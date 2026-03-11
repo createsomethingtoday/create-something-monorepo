@@ -101,7 +101,7 @@ For each reviewer-specific Hub/account, apply this Phase A discovery posture fir
 {
   "mode": "compact",
   "activeServers": ["webflow-app-review-mcp"],
-  "maxProxyTools": 8
+  "maxProxyTools": 6
 }
 ```
 

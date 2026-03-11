@@ -486,6 +486,7 @@ export async function createMcpSession(
 		tenant_id: string;
 		account_id: string;
 		host: string;
+		bound_host: string | null;
 		tool_mode: 'read_only' | 'read_write';
 		toolkit_profile_json: string;
 		allowed_tool_prefixes_json: string;
@@ -496,9 +497,9 @@ export async function createMcpSession(
 	await db
 		.prepare(
 			`INSERT INTO mcp_sessions (
-         id, user_id, tenant_id, account_id, host, tool_mode,
+         id, user_id, tenant_id, account_id, host, bound_host, tool_mode,
          toolkit_profile_json, allowed_tool_prefixes_json, token_hash, expires_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			session.id,
@@ -506,6 +507,7 @@ export async function createMcpSession(
 			session.tenant_id,
 			session.account_id,
 			session.host,
+			session.bound_host,
 			session.tool_mode,
 			session.toolkit_profile_json,
 			session.allowed_tool_prefixes_json,
@@ -552,6 +554,7 @@ export async function upsertMcpLongLivedToken(
 		auth_email: string | null;
 		tenant_id: string;
 		account_id: string;
+		bound_host: string | null;
 		tool_mode: 'read_only' | 'read_write';
 		toolkit_profile_json: string;
 		allowed_tool_prefixes_json: string;
@@ -564,15 +567,16 @@ export async function upsertMcpLongLivedToken(
 	await db
 		.prepare(
 			`INSERT INTO mcp_long_lived_tokens (
-         id, auth_subject, auth_email, tenant_id, account_id, tool_mode,
+         id, auth_subject, auth_email, tenant_id, account_id, bound_host, tool_mode,
          toolkit_profile_json, allowed_tool_prefixes_json, token_hash, token_prefix,
          issued_by, metadata_json, revoked_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
        ON CONFLICT(auth_subject) DO UPDATE SET
          id = excluded.id,
          auth_email = excluded.auth_email,
          tenant_id = excluded.tenant_id,
          account_id = excluded.account_id,
+         bound_host = excluded.bound_host,
          tool_mode = excluded.tool_mode,
          toolkit_profile_json = excluded.toolkit_profile_json,
          allowed_tool_prefixes_json = excluded.allowed_tool_prefixes_json,
@@ -590,6 +594,7 @@ export async function upsertMcpLongLivedToken(
 			token.auth_email,
 			token.tenant_id,
 			token.account_id,
+			token.bound_host,
 			token.tool_mode,
 			token.toolkit_profile_json,
 			token.allowed_tool_prefixes_json,

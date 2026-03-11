@@ -221,6 +221,13 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   );
 
   server.tool(
+    'app_review_get_field_map',
+    'Return canonical Airtable field mappings, writability, and allowed status options.',
+    {},
+    async () => asSuccess(APP_REVIEW_FIELD_MAP),
+  );
+
+  server.tool(
     'app_review_update_version_review',
     'Update review fields on an Asset Version record.',
     {
@@ -524,10 +531,4 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
   );
 
-  server.tool(
-    'app_review_get_field_map',
-    'Return canonical Airtable field mappings, writability, and allowed status options.',
-    {},
-    async () => asSuccess(APP_REVIEW_FIELD_MAP),
-  );
 }

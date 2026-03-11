@@ -50,7 +50,7 @@
       "activeServers": [
         "webflow-app-review-mcp"
       ],
-      "maxProxyTools": 8
+      "maxProxyTools": 6
     }
   }
 }

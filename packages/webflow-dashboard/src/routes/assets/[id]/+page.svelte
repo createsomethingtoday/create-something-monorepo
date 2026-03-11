@@ -122,6 +122,19 @@
     return `$${num.toLocaleString()}`;
   }
 
+  function formatMetricDate(dateStr?: string): string {
+    if (!dateStr) return '—';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: '2-digit'
+      });
+    } catch {
+      return '—';
+    }
+  }
+
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/login';
@@ -354,6 +367,23 @@
                 · {asset.subcategory}
               {/if}
             </p>
+            <div class="detail-evidence" aria-label="Asset summary">
+              <span><strong>{formatMetricDate(asset.submittedDate)}</strong> submitted</span>
+              {#if asset.publishedDate}
+                <span><strong>{formatMetricDate(asset.publishedDate)}</strong> published</span>
+              {/if}
+              {#if asset.priceString}
+                <span><strong>{asset.priceString}</strong> price</span>
+              {/if}
+              {#if asset.qualityScore}
+                <span><strong>{asset.qualityScore}</strong> quality score</span>
+              {/if}
+              {#if canShowMetrics && showPerformance}
+                <span><strong>{formatNumber(asset.uniqueViewers)}</strong> viewers</span>
+                <span><strong>{formatNumber(asset.cumulativePurchases)}</strong> purchases</span>
+                <span><strong>{formatCurrency(asset.cumulativeRevenue)}</strong> revenue</span>
+              {/if}
+            </div>
           </div>
         </div>
         <div class="header-actions">
@@ -458,7 +488,7 @@
               <Card>
                 <CardHeader>
                   <div class="card-header-flex">
-                    <CardTitle>Template Details</CardTitle>
+                    <CardTitle>Asset Record</CardTitle>
                     <Button
                       variant={showPerformance ? 'default' : 'outline'}
                       size="sm"
@@ -472,7 +502,7 @@
                 <CardContent>
                   <div class="details-grid">
                     <div class="detail-item">
-                      <span class="detail-label">Template Name</span>
+                      <span class="detail-label">Name</span>
                       <span class="detail-value">{asset.name}</span>
                     </div>
                     <div class="detail-item">
@@ -502,19 +532,19 @@
 
                     {#if showPerformance && canShowMetrics}
                       <div class="detail-item">
-                        <span class="detail-label"
+                        <span class="detail-label detail-label--with-freshness"
                           >Unique Viewers <DataFreshnessIndicator variant="tooltip" /></span
                         >
                         <span class="detail-value">{formatNumber(asset.uniqueViewers)}</span>
                       </div>
                       <div class="detail-item">
-                        <span class="detail-label"
+                        <span class="detail-label detail-label--with-freshness"
                           >Total Purchases <DataFreshnessIndicator variant="tooltip" /></span
                         >
                         <span class="detail-value">{formatNumber(asset.cumulativePurchases)}</span>
                       </div>
                       <div class="detail-item">
-                        <span class="detail-label"
+                        <span class="detail-label detail-label--with-freshness"
                           >Total Revenue <DataFreshnessIndicator variant="tooltip" /></span
                         >
                         <span class="detail-value">{formatCurrency(asset.cumulativeRevenue)}</span>
@@ -747,6 +777,22 @@
     gap: 0.35rem;
   }
 
+  .detail-evidence {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.85rem;
+    margin-top: 0.35rem;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .detail-evidence strong {
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
   .detail-kicker {
     margin: 0;
     font-size: var(--text-caption);
@@ -790,9 +836,10 @@
   :global(.asset-tabs-list) {
     display: flex;
     gap: var(--space-xs);
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-md);
-    padding: var(--space-xs);
+    background: transparent;
+    border-bottom: 1px solid var(--color-border-default);
+    border-radius: 0;
+    padding: 0 0 0.4rem;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -853,24 +900,33 @@
   .details-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md);
+    gap: 0.9rem 1.15rem;
   }
 
   .detail-item {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 0.15rem;
   }
 
   .detail-label {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-caption);
     font-weight: var(--font-medium);
     color: var(--color-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .detail-label--with-freshness {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   .detail-value {
     font-size: var(--text-body);
     color: var(--color-fg-primary);
+    font-variant-numeric: tabular-nums;
   }
 
   .description-short {

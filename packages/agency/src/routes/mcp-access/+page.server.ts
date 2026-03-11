@@ -34,11 +34,12 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 		available: false,
 		error: 'Password state is temporarily unavailable',
 	});
-	const assignment = resolveMcpAccessAssignment({
+	const assignment = await resolveMcpAccessAssignment(platform?.env?.DB, {
 		email: user.email,
 		accountId: entitlement.account_id,
 		tenantId: entitlement.tenant_id,
 		workspaceAccountId: entitlement.workspace_account_id,
+		authSubject: user.id,
 	});
 
 	return {

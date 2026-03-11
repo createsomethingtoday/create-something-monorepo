@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Card, CardHeader, CardTitle, CardContent } from './ui';
-  import StatusBadge from './StatusBadge.svelte';
   import KineticNumber from './KineticNumber.svelte';
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import type { Asset } from '$lib/server/airtable';
@@ -71,6 +70,10 @@
     Delisted: 'var(--color-warning)',
     Rejected: 'var(--color-error)'
   };
+
+  function getStatusLabel(status: string, count: number): string {
+    return `${status} ${count}`;
+  }
 </script>
 
 <div class="overview-stats">
@@ -80,7 +83,7 @@
       <Card>
         <CardHeader>
           <div class="header-with-indicator">
-            <CardTitle>Performance Summary</CardTitle>
+            <CardTitle>Portfolio Performance</CardTitle>
             <DataFreshnessIndicator variant="inline" />
           </div>
         </CardHeader>
@@ -119,7 +122,10 @@
     <div>
       <Card>
         <CardHeader>
-          <CardTitle>Status Distribution</CardTitle>
+          <div class="distribution-heading">
+            <CardTitle>Portfolio Distribution</CardTitle>
+            <span class="distribution-total-inline">{assets.length} total</span>
+          </div>
         </CardHeader>
         <CardContent>
           <div class="distribution-list">
@@ -127,29 +133,25 @@
               {@const data = statusBreakdown[status]}
               {@const percentage = getPercentage(data.count)}
               <div class="distribution-item">
-                <div class="distribution-header">
-                  <div class="distribution-info">
-                    <StatusBadge {status} size="sm" />
-                    <span class="distribution-count"
-                      >{data.count} template{data.count !== 1 ? 's' : ''}</span
-                    >
+                <div class="distribution-meta">
+                  <span class="distribution-label" style="--status-color: {statusColors[status] ||
+                    'var(--color-fg-muted)'}">{getStatusLabel(status, data.count)}</span>
+                  <span class="distribution-count"
+                    >{data.count === 1 ? '1 template' : `${data.count} templates`}</span
+                  >
+                </div>
+                <div class="distribution-track-row">
+                  <div class="distribution-bar" aria-hidden="true">
+                    <div
+                      class="distribution-fill"
+                      style="width: {percentage}%; background-color: {statusColors[status] ||
+                        'var(--color-fg-muted)'}"
+                    ></div>
                   </div>
                   <span class="distribution-percentage">{percentage}%</span>
                 </div>
-                <div class="distribution-bar">
-                  <div
-                    class="distribution-fill"
-                    style="width: {percentage}%; background-color: {statusColors[status] ||
-                      'var(--color-fg-muted)'}"
-                  ></div>
-                </div>
               </div>
             {/each}
-          </div>
-
-          <div class="distribution-total">
-            <span class="total-label">Total Assets</span>
-            <span class="total-value">{assets.length}</span>
           </div>
         </CardContent>
       </Card>
@@ -182,23 +184,17 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-sm);
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-shell-border-default);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    padding: 0 0.25rem;
+    background: transparent;
+    border: none;
+    border-radius: 0;
     transition:
-      transform var(--duration-micro) var(--ease-standard),
       border-color var(--duration-micro) var(--ease-standard),
-      background-color var(--duration-micro) var(--ease-standard),
-      box-shadow var(--duration-micro) var(--ease-standard);
+      background-color var(--duration-micro) var(--ease-standard);
   }
 
   .performance-item:hover {
-    background: color-mix(in srgb, var(--color-bg-subtle) 86%, var(--color-bg-surface));
-    border-color: var(--color-shell-border-strong);
-    transform: none;
-    box-shadow: var(--shadow-sm);
+    background: transparent;
   }
 
   .performance-content {
@@ -208,10 +204,11 @@
 
   .performance-value {
     font-family: var(--font-heading);
-    font-size: var(--text-body-lg);
+    font-size: clamp(1.15rem, 1vw + 0.75rem, 1.5rem);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
     letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
   }
 
   .performance-label {
@@ -223,41 +220,77 @@
   .distribution-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 0.9rem;
   }
 
   .distribution-item {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 0.35rem;
   }
 
-  .distribution-header {
+  .distribution-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
-  }
-
-  .distribution-info {
-    display: flex;
-    align-items: center;
     gap: var(--space-sm);
   }
 
-  .distribution-count {
+  .distribution-total-inline {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .distribution-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
+
+  .distribution-label {
+    position: relative;
+    padding-left: 0.75rem;
     font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    opacity: 0.82;
+    color: var(--color-fg-primary);
+    font-weight: var(--font-medium);
+  }
+
+  .distribution-label::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--status-color, var(--color-fg-muted));
+    transform: translateY(-50%);
+  }
+
+  .distribution-count {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .distribution-track-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
   }
 
   .distribution-percentage {
     font-size: var(--text-body-sm);
     font-weight: var(--font-medium);
     color: var(--color-fg-primary);
+    font-variant-numeric: tabular-nums;
   }
 
   .distribution-bar {
-    height: 0.45rem;
+    height: 0.36rem;
     background: var(--color-bg-subtle);
     border-radius: var(--radius-full);
     overflow: hidden;
@@ -267,29 +300,6 @@
     height: 100%;
     border-radius: var(--radius-full);
     transition: width var(--duration-standard) var(--ease-standard);
-  }
-
-  .distribution-total {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: var(--space-md);
-    margin-top: var(--space-md);
-    border-top: 1px solid var(--color-shell-border-default);
-  }
-
-  .total-label {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    opacity: 0.76;
-  }
-
-  .total-value {
-    font-family: var(--font-heading);
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    letter-spacing: 0.02em;
-    color: var(--color-fg-primary);
   }
 
   @media (max-width: 900px) {

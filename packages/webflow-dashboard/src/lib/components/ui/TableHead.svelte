@@ -19,13 +19,16 @@
 
 <style>
 	.table-head {
-		height: 2.5rem;
-		padding: 0.25rem;
+		height: 2.15rem;
+		padding: 0.15rem 0.25rem;
 		text-align: left;
 		vertical-align: middle;
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-secondary);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
 		border-bottom: 1px solid var(--color-border-emphasis);
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
 	}
 
 	.table-head-inner {
@@ -33,7 +36,7 @@
 		align-items: center;
 		gap: 0.25rem;
 		height: 100%;
-		padding: 0.25rem 0.5rem;
+		padding: 0.15rem 0.45rem;
 		border-radius: var(--radius-sm, 4px);
 		transition:
 			background 150ms ease,
@@ -41,12 +44,12 @@
 	}
 
 	.table-head:hover .table-head-inner {
-		background: var(--color-bg-surface);
+		background: transparent;
 		color: var(--color-fg-primary);
 	}
 
 	.table-head:focus-within .table-head-inner {
-		background: var(--color-bg-surface);
+		background: transparent;
 		color: var(--color-fg-primary);
 		outline: 1px solid var(--color-focus);
 		outline-offset: -1px;

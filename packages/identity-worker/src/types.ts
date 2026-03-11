@@ -170,6 +170,7 @@ export interface McpSession {
 	tenant_id: string;
 	account_id: string;
 	host: string;
+	bound_host: string | null;
 	tool_mode: 'read_only' | 'read_write';
 	toolkit_profile_json: string;
 	allowed_tool_prefixes_json: string;
@@ -229,6 +230,7 @@ export interface McpLongLivedToken {
 	auth_email: string | null;
 	tenant_id: string;
 	account_id: string;
+	bound_host: string | null;
 	tool_mode: 'read_only' | 'read_write';
 	toolkit_profile_json: string;
 	allowed_tool_prefixes_json: string;

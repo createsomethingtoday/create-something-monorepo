@@ -29,6 +29,13 @@
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let EditAssetModal = $state<any>(null);
 
+  const publishedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Published').length);
+  const delistedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Delisted').length);
+  const scheduledCount = $derived(
+    (data.assets || []).filter((asset) => ['Scheduled', 'Upcoming'].includes(asset.status)).length
+  );
+  const rejectedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Rejected').length);
+
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/login';
@@ -209,10 +216,21 @@
                 Track published assets, upcoming submissions, and marketplace signals in one place.
                 <DataFreshnessIndicator variant="tooltip" />
               </p>
+              <div class="portfolio-evidence" aria-label="Portfolio summary">
+                <span><strong>{publishedCount}</strong> published</span>
+                <span><strong>{delistedCount}</strong> delisted</span>
+                {#if scheduledCount > 0}
+                  <span><strong>{scheduledCount}</strong> scheduled</span>
+                {/if}
+                {#if rejectedCount > 0}
+                  <span><strong>{rejectedCount}</strong> rejected</span>
+                {/if}
+                <span><strong>{(data.assets || []).length}</strong> total assets</span>
+              </div>
               <div class="quick-actions">
-                <Button variant="default" onclick={handleReviewAssets}>Review assets</Button>
-                <Button variant="secondary" onclick={handleOpenValidation}>Open validation</Button>
-                <Button variant="outline" onclick={handleExploreMarketplace}
+                <Button variant="default" size="sm" onclick={handleReviewAssets}>Review assets</Button>
+                <Button variant="secondary" size="sm" onclick={handleOpenValidation}>Open validation</Button>
+                <Button variant="outline" size="sm" onclick={handleExploreMarketplace}
                   >Explore marketplace</Button
                 >
               </div>
@@ -289,6 +307,26 @@
     vertical-align: middle;
   }
 
+  .portfolio-evidence {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-top: 0.7rem;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+  }
+
+  .portfolio-evidence span {
+    white-space: nowrap;
+  }
+
+  .portfolio-evidence strong {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+  }
+
   .overview-top {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(22rem, 0.95fr);
@@ -299,7 +337,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
-    margin-top: var(--space-md);
+    margin-top: 1rem;
   }
 
   .submission-column {

@@ -60,6 +60,15 @@
 	function getPrimaryActionAriaLabel(action: AssetActionDescriptor): string {
 		return `${action.label}: ${asset.name}`;
 	}
+
+	function formatMetricDate(dateStr?: string): string {
+		if (!dateStr) return '';
+		try {
+			return new Date(dateStr).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
+		} catch {
+			return '';
+		}
+	}
 </script>
 
 <TableRow class="asset-table-row">
@@ -87,10 +96,18 @@
 	<TableCell>
 		<button type="button" class="asset-name-link" onclick={() => onView?.(asset.id)}>
 			<span class="asset-name">{asset.name}</span>
+			{#if asset.category}
+				<span class="asset-meta">{asset.category}</span>
+			{/if}
 		</button>
 	</TableCell>
 	<TableCell>
-		<span class="date">{formatDate(asset.submittedDate)}</span>
+		<div class="date-stack">
+			<span class="date">{formatDate(asset.submittedDate)}</span>
+			{#if asset.submittedDate}
+				<span class="date-sub">{formatMetricDate(asset.submittedDate)}</span>
+			{/if}
+		</div>
 	</TableCell>
 	<TableCell>
 		<span class="type">{asset.type}</span>
@@ -149,8 +166,14 @@
 <style>
 	.asset-thumbnail-link,
 	.asset-name-link {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.15rem;
+		max-width: 20rem;
+	}
+
+	.asset-name-link {
 		display: inline-flex;
-		align-items: center;
 		padding: 0;
 		background: transparent;
 		border: none;
@@ -192,6 +215,13 @@
 	.asset-name {
 		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
+		line-height: 1.25;
+	}
+
+	.asset-meta {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		line-height: 1.25;
 	}
 
 	.asset-name-link:hover .asset-name {
@@ -202,6 +232,25 @@
 	.type {
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
+	}
+
+	.date-stack {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+	}
+
+	.date,
+	.date-sub,
+	.type,
+	.metric,
+	.metric-sub {
+		font-variant-numeric: tabular-nums;
+	}
+
+	.date-sub {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 
 	.metric {
@@ -216,14 +265,13 @@
 	.metric-stack {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: 0.125rem;
+		align-items: flex-end;
+		gap: 0.1rem;
 	}
 
 	.metric-sub {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		font-variant-numeric: tabular-nums;
 	}
 
 	:global(.primary-action-button) {

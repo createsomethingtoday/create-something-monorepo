@@ -211,6 +211,11 @@
           <p class="page-subtitle page-intro__subtitle">
             Weekly marketplace snapshot with 30-day performance data
           </p>
+          <div class="marketplace-evidence" aria-label="Marketplace evidence">
+            <span><strong>30-day window</strong> for category and template performance</span>
+            <span><strong>Portfolio categories first</strong> to find relevant signal quickly</span>
+            <span><strong>Weekly refresh</strong> for comparative market context</span>
+          </div>
           {#if summary.lastUpdated}
             <div class="sync-info-container">
               <p class="sync-info">
@@ -307,6 +312,21 @@
     margin-top: var(--space-sm);
   }
 
+  .marketplace-evidence {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.9rem;
+    margin-top: 0.7rem;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .marketplace-evidence strong {
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+  }
+
   .sync-info {
     display: flex;
     align-items: center;
@@ -341,7 +361,8 @@
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
     margin: 0;
-    max-width: 84ch;
+    max-width: 72ch;
+    line-height: 1.4;
   }
 
   .sync-warning {
@@ -425,10 +446,9 @@
 
   .data-scope-notice {
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--color-shell-border-default);
+    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
-    background: var(--color-bg-surface);
-    box-shadow: var(--shadow-sm);
+    background: transparent;
     margin-bottom: var(--space-md);
   }
 

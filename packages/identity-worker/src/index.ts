@@ -620,11 +620,13 @@ interface CreateMcpSessionBody {
 
 interface ResolveMcpSessionBody {
 	token?: string;
+	resource_host?: string;
 }
 
 interface AdminMintMcpSessionBody {
 	account_id?: string;
 	host?: string;
+	bound_host?: string;
 	toolkit_profile?: string[];
 	allowed_tool_prefixes?: string[];
 	tool_mode?: McpToolMode;
@@ -650,6 +652,7 @@ interface AdminIssueMcpLongLivedTokenBody {
 	auth_email?: string;
 	tenant_id?: string;
 	account_id?: string;
+	bound_host?: string;
 	toolkit_profile?: string[];
 	allowed_tool_prefixes?: string[];
 	tool_mode?: McpToolMode;
@@ -738,6 +741,7 @@ type ManagedBearerIssueResult =
 		toolMode: McpToolMode;
 		toolkitProfile: string[];
 		allowedToolPrefixes: string[];
+		boundHost: string | null;
 		policyDecision: DecisionTelemetry;
 	}
 	| {
@@ -1141,6 +1145,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 		tenant_id: tenantId,
 		account_id: accountId,
 		host,
+		bound_host: host,
 		tool_mode: toolMode,
 		toolkit_profile_json: JSON.stringify(toolkitProfile),
 		allowed_tool_prefixes_json: JSON.stringify(allowedToolPrefixes),
@@ -1164,6 +1169,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 		event_type: 'mcp_session_created',
 		event_data_json: JSON.stringify({
 			host,
+			bound_host: host,
 			tenant_id: tenantId,
 			tool_mode: toolMode,
 			toolkit_profile: toolkitProfile,
@@ -1182,6 +1188,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 		tenant_id: tenantId,
 		user_id: payload.sub,
 		host,
+		bound_host: host,
 		tool_mode: toolMode,
 		toolkit_profile: toolkitProfile,
 		allowed_tool_prefixes: allowedToolPrefixes,
@@ -1270,6 +1277,7 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 			consent_granted_at: consentGrantedAt,
 			client_slug: clientSlug,
 			workspace_account_id: workspaceAccountId,
+			bound_host: normalizeOptionalHostName(body.bound_host) ?? normalizeHostName(body.host),
 			...metadata,
 		},
 	});
@@ -1287,6 +1295,7 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 	}
 
 	const host = normalizeHostName(body.host);
+	const boundHost = normalizeOptionalHostName(body.bound_host) ?? host;
 	const toolMode = normalizeToolMode(body.tool_mode);
 	const toolkitProfile = normalizeToolkitProfile(body.toolkit_profile);
 	const allowedToolPrefixes = resolveAllowedToolPrefixes(body.allowed_tool_prefixes, toolkitProfile);
@@ -1303,6 +1312,7 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 		tenant_id: account.tenant_id,
 		account_id: account.account_id,
 		host,
+		bound_host: boundHost,
 		tool_mode: toolMode,
 		toolkit_profile_json: JSON.stringify(toolkitProfile),
 		allowed_tool_prefixes_json: JSON.stringify(allowedToolPrefixes),
@@ -1328,6 +1338,7 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 			account_id: account.account_id,
 			tenant_id: account.tenant_id,
 			host,
+			bound_host: boundHost,
 			tool_mode: toolMode,
 			toolkit_profile: toolkitProfile,
 			allowed_tool_prefixes: allowedToolPrefixes,
@@ -1348,6 +1359,7 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 		tenant_id: account.tenant_id,
 		user_id: account.user_id,
 		host,
+		bound_host: boundHost,
 		tool_mode: toolMode,
 		toolkit_profile: toolkitProfile,
 		allowed_tool_prefixes: allowedToolPrefixes,
@@ -1376,6 +1388,7 @@ async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Pr
 		authEmail: body.auth_email ?? null,
 		tenantId: body.tenant_id ?? null,
 		accountId: body.account_id ?? null,
+		boundHost: body.bound_host ?? null,
 		toolkitProfile: body.toolkit_profile,
 		allowedToolPrefixes: body.allowed_tool_prefixes,
 		toolMode: body.tool_mode,
@@ -1399,6 +1412,7 @@ async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Pr
 		tool_mode: issued.toolMode,
 		toolkit_profile: issued.toolkitProfile,
 		allowed_tool_prefixes: issued.allowedToolPrefixes,
+		bound_host: issued.boundHost,
 		policy: issued.policyDecision,
 	});
 }
@@ -1428,6 +1442,7 @@ async function handleAdminGetMcpLongLivedToken(request: Request, env: Env): Prom
 			auth_email: token.auth_email,
 			account_id: token.account_id,
 			tenant_id: token.tenant_id,
+			bound_host: token.bound_host,
 			token_prefix: token.token_prefix,
 			tool_mode: token.tool_mode,
 			toolkit_profile: parseStringArray(token.toolkit_profile_json),
@@ -1448,6 +1463,7 @@ async function issueManagedBearerToken(
 		authEmail?: string | null;
 		tenantId?: string | null;
 		accountId?: string | null;
+		boundHost?: string | null;
 		toolkitProfile?: string[];
 		allowedToolPrefixes?: string[];
 		toolMode?: McpToolMode;
@@ -1480,6 +1496,8 @@ async function issueManagedBearerToken(
 	const accountId =
 		normalizeAccountId(requestedAccountId ?? entitlement.account_id ?? existing?.account_id ?? undefined)
 		?? `acct_${generateUUID().replace(/-/g, '')}`;
+	const boundHost =
+		normalizeOptionalHostName(input.boundHost) ?? normalizeOptionalHostName(existing?.bound_host) ?? null;
 	const toolMode = normalizeToolMode(input.toolMode ?? (existing?.tool_mode as McpToolMode | undefined));
 	const toolkitProfile =
 		input.toolkitProfile !== undefined
@@ -1523,6 +1541,7 @@ async function issueManagedBearerToken(
 				metadata: {
 					auth_subject: input.authSubject,
 					tool_mode: toolMode,
+					bound_host: boundHost,
 					toolkit_profile: toolkitProfile,
 					allowed_tool_prefixes: allowedToolPrefixes,
 					entitlement_reason: entitlement.reason ?? 'allowed',
@@ -1535,6 +1554,7 @@ async function issueManagedBearerToken(
 			tenant_id: tenantId,
 			account_id: accountId,
 			tool_mode: toolMode,
+			bound_host: boundHost,
 			toolkit_profile: toolkitProfile,
 			allowed_tool_prefixes: allowedToolPrefixes,
 			entitlement_reason: entitlement.reason ?? 'allowed',
@@ -1562,6 +1582,7 @@ async function issueManagedBearerToken(
 		auth_email: normalizeNullableString(input.authEmail) ?? existing?.auth_email ?? null,
 		tenant_id: tenantId,
 		account_id: accountId,
+		bound_host: boundHost,
 		tool_mode: toolMode,
 		toolkit_profile_json: JSON.stringify(toolkitProfile),
 		allowed_tool_prefixes_json: JSON.stringify(allowedToolPrefixes),
@@ -1580,6 +1601,7 @@ async function issueManagedBearerToken(
 			token_id: tokenId,
 			account_id: accountId,
 			tenant_id: tenantId,
+			bound_host: boundHost,
 			auth_subject: input.authSubject,
 			token_prefix: tokenPrefix,
 			policy: policyDecision,
@@ -1597,6 +1619,7 @@ async function issueManagedBearerToken(
 		tenantId,
 		authSubject: input.authSubject,
 		authEmail: normalizeNullableString(input.authEmail) ?? existing?.auth_email ?? null,
+		boundHost,
 		toolMode,
 		toolkitProfile,
 		allowedToolPrefixes,
@@ -1983,6 +2006,7 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 	if (!body?.token) {
 		return json({ error: 'invalid_request', message: 'token is required', status: 400 }, 400);
 	}
+	const resourceHost = normalizeOptionalHostName(body.resource_host);
 
 	const tokenHash = await hashToken(body.token);
 	const session = await findMcpSessionByTokenHash(db, tokenHash);
@@ -2011,6 +2035,30 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			});
 		}
 
+		const hostBindingFailure = getHostBindingFailure(session.bound_host, resourceHost);
+		if (hostBindingFailure) {
+			await createMcpAuthEvent(db, {
+				id: generateUUID(),
+				session_id: session.id,
+				user_id: session.user_id,
+				event_type: 'mcp_session_resolve_rejected',
+				event_data_json: JSON.stringify({
+					reason: hostBindingFailure,
+					host: session.host,
+					bound_host: session.bound_host,
+					resource_host: resourceHost,
+				}),
+			});
+			return json({
+				valid: false,
+				reason: hostBindingFailure,
+				session_id: session.id,
+				host: session.host,
+				bound_host: session.bound_host,
+				resource_host: resourceHost,
+			});
+		}
+
 		const toolkitProfile = parseStringArray(session.toolkit_profile_json);
 		const allowedToolPrefixes = parseStringArray(session.allowed_tool_prefixes_json);
 
@@ -2028,6 +2076,9 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			event_data_json: JSON.stringify({
 				account_id: session.account_id,
 				tenant_id: session.tenant_id,
+				host: session.host,
+				bound_host: session.bound_host,
+				resource_host: resourceHost,
 			}),
 		});
 
@@ -2038,6 +2089,7 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			tenant_id: session.tenant_id,
 			user_id: session.user_id,
 			host: session.host,
+			bound_host: session.bound_host,
 			tool_mode: session.tool_mode,
 			expires_at: session.expires_at,
 			allowed_tool_prefixes: allowedToolPrefixes,
@@ -2068,6 +2120,8 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 					account_id: longLivedToken.account_id,
 					tenant_id: longLivedToken.tenant_id,
 					reason: 'revoked',
+					bound_host: longLivedToken.bound_host,
+					resource_host: resourceHost,
 					revoked_at: longLivedToken.revoked_at,
 				}),
 			});
@@ -2077,7 +2131,37 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 				token_id: longLivedToken.id,
 				account_id: longLivedToken.account_id,
 				tenant_id: longLivedToken.tenant_id,
+				bound_host: longLivedToken.bound_host,
+				resource_host: resourceHost,
 				revoked_at: longLivedToken.revoked_at,
+			});
+		}
+
+		const hostBindingFailure = getHostBindingFailure(longLivedToken.bound_host, resourceHost);
+		if (hostBindingFailure) {
+			await createMcpAuthEvent(db, {
+				id: generateUUID(),
+				session_id: null,
+				user_id: longLivedToken.auth_subject,
+				event_type: 'mcp_long_lived_token_resolve_rejected',
+				event_data_json: JSON.stringify({
+					token_id: longLivedToken.id,
+					account_id: longLivedToken.account_id,
+					tenant_id: longLivedToken.tenant_id,
+					reason: hostBindingFailure,
+					bound_host: longLivedToken.bound_host,
+					resource_host: resourceHost,
+				}),
+			});
+			return json({
+				valid: false,
+				reason: hostBindingFailure,
+				token_id: longLivedToken.id,
+				account_id: longLivedToken.account_id,
+				tenant_id: longLivedToken.tenant_id,
+				auth_mode: 'managed_bearer',
+				bound_host: longLivedToken.bound_host,
+				resource_host: resourceHost,
 			});
 		}
 
@@ -2097,6 +2181,8 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 					account_id: longLivedToken.account_id,
 					tenant_id: longLivedToken.tenant_id,
 					reason: entitlement.reason ?? 'entitlement_denied',
+					bound_host: longLivedToken.bound_host,
+					resource_host: resourceHost,
 					entitlement,
 				}),
 			});
@@ -2107,6 +2193,8 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 				account_id: longLivedToken.account_id,
 				tenant_id: longLivedToken.tenant_id,
 				auth_mode: 'managed_bearer',
+				bound_host: longLivedToken.bound_host,
+				resource_host: resourceHost,
 				service_tier: entitlement.service_tier ?? null,
 				entitlement_snapshot: entitlement.entitlement_snapshot ?? null,
 			});
@@ -2123,6 +2211,8 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 				account_id: longLivedToken.account_id,
 				tenant_id: longLivedToken.tenant_id,
 				token_prefix: longLivedToken.token_prefix,
+				bound_host: longLivedToken.bound_host,
+				resource_host: resourceHost,
 			}),
 		});
 
@@ -2132,7 +2222,8 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			account_id: longLivedToken.account_id,
 			tenant_id: longLivedToken.tenant_id,
 			user_id: longLivedToken.auth_subject,
-			host: 'agency_bearer',
+			host: longLivedToken.bound_host ?? 'agency_bearer',
+			bound_host: longLivedToken.bound_host,
 			tool_mode: longLivedToken.tool_mode,
 			expires_at: null,
 			allowed_tool_prefixes: parseAllowedToolPrefixesOrNull(longLivedToken.allowed_tool_prefixes_json),
@@ -2277,6 +2368,7 @@ async function handleGetMcpSession(request: Request, env: Env, sessionId: string
 		tenant_id: session.tenant_id,
 		user_id: session.user_id,
 		host: session.host,
+		bound_host: session.bound_host,
 		tool_mode: session.tool_mode,
 		toolkit_profile: parseStringArray(session.toolkit_profile_json),
 		allowed_tool_prefixes: parseStringArray(session.allowed_tool_prefixes_json),
@@ -3428,9 +3520,28 @@ function normalizeTenantId(raw: string | undefined): string {
 }
 
 function normalizeHostName(raw: string | undefined): string {
-	const candidate = (raw ?? 'codex').trim().toLowerCase();
-	if (!candidate) return 'codex';
-	return candidate.replace(/[^a-z0-9._-]/g, '_').slice(0, 64);
+	return normalizeOptionalHostName(raw) ?? 'codex';
+}
+
+function normalizeOptionalHostName(raw: string | null | undefined): string | null {
+	if (typeof raw !== 'string') return null;
+	const candidate = raw.trim().toLowerCase();
+	if (!candidate) return null;
+	const withoutProtocol = candidate.replace(/^[a-z]+:\/\//, '');
+	const hostPort = withoutProtocol.split('/')[0] ?? withoutProtocol;
+	const hostname = hostPort.split('@').pop() ?? hostPort;
+	const label = hostname.split(':')[0]?.split('.')[0] ?? hostname;
+	if (!label) return null;
+	const normalized = label.replace(/[^a-z0-9._-]/g, '_').slice(0, 64);
+	return normalized || null;
+}
+
+function getHostBindingFailure(boundHost: string | null | undefined, resourceHost: string | null): string | null {
+	const normalizedBoundHost = normalizeOptionalHostName(boundHost);
+	if (!normalizedBoundHost) return null;
+	if (!resourceHost) return 'resource_host_required';
+	if (resourceHost !== normalizedBoundHost) return 'host_mismatch';
+	return null;
 }
 
 function normalizeToolMode(raw: McpToolMode | undefined): McpToolMode {

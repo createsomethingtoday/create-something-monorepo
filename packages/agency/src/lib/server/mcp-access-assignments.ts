@@ -1,8 +1,16 @@
+import {
+	buildPartnerLaneNotionBridgeUrl,
+	findPartnerAccessLaneForIdentity,
+	parseJsonObject,
+	type PartnerAuthAccessLaneAssignmentRow,
+} from '$lib/server/partner-auth';
+
 type AccessAssignmentInput = {
 	email: string;
 	accountId: string | null;
 	tenantId: string | null;
 	workspaceAccountId?: string | null;
+	authSubject?: string | null;
 };
 
 export type McpAccessAssignment = {
@@ -25,6 +33,7 @@ type LaneConfig = {
 };
 
 const DEFAULT_CREDENTIAL_SOURCE = 'Vault + private operator handoff';
+const DEFAULT_LANE_CREDENTIAL_SOURCE = 'Partner-managed named lane';
 
 const LANE_CONFIGS: Record<string, LaneConfig> = {
 	mj: {
@@ -110,7 +119,7 @@ function normalizeKey(value: string | null | undefined): string {
 		.replace(/^_+|_+$/g, '');
 }
 
-function resolveLaneKey(email: string, accountId: string | null): string | null {
+function resolveLegacyLaneKey(email: string, accountId: string | null): string | null {
 	const normalizedAccount = normalizeKey(accountId);
 	if (normalizedAccount && normalizedAccount in LANE_CONFIGS) {
 		return normalizedAccount;
@@ -125,8 +134,8 @@ function resolveLaneKey(email: string, accountId: string | null): string | null 
 	return null;
 }
 
-export function resolveMcpAccessAssignment(input: AccessAssignmentInput): McpAccessAssignment | null {
-	const laneKey = resolveLaneKey(input.email, input.accountId);
+function buildLegacyAssignment(input: AccessAssignmentInput): McpAccessAssignment | null {
+	const laneKey = resolveLegacyLaneKey(input.email, input.accountId);
 	if (!laneKey) return null;
 
 	const lane = LANE_CONFIGS[laneKey];
@@ -141,4 +150,53 @@ export function resolveMcpAccessAssignment(input: AccessAssignmentInput): McpAcc
 		tenantId: input.tenantId,
 		workspaceAccountId: input.workspaceAccountId ?? input.accountId,
 	};
+}
+
+function buildLaneAssignment(
+	lane: PartnerAuthAccessLaneAssignmentRow,
+	input: AccessAssignmentInput,
+): McpAccessAssignment {
+	const metadata = parseJsonObject(lane.metadata_json);
+	const notionBridgeUrl =
+		typeof metadata.notion_bridge_url === 'string' && metadata.notion_bridge_url.trim().length > 0
+			? metadata.notion_bridge_url.trim()
+			: buildPartnerLaneNotionBridgeUrl(lane.client_slug);
+	const bridgeUsername =
+		typeof metadata.bridge_username === 'string' && metadata.bridge_username.trim().length > 0
+			? metadata.bridge_username.trim()
+			: lane.host_key;
+	const credentialSource =
+		typeof metadata.credential_source === 'string' && metadata.credential_source.trim().length > 0
+			? metadata.credential_source.trim()
+			: DEFAULT_LANE_CREDENTIAL_SOURCE;
+
+	return {
+		laneKey: lane.slug,
+		displayName: lane.display_name,
+		hubUrl: lane.hub_url,
+		bridgeUrl: notionBridgeUrl,
+		bridgeUsername,
+		credentialSource,
+		accountId: lane.identity_account_id ?? input.accountId,
+		tenantId: lane.identity_tenant_id ?? input.tenantId,
+		workspaceAccountId: lane.workspace_account_id ?? input.workspaceAccountId ?? input.accountId,
+	};
+}
+
+export async function resolveMcpAccessAssignment(
+	db: D1Database | null | undefined,
+	input: AccessAssignmentInput,
+): Promise<McpAccessAssignment | null> {
+	if (db) {
+		const lane = await findPartnerAccessLaneForIdentity(db, {
+			authSubject: input.authSubject ?? null,
+			email: input.email,
+			accountId: input.accountId,
+		});
+		if (lane) {
+			return buildLaneAssignment(lane, input);
+		}
+	}
+
+	return buildLegacyAssignment(input);
 }

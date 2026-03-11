@@ -195,6 +195,32 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "notion-halfdozen-blondish": {
+      "transport": "http",
+      "url": "https://blondish-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for BLOND:ISH",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "blondish",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "notion-halfdozen-c3-management": {
+      "transport": "http",
+      "url": "https://c3-management-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for C3 Management",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "c3-management",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
     "halfdozen-dm-mcp": {
       "transport": "http",
       "url": "https://dm.mcp.workway.co/mcp",

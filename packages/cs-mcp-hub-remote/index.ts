@@ -250,6 +250,7 @@ type IdentitySessionResolveResponse = {
   account_id?: string;
   tenant_id?: string;
   user_id?: string;
+  bound_host?: string | null;
   tool_mode?: string;
   allowed_tool_prefixes?: unknown;
   service_tier?: string | null;
@@ -264,6 +265,8 @@ type ResolvedAccountContext = {
   sessionId: string | null;
   toolMode: string | null;
   allowedToolPrefixes: string[] | null;
+  boundHost: string | null;
+  resourceHost: string | null;
   serviceTier: string | null;
   entitlementSnapshot: Record<string, unknown> | null;
   identitySource: 'session' | 'fallback';
@@ -903,7 +906,7 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
     return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
   }
 
-  const resolved = await resolveSessionForBearerToken(env, identityToken);
+  const resolved = await resolveSessionForBearerToken(env, identityToken, extractResourceHostFromRequest(request));
   if (resolved?.valid === true && normalizeTraceValue(resolved.account_id)) {
     return null;
   }
@@ -2684,11 +2687,16 @@ function toHubAuthzEvent(params: {
 }
 
 function hasProtectedHubActorContext(env: Env, accountContext: ResolvedAccountContext): boolean {
+  const identityMode = resolveHubIdentityMode(env);
   const protectedRemoteExecution =
-    resolveHubIdentityMode(env) === 'session_required' || Boolean(readEnvString(env, 'HUB_API_TOKEN'));
+    identityMode === 'session_required' || Boolean(readEnvString(env, 'HUB_API_TOKEN'));
 
   if (!protectedRemoteExecution) {
     return true;
+  }
+
+  if (identityMode === 'compat') {
+    return Boolean(accountContext.accountId);
   }
 
   if (accountContext.identitySource !== 'session') {
@@ -2881,6 +2889,14 @@ export async function executeProxyRoute(params: {
     recordHubInvocation(env, log, executionCtx);
   const recordHubRouteInvocationWithCtx = (log: HubRouteLog): Promise<void> =>
     recordHubRouteInvocation(env, log, executionCtx);
+  const identityTraceMetadata = {
+    tenantId: accountContext.tenantId,
+    userId: accountContext.userId,
+    sessionId: accountContext.sessionId,
+    identitySource: accountContext.identitySource,
+    boundHost: accountContext.boundHost,
+    resourceHost: accountContext.resourceHost,
+  };
 
   if (!isRouteAllowedForSession(route, accountContext.allowedToolPrefixes)) {
     const message =
@@ -2902,9 +2918,7 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
-          tenantId: accountContext.tenantId,
-          sessionId: accountContext.sessionId,
-          identitySource: accountContext.identitySource,
+          ...identityTraceMetadata,
           allowedToolPrefixes: accountContext.allowedToolPrefixes ?? null,
         },
       }),
@@ -2920,8 +2934,7 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           blockedByPolicy: 'session_scope',
           entrypoint,
-          tenantId: accountContext.tenantId,
-          sessionId: accountContext.sessionId,
+          ...identityTraceMetadata,
         },
       }),
     ]);
@@ -2970,6 +2983,7 @@ export async function executeProxyRoute(params: {
           evaluationPath: authzEvaluation.final.evaluationPath,
           fallbackReason: authzEvaluation.final.fallbackReason,
           matchedRuleIds: authzEvaluation.final.matchedRuleIds,
+          ...identityTraceMetadata,
         },
       }),
       recordHubRouteInvocationWithCtx({
@@ -2985,6 +2999,7 @@ export async function executeProxyRoute(params: {
           blockedByPolicy: authzEvaluation.final.policyId,
           requiresHumanReview: requiresHumanReview(authzEvaluation.final),
           evaluationPath: authzEvaluation.final.evaluationPath,
+          ...identityTraceMetadata,
         },
       }),
     ]);
@@ -3020,6 +3035,7 @@ export async function executeProxyRoute(params: {
           resetAt: rateLimitDecision.resetAt,
           maxCalls: rateLimitDecision.maxCalls,
           windowSeconds: rateLimitDecision.windowSeconds,
+          ...identityTraceMetadata,
         },
       }),
       recordHubRouteInvocationWithCtx({
@@ -3039,6 +3055,7 @@ export async function executeProxyRoute(params: {
           resetAt: rateLimitDecision.resetAt,
           maxCalls: rateLimitDecision.maxCalls,
           windowSeconds: rateLimitDecision.windowSeconds,
+          ...identityTraceMetadata,
         },
       }),
     ]);
@@ -3073,6 +3090,7 @@ export async function executeProxyRoute(params: {
           currentCount: quotaDecision.currentCount,
           maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
           period: quotaDecision.period,
+          ...identityTraceMetadata,
         },
       }),
       recordHubRouteInvocationWithCtx({
@@ -3092,6 +3110,7 @@ export async function executeProxyRoute(params: {
           currentCount: quotaDecision.currentCount,
           maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
           period: quotaDecision.period,
+          ...identityTraceMetadata,
         },
       }),
     ]);
@@ -3118,10 +3137,7 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
-          tenantId: accountContext.tenantId,
-          userId: accountContext.userId,
-          sessionId: accountContext.sessionId,
-          identitySource: accountContext.identitySource,
+          ...identityTraceMetadata,
           rateLimit: {
             scope: rateLimitDecision.scope,
             remaining: rateLimitDecision.remaining,
@@ -3156,6 +3172,7 @@ export async function executeProxyRoute(params: {
         metadata: {
           proxyToolName: entryProxyToolName,
           entrypoint,
+          ...identityTraceMetadata,
           downstreamFailure: proxiedSuccess
             ? null
             : {
@@ -3199,10 +3216,7 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
-          tenantId: accountContext.tenantId,
-          userId: accountContext.userId,
-          sessionId: accountContext.sessionId,
-          identitySource: accountContext.identitySource,
+          ...identityTraceMetadata,
           downstreamFailure: {
             code: proxyFailure.code,
             missingScopes: proxyFailure.missingScopes,
@@ -3221,6 +3235,7 @@ export async function executeProxyRoute(params: {
         metadata: {
           proxyToolName: entryProxyToolName,
           entrypoint,
+          ...identityTraceMetadata,
           downstreamFailure: {
             code: proxyFailure.code,
             missingScopes: proxyFailure.missingScopes,
@@ -4368,6 +4383,7 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
   const sessionHeaderToken = getHeaderValue(extraRecord?.requestInfo, 'x-mcp-session-token');
   const identityMode = resolveHubIdentityMode(env);
+  const resourceHost = extractResourceHostFromExtra(extra);
 
   if (identityMode === 'session_required') {
     if (!isSessionResolverConfigured(env)) {
@@ -4375,10 +4391,15 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
         'HUB_IDENTITY_MODE=session_required requires HUB_SESSION_RESOLVE_URL and HUB_SESSION_RESOLVE_TOKEN.',
       );
     }
-    if (!sessionHeaderToken) {
-      throw new Error('Missing X-MCP-Session-Token header.');
+    const bearerToken = authorization ? parseBearerToken(authorization) : null;
+    const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
+    const bearerIsHubToken =
+      bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
+    const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
+    if (!identityToken) {
+      throw new Error('Missing X-MCP-Session-Token header or bearer token.');
     }
-    return resolveSessionAccountContext(env, sessionHeaderToken);
+    return resolveSessionAccountContext(env, identityToken, resourceHost);
   }
 
   const bearerToken = authorization ? parseBearerToken(authorization) : null;
@@ -4388,14 +4409,18 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   const sessionToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
 
   if (sessionToken && isSessionResolverConfigured(env)) {
-    return resolveSessionAccountContext(env, sessionToken);
+    return resolveSessionAccountContext(env, sessionToken, resourceHost);
   }
 
-  return resolveFallbackAccountContext(extra, env);
+  return resolveFallbackAccountContext(extra, env, resourceHost);
 }
 
-async function resolveSessionAccountContext(env: Env, token: string): Promise<ResolvedAccountContext> {
-  const resolved = await resolveSessionForBearerToken(env, token);
+async function resolveSessionAccountContext(
+  env: Env,
+  token: string,
+  resourceHost: string | null,
+): Promise<ResolvedAccountContext> {
+  const resolved = await resolveSessionForBearerToken(env, token, resourceHost);
   const accountId = normalizeTraceValue(resolved?.account_id);
   if (!resolved || resolved.valid !== true || !accountId) {
     const reason = normalizeTraceValue(resolved?.reason);
@@ -4410,13 +4435,19 @@ async function resolveSessionAccountContext(env: Env, token: string): Promise<Re
     toolMode: normalizeTraceValue(resolved.tool_mode),
     allowedToolPrefixes:
       resolved.allowed_tool_prefixes == null ? null : parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
+    boundHost: normalizeTraceValue(resolved.bound_host),
+    resourceHost,
     identitySource: 'session',
     serviceTier: normalizeTraceValue(resolved.service_tier),
     entitlementSnapshot: asRecord(resolved.entitlement_snapshot),
   };
 }
 
-function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccountContext {
+function resolveFallbackAccountContext(
+  extra: unknown,
+  env: Env,
+  resourceHost: string | null,
+): ResolvedAccountContext {
   const extraRecord = asRecord(extra);
   const authInfo = asRecord(extraRecord?.authInfo);
   const trustClientAccountHeaders = parseBooleanWithDefault(
@@ -4446,6 +4477,8 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
     sessionId: null,
     toolMode: null,
     allowedToolPrefixes: null,
+    boundHost: null,
+    resourceHost,
     serviceTier: null,
     entitlementSnapshot: null,
     identitySource: 'fallback',
@@ -4467,9 +4500,11 @@ export function resolveHubIdentityMode(env: Env): HubIdentityMode {
 async function resolveSessionForBearerToken(
   env: Env,
   token: string,
+  resourceHost: string | null = null,
 ): Promise<IdentitySessionResolveResponse | null> {
   const now = Date.now();
-  const cached = sessionResolveCache.get(token);
+  const cacheKey = buildSessionResolveCacheKey(token, resourceHost);
+  const cached = sessionResolveCache.get(cacheKey);
   if (cached && cached.expiresAtMs > now) {
     return cached.value;
   }
@@ -4494,19 +4529,19 @@ async function resolveSessionForBearerToken(
         Authorization: `Bearer ${resolveToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ token, resource_host: resourceHost }),
       signal: controller.signal,
     });
 
     if (!response.ok) {
       const value = { valid: false, reason: `resolver_http_${response.status}` };
-      sessionResolveCache.set(token, { value, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
+      sessionResolveCache.set(cacheKey, { value, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
       maybeSweepSessionResolveCache(now);
       return value;
     }
 
     const payload = (await response.json()) as IdentitySessionResolveResponse;
-    sessionResolveCache.set(token, { value: payload, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
+    sessionResolveCache.set(cacheKey, { value: payload, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
     maybeSweepSessionResolveCache(now);
     return payload;
   } catch (error) {
@@ -4514,7 +4549,7 @@ async function resolveSessionForBearerToken(
       valid: false,
       reason: error instanceof Error ? `resolver_error:${error.name}` : 'resolver_error',
     };
-    sessionResolveCache.set(token, { value, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
+    sessionResolveCache.set(cacheKey, { value, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
     maybeSweepSessionResolveCache(now);
     return value;
   } finally {
@@ -4529,6 +4564,10 @@ function maybeSweepSessionResolveCache(nowMs: number): void {
       sessionResolveCache.delete(key);
     }
   }
+}
+
+function buildSessionResolveCacheKey(token: string, resourceHost: string | null): string {
+  return `${resourceHost ?? '*'}::${token}`;
 }
 
 function parseAllowedToolPrefixes(value: unknown): string[] {
@@ -4569,6 +4608,39 @@ function normalizeTraceValue(value: unknown): string | null {
     return Number.isFinite(value) ? String(value) : null;
   }
   return null;
+}
+
+function normalizeResourceHostValue(value: unknown): string | null {
+  const raw = normalizeTraceValue(value);
+  if (!raw) return null;
+  const candidate = raw.toLowerCase().replace(/^[a-z]+:\/\//, '');
+  const hostPort = candidate.split('/')[0] ?? candidate;
+  const hostname = hostPort.split('@').pop() ?? hostPort;
+  const label = hostname.split(':')[0]?.split('.')[0] ?? hostname;
+  if (!label) return null;
+  const normalized = label.replace(/[^a-z0-9._-]/g, '_').slice(0, 64);
+  return normalized || null;
+}
+
+function extractResourceHostFromRequest(request: Request): string | null {
+  try {
+    return normalizeResourceHostValue(new URL(request.url).host);
+  } catch {
+    return (
+      normalizeResourceHostValue(request.headers.get('x-forwarded-host')) ??
+      normalizeResourceHostValue(request.headers.get('host'))
+    );
+  }
+}
+
+function extractResourceHostFromExtra(extra: unknown): string | null {
+  const extraRecord = asRecord(extra);
+  const requestInfo = asRecord(extraRecord?.requestInfo);
+  return (
+    normalizeResourceHostValue(requestInfo?.url) ??
+    normalizeResourceHostValue(getHeaderValue(requestInfo, 'x-forwarded-host')) ??
+    normalizeResourceHostValue(getHeaderValue(requestInfo, 'host'))
+  );
 }
 
 function createFallbackRequestId(): string {

@@ -58,6 +58,11 @@
           <p class="page-subtitle page-intro__subtitle">
             Test and validate your templates before submission to ensure marketplace compliance
           </p>
+          <div class="validation-evidence" aria-label="Validation outcomes">
+            <span><strong>Quick Validate</strong> for fast submission checks</span>
+            <span><strong>Full Playground</strong> for page-level inspection</span>
+            <span><strong>Earlier checks</strong> reduce review delays</span>
+          </div>
         </div>
       </div>
 
@@ -65,10 +70,7 @@
         <div class="tool-header">
           <div>
             <h2 class="section-title">Start with the fastest check</h2>
-            <p class="tool-description">
-              Run the GSAP validator when you need a quick submission read, then move to the full
-              playground when you need page-by-page inspection.
-            </p>
+            <p class="tool-description">Quick read first, full inspection second.</p>
           </div>
           <span class="tool-kicker">Primary workflow</span>
         </div>
@@ -90,12 +92,9 @@
       </div>
 
       <Card class="info-card">
-        <h3 class="info-title">Why Validate?</h3>
+        <h3 class="info-title">Validation Heuristics</h3>
         <div class="info-content">
-          <p>
-            Validation tools help ensure your templates meet Webflow marketplace standards before
-            submission. Running these checks can:
-          </p>
+          <p>Use validation to catch high-cost issues before review.</p>
           <ul>
             <li>Catch potential issues early in development</li>
             <li>Reduce submission review time</li>
@@ -144,6 +143,21 @@
     gap: var(--space-md);
     padding: var(--space-md);
     margin-bottom: var(--space-lg);
+  }
+
+  .validation-evidence {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.9rem;
+    margin-top: 0.7rem;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .validation-evidence strong {
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
   }
 
   .section-title {
@@ -197,7 +211,7 @@
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.4;
   }
 
   .primary-tool-actions {
@@ -232,16 +246,16 @@
   }
 
   .info-content p {
-    margin: 0 0 var(--space-sm);
+    margin: 0 0 0.75rem;
   }
 
   .info-content ul {
-    margin: 0 0 var(--space-md);
-    padding-left: var(--space-md);
+    margin: 0 0 0.9rem;
+    padding-left: 1rem;
   }
 
   .info-content li {
-    margin-bottom: var(--space-xs);
+    margin-bottom: 0.35rem;
   }
 
   .tip-box {

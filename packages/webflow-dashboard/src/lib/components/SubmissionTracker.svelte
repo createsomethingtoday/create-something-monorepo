@@ -340,7 +340,17 @@
     <Card>
       <CardHeader>
         <div class="card-header-content">
-          <CardTitle>Submission Status</CardTitle>
+          <div class="submission-heading">
+            <CardTitle>Submission Status</CardTitle>
+            <p class="submission-summary">
+              <strong>{submissionData.publishedCount}</strong> published
+              <span aria-hidden="true">·</span>
+              <strong>{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}</strong> used this month
+              <span aria-hidden="true">·</span>
+              <strong>{submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}</strong>
+              remaining
+            </p>
+          </div>
           <div class="header-badges">
             {#if submissionData.isDevMode}
               <Badge variant="default">DEV</Badge>
@@ -762,6 +772,28 @@
     width: 100%;
   }
 
+  .submission-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .submission-summary {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .submission-summary strong {
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
   .header-badges {
     display: flex;
     gap: var(--space-xs);
@@ -831,25 +863,28 @@
   .status-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
+    gap: 0.9rem 1rem;
+    margin-bottom: 1rem;
   }
 
   .status-item {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: 0.15rem;
   }
 
   .status-label {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-caption);
     color: var(--color-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   .status-value {
-    font-size: var(--text-body-lg);
+    font-size: clamp(1.45rem, 1vw + 1rem, 1.85rem);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
+    font-variant-numeric: tabular-nums;
   }
 
   .status-value.warning {
@@ -953,7 +988,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-top: var(--space-sm);
+    padding-top: 0.85rem;
     border-top: 1px solid var(--color-border-default);
   }
 

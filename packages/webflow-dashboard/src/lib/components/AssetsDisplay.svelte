@@ -275,15 +275,11 @@
             </div>
             <div class="status-meta">
               <div class="status-line">
-                <h3 class="status-title">{status}</h3>
-                <span class="status-count">
-                  {statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}
-                </span>
+                <h3 class="status-title">{status} {statusAssets.length}</h3>
               </div>
-              <span class="sort-summary">Submitted date, descending</span>
+              <span class="sort-summary">{getSortLabel()}</span>
             </div>
           </div>
-          <StatusBadge {status} />
         </div>
 
         <Card>
@@ -370,7 +366,7 @@
                     {onArchive}
                   />
                 {/each}
-                {#if totals}
+                  {#if totals}
                   <TableRow class="totals-row">
                     <TableCell>
                       <div class="totals-icon">
@@ -535,13 +531,12 @@
   .status-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 0.75rem;
   }
 
   .status-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-sm);
   }
 
@@ -559,12 +554,12 @@
   .status-info {
     display: flex;
     align-items: baseline;
-    gap: 0.65rem;
+    gap: 0.5rem;
   }
 
   .status-icon {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.15rem;
+    height: 1.15rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -607,29 +602,24 @@
   .status-meta {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.05rem;
   }
 
   .status-line {
     display: flex;
     align-items: baseline;
-    gap: 0.65rem;
+    gap: 0.4rem;
     flex-wrap: wrap;
   }
 
   .status-title {
     font-family: var(--font-heading);
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: var(--font-semibold);
     letter-spacing: 0.01em;
     color: var(--color-fg-primary);
     margin: 0;
-  }
-
-  .status-count {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
-    opacity: 0.78;
+    font-variant-numeric: tabular-nums;
   }
 
   .sort-summary {
@@ -691,7 +681,8 @@
   .sort-btn.active {
     color: var(--color-info);
     text-decoration: underline;
-    text-underline-offset: 4px;
+    text-underline-offset: 0.22rem;
+    text-decoration-thickness: 1px;
   }
 
   .sort-btn:focus-visible {
@@ -703,13 +694,13 @@
   .show-more {
     display: flex;
     justify-content: center;
-    padding: var(--space-md);
+    padding: 0.85rem;
     border-top: 1px solid var(--color-shell-border-default);
   }
 
   .totals-row {
-    border-top: 2px solid var(--color-info-border);
-    background: color-mix(in srgb, var(--color-info-muted) 35%, var(--color-bg-surface));
+    border-top: 1px solid var(--color-border-emphasis);
+    background: color-mix(in srgb, var(--color-bg-subtle) 60%, var(--color-bg-surface));
   }
 
   .totals-icon {
@@ -721,7 +712,7 @@
     background: var(--color-bg-surface);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-shell-border-default);
-    color: var(--color-info);
+    color: var(--color-fg-muted);
   }
 
   .empty-state {
@@ -762,7 +753,7 @@
 
   .mobile-cards {
     display: none;
-    padding: var(--space-sm);
+    padding: 0.75rem;
   }
 
   .asset-card-mobile {
@@ -771,9 +762,8 @@
     gap: var(--space-sm);
     border: 1px solid var(--color-shell-border-default);
     border-radius: var(--radius-md);
-    padding: var(--space-sm);
+    padding: 0.85rem;
     background: var(--color-bg-surface);
-    box-shadow: var(--shadow-sm);
   }
 
   .mobile-header-row {
@@ -837,6 +827,17 @@
   }
 
   :global(.text-center) {
+    text-align: center;
+  }
+
+  :global(.desktop-table td.text-center),
+  :global(.desktop-table th.text-center) {
+    text-align: right;
+  }
+
+  :global(.desktop-table th.action-head),
+  :global(.desktop-table td:last-child),
+  :global(.desktop-table td:nth-last-child(2)) {
     text-align: center;
   }
 </style>

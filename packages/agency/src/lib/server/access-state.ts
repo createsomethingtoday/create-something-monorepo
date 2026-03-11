@@ -7,6 +7,7 @@ export interface ManagedTokenSnapshot {
 		auth_email: string | null;
 		account_id: string;
 		tenant_id: string;
+		bound_host: string | null;
 		token_prefix: string;
 		tool_mode: 'read_only' | 'read_write';
 		toolkit_profile: string[];

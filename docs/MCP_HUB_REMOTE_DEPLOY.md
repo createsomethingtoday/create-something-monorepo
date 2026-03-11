@@ -309,13 +309,24 @@ Agency partner APIs (Half Dozen lane):
 - `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/connect-link`
 - `GET /api/partners/half-dozen/clients/:slug/toolkits/status`
 - `POST /api/partners/half-dozen/clients/:slug/access/mint`
+- `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/init`
+- `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/access/mint`
+- `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue`
+- `POST /api/partners/half-dozen/clients/:slug/bearer-token/issue`
 - `POST /api/partners/half-dozen/clients/:slug/legacy-key/issue`
 
 Identity admin APIs (policy-gated):
 
 - `POST /v1/mcp/sessions/admin-mint`
+- `POST /v1/mcp/long-lived-tokens/admin-issue`
 - `POST /v1/mcp/legacy-keys/issue`
 - `POST /v1/mcp/legacy-keys/:id/revoke`
+
+Named-lane delivery baseline:
+
+- public URL naming uses `<person-slug>-<client-slug>`
+- strict sessions and managed bearer tokens may carry `bound_host`
+- telemetry and Braintrust tracing are baseline operator observability for dedicated named lanes
 
 Policy telemetry fields for admin actions:
 

@@ -6,11 +6,12 @@
 
 ## Purpose
 
-Define policy controls for partner-admin actions that mint MCP sessions and manage toolkit auth on behalf of client workspaces.
+Define policy controls for partner-admin actions that mint MCP sessions, issue managed bearer credentials, and manage toolkit auth on behalf of client workspaces and named teammate lanes.
 
 ## Scope
 
 - Partner-boundary admin minting (`/v1/mcp/sessions/admin-mint`)
+- Lane-scoped partner issuance (`/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/*`)
 - Partner toolkit auth account management (`/api/partners/half-dozen/clients/:slug/notion/accounts/*`)
 - Partner toolkit auth account management (`/api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/*`)
 - Consent and actor trace requirements
@@ -34,6 +35,9 @@ Define policy controls for partner-admin actions that mint MCP sessions and mana
 9. Background job executions MUST record workflow or job identity in addition to actor trace metadata.
 10. Partner-admin issuance flows MUST support explicit `allowed_tool_prefixes` for reviewer or custom hub lanes whose runtime surface cannot be expressed as a toolkit-only profile.
 11. When partner-admin issuance uses explicit `allowed_tool_prefixes`, the delivery artifact and audit metadata MUST expose the effective prefix set so reviewers and operators can verify the lane transparently.
+12. Named teammate lanes MUST be data-driven records, not hardcoded operator aliases. The canonical lane slug, public URL, and host key MUST remain aligned.
+13. Lane-scoped bearer and strict-session issuance MUST derive the effective `allowed_tool_prefixes` from the named lane record and MUST bind the credential to the lane host.
+14. Telemetry and Braintrust tracing are mandatory baseline observability controls for partner-managed named lanes.
 
 ## Enforcement Surfaces
 
@@ -43,6 +47,9 @@ Define policy controls for partner-admin actions that mint MCP sessions and mana
   - `mcp_policy_events`
 - Agency partner API:
   - `POST /api/partners/half-dozen/clients/:slug/access/mint`
+  - `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/init`
+  - `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/access/mint`
+  - `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue`
   - `GET|POST /api/partners/half-dozen/clients/:slug/notion/accounts`
   - `POST /api/partners/half-dozen/clients/:slug/notion/accounts/:accountSlug/connect-link`
   - `POST /api/partners/half-dozen/clients/:slug/notion/accounts/:accountSlug/pin`
@@ -52,17 +59,25 @@ Define policy controls for partner-admin actions that mint MCP sessions and mana
   - `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/pin`
   - `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/disable`
 
+- Agency partner data:
+  - `partner_auth_access_lanes`
+
 ## Evidence
 
 - Decision events in `mcp_policy_events`
 - Consent linkage in admin mint payloads and partner consent records
 - Delivery audit records in `partner_access_deliveries`
 - workflow or job traces showing pinned account and runtime identity selection
+- lane audit records showing lane slug, host key, and effective prefix set
+- resolver and hub traces showing host-bound credential enforcement
 
 ## Source Anchors
 
 - `packages/identity-worker/src/index.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/access/mint/+server.ts`
+- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/init/+server.ts`
+- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/access/mint/+server.ts`
+- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/bearer-token/issue/+server.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/notion/accounts/+server.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/toolkits/[toolkit]/accounts/+server.ts`
 - `docs/policies/v1/policy.cross-workspace-sync-governance.v1.md`

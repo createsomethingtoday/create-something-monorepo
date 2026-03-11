@@ -20,32 +20,35 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 ## Policy Statements
 
 1. `managed_bearer_bundle` is the default customer-facing MCP credential delivery mode.
-2. Legacy key issuance MUST be blocked when `exception_approved_by` is missing.
-3. Every issued credential MUST have explicit revocation path; time-bounded credentials MUST also have explicit `expires_at`.
-4. Plaintext secrets MUST NOT be persisted in docs, migration artifacts, or delivery audit tables.
-5. Delivery must be recorded with channel, actor, recipient, and artifact reference.
-6. Revocation actions MUST remain available regardless of legacy/sunset state.
-7. Production credential sync/rotation MUST use Infisical for runtime secrets. Doppler MAY exist only as a one-time migration source.
-8. Managed bearer-token issuance for partner-linked users MUST reconcile against current `partner_auth_clients` status and active consent before issuance or request-time allow.
-9. Free `MCP-only` versus paid `Policy OS` credential scope MUST follow [`policy.service-tier-entitlement.v1`](./policy.service-tier-entitlement.v1.md); credential delivery alone MUST NOT imply paid governed access.
-10. Vault migration cutover MUST include:
+2. Named teammate lanes MUST deliver one transparent house URL per lane, and that URL MUST be reflected in the delivery artifact, audit metadata, and `.agency` access view.
+3. Credentials issued for a named lane MUST be host-bound so they are rejected on a different named-lane URL unless explicitly approved.
+4. Telemetry and Braintrust tracing are mandatory baseline observability controls for dedicated named-lane delivery.
+5. Legacy key issuance MUST be blocked when `exception_approved_by` is missing.
+6. Every issued credential MUST have explicit revocation path; time-bounded credentials MUST also have explicit `expires_at`.
+7. Plaintext secrets MUST NOT be persisted in docs, migration artifacts, or delivery audit tables.
+8. Delivery must be recorded with channel, actor, recipient, and artifact reference.
+9. Revocation actions MUST remain available regardless of legacy/sunset state.
+10. Production credential sync/rotation MUST use Infisical for runtime secrets. Doppler MAY exist only as a one-time migration source.
+11. Managed bearer-token issuance for partner-linked users MUST reconcile against current `partner_auth_clients` status and active consent before issuance or request-time allow.
+12. Free `MCP-only` versus paid `Policy OS` credential scope MUST follow [`policy.service-tier-entitlement.v1`](./policy.service-tier-entitlement.v1.md); credential delivery alone MUST NOT imply paid governed access.
+13. Vault migration cutover MUST include:
    - a dry-run import
    - an executed import
    - verification results showing no missing or mismatched keys before production sync
-11. CI/CD and unattended automation MUST use non-interactive Infisical machine identity auth; interactive login is prohibited for production automation.
-12. Vault sync/rotation executions MUST produce auditable run context (`provider`, `source project/config`, `target env/path`, `dry_run`, `result`) without exposing plaintext secret values.
-13. When a third-party host requires OAuth, OAuth MAY be used as the credential-delivery mechanism for `managed_bearer_bundle`; in that case the delivered OAuth `access_token` MUST be the same managed bearer artifact already governed by `.agency` and `identity-worker`.
-14. OAuth delivery MUST NOT require replacing the existing direct bearer-token experience for current MCP clients.
-15. OAuth discovery, authorization, token, registration, and OIDC endpoints MUST NOT expose or deliver shared worker/runtime guardrail tokens such as `HUB_API_TOKEN`.
-16. Any UI that surfaces managed bearer credentials MUST only reveal plaintext at issuance or regeneration time, while keeping revoke and regenerate controls continuously available.
-17. The interactive password used by `identity-worker` OAuth login MUST be governed as a separate credential from the managed bearer token and from the Auth0 portal session.
-18. `.agency` MUST provide a self-service surface for entitled users to set or rotate that OAuth login password without exposing previously stored plaintext password material.
-19. The OAuth authorization code issued during host onboarding MAY be a signed `identity-worker` token instead of a database-persisted opaque code.
-20. If signed authorization codes are used, token exchange MUST validate the signed code against the original OAuth request context, including `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material carried by the authorization flow.
-21. Existing compat bearer tokens stored in an approved runtime vault MAY be migrated into `mcp_long_lived_tokens` without rotating the plaintext token, provided the credential is rebound to one canonical Auth0 subject and one canonical `.agency` account/tenant mapping.
-22. After managed-token migration, `mcp_long_lived_tokens` becomes the source of truth for token state, while Infisical or another approved vault MAY continue storing the same plaintext value only for runtime compatibility.
-23. Credential-delivery migration MUST include duplicate-subject cleanup so that stale entitlement rows, stale token rows, and stale legacy aliases no longer resolve for the same email or account.
-24. Auth0 delete/recreate incidents for the same normalized email MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md) so delivery artifacts preserve canonical account context while stale old-subject credentials are revoked or deactivated.
+14. CI/CD and unattended automation MUST use non-interactive Infisical machine identity auth; interactive login is prohibited for production automation.
+15. Vault sync/rotation executions MUST produce auditable run context (`provider`, `source project/config`, `target env/path`, `dry_run`, `result`) without exposing plaintext secret values.
+16. When a third-party host requires OAuth, OAuth MAY be used as the credential-delivery mechanism for `managed_bearer_bundle`; in that case the delivered OAuth `access_token` MUST be the same managed bearer artifact already governed by `.agency` and `identity-worker`.
+17. OAuth delivery MUST NOT require replacing the existing direct bearer-token experience for current MCP clients.
+18. OAuth discovery, authorization, token, registration, and OIDC endpoints MUST NOT expose or deliver shared worker/runtime guardrail tokens such as `HUB_API_TOKEN`.
+19. Any UI that surfaces managed bearer credentials MUST only reveal plaintext at issuance or regeneration time, while keeping revoke and regenerate controls continuously available.
+20. The interactive password used by `identity-worker` OAuth login MUST be governed as a separate credential from the managed bearer token and from the Auth0 portal session.
+21. `.agency` MUST provide a self-service surface for entitled users to set or rotate that OAuth login password without exposing previously stored plaintext password material.
+22. The OAuth authorization code issued during host onboarding MAY be a signed `identity-worker` token instead of a database-persisted opaque code.
+23. If signed authorization codes are used, token exchange MUST validate the signed code against the original OAuth request context, including `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material carried by the authorization flow.
+24. Existing compat bearer tokens stored in an approved runtime vault MAY be migrated into `mcp_long_lived_tokens` without rotating the plaintext token, provided the credential is rebound to one canonical Auth0 subject and one canonical `.agency` account/tenant mapping.
+25. After managed-token migration, `mcp_long_lived_tokens` becomes the source of truth for token state, while Infisical or another approved vault MAY continue storing the same plaintext value only for runtime compatibility.
+26. Credential-delivery migration MUST include duplicate-subject cleanup so that stale entitlement rows, stale token rows, and stale legacy aliases no longer resolve for the same email or account.
+27. Auth0 delete/recreate incidents for the same normalized email MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md) so delivery artifacts preserve canonical account context while stale old-subject credentials are revoked or deactivated.
 
 ## Enforcement Surfaces
 
@@ -66,6 +69,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
   - `mcp_policy_events`
 - Agency partner API:
   - `POST /api/partners/half-dozen/clients/:slug/bearer-token/issue`
+  - `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue`
   - `POST /api/partners/half-dozen/clients/:slug/legacy-key/issue`
   - `POST /api/admin/mcp-entitlements`
   - `POST /api/admin/contracts`
@@ -89,6 +93,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 
 - `mcp_policy_events` decisions for issue/revoke actions
 - `partner_access_deliveries` rows with non-secret metadata
+- `partner_access_deliveries` rows exposing named lane URL, host key, bound host, and effective prefix set without plaintext secret storage
 - `agency_mcp_entitlements` rows and operator mutation history
 - `partner_auth_clients` and `partner_auth_consents` records used for entitlement reconciliation
 - `agency_contract_state` records used as explicit contract authority
@@ -108,6 +113,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `packages/identity-worker/src/index.ts`
 - `packages/identity-worker/README.md`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/bearer-token/issue/+server.ts`
+- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/bearer-token/issue/+server.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/legacy-key/issue/+server.ts`
 - `packages/agency/src/routes/api/admin/mcp-entitlements/+server.ts`
 - `scripts/cs-hub-vault-sync.sh`

@@ -79,6 +79,12 @@ interface AgencyPartnerEntitlementSource {
 	identity_tenant_id: string | null;
 	owner_email: string | null;
 	active_consent_id: string | null;
+	lane_id: string | null;
+	lane_slug: string | null;
+	lane_display_name: string | null;
+	lane_hub_url: string | null;
+	lane_host_key: string | null;
+	lane_metadata_json: string | null;
 }
 
 export interface AgencyCommercialStateRow {
@@ -644,6 +650,7 @@ export async function reconcileAgencyMcpEntitlement(
 		tenantId?: string | null;
 		workspaceAccountId?: string | null;
 		serviceTier?: string | null;
+		metadata?: Record<string, unknown>;
 	}
 ): Promise<AgencyMcpEntitlementRow | null> {
 	const existing = await findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
@@ -722,6 +729,20 @@ export async function reconcileAgencyMcpEntitlement(
 		const commerciallyAllowed = contractActive && billingActive;
 
 		if (existing) {
+			const metadata = mergeMetadata(
+				existingMetadata,
+				input.metadata,
+				{
+					source: commercial ? 'stripe_commercial_state' : 'session_bootstrap',
+					manual_override: false,
+					contract_reference: contract?.contract_reference ?? null,
+					contract_status: contract?.contract_status ?? null,
+					stripe_customer_id: commercial?.stripe_customer_id ?? null,
+					stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
+					subscription_status: commercial?.subscription_status ?? null,
+					product_id: commercial?.product_id ?? null,
+				},
+			);
 			await db
 				.prepare(
 					`UPDATE agency_mcp_entitlements
@@ -730,6 +751,7 @@ export async function reconcileAgencyMcpEntitlement(
                tenant_id = COALESCE(?, tenant_id),
                workspace_account_id = COALESCE(?, workspace_account_id),
                service_tier = COALESCE(?, service_tier),
+               metadata_json = ?,
                contract_active = ?,
                billing_active = ?,
                service_entitled = ?,
@@ -744,6 +766,7 @@ export async function reconcileAgencyMcpEntitlement(
 					input.tenantId ?? existing.tenant_id,
 					input.workspaceAccountId ?? existing.workspace_account_id,
 					normalizeAgencyServiceTier(input.serviceTier ?? existing.service_tier),
+					JSON.stringify(metadata),
 					contractActive ? 1 : 0,
 					billingActive ? 1 : 0,
 					serviceEntitled ? 1 : 0,
@@ -769,6 +792,7 @@ export async function reconcileAgencyMcpEntitlement(
 			workspaceAccountId: input.workspaceAccountId ?? input.accountId ?? null,
 			serviceTier: normalizeAgencyServiceTier(input.serviceTier),
 			metadata: {
+				...input.metadata,
 				source: commercial ? 'stripe_commercial_state' : 'session_bootstrap',
 				manual_override: false,
 				contract_reference: contract?.contract_reference ?? null,
@@ -826,6 +850,36 @@ export async function reconcileAgencyMcpEntitlement(
 		policyAccepted,
 		statusReason,
 	});
+	const laneMetadata = source.lane_metadata_json ? safeParseMetadata(source.lane_metadata_json) : {};
+	const metadata = mergeMetadata(
+		existingMetadata,
+		laneMetadata,
+		input.metadata,
+		{
+			manual_override: false,
+			source: commercial ? 'partner_auth_client+stripe' : 'partner_auth_client',
+			partner_client_id: source.partner_client_id,
+			partner_key: source.partner_key,
+			client_slug: source.slug,
+			partner_status: source.status,
+			active_consent_id: source.active_consent_id,
+			contract_reference: contract?.contract_reference ?? null,
+			contract_status: contract?.contract_status ?? null,
+			stripe_customer_id: commercial?.stripe_customer_id ?? null,
+			stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
+			subscription_status: commercial?.subscription_status ?? null,
+			product_id: commercial?.product_id ?? null,
+		},
+		source.lane_id
+			? {
+				partner_access_lane_id: source.lane_id,
+				partner_access_lane_slug: source.lane_slug,
+				partner_access_lane_display_name: source.lane_display_name,
+				partner_access_lane_url: source.lane_hub_url,
+				partner_access_lane_host_key: source.lane_host_key,
+			}
+			: undefined,
+	);
 
 	return upsertAgencyMcpEntitlement(db, {
 		authSubject: input.authSubject,
@@ -834,21 +888,7 @@ export async function reconcileAgencyMcpEntitlement(
 		tenantId: source.identity_tenant_id ?? input.tenantId ?? existing?.tenant_id ?? source.slug,
 		workspaceAccountId: source.workspace_account_id,
 		serviceTier: normalizeAgencyServiceTier(input.serviceTier),
-			metadata: {
-				manual_override: false,
-				source: commercial ? 'partner_auth_client+stripe' : 'partner_auth_client',
-				partner_client_id: source.partner_client_id,
-				partner_key: source.partner_key,
-				client_slug: source.slug,
-				partner_status: source.status,
-				active_consent_id: source.active_consent_id,
-				contract_reference: contract?.contract_reference ?? null,
-				contract_status: contract?.contract_status ?? null,
-				stripe_customer_id: commercial?.stripe_customer_id ?? null,
-				stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
-				subscription_status: commercial?.subscription_status ?? null,
-				product_id: commercial?.product_id ?? null,
-			},
+			metadata,
 		}).then(async (row) => {
 		await db
 			.prepare(
@@ -963,6 +1003,13 @@ function asObject(value: unknown): Record<string, unknown> | null {
 	return value as Record<string, unknown>;
 }
 
+function mergeMetadata(...values: Array<Record<string, unknown> | null | undefined>): Record<string, unknown> {
+	return values.reduce<Record<string, unknown>>((acc, value) => {
+		if (!value) return acc;
+		return { ...acc, ...value };
+	}, {});
+}
+
 function booleanToInt(input: boolean | undefined, fallback: number): number {
 	return input === undefined ? fallback : input ? 1 : 0;
 }
@@ -973,12 +1020,65 @@ async function findAgencyPartnerEntitlementSource(
 	authEmail: string | null
 ): Promise<AgencyPartnerEntitlementSource | null> {
 	const normalizedEmail = authEmail?.trim().toLowerCase() ?? null;
+	const laneQuery = `SELECT
+      c.id AS partner_client_id,
+      c.partner_key,
+      c.slug,
+      c.status,
+      c.workspace_account_id,
+      c.identity_account_id,
+      c.identity_user_id,
+      c.identity_tenant_id,
+      c.owner_email,
+      consent.id AS active_consent_id,
+      lane.id AS lane_id,
+      lane.slug AS lane_slug,
+      lane.display_name AS lane_display_name,
+      lane.hub_url AS lane_hub_url,
+      lane.host_key AS lane_host_key,
+      lane.metadata_json AS lane_metadata_json
+     FROM partner_auth_access_lanes lane
+     INNER JOIN partner_auth_clients c
+       ON c.id = lane.partner_client_id
+     LEFT JOIN partner_auth_consents consent
+       ON consent.partner_client_id = c.id
+      AND consent.revoked_at IS NULL
+      AND (consent.expires_at IS NULL OR consent.expires_at > datetime('now'))
+     WHERE (
+         (? IS NOT NULL AND lane.identity_user_id = ?)
+         OR (? IS NOT NULL AND lower(COALESCE(lane.owner_email, '')) = ?)
+       )
+     ORDER BY
+       CASE lane.status
+         WHEN 'active' THEN 0
+         WHEN 'paused' THEN 1
+         WHEN 'initialized' THEN 2
+         WHEN 'sunset' THEN 3
+         ELSE 4
+       END,
+       lane.updated_at DESC
+     LIMIT 1`;
+
+	const laneRow = await db
+		.prepare(laneQuery)
+		.bind(authSubject, authSubject, normalizedEmail, normalizedEmail)
+		.first<AgencyPartnerEntitlementSource>();
+	if (laneRow) {
+		return laneRow;
+	}
+
 	if (normalizedEmail) {
 		const row = await db
 			.prepare(
 				`SELECT c.id AS partner_client_id, c.partner_key, c.slug, c.status, c.workspace_account_id,
                 c.identity_account_id, c.identity_user_id, c.identity_tenant_id, c.owner_email,
-                consent.id AS active_consent_id
+                consent.id AS active_consent_id,
+                NULL AS lane_id,
+                NULL AS lane_slug,
+                NULL AS lane_display_name,
+                NULL AS lane_hub_url,
+                NULL AS lane_host_key,
+                NULL AS lane_metadata_json
          FROM partner_auth_clients c
          LEFT JOIN partner_auth_consents consent
            ON consent.partner_client_id = c.id
@@ -1007,7 +1107,13 @@ async function findAgencyPartnerEntitlementSource(
 		.prepare(
 			`SELECT c.id AS partner_client_id, c.partner_key, c.slug, c.status, c.workspace_account_id,
               c.identity_account_id, c.identity_user_id, c.identity_tenant_id, c.owner_email,
-              consent.id AS active_consent_id
+              consent.id AS active_consent_id,
+              NULL AS lane_id,
+              NULL AS lane_slug,
+              NULL AS lane_display_name,
+              NULL AS lane_hub_url,
+              NULL AS lane_host_key,
+              NULL AS lane_metadata_json
        FROM partner_auth_clients c
        LEFT JOIN partner_auth_consents consent
          ON consent.partner_client_id = c.id

@@ -38,6 +38,32 @@ export interface PartnerAuthClientRow {
 	updated_at: string;
 }
 
+export interface PartnerAuthAccessLaneRow {
+	id: string;
+	partner_client_id: string;
+	slug: string;
+	display_name: string;
+	identity_user_id: string | null;
+	owner_email: string | null;
+	hub_url: string;
+	host_key: string;
+	status: 'initialized' | 'active' | 'paused' | 'sunset' | 'disabled';
+	toolkit_profile_json: string;
+	allowed_tool_prefixes_json: string;
+	metadata_json: string;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface PartnerAuthAccessLaneAssignmentRow extends PartnerAuthAccessLaneRow {
+	partner_key: string;
+	client_slug: string;
+	client_display_name: string | null;
+	workspace_account_id: string;
+	identity_account_id: string | null;
+	identity_tenant_id: string | null;
+}
+
 export interface PartnerAuthConsentRow {
 	id: string;
 	partner_client_id: string;
@@ -151,6 +177,10 @@ export function normalizePartnerSlug(raw: string): string {
 		.slice(0, 64);
 }
 
+export function normalizePartnerAccessLaneSlug(raw: string): string {
+	return normalizePartnerSlug(raw);
+}
+
 export function normalizeToolkitSlug(raw: string): string {
 	return raw
 		.trim()
@@ -194,6 +224,48 @@ export function parseJsonObject(raw: string | null | undefined): Record<string, 
 	} catch {
 		return {};
 	}
+}
+
+export function parseJsonStringArray(raw: string | null | undefined): string[] {
+	if (!raw) return [];
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		if (!Array.isArray(parsed)) return [];
+		return parsed
+			.filter((value): value is string => typeof value === 'string')
+			.map((value) => value.trim())
+			.filter(Boolean);
+	} catch {
+		return [];
+	}
+}
+
+export function normalizeAllowedToolPrefixes(raw: unknown): string[] {
+	if (!Array.isArray(raw)) return [];
+	const normalized = raw
+		.filter((value): value is string => typeof value === 'string')
+		.map((value) => value.trim())
+		.filter(Boolean);
+	return [...new Set(normalized)].slice(0, 500);
+}
+
+export function buildComposioAllowedToolPrefixes(toolkits: string[]): string[] {
+	return parseToolkitList(toolkits).map((toolkit) => `composio-toolkit-${toolkit}__`);
+}
+
+export function resolveAllowedToolPrefixes(
+	toolkits: string[],
+	explicitPrefixes: string[] = [],
+): string[] {
+	return [...new Set([...normalizeAllowedToolPrefixes(explicitPrefixes), ...buildComposioAllowedToolPrefixes(toolkits)])];
+}
+
+export function buildPartnerLaneHubUrl(laneSlug: string): string {
+	return `https://${normalizePartnerAccessLaneSlug(laneSlug)}.mcp.createsomething.agency/mcp`;
+}
+
+export function buildPartnerLaneNotionBridgeUrl(clientSlug: string): string {
+	return `https://${normalizePartnerSlug(clientSlug)}-notion.mcp.workway.co/mcp`;
 }
 
 export function parseBearerToken(authorizationHeader: string | null): string | null {
@@ -244,6 +316,87 @@ export async function getPartnerClientBySlug(
 		.first<PartnerAuthClientRow>();
 }
 
+export async function getPartnerAccessLaneBySlug(
+	db: D1Database,
+	partnerClientId: string,
+	laneSlug: string,
+): Promise<PartnerAuthAccessLaneRow | null> {
+	return db
+		.prepare(
+			`SELECT * FROM partner_auth_access_lanes
+       WHERE partner_client_id = ? AND slug = ?
+       LIMIT 1`
+		)
+		.bind(partnerClientId, normalizePartnerAccessLaneSlug(laneSlug))
+		.first<PartnerAuthAccessLaneRow>();
+}
+
+export async function listPartnerAccessLanes(
+	db: D1Database,
+	partnerClientId: string,
+): Promise<PartnerAuthAccessLaneRow[]> {
+	const result = await db
+		.prepare(
+			`SELECT * FROM partner_auth_access_lanes
+       WHERE partner_client_id = ?
+       ORDER BY
+         CASE status
+           WHEN 'active' THEN 0
+           WHEN 'paused' THEN 1
+           WHEN 'initialized' THEN 2
+           WHEN 'sunset' THEN 3
+           ELSE 4
+         END,
+         updated_at DESC`
+		)
+		.bind(partnerClientId)
+		.all<PartnerAuthAccessLaneRow>();
+	return result.results ?? [];
+}
+
+export async function findPartnerAccessLaneForIdentity(
+	db: D1Database,
+	input: {
+		authSubject?: string | null;
+		email?: string | null;
+		accountId?: string | null;
+	},
+): Promise<PartnerAuthAccessLaneAssignmentRow | null> {
+	const normalizedEmail = normalizeEmail(input.email ?? undefined);
+	const authSubject = input.authSubject?.trim() || null;
+
+	const query = `SELECT
+      lane.*,
+      client.partner_key,
+      client.slug AS client_slug,
+      client.display_name AS client_display_name,
+      client.workspace_account_id,
+      client.identity_account_id,
+      client.identity_tenant_id
+     FROM partner_auth_access_lanes lane
+     INNER JOIN partner_auth_clients client
+       ON client.id = lane.partner_client_id
+     WHERE (
+         (? IS NOT NULL AND lane.identity_user_id = ?)
+         OR (? IS NOT NULL AND lower(COALESCE(lane.owner_email, '')) = ?)
+       )
+     ORDER BY
+       CASE lane.status
+         WHEN 'active' THEN 0
+         WHEN 'paused' THEN 1
+         WHEN 'initialized' THEN 2
+         WHEN 'sunset' THEN 3
+         ELSE 4
+       END,
+       lane.updated_at DESC
+     LIMIT 1`;
+
+	return db
+		.prepare(query)
+		.bind(authSubject, authSubject, normalizedEmail, normalizedEmail)
+		.first<PartnerAuthAccessLaneAssignmentRow>();
+}
+
 export async function listPartnerClients(
 	db: D1Database,
 	partnerKey: string,
@@ -282,6 +435,60 @@ export async function listPartnerClients(
 		.bind(partnerKey, limit)
 		.all<PartnerAuthClientRow>();
 	return result.results ?? [];
+}
+
+export async function upsertPartnerAccessLane(
+	db: D1Database,
+	input: {
+		id: string;
+		partnerClientId: string;
+		slug: string;
+		displayName: string;
+		identityUserId: string | null;
+		ownerEmail: string | null;
+		hubUrl: string;
+		hostKey: string;
+		status: PartnerAuthAccessLaneRow['status'];
+		toolkitProfile: string[];
+		allowedToolPrefixes: string[];
+		metadata: Record<string, unknown>;
+	},
+): Promise<PartnerAuthAccessLaneRow> {
+	await db
+		.prepare(
+			`INSERT INTO partner_auth_access_lanes (
+         id, partner_client_id, slug, display_name, identity_user_id, owner_email, hub_url, host_key, status,
+         toolkit_profile_json, allowed_tool_prefixes_json, metadata_json
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(partner_client_id, slug) DO UPDATE SET
+         display_name = excluded.display_name,
+         identity_user_id = excluded.identity_user_id,
+         owner_email = excluded.owner_email,
+         hub_url = excluded.hub_url,
+         host_key = excluded.host_key,
+         status = excluded.status,
+         toolkit_profile_json = excluded.toolkit_profile_json,
+         allowed_tool_prefixes_json = excluded.allowed_tool_prefixes_json,
+         metadata_json = excluded.metadata_json,
+         updated_at = datetime('now')`
+		)
+		.bind(
+			input.id,
+			input.partnerClientId,
+			normalizePartnerAccessLaneSlug(input.slug),
+			input.displayName,
+			input.identityUserId,
+			normalizeEmail(input.ownerEmail ?? undefined),
+			input.hubUrl,
+			input.hostKey,
+			input.status,
+			JSON.stringify(parseToolkitList(input.toolkitProfile)),
+			JSON.stringify(normalizeAllowedToolPrefixes(input.allowedToolPrefixes)),
+			JSON.stringify(input.metadata),
+		)
+		.run();
+
+	return (await getPartnerAccessLaneBySlug(db, input.partnerClientId, input.slug))!;
 }
 
 export async function getLatestActiveConsent(

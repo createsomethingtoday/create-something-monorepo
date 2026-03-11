@@ -5,7 +5,31 @@
     "allowPendingOauthApprovals": false
   },
   "tenants": {
-    "default": {}
+    "default": {},
+    "blondish": {
+      "allowServers": [
+        "notion-halfdozen-blondish",
+        "composio-toolkit-gmail",
+        "composio-toolkit-exa"
+      ],
+      "allowToolPrefixes": [
+        "notion-halfdozen-blondish__",
+        "composio-toolkit-gmail__",
+        "composio-toolkit-exa__"
+      ]
+    },
+    "c3-management": {
+      "allowServers": [
+        "notion-halfdozen-c3-management",
+        "composio-toolkit-gmail",
+        "composio-toolkit-exa"
+      ],
+      "allowToolPrefixes": [
+        "notion-halfdozen-c3-management__",
+        "composio-toolkit-gmail__",
+        "composio-toolkit-exa__"
+      ]
+    }
   },
   "aliases": {}
 }

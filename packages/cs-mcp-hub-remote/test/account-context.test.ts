@@ -16,7 +16,7 @@ test('resolveHubIdentityMode defaults to session_required', () => {
   assert.equal(mode, 'session_required');
 });
 
-test('resolveAccountContext requires session token header in session_required mode', async () => {
+test('resolveAccountContext requires session token header or bearer token in session_required mode', async () => {
   await assert.rejects(
     resolveAccountContext(
       makeExtra({}),
@@ -26,7 +26,7 @@ test('resolveAccountContext requires session token header in session_required mo
         HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
       } as any,
     ),
-    /Missing X-MCP-Session-Token header\./,
+    /Missing X-MCP-Session-Token header or bearer token\./,
   );
 });
 
@@ -34,11 +34,13 @@ test('resolveAccountContext resolves identity via session resolver in session_re
   const originalFetch = globalThis.fetch;
   let capturedAuth = '';
   let capturedToken = '';
+  let capturedResourceHost = '';
 
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     capturedAuth = String((init?.headers as Record<string, string> | undefined)?.Authorization ?? '');
-    const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string };
+    const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string; resource_host?: string | null };
     capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
     return new Response(
       JSON.stringify({
         valid: true,
@@ -59,7 +61,10 @@ test('resolveAccountContext resolves identity via session resolver in session_re
 
   try {
     const context = await resolveAccountContext(
-      makeExtra({ 'x-mcp-session-token': 'ms_tok_abc' }),
+      makeExtra({
+        'x-mcp-session-token': 'ms_tok_abc',
+        host: 'viv-blondish.mcp.createsomething.agency',
+      }),
       {
         HUB_IDENTITY_MODE: 'session_required',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
@@ -69,12 +74,67 @@ test('resolveAccountContext resolves identity via session resolver in session_re
 
     assert.equal(capturedAuth, 'Bearer resolver_secret');
     assert.equal(capturedToken, 'ms_tok_abc');
+    assert.equal(capturedResourceHost, 'viv-blondish');
     assert.equal(context.accountId, 'acct_123');
     assert.equal(context.tenantId, 'tenant_acme');
     assert.equal(context.userId, 'user_123');
     assert.equal(context.sessionId, 'ms_123');
+    assert.equal(context.boundHost, null);
+    assert.equal(context.resourceHost, 'viv-blondish');
     assert.equal(context.identitySource, 'session');
     assert.deepEqual(context.allowedToolPrefixes, ['composio-toolkit-gmail__']);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('resolveAccountContext accepts managed bearer auth in session_required mode', async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string; resource_host?: string | null };
+    capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        session_id: null,
+        account_id: 'acct_lane',
+        tenant_id: 'tenant_lane',
+        user_id: 'user_lane',
+        bound_host: 'morgan-young-c3-management',
+        allowed_tool_prefixes: ['composio-toolkit-gmail__'],
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const context = await resolveAccountContext(
+      makeExtra({
+        authorization: 'Bearer mcpu_lane_token',
+        host: 'morgan-young-c3-management.mcp.createsomething.agency',
+      }),
+      {
+        HUB_IDENTITY_MODE: 'session_required',
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(capturedToken, 'mcpu_lane_token');
+    assert.equal(capturedResourceHost, 'morgan-young-c3-management');
+    assert.equal(context.accountId, 'acct_lane');
+    assert.equal(context.boundHost, 'morgan-young-c3-management');
+    assert.equal(context.resourceHost, 'morgan-young-c3-management');
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -89,6 +149,7 @@ test('resolveAccountContext keeps fallback behavior in compat mode', async () =>
   );
 
   assert.equal(context.accountId, 'acct_fallback');
+  assert.equal(context.resourceHost, null);
   assert.equal(context.identitySource, 'fallback');
 });
 
@@ -150,11 +211,13 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
   const originalFetch = globalThis.fetch;
   let capturedAuth = '';
   let capturedToken = '';
+  let capturedResourceHost = '';
 
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     capturedAuth = new Headers(init?.headers).get('authorization') ?? '';
-    const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string };
+    const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string; resource_host?: string | null };
     capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
     return new Response(
       JSON.stringify({
         valid: true,
@@ -174,7 +237,7 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
 
   try {
     const failure = await authorizeRequest(
-      new Request('https://hub.example/mcp', {
+      new Request('https://viv-blondish.mcp.createsomething.agency/mcp', {
         headers: {
           Authorization: 'Bearer mlk_personal_token_authz',
         },
@@ -189,6 +252,45 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
     assert.equal(failure, null);
     assert.equal(capturedAuth, 'Bearer resolver_secret');
     assert.equal(capturedToken, 'mlk_personal_token_authz');
+    assert.equal(capturedResourceHost, 'viv-blondish');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('authorizeRequest rejects host-mismatched managed bearer tokens', async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async (): Promise<Response> =>
+    new Response(
+      JSON.stringify({
+        valid: false,
+        reason: 'host_mismatch',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+  try {
+    const failure = await authorizeRequest(
+      new Request('https://morgan-young-c3-management.mcp.createsomething.agency/mcp', {
+        headers: {
+          Authorization: 'Bearer mcpu_wrong_host',
+        },
+      }),
+      {
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.ok(failure instanceof Response);
+    assert.equal(failure.status, 401);
   } finally {
     globalThis.fetch = originalFetch;
   }

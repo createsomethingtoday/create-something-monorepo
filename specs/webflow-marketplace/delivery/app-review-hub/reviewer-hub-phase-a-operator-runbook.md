@@ -44,7 +44,6 @@ Required locally:
 
 Required environment:
 
-- `SESSION_TOKEN_FOR_NORMALIZE`
 - `SESSION_RESOLVE_URL` if not using the default in the script
 
 Reviewer hub auth:
@@ -55,6 +54,7 @@ Reviewer hub auth:
 
 Optional environment:
 
+- `SESSION_TOKEN_FOR_NORMALIZE` when intentionally running `session_required`
 - `SESSION_TOKEN_FOR_VERIFY`
 - `DISCOVERY_MAX_PROXY_TOOLS`
 - `RATE_LIMIT_MAX_CALLS`
@@ -85,7 +85,7 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 
 This deploys each reviewer worker with:
 
-- `HUB_IDENTITY_MODE=session_required`
+- `HUB_IDENTITY_MODE=compat`
 - `HUB_ENABLED_SERVERS=webflow-app-review-mcp`
 - `HUB_DISCOVERY_SHARED_PACK=webflow-marketplace-app-review-phase-a`
 - compact discovery
@@ -109,7 +109,7 @@ This applies:
   - `pack="webflow-marketplace-app-review-phase-a"`
   - `mode="compact"`
   - `activeServers=["webflow-app-review-mcp"]`
-  - `maxProxyTools=8`
+  - `maxProxyTools=6`
 
 ## 7. Verify each reviewer Hub
 
@@ -158,7 +158,7 @@ Also keep the narrow reviewer decision verbs hidden in Phase A:
 
 This runbook is intentionally Phase A only.
 
-The deployed app-review worker can now resolve reviewer identity from Hub account context, but official review-state writes still require:
+The deployed app-review worker can now resolve reviewer identity from the hub's compat account context, but official review-state writes still require:
 
 - live reviewer trace validation
 - approval-gated write posture
@@ -228,12 +228,10 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 
 export CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN="replace-with-pablo-hub-token"
 export CS_HUB_WF_APP_REVIEW_SHEA_API_TOKEN="replace-with-shea-hub-token"
-export SESSION_TOKEN_FOR_NORMALIZE="replace-with-valid-session-token"
-export SESSION_TOKEN_FOR_VERIFY="${SESSION_TOKEN_FOR_NORMALIZE}"
 export SESSION_RESOLVE_URL="https://id.createsomething.space/v1/mcp/sessions/resolve"
 
 # Optional rollout tuning
-export DISCOVERY_MAX_PROXY_TOOLS="8"
+export DISCOVERY_MAX_PROXY_TOOLS="6"
 export RATE_LIMIT_MAX_CALLS="120"
 export RATE_LIMIT_WINDOW_SECONDS="60"
 export QUOTA_MAX_PROXY_CALLS_PER_PERIOD="10000"
@@ -274,7 +272,6 @@ After deploy, verify that reviewer discovery stays read-only:
 ```bash
 curl -sS -X POST "https://wf-app-review-pablo.mcp.createsomething.agency/mcp" \
   -H "Authorization: Bearer ${CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN}" \
-  -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_VERIFY}" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{
