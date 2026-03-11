@@ -104,6 +104,18 @@ function currentReviewerAsCollaborator(getReviewer: ReviewerFactory) {
   };
 }
 
+function requireResolvedReviewer(getReviewer: ReviewerFactory) {
+  const reviewer = getReviewer();
+  if (!reviewer) {
+    throw new AirtableClientError(
+      'REVIEWER_IDENTITY_UNAVAILABLE',
+      'Current reviewer identity is not configured for this MCP runtime.',
+      503,
+    );
+  }
+  return reviewer;
+}
+
 export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
   server.tool(
     'app_review_health',
@@ -418,6 +430,93 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           reviewer: getReviewer(),
           acting_reviewer: currentReviewerAsCollaborator(getReviewer),
           updated_asset: updated,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_request_changes',
+    'Set an app version to changes-requested and attach reviewer feedback using the authenticated reviewer identity.',
+    {
+      version_id: z.string().min(1),
+      review_feedback: z.string().min(1),
+      rejection_reason: z.enum(REJECTION_REASON_OPTIONS).optional(),
+      review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
+    },
+    async ({ version_id, review_feedback, rejection_reason, review_status }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const updated = await getClient().updateVersionReview(version_id, {
+          review_status: review_status ?? '📤Changes Requested',
+          reviewer: { id: reviewer.airtableCollaboratorId },
+          rejection_reason,
+          review_feedback,
+        });
+        return asSuccess({
+          reviewer,
+          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
+          updated_version: updated,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_approve_version',
+    'Approve an app version using the authenticated reviewer identity.',
+    {
+      version_id: z.string().min(1),
+      review_feedback: z.string().optional(),
+      review_type: z.enum(REVIEW_TYPE_OPTIONS).optional(),
+    },
+    async ({ version_id, review_feedback, review_type }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const updated = await getClient().updateVersionReview(version_id, {
+          review_status: '✅Approved',
+          reviewer: { id: reviewer.airtableCollaboratorId },
+          review_type,
+          review_feedback,
+        });
+        return asSuccess({
+          reviewer,
+          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
+          updated_version: updated,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_reject_version',
+    'Reject an app version with reason and reviewer feedback using the authenticated reviewer identity.',
+    {
+      version_id: z.string().min(1),
+      rejection_reason: z.enum(REJECTION_REASON_OPTIONS),
+      review_feedback: z.string().min(1),
+      review_type: z.enum(REVIEW_TYPE_OPTIONS).optional(),
+    },
+    async ({ version_id, rejection_reason, review_feedback, review_type }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const updated = await getClient().updateVersionReview(version_id, {
+          review_status: '❌Rejected',
+          reviewer: { id: reviewer.airtableCollaboratorId },
+          review_type,
+          rejection_reason,
+          review_feedback,
+        });
+        return asSuccess({
+          reviewer,
+          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
+          updated_version: updated,
         });
       } catch (error) {
         return asError(error);

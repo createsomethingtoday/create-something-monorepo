@@ -30,25 +30,22 @@
 </button>
 
 <style>
-	.btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
+		.btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
 		gap: 0.5rem;
 		white-space: nowrap;
 		font-weight: var(--font-medium);
-		letter-spacing: -0.01em;
-		border-radius: 999px;
-		border: 1px solid var(--color-shell-border-default);
-		cursor: pointer;
-		box-shadow: var(--shadow-sm);
-		transition:
-			transform var(--duration-micro) var(--ease-standard),
-			background-color var(--duration-micro) var(--ease-standard),
-			border-color var(--duration-micro) var(--ease-standard),
-			color var(--duration-micro) var(--ease-standard),
-			box-shadow var(--duration-micro) var(--ease-standard);
-	}
+			letter-spacing: -0.01em;
+			border-radius: 999px;
+			border: 1px solid var(--color-shell-border-default);
+			cursor: pointer;
+			transition:
+				background-color var(--duration-micro) var(--ease-standard),
+				border-color var(--duration-micro) var(--ease-standard),
+				color var(--duration-micro) var(--ease-standard);
+		}
 
 	.btn:disabled {
 		pointer-events: none;
@@ -67,12 +64,10 @@
 		border-color: color-mix(in srgb, var(--color-info) 82%, #ffffff);
 	}
 
-	.btn-default:hover:not(:disabled) {
-		background: color-mix(in srgb, var(--color-info) 96%, #000000 4%);
-		border-color: color-mix(in srgb, var(--color-info) 88%, #000000 12%);
-		transform: translateY(-1px);
-		box-shadow: 0 6px 14px rgba(20, 110, 245, 0.14);
-	}
+		.btn-default:hover:not(:disabled) {
+			background: color-mix(in srgb, var(--color-info) 90%, #ffffff 10%);
+			border-color: color-mix(in srgb, var(--color-info) 76%, #ffffff 24%);
+		}
 
 	.btn-secondary {
 		background: var(--color-bg-surface);
@@ -80,11 +75,10 @@
 		border-color: var(--color-shell-border-default);
 	}
 
-	.btn-secondary:hover:not(:disabled) {
-		background: var(--color-bg-subtle);
-		border-color: var(--color-shell-border-strong);
-		transform: translateY(-1px);
-	}
+		.btn-secondary:hover:not(:disabled) {
+			background: var(--color-bg-subtle);
+			border-color: var(--color-shell-border-strong);
+		}
 
 	.btn-destructive {
 		background: var(--color-error);
@@ -92,10 +86,10 @@
 		border-color: var(--color-error);
 	}
 
-	.btn-destructive:hover:not(:disabled) {
-		transform: translateY(-1px);
-		box-shadow: 0 8px 18px rgba(238, 29, 54, 0.18);
-	}
+		.btn-destructive:hover:not(:disabled) {
+			background: color-mix(in srgb, var(--color-error) 92%, #000000 8%);
+			border-color: color-mix(in srgb, var(--color-error) 82%, #000000 18%);
+		}
 
 	.btn-outline {
 		background: transparent;

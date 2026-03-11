@@ -45,6 +45,9 @@ Optional:
 - `app_review_update_version_review`
 - `app_review_update_asset_metadata`
 - `app_review_set_marketplace_status`
+- `app_review_request_changes`
+- `app_review_approve_version`
+- `app_review_reject_version`
 - `app_review_get_field_map`
 
 ## Resources

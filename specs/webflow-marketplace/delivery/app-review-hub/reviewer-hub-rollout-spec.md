@@ -58,6 +58,9 @@ The codebase app-review MCP currently exposes these tools:
 - `app_review_update_version_review`
 - `app_review_update_asset_metadata`
 - `app_review_set_marketplace_status`
+- `app_review_request_changes`
+- `app_review_approve_version`
+- `app_review_reject_version`
 
 ### Prompts
 
@@ -115,7 +118,10 @@ Do not expose write tools until the write-enable gates in section 7 pass.
 
 Once the gates pass, the reviewer lane may selectively expose:
 
-- `app_review_update_version_review`
+- `app_review_request_changes`
+- `app_review_approve_version`
+- `app_review_reject_version`
+- `app_review_update_version_review` only if broader update semantics are still needed
 - `app_review_set_marketplace_status`
 
 These must remain reviewer-owned actions and must only be callable through a Hub path that records reviewer identity and approval evidence.
@@ -127,6 +133,9 @@ Keep these tools out of reviewer-facing discovery during alpha:
 - `app_review_update_version_review`
 - `app_review_set_marketplace_status`
 - `app_review_update_asset_metadata`
+- `app_review_request_changes`
+- `app_review_approve_version`
+- `app_review_reject_version`
 
 `app_review_update_asset_metadata` should remain operator-only unless the workflow scope is explicitly expanded and reapproved.
 
@@ -169,7 +178,12 @@ Write tools remain disabled until all of the following are demonstrated in the p
    - correlation id links the recommendation and the write
    - retry behavior is understood and documented
 
-2. `app_review_set_marketplace_status`
+2. `app_review_request_changes`, `app_review_approve_version`, `app_review_reject_version`
+   - each route sets reviewer attribution from authenticated Hub identity
+   - each route mutates only the bounded review fields needed for that decision
+   - no broader metadata field is silently writable through the narrow route
+
+3. `app_review_set_marketplace_status`
    - marketplace status writes are attributable to the reviewer Hub identity
    - write scope is limited to approved status transitions
    - no unsupported field is silently mutated as part of the route
