@@ -3693,16 +3693,20 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
 }
 
 function getRequiredGlobalServers(currentRegistry: McpBundleRegistry, env?: Env): string[] {
-  const configured = env
-    ? parseList(readEnvString(env, 'HUB_REQUIRED_GLOBAL_SERVERS')) ?? DEFAULT_REQUIRED_GLOBAL_SERVERS
-    : DEFAULT_REQUIRED_GLOBAL_SERVERS;
+  const raw = env?.HUB_REQUIRED_GLOBAL_SERVERS;
+  const configured =
+    typeof raw === 'string'
+      ? parseList(raw) ?? []
+      : DEFAULT_REQUIRED_GLOBAL_SERVERS;
   return configured.filter((serverName) => Boolean(currentRegistry.servers[serverName]));
 }
 
 function getRequiredDiscoveryServers(runtime: HubRuntime, env?: Env): string[] {
-  const configured = env
-    ? parseList(readEnvString(env, 'HUB_REQUIRED_DISCOVERY_SERVERS')) ?? DEFAULT_REQUIRED_DISCOVERY_SERVERS
-    : DEFAULT_REQUIRED_DISCOVERY_SERVERS;
+  const raw = env?.HUB_REQUIRED_DISCOVERY_SERVERS;
+  const configured =
+    typeof raw === 'string'
+      ? parseList(raw) ?? []
+      : DEFAULT_REQUIRED_DISCOVERY_SERVERS;
   return configured.filter((serverName) =>
     runtime.connected.some((server) => server.name === serverName),
   );
