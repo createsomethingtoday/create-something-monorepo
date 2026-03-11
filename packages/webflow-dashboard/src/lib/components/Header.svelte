@@ -84,8 +84,8 @@
     z-index: 100;
     border-bottom: 1px solid var(--color-shell-border-default);
     background: var(--color-shell-surface);
-    box-shadow: var(--color-shell-shadow);
-    backdrop-filter: blur(18px);
+    box-shadow: none;
+    backdrop-filter: blur(10px);
   }
 
   .header-content {
@@ -107,15 +107,13 @@
     grid-template-columns: auto auto;
     align-items: center;
     justify-content: start;
-    column-gap: 0.625rem;
+    column-gap: 1rem;
     min-width: 0;
-    padding: 0.375rem;
-    border: 1px solid var(--color-shell-border-subtle);
-    border-radius: 1.25rem;
-    background: linear-gradient(180deg, var(--glass-bg-medium) 0%, var(--glass-bg-subtle) 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      var(--shadow-sm);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .brand-lockup {
@@ -129,8 +127,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 0.5rem 0.9rem;
-    border-radius: 999px;
+    padding: 0.5rem 0.4rem 0.5rem 0;
+    border-radius: 0;
     background: transparent;
     border: none;
     box-shadow: none;
@@ -154,10 +152,10 @@
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.2rem;
+    gap: 0.5rem;
+    padding: 0;
     border: none;
-    border-radius: 999px;
+    border-radius: 0;
     background: transparent;
     overflow-x: auto;
     scrollbar-width: none;
@@ -171,14 +169,14 @@
 
   .nav-link {
     flex: 0 0 auto;
-    padding: 0.65rem 1rem;
+    padding: 0.65rem 0.5rem;
     font-size: var(--text-body-sm);
     font-weight: var(--font-medium);
     color: var(--color-fg-muted);
     text-decoration: none;
     white-space: nowrap;
     border: 1px solid transparent;
-    border-radius: 999px;
+    border-radius: 0.625rem;
     transition:
       color var(--duration-micro) var(--ease-standard),
       background-color var(--duration-micro) var(--ease-standard),
@@ -192,9 +190,9 @@
   }
 
   .nav-link.active {
-    color: var(--color-fg-primary);
-    background: var(--color-active);
-    border-color: var(--color-info-border);
+    color: var(--color-info);
+    background: transparent;
+    border-color: transparent;
     box-shadow: none;
   }
 
@@ -216,13 +214,13 @@
     height: 2.5rem;
     padding-inline: 0.9rem;
     color: var(--color-fg-secondary);
-    background: var(--glass-bg-medium);
+    background: var(--color-bg-surface);
     border: 1px solid var(--color-shell-border-default);
     box-shadow: none;
   }
 
   .header-right :global(.header-action:hover:not(:disabled)) {
-    background: var(--glass-bg-strong);
+    background: var(--color-bg-subtle);
     border-color: var(--color-shell-border-strong);
     transform: none;
   }
@@ -245,8 +243,8 @@
     .nav-cluster {
       grid-template-columns: 1fr;
       align-items: stretch;
-      padding: 0.5rem;
-      border-radius: 1.25rem;
+      padding: 0;
+      border-radius: 0;
     }
 
     .brand-lockup,

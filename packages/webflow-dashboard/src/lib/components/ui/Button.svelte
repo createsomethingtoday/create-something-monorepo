@@ -38,7 +38,7 @@
 		white-space: nowrap;
 		font-weight: var(--font-medium);
 			letter-spacing: -0.01em;
-			border-radius: 999px;
+			border-radius: 0.75rem;
 			border: 1px solid var(--color-shell-border-default);
 			cursor: pointer;
 			transition:

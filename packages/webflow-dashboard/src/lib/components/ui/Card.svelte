@@ -28,12 +28,10 @@
 		border-radius: var(--radius-md);
 		border: 1px solid var(--color-shell-border-default);
 		background: var(--color-bg-surface);
-		box-shadow: var(--shadow-sm);
+		box-shadow: none;
 		transition:
-			transform var(--duration-micro) var(--ease-standard),
 			border-color var(--duration-micro) var(--ease-standard),
-			background-color var(--duration-micro) var(--ease-standard),
-			box-shadow var(--duration-micro) var(--ease-standard);
+			background-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.card-default {
@@ -42,14 +40,11 @@
 
 	.card-elevated {
 		border-color: var(--color-info-border);
-		box-shadow: var(--shadow-md);
 	}
 
 	.card-elevated:hover {
 		background: var(--color-bg-subtle);
 		border-color: var(--color-info-border);
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-lg);
 	}
 
 	.card-glass {

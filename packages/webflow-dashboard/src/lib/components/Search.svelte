@@ -77,25 +77,19 @@
     display: flex;
     align-items: center;
     width: 100%;
-    border-radius: 999px;
+    border-radius: 0.75rem;
     overflow: hidden;
-    background: linear-gradient(180deg, var(--glass-bg-medium) 0%, var(--glass-bg-subtle) 100%);
-    border: 1px solid var(--glass-border-subtle);
-    box-shadow:
-      inset 0 1px 0 var(--glass-border-light),
-      var(--shadow-sm);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-shell-border-default);
+    box-shadow: none;
     transition:
       border-color var(--duration-micro) var(--ease-standard),
-      box-shadow var(--duration-micro) var(--ease-standard),
       background-color var(--duration-micro) var(--ease-standard);
   }
 
   .search-wrapper:focus-within {
     border-color: var(--color-info-border);
-    box-shadow:
-      inset 0 1px 0 var(--glass-border-medium),
-      0 0 0 4px var(--color-info-muted),
-      var(--shadow-md);
+    box-shadow: 0 0 0 4px var(--color-info-muted);
   }
 
   :global(.search-icon) {
