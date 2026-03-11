@@ -1,0 +1,3 @@
+auth_email,account_id,tenant_id,workspace_account_id,service_tier,managed_bearer_allowed,org_membership_active,service_entitled,policy_accepted,contract_active,billing_active,status,invited_at,metadata_json
+pablo.miranda@webflow.com,acct_wf_pablo,tenant_webflow_marketplace,acct_wf_pablo,agency,1,1,1,0,1,1,seeded,2026-03-11T15:00:00Z,"{""source"":""webflow_app_review_phase_a"",""workflow"":""app_review_hub_lane"",""hub_slug"":""wf-app-review-pablo"",""reviewer_name"":""Pablo Miranda""}"
+shea.sisco@webflow.com,acct_wf_shea,tenant_webflow_marketplace,acct_wf_shea,agency,1,1,1,0,1,1,seeded,2026-03-11T15:00:00Z,"{""source"":""webflow_app_review_phase_a"",""workflow"":""app_review_hub_lane"",""hub_slug"":""wf-app-review-shea"",""reviewer_name"":""Shea Sisco""}"

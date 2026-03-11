@@ -13013,6 +13013,33 @@
       "catalog_exposure_mode": "brokered",
       "estimated_tool_count": 100
     },
+    "webflow-app-review-mcp": {
+      "transport": "http",
+      "url": "https://webflow-app-review-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "WEBFLOW_APP_REVIEW_MCP_API_KEY",
+      "description": "Webflow App Review MCP for app asset and version workflows",
+      "tags": [
+        "webflow",
+        "review",
+        "airtable",
+        "apps",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Webflow App Review",
+        "slug": "webflow-app-review",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http",
+          "sse"
+        ]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
     "webflow-template-review-mcp": {
       "transport": "http",
       "url": "https://webflow-template-review-mcp.createsomething.workers.dev/mcp",
@@ -13093,6 +13120,9 @@
     ],
     "webflow-marketplace-review-phase-a": [
       "webflow-template-review-mcp"
+    ],
+    "webflow-marketplace-app-review-phase-a": [
+      "webflow-app-review-mcp"
     ],
     "composio-all": [
       "composio-toolkit-_21risk",

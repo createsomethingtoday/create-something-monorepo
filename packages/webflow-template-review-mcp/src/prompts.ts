@@ -46,7 +46,7 @@ Output sections:
 2) Why
 3) Required actions for submitter
 4) Suggested Airtable mutation plan
-5) Unknowns blocked by pending field mappings`,
+5) Remaining unknowns or manual fallback needs`,
           },
         },
       ],
