@@ -353,7 +353,9 @@
                       </div>
                     </TableHead>
                   {/if}
-                  <TableHead class="text-center action-head">Next step</TableHead>
+                  <TableHead class="text-center action-head">
+                    <span class="sr-only">Primary action</span>
+                  </TableHead>
                   <TableHead class="w-12 text-center action-head">More</TableHead>
                 </TableRow>
               </TableHeader>

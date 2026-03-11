@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button, TableCell, TableRow } from './ui';
 	import ActionsDropdown from './ActionsDropdown.svelte';
+	import { Eye, Pencil } from 'lucide-svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
@@ -54,6 +55,10 @@
 		if (num === undefined || num === null) return '$0';
 		if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
 		return `$${num.toLocaleString()}`;
+	}
+
+	function getPrimaryActionAriaLabel(action: AssetActionDescriptor): string {
+		return `${action.label}: ${asset.name}`;
 	}
 </script>
 
@@ -115,12 +120,18 @@
 	{/if}
 	<TableCell>
 		<Button
-			variant={actionConfig.primary.handler === 'edit' ? 'default' : 'secondary'}
-			size="sm"
+			variant="ghost"
+			size="icon"
 			class="primary-action-button"
 			onclick={() => onPrimaryAction?.(asset, actionConfig.primary)}
+			aria-label={getPrimaryActionAriaLabel(actionConfig.primary)}
+			title={actionConfig.primary.label}
 		>
-			{actionConfig.primary.label}
+			{#if actionConfig.primary.handler === 'edit'}
+				<Pencil size={16} />
+			{:else}
+				<Eye size={16} />
+			{/if}
 		</Button>
 	</TableCell>
 	<TableCell>
@@ -216,6 +227,16 @@
 	}
 
 	:global(.primary-action-button) {
-		min-width: 8rem;
+		width: 2.25rem;
+		height: 2.25rem;
+		color: var(--color-fg-secondary);
+		border: 1px solid var(--color-shell-border-default);
+		background: var(--color-bg-surface);
+	}
+
+	:global(.primary-action-button:hover:not(:disabled)) {
+		color: var(--color-fg-primary);
+		border-color: var(--color-shell-border-strong);
+		background: var(--color-bg-subtle);
 	}
 </style>
