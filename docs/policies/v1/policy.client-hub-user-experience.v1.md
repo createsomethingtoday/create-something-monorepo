@@ -32,35 +32,38 @@ Define the canonical user-experience contract for client-facing MCP access, tran
 5. External client-facing Hub lanes MUST use transparent person-plus-client naming (`<person-slug>-<client-slug>`) for the public lane slug, worker suffix, host key, and URL subdomain.
 6. The named lane MUST appear consistently in the delivered URL, `.agency` access view, delivery metadata, audit rows, exception records, and runbooks. Opaque operator-only naming for client-facing lanes is prohibited.
 7. Named-lane URLs MUST be enforceable. Managed bearer tokens and strict sessions issued for a named lane MUST be host-bound so a credential issued for one named lane is rejected on a different named-lane URL unless explicitly approved.
-8. Self-service customer actions MAY include:
+8. Customer-facing UX MUST support an explicit "infrastructure ready, credential pending" state for named lanes that have already been deployed but are still blocked on identity mapping, consent, or credential issuance.
+9. In that pending state, the UI MUST show the transparent lane name and URL, explain why customer credentials are not yet available, and distinguish that blocked state from a denied or broken deployment.
+10. Self-service customer actions MAY include:
    - policy acceptance
    - managed bearer token issue, revoke, and regenerate
    - MCP OAuth password set or rotate
    - viewing connection status
    - launching connect or reconnect links
    - copying approved host configuration snippets
-9. Operator-only actions MUST include:
+11. Operator-only actions MUST include:
    - entitlement overrides
    - tenant routing mutation
    - toolkit account pinning or disabling
    - partner admin mint
    - legacy credential issuance
+   - runtime bootstrap secret rotation or sync
    - direct control-plane mutation
-10. Every blocked state shown to a customer MUST map to an explicit reason code and human-readable explanation. Generic "access denied" messaging without reason classification is prohibited.
-11. Auth-required or reconnect-required toolkit flows MUST resolve through one standard recovery contract that identifies the toolkit, the required action, the reconnect path, and the retry expectation.
-12. Customer-facing surfaces MUST clearly distinguish:
-    - portal login
-    - managed bearer token
-    - MCP OAuth password
-    - third-party toolkit connection state
-13. Conversational DUI or MCP App UIs that can mutate state MUST route mutations through server tools and MUST honor the same policy, authorization, and audit requirements as non-UI execution paths.
-14. CREATE SOMETHING MCP App UI resources MUST use curated, code-reviewed `ui://` resources. Raw model-generated executable UI delivered directly to end users without code review is prohibited.
-15. If schema-driven or generative UI is used, the generated artifact MUST be a bounded data or layout spec rendered by approved UI components, not arbitrary executable code.
-16. Dedicated client UX MUST disclose when access is blocked by legal, billing, contract, consent, or policy state, even if the credential itself still exists.
-17. Any client-facing DUI that supports write or destructive actions MUST include an explicit review or confirmation step when required by route classification or policy.
-18. Telemetry and Braintrust tracing are mandatory baseline observability controls for dedicated named lanes. They are operator-facing controls and MUST NOT expand the client-visible tool surface.
-19. When a hosted chat or concierge product is part of delivery, it MUST be implemented as a product surface separate from `.agency` control-plane routes and separate from MCP App DUI resources.
-20. Hosted chat or concierge products MUST follow [`policy.progressive-profile-governance.v1`](./policy.progressive-profile-governance.v1.md) for inferred-versus-confirmed field handling and dynamic widget selection.
+12. Every blocked state shown to a customer MUST map to an explicit reason code and human-readable explanation. Generic "access denied" messaging without reason classification is prohibited.
+13. Auth-required or reconnect-required toolkit flows MUST resolve through one standard recovery contract that identifies the toolkit, the required action, the reconnect path, and the retry expectation.
+14. Customer-facing surfaces MUST clearly distinguish:
+   - portal login
+   - managed bearer token
+   - MCP OAuth password
+   - third-party toolkit connection state
+15. Conversational DUI or MCP App UIs that can mutate state MUST route mutations through server tools and MUST honor the same policy, authorization, and audit requirements as non-UI execution paths.
+16. CREATE SOMETHING MCP App UI resources MUST use curated, code-reviewed `ui://` resources. Raw model-generated executable UI delivered directly to end users without code review is prohibited.
+17. If schema-driven or generative UI is used, the generated artifact MUST be a bounded data or layout spec rendered by approved UI components, not arbitrary executable code.
+18. Dedicated client UX MUST disclose when access is blocked by legal, billing, contract, consent, or policy state, even if the credential itself still exists.
+19. Any client-facing DUI that supports write or destructive actions MUST include an explicit review or confirmation step when required by route classification or policy.
+20. Telemetry and Braintrust tracing are mandatory baseline observability controls for dedicated named lanes. They are operator-facing controls and MUST NOT expand the client-visible tool surface.
+21. When a hosted chat or concierge product is part of delivery, it MUST be implemented as a product surface separate from `.agency` control-plane routes and separate from MCP App DUI resources.
+22. Hosted chat or concierge products MUST follow [`policy.progressive-profile-governance.v1`](./policy.progressive-profile-governance.v1.md) for inferred-versus-confirmed field handling and dynamic widget selection.
 
 ## Required User Surfaces
 
@@ -83,6 +86,7 @@ Must show:
 - linked hub URL or assigned access lane
 - transparent named-lane display name and URL when a named lane is assigned
 - host-bound credential status for the active named lane
+- infrastructure-ready but credential-pending state when lane deployment is complete before identity or consent onboarding
 
 ### 3. Connections
 
@@ -141,6 +145,7 @@ When the product includes a hosted chat experience, it must show:
 - UI metadata tests confirming tool-to-`ui://` resource mapping
 - screenshots or previews of required user surfaces
 - customer-visible named lane, URL, and host binding aligned across `.agency`, delivery records, and runbooks
+- screenshots or logs showing the explicit pending state when lane infrastructure exists but customer credential delivery is not yet available
 - host mismatch rejects the wrong named-lane credential with an explicit reason
 
 ## Source Anchors
