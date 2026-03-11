@@ -15,6 +15,9 @@
     "workflow_job_id"
   ],
   "required_telemetry_fields": [
+    "account_id",
+    "tenant_id",
+    "lane_slug_or_bound_host",
     "decision",
     "evaluation_path",
     "policy_hash",
@@ -28,6 +31,7 @@
     "bound_host_required_for_named_lane_credentials": true,
     "telemetry_required": true,
     "braintrust_required": true,
+    "account_attribution_required_for_observability": true,
     "white_glove_initial_delivery_allowed": true,
     "white_glove_follow_on_self_service_required": true,
     "runtime_bootstrap_tokens_customer_delivery_prohibited": true
@@ -63,6 +67,8 @@
     "recipient",
     "initial_delivery_mode",
     "follow_on_management_surface",
+    "account_id",
+    "tenant_id",
     "allowed_tool_prefixes",
     "bound_host"
   ]

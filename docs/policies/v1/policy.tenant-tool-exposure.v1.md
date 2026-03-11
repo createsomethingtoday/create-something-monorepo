@@ -30,6 +30,7 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
    - `composio-toolkit-exa`
 9. Tenant exposure policy MUST block the other client’s Notion server, Composio Notion, Slack, Dropbox, and any other unapproved bundle or server for these named-lane pilots.
 10. Telemetry and Braintrust tracing are mandatory baseline observability controls for named lanes, but they remain operator-facing controls and MUST NOT appear in the client-visible tenant allowlist.
+11. Named-lane routed-call traces MUST include explicit account attribution, at minimum `account_id`, `tenant_id`, and lane slug or bound host, so operator observability can attribute downstream access to the correct client lane.
 
 ## Enforcement Surfaces
 
@@ -49,6 +50,7 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 - visible workflow-control routes versus hidden raw provider routes for governed syncs
 - named-lane allowlists showing only custom Notion + Gmail + Exa for BLOND:ISH and C3 Management
 - trace evidence showing lane host key or bound host on routed calls
+- trace evidence showing `account_id` and `tenant_id` aligned with the lane host key or bound host on routed calls
 
 ## Source Anchors
 
