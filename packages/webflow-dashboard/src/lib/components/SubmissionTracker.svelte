@@ -500,6 +500,11 @@
 <style>
   .card-wrapper {
     border-radius: var(--radius-lg);
+    width: 100%;
+  }
+
+  .card-wrapper :global(.card) {
+    width: 100%;
   }
 
   .card-wrapper.warning-card :global(.card) {

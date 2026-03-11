@@ -9,19 +9,22 @@ import { loadFont as loadSpaceGrotesk } from '@remotion/google-fonts/SpaceGrotes
 import { loadFont as loadSpaceMono } from '@remotion/google-fonts/SpaceMono';
 
 const fontLoadOptions = {
-  subsets: ['latin'] as string[],
   ignoreTooManyRequestsWarning: true,
 };
+
+const latinSubsets: Array<'latin'> = ['latin'];
 
 // Load only the weights the composition actually uses.
 const { fontFamily: spaceGroteskFamily } = loadSpaceGrotesk('normal', {
   ...fontLoadOptions,
+  subsets: latinSubsets,
   weights: ['400', '500', '700'],
 });
 
 // Load Space Mono for data/technical content
 const { fontFamily: spaceMonoFamily } = loadSpaceMono('normal', {
   ...fontLoadOptions,
+  subsets: latinSubsets,
   weights: ['400', '700'],
 });
 

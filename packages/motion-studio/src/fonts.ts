@@ -9,19 +9,22 @@ import { loadFont as loadStackSansNotch } from '@remotion/google-fonts/StackSans
 import { loadFont as loadJetBrainsMono } from '@remotion/google-fonts/JetBrainsMono';
 
 const fontLoadOptions = {
-  subsets: ['latin'] as string[],
   ignoreTooManyRequestsWarning: true,
 };
+
+const latinSubsets: Array<'latin'> = ['latin'];
 
 // Load only the weights/styles used in the compositions.
 const { fontFamily: stackSansNotchFamily } = loadStackSansNotch('normal', {
   ...fontLoadOptions,
+  subsets: latinSubsets,
   weights: ['400', '500', '700'],
 });
 
 // Load JetBrains Mono for code/data
 const { fontFamily: jetBrainsMonoFamily } = loadJetBrainsMono('normal', {
   ...fontLoadOptions,
+  subsets: latinSubsets,
   weights: ['400', '500', '700'],
 });
 

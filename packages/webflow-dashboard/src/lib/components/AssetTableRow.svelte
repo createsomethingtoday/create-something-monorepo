@@ -135,7 +135,7 @@
 		display: inline-flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 0.15rem;
+		gap: 0.08rem;
 		max-width: 20rem;
 	}
 
@@ -158,16 +158,16 @@
 	}
 
 	.thumbnail {
-		width: 35px;
-		height: 45px;
+		width: 36px;
+		height: 46px;
 		object-fit: cover;
 		border-radius: var(--radius-sm);
 		aspect-ratio: 7/9;
 	}
 
 	.thumbnail-placeholder {
-		width: 35px;
-		height: 45px;
+		width: 36px;
+		height: 46px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -179,15 +179,18 @@
 	}
 
 	.asset-name {
-		font-weight: var(--font-medium);
+		font-size: 1rem;
+		font-weight: var(--font-semibold);
+		letter-spacing: 0.005em;
 		color: var(--color-fg-primary);
-		line-height: 1.25;
+		line-height: 1.2;
 	}
 
 	.asset-meta {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		line-height: 1.25;
+		line-height: 1.2;
+		letter-spacing: 0.01em;
 	}
 
 	.asset-name-link:hover .asset-name {
@@ -196,14 +199,14 @@
 
 	.date,
 	.type {
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-tertiary);
 		font-size: var(--text-body-sm);
 	}
 
 	.date-stack {
 		display: flex;
 		flex-direction: column;
-		gap: 0.1rem;
+		gap: 0.04rem;
 	}
 
 	.date,
@@ -217,6 +220,13 @@
 	.date-sub {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+		letter-spacing: 0.01em;
+	}
+
+	.type {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
 	.metric {
@@ -251,16 +261,18 @@
 		padding: 0;
 		background: transparent;
 		border: none;
-		color: var(--color-info);
-		font-size: var(--text-body-sm);
+		color: var(--color-info-ink);
+		font-size: var(--text-caption);
 		font-weight: var(--font-medium);
 		cursor: pointer;
 		text-decoration: underline;
 		text-underline-offset: 0.22rem;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
 	}
 
 	.primary-action-link:hover {
-		color: color-mix(in srgb, var(--color-info) 82%, var(--color-fg-primary));
+		color: var(--color-info);
 	}
 
 	.primary-action-link:focus-visible {
