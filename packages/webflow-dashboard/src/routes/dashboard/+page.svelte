@@ -211,6 +211,7 @@
         <div class="overview-top">
           <div class="page-header page-intro page-intro--dashboard">
             <div class="header-text">
+              <span class="page-kicker">Portfolio overview</span>
               <h1 class="page-title page-intro__title">Your Webflow template portfolio</h1>
               <p class="page-subtitle page-intro__subtitle">
                 Track published assets, upcoming submissions, and marketplace signals in one place.
@@ -307,6 +308,17 @@
     max-width: 37.5rem;
   }
 
+  .page-kicker {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 0.65rem;
+    font-size: 0.72rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-fg-muted);
+  }
+
   .page-subtitle :global(*) {
     display: inline-flex;
     vertical-align: middle;
@@ -317,8 +329,8 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.35rem 0.85rem;
-    color: var(--color-fg-secondary);
-    font-size: 1.02rem;
+    color: var(--color-fg-tertiary);
+    font-size: 0.98rem;
     line-height: 1.4;
   }
 
@@ -371,6 +383,11 @@
   .quick-actions :global(.btn-secondary),
   .quick-actions :global(.btn-outline) {
     color: var(--color-fg-secondary);
+  }
+
+  .quick-actions :global(.btn-secondary) {
+    background: var(--color-shell-surface-tertiary);
+    border-color: var(--color-shell-border-default);
   }
 
   .submission-column {

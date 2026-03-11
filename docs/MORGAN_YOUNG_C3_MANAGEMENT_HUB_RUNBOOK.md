@@ -27,15 +27,22 @@ pnpm exec wrangler deploy \
   --var HUB_INSTANCE_ID:cs-hub-morgan-young-c3-management \
   --domain morgan-young-c3-management.mcp.createsomething.agency \
   --var HUB_ACCOUNT_ID:acct_morgan_young_c3_management \
+  --var 'HUB_ENABLED_BUNDLES:[]' \
   --var HUB_ENABLED_SERVERS:notion-halfdozen-c3-management,composio-toolkit-gmail,composio-toolkit-exa \
+  --var HUB_DISABLED_SERVERS:composio-toolkit-notion \
+  --var 'HUB_REQUIRED_GLOBAL_SERVERS:' \
+  --var 'HUB_REQUIRED_DISCOVERY_SERVERS:' \
   --var HUB_DISCOVERY_MODE:compact \
   --var HUB_DISCOVERY_DEFAULT_SERVERS:notion-halfdozen-c3-management,composio-toolkit-gmail,composio-toolkit-exa \
+  --var HUB_SESSION_RESOLVE_URL:https://id.createsomething.space/v1/mcp/sessions/resolve \
   --keep-vars
 ```
 
 Notes:
 
 - `wrangler.team-hubs.toml` already enables telemetry D1 and `BRAINTRUST_ENABLED=true`.
+- `HUB_ENABLED_BUNDLES=[]` is required so the registry default `core` and `observability` bundles do not leak extra servers onto the lane.
+- `HUB_DISABLED_SERVERS`, `HUB_REQUIRED_GLOBAL_SERVERS`, and `HUB_REQUIRED_DISCOVERY_SERVERS` explicitly remove the default `composio-toolkit-notion` requirement; the lane should expose only the custom C3 Notion bridge plus Gmail and Exa.
 - Do not add this worker to the shared team-hub fleet deploy script.
 
 ## 2) Required Secrets
