@@ -292,3 +292,58 @@ Expected:
 - `app_review_update_version_review` is not visible in Phase A
 - `app_review_set_marketplace_status` is not visible in Phase A
 - `app_review_update_asset_metadata` is not visible in Phase A
+- `app_review_request_changes` is not visible in Phase A
+- `app_review_approve_version` is not visible in Phase A
+- `app_review_reject_version` is not visible in Phase A
+
+### 12.5 Reserved Phase B smoke path
+
+Do not use this in Phase A.
+
+When Phase B write rollout is explicitly approved, use the narrow decision verbs first and test only on a noncritical version record with a planned rollback path.
+
+Script:
+
+- `scripts/webflow-app-review-phase-b-smoke.sh`
+
+Examples:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+
+REVIEWER=pablo \
+ACTION=request_changes \
+VERSION_ID="rec_replace_me" \
+REVIEW_FEEDBACK="Phase B smoke verification only." \
+REJECTION_REASON="Other" \
+./scripts/webflow-app-review-phase-b-smoke.sh
+```
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+
+REVIEWER=shea \
+ACTION=approve \
+VERSION_ID="rec_replace_me" \
+REVIEW_FEEDBACK="Phase B smoke verification only." \
+./scripts/webflow-app-review-phase-b-smoke.sh
+```
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+
+REVIEWER=pablo \
+ACTION=reject \
+VERSION_ID="rec_replace_me" \
+REVIEW_FEEDBACK="Phase B smoke verification only." \
+REJECTION_REASON="Other" \
+./scripts/webflow-app-review-phase-b-smoke.sh
+```
+
+Expected Phase B smoke evidence:
+
+- hub call succeeds through the reviewer-scoped Hub URL
+- reviewer attribution is present in the returned payload
+- the updated version record reflects only the bounded decision mutation
+- `hub_trace_lookup` can recover the corresponding trace record
+- the version can be manually reconciled or reverted if needed
