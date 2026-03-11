@@ -20,8 +20,8 @@
 
 <style>
 	.table-head {
-		height: 2.15rem;
-		padding: 0.15rem 0.25rem;
+		height: 2rem;
+		padding: 0.1rem 0.2rem;
 		text-align: left;
 		vertical-align: middle;
 		font-weight: var(--font-medium);
@@ -29,7 +29,7 @@
 		border-bottom: 1px solid var(--color-border-emphasis);
 		font-size: var(--text-caption);
 		text-transform: uppercase;
-		letter-spacing: 0.04em;
+		letter-spacing: 0.035em;
 	}
 
 	.table-head-inner {
@@ -38,8 +38,7 @@
 		gap: 0.25rem;
 		height: 100%;
 		width: 100%;
-		padding: 0.15rem 0.45rem;
-		border-radius: var(--radius-sm, 4px);
+		padding: 0.1rem 0.5rem;
 		transition:
 			background 150ms ease,
 			color 150ms ease;
@@ -63,7 +62,7 @@
 
 	.table-head:hover .table-head-inner {
 		background: transparent;
-		color: var(--color-fg-primary);
+		color: var(--color-fg-secondary);
 	}
 
 	.table-head:focus-within .table-head-inner {

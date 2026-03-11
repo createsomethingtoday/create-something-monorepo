@@ -673,23 +673,23 @@
   }
 
   :global(.desktop-table col.thumb-col) {
-    width: 4.25rem;
+    width: 4.4rem;
   }
 
   :global(.desktop-table col.name-col) {
-    width: 44%;
+    width: 43%;
   }
 
   :global(.desktop-table col.submitted-col) {
-    width: 14%;
+    width: 15%;
   }
 
   :global(.desktop-table col.type-col) {
-    width: 12%;
+    width: 11%;
   }
 
   :global(.desktop-table col.metric-col) {
-    width: 10%;
+    width: 9.5%;
   }
 
   :global(.desktop-table col.action-col) {
@@ -710,7 +710,7 @@
     color: var(--color-fg-muted);
     font: inherit;
     font-size: var(--text-caption);
-    letter-spacing: 0.04em;
+    letter-spacing: 0.035em;
     text-transform: uppercase;
     cursor: pointer;
     transition: color var(--duration-micro) var(--ease-standard);
@@ -723,7 +723,7 @@
   .sort-btn.active {
     color: var(--color-info);
     text-decoration: underline;
-    text-underline-offset: 0.22rem;
+    text-underline-offset: 0.18rem;
     text-decoration-thickness: 1px;
   }
 

@@ -135,7 +135,7 @@
 		display: inline-flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 0.08rem;
+		gap: 0.04rem;
 		max-width: 20rem;
 	}
 
@@ -179,18 +179,18 @@
 	}
 
 	.asset-name {
-		font-size: 1rem;
+		font-size: 0.98rem;
 		font-weight: var(--font-semibold);
 		letter-spacing: 0.005em;
 		color: var(--color-fg-primary);
-		line-height: 1.2;
+		line-height: 1.18;
 	}
 
 	.asset-meta {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		line-height: 1.2;
-		letter-spacing: 0.01em;
+		line-height: 1.15;
+		letter-spacing: 0.005em;
 	}
 
 	.asset-name-link:hover .asset-name {
@@ -200,7 +200,7 @@
 	.date,
 	.type {
 		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		font-size: 0.96rem;
 	}
 
 	.date-stack {
@@ -226,7 +226,7 @@
 	.type {
 		font-size: var(--text-caption);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: 0.035em;
 	}
 
 	.metric {
@@ -266,8 +266,8 @@
 		font-weight: var(--font-medium);
 		cursor: pointer;
 		text-decoration: underline;
-		text-underline-offset: 0.22rem;
-		letter-spacing: 0.03em;
+		text-underline-offset: 0.18rem;
+		letter-spacing: 0.02em;
 		text-transform: uppercase;
 	}
 

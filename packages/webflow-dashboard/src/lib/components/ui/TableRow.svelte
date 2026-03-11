@@ -35,11 +35,11 @@
 	}
 
 	.table-row:hover {
-		background: color-mix(in srgb, var(--color-hover) 55%, var(--color-bg-surface));
+		background: color-mix(in srgb, var(--color-hover) 38%, var(--color-bg-surface));
 	}
 
 	.table-row:focus-within {
-		background: color-mix(in srgb, var(--color-info-muted) 35%, var(--color-bg-surface));
+		background: color-mix(in srgb, var(--color-info-muted) 24%, var(--color-bg-surface));
 	}
 
 	.table-row-card {

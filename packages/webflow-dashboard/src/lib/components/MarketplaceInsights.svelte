@@ -1421,7 +1421,7 @@
 
   .data-table th,
   .data-table td {
-    padding: 0.7rem 0.95rem;
+    padding: 0.58rem 0.95rem;
     text-align: left;
     border-bottom: 1px solid var(--color-shell-border-default);
     vertical-align: middle;
@@ -1430,10 +1430,11 @@
   .data-table th {
     font-size: var(--text-caption);
     font-weight: var(--font-medium);
-    color: var(--color-fg-secondary);
+    color: var(--color-fg-muted);
     background: transparent;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.035em;
+    white-space: nowrap;
   }
 
   .data-table th.sortable {
@@ -1453,7 +1454,8 @@
   }
 
   .data-table th.sortable:hover {
-    background: var(--color-bg-subtle);
+    background: transparent;
+    color: var(--color-fg-secondary);
   }
 
   .sort-icon {
@@ -1463,10 +1465,11 @@
   .data-table td {
     font-size: var(--text-body-sm);
     color: var(--color-fg-primary);
+    line-height: 1.3;
   }
 
   .data-table tbody tr:hover {
-    background: color-mix(in srgb, var(--color-bg-subtle) 80%, transparent);
+    background: color-mix(in srgb, var(--color-bg-subtle) 55%, transparent);
   }
 
   .data-table tr:last-child td {
@@ -1479,6 +1482,7 @@
 
   .data-table .center {
     text-align: center;
+    font-variant-numeric: tabular-nums;
   }
 
   .data-table .right {
@@ -1489,14 +1493,14 @@
   .category-name {
     font-weight: var(--font-medium);
     display: inline-block;
-    line-height: 1.3;
+    line-height: 1.25;
   }
 
   .user-indicator {
     display: block;
     font-size: var(--text-caption);
     color: var(--color-info-soft-text);
-    margin-top: 2px;
+    margin-top: 1px;
   }
 
   .rank-pill {
