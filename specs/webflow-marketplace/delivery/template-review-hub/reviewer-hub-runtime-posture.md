@@ -52,7 +52,7 @@ Use this immediately, because it only depends on the server that is already conn
 
 - `mode`: `compact`
 - `activeServers`: `["webflow-template-review-mcp"]`
-- `maxProxyTools`: `12`
+- `maxProxyTools`: `14`
 
 ### Reviewer-visible tool target
 
@@ -147,7 +147,7 @@ For each reviewer-specific Hub/account, apply this Phase A discovery posture fir
 {
   "mode": "compact",
   "activeServers": ["webflow-template-review-mcp"],
-  "maxProxyTools": 12
+  "maxProxyTools": 14
 }
 ```
 
@@ -195,6 +195,77 @@ Keep these out of reviewer use until:
 - `correlation_id` links recommendation and write
 - Airtable writes are validated
 - fallback is rehearsed
+
+### Future write guardrails
+
+If reviewer write actions are enabled later, each route must satisfy all of the following:
+
+- the version is assigned to the current reviewer
+- the current reviewer matches the authenticated hub account identity
+- the write is a narrow verb, not `template_review_update_version_review`
+- the write returns the updated version payload and reviewer attribution
+- the write fails closed on assignment mismatch or missing reviewer identity
+
+Recommended preconditions by action:
+
+- `template_review_request_changes`
+  - current reviewer owns the assignment
+  - non-empty `review_feedback`
+  - optional `improvement_areas`
+- `template_review_approve_version`
+  - current reviewer owns the assignment
+  - approval-only fields are limited to release/publishing metadata
+- `template_review_reject_version`
+  - current reviewer owns the assignment
+  - non-empty `reject_reason`
+  - non-empty `rejection_feedback`
+- `template_review_complete_publishing`
+  - current reviewer owns the assignment
+  - release selector resolves cleanly
+  - publishing checklist mutations are explicit and bounded
+
+Do not expose any future write tool that can silently overwrite:
+
+- `📝Reviewer`
+- arbitrary review status
+- arbitrary feedback fields
+- arbitrary publishing metadata
+
+unless the tool is wrapped in reviewer ownership checks server-side.
+
+### Trace requirements for reviewer writes
+
+Every reviewer write route should emit and preserve:
+
+- `correlation_id`
+- `workflow_id`
+- `tool_name`
+- `asset_id`
+- `version_id`
+- `reviewer_account_id`
+- `reviewer_airtable_collaborator_id`
+- `review_owner_before`
+- `review_owner_after`
+- `review_status_before`
+- `review_status_after`
+- `matched_policy_class`
+
+Treat missing reviewer attribution or missing before/after state as a rollout blocker for expanded writes.
+
+### Rollout gates for expanded writes
+
+Enable future review-state writers in this order:
+
+1. hidden in discovery, operator-only smoke
+2. reviewer-visible for one lane only
+3. reviewer-visible for all lanes after traces, smoke, and rollback checks pass
+
+Minimum validation before widening beyond assignment tools:
+
+- reviewer smoke covers success and assignment-conflict failure
+- one real write and one revert are validated on a noncritical record
+- Hub trace lookup shows reviewer attribution and correlation continuity
+- fallback runbook documents manual Airtable recovery for each write tool
 
 ## 9. Tools that should stay hidden from reviewers
 

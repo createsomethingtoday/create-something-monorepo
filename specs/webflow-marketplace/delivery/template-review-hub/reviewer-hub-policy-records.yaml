@@ -11,6 +11,7 @@ policy_intent:
     - "These records are reviewer-specific, not one shared reviewer template."
     - "Phase A allows template-review-context tools plus narrow reviewer self-assignment from webflow-template-review-mcp."
     - "Official review-state writes beyond reviewer assignment remain manual until reviewer-attributed traces and write gates are proven."
+    - "Any future review-state writer must enforce reviewer ownership of the assigned Asset Version server-side."
 
 shared_phase_a_policy:
   discovery:
@@ -43,13 +44,25 @@ shared_phase_a_policy:
     - "webflow-template-review-mcp__template_review_update_version_review"
   required_trace_fields:
     - "workflow_id"
+    - "tool_name"
     - "asset_id"
     - "version_id"
     - "decision"
+    - "review_owner_before"
+    - "review_owner_after"
+    - "review_status_before"
+    - "review_status_after"
     - "matched_policy_class"
     - "reviewer_id"
+    - "reviewer_account_id"
+    - "reviewer_airtable_collaborator_id"
     - "correlation_id"
   fallback_mode: "manual_airtable_except_assignment"
+  future_write_prerequisites:
+    - "current reviewer must own the Asset Version assignment"
+    - "write route must be narrow and explicit, never broad update_version_review exposure"
+    - "missing reviewer identity or assignment mismatch must fail closed"
+    - "one-lane smoke and revert validation must pass before reviewer-wide rollout"
 
 reviewers:
   - reviewer_name: "Natalia Ledford"
