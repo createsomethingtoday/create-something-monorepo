@@ -81,6 +81,7 @@ Before enabling any write path, confirm:
 
 - reviewer-specific Hub posture is applied
 - `webflow-app-review-mcp` is the only required active server for Phase A
+- `webflow-app-review-mcp` has `REVIEWER_DIRECTORY_JSON` configured with the real Airtable collaborator ids for Pablo and Shea
 - rate limits and quotas are enabled before write rollout
 - traces include reviewer identity and `correlation_id`
 - manual fallback is rehearsed

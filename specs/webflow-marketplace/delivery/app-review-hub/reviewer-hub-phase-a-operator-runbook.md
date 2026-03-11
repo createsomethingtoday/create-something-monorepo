@@ -56,6 +56,19 @@ Optional environment:
 - `RATE_LIMIT_WINDOW_SECONDS`
 - `QUOTA_MAX_PROXY_CALLS_PER_PERIOD`
 
+Required reviewer mapping input for `webflow-app-review-mcp`:
+
+- set `REVIEWER_DIRECTORY_JSON` on the deployed `webflow-app-review-mcp` worker
+- use [webflow-app-review-reviewer-directory.example.json](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/examples/webflow-app-review-reviewer-directory.example.json) as the template
+- replace `usr_replace_pablo` and `usr_replace_shea` with the real Airtable collaborator ids before deploy
+
+Suggested command:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-app-review-mcp/worker"
+pnpm exec wrangler secret put REVIEWER_DIRECTORY_JSON
+```
+
 ## 5. Deploy both reviewer Hubs
 
 ```bash
@@ -70,6 +83,8 @@ This deploys each reviewer worker with:
 - `HUB_DISCOVERY_SHARED_PACK=webflow-marketplace-app-review-phase-a`
 - compact discovery
 - Phase A rate-limit and quota defaults
+
+It assumes the upstream `webflow-app-review-mcp` worker already has `REVIEWER_DIRECTORY_JSON`, `AIRTABLE_API_KEY`, and `MCP_API_KEY` configured.
 
 ## 6. Normalize state
 

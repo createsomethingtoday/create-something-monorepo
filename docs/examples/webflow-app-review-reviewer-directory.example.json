@@ -1,0 +1,14 @@
+{
+  "acct_wf_pablo": {
+    "airtableCollaboratorId": "usr_replace_pablo",
+    "email": "pablo.miranda@webflow.com",
+    "name": "Pablo Miranda",
+    "lane": "wf-app-review-pablo"
+  },
+  "acct_wf_shea": {
+    "airtableCollaboratorId": "usr_replace_shea",
+    "email": "shea.sisco@webflow.com",
+    "name": "Shea Sisco",
+    "lane": "wf-app-review-shea"
+  }
+}
