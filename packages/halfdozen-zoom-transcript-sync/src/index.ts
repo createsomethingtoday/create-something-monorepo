@@ -3,6 +3,7 @@ import {
   completeSyncRun,
   createSyncRun,
   discoverTranscript,
+  getCanonicalMeetingPage,
   getLedgerByDedupKey,
   incrementRunCounter,
   initSchema,
@@ -20,6 +21,7 @@ import { downloadTranscript, listTranscriptCandidates, parseTranscript } from '.
 
 const DISCOVERY_LOCK_ID = 'zoom-transcript-sync-discovery';
 const LOCK_TTL_SECONDS = 10 * 60;
+const MEETING_SYNC_LOCK_TTL_SECONDS = 10 * 60;
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -213,23 +215,34 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
     return;
   }
 
-  const notionWrite = await syncTranscriptToNotion(env, payload, parsedTranscript, transcriptHash);
-  if (notionWrite.action === 'skipped') {
-    await markLedgerSkipped(
-      env.DB,
-      payload.dedupKey,
-      notionWrite.pageId,
-      notionWrite.pageUrl,
-      transcriptHash,
-      notionWrite.reason ?? 'Transcript already present in page body',
-    );
-    if (payload.runId) {
-      await incrementRunCounter(env.DB, payload.runId, 'skipped_count');
-    }
-    return;
+  const meetingLockId = `zoom-transcript-sync-meeting:${payload.canonicalMeetingKey}:${payload.meetingDate}`;
+  const acquired = await acquireLock(env.DB, meetingLockId, MEETING_SYNC_LOCK_TTL_SECONDS);
+  if (!acquired) {
+    throw new Error(`Meeting sync lock is busy for ${payload.canonicalMeetingKey} on ${payload.meetingDate}`);
   }
 
-  await markLedgerSynced(env.DB, payload.dedupKey, notionWrite.pageId, notionWrite.pageUrl, transcriptHash);
+  try {
+    const canonicalPage = await getCanonicalMeetingPage(env.DB, payload.canonicalMeetingKey, payload.meetingDate);
+    const notionWrite = await syncTranscriptToNotion(env, payload, parsedTranscript, transcriptHash, canonicalPage);
+    if (notionWrite.action === 'skipped') {
+      await markLedgerSkipped(
+        env.DB,
+        payload.dedupKey,
+        notionWrite.pageId,
+        notionWrite.pageUrl,
+        transcriptHash,
+        notionWrite.reason ?? 'Transcript already present in page body',
+      );
+      if (payload.runId) {
+        await incrementRunCounter(env.DB, payload.runId, 'skipped_count');
+      }
+      return;
+    }
+
+    await markLedgerSynced(env.DB, payload.dedupKey, notionWrite.pageId, notionWrite.pageUrl, transcriptHash);
+  } finally {
+    await releaseLock(env.DB, meetingLockId);
+  }
 }
 
 function requireApiKey(request: Request, env: Env): Response | null {

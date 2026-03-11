@@ -51,6 +51,8 @@ const SCHEMA_STATEMENTS = [
     ON transcript_sync_ledger(canonical_meeting_key, meeting_date)`,
 ] as const;
 
+const STALE_QUEUE_WINDOW_MS = 2 * 60 * 60 * 1000;
+
 export async function initSchema(db: D1Database): Promise<void> {
   for (const statement of SCHEMA_STATEMENTS) {
     await db.prepare(statement).run();
@@ -175,6 +177,27 @@ export async function getLedgerByDedupKey(db: D1Database, dedupKey: string): Pro
     .first<LedgerRow>();
 }
 
+export async function getCanonicalMeetingPage(
+  db: D1Database,
+  canonicalMeetingKey: string,
+  meetingDate: string,
+): Promise<{ pageId: string; pageUrl: string | null } | null> {
+  const page = await db
+    .prepare(`
+      SELECT notion_page_id AS pageId, notion_page_url AS pageUrl
+      FROM transcript_sync_ledger
+      WHERE canonical_meeting_key = ?
+        AND meeting_date = ?
+        AND notion_page_id IS NOT NULL
+      ORDER BY id ASC
+      LIMIT 1
+    `)
+    .bind(canonicalMeetingKey, meetingDate)
+    .first<{ pageId: string; pageUrl: string | null }>();
+
+  return page ?? null;
+}
+
 export async function discoverTranscript(
   db: D1Database,
   candidate: TranscriptCandidate,
@@ -229,10 +252,22 @@ export async function discoverTranscript(
     return { ledger: created, shouldEnqueue: true };
   }
 
-  const shouldEnqueue =
-    existing.status !== 'synced' ||
+  // Zoom transcript download URLs are ephemeral; a refreshed URL alone should not
+  // cause the worker to re-sync a transcript that is already keyed by the same file.
+  const transcriptIdentityChanged =
     existing.transcript_file_id !== candidate.transcriptFileId ||
-    existing.transcript_download_url !== candidate.transcriptDownloadUrl;
+    existing.transcript_file_type !== candidate.transcriptFileType ||
+    existing.transcript_file_extension !== candidate.transcriptFileExtension;
+
+  const isTerminalStatus = existing.status === 'synced' || existing.status === 'skipped';
+  const hasFreshQueueDelivery =
+    existing.status === 'queued' &&
+    existing.enqueued_at !== null &&
+    Date.now() - Date.parse(existing.enqueued_at) < STALE_QUEUE_WINDOW_MS;
+
+  const shouldEnqueue =
+    transcriptIdentityChanged ||
+    (!isTerminalStatus && !hasFreshQueueDelivery);
 
   await db
     .prepare(`

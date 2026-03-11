@@ -36,9 +36,18 @@ export async function syncTranscriptToNotion(
   candidate: TranscriptCandidate,
   parsedTranscript: ParsedTranscript,
   transcriptHash: string,
+  existingPageHint?: { pageId: string; pageUrl: string | null } | null,
 ): Promise<NotionWriteResult> {
   const notion = createNotionTransport(env);
-  const existing = await findExistingMeetingPage(notion, candidate);
+  const existing = existingPageHint
+    ? {
+      id: existingPageHint.pageId,
+      url: existingPageHint.pageUrl ?? notionUrl(existingPageHint.pageId),
+      title: candidate.meetingTitle,
+      sourceUrl: candidate.sourceUrl,
+      date: candidate.meetingDate,
+    }
+    : await findExistingMeetingPage(notion, candidate);
   const properties = buildPageProperties(env, candidate, parsedTranscript);
   const transcriptBlocks = buildTranscriptBlocks(parsedTranscript);
 
