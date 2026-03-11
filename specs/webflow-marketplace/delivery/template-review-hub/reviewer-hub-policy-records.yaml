@@ -6,12 +6,12 @@ date: "2026-03-10"
 policy_intent:
   summary: "Reviewer-specific Hub policy records for the five-reviewer Phase A rollout."
   authoritative_scope: "Phase A only"
-  rollout_mode: "narrow_reviewer_assignment_lane"
+  rollout_mode: "narrow_reviewer_workflow_write_lane"
   notes:
     - "These records are reviewer-specific, not one shared reviewer template."
-    - "Phase A allows template-review-context tools plus narrow reviewer self-assignment from webflow-template-review-mcp."
-    - "Official review-state writes beyond reviewer assignment remain manual until reviewer-attributed traces and write gates are proven."
-    - "Any future review-state writer must enforce reviewer ownership of the assigned Asset Version server-side."
+    - "Phase A allows template-review-context tools plus narrow reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates from webflow-template-review-mcp."
+    - "Broad official review-state writes beyond the explicit reviewer-safe verbs remain manual until reviewer-attributed traces and write gates are proven."
+    - "Any reviewer write route must enforce reviewer ownership of the assigned Asset Version server-side."
 
 shared_phase_a_policy:
   discovery:
@@ -34,8 +34,10 @@ shared_phase_a_policy:
     - "webflow-template-review-mcp__template_review_assign_self"
     - "webflow-template-review-mcp__template_review_unassign_self"
     - "webflow-template-review-mcp__template_review_assign_reviewer"
-  blocked_proxy_tools:
     - "webflow-template-review-mcp__template_review_request_changes"
+    - "webflow-template-review-mcp__template_review_set_review_status"
+    - "webflow-template-review-mcp__template_review_save_draft_feedback"
+  blocked_proxy_tools:
     - "webflow-template-review-mcp__template_review_approve_version"
     - "webflow-template-review-mcp__template_review_reject_version"
     - "webflow-template-review-mcp__template_review_complete_publishing"
@@ -57,7 +59,8 @@ shared_phase_a_policy:
     - "reviewer_account_id"
     - "reviewer_airtable_collaborator_id"
     - "correlation_id"
-  fallback_mode: "manual_airtable_except_assignment"
+    - "request_id"
+  fallback_mode: "manual_airtable_except_narrow_reviewer_writes"
   future_write_prerequisites:
     - "current reviewer must own the Asset Version assignment"
     - "write route must be narrow and explicit, never broad update_version_review exposure"
@@ -70,7 +73,7 @@ reviewers:
     hub_slug: "wf-template-review-natalia"
     account_model: "per_user"
     approval_owner: "Natalia Ledford"
-    access_mode: "narrow_write_assignment_only"
+    access_mode: "narrow_reviewer_workflow_writes"
     policy_record_id: "wf_template_review_natalia_phase_a"
 
   - reviewer_name: "Sudiksha Khanduja"
@@ -78,7 +81,7 @@ reviewers:
     hub_slug: "wf-template-review-sudiksha"
     account_model: "per_user"
     approval_owner: "Sudiksha Khanduja"
-    access_mode: "narrow_write_assignment_only"
+    access_mode: "narrow_reviewer_workflow_writes"
     policy_record_id: "wf_template_review_sudiksha_phase_a"
 
   - reviewer_name: "Eric Unger"
@@ -86,7 +89,7 @@ reviewers:
     hub_slug: "wf-template-review-eric"
     account_model: "per_user"
     approval_owner: "Eric Unger"
-    access_mode: "narrow_write_assignment_only"
+    access_mode: "narrow_reviewer_workflow_writes"
     policy_record_id: "wf_template_review_eric_phase_a"
 
   - reviewer_name: "Vicki Chen"
@@ -94,7 +97,7 @@ reviewers:
     hub_slug: "wf-template-review-vicki"
     account_model: "per_user"
     approval_owner: "Vicki Chen"
-    access_mode: "narrow_write_assignment_only"
+    access_mode: "narrow_reviewer_workflow_writes"
     policy_record_id: "wf_template_review_vicki_phase_a"
 
   - reviewer_name: "Mariana Segura"
@@ -102,7 +105,7 @@ reviewers:
     hub_slug: "wf-template-review-mariana"
     account_model: "per_user"
     approval_owner: "Mariana Segura"
-    access_mode: "narrow_write_assignment_only"
+    access_mode: "narrow_reviewer_workflow_writes"
     policy_record_id: "wf_template_review_mariana_phase_a"
 
 phase_b_prerequisites:

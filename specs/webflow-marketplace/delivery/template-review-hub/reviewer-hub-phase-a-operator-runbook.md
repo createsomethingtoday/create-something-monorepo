@@ -14,8 +14,8 @@ Phase A outcome:
 - one reviewer-specific Hub surface per reviewer
 - `webflow-template-review-mcp` only
 - compact discovery
-- read-only evidence lane
-- manual Airtable fallback for official review-state changes
+- narrow reviewer workflow write lane
+- manual Airtable fallback for broader official review-state changes
 
 ## 2. Reviewer Hub set
 
@@ -117,19 +117,26 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 
 ## 9. Expected reviewer-visible surface
 
-Phase A reviewer Hubs should expose only template-review-context tools:
+Phase A reviewer Hubs should expose template-review-context tools plus narrow reviewer-safe write verbs:
 
 - `template_review_health`
 - `template_review_list_queue`
+- `template_review_my_queue`
 - `template_review_search_assets`
 - `template_review_search_versions`
 - `template_review_get_asset`
 - `template_review_list_versions`
 - `template_review_get_version`
+- `template_review_get_review_context`
 - `template_review_list_releases`
 - `template_review_get_field_map`
+- `template_review_assign_self`
+- `template_review_unassign_self`
+- `template_review_request_changes`
+- `template_review_set_review_status`
+- `template_review_save_draft_feedback`
 
-Do not enable reviewer write tools in Phase A.
+Do not enable broad reviewer mutation tools in Phase A. Keep approval/rejection/publishing completion and general update routes out of reviewer discovery.
 
 ## 10. Known boundary
 
@@ -152,5 +159,5 @@ If the issue is broader:
 
 - keep the worker deployed
 - retain `webflow-template-review-mcp` only
-- keep reviewer access read-only
-- move any official state change back to Airtable manual handling
+- disable reviewer-safe writes and fall back to assignment-only or full manual handling
+- move any broader official state change back to Airtable manual handling

@@ -24,7 +24,7 @@ As of `2026-03-10`, the live remote Hub currently shows:
 - `webflow-site-analyzer-mcp` not connected
 - `webflow-local` not connected
 
-That means the only safe exact runtime posture today is a **template-review-context-only** lane unless the other Webflow servers are enabled and verified first.
+That means the only safe exact runtime posture today is a **template-review-context plus narrow reviewer workflow write** lane unless the other Webflow servers are enabled and verified first.
 
 ## 3. Reviewer Hub identities
 
@@ -71,12 +71,15 @@ Visible tools should be limited to:
 - `webflow-template-review-mcp__template_review_get_field_map`
 - `webflow-template-review-mcp__template_review_assign_self`
 - `webflow-template-review-mcp__template_review_unassign_self`
+- `webflow-template-review-mcp__template_review_request_changes`
+- `webflow-template-review-mcp__template_review_set_review_status`
+- `webflow-template-review-mcp__template_review_save_draft_feedback`
 
-Do not expose broad write tools in Phase A. The only permitted mutation is reviewer self-assignment on the Asset Version.
+Do not expose broad write tools in Phase A. The permitted mutations are narrow reviewer workflow verbs only: reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates on the assigned Asset Version.
 
 ### Reviewer action
 
-Reads plus narrow self-assignment and self-unassignment. Broader review-state changes remain manual in Airtable.
+Reads plus narrow self-assignment, self-unassignment, bounded feedback writes, and controlled 📝Review Status updates. Broader review-state changes remain manual in Airtable.
 
 ## 5. Phase B: full reviewer lane posture
 
@@ -171,9 +174,14 @@ After the other Webflow servers are connected and tested, move the reviewer to P
 
 Do not widen discovery to expose general mutation tools.
 
-The only write actions that may be enabled later are:
+The narrow reviewer-safe write actions that may be enabled in Phase A are:
 
 - `webflow-template-review-mcp__template_review_request_changes`
+- `webflow-template-review-mcp__template_review_set_review_status`
+- `webflow-template-review-mcp__template_review_save_draft_feedback`
+
+The broader official decision actions that may be enabled later are:
+
 - `webflow-template-review-mcp__template_review_approve_version`
 - `webflow-template-review-mcp__template_review_reject_version`
 - `webflow-template-review-mcp__template_review_complete_publishing`
@@ -189,7 +197,7 @@ For host integrations and smoke checks, note the read envelope for reviewer cont
 - `currentReviewer`, `reviewOwner`, and `isAssignedToCurrentReviewer` are fields on `data.context`, not top-level `data`
 - repeatable bearer-token validation is scripted in `scripts/webflow-reviewer-assign-self-smoke.sh`
 
-Keep these out of reviewer use until:
+Keep narrow reviewer workflow writes gated until:
 
 - reviewer identity is visible in traces
 - `correlation_id` links recommendation and write
@@ -198,7 +206,7 @@ Keep these out of reviewer use until:
 
 ### Future write guardrails
 
-If reviewer write actions are enabled later, each route must satisfy all of the following:
+If reviewer write actions are enabled, each route must satisfy all of the following:
 
 - the version is assigned to the current reviewer
 - the current reviewer matches the authenticated hub account identity
@@ -212,6 +220,14 @@ Recommended preconditions by action:
   - current reviewer owns the assignment
   - non-empty `review_feedback`
   - optional `improvement_areas`
+- `template_review_set_review_status`
+  - current reviewer owns the assignment
+  - `review_status` is drawn from an allowlisted reviewer workflow state set
+  - transition rules fail closed when the requested status is out of order or unsupported
+- `template_review_save_draft_feedback`
+  - current reviewer owns the assignment
+  - only draft feedback fields are mutable
+  - official decision state remains unchanged
 - `template_review_approve_version`
   - current reviewer owns the assignment
   - approval-only fields are limited to release/publishing metadata
@@ -227,8 +243,8 @@ Recommended preconditions by action:
 Do not expose any future write tool that can silently overwrite:
 
 - `📝Reviewer`
-- arbitrary review status
-- arbitrary feedback fields
+- arbitrary review status outside the allowlisted transition set
+- arbitrary feedback fields outside the explicit reviewer-safe inputs
 - arbitrary publishing metadata
 
 unless the tool is wrapped in reviewer ownership checks server-side.
@@ -249,16 +265,20 @@ Every reviewer write route should emit and preserve:
 - `review_status_before`
 - `review_status_after`
 - `matched_policy_class`
+- `request_id`
 
 Treat missing reviewer attribution or missing before/after state as a rollout blocker for expanded writes.
 
 ### Rollout gates for expanded writes
 
-Enable future review-state writers in this order:
+Enable reviewer write actions in this order:
 
-1. hidden in discovery, operator-only smoke
-2. reviewer-visible for one lane only
-3. reviewer-visible for all lanes after traces, smoke, and rollback checks pass
+1. `template_review_request_changes`
+2. `template_review_set_review_status`
+3. `template_review_save_draft_feedback`
+4. hidden in discovery, operator-only smoke for broader decision routes
+5. reviewer-visible for one lane only for broader decision routes
+6. reviewer-visible for all lanes after traces, smoke, and rollback checks pass
 
 Minimum validation before widening beyond assignment tools:
 
@@ -281,9 +301,9 @@ These are too broad for the current reviewer playbook and should remain operator
 
 Use this reviewer policy posture:
 
-- read-only reviewer sessions cannot discover mutable routes
-- read-only reviewer sessions cannot execute mutable routes
-- reviewer write routes remain approval-gated
+- reviewer sessions may discover only the explicit reviewer-safe write routes plus read routes
+- reviewer sessions cannot discover broad mutation routes
+- reviewer-safe write routes remain approval-gated
 - control-plane and destructive routes remain blocked or review-only
 - policy-denied routes must fail closed
 
