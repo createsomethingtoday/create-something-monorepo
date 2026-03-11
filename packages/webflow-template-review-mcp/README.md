@@ -47,6 +47,7 @@ Optional:
 ## Tools
 
 - `template_review_health`
+- `template_review_get_metrics`
 - `template_review_list_queue` (compact queue summaries)
 - `template_review_my_queue` (compact queue summaries for the authenticated reviewer)
 - `template_review_search_assets`

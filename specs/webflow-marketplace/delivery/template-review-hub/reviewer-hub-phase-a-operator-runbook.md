@@ -90,7 +90,7 @@ This applies:
   - `pack="webflow-marketplace-review-phase-a"`
   - `mode="compact"`
   - `activeServers=["webflow-template-review-mcp"]`
-  - `maxProxyTools=12`
+  - `maxProxyTools=18`
 
 ## 7. Verify each reviewer Hub
 
@@ -120,6 +120,7 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 Phase A reviewer Hubs should expose template-review-context tools plus narrow reviewer-safe write verbs:
 
 - `template_review_health`
+- `template_review_get_metrics`
 - `template_review_list_queue`
 - `template_review_my_queue`
 - `template_review_search_assets`

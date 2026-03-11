@@ -18,9 +18,10 @@ shared_phase_a_policy:
     mode: "compact"
     active_servers:
       - "webflow-template-review-mcp"
-    max_proxy_tools: 14
+    max_proxy_tools: 18
   allowed_proxy_tools:
     - "webflow-template-review-mcp__template_review_health"
+    - "webflow-template-review-mcp__template_review_get_metrics"
     - "webflow-template-review-mcp__template_review_list_queue"
     - "webflow-template-review-mcp__template_review_my_queue"
     - "webflow-template-review-mcp__template_review_search_assets"

@@ -52,13 +52,14 @@ Use this immediately, because it only depends on the server that is already conn
 
 - `mode`: `compact`
 - `activeServers`: `["webflow-template-review-mcp"]`
-- `maxProxyTools`: `14`
+- `maxProxyTools`: `18`
 
 ### Reviewer-visible tool target
 
 Visible tools should be limited to:
 
 - `webflow-template-review-mcp__template_review_health`
+- `webflow-template-review-mcp__template_review_get_metrics`
 - `webflow-template-review-mcp__template_review_list_queue`
 - `webflow-template-review-mcp__template_review_my_queue`
 - `webflow-template-review-mcp__template_review_search_assets`
@@ -69,6 +70,7 @@ Visible tools should be limited to:
 - `webflow-template-review-mcp__template_review_get_review_context`
 - `webflow-template-review-mcp__template_review_list_releases`
 - `webflow-template-review-mcp__template_review_get_field_map`
+- `webflow-template-review-mcp__template_review_assign_reviewer`
 - `webflow-template-review-mcp__template_review_assign_self`
 - `webflow-template-review-mcp__template_review_unassign_self`
 - `webflow-template-review-mcp__template_review_request_changes`
@@ -150,7 +152,7 @@ For each reviewer-specific Hub/account, apply this Phase A discovery posture fir
 {
   "mode": "compact",
   "activeServers": ["webflow-template-review-mcp"],
-  "maxProxyTools": 14
+  "maxProxyTools": 18
 }
 ```
 

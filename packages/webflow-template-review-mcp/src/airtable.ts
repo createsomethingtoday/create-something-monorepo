@@ -130,6 +130,38 @@ export interface TemplateReviewContext {
   version: TemplateReviewVersion;
 }
 
+export interface TemplateReviewMetricsWindow {
+  startDate: string;
+  endDate: string;
+  days: number;
+}
+
+export interface TemplateReviewMarketplaceMetrics {
+  window: TemplateReviewMetricsWindow;
+  totals: {
+    templatesScanned: number;
+    submissions: number;
+    decisions: number;
+    approvals: number;
+    rejections: number;
+    published: number;
+  };
+  reviewStatusActivity: Record<string, number>;
+  backlogSnapshot: {
+    ready_to_review: number;
+    in_review: number;
+    changes_requested: number;
+    approved: number;
+    published: number;
+    unknown: number;
+  };
+  qualityRatingSnapshot: Record<string, number>;
+  turnaround: {
+    decidedCount: number;
+    averageHours: number | null;
+  };
+}
+
 export interface TemplateReviewRelease {
   releaseId: string;
   releaseName: string;
@@ -371,6 +403,21 @@ function compareIsoDates(a?: string, b?: string): number {
   return leftValue - rightValue;
 }
 
+function formatIsoDateOnly(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
+function parseDate(value?: string): number | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isWithinRange(value: string | undefined, startMs: number, endExclusiveMs: number): boolean {
+  const parsed = parseDate(value);
+  return parsed !== null && parsed >= startMs && parsed < endExclusiveMs;
+}
+
 function sortQueueItems(items: TemplateReviewQueueItem[], sort: TemplateReviewQueueSort): TemplateReviewQueueItem[] {
   const cloned = [...items];
   cloned.sort((left, right) => {
@@ -553,6 +600,100 @@ export class AirtableClient {
     return {
       sortApplied: sort,
       items: sortQueueItems(filtered, sort),
+    };
+  }
+
+  async getMarketplaceMetrics(options?: { days?: number; end_date?: string }): Promise<TemplateReviewMarketplaceMetrics> {
+    const days = Math.min(Math.max(options?.days ?? 7, 1), 90);
+    const endBase = options?.end_date ? new Date(`${options.end_date}T00:00:00.000Z`) : new Date();
+    const endDay = new Date(Date.UTC(endBase.getUTCFullYear(), endBase.getUTCMonth(), endBase.getUTCDate()));
+    const endExclusive = new Date(endDay);
+    endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
+
+    const startDay = new Date(endDay);
+    startDay.setUTCDate(startDay.getUTCDate() - (days - 1));
+
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assets,
+      fieldNames: Object.values(CONFIRMED_ASSET_FIELDS),
+      filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
+      limit: 1000,
+    });
+    const assets = records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
+
+    const startMs = startDay.getTime();
+    const endExclusiveMs = endExclusive.getTime();
+
+    const reviewStatusActivity = Object.fromEntries(REVIEW_STATUS_OPTIONS.map((status) => [status, 0]));
+    const qualityRatingSnapshot = Object.fromEntries(QUALITY_RATING_OPTIONS.map((rating) => [rating, 0]));
+    const backlogSnapshot = {
+      ready_to_review: 0,
+      in_review: 0,
+      changes_requested: 0,
+      approved: 0,
+      published: 0,
+      unknown: 0,
+    };
+
+    let submissions = 0;
+    let decisions = 0;
+    let approvals = 0;
+    let rejections = 0;
+    let published = 0;
+    let decidedCount = 0;
+    let turnaroundHoursTotal = 0;
+
+    for (const asset of assets) {
+      if (isWithinRange(asset.submittedDate, startMs, endExclusiveMs)) submissions += 1;
+      if (isWithinRange(asset.publishedDate, startMs, endExclusiveMs)) published += 1;
+
+      if (asset.latestReviewStatus && Object.hasOwn(reviewStatusActivity, asset.latestReviewStatus) && isWithinRange(asset.latestReviewDate, startMs, endExclusiveMs)) {
+        reviewStatusActivity[asset.latestReviewStatus] += 1;
+      }
+
+      if (asset.qualityRating && Object.hasOwn(qualityRatingSnapshot, asset.qualityRating)) {
+        qualityRatingSnapshot[asset.qualityRating] += 1;
+      }
+
+      const normalizedStatus = normalizeQueueStatus(asset);
+      if (normalizedStatus) backlogSnapshot[normalizedStatus] += 1;
+      else backlogSnapshot.unknown += 1;
+
+      if (isWithinRange(asset.decisionDate, startMs, endExclusiveMs)) {
+        decisions += 1;
+        if (/approved/i.test(asset.latestReviewStatus ?? '')) approvals += 1;
+        if (/rejected/i.test(asset.latestReviewStatus ?? '')) rejections += 1;
+
+        const submittedMs = parseDate(asset.submittedDate);
+        const decisionMs = parseDate(asset.decisionDate);
+        if (submittedMs !== null && decisionMs !== null && decisionMs >= submittedMs) {
+          decidedCount += 1;
+          turnaroundHoursTotal += (decisionMs - submittedMs) / 36e5;
+        }
+      }
+    }
+
+    return {
+      window: {
+        startDate: formatIsoDateOnly(startDay),
+        endDate: formatIsoDateOnly(endDay),
+        days,
+      },
+      totals: {
+        templatesScanned: assets.length,
+        submissions,
+        decisions,
+        approvals,
+        rejections,
+        published,
+      },
+      reviewStatusActivity,
+      backlogSnapshot,
+      qualityRatingSnapshot,
+      turnaround: {
+        decidedCount,
+        averageHours: decidedCount > 0 ? Number((turnaroundHoursTotal / decidedCount).toFixed(2)) : null,
+      },
     };
   }
 

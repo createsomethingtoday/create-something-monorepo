@@ -88,6 +88,25 @@ resources:
     access: "read"
     pii: false
 tools:
+  - name: "template_review_get_metrics"
+    description: "Return compact marketplace template review metrics for a recent date window."
+    action_type: "read"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.metrics.read"
+    input_schema_summary:
+      required: []
+      optional:
+        - "days"
+        - "end_date"
+    output_contract:
+      success_shape: "Returns compact aggregate metrics for the requested window, including submissions, decisions, approvals, rejections, published count, current backlog snapshot, review-status activity, quality-rating snapshot, and average decision turnaround hours. This tool is for analytics summaries, not record-by-record inspection."
+      error_shape: "Returns structured Airtable or date-window validation error."
+    idempotency_expectation: "Pure read operation."
+    fallback_behavior: "Use Airtable reporting views manually if Hub metrics read path fails."
+
   - name: "template_review_list_queue"
     description: "List compact queue summaries for template submissions ready for review."
     action_type: "read"

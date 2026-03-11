@@ -87,6 +87,27 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   );
 
   server.tool(
+    'template_review_get_metrics',
+    'Return compact marketplace template review metrics for a recent date window.',
+    {
+      days: z.number().int().min(1).max(90).optional(),
+      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    },
+    async ({ days, end_date }) => {
+      try {
+        return asSuccess({
+          metrics: await getClient().getMarketplaceMetrics({
+            days,
+            end_date,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_list_queue',
     'List compact template review queue summaries using confirmed template Airtable fields.',
     {
