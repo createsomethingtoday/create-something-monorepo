@@ -177,7 +177,7 @@
   .performance-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--space-md);
+    gap: 0.75rem 1.25rem;
   }
 
   .performance-item {
@@ -200,6 +200,7 @@
   .performance-content {
     display: flex;
     flex-direction: column;
+    gap: 0.15rem;
   }
 
   .performance-value {
@@ -213,8 +214,9 @@
 
   .performance-label {
     font-size: var(--text-caption);
-    color: var(--color-fg-secondary);
-    opacity: 0.78;
+    color: var(--color-fg-muted);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
   }
 
   .distribution-list {
@@ -240,6 +242,7 @@
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
   }
 
   .distribution-meta {
@@ -252,7 +255,7 @@
   .distribution-label {
     position: relative;
     padding-left: 0.75rem;
-    font-size: var(--text-body-sm);
+    font-size: 0.98rem;
     color: var(--color-fg-primary);
     font-weight: var(--font-medium);
   }
@@ -273,6 +276,7 @@
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
   }
 
   .distribution-track-row {
@@ -283,8 +287,10 @@
   }
 
   .distribution-percentage {
-    font-size: var(--text-body-sm);
-    font-weight: var(--font-medium);
+    min-width: 2.7rem;
+    text-align: right;
+    font-size: 1rem;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
     font-variant-numeric: tabular-nums;
   }

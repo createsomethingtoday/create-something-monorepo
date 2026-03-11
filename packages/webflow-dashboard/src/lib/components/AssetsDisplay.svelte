@@ -495,7 +495,7 @@
   .section-heading {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.38rem;
   }
 
   .section-title {
@@ -511,8 +511,8 @@
   .section-description {
     margin: 0;
     font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    opacity: 0.8;
+    color: var(--color-fg-tertiary);
+    line-height: 1.5;
   }
 
   .section-actions {
@@ -600,7 +600,7 @@
   .status-meta {
     display: flex;
     flex-direction: column;
-    gap: 0.05rem;
+    gap: 0.16rem;
   }
 
   .status-line {
@@ -612,7 +612,7 @@
 
   .status-title {
     font-family: var(--font-heading);
-    font-size: 1rem;
+    font-size: 1.08rem;
     font-weight: var(--font-semibold);
     letter-spacing: 0.01em;
     color: var(--color-fg-primary);
@@ -623,7 +623,7 @@
   .sort-summary {
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
-    opacity: 0.9;
+    letter-spacing: 0.02em;
     font-variant-numeric: tabular-nums;
   }
 
@@ -666,14 +666,17 @@
     padding: 0;
     background: none;
     border: none;
-    color: inherit;
+    color: var(--color-fg-muted);
     font: inherit;
+    font-size: var(--text-caption);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     cursor: pointer;
     transition: color var(--duration-micro) var(--ease-standard);
   }
 
   .sort-btn:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-fg-secondary);
   }
 
   .sort-btn.active {
