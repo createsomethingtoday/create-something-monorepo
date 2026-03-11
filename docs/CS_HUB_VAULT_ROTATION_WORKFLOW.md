@@ -60,6 +60,14 @@ Per-team hub worker tokens (runtime / compat fallback only, or migrated plaintex
 - `CS_HUB_LEAH_API_TOKEN`
 - `CS_HUB_MJ_API_TOKEN`
 
+Webflow reviewer Hub worker tokens:
+
+- `CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN`
+- `CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_API_TOKEN`
+- `CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN`
+- `CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN`
+- `CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN`
+
 Per-team Notion bridge basic auth passwords:
 
 - `CS_HUB_LAINY_NOTION_BRIDGE_BASIC_PASSWORD`
