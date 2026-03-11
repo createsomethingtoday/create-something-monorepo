@@ -11,7 +11,7 @@ This package uses:
 - scheduled discovery
 - Queue-backed transcript processing
 - D1 meeting ledger keyed by canonical Zoom meeting identity
-- account-wide recording discovery for Server-to-Server Zoom apps
+- account-level recording discovery for Server-to-Server Zoom apps
 - Notion page-body transcript writes aligned to the live `Internal LLM [HD]` format
 
 ## Runtime modes
@@ -22,6 +22,16 @@ Notion writes support two transport modes:
 - `hub` — Hub-backed writes via `NOTION_HUB_URL`, `NOTION_HUB_API_TOKEN`, and `NOTION_HUB_PROXY_TOOL`
 
 `hub` is the practical default for current Half Dozen operator-managed access. `NOTION_RUNTIME_CONNECTION_REF` can be carried as an approved runtime handle for rollout governance, but this package does not yet resolve raw `ntn_...` refs directly.
+
+## Zoom scopes
+
+For the default Server-to-Server account discovery path, the Zoom app needs these scopes:
+
+- `cloud_recording:read:list_account_recordings:admin`
+- `cloud_recording:read:list_recording_files:admin`
+- `cloud_recording:read:meeting_transcript:admin`
+
+If you intentionally switch to a per-user discovery path via `ZOOM_USER_ID`, the app instead needs the corresponding user-recordings listing scope.
 
 ## HTTP surface
 

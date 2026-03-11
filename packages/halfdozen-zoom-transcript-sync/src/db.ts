@@ -1,62 +1,60 @@
 import type { LedgerRow, SyncRunRow, TranscriptCandidate } from './types';
 
-const SCHEMA_SQL = `
-CREATE TABLE IF NOT EXISTS sync_runs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  trigger TEXT NOT NULL,
-  started_at TEXT NOT NULL,
-  completed_at TEXT,
-  status TEXT NOT NULL DEFAULT 'running',
-  discovered_count INTEGER NOT NULL DEFAULT 0,
-  queued_count INTEGER NOT NULL DEFAULT 0,
-  skipped_count INTEGER NOT NULL DEFAULT 0,
-  synced_count INTEGER NOT NULL DEFAULT 0,
-  failed_count INTEGER NOT NULL DEFAULT 0,
-  error TEXT
-);
-
-CREATE TABLE IF NOT EXISTS sync_locks (
-  id TEXT PRIMARY KEY,
-  acquired_at TEXT NOT NULL,
-  expires_at TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS transcript_sync_ledger (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  dedup_key TEXT NOT NULL UNIQUE,
-  canonical_meeting_key TEXT NOT NULL,
-  zoom_meeting_id TEXT,
-  zoom_meeting_uuid TEXT,
-  meeting_title TEXT NOT NULL,
-  meeting_date TEXT NOT NULL,
-  recording_start_time TEXT,
-  source_url TEXT,
-  original_source_url TEXT,
-  transcript_file_id TEXT,
-  transcript_download_url TEXT NOT NULL,
-  transcript_file_type TEXT,
-  transcript_file_extension TEXT,
-  transcript_sha256 TEXT,
-  notion_page_id TEXT,
-  notion_page_url TEXT,
-  status TEXT NOT NULL DEFAULT 'discovered',
-  last_error TEXT,
-  first_seen_at TEXT NOT NULL,
-  last_seen_at TEXT NOT NULL,
-  enqueued_at TEXT,
-  last_synced_at TEXT,
-  updated_at TEXT NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_transcript_sync_ledger_status
-  ON transcript_sync_ledger(status);
-
-CREATE INDEX IF NOT EXISTS idx_transcript_sync_ledger_meeting
-  ON transcript_sync_ledger(canonical_meeting_key, meeting_date);
-`;
+const SCHEMA_STATEMENTS = [
+  `CREATE TABLE IF NOT EXISTS sync_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trigger_name TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    completed_at TEXT,
+    status TEXT NOT NULL DEFAULT 'running',
+    discovered_count INTEGER NOT NULL DEFAULT 0,
+    queued_count INTEGER NOT NULL DEFAULT 0,
+    skipped_count INTEGER NOT NULL DEFAULT 0,
+    synced_count INTEGER NOT NULL DEFAULT 0,
+    failed_count INTEGER NOT NULL DEFAULT 0,
+    error TEXT
+  )`,
+  `CREATE TABLE IF NOT EXISTS sync_locks (
+    id TEXT PRIMARY KEY,
+    acquired_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS transcript_sync_ledger (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dedup_key TEXT NOT NULL UNIQUE,
+    canonical_meeting_key TEXT NOT NULL,
+    zoom_meeting_id TEXT,
+    zoom_meeting_uuid TEXT,
+    meeting_title TEXT NOT NULL,
+    meeting_date TEXT NOT NULL,
+    recording_start_time TEXT,
+    source_url TEXT,
+    original_source_url TEXT,
+    transcript_file_id TEXT,
+    transcript_download_url TEXT NOT NULL,
+    transcript_file_type TEXT,
+    transcript_file_extension TEXT,
+    transcript_sha256 TEXT,
+    notion_page_id TEXT,
+    notion_page_url TEXT,
+    status TEXT NOT NULL DEFAULT 'discovered',
+    last_error TEXT,
+    first_seen_at TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    enqueued_at TEXT,
+    last_synced_at TEXT,
+    updated_at TEXT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_transcript_sync_ledger_status
+    ON transcript_sync_ledger(status)`,
+  `CREATE INDEX IF NOT EXISTS idx_transcript_sync_ledger_meeting
+    ON transcript_sync_ledger(canonical_meeting_key, meeting_date)`,
+] as const;
 
 export async function initSchema(db: D1Database): Promise<void> {
-  await db.exec(SCHEMA_SQL);
+  for (const statement of SCHEMA_STATEMENTS) {
+    await db.exec(statement);
+  }
 }
 
 export async function acquireLock(db: D1Database, lockId: string, ttlSeconds = 300): Promise<boolean> {
@@ -79,7 +77,7 @@ export async function releaseLock(db: D1Database, lockId: string): Promise<void>
 
 export async function createSyncRun(db: D1Database, trigger: string): Promise<number> {
   const result = await db
-    .prepare(`INSERT INTO sync_runs (trigger, started_at, status) VALUES (?, ?, 'running')`)
+    .prepare(`INSERT INTO sync_runs (trigger_name, started_at, status) VALUES (?, ?, 'running')`)
     .bind(trigger, nowIso())
     .run();
   return Number(result.meta.last_row_id);
@@ -128,7 +126,23 @@ export async function incrementRunCounter(
 
 export async function listRecentRuns(db: D1Database, limit = 10): Promise<SyncRunRow[]> {
   const result = await db
-    .prepare(`SELECT * FROM sync_runs ORDER BY id DESC LIMIT ?`)
+    .prepare(`
+      SELECT
+        id,
+        trigger_name AS trigger,
+        started_at,
+        completed_at,
+        status,
+        discovered_count,
+        queued_count,
+        skipped_count,
+        synced_count,
+        failed_count,
+        error
+      FROM sync_runs
+      ORDER BY id DESC
+      LIMIT ?
+    `)
     .bind(limit)
     .all<SyncRunRow>();
   return result.results ?? [];
