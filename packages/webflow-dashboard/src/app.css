@@ -114,8 +114,8 @@
   --shadow-md: 0 10px 24px rgba(8, 8, 8, 0.06);
   --shadow-lg: 0 16px 32px rgba(8, 8, 8, 0.08);
 
-  --layout-content-max-width: 76rem;
-  --layout-header-max-width: 78rem;
+  --layout-content-max-width: 81rem;
+  --layout-header-max-width: 83rem;
 }
 
 [data-theme='dark'] {

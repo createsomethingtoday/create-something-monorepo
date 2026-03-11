@@ -291,7 +291,7 @@
 
   .overview-top {
     display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(20rem, 0.9fr);
+    grid-template-columns: minmax(0, 1.4fr) minmax(22rem, 0.95fr);
     gap: var(--space-md);
   }
 
@@ -309,6 +309,7 @@
   .dashboard-summary-grid {
     display: grid;
     grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .assets-section {
