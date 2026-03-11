@@ -17,10 +17,11 @@ shared_phase_a_policy:
     mode: "compact"
     active_servers:
       - "webflow-template-review-mcp"
-    max_proxy_tools: 12
+    max_proxy_tools: 14
   allowed_proxy_tools:
     - "webflow-template-review-mcp__template_review_health"
     - "webflow-template-review-mcp__template_review_list_queue"
+    - "webflow-template-review-mcp__template_review_my_queue"
     - "webflow-template-review-mcp__template_review_search_assets"
     - "webflow-template-review-mcp__template_review_search_versions"
     - "webflow-template-review-mcp__template_review_get_asset"
@@ -30,6 +31,7 @@ shared_phase_a_policy:
     - "webflow-template-review-mcp__template_review_list_releases"
     - "webflow-template-review-mcp__template_review_get_field_map"
     - "webflow-template-review-mcp__template_review_assign_self"
+    - "webflow-template-review-mcp__template_review_unassign_self"
     - "webflow-template-review-mcp__template_review_assign_reviewer"
   blocked_proxy_tools:
     - "webflow-template-review-mcp__template_review_request_changes"

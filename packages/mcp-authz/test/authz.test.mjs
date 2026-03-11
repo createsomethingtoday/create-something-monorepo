@@ -52,6 +52,16 @@ test('hub route classification treats reviewer assignment as write access', () =
   assert.equal(classification.accessType, 'write');
 });
 
+test('hub route classification treats reviewer unassignment as write access', () => {
+  const classification = classifyHubRoute({
+    proxyToolName: 'webflow-template-review-mcp__template_review_unassign_self',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_unassign_self',
+  });
+
+  assert.equal(classification.accessType, 'write');
+});
+
 test('hub route auth blocks mutation discovery for read-only sessions', async () => {
   const request = buildHubAuthorizationRequest({
     accountId: 'acct_1',

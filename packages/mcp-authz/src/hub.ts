@@ -5,7 +5,7 @@ type ToolLike = {
 };
 
 const DESTRUCTIVE_PATTERN = /\b(delete|destroy|purge|wipe|drop|archive|trash|remove|revoke|disconnect|deactivate)\b/i;
-const WRITE_PATTERN = /\b(create|update|upsert|insert|append|send|post|publish|start|run|execute|sync|batch_update|values_update|set|assign)\b/i;
+const WRITE_PATTERN = /\b(create|update|upsert|insert|append|send|post|publish|start|run|execute|sync|batch_update|values_update|set|assign|unassign|clear)\b/i;
 const AUTH_ADMIN_PATTERN = /\b(get_connect_link|oauth|authorize|auth|token|consent|credential|scope)\b/i;
 const CONTROL_PLANE_PATTERN = /\b(policy|rollout|registry|state|quota|rate_limit|discovery|bundle|trace)\b/i;
 

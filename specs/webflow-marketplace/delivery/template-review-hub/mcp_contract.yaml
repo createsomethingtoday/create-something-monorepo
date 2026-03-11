@@ -97,10 +97,30 @@ tools:
         - "assigned"
         - "sort"
     output_contract:
-      success_shape: "Returns normalized queue records with assignableVersionId, review ownership, and reviewer-facing capability flags."
+      success_shape: "Returns normalized queue records with assignableVersionId, review ownership, reviewer-facing capability flags, and reviewer-safe defaults for ready_to_review + unassigned + submittedDate_desc when filters are omitted."
       error_shape: "Returns structured Airtable or scope error."
     idempotency_expectation: "Pure read operation."
     fallback_behavior: "Use Airtable queue view manually if Hub read path fails."
+
+  - name: "template_review_my_queue"
+    description: "List queue items already assigned to the currently authenticated reviewer."
+    action_type: "read"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.queue.read"
+    input_schema_summary:
+      required: []
+      optional:
+        - "limit"
+        - "status"
+        - "sort"
+    output_contract:
+      success_shape: "Returns normalized queue records filtered to items assigned to the current reviewer."
+      error_shape: "Returns reviewer identity unavailable or Airtable failure error."
+    idempotency_expectation: "Pure read operation."
+    fallback_behavior: "Use Airtable filtered by reviewer if Hub read path fails."
 
   - name: "template_review_get_review_context"
     description: "Read the normalized reviewer context for one template version."
@@ -137,6 +157,24 @@ tools:
       error_shape: "Returns reviewer identity unavailable, not-found, or Airtable failure error."
     idempotency_expectation: "Idempotent when the selected version is already assigned to the current reviewer."
     fallback_behavior: "Reviewer manually assigns themselves in Airtable if the narrow write path fails."
+
+  - name: "template_review_unassign_self"
+    description: "Clear reviewer assignment only when the selected Asset Version is assigned to the currently authenticated reviewer."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow_narrow_write"
+    auth_scopes:
+      - "review.assignment.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+      optional: []
+    output_contract:
+      success_shape: "Returns the updated version with 📝Reviewer cleared when the current reviewer owns the assignment."
+      error_shape: "Returns reviewer identity unavailable, assignment conflict, not-found, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the selected version is already unassigned."
+    fallback_behavior: "Reviewer manually clears assignment in Airtable if the narrow write path fails."
 
   - name: "template_review_get_asset"
     description: "Read one template asset and associated versions."
