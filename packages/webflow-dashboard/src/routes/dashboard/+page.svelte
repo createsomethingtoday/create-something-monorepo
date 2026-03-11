@@ -229,8 +229,8 @@
                   <span><strong>{(data.assets || []).length}</strong> total assets</span>
                 </div>
                 <div class="quick-actions">
-                  <Button variant="default" size="sm" onclick={handleReviewAssets}>Review assets</Button>
-                  <Button variant="secondary" size="sm" onclick={handleOpenValidation}>Open validation</Button>
+                  <Button variant="secondary" size="sm" onclick={handleReviewAssets}>Review assets</Button>
+                  <Button variant="outline" size="sm" onclick={handleOpenValidation}>Open validation</Button>
                   <Button variant="outline" size="sm" onclick={handleExploreMarketplace}
                     >Explore marketplace</Button
                   >
@@ -303,7 +303,8 @@
     display: flex;
     flex-direction: column;
     min-height: 100%;
-    max-width: 39rem;
+    justify-content: center;
+    max-width: 37.5rem;
   }
 
   .page-subtitle :global(*) {
@@ -315,13 +316,21 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem 1rem;
+    gap: 0.35rem 0.85rem;
     color: var(--color-fg-secondary);
-    font-size: var(--text-body-sm);
+    font-size: 1.02rem;
+    line-height: 1.4;
   }
 
   .portfolio-evidence span {
+    position: relative;
     white-space: nowrap;
+  }
+
+  .portfolio-evidence span:not(:first-child)::before {
+    content: '•';
+    color: var(--color-fg-muted);
+    margin-right: 0.85rem;
   }
 
   .portfolio-evidence strong {
@@ -341,17 +350,27 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.85rem;
-    margin-top: 1rem;
-    padding-top: 0.95rem;
+    gap: 0.7rem;
+    margin-top: 1.15rem;
+    padding-top: 0.9rem;
     border-top: 1px solid var(--color-shell-border-default);
-    max-width: 34rem;
+    max-width: 35rem;
   }
 
   .quick-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.65rem;
+  }
+
+  .quick-actions :global(.btn) {
+    min-height: 2.5rem;
+    padding-inline: 0.9rem;
+  }
+
+  .quick-actions :global(.btn-secondary),
+  .quick-actions :global(.btn-outline) {
+    color: var(--color-fg-secondary);
   }
 
   .submission-column {
