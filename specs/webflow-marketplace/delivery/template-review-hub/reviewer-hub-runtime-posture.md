@@ -184,6 +184,7 @@ For host integrations and smoke checks, note the read envelope for reviewer cont
 
 - `template_review_get_review_context` returns the normalized payload under `data.context`
 - `currentReviewer`, `reviewOwner`, and `isAssignedToCurrentReviewer` are fields on `data.context`, not top-level `data`
+- repeatable bearer-token validation is scripted in `scripts/webflow-reviewer-assign-self-smoke.sh`
 
 Keep these out of reviewer use until:
 

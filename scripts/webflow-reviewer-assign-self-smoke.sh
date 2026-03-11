@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/}"
+INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
+REVIEWER="${REVIEWER:-all}"
+
+reviewer_url() {
+  case "$1" in
+    natalia) echo "https://wf-template-review-natalia.mcp.createsomething.agency/mcp" ;;
+    sudiksha) echo "https://wf-template-review-sudiksha.mcp.createsomething.agency/mcp" ;;
+    eric) echo "https://wf-template-review-eric.mcp.createsomething.agency/mcp" ;;
+    vicki) echo "https://wf-template-review-vicki.mcp.createsomething.agency/mcp" ;;
+    mariana) echo "https://wf-template-review-mariana.mcp.createsomething.agency/mcp" ;;
+    *) return 1 ;;
+  esac
+}
+
+reviewer_secret_name() {
+  case "$1" in
+    natalia) echo "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN" ;;
+    sudiksha) echo "CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_API_TOKEN" ;;
+    eric) echo "CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN" ;;
+    vicki) echo "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN" ;;
+    mariana) echo "CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN" ;;
+    *) return 1 ;;
+  esac
+}
+
+reviewer_version_id() {
+  case "$1" in
+    natalia) echo "rec2Z71ZwPRlAqmJ5" ;;
+    sudiksha) echo "reci2kYADC8S6OFw3" ;;
+    eric) echo "reckK8373eRd3cZyJ" ;;
+    vicki) echo "recMzHVzKn9M7m7fH" ;;
+    mariana) echo "recNGiYJ1fjpQ9Q8D" ;;
+    *) return 1 ;;
+  esac
+}
+
+reviewer_email() {
+  case "$1" in
+    natalia) echo "natalia.ledford@webflow.com" ;;
+    sudiksha) echo "sudiksha.khanduja@webflow.com" ;;
+    eric) echo "eric.unger@webflow.com" ;;
+    vicki) echo "vicki.chen@webflow.com" ;;
+    mariana) echo "mariana.segura@webflow.com" ;;
+    *) return 1 ;;
+  esac
+}
+
+require_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "missing required command: $1" >&2
+    exit 1
+  fi
+}
+
+resolve_token() {
+  local secret_name="$1"
+  if [[ -n "${!secret_name:-}" ]]; then
+    echo "${!secret_name}"
+    return 0
+  fi
+  if command -v infisical >/dev/null 2>&1; then
+    local token
+    local -a cmd=(
+      infisical secrets get "$secret_name"
+      --plain
+      --silent
+      --env="$INFISICAL_ENV"
+      --path="$INFISICAL_PATH"
+      --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+    )
+    if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+      cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+    fi
+    token="$("${cmd[@]}" 2>/dev/null || true)"
+    if [[ -n "$token" ]]; then
+      echo "$token"
+      return 0
+    fi
+  fi
+  return 1
+}
+
+mcp_call() {
+  local hub_url="$1"
+  local token="$2"
+  local tool_name="$3"
+  local args_json="$4"
+
+  curl -sS -X POST "$hub_url" \
+    -H "Authorization: Bearer ${token}" \
+    -H 'Content-Type: application/json' \
+    -d "$(jq -cn --arg name "$tool_name" --argjson args "$args_json" '{jsonrpc:"2.0",id:(now|tostring),method:"tools/call",params:{name:$name,arguments:$args}}')"
+}
+
+assert_no_rpc_error() {
+  local payload="$1"
+  local context="$2"
+  if ! echo "$payload" | jq -e '.error == null' >/dev/null 2>&1; then
+    echo "rpc error during ${context}:"
+    echo "$payload" | jq .
+    exit 1
+  fi
+}
+
+payload_json() {
+  jq -r '.result.content[0].text | fromjson'
+}
+
+smoke_reviewer() {
+  local reviewer="$1"
+  local hub_url secret_name version_id expected_email token
+  hub_url="$(reviewer_url "$reviewer")"
+  secret_name="$(reviewer_secret_name "$reviewer")"
+  version_id="$(reviewer_version_id "$reviewer")"
+  expected_email="$(reviewer_email "$reviewer")"
+
+  if ! token="$(resolve_token "$secret_name")"; then
+    echo "missing ${secret_name} and unable to fetch from Infisical" >&2
+    exit 1
+  fi
+
+  echo "== ${reviewer} =="
+  local refresh_resp assign_resp context_resp revert_resp
+  refresh_resp="$(mcp_call "$hub_url" "$token" "hub_refresh_connections" '{}')"
+  assert_no_rpc_error "$refresh_resp" "hub_refresh_connections ${reviewer}"
+
+  assign_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_assign_self",args:{version_id:$version_id}}')")"
+  assert_no_rpc_error "$assign_resp" "assign_self ${reviewer}"
+
+  context_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_get_review_context",args:{version_id:$version_id}}')")"
+  assert_no_rpc_error "$context_resp" "get_review_context ${reviewer}"
+
+  revert_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_assign_reviewer",args:{version_id:$version_id,review_owner:null}}')")"
+  assert_no_rpc_error "$revert_resp" "assign_reviewer(null) ${reviewer}"
+
+  local assign_ok assign_owner context_ok context_current context_owner context_assigned revert_ok revert_owner
+  assign_ok="$(echo "$assign_resp" | payload_json | jq -r '.ok // false')"
+  assign_owner="$(echo "$assign_resp" | payload_json | jq -r '.data.updated_version.reviewOwner.email // "null"')"
+  context_ok="$(echo "$context_resp" | payload_json | jq -r '.ok // false')"
+  context_current="$(echo "$context_resp" | payload_json | jq -r '.data.context.currentReviewer.email // "null"')"
+  context_owner="$(echo "$context_resp" | payload_json | jq -r '.data.context.reviewOwner.email // "null"')"
+  context_assigned="$(echo "$context_resp" | payload_json | jq -r '.data.context.isAssignedToCurrentReviewer // false')"
+  revert_ok="$(echo "$revert_resp" | payload_json | jq -r '.ok // false')"
+  revert_owner="$(echo "$revert_resp" | payload_json | jq -r '.data.updated_version.reviewOwner.email // "null"')"
+
+  if [[ "$assign_ok" != "true" || "$assign_owner" != "$expected_email" ]]; then
+    echo "assign_self validation failed for ${reviewer}" >&2
+    echo "$assign_resp" | jq .
+    exit 1
+  fi
+  if [[ "$context_ok" != "true" || "$context_current" != "$expected_email" || "$context_owner" != "$expected_email" || "$context_assigned" != "true" ]]; then
+    echo "get_review_context validation failed for ${reviewer}" >&2
+    echo "$context_resp" | jq .
+    exit 1
+  fi
+  if [[ "$revert_ok" != "true" || "$revert_owner" != "null" ]]; then
+    echo "revert validation failed for ${reviewer}" >&2
+    echo "$revert_resp" | jq .
+    exit 1
+  fi
+
+  echo "assign_self=ok owner=${assign_owner}"
+  echo "get_review_context=ok current=${context_current} assigned=${context_assigned}"
+  echo "revert=ok owner=${revert_owner}"
+}
+
+main() {
+  require_cmd curl
+  require_cmd jq
+
+  local reviewers=()
+  if [[ "$REVIEWER" == "all" ]]; then
+    reviewers=(natalia sudiksha eric vicki mariana)
+  else
+    reviewers=("$REVIEWER")
+  fi
+
+  local reviewer
+  for reviewer in "${reviewers[@]}"; do
+    smoke_reviewer "$reviewer"
+  done
+
+  echo "webflow reviewer assign-self smoke passed"
+}
+
+main "$@"
