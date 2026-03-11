@@ -1,7 +1,7 @@
 /**
  * Ground Commercial Specification
  * 
- * 60-second commercial showing the real Ground CLI experience.
+ * 30-second commercial showing the real Ground CLI experience.
  * Product: github.com/createsomethingtoday/ground
  * 
  * Real scenario: hashString function duplicated between analytics.ts and +server.ts
@@ -13,7 +13,7 @@ export const SPEC = {
   fps: 30,
   width: 1920,
   height: 1080,
-  durationInFrames: 1800, // 60 seconds
+  durationInFrames: 900, // 30 seconds
   
   // Product information
   product: {

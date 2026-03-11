@@ -12,8 +12,8 @@
  *   <YourVisualComponent />
  * </AudioSync>
  */
-import React, { createContext, useContext, useMemo } from 'react';
-import { useCurrentFrame, useVideoConfig, Audio, staticFile } from 'remotion';
+import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
+import { useCurrentFrame, Audio, staticFile } from 'remotion';
 
 export interface TimingMarker {
   label: string;
@@ -67,7 +67,6 @@ export const AudioSync: React.FC<AudioSyncProps> = ({
   onMarker,
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
   
   // Sort markers by frame
   const sortedMarkers = useMemo(
@@ -113,6 +112,21 @@ export const AudioSync: React.FC<AudioSyncProps> = ({
   const getFrame = (label: string): number | undefined => {
     return sortedMarkers.find(m => m.label === label)?.frame;
   };
+
+  const lastMarkerFrame = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!onMarker || !currentMarker) {
+      return;
+    }
+
+    if (lastMarkerFrame.current === currentMarker.frame) {
+      return;
+    }
+
+    lastMarkerFrame.current = currentMarker.frame;
+    onMarker(currentMarker);
+  }, [currentMarker, onMarker]);
   
   const contextValue: AudioSyncContextValue = {
     currentMarker,

@@ -25,17 +25,21 @@ interface GitHubHistoryCommercialProps {
   useMockData?: boolean;
   /** GitHub personal access token for API authentication */
   githubToken?: string;
+  /** How to behave if GitHub data fails to load */
+  fallbackMode?: 'error' | 'mock';
 }
 
 export const GitHubHistoryCommercial: React.FC<GitHubHistoryCommercialProps> = ({
   username = SPEC.github.username,
-  useMockData = false,
+  useMockData = true,
   githubToken,
+  fallbackMode = 'error',
 }) => {
   const { scenes, voxTreatment } = SPEC;
   
   const [data, setData] = useState<GitHubContributionData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [handle] = useState(() => delayRender('Loading GitHub data...'));
   
   useEffect(() => {
@@ -55,21 +59,46 @@ export const GitHubHistoryCommercial: React.FC<GitHubHistoryCommercialProps> = (
         continueRender(handle);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error('Failed to fetch GitHub data:', errorMessage);
-        
-        // Fall back to mock data on error
-        console.log('Falling back to mock data...');
-        const mockData = generateMockData(username);
-        setData(mockData);
-        setError(errorMessage);
+        if (fallbackMode === 'mock') {
+          console.warn('Failed to fetch GitHub data, falling back to mock data:', errorMessage);
+          setData(generateMockData(username));
+          setWarning(errorMessage);
+        } else {
+          setError(errorMessage);
+        }
         continueRender(handle);
       }
     };
     
     loadData();
-  }, [username, useMockData, githubToken, handle]);
+  }, [username, useMockData, githubToken, fallbackMode, handle]);
   
-  // Show loading state until data is ready
+  if (error && !data) {
+    return (
+      <AbsoluteFill
+        style={{
+          backgroundColor: voxTreatment.backgroundTint,
+          color: '#f5f5f5',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 16,
+          padding: 80,
+          fontFamily: 'monospace',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: 28, fontWeight: 700 }}>GitHub data unavailable</div>
+        <div style={{ fontSize: 16, maxWidth: 900, color: '#a3a3a3', lineHeight: 1.5 }}>
+          Rendered data was requested, but GitHub contributions could not be loaded.
+          Provide a valid token or enable mock data explicitly for previews.
+        </div>
+        <div style={{ fontSize: 13, maxWidth: 1000, color: '#737373' }}>{error}</div>
+      </AbsoluteFill>
+    );
+  }
+
   if (!data) {
     return (
       <AbsoluteFill
@@ -111,8 +140,8 @@ export const GitHubHistoryCommercial: React.FC<GitHubHistoryCommercialProps> = (
       chromaticAberration={voxTreatment.chromaticAberration}
       backgroundTint={voxTreatment.backgroundTint}
     >
-      {/* Error indicator (subtle, bottom corner) */}
-      {error && (
+      {/* Mock fallback indicator */}
+      {warning && (
         <div
           style={{
             position: 'absolute',
@@ -124,7 +153,7 @@ export const GitHubHistoryCommercial: React.FC<GitHubHistoryCommercialProps> = (
             zIndex: 100,
           }}
         >
-          [Mock data - API error]
+          [Mock data - GitHub fetch failed]
         </div>
       )}
       
@@ -192,7 +221,8 @@ export const GITHUB_HISTORY_COMMERCIAL_CONFIG = {
   height: SPEC.height,
   defaultProps: {
     username: SPEC.github.username,
-    useMockData: false,
+    useMockData: true,
+    fallbackMode: 'error' as const,
   },
 };
 

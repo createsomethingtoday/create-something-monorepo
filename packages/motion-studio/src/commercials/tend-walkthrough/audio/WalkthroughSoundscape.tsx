@@ -1,23 +1,23 @@
 /**
- * WalkthroughSoundscape - Tone.js integration with Remotion
- * 
- * Creates an ambient soundscape that responds to scene transitions
- * and component interactions.
- * 
- * Note: Tone.js runs in browser context. For Remotion rendering,
- * we use pre-rendered audio files generated from these definitions.
- * This component provides real-time preview functionality.
+ * WalkthroughSoundscape - Pre-rendered audio cues for the walkthrough
+ *
+ * Uses the shared declarative cue renderer so renders stay deterministic.
  */
-import React, { useEffect, useRef, useCallback } from 'react';
-import { useCurrentFrame, useVideoConfig, Audio, staticFile, interpolate } from 'remotion';
+import React from 'react';
+import { Audio, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { WALKTHROUGH_SPEC } from '../spec';
+import {
+  SoundCues,
+  SOUND_LIBRARY,
+  type SoundCue as BaseSoundCue,
+  type SoundName,
+} from '../../shared/audio/SoundCues';
 
 // Sound cue types for the walkthrough
 interface SoundCue {
   frame: number;
   type: 'transition' | 'wireframe' | 'embodiment' | 'keypress' | 'success' | 'connection';
   volume?: number;
-  note?: string;
 }
 
 /**
@@ -59,11 +59,11 @@ const generateSoundCues = (): SoundCue[] => {
   const keyboardStart = inboxScene.start + inboxScene.phases.keyboardDemo.start;
   
   // A key
-  cues.push({ frame: keyboardStart, type: 'keypress', volume: 0.06, note: 'C6' });
+  cues.push({ frame: keyboardStart, type: 'keypress', volume: 0.06 });
   // D key
-  cues.push({ frame: keyboardStart + 60, type: 'keypress', volume: 0.06, note: 'D6' });
+  cues.push({ frame: keyboardStart + 60, type: 'keypress', volume: 0.06 });
   // S key  
-  cues.push({ frame: keyboardStart + 120, type: 'keypress', volume: 0.06, note: 'E6' });
+  cues.push({ frame: keyboardStart + 120, type: 'keypress', volume: 0.06 });
   
   // Connection sounds in Assembly scene
   const assemblyScene = scenes.assembly;
@@ -86,14 +86,20 @@ const generateSoundCues = (): SoundCue[] => {
 };
 
 // Map sound types to pre-rendered audio files
-const SOUND_FILES: Record<SoundCue['type'], string> = {
-  transition: 'sounds/whoosh-soft.wav',
-  wireframe: 'sounds/tick-soft.wav',
-  embodiment: 'sounds/shimmer.wav',
-  keypress: 'sounds/micro-tick.wav',
-  success: 'sounds/success-soft.wav',
-  connection: 'sounds/pop-soft.wav',
+const SOUND_FILES: Record<SoundCue['type'], SoundName> = {
+  transition: 'whoosh-soft',
+  wireframe: 'tick-soft',
+  embodiment: 'shimmer',
+  keypress: 'micro-tick',
+  success: 'success-soft',
+  connection: 'pop-soft',
 };
+
+const WALKTHROUGH_CUES: BaseSoundCue[] = generateSoundCues().map((cue) => ({
+  frame: cue.frame,
+  sound: SOUND_FILES[cue.type],
+  volume: cue.volume,
+}));
 
 /**
  * WalkthroughSoundscape Component
@@ -102,44 +108,7 @@ const SOUND_FILES: Record<SoundCue['type'], string> = {
  * Uses pre-rendered WAV files for Remotion compatibility.
  */
 export const WalkthroughSoundscape: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const cues = useRef(generateSoundCues());
-  
-  // Track which cues have been triggered (for preview mode)
-  const triggeredRef = useRef<Set<number>>(new Set());
-  
-  return (
-    <>
-      {cues.current.map((cue, index) => {
-        // Calculate when this sound should play
-        const startFrame = cue.frame;
-        const endFrame = cue.frame + 30; // ~1 second duration
-        
-        // Only render audio elements for nearby cues
-        if (frame < startFrame - 30 || frame > endFrame + 60) {
-          return null;
-        }
-        
-        // Calculate volume envelope
-        const volume = interpolate(
-          frame,
-          [startFrame, startFrame + 5, endFrame - 5, endFrame],
-          [0, cue.volume || 0.1, cue.volume || 0.1, 0],
-          { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
-        );
-        
-        return (
-          <Audio
-            key={`${cue.type}-${index}`}
-            src={staticFile(SOUND_FILES[cue.type])}
-            startFrom={0}
-            volume={volume}
-          />
-        );
-      })}
-    </>
-  );
+  return <SoundCues cues={WALKTHROUGH_CUES} />;
 };
 
 /**
@@ -162,7 +131,7 @@ export const AmbientDrone: React.FC<{ volume?: number }> = ({ volume = 0.03 }) =
   
   return (
     <Audio
-      src={staticFile('sounds/ambient-drone.wav')}
+      src={staticFile(SOUND_LIBRARY['ambient-drone'])}
       volume={fadeVolume}
       loop
     />

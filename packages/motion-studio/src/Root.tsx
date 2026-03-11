@@ -352,7 +352,7 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={{
           ...GITHUB_HISTORY_COMMERCIAL_CONFIG.defaultProps,
           username: 'createsomethingtoday',
-          githubToken: '', // Set via Remotion input props if needed
+          githubToken: undefined, // Set via Remotion input props if needed
         }}
       />
       

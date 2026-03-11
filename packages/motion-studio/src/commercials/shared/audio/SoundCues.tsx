@@ -47,6 +47,7 @@ export const SOUND_LIBRARY = {
   
   // Ambient/resolution
   'resolve': 'sounds/resolve.wav',
+  'ambient-drone': 'sounds/ambient-drone.wav',
 } as const;
 
 export type SoundName = keyof typeof SOUND_LIBRARY;

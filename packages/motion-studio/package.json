@@ -11,21 +11,23 @@
     "render": "remotion render",
     "render:still": "remotion still",
     "preview": "remotion preview",
-    "lint": "pnpm run typecheck",
+    "lint": "pnpm run validate",
+    "validate": "pnpm run typecheck && pnpm run validate:motion-studio",
+    "validate:motion-studio": "npx tsx scripts/validate-motion-studio.ts",
     "typecheck": "tsc --noEmit",
     "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts",
     "generate-sounds": "npx tsx scripts/generate-sounds.ts"
   },
   "dependencies": {
-    "@remotion/cli": "^4.0.0",
-    "@remotion/google-fonts": "^4.0.406",
-    "@remotion/player": "^4.0.0",
+    "@remotion/cli": "4.0.410",
+    "@remotion/google-fonts": "4.0.410",
+    "@remotion/player": "4.0.410",
     "lucide-react": "^0.460.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "remotion": "^4.0.0",
+    "remotion": "4.0.410",
     "tone": "^15.0.4",
-    "zod": "^3.22.0"
+    "zod": "3.22.3"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",

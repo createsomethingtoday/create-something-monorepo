@@ -168,7 +168,13 @@ function highpass(buffer: Float32Array, cutoff: number): Float32Array {
  * Normalize to prevent clipping
  */
 function normalize(buffer: Float32Array, targetPeak: number = 0.9): Float32Array {
-  const max = Math.max(...buffer.map(Math.abs));
+  let max = 0;
+  for (let i = 0; i < buffer.length; i++) {
+    const absSample = Math.abs(buffer[i]);
+    if (absSample > max) {
+      max = absSample;
+    }
+  }
   if (max === 0) return buffer;
   const scale = targetPeak / max;
   return buffer.map(s => s * scale);
@@ -533,6 +539,32 @@ const sounds: SoundGenerator[] = [
       }
       
       return normalize(buffer, 0.5);
+    },
+  },
+  {
+    name: 'ambient-drone',
+    generate: () => {
+      const buffer = createBuffer(4);
+      const freqs = [noteToFreq('C2'), noteToFreq('G2'), noteToFreq('D3')];
+
+      for (let i = 0; i < buffer.length; i++) {
+        const t = i / SAMPLE_RATE;
+        const fadeIn = Math.min(1, t / 0.8);
+        const fadeOut = Math.min(1, (buffer.length - i) / (SAMPLE_RATE * 0.8));
+        const drift = Math.sin(t * 0.3) * 0.15 + Math.sin(t * 0.11) * 0.1;
+
+        let sample = 0;
+        for (let j = 0; j < freqs.length; j++) {
+          const detune = 1 + drift * (j === 1 ? 0.01 : -0.008);
+          const phase = freqToRad(freqs[j] * detune) * i;
+          sample += sine(phase) * (j === 0 ? 0.45 : 0.28);
+        }
+
+        const noiseBed = noise() * 0.015;
+        buffer[i] = (sample * 0.12 + noiseBed) * fadeIn * fadeOut;
+      }
+
+      return lowpass(normalize(buffer, 0.35), 800);
     },
   },
 ];
