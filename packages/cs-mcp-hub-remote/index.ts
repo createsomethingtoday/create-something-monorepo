@@ -699,8 +699,8 @@ const DEFAULT_DISCOVERY_PAGE_SIZE = 100;
 const MAX_DISCOVERY_PAGE_SIZE = 500;
 const discoveryPreferencesByAccount = new Map<string, DiscoveryPreferences>();
 const HUB_DISCOVERY_KV_PREFIX = 'hub_discovery_v1::';
-const REQUIRED_GLOBAL_SERVERS: string[] = ['composio-toolkit-notion'];
-const REQUIRED_DISCOVERY_SERVERS: string[] = ['composio-toolkit-notion'];
+const DEFAULT_REQUIRED_GLOBAL_SERVERS: string[] = ['composio-toolkit-notion'];
+const DEFAULT_REQUIRED_DISCOVERY_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1929,7 +1929,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         } else {
           const current = await getDiscoveryPreferences(accountId, runtime, env);
           if (packId) {
-            appliedPack = resolveDiscoveryPack(packId, runtime);
+            appliedPack = resolveDiscoveryPack(packId, runtime, env);
             if (!appliedPack) {
               const message = `Unknown discovery pack "${packId}".`;
               const errorResult = toErrorResult(message);
@@ -3637,7 +3637,7 @@ async function getDiscoveryPreferences(
   const cacheKey = buildDiscoveryCacheKey(env, accountId);
   const cached = discoveryPreferencesByAccount.get(cacheKey);
   if (cached) {
-    const normalized = normalizeDiscoveryPreferences(cached, runtime);
+    const normalized = normalizeDiscoveryPreferences(cached, runtime, env);
     discoveryPreferencesByAccount.set(cacheKey, normalized);
     return normalized;
   }
@@ -3657,6 +3657,7 @@ async function getDiscoveryPreferences(
             ),
           },
           runtime,
+          env,
         );
         discoveryPreferencesByAccount.set(cacheKey, fromKv);
         return fromKv;
@@ -3673,7 +3674,7 @@ async function getDiscoveryPreferences(
 
 function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): DiscoveryPreferences {
   const sharedPackId = readEnvString(env, 'HUB_DISCOVERY_SHARED_PACK');
-  const sharedPack = sharedPackId ? resolveDiscoveryPack(sharedPackId, runtime) : null;
+  const sharedPack = sharedPackId ? resolveDiscoveryPack(sharedPackId, runtime, env) : null;
   const modeFromEnv = parseDiscoveryMode(readEnvString(env, 'HUB_DISCOVERY_MODE'));
   const activeServersFromEnv = parseList(readEnvString(env, 'HUB_DISCOVERY_DEFAULT_SERVERS'));
   const maxProxyToolsRaw = readEnvString(env, 'HUB_DISCOVERY_MAX_PROXY_TOOLS');
@@ -3688,7 +3689,19 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
       runtime,
     ),
     maxProxyTools: maxProxyToolsFromEnv ?? sharedPack?.preferences.maxProxyTools ?? null,
-  }, runtime);
+  }, runtime, env);
+}
+
+function getRequiredGlobalServers(currentRegistry: McpBundleRegistry, env: Env): string[] {
+  const configured = parseList(readEnvString(env, 'HUB_REQUIRED_GLOBAL_SERVERS')) ?? DEFAULT_REQUIRED_GLOBAL_SERVERS;
+  return configured.filter((serverName) => Boolean(currentRegistry.servers[serverName]));
+}
+
+function getRequiredDiscoveryServers(runtime: HubRuntime, env: Env): string[] {
+  const configured = parseList(readEnvString(env, 'HUB_REQUIRED_DISCOVERY_SERVERS')) ?? DEFAULT_REQUIRED_DISCOVERY_SERVERS;
+  return configured.filter((serverName) =>
+    runtime.connected.some((server) => server.name === serverName),
+  );
 }
 
 async function persistDiscoveryPreferences(
@@ -3722,10 +3735,9 @@ async function clearDiscoveryPreferences(
 function normalizeDiscoveryPreferences(
   prefs: DiscoveryPreferences,
   runtime: HubRuntime,
+  env: Env,
 ): DiscoveryPreferences {
-  const requiredActiveServers = REQUIRED_DISCOVERY_SERVERS.filter((serverName) =>
-    runtime.connected.some((server) => server.name === serverName),
-  );
+  const requiredActiveServers = getRequiredDiscoveryServers(runtime, env);
   return {
     mode: prefs.mode,
     activeServers: resolveDiscoveryActiveServers(
@@ -3771,23 +3783,24 @@ function resolveDiscoveryPageSize(env: Env): number {
 
 function listDiscoveryPacks(runtime: HubRuntime): ResolvedDiscoveryPack[] {
   return Object.entries(discoveryPackRegistry.packs ?? {})
-    .map(([packId, definition]) => resolveDiscoveryPackDefinition(packId, definition, runtime))
+    .map(([packId, definition]) => resolveDiscoveryPackDefinition(packId, definition, runtime, env))
     .filter((pack): pack is ResolvedDiscoveryPack => pack !== null)
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export function resolveDiscoveryPack(packId: string, runtime: HubRuntime): ResolvedDiscoveryPack | null {
+export function resolveDiscoveryPack(packId: string, runtime: HubRuntime, env: Env): ResolvedDiscoveryPack | null {
   const key = packId.trim();
   if (!key) return null;
   const definition = discoveryPackRegistry.packs?.[key];
   if (!definition) return null;
-  return resolveDiscoveryPackDefinition(key, definition, runtime);
+  return resolveDiscoveryPackDefinition(key, definition, runtime, env);
 }
 
 function resolveDiscoveryPackDefinition(
   packId: string,
   definition: DiscoveryPackDefinition | undefined,
   runtime: HubRuntime,
+  env: Env,
 ): ResolvedDiscoveryPack | null {
   if (!definition) return null;
   const mode = parseDiscoveryMode(typeof definition.mode === 'string' ? definition.mode : null) ?? DEFAULT_DISCOVERY_MODE;
@@ -3803,7 +3816,7 @@ function resolveDiscoveryPackDefinition(
       mode,
       activeServers,
       maxProxyTools,
-    }, runtime),
+    }, runtime, env),
   };
 }
 
@@ -5201,9 +5214,9 @@ function isMissingColumnError(message: string, column: string): boolean {
 async function readHubState(env: Env, currentRegistry: McpBundleRegistry): Promise<HubState> {
   const fromKv = await readHubStateFromKv(env);
   if (fromKv) {
-    return enforceRequiredHubStateServers(fromKv, currentRegistry);
+    return enforceRequiredHubStateServers(fromKv, currentRegistry, env);
   }
-  return enforceRequiredHubStateServers(readStateFromEnv(env, currentRegistry), currentRegistry);
+  return enforceRequiredHubStateServers(readStateFromEnv(env, currentRegistry), currentRegistry, env);
 }
 
 async function readHubStateFromKv(env: Env): Promise<HubState | null> {
@@ -5267,10 +5280,8 @@ function readStateFromEnv(env: Env, currentRegistry: McpBundleRegistry): HubStat
   };
 }
 
-function enforceRequiredHubStateServers(state: HubState, currentRegistry: McpBundleRegistry): HubState {
-  const requiredServers = REQUIRED_GLOBAL_SERVERS.filter((serverName) =>
-    Boolean(currentRegistry.servers[serverName]),
-  );
+function enforceRequiredHubStateServers(state: HubState, currentRegistry: McpBundleRegistry, env: Env): HubState {
+  const requiredServers = getRequiredGlobalServers(currentRegistry, env);
   if (requiredServers.length === 0) {
     return {
       enabledBundles: uniqueSortedStrings(state.enabledBundles),
@@ -5290,6 +5301,7 @@ function enforceRequiredHubStateServers(state: HubState, currentRegistry: McpBun
 function updateState(
   currentRegistry: McpBundleRegistry,
   current: HubState,
+  env: Env,
   patch: {
     setBundles?: string[];
     setServers?: string[];
@@ -5358,6 +5370,7 @@ function updateState(
       disabledServers: [...disabledServers].sort(),
     },
     currentRegistry,
+    env,
   );
 }
 
