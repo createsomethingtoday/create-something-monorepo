@@ -2545,7 +2545,7 @@ async function applyRemoteStateUpdate(
   },
 ): Promise<Record<string, unknown>> {
   const current = await readHubState(env, registry);
-  const next = updateState(registry, current, patch);
+  const next = updateState(registry, current, env, patch);
   const write = await writeHubState(env, next);
 
   return {
