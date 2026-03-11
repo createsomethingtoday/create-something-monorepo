@@ -69,6 +69,36 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'danny-notion',
 		bridgeUsername: 'acct_danny',
 	},
+	wf_natalia: {
+		displayName: 'Natalia Ledford',
+		hubSubdomain: 'wf-template-review-natalia',
+		bridgeSubdomain: 'wf-template-review-natalia',
+		bridgeUsername: 'acct_wf_natalia',
+	},
+	wf_sudiksha: {
+		displayName: 'Sudiksha Khanduja',
+		hubSubdomain: 'wf-template-review-sudiksha',
+		bridgeSubdomain: 'wf-template-review-sudiksha',
+		bridgeUsername: 'acct_wf_sudiksha',
+	},
+	wf_eric: {
+		displayName: 'Eric Unger',
+		hubSubdomain: 'wf-template-review-eric',
+		bridgeSubdomain: 'wf-template-review-eric',
+		bridgeUsername: 'acct_wf_eric',
+	},
+	wf_vicki: {
+		displayName: 'Vicki Chen',
+		hubSubdomain: 'wf-template-review-vicki',
+		bridgeSubdomain: 'wf-template-review-vicki',
+		bridgeUsername: 'acct_wf_vicki',
+	},
+	wf_mariana: {
+		displayName: 'Mariana Segura',
+		hubSubdomain: 'wf-template-review-mariana',
+		bridgeSubdomain: 'wf-template-review-mariana',
+		bridgeUsername: 'acct_wf_mariana',
+	},
 };
 
 function normalizeKey(value: string | null | undefined): string {

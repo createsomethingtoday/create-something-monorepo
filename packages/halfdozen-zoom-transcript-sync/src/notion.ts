@@ -100,7 +100,7 @@ async function findExistingMeetingPage(
       5,
     );
 
-    const matched = pickBestPageMatch(directUrlMatch.results, candidate);
+    const matched = pickSourceUrlMatch(directUrlMatch.results, candidate);
     if (matched) return matched;
   }
 
@@ -120,26 +120,44 @@ async function findExistingMeetingPage(
     10,
   );
 
-  return pickBestPageMatch(titleDateMatch.results, candidate);
+  return pickTitleDateMatch(titleDateMatch.results, candidate);
 }
 
-function pickBestPageMatch(pages: PageObject[], candidate: TranscriptCandidate): NotionPageSummary | null {
-  if (!pages.length) return null;
+function pickSourceUrlMatch(pages: PageObject[], candidate: TranscriptCandidate): NotionPageSummary | null {
+  if (!candidate.sourceUrl) return null;
 
-  const scored = pages
-    .map((page) => {
-      const summary = toPageSummary(page);
-      let score = 0;
-      if (summary.sourceUrl && candidate.sourceUrl && summary.sourceUrl === candidate.sourceUrl) score += 100;
-      if (!summary.sourceUrl) score += 70;
-      if (summary.date === candidate.meetingDate) score += 20;
-      if (summary.title === candidate.meetingTitle) score += 10;
-      if (summary.sourceUrl?.includes('/recording/management/detail?meeting_id=')) score += 10;
-      return { summary, score };
-    })
-    .sort((a, b) => b.score - a.score);
+  for (const page of pages) {
+    const summary = toPageSummary(page);
+    if (summary.sourceUrl === candidate.sourceUrl) {
+      return summary;
+    }
+  }
 
-  return scored[0]?.summary ?? null;
+  return null;
+}
+
+function pickTitleDateMatch(pages: PageObject[], candidate: TranscriptCandidate): NotionPageSummary | null {
+  const matchingPages = pages
+    .map((page) => toPageSummary(page))
+    .filter((summary) => summary.title === candidate.meetingTitle && summary.date === candidate.meetingDate);
+
+  if (!matchingPages.length) {
+    return null;
+  }
+
+  const exactSourceUrl = candidate.sourceUrl
+    ? matchingPages.find((summary) => summary.sourceUrl === candidate.sourceUrl) ?? null
+    : null;
+  if (exactSourceUrl) {
+    return exactSourceUrl;
+  }
+
+  const emptySourceUrl = matchingPages.find((summary) => !summary.sourceUrl);
+  if (emptySourceUrl) {
+    return emptySourceUrl;
+  }
+
+  return matchingPages.find((summary) => summary.sourceUrl?.includes('/recording/management/detail?meeting_id=')) ?? null;
 }
 
 function buildPageProperties(
