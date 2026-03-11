@@ -523,16 +523,24 @@
         <!-- Desktop Table Layout -->
         <div class="table-container table-desktop">
           <table class="data-table">
+            <colgroup>
+              <col class="category-col" />
+              <col class="rank-col" />
+              <col class="active-col" />
+              <col class="sales-col" />
+              <col class="revenue-col" />
+              <col class="competition-col" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Category • Subcategory</th>
-                <th class="sortable" onclick={() => handleSort('revenueRank')}>
+                <th class="sortable center-head" onclick={() => handleSort('revenueRank')}>
                   Rank
                   {#if sortKey === 'revenueRank'}
                     <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th class="sortable" onclick={() => handleSort('templatesInSubcategory')}>
+                <th class="sortable right-head" onclick={() => handleSort('templatesInSubcategory')}>
                   <span class="th-with-tooltip">
                     Active Templates
                     <span
@@ -546,19 +554,19 @@
                     <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th class="sortable" onclick={() => handleSort('totalSales30d')}>
+                <th class="sortable right-head" onclick={() => handleSort('totalSales30d')}>
                   Sales (30d)
                   {#if sortKey === 'totalSales30d'}
                     <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th class="sortable" onclick={() => handleSort('avgRevenuePerTemplate')}>
+                <th class="sortable right-head" onclick={() => handleSort('avgRevenuePerTemplate')}>
                   Avg Revenue
                   {#if sortKey === 'avgRevenuePerTemplate'}
                     <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th>Competition</th>
+                <th class="competition-head">Competition</th>
               </tr>
             </thead>
             <tbody>
@@ -1390,13 +1398,33 @@
   .data-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .data-table col.category-col {
+    width: 39%;
+  }
+
+  .data-table col.rank-col {
+    width: 10%;
+  }
+
+  .data-table col.active-col,
+  .data-table col.sales-col,
+  .data-table col.revenue-col {
+    width: 11%;
+  }
+
+  .data-table col.competition-col {
+    width: 14%;
   }
 
   .data-table th,
   .data-table td {
-    padding: 0.65rem 0.85rem;
+    padding: 0.7rem 0.95rem;
     text-align: left;
     border-bottom: 1px solid var(--color-shell-border-default);
+    vertical-align: middle;
   }
 
   .data-table th {
@@ -1410,6 +1438,18 @@
 
   .data-table th.sortable {
     cursor: pointer;
+  }
+
+  .data-table th.center-head {
+    text-align: center;
+  }
+
+  .data-table th.right-head {
+    text-align: right;
+  }
+
+  .data-table th.competition-head {
+    text-align: left;
   }
 
   .data-table th.sortable:hover {
@@ -1443,10 +1483,13 @@
 
   .data-table .right {
     text-align: right;
+    font-variant-numeric: tabular-nums;
   }
 
   .category-name {
     font-weight: var(--font-medium);
+    display: inline-block;
+    line-height: 1.3;
   }
 
   .user-indicator {
