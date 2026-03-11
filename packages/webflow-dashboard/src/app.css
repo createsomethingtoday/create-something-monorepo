@@ -1,10 +1,38 @@
 /* Canon Design Tokens */
 @import '@create-something/canon/styles/tokens.css';
 
+@font-face {
+  font-family: 'WF Visual Sans';
+  src:
+    url('/fonts/WFVisualSans-RegularText.woff') format('woff'),
+    url('/fonts/WFVisualSans-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'WF Visual Sans';
+  src: url('/fonts/WFVisualSans-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'WF Visual Sans';
+  src:
+    url('/fonts/WFVisualSans-SemiBoldText.woff') format('woff'),
+    url('/fonts/WFVisualSans-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-heading: 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-sans: 'WF Visual Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'WF Visual Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   --color-bg-pure: #ffffff;
   --color-bg-elevated: #f0f0f0;
