@@ -55,6 +55,13 @@ export {
   TUFTE_MOBILE_SPEC,
 } from './tufte-mobile';
 
+// Hub onboarding commercial
+export {
+  HubOnboardingCommercial,
+  HUB_ONBOARDING_CONFIG,
+  HUB_ONBOARDING_SPEC,
+} from './hub-onboarding';
+
 // Shared primitives
 export {
   KineticHeadline,

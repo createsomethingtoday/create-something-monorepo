@@ -41,6 +41,8 @@ import {
   TEND_WALKTHROUGH_CONFIG,
   TufteMobileCommercial,
   TUFTE_MOBILE_CONFIG,
+  HubOnboardingCommercial,
+  HUB_ONBOARDING_CONFIG,
 } from './commercials';
 
 // Primitives
@@ -396,6 +398,17 @@ export const RemotionRoot: React.FC = () => {
         fps={TUFTE_MOBILE_CONFIG.fps}
         width={TUFTE_MOBILE_CONFIG.width}
         height={TUFTE_MOBILE_CONFIG.height}
+      />
+
+      {/* Hub onboarding - learner-first explainer for receiving and connecting a Hub MCP */}
+      <Composition
+        id="HubOnboardingCommercial"
+        component={HubOnboardingCommercial}
+        durationInFrames={HUB_ONBOARDING_CONFIG.durationInFrames}
+        fps={HUB_ONBOARDING_CONFIG.fps}
+        width={HUB_ONBOARDING_CONFIG.width}
+        height={HUB_ONBOARDING_CONFIG.height}
+        defaultProps={HUB_ONBOARDING_CONFIG.defaultProps}
       />
       
       {/* ========================================
