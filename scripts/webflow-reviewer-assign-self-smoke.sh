@@ -136,7 +136,7 @@ smoke_reviewer() {
   context_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_get_review_context",args:{version_id:$version_id}}')")"
   assert_no_rpc_error "$context_resp" "get_review_context ${reviewer}"
 
-  my_queue_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_my_queue",args:{limit:10}}')")"
+  my_queue_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_my_queue",args:{limit:500}}')")"
   assert_no_rpc_error "$my_queue_resp" "my_queue ${reviewer}"
 
   unassign_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_unassign_self",args:{version_id:$version_id}}')")"
