@@ -39,12 +39,19 @@
     "blondish_allow_servers": [
       "notion-halfdozen-blondish",
       "composio-toolkit-gmail",
-      "composio-toolkit-exa"
+      "composio-toolkit-exa",
+      "composio-toolkit-perplexityai",
+      "composio-toolkit-composio_search"
     ],
     "c3_management_allow_servers": [
       "notion-halfdozen-c3-management",
       "composio-toolkit-gmail",
-      "composio-toolkit-exa"
+      "composio-toolkit-exa",
+      "composio-toolkit-perplexityai",
+      "composio-toolkit-composio_search"
+    ],
+    "no_auth_search_providers": [
+      "composio-toolkit-composio_search"
     ],
     "telemetry_required": true,
     "braintrust_required": true,
