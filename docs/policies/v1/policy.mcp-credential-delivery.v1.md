@@ -57,6 +57,9 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 33. After managed-token migration, `mcp_long_lived_tokens` becomes the source of truth for token state, while Infisical or another approved vault MAY continue storing the same plaintext value only for runtime compatibility.
 34. Credential-delivery migration MUST include duplicate-subject cleanup so that stale entitlement rows, stale token rows, and stale legacy aliases no longer resolve for the same email or account.
 35. Auth0 delete/recreate incidents for the same normalized email MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md) so delivery artifacts preserve canonical account context while stale old-subject credentials are revoked or deactivated.
+36. If a lane advertises third-party search access, at least one approved search provider MUST be named explicitly in the delivery contract and runbook. The approved provider set is Exa (`composio-toolkit-exa`) and PerplexityAI (`composio-toolkit-perplexityai`).
+37. A promised search provider MUST NOT be represented as onboarding-complete until its auth-config mapping is live and the lane can produce a governed connect link or equivalent operator-approved auth path for that provider.
+38. Delivery metadata for a lane that includes search MUST expose the effective provider set so operators can distinguish `exa`, `perplexityai`, or dual-provider lanes during onboarding and support.
 
 ## Enforcement Surfaces
 
@@ -120,6 +123,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - evidence that runtime bootstrap secrets were stored only in Infisical/Worker secret state and never emitted as customer delivery artifacts
 - portal or operator evidence showing lane infrastructure ready while customer credential delivery remained blocked pending identity mapping or consent
 - Braintrust and telemetry traces showing explicit `account_id`, `tenant_id`, and lane host attribution for named-lane issuance and resolution events
+- lane onboarding evidence showing the promised search provider set and successful auth-config/connect-link validation for each promised provider
 
 ## Source Anchors
 

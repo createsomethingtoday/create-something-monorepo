@@ -46,6 +46,9 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 20. White-glove onboarding MAY deliver a managed bearer credential or an approved legacy credential before the customer has logged into `.agency`, but the governing partner route MUST still record actor trace, recipient, delivery channel, effective scope, and the follow-on self-service surface.
 21. White-glove onboarding MUST NOT bypass the policy prerequisites for the selected credential type. If consent, exception approval, or subject binding is required for that credential, the handoff MUST remain blocked until those prerequisites are satisfied.
 22. `.agency` remains the canonical self-service surface after white-glove delivery for revoke, regenerate, password rotation, connection management, and ongoing access visibility.
+23. When a named lane promises a third-party search surface, the approved provider set is `composio-toolkit-exa` and `composio-toolkit-perplexityai`.
+24. A named lane MUST NOT be treated as search-ready unless every promised search provider has a live auth-config mapping in `COMPOSIO_AUTH_CONFIG_MAP` and a successful `get_connect_link` or equivalent governed auth path.
+25. Search-provider choice MAY be lane-specific. A lane MAY expose Exa, PerplexityAI, or both, but the public contract, runbook, and delivery metadata MUST name the actual enabled provider set.
 
 ## Enforcement Surfaces
 
@@ -81,6 +84,7 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 - white-glove delivery records showing the onboarding handoff channel, recipient, and designated follow-on self-service surface
 - deny records showing issuance blocked for missing identity mapping, missing active consent, or missing lane identity subject
 - resolver and hub traces showing host-bound credential enforcement
+- lane verification evidence showing the promised search provider set and successful auth-config/connect-link validation for each promised provider
 
 ## Source Anchors
 

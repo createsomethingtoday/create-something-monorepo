@@ -7,7 +7,7 @@ Production runbook for the transparent named-lane Hub worker:
 - Health URL: `https://morgan-young-c3-management.mcp.createsomething.agency/health`
 - Fallback account ID: `acct_morgan_young_c3_management`
 - Lane slug / host key: `morgan-young-c3-management`
-- Allowed client surface: `notion-halfdozen-c3-management`, `composio-toolkit-gmail`, `composio-toolkit-exa`
+- Allowed client surface: `notion-halfdozen-c3-management`, `composio-toolkit-gmail`, and approved search provider(s) `composio-toolkit-exa` and/or `composio-toolkit-perplexityai`
 - Observability baseline: Cloudflare telemetry + Braintrust tracing
 
 References:
@@ -44,6 +44,7 @@ Notes:
 - `HUB_ENABLED_BUNDLES=[]` is required so the registry default `core` and `observability` bundles do not leak extra servers onto the lane.
 - `HUB_DISABLED_SERVERS`, `HUB_REQUIRED_GLOBAL_SERVERS`, and `HUB_REQUIRED_DISCOVERY_SERVERS` explicitly remove the default `composio-toolkit-notion` requirement; the lane should expose only the custom C3 Notion bridge plus Gmail and Exa.
 - Do not add this worker to the shared team-hub fleet deploy script.
+- If PerplexityAI is enabled for this lane, add `composio-toolkit-perplexityai` to both `HUB_ENABLED_SERVERS` and `HUB_DISCOVERY_DEFAULT_SERVERS`.
 
 ## 2) Required Secrets
 
@@ -93,7 +94,7 @@ Expected:
 - `enabled_servers` only:
   - `notion-halfdozen-c3-management`
   - `composio-toolkit-gmail`
-  - `composio-toolkit-exa`
+  - promised search provider(s): `composio-toolkit-exa` and/or `composio-toolkit-perplexityai`
 
 Verify proxy discovery is limited to the intended surface:
 
@@ -134,13 +135,35 @@ curl -sS -X POST "https://agency.createsomething.agency/api/partners/half-dozen/
 
 Use `access/mint` only for operator testing or temporary strict-session debugging.
 
-## 6) Host-Binding Smoke Check
+## 6) Search + Auth Config Baseline
+
+Before calling the lane onboarding-complete, verify the promised search provider mapping:
+
+- Exa auth config ID: `ac_6P0uExNakGbD`
+- PerplexityAI auth config ID: `ac_F_aj7f1MFici`
+
+Rules:
+
+1. If the lane promises Exa, `COMPOSIO_AUTH_CONFIG_MAP` must include an `exa` entry and `composio-toolkit-exa__get_connect_link` must succeed.
+2. If the lane promises PerplexityAI, `COMPOSIO_AUTH_CONFIG_MAP` must include a `perplexityai` entry and `composio-toolkit-perplexityai__get_connect_link` must succeed.
+3. If the lane promises both, both checks must pass.
+4. If a promised provider fails `get_connect_link`, the lane may still be infrastructure-ready, but it is not onboarding-complete for search.
+
+## 7) Host-Binding Smoke Check
 
 1. Mint a named-lane bearer for `morgan-young-c3-management`.
 2. Call `https://morgan-young-c3-management.mcp.createsomething.agency/mcp` with `Authorization: Bearer <lane-token>` and verify a broker call succeeds.
 3. Reuse the same bearer against `https://viv-blondish.mcp.createsomething.agency/mcp` and verify the request is rejected.
 
-## 7) Trace Verification
+Minimum success checks:
+
+1. `tools/list` succeeds with the lane bearer.
+2. `hub_search_proxy_tools` shows the client-specific Notion server.
+3. `hub_execute_proxy_tool` succeeds for a low-risk Notion read such as `notion_list_databases`.
+4. `composio-toolkit-gmail__connection_status` returns a governed result.
+5. Each promised search provider returns either a governed connect link or an active connection status result.
+
+## 8) Trace Verification
 
 Use a correlation ID, execute a brokered tool, then inspect the trace:
 

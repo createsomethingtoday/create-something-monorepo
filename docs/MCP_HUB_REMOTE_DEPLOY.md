@@ -86,6 +86,18 @@ Recommended production posture:
 - `OSO_BOOTSTRAP_POLICY=false`
 - `ENGINE_FALLBACK_ENABLED=true`
 
+Named-lane search provider baseline:
+
+- Approved search providers for partner-managed lanes are:
+  - `composio-toolkit-exa`
+  - `composio-toolkit-perplexityai`
+- A lane may expose either provider or both.
+- A lane is not onboarding-complete for search until each promised provider has a live `COMPOSIO_AUTH_CONFIG_MAP` entry and `get_connect_link` succeeds from the lane.
+- The current production auth config IDs validated during rollout are:
+  - Exa: `ac_6P0uExNakGbD`
+  - PerplexityAI: `ac_F_aj7f1MFici`
+- If a lane promises both Exa and PerplexityAI, both mappings must be present. If a lane promises only one, the runbook and delivery metadata must say so explicitly.
+
 Worker secrets / vars:
 
 ```bash
