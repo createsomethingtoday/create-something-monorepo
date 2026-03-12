@@ -28,11 +28,30 @@
     "raw_generated_executable_ui_prohibited": true,
     "confirmed_fields_not_silently_overwritten": true
   },
+  "workflow_scope_controls": {
+    "active_workflow_only_collection": true,
+    "upstream_context_may_inform_matching": true,
+    "counterparty_scope_expansion_requires_explicit_workflow": true
+  },
+  "candidate_acquisition_priority_fields": [
+    "availability",
+    "specialty",
+    "credential_state",
+    "location_radius",
+    "pay_expectations",
+    "consent",
+    "proof_artifacts"
+  ],
+  "blocked_progression_conditions": [
+    "missing_required_proof_artifact",
+    "missing_explicit_confirmation_for_sensitive_field"
+  },
   "handoff_triggers": [
     "user_requested_human",
     "repeated_low_confidence",
     "conflicting_evidence",
     "policy_requires_review",
-    "regulated_or_destructive_path"
+    "regulated_or_destructive_path",
+    "required_proof_missing"
   ]
 }

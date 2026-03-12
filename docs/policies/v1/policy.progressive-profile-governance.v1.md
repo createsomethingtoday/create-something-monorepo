@@ -12,6 +12,7 @@ Define how CREATE SOMETHING systems may infer, store, confirm, reject, and act o
 
 - hosted concierge chat products
 - progressive profiling from messages and artifacts
+- workflow-scoped recruitment and intake flows where open demand may already exist upstream
 - field confidence and confirmation rules
 - in-chat widget rendering for profile completion
 - handoff rules when confidence or policy requirements are not met
@@ -38,7 +39,10 @@ Define how CREATE SOMETHING systems may infer, store, confirm, reject, and act o
    - the workflow reaches a regulated, destructive, or exception path
 10. Audit records MUST distinguish inferred profile updates from user-confirmed profile updates.
 11. Only fields relevant to the active workflow SHOULD be collected or persisted; unnecessary profile accumulation is prohibited.
-12. User-facing summaries MUST clearly indicate what the system inferred versus what the user explicitly confirmed.
+12. When counterparty demand, role context, or job-order context already exists upstream, the system MAY reference that upstream context for matching, but MUST NOT expand collection into the counterparty workflow unless a separate explicit workflow requires it.
+13. In candidate-acquisition deployments, the system SHOULD prioritize nurse-side availability, specialty, credential state, location or radius, pay expectations, consent, and required proof artifacts over generalized marketplace-field accumulation.
+14. Candidate-side proof artifacts, including resume receipt, consent records, license evidence, and compliance uploads, MUST remain visibly incomplete until received and MUST block shortlist delivery or external writes when required by workflow rules.
+15. User-facing summaries MUST clearly indicate what the system inferred versus what the user explicitly confirmed.
 
 ## Default Thresholds
 
@@ -79,6 +83,7 @@ The following classes require explicit confirmation before external use:
 - user confirmation and rejection audit events
 - widget selection logs by thread and turn
 - handoff event records with reason codes
+- blocked progression records showing shortlist or write actions halted for missing nurse-side proof
 - blocked external writes caused by missing confirmation
 - UI evidence that inferred versus confirmed values are visibly distinct
 
