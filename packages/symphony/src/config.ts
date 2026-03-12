@@ -90,7 +90,11 @@ export function resolve_service_config(
   const codex = asObject(workflow.config.codex);
   const server = asObject(workflow.config.server);
 
-  const api_key = resolveEnvToken(asString(tracker.api_key), env) ?? resolveEnvToken('$LINEAR_API_KEY', env) ?? '';
+  const tracker_api_key = asString(tracker.api_key);
+  const api_key =
+    tracker_api_key !== null
+      ? resolveEnvToken(tracker_api_key, env) ?? ''
+      : resolveEnvToken('$LINEAR_API_KEY', env) ?? '';
   const project_slug = asString(tracker.project_slug) ?? '';
   const workspace_root = resolvePathValue(
     asString(workspace.root),
@@ -102,7 +106,7 @@ export function resolve_service_config(
   return {
     workflow_path: workflow.path,
     tracker: {
-      kind: 'linear',
+      kind: asString(tracker.kind) ?? '',
       endpoint: asString(tracker.endpoint) ?? 'https://api.linear.app/graphql',
       api_key,
       project_slug,

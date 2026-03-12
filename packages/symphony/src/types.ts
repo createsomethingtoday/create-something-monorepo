@@ -32,7 +32,7 @@ export interface WorkflowDefinition {
 export interface ServiceConfig {
   workflow_path: string;
   tracker: {
-    kind: 'linear';
+    kind: string;
     endpoint: string;
     api_key: string;
     project_slug: string;
