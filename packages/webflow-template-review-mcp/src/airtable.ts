@@ -230,42 +230,6 @@ interface AirtableRecord {
   fields: Record<string, unknown>;
 }
 
-const QUEUE_ASSET_FIELD_NAMES = [
-  CONFIRMED_ASSET_FIELDS.type,
-  CONFIRMED_ASSET_FIELDS.name,
-  CONFIRMED_ASSET_FIELDS.websiteUrl,
-  CONFIRMED_ASSET_FIELDS.previewSiteUrl,
-  CONFIRMED_ASSET_FIELDS.marketplaceStatus,
-  CONFIRMED_ASSET_FIELDS.latestReviewStatus,
-  CONFIRMED_ASSET_FIELDS.latestReviewDate,
-  CONFIRMED_ASSET_FIELDS.latestReviewFeedback,
-  CONFIRMED_ASSET_FIELDS.qualityScore,
-  CONFIRMED_ASSET_FIELDS.submittedDate,
-  CONFIRMED_ASSET_FIELDS.decisionDate,
-  CONFIRMED_ASSET_FIELDS.priceString,
-] as const;
-
-const QUEUE_VERSION_FIELD_NAMES = [
-  CONFIRMED_VERSION_FIELDS.assetLink,
-  CONFIRMED_VERSION_FIELDS.assetRecordId,
-  CONFIRMED_VERSION_FIELDS.versionNumber,
-  CONFIRMED_VERSION_FIELDS.submissionDatetime,
-  CONFIRMED_VERSION_FIELDS.reviewOwner,
-  CONFIRMED_VERSION_FIELDS.reviewStatus,
-  CONFIRMED_VERSION_FIELDS.decisionDate,
-] as const;
-
-const METRICS_ASSET_FIELD_NAMES = [
-  CONFIRMED_ASSET_FIELDS.type,
-  CONFIRMED_ASSET_FIELDS.latestReviewStatus,
-  CONFIRMED_ASSET_FIELDS.latestReviewDate,
-  CONFIRMED_ASSET_FIELDS.qualityScore,
-  CONFIRMED_ASSET_FIELDS.submittedDate,
-  CONFIRMED_ASSET_FIELDS.publishedDate,
-  CONFIRMED_ASSET_FIELDS.decisionDate,
-  CONFIRMED_ASSET_FIELDS.marketplaceStatus,
-] as const;
-
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
 }
@@ -789,7 +753,6 @@ export class AirtableClient {
   ): Promise<TemplateReviewAsset[]> {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
-      fieldNames: QUEUE_ASSET_FIELD_NAMES,
       limit,
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
       sortField: options?.sortField,
@@ -811,7 +774,6 @@ export class AirtableClient {
     do {
       const page = await this.listRecordsPage({
         tableId: TABLE_IDS.assets,
-        fieldNames: QUEUE_ASSET_FIELD_NAMES,
         filterByFormula: templateQueueAssetFilterFormula(query),
         sortField: airtableSort.field,
         sortDirection: airtableSort.direction,
@@ -848,7 +810,6 @@ export class AirtableClient {
       chunkArray(uniqueAssetIds, 25).map((chunk) =>
         this.listRecords({
           tableId: TABLE_IDS.assets,
-          fieldNames: QUEUE_ASSET_FIELD_NAMES,
           limit: chunk.length,
           filterByFormula: `AND({${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️', ${recordIdsFormula(chunk)})`,
         }),
@@ -866,7 +827,6 @@ export class AirtableClient {
   private async listVersionsAssignedToReviewer(currentReviewer: CollaboratorRef): Promise<TemplateReviewVersion[]> {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assetVersions,
-      fieldNames: QUEUE_VERSION_FIELD_NAMES,
       filterByFormula: reviewerLookupFormula(CONFIRMED_VERSION_FIELDS.reviewOwner, currentReviewer),
       sortField: CONFIRMED_VERSION_FIELDS.submissionDatetime,
       sortDirection: 'desc',
@@ -886,7 +846,6 @@ export class AirtableClient {
       chunkArray(uniqueAssetIds, 25).map((chunk) =>
         this.listRecords({
           tableId: TABLE_IDS.assetVersions,
-          fieldNames: QUEUE_VERSION_FIELD_NAMES,
           filterByFormula: buildOrFormula(CONFIRMED_VERSION_FIELDS.assetRecordId, chunk),
         }),
       ),
@@ -965,7 +924,6 @@ export class AirtableClient {
 
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
-      fieldNames: METRICS_ASSET_FIELD_NAMES,
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
     });
     const assets = records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
