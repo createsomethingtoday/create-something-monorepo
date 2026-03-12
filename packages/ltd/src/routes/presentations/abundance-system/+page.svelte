@@ -65,6 +65,43 @@
 			body: 'Read-only users do not see write paths, and destructive actions require review instead of silent execution.'
 		}
 	];
+
+	const budgetBenchmarks = [
+		{
+			eyebrow: 'Nurse supply',
+			title: '$3k-$6k/mo lean, $6k-$12k/mo solid',
+			body: 'Healthcare recruitment benchmarks point to lower-cost job-channel traffic, with completed applications often around $35 and harder-to-fill roles rising above that.'
+		},
+		{
+			eyebrow: 'Facility demand',
+			title: '$4k-$8k/mo lean, $8k-$15k/mo solid',
+			body: 'Facility acquisition is costlier and less directly benchmarked. Treat it as B2B demand generation, with LinkedIn-style lead costs often landing in the $75-$200+ range.'
+		}
+	];
+
+	const firstNinetyPlan = [
+		{
+			eyebrow: 'Budget',
+			title: '$8k-$12k/mo minimum viable test',
+			body: 'Use this range when the goal is to validate the funnel in one market without overclaiming signal.'
+		},
+		{
+			eyebrow: 'Signal',
+			title: '$12k-$20k/mo better read',
+			body: 'This is the cleaner range for learning by specialty, geography, and buyer segment instead of guessing.'
+		},
+		{
+			eyebrow: 'Split',
+			title: '60-70% nurse side, 30-40% facility side',
+			body: 'Candidate acquisition is faster to learn from, so it should get the bigger share of paid spend first.'
+		}
+	];
+
+	const channelMix = [
+		'Nurse supply: job channels, Google Search, Meta retargeting, and a small LinkedIn test for specialized roles.',
+		'Facility demand: LinkedIn lead gen, search around staffing intent, and follow-up around proof and workflow speed.',
+		'Operating rhythm: month one message testing, month two reallocation, month three scale the best specialty and geography combinations.'
+	];
 </script>
 
 <SEO
@@ -242,12 +279,44 @@
 		</div>
 	</Slide>
 
-	<Slide type="title">
+	<Slide type="content">
 		<span class="number">12</span>
+		<h2>What Paid Acquisition Likely Costs</h2>
+		<p>
+			We now have enough market research to put directional budget ranges around the rollout.
+		</p>
+		<SystemPillars items={budgetBenchmarks} />
+		<p class="muted">
+			Research note: nurse-side benchmarks are stronger than facility-side benchmarks. Facility demand is
+			best treated as a B2B healthcare estimate.
+		</p>
+		<p class="source-note">
+			Directional ranges pulled from Recruiters Websites, Staffing Industry Analysts, PPC Chief,
+			Benly, College Recruiter/Appcast, and WordStream/LocaliQ.
+		</p>
+	</Slide>
+
+	<Slide type="content">
+		<span class="number">13</span>
+		<h2>Recommended First 90 Days</h2>
+		<p>
+			If the goal is to prove the funnel instead of just talking about it, the first budget band is already visible.
+		</p>
+		<SystemPillars items={firstNinetyPlan} />
+		<ul>
+			{#each channelMix as item}
+				<li>{item}</li>
+			{/each}
+		</ul>
+	</Slide>
+
+	<Slide type="title">
+		<span class="number">14</span>
 		<h1>The Claim</h1>
 		<p class="subtitle">Less form fatigue for nurses.</p>
 		<p class="subtitle">Less manual re-entry for recruiters.</p>
 		<p class="subtitle">Faster matching with visible safety rails.</p>
+		<p class="tagline">A real adaptation path, with research-backed budget ranges.</p>
 	</Slide>
 </Presentation>
 
@@ -273,6 +342,12 @@
 	.formula strong {
 		font-size: var(--text-h3);
 		color: var(--color-fg-primary);
+	}
+
+	.source-note {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		line-height: var(--leading-relaxed);
 	}
 
 	:global(.slide-split ul.compact-list) {

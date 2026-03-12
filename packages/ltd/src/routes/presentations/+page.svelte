@@ -92,9 +92,9 @@
       title: 'ABUNDANCE',
       subtitle: 'Nurse Staffing, Explained Simply',
       description:
-        'A client-facing walkthrough of how Abundance captures profile data, ranks matches, and uses policy controls to keep nurse staffing workflows legible and safe.',
-      slides: 12,
-      duration: '15 min',
+        'A client-facing walkthrough of how Abundance captures profile data, ranks matches, uses policy controls, and frames directional go-to-market budgets for nurse staffing.',
+      slides: 14,
+      duration: '18 min',
       tags: ['Healthcare', 'Matching', 'Concierge', 'Policy']
     }
   ];

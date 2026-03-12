@@ -161,7 +161,57 @@ It is a real system with a clear adaptation path.
 
 ---
 
-## Slide 12: The client value
+## Slide 12: What paid acquisition likely costs
+
+We also have enough research to budget the go-to-market honestly.
+
+On the nurse side, a lean paid test is roughly three to six thousand dollars a month.
+A stronger single-market test is roughly six to twelve thousand.
+
+That is grounded in recruitment and healthcare benchmarks:
+lower-cost job-channel clicks,
+higher-cost Google and LinkedIn clicks,
+and healthcare application costs that rise fast for harder-to-fill roles.
+
+On the facility side, the numbers are higher and less direct.
+A lean validation range is roughly four to eight thousand dollars a month.
+A more serious demand-generation range is roughly eight to fifteen thousand.
+
+That side is inferred from B2B healthcare and staffing benchmarks, especially LinkedIn lead-gen costs.
+So the honest statement is:
+candidate acquisition is better benchmarked than facility acquisition.
+
+---
+
+## Slide 13: Recommended first 90 days
+
+If we wanted to test the funnel instead of just describe it, the starting range is clear.
+
+Minimum viable paid test:
+eight to twelve thousand dollars per month total.
+
+Better signal-generating budget:
+twelve to twenty thousand dollars per month total.
+
+The recommended split is about two-thirds nurse acquisition and one-third facility acquisition.
+
+On the nurse side:
+job channels first,
+search second,
+Meta and specialty LinkedIn tests where they help.
+
+On the facility side:
+LinkedIn lead gen,
+search for staffing-intent terms,
+then retargeting and follow-up.
+
+Month one is message testing.
+Month two is budget reallocation.
+Month three is scaling the best specialty and geography combinations.
+
+---
+
+## Slide 14: The client value
 
 For nurses, less form fatigue.
 For recruiters, less retyping.
@@ -170,3 +220,5 @@ For leadership, a system that is faster without becoming opaque.
 
 The claim is simple:
 Abundance turns staffing from repeated intake and manual guesswork into guided matching with visible safety rails.
+
+And now the adaptation path includes a research-backed budget range, not just a product story.
