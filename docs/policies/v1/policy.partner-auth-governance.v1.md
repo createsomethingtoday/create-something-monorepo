@@ -46,9 +46,11 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 20. White-glove onboarding MAY deliver a managed bearer credential or an approved legacy credential before the customer has logged into `.agency`, but the governing partner route MUST still record actor trace, recipient, delivery channel, effective scope, and the follow-on self-service surface.
 21. White-glove onboarding MUST NOT bypass the policy prerequisites for the selected credential type. If consent, exception approval, or subject binding is required for that credential, the handoff MUST remain blocked until those prerequisites are satisfied.
 22. `.agency` remains the canonical self-service surface after white-glove delivery for revoke, regenerate, password rotation, connection management, and ongoing access visibility.
-23. When a named lane promises a third-party search surface, the approved provider set is `composio-toolkit-exa` and `composio-toolkit-perplexityai`.
-24. A named lane MUST NOT be treated as search-ready unless every promised search provider has a live auth-config mapping in `COMPOSIO_AUTH_CONFIG_MAP` and a successful `get_connect_link` or equivalent governed auth path.
-25. Search-provider choice MAY be lane-specific. A lane MAY expose Exa, PerplexityAI, or both, but the public contract, runbook, and delivery metadata MUST name the actual enabled provider set.
+23. When a named lane promises a third-party search surface, the approved provider set is `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and `composio-toolkit-composio_search`.
+24. A named lane MUST NOT be treated as search-ready unless every promised search provider has its required runtime prerequisites satisfied.
+25. For auth-bound search providers such as Exa or PerplexityAI, the required prerequisite is a live auth-config mapping in `COMPOSIO_AUTH_CONFIG_MAP` plus a successful `get_connect_link` or equivalent governed auth path.
+26. For `NO_AUTH` providers such as `composio-toolkit-composio_search`, the required prerequisite is that the toolkit is enabled on the lane and at least one representative brokered tool call succeeds without customer auth.
+27. Search-provider choice MAY be lane-specific. A lane MAY expose Exa, PerplexityAI, Composio Search, or any approved combination, but the public contract, runbook, and delivery metadata MUST name the actual enabled provider set.
 
 ## Enforcement Surfaces
 

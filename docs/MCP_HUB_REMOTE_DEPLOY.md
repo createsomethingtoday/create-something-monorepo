@@ -91,12 +91,16 @@ Named-lane search provider baseline:
 - Approved search providers for partner-managed lanes are:
   - `composio-toolkit-exa`
   - `composio-toolkit-perplexityai`
+  - `composio-toolkit-composio_search`
 - A lane may expose either provider or both.
-- A lane is not onboarding-complete for search until each promised provider has a live `COMPOSIO_AUTH_CONFIG_MAP` entry and `get_connect_link` succeeds from the lane.
+- A lane may expose any approved combination.
+- A lane is not onboarding-complete for search until each promised provider satisfies its runtime prerequisites:
+  - Exa and PerplexityAI: live `COMPOSIO_AUTH_CONFIG_MAP` entry plus successful `get_connect_link`
+  - Composio Search: successful brokered tool execution from the lane; no auth config is required because the toolkit is `NO_AUTH`
 - The current production auth config IDs validated during rollout are:
   - Exa: `ac_6P0uExNakGbD`
   - PerplexityAI: `ac_F_aj7f1MFici`
-- If a lane promises both Exa and PerplexityAI, both mappings must be present. If a lane promises only one, the runbook and delivery metadata must say so explicitly.
+- If a lane promises multiple auth-bound providers, each mapping must be present. If a lane promises Composio Search, validate a representative brokered call instead. The runbook and delivery metadata must say which providers are actually enabled.
 
 Worker secrets / vars:
 

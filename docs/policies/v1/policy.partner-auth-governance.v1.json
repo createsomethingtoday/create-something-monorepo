@@ -37,10 +37,12 @@
     "runtime_bootstrap_tokens_customer_delivery_prohibited": true,
     "approved_search_providers": [
       "composio-toolkit-exa",
-      "composio-toolkit-perplexityai"
+      "composio-toolkit-perplexityai",
+      "composio-toolkit-composio_search"
     ],
     "promised_search_provider_auth_config_required": true,
-    "promised_search_provider_connect_link_required": true
+    "promised_search_provider_connect_link_required": true,
+    "promised_no_auth_search_provider_broker_call_required": true
   },
   "deny_conditions": [
     "missing_consent_record",
