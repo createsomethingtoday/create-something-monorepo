@@ -45,7 +45,7 @@
   "blocked_progression_conditions": [
     "missing_required_proof_artifact",
     "missing_explicit_confirmation_for_sensitive_field"
-  },
+  ],
   "handoff_triggers": [
     "user_requested_human",
     "repeated_low_confidence",
