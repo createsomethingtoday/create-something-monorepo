@@ -2,7 +2,6 @@
 	import { TableCell, TableRow } from './ui';
 	import ActionsDropdown from './ActionsDropdown.svelte';
 	import type { Asset } from '$lib/server/airtable';
-	import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
 	import {
 		formatCompactCurrency,
@@ -14,13 +13,12 @@
 	interface Props {
 		asset: Asset;
 		showPerformance?: boolean;
-		onPrimaryAction?: (asset: Asset, action: AssetActionDescriptor) => void;
 		onView?: (id: string) => void;
 		onEdit?: (id: string) => void;
 		onArchive?: (id: string) => Promise<void>;
 	}
 
-	let { asset, showPerformance = false, onPrimaryAction, onView, onEdit, onArchive }: Props = $props();
+	let { asset, showPerformance = false, onView, onEdit, onArchive }: Props = $props();
 
 	let imageError = $state(false);
 
@@ -107,21 +105,11 @@
 			</div>
 		</TableCell>
 	{/if}
-	<TableCell class="action-cell">
-		<button
-			type="button"
-			class="primary-action-link"
-			onclick={() => onPrimaryAction?.(asset, actionConfig.primary)}
-			aria-label={`${actionConfig.primary.label}: ${asset.name}`}
-		>
-			{actionConfig.primary.label}
-		</button>
-	</TableCell>
 	<TableCell class="more-cell">
 		<ActionsDropdown
 			assetId={asset.id}
 			status={asset.status}
-			actions={actionConfig.secondary}
+			actions={[actionConfig.primary, ...actionConfig.secondary]}
 			{onView}
 			{onEdit}
 			{onArchive}
@@ -250,34 +238,7 @@
 		color: var(--color-fg-muted);
 	}
 
-	:global(.action-cell),
 	:global(.more-cell) {
 		white-space: nowrap;
-	}
-
-	.primary-action-link {
-		display: inline-flex;
-		align-items: center;
-		padding: 0;
-		background: transparent;
-		border: none;
-		color: var(--color-info-ink);
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		cursor: pointer;
-		text-decoration: underline;
-		text-underline-offset: 0.18rem;
-		letter-spacing: 0.02em;
-		text-transform: uppercase;
-	}
-
-	.primary-action-link:hover {
-		color: var(--color-info);
-	}
-
-	.primary-action-link:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
-		border-radius: var(--radius-sm);
 	}
 </style>
