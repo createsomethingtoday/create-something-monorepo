@@ -230,6 +230,31 @@ interface AirtableRecord {
   fields: Record<string, unknown>;
 }
 
+const QUEUE_ASSET_FIELD_NAMES = [
+  CONFIRMED_ASSET_FIELDS.type,
+  CONFIRMED_ASSET_FIELDS.name,
+  CONFIRMED_ASSET_FIELDS.websiteUrl,
+  CONFIRMED_ASSET_FIELDS.previewSiteUrl,
+  CONFIRMED_ASSET_FIELDS.marketplaceStatus,
+  CONFIRMED_ASSET_FIELDS.latestReviewStatus,
+  CONFIRMED_ASSET_FIELDS.latestReviewDate,
+  CONFIRMED_ASSET_FIELDS.latestReviewFeedback,
+  CONFIRMED_ASSET_FIELDS.qualityScore,
+  CONFIRMED_ASSET_FIELDS.submittedDate,
+  CONFIRMED_ASSET_FIELDS.decisionDate,
+  CONFIRMED_ASSET_FIELDS.priceString,
+] as const;
+
+const QUEUE_VERSION_FIELD_NAMES = [
+  CONFIRMED_VERSION_FIELDS.assetLink,
+  CONFIRMED_VERSION_FIELDS.assetRecordId,
+  CONFIRMED_VERSION_FIELDS.versionNumber,
+  CONFIRMED_VERSION_FIELDS.submissionDatetime,
+  CONFIRMED_VERSION_FIELDS.reviewOwner,
+  CONFIRMED_VERSION_FIELDS.reviewStatus,
+  CONFIRMED_VERSION_FIELDS.decisionDate,
+] as const;
+
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
 }
