@@ -4,19 +4,20 @@ Prepared: March 12, 2026
 
 ## Purpose
 
-Turn the Abundance nurse staffing presentation into a testable paid-acquisition plan with directional budget ranges.
+Turn the Abundance nurse staffing presentation into a testable nurse-acquisition plan with directional budget ranges.
 
 ## Executive Summary
 
-The current evidence is strong enough to budget a first 90-day paid-acquisition test for Abundance.
+The client already has demand.
+The paid-acquisition question is how to attract, qualify, and reactivate more nurses.
 
-- Minimum viable paid test: `$8k-$12k/month`
-- Better signal-generating budget: `$12k-$20k/month`
-- Recommended split:
-  - `60-70%` nurse supply acquisition
-  - `30-40%` facility demand acquisition
+- Focused working range: `$6k-$12k/month`
+- Broader signal-generating range: `$12k-$20k/month`
+- Suggested 90-day test budget:
+  - `18k-36k` for a focused market or specialty test
+  - `36k-60k` for broader multi-lane learning
 
-This split is an inference from the benchmark mix, not a nurse-staffing-specific industry standard. Candidate-side acquisition is much better benchmarked than facility-side acquisition.
+These ranges are candidate-side only. They are grounded in recruitment-media click costs, healthcare completed-application benchmarks, and staffing marketing-spend norms.
 
 ## Budget Benchmarks
 
@@ -32,30 +33,11 @@ Directional benchmarks:
 
 Implication:
 
-- Lean single-market test: `$3k-$6k/month`
-- Solid single-market or specialty-heavy test: `$6k-$12k/month`
-- Multi-market push: `$12k-$15k+/month`
+- Lean single-market validation: `$3k-$6k/month`
+- Focused working range: `$6k-$12k/month`
+- Broader multi-lane test: `$12k-$20k/month`
 
-### 2. Facility / Hospital Client Acquisition
-
-Directional benchmarks:
-
-- LinkedIn lead generation CPL: roughly `$75-$200+`
-- LinkedIn effective testing budget: roughly `$1.5k-$3k/month`
-- LinkedIn scaled lead generation budget: roughly `$5k-$10k/month`
-- Hospitals and clinics search benchmark: roughly `$3.63` CPC and `$33.45` CPL
-
-Implication:
-
-- Lean demand validation: `$4k-$8k/month`
-- Serious B2B demand generation: `$8k-$15k/month`
-- Broader regional pipeline build: `$15k-$30k+/month`
-
-Important caveat:
-
-Facility-side numbers are more indirect than nurse-side numbers. They come from B2B LinkedIn benchmarks and broader healthcare search benchmarks, not from a clean nurse-staffing demand-gen dataset.
-
-### 3. Staffing Agency Marketing Spend Norms
+### 2. Staffing Agency Marketing Spend Norms
 
 Directional benchmarks:
 
@@ -65,29 +47,21 @@ Directional benchmarks:
 
 Implication:
 
-If Abundance is positioned as a serious growth lane rather than a side experiment, a low-four-figure monthly paid budget is usually too small to produce reliable signal on both sides of the marketplace.
+If Abundance is positioned as a serious growth lane rather than a side experiment, a low-four-figure monthly paid budget is usually too small to produce reliable nurse-side signal.
 
 ## Recommended First 90 Days
 
 ### Budget
 
-- Minimum viable: `$24k-$36k` over 90 days
+- Focused working test: `$18k-$36k` over 90 days
 - Better signal: `$36k-$60k` over 90 days
 
 ### Channel Mix
 
-#### Nurse supply side
-
 - `35-45%` job-channel / recruitment media
 - `10-15%` Google Search
-- `10-15%` Meta paid social and retargeting
+- `15-20%` Meta paid social and retargeting
 - `5-10%` LinkedIn for specialty or senior clinical roles
-
-#### Facility demand side
-
-- `15-20%` LinkedIn lead gen
-- `10-15%` Google Search for staffing-intent terms
-- `5%` retargeting and proof-driven remarketing
 
 ### Operating Cadence
 
@@ -95,37 +69,31 @@ If Abundance is positioned as a serious growth lane rather than a side experimen
 
 - Launch core landing pages and tracking
 - Test nurse-side hooks by specialty, geography, and contract type
-- Test facility-side offers around speed, fill quality, and reduced manual intake
+- Measure click-to-apply and apply-to-conversation rates
+- Confirm which missing facts are worth asking for early
 
 #### Days 31-60
 
 - Reallocate to the best-performing nurse channels
-- Tighten facility targeting by role and account type
-- Add stronger proof assets: benchmark slide, workflow explanation, intake screenshots, case framing
+- Tighten specialty, geography, and shift targeting
+- Add stronger proof assets: intake visuals, workflow explanation, recruiter handoff framing
+- Retarget incomplete resume and consent flows
 
 #### Days 61-90
 
 - Scale winning specialties and regions
 - Cut low-signal campaigns
-- Add retargeting and nurture sequences for facility-side leads
+- Improve apply-to-shortlist speed and recruiter follow-up
+- Expand only the lanes that hold quality, not just volume
 
 ## Measurement
-
-Track these separately.
-
-### Nurse supply
 
 - cost per click
 - cost per completed application
 - cost per qualified recruiter conversation
 - qualified application rate
-
-### Facility demand
-
-- cost per lead
-- cost per booked discovery meeting
-- booked meeting rate
-- pipeline created
+- resume upload completion rate
+- consent completion rate
 
 ## Recommendation For The Meeting
 
@@ -133,7 +101,7 @@ Present the budget as a research-backed directional operating range, not a hard 
 
 Suggested phrasing:
 
-> We have enough benchmark data to budget an honest first test. Nurse-side acquisition is easier to benchmark and usually needs the larger share of spend. Facility-side demand is more expensive and less directly benchmarked, so we should treat that side as a B2B estimate and validate it quickly.
+> Because you already have demand, we are not budgeting a two-sided marketplace launch. This is a nurse-acquisition budget. A focused working range is roughly six to twelve thousand dollars a month, and a broader learning range is roughly twelve to twenty thousand, depending on how many specialties and markets we want to test at once.
 
 ## Sources
 
@@ -142,4 +110,3 @@ Suggested phrasing:
 - [PPC Chief: Average CPC by Ad Platform 2026](https://ppcchief.com/blog/average-cpc-by-ad-platform-2026)
 - [Benly: LinkedIn Ads Cost 2026](https://benly.ai/learn/linkedin-ads/linkedin-ads-cost)
 - [College Recruiter: Cost-Per-Application Rates](https://www.collegerecruiter.com/blog/2023/08/10/cost-per-application-cpa-rates-to-build-your-recruitment-advertising-budget)
-- [WordStream / LocaliQ: Healthcare Advertising Benchmarks](https://www.wordstream.com/blog/ws/2021/11/24/healthcare-advertising-benchmarks-2021)

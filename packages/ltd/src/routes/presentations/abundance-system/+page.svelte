@@ -33,8 +33,8 @@
 	const termMap = [
 		{
 			codeTerm: 'Seeker',
-			clientTerm: 'Coverage request / facility side',
-			note: 'The side asking for help. In staffing, this is usually the facility or staffing team opening a need.'
+			clientTerm: 'Open role / existing demand',
+			note: 'The side asking for help. For this client, that demand already exists. The opportunity is filling it faster with better nurse intake and matching.'
 		},
 		{
 			codeTerm: 'Talent',
@@ -118,6 +118,7 @@
 			Abundance is not one feature. It is <span class="em">three coordinated jobs</span>.
 		</p>
 		<SystemPillars items={systemPillars} />
+		<p class="muted">For this client, the practical scope is nurse acquisition and matching. Demand is already there.</p>
 	</Slide>
 
 	<Slide type="content">
@@ -125,7 +126,7 @@
 		<h2>Translating the Code</h2>
 		<p>
 			The repo uses generic marketplace terms.
-			<span class="muted">Here is the same system in nurse staffing language.</span>
+			<span class="muted">Here is the same system in nurse staffing language, with this engagement focused on the nurse side.</span>
 		</p>
 		<TermMap items={termMap} />
 	</Slide>
@@ -225,12 +226,12 @@
 			</ul>
 		</div>
 		<div class="right">
-			<h2>Specialized for healthcare</h2>
+			<h2>Specialized for nurse acquisition</h2>
 			<ul class="compact-list">
-				<li>facility-side coverage data</li>
 				<li>nurse credential rules and verifications</li>
-				<li>shift templates and pay-package logic</li>
-				<li>downstream staffing-system writebacks</li>
+				<li>specialty, shift, and pay-package fit</li>
+				<li>resume, consent, and document collection</li>
+				<li>recruiter handoff for exceptions and follow-up</li>
 				<li>healthcare-specific audit outputs</li>
 			</ul>
 		</div>
@@ -238,18 +239,17 @@
 
 	<Slide type="content">
 		<span class="number">12</span>
-		<h2>What Paid Acquisition Likely Costs</h2>
+		<h2>What Nurse Acquisition Likely Costs</h2>
 		<p>
-			We now have enough market research to put directional budget ranges around the rollout.
+			The client already has demand. This budget is about attracting and qualifying more nurses.
 		</p>
 		<BudgetAllocationVisual />
 		<p class="muted">
-			Research note: nurse-side benchmarks are stronger than facility-side benchmarks. Facility demand is
-			best treated as a B2B healthcare estimate.
+			Research note: these ranges are candidate-side only. That is the funnel we are helping optimize.
 		</p>
 		<p class="source-note">
 			Directional ranges pulled from Recruiters Websites, Staffing Industry Analysts, PPC Chief,
-			Benly, College Recruiter/Appcast, and WordStream/LocaliQ.
+			Benly, and College Recruiter/Appcast.
 		</p>
 	</Slide>
 
@@ -257,7 +257,7 @@
 		<span class="number">13</span>
 		<h2>Recommended First 90 Days</h2>
 		<p>
-			If the goal is to prove the funnel instead of just talking about it, the first budget band is already visible.
+			The first 90 days are about improving nurse-side intake quality, recruiter handoff speed, and application flow.
 		</p>
 		<RolloutTimelineVisual />
 	</Slide>
@@ -268,7 +268,7 @@
 		<p class="subtitle">Less form fatigue for nurses.</p>
 		<p class="subtitle">Less manual re-entry for recruiters.</p>
 		<p class="subtitle">Faster matching with visible safety rails.</p>
-		<p class="tagline">A real adaptation path, with research-backed budget ranges.</p>
+		<p class="tagline">A real nurse-acquisition path, with research-backed budget ranges.</p>
 	</Slide>
 </Presentation>
 

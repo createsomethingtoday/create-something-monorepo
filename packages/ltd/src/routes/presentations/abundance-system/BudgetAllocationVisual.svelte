@@ -1,21 +1,29 @@
 <script lang="ts">
 	const scenarios = [
 		{
-			label: 'Minimum viable test',
-			total: '$8k-$12k / month',
-			nurse: 65,
-			facility: 35
+			label: 'Focused working range',
+			total: '$6k-$12k / month',
+			note: 'Enough to test one market or specialty with recruiter feedback in the loop.'
 		},
 		{
-			label: 'Better signal range',
+			label: 'Broader signal range',
 			total: '$12k-$20k / month',
-			nurse: 65,
-			facility: 35
+			note: 'Enough to compare creative, geography, and specialty lanes without guessing from one campaign.'
 		}
 	];
 
-	const nurseBenchmarks = ['Indeed / job media: lower-cost clicks', 'Healthcare applies: about $35 average', 'Harder-to-fill roles: $58+ applies'];
-	const facilityBenchmarks = ['LinkedIn B2B lead gen: about $75-$200+ CPL', 'Search is useful for staffing-intent terms', 'Demand side is more inferred than nurse side'];
+	const nurseBenchmarks = [
+		'Indeed and recruitment media: lower-cost healthcare clicks',
+		'Healthcare completed applies: about $35 average',
+		'Harder-to-fill roles: $58+ completed applies'
+	];
+
+	const channelMix = [
+		'40-50% job media for active nurse demand capture',
+		'15-20% search for specialty and location intent',
+		'15-20% Meta retargeting for resume and consent completion',
+		'5-10% LinkedIn for specialized or senior clinical roles'
+	];
 </script>
 
 <div class="budget-visual">
@@ -24,41 +32,35 @@
 			<article class="scenario-card">
 				<p class="eyebrow">{scenario.label}</p>
 				<h3>{scenario.total}</h3>
-
-				<div class="split-bar" aria-label={`${scenario.label} budget split`}>
-					<div class="bar nurse" style={`width: ${scenario.nurse}%`}>
-						<span>{scenario.nurse}% nurse side</span>
-					</div>
-					<div class="bar facility" style={`width: ${scenario.facility}%`}>
-						<span>{scenario.facility}% facility side</span>
-					</div>
-				</div>
+				<p class="scenario-note">{scenario.note}</p>
+				<span class="scope-pill">Nurse acquisition only</span>
 			</article>
 		{/each}
 	</section>
 
 	<section class="benchmark-card">
-		<p class="eyebrow">Directional benchmarks</p>
-		<h3>Why the split starts nurse-heavy</h3>
+		<p class="eyebrow">Scope</p>
+		<h3>Demand already exists</h3>
+		<p class="scope-copy">
+			The paid question is how to acquire more nurses, not how to create facility demand.
+		</p>
 
-		<div class="benchmark-columns">
-			<div>
-				<p class="column-title">Nurse acquisition</p>
-				<ul>
-					{#each nurseBenchmarks as item}
-						<li>{item}</li>
-					{/each}
-				</ul>
-			</div>
+		<div class="benchmark-block">
+			<p class="column-title">Directional benchmarks</p>
+			<ul>
+				{#each nurseBenchmarks as item}
+					<li>{item}</li>
+				{/each}
+			</ul>
+		</div>
 
-			<div>
-				<p class="column-title">Facility demand</p>
-				<ul>
-					{#each facilityBenchmarks as item}
-						<li>{item}</li>
-					{/each}
-				</ul>
-			</div>
+		<div class="benchmark-block">
+			<p class="column-title">Recommended channel mix</p>
+			<ul>
+				{#each channelMix as item}
+					<li>{item}</li>
+				{/each}
+			</ul>
 		</div>
 	</section>
 </div>
@@ -104,43 +106,33 @@
 		font-size: var(--text-h3);
 	}
 
-	.split-bar {
-		margin-top: var(--space-md);
-		height: 2.9rem;
-		display: flex;
-		border-radius: 999px;
-		overflow: hidden;
-		background: rgba(15, 23, 42, 0.06);
+	.scenario-note,
+	.scope-copy {
+		margin: var(--space-sm) 0 0;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: 1.5;
 	}
 
-	.bar {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0 var(--space-sm);
+	.scope-pill {
+		display: inline-flex;
+		align-self: flex-start;
+		margin-top: var(--space-md);
+		padding: 0.4rem 0.7rem;
+		border-radius: 999px;
+		background: rgba(37, 99, 235, 0.08);
+		color: #1d4ed8;
 		font-size: var(--text-caption);
 		font-family: var(--font-mono);
-	}
-
-	.bar.nurse {
-		background: rgba(37, 99, 235, 0.88);
-		color: white;
-	}
-
-	.bar.facility {
-		background: rgba(245, 158, 11, 0.85);
-		color: #111827;
-	}
-
-	.benchmark-columns {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: var(--space-lg);
 	}
 
 	.column-title {
 		font-size: var(--text-body);
 		margin-bottom: var(--space-sm);
+	}
+
+	.benchmark-block + .benchmark-block {
+		margin-top: var(--space-lg);
 	}
 
 	.benchmark-card ul {
@@ -172,13 +164,8 @@
 	}
 
 	@media (max-width: 768px) {
-		.budget-visual,
-		.benchmark-columns {
+		.budget-visual {
 			grid-template-columns: 1fr;
-		}
-
-		.bar span {
-			font-size: 0.7rem;
 		}
 	}
 </style>

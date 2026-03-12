@@ -48,7 +48,11 @@ Talent.
 Match.
 Intake.
 
-In nurse staffing terms, that becomes the side asking for coverage, the nurse available to fill it, the recommended pairing, and the running intake history.
+In nurse staffing terms, that becomes the open role, the nurse available to fill it, the recommended pairing, and the running intake history.
+
+For this client, the important note is that demand already exists.
+We are not trying to generate the facility side.
+We are improving how nurses are acquired and matched into it.
 
 That translation matters because the engine is generic by design, but the workflow can be specialized.
 
@@ -152,8 +156,8 @@ One place to stop execution when policy, billing, contract, or security state sa
 What is already real in code:
 profiles, intake history, matching, WhatsApp-ready identity, human handoff, governed widgets, and controlled execution.
 
-What gets specialized for nurse staffing:
-facility-side data, nurse credential rules, shift templates, license-verification integrations, compliance workflows, and downstream writebacks.
+What gets specialized for this engagement:
+nurse credential rules, specialty and shift fit, pay-package logic, resume and consent collection, recruiter handoff, and healthcare audit outputs.
 
 That distinction is important.
 This is not a fake deck.
@@ -161,25 +165,20 @@ It is a real system with a clear adaptation path.
 
 ---
 
-## Slide 12: What paid acquisition likely costs
+## Slide 12: What nurse acquisition likely costs
 
-We also have enough research to budget the go-to-market honestly.
+We also have enough research to budget this honestly.
 
-On the nurse side, a lean paid test is roughly three to six thousand dollars a month.
-A stronger single-market test is roughly six to twelve thousand.
+The client already has demand.
+So this budget is about nurse acquisition, not a two-sided marketplace launch.
 
-That is grounded in recruitment and healthcare benchmarks:
-lower-cost job-channel clicks,
-higher-cost Google and LinkedIn clicks,
-and healthcare application costs that rise fast for harder-to-fill roles.
+A focused working range is roughly six to twelve thousand dollars a month.
+A broader signal-generating range is roughly twelve to twenty thousand.
 
-On the facility side, the numbers are higher and less direct.
-A lean validation range is roughly four to eight thousand dollars a month.
-A more serious demand-generation range is roughly eight to fifteen thousand.
-
-That side is inferred from B2B healthcare and staffing benchmarks, especially LinkedIn lead-gen costs.
-So the honest statement is:
-candidate acquisition is better benchmarked than facility acquisition.
+That is grounded in candidate-side recruitment benchmarks:
+Indeed and job-media clicks,
+Google and LinkedIn specialty clicks,
+and healthcare completed-application costs that rise fast for harder-to-fill roles.
 
 ---
 
@@ -187,26 +186,20 @@ candidate acquisition is better benchmarked than facility acquisition.
 
 If we wanted to test the funnel instead of just describe it, the starting range is clear.
 
-Minimum viable paid test:
-eight to twelve thousand dollars per month total.
+Focused working budget:
+six to twelve thousand dollars per month.
 
 Better signal-generating budget:
-twelve to twenty thousand dollars per month total.
+twelve to twenty thousand dollars per month.
 
-The recommended split is about two-thirds nurse acquisition and one-third facility acquisition.
-
-On the nurse side:
+Channel order is straightforward:
 job channels first,
 search second,
-Meta and specialty LinkedIn tests where they help.
-
-On the facility side:
-LinkedIn lead gen,
-search for staffing-intent terms,
-then retargeting and follow-up.
+Meta retargeting for completion and reactivation,
+and LinkedIn only where specialty targeting matters.
 
 Month one is message testing.
-Month two is budget reallocation.
+Month two is budget reallocation around nurse quality.
 Month three is scaling the best specialty and geography combinations.
 
 ---
@@ -221,4 +214,4 @@ For leadership, a system that is faster without becoming opaque.
 The claim is simple:
 Abundance turns staffing from repeated intake and manual guesswork into guided matching with visible safety rails.
 
-And now the adaptation path includes a research-backed budget range, not just a product story.
+And now the nurse-acquisition path includes a research-backed budget range, not just a product story.

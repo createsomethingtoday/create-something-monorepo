@@ -11,11 +11,11 @@
 		},
 		{
 			label: 'Month 2',
-			title: 'Reallocate toward what converts',
+			title: 'Reallocate around nurse quality',
 			points: [
 				'Shift budget into the best nurse channels',
-				'Tighten facility-side offer and audience assumptions',
-				'Use proof assets to improve buyer confidence'
+				'Tighten specialty, geography, and shift targeting',
+				'Add retargeting for resume, consent, and recruiter follow-up'
 			]
 		},
 		{
@@ -23,7 +23,7 @@
 			title: 'Scale the winning lanes',
 			points: [
 				'Expand the best specialty and geography combinations',
-				'Keep facility demand narrow and accountable',
+				'Improve apply-to-shortlist speed for recruiters',
 				'Cut low-signal channels instead of broadening too early'
 			]
 		}
