@@ -67,12 +67,16 @@ Recommended reviewer discovery policy:
 
 - `mode`: `compact`
 - `activeServers`: `["webflow-app-review-mcp"]`
-- `maxProxyTools`: `8`
+- `maxProxyTools`: `6`
 
 ## 6. Hide all mutable routes during Phase A
 
 Remove these tools from reviewer-facing discovery during alpha:
 
+- `webflow-app-review-mcp__app_review_assign_self`
+- `webflow-app-review-mcp__app_review_unassign_self`
+- `webflow-app-review-mcp__app_review_save_draft_feedback`
+- `webflow-app-review-mcp__app_review_set_review_status`
 - `webflow-app-review-mcp__app_review_update_version_review`
 - `webflow-app-review-mcp__app_review_set_marketplace_status`
 - `webflow-app-review-mcp__app_review_update_asset_metadata`
@@ -168,8 +172,13 @@ If the Hub trace cannot support reviewer-attributed write review, keep reviewer 
 
 Enable writes in this order:
 
-1. `app_review_update_version_review`
-2. `app_review_set_marketplace_status`
+1. `app_review_assign_self`
+2. `app_review_unassign_self`
+3. `app_review_save_draft_feedback`
+4. `app_review_set_review_status`
+5. `app_review_request_changes`
+6. `app_review_approve_version`
+7. `app_review_reject_version`
 
 Do not enable the next action until the earlier action passes:
 
@@ -187,6 +196,7 @@ Before write enablement for each reviewer Hub:
 - session identity resolves correctly
 - reviewer discovery is limited to app-review read surfaces
 - broad mutation tools are hidden
+- reviewer-owned workflow tools are hidden until Phase B
 - read-only sessions block write discovery
 - read-only sessions block write execution
 - telemetry rows appear in `cs-telemetry`

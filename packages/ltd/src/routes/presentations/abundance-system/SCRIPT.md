@@ -54,9 +54,9 @@ That translation matters because the engine is generic by design, but the workfl
 
 ---
 
-## Slide 5: No giant intake form
+## Slide 5: What intake feels like
 
-The concierge flow is the simplest way to understand the product.
+The concierge flow is the clearest way to understand the product.
 
 A nurse says, “I’m an ICU nurse in Austin looking for a 13-week travel contract starting in April. Nights are best.”
 
@@ -84,7 +84,7 @@ It is meant to remember progress, not just collect data.
 
 ---
 
-## Slide 7: Matching is simple on purpose
+## Slide 7: How matching stays legible
 
 The current matching engine is not magic.
 It is simple math.
@@ -102,7 +102,7 @@ You can improve it without pretending it is a black box.
 
 ---
 
-## Slide 8: When the system must stop
+## Slide 8: What happens on conflict
 
 The seeded concierge demo includes a strong example.
 

@@ -51,6 +51,14 @@
         "webflow-app-review-mcp"
       ],
       "maxProxyTools": 6
+    },
+    "webflow-marketplace-app-review-phase-b": {
+      "description": "Phase B reviewer pack for Webflow Marketplace app review. Read surface plus narrow reviewer-owned workflow writes.",
+      "mode": "compact",
+      "activeServers": [
+        "webflow-app-review-mcp"
+      ],
+      "maxProxyTools": 15
     }
   }
 }

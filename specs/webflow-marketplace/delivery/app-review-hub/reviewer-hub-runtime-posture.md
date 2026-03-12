@@ -49,7 +49,7 @@ Use this immediately, because it only depends on the app-review MCP and does not
 
 - `mode`: `compact`
 - `activeServers`: `["webflow-app-review-mcp"]`
-- `maxProxyTools`: `8`
+- `maxProxyTools`: `6`
 
 ### Reviewer-visible tool target
 
@@ -78,18 +78,24 @@ Use this only after reviewer attribution and trace requirements are verified in 
 
 - `mode`: `compact`
 - `activeServers`: `["webflow-app-review-mcp"]`
-- `maxProxyTools`: `10`
+- `maxProxyTools`: `15`
 
 ### Reviewer-visible tool target
 
 Phase B should still default to a narrow review surface:
 
 - all Phase A read tools
+- `webflow-app-review-mcp__app_review_my_queue`
+- `webflow-app-review-mcp__app_review_get_review_context`
+- `webflow-app-review-mcp__app_review_assign_self`
+- `webflow-app-review-mcp__app_review_unassign_self`
+- `webflow-app-review-mcp__app_review_save_draft_feedback`
+- `webflow-app-review-mcp__app_review_set_review_status`
 - `webflow-app-review-mcp__app_review_request_changes`
 - `webflow-app-review-mcp__app_review_approve_version`
 - `webflow-app-review-mcp__app_review_reject_version`
-- `webflow-app-review-mcp__app_review_update_version_review` only if broader update semantics are still required
-- optionally `webflow-app-review-mcp__app_review_set_marketplace_status` after separate validation
+
+Do not expose the broad `app_review_update_version_review` or `app_review_set_marketplace_status` routes in the default reviewer pack. Keep reviewer workflow on narrow ownership-checked verbs.
 
 Do not expose general metadata mutation tools if the reviewer workflow only needs review-state actions.
 
@@ -113,7 +119,7 @@ Move to Phase B only after trace validation:
 {
   "mode": "compact",
   "activeServers": ["webflow-app-review-mcp"],
-  "maxProxyTools": 10
+  "maxProxyTools": 15
 }
 ```
 
@@ -123,10 +129,23 @@ Do not widen discovery to expose broad mutation tools.
 
 The only reviewer-facing write actions that may be enabled later are:
 
+- `webflow-app-review-mcp__app_review_assign_self`
+- `webflow-app-review-mcp__app_review_unassign_self`
+- `webflow-app-review-mcp__app_review_save_draft_feedback`
+- `webflow-app-review-mcp__app_review_set_review_status`
 - `webflow-app-review-mcp__app_review_request_changes`
 - `webflow-app-review-mcp__app_review_approve_version`
 - `webflow-app-review-mcp__app_review_reject_version`
-- `webflow-app-review-mcp__app_review_update_version_review` only if broader update semantics are still required
+
+Reviewer-owned flow should mirror the template-review lane:
+
+- self-assign before review writes
+- save draft feedback or controlled status changes while the review is in progress
+- use dedicated decision verbs for changes requested, approve, and reject
+
+Keep the broader routes out of the default reviewer surface:
+
+- `webflow-app-review-mcp__app_review_update_version_review`
 - `webflow-app-review-mcp__app_review_set_marketplace_status`
 
 Keep these out of reviewer use until:
@@ -146,6 +165,10 @@ Keep the broad metadata route operator-only unless the policy pack is explicitly
 
 In Phase A, also keep the narrow reviewer decision verbs hidden until reviewer identity and trace continuity are proven:
 
+- `webflow-app-review-mcp__app_review_assign_self`
+- `webflow-app-review-mcp__app_review_unassign_self`
+- `webflow-app-review-mcp__app_review_save_draft_feedback`
+- `webflow-app-review-mcp__app_review_set_review_status`
 - `webflow-app-review-mcp__app_review_request_changes`
 - `webflow-app-review-mcp__app_review_approve_version`
 - `webflow-app-review-mcp__app_review_reject_version`
@@ -198,11 +221,11 @@ Reason:
 3. Confirm write tools are not visible in reviewer discovery.
 4. Confirm reviewer sessions are read-only and actor-resolved.
 5. Turn on Hub rate limits and quotas.
-6. Enable `app_review_request_changes` for one reviewer only after trace validation.
-7. Validate Airtable writes and rollback behavior.
-8. Enable `app_review_approve_version`, then `app_review_reject_version`, only after clean results.
+6. Enable `app_review_assign_self`, `app_review_unassign_self`, `app_review_save_draft_feedback`, and `app_review_set_review_status` for one reviewer only after trace validation.
+7. Validate Airtable writes and rollback behavior on the reviewer-owned workflow actions.
+8. Enable `app_review_request_changes`, then `app_review_approve_version`, then `app_review_reject_version`, only after clean results.
 9. Expand to the second reviewer.
-10. Consider `app_review_set_marketplace_status` only after clean evidence.
+10. Consider `app_review_update_version_review` or `app_review_set_marketplace_status` only after a separate governance decision.
 
 ## 13. Stop conditions
 

@@ -81,22 +81,35 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
       asJsonResource(uri, {
         steps: [
           'Call app_review_list_queue to load the current app-review queue.',
+          'Call app_review_my_queue in reviewer-owned write posture to focus on versions already assigned to you.',
           'Call app_review_get_asset to inspect one app asset and its version history.',
           'Call app_review_get_version when a specific version record needs confirmation.',
+          'Call app_review_get_review_context before any write to confirm assignment state and reviewer ownership.',
           'Use app_review_decision_support and app_review_feedback_refiner for recommendation drafting only.',
+          'In write posture, assign yourself first, save draft feedback or set review status as needed, then use the narrow decision verbs for final reviewer-owned actions.',
           'Until reviewer write rollout is enabled in the Hub, complete official state changes manually in Airtable.',
         ],
         notes: {
           currentReviewer: getReviewer(),
           phaseAAccess: 'read_only_evidence_lane',
-          allowedWriteSurface: [
+          futurePhaseBWriteSurface: [
+            'app_review_assign_self',
+            'app_review_unassign_self',
+            'app_review_save_draft_feedback',
+            'app_review_set_review_status',
+            'app_review_request_changes',
+            'app_review_approve_version',
+            'app_review_reject_version',
+          ],
+          blockedWriteSurface: [
             'app_review_update_version_review',
             'app_review_set_marketplace_status',
+            'app_review_update_asset_metadata',
           ],
-          blockedWriteSurface: ['app_review_update_asset_metadata'],
           hostGuidance: [
             'Do not ask the reviewer to type their Airtable collaborator id.',
             'Treat reviewer identity as Hub-resolved account context, not prompt text.',
+            'Require assignment ownership before any reviewer-owned state change.',
             'Keep metadata-editing behavior out of the reviewer lane unless policy expands explicitly.',
           ],
         },

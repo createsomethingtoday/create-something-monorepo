@@ -1,6 +1,47 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AirtableClient, AirtableClientError, assertScopedTable } from './airtable.js';
+import { AirtableClient, AirtableClientError, assertScopedTable, type CollaboratorRef } from './airtable.js';
+import { FIELD_IDS, TABLE_IDS } from './schema.js';
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function versionRecord(id: string, reviewer?: CollaboratorRef | null) {
+  return {
+    id,
+    createdTime: '2026-03-11T10:00:00.000Z',
+    fields: {
+      [FIELD_IDS.versions.assetLink]: ['recAsset'],
+      [FIELD_IDS.versions.assetRecordIdRollup]: ['recAsset'],
+      [FIELD_IDS.versions.versionNumber]: 3,
+      [FIELD_IDS.versions.reviewStatus]: '🏃🏾In Review',
+      [FIELD_IDS.versions.reviewType]: 'New Asset',
+      [FIELD_IDS.versions.submissionDatetime]: '2026-03-10T18:00:00.000Z',
+      [FIELD_IDS.versions.reviewFeedback]: 'Looks good so far.',
+      ...(reviewer === undefined ? {} : { [FIELD_IDS.versions.reviewer]: reviewer }),
+    },
+  };
+}
+
+function assetRecord(id: string) {
+  return {
+    id,
+    fields: {
+      [FIELD_IDS.assets.name]: 'Example App',
+      [FIELD_IDS.assets.capabilities]: 'Data Client v2',
+      [FIELD_IDS.assets.clientId]: 'client_123',
+      [FIELD_IDS.assets.appId]: 'app_123',
+      [FIELD_IDS.assets.visibility]: 'Public',
+      [FIELD_IDS.assets.latestReviewStatus]: '🏃🏾In Review',
+      [FIELD_IDS.assets.marketplaceStatus]: '1️⃣Upcoming🆕',
+      [FIELD_IDS.assets.openReviewStatus]: ['🏃🏾In Review'],
+    },
+  };
+}
 
 describe('AirtableClient scope and validation', () => {
   it('enforces scoped table IDs', () => {
@@ -44,12 +85,9 @@ describe('AirtableClient retry behavior', () => {
       callCount += 1;
       if (callCount === 1) return new Response('rate limited', { status: 429 });
       if (callCount === 2) return new Response('upstream error', { status: 503 });
-      return new Response(
-        JSON.stringify({
-          records: [{ id: 'rec1', fields: { fldUzJBor3Gnkykjc: 'App One' } }],
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      );
+      return jsonResponse({
+        records: [{ id: 'rec1', fields: { [FIELD_IDS.assets.name]: 'App One' } }],
+      });
     });
 
     const client = new AirtableClient({
@@ -69,3 +107,126 @@ describe('AirtableClient retry behavior', () => {
   });
 });
 
+describe('AirtableClient reviewer ownership helpers', () => {
+  const reviewer = { id: 'usr_pablo', email: 'pablo.miranda@webflow.com', name: 'Pablo Miranda' };
+  const otherReviewer = { id: 'usr_other', email: 'other@webflow.com', name: 'Other Reviewer' };
+
+  function createClient() {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-other`) && (!init?.method || init.method === 'GET')) {
+        return jsonResponse(versionRecord('rec-version-other', otherReviewer));
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-self`) && (!init?.method || init.method === 'GET')) {
+        return jsonResponse(versionRecord('rec-version-self', reviewer));
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-unassigned`) && (!init?.method || init.method === 'GET')) {
+        return jsonResponse(versionRecord('rec-version-unassigned', null));
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-out-of-scope`) && (!init?.method || init.method === 'GET')) {
+        return jsonResponse({
+          ...versionRecord('rec-version-out-of-scope', null),
+          fields: {
+            ...versionRecord('rec-version-out-of-scope', null).fields,
+            [FIELD_IDS.versions.assetLink]: ['recNotApp'],
+            [FIELD_IDS.versions.assetRecordIdRollup]: ['recNotApp'],
+          },
+        });
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}/recAsset`) && (!init?.method || init.method === 'GET')) {
+        return jsonResponse(assetRecord('recAsset'));
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}/recNotApp`) && (!init?.method || init.method === 'GET')) {
+        return jsonResponse({
+          id: 'recNotApp',
+          fields: {
+            [FIELD_IDS.assets.name]: 'Out of Scope Record',
+          },
+        });
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`) && init?.method === 'PATCH') {
+        const payload = JSON.parse(String(init.body)) as {
+          records: Array<{ id: string; fields: Record<string, unknown> }>;
+        };
+        const [{ id, fields }] = payload.records;
+        const current =
+          id === 'rec-version-self'
+            ? versionRecord('rec-version-self', reviewer)
+            : versionRecord(id, null);
+        return jsonResponse({
+          records: [
+            {
+              ...current,
+              fields: {
+                ...current.fields,
+                ...fields,
+              },
+            },
+          ],
+        });
+      }
+
+      return new Response('not found', { status: 404 });
+    });
+
+    return {
+      client: new AirtableClient({
+        apiKey: 'token',
+        fetchFn,
+      }),
+      fetchFn,
+    };
+  }
+
+  it('blocks self-assignment when another reviewer already owns the version', async () => {
+    const { client } = createClient();
+
+    await expect(client.assignSelfToVersion('rec-version-other', reviewer)).rejects.toMatchObject({
+      code: 'REVIEWER_ASSIGNMENT_CONFLICT',
+    });
+  });
+
+  it('rejects reviewer-owned helpers for versions outside app-review scope', async () => {
+    const { client } = createClient();
+
+    await expect(client.assignSelfToVersion('rec-version-out-of-scope', reviewer)).rejects.toMatchObject({
+      code: 'ASSET_NOT_FOUND_OR_OUT_OF_SCOPE',
+    });
+  });
+
+  it('clears the reviewer field when unassigning the current reviewer', async () => {
+    const { client, fetchFn } = createClient();
+
+    const updated = await client.unassignVersionReviewer('rec-version-self', reviewer);
+
+    expect(updated.reviewer).toBeNull();
+    expect(fetchFn).toHaveBeenCalled();
+  });
+
+  it('requires reviewer ownership before reviewer-owned writes', async () => {
+    const { client } = createClient();
+
+    await expect(client.requireAssignedVersion('rec-version-unassigned', reviewer)).rejects.toMatchObject({
+      code: 'REVIEWER_ASSIGNMENT_REQUIRED',
+    });
+  });
+
+  it('returns normalized review context with reviewer flags', async () => {
+    const { client } = createClient();
+
+    const context = await client.getReviewContext('rec-version-self', reviewer);
+
+    expect(context.appName).toBe('Example App');
+    expect(context.isAssignedToCurrentReviewer).toBe(true);
+    expect(context.canAssign).toBe(false);
+    expect(context.canReview).toBe(true);
+    expect(context.reviewer?.id).toBe('usr_pablo');
+  });
+});

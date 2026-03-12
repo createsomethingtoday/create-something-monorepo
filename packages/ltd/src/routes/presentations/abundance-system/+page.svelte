@@ -2,6 +2,11 @@
 	import { Presentation } from '@create-something/canon/domains/ltd';
 	import { Slide } from '@create-something/canon/domains/ltd';
 	import { SEO } from '@create-something/canon';
+	import BudgetAllocationVisual from './BudgetAllocationVisual.svelte';
+	import IntakeExperience from './IntakeExperience.svelte';
+	import MatchingShortlistVisual from './MatchingShortlistVisual.svelte';
+	import PolicyEscalationVisual from './PolicyEscalationVisual.svelte';
+	import RolloutTimelineVisual from './RolloutTimelineVisual.svelte';
 	import SystemPillars from './SystemPillars.svelte';
 	import TermMap from './TermMap.svelte';
 
@@ -66,42 +71,6 @@
 		}
 	];
 
-	const budgetBenchmarks = [
-		{
-			eyebrow: 'Nurse supply',
-			title: '$3k-$6k/mo lean, $6k-$12k/mo solid',
-			body: 'Healthcare recruitment benchmarks point to lower-cost job-channel traffic, with completed applications often around $35 and harder-to-fill roles rising above that.'
-		},
-		{
-			eyebrow: 'Facility demand',
-			title: '$4k-$8k/mo lean, $8k-$15k/mo solid',
-			body: 'Facility acquisition is costlier and less directly benchmarked. Treat it as B2B demand generation, with LinkedIn-style lead costs often landing in the $75-$200+ range.'
-		}
-	];
-
-	const firstNinetyPlan = [
-		{
-			eyebrow: 'Budget',
-			title: '$8k-$12k/mo minimum viable test',
-			body: 'Use this range when the goal is to validate the funnel in one market without overclaiming signal.'
-		},
-		{
-			eyebrow: 'Signal',
-			title: '$12k-$20k/mo better read',
-			body: 'This is the cleaner range for learning by specialty, geography, and buyer segment instead of guessing.'
-		},
-		{
-			eyebrow: 'Split',
-			title: '60-70% nurse side, 30-40% facility side',
-			body: 'Candidate acquisition is faster to learn from, so it should get the bigger share of paid spend first.'
-		}
-	];
-
-	const channelMix = [
-		'Nurse supply: job channels, Google Search, Meta retargeting, and a small LinkedIn test for specialized roles.',
-		'Facility demand: LinkedIn lead gen, search around staffing intent, and follow-up around proof and workflow speed.',
-		'Operating rhythm: month one message testing, month two reallocation, month three scale the best specialty and geography combinations.'
-	];
 </script>
 
 <SEO
@@ -163,16 +132,12 @@
 
 	<Slide type="content">
 		<span class="number">05</span>
-		<h2>No 20-Question Form First</h2>
+		<h2>What Intake Feels Like</h2>
 		<p>
 			The concierge flow starts with a normal message.
-			<span class="em">The profile gets built in the background.</span>
+			<span class="em">The profile is built while the conversation is happening.</span>
 		</p>
-		<ul>
-			<li>Carmen says she is an ICU nurse in Austin looking for a 13-week travel contract.</li>
-			<li>The system pulls in specialty, shift preference, start window, and contract type.</li>
-			<li>Then it asks only for what is still missing: radius, resume, and consent.</li>
-		</ul>
+		<IntakeExperience />
 		<p class="muted">Useful first. Structured second. That is the product move.</p>
 	</Slide>
 
@@ -194,31 +159,23 @@
 
 	<Slide type="content">
 		<span class="number">07</span>
-		<h2>Matching Uses Simple Math, Not Magic</h2>
-		<div class="formula">
-			<span class="formula-label">Current score</span>
-			<strong>Fit = Skills 40% + Budget 30% + Availability 30%</strong>
-		</div>
-		<ul>
-			<li>In nurse staffing terms, that maps to specialty and credential fit.</li>
-			<li>Then pay fit.</li>
-			<li>Then shift or start-date availability fit.</li>
-		</ul>
+		<h2>How Matching Stays Legible</h2>
+		<p>
+			The current engine is simple enough to explain.
+			<span class="em">Every shortlist comes with visible reasons.</span>
+		</p>
+		<MatchingShortlistVisual />
 		<p class="muted">The code keeps this simple on purpose so every score can be explained and audited.</p>
 	</Slide>
 
 	<Slide type="content">
 		<span class="number">08</span>
-		<h2>When the System Must Stop</h2>
+		<h2>What Happens On Conflict</h2>
 		<p>
 			A good staffing system does not try to be brave.
 			<span class="em">It knows when to escalate.</span>
 		</p>
-		<ul>
-			<li>In the seeded demo, a nurse reports one license date and the portal returns another.</li>
-			<li>The system does not write over the conflict.</li>
-			<li>It packages the thread, records the reason, and hands it to a human reviewer.</li>
-		</ul>
+		<PolicyEscalationVisual />
 		<p class="muted">Fast where safe. Human where necessary.</p>
 	</Slide>
 
@@ -285,7 +242,7 @@
 		<p>
 			We now have enough market research to put directional budget ranges around the rollout.
 		</p>
-		<SystemPillars items={budgetBenchmarks} />
+		<BudgetAllocationVisual />
 		<p class="muted">
 			Research note: nurse-side benchmarks are stronger than facility-side benchmarks. Facility demand is
 			best treated as a B2B healthcare estimate.
@@ -302,12 +259,7 @@
 		<p>
 			If the goal is to prove the funnel instead of just talking about it, the first budget band is already visible.
 		</p>
-		<SystemPillars items={firstNinetyPlan} />
-		<ul>
-			{#each channelMix as item}
-				<li>{item}</li>
-			{/each}
-		</ul>
+		<RolloutTimelineVisual />
 	</Slide>
 
 	<Slide type="title">
@@ -321,29 +273,6 @@
 </Presentation>
 
 <style>
-	.formula {
-		width: 100%;
-		padding: var(--space-lg);
-		border-radius: var(--radius-md);
-		border: 1px solid var(--color-border-subtle);
-		background: var(--color-bg-surface);
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-	}
-
-	.formula-label {
-		font-size: var(--text-caption);
-		letter-spacing: var(--tracking-widest);
-		text-transform: uppercase;
-		color: var(--color-fg-muted);
-	}
-
-	.formula strong {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
-	}
-
 	.source-note {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);

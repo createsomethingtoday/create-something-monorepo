@@ -124,6 +124,18 @@ export interface AppReviewQueueItem {
   clientId?: string;
   appId?: string;
   visibilityStatus?: string;
+  assignableVersionId?: string;
+  reviewer?: CollaboratorRef | null;
+  versionNumber?: number;
+  reviewType?: string;
+  submissionDatetime?: string;
+  normalizedStatus?: AppReviewQueueStatus | null;
+  isReadyToReview?: boolean;
+  isUnassigned?: boolean;
+  canAssign?: boolean;
+  canReview?: boolean;
+  isAssignedToCurrentReviewer?: boolean;
+  isBlockedByOtherReviewer?: boolean;
 }
 
 export interface AppReviewAsset extends AppReviewQueueItem {
@@ -164,6 +176,44 @@ export interface AppReviewVersion {
   reviewFeedback?: string;
   daysInCurrentStage?: number;
   createdTime?: string;
+}
+
+export type AppReviewQueueStatus =
+  | 'ready_to_review'
+  | 'in_review'
+  | 'changes_requested'
+  | 'approved'
+  | 'rejected'
+  | 'on_hold'
+  | 'archived';
+
+export type AppReviewQueueAssignmentFilter = 'any' | 'assigned' | 'unassigned';
+export type AppReviewQueueSort = 'submissionDatetime_desc' | 'submissionDatetime_asc' | 'versionNumber_desc' | 'versionNumber_asc';
+
+export interface AppReviewQueueQuery {
+  limit?: number;
+  status?: AppReviewQueueStatus;
+  assigned?: AppReviewQueueAssignmentFilter;
+  sort?: AppReviewQueueSort;
+  currentReviewer?: CollaboratorRef | null;
+  onlyAssignedToCurrentReviewer?: boolean;
+}
+
+export interface AppReviewContext {
+  versionId: string;
+  assetId?: string;
+  appName?: string;
+  reviewer?: CollaboratorRef | null;
+  reviewStatus?: string;
+  reviewType?: string;
+  rejectionReason?: string;
+  reviewFeedback?: string;
+  canAssign: boolean;
+  canReview: boolean;
+  isAssignedToCurrentReviewer: boolean;
+  currentReviewer?: CollaboratorRef | null;
+  asset?: AppReviewAsset | null;
+  version: AppReviewVersion;
 }
 
 export interface VersionReviewUpdateInput {
@@ -342,6 +392,84 @@ function mapVersionRecord(record: AirtableRecord): AppReviewVersion {
     daysInCurrentStage: toNumberValue(fields[FIELD_IDS.versions.daysInCurrentStage]),
     createdTime: record.createdTime,
   };
+}
+
+function normalizeQueueStatus(asset: AppReviewAsset, version?: AppReviewVersion | null): AppReviewQueueStatus | null {
+  const candidates = [
+    version?.reviewStatus,
+    asset.latestReviewStatus,
+    ...(asset.openReviewStatus ?? []),
+    asset.marketplaceStatus,
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    if (/ready/i.test(candidate)) return 'ready_to_review';
+    if (/training check|in review|admin feedback review|managed feedback review|admin approval review|admin rejection review/i.test(candidate)) {
+      return 'in_review';
+    }
+    if (/changes requested|response to review/i.test(candidate)) return 'changes_requested';
+    if (/approved/i.test(candidate)) return 'approved';
+    if (/rejected/i.test(candidate)) return 'rejected';
+    if (/on hold/i.test(candidate)) return 'on_hold';
+    if (/archived/i.test(candidate)) return 'archived';
+  }
+
+  return null;
+}
+
+function toQueueItem(
+  asset: AppReviewAsset,
+  version?: AppReviewVersion | null,
+  query: AppReviewQueueQuery = {},
+): AppReviewQueueItem {
+  const reviewer = version?.reviewer ?? null;
+  const isAssignedToCurrentReviewer = Boolean(
+    query.currentReviewer?.id &&
+      reviewer?.id &&
+      query.currentReviewer.id === reviewer.id,
+  );
+  const normalizedStatus = normalizeQueueStatus(asset, version);
+
+  return {
+    ...asset,
+    assignableVersionId: version?.versionId,
+    reviewer,
+    versionNumber: version?.versionNumber,
+    reviewType: version?.reviewType,
+    submissionDatetime: version?.submissionDatetime ?? version?.createdTime,
+    normalizedStatus,
+    isReadyToReview: normalizedStatus === 'ready_to_review',
+    isUnassigned: !reviewer,
+    canAssign: Boolean(version?.versionId && query.currentReviewer?.id && !reviewer),
+    canReview: Boolean(!reviewer || isAssignedToCurrentReviewer),
+    isAssignedToCurrentReviewer,
+    isBlockedByOtherReviewer: Boolean(reviewer?.id && !isAssignedToCurrentReviewer),
+  };
+}
+
+function compareIsoDates(a?: string, b?: string): number {
+  const left = a ? Date.parse(a) : Number.NaN;
+  const right = b ? Date.parse(b) : Number.NaN;
+  const leftValue = Number.isFinite(left) ? left : -Infinity;
+  const rightValue = Number.isFinite(right) ? right : -Infinity;
+  return leftValue - rightValue;
+}
+
+function sortQueueItems(items: AppReviewQueueItem[], sort: AppReviewQueueSort): AppReviewQueueItem[] {
+  const cloned = [...items];
+  cloned.sort((left, right) => {
+    switch (sort) {
+      case 'submissionDatetime_asc':
+        return compareIsoDates(left.submissionDatetime, right.submissionDatetime);
+      case 'submissionDatetime_desc':
+        return compareIsoDates(right.submissionDatetime, left.submissionDatetime);
+      case 'versionNumber_asc':
+        return (left.versionNumber ?? 0) - (right.versionNumber ?? 0);
+      case 'versionNumber_desc':
+        return (right.versionNumber ?? 0) - (left.versionNumber ?? 0);
+    }
+  });
+  return cloned;
 }
 
 export function assertScopedTable(tableId: string): asserts tableId is ScopedTableId {
@@ -532,6 +660,37 @@ export class AirtableClient {
       .map((record) => mapQueueRecord(record));
   }
 
+  async listAssetQueueDetailed(query: AppReviewQueueQuery = {}): Promise<{
+    sortApplied: AppReviewQueueSort;
+    items: AppReviewQueueItem[];
+  }> {
+    const limit = query.limit ?? 100;
+    const sort = query.sort ?? 'submissionDatetime_desc';
+    const queue = await this.listAssetQueue(limit);
+    const items = await Promise.all(
+      queue.map(async (item) => {
+        const asset = await this.getAssetById(item.assetId);
+        if (!asset) return item;
+        const versions = await this.listVersionsForAsset(item.assetId, 25);
+        const currentVersion = versions[0] ?? null;
+        return toQueueItem(asset, currentVersion, query);
+      }),
+    );
+
+    const filtered = items.filter((item) => {
+      if (query.status && item.normalizedStatus !== query.status) return false;
+      if (query.assigned === 'assigned' && item.isUnassigned) return false;
+      if (query.assigned === 'unassigned' && !item.isUnassigned) return false;
+      if (query.onlyAssignedToCurrentReviewer && !item.isAssignedToCurrentReviewer) return false;
+      return true;
+    });
+
+    return {
+      sortApplied: sort,
+      items: sortQueueItems(filtered, sort),
+    };
+  }
+
   async getAssetById(assetId: string): Promise<AppReviewAsset | null> {
     const record = await this.getRecord(TABLE_IDS.assets, assetId, ASSET_DETAIL_FIELD_IDS);
     if (!record) return null;
@@ -574,6 +733,152 @@ export class AirtableClient {
   async getVersionById(versionId: string): Promise<AppReviewVersion | null> {
     const record = await this.getRecord(TABLE_IDS.assetVersions, versionId, VERSION_FIELD_IDS);
     return record ? mapVersionRecord(record) : null;
+  }
+
+  private async getScopedVersion(versionId: string): Promise<{ version: AppReviewVersion; asset: AppReviewAsset }> {
+    const version = await this.getVersionById(versionId);
+    if (!version) {
+      throw new AirtableClientError('VERSION_NOT_FOUND', 'Version not found.', 404, { version_id: versionId });
+    }
+    if (!version.assetId) {
+      throw new AirtableClientError('VERSION_SCOPE_ERROR', 'Version is missing linked asset ID.', 400, { version_id: versionId });
+    }
+
+    const asset = await this.getAssetById(version.assetId);
+    if (!asset) {
+      throw new AirtableClientError(
+        'ASSET_NOT_FOUND_OR_OUT_OF_SCOPE',
+        'Asset not found or outside app-review scope.',
+        404,
+        {
+          asset_id: version.assetId,
+          version_id: versionId,
+        },
+      );
+    }
+
+    return { version, asset };
+  }
+
+  async assignVersionReviewer(versionId: string, reviewer: CollaboratorRef | null): Promise<AppReviewVersion> {
+    return this.updateVersionReview(versionId, { reviewer });
+  }
+
+  async assignSelfToVersion(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<AppReviewVersion> {
+    if (!currentReviewer?.id) {
+      throw new AirtableClientError(
+        'REVIEWER_IDENTITY_UNAVAILABLE',
+        'Current reviewer identity is not configured for this MCP runtime.',
+        503,
+      );
+    }
+
+    const { version } = await this.getScopedVersion(versionId);
+    if (version.reviewer?.id && version.reviewer.id !== currentReviewer.id) {
+      throw new AirtableClientError(
+        'REVIEWER_ASSIGNMENT_CONFLICT',
+        'Version is already assigned to a different reviewer.',
+        409,
+        {
+          version_id: versionId,
+          current_reviewer_id: currentReviewer.id,
+          assigned_reviewer_id: version.reviewer.id,
+        },
+      );
+    }
+    if (version.reviewer?.id === currentReviewer.id) {
+      return version;
+    }
+
+    return this.assignVersionReviewer(versionId, currentReviewer);
+  }
+
+  async unassignVersionReviewer(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<AppReviewVersion> {
+    const { version } = await this.getScopedVersion(versionId);
+    if (!currentReviewer?.id) {
+      throw new AirtableClientError(
+        'REVIEWER_IDENTITY_UNAVAILABLE',
+        'Current reviewer identity is not configured for this MCP runtime.',
+        503,
+      );
+    }
+    if (!version.reviewer?.id) {
+      return version;
+    }
+    if (version.reviewer.id !== currentReviewer.id) {
+      throw new AirtableClientError(
+        'REVIEWER_ASSIGNMENT_CONFLICT',
+        'Version is assigned to a different reviewer and cannot be unassigned from this lane.',
+        409,
+        {
+          version_id: versionId,
+          current_reviewer_id: currentReviewer.id,
+          assigned_reviewer_id: version.reviewer.id,
+        },
+      );
+    }
+    return this.assignVersionReviewer(versionId, null);
+  }
+
+  async requireAssignedVersion(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<AppReviewVersion> {
+    const { version } = await this.getScopedVersion(versionId);
+    if (!currentReviewer?.id) {
+      throw new AirtableClientError(
+        'REVIEWER_IDENTITY_UNAVAILABLE',
+        'Current reviewer identity is not configured for this MCP runtime.',
+        503,
+      );
+    }
+    if (!version.reviewer?.id) {
+      throw new AirtableClientError(
+        'REVIEWER_ASSIGNMENT_REQUIRED',
+        'Version must be assigned to the authenticated reviewer before this action can run.',
+        409,
+        {
+          version_id: versionId,
+          current_reviewer_id: currentReviewer.id,
+        },
+      );
+    }
+    if (version.reviewer.id !== currentReviewer.id) {
+      throw new AirtableClientError(
+        'REVIEWER_ASSIGNMENT_CONFLICT',
+        'Version is assigned to a different reviewer.',
+        409,
+        {
+          version_id: versionId,
+          current_reviewer_id: currentReviewer.id,
+          assigned_reviewer_id: version.reviewer.id,
+        },
+      );
+    }
+    return version;
+  }
+
+  async getReviewContext(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<AppReviewContext> {
+    const { version, asset } = await this.getScopedVersion(versionId);
+    const isAssignedToCurrentReviewer = Boolean(
+      currentReviewer?.id &&
+        version.reviewer?.id &&
+        currentReviewer.id === version.reviewer.id,
+    );
+
+    return {
+      versionId: version.versionId,
+      assetId: version.assetId,
+      appName: asset?.appName,
+      reviewer: version.reviewer ?? null,
+      reviewStatus: version.reviewStatus,
+      reviewType: version.reviewType,
+      rejectionReason: version.rejectionReason,
+      reviewFeedback: version.reviewFeedback,
+      canAssign: Boolean(currentReviewer?.id && !version.reviewer),
+      canReview: !version.reviewer || isAssignedToCurrentReviewer,
+      isAssignedToCurrentReviewer,
+      currentReviewer: currentReviewer ?? null,
+      asset,
+      version,
+    };
   }
 
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<AppReviewVersion> {
@@ -840,4 +1145,3 @@ function mapWritableKeyToAssetFieldName(
       return 'promoVideoUrl';
   }
 }
-

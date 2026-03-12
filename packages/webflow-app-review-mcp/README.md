@@ -42,13 +42,26 @@ Optional:
 - `app_review_get_asset`
 - `app_review_list_versions`
 - `app_review_get_version`
-- `app_review_update_version_review`
-- `app_review_update_asset_metadata`
-- `app_review_set_marketplace_status`
+- `app_review_my_queue`
+- `app_review_get_review_context`
+- `app_review_assign_self`
+- `app_review_unassign_self`
+- `app_review_save_draft_feedback`
+- `app_review_set_review_status`
+- `app_review_get_field_map`
 - `app_review_request_changes`
 - `app_review_approve_version`
 - `app_review_reject_version`
-- `app_review_get_field_map`
+- `app_review_update_version_review`
+- `app_review_update_asset_metadata`
+- `app_review_set_marketplace_status`
+
+Reviewer-owned write posture is intended to mirror the Webflow template-review lane:
+
+- self-assignment before review writes
+- draft feedback and controlled status changes before final decisions
+- narrow decision verbs for request-changes, approve, and reject
+- broad metadata and marketplace-status updates kept outside the normal reviewer flow
 
 ## Resources
 

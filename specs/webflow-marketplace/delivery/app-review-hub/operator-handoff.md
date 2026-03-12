@@ -60,8 +60,12 @@ The app-review MCP now supports reviewer identity resolution via account-scoped 
 - [worker/index.ts](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/webflow-app-review-mcp/worker/index.ts)
 - [index.ts](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/webflow-app-review-mcp/src/index.ts)
 
-The MCP now exposes narrow reviewer-safe decision verbs for later gated rollout:
+The MCP now exposes narrow reviewer-safe workflow verbs for later gated rollout:
 
+- `app_review_assign_self`
+- `app_review_unassign_self`
+- `app_review_save_draft_feedback`
+- `app_review_set_review_status`
 - `app_review_request_changes`
 - `app_review_approve_version`
 - `app_review_reject_version`
@@ -177,6 +181,10 @@ Visible reviewer tools:
 
 Hidden reviewer tools:
 
+- `app_review_assign_self`
+- `app_review_unassign_self`
+- `app_review_save_draft_feedback`
+- `app_review_set_review_status`
 - `app_review_update_version_review`
 - `app_review_set_marketplace_status`
 - `app_review_update_asset_metadata`
@@ -194,6 +202,10 @@ Use only after explicit Phase B approval, on a noncritical version record with a
 
 Supported actions:
 
+- `assign_self`
+- `unassign_self`
+- `save_draft_feedback`
+- `set_review_status`
 - `request_changes`
 - `approve`
 - `reject`
@@ -208,7 +220,7 @@ The remaining work is operational, not repo scaffolding:
 4. deploy and normalize the two reviewer Hub surfaces
 5. verify Phase A read-only discovery
 6. keep all state changes manual in Airtable during Phase A
-7. only after signoff, run a Phase B smoke for one narrow reviewer decision verb
+7. only after signoff, run a Phase B smoke for one narrow reviewer-owned workflow action
 
 ## 10. Final status
 

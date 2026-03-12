@@ -52,9 +52,15 @@ The codebase app-review MCP currently exposes these tools:
 - `app_review_list_versions`
 - `app_review_get_version`
 - `app_review_get_field_map`
+- `app_review_my_queue`
+- `app_review_get_review_context`
 
 ### Mutation tools
 
+- `app_review_assign_self`
+- `app_review_unassign_self`
+- `app_review_save_draft_feedback`
+- `app_review_set_review_status`
 - `app_review_update_version_review`
 - `app_review_update_asset_metadata`
 - `app_review_set_marketplace_status`
@@ -118,11 +124,15 @@ Do not expose write tools until the write-enable gates in section 7 pass.
 
 Once the gates pass, the reviewer lane may selectively expose:
 
+- `app_review_my_queue`
+- `app_review_get_review_context`
+- `app_review_assign_self`
+- `app_review_unassign_self`
+- `app_review_save_draft_feedback`
+- `app_review_set_review_status`
 - `app_review_request_changes`
 - `app_review_approve_version`
 - `app_review_reject_version`
-- `app_review_update_version_review` only if broader update semantics are still needed
-- `app_review_set_marketplace_status`
 
 These must remain reviewer-owned actions and must only be callable through a Hub path that records reviewer identity and approval evidence.
 
@@ -130,6 +140,10 @@ These must remain reviewer-owned actions and must only be callable through a Hub
 
 Keep these tools out of reviewer-facing discovery during alpha:
 
+- `app_review_assign_self`
+- `app_review_unassign_self`
+- `app_review_save_draft_feedback`
+- `app_review_set_review_status`
 - `app_review_update_version_review`
 - `app_review_set_marketplace_status`
 - `app_review_update_asset_metadata`
@@ -172,20 +186,22 @@ The current `webflow-app-review-mcp` worker validates a single shared `MCP_API_K
 
 Write tools remain disabled until all of the following are demonstrated in the pilot environment:
 
-1. `app_review_update_version_review`
+1. `app_review_assign_self`, `app_review_unassign_self`, `app_review_save_draft_feedback`, `app_review_set_review_status`
    - reviewer identity is visible in trace output
+   - reviewer ownership is enforced before any state-changing review write
    - updated Airtable version record matches the requested state change
    - correlation id links the recommendation and the write
    - retry behavior is understood and documented
 
 2. `app_review_request_changes`, `app_review_approve_version`, `app_review_reject_version`
    - each route sets reviewer attribution from authenticated Hub identity
+   - each route fails closed when the version is unassigned or assigned to another reviewer
    - each route mutates only the bounded review fields needed for that decision
    - no broader metadata field is silently writable through the narrow route
 
-3. `app_review_set_marketplace_status`
+3. `app_review_update_version_review`, `app_review_set_marketplace_status`
    - marketplace status writes are attributable to the reviewer Hub identity
-   - write scope is limited to approved status transitions
+   - broader update scope is limited to explicitly approved transitions
    - no unsupported field is silently mutated as part of the route
 
 If either check fails, revert both reviewer Hubs to read-only evidence mode until corrected.
@@ -197,6 +213,7 @@ The reviewer Hubs should use this action model:
 - reads and analysis: auto-allow
 - recommendation drafting: auto-allow
 - feedback refinement: auto-allow
+- reviewer self-assignment and draft review workflow writes: approval-required
 - version review state change: approval-required
 - marketplace status change: approval-required
 - asset metadata edits: blocked
@@ -218,8 +235,9 @@ The reviewer should be the approval owner for any write. Operators should interv
 
 ### Alpha week two
 
-- enable `app_review_update_version_review` first if trace and audit checks pass
-- keep `app_review_set_marketplace_status` gated until proven separately
+- enable `app_review_assign_self`, `app_review_unassign_self`, `app_review_save_draft_feedback`, and `app_review_set_review_status` first if trace and audit checks pass
+- keep the decision verbs gated until the reviewer-owned workflow path is clean
+- keep `app_review_update_version_review` and `app_review_set_marketplace_status` gated until proven separately
 - review every write trace and Airtable update with the workflow owner
 
 ### Beta

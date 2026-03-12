@@ -11,6 +11,7 @@ VERSION_ID="${VERSION_ID:-}"
 REVIEW_FEEDBACK="${REVIEW_FEEDBACK:-Phase B smoke verification from reviewer-scoped Hub.}"
 REJECTION_REASON="${REJECTION_REASON:-Other}"
 REVIEW_TYPE="${REVIEW_TYPE:-}"
+REVIEW_STATUS="${REVIEW_STATUS:-🏃🏾In Review}"
 
 reviewer_url() {
   case "$1" in
@@ -87,6 +88,46 @@ assert_no_rpc_error() {
 
 build_args_json() {
   case "$ACTION" in
+    assign_self)
+      jq -cn \
+        --arg version_id "$VERSION_ID" \
+        '{
+          proxyToolName:"webflow-app-review-mcp__app_review_assign_self",
+          args:{version_id:$version_id}
+        }'
+      ;;
+    unassign_self)
+      jq -cn \
+        --arg version_id "$VERSION_ID" \
+        '{
+          proxyToolName:"webflow-app-review-mcp__app_review_unassign_self",
+          args:{version_id:$version_id}
+        }'
+      ;;
+    save_draft_feedback)
+      jq -cn \
+        --arg version_id "$VERSION_ID" \
+        --arg review_feedback "$REVIEW_FEEDBACK" \
+        '{
+          proxyToolName:"webflow-app-review-mcp__app_review_save_draft_feedback",
+          args:{
+            version_id:$version_id,
+            review_feedback:$review_feedback
+          }
+        }'
+      ;;
+    set_review_status)
+      jq -cn \
+        --arg version_id "$VERSION_ID" \
+        --arg review_status "$REVIEW_STATUS" \
+        '{
+          proxyToolName:"webflow-app-review-mcp__app_review_set_review_status",
+          args:{
+            version_id:$version_id,
+            review_status:$review_status
+          }
+        }'
+      ;;
     request_changes)
       jq -cn \
         --arg version_id "$VERSION_ID" \
@@ -151,7 +192,7 @@ main() {
     exit 1
   fi
   if [[ -z "$ACTION" ]]; then
-    echo "set ACTION=request_changes|approve|reject" >&2
+    echo "set ACTION=assign_self|unassign_self|save_draft_feedback|set_review_status|request_changes|approve|reject" >&2
     exit 1
   fi
   if [[ -z "$VERSION_ID" ]]; then
@@ -174,6 +215,9 @@ main() {
   echo "reviewer=${REVIEWER}"
   echo "action=${ACTION}"
   echo "version_id=${VERSION_ID}"
+  if [[ "$ACTION" == "set_review_status" ]]; then
+    echo "review_status=${REVIEW_STATUS}"
+  fi
   echo "hub_url=${hub_url}"
   echo "note=use only on a noncritical record or a record prepared for rollback"
 

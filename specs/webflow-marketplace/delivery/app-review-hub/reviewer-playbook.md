@@ -30,12 +30,14 @@ Do not use the Hub to:
 
 1. Open the submission in the app review lane.
 2. Confirm asset, version, and current review context.
-3. Review the asset and version history.
-4. Use the recommendation and feedback prompts if helpful.
-5. Validate the recommendation against the actual app-review evidence.
-6. Add your own security, compliance, or Marketplace judgment.
-7. Choose the final reviewer action.
-8. If the reviewer lane is still read-only, record the official state change manually in Airtable.
+3. In write posture, assign the version to yourself before any reviewer-owned write.
+4. Review the asset and version history.
+5. Use the recommendation and feedback prompts if helpful.
+6. Save draft feedback or set review status if that helps you manage the review cycle.
+7. Validate the recommendation against the actual app-review evidence.
+8. Add your own security, compliance, or Marketplace judgment.
+9. Choose the final reviewer action.
+10. If the reviewer lane is still read-only, record the official state change manually in Airtable.
 
 ## When to trust the Hub
 
@@ -66,6 +68,9 @@ If you override, note why during pilot so the workflow can improve.
 
 These actions remain reviewer-owned:
 
+- assigning or unassigning yourself on a version
+- saving draft feedback
+- setting a controlled in-progress review status
 - requesting changes on a version
 - approving a version
 - rejecting a version

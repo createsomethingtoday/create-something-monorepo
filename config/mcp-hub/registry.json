@@ -13150,6 +13150,9 @@
     "webflow-marketplace-app-review-phase-a": [
       "webflow-app-review-mcp"
     ],
+    "webflow-marketplace-app-review-phase-b": [
+      "webflow-app-review-mcp"
+    ],
     "composio-all": [
       "composio-toolkit-_21risk",
       "composio-toolkit-_2chat",

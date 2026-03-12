@@ -18,7 +18,7 @@ shared_phase_a_policy:
     mode: "compact"
     active_servers:
       - "webflow-app-review-mcp"
-    max_proxy_tools: 8
+    max_proxy_tools: 6
   allowed_proxy_tools:
     - "webflow-app-review-mcp__app_review_health"
     - "webflow-app-review-mcp__app_review_list_queue"
@@ -27,6 +27,10 @@ shared_phase_a_policy:
     - "webflow-app-review-mcp__app_review_get_version"
     - "webflow-app-review-mcp__app_review_get_field_map"
   blocked_proxy_tools:
+    - "webflow-app-review-mcp__app_review_assign_self"
+    - "webflow-app-review-mcp__app_review_unassign_self"
+    - "webflow-app-review-mcp__app_review_save_draft_feedback"
+    - "webflow-app-review-mcp__app_review_set_review_status"
     - "webflow-app-review-mcp__app_review_update_version_review"
     - "webflow-app-review-mcp__app_review_set_marketplace_status"
     - "webflow-app-review-mcp__app_review_update_asset_metadata"
@@ -68,6 +72,10 @@ reviewers:
     policy_record_id: "wf_app_review_shea_phase_a"
 
 phase_b_prerequisites:
+  - "reviewer-attributed trace verification for app_review_assign_self"
+  - "reviewer-attributed trace verification for app_review_unassign_self"
+  - "reviewer-attributed trace verification for app_review_save_draft_feedback"
+  - "reviewer-attributed trace verification for app_review_set_review_status"
   - "reviewer-attributed trace verification for app_review_request_changes"
   - "reviewer-attributed trace verification for app_review_approve_version"
   - "reviewer-attributed trace verification for app_review_reject_version"

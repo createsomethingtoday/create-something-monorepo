@@ -148,8 +148,12 @@ Phase A reviewer Hubs should expose app-review context tools only:
 
 Do not enable reviewer mutation tools in Phase A. Keep version-review updates, Marketplace status changes, and asset metadata changes out of reviewer discovery.
 
-Also keep the narrow reviewer decision verbs hidden in Phase A:
+Also keep the future reviewer-owned workflow tools hidden in Phase A:
 
+- `app_review_assign_self`
+- `app_review_unassign_self`
+- `app_review_save_draft_feedback`
+- `app_review_set_review_status`
 - `app_review_request_changes`
 - `app_review_approve_version`
 - `app_review_reject_version`
@@ -165,7 +169,17 @@ The deployed app-review worker can now resolve reviewer identity from the hub's 
 - fallback drill evidence
 - explicit write enablement signoff
 
-When write rollout begins, prefer the narrow decision verbs before exposing the broader `app_review_update_version_review` route.
+When write rollout begins, prefer the template-style workflow sequence:
+
+- `app_review_assign_self`
+- `app_review_unassign_self`
+- `app_review_save_draft_feedback`
+- `app_review_set_review_status`
+- `app_review_request_changes`
+- `app_review_approve_version`
+- `app_review_reject_version`
+
+Only consider `app_review_update_version_review` or `app_review_set_marketplace_status` after the narrow workflow is proven clean.
 
 ## 11. Rollback
 
@@ -292,6 +306,10 @@ curl -sS -X POST "https://wf-app-review-pablo.mcp.createsomething.agency/mcp" \
 Expected:
 
 - read tools are visible
+- `app_review_assign_self` is not visible in Phase A
+- `app_review_unassign_self` is not visible in Phase A
+- `app_review_save_draft_feedback` is not visible in Phase A
+- `app_review_set_review_status` is not visible in Phase A
 - `app_review_update_version_review` is not visible in Phase A
 - `app_review_set_marketplace_status` is not visible in Phase A
 - `app_review_update_asset_metadata` is not visible in Phase A
@@ -303,13 +321,42 @@ Expected:
 
 Do not use this in Phase A.
 
-When Phase B write rollout is explicitly approved, use the narrow decision verbs first and test only on a noncritical version record with a planned rollback path.
+When Phase B write rollout is explicitly approved, use the reviewer-owned workflow actions first and test only on a noncritical version record with a planned rollback path.
 
 Script:
 
 - `scripts/webflow-app-review-phase-b-smoke.sh`
 
 Examples:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+
+REVIEWER=pablo \
+ACTION=assign_self \
+VERSION_ID="rec_replace_me" \
+./scripts/webflow-app-review-phase-b-smoke.sh
+```
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+
+REVIEWER=pablo \
+ACTION=save_draft_feedback \
+VERSION_ID="rec_replace_me" \
+REVIEW_FEEDBACK="Phase B smoke verification only." \
+./scripts/webflow-app-review-phase-b-smoke.sh
+```
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+
+REVIEWER=pablo \
+ACTION=set_review_status \
+VERSION_ID="rec_replace_me" \
+REVIEW_STATUS="🏃🏾In Review" \
+./scripts/webflow-app-review-phase-b-smoke.sh
+```
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
@@ -347,6 +394,7 @@ Expected Phase B smoke evidence:
 
 - hub call succeeds through the reviewer-scoped Hub URL
 - reviewer attribution is present in the returned payload
+- reviewer ownership is enforced before draft/status/decision writes
 - the updated version record reflects only the bounded decision mutation
 - `hub_trace_lookup` can recover the corresponding trace record
 - the version can be manually reconciled or reverted if needed
