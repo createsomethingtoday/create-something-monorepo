@@ -61,6 +61,11 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 37. A promised auth-bound search provider MUST NOT be represented as onboarding-complete until its auth-config mapping is live and the lane can produce a governed connect link or equivalent operator-approved auth path for that provider.
 38. A promised `NO_AUTH` search provider MUST NOT be represented as onboarding-complete until the lane can execute at least one representative brokered tool call successfully for that provider.
 39. Delivery metadata for a lane that includes search MUST expose the effective provider set so operators can distinguish `exa`, `perplexityai`, `composio_search`, or mixed-provider lanes during onboarding and support.
+40. Approved customer lanes MAY run the hub in `HUB_IDENTITY_MODE=compat` when a third-party host reliably forwards `Authorization: Bearer <managed bearer>` but does not reliably send `X-MCP-Session-Token`.
+41. A managed-bearer compat lane MUST keep `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` configured so the bearer still resolves through `identity-worker` rather than degrading to static worker-token identity.
+42. A managed-bearer compat lane MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` unless an explicit separately approved exception exists.
+43. A managed-bearer compat lane MUST preserve bound-host rejection and explicit `allowed_tool_prefixes` enforcement through the resolver-backed bearer path.
+44. Managed-bearer compat lanes are host-compatibility infrastructure, not legacy credential exceptions, and MUST NOT be governed as sunset-bounded legacy key lanes unless they also use approved legacy key delivery.
 
 ## Enforcement Surfaces
 

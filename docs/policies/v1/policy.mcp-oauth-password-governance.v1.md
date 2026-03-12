@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Define the policy for the portal-managed password used by `identity-worker` OAuth sign-in flows for ChatGPT and other MCP hosts that require an interactive username/password authorization step.
+Define the policy for the portal-managed password used by `identity-worker` OAuth sign-in flows for Notion, ChatGPT, and other MCP hosts that require an interactive username/password authorization step.
 
 ## Scope
 
@@ -38,7 +38,7 @@ Define the policy for the portal-managed password used by `identity-worker` OAut
 ## Operational Rules
 
 1. The MCP OAuth password is the credential a user types into the OAuth authorize page.
-2. The managed bearer token is the credential ChatGPT or another host ultimately sends to the MCP hub.
+2. The managed bearer token is the credential Notion, ChatGPT, or another host ultimately sends to the MCP hub.
 3. The `.agency` portal password or Auth0 session is never forwarded to the MCP hub.
 4. If a password is seeded manually, the client must be able to replace it from `.agency` without operator intervention.
 5. If the entitled email changes, the MCP OAuth password binding must be re-established for the new email before the old login path is considered authoritative.

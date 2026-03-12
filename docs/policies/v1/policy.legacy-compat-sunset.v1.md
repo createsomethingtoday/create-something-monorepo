@@ -13,6 +13,7 @@ Govern temporary legacy compatibility lanes for bearer-only MCP hosts and force 
 - Legacy bridge worker deployment (`HUB_IDENTITY_MODE=compat`)
 - Sunset-bounded legacy key issuance
 - Migration deadlines for strict-session adoption
+- Excludes managed-bearer compat lanes that still resolve through `identity-worker` and preserve bound-host plus allowed-prefix enforcement for third-party host compatibility
 
 ## Policy Statements
 
@@ -22,6 +23,7 @@ Govern temporary legacy compatibility lanes for bearer-only MCP hosts and force 
 4. Each legacy bundle MUST carry explicit expiry and sunset metadata in delivery outputs.
 5. Legacy exceptions MUST be removable by revocation and tracked in audit records.
 6. Compat workers MUST default `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false`; any per-client override requires explicit operator exception approval.
+7. This policy governs legacy key or shared-runtime-token compatibility paths, not managed-bearer compat lanes used to accommodate bearer-only third-party hosts.
 
 ## Enforcement Surfaces
 

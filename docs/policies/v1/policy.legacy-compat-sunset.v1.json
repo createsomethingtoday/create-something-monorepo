@@ -5,7 +5,8 @@
   "legacy_lane": {
     "enabled_via_separate_endpoints": true,
     "strict_hubs_unchanged": true,
-    "compat_trust_client_account_headers_default": false
+    "compat_trust_client_account_headers_default": false,
+    "excludes_managed_bearer_host_compat_lanes": true
   },
   "sunset_requirements": {
     "sunset_at_required": true,

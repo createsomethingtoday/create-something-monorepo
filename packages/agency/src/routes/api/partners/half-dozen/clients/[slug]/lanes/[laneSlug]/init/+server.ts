@@ -36,7 +36,7 @@ interface InitLaneRequestBody {
 }
 
 const ALLOWED_STATUSES = new Set(['initialized', 'active', 'paused', 'sunset', 'disabled']);
-const REQUIRED_LANE_TOOLKITS = ['gmail', 'exa'];
+const REQUIRED_LANE_TOOLKITS = ['gmail'];
 
 export const POST: RequestHandler = async ({ request, params, platform }) => {
 	try {

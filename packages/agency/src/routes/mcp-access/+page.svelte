@@ -57,12 +57,13 @@
 		workspaceAccountId: string | null;
 	} | null;
 
-	type HostId = 'codex' | 'claude' | 'cursor';
+	type HostId = 'codex' | 'claude' | 'cursor' | 'notion';
 
 	const hostOptions: Array<{ id: HostId; label: string }> = [
 		{ id: 'codex', label: 'Codex' },
 		{ id: 'claude', label: 'Claude Desktop' },
 		{ id: 'cursor', label: 'Cursor' },
+		{ id: 'notion', label: 'Notion AI' },
 	];
 	const fallbackHostUrl = 'https://YOUR-MCP-URL/mcp';
 
@@ -93,6 +94,7 @@
 
 	const activeHost = $derived(hostOptions.find((host) => host.id === selectedHost) ?? hostOptions[0]);
 	const activeHostUrl = $derived(assignment?.hubUrl ?? fallbackHostUrl);
+	const oauthHostEmail = $derived(oauthPassword?.email ?? data.user.email ?? 'your-linked-email@example.com');
 	const tokenModeLabel = $derived(token?.tool_mode === 'read_write' ? 'Read + write' : 'Read only');
 	const tokenStatus = $derived(
 		!data.entitlement.accountId || !data.entitlement.tenantId
@@ -135,8 +137,31 @@ bearer_token = "${tokenValue}"`);
     }
   }
 }`);
+	const notionSnippet = $derived(`\
+URL
+${activeHostUrl}
+
+Recommended auth
+Header-based bearer token
+
+Header
+Authorization: Bearer ${tokenValue}
+
+OAuth login email
+${oauthHostEmail}
+
+OAuth login password
+Optional compatibility flow. Use the OAuth host password shown above in MCP Access only if the host requires OAuth onboarding. It is separate from Auth0 and separate from the bearer token.
+
+`);
 	const activeSnippet = $derived(
-		selectedHost === 'codex' ? codexSnippet : selectedHost === 'claude' ? claudeSnippet : cursorSnippet,
+		selectedHost === 'codex'
+			? codexSnippet
+			: selectedHost === 'claude'
+				? claudeSnippet
+				: selectedHost === 'cursor'
+					? cursorSnippet
+					: notionSnippet,
 	);
 	const passwordActionLabel = $derived(oauthPassword?.has_password ? 'Rotate password' : 'Set password');
 	const tokenFacts = $derived([
@@ -180,7 +205,7 @@ bearer_token = "${tokenValue}"`);
 			credential: 'Auth0',
 			use: 'Authenticates the web session for `.agency`.',
 			status: 'Session active',
-			note: 'Never reused as the bearer token or ChatGPT authorize password.',
+			note: 'Never reused as the bearer token or OAuth host authorize password.',
 		},
 		{
 			lane: 'MCP host',
@@ -194,9 +219,9 @@ bearer_token = "${tokenValue}"`);
 					: 'Only creation or regeneration reveals the full token.',
 		},
 		{
-			lane: 'ChatGPT authorize',
+			lane: 'OAuth host authorize',
 			credential: oauthPassword?.email ?? data.user.email,
-			use: 'Typed only into the ChatGPT authorization screen.',
+			use: 'Typed only into the OAuth authorization screen for Notion, ChatGPT, or another supported host.',
 			status: passwordStatus,
 			note: 'Separate secret path from portal login and bearer token usage.',
 		},
@@ -306,7 +331,7 @@ bearer_token = "${tokenValue}"`);
 				throw new Error(payload.message ?? 'Failed to update MCP password');
 			}
 			oauthPassword = payload;
-			passwordSuccess = payload.message ?? 'ChatGPT connection password updated.';
+			passwordSuccess = payload.message ?? 'OAuth host password updated.';
 			newPassword = '';
 			confirmPassword = '';
 			await loadOAuthPassword();
@@ -328,14 +353,14 @@ bearer_token = "${tokenValue}"`);
 <ReportShell
 	eyebrow="Operator Access"
 	title="MCP Access"
-	lede="A compact operator report for `.agency` credentials. Review the identity lane first, then act on the bearer token or ChatGPT authorize password without confusing those credentials with portal sign-in."
+	lede="A compact operator report for `.agency` credentials. Review the identity lane first, then act on the bearer token or OAuth host password without confusing those credentials with portal sign-in."
 	sideLabel="Signed in as"
 	sideValue={data.user.email}
 	sideMeta={`Account ${data.entitlement.accountId ?? 'Not linked'} · Tenant ${data.entitlement.tenantId ?? 'Not linked'}`}
 >
 	<svelte:fragment slot="summary">
 		<SummaryItem label="Bearer Token" value={tokenStatus} note={token?.token_prefix ? `Prefix ${token.token_prefix}` : 'Managed bearer token'} />
-		<SummaryItem label="ChatGPT Password" value={passwordStatus} note={oauthPassword?.email ?? data.user.email} />
+		<SummaryItem label="OAuth Password" value={passwordStatus} note={oauthPassword?.email ?? data.user.email} />
 		<SummaryItem label="Linked Account" value={data.entitlement.accountId ?? 'Not linked'} note={data.entitlement.tenantId ?? 'No tenant linked'} />
 		<SummaryItem label="Portal Identity" value="Auth0" note="Web session boundary only" />
 		{#if assignment}
@@ -345,7 +370,7 @@ bearer_token = "${tokenValue}"`);
 
 	<ReportSection
 		title="Credential Lanes"
-		description="Three credentials exist on purpose. Keep portal sign-in, MCP host access, and ChatGPT authorization separate."
+		description="Three credentials exist on purpose. Keep portal sign-in, MCP host access, and OAuth host authorization separate."
 		fullWidth={true}
 	>
 		<CredentialMatrix rows={credentialRows} />
@@ -353,7 +378,7 @@ bearer_token = "${tokenValue}"`);
 
 	<ReportSection
 		title="Identity Mapping"
-		description="This canonical `.agency` identity determines entitlement, token issuance, and ChatGPT password setup."
+		description="This canonical `.agency` identity determines entitlement, token issuance, and OAuth host password setup."
 	>
 		<FactList items={identityFacts} />
 	</ReportSection>
@@ -434,8 +459,8 @@ bearer_token = "${tokenValue}"`);
 	</ReportSection>
 
 	<ReportSection
-		title="ChatGPT Connection Password"
-		description="Used only on the ChatGPT authorize screen. This credential is separate from both portal sign-in and bearer-token access."
+		title="OAuth Host Password"
+		description="Used only on the OAuth authorize screen for supported hosts such as Notion AI and ChatGPT. This credential is separate from both portal sign-in and bearer-token access."
 		href="/security"
 		actionLabel="Identity model"
 	>
@@ -443,7 +468,7 @@ bearer_token = "${tokenValue}"`);
 			<FactList items={passwordFacts} />
 
 			<div class="annotation-block">
-				<p>Rotate this secret when ChatGPT access changes hands. It does not affect existing portal sessions or bearer-token hosts.</p>
+				<p>Rotate this secret when Notion, ChatGPT, or another OAuth-capable host changes hands. It does not affect existing portal sessions or bearer-token hosts.</p>
 			</div>
 
 			<div class="form-stack">
@@ -486,7 +511,7 @@ bearer_token = "${tokenValue}"`);
 
 	<ReportSection
 		title="Host Setup"
-		description="Apply the same bearer token to approved hosts. Replace the placeholder MCP URL with the account-specific endpoint."
+		description="Use the account-specific MCP URL with either bearer auth or the OAuth host flow, depending on the client."
 		fullWidth={true}
 		>
 			<div class="host-setup">
@@ -519,12 +544,12 @@ bearer_token = "${tokenValue}"`);
 						</div>
 						<div class="instruction-row">
 							<span>Bearer token</span>
-						<strong>{revealedToken ? 'Fresh value in snippet below' : 'Insert your current token'}</strong>
-					</div>
+							<strong>{selectedHost === 'notion' ? (revealedToken ? 'Use in Authorization header below' : 'Insert your current token into the Authorization header') : (revealedToken ? 'Fresh value in snippet below' : 'Insert your current token')}</strong>
+						</div>
 				</div>
 
 				<p class="annotation-copy">
-					Auth0 remains the portal identity boundary. The snippet below configures only the MCP host connection.
+					Auth0 remains the portal identity boundary. The snippet below configures only the MCP host connection. For Notion AI, use bearer auth by default; the OAuth host password above is only for hosts that require an authorize flow.
 				</p>
 			</div>
 
@@ -532,7 +557,7 @@ bearer_token = "${tokenValue}"`);
 				<div class="panel-head">
 					<div>
 						<h3>{activeHost.label} configuration</h3>
-						<p>Copy the template, then replace the MCP URL placeholder with the provisioned endpoint.</p>
+						<p>{selectedHost === 'notion' ? 'Use the provisioned MCP URL and send the bearer token in the Authorization header. OAuth remains available only when the host requires it.' : 'Copy the template, then replace the MCP URL placeholder with the provisioned endpoint.'}</p>
 					</div>
 					<button class="secondary small" type="button" onclick={() => copyText(activeSnippet, `${activeHost.label} snippet`, 'snippet')}>
 						Copy snippet

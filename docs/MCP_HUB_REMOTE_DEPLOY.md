@@ -76,6 +76,7 @@ Compatibility note:
 - `compat` mode:
   - shared worker token still works via `Authorization`, `X-API-Key`, or query `token`
   - identity-issued personal bearer tokens are also accepted directly when `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` are configured
+  - this is the preferred host-compatibility mode for Notion-style MCP clients that reliably send a bearer header but do not send `X-MCP-Session-Token`
 - `compat` mode no longer trusts client-supplied account headers; identity must come from the resolver, gateway auth, or explicit worker fallback configuration.
 
 Recommended production posture:
@@ -134,7 +135,9 @@ Legacy bridge lane:
 - Deploy scripts set `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default so compat workers do not trust client-supplied account headers.
 - Set explicit sunset:
   - `HUB_LEGACY_SUNSET_AT=YYYY-MM-DDTHH:MM:SSZ`
-- Do not switch strict hubs into compat mode.
+- Default to `session_required` for first-party and operator-controlled hosts.
+- Use `compat` for host-compatibility lanes when the external host reliably forwards bearer auth but not MCP session headers.
+- When using `compat` for a customer lane, keep `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` configured so managed bearers still resolve through `identity-worker` with host binding and governed prefix enforcement.
 - C3 Denver runs on the primary team-hub fleet path, not the legacy bridge lane. Its canonical account mapping is `acct_c3_denver`.
 
 State persistence:
@@ -217,9 +220,9 @@ That returns a `managed_bearer_bundle` for the client while leaving `HUB_API_TOK
 
 Use `--mode legacy` only for exception-governed fallback delivery.
 
-## ChatGPT OAuth Rule
+## OAuth Host Rule
 
-For ChatGPT and other hosts that require OAuth app onboarding, use OAuth as the delivery layer for the existing managed long-lived bearer token.
+For Notion, ChatGPT, and other hosts that require OAuth app onboarding, use OAuth as the delivery layer for the existing managed long-lived bearer token.
 
 Required behavior:
 
@@ -244,7 +247,7 @@ Required discovery surfaces:
   - `POST /oauth/register` when dynamic registration is required
   - `GET /oauth/userinfo` when OIDC support is enabled
 
-Do not require ChatGPT to send `X-MCP-Session-Token`. Session tokens remain valid for first-party flows, but ChatGPT compatibility should use `Authorization: Bearer <managed bearer>`.
+Do not require Notion or ChatGPT to send `X-MCP-Session-Token`. Session tokens remain valid for first-party flows, but host compatibility should use `Authorization: Bearer <managed bearer>` after OAuth delivery.
 
 ## Rollout Validation Checklist
 
@@ -259,7 +262,8 @@ After deploy, validate:
 7. `hub_trace_lookup` shows both hub and routed downstream telemetry rows for broker calls.
 8. Hub OAuth discovery endpoints resolve successfully from the custom domain.
 9. OAuth token exchange yields a managed bearer token that the resolver accepts at `/mcp`.
-10. Revoking or regenerating the managed bearer token immediately breaks and then restores host access as expected.
+10. Notion, ChatGPT, or another OAuth-capable host can complete MCP connection setup end-to-end.
+11. Revoking or regenerating the managed bearer token immediately breaks and then restores host access as expected.
 
 ## Fleet E2E Verification
 

@@ -56,6 +56,9 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 26. Managed bearer issuance and regeneration MUST support explicit `allowed_tool_prefixes` for non-Composio or reviewer-specific lanes whose visible tool surface cannot be derived from `toolkit_profile` alone.
 27. When explicit `allowed_tool_prefixes` are used, the issued token record MUST persist them as first-class governed scope data and the resolver MUST return the same effective prefix set transparently at request time.
 28. Managed bearer delivery UIs and APIs SHOULD surface the effective `allowed_tool_prefixes` alongside `toolkit_profile` so operators can verify the actor-visible lane without relying on inferred behavior.
+29. For third-party hosts that do not reliably send `X-MCP-Session-Token` but do reliably forward `Authorization: Bearer <managed bearer>`, CREATE SOMETHING MAY expose the Hub in `compat` identity mode as a host-compatibility measure.
+30. In host-compatibility `compat` mode, bearer authorization MUST still resolve through `identity-worker`, and the resulting actor context MUST preserve `bound_host` rejection and effective `allowed_tool_prefixes`.
+31. Host-compatibility `compat` mode MUST NOT rely on client-supplied account headers and MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default.
 
 ## Required Legal Alignment
 
