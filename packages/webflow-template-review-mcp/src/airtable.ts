@@ -230,6 +230,31 @@ interface AirtableRecord {
   fields: Record<string, unknown>;
 }
 
+const QUEUE_ASSET_FIELD_NAMES = [
+  CONFIRMED_ASSET_FIELDS.type,
+  CONFIRMED_ASSET_FIELDS.name,
+  CONFIRMED_ASSET_FIELDS.websiteUrl,
+  CONFIRMED_ASSET_FIELDS.previewSiteUrl,
+  CONFIRMED_ASSET_FIELDS.marketplaceStatus,
+  CONFIRMED_ASSET_FIELDS.latestReviewStatus,
+  CONFIRMED_ASSET_FIELDS.latestReviewDate,
+  CONFIRMED_ASSET_FIELDS.latestReviewFeedback,
+  CONFIRMED_ASSET_FIELDS.qualityScore,
+  CONFIRMED_ASSET_FIELDS.submittedDate,
+  CONFIRMED_ASSET_FIELDS.decisionDate,
+  CONFIRMED_ASSET_FIELDS.priceString,
+] as const;
+
+const QUEUE_VERSION_FIELD_NAMES = [
+  CONFIRMED_VERSION_FIELDS.assetLink,
+  CONFIRMED_VERSION_FIELDS.assetRecordId,
+  CONFIRMED_VERSION_FIELDS.versionNumber,
+  CONFIRMED_VERSION_FIELDS.submissionDatetime,
+  CONFIRMED_VERSION_FIELDS.reviewOwner,
+  CONFIRMED_VERSION_FIELDS.reviewStatus,
+  CONFIRMED_VERSION_FIELDS.decisionDate,
+] as const;
+
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
 }
@@ -377,6 +402,30 @@ function toQueueItem(asset: TemplateReviewAsset, version?: TemplateReviewVersion
   };
 }
 
+function queueItemMatchesQuery(item: TemplateReviewQueueItem, query: TemplateReviewQueueQuery = {}): boolean {
+  if (query.status && item.normalizedStatus !== query.status) return false;
+  if (query.assigned === 'assigned' && item.isUnassigned) return false;
+  if (query.assigned === 'unassigned' && !item.isUnassigned) return false;
+  if (query.onlyAssignedToCurrentReviewer && !item.isAssignedToCurrentReviewer) return false;
+  return true;
+}
+
+function selectQueueVersion(
+  asset: TemplateReviewAsset,
+  versions: TemplateReviewVersion[],
+  query: TemplateReviewQueueQuery = {},
+): TemplateReviewVersion | null {
+  if (versions.length === 0) return null;
+
+  for (const version of versions) {
+    if (queueItemMatchesQuery(toQueueItem(asset, version, query), query)) {
+      return version;
+    }
+  }
+
+  return versions[0] ?? null;
+}
+
 function normalizeQueueStatus(asset: TemplateReviewAsset, version?: TemplateReviewVersion | null): TemplateReviewQueueStatus | null {
   const candidates = [
     version?.reviewStatus,
@@ -393,6 +442,53 @@ function normalizeQueueStatus(asset: TemplateReviewAsset, version?: TemplateRevi
   }
 
   return null;
+}
+
+function queueSortToAirtableSort(sort: TemplateReviewQueueSort): {
+  field: string;
+  direction: 'asc' | 'desc';
+} {
+  switch (sort) {
+    case 'submittedDate_asc':
+      return { field: CONFIRMED_ASSET_FIELDS.submittedDate, direction: 'asc' };
+    case 'submittedDate_desc':
+      return { field: CONFIRMED_ASSET_FIELDS.submittedDate, direction: 'desc' };
+    case 'decisionDate_asc':
+      return { field: CONFIRMED_ASSET_FIELDS.decisionDate, direction: 'asc' };
+    case 'decisionDate_desc':
+      return { field: CONFIRMED_ASSET_FIELDS.decisionDate, direction: 'desc' };
+  }
+}
+
+function chunkArray<T>(values: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function recordIdsFormula(ids: string[]): string {
+  if (ids.length === 0) return 'FALSE()';
+  const clauses = ids.map((id) => `RECORD_ID() = '${escapeFormulaValue(id)}'`);
+  return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
+}
+
+function reviewerLookupFormula(fieldName: string, reviewer: CollaboratorRef): string {
+  const identifiers = [...new Set([reviewer.id, reviewer.email, reviewer.name].filter((value): value is string => Boolean(value?.trim())))];
+  if (identifiers.length === 0) {
+    throw new AirtableClientError(
+      'REVIEWER_IDENTITY_UNAVAILABLE',
+      'Current reviewer identity is not configured for this MCP runtime.',
+      503,
+    );
+  }
+
+  const exactClauses = identifiers.map((value) => `{${fieldName}} = '${escapeFormulaValue(value)}'`);
+  const searchClauses = identifiers.map(
+    (value) => `FIND(LOWER("${escapeFormulaStringValue(value)}"), LOWER(ARRAYJOIN({${fieldName}}))) > 0`,
+  );
+  return `OR(${[...exactClauses, ...searchClauses].join(', ')})`;
 }
 
 function compareIsoDates(a?: string, b?: string): number {
@@ -502,20 +598,35 @@ export class AirtableClient {
     sortField?: string;
     sortDirection?: 'asc' | 'desc';
   }): Promise<AirtableRecord[]> {
-    const params = new URLSearchParams();
-    if (args.limit) params.set('maxRecords', String(args.limit));
-    if (args.filterByFormula) params.set('filterByFormula', args.filterByFormula);
-    for (const field of args.fieldNames ?? []) params.append('fields[]', field);
-    if (args.sortField) {
-      params.set('sort[0][field]', args.sortField);
-      params.set('sort[0][direction]', args.sortDirection ?? 'asc');
-    }
-    const response = await this.request(`/${args.tableId}?${params.toString()}`);
-    if (!response.ok) {
-      throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status);
-    }
-    const json = (await response.json()) as { records?: AirtableRecord[] };
-    return json.records ?? [];
+    const records: AirtableRecord[] = [];
+    let offset: string | undefined;
+
+    do {
+      const params = new URLSearchParams();
+      const remaining = args.limit ? Math.max(args.limit - records.length, 0) : undefined;
+      const pageSize = remaining ? Math.min(remaining, 100) : 100;
+
+      if (args.limit) params.set('maxRecords', String(args.limit));
+      params.set('pageSize', String(pageSize));
+      if (args.filterByFormula) params.set('filterByFormula', args.filterByFormula);
+      for (const field of args.fieldNames ?? []) params.append('fields[]', field);
+      if (args.sortField) {
+        params.set('sort[0][field]', args.sortField);
+        params.set('sort[0][direction]', args.sortDirection ?? 'asc');
+      }
+      if (offset) params.set('offset', offset);
+
+      const response = await this.request(`/${args.tableId}?${params.toString()}`);
+      if (!response.ok) {
+        throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status);
+      }
+
+      const json = (await response.json()) as { records?: AirtableRecord[]; offset?: string };
+      records.push(...(json.records ?? []));
+      offset = json.offset;
+    } while (offset && (!args.limit || records.length < args.limit));
+
+    return args.limit ? records.slice(0, args.limit) : records;
   }
 
   private async getRecord(tableId: string, recordId: string): Promise<AirtableRecord | null> {
@@ -565,11 +676,19 @@ export class AirtableClient {
     };
   }
 
-  async listAssetQueue(limit = 100): Promise<TemplateReviewQueueItem[]> {
+  async listAssetQueue(
+    limit = 100,
+    options?: {
+      sortField?: string;
+      sortDirection?: 'asc' | 'desc';
+    },
+  ): Promise<TemplateReviewAsset[]> {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
       limit,
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
+      sortField: options?.sortField,
+      sortDirection: options?.sortDirection,
     });
     return records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
   }
@@ -580,26 +699,110 @@ export class AirtableClient {
   }> {
     const limit = query.limit ?? 100;
     const sort = query.sort ?? 'submittedDate_desc';
-    const assets = await this.listAssetQueue(limit);
+    const airtableSort = queueSortToAirtableSort(sort);
+    const assets = await this.listAssetQueue(limit, {
+      sortField: airtableSort.field,
+      sortDirection: airtableSort.direction,
+    });
     const items = await Promise.all(
       assets.map(async (asset) => {
         const versions = await this.listVersionsForAsset(asset.assetId, 25);
-        const currentVersion = versions[0] ?? null;
-        return toQueueItem(asset, currentVersion, query);
+        const selectedVersion = selectQueueVersion(asset, versions, query);
+        return toQueueItem(asset, selectedVersion, query);
       }),
     );
 
-    const filtered = items.filter((item) => {
-      if (query.status && item.normalizedStatus !== query.status) return false;
-      if (query.assigned === 'assigned' && item.isUnassigned) return false;
-      if (query.assigned === 'unassigned' && !item.isUnassigned) return false;
-      if (query.onlyAssignedToCurrentReviewer && !item.isAssignedToCurrentReviewer) return false;
-      return true;
-    });
+    const filtered = items.filter((item) => queueItemMatchesQuery(item, query));
 
     return {
       sortApplied: sort,
       items: sortQueueItems(filtered, sort),
+    };
+  }
+
+  private async listAssetsByIds(assetIds: string[]): Promise<Map<string, TemplateReviewAsset>> {
+    const uniqueAssetIds = [...new Set(assetIds.filter(Boolean))];
+    if (uniqueAssetIds.length === 0) return new Map();
+
+    const recordGroups = await Promise.all(
+      chunkArray(uniqueAssetIds, 25).map((chunk) =>
+        this.listRecords({
+          tableId: TABLE_IDS.assets,
+          limit: chunk.length,
+          filterByFormula: `AND({${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️', ${recordIdsFormula(chunk)})`,
+        }),
+      ),
+    );
+
+    return new Map(
+      recordGroups
+        .flat()
+        .filter((record) => isTemplateLikeAsset(record.fields))
+        .map((record) => [record.id, mapAsset(record)]),
+    );
+  }
+
+  private async listVersionsAssignedToReviewer(currentReviewer: CollaboratorRef): Promise<TemplateReviewVersion[]> {
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assetVersions,
+      filterByFormula: reviewerLookupFormula(CONFIRMED_VERSION_FIELDS.reviewOwner, currentReviewer),
+      sortField: CONFIRMED_VERSION_FIELDS.submissionDatetime,
+      sortDirection: 'desc',
+    });
+
+    return records
+      .map((record) => mapVersion(record))
+      .filter((version) => version.reviewOwner?.id === currentReviewer.id);
+  }
+
+  async listMyQueueDetailed(query: TemplateReviewQueueQuery = {}): Promise<{
+    sortApplied: TemplateReviewQueueSort;
+    items: TemplateReviewQueueItem[];
+  }> {
+    const currentReviewer = query.currentReviewer;
+    if (!currentReviewer?.id) {
+      throw new AirtableClientError(
+        'REVIEWER_IDENTITY_UNAVAILABLE',
+        'Current reviewer identity is not configured for this MCP runtime.',
+        503,
+      );
+    }
+
+    const sort = query.sort ?? 'submittedDate_desc';
+    const normalizedQuery: TemplateReviewQueueQuery = {
+      ...query,
+      assigned: 'assigned',
+      currentReviewer,
+      onlyAssignedToCurrentReviewer: true,
+    };
+
+    const assignedVersions = await this.listVersionsAssignedToReviewer(currentReviewer);
+    const versionsByAsset = new Map<string, TemplateReviewVersion[]>();
+    for (const version of assignedVersions) {
+      if (!version.assetId) continue;
+      const assetVersions = versionsByAsset.get(version.assetId) ?? [];
+      assetVersions.push(version);
+      versionsByAsset.set(version.assetId, assetVersions);
+    }
+
+    const assetsById = await this.listAssetsByIds([...versionsByAsset.keys()]);
+    const items: TemplateReviewQueueItem[] = [];
+
+    for (const [assetId, versions] of versionsByAsset) {
+      const asset = assetsById.get(assetId);
+      if (!asset) continue;
+
+      const selectedVersion = selectQueueVersion(asset, versions, normalizedQuery);
+      const item = toQueueItem(asset, selectedVersion, normalizedQuery);
+      if (queueItemMatchesQuery(item, normalizedQuery)) {
+        items.push(item);
+      }
+    }
+
+    const sorted = sortQueueItems(items, sort);
+    return {
+      sortApplied: sort,
+      items: query.limit ? sorted.slice(0, query.limit) : sorted,
     };
   }
 

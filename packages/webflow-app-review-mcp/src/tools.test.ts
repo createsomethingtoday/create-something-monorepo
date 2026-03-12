@@ -115,4 +115,69 @@ describe('registerTools', () => {
       reviewStatus: '📤Changes Requested',
     });
   });
+
+  it('rejects request_changes status overrides outside the changes-requested allowlist', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      requireAssignedVersion: vi.fn(),
+      updateVersionReview: vi.fn(),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client, () => reviewer);
+
+    const result = await handlers.get('app_review_request_changes')?.({
+      version_id: 'recVersion',
+      review_feedback: 'feedback',
+      review_status: '✅Approved',
+    });
+
+    const payload = parsePayload(result!);
+    expect(payload.ok).toBe(false);
+    expect(client.requireAssignedVersion).not.toHaveBeenCalled();
+    expect(client.updateVersionReview).not.toHaveBeenCalled();
+  });
+
+  it('does not implicitly assign the acting reviewer in the broad update_version_review route', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getVersionById: vi.fn().mockResolvedValue({ versionId: 'recVersion', assetId: 'recAsset' }),
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Example App' }),
+      updateVersionReview: vi.fn().mockResolvedValue({ versionId: 'recVersion', reviewFeedback: 'draft' }),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client, () => reviewer);
+
+    await handlers.get('app_review_update_version_review')?.({
+      version_id: 'recVersion',
+      review_feedback: 'draft',
+    });
+
+    expect(client.updateVersionReview).toHaveBeenCalledWith('recVersion', {
+      review_feedback: 'draft',
+    });
+  });
+
+  it('rejects combined routed latest_review_status and asset metadata writes before any mutation runs', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Example App' }),
+      listVersionsForAsset: vi.fn(),
+      updateVersionReview: vi.fn(),
+      updateAssetMetadata: vi.fn(),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client, () => reviewer);
+
+    const result = await handlers.get('app_review_update_asset_metadata')?.({
+      asset_id: 'recAsset',
+      latest_review_status: '🏃🏾In Review',
+      notes: 'new note',
+    });
+
+    const payload = parsePayload(result!);
+    expect(payload.ok).toBe(false);
+    expect(client.listVersionsForAsset).not.toHaveBeenCalled();
+    expect(client.updateVersionReview).not.toHaveBeenCalled();
+    expect(client.updateAssetMetadata).not.toHaveBeenCalled();
+  });
 });
