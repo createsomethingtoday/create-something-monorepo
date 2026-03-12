@@ -50,6 +50,11 @@ const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '⏸️On Hold',
 ] as const;
 
+const REQUEST_CHANGES_STATUS_OPTIONS = [
+  '📤Changes Requested',
+  '📤Changes Requested (No Notification)',
+] as const;
+
 function jsonContent(value: unknown) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
@@ -152,6 +157,20 @@ function reviewerPayload(reviewer: ReviewerProfile) {
     name: reviewer.name,
     lane: reviewer.lane,
   };
+}
+
+function ensureRequestChangesStatus(value: string | undefined) {
+  if (value === undefined) return;
+  if ((REQUEST_CHANGES_STATUS_OPTIONS as readonly string[]).includes(value)) return;
+  throw new AirtableClientError(
+    'INVALID_REQUEST_CHANGES_STATUS',
+    'request_changes only supports the changes-requested statuses.',
+    400,
+    {
+      value,
+      allowed: REQUEST_CHANGES_STATUS_OPTIONS,
+    },
+  );
 }
 
 export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
@@ -424,10 +443,11 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       version_id: z.string().min(1),
       review_feedback: z.string().min(1),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS).optional(),
-      review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
+      review_status: z.enum(REQUEST_CHANGES_STATUS_OPTIONS).optional(),
     },
     async ({ version_id, review_feedback, rejection_reason, review_status }) => {
       try {
+        ensureRequestChangesStatus(review_status);
         const reviewer = requireResolvedReviewer(getReviewer);
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
         await getClient().requireAssignedVersion(version_id, actingReviewer);
@@ -531,7 +551,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         const mutation = cleanObject({
           review_status: params.review_status,
           review_type: params.review_type,
-          reviewer: params.reviewer === undefined ? actingReviewer ?? undefined : (params.reviewer as CollaboratorRef | null),
+          reviewer: params.reviewer as CollaboratorRef | null | undefined,
           rejection_reason: params.rejection_reason,
           review_feedback: params.review_feedback,
           submission_datetime_override: params.submission_datetime_override,
@@ -622,28 +642,6 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           );
         }
 
-        const routedUpdates: Record<string, unknown> = {};
-        if (params.latest_review_status !== undefined) {
-          const versions = await client.listVersionsForAsset(params.asset_id, 100);
-          const latestVersion = versions[0];
-          if (!latestVersion) {
-            throw new AirtableClientError(
-              'ROUTING_FAILED',
-              'Unable to route latest_review_status: no versions found for this asset.',
-              400,
-              getReadOnlyAssetWriteHint('latest_review_status'),
-            );
-          }
-
-          const routed = await client.updateVersionReview(latestVersion.versionId, {
-            review_status: params.latest_review_status,
-          });
-          routedUpdates.latest_review_status = {
-            routedToVersionId: latestVersion.versionId,
-            updatedVersion: routed,
-          };
-        }
-
         const metadataPayload = cleanObject({
           app_name: params.app_name,
           app_capabilities: params.app_capabilities,
@@ -671,6 +669,39 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           promo_video_url: params.promo_video_url,
           marketplace_status: params.marketplace_status,
         });
+
+        if (params.latest_review_status !== undefined && Object.keys(metadataPayload).length > 0) {
+          throw new AirtableClientError(
+            'COMBINED_ROUTED_WRITE_UNSUPPORTED',
+            'latest_review_status cannot be combined with asset metadata writes in one request.',
+            400,
+            {
+              routeTo: 'Use app_review_set_review_status or app_review_update_version_review separately from asset metadata edits.',
+            },
+          );
+        }
+
+        const routedUpdates: Record<string, unknown> = {};
+        if (params.latest_review_status !== undefined) {
+          const versions = await client.listVersionsForAsset(params.asset_id, 1);
+          const latestVersion = versions[0];
+          if (!latestVersion) {
+            throw new AirtableClientError(
+              'ROUTING_FAILED',
+              'Unable to route latest_review_status: no versions found for this asset.',
+              400,
+              getReadOnlyAssetWriteHint('latest_review_status'),
+            );
+          }
+
+          const routed = await client.updateVersionReview(latestVersion.versionId, {
+            review_status: params.latest_review_status,
+          });
+          routedUpdates.latest_review_status = {
+            routedToVersionId: latestVersion.versionId,
+            updatedVersion: routed,
+          };
+        }
 
         let updatedAsset = null;
         if (Object.keys(metadataPayload).length > 0) {

@@ -245,6 +245,10 @@ function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
 }
 
+function buildOrFormula(fieldId: string, values: string[]): string {
+  return `OR(${values.map((value) => `{${fieldId}} = '${escapeFormulaValue(value)}'`).join(',')})`;
+}
+
 function toStringValue(value: unknown): string | undefined {
   if (typeof value === 'string') {
     const trimmed = value.trim();
@@ -472,6 +476,24 @@ function sortQueueItems(items: AppReviewQueueItem[], sort: AppReviewQueueSort): 
   return cloned;
 }
 
+function pickLatestVersion(current: AppReviewVersion | undefined, candidate: AppReviewVersion): AppReviewVersion {
+  if (!current) return candidate;
+
+  const currentVersionNumber = current.versionNumber ?? -Infinity;
+  const candidateVersionNumber = candidate.versionNumber ?? -Infinity;
+  if (candidateVersionNumber !== currentVersionNumber) {
+    return candidateVersionNumber > currentVersionNumber ? candidate : current;
+  }
+
+  const currentSubmitted = Date.parse(current.submissionDatetime ?? current.createdTime ?? '');
+  const candidateSubmitted = Date.parse(candidate.submissionDatetime ?? candidate.createdTime ?? '');
+  if (Number.isFinite(candidateSubmitted) && (!Number.isFinite(currentSubmitted) || candidateSubmitted > currentSubmitted)) {
+    return candidate;
+  }
+
+  return current;
+}
+
 export function assertScopedTable(tableId: string): asserts tableId is ScopedTableId {
   if (!SCOPED_TABLE_IDS.has(tableId)) {
     throw new AirtableClientError('TABLE_SCOPE_VIOLATION', `Table ${tableId} is outside MCP scope.`);
@@ -555,6 +577,8 @@ export class AirtableClient {
     fieldIds: readonly string[];
     limit?: number;
     filterByFormula?: string;
+    sortField?: string;
+    sortDirection?: 'asc' | 'desc';
   }): Promise<AirtableRecord[]> {
     assertScopedTable(args.tableId);
 
@@ -567,6 +591,10 @@ export class AirtableClient {
       query.set('pageSize', '100');
       args.fieldIds.forEach((fieldId) => query.append('fields[]', fieldId));
       if (args.filterByFormula) query.set('filterByFormula', args.filterByFormula);
+      if (args.sortField) {
+        query.set('sort[0][field]', args.sortField);
+        query.set('sort[0][direction]', args.sortDirection ?? 'asc');
+      }
       if (offset) query.set('offset', offset);
 
       const data = await this.requestJson<AirtableListResponse>(
@@ -649,7 +677,7 @@ export class AirtableClient {
     };
   }
 
-  async listAssetQueue(limit = 100): Promise<AppReviewQueueItem[]> {
+  async listAssetQueue(limit?: number): Promise<AppReviewQueueItem[]> {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
       fieldIds: ASSET_QUEUE_FIELD_IDS,
@@ -666,16 +694,10 @@ export class AirtableClient {
   }> {
     const limit = query.limit ?? 100;
     const sort = query.sort ?? 'submissionDatetime_desc';
-    const queue = await this.listAssetQueue(limit);
-    const items = await Promise.all(
-      queue.map(async (item) => {
-        const asset = await this.getAssetById(item.assetId);
-        if (!asset) return item;
-        const versions = await this.listVersionsForAsset(item.assetId, 25);
-        const currentVersion = versions[0] ?? null;
-        return toQueueItem(asset, currentVersion, query);
-      }),
-    );
+    const needsPostFilterCompleteness = Boolean(query.status || query.assigned !== undefined || query.onlyAssignedToCurrentReviewer);
+    const queue = await this.listAssetQueue(needsPostFilterCompleteness ? undefined : limit);
+    const latestVersions = await this.listLatestVersionsForAssets(queue.map((item) => item.assetId));
+    const items = queue.map((item) => toQueueItem(item, latestVersions.get(item.assetId) ?? null, query));
 
     const filtered = items.filter((item) => {
       if (query.status && item.normalizedStatus !== query.status) return false;
@@ -687,7 +709,7 @@ export class AirtableClient {
 
     return {
       sortApplied: sort,
-      items: sortQueueItems(filtered, sort),
+      items: sortQueueItems(filtered, sort).slice(0, limit),
     };
   }
 
@@ -702,19 +724,31 @@ export class AirtableClient {
     const needle = appId.trim().toLowerCase();
     if (!needle) return null;
 
-    const records = await this.listRecords({
-      tableId: TABLE_IDS.assets,
-      fieldIds: ASSET_DETAIL_FIELD_IDS,
-      limit: 500,
-    });
+    let offset: string | undefined;
+    do {
+      const query = new URLSearchParams();
+      query.set('returnFieldsByFieldId', 'true');
+      query.set('pageSize', '100');
+      ASSET_DETAIL_FIELD_IDS.forEach((fieldId) => query.append('fields[]', fieldId));
+      if (offset) query.set('offset', offset);
 
-    const match = records.find((record) => {
-      if (!isAppLikeAsset(record.fields)) return false;
-      const appIds = toStringArray(record.fields[FIELD_IDS.assets.appId]).map((value) => value.toLowerCase());
-      return appIds.includes(needle);
-    });
+      const data = await this.requestJson<AirtableListResponse>(
+        `/${encodeURIComponent(TABLE_IDS.assets)}`,
+        { method: 'GET' },
+        query,
+      );
 
-    return match ? mapAssetRecord(match) : null;
+      const match = data.records.find((record) => {
+        if (!isAppLikeAsset(record.fields)) return false;
+        const appIds = toStringArray(record.fields[FIELD_IDS.assets.appId]).map((value) => value.toLowerCase());
+        return appIds.includes(needle);
+      });
+      if (match) return mapAssetRecord(match);
+
+      offset = data.offset;
+    } while (offset);
+
+    return null;
   }
 
   async listVersionsForAsset(assetId: string, limit = 100): Promise<AppReviewVersion[]> {
@@ -724,10 +758,36 @@ export class AirtableClient {
       fieldIds: VERSION_FIELD_IDS,
       limit,
       filterByFormula: formula,
+      sortField: FIELD_IDS.versions.versionNumber,
+      sortDirection: 'desc',
     });
     return records
       .map((record) => mapVersionRecord(record))
       .sort((a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0));
+  }
+
+  private async listLatestVersionsForAssets(assetIds: string[]): Promise<Map<string, AppReviewVersion>> {
+    const uniqueAssetIds = [...new Set(assetIds.filter(Boolean))];
+    const latestByAssetId = new Map<string, AppReviewVersion>();
+    if (uniqueAssetIds.length === 0) return latestByAssetId;
+
+    const chunkSize = 25;
+    for (let index = 0; index < uniqueAssetIds.length; index += chunkSize) {
+      const chunk = uniqueAssetIds.slice(index, index + chunkSize);
+      const records = await this.listRecords({
+        tableId: TABLE_IDS.assetVersions,
+        fieldIds: VERSION_FIELD_IDS,
+        filterByFormula: buildOrFormula(FIELD_IDS.versions.assetRecordIdRollup, chunk),
+      });
+
+      for (const record of records) {
+        const version = mapVersionRecord(record);
+        if (!version.assetId) continue;
+        latestByAssetId.set(version.assetId, pickLatestVersion(latestByAssetId.get(version.assetId), version));
+      }
+    }
+
+    return latestByAssetId;
   }
 
   async getVersionById(versionId: string): Promise<AppReviewVersion | null> {

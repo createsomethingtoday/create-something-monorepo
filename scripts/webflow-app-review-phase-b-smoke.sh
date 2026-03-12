@@ -86,6 +86,23 @@ assert_no_rpc_error() {
   fi
 }
 
+assert_downstream_success() {
+  local payload="$1"
+  local context="$2"
+  local inner_text
+
+  inner_text="$(echo "$payload" | jq -r '.result.content[0].text // empty' 2>/dev/null || true)"
+  if [[ -z "$inner_text" ]]; then
+    return 0
+  fi
+
+  if echo "$inner_text" | jq -e '.ok == false' >/dev/null 2>&1; then
+    echo "downstream tool failure during ${context}:"
+    echo "$inner_text" | jq .
+    exit 1
+  fi
+}
+
 build_args_json() {
   case "$ACTION" in
     assign_self)
@@ -223,6 +240,7 @@ main() {
 
   response="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$args_json")"
   assert_no_rpc_error "$response" "hub_execute_proxy_tool ${ACTION}"
+  assert_downstream_success "$response" "hub_execute_proxy_tool ${ACTION}"
 
   echo "$response" | jq .
 }

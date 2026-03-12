@@ -27,7 +27,10 @@ function versionRecord(id: string, reviewer?: CollaboratorRef | null) {
   };
 }
 
-function assetRecord(id: string) {
+function assetRecord(
+  id: string,
+  overrides?: Partial<Record<string, unknown>>,
+) {
   return {
     id,
     fields: {
@@ -39,6 +42,7 @@ function assetRecord(id: string) {
       [FIELD_IDS.assets.latestReviewStatus]: '🏃🏾In Review',
       [FIELD_IDS.assets.marketplaceStatus]: '1️⃣Upcoming🆕',
       [FIELD_IDS.assets.openReviewStatus]: ['🏃🏾In Review'],
+      ...(overrides ?? {}),
     },
   };
 }
@@ -228,5 +232,101 @@ describe('AirtableClient reviewer ownership helpers', () => {
     expect(context.canAssign).toBe(false);
     expect(context.canReview).toBe(true);
     expect(context.reviewer?.id).toBe('usr_pablo');
+  });
+
+  it('finds app_id matches across paginated asset results', async () => {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}`) && !url.searchParams.get('offset')) {
+        return jsonResponse({
+          records: [
+            assetRecord('recAsset1', {
+              [FIELD_IDS.assets.appId]: 'app_other',
+            }),
+          ],
+          offset: 'next-page',
+        });
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}`) && url.searchParams.get('offset') === 'next-page') {
+        return jsonResponse({
+          records: [
+            assetRecord('recAsset2', {
+              [FIELD_IDS.assets.name]: 'Target App',
+              [FIELD_IDS.assets.appId]: 'app_target',
+            }),
+          ],
+        });
+      }
+
+      return new Response('not found', { status: 404 });
+    });
+
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+    });
+
+    const asset = await client.getAssetByAppId('app_target');
+
+    expect(asset?.assetId).toBe('recAsset2');
+    expect(asset?.appName).toBe('Target App');
+  });
+
+  it('applies queue limit after reviewer filtering for my_queue-style queries', async () => {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}`)) {
+        return jsonResponse({
+          records: [
+            assetRecord('recAsset1', { [FIELD_IDS.assets.name]: 'Other Queue Item' }),
+            assetRecord('recAsset2', { [FIELD_IDS.assets.name]: 'Assigned To Me' }),
+          ],
+        });
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`)) {
+        return jsonResponse({
+          records: [
+            {
+              ...versionRecord('rec-version-1', otherReviewer),
+              fields: {
+                ...versionRecord('rec-version-1', otherReviewer).fields,
+                [FIELD_IDS.versions.assetLink]: ['recAsset1'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAsset1'],
+              },
+            },
+            {
+              ...versionRecord('rec-version-2', reviewer),
+              fields: {
+                ...versionRecord('rec-version-2', reviewer).fields,
+                [FIELD_IDS.versions.assetLink]: ['recAsset2'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAsset2'],
+              },
+            },
+          ],
+        });
+      }
+
+      return new Response('not found', { status: 404 });
+    });
+
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+    });
+
+    const result = await client.listAssetQueueDetailed({
+      limit: 1,
+      assigned: 'assigned',
+      onlyAssignedToCurrentReviewer: true,
+      currentReviewer: reviewer,
+    });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.assetId).toBe('recAsset2');
+    expect(result.items[0]?.isAssignedToCurrentReviewer).toBe(true);
   });
 });
