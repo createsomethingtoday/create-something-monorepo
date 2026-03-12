@@ -114,6 +114,7 @@ The follow-up implementation discussion resolved two previously open policy ques
 
 - CC routing applies to the full Zendesk thread.
 - Zendesk supports multiple CC recipients, so the notification contract should support an explicit CC list rather than a single optional CC.
+- the live Airtable implementation now uses the existing `🌟Email Type(s)` field with an added `CC Recipient` option.
 
 This addendum does not change the core decision. It narrows the implementation direction:
 
@@ -123,7 +124,6 @@ This addendum does not change the core decision. It narrows the implementation d
 
 ## Open Questions
 
-- should notification roles live in the existing `🌟Email Type(s)` field, or in a separate notification-specific field on the Email table?
 - what should the operational reroute path be when recipients need to change after a Zendesk ticket already exists?
 - what exact validation should block Zendesk sends when recipient data is malformed?
 

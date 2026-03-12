@@ -20,23 +20,36 @@ It resolves the current policy boundary as follows:
 
 The Airtable Email table remains the canonical source of truth for creator notification routing.
 
-Recommended representation:
+Current representation:
 
 - keep `Email` as the email identity field
 - keep `🎨Creators` as the creator link
 - do not rely on `creator override email` as canonical storage
 - do not rely on positional comma parsing to infer primary vs CC
-- add a notification-specific role field on the Email table rather than overloading identity fields
+- use the existing `🌟Email Type(s)` multi-select field, which now includes `CC Recipient`
 
-Recommended field shape:
+Current field shape:
 
 - Email table:
   - `Email`
   - `🎨Creators`
-  - `🌟Email Type(s)` for identity semantics such as `Primary` and `WF Account`
-  - new `🔔Review Notification Role(s)` multi-select with values:
+  - `🌟Email Type(s)` with values including:
     - `Primary`
-    - `CC`
+    - `CC Recipient`
+    - `WF Account`
+    - `Other`
+
+Field semantics:
+
+- `Primary` means the email is eligible to be the creator's canonical review recipient
+- `CC Recipient` means the email should be included in the Zendesk CC list for the full review thread
+- `WF Account` remains an account-identity marker and is not sufficient on its own to make an address a review recipient
+- `Other` is non-routing metadata and should be ignored by the review notification automation
+- an email record may carry both `WF Account` and `Primary`
+- an email record may carry both `WF Account` and `CC Recipient`
+- exactly one linked email per creator should carry `Primary`
+- zero or more linked emails per creator may carry `CC Recipient`
+- the email selected as `Primary` should not also be emitted in the CC list after normalization
 
 Recommended creator-level rollups/lookups:
 
@@ -55,7 +68,8 @@ Recommended version-level lookups:
 Reasoning:
 
 - the automation triggers on Asset Versions, so the resolved values must be available on the version record without hidden parsing
-- `🌟Email Type(s)` already mixes identity meaning such as `Primary` and `WF Account`; notification behavior should be represented separately
+- the live Airtable schema now carries `CC Recipient` in `🌟Email Type(s)`, so the automation should key off that field directly
+- if identity semantics and notification semantics become hard to manage later, this can still be split into a dedicated notification field without changing the higher-level ADR
 
 ## Override Policy
 
@@ -171,8 +185,8 @@ Failure behavior:
 Phase 1:
 
 - document the current automation location and payload contract
-- add the notification-role field on the Email table
 - add creator and version lookup fields for resolved primary and CC recipients
+- begin using `🌟Email Type(s)` values `Primary` and `CC Recipient` as the routing contract
 
 Phase 2:
 
