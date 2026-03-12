@@ -377,6 +377,32 @@ function toQueueItem(asset: TemplateReviewAsset, version?: TemplateReviewVersion
   };
 }
 
+function queueItemMatchesQuery(item: TemplateReviewQueueItem, query: TemplateReviewQueueQuery = {}): boolean {
+  if (query.status && item.normalizedStatus !== query.status) return false;
+  if (query.assigned === 'assigned' && item.isUnassigned) return false;
+  if (query.assigned === 'unassigned' && !item.isUnassigned) return false;
+  if (query.onlyAssignedToCurrentReviewer && !item.isAssignedToCurrentReviewer) return false;
+  return true;
+}
+
+function selectQueueVersion(
+  asset: TemplateReviewAsset,
+  versions: TemplateReviewVersion[],
+  query: TemplateReviewQueueQuery = {},
+): TemplateReviewVersion | null {
+  if (versions.length === 0) {
+    return null;
+  }
+
+  for (const version of versions) {
+    if (queueItemMatchesQuery(toQueueItem(asset, version, query), query)) {
+      return version;
+    }
+  }
+
+  return versions[0] ?? null;
+}
+
 function normalizeQueueStatus(asset: TemplateReviewAsset, version?: TemplateReviewVersion | null): TemplateReviewQueueStatus | null {
   const candidates = [
     version?.reviewStatus,
@@ -584,18 +610,12 @@ export class AirtableClient {
     const items = await Promise.all(
       assets.map(async (asset) => {
         const versions = await this.listVersionsForAsset(asset.assetId, 25);
-        const currentVersion = versions[0] ?? null;
-        return toQueueItem(asset, currentVersion, query);
+        const selectedVersion = selectQueueVersion(asset, versions, query);
+        return toQueueItem(asset, selectedVersion, query);
       }),
     );
 
-    const filtered = items.filter((item) => {
-      if (query.status && item.normalizedStatus !== query.status) return false;
-      if (query.assigned === 'assigned' && item.isUnassigned) return false;
-      if (query.assigned === 'unassigned' && !item.isUnassigned) return false;
-      if (query.onlyAssignedToCurrentReviewer && !item.isAssignedToCurrentReviewer) return false;
-      return true;
-    });
+    const filtered = items.filter((item) => queueItemMatchesQuery(item, query));
 
     return {
       sortApplied: sort,
