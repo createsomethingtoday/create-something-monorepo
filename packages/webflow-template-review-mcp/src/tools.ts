@@ -156,13 +156,11 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
             503,
           );
         }
-        const queue = await getClient().listAssetQueueDetailed({
-          limit: limit ?? 100,
+        const queue = await getClient().listMyQueueDetailed({
           status,
-          assigned: 'assigned',
           sort: sort ?? 'submittedDate_desc',
+          limit: limit ?? 100,
           currentReviewer,
-          onlyAssignedToCurrentReviewer: true,
         });
         return asSuccess({
           count: queue.items.length,
