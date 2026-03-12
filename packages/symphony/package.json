@@ -1,0 +1,30 @@
+{
+  "name": "@create-something/symphony",
+  "version": "0.1.0",
+  "description": "Symphony issue-orchestration runtime for Linear + Codex app-server workflows",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "symphony": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "liquidjs": "^10.24.0",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
+  },
+  "license": "MIT"
+}
