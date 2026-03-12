@@ -295,7 +295,6 @@
                   <col class="metric-col" />
                   <col class="metric-col" />
                 {/if}
-                <col class="action-col" />
                 <col class="more-col" />
               </colgroup>
               <TableHeader>
@@ -362,7 +361,6 @@
                       </div>
                     </TableHead>
                   {/if}
-                  <TableHead class="action-head">Action</TableHead>
                   <TableHead align="center" class="w-12 more-head">More</TableHead>
                 </TableRow>
               </TableHeader>
@@ -371,7 +369,6 @@
                   <AssetTableRow
                     {asset}
                     {showPerformance}
-                    onPrimaryAction={runPrimaryAction}
                     {onView}
                     {onEdit}
                     {onArchive}
@@ -396,7 +393,6 @@
                     <TableCell class="text-center"
                       ><strong>${totals.revenue.toLocaleString()}</strong></TableCell
                     >
-                    <TableCell class="action-cell"></TableCell>
                     <TableCell class="more-cell"></TableCell>
                   </TableRow>
                 {/if}
@@ -558,10 +554,6 @@
     gap: 0.25rem;
   }
 
-  .action-head {
-    white-space: nowrap;
-  }
-
   .status-info {
     display: flex;
     align-items: baseline;
@@ -690,10 +682,6 @@
 
   :global(.desktop-table col.metric-col) {
     width: 9.5%;
-  }
-
-  :global(.desktop-table col.action-col) {
-    width: 7rem;
   }
 
   :global(.desktop-table col.more-col) {
@@ -870,12 +858,6 @@
 
   :global(.desktop-table td.text-center) {
     text-align: right;
-  }
-
-  :global(.desktop-table th.action-head),
-  :global(.desktop-table td.action-cell) {
-    width: 7rem;
-    text-align: left;
   }
 
   :global(.desktop-table th.more-head),
