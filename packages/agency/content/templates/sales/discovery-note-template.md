@@ -47,7 +47,7 @@
 
 - recommended tier:
   - `Workflow Infrastructure`
-  - `Reliability and Control Layer`
+  - `Policy OS`
   - `Enterprise Extension`
 - rationale:
 - if MCP-only wedge recommended, list assurance trigger criteria:

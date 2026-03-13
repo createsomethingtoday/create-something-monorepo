@@ -7,7 +7,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       policyId: 'policy.service-tier-entitlement.v1',
       version: 1,
       commitSha: 'workspace',
-      status: 'draft',
+      status: 'active',
       description: 'Service-tier and commercial entitlement policy for free MCP-only versus paid Policy OS access.',
       rolloutDefaults: {
         mode: 'legacy_enforce',
@@ -122,7 +122,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       policyId: 'policy.hub-route-authorization.v1',
       version: 1,
       commitSha: 'workspace',
-      status: 'draft',
+      status: 'active',
       description: 'Centralized broker authorization for proxy route discovery and execution.',
       rolloutDefaults: {
         mode: 'legacy_enforce',
@@ -220,7 +220,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       policyId: 'policy.judgment-baseline.v1',
       version: 1,
       commitSha: 'workspace',
-      status: 'draft',
+      status: 'active',
       description: 'Baseline hard-gate policy for Atlas workflow and MCP mapping operations.',
       rolloutDefaults: {
         mode: 'legacy_enforce',
@@ -291,7 +291,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       policyId: 'policy.mcp-session-self-service.v1',
       version: 1,
       commitSha: 'workspace',
-      status: 'draft',
+      status: 'active',
       description: 'Self-service MCP session minting for authenticated users.',
       rolloutDefaults: {
         mode: 'legacy_enforce',
@@ -323,7 +323,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       policyId: 'policy.partner-auth-governance.v1',
       version: 1,
       commitSha: 'workspace',
-      status: 'draft',
+      status: 'active',
       description: 'Partner-admin auth operations require consent evidence and review traceability.',
       rolloutDefaults: {
         mode: 'legacy_enforce',
@@ -493,7 +493,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       policyId: 'policy.user-bearer-token-governance.v1',
       version: 1,
       commitSha: 'workspace',
-      status: 'draft',
+      status: 'active',
       description: 'Managed long-lived user bearer tokens for .agency-issued MCP access.',
       rolloutDefaults: {
         mode: 'legacy_enforce',
@@ -537,7 +537,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       policyId: 'policy.mcp-credential-delivery.v1',
       version: 1,
       commitSha: 'workspace',
-      status: 'draft',
+      status: 'active',
       description: 'Legacy credential issuance requires exception approval and review traceability.',
       rolloutDefaults: {
         mode: 'legacy_enforce',
@@ -609,7 +609,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       policyId: 'policy.legacy-compat-sunset.v1',
       version: 1,
       commitSha: 'workspace',
-      status: 'draft',
+      status: 'active',
       description: 'Legacy bearer compatibility must have bounded sunset windows.',
       rolloutDefaults: {
         mode: 'legacy_enforce',

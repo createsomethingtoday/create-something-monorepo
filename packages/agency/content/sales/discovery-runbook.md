@@ -92,7 +92,7 @@ Then capture:
 - audit expectation
 - release-gate condition
 
-This is the handoff point between workflow discovery and control-layer scope.
+This is the handoff point between workflow discovery and Policy OS scope.
 
 ---
 
@@ -102,7 +102,7 @@ Use these routing rules:
 
 - `MCP-only wedge` if trusted connectivity is the primary need
 - `Workflow Infrastructure` if the workflow needs deterministic execution paths
-- `Reliability and Control Layer` if action governance is required
+- `Policy OS` if action governance is required
 - `Enterprise Extension` if stakes, regulation, or orchestration depth are high
 
 Default rule:

@@ -86,7 +86,7 @@ Exit rule:
 - Draft [mcp_contract.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/mcp_contract.yaml)
 - Draft [agent_contract.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/agent_contract.yaml)
 - Draft [outcome_contract.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/outcome_contract.md)
-- Draft [golden-task-checks.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/golden-task-checks.md)
+- Draft [golden_tasks.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/golden_tasks.yaml)
 - Draft [runbook.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/runbook.md)
 
 Reference example set:
@@ -94,7 +94,7 @@ Reference example set:
 - [exampleco-mcp_contract.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/exampleco-mcp_contract.yaml)
 - [exampleco-agent_contract.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/exampleco-agent_contract.yaml)
 - [exampleco-outcome_contract.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/exampleco-outcome_contract.md)
-- [exampleco-golden-task-checks.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/exampleco-golden-task-checks.md)
+- [golden_tasks.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/golden_tasks.yaml)
 - [exampleco-runbook.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/exampleco-runbook.md)
 
 ---

@@ -5,6 +5,18 @@ metadata:
   client_name: "half-dozen"
   engagement_id: "hd-dedup-v1"
   owner: "create-something-platform"
+  package_name: "policy-os"
+  approved_workflows:
+    - "notion-contact-dedup"
+  approval_mode: "hybrid"
+  escalation_policy: "HD-DEDUP-POLICY"
+  review_cadence: "weekly-review-monthly-tuning"
+  billing_and_entitlement_assumptions:
+    service_tier: "policy_os_core"
+    service_entitled: true
+    policy_accepted: true
+    contract_active: true
+    billing_active: true
 
 scenarios:
   - id: "dedup-high-confidence-merge"

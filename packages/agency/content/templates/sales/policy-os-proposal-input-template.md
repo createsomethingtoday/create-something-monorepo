@@ -31,7 +31,7 @@
 - workflow boundaries:
 - implementation deliverables:
 
-### Reliability and Control Layer (if included)
+### Policy OS (if included)
 - approval boundaries:
 - release gates:
 - incident loop expectations:

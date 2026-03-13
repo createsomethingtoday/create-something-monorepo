@@ -3,7 +3,11 @@
 ## 1) Engagement
 - Client: `half-dozen`
 - Engagement ID: `hd-fleet-watchdog-v1`
-- Delivery Model: `Agent Outcome Stack`
+- Package Name: `Policy OS`
+- Approved Workflows: `fleet-reliability-watchdog`
+- Approval Mode: `human-in-the-loop`
+- Escalation Policy: `HD-INCIDENT-ESCALATION-POLICY`
+- Review Cadence: `weekly review + monthly tuning`
 - Primary Interface: `Codex` (portable artifacts required)
 
 ## 2) Target Workflows

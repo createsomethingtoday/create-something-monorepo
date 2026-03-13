@@ -3,7 +3,11 @@
 ## 1) Engagement
 - Client: `half-dozen`
 - Engagement ID: `hd-inbox-triage-v1`
-- Delivery Model: `Agent Outcome Stack`
+- Package Name: `Policy OS`
+- Approved Workflows: `gmail-inbox-triage`
+- Approval Mode: `hybrid`
+- Escalation Policy: `HD-INBOX-TRIAGE-POLICY`
+- Review Cadence: `weekly review + monthly tuning`
 - Primary Interface: `Codex` (portable artifacts required)
 
 ## 2) Target Workflows

@@ -3,6 +3,8 @@
 > Prepared: March 9, 2026
 > Scope: internal commercial recommendation for packaging the first client trial as a monthly subscription that ladders into CREATE SOMETHING Policy OS
 
+> Superseded note (March 13, 2026): This memo preserves the March 9 framing. Current canonical packaging uses `Policy OS` as the paid package name. See [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md).
+
 ## Executive Summary
 
 - The repo already makes the commercial answer clear: the default paid delivery is not `MCP-only`. It is **Agent Outcome Stack**: custom MCP + policy artifacts + runbooks + managed judgment loop + monthly tuning.

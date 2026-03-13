@@ -3,11 +3,26 @@
 **Status:** Draft  
 **Client:** `CLIENT_NAME`  
 **Workflow:** `PRIMARY_WORKFLOW_NAME`  
-**Primary owner:** `ROLE_OR_NAME`
+**Primary owner:** `ROLE_OR_NAME`  
+**Package:** `Policy OS`
 
 ---
 
-## 1. Purpose
+## 1. Policy OS metadata
+
+- approved workflows:
+  - `WORKFLOW_NAME`
+- approval mode: `none|human-in-the-loop|hybrid`
+- escalation policy: `POLICY_ID_OR_RUNBOOK_SECTION`
+- review cadence: `weekly review + monthly tuning`
+- billing and entitlement assumptions:
+  - service tier: `mcp_only|policy_os_trial|policy_os_core`
+  - service entitled: `true|false`
+  - policy accepted: `true|false`
+  - contract active: `true|false`
+  - billing active: `true|false`
+
+## 2. Purpose
 
 This runbook defines how operators monitor, intervene in, and recover the workflow safely.
 
@@ -19,9 +34,7 @@ Use it for:
 - fallback/manual execution
 - rollback and containment
 
----
-
-## 2. Workflow summary
+## 3. Workflow summary
 
 - business objective: `BUSINESS_OBJECTIVE`
 - workflow boundary: `START TO END OF THE PILOT WORKFLOW`
@@ -33,18 +46,14 @@ Use it for:
   - approval-required: `RISKY ACTIONS`
   - block: `DISALLOWED ACTIONS`
 
----
-
-## 3. Roles
+## 4. Roles
 
 - workflow owner: `ROLE_OR_NAME`
 - technical owner: `ROLE_OR_NAME`
 - approval owner: `ROLE_OR_NAME`
 - fallback owner: `ROLE_OR_NAME`
 
----
-
-## 4. Normal operating procedure
+## 5. Normal operating procedure
 
 ### Auto-allow path
 
@@ -68,9 +77,7 @@ Use it for:
 3. `REASON IS RETURNED`
 4. `OPERATOR REVIEWS WHETHER MANUAL ALTERNATIVE IS NEEDED`
 
----
-
-## 5. Exception handling
+## 6. Exception handling
 
 ### Source-state mismatch
 
@@ -99,9 +106,7 @@ Use it for:
   3. switch to fallback/manual path if risk boundary would be crossed
 - exit condition: `ACTION COMPLETES SAFELY OR MANUAL PATH COMPLETES`
 
----
-
-## 6. Manual fallback
+## 7. Manual fallback
 
 When the workflow cannot proceed safely:
 
@@ -115,9 +120,7 @@ Fallback success condition:
 
 - `WORKFLOW OUTCOME IS COMPLETED WITHOUT BREACHING POLICY BOUNDARY`
 
----
-
-## 7. Rollback and containment
+## 8. Rollback and containment
 
 Use rollback or containment when:
 
@@ -140,9 +143,7 @@ Recovery steps:
 3. replay or reconcile affected records if required
 4. rerun golden-task checks before re-enable
 
----
-
-## 8. Observability and evidence
+## 9. Observability and evidence
 
 Required evidence sources:
 
@@ -155,26 +156,23 @@ Required review cadence:
 
 - daily during pilot
 - weekly after stabilization, unless risk profile requires more
+- monthly tuning review for ongoing Policy OS engagements
 
----
-
-## 9. Escalation matrix
+## 10. Escalation matrix
 
 - policy ambiguity: `POLICY_OWNER`
 - technical failure: `TECHNICAL_OWNER`
 - workflow exception: `WORKFLOW_OWNER`
 - customer-impacting incident: `DECISION_OWNER`
 
----
-
-## 10. Change management
+## 11. Change management
 
 Any change to the workflow must update:
 
 - `mcp_contract.yaml`
 - `agent_contract.yaml`
 - `outcome_contract.md`
-- golden-task checks
+- `golden_tasks.yaml`
 - this runbook
 
 No production change is complete until the documentation and gates are updated together.

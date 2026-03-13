@@ -23,7 +23,7 @@ Standardize when to use Composio-based connectivity versus custom MCP integratio
 4. Composio usage MUST remain implementation plumbing; client-facing delivery remains CREATE SOMETHING MCP.
 5. Commercial packaging MUST remain aligned:
    - `MCP-only` as discovery/compliance wedge
-   - `Agent Outcome Stack` as default paid delivery
+   - `Policy OS` as default paid delivery
 6. Integration selection compliance alone is insufficient for catalog exposure; any broad or variable connector surface MUST also comply with the MCP catalog exposure policy.
 7. Broad multi-provider or large-catalog connector surfaces MUST default to Hub-brokered discovery rather than eager direct registration.
 8. Direct exposure of provider-branded commodity MCP surfaces MUST be treated as an exception path with explicit rationale, approving owner, and sunset or review criteria.

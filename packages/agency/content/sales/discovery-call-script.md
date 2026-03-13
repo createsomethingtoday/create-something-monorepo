@@ -97,7 +97,7 @@ Map problem to delivery tier:
 - build trusted workflow substrate
 - normalize tool contracts and execution paths
 
-2. **Reliability and Control Layer**
+2. **Policy OS**
 - policy controls, release gates, approval rules, incident loops
 - default path for production-risk workflows
 
@@ -138,7 +138,7 @@ Pivot:
 ### Objection: "Why not MCP-only?"
 Response:
 
-> "MCP-only is a good wedge for discovery or compliance-constrained starts. The control layer is what makes automation reliable at production scale."
+> "MCP-only is a good wedge for discovery or compliance-constrained starts. Policy OS is what makes automation reliable at production scale."
 
 Pivot:
 
@@ -182,7 +182,7 @@ Commit:
 
 Use when value is likely but authority, budget, or urgency is partial.
 
-> "We can start with a scoped MCP-only wedge and define explicit triggers for moving into the Reliability and Control Layer."
+> "We can start with a scoped MCP-only wedge and define explicit triggers for moving into Policy OS."
 
 Commit:
 

@@ -5,6 +5,18 @@ metadata:
   client_name: "half-dozen"
   engagement_id: "hd-fleet-watchdog-v1"
   owner: "create-something-platform"
+  package_name: "policy-os"
+  approved_workflows:
+    - "fleet-reliability-watchdog"
+  approval_mode: "human-in-the-loop"
+  escalation_policy: "HD-INCIDENT-ESCALATION-POLICY"
+  review_cadence: "weekly-review-monthly-tuning"
+  billing_and_entitlement_assumptions:
+    service_tier: "policy_os_core"
+    service_entitled: true
+    policy_accepted: true
+    contract_active: true
+    billing_active: true
 
 scenarios:
   - id: "watchdog-hourly-health-review"

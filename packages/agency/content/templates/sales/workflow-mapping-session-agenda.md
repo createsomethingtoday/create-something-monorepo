@@ -61,7 +61,7 @@ We will also define:
 
 ### 4. Delivery path
 
-- Is this an `MCP-only wedge`, `Workflow Infrastructure`, or `Reliability and Control Layer` engagement?
+- Is this an `MCP-only wedge`, `Workflow Infrastructure`, or `Policy OS` engagement?
 - What must ship first?
 - What does success look like in 30 days?
 

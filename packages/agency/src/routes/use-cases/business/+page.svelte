@@ -32,7 +32,7 @@
 			title: 'Make it reliable',
 			paragraphs: [
 				'Connections are only the start. Reliability is what makes them usable in real operations.',
-				'The control layer: we tune your agents monthly. Optimize prompts. Update policies as your business changes. Monitor performance. Catch edge cases before they become problems.',
+				'Policy OS: we tune your agents monthly. Optimize prompts. Update policies as your business changes. Monitor performance. Catch edge cases before they become problems.',
 				'Your automation gets smarter every month. $1,500\u2013$3,500/mo.'
 			]
 		}

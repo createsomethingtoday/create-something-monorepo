@@ -27,7 +27,7 @@ This pack should be used together with:
 - `mcp_contract.yaml`
 - `agent_contract.yaml`
 - `outcome_contract.md`
-- `golden-task-checks.md`
+- `golden_tasks.yaml`
 - `runbook.md`
 
 ---

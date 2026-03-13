@@ -10,13 +10,15 @@ Read in this order when you need broad repo context:
 
 1. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
 2. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
-3. [policies/README.md](./policies/README.md) — versioned policy artifacts
+3. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
+4. [policies/README.md](./policies/README.md) — versioned policy artifacts
 
 ## Navigation by task
 
 ### Strategy and positioning
 
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)
+- [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md)
 - [AGENCY_CODEX_VECTOR_STRATEGY.md](./AGENCY_CODEX_VECTOR_STRATEGY.md)
 - [MIXED_STACK_CLIENT_MCP_OFFER_ASSESSMENT_2026-03-09.md](./MIXED_STACK_CLIENT_MCP_OFFER_ASSESSMENT_2026-03-09.md)
 - [FUNNEL_AND_DISCOVERY_STRATEGY_2026-03-09.md](./FUNNEL_AND_DISCOVERY_STRATEGY_2026-03-09.md)

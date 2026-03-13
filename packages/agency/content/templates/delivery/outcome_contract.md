@@ -1,149 +1,89 @@
-# Outcome Contract
+# Outcome Contract v1
 
-**Status:** Draft  
-**Client:** `CLIENT_NAME`  
-**Workflow:** `PRIMARY_WORKFLOW_NAME`  
-**Date:** `YYYY-MM-DD`
+## 1) Engagement
+- Client: `<client-name>`
+- Engagement ID: `<engagement-id>`
+- Package Name: `Policy OS` (default) or `MCP-only` (exception)
+- Approved Workflows:
+  - `<workflow-1>`
+- Approval Mode: `hybrid`
+- Escalation Policy: `<policy-id-or-runbook-section>`
+- Review Cadence: `weekly review + monthly tuning`
+- Billing and Entitlement Assumptions:
+  - service tier: `policy_os_trial`
+  - service entitled: `true`
+  - policy accepted: `true`
+  - contract active: `true`
+  - billing active: `true`
+- Delivery Vector Canonical Phrase: `Skills on MCP`
+- Delivery Vector (Client-Facing): `Skills + MCP`
+- Delivery Vector (Technical): `MCP + Skills`
+- Primary Interface: `Codex` (portable artifacts required)
 
----
+## 2) Target Workflows
+List the workflows that must improve.
 
-## 1. Pilot scope
+1. `<workflow-1>`
+2. `<workflow-2>`
+3. `<workflow-3>`
 
-### In scope
+For each workflow, define:
+- Trigger event
+- Required systems
+- Expected output artifact
+- Human approval requirement
 
-- `SPECIFIC_WORKFLOW_START`
-- `PRIMARY_AUTOMATION_OR_ASSISTIVE_PATH`
-- `APPROVAL OR HUMAN GATE STEP`
-- `SPECIFIC_WORKFLOW_END`
+## 3) Success Metrics
+Define measurable outcomes.
 
-### Out of scope
+- Time to first autonomous outcome: `<= 14 days`
+- Golden task pass rate: `>= 90%`
+- Manual effort reduction: `<target-%>`
+- Error/escalation rate ceiling: `<target-%>`
 
-- `OUT_OF_SCOPE_ITEM`
-- `OUT_OF_SCOPE_ITEM`
+## 4) Fallback and Manual Path
+Define safe fallback behavior.
 
----
+- If policy confidence is below threshold: route to human owner.
+- If write operation is blocked: return draft artifact and escalation ticket.
+- If dependency fails: use documented manual workflow and capture incident.
 
-## 2. Business objective
+## 5) Ownership Boundaries
+Clarify who owns what.
 
-The purpose of this pilot is to:
+- Client owns business decisions, approvals, and policy sign-off.
+- CREATE SOMETHING owns integration architecture, quality gates, and runbook maintenance.
+- Both parties review model behavior drift on agreed cadence.
 
-- reduce `CURRENT_FAILURE_PATTERN`
-- improve `SPEED|ACCURACY|GOVERNANCE`
-- establish a production-safe path for `TARGET_WORKFLOW`
+## 6) Handoff Bundle
+All items are required for completion.
 
-Target outcome in 30 days:
+- [ ] `mcp_contract.yaml`
+- [ ] `agent_contract.yaml`
+- [ ] `outcome_contract.md`
+- [ ] `golden_tasks.yaml`
+- [ ] `runbook.md`
+- [ ] Endpoint inventory and auth scope matrix
+- [ ] Tool/resource/prompt registry
+- [ ] Incident and rollback runbook
 
-- `MEASURABLE_RESULT`
+## 7) Change Control
+How changes are approved.
 
----
+- Policy change requests require explicit owner approval.
+- Tool scope expansions require security review.
+- Pricing/commercial logic changes are always human approved.
 
-## 3. Success criteria
+## 8) Messaging and Trust
+Positioning rules that remain aligned across sales, delivery, and technical proof.
 
-The pilot is successful if:
+- Operator-facing pages and outreach lead with `Skills + MCP`.
+- Technical architecture, security, and compliance surfaces use `MCP + Skills`.
+- Technical positioning statement: `MCP is the substrate for auth, trust boundaries, portability, and governance; Skills are the behavior layer.`
+- Context-bloat objection handling: `We scope tool access by bundle and workflow so only relevant capabilities enter context.`
+- Moat emphasis order: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, monthly tuning.
 
-- risky actions are not executed without the required approval
-- the workflow owner accepts the new workflow path
-- manual cleanup is reduced by `TARGET_AMOUNT`
-- required audit fields are visible for key actions
-- golden-task checks pass at the agreed threshold
-
-Primary KPI:
-
-- `PRIMARY_RELIABILITY_KPI`
-
-Secondary KPIs:
-
-- `SECONDARY_KPI`
-- `SECONDARY_KPI`
-
----
-
-## 4. Workflow boundary
-
-### Systems in scope
-
-- `SYSTEM_NAME`
-- `SYSTEM_NAME`
-
-### Trust boundary
-
-- `WHAT CAN BE AUTO-ALLOWED`
-- `WHAT REQUIRES APPROVAL`
-- `WHAT MUST BE BLOCKED`
-
-### Ownership boundary
-
-- workflow owner: `ROLE_OR_NAME`
-- technical owner: `ROLE_OR_NAME`
-- approval owner: `ROLE_OR_NAME`
-
----
-
-## 5. Fallback and manual path
-
-If the governed workflow cannot complete safely:
-
-1. `STOP_CONDITION`
-2. `MANUAL_HANDOFF_STEP`
-3. `OWNER_COMPLETES_REMAINING_WORK`
-4. `AUDIT_NOTE_OR_EXCEPTION_LOG`
-
-Fallback is considered acceptable if:
-
-- `FALLBACK_SUCCESS_CONDITION`
-
----
-
-## 6. Delivery artifacts
-
-This pilot produces:
-
-- `mcp_contract.yaml`
-- `agent_contract.yaml`
-- `outcome_contract.md`
-- golden-task checks
-- runbook
-
-If observability is included, it may also include Braintrust tracing and eval coverage.
-
----
-
-## 7. Release gates
-
-The workflow does not move to production until:
-
-- pilot workflow scope is approved
-- policy boundary is approved
-- golden-task checks pass
-- manual fallback is rehearsed
-- required stakeholders sign off
-
----
-
-## 8. Risks and assumptions
-
-### Risks
-
-- `RISK_ITEM`
-- `RISK_ITEM`
-
-### Assumptions
-
-- `ASSUMPTION_ITEM`
-- `ASSUMPTION_ITEM`
-
----
-
-## 9. Decision record
-
-### Approved next step
-
-- `NEXT_STEP`
-
-### Decision owner
-
-- `ROLE_OR_NAME`
-
-### Target date
-
-- `YYYY-MM-DD`
+## 9) Review Cadence
+- Weekly: golden task report + incident summary
+- Monthly: policy tuning and roadmap update
+- Quarterly: architecture and portability review

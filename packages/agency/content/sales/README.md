@@ -45,7 +45,7 @@
    - `../templates/delivery/mcp_contract.yaml`
    - `../templates/delivery/agent_contract.yaml`
    - `../templates/delivery/outcome_contract.md`
-   - `../templates/delivery/golden-task-checks.md`
+   - `../templates/delivery/golden_tasks.yaml`
    - `../templates/delivery/runbook.md`
    - `../templates/delivery/halfdozen-mcp-onboarding-pack.md`
    - `../templates/delivery/halfdozen-mcp-onboarding-checklist.md`
@@ -82,6 +82,7 @@
    - `mcp_contract.yaml`
    - `agent_contract.yaml`
    - `outcome_contract.md`
+   - `golden_tasks.yaml`
 9. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
 
 ---

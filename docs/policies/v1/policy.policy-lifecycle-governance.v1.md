@@ -1,8 +1,8 @@
 # policy.policy-lifecycle-governance.v1
 
-- Status: `draft`
+- Status: `active`
 - Owner: `CREATE SOMETHING policy operations`
-- Effective date: `TBD`
+- Effective date: `2026-03-13`
 
 ## Purpose
 
@@ -32,6 +32,7 @@ Define lifecycle governance for policy artifacts from draft through activation a
    - `fallback_ir_json`
 4. Rollback MUST be possible to a previously active policy version.
 5. Archived policies MUST remain queryable for audit but MUST NOT be used for enforcement.
+6. Runtime-backed authz manifests MAY move to `active` when compiled artifacts are checked into `docs/policies/generated/` and the publish path can promote all active manifests.
 
 ## Enforcement Surfaces
 

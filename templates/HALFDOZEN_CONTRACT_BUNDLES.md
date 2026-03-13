@@ -1,11 +1,12 @@
 # Half Dozen Contract Bundles
 
-Each scenario ships as a 4-artifact bundle:
+Each scenario ships as a 5-artifact bundle:
 
 - `agent_contract`
 - `mcp_contract`
 - `outcome_contract`
 - `golden_tasks`
+- `runbook`
 
 ## Runtime Wiring
 

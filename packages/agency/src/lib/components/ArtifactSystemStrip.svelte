@@ -42,7 +42,7 @@
 
   let {
     eyebrow = 'Operating Artifacts',
-    title = 'What makes the Control Layer durable',
+    title = 'What makes Policy OS durable',
     description = 'Every engagement ships explicit artifacts so access, behavior, and recovery stay legible after the kickoff call.',
     items = DEFAULT_ITEMS
   }: Props = $props();

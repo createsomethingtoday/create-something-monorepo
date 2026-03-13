@@ -17,7 +17,7 @@ When to use Composio for app connectivity, how we wrap it, and where the SDK sur
 Composio usage does **not** change the commercial packaging rule:
 
 - `MCP-only` remains a narrow discovery/compliance offer.
-- `Agent Outcome Stack` (agents + MCPs) is the default paid delivery.
+- `Policy OS` (agents + MCPs + governed execution) is the default paid delivery.
 - Codex is the primary setup/demo vector, but MCP/policy artifacts remain portable.
 
 ## Wrap pattern
