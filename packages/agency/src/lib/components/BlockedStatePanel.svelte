@@ -34,7 +34,7 @@
       recovery: 'Accept the active policy and retry the governed action.'
     },
     {
-      label: 'Workflow suspended',
+      label: 'Governance suspension',
       reason: 'The workflow remains installed, but governance has paused execution for risk or review.',
       recovery: 'Resume only after operator review or updated policy conditions.'
     }

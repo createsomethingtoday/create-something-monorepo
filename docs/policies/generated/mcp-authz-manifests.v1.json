@@ -1,0 +1,852 @@
+{
+  "generatedAt": "2026-03-13T14:39:22.645Z",
+  "commitSha": "aa291776c241832234c153264498ce1ef1849232",
+  "policies": [
+    {
+      "manifest": {
+        "policyId": "policy.hub-route-authorization.v1",
+        "version": 1,
+        "commitSha": "aa291776c241832234c153264498ce1ef1849232",
+        "status": "active",
+        "description": "Centralized broker authorization for proxy route discovery and execution.",
+        "rolloutDefaults": {
+          "mode": "legacy_enforce",
+          "canaryPercent": 0,
+          "mismatchThreshold": 0.005,
+          "fallbackRateThreshold": 0.01
+        },
+        "polar": "# POLICY OS runtime interpreter policy.\n\naction_ok(rule_id) if req_action_name(rule_id, false);\naction_ok(rule_id) if req_action_name(rule_id, true) and input_action_name(action_name) and cond_action_name(rule_id, action_name);\n\nresource_kind_ok(rule_id) if req_resource_kind(rule_id, false);\nresource_kind_ok(rule_id) if\n  req_resource_kind(rule_id, true) and input_resource_kind(resource_kind) and cond_resource_kind(rule_id, resource_kind);\n\naccess_type_ok(rule_id) if req_access_type(rule_id, false);\naccess_type_ok(rule_id) if req_access_type(rule_id, true) and input_access_type(access_type) and cond_access_type(rule_id, access_type);\n\noauth_required_ok(rule_id) if req_oauth_required(rule_id, false);\noauth_required_ok(rule_id) if\n  req_oauth_required(rule_id, true) and input_oauth_required(oauth_required) and cond_oauth_required(rule_id, oauth_required);\n\nservice_tier_ok(rule_id) if req_service_tier(rule_id, false);\nservice_tier_ok(rule_id) if\n  req_service_tier(rule_id, true) and input_service_tier(service_tier) and cond_service_tier(rule_id, service_tier);\n\nactor_role_ok(rule_id) if req_actor_role(rule_id, false);\nactor_role_ok(rule_id) if req_actor_role(rule_id, true) and input_actor_role(actor_role) and cond_actor_role(rule_id, actor_role);\n\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, false);\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, true) and input_tool_mode(tool_mode) and cond_tool_mode(rule_id, tool_mode);\n\nidentity_source_ok(rule_id) if req_identity_source(rule_id, false);\nidentity_source_ok(rule_id) if\n  req_identity_source(rule_id, true) and input_identity_source(identity_source) and cond_identity_source(rule_id, identity_source);\n\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, false);\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, true) and input_resource_tag(resource_tag) and cond_resource_tag(rule_id, resource_tag);\n\ntool_ok(rule_id) if req_tool(rule_id, false);\ntool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);\n\nwrite_ok(rule_id) if req_has_write_intent(rule_id, false);\nwrite_ok(rule_id) if\n  req_has_write_intent(rule_id, true) and input_has_write_intent(has_write_intent) and cond_has_write_intent(rule_id, has_write_intent);\n\nhuman_review_ok(rule_id) if req_has_human_review_step(rule_id, false);\nhuman_review_ok(rule_id) if\n  req_has_human_review_step(rule_id, true) and\n  input_has_human_review_step(has_human_review_step) and\n  cond_has_human_review_step(rule_id, has_human_review_step);\n\nintrospection_ok_cond(rule_id) if req_introspection_ok(rule_id, false);\nintrospection_ok_cond(rule_id) if\n  req_introspection_ok(rule_id, true) and\n  input_introspection_ok(introspection_ok) and\n  cond_introspection_ok(rule_id, introspection_ok);\n\nservice_entitled_ok(rule_id) if req_service_entitled(rule_id, false);\nservice_entitled_ok(rule_id) if\n  req_service_entitled(rule_id, true) and\n  input_service_entitled(service_entitled) and\n  cond_service_entitled(rule_id, service_entitled);\n\npolicy_accepted_ok(rule_id) if req_policy_accepted(rule_id, false);\npolicy_accepted_ok(rule_id) if\n  req_policy_accepted(rule_id, true) and\n  input_policy_accepted(policy_accepted) and\n  cond_policy_accepted(rule_id, policy_accepted);\n\ncontract_active_ok(rule_id) if req_contract_active(rule_id, false);\ncontract_active_ok(rule_id) if\n  req_contract_active(rule_id, true) and\n  input_contract_active(contract_active) and\n  cond_contract_active(rule_id, contract_active);\n\nbilling_active_ok(rule_id) if req_billing_active(rule_id, false);\nbilling_active_ok(rule_id) if\n  req_billing_active(rule_id, true) and\n  input_billing_active(billing_active) and\n  cond_billing_active(rule_id, billing_active);\n\napproved_exception_ok(rule_id) if req_approved_exception_present(rule_id, false);\napproved_exception_ok(rule_id) if\n  req_approved_exception_present(rule_id, true) and\n  input_approved_exception_present(approved_exception_present) and\n  cond_approved_exception_present(rule_id, approved_exception_present);\n\naccount_ok(rule_id) if req_account_id(rule_id, false);\naccount_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);\n\nrule_matches(rule_id, priority, decision, reason) if\n  rule(rule_id, priority, decision, reason) and\n  action_ok(rule_id) and\n  resource_kind_ok(rule_id) and\n  access_type_ok(rule_id) and\n  oauth_required_ok(rule_id) and\n  service_tier_ok(rule_id) and\n  actor_role_ok(rule_id) and\n  tool_mode_ok(rule_id) and\n  identity_source_ok(rule_id) and\n  resource_tag_ok(rule_id) and\n  tool_ok(rule_id) and\n  write_ok(rule_id) and\n  human_review_ok(rule_id) and\n  introspection_ok_cond(rule_id) and\n  service_entitled_ok(rule_id) and\n  policy_accepted_ok(rule_id) and\n  contract_active_ok(rule_id) and\n  billing_active_ok(rule_id) and\n  approved_exception_ok(rule_id) and\n  account_ok(rule_id);\n\n# Compiled policy facts\nrule(\"hub_route_block_unresolved_context\", 5, \"block\", \"Protected remote hub routes require resolved actor and tenant context before discovery or execution.\");\nreq_action_name(\"hub_route_block_unresolved_context\", false);\nreq_resource_kind(\"hub_route_block_unresolved_context\", true);\nreq_access_type(\"hub_route_block_unresolved_context\", false);\nreq_oauth_required(\"hub_route_block_unresolved_context\", false);\nreq_service_tier(\"hub_route_block_unresolved_context\", false);\nreq_actor_role(\"hub_route_block_unresolved_context\", false);\nreq_tool_mode(\"hub_route_block_unresolved_context\", false);\nreq_identity_source(\"hub_route_block_unresolved_context\", false);\nreq_resource_tag(\"hub_route_block_unresolved_context\", false);\nreq_tool(\"hub_route_block_unresolved_context\", false);\nreq_has_write_intent(\"hub_route_block_unresolved_context\", false);\nreq_has_human_review_step(\"hub_route_block_unresolved_context\", false);\nreq_introspection_ok(\"hub_route_block_unresolved_context\", true);\nreq_service_entitled(\"hub_route_block_unresolved_context\", false);\nreq_policy_accepted(\"hub_route_block_unresolved_context\", false);\nreq_contract_active(\"hub_route_block_unresolved_context\", false);\nreq_billing_active(\"hub_route_block_unresolved_context\", false);\nreq_approved_exception_present(\"hub_route_block_unresolved_context\", false);\nreq_account_id(\"hub_route_block_unresolved_context\", false);\ncond_resource_kind(\"hub_route_block_unresolved_context\", \"hub_route\");\ncond_introspection_ok(\"hub_route_block_unresolved_context\", false);\nrule(\"hub_discover_readonly_blocks_mutations\", 10, \"block\", \"Read-only sessions cannot discover mutable or administrative routes.\");\nreq_action_name(\"hub_discover_readonly_blocks_mutations\", true);\nreq_resource_kind(\"hub_discover_readonly_blocks_mutations\", false);\nreq_access_type(\"hub_discover_readonly_blocks_mutations\", true);\nreq_oauth_required(\"hub_discover_readonly_blocks_mutations\", false);\nreq_service_tier(\"hub_discover_readonly_blocks_mutations\", false);\nreq_actor_role(\"hub_discover_readonly_blocks_mutations\", false);\nreq_tool_mode(\"hub_discover_readonly_blocks_mutations\", true);\nreq_identity_source(\"hub_discover_readonly_blocks_mutations\", false);\nreq_resource_tag(\"hub_discover_readonly_blocks_mutations\", false);\nreq_tool(\"hub_discover_readonly_blocks_mutations\", false);\nreq_has_write_intent(\"hub_discover_readonly_blocks_mutations\", false);\nreq_has_human_review_step(\"hub_discover_readonly_blocks_mutations\", false);\nreq_introspection_ok(\"hub_discover_readonly_blocks_mutations\", false);\nreq_service_entitled(\"hub_discover_readonly_blocks_mutations\", false);\nreq_policy_accepted(\"hub_discover_readonly_blocks_mutations\", false);\nreq_contract_active(\"hub_discover_readonly_blocks_mutations\", false);\nreq_billing_active(\"hub_discover_readonly_blocks_mutations\", false);\nreq_approved_exception_present(\"hub_discover_readonly_blocks_mutations\", false);\nreq_account_id(\"hub_discover_readonly_blocks_mutations\", false);\ncond_action_name(\"hub_discover_readonly_blocks_mutations\", \"discover\");\ncond_access_type(\"hub_discover_readonly_blocks_mutations\", \"auth_admin\");\ncond_access_type(\"hub_discover_readonly_blocks_mutations\", \"control_plane\");\ncond_access_type(\"hub_discover_readonly_blocks_mutations\", \"destructive\");\ncond_access_type(\"hub_discover_readonly_blocks_mutations\", \"write\");\ncond_tool_mode(\"hub_discover_readonly_blocks_mutations\", \"read_only\");\nrule(\"hub_execute_readonly_blocks_mutations\", 20, \"block\", \"Read-only sessions cannot execute mutable or administrative routes.\");\nreq_action_name(\"hub_execute_readonly_blocks_mutations\", true);\nreq_resource_kind(\"hub_execute_readonly_blocks_mutations\", false);\nreq_access_type(\"hub_execute_readonly_blocks_mutations\", true);\nreq_oauth_required(\"hub_execute_readonly_blocks_mutations\", false);\nreq_service_tier(\"hub_execute_readonly_blocks_mutations\", false);\nreq_actor_role(\"hub_execute_readonly_blocks_mutations\", false);\nreq_tool_mode(\"hub_execute_readonly_blocks_mutations\", true);\nreq_identity_source(\"hub_execute_readonly_blocks_mutations\", false);\nreq_resource_tag(\"hub_execute_readonly_blocks_mutations\", false);\nreq_tool(\"hub_execute_readonly_blocks_mutations\", false);\nreq_has_write_intent(\"hub_execute_readonly_blocks_mutations\", false);\nreq_has_human_review_step(\"hub_execute_readonly_blocks_mutations\", false);\nreq_introspection_ok(\"hub_execute_readonly_blocks_mutations\", false);\nreq_service_entitled(\"hub_execute_readonly_blocks_mutations\", false);\nreq_policy_accepted(\"hub_execute_readonly_blocks_mutations\", false);\nreq_contract_active(\"hub_execute_readonly_blocks_mutations\", false);\nreq_billing_active(\"hub_execute_readonly_blocks_mutations\", false);\nreq_approved_exception_present(\"hub_execute_readonly_blocks_mutations\", false);\nreq_account_id(\"hub_execute_readonly_blocks_mutations\", false);\ncond_action_name(\"hub_execute_readonly_blocks_mutations\", \"execute\");\ncond_access_type(\"hub_execute_readonly_blocks_mutations\", \"auth_admin\");\ncond_access_type(\"hub_execute_readonly_blocks_mutations\", \"control_plane\");\ncond_access_type(\"hub_execute_readonly_blocks_mutations\", \"destructive\");\ncond_access_type(\"hub_execute_readonly_blocks_mutations\", \"write\");\ncond_tool_mode(\"hub_execute_readonly_blocks_mutations\", \"read_only\");\nrule(\"hub_execute_destructive_requires_review\", 30, \"require_human_review\", \"Destructive or control-plane proxy routes require human review.\");\nreq_action_name(\"hub_execute_destructive_requires_review\", true);\nreq_resource_kind(\"hub_execute_destructive_requires_review\", false);\nreq_access_type(\"hub_execute_destructive_requires_review\", true);\nreq_oauth_required(\"hub_execute_destructive_requires_review\", false);\nreq_service_tier(\"hub_execute_destructive_requires_review\", false);\nreq_actor_role(\"hub_execute_destructive_requires_review\", false);\nreq_tool_mode(\"hub_execute_destructive_requires_review\", false);\nreq_identity_source(\"hub_execute_destructive_requires_review\", false);\nreq_resource_tag(\"hub_execute_destructive_requires_review\", false);\nreq_tool(\"hub_execute_destructive_requires_review\", false);\nreq_has_write_intent(\"hub_execute_destructive_requires_review\", false);\nreq_has_human_review_step(\"hub_execute_destructive_requires_review\", false);\nreq_introspection_ok(\"hub_execute_destructive_requires_review\", false);\nreq_service_entitled(\"hub_execute_destructive_requires_review\", false);\nreq_policy_accepted(\"hub_execute_destructive_requires_review\", false);\nreq_contract_active(\"hub_execute_destructive_requires_review\", false);\nreq_billing_active(\"hub_execute_destructive_requires_review\", false);\nreq_approved_exception_present(\"hub_execute_destructive_requires_review\", false);\nreq_account_id(\"hub_execute_destructive_requires_review\", false);\ncond_action_name(\"hub_execute_destructive_requires_review\", \"execute\");\ncond_access_type(\"hub_execute_destructive_requires_review\", \"control_plane\");\ncond_access_type(\"hub_execute_destructive_requires_review\", \"destructive\");\nrule(\"hub_discover_allow\", 900, \"allow\", \"Route is visible for discovery.\");\nreq_action_name(\"hub_discover_allow\", true);\nreq_resource_kind(\"hub_discover_allow\", true);\nreq_access_type(\"hub_discover_allow\", false);\nreq_oauth_required(\"hub_discover_allow\", false);\nreq_service_tier(\"hub_discover_allow\", false);\nreq_actor_role(\"hub_discover_allow\", false);\nreq_tool_mode(\"hub_discover_allow\", false);\nreq_identity_source(\"hub_discover_allow\", false);\nreq_resource_tag(\"hub_discover_allow\", false);\nreq_tool(\"hub_discover_allow\", false);\nreq_has_write_intent(\"hub_discover_allow\", false);\nreq_has_human_review_step(\"hub_discover_allow\", false);\nreq_introspection_ok(\"hub_discover_allow\", true);\nreq_service_entitled(\"hub_discover_allow\", false);\nreq_policy_accepted(\"hub_discover_allow\", false);\nreq_contract_active(\"hub_discover_allow\", false);\nreq_billing_active(\"hub_discover_allow\", false);\nreq_approved_exception_present(\"hub_discover_allow\", false);\nreq_account_id(\"hub_discover_allow\", false);\ncond_action_name(\"hub_discover_allow\", \"discover\");\ncond_resource_kind(\"hub_discover_allow\", \"hub_route\");\ncond_introspection_ok(\"hub_discover_allow\", true);\nrule(\"hub_execute_allow\", 910, \"allow\", \"Proxy route execution is allowed.\");\nreq_action_name(\"hub_execute_allow\", true);\nreq_resource_kind(\"hub_execute_allow\", true);\nreq_access_type(\"hub_execute_allow\", false);\nreq_oauth_required(\"hub_execute_allow\", false);\nreq_service_tier(\"hub_execute_allow\", false);\nreq_actor_role(\"hub_execute_allow\", false);\nreq_tool_mode(\"hub_execute_allow\", false);\nreq_identity_source(\"hub_execute_allow\", false);\nreq_resource_tag(\"hub_execute_allow\", false);\nreq_tool(\"hub_execute_allow\", false);\nreq_has_write_intent(\"hub_execute_allow\", false);\nreq_has_human_review_step(\"hub_execute_allow\", false);\nreq_introspection_ok(\"hub_execute_allow\", true);\nreq_service_entitled(\"hub_execute_allow\", false);\nreq_policy_accepted(\"hub_execute_allow\", false);\nreq_contract_active(\"hub_execute_allow\", false);\nreq_billing_active(\"hub_execute_allow\", false);\nreq_approved_exception_present(\"hub_execute_allow\", false);\nreq_account_id(\"hub_execute_allow\", false);\ncond_action_name(\"hub_execute_allow\", \"execute\");\ncond_resource_kind(\"hub_execute_allow\", \"hub_route\");\ncond_introspection_ok(\"hub_execute_allow\", true);\n",
+        "fallbackIrJson": "{\"id\":\"policy.hub-route-authorization.v1\",\"name\":\"Hub route authorization\",\"description\":\"Fine-grained broker policy for route discovery and proxy execution.\",\"rules\":[{\"id\":\"hub_route_block_unresolved_context\",\"priority\":5,\"when\":{\"resourceKinds\":[\"hub_route\"],\"introspectionOk\":false},\"then\":{\"decision\":\"block\",\"reason\":\"Protected remote hub routes require resolved actor and tenant context before discovery or execution.\"}},{\"id\":\"hub_discover_readonly_blocks_mutations\",\"priority\":10,\"when\":{\"actionNames\":[\"discover\"],\"toolModes\":[\"read_only\"],\"accessTypes\":[\"write\",\"destructive\",\"auth_admin\",\"control_plane\"]},\"then\":{\"decision\":\"block\",\"reason\":\"Read-only sessions cannot discover mutable or administrative routes.\"}},{\"id\":\"hub_execute_readonly_blocks_mutations\",\"priority\":20,\"when\":{\"actionNames\":[\"execute\"],\"toolModes\":[\"read_only\"],\"accessTypes\":[\"write\",\"destructive\",\"auth_admin\",\"control_plane\"]},\"then\":{\"decision\":\"block\",\"reason\":\"Read-only sessions cannot execute mutable or administrative routes.\"}},{\"id\":\"hub_execute_destructive_requires_review\",\"priority\":30,\"when\":{\"actionNames\":[\"execute\"],\"accessTypes\":[\"destructive\",\"control_plane\"]},\"then\":{\"decision\":\"require_human_review\",\"reason\":\"Destructive or control-plane proxy routes require human review.\"}},{\"id\":\"hub_discover_allow\",\"priority\":900,\"when\":{\"actionNames\":[\"discover\"],\"resourceKinds\":[\"hub_route\"],\"introspectionOk\":true},\"then\":{\"decision\":\"allow\",\"reason\":\"Route is visible for discovery.\"}},{\"id\":\"hub_execute_allow\",\"priority\":910,\"when\":{\"actionNames\":[\"execute\"],\"resourceKinds\":[\"hub_route\"],\"introspectionOk\":true},\"then\":{\"decision\":\"allow\",\"reason\":\"Proxy route execution is allowed.\"}}]}",
+        "compilerVersion": "policy-os-polar-compiler-v1",
+        "policyHash": "4932f46016444fcf15ef98bee90efb8004d51b6be6dfd302227b72be4176d44e"
+      },
+      "policy": {
+        "id": "policy.hub-route-authorization.v1",
+        "name": "Hub route authorization",
+        "description": "Fine-grained broker policy for route discovery and proxy execution.",
+        "rules": [
+          {
+            "id": "hub_route_block_unresolved_context",
+            "priority": 5,
+            "when": {
+              "resourceKinds": [
+                "hub_route"
+              ],
+              "introspectionOk": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Protected remote hub routes require resolved actor and tenant context before discovery or execution."
+            }
+          },
+          {
+            "id": "hub_discover_readonly_blocks_mutations",
+            "priority": 10,
+            "when": {
+              "actionNames": [
+                "discover"
+              ],
+              "toolModes": [
+                "read_only"
+              ],
+              "accessTypes": [
+                "write",
+                "destructive",
+                "auth_admin",
+                "control_plane"
+              ]
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Read-only sessions cannot discover mutable or administrative routes."
+            }
+          },
+          {
+            "id": "hub_execute_readonly_blocks_mutations",
+            "priority": 20,
+            "when": {
+              "actionNames": [
+                "execute"
+              ],
+              "toolModes": [
+                "read_only"
+              ],
+              "accessTypes": [
+                "write",
+                "destructive",
+                "auth_admin",
+                "control_plane"
+              ]
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Read-only sessions cannot execute mutable or administrative routes."
+            }
+          },
+          {
+            "id": "hub_execute_destructive_requires_review",
+            "priority": 30,
+            "when": {
+              "actionNames": [
+                "execute"
+              ],
+              "accessTypes": [
+                "destructive",
+                "control_plane"
+              ]
+            },
+            "then": {
+              "decision": "require_human_review",
+              "reason": "Destructive or control-plane proxy routes require human review."
+            }
+          },
+          {
+            "id": "hub_discover_allow",
+            "priority": 900,
+            "when": {
+              "actionNames": [
+                "discover"
+              ],
+              "resourceKinds": [
+                "hub_route"
+              ],
+              "introspectionOk": true
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Route is visible for discovery."
+            }
+          },
+          {
+            "id": "hub_execute_allow",
+            "priority": 910,
+            "when": {
+              "actionNames": [
+                "execute"
+              ],
+              "resourceKinds": [
+                "hub_route"
+              ],
+              "introspectionOk": true
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Proxy route execution is allowed."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "manifest": {
+        "policyId": "policy.judgment-baseline.v1",
+        "version": 1,
+        "commitSha": "aa291776c241832234c153264498ce1ef1849232",
+        "status": "active",
+        "description": "Baseline hard-gate policy for Atlas workflow and MCP mapping operations.",
+        "rolloutDefaults": {
+          "mode": "legacy_enforce",
+          "canaryPercent": 0,
+          "mismatchThreshold": 0.005,
+          "fallbackRateThreshold": 0.01
+        },
+        "polar": "# POLICY OS runtime interpreter policy.\n\naction_ok(rule_id) if req_action_name(rule_id, false);\naction_ok(rule_id) if req_action_name(rule_id, true) and input_action_name(action_name) and cond_action_name(rule_id, action_name);\n\nresource_kind_ok(rule_id) if req_resource_kind(rule_id, false);\nresource_kind_ok(rule_id) if\n  req_resource_kind(rule_id, true) and input_resource_kind(resource_kind) and cond_resource_kind(rule_id, resource_kind);\n\naccess_type_ok(rule_id) if req_access_type(rule_id, false);\naccess_type_ok(rule_id) if req_access_type(rule_id, true) and input_access_type(access_type) and cond_access_type(rule_id, access_type);\n\noauth_required_ok(rule_id) if req_oauth_required(rule_id, false);\noauth_required_ok(rule_id) if\n  req_oauth_required(rule_id, true) and input_oauth_required(oauth_required) and cond_oauth_required(rule_id, oauth_required);\n\nservice_tier_ok(rule_id) if req_service_tier(rule_id, false);\nservice_tier_ok(rule_id) if\n  req_service_tier(rule_id, true) and input_service_tier(service_tier) and cond_service_tier(rule_id, service_tier);\n\nactor_role_ok(rule_id) if req_actor_role(rule_id, false);\nactor_role_ok(rule_id) if req_actor_role(rule_id, true) and input_actor_role(actor_role) and cond_actor_role(rule_id, actor_role);\n\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, false);\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, true) and input_tool_mode(tool_mode) and cond_tool_mode(rule_id, tool_mode);\n\nidentity_source_ok(rule_id) if req_identity_source(rule_id, false);\nidentity_source_ok(rule_id) if\n  req_identity_source(rule_id, true) and input_identity_source(identity_source) and cond_identity_source(rule_id, identity_source);\n\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, false);\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, true) and input_resource_tag(resource_tag) and cond_resource_tag(rule_id, resource_tag);\n\ntool_ok(rule_id) if req_tool(rule_id, false);\ntool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);\n\nwrite_ok(rule_id) if req_has_write_intent(rule_id, false);\nwrite_ok(rule_id) if\n  req_has_write_intent(rule_id, true) and input_has_write_intent(has_write_intent) and cond_has_write_intent(rule_id, has_write_intent);\n\nhuman_review_ok(rule_id) if req_has_human_review_step(rule_id, false);\nhuman_review_ok(rule_id) if\n  req_has_human_review_step(rule_id, true) and\n  input_has_human_review_step(has_human_review_step) and\n  cond_has_human_review_step(rule_id, has_human_review_step);\n\nintrospection_ok_cond(rule_id) if req_introspection_ok(rule_id, false);\nintrospection_ok_cond(rule_id) if\n  req_introspection_ok(rule_id, true) and\n  input_introspection_ok(introspection_ok) and\n  cond_introspection_ok(rule_id, introspection_ok);\n\nservice_entitled_ok(rule_id) if req_service_entitled(rule_id, false);\nservice_entitled_ok(rule_id) if\n  req_service_entitled(rule_id, true) and\n  input_service_entitled(service_entitled) and\n  cond_service_entitled(rule_id, service_entitled);\n\npolicy_accepted_ok(rule_id) if req_policy_accepted(rule_id, false);\npolicy_accepted_ok(rule_id) if\n  req_policy_accepted(rule_id, true) and\n  input_policy_accepted(policy_accepted) and\n  cond_policy_accepted(rule_id, policy_accepted);\n\ncontract_active_ok(rule_id) if req_contract_active(rule_id, false);\ncontract_active_ok(rule_id) if\n  req_contract_active(rule_id, true) and\n  input_contract_active(contract_active) and\n  cond_contract_active(rule_id, contract_active);\n\nbilling_active_ok(rule_id) if req_billing_active(rule_id, false);\nbilling_active_ok(rule_id) if\n  req_billing_active(rule_id, true) and\n  input_billing_active(billing_active) and\n  cond_billing_active(rule_id, billing_active);\n\napproved_exception_ok(rule_id) if req_approved_exception_present(rule_id, false);\napproved_exception_ok(rule_id) if\n  req_approved_exception_present(rule_id, true) and\n  input_approved_exception_present(approved_exception_present) and\n  cond_approved_exception_present(rule_id, approved_exception_present);\n\naccount_ok(rule_id) if req_account_id(rule_id, false);\naccount_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);\n\nrule_matches(rule_id, priority, decision, reason) if\n  rule(rule_id, priority, decision, reason) and\n  action_ok(rule_id) and\n  resource_kind_ok(rule_id) and\n  access_type_ok(rule_id) and\n  oauth_required_ok(rule_id) and\n  service_tier_ok(rule_id) and\n  actor_role_ok(rule_id) and\n  tool_mode_ok(rule_id) and\n  identity_source_ok(rule_id) and\n  resource_tag_ok(rule_id) and\n  tool_ok(rule_id) and\n  write_ok(rule_id) and\n  human_review_ok(rule_id) and\n  introspection_ok_cond(rule_id) and\n  service_entitled_ok(rule_id) and\n  policy_accepted_ok(rule_id) and\n  contract_active_ok(rule_id) and\n  billing_active_ok(rule_id) and\n  approved_exception_ok(rule_id) and\n  account_ok(rule_id);\n\n# Compiled policy facts\nrule(\"jr_block_readonly_write_01\", 10, \"block\", \"Public read-only account cannot run write-intent path.\");\nreq_action_name(\"jr_block_readonly_write_01\", false);\nreq_resource_kind(\"jr_block_readonly_write_01\", false);\nreq_access_type(\"jr_block_readonly_write_01\", false);\nreq_oauth_required(\"jr_block_readonly_write_01\", false);\nreq_service_tier(\"jr_block_readonly_write_01\", false);\nreq_actor_role(\"jr_block_readonly_write_01\", false);\nreq_tool_mode(\"jr_block_readonly_write_01\", false);\nreq_identity_source(\"jr_block_readonly_write_01\", false);\nreq_resource_tag(\"jr_block_readonly_write_01\", false);\nreq_tool(\"jr_block_readonly_write_01\", false);\nreq_has_write_intent(\"jr_block_readonly_write_01\", true);\nreq_has_human_review_step(\"jr_block_readonly_write_01\", false);\nreq_introspection_ok(\"jr_block_readonly_write_01\", false);\nreq_service_entitled(\"jr_block_readonly_write_01\", false);\nreq_policy_accepted(\"jr_block_readonly_write_01\", false);\nreq_contract_active(\"jr_block_readonly_write_01\", false);\nreq_billing_active(\"jr_block_readonly_write_01\", false);\nreq_approved_exception_present(\"jr_block_readonly_write_01\", false);\nreq_account_id(\"jr_block_readonly_write_01\", true);\ncond_has_write_intent(\"jr_block_readonly_write_01\", true);\ncond_account_id(\"jr_block_readonly_write_01\", \"public\");\nrule(\"jr_review_introspection_failure_02\", 20, \"require_human_review\", \"Introspection failed; operator review required.\");\nreq_action_name(\"jr_review_introspection_failure_02\", false);\nreq_resource_kind(\"jr_review_introspection_failure_02\", false);\nreq_access_type(\"jr_review_introspection_failure_02\", false);\nreq_oauth_required(\"jr_review_introspection_failure_02\", false);\nreq_service_tier(\"jr_review_introspection_failure_02\", false);\nreq_actor_role(\"jr_review_introspection_failure_02\", false);\nreq_tool_mode(\"jr_review_introspection_failure_02\", false);\nreq_identity_source(\"jr_review_introspection_failure_02\", false);\nreq_resource_tag(\"jr_review_introspection_failure_02\", false);\nreq_tool(\"jr_review_introspection_failure_02\", true);\nreq_has_write_intent(\"jr_review_introspection_failure_02\", false);\nreq_has_human_review_step(\"jr_review_introspection_failure_02\", false);\nreq_introspection_ok(\"jr_review_introspection_failure_02\", true);\nreq_service_entitled(\"jr_review_introspection_failure_02\", false);\nreq_policy_accepted(\"jr_review_introspection_failure_02\", false);\nreq_contract_active(\"jr_review_introspection_failure_02\", false);\nreq_billing_active(\"jr_review_introspection_failure_02\", false);\nreq_approved_exception_present(\"jr_review_introspection_failure_02\", false);\nreq_account_id(\"jr_review_introspection_failure_02\", false);\ncond_tool(\"jr_review_introspection_failure_02\", \"mcp_map_to_workflow\");\ncond_introspection_ok(\"jr_review_introspection_failure_02\", false);\nrule(\"jr_review_missing_human_step_03\", 30, \"require_human_review\", \"Write-intent path without explicit human review.\");\nreq_action_name(\"jr_review_missing_human_step_03\", false);\nreq_resource_kind(\"jr_review_missing_human_step_03\", false);\nreq_access_type(\"jr_review_missing_human_step_03\", false);\nreq_oauth_required(\"jr_review_missing_human_step_03\", false);\nreq_service_tier(\"jr_review_missing_human_step_03\", false);\nreq_actor_role(\"jr_review_missing_human_step_03\", false);\nreq_tool_mode(\"jr_review_missing_human_step_03\", false);\nreq_identity_source(\"jr_review_missing_human_step_03\", false);\nreq_resource_tag(\"jr_review_missing_human_step_03\", false);\nreq_tool(\"jr_review_missing_human_step_03\", false);\nreq_has_write_intent(\"jr_review_missing_human_step_03\", true);\nreq_has_human_review_step(\"jr_review_missing_human_step_03\", true);\nreq_introspection_ok(\"jr_review_missing_human_step_03\", false);\nreq_service_entitled(\"jr_review_missing_human_step_03\", false);\nreq_policy_accepted(\"jr_review_missing_human_step_03\", false);\nreq_contract_active(\"jr_review_missing_human_step_03\", false);\nreq_billing_active(\"jr_review_missing_human_step_03\", false);\nreq_approved_exception_present(\"jr_review_missing_human_step_03\", false);\nreq_account_id(\"jr_review_missing_human_step_03\", false);\ncond_has_write_intent(\"jr_review_missing_human_step_03\", true);\ncond_has_human_review_step(\"jr_review_missing_human_step_03\", false);\nrule(\"jr_allow_default_99\", 999, \"allow\", \"No restrictive rules matched.\");\nreq_action_name(\"jr_allow_default_99\", false);\nreq_resource_kind(\"jr_allow_default_99\", false);\nreq_access_type(\"jr_allow_default_99\", false);\nreq_oauth_required(\"jr_allow_default_99\", false);\nreq_service_tier(\"jr_allow_default_99\", false);\nreq_actor_role(\"jr_allow_default_99\", false);\nreq_tool_mode(\"jr_allow_default_99\", false);\nreq_identity_source(\"jr_allow_default_99\", false);\nreq_resource_tag(\"jr_allow_default_99\", false);\nreq_tool(\"jr_allow_default_99\", false);\nreq_has_write_intent(\"jr_allow_default_99\", false);\nreq_has_human_review_step(\"jr_allow_default_99\", false);\nreq_introspection_ok(\"jr_allow_default_99\", false);\nreq_service_entitled(\"jr_allow_default_99\", false);\nreq_policy_accepted(\"jr_allow_default_99\", false);\nreq_contract_active(\"jr_allow_default_99\", false);\nreq_billing_active(\"jr_allow_default_99\", false);\nreq_approved_exception_present(\"jr_allow_default_99\", false);\nreq_account_id(\"jr_allow_default_99\", false);\n",
+        "fallbackIrJson": "{\"id\":\"policy.judgment-baseline.v1\",\"name\":\"Judgment baseline\",\"description\":\"Baseline hard-gate decision policy for workflow and MCP mapping operations.\",\"guardrails\":{\"maxReviewDelta\":2,\"maxBlockDelta\":1},\"rules\":[{\"id\":\"jr_block_readonly_write_01\",\"priority\":10,\"when\":{\"hasWriteIntent\":true,\"accountIds\":[\"public\"]},\"then\":{\"decision\":\"block\",\"reason\":\"Public read-only account cannot run write-intent path.\"}},{\"id\":\"jr_review_introspection_failure_02\",\"priority\":20,\"when\":{\"toolNames\":[\"mcp_map_to_workflow\"],\"introspectionOk\":false},\"then\":{\"decision\":\"require_human_review\",\"reason\":\"Introspection failed; operator review required.\"}},{\"id\":\"jr_review_missing_human_step_03\",\"priority\":30,\"when\":{\"hasWriteIntent\":true,\"hasHumanReviewStep\":false},\"then\":{\"decision\":\"require_human_review\",\"reason\":\"Write-intent path without explicit human review.\"}},{\"id\":\"jr_allow_default_99\",\"priority\":999,\"when\":{},\"then\":{\"decision\":\"allow\",\"reason\":\"No restrictive rules matched.\"}}]}",
+        "compilerVersion": "policy-os-polar-compiler-v1",
+        "policyHash": "b53471db93703eff1c4dfc2a11b21387ad0688dd16e4214bcd9523f73070986c"
+      },
+      "policy": {
+        "id": "policy.judgment-baseline.v1",
+        "name": "Judgment baseline",
+        "description": "Baseline hard-gate decision policy for workflow and MCP mapping operations.",
+        "guardrails": {
+          "maxReviewDelta": 2,
+          "maxBlockDelta": 1
+        },
+        "rules": [
+          {
+            "id": "jr_block_readonly_write_01",
+            "priority": 10,
+            "when": {
+              "hasWriteIntent": true,
+              "accountIds": [
+                "public"
+              ]
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Public read-only account cannot run write-intent path."
+            }
+          },
+          {
+            "id": "jr_review_introspection_failure_02",
+            "priority": 20,
+            "when": {
+              "toolNames": [
+                "mcp_map_to_workflow"
+              ],
+              "introspectionOk": false
+            },
+            "then": {
+              "decision": "require_human_review",
+              "reason": "Introspection failed; operator review required."
+            }
+          },
+          {
+            "id": "jr_review_missing_human_step_03",
+            "priority": 30,
+            "when": {
+              "hasWriteIntent": true,
+              "hasHumanReviewStep": false
+            },
+            "then": {
+              "decision": "require_human_review",
+              "reason": "Write-intent path without explicit human review."
+            }
+          },
+          {
+            "id": "jr_allow_default_99",
+            "priority": 999,
+            "when": {},
+            "then": {
+              "decision": "allow",
+              "reason": "No restrictive rules matched."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "manifest": {
+        "policyId": "policy.legacy-compat-sunset.v1",
+        "version": 1,
+        "commitSha": "aa291776c241832234c153264498ce1ef1849232",
+        "status": "active",
+        "description": "Legacy bearer compatibility must have bounded sunset windows.",
+        "rolloutDefaults": {
+          "mode": "legacy_enforce",
+          "canaryPercent": 0
+        },
+        "polar": "# POLICY OS runtime interpreter policy.\n\naction_ok(rule_id) if req_action_name(rule_id, false);\naction_ok(rule_id) if req_action_name(rule_id, true) and input_action_name(action_name) and cond_action_name(rule_id, action_name);\n\nresource_kind_ok(rule_id) if req_resource_kind(rule_id, false);\nresource_kind_ok(rule_id) if\n  req_resource_kind(rule_id, true) and input_resource_kind(resource_kind) and cond_resource_kind(rule_id, resource_kind);\n\naccess_type_ok(rule_id) if req_access_type(rule_id, false);\naccess_type_ok(rule_id) if req_access_type(rule_id, true) and input_access_type(access_type) and cond_access_type(rule_id, access_type);\n\noauth_required_ok(rule_id) if req_oauth_required(rule_id, false);\noauth_required_ok(rule_id) if\n  req_oauth_required(rule_id, true) and input_oauth_required(oauth_required) and cond_oauth_required(rule_id, oauth_required);\n\nservice_tier_ok(rule_id) if req_service_tier(rule_id, false);\nservice_tier_ok(rule_id) if\n  req_service_tier(rule_id, true) and input_service_tier(service_tier) and cond_service_tier(rule_id, service_tier);\n\nactor_role_ok(rule_id) if req_actor_role(rule_id, false);\nactor_role_ok(rule_id) if req_actor_role(rule_id, true) and input_actor_role(actor_role) and cond_actor_role(rule_id, actor_role);\n\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, false);\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, true) and input_tool_mode(tool_mode) and cond_tool_mode(rule_id, tool_mode);\n\nidentity_source_ok(rule_id) if req_identity_source(rule_id, false);\nidentity_source_ok(rule_id) if\n  req_identity_source(rule_id, true) and input_identity_source(identity_source) and cond_identity_source(rule_id, identity_source);\n\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, false);\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, true) and input_resource_tag(resource_tag) and cond_resource_tag(rule_id, resource_tag);\n\ntool_ok(rule_id) if req_tool(rule_id, false);\ntool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);\n\nwrite_ok(rule_id) if req_has_write_intent(rule_id, false);\nwrite_ok(rule_id) if\n  req_has_write_intent(rule_id, true) and input_has_write_intent(has_write_intent) and cond_has_write_intent(rule_id, has_write_intent);\n\nhuman_review_ok(rule_id) if req_has_human_review_step(rule_id, false);\nhuman_review_ok(rule_id) if\n  req_has_human_review_step(rule_id, true) and\n  input_has_human_review_step(has_human_review_step) and\n  cond_has_human_review_step(rule_id, has_human_review_step);\n\nintrospection_ok_cond(rule_id) if req_introspection_ok(rule_id, false);\nintrospection_ok_cond(rule_id) if\n  req_introspection_ok(rule_id, true) and\n  input_introspection_ok(introspection_ok) and\n  cond_introspection_ok(rule_id, introspection_ok);\n\nservice_entitled_ok(rule_id) if req_service_entitled(rule_id, false);\nservice_entitled_ok(rule_id) if\n  req_service_entitled(rule_id, true) and\n  input_service_entitled(service_entitled) and\n  cond_service_entitled(rule_id, service_entitled);\n\npolicy_accepted_ok(rule_id) if req_policy_accepted(rule_id, false);\npolicy_accepted_ok(rule_id) if\n  req_policy_accepted(rule_id, true) and\n  input_policy_accepted(policy_accepted) and\n  cond_policy_accepted(rule_id, policy_accepted);\n\ncontract_active_ok(rule_id) if req_contract_active(rule_id, false);\ncontract_active_ok(rule_id) if\n  req_contract_active(rule_id, true) and\n  input_contract_active(contract_active) and\n  cond_contract_active(rule_id, contract_active);\n\nbilling_active_ok(rule_id) if req_billing_active(rule_id, false);\nbilling_active_ok(rule_id) if\n  req_billing_active(rule_id, true) and\n  input_billing_active(billing_active) and\n  cond_billing_active(rule_id, billing_active);\n\napproved_exception_ok(rule_id) if req_approved_exception_present(rule_id, false);\napproved_exception_ok(rule_id) if\n  req_approved_exception_present(rule_id, true) and\n  input_approved_exception_present(approved_exception_present) and\n  cond_approved_exception_present(rule_id, approved_exception_present);\n\naccount_ok(rule_id) if req_account_id(rule_id, false);\naccount_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);\n\nrule_matches(rule_id, priority, decision, reason) if\n  rule(rule_id, priority, decision, reason) and\n  action_ok(rule_id) and\n  resource_kind_ok(rule_id) and\n  access_type_ok(rule_id) and\n  oauth_required_ok(rule_id) and\n  service_tier_ok(rule_id) and\n  actor_role_ok(rule_id) and\n  tool_mode_ok(rule_id) and\n  identity_source_ok(rule_id) and\n  resource_tag_ok(rule_id) and\n  tool_ok(rule_id) and\n  write_ok(rule_id) and\n  human_review_ok(rule_id) and\n  introspection_ok_cond(rule_id) and\n  service_entitled_ok(rule_id) and\n  policy_accepted_ok(rule_id) and\n  contract_active_ok(rule_id) and\n  billing_active_ok(rule_id) and\n  approved_exception_ok(rule_id) and\n  account_ok(rule_id);\n\n# Compiled policy facts\nrule(\"legacy_sunset_block_out_of_window\", 10, \"block\", \"Legacy key sunset window exceeds policy limits.\");\nreq_action_name(\"legacy_sunset_block_out_of_window\", true);\nreq_resource_kind(\"legacy_sunset_block_out_of_window\", true);\nreq_access_type(\"legacy_sunset_block_out_of_window\", false);\nreq_oauth_required(\"legacy_sunset_block_out_of_window\", false);\nreq_service_tier(\"legacy_sunset_block_out_of_window\", false);\nreq_actor_role(\"legacy_sunset_block_out_of_window\", false);\nreq_tool_mode(\"legacy_sunset_block_out_of_window\", false);\nreq_identity_source(\"legacy_sunset_block_out_of_window\", false);\nreq_resource_tag(\"legacy_sunset_block_out_of_window\", false);\nreq_tool(\"legacy_sunset_block_out_of_window\", false);\nreq_has_write_intent(\"legacy_sunset_block_out_of_window\", false);\nreq_has_human_review_step(\"legacy_sunset_block_out_of_window\", false);\nreq_introspection_ok(\"legacy_sunset_block_out_of_window\", true);\nreq_service_entitled(\"legacy_sunset_block_out_of_window\", false);\nreq_policy_accepted(\"legacy_sunset_block_out_of_window\", false);\nreq_contract_active(\"legacy_sunset_block_out_of_window\", false);\nreq_billing_active(\"legacy_sunset_block_out_of_window\", false);\nreq_approved_exception_present(\"legacy_sunset_block_out_of_window\", false);\nreq_account_id(\"legacy_sunset_block_out_of_window\", false);\ncond_action_name(\"legacy_sunset_block_out_of_window\", \"issue_legacy_key\");\ncond_resource_kind(\"legacy_sunset_block_out_of_window\", \"legacy_key\");\ncond_introspection_ok(\"legacy_sunset_block_out_of_window\", false);\nrule(\"legacy_sunset_allow\", 20, \"allow\", \"Legacy key sunset window is policy compliant.\");\nreq_action_name(\"legacy_sunset_allow\", true);\nreq_resource_kind(\"legacy_sunset_allow\", true);\nreq_access_type(\"legacy_sunset_allow\", false);\nreq_oauth_required(\"legacy_sunset_allow\", false);\nreq_service_tier(\"legacy_sunset_allow\", false);\nreq_actor_role(\"legacy_sunset_allow\", false);\nreq_tool_mode(\"legacy_sunset_allow\", false);\nreq_identity_source(\"legacy_sunset_allow\", false);\nreq_resource_tag(\"legacy_sunset_allow\", false);\nreq_tool(\"legacy_sunset_allow\", false);\nreq_has_write_intent(\"legacy_sunset_allow\", false);\nreq_has_human_review_step(\"legacy_sunset_allow\", false);\nreq_introspection_ok(\"legacy_sunset_allow\", true);\nreq_service_entitled(\"legacy_sunset_allow\", false);\nreq_policy_accepted(\"legacy_sunset_allow\", false);\nreq_contract_active(\"legacy_sunset_allow\", false);\nreq_billing_active(\"legacy_sunset_allow\", false);\nreq_approved_exception_present(\"legacy_sunset_allow\", false);\nreq_account_id(\"legacy_sunset_allow\", false);\ncond_action_name(\"legacy_sunset_allow\", \"issue_legacy_key\");\ncond_resource_kind(\"legacy_sunset_allow\", \"legacy_key\");\ncond_introspection_ok(\"legacy_sunset_allow\", true);\n",
+        "fallbackIrJson": "{\"id\":\"policy.legacy-compat-sunset.v1\",\"name\":\"Legacy compatibility sunset\",\"description\":\"Legacy bearer compatibility must have bounded sunset windows.\",\"rules\":[{\"id\":\"legacy_sunset_block_out_of_window\",\"priority\":10,\"when\":{\"actionNames\":[\"issue_legacy_key\"],\"resourceKinds\":[\"legacy_key\"],\"introspectionOk\":false},\"then\":{\"decision\":\"block\",\"reason\":\"Legacy key sunset window exceeds policy limits.\"}},{\"id\":\"legacy_sunset_allow\",\"priority\":20,\"when\":{\"actionNames\":[\"issue_legacy_key\"],\"resourceKinds\":[\"legacy_key\"],\"introspectionOk\":true},\"then\":{\"decision\":\"allow\",\"reason\":\"Legacy key sunset window is policy compliant.\"}}]}",
+        "compilerVersion": "policy-os-polar-compiler-v1",
+        "policyHash": "00a3afbc728da984ba69902613b96c825a96a0f2b5430eade66fa988e8d2bb29"
+      },
+      "policy": {
+        "id": "policy.legacy-compat-sunset.v1",
+        "name": "Legacy compatibility sunset",
+        "description": "Legacy bearer compatibility must have bounded sunset windows.",
+        "rules": [
+          {
+            "id": "legacy_sunset_block_out_of_window",
+            "priority": 10,
+            "when": {
+              "actionNames": [
+                "issue_legacy_key"
+              ],
+              "resourceKinds": [
+                "legacy_key"
+              ],
+              "introspectionOk": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Legacy key sunset window exceeds policy limits."
+            }
+          },
+          {
+            "id": "legacy_sunset_allow",
+            "priority": 20,
+            "when": {
+              "actionNames": [
+                "issue_legacy_key"
+              ],
+              "resourceKinds": [
+                "legacy_key"
+              ],
+              "introspectionOk": true
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Legacy key sunset window is policy compliant."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "manifest": {
+        "policyId": "policy.mcp-credential-delivery.v1",
+        "version": 1,
+        "commitSha": "aa291776c241832234c153264498ce1ef1849232",
+        "status": "active",
+        "description": "Legacy credential issuance requires exception approval and review traceability.",
+        "rolloutDefaults": {
+          "mode": "legacy_enforce",
+          "canaryPercent": 0
+        },
+        "polar": "# POLICY OS runtime interpreter policy.\n\naction_ok(rule_id) if req_action_name(rule_id, false);\naction_ok(rule_id) if req_action_name(rule_id, true) and input_action_name(action_name) and cond_action_name(rule_id, action_name);\n\nresource_kind_ok(rule_id) if req_resource_kind(rule_id, false);\nresource_kind_ok(rule_id) if\n  req_resource_kind(rule_id, true) and input_resource_kind(resource_kind) and cond_resource_kind(rule_id, resource_kind);\n\naccess_type_ok(rule_id) if req_access_type(rule_id, false);\naccess_type_ok(rule_id) if req_access_type(rule_id, true) and input_access_type(access_type) and cond_access_type(rule_id, access_type);\n\noauth_required_ok(rule_id) if req_oauth_required(rule_id, false);\noauth_required_ok(rule_id) if\n  req_oauth_required(rule_id, true) and input_oauth_required(oauth_required) and cond_oauth_required(rule_id, oauth_required);\n\nservice_tier_ok(rule_id) if req_service_tier(rule_id, false);\nservice_tier_ok(rule_id) if\n  req_service_tier(rule_id, true) and input_service_tier(service_tier) and cond_service_tier(rule_id, service_tier);\n\nactor_role_ok(rule_id) if req_actor_role(rule_id, false);\nactor_role_ok(rule_id) if req_actor_role(rule_id, true) and input_actor_role(actor_role) and cond_actor_role(rule_id, actor_role);\n\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, false);\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, true) and input_tool_mode(tool_mode) and cond_tool_mode(rule_id, tool_mode);\n\nidentity_source_ok(rule_id) if req_identity_source(rule_id, false);\nidentity_source_ok(rule_id) if\n  req_identity_source(rule_id, true) and input_identity_source(identity_source) and cond_identity_source(rule_id, identity_source);\n\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, false);\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, true) and input_resource_tag(resource_tag) and cond_resource_tag(rule_id, resource_tag);\n\ntool_ok(rule_id) if req_tool(rule_id, false);\ntool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);\n\nwrite_ok(rule_id) if req_has_write_intent(rule_id, false);\nwrite_ok(rule_id) if\n  req_has_write_intent(rule_id, true) and input_has_write_intent(has_write_intent) and cond_has_write_intent(rule_id, has_write_intent);\n\nhuman_review_ok(rule_id) if req_has_human_review_step(rule_id, false);\nhuman_review_ok(rule_id) if\n  req_has_human_review_step(rule_id, true) and\n  input_has_human_review_step(has_human_review_step) and\n  cond_has_human_review_step(rule_id, has_human_review_step);\n\nintrospection_ok_cond(rule_id) if req_introspection_ok(rule_id, false);\nintrospection_ok_cond(rule_id) if\n  req_introspection_ok(rule_id, true) and\n  input_introspection_ok(introspection_ok) and\n  cond_introspection_ok(rule_id, introspection_ok);\n\nservice_entitled_ok(rule_id) if req_service_entitled(rule_id, false);\nservice_entitled_ok(rule_id) if\n  req_service_entitled(rule_id, true) and\n  input_service_entitled(service_entitled) and\n  cond_service_entitled(rule_id, service_entitled);\n\npolicy_accepted_ok(rule_id) if req_policy_accepted(rule_id, false);\npolicy_accepted_ok(rule_id) if\n  req_policy_accepted(rule_id, true) and\n  input_policy_accepted(policy_accepted) and\n  cond_policy_accepted(rule_id, policy_accepted);\n\ncontract_active_ok(rule_id) if req_contract_active(rule_id, false);\ncontract_active_ok(rule_id) if\n  req_contract_active(rule_id, true) and\n  input_contract_active(contract_active) and\n  cond_contract_active(rule_id, contract_active);\n\nbilling_active_ok(rule_id) if req_billing_active(rule_id, false);\nbilling_active_ok(rule_id) if\n  req_billing_active(rule_id, true) and\n  input_billing_active(billing_active) and\n  cond_billing_active(rule_id, billing_active);\n\napproved_exception_ok(rule_id) if req_approved_exception_present(rule_id, false);\napproved_exception_ok(rule_id) if\n  req_approved_exception_present(rule_id, true) and\n  input_approved_exception_present(approved_exception_present) and\n  cond_approved_exception_present(rule_id, approved_exception_present);\n\naccount_ok(rule_id) if req_account_id(rule_id, false);\naccount_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);\n\nrule_matches(rule_id, priority, decision, reason) if\n  rule(rule_id, priority, decision, reason) and\n  action_ok(rule_id) and\n  resource_kind_ok(rule_id) and\n  access_type_ok(rule_id) and\n  oauth_required_ok(rule_id) and\n  service_tier_ok(rule_id) and\n  actor_role_ok(rule_id) and\n  tool_mode_ok(rule_id) and\n  identity_source_ok(rule_id) and\n  resource_tag_ok(rule_id) and\n  tool_ok(rule_id) and\n  write_ok(rule_id) and\n  human_review_ok(rule_id) and\n  introspection_ok_cond(rule_id) and\n  service_entitled_ok(rule_id) and\n  policy_accepted_ok(rule_id) and\n  contract_active_ok(rule_id) and\n  billing_active_ok(rule_id) and\n  approved_exception_ok(rule_id) and\n  account_ok(rule_id);\n\n# Compiled policy facts\nrule(\"legacy_issue_block_without_exception\", 10, \"block\", \"Legacy key issuance requires approved exception.\");\nreq_action_name(\"legacy_issue_block_without_exception\", true);\nreq_resource_kind(\"legacy_issue_block_without_exception\", true);\nreq_access_type(\"legacy_issue_block_without_exception\", false);\nreq_oauth_required(\"legacy_issue_block_without_exception\", false);\nreq_service_tier(\"legacy_issue_block_without_exception\", false);\nreq_actor_role(\"legacy_issue_block_without_exception\", false);\nreq_tool_mode(\"legacy_issue_block_without_exception\", false);\nreq_identity_source(\"legacy_issue_block_without_exception\", false);\nreq_resource_tag(\"legacy_issue_block_without_exception\", false);\nreq_tool(\"legacy_issue_block_without_exception\", false);\nreq_has_write_intent(\"legacy_issue_block_without_exception\", false);\nreq_has_human_review_step(\"legacy_issue_block_without_exception\", false);\nreq_introspection_ok(\"legacy_issue_block_without_exception\", true);\nreq_service_entitled(\"legacy_issue_block_without_exception\", false);\nreq_policy_accepted(\"legacy_issue_block_without_exception\", false);\nreq_contract_active(\"legacy_issue_block_without_exception\", false);\nreq_billing_active(\"legacy_issue_block_without_exception\", false);\nreq_approved_exception_present(\"legacy_issue_block_without_exception\", false);\nreq_account_id(\"legacy_issue_block_without_exception\", false);\ncond_action_name(\"legacy_issue_block_without_exception\", \"issue_legacy_key\");\ncond_resource_kind(\"legacy_issue_block_without_exception\", \"legacy_key\");\ncond_introspection_ok(\"legacy_issue_block_without_exception\", false);\nrule(\"legacy_issue_review_without_trace\", 20, \"require_human_review\", \"Legacy key issuance requires review trace.\");\nreq_action_name(\"legacy_issue_review_without_trace\", true);\nreq_resource_kind(\"legacy_issue_review_without_trace\", true);\nreq_access_type(\"legacy_issue_review_without_trace\", false);\nreq_oauth_required(\"legacy_issue_review_without_trace\", false);\nreq_service_tier(\"legacy_issue_review_without_trace\", false);\nreq_actor_role(\"legacy_issue_review_without_trace\", false);\nreq_tool_mode(\"legacy_issue_review_without_trace\", false);\nreq_identity_source(\"legacy_issue_review_without_trace\", false);\nreq_resource_tag(\"legacy_issue_review_without_trace\", false);\nreq_tool(\"legacy_issue_review_without_trace\", false);\nreq_has_write_intent(\"legacy_issue_review_without_trace\", false);\nreq_has_human_review_step(\"legacy_issue_review_without_trace\", true);\nreq_introspection_ok(\"legacy_issue_review_without_trace\", false);\nreq_service_entitled(\"legacy_issue_review_without_trace\", false);\nreq_policy_accepted(\"legacy_issue_review_without_trace\", false);\nreq_contract_active(\"legacy_issue_review_without_trace\", false);\nreq_billing_active(\"legacy_issue_review_without_trace\", false);\nreq_approved_exception_present(\"legacy_issue_review_without_trace\", false);\nreq_account_id(\"legacy_issue_review_without_trace\", false);\ncond_action_name(\"legacy_issue_review_without_trace\", \"issue_legacy_key\");\ncond_resource_kind(\"legacy_issue_review_without_trace\", \"legacy_key\");\ncond_has_human_review_step(\"legacy_issue_review_without_trace\", false);\nrule(\"legacy_issue_allow\", 30, \"allow\", \"Approved exception and review trace present.\");\nreq_action_name(\"legacy_issue_allow\", true);\nreq_resource_kind(\"legacy_issue_allow\", true);\nreq_access_type(\"legacy_issue_allow\", false);\nreq_oauth_required(\"legacy_issue_allow\", false);\nreq_service_tier(\"legacy_issue_allow\", false);\nreq_actor_role(\"legacy_issue_allow\", false);\nreq_tool_mode(\"legacy_issue_allow\", false);\nreq_identity_source(\"legacy_issue_allow\", false);\nreq_resource_tag(\"legacy_issue_allow\", false);\nreq_tool(\"legacy_issue_allow\", false);\nreq_has_write_intent(\"legacy_issue_allow\", false);\nreq_has_human_review_step(\"legacy_issue_allow\", true);\nreq_introspection_ok(\"legacy_issue_allow\", true);\nreq_service_entitled(\"legacy_issue_allow\", false);\nreq_policy_accepted(\"legacy_issue_allow\", false);\nreq_contract_active(\"legacy_issue_allow\", false);\nreq_billing_active(\"legacy_issue_allow\", false);\nreq_approved_exception_present(\"legacy_issue_allow\", false);\nreq_account_id(\"legacy_issue_allow\", false);\ncond_action_name(\"legacy_issue_allow\", \"issue_legacy_key\");\ncond_resource_kind(\"legacy_issue_allow\", \"legacy_key\");\ncond_has_human_review_step(\"legacy_issue_allow\", true);\ncond_introspection_ok(\"legacy_issue_allow\", true);\nrule(\"legacy_revoke_allow\", 40, \"allow\", \"Legacy key revocation is always permitted for operators.\");\nreq_action_name(\"legacy_revoke_allow\", true);\nreq_resource_kind(\"legacy_revoke_allow\", true);\nreq_access_type(\"legacy_revoke_allow\", false);\nreq_oauth_required(\"legacy_revoke_allow\", false);\nreq_service_tier(\"legacy_revoke_allow\", false);\nreq_actor_role(\"legacy_revoke_allow\", false);\nreq_tool_mode(\"legacy_revoke_allow\", false);\nreq_identity_source(\"legacy_revoke_allow\", false);\nreq_resource_tag(\"legacy_revoke_allow\", false);\nreq_tool(\"legacy_revoke_allow\", false);\nreq_has_write_intent(\"legacy_revoke_allow\", false);\nreq_has_human_review_step(\"legacy_revoke_allow\", false);\nreq_introspection_ok(\"legacy_revoke_allow\", false);\nreq_service_entitled(\"legacy_revoke_allow\", false);\nreq_policy_accepted(\"legacy_revoke_allow\", false);\nreq_contract_active(\"legacy_revoke_allow\", false);\nreq_billing_active(\"legacy_revoke_allow\", false);\nreq_approved_exception_present(\"legacy_revoke_allow\", false);\nreq_account_id(\"legacy_revoke_allow\", false);\ncond_action_name(\"legacy_revoke_allow\", \"revoke_legacy_key\");\ncond_resource_kind(\"legacy_revoke_allow\", \"legacy_key\");\n",
+        "fallbackIrJson": "{\"id\":\"policy.mcp-credential-delivery.v1\",\"name\":\"MCP credential delivery\",\"description\":\"Legacy credential issuance requires approved exception evidence and review.\",\"rules\":[{\"id\":\"legacy_issue_block_without_exception\",\"priority\":10,\"when\":{\"actionNames\":[\"issue_legacy_key\"],\"resourceKinds\":[\"legacy_key\"],\"introspectionOk\":false},\"then\":{\"decision\":\"block\",\"reason\":\"Legacy key issuance requires approved exception.\"}},{\"id\":\"legacy_issue_review_without_trace\",\"priority\":20,\"when\":{\"actionNames\":[\"issue_legacy_key\"],\"resourceKinds\":[\"legacy_key\"],\"hasHumanReviewStep\":false},\"then\":{\"decision\":\"require_human_review\",\"reason\":\"Legacy key issuance requires review trace.\"}},{\"id\":\"legacy_issue_allow\",\"priority\":30,\"when\":{\"actionNames\":[\"issue_legacy_key\"],\"resourceKinds\":[\"legacy_key\"],\"introspectionOk\":true,\"hasHumanReviewStep\":true},\"then\":{\"decision\":\"allow\",\"reason\":\"Approved exception and review trace present.\"}},{\"id\":\"legacy_revoke_allow\",\"priority\":40,\"when\":{\"actionNames\":[\"revoke_legacy_key\"],\"resourceKinds\":[\"legacy_key\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Legacy key revocation is always permitted for operators.\"}}]}",
+        "compilerVersion": "policy-os-polar-compiler-v1",
+        "policyHash": "d23072b42913c699fc98a43abe6a69425fbe6cf2b86ff99a30aaf60cd25469c3"
+      },
+      "policy": {
+        "id": "policy.mcp-credential-delivery.v1",
+        "name": "MCP credential delivery",
+        "description": "Legacy credential issuance requires approved exception evidence and review.",
+        "rules": [
+          {
+            "id": "legacy_issue_block_without_exception",
+            "priority": 10,
+            "when": {
+              "actionNames": [
+                "issue_legacy_key"
+              ],
+              "resourceKinds": [
+                "legacy_key"
+              ],
+              "introspectionOk": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Legacy key issuance requires approved exception."
+            }
+          },
+          {
+            "id": "legacy_issue_review_without_trace",
+            "priority": 20,
+            "when": {
+              "actionNames": [
+                "issue_legacy_key"
+              ],
+              "resourceKinds": [
+                "legacy_key"
+              ],
+              "hasHumanReviewStep": false
+            },
+            "then": {
+              "decision": "require_human_review",
+              "reason": "Legacy key issuance requires review trace."
+            }
+          },
+          {
+            "id": "legacy_issue_allow",
+            "priority": 30,
+            "when": {
+              "actionNames": [
+                "issue_legacy_key"
+              ],
+              "resourceKinds": [
+                "legacy_key"
+              ],
+              "introspectionOk": true,
+              "hasHumanReviewStep": true
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Approved exception and review trace present."
+            }
+          },
+          {
+            "id": "legacy_revoke_allow",
+            "priority": 40,
+            "when": {
+              "actionNames": [
+                "revoke_legacy_key"
+              ],
+              "resourceKinds": [
+                "legacy_key"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Legacy key revocation is always permitted for operators."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "manifest": {
+        "policyId": "policy.mcp-session-self-service.v1",
+        "version": 1,
+        "commitSha": "aa291776c241832234c153264498ce1ef1849232",
+        "status": "active",
+        "description": "Self-service MCP session minting for authenticated users.",
+        "rolloutDefaults": {
+          "mode": "legacy_enforce",
+          "canaryPercent": 0
+        },
+        "polar": "# POLICY OS runtime interpreter policy.\n\naction_ok(rule_id) if req_action_name(rule_id, false);\naction_ok(rule_id) if req_action_name(rule_id, true) and input_action_name(action_name) and cond_action_name(rule_id, action_name);\n\nresource_kind_ok(rule_id) if req_resource_kind(rule_id, false);\nresource_kind_ok(rule_id) if\n  req_resource_kind(rule_id, true) and input_resource_kind(resource_kind) and cond_resource_kind(rule_id, resource_kind);\n\naccess_type_ok(rule_id) if req_access_type(rule_id, false);\naccess_type_ok(rule_id) if req_access_type(rule_id, true) and input_access_type(access_type) and cond_access_type(rule_id, access_type);\n\noauth_required_ok(rule_id) if req_oauth_required(rule_id, false);\noauth_required_ok(rule_id) if\n  req_oauth_required(rule_id, true) and input_oauth_required(oauth_required) and cond_oauth_required(rule_id, oauth_required);\n\nservice_tier_ok(rule_id) if req_service_tier(rule_id, false);\nservice_tier_ok(rule_id) if\n  req_service_tier(rule_id, true) and input_service_tier(service_tier) and cond_service_tier(rule_id, service_tier);\n\nactor_role_ok(rule_id) if req_actor_role(rule_id, false);\nactor_role_ok(rule_id) if req_actor_role(rule_id, true) and input_actor_role(actor_role) and cond_actor_role(rule_id, actor_role);\n\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, false);\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, true) and input_tool_mode(tool_mode) and cond_tool_mode(rule_id, tool_mode);\n\nidentity_source_ok(rule_id) if req_identity_source(rule_id, false);\nidentity_source_ok(rule_id) if\n  req_identity_source(rule_id, true) and input_identity_source(identity_source) and cond_identity_source(rule_id, identity_source);\n\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, false);\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, true) and input_resource_tag(resource_tag) and cond_resource_tag(rule_id, resource_tag);\n\ntool_ok(rule_id) if req_tool(rule_id, false);\ntool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);\n\nwrite_ok(rule_id) if req_has_write_intent(rule_id, false);\nwrite_ok(rule_id) if\n  req_has_write_intent(rule_id, true) and input_has_write_intent(has_write_intent) and cond_has_write_intent(rule_id, has_write_intent);\n\nhuman_review_ok(rule_id) if req_has_human_review_step(rule_id, false);\nhuman_review_ok(rule_id) if\n  req_has_human_review_step(rule_id, true) and\n  input_has_human_review_step(has_human_review_step) and\n  cond_has_human_review_step(rule_id, has_human_review_step);\n\nintrospection_ok_cond(rule_id) if req_introspection_ok(rule_id, false);\nintrospection_ok_cond(rule_id) if\n  req_introspection_ok(rule_id, true) and\n  input_introspection_ok(introspection_ok) and\n  cond_introspection_ok(rule_id, introspection_ok);\n\nservice_entitled_ok(rule_id) if req_service_entitled(rule_id, false);\nservice_entitled_ok(rule_id) if\n  req_service_entitled(rule_id, true) and\n  input_service_entitled(service_entitled) and\n  cond_service_entitled(rule_id, service_entitled);\n\npolicy_accepted_ok(rule_id) if req_policy_accepted(rule_id, false);\npolicy_accepted_ok(rule_id) if\n  req_policy_accepted(rule_id, true) and\n  input_policy_accepted(policy_accepted) and\n  cond_policy_accepted(rule_id, policy_accepted);\n\ncontract_active_ok(rule_id) if req_contract_active(rule_id, false);\ncontract_active_ok(rule_id) if\n  req_contract_active(rule_id, true) and\n  input_contract_active(contract_active) and\n  cond_contract_active(rule_id, contract_active);\n\nbilling_active_ok(rule_id) if req_billing_active(rule_id, false);\nbilling_active_ok(rule_id) if\n  req_billing_active(rule_id, true) and\n  input_billing_active(billing_active) and\n  cond_billing_active(rule_id, billing_active);\n\napproved_exception_ok(rule_id) if req_approved_exception_present(rule_id, false);\napproved_exception_ok(rule_id) if\n  req_approved_exception_present(rule_id, true) and\n  input_approved_exception_present(approved_exception_present) and\n  cond_approved_exception_present(rule_id, approved_exception_present);\n\naccount_ok(rule_id) if req_account_id(rule_id, false);\naccount_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);\n\nrule_matches(rule_id, priority, decision, reason) if\n  rule(rule_id, priority, decision, reason) and\n  action_ok(rule_id) and\n  resource_kind_ok(rule_id) and\n  access_type_ok(rule_id) and\n  oauth_required_ok(rule_id) and\n  service_tier_ok(rule_id) and\n  actor_role_ok(rule_id) and\n  tool_mode_ok(rule_id) and\n  identity_source_ok(rule_id) and\n  resource_tag_ok(rule_id) and\n  tool_ok(rule_id) and\n  write_ok(rule_id) and\n  human_review_ok(rule_id) and\n  introspection_ok_cond(rule_id) and\n  service_entitled_ok(rule_id) and\n  policy_accepted_ok(rule_id) and\n  contract_active_ok(rule_id) and\n  billing_active_ok(rule_id) and\n  approved_exception_ok(rule_id) and\n  account_ok(rule_id);\n\n# Compiled policy facts\nrule(\"self_service_mint_allow\", 10, \"allow\", \"Authenticated user may mint a scoped session for their account.\");\nreq_action_name(\"self_service_mint_allow\", true);\nreq_resource_kind(\"self_service_mint_allow\", true);\nreq_access_type(\"self_service_mint_allow\", false);\nreq_oauth_required(\"self_service_mint_allow\", false);\nreq_service_tier(\"self_service_mint_allow\", false);\nreq_actor_role(\"self_service_mint_allow\", false);\nreq_tool_mode(\"self_service_mint_allow\", false);\nreq_identity_source(\"self_service_mint_allow\", false);\nreq_resource_tag(\"self_service_mint_allow\", false);\nreq_tool(\"self_service_mint_allow\", false);\nreq_has_write_intent(\"self_service_mint_allow\", false);\nreq_has_human_review_step(\"self_service_mint_allow\", false);\nreq_introspection_ok(\"self_service_mint_allow\", false);\nreq_service_entitled(\"self_service_mint_allow\", false);\nreq_policy_accepted(\"self_service_mint_allow\", false);\nreq_contract_active(\"self_service_mint_allow\", false);\nreq_billing_active(\"self_service_mint_allow\", false);\nreq_approved_exception_present(\"self_service_mint_allow\", false);\nreq_account_id(\"self_service_mint_allow\", false);\ncond_action_name(\"self_service_mint_allow\", \"mint_session\");\ncond_resource_kind(\"self_service_mint_allow\", \"mcp_session\");\n",
+        "fallbackIrJson": "{\"id\":\"policy.mcp-session-self-service.v1\",\"name\":\"MCP session self-service\",\"description\":\"Authenticated callers may mint scoped MCP sessions for themselves.\",\"rules\":[{\"id\":\"self_service_mint_allow\",\"priority\":10,\"when\":{\"actionNames\":[\"mint_session\"],\"resourceKinds\":[\"mcp_session\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Authenticated user may mint a scoped session for their account.\"}}]}",
+        "compilerVersion": "policy-os-polar-compiler-v1",
+        "policyHash": "638554d5b049adb86a826047c57ab8b7ba8d7fff9c3f7654dd59f62eed479f4a"
+      },
+      "policy": {
+        "id": "policy.mcp-session-self-service.v1",
+        "name": "MCP session self-service",
+        "description": "Authenticated callers may mint scoped MCP sessions for themselves.",
+        "rules": [
+          {
+            "id": "self_service_mint_allow",
+            "priority": 10,
+            "when": {
+              "actionNames": [
+                "mint_session"
+              ],
+              "resourceKinds": [
+                "mcp_session"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Authenticated user may mint a scoped session for their account."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "manifest": {
+        "policyId": "policy.partner-auth-governance.v1",
+        "version": 1,
+        "commitSha": "aa291776c241832234c153264498ce1ef1849232",
+        "status": "active",
+        "description": "Partner-admin auth operations require consent evidence and review traceability.",
+        "rolloutDefaults": {
+          "mode": "legacy_enforce",
+          "canaryPercent": 0
+        },
+        "polar": "# POLICY OS runtime interpreter policy.\n\naction_ok(rule_id) if req_action_name(rule_id, false);\naction_ok(rule_id) if req_action_name(rule_id, true) and input_action_name(action_name) and cond_action_name(rule_id, action_name);\n\nresource_kind_ok(rule_id) if req_resource_kind(rule_id, false);\nresource_kind_ok(rule_id) if\n  req_resource_kind(rule_id, true) and input_resource_kind(resource_kind) and cond_resource_kind(rule_id, resource_kind);\n\naccess_type_ok(rule_id) if req_access_type(rule_id, false);\naccess_type_ok(rule_id) if req_access_type(rule_id, true) and input_access_type(access_type) and cond_access_type(rule_id, access_type);\n\noauth_required_ok(rule_id) if req_oauth_required(rule_id, false);\noauth_required_ok(rule_id) if\n  req_oauth_required(rule_id, true) and input_oauth_required(oauth_required) and cond_oauth_required(rule_id, oauth_required);\n\nservice_tier_ok(rule_id) if req_service_tier(rule_id, false);\nservice_tier_ok(rule_id) if\n  req_service_tier(rule_id, true) and input_service_tier(service_tier) and cond_service_tier(rule_id, service_tier);\n\nactor_role_ok(rule_id) if req_actor_role(rule_id, false);\nactor_role_ok(rule_id) if req_actor_role(rule_id, true) and input_actor_role(actor_role) and cond_actor_role(rule_id, actor_role);\n\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, false);\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, true) and input_tool_mode(tool_mode) and cond_tool_mode(rule_id, tool_mode);\n\nidentity_source_ok(rule_id) if req_identity_source(rule_id, false);\nidentity_source_ok(rule_id) if\n  req_identity_source(rule_id, true) and input_identity_source(identity_source) and cond_identity_source(rule_id, identity_source);\n\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, false);\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, true) and input_resource_tag(resource_tag) and cond_resource_tag(rule_id, resource_tag);\n\ntool_ok(rule_id) if req_tool(rule_id, false);\ntool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);\n\nwrite_ok(rule_id) if req_has_write_intent(rule_id, false);\nwrite_ok(rule_id) if\n  req_has_write_intent(rule_id, true) and input_has_write_intent(has_write_intent) and cond_has_write_intent(rule_id, has_write_intent);\n\nhuman_review_ok(rule_id) if req_has_human_review_step(rule_id, false);\nhuman_review_ok(rule_id) if\n  req_has_human_review_step(rule_id, true) and\n  input_has_human_review_step(has_human_review_step) and\n  cond_has_human_review_step(rule_id, has_human_review_step);\n\nintrospection_ok_cond(rule_id) if req_introspection_ok(rule_id, false);\nintrospection_ok_cond(rule_id) if\n  req_introspection_ok(rule_id, true) and\n  input_introspection_ok(introspection_ok) and\n  cond_introspection_ok(rule_id, introspection_ok);\n\nservice_entitled_ok(rule_id) if req_service_entitled(rule_id, false);\nservice_entitled_ok(rule_id) if\n  req_service_entitled(rule_id, true) and\n  input_service_entitled(service_entitled) and\n  cond_service_entitled(rule_id, service_entitled);\n\npolicy_accepted_ok(rule_id) if req_policy_accepted(rule_id, false);\npolicy_accepted_ok(rule_id) if\n  req_policy_accepted(rule_id, true) and\n  input_policy_accepted(policy_accepted) and\n  cond_policy_accepted(rule_id, policy_accepted);\n\ncontract_active_ok(rule_id) if req_contract_active(rule_id, false);\ncontract_active_ok(rule_id) if\n  req_contract_active(rule_id, true) and\n  input_contract_active(contract_active) and\n  cond_contract_active(rule_id, contract_active);\n\nbilling_active_ok(rule_id) if req_billing_active(rule_id, false);\nbilling_active_ok(rule_id) if\n  req_billing_active(rule_id, true) and\n  input_billing_active(billing_active) and\n  cond_billing_active(rule_id, billing_active);\n\napproved_exception_ok(rule_id) if req_approved_exception_present(rule_id, false);\napproved_exception_ok(rule_id) if\n  req_approved_exception_present(rule_id, true) and\n  input_approved_exception_present(approved_exception_present) and\n  cond_approved_exception_present(rule_id, approved_exception_present);\n\naccount_ok(rule_id) if req_account_id(rule_id, false);\naccount_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);\n\nrule_matches(rule_id, priority, decision, reason) if\n  rule(rule_id, priority, decision, reason) and\n  action_ok(rule_id) and\n  resource_kind_ok(rule_id) and\n  access_type_ok(rule_id) and\n  oauth_required_ok(rule_id) and\n  service_tier_ok(rule_id) and\n  actor_role_ok(rule_id) and\n  tool_mode_ok(rule_id) and\n  identity_source_ok(rule_id) and\n  resource_tag_ok(rule_id) and\n  tool_ok(rule_id) and\n  write_ok(rule_id) and\n  human_review_ok(rule_id) and\n  introspection_ok_cond(rule_id) and\n  service_entitled_ok(rule_id) and\n  policy_accepted_ok(rule_id) and\n  contract_active_ok(rule_id) and\n  billing_active_ok(rule_id) and\n  approved_exception_ok(rule_id) and\n  account_ok(rule_id);\n\n# Compiled policy facts\nrule(\"admin_mint_block_without_consent\", 10, \"block\", \"Admin mint requires consent evidence.\");\nreq_action_name(\"admin_mint_block_without_consent\", true);\nreq_resource_kind(\"admin_mint_block_without_consent\", true);\nreq_access_type(\"admin_mint_block_without_consent\", false);\nreq_oauth_required(\"admin_mint_block_without_consent\", false);\nreq_service_tier(\"admin_mint_block_without_consent\", false);\nreq_actor_role(\"admin_mint_block_without_consent\", false);\nreq_tool_mode(\"admin_mint_block_without_consent\", false);\nreq_identity_source(\"admin_mint_block_without_consent\", false);\nreq_resource_tag(\"admin_mint_block_without_consent\", false);\nreq_tool(\"admin_mint_block_without_consent\", false);\nreq_has_write_intent(\"admin_mint_block_without_consent\", false);\nreq_has_human_review_step(\"admin_mint_block_without_consent\", false);\nreq_introspection_ok(\"admin_mint_block_without_consent\", true);\nreq_service_entitled(\"admin_mint_block_without_consent\", false);\nreq_policy_accepted(\"admin_mint_block_without_consent\", false);\nreq_contract_active(\"admin_mint_block_without_consent\", false);\nreq_billing_active(\"admin_mint_block_without_consent\", false);\nreq_approved_exception_present(\"admin_mint_block_without_consent\", false);\nreq_account_id(\"admin_mint_block_without_consent\", false);\ncond_action_name(\"admin_mint_block_without_consent\", \"admin_mint_session\");\ncond_resource_kind(\"admin_mint_block_without_consent\", \"mcp_session\");\ncond_introspection_ok(\"admin_mint_block_without_consent\", false);\nrule(\"admin_mint_review_without_trace\", 20, \"require_human_review\", \"Admin mint requires human review trace.\");\nreq_action_name(\"admin_mint_review_without_trace\", true);\nreq_resource_kind(\"admin_mint_review_without_trace\", true);\nreq_access_type(\"admin_mint_review_without_trace\", false);\nreq_oauth_required(\"admin_mint_review_without_trace\", false);\nreq_service_tier(\"admin_mint_review_without_trace\", false);\nreq_actor_role(\"admin_mint_review_without_trace\", false);\nreq_tool_mode(\"admin_mint_review_without_trace\", false);\nreq_identity_source(\"admin_mint_review_without_trace\", false);\nreq_resource_tag(\"admin_mint_review_without_trace\", false);\nreq_tool(\"admin_mint_review_without_trace\", false);\nreq_has_write_intent(\"admin_mint_review_without_trace\", false);\nreq_has_human_review_step(\"admin_mint_review_without_trace\", true);\nreq_introspection_ok(\"admin_mint_review_without_trace\", false);\nreq_service_entitled(\"admin_mint_review_without_trace\", false);\nreq_policy_accepted(\"admin_mint_review_without_trace\", false);\nreq_contract_active(\"admin_mint_review_without_trace\", false);\nreq_billing_active(\"admin_mint_review_without_trace\", false);\nreq_approved_exception_present(\"admin_mint_review_without_trace\", false);\nreq_account_id(\"admin_mint_review_without_trace\", false);\ncond_action_name(\"admin_mint_review_without_trace\", \"admin_mint_session\");\ncond_resource_kind(\"admin_mint_review_without_trace\", \"mcp_session\");\ncond_has_human_review_step(\"admin_mint_review_without_trace\", false);\nrule(\"admin_mint_allow\", 30, \"allow\", \"Consent and review evidence present.\");\nreq_action_name(\"admin_mint_allow\", true);\nreq_resource_kind(\"admin_mint_allow\", true);\nreq_access_type(\"admin_mint_allow\", false);\nreq_oauth_required(\"admin_mint_allow\", false);\nreq_service_tier(\"admin_mint_allow\", false);\nreq_actor_role(\"admin_mint_allow\", false);\nreq_tool_mode(\"admin_mint_allow\", false);\nreq_identity_source(\"admin_mint_allow\", false);\nreq_resource_tag(\"admin_mint_allow\", false);\nreq_tool(\"admin_mint_allow\", false);\nreq_has_write_intent(\"admin_mint_allow\", false);\nreq_has_human_review_step(\"admin_mint_allow\", true);\nreq_introspection_ok(\"admin_mint_allow\", true);\nreq_service_entitled(\"admin_mint_allow\", false);\nreq_policy_accepted(\"admin_mint_allow\", false);\nreq_contract_active(\"admin_mint_allow\", false);\nreq_billing_active(\"admin_mint_allow\", false);\nreq_approved_exception_present(\"admin_mint_allow\", false);\nreq_account_id(\"admin_mint_allow\", false);\ncond_action_name(\"admin_mint_allow\", \"admin_mint_session\");\ncond_resource_kind(\"admin_mint_allow\", \"mcp_session\");\ncond_has_human_review_step(\"admin_mint_allow\", true);\ncond_introspection_ok(\"admin_mint_allow\", true);\nrule(\"partner_toolkit_block_without_consent\", 40, \"block\", \"Partner toolkit auth actions require an active consent record.\");\nreq_action_name(\"partner_toolkit_block_without_consent\", false);\nreq_resource_kind(\"partner_toolkit_block_without_consent\", true);\nreq_access_type(\"partner_toolkit_block_without_consent\", false);\nreq_oauth_required(\"partner_toolkit_block_without_consent\", false);\nreq_service_tier(\"partner_toolkit_block_without_consent\", false);\nreq_actor_role(\"partner_toolkit_block_without_consent\", false);\nreq_tool_mode(\"partner_toolkit_block_without_consent\", false);\nreq_identity_source(\"partner_toolkit_block_without_consent\", false);\nreq_resource_tag(\"partner_toolkit_block_without_consent\", false);\nreq_tool(\"partner_toolkit_block_without_consent\", false);\nreq_has_write_intent(\"partner_toolkit_block_without_consent\", false);\nreq_has_human_review_step(\"partner_toolkit_block_without_consent\", false);\nreq_introspection_ok(\"partner_toolkit_block_without_consent\", true);\nreq_service_entitled(\"partner_toolkit_block_without_consent\", false);\nreq_policy_accepted(\"partner_toolkit_block_without_consent\", false);\nreq_contract_active(\"partner_toolkit_block_without_consent\", false);\nreq_billing_active(\"partner_toolkit_block_without_consent\", false);\nreq_approved_exception_present(\"partner_toolkit_block_without_consent\", false);\nreq_account_id(\"partner_toolkit_block_without_consent\", false);\ncond_resource_kind(\"partner_toolkit_block_without_consent\", \"partner_toolkit_account\");\ncond_introspection_ok(\"partner_toolkit_block_without_consent\", false);\nrule(\"partner_toolkit_pin_requires_review\", 50, \"require_human_review\", \"Pinning a partner toolkit account requires a human review trace.\");\nreq_action_name(\"partner_toolkit_pin_requires_review\", true);\nreq_resource_kind(\"partner_toolkit_pin_requires_review\", true);\nreq_access_type(\"partner_toolkit_pin_requires_review\", false);\nreq_oauth_required(\"partner_toolkit_pin_requires_review\", false);\nreq_service_tier(\"partner_toolkit_pin_requires_review\", false);\nreq_actor_role(\"partner_toolkit_pin_requires_review\", false);\nreq_tool_mode(\"partner_toolkit_pin_requires_review\", false);\nreq_identity_source(\"partner_toolkit_pin_requires_review\", false);\nreq_resource_tag(\"partner_toolkit_pin_requires_review\", false);\nreq_tool(\"partner_toolkit_pin_requires_review\", false);\nreq_has_write_intent(\"partner_toolkit_pin_requires_review\", false);\nreq_has_human_review_step(\"partner_toolkit_pin_requires_review\", true);\nreq_introspection_ok(\"partner_toolkit_pin_requires_review\", false);\nreq_service_entitled(\"partner_toolkit_pin_requires_review\", false);\nreq_policy_accepted(\"partner_toolkit_pin_requires_review\", false);\nreq_contract_active(\"partner_toolkit_pin_requires_review\", false);\nreq_billing_active(\"partner_toolkit_pin_requires_review\", false);\nreq_approved_exception_present(\"partner_toolkit_pin_requires_review\", false);\nreq_account_id(\"partner_toolkit_pin_requires_review\", false);\ncond_action_name(\"partner_toolkit_pin_requires_review\", \"pin_toolkit_account\");\ncond_resource_kind(\"partner_toolkit_pin_requires_review\", \"partner_toolkit_account\");\ncond_has_human_review_step(\"partner_toolkit_pin_requires_review\", false);\nrule(\"partner_toolkit_disable_requires_review\", 60, \"require_human_review\", \"Disabling a partner toolkit account requires a human review trace.\");\nreq_action_name(\"partner_toolkit_disable_requires_review\", true);\nreq_resource_kind(\"partner_toolkit_disable_requires_review\", true);\nreq_access_type(\"partner_toolkit_disable_requires_review\", false);\nreq_oauth_required(\"partner_toolkit_disable_requires_review\", false);\nreq_service_tier(\"partner_toolkit_disable_requires_review\", false);\nreq_actor_role(\"partner_toolkit_disable_requires_review\", false);\nreq_tool_mode(\"partner_toolkit_disable_requires_review\", false);\nreq_identity_source(\"partner_toolkit_disable_requires_review\", false);\nreq_resource_tag(\"partner_toolkit_disable_requires_review\", false);\nreq_tool(\"partner_toolkit_disable_requires_review\", false);\nreq_has_write_intent(\"partner_toolkit_disable_requires_review\", false);\nreq_has_human_review_step(\"partner_toolkit_disable_requires_review\", true);\nreq_introspection_ok(\"partner_toolkit_disable_requires_review\", false);\nreq_service_entitled(\"partner_toolkit_disable_requires_review\", false);\nreq_policy_accepted(\"partner_toolkit_disable_requires_review\", false);\nreq_contract_active(\"partner_toolkit_disable_requires_review\", false);\nreq_billing_active(\"partner_toolkit_disable_requires_review\", false);\nreq_approved_exception_present(\"partner_toolkit_disable_requires_review\", false);\nreq_account_id(\"partner_toolkit_disable_requires_review\", false);\ncond_action_name(\"partner_toolkit_disable_requires_review\", \"disable_toolkit_account\");\ncond_resource_kind(\"partner_toolkit_disable_requires_review\", \"partner_toolkit_account\");\ncond_has_human_review_step(\"partner_toolkit_disable_requires_review\", false);\nrule(\"partner_toolkit_view_allow\", 70, \"allow\", \"Partner admin may inspect toolkit auth state with active consent.\");\nreq_action_name(\"partner_toolkit_view_allow\", true);\nreq_resource_kind(\"partner_toolkit_view_allow\", true);\nreq_access_type(\"partner_toolkit_view_allow\", false);\nreq_oauth_required(\"partner_toolkit_view_allow\", false);\nreq_service_tier(\"partner_toolkit_view_allow\", false);\nreq_actor_role(\"partner_toolkit_view_allow\", true);\nreq_tool_mode(\"partner_toolkit_view_allow\", false);\nreq_identity_source(\"partner_toolkit_view_allow\", false);\nreq_resource_tag(\"partner_toolkit_view_allow\", false);\nreq_tool(\"partner_toolkit_view_allow\", false);\nreq_has_write_intent(\"partner_toolkit_view_allow\", false);\nreq_has_human_review_step(\"partner_toolkit_view_allow\", false);\nreq_introspection_ok(\"partner_toolkit_view_allow\", true);\nreq_service_entitled(\"partner_toolkit_view_allow\", false);\nreq_policy_accepted(\"partner_toolkit_view_allow\", false);\nreq_contract_active(\"partner_toolkit_view_allow\", false);\nreq_billing_active(\"partner_toolkit_view_allow\", false);\nreq_approved_exception_present(\"partner_toolkit_view_allow\", false);\nreq_account_id(\"partner_toolkit_view_allow\", false);\ncond_action_name(\"partner_toolkit_view_allow\", \"view_toolkit_auth\");\ncond_resource_kind(\"partner_toolkit_view_allow\", \"partner_toolkit_account\");\ncond_actor_role(\"partner_toolkit_view_allow\", \"partner_admin\");\ncond_introspection_ok(\"partner_toolkit_view_allow\", true);\nrule(\"partner_toolkit_upsert_allow\", 80, \"allow\", \"Partner admin may create or update toolkit auth bindings with active consent.\");\nreq_action_name(\"partner_toolkit_upsert_allow\", true);\nreq_resource_kind(\"partner_toolkit_upsert_allow\", true);\nreq_access_type(\"partner_toolkit_upsert_allow\", false);\nreq_oauth_required(\"partner_toolkit_upsert_allow\", false);\nreq_service_tier(\"partner_toolkit_upsert_allow\", false);\nreq_actor_role(\"partner_toolkit_upsert_allow\", true);\nreq_tool_mode(\"partner_toolkit_upsert_allow\", false);\nreq_identity_source(\"partner_toolkit_upsert_allow\", false);\nreq_resource_tag(\"partner_toolkit_upsert_allow\", false);\nreq_tool(\"partner_toolkit_upsert_allow\", false);\nreq_has_write_intent(\"partner_toolkit_upsert_allow\", false);\nreq_has_human_review_step(\"partner_toolkit_upsert_allow\", false);\nreq_introspection_ok(\"partner_toolkit_upsert_allow\", true);\nreq_service_entitled(\"partner_toolkit_upsert_allow\", false);\nreq_policy_accepted(\"partner_toolkit_upsert_allow\", false);\nreq_contract_active(\"partner_toolkit_upsert_allow\", false);\nreq_billing_active(\"partner_toolkit_upsert_allow\", false);\nreq_approved_exception_present(\"partner_toolkit_upsert_allow\", false);\nreq_account_id(\"partner_toolkit_upsert_allow\", false);\ncond_action_name(\"partner_toolkit_upsert_allow\", \"upsert_toolkit_account\");\ncond_resource_kind(\"partner_toolkit_upsert_allow\", \"partner_toolkit_account\");\ncond_actor_role(\"partner_toolkit_upsert_allow\", \"partner_admin\");\ncond_introspection_ok(\"partner_toolkit_upsert_allow\", true);\nrule(\"partner_toolkit_connect_allow\", 90, \"allow\", \"Partner admin may issue toolkit connect links with active consent.\");\nreq_action_name(\"partner_toolkit_connect_allow\", true);\nreq_resource_kind(\"partner_toolkit_connect_allow\", true);\nreq_access_type(\"partner_toolkit_connect_allow\", false);\nreq_oauth_required(\"partner_toolkit_connect_allow\", false);\nreq_service_tier(\"partner_toolkit_connect_allow\", false);\nreq_actor_role(\"partner_toolkit_connect_allow\", true);\nreq_tool_mode(\"partner_toolkit_connect_allow\", false);\nreq_identity_source(\"partner_toolkit_connect_allow\", false);\nreq_resource_tag(\"partner_toolkit_connect_allow\", false);\nreq_tool(\"partner_toolkit_connect_allow\", false);\nreq_has_write_intent(\"partner_toolkit_connect_allow\", false);\nreq_has_human_review_step(\"partner_toolkit_connect_allow\", false);\nreq_introspection_ok(\"partner_toolkit_connect_allow\", true);\nreq_service_entitled(\"partner_toolkit_connect_allow\", false);\nreq_policy_accepted(\"partner_toolkit_connect_allow\", false);\nreq_contract_active(\"partner_toolkit_connect_allow\", false);\nreq_billing_active(\"partner_toolkit_connect_allow\", false);\nreq_approved_exception_present(\"partner_toolkit_connect_allow\", false);\nreq_account_id(\"partner_toolkit_connect_allow\", false);\ncond_action_name(\"partner_toolkit_connect_allow\", \"create_toolkit_connect_link\");\ncond_resource_kind(\"partner_toolkit_connect_allow\", \"partner_toolkit_account\");\ncond_actor_role(\"partner_toolkit_connect_allow\", \"partner_admin\");\ncond_introspection_ok(\"partner_toolkit_connect_allow\", true);\nrule(\"partner_toolkit_pin_allow\", 100, \"allow\", \"Partner admin may pin toolkit accounts after human review.\");\nreq_action_name(\"partner_toolkit_pin_allow\", true);\nreq_resource_kind(\"partner_toolkit_pin_allow\", true);\nreq_access_type(\"partner_toolkit_pin_allow\", false);\nreq_oauth_required(\"partner_toolkit_pin_allow\", false);\nreq_service_tier(\"partner_toolkit_pin_allow\", false);\nreq_actor_role(\"partner_toolkit_pin_allow\", true);\nreq_tool_mode(\"partner_toolkit_pin_allow\", false);\nreq_identity_source(\"partner_toolkit_pin_allow\", false);\nreq_resource_tag(\"partner_toolkit_pin_allow\", false);\nreq_tool(\"partner_toolkit_pin_allow\", false);\nreq_has_write_intent(\"partner_toolkit_pin_allow\", false);\nreq_has_human_review_step(\"partner_toolkit_pin_allow\", true);\nreq_introspection_ok(\"partner_toolkit_pin_allow\", true);\nreq_service_entitled(\"partner_toolkit_pin_allow\", false);\nreq_policy_accepted(\"partner_toolkit_pin_allow\", false);\nreq_contract_active(\"partner_toolkit_pin_allow\", false);\nreq_billing_active(\"partner_toolkit_pin_allow\", false);\nreq_approved_exception_present(\"partner_toolkit_pin_allow\", false);\nreq_account_id(\"partner_toolkit_pin_allow\", false);\ncond_action_name(\"partner_toolkit_pin_allow\", \"pin_toolkit_account\");\ncond_resource_kind(\"partner_toolkit_pin_allow\", \"partner_toolkit_account\");\ncond_actor_role(\"partner_toolkit_pin_allow\", \"partner_admin\");\ncond_has_human_review_step(\"partner_toolkit_pin_allow\", true);\ncond_introspection_ok(\"partner_toolkit_pin_allow\", true);\nrule(\"partner_toolkit_disable_allow\", 110, \"allow\", \"Partner admin may disable toolkit accounts after human review.\");\nreq_action_name(\"partner_toolkit_disable_allow\", true);\nreq_resource_kind(\"partner_toolkit_disable_allow\", true);\nreq_access_type(\"partner_toolkit_disable_allow\", false);\nreq_oauth_required(\"partner_toolkit_disable_allow\", false);\nreq_service_tier(\"partner_toolkit_disable_allow\", false);\nreq_actor_role(\"partner_toolkit_disable_allow\", true);\nreq_tool_mode(\"partner_toolkit_disable_allow\", false);\nreq_identity_source(\"partner_toolkit_disable_allow\", false);\nreq_resource_tag(\"partner_toolkit_disable_allow\", false);\nreq_tool(\"partner_toolkit_disable_allow\", false);\nreq_has_write_intent(\"partner_toolkit_disable_allow\", false);\nreq_has_human_review_step(\"partner_toolkit_disable_allow\", true);\nreq_introspection_ok(\"partner_toolkit_disable_allow\", true);\nreq_service_entitled(\"partner_toolkit_disable_allow\", false);\nreq_policy_accepted(\"partner_toolkit_disable_allow\", false);\nreq_contract_active(\"partner_toolkit_disable_allow\", false);\nreq_billing_active(\"partner_toolkit_disable_allow\", false);\nreq_approved_exception_present(\"partner_toolkit_disable_allow\", false);\nreq_account_id(\"partner_toolkit_disable_allow\", false);\ncond_action_name(\"partner_toolkit_disable_allow\", \"disable_toolkit_account\");\ncond_resource_kind(\"partner_toolkit_disable_allow\", \"partner_toolkit_account\");\ncond_actor_role(\"partner_toolkit_disable_allow\", \"partner_admin\");\ncond_has_human_review_step(\"partner_toolkit_disable_allow\", true);\ncond_introspection_ok(\"partner_toolkit_disable_allow\", true);\n",
+        "fallbackIrJson": "{\"id\":\"policy.partner-auth-governance.v1\",\"name\":\"Partner auth governance\",\"description\":\"Partner-admin auth operations require explicit consent evidence and review traceability.\",\"rules\":[{\"id\":\"admin_mint_block_without_consent\",\"priority\":10,\"when\":{\"actionNames\":[\"admin_mint_session\"],\"resourceKinds\":[\"mcp_session\"],\"introspectionOk\":false},\"then\":{\"decision\":\"block\",\"reason\":\"Admin mint requires consent evidence.\"}},{\"id\":\"admin_mint_review_without_trace\",\"priority\":20,\"when\":{\"actionNames\":[\"admin_mint_session\"],\"resourceKinds\":[\"mcp_session\"],\"hasHumanReviewStep\":false},\"then\":{\"decision\":\"require_human_review\",\"reason\":\"Admin mint requires human review trace.\"}},{\"id\":\"admin_mint_allow\",\"priority\":30,\"when\":{\"actionNames\":[\"admin_mint_session\"],\"resourceKinds\":[\"mcp_session\"],\"introspectionOk\":true,\"hasHumanReviewStep\":true},\"then\":{\"decision\":\"allow\",\"reason\":\"Consent and review evidence present.\"}},{\"id\":\"partner_toolkit_block_without_consent\",\"priority\":40,\"when\":{\"resourceKinds\":[\"partner_toolkit_account\"],\"introspectionOk\":false},\"then\":{\"decision\":\"block\",\"reason\":\"Partner toolkit auth actions require an active consent record.\"}},{\"id\":\"partner_toolkit_pin_requires_review\",\"priority\":50,\"when\":{\"actionNames\":[\"pin_toolkit_account\"],\"resourceKinds\":[\"partner_toolkit_account\"],\"hasHumanReviewStep\":false},\"then\":{\"decision\":\"require_human_review\",\"reason\":\"Pinning a partner toolkit account requires a human review trace.\"}},{\"id\":\"partner_toolkit_disable_requires_review\",\"priority\":60,\"when\":{\"actionNames\":[\"disable_toolkit_account\"],\"resourceKinds\":[\"partner_toolkit_account\"],\"hasHumanReviewStep\":false},\"then\":{\"decision\":\"require_human_review\",\"reason\":\"Disabling a partner toolkit account requires a human review trace.\"}},{\"id\":\"partner_toolkit_view_allow\",\"priority\":70,\"when\":{\"actionNames\":[\"view_toolkit_auth\"],\"resourceKinds\":[\"partner_toolkit_account\"],\"introspectionOk\":true,\"actorRoles\":[\"partner_admin\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Partner admin may inspect toolkit auth state with active consent.\"}},{\"id\":\"partner_toolkit_upsert_allow\",\"priority\":80,\"when\":{\"actionNames\":[\"upsert_toolkit_account\"],\"resourceKinds\":[\"partner_toolkit_account\"],\"introspectionOk\":true,\"actorRoles\":[\"partner_admin\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Partner admin may create or update toolkit auth bindings with active consent.\"}},{\"id\":\"partner_toolkit_connect_allow\",\"priority\":90,\"when\":{\"actionNames\":[\"create_toolkit_connect_link\"],\"resourceKinds\":[\"partner_toolkit_account\"],\"introspectionOk\":true,\"actorRoles\":[\"partner_admin\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Partner admin may issue toolkit connect links with active consent.\"}},{\"id\":\"partner_toolkit_pin_allow\",\"priority\":100,\"when\":{\"actionNames\":[\"pin_toolkit_account\"],\"resourceKinds\":[\"partner_toolkit_account\"],\"introspectionOk\":true,\"hasHumanReviewStep\":true,\"actorRoles\":[\"partner_admin\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Partner admin may pin toolkit accounts after human review.\"}},{\"id\":\"partner_toolkit_disable_allow\",\"priority\":110,\"when\":{\"actionNames\":[\"disable_toolkit_account\"],\"resourceKinds\":[\"partner_toolkit_account\"],\"introspectionOk\":true,\"hasHumanReviewStep\":true,\"actorRoles\":[\"partner_admin\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Partner admin may disable toolkit accounts after human review.\"}}]}",
+        "compilerVersion": "policy-os-polar-compiler-v1",
+        "policyHash": "c5aecb87392c6be1b3d8efc3e4f5acb03f4d94bc47bed034831743636bd6e8cb"
+      },
+      "policy": {
+        "id": "policy.partner-auth-governance.v1",
+        "name": "Partner auth governance",
+        "description": "Partner-admin auth operations require explicit consent evidence and review traceability.",
+        "rules": [
+          {
+            "id": "admin_mint_block_without_consent",
+            "priority": 10,
+            "when": {
+              "actionNames": [
+                "admin_mint_session"
+              ],
+              "resourceKinds": [
+                "mcp_session"
+              ],
+              "introspectionOk": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Admin mint requires consent evidence."
+            }
+          },
+          {
+            "id": "admin_mint_review_without_trace",
+            "priority": 20,
+            "when": {
+              "actionNames": [
+                "admin_mint_session"
+              ],
+              "resourceKinds": [
+                "mcp_session"
+              ],
+              "hasHumanReviewStep": false
+            },
+            "then": {
+              "decision": "require_human_review",
+              "reason": "Admin mint requires human review trace."
+            }
+          },
+          {
+            "id": "admin_mint_allow",
+            "priority": 30,
+            "when": {
+              "actionNames": [
+                "admin_mint_session"
+              ],
+              "resourceKinds": [
+                "mcp_session"
+              ],
+              "introspectionOk": true,
+              "hasHumanReviewStep": true
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Consent and review evidence present."
+            }
+          },
+          {
+            "id": "partner_toolkit_block_without_consent",
+            "priority": 40,
+            "when": {
+              "resourceKinds": [
+                "partner_toolkit_account"
+              ],
+              "introspectionOk": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Partner toolkit auth actions require an active consent record."
+            }
+          },
+          {
+            "id": "partner_toolkit_pin_requires_review",
+            "priority": 50,
+            "when": {
+              "actionNames": [
+                "pin_toolkit_account"
+              ],
+              "resourceKinds": [
+                "partner_toolkit_account"
+              ],
+              "hasHumanReviewStep": false
+            },
+            "then": {
+              "decision": "require_human_review",
+              "reason": "Pinning a partner toolkit account requires a human review trace."
+            }
+          },
+          {
+            "id": "partner_toolkit_disable_requires_review",
+            "priority": 60,
+            "when": {
+              "actionNames": [
+                "disable_toolkit_account"
+              ],
+              "resourceKinds": [
+                "partner_toolkit_account"
+              ],
+              "hasHumanReviewStep": false
+            },
+            "then": {
+              "decision": "require_human_review",
+              "reason": "Disabling a partner toolkit account requires a human review trace."
+            }
+          },
+          {
+            "id": "partner_toolkit_view_allow",
+            "priority": 70,
+            "when": {
+              "actionNames": [
+                "view_toolkit_auth"
+              ],
+              "resourceKinds": [
+                "partner_toolkit_account"
+              ],
+              "introspectionOk": true,
+              "actorRoles": [
+                "partner_admin"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Partner admin may inspect toolkit auth state with active consent."
+            }
+          },
+          {
+            "id": "partner_toolkit_upsert_allow",
+            "priority": 80,
+            "when": {
+              "actionNames": [
+                "upsert_toolkit_account"
+              ],
+              "resourceKinds": [
+                "partner_toolkit_account"
+              ],
+              "introspectionOk": true,
+              "actorRoles": [
+                "partner_admin"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Partner admin may create or update toolkit auth bindings with active consent."
+            }
+          },
+          {
+            "id": "partner_toolkit_connect_allow",
+            "priority": 90,
+            "when": {
+              "actionNames": [
+                "create_toolkit_connect_link"
+              ],
+              "resourceKinds": [
+                "partner_toolkit_account"
+              ],
+              "introspectionOk": true,
+              "actorRoles": [
+                "partner_admin"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Partner admin may issue toolkit connect links with active consent."
+            }
+          },
+          {
+            "id": "partner_toolkit_pin_allow",
+            "priority": 100,
+            "when": {
+              "actionNames": [
+                "pin_toolkit_account"
+              ],
+              "resourceKinds": [
+                "partner_toolkit_account"
+              ],
+              "introspectionOk": true,
+              "hasHumanReviewStep": true,
+              "actorRoles": [
+                "partner_admin"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Partner admin may pin toolkit accounts after human review."
+            }
+          },
+          {
+            "id": "partner_toolkit_disable_allow",
+            "priority": 110,
+            "when": {
+              "actionNames": [
+                "disable_toolkit_account"
+              ],
+              "resourceKinds": [
+                "partner_toolkit_account"
+              ],
+              "introspectionOk": true,
+              "hasHumanReviewStep": true,
+              "actorRoles": [
+                "partner_admin"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Partner admin may disable toolkit accounts after human review."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "manifest": {
+        "policyId": "policy.service-tier-entitlement.v1",
+        "version": 1,
+        "commitSha": "aa291776c241832234c153264498ce1ef1849232",
+        "status": "active",
+        "description": "Service-tier and commercial entitlement policy for free MCP-only versus paid Policy OS access.",
+        "rolloutDefaults": {
+          "mode": "legacy_enforce",
+          "canaryPercent": 0,
+          "mismatchThreshold": 0.005,
+          "fallbackRateThreshold": 0.01
+        },
+        "polar": "# POLICY OS runtime interpreter policy.\n\naction_ok(rule_id) if req_action_name(rule_id, false);\naction_ok(rule_id) if req_action_name(rule_id, true) and input_action_name(action_name) and cond_action_name(rule_id, action_name);\n\nresource_kind_ok(rule_id) if req_resource_kind(rule_id, false);\nresource_kind_ok(rule_id) if\n  req_resource_kind(rule_id, true) and input_resource_kind(resource_kind) and cond_resource_kind(rule_id, resource_kind);\n\naccess_type_ok(rule_id) if req_access_type(rule_id, false);\naccess_type_ok(rule_id) if req_access_type(rule_id, true) and input_access_type(access_type) and cond_access_type(rule_id, access_type);\n\noauth_required_ok(rule_id) if req_oauth_required(rule_id, false);\noauth_required_ok(rule_id) if\n  req_oauth_required(rule_id, true) and input_oauth_required(oauth_required) and cond_oauth_required(rule_id, oauth_required);\n\nservice_tier_ok(rule_id) if req_service_tier(rule_id, false);\nservice_tier_ok(rule_id) if\n  req_service_tier(rule_id, true) and input_service_tier(service_tier) and cond_service_tier(rule_id, service_tier);\n\nactor_role_ok(rule_id) if req_actor_role(rule_id, false);\nactor_role_ok(rule_id) if req_actor_role(rule_id, true) and input_actor_role(actor_role) and cond_actor_role(rule_id, actor_role);\n\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, false);\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, true) and input_tool_mode(tool_mode) and cond_tool_mode(rule_id, tool_mode);\n\nidentity_source_ok(rule_id) if req_identity_source(rule_id, false);\nidentity_source_ok(rule_id) if\n  req_identity_source(rule_id, true) and input_identity_source(identity_source) and cond_identity_source(rule_id, identity_source);\n\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, false);\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, true) and input_resource_tag(resource_tag) and cond_resource_tag(rule_id, resource_tag);\n\ntool_ok(rule_id) if req_tool(rule_id, false);\ntool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);\n\nwrite_ok(rule_id) if req_has_write_intent(rule_id, false);\nwrite_ok(rule_id) if\n  req_has_write_intent(rule_id, true) and input_has_write_intent(has_write_intent) and cond_has_write_intent(rule_id, has_write_intent);\n\nhuman_review_ok(rule_id) if req_has_human_review_step(rule_id, false);\nhuman_review_ok(rule_id) if\n  req_has_human_review_step(rule_id, true) and\n  input_has_human_review_step(has_human_review_step) and\n  cond_has_human_review_step(rule_id, has_human_review_step);\n\nintrospection_ok_cond(rule_id) if req_introspection_ok(rule_id, false);\nintrospection_ok_cond(rule_id) if\n  req_introspection_ok(rule_id, true) and\n  input_introspection_ok(introspection_ok) and\n  cond_introspection_ok(rule_id, introspection_ok);\n\nservice_entitled_ok(rule_id) if req_service_entitled(rule_id, false);\nservice_entitled_ok(rule_id) if\n  req_service_entitled(rule_id, true) and\n  input_service_entitled(service_entitled) and\n  cond_service_entitled(rule_id, service_entitled);\n\npolicy_accepted_ok(rule_id) if req_policy_accepted(rule_id, false);\npolicy_accepted_ok(rule_id) if\n  req_policy_accepted(rule_id, true) and\n  input_policy_accepted(policy_accepted) and\n  cond_policy_accepted(rule_id, policy_accepted);\n\ncontract_active_ok(rule_id) if req_contract_active(rule_id, false);\ncontract_active_ok(rule_id) if\n  req_contract_active(rule_id, true) and\n  input_contract_active(contract_active) and\n  cond_contract_active(rule_id, contract_active);\n\nbilling_active_ok(rule_id) if req_billing_active(rule_id, false);\nbilling_active_ok(rule_id) if\n  req_billing_active(rule_id, true) and\n  input_billing_active(billing_active) and\n  cond_billing_active(rule_id, billing_active);\n\napproved_exception_ok(rule_id) if req_approved_exception_present(rule_id, false);\napproved_exception_ok(rule_id) if\n  req_approved_exception_present(rule_id, true) and\n  input_approved_exception_present(approved_exception_present) and\n  cond_approved_exception_present(rule_id, approved_exception_present);\n\naccount_ok(rule_id) if req_account_id(rule_id, false);\naccount_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);\n\nrule_matches(rule_id, priority, decision, reason) if\n  rule(rule_id, priority, decision, reason) and\n  action_ok(rule_id) and\n  resource_kind_ok(rule_id) and\n  access_type_ok(rule_id) and\n  oauth_required_ok(rule_id) and\n  service_tier_ok(rule_id) and\n  actor_role_ok(rule_id) and\n  tool_mode_ok(rule_id) and\n  identity_source_ok(rule_id) and\n  resource_tag_ok(rule_id) and\n  tool_ok(rule_id) and\n  write_ok(rule_id) and\n  human_review_ok(rule_id) and\n  introspection_ok_cond(rule_id) and\n  service_entitled_ok(rule_id) and\n  policy_accepted_ok(rule_id) and\n  contract_active_ok(rule_id) and\n  billing_active_ok(rule_id) and\n  approved_exception_ok(rule_id) and\n  account_ok(rule_id);\n\n# Compiled policy facts\nrule(\"service_tier_block_paid_write_for_mcp_only\", 10, \"block\", \"MCP-only access does not include paid governed write or control-plane execution.\");\nreq_action_name(\"service_tier_block_paid_write_for_mcp_only\", true);\nreq_resource_kind(\"service_tier_block_paid_write_for_mcp_only\", true);\nreq_access_type(\"service_tier_block_paid_write_for_mcp_only\", true);\nreq_oauth_required(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_service_tier(\"service_tier_block_paid_write_for_mcp_only\", true);\nreq_actor_role(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_tool_mode(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_identity_source(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_resource_tag(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_tool(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_has_write_intent(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_has_human_review_step(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_introspection_ok(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_service_entitled(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_policy_accepted(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_contract_active(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_billing_active(\"service_tier_block_paid_write_for_mcp_only\", false);\nreq_approved_exception_present(\"service_tier_block_paid_write_for_mcp_only\", true);\nreq_account_id(\"service_tier_block_paid_write_for_mcp_only\", false);\ncond_action_name(\"service_tier_block_paid_write_for_mcp_only\", \"execute\");\ncond_resource_kind(\"service_tier_block_paid_write_for_mcp_only\", \"hub_route\");\ncond_access_type(\"service_tier_block_paid_write_for_mcp_only\", \"control_plane\");\ncond_access_type(\"service_tier_block_paid_write_for_mcp_only\", \"destructive\");\ncond_access_type(\"service_tier_block_paid_write_for_mcp_only\", \"write\");\ncond_service_tier(\"service_tier_block_paid_write_for_mcp_only\", \"mcp_only\");\ncond_approved_exception_present(\"service_tier_block_paid_write_for_mcp_only\", false);\nrule(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", 20, \"block\", \"MCP-only access does not include Policy OS-only product surfaces.\");\nreq_action_name(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", true);\nreq_resource_kind(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", true);\nreq_access_type(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_oauth_required(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_service_tier(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", true);\nreq_actor_role(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_tool_mode(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_identity_source(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_resource_tag(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", true);\nreq_tool(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_has_write_intent(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_has_human_review_step(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_introspection_ok(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_service_entitled(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_policy_accepted(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_contract_active(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_billing_active(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nreq_approved_exception_present(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", true);\nreq_account_id(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\ncond_action_name(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", \"discover\");\ncond_action_name(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", \"execute\");\ncond_resource_kind(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", \"hub_route\");\ncond_service_tier(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", \"mcp_only\");\ncond_resource_tag(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", \"policy_os_only\");\ncond_approved_exception_present(\"service_tier_block_policy_os_only_discovery_for_mcp_only\", false);\nrule(\"service_tier_block_paid_access_without_service_entitlement\", 30, \"block\", \"Paid Policy OS access requires explicit service entitlement.\");\nreq_action_name(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_resource_kind(\"service_tier_block_paid_access_without_service_entitlement\", true);\nreq_access_type(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_oauth_required(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_service_tier(\"service_tier_block_paid_access_without_service_entitlement\", true);\nreq_actor_role(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_tool_mode(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_identity_source(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_resource_tag(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_tool(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_has_write_intent(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_has_human_review_step(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_introspection_ok(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_service_entitled(\"service_tier_block_paid_access_without_service_entitlement\", true);\nreq_policy_accepted(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_contract_active(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_billing_active(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_approved_exception_present(\"service_tier_block_paid_access_without_service_entitlement\", false);\nreq_account_id(\"service_tier_block_paid_access_without_service_entitlement\", false);\ncond_resource_kind(\"service_tier_block_paid_access_without_service_entitlement\", \"hub_route\");\ncond_service_tier(\"service_tier_block_paid_access_without_service_entitlement\", \"policy_os_core\");\ncond_service_tier(\"service_tier_block_paid_access_without_service_entitlement\", \"policy_os_trial\");\ncond_service_entitled(\"service_tier_block_paid_access_without_service_entitlement\", false);\nrule(\"service_tier_block_paid_access_without_policy_acceptance\", 40, \"block\", \"Paid Policy OS access requires required policy acceptance.\");\nreq_action_name(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_resource_kind(\"service_tier_block_paid_access_without_policy_acceptance\", true);\nreq_access_type(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_oauth_required(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_service_tier(\"service_tier_block_paid_access_without_policy_acceptance\", true);\nreq_actor_role(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_tool_mode(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_identity_source(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_resource_tag(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_tool(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_has_write_intent(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_has_human_review_step(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_introspection_ok(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_service_entitled(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_policy_accepted(\"service_tier_block_paid_access_without_policy_acceptance\", true);\nreq_contract_active(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_billing_active(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_approved_exception_present(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nreq_account_id(\"service_tier_block_paid_access_without_policy_acceptance\", false);\ncond_resource_kind(\"service_tier_block_paid_access_without_policy_acceptance\", \"hub_route\");\ncond_service_tier(\"service_tier_block_paid_access_without_policy_acceptance\", \"policy_os_core\");\ncond_service_tier(\"service_tier_block_paid_access_without_policy_acceptance\", \"policy_os_trial\");\ncond_policy_accepted(\"service_tier_block_paid_access_without_policy_acceptance\", false);\nrule(\"service_tier_block_paid_access_without_contract\", 50, \"block\", \"Paid Policy OS access requires an active contract.\");\nreq_action_name(\"service_tier_block_paid_access_without_contract\", false);\nreq_resource_kind(\"service_tier_block_paid_access_without_contract\", true);\nreq_access_type(\"service_tier_block_paid_access_without_contract\", false);\nreq_oauth_required(\"service_tier_block_paid_access_without_contract\", false);\nreq_service_tier(\"service_tier_block_paid_access_without_contract\", true);\nreq_actor_role(\"service_tier_block_paid_access_without_contract\", false);\nreq_tool_mode(\"service_tier_block_paid_access_without_contract\", false);\nreq_identity_source(\"service_tier_block_paid_access_without_contract\", false);\nreq_resource_tag(\"service_tier_block_paid_access_without_contract\", false);\nreq_tool(\"service_tier_block_paid_access_without_contract\", false);\nreq_has_write_intent(\"service_tier_block_paid_access_without_contract\", false);\nreq_has_human_review_step(\"service_tier_block_paid_access_without_contract\", false);\nreq_introspection_ok(\"service_tier_block_paid_access_without_contract\", false);\nreq_service_entitled(\"service_tier_block_paid_access_without_contract\", false);\nreq_policy_accepted(\"service_tier_block_paid_access_without_contract\", false);\nreq_contract_active(\"service_tier_block_paid_access_without_contract\", true);\nreq_billing_active(\"service_tier_block_paid_access_without_contract\", false);\nreq_approved_exception_present(\"service_tier_block_paid_access_without_contract\", false);\nreq_account_id(\"service_tier_block_paid_access_without_contract\", false);\ncond_resource_kind(\"service_tier_block_paid_access_without_contract\", \"hub_route\");\ncond_service_tier(\"service_tier_block_paid_access_without_contract\", \"policy_os_core\");\ncond_service_tier(\"service_tier_block_paid_access_without_contract\", \"policy_os_trial\");\ncond_contract_active(\"service_tier_block_paid_access_without_contract\", false);\nrule(\"service_tier_block_paid_access_without_billing\", 60, \"block\", \"Paid Policy OS access requires active billing.\");\nreq_action_name(\"service_tier_block_paid_access_without_billing\", false);\nreq_resource_kind(\"service_tier_block_paid_access_without_billing\", true);\nreq_access_type(\"service_tier_block_paid_access_without_billing\", false);\nreq_oauth_required(\"service_tier_block_paid_access_without_billing\", false);\nreq_service_tier(\"service_tier_block_paid_access_without_billing\", true);\nreq_actor_role(\"service_tier_block_paid_access_without_billing\", false);\nreq_tool_mode(\"service_tier_block_paid_access_without_billing\", false);\nreq_identity_source(\"service_tier_block_paid_access_without_billing\", false);\nreq_resource_tag(\"service_tier_block_paid_access_without_billing\", false);\nreq_tool(\"service_tier_block_paid_access_without_billing\", false);\nreq_has_write_intent(\"service_tier_block_paid_access_without_billing\", false);\nreq_has_human_review_step(\"service_tier_block_paid_access_without_billing\", false);\nreq_introspection_ok(\"service_tier_block_paid_access_without_billing\", false);\nreq_service_entitled(\"service_tier_block_paid_access_without_billing\", false);\nreq_policy_accepted(\"service_tier_block_paid_access_without_billing\", false);\nreq_contract_active(\"service_tier_block_paid_access_without_billing\", false);\nreq_billing_active(\"service_tier_block_paid_access_without_billing\", true);\nreq_approved_exception_present(\"service_tier_block_paid_access_without_billing\", false);\nreq_account_id(\"service_tier_block_paid_access_without_billing\", false);\ncond_resource_kind(\"service_tier_block_paid_access_without_billing\", \"hub_route\");\ncond_service_tier(\"service_tier_block_paid_access_without_billing\", \"policy_os_core\");\ncond_service_tier(\"service_tier_block_paid_access_without_billing\", \"policy_os_trial\");\ncond_billing_active(\"service_tier_block_paid_access_without_billing\", false);\nrule(\"service_tier_allow_default\", 900, \"allow\", \"Service-tier entitlement requirements are satisfied for this route.\");\nreq_action_name(\"service_tier_allow_default\", false);\nreq_resource_kind(\"service_tier_allow_default\", true);\nreq_access_type(\"service_tier_allow_default\", false);\nreq_oauth_required(\"service_tier_allow_default\", false);\nreq_service_tier(\"service_tier_allow_default\", false);\nreq_actor_role(\"service_tier_allow_default\", false);\nreq_tool_mode(\"service_tier_allow_default\", false);\nreq_identity_source(\"service_tier_allow_default\", false);\nreq_resource_tag(\"service_tier_allow_default\", false);\nreq_tool(\"service_tier_allow_default\", false);\nreq_has_write_intent(\"service_tier_allow_default\", false);\nreq_has_human_review_step(\"service_tier_allow_default\", false);\nreq_introspection_ok(\"service_tier_allow_default\", false);\nreq_service_entitled(\"service_tier_allow_default\", false);\nreq_policy_accepted(\"service_tier_allow_default\", false);\nreq_contract_active(\"service_tier_allow_default\", false);\nreq_billing_active(\"service_tier_allow_default\", false);\nreq_approved_exception_present(\"service_tier_allow_default\", false);\nreq_account_id(\"service_tier_allow_default\", false);\ncond_resource_kind(\"service_tier_allow_default\", \"hub_route\");\n",
+        "fallbackIrJson": "{\"id\":\"policy.service-tier-entitlement.v1\",\"name\":\"Service-tier entitlement\",\"description\":\"Commercial and entitlement gating for Policy OS-only hosted surfaces and governed write paths.\",\"rules\":[{\"id\":\"service_tier_block_paid_write_for_mcp_only\",\"priority\":10,\"when\":{\"resourceKinds\":[\"hub_route\"],\"actionNames\":[\"execute\"],\"serviceTiers\":[\"mcp_only\"],\"accessTypes\":[\"write\",\"destructive\",\"control_plane\"],\"approvedExceptionPresent\":false},\"then\":{\"decision\":\"block\",\"reason\":\"MCP-only access does not include paid governed write or control-plane execution.\"}},{\"id\":\"service_tier_block_policy_os_only_discovery_for_mcp_only\",\"priority\":20,\"when\":{\"resourceKinds\":[\"hub_route\"],\"actionNames\":[\"discover\",\"execute\"],\"serviceTiers\":[\"mcp_only\"],\"resourceTags\":[\"policy_os_only\"],\"approvedExceptionPresent\":false},\"then\":{\"decision\":\"block\",\"reason\":\"MCP-only access does not include Policy OS-only product surfaces.\"}},{\"id\":\"service_tier_block_paid_access_without_service_entitlement\",\"priority\":30,\"when\":{\"resourceKinds\":[\"hub_route\"],\"serviceTiers\":[\"policy_os_trial\",\"policy_os_core\"],\"serviceEntitled\":false},\"then\":{\"decision\":\"block\",\"reason\":\"Paid Policy OS access requires explicit service entitlement.\"}},{\"id\":\"service_tier_block_paid_access_without_policy_acceptance\",\"priority\":40,\"when\":{\"resourceKinds\":[\"hub_route\"],\"serviceTiers\":[\"policy_os_trial\",\"policy_os_core\"],\"policyAccepted\":false},\"then\":{\"decision\":\"block\",\"reason\":\"Paid Policy OS access requires required policy acceptance.\"}},{\"id\":\"service_tier_block_paid_access_without_contract\",\"priority\":50,\"when\":{\"resourceKinds\":[\"hub_route\"],\"serviceTiers\":[\"policy_os_trial\",\"policy_os_core\"],\"contractActive\":false},\"then\":{\"decision\":\"block\",\"reason\":\"Paid Policy OS access requires an active contract.\"}},{\"id\":\"service_tier_block_paid_access_without_billing\",\"priority\":60,\"when\":{\"resourceKinds\":[\"hub_route\"],\"serviceTiers\":[\"policy_os_trial\",\"policy_os_core\"],\"billingActive\":false},\"then\":{\"decision\":\"block\",\"reason\":\"Paid Policy OS access requires active billing.\"}},{\"id\":\"service_tier_allow_default\",\"priority\":900,\"when\":{\"resourceKinds\":[\"hub_route\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Service-tier entitlement requirements are satisfied for this route.\"}}]}",
+        "compilerVersion": "policy-os-polar-compiler-v1",
+        "policyHash": "07d0f4ac869772c9d11f8e8625808fba25ed50c17c392b92a1efc5620b3174b7"
+      },
+      "policy": {
+        "id": "policy.service-tier-entitlement.v1",
+        "name": "Service-tier entitlement",
+        "description": "Commercial and entitlement gating for Policy OS-only hosted surfaces and governed write paths.",
+        "rules": [
+          {
+            "id": "service_tier_block_paid_write_for_mcp_only",
+            "priority": 10,
+            "when": {
+              "resourceKinds": [
+                "hub_route"
+              ],
+              "actionNames": [
+                "execute"
+              ],
+              "serviceTiers": [
+                "mcp_only"
+              ],
+              "accessTypes": [
+                "write",
+                "destructive",
+                "control_plane"
+              ],
+              "approvedExceptionPresent": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "MCP-only access does not include paid governed write or control-plane execution."
+            }
+          },
+          {
+            "id": "service_tier_block_policy_os_only_discovery_for_mcp_only",
+            "priority": 20,
+            "when": {
+              "resourceKinds": [
+                "hub_route"
+              ],
+              "actionNames": [
+                "discover",
+                "execute"
+              ],
+              "serviceTiers": [
+                "mcp_only"
+              ],
+              "resourceTags": [
+                "policy_os_only"
+              ],
+              "approvedExceptionPresent": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "MCP-only access does not include Policy OS-only product surfaces."
+            }
+          },
+          {
+            "id": "service_tier_block_paid_access_without_service_entitlement",
+            "priority": 30,
+            "when": {
+              "resourceKinds": [
+                "hub_route"
+              ],
+              "serviceTiers": [
+                "policy_os_trial",
+                "policy_os_core"
+              ],
+              "serviceEntitled": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Paid Policy OS access requires explicit service entitlement."
+            }
+          },
+          {
+            "id": "service_tier_block_paid_access_without_policy_acceptance",
+            "priority": 40,
+            "when": {
+              "resourceKinds": [
+                "hub_route"
+              ],
+              "serviceTiers": [
+                "policy_os_trial",
+                "policy_os_core"
+              ],
+              "policyAccepted": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Paid Policy OS access requires required policy acceptance."
+            }
+          },
+          {
+            "id": "service_tier_block_paid_access_without_contract",
+            "priority": 50,
+            "when": {
+              "resourceKinds": [
+                "hub_route"
+              ],
+              "serviceTiers": [
+                "policy_os_trial",
+                "policy_os_core"
+              ],
+              "contractActive": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Paid Policy OS access requires an active contract."
+            }
+          },
+          {
+            "id": "service_tier_block_paid_access_without_billing",
+            "priority": 60,
+            "when": {
+              "resourceKinds": [
+                "hub_route"
+              ],
+              "serviceTiers": [
+                "policy_os_trial",
+                "policy_os_core"
+              ],
+              "billingActive": false
+            },
+            "then": {
+              "decision": "block",
+              "reason": "Paid Policy OS access requires active billing."
+            }
+          },
+          {
+            "id": "service_tier_allow_default",
+            "priority": 900,
+            "when": {
+              "resourceKinds": [
+                "hub_route"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Service-tier entitlement requirements are satisfied for this route."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "manifest": {
+        "policyId": "policy.user-bearer-token-governance.v1",
+        "version": 1,
+        "commitSha": "aa291776c241832234c153264498ce1ef1849232",
+        "status": "active",
+        "description": "Managed long-lived user bearer tokens for .agency-issued MCP access.",
+        "rolloutDefaults": {
+          "mode": "legacy_enforce",
+          "canaryPercent": 0
+        },
+        "polar": "# POLICY OS runtime interpreter policy.\n\naction_ok(rule_id) if req_action_name(rule_id, false);\naction_ok(rule_id) if req_action_name(rule_id, true) and input_action_name(action_name) and cond_action_name(rule_id, action_name);\n\nresource_kind_ok(rule_id) if req_resource_kind(rule_id, false);\nresource_kind_ok(rule_id) if\n  req_resource_kind(rule_id, true) and input_resource_kind(resource_kind) and cond_resource_kind(rule_id, resource_kind);\n\naccess_type_ok(rule_id) if req_access_type(rule_id, false);\naccess_type_ok(rule_id) if req_access_type(rule_id, true) and input_access_type(access_type) and cond_access_type(rule_id, access_type);\n\noauth_required_ok(rule_id) if req_oauth_required(rule_id, false);\noauth_required_ok(rule_id) if\n  req_oauth_required(rule_id, true) and input_oauth_required(oauth_required) and cond_oauth_required(rule_id, oauth_required);\n\nservice_tier_ok(rule_id) if req_service_tier(rule_id, false);\nservice_tier_ok(rule_id) if\n  req_service_tier(rule_id, true) and input_service_tier(service_tier) and cond_service_tier(rule_id, service_tier);\n\nactor_role_ok(rule_id) if req_actor_role(rule_id, false);\nactor_role_ok(rule_id) if req_actor_role(rule_id, true) and input_actor_role(actor_role) and cond_actor_role(rule_id, actor_role);\n\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, false);\ntool_mode_ok(rule_id) if req_tool_mode(rule_id, true) and input_tool_mode(tool_mode) and cond_tool_mode(rule_id, tool_mode);\n\nidentity_source_ok(rule_id) if req_identity_source(rule_id, false);\nidentity_source_ok(rule_id) if\n  req_identity_source(rule_id, true) and input_identity_source(identity_source) and cond_identity_source(rule_id, identity_source);\n\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, false);\nresource_tag_ok(rule_id) if req_resource_tag(rule_id, true) and input_resource_tag(resource_tag) and cond_resource_tag(rule_id, resource_tag);\n\ntool_ok(rule_id) if req_tool(rule_id, false);\ntool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);\n\nwrite_ok(rule_id) if req_has_write_intent(rule_id, false);\nwrite_ok(rule_id) if\n  req_has_write_intent(rule_id, true) and input_has_write_intent(has_write_intent) and cond_has_write_intent(rule_id, has_write_intent);\n\nhuman_review_ok(rule_id) if req_has_human_review_step(rule_id, false);\nhuman_review_ok(rule_id) if\n  req_has_human_review_step(rule_id, true) and\n  input_has_human_review_step(has_human_review_step) and\n  cond_has_human_review_step(rule_id, has_human_review_step);\n\nintrospection_ok_cond(rule_id) if req_introspection_ok(rule_id, false);\nintrospection_ok_cond(rule_id) if\n  req_introspection_ok(rule_id, true) and\n  input_introspection_ok(introspection_ok) and\n  cond_introspection_ok(rule_id, introspection_ok);\n\nservice_entitled_ok(rule_id) if req_service_entitled(rule_id, false);\nservice_entitled_ok(rule_id) if\n  req_service_entitled(rule_id, true) and\n  input_service_entitled(service_entitled) and\n  cond_service_entitled(rule_id, service_entitled);\n\npolicy_accepted_ok(rule_id) if req_policy_accepted(rule_id, false);\npolicy_accepted_ok(rule_id) if\n  req_policy_accepted(rule_id, true) and\n  input_policy_accepted(policy_accepted) and\n  cond_policy_accepted(rule_id, policy_accepted);\n\ncontract_active_ok(rule_id) if req_contract_active(rule_id, false);\ncontract_active_ok(rule_id) if\n  req_contract_active(rule_id, true) and\n  input_contract_active(contract_active) and\n  cond_contract_active(rule_id, contract_active);\n\nbilling_active_ok(rule_id) if req_billing_active(rule_id, false);\nbilling_active_ok(rule_id) if\n  req_billing_active(rule_id, true) and\n  input_billing_active(billing_active) and\n  cond_billing_active(rule_id, billing_active);\n\napproved_exception_ok(rule_id) if req_approved_exception_present(rule_id, false);\napproved_exception_ok(rule_id) if\n  req_approved_exception_present(rule_id, true) and\n  input_approved_exception_present(approved_exception_present) and\n  cond_approved_exception_present(rule_id, approved_exception_present);\n\naccount_ok(rule_id) if req_account_id(rule_id, false);\naccount_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);\n\nrule_matches(rule_id, priority, decision, reason) if\n  rule(rule_id, priority, decision, reason) and\n  action_ok(rule_id) and\n  resource_kind_ok(rule_id) and\n  access_type_ok(rule_id) and\n  oauth_required_ok(rule_id) and\n  service_tier_ok(rule_id) and\n  actor_role_ok(rule_id) and\n  tool_mode_ok(rule_id) and\n  identity_source_ok(rule_id) and\n  resource_tag_ok(rule_id) and\n  tool_ok(rule_id) and\n  write_ok(rule_id) and\n  human_review_ok(rule_id) and\n  introspection_ok_cond(rule_id) and\n  service_entitled_ok(rule_id) and\n  policy_accepted_ok(rule_id) and\n  contract_active_ok(rule_id) and\n  billing_active_ok(rule_id) and\n  approved_exception_ok(rule_id) and\n  account_ok(rule_id);\n\n# Compiled policy facts\nrule(\"user_bearer_issue_allow\", 10, \"allow\", \"Governed service path may issue a managed bearer token.\");\nreq_action_name(\"user_bearer_issue_allow\", true);\nreq_resource_kind(\"user_bearer_issue_allow\", true);\nreq_access_type(\"user_bearer_issue_allow\", false);\nreq_oauth_required(\"user_bearer_issue_allow\", false);\nreq_service_tier(\"user_bearer_issue_allow\", false);\nreq_actor_role(\"user_bearer_issue_allow\", false);\nreq_tool_mode(\"user_bearer_issue_allow\", false);\nreq_identity_source(\"user_bearer_issue_allow\", false);\nreq_resource_tag(\"user_bearer_issue_allow\", false);\nreq_tool(\"user_bearer_issue_allow\", false);\nreq_has_write_intent(\"user_bearer_issue_allow\", false);\nreq_has_human_review_step(\"user_bearer_issue_allow\", false);\nreq_introspection_ok(\"user_bearer_issue_allow\", false);\nreq_service_entitled(\"user_bearer_issue_allow\", false);\nreq_policy_accepted(\"user_bearer_issue_allow\", false);\nreq_contract_active(\"user_bearer_issue_allow\", false);\nreq_billing_active(\"user_bearer_issue_allow\", false);\nreq_approved_exception_present(\"user_bearer_issue_allow\", false);\nreq_account_id(\"user_bearer_issue_allow\", false);\ncond_action_name(\"user_bearer_issue_allow\", \"issue_user_bearer_token\");\ncond_resource_kind(\"user_bearer_issue_allow\", \"managed_bearer_token\");\nrule(\"user_bearer_revoke_allow\", 20, \"allow\", \"Governed service path may revoke a managed bearer token.\");\nreq_action_name(\"user_bearer_revoke_allow\", true);\nreq_resource_kind(\"user_bearer_revoke_allow\", true);\nreq_access_type(\"user_bearer_revoke_allow\", false);\nreq_oauth_required(\"user_bearer_revoke_allow\", false);\nreq_service_tier(\"user_bearer_revoke_allow\", false);\nreq_actor_role(\"user_bearer_revoke_allow\", false);\nreq_tool_mode(\"user_bearer_revoke_allow\", false);\nreq_identity_source(\"user_bearer_revoke_allow\", false);\nreq_resource_tag(\"user_bearer_revoke_allow\", false);\nreq_tool(\"user_bearer_revoke_allow\", false);\nreq_has_write_intent(\"user_bearer_revoke_allow\", false);\nreq_has_human_review_step(\"user_bearer_revoke_allow\", false);\nreq_introspection_ok(\"user_bearer_revoke_allow\", false);\nreq_service_entitled(\"user_bearer_revoke_allow\", false);\nreq_policy_accepted(\"user_bearer_revoke_allow\", false);\nreq_contract_active(\"user_bearer_revoke_allow\", false);\nreq_billing_active(\"user_bearer_revoke_allow\", false);\nreq_approved_exception_present(\"user_bearer_revoke_allow\", false);\nreq_account_id(\"user_bearer_revoke_allow\", false);\ncond_action_name(\"user_bearer_revoke_allow\", \"revoke_user_bearer_token\");\ncond_resource_kind(\"user_bearer_revoke_allow\", \"managed_bearer_token\");\n",
+        "fallbackIrJson": "{\"id\":\"policy.user-bearer-token-governance.v1\",\"name\":\"User bearer token governance\",\"description\":\"Managed bearer tokens are issued and revoked through governed service paths.\",\"rules\":[{\"id\":\"user_bearer_issue_allow\",\"priority\":10,\"when\":{\"actionNames\":[\"issue_user_bearer_token\"],\"resourceKinds\":[\"managed_bearer_token\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Governed service path may issue a managed bearer token.\"}},{\"id\":\"user_bearer_revoke_allow\",\"priority\":20,\"when\":{\"actionNames\":[\"revoke_user_bearer_token\"],\"resourceKinds\":[\"managed_bearer_token\"]},\"then\":{\"decision\":\"allow\",\"reason\":\"Governed service path may revoke a managed bearer token.\"}}]}",
+        "compilerVersion": "policy-os-polar-compiler-v1",
+        "policyHash": "83e62f5de53595554eb9f46c061c55e353ce549316c46f90d0200b2dd84b86e3"
+      },
+      "policy": {
+        "id": "policy.user-bearer-token-governance.v1",
+        "name": "User bearer token governance",
+        "description": "Managed bearer tokens are issued and revoked through governed service paths.",
+        "rules": [
+          {
+            "id": "user_bearer_issue_allow",
+            "priority": 10,
+            "when": {
+              "actionNames": [
+                "issue_user_bearer_token"
+              ],
+              "resourceKinds": [
+                "managed_bearer_token"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Governed service path may issue a managed bearer token."
+            }
+          },
+          {
+            "id": "user_bearer_revoke_allow",
+            "priority": 20,
+            "when": {
+              "actionNames": [
+                "revoke_user_bearer_token"
+              ],
+              "resourceKinds": [
+                "managed_bearer_token"
+              ]
+            },
+            "then": {
+              "decision": "allow",
+              "reason": "Governed service path may revoke a managed bearer token."
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

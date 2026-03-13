@@ -1,6 +1,17 @@
-import { Oso } from 'oso-cloud';
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-import { getPolicyManifest } from '../packages/mcp-authz/src/index.ts';
+import { getPolicyManifest, listPolicyManifests } from '../packages/mcp-authz/src/index.ts';
+
+const require = createRequire(import.meta.url);
+
+async function loadOsoClient() {
+  const osoEntry = require.resolve('oso-cloud', {
+    paths: [join(process.cwd(), 'packages/policy-os-engine')],
+  });
+  return import(pathToFileURL(osoEntry).href);
+}
 
 function readFlag(name: string): string | null {
   const index = process.argv.indexOf(name);
@@ -15,10 +26,7 @@ function parseBoolean(value: string | undefined): boolean {
 }
 
 async function main(): Promise<void> {
-  const policyId = readFlag('--policy-id') ?? process.env.OSO_POLICY_ID;
-  if (!policyId) {
-    throw new Error('Missing policy id. Pass --policy-id <policy-id> or set OSO_POLICY_ID.');
-  }
+  const policyId = readFlag('--policy-id');
 
   const osoUrl = process.env.OSO_URL;
   const osoApiKey = process.env.OSO_API_KEY;
@@ -27,21 +35,32 @@ async function main(): Promise<void> {
   }
 
   const dryRun = parseBoolean(process.env.DRY_RUN) || process.argv.includes('--dry-run');
-  const manifest = getPolicyManifest(policyId);
+  const manifests = policyId
+    ? [getPolicyManifest(policyId)]
+    : listPolicyManifests().filter((manifest) => manifest.status === 'active');
+
+  if (manifests.length === 0) {
+    throw new Error('No active policy manifests found to publish.');
+  }
 
   if (dryRun) {
-    console.log(`Dry run: would publish ${manifest.policyId} (${manifest.policyHash}) to ${osoUrl}`);
+    for (const manifest of manifests) {
+      console.log(`Dry run: would publish ${manifest.policyId} (${manifest.policyHash}) to ${osoUrl}`);
+    }
     return;
   }
 
   const fetchTimeoutRaw = process.env.OSO_FETCH_TIMEOUT_MS;
   const fetchTimeoutMillis = fetchTimeoutRaw ? Number.parseInt(fetchTimeoutRaw, 10) : undefined;
+  const { Oso } = await loadOsoClient();
   const client = new Oso(osoUrl, osoApiKey, {
     fetchTimeoutMillis: Number.isFinite(fetchTimeoutMillis ?? NaN) ? fetchTimeoutMillis : undefined,
   });
 
-  await client.policy(manifest.polar);
-  console.log(`Published ${manifest.policyId} (${manifest.policyHash}) to ${osoUrl}`);
+  for (const manifest of manifests) {
+    await client.policy(manifest.polar);
+    console.log(`Published ${manifest.policyId} (${manifest.policyHash}) to ${osoUrl}`);
+  }
 }
 
 await main();

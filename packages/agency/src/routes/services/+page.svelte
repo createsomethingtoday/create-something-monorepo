@@ -39,9 +39,9 @@
       priceDescription: 'Scoped build'
     },
     {
-      name: 'Reliability and Control Layer',
-      description: `Operational safeguards delivered with ${deliveryVector.clientFacingLabel}: evals, policy controls, release gates, and incident loops.`,
-      type: 'Add-on Retainer',
+      name: 'Policy OS',
+      description: `Operational safeguards delivered with ${deliveryVector.clientFacingLabel}: policy artifacts, release gates, blocked-state UX, and incident loops.`,
+      type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly'
     },
@@ -59,7 +59,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow Infrastructure for production business workflows. Reliability and Control Layer and Enterprise Extension are added as workflow complexity and operational risk increase.'
+        'Policy OS is the canonical paid package. Workflow Infrastructure delivers the implementation layer, and Enterprise Extension expands that package for higher-stakes operations.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
@@ -72,9 +72,9 @@
         '.agency owns workflow infrastructure design, reliability controls, trust boundaries, and enterprise extension architecture.'
     },
     {
-      question: 'When should we add the Reliability and Control Layer?',
+      question: 'When should we add Policy OS?',
       answer:
-        'Add it when failures become expensive, workflows become autonomous, or multiple systems must stay in sync. It is the reliability gate before scale.'
+        'Add it when failures become expensive, workflows become autonomous, or multiple systems must stay in sync. It is the governed-execution layer before scale.'
     },
     {
       question: 'When do we need Enterprise Extension?',
@@ -131,8 +131,8 @@
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
         We help CTOs and engineering leaders orchestrate the tools their teams already rely on,
-        add control layers around AI execution, and keep cross-system work reliable in production.
-        Start with Workflow Infrastructure. Add the Reliability and Control Layer when failure cost
+        add Policy OS around AI execution, and keep cross-system work reliable in production.
+        Start with Workflow Infrastructure. Add Policy OS when failure cost
         rises. Escalate to Enterprise Extension for high-stakes operations.
       </p>
     </BlurFade>
@@ -144,8 +144,8 @@
   <div class="section-container">
     <BlurFade delay={0.3}>
       <GovernedExecutionFlow
-        title="Where the Control Layer fits"
-        description="Workflow Infrastructure creates the route. The Control Layer decides whether the route can run fast, needs review, or should stop."
+        title="Where Policy OS fits"
+        description="Workflow Infrastructure creates the route. Policy OS decides whether the route can run fast, needs review, or should stop."
       />
     </BlurFade>
   </div>
@@ -190,7 +190,7 @@
             <div class="retainer-period">From wedge to governed execution</div>
           </div>
           <p class="retainer-note">
-            Start with one workflow. Add the Control Layer when failures become expensive. Escalate
+            Start with one workflow. Add Policy OS when failures become expensive. Escalate
             to Enterprise Extension when governance and orchestration requirements widen.
           </p>
         </div>
@@ -207,8 +207,8 @@
               </ul>
             </article>
             <article class="progression-card highlighted-card">
-              <span class="progression-tag">Branded layer</span>
-              <h3>Control Layer</h3>
+              <span class="progression-tag">Canonical package</span>
+              <h3>Policy OS</h3>
               <p>The governed middle that makes <strong>{deliveryVector.clientFacingLabel}</strong> safe to run in production.</p>
               <ul class="retainer-list">
                 <li>Approval and block boundaries</li>
@@ -229,7 +229,7 @@
           </div>
           <div class="retainer-callout">
             <p>
-              Discovery can start with MCP-only, but the Control Layer is where execution becomes a
+              Discovery can start with MCP-only, but Policy OS is where execution becomes a
               managed product instead of a loose integration.
             </p>
           </div>
@@ -245,7 +245,7 @@
     <BlurFade>
       <ArtifactSystemStrip
         title="What ships with every governed engagement"
-        description="The Control Layer is not a promise in a sales call. It is a set of artifacts your team can inspect, run, and inherit."
+        description="Policy OS is not a promise in a sales call. It is a set of artifacts your team can inspect, run, and inherit."
       />
     </BlurFade>
   </div>
@@ -273,7 +273,7 @@
       <BlurFade delay={0.2}>
           <div class="timeline-card">
             <span class="timeline-label">Phase 2</span>
-          <h3>Reliability and Control</h3>
+          <h3>Policy OS</h3>
           <p>
             .agency adds eval coverage, release checks, policy envelopes, and incident loops as
             automation scope, business criticality, and risk increase.

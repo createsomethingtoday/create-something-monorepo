@@ -44,9 +44,15 @@ const SERVICES: ContentItem[] = [
 		category: 'service'
 	},
 	{
+		slug: 'policy-os',
+		title: 'Policy OS',
+		description: 'Canonical paid governed-execution package: policy artifacts, approval boundaries, release evidence, and recurring runtime operations.',
+		category: 'service'
+	},
+	{
 		slug: 'reliability-and-control-layer',
-		title: 'Reliability and Control Layer',
-		description: 'CREATE SOMETHING .agency provides evals, release gates, policy controls, and incident loops for production automation.',
+		title: 'Reliability and Control Layer (Deprecated Alias)',
+		description: 'Compatibility alias for the Policy OS package during the current transition window.',
 		category: 'service'
 	},
 	{

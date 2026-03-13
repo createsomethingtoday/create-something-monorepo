@@ -13,7 +13,7 @@
   - `mcp_contract.yaml`
   - `agent_contract.yaml`
   - `outcome_contract.md`
-  - `golden-task-checks.md`
+  - `golden_tasks.yaml`
   - `runbook.md`
 - confirm approval owner
 - confirm fallback owner

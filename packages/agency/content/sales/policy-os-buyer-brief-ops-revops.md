@@ -36,8 +36,8 @@ This is how automation scales without creating hidden operational risk.
 ### 1) Workflow Infrastructure
 Build the workflow substrate: trusted integrations, tool contracts, and deterministic execution paths.
 
-### 2) Reliability and Control Layer
-Add reliability controls: policy envelopes, release gates, approval rules, and incident loops.
+### 2) Policy OS
+Add governed execution controls: policy envelopes, release gates, approval rules, blocked-state UX, and incident loops.
 
 ### 3) Enterprise Extension
 Extend into high-stakes operations: cross-system orchestration, strict governance controls, and custom trust boundaries.
@@ -52,7 +52,7 @@ Extend into high-stakes operations: cross-system orchestration, strict governanc
   Allowed actions, approval mode, escalation triggers, budget/latency guardrails.
 - `outcome_contract.md`  
   Workflow targets, success criteria, fallback/manual path, ownership boundaries.
-- Golden-task checks + runbook  
+- `golden_tasks.yaml` + runbook
   Regression gates, incident response, rollback path.
 
 ---
@@ -88,7 +88,7 @@ Most automations fail at governance boundaries. This model adds approvals, polic
 It is phased. Start with one high-value workflow, govern only the risky actions, then expand coverage with evidence.
 
 ### "Why not MCP-only?"
-MCP-only is a valid entry wedge for discovery/compliance. The reliability and control layer is what makes autonomous outcomes dependable in production.
+MCP-only is a valid entry wedge for discovery/compliance. Policy OS is what makes autonomous outcomes dependable in production.
 
 ---
 

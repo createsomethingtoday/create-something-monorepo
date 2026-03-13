@@ -20,12 +20,12 @@
       priceDescription: 'Scoped build with optional ongoing support'
     },
     {
-      name: 'Reliability and Control Layer',
+      name: 'Policy OS',
       description:
-        'CREATE SOMETHING .agency adds evals, policy gates, release checks, and incident loops so automation scales safely.',
-      type: 'Add-on Retainer',
+        'CREATE SOMETHING .agency adds policy artifacts, release checks, blocked-state UX, and incident loops so automation scales safely.',
+      type: 'Governed Execution Retainer',
       price: 'Custom',
-      priceDescription: 'Monthly reliability and governance layer'
+      priceDescription: 'Monthly governed execution layer'
     },
     {
       name: 'Enterprise Extension',
@@ -181,7 +181,7 @@
       <BlurFade delay={0.2}>
         <p class="hero-detail">
           I help CTOs and engineering leaders orchestrate the tools their teams already rely on,
-          add a Control Layer around AI execution, and ship cross-system workflows that stay
+          add Policy OS around AI execution, and ship cross-system workflows that stay
           reliable when the stakes become operational.
         </p>
       </BlurFade>
@@ -293,7 +293,7 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Three escalation lanes: Workflow Infrastructure, Reliability and Control Layer, and
+        Three escalation lanes: Workflow Infrastructure, Policy OS, and
         Enterprise Extension.
       </p>
     </BlurFade>
@@ -324,10 +324,10 @@
           </div>
           <div class="funnel-step-content">
             <span class="funnel-step-label">Lane 2</span>
-            <h3>Reliability and Control Layer</h3>
+            <h3>Policy OS</h3>
             <p>
-              I add evals, release gates, policy rules, and incident reviews so automation stays
-              reliable as workflow scope expands.
+              I add policy artifacts, release gates, blocked-state UX, and incident reviews so
+              automation stays reliable as workflow scope expands.
             </p>
           </div>
         </div>
@@ -393,12 +393,12 @@
         <div class="offering-card offering-featured">
           <span class="offering-badge">The real product</span>
           <div class="offering-header">
-            <h3 class="offering-name">Reliability and Control Layer</h3>
+            <h3 class="offering-name">Policy OS</h3>
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              The reliability layer for production automation. Evals, release checks, and policy
-              controls.
+              The governed execution package for production automation. Policy artifacts, release
+              checks, and operational review loops.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -482,7 +482,7 @@
   <div class="section-container">
     <BlurFade>
       <ArtifactSystemStrip
-        title="What makes the Control Layer durable"
+        title="What makes Policy OS durable"
         description="The buyer promise is backed by explicit contracts, runbooks, and release evidence, not by founder memory or hidden prompts."
       />
     </BlurFade>

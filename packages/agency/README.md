@@ -26,7 +26,7 @@ This is what `.agency` delivers.
 | Offer | Description | Typical Output |
 |-------|-------------|----------------|
 | **Workflow Infrastructure** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
-| **Reliability and Control Layer** | Add policy controls, release gates, approval rules, and incident loops. | Governed runtime behavior + reliability controls |
+| **Policy OS** | Add policy controls, release gates, approval rules, incident loops, and recurring governed-execution operations. | Governed runtime behavior + release evidence |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
 | **Workflow Mapping Session** | Paid pre-implementation mapping to scope workflow and trust boundary. | Pilot scope, trust boundary, and 30-day plan |
 
@@ -47,7 +47,7 @@ This is what `.agency` delivers.
 ```
 
 **Entry point**: a scoped MCP wedge that connects one important workflow with trusted action paths  
-**Expansion**: Reliability and Control plus Enterprise Extension based on risk and workflow complexity
+**Expansion**: Workflow Infrastructure first, Policy OS for governed execution, then Enterprise Extension based on risk and workflow complexity
 
 ---
 

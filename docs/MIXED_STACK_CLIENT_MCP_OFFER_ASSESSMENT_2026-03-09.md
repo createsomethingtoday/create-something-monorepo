@@ -3,6 +3,8 @@
 > Prepared: March 9, 2026
 > Context: internal assessment of the Gemini/Composio "client MCP hub" brief against current monorepo capabilities and CREATE SOMETHING packaging rules
 
+> Superseded note (March 13, 2026): This memo remains historically accurate for its authorship date, but current canonical packaging now uses `Policy OS` as the default paid package. See [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md).
+
 ## Executive Summary
 
 - The external brief is directionally correct: Composio can support managed auth, toolkit-scoped MCP distribution, and partner-facing MCP delivery for client environments.

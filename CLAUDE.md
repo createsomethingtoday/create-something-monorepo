@@ -96,7 +96,7 @@ This inverts the common assumption that you build an AI agent first, then add in
 2. **Skills provide capabilities** (reusable, portable across platforms)
 3. **Agents produce outcomes** (the monetizable layer)
 
-**Packaging rule**: `MCP-only` is the discovery/compliance wedge; `Agent Outcome Stack` (agents + MCPs) is the default paid delivery. Codex is the primary vector, with MCP/policy artifacts kept portable across clients.
+**Packaging rule**: `MCP-only` is the discovery/compliance wedge; `Policy OS` (agents + MCPs + governed execution) is the default paid delivery. Codex is the primary vector, with MCP/policy artifacts kept portable across clients.
 
 ### WORKWAY
 
@@ -144,7 +144,7 @@ The hermeneutic circle: Philosophy informs research. Research validates practice
 |---------|-------------|-------|
 | **MCP Audit** | What MCPs would unlock value for your business? | Strategic clarity |
 | **MCP-only (Discovery/Compliance)** | Limited-scope or read-only connectivity for teams operating agents internally | Fast trust setup with lower autonomy risk |
-| **Agent Outcome Stack (Default)** | Custom MCP server(s) + Codex setup + policy + runbook + managed judgment loop | Differentiated outcomes + premium margin |
+| **Policy OS (Default)** | Custom MCP server(s) + Codex setup + policy + runbook + managed judgment loop | Differentiated outcomes + premium margin |
 | **Ongoing Support** | Auth updates, policy tuning, golden-task regressions, new capabilities | Recurring relationship |
 
 **Positioning shift**: From "We build websites/apps with modern stacks" to "We build the connectivity and outcome layers between your tools and AI."
@@ -224,7 +224,7 @@ Zero external dependencies. Pure framework knowledge served through protocol. Se
 
 ### Integration connectivity (Composio)
 
-For **commodity app connectivity** (Gmail, Notion, Slack, etc.), prefer [Composio](https://composio.dev) via `@create-something/composio-bridge`: managed auth, tool discovery, and execution with the client seeing our MCP. Use **custom** OAuth and APIs when the integration is deep or client-specific (e.g. Half Dozen Gmail Sync). Packaging is unchanged: Composio remains internal plumbing, while client delivery defaults to the Agent Outcome Stack and reserves MCP-only for discovery/compliance cases. See `docs/COMPOSIO_PATTERNS.md` for when-to-use, wrap pattern, and SDK pointers; `docs/internal/COMPOSIO_EVALUATION.md` for the evaluation.
+For **commodity app connectivity** (Gmail, Notion, Slack, etc.), prefer [Composio](https://composio.dev) via `@create-something/composio-bridge`: managed auth, tool discovery, and execution with the client seeing our MCP. Use **custom** OAuth and APIs when the integration is deep or client-specific (e.g. Half Dozen Gmail Sync). Packaging is unchanged: Composio remains internal plumbing, while client delivery defaults to Policy OS and reserves MCP-only for discovery/compliance cases. See `docs/COMPOSIO_PATTERNS.md` for when-to-use, wrap pattern, and SDK pointers; `docs/internal/COMPOSIO_EVALUATION.md` for the evaluation.
 
 ## Languages
 

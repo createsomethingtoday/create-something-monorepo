@@ -101,7 +101,7 @@ Hi {{Name}},
 
 For the MCP-only wedge, please confirm:
 - single workflow boundary
-- trigger criteria for entering the Reliability and Control Layer
+- trigger criteria for entering Policy OS
 - checkpoint date for trigger review
 
 If runtime tracing is in scope, we can add Braintrust as observability support after the wedge is defined.

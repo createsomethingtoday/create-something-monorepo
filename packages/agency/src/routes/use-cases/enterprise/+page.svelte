@@ -146,8 +146,8 @@
 </script>
 
 <SEO
-	title="Enterprise Judgment Operations | CREATE SOMETHING .agency"
-	description="Reliability and control for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the workflow wedge is live."
+	title="Policy OS For Enterprise Judgment Operations | CREATE SOMETHING .agency"
+	description="Policy OS for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the workflow wedge is live."
 	keywords="enterprise automation reliability, workflow controls, policy operations, ai governance, mcp wedge"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -166,7 +166,7 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					For teams already running MCPs or cross-system workflows, this is the control layer that
+					For teams already running MCPs or cross-system workflows, this is Policy OS, the governed execution layer that
 					keeps outcomes reliable. We add prompt optimization, policy controls, approval and
 					escalation logic, and ongoing operational oversight.
 				</p>
@@ -355,7 +355,7 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Your workflows need a control layer.</h2>
+			<h2 class="cta-heading">Your workflows need Policy OS.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">

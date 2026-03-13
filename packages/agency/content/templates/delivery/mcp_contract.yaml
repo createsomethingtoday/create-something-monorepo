@@ -1,101 +1,104 @@
-version: "0.1"
-artifact: "mcp_contract"
-status: "draft"
+version: "1.0"
+contract_type: "mcp_contract"
 
-client:
-  name: "CLIENT_NAME"
-  owner: "DECISION_OWNER"
-  workflow_name: "PRIMARY_WORKFLOW_NAME"
-  workflow_owner: "WORKFLOW_OWNER"
+metadata:
+  client_name: "<client-name>"
+  engagement_id: "<engagement-id>"
+  package_name: "policy-os" # policy-os | mcp-only
+  status: "draft" # draft | active | deprecated
+  approved_workflows:
+    - "<workflow-name>"
+  approval_mode: "hybrid" # none | human-in-the-loop | hybrid
+  escalation_policy: "<policy-id-or-runbook-section>"
+  review_cadence: "weekly-review-monthly-tuning"
+  billing_and_entitlement_assumptions:
+    service_tier: "policy_os_trial" # mcp_only | policy_os_trial | policy_os_core
+    service_entitled: true
+    policy_accepted: true
+    contract_active: true
+    billing_active: true
+  owners:
+    technical_owner: "<name>"
+    client_owner: "<name>"
+  codex_vector:
+    primary_client: "codex"
+    portability_target_clients:
+      - "claude"
+      - "cursor"
 
-scope:
-  objective: "WHAT BUSINESS OUTCOME THIS MCP SURFACE ENABLES"
-  workflow_boundary: "START AND END OF THE PILOT WORKFLOW"
-  out_of_scope:
-    - "OUT_OF_SCOPE_ITEM"
-
-systems:
-  source_systems:
-    - name: "SYSTEM_OF_RECORD"
-      role: "database"
-      notes: "PRIMARY STATE OR RECORD SOURCE"
-  connected_systems:
-    - name: "CONNECTED_APP"
-      role: "integration"
-      notes: "SECONDARY SYSTEM OR ACTION DESTINATION"
-
-resources:
-  - uri: "domain://entity/{id}"
-    name: "RESOURCE_NAME"
-    description: "WHAT THE AGENT CAN READ"
-    source_system: "SYSTEM_OF_RECORD"
-    freshness_requirement: "realtime|near_realtime|daily|manual"
-    access: "read"
-    pii: false
-
-tools:
-  - name: "tool_name"
-    description: "WHAT THE TOOL DOES"
-    action_type: "read|write|send|create|update|delete"
-    systems_touched:
-      - "SYSTEM_NAME"
-    approval_mode: "auto_allow|approval_required|block"
-    auth_scopes:
-      - "oauth:scope"
-    input_schema_summary:
-      required:
-        - "field_name"
-      optional:
-        - "optional_field_name"
-    output_contract:
-      success_shape: "BRIEF DESCRIPTION OF SUCCESS RESULT"
-      error_shape: "BRIEF DESCRIPTION OF ERROR RESULT"
-    idempotency_expectation: "HOW DUPLICATE CALLS ARE HANDLED"
-    fallback_behavior: "WHAT HAPPENS IF TOOL EXECUTION FAILS"
-
-prompts:
-  - name: "prompt_name"
-    purpose: "OPTIONAL MCP PROMPT OR SKILL SURFACE"
-    usage: "WHEN THIS SHOULD BE SELECTED"
+mcp_server:
+  name: "<server-name>"
+  version: "<semver>"
+  transport: "sse" # sse | stdio | remote
+  endpoints:
+    production: "<https-endpoint>"
+    staging: "<https-endpoint>"
+  runtime:
+    framework: "@create-something/mcp-core"
+    hosting: "cloudflare-workers"
 
 auth:
-  identity_source: "AUTH0|CLIENT_OAUTH|SERVICE_ACCOUNT|OTHER"
-  account_model: "shared|per_user|per_team"
-  production_write_access: true
-  auth_notes:
-    - "AUTH OR ENTITLEMENT CONSTRAINT"
+  strategy: "oauth" # oauth | api-key | service-account | mixed
+  provider: "<provider-name>"
+  scopes:
+    required: []
+    optional: []
+  token_lifecycle:
+    refresh_policy: "<policy>"
+    revocation_policy: "<policy>"
+  secrets:
+    owner: "<team-or-person>"
+    rotation_window_days: 90
 
-policy_integration:
-  control_surface: "agent_contract.yaml"
-  observability_surface:
-    - "Braintrust"
-  release_gate_dependency: "REFERENCE TO RELEASE GATES OR GOLDEN TASKS"
+resources:
+  - id: "<resource-id>"
+    uri: "<resource-uri>"
+    schema_ref: "<schema-url-or-path>"
+    data_classification: "internal" # public | internal | confidential | restricted
+    freshness_sla_minutes: 15
+
+tools:
+  - name: "<tool-name>"
+    description: "<what-it-does>"
+    schema_ref: "<schema-url-or-path>"
+    side_effect_level: "read" # read | write | destructive
+    approval_required: "policy" # never | policy | always
+    latency_budget_ms: 5000
+    idempotent: true
+
+prompts:
+  - id: "<prompt-id>"
+    purpose: "<why-this-prompt-exists>"
+    owner: "<name>"
+    version: "<prompt-version>"
 
 error_model:
-  expected_failures:
-    - "STALE_STATE"
-    - "AUTH_EXPIRED"
-    - "VALIDATION_FAILURE"
-  operator_visible_errors:
-    - "ERROR THE USER/OPERATOR SHOULD SEE"
-  audit_fields:
-    - "workflow_id"
-    - "tool_name"
-    - "decision"
-    - "correlation_id"
+  retry_policy:
+    max_retries: 2
+    backoff_ms: 500
+  codes:
+    - code: "AUTH_EXPIRED"
+      meaning: "Access token expired or revoked."
+      user_action: "Reconnect account."
+    - code: "SCOPE_MISSING"
+      meaning: "Required OAuth scope is missing."
+      user_action: "Grant required scope and retry."
+    - code: "RATE_LIMITED"
+      meaning: "Provider throttled requests."
+      user_action: "Retry after cooldown."
+    - code: "UPSTREAM_UNAVAILABLE"
+      meaning: "Dependency is unavailable."
+      user_action: "Use fallback/manual path."
 
-non_functional_requirements:
-  latency_budget_ms: 5000
-  retry_policy: "none|bounded_retry|queue_retry"
-  logging_requirement: "WHAT MUST BE LOGGED"
-  data_retention_notes:
-    - "RETENTION OR REDACTION REQUIREMENT"
-
-acceptance:
-  required_before_build:
-    - "SYSTEM ACCESS CONFIRMED"
-    - "WORKFLOW BOUNDARY APPROVED"
-  required_before_production:
-    - "AUTH SCOPES APPROVED"
-    - "GOLDEN TASKS PASS"
-    - "MANUAL FALLBACK VERIFIED"
+handoff_bundle:
+  required_artifacts:
+    - "mcp_contract.yaml"
+    - "agent_contract.yaml"
+    - "outcome_contract.md"
+    - "golden_tasks.yaml"
+    - "runbook.md"
+  operational_assets:
+    - "endpoint inventory"
+    - "auth scope matrix"
+    - "tool/resource/prompt registry"
+    - "incident + rollback runbook"

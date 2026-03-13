@@ -77,9 +77,9 @@ jobs:
           name: mcp-authz-manifests
           path: docs/policies/generated/
 
-      - name: Publish active policy to Oso Cloud
-        if: github.ref == 'refs/heads/main' && vars.OSO_POLICY_ID != '' && secrets.OSO_URL != '' && secrets.OSO_API_KEY != ''
-        run: pnpm authz:publish --policy-id "${{ vars.OSO_POLICY_ID }}"
+      - name: Publish active policies to Oso Cloud
+        if: github.ref == 'refs/heads/main' && secrets.OSO_URL != '' && secrets.OSO_API_KEY != ''
+        run: pnpm authz:publish
         env:
           OSO_URL: ${{ secrets.OSO_URL }}
           OSO_API_KEY: ${{ secrets.OSO_API_KEY }}

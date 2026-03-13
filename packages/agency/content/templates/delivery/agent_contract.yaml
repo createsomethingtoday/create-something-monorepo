@@ -1,101 +1,84 @@
-version: "0.1"
-artifact: "agent_contract"
-status: "draft"
+version: "1.0"
+contract_type: "agent_contract"
 
-client:
-  name: "CLIENT_NAME"
-  workflow_name: "PRIMARY_WORKFLOW_NAME"
-  workflow_owner: "WORKFLOW_OWNER"
+metadata:
+  client_name: "<client-name>"
+  engagement_id: "<engagement-id>"
+  status: "draft" # draft | active | deprecated
+  package_name: "policy-os" # policy-os | mcp-only
+  approved_workflows:
+    - "<workflow-name>"
+  approval_mode: "hybrid" # none | human-in-the-loop | hybrid
+  escalation_policy: "<policy-id-or-runbook-section>"
+  review_cadence: "weekly-review-monthly-tuning"
+  billing_and_entitlement_assumptions:
+    service_tier: "policy_os_trial" # mcp_only | policy_os_trial | policy_os_core
+    service_entitled: true
+    policy_accepted: true
+    contract_active: true
+    billing_active: true
+  delivery_vector:
+    canonical_phrase: "Skills on MCP"
+    client_facing_label: "Skills + MCP"
+    technical_label: "MCP + Skills"
 
-purpose:
-  business_objective: "WHAT BUSINESS RESULT THE AGENT IS ALLOWED TO HELP PRODUCE"
-  operator_outcome: "WHAT THE HUMAN TEAM SHOULD EXPERIENCE"
+agent_profile:
+  name: "<agent-name>"
+  purpose: "<primary-job-to-be-done>"
+  primary_interface: "codex" # codex | claude | cursor | api
+  portability:
+    required: true
+    supported_clients:
+      - "codex"
+      - "claude"
+      - "cursor"
 
-runtime_profile:
-  delivery_vector: "Skills + MCP"
-  execution_mode: "copilot|approval_gated|semi_autonomous|autonomous"
-  environment: "staging|production"
+capability_scope:
+  allowed_tools:
+    - "<tool-name>"
+  blocked_tools:
+    - "<tool-name>"
+  allowed_resource_patterns:
+    - "<resource-uri-glob>"
 
-action_policy:
-  auto_allow:
-    - action: "READ_OR_LOW_RISK_ACTION"
-      rationale: "WHY THIS CAN RUN WITHOUT REVIEW"
-  approval_required:
-    - action: "RISKY_WRITE_OR_SEND_ACTION"
-      rationale: "WHY HUMAN REVIEW IS REQUIRED"
-      approval_inbox: "WHERE APPROVAL HAPPENS"
-  block:
-    - action: "DISALLOWED_ACTION"
-      rationale: "WHY THIS MUST NEVER EXECUTE"
+approval_and_control:
+  mode: "hybrid" # none | human-in-the-loop | hybrid
+  write_operations: "policy" # blocked | policy | always-approved
+  destructive_operations: "always-human"
+  escalation_triggers:
+    - "pricing_or_contract_change"
+    - "high_confidence_below_threshold"
+    - "missing_required_data"
 
-escalation:
-  triggers:
-    - "POLICY_AMBIGUITY"
-    - "MISSING_REQUIRED_CONTEXT"
-    - "HIGH_RISK_EXCEPTION"
-  behavior:
-    - "STOP AND REQUEST HUMAN REVIEW"
-    - "EMIT STRUCTURED REASON"
-  escalation_owner: "HUMAN_OWNER"
+judgment_layer:
+  policy_artifacts:
+    - id: "<policy-id>"
+      description: "<policy-purpose>"
+      owner: "<name>"
+      version: "<version>"
+  decision_thresholds:
+    minimum_confidence: 0.8
+    max_autonomous_steps: 5
 
-guardrails:
-  budget:
-    max_tool_calls_per_run: 10
-    max_duration_minutes: 15
-  latency:
-    soft_limit_ms: 8000
-  data_handling:
-    pii_allowed: false
-    redact_before_output: true
-  unsafe_defaults:
-    - "NO DESTRUCTIVE ACTION WITHOUT EXPLICIT REVIEW"
-    - "NO WRITE ACTION WHEN SOURCE STATE IS STALE"
-
-decision_rules:
-  use_latest_source_of_truth: true
-  require_human_review_on_write: true
-  require_human_review_when_introspection_fails: true
-  fallback_decision: "block|approval_required"
-
-inputs_required:
-  - "WORKFLOW_CONTEXT"
-  - "SYSTEM_STATE"
-  - "REQUIRED_IDENTIFIERS"
-
-outputs_expected:
-  - "DECISION"
-  - "RATIONALE"
-  - "AUDIT_FIELDS"
-  - "NEXT_ACTION"
-
-manual_fallback:
-  path: "HOW THE HUMAN TEAM COMPLETES THE WORK WITHOUT THE AGENT"
-  owner: "FALLBACK_OWNER"
-  success_condition: "HOW TO KNOW FALLBACK COMPLETED SUCCESSFULLY"
+budget_and_latency_guardrails:
+  max_cost_usd_per_day: 25
+  max_cost_usd_per_task: 2
+  p95_latency_ms: 10000
+  hard_timeout_ms: 30000
 
 observability:
-  traces_enabled: true
-  evals_enabled: true
-  providers:
-    - name: "Braintrust"
-      role: "observability_and_evals"
-  required_audit_fields:
-    - "decision"
-    - "matched_policy_class"
-    - "approver_id"
-    - "correlation_id"
+  log_sink: "<provider>"
+  required_metrics:
+    - "tool_success_rate"
+    - "approval_rate"
+    - "escalation_rate"
+    - "cost_per_task"
 
-release_gates:
-  pre_prod:
-    - "GOLDEN TASK SET PASSES"
-    - "APPROVAL PATH VERIFIED"
-    - "BLOCKED ACTIONS TESTED"
-  production:
-    - "WORKFLOW OWNER SIGNOFF"
-    - "ROLLBACK PATH CONFIRMED"
-    - "TRACE VISIBILITY CONFIRMED"
-
-ownership:
-  policy_owner: "ROLE_OR_NAME"
-  workflow_owner: "ROLE_OR_NAME"
-  technical_owner: "ROLE_OR_NAME"
+runbook:
+  codex_setup_included: true
+  policy_pack_included: true
+  operator_runbook_included: true
+  rollback_steps:
+    - "Disable write-capable tools"
+    - "Switch to read-only policy"
+    - "Route unresolved tasks to human owner"

@@ -38,6 +38,8 @@ Each policy has:
 
 ## Notes
 
-- Status is initialized as `draft`.
+- Runtime-backed authz manifests compiled from `packages/mcp-authz` may be `active` when they are enforced and publishable.
+- Docs-only policy artifacts remain `draft` until promoted under lifecycle governance.
 - Policy IDs are stable and intended for traceability in runbooks, control planes, and sales artifacts.
 - Promotion flow is defined in `policy.policy-lifecycle-governance.v1`.
+- Compiled runtime artifacts are generated under `docs/policies/generated/`.

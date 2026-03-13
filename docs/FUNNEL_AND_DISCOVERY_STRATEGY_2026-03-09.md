@@ -3,6 +3,8 @@
 > Prepared: March 9, 2026
 > Scope: canonical funnel progression, discovery logic, and package routing for CREATE SOMETHING commercial work
 
+> Superseded note (March 13, 2026): This memo preserves the March 9 funnel framing. Current canonical packaging uses `Policy OS` as the paid package name. See [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md).
+
 ## Executive Summary
 
 The funnel should stop asking buyers to understand protocol categories before they understand their own workflow risk.

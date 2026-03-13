@@ -5,7 +5,18 @@ metadata:
   client_name: "<client-name>"
   engagement_id: "<engagement-id>"
   status: "draft" # draft | active | deprecated
-  delivery_mode: "agent-outcome-stack" # agent-outcome-stack | mcp-only
+  package_name: "policy-os" # policy-os | mcp-only
+  approved_workflows:
+    - "<workflow-name>"
+  approval_mode: "hybrid" # none | human-in-the-loop | hybrid
+  escalation_policy: "<policy-id-or-runbook-section>"
+  review_cadence: "weekly-review-monthly-tuning"
+  billing_and_entitlement_assumptions:
+    service_tier: "policy_os_trial" # mcp_only | policy_os_trial | policy_os_core
+    service_entitled: true
+    policy_accepted: true
+    contract_active: true
+    billing_active: true
   delivery_vector:
     canonical_phrase: "Skills on MCP"
     client_facing_label: "Skills + MCP"

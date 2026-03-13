@@ -36,8 +36,8 @@
 		},
 		{
 			value: 'reliability_and_control',
-			label: 'Reliability and Control',
-			description: 'Evals, policy gates, and incident controls for production automation.'
+			label: 'Policy OS',
+			description: 'Policy artifacts, release gates, and incident controls for production automation.'
 		},
 		{
 			value: 'enterprise_extension',

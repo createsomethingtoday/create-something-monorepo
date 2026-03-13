@@ -15,7 +15,7 @@ Discovery must determine:
 2. The systems and data required
 3. The trust boundary for autonomous action
 4. The policy boundary for `auto-allow`, `approval-required`, and `block`
-5. The correct engagement path: `MCP-only wedge`, `Workflow Infrastructure`, `Reliability and Control Layer`, or `Enterprise Extension`
+5. The correct engagement path: `MCP-only wedge`, `Workflow Infrastructure`, `Policy OS`, or `Enterprise Extension`
 
 ---
 
@@ -85,7 +85,7 @@ The policy boundary must also define:
 - ownership boundary
 - release-gate conditions for production rollout
 
-If a workflow cannot be described in these terms, it is not ready for the Reliability and Control Layer.
+If a workflow cannot be described in these terms, it is not ready for Policy OS.
 
 ---
 
@@ -104,7 +104,7 @@ If a workflow cannot be described in these terms, it is not ready for the Reliab
 - multiple systems must stay in sync
 - current failure cost is operational, financial, or customer-visible
 
-### Add `Reliability and Control Layer` when:
+### Add `Policy OS` when:
 
 - write actions or approvals matter
 - risky actions need gating

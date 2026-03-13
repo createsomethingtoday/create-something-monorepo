@@ -6,7 +6,7 @@
 
 ## Summary
 
-The commercial default is now **Agent Outcome Stack** (**Skills + MCP**), with **MCP-only** as a narrow entry wedge.
+The commercial default is now **Policy OS** (**Skills + MCP**), with **MCP-only** as a narrow entry wedge.
 
 - MCP remains the chassis: trust boundaries, connectivity, policy artifacts.
 - Outcomes are the product: execution quality, escalation policy, and continuous tuning.
@@ -25,7 +25,7 @@ Placement rules:
 
 - Operator-facing headlines, subheads, sales pages, and outbound use `Skills + MCP`.
 - Technical proof surfaces (architecture docs, security/compliance notes, and RFP responses) use `MCP + Skills`.
-- Commercial packaging names stay unchanged: `Agent Outcome Stack` default, `MCP-only` exception.
+- Commercial packaging names are now canonicalized: `Policy OS` default, `MCP-only` exception.
 
 Technical statement (must appear in technical proof surfaces):
 
@@ -42,10 +42,12 @@ Competitive moat emphasis:
 ## Strategic decision
 
 1. `MCP-only` is sold only for discovery/compliance use cases.
-2. `Agent Outcome Stack` is the default paid package:
+2. `Policy OS` is the default paid package:
    - Custom MCP server(s) for client systems.
    - Codex-ready agent setup and prompt/policy artifacts.
    - Managed judgment loop (approvals, escalation, monthly tuning).
+   - `Workflow Infrastructure` is the implementation layer inside the package.
+   - `Enterprise Extension` is the high-stakes expansion layer inside the package.
 3. Supplier wrap pattern remains unchanged:
    - Commodity connectivity via `@create-something/composio-bridge`.
    - Deep-domain logic and intelligence layer are always custom.
@@ -65,7 +67,7 @@ Deliverables:
 - Tool/resource/prompt inventory
 - Basic runbook and ownership handoff
 
-### Agent Outcome Stack (default)
+### Policy OS (default)
 
 Use when:
 - Client asks for measurable time savings or autonomous follow-through.
@@ -108,6 +110,15 @@ Every engagement ships three artifacts:
 - Review cadence
 - Messaging orientation (`Skills + MCP` for operator-facing pages, `MCP + Skills` for technical proof)
 
+Policy OS metadata must also include:
+
+- `package_name`
+- `approved_workflows`
+- `approval_mode`
+- `escalation_policy`
+- `review_cadence`
+- `billing_and_entitlement_assumptions`
+
 ## Per-client handoff bundle
 
 Required in every handoff:
@@ -140,7 +151,7 @@ Required in every handoff:
 
 ### Weeks 8-12
 
-- Run 2-3 engagements with Agent Outcome Stack default.
+- Run 2-3 engagements with Policy OS default.
 - Measure attach/conversion/time-to-outcome.
 - Publish one case study comparing MCP-only vs bundled outcomes.
 - Run a 14-day headline A/B test: `Skills + MCP` vs `MCP + Skills`.

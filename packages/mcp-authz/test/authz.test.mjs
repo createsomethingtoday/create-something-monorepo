@@ -203,6 +203,76 @@ test('service-tier policy blocks paid policy os access without billing', async (
   assert.match(result.final.reason, /requires active billing/i);
 });
 
+test('service-tier policy blocks paid policy os access without contract', async () => {
+  const request = buildHubAuthorizationRequest({
+    accountId: 'acct_1',
+    tenantId: 'tenant_1',
+    sessionId: 'session_1',
+    toolMode: 'read_write',
+    identitySource: 'session',
+    proxyToolName: 'composio-toolkit-slack__slack_send_message',
+    serverName: 'composio-toolkit-slack',
+    downstreamToolName: 'slack_send_message',
+    actionName: 'execute',
+    context: {
+      serviceTier: 'policy_os_trial',
+      entitlementSnapshot: {
+        service_tier: 'policy_os_trial',
+        service_entitled: true,
+        policy_accepted: true,
+        contract_active: false,
+        billing_active: true,
+        approved_exception: { present: false },
+      },
+    },
+  });
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.service-tier-entitlement.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'block');
+  assert.match(result.final.reason, /requires an active contract/i);
+});
+
+test('service-tier policy blocks paid policy os access without policy acceptance', async () => {
+  const request = buildHubAuthorizationRequest({
+    accountId: 'acct_1',
+    tenantId: 'tenant_1',
+    sessionId: 'session_1',
+    toolMode: 'read_write',
+    identitySource: 'session',
+    proxyToolName: 'composio-toolkit-slack__slack_send_message',
+    serverName: 'composio-toolkit-slack',
+    downstreamToolName: 'slack_send_message',
+    actionName: 'execute',
+    context: {
+      serviceTier: 'policy_os_core',
+      entitlementSnapshot: {
+        service_tier: 'policy_os_core',
+        service_entitled: true,
+        policy_accepted: false,
+        contract_active: true,
+        billing_active: true,
+        approved_exception: { present: false },
+      },
+    },
+  });
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.service-tier-entitlement.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'block');
+  assert.match(result.final.reason, /requires required policy acceptance/i);
+});
+
 test('service-tier policy allows paid policy os execution when commercial gates pass', async () => {
   const request = buildHubAuthorizationRequest({
     accountId: 'acct_1',

@@ -76,8 +76,8 @@
 
   let {
     eyebrow = 'Governed Execution',
-    title = 'Control Layer',
-    description = 'Hub MCP routes work into a control layer that decides what can run automatically, what needs approval, and what stops with a reason.',
+    title = 'Policy OS',
+    description = 'Hub MCP routes work into Policy OS, the governed execution layer that decides what can run automatically, what needs approval, and what stops with a reason.',
     caption = 'Safe actions run fast. Risky actions route to approval. Disallowed actions stop with a reason.',
     initiators = ['Client LLM', 'Ops Inbox', 'Background Agent'],
     destinations = ['CRM', 'ERP', 'Workflow System'],
@@ -173,9 +173,9 @@
       <BlurFade delay={0.9}>
         <div class="node control-node" style={`left:${layout.control.x}px; top:${layout.control.y}px;`}>
           <BorderBeam size={160} duration={8} colorFrom={primaryBeam} colorTo={secondaryBeam} />
-          <span class="node-kicker">Decides</span>
+            <span class="node-kicker">Decides</span>
           <div class="lockup">
-            <span class="node-title control-title">Control Layer</span>
+            <span class="node-title control-title">Policy OS</span>
             <span class="node-subtitle">Reason-coded governance</span>
           </div>
           <div class="pill-row">

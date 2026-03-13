@@ -1,7 +1,7 @@
 version: "1.0"
-name: "Workflow Infrastructure Commercial Interface"
+name: "Policy OS Commercial Interface"
 owner: "CREATE SOMETHING .agency"
-updated_at: "2026-03-07"
+updated_at: "2026-03-13"
 
 message_taxonomy:
   core_phrase: "Production-safe workflow infrastructure."
@@ -11,8 +11,8 @@ message_taxonomy:
 offer_ladder:
   - name: "Workflow Infrastructure"
     purpose: "Build trusted workflow substrate and deterministic execution paths."
-  - name: "Reliability and Control Layer"
-    purpose: "Add policy controls, release gates, approval rules, and incident loops."
+  - name: "Policy OS"
+    purpose: "Add policy controls, release gates, approval rules, blocked-state UX, and incident loops."
   - name: "Enterprise Extension"
     purpose: "Handle high-stakes cross-system governance and custom trust boundaries."
 
@@ -32,7 +32,7 @@ one_pager_interface:
     - "mcp_contract.yaml"
     - "agent_contract.yaml"
     - "outcome_contract.md"
-    - "golden-task checks + runbook"
+    - "golden_tasks.yaml + runbook"
   cta:
     name: "Workflow Mapping Session"
     expected_output:
@@ -68,7 +68,7 @@ call_script_interface:
     - next_step_date
   close_paths:
     high_fit: "Schedule paid Workflow Mapping Session"
-    medium_fit: "Run MCP-only wedge with explicit reliability trigger"
+    medium_fit: "Run MCP-only wedge with explicit Policy OS trigger"
     low_fit: "Park or refer with re-entry condition"
 
 operating_model:

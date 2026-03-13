@@ -4,8 +4,19 @@ contract_type: "mcp_contract"
 metadata:
   client_name: "half-dozen"
   engagement_id: "hd-inbox-triage-v1"
-  delivery_model: "agent-outcome-stack" # agent-outcome-stack | mcp-only
+  package_name: "policy-os" # policy-os | mcp-only
   status: "draft" # draft | active | deprecated
+  approved_workflows:
+    - "gmail-inbox-triage"
+  approval_mode: "hybrid" # none | human-in-the-loop | hybrid
+  escalation_policy: "HD-INBOX-TRIAGE-POLICY"
+  review_cadence: "weekly-review-monthly-tuning"
+  billing_and_entitlement_assumptions:
+    service_tier: "policy_os_core"
+    service_entitled: true
+    policy_accepted: true
+    contract_active: true
+    billing_active: true
   owners:
     technical_owner: "create-something-platform"
     client_owner: "halfdozen-ops"
@@ -176,6 +187,7 @@ handoff_bundle:
     - "agent_contract_halfdozen_inbox_triage.yaml"
     - "outcome_contract_halfdozen_inbox_triage.md"
     - "golden_tasks_halfdozen_inbox_triage.yaml"
+    - "runbook.md"
   operational_assets:
     - "endpoint inventory"
     - "auth scope matrix"

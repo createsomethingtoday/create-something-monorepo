@@ -8,7 +8,6 @@ build
 .svelte-kit
 .cloudflare
 packages/simulation/target/
-docs/policies/generated/
 
 # Environment
 .env

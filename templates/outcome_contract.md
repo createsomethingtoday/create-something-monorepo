@@ -3,7 +3,18 @@
 ## 1) Engagement
 - Client: `<client-name>`
 - Engagement ID: `<engagement-id>`
-- Delivery Model: `Agent Outcome Stack` (default) or `MCP-only` (exception)
+- Package Name: `Policy OS` (default) or `MCP-only` (exception)
+- Approved Workflows:
+  - `<workflow-1>`
+- Approval Mode: `hybrid`
+- Escalation Policy: `<policy-id-or-runbook-section>`
+- Review Cadence: `weekly review + monthly tuning`
+- Billing and Entitlement Assumptions:
+  - service tier: `policy_os_trial`
+  - service entitled: `true`
+  - policy accepted: `true`
+  - contract active: `true`
+  - billing active: `true`
 - Delivery Vector Canonical Phrase: `Skills on MCP`
 - Delivery Vector (Client-Facing): `Skills + MCP`
 - Delivery Vector (Technical): `MCP + Skills`
@@ -51,6 +62,7 @@ All items are required for completion.
 - [ ] `agent_contract.yaml`
 - [ ] `outcome_contract.md`
 - [ ] `golden_tasks.yaml`
+- [ ] `runbook.md`
 - [ ] Endpoint inventory and auth scope matrix
 - [ ] Tool/resource/prompt registry
 - [ ] Incident and rollback runbook
