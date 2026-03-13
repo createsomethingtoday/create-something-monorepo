@@ -59,7 +59,12 @@
     "required_trace_fields": [
       "account_id",
       "tenant_id",
-      "lane_slug_or_bound_host"
-    ]
+      "lane_slug_or_bound_host",
+      "correlation_id",
+      "route_classification",
+      "policy_or_review_outcome"
+    ],
+    "braintrust_auto_instrumentation_requires_house_governance_metadata": true,
+    "trace_tags_should_be_business_legible": true
   }
 }

@@ -169,6 +169,55 @@ export interface ToolInvocationEvent {
   error?: string;
   aiTaskType?: AITaskType;
   atlasMetadata?: AtlasMetadata;
+  traceContext?: GovernanceTraceContext;
+}
+
+export interface GovernanceTraceContext {
+  accountId?: string;
+  tenantId?: string;
+  userId?: string;
+  sessionId?: string;
+  correlationId?: string;
+  requestId?: string;
+  policyId?: string;
+  routeClassification?: string;
+  authzDecision?: 'allow' | 'review' | 'block' | string;
+  laneSlug?: string;
+  boundHost?: string;
+  entrypoint?: string;
+}
+
+function governanceMetadata(
+  traceContext: GovernanceTraceContext | undefined,
+): Record<string, string> {
+  if (!traceContext) return {};
+
+  return Object.fromEntries(
+    Object.entries({
+      tenantId: traceContext.tenantId,
+      userId: traceContext.userId,
+      sessionId: traceContext.sessionId,
+      correlationId: traceContext.correlationId,
+      requestId: traceContext.requestId,
+      policyId: traceContext.policyId,
+      routeClassification: traceContext.routeClassification,
+      authzDecision: traceContext.authzDecision,
+      laneSlug: traceContext.laneSlug,
+      boundHost: traceContext.boundHost,
+      entrypoint: traceContext.entrypoint,
+    }).filter(([, value]) => typeof value === 'string' && value.length > 0),
+  ) as Record<string, string>;
+}
+
+function governanceTags(traceContext: GovernanceTraceContext | undefined): string[] {
+  if (!traceContext) return [];
+
+  return [
+    traceContext.policyId ? `policy:${traceContext.policyId}` : null,
+    traceContext.routeClassification ? `route:${traceContext.routeClassification}` : null,
+    traceContext.authzDecision ? `authz:${traceContext.authzDecision}` : null,
+    traceContext.laneSlug ? `lane:${traceContext.laneSlug}` : null,
+  ].filter((value): value is string => Boolean(value));
 }
 
 /**
@@ -179,6 +228,8 @@ export async function emitToolInvocation(event: ToolInvocationEvent): Promise<vo
   if (!_logger || !_config.enabled) return;
 
   try {
+    const resolvedAccountId = event.traceContext?.accountId || event.accountId || 'operator';
+
     await _logger.traced(
       (span: Span) => {
         span.log({
@@ -190,14 +241,16 @@ export async function emitToolInvocation(event: ToolInvocationEvent): Promise<vo
             event.serverName,
             event.toolName,
             event.success ? 'success' : 'error',
+            ...governanceTags(event.traceContext),
           ],
           metadata: {
             server: event.serverName,
             tool: event.toolName,
-            accountId: event.accountId || 'operator',
+            accountId: resolvedAccountId,
             durationMs: event.durationMs,
             success: event.success,
             aiTaskType: event.aiTaskType,
+            ...governanceMetadata(event.traceContext),
             ...event.atlasMetadata,
           },
         });
@@ -223,6 +276,8 @@ export interface WrappedToolOptions {
   atlasMetadata?: AtlasMetadata;
   /** Resolve the calling account from the handler arguments or surrounding context. */
   getAccountId?: (args: Record<string, unknown>) => string | undefined;
+  /** Resolve governance and policy context that should be attached to the trace. */
+  getTraceContext?: (args: Record<string, unknown>) => GovernanceTraceContext | undefined;
 }
 
 /**
@@ -249,18 +304,20 @@ export function wrapMcpToolWithBraintrust<TArgs extends Record<string, unknown>,
     }
 
     const accountId = options.getAccountId?.(args);
+    const traceContext = options.getTraceContext?.(args);
     const start = Date.now();
 
     return _logger.traced(
       async (span: Span) => {
         span.log({
           input: args,
-          tags: ['mcp', options.serverName, options.toolName],
+          tags: ['mcp', options.serverName, options.toolName, ...governanceTags(traceContext)],
           metadata: {
             server: options.serverName,
             tool: options.toolName,
             accountId: accountId || 'operator',
             aiTaskType: options.aiTaskType,
+            ...governanceMetadata(traceContext),
             ...options.atlasMetadata,
           },
         });
@@ -272,6 +329,7 @@ export function wrapMcpToolWithBraintrust<TArgs extends Record<string, unknown>,
             metadata: {
               success: true,
               durationMs: Date.now() - start,
+              ...governanceMetadata(traceContext),
             },
           });
           return result;
@@ -287,6 +345,7 @@ export function wrapMcpToolWithBraintrust<TArgs extends Record<string, unknown>,
               success: false,
               durationMs,
               error: errorMessage,
+              ...governanceMetadata(traceContext),
             },
           });
 

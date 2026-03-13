@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: CREATE SOMETHING Hub broker-only regression scaffold
+
+prompts:
+  - '{{payload}}'
+
+providers:
+  - id: file://providers/hub-rpc-provider.mjs
+    label: hub-strict-missing-session
+    config:
+      hubUrlEnv: PROMPTFOO_HUB_URL
+      hubApiTokenEnv: PROMPTFOO_HUB_API_TOKEN
+      timeoutMs: 15000
+      requireSessionToken: false
+
+  - id: file://providers/hub-rpc-provider.mjs
+    label: hub-strict-with-session
+    config:
+      hubUrlEnv: PROMPTFOO_HUB_URL
+      hubApiTokenEnv: PROMPTFOO_HUB_API_TOKEN
+      sessionTokenEnv: PROMPTFOO_HUB_SESSION_TOKEN
+      timeoutMs: 15000
+      requireSessionToken: true
+
+defaultTest:
+  options:
+    runSerially: true
+
+tests:
+  - description: strict identity rejects tools/list without session token
+    providers:
+      - hub-strict-missing-session
+    vars:
+      payload: '{"method":"tools/list","params":{}}'
+    assert:
+      - type: javascript
+        value: file://assertions/missing-session.cjs
+
+  - description: broker-only tools/list exposes management tools only
+    providers:
+      - hub-strict-with-session
+    vars:
+      payload: '{"method":"tools/list","params":{}}'
+    assert:
+      - type: javascript
+        value: file://assertions/tools-list-management.cjs
+
+  - description: broker-only mode rejects direct proxy tool calls
+    providers:
+      - hub-strict-with-session
+    vars:
+      payload: '{"method":"tools/call","params":{"name":"composio-toolkit-slack__slack_send_message","arguments":{}}}'
+    assert:
+      - type: javascript
+        value: file://assertions/direct-proxy-disabled.cjs
+
+  - description: visible proxy discovery returns structured tool envelope
+    providers:
+      - hub-strict-with-session
+    vars:
+      payload: '{"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"limit":1}}}'
+    assert:
+      - type: javascript
+        value: file://assertions/search-proxy-tools.cjs

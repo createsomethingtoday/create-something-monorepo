@@ -1,13 +1,13 @@
 # Reviewer Hub Phase A Operator Runbook
 
-**Status:** Working draft  
+**Status:** Rollback reference  
 **Audience:** Hub operators  
 **Workflow:** `app_review_hub_lane`  
-**Date:** `2026-03-11`
+**Date:** `2026-03-13`
 
 ## 1. Purpose
 
-This runbook is the operational implementation path for the two reviewer-specific Hub surfaces in Phase A.
+This runbook is the rollback path for restoring the original compact read-only reviewer posture.
 
 Phase A outcome:
 
@@ -16,6 +16,12 @@ Phase A outcome:
 - compact discovery
 - read-only evidence lane
 - manual Airtable fallback for official review-state changes
+
+Current-live note:
+
+- the live reviewer hubs are no longer in this posture
+- production currently uses full discovery and exposes all 18 downstream app-review tools
+- use this document only when you intentionally need to revert the reviewer lane back to the original compact 6-tool posture
 
 ## 2. Reviewer Hub set
 
@@ -80,6 +86,10 @@ pnpm exec wrangler secret put REVIEWER_DIRECTORY_JSON
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+export HUB_ENABLED_BUNDLE="webflow-marketplace-app-review-phase-a"
+export DISCOVERY_MODE="compact"
+export DISCOVERY_PACK="webflow-marketplace-app-review-phase-a"
+export DISCOVERY_MAX_PROXY_TOOLS="6"
 ./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh deploy
 ```
 
@@ -97,6 +107,10 @@ It assumes the upstream `webflow-app-review-mcp` worker already has `REVIEWER_DI
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+export HUB_ENABLED_BUNDLE="webflow-marketplace-app-review-phase-a"
+export DISCOVERY_MODE="compact"
+export DISCOVERY_PACK="webflow-marketplace-app-review-phase-a"
+export DISCOVERY_MAX_PROXY_TOOLS="6"
 ./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh normalize
 ```
 
@@ -115,6 +129,10 @@ This applies:
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+export HUB_ENABLED_BUNDLE="webflow-marketplace-app-review-phase-a"
+export DISCOVERY_MODE="compact"
+export DISCOVERY_PACK="webflow-marketplace-app-review-phase-a"
+export DISCOVERY_MAX_PROXY_TOOLS="6"
 ./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh verify
 ```
 
@@ -132,6 +150,10 @@ If all required environment variables are present:
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+export HUB_ENABLED_BUNDLE="webflow-marketplace-app-review-phase-a"
+export DISCOVERY_MODE="compact"
+export DISCOVERY_PACK="webflow-marketplace-app-review-phase-a"
+export DISCOVERY_MAX_PROXY_TOOLS="6"
 ./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh all
 ```
 

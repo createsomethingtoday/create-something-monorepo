@@ -1,0 +1,7 @@
+interface:
+  display_name: "Canon Design Review"
+  short_description: "Audit UI work against Canon house rules"
+  default_prompt: "Use $canon-design-review to critique this UI change against Canon tokens, house typography, and informative-over-decorative design constraints."
+
+policy:
+  allow_implicit_invocation: false

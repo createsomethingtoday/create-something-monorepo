@@ -1,0 +1,11 @@
+{
+  "workerId": "worker-test-3",
+  "issueId": "csm-xkoz4",
+  "status": "completed",
+  "outcome": {
+    "success": true,
+    "summary": "Documentation updated"
+  },
+  "costUsd": 0.001,
+  "updatedAt": "2026-01-09T22:11:56.602Z"
+}

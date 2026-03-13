@@ -1,0 +1,29 @@
+{
+  "workerId": "worker-4",
+  "issueId": "csm-14q61",
+  "convoyId": "convoy-erc5g_82fd",
+  "epicId": "voice-audit-agency",
+  "issue": {
+    "id": "csm-14q61",
+    "title": "Voice audit: Methodology section",
+    "status": "open",
+    "priority": 1,
+    "labels": ["agency", "complexity:trivial", "voice-audit"],
+    "description": "Audit the 'How We Work' methodology section with three guiding questions. Check for clarity and business context appropriateness."
+  },
+  "context": {
+    "url": "https://createsomething.agency/",
+    "section": "methodology",
+    "property": ".agency",
+    "currentText": {
+      "question1": "Have I built this before? (Unify)",
+      "question2": "Does this earn its existence? (Remove)",
+      "question3": "Does this serve the whole? (Reconnect)"
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}

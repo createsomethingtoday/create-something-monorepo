@@ -3,7 +3,7 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { enableTelemetry } from '@create-something/mcp-core';
 
 import { healthCounts } from './src/db.js';
-import { handleMigrationImport } from './src/migration.js';
+import { handleMigrationExport, handleMigrationImport } from './src/migration.js';
 import { registerLoomTools } from './src/tools.js';
 import type { Env } from './src/types.js';
 import { jsonResponse } from './src/utils.js';
@@ -88,6 +88,7 @@ export default {
           endpoints: {
             mcp: '/mcp',
             health: '/health',
+            admin_export: '/admin/export',
             admin_migrate: '/admin/migrate',
           },
           auth: {
@@ -109,6 +110,10 @@ export default {
           503,
         );
       }
+    }
+
+    if (url.pathname === '/admin/export' && request.method === 'GET') {
+      return handleMigrationExport(request, env);
     }
 
     if (url.pathname === '/admin/migrate' && request.method === 'POST') {

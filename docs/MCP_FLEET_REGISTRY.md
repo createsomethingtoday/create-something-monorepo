@@ -86,7 +86,7 @@ Not deployed to Cloudflare. Run locally via stdio transport.
 | # | Package | Server Name | Notes |
 |---|---------|-------------|-------|
 | 27 | `quickbooks-notion-mcp` | `quickbooks-notion-mcp-server` | Node.js HTTP/stdio, KV for tokens |
-| 28 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp` | Node.js stdio |
+| 28 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp` | Node.js stdio (package also supports Streamable HTTP, but no live remote deployment yet) |
 | 29 | `outerfields-mcp-server` | `outerfields-pcn` | Stdio companion to remote Worker |
 
 ---

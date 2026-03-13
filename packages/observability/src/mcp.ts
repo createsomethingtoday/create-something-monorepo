@@ -24,6 +24,7 @@ import {
   initBraintrust,
   emitToolInvocation,
   shutdownBraintrust,
+  type GovernanceTraceContext,
   type BraintrustConfig,
 } from './braintrust.js';
 
@@ -40,6 +41,11 @@ export interface McpServerConfig extends ObservabilityConfig {
   /** Resolve the calling account ID from the tool arguments.
    *  Used for per-client segmentation in both D1 telemetry and Braintrust. */
   getAccountId?: (args: Record<string, unknown>) => string | undefined;
+  /** Resolve the policy and routing context that should be attached to traces. */
+  getTraceContext?: (input: {
+    toolName: string;
+    args: Record<string, unknown>;
+  }) => GovernanceTraceContext | undefined;
 }
 
 export interface ToolHandlerContext {
@@ -57,6 +63,39 @@ export type InstrumentedToolHandler = (
 export interface ToolMetadata {
   aiTaskType?: AITaskType;
   metadata?: AtlasMetadata;
+}
+
+function governanceAtlasMetadata(
+  traceContext: GovernanceTraceContext | undefined,
+): AtlasMetadata {
+  if (!traceContext) return {};
+
+  return Object.fromEntries(
+    Object.entries({
+      'governance.tenant_id': traceContext.tenantId,
+      'governance.user_id': traceContext.userId,
+      'governance.session_id': traceContext.sessionId,
+      'governance.correlation_id': traceContext.correlationId,
+      'governance.request_id': traceContext.requestId,
+      'governance.policy_id': traceContext.policyId,
+      'governance.route_classification': traceContext.routeClassification,
+      'governance.authz_decision': traceContext.authzDecision,
+      'governance.lane_slug': traceContext.laneSlug,
+      'governance.bound_host': traceContext.boundHost,
+      'governance.entrypoint': traceContext.entrypoint,
+    }).filter(([, value]) => typeof value === 'string' && value.length > 0),
+  ) as AtlasMetadata;
+}
+
+function governanceTags(traceContext: GovernanceTraceContext | undefined): string[] {
+  if (!traceContext) return [];
+
+  return [
+    traceContext.policyId ? `policy:${traceContext.policyId}` : null,
+    traceContext.routeClassification ? `route:${traceContext.routeClassification}` : null,
+    traceContext.authzDecision ? `authz:${traceContext.authzDecision}` : null,
+    traceContext.laneSlug ? `lane:${traceContext.laneSlug}` : null,
+  ].filter((value): value is string => Boolean(value));
 }
 
 // =============================================================================
@@ -112,6 +151,7 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
   const serverName = config.serverName;
   const serverVersion = config.serverVersion || '1.0.0';
   const getAccountId = config.getAccountId;
+  const getTraceContext = config.getTraceContext;
 
   /**
    * Wrap a tool handler with automatic tracing.
@@ -128,6 +168,9 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
     const meta = toolMetadata?.[name];
     const aiTaskType = meta?.aiTaskType || 'orchestrate';
     const additionalMetadata = meta?.metadata || {};
+    const traceContext = getTraceContext?.({ toolName: name, args: safeArgs });
+    const governanceMetadata = governanceAtlasMetadata(traceContext);
+    const traceTags = governanceTags(traceContext);
 
     // Create trace for this tool call
     const trace = createTrace({
@@ -136,9 +179,10 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
       metadata: {
         ...mcpToolMetadata(serverName, name, aiTaskType),
         ...additionalMetadata,
+        ...governanceMetadata,
         'mcp.server_version': serverVersion
       },
-      tags: ['mcp', serverName, name]
+      tags: ['mcp', serverName, name, ...traceTags]
     });
 
     // Create span for execution
@@ -146,7 +190,8 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
       name: `execute:${name}`,
       input: safeArgs,
       metadata: {
-        'ai_task.skill': name
+        'ai_task.skill': name,
+        ...governanceMetadata
       }
     });
 
@@ -193,6 +238,10 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
         serverName,
         toolName: name,
         accountId,
+        traceContext: {
+          ...traceContext,
+          accountId: traceContext?.accountId || accountId,
+        },
         input: safeArgs,
         output: { contentLength: result.content?.length || 0, isError: result.isError || false },
         durationMs,
@@ -229,6 +278,10 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
         serverName,
         toolName: name,
         accountId,
+        traceContext: {
+          ...traceContext,
+          accountId: traceContext?.accountId || accountId,
+        },
         input: safeArgs,
         output: { error: errorMessage },
         durationMs,

@@ -4853,7 +4853,7 @@ async function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): P
             error: log.errorMessage ?? null,
           },
           error: log.errorMessage ?? undefined,
-          tags: ['mcp', HUB_NAME, log.toolName, log.success ? 'success' : 'error', 'hub'],
+          tags: buildHubBraintrustTags(['mcp', HUB_NAME, log.toolName], metadata),
           metadata: {
             server: HUB_NAME,
             tool: log.toolName,
@@ -4900,14 +4900,10 @@ async function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): Promise<voi
             error: log.errorMessage ?? null,
           },
           error: log.errorMessage ?? undefined,
-          tags: [
-            'mcp',
-            HUB_NAME,
-            'hub-route',
-            log.downstreamServer,
-            log.downstreamTool,
-            log.success ? 'success' : 'error',
-          ],
+          tags: buildHubBraintrustTags(
+            ['mcp', HUB_NAME, log.downstreamServer, log.downstreamTool],
+            metadata,
+          ),
           metadata: {
             server: HUB_NAME,
             accountId: log.accountId,
@@ -4932,6 +4928,26 @@ async function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): Promise<voi
       `[${HUB_NAME}] braintrust route emit failed: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+function buildHubBraintrustTags(
+  baseTags: string[],
+  metadata: Record<string, unknown> | null,
+): string[] {
+  const policy =
+    typeof metadata?.policy === 'string' && metadata.policy.length > 0
+      ? `policy:${metadata.policy}`
+      : null;
+  const type =
+    typeof metadata?.type === 'string' && metadata.type.length > 0
+      ? `type:${metadata.type}`
+      : null;
+  const entrypoint =
+    typeof metadata?.entrypoint === 'string' && metadata.entrypoint.length > 0
+      ? `entry:${metadata.entrypoint}`
+      : null;
+
+  return [...baseTags, policy, type, entrypoint].filter((value): value is string => Boolean(value));
 }
 
 async function recordHubInvocation(

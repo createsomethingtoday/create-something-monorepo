@@ -1,0 +1,19 @@
+{
+  "workerId": "worker-ltd-5",
+  "issueId": "csm-3vmcp",
+  "convoyId": "convoy-fd8a2b",
+  "epicId": "voice-audit-ltd",
+  "context": {
+    "url": "https://createsomething.ltd/",
+    "section": "ecosystem",
+    "property": ".ltd",
+    "currentText": {
+      "description": "The platform operates across five domains: Research (papers and tools), Practice (experiments and working code), Services (client software), Learning (structured courses), and Canon (philosophy and patterns)—accessible via .io, .space, .agency, .learn, and .ltd respectively."
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}

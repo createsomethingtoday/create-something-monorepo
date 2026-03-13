@@ -84,6 +84,11 @@ The analyzer supports multiple browser automation providers:
 # Recommended: Steel.dev (production)
 STEEL_API_KEY=your-steel-api-key
 
+# Optional: Streamable HTTP auth + runtime settings (remote mode)
+# WEBFLOW_SITE_ANALYZER_MCP_API_KEY=your-shared-bearer-token
+# PORT=8788
+# WEBFLOW_ANALYZER_REGISTRY_PATH=/var/lib/webflow-site-analyzer/registry.json
+
 # Alternative: Browserless (local dev)
 BROWSERLESS_TOKEN=your-browserless-token
 
@@ -130,6 +135,8 @@ In CI, set `STEEL_API_KEY` (and optionally `WEBFLOW_PREVIEW_URL`) as secrets to 
 
 ### MCP Configuration
 
+#### Local stdio
+
 Add to your `.mcp.json`:
 
 ```json
@@ -161,6 +168,54 @@ Or with npx:
   }
 }
 ```
+
+#### Remote Streamable HTTP
+
+The package now also supports a hosted Streamable HTTP endpoint for Hub/downstream use.
+
+```bash
+pnpm build
+WEBFLOW_SITE_ANALYZER_MCP_API_KEY=your-token \
+STEEL_API_KEY=your-steel-key \
+PORT=8788 \
+pnpm start:http
+```
+
+Health endpoint:
+
+```bash
+curl -sS http://localhost:8788/health
+```
+
+Protected MCP endpoint:
+
+```bash
+curl -sS -X POST http://localhost:8788/mcp \
+  -H "Authorization: Bearer $WEBFLOW_SITE_ANALYZER_MCP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
+
+Hosted client config:
+
+```json
+{
+  "mcpServers": {
+    "webflow-site-analyzer": {
+      "url": "https://your-host.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${WEBFLOW_SITE_ANALYZER_MCP_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+Notes:
+- `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` is preferred for remote auth. `MCP_API_KEY` is still accepted as a fallback.
+- `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
+- This package is now remote-capable, but the reviewer hub cannot use it until an actual hosted URL is deployed and the Hub registry entry is switched from `stdio` to `http`.
 
 ## Tools
 
@@ -800,6 +855,9 @@ pnpm build
 
 # Watch mode
 pnpm dev
+
+# Streamable HTTP dev server
+pnpm dev:http
 
 # Type check
 pnpm typecheck

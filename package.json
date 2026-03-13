@@ -31,6 +31,8 @@
     "braintrust:eval:mcp:error-path": "pnpm exec braintrust eval ./evals/braintrust/mcp/fleet-error-path-tracing.eval.ts",
     "braintrust:eval:mcp:account-isolation": "pnpm exec braintrust eval ./evals/braintrust/mcp/account-isolation.eval.ts",
     "braintrust:eval:mcp:exa": "pnpm exec braintrust eval ./evals/braintrust/mcp/exa-workload-latency.eval.ts",
+    "promptfoo:hub:validate": "pnpm dlx promptfoo@latest validate -c evals/promptfoo/hub/promptfooconfig.yaml",
+    "promptfoo:hub:eval": "pnpm dlx promptfoo@latest eval -c evals/promptfoo/hub/promptfooconfig.yaml",
     "braintrust:smoke": "tsx scripts/braintrust-openai-smoke.ts",
     "braintrust:mcp:telemetry-smoke": "tsx scripts/braintrust-mcp-telemetry-smoke.ts",
     "braintrust:playbook-smoke": "tsx scripts/braintrust-playbook-mcp-smoke.ts",
@@ -111,6 +113,7 @@
     "deploy:halfdozen-dm-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-dm-mcp/worker deploy",
     "deploy:halfdozen-operator-notion-mcp": "pnpm mcp:halfdozen-operator-notion:preflight && node scripts/run-wrangler.mjs --cwd packages/halfdozen-operator-notion-mcp/worker deploy",
     "deploy:loom-mcp-remote": "node scripts/run-wrangler.mjs --cwd packages/loom-mcp-remote deploy",
+    "loom:mcp:vault:sync": "bash scripts/loom-mcp-remote-vault-sync.sh",
     "deploy:blondish-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.blondish.toml",
     "deploy:c3-management-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.c3-management.toml",
     "deploy:cracked-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.cracked.toml",
@@ -125,9 +128,15 @@
     "agency:auth0:seed": "bash scripts/agency-auth0-seed-infisical.sh",
     "agency:auth0:sync": "bash scripts/agency-pages-sync-auth0-from-infisical.sh",
     "auth0:export": "bash scripts/auth0-export.sh",
+    "loom:migrate:backup": "node scripts/loom/backup-remote-snapshot.mjs",
     "loom:migrate:export": "node scripts/loom/export-local-snapshot.mjs",
     "loom:migrate:import": "node scripts/loom/import-remote-snapshot.mjs",
-    "loom:migrate:validate": "node scripts/loom/validate-remote-cutover.mjs"
+    "loom:remote": "node scripts/loom/remote.mjs",
+    "loom:migrate:validate": "node scripts/loom/validate-remote-cutover.mjs",
+    "symphony:code-quality": "node packages/symphony/dist/cli.js automation/symphony/code-quality/WORKFLOW.md",
+    "symphony:code-quality:once": "node packages/symphony/dist/cli.js automation/symphony/code-quality/WORKFLOW.md --once",
+    "symphony:policy": "node packages/symphony/dist/cli.js automation/symphony/policy/WORKFLOW.md",
+    "symphony:policy:once": "node packages/symphony/dist/cli.js automation/symphony/policy/WORKFLOW.md --once"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
@@ -158,6 +167,9 @@
       "undici": ">=7.18.2",
       "@types/node": "24.10.9",
       "@modelcontextprotocol/sdk": "1.25.3"
+    },
+    "patchedDependencies": {
+      "@modelcontextprotocol/sdk@1.25.3": "patches/@modelcontextprotocol__sdk@1.25.3.patch"
     }
   },
   "dependencies": {

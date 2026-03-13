@@ -2,6 +2,8 @@
 
 This repo now includes a small smoke script and a thin wrapper module to help you start tracing OpenAI calls with Braintrust.
 
+Use this as operator-facing observability amplification for LLM spans, evals, and smoke runs. Do not treat Braintrust auto-instrumentation as the authoritative policy trace for governed MCP execution.
+
 ## 1) Set Environment Variables
 
 Required:
@@ -105,6 +107,7 @@ Notes:
 
 - `initBraintrust()` intentionally disables tracing if `BRAINTRUST_API_KEY` is missing (to avoid interactive login prompts in server/CI contexts).
 - `wrapOpenAI()` is a no-op when Braintrust isn't configured.
+- `wrapOpenAI()` only covers the LLM span. It does not prove that route authorization, quota, retry, or lane policy were applied.
 
 ## OpenAI Agents SDK (This Repo)
 
@@ -124,6 +127,23 @@ This repo's Half Dozen smoke script will automatically enable Agents tracing whe
 ```bash
 pnpm agent:halfdozen:smoke --scenario inbox-triage
 ```
+
+## Governed MCP Requirement
+
+If you use Braintrust in an MCP or Hub path that is subject to policy enforcement, the trace or log payloads must still include house governance fields such as:
+
+- `account_id`
+- `tenant_id`
+- `correlation_id`
+- route classification
+- authorization or review outcome
+- lane slug or bound host for named lanes
+
+When using `@create-something/observability/mcp`, prefer `getTraceContext(...)` so those fields are attached consistently without duplicating noisy tags.
+
+## Production Caution
+
+Braintrust can log full prompts, inputs, and outputs. For production named lanes, review payload handling before enabling broad auto-instrumentation and avoid treating raw prompt capture as a default-safe setting.
 
 ## Runbook (Production Checklist)
 

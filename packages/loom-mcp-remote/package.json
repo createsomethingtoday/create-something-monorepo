@@ -5,9 +5,11 @@
   "type": "module",
   "description": "Remote Loom MCP server for Hub HTTP transport",
   "scripts": {
+    "check": "pnpm run typecheck && pnpm run test",
     "dev": "node ../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
     "lint": "pnpm run typecheck",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -17,8 +19,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.0.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.10.9",
     "typescript": "^5.3.0",
+    "vitest": "^4.0.18",
     "wrangler": "^4.0.0"
   }
 }

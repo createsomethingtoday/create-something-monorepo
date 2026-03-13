@@ -1,17 +1,17 @@
 # Webflow Marketplace App Review Hub Delivery Pack
 
-**Status:** Working draft  
-**Prepared:** 2026-03-10  
+**Status:** Live production pack  
+**Prepared:** 2026-03-13  
 **Audience:** Webflow Marketplace team
 
 This folder packages the current Webflow app review MCP work into a delivery-ready rollout and policy pack for the initial app reviewer cohort.
 
-The goal is to make the app-review lane operationally safe before wider rollout by defining:
+The goal is to keep the live app-review lane operationally safe by defining:
 
 - what the app-review Hub lane is
 - which reviewer actions stay human-owned
-- which tools may be exposed in reviewer-facing discovery
-- what must be true before writes are enabled
+- which tools are currently exposed in reviewer-facing discovery
+- how production posture is maintained
 - how reviewers and operators fall back when the workflow is uncertain
 
 ## Important current-state note
@@ -20,9 +20,9 @@ The codebase contains a dedicated app-review MCP server:
 
 - `packages/webflow-app-review-mcp`
 
-But the current worker auth model is still a shared bearer token at the MCP boundary. That means reviewer-specific attribution is not yet guaranteed by the MCP server itself.
+But the current worker auth model is still a shared bearer token at the MCP boundary. Reviewer-specific attribution therefore depends on the outer Hub account context plus `REVIEWER_DIRECTORY_JSON`.
 
-Until reviewer identity is injected and traced by the outer Hub layer, this pack treats the app-review lane as a **read-only evidence lane** with manual Airtable fallback for official state changes.
+As of `2026-03-13`, both reviewer hubs are live in production with the full downstream `webflow-app-review-mcp` tool surface visible. The old compact 6-tool Phase A posture is now the rollback mode, not the default.
 
 ## Contents
 
@@ -33,7 +33,7 @@ Concrete rollout plan for the first two app reviewers, including mapping, tool e
 Exact Hub posture to use for reviewer-facing app-review access based on the current MCP implementation.
 
 3. `reviewer-hub-policy-records.yaml`
-Reviewer-specific Phase A policy records for the two-reviewer pilot.
+Reviewer-specific production policy records for the two live reviewer hubs.
 
 4. `reviewer-playbook.md`
 Day-to-day instructions for app reviewers using the Hub lane.
@@ -45,7 +45,7 @@ Operator procedures for exception handling, fallback, containment, and recovery.
 Auth0 invite manifest for the two-reviewer app-review pilot.
 
 7. `reviewer-hub-phase-a-operator-runbook.md`
-Exact deploy, normalize, and verify path for the two Phase A reviewer Hub surfaces.
+Rollback/read-only operator path for restoring the original compact reviewer posture if production writes must be withdrawn.
 
 8. `confirmed-field-inventory.md`
 Reviewer-confirmed Airtable field inventory from Pablo Miranda for the app-review workflow.

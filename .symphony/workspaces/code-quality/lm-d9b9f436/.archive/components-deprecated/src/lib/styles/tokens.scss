@@ -1,0 +1,370 @@
+// Canon Design System - SCSS Variables
+// Auto-generated from tokens.css
+// Do not edit directly - modify tokens.css instead
+//@generated 2025-12-27T18:33:44.241Z
+
+// ==========================================================================
+// Root Tokens
+// ==========================================================================
+
+// Color
+// ----------------------------------------------------------------------
+$color-bg-pure: #000000;
+$color-bg-elevated: #0a0a0a;
+$color-bg-surface: #111111;
+$color-bg-subtle: #1a1a1a;
+$color-fg-primary: #ffffff;
+$color-fg-secondary: rgba(255, 255, 255, 0.8);
+$color-fg-tertiary: rgba(255, 255, 255, 0.6);
+$color-fg-muted: rgba(255, 255, 255, 0.46); // WCAG AA compliant: 4.56:1 on pure black
+$color-fg-subtle: rgba(255, 255, 255, 0.2); // WCAG AA compliant: 4.56:1 on pure black
+$color-border-default: rgba(255, 255, 255, 0.1); // Borders - Subtle separation
+$color-border-emphasis: rgba(255, 255, 255, 0.2);
+$color-border-strong: rgba(255, 255, 255, 0.3);
+$color-success: #44aa44; // 7.08:1
+$color-success-muted: rgba(68, 170, 68, 0.2); // 7.08:1
+$color-success-border: rgba(68, 170, 68, 0.3);
+$color-error: #d44d4d; // 4.97:1
+$color-error-muted: rgba(212, 77, 77, 0.2); // 4.97:1
+$color-error-border: rgba(212, 77, 77, 0.3);
+$color-warning: #aa8844; // 6.31:1
+$color-warning-muted: rgba(170, 136, 68, 0.2); // 6.31:1
+$color-warning-border: rgba(170, 136, 68, 0.3);
+$color-info: #5082b9; // 5.23:1
+$color-info-muted: rgba(80, 130, 185, 0.2); // 5.23:1
+$color-info-border: rgba(80, 130, 185, 0.3);
+$color-hover: rgba(255, 255, 255, 0.05); // Interactive states
+$color-active: rgba(255, 255, 255, 0.1);
+$color-focus: rgba(255, 255, 255, 0.5); // WCAG AA compliant: 5.28:1 for focus indicators
+$color-overlay: rgba(0, 0, 0, 0.5); // Overlay - for modals, dialogs, backdrops
+$color-overlay-heavy: rgba(0, 0, 0, 0.7);
+$color-data-1: #60a5fa; // Blue
+$color-data-1-muted: rgba(96, 165, 250, 0.2); // Blue
+$color-data-2: #22c55e; // Green
+$color-data-2-muted: rgba(34, 197, 94, 0.2); // Green
+$color-data-3: #c084fc; // Purple
+$color-data-3-muted: rgba(192, 132, 252, 0.2); // Purple
+$color-data-3-border: rgba(192, 132, 252, 0.3);
+$color-data-4: #fbbf24; // Amber/Gold
+$color-data-4-muted: rgba(251, 191, 36, 0.2); // Amber/Gold
+$color-data-5: #f472b6; // Pink
+$color-data-5-muted: rgba(244, 114, 182, 0.2); // Pink
+$color-data-6: #facc15; // Yellow
+$color-data-6-muted: rgba(250, 204, 21, 0.2); // Yellow
+$color-rank-gold: #ca8a04; // Gold/1st place
+$color-rank-gold-muted: rgba(202, 138, 4, 0.2); // Gold/1st place
+$color-rank-bronze: #c2410c; // Bronze/3rd place
+$color-rank-bronze-muted: rgba(194, 65, 12, 0.2); // Bronze/3rd place
+
+// Font
+// ----------------------------------------------------------------------
+$font-sans: unquote("'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif"); // Font families
+$font-mono: unquote(""JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace");
+$font-serif: unquote("Georgia, "Times New Roman", serif");
+$font-light: 300; // Font weights
+$font-regular: 400;
+$font-medium: 500;
+$font-semibold: 600;
+$font-bold: 700;
+
+// Leading
+// ----------------------------------------------------------------------
+$leading-tight: 1.25; // Line heights
+$leading-snug: 1.375;
+$leading-normal: 1.5;
+$leading-relaxed: 1.618; // φ - Golden ratio
+$leading-loose: 1.75; // φ - Golden ratio
+
+// Tracking
+// ----------------------------------------------------------------------
+$tracking-tighter: -0.025em; // Letter spacing
+$tracking-tight: -0.015em;
+$tracking-normal: 0;
+$tracking-wide: 0.025em;
+$tracking-wider: 0.05em;
+$tracking-widest: 0.1em;
+
+// Text
+// ----------------------------------------------------------------------
+$text-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem); // φ⁴ max
+$text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem); // φ³ max
+$text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem); // φ² max
+$text-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem); // φ¹ max
+$text-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem); // 1.2¹ max
+$text-h4: clamp(0.931rem, 0.5vw + 0.5rem, 1.095rem); // √1.2 max
+$text-h5: 1rem; // base
+$text-h6: 0.913rem; // 1/√1.2
+$text-body-lg: 1.095rem; // √1.2
+$text-body: 1rem; // base
+$text-body-sm: 0.913rem; // 1/√1.2
+$text-caption: 0.833rem; // 1/1.2
+$text-overline: 0.618rem; // 1/φ
+
+// Space
+// ----------------------------------------------------------------------
+$space-xs: 0.618rem; // φ⁻¹
+$space-sm: 1rem; // φ⁰ (base)
+$space-md: 1.618rem; // φ¹
+$space-lg: 2.618rem; // φ²
+$space-xl: 4.236rem; // φ³
+$space-2xl: 6.854rem; // φ⁴
+$space-3xl: 11.09rem; // φ⁵
+
+// Radius
+// ----------------------------------------------------------------------
+$radius-sm: 6px; // 4 × 1.5
+$radius-md: 8px; // 4 × 2
+$radius-lg: 12px; // 4 × 3
+$radius-xl: 16px; // 4 × 4
+$radius-2xl: 24px; // 4 × 6
+$radius-full: 9999px; // 4 × 6
+
+// Shadow
+// ----------------------------------------------------------------------
+$shadow-none: none;
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+$shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+$shadow-glow-sm: 0 0 10px rgba(255, 255, 255, 0.05);
+$shadow-glow-md: 0 0 20px rgba(255, 255, 255, 0.1);
+$shadow-glow-lg: 0 0 40px rgba(255, 255, 255, 0.15);
+$shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5);
+$shadow-inner-lg: inset 0 4px 8px 0 rgba(0, 0, 0, 0.5);
+
+// Ease
+// ----------------------------------------------------------------------
+$ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+$ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+$ease-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+
+// Duration
+// ----------------------------------------------------------------------
+$duration-instant: 100ms;
+$duration-micro: 200ms;
+$duration-standard: 300ms;
+$duration-complex: 500ms;
+$duration-slow: 700ms;
+
+// Opacity
+// ----------------------------------------------------------------------
+$opacity-muted: 0.6; // Opacity states
+$opacity-hover: 0.8;
+$opacity-full: 1;
+
+// Z
+// ----------------------------------------------------------------------
+$z-base: 0;
+$z-dropdown: 10;
+$z-sticky: 20;
+$z-fixed: 50;
+$z-modal: 100;
+$z-popover: 200;
+$z-tooltip: 300;
+
+// Breakpoint
+// ----------------------------------------------------------------------
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
+
+// Container
+// ----------------------------------------------------------------------
+$container-sm: 640px;
+$container-md: 768px;
+$container-lg: 1024px;
+$container-xl: 1280px;
+$container-2xl: 1400px;
+$container-prose: 65ch;
+
+// Width
+// ----------------------------------------------------------------------
+$width-tight: 16.07rem; // 26 / φ - narrow sidebars
+$width-narrow: 32.36rem; // 20 × φ - narrow content
+$width-prose: 42rem; // 26 × φ - optimal reading (66-75 chars)
+$width-content: 52.36rem; // 20 × φ² - content sections
+$width-wide: 68rem; // 26 × φ² - full-width content
+
+// View
+// ----------------------------------------------------------------------
+$view-transition-duration: var(--duration-standard);
+
+// ==========================================================================
+// CSS Variable Map (for dynamic access)
+// ==========================================================================
+
+$canon-tokens: (
+  'color-bg-pure': #000000,
+  'color-bg-elevated': #0a0a0a,
+  'color-bg-surface': #111111,
+  'color-bg-subtle': #1a1a1a,
+  'color-fg-primary': #ffffff,
+  'color-fg-secondary': rgba(255, 255, 255, 0.8),
+  'color-fg-tertiary': rgba(255, 255, 255, 0.6),
+  'color-fg-muted': rgba(255, 255, 255, 0.46),
+  'color-fg-subtle': rgba(255, 255, 255, 0.2),
+  'color-border-default': rgba(255, 255, 255, 0.1),
+  'color-border-emphasis': rgba(255, 255, 255, 0.2),
+  'color-border-strong': rgba(255, 255, 255, 0.3),
+  'color-success': #44aa44,
+  'color-success-muted': rgba(68, 170, 68, 0.2),
+  'color-success-border': rgba(68, 170, 68, 0.3),
+  'color-error': #d44d4d,
+  'color-error-muted': rgba(212, 77, 77, 0.2),
+  'color-error-border': rgba(212, 77, 77, 0.3),
+  'color-warning': #aa8844,
+  'color-warning-muted': rgba(170, 136, 68, 0.2),
+  'color-warning-border': rgba(170, 136, 68, 0.3),
+  'color-info': #5082b9,
+  'color-info-muted': rgba(80, 130, 185, 0.2),
+  'color-info-border': rgba(80, 130, 185, 0.3),
+  'color-hover': rgba(255, 255, 255, 0.05),
+  'color-active': rgba(255, 255, 255, 0.1),
+  'color-focus': rgba(255, 255, 255, 0.5),
+  'color-overlay': rgba(0, 0, 0, 0.5),
+  'color-overlay-heavy': rgba(0, 0, 0, 0.7),
+  'color-data-1': #60a5fa,
+  'color-data-1-muted': rgba(96, 165, 250, 0.2),
+  'color-data-2': #22c55e,
+  'color-data-2-muted': rgba(34, 197, 94, 0.2),
+  'color-data-3': #c084fc,
+  'color-data-3-muted': rgba(192, 132, 252, 0.2),
+  'color-data-3-border': rgba(192, 132, 252, 0.3),
+  'color-data-4': #fbbf24,
+  'color-data-4-muted': rgba(251, 191, 36, 0.2),
+  'color-data-5': #f472b6,
+  'color-data-5-muted': rgba(244, 114, 182, 0.2),
+  'color-data-6': #facc15,
+  'color-data-6-muted': rgba(250, 204, 21, 0.2),
+  'color-rank-gold': #ca8a04,
+  'color-rank-gold-muted': rgba(202, 138, 4, 0.2),
+  'color-rank-bronze': #c2410c,
+  'color-rank-bronze-muted': rgba(194, 65, 12, 0.2),
+  'font-sans': unquote("'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif"),
+  'font-mono': unquote(""JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace"),
+  'font-serif': unquote("Georgia, "Times New Roman", serif"),
+  'font-light': 300,
+  'font-regular': 400,
+  'font-medium': 500,
+  'font-semibold': 600,
+  'font-bold': 700,
+  'leading-tight': 1.25,
+  'leading-snug': 1.375,
+  'leading-normal': 1.5,
+  'leading-relaxed': 1.618,
+  'leading-loose': 1.75,
+  'tracking-tighter': -0.025em,
+  'tracking-tight': -0.015em,
+  'tracking-normal': 0,
+  'tracking-wide': 0.025em,
+  'tracking-wider': 0.05em,
+  'tracking-widest': 0.1em,
+  'text-display-xl': clamp(4.236rem, 6vw + 2rem, 6.854rem),
+  'text-display': clamp(2.618rem, 4vw + 1.5rem, 4.236rem),
+  'text-h1': clamp(1.618rem, 3vw + 1rem, 2.618rem),
+  'text-h2': clamp(1.2rem, 2vw + 0.5rem, 1.618rem),
+  'text-h3': clamp(1.02rem, 1vw + 0.5rem, 1.2rem),
+  'text-h4': clamp(0.931rem, 0.5vw + 0.5rem, 1.095rem),
+  'text-h5': 1rem,
+  'text-h6': 0.913rem,
+  'text-body-lg': 1.095rem,
+  'text-body': 1rem,
+  'text-body-sm': 0.913rem,
+  'text-caption': 0.833rem,
+  'text-overline': 0.618rem,
+  'space-xs': 0.618rem,
+  'space-sm': 1rem,
+  'space-md': 1.618rem,
+  'space-lg': 2.618rem,
+  'space-xl': 4.236rem,
+  'space-2xl': 6.854rem,
+  'space-3xl': 11.09rem,
+  'radius-sm': 6px,
+  'radius-md': 8px,
+  'radius-lg': 12px,
+  'radius-xl': 16px,
+  'radius-2xl': 24px,
+  'radius-full': 9999px,
+  'shadow-none': none,
+  'shadow-sm': 0 1px 2px 0 rgba(0, 0, 0, 0.5),
+  'shadow-md': 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5),
+  'shadow-lg': 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5),
+  'shadow-xl': 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5),
+  'shadow-2xl': 0 25px 50px -12px rgba(0, 0, 0, 0.75),
+  'shadow-glow-sm': 0 0 10px rgba(255, 255, 255, 0.05),
+  'shadow-glow-md': 0 0 20px rgba(255, 255, 255, 0.1),
+  'shadow-glow-lg': 0 0 40px rgba(255, 255, 255, 0.15),
+  'shadow-inner': inset 0 2px 4px 0 rgba(0, 0, 0, 0.5),
+  'shadow-inner-lg': inset 0 4px 8px 0 rgba(0, 0, 0, 0.5),
+  'ease-standard': cubic-bezier(0.4, 0.0, 0.2, 1),
+  'ease-decelerate': cubic-bezier(0.0, 0.0, 0.2, 1),
+  'ease-accelerate': cubic-bezier(0.4, 0.0, 1, 1),
+  'duration-instant': 100ms,
+  'duration-micro': 200ms,
+  'duration-standard': 300ms,
+  'duration-complex': 500ms,
+  'duration-slow': 700ms,
+  'opacity-muted': 0.6,
+  'opacity-hover': 0.8,
+  'opacity-full': 1,
+  'z-base': 0,
+  'z-dropdown': 10,
+  'z-sticky': 20,
+  'z-fixed': 50,
+  'z-modal': 100,
+  'z-popover': 200,
+  'z-tooltip': 300,
+  'breakpoint-sm': 640px,
+  'breakpoint-md': 768px,
+  'breakpoint-lg': 1024px,
+  'breakpoint-xl': 1280px,
+  'breakpoint-2xl': 1536px,
+  'container-sm': 640px,
+  'container-md': 768px,
+  'container-lg': 1024px,
+  'container-xl': 1280px,
+  'container-2xl': 1400px,
+  'container-prose': 65ch,
+  'width-tight': 16.07rem,
+  'width-narrow': 32.36rem,
+  'width-prose': 42rem,
+  'width-content': 52.36rem,
+  'width-wide': 68rem,
+  'view-transition-duration': var(--duration-standard)
+);
+
+// ==========================================================================
+// Utility Mixin
+// ==========================================================================
+
+@mixin canon-var($property, $token) {
+  #{$property}: var(--#{$token}, map-get($canon-tokens, $token));
+}
+
+// ==========================================================================
+// Light Theme Overrides
+// ==========================================================================
+
+$canon-light-theme: (
+  'color-bg-pure': #ffffff,
+  'color-bg-elevated': #fafafa,
+  'color-bg-surface': #f5f5f5,
+  'color-bg-subtle': #eeeeee,
+  'color-fg-primary': #1a1a1a,
+  'color-fg-secondary': rgba(0, 0, 0, 0.8),
+  'color-fg-tertiary': rgba(0, 0, 0, 0.6),
+  'color-fg-muted': rgba(0, 0, 0, 0.46),
+  'color-fg-subtle': rgba(0, 0, 0, 0.2),
+  'color-border-default': rgba(0, 0, 0, 0.1),
+  'color-border-emphasis': rgba(0, 0, 0, 0.15),
+  'color-border-strong': rgba(0, 0, 0, 0.25),
+  'color-hover': rgba(0, 0, 0, 0.03),
+  'color-active': rgba(0, 0, 0, 0.06),
+  'color-focus': rgba(0, 0, 0, 0.2),
+  'shadow-sm': 0 1px 2px rgba(0, 0, 0, 0.05),
+  'shadow-md': 0 4px 6px rgba(0, 0, 0, 0.07),
+  'shadow-lg': 0 10px 15px rgba(0, 0, 0, 0.1)
+);

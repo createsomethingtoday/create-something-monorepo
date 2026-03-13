@@ -18,6 +18,12 @@ Claude Code settings and templates:
 - `mcp-templates/` - Pre-configured MCP server configs (Slack, Linear, Stripe, etc.)
 - `harness-templates/` - Multi-session work templates (feature, migration, refactor)
 
+### codex/
+
+Repo-owned Codex assets:
+- `skills/` - CREATE SOMETHING Codex skills and guardrails
+- `README.md` - installation and usage notes for Codex skills
+
 ### wezterm/
 
 Terminal emulator configuration:
@@ -52,6 +58,12 @@ Neovim configuration (Canon-aligned).
 
 ```bash
 pnpm --filter=dotfiles install-dotfiles
+```
+
+To install only the repo-owned Codex skills:
+
+```bash
+pnpm --filter @create-something/dotfiles install-codex-skills
 ```
 
 Or manually:

@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Default posture is the current production reviewer surface.
+# To revert to read-only Phase A, set:
+#   DISCOVERY_MODE=compact
+#   DISCOVERY_PACK=webflow-marketplace-app-review-phase-a
+#   DISCOVERY_MAX_PROXY_TOOLS=6
+#   HUB_ENABLED_BUNDLE=webflow-marketplace-app-review-phase-a
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HUB_DIR="$ROOT_DIR/packages/cs-mcp-hub-remote"
 TEAM_CONFIG="$HUB_DIR/wrangler.team-hubs.toml"
 
 ACTION="${1:-all}"
 SESSION_RESOLVE_URL="${SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
-DISCOVERY_PACK="${DISCOVERY_PACK:-webflow-marketplace-app-review-phase-a}"
-DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-6}"
+HUB_ENABLED_BUNDLE="${HUB_ENABLED_BUNDLE:-webflow-marketplace-app-review-phase-a}"
+DISCOVERY_MODE="${DISCOVERY_MODE:-full}"
+DISCOVERY_PACK="${DISCOVERY_PACK:-}"
+DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-18}"
 RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
 QUOTA_MAX_PROXY_CALLS_PER_PERIOD="${QUOTA_MAX_PROXY_CALLS_PER_PERIOD:-10000}"
@@ -123,21 +132,21 @@ deploy_one() {
 
   echo "===== DEPLOY ${worker} ====="
   cd "$HUB_DIR"
-  pnpm exec wrangler deploy \
+  local -a deploy_cmd=(
+    pnpm exec wrangler deploy
     --config "$TEAM_CONFIG" \
     --name "$worker" \
     --domain "$(domain_for_slug "$slug")" \
     --var "HUB_INSTANCE_ID:${worker}" \
     --var "HUB_ACCOUNT_ID:${account_id}" \
-    --var "HUB_ENABLED_BUNDLES:webflow-marketplace-app-review-phase-a" \
+    --var "HUB_ENABLED_BUNDLES:${HUB_ENABLED_BUNDLE}" \
     --var "HUB_ENABLED_SERVERS:webflow-app-review-mcp" \
     --var "HUB_IDENTITY_MODE:${REVIEWER_IDENTITY_MODE}" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:false" \
     --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
     --var "HUB_CONNECT_TIMEOUT_MS:${HUB_CONNECT_TIMEOUT_MS}" \
     --var "HUB_LIST_TOOLS_TIMEOUT_MS:${HUB_LIST_TOOLS_TIMEOUT_MS}" \
-    --var "HUB_DISCOVERY_MODE:compact" \
-    --var "HUB_DISCOVERY_SHARED_PACK:${DISCOVERY_PACK}" \
+    --var "HUB_DISCOVERY_MODE:${DISCOVERY_MODE}" \
     --var "HUB_DISCOVERY_DEFAULT_SERVERS:webflow-app-review-mcp" \
     --var "HUB_DISCOVERY_MAX_PROXY_TOOLS:${DISCOVERY_MAX_PROXY_TOOLS}" \
     --var "HUB_REQUIRED_GLOBAL_SERVERS:${REQUIRED_GLOBAL_SERVERS_SENTINEL}" \
@@ -146,6 +155,11 @@ deploy_one() {
     --var "HUB_RATE_LIMIT_WINDOW_SECONDS:${RATE_LIMIT_WINDOW_SECONDS}" \
     --var "HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD:${QUOTA_MAX_PROXY_CALLS_PER_PERIOD}" \
     --keep-vars
+  )
+  if [[ -n "$DISCOVERY_PACK" ]]; then
+    deploy_cmd+=(--var "HUB_DISCOVERY_SHARED_PACK:${DISCOVERY_PACK}")
+  fi
+  "${deploy_cmd[@]}"
 }
 
 normalize_one() {
@@ -168,41 +182,55 @@ normalize_one() {
 
   echo "===== NORMALIZE ${worker} ====="
 
-  curl -sS -X POST "$mcp_url" \
-    "${auth_headers[@]}" \
-    -H "Content-Type: application/json" \
-    -H "Accept: application/json, text/event-stream" \
-    -d '{
-      "jsonrpc":"2.0",
-      "id":"phase-a-state",
-      "method":"tools/call",
-      "params":{
-        "name":"hub_update_state",
-        "arguments":{
-          "setBundles":["webflow-marketplace-app-review-phase-a"],
-          "setServers":["webflow-app-review-mcp"]
+  local state_payload
+  state_payload="$(jq -cn \
+    --arg bundle "$HUB_ENABLED_BUNDLE" \
+    '{
+      jsonrpc:"2.0",
+      id:"reviewer-state",
+      method:"tools/call",
+      params:{
+        name:"hub_update_state",
+        arguments:{
+          setBundles:[$bundle],
+          setServers:["webflow-app-review-mcp"]
         }
       }
-    }' | jq .
+    }')"
 
   curl -sS -X POST "$mcp_url" \
     "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
-    -d "{
-      \"jsonrpc\":\"2.0\",
-      \"id\":\"phase-a-discovery\",
-      \"method\":\"tools/call\",
-      \"params\":{
-        \"name\":\"hub_set_discovery\",
-        \"arguments\":{
-          \"pack\":\"${DISCOVERY_PACK}\",
-          \"mode\":\"compact\",
-          \"activeServers\":[\"webflow-app-review-mcp\"],
-          \"maxProxyTools\":${DISCOVERY_MAX_PROXY_TOOLS}
-        }
+    -d "$state_payload" | jq .
+
+  local discovery_payload
+  discovery_payload="$(jq -cn \
+    --arg mode "$DISCOVERY_MODE" \
+    --arg pack "$DISCOVERY_PACK" \
+    --argjson maxProxyTools "$DISCOVERY_MAX_PROXY_TOOLS" \
+    '{
+      jsonrpc:"2.0",
+      id:"reviewer-discovery",
+      method:"tools/call",
+      params:{
+        name:"hub_set_discovery",
+        arguments:(
+          {
+            mode:$mode,
+            activeServers:["webflow-app-review-mcp"],
+            maxProxyTools:$maxProxyTools
+          }
+          + (if $pack != "" then {pack:$pack} else {} end)
+        )
       }
-    }" | jq .
+    }')"
+
+  curl -sS -X POST "$mcp_url" \
+    "${auth_headers[@]}" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json, text/event-stream" \
+    -d "$discovery_payload" | jq .
 }
 
 verify_one() {
@@ -293,4 +321,4 @@ for entry in "${REVIEWERS[@]}"; do
   fi
 done
 
-echo "webflow app-reviewer Phase A hub action complete: ${ACTION}"
+echo "webflow app-reviewer hub action complete: ${ACTION}"

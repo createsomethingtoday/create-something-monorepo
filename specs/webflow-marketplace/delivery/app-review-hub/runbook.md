@@ -27,8 +27,8 @@ Use it for:
   - `webflow-app-review-mcp`
 - policy boundary:
   - auto-allow: reads, queue context, field-map lookup, recommendation drafting, feedback refinement
-  - approval-required: reviewer-owned workflow writes (`assign_self`, `unassign_self`, `save_draft_feedback`, `set_review_status`, `request_changes`, `approve_version`, `reject_version`), broader version review state changes, Marketplace status changes
-  - block: broad asset metadata editing from reviewer lane, creator-facing sends, reviewer-lane control-plane actions
+  - approval-required: reviewer-owned workflow writes (`assign_self`, `unassign_self`, `save_draft_feedback`, `set_review_status`, `request_changes`, `approve_version`, `reject_version`), broader version review state changes, broad asset metadata edits, Marketplace status changes
+  - block: creator-facing sends, reviewer-lane control-plane actions
 
 ## 3. Roles
 

@@ -343,6 +343,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
     const args = normalizeArgs(toolRequest.params.arguments);
     const startedAt = Date.now();
     let entityId = 'unknown';
+    const traceContext = resolveInvocationTraceContext(extra, request);
 
     const emitAndReturn = async (
       result: {
@@ -364,6 +365,8 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           toolName,
           composioToolSlug,
           accountId: entityId,
+          correlationId: traceContext.correlationId,
+          requestId: traceContext.requestId,
           input: args,
           output: result,
           durationMs,
@@ -2047,6 +2050,8 @@ async function emitBraintrustInvocation(
     durationMs: number;
     success: boolean;
     error?: string;
+    correlationId?: string | null;
+    requestId?: string | null;
   },
 ): Promise<void> {
   await logger.traced(
@@ -2055,7 +2060,7 @@ async function emitBraintrustInvocation(
         input: args.input,
         output: args.output,
         error: args.error,
-        tags: ['mcp', SERVER_NAME, args.toolkitSlug, args.toolName, args.success ? 'success' : 'error'],
+        tags: ['mcp', SERVER_NAME, args.toolkitSlug, args.toolName],
         metadata: {
           server: args.serverName,
           toolkit: args.toolkitSlug,
@@ -2064,6 +2069,8 @@ async function emitBraintrustInvocation(
           accountId: args.accountId,
           durationMs: args.durationMs,
           success: args.success,
+          correlationId: args.correlationId ?? null,
+          requestId: args.requestId ?? null,
         },
       });
     },
@@ -2072,6 +2079,21 @@ async function emitBraintrustInvocation(
       type: 'tool',
     },
   );
+}
+
+function resolveInvocationTraceContext(extra: unknown, request: Request): {
+  correlationId: string | null;
+  requestId: string | null;
+} {
+  const requestInfo = asRecord(extra)?.requestInfo;
+  return {
+    correlationId:
+      getHeaderValue(requestInfo, 'x-correlation-id') ??
+      request.headers.get('x-correlation-id'),
+    requestId:
+      getHeaderValue(requestInfo, 'x-request-id') ??
+      request.headers.get('x-request-id'),
+  };
 }
 
 function extractToolErrorMessage(result: {

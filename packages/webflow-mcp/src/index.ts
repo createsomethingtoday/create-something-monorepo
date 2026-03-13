@@ -19,6 +19,25 @@ import { mcpToolMetadata } from '@create-something/observability/atlas';
 
 import * as plagiarism from './tools/plagiarism.js';
 
+function webflowToolGroup(name: string): string {
+  if (name.startsWith('plagiarism_')) {
+    return 'plagiarism';
+  }
+  return 'other';
+}
+
+function webflowTraceMetadata(name: string, args: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...mcpToolMetadata('webflow-mcp', name, 'classify'),
+    'business.tool_group': webflowToolGroup(name),
+    'business.template_id': typeof args.templateId === 'string' ? args.templateId : undefined,
+    'business.template_a': typeof args.templateA === 'string' ? args.templateA : undefined,
+    'business.template_b': typeof args.templateB === 'string' ? args.templateB : undefined,
+    'business.reason': typeof args.reason === 'string' ? args.reason : undefined,
+    'business.url_present': typeof args.url === 'string' && args.url.length > 0 ? 'true' : undefined,
+  };
+}
+
 // Initialize Langfuse tracing
 initObservability();
 
@@ -205,20 +224,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
+  const safeArgs = (args as Record<string, unknown> | undefined) || {};
 
   // Create trace for tool call
   const trace = createTrace({
     name: `webflow-mcp:${name}`,
-    metadata: mcpToolMetadata('webflow-mcp', name, 'classify')
+    metadata: webflowTraceMetadata(name, safeArgs),
+    tags: ['mcp', 'webflow-mcp', webflowToolGroup(name)]
   });
 
   const span = createSpan(trace, {
     name: `tool:${name}`,
-    input: args
+    input: args,
+    metadata: {
+      'business.tool_group': webflowToolGroup(name)
+    }
   });
 
   try {
-    const safeArgs = args as Record<string, unknown> || {};
     let result: unknown;
 
     switch (name) {

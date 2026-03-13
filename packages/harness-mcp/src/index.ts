@@ -12,6 +12,37 @@ import * as git from './tools/git.js';
 import * as checkpoint from './tools/checkpoint.js';
 import * as canon from './tools/canon.js';
 
+function harnessToolGroup(name: string): string {
+  if (['get_issue', 'list_issues', 'get_priority', 'update_issue', 'close_issue'].includes(name)) {
+    return 'issue_tracking';
+  }
+  if (['run_quality_gate', 'run_all_gates'].includes(name)) {
+    return 'quality_gate';
+  }
+  if (['get_git_status', 'get_diff', 'commit_with_issue'].includes(name)) {
+    return 'git';
+  }
+  if (['save_checkpoint', 'load_checkpoint', 'list_checkpoints'].includes(name)) {
+    return 'checkpoint';
+  }
+  if (['get_canon_rules', 'get_quick_reference'].includes(name)) {
+    return 'canon';
+  }
+  return 'other';
+}
+
+function harnessTraceMetadata(name: string, args: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...mcpToolMetadata('harness-mcp', name, 'orchestrate'),
+    'business.tool_group': harnessToolGroup(name),
+    'business.issue_id': typeof args.issueId === 'string' ? args.issueId : undefined,
+    'business.session_id': typeof args.sessionId === 'string' ? args.sessionId : undefined,
+    'business.package': typeof args.package === 'string' ? args.package : undefined,
+    'business.gate': typeof args.gate === 'string' ? args.gate : undefined,
+    'business.category': typeof args.category === 'string' ? args.category : undefined,
+  };
+}
+
 // Initialize Langfuse tracing
 initObservability();
 
@@ -278,23 +309,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
+  const safeArgs = (args as Record<string, any> | undefined) || {};
 
   // Create trace for tool call
   const trace = createTrace({
     name: `harness-mcp:${name}`,
-    metadata: mcpToolMetadata('harness-mcp', name, 'orchestrate')
+    metadata: harnessTraceMetadata(name, safeArgs),
+    tags: ['mcp', 'harness-mcp', harnessToolGroup(name)]
   });
 
   const span = createSpan(trace, {
     name: `tool:${name}`,
-    input: args
+    input: args,
+    metadata: {
+      'business.tool_group': harnessToolGroup(name)
+    }
   });
 
   try {
     let result: any;
-
-    // Type guard for args
-    const safeArgs = args as Record<string, any> || {};
 
     switch (name) {
       // Beads operations

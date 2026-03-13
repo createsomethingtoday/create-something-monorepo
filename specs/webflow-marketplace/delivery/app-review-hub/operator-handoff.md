@@ -1,23 +1,28 @@
 # Operator Handoff
 
-**Status:** Ready for operator execution  
+**Status:** Live in production  
 **Audience:** Hub operators, Marketplace review lead, Senior Systems Architect  
 **Workflow:** `app_review_hub_lane`  
-**Date:** `2026-03-11`
+**Date:** `2026-03-13`
 
 ## 1. Outcome
 
-The repository is now prepared for the two-user Phase A rollout of the Webflow Marketplace app-review Hub lane.
+The repository and live reviewer hubs are now aligned to the current production app-review posture for the two-user reviewer lane.
 
-Phase A target posture:
+Current live posture:
 
 - one reviewer-specific Hub surface per reviewer
 - `webflow-app-review-mcp` only
-- compact discovery
-- read-only evidence lane
-- manual Airtable fallback for official review-state changes
+- full discovery over the downstream app-review server
+- all 18 downstream app-review tools visible
+- reviewer-owned write actions enabled
+- rate limits and quotas enabled
 
-This is a rollout-ready repo state, not a claim that the live reviewer hubs have already been enabled.
+Compatibility note:
+
+- the currently deployed Hub runtime still reports `webflow-marketplace-app-review-phase-a` as the enabled bundle
+- discovery is what currently governs the live production surface
+- this handoff therefore treats Phase A as the rollback bundle and full discovery as the active production setting
 
 ## 2. Reviewer set
 
@@ -60,8 +65,10 @@ The app-review MCP now supports reviewer identity resolution via account-scoped 
 - [worker/index.ts](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/webflow-app-review-mcp/worker/index.ts)
 - [index.ts](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/webflow-app-review-mcp/src/index.ts)
 
-The MCP now exposes narrow reviewer-safe workflow verbs for later gated rollout:
+The MCP now exposes the full reviewer workflow and broader app-review routes used in production:
 
+- `app_review_my_queue`
+- `app_review_get_review_context`
 - `app_review_assign_self`
 - `app_review_unassign_self`
 - `app_review_save_draft_feedback`
@@ -69,6 +76,9 @@ The MCP now exposes narrow reviewer-safe workflow verbs for later gated rollout:
 - `app_review_request_changes`
 - `app_review_approve_version`
 - `app_review_reject_version`
+- `app_review_update_version_review`
+- `app_review_update_asset_metadata`
+- `app_review_set_marketplace_status`
 
 Implementation:
 
@@ -134,7 +144,7 @@ pnpm exec wrangler secret put AIRTABLE_API_KEY
 pnpm exec wrangler secret put MCP_API_KEY
 ```
 
-## 6. Phase A rollout commands
+## 6. Production rollout commands
 
 Primary deploy script:
 
@@ -148,7 +158,9 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 export CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN="replace-with-pablo-hub-token"
 export CS_HUB_WF_APP_REVIEW_SHEA_API_TOKEN="replace-with-shea-hub-token"
 export SESSION_RESOLVE_URL="https://id.createsomething.space/v1/mcp/sessions/resolve"
-export DISCOVERY_MAX_PROXY_TOOLS="6"
+export HUB_ENABLED_BUNDLE="webflow-marketplace-app-review-phase-a"
+export DISCOVERY_MODE="full"
+export DISCOVERY_MAX_PROXY_TOOLS="18"
 export RATE_LIMIT_MAX_CALLS="120"
 export RATE_LIMIT_WINDOW_SECONDS="60"
 export QUOTA_MAX_PROXY_CALLS_PER_PERIOD="10000"
@@ -168,7 +180,9 @@ Or:
 ./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh all
 ```
 
-## 7. Expected Phase A surface
+The compatibility bundle remains `webflow-marketplace-app-review-phase-a` until the Hub runtime is redeployed with explicit bundle awareness for the full app-review production pack. The live reviewer surface is driven by the full discovery setting above.
+
+## 7. Expected current production surface
 
 Visible reviewer tools:
 
@@ -178,27 +192,26 @@ Visible reviewer tools:
 - `app_review_list_versions`
 - `app_review_get_version`
 - `app_review_get_field_map`
-
-Hidden reviewer tools:
-
+- `app_review_my_queue`
+- `app_review_get_review_context`
 - `app_review_assign_self`
 - `app_review_unassign_self`
 - `app_review_save_draft_feedback`
 - `app_review_set_review_status`
-- `app_review_update_version_review`
-- `app_review_set_marketplace_status`
-- `app_review_update_asset_metadata`
 - `app_review_request_changes`
 - `app_review_approve_version`
 - `app_review_reject_version`
+- `app_review_update_version_review`
+- `app_review_update_asset_metadata`
+- `app_review_set_marketplace_status`
 
-## 8. Future Phase B smoke
+## 8. Write smoke helper
 
 Reserved smoke script:
 
 - [webflow-app-review-phase-b-smoke.sh](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/scripts/webflow-app-review-phase-b-smoke.sh)
 
-Use only after explicit Phase B approval, on a noncritical version record with a planned rollback path.
+Use it for controlled verification on a noncritical version record with a planned rollback path.
 
 Supported actions:
 
@@ -212,23 +225,8 @@ Supported actions:
 
 ## 9. Remaining live work
 
-The remaining work is operational, not repo scaffolding:
-
-1. seed `.agency`
-2. create Auth0 users
-3. set `REVIEWER_DIRECTORY_JSON` on the deployed worker
-4. deploy and normalize the two reviewer Hub surfaces
-5. verify Phase A read-only discovery
-6. keep all state changes manual in Airtable during Phase A
-7. only after signoff, run a Phase B smoke for one narrow reviewer-owned workflow action
+The only remaining operational cleanup is to redeploy the Hub runtime with explicit awareness of the `webflow-marketplace-app-review-phase-b` bundle name so bundle state and discovery state match. Until then, do not rerun legacy Phase A normalization values.
 
 ## 10. Final status
 
-The repo is ready for operator execution of the two-user Phase A app-review rollout.
-
-The live environment should still be treated as not yet production-write-enabled until:
-
-- reviewer attribution is proven in live traces
-- approval-gated authz is confirmed
-- fallback drills are rehearsed
-- Marketplace review lead and Senior Systems Architect sign off
+The two-user app-review reviewer lane is live in production write posture. Pablo and Shea both have the full downstream app-review tool surface through their reviewer-specific Hub URLs.

@@ -1,12 +1,19 @@
 import type {
+  AgentProfile,
+  AgentProfileRow,
   AgentExecutionRow,
   CheckpointRow,
+  DispatchConfig,
   DependencyRow,
   LoomIssueType,
   LoomPriority,
   LoomSessionStatus,
   LoomStatus,
   MigrationPayload,
+  ModelsConfig,
+  NotionRuntimeConfig,
+  RuntimeSettingRow,
+  RuntimeSettings,
   SessionRow,
   TaskRow,
 } from './types.js';
@@ -18,6 +25,8 @@ import {
   normalizeSessionStatus,
   normalizeStatus,
   parseJsonArray,
+  parseJsonObject,
+  parseJsonValue,
 } from './utils.js';
 
 interface SummaryRow {
@@ -29,6 +38,10 @@ interface SummaryRow {
   cancelled: number;
   total_cost_usd: number;
 }
+
+const DISPATCH_CONFIG_KEY = 'dispatch_config';
+const MODELS_CONFIG_KEY = 'models_config';
+const NOTION_CONFIG_KEY = 'notion';
 
 export async function getTask(db: D1Database, taskId: string): Promise<TaskRow | null> {
   return db
@@ -506,6 +519,79 @@ export async function insertExecution(
     )
     .bind(input.agentId, input.taskId, input.taskType ?? null, input.success ? 1 : 0, input.durationSecs, nowIso())
     .run();
+
+  const profileRow = await db
+    .prepare('SELECT id, profile_json, updated_at FROM agent_profiles WHERE id = ?1')
+    .bind(input.agentId)
+    .first<AgentProfileRow>();
+
+  const profile = profileRow
+    ? parseJsonObject<AgentProfile | null>(profileRow.profile_json, null)
+    : ({
+        id: input.agentId,
+        name: input.agentId,
+        cli_path: input.agentId,
+        capabilities: {
+          planning: 0.5,
+          coding: 0.5,
+          debugging: 0.5,
+          ui: 0.5,
+          docs: 0.5,
+          refactor: 0.5,
+          testing: 0.5,
+          mcp: false,
+          checkpoints: false,
+          git_aware: false,
+          sub_agents: false,
+          max_context: 128000,
+        },
+        cost: {
+          input_per_1k: 0,
+          output_per_1k: 0,
+          output_ratio: 2.5,
+        },
+        quality: {
+          successes: 0,
+          failures: 0,
+          avg_duration_secs: 0,
+          by_type: {},
+        },
+        max_concurrent: 1,
+        active: 0,
+        available: true,
+        last_used: null,
+      } satisfies AgentProfile);
+
+  if (!profile) return;
+
+  const taskType = input.taskType ?? 'task';
+  const currentSuccesses = profile.quality.successes ?? 0;
+  const currentFailures = profile.quality.failures ?? 0;
+  const priorTotal = currentSuccesses + currentFailures;
+  const nextTotal = priorTotal + 1;
+  const byType = { ...(profile.quality.by_type ?? {}) };
+  const existingByType = byType[taskType] ?? 0.5;
+
+  profile.quality = {
+    successes: input.success ? currentSuccesses + 1 : currentSuccesses,
+    failures: input.success ? currentFailures : currentFailures + 1,
+    avg_duration_secs:
+      nextTotal > 0 ? (profile.quality.avg_duration_secs * priorTotal + input.durationSecs) / nextTotal : input.durationSecs,
+    by_type: {
+      ...byType,
+      [taskType]: input.success ? existingByType * 0.9 + 0.1 : existingByType * 0.9,
+    },
+  };
+  profile.last_used = nowIso();
+
+  await db
+    .prepare(
+      `INSERT INTO agent_profiles (id, profile_json, updated_at)
+       VALUES (?1, ?2, ?3)
+       ON CONFLICT(id) DO UPDATE SET profile_json = excluded.profile_json, updated_at = excluded.updated_at`,
+    )
+    .bind(profile.id, JSON.stringify(profile), nowIso())
+    .run();
 }
 
 export async function analytics(
@@ -654,12 +740,25 @@ export async function compactTasks(db: D1Database, olderThanDays: number): Promi
   return count;
 }
 
-export async function healthCounts(db: D1Database): Promise<{ tasks: number; dependencies: number; sessions: number; checkpoints: number }> {
-  const [tasks, dependencies, sessions, checkpoints] = await Promise.all([
+export async function healthCounts(
+  db: D1Database,
+): Promise<{
+  tasks: number;
+  dependencies: number;
+  sessions: number;
+  checkpoints: number;
+  agent_executions: number;
+  agent_profiles: number;
+  runtime_settings: number;
+}> {
+  const [tasks, dependencies, sessions, checkpoints, agentExecutions, agentProfiles, runtimeSettings] = await Promise.all([
     db.prepare('SELECT COUNT(*) as count FROM tasks').first<{ count: number }>(),
     db.prepare('SELECT COUNT(*) as count FROM dependencies').first<{ count: number }>(),
     db.prepare('SELECT COUNT(*) as count FROM sessions').first<{ count: number }>(),
     db.prepare('SELECT COUNT(*) as count FROM checkpoints').first<{ count: number }>(),
+    db.prepare('SELECT COUNT(*) as count FROM agent_executions').first<{ count: number }>(),
+    db.prepare('SELECT COUNT(*) as count FROM agent_profiles').first<{ count: number }>(),
+    db.prepare('SELECT COUNT(*) as count FROM runtime_settings').first<{ count: number }>(),
   ]);
 
   return {
@@ -667,6 +766,9 @@ export async function healthCounts(db: D1Database): Promise<{ tasks: number; dep
     dependencies: dependencies?.count ?? 0,
     sessions: sessions?.count ?? 0,
     checkpoints: checkpoints?.count ?? 0,
+    agent_executions: agentExecutions?.count ?? 0,
+    agent_profiles: agentProfiles?.count ?? 0,
+    runtime_settings: runtimeSettings?.count ?? 0,
   };
 }
 
@@ -727,6 +829,137 @@ export async function getDoctorIssues(db: D1Database): Promise<string[]> {
   return issues;
 }
 
+export async function getRuntimeSetting<T>(db: D1Database, key: string): Promise<T | null> {
+  const row = await db
+    .prepare('SELECT key, value_json, updated_at FROM runtime_settings WHERE key = ?1')
+    .bind(key)
+    .first<RuntimeSettingRow>();
+
+  if (!row) return null;
+  return parseJsonValue<T | null>(row.value_json, null);
+}
+
+export async function setRuntimeSetting(db: D1Database, key: string, value: unknown): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO runtime_settings (key, value_json, updated_at)
+       VALUES (?1, ?2, ?3)
+       ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`,
+    )
+    .bind(key, JSON.stringify(value ?? null), nowIso())
+    .run();
+}
+
+export async function getRuntimeSettings(db: D1Database): Promise<RuntimeSettings> {
+  const rows = await db
+    .prepare('SELECT key, value_json, updated_at FROM runtime_settings ORDER BY key ASC')
+    .all<RuntimeSettingRow>();
+
+  const settings: RuntimeSettings = {};
+  for (const row of rows.results ?? []) {
+    if (row.key === DISPATCH_CONFIG_KEY || row.key === MODELS_CONFIG_KEY) continue;
+    settings[row.key] = parseJsonValue(row.value_json, null);
+  }
+
+  return settings;
+}
+
+export async function getDispatchConfig(db: D1Database): Promise<DispatchConfig | null> {
+  return getRuntimeSetting<DispatchConfig>(db, DISPATCH_CONFIG_KEY);
+}
+
+export async function getModelsConfig(db: D1Database): Promise<ModelsConfig | null> {
+  return getRuntimeSetting<ModelsConfig>(db, MODELS_CONFIG_KEY);
+}
+
+export async function getNotionConfig(db: D1Database): Promise<NotionRuntimeConfig | null> {
+  return getRuntimeSetting<NotionRuntimeConfig>(db, NOTION_CONFIG_KEY);
+}
+
+export async function setNotionConfig(db: D1Database, config: NotionRuntimeConfig): Promise<void> {
+  await setRuntimeSetting(db, NOTION_CONFIG_KEY, config);
+}
+
+export async function getAgentProfiles(db: D1Database): Promise<AgentProfile[]> {
+  const rows = await db
+    .prepare('SELECT id, profile_json, updated_at FROM agent_profiles ORDER BY id ASC')
+    .all<AgentProfileRow>();
+
+  return (rows.results ?? [])
+    .map((row) => parseJsonObject<AgentProfile | null>(row.profile_json, null))
+    .filter((profile): profile is AgentProfile => Boolean(profile?.id));
+}
+
+export async function exportSnapshot(
+  db: D1Database,
+): Promise<{
+  payload: MigrationPayload;
+  counts: Record<string, number>;
+}> {
+  const [tasks, dependencies, sessions, checkpoints, agentExecutions, agentProfiles, runtimeSettings, dispatchConfig, modelsConfig] =
+    await Promise.all([
+      db
+        .prepare(
+          `SELECT id, title, description, status, priority, issue_type, agent, labels_json, parent, evidence, actual_cost_usd, repo, close_reason, created_at, updated_at
+           FROM tasks
+           ORDER BY created_at ASC`,
+        )
+        .all<TaskRow>(),
+      db
+        .prepare('SELECT task_id, depends_on, dep_type, created_at FROM dependencies ORDER BY created_at ASC')
+        .all<DependencyRow>(),
+      db
+        .prepare(
+          `SELECT id, agent_id, task_id, status, started_at, ended_at, working_dir, git_branch, last_checkpoint, context_json
+           FROM sessions
+           ORDER BY started_at ASC`,
+        )
+        .all<SessionRow>(),
+      db
+        .prepare(
+          `SELECT id, session_id, sequence, summary, context_json, git_commit, created_at
+           FROM checkpoints
+           ORDER BY created_at ASC`,
+        )
+        .all<CheckpointRow>(),
+      db
+        .prepare(
+          `SELECT agent_id, task_id, task_type, success, duration_secs, created_at
+           FROM agent_executions
+           ORDER BY created_at ASC`,
+        )
+        .all<Omit<AgentExecutionRow, 'id'>>(),
+      db.prepare('SELECT id, profile_json, updated_at FROM agent_profiles ORDER BY id ASC').all<AgentProfileRow>(),
+      getRuntimeSettings(db),
+      getDispatchConfig(db),
+      getModelsConfig(db),
+    ]);
+
+  const payload: MigrationPayload = {
+    tasks: tasks.results ?? [],
+    dependencies: dependencies.results ?? [],
+    sessions: sessions.results ?? [],
+    checkpoints: checkpoints.results ?? [],
+    ...(agentExecutions.results && agentExecutions.results.length > 0 ? { agentExecutions: agentExecutions.results } : {}),
+    ...(agentProfiles.results && agentProfiles.results.length > 0 ? { agentProfiles: agentProfiles.results } : {}),
+    ...(dispatchConfig ? { dispatchConfig } : {}),
+    ...(modelsConfig ? { modelsConfig } : {}),
+    ...(Object.keys(runtimeSettings).length > 0 ? { runtimeSettings } : {}),
+  };
+
+  const counts = {
+    tasks: payload.tasks.length,
+    dependencies: payload.dependencies.length,
+    sessions: payload.sessions.length,
+    checkpoints: payload.checkpoints.length,
+    agentExecutions: payload.agentExecutions?.length ?? 0,
+    agentProfiles: payload.agentProfiles?.length ?? 0,
+    runtimeSettings: Object.keys(payload.runtimeSettings ?? {}).length,
+  };
+
+  return { payload, counts };
+}
+
 export async function importSnapshot(db: D1Database, payload: MigrationPayload): Promise<{ counts: Record<string, number> }> {
   await db.exec(`
     DELETE FROM staging_dependencies;
@@ -734,6 +967,8 @@ export async function importSnapshot(db: D1Database, payload: MigrationPayload):
     DELETE FROM staging_checkpoints;
     DELETE FROM staging_sessions;
     DELETE FROM staging_agent_executions;
+    DELETE FROM staging_agent_profiles;
+    DELETE FROM staging_runtime_settings;
   `);
 
   if (payload.tasks.length > 0) {
@@ -841,34 +1076,97 @@ export async function importSnapshot(db: D1Database, payload: MigrationPayload):
     await db.batch(inserts);
   }
 
-  await db.exec(`
-    BEGIN TRANSACTION;
-      DELETE FROM dependencies;
-      DELETE FROM checkpoints;
-      DELETE FROM sessions;
-      DELETE FROM agent_executions;
-      DELETE FROM tasks;
+  const hasExtendedState =
+    payload.agentProfiles !== undefined ||
+    payload.dispatchConfig !== undefined ||
+    payload.modelsConfig !== undefined ||
+    payload.runtimeSettings !== undefined;
 
-      INSERT INTO tasks (id, title, description, status, priority, issue_type, agent, labels_json, parent, evidence, actual_cost_usd, repo, close_reason, created_at, updated_at)
-      SELECT id, title, description, status, priority, issue_type, agent, labels_json, parent, evidence, actual_cost_usd, repo, close_reason, created_at, updated_at
-      FROM staging_tasks;
+  if ((payload.agentProfiles ?? []).length > 0) {
+    const inserts = (payload.agentProfiles ?? []).map((profile) =>
+      db
+        .prepare(
+          `INSERT INTO staging_agent_profiles (id, profile_json, updated_at)
+           VALUES (?1, ?2, ?3)`,
+        )
+        .bind(profile.id, profile.profile_json, profile.updated_at || nowIso()),
+    );
+    await db.batch(inserts);
+  }
 
-      INSERT INTO dependencies (task_id, depends_on, dep_type, created_at)
-      SELECT task_id, depends_on, dep_type, created_at FROM staging_dependencies;
+  const runtimeSettingEntries: Array<[string, unknown]> = [];
+  if (payload.dispatchConfig !== undefined) {
+    runtimeSettingEntries.push([DISPATCH_CONFIG_KEY, payload.dispatchConfig ?? null]);
+  }
+  if (payload.modelsConfig !== undefined) {
+    runtimeSettingEntries.push([MODELS_CONFIG_KEY, payload.modelsConfig ?? null]);
+  }
+  if (payload.runtimeSettings !== undefined) {
+    for (const [key, value] of Object.entries(payload.runtimeSettings)) {
+      runtimeSettingEntries.push([key, value]);
+    }
+  }
 
-      INSERT INTO sessions (id, agent_id, task_id, status, started_at, ended_at, working_dir, git_branch, last_checkpoint, context_json)
-      SELECT id, agent_id, task_id, status, started_at, ended_at, working_dir, git_branch, last_checkpoint, context_json
-      FROM staging_sessions;
+  if (runtimeSettingEntries.length > 0) {
+    const inserts = runtimeSettingEntries.map(([key, value]) =>
+      db
+        .prepare(
+          `INSERT INTO staging_runtime_settings (key, value_json, updated_at)
+           VALUES (?1, ?2, ?3)`,
+        )
+        .bind(key, JSON.stringify(value ?? null), nowIso()),
+    );
+    await db.batch(inserts);
+  }
 
-      INSERT INTO checkpoints (id, session_id, sequence, summary, context_json, git_commit, created_at)
-      SELECT id, session_id, sequence, summary, context_json, git_commit, created_at
-      FROM staging_checkpoints;
+  const replacementStatements = [
+    db.prepare('DELETE FROM dependencies'),
+    db.prepare('DELETE FROM checkpoints'),
+    db.prepare('DELETE FROM sessions'),
+    db.prepare('DELETE FROM agent_executions'),
+    db.prepare('DELETE FROM tasks'),
+    db.prepare(
+      `INSERT INTO tasks (id, title, description, status, priority, issue_type, agent, labels_json, parent, evidence, actual_cost_usd, repo, close_reason, created_at, updated_at)
+       SELECT id, title, description, status, priority, issue_type, agent, labels_json, parent, evidence, actual_cost_usd, repo, close_reason, created_at, updated_at
+       FROM staging_tasks`,
+    ),
+    db.prepare(
+      `INSERT INTO dependencies (task_id, depends_on, dep_type, created_at)
+       SELECT task_id, depends_on, dep_type, created_at FROM staging_dependencies`,
+    ),
+    db.prepare(
+      `INSERT INTO sessions (id, agent_id, task_id, status, started_at, ended_at, working_dir, git_branch, last_checkpoint, context_json)
+       SELECT id, agent_id, task_id, status, started_at, ended_at, working_dir, git_branch, last_checkpoint, context_json
+       FROM staging_sessions`,
+    ),
+    db.prepare(
+      `INSERT INTO checkpoints (id, session_id, sequence, summary, context_json, git_commit, created_at)
+       SELECT id, session_id, sequence, summary, context_json, git_commit, created_at
+       FROM staging_checkpoints`,
+    ),
+    db.prepare(
+      `INSERT INTO agent_executions (agent_id, task_id, task_type, success, duration_secs, created_at)
+       SELECT agent_id, task_id, task_type, success, duration_secs, created_at
+       FROM staging_agent_executions`,
+    ),
+  ];
 
-      INSERT INTO agent_executions (agent_id, task_id, task_type, success, duration_secs, created_at)
-      SELECT agent_id, task_id, task_type, success, duration_secs, created_at
-      FROM staging_agent_executions;
-    COMMIT;
-  `);
+  if (hasExtendedState) {
+    replacementStatements.push(
+      db.prepare('DELETE FROM agent_profiles'),
+      db.prepare('DELETE FROM runtime_settings'),
+      db.prepare(
+        `INSERT INTO agent_profiles (id, profile_json, updated_at)
+         SELECT id, profile_json, updated_at FROM staging_agent_profiles`,
+      ),
+      db.prepare(
+        `INSERT INTO runtime_settings (key, value_json, updated_at)
+         SELECT key, value_json, updated_at FROM staging_runtime_settings`,
+      ),
+    );
+  }
+
+  await db.batch(replacementStatements);
 
   const counts = {
     tasks: (await db.prepare('SELECT COUNT(*) as count FROM tasks').first<{ count: number }>())?.count ?? 0,
@@ -876,6 +1174,8 @@ export async function importSnapshot(db: D1Database, payload: MigrationPayload):
     sessions: (await db.prepare('SELECT COUNT(*) as count FROM sessions').first<{ count: number }>())?.count ?? 0,
     checkpoints: (await db.prepare('SELECT COUNT(*) as count FROM checkpoints').first<{ count: number }>())?.count ?? 0,
     agentExecutions: (await db.prepare('SELECT COUNT(*) as count FROM agent_executions').first<{ count: number }>())?.count ?? 0,
+    agentProfiles: (await db.prepare('SELECT COUNT(*) as count FROM agent_profiles').first<{ count: number }>())?.count ?? 0,
+    runtimeSettings: (await db.prepare('SELECT COUNT(*) as count FROM runtime_settings').first<{ count: number }>())?.count ?? 0,
   };
 
   return { counts };

@@ -2,12 +2,22 @@
 
 This repository uses **Loom** (`lm`) for agent-native coordination.
 
+Important: local `lm` talks to the repo-local `.loom` database. Shared coordination for Symphony and other remote agent lanes now uses the remote Loom MCP control plane at `https://loom.mcp.createsomething.agency/mcp`.
+
 Start here:
 
 ```bash
 lm init
 lm ready
 lm claim <id>
+```
+
+For shared remote Loom operations, use:
+
+```bash
+pnpm loom:remote ready
+pnpm loom:remote list --status ready --label code-quality
+pnpm loom:remote create --title "..." --description "..." --label code-quality
 ```
 
 ## What this repo is
@@ -77,6 +87,9 @@ pnpm lint
 pnpm test
 ```
 
+For shared orchestration lanes, prefer remote Loom via `pnpm loom:remote ...`.
+Use local `lm` only when you intentionally mean the repo-local `.loom` database.
+
 ## Grounding discipline
 
 Do not guess code symbols, import paths, or public exports.
@@ -115,4 +128,4 @@ Common library IDs used here:
 - **Task coordination**: `lm`
 - **Priority ranking**: `lm ready --ranked`
 
-Loom replaces Beads in this repository. Use `lm` for task management and coordination.
+Loom replaces Beads in this repository. Use remote Loom for shared coordination and local `lm` for repo-local task state.

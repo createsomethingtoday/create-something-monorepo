@@ -43,13 +43,14 @@
 //! lm pull         # Fetch and import
 //! ```
 
-use clap::{Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand};
 use loom::{
     Loom, LoomError, CreateTask, Status,
     RoutingStrategy, RoutingConstraints, SessionStatus,
     Backfill, BackfillOptions, BackfillAnalytics,
     PriorityCalculator,
 };
+use serde_json::{json, Value};
 use std::path::Path;
 use std::process::Command;
 
@@ -59,6 +60,14 @@ use std::process::Command;
 #[command(about = "External memory for agents. Multi-agent task coordination.")]
 #[command(version)]
 struct Cli {
+    /// Force remote Loom MCP instead of the local .loom database
+    #[arg(long, global = true, action = ArgAction::SetTrue)]
+    remote: bool,
+
+    /// Force local .loom database instead of remote Loom MCP
+    #[arg(long, global = true, action = ArgAction::SetTrue)]
+    local: bool,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -460,7 +469,12 @@ fn main() {
 
 fn run() -> Result<(), LoomError> {
     let cli = Cli::parse();
+    let remote = should_use_remote(&cli);
     
+    if remote {
+        return run_remote(cli.command);
+    }
+
     match cli.command {
         Commands::Init => {
             let loom = Loom::init(".")?;
@@ -1433,6 +1447,235 @@ fn run() -> Result<(), LoomError> {
     }
     
     Ok(())
+}
+
+fn should_use_remote(cli: &Cli) -> bool {
+    if cli.local {
+        return false;
+    }
+    if cli.remote {
+        return true;
+    }
+    std::env::var("LOOM_MCP_API_TOKEN")
+        .map(|value| !value.trim().is_empty())
+        .unwrap_or(false)
+}
+
+struct RemoteLoomClient {
+    endpoint: String,
+    token: String,
+}
+
+impl RemoteLoomClient {
+    fn from_env() -> Result<Self, LoomError> {
+        let token = std::env::var("LOOM_MCP_API_TOKEN")
+            .map_err(|_| LoomError::Config("LOOM_MCP_API_TOKEN is required for remote Loom".into()))?;
+        let token = token.trim().to_string();
+        if token.is_empty() {
+            return Err(LoomError::Config("LOOM_MCP_API_TOKEN is required for remote Loom".into()));
+        }
+
+        let endpoint = std::env::var("LOOM_REMOTE_ENDPOINT")
+            .unwrap_or_else(|_| "https://loom.mcp.createsomething.agency/mcp".to_string());
+
+        Ok(Self { endpoint, token })
+    }
+
+    fn call_tool(&self, name: &str, arguments: Value) -> Result<Value, LoomError> {
+        let payload = json!({
+            "jsonrpc": "2.0",
+            "id": format!("{}-{}", name, chrono::Utc::now().timestamp_millis()),
+            "method": "tools/call",
+            "params": {
+                "name": name,
+                "arguments": arguments,
+            }
+        });
+
+        let response = ureq::post(&self.endpoint)
+            .set("Content-Type", "application/json")
+            .set("Accept", "application/json, text/event-stream")
+            .set("Authorization", &format!("Bearer {}", self.token))
+            .send_string(&payload.to_string())
+            .map_err(|error| LoomError::Config(format!("Remote Loom request failed: {}", error)))?;
+
+        let body: Value = response
+            .into_json()
+            .map_err(|error| LoomError::Config(format!("Remote Loom response parse failed: {}", error)))?;
+
+        if let Some(error) = body.get("error") {
+            return Err(LoomError::Config(format!("Remote Loom error: {}", error)));
+        }
+
+        let result = body
+            .get("result")
+            .ok_or_else(|| LoomError::Config("Remote Loom result payload missing".into()))?;
+
+        if result.get("isError").and_then(Value::as_bool).unwrap_or(false) {
+            return Err(LoomError::Config(format!(
+                "Remote Loom tool {} returned an error result",
+                name
+            )));
+        }
+
+        if let Some(structured) = result.get("structuredContent") {
+            return Ok(structured.clone());
+        }
+
+        if let Some(text) = result
+            .get("content")
+            .and_then(Value::as_array)
+            .and_then(|items| items.iter().find_map(|entry| entry.get("text").and_then(Value::as_str)))
+        {
+            return serde_json::from_str(text)
+                .map_err(|error| LoomError::Config(format!("Remote Loom structured content parse failed: {}", error)));
+        }
+
+        Ok(json!({}))
+    }
+}
+
+fn run_remote(command: Commands) -> Result<(), LoomError> {
+    let client = RemoteLoomClient::from_env()?;
+
+    match command {
+        Commands::Init => {
+            return Err(LoomError::Config(
+                "lm init is local-only. Remote Loom is already provisioned.".into(),
+            ));
+        }
+        Commands::Ready { .. } => {
+            let payload = client.call_tool("loom_ready", json!({}))?;
+            print_remote_items(&payload);
+        }
+        Commands::Blocked => {
+            let payload = client.call_tool("loom_blocked", json!({}))?;
+            print_remote_items(&payload);
+        }
+        Commands::Mine { agent } => {
+            let payload = client.call_tool(
+                "loom_mine",
+                json!({ "agent": agent.unwrap_or_else(get_hostname) }),
+            )?;
+            print_remote_items(&payload);
+        }
+        Commands::Create { title, description, labels, parent, .. } => {
+            let mut args = json!({ "title": title });
+            if let Some(description) = description {
+                args["description"] = Value::String(description);
+            }
+            if let Some(parent) = parent {
+                args["parent"] = Value::String(parent);
+            }
+            if let Some(labels) = labels {
+                let parsed = labels
+                    .split(',')
+                    .map(|entry| entry.trim())
+                    .filter(|entry| !entry.is_empty())
+                    .map(|entry| Value::String(entry.to_string()))
+                    .collect::<Vec<_>>();
+                args["labels"] = Value::Array(parsed);
+            }
+            let payload = client.call_tool("loom_create", args)?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::Claim { id, agent } => {
+            let payload = client.call_tool(
+                "loom_claim",
+                json!({ "task_id": id, "agent": agent.unwrap_or_else(get_hostname) }),
+            )?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::Release { id } => {
+            let payload = client.call_tool("loom_release", json!({ "task_id": id }))?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::Done { id, evidence } => {
+            let payload = client.call_tool(
+                "loom_complete",
+                json!({
+                    "task_id": id,
+                    "evidence": evidence,
+                }),
+            )?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::Cancel { id } => {
+            let payload = client.call_tool("loom_cancel", json!({ "task_id": id }))?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::List { status, label, repo } => {
+            let payload = client.call_tool(
+                "loom_list",
+                json!({
+                    "status": status,
+                    "label": label,
+                    "repo": repo,
+                }),
+            )?;
+            print_remote_items(&payload);
+        }
+        Commands::Show { id } => {
+            let payload = client.call_tool("loom_get", json!({ "task_id": id }))?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::Summary => {
+            let payload = client.call_tool("loom_summary", json!({}))?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::Route { id, strategy, max_cost } => {
+            let payload = client.call_tool(
+                "loom_route",
+                json!({
+                    "task_id": id,
+                    "strategy": strategy,
+                    "max_cost": max_cost,
+                }),
+            )?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::Agents => {
+            let payload = client.call_tool("loom_agents", json!({}))?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::Repos => {
+            let payload = client.call_tool("loom_repos", json!({}))?;
+            println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+        }
+        Commands::All { status } => {
+            let payload = client.call_tool("loom_list_all", json!({ "status": status }))?;
+            print_remote_items(&payload);
+        }
+        Commands::Update { .. }
+        | Commands::Block { .. }
+        | Commands::Unblock { .. }
+        | Commands::Spawn { .. }
+        | Commands::Session { .. }
+        | Commands::Checkpoint { .. }
+        | Commands::Recover
+        | Commands::Resume { .. }
+        | Commands::Agent { .. }
+        | Commands::Formula { .. }
+        | Commands::Sync
+        | Commands::Push
+        | Commands::Pull
+        | Commands::Daemon { .. }
+        | Commands::Backfill { .. }
+        | Commands::Analytics { .. }
+        | Commands::Notion { .. }
+        | Commands::Compact { .. }
+        | Commands::Doctor => {
+            return Err(LoomError::Config(
+                "This lm command is not yet wired to remote Loom. Use --local for repo-local .loom commands.".into(),
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn print_remote_items(payload: &Value) {
+    println!("{}", serde_json::to_string_pretty(payload).unwrap_or_default());
 }
 
 fn parse_status(s: &str) -> Result<Status, LoomError> {

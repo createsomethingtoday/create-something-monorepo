@@ -1,20 +1,24 @@
 # Reviewer Hub Rollout Spec
 
-**Status:** Working draft  
+**Status:** Live production with historical rollout notes  
 **Audience:** Marketplace review lead, Senior Systems Architect, pilot operators  
 **Workflow:** `app_review_hub_lane`  
-**Date:** `2026-03-10`
+**Date:** `2026-03-13`
 
 ## 1. Purpose
 
 This document defines the rollout shape for the first two Webflow Marketplace app reviewers using the app review Hub lane.
 
-The goal is to make the pilot operationally safe before broader rollout by aligning the workflow with the actual codebase posture:
+The goal is to document the original rollout logic while recording the current live production result:
 
 - reviewer-specific identity at the Hub layer
 - restricted reviewer-facing tool exposure
 - approval-gated writes
 - reviewer-attributed traces for every write path
+
+## 1a. Current live note
+
+As of `2026-03-13`, both reviewer hubs are live and expose the full downstream `webflow-app-review-mcp` tool surface, including the write tools. The historical Phase A and gated Phase B sections below remain useful as rollback and governance context, but they are no longer the default live posture.
 
 ## 2. Rollout decision
 

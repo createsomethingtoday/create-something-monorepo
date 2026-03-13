@@ -1,0 +1,214 @@
+{
+  "version": "2.6",
+  "children": [
+    {
+      "type": "frame",
+      "id": "fimw1",
+      "x": 0,
+      "y": 0,
+      "name": "Video Card - Outerfields",
+      "reusable": true,
+      "width": 280,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "CU3EP",
+          "name": "Poster Container",
+          "clip": true,
+          "width": "fill_container",
+          "height": 210,
+          "fill": "#252525",
+          "cornerRadius": 12,
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Q3ovQ",
+              "x": 0,
+              "y": 0,
+              "name": "Poster Image",
+              "metadata": {
+                "type": "unsplash",
+                "username": "virussinside",
+                "link": "https://unsplash.com/@virussinside",
+                "author": "Artiom Vallat"
+              },
+              "width": 280,
+              "height": 210,
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "https://images.unsplash.com/photo-1574923930958-9b653a0e5148?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NjkxNDMxNDZ8&ixlib=rb-4.1.0&q=80&w=1080",
+                "mode": "fill"
+              }
+            },
+            {
+              "type": "frame",
+              "id": "aorYo",
+              "x": 0,
+              "y": 0,
+              "name": "Hover Overlay",
+              "opacity": 0,
+              "width": 280,
+              "height": 210,
+              "fill": "#00000066",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "H4IPv",
+                  "name": "Play Indicator",
+                  "width": 48,
+                  "height": 48,
+                  "fill": "#FFFFFF26",
+                  "cornerRadius": 24,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#FFFFFF4D"
+                  },
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "57o2Z",
+                      "name": "playIcon",
+                      "width": 24,
+                      "height": 24,
+                      "iconFontName": "play",
+                      "iconFontFamily": "lucide",
+                      "fill": "#FFFFFF"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "xD3Qe",
+          "name": "Card Info",
+          "width": "fill_container",
+          "fill": "#1E1E1E",
+          "layout": "vertical",
+          "gap": 6,
+          "padding": [
+            12,
+            4,
+            0,
+            4
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "JYV7e",
+              "name": "Card Title",
+              "fill": "#FFFFFF",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Featured Film",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 15,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "X9Zm9",
+              "name": "Card Meta",
+              "width": "fill_container",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ZnlZ4",
+                  "name": "Free Indicator",
+                  "fill": "#F45126",
+                  "content": "Free",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "tJFcC",
+                  "name": "Dot 1",
+                  "fill": "#6B717E80",
+                  "content": "•",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Syvl6",
+                  "name": "Category",
+                  "fill": "#6B717E",
+                  "content": "films",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "QzovW",
+                  "name": "Dot 2",
+                  "fill": "#6B717E80",
+                  "content": "•",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "SdfI0",
+                  "name": "Duration",
+                  "fill": "#6B717E",
+                  "content": "1:30:00",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "d23uM",
+      "x": 0,
+      "y": 300,
+      "name": "Card Preview",
+      "width": 640,
+      "height": 320,
+      "fill": "#1E1E1E",
+      "gap": 24,
+      "padding": 24,
+      "children": [
+        {
+          "id": "wzUNF",
+          "type": "ref",
+          "ref": "fimw1",
+          "name": "defaultCard"
+        },
+        {
+          "id": "N2PWA",
+          "type": "ref",
+          "ref": "fimw1",
+          "name": "hoverCard",
+          "descendants": {
+            "aorYo": {
+              "opacity": 1
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

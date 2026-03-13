@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
+import TOML from '@iarna/toml';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 
 function parseArgs(argv) {
   const args = {
@@ -78,6 +79,11 @@ function fromTasksJsonl(tasksJsonlPath) {
   });
 }
 
+function readTomlIfExists(path) {
+  if (!existsSync(path)) return null;
+  return TOML.parse(readFileSync(path, 'utf8'));
+}
+
 function main() {
   const args = parseArgs(process.argv);
   const loomDir = resolve(args.loomDir);
@@ -86,6 +92,9 @@ function main() {
   const memoryDbPath = resolve(loomDir, 'memory.db');
   const agentsDbPath = resolve(loomDir, 'agents.db');
   const tasksJsonlPath = resolve(loomDir, 'tasks.jsonl');
+  const configTomlPath = resolve(loomDir, 'config.toml');
+  const dispatchTomlPath = resolve(loomDir, 'dispatch.toml');
+  const modelsTomlPath = resolve(loomDir, 'models.toml');
 
   let tasks = [];
   let dependencies = [];
@@ -145,6 +154,7 @@ function main() {
   }
 
   let agentExecutions = [];
+  let agentProfiles = [];
   if (existsSync(agentsDbPath) && tableExists(agentsDbPath, 'agent_history')) {
     agentExecutions = runSqliteJson(
       agentsDbPath,
@@ -155,8 +165,31 @@ function main() {
     }));
   }
 
+  if (existsSync(agentsDbPath) && tableExists(agentsDbPath, 'agent_profiles')) {
+    agentProfiles = runSqliteJson(
+      agentsDbPath,
+      `SELECT id, profile_json, updated_at FROM agent_profiles ORDER BY id ASC;`,
+    );
+  }
+
+  const loomConfig = readTomlIfExists(configTomlPath);
+  const dispatchConfig = readTomlIfExists(dispatchTomlPath);
+  const modelsConfig = readTomlIfExists(modelsTomlPath);
+  const runtimeSettings = {
+    repoId: loomConfig?.['repo-id'] ?? null,
+    repoName: loomConfig?.['repo-name'] ?? basename(resolve(args.source)),
+    issuePrefix: loomConfig?.['issue-prefix'] ?? 'lm',
+    notion: {
+      databaseId: loomConfig?.notion?.['database-id'] ?? loomConfig?.notion?.database_id ?? null,
+    },
+    source: {
+      repoPath: resolve(args.source),
+      loomDir,
+    },
+  };
+
   const snapshot = {
-    snapshot_version: 'loom-remote-v1',
+    snapshot_version: 'loom-remote-v2',
     generated_at: new Date().toISOString(),
     source: resolve(args.source),
     payload: {
@@ -165,6 +198,10 @@ function main() {
       sessions,
       checkpoints,
       ...(agentExecutions.length > 0 ? { agentExecutions } : {}),
+      ...(agentProfiles.length > 0 ? { agentProfiles } : {}),
+      ...(dispatchConfig ? { dispatchConfig } : {}),
+      ...(modelsConfig ? { modelsConfig } : {}),
+      runtimeSettings,
     },
     counts: {
       tasks: tasks.length,
@@ -172,6 +209,8 @@ function main() {
       sessions: sessions.length,
       checkpoints: checkpoints.length,
       agentExecutions: agentExecutions.length,
+      agentProfiles: agentProfiles.length,
+      runtimeSettings: Object.keys(runtimeSettings).length + (dispatchConfig ? 1 : 0) + (modelsConfig ? 1 : 0),
     },
   };
 

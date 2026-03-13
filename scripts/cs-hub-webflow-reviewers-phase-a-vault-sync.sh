@@ -122,10 +122,15 @@ require_cmd infisical
 load_secrets_from_infisical
 
 missing=0
-require_secret "HUB_API_TOKEN" || missing=1
+require_secret "HUB_SESSION_RESOLVE_TOKEN" || missing=1
 require_secret "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" || missing=1
 require_secret "BRAINTRUST_API_KEY" || missing=1
 require_secret "BRAINTRUST_PROJECT_ID" || missing=1
+require_secret "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN" || missing=1
+require_secret "CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_API_TOKEN" || missing=1
+require_secret "CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN" || missing=1
+require_secret "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN" || missing=1
+require_secret "CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN" || missing=1
 
 if [[ "$missing" == "1" ]]; then
   echo "reviewer hub secret validation failed" >&2
@@ -133,9 +138,11 @@ if [[ "$missing" == "1" ]]; then
 fi
 
 for entry in "${REVIEWERS[@]}"; do
-  IFS='|' read -r _ worker <<<"$entry"
+  IFS='|' read -r reviewer_key worker <<<"$entry"
+  reviewer_token_var="CS_HUB_${reviewer_key}_API_TOKEN"
   echo "syncing ${worker}"
-  put_versioned_secret "$worker" "HUB_API_TOKEN" "$HUB_API_TOKEN"
+  put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_token_var}"
+  put_versioned_secret "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
   put_versioned_secret "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
   put_versioned_secret "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
   put_versioned_secret "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"

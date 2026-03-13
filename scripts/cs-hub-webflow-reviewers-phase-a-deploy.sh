@@ -7,7 +7,11 @@ TEAM_CONFIG="$HUB_DIR/wrangler.team-hubs.toml"
 
 ACTION="${1:-all}"
 SESSION_RESOLVE_URL="${SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
+BUNDLE_NAME="${BUNDLE_NAME:-webflow-marketplace-review-phase-a}"
 DISCOVERY_PACK="${DISCOVERY_PACK:-webflow-marketplace-review-phase-a}"
+ENABLED_SERVERS="${ENABLED_SERVERS:-webflow-template-review-mcp}"
+DISABLED_SERVERS="${DISABLED_SERVERS:-webflow-local,webflow-site-analyzer-mcp}"
+DISCOVERY_ACTIVE_SERVERS="${DISCOVERY_ACTIVE_SERVERS:-$ENABLED_SERVERS}"
 DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-18}"
 RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
@@ -31,6 +35,15 @@ require_cmd() {
     echo "missing required command: $1" >&2
     exit 1
   }
+}
+
+json_array_from_csv() {
+  jq -cn --arg raw "$1" '
+    $raw
+    | split(",")
+    | map(gsub("^\\s+|\\s+$"; ""))
+    | map(select(length > 0))
+  '
 }
 
 worker_name_for_slug() {
@@ -67,15 +80,15 @@ deploy_one() {
     --domain "$(domain_for_slug "$slug")" \
     --var "HUB_INSTANCE_ID:${worker}" \
     --var "HUB_ACCOUNT_ID:${account_id}" \
-    --var "HUB_ENABLED_BUNDLES:webflow-marketplace-review-phase-a" \
-    --var "HUB_ENABLED_SERVERS:webflow-template-review-mcp" \
-    --var "HUB_DISABLED_SERVERS:webflow-local,webflow-site-analyzer-mcp" \
+    --var "HUB_ENABLED_BUNDLES:${BUNDLE_NAME}" \
+    --var "HUB_ENABLED_SERVERS:${ENABLED_SERVERS}" \
+    --var "HUB_DISABLED_SERVERS:${DISABLED_SERVERS}" \
     --var "HUB_IDENTITY_MODE:${REVIEWER_IDENTITY_MODE}" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:false" \
     --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
     --var "HUB_DISCOVERY_MODE:compact" \
     --var "HUB_DISCOVERY_SHARED_PACK:${DISCOVERY_PACK}" \
-    --var "HUB_DISCOVERY_DEFAULT_SERVERS:webflow-template-review-mcp" \
+    --var "HUB_DISCOVERY_DEFAULT_SERVERS:${DISCOVERY_ACTIVE_SERVERS}" \
     --var "HUB_DISCOVERY_MAX_PROXY_TOOLS:${DISCOVERY_MAX_PROXY_TOOLS}" \
     --var "HUB_REQUIRED_GLOBAL_SERVERS:${REQUIRED_GLOBAL_SERVERS_SENTINEL}" \
     --var "HUB_REQUIRED_DISCOVERY_SERVERS:${REQUIRED_DISCOVERY_SERVERS_SENTINEL}" \
@@ -89,8 +102,12 @@ normalize_one() {
   local slug="$1"
   local worker
   local mcp_url
+  local enabled_servers_json
+  local discovery_active_servers_json
   worker="$(worker_name_for_slug "$slug")"
   mcp_url="$(mcp_url_for_slug "$slug")"
+  enabled_servers_json="$(json_array_from_csv "$ENABLED_SERVERS")"
+  discovery_active_servers_json="$(json_array_from_csv "$DISCOVERY_ACTIVE_SERVERS")"
 
   if [[ -z "${HUB_API_TOKEN:-}" ]]; then
     echo "missing HUB_API_TOKEN; cannot normalize ${worker}" >&2
@@ -110,13 +127,13 @@ normalize_one() {
     -H "Accept: application/json, text/event-stream" \
     -d '{
       "jsonrpc":"2.0",
-      "id":"phase-a-state",
+      "id":"review-state",
       "method":"tools/call",
       "params":{
         "name":"hub_update_state",
         "arguments":{
-          "setBundles":["webflow-marketplace-review-phase-a"],
-          "setServers":["webflow-template-review-mcp"]
+          "setBundles":["'"${BUNDLE_NAME}"'"],
+          "setServers":'"${enabled_servers_json}"'
         }
       }
     }' | jq .
@@ -128,14 +145,14 @@ normalize_one() {
     -H "Accept: application/json, text/event-stream" \
     -d "{
       \"jsonrpc\":\"2.0\",
-      \"id\":\"phase-a-discovery\",
+      \"id\":\"review-discovery\",
       \"method\":\"tools/call\",
       \"params\":{
         \"name\":\"hub_set_discovery\",
         \"arguments\":{
           \"pack\":\"${DISCOVERY_PACK}\",
           \"mode\":\"compact\",
-          \"activeServers\":[\"webflow-template-review-mcp\"],
+          \"activeServers\":${discovery_active_servers_json},
           \"maxProxyTools\":${DISCOVERY_MAX_PROXY_TOOLS}
         }
       }

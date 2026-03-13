@@ -1,0 +1,30 @@
+{
+  "convoy": {
+    "id": "convoy-erc5g_82fd",
+    "epicId": "voice-audit-agency",
+    "name": "Agency Voice Audit",
+    "issueIds": [
+      "csm-h9zcu",
+      "csm-lp3ea",
+      "csm-as2vo",
+      "csm-14q61",
+      "csm-qvlu9"
+    ],
+    "status": "pending",
+    "createdAt": "2026-01-09T22:31:09.071Z",
+    "completedAt": null,
+    "workers": {},
+    "costTracker": null
+  },
+  "workers": [],
+  "costTracker": {
+    "sessionCosts": {},
+    "workerCosts": {},
+    "convoyCost": 0,
+    "epicBudget": null,
+    "epicRemaining": null
+  },
+  "checkpointIds": [],
+  "createdAt": "2026-01-09T22:31:09.071Z",
+  "updatedAt": "2026-01-09T22:31:09.071Z"
+}

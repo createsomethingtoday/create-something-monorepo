@@ -35,6 +35,9 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 10. Tenant exposure policy MUST block the other client’s Notion server, Composio Notion, Slack, Dropbox, and any other unapproved bundle or server for these named-lane pilots.
 11. Telemetry and Braintrust tracing are mandatory baseline observability controls for named lanes, but they remain operator-facing controls and MUST NOT appear in the client-visible tenant allowlist.
 12. Named-lane routed-call traces MUST include explicit account attribution, at minimum `account_id`, `tenant_id`, and lane slug or bound host, so operator observability can attribute downstream access to the correct client lane.
+13. Braintrust auto-instrumentation MAY amplify operator visibility for LLM or tool spans, but it MUST NOT be treated as sufficient policy evidence unless the trace also includes house governance metadata for the routed call.
+14. For named-lane governed execution, the required governance trace fields SHOULD include `correlation_id`, route classification, and policy or review outcome in addition to `account_id`, `tenant_id`, and lane slug or bound host.
+15. Trace tags and summary fields SHOULD remain DRY and business-legible. Low-signal transport details SHOULD remain in metadata or raw logs instead of high-cardinality tags.
 
 ## Enforcement Surfaces
 

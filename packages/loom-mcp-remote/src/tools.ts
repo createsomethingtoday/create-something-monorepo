@@ -11,7 +11,12 @@ import {
   createCheckpoint,
   createTask,
   endSession,
+  getAgentProfiles,
   getDoctorIssues,
+  getDispatchConfig,
+  getModelsConfig,
+  getNotionConfig,
+  getRuntimeSettings,
   getSession,
   getSummary,
   getTask,
@@ -26,6 +31,7 @@ import {
   repositoryIds,
   resumeSession,
   sessionResumeBrief,
+  setNotionConfig,
   setTaskIssueType,
   setTaskPriority,
   startSession,
@@ -34,6 +40,9 @@ import {
   updateSessionContext,
 } from './db.js';
 import type { Env, LoomPriority } from './types.js';
+import { getBuiltInFormula, listBuiltInFormulas } from './formulas.js';
+import { createDatabase, notionStatus, syncTasksToNotion } from './notion.js';
+import { agentViews, buildRoutingState, chooseAgent } from './runtime-routing.js';
 import {
   ageWeight,
   errorToolResult,
@@ -51,110 +60,6 @@ import {
   toTaskView,
 } from './utils.js';
 
-const ROUTING_AGENTS = [
-  {
-    id: 'codex',
-    name: 'Codex',
-    available: true,
-    estimated_cost_per_1k_tokens: 0.015,
-    avg_duration_secs: 180,
-    quality_score: 0.86,
-    capabilities: {
-      planning: true,
-      coding: true,
-      debugging: true,
-      ui: true,
-      refactor: true,
-      checkpoints: true,
-      git_aware: true,
-    },
-  },
-  {
-    id: 'claude-code',
-    name: 'Claude Code',
-    available: true,
-    estimated_cost_per_1k_tokens: 0.03,
-    avg_duration_secs: 220,
-    quality_score: 0.91,
-    capabilities: {
-      planning: true,
-      coding: true,
-      debugging: true,
-      ui: true,
-      refactor: true,
-      checkpoints: true,
-      git_aware: true,
-    },
-  },
-  {
-    id: 'cursor',
-    name: 'Cursor',
-    available: true,
-    estimated_cost_per_1k_tokens: 0.018,
-    avg_duration_secs: 200,
-    quality_score: 0.84,
-    capabilities: {
-      planning: true,
-      coding: true,
-      debugging: true,
-      ui: true,
-      refactor: true,
-      checkpoints: true,
-      git_aware: true,
-    },
-  },
-] as const;
-
-function estimateTaskTokens(task: { title: string; description?: string | null }): number {
-  const text = `${task.title} ${task.description ?? ''}`.trim();
-  return Math.max(500, Math.min(12000, text.length * 2));
-}
-
-function chooseAgent(
-  task: { title: string; description?: string | null },
-  strategy: 'best' | 'cheapest' | 'fastest',
-  maxCost?: number,
-): { agent_id: string; reason: string; estimated_cost: number; confidence: number; alternatives: string[] } {
-  const tokens = estimateTaskTokens(task);
-
-  const candidates = ROUTING_AGENTS
-    .map((agent) => {
-      const estimated_cost = (tokens / 1000) * agent.estimated_cost_per_1k_tokens;
-      return { ...agent, estimated_cost };
-    })
-    .filter((agent) => (typeof maxCost === 'number' ? agent.estimated_cost <= maxCost : true));
-
-  if (candidates.length === 0) {
-    throw new Error('No agents available under max_cost constraint');
-  }
-
-  let sorted = [...candidates];
-
-  if (strategy === 'cheapest') {
-    sorted = sorted.sort((a, b) => a.estimated_cost - b.estimated_cost);
-  } else if (strategy === 'fastest') {
-    sorted = sorted.sort((a, b) => a.avg_duration_secs - b.avg_duration_secs);
-  } else {
-    sorted = sorted.sort((a, b) => b.quality_score - a.quality_score);
-  }
-
-  const [best, ...rest] = sorted;
-  const reason =
-    strategy === 'cheapest'
-      ? `Cheapest route at $${best.estimated_cost.toFixed(4)}`
-      : strategy === 'fastest'
-        ? `Fastest route with ~${best.avg_duration_secs}s average runtime`
-        : `Best quality match (${best.quality_score.toFixed(2)} score)`;
-
-  return {
-    agent_id: best.id,
-    reason,
-    estimated_cost: Number(best.estimated_cost.toFixed(4)),
-    confidence: best.quality_score,
-    alternatives: rest.slice(0, 2).map((agent) => agent.id),
-  };
-}
-
 function calculateProgress(summary: { total: number; done: number }): number {
   if (summary.total === 0) return 0;
   return Number(((summary.done / summary.total) * 100).toFixed(2));
@@ -168,18 +73,25 @@ function validateStatus(value: string | null | undefined): 'ready' | 'claimed' |
   throw new Error(`Unknown status: ${value}`);
 }
 
-function capabilityForTaskType(taskType: string): { coding?: boolean; debugging?: boolean; ui?: boolean; planning?: boolean } {
-  const lower = taskType.toLowerCase();
-  return {
-    coding: lower.includes('feature') || lower.includes('task') || lower.includes('refactor'),
-    debugging: lower.includes('bug') || lower.includes('debug'),
-    ui: lower.includes('ui') || lower.includes('design'),
-    planning: true,
-  };
-}
-
 export function registerLoomTools(server: McpServer, env: Env): void {
   const db = env.DB;
+
+  async function currentRepoId(): Promise<string | null> {
+    if (typeof env.LOOM_REPO_ID === 'string' && env.LOOM_REPO_ID.trim().length > 0) {
+      return env.LOOM_REPO_ID.trim();
+    }
+    const settings = await getRuntimeSettings(db);
+    return typeof settings.repoId === 'string' && settings.repoId.length > 0 ? settings.repoId : null;
+  }
+
+  async function routingState() {
+    const [profiles, dispatchConfig, modelsConfig] = await Promise.all([
+      getAgentProfiles(db),
+      getDispatchConfig(db),
+      getModelsConfig(db),
+    ]);
+    return buildRoutingState(profiles, dispatchConfig, modelsConfig);
+  }
 
   server.tool(
     'loom_work',
@@ -193,12 +105,13 @@ export function registerLoomTools(server: McpServer, env: Env): void {
     async ({ title, agent, priority, labels }) => {
       try {
         const taskId = generateTaskId();
+        const repoId = await currentRepoId();
         await createTask(db, {
           id: taskId,
           title,
           priority,
           labels,
-          repo: env.LOOM_REPO_ID ?? null,
+          repo: repoId,
           status: 'ready',
         });
         const claimed = await claimTask(db, taskId, agent);
@@ -227,6 +140,7 @@ export function registerLoomTools(server: McpServer, env: Env): void {
     },
     async ({ title, description, priority, labels, parent }) => {
       try {
+        const repoId = await currentRepoId();
         const task = await createTask(db, {
           id: generateTaskId(),
           title,
@@ -234,7 +148,7 @@ export function registerLoomTools(server: McpServer, env: Env): void {
           priority,
           labels,
           parent,
-          repo: env.LOOM_REPO_ID ?? null,
+          repo: repoId,
           status: 'ready',
         });
         return textToolResult({
@@ -456,23 +370,21 @@ export function registerLoomTools(server: McpServer, env: Env): void {
     try {
       const task = await getTask(db, task_id);
       if (!task) return errorToolResult('Task not found');
-      const decision = chooseAgent(task, strategy ?? 'best', max_cost);
-      return textToolResult(decision);
+      const decision = chooseAgent(task, strategy ?? 'best', max_cost, await routingState());
+      return textToolResult(decision as unknown as Record<string, unknown>);
     } catch (error) {
       return errorToolResult(error instanceof Error ? error.message : String(error));
     }
   });
 
   server.tool('loom_agents', 'List all available agents and their capabilities', {}, async () => {
-    return textToolResult({
-      items: ROUTING_AGENTS.map((agent) => ({
-        id: agent.id,
-        name: agent.name,
-        available: agent.available,
-        success_rate: agent.quality_score,
-        capabilities: agent.capabilities,
-      })),
-    });
+    try {
+      return textToolResult({
+        items: agentViews(await routingState()),
+      });
+    } catch (error) {
+      return errorToolResult(error instanceof Error ? error.message : String(error));
+    }
   });
 
   server.tool('loom_session_start', 'Start a work session for a task', {
@@ -554,13 +466,25 @@ export function registerLoomTools(server: McpServer, env: Env): void {
   });
 
   server.tool('loom_formulas', 'List available workflow formulas', {}, async () => {
-    return errorToolResult('loom_formulas is not available in remote v1. Use loom_route + loom_priority for routing decisions.');
+    const items = listBuiltInFormulas().map((formula) => ({
+      name: formula.name,
+      description: formula.description,
+      quality: formula.quality,
+      agent: formula.agent,
+      labels: formula.labels,
+      estimated_tokens: formula.estimated_tokens,
+    }));
+    return textToolResult({ items });
   });
 
   server.tool('loom_formula', 'Get details of a specific formula', {
     name: z.string().min(1),
-  }, async () => {
-    return errorToolResult('loom_formula is not available in remote v1.');
+  }, async ({ name }) => {
+    const formula = getBuiltInFormula(name);
+    if (!formula) {
+      return errorToolResult(`Formula not found: ${name}`);
+    }
+    return textToolResult(formula as unknown as Record<string, unknown>);
   });
 
   server.tool('loom_record_execution', 'Record task execution result for learning (improves future routing)', {
@@ -587,11 +511,18 @@ export function registerLoomTools(server: McpServer, env: Env): void {
   server.tool('loom_repos', 'List configured repositories (for multi-repo coordination between projects)', {}, async () => {
     try {
       const reposInDb = await repositoryIds(db);
-      const currentRepo = env.LOOM_REPO_ID ?? null;
+      const settings = await getRuntimeSettings(db);
+      const currentRepo = await currentRepoId();
       return textToolResult({
         current_repo: currentRepo,
         configured: currentRepo
-          ? [{ id: currentRepo, name: currentRepo, path: null, is_primary: true, available: true }]
+          ? [{
+              id: currentRepo,
+              name: typeof settings.repoName === 'string' && settings.repoName.length > 0 ? settings.repoName : currentRepo,
+              path: typeof settings?.source === 'object' && settings.source && typeof settings.source.repoPath === 'string' ? settings.source.repoPath : null,
+              is_primary: true,
+              available: true,
+            }]
           : [],
         repos_in_database: reposInDb,
       });
@@ -619,7 +550,7 @@ export function registerLoomTools(server: McpServer, env: Env): void {
     beads_path: z.string().optional(),
     dry_run: z.boolean().optional(),
   }, async () => {
-    return errorToolResult('loom_backfill is not available in remote v1. Backfill analytics from local history as a follow-up migration step.');
+    return errorToolResult('loom_backfill is intentionally unavailable on remote Loom. Run local backfill into .loom, export a snapshot, then import that snapshot into the remote worker.');
   });
 
   server.tool('loom_analytics', 'Get analytics from historical execution data (after backfill)', {
@@ -628,7 +559,7 @@ export function registerLoomTools(server: McpServer, env: Env): void {
   }, async ({ agent, task_type }) => {
     try {
       const result = await analytics(db, { agent, taskType: task_type });
-      return textToolResult(result);
+      return textToolResult(result as unknown as Record<string, unknown>);
     } catch (error) {
       return errorToolResult(error instanceof Error ? error.message : String(error));
     }
@@ -949,8 +880,27 @@ export function registerLoomTools(server: McpServer, env: Env): void {
   server.tool('loom_notion_init', 'Initialize Notion database for Loom work analytics. Creates a database with the proper schema in the specified parent page.', {
     parent_page_id: z.string().min(1),
     token: z.string().optional(),
-  }, async () => {
-    return errorToolResult('loom_notion_init is not available in remote v1. Keep Notion sync in the local Loom runtime for now.');
+  }, async ({ parent_page_id, token }) => {
+    try {
+      if (token) {
+        return errorToolResult('Raw Notion token injection is disabled for remote Loom. Configure LOOM_NOTION_TOKEN via Infisical/Worker secrets.');
+      }
+      if (!env.LOOM_NOTION_TOKEN) {
+        return errorToolResult('LOOM_NOTION_TOKEN is not configured on the remote worker.');
+      }
+      const databaseId = await createDatabase(env.LOOM_NOTION_TOKEN, parent_page_id);
+      const existing = (await getNotionConfig(db)) ?? {};
+      await setNotionConfig(db, {
+        ...existing,
+        databaseId,
+      });
+      return textToolResult({
+        database_id: databaseId,
+        message: 'Notion database created and config saved. Use loom_notion_sync to sync tasks.',
+      });
+    } catch (error) {
+      return errorToolResult(error instanceof Error ? error.message : String(error));
+    }
   });
 
   server.tool('loom_notion_sync', 'Sync Loom tasks to Notion database. Creates new pages, updates changed pages, skips unchanged.', {
@@ -958,11 +908,47 @@ export function registerLoomTools(server: McpServer, env: Env): void {
     force: z.boolean().optional(),
     status: z.enum(['ready', 'claimed', 'blocked', 'done', 'cancelled']).optional(),
     since: z.string().optional(),
-  }, async () => {
-    return errorToolResult('loom_notion_sync is not available in remote v1.');
+  }, async ({ dry_run, force, status, since }) => {
+    try {
+      if (!env.LOOM_NOTION_TOKEN) {
+        return errorToolResult('LOOM_NOTION_TOKEN is not configured on the remote worker.');
+      }
+      const config = await getNotionConfig(db);
+      const databaseId = config?.databaseId ?? null;
+      if (!databaseId) {
+        return errorToolResult('Notion database is not configured. Run loom_notion_init first.');
+      }
+      const tasks = await listTasks(db, status ? { status } : {});
+      const result = await syncTasksToNotion(env.LOOM_NOTION_TOKEN, databaseId, tasks, {
+        dry_run,
+        force,
+        status,
+        since,
+      });
+      await setNotionConfig(db, {
+        ...(config ?? {}),
+        databaseId,
+        lastSyncAt: new Date().toISOString(),
+        lastSyncSummary: {
+          total: result.total,
+          created: result.created,
+          updated: result.updated,
+          skipped: result.skipped,
+          errors: result.errors,
+          dryRun: result.dry_run,
+        },
+      });
+      return textToolResult(result as unknown as Record<string, unknown>);
+    } catch (error) {
+      return errorToolResult(error instanceof Error ? error.message : String(error));
+    }
   });
 
   server.tool('loom_notion_status', 'Check Notion sync configuration status.', {}, async () => {
-    return textToolResult({ configured: false, message: 'Notion sync is not configured for remote v1.' });
+    try {
+      return textToolResult(notionStatus(await getNotionConfig(db), Boolean(env.LOOM_NOTION_TOKEN)));
+    } catch (error) {
+      return errorToolResult(error instanceof Error ? error.message : String(error));
+    }
   });
 }

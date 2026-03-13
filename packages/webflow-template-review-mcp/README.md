@@ -21,7 +21,7 @@ Phase 1 is intentionally conservative:
 - queue and version inspection are supported
 - field-map and hotspot resources are supported
 - reviewer assignment helpers are active
-- version review helpers (`request changes`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
+- reviewer-safe workflow helpers (`request changes`, `set review status`, `save draft feedback`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
 - some broader write surfaces still depend on remaining field verification and policy rollout
 
 ## Auth
@@ -60,12 +60,15 @@ Optional:
 - `template_review_complete_publishing`
 - `template_review_assign_reviewer`
 - `template_review_assign_self`
+- `template_review_unassign_self`
+- `template_review_request_changes`
+- `template_review_set_review_status`
+- `template_review_save_draft_feedback`
+- `template_review_get_field_map`
 - `template_review_update_asset_metadata`
 - `template_review_update_version_review`
-- `template_review_request_changes`
 - `template_review_approve_version`
 - `template_review_reject_version`
-- `template_review_get_field_map`
 
 ## Resources
 

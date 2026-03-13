@@ -37,7 +37,7 @@ Do not use the Hub to:
 7. Validate the recommendation against the actual app-review evidence.
 8. Add your own security, compliance, or Marketplace judgment.
 9. Choose the final reviewer action.
-10. If the reviewer lane is still read-only, record the official state change manually in Airtable.
+10. If the Hub cannot complete the official state change safely, fall back to Airtable and report the failure mode.
 
 ## When to trust the Hub
 
@@ -78,8 +78,6 @@ These actions remain reviewer-owned:
 - changing Marketplace status
 
 Treat every write action as a deliberate reviewer action, not an automatic follow-through from the recommendation.
-
-Until write gates pass, complete official state changes manually in Airtable.
 
 ## Escalate instead of improvising when
 

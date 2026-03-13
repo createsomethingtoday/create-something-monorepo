@@ -104,12 +104,18 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Pick a queue row and use assignableVersionId as the assignment target.',
           'Call template_review_assign_self with that version_id.',
           'Call template_review_get_review_context with the same version_id.',
+          'Use template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes for narrow reviewer-safe writes while the version remains assigned to the current reviewer.',
           'Call template_review_my_queue to resume work already assigned to the current reviewer.',
           'Call template_review_unassign_self if the reviewer intentionally wants to release the version back to the shared queue.',
         ],
         notes: {
           assignmentTarget: 'Asset Version',
           queuePrimaryAction: 'assign_self',
+          reviewerSafeWrites: [
+            'template_review_set_review_status',
+            'template_review_save_draft_feedback',
+            'template_review_request_changes',
+          ],
           queueDefaults: {
             status: 'ready_to_review',
             assigned: 'unassigned',
@@ -164,6 +170,24 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             expectation: 'Use this instead of re-scanning the shared queue when the reviewer asks for their work.',
           },
           {
+            step: 'draft',
+            tool: 'template_review_save_draft_feedback',
+            args: { version_id: '<assignedVersionId>', review_feedback: '<draft notes>' },
+            expectation: 'Only offer this when isAssignedToCurrentReviewer is true and the reviewer wants to save work without making an official decision.',
+          },
+          {
+            step: 'status',
+            tool: 'template_review_set_review_status',
+            args: { version_id: '<assignedVersionId>', review_status: '<allowlisted status>' },
+            expectation: 'Only offer this when isAssignedToCurrentReviewer is true.',
+          },
+          {
+            step: 'request_changes',
+            tool: 'template_review_request_changes',
+            args: { version_id: '<assignedVersionId>', review_feedback: '<final feedback>' },
+            expectation: 'Use this for the explicit changes-requested transition once reviewer notes are ready.',
+          },
+          {
             step: 'release',
             tool: 'template_review_unassign_self',
             args: { version_id: '<assignedVersionId>' },
@@ -179,6 +203,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'When helping a reviewer, start with template_review_list_queue unless they explicitly ask for their assigned work.',
           'If they want their current workload, use template_review_my_queue.',
           'When a queue row is chosen, use assignableVersionId rather than assetId for write actions.',
+          'Treat template_review_assign_self, template_review_unassign_self, template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes as the primary reviewer-safe write lane.',
           'Never ask the reviewer for an Airtable collaborator id.',
           'Do not offer broad mutation tools that are not visible in reviewer discovery.',
         ],

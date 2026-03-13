@@ -21,12 +21,14 @@ Turn a coding agent from a one-shot assistant into a repeatable worker by giving
 Use Loom as the control plane.
 
 ```bash
-lm ready
-lm claim <id>
-lm show <id>
+pnpm loom:remote ready
+pnpm loom:remote list --status ready
+pnpm loom:remote get --task-id <id>
 ```
 
 The agent should start from a tracked task, not from an untracked conversation fragment.
+
+Note: local `lm` still talks to the repo-local `.loom` database. Use it only for local-only workflows, migration/export inputs, or rollback scenarios. Shared agent lanes and Symphony should use remote Loom.
 
 ## 2. Build context from repo artifacts
 

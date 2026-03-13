@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { importSnapshot } from './db.js';
+import { exportSnapshot, importSnapshot } from './db.js';
 import type { Env, MigrationPayload } from './types.js';
 import { jsonResponse, normalizePriority, normalizeIssueType, normalizeSessionStatus, normalizeStatus, verifyHmacSignature } from './utils.js';
 
@@ -61,6 +61,12 @@ const AgentExecutionSchema = z.object({
   created_at: z.string().optional(),
 });
 
+const AgentProfileSchema = z.object({
+  id: z.string().min(1),
+  profile_json: z.string().min(2),
+  updated_at: z.string().optional(),
+});
+
 const MigrationRequestSchema = z.object({
   snapshot_version: z.string().optional(),
   generated_at: z.string().optional(),
@@ -71,6 +77,10 @@ const MigrationRequestSchema = z.object({
     sessions: z.array(SessionSchema),
     checkpoints: z.array(CheckpointSchema),
     agentExecutions: z.array(AgentExecutionSchema).optional(),
+    agentProfiles: z.array(AgentProfileSchema).optional(),
+    dispatchConfig: z.record(z.unknown()).optional(),
+    modelsConfig: z.record(z.unknown()).optional(),
+    runtimeSettings: z.record(z.unknown()).optional(),
   }),
 });
 
@@ -80,7 +90,7 @@ function parseBearerToken(request: Request): string | null {
   return auth.slice(7).trim();
 }
 
-export async function handleMigrationImport(request: Request, env: Env): Promise<Response> {
+function validateMigrationAdminAuth(request: Request, env: Env): Response | null {
   if (!env.MIGRATION_ADMIN_TOKEN) {
     return jsonResponse({ error: 'Migration endpoint disabled. Configure MIGRATION_ADMIN_TOKEN to enable.' }, 503);
   }
@@ -89,6 +99,34 @@ export async function handleMigrationImport(request: Request, env: Env): Promise
   if (!token || token !== env.MIGRATION_ADMIN_TOKEN) {
     return jsonResponse({ error: 'Unauthorized. Valid migration bearer token required.' }, 401);
   }
+
+  return null;
+}
+
+export async function handleMigrationExport(request: Request, env: Env): Promise<Response> {
+  const authError = validateMigrationAdminAuth(request, env);
+  if (authError) return authError;
+
+  try {
+    const snapshot = await exportSnapshot(env.DB);
+    return jsonResponse({
+      snapshot_version: 'loom-remote-v2',
+      generated_at: new Date().toISOString(),
+      source: 'remote-backup',
+      payload: snapshot.payload,
+      counts: snapshot.counts,
+    });
+  } catch (error) {
+    return jsonResponse({
+      error: 'Migration export failed.',
+      details: error instanceof Error ? error.message : String(error),
+    }, 500);
+  }
+}
+
+export async function handleMigrationImport(request: Request, env: Env): Promise<Response> {
+  const authError = validateMigrationAdminAuth(request, env);
+  if (authError) return authError;
 
   const rawBody = await request.text();
   if (!rawBody || rawBody.trim().length === 0) {
@@ -194,6 +232,14 @@ export async function handleMigrationImport(request: Request, env: Env): Promise
       duration_secs: execution.duration_secs,
       created_at: execution.created_at ?? '',
     })),
+    agentProfiles: (payload.agentProfiles ?? []).map((profile) => ({
+      id: profile.id,
+      profile_json: profile.profile_json,
+      updated_at: profile.updated_at ?? '',
+    })),
+    dispatchConfig: payload.dispatchConfig,
+    modelsConfig: payload.modelsConfig,
+    runtimeSettings: payload.runtimeSettings,
   };
 
   try {
@@ -202,7 +248,7 @@ export async function handleMigrationImport(request: Request, env: Env): Promise
       ok: true,
       counts: result.counts,
       imported_at: new Date().toISOString(),
-      snapshot_version: parsed.data.snapshot_version ?? 'v1',
+      snapshot_version: parsed.data.snapshot_version ?? 'loom-remote-v2',
       source: parsed.data.source ?? 'unknown',
     });
   } catch (error) {

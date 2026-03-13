@@ -12,6 +12,8 @@
  * - Intelligence Layer: Observability, feedback, self-improvement
  */
 
+import { fileURLToPath } from 'node:url';
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -19,11 +21,9 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { createProviderManager, type ProviderManager } from './providers/index.js';
 import {
   initRegistry,
-  getRegistry,
   createIntelligenceAnalyzer,
   type RegistryManager,
   type ExtractionFeedback,
-  type ScriptModification,
   type FeedbackIssue
 } from './versioning/index.js';
 import {
@@ -82,6 +82,19 @@ initMcpTracing();
 let providerManager: ProviderManager | null = null;
 let registry: RegistryManager | null = null;
 
+function getApiKey(): string | null {
+  const value =
+    process.env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY?.trim() ??
+    process.env.MCP_API_KEY?.trim() ??
+    '';
+  return value ? value : null;
+}
+
+function getRegistryPath(): string | undefined {
+  const value = process.env.WEBFLOW_ANALYZER_REGISTRY_PATH?.trim();
+  return value ? value : undefined;
+}
+
 function getProvider(): ProviderManager {
   if (!providerManager) {
     providerManager = createProviderManager();
@@ -91,7 +104,7 @@ function getProvider(): ProviderManager {
 
 async function getScriptRegistry(): Promise<RegistryManager> {
   if (!registry) {
-    registry = await initRegistry();
+    registry = await initRegistry(getRegistryPath());
   }
   return registry;
 }
@@ -1574,445 +1587,481 @@ function createProgressReporter(extra?: RequestHandlerExtraLike): ProgressReport
 // MCP Server Setup
 // =============================================================================
 
-const server = new Server(
-  {
-    name: 'webflow-site-analyzer-mcp',
-    version: '1.0.0'
-  },
-  {
-    capabilities: {
-      tools: {}
+export function createAnalyzerServer(): Server {
+  const server = new Server(
+    {
+      name: 'webflow-site-analyzer-mcp',
+      version: '1.0.0'
+    },
+    {
+      capabilities: {
+        tools: {}
+      }
     }
-  }
-);
+  );
 
-// List available tools
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
-    // =========================================================================
-    // Automation Layer Tools (Analysis)
-    // =========================================================================
-    {
-      name: 'analyze_touchpoints',
-      description: 'Extract all interactive elements (links, buttons, forms, Webflow interactions) from a Webflow page. Uses versioned extraction scripts.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: { type: 'string', description: 'URL of the Webflow page to analyze' },
-          waitForSelector: { type: 'string', description: 'Optional CSS selector to wait for before extraction' },
-          timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
-        },
-        required: ['url']
-      }
-    },
-    {
-      name: 'extract_seo',
-      description: 'Extract SEO data including meta tags, headings, links, images, and structured data with scoring',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: { type: 'string', description: 'URL to analyze for SEO' },
-          timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
-        },
-        required: ['url']
-      }
-    },
-    {
-      name: 'get_page_structure',
-      description: 'Extract hierarchical page structure including sections, navbar, footer, and Webflow components',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: { type: 'string', description: 'URL to analyze' },
-          timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
-        },
-        required: ['url']
-      }
-    },
-    {
-      name: 'analyze_images',
-      description: 'Analyze all images for optimization: formats, dimensions, alt text, lazy loading',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: { type: 'string', description: 'URL to analyze' },
-          timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
-        },
-        required: ['url']
-      }
-    },
-    {
-      name: 'get_performance',
-      description: 'Get performance metrics including load time, paint timings, and resource breakdown',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: { type: 'string', description: 'URL to analyze' },
-          timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
-        },
-        required: ['url']
-      }
-    },
-    {
-      name: 'capture_screenshot',
-      description: 'Capture a screenshot of a Webflow page',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: { type: 'string', description: 'URL to capture' },
-          fullPage: { type: 'boolean', description: 'Capture full page or viewport only (default: true)' },
-          viewport: {
-            type: 'object',
-            properties: { width: { type: 'number' }, height: { type: 'number' } }
+  // List available tools
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: [
+      // =========================================================================
+      // Automation Layer Tools (Analysis)
+      // =========================================================================
+      {
+        name: 'analyze_touchpoints',
+        description: 'Extract all interactive elements (links, buttons, forms, Webflow interactions) from a Webflow page. Uses versioned extraction scripts.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'URL of the Webflow page to analyze' },
+            waitForSelector: { type: 'string', description: 'Optional CSS selector to wait for before extraction' },
+            timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
           },
-          format: { type: 'string', enum: ['png', 'jpeg', 'webp'] },
-          quality: { type: 'number', description: 'Quality 0-100 for jpeg/webp' }
+          required: ['url']
         },
-        required: ['url']
-      }
-    },
-    {
-      name: 'get_provider_status',
-      description: 'Get browser provider health status and session metrics',
-      inputSchema: { type: 'object', properties: {} }
-    },
-    {
-      name: 'extract_designer_metadata',
-      description: 'Extract template metadata from Webflow Designer Preview URL. Navigates through Designer panels to gather: pages list, CSS classes (style selectors), components with usage counts, interactions/animations, CMS collections, assets, and site settings. Only works with Webflow preview URLs.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: { 
-            type: 'string', 
-            description: 'Webflow preview URL (must be preview.webflow.com/preview/...)' 
+      },
+      {
+        name: 'extract_seo',
+        description: 'Extract SEO data including meta tags, headings, links, images, and structured data with scoring',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'URL to analyze for SEO' },
+            timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
           },
-          timeout: { 
-            type: 'number', 
-            description: 'Timeout in milliseconds (default: 120000 for panel navigation)' 
-          }
-        },
-        required: ['url']
-      }
-    },
-    {
-      name: 'score_designer_checklist',
-      description: 'Score Webflow Designer-focused checklist rows (strict pass/fail/manual) using extracted Designer metadata. Accepts either a live preview URL or a previously extracted designerMetadata payload.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: {
-            type: 'string',
-            description: 'Webflow preview URL. If provided, live extraction runs before scoring.'
-          },
-          timeout: {
-            type: 'number',
-            description: 'Optional timeout (ms) for live extraction when url is provided.'
-          },
-          includeManual: {
-            type: 'boolean',
-            description: 'Include manual/not-automated rows in output (default: true).'
-          },
-          designerMetadata: {
-            type: 'object',
-            description: 'Optional Designer metadata payload from extract_designer_metadata.'
-          }
+          required: ['url']
         }
-      }
-    },
-    {
-      name: 'run_template_review',
-      description: 'Unified template review run for AI-native workflows. Combines Designer checklist scoring with published-site WebMCP crawl and returns normalized pass/fail/partial/manual rows with confidence and fix hints.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          previewUrl: {
-            type: 'string',
-            description: 'Webflow preview URL for Designer extraction/scoring.'
+      },
+      {
+        name: 'get_page_structure',
+        description: 'Extract hierarchical page structure including sections, navbar, footer, and Webflow components',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'URL to analyze' },
+            timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
           },
-          publishedUrl: {
-            type: 'string',
-            description: 'Published site URL with WebMCP snippet installed.'
-          },
-          timeout: {
-            type: 'number',
-            description: 'Optional per-page timeout in milliseconds (default: 90000).'
-          },
-          includeManual: {
-            type: 'boolean',
-            description: 'Include manual rows in final output (default: true).'
-          },
-          crawlMaxPages: {
-            type: 'number',
-            description: 'Maximum published pages to crawl (default: 20, max: 50).'
-          },
-          crawlMaxDepth: {
-            type: 'number',
-            description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
-          }
-        },
-        required: ['previewUrl', 'publishedUrl']
-      }
-    },
-    {
-      name: 'get_webflow_review_policy',
-      description: 'Fetch and normalize Webflow Template Submission Guidelines + Grading Rubric from canonical web pages with provenance and policy version hash.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          refresh: {
-            type: 'boolean',
-            description: 'Force a fresh fetch from canonical source URLs instead of using cache'
-          }
+          required: ['url']
         }
-      }
-    },
-    {
-      name: 'refresh_webflow_review_policy',
-      description: 'Force refresh policy ingestion from canonical Webflow guideline and rubric pages.',
-      inputSchema: { type: 'object', properties: {} }
-    },
-
-    // =========================================================================
-    // Intelligence Layer Tools (Versioning & Self-Improvement)
-    // =========================================================================
-    {
-      name: 'list_script_versions',
-      description: 'List all versions of an extraction script with their status and metrics',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          scriptName: {
-            type: 'string',
-            enum: ['touchpoints', 'seo', 'structure', 'images', 'performance'],
-            description: 'Name of the extraction script'
-          }
-        },
-        required: ['scriptName']
-      }
-    },
-    {
-      name: 'get_version_metrics',
-      description: 'Get performance metrics for a specific script version',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          versionId: { type: 'string', description: 'Version ID (e.g., touchpoints-v1.2.0)' }
-        },
-        required: ['versionId']
-      }
-    },
-    {
-      name: 'record_feedback',
-      description: 'Record feedback about an extraction result to improve future versions',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          versionId: { type: 'string', description: 'Version ID that produced the extraction' },
-          url: { type: 'string', description: 'URL that was analyzed' },
-          rating: { type: 'number', enum: [1, 2, 3, 4, 5], description: 'Quality rating (1=poor, 5=excellent)' },
-          issues: {
-            type: 'array',
-            items: {
+      },
+      {
+        name: 'analyze_images',
+        description: 'Analyze all images for optimization: formats, dimensions, alt text, lazy loading',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'URL to analyze' },
+            timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
+          },
+          required: ['url']
+        }
+      },
+      {
+        name: 'get_performance',
+        description: 'Get performance metrics including load time, paint timings, and resource breakdown',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'URL to analyze' },
+            timeout: { type: 'number', description: 'Timeout in milliseconds (default: 60000)' }
+          },
+          required: ['url']
+        }
+      },
+      {
+        name: 'capture_screenshot',
+        description: 'Capture a screenshot of a Webflow page',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'URL to capture' },
+            fullPage: { type: 'boolean', description: 'Capture full page or viewport only (default: true)' },
+            viewport: {
               type: 'object',
-              properties: {
-                type: { type: 'string', enum: ['missing', 'incorrect', 'extra', 'timeout', 'error'] },
-                description: { type: 'string' },
-                selector: { type: 'string', description: 'CSS selector of problematic element' }
-              },
-              required: ['type', 'description']
+              properties: { width: { type: 'number' }, height: { type: 'number' } }
+            },
+            format: { type: 'string', enum: ['png', 'jpeg', 'webp'] },
+            quality: { type: 'number', description: 'Quality 0-100 for jpeg/webp' }
+          },
+          required: ['url']
+        }
+      },
+      {
+        name: 'get_provider_status',
+        description: 'Get browser provider health status and session metrics',
+        inputSchema: { type: 'object', properties: {} }
+      },
+      {
+        name: 'extract_designer_metadata',
+        description: 'Extract template metadata from Webflow Designer Preview URL. Navigates through Designer panels to gather: pages list, CSS classes (style selectors), components with usage counts, interactions/animations, CMS collections, assets, and site settings. Only works with Webflow preview URLs.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { 
+              type: 'string', 
+              description: 'Webflow preview URL (must be preview.webflow.com/preview/...)' 
+            },
+            timeout: { 
+              type: 'number', 
+              description: 'Timeout in milliseconds (default: 120000 for panel navigation)' 
             }
           },
-          notes: { type: 'string', description: 'Additional notes' },
-          extractedData: { description: 'The data that was extracted' },
-          expectedData: { description: 'What should have been extracted' }
+          required: ['url']
         },
-        required: ['versionId', 'url', 'rating']
-      }
-    },
-    {
-      name: 'run_analysis_cycle',
-      description: 'Run intelligence analysis on feedback to identify patterns and generate improvement proposals',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          scriptName: {
-            type: 'string',
-            enum: ['touchpoints', 'seo', 'structure', 'images', 'performance']
-          }
-        },
-        required: ['scriptName']
-      }
-    },
-    {
-      name: 'compare_versions',
-      description: 'Compare metrics between two script versions to evaluate improvements',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          baseVersionId: { type: 'string', description: 'Base version ID to compare from' },
-          compareVersionId: { type: 'string', description: 'Version ID to compare against' }
-        },
-        required: ['baseVersionId', 'compareVersionId']
-      }
-    },
-    {
-      name: 'promote_version',
-      description: 'Promote a script version to testing (A/B test) or active (production)',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          versionId: { type: 'string', description: 'Version ID to promote' },
-          to: { type: 'string', enum: ['testing', 'active'], description: 'Target status' }
-        },
-        required: ['versionId', 'to']
-      }
-    },
-    {
-      name: 'create_script_version',
-      description: 'Create a new version of an extraction script (for agent-driven improvements)',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          scriptName: {
-            type: 'string',
-            enum: ['touchpoints', 'seo', 'structure', 'images', 'performance']
+      },
+      {
+        name: 'score_designer_checklist',
+        description: 'Score Webflow Designer-focused checklist rows (strict pass/fail/manual) using extracted Designer metadata. Accepts either a live preview URL or a previously extracted designerMetadata payload.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: {
+              type: 'string',
+              description: 'Webflow preview URL. If provided, live extraction runs before scoring.'
+            },
+            timeout: {
+              type: 'number',
+              description: 'Optional timeout (ms) for live extraction when url is provided.'
+            },
+            includeManual: {
+              type: 'boolean',
+              description: 'Include manual/not-automated rows in output (default: true).'
+            },
+            designerMetadata: {
+              type: 'object',
+              description: 'Optional Designer metadata payload from extract_designer_metadata.'
+            }
           },
-          code: { type: 'string', description: 'The new script code' },
-          changelog: { type: 'string', description: 'Description of changes' }
+        }
+      },
+      {
+        name: 'run_template_review',
+        description: 'Unified template review run for AI-native workflows. Combines Designer checklist scoring with published-site WebMCP crawl and returns normalized pass/fail/partial/manual rows with confidence and fix hints.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            previewUrl: {
+              type: 'string',
+              description: 'Webflow preview URL for Designer extraction/scoring.'
+            },
+            publishedUrl: {
+              type: 'string',
+              description: 'Published site URL with WebMCP snippet installed.'
+            },
+            timeout: {
+              type: 'number',
+              description: 'Optional per-page timeout in milliseconds (default: 90000).'
+            },
+            includeManual: {
+              type: 'boolean',
+              description: 'Include manual rows in final output (default: true).'
+            },
+            crawlMaxPages: {
+              type: 'number',
+              description: 'Maximum published pages to crawl (default: 20, max: 50).'
+            },
+            crawlMaxDepth: {
+              type: 'number',
+              description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
+            }
+          },
+          required: ['previewUrl', 'publishedUrl']
+        }
+      },
+      {
+        name: 'get_webflow_review_policy',
+        description: 'Fetch and normalize Webflow Template Submission Guidelines + Grading Rubric from canonical web pages with provenance and policy version hash.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            refresh: {
+              type: 'boolean',
+              description: 'Force a fresh fetch from canonical source URLs instead of using cache'
+            }
+          },
+        }
+      },
+      {
+        name: 'refresh_webflow_review_policy',
+        description: 'Force refresh policy ingestion from canonical Webflow guideline and rubric pages.',
+        inputSchema: { type: 'object', properties: {} }
+      },
+
+      // =========================================================================
+      // Intelligence Layer Tools (Versioning & Self-Improvement)
+      // =========================================================================
+      {
+        name: 'list_script_versions',
+        description: 'List all versions of an extraction script with their status and metrics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            scriptName: {
+              type: 'string',
+              enum: ['touchpoints', 'seo', 'structure', 'images', 'performance'],
+              description: 'Name of the extraction script'
+            }
+          }
+          ,
+          required: ['scriptName']
+        }
+      },
+      {
+        name: 'get_version_metrics',
+        description: 'Get performance metrics for a specific script version',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            versionId: { type: 'string', description: 'Version ID (e.g., touchpoints-v1.2.0)' }
+          },
+          required: ['versionId']
+        }
+      },
+      {
+        name: 'record_feedback',
+        description: 'Record feedback about an extraction result to improve future versions',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            versionId: { type: 'string', description: 'Version ID that produced the extraction' },
+            url: { type: 'string', description: 'URL that was analyzed' },
+            rating: { type: 'number', enum: [1, 2, 3, 4, 5], description: 'Quality rating (1=poor, 5=excellent)' },
+            issues: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string', enum: ['missing', 'incorrect', 'extra', 'timeout', 'error'] },
+                  description: { type: 'string' },
+                  selector: { type: 'string', description: 'CSS selector of problematic element' }
+                },
+                required: ['type', 'description']
+              }
+            },
+            notes: { type: 'string', description: 'Additional notes' },
+            extractedData: { description: 'The data that was extracted' },
+            expectedData: { description: 'What should have been extracted' }
+          },
+          required: ['versionId', 'url', 'rating']
+        }
+      },
+      {
+        name: 'run_analysis_cycle',
+        description: 'Run intelligence analysis on feedback to identify patterns and generate improvement proposals',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            scriptName: {
+              type: 'string',
+              enum: ['touchpoints', 'seo', 'structure', 'images', 'performance']
+            }
+          },
+          required: ['scriptName']
+        }
+      },
+      {
+        name: 'compare_versions',
+        description: 'Compare metrics between two script versions to evaluate improvements',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            baseVersionId: { type: 'string', description: 'Base version ID to compare from' },
+            compareVersionId: { type: 'string', description: 'Version ID to compare against' }
+          },
+          required: ['baseVersionId', 'compareVersionId']
+        }
+      },
+      {
+        name: 'promote_version',
+        description: 'Promote a script version to testing (A/B test) or active (production)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            versionId: { type: 'string', description: 'Version ID to promote' },
+            to: { type: 'string', enum: ['testing', 'active'], description: 'Target status' }
+          },
+          required: ['versionId', 'to']
+        }
+      },
+      {
+        name: 'create_script_version',
+        description: 'Create a new version of an extraction script (for agent-driven improvements)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            scriptName: {
+              type: 'string',
+              enum: ['touchpoints', 'seo', 'structure', 'images', 'performance']
+            },
+            code: { type: 'string', description: 'The new script code' },
+            changelog: { type: 'string', description: 'Description of changes' }
+          }
+          ,
+          required: ['scriptName', 'code', 'changelog']
         },
-        required: ['scriptName', 'code', 'changelog']
       }
+    ]
+  }));
+
+  // Handle tool calls
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+    const { name, arguments: args } = request.params;
+    const safeArgs = (args || {}) as Record<string, unknown>;
+    const traceContext = beginToolTrace(name, safeArgs, extra);
+
+    try {
+      let result: unknown;
+
+      switch (name) {
+        // Automation Layer
+        case 'analyze_touchpoints':
+          result = await analyzeTouchpoints(safeArgs as unknown as AnalyzeTouchpointsInput);
+          break;
+        case 'extract_seo':
+          result = await extractSEO(safeArgs as unknown as ExtractSEOInput);
+          break;
+        case 'get_page_structure':
+          result = await getPageStructure(safeArgs as unknown as GetPageStructureInput);
+          break;
+        case 'analyze_images':
+          result = await analyzeImages(safeArgs as unknown as AnalyzeImagesInput);
+          break;
+        case 'get_performance':
+          result = await getPerformance(safeArgs as unknown as GetPerformanceInput);
+          break;
+        case 'capture_screenshot':
+          result = await captureScreenshot(safeArgs as unknown as CaptureScreenshotInput);
+          break;
+        case 'get_provider_status':
+          result = await getProviderStatus();
+          break;
+        case 'extract_designer_metadata':
+          result = await extractDesignerMetadata(safeArgs as unknown as ExtractDesignerMetadataInput);
+          break;
+        case 'score_designer_checklist':
+          result = await scoreDesignerChecklistTool(safeArgs as unknown as ScoreDesignerChecklistInput);
+          break;
+        case 'run_template_review':
+          result = await runTemplateReviewTool(safeArgs as unknown as RunTemplateReviewInput, {
+            reportProgress: createProgressReporter(extra as RequestHandlerExtraLike)
+          });
+          break;
+        case 'get_webflow_review_policy':
+          result = await getWebflowReviewPolicy(Boolean(safeArgs.refresh));
+          break;
+        case 'refresh_webflow_review_policy':
+          result = await getWebflowReviewPolicy(true);
+          break;
+
+        // Intelligence Layer
+        case 'list_script_versions':
+          result = await listScriptVersions(safeArgs.scriptName as string);
+          break;
+        case 'get_version_metrics':
+          result = await getVersionMetrics(safeArgs.versionId as string);
+          break;
+        case 'record_feedback':
+          result = await recordFeedback(safeArgs as Parameters<typeof recordFeedback>[0]);
+          break;
+        case 'run_analysis_cycle':
+          result = await runAnalysisCycle(safeArgs.scriptName as string);
+          break;
+        case 'compare_versions':
+          result = await compareVersions(
+            safeArgs.baseVersionId as string,
+            safeArgs.compareVersionId as string
+          );
+          break;
+        case 'promote_version':
+          result = await promoteVersion(
+            safeArgs.versionId as string,
+            safeArgs.to as 'testing' | 'active'
+          );
+          break;
+        case 'create_script_version':
+          result = await createScriptVersion(safeArgs as Parameters<typeof createScriptVersion>[0]);
+          break;
+
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
+
+      await endToolTraceSuccess(traceContext, result);
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }]
+      };
+
+    } catch (error: unknown) {
+      await endToolTraceError(traceContext, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({ error: errorMessage, tool: name, arguments: safeArgs }, null, 2)
+        }],
+        isError: true
+      };
     }
-  ]
-}));
+  });
 
-// Handle tool calls
-server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
-  const { name, arguments: args } = request.params;
-  const safeArgs = (args || {}) as Record<string, unknown>;
-  const traceContext = beginToolTrace(name, safeArgs, extra);
-
-  try {
-    let result: unknown;
-
-    switch (name) {
-      // Automation Layer
-      case 'analyze_touchpoints':
-        result = await analyzeTouchpoints(safeArgs as unknown as AnalyzeTouchpointsInput);
-        break;
-      case 'extract_seo':
-        result = await extractSEO(safeArgs as unknown as ExtractSEOInput);
-        break;
-      case 'get_page_structure':
-        result = await getPageStructure(safeArgs as unknown as GetPageStructureInput);
-        break;
-      case 'analyze_images':
-        result = await analyzeImages(safeArgs as unknown as AnalyzeImagesInput);
-        break;
-      case 'get_performance':
-        result = await getPerformance(safeArgs as unknown as GetPerformanceInput);
-        break;
-      case 'capture_screenshot':
-        result = await captureScreenshot(safeArgs as unknown as CaptureScreenshotInput);
-        break;
-      case 'get_provider_status':
-        result = await getProviderStatus();
-        break;
-      case 'extract_designer_metadata':
-        result = await extractDesignerMetadata(safeArgs as unknown as ExtractDesignerMetadataInput);
-        break;
-      case 'score_designer_checklist':
-        result = await scoreDesignerChecklistTool(safeArgs as unknown as ScoreDesignerChecklistInput);
-        break;
-      case 'run_template_review':
-        result = await runTemplateReviewTool(safeArgs as unknown as RunTemplateReviewInput, {
-          reportProgress: createProgressReporter(extra as RequestHandlerExtraLike)
-        });
-        break;
-      case 'get_webflow_review_policy':
-        result = await getWebflowReviewPolicy(Boolean(safeArgs.refresh));
-        break;
-      case 'refresh_webflow_review_policy':
-        result = await getWebflowReviewPolicy(true);
-        break;
-
-      // Intelligence Layer
-      case 'list_script_versions':
-        result = await listScriptVersions(safeArgs.scriptName as string);
-        break;
-      case 'get_version_metrics':
-        result = await getVersionMetrics(safeArgs.versionId as string);
-        break;
-      case 'record_feedback':
-        result = await recordFeedback(safeArgs as Parameters<typeof recordFeedback>[0]);
-        break;
-      case 'run_analysis_cycle':
-        result = await runAnalysisCycle(safeArgs.scriptName as string);
-        break;
-      case 'compare_versions':
-        result = await compareVersions(
-          safeArgs.baseVersionId as string,
-          safeArgs.compareVersionId as string
-        );
-        break;
-      case 'promote_version':
-        result = await promoteVersion(
-          safeArgs.versionId as string,
-          safeArgs.to as 'testing' | 'active'
-        );
-        break;
-      case 'create_script_version':
-        result = await createScriptVersion(safeArgs as Parameters<typeof createScriptVersion>[0]);
-        break;
-
-      default:
-        throw new Error(`Unknown tool: ${name}`);
-    }
-
-    await endToolTraceSuccess(traceContext, result);
-    return {
-      content: [{
-        type: 'text',
-        text: JSON.stringify(result, null, 2)
-      }]
-    };
-
-  } catch (error: unknown) {
-    await endToolTraceError(traceContext, error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [{
-        type: 'text',
-        text: JSON.stringify({ error: errorMessage, tool: name, arguments: safeArgs }, null, 2)
-      }],
-      isError: true
-    };
-  }
-});
+  return server;
+}
 
 // =============================================================================
 // Server Lifecycle
 // =============================================================================
 
-async function shutdownServer(): Promise<void> {
+export async function shutdownAnalyzerServer(): Promise<void> {
   if (providerManager) providerManager.shutdown();
   if (registry) await registry.save();
   await shutdownMcpTracing();
 }
 
-process.on('SIGINT', async () => {
-  await shutdownServer();
-  process.exit(0);
-});
+export function getAnalyzerHealth(): Record<string, unknown> {
+  const providerName = providerManager?.getProviderName() ?? null;
+  return {
+    name: 'webflow-site-analyzer-mcp',
+    version: '1.0.0',
+    transport: 'stdio',
+    provider: providerName,
+    registryPath: getRegistryPath() ?? '.webflow-analyzer/registry.json',
+    auth: {
+      configured: Boolean(getApiKey()),
+      header: 'Authorization: Bearer <WEBFLOW_SITE_ANALYZER_MCP_API_KEY>'
+    }
+  };
+}
 
-process.on('SIGTERM', async () => {
-  await shutdownServer();
-  process.exit(0);
-});
+export async function runStdioServer(): Promise<void> {
+  const server = createAnalyzerServer();
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
 
-// Start server
-const transport = new StdioServerTransport();
-server.connect(transport);
+  console.error('Webflow Site Analyzer MCP server running on stdio');
+  console.error('Layers: Database (URL) -> Automation (versioned scripts) -> Intelligence (observability)');
+}
 
-console.error('Webflow Site Analyzer MCP server running on stdio');
-console.error('Layers: Database (URL) -> Automation (versioned scripts) -> Intelligence (observability)');
+function installSignalHandlers(): void {
+  process.on('SIGINT', async () => {
+    await shutdownAnalyzerServer();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    await shutdownAnalyzerServer();
+    process.exit(0);
+  });
+}
+
+const isMainModule = process.argv[1] != null && fileURLToPath(import.meta.url) === process.argv[1];
+
+if (isMainModule) {
+  installSignalHandlers();
+  runStdioServer().catch(async (error) => {
+    console.error('[webflow-site-analyzer-mcp] fatal error:', error);
+    await shutdownAnalyzerServer();
+    process.exit(1);
+  });
+}

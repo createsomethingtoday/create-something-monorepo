@@ -54,11 +54,11 @@ function headersWithAuth(token) {
     ? {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        Accept: 'application/json',
+        Accept: 'application/json, text/event-stream',
       }
     : {
         'Content-Type': 'application/json',
-        Accept: 'application/json',
+        Accept: 'application/json, text/event-stream',
       };
 }
 
@@ -112,6 +112,9 @@ async function main() {
     dependencies: (payload.dependencies ?? []).length,
     sessions: (payload.sessions ?? []).length,
     checkpoints: (payload.checkpoints ?? []).length,
+    agent_executions: (payload.agentExecutions ?? []).length,
+    agent_profiles: (payload.agentProfiles ?? []).length,
+    runtime_settings: Object.keys(payload.runtimeSettings ?? {}).length + (payload.dispatchConfig ? 1 : 0) + (payload.modelsConfig ? 1 : 0),
   };
 
   const healthResponse = await fetch(args.healthUrl, { headers: args.token ? { Authorization: `Bearer ${args.token}` } : {} });
@@ -164,12 +167,58 @@ async function main() {
     }
   }
 
+  const agentsResult = await mcpCall({
+    mcpUrl: args.mcpUrl,
+    token: args.token,
+    id: 'agents-1',
+    name: 'loom_agents',
+    args: {},
+  });
+  const remoteAgentIds = new Set((agentsResult?.items ?? []).map((item) => item.id));
+  for (const agentProfile of (payload.agentProfiles ?? []).slice(0, 10)) {
+    if (!remoteAgentIds.has(agentProfile.id)) {
+      mismatches.push(`agent-profile-parity: expected ${agentProfile.id} in loom_agents output`);
+    }
+  }
+
+  const formulasResult = await mcpCall({
+    mcpUrl: args.mcpUrl,
+    token: args.token,
+    id: 'formulas-1',
+    name: 'loom_formulas',
+    args: {},
+  });
+  const formulaNames = new Set((formulasResult?.items ?? []).map((item) => item.name));
+  for (const requiredFormula of ['basic-task', 'feature', 'bug-fix', 'refactor', 'cs-feature', 'cs-worker', 'fleet-deploy', 'mcp-gate']) {
+    if (!formulaNames.has(requiredFormula)) {
+      mismatches.push(`formula-parity: missing ${requiredFormula}`);
+    }
+  }
+
+  if (payload.runtimeSettings?.notion?.databaseId) {
+    const notionStatus = await mcpCall({
+      mcpUrl: args.mcpUrl,
+      token: args.token,
+      id: 'notion-1',
+      name: 'loom_notion_status',
+      args: {},
+    });
+    if (notionStatus?.database_id !== payload.runtimeSettings.notion.databaseId) {
+      mismatches.push(
+        `notion-database-parity: expected ${payload.runtimeSettings.notion.databaseId}, received ${notionStatus?.database_id ?? 'null'}`,
+      );
+    }
+  }
+
   console.log('Expected counts:', expectedCounts);
   console.log('Remote counts:', {
     tasks: Number(remoteCounts.tasks ?? 0),
     dependencies: Number(remoteCounts.dependencies ?? 0),
     sessions: Number(remoteCounts.sessions ?? 0),
     checkpoints: Number(remoteCounts.checkpoints ?? 0),
+    agent_executions: Number(remoteCounts.agent_executions ?? 0),
+    agent_profiles: Number(remoteCounts.agent_profiles ?? 0),
+    runtime_settings: Number(remoteCounts.runtime_settings ?? 0),
   });
   console.log(`Sampled tasks checked: ${sampledTaskIds.length}`);
   console.log(`Sampled sessions checked: ${sampledSessionIds.length}`);
@@ -185,7 +234,11 @@ async function main() {
   console.log('Cutover validation passed.');
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-});
+main()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });
