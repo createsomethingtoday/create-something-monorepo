@@ -108,6 +108,21 @@ export const QUALITY_RATING_OPTIONS = [
   '🥇Exceptional',
 ] as const;
 
+export const IMPROVEMENT_AREA_OPTIONS = [
+  'Template: Overall user experience',
+  'Template: Accessibility',
+  'Template: Conversion best practices',
+  'Template: Graphic design',
+  'Template: Guidelines compliance',
+  'Template: Hierarchy',
+  'Template: Interaction design',
+  'Template: Layout design quality',
+  'Template: Responsive design',
+  'Template: Site optimization',
+  'Template: Technical requirements',
+  'Template: Typography',
+] as const;
+
 export const HOTSPOT_GROUPS = {
   blue: [
     'thread',
@@ -171,6 +186,7 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
   statusOptions: {
     reviewStatus: REVIEW_STATUS_OPTIONS,
     qualityRating: QUALITY_RATING_OPTIONS,
+    improvementAreas: IMPROVEMENT_AREA_OPTIONS,
   },
   writeSupport: {
     assetMetadata: [

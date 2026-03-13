@@ -9,6 +9,12 @@ import type { ReviewerProfile } from './reviewer-directory.js';
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
 
+const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
+  '🏃🏾In Review',
+  '👀Admin Feedback Review',
+  '🔁Response to Review',
+] as const;
+
 function jsonContent(value: unknown, isError = false) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
@@ -71,6 +77,28 @@ function currentReviewerAsCollaborator(getReviewer: ReviewerFactory) {
   };
 }
 
+function requireResolvedReviewer(getReviewer: ReviewerFactory) {
+  const reviewer = getReviewer();
+  if (!reviewer) {
+    throw new AirtableClientError(
+      'REVIEWER_IDENTITY_UNAVAILABLE',
+      'Current reviewer identity is not configured for this MCP runtime.',
+      503,
+    );
+  }
+  return reviewer;
+}
+
+function reviewerPayload(reviewer: ReviewerProfile) {
+  return {
+    accountId: reviewer.accountId,
+    airtableCollaboratorId: reviewer.airtableCollaboratorId,
+    email: reviewer.email,
+    name: reviewer.name,
+    lane: reviewer.lane,
+  };
+}
+
 export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
   server.tool(
     'template_review_health',
@@ -80,27 +108,6 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         const health = await getClient().healthCheck();
         return asSuccess({ ...health, auth: 'Bearer token required at worker boundary.' });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'template_review_get_metrics',
-    'Return compact marketplace template review metrics for a recent date window.',
-    {
-      days: z.number().int().min(1).max(90).optional(),
-      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    },
-    async ({ days, end_date }) => {
-      try {
-        return asSuccess({
-          metrics: await getClient().getMarketplaceMetrics({
-            days,
-            end_date,
-          }),
-        });
       } catch (error) {
         return asError(error);
       }
@@ -176,6 +183,157 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   );
 
   server.tool(
+    'template_review_get_review_context',
+    'Get the normalized review context for one template version, including reviewer-facing fields and capability flags.',
+    {
+      version_id: z.string().min(1),
+    },
+    async ({ version_id }) => {
+      try {
+        return asSuccess({
+          context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_assign_self',
+    'Reviewer-safe write: assign the current reviewer to a template Asset Version using runtime reviewer identity mapped from the hub account.',
+    {
+      version_id: z.string().min(1),
+    },
+    async ({ version_id }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
+          updated_version: await getClient().assignSelfToVersion(version_id, actingReviewer),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_unassign_self',
+    'Reviewer-safe write: clear the 📝Reviewer field only when the selected template Asset Version is currently assigned to the authenticated reviewer.',
+    {
+      version_id: z.string().min(1),
+    },
+    async ({ version_id }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
+          updated_version: await getClient().unassignVersionReviewer(version_id, actingReviewer),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_request_changes',
+    'Reviewer-safe write: set a template version to changes-requested and attach reviewer feedback using the authenticated reviewer identity.',
+    {
+      version_id: z.string().min(1),
+      review_feedback: z.string().min(1),
+      improvement_areas: z.array(z.string()).optional(),
+    },
+    async ({ version_id, review_feedback, improvement_areas }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
+          updated_version: await getClient().updateVersionReview(version_id, {
+            review_owner: { id: reviewer.airtableCollaboratorId },
+            review_status: '📤Changes Requested',
+            review_feedback,
+            improvement_areas,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_set_review_status',
+    'Reviewer-safe write: set a reviewer-controlled template review status after ownership has been established through self-assignment.',
+    {
+      version_id: z.string().min(1),
+      review_status: z.enum(REVIEWER_CONTROLLED_STATUS_OPTIONS),
+    },
+    async ({ version_id, review_status }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
+          updated_version: await getClient().updateVersionReview(version_id, {
+            review_owner: { id: reviewer.airtableCollaboratorId },
+            review_status,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_save_draft_feedback',
+    'Reviewer-safe write: save draft reviewer feedback for a template version without changing the official decision state.',
+    {
+      version_id: z.string().min(1),
+      review_feedback: z.string().min(1).optional(),
+      improvement_areas: z.array(z.string()).optional(),
+    },
+    async ({ version_id, review_feedback, improvement_areas }) => {
+      try {
+        if (review_feedback === undefined && improvement_areas === undefined) {
+          throw new AirtableClientError(
+            'NO_MUTATION_FIELDS',
+            'Provide review_feedback, improvement_areas, or both.',
+            400,
+          );
+        }
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
+          updated_version: await getClient().updateVersionReview(version_id, {
+            review_owner: { id: reviewer.airtableCollaboratorId },
+            review_feedback,
+            improvement_areas,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_search_assets',
     'Search template assets by name so reviewers can find a specific submission without reading a broad queue slice.',
     {
@@ -212,18 +370,21 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ query, mode, asset_limit, versions_per_asset_limit }) => {
       try {
-        const matches = await getClient().searchVersionsByAssetName(query, {
-          mode,
-          assetLimit: asset_limit ?? 10,
-          versionsPerAssetLimit: versions_per_asset_limit ?? 25,
-        });
-
         return asSuccess({
           query,
           mode: mode ?? 'contains',
-          asset_count: matches.length,
-          version_count: matches.reduce((total, match) => total + match.versions.length, 0),
-          matches,
+          ...(await (async () => {
+            const matches = await getClient().searchVersionsByAssetName(query, {
+              mode,
+              assetLimit: asset_limit ?? 10,
+              versionsPerAssetLimit: versions_per_asset_limit ?? 25,
+            });
+            return {
+              asset_count: matches.length,
+              version_count: matches.reduce((total, match) => total + match.versions.length, 0),
+              matches,
+            };
+          })()),
         });
       } catch (error) {
         return asError(error);
@@ -292,23 +453,6 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   );
 
   server.tool(
-    'template_review_get_review_context',
-    'Get the normalized review context for one template version, including reviewer-facing fields and capability flags.',
-    {
-      version_id: z.string().min(1),
-    },
-    async ({ version_id }) => {
-      try {
-        return asSuccess({
-          context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
     'template_review_list_releases',
     'List available Asset Release records reviewers can link to approved template versions.',
     {
@@ -317,7 +461,62 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     async ({ limit }) => {
       try {
         const releases = await getClient().listReleases(limit ?? 100);
-        return asSuccess({ count: releases.length, releases });
+        return asSuccess({
+          count: releases.length,
+          releases,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_get_field_map',
+    'Return the template review Airtable field map with confirmed and pending mappings.',
+    {},
+    async () => asSuccess(TEMPLATE_REVIEW_FIELD_MAP),
+  );
+
+  server.tool(
+    'template_review_get_metrics',
+    'Return compact marketplace template review metrics for a recent date window.',
+    {
+      days: z.number().int().min(1).max(90).optional(),
+      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    },
+    async ({ days, end_date }) => {
+      try {
+        return asSuccess({
+          metrics: await getClient().getMarketplaceMetrics({
+            days,
+            end_date,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_assign_reviewer',
+    'Admin/operator write: assign or clear the 📝Reviewer collaborator on a template Asset Version without changing any other review fields.',
+    {
+      version_id: z.string().min(1),
+      review_owner: z.union([
+        z.string().min(1).describe('Airtable collaborator id for the reviewer.'),
+        z.object({ id: z.string().min(1) }),
+        z.null(),
+      ]),
+    },
+    async ({ version_id, review_owner }) => {
+      try {
+        return asSuccess({
+          updated_version: await getClient().assignVersionReviewer(version_id, {
+            review_owner,
+          }),
+        });
       } catch (error) {
         return asError(error);
       }
@@ -359,102 +558,6 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           resolved_release: result.resolvedRelease,
           resolved_local_date: result.resolvedLocalDate,
           support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.publishingCompletion,
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'template_review_assign_reviewer',
-    'Assign or clear the 📝Reviewer collaborator on a template Asset Version without changing any other review fields.',
-    {
-      version_id: z.string().min(1),
-      review_owner: z.union([
-        z.string().min(1).describe('Airtable collaborator id for the reviewer.'),
-        z.object({ id: z.string().min(1) }),
-        z.null(),
-      ]),
-    },
-    async ({ version_id, review_owner }) => {
-      try {
-        return asSuccess({
-          updated_version: await getClient().assignVersionReviewer(version_id, {
-            review_owner,
-          }),
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'template_review_assign_self',
-    'Assign the current reviewer to a template Asset Version using runtime reviewer identity mapped from the hub account.',
-    {
-      version_id: z.string().min(1),
-    },
-    async ({ version_id }) => {
-      try {
-        const reviewer = getReviewer();
-        if (!reviewer) {
-          throw new AirtableClientError(
-            'REVIEWER_IDENTITY_UNAVAILABLE',
-            'Current reviewer identity is not configured for this MCP runtime.',
-            503,
-          );
-        }
-
-        return asSuccess({
-          reviewer: {
-            accountId: reviewer.accountId,
-            airtableCollaboratorId: reviewer.airtableCollaboratorId,
-            email: reviewer.email,
-            name: reviewer.name,
-            lane: reviewer.lane,
-          },
-          updated_version: await getClient().assignVersionReviewer(version_id, {
-            review_owner: { id: reviewer.airtableCollaboratorId },
-          }),
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'template_review_unassign_self',
-    'Clear the 📝Reviewer field only when the selected template Asset Version is currently assigned to the authenticated reviewer.',
-    {
-      version_id: z.string().min(1),
-    },
-    async ({ version_id }) => {
-      try {
-        const reviewer = getReviewer();
-        if (!reviewer) {
-          throw new AirtableClientError(
-            'REVIEWER_IDENTITY_UNAVAILABLE',
-            'Current reviewer identity is not configured for this MCP runtime.',
-            503,
-          );
-        }
-
-        return asSuccess({
-          reviewer: {
-            accountId: reviewer.accountId,
-            airtableCollaboratorId: reviewer.airtableCollaboratorId,
-            email: reviewer.email,
-            name: reviewer.name,
-            lane: reviewer.lane,
-          },
-          updated_version: await getClient().unassignVersionReviewer(version_id, {
-            id: reviewer.airtableCollaboratorId,
-            ...(reviewer.email ? { email: reviewer.email } : {}),
-            ...(reviewer.name ? { name: reviewer.name } : {}),
-          }),
         });
       } catch (error) {
         return asError(error);
@@ -518,9 +621,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       review_feedback: z.string().optional(),
       review_checklist: z.unknown().optional(),
       publishing_checklist: z.unknown().optional(),
-      release_date: z.string().optional(),
       release_record_id: z.string().optional(),
-      mrp_id_overwrite: z.string().optional(),
       reject_reason: z.string().optional(),
       rejection_feedback: z.string().optional(),
     },
@@ -533,9 +634,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       review_feedback,
       review_checklist,
       publishing_checklist,
-      release_date,
       release_record_id,
-      mrp_id_overwrite,
       reject_reason,
       rejection_feedback,
     }) => {
@@ -549,35 +648,9 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
             review_feedback,
             review_checklist,
             publishing_checklist,
-            release_date,
             release_record_id,
-            mrp_id_overwrite,
             reject_reason,
             rejection_feedback,
-          }),
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'template_review_request_changes',
-    'Set a template version to changes-requested and attach review feedback.',
-    {
-      version_id: z.string().min(1),
-      review_feedback: z.string(),
-      review_status: z.string().optional(),
-      improvement_areas: z.array(z.string()).optional(),
-    },
-    async ({ version_id, review_feedback, review_status, improvement_areas }) => {
-      try {
-        return asSuccess({
-          updated_version: await getClient().updateVersionReview(version_id, {
-            review_status: review_status ?? '📤Changes Requested',
-            review_feedback,
-            improvement_areas,
           }),
         });
       } catch (error) {
@@ -591,19 +664,15 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'Approve a template version and optionally update confirmed publishing checklist metadata.',
     {
       version_id: z.string().min(1),
-      release_date: z.string().optional(),
       release_record_id: z.string().optional(),
-      mrp_id_overwrite: z.string().optional(),
       publishing_checklist: z.unknown().optional(),
     },
-    async ({ version_id, release_date, release_record_id, mrp_id_overwrite, publishing_checklist }) => {
+    async ({ version_id, release_record_id, publishing_checklist }) => {
       try {
         return asSuccess({
           updated_version: await getClient().updateVersionReview(version_id, {
             review_status: '✅Approved',
-            release_date,
             release_record_id,
-            mrp_id_overwrite,
             publishing_checklist,
           }),
         });
@@ -618,8 +687,8 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'Reject a template version with reason and reviewer feedback.',
     {
       version_id: z.string().min(1),
-      reject_reason: z.string(),
-      rejection_feedback: z.string(),
+      reject_reason: z.string().min(1),
+      rejection_feedback: z.string().min(1),
     },
     async ({ version_id, reject_reason, rejection_feedback }) => {
       try {
@@ -634,12 +703,5 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         return asError(error);
       }
     },
-  );
-
-  server.tool(
-    'template_review_get_field_map',
-    'Return the template review Airtable field map with confirmed and pending mappings.',
-    {},
-    async () => asSuccess(TEMPLATE_REVIEW_FIELD_MAP),
   );
 }
