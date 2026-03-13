@@ -1130,7 +1130,9 @@ export class AirtableClient {
       }
       fields[CONFIRMED_VERSION_FIELDS.improvementAreas] = input.improvement_areas;
     }
-    if (input.review_feedback !== undefined) fields[CONFIRMED_VERSION_FIELDS.reviewFeedback] = input.review_feedback;
+    if (input.review_feedback !== undefined) {
+      fields[CONFIRMED_WRITE_FIELD_IDS.versions.reviewFeedback] = input.review_feedback;
+    }
     if (input.review_checklist !== undefined) fields[CONFIRMED_VERSION_FIELDS.reviewChecklist] = coerceLongText(input.review_checklist);
     if (input.publishing_checklist !== undefined) {
       fields[CONFIRMED_VERSION_FIELDS.publishingChecklist] = coerceLongText(input.publishing_checklist);

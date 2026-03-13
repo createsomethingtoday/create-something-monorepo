@@ -5,6 +5,7 @@ import { AirtableClient } from '../src/airtable.js';
 import {
   CONFIRMED_ASSET_FIELDS,
   CONFIRMED_VERSION_FIELDS,
+  CONFIRMED_WRITE_FIELD_IDS,
   TABLE_IDS,
 } from '../src/schema.js';
 
@@ -311,6 +312,11 @@ test('updateVersionReview includes Airtable error details on failed updates', as
 
       assert.match(url.pathname, new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_error$`));
       assert.equal(init?.method, 'PATCH');
+      assert.deepEqual(JSON.parse(String(init?.body)), {
+        fields: {
+          [CONFIRMED_WRITE_FIELD_IDS.versions.reviewFeedback]: 'Draft feedback',
+        },
+      });
 
       return new Response(
         JSON.stringify({
