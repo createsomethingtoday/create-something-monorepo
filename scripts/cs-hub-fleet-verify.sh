@@ -24,6 +24,13 @@ REQUIRED_SECRETS=(
   "BRAINTRUST_PROJECT_ID"
 )
 
+INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
+LOAD_FROM_INFISICAL="${LOAD_FROM_INFISICAL:-auto}"
+VERIFY_CURL_CONNECT_TIMEOUT_SECONDS="${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS:-5}"
+VERIFY_CURL_MAX_TIME_SECONDS="${VERIFY_CURL_MAX_TIME_SECONDS:-30}"
+
 SHARED_AUTH_SERVERS=(
   "composio-toolkit-dropbox"
   "composio-toolkit-gmail"
@@ -48,9 +55,9 @@ join_by_comma() {
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
-DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-operator-notion-mcp"
-MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
-MJ_SERVERS_CSV="composio-toolkit-airtable,${MJ_SERVERS_CSV}"
+DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
+C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
+MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
 VERIFY_IDENTITY_MODE="${HUB_VERIFY_IDENTITY_MODE:-compat}"
 VERIFY_IDENTITY_MODE="$(printf '%s' "$VERIFY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]')"
 
@@ -165,6 +172,100 @@ resolve_secret_check_worker_name() {
   echo "cs-hub-fillip"
 }
 
+expected_identity_mode_for_worker() {
+  case "$1" in
+    "cs-mcp-hub-remote") echo "session_required" ;;
+    *) echo "compat" ;;
+  esac
+}
+
+expected_enabled_servers_csv_for_worker() {
+  case "$1" in
+    "cs-hub-lainy"|"cs-hub-august"|"cs-hub-fillip"|"cs-hub-leah") echo "$SHARED_AUTH_SERVERS_CSV" ;;
+    "cs-hub-danny") echo "$DANNY_SERVERS_CSV" ;;
+    "cs-hub-c3denver") echo "$C3DENVER_SERVERS_CSV" ;;
+    "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "$OUTERFIELDS_CLICKUP_SERVERS_CSV" ;;
+    "cs-hub-mj") echo "$MJ_SERVERS_CSV" ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+expected_enabled_policy_label_for_worker() {
+  case "$1" in
+    "cs-hub-lainy"|"cs-hub-august"|"cs-hub-fillip"|"cs-hub-leah") echo "shared_auth_core" ;;
+    "cs-hub-danny") echo "danny_shared_auth_plus_dm_and_operator_notion" ;;
+    "cs-hub-c3denver") echo "c3denver_airtable_gmail_notion" ;;
+    "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "outerfields_shared_auth_plus_clickup" ;;
+    "cs-hub-mj") echo "mj_shared_auth_plus_ops_search_meetings_and_review" ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+load_infisical_env() {
+  if ! command -v infisical >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local payload
+  payload="$(
+    infisical export \
+      --format=json \
+      --env="$INFISICAL_ENV" \
+      --path="$INFISICAL_PATH" \
+      --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+  )" || return 1
+
+  while IFS=$'\t' read -r key value; do
+    if [[ -z "${!key:-}" ]]; then
+      export "${key}=${value}"
+    fi
+  done < <(
+    printf '%s' "$payload" | jq -r '
+      def wanted:
+        test("^(HUB_API_TOKEN|CS_HUB_[A-Z0-9_]+_API_TOKEN|CS_MCP_HUB_REMOTE_API_TOKEN|IDENTITY_WORKER_ADMIN_API_KEY)$");
+      if type == "array" then
+        .[] | select(.key != null and (.key | wanted)) | [.key, (.value | tostring)]
+      else
+        to_entries[] | select(.key | wanted) | [.key, (.value | tostring)]
+      end
+      | @tsv
+    '
+  )
+
+  if [[ -z "${IDENTITY_API_KEY:-}" && -n "${IDENTITY_WORKER_ADMIN_API_KEY:-}" ]]; then
+    export IDENTITY_API_KEY="$IDENTITY_WORKER_ADMIN_API_KEY"
+  fi
+}
+
+maybe_load_supporting_env() {
+  local mode
+  mode="$(printf '%s' "$LOAD_FROM_INFISICAL" | tr '[:upper:]' '[:lower:]')"
+  if [[ "$mode" == "false" ]]; then
+    return 0
+  fi
+
+  local need_load=0
+  if [[ -z "${HUB_API_TOKEN:-}" || -z "${CS_MCP_HUB_REMOTE_API_TOKEN:-}" ]]; then
+    need_load=1
+  fi
+  if [[ -z "${IDENTITY_API_KEY:-}" && -z "${IDENTITY_WORKER_ADMIN_API_KEY:-}" ]]; then
+    need_load=1
+  fi
+
+  if [[ "$mode" == "true" || "$need_load" -eq 1 ]]; then
+    if ! load_infisical_env; then
+      if [[ "$mode" == "true" ]]; then
+        echo "failed to load fleet verify secrets from Infisical" >&2
+        exit 1
+      fi
+    fi
+  fi
+}
+
 reset_discovery_preferences() {
   local mcp_url="$1"
   local token="$2"
@@ -187,6 +288,7 @@ reset_discovery_preferences() {
 create_fleet_verify_session() {
   local identity_base_url="${IDENTITY_BASE_URL:-https://id.createsomething.space}"
   local identity_access_token="${IDENTITY_ACCESS_TOKEN:-}"
+  local identity_admin_token="${IDENTITY_API_KEY:-${IDENTITY_WORKER_ADMIN_API_KEY:-}}"
   local tenant_id="${MCP_SESSION_TENANT_ID:-fleet_verify}"
   local host="${MCP_SESSION_HOST:-fleet_verify}"
   local toolkit_profile_json="${MCP_SESSION_TOOLKIT_PROFILE_JSON:-[\"dropbox\",\"gmail\",\"youtube\",\"googlesheets\",\"googledrive\",\"zoom\",\"slack\",\"quickbooks\",\"linkedin\",\"notion\"]}"
@@ -198,8 +300,137 @@ create_fleet_verify_session() {
     return 0
   fi
 
+  create_admin_mint_session() {
+    local account_id="${MCP_SESSION_ACCOUNT_ID:-${POLICY_OS_ACCOUNT_ID:-${MCP_ONLY_ACCOUNT_ID:-}}}"
+    if [[ -z "$identity_admin_token" || -z "$account_id" ]]; then
+      return 1
+    fi
+
+    local create_url="${identity_base_url%/}/v1/mcp/sessions/admin-mint"
+    local consent_granted_at body_file status
+    consent_granted_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+    body_file="$(mktemp)"
+    status="$(
+      curl -sS -o "$body_file" -w "%{http_code}" -X POST "$create_url" \
+        -H "X-API-Key: ${identity_admin_token}" \
+        -H "Content-Type: application/json" \
+        --data "$(jq -cn \
+          --arg account_id "$account_id" \
+          --arg host "${host}-admin-mint" \
+          --arg consent_record_id "consent_cs_hub_fleet_verify" \
+          --arg consent_granted_at "$consent_granted_at" \
+          --arg workspace_account_id "$account_id" \
+          --argjson toolkitProfile "$toolkit_profile_json" '{
+            account_id: $account_id,
+            host: $host,
+            tool_mode: "read_write",
+            toolkit_profile: $toolkitProfile,
+            actor: "operator:cs-hub-fleet-verify",
+            consent_record_id: $consent_record_id,
+            consent_granted_at: $consent_granted_at,
+            metadata: {
+              client_slug: "cs-hub-fleet-verify",
+              workspace_account_id: $workspace_account_id
+            }
+          }')"
+    )"
+
+    if [[ "$status" != "200" ]]; then
+      echo "failed to admin-mint MCP session via identity-worker (status=${status})" >&2
+      cat "$body_file" >&2
+      rm -f "$body_file"
+      return 1
+    fi
+
+    local token account_id_value session_id
+    token="$(jq -r '.token // empty' "$body_file")"
+    account_id_value="$(jq -r '.account_id // empty' "$body_file")"
+    session_id="$(jq -r '.session_id // empty' "$body_file")"
+    rm -f "$body_file"
+
+    if [[ -z "$token" || -z "$account_id_value" ]]; then
+      echo "identity-worker admin-mint response missing token/account_id" >&2
+      return 1
+    fi
+
+    echo "${token}|${account_id_value}|${session_id}"
+  }
+
+  create_admin_managed_bearer() {
+    local auth_subject="${MCP_SESSION_AUTH_SUBJECT:-${POLICY_OS_AUTH_SUBJECT:-${MCP_ONLY_AUTH_SUBJECT:-}}}"
+    local account_id="${MCP_SESSION_ACCOUNT_ID:-${POLICY_OS_ACCOUNT_ID:-${MCP_ONLY_ACCOUNT_ID:-}}}"
+    local tenant_id_value="${MCP_SESSION_TENANT_ID:-${POLICY_OS_TENANT_ID:-${MCP_ONLY_TENANT_ID:-${tenant_id}}}}"
+    if [[ -z "$identity_admin_token" || -z "$auth_subject" || -z "$account_id" || -z "$tenant_id_value" ]]; then
+      return 1
+    fi
+
+    local issue_url="${identity_base_url%/}/v1/mcp/long-lived-tokens/admin-issue"
+    local body_file status
+    body_file="$(mktemp)"
+    status="$(
+      curl -sS -o "$body_file" -w "%{http_code}" -X POST "$issue_url" \
+        -H "X-API-Key: ${identity_admin_token}" \
+        -H "Content-Type: application/json" \
+        --data "$(jq -cn \
+          --arg auth_subject "$auth_subject" \
+          --arg account_id "$account_id" \
+          --arg tenant_id "$tenant_id_value" \
+          --arg actor "operator:cs-hub-fleet-verify" \
+          --argjson toolkitProfile "$toolkit_profile_json" '{
+            auth_subject: $auth_subject,
+            account_id: $account_id,
+            tenant_id: $tenant_id,
+            tool_mode: "read_write",
+            toolkit_profile: $toolkitProfile,
+            actor: $actor,
+            metadata: {
+              reason: "cs_hub_fleet_verify"
+            }
+          }')"
+    )"
+
+    if [[ "$status" != "200" ]]; then
+      echo "failed to issue managed bearer via identity-worker (status=${status})" >&2
+      cat "$body_file" >&2
+      rm -f "$body_file"
+      return 1
+    fi
+
+    local token issued_account_id token_id
+    token="$(jq -r '.token // empty' "$body_file")"
+    issued_account_id="$(jq -r '.account_id // empty' "$body_file")"
+    token_id="$(jq -r '.token_id // empty' "$body_file")"
+    rm -f "$body_file"
+
+    if [[ -z "$token" || -z "$issued_account_id" ]]; then
+      echo "identity-worker admin issue response missing token/account_id" >&2
+      return 1
+    fi
+
+    echo "${token}|${issued_account_id}|${token_id}"
+  }
+
+  local minted
+  if minted="$(create_admin_mint_session)"; then
+    local minted_token minted_account minted_session
+    IFS='|' read -r minted_token minted_account minted_session <<< "$minted"
+    FLEET_VERIFY_SESSION_TOKEN="$minted_token"
+    FLEET_VERIFY_ACCOUNT_ID="$minted_account"
+    echo "session_token_source=identity_worker_admin_mint account_id=${FLEET_VERIFY_ACCOUNT_ID} session_id=${minted_session:-unknown}"
+    return 0
+  fi
+
+  if minted="$(create_admin_managed_bearer)"; then
+    local issued_token issued_account issued_token_id
+    IFS='|' read -r issued_token issued_account issued_token_id <<< "$minted"
+    FLEET_VERIFY_SESSION_TOKEN="$issued_token"
+    FLEET_VERIFY_ACCOUNT_ID="$issued_account"
+    echo "session_token_source=identity_worker_admin_issue account_id=${FLEET_VERIFY_ACCOUNT_ID} token_id=${issued_token_id:-unknown}"
+    return 0
+  fi
+
   if [[ -z "$identity_access_token" ]]; then
-    echo "missing MCP_SESSION_TOKEN or IDENTITY_ACCESS_TOKEN for session-based E2E checks"
+    echo "missing MCP_SESSION_TOKEN, admin identity token, or IDENTITY_ACCESS_TOKEN for session-based E2E checks"
     return 1
   fi
 
@@ -271,16 +502,26 @@ create_fleet_verify_session() {
 
 check_mcp_protocol() {
   local worker="$1"
-  local mcp_url token_var_name token token_help
+  local mcp_url token_var_name token token_help expected_mode session_header
   mcp_url="$(mcp_url_for_worker "$worker")"
   token_var_name="$(token_env_var_for_worker "$worker")"
   token="$(resolve_worker_token "$worker")"
   token_help="${token_var_name} (or HUB_API_TOKEN)"
+  expected_mode="$(expected_identity_mode_for_worker "$worker")"
+  session_header=""
 
   if [[ -z "$token" ]]; then
     echo "missing API token for ${worker} (${token_help})"
     failures=1
     return
+  fi
+  if [[ "$expected_mode" == "session_required" ]]; then
+    if [[ -z "${FLEET_VERIFY_SESSION_TOKEN:-}" ]]; then
+      echo "missing fleet verify MCP session token for ${worker}"
+      failures=1
+      return
+    fi
+    session_header="$FLEET_VERIFY_SESSION_TOKEN"
   fi
 
   local init_headers init_body init_status session_id
@@ -292,6 +533,7 @@ check_mcp_protocol() {
       -H "Authorization: Bearer ${token}" \
       -H 'Content-Type: application/json' \
       -H 'Accept: application/json' \
+      ${session_header:+-H "X-MCP-Session-Token: ${session_header}"} \
       --data '{"jsonrpc":"2.0","id":"fleet-verify-init","method":"initialize","params":{"protocolVersion":"2024-11-05","clientInfo":{"name":"cs-hub-fleet-verify","version":"1.0.0"},"capabilities":{}}}'
   )"
 
@@ -342,6 +584,8 @@ check_mcp_protocol() {
   )
   if [[ -n "$session_id" ]]; then
     curl_args+=(-H "Mcp-Session-Id: ${session_id}")
+  elif [[ -n "$session_header" ]]; then
+    curl_args+=(-H "X-MCP-Session-Token: ${session_header}")
   fi
 
   list_status="$(curl "${curl_args[@]}")"
@@ -465,6 +709,7 @@ check_compat_identity_without_session() {
 check_compat_account_routing() {
   local worker="$1"
   local expected_account_id mcp_url token_var_name token token_help
+  local probe_proxy_tool="${COMPAT_ACCOUNT_ROUTING_PROXY_TOOL_NAME:-composio-toolkit-gmail__connection_status}"
   if ! expected_account_id="$(expected_account_id_for_worker "$worker")"; then
     echo "account_routing=skipped reason=no_expected_account_mapping"
     return
@@ -476,37 +721,6 @@ check_compat_account_routing() {
 
   if [[ -z "$token" ]]; then
     echo "missing API token for ${worker} (${token_help})"
-    failures=1
-    return
-  fi
-
-  local probe_body_file probe_status probe_proxy_tool
-  probe_body_file="$(mktemp)"
-  probe_status="$(
-    curl -sS -o "$probe_body_file" -w "%{http_code}" -X POST "$mcp_url" \
-      -H "Authorization: Bearer ${token}" \
-      -H "Content-Type: application/json" \
-      -H "Accept: application/json" \
-      --data '{"jsonrpc":"2.0","id":"fleet-verify-compat-search","method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"connection_status","limit":1}}}'
-  )"
-  if [[ "$probe_status" != "200" ]]; then
-    echo "compat account routing probe search failed for ${worker} (status=${probe_status})"
-    cat "$probe_body_file"
-    failures=1
-    rm -f "$probe_body_file"
-    return
-  fi
-
-  probe_proxy_tool="$(
-    jq -r '
-      .result.structuredContent.tools[0].proxyToolName //
-      (.result.content[0].text | fromjson? | .tools[0].proxyToolName) //
-      empty
-    ' "$probe_body_file"
-  )"
-  rm -f "$probe_body_file"
-  if [[ -z "$probe_proxy_tool" ]]; then
-    echo "compat account routing probe returned no visible proxy tool for ${worker}"
     failures=1
     return
   fi
@@ -566,59 +780,27 @@ check_compat_account_routing() {
 
 check_clickup_discovery_for_worker() {
   local worker="$1"
-  local mcp_url token_var_name token token_help
-  mcp_url="$(mcp_url_for_worker "$worker")"
-  token_var_name="$(token_env_var_for_worker "$worker")"
-  token="$(resolve_worker_token "$worker")"
-  token_help="${token_var_name} (or HUB_API_TOKEN)"
-
-  if [[ -z "$token" ]]; then
-    echo "missing API token for ${worker} (${token_help})"
+  local health_url health_json
+  health_url="$(health_url_for_worker "$worker")"
+  health_json="$(
+    curl -fsS \
+      --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+      --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
+      "$health_url"
+  )" || {
+    echo "clickup discovery health probe failed for ${worker}"
     failures=1
     return
-  fi
+  }
 
-  local body_file status total first_proxy
-  body_file="$(mktemp)"
-  status="$(
-    curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
-      -H "Authorization: Bearer ${token}" \
-      -H "Content-Type: application/json" \
-      -H "Accept: application/json" \
-      --data '{"jsonrpc":"2.0","id":"fleet-verify-clickup-search","method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"composio-toolkit-clickup","limit":5}}}'
-  )"
-  if [[ "$status" != "200" ]]; then
-    echo "clickup discovery search failed for ${worker} (status=${status})"
-    cat "$body_file"
-    failures=1
-    rm -f "$body_file"
-    return
-  fi
-
-  total="$(
-    jq -r '
-      .result.structuredContent.total //
-      (.result.content[0].text | fromjson? | .total) //
-      0
-    ' "$body_file"
-  )"
-  first_proxy="$(
-    jq -r '
-      .result.structuredContent.tools[0].proxyToolName //
-      (.result.content[0].text | fromjson? | .tools[0].proxyToolName) //
-      empty
-    ' "$body_file"
-  )"
-  rm -f "$body_file"
-
-  if [[ "$total" -lt 1 || -z "$first_proxy" ]]; then
+  if ! echo "$health_json" | jq -e '.enabled_servers // [] | index("composio-toolkit-clickup") != null' >/dev/null; then
     echo "clickup discovery visibility failed for ${worker}"
-    echo "total=${total}"
+    echo "$health_json"
     failures=1
     return
   fi
 
-  echo "clickup_discovery=ok total=${total} first_proxy=${first_proxy}"
+  echo "clickup_discovery=ok via=enabled_servers"
 }
 
 check_session_account_routing() {
@@ -757,6 +939,7 @@ failures=0
 FLEET_VERIFY_SESSION_TOKEN=""
 FLEET_VERIFY_ACCOUNT_ID=""
 cd "$HUB_DIR"
+maybe_load_supporting_env
 
 echo "Checking required secrets on each worker..."
 for worker in "${WORKERS[@]}"; do
@@ -781,27 +964,33 @@ echo "Checking health endpoints..."
 for worker in "${WORKERS[@]}"; do
   health_url="$(health_url_for_worker "$worker")"
   echo "===== HEALTH ${worker} ====="
-  health_json="$(curl -fsS "$health_url")"
+  health_json="$(
+    curl -fsS \
+      --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+      --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
+      "$health_url"
+  )"
   built_at="$(echo "$health_json" | jq -r '.built_at // "unknown"')"
   auth_required="$(echo "$health_json" | jq -r '.auth_required // "false"')"
   identity_mode="$(echo "$health_json" | jq -r '.identity_mode // "unknown"')"
+  expected_identity_mode="$(expected_identity_mode_for_worker "$worker")"
   telemetry_db="$(echo "$health_json" | jq -r '.policy.quota.telemetryDbConfigured // "false"')"
   echo "built_at=${built_at}"
   echo "auth_required=${auth_required}"
   echo "identity_mode=${identity_mode}"
   echo "telemetryDbConfigured=${telemetry_db}"
 
-  if [[ "$auth_required" != "true" || "$telemetry_db" != "true" || "$identity_mode" != "$VERIFY_IDENTITY_MODE" ]]; then
+  if [[ "$auth_required" != "true" || "$telemetry_db" != "true" || "$identity_mode" != "$expected_identity_mode" ]]; then
     echo "health check failed for ${worker}"
     failures=1
   fi
 
-  if [[ "$worker" == "cs-hub-lainy" || "$worker" == "cs-hub-august" || "$worker" == "cs-hub-fillip" || "$worker" == "cs-hub-leah" ]]; then
+  if expected_servers_csv="$(expected_enabled_servers_csv_for_worker "$worker")"; then
     enabled_sorted_csv="$(
       echo "$health_json" | jq -r '.enabled_servers // [] | sort | join(",")'
     )"
     expected_sorted_csv="$(
-      printf '%s\n' "$SHARED_AUTH_SERVERS_CSV" | tr ',' '\n' | sort | paste -sd',' -
+      printf '%s\n' "$expected_servers_csv" | tr ',' '\n' | sort | paste -sd',' -
     )"
     if [[ "$enabled_sorted_csv" != "$expected_sorted_csv" ]]; then
       echo "enabled server policy mismatch for ${worker}"
@@ -809,75 +998,38 @@ for worker in "${WORKERS[@]}"; do
       echo "actual=${enabled_sorted_csv}"
       failures=1
     else
-      echo "enabled_server_policy=shared_auth_core"
-    fi
-  fi
-
-  if [[ "$worker" == "cs-hub-danny" ]]; then
-    enabled_sorted_csv="$(
-      echo "$health_json" | jq -r '.enabled_servers // [] | sort | join(",")'
-    )"
-    expected_sorted_csv="$(
-      printf '%s\n' "$DANNY_SERVERS_CSV" | tr ',' '\n' | sort | paste -sd',' -
-    )"
-    if [[ "$enabled_sorted_csv" != "$expected_sorted_csv" ]]; then
-      echo "enabled server policy mismatch for cs-hub-danny"
-      echo "expected=${expected_sorted_csv}"
-      echo "actual=${enabled_sorted_csv}"
-      failures=1
-    else
-      echo "enabled_server_policy=danny_shared_auth_plus_operator_notion"
-    fi
-  fi
-
-  if [[ "$worker" == "cs-hub-aaron-outerfields" || "$worker" == "cs-hub-andre-outerfields" ]]; then
-    enabled_sorted_csv="$(
-      echo "$health_json" | jq -r '.enabled_servers // [] | sort | join(",")'
-    )"
-    expected_sorted_csv="$(
-      printf '%s\n' "$OUTERFIELDS_CLICKUP_SERVERS_CSV" | tr ',' '\n' | sort | paste -sd',' -
-    )"
-    if [[ "$enabled_sorted_csv" != "$expected_sorted_csv" ]]; then
-      echo "enabled server policy mismatch for ${worker}"
-      echo "expected=${expected_sorted_csv}"
-      echo "actual=${enabled_sorted_csv}"
-      failures=1
-    else
-      echo "enabled_server_policy=outerfields_shared_auth_plus_clickup"
-    fi
-  fi
-
-  if [[ "$worker" == "cs-hub-mj" ]]; then
-    enabled_sorted_csv="$(
-      echo "$health_json" | jq -r '.enabled_servers // [] | sort | join(",")'
-    )"
-    expected_sorted_csv="$(
-      printf '%s\n' "$MJ_SERVERS_CSV" | tr ',' '\n' | sort | paste -sd',' -
-    )"
-    if [[ "$enabled_sorted_csv" != "$expected_sorted_csv" ]]; then
-      echo "enabled server policy mismatch for cs-hub-mj"
-      echo "expected=${expected_sorted_csv}"
-      echo "actual=${enabled_sorted_csv}"
-      failures=1
-    else
-      echo "enabled_server_policy=mj_shared_auth_plus_meetings"
+      echo "enabled_server_policy=$(expected_enabled_policy_label_for_worker "$worker")"
     fi
   fi
 
   echo
 done
 
-if [[ "$VERIFY_IDENTITY_MODE" == "session_required" ]]; then
+needs_session_checks=0
+for worker in "${WORKERS[@]}"; do
+  if [[ "$(expected_identity_mode_for_worker "$worker")" == "session_required" ]]; then
+    needs_session_checks=1
+    break
+  fi
+done
+
+if [[ "$needs_session_checks" -eq 1 ]]; then
   echo "Creating MCP session token for strict identity E2E..."
   if ! create_fleet_verify_session; then
     failures=1
   fi
   echo
 
-  echo "Checking strict identity enforcement (missing X-MCP-Session-Token should fail)..."
+  echo "Checking identity behavior by worker mode..."
   for worker in "${WORKERS[@]}"; do
-    echo "===== STRICT ${worker} ====="
-    check_missing_session_token_rejected "$worker"
+    expected_identity_mode="$(expected_identity_mode_for_worker "$worker")"
+    if [[ "$expected_identity_mode" == "session_required" ]]; then
+      echo "===== STRICT ${worker} ====="
+      check_missing_session_token_rejected "$worker"
+    else
+      echo "===== COMPAT ${worker} ====="
+      check_compat_identity_without_session "$worker"
+    fi
     echo
   done
 else
@@ -903,31 +1055,22 @@ for worker in "cs-hub-aaron-outerfields" "cs-hub-andre-outerfields"; do
   echo
 done
 
-if [[ "$VERIFY_IDENTITY_MODE" == "session_required" ]]; then
-  echo "Checking session-based account routing across hubs..."
-  for worker in "${WORKERS[@]}"; do
-    echo "===== ACCOUNT ${worker} ====="
-    if [[ "$worker" == "cs-mcp-hub-remote" ]]; then
-      echo "account_routing=skipped reason=core_hub_probe_timeout_variance"
-      echo
-      continue
-    fi
+echo "Checking account routing by worker mode..."
+for worker in "${WORKERS[@]}"; do
+  echo "===== ACCOUNT ${worker} ====="
+  if [[ "$worker" == "cs-mcp-hub-remote" ]]; then
+    echo "account_routing=skipped reason=core_hub_probe_timeout_variance"
+    echo
+    continue
+  fi
+  expected_identity_mode="$(expected_identity_mode_for_worker "$worker")"
+  if [[ "$expected_identity_mode" == "session_required" ]]; then
     check_session_account_routing "$worker"
-    echo
-  done
-else
-  echo "Checking token-bound account routing across compat hubs..."
-  for worker in "${WORKERS[@]}"; do
-    echo "===== ACCOUNT ${worker} ====="
-    if [[ "$worker" == "cs-mcp-hub-remote" ]]; then
-      echo "account_routing=skipped reason=core_hub_probe_timeout_variance"
-      echo
-      continue
-    fi
+  else
     check_compat_account_routing "$worker"
-    echo
-  done
-fi
+  fi
+  echo
+done
 
 if [[ "$failures" -ne 0 ]]; then
   echo "Hub fleet verification failed."

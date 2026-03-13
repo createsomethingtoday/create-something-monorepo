@@ -45,22 +45,25 @@ join_by_comma() {
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
-DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-operator-notion-mcp"
-MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
-MJ_SERVERS_CSV="composio-toolkit-airtable,${MJ_SERVERS_CSV}"
-MJ_SERVERS_CSV="${MJ_SERVERS_CSV},composio-toolkit-exa"
+DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
+MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
 MJ_DISCOVERY_DEFAULT_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-exa,composio-toolkit-notion"
-MJ_SERVERS_CSV="${MJ_SERVERS_CSV},webflow-template-review-mcp"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
+CORE_BUNDLES_CSV="core"
+CORE_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV}"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
 SESSION_TOKEN_FOR_NORMALIZE="${MCP_SESSION_TOKEN:-}"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="${HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:-false}"
-HUB_DEPLOY_IDENTITY_MODE="${HUB_DEPLOY_IDENTITY_MODE:-compat}"
+TEAM_HUB_DEPLOY_IDENTITY_MODE="${TEAM_HUB_DEPLOY_IDENTITY_MODE:-${HUB_DEPLOY_IDENTITY_MODE:-compat}}"
+CORE_HUB_DEPLOY_IDENTITY_MODE="${CORE_HUB_DEPLOY_IDENTITY_MODE:-session_required}"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="$(
   printf '%s' "$COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS" | tr '[:upper:]' '[:lower:]'
 )"
-HUB_DEPLOY_IDENTITY_MODE="$(
-  printf '%s' "$HUB_DEPLOY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]'
+TEAM_HUB_DEPLOY_IDENTITY_MODE="$(
+  printf '%s' "$TEAM_HUB_DEPLOY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]'
+)"
+CORE_HUB_DEPLOY_IDENTITY_MODE="$(
+  printf '%s' "$CORE_HUB_DEPLOY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]'
 )"
 
 case "${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" in
@@ -72,11 +75,20 @@ case "${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" in
     ;;
 esac
 
-case "${HUB_DEPLOY_IDENTITY_MODE}" in
+case "${TEAM_HUB_DEPLOY_IDENTITY_MODE}" in
   "session_required"|"compat")
     ;;
   *)
-    echo "invalid HUB_DEPLOY_IDENTITY_MODE=${HUB_DEPLOY_IDENTITY_MODE}; expected session_required|compat" >&2
+    echo "invalid TEAM_HUB_DEPLOY_IDENTITY_MODE=${TEAM_HUB_DEPLOY_IDENTITY_MODE}; expected session_required|compat" >&2
+    exit 1
+    ;;
+esac
+
+case "${CORE_HUB_DEPLOY_IDENTITY_MODE}" in
+  "session_required"|"compat")
+    ;;
+  *)
+    echo "invalid CORE_HUB_DEPLOY_IDENTITY_MODE=${CORE_HUB_DEPLOY_IDENTITY_MODE}; expected session_required|compat" >&2
     exit 1
     ;;
 esac
@@ -126,6 +138,7 @@ token_env_var_for_worker() {
     "cs-hub-fillip"|"cs-hub-filip") echo "CS_HUB_FILLIP_API_TOKEN" ;;
     "cs-hub-leah") echo "CS_HUB_LEAH_API_TOKEN" ;;
     "cs-hub-mj") echo "CS_HUB_MJ_API_TOKEN" ;;
+    "cs-mcp-hub-remote") echo "CS_MCP_HUB_REMOTE_API_TOKEN" ;;
     *)
       return 1
       ;;
@@ -165,11 +178,19 @@ resolve_deploy_worker_name() {
 
 target_server_csv_for_worker() {
   case "$1" in
+    "cs-mcp-hub-remote") echo "$CORE_SERVERS_CSV" ;;
     "cs-hub-c3denver") echo "$C3DENVER_SERVERS_CSV" ;;
     "cs-hub-danny") echo "$DANNY_SERVERS_CSV" ;;
     "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "$OUTERFIELDS_CLICKUP_SERVERS_CSV" ;;
     "cs-hub-mj") echo "$MJ_SERVERS_CSV" ;;
     *) echo "$SHARED_AUTH_SERVERS_CSV" ;;
+  esac
+}
+
+target_bundle_csv_for_worker() {
+  case "$1" in
+    "cs-mcp-hub-remote") echo "$CORE_BUNDLES_CSV" ;;
+    *) echo "" ;;
   esac
 }
 
@@ -203,26 +224,49 @@ csv_to_json_array() {
   printf '%s' "$csv" | tr ',' '\n' | sed '/^\s*$/d' | jq -R . | jq -s .
 }
 
+write_worker_state_to_kv() {
+  local worker="$1"
+  local bundle_csv="$2"
+  local server_csv="$3"
+  local disabled_server_csv="${4:-}"
+  local state_key state_payload
+  state_key="hub_state_v1::${worker}"
+  state_payload="$(
+    jq -cn \
+      --argjson enabledBundles "$(csv_to_json_array "$bundle_csv")" \
+      --argjson enabledServers "$(csv_to_json_array "$server_csv")" \
+      --argjson disabledServers "$(csv_to_json_array "$disabled_server_csv")" \
+      '{
+        enabledBundles: $enabledBundles,
+        enabledServers: $enabledServers,
+        disabledServers: $disabledServers
+      }'
+  )"
+  pnpm exec wrangler kv key put --binding HUB_STATE_KV --remote --preview false "$state_key" "$state_payload" >/dev/null
+  echo "state_kv_sync=ok key=${state_key}"
+}
+
 normalize_worker_state() {
   local worker="$1"
-  local mcp_url token_var_name token token_help target_servers_csv
+  local mcp_url token_var_name token token_help target_servers_csv target_bundles_csv
   mcp_url="$(mcp_url_for_worker "$worker")"
   token_var_name="$(token_env_var_for_worker "$worker")"
   token="$(resolve_worker_token "$worker")"
   token_help="${token_var_name} (or HUB_API_TOKEN)"
   target_servers_csv="$(target_server_csv_for_worker "$worker")"
+  target_bundles_csv="$(target_bundle_csv_for_worker "$worker")"
 
   if [[ -z "$token" ]]; then
     echo "missing API token for state normalization on ${worker} (${token_help})"
     return 1
   fi
-  if [[ "$HUB_DEPLOY_IDENTITY_MODE" == "session_required" && -z "$SESSION_TOKEN_FOR_NORMALIZE" ]]; then
+  if [[ "$TEAM_HUB_DEPLOY_IDENTITY_MODE" == "session_required" && -z "$SESSION_TOKEN_FOR_NORMALIZE" ]]; then
     echo "missing MCP_SESSION_TOKEN for state normalization on ${worker} (strict identity mode)"
     return 1
   fi
 
   local set_bundles_json set_servers_json payload response_body status
-  set_bundles_json='[]'
+  set_bundles_json="$(csv_to_json_array "$target_bundles_csv")"
   set_servers_json="$(csv_to_json_array "$target_servers_csv")"
   payload="$(
     jq -cn \
@@ -282,10 +326,12 @@ normalize_worker_state() {
 cd "$HUB_DIR"
 
 echo "Deploying team hub workers with hardened routing config..."
-echo "identity_mode=${HUB_DEPLOY_IDENTITY_MODE}"
+echo "team_identity_mode=${TEAM_HUB_DEPLOY_IDENTITY_MODE}"
+echo "core_identity_mode=${CORE_HUB_DEPLOY_IDENTITY_MODE}"
 echo "compat_trust_client_account_headers=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}"
 for worker in "${TEAM_WORKERS[@]}"; do
   deploy_worker="$(resolve_deploy_worker_name "$worker")"
+  target_servers_csv="$(target_server_csv_for_worker "$worker")"
   discovery_shared_pack="$(discovery_shared_pack_for_worker "$worker")"
   direct_proxy_enabled="$(direct_proxy_enabled_for_worker "$worker")"
   direct_proxy_prefixes="$(direct_proxy_prefixes_for_worker "$worker")"
@@ -301,9 +347,9 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_INSTANCE_ID:${deploy_worker}" \
       --var "HUB_ACCOUNT_ID:${account_id}" \
       --var "HUB_ENABLED_BUNDLES:[]" \
-      --var "HUB_ENABLED_SERVERS:${MJ_SERVERS_CSV}" \
-      --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-airtable,composio-toolkit-webflow,halfdozen-dm-mcp,loom-mcp,schedule-mcp,substrate-mcp" \
-      --var "HUB_IDENTITY_MODE:${HUB_DEPLOY_IDENTITY_MODE}" \
+      --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
+      --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-webflow,halfdozen-dm-mcp,schedule-mcp,substrate-mcp" \
+      --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:full" \
@@ -321,9 +367,9 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_INSTANCE_ID:${deploy_worker}" \
       --var "HUB_ACCOUNT_ID:${account_id}" \
       --var "HUB_ENABLED_BUNDLES:[]" \
-      --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV}" \
+      --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
       --var "HUB_DISABLED_SERVERS:[]" \
-      --var "HUB_IDENTITY_MODE:${HUB_DEPLOY_IDENTITY_MODE}" \
+      --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:compact" \
@@ -341,13 +387,23 @@ done
 
 echo "Deploying core hub workers..."
 for worker in "${CORE_WORKERS[@]}"; do
+  target_bundles_csv="$(target_bundle_csv_for_worker "$worker")"
+  target_servers_csv="$(target_server_csv_for_worker "$worker")"
+  discovery_shared_pack="$(discovery_shared_pack_for_worker "$worker")"
   echo "===== DEPLOY ${worker} ====="
   pnpm exec wrangler deploy \
     --name "$worker" \
     --var "HUB_INSTANCE_ID:${worker}" \
-    --var "HUB_IDENTITY_MODE:${HUB_DEPLOY_IDENTITY_MODE}" \
+    --var "HUB_IDENTITY_MODE:${CORE_HUB_DEPLOY_IDENTITY_MODE}" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
-    --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}"
+    --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
+    --var "HUB_ENABLED_BUNDLES:${target_bundles_csv}" \
+    --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
+    --var "HUB_DISABLED_SERVERS:[]" \
+    --var "HUB_DISCOVERY_MODE:compact" \
+    --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
+  echo "----- SYNC KV STATE ${worker} -----"
+  write_worker_state_to_kv "$worker" "$target_bundles_csv" "$target_servers_csv" "[]"
   echo
 done
 

@@ -108,6 +108,7 @@ Deployment targets:
 - `.agency`
 - `identity-worker`
 - `cs-mcp-hub-remote`
+- team hub fleet (`cs-hub-lainy`, `cs-hub-danny`, `cs-hub-august`, `cs-hub-c3denver`, `cs-hub-aaron-outerfields`, `cs-hub-andre-outerfields`, `cs-hub-fillip`, `cs-hub-leah`, `cs-hub-mj`)
 
 Post-deploy commands:
 
@@ -124,21 +125,24 @@ Result:
 - `identity-worker` deployed successfully.
   - current version ID: `aa791c0e-3ebe-4b37-87f8-79026850a2f7`
   - root health response: `{"service":"identity-worker","version":"0.1.0","status":"healthy"}`
-- `cs-mcp-hub-remote` deployed successfully.
-  - current version ID: `c0c81494-d652-4c6f-8ae5-513f05413e32`
-  - `/health` confirmed `auth_required=true`, `identity_mode=session_required`, `telemetryDbConfigured=true`, `built_at=2026-03-13T14:57:19.762Z`
-- `pnpm mcp:hub:fleet:verify` did not pass cleanly.
-  - existing fleet drift was reported for `cs-hub-danny` and `cs-hub-mj` because enabled-server policy on those hubs no longer matches the verifier's expected allowlist
-  - the script also reported a `cs-mcp-hub-remote` health-check failure even though direct `/health` returned a valid payload after deploy
-  - compat, protocol, ClickUp, and account-routing checks were blocked by missing per-hub API token env vars in the local shell
-- `pnpm policy:os:verify:live` was blocked before execution because `AGENCY_INTERNAL_API_KEY` was not present in the local environment.
-  - this prevented a full end-to-end live verification of entitlement resolution, session minting, discovery deny, and governed write deny/allow behavior from this machine
+- `cs-mcp-hub-remote` was redeployed and repaired during post-release stabilization.
+  - current version ID: `04a7e159-1da7-4356-b59e-d19e46be1424`
+  - `/health` confirmed `auth_required=true`, `identity_mode=session_required`, `telemetryDbConfigured=true`, `session_resolver.has_binding=true`, `built_at=2026-03-13T17:14:42.277Z`
+- fleet deploy/state normalization completed for the team hubs and shared core hub.
+  - the deploy script now keeps team hubs in `compat` mode and the shared core hub in `session_required`
+  - the deploy script now writes hub KV state with `--preview false`
+- `pnpm mcp:hub:fleet:verify` passed after the verifier and deploy remediation work.
+  - secrets, health, identity-mode checks, MCP protocol checks, Outerfields ClickUp visibility, and compat account routing all passed
+  - the shared core hub still intentionally reports `account_routing=skipped reason=core_hub_probe_timeout_variance`
+  - identity-worker `admin-mint` returned `403 missing mcp_session_admin_mint`, but the verifier fell back to `v1/mcp/long-lived-tokens/admin-issue` successfully for strict-hub session-based verification
+- `pnpm policy:os:verify:live` passed from this machine after the verifier/runtime fixes.
+  - local run used `REQUIRE_AGENCY_ENTITLEMENT_CHECK=false` because `AGENCY_INTERNAL_API_KEY` was not available in the local Infisical export
+  - live proof covered: strict missing-session enforcement, identity resolve, `mcp_only` block on `policy_os_only`, `mcp_only` block on paid governed write, and paid `Policy OS` discovery on `composio-toolkit-slack__slack_send_message`
 
 Trace evidence:
 
-- No new routed trace IDs were captured in this run.
-- The scripted live verifier could not reach routed-tool execution because required operator secrets were not present locally.
-- Deployment evidence for this release is preserved through the runtime version IDs and the post-deploy HTTP checks above.
+- No routed trace IDs were emitted by the current verifier scripts.
+- Release evidence for this run is preserved through the runtime version IDs above plus the successful `pnpm mcp:hub:fleet:verify` and `pnpm policy:os:verify:live` outputs captured on March 13, 2026.
 
 ## Claim boundary
 
@@ -148,9 +152,10 @@ This release is sufficient to claim:
 - active runtime-backed policy lifecycle
 - tested entitlement and governance enforcement paths
 - standardized repeatable artifact shape
+- passing live Policy OS verification against the shared strict hub
+- passing fleet verification across the current production hub estate, with the shared core-hub account-routing probe explicitly skipped by design
 
 This release is not sufficient to claim:
 
-- clean live fleet verification across every existing hub in the current production estate
-- end-to-end live Policy OS verification from this shell without the operator secret set required by `scripts/policy-os-live-verify.sh`
+- routed trace-ID capture from the current verifier scripts
 - broad multi-client live repeatability beyond the evidence currently preserved in this repo

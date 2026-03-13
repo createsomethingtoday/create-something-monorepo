@@ -42,7 +42,10 @@ The deploy workflow can also run this automatically after hub deploys when these
 
 - repo variable: `POLICY_OS_LIVE_VERIFY_ENABLED=true`
 - repo variables: `AGENCY_BASE_URL`, `IDENTITY_BASE_URL`, `POLICY_OS_HUB_BASE_URL`
-- repo secrets: `AGENCY_INTERNAL_API_KEY`, `IDENTITY_API_KEY`, `HUB_API_TOKEN`
+- repo secrets: `AGENCY_INTERNAL_API_KEY`
+- repo secrets: `IDENTITY_API_KEY` or `IDENTITY_WORKER_ADMIN_API_KEY`
+- repo secrets: `HUB_API_TOKEN` or `CS_MCP_HUB_REMOTE_API_TOKEN`
+- repo secrets: `HUB_SESSION_RESOLVE_TOKEN`
 - repo secrets: `MCP_ONLY_AUTH_SUBJECT`, `MCP_ONLY_ACCOUNT_ID`, `MCP_ONLY_TENANT_ID`
 - repo secrets: `POLICY_OS_AUTH_SUBJECT`, `POLICY_OS_ACCOUNT_ID`, `POLICY_OS_TENANT_ID`
 - optional repo secrets: `POLICY_OS_DENY_AUTH_SUBJECT`, `POLICY_OS_DENY_ACCOUNT_ID`, `POLICY_OS_DENY_TENANT_ID`
@@ -59,24 +62,34 @@ export HUB_BASE_URL="https://cs-mcp-hub-remote.createsomething.workers.dev"
 
 export AGENCY_INTERNAL_API_KEY="replace-me"
 export IDENTITY_API_KEY="replace-me"
+export IDENTITY_WORKER_ADMIN_API_KEY="replace-me"
 export HUB_API_TOKEN="replace-me"
+export CS_MCP_HUB_REMOTE_API_TOKEN="$HUB_API_TOKEN"
+export MCP_SESSION_RESOLVE_TOKEN="replace-me"
 
 export MCP_ONLY_AUTH_SUBJECT="auth0|mcp-only-user"
 export MCP_ONLY_ACCOUNT_ID="acct_mcp_only_example"
 export MCP_ONLY_TENANT_ID="tenant_mcp_only_example"
+export MCP_ONLY_TOOLKIT_PROFILE_JSON='["googlesheets"]'
 
 export POLICY_OS_AUTH_SUBJECT="auth0|policy-os-user"
 export POLICY_OS_ACCOUNT_ID="acct_policy_os_example"
 export POLICY_OS_TENANT_ID="tenant_policy_os_example"
+export POLICY_OS_TOOLKIT_PROFILE_JSON='["slack"]'
+export POLICY_OS_BOUND_HOST="cs-mcp-hub-remote"
+export POLICY_OS_RESOURCE_HOST="cs-mcp-hub-remote"
 
 # Optional staged commercial-deny actor
 export POLICY_OS_DENY_AUTH_SUBJECT="auth0|policy-os-denied-user"
 export POLICY_OS_DENY_ACCOUNT_ID="acct_policy_os_denied_example"
 export POLICY_OS_DENY_TENANT_ID="tenant_policy_os_denied_example"
 export POLICY_OS_DENY_EXPECTED_REASON="billing_inactive"
+export REQUIRE_AGENCY_ENTITLEMENT_CHECK="true"
 ```
 
 If you are testing a named client hub instead of the shared default endpoint, point `HUB_BASE_URL` at that client host.
+
+If `AGENCY_INTERNAL_API_KEY` is not available locally, set `REQUIRE_AGENCY_ENTITLEMENT_CHECK=false` and rely on the identity-worker entitlement snapshot plus live hub checks. This is the supported local fallback used by the March 13, 2026 validation run.
 
 ## Step 1: Confirm `.agency` entitlement state
 
@@ -132,14 +145,15 @@ Free wedge actor:
 
 ```bash
 curl -sS -X POST "$IDENTITY_BASE_URL/v1/mcp/long-lived-tokens/admin-issue" \
-  -H "Authorization: Bearer $IDENTITY_API_KEY" \
+  -H "X-API-Key: ${IDENTITY_WORKER_ADMIN_API_KEY:-$IDENTITY_API_KEY}" \
   -H "Content-Type: application/json" \
   -d "{
     \"auth_subject\": \"$MCP_ONLY_AUTH_SUBJECT\",
     \"account_id\": \"$MCP_ONLY_ACCOUNT_ID\",
     \"tenant_id\": \"$MCP_ONLY_TENANT_ID\",
     \"tool_mode\": \"read_write\",
-    \"toolkit_profile\": [],
+    \"toolkit_profile\": [\"googlesheets\"],
+    \"allowed_tool_prefixes\": [\"composio-toolkit-googlesheets__\"],
     \"actor\": \"operator:policy-os-live-verify\",
     \"metadata\": {
       \"reason\": \"policy_os_live_verification\"
@@ -151,7 +165,7 @@ Paid actor:
 
 ```bash
 curl -sS -X POST "$IDENTITY_BASE_URL/v1/mcp/long-lived-tokens/admin-issue" \
-  -H "Authorization: Bearer $IDENTITY_API_KEY" \
+  -H "X-API-Key: ${IDENTITY_WORKER_ADMIN_API_KEY:-$IDENTITY_API_KEY}" \
   -H "Content-Type: application/json" \
   -d "{
     \"auth_subject\": \"$POLICY_OS_AUTH_SUBJECT\",
@@ -159,6 +173,8 @@ curl -sS -X POST "$IDENTITY_BASE_URL/v1/mcp/long-lived-tokens/admin-issue" \
     \"tenant_id\": \"$POLICY_OS_TENANT_ID\",
     \"tool_mode\": \"read_write\",
     \"toolkit_profile\": [\"slack\"],
+    \"allowed_tool_prefixes\": [\"composio-toolkit-slack__\"],
+    \"bound_host\": \"${POLICY_OS_BOUND_HOST:-cs-mcp-hub-remote}\",
     \"actor\": \"operator:policy-os-live-verify\",
     \"metadata\": {
       \"reason\": \"policy_os_live_verification\"
@@ -230,10 +246,11 @@ Managed bearer example:
 
 ```bash
 curl -sS -X POST "$IDENTITY_BASE_URL/v1/mcp/sessions/resolve" \
-  -H "Authorization: Bearer $IDENTITY_API_KEY" \
+  -H "X-Session-Resolve-Token: $MCP_SESSION_RESOLVE_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
-    \"token\": \"$MCP_ONLY_MANAGED_BEARER\"
+    \"token\": \"$MCP_ONLY_MANAGED_BEARER\",
+    \"resource_host\": \"${POLICY_OS_RESOURCE_HOST:-cs-mcp-hub-remote}\"
   }" | jq
 ```
 
@@ -241,10 +258,11 @@ Session example:
 
 ```bash
 curl -sS -X POST "$IDENTITY_BASE_URL/v1/mcp/sessions/resolve" \
-  -H "Authorization: Bearer $IDENTITY_API_KEY" \
+  -H "X-Session-Resolve-Token: $MCP_SESSION_RESOLVE_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{
-    \"token\": \"$MCP_ONLY_SESSION_TOKEN\"
+    \"token\": \"$MCP_ONLY_SESSION_TOKEN\",
+    \"resource_host\": \"${POLICY_OS_RESOURCE_HOST:-cs-mcp-hub-remote}\"
   }" | jq
 ```
 
@@ -273,7 +291,7 @@ Expected:
 - `401` or `400`
 - error mentions missing `X-MCP-Session-Token`
 
-`tools/list` with a real session token should succeed:
+`tools/call hub_status` with a real session token should succeed:
 
 ```bash
 curl -sS -X POST "$HUB_BASE_URL/mcp" \
@@ -281,13 +299,13 @@ curl -sS -X POST "$HUB_BASE_URL/mcp" \
   -H "X-MCP-Session-Token: $MCP_ONLY_SESSION_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | jq
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hub_status","arguments":{}}}' | jq
 ```
 
 Expected:
 
-- result includes management tools only
-- `hub_search_proxy_tools` is present
+- result returns successfully with no JSON-RPC error
+- this confirms the hub accepts the live session token after strict-session enforcement
 
 If you are validating a managed bearer flow against a compat hub, replace the session header with:
 
@@ -299,7 +317,7 @@ Do not use that pattern against `session_required` hubs.
 
 ## Step 5: Verify `mcp_only` cannot discover `policy_os_only`
 
-Run discovery for the house surface with the free actor:
+Use an exact house tool probe with the free actor:
 
 ```bash
 curl -sS -X POST "$HUB_BASE_URL/mcp" \
@@ -312,11 +330,9 @@ curl -sS -X POST "$HUB_BASE_URL/mcp" \
     "id":3,
     "method":"tools/call",
     "params":{
-      "name":"hub_search_proxy_tools",
+      "name":"hub_describe_proxy_tool",
       "arguments":{
-        "serverName":"create-something",
-        "query":"policy",
-        "limit":10
+        "proxyToolName":"create-something__search"
       }
     }
   }' | jq
@@ -324,35 +340,8 @@ curl -sS -X POST "$HUB_BASE_URL/mcp" \
 
 Expected:
 
-- no `policy_os_only` house tools are returned
-- if a deny is surfaced, the reason references `Policy OS`-only product surfaces
-
-Run the same call with the paid actor:
-
-```bash
-curl -sS -X POST "$HUB_BASE_URL/mcp" \
-  -H "Authorization: Bearer $HUB_API_TOKEN" \
-  -H "X-MCP-Session-Token: $POLICY_OS_SESSION_TOKEN" \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{
-    "jsonrpc":"2.0",
-    "id":4,
-    "method":"tools/call",
-    "params":{
-      "name":"hub_search_proxy_tools",
-      "arguments":{
-        "serverName":"create-something",
-        "query":"policy",
-        "limit":10
-      }
-    }
-  }' | jq
-```
-
-Expected:
-
-- discovery returns the contracted house tools or at minimum does not block on service-tier grounds
+- the exact house tool returns `isError: true`
+- the message references `unknown or not visible` or session scope blocking
 
 ## Step 6: Verify `mcp_only` cannot execute paid governed writes
 
@@ -390,7 +379,7 @@ Expected:
 
 ## Step 7: Verify paid `Policy OS` execution path
 
-Use a paid actor with an allowed write tool in scope:
+Use a paid actor with an allowed exact discovery probe in scope:
 
 ```bash
 curl -sS -X POST "$HUB_BASE_URL/mcp" \
@@ -403,11 +392,9 @@ curl -sS -X POST "$HUB_BASE_URL/mcp" \
     "id":6,
     "method":"tools/call",
     "params":{
-      "name":"hub_search_proxy_tools",
+      "name":"hub_describe_proxy_tool",
       "arguments":{
-        "serverName":"composio-toolkit-slack",
-        "query":"send message",
-        "limit":5
+        "proxyToolName":"composio-toolkit-slack__slack_send_message"
       }
     }
   }' | jq
@@ -415,7 +402,8 @@ curl -sS -X POST "$HUB_BASE_URL/mcp" \
 
 Expected:
 
-- the tool is discoverable for the paid actor
+- the exact Slack tool is describable for the paid actor
+- `result.structuredContent.proxyToolName` is `composio-toolkit-slack__slack_send_message`
 
 If you have a non-production-safe test route, execute it with the paid actor and confirm the deny is not service-tier related.
 

@@ -37,6 +37,9 @@ jobs:
   authz-policy:
     name: Compile and Verify Authz Policy
     runs-on: ubuntu-latest
+    env:
+      OSO_URL: ${{ secrets.OSO_URL }}
+      OSO_API_KEY: ${{ secrets.OSO_API_KEY }}
 
     steps:
       - name: Checkout
@@ -78,9 +81,7 @@ jobs:
           path: docs/policies/generated/
 
       - name: Publish active policies to Oso Cloud
-        if: github.ref == 'refs/heads/main' && secrets.OSO_URL != '' && secrets.OSO_API_KEY != ''
+        if: github.ref == 'refs/heads/main' && env.OSO_URL != '' && env.OSO_API_KEY != ''
         run: pnpm authz:publish
         env:
-          OSO_URL: ${{ secrets.OSO_URL }}
-          OSO_API_KEY: ${{ secrets.OSO_API_KEY }}
           OSO_FETCH_TIMEOUT_MS: '5000'

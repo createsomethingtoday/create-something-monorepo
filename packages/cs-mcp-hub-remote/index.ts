@@ -345,6 +345,7 @@ interface Env {
   BRAINTRUST_ENABLED?: string;
   HUB_STATE_KV?: KVNamespace;
   TELEMETRY_DB?: D1Database;
+  IDENTITY_WORKER?: Fetcher;
   [key: string]: unknown;
 }
 
@@ -806,6 +807,7 @@ export default {
             session_resolver: {
               enabled: isSessionResolverConfigured(env),
               has_token: Boolean(readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN')),
+              has_binding: Boolean(env.IDENTITY_WORKER),
               timeout_ms: parsePositiveInt(
                 readEnvString(env, 'HUB_SESSION_RESOLVE_TIMEOUT_MS'),
                 DEFAULT_SESSION_RESOLVE_TIMEOUT_MS,
@@ -1603,15 +1605,6 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       }
 
       if (toolName === 'hub_describe_proxy_tool' || toolName === 'hub_get_proxy_tool') {
-        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = await buildAuthorizedVisibleProxyRoutes({
-          runtime,
-          prefs,
-          accountContext,
-          env,
-          trace,
-          entrypoint: 'hub_describe_proxy_tool',
-        });
         const proxyToolName = stringArg(args.proxyToolName);
         if (!proxyToolName) {
           const errorResult = toErrorResult('"proxyToolName" is required');
@@ -1630,9 +1623,17 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           return errorResult;
         }
 
-        const route = visible.routes.get(proxyToolName);
-        const definition = visible.definitionByName.get(proxyToolName);
-        if (!route || !definition) {
+        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
+        const match = await getAuthorizedExactVisibleProxyRoute({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_describe_proxy_tool',
+          proxyToolName,
+        });
+        if (!match) {
           const message = `Proxy tool "${proxyToolName}" is unknown or not visible for this session.`;
           const errorResult = toErrorResult(message);
           await recordHubInvocationWithCtx({
@@ -1651,6 +1652,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           return errorResult;
         }
 
+        const { route, definition } = match;
         const result = toJsonResult({
           proxyToolName,
           serverName: route.serverName,
@@ -1787,15 +1789,6 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       }
 
       if (toolName === 'hub_execute_proxy_tool' || toolName === 'hub_run_proxy_tool') {
-        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = await buildAuthorizedVisibleProxyRoutes({
-          runtime,
-          prefs,
-          accountContext,
-          env,
-          trace,
-          entrypoint: 'hub_execute_proxy_tool',
-        });
         const proxyToolName = stringArg(args.proxyToolName);
         if (!proxyToolName) {
           const errorResult = toErrorResult('"proxyToolName" is required');
@@ -1814,8 +1807,17 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           return errorResult;
         }
 
-        const route = visible.routes.get(proxyToolName);
-        if (!route) {
+        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
+        const match = await getAuthorizedExactVisibleProxyRoute({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_execute_proxy_tool',
+          proxyToolName,
+        });
+        if (!match) {
           const message = `Proxy tool "${proxyToolName}" is unknown or not visible for this session.`;
           const errorResult = toErrorResult(message);
           await recordHubInvocationWithCtx({
@@ -1857,7 +1859,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         return executeProxyRoute({
           env,
           executionCtx,
-          route,
+          route: match.route,
           executionArgs,
           trace,
           accountContext,
@@ -2855,6 +2857,53 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
   };
 }
 
+async function getAuthorizedExactVisibleProxyRoute(params: {
+  runtime: HubRuntime;
+  prefs: DiscoveryPreferences;
+  accountContext: ResolvedAccountContext;
+  env: Env;
+  trace: InvocationTrace;
+  entrypoint: string;
+  proxyToolName: string;
+}): Promise<{ route: ProxyRoute; definition: Tool } | null> {
+  const base = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext);
+  const route = base.routes.get(params.proxyToolName);
+  const definition = base.definitionByName.get(params.proxyToolName);
+  if (!route || !definition) {
+    return null;
+  }
+
+  const evaluation = await evaluateHubRouteAuthorization({
+    env: params.env,
+    accountContext: params.accountContext,
+    route,
+    definition,
+    trace: params.trace,
+    rollout: await getHubRouteAuthzRollout(params.env),
+    actionName: 'discover',
+    entrypoint: params.entrypoint,
+    recordDecision: false,
+  });
+  if (evaluation.final.decision === 'allow') {
+    return { route, definition };
+  }
+
+  await recordAuthzDecisionEvent(
+    params.env.TELEMETRY_DB,
+    toHubAuthzEvent({
+      policyId: evaluation.final.policyId,
+      accountContext: params.accountContext,
+      route,
+      trace: params.trace,
+      evaluation,
+      actionName: 'discover',
+      entrypoint: params.entrypoint,
+    }),
+  );
+
+  return null;
+}
+
 export async function executeProxyRoute(params: {
   env: Env;
   executionCtx?: WaitUntilContext;
@@ -3650,6 +3699,10 @@ async function getDiscoveryPreferences(
   env: Env,
 ): Promise<DiscoveryPreferences> {
   const cacheKey = buildDiscoveryCacheKey(env, accountId);
+  const kvReadTimeoutMs = parsePositiveInt(
+    readEnvString(env, 'HUB_DISCOVERY_READ_TIMEOUT_MS'),
+    500,
+  );
   const cached = discoveryPreferencesByAccount.get(cacheKey);
   if (cached) {
     const normalized = normalizeDiscoveryPreferences(cached, runtime, env);
@@ -3659,26 +3712,34 @@ async function getDiscoveryPreferences(
 
   const kv = env.HUB_STATE_KV;
   if (kv) {
-    const raw = await kv.get(buildDiscoveryKvKey(env, accountId));
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw) as Record<string, unknown>;
-        const fromKv = normalizeDiscoveryPreferences(
-          {
-            mode: parseDiscoveryMode(typeof parsed.mode === 'string' ? parsed.mode : null) ?? DEFAULT_DISCOVERY_MODE,
-            activeServers: parseStateStringArray(parsed.activeServers),
-            maxProxyTools: resolveDiscoveryMaxProxyTools(
-              typeof parsed.maxProxyTools === 'number' ? parsed.maxProxyTools : null,
-            ),
-          },
-          runtime,
-          env,
-        );
-        discoveryPreferencesByAccount.set(cacheKey, fromKv);
-        return fromKv;
-      } catch {
-        // Ignore malformed KV payload and fall back to defaults.
+    try {
+      const raw = await withTimeout(
+        kv.get(buildDiscoveryKvKey(env, accountId)),
+        kvReadTimeoutMs,
+        `Read discovery preferences for ${accountId}`,
+      );
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw) as Record<string, unknown>;
+          const fromKv = normalizeDiscoveryPreferences(
+            {
+              mode: parseDiscoveryMode(typeof parsed.mode === 'string' ? parsed.mode : null) ?? DEFAULT_DISCOVERY_MODE,
+              activeServers: parseStateStringArray(parsed.activeServers),
+              maxProxyTools: resolveDiscoveryMaxProxyTools(
+                typeof parsed.maxProxyTools === 'number' ? parsed.maxProxyTools : null,
+              ),
+            },
+            runtime,
+            env,
+          );
+          discoveryPreferencesByAccount.set(cacheKey, fromKv);
+          return fromKv;
+        } catch {
+          // Ignore malformed KV payload and fall back to defaults.
+        }
       }
+    } catch {
+      // Ignore slow/unavailable KV reads and fall back to defaults.
     }
   }
 
@@ -4406,10 +4467,20 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
   const bearerIsHubToken =
     bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
-  const sessionToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
+  const compatIdentityToken = sessionHeaderToken ?? bearerToken;
 
-  if (sessionToken && isSessionResolverConfigured(env)) {
-    return resolveSessionAccountContext(env, sessionToken, resourceHost);
+  if (compatIdentityToken && isSessionResolverConfigured(env)) {
+    try {
+      return await resolveSessionAccountContext(env, compatIdentityToken, resourceHost);
+    } catch (error) {
+      const allowFallback =
+        bearerIsHubToken &&
+        !sessionHeaderToken &&
+        compatIdentityToken === bearerToken;
+      if (!allowFallback) {
+        throw error;
+      }
+    }
   }
 
   return resolveFallbackAccountContext(extra, env, resourceHost);
@@ -4486,7 +4557,10 @@ function resolveFallbackAccountContext(
 }
 
 function isSessionResolverConfigured(env: Env): boolean {
-  return Boolean(readEnvString(env, 'HUB_SESSION_RESOLVE_URL') && readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN'));
+  return Boolean(
+    readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN') &&
+      (env.IDENTITY_WORKER || readEnvString(env, 'HUB_SESSION_RESOLVE_URL')),
+  );
 }
 
 export function resolveHubIdentityMode(env: Env): HubIdentityMode {
@@ -4511,7 +4585,8 @@ async function resolveSessionForBearerToken(
 
   const resolveUrl = readEnvString(env, 'HUB_SESSION_RESOLVE_URL');
   const resolveToken = readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN');
-  if (!resolveUrl || !resolveToken) {
+  const identityWorker = env.IDENTITY_WORKER;
+  if (!resolveToken || (!identityWorker && !resolveUrl)) {
     return null;
   }
 
@@ -4523,7 +4598,7 @@ async function resolveSessionForBearerToken(
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(resolveUrl, {
+    const request = new Request(resolveUrl ?? 'https://identity-worker.internal/v1/mcp/sessions/resolve', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${resolveToken}`,
@@ -4532,6 +4607,7 @@ async function resolveSessionForBearerToken(
       body: JSON.stringify({ token, resource_host: resourceHost }),
       signal: controller.signal,
     });
+    const response = identityWorker ? await identityWorker.fetch(request) : await fetch(request);
 
     if (!response.ok) {
       const value = { valid: false, reason: `resolver_http_${response.status}` };

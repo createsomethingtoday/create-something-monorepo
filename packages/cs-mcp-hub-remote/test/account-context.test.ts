@@ -37,8 +37,9 @@ test('resolveAccountContext resolves identity via session resolver in session_re
   let capturedResourceHost = '';
 
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    capturedAuth = String((init?.headers as Record<string, string> | undefined)?.Authorization ?? '');
-    const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string; resource_host?: string | null };
+    const request = input instanceof Request ? input : new Request(String(input), init);
+    capturedAuth = request.headers.get('authorization') ?? '';
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(
@@ -88,13 +89,75 @@ test('resolveAccountContext resolves identity via session resolver in session_re
   }
 });
 
+test('resolveAccountContext prefers identity service binding when available', async () => {
+  const originalFetch = globalThis.fetch;
+  let bindingCalled = false;
+  let capturedAuth = '';
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (): Promise<Response> => {
+    throw new Error('global fetch should not be used when IDENTITY_WORKER binding is present');
+  };
+
+  try {
+    const context = await resolveAccountContext(
+      makeExtra({
+        'x-mcp-session-token': 'ms_tok_binding',
+        host: 'cs-mcp-hub-remote.createsomething.workers.dev',
+      }),
+      {
+        HUB_IDENTITY_MODE: 'session_required',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+        IDENTITY_WORKER: {
+          fetch: async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+            const request = _input instanceof Request ? _input : new Request(String(_input), init);
+            bindingCalled = true;
+            capturedAuth = request.headers.get('authorization') ?? '';
+            const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+            capturedToken = body.token ?? '';
+            capturedResourceHost = body.resource_host ?? '';
+            return new Response(
+              JSON.stringify({
+                valid: true,
+                session_id: 'ms_binding',
+                account_id: 'acct_binding',
+                tenant_id: 'tenant_binding',
+                user_id: 'user_binding',
+                allowed_tool_prefixes: ['composio-toolkit-slack__'],
+              }),
+              {
+                status: 200,
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              },
+            );
+          },
+        },
+      } as any,
+    );
+
+    assert.equal(bindingCalled, true);
+    assert.equal(capturedAuth, 'Bearer resolver_secret');
+    assert.equal(capturedToken, 'ms_tok_binding');
+    assert.equal(capturedResourceHost, 'cs-mcp-hub-remote');
+    assert.equal(context.accountId, 'acct_binding');
+    assert.equal(context.identitySource, 'session');
+    assert.deepEqual(context.allowedToolPrefixes, ['composio-toolkit-slack__']);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('resolveAccountContext accepts managed bearer auth in session_required mode', async () => {
   const originalFetch = globalThis.fetch;
   let capturedToken = '';
   let capturedResourceHost = '';
 
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string; resource_host?: string | null };
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(
@@ -207,6 +270,99 @@ test('resolveAccountContext preserves unrestricted tool access for compat person
   }
 });
 
+test('resolveAccountContext resolves compat bearer even when it matches HUB_API_TOKEN', async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        account_id: 'acct_reviewer',
+        tenant_id: 'tenant_webflow_marketplace',
+        user_id: 'auth0|reviewer',
+        tool_mode: 'read_write',
+        allowed_tool_prefixes: ['webflow-template-review-mcp__template_review_assign_self'],
+        auth_mode: 'managed_bearer',
+        bound_host: 'wf-template-review-eric',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const context = await resolveAccountContext(
+      makeExtra({
+        authorization: 'Bearer mcpu_reviewer_lane_token',
+        host: 'wf-template-review-eric.mcp.createsomething.agency',
+      }),
+      {
+        HUB_IDENTITY_MODE: 'compat',
+        HUB_API_TOKEN: 'mcpu_reviewer_lane_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(context.accountId, 'acct_reviewer');
+    assert.equal(context.identitySource, 'session');
+    assert.deepEqual(context.allowedToolPrefixes, ['webflow-template-review-mcp__template_review_assign_self']);
+    assert.equal(capturedToken, 'mcpu_reviewer_lane_token');
+    assert.equal(capturedResourceHost, 'wf-template-review-eric');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('resolveAccountContext falls back for compat static hub bearer when resolver rejects it', async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async (): Promise<Response> =>
+    new Response(
+      JSON.stringify({
+        valid: false,
+        reason: 'token_not_found',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+  try {
+    const context = await resolveAccountContext(
+      makeExtra({
+        authorization: 'Bearer hub_static_token',
+      }),
+      {
+        HUB_IDENTITY_MODE: 'compat',
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_ACCOUNT_ID: 'acct_lane',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(context.accountId, 'acct_lane');
+    assert.equal(context.identitySource, 'fallback');
+    assert.equal(context.allowedToolPrefixes, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('authorizeRequest accepts a resolved personal bearer token in compat mode', async () => {
   const originalFetch = globalThis.fetch;
   let capturedAuth = '';
@@ -214,8 +370,9 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
   let capturedResourceHost = '';
 
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    capturedAuth = new Headers(init?.headers).get('authorization') ?? '';
-    const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string; resource_host?: string | null };
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    capturedAuth = request.headers.get('authorization') ?? '';
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(

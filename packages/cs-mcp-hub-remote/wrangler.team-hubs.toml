@@ -19,6 +19,10 @@ binding = "HUB_STATE_KV"
 id = "f77e7c97087041d29fbf0d12e5a831ee"
 preview_id = "6356c7663c334a4195243971e117565c"
 
+[[services]]
+binding = "IDENTITY_WORKER"
+service = "identity-worker"
+
 [vars]
 HUB_DISCOVERY_MODE = "compact"
 HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
