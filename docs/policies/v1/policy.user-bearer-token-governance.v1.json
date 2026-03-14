@@ -14,7 +14,9 @@
     "oauth_delivery_allowed": true,
     "oauth_access_token_may_equal_managed_bearer": true,
     "oauth_requires_portable_bearer_auth": true,
-    "oauth_login_password_separate_from_bearer": true
+    "oauth_login_password_separate_from_bearer": true,
+    "named_lane_read_write_allowed_with_approved_exception": true,
+    "named_lane_bound_host_required_when_configured": true
   },
   "authorization_requirements": {
     "live_check_per_request": true,
@@ -46,6 +48,12 @@
     "user_id",
     "organization_id",
     "service_key",
+    "partner_key",
+    "client_slug",
+    "lane_slug",
+    "bound_host",
+    "tool_mode",
+    "allowed_tool_prefixes",
     "decision",
     "ip",
     "user_agent",

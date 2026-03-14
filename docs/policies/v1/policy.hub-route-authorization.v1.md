@@ -21,8 +21,8 @@ Define the centralized broker authorization policy for MCP proxy route discovery
 3. Destructive or control-plane proxy execution MUST require human review.
 4. Protected remote discovery and execution MUST default-deny unless actor context, tenant exposure policy, and route authorization rules resolve to an explicit allow or review outcome.
 5. Discovery and execution for protected remote routes MUST fail closed when actor context is missing, tenant context is unresolved, or applicable policy inputs cannot be evaluated.
-6. Discovery allow decisions MUST be constrained by tenant exposure policy, including server allow/deny rules, tool-prefix limits, and pending OAuth candidate policy.
-7. Execution allow decisions MUST be constrained by route classification, access mode, tenant exposure policy, and destructive/control-plane review requirements.
+6. Discovery allow decisions MUST be constrained by tenant exposure policy, including server allow/deny rules, exact approved `allowed_tool_prefixes`, and pending OAuth candidate policy.
+7. Execution allow decisions MUST be constrained by route classification, access mode, exact approved `allowed_tool_prefixes`, tenant exposure policy, and destructive/control-plane review requirements.
 8. Decisions MUST record policy ID, policy hash, matched rule IDs, evaluation path, fallback reason, actor context summary, and route classification.
 
 ## Enforcement Surfaces
@@ -38,6 +38,7 @@ Define the centralized broker authorization policy for MCP proxy route discovery
 - `authz_policy_rollouts`
 - `authz_decision_events`
 - Hub invocation telemetry with `blockedByPolicy` and `requiresHumanReview`
+- session-scope evidence showing the effective `allowed_tool_prefixes` on visible-route filtering and blocked execution
 - explicit deny reasons for missing actor context, unresolved tenant policy, or route-classification restrictions
 
 ## Source Anchors

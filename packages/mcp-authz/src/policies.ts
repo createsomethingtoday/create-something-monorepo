@@ -22,6 +22,20 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       description: 'Commercial and entitlement gating for Policy OS-only hosted surfaces and governed write paths.',
       rules: [
         {
+          id: 'service_tier_allow_bounded_mcp_only_exception',
+          priority: 5,
+          when: {
+            resourceKinds: ['hub_route'],
+            actionNames: ['discover', 'execute'],
+            serviceTiers: ['mcp_only'],
+            approvedExceptionPresent: true,
+          },
+          then: {
+            decision: 'allow',
+            reason: 'Approved MCP-only exceptions may permit bounded interactive route access.',
+          },
+        },
+        {
           id: 'service_tier_block_paid_write_for_mcp_only',
           priority: 10,
           when: {

@@ -168,6 +168,45 @@ test('service-tier policy blocks paid write execution for mcp-only access', asyn
   assert.match(result.final.reason, /mcp-only access does not include paid governed write/i);
 });
 
+test('service-tier policy allows bounded mcp-only write execution when an approved exception exists', async () => {
+  const request = buildHubAuthorizationRequest({
+    accountId: 'acct_stacey_thenpgroup',
+    tenantId: 'thenpgroup',
+    sessionId: 'session_lane_1',
+    toolMode: 'read_write',
+    identitySource: 'session',
+    proxyToolName: 'composio-toolkit-mailchimp__mailchimp_create_campaign',
+    serverName: 'composio-toolkit-mailchimp',
+    downstreamToolName: 'mailchimp_create_campaign',
+    actionName: 'execute',
+    context: {
+      serviceTier: 'mcp_only',
+      entitlementSnapshot: {
+        service_tier: 'mcp_only',
+        service_entitled: true,
+        policy_accepted: true,
+        contract_active: true,
+        billing_active: true,
+        approved_exception: {
+          present: true,
+          exception_type: 'named_lane_mcp_only_pilot',
+          allowed_scope: 'interactive_named_lane:stacey-thenpgroup:read_write',
+        },
+      },
+    },
+  });
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.service-tier-entitlement.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'allow');
+  assert.match(result.final.reason, /approved mcp-only exceptions/i);
+});
+
 test('service-tier policy blocks paid policy os access without billing', async () => {
   const request = buildHubAuthorizationRequest({
     accountId: 'acct_1',

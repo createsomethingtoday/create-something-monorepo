@@ -9,6 +9,8 @@
   },
   "required_inputs": [
     "account_id",
+    "partner_key",
+    "client_slug",
     "consent_record_id",
     "consent_granted_at",
     "actor",
@@ -17,7 +19,11 @@
   "required_telemetry_fields": [
     "account_id",
     "tenant_id",
+    "partner_key",
+    "client_slug",
     "lane_slug_or_bound_host",
+    "tool_mode",
+    "allowed_tool_prefixes",
     "decision",
     "evaluation_path",
     "policy_hash",
@@ -32,6 +38,7 @@
     "telemetry_required": true,
     "braintrust_required": true,
     "account_attribution_required_for_observability": true,
+    "shared_connector_accounts_supported": true,
     "white_glove_initial_delivery_allowed": true,
     "white_glove_follow_on_self_service_required": true,
     "runtime_bootstrap_tokens_customer_delivery_prohibited": true,
@@ -66,17 +73,21 @@
     "disable_toolkit_account"
   ],
   "lane_scoped_routes": [
-    "/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/init",
-    "/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/access/mint",
-    "/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue"
+    "/api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/init",
+    "/api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/access/mint",
+    "/api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/bearer-token/issue"
   ],
   "white_glove_delivery_audit_fields": [
     "delivery_channel",
     "recipient",
     "initial_delivery_mode",
     "follow_on_management_surface",
+    "partner_key",
+    "client_slug",
+    "lane_slug",
     "account_id",
     "tenant_id",
+    "tool_mode",
     "allowed_tool_prefixes",
     "bound_host"
   ]

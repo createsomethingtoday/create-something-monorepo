@@ -127,8 +127,8 @@ When the product includes a hosted chat experience, it must show:
   - `packages/agency/src/routes/security/+page.svelte`
   - `packages/agency/src/routes/api/me/mcp-token/+server.ts`
   - `packages/agency/src/routes/api/me/mcp-oauth-password/+server.ts`
-  - partner toolkit/account routes under `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/toolkits/*`
-  - named-lane routes under `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/*`
+  - partner toolkit/account routes under `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/toolkits/*`
+  - named-lane routes under `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/lanes/[laneSlug]/*`
 - shared server composition
   - `packages/agency/src/lib/server/mcp-entitlements.ts`
   - `packages/agency/src/lib/server/access-state.ts`
@@ -160,9 +160,10 @@ When the product includes a hosted chat experience, it must show:
 - `packages/agency/src/lib/server/mcp-entitlements.ts`
 - `packages/agency/src/lib/server/access-state.ts`
 - `packages/agency/src/lib/server/mcp-access-assignments.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/init/+server.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/access/mint/+server.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/bearer-token/issue/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/lanes/[laneSlug]/init/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/lanes/[laneSlug]/access/mint/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/lanes/[laneSlug]/bearer-token/issue/+server.ts`
+- `packages/agency/src/lib/server/partner-auth-handlers.ts`
 - `packages/cs-mcp-hub-remote/index.ts`
 - `docs/policies/v1/policy.mcp-credential-delivery.v1.md`
 - `docs/policies/v1/policy.user-bearer-token-governance.v1.md`

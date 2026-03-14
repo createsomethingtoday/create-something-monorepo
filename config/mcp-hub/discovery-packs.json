@@ -36,6 +36,15 @@
       ],
       "maxProxyTools": null
     },
+    "abundance-thenpgroup-staffing": {
+      "description": "Abundance / The NP Group staffing pilot: compact Jotform + Mailchimp surface with named-lane managed bearer delivery.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-jotform",
+        "composio-toolkit-mailchimp"
+      ],
+      "maxProxyTools": 40
+    },
     "webflow-marketplace-review-phase-a": {
       "description": "Phase A reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus bounded reviewer-safe actions and metrics.",
       "mode": "compact",

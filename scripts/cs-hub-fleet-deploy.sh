@@ -10,6 +10,8 @@ TEAM_WORKERS=(
   "cs-hub-danny"
   "cs-hub-august"
   "cs-hub-c3denver"
+  "cs-hub-stacey-thenpgroup"
+  "cs-hub-latasha-thenpgroup"
   "cs-hub-aaron-outerfields"
   "cs-hub-andre-outerfields"
   "cs-hub-fillip"
@@ -49,6 +51,7 @@ DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operato
 MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
 MJ_DISCOVERY_DEFAULT_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-exa,composio-toolkit-notion"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
+THENPGROUP_STAFFING_SERVERS_CSV="composio-toolkit-jotform,composio-toolkit-mailchimp"
 CORE_BUNDLES_CSV="core"
 CORE_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV}"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
@@ -99,6 +102,8 @@ account_id_for_worker() {
     "cs-hub-danny") echo "acct_danny" ;;
     "cs-hub-august") echo "acct_august" ;;
     "cs-hub-c3denver") echo "acct_c3_denver" ;;
+    "cs-hub-stacey-thenpgroup") echo "acct_stacey_thenpgroup" ;;
+    "cs-hub-latasha-thenpgroup") echo "acct_latasha_thenpgroup" ;;
     "cs-hub-aaron-outerfields") echo "acct_aaron_outerfields" ;;
     "cs-hub-andre-outerfields") echo "acct_andre_outerfields" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "acct_fillip" ;;
@@ -116,6 +121,8 @@ mcp_url_for_worker() {
     "cs-hub-danny") echo "https://danny.mcp.createsomething.agency/mcp" ;;
     "cs-hub-august") echo "https://august.mcp.createsomething.agency/mcp" ;;
     "cs-hub-c3denver") echo "https://c3denver.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-stacey-thenpgroup") echo "https://stacey-thenpgroup.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-latasha-thenpgroup") echo "https://latasha-thenpgroup.mcp.createsomething.agency/mcp" ;;
     "cs-hub-aaron-outerfields") echo "https://aaron-outerfields.mcp.createsomething.agency/mcp" ;;
     "cs-hub-andre-outerfields") echo "https://andre-outerfields.mcp.createsomething.agency/mcp" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/mcp" ;;
@@ -133,6 +140,8 @@ token_env_var_for_worker() {
     "cs-hub-danny") echo "CS_HUB_DANNY_API_TOKEN" ;;
     "cs-hub-august") echo "CS_HUB_AUGUST_API_TOKEN" ;;
     "cs-hub-c3denver") echo "CS_HUB_C3DENVER_API_TOKEN" ;;
+    "cs-hub-stacey-thenpgroup") echo "CS_HUB_STACEY_THENPGROUP_API_TOKEN" ;;
+    "cs-hub-latasha-thenpgroup") echo "CS_HUB_LATASHA_THENPGROUP_API_TOKEN" ;;
     "cs-hub-aaron-outerfields") echo "CS_HUB_AARON_OUTERFIELDS_API_TOKEN" ;;
     "cs-hub-andre-outerfields") echo "CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "CS_HUB_FILLIP_API_TOKEN" ;;
@@ -180,6 +189,7 @@ target_server_csv_for_worker() {
   case "$1" in
     "cs-mcp-hub-remote") echo "$CORE_SERVERS_CSV" ;;
     "cs-hub-c3denver") echo "$C3DENVER_SERVERS_CSV" ;;
+    "cs-hub-stacey-thenpgroup"|"cs-hub-latasha-thenpgroup") echo "$THENPGROUP_STAFFING_SERVERS_CSV" ;;
     "cs-hub-danny") echo "$DANNY_SERVERS_CSV" ;;
     "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "$OUTERFIELDS_CLICKUP_SERVERS_CSV" ;;
     "cs-hub-mj") echo "$MJ_SERVERS_CSV" ;;
@@ -197,6 +207,7 @@ target_bundle_csv_for_worker() {
 discovery_shared_pack_for_worker() {
   case "$1" in
     "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "outerfields-shared-auth-clickup" ;;
+    "cs-hub-stacey-thenpgroup"|"cs-hub-latasha-thenpgroup") echo "abundance-thenpgroup-staffing" ;;
     *) echo "shared-auth-core" ;;
   esac
 }

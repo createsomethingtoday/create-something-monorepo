@@ -37,7 +37,7 @@ Define how service tier, commercial state, policy acceptance, and approved excep
    - broad governed write access
    - Policy OS-only hosted product surfaces
    - commercial operator services represented as self-service product features
-7. Strategic free-wedge exceptions MAY temporarily widen `MCP-only` access, but MUST be explicit, bounded, auditable, and tied to a named graduation path into `Policy OS Trial`.
+7. Strategic free-wedge exceptions MAY temporarily widen `MCP-only` access, including bounded interactive named-lane `read_write` access, but they MUST be explicit, bounded, auditable, Braintrust-traced, and tied to a named graduation path into `Policy OS Trial`.
 8. Exception handling MUST be modeled as data in entitlement or commercial state, not hardcoded per client in generic route authorization logic.
 9. Where a request affects only safety or route risk, route authorization policy MAY decide independently of service tier. Where a request changes paid-versus-free product scope, service-tier entitlement policy MUST be evaluated before final allow.
 10. Revocation, regeneration, incident response, and security containment actions MUST remain available regardless of commercial state.
@@ -55,6 +55,7 @@ Define how service tier, commercial state, policy acceptance, and approved excep
   - narrow proof wedge
 - Default runtime posture:
   - read-only or tightly constrained tool scope
+  - named-lane interactive write only when an approved bounded exception exists
   - bounded discovery surface
   - no Policy OS-only product features
   - no autonomous cross-workspace write jobs

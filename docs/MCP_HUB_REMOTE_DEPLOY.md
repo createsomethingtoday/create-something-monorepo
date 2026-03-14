@@ -332,14 +332,14 @@ Named-lane runtime baseline:
 
 Agency partner APIs (Half Dozen lane):
 
-- `POST /api/partners/half-dozen/clients/:slug/init`
-- `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/connect-link`
-- `GET /api/partners/half-dozen/clients/:slug/toolkits/status`
-- `POST /api/partners/half-dozen/clients/:slug/access/mint`
-- `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/init`
-- `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/access/mint`
-- `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue`
-- `POST /api/partners/half-dozen/clients/:slug/bearer-token/issue`
+- `POST /api/partners/:partnerKey/clients/:slug/init`
+- `POST /api/partners/:partnerKey/clients/:slug/toolkits/:toolkit/connect-link`
+- `GET /api/partners/:partnerKey/clients/:slug/toolkits/status`
+- `POST /api/partners/:partnerKey/clients/:slug/access/mint`
+- `POST /api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/init`
+- `POST /api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/access/mint`
+- `POST /api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/bearer-token/issue`
+- `POST /api/partners/:partnerKey/clients/:slug/bearer-token/issue`
 - `POST /api/partners/half-dozen/clients/:slug/legacy-key/issue`
 
 Identity admin APIs (policy-gated):

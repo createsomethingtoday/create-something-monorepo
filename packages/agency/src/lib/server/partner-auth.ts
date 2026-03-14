@@ -1,13 +1,33 @@
 import { Composio } from '@composio/core';
 import {
+	buildAuthzScopeKey,
 	evaluateAuthorizationRequest,
 	getPolicyManifest,
+	recordAuthzDecisionEvent,
 	type AuthorizationAccessType,
 	type AuthorizationDecision,
 	type HybridEvaluatorConfig,
 } from '@create-something/mcp-authz';
 
 export const HALF_DOZEN_PARTNER_KEY = 'half-dozen';
+export const ABUNDANCE_PARTNER_KEY = 'abundance';
+
+export interface PartnerConnectorTargetConfig {
+	status: 'ready' | 'pending_auth' | 'pending_registry' | 'pending_entitlement';
+	expose_after: string[];
+	auth_config_id?: string | null;
+	registry_server?: string | null;
+	notes?: string | null;
+}
+
+export interface PartnerClientBootstrapDefaults {
+	displayName?: string;
+	requiredToolkits?: string[];
+	laneBaselineToolkits?: string[];
+	toolkitAuthConfigMap?: Record<string, string>;
+	connectorTargets?: Record<string, PartnerConnectorTargetConfig>;
+	metadata?: Record<string, unknown>;
+}
 
 export class PartnerAuthHttpError extends Error {
 	readonly status: number;
@@ -149,6 +169,7 @@ export interface PartnerToolkitPolicyDecision {
 	policy_id: string;
 	decision: AuthorizationDecision['decision'];
 	evaluation_path: AuthorizationDecision['evaluationPath'];
+	matched_rule_ids: string[];
 	policy_hash: string | null;
 	fallback_used: boolean;
 	rollout_mode: AuthorizationDecision['rolloutMode'];
@@ -159,6 +180,64 @@ export interface PartnerToolkitPolicyDecision {
 type PlatformEnv = App.Platform['env'];
 
 const PARTNER_AUTH_GOVERNANCE_POLICY_ID = 'policy.partner-auth-governance.v1';
+
+const PARTNER_CLIENT_BOOTSTRAP_DEFAULTS: Record<string, Record<string, PartnerClientBootstrapDefaults>> = {
+	[ABUNDANCE_PARTNER_KEY]: {
+		thenpgroup: {
+			displayName: 'The NP Group',
+			requiredToolkits: ['jotform', 'mailchimp'],
+			laneBaselineToolkits: [],
+			toolkitAuthConfigMap: {
+				jotform: 'ac_tmBbHlLd51ad',
+				mailchimp: 'ac_eTxcnOkspU3h',
+			},
+			connectorTargets: {
+				jotform: {
+					status: 'ready',
+					expose_after: ['account_connected', 'account_pinned', 'smoke_passed'],
+					auth_config_id: 'ac_tmBbHlLd51ad',
+					registry_server: 'composio-toolkit-jotform',
+					notes: 'Shared client-owned Jotform account for recruiter intake and submission review.',
+				},
+				mailchimp: {
+					status: 'ready',
+					expose_after: ['account_connected', 'account_pinned', 'smoke_passed'],
+					auth_config_id: 'ac_eTxcnOkspU3h',
+					registry_server: 'composio-toolkit-mailchimp',
+					notes: 'Shared client-owned Mailchimp account for outreach and audience operations.',
+				},
+				indeed: {
+					status: 'pending_auth',
+					expose_after: ['partner_app_verified', 'client_entitlement_verified', 'smoke_passed'],
+					registry_server: null,
+					notes: 'Direct Indeed employer/candidate surfaces stay hidden until partner app and client entitlements are verified.',
+				},
+				paylocity: {
+					status: 'pending_auth',
+					expose_after: ['oauth_client_registered', 'recruiting_surface_verified', 'smoke_passed'],
+					registry_server: null,
+					notes: 'Paylocity recruiting routes stay hidden until the client OAuth app and API surfaces are confirmed.',
+				},
+				ziprecruiter: {
+					status: 'pending_registry',
+					expose_after: ['partner_feed_verified', 'applicant_intake_verified', 'smoke_passed'],
+					registry_server: null,
+					notes: 'ZipRecruiter remains gated until feed/webhook integration is registered and smoke-tested.',
+				},
+			},
+			metadata: {
+				pilot_name: 'abundance-nurse-staffing',
+				shared_connector_accounts: true,
+				tool_mode_default: 'read_write',
+				compat_identity_mode: true,
+				required_observability: {
+					telemetry: true,
+					braintrust: true,
+				},
+			},
+		},
+	},
+};
 
 let composioCache:
 	| {
@@ -265,7 +344,7 @@ export function buildPartnerLaneHubUrl(laneSlug: string): string {
 }
 
 export function buildPartnerLaneNotionBridgeUrl(clientSlug: string): string {
-	return `https://${normalizePartnerSlug(clientSlug)}-notion.mcp.workway.co/mcp`;
+	return `https://${normalizePartnerSlug(clientSlug)}-notion.mcp.createsomething.agency/mcp`;
 }
 
 export function parseBearerToken(authorizationHeader: string | null): string | null {
@@ -548,6 +627,7 @@ function toPartnerPolicyDecision(decision: AuthorizationDecision): PartnerToolki
 		policy_id: PARTNER_AUTH_GOVERNANCE_POLICY_ID,
 		decision: decision.decision,
 		evaluation_path: decision.evaluationPath,
+		matched_rule_ids: decision.matchedRuleIds,
 		policy_hash: decision.policyHash,
 		fallback_used: Boolean(decision.fallbackReason),
 		rollout_mode: decision.rolloutMode,
@@ -600,13 +680,16 @@ export async function authorizePartnerToolkitAdminAction(params: {
 				accessType,
 				oauthRequired: actionName === 'create_toolkit_connect_link',
 				tags: [
-					`partner:${HALF_DOZEN_PARTNER_KEY}`,
+					`partner:${normalizePartnerSlug(client.partner_key)}`,
 					`toolkit:${normalizeToolkitSlug(toolkit)}`,
 					...(accountSlug ? [`account:${normalizePartnerSlug(accountSlug)}`] : []),
 				],
 				metadata: {
+					partner_key: client.partner_key,
 					client_slug: client.slug,
 					workspace_account_id: client.workspace_account_id,
+					identity_account_id: client.identity_account_id,
+					identity_tenant_id: client.identity_tenant_id,
 					consent_record_id: consent?.id ?? null,
 					review_step: reviewStep,
 				},
@@ -618,6 +701,19 @@ export async function authorizePartnerToolkitAdminAction(params: {
 		},
 		partnerAuthzHybridConfig(env),
 	);
+	await recordPartnerToolkitAuthzDecision({
+		db: env.DB,
+		client,
+		actor,
+		actionName,
+		accessType,
+		toolkit,
+		accountSlug: accountSlug ?? null,
+		reviewStep,
+		consentId: consent?.id ?? null,
+		request,
+		evaluation,
+	});
 
 	const policy = toPartnerPolicyDecision(evaluation.final);
 	if (evaluation.final.decision === 'block') {
@@ -636,6 +732,80 @@ export async function authorizePartnerToolkitAdminAction(params: {
 		reviewStep,
 		policy,
 	};
+}
+
+async function recordPartnerToolkitAuthzDecision(params: {
+	db: D1Database;
+	client: PartnerAuthClientRow;
+	actor: string;
+	actionName: PartnerToolkitAdminActionName;
+	accessType: AuthorizationAccessType;
+	toolkit: string;
+	accountSlug: string | null;
+	reviewStep: string | null;
+	consentId: string | null;
+	request: Request;
+	evaluation: Awaited<ReturnType<typeof evaluateAuthorizationRequest>>;
+}): Promise<void> {
+	const { db, client, actor, actionName, accessType, toolkit, accountSlug, reviewStep, consentId, request, evaluation } =
+		params;
+	const trace = getRequestTraceContext(request);
+	const scope = {
+		scopeType: 'entity' as const,
+		policyId: PARTNER_AUTH_GOVERNANCE_POLICY_ID,
+		accountId: client.identity_account_id ?? client.workspace_account_id,
+		entityType: 'partner_client',
+		entityId: client.id,
+	};
+
+	try {
+		await recordAuthzDecisionEvent(db, {
+			id: randomId('authzevt'),
+			scopeKey: buildAuthzScopeKey(scope),
+			scopeType: scope.scopeType,
+			policyId: PARTNER_AUTH_GOVERNANCE_POLICY_ID,
+			accountId: scope.accountId,
+			tenantId: client.identity_tenant_id ?? null,
+			entityType: scope.entityType,
+			entityId: scope.entityId,
+			actorId: actor,
+			actorRole: 'partner_admin',
+			actionName,
+			resourceKind: 'partner_toolkit_account',
+			resourceId: `${client.id}:${normalizeToolkitSlug(toolkit)}:${accountSlug ?? '*'}`,
+			resourceAccessType: accessType,
+			rolloutMode: evaluation.final.rolloutMode,
+			canaryPercent: evaluation.final.canaryPercent,
+			sampledPolar: evaluation.final.sampledPolar ? 1 : 0,
+			mismatch: evaluation.final.mismatch ? 1 : 0,
+			evaluationPath: evaluation.final.evaluationPath,
+			fallbackUsed: evaluation.final.fallbackReason ? 1 : 0,
+			fallbackReason: evaluation.final.fallbackReason,
+			legacyDecision: evaluation.legacy.decision,
+			polarDecision: evaluation.polar.decision,
+			finalDecision: evaluation.final.decision,
+			matchedRuleIdsJson: JSON.stringify(evaluation.final.matchedRuleIds ?? []),
+			reason: evaluation.final.reason,
+			policyHash: evaluation.final.policyHash,
+			compilerVersion: evaluation.final.compilerVersion,
+			correlationId: trace.correlationId,
+			metadataJson: JSON.stringify({
+				partner_key: client.partner_key,
+				client_slug: client.slug,
+				client_display_name: client.display_name,
+				toolkit: normalizeToolkitSlug(toolkit),
+				account_slug: accountSlug,
+				review_step: reviewStep,
+				consent_record_id: consentId,
+				workspace_account_id: client.workspace_account_id,
+				identity_account_id: client.identity_account_id,
+				identity_tenant_id: client.identity_tenant_id,
+				latency_ms: evaluation.final.latencyMs,
+			}),
+		});
+	} catch {
+		// Authz telemetry is best-effort here; policy enforcement itself must still proceed.
+	}
 }
 
 export async function insertPartnerAccessDelivery(
@@ -715,6 +885,88 @@ export function resolveAuthConfigId(env: PlatformEnv, toolkit: string): string |
 	return map[normalizeToolkitSlug(toolkit)] ?? null;
 }
 
+export function getPartnerClientBootstrapDefaults(
+	partnerKey: string,
+	clientSlug: string,
+): PartnerClientBootstrapDefaults | null {
+	const normalizedPartnerKey = normalizePartnerSlug(partnerKey);
+	const normalizedClientSlug = normalizePartnerSlug(clientSlug);
+	const defaults = PARTNER_CLIENT_BOOTSTRAP_DEFAULTS[normalizedPartnerKey]?.[normalizedClientSlug];
+	if (!defaults) return null;
+	return {
+		displayName: defaults.displayName,
+		requiredToolkits: defaults.requiredToolkits ? [...defaults.requiredToolkits] : undefined,
+		laneBaselineToolkits: defaults.laneBaselineToolkits ? [...defaults.laneBaselineToolkits] : undefined,
+		toolkitAuthConfigMap: defaults.toolkitAuthConfigMap ? { ...defaults.toolkitAuthConfigMap } : undefined,
+		connectorTargets: defaults.connectorTargets
+			? Object.fromEntries(Object.entries(defaults.connectorTargets).map(([key, value]) => [key, { ...value }]))
+			: undefined,
+		metadata: defaults.metadata ? { ...defaults.metadata } : undefined,
+	};
+}
+
+export function resolvePartnerToolkitAuthConfigId(
+	env: PlatformEnv,
+	toolkit: string,
+	client?: { partner_key?: string | null; slug?: string | null; metadata_json?: string | null } | null,
+): string | null {
+	const normalizedToolkit = normalizeToolkitSlug(toolkit);
+	const envConfig = resolveAuthConfigId(env, normalizedToolkit);
+	if (envConfig) return envConfig;
+
+	const metadataMap = parseMetadataStringMap(parseJsonObject(client?.metadata_json).toolkit_auth_config_map);
+	if (metadataMap[normalizedToolkit]) {
+		return metadataMap[normalizedToolkit]!;
+	}
+
+	if (client?.partner_key && client?.slug) {
+		const defaults = getPartnerClientBootstrapDefaults(client.partner_key, client.slug);
+		const defaultMap = defaults?.toolkitAuthConfigMap ?? {};
+		if (defaultMap[normalizedToolkit]) {
+			return defaultMap[normalizedToolkit]!;
+		}
+	}
+
+	return null;
+}
+
+export function resolvePartnerLaneBaselineToolkits(partnerKey: string, clientSlug: string): string[] {
+	const defaults = getPartnerClientBootstrapDefaults(partnerKey, clientSlug);
+	if (defaults?.laneBaselineToolkits) {
+		return [...defaults.laneBaselineToolkits];
+	}
+	return normalizePartnerSlug(partnerKey) === HALF_DOZEN_PARTNER_KEY ? ['gmail'] : [];
+}
+
+export function resolvePartnerObservabilityBaseline(
+	_metadata?: Record<string, unknown> | null,
+): { telemetry: true; braintrust: true } {
+	return {
+		telemetry: true,
+		braintrust: true,
+	};
+}
+
+export function getRequestTraceContext(request: Request): {
+	correlationId: string | null;
+	requestId: string | null;
+} {
+	const correlationId = normalizeHeaderValue(
+		request.headers.get('x-correlation-id') ?? request.headers.get('X-Correlation-ID'),
+	);
+	const requestId = normalizeHeaderValue(
+		request.headers.get('x-request-id') ?? request.headers.get('X-Request-ID'),
+	);
+	return {
+		correlationId,
+		requestId,
+	};
+}
+
+export function buildPartnerLaneWorkerName(laneSlug: string): string {
+	return `cs-hub-${normalizePartnerAccessLaneSlug(laneSlug)}`;
+}
+
 export async function postIdentityAdmin<TResponse>(
 	env: PlatformEnv,
 	path: string,
@@ -786,4 +1038,23 @@ function constantTimeEqual(a: string, b: string): boolean {
 		mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
 	}
 	return mismatch === 0;
+}
+
+function parseMetadataStringMap(value: unknown): Record<string, string> {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) {
+		return {};
+	}
+	const entries: Array<[string, string]> = [];
+	for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+		if (typeof entry !== 'string') continue;
+		const trimmed = entry.trim();
+		if (!trimmed) continue;
+		entries.push([normalizeToolkitSlug(key), trimmed]);
+	}
+	return Object.fromEntries(entries);
+}
+
+function normalizeHeaderValue(raw: string | null): string | null {
+	const value = raw?.trim() ?? '';
+	return value.length > 0 ? value.slice(0, 255) : null;
 }

@@ -19,10 +19,10 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 
 ## Policy Statements
 
-1. `managed_bearer_bundle` is the default customer-facing MCP credential delivery mode.
+1. `managed_bearer_bundle` is the default customer-facing MCP credential delivery mode, including compat named lanes that resolve through `identity-worker`.
 2. Named teammate lanes MUST deliver one transparent house URL per lane, and that URL MUST be reflected in the delivery artifact, audit metadata, and `.agency` access view.
 3. Credentials issued for a named lane MUST be host-bound so they are rejected on a different named-lane URL unless explicitly approved.
-4. Telemetry and Braintrust tracing are mandatory baseline observability controls for dedicated named-lane delivery.
+4. Telemetry and Braintrust tracing are mandatory baseline observability controls for dedicated named-lane delivery and shared connector-account onboarding.
 5. Delivery, issuance, and resolve traces for named lanes MUST carry explicit account attribution, including at minimum `account_id`, `tenant_id`, and the active lane or host binding, so operator observability can distinguish one client lane from another.
 6. Operator-assisted white-glove onboarding is an approved first-class pathway for initial customer credential delivery when a partner or operator is actively setting up host access for the customer.
 7. White-glove onboarding MAY deliver a managed bearer token or an approved legacy credential before the customer has ever logged into `.agency`, provided all policy prerequisites for that credential type are satisfied and the handoff is fully audited.
@@ -66,6 +66,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 42. A managed-bearer compat lane MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` unless an explicit separately approved exception exists.
 43. A managed-bearer compat lane MUST preserve bound-host rejection and explicit `allowed_tool_prefixes` enforcement through the resolver-backed bearer path.
 44. Managed-bearer compat lanes are host-compatibility infrastructure, not legacy credential exceptions, and MUST NOT be governed as sunset-bounded legacy key lanes unless they also use approved legacy key delivery.
+45. Shared third-party connector accounts MAY sit behind multiple named-lane managed bearers, but every delivered bearer MUST remain distinct, actor-bound, host-bound where required, and auditable independently.
 
 ## Enforcement Surfaces
 
@@ -85,8 +86,8 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
   - `mcp_long_lived_tokens`
   - `mcp_policy_events`
 - Agency partner API:
-  - `POST /api/partners/half-dozen/clients/:slug/bearer-token/issue`
-  - `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue`
+  - `POST /api/partners/:partnerKey/clients/:slug/bearer-token/issue`
+  - `POST /api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/bearer-token/issue`
   - `POST /api/partners/half-dozen/clients/:slug/legacy-key/issue`
   - `POST /api/admin/mcp-entitlements`
   - `POST /api/admin/contracts`
@@ -135,9 +136,10 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 
 - `packages/identity-worker/src/index.ts`
 - `packages/identity-worker/README.md`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/bearer-token/issue/+server.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/bearer-token/issue/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/bearer-token/issue/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/lanes/[laneSlug]/bearer-token/issue/+server.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/legacy-key/issue/+server.ts`
+- `packages/agency/src/lib/server/partner-auth-handlers.ts`
 - `packages/agency/src/routes/api/admin/mcp-entitlements/+server.ts`
 - `scripts/cs-hub-vault-sync.sh`
 - `scripts/cs-hub-rotate-production.sh`

@@ -20,7 +20,8 @@
       "free_by_default": true,
       "policy_os_capabilities_allowed": false,
       "scope": "narrow",
-      "autonomous_cross_workspace_syncs_allowed": false
+      "autonomous_cross_workspace_syncs_allowed": false,
+      "interactive_named_lane_write_exception_allowed": true
     },
     "policy_os_trial": {
       "paid": true,
@@ -55,6 +56,7 @@
     "billing_inactive",
     "org_membership_inactive",
     "approved_exception_required",
+    "approved_exception_scope_not_sufficient",
     "autonomous_sync_not_allowed"
   ]
 }

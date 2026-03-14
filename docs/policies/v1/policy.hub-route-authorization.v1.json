@@ -3,6 +3,10 @@
   "version": 1,
   "status": "draft",
   "engine": "polar_v1",
+  "requirements": {
+    "session_scope_prefix_enforcement_required": true,
+    "policy_decision_metadata_required": true
+  },
   "rules": [
     {
       "id": "hub_discover_readonly_blocks_mutations",

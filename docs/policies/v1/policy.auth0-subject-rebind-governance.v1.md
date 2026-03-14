@@ -53,7 +53,7 @@ Define the governance path for incidents where an Auth0 user is deleted or recre
 - `.agency`:
   - `GET|POST /api/admin/identity-seeds`
   - `GET|POST /api/admin/mcp-entitlements`
-  - `POST /api/partners/half-dozen/clients/:slug/init`
+  - `POST /api/partners/:partnerKey/clients/:slug/init`
   - `GET|POST /api/me/mcp-token`
   - `POST /api/me/mcp-token/regenerate`
   - `POST /api/me/mcp-token/revoke`
@@ -89,7 +89,8 @@ Define the governance path for incidents where an Auth0 user is deleted or recre
 - `packages/agency/src/lib/server/mcp-entitlements.ts`
 - `packages/agency/src/routes/api/admin/identity-seeds/+server.ts`
 - `packages/agency/src/routes/api/admin/mcp-entitlements/+server.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/init/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/init/+server.ts`
+- `packages/agency/src/lib/server/partner-auth-handlers.ts`
 - `packages/identity-worker/src/index.ts`
 - `packages/identity-worker/src/db/queries.ts`
 - `docs/AGENCY_USER_PROVISIONING_POLICY.md`

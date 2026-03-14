@@ -11,9 +11,9 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 ## Scope
 
 - Partner-boundary admin minting (`/v1/mcp/sessions/admin-mint`)
-- Lane-scoped partner issuance (`/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/*`)
-- Partner toolkit auth account management (`/api/partners/half-dozen/clients/:slug/notion/accounts/*`)
-- Partner toolkit auth account management (`/api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/*`)
+- Lane-scoped partner issuance (`/api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/*`)
+- Partner toolkit auth account management (`/api/partners/:partnerKey/clients/:slug/notion/accounts/*`)
+- Partner toolkit auth account management (`/api/partners/:partnerKey/clients/:slug/toolkits/:toolkit/accounts/*`)
 - Consent and actor trace requirements
 - Hybrid rollout enforcement (`legacy_enforce -> shadow -> polar_enforce`)
 
@@ -40,8 +40,8 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 14. Lane-scoped bearer and strict-session issuance MUST derive the effective `allowed_tool_prefixes` from the named lane record and MUST bind the credential to the lane host.
 15. Lane-scoped bearer and strict-session issuance MUST deny when client identity mapping, active consent, or lane identity subject binding is missing, even if the named lane itself is already provisioned.
 16. Vault-backed worker/runtime tokens used to bootstrap or verify named lanes are operator-only controls and MUST NOT be repurposed as customer-delivered bearer artifacts.
-17. Telemetry and Braintrust tracing are mandatory baseline observability controls for partner-managed named lanes.
-18. Those observability traces MUST include explicit account attribution, at minimum `account_id`, `tenant_id`, and the lane slug or bound host, for issuance, denial, and routed-call evidence.
+17. Telemetry and Braintrust tracing are mandatory baseline observability controls for partner-managed named lanes and shared connector-account onboarding flows.
+18. Those observability traces MUST include explicit account attribution, at minimum `account_id`, `tenant_id`, `partner_key`, `client_slug`, and the lane slug or bound host, for issuance, denial, connect-link, pin/disable, and routed-call evidence.
 19. Operator-assisted white-glove onboarding is an approved partner-governed pathway for initial customer access delivery when a named lane or client hub is being set up directly with the customer.
 20. White-glove onboarding MAY deliver a managed bearer credential or an approved legacy credential before the customer has logged into `.agency`, but the governing partner route MUST still record actor trace, recipient, delivery channel, effective scope, and the follow-on self-service surface.
 21. White-glove onboarding MUST NOT bypass the policy prerequisites for the selected credential type. If consent, exception approval, or subject binding is required for that credential, the handoff MUST remain blocked until those prerequisites are satisfied.
@@ -59,18 +59,18 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
   - `mcp_policy_rollout`
   - `mcp_policy_events`
 - Agency partner API:
-  - `POST /api/partners/half-dozen/clients/:slug/access/mint`
-  - `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/init`
-  - `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/access/mint`
-  - `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue`
-  - `GET|POST /api/partners/half-dozen/clients/:slug/notion/accounts`
-  - `POST /api/partners/half-dozen/clients/:slug/notion/accounts/:accountSlug/connect-link`
-  - `POST /api/partners/half-dozen/clients/:slug/notion/accounts/:accountSlug/pin`
-  - `POST /api/partners/half-dozen/clients/:slug/notion/accounts/:accountSlug/disable`
-  - `GET|POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts`
-  - `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/connect-link`
-  - `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/pin`
-  - `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/disable`
+  - `POST /api/partners/:partnerKey/clients/:slug/access/mint`
+  - `POST /api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/init`
+  - `POST /api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/access/mint`
+  - `POST /api/partners/:partnerKey/clients/:slug/lanes/:laneSlug/bearer-token/issue`
+  - `GET|POST /api/partners/:partnerKey/clients/:slug/notion/accounts`
+  - `POST /api/partners/:partnerKey/clients/:slug/notion/accounts/:accountSlug/connect-link`
+  - `POST /api/partners/:partnerKey/clients/:slug/notion/accounts/:accountSlug/pin`
+  - `POST /api/partners/:partnerKey/clients/:slug/notion/accounts/:accountSlug/disable`
+  - `GET|POST /api/partners/:partnerKey/clients/:slug/toolkits/:toolkit/accounts`
+  - `POST /api/partners/:partnerKey/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/connect-link`
+  - `POST /api/partners/:partnerKey/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/pin`
+  - `POST /api/partners/:partnerKey/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/disable`
 
 - Agency partner data:
   - `partner_auth_access_lanes`
@@ -91,12 +91,12 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 ## Source Anchors
 
 - `packages/identity-worker/src/index.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/access/mint/+server.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/init/+server.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/access/mint/+server.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/lanes/[laneSlug]/bearer-token/issue/+server.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/notion/accounts/+server.ts`
-- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/toolkits/[toolkit]/accounts/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/access/mint/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/lanes/[laneSlug]/init/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/lanes/[laneSlug]/access/mint/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/lanes/[laneSlug]/bearer-token/issue/+server.ts`
+- `packages/agency/src/routes/api/partners/[partnerKey]/clients/[slug]/toolkits/[toolkit]/accounts/+server.ts`
+- `packages/agency/src/lib/server/partner-auth-handlers.ts`
 - `docs/policies/v1/policy.cross-workspace-sync-governance.v1.md`
 - `packages/agency/src/lib/server/partner-auth.ts`
 - `packages/policy-os-engine/src/hybrid.ts`
