@@ -1234,6 +1234,34 @@
     }
   }
 
+  @media (max-width: 1024px) and (min-width: 769px) {
+    .offerings-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-6, 2rem);
+    }
+
+    .offering-card.offering-featured {
+      order: -1;
+      grid-column: 1 / -1;
+    }
+
+    .offering-card.offering-featured .offering-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(16rem, 0.9fr);
+      gap: var(--space-5, 1.5rem);
+      align-items: start;
+    }
+
+    .offering-card.offering-featured .offering-description {
+      margin-bottom: 0;
+      padding-top: var(--space-4, 1rem);
+    }
+
+    .offering-card.offering-featured .offering-deliverables {
+      margin-top: 0;
+    }
+  }
+
   /* CTA */
   .cta-section {
     padding: var(--section-padding, 6rem) 0;
