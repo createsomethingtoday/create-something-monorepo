@@ -66,24 +66,24 @@ type CliOptions = {
 
 const SERVER_ENDPOINTS: Record<ServerKey, { url: string; description: string }> = {
   telemetry: {
-    url: 'https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp',
-    description: 'Fleet health, usage, errors, trends',
+    url: 'https://cs-telemetry-mcp.createsomething.workers.dev/mcp',
+    description: 'Fleet health, usage, errors, and trends via CREATE SOMETHING telemetry',
   },
   youtube: {
-    url: 'https://youtube.mcp.workway.co/mcp',
-    description: 'YouTube transcript + Notion sync tools',
+    url: 'https://danny.mcp.createsomething.agency/mcp',
+    description: 'YouTube-adjacent tools routed through the Danny CREATE SOMETHING hub lane',
   },
   gmail: {
-    url: 'https://gmail.mcp.workway.co/mcp',
-    description: 'Gmail search/sync/automation tools',
+    url: 'https://danny.mcp.createsomething.agency/mcp',
+    description: 'Gmail search/sync/automation tools routed through the Danny CREATE SOMETHING hub lane',
   },
   zoom: {
-    url: 'https://zoom.mcp.workway.co/mcp',
-    description: 'Zoom clips sync + search tools',
+    url: 'https://danny.mcp.createsomething.agency/mcp',
+    description: 'Zoom sync/search tools routed through the Danny CREATE SOMETHING hub lane',
   },
   notion: {
-    url: 'https://createsomething-notion.mcp.workway.co/mcp',
-    description: 'Half Dozen Notion CRUD tools',
+    url: 'https://danny-notion.mcp.createsomething.agency/mcp',
+    description: 'Half Dozen CREATE SOMETHING Notion bridge tools',
   },
 };
 

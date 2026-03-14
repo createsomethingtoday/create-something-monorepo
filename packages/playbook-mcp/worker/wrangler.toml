@@ -26,9 +26,9 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 
 [vars]
 # Optional MCP endpoint overrides for Half Dozen scenario routes.
-# HALFDOZEN_TELEMETRY_MCP_URL = "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp"
-# HALFDOZEN_GMAIL_MCP_URL = "https://gmail.mcp.workway.co/mcp"
-# HALFDOZEN_NOTION_MCP_URL = "https://createsomething-notion.mcp.workway.co/mcp"
+# HALFDOZEN_TELEMETRY_MCP_URL = "https://cs-telemetry-mcp.createsomething.workers.dev/mcp"
+# HALFDOZEN_GMAIL_MCP_URL = "https://danny.mcp.createsomething.agency/mcp"
+# HALFDOZEN_NOTION_MCP_URL = "https://danny-notion.mcp.createsomething.agency/mcp"
 
 # Braintrust tracing defaults (override per environment in the Cloudflare dashboard).
 # Tracing is enabled automatically when `BRAINTRUST_API_KEY` is present; `BRAINTRUST_ENABLED`

@@ -121,9 +121,9 @@ const DEFAULT_MAX_TURNS = 10;
 const DEFAULT_TIMEOUT_MS = 20_000;
 
 const SERVER_ENDPOINTS: ServerEndpointConfig = {
-  telemetry: 'https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp',
-  gmail: 'https://gmail.mcp.workway.co/mcp',
-  notion: 'https://createsomething-notion.mcp.workway.co/mcp',
+  telemetry: 'https://cs-telemetry-mcp.createsomething.workers.dev/mcp',
+  gmail: 'https://danny.mcp.createsomething.agency/mcp',
+  notion: 'https://danny-notion.mcp.createsomething.agency/mcp',
 };
 
 const MULTI_SERVER_GENERIC_BLOCKLIST = ['search', 'fetch', 'submit_feedback'];

@@ -692,7 +692,7 @@ export function registerTools(server: McpServer) {
     'Check if an MCP server URL is reachable and responding. Automatically strips /mcp and /sse transport suffixes to find the health endpoint. Use this after installing an MCP server to confirm it works.',
     {
       url: z.string()
-        .describe('The MCP server URL to check (e.g., "https://playbook.mcp.createsomething.ltd" or "https://youtube.mcp.workway.co/mcp")'),
+        .describe('The MCP server URL to check (e.g., "https://playbook.mcp.createsomething.ltd" or "https://danny.mcp.createsomething.agency/mcp")'),
     },
     async ({ url }) => {
       // Strip trailing slashes and transport suffixes to find the health/root endpoint

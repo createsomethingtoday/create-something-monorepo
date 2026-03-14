@@ -1,6 +1,6 @@
 # OpenAI Agent SDK Half Dozen Smoke Test
 
-This repo includes a runnable OpenAI Agents SDK smoke test for Half Dozen MCP servers:
+This repo includes a runnable OpenAI Agents SDK smoke test for Half Dozen CREATE SOMETHING delivery lanes:
 
 - Script: `scripts/openai-agent-sdk-halfdozen-smoke.ts`
 - npm script: `pnpm agent:halfdozen:smoke`
@@ -8,7 +8,17 @@ This repo includes a runnable OpenAI Agents SDK smoke test for Half Dozen MCP se
 ## Prerequisites
 
 - `OPENAI_API_KEY` is set in your shell
-- Network access to the Half Dozen MCP endpoints
+- Network access to the Half Dozen CREATE SOMETHING hub / bridge endpoints
+
+## Default Endpoint Wiring
+
+By default the smoke runner targets the current CREATE SOMETHING delivery surface:
+
+- `telemetry` -> `https://cs-telemetry-mcp.createsomething.workers.dev/mcp`
+- `gmail`, `youtube`, `zoom` -> `https://danny.mcp.createsomething.agency/mcp`
+- `notion` -> `https://danny-notion.mcp.createsomething.agency/mcp`
+
+Use CLI overrides if you want to test a different team lane.
 
 ## Scenario-Wired Runs
 
