@@ -103,3 +103,9 @@ PROMPT='%F{white}%1~%f %F{green}→%f '
 # precmd() { vcs_info }
 # zstyle ':vcs_info:git:*' formats '%F{666666}(%b)%f '
 # PROMPT='%F{white}%1~%f ${vcs_info_msg_0_}%F{green}→%f '
+
+# Infisical-backed shell secrets cache
+INFISICAL_SHELL_SECRETS="$HOME/.config/create-something/infisical-shell-secrets.zsh"
+if [[ -f "$INFISICAL_SHELL_SECRETS" ]]; then
+  source "$INFISICAL_SHELL_SECRETS"
+fi

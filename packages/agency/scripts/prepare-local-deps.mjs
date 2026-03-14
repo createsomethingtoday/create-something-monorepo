@@ -18,6 +18,17 @@ function normalizePrefix(name, version) {
 	return `${name.replace('/', '+')}@${version}`;
 }
 
+function findInstalledStorePath(pnpmStore, pkgName, version) {
+	const storePrefix = normalizePrefix(pkgName, version);
+	const candidates = fs
+		.readdirSync(pnpmStore)
+		.filter((entry) => entry === storePrefix || entry.startsWith(`${storePrefix}_`))
+		.map((entry) => path.join(pnpmStore, entry, 'node_modules', pkgName))
+		.filter((candidate) => fs.existsSync(path.join(candidate, 'package.json')));
+
+	return candidates[0] ?? null;
+}
+
 const workspaceRoot = findWorkspaceRoot(packageRoot);
 const pnpmStore = path.join(workspaceRoot, 'node_modules', '.pnpm');
 const nodeModulesRoot = path.join(packageRoot, 'node_modules');
@@ -31,15 +42,8 @@ fs.mkdirSync(nodeModulesRoot, { recursive: true });
 for (const [pkgName, version] of Object.entries(declared)) {
 	if (version.startsWith('workspace:')) continue;
 
-	const storePrefix = normalizePrefix(pkgName, version);
-	const storeDir = fs
-		.readdirSync(pnpmStore)
-		.find((entry) => entry === storePrefix || entry.startsWith(`${storePrefix}_`));
-
-	if (!storeDir) continue;
-
-	const sourcePath = path.join(pnpmStore, storeDir, 'node_modules', pkgName);
-	if (!fs.existsSync(sourcePath)) continue;
+	const sourcePath = findInstalledStorePath(pnpmStore, pkgName, version);
+	if (!sourcePath) continue;
 
 	const segments = pkgName.split('/');
 	const leaf = segments.pop();

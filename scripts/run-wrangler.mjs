@@ -46,16 +46,44 @@ function parseArgs(argv) {
 	return { cwd, wranglerArgs };
 }
 
+function resolveWranglerBin(runnerCwd, workspaceRoot) {
+	const candidateDirs = [
+		path.join(runnerCwd, 'node_modules', 'wrangler'),
+		path.join(workspaceRoot, 'node_modules', 'wrangler')
+	];
+
+	for (const packageDir of candidateDirs) {
+		const manifestPath = path.join(packageDir, 'package.json');
+		if (!fs.existsSync(manifestPath)) continue;
+
+		const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+		const relativeBin =
+			typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.wrangler;
+
+		if (!relativeBin) continue;
+
+		return path.join(packageDir, relativeBin);
+	}
+
+	return null;
+}
+
 const { cwd, wranglerArgs } = parseArgs(process.argv.slice(2));
 const runnerCwd = cwd ? path.resolve(process.cwd(), cwd) : process.cwd();
 const workspaceRoot = findWorkspaceRoot(runnerCwd);
 const relativeCwd = path.relative(workspaceRoot, runnerCwd) || 'root';
 const defaultLogPath = path.join(workspaceRoot, '.wrangler', 'logs', relativeCwd);
 const logPath = process.env.WRANGLER_LOG_PATH ?? defaultLogPath;
+const wranglerBin = resolveWranglerBin(runnerCwd, workspaceRoot);
 
 fs.mkdirSync(logPath, { recursive: true });
 
-const child = spawn('pnpm', ['exec', 'wrangler', ...wranglerArgs], {
+if (!wranglerBin) {
+	console.error(`Could not resolve wrangler from ${runnerCwd} or ${workspaceRoot}`);
+	process.exit(1);
+}
+
+const child = spawn(process.execPath, [wranglerBin, ...wranglerArgs], {
 	cwd: runnerCwd,
 	stdio: 'inherit',
 	env: {

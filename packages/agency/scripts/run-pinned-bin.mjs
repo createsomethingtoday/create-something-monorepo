@@ -35,20 +35,41 @@ function normalizePrefix(name, pkgVersion) {
 	return `${name.replace('/', '+')}@${pkgVersion}`;
 }
 
-const workspaceRoot = findWorkspaceRoot(packageRoot);
-const pnpmStore = path.join(workspaceRoot, 'node_modules', '.pnpm');
-const prefix = normalizePrefix(pkgName, version);
+function findInstalledStorePath(pnpmStore, pkgName, version) {
+	const prefix = normalizePrefix(pkgName, version);
+	const candidates = fs
+		.readdirSync(pnpmStore)
+		.filter((entry) => entry === prefix || entry.startsWith(`${prefix}_`))
+		.map((entry) => path.join(pnpmStore, entry, 'node_modules', pkgName))
+		.filter((candidate) => fs.existsSync(path.join(candidate, 'package.json')));
 
-const storeDir = fs
-	.readdirSync(pnpmStore)
-	.find((entry) => entry === prefix || entry.startsWith(`${prefix}_`));
-
-if (!storeDir) {
-	console.error(`Could not find ${pkgName}@${version} in ${pnpmStore}`);
-	process.exit(1);
+	return candidates[0] ?? null;
 }
 
-const packageDir = path.join(pnpmStore, storeDir, 'node_modules', pkgName);
+const workspaceRoot = findWorkspaceRoot(packageRoot);
+const pnpmStore = path.join(workspaceRoot, 'node_modules', '.pnpm');
+
+function resolveInstalledPackageDir() {
+	const localPackageDir = path.join(packageRoot, 'node_modules', pkgName);
+	if (fs.existsSync(path.join(localPackageDir, 'package.json'))) {
+		return localPackageDir;
+	}
+
+	const workspacePackageDir = path.join(workspaceRoot, 'node_modules', pkgName);
+	if (fs.existsSync(path.join(workspacePackageDir, 'package.json'))) {
+		return workspacePackageDir;
+	}
+
+	const storePath = findInstalledStorePath(pnpmStore, pkgName, version);
+	if (!storePath) {
+		console.error(`Could not find ${pkgName}@${version} in ${pnpmStore}`);
+		process.exit(1);
+	}
+
+	return storePath;
+}
+
+const packageDir = resolveInstalledPackageDir();
 const manifest = JSON.parse(fs.readFileSync(path.join(packageDir, 'package.json'), 'utf8'));
 const binField = manifest.bin;
 
