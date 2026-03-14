@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { LoomTrackerClient } from '../dist/tracker/loom.js';
+import { LoomTrackerClient } from '../src/tracker/loom.js';
 
 function createConfig(overrides = {}) {
   return {

@@ -1,0 +1,36 @@
+{
+  "name": "@create-something/symphony",
+  "version": "0.1.0",
+  "description": "CREATE SOMETHING orchestration runtime for Loom-backed Codex workers.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./cli": "./src/cli.js",
+    "./config": "./src/config.js",
+    "./orchestrator": "./src/orchestrator.js",
+    "./tracker/loom": "./src/tracker/loom.js",
+    "./tracker/linear": "./src/tracker/linear.js"
+  },
+  "bin": {
+    "symphony": "./src/cli.js"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "check": "for f in src/*.js src/tracker/*.js test/*.mjs; do node --check \"$f\"; done",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "liquidjs": "^10.25.0",
+    "yaml": "^2.8.2"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/symphony"
+  }
+}

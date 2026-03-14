@@ -134,10 +134,10 @@
     "loom:migrate:import": "node scripts/loom/import-remote-snapshot.mjs",
     "loom:remote": "node scripts/loom/remote.mjs",
     "loom:migrate:validate": "node scripts/loom/validate-remote-cutover.mjs",
-    "symphony:code-quality": "node packages/symphony/dist/cli.js automation/symphony/code-quality/WORKFLOW.md",
-    "symphony:code-quality:once": "node packages/symphony/dist/cli.js automation/symphony/code-quality/WORKFLOW.md --once",
-    "symphony:policy": "node packages/symphony/dist/cli.js automation/symphony/policy/WORKFLOW.md",
-    "symphony:policy:once": "node packages/symphony/dist/cli.js automation/symphony/policy/WORKFLOW.md --once"
+    "symphony:code-quality": "node packages/symphony/src/cli.js automation/symphony/code-quality/WORKFLOW.md",
+    "symphony:code-quality:once": "node packages/symphony/src/cli.js automation/symphony/code-quality/WORKFLOW.md --once",
+    "symphony:policy": "node packages/symphony/src/cli.js automation/symphony/policy/WORKFLOW.md",
+    "symphony:policy:once": "node packages/symphony/src/cli.js automation/symphony/policy/WORKFLOW.md --once"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
