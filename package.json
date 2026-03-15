@@ -137,8 +137,16 @@
     "loom:migrate:validate": "node scripts/loom/validate-remote-cutover.mjs",
     "symphony:code-quality": "node packages/symphony/src/cli.js automation/symphony/code-quality/WORKFLOW.md",
     "symphony:code-quality:once": "node packages/symphony/src/cli.js automation/symphony/code-quality/WORKFLOW.md --once",
+    "symphony:code-quality:infisical": "bash scripts/symphony/run-with-infisical.sh code-quality",
+    "symphony:code-quality:infisical:once": "bash scripts/symphony/run-with-infisical.sh code-quality --once",
+    "symphony:hub-deploy": "node packages/symphony/src/cli.js automation/symphony/hub-deploy/WORKFLOW.md",
+    "symphony:hub-deploy:once": "node packages/symphony/src/cli.js automation/symphony/hub-deploy/WORKFLOW.md --once",
+    "symphony:hub-deploy:infisical": "bash scripts/symphony/run-with-infisical.sh hub-deploy",
+    "symphony:hub-deploy:infisical:once": "bash scripts/symphony/run-with-infisical.sh hub-deploy --once",
     "symphony:policy": "node packages/symphony/src/cli.js automation/symphony/policy/WORKFLOW.md",
-    "symphony:policy:once": "node packages/symphony/src/cli.js automation/symphony/policy/WORKFLOW.md --once"
+    "symphony:policy:once": "node packages/symphony/src/cli.js automation/symphony/policy/WORKFLOW.md --once",
+    "symphony:policy:infisical": "bash scripts/symphony/run-with-infisical.sh policy",
+    "symphony:policy:infisical:once": "bash scripts/symphony/run-with-infisical.sh policy --once"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",

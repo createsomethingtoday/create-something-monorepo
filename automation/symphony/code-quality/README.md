@@ -19,6 +19,10 @@ lm create "Fix failing MCP typecheck in playbook worker" \
   --labels code-quality
 ```
 
+For the recommended CREATE SOMETHING task shapes, use:
+
+- [docs/guides/SYMPHONY_TASK_TEMPLATES.md](/Volumes/LaCie/Create Something/create-something-monorepo/docs/guides/SYMPHONY_TASK_TEMPLATES.md)
+
 ## Running
 
 Continuous orchestration:
@@ -34,3 +38,18 @@ pnpm symphony:code-quality:once
 ```
 
 Runtime state is exposed on `http://127.0.0.1:4780/`.
+
+## Running with Infisical
+
+If `LOOM_MCP_API_TOKEN` is stored in Infisical instead of exported into your shell:
+
+```bash
+pnpm symphony:code-quality:infisical:once
+```
+
+Optional Infisical controls:
+
+- `INFISICAL_ENV` defaults to `prod`
+- `INFISICAL_PATH` defaults to `/`
+- `INFISICAL_PROJECT_ID` selects an explicit project
+- `INFISICAL_SECRET_NAME` defaults to `LOOM_MCP_API_TOKEN`

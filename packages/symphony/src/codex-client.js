@@ -104,6 +104,13 @@ export class CodexAppServerClient {
             }
             this.thread_id = thread_id;
             this.started = true;
+            this.emit({
+                event: 'session_started',
+                timestamp: now_iso(),
+                codex_app_server_pid: this.proc?.pid ?? null,
+                session_id: thread_id,
+                thread_id,
+            });
             return { thread_id, codex_app_server_pid: this.proc?.pid ?? null };
         }
         catch (error) {
@@ -151,7 +158,7 @@ export class CodexAppServerClient {
         }
         this.set_active_turn_id(turn_id);
         this.emit({
-            event: 'session_started',
+            event: 'turn_started',
             timestamp: now_iso(),
             codex_app_server_pid: this.proc?.pid ?? null,
             session_id: `${this.thread_id}-${turn_id}`,

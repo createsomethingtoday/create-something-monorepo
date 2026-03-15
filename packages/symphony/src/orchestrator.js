@@ -6,6 +6,7 @@ import { validate_dispatch_config } from './config.js';
 import { WorkflowManager } from './workflow.js';
 import { WorkspaceManager } from './workspace.js';
 import { create_agent_worker_run } from './agent-worker.js';
+import { create_telemetry } from './telemetry.js';
 function now_iso() {
     return new Date().toISOString();
 }
@@ -75,6 +76,7 @@ export class SymphonyService {
     current_config;
     tracker;
     workspace_manager;
+    telemetry;
     running = new Map();
     claimed = new Set();
     retry_attempts = new Map();
@@ -93,6 +95,9 @@ export class SymphonyService {
     started = false;
     http_server = null;
     requested_port;
+    startup_ready = false;
+    resolve_startup_ready;
+    startup_ready_promise;
     constructor(options = {}) {
         this.logger = options.logger ?? new ConsoleLogger();
         this.workflow_manager =
@@ -106,14 +111,33 @@ export class SymphonyService {
         this.tracker_factory = options.dependencies?.tracker_factory ?? default_tracker_factory;
         this.worker_factory =
             options.dependencies?.worker_factory ??
-                ((issue, attempt, prompt_template, config, tracker, workspace_manager, logger, on_event) => create_agent_worker_run(issue, attempt, prompt_template, config, tracker, workspace_manager, logger, on_event));
+                ((issue, attempt, workspace, prompt_template, config, tracker, workspace_manager, logger, on_event) => create_agent_worker_run(issue, attempt, workspace, prompt_template, config, tracker, workspace_manager, logger, on_event));
         this.requested_port = options.port ?? null;
+        this.startup_ready_promise = new Promise((resolve) => {
+            this.resolve_startup_ready = resolve;
+        });
+    }
+    mark_startup_ready(phase) {
+        if (this.startup_ready) {
+            return;
+        }
+        this.startup_ready = true;
+        this.logger.info('startup ready completed', { phase });
+        this.resolve_startup_ready?.(phase);
+    }
+    wait_for_startup_ready() {
+        return this.startup_ready_promise;
     }
     async start() {
         if (this.started)
             return;
+        this.logger.info('service start started', { mode: 'daemon' });
         const loaded = await this.workflow_manager.initialize();
         this.apply_workflow(loaded.definition, loaded.config);
+        this.logger.info('service workflow applied', {
+            workflow_path: loaded.definition.path,
+            tracker_kind: loaded.config.tracker.kind,
+        });
         await this.startup_terminal_workspace_cleanup();
         this.workflow_manager.on_reload(({ definition, config }) => {
             this.apply_workflow(definition, config);
@@ -122,11 +146,17 @@ export class SymphonyService {
         await this.maybe_start_http_server();
         this.started = true;
         this.schedule_tick(0);
+        this.logger.info('service start completed', { mode: 'daemon' });
     }
     async run_once() {
+        this.logger.info('service run_once started', {});
         if (!this.current_config) {
             const loaded = await this.workflow_manager.initialize();
             this.apply_workflow(loaded.definition, loaded.config);
+            this.logger.info('service workflow applied', {
+                workflow_path: loaded.definition.path,
+                tracker_kind: loaded.config.tracker.kind,
+            });
         }
         await this.startup_terminal_workspace_cleanup();
         this.started = true;
@@ -142,6 +172,7 @@ export class SymphonyService {
                 this.tick_timer = null;
             }
         }
+        this.logger.info('service run_once completed', {});
     }
     async stop() {
         this.started = false;
@@ -256,14 +287,20 @@ export class SymphonyService {
         this.current_definition = definition;
         this.current_config = config;
         this.tracker = this.tracker_factory(config, this.logger);
-        this.workspace_manager = new WorkspaceManager(config, this.logger);
+        this.telemetry = create_telemetry(config, this.logger);
+        this.workspace_manager = new WorkspaceManager(config, this.logger, this.telemetry);
     }
     async startup_terminal_workspace_cleanup() {
+        this.logger.info('startup cleanup started', {
+            terminal_states: this.current_config.tracker.terminal_states.join(','),
+        });
         try {
+            this.mark_startup_ready('startup_cleanup_tracker_call');
             const issues = await this.tracker.fetch_issues_by_states(this.current_config.tracker.terminal_states);
             for (const issue of issues) {
                 await this.workspace_manager.remove_workspace(issue.identifier);
             }
+            this.logger.info('startup cleanup completed', { issue_count: issues.length });
         }
         catch (error) {
             this.logger.warn('startup cleanup failed', { error: error.message });
@@ -364,9 +401,36 @@ export class SymphonyService {
             }
             let issues;
             try {
+                this.mark_startup_ready('candidate_fetch');
+                await this.telemetry.emit({
+                    task_id: '__lane__',
+                    phase: 'poll',
+                    status: 'started',
+                    details: {
+                        operations: ['poll', 'reconcile'],
+                    },
+                });
                 issues = await this.tracker.fetch_candidate_issues();
+                await this.telemetry.emit({
+                    task_id: '__lane__',
+                    phase: 'poll',
+                    status: 'succeeded',
+                    details: {
+                        candidate_count: issues.length,
+                    },
+                });
             }
             catch (error) {
+                await this.telemetry.emit({
+                    task_id: '__lane__',
+                    phase: 'poll',
+                    status: 'failed',
+                    error: {
+                        class: error?.name ?? 'PollError',
+                        message: error.message,
+                        retryable: true,
+                    },
+                });
                 this.logger.error('candidate fetch failed', { error: error.message });
                 return;
             }
@@ -381,7 +445,19 @@ export class SymphonyService {
             })) {
                 if (this.available_slots() <= 0)
                     break;
-                if (this.should_dispatch(issue, false)) {
+                const should_dispatch = this.should_dispatch(issue, false);
+                await this.telemetry.emit({
+                    task_id: issue.identifier,
+                    phase: 'select_task',
+                    status: should_dispatch ? 'succeeded' : 'skipped',
+                    details: {
+                        issue_id: issue.id,
+                        state: issue.state,
+                        priority: issue.priority ?? null,
+                        available_slots: this.available_slots(),
+                    },
+                });
+                if (should_dispatch) {
                     await this.dispatch_issue(issue, null);
                 }
             }
@@ -433,19 +509,61 @@ export class SymphonyService {
     async dispatch_issue(issue, attempt) {
         let claimed_issue = issue;
         if (typeof this.tracker.claim_issue === 'function') {
+            const claim_started_at = now_ms();
+            await this.telemetry.emit({
+                task_id: issue.identifier,
+                attempt,
+                phase: 'claim',
+                status: 'started',
+                details: {
+                    issue_id: issue.id,
+                },
+            });
             claimed_issue = await this.tracker.claim_issue(issue);
+            await this.telemetry.emit({
+                task_id: claimed_issue.identifier,
+                attempt,
+                phase: 'claim',
+                status: 'succeeded',
+                duration_ms: now_ms() - claim_started_at,
+                details: {
+                    issue_id: claimed_issue.id,
+                    state: claimed_issue.state,
+                },
+            });
         }
         let workspace;
         try {
-            workspace = await this.workspace_manager.ensure_workspace(claimed_issue.identifier);
+            workspace = await this.workspace_manager.ensure_workspace(claimed_issue.identifier, attempt);
         }
         catch (error) {
+            await this.telemetry.emit({
+                task_id: claimed_issue.identifier,
+                attempt,
+                phase: 'worktree_create',
+                status: 'failed',
+                error: {
+                    class: error?.name ?? 'WorkspaceSetupError',
+                    message: error.message,
+                    retryable: true,
+                },
+            });
             if (typeof this.tracker.release_issue === 'function') {
                 await this.tracker.release_issue(claimed_issue, 'workspace setup failed');
+                await this.telemetry.emit({
+                    task_id: claimed_issue.identifier,
+                    attempt,
+                    phase: 'release',
+                    status: 'succeeded',
+                    workspace_path: workspace?.path ?? null,
+                    details: {
+                        reason: 'workspace setup failed',
+                    },
+                });
             }
             throw error;
         }
-        const run = this.worker_factory(claimed_issue, attempt, this.current_definition.prompt_template, this.current_config, this.tracker, this.workspace_manager, this.logger, (event) => this.handle_codex_event(claimed_issue.id, event));
+        const run = this.worker_factory(claimed_issue, attempt, workspace, this.current_definition.prompt_template, this.current_config, this.tracker, this.workspace_manager, this.logger, (event) => this.handle_codex_event(claimed_issue.id, event));
         this.running.set(claimed_issue.id, {
             entry: to_running_entry(claimed_issue, attempt),
             run,
@@ -472,6 +590,16 @@ export class SymphonyService {
             this.pending_exits.delete(exit_settlement);
         });
         this.pending_exits.add(exit_settlement);
+        void this.telemetry.emit({
+            task_id: claimed_issue.identifier,
+            attempt,
+            phase: 'codex_start',
+            status: 'started',
+            workspace_path: workspace.path,
+            details: {
+                issue_id: claimed_issue.id,
+            },
+        });
         this.logger.info('dispatch completed', {
             issue_id: claimed_issue.id,
             issue_identifier: claimed_issue.identifier,
@@ -513,6 +641,36 @@ export class SymphonyService {
         if (event.rate_limits) {
             this.codex_rate_limits = event.rate_limits;
         }
+        const phase_status = event.event === 'session_started'
+            ? 'succeeded'
+            : event.event === 'turn_started'
+                ? 'started'
+                : event.event === 'turn_completed'
+                    ? 'succeeded'
+                    : event.event === 'turn_failed' || event.event === 'turn_cancelled'
+                        ? 'failed'
+                        : null;
+        if (phase_status) {
+            void this.telemetry.emit({
+                task_id: state.entry.identifier,
+                attempt: state.entry.retry_attempt,
+                phase: event.event === 'session_started' ? 'codex_start' : 'codex_turn',
+                status: phase_status,
+                workspace_path: this.running.get(issue_id)?.workspace_path ?? null,
+                details: {
+                    session_id: event.session_id ?? null,
+                    event: event.event,
+                    usage: event.usage ?? null,
+                },
+                error: phase_status === 'failed'
+                    ? {
+                        class: 'CodexTurnError',
+                        message: event.message ?? event.event,
+                        retryable: true,
+                    }
+                    : undefined,
+            });
+        }
         state.entry.recent_events.push({
             at: event.timestamp,
             event: event.event,
@@ -527,10 +685,27 @@ export class SymphonyService {
         if (!state)
             return;
         this.running.delete(issue_id);
+        await this.telemetry.emit({
+            task_id: state.entry.identifier,
+            attempt: state.entry.retry_attempt,
+            phase: 'codex_turn',
+            status: result.status === 'completed' ? 'succeeded' : result.status === 'cancelled' ? 'skipped' : 'failed',
+            workspace_path: state.workspace_path,
+            details: {
+                turn_count: result.turn_count,
+            },
+            error: result.status === 'failed'
+                ? {
+                    class: 'WorkerExitError',
+                    message: result.error ?? 'worker exited unexpectedly',
+                    retryable: true,
+                }
+                : undefined,
+        });
         this.codex_totals.seconds_running_ended += Math.max(0, (now_ms() - Date.parse(state.entry.started_at)) / 1000);
         if (state.stop_behavior.mode === 'release') {
             if (state.stop_behavior.cleanup_workspace) {
-                await this.workspace_manager.remove_workspace(state.entry.issue.identifier);
+                await this.workspace_manager.remove_workspace(state.entry.issue.identifier, state.entry.retry_attempt);
             }
             this.claimed.delete(issue_id);
             return;
@@ -550,15 +725,44 @@ export class SymphonyService {
             this.completed.add(issue_id);
             if (typeof this.tracker.complete_issue === 'function') {
                 try {
+                    await this.telemetry.emit({
+                        task_id: state.entry.identifier,
+                        attempt: state.entry.retry_attempt,
+                        phase: 'complete',
+                        status: 'started',
+                        workspace_path: state.workspace_path,
+                    });
                     await this.tracker.complete_issue(state.entry.issue, {
                         turn_count: result.turn_count,
                         message: result.final_message ?? state.entry.last_codex_message ?? null,
                     });
-                    await this.workspace_manager.remove_workspace(state.entry.issue.identifier);
+                    await this.telemetry.emit({
+                        task_id: state.entry.identifier,
+                        attempt: state.entry.retry_attempt,
+                        phase: 'complete',
+                        status: 'succeeded',
+                        workspace_path: state.workspace_path,
+                        details: {
+                            turn_count: result.turn_count,
+                        },
+                    });
+                    await this.workspace_manager.remove_workspace(state.entry.issue.identifier, state.entry.retry_attempt);
                     this.claimed.delete(issue_id);
                     return;
                 }
                 catch (error) {
+                    await this.telemetry.emit({
+                        task_id: state.entry.identifier,
+                        attempt: state.entry.retry_attempt,
+                        phase: 'complete',
+                        status: 'failed',
+                        workspace_path: state.workspace_path,
+                        error: {
+                            class: error?.name ?? 'TrackerCompletionError',
+                            message: error instanceof Error ? error.message : String(error),
+                            retryable: true,
+                        },
+                    });
                     this.logger.error('tracker completion failed', {
                         issue_id,
                         issue_identifier: state.entry.issue.identifier,
@@ -602,6 +806,16 @@ export class SymphonyService {
             timer,
         });
         this.claimed.add(issue_id);
+        void this.telemetry.emit({
+            task_id: meta.identifier ?? issue_id,
+            attempt,
+            phase: 'retry_scheduled',
+            status: 'started',
+            details: {
+                due_at: new Date(due_at_ms).toISOString(),
+                reason: meta.error ?? (continuation ? 'continuation' : 'retry'),
+            },
+        });
         this.logger.info('retry scheduled retrying', {
             issue_id,
             issue_identifier: meta.identifier ?? undefined,
@@ -614,12 +828,22 @@ export class SymphonyService {
         const retry = this.retry_attempts.get(issue_id);
         if (!retry)
             return;
-        this.retry_attempts.delete(issue_id);
         let candidates;
         try {
             candidates = await this.tracker.fetch_candidate_issues();
         }
         catch (error) {
+            await this.telemetry.emit({
+                task_id: retry.entry.identifier,
+                attempt: retry.entry.attempt,
+                phase: 'poll',
+                status: 'failed',
+                error: {
+                    class: error?.name ?? 'RetryPollError',
+                    message: 'retry poll failed',
+                    retryable: true,
+                },
+            });
             this.schedule_retry(issue_id, retry.entry.attempt + 1, {
                 identifier: retry.entry.identifier,
                 error: 'retry poll failed',
@@ -628,6 +852,7 @@ export class SymphonyService {
         }
         const issue = candidates.find((entry) => entry.id === issue_id) ?? null;
         if (!issue) {
+            this.retry_attempts.delete(issue_id);
             this.claimed.delete(issue_id);
             return;
         }
@@ -639,6 +864,7 @@ export class SymphonyService {
             return;
         }
         if (!this.should_dispatch(issue, true)) {
+            this.retry_attempts.delete(issue_id);
             this.claimed.delete(issue_id);
             return;
         }
@@ -664,6 +890,16 @@ export class SymphonyService {
                 continue;
             if (is_terminal_state(issue, this.current_config)) {
                 running.stop_behavior = { mode: 'release', cleanup_workspace: true };
+                await this.telemetry.emit({
+                    task_id: running.entry.identifier,
+                    attempt: running.entry.retry_attempt,
+                    phase: 'release',
+                    status: 'started',
+                    workspace_path: running.workspace_path,
+                    details: {
+                        reason: 'terminal state',
+                    },
+                });
                 await running.run.terminate('terminal state');
             }
             else if (is_active_state(issue, this.current_config)) {
@@ -671,6 +907,16 @@ export class SymphonyService {
             }
             else {
                 running.stop_behavior = { mode: 'release', cleanup_workspace: false };
+                await this.telemetry.emit({
+                    task_id: running.entry.identifier,
+                    attempt: running.entry.retry_attempt,
+                    phase: 'release',
+                    status: 'started',
+                    workspace_path: running.workspace_path,
+                    details: {
+                        reason: 'inactive state',
+                    },
+                });
                 await running.run.terminate('inactive state');
             }
         }
@@ -686,6 +932,18 @@ export class SymphonyService {
             }
             running.stop_behavior = { mode: 'retry', reason: 'stalled session' };
             await running.run.terminate('stalled session');
+            await this.telemetry.emit({
+                task_id: running.entry.identifier,
+                attempt: running.entry.retry_attempt,
+                phase: 'codex_turn',
+                status: 'failed',
+                workspace_path: running.workspace_path,
+                error: {
+                    class: 'StalledSessionError',
+                    message: 'stalled session',
+                    retryable: true,
+                },
+            });
             this.logger.warn('stall detected retrying', {
                 issue_id,
                 issue_identifier: running.entry.issue.identifier,
@@ -694,6 +952,9 @@ export class SymphonyService {
     }
     async drain_until_idle() {
         while (this.running.size > 0 || this.retry_attempts.size > 0 || this.pending_exits.size > 0 || this.tick_running) {
+            if (!this.tick_running) {
+                await this.reconcile_running_issues();
+            }
             await new Promise((resolve) => setTimeout(resolve, 25));
         }
     }

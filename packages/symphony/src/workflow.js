@@ -1,9 +1,9 @@
 import { readFile, stat, watch } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import YAML from 'yaml';
 import { SymphonyError, isSymphonyError } from './errors.js';
 import { resolve_service_config, validate_dispatch_config } from './config.js';
+import { parse_front_matter_map } from './frontmatter.js';
 function splitFrontMatter(source) {
     if (!source.startsWith('---')) {
         return { frontMatter: null, body: source };
@@ -27,7 +27,7 @@ export async function load_workflow_definition(workflow_path, cwd = process.cwd(
     let config = {};
     if (frontMatter !== null) {
         try {
-            const parsed = YAML.parse(frontMatter);
+            const parsed = parse_front_matter_map(frontMatter);
             if (parsed === null) {
                 config = {};
             }
@@ -70,13 +70,28 @@ export class WorkflowManager {
         this.logger = options.logger;
     }
     async initialize() {
+        this.logger.info('workflow initialize started', { workflow_path: this.workflow_path });
         const definition = await load_workflow_definition(this.workflow_path, this.cwd);
+        this.logger.info('workflow definition loaded', { workflow_path: definition.path });
         const config = resolve_service_config(definition, this.cwd, this.env);
+        this.logger.info('workflow config resolved', {
+            workflow_path: definition.path,
+            tracker_kind: config.tracker.kind,
+            workspace_root: config.workspace.root,
+        });
         validate_dispatch_config(config);
+        this.logger.info('workflow config validated', {
+            workflow_path: definition.path,
+            tracker_kind: config.tracker.kind,
+        });
         const info = await stat(definition.path);
         this.current_definition = definition;
         this.current_config = config;
         this.current_mtime_ms = info.mtimeMs;
+        this.logger.info('workflow initialize completed', {
+            workflow_path: definition.path,
+            mtime_ms: info.mtimeMs,
+        });
         return { definition, config };
     }
     get_current() {

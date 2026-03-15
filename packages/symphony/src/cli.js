@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { appendFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { ConsoleLogger } from './logger.js';
 import { SymphonyService } from './orchestrator.js';
 function parse_args(argv) {
@@ -28,20 +29,72 @@ function parse_args(argv) {
     }
     return out;
 }
+function bootstrap_log_path(workflow_path) {
+    return process.env.SYMPHONY_BOOTSTRAP_LOG || join(dirname(workflow_path), '.symphony-bootstrap.jsonl');
+}
+async function write_bootstrap_log(workflow_path, phase, details = {}) {
+    const path = bootstrap_log_path(workflow_path);
+    const entry = {
+        timestamp: new Date().toISOString(),
+        phase,
+        ...details,
+    };
+    try {
+        await mkdir(dirname(path), { recursive: true });
+        await appendFile(path, `${JSON.stringify(entry)}\n`, 'utf8');
+    }
+    catch {
+        // Best-effort only. Startup logging must never block process execution.
+    }
+}
 async function main() {
     const args = parse_args(process.argv);
     const workflow_path = resolve(process.cwd(), args.workflow_path ?? 'WORKFLOW.md');
+    await write_bootstrap_log(workflow_path, 'cli_entered', { once: args.once, port: args.port ?? null });
     if (!existsSync(workflow_path)) {
+        await write_bootstrap_log(workflow_path, 'workflow_missing', {});
         throw new Error(`Workflow file not found: ${workflow_path}`);
     }
     const logger = new ConsoleLogger();
+    logger.info('cli bootstrap started', { workflow_path, once: args.once, port: args.port ?? undefined });
+    await write_bootstrap_log(workflow_path, 'workflow_resolved', { workflow_path });
     const service = new SymphonyService({
         workflow_path,
         logger,
         port: args.port,
     });
+    await write_bootstrap_log(workflow_path, 'service_created', {});
     if (args.once) {
-        await service.run_once();
+        const startup_timeout_ms = Number(process.env.SYMPHONY_STARTUP_TIMEOUT_MS ?? 10_000);
+        const run_once_promise = service.run_once();
+        let startup_timer;
+        const startup_timeout_promise = new Promise((_, reject) => {
+            startup_timer = setTimeout(() => {
+                reject(new Error(`Symphony startup stalled before first tracker call after ${startup_timeout_ms}ms`));
+            }, startup_timeout_ms);
+        });
+        try {
+            await write_bootstrap_log(workflow_path, 'run_once_started', { startup_timeout_ms });
+            await Promise.race([
+                run_once_promise,
+                service.wait_for_startup_ready().then(async (phase) => {
+                    clearTimeout(startup_timer);
+                    logger.info('cli startup checkpoint reached', { phase });
+                    await write_bootstrap_log(workflow_path, 'startup_ready', { phase });
+                }),
+                startup_timeout_promise,
+            ]);
+            await run_once_promise;
+            await write_bootstrap_log(workflow_path, 'run_once_completed', {});
+        }
+        catch (error) {
+            clearTimeout(startup_timer);
+            await write_bootstrap_log(workflow_path, 'startup_failed', {
+                error: error instanceof Error ? error.message : String(error),
+            });
+            await service.stop().catch(() => {});
+            throw error;
+        }
         return;
     }
     await service.start();

@@ -1,6 +1,5 @@
 import { CodexAppServerClient } from './codex-client.js';
 import { render_prompt_template } from './template.js';
-import { WorkspaceManager } from './workspace.js';
 function normalize_state(state) {
     return state.trim().toLowerCase();
 }
@@ -17,18 +16,16 @@ function continuation_prompt(issue, attempt, turn_number, max_turns) {
         'Do not restate the original task prompt. Continue from the existing thread history.',
     ].join('\n');
 }
-export function create_agent_worker_run(issue, attempt, prompt_template, config, tracker, workspace_manager, logger, on_event) {
+export function create_agent_worker_run(issue, attempt, workspace, prompt_template, config, tracker, workspace_manager, logger, on_event) {
     let stopped = false;
     let stop_reason = 'cancelled';
     let client = null;
     const promise = (async () => {
-        let workspace = null;
         let current_issue = issue;
         let turn_count = 0;
         let final_message = null;
         try {
-            workspace = await workspace_manager.ensure_workspace(issue.identifier);
-            await workspace_manager.run_before_run(workspace);
+            await workspace_manager.run_before_run(workspace, attempt);
             client = new CodexAppServerClient({
                 config,
                 cwd: workspace.path,
@@ -89,7 +86,7 @@ export function create_agent_worker_run(issue, attempt, prompt_template, config,
         finally {
             await client?.close();
             if (workspace) {
-                await workspace_manager.run_after_run(workspace);
+                await workspace_manager.run_after_run(workspace, attempt);
             }
         }
     })();
