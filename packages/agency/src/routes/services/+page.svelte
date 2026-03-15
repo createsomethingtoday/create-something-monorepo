@@ -33,14 +33,14 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'Production-safe workflow infrastructure for cross-system operations, automation, and AI execution.',
+        'Cross-system workflows built with explicit business rules, auth boundaries, and production behavior.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build'
     },
     {
       name: 'Policy OS',
-      description: `Operational safeguards delivered with ${deliveryVector.clientFacingLabel}: policy artifacts, release gates, blocked-state UX, and incident loops.`,
+      description: `Operational safeguards delivered with ${deliveryVector.clientFacingLabel}: approval rules, release checks, blocked states, and incident loops.`,
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly'
@@ -48,7 +48,7 @@
     {
       name: 'Enterprise Extension',
       description:
-        'Custom orchestration and governance for high-stakes, cross-system, and compliance-heavy workflows.',
+        'Orchestration for regulated, high-volume, or multi-system workflows that need auditability and deterministic recovery.',
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation'
@@ -59,7 +59,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Policy OS is the canonical paid package. Workflow Infrastructure delivers the implementation layer, and Enterprise Extension expands that package for higher-stakes operations.'
+        'Policy OS is the canonical paid package. Workflow Infrastructure gets the workflow live. Enterprise Extension covers higher-stakes environments.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
@@ -69,12 +69,12 @@
     {
       question: 'What does .agency own?',
       answer:
-        '.agency owns workflow infrastructure design, reliability controls, trust boundaries, and enterprise extension architecture.'
+        '.agency owns workflow logic, trust boundaries, production controls, and extension architecture.'
     },
     {
       question: 'When should we add Policy OS?',
       answer:
-        'Add it when failures become expensive, workflows become autonomous, or multiple systems must stay in sync. It is the governed-execution layer before scale.'
+        'Add it when failures get expensive, workflows become autonomous, or several systems must stay in sync.'
     },
     {
       question: 'When do we need Enterprise Extension?',
@@ -93,14 +93,14 @@
     },
     {
       question: 'Why the phrase Skills + MCP?',
-      answer: `Client-facing delivery is ${deliveryVector.clientFacingLabel}. Technical proof uses ${deliveryVector.technicalLabel}: MCP handles trust and connectivity while Skills carry behavior and workflow intent.`
+      answer: `Client-facing delivery is ${deliveryVector.clientFacingLabel}. MCP handles trust and connectivity. Skills carry behavior and workflow intent.`
     }
   ];
 </script>
 
 <SEO
   title="How We Work | Production-Safe Workflow Infrastructure"
-  description="CREATE SOMETHING .agency builds production-safe workflow infrastructure for technical operators: reliability controls, trust boundaries, and enterprise automation architecture."
+  description="CREATE SOMETHING .agency turns one critical workflow into a governed production system: implementation first, controls second, extension only when needed."
   keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -126,14 +126,12 @@
       <p class="hero-eyebrow">How I Work</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Connected systems.</h1>
+      <h1 class="hero-title">Start with one workflow.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        We help CTOs and engineering leaders orchestrate the tools their teams already rely on,
-        add Policy OS around AI execution, and keep cross-system work reliable in production.
-        Start with Workflow Infrastructure. Add Policy OS when failure cost
-        rises. Escalate to Enterprise Extension for high-stakes operations.
+        Workflow Infrastructure gets it running. Policy OS governs execution when failure gets
+        expensive. Enterprise Extension covers high-stakes operations.
       </p>
     </BlurFade>
   </div>
@@ -145,7 +143,7 @@
     <BlurFade delay={0.3}>
       <GovernedExecutionFlow
         title="Where Policy OS fits"
-        description="Workflow Infrastructure creates the route. Policy OS decides whether the route can run fast, needs review, or should stop."
+        description="Workflow Infrastructure gets the route live. Policy OS decides what runs automatically, what needs review, and what stops."
       />
     </BlurFade>
   </div>
@@ -190,8 +188,8 @@
             <div class="retainer-period">From wedge to governed execution</div>
           </div>
           <p class="retainer-note">
-            Start with one workflow. Add Policy OS when failures become expensive. Escalate
-            to Enterprise Extension when governance and orchestration requirements widen.
+            Start with one workflow. Add Policy OS when failure gets expensive. Use Enterprise
+            Extension when auditability and orchestration widen.
           </p>
         </div>
         <div class="retainer-body">
@@ -199,7 +197,7 @@
             <article class="progression-card wedge-card">
               <span class="progression-tag">Entry wedge</span>
               <h3>MCP-only</h3>
-              <p>Use this when discovery or compliance means the client team will operate the agent.</p>
+              <p>Use this when discovery or compliance means your team will operate the agent directly.</p>
               <ul class="retainer-list">
                 <li>Connectivity validation</li>
                 <li>Scoped host setup</li>
@@ -229,8 +227,7 @@
           </div>
           <div class="retainer-callout">
             <p>
-              Discovery can start with MCP-only, but Policy OS is where execution becomes a
-              managed product instead of a loose integration.
+              MCP-only gets you connected. Policy OS makes it safe to run.
             </p>
           </div>
         </div>
@@ -245,7 +242,7 @@
     <BlurFade>
       <ArtifactSystemStrip
         title="What ships with every governed engagement"
-        description="Policy OS is not a promise in a sales call. It is a set of artifacts your team can inspect, run, and inherit."
+        description="Policy OS ships as artifacts your team can inspect, run, and inherit."
       />
     </BlurFade>
   </div>
@@ -260,12 +257,11 @@
 
     <div class="timeline-grid">
       <BlurFade delay={0.1}>
-          <div class="timeline-card">
+        <div class="timeline-card">
             <span class="timeline-label">Phase 1</span>
           <h3>Workflow Infrastructure</h3>
           <p>
-            Implement the highest-value cross-system workflows with clear trust boundaries and
-            production behavior.
+            Build the highest-value workflow with clear trust boundaries and production behavior.
           </p>
         </div>
       </BlurFade>
@@ -275,8 +271,7 @@
             <span class="timeline-label">Phase 2</span>
           <h3>Policy OS</h3>
           <p>
-            .agency adds eval coverage, release checks, policy envelopes, and incident loops as
-            automation scope, business criticality, and risk increase.
+            Add evals, release checks, policy envelopes, and incident loops as risk rises.
           </p>
         </div>
       </BlurFade>
@@ -286,8 +281,8 @@
           <span class="timeline-label">Phase 3</span>
           <h3>Extension</h3>
           <p>
-            For enterprise constraints, we extend beyond Notion-native automations with custom
-            MCP/orchestration and governance controls.
+            Extend with custom orchestration and governance when native automation stops being
+            enough.
           </p>
         </div>
       </BlurFade>
@@ -323,8 +318,7 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="cta-subtext">
-        We’ll define your trust boundaries, failure modes, and escalation path before
-        implementation.
+        We’ll define the trust boundary, failure modes, and escalation path before implementation.
       </p>
     </BlurFade>
     <BlurFade delay={0.2}>

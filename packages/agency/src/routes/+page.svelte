@@ -14,7 +14,7 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'Production-safe workflow infrastructure for business-critical operations that generic automations cannot handle reliably.',
+        'Cross-system workflows built with explicit business rules, auth boundaries, and production behavior.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build with optional ongoing support'
@@ -22,7 +22,7 @@
     {
       name: 'Policy OS',
       description:
-        'CREATE SOMETHING .agency adds policy artifacts, release checks, blocked-state UX, and incident loops so automation scales safely.',
+        'Approval rules, release checks, blocked states, and incident loops that keep automation safe in production.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly governed execution layer'
@@ -30,7 +30,7 @@
     {
       name: 'Enterprise Extension',
       description:
-        'Custom orchestration for cross-system, high-stakes, and compliance-heavy workflows.',
+        'Orchestration for regulated, high-volume, or multi-system workflows that need auditability and deterministic recovery.',
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation with optional ongoing support'
@@ -153,7 +153,7 @@
 
 <SEO
   title="Production-Safe Workflow Infrastructure | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency helps CTOs and engineering leaders reduce integration drag, control automation risk, and ship reliable cross-system workflows."
+  description="CREATE SOMETHING .agency builds cross-system workflows for CTOs and engineering leaders, with the controls needed to run them safely in production."
   keywords="workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -176,19 +176,18 @@
   <div class="hero-container">
     <div class="hero-content">
       <BlurFade delay={0}>
-        <h1 class="hero-title">Connected systems.</h1>
+        <h1 class="hero-title">Critical workflows that hold up in production.</h1>
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-detail">
-          I help CTOs and engineering leaders orchestrate the tools their teams already rely on,
-          add Policy OS around AI execution, and ship cross-system workflows that stay
-          reliable when the stakes become operational.
+          I build the logic, controls, and operating artifacts that keep cross-system work
+          reliable. Start with one workflow. Add Policy OS when failure gets expensive.
         </p>
       </BlurFade>
       <BlurFade delay={0.25}>
         <div class="hero-cta">
           <ShimmerButton href="/book">Book Mapping Session</ShimmerButton>
-          <a href="#how" class="hero-link">How it works →</a>
+          <a href="#how" class="hero-link">See the three lanes →</a>
         </div>
       </BlurFade>
     </div>
@@ -293,8 +292,8 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Three escalation lanes: Workflow Infrastructure, Policy OS, and
-        Enterprise Extension.
+        Start with one workflow. Add controls as failure cost rises. Extend only when the
+        environment demands it.
       </p>
     </BlurFade>
 
@@ -309,8 +308,8 @@
             <span class="funnel-step-label">Lane 1</span>
             <h3>Workflow Infrastructure</h3>
             <p>
-              I build the integration and workflow logic for the operations that matter most, with
-              clear trust boundaries and production-ready behavior.
+              I map the business rules, auth boundaries, and failure paths for the workflow that
+              matters most.
             </p>
           </div>
         </div>
@@ -326,8 +325,8 @@
             <span class="funnel-step-label">Lane 2</span>
             <h3>Policy OS</h3>
             <p>
-              I add policy artifacts, release gates, blocked-state UX, and incident reviews so
-              automation stays reliable as workflow scope expands.
+              I add approval rules, release gates, blocked states, and incident reviews so
+              automation keeps working as scope expands.
             </p>
           </div>
         </div>
@@ -342,8 +341,8 @@
             <span class="funnel-step-label">Lane 3</span>
             <h3>Enterprise Extension</h3>
             <p>
-              For high-stakes workflows, I build orchestration layers across systems, with
-              governance and traceability that native automation cannot yet provide.
+              I build the orchestration layer for workflows that cross systems, teams, or
+              compliance boundaries.
             </p>
           </div>
         </div>
@@ -360,8 +359,8 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Start with workflow infrastructure, add reliability controls as risk grows, and extend for
-        enterprise constraints.
+        Each lane adds a clear control layer. You know what gets built, what gets governed, and
+        what your team inherits.
       </p>
     </BlurFade>
 
@@ -373,8 +372,7 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              Workflow infrastructure designed specifically for your business rules and trust
-              boundaries.
+              One critical workflow, implemented with explicit business rules and trust boundaries.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -397,8 +395,8 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              The governed execution package for production automation. Policy artifacts, release
-              checks, and operational review loops.
+              The controls layer for production automation: approval rules, release checks,
+              blocked states, and review loops.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -420,8 +418,8 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              Beyond native limits. Architecture and orchestration for strict governance
-              constraints.
+              The orchestration layer for auditability, deterministic retries, and cross-system
+              coordination.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -449,16 +447,15 @@
       <div class="problem-statements model-grid">
         <div class="model-copy">
           <p class="problem-text">
-            Native agent features are getting easier to adopt. That is good for teams and good for
-            velocity.
+            Connecting tools is getting easier. Governing live workflows is not.
           </p>
           <p class="problem-text">
-            The hard gap remains workflow-specific logic, approval boundaries, and live blocked
-            states. That is where `.agency` compounds value.
+            The hard part is deciding what can run automatically, what needs approval, and what
+            must stop with a reason. That is the work.
           </p>
           <ul class="control-outcomes">
             <li>Safe actions run automatically once the workflow and tenant are in good standing.</li>
-            <li>Risky actions route to approval instead of silently becoming manual cleanup.</li>
+            <li>Risky actions route to approval instead of becoming cleanup.</li>
             <li>Disallowed actions stop with a reason buyers and operators can both understand.</li>
           </ul>
           <p class="problem-text">
@@ -493,18 +490,18 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="cta-heading">Need trust you can inspect?</h2>
+      <h2 class="cta-heading">Map the workflow that cannot fail.</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="cta-subtext">
-        Book a Policy Mapping Session and I will map your policy boundary and show what the artifact
-        bundle looks like for your workflows.
+        In one session, I will map the trust boundary, failure modes, and artifact bundle your
+        team would need.
       </p>
     </BlurFade>
     <BlurFade delay={0.2}>
       <div class="cta-buttons">
         <ShimmerButton href="/book">Book Mapping Session</ShimmerButton>
-        <a href="/services" class="cta-book-link"> Review the approach → </a>
+        <a href="/services" class="cta-book-link"> See the engagement model → </a>
       </div>
     </BlurFade>
   </div>

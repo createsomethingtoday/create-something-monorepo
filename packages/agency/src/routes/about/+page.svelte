@@ -34,8 +34,8 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        I work on the part most teams under-scope: cross-system logic, reliability controls, trust
-        boundaries, and the operating artifacts that make automation safe in production.
+        I work on the part most teams under-scope: the rules, controls, and artifacts that make
+        automation safe in production.
       </p>
     </BlurFade>
   </div>
@@ -48,16 +48,13 @@
       <div class="about-content">
         <h2>The approach</h2>
         <p>
-          CREATE SOMETHING .agency helps CTOs and engineering leaders make important workflows
-          reliable. Most engagements start with a scoped MCP implementation for one critical
-          workflow, then expand into reliability controls and enterprise extension only when the
-          operating risk justifies it.
+          Most teams do not need a giant platform project first. They need one workflow that
+          works. I usually start there, then add controls only when the cost of failure justifies
+          it.
         </p>
         <p>
-          My methodology is the Subtractive Triad: before building anything new, I audit your
-          systems to find what should be removed — duplication, excess, disconnection. What remains
-          is what's worth automating. This is why the systems hold up in production: the
-          architecture is designed before capabilities are added.
+          My methodology is the Subtractive Triad: remove duplication, excess, and disconnection
+          before adding automation. Cleaner systems produce more reliable automation.
         </p>
       </div>
     </BlurFade>
@@ -183,12 +180,12 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
-      <h2 class="cta-heading">Need a workflow you can trust?</h2>
+      <h2 class="cta-heading">Map the workflow that cannot fail.</h2>
     </BlurFade>
     <BlurFade delay={0.2}>
       <div class="cta-actions">
         <a href="/book" class="cta-link-primary">Book Mapping Session →</a>
-        <a href="/services" class="cta-link-secondary">How I work →</a>
+        <a href="/services" class="cta-link-secondary">See the engagement model →</a>
       </div>
     </BlurFade>
   </div>

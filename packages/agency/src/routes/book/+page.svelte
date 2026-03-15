@@ -32,17 +32,17 @@
 		{
 			value: 'workflow_infrastructure',
 			label: 'Critical Workflow',
-			description: 'A high-value workflow that needs a safer starting wedge.'
+			description: 'One workflow that needs a safer, production-ready starting point.'
 		},
 		{
 			value: 'reliability_and_control',
 			label: 'Policy OS',
-			description: 'Policy artifacts, release gates, and incident controls for production automation.'
+			description: 'Approval rules, release gates, and incident controls around live automation.'
 		},
 		{
 			value: 'enterprise_extension',
 			label: 'Enterprise Constraints',
-			description: 'Cross-system orchestration with stricter governance and operational controls.'
+			description: 'Cross-system orchestration with stricter governance, auditability, and recovery.'
 		},
 		{
 			value: 'system_development_referral',
@@ -52,7 +52,7 @@
 		{
 			value: 'not_sure',
 			label: 'Not sure yet',
-			description: 'Need help mapping the right engagement.'
+			description: 'Need help choosing the right lane.'
 		}
 	];
 
@@ -233,7 +233,7 @@
 	<header class="booking-header">
 		<h1 class="booking-title">Book a Workflow Mapping Session</h1>
 		<p class="booking-subtitle">
-			Bring the workflow with the most drag or risk. We’ll map the safest starting wedge together.
+			Bring the workflow with the most drag or risk. We’ll map the safest starting point together.
 		</p>
 	</header>
 
@@ -290,7 +290,7 @@
 				<h2 class="step-title">Your details and lane</h2>
 				<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
 					<p id="lane-intake-title" class="lane-intake-title">Which kind of workflow needs attention first?</p>
-					<p class="lane-intake-helper">This only helps me prep. Most engagements start with one scoped MCP implementation.</p>
+					<p class="lane-intake-helper">This helps me prep. Most engagements start with one scoped workflow.</p>
 					<div class="lane-options">
 						{#each laneOptions as lane}
 							<label class="lane-option" class:selected={selectedLane === lane.value}>

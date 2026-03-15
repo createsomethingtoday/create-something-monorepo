@@ -23,6 +23,25 @@ function find_last(events, predicate) {
     return null;
 }
 
+function summarize_run_state(run_end) {
+    if (!run_end) {
+        return 'unknown';
+    }
+    if (run_end.phase === 'retry_scheduled' && run_end.status === 'started') {
+        return 'retrying';
+    }
+    if (run_end.phase === 'release' && run_end.status === 'succeeded') {
+        return 'released';
+    }
+    if ((run_end.phase === 'complete' || run_end.phase === 'cleanup') && run_end.status === 'succeeded') {
+        return 'succeeded';
+    }
+    if (run_end.status === 'failed') {
+        return 'failed';
+    }
+    return 'running';
+}
+
 export function summarize_task_events(events) {
     if (!Array.isArray(events) || events.length === 0) {
         return null;
@@ -33,21 +52,24 @@ export function summarize_task_events(events) {
     const current_run = latest_run_id ? ordered.filter((event) => event.run_id === latest_run_id) : ordered;
     const run_start = current_run[0];
     const run_end = current_run.at(-1);
+    const state = summarize_run_state(run_end);
     const last_success = find_last(current_run, (event) => event.status === 'succeeded');
     const last_failure = find_last(current_run, (event) => event.status === 'failed');
     const last_workspace = find_last(current_run, (event) => typeof event.workspace_path === 'string' && event.workspace_path.trim() !== '');
-    const active_error = run_end.status === 'failed' ? run_end.error ?? last_failure?.error ?? null : null;
+    const active_error = state === 'failed' ? run_end.error ?? last_failure?.error ?? null : null;
     return {
         task_id: run_end.task_id,
         run_id: latest_run_id,
         lane: run_end.lane ?? run_start.lane ?? null,
         agent_id: run_end.agent_id ?? run_start.agent_id ?? null,
+        state,
         phase: run_end.phase ?? null,
         status: run_end.status ?? null,
         started_at: run_start.timestamp,
         updated_at: run_end.timestamp,
         elapsed_ms: Math.max(0, Date.parse(run_end.timestamp) - Date.parse(run_start.timestamp)),
         attempt: run_end.attempt ?? null,
+        next_retry_at: state === 'retrying' ? run_end.details?.due_at ?? null : null,
         workspace_path: last_workspace?.workspace_path ?? null,
         last_successful_phase: last_success?.phase ?? null,
         last_error: active_error,
@@ -137,9 +159,12 @@ export function format_status_report(report) {
     if (report.task_id) {
         const task = report.tasks[0];
         const lines = [
-            `task=${task.task_id} lane=${task.lane} status=${task.status} phase=${task.phase}`,
+            `task=${task.task_id} lane=${task.lane} state=${task.state} phase=${task.phase} event_status=${task.status}`,
             `updated_at=${task.updated_at} elapsed=${format_duration(task.elapsed_ms)}`,
         ];
+        if (task.next_retry_at) {
+            lines.push(`next_retry_at=${task.next_retry_at}`);
+        }
         if (task.last_successful_phase) {
             lines.push(`last_successful_phase=${task.last_successful_phase}`);
         }
@@ -158,11 +183,15 @@ export function format_status_report(report) {
         .map((task) => {
         const parts = [
             `task=${task.task_id}`,
-            `status=${task.status}`,
+            `state=${task.state}`,
             `phase=${task.phase}`,
+            `event_status=${task.status}`,
             `updated_at=${task.updated_at}`,
             `elapsed=${format_duration(task.elapsed_ms)}`,
         ];
+        if (task.next_retry_at) {
+            parts.push(`next_retry_at=${task.next_retry_at}`);
+        }
         if (task.last_error?.message) {
             parts.push(`error=${task.last_error.message}`);
         }
