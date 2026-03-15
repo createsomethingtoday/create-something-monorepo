@@ -9,9 +9,9 @@ export interface OAuthDiscoveryOptions {
 }
 
 const DEFAULT_RESOURCE_PATH = '/mcp';
-const DEFAULT_SCOPES = ['openid', 'profile', 'email', 'mcp'];
+const DEFAULT_SCOPES = ['openid', 'profile', 'email', 'mcp', 'offline_access'];
 const DEFAULT_RESPONSE_TYPES = ['code'];
-const DEFAULT_GRANT_TYPES = ['authorization_code'];
+const DEFAULT_GRANT_TYPES = ['authorization_code', 'refresh_token'];
 const DEFAULT_AUTH_METHODS = ['none', 'client_secret_post'];
 const DEFAULT_CODE_CHALLENGE_METHODS = ['S256', 'plain'];
 

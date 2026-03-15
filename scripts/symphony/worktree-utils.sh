@@ -112,3 +112,29 @@ symphony_remove_worktree() {
   symphony_release_worktree_lock "${repo_root}"
   return "${status}"
 }
+
+symphony_link_existing_node_modules() {
+  local repo_root="$1"
+  local workspace_path="$2"
+
+  if [[ ! -d "${repo_root}/node_modules" ]]; then
+    return 1
+  fi
+
+  if [[ ! -e "${workspace_path}/node_modules" ]]; then
+    ln -s "${repo_root}/node_modules" "${workspace_path}/node_modules"
+  fi
+
+  while IFS= read -r source_path; do
+    local relative_path target_path target_parent
+    relative_path="${source_path#${repo_root}/}"
+    target_path="${workspace_path}/${relative_path}"
+    target_parent="$(dirname "${target_path}")"
+    mkdir -p "${target_parent}"
+    if [[ ! -e "${target_path}" ]]; then
+      ln -s "${source_path}" "${target_path}"
+    fi
+  done < <(find "${repo_root}/packages" -type d -name node_modules -prune -print 2>/dev/null)
+
+  return 0
+}

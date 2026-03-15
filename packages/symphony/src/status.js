@@ -57,6 +57,7 @@ export function summarize_task_events(events) {
     const last_failure = find_last(current_run, (event) => event.status === 'failed');
     const last_workspace = find_last(current_run, (event) => typeof event.workspace_path === 'string' && event.workspace_path.trim() !== '');
     const active_error = state === 'failed' ? run_end.error ?? last_failure?.error ?? null : null;
+    const elapsed_end_ms = state === 'running' || state === 'retrying' ? Date.now() : Date.parse(run_end.timestamp);
     return {
         task_id: run_end.task_id,
         run_id: latest_run_id,
@@ -67,7 +68,7 @@ export function summarize_task_events(events) {
         status: run_end.status ?? null,
         started_at: run_start.timestamp,
         updated_at: run_end.timestamp,
-        elapsed_ms: Math.max(0, Date.parse(run_end.timestamp) - Date.parse(run_start.timestamp)),
+        elapsed_ms: Math.max(0, elapsed_end_ms - Date.parse(run_start.timestamp)),
         attempt: run_end.attempt ?? null,
         next_retry_at: state === 'retrying' ? run_end.details?.due_at ?? null : null,
         workspace_path: last_workspace?.workspace_path ?? null,

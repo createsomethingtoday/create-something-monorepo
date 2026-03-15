@@ -609,6 +609,21 @@ interface OAuthRefreshTokenClaims extends JWTPayload {
 	toolkit_profile?: string[];
 }
 
+interface OAuthClientRegistrationClaims {
+	sub: string;
+	iss: string;
+	aud: string[];
+	iat: number;
+	exp: number;
+	kind: 'oauth_client_registration';
+	client_name: string;
+	redirect_uris: string[];
+	token_endpoint_auth_method: 'none' | 'client_secret_post';
+	grant_types: string[];
+	response_types: string[];
+	scope: string;
+}
+
 interface CreateMcpSessionBody {
 	tenant_id?: string;
 	host?: string;
@@ -775,32 +790,55 @@ const OAUTH_AUTHORIZATION_CODE_TTL_SECONDS = 300;
 const OAUTH_MANAGED_BEARER_EXPIRES_IN = 31536000;
 const OAUTH_ID_TOKEN_TTL_SECONDS = 3600;
 const OAUTH_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
+const OAUTH_CLIENT_REGISTRATION_TTL_SECONDS = 365 * 24 * 60 * 60;
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
 const MAX_LEGACY_COMPAT_SUNSET_DAYS = 90;
 
-async function handleOAuthRegister(request: Request, _env: Env): Promise<Response> {
+async function handleOAuthRegister(request: Request, env: Env): Promise<Response> {
 	const body = await parseJSON<OAuthRegisterBody>(request);
 	const clientName = normalizeOptionalId(body?.client_name) ?? 'chatgpt-mcp-client';
-	const clientId = `oauth_${slugify(clientName)}_${generateUUID().replace(/-/g, '').slice(0, 12)}`;
-	const redirectUris = Array.isArray(body?.redirect_uris)
-		? body!.redirect_uris.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-		: [];
+	const redirectUris = normalizeOAuthRedirectUris(body?.redirect_uris);
+	if (redirectUris.length === 0) {
+		return oauthErrorResponse('invalid_redirect_uri', 400, 'At least one valid redirect_uri is required.');
+	}
+	const tokenEndpointAuthMethod = normalizeOAuthTokenEndpointAuthMethod(body?.token_endpoint_auth_method);
+	if (!tokenEndpointAuthMethod) {
+		return oauthErrorResponse('invalid_client_metadata', 400, 'Unsupported token_endpoint_auth_method.');
+	}
+	const grantTypes = normalizeOAuthGrantTypes(body?.grant_types);
+	const responseTypes = normalizeOAuthResponseTypes(body?.response_types);
+	const scope = normalizeScope(body?.scope ?? 'openid profile email mcp offline_access');
+	const now = Math.floor(Date.now() / 1000);
+	const clientId = await createSignedToken(env.DB, {
+		sub: `oauth_client:${slugify(clientName)}`,
+		iss: getOauthIssuer(new URL(request.url), env),
+		aud: ['oauth_client_registration'],
+		iat: now,
+		exp: now + OAUTH_CLIENT_REGISTRATION_TTL_SECONDS,
+		kind: 'oauth_client_registration',
+		client_name: clientName,
+		redirect_uris: redirectUris,
+		token_endpoint_auth_method: tokenEndpointAuthMethod,
+		grant_types: grantTypes,
+		response_types: responseTypes,
+		scope,
+	} satisfies OAuthClientRegistrationClaims);
 	return json({
 		client_id: clientId,
 		client_name: clientName,
 		redirect_uris: redirectUris,
-		token_endpoint_auth_method: body?.token_endpoint_auth_method ?? 'none',
-		grant_types: body?.grant_types ?? ['authorization_code', 'refresh_token'],
-		response_types: body?.response_types ?? ['code'],
-		scope: body?.scope ?? 'openid profile email mcp offline_access',
+		token_endpoint_auth_method: tokenEndpointAuthMethod,
+		grant_types: grantTypes,
+		response_types: responseTypes,
+		scope,
 	});
 }
 
 async function handleOAuthAuthorizePage(request: Request, env: Env): Promise<Response> {
 	const params = new URL(request.url).searchParams;
-	const validationError = validateOAuthAuthorizeRequest(params);
+	const validationError = await validateOAuthAuthorizeRequest(params, env);
 	if (validationError) {
 		return oauthErrorResponse(validationError, 400);
 	}
@@ -848,7 +886,7 @@ async function handleOAuthAuthorize(request: Request, env: Env): Promise<Respons
 		...(toolMode ? { tool_mode: toolMode } : {}),
 		...(toolkitProfile.length > 0 ? { toolkit_profile: toolkitProfile.join(',') } : {}),
 	});
-	const validationError = validateOAuthAuthorizeRequest(params);
+	const validationError = await validateOAuthAuthorizeRequest(params, env);
 	if (validationError) {
 		return oauthErrorResponse(validationError, 400);
 	}
@@ -902,6 +940,10 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	if (!body.client_id) {
 		return oauthErrorResponse('invalid_request', 400, 'client_id is required.');
 	}
+	const registeredClient = await validateOAuthClientRegistration(body.client_id, env);
+	if (!registeredClient) {
+		return oauthErrorResponse('invalid_client', 400, 'Unknown or expired client_id.');
+	}
 
 	type OAuthExchangeClaims = Pick<
 		OAuthAuthorizationCodeClaims,
@@ -910,8 +952,14 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 
 	let claims: OAuthExchangeClaims | null = null;
 	if (body.grant_type === 'authorization_code') {
+		if (!registeredClient.grant_types.includes('authorization_code')) {
+			return oauthErrorResponse('unauthorized_client', 400, 'Client is not allowed to use authorization_code.');
+		}
 		if (!body.code || !body.redirect_uri) {
 			return oauthErrorResponse('invalid_request', 400, 'code, client_id, and redirect_uri are required.');
+		}
+		if (!registeredClient.redirect_uris.includes(body.redirect_uri)) {
+			return oauthErrorResponse('invalid_grant', 400, 'Authorization code does not match a registered redirect_uri.');
 		}
 
 		const authorizationCodeClaims = await validateOAuthAuthorizationCode(body.code, env);
@@ -929,6 +977,9 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		}
 		claims = authorizationCodeClaims;
 	} else if (body.grant_type === 'refresh_token') {
+		if (!registeredClient.grant_types.includes('refresh_token')) {
+			return oauthErrorResponse('unauthorized_client', 400, 'Client is not allowed to use refresh_token.');
+		}
 		if (!body.refresh_token) {
 			return oauthErrorResponse('invalid_request', 400, 'refresh_token and client_id are required.');
 		}
@@ -944,6 +995,9 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	} else {
 		return oauthErrorResponse('unsupported_grant_type', 400, 'Supported grant_types are authorization_code and refresh_token.');
 	}
+	if (body.resource && normalizeOAuthResource(body.resource) !== claims.resource) {
+		return oauthErrorResponse('invalid_target', 400, 'Requested resource does not match the original authorization context.');
+	}
 
 	const user = await findUserById(env.DB, claims.sub);
 	if (!user) {
@@ -951,11 +1005,13 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	}
 
 	try {
+		const boundHost = normalizeOAuthResourceBoundHost(claims.resource);
 		const issued = await issueManagedBearerToken(env, {
 			authSubject: user.id,
 			authEmail: user.email,
 			tenantId: claims.tenant_id ?? null,
 			accountId: claims.account_id ?? null,
+			boundHost,
 			toolMode: claims.tool_mode,
 			toolkitProfile: Array.isArray(claims.toolkit_profile) ? claims.toolkit_profile : [],
 			actor: `oauth:${user.id}`,
@@ -965,6 +1021,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				issued_via: 'oauth_token_exchange',
 				client_id: claims.client_id,
 				resource: claims.resource,
+				resource_host: boundHost,
 				scope: claims.scope,
 				...('redirect_uri' in claims && claims.redirect_uri ? { redirect_uri: claims.redirect_uri } : {}),
 			},
@@ -3678,13 +3735,20 @@ function normalizeUrlOrigin(origin: string): string {
 	return origin.replace(/\/+$/, '');
 }
 
-function validateOAuthAuthorizeRequest(params: URLSearchParams): string | null {
+async function validateOAuthAuthorizeRequest(params: URLSearchParams, env: Env): Promise<string | null> {
 	if (params.get('response_type') !== 'code') return 'unsupported_response_type';
-	if (!params.get('client_id')) return 'invalid_client';
+	const clientId = params.get('client_id');
+	if (!clientId) return 'invalid_client';
+	const registration = await validateOAuthClientRegistration(clientId, env);
+	if (!registration) return 'invalid_client';
 	const redirectUri = params.get('redirect_uri');
-	if (!redirectUri || !isValidHttpUrl(redirectUri)) return 'invalid_redirect_uri';
+	if (!redirectUri || !isValidOAuthRedirectUri(redirectUri)) return 'invalid_redirect_uri';
+	if (!registration.redirect_uris.includes(redirectUri)) return 'invalid_redirect_uri';
+	if (!registration.response_types.includes('code')) return 'unauthorized_client';
 	const resource = params.get('resource');
 	if (resource && !isValidHttpUrl(resource)) return 'invalid_target';
+	const requestedScope = normalizeScope(params.get('scope') ?? '');
+	if (!isScopeSubset(requestedScope, registration.scope)) return 'invalid_scope';
 	return null;
 }
 
@@ -3692,7 +3756,7 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
 	const hidden = Array.from(params.entries())
 		.map(([key, value]) => `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(value)}" />`)
 		.join('\n');
-	const hubUrl = escapeHtml(env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE);
+	const hubUrl = escapeHtml(params.get('resource') ?? env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE);
 	return `<!doctype html>
 <html lang="en">
 <head>
@@ -3927,6 +3991,20 @@ function normalizeScope(raw: string): string {
 		.join(' ');
 }
 
+function isScopeSubset(requestedScope: string, registeredScope: string): boolean {
+	const registeredScopes = new Set(
+		registeredScope
+			.split(/\s+/)
+			.map((value) => value.trim())
+			.filter(Boolean),
+	);
+	return requestedScope
+		.split(/\s+/)
+		.map((value) => value.trim())
+		.filter(Boolean)
+		.every((value) => registeredScopes.has(value));
+}
+
 function scopeIncludes(scope: string, expected: string): boolean {
 	return scope
 		.split(/\s+/)
@@ -3937,6 +4015,15 @@ function scopeIncludes(scope: string, expected: string): boolean {
 
 function normalizeOAuthResource(raw: string): string {
 	return isValidHttpUrl(raw) ? raw : DEFAULT_OAUTH_RESOURCE;
+}
+
+function normalizeOAuthResourceBoundHost(resource: string): string | null {
+	if (!isValidHttpUrl(resource)) return null;
+	try {
+		return normalizeOptionalHostName(new URL(resource).hostname);
+	} catch {
+		return null;
+	}
 }
 
 function normalizeToolkitProfileString(raw: FormEntryValue | null): string[] {
@@ -3994,6 +4081,40 @@ function oauthErrorResponse(error: string, status: number, description?: string)
 	);
 }
 
+function normalizeOAuthRedirectUris(raw: string[] | undefined): string[] {
+	if (!Array.isArray(raw)) return [];
+	return [...new Set(raw.map((value) => value.trim()).filter(isValidOAuthRedirectUri))];
+}
+
+function normalizeOAuthGrantTypes(raw: string[] | undefined): string[] {
+	const requested = Array.isArray(raw) && raw.length > 0 ? raw : ['authorization_code', 'refresh_token'];
+	const normalized = [...new Set(requested.filter((value) => value === 'authorization_code' || value === 'refresh_token'))];
+	return normalized.length > 0 ? normalized : ['authorization_code', 'refresh_token'];
+}
+
+function normalizeOAuthResponseTypes(raw: string[] | undefined): string[] {
+	const requested = Array.isArray(raw) && raw.length > 0 ? raw : ['code'];
+	const normalized = [...new Set(requested.filter((value) => value === 'code'))];
+	return normalized.length > 0 ? normalized : ['code'];
+}
+
+function normalizeOAuthTokenEndpointAuthMethod(raw: string | undefined): 'none' | 'client_secret_post' | null {
+	if (!raw || raw === 'none') return 'none';
+	if (raw === 'client_secret_post') return 'client_secret_post';
+	return null;
+}
+
+function isValidOAuthRedirectUri(value: string): boolean {
+	if (!isValidHttpUrl(value)) return false;
+	try {
+		const parsed = new URL(value);
+		if (parsed.protocol === 'https:') return true;
+		return parsed.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname);
+	} catch {
+		return false;
+	}
+}
+
 function isValidHttpUrl(value: string): boolean {
 	try {
 		const parsed = new URL(value);
@@ -4001,6 +4122,32 @@ function isValidHttpUrl(value: string): boolean {
 	} catch {
 		return false;
 	}
+}
+
+async function validateOAuthClientRegistration(
+	clientId: string,
+	env: Env
+): Promise<OAuthClientRegistrationClaims | null> {
+	const jwks = await getJWKS(env.DB);
+	for (const jwk of jwks.keys) {
+		const publicKey = await importPublicKey(jwk);
+		const payload = (await validateJWT(clientId, publicKey)) as OAuthClientRegistrationClaims | null;
+		if (
+			payload?.kind === 'oauth_client_registration'
+			&& typeof payload.client_name === 'string'
+			&& Array.isArray(payload.redirect_uris)
+			&& payload.redirect_uris.every((value) => typeof value === 'string')
+			&& typeof payload.scope === 'string'
+			&& Array.isArray(payload.grant_types)
+			&& payload.grant_types.every((value) => typeof value === 'string')
+			&& Array.isArray(payload.response_types)
+			&& payload.response_types.every((value) => typeof value === 'string')
+			&& (payload.token_endpoint_auth_method === 'none' || payload.token_endpoint_auth_method === 'client_secret_post')
+		) {
+			return payload;
+		}
+	}
+	return null;
 }
 
 function slugify(value: string): string {
