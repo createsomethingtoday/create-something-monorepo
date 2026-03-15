@@ -152,15 +152,7 @@ test('WorkspaceManager caps captured hook output on failure', async (t) => {
         root: workspaceRoot,
       },
       hooks: {
-        after_create: [
-          'i=0',
-          'while [[ "$i" -lt 6000 ]]; do',
-          '  printf x',
-          '  printf y >&2',
-          '  i=$((i + 1))',
-          'done',
-          'exit 7',
-        ].join('; '),
+        after_create: "printf 'x%.0s' {1..6000}; printf 'y%.0s' {1..6000} >&2; exit 7",
         timeout_ms: 5_000,
       },
     },

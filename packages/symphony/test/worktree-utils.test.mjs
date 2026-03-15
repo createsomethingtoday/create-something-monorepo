@@ -151,6 +151,14 @@ for (const checkoutStrategy of ['archive', 'checkout']) {
   test(`symphony_add_worktree prunes tracked runtime state for ${checkoutStrategy} checkouts`, async (t) => {
     const { repoRoot, tempRoot } = await createRepoFixture(t);
     const workspacePath = join(tempRoot, `worktree-${checkoutStrategy}`);
+    t.after(async () => {
+      await runBash(
+        [
+          `source ${quoteShell(WORKTREE_UTILS_PATH)}`,
+          `symphony_remove_worktree ${quoteShell(repoRoot)} ${quoteShell(workspacePath)}`,
+        ].join('; '),
+      );
+    });
 
     const result = await runBash(
       [
