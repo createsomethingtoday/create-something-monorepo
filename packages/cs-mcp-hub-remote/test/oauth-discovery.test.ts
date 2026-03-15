@@ -134,9 +134,30 @@ test('MCP initialize and tools/list handshake requests bypass top-level auth', a
     },
     body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
   });
+  const resourcesListRequest = new Request('https://mj.mcp.createsomething.agency/mcp', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'resources/list', params: {} }),
+  });
+  const publicResourceReadRequest = new Request('https://mj.mcp.createsomething.agency/mcp', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 4,
+      method: 'resources/read',
+      params: { uri: 'ui://hub/overview' },
+    }),
+  });
 
   assert.equal(await shouldBypassMcpAuth(initializeRequest), true);
   assert.equal(await shouldBypassMcpAuth(toolsListRequest), true);
+  assert.equal(await shouldBypassMcpAuth(resourcesListRequest), true);
+  assert.equal(await shouldBypassMcpAuth(publicResourceReadRequest), true);
 });
 
 test('tool execution requests still require auth', async () => {
@@ -157,4 +178,21 @@ test('tool execution requests still require auth', async () => {
   });
 
   assert.equal(await shouldBypassMcpAuth(toolCallRequest), false);
+});
+
+test('non-public resource reads still require auth', async () => {
+  const privateResourceReadRequest = new Request('https://mj.mcp.createsomething.agency/mcp', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 5,
+      method: 'resources/read',
+      params: { uri: 'hub://proxy-tools' },
+    }),
+  });
+
+  assert.equal(await shouldBypassMcpAuth(privateResourceReadRequest), false);
 });
