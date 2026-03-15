@@ -15,6 +15,8 @@ test('buildHubOAuthAuthorizationServerMetadata points to shared identity issuer'
   assert.equal(metadata.authorization_endpoint, 'https://id.createsomething.space/oauth/authorize');
   assert.equal(metadata.token_endpoint, 'https://id.createsomething.space/oauth/token');
   assert.equal(metadata.resource, 'https://mj.mcp.createsomething.agency/mcp');
+  assert.deepEqual(metadata.scopes_supported, ['openid', 'profile', 'email', 'mcp', 'offline_access']);
+  assert.deepEqual(metadata.grant_types_supported, ['authorization_code', 'refresh_token']);
 });
 
 test('hub worker serves oauth authorization server metadata from custom-domain discovery path', async () => {
@@ -32,6 +34,8 @@ test('hub worker serves oauth authorization server metadata from custom-domain d
   const body = await response.json() as Record<string, unknown>;
   assert.equal(body.authorization_endpoint, 'https://id.createsomething.space/oauth/authorize');
   assert.equal(body.resource, 'https://mj.mcp.createsomething.agency/mcp');
+  assert.deepEqual(body.scopes_supported, ['openid', 'profile', 'email', 'mcp', 'offline_access']);
+  assert.deepEqual(body.grant_types_supported, ['authorization_code', 'refresh_token']);
 });
 
 test('buildHubOAuthProtectedResourceMetadata points to the hub MCP resource', () => {
@@ -44,6 +48,7 @@ test('buildHubOAuthProtectedResourceMetadata points to the hub MCP resource', ()
 
   assert.equal(metadata.resource, 'https://mj.mcp.createsomething.agency/mcp');
   assert.deepEqual(metadata.authorization_servers, ['https://id.createsomething.space']);
+  assert.deepEqual(metadata.scopes_supported, ['openid', 'profile', 'email', 'mcp', 'offline_access']);
 });
 
 test('hub worker serves oauth protected resource metadata from MCP discovery path', async () => {
@@ -60,6 +65,7 @@ test('hub worker serves oauth protected resource metadata from MCP discovery pat
   assert.equal(response.status, 200);
   const body = await response.json() as Record<string, unknown>;
   assert.equal(body.resource, 'https://mj.mcp.createsomething.agency/mcp');
+  assert.deepEqual(body.scopes_supported, ['openid', 'profile', 'email', 'mcp', 'offline_access']);
 });
 
 test('unauthorized MCP responses advertise oauth protected resource metadata', async () => {

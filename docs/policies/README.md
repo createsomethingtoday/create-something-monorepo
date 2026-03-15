@@ -43,3 +43,9 @@ Each policy has:
 - Policy IDs are stable and intended for traceability in runbooks, control planes, and sales artifacts.
 - Promotion flow is defined in `policy.policy-lifecycle-governance.v1`.
 - Compiled runtime artifacts are generated under `docs/policies/generated/`.
+
+## Promotion Checklist
+
+For the current Hub-adjacent promotion state and the concrete steps required to move a policy to `active`, read:
+
+- [HUB_POLICY_PROMOTION_CHECKLIST_2026-03-15.md](./HUB_POLICY_PROMOTION_CHECKLIST_2026-03-15.md)

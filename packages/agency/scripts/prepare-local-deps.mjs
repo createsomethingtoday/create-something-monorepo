@@ -18,20 +18,38 @@ function normalizePrefix(name, version) {
 	return `${name.replace('/', '+')}@${version}`;
 }
 
+function indexPnpmStore(pnpmStore) {
+	if (!fs.existsSync(pnpmStore)) return new Map();
+
+	const index = new Map();
+
+	for (const entry of fs.readdirSync(pnpmStore)) {
+		const prefix = entry.split('_')[0];
+		const entries = index.get(prefix);
+		if (entries) {
+			entries.push(entry);
+		} else {
+			index.set(prefix, [entry]);
+		}
+	}
+
+	return index;
+}
+
 function findInstalledStorePath(pnpmStore, pkgName, version) {
 	const storePrefix = normalizePrefix(pkgName, version);
-	const candidates = fs
-		.readdirSync(pnpmStore)
-		.filter((entry) => entry === storePrefix || entry.startsWith(`${storePrefix}_`))
+	const storeEntries = pnpmStoreIndex.get(storePrefix) ?? [];
+	const candidates = storeEntries
 		.map((entry) => path.join(pnpmStore, entry, 'node_modules', pkgName))
 		.filter((candidate) => fs.existsSync(path.join(candidate, 'package.json')));
 
 	return candidates[0] ?? null;
 }
 
-function findWorkspacePackageDir(workspaceRoot, pkgName) {
+function indexWorkspacePackages(workspaceRoot) {
 	const packagesDir = path.join(workspaceRoot, 'packages');
-	if (!fs.existsSync(packagesDir)) return null;
+	const index = new Map();
+	if (!fs.existsSync(packagesDir)) return index;
 
 	for (const entry of fs.readdirSync(packagesDir, { withFileTypes: true })) {
 		if (!entry.isDirectory()) continue;
@@ -41,12 +59,16 @@ function findWorkspacePackageDir(workspaceRoot, pkgName) {
 		if (!fs.existsSync(manifestPath)) continue;
 
 		const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-		if (manifest.name === pkgName) {
-			return candidate;
+		if (manifest.name) {
+			index.set(manifest.name, candidate);
 		}
 	}
 
-	return null;
+	return index;
+}
+
+function findWorkspacePackageDir(workspaceRoot, pkgName) {
+	return workspacePackageIndex.get(pkgName) ?? null;
 }
 
 function removeTarget(targetPath) {
@@ -67,7 +89,9 @@ function removeTarget(targetPath) {
 
 const workspaceRoot = findWorkspaceRoot(packageRoot);
 const pnpmStore = path.join(workspaceRoot, 'node_modules', '.pnpm');
+const pnpmStoreIndex = indexPnpmStore(pnpmStore);
 const nodeModulesRoot = path.join(packageRoot, 'node_modules');
+const workspacePackageIndex = indexWorkspacePackages(workspaceRoot);
 const declared = {
 	...packageJson.dependencies,
 	...packageJson.devDependencies

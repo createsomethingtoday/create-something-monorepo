@@ -80,3 +80,30 @@ test('summarize_task_events surfaces the active error when the latest event fail
   assert.equal(summary.last_error.class, 'StalledSessionError');
   assert.equal(summary.last_failure.error.message, 'stalled session');
 });
+
+test('summarize_task_events uses current time for active run elapsed reporting', () => {
+  const now = Date.now();
+  const summary = summarize_task_events([
+    {
+      timestamp: new Date(now - 10_000).toISOString(),
+      run_id: 'sym-status',
+      lane: 'code-quality',
+      agent_id: 'symphony-code-quality',
+      task_id: 'lm-status-4',
+      phase: 'claim',
+      status: 'succeeded',
+    },
+    {
+      timestamp: new Date(now - 9_000).toISOString(),
+      run_id: 'sym-status',
+      lane: 'code-quality',
+      agent_id: 'symphony-code-quality',
+      task_id: 'lm-status-4',
+      phase: 'after_create',
+      status: 'started',
+    },
+  ]);
+
+  assert.equal(summary.state, 'running');
+  assert.ok(summary.elapsed_ms >= 8_000, `expected active elapsed >= 8000ms, got ${summary.elapsed_ms}`);
+});
