@@ -21,6 +21,7 @@ TEAM_KEYS=(
 )
 
 NAMED_LANE_KEYS=(
+  "ABUNDANCE_THENPGROUP"
   "VIV_BLONDISH"
   "MORGAN_YOUNG_C3_MANAGEMENT"
 )
@@ -103,6 +104,7 @@ hub_worker_for_team() {
 
 hub_worker_for_named_lane() {
   case "$1" in
+    "ABUNDANCE_THENPGROUP") echo "cs-hub-abundance-thenpgroup" ;;
     "VIV_BLONDISH") echo "cs-hub-viv-blondish" ;;
     "MORGAN_YOUNG_C3_MANAGEMENT") echo "cs-hub-morgan-young-c3-management" ;;
     *)
