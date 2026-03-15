@@ -1,5 +1,0 @@
- 206 svg
-  12 section
-   3 form
-   2 video
-   1 nav

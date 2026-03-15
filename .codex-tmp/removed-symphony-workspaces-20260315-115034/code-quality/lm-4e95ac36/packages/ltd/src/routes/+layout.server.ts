@@ -1,9 +1,0 @@
-/**
- * Layout Server Loader - LTD
- *
- * Uses shared loader from @create-something/canon/auth
- */
-
-import { createLayoutServerLoader } from '@create-something/canon/auth';
-
-export const load = createLayoutServerLoader({ property: 'ltd' });

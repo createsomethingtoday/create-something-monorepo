@@ -1,7 +1,0 @@
-  41 svg
-  10 section
-  10 nav
-   4 video
-   1 main
-   1 header
-   1 footer

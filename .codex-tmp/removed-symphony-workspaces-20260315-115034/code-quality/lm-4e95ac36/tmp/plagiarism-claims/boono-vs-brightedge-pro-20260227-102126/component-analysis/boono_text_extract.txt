@@ -1,5 +1,0 @@
---- NAV TEXT ---
-
---- H1/H2/H3 TEXT ---
-
---- FAQ TITLE TEXT (class contains faq-title) ---

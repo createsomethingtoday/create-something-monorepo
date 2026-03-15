@@ -1,3 +1,0 @@
-https://cdn.prod.website-files.com/<site-id>/css/TEMPLATE.webflow.shared.css
-https://fonts.googleapis.com
-https://fonts.gstatic.com

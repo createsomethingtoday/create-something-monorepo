@@ -1,5 +1,0 @@
-https://cdn.prod.website-files.com/<site-id>/691a0f8db0875283e454ed1a_Favicon%20Large.webp
-https://cdn.prod.website-files.com/<site-id>/691a0fc6b0875283e454f42e_Favicon%20Small.webp
-https://cdn.prod.website-files.com/<site-id>/css/TEMPLATE.webflow.shared.css
-https://fonts.googleapis.com
-https://fonts.gstatic.com
