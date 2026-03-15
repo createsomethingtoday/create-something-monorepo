@@ -6,14 +6,9 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 WORKSPACE_PATH="$(pwd)"
 ISSUE_ID="$(basename "${WORKSPACE_PATH}")"
 BRANCH_NAME="codex/${ISSUE_ID}-policy"
+source "${SCRIPT_DIR}/worktree-utils.sh"
 
-if [[ ! -e "${WORKSPACE_PATH}/.git" ]]; then
-  if git -C "${REPO_ROOT}" show-ref --verify --quiet "refs/heads/${BRANCH_NAME}"; then
-    git -C "${REPO_ROOT}" worktree add --force "${WORKSPACE_PATH}" "${BRANCH_NAME}"
-  else
-    git -C "${REPO_ROOT}" worktree add --force -b "${BRANCH_NAME}" "${WORKSPACE_PATH}" HEAD
-  fi
-fi
+symphony_add_worktree "${REPO_ROOT}" "${WORKSPACE_PATH}" "${BRANCH_NAME}"
 
 if [[ -d "${REPO_ROOT}/.loom" && ! -e "${WORKSPACE_PATH}/.loom" ]]; then
   ln -s "${REPO_ROOT}/.loom" "${WORKSPACE_PATH}/.loom"
