@@ -1,4 +1,0 @@
-interface:
-  display_name: "Webflow Review Analysis Calibration"
-  short_description: "Calibrate analyzer findings for reviewer-safe output"
-  default_prompt: "Use $webflow-template-review-analysis-calibration to convert Webflow analysis outputs into reviewer-safe Auto, Partial, and Manual findings without overstating confidence."

@@ -175,8 +175,36 @@ function validateTenantRoutingArtifact(details) {
           }
         }
       }
-      if (!asObject(routing.aliases)) {
-        details.push(`routing.aliases must be an object in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+      if (!asObject(routing.tenantAliases)) {
+        details.push(`routing.tenantAliases must be an object in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+      }
+      if (!asObject(routing.routedAliases)) {
+        details.push(`routing.routedAliases must be an object in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+      } else {
+        for (const [aliasToolName, aliasConfig] of Object.entries(routing.routedAliases)) {
+          const routedAlias = asObject(aliasConfig);
+          if (!routedAlias) {
+            details.push(`routing.routedAliases.${aliasToolName} must be an object in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+            continue;
+          }
+          const candidates = asArray(routedAlias.candidates);
+          if (candidates.length === 0) {
+            details.push(`routing.routedAliases.${aliasToolName}.candidates must contain at least one entry in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+          }
+          for (const [index, candidate] of candidates.entries()) {
+            const routedCandidate = asObject(candidate);
+            if (!routedCandidate) {
+              details.push(`routing.routedAliases.${aliasToolName}.candidates[${index}] must be an object in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+              continue;
+            }
+            if (typeof routedCandidate.server !== 'string' || routedCandidate.server.trim().length === 0) {
+              details.push(`routing.routedAliases.${aliasToolName}.candidates[${index}].server must be a non-empty string in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+            }
+            if (typeof routedCandidate.tool !== 'string' || routedCandidate.tool.trim().length === 0) {
+              details.push(`routing.routedAliases.${aliasToolName}.candidates[${index}].tool must be a non-empty string in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+            }
+          }
+        }
       }
     }
 

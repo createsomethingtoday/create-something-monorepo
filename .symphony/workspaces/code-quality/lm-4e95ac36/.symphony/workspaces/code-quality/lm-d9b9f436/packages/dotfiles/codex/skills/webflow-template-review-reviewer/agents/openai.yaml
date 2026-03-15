@@ -1,4 +1,0 @@
-interface:
-  display_name: "Webflow Review Reviewer"
-  short_description: "Run the safe reviewer Hub flow for template review"
-  default_prompt: "Use $webflow-template-review-reviewer to guide this Webflow Marketplace reviewer through the live-safe Hub flow and fail closed when context or evidence is missing."

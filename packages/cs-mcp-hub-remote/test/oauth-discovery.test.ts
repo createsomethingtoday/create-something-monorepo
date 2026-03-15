@@ -107,7 +107,35 @@ test('unauthorized MCP tool execution responses advertise oauth protected resour
   );
 });
 
+test('GET SSE transport probes return 405 instead of triggering auth', async () => {
+  const response = await hubWorker.fetch(
+    new Request('https://mj.mcp.createsomething.agency/mcp', {
+      method: 'GET',
+      headers: {
+        Accept: 'text/event-stream',
+      },
+    }),
+    {
+      OAUTH_ISSUER_URL: 'https://id.createsomething.space',
+      HUB_API_TOKEN: 'secret',
+      HUB_SESSION_RESOLVE_URL: 'https://id.createsomething.space/v1/mcp/sessions/resolve',
+      HUB_SESSION_RESOLVE_TOKEN: 'resolve-token',
+    } as any,
+    {
+      waitUntil() {},
+    } as any,
+  );
+
+  assert.equal(response.status, 405);
+});
+
 test('MCP initialize and tools/list handshake requests bypass top-level auth', async () => {
+  const streamRequest = new Request('https://mj.mcp.createsomething.agency/mcp', {
+    method: 'GET',
+    headers: {
+      Accept: 'text/event-stream',
+    },
+  });
   const initializeRequest = new Request('https://mj.mcp.createsomething.agency/mcp', {
     method: 'POST',
     headers: {
@@ -154,6 +182,7 @@ test('MCP initialize and tools/list handshake requests bypass top-level auth', a
     }),
   });
 
+  assert.equal(await shouldBypassMcpAuth(streamRequest), true);
   assert.equal(await shouldBypassMcpAuth(initializeRequest), true);
   assert.equal(await shouldBypassMcpAuth(toolsListRequest), true);
   assert.equal(await shouldBypassMcpAuth(resourcesListRequest), true);
@@ -195,4 +224,12 @@ test('non-public resource reads still require auth', async () => {
   });
 
   assert.equal(await shouldBypassMcpAuth(privateResourceReadRequest), false);
+});
+
+test('plain GET requests without SSE accept header still require auth', async () => {
+  const getRequest = new Request('https://mj.mcp.createsomething.agency/mcp', {
+    method: 'GET',
+  });
+
+  assert.equal(await shouldBypassMcpAuth(getRequest), false);
 });

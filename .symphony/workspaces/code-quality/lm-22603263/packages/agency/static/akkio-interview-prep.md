@@ -1,1 +1,0 @@
-job-applications/akkio/interview-prep.md

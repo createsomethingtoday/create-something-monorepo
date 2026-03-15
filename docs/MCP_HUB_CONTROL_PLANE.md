@@ -80,14 +80,24 @@ splitting into separate MCP gateways:
   generated artifact `docs/policies/generated/tenant-tool-exposure-routing.v1.json`,
   compiled from `config/mcp-hub/routing.json`.
 - `HUB_TENANT_ID` can override the resolved tenant policy key at runtime.
-- Alias failover and pending OAuth approval handling are not yet enforced in
-  `cs-mcp-hub-remote`.
+- Routed alias plans are now exposed as recommender and inspection metadata in
+  `cs-mcp-hub-remote`, including skipped candidate reasons such as pending or
+  blocked OAuth approval.
+- Alias failover execution is still not enforced in `cs-mcp-hub-remote`; the
+  broker still executes the selected direct provider proxy tool underneath.
 
 Runtime env:
 
 - `HUB_TENANT_ID` (tenant policy key override for visible-route filtering)
-- `CS_MCP_HUB_ROUTING` and `HUB_ALLOW_PENDING_OAUTH_APPROVALS` are reserved in
-  docs but are not yet part of the active routing implementation.
+- `HUB_ALLOW_PENDING_OAUTH_APPROVALS` (allow routed alias plans to surface
+  pending OAuth candidates)
+- `CS_MCP_HUB_ROUTING` remains reserved in docs and is not part of the active
+  remote-worker routing implementation.
+
+Operator inspection surface:
+
+- `hub://tenant-routing` exposes the effective tenant key, visible alias plans,
+  and skipped candidate reasons for the current account/session.
 
 ## Judgment Routing Utility
 

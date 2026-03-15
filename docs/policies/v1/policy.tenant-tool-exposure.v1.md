@@ -46,6 +46,7 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 - `config/mcp-hub/registry.json`
 - `packages/agency/src/lib/server/partner-auth.ts`
 - `packages/cs-mcp-hub-remote/index.ts`
+- `hub://tenant-routing`
 - Runtime env:
   - `HUB_TENANT_ID`
   - `HUB_ALLOW_PENDING_OAUTH_APPROVALS`
@@ -55,6 +56,7 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 
 - Effective candidate set per tenant
 - Rejected candidate reasons (blocked, pending, out-of-scope)
+- Routed alias recommendation plans showing the primary visible provider candidate
 - visible workflow-control routes versus hidden raw provider routes for governed syncs
 - named-lane allowlists showing only custom Notion + Gmail + the approved search-provider set for BLOND:ISH and C3 Management
 - trace evidence showing lane host key or bound host on routed calls

@@ -693,6 +693,56 @@ test('resolveIntentRouteCandidate falls back to discovery for unknown intents', 
   assert.equal(route.proxyToolName, 'composio-toolkit-googlesheets__googlesheets_batch_update');
 });
 
+test('resolveIntentRouteCandidate prefers routed alias plans when present', () => {
+  const route = {
+    proxyToolName: 'composio-toolkit-gmail__gmail_send_email',
+    serverName: 'composio-toolkit-gmail',
+    downstreamToolName: 'gmail_send_email',
+    serverTags: ['composio', 'composio-email', 'toolkit'],
+    call: async () => ({ ok: true }),
+  };
+  const definition = {
+    name: route.proxyToolName,
+    description: '[composio-toolkit-gmail] send email',
+    inputSchema: { type: 'object', properties: {} },
+  };
+
+  const candidate = resolveIntentRouteCandidate({
+    toolDefinitions: [definition],
+    routes: new Map([[route.proxyToolName, route]]),
+    definitionByName: new Map([[definition.name, definition]]),
+    aliasPlans: [{
+      aliasToolName: 'gmail_send',
+      description: 'Send email with provider fallback',
+      inputSchema: { type: 'object', properties: {} },
+      primaryProxyToolName: route.proxyToolName,
+      candidates: [{
+        proxyToolName: route.proxyToolName,
+        serverName: route.serverName,
+        downstreamToolName: route.downstreamToolName,
+        description: definition.description,
+        provider: 'composio',
+        oauthApproval: 'approved',
+      }],
+      skippedCandidates: [{
+        serverName: 'arcade-gmail',
+        downstreamToolName: 'send_message',
+        provider: 'arcade',
+        oauthApproval: 'pending',
+        reason: 'oauth_pending',
+      }],
+    }],
+  } as any, {
+    intent: 'send gmail email',
+  });
+
+  assert.equal(candidate.source, 'alias');
+  assert.equal(candidate.logicalAliasToolName, 'gmail_send');
+  assert.equal(candidate.proxyToolName, 'composio-toolkit-gmail__gmail_send_email');
+  assert.equal(candidate.alternatives[0]?.provider, 'composio');
+  assert.equal(candidate.skippedCandidates?.[0]?.reason, 'oauth_pending');
+});
+
 test('resolveIntentRouteCandidate de-prioritizes deprecated discovery tools', () => {
   const runtime = createIntentRuntime();
   const visible = buildVisibleProxyRoutes(runtime as any, {

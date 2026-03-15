@@ -115,10 +115,62 @@ type ProxyCatalog = {
   warnings: string[];
 };
 
+type TenantRoutingAliasOauthApproval = 'approved' | 'pending' | 'blocked';
+
+type TenantRoutingAliasCandidate = {
+  server: string;
+  tool: string;
+  provider?: string;
+  oauthApproval?: TenantRoutingAliasOauthApproval;
+  note?: string;
+};
+
+type TenantRoutingAliasConfig = {
+  description?: string;
+  inputSchema?: Tool['inputSchema'];
+  candidates: TenantRoutingAliasCandidate[];
+  tenantAllowlist?: string[];
+  tenantDenylist?: string[];
+};
+
+type VisibleTenantAliasCandidate = {
+  proxyToolName: string;
+  serverName: string;
+  downstreamToolName: string;
+  description: string;
+  provider?: string;
+  oauthApproval?: TenantRoutingAliasOauthApproval;
+  note?: string;
+};
+
+type SkippedTenantAliasCandidate = {
+  serverName: string;
+  downstreamToolName: string;
+  provider?: string;
+  oauthApproval?: TenantRoutingAliasOauthApproval;
+  note?: string;
+  reason: string;
+};
+
+type VisibleTenantAliasPlan = {
+  aliasToolName: string;
+  description: string;
+  inputSchema: Tool['inputSchema'];
+  primaryProxyToolName: string;
+  candidates: VisibleTenantAliasCandidate[];
+  skippedCandidates: SkippedTenantAliasCandidate[];
+};
+
 type VisibleProxyCatalog = {
   toolDefinitions: Tool[];
   routes: Map<string, ProxyRoute>;
   definitionByName: Map<string, Tool>;
+  aliasPlans: VisibleTenantAliasPlan[];
+};
+
+type VisibleProxyRouteEntry = {
+  tool: Tool;
+  route: ProxyRoute;
 };
 
 type OAuthSecurityScheme = {
@@ -229,7 +281,7 @@ type IntentRouteRegistry = {
 };
 
 type IntentRouteCandidate = {
-  source: 'allowlist' | 'discovery' | 'none';
+  source: 'allowlist' | 'alias' | 'discovery' | 'none';
   intent: string;
   normalizedIntent: string;
   proxyToolName: string | null;
@@ -237,11 +289,16 @@ type IntentRouteCandidate = {
   downstreamToolName: string | null;
   description: string;
   reason: string;
+  logicalAliasToolName?: string | null;
+  skippedCandidates?: SkippedTenantAliasCandidate[];
   alternatives: Array<{
     proxyToolName: string;
     serverName: string;
     downstreamToolName: string;
     description: string;
+    provider?: string;
+    oauthApproval?: TenantRoutingAliasOauthApproval;
+    note?: string;
   }>;
 };
 
@@ -671,6 +728,12 @@ export const HUB_RESOURCES: HubResourceDefinition[] = [
     mimeType: 'application/json',
   },
   {
+    uri: 'hub://tenant-routing',
+    name: 'Tenant Routing',
+    description: 'Effective tenant routing policy, alias plans, and skipped candidate reasons for the calling account/session.',
+    mimeType: 'application/json',
+  },
+  {
     uri: 'hub://discovery',
     name: 'Discovery Settings',
     description: 'Current discovery preferences and available discovery packs for this account.',
@@ -791,6 +854,11 @@ function hasMcpAuthenticationHeaders(extra: unknown): boolean {
 }
 
 export async function shouldBypassMcpAuth(request: Request): Promise<boolean> {
+  if (request.method === 'GET') {
+    const acceptHeader = (request.headers.get('accept') ?? '').toLowerCase();
+    return acceptHeader.includes('text/event-stream');
+  }
+
   if (request.method !== 'POST') {
     return false;
   }
@@ -856,6 +924,25 @@ export default {
             jsonResponse({ error: 'Not Acceptable: Client must accept text/event-stream' }, 406),
           );
         }
+        return withCors(
+          new Response(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              error: {
+                code: -32000,
+                message: 'Method not allowed.',
+              },
+              id: null,
+            }),
+            {
+              status: 405,
+              headers: {
+                Allow: 'POST, DELETE, OPTIONS',
+                'Content-Type': 'application/json',
+              },
+            },
+          ),
+        );
       }
 
       try {
@@ -1523,6 +1610,10 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           discovery: prefs,
         });
       }
+      case 'hub://tenant-routing': {
+        const { accountContext, visible } = await getDiscoveryContext();
+        return toJsonResource(uri, buildTenantRoutingPayload(accountContext, visible, env));
+      }
       case 'hub://discovery': {
         const { prefs } = await getDiscoveryContext();
         return toJsonResource(uri, {
@@ -1715,6 +1806,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             intent: candidate.intent,
             normalizedIntent: candidate.normalizedIntent,
             proxyToolName: candidate.proxyToolName,
+            logicalAliasToolName: candidate.logicalAliasToolName ?? null,
           },
         });
         return result;
@@ -1858,6 +1950,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
               source: candidate.source,
               intent: candidate.intent,
               normalizedIntent: candidate.normalizedIntent,
+              logicalAliasToolName: candidate.logicalAliasToolName ?? null,
             },
           });
           return errorResult;
@@ -1881,6 +1974,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
               intent: candidate.intent,
               normalizedIntent: candidate.normalizedIntent,
               proxyToolName: candidate.proxyToolName,
+              logicalAliasToolName: candidate.logicalAliasToolName ?? null,
             },
           });
           return errorResult;
@@ -2687,7 +2781,7 @@ export function buildVisibleProxyRoutes(
       if (!route) return null;
       return { tool, route };
     })
-    .filter((entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry))
+    .filter((entry): entry is VisibleProxyRouteEntry => Boolean(entry))
     .filter((entry) => isRouteAllowedForSession(entry.route, accountContext.allowedToolPrefixes));
 
   const tenantScoped = sessionScoped.filter((entry) =>
@@ -2705,11 +2799,13 @@ export function buildVisibleProxyRoutes(
   const toolDefinitions = capped.map((entry) => entry.tool);
   const routes = new Map(capped.map((entry) => [entry.route.proxyToolName, entry.route]));
   const definitionByName = new Map(toolDefinitions.map((tool) => [tool.name, tool]));
+  const aliasPlans = buildVisibleTenantAliasPlans(capped, accountContext, env);
 
   return {
     toolDefinitions,
     routes,
     definitionByName,
+    aliasPlans,
   };
 }
 
@@ -2975,6 +3071,7 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
     toolDefinitions: allowed.map((entry) => entry.tool),
     routes: new Map(allowed.map((entry) => [entry.route.proxyToolName, entry.route])),
     definitionByName: new Map(allowed.map((entry) => [entry.tool.name, entry.tool])),
+    aliasPlans: buildVisibleTenantAliasPlans(allowed, params.accountContext, params.env),
   };
 }
 
@@ -3523,6 +3620,36 @@ export function resolveIntentRouteCandidate(
     };
   }
 
+  const aliasMatch = findVisibleAliasIntentMatch(visible.aliasPlans, normalizedIntent);
+  if (aliasMatch) {
+    const primary = aliasMatch.plan.candidates[0]!;
+    const skippedReasons = aliasMatch.plan.skippedCandidates.map((candidate) => candidate.reason);
+    const skippedSummary = skippedReasons.length > 0
+      ? ` Skipped candidates: ${Array.from(new Set(skippedReasons)).join(', ')}.`
+      : '';
+    return {
+      source: 'alias',
+      intent,
+      normalizedIntent,
+      proxyToolName: primary.proxyToolName,
+      serverName: primary.serverName,
+      downstreamToolName: primary.downstreamToolName,
+      description: aliasMatch.plan.description || primary.description,
+      reason: `Matched routed alias "${aliasMatch.plan.aliasToolName}" and selected its primary visible candidate.${skippedSummary}`,
+      logicalAliasToolName: aliasMatch.plan.aliasToolName,
+      skippedCandidates: aliasMatch.plan.skippedCandidates,
+      alternatives: aliasMatch.plan.candidates.map((candidate) => ({
+        proxyToolName: candidate.proxyToolName,
+        serverName: candidate.serverName,
+        downstreamToolName: candidate.downstreamToolName,
+        description: candidate.description,
+        provider: candidate.provider,
+        oauthApproval: candidate.oauthApproval,
+        note: candidate.note,
+      })),
+    };
+  }
+
   if (!allowDiscoveryFallback) {
     const reason = allowlistMatch
       ? `Allowlisted route "${allowlistMatch.definition.proxyToolName}" is not visible for this session.`
@@ -3605,6 +3732,8 @@ function candidateToRoutePayload(
     description: candidate.description || definition?.description || '',
     inputSchema: definition?.inputSchema ?? null,
     reason: candidate.reason,
+    logicalAliasToolName: candidate.logicalAliasToolName ?? null,
+    skippedCandidates: candidate.skippedCandidates ?? [],
     alternatives: candidate.alternatives,
   };
 }
@@ -3637,6 +3766,7 @@ const ROUTER_STOP_WORDS = new Set([
 ]);
 
 const MIN_HEURISTIC_ALLOWLIST_SCORE = 120;
+const MIN_HEURISTIC_ALIAS_SCORE = 90;
 
 function canonicalizeRouterToken(token: string): string {
   const lower = token.trim().toLowerCase();
@@ -3690,6 +3820,32 @@ function scoreAllowlistIntentHeuristic(
   const actionToken = idTokens[0];
   if (actionToken && queryTokens.has(actionToken)) {
     score += 25;
+  }
+
+  return score;
+}
+
+function scoreAliasIntentHeuristic(
+  queryTokens: Set<string>,
+  plan: VisibleTenantAliasPlan,
+): number {
+  if (!queryTokens.size) return 0;
+  const aliasTokens = tokenizeRouterText(plan.aliasToolName);
+  const descriptionTokens = tokenizeRouterText(plan.description);
+  const candidateTokens = plan.candidates.flatMap((candidate) => [
+    ...tokenizeRouterText(candidate.serverName),
+    ...tokenizeRouterText(candidate.downstreamToolName),
+    ...tokenizeRouterText(candidate.provider ?? ''),
+  ]);
+
+  let score = 0;
+  score += countTokenOverlap(queryTokens, aliasTokens) * 45;
+  score += countTokenOverlap(queryTokens, descriptionTokens) * 14;
+  score += countTokenOverlap(queryTokens, candidateTokens) * 10;
+
+  const actionToken = aliasTokens[0];
+  if (actionToken && queryTokens.has(actionToken)) {
+    score += 20;
   }
 
   return score;
@@ -3782,6 +3938,41 @@ function findAllowlistIntentMatch(
     : null;
 }
 
+function findVisibleAliasIntentMatch(
+  plans: VisibleTenantAliasPlan[],
+  normalizedIntent: string,
+): { plan: VisibleTenantAliasPlan } | null {
+  if (!plans.length || !normalizedIntent) {
+    return null;
+  }
+
+  for (const plan of plans) {
+    if (normalizeIntentKey(plan.aliasToolName) === normalizedIntent) {
+      return { plan };
+    }
+  }
+
+  const queryTokens = new Set(tokenizeRouterText(normalizedIntent));
+  let best:
+    | {
+      score: number;
+      plan: VisibleTenantAliasPlan;
+    }
+    | null = null;
+
+  for (const plan of plans) {
+    const score = scoreAliasIntentHeuristic(queryTokens, plan);
+    if (score < MIN_HEURISTIC_ALIAS_SCORE) {
+      continue;
+    }
+    if (!best || score > best.score) {
+      best = { score, plan };
+    }
+  }
+
+  return best ? { plan: best.plan } : null;
+}
+
 function buildDiscoveryServicesPayload(
   runtime: HubRuntime,
   prefs: DiscoveryPreferences,
@@ -3811,6 +4002,29 @@ function buildDiscoveryServicesPayload(
     })),
     totalProxyToolCount: runtime.proxies.toolDefinitions.length,
     visibleProxyToolCount: visible.toolDefinitions.length,
+  };
+}
+
+function buildTenantRoutingPayload(
+  accountContext: ResolvedAccountContext,
+  visible: VisibleProxyCatalog,
+  env: Env,
+): Record<string, unknown> {
+  const tenantRouting = resolveTenantRoutingState(accountContext, env);
+  return {
+    requestedTenant: tenantRouting.requestedTenant,
+    resolvedTenantKey: tenantRouting.tenantKey,
+    allowPendingOauthApprovals: tenantRouting.allowPendingOauthApprovals,
+    policy: tenantRouting.policy,
+    visibleProxyToolCount: visible.toolDefinitions.length,
+    aliasPlanCount: visible.aliasPlans.length,
+    aliasPlans: visible.aliasPlans.map((plan) => ({
+      aliasToolName: plan.aliasToolName,
+      description: plan.description,
+      primaryProxyToolName: plan.primaryProxyToolName,
+      candidates: plan.candidates,
+      skippedCandidates: plan.skippedCandidates,
+    })),
   };
 }
 
@@ -4822,10 +5036,21 @@ type TenantRoutingConfig = {
     allowPendingOauthApprovals?: boolean;
   };
   tenants?: Record<string, TenantRoutingPolicy>;
-  aliases?: Record<string, string>;
+  tenantAliases?: Record<string, string>;
+  routedAliases?: Record<string, TenantRoutingAliasConfig>;
+  aliases?: Record<string, string | TenantRoutingAliasConfig>;
 };
 
-function resolveTenantRoutingConfig(accountContext: ResolvedAccountContext, env?: Env): TenantRoutingPolicy | null {
+type ResolvedTenantRoutingState = {
+  requestedTenant: string;
+  tenantKey: string | null;
+  policy: TenantRoutingPolicy | null;
+  allowPendingOauthApprovals: boolean;
+  tenantAliases: Record<string, string>;
+  routedAliases: Record<string, TenantRoutingAliasConfig>;
+};
+
+function resolveTenantRoutingState(accountContext: ResolvedAccountContext, env?: Env): ResolvedTenantRoutingState {
   const config =
     ((tenantRoutingArtifactJson as { routing?: TenantRoutingConfig }).routing ?? {}) as TenantRoutingConfig;
   const configuredTenant = readEnvString(env ?? {}, 'HUB_TENANT_ID');
@@ -4834,8 +5059,29 @@ function resolveTenantRoutingConfig(accountContext: ResolvedAccountContext, env?
     accountContext.tenantId?.trim() ||
     config.defaults?.tenant?.trim() ||
     'default';
-  const tenantKey = resolveTenantRoutingKey(config, requestedTenant);
-  const policy = tenantKey ? config.tenants?.[tenantKey] ?? null : null;
+  const tenantAliases = normalizeRoutingAliasMap(config.tenantAliases ?? config.aliases);
+  const routedAliases = normalizeRoutedAliasMap(config.routedAliases ?? config.aliases);
+  const tenantKey = resolveTenantRoutingKey(config, tenantAliases, requestedTenant);
+  const policy = tenantKey ? normalizeTenantRoutingPolicy(config.tenants?.[tenantKey]) : null;
+
+  return {
+    requestedTenant,
+    tenantKey,
+    policy,
+    allowPendingOauthApprovals: parseBooleanWithDefault(
+      readEnvString(env ?? {}, 'HUB_ALLOW_PENDING_OAUTH_APPROVALS'),
+      config.defaults?.allowPendingOauthApprovals === true,
+    ),
+    tenantAliases,
+    routedAliases,
+  };
+}
+
+function resolveTenantRoutingConfig(accountContext: ResolvedAccountContext, env?: Env): TenantRoutingPolicy | null {
+  return resolveTenantRoutingState(accountContext, env).policy;
+}
+
+function normalizeTenantRoutingPolicy(policy: TenantRoutingPolicy | undefined): TenantRoutingPolicy | null {
   if (!policy) {
     return null;
   }
@@ -4847,18 +5093,129 @@ function resolveTenantRoutingConfig(accountContext: ResolvedAccountContext, env?
   };
 }
 
-function resolveTenantRoutingKey(config: TenantRoutingConfig, requestedTenant: string): string | null {
+function resolveTenantRoutingKey(
+  config: TenantRoutingConfig,
+  tenantAliases: Record<string, string>,
+  requestedTenant: string,
+): string | null {
   if (!requestedTenant) {
     return null;
   }
   if (config.tenants?.[requestedTenant]) {
     return requestedTenant;
   }
-  const aliasTarget = config.aliases?.[requestedTenant];
+  const aliasTarget = tenantAliases[requestedTenant];
   if (aliasTarget && config.tenants?.[aliasTarget]) {
     return aliasTarget;
   }
   return null;
+}
+
+function normalizeRoutingAliasMap(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, aliasTarget]) => typeof aliasTarget === 'string' && aliasTarget.trim().length > 0)
+      .map(([key, aliasTarget]) => [key.trim(), aliasTarget.trim()])
+      .sort(([left], [right]) => left.localeCompare(right)),
+  );
+}
+
+function normalizeRoutedAliasMap(value: unknown): Record<string, TenantRoutingAliasConfig> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => typeof key === 'string' && key.trim().length > 0)
+      .map(([key, aliasConfig]) => [key.trim(), normalizeRoutedAliasConfig(aliasConfig)])
+      .filter((entry): entry is [string, TenantRoutingAliasConfig] => Boolean(entry[1]))
+      .sort(([left], [right]) => left.localeCompare(right)),
+  );
+}
+
+function normalizeRoutedAliasConfig(value: unknown): TenantRoutingAliasConfig | null {
+  const aliasConfig = asRecord(value);
+  if (!aliasConfig) {
+    return null;
+  }
+
+  const candidates = Array.isArray(aliasConfig.candidates)
+    ? aliasConfig.candidates
+      .map((candidate) => normalizeRoutedAliasCandidate(candidate))
+      .filter((candidate): candidate is TenantRoutingAliasCandidate => Boolean(candidate))
+    : [];
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const normalized: TenantRoutingAliasConfig = {
+    candidates,
+  };
+  const description = normalizeTraceValue(aliasConfig.description);
+  if (description) {
+    normalized.description = description;
+  }
+  const inputSchema = normalizeRoutedAliasInputSchema(aliasConfig.inputSchema);
+  if (inputSchema) {
+    normalized.inputSchema = inputSchema;
+  }
+  const tenantAllowlist = normalizeRoutingList(aliasConfig.tenantAllowlist as string[] | undefined);
+  if (tenantAllowlist) {
+    normalized.tenantAllowlist = tenantAllowlist;
+  }
+  const tenantDenylist = normalizeRoutingList(aliasConfig.tenantDenylist as string[] | undefined);
+  if (tenantDenylist) {
+    normalized.tenantDenylist = tenantDenylist;
+  }
+
+  return normalized;
+}
+
+function normalizeRoutedAliasCandidate(value: unknown): TenantRoutingAliasCandidate | null {
+  const candidate = asRecord(value);
+  if (!candidate) {
+    return null;
+  }
+
+  const server = normalizeTraceValue(candidate.server);
+  const tool = normalizeTraceValue(candidate.tool);
+  if (!server || !tool) {
+    return null;
+  }
+
+  const normalized: TenantRoutingAliasCandidate = {
+    server,
+    tool,
+  };
+  const provider = normalizeTraceValue(candidate.provider);
+  if (provider) {
+    normalized.provider = provider;
+  }
+  if (
+    candidate.oauthApproval === 'approved'
+    || candidate.oauthApproval === 'pending'
+    || candidate.oauthApproval === 'blocked'
+  ) {
+    normalized.oauthApproval = candidate.oauthApproval;
+  }
+  const note = normalizeTraceValue(candidate.note);
+  if (note) {
+    normalized.note = note;
+  }
+
+  return normalized;
+}
+
+function normalizeRoutedAliasInputSchema(value: unknown): Tool['inputSchema'] | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+  return (value as Record<string, unknown>).type === 'object' ? value as Tool['inputSchema'] : undefined;
 }
 
 function normalizeRoutingList(value: string[] | undefined): string[] | null {
@@ -4870,6 +5227,123 @@ function normalizeRoutingList(value: string[] | undefined): string[] | null {
     .map((entry) => entry.trim())
     .filter(Boolean);
   return normalized.length > 0 ? normalized : [];
+}
+
+function buildVisibleTenantAliasPlans(
+  entries: VisibleProxyRouteEntry[],
+  accountContext: ResolvedAccountContext,
+  env?: Env,
+): VisibleTenantAliasPlan[] {
+  const tenantRouting = resolveTenantRoutingState(accountContext, env);
+  if (Object.keys(tenantRouting.routedAliases).length === 0) {
+    return [];
+  }
+
+  const visibleByServerTool = new Map<string, VisibleProxyRouteEntry>();
+  for (const entry of entries) {
+    visibleByServerTool.set(routeServerToolKey(entry.route.serverName, entry.route.downstreamToolName), entry);
+  }
+
+  const plans: VisibleTenantAliasPlan[] = [];
+  for (const [aliasToolName, aliasConfig] of Object.entries(tenantRouting.routedAliases).sort(([left], [right]) =>
+    left.localeCompare(right)
+  )) {
+    if (!isRoutedAliasVisibleToTenant(aliasConfig, tenantRouting.requestedTenant, tenantRouting.tenantKey)) {
+      continue;
+    }
+
+    const candidates: VisibleTenantAliasCandidate[] = [];
+    const skippedCandidates: SkippedTenantAliasCandidate[] = [];
+    for (const candidate of aliasConfig.candidates) {
+      const baseCandidate = {
+        serverName: candidate.server,
+        downstreamToolName: candidate.tool,
+        provider: candidate.provider,
+        oauthApproval: candidate.oauthApproval,
+        note: candidate.note,
+      };
+
+      if (candidate.oauthApproval === 'blocked') {
+        skippedCandidates.push({
+          ...baseCandidate,
+          reason: 'oauth_blocked',
+        });
+        continue;
+      }
+
+      if (candidate.oauthApproval === 'pending' && !tenantRouting.allowPendingOauthApprovals) {
+        skippedCandidates.push({
+          ...baseCandidate,
+          reason: 'oauth_pending',
+        });
+        continue;
+      }
+
+      const visibleEntry = visibleByServerTool.get(routeServerToolKey(candidate.server, candidate.tool));
+      if (!visibleEntry) {
+        skippedCandidates.push({
+          ...baseCandidate,
+          reason: 'route_not_visible',
+        });
+        continue;
+      }
+
+      candidates.push({
+        proxyToolName: visibleEntry.route.proxyToolName,
+        serverName: visibleEntry.route.serverName,
+        downstreamToolName: visibleEntry.route.downstreamToolName,
+        description: visibleEntry.tool.description ?? '',
+        provider: candidate.provider,
+        oauthApproval: candidate.oauthApproval,
+        note: candidate.note,
+      });
+    }
+
+    if (candidates.length === 0) {
+      continue;
+    }
+
+    plans.push({
+      aliasToolName,
+      description: aliasConfig.description ?? `Routed alias for ${aliasToolName}`,
+      inputSchema: aliasConfig.inputSchema ?? { type: 'object', properties: {} },
+      primaryProxyToolName: candidates[0]!.proxyToolName,
+      candidates,
+      skippedCandidates,
+    });
+  }
+
+  return plans;
+}
+
+function isRoutedAliasVisibleToTenant(
+  aliasConfig: TenantRoutingAliasConfig,
+  requestedTenant: string,
+  tenantKey: string | null,
+): boolean {
+  const allowedTenants = new Set([
+    requestedTenant,
+    tenantKey,
+  ].filter((value): value is string => Boolean(value)));
+
+  const tenantAllowlist = normalizeRoutingList(aliasConfig.tenantAllowlist);
+  if (tenantAllowlist && tenantAllowlist.length > 0) {
+    const allowed = tenantAllowlist.some((tenantId) => allowedTenants.has(tenantId));
+    if (!allowed) {
+      return false;
+    }
+  }
+
+  const tenantDenylist = normalizeRoutingList(aliasConfig.tenantDenylist);
+  if (tenantDenylist && tenantDenylist.some((tenantId) => allowedTenants.has(tenantId))) {
+    return false;
+  }
+
+  return true;
+}
+
+function routeServerToolKey(serverName: string, downstreamToolName: string): string {
+  return `${serverName}::${downstreamToolName}`;
 }
 
 function isRouteAllowedForTenant(

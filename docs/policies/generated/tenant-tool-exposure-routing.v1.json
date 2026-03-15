@@ -2,8 +2,8 @@
   "policy_id": "policy.tenant-tool-exposure.v1",
   "artifact_type": "hub_tenant_routing",
   "version": 1,
-  "generated_at": "2026-03-15T15:52:36.573Z",
-  "commit_sha": "08a8fbe2d96f2d12676b7640b84d0bafc2ee278d",
+  "generated_at": "2026-03-15T16:43:50.168Z",
+  "commit_sha": "7b5198ca40d04973f3a0baa9846b9ccb167698c1",
   "compiler": {
     "name": "compile-tenant-routing-artifact",
     "version": 1
@@ -16,11 +16,13 @@
   "coverage": {
     "implemented_controls": [
       "defaults.tenant",
-      "tenant_aliases",
+      "tenant_key_aliases",
       "allow_servers",
       "allow_tags",
       "allow_access_types",
       "allow_tool_prefixes",
+      "alias_candidate_recommendations",
+      "alias_candidate_skip_reasons",
       "hub_tenant_id_override"
     ],
     "unimplemented_policy_controls": [
@@ -30,8 +32,8 @@
     ]
   },
   "integrity": {
-    "policy_hash": "e0edc541504b38081625446b6b9256cd9217863d10594af24ff0b848d4c2029f",
-    "source_hash": "4f81022a514bcf55d53494681248ff7f85dd77e742fa1c34c7982d5e22b1d1cf"
+    "policy_hash": "462463f85e11127397f120f6e61c943f8b26f39964b630bd5ef9a97fef7811d3",
+    "source_hash": "482e7823c6506da9fd8262f849649bbb002cfc23ca3e50d84701ab363936530c"
   },
   "sources": {
     "policy_spec": "docs/policies/v1/policy.tenant-tool-exposure.v1.json",
@@ -105,6 +107,7 @@
       },
       "default": {}
     },
-    "aliases": {}
+    "tenantAliases": {},
+    "routedAliases": {}
   }
 }

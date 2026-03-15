@@ -1,4 +1,0 @@
-interface:
-  display_name: "Webflow Review Pilot Triage"
-  short_description: "Triage reviewer-lane failures and manual fallback"
-  default_prompt: "Use $webflow-template-review-pilot-triage to triage this reviewer-lane issue, contain risk, and route to exact manual fallback when safe automation is unavailable."

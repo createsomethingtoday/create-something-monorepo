@@ -46,6 +46,98 @@ function normalizeStringMap(value) {
   );
 }
 
+function normalizeInputSchema(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+  return value.type === 'object' ? value : undefined;
+}
+
+function normalizeAliasCandidate(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const server = typeof value.server === 'string' ? value.server.trim() : '';
+  const tool = typeof value.tool === 'string' ? value.tool.trim() : '';
+  if (!server || !tool) {
+    return null;
+  }
+
+  const normalized = {
+    server,
+    tool,
+  };
+
+  if (typeof value.provider === 'string' && value.provider.trim().length > 0) {
+    normalized.provider = value.provider.trim();
+  }
+  if (
+    value.oauthApproval === 'approved'
+    || value.oauthApproval === 'pending'
+    || value.oauthApproval === 'blocked'
+  ) {
+    normalized.oauthApproval = value.oauthApproval;
+  }
+  if (typeof value.note === 'string' && value.note.trim().length > 0) {
+    normalized.note = value.note.trim();
+  }
+
+  return normalized;
+}
+
+function normalizeRoutedAliasConfig(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const candidates = Array.isArray(value.candidates)
+    ? value.candidates.map((candidate) => normalizeAliasCandidate(candidate)).filter(Boolean)
+    : [];
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const normalized = {
+    candidates,
+  };
+
+  if (typeof value.description === 'string' && value.description.trim().length > 0) {
+    normalized.description = value.description.trim();
+  }
+
+  const inputSchema = normalizeInputSchema(value.inputSchema);
+  if (inputSchema) {
+    normalized.inputSchema = inputSchema;
+  }
+
+  const tenantAllowlist = normalizeStringArray(value.tenantAllowlist);
+  if (tenantAllowlist) {
+    normalized.tenantAllowlist = tenantAllowlist;
+  }
+
+  const tenantDenylist = normalizeStringArray(value.tenantDenylist);
+  if (tenantDenylist) {
+    normalized.tenantDenylist = tenantDenylist;
+  }
+
+  return normalized;
+}
+
+function normalizeRoutedAliases(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => typeof key === 'string' && key.trim().length > 0)
+      .map(([key, aliasConfig]) => [key.trim(), normalizeRoutedAliasConfig(aliasConfig)])
+      .filter(([, aliasConfig]) => Boolean(aliasConfig))
+      .sort(([left], [right]) => left.localeCompare(right)),
+  );
+}
+
 function normalizeTenantPolicy(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {};
@@ -95,7 +187,8 @@ function normalizeRoutingConfig(value) {
         .map(([key, policy]) => [key.trim(), normalizeTenantPolicy(policy)])
         .sort(([left], [right]) => left.localeCompare(right)),
     ),
-    aliases: normalizeStringMap(input.aliases),
+    tenantAliases: normalizeStringMap(input.tenantAliases),
+    routedAliases: normalizeRoutedAliases(input.aliases),
   };
 }
 
@@ -146,11 +239,13 @@ function main() {
     coverage: {
       implemented_controls: [
         'defaults.tenant',
-        'tenant_aliases',
+        'tenant_key_aliases',
         'allow_servers',
         'allow_tags',
         'allow_access_types',
         'allow_tool_prefixes',
+        'alias_candidate_recommendations',
+        'alias_candidate_skip_reasons',
         'hub_tenant_id_override',
       ],
       unimplemented_policy_controls: [

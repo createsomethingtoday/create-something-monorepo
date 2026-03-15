@@ -117,9 +117,10 @@ Current state:
 - Not present in the generated active authz manifest bundle.
 - A generated routing artifact now exists at `docs/policies/generated/tenant-tool-exposure-routing.v1.json`, compiled from `config/mcp-hub/routing.json`.
 - The Hub runtime now consumes that generated artifact for tenant allow-server, allow-tag, allow-access-type, and allow-prefix filtering in the visible-route path.
-- The generated artifact currently covers server allowlists, tag allowlists, access-type allowlists, tool-prefix allowlists, and tenant alias resolution.
+- The generated artifact currently covers server allowlists, tag allowlists, access-type allowlists, tool-prefix allowlists, tenant key aliases, and routed alias recommendation plans with skipped-candidate reasons.
 - Named-lane tenants can now hide generic write/destructive/control-plane routes while still exposing read and reconnect surfaces, which partially constrains broad raw provider catalogs until a stricter workflow target-scope model exists.
-- The generated artifact still does not implement provider candidate failover, pending OAuth candidate state, precise workflow target-scope constraints, or a publish flow.
+- The generated artifact and remote broker still do not implement provider candidate failover execution, precise workflow target-scope constraints, or a publish flow.
+- Pending OAuth candidate handling now exists only at the routed-alias recommendation layer; it is still not a full execution-time policy surface for direct proxy tools.
 
 Needed before promotion:
 
