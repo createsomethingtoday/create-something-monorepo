@@ -172,7 +172,10 @@ export function isDNTEnabled(): boolean {
 // =============================================================================
 
 export class AnalyticsClient {
-	private config: Omit<Required<AnalyticsConfig>, 'userId'> & { userId?: string };
+	private config: Omit<Required<AnalyticsConfig>, 'userId' | 'globalMetadata'> & {
+		userId?: string;
+		globalMetadata?: Record<string, unknown>;
+	};
 	private queue: AnalyticsEvent[] = [];
 	private flushTimer: ReturnType<typeof setTimeout> | null = null;
 	private sessionId: string;
@@ -193,6 +196,7 @@ export class AnalyticsClient {
 			debug: config.debug ?? false,
 			userOptedOut: config.userOptedOut ?? false,
 			userId: config.userId,
+			globalMetadata: config.globalMetadata,
 		};
 		this.userOptedOut = config.userOptedOut ?? false;
 		this.userId = config.userId ?? null;
@@ -335,6 +339,10 @@ export class AnalyticsClient {
 		}
 	}
 
+	setGlobalMetadata(metadata: Record<string, unknown> | null): void {
+		this.config.globalMetadata = metadata ?? undefined;
+	}
+
 	/**
 	 * Get current user ID
 	 */
@@ -362,6 +370,14 @@ export class AnalyticsClient {
 			return;
 		}
 
+		const metadata =
+			this.config.globalMetadata || options?.metadata
+				? {
+						...(this.config.globalMetadata ?? {}),
+						...(options?.metadata ?? {}),
+					}
+				: undefined;
+
 		const event: AnalyticsEvent = {
 			eventId: this.generateEventId(),
 			sessionId: this.sessionId,
@@ -375,7 +391,7 @@ export class AnalyticsClient {
 			action,
 			target: options?.target,
 			value: options?.value,
-			metadata: options?.metadata,
+			metadata,
 		};
 
 		this.enqueue(event);

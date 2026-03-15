@@ -34,6 +34,8 @@
 		userOptedOut?: boolean;
 		/** Authenticated user ID for cross-property tracking */
 		userId?: string;
+		/** Metadata merged into every emitted event */
+		globalMetadata?: Record<string, unknown>;
 	}
 
 	let {
@@ -48,6 +50,7 @@
 		debug = false,
 		userOptedOut = false,
 		userId = undefined,
+		globalMetadata = undefined,
 	}: Props = $props();
 
 	let cleanupFns: Array<() => void> = [];
@@ -61,6 +64,7 @@
 			debug,
 			userOptedOut,
 			userId,
+			globalMetadata,
 		};
 
 		const client = initAnalytics(config);
@@ -114,6 +118,7 @@
 		if (currentPath && currentPath !== lastPath) {
 			const client = getAnalytics();
 			if (client) {
+				client.setGlobalMetadata(globalMetadata ?? null);
 				client.routeChange(lastPath, currentPath);
 				client.pageView({ title: document.title });
 			}
@@ -134,6 +139,13 @@
 		const client = getAnalytics();
 		if (client) {
 			client.setUserId(userId ?? null);
+		}
+	});
+
+	$effect(() => {
+		const client = getAnalytics();
+		if (client) {
+			client.setGlobalMetadata(globalMetadata ?? null);
 		}
 	});
 

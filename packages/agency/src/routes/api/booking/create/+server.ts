@@ -13,6 +13,8 @@ interface CreateEventRequest {
 	timezone: string;
 	company?: string;
 	notes?: string;
+	experiment_id?: string;
+	tag_id?: string;
 }
 
 interface SavvyCalEvent {
@@ -40,7 +42,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	// Validate required fields
-	const { start_at, end_at, name, email, timezone, company, notes } = body;
+	const { start_at, end_at, name, email, timezone, company, notes, experiment_id, tag_id } = body;
 
 	if (!start_at || !end_at || !name || !email || !timezone) {
 		throw error(400, 'Missing required fields: start_at, end_at, name, email, timezone');
@@ -122,13 +124,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		if (platform?.env?.DB) {
 			try {
 				await platform.env.DB.prepare(
-					`INSERT INTO analytics_events (event_type, property, path, metadata, created_at)
-					 VALUES (?, ?, ?, ?, datetime('now'))`
+					`INSERT INTO analytics_events (event_type, property, path, experiment_id, tag_id, metadata, created_at)
+					 VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
 				)
 					.bind(
 						'booking_completed',
 						'agency',
 						'/book',
+						experiment_id || null,
+						tag_id || null,
 						JSON.stringify({
 							event_id: event.id,
 							email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3') // Partial redaction

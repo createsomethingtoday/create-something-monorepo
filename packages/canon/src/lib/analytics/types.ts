@@ -315,6 +315,8 @@ export interface AnalyticsConfig {
 	userOptedOut?: boolean;
 	/** Authenticated user ID for cross-property tracking */
 	userId?: string;
+	/** Metadata merged into every emitted event */
+	globalMetadata?: Record<string, unknown>;
 }
 
 export const DEFAULT_CONFIG: Partial<AnalyticsConfig> = {

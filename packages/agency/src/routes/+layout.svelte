@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
 	import { UnifiedSearch } from '@create-something/canon/navigation';
+	import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate, disableScrollHandling, goto, onNavigate } from '$app/navigation';
@@ -123,7 +124,12 @@
 	<script src="https://embed.savvycal.com/v1/embed.js" defer></script>
 </svelte:head>
 
-<Analytics property="agency" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
+<Analytics
+	property="agency"
+	userId={data.user?.id}
+	userOptedOut={data.user?.analytics_opt_out ?? false}
+	globalMetadata={getAgencyMarketingExperimentMetadata($page.url.pathname)}
+/>
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} />

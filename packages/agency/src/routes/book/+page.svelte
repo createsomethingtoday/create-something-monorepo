@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { SEO } from '@create-something/canon';
+	import { getAnalytics } from '@create-something/canon/analytics';
 	import { DatePicker } from '@create-something/canon/domains/agency';
 	import { TimeSlotPicker } from '@create-something/canon/domains/agency';
 	import { BookingForm } from '@create-something/canon/domains/agency';
 	import { BookingConfirmation } from '@create-something/canon/domains/agency';
+	import {
+		AGENCY_MARKETING_COPY_EXPERIMENT,
+		getAgencyMarketingExperimentMetadata
+	} from '$lib/analytics/marketing-experiment';
 
 	interface TimeSlot {
 		start_at: string;
@@ -32,17 +37,17 @@
 		{
 			value: 'workflow_infrastructure',
 			label: 'Critical Workflow',
-			description: 'A high-value workflow that needs a safer starting wedge.'
+			description: 'One workflow that needs a safer, production-ready starting point.'
 		},
 		{
 			value: 'reliability_and_control',
 			label: 'Policy OS',
-			description: 'Policy artifacts, release gates, and incident controls for production automation.'
+			description: 'Approval rules, release gates, and incident controls around live automation.'
 		},
 		{
 			value: 'enterprise_extension',
 			label: 'Enterprise Constraints',
-			description: 'Cross-system orchestration with stricter governance and operational controls.'
+			description: 'Cross-system orchestration with stricter governance, auditability, and recovery.'
 		},
 		{
 			value: 'system_development_referral',
@@ -52,9 +57,11 @@
 		{
 			value: 'not_sure',
 			label: 'Not sure yet',
-			description: 'Need help mapping the right engagement.'
+			description: 'Need help choosing the right lane.'
 		}
 	];
+
+	const bookingExperimentMetadata = getAgencyMarketingExperimentMetadata('/book') ?? {};
 
 	// State
 	let step = $state<BookingStep>('date');
@@ -165,6 +172,11 @@
 		error = null;
 
 		try {
+			getAnalytics()?.conversion('booking_initiated', {
+				...bookingExperimentMetadata,
+				serviceLane: selectedLane
+			});
+
 			// Track booking initiated
 			fetch('/api/analytics/track', {
 				method: 'POST',
@@ -172,7 +184,9 @@
 				body: JSON.stringify({
 					event_type: 'booking_initiated',
 					property: 'agency',
-					path: '/book'
+					path: '/book',
+					experiment_id: AGENCY_MARKETING_COPY_EXPERIMENT.id,
+					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant
 				})
 			}).catch(() => {});
 
@@ -186,7 +200,9 @@
 					email: data.email,
 					timezone,
 					company: data.company || undefined,
-					notes: mergeLaneIntoNotes(data.notes)
+					notes: mergeLaneIntoNotes(data.notes),
+					experiment_id: AGENCY_MARKETING_COPY_EXPERIMENT.id,
+					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant
 				})
 			});
 
@@ -197,6 +213,10 @@
 
 			const result = (await response.json()) as { event: BookingEvent };
 			confirmedEvent = result.event;
+			getAnalytics()?.conversion('booking_completed', {
+				...bookingExperimentMetadata,
+				serviceLane: selectedLane
+			});
 			step = 'confirm';
 		} catch (err) {
 			console.error('Booking error:', err);
@@ -233,7 +253,7 @@
 	<header class="booking-header">
 		<h1 class="booking-title">Book a Workflow Mapping Session</h1>
 		<p class="booking-subtitle">
-			Bring the workflow with the most drag or risk. We’ll map the safest starting wedge together.
+			Bring the workflow with the most drag or risk. We’ll map the safest starting point together.
 		</p>
 	</header>
 
@@ -290,7 +310,7 @@
 				<h2 class="step-title">Your details and lane</h2>
 				<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
 					<p id="lane-intake-title" class="lane-intake-title">Which kind of workflow needs attention first?</p>
-					<p class="lane-intake-helper">This only helps me prep. Most engagements start with one scoped MCP implementation.</p>
+					<p class="lane-intake-helper">This helps me prep. Most engagements start with one scoped workflow.</p>
 					<div class="lane-options">
 						{#each laneOptions as lane}
 							<label class="lane-option" class:selected={selectedLane === lane.value}>
