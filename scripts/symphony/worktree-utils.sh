@@ -58,6 +58,22 @@ symphony_populate_worktree_from_archive() {
   git -C "${repo_root}" archive --format=tar "${ref}" | tar -xf - -C "${workspace_path}"
 }
 
+symphony_clone_workspace_from_archive() {
+  local repo_root="$1"
+  local workspace_path="$2"
+  local branch_name="$3"
+  local target_ref="${4:-HEAD}"
+
+  if [[ -e "${workspace_path}/.git" ]]; then
+    return 0
+  fi
+
+  git clone --local --shared --no-checkout "${repo_root}" "${workspace_path}"
+  git -C "${workspace_path}" branch -f "${branch_name}" "${target_ref}"
+  git -C "${workspace_path}" symbolic-ref HEAD "refs/heads/${branch_name}"
+  symphony_populate_worktree_from_archive "${repo_root}" "${workspace_path}" "${target_ref}"
+}
+
 symphony_acquire_worktree_lock() {
   local repo_root="$1"
   local lock_dir

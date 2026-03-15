@@ -73,20 +73,20 @@ to multiple provider candidates (ordered failover).
 
 ## Tenant + Provider Routing
 
-The hub now supports tenant-scoped exposure and provider failover without
+The hub currently supports tenant-scoped visible-route exposure without
 splitting into separate MCP gateways:
 
-- Tenant policy gates tools by server, tags, and tool prefix.
-- Alias routes define candidate targets across providers (e.g. Arcade first,
-  Composio fallback).
-- OAuth approval state is respected per candidate (`approved`, `pending`,
-  `blocked`), with pending candidates opt-in via env.
+- Tenant policy gates visible tools by server and tool prefix from
+  `config/mcp-hub/routing.json`.
+- `HUB_TENANT_ID` can override the resolved tenant policy key at runtime.
+- Alias failover, tag-level routing, and pending OAuth approval handling are
+  not yet enforced in `cs-mcp-hub-remote`.
 
 Runtime env:
 
-- `CS_MCP_HUB_ROUTING` (optional path override)
-- `HUB_TENANT_ID` (tenant policy key)
-- `HUB_ALLOW_PENDING_OAUTH_APPROVALS` (`true|false`)
+- `HUB_TENANT_ID` (tenant policy key override for visible-route filtering)
+- `CS_MCP_HUB_ROUTING` and `HUB_ALLOW_PENDING_OAUTH_APPROVALS` are reserved in
+  docs but are not yet part of the active routing implementation.
 
 ## Judgment Routing Utility
 
