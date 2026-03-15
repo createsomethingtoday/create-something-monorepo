@@ -1,0 +1,84 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.svelte-kit
+.cloudflare
+packages/simulation/target/
+
+# Environment
+.env
+.env.*
+!.env.example
+auth0/config.json
+auth0/export/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / agent config (local)
+.vscode/
+.idea/
+.codex/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage
+.vitest
+
+# Temporary files
+*.tmp
+.cache
+.wrangler/
+
+# Client apps (in development)
+# Keep apps ignored by default, but track Meeting Capture.
+apps/*
+!apps/meeting-capture/
+!apps/meeting-capture/**
+apps/meeting-capture/MeetingCapture/.build/
+apps/meeting-capture/MeetingCapture/.swiftpm/
+
+# Gastown nested repositories
+csm/.repo.git
+csm/csm/.repo.git
+
+# MCP configuration
+# Note: Project .mcp.json is tracked (uses HTTP-based servers, no local keys)
+# User-level config (~/.claude/mcp.json) may contain keys - don't commit that
+
+# LSP MCP (lsmcp)
+.lsmcp/
+!.lsmcp/config.json
+# Keep config.json tracked, ignore cache/index/memories
+
+# Loom (agent coordination)
+.loom/
+__pycache__/
+.dev.vars
+
+# Judgment Layer (policy packs + local Andon logs)
+.judgment/
+!.judgment/README.md
+!.judgment/policies/
+!.judgment/policies/**
+
+# Python virtual environments
+venv/
+.venv/
+**/venv/
+**/.venv/
+.ground.merged.yml
+tmp/loom-remote-secrets-*.txt

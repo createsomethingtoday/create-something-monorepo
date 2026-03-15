@@ -14,6 +14,20 @@
         "composio-toolkit-perplexityai",
         "composio-toolkit-composio_search"
       ],
+      "allowTags": [
+        "blondish",
+        "composio-email",
+        "composio-ai-web-scraping",
+        "composio-analytics",
+        "composio-ai-chatbots",
+        "composio-artificial-intelligence",
+        "composio-ai-agents",
+        "composio-developer-tools"
+      ],
+      "allowAccessTypes": [
+        "read",
+        "auth_admin"
+      ],
       "allowToolPrefixes": [
         "notion-halfdozen-blondish__",
         "composio-toolkit-gmail__",
@@ -29,6 +43,20 @@
         "composio-toolkit-exa",
         "composio-toolkit-perplexityai",
         "composio-toolkit-composio_search"
+      ],
+      "allowTags": [
+        "c3-management",
+        "composio-email",
+        "composio-ai-web-scraping",
+        "composio-analytics",
+        "composio-ai-chatbots",
+        "composio-artificial-intelligence",
+        "composio-ai-agents",
+        "composio-developer-tools"
+      ],
+      "allowAccessTypes": [
+        "read",
+        "auth_admin"
       ],
       "allowToolPrefixes": [
         "notion-halfdozen-c3-management__",

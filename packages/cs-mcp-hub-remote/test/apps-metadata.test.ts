@@ -28,6 +28,17 @@ test('overview trigger tools include MCP App ui metadata', () => {
   }
 });
 
+test('management tools advertise oauth security schemes for ChatGPT tool calls', () => {
+  for (const toolName of ['hub_status', 'hub_search_proxy_tools', 'hub_execute_proxy_tool']) {
+    const tool = MANAGEMENT_TOOLS.find((entry) => entry.name === toolName) as
+      | (typeof MANAGEMENT_TOOLS)[number]
+      | undefined;
+    assert.ok(tool, `Expected tool definition for ${toolName}`);
+    assert.deepEqual((tool as any).securitySchemes, [{ type: 'oauth2', scopes: ['mcp'] }]);
+    assert.deepEqual((tool as any)._meta?.securitySchemes, [{ type: 'oauth2', scopes: ['mcp'] }]);
+  }
+});
+
 test('hub overview ui resource is registered as html content', () => {
   const resource = HUB_RESOURCES.find((entry) => entry.uri === HUB_OVERVIEW_RESOURCE_URI);
   assert.ok(resource, 'Expected hub overview ui resource to be registered');

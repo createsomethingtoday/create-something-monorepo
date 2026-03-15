@@ -4,6 +4,49 @@ set -euo pipefail
 SYMPHONY_WORKTREE_LOCK_TIMEOUT_SECONDS="${SYMPHONY_WORKTREE_LOCK_TIMEOUT_SECONDS:-120}"
 SYMPHONY_WORKTREE_LOCK_SLEEP_SECONDS="${SYMPHONY_WORKTREE_LOCK_SLEEP_SECONDS:-1}"
 
+symphony_should_exclude_runtime_path() {
+  local path="$1"
+
+  case "${path}" in
+    .git|.git/*|.symphony|.symphony/*|.loom|.loom/*|node_modules|node_modules/*|.archive|.archive/*|.ralph-archive|.ralph-archive/*|.beads|.beads/*|.claude|.claude/*|.gemini|.gemini/*|.orchestration|.orchestration/*|packages/*/node_modules|packages/*/node_modules/*)
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
+symphony_filter_runtime_paths() {
+  local path
+
+  while IFS= read -r -d '' path; do
+    if symphony_should_exclude_runtime_path "${path}"; then
+      continue
+    fi
+
+    printf '%s\0' "${path}"
+  done
+}
+
+symphony_prune_workspace_runtime_state() {
+  local workspace_path="$1"
+
+  rm -rf \
+    "${workspace_path}/.symphony" \
+    "${workspace_path}/.loom" \
+    "${workspace_path}/node_modules" \
+    "${workspace_path}/.archive" \
+    "${workspace_path}/.ralph-archive" \
+    "${workspace_path}/.beads" \
+    "${workspace_path}/.claude" \
+    "${workspace_path}/.gemini" \
+    "${workspace_path}/.orchestration"
+
+  if [[ -d "${workspace_path}/packages" ]]; then
+    find "${workspace_path}/packages" -type d -name node_modules -prune -exec rm -rf {} +
+  fi
+}
+
 symphony_worktree_lock_dir() {
   local repo_root="$1"
   printf '%s\n' "${repo_root}/.git/.symphony-worktree-lock"
@@ -56,6 +99,7 @@ symphony_populate_worktree_from_archive() {
   local ref="$3"
 
   git -C "${repo_root}" archive --format=tar "${ref}" | tar -xf - -C "${workspace_path}"
+  symphony_prune_workspace_runtime_state "${workspace_path}"
 }
 
 symphony_clone_workspace_from_archive() {
@@ -77,6 +121,7 @@ symphony_clone_workspace_from_archive() {
 symphony_snapshot_workspace() {
   local repo_root="$1"
   local workspace_path="$2"
+  local workspace_name stage_root stage_path moved=0
   local -a excludes=(
     --exclude='.git/'
     --exclude='.symphony/'
@@ -91,6 +136,38 @@ symphony_snapshot_workspace() {
     --exclude='.orchestration/'
   )
 
+  workspace_name="$(basename "${workspace_path}")"
+  stage_root="$(dirname "${repo_root}")/.symphony-snapshot-staging/$(basename "${repo_root}")"
+  mkdir -p "${stage_root}"
+  stage_path="$(mktemp -d "${stage_root}/${workspace_name}.XXXXXX")"
+
+  cleanup_stage_path() {
+    if [[ "${moved}" -eq 0 && -n "${stage_path:-}" ]]; then
+      rm -rf "${stage_path}" 2>/dev/null || true
+    fi
+  }
+
+  trap cleanup_stage_path RETURN
+
+  if command -v git >/dev/null 2>&1 && git -C "${repo_root}" rev-parse --is-inside-work-tree >/dev/null 2>&1 && command -v rsync >/dev/null 2>&1; then
+    rm -rf "${workspace_path}"
+    mkdir -p "${workspace_path}"
+    git -C "${repo_root}" ls-files -z --cached --others --exclude-standard | \
+      symphony_filter_runtime_paths | \
+      rsync -a --from0 --files-from=- "${repo_root}/" "${workspace_path}/"
+    return 0
+  fi
+
+  if cp -cR "${repo_root}/." "${stage_path}" 2>/dev/null; then
+    rm -rf "${stage_path}/.git"
+    symphony_prune_workspace_runtime_state "${stage_path}"
+
+    rm -rf "${workspace_path}"
+    mv "${stage_path}" "${workspace_path}"
+    moved=1
+    return 0
+  fi
+
   if command -v rsync >/dev/null 2>&1; then
     rsync -a --delete "${excludes[@]}" "${repo_root}/" "${workspace_path}/"
     return 0
@@ -103,6 +180,41 @@ symphony_snapshot_workspace() {
     cd "${workspace_path}"
     tar -xf -
   )
+}
+
+symphony_snapshot_selected_paths() {
+  local repo_root="$1"
+  local workspace_path="$2"
+  shift 2
+  local -a snapshot_paths=("$@")
+
+  rm -rf "${workspace_path}"
+  mkdir -p "${workspace_path}"
+
+  (
+    cd "${repo_root}"
+    tar -cf - "${snapshot_paths[@]}"
+  ) | (
+    cd "${workspace_path}"
+    tar -xf -
+  )
+}
+
+symphony_link_selected_paths() {
+  local repo_root="$1"
+  local workspace_path="$2"
+  shift 2
+  local path target_path target_parent
+
+  rm -rf "${workspace_path}"
+  mkdir -p "${workspace_path}"
+
+  for path in "$@"; do
+    target_path="${workspace_path}/${path%/}"
+    target_parent="$(dirname "${target_path}")"
+    mkdir -p "${target_parent}"
+    ln -s "${repo_root}/${path%/}" "${target_path}"
+  done
 }
 
 symphony_acquire_worktree_lock() {
@@ -206,6 +318,10 @@ symphony_add_worktree() {
 
   if [[ "${status}" -eq 0 && "${checkout_strategy}" == "archive" ]]; then
     symphony_populate_worktree_from_archive "${repo_root}" "${workspace_path}" "${target_ref}" || status=$?
+  fi
+
+  if [[ "${status}" -eq 0 ]]; then
+    symphony_prune_workspace_runtime_state "${workspace_path}" || status=$?
   fi
 
   symphony_release_worktree_lock "${repo_root}"

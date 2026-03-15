@@ -1,0 +1,56 @@
+{
+  "workerId": "worker-csm-h9zcu",
+  "issueId": "csm-h9zcu",
+  "convoId": "convoy-erc5g_82fd",
+  "status": "completed",
+  "taskType": "voice-audit",
+  "targetUrl": "https://createsomething.agency/",
+  "completedAt": "2026-01-09T00:00:00Z",
+  "findings": {
+    "totalIssues": 4,
+    "severity": "medium",
+    "complianceRate": "50%",
+    "issues": [
+      {
+        "id": "hero-jargon-1",
+        "severity": "high",
+        "type": "marketing-jargon",
+        "phrase": "AI-powered automation solutions that streamline workflows",
+        "reason": "Violates .agency voice: vague claims, jargon-heavy, no specific metrics"
+      },
+      {
+        "id": "hero-vague-2",
+        "severity": "high",
+        "type": "vague-claim",
+        "phrase": "identify operational inefficiencies",
+        "reason": "Passive action, no outcome metric, doesn't communicate business result"
+      },
+      {
+        "id": "philosophy-placement-3",
+        "severity": "medium",
+        "type": "philosophy-placement",
+        "phrase": "remove what obscures",
+        "reason": "Philosophy should follow outcomes, not be woven into hero for first-time visitors"
+      },
+      {
+        "id": "cta-weakness-4",
+        "severity": "medium",
+        "type": "weak-cta",
+        "phrase": "Book a discovery call",
+        "reason": "Generic language, doesn't indicate what prospect will discover"
+      }
+    ]
+  },
+  "recommendations": {
+    "heroRewrite": "Lead with '155 scripts → 13' (most compelling outcome from service section). Use service section voice as model—it already passes all criteria.",
+    "ctaRewrite": "Specify what happens next: 'See case studies →' or 'Talk about your automation needs' instead of generic 'discovery call'",
+    "priorityActions": [
+      "Priority 1: Replace hero headline with outcome-focused version (high impact)",
+      "Priority 2: Update CTA language to be specific (medium impact)",
+      "Priority 3: Audit rest of .agency site using same voice canon criteria"
+    ]
+  },
+  "reportPath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.orchestration/voice-audit-agency-hero.md",
+  "nextSteps": "Submit findings to coordinator. Await copywriting + design review approval before implementation.",
+  "estimatedImplementationTime": "2 hours"
+}

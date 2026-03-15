@@ -41,6 +41,7 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 
 ## Enforcement Surfaces
 
+- `docs/policies/generated/tenant-tool-exposure-routing.v1.json`
 - `config/mcp-hub/routing.json`
 - `config/mcp-hub/registry.json`
 - `packages/agency/src/lib/server/partner-auth.ts`
@@ -61,6 +62,7 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 
 ## Source Anchors
 
+- `docs/policies/generated/tenant-tool-exposure-routing.v1.json`
 - `docs/MCP_HUB_CONTROL_PLANE.md`
 - `docs/policies/v1/policy.cross-workspace-sync-governance.v1.md`
 - `config/mcp-hub/routing.json`

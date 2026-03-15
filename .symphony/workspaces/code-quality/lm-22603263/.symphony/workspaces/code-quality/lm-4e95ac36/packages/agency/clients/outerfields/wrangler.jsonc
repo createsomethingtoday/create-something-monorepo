@@ -1,0 +1,49 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "outerfields-pcn",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"pages_build_output_dir": ".svelte-kit/cloudflare",
+
+	// Set ANTHROPIC_API_KEY as a secret:
+	// wrangler secret put ANTHROPIC_API_KEY --env production
+	// The demo will use fallback responses if not configured.
+
+	"vars": {
+		"ENVIRONMENT": "production"
+	},
+
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "outerfields-db",
+			"database_id": "1841903d-9c2d-4b8b-809a-3aef68d2c8f0",
+			"preview_database_id": "1841903d-9c2d-4b8b-809a-3aef68d2c8f0"
+		}
+	],
+
+	"kv_namespaces": [
+		{
+			"binding": "SESSIONS",
+			"id": "973b18397c4d4b068313152a642f1ad5",
+			"preview_id": "973b18397c4d4b068313152a642f1ad5"
+		},
+		{
+			"binding": "VIDEO_STATS",
+			"id": "55a1177ee7c3491589c19094e38df0f7",
+			"preview_id": "55a1177ee7c3491589c19094e38df0f7"
+		}
+	],
+
+	"r2_buckets": [
+		{
+			"binding": "VIDEO_ASSETS",
+			"bucket_name": "outerfields-videos",
+			"preview_bucket_name": "outerfields-videos-preview"
+		}
+	],
+
+	"ai": {
+		"binding": "AI"
+	}
+}

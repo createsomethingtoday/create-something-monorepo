@@ -1,0 +1,50 @@
+[
+  {
+    "timestamp": "2025-11-30T06:20:07.139Z",
+    "scores": {
+      "dry": 10,
+      "rams": 9.8,
+      "heidegger": 1,
+      "overall": 6.3
+    },
+    "violations": {
+      "total": 3,
+      "critical": 0,
+      "high": 1,
+      "medium": 2,
+      "low": 0
+    }
+  },
+  {
+    "timestamp": "2025-11-30T06:20:40.472Z",
+    "scores": {
+      "dry": 10,
+      "rams": 9.8,
+      "heidegger": 4,
+      "overall": 7.5
+    },
+    "violations": {
+      "total": 3,
+      "critical": 0,
+      "high": 1,
+      "medium": 2,
+      "low": 0
+    }
+  },
+  {
+    "timestamp": "2025-11-30T06:24:28.171Z",
+    "scores": {
+      "dry": 10,
+      "rams": 9.8,
+      "heidegger": 4,
+      "overall": 7.5
+    },
+    "violations": {
+      "total": 3,
+      "critical": 0,
+      "high": 1,
+      "medium": 2,
+      "low": 0
+    }
+  }
+]

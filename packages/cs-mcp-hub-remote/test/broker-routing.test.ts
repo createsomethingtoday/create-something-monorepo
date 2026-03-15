@@ -239,14 +239,14 @@ test('buildVisibleProxyRoutes applies tenant routing allowlists from tenant id',
           proxyToolName: 'notion-halfdozen-blondish__query_database',
           serverName: 'notion-halfdozen-blondish',
           downstreamToolName: 'query_database',
-          serverTags: [],
+          serverTags: ['halfdozen', 'notion', 'blondish', 'workway'],
           call: async () => ({ ok: true }),
         }],
         ['composio-toolkit-gmail__gmail_list_messages', {
           proxyToolName: 'composio-toolkit-gmail__gmail_list_messages',
           serverName: 'composio-toolkit-gmail',
           downstreamToolName: 'gmail_list_messages',
-          serverTags: [],
+          serverTags: ['composio', 'composio-email', 'toolkit'],
           call: async () => ({ ok: true }),
         }],
         ['server_b__gamma', {
@@ -279,6 +279,145 @@ test('buildVisibleProxyRoutes applies tenant routing allowlists from tenant id',
     [
       'notion-halfdozen-blondish__query_database',
       'composio-toolkit-gmail__gmail_list_messages',
+    ],
+  );
+});
+
+test('buildVisibleProxyRoutes applies tenant routing allow-tags filter', () => {
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['composio-toolkit-gmail'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        {
+          name: 'composio-toolkit-gmail__gmail_list_messages',
+          description: '[composio-toolkit-gmail] list messages',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'composio-toolkit-gmail__gmail_list_drafts',
+          description: '[composio-toolkit-gmail] list drafts',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+      routes: new Map([
+        ['composio-toolkit-gmail__gmail_list_messages', {
+          proxyToolName: 'composio-toolkit-gmail__gmail_list_messages',
+          serverName: 'composio-toolkit-gmail',
+          downstreamToolName: 'gmail_list_messages',
+          serverTags: ['composio', 'composio-email', 'toolkit'],
+          call: async () => ({ ok: true }),
+        }],
+        ['composio-toolkit-gmail__gmail_list_drafts', {
+          proxyToolName: 'composio-toolkit-gmail__gmail_list_drafts',
+          serverName: 'composio-toolkit-gmail',
+          downstreamToolName: 'gmail_list_drafts',
+          serverTags: ['composio', 'unapproved-tag', 'toolkit'],
+          call: async () => ({ ok: true }),
+        }],
+      ]),
+      warnings: [],
+    },
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'full',
+    activeServers: [],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: 'blondish',
+    userId: null,
+    sessionId: 'session_1',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  });
+
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    ['composio-toolkit-gmail__gmail_list_messages'],
+  );
+});
+
+test('buildVisibleProxyRoutes applies tenant routing allow-access-types filter', () => {
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['composio-toolkit-gmail'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        {
+          name: 'composio-toolkit-gmail__gmail_list_messages',
+          description: '[composio-toolkit-gmail] list messages',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'composio-toolkit-gmail__gmail_send_email',
+          description: '[composio-toolkit-gmail] send email',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'composio-toolkit-gmail__get_connect_link',
+          description: '[composio-toolkit-gmail] get connect link',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+      routes: new Map([
+        ['composio-toolkit-gmail__gmail_list_messages', {
+          proxyToolName: 'composio-toolkit-gmail__gmail_list_messages',
+          serverName: 'composio-toolkit-gmail',
+          downstreamToolName: 'gmail_list_messages',
+          serverTags: ['composio', 'composio-email', 'toolkit'],
+          call: async () => ({ ok: true }),
+        }],
+        ['composio-toolkit-gmail__gmail_send_email', {
+          proxyToolName: 'composio-toolkit-gmail__gmail_send_email',
+          serverName: 'composio-toolkit-gmail',
+          downstreamToolName: 'gmail_send_email',
+          serverTags: ['composio', 'composio-email', 'toolkit'],
+          call: async () => ({ ok: true }),
+        }],
+        ['composio-toolkit-gmail__get_connect_link', {
+          proxyToolName: 'composio-toolkit-gmail__get_connect_link',
+          serverName: 'composio-toolkit-gmail',
+          downstreamToolName: 'get_connect_link',
+          serverTags: ['composio', 'composio-email', 'toolkit'],
+          call: async () => ({ ok: true }),
+        }],
+      ]),
+      warnings: [],
+    },
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'full',
+    activeServers: [],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: 'blondish',
+    userId: null,
+    sessionId: 'session_1',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  });
+
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    [
+      'composio-toolkit-gmail__gmail_list_messages',
+      'composio-toolkit-gmail__get_connect_link',
     ],
   );
 });

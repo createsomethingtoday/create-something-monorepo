@@ -1,0 +1,41 @@
+{
+  "id": "policy.legacy-compat-sunset.v1",
+  "name": "Legacy compatibility sunset",
+  "description": "Legacy bearer compatibility must have bounded sunset windows.",
+  "rules": [
+    {
+      "id": "legacy_sunset_block_out_of_window",
+      "priority": 10,
+      "when": {
+        "actionNames": [
+          "issue_legacy_key"
+        ],
+        "resourceKinds": [
+          "legacy_key"
+        ],
+        "introspectionOk": false
+      },
+      "then": {
+        "decision": "block",
+        "reason": "Legacy key sunset window exceeds policy limits."
+      }
+    },
+    {
+      "id": "legacy_sunset_allow",
+      "priority": 20,
+      "when": {
+        "actionNames": [
+          "issue_legacy_key"
+        ],
+        "resourceKinds": [
+          "legacy_key"
+        ],
+        "introspectionOk": true
+      },
+      "then": {
+        "decision": "allow",
+        "reason": "Legacy key sunset window is policy compliant."
+      }
+    }
+  ]
+}

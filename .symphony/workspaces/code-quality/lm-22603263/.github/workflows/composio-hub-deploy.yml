@@ -1,0 +1,117 @@
+name: Composio Hub Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'config/mcp-hub/registry.json'
+      - 'packages/composio-toolkit-mcp/**'
+      - 'packages/cs-mcp-hub-remote/**'
+      - 'scripts/cs-hub-fleet-deploy.sh'
+      - 'scripts/cs-hub-fleet-verify.sh'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/composio-hub-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: composio-hub-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AGENCY_INTERNAL_API_KEY: ${{ secrets.AGENCY_INTERNAL_API_KEY }}
+      CS_HUB_AARON_OUTERFIELDS_API_TOKEN: ${{ secrets.CS_HUB_AARON_OUTERFIELDS_API_TOKEN }}
+      CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN: ${{ secrets.CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN }}
+      CS_HUB_AUGUST_API_TOKEN: ${{ secrets.CS_HUB_AUGUST_API_TOKEN }}
+      CS_HUB_C3DENVER_API_TOKEN: ${{ secrets.CS_HUB_C3DENVER_API_TOKEN }}
+      CS_HUB_DANNY_API_TOKEN: ${{ secrets.CS_HUB_DANNY_API_TOKEN }}
+      CS_HUB_FILLIP_API_TOKEN: ${{ secrets.CS_HUB_FILLIP_API_TOKEN }}
+      CS_HUB_LAINY_API_TOKEN: ${{ secrets.CS_HUB_LAINY_API_TOKEN }}
+      CS_HUB_LEAH_API_TOKEN: ${{ secrets.CS_HUB_LEAH_API_TOKEN }}
+      CS_HUB_MJ_API_TOKEN: ${{ secrets.CS_HUB_MJ_API_TOKEN }}
+      CS_MCP_HUB_REMOTE_API_TOKEN: ${{ secrets.CS_MCP_HUB_REMOTE_API_TOKEN }}
+      HUB_API_TOKEN: ${{ secrets.HUB_API_TOKEN }}
+      HUB_SESSION_RESOLVE_TOKEN: ${{ secrets.HUB_SESSION_RESOLVE_TOKEN }}
+      IDENTITY_API_KEY: ${{ secrets.IDENTITY_API_KEY }}
+      IDENTITY_WORKER_ADMIN_API_KEY: ${{ secrets.IDENTITY_WORKER_ADMIN_API_KEY }}
+      MCP_ONLY_AUTH_SUBJECT: ${{ secrets.MCP_ONLY_AUTH_SUBJECT }}
+      MCP_ONLY_ACCOUNT_ID: ${{ secrets.MCP_ONLY_ACCOUNT_ID }}
+      MCP_ONLY_TENANT_ID: ${{ secrets.MCP_ONLY_TENANT_ID }}
+      POLICY_OS_AUTH_SUBJECT: ${{ secrets.POLICY_OS_AUTH_SUBJECT }}
+      POLICY_OS_ACCOUNT_ID: ${{ secrets.POLICY_OS_ACCOUNT_ID }}
+      POLICY_OS_TENANT_ID: ${{ secrets.POLICY_OS_TENANT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build mcp-core dependency
+        run: pnpm --filter @create-something/mcp-core build
+
+      - name: Build composio-bridge dependency
+        run: pnpm --filter @create-something/composio-bridge build
+
+      - name: Deploy Composio toolkit gateway
+        run: pnpm --filter @create-something/composio-toolkit-mcp run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy remote MCP hub fleet
+        run: pnpm mcp:hub:fleet:deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Verify remote MCP hub fleet
+        run: pnpm mcp:hub:fleet:verify
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          MCP_SESSION_ACCOUNT_ID: ${{ secrets.POLICY_OS_ACCOUNT_ID }}
+
+      - name: Verify Policy OS live gating
+        if: vars.POLICY_OS_LIVE_VERIFY_ENABLED == 'true' && (env.IDENTITY_API_KEY != '' || env.IDENTITY_WORKER_ADMIN_API_KEY != '') && (env.HUB_API_TOKEN != '' || env.CS_MCP_HUB_REMOTE_API_TOKEN != '') && env.HUB_SESSION_RESOLVE_TOKEN != '' && env.MCP_ONLY_AUTH_SUBJECT != '' && env.MCP_ONLY_ACCOUNT_ID != '' && env.MCP_ONLY_TENANT_ID != '' && env.POLICY_OS_AUTH_SUBJECT != '' && env.POLICY_OS_ACCOUNT_ID != '' && env.POLICY_OS_TENANT_ID != ''
+        run: pnpm policy:os:verify:live
+        env:
+          AGENCY_BASE_URL: ${{ vars.AGENCY_BASE_URL }}
+          IDENTITY_BASE_URL: ${{ vars.IDENTITY_BASE_URL }}
+          HUB_BASE_URL: ${{ vars.POLICY_OS_HUB_BASE_URL }}
+          AGENCY_INTERNAL_API_KEY: ${{ secrets.AGENCY_INTERNAL_API_KEY }}
+          CS_MCP_HUB_REMOTE_API_TOKEN: ${{ secrets.CS_MCP_HUB_REMOTE_API_TOKEN }}
+          HUB_SESSION_RESOLVE_TOKEN: ${{ secrets.HUB_SESSION_RESOLVE_TOKEN }}
+          IDENTITY_API_KEY: ${{ secrets.IDENTITY_API_KEY }}
+          IDENTITY_WORKER_ADMIN_API_KEY: ${{ secrets.IDENTITY_WORKER_ADMIN_API_KEY }}
+          HUB_API_TOKEN: ${{ secrets.HUB_API_TOKEN }}
+          MCP_SESSION_RESOLVE_TOKEN: ${{ secrets.HUB_SESSION_RESOLVE_TOKEN }}
+          MCP_ONLY_AUTH_SUBJECT: ${{ secrets.MCP_ONLY_AUTH_SUBJECT }}
+          MCP_ONLY_ACCOUNT_ID: ${{ secrets.MCP_ONLY_ACCOUNT_ID }}
+          MCP_ONLY_TENANT_ID: ${{ secrets.MCP_ONLY_TENANT_ID }}
+          POLICY_OS_AUTH_SUBJECT: ${{ secrets.POLICY_OS_AUTH_SUBJECT }}
+          POLICY_OS_ACCOUNT_ID: ${{ secrets.POLICY_OS_ACCOUNT_ID }}
+          POLICY_OS_TENANT_ID: ${{ secrets.POLICY_OS_TENANT_ID }}
+          POLICY_OS_DENY_AUTH_SUBJECT: ${{ secrets.POLICY_OS_DENY_AUTH_SUBJECT }}
+          POLICY_OS_DENY_ACCOUNT_ID: ${{ secrets.POLICY_OS_DENY_ACCOUNT_ID }}
+          POLICY_OS_DENY_TENANT_ID: ${{ secrets.POLICY_OS_DENY_TENANT_ID }}
+          POLICY_OS_DENY_EXPECTED_REASON: ${{ vars.POLICY_OS_DENY_EXPECTED_REASON }}
+          REQUIRE_AGENCY_ENTITLEMENT_CHECK: ${{ secrets.AGENCY_INTERNAL_API_KEY != '' && 'true' || 'false' }}

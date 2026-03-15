@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Micah Johnson - Resume</title>
+  <style>
+    @page {
+      size: letter;
+      margin: 0.5in;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Charter', 'Georgia', serif;
+      font-size: 10pt;
+      line-height: 1.4;
+      color: #1a1a1a;
+      max-width: 8.5in;
+      margin: 0 auto;
+      padding: 0.5in;
+    }
+
+    header {
+      margin-bottom: 16pt;
+      border-bottom: 1px solid #333;
+      padding-bottom: 12pt;
+    }
+
+    h1 {
+      font-size: 18pt;
+      font-weight: 600;
+      letter-spacing: 0.5pt;
+      margin-bottom: 4pt;
+    }
+
+    .contact {
+      font-size: 9pt;
+      color: #444;
+    }
+
+    .contact a {
+      color: #444;
+      text-decoration: none;
+    }
+
+    h2 {
+      font-size: 11pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1pt;
+      margin-top: 14pt;
+      margin-bottom: 8pt;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 2pt;
+    }
+
+    h3 {
+      font-size: 10pt;
+      font-weight: 600;
+      margin-bottom: 2pt;
+    }
+
+    .role-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 2pt;
+    }
+
+    .company {
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .dates {
+      font-size: 9pt;
+      color: #666;
+      white-space: nowrap;
+    }
+
+    .location {
+      font-size: 9pt;
+      color: #666;
+      margin-bottom: 4pt;
+    }
+
+    ul {
+      margin-left: 14pt;
+      margin-bottom: 10pt;
+    }
+
+    li {
+      margin-bottom: 3pt;
+    }
+
+    .summary {
+      margin-bottom: 12pt;
+      font-style: italic;
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4pt 24pt;
+      font-size: 9pt;
+    }
+
+    .skill-category {
+      margin-bottom: 6pt;
+    }
+
+    .skill-label {
+      font-weight: 600;
+    }
+
+    .education-item {
+      margin-bottom: 6pt;
+    }
+
+    .cert-list {
+      font-size: 9pt;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MICAH JOHNSON</h1>
+    <div class="contact">
+      Kennedale, TX &nbsp;|&nbsp;
+      (817) 366-8742 &nbsp;|&nbsp;
+      <a href="mailto:micah@createsomething.io">micah@createsomething.io</a> &nbsp;|&nbsp;
+      <a href="https://createsomething.io">createsomething.io</a>
+    </div>
+  </header>
+
+  <p class="summary">
+    System Architect with 12+ years building web platforms, APIs, and AI-augmented workflows.
+    Led modernization of Webflow's Marketplace infrastructure serving 500+ creators and 7,000+ templates.
+    Seeking to apply technical expertise and systems thinking to federal AI and modernization initiatives.
+  </p>
+
+  <h2>Technical Skills</h2>
+  <div class="skills-grid">
+    <div class="skill-category">
+      <span class="skill-label">Languages:</span> TypeScript, JavaScript, Python, SQL, HTML/CSS
+    </div>
+    <div class="skill-category">
+      <span class="skill-label">AI/Automation:</span> Claude API, OpenAI API, LLM integration, Agent orchestration
+    </div>
+    <div class="skill-category">
+      <span class="skill-label">Platforms:</span> Cloudflare (Workers, Pages, D1, KV, R2), Vercel, AWS
+    </div>
+    <div class="skill-category">
+      <span class="skill-label">Frameworks:</span> SvelteKit, React, Next.js, Node.js
+    </div>
+    <div class="skill-category">
+      <span class="skill-label">Data:</span> PostgreSQL, SQLite, REST APIs, GraphQL, ETL pipelines
+    </div>
+    <div class="skill-category">
+      <span class="skill-label">Tools:</span> Git, CI/CD, Airtable, Make/Zapier, Webflow
+    </div>
+  </div>
+
+  <h2>Professional Experience</h2>
+
+  <div class="role-header">
+    <h3>System Architect <span class="company">— Webflow</span></h3>
+    <span class="dates">Dec 2024 – Present</span>
+  </div>
+  <div class="location">Remote</div>
+  <ul>
+    <li>Architect backend systems for Webflow's App and Template Marketplaces, supporting 300+ app developers and 500+ template creators</li>
+    <li>Built AI-augmented form submission system processing 700+ app submissions with automated validation and Airtable integration</li>
+    <li>Developed Asset Dashboard for marketplace operations, reducing manual review time through automated QA checks</li>
+    <li>Created Webflow Way Validator app to ensure marketplace submissions meet quality standards programmatically</li>
+    <li>Implemented cross-origin iframe communication system for embedded applications with dynamic styling inheritance</li>
+  </ul>
+
+  <div class="role-header">
+    <h3>Marketplace Operations Manager <span class="company">— Webflow</span></h3>
+    <span class="dates">Jul 2023 – Dec 2024</span>
+  </div>
+  <div class="location">San Francisco Bay Area (Remote)</div>
+  <ul>
+    <li>Managed quality assurance for Template Marketplace with 7,000+ templates, ensuring consistent standards across submissions</li>
+    <li>Built Template Marketplace Dashboard integrating marketplace data into Webflow's CMS for real-time operations tracking</li>
+    <li>Conducted QA for app submissions, establishing quality and functionality standards adopted across the organization</li>
+    <li>Collaborated with engineering to resolve complex technical issues affecting marketplace creator experience</li>
+  </ul>
+
+  <div class="role-header">
+    <h3>Co-Founder, Technology <span class="company">— Half Dozen</span></h3>
+    <span class="dates">Jul 2024 – Present</span>
+  </div>
+  <div class="location">Remote</div>
+  <ul>
+    <li>Co-founded startup building workflow automation platform (WORKWAY) for compound multi-step automations</li>
+    <li>Architected multi-tenant SaaS platform on Cloudflare infrastructure (Workers, D1, R2, KV)</li>
+    <li>Designed developer marketplace model enabling third-party workflow creation and monetization</li>
+  </ul>
+
+  <div class="role-header">
+    <h3>Webflow & API Developer <span class="company">— CREATE SOMETHING (Self-employed)</span></h3>
+    <span class="dates">Nov 2013 – Present</span>
+  </div>
+  <div class="location">Kennedale, TX</div>
+  <ul>
+    <li>Built 100+ custom websites and API integrations for businesses across industries over 12 years</li>
+    <li>Developed AI agent infrastructure including task management system (Beads) and autonomous orchestration framework (Harness)</li>
+    <li>Created automation solutions: certificate delivery systems, multi-platform event sync (Webflow/Eventbrite/Zoom/MailChimp), QuickBooks time-tracking integration</li>
+    <li>Established design system philosophy (Subtractive Triad) applied across all client and internal projects</li>
+  </ul>
+
+  <div class="role-header">
+    <h3>On-Screen Educator <span class="company">— Webflow</span></h3>
+    <span class="dates">Mar 2020 – Apr 2021</span>
+  </div>
+  <div class="location">Hybrid</div>
+  <ul>
+    <li>Created video tutorials and live streams teaching web design, interactions, e-commerce, and CMS to global user base</li>
+    <li>Contributed to development and launch of Webflow University 2.0, comprehensive learning platform for web design education</li>
+    <li>Collaborated with product team on curriculum development aligned with feature releases and user needs</li>
+  </ul>
+
+  <div class="role-header">
+    <h3>Customer Support Specialist & Team Manager <span class="company">— Webflow</span></h3>
+    <span class="dates">Feb 2018 – Mar 2020</span>
+  </div>
+  <div class="location">Greater St. Louis Area (Remote)</div>
+  <ul>
+    <li>Led team of Customer Support Specialists, setting performance goals and ensuring consistent service quality</li>
+    <li>Developed comprehensive onboarding program using custom LMS built with Knack and Webflow</li>
+    <li>Diagnosed and resolved technical issues, collaborating with engineering team on complex problems</li>
+    <li>Contributed to Webflow's help documentation, ensuring accurate and comprehensive content</li>
+  </ul>
+
+  <h2>Education & Certifications</h2>
+  <div class="education-item">
+    <strong>Texas A&M University</strong> — B.S. Animal Sciences (2008–2010)
+  </div>
+  <div class="cert-list">
+    <strong>Certifications:</strong> UI/UX Design (Boulder Digital Arts) | Web Design (UTA, Arlington TX)
+  </div>
+
+  <h2>Selected Projects</h2>
+  <ul>
+    <li><strong>Beads:</strong> Agent-native task management system with cross-session memory, PageRank-based prioritization, and Git-synced persistence for AI agent workflows</li>
+    <li><strong>Harness:</strong> Autonomous agent orchestration framework with checkpoint-based human oversight, failure recovery, and parallel execution (swarm mode)</li>
+    <li><strong>CREATE SOMETHING Platform:</strong> Multi-property web architecture (.io, .space, .agency, .ltd) on Cloudflare with shared component library and design canon</li>
+  </ul>
+
+</body>
+</html>

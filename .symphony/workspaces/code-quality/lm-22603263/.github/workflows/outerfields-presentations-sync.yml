@@ -1,0 +1,48 @@
+name: Sync OUTERFIELDS presentations subtree
+
+on:
+  # Triggered by the OUTERFIELDS MCP remote server after it publishes changes
+  repository_dispatch:
+    types: [outerfields_presentations_updated]
+
+  # Manual trigger for recovery/debugging
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: outerfields-presentations-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "outerfields-presentations-bot"
+          git config user.email "outerfields-presentations-bot@users.noreply.github.com"
+
+      - name: Sync subtree
+        run: |
+          git subtree pull \
+            --prefix "packages/agency/clients/outerfields/src/routes/presentations" \
+            "https://github.com/createsomethingtoday/outerfields-presentations.git" \
+            main \
+            --squash \
+            -m "chore(outerfields): sync presentations subtree"
+
+      - name: Push if changed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git push
+          else
+            echo "No changes to push."
+          fi
+

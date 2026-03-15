@@ -1,0 +1,16 @@
+# project: create-something-monorepo
+# session: 2025-12-08T16:30:00Z
+
+id,description,status,tests_passing,complexity,files_touched
+auth-login,User login with email/password,completed,true,medium,src/routes/login/+page.svelte|src/lib/auth.ts
+auth-logout,User logout with session cleanup,completed,true,low,src/routes/logout/+server.ts
+dashboard-metrics,Display user activity metrics,in_progress,false,high,src/routes/dashboard/+page.svelte|src/lib/metrics.ts|src/lib/components/MetricCard.svelte
+export-csv,Export data to CSV format,pending,,medium,
+notification-system,Real-time notifications via WebSocket,pending,,high,
+
+# progress: completed=2, in_progress=1, pending=2, total=5
+
+# notes:
+# - Auth system working, session persistence verified
+# - Dashboard metrics failing on aggregation query
+# - Need to investigate D1 performance for large datasets

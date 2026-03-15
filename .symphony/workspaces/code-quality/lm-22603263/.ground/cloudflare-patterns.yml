@@ -1,0 +1,46 @@
+# Ground MCP - Cloudflare Workers/Pages Patterns
+# https://developers.cloudflare.com/workers/
+#
+# Cloudflare Workers and Pages have unique deployment patterns
+# where configuration files and workers are loaded by the runtime.
+
+version: "1"
+
+ignore:
+  paths:
+    # ─────────────────────────────────────────────────────────────────────
+    # Cloudflare Configuration
+    # ─────────────────────────────────────────────────────────────────────
+    # These files are loaded by wrangler/runtime, not imported
+    
+    - "**/wrangler.toml"          # Worker configuration
+    - "**/wrangler.jsonc"         # Worker configuration (JSON with comments)
+    - "**/_routes.json"           # Pages routing rules
+    - "**/_headers"               # Custom headers
+    - "**/_redirects"             # Redirect rules
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Worker Entry Points
+    # ─────────────────────────────────────────────────────────────────────
+    # Workers entry points are defined in wrangler.toml, not imports
+    
+    - "**/src/index.ts"           # Default worker entry point
+    - "**/workers/**/*.ts"        # Multi-worker setup
+    - "**/functions/**/*.ts"      # Pages Functions (filesystem routing)
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Cloudflare-Specific Files
+    # ─────────────────────────────────────────────────────────────────────
+    
+    - "**/*.d.ts"                 # Type definitions (e.g., worker-configuration.d.ts)
+
+monorepo:
+  entry_points:
+    # ─────────────────────────────────────────────────────────────────────
+    # Cloudflare Entry Points
+    # ─────────────────────────────────────────────────────────────────────
+    
+    - "**/wrangler.toml"
+    - "**/wrangler.jsonc"
+    - "**/src/index.ts"
+    - "**/package.json"

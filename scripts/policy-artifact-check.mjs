@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const POLICY_DIR = resolve(ROOT, 'docs/policies/v1');
+const GENERATED_POLICY_DIR = resolve(ROOT, 'docs/policies/generated');
+const TENANT_ROUTING_ARTIFACT_PATH = resolve(GENERATED_POLICY_DIR, 'tenant-tool-exposure-routing.v1.json');
 const ALLOWED_STATUS = new Set(['draft', 'active', 'archived', 'deprecated']);
 
 function parseArgs(argv) {
@@ -120,6 +122,80 @@ function validateReleaseGatePolicy(parsed, details) {
   }
 }
 
+function validateTenantRoutingArtifact(details) {
+  if (!existsSync(TENANT_ROUTING_ARTIFACT_PATH)) {
+    details.push(`Missing generated tenant routing artifact: ${TENANT_ROUTING_ARTIFACT_PATH}`);
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(readFileSync(TENANT_ROUTING_ARTIFACT_PATH, 'utf8'));
+    if (parsed.policy_id !== 'policy.tenant-tool-exposure.v1') {
+      details.push(`policy_id mismatch in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+    }
+    if (parsed.artifact_type !== 'hub_tenant_routing') {
+      details.push(`artifact_type must be "hub_tenant_routing" in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+    }
+    if (!Number.isInteger(parsed.version) || parsed.version < 1) {
+      details.push(`version must be a positive integer in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+    }
+
+    const integrity = asObject(parsed.integrity);
+    if (!integrity?.policy_hash || typeof integrity.policy_hash !== 'string') {
+      details.push(`integrity.policy_hash must be a non-empty string in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+    }
+    if (!integrity?.source_hash || typeof integrity.source_hash !== 'string') {
+      details.push(`integrity.source_hash must be a non-empty string in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+    }
+
+    const routing = asObject(parsed.routing);
+    if (!routing) {
+      details.push(`routing block is required in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+    } else {
+      const defaults = asObject(routing.defaults);
+      if (!defaults || typeof defaults.tenant !== 'string' || defaults.tenant.trim().length === 0) {
+        details.push(`routing.defaults.tenant must be a non-empty string in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+      }
+      if (!asObject(routing.tenants)) {
+        details.push(`routing.tenants must be an object in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+      } else {
+        for (const [tenantKey, policy] of Object.entries(routing.tenants)) {
+          const tenantPolicy = asObject(policy);
+          if (!tenantPolicy) {
+            details.push(`routing.tenants.${tenantKey} must be an object in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+            continue;
+          }
+          for (const field of ['allowServers', 'allowTags', 'allowAccessTypes', 'allowToolPrefixes']) {
+            if (tenantPolicy[field] !== undefined) {
+              const values = tenantPolicy[field];
+              if (!Array.isArray(values) || values.some((entry) => typeof entry !== 'string' || entry.trim().length === 0)) {
+                details.push(`routing.tenants.${tenantKey}.${field} must be an array of non-empty strings in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+              }
+            }
+          }
+        }
+      }
+      if (!asObject(routing.aliases)) {
+        details.push(`routing.aliases must be an object in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+      }
+    }
+
+    const coverage = asObject(parsed.coverage);
+    if (!coverage) {
+      details.push(`coverage block is required in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+    } else {
+      if (asArray(coverage.implemented_controls).length === 0) {
+        details.push(`coverage.implemented_controls must contain at least one entry in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+      }
+      if (asArray(coverage.unimplemented_policy_controls).length === 0) {
+        details.push(`coverage.unimplemented_policy_controls must contain at least one entry in ${TENANT_ROUTING_ARTIFACT_PATH}`);
+      }
+    }
+  } catch (error) {
+    details.push(`Invalid JSON in ${TENANT_ROUTING_ARTIFACT_PATH}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 function validatePolicy(policyId) {
   const details = [];
   const jsonPath = resolve(POLICY_DIR, `${policyId}.json`);
@@ -172,6 +248,10 @@ function validatePolicy(policyId) {
     if (policyId === 'policy.paper-experiment-release-gate.v1' && !content.includes('Commit count MUST NOT be used')) {
       details.push(`Release gate policy markdown must explicitly prohibit commit-count deploy triggers in ${mdPath}`);
     }
+  }
+
+  if (policyId === 'policy.tenant-tool-exposure.v1') {
+    validateTenantRoutingArtifact(details);
   }
 
   return {

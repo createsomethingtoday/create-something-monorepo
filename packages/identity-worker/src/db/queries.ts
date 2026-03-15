@@ -477,6 +477,18 @@ export async function findMcpAccountById(db: D1Database, accountId: string): Pro
 		.first<McpAccount>();
 }
 
+export async function listMcpAccountsByUserId(db: D1Database, userId: string): Promise<McpAccount[]> {
+	const result = await db
+		.prepare(
+			`SELECT * FROM mcp_accounts
+       WHERE user_id = ?
+       ORDER BY updated_at DESC, created_at DESC`
+		)
+		.bind(userId)
+		.all<McpAccount>();
+	return result.results ?? [];
+}
+
 // MCP session queries
 export async function createMcpSession(
 	db: D1Database,
@@ -617,6 +629,21 @@ export async function findMcpLongLivedTokenByAuthSubject(
        LIMIT 1`
 		)
 		.bind(authSubject)
+		.first<McpLongLivedToken>();
+}
+
+export async function findMcpLongLivedTokenByAuthEmail(
+	db: D1Database,
+	authEmail: string
+): Promise<McpLongLivedToken | null> {
+	return db
+		.prepare(
+			`SELECT * FROM mcp_long_lived_tokens
+       WHERE auth_email = ? AND revoked_at IS NULL
+       ORDER BY updated_at DESC, created_at DESC
+       LIMIT 1`
+		)
+		.bind(authEmail.toLowerCase())
 		.first<McpLongLivedToken>();
 }
 

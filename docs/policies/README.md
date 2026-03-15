@@ -42,7 +42,7 @@ Each policy has:
 - Docs-only policy artifacts remain `draft` until promoted under lifecycle governance.
 - Policy IDs are stable and intended for traceability in runbooks, control planes, and sales artifacts.
 - Promotion flow is defined in `policy.policy-lifecycle-governance.v1`.
-- Compiled runtime artifacts are generated under `docs/policies/generated/`.
+- Compiled runtime artifacts are generated under `docs/policies/generated/`, including `mcp-authz-manifests.v1.json` and `tenant-tool-exposure-routing.v1.json`.
 
 ## Promotion Checklist
 

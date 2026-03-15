@@ -1,0 +1,202 @@
+# Ground MCP - Create Something Project-Specific Patterns
+# Patterns unique to this monorepo's architecture
+
+version: "1"
+
+ignore:
+  paths:
+    # ─────────────────────────────────────────────────────────────────────
+    # Side-Effect Imports
+    # ─────────────────────────────────────────────────────────────────────
+    # These files have no exports but are imported for side effects
+    
+    - "**/webflow/globals.ts"     # CSS injection for Shadow DOM components
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Co-Located Experiment Data
+    # ─────────────────────────────────────────────────────────────────────
+    # Experiments often have co-located data files with relative imports
+    # Ground's import resolution misses these patterns
+    
+    - "**/experiments/*/arenaData.ts"      # Living Arena game data
+    - "**/experiments/*/svg-operations.ts" # Render Studio SVG utilities
+    - "**/experiments/*/gameData.ts"       # Game configuration
+    - "**/experiments/*/mockData.ts"       # Mock/seed data
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Airtable Scripts
+    # ─────────────────────────────────────────────────────────────────────
+    # These are embedded directly in Airtable, not imported
+    
+    - "**/airtable-scripts/**"
+    
+  duplicate_pairs:
+    # ─────────────────────────────────────────────────────────────────────
+    # Intentional Duplicates
+    # ─────────────────────────────────────────────────────────────────────
+    # Each SvelteKit app needs its own analytics route handler
+    # Even though they call the same shared functions
+    
+    - ["packages/agency/src/routes/api/analytics/track/+server.ts",
+       "packages/io/src/routes/api/analytics/track/+server.ts"]
+    - ["packages/agency/src/routes/api/analytics/events/+server.ts",
+       "packages/io/src/routes/api/analytics/events/+server.ts"]
+       
+    # Model routing has different BeadsIssue types in each package
+    # Adapts harness model-routing for orchestration layer
+    - ["packages/harness/src/model-routing.ts",
+       "packages/orchestration/src/integration/model-routing.ts"]
+       
+    # Stripe client uses different API versions per app
+    - ["packages/agency/src/lib/services/stripe.ts",
+       "packages/clearway/src/lib/services/stripe-connect.ts"]
+
+# ─────────────────────────────────────────────────────────────────────
+# Design Pattern Exceptions
+# ─────────────────────────────────────────────────────────────────────
+# Known drift and intentional exclusions from Canon design system
+
+design_patterns:
+  mode: "warn"
+  
+  ignore_paths:
+    - "packages/maverick/**"           # Client project (uses Tailwind)
+    - "packages/clearway/src/embed/**" # Isolated widget (standalone CSS)
+    - "packages/agency/clients/**"     # Client-specific sites (custom styling)
+    - "**/dist/**"                     # Build artifacts (generated from src)
+    - "**/visualizations/**"           # Experimental visualizations (custom SVG styling)
+    - "**/papers/**"                   # Academic papers (custom prose styling)
+    - "packages/space/**"              # Experimental space package
+    - "packages/lms/**"                # Learning system (custom course styling)
+    - "**/*.test.ts"
+    - "**/node_modules/**"
+    
+  # CSS contexts where hardcoded values are intentional
+  ignore_contexts:
+    # High contrast mode - accessibility overrides require specific values
+    - pattern: "@media (prefers-contrast: more)"
+      reason: "Accessibility overrides - WCAG AAA compliance requires specific values"
+    # Reduced transparency fallbacks - accessibility
+    - pattern: "@media (prefers-reduced-transparency: reduce)"
+      reason: "Accessibility fallback - solid background replacement"
+    # Mobile performance optimizations
+    - pattern: "@media (max-width: 768px)"
+      reason: "Performance optimization - reduced blur values for mobile"
+    
+  # Values that are intentionally NOT tokens (below design system granularity)
+  allowed_values:
+    spacing:
+      - "1px"     # Border width, fine adjustments
+      - "2px"     # Small gaps, borders (below --space-xs)
+      - "-1px"    # Negative offset adjustments
+      - "0.25rem" # Fine-grained spacing (xs/2)
+      - "0.375rem" # Fine-grained spacing (xs * 0.6)
+      - "0.5rem"  # Half of sm spacing
+      - "0.75rem" # 3/4 of sm spacing
+      - "2px 8px" # Fine-grained padding for small badges
+    typography:
+      - "inherit"  # Inherit from parent
+      - "100%"     # Percentage-based sizing
+    colors:
+      - "transparent"
+      - "currentColor"
+      - "inherit"
+      # Design system definitions (these define the tokens)
+      - "rgba(255, 255, 255, 0.06)"   # glass-border-subtle definition
+      - "rgba(255, 255, 255, 0.10)"   # glass-border-light definition
+      - "rgba(255, 255, 255, 0.15)"   # glass-border-medium definition
+      - "rgba(255, 255, 255, 0.22)"   # glass-border-strong definition
+      - "rgba(255, 255, 255, 0.25)"   # liquid-glass hover state
+      - "rgba(0, 0, 0, 0.90)"         # high-contrast glass background
+      - "color-mix(*)"                # CSS color-mix() function
+    shadows:
+      # Focus ring shadows (accessibility)
+      - "0 0 0 2px var(--color-fg-muted)"   # Focus ring
+      - "0 0 0 4px var(--color-fg-subtle)"  # Extended focus ring
+      - "0 0 0 1px var(--color-border-emphasis)"  # Selection outline
+      # Liquid glass decorative shadows (define the aesthetic)
+      - "0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+      - "0 6px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)"
+    animations:
+      # Reduced-motion accessibility patterns
+      - "0.01ms"    # Near-instant for prefers-reduced-motion
+      - "0ms"       # Instant for prefers-reduced-motion
+      - "1"         # animation-iteration-count: 1 (not a timing value)
+    
+  known_drift:
+    critical:
+      - file: "packages/components/src/lib/components/SEO.svelte"
+        issue: "21 export let props - needs Svelte 5 migration"
+        status: "tracked"
+        priority: "high"
+        reason: "Used by 25+ pages across all properties"
+        
+    unmigrated:
+      - package: "packages/tufte"
+        issue: "Visualization library still Svelte 4"
+        status: "tracked"
+        priority: "low"
+        reason: "Rarely used - migrate when touched"
+        
+    # Files with known low adoption that need attention
+    low_adoption:
+      - file: "packages/io/src/routes/visualizations/arena-scale/+page.svelte"
+        adoption: "16.4%"
+        priority: "medium"
+        reason: "Experimental visualization - uses custom SVG styling"
+      - file: "packages/io/src/routes/papers/ground-evidence-based-claims/+page.svelte"
+        adoption: "32.0%"
+        priority: "medium"
+        reason: "Technical paper - uses code/markdown styling"
+      - file: "packages/components/src/lib/brand/marks/PropertyMark.svelte"
+        adoption: "17.6%"
+        priority: "skip"
+        reason: "Brand mark - uses calculated sizes (calc with var), SVG opacities for 3D cube effect"
+      - file: "packages/components/src/lib/motion/ParallaxSection.svelte"
+        adoption: "50.0%"
+        priority: "skip"
+        reason: "Parallax effect - uses percentage positions (-20%) for buffer zones, dynamic overlay opacity"
+      - file: "packages/components/src/lib/components/navigation/Tooltip.svelte"
+        adoption: "50.0%"
+        priority: "skip"
+        reason: "Tooltip arrows - uses precise pixel values (8px, -4px) for geometric positioning (arrow offset = half arrow size)"
+      - file: "packages/components/src/lib/visual/IsometricSpiral.svelte"
+        adoption: "56.5%"
+        priority: "skip"
+        reason: "SVG visualization - uses pixel values for SVG text rendering where rem doesn't work reliably"
+
+# ─────────────────────────────────────────────────────────────────────
+# File Contexts (AI-Native)
+# ─────────────────────────────────────────────────────────────────────
+# Explicit declarations of why certain files use hardcoded values.
+# Each context has a documented reason that agents can cite.
+# Use `ground explain <file>` to query why a file is excluded.
+
+contexts:
+  video-rendering:
+    reason: "Remotion compositions render to video frames; CSS custom properties are not applicable in this context"
+    paths:
+      - "packages/motion-studio/**"
+    
+  email-templates:
+    reason: "Email clients (Gmail, Outlook, Apple Mail) do not support CSS custom properties; hardcoded values required for compatibility"
+    paths:
+      - "**/newsletter/subscribe.ts"
+      - "**/email-templates/**"
+      - "**/email/**/*.ts"
+    
+  third-party-css:
+    reason: "External CSS from third-party tools (Webflow, etc.) not under our design system control"
+    paths:
+      - "packages/bundle-scanner/webflow/**"
+      
+  polecats-snapshots:
+    reason: "Polecat snapshots are historical point-in-time copies; violations reflect state at snapshot time"
+    paths:
+      - "csm/polecats/**"
+
+report:
+  format: markdown
+  include_suggestions: true
+  group_by: type
+  verbose: true

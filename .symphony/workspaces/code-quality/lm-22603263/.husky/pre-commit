@@ -1,0 +1,131 @@
+#!/bin/sh
+# Ground Pre-commit Hook
+# Catches duplicates and design system drift before they're committed
+
+# Get staged TypeScript/Svelte files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|svelte)$' || true)
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+# Check if ground exists
+GROUND="./packages/ground/target/release/ground"
+if [ ! -f "$GROUND" ]; then
+  echo "⚠️  ground not found, skipping checks"
+  exit 0
+fi
+
+# =============================================================================
+# CHECK 1: Duplicates
+# =============================================================================
+echo "🔍 Checking for duplicates in staged files..."
+
+RESULT=$($GROUND find duplicates ./packages --threshold 0.90 --extensions ts,svelte 2>&1)
+
+if echo "$RESULT" | grep -q "No duplicates found"; then
+  echo "✅ No duplicates found"
+else
+  VIOLATIONS=$(echo "$RESULT" | grep -c "% similar" || echo "0")
+  if [ "$VIOLATIONS" -gt 0 ]; then
+    echo ""
+    echo "⚠️  Found $VIOLATIONS potential duplicates (>90% similar):"
+    echo "$RESULT" | grep -A2 "% similar" | head -20
+    echo ""
+    echo "Consider consolidating these files or use --no-verify to skip."
+  fi
+fi
+
+# =============================================================================
+# CHECK 2: CSS Token Adoption
+# =============================================================================
+STAGED_CSS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.css$' || true)
+
+if [ -n "$STAGED_CSS" ]; then
+  echo ""
+  echo "🎨 Checking CSS token adoption..."
+  
+  DRIFT_RESULT=$($GROUND find drift ./packages --extensions css 2>&1)
+  ADOPTION=$(echo "$DRIFT_RESULT" | grep "Overall adoption:" | awk '{print $3}' | tr -d '%')
+  
+  if [ -n "$ADOPTION" ]; then
+    # Check if adoption is below threshold (90%)
+    if [ $(echo "$ADOPTION < 90" | bc -l 2>/dev/null || echo "0") -eq 1 ]; then
+      echo "⚠️  CSS token adoption is below 90% ($ADOPTION%)"
+      echo "$DRIFT_RESULT" | grep -E "^  •" | head -5
+      echo ""
+      echo "Run 'ground find drift --extensions css' for details."
+    else
+      echo "✅ CSS token adoption: $ADOPTION%"
+    fi
+  fi
+fi
+
+# =============================================================================
+# CHECK 3: Design System Drift (Svelte files only)
+# =============================================================================
+STAGED_SVELTE=$(echo "$STAGED_FILES" | grep -E '\.svelte$' || true)
+
+if [ -n "$STAGED_SVELTE" ]; then
+  echo ""
+  echo "🎨 Checking for design system drift in staged Svelte files..."
+  
+  # Check each staged Svelte file for drift
+  DRIFT_WARNINGS=0
+  for FILE in $STAGED_SVELTE; do
+    if [ -f "$FILE" ]; then
+      # Skip files in ignored paths
+      if echo "$FILE" | grep -qE 'maverick|verticals|clearway/src/embed|node_modules'; then
+        continue
+      fi
+      
+      # Quick check for hardcoded values (simplified check)
+      if grep -qE 'color:\s*#[0-9a-fA-F]|font-size:\s*[0-9]+px' "$FILE" 2>/dev/null; then
+        # Verify it's not using var()
+        if ! grep -q 'var(--' "$FILE" 2>/dev/null; then
+          echo "  ⚠️  $FILE may have hardcoded values"
+          DRIFT_WARNINGS=$((DRIFT_WARNINGS + 1))
+        fi
+      fi
+    fi
+  done
+  
+  if [ "$DRIFT_WARNINGS" -eq 0 ]; then
+    echo "✅ No obvious drift detected"
+  else
+    echo ""
+    echo "⚠️  Found potential drift in $DRIFT_WARNINGS file(s)"
+    echo "Run 'ground find drift' for detailed analysis."
+    echo "Canon tokens: --color-*, --space-*, --text-*"
+  fi
+fi
+
+# =============================================================================
+# CHECK 4: Svelte 4 Props (export let)
+# =============================================================================
+if [ -n "$STAGED_SVELTE" ]; then
+  LEGACY_PROPS=0
+  for FILE in $STAGED_SVELTE; do
+    if [ -f "$FILE" ]; then
+      # Skip known exceptions
+      if echo "$FILE" | grep -qE 'SEO\.svelte|tufte'; then
+        continue
+      fi
+      
+      if grep -q 'export let.*:' "$FILE" 2>/dev/null; then
+        echo "  ⚠️  $FILE uses Svelte 4 'export let' pattern"
+        LEGACY_PROPS=$((LEGACY_PROPS + 1))
+      fi
+    fi
+  done
+  
+  if [ "$LEGACY_PROPS" -gt 0 ]; then
+    echo ""
+    echo "⚠️  Found $LEGACY_PROPS file(s) with Svelte 4 props"
+    echo "Consider migrating to Svelte 5 \$props() pattern."
+  fi
+fi
+
+echo ""
+echo "✅ Pre-commit checks complete"
+exit 0

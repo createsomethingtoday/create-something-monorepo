@@ -76,11 +76,12 @@ to multiple provider candidates (ordered failover).
 The hub currently supports tenant-scoped visible-route exposure without
 splitting into separate MCP gateways:
 
-- Tenant policy gates visible tools by server and tool prefix from
-  `config/mcp-hub/routing.json`.
+- Tenant policy gates visible tools by server, tag, access type, and tool prefix from the
+  generated artifact `docs/policies/generated/tenant-tool-exposure-routing.v1.json`,
+  compiled from `config/mcp-hub/routing.json`.
 - `HUB_TENANT_ID` can override the resolved tenant policy key at runtime.
-- Alias failover, tag-level routing, and pending OAuth approval handling are
-  not yet enforced in `cs-mcp-hub-remote`.
+- Alias failover and pending OAuth approval handling are not yet enforced in
+  `cs-mcp-hub-remote`.
 
 Runtime env:
 

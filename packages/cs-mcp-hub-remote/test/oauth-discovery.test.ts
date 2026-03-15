@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import hubWorker, { buildHubOAuthAuthorizationServerMetadata, buildHubOAuthProtectedResourceMetadata } from '../index.ts';
+import hubWorker, {
+  buildHubOAuthAuthorizationServerMetadata,
+  buildHubOAuthProtectedResourceMetadata,
+  shouldBypassMcpAuth,
+} from '../index.ts';
 
 test('buildHubOAuthAuthorizationServerMetadata points to shared identity issuer', () => {
   const metadata = buildHubOAuthAuthorizationServerMetadata(
@@ -68,14 +72,22 @@ test('hub worker serves oauth protected resource metadata from MCP discovery pat
   assert.deepEqual(body.scopes_supported, ['openid', 'profile', 'email', 'mcp', 'offline_access']);
 });
 
-test('unauthorized MCP responses advertise oauth protected resource metadata', async () => {
+test('unauthorized MCP tool execution responses advertise oauth protected resource metadata', async () => {
   const response = await hubWorker.fetch(
     new Request('https://mj.mcp.createsomething.agency/mcp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {
+          name: 'hub_status',
+          arguments: {},
+        },
+      }),
     }),
     {
       OAUTH_ISSUER_URL: 'https://id.createsomething.space',
@@ -93,4 +105,56 @@ test('unauthorized MCP responses advertise oauth protected resource metadata', a
     response.headers.get('WWW-Authenticate') ?? '',
     /resource_metadata="https:\/\/mj\.mcp\.createsomething\.agency\/mcp\/\.well-known\/oauth-protected-resource"/,
   );
+});
+
+test('MCP initialize and tools/list handshake requests bypass top-level auth', async () => {
+  const initializeRequest = new Request('https://mj.mcp.createsomething.agency/mcp', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-03-26',
+        capabilities: {},
+        clientInfo: {
+          name: 'chatgpt',
+          version: '1.0.0',
+        },
+      },
+    }),
+  });
+  const toolsListRequest = new Request('https://mj.mcp.createsomething.agency/mcp', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+  });
+
+  assert.equal(await shouldBypassMcpAuth(initializeRequest), true);
+  assert.equal(await shouldBypassMcpAuth(toolsListRequest), true);
+});
+
+test('tool execution requests still require auth', async () => {
+  const toolCallRequest = new Request('https://mj.mcp.createsomething.agency/mcp', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 3,
+      method: 'tools/call',
+      params: {
+        name: 'hub_status',
+        arguments: {},
+      },
+    }),
+  });
+
+  assert.equal(await shouldBypassMcpAuth(toolCallRequest), false);
 });

@@ -1,0 +1,110 @@
+{
+  "policy_id": "policy.tenant-tool-exposure.v1",
+  "artifact_type": "hub_tenant_routing",
+  "version": 1,
+  "generated_at": "2026-03-15T15:52:36.573Z",
+  "commit_sha": "08a8fbe2d96f2d12676b7640b84d0bafc2ee278d",
+  "compiler": {
+    "name": "compile-tenant-routing-artifact",
+    "version": 1
+  },
+  "catalog": {
+    "version": 1,
+    "status": "draft"
+  },
+  "runtime_surface": "hub_visible_route_filter",
+  "coverage": {
+    "implemented_controls": [
+      "defaults.tenant",
+      "tenant_aliases",
+      "allow_servers",
+      "allow_tags",
+      "allow_access_types",
+      "allow_tool_prefixes",
+      "hub_tenant_id_override"
+    ],
+    "unimplemented_policy_controls": [
+      "provider_candidate_failover",
+      "pending_oauth_candidate_state",
+      "workflow_target_scope_constraints"
+    ]
+  },
+  "integrity": {
+    "policy_hash": "e0edc541504b38081625446b6b9256cd9217863d10594af24ff0b848d4c2029f",
+    "source_hash": "4f81022a514bcf55d53494681248ff7f85dd77e742fa1c34c7982d5e22b1d1cf"
+  },
+  "sources": {
+    "policy_spec": "docs/policies/v1/policy.tenant-tool-exposure.v1.json",
+    "routing_config": "config/mcp-hub/routing.json"
+  },
+  "routing": {
+    "defaults": {
+      "tenant": "default",
+      "allowPendingOauthApprovals": false
+    },
+    "tenants": {
+      "blondish": {
+        "allowServers": [
+          "notion-halfdozen-blondish",
+          "composio-toolkit-gmail",
+          "composio-toolkit-exa",
+          "composio-toolkit-perplexityai",
+          "composio-toolkit-composio_search"
+        ],
+        "allowTags": [
+          "blondish",
+          "composio-email",
+          "composio-ai-web-scraping",
+          "composio-analytics",
+          "composio-ai-chatbots",
+          "composio-artificial-intelligence",
+          "composio-ai-agents",
+          "composio-developer-tools"
+        ],
+        "allowAccessTypes": [
+          "read",
+          "auth_admin"
+        ],
+        "allowToolPrefixes": [
+          "notion-halfdozen-blondish__",
+          "composio-toolkit-gmail__",
+          "composio-toolkit-exa__",
+          "composio-toolkit-perplexityai__",
+          "composio-toolkit-composio_search__"
+        ]
+      },
+      "c3-management": {
+        "allowServers": [
+          "notion-halfdozen-c3-management",
+          "composio-toolkit-gmail",
+          "composio-toolkit-exa",
+          "composio-toolkit-perplexityai",
+          "composio-toolkit-composio_search"
+        ],
+        "allowTags": [
+          "c3-management",
+          "composio-email",
+          "composio-ai-web-scraping",
+          "composio-analytics",
+          "composio-ai-chatbots",
+          "composio-artificial-intelligence",
+          "composio-ai-agents",
+          "composio-developer-tools"
+        ],
+        "allowAccessTypes": [
+          "read",
+          "auth_admin"
+        ],
+        "allowToolPrefixes": [
+          "notion-halfdozen-c3-management__",
+          "composio-toolkit-gmail__",
+          "composio-toolkit-exa__",
+          "composio-toolkit-perplexityai__",
+          "composio-toolkit-composio_search__"
+        ]
+      },
+      "default": {}
+    },
+    "aliases": {}
+  }
+}

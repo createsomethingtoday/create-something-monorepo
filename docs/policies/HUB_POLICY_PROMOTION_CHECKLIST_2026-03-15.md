@@ -115,17 +115,20 @@ Current state:
 
 - Draft-only policy.
 - Not present in the generated active authz manifest bundle.
-- Tenant routing data exists in `config/mcp-hub/routing.json`, and the Hub runtime now applies tenant allow-server and allow-prefix filtering in the visible-route path.
-- Even with that runtime enforcement, the policy is still not represented as a compiled active authz manifest with integrity fields and publish flow.
+- A generated routing artifact now exists at `docs/policies/generated/tenant-tool-exposure-routing.v1.json`, compiled from `config/mcp-hub/routing.json`.
+- The Hub runtime now consumes that generated artifact for tenant allow-server, allow-tag, allow-access-type, and allow-prefix filtering in the visible-route path.
+- The generated artifact currently covers server allowlists, tag allowlists, access-type allowlists, tool-prefix allowlists, and tenant alias resolution.
+- Named-lane tenants can now hide generic write/destructive/control-plane routes while still exposing read and reconnect surfaces, which partially constrains broad raw provider catalogs until a stricter workflow target-scope model exists.
+- The generated artifact still does not implement provider candidate failover, pending OAuth candidate state, precise workflow target-scope constraints, or a publish flow.
 
 Needed before promotion:
 
-1. Decide the enforcement surface:
-   - runtime authz manifest in `packages/mcp-authz`, or
-   - another compiled/queryable control-plane artifact
-2. Implement the enforcement or publish surface.
-3. Generate compiled integrity fields or an equivalent promoted artifact.
-4. Add publish and verification steps.
+1. Decide whether the generated routing artifact is the final enforcement surface:
+   - keep it as a compiled/queryable control-plane artifact, or
+   - move the policy into a runtime authz manifest in `packages/mcp-authz`
+2. Close the current coverage gaps between the draft policy statements and the generated runtime artifact.
+3. Add publish and verification steps for the chosen enforcement surface.
+4. Record approval evidence and post-merge verification.
 5. Only then change the policy from `draft` to `active`.
 
 ### `policy.cross-workspace-sync-governance.v1`
@@ -167,13 +170,24 @@ For runtime-backed authz policies, the working sequence is:
 5. Run `scripts/policy-artifact-check.mjs`.
 6. Record review and verification evidence in Loom/PR.
 
+For the tenant-routing control-plane artifact, the working sequence is:
+
+1. Update `config/mcp-hub/routing.json`.
+2. Rebuild the generated routing artifact with `scripts/compile-tenant-routing-artifact.mjs`.
+3. Commit `docs/policies/generated/tenant-tool-exposure-routing.v1.json`.
+4. Redeploy or restart the Hub so the runtime picks up the new compiled artifact.
+5. Run `scripts/policy-artifact-check.mjs` and targeted Hub routing verification.
+6. Record review and verification evidence in Loom/PR.
+
 ## Source Anchors
 
 - `docs/policies/README.md`
 - `docs/policies/v1/policy.policy-lifecycle-governance.v1.md`
 - `docs/policies/v1/policy.paper-experiment-release-gate.v1.md`
 - `docs/policies/generated/mcp-authz-manifests.v1.json`
+- `docs/policies/generated/tenant-tool-exposure-routing.v1.json`
 - `packages/mcp-authz/src/policies.ts`
 - `scripts/compile-authz-manifests.ts`
+- `scripts/compile-tenant-routing-artifact.mjs`
 - `scripts/publish-authz-policy.ts`
 - `scripts/policy-artifact-check.mjs`

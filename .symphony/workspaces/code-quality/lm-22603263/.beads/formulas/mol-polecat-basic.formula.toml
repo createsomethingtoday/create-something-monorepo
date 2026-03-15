@@ -1,0 +1,38 @@
+# Polecat Formula: Basic Quality (Haiku)
+# For simple, mechanical tasks with clear scope
+
+name = "mol-polecat-basic"
+description = "Basic polecat workflow for simple tasks using Haiku model"
+quality = "basic"
+model = "haiku"
+
+[[variables]]
+name = "issue_id"
+description = "The issue ID to work on"
+required = true
+
+[[steps]]
+id = "understand"
+title = "Understand the task"
+description = "Read issue description and acceptance criteria"
+
+[[steps]]
+id = "execute"
+title = "Execute the work"
+description = "Complete the task according to specifications"
+
+[[steps]]
+id = "verify"
+title = "Quick verification"
+description = "Basic sanity check - does it work?"
+
+[[steps]]
+id = "report"
+title = "Report completion"
+description = "Update issue status and document changes"
+
+[success_criteria]
+criteria = [
+  "All steps completed without errors",
+  "Issue updated with completion status"
+]

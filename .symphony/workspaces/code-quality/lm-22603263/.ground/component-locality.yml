@@ -1,0 +1,92 @@
+# Ground Component Locality Patterns
+# Enforces Canon as single source of truth for components
+#
+# Usage: ground components --check
+# Migrate: ground components --relocate
+
+version: "1"
+
+component_locality:
+  enabled: true
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Forbidden Locations
+  # ─────────────────────────────────────────────────────────────────────────
+  # Components should NOT live in these paths
+  
+  forbidden_paths:
+    - pattern: "packages/*/src/routes/**/*.svelte"
+      description: "Route directories should only contain page components"
+      exceptions:
+        # SvelteKit page components (start with +)
+        - "+page.svelte"
+        - "+layout.svelte"
+        - "+error.svelte"
+        - "+loading.svelte"
+        # Server-only files
+        - "+page.server.ts"
+        - "+layout.server.ts"
+        - "+server.ts"
+      message: |
+        Component '{file}' is in a route directory but is not a SvelteKit page component.
+        
+        Move to one of:
+        - @create-something/canon/experiments/{experiment}/ (if 1-of-1 for an experiment)
+        - @create-something/canon/domains/{property}/ (if property-specific)
+        - @create-something/canon/components/ (if shared across properties)
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Canonical Locations
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  canonical_paths:
+    # Shared components (used across 2+ properties)
+    shared: "packages/canon/src/lib/components/"
+    
+    # Property-specific components
+    domains:
+      ltd: "packages/canon/src/lib/domains/ltd/"
+      agency: "packages/canon/src/lib/domains/agency/"
+      space: "packages/canon/src/lib/domains/space/"
+      io: "packages/canon/src/lib/domains/io/"
+    
+    # Experiment-specific components (1-of-1)
+    experiments: "packages/canon/src/lib/experiments/{experiment}/"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Property Detection
+  # ─────────────────────────────────────────────────────────────────────────
+  # Map file paths to properties for domain suggestions
+  
+  property_mapping:
+    "packages/ltd/": "ltd"
+    "packages/agency/": "agency"
+    "packages/space/": "space"
+    "packages/io/": "io"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Experiment Detection
+  # ─────────────────────────────────────────────────────────────────────────
+  # Detect experiment context from route path
+  
+  experiment_detection:
+    pattern: "packages/*/src/routes/experiments/([^/]+)/"
+    capture_group: 1  # Experiment name
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Component Detection Heuristics
+  # ─────────────────────────────────────────────────────────────────────────
+  # Distinguish reusable components from page-specific markup
+  
+  component_indicators:
+    # Must have at least one of these to be considered a component
+    required_any:
+      - "let { .* } = $props()"     # Has props (Svelte 5)
+      - "export let"                 # Has props (Svelte 4)
+      - "<slot"                      # Has slots
+      - "export default"             # Default export
+    
+    # Exclude if matches (page-specific patterns)
+    exclude_if:
+      - "export const load"          # Load function = page
+      - "export const actions"       # Form actions = page

@@ -1,0 +1,16 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with rounded corners for iOS -->
+  <rect width="180" height="180" fill="#000000"/>
+
+  <!-- Outer ring -->
+  <circle cx="90" cy="90" r="50" fill="none" stroke="#ffffff" stroke-width="4"/>
+
+  <!-- Middle ring -->
+  <circle cx="90" cy="90" r="32" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+
+  <!-- Inner dot -->
+  <circle cx="90" cy="90" r="16" fill="#ffffff"/>
+
+  <!-- Subtle radial glow -->
+  <circle cx="90" cy="90" r="65" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+</svg>

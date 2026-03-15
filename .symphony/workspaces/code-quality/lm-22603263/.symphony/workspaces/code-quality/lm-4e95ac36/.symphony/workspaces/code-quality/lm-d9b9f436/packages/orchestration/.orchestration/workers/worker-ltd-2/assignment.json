@@ -1,0 +1,20 @@
+{
+  "workerId": "worker-ltd-2",
+  "issueId": "csm-r88mu",
+  "convoyId": "convoy-fd8a2b",
+  "epicId": "voice-audit-ltd",
+  "context": {
+    "url": "https://createsomething.ltd/",
+    "section": "philosophy",
+    "property": ".ltd",
+    "currentText": {
+      "paragraph1": "Less, but better. Not minimalism for its own sake—a way to focus on what matters. When you remove the unnecessary, what remains gets stronger.",
+      "paragraph2": "Simple isn't easy. It takes more effort to make something clear than to leave it complicated. That effort is worth it."
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}

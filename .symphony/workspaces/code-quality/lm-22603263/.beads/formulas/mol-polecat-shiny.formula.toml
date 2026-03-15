@@ -1,0 +1,50 @@
+# Polecat Formula: Shiny Quality (Sonnet)
+# For standard features requiring thoughtful implementation
+
+name = "mol-polecat-shiny"
+description = "Standard polecat workflow for normal complexity using Sonnet model"
+quality = "shiny"
+model = "sonnet"
+
+[[variables]]
+name = "issue_id"
+description = "The issue ID to work on"
+required = true
+
+[[steps]]
+id = "analyze"
+title = "Analyze requirements"
+description = "Understand issue, check dependencies, review existing code"
+
+[[steps]]
+id = "plan"
+title = "Plan implementation"
+description = "Design approach, identify files to change, consider edge cases"
+
+[[steps]]
+id = "implement"
+title = "Implement changes"
+description = "Write code following Canon patterns and conventions"
+
+[[steps]]
+id = "test"
+title = "Test thoroughly"
+description = "Run existing tests, add new tests, verify functionality"
+
+[[steps]]
+id = "review"
+title = "Self-review"
+description = "Check for DRY violations, Canon compliance, documentation"
+
+[[steps]]
+id = "commit"
+title = "Commit and report"
+description = "Create descriptive commit, update issue with completion details"
+
+[success_criteria]
+criteria = [
+  "All tests passing",
+  "Code follows Canon conventions",
+  "Issue updated with implementation notes",
+  "Changes committed to branch"
+]

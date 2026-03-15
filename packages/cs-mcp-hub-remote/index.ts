@@ -24,6 +24,7 @@ import {
   getPolicyManifest,
   recordAuthzDecisionEvent,
   requiresHumanReview,
+  type AuthorizationAccessType,
   type AuthzDecisionEventRecord,
   type AuthzRolloutRow,
 } from '@create-something/mcp-authz';
@@ -32,7 +33,7 @@ import { flush as braintrustFlush, initLogger, type Logger, type Span } from 'br
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
 import intentRoutesJson from '../../config/mcp-hub/intent-routes.json';
 import registryJson from '../../config/mcp-hub/registry.json';
-import routingJson from '../../config/mcp-hub/routing.json';
+import tenantRoutingArtifactJson from '../../docs/policies/generated/tenant-tool-exposure-routing.v1.json';
 
 type StringMap = Record<string, string>;
 
@@ -118,6 +119,18 @@ type VisibleProxyCatalog = {
   toolDefinitions: Tool[];
   routes: Map<string, ProxyRoute>;
   definitionByName: Map<string, Tool>;
+};
+
+type OAuthSecurityScheme = {
+  type: 'oauth2';
+  scopes: string[];
+};
+
+type ToolWithSecuritySchemes = Tool & {
+  securitySchemes?: OAuthSecurityScheme[];
+  _meta?: NonNullable<Tool['_meta']> & {
+    securitySchemes?: OAuthSecurityScheme[];
+  };
 };
 
 type HubRuntime = {
@@ -365,8 +378,9 @@ const SERVICE_TIER_AUTHZ_POLICY_ID = 'policy.service-tier-entitlement.v1';
 const registry = registryJson as unknown as McpBundleRegistry;
 const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
 const intentRouteRegistry = intentRoutesJson as unknown as IntentRouteRegistry;
+const OAUTH_TOOL_SECURITY_SCHEMES: OAuthSecurityScheme[] = [{ type: 'oauth2', scopes: ['mcp'] }];
 
-export const MANAGEMENT_TOOLS: Tool[] = [
+const MANAGEMENT_TOOL_DEFINITIONS: Tool[] = [
   {
     name: 'hub_status',
     description: 'Show active downstream MCP servers, proxy tool count, and warning state.',
@@ -620,6 +634,10 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   },
 ];
 
+export const MANAGEMENT_TOOLS: Tool[] = MANAGEMENT_TOOL_DEFINITIONS.map((tool) =>
+  attachOAuthSecuritySchemes(tool),
+);
+
 export const HUB_RESOURCES: HubResourceDefinition[] = [
   {
     uri: 'hub://status',
@@ -710,10 +728,63 @@ const HUB_DISCOVERY_KV_PREFIX = 'hub_discovery_v1::';
 const DEFAULT_REQUIRED_GLOBAL_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_REQUIRED_DISCOVERY_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const MCP_HANDSHAKE_METHODS = new Set(['initialize', 'notifications/initialized', 'tools/list', 'ping']);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let braintrustLogger: Logger<any> | null = null;
 let braintrustLoggerKey: string | null = null;
+
+function cloneOAuthToolSecuritySchemes(): OAuthSecurityScheme[] {
+  return OAUTH_TOOL_SECURITY_SCHEMES.map((scheme) => ({ ...scheme, scopes: [...scheme.scopes] }));
+}
+
+function attachOAuthSecuritySchemes(tool: Tool): Tool {
+  const securitySchemes = cloneOAuthToolSecuritySchemes();
+  const toolWithSecuritySchemes: ToolWithSecuritySchemes = {
+    ...tool,
+    securitySchemes,
+    _meta: {
+      ...(tool._meta ?? {}),
+      securitySchemes: cloneOAuthToolSecuritySchemes(),
+    },
+  };
+  return toolWithSecuritySchemes;
+}
+
+function isMcpHandshakeMethod(method: unknown): boolean {
+  return typeof method === 'string' && MCP_HANDSHAKE_METHODS.has(method);
+}
+
+function isAllowedUnauthenticatedMcpPayload(payload: unknown): boolean {
+  if (Array.isArray(payload)) {
+    return payload.length > 0 && payload.every((entry) => isAllowedUnauthenticatedMcpPayload(entry));
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return false;
+  }
+
+  const method = Reflect.get(payload, 'method');
+  return isMcpHandshakeMethod(method);
+}
+
+export async function shouldBypassMcpAuth(request: Request): Promise<boolean> {
+  if (request.method !== 'POST') {
+    return false;
+  }
+
+  const contentType = (request.headers.get('content-type') ?? '').toLowerCase();
+  if (!contentType.includes('application/json')) {
+    return false;
+  }
+
+  try {
+    const payload = await request.clone().json();
+    return isAllowedUnauthenticatedMcpPayload(payload);
+  } catch {
+    return false;
+  }
+}
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -748,9 +819,12 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      const authFailure = await authorizeRequest(request, env);
-      if (authFailure) {
-        return withCors(authFailure);
+      const bypassAuth = await shouldBypassMcpAuth(request);
+      if (!bypassAuth) {
+        const authFailure = await authorizeRequest(request, env);
+        if (authFailure) {
+          return withCors(authFailure);
+        }
       }
 
       if (request.method === 'GET') {
@@ -1309,13 +1383,13 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
     for (const tool of server.tools) {
       const baseProxyName = buildProxyToolName(server.name, tool.name);
       const proxyName = reserveProxyName(baseProxyName, routes, warnings);
-
-      toolDefinitions.push({
+      const proxyTool = attachOAuthSecuritySchemes({
         ...tool,
         name: proxyName,
         description: `[${server.name}] ${tool.description ?? ''}`.trim(),
         inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
       });
+      toolDefinitions.push(proxyTool);
 
       routes.set(proxyName, {
         proxyToolName: proxyName,
@@ -2578,7 +2652,9 @@ export function buildVisibleProxyRoutes(
     .filter((entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry))
     .filter((entry) => isRouteAllowedForSession(entry.route, accountContext.allowedToolPrefixes));
 
-  const tenantScoped = sessionScoped.filter((entry) => isRouteAllowedForTenant(entry.route, accountContext, env));
+  const tenantScoped = sessionScoped.filter((entry) =>
+    isRouteAllowedForTenant(entry.route, accountContext, env, entry.tool)
+  );
 
   const discoveryScoped = prefs.mode === 'full'
     ? tenantScoped
@@ -4684,6 +4760,8 @@ function isRouteAllowedForSession(route: ProxyRoute, allowedToolPrefixes: string
 
 type TenantRoutingPolicy = {
   allowServers?: string[];
+  allowTags?: string[];
+  allowAccessTypes?: AuthorizationAccessType[];
   allowToolPrefixes?: string[];
 };
 
@@ -4697,7 +4775,8 @@ type TenantRoutingConfig = {
 };
 
 function resolveTenantRoutingConfig(accountContext: ResolvedAccountContext, env?: Env): TenantRoutingPolicy | null {
-  const config = routingJson as TenantRoutingConfig;
+  const config =
+    ((tenantRoutingArtifactJson as { routing?: TenantRoutingConfig }).routing ?? {}) as TenantRoutingConfig;
   const configuredTenant = readEnvString(env ?? {}, 'HUB_TENANT_ID');
   const requestedTenant =
     configuredTenant?.trim() ||
@@ -4711,6 +4790,8 @@ function resolveTenantRoutingConfig(accountContext: ResolvedAccountContext, env?
   }
   return {
     allowServers: normalizeRoutingList(policy.allowServers),
+    allowTags: normalizeRoutingList(policy.allowTags),
+    allowAccessTypes: normalizeRoutingList(policy.allowAccessTypes) as AuthorizationAccessType[] | null,
     allowToolPrefixes: normalizeRoutingList(policy.allowToolPrefixes),
   };
 }
@@ -4740,14 +4821,29 @@ function normalizeRoutingList(value: string[] | undefined): string[] | null {
   return normalized.length > 0 ? normalized : [];
 }
 
-function isRouteAllowedForTenant(route: ProxyRoute, accountContext: ResolvedAccountContext, env?: Env): boolean {
+function isRouteAllowedForTenant(
+  route: ProxyRoute,
+  accountContext: ResolvedAccountContext,
+  env?: Env,
+  definition?: Tool,
+): boolean {
   const policy = resolveTenantRoutingConfig(accountContext, env);
   if (!policy) {
     return true;
   }
+  const classification = classifyHubRoute(route, definition);
 
   if (policy.allowServers && policy.allowServers.length > 0 && !policy.allowServers.includes(route.serverName)) {
     return false;
+  }
+
+  if (policy.allowAccessTypes) {
+    if (policy.allowAccessTypes.length === 0) {
+      return false;
+    }
+    if (!policy.allowAccessTypes.includes(classification.accessType)) {
+      return false;
+    }
   }
 
   if (policy.allowToolPrefixes) {
@@ -4755,6 +4851,15 @@ function isRouteAllowedForTenant(route: ProxyRoute, accountContext: ResolvedAcco
       return false;
     }
     if (!policy.allowToolPrefixes.some((prefix) => route.proxyToolName.startsWith(prefix))) {
+      return false;
+    }
+  }
+
+  if (policy.allowTags) {
+    if (policy.allowTags.length === 0) {
+      return false;
+    }
+    if (!route.serverTags.some((tag) => policy.allowTags?.includes(tag))) {
       return false;
     }
   }

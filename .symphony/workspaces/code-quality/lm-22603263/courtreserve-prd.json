@@ -1,0 +1,373 @@
+{
+  "title": "CourtReserve AI Front Desk Agent",
+  "description": "Autonomous booking and member service agent for CourtReserve-powered tennis/pickleball clubs using the Organization API",
+  "created": "2026-01-12T00:00:00Z",
+  "targetProperty": "agency",
+  "complexity": "standard",
+  "requirements": [
+    "All endpoints use HTTPS",
+    "HTTP Basic Authentication for CourtReserve API",
+    "Multi-tenant architecture (one credential per club)",
+    "Rate limiting: 100 requests/minute per club",
+    "All API responses cached for 5 minutes where appropriate",
+    "Comprehensive error handling with user-friendly messages",
+    "All code follows CREATE SOMETHING Canon (TypeScript, tests required)"
+  ],
+  "success": [
+    "Agent successfully books courts via natural language",
+    "Authentication works with real CourtReserve credentials",
+    "All acceptance tests pass (>90% coverage)",
+    "Deployed to Cloudflare Workers with <500ms response time",
+    "Handles 100+ concurrent requests without errors"
+  ],
+  "stories": [
+    {
+      "id": "story-0",
+      "title": "Implement CourtReserve Basic Auth",
+      "description": "Create authentication helper for CourtReserve Organization API using HTTP Basic (username + API key)",
+      "acceptance": [
+        "createCourtReserveClient() function accepts organizationId, username, apiKey",
+        "Encodes credentials as Base64 for Authorization header format: Basic <base64(username:apiKey)>",
+        "Returns configured axios instance with 10-second timeout",
+        "Includes proper Content-Type: application/json header",
+        "Test: successfully makes authenticated request to /api/members endpoint",
+        "Test: returns 401 error for invalid credentials with clear error message",
+        "Test: handles network timeouts gracefully"
+      ],
+      "files": [
+        "packages/courtreserve-agent/src/lib/api-client.ts",
+        "packages/courtreserve-agent/src/lib/__tests__/api-client.test.ts",
+        "packages/courtreserve-agent/src/types/credentials.ts"
+      ],
+      "priority": 1,
+      "passes": false
+    },
+    {
+      "id": "story-1",
+      "title": "Generate TypeScript client from OpenAPI spec",
+      "description": "Auto-generate type-safe API client from CourtReserve Organization API Swagger specification",
+      "acceptance": [
+        "Download OpenAPI spec from https://api.courtreserve.com/swagger/docs/ORGANIZATION",
+        "Generate TypeScript client using @openapitools/openapi-generator-cli with typescript-axios generator",
+        "Generated client exports typed interfaces for: Reservation, Member, Event, Transaction, etc.",
+        "Client includes all documented endpoints from Organization API",
+        "package.json includes generate-api-client script for regeneration",
+        "README documents how to regenerate client when API changes"
+      ],
+      "files": [
+        "packages/courtreserve-agent/scripts/generate-api-client.sh",
+        "packages/courtreserve-agent/src/generated/",
+        "packages/courtreserve-agent/package.json",
+        "packages/courtreserve-agent/README.md"
+      ],
+      "priority": 1,
+      "passes": false,
+      "depends_on": ["story-0"]
+    },
+    {
+      "id": "story-2",
+      "title": "Implement court availability tool",
+      "description": "Agent tool to check court availability using CourtReserve Reservation API",
+      "acceptance": [
+        {
+          "test": "Tool accepts date (YYYY-MM-DD), startTime (HH:MM), endTime (HH:MM), optional courtType",
+          "verify": "TypeScript types enforce correct parameter format"
+        },
+        {
+          "test": "Makes GET request to /api/reservations/availability endpoint",
+          "verify": "Network request logged in test output"
+        },
+        {
+          "test": "Returns array of available courts with: courtId, courtName, courtType, timeSlots",
+          "verify": "Response matches TypeScript interface AvailableCourt[]"
+        },
+        {
+          "test": "Handles no availability gracefully with message 'No courts available for selected time'",
+          "verify": "Returns empty array with user-friendly message"
+        },
+        {
+          "test": "Caches results for 5 minutes to reduce API calls",
+          "verify": "Second identical request returns cached data"
+        },
+        "Test: Query 'any courts free tomorrow at 3pm?' returns correct available courts",
+        "Test: Handles API errors (500, timeout) with retry logic (max 3 attempts)"
+      ],
+      "files": [
+        "packages/courtreserve-agent/src/tools/availability.ts",
+        "packages/courtreserve-agent/src/tools/__tests__/availability.test.ts",
+        "packages/courtreserve-agent/src/types/court.ts"
+      ],
+      "priority": 1,
+      "passes": false,
+      "depends_on": ["story-1"]
+    },
+    {
+      "id": "story-3",
+      "title": "Implement member search tool",
+      "description": "Agent tool to find members by name, email, or phone using CourtReserve Member API",
+      "acceptance": [
+        {
+          "test": "Tool accepts search query (string) that can be name, email, or phone",
+          "verify": "Query parameter properly URL-encoded"
+        },
+        {
+          "test": "Makes GET request to /api/members endpoint with search parameter",
+          "verify": "Request includes search query in URL params"
+        },
+        {
+          "test": "Returns member data: memberId, firstName, lastName, email, phone, membershipStatus, membershipTier",
+          "verify": "Response matches TypeScript interface Member"
+        },
+        {
+          "test": "Handles multiple results (shows top 5, asks user to clarify)",
+          "verify": "Returns array limited to 5 results with message to clarify"
+        },
+        {
+          "test": "Handles no results with message 'No member found matching [query]'",
+          "verify": "Returns empty array with user-friendly message"
+        },
+        "Test: Search 'John Smith' returns member profile with active status",
+        "Test: Search by email 'john@example.com' returns exact match",
+        "Test: Validates member is active before allowing bookings (status === 'active')"
+      ],
+      "files": [
+        "packages/courtreserve-agent/src/tools/member.ts",
+        "packages/courtreserve-agent/src/tools/__tests__/member.test.ts",
+        "packages/courtreserve-agent/src/types/member.ts"
+      ],
+      "priority": 1,
+      "passes": false,
+      "depends_on": ["story-1"]
+    },
+    {
+      "id": "story-4",
+      "title": "Implement create reservation tool",
+      "description": "Agent tool to book courts for members using CourtReserve Reservation API",
+      "acceptance": [
+        {
+          "test": "Tool accepts memberId, courtId, date, startTime, endTime",
+          "verify": "All parameters validated before API call"
+        },
+        {
+          "test": "Validates member exists and is active before booking",
+          "verify": "Calls member search tool to verify membership status"
+        },
+        {
+          "test": "Validates court is available for requested time",
+          "verify": "Calls availability tool to check court before booking"
+        },
+        {
+          "test": "Makes POST request to /api/reservations endpoint with booking details",
+          "verify": "Request body includes all required fields"
+        },
+        {
+          "test": "Returns reservation confirmation with: reservationId, confirmationNumber, courtName, date, time, memberName",
+          "verify": "Response matches TypeScript interface ReservationConfirmation"
+        },
+        {
+          "test": "Handles booking conflicts with clear error 'Court [name] is already booked for [time]'",
+          "verify": "Returns 409 error with user-friendly message"
+        },
+        "Test: End-to-end booking flow completes successfully and returns confirmation",
+        "Test: Prevents double-booking (second request for same time/court fails)",
+        "Test: Validates date is not in the past before attempting booking"
+      ],
+      "files": [
+        "packages/courtreserve-agent/src/tools/booking.ts",
+        "packages/courtreserve-agent/src/tools/__tests__/booking.test.ts",
+        "packages/courtreserve-agent/src/types/reservation.ts"
+      ],
+      "priority": 1,
+      "passes": false,
+      "depends_on": ["story-2", "story-3"]
+    },
+    {
+      "id": "story-5",
+      "title": "Implement reservation management tools",
+      "description": "Agent tools to view, modify, and cancel reservations",
+      "acceptance": [
+        {
+          "test": "getReservation tool accepts reservationId and returns full booking details",
+          "verify": "GET /api/reservations/{id} returns Reservation object"
+        },
+        {
+          "test": "getMemberReservations tool accepts memberId and returns upcoming/past bookings",
+          "verify": "Returns array of reservations sorted by date (upcoming first)"
+        },
+        {
+          "test": "cancelReservation tool accepts reservationId and cancels booking",
+          "verify": "DELETE /api/reservations/{id} returns success confirmation"
+        },
+        {
+          "test": "Cancellation validates booking exists before attempting delete",
+          "verify": "Calls getReservation first to confirm existence"
+        },
+        {
+          "test": "Cancellation validates booking belongs to requesting member (security check)",
+          "verify": "Compares memberId from reservation with requesting member"
+        },
+        "Test: 'Show my upcoming reservations' returns member's bookings",
+        "Test: 'Cancel my Friday booking' successfully cancels reservation",
+        "Test: Handles cancellation of non-existent reservation gracefully"
+      ],
+      "files": [
+        "packages/courtreserve-agent/src/tools/reservation-management.ts",
+        "packages/courtreserve-agent/src/tools/__tests__/reservation-management.test.ts"
+      ],
+      "priority": 2,
+      "passes": false,
+      "depends_on": ["story-4"]
+    },
+    {
+      "id": "story-6",
+      "title": "Build Front Desk Agent - Conversational Interface",
+      "description": "Complete Claude-powered agent that handles natural language booking requests using all tools",
+      "acceptance": [
+        {
+          "test": "Agent uses Claude 3.5 Sonnet model via @anthropic-ai/sdk",
+          "verify": "Model configured as 'claude-3-5-sonnet-20241022'"
+        },
+        {
+          "test": "System prompt defines agent as friendly front desk receptionist for tennis/pickleball club",
+          "verify": "Prompt includes personality, capabilities, and response guidelines"
+        },
+        {
+          "test": "Agent has access to all tools: check_availability, find_member, create_reservation, get_reservations, cancel_reservation",
+          "verify": "Tools array includes all 5 tools with proper schemas"
+        },
+        {
+          "test": "Responds to 'What are your hours?' with club hours (from config or generic response)",
+          "verify": "Returns conversational response about hours"
+        },
+        {
+          "test": "Responds to 'Book court 3 tomorrow at 5pm for John Smith' by creating reservation",
+          "verify": "Agent calls find_member, check_availability, create_reservation in sequence"
+        },
+        {
+          "test": "Handles ambiguous requests like 'I want to play tennis' by asking clarifying questions",
+          "verify": "Agent asks: what time? which court? outdoor or indoor?"
+        },
+        {
+          "test": "Confirms all bookings clearly with date, time, court number, and confirmation ID",
+          "verify": "Response includes all booking details in friendly format"
+        },
+        {
+          "test": "Handles errors gracefully without exposing technical details",
+          "verify": "API errors converted to user-friendly messages"
+        },
+        {
+          "test": "E2E test suite with 15 conversation scenarios passes (bookings, cancellations, inquiries)",
+          "verify": "pnpm test shows 15/15 scenarios passing"
+        }
+      ],
+      "files": [
+        "packages/courtreserve-agent/src/agents/front-desk.ts",
+        "packages/courtreserve-agent/src/agents/__tests__/front-desk.test.ts",
+        "packages/courtreserve-agent/src/agents/prompts/front-desk-system.txt",
+        "packages/courtreserve-agent/src/types/conversation.ts"
+      ],
+      "priority": 1,
+      "passes": false,
+      "depends_on": ["story-5"]
+    },
+    {
+      "id": "story-7",
+      "title": "Deploy to Cloudflare Workers",
+      "description": "Production-ready HTTP endpoint for agent chat integration (SMS, web, WhatsApp)",
+      "acceptance": [
+        {
+          "test": "Worker exposes POST /api/chat endpoint that accepts { tenantId, userId, message }",
+          "verify": "Endpoint validates request body and returns 400 for invalid format"
+        },
+        {
+          "test": "Worker loads tenant credentials from D1 database by tenantId",
+          "verify": "SELECT query retrieves username, api_key_encrypted for tenant"
+        },
+        {
+          "test": "Worker decrypts API key using Cloudflare Workers crypto API",
+          "verify": "Encrypted key successfully decrypted before API client creation"
+        },
+        {
+          "test": "Worker creates CourtReserve API client with tenant's credentials",
+          "verify": "Client authenticated with tenant-specific username/API key"
+        },
+        {
+          "test": "Worker initializes Front Desk Agent with tenant's API client",
+          "verify": "Agent instance created with correct client binding"
+        },
+        {
+          "test": "Worker returns agent response with <500ms latency (p95)",
+          "verify": "Response time logged and meets SLA"
+        },
+        {
+          "test": "Rate limiting implemented: 100 requests/minute per tenant",
+          "verify": "101st request returns 429 Too Many Requests"
+        },
+        {
+          "test": "CORS headers configured for web chat integration",
+          "verify": "OPTIONS request returns proper Access-Control headers"
+        },
+        {
+          "test": "Error responses use proper HTTP status codes (400, 401, 429, 500)",
+          "verify": "Each error type returns appropriate status"
+        },
+        {
+          "test": "Environment variables configured: ANTHROPIC_API_KEY",
+          "verify": "wrangler secret put ANTHROPIC_API_KEY succeeds"
+        },
+        {
+          "test": "Monitoring dashboard shows request counts, errors, and latency",
+          "verify": "Cloudflare Analytics or custom logging captures metrics"
+        }
+      ],
+      "files": [
+        "packages/courtreserve-agent/workers/chat-endpoint/src/index.ts",
+        "packages/courtreserve-agent/workers/chat-endpoint/wrangler.toml",
+        "packages/courtreserve-agent/migrations/0001_tenants.sql",
+        "packages/courtreserve-agent/src/lib/encryption.ts"
+      ],
+      "priority": 1,
+      "passes": false,
+      "depends_on": ["story-6"]
+    },
+    {
+      "id": "story-8",
+      "title": "Multi-tenant admin dashboard",
+      "description": "Internal tool to onboard clubs, test credentials, and monitor usage",
+      "acceptance": [
+        {
+          "test": "Dashboard UI shows list of all tenants with status (active, pending, suspended)",
+          "verify": "Table displays tenantId, displayName, status, created_at"
+        },
+        {
+          "test": "Add tenant form accepts: displayName, username, apiKey, planTier",
+          "verify": "Form validates all required fields before submission"
+        },
+        {
+          "test": "Test credentials button verifies CourtReserve API access works",
+          "verify": "Makes test GET /api/members request and shows success/failure"
+        },
+        {
+          "test": "Credentials encrypted using Cloudflare Workers crypto API before storage",
+          "verify": "API keys never stored in plain text in D1"
+        },
+        {
+          "test": "Usage stats show requests per tenant in last 30 days",
+          "verify": "Query D1 analytics table for per-tenant metrics"
+        },
+        {
+          "test": "Suspend tenant button disables API access immediately",
+          "verify": "Suspended tenant receives 401 on next request"
+        }
+      ],
+      "files": [
+        "packages/courtreserve-agent/src/routes/admin/+page.svelte",
+        "packages/courtreserve-agent/src/routes/admin/tenants/+page.server.ts",
+        "packages/courtreserve-agent/src/lib/admin/tenant-manager.ts"
+      ],
+      "priority": 2,
+      "passes": false,
+      "depends_on": ["story-7"]
+    }
+  ]
+}

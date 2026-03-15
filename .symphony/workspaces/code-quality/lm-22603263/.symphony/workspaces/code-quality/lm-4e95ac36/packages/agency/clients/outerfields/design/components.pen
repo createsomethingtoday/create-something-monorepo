@@ -1,0 +1,952 @@
+{
+  "version": "2.6",
+  "children": [
+    {
+      "type": "frame",
+      "id": "Bd7EY",
+      "x": 0,
+      "y": -742,
+      "name": "Pricing Section",
+      "width": 1200,
+      "fill": "$--color-bg-pure",
+      "layout": "vertical",
+      "padding": [
+        64,
+        24
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "IrAef",
+          "name": "Pricing Card",
+          "width": "fill_container",
+          "fill": "$--color-bg-surface",
+          "cornerRadius": "$--radius-lg",
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "$--color-border-default"
+          },
+          "gap": 48,
+          "padding": 48,
+          "children": [
+            {
+              "type": "frame",
+              "id": "WMl7j",
+              "name": "Pricing Left",
+              "width": 395,
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "8hjkl",
+                  "name": "Pricing Header",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "aWi18",
+                      "name": "Badge",
+                      "fill": "#ffffff1a",
+                      "cornerRadius": "$--radius-full",
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#ffffff33"
+                      },
+                      "padding": [
+                        4,
+                        12
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "kA7tN",
+                          "name": "badgeText",
+                          "fill": "$--color-fg-secondary",
+                          "content": "Founding Member",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 11,
+                          "fontWeight": "700",
+                          "letterSpacing": 0.5
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "jF6QZ",
+                      "name": "Price Row",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "WHsxC",
+                          "name": "priceCurrency",
+                          "fill": "$--color-fg-muted",
+                          "content": "$",
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 24,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Aa7nE",
+                          "name": "priceAmount",
+                          "fill": "$--color-fg-primary",
+                          "content": "99",
+                          "lineHeight": 1,
+                          "fontFamily": "$--font-primary",
+                          "fontSize": 140,
+                          "fontWeight": "700",
+                          "letterSpacing": -0.03
+                        },
+                        {
+                          "type": "frame",
+                          "id": "n7SIq",
+                          "name": "Price Meta",
+                          "layout": "vertical",
+                          "padding": [
+                            0,
+                            0,
+                            0,
+                            8
+                          ],
+                          "justifyContent": "end",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "EXzcx",
+                              "name": "pricePeriod",
+                              "fill": "$--color-fg-secondary",
+                              "content": "one-time",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "fC7J0",
+                              "name": "priceNote",
+                              "fill": "$--color-fg-muted",
+                              "content": "lifetime access",
+                              "fontFamily": "$--font-primary",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "63Y9M",
+                  "name": "Tagline",
+                  "fill": "$--color-fg-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": 340,
+                  "content": "One payment. All features. No recurring fees. Ever.",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "BekWB",
+                  "name": "Urgency Strip",
+                  "width": "fill_container",
+                  "fill": "#000000",
+                  "cornerRadius": [
+                    0,
+                    8,
+                    8,
+                    0
+                  ],
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": {
+                      "left": 3
+                    },
+                    "fill": "$--color-warning"
+                  },
+                  "gap": 6,
+                  "padding": [
+                    12,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "WG37J",
+                      "name": "urgencyIcon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "triangle-alert",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--color-warning"
+                    },
+                    {
+                      "type": "text",
+                      "id": "n549S",
+                      "name": "urgencyText",
+                      "fill": "$--color-fg-muted",
+                      "content": "Founding member pricing —",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "iDB1m",
+                      "name": "urgencyHighlight",
+                      "fill": "$--color-warning",
+                      "content": "70%+ savings",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y6Jm9",
+                      "name": "urgencyEnd",
+                      "fill": "$--color-fg-muted",
+                      "content": "vs. post-launch",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "mZzgp",
+              "name": "Pricing Right",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": {
+                  "left": 1
+                },
+                "fill": "$--color-border-default"
+              },
+              "layout": "vertical",
+              "gap": 24,
+              "padding": [
+                16,
+                0,
+                16,
+                48
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "zE1zF",
+                  "name": "Benefits Title",
+                  "fill": "$--color-fg-muted",
+                  "content": "What's included",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600",
+                  "letterSpacing": 0.5
+                },
+                {
+                  "type": "frame",
+                  "id": "2frNa",
+                  "name": "Benefits Grid",
+                  "width": "fill_container",
+                  "gap": 48,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "eQGna",
+                      "name": "Benefits Column 1",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 20,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "2nQ4n",
+                          "name": "Benefit Item",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "5qwkD",
+                              "name": "benefit1Icon",
+                              "width": 16,
+                              "height": 16,
+                              "iconFontName": "check",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--color-success"
+                            },
+                            {
+                              "type": "text",
+                              "id": "rTju6",
+                              "name": "benefit1Text",
+                              "fill": "$--color-fg-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": 250,
+                              "content": "Lifetime access to all platform content (50+ videos)",
+                              "lineHeight": 1.4,
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "yFAfH",
+                          "name": "Benefit Item",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "mIHdu",
+                              "name": "benefit2Icon",
+                              "width": 16,
+                              "height": 16,
+                              "iconFontName": "check",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--color-success"
+                            },
+                            {
+                              "type": "text",
+                              "id": "f2gcT",
+                              "name": "benefit2Text",
+                              "fill": "$--color-fg-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": 250,
+                              "content": "Behind-the-scenes exclusive content",
+                              "lineHeight": 1.4,
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qbdOX",
+                          "name": "Benefit Item",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "7YAWN",
+                              "name": "benefit3Icon",
+                              "width": 16,
+                              "height": 16,
+                              "iconFontName": "check",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--color-success"
+                            },
+                            {
+                              "type": "text",
+                              "id": "TvVt6",
+                              "name": "benefit3Text",
+                              "fill": "$--color-fg-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": 250,
+                              "content": "Educational resources and training materials",
+                              "lineHeight": 1.4,
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "f7wW1",
+                      "name": "Benefits Column 2",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 20,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "9zkmo",
+                          "name": "Benefit Item",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "0erEQ",
+                              "name": "benefit4Icon",
+                              "width": 16,
+                              "height": 16,
+                              "iconFontName": "check",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--color-success"
+                            },
+                            {
+                              "type": "text",
+                              "id": "TNVd3",
+                              "name": "benefit4Text",
+                              "fill": "$--color-fg-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": 250,
+                              "content": "Member-only resource library",
+                              "lineHeight": 1.4,
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "WOPZh",
+                          "name": "Benefit Item",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "x8JZM",
+                              "name": "benefit5Icon",
+                              "width": 16,
+                              "height": 16,
+                              "iconFontName": "check",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--color-success"
+                            },
+                            {
+                              "type": "text",
+                              "id": "lUqlQ",
+                              "name": "benefit5Text",
+                              "fill": "$--color-fg-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": 250,
+                              "content": "Included 1-on-1 discovery call",
+                              "lineHeight": 1.4,
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "9enjJ",
+                          "name": "Benefit Item",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "F27My",
+                              "name": "benefit6Icon",
+                              "width": 16,
+                              "height": 16,
+                              "iconFontName": "check",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--color-success"
+                            },
+                            {
+                              "type": "text",
+                              "id": "r3sKS",
+                              "name": "benefit6Text",
+                              "fill": "$--color-fg-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": 250,
+                              "content": "Exclusive Outerfields merchandise",
+                              "lineHeight": 1.4,
+                              "fontFamily": "Inter",
+                              "fontSize": 15,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "KYb84",
+                  "name": "CTA Button",
+                  "width": "fill_container",
+                  "fill": "$--color-cta-bg",
+                  "cornerRadius": "$--radius-md",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--color-cta-border"
+                  },
+                  "effect": {
+                    "type": "background_blur",
+                    "radius": 12
+                  },
+                  "gap": 8,
+                  "padding": [
+                    16,
+                    32
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "b8e87",
+                      "name": "ctaIcon",
+                      "width": 18,
+                      "height": 18,
+                      "iconFontName": "lock",
+                      "iconFontFamily": "lucide",
+                      "fill": "#ffffff"
+                    },
+                    {
+                      "type": "text",
+                      "id": "afyE9",
+                      "name": "ctaText",
+                      "fill": "#ffffff",
+                      "content": "Get Lifetime Access",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "J8p9W",
+                  "name": "Guarantee",
+                  "fill": "$--color-fg-muted",
+                  "textGrowth": "fixed-width",
+                  "width": 380,
+                  "content": "30-day money-back guarantee · Secure payment via Stripe",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "WmGtQ",
+      "x": 1300,
+      "y": -742,
+      "name": "Hero Section",
+      "width": 1440,
+      "height": 800,
+      "fill": "$--color-bg-pure",
+      "gap": 60,
+      "padding": 120,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "FNDfi",
+          "name": "Hero Content",
+          "width": 600,
+          "layout": "vertical",
+          "gap": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "pG2oi",
+              "name": "Headline H1",
+              "fill": "$--color-fg-primary",
+              "textGrowth": "fixed-width",
+              "width": 600,
+              "content": "The Future of Film Production",
+              "lineHeight": 1.1,
+              "fontFamily": "Inter",
+              "fontSize": 64,
+              "fontWeight": "700",
+              "letterSpacing": -0.02
+            },
+            {
+              "type": "text",
+              "id": "fBJ2V",
+              "name": "Subhead",
+              "fill": "$--color-fg-secondary",
+              "textGrowth": "fixed-width",
+              "width": 540,
+              "content": "Behind-the-scenes access to professional film equipment, techniques, and exclusive content from working productions.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 20,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "eJK1y",
+              "name": "CTA Group",
+              "gap": 16,
+              "padding": [
+                24,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "9VsBu",
+                  "name": "Primary CTA",
+                  "fill": "$--color-fg-primary",
+                  "cornerRadius": 8,
+                  "gap": 8,
+                  "padding": [
+                    16,
+                    32
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "u92RW",
+                      "name": "heroPrimaryCTAText",
+                      "fill": "$--color-bg-pure",
+                      "content": "Get Started",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "VOfmh",
+                  "name": "Secondary CTA",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--color-border-default"
+                  },
+                  "gap": 8,
+                  "padding": [
+                    16,
+                    32
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fMI31",
+                      "name": "heroSecondaryCTAText",
+                      "fill": "$--color-fg-secondary",
+                      "content": "Watch Demo",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "z2EnL",
+          "name": "Hero Image",
+          "width": 540,
+          "height": 560,
+          "fill": "#1a1a1a",
+          "cornerRadius": 16,
+          "layout": "none"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "eYIjl",
+      "x": 0,
+      "y": 200,
+      "name": "Feature Grid Section",
+      "width": 1200,
+      "fill": "$--color-bg-pure",
+      "layout": "vertical",
+      "gap": 48,
+      "padding": [
+        80,
+        60
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "KT46R",
+          "name": "Section Header",
+          "width": 600,
+          "layout": "vertical",
+          "gap": 16,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "LEFbN",
+              "name": "Section Title",
+              "fill": "$--color-fg-primary",
+              "content": "Everything You Need",
+              "textAlign": "center",
+              "fontFamily": "Inter",
+              "fontSize": 40,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "phWnG",
+              "name": "Section Subtitle",
+              "fill": "$--color-fg-secondary",
+              "content": "Professional tools and resources for serious filmmakers",
+              "textAlign": "center",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "MiOFD",
+          "name": "Feature Grid",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "bzcCs",
+              "name": "Feature Card",
+              "width": "fill_container",
+              "fill": "$--color-bg-surface",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--color-border-default"
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "TmUw7",
+                  "name": "Icon Container",
+                  "width": 48,
+                  "height": 48,
+                  "fill": "#ffffff1a",
+                  "cornerRadius": 8,
+                  "layout": "none"
+                },
+                {
+                  "type": "text",
+                  "id": "7K29V",
+                  "name": "Feature Title",
+                  "fill": "$--color-fg-primary",
+                  "content": "HD Video Library",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "3BcX8",
+                  "name": "Feature Description",
+                  "fill": "$--color-fg-muted",
+                  "textGrowth": "fixed-width",
+                  "width": 280,
+                  "content": "Access 50+ hours of professional behind-the-scenes footage",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "6hbW6",
+              "name": "Feature Card",
+              "width": "fill_container",
+              "fill": "$--color-bg-surface",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--color-border-default"
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "xYZL8",
+                  "name": "Icon Container",
+                  "width": 48,
+                  "height": 48,
+                  "fill": "#ffffff1a",
+                  "cornerRadius": 8,
+                  "layout": "none"
+                },
+                {
+                  "type": "text",
+                  "id": "vE6zK",
+                  "name": "Feature Title",
+                  "fill": "$--color-fg-primary",
+                  "content": "Expert Training",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "lho6b",
+                  "name": "Feature Description",
+                  "fill": "$--color-fg-muted",
+                  "textGrowth": "fixed-width",
+                  "width": 280,
+                  "content": "Learn from industry professionals with decades of experience",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nQ19b",
+              "name": "Feature Card",
+              "width": "fill_container",
+              "fill": "$--color-bg-surface",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--color-border-default"
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "OfLu3",
+                  "name": "Icon Container",
+                  "width": 48,
+                  "height": 48,
+                  "fill": "#ffffff1a",
+                  "cornerRadius": 8,
+                  "layout": "none"
+                },
+                {
+                  "type": "text",
+                  "id": "wlbGg",
+                  "name": "Feature Title",
+                  "fill": "$--color-fg-primary",
+                  "content": "Community Access",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "KyYqQ",
+                  "name": "Feature Description",
+                  "fill": "$--color-fg-muted",
+                  "textGrowth": "fixed-width",
+                  "width": 280,
+                  "content": "Connect with fellow filmmakers and get feedback on your work",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "--color-bg-pure": {
+      "type": "color",
+      "value": "#0a0a0a"
+    },
+    "--color-bg-surface": {
+      "type": "color",
+      "value": "#141414"
+    },
+    "--color-border-default": {
+      "type": "color",
+      "value": "#262626"
+    },
+    "--color-cta-bg": {
+      "type": "color",
+      "value": "#ffffff1f"
+    },
+    "--color-cta-border": {
+      "type": "color",
+      "value": "#ffffff40"
+    },
+    "--color-fg-muted": {
+      "type": "color",
+      "value": "#737373"
+    },
+    "--color-fg-primary": {
+      "type": "color",
+      "value": "#ffffff"
+    },
+    "--color-fg-secondary": {
+      "type": "color",
+      "value": "#a3a3a3"
+    },
+    "--color-success": {
+      "type": "color",
+      "value": "#22c55e"
+    },
+    "--color-warning": {
+      "type": "color",
+      "value": "#fbbf24"
+    },
+    "--container-max-width": {
+      "type": "number",
+      "value": 1200
+    },
+    "--font-primary": {
+      "type": "string",
+      "value": "Inter"
+    },
+    "--radius-full": {
+      "type": "number",
+      "value": 9999
+    },
+    "--radius-lg": {
+      "type": "number",
+      "value": 16
+    },
+    "--radius-md": {
+      "type": "number",
+      "value": 8
+    }
+  }
+}

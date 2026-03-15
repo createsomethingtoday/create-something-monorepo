@@ -44,10 +44,12 @@ import {
 	countRecentCrossDomainTokens,
 	ensureMcpAccountForUserTenant,
 	findMcpAccountById,
+	listMcpAccountsByUserId,
 	createMcpSession,
 	findMcpSessionById,
 	findMcpSessionByTokenHash,
 	findMcpLegacyKeyByTokenHash,
+	findMcpLongLivedTokenByAuthEmail,
 	findMcpLongLivedTokenByAuthSubject,
 	findMcpLongLivedTokenById,
 	findMcpLongLivedTokenByTokenHash,
@@ -1015,11 +1017,18 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 
 	try {
 		const boundHost = normalizeOAuthResourceBoundHost(claims.resource);
-		const issued = await issueManagedBearerToken(env, {
-			authSubject: user.id,
-			authEmail: user.email,
-			tenantId: claims.tenant_id ?? null,
+		const resolvedContext = await resolveOAuthManagedBearerContext(env.DB, {
+			userId: user.id,
+			email: user.email,
 			accountId: claims.account_id ?? null,
+			tenantId: claims.tenant_id ?? null,
+			boundHost,
+		});
+		const issued = await issueManagedBearerToken(env, {
+			authSubject: resolvedContext.authSubject,
+			authEmail: user.email,
+			tenantId: resolvedContext.tenantId,
+			accountId: resolvedContext.accountId,
 			boundHost,
 			toolMode: claims.tool_mode,
 			toolkitProfile: Array.isArray(claims.toolkit_profile) ? claims.toolkit_profile : [],
@@ -1032,6 +1041,9 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				resource: claims.resource,
 				resource_host: boundHost,
 				scope: claims.scope,
+				resolved_auth_subject: resolvedContext.authSubject,
+				resolved_account_id: resolvedContext.accountId,
+				resolved_tenant_id: resolvedContext.tenantId,
 				...('redirect_uri' in claims && claims.redirect_uri ? { redirect_uri: claims.redirect_uri } : {}),
 			},
 		});
@@ -4033,6 +4045,57 @@ function normalizeOAuthResourceBoundHost(resource: string): string | null {
 	} catch {
 		return null;
 	}
+}
+
+async function resolveOAuthManagedBearerContext(
+	db: D1Database,
+	input: {
+		userId: string;
+		email: string;
+		accountId?: string | null;
+		tenantId?: string | null;
+		boundHost?: string | null;
+	}
+): Promise<{ authSubject: string; accountId: string | null; tenantId: string | null }> {
+	const explicitAccountId = normalizeAccountId(input.accountId ?? undefined);
+	const explicitTenantId = normalizeNullableString(input.tenantId);
+	if (explicitAccountId || explicitTenantId) {
+		return {
+			authSubject: input.userId,
+			accountId: explicitAccountId,
+			tenantId: explicitTenantId,
+		};
+	}
+
+	// Preserve the previously entitled managed-bearer identity for this verified email.
+	const existingToken = await findMcpLongLivedTokenByAuthEmail(db, input.email);
+	if (existingToken) {
+		return {
+			authSubject: existingToken.auth_subject,
+			accountId: normalizeAccountId(existingToken.account_id),
+			tenantId: normalizeNullableString(existingToken.tenant_id),
+		};
+	}
+
+	const accounts = await listMcpAccountsByUserId(db, input.userId);
+	if (accounts.length === 0) {
+		return { authSubject: input.userId, accountId: null, tenantId: null };
+	}
+
+	const host = normalizeOptionalHostName(input.boundHost);
+	const matchedAccount = host
+		? (
+			accounts.find((account) => account.tenant_id === `${host}.mcp`)
+			?? accounts.find((account) => account.tenant_id === host)
+			?? accounts.find((account) => account.account_id === `acct_${host}`)
+		)
+		: null;
+	const fallbackAccount = matchedAccount ?? (accounts.length === 1 ? accounts[0] : null);
+	return {
+		authSubject: input.userId,
+		accountId: normalizeAccountId(fallbackAccount?.account_id),
+		tenantId: normalizeNullableString(fallbackAccount?.tenant_id),
+	};
 }
 
 function normalizeToolkitProfileString(raw: FormEntryValue | null): string[] {

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "harness": {
+      "command": "node",
+      "args": [
+        "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/harness-mcp/dist/index.js"
+      ]
+    }
+  }
+}
