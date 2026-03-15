@@ -32,6 +32,7 @@ import { flush as braintrustFlush, initLogger, type Logger, type Span } from 'br
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
 import intentRoutesJson from '../../config/mcp-hub/intent-routes.json';
 import registryJson from '../../config/mcp-hub/registry.json';
+import routingJson from '../../config/mcp-hub/routing.json';
 
 type StringMap = Record<string, string>;
 
@@ -305,6 +306,9 @@ const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
 interface Env {
   HUB_INSTANCE_ID?: string;
   HUB_API_TOKEN?: string;
+  HUB_TENANT_ID?: string;
+  HUB_ALLOW_PENDING_OAUTH_APPROVALS?: string;
+  CS_MCP_HUB_ROUTING?: string;
   OAUTH_ISSUER_URL?: string;
   HUB_IDENTITY_MODE?: string;
   HUB_SESSION_RESOLVE_URL?: string;
@@ -1968,7 +1972,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           await persistDiscoveryPreferences(accountId, nextPrefs, env);
         }
 
-        const visibleTools = buildVisibleProxyRoutes(runtime, nextPrefs, accountContext).toolDefinitions;
+        const visibleTools = buildVisibleProxyRoutes(runtime, nextPrefs, accountContext, env).toolDefinitions;
         try {
           await server.sendToolListChanged();
         } catch {
@@ -2563,6 +2567,7 @@ export function buildVisibleProxyRoutes(
   runtime: HubRuntime,
   prefs: DiscoveryPreferences,
   accountContext: ResolvedAccountContext,
+  env?: Env,
 ): VisibleProxyCatalog {
   const sessionScoped = runtime.proxies.toolDefinitions
     .map((tool) => {
@@ -2573,9 +2578,11 @@ export function buildVisibleProxyRoutes(
     .filter((entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry))
     .filter((entry) => isRouteAllowedForSession(entry.route, accountContext.allowedToolPrefixes));
 
+  const tenantScoped = sessionScoped.filter((entry) => isRouteAllowedForTenant(entry.route, accountContext, env));
+
   const discoveryScoped = prefs.mode === 'full'
-    ? sessionScoped
-    : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
+    ? tenantScoped
+    : tenantScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
 
   const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
     ? discoveryScoped.slice(0, prefs.maxProxyTools)
@@ -2810,7 +2817,7 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
   trace: InvocationTrace;
   entrypoint: string;
 }): Promise<VisibleProxyCatalog> {
-  const base = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext);
+  const base = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext, params.env);
   if (base.toolDefinitions.length === 0) {
     return base;
   }
@@ -2866,7 +2873,7 @@ async function getAuthorizedExactVisibleProxyRoute(params: {
   entrypoint: string;
   proxyToolName: string;
 }): Promise<{ route: ProxyRoute; definition: Tool } | null> {
-  const base = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext);
+  const base = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext, params.env);
   const route = base.routes.get(params.proxyToolName);
   const definition = base.definitionByName.get(params.proxyToolName);
   if (!route || !definition) {
@@ -4673,6 +4680,86 @@ function isRouteAllowedForSession(route: ProxyRoute, allowedToolPrefixes: string
   }
 
   return false;
+}
+
+type TenantRoutingPolicy = {
+  allowServers?: string[];
+  allowToolPrefixes?: string[];
+};
+
+type TenantRoutingConfig = {
+  defaults?: {
+    tenant?: string;
+    allowPendingOauthApprovals?: boolean;
+  };
+  tenants?: Record<string, TenantRoutingPolicy>;
+  aliases?: Record<string, string>;
+};
+
+function resolveTenantRoutingConfig(accountContext: ResolvedAccountContext, env?: Env): TenantRoutingPolicy | null {
+  const config = routingJson as TenantRoutingConfig;
+  const configuredTenant = readEnvString(env ?? {}, 'HUB_TENANT_ID');
+  const requestedTenant =
+    configuredTenant?.trim() ||
+    accountContext.tenantId?.trim() ||
+    config.defaults?.tenant?.trim() ||
+    'default';
+  const tenantKey = resolveTenantRoutingKey(config, requestedTenant);
+  const policy = tenantKey ? config.tenants?.[tenantKey] ?? null : null;
+  if (!policy) {
+    return null;
+  }
+  return {
+    allowServers: normalizeRoutingList(policy.allowServers),
+    allowToolPrefixes: normalizeRoutingList(policy.allowToolPrefixes),
+  };
+}
+
+function resolveTenantRoutingKey(config: TenantRoutingConfig, requestedTenant: string): string | null {
+  if (!requestedTenant) {
+    return null;
+  }
+  if (config.tenants?.[requestedTenant]) {
+    return requestedTenant;
+  }
+  const aliasTarget = config.aliases?.[requestedTenant];
+  if (aliasTarget && config.tenants?.[aliasTarget]) {
+    return aliasTarget;
+  }
+  return null;
+}
+
+function normalizeRoutingList(value: string[] | undefined): string[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  const normalized = value
+    .filter((entry): entry is string => typeof entry === 'string')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  return normalized.length > 0 ? normalized : [];
+}
+
+function isRouteAllowedForTenant(route: ProxyRoute, accountContext: ResolvedAccountContext, env?: Env): boolean {
+  const policy = resolveTenantRoutingConfig(accountContext, env);
+  if (!policy) {
+    return true;
+  }
+
+  if (policy.allowServers && policy.allowServers.length > 0 && !policy.allowServers.includes(route.serverName)) {
+    return false;
+  }
+
+  if (policy.allowToolPrefixes) {
+    if (policy.allowToolPrefixes.length === 0) {
+      return false;
+    }
+    if (!policy.allowToolPrefixes.some((prefix) => route.proxyToolName.startsWith(prefix))) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function normalizeTraceValue(value: unknown): string | null {

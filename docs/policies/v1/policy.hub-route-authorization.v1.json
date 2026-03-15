@@ -1,7 +1,7 @@
 {
   "policy_id": "policy.hub-route-authorization.v1",
   "version": 1,
-  "status": "draft",
+  "status": "active",
   "engine": "polar_v1",
   "rules": [
     {

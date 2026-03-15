@@ -8,6 +8,7 @@ ISSUE_ID="$(basename "${WORKSPACE_PATH}")"
 BRANCH_NAME="codex/${ISSUE_ID}-code-quality"
 source "${SCRIPT_DIR}/worktree-utils.sh"
 
+export SYMPHONY_WORKTREE_CHECKOUT_STRATEGY="${SYMPHONY_WORKTREE_CHECKOUT_STRATEGY:-archive}"
 symphony_add_worktree "${REPO_ROOT}" "${WORKSPACE_PATH}" "${BRANCH_NAME}"
 
 if [[ -d "${REPO_ROOT}/.loom" && ! -e "${WORKSPACE_PATH}/.loom" ]]; then

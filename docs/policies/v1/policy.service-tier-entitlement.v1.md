@@ -1,8 +1,8 @@
 # policy.service-tier-entitlement.v1
 
-- Status: `draft`
+- Status: `active`
 - Owner: `CREATE SOMETHING product + identity + broker operations`
-- Effective date: `TBD`
+- Effective date: `2026-03-13`
 
 ## Purpose
 

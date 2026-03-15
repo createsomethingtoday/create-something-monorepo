@@ -90,3 +90,27 @@ test('SymphonyService derives retry workspace paths from the sanitized workspace
   const snapshot = service.get_issue_snapshot('lm target/1');
   assert.equal(snapshot.workspace.path, '/tmp/symphony-workspaces/lm_target_1');
 });
+
+test('SymphonyService skips startup cleanup tracker calls for targeted task runs', async () => {
+  const service = new SymphonyService({
+    task_id_filter: 'lm-target',
+  });
+
+  let tracker_calls = 0;
+  service.tracker = {
+    fetch_issues_by_states: async () => {
+      tracker_calls += 1;
+      return [];
+    },
+  };
+  service.workspace_manager = {
+    remove_workspace: async () => {
+      throw new Error('workspace cleanup should not run for targeted task startup');
+    },
+  };
+
+  await service.startup_terminal_workspace_cleanup();
+
+  assert.equal(tracker_calls, 0);
+  assert.equal(await service.wait_for_startup_ready(), 'startup_cleanup_skipped');
+});
