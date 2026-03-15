@@ -15,14 +15,14 @@
 		<!-- Link Columns -->
 		<div class="footer-columns">
 			<!-- Work With Me Column -->
-			<div class="footer-column">
-				<h6 class="footer-heading">Start Here</h6>
-				<ul class="footer-links">
-					<li><a href="/services">How I Work</a></li>
-					<li><a href="/products">What I've Built</a></li>
-					<li><a href="/book">Book Mapping Session</a></li>
-				</ul>
-			</div>
+				<div class="footer-column">
+					<h6 class="footer-heading">Start Here</h6>
+					<ul class="footer-links">
+						<li><a href="/services">How I Work</a></li>
+						<li><a href="/products">Proof in Production</a></li>
+						<li><a href="/book">Book Mapping Session</a></li>
+					</ul>
+				</div>
 
 			<!-- Learn Column -->
 			<div class="footer-column">
@@ -55,10 +55,10 @@
 		</div>
 
 		<!-- Bottom Bar -->
-		<div class="footer-bottom">
-		<p class="footer-copyright">
-			© 2026 CREATE SOMETHING. Workflow infrastructure for AI systems.
-		</p>
+			<div class="footer-bottom">
+			<p class="footer-copyright">
+				© 2026 CREATE SOMETHING. Reliable workflows, clear approvals, safer automation.
+			</p>
 			<div class="footer-social">
 				<a href="https://github.com/create-something" target="_blank" rel="noopener">GitHub</a>
 			</div>

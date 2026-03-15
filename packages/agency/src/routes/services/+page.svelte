@@ -33,14 +33,15 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'A single workflow wedge with clear business logic, trust boundaries, and production-safe operating behavior.',
+        'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build'
     },
     {
       name: 'Policy OS',
-      description: `Governed execution delivered with ${deliveryVector.clientFacingLabel}: approval rules, release checks, blocked states, and incident loops.`,
+      description:
+        'Approvals, release checks, blocked states, and incident loops for workflows already in motion.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly'
@@ -59,7 +60,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow Infrastructure gets the first wedge live. Policy OS becomes the core engagement once the workflow is worth governing. Enterprise Extension covers the highest-stakes environments.'
+        'Workflow Infrastructure fixes the first painful workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
@@ -69,7 +70,7 @@
     {
       question: 'What does .agency own?',
       answer:
-        '.agency owns workflow logic, trust boundaries, release controls, and the operating artifacts around them.'
+        '.agency owns the rules, approvals, handoffs, release controls, and operating artifacts around the workflow.'
     },
     {
       question: 'When should we add Policy OS?',
@@ -79,7 +80,7 @@
     {
       question: 'When do we need Enterprise Extension?',
       answer:
-        'Use Enterprise Extension when you need auditability, deterministic recovery, custom trust boundaries, or several governed workflows operating together.'
+        'Use Enterprise Extension when several systems, teams, or compliance requirements must stay aligned and recover cleanly from failure.'
     },
     {
       question: 'Do you still offer MCP-only?',
@@ -100,7 +101,7 @@
 
 <SEO
   title="How We Work | Production-Safe Workflow Infrastructure"
-  description="CREATE SOMETHING .agency starts with one workflow wedge, adds governed execution when failure gets expensive, and extends only when the risk profile demands it."
+  description="CREATE SOMETHING .agency starts with the workflow causing the most drag, adds approvals when failure gets expensive, and extends only when the risk profile demands it."
   keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -126,12 +127,12 @@
       <p class="hero-eyebrow">How I Work</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Start with one workflow. Govern the rest.</h1>
+      <h1 class="hero-title">Start with the workflow creating the most drag.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Launch the first wedge. Add Policy OS when execution gets risky. Reserve Enterprise
-        Extension for workflows that need auditability, recovery, and orchestration.
+        Fix the first workflow. Add approvals and oversight when the risk rises. Reserve
+        Enterprise Extension for auditability, recovery, and cross-system coordination.
       </p>
     </BlurFade>
   </div>
@@ -143,7 +144,7 @@
     <BlurFade delay={0.3}>
       <GovernedExecutionFlow
         title="Where Policy OS fits"
-        description="Workflow Infrastructure gets the route live. Policy OS decides what runs automatically, what needs review, and what stops."
+        description="Workflow Infrastructure gets the first handoff working. Policy OS decides what runs automatically, what needs review, and what stops."
       />
     </BlurFade>
   </div>
@@ -197,7 +198,7 @@
             <article class="progression-card wedge-card">
               <span class="progression-tag">Entry wedge</span>
               <h3>MCP-only</h3>
-              <p>Use this when discovery or compliance means your team will operate the agent directly.</p>
+              <p>Use this when you need the connection first or your team will operate the workflow directly.</p>
               <ul class="retainer-list">
                 <li>Connectivity validation</li>
                 <li>Scoped host setup</li>
@@ -207,7 +208,7 @@
             <article class="progression-card highlighted-card">
               <span class="progression-tag">Canonical package</span>
               <h3>Policy OS</h3>
-              <p>The governed middle that makes <strong>{deliveryVector.clientFacingLabel}</strong> safe to run in production.</p>
+              <p>The approval and oversight layer that makes <strong>{deliveryVector.clientFacingLabel}</strong> safe to run faster in production.</p>
               <ul class="retainer-list">
                 <li>Approval and block boundaries</li>
                 <li>Reason-coded access and blocked states</li>
@@ -217,7 +218,7 @@
             <article class="progression-card">
               <span class="progression-tag">High-stakes scale</span>
               <h3>Enterprise Extension</h3>
-              <p>Apply when cross-system orchestration, auditability, and deterministic recovery all matter at once.</p>
+              <p>Apply when several systems, teams, or compliance requirements have to stay aligned.</p>
               <ul class="retainer-list">
                 <li>Custom trust boundaries</li>
                 <li>Cross-system orchestration</li>
@@ -227,7 +228,7 @@
           </div>
           <div class="retainer-callout">
             <p>
-              MCP-only gets you connected. Policy OS keeps the workflow trustworthy under real load.
+              MCP-only gets you connected. Policy OS keeps the workflow safe as speed and volume increase.
             </p>
           </div>
         </div>
@@ -242,7 +243,7 @@
     <BlurFade>
       <ArtifactSystemStrip
         title="What ships with every governed engagement"
-        description="Policy OS ships as artifacts your team can inspect, run, and inherit."
+        description="Every governed engagement ships as artifacts your team can inspect, inherit, and operate."
       />
     </BlurFade>
   </div>
@@ -261,7 +262,7 @@
             <span class="timeline-label">Phase 1</span>
           <h3>Workflow Infrastructure</h3>
           <p>
-            Build the highest-value workflow with clear trust boundaries and production behavior.
+            Get the first high-value workflow working with clear rules, owners, and handoffs.
           </p>
         </div>
       </BlurFade>
@@ -271,7 +272,7 @@
             <span class="timeline-label">Phase 2</span>
           <h3>Policy OS</h3>
           <p>
-            Add evals, release checks, policy envelopes, and incident loops as risk rises.
+            Add evals, approvals, release checks, and incident loops as the workflow touches real risk.
           </p>
         </div>
       </BlurFade>
@@ -281,8 +282,8 @@
           <span class="timeline-label">Phase 3</span>
           <h3>Extension</h3>
           <p>
-            Extend with custom orchestration and governance when native automation stops being
-            enough.
+            Extend into custom orchestration when several systems or teams need one operating
+            model.
           </p>
         </div>
       </BlurFade>
@@ -314,11 +315,12 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="cta-heading">Map your workflow risk surface.</h2>
+      <h2 class="cta-heading">Map the workflow that's creating the most drag.</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="cta-subtext">
-        We’ll define the trust boundary, failure modes, and escalation path before implementation.
+        We’ll define the handoffs, approvals, failure modes, and escalation path before
+        implementation.
       </p>
     </BlurFade>
     <BlurFade delay={0.2}>
