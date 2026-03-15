@@ -143,6 +143,7 @@ export class CodexAppServerClient {
                 timer,
             };
         });
+        turn_result.catch(() => {});
         const started = await this.request('turn/start', {
             threadId: this.thread_id,
             input: [{ type: 'text', text: prompt }],

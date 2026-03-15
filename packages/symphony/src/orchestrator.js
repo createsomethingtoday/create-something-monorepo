@@ -95,6 +95,7 @@ export class SymphonyService {
     started = false;
     http_server = null;
     requested_port;
+    task_id_filter;
     startup_ready = false;
     resolve_startup_ready;
     startup_ready_promise;
@@ -113,6 +114,9 @@ export class SymphonyService {
             options.dependencies?.worker_factory ??
                 ((issue, attempt, workspace, prompt_template, config, tracker, workspace_manager, logger, on_event) => create_agent_worker_run(issue, attempt, workspace, prompt_template, config, tracker, workspace_manager, logger, on_event));
         this.requested_port = options.port ?? null;
+        this.task_id_filter = typeof options.task_id_filter === 'string' && options.task_id_filter.trim()
+            ? options.task_id_filter.trim()
+            : null;
         this.startup_ready_promise = new Promise((resolve) => {
             this.resolve_startup_ready = resolve;
         });
@@ -127,6 +131,12 @@ export class SymphonyService {
     }
     wait_for_startup_ready() {
         return this.startup_ready_promise;
+    }
+    filter_candidate_issues(issues) {
+        if (!this.task_id_filter) {
+            return issues;
+        }
+        return issues.filter((issue) => issue.id === this.task_id_filter || issue.identifier === this.task_id_filter);
     }
     async start() {
         if (this.started)
@@ -411,6 +421,7 @@ export class SymphonyService {
                     },
                 });
                 issues = await this.tracker.fetch_candidate_issues();
+                issues = this.filter_candidate_issues(issues);
                 await this.telemetry.emit({
                     task_id: '__lane__',
                     phase: 'poll',

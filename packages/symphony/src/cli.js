@@ -9,6 +9,7 @@ function parse_args(argv) {
     const out = {
         once: false,
         port: null,
+        task_id: null,
     };
     for (let index = 0; index < args.length; index += 1) {
         const arg = args[index];
@@ -21,6 +22,11 @@ function parse_args(argv) {
             index += 1;
             const parsed = Number(raw);
             out.port = Number.isFinite(parsed) ? Math.trunc(parsed) : null;
+            continue;
+        }
+        if (arg === '--task-id') {
+            out.task_id = args[index + 1] ?? null;
+            index += 1;
             continue;
         }
         if (!arg.startsWith('-') && !out.workflow_path) {
@@ -50,18 +56,28 @@ async function write_bootstrap_log(workflow_path, phase, details = {}) {
 async function main() {
     const args = parse_args(process.argv);
     const workflow_path = resolve(process.cwd(), args.workflow_path ?? 'WORKFLOW.md');
-    await write_bootstrap_log(workflow_path, 'cli_entered', { once: args.once, port: args.port ?? null });
+    await write_bootstrap_log(workflow_path, 'cli_entered', {
+        once: args.once,
+        port: args.port ?? null,
+        task_id: args.task_id ?? null,
+    });
     if (!existsSync(workflow_path)) {
         await write_bootstrap_log(workflow_path, 'workflow_missing', {});
         throw new Error(`Workflow file not found: ${workflow_path}`);
     }
     const logger = new ConsoleLogger();
-    logger.info('cli bootstrap started', { workflow_path, once: args.once, port: args.port ?? undefined });
+    logger.info('cli bootstrap started', {
+        workflow_path,
+        once: args.once,
+        port: args.port ?? undefined,
+        task_id: args.task_id ?? undefined,
+    });
     await write_bootstrap_log(workflow_path, 'workflow_resolved', { workflow_path });
     const service = new SymphonyService({
         workflow_path,
         logger,
         port: args.port,
+        task_id_filter: args.task_id,
     });
     await write_bootstrap_log(workflow_path, 'service_created', {});
     if (args.once) {

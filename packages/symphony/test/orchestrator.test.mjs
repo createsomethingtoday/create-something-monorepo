@@ -7,6 +7,7 @@ test('SymphonyService does not dispatch blocked ready issues', () => {
   const service = new SymphonyService();
   service.current_config = {
     tracker: {
+      kind: 'loom',
       active_states: ['ready', 'claimed'],
       terminal_states: ['done', 'cancelled'],
     },
@@ -35,4 +36,28 @@ test('SymphonyService does not dispatch blocked ready issues', () => {
   );
 
   assert.equal(should_dispatch, false);
+});
+
+test('SymphonyService filters candidates by explicit task id', () => {
+  const service = new SymphonyService({
+    task_id_filter: 'lm-target',
+  });
+
+  const filtered = service.filter_candidate_issues([
+    {
+      id: 'lm-other',
+      identifier: 'lm-other',
+    },
+    {
+      id: 'lm-target',
+      identifier: 'lm-target',
+    },
+  ]);
+
+  assert.deepEqual(filtered, [
+    {
+      id: 'lm-target',
+      identifier: 'lm-target',
+    },
+  ]);
 });
