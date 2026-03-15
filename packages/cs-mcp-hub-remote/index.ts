@@ -379,6 +379,7 @@ const registry = registryJson as unknown as McpBundleRegistry;
 const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
 const intentRouteRegistry = intentRoutesJson as unknown as IntentRouteRegistry;
 const OAUTH_TOOL_SECURITY_SCHEMES: OAuthSecurityScheme[] = [{ type: 'oauth2', scopes: ['mcp'] }];
+const PUBLIC_HUB_RESOURCE_URIS = new Set([HUB_OVERVIEW_RESOURCE_URI, HUB_AUTH_WORKFLOW_RESOURCE_URI]);
 
 const MANAGEMENT_TOOL_DEFINITIONS: Tool[] = [
   {
@@ -689,6 +690,8 @@ export const HUB_RESOURCES: HubResourceDefinition[] = [
   },
 ];
 
+const PUBLIC_HUB_RESOURCES = HUB_RESOURCES.filter((resource) => PUBLIC_HUB_RESOURCE_URIS.has(resource.uri));
+
 let runtimeCache:
   | {
       key: string;
@@ -765,7 +768,26 @@ function isAllowedUnauthenticatedMcpPayload(payload: unknown): boolean {
   }
 
   const method = Reflect.get(payload, 'method');
+  if (method === 'resources/list') {
+    return true;
+  }
+  if (method === 'resources/read') {
+    const params = asRecord(Reflect.get(payload, 'params'));
+    const uri = normalizeTraceValue(params?.uri);
+    return Boolean(uri && PUBLIC_HUB_RESOURCE_URIS.has(uri));
+  }
   return isMcpHandshakeMethod(method);
+}
+
+function hasMcpAuthenticationHeaders(extra: unknown): boolean {
+  const extraRecord = asRecord(extra);
+  const requestInfo = extraRecord?.requestInfo;
+  return Boolean(
+    getHeaderValue(requestInfo, 'authorization')
+    || getHeaderValue(requestInfo, 'x-mcp-session-token')
+    || getHeaderValue(requestInfo, 'x-api-key')
+    || getHeaderValue(requestInfo, 'api-key'),
+  );
 }
 
 export async function shouldBypassMcpAuth(request: Request): Promise<boolean> {
@@ -1448,12 +1470,13 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
     };
   });
 
-  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-    resources: HUB_RESOURCES,
+  server.setRequestHandler(ListResourcesRequestSchema, async (_request, extra) => ({
+    resources: hasMcpAuthenticationHeaders(extra) ? HUB_RESOURCES : PUBLIC_HUB_RESOURCES,
   }));
 
   server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
     const uri = request.params.uri;
+    const authenticated = hasMcpAuthenticationHeaders(extra);
     const getDiscoveryContext = async () => {
       const accountContext = await resolveAccountContext(extra, env);
       const prefs = await getDiscoveryPreferences(accountContext.accountId, runtime, env);
@@ -1514,6 +1537,21 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         });
       }
       case HUB_OVERVIEW_RESOURCE_URI: {
+        if (!authenticated) {
+          return toHtmlResource(uri, buildHubOverviewHtml({
+            runtime,
+            rateLimitPolicy,
+            quotaPolicy,
+            env,
+            prefs: {
+              mode: DEFAULT_DISCOVERY_MODE,
+              activeServers: [],
+              maxProxyTools: null,
+            },
+            visibleProxyToolCount: null,
+            publicPreview: true,
+          }));
+        }
         const { prefs, visible } = await getDiscoveryContext();
         return toHtmlResource(uri, buildHubOverviewHtml({
           runtime,
@@ -4272,9 +4310,18 @@ function buildHubOverviewHtml(params: {
   quotaPolicy: QuotaPolicy;
   env: Env;
   prefs: DiscoveryPreferences;
-  visibleProxyToolCount: number;
+  visibleProxyToolCount: number | null;
+  publicPreview?: boolean;
 }): string {
-  const { runtime, rateLimitPolicy, quotaPolicy, env, prefs, visibleProxyToolCount } = params;
+  const {
+    runtime,
+    rateLimitPolicy,
+    quotaPolicy,
+    env,
+    prefs,
+    visibleProxyToolCount,
+    publicPreview = false,
+  } = params;
   const policy = buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env);
   const health = {
     hub: {
@@ -4291,6 +4338,10 @@ function buildHubOverviewHtml(params: {
     note: 'Use hub_search_proxy_tools -> hub_describe_proxy_tool -> hub_execute_proxy_tool for brokered execution.',
     authNote:
       'For toolkit auth or reconnects, search for __connection_status or __get_connect_link and execute that proxy tool via hub_execute_proxy_tool.',
+    publicPreview,
+    previewNote: publicPreview
+      ? 'Authenticate to see personalized discovery settings and visible proxy tool counts.'
+      : null,
   };
 
   const escaped = escapeHtml(JSON.stringify(health, null, 2));
