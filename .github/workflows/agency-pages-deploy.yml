@@ -70,7 +70,7 @@ jobs:
       - name: Deploy Agency to Cloudflare Pages
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: |
-          pnpm exec wrangler pages deploy packages/agency/.svelte-kit/cloudflare \
+          node scripts/run-wrangler.mjs --cwd packages/agency pages deploy .svelte-kit/cloudflare \
             --project-name=create-something-agency \
             --branch="${{ steps.branch.outputs.alias }}"
 
