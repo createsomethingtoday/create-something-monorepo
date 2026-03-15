@@ -17,9 +17,27 @@ function quoteShell(value) {
 }
 
 function createLogger() {
+  const infos = [];
+  const warnings = [];
   return {
-    info() {},
-    warn() {},
+    infos,
+    warnings,
+    info(message, details) {
+      infos.push({ message, details });
+    },
+    warn(message, details) {
+      warnings.push({ message, details });
+    },
+  };
+}
+
+function createTelemetry() {
+  const events = [];
+  return {
+    events,
+    async emit(event) {
+      events.push(event);
+    },
   };
 }
 
@@ -117,6 +135,60 @@ test('WorkspaceManager removes incomplete workspaces when recreated bootstrap fa
   );
 
   assert.equal(await pathExists(workspacePath), false);
+});
+
+test('WorkspaceManager caps captured hook output on failure', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-workspace-output-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const workspaceRoot = join(tempRoot, 'workspaces');
+  const logger = createLogger();
+  const telemetry = createTelemetry();
+  const manager = new WorkspaceManager(
+    {
+      workspace: {
+        root: workspaceRoot,
+      },
+      hooks: {
+        after_create: [
+          'i=0',
+          'while [[ "$i" -lt 6000 ]]; do',
+          '  printf x',
+          '  printf y >&2',
+          '  i=$((i + 1))',
+          'done',
+          'exit 7',
+        ].join('; '),
+        timeout_ms: 5_000,
+      },
+    },
+    logger,
+    telemetry,
+  );
+
+  await assert.rejects(
+    manager.ensure_workspace('lm noisy fail'),
+    (error) => {
+      assert.ok(error instanceof SymphonyError);
+      assert.equal(error.code, 'hook_failed');
+      return true;
+    },
+  );
+
+  const warning = logger.warnings.at(-1);
+  assert.ok(warning);
+  assert.equal(warning.message, 'hook failed');
+  assert.equal(warning.details.stdout.length, 2001);
+  assert.equal(warning.details.stderr.length, 2001);
+  assert.match(warning.details.stdout, /^x+…$/);
+  assert.match(warning.details.stderr, /^y+…$/);
+
+  const failureEvent = telemetry.events.find((event) => event.phase === 'after_create' && event.status === 'failed');
+  assert.ok(failureEvent);
+  assert.equal(failureEvent.details.stdout, warning.details.stdout);
+  assert.equal(failureEvent.details.stderr, warning.details.stderr);
 });
 
 test('WorkspaceManager runs the real code-quality snapshot bootstrap hook for incomplete workspaces', async (t) => {
