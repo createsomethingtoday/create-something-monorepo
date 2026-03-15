@@ -33,14 +33,14 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'Cross-system workflows built with explicit business rules, auth boundaries, and production behavior.',
+        'A single workflow wedge with clear business logic, trust boundaries, and production-safe operating behavior.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build'
     },
     {
       name: 'Policy OS',
-      description: `Operational safeguards delivered with ${deliveryVector.clientFacingLabel}: approval rules, release checks, blocked states, and incident loops.`,
+      description: `Governed execution delivered with ${deliveryVector.clientFacingLabel}: approval rules, release checks, blocked states, and incident loops.`,
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly'
@@ -48,7 +48,7 @@
     {
       name: 'Enterprise Extension',
       description:
-        'Orchestration for regulated, high-volume, or multi-system workflows that need auditability and deterministic recovery.',
+        'Audit-ready orchestration for regulated, high-volume, or multi-system workflows that need deterministic recovery.',
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation'
@@ -59,32 +59,32 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Policy OS is the canonical paid package. Workflow Infrastructure gets the workflow live. Enterprise Extension covers higher-stakes environments.'
+        'Workflow Infrastructure gets the first wedge live. Policy OS becomes the core engagement once the workflow is worth governing. Enterprise Extension covers the highest-stakes environments.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
       answer:
-        'When system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen.'
+        'When full system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen.'
     },
     {
       question: 'What does .agency own?',
       answer:
-        '.agency owns workflow logic, trust boundaries, production controls, and extension architecture.'
+        '.agency owns workflow logic, trust boundaries, release controls, and the operating artifacts around them.'
     },
     {
       question: 'When should we add Policy OS?',
       answer:
-        'Add it when failures get expensive, workflows become autonomous, or several systems must stay in sync.'
+        'Add it when the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
     },
     {
       question: 'When do we need Enterprise Extension?',
       answer:
-        'Use Enterprise Extension for regulated, high-volume, or cross-system operations requiring deterministic retries, auditability, and custom trust boundaries.'
+        'Use Enterprise Extension when you need auditability, deterministic recovery, custom trust boundaries, or several governed workflows operating together.'
     },
     {
       question: 'Do you still offer MCP-only?',
       answer:
-        'Yes. MCP-only remains a scoped wedge for discovery and compliance-constrained rollouts, but default delivery moves to outcomes and operational reliability.'
+        'Yes. MCP-only still works for discovery, compliance-constrained pilots, or teams that need the connection before the operating layer.'
     },
     {
       question: 'Do clients own the implementation?',
@@ -100,7 +100,7 @@
 
 <SEO
   title="How We Work | Production-Safe Workflow Infrastructure"
-  description="CREATE SOMETHING .agency turns one critical workflow into a governed production system: implementation first, controls second, extension only when needed."
+  description="CREATE SOMETHING .agency starts with one workflow wedge, adds governed execution when failure gets expensive, and extends only when the risk profile demands it."
   keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -126,12 +126,12 @@
       <p class="hero-eyebrow">How I Work</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Start with one workflow.</h1>
+      <h1 class="hero-title">Start with one workflow. Govern the rest.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Workflow Infrastructure gets it running. Policy OS governs execution when failure gets
-        expensive. Enterprise Extension covers high-stakes operations.
+        Launch the first wedge. Add Policy OS when execution gets risky. Reserve Enterprise
+        Extension for workflows that need auditability, recovery, and orchestration.
       </p>
     </BlurFade>
   </div>
@@ -188,8 +188,8 @@
             <div class="retainer-period">From wedge to governed execution</div>
           </div>
           <p class="retainer-note">
-            Start with one workflow. Add Policy OS when failure gets expensive. Use Enterprise
-            Extension when auditability and orchestration widen.
+            Start with the wedge that proves value. Add governed execution when the workflow starts
+            touching revenue, compliance, or customer trust.
           </p>
         </div>
         <div class="retainer-body">
@@ -227,7 +227,7 @@
           </div>
           <div class="retainer-callout">
             <p>
-              MCP-only gets you connected. Policy OS makes it safe to run.
+              MCP-only gets you connected. Policy OS keeps the workflow trustworthy under real load.
             </p>
           </div>
         </div>

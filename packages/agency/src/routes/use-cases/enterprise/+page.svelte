@@ -20,17 +20,17 @@
 	const failureModes = [
 		{
 			title: 'Prompt Drift',
-			description: 'Agent performance degrades over time as data changes, edge cases accumulate, and prompts go untuned. What worked at launch stops working at month three.',
+			description: 'Agent performance degrades as the business changes, edge cases accumulate, and prompts go untuned. What worked at launch stops holding up in month three.',
 			icon: '01'
 		},
 		{
 			title: 'Policy Gaps',
-			description: 'No clear rules for when agents should escalate, what they can\'t do, how to handle ambiguity. The agent makes a bad call. Trust breaks.',
+			description: 'No clear rules for escalation, ambiguity, or refusal. The agent makes one bad call, and trust in the system collapses.',
 			icon: '02'
 		},
 		{
 			title: 'Orphaned Connections',
-			description: 'MCPs deployed and forgotten. APIs change, tokens expire, workflows evolve. The automation silently stops working — and nobody notices until damage is done.',
+			description: 'Connections get deployed and forgotten. APIs change, tokens expire, workflows evolve, and the automation quietly stops doing the right thing.',
 			icon: '03'
 		}
 	];
@@ -39,32 +39,32 @@
 		{
 			name: 'Prompt Optimization',
 			cadence: 'Weekly',
-			description: 'Systematic review of agent outputs. A/B testing prompt variations. Improving accuracy, tone, and consistency.',
-			result: 'Your agents get better every week.'
+			description: 'Systematic review of agent outputs, prompt revisions, and behavior tuning to improve accuracy, tone, and consistency.',
+			result: 'Your agents improve instead of drifting.'
 		},
 		{
 			name: 'Agent Orchestration',
 			cadence: 'Ongoing',
-			description: 'Coordinating multiple agents across systems. Ensuring they don\'t conflict, duplicate work, or miss handoffs.',
-			result: 'The conductor for your automation orchestra.'
+			description: 'Coordination across agents and systems so they do not conflict, duplicate work, or miss handoffs.',
+			result: 'Clear handoffs instead of hidden collisions.'
 		},
 		{
 			name: 'Policy Management',
 			cadence: 'Ongoing',
-			description: 'Decision rules, escalation paths, boundary conditions. What the agent can do, can\'t do, and when to involve a human.',
-			result: 'Guardrails that protect your business.'
+			description: 'Decision rules, escalation paths, and boundary conditions for what the agent can do, cannot do, and when to involve a human.',
+			result: 'Guardrails that protect the operation.'
 		},
 		{
 			name: 'Performance Monitoring',
 			cadence: 'Continuous',
-			description: 'Uptime, accuracy rates, cost per operation, response times. Alerts when something degrades.',
-			result: 'You know it\'s working. We prove it monthly.'
+			description: 'Uptime, accuracy, cost per operation, response times, and alerts when behavior starts degrading.',
+			result: 'You know what is working, and what needs attention.'
 		},
 		{
 			name: 'Quarterly Business Review',
 			cadence: 'Quarterly',
-			description: 'ROI measurement, expansion opportunities, roadmap updates.',
-			result: 'Every quarter, we show you the numbers and plan what\'s next.'
+			description: 'ROI measurement, expansion opportunities, and roadmap updates tied to actual operating results.',
+			result: 'Every quarter, you get the numbers and the next move.'
 		}
 	];
 
@@ -147,7 +147,7 @@
 
 <SEO
 	title="Policy OS For Enterprise Judgment Operations | CREATE SOMETHING .agency"
-	description="Policy OS for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the workflow wedge is live."
+	description="Policy OS for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the first workflow wedge is live."
 	keywords="enterprise automation reliability, workflow controls, policy operations, ai governance, mcp wedge"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -166,9 +166,9 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					For teams already running MCPs or cross-system workflows, this is Policy OS, the governed execution layer that
-					keeps outcomes reliable. We add prompt optimization, policy controls, approval and
-					escalation logic, and ongoing operational oversight.
+					For teams already running MCPs or cross-system workflows, this is Policy OS: the
+					governed execution layer that keeps outcomes reliable after launch. We add prompt
+					optimization, policy controls, approval logic, escalation paths, and ongoing oversight.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -214,7 +214,7 @@
 
 		<BlurFade delay={0.5}>
 			<p class="problem-conclusion">
-				These aren't connection problems. They're judgment problems.
+				These are not connection problems. They are judgment problems.
 			</p>
 		</BlurFade>
 	</div>

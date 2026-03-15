@@ -16,7 +16,7 @@
 		<div class="footer-columns">
 			<!-- Work With Me Column -->
 			<div class="footer-column">
-				<h6 class="footer-heading">Work With Me</h6>
+				<h6 class="footer-heading">Start Here</h6>
 				<ul class="footer-links">
 					<li><a href="/services">How I Work</a></li>
 					<li><a href="/products">What I've Built</a></li>
@@ -26,7 +26,7 @@
 
 			<!-- Learn Column -->
 			<div class="footer-column">
-				<h6 class="footer-heading">Learn</h6>
+				<h6 class="footer-heading">Framework</h6>
 				<ul class="footer-links">
 					<li><a href="/methodology">Methodology</a></li>
 					<li><a href="https://createsomething.io" target="_blank" rel="noopener">Research</a></li>
@@ -36,7 +36,7 @@
 
 			<!-- About Column -->
 			<div class="footer-column">
-				<h6 class="footer-heading">About</h6>
+				<h6 class="footer-heading">Company</h6>
 				<ul class="footer-links">
 					<li><a href="/about">About Me</a></li>
 					<li><a href="https://createsomething.ltd" target="_blank" rel="noopener">Philosophy</a></li>
@@ -57,7 +57,7 @@
 		<!-- Bottom Bar -->
 		<div class="footer-bottom">
 		<p class="footer-copyright">
-			© 2026 CREATE SOMETHING. Your AI person.
+			© 2026 CREATE SOMETHING. Workflow infrastructure for AI systems.
 		</p>
 			<div class="footer-social">
 				<a href="https://github.com/create-something" target="_blank" rel="noopener">GitHub</a>

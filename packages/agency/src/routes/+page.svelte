@@ -14,7 +14,7 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'Cross-system workflows built with explicit business rules, auth boundaries, and production behavior.',
+        'One critical workflow turned into a production-safe system with clear logic, trust boundaries, and operator handoff.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build with optional ongoing support'
@@ -22,7 +22,7 @@
     {
       name: 'Policy OS',
       description:
-        'Approval rules, release checks, blocked states, and incident loops that keep automation safe in production.',
+        'The governed execution layer: approvals, blocked states, release checks, and incident loops for workflows already in motion.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly governed execution layer'
@@ -30,7 +30,7 @@
     {
       name: 'Enterprise Extension',
       description:
-        'Orchestration for regulated, high-volume, or multi-system workflows that need auditability and deterministic recovery.',
+        'Audit-ready orchestration for regulated, high-volume, or multi-system workflows where drift and failure carry real cost.',
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation with optional ongoing support'
@@ -153,7 +153,7 @@
 
 <SEO
   title="Production-Safe Workflow Infrastructure | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency builds cross-system workflows for CTOs and engineering leaders, with the controls needed to run them safely in production."
+  description="CREATE SOMETHING .agency turns one critical workflow into a production-safe system, then adds the controls needed to keep it reliable."
   keywords="workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -176,12 +176,13 @@
   <div class="hero-container">
     <div class="hero-content">
       <BlurFade delay={0}>
-        <h1 class="hero-title">Critical workflows that hold up in production.</h1>
+        <h1 class="hero-title">One critical workflow, built to survive production.</h1>
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-detail">
-          I build the logic, controls, and operating artifacts that keep cross-system work
-          reliable. Start with one workflow. Add Policy OS when failure gets expensive.
+          I design the logic, controls, and operator artifacts that keep cross-system work
+          reliable under real load. Start with one workflow wedge. Add Policy OS when the cost of
+          failure rises.
         </p>
       </BlurFade>
       <BlurFade delay={0.25}>

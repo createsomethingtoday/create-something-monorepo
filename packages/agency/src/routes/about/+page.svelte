@@ -6,7 +6,7 @@
 
 <SEO
   title="About | Micah Johnson — Workflow Infrastructure"
-  description="I build workflow infrastructure for technical operators: cross-system logic, reliability controls, trust boundaries, and production-safe automation."
+  description="I build the part of automation most teams under-scope: workflow logic, trust boundaries, reliability controls, and the operator artifacts that keep systems safe in production."
   keywords="Micah Johnson, workflow infrastructure, production automation, technical operators, cross-system architecture, automation reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -30,12 +30,12 @@
       <p class="hero-eyebrow">About</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">I build workflow infrastructure for technical operators.</h1>
+      <h1 class="hero-title">I build the part of automation most teams skip.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        I work on the part most teams under-scope: the rules, controls, and artifacts that make
-        automation safe in production.
+        Rules, trust boundaries, operating artifacts, and recovery paths. The pieces that decide
+        whether automation becomes reliable operations or expensive noise.
       </p>
     </BlurFade>
   </div>
@@ -48,13 +48,14 @@
       <div class="about-content">
         <h2>The approach</h2>
         <p>
-          Most teams do not need a giant platform project first. They need one workflow that
-          works. I usually start there, then add controls only when the cost of failure justifies
-          it.
+          Most teams do not need a giant platform initiative first. They need one workflow that
+          actually works. I start there, then add controls only when the cost of failure justifies
+          the extra layer.
         </p>
         <p>
           My methodology is the Subtractive Triad: remove duplication, excess, and disconnection
-          before adding automation. Cleaner systems produce more reliable automation.
+          before adding automation. Cleaner systems create better constraints, and better
+          constraints create more reliable outcomes.
         </p>
       </div>
     </BlurFade>
@@ -68,15 +69,16 @@
       <div class="about-content">
         <h2>Background</h2>
         <p>
-          Micah Johnson. System Architect on the Marketplace Team at Webflow — building internal
-          tools, onboarding systems, and platform infrastructure serving millions of users. Focused
-          on technical architecture for production workflows and agent systems.
+          Micah Johnson. I work as a System Architect on the Marketplace Team at Webflow, where I
+          build internal tooling, onboarding systems, and platform infrastructure serving millions
+          of users. My focus is production workflow architecture and agent systems that can be
+          operated, not just demoed.
         </p>
         <p>
-          I have deployed production integrations connecting tools like Salesforce, HubSpot, Notion,
-          Slack, Procore, and custom internal systems to AI. That building experience informs where
-          to trust native tooling, where to start with MCP, and where to design custom control
-          layers.
+          I have shipped integrations across Salesforce, HubSpot, Notion, Slack, Procore, and
+          internal systems. That work informs where native tooling is enough, where MCP is the
+          right wedge, and where custom control layers are the difference between launch and
+          reliability.
         </p>
         <p>Based in Texas. Working with businesses across the US.</p>
         <p>
@@ -116,7 +118,7 @@
     <BlurFade delay={0.1}>
       <div class="about-content">
         <h2>The system behind the work</h2>
-        <p>CREATE SOMETHING operates as a connected system — each part informs the others:</p>
+        <p>CREATE SOMETHING operates as a connected system. Each property has a distinct job, and each one sharpens the rest:</p>
         <ul class="circle-list">
           <li>
             <a
@@ -148,8 +150,8 @@
           </li>
         </ul>
         <p>
-          Client work informs the research. Research refines the methodology. The methodology
-          improves the client work. Every part serves the whole.
+          Client work informs the research. Research sharpens the methodology. The methodology
+          raises the bar on client work. Every part serves the whole.
         </p>
       </div>
     </BlurFade>
@@ -180,7 +182,7 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
-      <h2 class="cta-heading">Map the workflow that cannot fail.</h2>
+      <h2 class="cta-heading">Map the workflow your team is still babysitting.</h2>
     </BlurFade>
     <BlurFade delay={0.2}>
       <div class="cta-actions">

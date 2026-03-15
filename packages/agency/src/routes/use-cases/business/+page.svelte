@@ -13,27 +13,27 @@
 			number: '01',
 			title: 'Start with one critical workflow',
 			paragraphs: [
-				'Pick your biggest pain point. The report you build every Monday. The data you copy between systems. The emails you sort by hand.',
-				`We start with a scoped workflow wedge using ${deliveryVector.clientFacingLabel}: MCP connectivity, setup, policy, and runbook for one high-value workflow. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.`,
-				'Now your AI agent can read your CRM, update your project tracker, draft your emails \u2014 using your actual data, not generic responses.'
+				'Pick the workflow that steals the most time. The Monday report. The handoff that breaks between tools. The updates your team keeps rebuilding by hand.',
+				`We start with a scoped workflow wedge using ${deliveryVector.clientFacingLabel}: connectivity, setup, policy, and runbook for one high-value workflow. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.`,
+				'Now your agent can work against your actual systems instead of forcing your team to stay in the middle.'
 			]
 		},
 		{
 			number: '02',
 			title: 'See the value, then map the whole picture',
 			paragraphs: [
-				'One connection shows you what\u2019s possible. The Subtractive Triad audit shows you the full opportunity.',
-				'We map every tool, every workflow, every data flow. We find the duplication (three teams using three project trackers), the excess (tools nobody uses but everyone pays for), and the disconnection (data that exists but can\u2019t be reached).',
-				'You get a strategic report with a prioritized roadmap. No commitment to build. $5,000\u2013$10,000.'
+				'One connection proves the value. The Subtractive Triad audit shows you where to go next.',
+				'We map every tool, workflow, and data flow. Then we find the duplication, the waste, and the disconnected information that is quietly slowing the business down.',
+				'You get a strategic report with a prioritized roadmap. No obligation to build. $5,000\u2013$10,000.'
 			]
 		},
 		{
 			number: '03',
 			title: 'Make it reliable',
 			paragraphs: [
-				'Connections are only the start. Reliability is what makes them usable in real operations.',
-				'Policy OS: we tune your agents monthly. Optimize prompts. Update policies as your business changes. Monitor performance. Catch edge cases before they become problems.',
-				'Your automation gets smarter every month. $1,500\u2013$3,500/mo.'
+				'Connections are the start. Reliability is what makes them usable in real operations.',
+				'Policy OS keeps the workflow healthy over time: prompt tuning, policy updates, performance monitoring, and edge-case handling before problems become incidents.',
+				'Your automation becomes more dependable as the business changes. $1,500\u2013$3,500/mo.'
 			]
 		}
 	];
@@ -126,7 +126,7 @@
 
 <SEO
 	title="Your tools don't talk to each other. We fix that. | CREATE SOMETHING"
-	description="We help small teams turn one painful workflow into a reliable system, starting with a scoped MCP wedge and expanding only when the workflow proves out."
+	description="We help small teams turn one painful workflow into a reliable system, starting with a scoped wedge and expanding only when the workflow proves out."
 	keywords="small business automation, workflow integration, custom mcp, HubSpot automation, Notion integration, ops automation, SMB AI"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -156,9 +156,8 @@
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
 					We turn one painful workflow into a reliable system instead of asking your team to keep
-					bridging the gap by hand. Every day you copy data between HubSpot and Notion, format
-					reports nobody asked for, and post Slack updates you assembled manually. That is why we
-					start with {deliveryVector.clientFacingLabel} as the lowest-risk wedge.
+					bridging the gap by hand. If your team is stitching together HubSpot, Notion, Slack,
+					and spreadsheets, we start with the smallest wedge that removes the manual bridge.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -245,7 +244,7 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				You don't need to transform everything at once. You need one thing to stop hurting.
+				You do not need a re-platform. You need the first broken workflow to stop stealing time.
 			</p>
 		</BlurFade>
 		<div class="story-track">
