@@ -14,7 +14,7 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'One critical workflow turned into a production-safe system with clear logic, trust boundaries, and operator handoff.',
+        'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build with optional ongoing support'
@@ -22,7 +22,7 @@
     {
       name: 'Policy OS',
       description:
-        'The governed execution layer: approvals, blocked states, release checks, and incident loops for workflows already in motion.',
+        'The oversight layer: approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly governed execution layer'
@@ -30,7 +30,7 @@
     {
       name: 'Enterprise Extension',
       description:
-        'Audit-ready orchestration for regulated, high-volume, or multi-system workflows where drift and failure carry real cost.',
+        'Cross-system control for regulated, high-volume, or multi-team workflows where auditability and recovery matter.',
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation with optional ongoing support'
@@ -153,7 +153,7 @@
 
 <SEO
   title="Production-Safe Workflow Infrastructure | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency turns one critical workflow into a production-safe system, then adds the controls needed to keep it reliable."
+  description="CREATE SOMETHING .agency fixes the workflow your team keeps protecting by hand, then adds approvals and controls as the risk rises."
   keywords="workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -176,13 +176,13 @@
   <div class="hero-container">
     <div class="hero-content">
       <BlurFade delay={0}>
-        <h1 class="hero-title">One critical workflow, built to survive production.</h1>
+        <h1 class="hero-title">Fix the workflow your team still protects by hand.</h1>
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-detail">
-          I design the logic, controls, and operator artifacts that keep cross-system work
-          reliable under real load. Start with one workflow wedge. Add Policy OS when the cost of
-          failure rises.
+          I turn broken handoffs, approval gaps, and cross-system drag into a workflow your team
+          can trust in production. Start with one workflow. Add Policy OS when speed needs
+          guardrails.
         </p>
       </BlurFade>
       <BlurFade delay={0.25}>
@@ -293,8 +293,8 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Start with one workflow. Add controls as failure cost rises. Extend only when the
-        environment demands it.
+        Start with the workflow creating the most drag. Add approvals as the risk rises. Extend
+        only when several systems have to stay in sync.
       </p>
     </BlurFade>
 
@@ -309,8 +309,8 @@
             <span class="funnel-step-label">Lane 1</span>
             <h3>Workflow Infrastructure</h3>
             <p>
-              I map the business rules, auth boundaries, and failure paths for the workflow that
-              matters most.
+              I map the rules, owners, and handoffs around the workflow slowing your team down
+              most.
             </p>
           </div>
         </div>
@@ -326,8 +326,8 @@
             <span class="funnel-step-label">Lane 2</span>
             <h3>Policy OS</h3>
             <p>
-              I add approval rules, release gates, blocked states, and incident reviews so
-              automation keeps working as scope expands.
+              I add approvals, release checks, blocked states, and incident review so automation
+              stays trustworthy as it expands.
             </p>
           </div>
         </div>
@@ -342,8 +342,8 @@
             <span class="funnel-step-label">Lane 3</span>
             <h3>Enterprise Extension</h3>
             <p>
-              I build the orchestration layer for workflows that cross systems, teams, or
-              compliance boundaries.
+              I build the control layer for workflows that cross systems, teams, or compliance
+              boundaries.
             </p>
           </div>
         </div>
@@ -360,8 +360,8 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Each lane adds a clear control layer. You know what gets built, what gets governed, and
-        what your team inherits.
+        Each lane answers three questions: what gets fixed first, what needs review, and what your
+        team inherits after launch.
       </p>
     </BlurFade>
 
@@ -373,15 +373,16 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              One critical workflow, implemented with explicit business rules and trust boundaries.
+              One painful workflow rebuilt with clear rules, cleaner handoffs, and safer
+              automation.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
               <ul>
-                <li>Workflow endpoints</li>
+                <li>Workflow implementation</li>
                 <li>Business-rule mapping</li>
-                <li>Secure auth boundaries</li>
-                <li>Handoff artifacts</li>
+                <li>Auth and access setup</li>
+                <li>Runbook and handoff artifacts</li>
               </ul>
             </div>
           </div>
@@ -396,8 +397,8 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              The controls layer for production automation: approval rules, release checks,
-              blocked states, and review loops.
+              The approval and oversight layer that keeps a live workflow trustworthy as volume,
+              risk, and exceptions increase.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -419,15 +420,15 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              The orchestration layer for auditability, deterministic retries, and cross-system
-              coordination.
+              Cross-system control for workflows that need audit trails, recovery paths, and
+              coordination across teams.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
               <ul>
                 <li>Cross-system orchestration</li>
-                <li>Auditability controls</li>
-                <li>Deterministic retries</li>
+                <li>Audit and review controls</li>
+                <li>Recovery design</li>
                 <li>Architecture support</li>
               </ul>
             </div>
@@ -480,7 +481,7 @@
   <div class="section-container">
     <BlurFade>
       <ArtifactSystemStrip
-        title="What makes Policy OS durable"
+        title="What makes the workflow dependable"
         description="The buyer promise is backed by explicit contracts, runbooks, and release evidence, not by founder memory or hidden prompts."
       />
     </BlurFade>
@@ -491,12 +492,12 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="cta-heading">Map the workflow that cannot fail.</h2>
+      <h2 class="cta-heading">Map the workflow your team still protects by hand.</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="cta-subtext">
-        In one session, I will map the trust boundary, failure modes, and artifact bundle your
-        team would need.
+        In one session, I will map the handoffs, approval points, failure modes, and artifact
+        bundle the workflow needs.
       </p>
     </BlurFade>
     <BlurFade delay={0.2}>

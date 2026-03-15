@@ -85,7 +85,7 @@
 
 <SEO
 	title="Methodology | How I Think About Automation"
-	description="Most automation fails because it adds complexity. My methodology does the opposite: remove duplication, strip excess, reconnect what remains, and only then automate."
+	description="Most automation gets worse because it adds more tools and more handoff risk. My methodology removes duplication, strips excess, reconnects what remains, and only then automates."
 	keywords="AI automation methodology, systems design, automation audit, workflow optimization, tool consolidation, connected systems"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -103,13 +103,12 @@
 			<p class="hero-eyebrow">Methodology</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">Remove what does not belong. Connect what remains.</h1>
+			<h1 class="hero-title">Simplify the system before you automate it.</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				Most automation projects fail because they add complexity: more tools, more workflows,
-				more moving parts. I do the opposite. First remove the waste. Then reconnect the systems
-				that matter. Only then do we automate.
+				If the workflow is already bloated, automation just scales the mess. I remove
+				duplication, strip excess, reconnect what matters, and only then add automation.
 			</p>
 		</BlurFade>
 	</div>
@@ -119,14 +118,14 @@
 <section class="principle-section">
 	<div class="section-container">
 		<BlurFade delay={0.1}>
-			<div class="principle-card">
-				<h2 class="principle-heading">The Core Principle</h2>
-			<p class="principle-body">
-				Most automation strategies fail because they <em>add</em> more than they clarify. The
-				Subtractive Triad inverts that instinct. I remove what does not belong first. What
-				remains is the architecture worth trusting.
-			</p>
-			</div>
+				<div class="principle-card">
+					<h2 class="principle-heading">The Core Principle</h2>
+				<p class="principle-body">
+					Most automation strategies fail because they add more tools, more exceptions, and more
+					hidden handoffs than the team can actually manage. The Subtractive Triad inverts that
+					instinct. I remove what does not belong first. What remains is the system worth scaling.
+				</p>
+				</div>
 		</BlurFade>
 	</div>
 </section>
@@ -137,11 +136,12 @@
 		<BlurFade delay={0.1}>
 			<h2 class="section-heading">The Three Disciplines</h2>
 		</BlurFade>
-		<BlurFade delay={0.15}>
-			<p class="section-subhead">
-				One principle — subtractive revelation — applied at three scales.
-			</p>
-		</BlurFade>
+			<BlurFade delay={0.15}>
+				<p class="section-subhead">
+					One principle applied at three scales so the workflow gets simpler before it gets
+					faster.
+				</p>
+			</BlurFade>
 
 		<div class="disciplines-stack">
 			{#each disciplines as discipline, i}
@@ -187,11 +187,11 @@
 		<BlurFade delay={0.1}>
 			<h2 class="section-heading">The Process Applied</h2>
 		</BlurFade>
-		<BlurFade delay={0.15}>
-			<p class="section-subhead">
-				How the Triad maps to an engagement, from audit through architecture.
-			</p>
-		</BlurFade>
+			<BlurFade delay={0.15}>
+				<p class="section-subhead">
+					How the Triad becomes a workflow map, from audit through architecture.
+				</p>
+			</BlurFade>
 
 		<div class="phases-grid">
 			{#each phases as phase, i}

@@ -15,8 +15,8 @@
 </script>
 
 <SEO
-  title="What I've Built | Production Workflow MCPs"
-  description="Open-source tools, platform connectors, and custom builds that connect real business systems to production workflows."
+  title="Proof in Production | Workflow Systems and MCPs"
+  description="Tools, connectors, and client builds that prove the operating model behind CREATE SOMETHING .agency."
   keywords="AI integrations, business tool automation, Notion AI, Gmail AI, Zoom AI, Salesforce AI, custom AI development, MCP servers"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -37,14 +37,15 @@
   </div>
   <div class="hero-content">
     <BlurFade delay={0}>
-      <p class="hero-eyebrow">Open Source + Custom</p>
+      <p class="hero-eyebrow">Proof of Work</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">What I've Built</h1>
+      <h1 class="hero-title">Proof in Production</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Open-source tools, platform connectors, and custom builds that move real work through production systems.
+        Tools, connectors, and client builds that show how I design cleaner handoffs, safer
+        automation, and workflows that can survive real use.
       </p>
     </BlurFade>
   </div>
@@ -57,7 +58,8 @@
       <div class="section-header">
         <h2 class="section-eyebrow">Flagship Tools</h2>
         <p class="section-desc">
-          Quick to install. Built from the same operating assumptions used in client work.
+          Reusable patterns from real client work. Proof that the operating model exists beyond
+          pitch language.
         </p>
       </div>
     </BlurFade>
@@ -88,7 +90,10 @@
     <BlurFade delay={0.1}>
       <div class="section-header">
         <h2 class="section-eyebrow">Integration MCPs</h2>
-        <p class="section-desc">Bridges between the platforms you run and the agents you expect to trust.</p>
+        <p class="section-desc">
+          Infrastructure for connecting live systems without asking the team to keep rebuilding
+          context by hand.
+        </p>
       </div>
     </BlurFade>
     <div class="category-grid">
@@ -118,7 +123,10 @@
     <BlurFade delay={0.1}>
       <div class="section-header">
         <h2 class="section-eyebrow">Client Portfolio</h2>
-        <p class="section-desc">Selected builds for specific clients, operating constraints, and workflow realities.</p>
+        <p class="section-desc">
+          Selected builds showing the constraints, handoffs, and operating realities behind the
+          work.
+        </p>
       </div>
     </BlurFade>
     <div class="client-grid">
@@ -152,10 +160,12 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
-      <p class="cta-heading">Need a custom workflow wedge?</p>
+      <p class="cta-heading">Need this applied to your workflow?</p>
     </BlurFade>
     <BlurFade delay={0.2}>
-      <p class="cta-subtext">I build around your actual stack, constraints, and operating risk.</p>
+      <p class="cta-subtext">
+        I’ll map the first workflow, the risk points, and the cleanest path into production.
+      </p>
     </BlurFade>
     <BlurFade delay={0.3}>
       <a href="/book" class="cta-link">Book a mapping session →</a>

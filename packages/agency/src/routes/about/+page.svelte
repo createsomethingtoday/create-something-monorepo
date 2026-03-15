@@ -6,7 +6,7 @@
 
 <SEO
   title="About | Micah Johnson — Workflow Infrastructure"
-  description="I build the part of automation most teams under-scope: workflow logic, trust boundaries, reliability controls, and the operator artifacts that keep systems safe in production."
+  description="I help Ops, RevOps, and systems-minded teams fix the workflow rules, approvals, and reliability controls that usually break after launch."
   keywords="Micah Johnson, workflow infrastructure, production automation, technical operators, cross-system architecture, automation reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -30,12 +30,12 @@
       <p class="hero-eyebrow">About</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">I build the part of automation most teams skip.</h1>
+      <h1 class="hero-title">I help teams fix the part of automation that breaks after launch.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        Rules, trust boundaries, operating artifacts, and recovery paths. The pieces that decide
-        whether automation becomes reliable operations or expensive noise.
+        The rules, approvals, handoffs, and recovery paths that decide whether automation becomes
+        leverage or cleanup.
       </p>
     </BlurFade>
   </div>
@@ -49,13 +49,13 @@
         <h2>The approach</h2>
         <p>
           Most teams do not need a giant platform initiative first. They need one workflow that
-          actually works. I start there, then add controls only when the cost of failure justifies
-          the extra layer.
+          stops creating manual cleanup. I start there, then add controls only when the cost of
+          failure justifies the extra layer.
         </p>
         <p>
           My methodology is the Subtractive Triad: remove duplication, excess, and disconnection
-          before adding automation. Cleaner systems create better constraints, and better
-          constraints create more reliable outcomes.
+          before adding automation. Cleaner systems reduce handoff risk. Better constraints make
+          automation more reliable.
         </p>
       </div>
     </BlurFade>
@@ -71,14 +71,14 @@
         <p>
           Micah Johnson. I work as a System Architect on the Marketplace Team at Webflow, where I
           build internal tooling, onboarding systems, and platform infrastructure serving millions
-          of users. My focus is production workflow architecture and agent systems that can be
-          operated, not just demoed.
+          of users. The problems are familiar: brittle handoffs, unclear ownership, and systems
+          that look automated until exceptions show up.
         </p>
         <p>
           I have shipped integrations across Salesforce, HubSpot, Notion, Slack, Procore, and
           internal systems. That work informs where native tooling is enough, where MCP is the
-          right wedge, and where custom control layers are the difference between launch and
-          reliability.
+          right wedge, and where approvals, policies, and recovery paths are the difference
+          between launch and reliability.
         </p>
         <p>Based in Texas. Working with businesses across the US.</p>
         <p>
