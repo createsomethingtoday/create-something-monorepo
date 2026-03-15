@@ -1,0 +1,592 @@
+/*
+ * CREATE SOMETHING — Zen Browser Chrome
+ * Glass Design System applied to browser UI
+ *
+ * Philosophy: The browser is the chassis — the structural frame that
+ * holds everything together. Like MCP, it recedes into transparent use.
+ * The cockpit is driver-centric: controls angle toward you, minimal
+ * decoration. You focus on your destination.
+ *
+ * Canon tokens mapped to Firefox/Zen CSS:
+ *   --color-bg-pure:      #000000
+ *   --color-bg-elevated:  #0a0a0a
+ *   --color-bg-surface:   #111111
+ *   --color-bg-subtle:    #1a1a1a
+ *   --color-fg-primary:   #ffffff
+ *   --color-fg-secondary: rgba(255, 255, 255, 0.8)
+ *   --color-fg-tertiary:  rgba(255, 255, 255, 0.6)
+ *   --color-fg-muted:     rgba(255, 255, 255, 0.46)
+ *   --color-fg-subtle:    rgba(255, 255, 255, 0.2)
+ *   --color-border:       rgba(255, 255, 255, 0.1)
+ *   --glass-bg-subtle:    rgba(0, 0, 0, 0.65)
+ *   --glass-bg-light:     rgba(0, 0, 0, 0.72)
+ *   --glass-bg-medium:    rgba(0, 0, 0, 0.78)
+ *   --glass-border-light: rgba(255, 255, 255, 0.10)
+ *   --glass-blur-md:      32px
+ *
+ * Weniger, aber besser.
+ */
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 0: CANON CUSTOM PROPERTIES
+   Single source of truth. Change here, propagates everywhere.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Background hierarchy */
+  --cs-bg-pure: #000000;
+  --cs-bg-elevated: #0a0a0a;
+  --cs-bg-surface: #111111;
+  --cs-bg-subtle: #1a1a1a;
+
+  /* Foreground hierarchy (opacity-based) */
+  --cs-fg-primary: #ffffff;
+  --cs-fg-secondary: rgba(255, 255, 255, 0.8);
+  --cs-fg-tertiary: rgba(255, 255, 255, 0.6);
+  --cs-fg-muted: rgba(255, 255, 255, 0.46);
+  --cs-fg-subtle: rgba(255, 255, 255, 0.2);
+
+  /* Borders */
+  --cs-border-default: rgba(255, 255, 255, 0.1);
+  --cs-border-emphasis: rgba(255, 255, 255, 0.2);
+
+  /* Interactive states */
+  --cs-hover: rgba(255, 255, 255, 0.05);
+  --cs-active: rgba(255, 255, 255, 0.1);
+  --cs-focus: rgba(255, 255, 255, 0.5);
+
+  /* Semantic */
+  --cs-success: #44aa44;
+  --cs-error: #d44d4d;
+  --cs-warning: #aa8844;
+  --cs-info: #5082b9;
+
+  /* Glass */
+  --cs-glass-bg: rgba(0, 0, 0, 0.72);
+  --cs-glass-border: rgba(255, 255, 255, 0.10);
+  --cs-glass-blur: 32px;
+  --cs-glass-saturate: saturate(120%);
+
+  /* Typography */
+  --cs-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --cs-font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+
+  /* Motion — standard ease (Automotive Framework) */
+  --cs-ease: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --cs-duration-fast: 200ms;
+  --cs-duration-standard: 300ms;
+
+  /* Radius */
+  --cs-radius-sm: 6px;
+  --cs-radius-md: 8px;
+  --cs-radius-lg: 12px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 1: ROOT CHROME — The Chassis
+   Pure black. No gradient. No noise. The frame disappears.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Global chrome background */
+#navigator-toolbox,
+#browser,
+#main-window,
+#zen-main-app-wrapper {
+  background-color: var(--cs-bg-pure) !important;
+}
+
+/* Remove any default box shadows from toolbar area */
+#navigator-toolbox {
+  border-bottom: 1px solid var(--cs-border-default) !important;
+  box-shadow: none !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 2: TAB BAR — Minimal Hierarchy
+   Active tab: primary. Inactive: muted. Nothing else.
+   Mirrors the WezTerm tab bar Canon pattern.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Tab bar container */
+#TabsToolbar,
+#zen-tabbox-wrapper,
+#tabbrowser-tabs {
+  background-color: var(--cs-bg-pure) !important;
+}
+
+/* Individual tab — default/inactive state */
+.tabbrowser-tab {
+  background-color: transparent !important;
+  color: var(--cs-fg-muted) !important;
+  border-radius: var(--cs-radius-md) !important;
+  margin: 2px !important;
+  transition: color var(--cs-duration-fast) var(--cs-ease),
+              background-color var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+/* Tab label text */
+.tabbrowser-tab .tab-label {
+  color: inherit !important;
+  font-family: var(--cs-font-sans) !important;
+}
+
+/* Active tab — elevated, not decorated */
+.tabbrowser-tab[selected="true"],
+.tabbrowser-tab[visuallyselected="true"] {
+  background-color: var(--cs-bg-subtle) !important;
+  color: var(--cs-fg-primary) !important;
+}
+
+.tabbrowser-tab[selected="true"] .tab-label,
+.tabbrowser-tab[visuallyselected="true"] .tab-label {
+  color: var(--cs-fg-primary) !important;
+  font-weight: 500 !important;
+}
+
+/* Hovered tab */
+.tabbrowser-tab:hover:not([selected="true"]) {
+  background-color: var(--cs-hover) !important;
+  color: var(--cs-fg-secondary) !important;
+}
+
+/* Tab close button — subtle until needed */
+.tabbrowser-tab .tab-close-button {
+  opacity: 0 !important;
+  transition: opacity var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+.tabbrowser-tab:hover .tab-close-button {
+  opacity: 0.6 !important;
+}
+
+.tabbrowser-tab .tab-close-button:hover {
+  opacity: 1 !important;
+  background-color: var(--cs-error) !important;
+  border-radius: var(--cs-radius-sm) !important;
+}
+
+/* Tab separator lines — remove */
+.tabbrowser-tab::after,
+.tabbrowser-tab::before {
+  display: none !important;
+}
+
+/* New tab button */
+#tabs-newtab-button,
+#new-tab-button {
+  color: var(--cs-fg-muted) !important;
+  opacity: 0.6 !important;
+  transition: opacity var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+#tabs-newtab-button:hover,
+#new-tab-button:hover {
+  opacity: 1 !important;
+  color: var(--cs-fg-primary) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 3: URL BAR — The Cockpit Instrument
+   Tachometer center-mounted. Clean read. No clutter.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Navigation bar container */
+#nav-bar {
+  background-color: var(--cs-bg-pure) !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* URL bar background */
+#urlbar,
+#urlbar-background {
+  background-color: var(--cs-bg-surface) !important;
+  border: 1px solid var(--cs-border-default) !important;
+  border-radius: var(--cs-radius-md) !important;
+  color: var(--cs-fg-primary) !important;
+  transition: border-color var(--cs-duration-fast) var(--cs-ease),
+              box-shadow var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+/* URL bar focused — subtle glass glow */
+#urlbar[focused="true"] #urlbar-background,
+#urlbar:focus-within #urlbar-background {
+  border-color: var(--cs-border-emphasis) !important;
+  box-shadow: 0 0 0 1px var(--cs-border-default),
+              0 4px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* URL bar expanded (showing suggestions) */
+#urlbar[open] #urlbar-background {
+  background-color: var(--cs-bg-elevated) !important;
+  border-color: var(--cs-border-emphasis) !important;
+}
+
+/* URL text */
+#urlbar-input {
+  color: var(--cs-fg-primary) !important;
+  font-family: var(--cs-font-sans) !important;
+}
+
+/* URL bar — domain emphasis */
+#urlbar-input::selection {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: var(--cs-fg-primary) !important;
+}
+
+/* URL bar icons (bookmark star, shield, etc.) */
+#urlbar .urlbar-icon,
+#urlbar .urlbar-icon-wrapper {
+  color: var(--cs-fg-muted) !important;
+  fill: var(--cs-fg-muted) !important;
+  transition: color var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+#urlbar .urlbar-icon:hover,
+#urlbar .urlbar-icon-wrapper:hover {
+  color: var(--cs-fg-primary) !important;
+  fill: var(--cs-fg-primary) !important;
+}
+
+/* Tracking protection shield — semantic coloring */
+#tracking-protection-icon-container {
+  color: var(--cs-fg-muted) !important;
+}
+
+/* Lock icon for HTTPS */
+#identity-icon {
+  fill: var(--cs-success) !important;
+  opacity: 0.7 !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 4: URL BAR DROPDOWN — Glass Panel
+   Suggestions appear as a glass-elevated panel.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Autocomplete/suggestions popup */
+#urlbar .urlbarView,
+.urlbarView {
+  background-color: var(--cs-bg-elevated) !important;
+  border: 1px solid var(--cs-border-default) !important;
+  border-radius: 0 0 var(--cs-radius-md) var(--cs-radius-md) !important;
+}
+
+/* Individual suggestion rows */
+.urlbarView-row {
+  border-radius: var(--cs-radius-sm) !important;
+  padding: 4px 8px !important;
+  transition: background-color var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+.urlbarView-row:hover,
+.urlbarView-row[selected] {
+  background-color: var(--cs-active) !important;
+}
+
+/* Suggestion text */
+.urlbarView-title,
+.urlbarView-url,
+.urlbarView-action {
+  color: var(--cs-fg-secondary) !important;
+}
+
+.urlbarView-row[selected] .urlbarView-title {
+  color: var(--cs-fg-primary) !important;
+}
+
+.urlbarView-url {
+  color: var(--cs-fg-tertiary) !important;
+}
+
+/* Suggestion type icons */
+.urlbarView-favicon {
+  opacity: 0.8 !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 5: ZEN SIDEBAR — The Workspace Panel
+   Glass-elevated panel. Zen's signature feature, Canon-styled.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Zen sidebar container */
+#zen-sidebar-web-panel,
+#zen-sidebar-web-panel-wrapper,
+#sidebar-box {
+  background-color: var(--cs-bg-pure) !important;
+  border-right: 1px solid var(--cs-border-default) !important;
+}
+
+/* Zen sidebar icons */
+#zen-sidebar-icons-wrapper,
+.zen-sidebar-panel-icon {
+  background-color: var(--cs-bg-pure) !important;
+}
+
+/* Sidebar icon buttons */
+.zen-sidebar-panel-button {
+  color: var(--cs-fg-muted) !important;
+  border-radius: var(--cs-radius-md) !important;
+  transition: color var(--cs-duration-fast) var(--cs-ease),
+              background-color var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+.zen-sidebar-panel-button:hover {
+  color: var(--cs-fg-secondary) !important;
+  background-color: var(--cs-hover) !important;
+}
+
+.zen-sidebar-panel-button[selected="true"],
+.zen-sidebar-panel-button[active="true"] {
+  color: var(--cs-fg-primary) !important;
+  background-color: var(--cs-active) !important;
+}
+
+/* Zen workspaces */
+.zen-workspace-button {
+  border-radius: var(--cs-radius-md) !important;
+  transition: all var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+.zen-workspace-button:hover {
+  background-color: var(--cs-hover) !important;
+}
+
+.zen-workspace-button[selected="true"] {
+  background-color: var(--cs-bg-subtle) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 6: TOOLBAR BUTTONS — Functional Only
+   Icons are muted by default, full opacity on hover.
+   Tool disappears when not needed.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* All toolbar buttons */
+#nav-bar toolbarbutton,
+#PersonalToolbar toolbarbutton,
+.toolbarbutton-1 {
+  color: var(--cs-fg-muted) !important;
+  fill: var(--cs-fg-muted) !important;
+  transition: color var(--cs-duration-fast) var(--cs-ease),
+              background-color var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+#nav-bar toolbarbutton:hover,
+#PersonalToolbar toolbarbutton:hover,
+.toolbarbutton-1:hover {
+  color: var(--cs-fg-primary) !important;
+  fill: var(--cs-fg-primary) !important;
+  background-color: var(--cs-hover) !important;
+  border-radius: var(--cs-radius-sm) !important;
+}
+
+/* Back/forward buttons */
+#back-button,
+#forward-button {
+  color: var(--cs-fg-muted) !important;
+}
+
+#back-button:hover,
+#forward-button:hover {
+  color: var(--cs-fg-primary) !important;
+}
+
+/* Disabled nav buttons — barely visible */
+#back-button[disabled="true"],
+#forward-button[disabled="true"] {
+  opacity: 0.2 !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 7: BOOKMARKS BAR — Subtractive
+   If shown, minimal. Muted until hovered.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+#PersonalToolbar {
+  background-color: var(--cs-bg-pure) !important;
+  border-bottom: 1px solid var(--cs-border-default) !important;
+  padding: 2px 8px !important;
+}
+
+#PersonalToolbar toolbarbutton {
+  color: var(--cs-fg-tertiary) !important;
+  font-size: 12px !important;
+}
+
+#PersonalToolbar toolbarbutton:hover {
+  color: var(--cs-fg-primary) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 8: CONTEXT MENUS & PANELS — Glass Elevated
+   Popups use glass treatment: blur, transparency, subtle border.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* All popup panels (menus, extension popups, etc.) */
+menupopup,
+panel,
+.panel-arrowcontent,
+#appMenu-popup,
+#customizationui-widget-panel,
+#unified-extensions-panel {
+  background-color: var(--cs-bg-elevated) !important;
+  border: 1px solid var(--cs-border-default) !important;
+  border-radius: var(--cs-radius-lg) !important;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5) !important;
+  color: var(--cs-fg-secondary) !important;
+}
+
+/* Menu items */
+menuitem,
+menu {
+  color: var(--cs-fg-secondary) !important;
+  border-radius: var(--cs-radius-sm) !important;
+  transition: background-color var(--cs-duration-fast) var(--cs-ease) !important;
+}
+
+menuitem:hover,
+menuitem[_moz-menuactive="true"],
+menu:hover,
+menu[_moz-menuactive="true"] {
+  background-color: var(--cs-active) !important;
+  color: var(--cs-fg-primary) !important;
+}
+
+/* Menu separators */
+menuseparator {
+  border-color: var(--cs-border-default) !important;
+  opacity: 0.5 !important;
+}
+
+/* Disabled menu items */
+menuitem[disabled="true"],
+menu[disabled="true"] {
+  color: var(--cs-fg-subtle) !important;
+  opacity: 0.5 !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 9: FINDBAR — Minimal Search
+   Same treatment as URL bar. Surface background, border on focus.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+findbar {
+  background-color: var(--cs-bg-elevated) !important;
+  border-top: 1px solid var(--cs-border-default) !important;
+  color: var(--cs-fg-secondary) !important;
+}
+
+findbar .findbar-textbox {
+  background-color: var(--cs-bg-surface) !important;
+  border: 1px solid var(--cs-border-default) !important;
+  border-radius: var(--cs-radius-sm) !important;
+  color: var(--cs-fg-primary) !important;
+}
+
+findbar .findbar-textbox:focus {
+  border-color: var(--cs-border-emphasis) !important;
+}
+
+/* Find match highlighting */
+findbar .found-matches {
+  color: var(--cs-fg-tertiary) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 10: NOTIFICATION BARS — Semantic Color
+   Warnings are warnings. Errors are errors. Nothing decorative.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+notification-message {
+  background-color: var(--cs-bg-elevated) !important;
+  border-bottom: 1px solid var(--cs-border-default) !important;
+  color: var(--cs-fg-secondary) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 11: SCROLLBARS — Disappearing
+   Thin, auto-hiding. The content is primary.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Thin scrollbars throughout the chrome */
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 12: LOADING INDICATOR — Subtle Progress
+   No garish loading bar. Subtle, functional.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Tab loading indicator */
+.tabbrowser-tab[busy] .tab-throbber,
+.tabbrowser-tab[busy] .tab-icon-pending {
+  opacity: 0.6 !important;
+}
+
+/* Page loading progress bar (in URL bar) */
+#urlbar-input-container .urlbar-page-action {
+  opacity: 0.5 !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 13: DEVTOOLS — Our Workshop
+   DevTools are the primary tool. Ensure they match Canon.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* DevTools overall — dark, high contrast for readability */
+:root[devtoolstheme="dark"] {
+  --theme-toolbar-background: var(--cs-bg-elevated) !important;
+  --theme-body-background: var(--cs-bg-pure) !important;
+  --theme-sidebar-background: var(--cs-bg-elevated) !important;
+  --theme-selection-background: var(--cs-active) !important;
+  --theme-splitter-color: var(--cs-border-default) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 14: SELECTION & FOCUS — Intentional
+   Selection uses the Canon white-on-black inversion.
+   Focus rings use the Canon focus color.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Focus ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--cs-focus) !important;
+  outline-offset: 2px !important;
+}
+
+/* Text selection in chrome */
+::selection {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: var(--cs-fg-primary) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 15: REDUCED MOTION — Accessibility
+   Respect the user's motion preferences.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}

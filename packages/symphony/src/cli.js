@@ -2,17 +2,25 @@
 import { appendFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { ConsoleLogger } from './logger.js';
+import { ConsoleLogger, MemoryLogger } from './logger.js';
 import { SymphonyService } from './orchestrator.js';
+import { format_status_report, load_lane_statuses } from './status.js';
+import { WorkflowManager } from './workflow.js';
 function parse_args(argv) {
     const args = argv.slice(2);
     const out = {
+        command: 'run',
         once: false,
         port: null,
         task_id: null,
+        json: false,
     };
     for (let index = 0; index < args.length; index += 1) {
         const arg = args[index];
+        if (index === 0 && (arg === 'run' || arg === 'status')) {
+            out.command = arg;
+            continue;
+        }
         if (arg === '--once') {
             out.once = true;
             continue;
@@ -27,6 +35,10 @@ function parse_args(argv) {
         if (arg === '--task-id') {
             out.task_id = args[index + 1] ?? null;
             index += 1;
+            continue;
+        }
+        if (arg === '--json') {
+            out.json = true;
             continue;
         }
         if (!arg.startsWith('-') && !out.workflow_path) {
@@ -56,6 +68,23 @@ async function write_bootstrap_log(workflow_path, phase, details = {}) {
 async function main() {
     const args = parse_args(process.argv);
     const workflow_path = resolve(process.cwd(), args.workflow_path ?? 'WORKFLOW.md');
+    if (args.command === 'status') {
+        const workflow_manager = new WorkflowManager({
+            workflow_path,
+            logger: new MemoryLogger(),
+        });
+        const { config } = await workflow_manager.initialize();
+        const report = await load_lane_statuses(config, {
+            task_id: args.task_id,
+        });
+        if (args.json) {
+            process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+        }
+        else {
+            process.stdout.write(`${format_status_report(report)}\n`);
+        }
+        return;
+    }
     await write_bootstrap_log(workflow_path, 'cli_entered', {
         once: args.once,
         port: args.port ?? null,

@@ -61,3 +61,32 @@ test('SymphonyService filters candidates by explicit task id', () => {
     },
   ]);
 });
+
+test('SymphonyService derives retry workspace paths from the sanitized workspace key', () => {
+  const service = new SymphonyService();
+  service.retry_attempts.set('lm target/1', {
+    entry: {
+      issue_id: 'lm-target-1',
+      identifier: 'lm target/1',
+      attempt: 2,
+      due_at_ms: Date.now() + 5_000,
+      error: {
+        class: 'StalledSessionError',
+        message: 'stalled session',
+        retryable: true,
+      },
+    },
+  });
+
+  const with_root = service.get_issue_snapshot('lm target/1');
+  assert.equal(with_root.workspace.path, 'lm_target_1');
+
+  service.current_config = {
+    workspace: {
+      root: '/tmp/symphony-workspaces',
+    },
+  };
+
+  const snapshot = service.get_issue_snapshot('lm target/1');
+  assert.equal(snapshot.workspace.path, '/tmp/symphony-workspaces/lm_target_1');
+});

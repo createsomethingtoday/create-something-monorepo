@@ -1,0 +1,39 @@
+{
+  "name": "perplexity",
+  "description": "Perplexity AI search and reasoning - research agent for deep web search, analysis, and reasoning",
+  "package": "@perplexity-ai/mcp-server",
+  "config": {
+    "command": "npx",
+    "args": ["-y", "@perplexity-ai/mcp-server"],
+    "env": {
+      "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+    }
+  },
+  "tools": [
+    {
+      "name": "perplexity_search",
+      "description": "Direct web search - returns ranked results with titles, URLs, snippets",
+      "best_for": "Finding current information, news, facts, specific web content"
+    },
+    {
+      "name": "perplexity_ask",
+      "description": "Conversational AI with real-time web search (sonar-pro model)",
+      "best_for": "Quick questions, everyday searches, conversational queries"
+    },
+    {
+      "name": "perplexity_research",
+      "description": "Deep comprehensive research (sonar-deep-research model)",
+      "best_for": "Complex topics, detailed investigation, comprehensive reports"
+    },
+    {
+      "name": "perplexity_reason",
+      "description": "Advanced reasoning and problem-solving (sonar-reasoning-pro model)",
+      "best_for": "Logical problems, complex analysis, decision-making, step-by-step reasoning"
+    }
+  ],
+  "workway_alignment": "Research tools recede into the workflow - invoke when deep understanding is needed, results flow back into the work context.",
+  "setup": {
+    "api_key_url": "https://www.perplexity.ai/account/api/group",
+    "docs": "https://docs.perplexity.ai/guides/mcp-server"
+  }
+}

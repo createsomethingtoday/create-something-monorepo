@@ -1,0 +1,95 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://webflow.com/#website",
+      "url": "https://webflow.com/",
+      "name": "Webflow"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://webflow.com/templates/html/{{wf {\"path\":\"slug\",\"type\":\"PlainText\"} }}#webpage",
+      "url": "https://webflow.com/templates/html/{{wf {\"path\":\"slug\",\"type\":\"PlainText\"} }}",
+      "name": "{{wf {\"path\":\"name\",\"type\":\"PlainText\"} }} – {{wf {\"path\":\"primary-tag:name\",\"type\":\"PlainText\",\"fallback\":\"Website\"} }} Template",
+      "description": "{{wf {\"path\":\"description\",\"type\":\"PlainText\"} }}",
+      "isPartOf": {
+        "@id": "https://webflow.com/#website"
+      },
+      "publisher": {
+        "@id": "https://webflow.com/#organization"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "@id": "https://webflow.com/templates/html/{{wf {\"path\":\"slug\",\"type\":\"PlainText\"} }}#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "item": {
+              "@id": "https://webflow.com/templates",
+              "name": "Templates"
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "item": {
+              "@id": "https://webflow.com/templates/category/{{wf {\"path\":\"primary-tag:slug\",\"type\":\"PlainText\",\"fallback\":\"all\"} }}",
+              "name": "{{wf {\"path\":\"primary-tag:name\",\"type\":\"PlainText\",\"fallback\":\"All Templates\"} }}"
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "item": {
+              "@id": "https://webflow.com/templates/html/{{wf {\"path\":\"slug\",\"type\":\"PlainText\"} }}",
+              "name": "{{wf {\"path\":\"name\",\"type\":\"PlainText\"} }}"
+            }
+          }
+        ]
+      },
+      "mainEntity": {
+        "@type": "Product",
+        "@id": "https://webflow.com/templates/html/{{wf {\"path\":\"slug\",\"type\":\"PlainText\"} }}#product",
+        "name": "{{wf {\"path\":\"name\",\"type\":\"PlainText\"} }}",
+        "description": "{{wf {\"path\":\"description\",\"type\":\"PlainText\"} }}",
+        "image": "{{wf {\"path\":\"thumbnail\",\"type\":\"ImageRef\"} }}",
+        "url": "https://webflow.com/templates/html/{{wf {\"path\":\"slug\",\"type\":\"PlainText\"} }}",
+        "category": "Website Template",
+        "offers": {
+          "@type": "Offer",
+          "priceCurrency": "USD",
+          "price": "{{wf {\"path\":\"price\",\"type\":\"Number\"} }}",
+          "availability": "https://schema.org/InStock",
+          "seller": {
+            "@type": "Organization",
+            "name": "Webflow"
+          },
+          "priceValidUntil": "2026-12-31",
+          "url": "https://webflow.com/templates/html/{{wf {\"path\":\"slug\",\"type\":\"PlainText\"} }}"
+        }
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://webflow.com/#organization",
+      "name": "Webflow",
+      "url": "https://webflow.com/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://cdn.prod.website-files.com/6009ec8cda7f305645c9d91b/651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
+        "width": 2400,
+        "height": 1260
+      },
+      "sameAs": [
+        "https://www.facebook.com/webflow",
+        "https://twitter.com/webflow",
+        "https://www.linkedin.com/company/webflow-inc-",
+        "https://en.wikipedia.org/wiki/Webflow",
+        "https://www.instagram.com/webflow",
+        "https://www.youtube.com/webflow"
+      ]
+    }
+  ]
+}

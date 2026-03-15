@@ -1,0 +1,150 @@
+/*
+  CREATE SOMETHING Brand Icons
+  CSS-based icon definitions using mask-image
+
+  Philosophy: "Weniger, aber besser" - Dieter Rams
+
+  The cube mark is our primary brand icon. This CSS implementation
+  provides performant, scalable icons that inherit color from
+  the current text color via mask-image.
+
+  Usage:
+    <span class="icon-cube icon-md"></span>
+    <span class="icon-cube icon-lg" style="color: var(--color-fg-secondary);"></span>
+
+  The icon uses currentColor, so it inherits from the parent's color property.
+*/
+
+/* ==========================================================================
+   Cube Icon - Isometric Mark
+   SVG embedded as data URI for zero network requests
+   ========================================================================== */
+
+/*
+  Cube SVG path data (viewBox="0 0 32 32"):
+  - Top face:   M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z
+  - Left face:  M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z
+  - Right face: M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z
+
+  For mask-image, we use opacity-based grayscale to represent the
+  Canon face opacities (top=1.0, left=0.6, right=0.3) as mask values.
+*/
+
+.icon-cube {
+  /* Base setup */
+  display: inline-block;
+  vertical-align: middle;
+
+  /* Default color - inherits from text color */
+  background-color: currentColor;
+
+  /* Mask with the cube SVG */
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z' fill='%23FFFFFF'/%3E%3Cpath d='M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z' fill='%23999999'/%3E%3Cpath d='M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z' fill='%234D4D4D'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z' fill='%23FFFFFF'/%3E%3Cpath d='M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z' fill='%23999999'/%3E%3Cpath d='M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z' fill='%234D4D4D'/%3E%3C/svg%3E");
+
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+}
+
+/* ==========================================================================
+   Size Variants
+   Following BRAND_SIZE_MAP from types.ts:
+   xs: 16px, sm: 24px, md: 32px, lg: 48px, xl: 64px
+   ========================================================================== */
+
+.icon-xs {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-sm {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-md {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-lg {
+  width: 48px;
+  height: 48px;
+}
+
+.icon-xl {
+  width: 64px;
+  height: 64px;
+}
+
+/* ==========================================================================
+   Monochrome Variant
+   Single-color cube without face shading
+   Useful for smaller sizes or when simplicity is needed
+   ========================================================================== */
+
+.icon-cube-mono {
+  display: inline-block;
+  vertical-align: middle;
+  background-color: currentColor;
+
+  /* Solid cube paths - all faces same opacity */
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z' fill='%23FFFFFF'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z' fill='%23FFFFFF'/%3E%3C/svg%3E");
+
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+}
+
+/* ==========================================================================
+   Animation Variants
+   Optional animation classes that can be combined with .icon-cube
+   ========================================================================== */
+
+/* Pulse animation - subtle breathing effect */
+.icon-pulse {
+  animation: icon-pulse var(--duration-complex, 500ms) var(--ease-standard, ease) infinite alternate;
+}
+
+@keyframes icon-pulse {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Spin animation - loading state */
+.icon-spin {
+  animation: icon-spin calc(var(--duration-complex, 500ms) * 2) linear infinite;
+}
+
+@keyframes icon-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================================
+   Accessibility
+   Respect reduced motion preferences
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-pulse,
+  .icon-spin {
+    animation: none;
+  }
+}

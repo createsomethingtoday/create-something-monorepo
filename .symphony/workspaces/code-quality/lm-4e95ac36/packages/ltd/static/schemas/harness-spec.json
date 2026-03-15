@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://createsomething.ltd/schemas/harness-spec.json",
+  "title": "CREATE SOMETHING Harness Spec",
+  "description": "Schema for harness specification files. Weniger, aber besser.",
+  "type": "object",
+  "required": ["title", "features"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Project or epic title",
+      "minLength": 1
+    },
+    "property": {
+      "type": "string",
+      "enum": ["space", "io", "agency", "ltd"],
+      "description": "Target CREATE SOMETHING property"
+    },
+    "complexity": {
+      "type": "string",
+      "enum": ["trivial", "simple", "standard", "complex"],
+      "description": "Override complexity detection for model routing"
+    },
+    "overview": {
+      "type": "string",
+      "description": "Brief description of the project scope"
+    },
+    "features": {
+      "type": "array",
+      "description": "List of features to implement",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/feature"
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "description": "Technical requirements that apply to all features",
+      "items": {
+        "type": "string"
+      }
+    },
+    "success": {
+      "type": "array",
+      "description": "Success criteria for the entire project",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "feature": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Feature title (becomes Beads issue title)",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the feature"
+        },
+        "priority": {
+          "type": "integer",
+          "enum": [0, 1, 2, 3, 4],
+          "default": 2,
+          "description": "Priority level (P0=critical, P4=backlog)"
+        },
+        "files": {
+          "type": "array",
+          "description": "Files expected to be modified",
+          "items": {
+            "type": "string"
+          }
+        },
+        "depends_on": {
+          "type": "array",
+          "description": "Feature titles this depends on (creates blocking dependency)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "acceptance": {
+          "type": "array",
+          "description": "Acceptance criteria for this feature",
+          "items": {
+            "$ref": "#/$defs/criterion"
+          }
+        },
+        "labels": {
+          "type": "array",
+          "description": "Additional labels for the Beads issue",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "criterion": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Simple text criterion"
+        },
+        {
+          "type": "object",
+          "required": ["test"],
+          "properties": {
+            "test": {
+              "type": "string",
+              "description": "What to test"
+            },
+            "verify": {
+              "type": "string",
+              "description": "Command to verify (e.g., 'pnpm test')"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

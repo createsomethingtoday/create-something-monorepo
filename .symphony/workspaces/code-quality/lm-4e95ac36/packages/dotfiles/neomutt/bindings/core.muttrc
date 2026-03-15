@@ -1,0 +1,116 @@
+# Core Keybindings
+# Grammar: Vim-native, consistent across contexts
+#
+# Principles:
+#   - j/k navigation everywhere
+#   - Single-key for frequent actions
+#   - g prefix for goto operations
+#   - Muscle memory over discoverability
+
+# ─────────────────────────────────────────────────────────────
+# Index Navigation
+# ─────────────────────────────────────────────────────────────
+
+bind index j next-entry
+bind index k previous-entry
+bind index g noop
+bind index gg first-entry
+bind index G last-entry
+
+bind index \Cd half-down
+bind index \Cu half-up
+
+bind index l display-message
+bind index h noop
+
+# Threading
+bind index za collapse-thread
+bind index zA collapse-all
+
+# ─────────────────────────────────────────────────────────────
+# Pager Navigation
+# ─────────────────────────────────────────────────────────────
+
+bind pager g noop
+bind pager j next-line
+bind pager k previous-line
+bind pager gg top
+bind pager G bottom
+
+bind pager \Cd half-down
+bind pager \Cu half-up
+
+bind pager h exit
+bind pager l view-attachments
+
+# ─────────────────────────────────────────────────────────────
+# Actions (Index + Pager)
+# ─────────────────────────────────────────────────────────────
+
+# Reply/Forward - single key, friction → zero
+bind index,pager r reply
+bind index,pager R group-reply
+bind index,pager f forward-message
+
+# Compose
+bind index,pager c mail
+
+# Archive/Delete
+bind index,pager d delete-message
+bind index,pager u undelete-message
+bind index,pager D purge-message
+
+# Flag for action
+bind index,pager F flag-message
+
+# Tag for batch (index only - not available in pager)
+bind index t tag-entry
+bind index T tag-thread
+
+# Search
+bind index,pager / search
+bind index,pager ? search-reverse
+bind index,pager n search-next
+bind index,pager N search-opposite
+
+# Sync
+bind index,pager $ sync-mailbox
+
+# ─────────────────────────────────────────────────────────────
+# g-prefix (goto operations)
+# ─────────────────────────────────────────────────────────────
+
+macro index,pager gi "<change-folder>=INBOX<enter>" "Go to inbox"
+macro index,pager gs "<change-folder>=[Gmail]/Sent Mail<enter>" "Go to sent"
+macro index,pager gd "<change-folder>=[Gmail]/Drafts<enter>" "Go to drafts"
+macro index,pager ga "<change-folder>=[Gmail]/All Mail<enter>" "Go to archive"
+macro index,pager gt "<change-folder>=[Gmail]/Trash<enter>" "Go to trash"
+
+# Archive current message (move to All Mail)
+macro index,pager A "<save-message>=[Gmail]/All Mail<enter><enter>" "Archive message"
+
+# ─────────────────────────────────────────────────────────────
+# Task Integration (Taskwarrior)
+# ─────────────────────────────────────────────────────────────
+
+# Create task from email - email is capture, tasks flow OUT
+macro index,pager \ct '<pipe-message>~/.config/neomutt/../scripts/email-to-task.sh<enter>' "Create task from email"
+
+# ─────────────────────────────────────────────────────────────
+# Attachment View
+# ─────────────────────────────────────────────────────────────
+
+bind attach h exit
+bind attach l view-mailcap
+bind attach <return> view-mailcap
+
+# ─────────────────────────────────────────────────────────────
+# Browser (folder selection)
+# ─────────────────────────────────────────────────────────────
+
+bind browser j next-entry
+bind browser k previous-entry
+bind browser gg first-entry
+bind browser G last-entry
+bind browser l select-entry
+bind browser h exit

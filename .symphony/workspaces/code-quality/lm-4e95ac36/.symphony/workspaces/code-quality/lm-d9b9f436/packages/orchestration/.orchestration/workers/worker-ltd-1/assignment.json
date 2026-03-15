@@ -1,0 +1,19 @@
+{
+  "workerId": "worker-ltd-1",
+  "issueId": "csm-47tmp",
+  "convoyId": "convoy-fd8a2b",
+  "epicId": "voice-audit-ltd",
+  "context": {
+    "url": "https://createsomething.ltd/",
+    "section": "hero",
+    "property": ".ltd",
+    "currentText": {
+      "headline": "Design principles that help you make better decisions. Learn from Dieter Rams, Mies van der Rohe, and other masters who shaped how we think about quality."
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}

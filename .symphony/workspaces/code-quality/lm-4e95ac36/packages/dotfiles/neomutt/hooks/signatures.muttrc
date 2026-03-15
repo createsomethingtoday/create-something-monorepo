@@ -1,0 +1,32 @@
+# Signature Hooks
+# Switch signature based on recipient domain
+#
+# Pattern: send-hook <address-pattern> <command>
+
+# ─────────────────────────────────────────────────────────────
+# Domain-based Signature Switching
+# ─────────────────────────────────────────────────────────────
+
+# Default: use current account's signature (set in account file)
+send-hook . 'unset signature'
+
+# Webflow recipients: use Webflow signature
+send-hook '~t @webflow\.com' 'set signature="~/.config/neomutt/signatures/webflow.txt"'
+
+# Half Dozen clients/recipients
+send-hook '~t @halfdozen\.io' 'set signature="~/.config/neomutt/signatures/halfdozen.txt"'
+
+# CREATE SOMETHING: formal correspondence
+send-hook '~t @createsomething\.io' 'set signature="~/.config/neomutt/signatures/createsomething.txt"'
+send-hook '~t @createsomething\.space' 'set signature="~/.config/neomutt/signatures/createsomething.txt"'
+send-hook '~t @createsomething\.agency' 'set signature="~/.config/neomutt/signatures/createsomething.txt"'
+send-hook '~t @createsomething\.ltd' 'set signature="~/.config/neomutt/signatures/createsomething.txt"'
+
+# ─────────────────────────────────────────────────────────────
+# Reply-based Signature (match sender identity)
+# ─────────────────────────────────────────────────────────────
+
+# When replying, use signature matching the To: address we're sending from
+reply-hook '~f micah@createsomething\.io' 'set signature="~/.config/neomutt/signatures/createsomething.txt"'
+reply-hook '~f mj@halfdozen\.io' 'set signature="~/.config/neomutt/signatures/halfdozen.txt"'
+reply-hook '~f micah@webflow\.com' 'set signature="~/.config/neomutt/signatures/webflow.txt"'

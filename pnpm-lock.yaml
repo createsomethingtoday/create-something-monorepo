@@ -2397,9 +2397,6 @@ importers:
       liquidjs:
         specifier: ^10.25.0
         version: 10.25.0
-      yaml:
-        specifier: ^2.8.2
-        version: 2.8.2
 
   packages/tend:
     dependencies:

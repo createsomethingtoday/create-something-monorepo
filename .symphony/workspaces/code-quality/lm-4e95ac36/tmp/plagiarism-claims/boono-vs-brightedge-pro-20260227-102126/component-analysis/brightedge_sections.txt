@@ -1,0 +1,12 @@
+hero-section
+service-section
+about-section
+project-section
+approach-section
+team-section
+pricing-section
+review-section
+faq-section
+blog-section
+contact-section
+[no-id]

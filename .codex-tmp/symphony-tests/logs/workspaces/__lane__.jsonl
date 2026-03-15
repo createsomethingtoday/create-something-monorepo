@@ -1,0 +1,2 @@
+{"timestamp":"2026-03-15T01:06:53.808Z","run_id":"sym-mmr20zqo-psy9xreg","lane":"workspaces","agent_id":"symphony-code-quality","correlation_id":"__lane__","task_id":"__lane__","phase":"poll","status":"started","details":{"operations":["poll","reconcile"]}}
+{"timestamp":"2026-03-15T01:06:54.724Z","run_id":"sym-mmr20zqo-psy9xreg","lane":"workspaces","agent_id":"symphony-code-quality","correlation_id":"__lane__","task_id":"__lane__","phase":"poll","status":"succeeded","details":{"candidate_count":1}}

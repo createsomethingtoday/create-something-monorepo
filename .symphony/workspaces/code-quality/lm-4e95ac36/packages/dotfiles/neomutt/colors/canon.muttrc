@@ -1,0 +1,102 @@
+# Canon Color Scheme for Neomutt
+# Principle: Color only for semantic distinction
+#
+# Palette (from .claude/rules/css-canon.md):
+#   bg-pure:      #000000 (color0)
+#   bg-surface:   #111111 (color232)
+#   fg-primary:   #ffffff (color15)
+#   fg-secondary: 80% white (color250)
+#   fg-tertiary:  60% white (color245)
+#   fg-muted:     40% white (color240)
+#   border:       10% white (color236)
+#
+#   success:      #44aa44 (color71)
+#   error:        #cc4444 (color167)
+#   warning:      #aa8844 (color136)
+#   info:         #4477aa (color67)
+
+# ─────────────────────────────────────────────────────────────
+# Base
+# ─────────────────────────────────────────────────────────────
+
+color normal        color250 color0
+color error         color167 color0
+color message       color250 color0
+color prompt        color15  color0
+color status        color245 color232
+color indicator     color15  color236
+
+# ─────────────────────────────────────────────────────────────
+# Index (message list)
+# ─────────────────────────────────────────────────────────────
+
+# Default
+color index         color245 color0 "~A"
+
+# New/Unread - primary attention
+color index         color15  color0 "~N"
+color index         color15  color0 "~U"
+
+# Flagged - actionable
+color index         color136 color0 "~F"
+
+# Deleted - muted, removing
+color index         color240 color0 "~D"
+
+# Tagged - selected for batch
+color index         color67  color0 "~T"
+
+# From me - de-emphasized
+color index         color240 color0 "~P"
+
+# ─────────────────────────────────────────────────────────────
+# Threading
+# ─────────────────────────────────────────────────────────────
+
+color tree          color236 color0
+
+# ─────────────────────────────────────────────────────────────
+# Sidebar
+# ─────────────────────────────────────────────────────────────
+
+color sidebar_indicator  color15  color236
+color sidebar_highlight  color250 color232
+color sidebar_new        color71  color0
+color sidebar_ordinary   color245 color0
+color sidebar_divider    color236 color0
+
+# ─────────────────────────────────────────────────────────────
+# Pager (message body)
+# ─────────────────────────────────────────────────────────────
+
+color body          color67  color0 "(https?|ftp)://[^ ]+"
+color body          color67  color0 "[-a-z_0-9.]+@[-a-z_0-9.]+"
+color body          color71  color0 "^[>].*"
+color body          color136 color0 "^[>][>].*"
+
+# Headers: minimal emphasis
+color hdrdefault    color240 color0
+color header        color250 color0 "^(From|Subject):"
+color header        color245 color0 "^Date:"
+
+# Attachments
+color attachment    color245 color0
+
+# Signature: muted
+color signature     color240 color0
+
+# ─────────────────────────────────────────────────────────────
+# Compose
+# ─────────────────────────────────────────────────────────────
+
+color compose header            color250 color0
+color compose security_encrypt  color71  color0
+color compose security_sign     color71  color0
+color compose security_both     color71  color0
+color compose security_none     color240 color0
+
+# ─────────────────────────────────────────────────────────────
+# Search
+# ─────────────────────────────────────────────────────────────
+
+color search        color0   color136

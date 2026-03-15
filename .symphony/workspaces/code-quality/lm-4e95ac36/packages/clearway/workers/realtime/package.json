@@ -1,0 +1,17 @@
+{
+	"name": "@court-reserve/realtime-worker",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "node ../../../../scripts/run-wrangler.mjs dev",
+		"deploy": "node ../../../../scripts/run-wrangler.mjs deploy",
+		"tail": "node ../../../../scripts/run-wrangler.mjs tail"
+	},
+	"dependencies": {
+		"@cloudflare/workers-types": "^4.20241127.0"
+	},
+	"devDependencies": {
+		"wrangler": "^4.59.0"
+	}
+}

@@ -1,0 +1,24 @@
+# Bundle Scanner API Worker
+# Auto-scans Webflow Marketplace submissions for security/policy compliance
+#
+# Canon: Security scanning recedes into infrastructure.
+# Every submission is scanned; reviewers see results, not process.
+
+name = "bundle-scanner-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+workers_dev = true
+
+# TODO: Add custom domain once tested
+# routes = [{ pattern = "scanner-api.createsomething.io/*", zone_name = "createsomething.io" }]
+
+[vars]
+ENVIRONMENT = "production"
+# Allowed origins for CORS
+ALLOWED_ORIGINS = "https://wf.createsomething.io,https://wf-asset-dashboard.vercel.app,https://webflow.com"
+
+# Secrets (set via `wrangler secret put`):
+# - AIRTABLE_API_KEY: For updating submission records with scan results
+# - SCAN_WEBHOOK_SECRET: HMAC key for authenticating scan requests

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motion Ontology Analyzer</title>
+  <style>
+    :root {
+      --color-bg-pure: #000000;
+      --color-bg-elevated: #0a0a0a;
+      --color-bg-surface: #111111;
+      --color-bg-subtle: #1a1a1a;
+      --color-fg-primary: #ffffff;
+      --color-fg-secondary: rgba(255, 255, 255, 0.8);
+      --color-fg-tertiary: rgba(255, 255, 255, 0.6);
+      --color-fg-muted: rgba(255, 255, 255, 0.4);
+      --color-border-default: rgba(255, 255, 255, 0.1);
+      --color-border-emphasis: rgba(255, 255, 255, 0.2);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --space-sm: 1rem;
+      --space-md: 1.618rem;
+      --space-lg: 2.618rem;
+
+      --color-zuhandenheit: rgba(100, 200, 150, 0.9);
+      --color-vorhandenheit: rgba(220, 150, 100, 0.9);
+      --color-functional: rgba(100, 180, 220, 0.9);
+      --color-decorative: rgba(220, 100, 150, 0.9);
+      --color-ambiguous: rgba(180, 180, 100, 0.9);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--color-bg-pure);
+      color: var(--color-fg-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: var(--space-md);
+    }
+
+    header {
+      text-align: center;
+      padding: var(--space-lg) 0;
+      border-bottom: 1px solid var(--color-border-default);
+      margin-bottom: var(--space-lg);
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: var(--space-sm);
+    }
+
+    .subtitle {
+      color: var(--color-fg-tertiary);
+      font-size: 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .concepts {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-lg);
+      margin-top: var(--space-md);
+      font-size: 0.875rem;
+    }
+
+    .concept {
+      text-align: center;
+    }
+
+    .concept-term {
+      font-weight: 600;
+      color: var(--color-fg-secondary);
+    }
+
+    .concept-meaning {
+      color: var(--color-fg-muted);
+      font-style: italic;
+    }
+
+    .input-section {
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    .input-row {
+      display: flex;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    input[type="url"] {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      color: var(--color-fg-primary);
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--color-border-emphasis);
+    }
+
+    select {
+      padding: 0.75rem 1rem;
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      color: var(--color-fg-primary);
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .selector-row {
+      display: none;
+      margin-bottom: var(--space-sm);
+    }
+
+    .selector-row.visible {
+      display: block;
+    }
+
+    .selector-row input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      color: var(--color-fg-primary);
+      font-size: 0.875rem;
+    }
+
+    button {
+      padding: 0.75rem 2rem;
+      background: var(--color-fg-primary);
+      color: var(--color-bg-pure);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .results {
+      display: none;
+    }
+
+    .results.visible {
+      display: block;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+    }
+
+    @media (max-width: 768px) {
+      .result-grid { grid-template-columns: 1fr; }
+      .concepts { flex-direction: column; gap: var(--space-sm); }
+    }
+
+    .panel {
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+    }
+
+    .panel h2 {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-fg-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-sm);
+    }
+
+    .judgment-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: var(--space-sm);
+    }
+
+    .judgment-functional { background: rgba(100, 180, 220, 0.2); color: var(--color-functional); }
+    .judgment-decorative { background: rgba(220, 100, 150, 0.2); color: var(--color-decorative); }
+    .judgment-ambiguous { background: rgba(180, 180, 100, 0.2); color: var(--color-ambiguous); }
+
+    .mode-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-left: 0.5rem;
+    }
+
+    .mode-zuhandenheit { background: rgba(100, 200, 150, 0.2); color: var(--color-zuhandenheit); }
+    .mode-vorhandenheit { background: rgba(220, 150, 100, 0.2); color: var(--color-vorhandenheit); }
+
+    .disclosure {
+      margin: var(--space-sm) 0;
+      padding: var(--space-sm);
+      background: var(--color-bg-elevated);
+      border-radius: var(--radius-md);
+    }
+
+    .disclosure-type {
+      font-weight: 600;
+      color: var(--color-fg-secondary);
+    }
+
+    .disclosure-description {
+      color: var(--color-fg-tertiary);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    .rationale {
+      color: var(--color-fg-tertiary);
+      font-size: 0.875rem;
+      margin: var(--space-sm) 0;
+      font-style: italic;
+    }
+
+    .recommendation {
+      margin-top: var(--space-sm);
+      padding: var(--space-sm);
+      background: var(--color-bg-subtle);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--color-fg-muted);
+    }
+
+    .recommendation-action {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .action-keep { color: var(--color-zuhandenheit); }
+    .action-modify { color: var(--color-ambiguous); }
+    .action-remove { color: var(--color-decorative); }
+
+    .recommendation-text {
+      font-size: 0.875rem;
+      color: var(--color-fg-secondary);
+    }
+
+    .confidence-bar {
+      margin-top: var(--space-sm);
+      height: 4px;
+      background: var(--color-bg-elevated);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: var(--color-fg-muted);
+      transition: width 0.3s;
+    }
+
+    .technical-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    .stat {
+      padding: var(--space-sm);
+      background: var(--color-bg-elevated);
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--color-fg-muted);
+      text-transform: uppercase;
+    }
+
+    .properties-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: var(--space-sm);
+    }
+
+    .property-tag {
+      padding: 0.25rem 0.5rem;
+      background: var(--color-bg-elevated);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: var(--color-fg-secondary);
+    }
+
+    .screenshot {
+      margin-top: var(--space-sm);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--color-border-default);
+    }
+
+    .screenshot img {
+      width: 100%;
+      display: block;
+    }
+
+    .loading {
+      text-align: center;
+      padding: var(--space-lg);
+      color: var(--color-fg-muted);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--color-border-default);
+      border-top-color: var(--color-fg-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: var(--space-sm);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    footer {
+      text-align: center;
+      padding: var(--space-lg);
+      color: var(--color-fg-muted);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--color-border-default);
+      margin-top: var(--space-lg);
+    }
+
+    footer a {
+      color: var(--color-fg-tertiary);
+      text-decoration: none;
+    }
+
+    footer a:hover { color: var(--color-fg-primary); }
+
+    .error {
+      background: rgba(220, 100, 100, 0.1);
+      border: 1px solid rgba(220, 100, 100, 0.3);
+      color: #ff6b6b;
+      padding: var(--space-sm);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-sm);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Motion Ontology Analyzer</h1>
+      <p class="subtitle">
+        Analyze UI motion through Heidegger's phenomenological framework.
+        Does your animation recede into use, or obstruct the user's intention?
+      </p>
+      <div class="concepts">
+        <div class="concept">
+          <div class="concept-term">Zuhandenheit</div>
+          <div class="concept-meaning">ready-to-hand — motion recedes</div>
+        </div>
+        <div class="concept">
+          <div class="concept-term">Vorhandenheit</div>
+          <div class="concept-meaning">present-at-hand — motion obstructs</div>
+        </div>
+        <div class="concept">
+          <div class="concept-term">Aletheia</div>
+          <div class="concept-meaning">unconcealment — motion reveals</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="input-section">
+      <div class="input-row">
+        <input type="url" id="url-input" placeholder="https://example.com" value="https://stripe.com">
+        <select id="trigger-select">
+          <option value="load">On Load</option>
+          <option value="hover">On Hover</option>
+          <option value="click">On Click</option>
+          <option value="scroll">On Scroll</option>
+        </select>
+        <button id="analyze-btn" onclick="analyzeMotion()">Analyze</button>
+      </div>
+      <div class="selector-row" id="selector-row">
+        <input type="text" id="selector-input" placeholder="CSS selector (e.g., .button, #nav-link)">
+      </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+      <div class="loading-spinner"></div>
+      <div>Extracting motion with Puppeteer...</div>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div id="results" class="results">
+      <div class="result-grid">
+        <div class="panel">
+          <h2>Phenomenological Analysis</h2>
+          <div id="phenom-content"></div>
+        </div>
+        <div class="panel">
+          <h2>Technical Extraction</h2>
+          <div id="tech-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Built by <a href="https://createsomething.ltd" target="_blank">CREATE SOMETHING</a></p>
+      <p>
+        <a href="https://createsomething.space" target="_blank">.space</a> |
+        <a href="https://createsomething.io" target="_blank">.io</a> |
+        <a href="https://createsomething.agency" target="_blank">.agency</a> |
+        <a href="https://createsomething.ltd" target="_blank">.ltd</a>
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    const triggerSelect = document.getElementById('trigger-select');
+    const selectorRow = document.getElementById('selector-row');
+
+    triggerSelect.addEventListener('change', () => {
+      const needsSelector = ['hover', 'click', 'focus'].includes(triggerSelect.value);
+      selectorRow.classList.toggle('visible', needsSelector);
+    });
+
+    async function analyzeMotion() {
+      const url = document.getElementById('url-input').value;
+      const triggerType = document.getElementById('trigger-select').value;
+      const selector = document.getElementById('selector-input').value;
+
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const resultsEl = document.getElementById('results');
+      const btn = document.getElementById('analyze-btn');
+
+      if (!url) {
+        errorEl.textContent = 'Please enter a URL';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      loadingEl.style.display = 'block';
+      errorEl.style.display = 'none';
+      resultsEl.classList.remove('visible');
+
+      try {
+        const trigger = { type: triggerType };
+        if (selector && ['hover', 'click', 'focus'].includes(triggerType)) {
+          trigger.selector = selector;
+        }
+        if (triggerType === 'scroll') {
+          trigger.scrollPosition = 500;
+        }
+
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, trigger }),
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Analysis failed');
+        }
+
+        renderResults(data.result);
+        resultsEl.classList.add('visible');
+      } catch (error) {
+        errorEl.textContent = `Error: ${error.message}`;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        loadingEl.style.display = 'none';
+      }
+    }
+
+    function renderResults(result) {
+      const { technical, phenomenological } = result;
+
+      // Phenomenological panel
+      const phenomEl = document.getElementById('phenom-content');
+      phenomEl.innerHTML = `
+        <div>
+          <span class="judgment-badge judgment-${phenomenological.judgment}">${phenomenological.judgment}</span>
+          <span class="mode-badge mode-${phenomenological.mode}">${phenomenological.mode}</span>
+        </div>
+
+        <div class="disclosure">
+          <div class="disclosure-type">${formatDisclosure(phenomenological.disclosure)}</div>
+          <div class="disclosure-description">${phenomenological.disclosureDescription}</div>
+        </div>
+
+        <div class="rationale">${phenomenological.modeRationale}</div>
+
+        <p style="font-size: 0.875rem; color: var(--color-fg-secondary);">
+          ${phenomenological.justification}
+        </p>
+
+        <div class="recommendation">
+          <div class="recommendation-action action-${phenomenological.recommendation.action}">
+            ${phenomenological.recommendation.action}
+          </div>
+          <div class="recommendation-text">${phenomenological.recommendation.reasoning}</div>
+          ${phenomenological.recommendation.modification ? `<div class="recommendation-text" style="margin-top: 0.5rem; font-style: italic;">${phenomenological.recommendation.modification}</div>` : ''}
+        </div>
+
+        <div class="confidence-bar">
+          <div class="confidence-fill" style="width: ${phenomenological.confidence * 100}%"></div>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--color-fg-muted); margin-top: 0.25rem;">
+          Confidence: ${Math.round(phenomenological.confidence * 100)}%
+        </div>
+      `;
+
+      // Technical panel
+      const techEl = document.getElementById('tech-content');
+      techEl.innerHTML = `
+        <div class="technical-stats">
+          <div class="stat">
+            <div class="stat-value">${technical.animations.length}</div>
+            <div class="stat-label">Animations</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${technical.transitions.length}</div>
+            <div class="stat-label">Transitions</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${Math.round(technical.timing.totalDuration)}ms</div>
+            <div class="stat-label">Total Duration</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${Math.round(technical.timing.averageDuration)}ms</div>
+            <div class="stat-label">Avg Duration</div>
+          </div>
+        </div>
+
+        ${technical.propertiesAnimated.length > 0 ? `
+          <div style="margin-top: var(--space-sm);">
+            <div style="font-size: 0.75rem; color: var(--color-fg-muted); margin-bottom: 0.5rem;">Properties Animated</div>
+            <div class="properties-list">
+              ${technical.propertiesAnimated.map(p => `<span class="property-tag">${p}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${technical.debug ? `
+          <div style="margin-top: var(--space-sm); font-size: 0.75rem; color: var(--color-fg-muted);">
+            Debug: ${technical.debug.elementFound !== undefined ? (technical.debug.elementFound ? 'Element found' : 'Element not found') : ''}
+            ${technical.debug.animationsBefore !== undefined ? ` | Before: ${technical.debug.animationsBefore}` : ''}
+            ${technical.debug.animationsAfter !== undefined ? ` | After: ${technical.debug.animationsAfter}` : ''}
+          </div>
+        ` : ''}
+
+        ${technical.screenshot ? `
+          <div class="screenshot">
+            <img src="data:image/png;base64,${technical.screenshot}" alt="Page screenshot">
+          </div>
+        ` : ''}
+      `;
+    }
+
+    function formatDisclosure(type) {
+      const labels = {
+        state_transition: 'State Transition',
+        spatial_relationship: 'Spatial Relationship',
+        user_confirmation: 'User Confirmation',
+        hierarchy_reveal: 'Hierarchy Reveal',
+        temporal_sequence: 'Temporal Sequence',
+        none: 'No Disclosure'
+      };
+      return labels[type] || type;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loom Task Board</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-hover: rgba(255, 255, 255, 0.1);
+      --text-primary: rgba(255, 255, 255, 0.95);
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --status-ready: #22c55e;
+      --status-claimed: #3b82f6;
+      --status-blocked: #ef4444;
+      --status-done: #a855f7;
+      --priority-critical: #ef4444;
+      --priority-high: #f97316;
+      --priority-normal: #6b7280;
+      --priority-low: #9ca3af;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header h1::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--status-ready);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--glass-bg);
+      border-radius: 6px;
+    }
+
+    .stat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      min-height: calc(100vh - 100px);
+    }
+
+    .column {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 4px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .column-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .column-count {
+      font-size: 12px;
+      padding: 2px 8px;
+      background: var(--glass-bg);
+      border-radius: 10px;
+    }
+
+    .tasks {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+
+    .task-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .task-card:hover {
+      background: var(--glass-hover);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .task-card.dragging {
+      opacity: 0.5;
+      transform: rotate(2deg);
+    }
+
+    .task-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .task-id {
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .task-priority {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .task-priority.critical { background: rgba(239, 68, 68, 0.2); color: var(--priority-critical); }
+    .task-priority.high { background: rgba(249, 115, 22, 0.2); color: var(--priority-high); }
+    .task-priority.normal { background: rgba(107, 114, 128, 0.2); color: var(--priority-normal); }
+    .task-priority.low { background: rgba(156, 163, 175, 0.2); color: var(--priority-low); }
+
+    .task-label {
+      padding: 2px 6px;
+      background: rgba(59, 130, 246, 0.2);
+      border-radius: 4px;
+      color: #60a5fa;
+    }
+
+    .task-agent {
+      padding: 2px 6px;
+      background: rgba(168, 85, 247, 0.2);
+      border-radius: 4px;
+      color: #c084fc;
+    }
+
+    .drop-zone {
+      min-height: 60px;
+      border: 2px dashed transparent;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .drop-zone.active {
+      border-color: var(--status-ready);
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--text-secondary);
+    }
+
+    .loading::after {
+      content: '';
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--glass-border);
+      border-top-color: var(--status-ready);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-column {
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .refresh-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: var(--text-primary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .refresh-btn:hover {
+      background: var(--glass-hover);
+    }
+
+    .action-btn {
+      padding: 4px 8px;
+      font-size: 11px;
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 4px;
+      color: #60a5fa;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--glass-border);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Loom Task Board</h1>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <div class="stats" id="stats">
+        <div class="stat">
+          <span class="stat-dot" style="background: var(--status-ready)"></span>
+          <span id="ready-count">0</span> Ready
+        </div>
+        <div class="stat">
+          <span class="stat-dot" style="background: var(--status-claimed)"></span>
+          <span id="claimed-count">0</span> Active
+        </div>
+        <div class="stat">
+          <span class="stat-dot" style="background: var(--status-blocked)"></span>
+          <span id="blocked-count">0</span> Blocked
+        </div>
+      </div>
+      <button class="refresh-btn" onclick="refreshTasks()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="board" id="board">
+    <div class="column" data-status="ready">
+      <div class="column-header">
+        <span class="column-title">Ready</span>
+        <span class="column-count" id="ready-col-count">0</span>
+      </div>
+      <div class="tasks" id="ready-tasks"></div>
+      <div class="drop-zone" data-status="ready"></div>
+    </div>
+    
+    <div class="column" data-status="claimed">
+      <div class="column-header">
+        <span class="column-title">In Progress</span>
+        <span class="column-count" id="claimed-col-count">0</span>
+      </div>
+      <div class="tasks" id="claimed-tasks"></div>
+      <div class="drop-zone" data-status="claimed"></div>
+    </div>
+    
+    <div class="column" data-status="blocked">
+      <div class="column-header">
+        <span class="column-title">Blocked</span>
+        <span class="column-count" id="blocked-col-count">0</span>
+      </div>
+      <div class="tasks" id="blocked-tasks"></div>
+      <div class="drop-zone" data-status="blocked"></div>
+    </div>
+    
+    <div class="column" data-status="done">
+      <div class="column-header">
+        <span class="column-title">Done</span>
+        <span class="column-count" id="done-col-count">0</span>
+      </div>
+      <div class="tasks" id="done-tasks"></div>
+      <div class="drop-zone" data-status="done"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // MCP Apps SDK integration
+    class McpApp {
+      constructor() {
+        this.messageId = 0;
+        this.pendingRequests = new Map();
+        this.ontoolresult = null;
+        
+        window.addEventListener('message', (event) => {
+          this.handleMessage(event.data);
+        });
+      }
+
+      async connect() {
+        return new Promise((resolve) => {
+          // Send connect message to parent
+          parent.postMessage({ type: 'mcp-app-connect' }, '*');
+          resolve();
+        });
+      }
+
+      handleMessage(data) {
+        if (data.type === 'tool-result' && this.ontoolresult) {
+          this.ontoolresult(data.result);
+        }
+        
+        if (data.id && this.pendingRequests.has(data.id)) {
+          const { resolve, reject } = this.pendingRequests.get(data.id);
+          this.pendingRequests.delete(data.id);
+          
+          if (data.error) {
+            reject(new Error(data.error.message));
+          } else {
+            resolve(data.result);
+          }
+        }
+      }
+
+      async callServerTool(request) {
+        const id = ++this.messageId;
+        
+        return new Promise((resolve, reject) => {
+          this.pendingRequests.set(id, { resolve, reject });
+          
+          parent.postMessage({
+            jsonrpc: '2.0',
+            id,
+            method: 'tools/call',
+            params: {
+              name: request.name,
+              arguments: request.arguments
+            }
+          }, '*');
+        });
+      }
+
+      async updateModelContext(context) {
+        parent.postMessage({
+          type: 'update-context',
+          context
+        }, '*');
+      }
+    }
+
+    const app = new McpApp();
+    let tasks = [];
+
+    async function init() {
+      await app.connect();
+      
+      // Set up tool result handler
+      app.ontoolresult = (result) => {
+        if (result && result.tasks) {
+          renderTasks(result.tasks);
+        }
+      };
+
+      await refreshTasks();
+    }
+
+    async function refreshTasks() {
+      try {
+        document.getElementById('board').innerHTML = '<div class="loading">Loading tasks</div>';
+        
+        const result = await app.callServerTool({
+          name: 'loom_list',
+          arguments: {}
+        });
+        
+        // Parse the result
+        const parsed = typeof result === 'string' ? JSON.parse(result) : result;
+        tasks = Array.isArray(parsed) ? parsed : (parsed.content?.[0]?.text ? JSON.parse(parsed.content[0].text) : []);
+        
+        renderBoard();
+        updateStats();
+      } catch (error) {
+        console.error('Failed to load tasks:', error);
+        renderBoard(); // Render empty board
+      }
+    }
+
+    function renderBoard() {
+      const columns = {
+        ready: tasks.filter(t => t.status === 'ready'),
+        claimed: tasks.filter(t => t.status === 'claimed'),
+        blocked: tasks.filter(t => t.status === 'blocked'),
+        done: tasks.filter(t => t.status === 'done').slice(0, 10) // Limit done tasks
+      };
+
+      document.getElementById('board').innerHTML = `
+        ${Object.entries(columns).map(([status, statusTasks]) => `
+          <div class="column" data-status="${status}">
+            <div class="column-header">
+              <span class="column-title">${getStatusLabel(status)}</span>
+              <span class="column-count">${statusTasks.length}</span>
+            </div>
+            <div class="tasks" id="${status}-tasks">
+              ${statusTasks.length === 0 ? 
+                `<div class="empty-column">No ${status} tasks</div>` :
+                statusTasks.map(task => renderTaskCard(task, status)).join('')
+              }
+            </div>
+            <div class="drop-zone" data-status="${status}"></div>
+          </div>
+        `).join('')}
+      `;
+
+      // Setup drag and drop
+      setupDragAndDrop();
+    }
+
+    function getStatusLabel(status) {
+      const labels = {
+        ready: 'Ready',
+        claimed: 'In Progress',
+        blocked: 'Blocked',
+        done: 'Done'
+      };
+      return labels[status] || status;
+    }
+
+    function renderTaskCard(task, currentStatus) {
+      const actions = getAvailableActions(task, currentStatus);
+      
+      return `
+        <div class="task-card" draggable="true" data-task-id="${task.id}">
+          <div class="task-title">${escapeHtml(task.title)}</div>
+          <div class="task-meta">
+            <span class="task-id">${task.id}</span>
+            <span class="task-priority ${task.priority}">${task.priority}</span>
+            ${task.labels?.map(l => `<span class="task-label">${escapeHtml(l)}</span>`).join('') || ''}
+            ${task.agent ? `<span class="task-agent">${escapeHtml(task.agent)}</span>` : ''}
+          </div>
+          ${actions.length > 0 ? `
+            <div class="task-actions">
+              ${actions.map(action => `
+                <button class="action-btn" onclick="handleAction('${task.id}', '${action.action}')">${action.label}</button>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function getAvailableActions(task, status) {
+      const actions = [];
+      
+      switch (status) {
+        case 'ready':
+          actions.push({ action: 'claim', label: 'Claim' });
+          break;
+        case 'claimed':
+          actions.push({ action: 'complete', label: 'Complete' });
+          actions.push({ action: 'release', label: 'Release' });
+          break;
+        case 'blocked':
+          actions.push({ action: 'unblock', label: 'Unblock' });
+          break;
+      }
+      
+      return actions;
+    }
+
+    window.handleAction = async function(taskId, action) {
+      try {
+        let toolName, args;
+        
+        switch (action) {
+          case 'claim':
+            toolName = 'loom_claim';
+            args = { task_id: taskId, agent: 'mcp-app-user' };
+            break;
+          case 'complete':
+            toolName = 'loom_complete';
+            args = { task_id: taskId };
+            break;
+          case 'release':
+            toolName = 'loom_release';
+            args = { task_id: taskId };
+            break;
+          default:
+            return;
+        }
+        
+        await app.callServerTool({ name: toolName, arguments: args });
+        
+        // Update model context
+        await app.updateModelContext({
+          content: [{ type: 'text', text: `User ${action}ed task ${taskId}` }]
+        });
+        
+        await refreshTasks();
+      } catch (error) {
+        console.error(`Failed to ${action} task:`, error);
+      }
+    };
+
+    function setupDragAndDrop() {
+      const cards = document.querySelectorAll('.task-card');
+      const dropZones = document.querySelectorAll('.drop-zone, .tasks');
+
+      cards.forEach(card => {
+        card.addEventListener('dragstart', (e) => {
+          card.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', card.dataset.taskId);
+        });
+
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          dropZones.forEach(zone => zone.classList.remove('active'));
+        });
+      });
+
+      dropZones.forEach(zone => {
+        zone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          zone.classList.add('active');
+        });
+
+        zone.addEventListener('dragleave', () => {
+          zone.classList.remove('active');
+        });
+
+        zone.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          zone.classList.remove('active');
+          
+          const taskId = e.dataTransfer.getData('text/plain');
+          const column = zone.closest('.column');
+          const newStatus = column?.dataset.status;
+          
+          if (taskId && newStatus) {
+            await moveTask(taskId, newStatus);
+          }
+        });
+      });
+    }
+
+    async function moveTask(taskId, newStatus) {
+      try {
+        let toolName, args;
+        
+        switch (newStatus) {
+          case 'ready':
+            toolName = 'loom_release';
+            args = { task_id: taskId };
+            break;
+          case 'claimed':
+            toolName = 'loom_claim';
+            args = { task_id: taskId, agent: 'mcp-app-user' };
+            break;
+          case 'done':
+            toolName = 'loom_complete';
+            args = { task_id: taskId };
+            break;
+          default:
+            return;
+        }
+        
+        await app.callServerTool({ name: toolName, arguments: args });
+        await refreshTasks();
+      } catch (error) {
+        console.error('Failed to move task:', error);
+      }
+    }
+
+    function updateStats() {
+      const counts = {
+        ready: tasks.filter(t => t.status === 'ready').length,
+        claimed: tasks.filter(t => t.status === 'claimed').length,
+        blocked: tasks.filter(t => t.status === 'blocked').length
+      };
+
+      document.getElementById('ready-count').textContent = counts.ready;
+      document.getElementById('claimed-count').textContent = counts.claimed;
+      document.getElementById('blocked-count').textContent = counts.blocked;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    // Make refreshTasks available globally
+    window.refreshTasks = refreshTasks;
+
+    // Initialize on load
+    init();
+  </script>
+</body>
+</html>

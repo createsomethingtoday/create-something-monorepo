@@ -1,8 +1,9 @@
 import { createServer } from 'node:http';
+import { join } from 'node:path';
 import { ConsoleLogger } from './logger.js';
 import { LinearTrackerClient } from './tracker/linear.js';
 import { LoomTrackerClient } from './tracker/loom.js';
-import { validate_dispatch_config } from './config.js';
+import { sanitize_workspace_key, validate_dispatch_config } from './config.js';
 import { WorkflowManager } from './workflow.js';
 import { WorkspaceManager } from './workspace.js';
 import { create_agent_worker_run } from './agent-worker.js';
@@ -137,6 +138,14 @@ export class SymphonyService {
             return issues;
         }
         return issues.filter((issue) => issue.id === this.task_id_filter || issue.identifier === this.task_id_filter);
+    }
+    derive_workspace_path(issue_identifier) {
+        const workspace_key = sanitize_workspace_key(issue_identifier);
+        const root = this.current_config?.workspace?.root;
+        if (typeof root !== 'string' || root.trim() === '') {
+            return workspace_key;
+        }
+        return join(root, workspace_key);
     }
     async start() {
         if (this.started)
@@ -279,7 +288,7 @@ export class SymphonyService {
             issue_id: running?.entry.issue.id ?? retry?.entry.issue_id ?? '',
             status: running ? 'running' : retry ? 'retrying' : 'released',
             workspace: {
-                path: running?.workspace_path ?? `${this.current_config.workspace.root}/${issue_identifier}`,
+                path: running?.workspace_path ?? this.derive_workspace_path(issue_identifier),
             },
             attempts: {
                 restart_count: running?.entry.restart_count ?? retry?.entry.attempt ?? 0,

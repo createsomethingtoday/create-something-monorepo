@@ -1,0 +1,24 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "webflow-review-queue-consumer"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Queue consumer
+[[queues.consumers]]
+queue = "webflow-review-queue"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "webflow-review-dlq"
+
+# D1 Database (same as orchestrator)
+[[d1_databases]]
+binding = "DB"
+database_name = "webflow-review-db"
+database_id = "YOUR_D1_DATABASE_ID"
+
+# R2 Bucket
+[[r2_buckets]]
+binding = "SCREENSHOTS"
+bucket_name = "webflow-review-screenshots"

@@ -1,0 +1,52 @@
+# HALF DOZEN Account
+# mj@halfdozen.co (Google Workspace)
+
+# ─────────────────────────────────────────────────────────────
+# Identity
+# ─────────────────────────────────────────────────────────────
+
+set realname = "Micah Johnson"
+set from = "mj@halfdozen.co"
+
+# ─────────────────────────────────────────────────────────────
+# IMAP (Google Workspace)
+# ─────────────────────────────────────────────────────────────
+
+set imap_user = "mj@halfdozen.co"
+set imap_pass = "`cat ~/.config/neomutt/credentials/halfdozen.pass`"
+
+set folder = "imaps://imap.gmail.com:993"
+set spoolfile = "+INBOX"
+set postponed = "+[Gmail]/Drafts"
+set record = "+[Gmail]/Sent Mail"
+set trash = "+[Gmail]/Trash"
+
+# ─────────────────────────────────────────────────────────────
+# SMTP (Google Workspace)
+# ─────────────────────────────────────────────────────────────
+
+set smtp_url = "smtps://mj@halfdozen.co@smtp.gmail.com:465"
+set smtp_pass = "`cat ~/.config/neomutt/credentials/halfdozen.pass`"
+
+# ─────────────────────────────────────────────────────────────
+# Sidebar Mailboxes
+# ─────────────────────────────────────────────────────────────
+
+mailboxes =INBOX "=[Gmail]/Sent Mail" "=[Gmail]/Drafts" "=[Gmail]/All Mail" "=[Gmail]/Trash"
+
+# ─────────────────────────────────────────────────────────────
+# Signature
+# ─────────────────────────────────────────────────────────────
+
+set signature = "~/.config/neomutt/signatures/halfdozen.txt"
+
+# ─────────────────────────────────────────────────────────────
+# Account-specific settings
+# ─────────────────────────────────────────────────────────────
+
+# Named mailboxes for account switching
+named-mailboxes "HD: Inbox" =INBOX
+named-mailboxes "HD: Sent" "=[Gmail]/Sent Mail"
+named-mailboxes "HD: Drafts" "=[Gmail]/Drafts"
+named-mailboxes "HD: Archive" "=[Gmail]/All Mail"
+named-mailboxes "HD: Trash" "=[Gmail]/Trash"

@@ -1,0 +1,28 @@
+{
+  "_template": "Linear MCP Server",
+  "_description": "Create and manage issues in Linear",
+  "_workway": "Issue tracking without leaving the terminal",
+  "_requires": ["LINEAR_API_KEY"],
+
+  "linear": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-linear"],
+    "env": {
+      "LINEAR_API_KEY": "${LINEAR_API_KEY}"
+    }
+  },
+
+  "_setup": [
+    "1. Go to Linear Settings > API > Personal API Keys",
+    "2. Create a new API key with appropriate scopes",
+    "3. Set LINEAR_API_KEY in environment"
+  ],
+
+  "_usage": [
+    "Create issue: 'Create a Linear issue for fixing the login bug'",
+    "List issues: 'What issues are assigned to me in Linear?'",
+    "Update status: 'Move LIN-123 to In Progress'"
+  ],
+
+  "_beads_integration": "For most work, prefer Beads (bd) over Linear. Use Linear MCP for syncing with external teams."
+}

@@ -1,0 +1,82 @@
+version: "0.1"
+artifact: "reviewer_hub_policy_records"
+status: "production_live"
+date: "2026-03-13"
+
+policy_intent:
+  summary: "Reviewer-specific Hub policy records for the two live app-review reviewer hubs."
+  authoritative_scope: "Current production reviewer surface"
+  rollout_mode: "reviewer_write_lane"
+  notes:
+    - "These records are reviewer-specific, not one shared reviewer template."
+    - "Both reviewer hubs currently expose the full downstream webflow-app-review-mcp tool surface."
+    - "Reviewer identity is resolved through the outer Hub account context plus REVIEWER_DIRECTORY_JSON."
+    - "The deployed Hub runtime still reports the Phase A bundle name, so discovery state is currently the production source of truth."
+
+shared_production_policy:
+  discovery:
+    mode: "full"
+    active_servers:
+      - "webflow-app-review-mcp"
+    max_proxy_tools: 18
+  allowed_proxy_tools:
+    - "webflow-app-review-mcp__app_review_health"
+    - "webflow-app-review-mcp__app_review_list_queue"
+    - "webflow-app-review-mcp__app_review_get_asset"
+    - "webflow-app-review-mcp__app_review_list_versions"
+    - "webflow-app-review-mcp__app_review_get_version"
+    - "webflow-app-review-mcp__app_review_get_field_map"
+    - "webflow-app-review-mcp__app_review_my_queue"
+    - "webflow-app-review-mcp__app_review_get_review_context"
+    - "webflow-app-review-mcp__app_review_assign_self"
+    - "webflow-app-review-mcp__app_review_unassign_self"
+    - "webflow-app-review-mcp__app_review_save_draft_feedback"
+    - "webflow-app-review-mcp__app_review_set_review_status"
+    - "webflow-app-review-mcp__app_review_request_changes"
+    - "webflow-app-review-mcp__app_review_approve_version"
+    - "webflow-app-review-mcp__app_review_reject_version"
+    - "webflow-app-review-mcp__app_review_update_version_review"
+    - "webflow-app-review-mcp__app_review_update_asset_metadata"
+    - "webflow-app-review-mcp__app_review_set_marketplace_status"
+  blocked_proxy_tools: []
+  allowed_resources:
+    - "app-review://field-map"
+    - "app-review://status-options"
+    - "app-review://queue-snapshot"
+    - "app-review://reviewer-me"
+    - "app-review://reviewer-workflow"
+  allowed_prompts:
+    - "app_review_decision_support"
+    - "app_review_feedback_refiner"
+  required_trace_fields:
+    - "workflow_id"
+    - "asset_id"
+    - "version_id"
+    - "decision"
+    - "matched_policy_class"
+    - "reviewer_id"
+    - "correlation_id"
+  fallback_mode: "revert_discovery_to_phase_a_compact"
+
+reviewers:
+  - reviewer_name: "Pablo Miranda"
+    reviewer_email: "pablo.miranda@webflow.com"
+    hub_slug: "wf-app-review-pablo"
+    account_model: "per_user"
+    approval_owner: "Pablo Miranda"
+    access_mode: "full_reviewer_surface"
+    policy_record_id: "wf_app_review_pablo_production"
+
+  - reviewer_name: "Shea Sisco"
+    reviewer_email: "shea.sisco@webflow.com"
+    hub_slug: "wf-app-review-shea"
+    account_model: "per_user"
+    approval_owner: "Shea Sisco"
+    access_mode: "full_reviewer_surface"
+    policy_record_id: "wf_app_review_shea_production"
+
+production_guardrails:
+  - "reviewer identity must remain attributable on all write traces"
+  - "rate limits and quotas must stay enabled"
+  - "any reviewer attribution failure triggers rollback to compact 6-tool discovery"
+  - "Marketplace review lead and Senior Systems Architect remain the escalation owners"

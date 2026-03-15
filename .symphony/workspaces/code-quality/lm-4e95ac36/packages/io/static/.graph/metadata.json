@@ -1,0 +1,25 @@
+{
+  "builtAt": "2026-02-13T22:58:16.020Z",
+  "nodeCount": 599,
+  "edgeCount": 15201,
+  "edgesByType": {
+    "explicit": 12,
+    "cross-reference": 140,
+    "concept": 14995,
+    "infrastructure": 54,
+    "semantic": 0
+  },
+  "nodesByPackage": {
+    "root": 343,
+    "space": 31,
+    "ltd": 53,
+    "lms": 64,
+    "io": 45,
+    "harness": 5,
+    "dotfiles": 15,
+    "cloudflare-sdk": 2,
+    "agency": 41
+  },
+  "embeddingsUpdated": false,
+  "filesReembedded": 0
+}

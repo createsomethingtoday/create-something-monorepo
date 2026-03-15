@@ -1,0 +1,23 @@
+# Motion Extractor Worker
+# Dedicated Worker with browser binding for real Puppeteer-based extraction
+# This enables page.hover() and capturing animations mid-flight
+
+name = "motion-extractor"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+main = "src/index.ts"
+compatibility_date = "2025-11-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Browser Rendering binding - enables Puppeteer
+browser = { binding = "BROWSER" }
+
+# Workers AI for phenomenological interpretation
+[ai]
+binding = "AI"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+
+# CORS allowed origins
+# Will be configured via secrets for production

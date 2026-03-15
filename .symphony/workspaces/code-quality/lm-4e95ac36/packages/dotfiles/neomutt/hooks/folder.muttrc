@@ -1,0 +1,16 @@
+# Folder Hooks
+# Context-specific settings when entering folders
+#
+# Pattern: folder-hook <pattern> <command>
+
+# Default sort for all folders
+folder-hook . 'set sort=threads; set sort_aux=reverse-last-date-received'
+
+# Sent folder: sort by date, not threads (your messages)
+folder-hook "=[Gmail]/Sent Mail" 'set sort=reverse-date'
+
+# Archive: collapsed threads, date-based
+folder-hook "=[Gmail]/All Mail" 'set sort=threads; set collapse_all=yes'
+
+# Drafts: simple date sort
+folder-hook "=[Gmail]/Drafts" 'set sort=date'

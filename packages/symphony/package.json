@@ -9,6 +9,7 @@
     "./cli": "./src/cli.js",
     "./config": "./src/config.js",
     "./orchestrator": "./src/orchestrator.js",
+    "./status": "./src/status.js",
     "./tracker/loom": "./src/tracker/loom.js",
     "./tracker/linear": "./src/tracker/linear.js"
   },
@@ -23,8 +24,7 @@
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
-    "liquidjs": "^10.25.0",
-    "yaml": "^2.8.2"
+    "liquidjs": "^10.25.0"
   },
   "author": "CREATE SOMETHING <hello@createsomething.agency>",
   "license": "MIT",

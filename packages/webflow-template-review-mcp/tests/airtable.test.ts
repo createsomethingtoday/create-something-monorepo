@@ -353,3 +353,100 @@ test('updateVersionReview includes Airtable error details on failed updates', as
     },
   );
 });
+
+test('getMarketplaceMetrics reads only live metrics fields and uses current published/review timestamps', async () => {
+  let requestCount = 0;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      requestCount += 1;
+
+      assert.match(url.pathname, new RegExp(`/${TABLE_IDS.assets}$`));
+      assert.equal(url.searchParams.get('filterByFormula'), `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`);
+
+      const fieldNames = url.searchParams.getAll('fields[]');
+      assert.deepEqual(fieldNames, [
+        CONFIRMED_ASSET_FIELDS.type,
+        CONFIRMED_ASSET_FIELDS.marketplaceStatus,
+        CONFIRMED_ASSET_FIELDS.latestReviewStatus,
+        '🚀📅Latest Version Review Status LMT',
+        CONFIRMED_ASSET_FIELDS.qualityScore,
+        CONFIRMED_ASSET_FIELDS.submittedDate,
+        '🚀📅Published Date',
+        CONFIRMED_ASSET_FIELDS.decisionDate,
+      ]);
+
+      return jsonResponse({
+        records: [
+          {
+            id: 'rec_asset_approved',
+            createdTime: '2026-03-10T00:00:00.000Z',
+            fields: {
+              [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+              [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '✅Approved',
+              [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '✅Approved',
+              '🚀📅Latest Version Review Status LMT': '2026-03-12T10:00:00.000Z',
+              [CONFIRMED_ASSET_FIELDS.qualityScore]: '✅Good',
+              [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-10T08:00:00.000Z',
+              '🚀📅Published Date': '2026-03-13T09:00:00.000Z',
+              [CONFIRMED_ASSET_FIELDS.decisionDate]: '2026-03-12T12:00:00.000Z',
+            },
+          },
+        ],
+      });
+    },
+  });
+
+  const metrics = await client.getMarketplaceMetrics({
+    days: 7,
+    end_date: '2026-03-13',
+  });
+
+  assert.equal(requestCount, 1);
+  assert.equal(metrics.totals.templatesScanned, 1);
+  assert.equal(metrics.totals.submissions, 1);
+  assert.equal(metrics.totals.decisions, 1);
+  assert.equal(metrics.totals.approvals, 1);
+  assert.equal(metrics.totals.published, 1);
+  assert.equal(metrics.reviewStatusActivity['✅Approved'], 1);
+  assert.equal(metrics.backlogSnapshot.approved, 1);
+  assert.equal(metrics.turnaround.averageHours, 52);
+});
+
+test('listAssetQueue surfaces Airtable list error details', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            type: 'UNKNOWN_FIELD_NAME',
+            message: 'Unknown field name: "📝Description"',
+          },
+        }),
+        {
+          status: 422,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
+  });
+
+  await assert.rejects(
+    client.listAssetQueue(10),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'AIRTABLE_LIST_FAILED');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        tableId: TABLE_IDS.assets,
+        filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
+        airtable: {
+          error: {
+            type: 'UNKNOWN_FIELD_NAME',
+            message: 'Unknown field name: "📝Description"',
+          },
+        },
+      });
+      return true;
+    },
+  );
+});

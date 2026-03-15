@@ -6,6 +6,7 @@ export * from './frontmatter.js';
 export * from './workflow.js';
 export * from './template.js';
 export * from './telemetry.js';
+export * from './status.js';
 export * from './workspace.js';
 export * from './tracker/linear.js';
 export * from './tracker/loom.js';

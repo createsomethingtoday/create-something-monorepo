@@ -1,0 +1,29 @@
+{
+  "workerId": "worker-3",
+  "issueId": "csm-as2vo",
+  "convoyId": "convoy-erc5g_82fd",
+  "epicId": "voice-audit-agency",
+  "issue": {
+    "id": "csm-as2vo",
+    "title": "Voice audit: Case studies and metrics display",
+    "status": "open",
+    "priority": 1,
+    "labels": ["agency", "complexity:simple", "voice-audit"],
+    "description": "Audit the three featured case study metrics on createsomething.agency. Verify specificity, clarity, and context sufficiency."
+  },
+  "context": {
+    "url": "https://createsomething.agency/",
+    "section": "case-studies",
+    "property": ".agency",
+    "currentText": {
+      "kickstand": "92% reduction Scripts: 155 → 13",
+      "arcForGmail": "99.8% cost savings $6.30 vs $3,750",
+      "viralytics": "100% automated Daily A&R discovery"
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1172 248" width="1172" height="248">
+<rect x="0" y="0" width="1172" height="248" fill="#000000"/>
+<line x1="40" y1="208" x2="1132" y2="208" stroke="#ffffff" stroke-width="2"/>
+<rect x="196" y="208" width="780" height="6" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<line x1="196" y1="100" x2="340" y2="100" stroke="#ffffff" stroke-width="2"/>
+<rect x="196" y="88" width="144" height="12" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<text x="268" y="154" font-family="Inter, system-ui, sans-serif" font-size="8" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">Pantry</text>
+<line x1="206" y1="208" x2="206" y2="100" stroke="#ffffff" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text x="211" y="154" font-family="Inter, system-ui, sans-serif" font-size="6" fill="#ffffff" dominant-baseline="middle">9'</text>
+<line x1="340" y1="100" x2="484" y2="100" stroke="#ffffff" stroke-width="2"/>
+<rect x="340" y="88" width="144" height="12" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<line x1="484" y1="100" x2="484" y2="88" stroke="#ffffff" stroke-width="2"/>
+<text x="412" y="154" font-family="Inter, system-ui, sans-serif" font-size="8" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">Kitchen</text>
+<line x1="350" y1="208" x2="350" y2="100" stroke="#ffffff" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text x="355" y="154" font-family="Inter, system-ui, sans-serif" font-size="6" fill="#ffffff" dominant-baseline="middle">9'</text>
+<line x1="484" y1="76" x2="628" y2="76" stroke="#ffffff" stroke-width="2"/>
+<rect x="484" y="64" width="144" height="12" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<text x="556" y="142" font-family="Inter, system-ui, sans-serif" font-size="8" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">Dining</text>
+<line x1="494" y1="208" x2="494" y2="76" stroke="#ffffff" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text x="499" y="142" font-family="Inter, system-ui, sans-serif" font-size="6" fill="#ffffff" dominant-baseline="middle">11'</text>
+<line x1="628" y1="76" x2="856" y2="76" stroke="#ffffff" stroke-width="2"/>
+<rect x="628" y="64" width="228" height="12" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<line x1="856" y1="76" x2="856" y2="100" stroke="#ffffff" stroke-width="2"/>
+<text x="742" y="142" font-family="Inter, system-ui, sans-serif" font-size="8" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">Living</text>
+<line x1="638" y1="208" x2="638" y2="76" stroke="#ffffff" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text x="643" y="142" font-family="Inter, system-ui, sans-serif" font-size="6" fill="#ffffff" dominant-baseline="middle">11'</text>
+<line x1="856" y1="100" x2="976" y2="100" stroke="#ffffff" stroke-width="2"/>
+<rect x="856" y="88" width="120" height="12" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<text x="916" y="154" font-family="Inter, system-ui, sans-serif" font-size="8" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">Dog
+Utility</text>
+<line x1="866" y1="208" x2="866" y2="100" stroke="#ffffff" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text x="871" y="154" font-family="Inter, system-ui, sans-serif" font-size="6" fill="#ffffff" dominant-baseline="middle">9'</text>
+<line x1="196" y1="208" x2="196" y2="100" stroke="#ffffff" stroke-width="2.5"/>
+<line x1="976" y1="208" x2="976" y2="100" stroke="#ffffff" stroke-width="2.5"/>
+<line x1="100" y1="88" x2="196" y2="88" stroke="#ffffff" stroke-width="1" stroke-dasharray="4 2"/>
+<line x1="976" y1="88" x2="1072" y2="88" stroke="#ffffff" stroke-width="1" stroke-dasharray="4 2"/>
+<line x1="388" y1="208" x2="388" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+<line x1="484" y1="208" x2="484" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+<line x1="544" y1="208" x2="544" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+<line x1="640" y1="208" x2="640" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+<line x1="700" y1="208" x2="700" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+<line x1="796" y1="208" x2="796" y2="100" stroke="#ffffff" stroke-width="0.5"/>
+<line x1="286" y1="208" x2="286" y2="112" stroke="rgba(255,255,255,0.4)" stroke-width="0.5"/>
+<line x1="322" y1="208" x2="322" y2="112" stroke="rgba(255,255,255,0.4)" stroke-width="0.5"/>
+<line x1="196" y1="208" x2="196" y2="100" stroke="#ffffff" stroke-width="3"/>
+<line x1="976" y1="208" x2="976" y2="100" stroke="#ffffff" stroke-width="3"/>
+<line x1="340" y1="208" x2="340" y2="100" stroke="#ffffff" stroke-width="2"/>
+<line x1="856" y1="208" x2="856" y2="76" stroke="#ffffff" stroke-width="2"/>
+<text x="40" y="25" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="bold" fill="#ffffff">SECTION A-A</text>
+<text x="1132" y="25" font-family="Inter, system-ui, sans-serif" font-size="8" fill="#ffffff" text-anchor="end">Looking South ↓</text>
+<line x1="40" y1="228" x2="160" y2="228" stroke="#ffffff" stroke-width="1"/>
+<line x1="40" y1="225" x2="40" y2="231" stroke="#ffffff" stroke-width="1"/>
+<line x1="160" y1="225" x2="160" y2="231" stroke="#ffffff" stroke-width="1"/>
+<text x="100" y="223" font-family="Inter, system-ui, sans-serif" font-size="6" fill="#ffffff" text-anchor="middle">10'</text>
+</svg>

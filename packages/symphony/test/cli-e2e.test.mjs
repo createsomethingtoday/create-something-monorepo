@@ -504,3 +504,116 @@ Issue: {{ issue.identifier }} :: {{ issue.title }}
   const workspaceEntries = await readdir(workspacesRoot);
   assert.deepEqual(workspaceEntries, []);
 });
+
+test('CLI status reports the latest task summary from telemetry', async (t) => {
+  await mkdir(TEST_TMP_ROOT, { recursive: true });
+  const tempRoot = await mkdtemp(join(TEST_TMP_ROOT, 'symphony-status-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const workflowPath = join(tempRoot, 'WORKFLOW.md');
+  const workspacesRoot = join(tempRoot, 'workspaces', 'code-quality');
+  const telemetryLaneRoot = join(tempRoot, 'logs', 'code-quality');
+  const taskId = 'lm-status-1';
+  const workspacePath = join(workspacesRoot, 'lm-status-1');
+
+  await mkdir(telemetryLaneRoot, { recursive: true });
+  await writeFile(
+    workflowPath,
+    `---
+tracker:
+  kind: loom
+  endpoint: https://loom.example.test/mcp
+  api_key: $LOOM_MCP_API_TOKEN
+  agent_id: symphony-code-quality
+  label: code-quality
+workspace:
+  root: ${JSON.stringify(workspacesRoot)}
+codex:
+  command: codex app-server
+---
+Status view only.
+`,
+    'utf8',
+  );
+
+  const telemetryPath = join(telemetryLaneRoot, `${taskId}.jsonl`);
+  const telemetryLines = [
+    {
+      timestamp: '2026-03-15T03:00:00.000Z',
+      run_id: 'sym-old',
+      lane: 'code-quality',
+      agent_id: 'symphony-code-quality',
+      correlation_id: taskId,
+      task_id: taskId,
+      phase: 'complete',
+      status: 'succeeded',
+      workspace_path: workspacePath,
+    },
+    {
+      timestamp: '2026-03-15T03:10:00.000Z',
+      run_id: 'sym-new',
+      lane: 'code-quality',
+      agent_id: 'symphony-code-quality',
+      correlation_id: taskId,
+      task_id: taskId,
+      phase: 'codex_start',
+      status: 'succeeded',
+      workspace_path: workspacePath,
+    },
+    {
+      timestamp: '2026-03-15T03:12:00.000Z',
+      run_id: 'sym-new',
+      lane: 'code-quality',
+      agent_id: 'symphony-code-quality',
+      correlation_id: taskId,
+      task_id: taskId,
+      phase: 'codex_turn',
+      status: 'failed',
+      workspace_path: workspacePath,
+      error: {
+        class: 'StalledSessionError',
+        message: 'stalled session',
+        retryable: true,
+      },
+    },
+  ];
+  await writeFile(telemetryPath, `${telemetryLines.map((line) => JSON.stringify(line)).join('\n')}\n`, 'utf8');
+
+  const child = spawn(process.execPath, [CLI_PATH, 'status', workflowPath, '--task-id', taskId, '--json'], {
+    cwd: REPO_ROOT,
+    env: {
+      ...process.env,
+      LOOM_MCP_API_TOKEN: 'test-token',
+      PATH: process.env.PATH ?? '',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  let stdout = '';
+  let stderr = '';
+  child.stdout.on('data', (chunk) => {
+    stdout += String(chunk);
+  });
+  child.stderr.on('data', (chunk) => {
+    stderr += String(chunk);
+  });
+
+  const exitCode = await new Promise((resolvePromise, rejectPromise) => {
+    child.once('error', rejectPromise);
+    child.once('exit', (code) => resolvePromise(code));
+  });
+
+  assert.equal(exitCode, 0, `stdout:\n${stdout}\n\nstderr:\n${stderr}`);
+  const report = JSON.parse(stdout);
+  assert.equal(report.lane, 'code-quality');
+  assert.equal(report.task_id, taskId);
+  assert.equal(report.tasks.length, 1);
+  assert.equal(report.tasks[0].task_id, taskId);
+  assert.equal(report.tasks[0].phase, 'codex_turn');
+  assert.equal(report.tasks[0].status, 'failed');
+  assert.equal(report.tasks[0].last_successful_phase, 'codex_start');
+  assert.equal(report.tasks[0].workspace_path, workspacePath);
+  assert.equal(report.tasks[0].last_error.class, 'StalledSessionError');
+});

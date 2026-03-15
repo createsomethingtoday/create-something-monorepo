@@ -1,0 +1,26 @@
+name = "schedule-notifier"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "schedule-mcp-db"
+database_id = "79f21c22-94e8-4a6e-85fe-baae307c5364"
+
+[[queues.producers]]
+binding = "NOTIFICATION_QUEUE"
+queue = "schedule-notifications"
+
+[[queues.consumers]]
+queue = "schedule-notifications"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3

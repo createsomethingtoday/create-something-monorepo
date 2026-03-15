@@ -1,0 +1,29 @@
+{
+  "workerId": "worker-2",
+  "issueId": "csm-lp3ea",
+  "convoyId": "convoy-erc5g_82fd",
+  "epicId": "voice-audit-agency",
+  "issue": {
+    "id": "csm-lp3ea",
+    "title": "Voice audit: Services section (3 service descriptions)",
+    "status": "open",
+    "priority": 1,
+    "labels": ["agency", "complexity:simple", "voice-audit"],
+    "description": "Audit the three service descriptions on createsomething.agency: Agentic Systems, Web Platforms, and Workflow Automation. Check for outcome-focus, specificity, and jargon."
+  },
+  "context": {
+    "url": "https://createsomething.agency/",
+    "section": "services",
+    "property": ".agency",
+    "currentText": {
+      "agenticSystems": "AI that runs your operations. Not chatbots—agents that make decisions while you sleep.",
+      "webPlatforms": "Fast sites on Cloudflare edge. Sub-100ms response, zero maintenance.",
+      "workflowAutomation": "Manual work becomes automated. We measure the hours saved."
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}

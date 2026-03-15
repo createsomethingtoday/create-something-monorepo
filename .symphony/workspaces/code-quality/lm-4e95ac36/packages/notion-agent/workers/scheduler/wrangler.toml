@@ -1,0 +1,33 @@
+# Notion Agent Scheduler Worker
+# Runs scheduled agents via Cron triggers
+
+name = "notion-agent-scheduler"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database - same as main app
+[[d1_databases]]
+binding = "DB"
+database_name = "notion-agent-db"
+database_id = "4669408a-2475-4314-b80e-d6c91a2d13a1"
+
+# KV Namespace - for rate limiting
+[[kv_namespaces]]
+binding = "KV"
+id = "adaa526410fa48f5b324313b574bf09a"
+
+# Workers AI
+[ai]
+binding = "AI"
+
+# Cron triggers - check for scheduled agents and process jobs
+[triggers]
+crons = ["* * * * *"]  # Every minute for job processing
+
+[vars]
+ENVIRONMENT = "development"
+
+# Secrets (same as main app):
+# - ENCRYPTION_KEY

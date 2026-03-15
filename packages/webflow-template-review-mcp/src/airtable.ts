@@ -256,6 +256,22 @@ const QUEUE_VERSION_FIELD_NAMES = [
   CONFIRMED_VERSION_FIELDS.decisionDate,
 ] as const;
 
+const MARKETPLACE_METRICS_FIELDS = {
+  latestReviewDate: '🚀📅Latest Version Review Status LMT',
+  publishedDate: '🚀📅Published Date',
+} as const;
+
+const MARKETPLACE_METRICS_FIELD_NAMES = [
+  CONFIRMED_ASSET_FIELDS.type,
+  CONFIRMED_ASSET_FIELDS.marketplaceStatus,
+  CONFIRMED_ASSET_FIELDS.latestReviewStatus,
+  MARKETPLACE_METRICS_FIELDS.latestReviewDate,
+  CONFIRMED_ASSET_FIELDS.qualityScore,
+  CONFIRMED_ASSET_FIELDS.submittedDate,
+  MARKETPLACE_METRICS_FIELDS.publishedDate,
+  CONFIRMED_ASSET_FIELDS.decisionDate,
+] as const;
+
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
 }
@@ -427,7 +443,10 @@ function selectQueueVersion(
   return versions[0] ?? null;
 }
 
-function normalizeQueueStatus(asset: TemplateReviewAsset, version?: TemplateReviewVersion | null): TemplateReviewQueueStatus | null {
+function normalizeQueueStatus(
+  asset: Pick<TemplateReviewQueueItem, 'latestReviewStatus' | 'marketplaceStatus'>,
+  version?: TemplateReviewVersion | null,
+): TemplateReviewQueueStatus | null {
   const candidates = [
     version?.reviewStatus,
     asset.latestReviewStatus,
@@ -633,7 +652,19 @@ export class AirtableClient {
 
       const response = await this.request(`/${args.tableId}?${params.toString()}`);
       if (!response.ok) {
-        throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status);
+        const airtable = await this.readErrorDetails(response);
+        throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status, {
+          tableId: args.tableId,
+          ...(args.fieldNames ? { fieldNames: args.fieldNames } : {}),
+          ...(args.filterByFormula ? { filterByFormula: args.filterByFormula } : {}),
+          ...(args.sortField
+            ? {
+                sortField: args.sortField,
+                sortDirection: args.sortDirection ?? 'asc',
+              }
+            : {}),
+          ...(airtable === undefined ? {} : { airtable }),
+        });
       }
 
       const json = (await response.json()) as { records?: AirtableRecord[]; offset?: string };
@@ -835,11 +866,21 @@ export class AirtableClient {
 
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
-      fieldNames: Object.values(CONFIRMED_ASSET_FIELDS),
+      fieldNames: [...MARKETPLACE_METRICS_FIELD_NAMES],
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
       limit: 1000,
     });
-    const assets = records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
+    const assets = records
+      .filter((record) => isTemplateLikeAsset(record.fields))
+      .map((record) => ({
+        latestReviewStatus: firstString(record.fields[CONFIRMED_ASSET_FIELDS.latestReviewStatus]),
+        latestReviewDate: firstString(record.fields[MARKETPLACE_METRICS_FIELDS.latestReviewDate]),
+        qualityRating: firstString(record.fields[CONFIRMED_ASSET_FIELDS.qualityScore]),
+        submittedDate: firstString(record.fields[CONFIRMED_ASSET_FIELDS.submittedDate]),
+        publishedDate: firstString(record.fields[MARKETPLACE_METRICS_FIELDS.publishedDate]),
+        decisionDate: firstString(record.fields[CONFIRMED_ASSET_FIELDS.decisionDate]),
+        marketplaceStatus: firstString(record.fields[CONFIRMED_ASSET_FIELDS.marketplaceStatus]),
+      }));
 
     const startMs = startDay.getTime();
     const endExclusiveMs = endExclusive.getTime();

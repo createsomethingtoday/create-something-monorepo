@@ -3,7 +3,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 function create_run_id() {
     return `sym-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
-function telemetry_root_from_workspace_root(workspace_root, lane) {
+export function telemetry_root_from_workspace_root(workspace_root, lane) {
     const absolute_root = resolve(workspace_root);
     const base = basename(absolute_root);
     if (base === lane) {

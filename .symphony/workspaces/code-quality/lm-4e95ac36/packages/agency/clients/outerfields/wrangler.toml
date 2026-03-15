@@ -1,0 +1,37 @@
+name = "outerfields-pcn"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+[vars]
+ENVIRONMENT = "production"
+
+# D1 Database for user accounts, videos, and discovery calls
+[[d1_databases]]
+binding = "DB"
+database_name = "outerfields-db"
+database_id = "1841903d-9c2d-4b8b-809a-3aef68d2c8f0"
+preview_database_id = "1841903d-9c2d-4b8b-809a-3aef68d2c8f0"
+
+# KV Namespace for session storage (24-hour TTL)
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "973b18397c4d4b068313152a642f1ad5"
+preview_id = "973b18397c4d4b068313152a642f1ad5"
+
+# KV Namespace for video engagement stats
+[[kv_namespaces]]
+binding = "VIDEO_STATS"
+id = "55a1177ee7c3491589c19094e38df0f7"
+preview_id = "55a1177ee7c3491589c19094e38df0f7"
+
+# R2 Bucket for video assets (videos and thumbnails)
+# Create with: wrangler r2 bucket create outerfields-videos
+[[r2_buckets]]
+binding = "VIDEO_ASSETS"
+bucket_name = "outerfields-videos"
+preview_bucket_name = "outerfields-videos-preview"
+
+[ai]
+binding = "AI"

@@ -1,0 +1,376 @@
+version: "0.1"
+artifact: "mcp_contract"
+status: "working_draft"
+
+client:
+  name: "Webflow Marketplace team"
+  owner: "Marketplace review lead"
+  workflow_name: "template_review_hub_lane"
+  workflow_owner: "Marketplace review lead"
+
+scope:
+  objective: "Reduce objective checklist time and improve consistency in template review by delivering a governed Phase A MCP Hub lane for reviewers."
+  workflow_boundary: "Phase A starts when a template submission enters the review queue and ends when the reviewer validates template-review context, may assign the Asset Version to themselves, may record bounded reviewer feedback and controlled 📝Review Status updates, and completes any broader official decision outside the Hub."
+  out_of_scope:
+    - "Preview and published-site analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
+    - "Originality or plagiarism analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
+    - "Broad Airtable mutation beyond explicit reviewer-safe write verbs during Phase A"
+    - "Subjective design judgment and final taste decisions"
+    - "Autonomous creator-facing communication"
+    - "Direct control-plane mutation by reviewers"
+
+systems:
+  source_systems:
+    - name: "Airtable Marketplace Assets"
+      role: "database"
+      notes: "System of record for template assets, asset versions, review state, and release metadata."
+    - name: "Webflow preview and published sites"
+      role: "database"
+      notes: "Source of truth for template structure, content, SEO, interactions, and published evidence."
+  connected_systems:
+    - name: "CREATE SOMETHING MCP Hub"
+      role: "gateway"
+      notes: "House entrypoint, broker, and governance surface for reviewer workflows."
+    - name: "webflow-template-review-mcp"
+      role: "workflow"
+      notes: "Queue, asset, version, and release operations for template review. This is the only confirmed live reviewer-Hub downstream in Phase A."
+    - name: "webflow-site-analyzer-mcp"
+      role: "analysis"
+      notes: "Planned Phase B analysis server. Not yet required for authoritative Phase A rollout."
+    - name: "webflow-local"
+      role: "analysis"
+      notes: "Planned Phase B analysis server backing webflow-local runtime tools. Not yet required for authoritative Phase A rollout."
+    - name: "Composio"
+      role: "integration"
+      notes: "Optional connectivity and auth plumbing behind the house Hub. Not a reviewer-facing surface in this pilot."
+
+resources:
+  - uri: "template-review://queue-snapshot"
+    name: "template_review_queue"
+    description: "Current template review queue view for triage and selection."
+    source_system: "Airtable Marketplace Assets"
+    freshness_requirement: "near_realtime"
+    access: "read"
+    pii: false
+  - uri: "airtable://assets/{asset_id}"
+    name: "template_asset"
+    description: "Template asset record with review metadata and publishing context."
+    source_system: "Airtable Marketplace Assets"
+    freshness_requirement: "near_realtime"
+    access: "read"
+    pii: false
+  - uri: "airtable://asset_versions/{version_id}"
+    name: "template_version"
+    description: "Template version record with checklist, reviewer state, and feedback fields."
+    source_system: "Airtable Marketplace Assets"
+    freshness_requirement: "near_realtime"
+    access: "read"
+    pii: false
+  - uri: "template-review://reviewer-me"
+    name: "template_review_reviewer_identity"
+    description: "Current reviewer identity resolved by the MCP runtime for self-assignment."
+    source_system: "CREATE SOMETHING MCP Hub"
+    freshness_requirement: "request_scoped"
+    access: "read"
+    pii: true
+  - uri: "template-review://reviewer-workflow"
+    name: "template_review_reviewer_workflow"
+    description: "Host-neutral workflow guidance for locating and self-assigning a reviewable template version."
+    source_system: "CREATE SOMETHING MCP Hub"
+    freshness_requirement: "static"
+    access: "read"
+    pii: false
+  - uri: "template-review://host-playbook"
+    name: "template_review_host_playbook"
+    description: "Runtime playbook for MCP hosts to drive queue, assignment, resume, and release flows without Airtable-specific prompt logic."
+    source_system: "CREATE SOMETHING MCP Hub"
+    freshness_requirement: "static"
+    access: "read"
+    pii: false
+tools:
+  - name: "template_review_get_metrics"
+    description: "Return compact marketplace template review metrics for a recent date window."
+    action_type: "read"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.metrics.read"
+    input_schema_summary:
+      required: []
+      optional:
+        - "days"
+        - "end_date"
+    output_contract:
+      success_shape: "Returns compact aggregate metrics for the requested window, including submissions, decisions, approvals, rejections, published count, current backlog snapshot, review-status activity, quality-rating snapshot, and average decision turnaround hours. This tool is for analytics summaries, not record-by-record inspection."
+      error_shape: "Returns structured Airtable or date-window validation error."
+    idempotency_expectation: "Pure read operation."
+    fallback_behavior: "Use Airtable reporting views manually if Hub metrics read path fails."
+
+  - name: "template_review_list_queue"
+    description: "List compact queue summaries for template submissions ready for review."
+    action_type: "read"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.queue.read"
+    input_schema_summary:
+      required: []
+      optional:
+        - "limit"
+        - "status"
+        - "assigned"
+        - "sort"
+    output_contract:
+      success_shape: "Returns compact normalized queue records with assignableVersionId, review ownership, reviewer-facing capability flags, and reviewer-safe defaults for ready_to_review + unassigned + submittedDate_desc when filters are omitted. Queue responses exclude bulky asset-detail fields such as long descriptions, HTML bodies, and image arrays; hosts should use get_asset, get_version, or get_review_context for detailed inspection."
+      error_shape: "Returns structured Airtable or scope error."
+    idempotency_expectation: "Pure read operation."
+    fallback_behavior: "Use Airtable queue view manually if Hub read path fails."
+
+  - name: "template_review_my_queue"
+    description: "List compact queue summaries already assigned to the currently authenticated reviewer."
+    action_type: "read"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.queue.read"
+    input_schema_summary:
+      required: []
+      optional:
+        - "limit"
+        - "status"
+        - "sort"
+    output_contract:
+      success_shape: "Returns compact normalized queue records filtered to items assigned to the current reviewer. Queue responses exclude bulky asset-detail fields such as long descriptions, HTML bodies, and image arrays; hosts should use get_asset, get_version, or get_review_context for detailed inspection."
+      error_shape: "Returns reviewer identity unavailable or Airtable failure error."
+    idempotency_expectation: "Pure read operation."
+    fallback_behavior: "Use Airtable filtered by reviewer if Hub read path fails."
+
+  - name: "template_review_get_review_context"
+    description: "Read the normalized reviewer context for one template version."
+    action_type: "read"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.version.read"
+    input_schema_summary:
+      required:
+        - "version_id"
+      optional: []
+    output_contract:
+      success_shape: "Returns { ok: true, data: { context: ... } } where reviewer-facing fields, current reviewer identity, and capability flags are nested under data.context."
+      error_shape: "Returns not-found or Airtable failure error."
+    idempotency_expectation: "Pure read operation."
+    fallback_behavior: "Open the version directly in Airtable if Hub read path fails."
+
+  - name: "template_review_assign_self"
+    description: "Assign the currently authenticated reviewer to a template Asset Version."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow_narrow_write"
+    auth_scopes:
+      - "review.assignment.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+      optional: []
+    output_contract:
+      success_shape: "Returns the updated version with 📝Reviewer set to the current reviewer."
+      error_shape: "Returns reviewer identity unavailable, not-found, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the selected version is already assigned to the current reviewer."
+    fallback_behavior: "Reviewer manually assigns themselves in Airtable if the narrow write path fails."
+
+  - name: "template_review_unassign_self"
+    description: "Clear reviewer assignment only when the selected Asset Version is assigned to the currently authenticated reviewer."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow_narrow_write"
+    auth_scopes:
+      - "review.assignment.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+      optional: []
+    output_contract:
+      success_shape: "Returns the updated version with 📝Reviewer cleared when the current reviewer owns the assignment."
+      error_shape: "Returns reviewer identity unavailable, assignment conflict, not-found, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the selected version is already unassigned."
+    fallback_behavior: "Reviewer manually clears assignment in Airtable if the narrow write path fails."
+
+  - name: "template_review_get_asset"
+    description: "Read one template asset and associated versions."
+    action_type: "read"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.asset.read"
+    input_schema_summary:
+      required:
+        - "asset_id"
+      optional:
+        - "versions_limit"
+    output_contract:
+      success_shape: "Returns asset metadata plus version history."
+      error_shape: "Returns not-found, out-of-scope, or Airtable failure error."
+    idempotency_expectation: "Pure read operation."
+    fallback_behavior: "Open the asset directly in Airtable if Hub read path fails."
+
+  - name: "template_review_request_changes"
+    description: "Record reviewer feedback and move the selected Asset Version into the approved changes-requested review state."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "approval_required_narrow_write"
+    auth_scopes:
+      - "review.feedback.write"
+      - "review.status.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+        - "review_feedback"
+      optional:
+        - "improvement_areas"
+    output_contract:
+      success_shape: "Returns the updated version with reviewer feedback persisted, optional improvement areas saved, and 📝Review Status moved to the allowlisted changes-requested state."
+      error_shape: "Returns reviewer identity unavailable, assignment conflict, invalid input, not-found, policy deny, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the selected version already contains the same reviewer feedback payload and changes-requested status."
+    fallback_behavior: "Reviewer records request-changes feedback manually in Airtable if the narrow write path fails."
+
+  - name: "template_review_set_review_status"
+    description: "Update only the 📝Review Status field for the selected Asset Version using allowlisted reviewer workflow states."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "approval_required_narrow_write"
+    auth_scopes:
+      - "review.status.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+        - "review_status"
+      optional: []
+    output_contract:
+      success_shape: "Returns the updated version with only 📝Review Status changed, preserving current reviewer ownership and bounded workflow semantics."
+      error_shape: "Returns reviewer identity unavailable, assignment conflict, invalid status transition, not-found, policy deny, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the selected version already has the requested allowlisted review status."
+    fallback_behavior: "Reviewer updates 📝Review Status manually in Airtable if the narrow write path fails."
+
+  - name: "template_review_save_draft_feedback"
+    description: "Persist draft reviewer feedback fields without changing the official decision state."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "approval_required_narrow_write"
+    auth_scopes:
+      - "review.feedback.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+      optional:
+        - "review_feedback_draft"
+        - "improvement_areas"
+    output_contract:
+      success_shape: "Returns the updated version with draft reviewer feedback fields saved while leaving official decision state unchanged."
+      error_shape: "Returns reviewer identity unavailable, assignment conflict, invalid input, not-found, policy deny, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the same draft feedback payload is already stored."
+    fallback_behavior: "Reviewer stores draft notes outside the Hub if the narrow draft-save path fails."
+
+  - name: "phase_b_review_analysis"
+    description: "Deferred Phase B capability for preview/published-site analysis and originality checks after the analysis servers are enabled in the live reviewer Hub."
+    action_type: "deferred"
+    systems_touched:
+      - "webflow-site-analyzer-mcp"
+      - "webflow-local"
+    approval_mode: "not_available_in_phase_a"
+    input_schema_summary:
+      required: []
+      optional: []
+    output_contract:
+      success_shape: "N/A in Phase A."
+      error_shape: "N/A in Phase A."
+    idempotency_expectation: "N/A in Phase A."
+    fallback_behavior: "Reviewer performs analysis manually until Phase B is enabled."
+
+  - name: "phase_a_review_state_changes"
+    description: "Broad official review-state changes beyond explicit reviewer-safe verbs remain manual in Airtable during Phase A."
+    action_type: "manual"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "manual_only_in_phase_a"
+    input_schema_summary:
+      required: []
+      optional: []
+    output_contract:
+      success_shape: "N/A in Phase A."
+      error_shape: "N/A in Phase A."
+    idempotency_expectation: "N/A in Phase A."
+    fallback_behavior: "Reviewer handles approval, rejection, publishing completion, and any unsupported review-field mutation directly in Airtable."
+
+prompts:
+  - name: "template_review_reviewer_mode"
+    purpose: "Guide the reviewer lane to gather evidence conservatively, separate objective findings from manual judgment, and escalate on uncertainty."
+    usage: "Selected when running the governed template review workflow through the Hub."
+  - name: "template_review_host_playbook"
+    purpose: "Guide generic MCP hosts toward the default reviewer queue -> assign -> review -> my_queue -> unassign flow."
+    usage: "Use together with template-review://host-playbook when a host needs workflow instructions instead of raw Airtable semantics."
+
+auth:
+  identity_source: "AUTH0"
+  account_model: "per_user"
+  production_write_access: "narrow_reviewer_workflow_writes"
+  auth_notes:
+    - "Reviewers should authenticate through the house Hub surface rather than direct downstream MCP endpoints."
+    - "Composio-backed auth may support selected connector plumbing behind the Hub but should not become the reviewer-facing delivery abstraction."
+    - "Phase A reviewer Hubs support narrow reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates while retaining manual Airtable fallback for broader official state changes."
+
+policy_integration:
+  control_surface: "agent_contract.yaml"
+  observability_surface:
+    - "Braintrust"
+    - "cs-telemetry"
+  release_gate_dependency: "Golden tasks must prove correct read behavior, approval-gated writes, blocked actions, and fallback handling."
+
+error_model:
+  expected_failures:
+    - "STALE_STATE"
+    - "AUTH_EXPIRED"
+    - "FIELD_MAPPING_UNVERIFIED"
+    - "PREVIEW_UNAVAILABLE"
+    - "POLICY_AMBIGUITY"
+  operator_visible_errors:
+    - "Template review write path requires human review or manual Airtable fallback, except for reviewer self-assignment."
+    - "Analysis incomplete; reviewer validation required."
+    - "Current evidence is insufficient to support an automated recommendation."
+  audit_fields:
+    - "workflow_id"
+    - "asset_id"
+    - "version_id"
+    - "tool_name"
+    - "decision"
+    - "correlation_id"
+
+non_functional_requirements:
+  latency_budget_ms: 15000
+  retry_policy: "bounded_retry"
+  logging_requirement: "All approval-required, blocked, and escalated actions must emit structured audit events and trace records."
+  data_retention_notes:
+    - "Reviewer-facing outputs should retain evidence and rationale without exposing unnecessary internal operational data."
+    - "Creator-facing feedback remains human-reviewed before send."
+
+acceptance:
+  required_before_build:
+    - "Hub lane composition for template review agreed"
+    - "Workflow boundary approved by Marketplace review lead"
+    - "Reviewer alpha owners identified"
+  required_before_production:
+    - "Golden-task checks pass"
+    - "Manual fallback path verified"
+    - "Reviewer playbook reviewed with pilot reviewers"
+    - "Trace visibility confirmed for reads, writes, and escalations"
+    - "Phase B analysis servers enabled and verified before any contract expansion beyond Phase A"

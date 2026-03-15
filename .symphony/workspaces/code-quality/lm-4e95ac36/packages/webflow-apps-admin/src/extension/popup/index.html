@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webflow Admin Tools</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      width: 320px;
+      padding: 16px;
+      background: #fafafa;
+    }
+    
+    h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1a1a1a;
+    }
+    
+    .tool-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .tool-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .tool-btn:hover {
+      border-color: #146ef5;
+      background: #f5f9ff;
+    }
+    
+    .tool-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .tool-icon {
+      font-size: 20px;
+    }
+    
+    .tool-info {
+      text-align: left;
+    }
+    
+    .tool-name {
+      font-weight: 500;
+      font-size: 14px;
+      color: #1a1a1a;
+    }
+    
+    .tool-desc {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+    
+    .status {
+      margin-top: 16px;
+      padding: 12px;
+      background: #e8f5e9;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #2e7d32;
+      display: none;
+    }
+    
+    .status.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+    
+    .status.visible {
+      display: block;
+    }
+    
+    footer {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Webflow Apps Admin</h1>
+  
+  <div class="tool-list">
+    <button class="tool-btn" id="runAudit">
+      <span class="tool-icon">🔍</span>
+      <div class="tool-info">
+        <div class="tool-name">Client ID Audit</div>
+        <div class="tool-desc">Scan for duplicate Client IDs</div>
+      </div>
+    </button>
+    
+    <button class="tool-btn" id="viewResults" disabled>
+      <span class="tool-icon">📊</span>
+      <div class="tool-info">
+        <div class="tool-name">View Last Results</div>
+        <div class="tool-desc">Open previous audit report</div>
+      </div>
+    </button>
+    
+    <button class="tool-btn" id="downloadReport" disabled>
+      <span class="tool-icon">📥</span>
+      <div class="tool-info">
+        <div class="tool-name">Download Report</div>
+        <div class="tool-desc">Export as JSON</div>
+      </div>
+    </button>
+  </div>
+  
+  <div class="status" id="status"></div>
+  
+  <footer>
+    CREATE SOMETHING · v1.0.0
+  </footer>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

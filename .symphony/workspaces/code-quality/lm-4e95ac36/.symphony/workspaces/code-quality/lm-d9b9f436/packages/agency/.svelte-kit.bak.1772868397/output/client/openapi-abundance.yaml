@@ -1,0 +1,838 @@
+openapi: 3.1.0
+info:
+  title: Abundance Network API
+  description: |
+    Connect Seekers with Talent through intelligent matching.
+
+    ## Concepts
+    - **Seeker**: Someone looking for creative help (brand owners, founders, creators)
+    - **Talent**: Creatives offering services (illustrators, designers, motion artists)
+    - **Match**: A suggested pairing between a Seeker's job and a Talent
+
+    ## Hermeneutic Spiral
+    Users return with evolving context. The API tracks conversation history
+    (intakes) to enable "delta intake" - only asking what's changed since last time.
+  version: 1.0.0
+  contact:
+    name: CREATE SOMETHING Agency
+    url: https://createsomething.agency
+
+servers:
+  - url: https://createsomething.agency/api/abundance
+    description: Production API
+
+paths:
+  /seekers:
+    post:
+      operationId: createSeeker
+      summary: Create a new Seeker profile
+      description: |
+        Register a new Seeker. Uses phone number as unique identifier.
+        If a Seeker with this phone already exists, returns the existing profile (idempotent).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeekerInput'
+      responses:
+        '201':
+          description: Seeker created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeekerResponse'
+        '200':
+          description: Existing Seeker returned (idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeekerResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      operationId: listSeekers
+      summary: List or lookup Seekers
+      description: |
+        Retrieve Seekers. Use `phone` or `id` parameter for single lookup,
+        or omit for paginated list.
+      parameters:
+        - name: phone
+          in: query
+          description: Lookup by phone number
+          schema:
+            type: string
+        - name: id
+          in: query
+          description: Lookup by Seeker ID
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum results (default 20, max 100)
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Seeker(s) found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/SeekerResponse'
+                  - $ref: '#/components/schemas/SeekersListResponse'
+
+  /seekers/{id}:
+    get:
+      operationId: getSeeker
+      summary: Get Seeker by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Seeker found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeekerResponse'
+        '404':
+          description: Seeker not found
+    patch:
+      operationId: updateSeeker
+      summary: Update Seeker profile
+      description: |
+        Update a Seeker's profile. Use this for check-ins where the Seeker
+        provides updated brand info, budget ranges, or preferences.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeekerUpdate'
+      responses:
+        '200':
+          description: Seeker updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeekerResponse'
+
+  /talent:
+    post:
+      operationId: createTalent
+      summary: Create a new Talent profile
+      description: |
+        Register a new Talent (creative). Uses phone number as unique identifier.
+        Skills array is required - at least one skill must be provided.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TalentInput'
+      responses:
+        '201':
+          description: Talent created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TalentResponse'
+        '200':
+          description: Existing Talent returned (idempotent)
+    get:
+      operationId: listTalent
+      summary: List or lookup Talent
+      description: |
+        Retrieve Talent profiles. Supports filtering by skill and availability.
+      parameters:
+        - name: phone
+          in: query
+          schema:
+            type: string
+        - name: id
+          in: query
+          schema:
+            type: string
+        - name: skill
+          in: query
+          description: Filter by skill (e.g., "illustration")
+          schema:
+            type: string
+        - name: availability
+          in: query
+          description: Filter by availability status
+          schema:
+            type: string
+            enum: [available, busy, unavailable]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Talent found
+
+  /talent/{id}:
+    get:
+      operationId: getTalent
+      summary: Get Talent by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Talent found
+    patch:
+      operationId: updateTalent
+      summary: Update Talent profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TalentUpdate'
+      responses:
+        '200':
+          description: Talent updated
+
+  /match:
+    post:
+      operationId: findMatches
+      summary: Find matching Talent for a job
+      description: |
+        Given a Seeker's job request, find and rank suitable Talent.
+        Returns up to 5 matches with fit scores and breakdowns.
+
+        Fit Score = (Skills × 0.4) + (Budget × 0.3) + (Availability × 0.3)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequest'
+      responses:
+        '201':
+          description: Matches found and stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchesResponse'
+        '404':
+          description: Seeker not found
+    get:
+      operationId: listMatches
+      summary: List matches with filters
+      parameters:
+        - name: seeker_id
+          in: query
+          description: Filter by Seeker
+          schema:
+            type: string
+        - name: talent_id
+          in: query
+          description: Filter by Talent
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [suggested, accepted, declined, in_progress, completed, cancelled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Matches found
+
+  /convert:
+    post:
+      operationId: convertUserType
+      summary: Convert user between Seeker and Talent
+      description: |
+        Convert a user from Seeker to Talent or vice versa.
+
+        Use this when GPT determines through conversation that a user
+        who was auto-created as Seeker is actually a Talent (or vice versa).
+
+        Example flow:
+        1. New user messages WhatsApp → auto-created as Seeker
+        2. GPT asks "Looking for help or offering services?"
+        3. User says "I'm a designer offering services"
+        4. GPT calls this endpoint to convert them to Talent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConvertRequest'
+      responses:
+        '201':
+          description: User converted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    oneOf:
+                      - $ref: '#/components/schemas/Seeker'
+                      - $ref: '#/components/schemas/Talent'
+                  message:
+                    type: string
+        '400':
+          description: Validation error
+        '404':
+          description: User not found
+
+  /match/{id}:
+    get:
+      operationId: getMatch
+      summary: Get match details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Match found
+    patch:
+      operationId: updateMatch
+      summary: Update match status or add feedback
+      description: |
+        Update a match's status (accept, decline, complete) or add feedback.
+        Use this when:
+        - Seeker accepts/declines a suggested Talent
+        - Work begins (in_progress)
+        - Job completes with ratings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchUpdate'
+      responses:
+        '200':
+          description: Match updated
+
+components:
+  schemas:
+    SeekerInput:
+      type: object
+      required:
+        - phone
+        - name
+      properties:
+        phone:
+          type: string
+          description: WhatsApp phone number (unique identifier)
+          example: "+1234567890"
+        name:
+          type: string
+          example: "Louis Chen"
+        email:
+          type: string
+          format: email
+        brand_name:
+          type: string
+          description: Brand or project name
+          example: "Abracadabra"
+        brand_vibe:
+          type: string
+          description: Freeform style tags
+          example: "colorful, spiritual, rave, no black & white"
+        website:
+          type: string
+          format: uri
+        typical_budget_min:
+          type: integer
+          description: Typical minimum budget in USD
+          example: 500
+        typical_budget_max:
+          type: integer
+          description: Typical maximum budget in USD
+          example: 1500
+        preferred_formats:
+          type: array
+          items:
+            type: string
+          description: Preferred deliverable types
+          example: ["cover_art", "merch", "video"]
+        readiness_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+
+    SeekerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        brand_name:
+          type: string
+        brand_vibe:
+          type: string
+        website:
+          type: string
+        typical_budget_min:
+          type: integer
+        typical_budget_max:
+          type: integer
+        preferred_formats:
+          type: array
+          items:
+            type: string
+        readiness_score:
+          type: integer
+        status:
+          type: string
+          enum: [active, inactive, onboarding]
+
+    TalentInput:
+      type: object
+      required:
+        - phone
+        - name
+        - skills
+      properties:
+        phone:
+          type: string
+          example: "+1987654321"
+        name:
+          type: string
+          example: "Maya Rodriguez"
+        email:
+          type: string
+          format: email
+        portfolio_url:
+          type: string
+          format: uri
+        instagram:
+          type: string
+          example: "@mayacreates"
+        skills:
+          type: array
+          items:
+            type: string
+          description: Creative skills offered
+          example: ["illustration", "cover_art", "merch_design"]
+        styles:
+          type: array
+          items:
+            type: string
+          description: Aesthetic styles
+          example: ["psychedelic", "colorful", "spiritual"]
+        hourly_rate_min:
+          type: integer
+          example: 50
+        hourly_rate_max:
+          type: integer
+          example: 100
+        availability:
+          type: string
+          enum: [available, busy, unavailable]
+          default: available
+        timezone:
+          type: string
+          example: "America/Los_Angeles"
+        abundance_index:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+
+    TalentUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        portfolio_url:
+          type: string
+        instagram:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        styles:
+          type: array
+          items:
+            type: string
+        hourly_rate_min:
+          type: integer
+        hourly_rate_max:
+          type: integer
+        availability:
+          type: string
+          enum: [available, busy, unavailable]
+        timezone:
+          type: string
+        abundance_index:
+          type: integer
+        status:
+          type: string
+          enum: [active, inactive, onboarding]
+
+    MatchRequest:
+      type: object
+      required:
+        - seeker_id
+        - job_title
+      properties:
+        seeker_id:
+          type: string
+          description: ID of the Seeker requesting matches
+        job_title:
+          type: string
+          description: Brief title for the job
+          example: "Album cover for new EP"
+        job_description:
+          type: string
+          description: Detailed description of what's needed
+        deliverables:
+          type: array
+          items:
+            type: string
+          description: Specific deliverables needed
+          example: ["album_cover", "spotify_canvas"]
+        budget:
+          type: integer
+          description: Budget for this job in USD
+          example: 800
+        deadline:
+          type: string
+          format: date
+          description: When the work is needed by
+        required_skills:
+          type: array
+          items:
+            type: string
+          description: Skills needed for this job
+          example: ["illustration", "cover_art"]
+        preferred_styles:
+          type: array
+          items:
+            type: string
+          description: Preferred aesthetic styles
+          example: ["psychedelic", "colorful"]
+
+    MatchUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [suggested, accepted, declined, in_progress, completed, cancelled]
+        seeker_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Seeker's rating of the Talent (after completion)
+        seeker_feedback:
+          type: string
+          description: Seeker's feedback text
+        talent_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Talent's rating of the Seeker
+        talent_feedback:
+          type: string
+          description: Talent's feedback text
+
+    ConvertRequest:
+      type: object
+      required:
+        - phone
+        - target_type
+      properties:
+        phone:
+          type: string
+          description: Phone number of user to convert
+        target_type:
+          type: string
+          enum: [seeker, talent]
+          description: The type to convert the user to
+        skills:
+          type: array
+          items:
+            type: string
+          description: Required when converting to talent
+        styles:
+          type: array
+          items:
+            type: string
+        hourly_rate_min:
+          type: integer
+        hourly_rate_max:
+          type: integer
+        availability:
+          type: string
+          enum: [available, busy, unavailable]
+        brand_name:
+          type: string
+          description: Used when converting to seeker
+        brand_vibe:
+          type: string
+        typical_budget_min:
+          type: integer
+        typical_budget_max:
+          type: integer
+        preferred_formats:
+          type: array
+          items:
+            type: string
+
+    SeekerResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Seeker'
+
+    SeekersListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Seeker'
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+
+    TalentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Talent'
+
+    MatchesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              match:
+                $ref: '#/components/schemas/Match'
+              talent:
+                $ref: '#/components/schemas/Talent'
+              fit_score:
+                type: integer
+              fit_breakdown:
+                $ref: '#/components/schemas/FitBreakdown'
+        total:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+    Seeker:
+      type: object
+      properties:
+        id:
+          type: string
+        phone:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        brand_name:
+          type: string
+        brand_vibe:
+          type: string
+        website:
+          type: string
+        typical_budget_min:
+          type: integer
+        typical_budget_max:
+          type: integer
+        preferred_formats:
+          type: array
+          items:
+            type: string
+        readiness_score:
+          type: integer
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Talent:
+      type: object
+      properties:
+        id:
+          type: string
+        phone:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        portfolio_url:
+          type: string
+        instagram:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        styles:
+          type: array
+          items:
+            type: string
+        hourly_rate_min:
+          type: integer
+        hourly_rate_max:
+          type: integer
+        availability:
+          type: string
+        timezone:
+          type: string
+        abundance_index:
+          type: integer
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Match:
+      type: object
+      properties:
+        id:
+          type: string
+        seeker_id:
+          type: string
+        talent_id:
+          type: string
+        job_title:
+          type: string
+        job_description:
+          type: string
+        deliverables:
+          type: array
+          items:
+            type: string
+        budget:
+          type: integer
+        deadline:
+          type: string
+        fit_score:
+          type: integer
+        fit_breakdown:
+          $ref: '#/components/schemas/FitBreakdown'
+        status:
+          type: string
+          enum: [suggested, accepted, declined, in_progress, completed, cancelled]
+        seeker_rating:
+          type: integer
+        seeker_feedback:
+          type: string
+        talent_rating:
+          type: integer
+        talent_feedback:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+
+    FitBreakdown:
+      type: object
+      properties:
+        skills:
+          type: integer
+          description: Skills match score (0-100)
+        budget:
+          type: integer
+          description: Budget compatibility score (0-100)
+        availability:
+          type: integer
+          description: Availability score (0-100)
