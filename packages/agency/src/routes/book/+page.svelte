@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { SEO } from '@create-something/canon';
+	import { getAnalytics } from '@create-something/canon/analytics';
 	import { DatePicker } from '@create-something/canon/domains/agency';
 	import { TimeSlotPicker } from '@create-something/canon/domains/agency';
 	import { BookingForm } from '@create-something/canon/domains/agency';
 	import { BookingConfirmation } from '@create-something/canon/domains/agency';
+	import {
+		AGENCY_MARKETING_COPY_EXPERIMENT,
+		getAgencyMarketingExperimentMetadata
+	} from '$lib/analytics/marketing-experiment';
 
 	interface TimeSlot {
 		start_at: string;
@@ -55,6 +60,8 @@
 			description: 'Need help choosing the right lane.'
 		}
 	];
+
+	const bookingExperimentMetadata = getAgencyMarketingExperimentMetadata('/book') ?? {};
 
 	// State
 	let step = $state<BookingStep>('date');
@@ -165,6 +172,11 @@
 		error = null;
 
 		try {
+			getAnalytics()?.conversion('booking_initiated', {
+				...bookingExperimentMetadata,
+				serviceLane: selectedLane
+			});
+
 			// Track booking initiated
 			fetch('/api/analytics/track', {
 				method: 'POST',
@@ -172,7 +184,9 @@
 				body: JSON.stringify({
 					event_type: 'booking_initiated',
 					property: 'agency',
-					path: '/book'
+					path: '/book',
+					experiment_id: AGENCY_MARKETING_COPY_EXPERIMENT.id,
+					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant
 				})
 			}).catch(() => {});
 
@@ -186,7 +200,9 @@
 					email: data.email,
 					timezone,
 					company: data.company || undefined,
-					notes: mergeLaneIntoNotes(data.notes)
+					notes: mergeLaneIntoNotes(data.notes),
+					experiment_id: AGENCY_MARKETING_COPY_EXPERIMENT.id,
+					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant
 				})
 			});
 
@@ -197,6 +213,10 @@
 
 			const result = (await response.json()) as { event: BookingEvent };
 			confirmedEvent = result.event;
+			getAnalytics()?.conversion('booking_completed', {
+				...bookingExperimentMetadata,
+				serviceLane: selectedLane
+			});
 			step = 'confirm';
 		} catch (err) {
 			console.error('Booking error:', err);
