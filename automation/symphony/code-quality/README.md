@@ -39,6 +39,8 @@ pnpm symphony:code-quality:once
 
 Runtime state is exposed on `http://127.0.0.1:4780/`.
 
+The `code-quality` lane now defaults to a snapshot-backed workspace bootstrap on this repo, which avoids Git worktree/clone stalls on external storage. Shared `node_modules` directories are linked into the workspace after the snapshot is created.
+
 ## Running with Infisical
 
 If `LOOM_MCP_API_TOKEN` is stored in Infisical instead of exported into your shell:

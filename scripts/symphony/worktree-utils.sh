@@ -74,6 +74,37 @@ symphony_clone_workspace_from_archive() {
   symphony_populate_worktree_from_archive "${repo_root}" "${workspace_path}" "${target_ref}"
 }
 
+symphony_snapshot_workspace() {
+  local repo_root="$1"
+  local workspace_path="$2"
+  local -a excludes=(
+    --exclude='.git/'
+    --exclude='.symphony/'
+    --exclude='.loom/'
+    --exclude='node_modules/'
+    --exclude='packages/*/node_modules/'
+    --exclude='.archive/'
+    --exclude='.ralph-archive/'
+    --exclude='.beads/'
+    --exclude='.claude/'
+    --exclude='.gemini/'
+    --exclude='.orchestration/'
+  )
+
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "${excludes[@]}" "${repo_root}/" "${workspace_path}/"
+    return 0
+  fi
+
+  (
+    cd "${repo_root}"
+    tar "${excludes[@]/#/}" -cf - .
+  ) | (
+    cd "${workspace_path}"
+    tar -xf -
+  )
+}
+
 symphony_acquire_worktree_lock() {
   local repo_root="$1"
   local lock_dir

@@ -4,14 +4,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 WORKSPACE_PATH="$(pwd)"
-ISSUE_ID="$(basename "${WORKSPACE_PATH}")"
-BRANCH_NAME="codex/${ISSUE_ID}-code-quality"
 source "${SCRIPT_DIR}/worktree-utils.sh"
 
-export SYMPHONY_WORKSPACE_BACKEND="${SYMPHONY_WORKSPACE_BACKEND:-clone}"
-if [[ "${SYMPHONY_WORKSPACE_BACKEND}" == "clone" ]]; then
+export SYMPHONY_WORKSPACE_BACKEND="${SYMPHONY_WORKSPACE_BACKEND:-snapshot}"
+if [[ "${SYMPHONY_WORKSPACE_BACKEND}" == "snapshot" ]]; then
+  symphony_snapshot_workspace "${REPO_ROOT}" "${WORKSPACE_PATH}"
+elif [[ "${SYMPHONY_WORKSPACE_BACKEND}" == "clone" ]]; then
+  ISSUE_ID="$(basename "${WORKSPACE_PATH}")"
+  BRANCH_NAME="codex/${ISSUE_ID}-code-quality"
   symphony_clone_workspace_from_archive "${REPO_ROOT}" "${WORKSPACE_PATH}" "${BRANCH_NAME}" HEAD
 else
+  ISSUE_ID="$(basename "${WORKSPACE_PATH}")"
+  BRANCH_NAME="codex/${ISSUE_ID}-code-quality"
   export SYMPHONY_WORKTREE_CHECKOUT_STRATEGY="${SYMPHONY_WORKTREE_CHECKOUT_STRATEGY:-archive}"
   symphony_add_worktree "${REPO_ROOT}" "${WORKSPACE_PATH}" "${BRANCH_NAME}"
 fi

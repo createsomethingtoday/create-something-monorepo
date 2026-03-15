@@ -791,6 +791,11 @@ const OAUTH_MANAGED_BEARER_EXPIRES_IN = 31536000;
 const OAUTH_ID_TOKEN_TTL_SECONDS = 3600;
 const OAUTH_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 const OAUTH_CLIENT_REGISTRATION_TTL_SECONDS = 365 * 24 * 60 * 60;
+const LEGACY_OAUTH_DYNAMIC_CLIENT_ID = /^oauth_[a-z0-9-]+_[a-f0-9]{12}$/;
+const LEGACY_OAUTH_ALLOWED_REDIRECT_HOSTS = new Set([
+	'chat.openai.com',
+	'chatgpt.com',
+]);
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -940,7 +945,11 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	if (!body.client_id) {
 		return oauthErrorResponse('invalid_request', 400, 'client_id is required.');
 	}
-	const registeredClient = await validateOAuthClientRegistration(body.client_id, env);
+	const registeredClient = await validateOAuthClientRegistration(
+		body.client_id,
+		env,
+		body.grant_type === 'authorization_code' ? body.redirect_uri : undefined,
+	);
 	if (!registeredClient) {
 		return oauthErrorResponse('invalid_client', 400, 'Unknown or expired client_id.');
 	}
@@ -3739,10 +3748,10 @@ async function validateOAuthAuthorizeRequest(params: URLSearchParams, env: Env):
 	if (params.get('response_type') !== 'code') return 'unsupported_response_type';
 	const clientId = params.get('client_id');
 	if (!clientId) return 'invalid_client';
-	const registration = await validateOAuthClientRegistration(clientId, env);
-	if (!registration) return 'invalid_client';
 	const redirectUri = params.get('redirect_uri');
 	if (!redirectUri || !isValidOAuthRedirectUri(redirectUri)) return 'invalid_redirect_uri';
+	const registration = await validateOAuthClientRegistration(clientId, env, redirectUri);
+	if (!registration) return 'invalid_client';
 	if (!registration.redirect_uris.includes(redirectUri)) return 'invalid_redirect_uri';
 	if (!registration.response_types.includes('code')) return 'unauthorized_client';
 	const resource = params.get('resource');
@@ -4124,9 +4133,49 @@ function isValidHttpUrl(value: string): boolean {
 	}
 }
 
+function isLegacyOAuthDynamicClientId(value: string): boolean {
+	return LEGACY_OAUTH_DYNAMIC_CLIENT_ID.test(value.trim());
+}
+
+function isAllowedLegacyOAuthRedirectUri(value: string): boolean {
+	if (!isValidOAuthRedirectUri(value)) return false;
+	try {
+		const parsed = new URL(value);
+		if (parsed.protocol === 'http:') {
+			return ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname);
+		}
+		return LEGACY_OAUTH_ALLOWED_REDIRECT_HOSTS.has(parsed.hostname);
+	} catch {
+		return false;
+	}
+}
+
+function buildLegacyOAuthClientRegistration(
+	clientId: string,
+	redirectUri?: string,
+): OAuthClientRegistrationClaims | null {
+	if (!isLegacyOAuthDynamicClientId(clientId)) return null;
+	if (redirectUri && !isAllowedLegacyOAuthRedirectUri(redirectUri)) return null;
+	return {
+		sub: `legacy:${clientId}`,
+		iss: 'legacy_dynamic_client',
+		aud: ['oauth_client_registration'],
+		iat: 0,
+		exp: Number.MAX_SAFE_INTEGER,
+		kind: 'oauth_client_registration',
+		client_name: 'legacy_dynamic_client',
+		redirect_uris: redirectUri ? [redirectUri] : [],
+		token_endpoint_auth_method: 'none',
+		grant_types: ['authorization_code', 'refresh_token'],
+		response_types: ['code'],
+		scope: 'openid profile email mcp offline_access',
+	};
+}
+
 async function validateOAuthClientRegistration(
 	clientId: string,
-	env: Env
+	env: Env,
+	redirectUri?: string,
 ): Promise<OAuthClientRegistrationClaims | null> {
 	const jwks = await getJWKS(env.DB);
 	for (const jwk of jwks.keys) {
@@ -4147,7 +4196,7 @@ async function validateOAuthClientRegistration(
 			return payload;
 		}
 	}
-	return null;
+	return buildLegacyOAuthClientRegistration(clientId, redirectUri);
 }
 
 function slugify(value: string): string {
