@@ -1,8 +1,8 @@
 # policy.hub-route-authorization.v1
 
-- Status: `draft`
+- Status: `active`
 - Owner: `CREATE SOMETHING broker layer`
-- Effective date: `TBD`
+- Effective date: `2026-03-13`
 
 ## Purpose
 

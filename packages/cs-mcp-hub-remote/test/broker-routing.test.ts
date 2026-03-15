@@ -206,6 +206,104 @@ test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', ()
   );
 });
 
+test('buildVisibleProxyRoutes applies tenant routing allowlists from tenant id', () => {
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['notion-halfdozen-blondish', 'composio-toolkit-gmail', 'server_b'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        {
+          name: 'notion-halfdozen-blondish__query_database',
+          description: '[notion-halfdozen-blondish] query database',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'composio-toolkit-gmail__gmail_list_messages',
+          description: '[composio-toolkit-gmail] list messages',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'server_b__gamma',
+          description: '[server_b] gamma',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+      routes: new Map([
+        ['notion-halfdozen-blondish__query_database', {
+          proxyToolName: 'notion-halfdozen-blondish__query_database',
+          serverName: 'notion-halfdozen-blondish',
+          downstreamToolName: 'query_database',
+          serverTags: [],
+          call: async () => ({ ok: true }),
+        }],
+        ['composio-toolkit-gmail__gmail_list_messages', {
+          proxyToolName: 'composio-toolkit-gmail__gmail_list_messages',
+          serverName: 'composio-toolkit-gmail',
+          downstreamToolName: 'gmail_list_messages',
+          serverTags: [],
+          call: async () => ({ ok: true }),
+        }],
+        ['server_b__gamma', {
+          proxyToolName: 'server_b__gamma',
+          serverName: 'server_b',
+          downstreamToolName: 'gamma',
+          serverTags: [],
+          call: async () => ({ ok: true }),
+        }],
+      ]),
+      warnings: [],
+    },
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'full',
+    activeServers: [],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: 'blondish',
+    userId: null,
+    sessionId: 'session_1',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  });
+
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    [
+      'notion-halfdozen-blondish__query_database',
+      'composio-toolkit-gmail__gmail_list_messages',
+    ],
+  );
+});
+
+test('buildVisibleProxyRoutes applies tenant routing allowlists from HUB_TENANT_ID override', () => {
+  const runtime = createRuntime();
+
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'full',
+    activeServers: [],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  }, {
+    HUB_TENANT_ID: 'blondish',
+  } as any);
+
+  assert.equal(visible.toolDefinitions.length, 0);
+});
+
 test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only sessions', async () => {
   const readRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_get_spreadsheet',

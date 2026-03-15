@@ -9,6 +9,55 @@ symphony_worktree_lock_dir() {
   printf '%s\n' "${repo_root}/.git/.symphony-worktree-lock"
 }
 
+symphony_worktree_lock_pid_file() {
+  local repo_root="$1"
+  printf '%s/pid\n' "$(symphony_worktree_lock_dir "${repo_root}")"
+}
+
+symphony_worktree_lock_is_stale() {
+  local repo_root="$1"
+  local lock_dir pid_file pid
+  lock_dir="$(symphony_worktree_lock_dir "${repo_root}")"
+  pid_file="$(symphony_worktree_lock_pid_file "${repo_root}")"
+
+  if [[ ! -d "${lock_dir}" ]]; then
+    return 1
+  fi
+
+  if [[ ! -f "${pid_file}" ]]; then
+    return 0
+  fi
+
+  pid="$(tr -d '[:space:]' < "${pid_file}" 2>/dev/null || true)"
+  if [[ -z "${pid}" ]]; then
+    return 0
+  fi
+
+  if ps -p "${pid}" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  return 0
+}
+
+symphony_clear_stale_worktree_lock() {
+  local repo_root="$1"
+  local lock_dir pid_file
+  lock_dir="$(symphony_worktree_lock_dir "${repo_root}")"
+  pid_file="$(symphony_worktree_lock_pid_file "${repo_root}")"
+
+  rm -f "${pid_file}" 2>/dev/null || true
+  rmdir "${lock_dir}" 2>/dev/null || true
+}
+
+symphony_populate_worktree_from_archive() {
+  local repo_root="$1"
+  local workspace_path="$2"
+  local ref="$3"
+
+  git -C "${repo_root}" archive --format=tar "${ref}" | tar -xf - -C "${workspace_path}"
+}
+
 symphony_acquire_worktree_lock() {
   local repo_root="$1"
   local lock_dir
@@ -26,6 +75,11 @@ symphony_acquire_worktree_lock() {
   done
 
   while ! mkdir "${lock_dir}" 2>/dev/null; do
+    if symphony_worktree_lock_is_stale "${repo_root}"; then
+      symphony_clear_stale_worktree_lock "${repo_root}"
+      continue
+    fi
+
     if (( waited >= SYMPHONY_WORKTREE_LOCK_TIMEOUT_SECONDS )); then
       echo "Timed out waiting for Symphony git worktree lock at ${lock_dir} after ${SYMPHONY_WORKTREE_LOCK_TIMEOUT_SECONDS}s." >&2
       return 1
@@ -79,6 +133,8 @@ symphony_add_worktree() {
   local repo_root="$1"
   local workspace_path="$2"
   local branch_name="$3"
+  local checkout_strategy="${SYMPHONY_WORKTREE_CHECKOUT_STRATEGY:-checkout}"
+  local target_ref="${branch_name}"
 
   if [[ -e "${workspace_path}/.git" ]]; then
     return 0
@@ -88,9 +144,21 @@ symphony_add_worktree() {
   local status=0
 
   if git -C "${repo_root}" show-ref --verify --quiet "refs/heads/${branch_name}"; then
-    git -C "${repo_root}" worktree add --force "${workspace_path}" "${branch_name}" || status=$?
+    if [[ "${checkout_strategy}" == "archive" ]]; then
+      git -C "${repo_root}" worktree add --force --no-checkout "${workspace_path}" "${branch_name}" || status=$?
+    else
+      git -C "${repo_root}" worktree add --force "${workspace_path}" "${branch_name}" || status=$?
+    fi
   else
-    git -C "${repo_root}" worktree add --force -b "${branch_name}" "${workspace_path}" HEAD || status=$?
+    if [[ "${checkout_strategy}" == "archive" ]]; then
+      git -C "${repo_root}" worktree add --force --no-checkout -b "${branch_name}" "${workspace_path}" HEAD || status=$?
+    else
+      git -C "${repo_root}" worktree add --force -b "${branch_name}" "${workspace_path}" HEAD || status=$?
+    fi
+  fi
+
+  if [[ "${status}" -eq 0 && "${checkout_strategy}" == "archive" ]]; then
+    symphony_populate_worktree_from_archive "${repo_root}" "${workspace_path}" "${target_ref}" || status=$?
   fi
 
   symphony_release_worktree_lock "${repo_root}"

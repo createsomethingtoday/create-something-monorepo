@@ -1,8 +1,8 @@
 # policy.mcp-credential-delivery.v1
 
-- Status: `draft`
+- Status: `active`
 - Owner: `CREATE SOMETHING security + partner operations`
-- Effective date: `TBD`
+- Effective date: `2026-03-13`
 
 ## Purpose
 

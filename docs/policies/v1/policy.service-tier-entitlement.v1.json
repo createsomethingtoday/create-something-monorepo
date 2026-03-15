@@ -1,7 +1,7 @@
 {
   "policy_id": "policy.service-tier-entitlement.v1",
   "version": 1,
-  "status": "draft",
+  "status": "active",
   "service_tiers": [
     "mcp_only",
     "policy_os_trial",

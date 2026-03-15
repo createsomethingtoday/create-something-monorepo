@@ -1,7 +1,7 @@
 {
   "policy_id": "policy.partner-auth-governance.v1",
   "version": 1,
-  "status": "draft",
+  "status": "active",
   "boundary": "partner_admin_mint",
   "rollout_defaults": {
     "mode": "legacy_enforce",

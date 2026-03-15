@@ -310,6 +310,14 @@ export class SymphonyService {
         this.workspace_manager = new WorkspaceManager(config, this.logger, this.telemetry);
     }
     async startup_terminal_workspace_cleanup() {
+        if (this.task_id_filter) {
+            this.mark_startup_ready('startup_cleanup_skipped');
+            this.logger.info('startup cleanup skipped', {
+                reason: 'task_id_filter',
+                task_id_filter: this.task_id_filter,
+            });
+            return;
+        }
         this.logger.info('startup cleanup started', {
             terminal_states: this.current_config.tracker.terminal_states.join(','),
         });
