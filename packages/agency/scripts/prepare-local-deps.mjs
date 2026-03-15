@@ -29,6 +29,42 @@ function findInstalledStorePath(pnpmStore, pkgName, version) {
 	return candidates[0] ?? null;
 }
 
+function findWorkspacePackageDir(workspaceRoot, pkgName) {
+	const packagesDir = path.join(workspaceRoot, 'packages');
+	if (!fs.existsSync(packagesDir)) return null;
+
+	for (const entry of fs.readdirSync(packagesDir, { withFileTypes: true })) {
+		if (!entry.isDirectory()) continue;
+
+		const candidate = path.join(packagesDir, entry.name);
+		const manifestPath = path.join(candidate, 'package.json');
+		if (!fs.existsSync(manifestPath)) continue;
+
+		const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+		if (manifest.name === pkgName) {
+			return candidate;
+		}
+	}
+
+	return null;
+}
+
+function removeTarget(targetPath) {
+	try {
+		const stats = fs.lstatSync(targetPath);
+		if (stats.isSymbolicLink()) {
+			fs.unlinkSync(targetPath);
+			return;
+		}
+
+		fs.rmSync(targetPath, { recursive: true, force: true });
+	} catch (error) {
+		if (error && error.code !== 'ENOENT') {
+			throw error;
+		}
+	}
+}
+
 const workspaceRoot = findWorkspaceRoot(packageRoot);
 const pnpmStore = path.join(workspaceRoot, 'node_modules', '.pnpm');
 const nodeModulesRoot = path.join(packageRoot, 'node_modules');
@@ -40,9 +76,9 @@ const declared = {
 fs.mkdirSync(nodeModulesRoot, { recursive: true });
 
 for (const [pkgName, version] of Object.entries(declared)) {
-	if (version.startsWith('workspace:')) continue;
-
-	const sourcePath = findInstalledStorePath(pnpmStore, pkgName, version);
+	const sourcePath = version.startsWith('workspace:')
+		? findWorkspacePackageDir(workspaceRoot, pkgName)
+		: findInstalledStorePath(pnpmStore, pkgName, version);
 	if (!sourcePath) continue;
 
 	const segments = pkgName.split('/');
@@ -59,7 +95,7 @@ for (const [pkgName, version] of Object.entries(declared)) {
 			if (currentTarget === sourcePath) continue;
 		}
 
-		fs.rmSync(targetPath, { recursive: true, force: true });
+		removeTarget(targetPath);
 	} catch (error) {
 		if (error && error.code !== 'ENOENT') {
 			throw error;
@@ -67,5 +103,15 @@ for (const [pkgName, version] of Object.entries(declared)) {
 	}
 
 	const relativeSource = path.relative(targetDir, sourcePath);
-	fs.symlinkSync(relativeSource, targetPath, 'dir');
+	try {
+		fs.symlinkSync(relativeSource, targetPath, 'dir');
+	} catch (error) {
+		if (error && error.code === 'EEXIST') {
+			removeTarget(targetPath);
+			fs.symlinkSync(relativeSource, targetPath, 'dir');
+			continue;
+		}
+
+		throw error;
+	}
 }
