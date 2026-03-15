@@ -16,7 +16,7 @@
 
 <SEO
   title="What I've Built | Production Workflow MCPs"
-  description="Open source tools and custom integrations connecting business tools to AI. Notion, Gmail, Zoom, Salesforce, HubSpot, Procore, and more."
+  description="Open-source tools, platform connectors, and custom builds that connect real business systems to production workflows."
   keywords="AI integrations, business tool automation, Notion AI, Gmail AI, Zoom AI, Salesforce AI, custom AI development, MCP servers"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -44,7 +44,7 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Open source tools, platform connectors, and custom builds for production workflows.
+        Open-source tools, platform connectors, and custom builds that move real work through production systems.
       </p>
     </BlurFade>
   </div>
@@ -57,7 +57,7 @@
       <div class="section-header">
         <h2 class="section-eyebrow">Flagship Tools</h2>
         <p class="section-desc">
-          Install in 2 minutes. Powering the same agents we build for clients.
+          Quick to install. Built from the same operating assumptions used in client work.
         </p>
       </div>
     </BlurFade>
@@ -88,7 +88,7 @@
     <BlurFade delay={0.1}>
       <div class="section-header">
         <h2 class="section-eyebrow">Integration MCPs</h2>
-        <p class="section-desc">Bridges between your platforms and the agents that serve you.</p>
+        <p class="section-desc">Bridges between the platforms you run and the agents you expect to trust.</p>
       </div>
     </BlurFade>
     <div class="category-grid">
@@ -118,7 +118,7 @@
     <BlurFade delay={0.1}>
       <div class="section-header">
         <h2 class="section-eyebrow">Client Portfolio</h2>
-        <p class="section-desc">MCPs we've built for specific clients and workflows.</p>
+        <p class="section-desc">Selected builds for specific clients, operating constraints, and workflow realities.</p>
       </div>
     </BlurFade>
     <div class="client-grid">
@@ -152,13 +152,13 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
-      <p class="cta-heading">Need something custom?</p>
+      <p class="cta-heading">Need a custom workflow wedge?</p>
     </BlurFade>
     <BlurFade delay={0.2}>
-      <p class="cta-subtext">I build integrations for your specific tools and workflows.</p>
+      <p class="cta-subtext">I build around your actual stack, constraints, and operating risk.</p>
     </BlurFade>
     <BlurFade delay={0.3}>
-      <a href="/book" class="cta-link">Book a call →</a>
+      <a href="/book" class="cta-link">Book a mapping session →</a>
     </BlurFade>
   </div>
 </section>

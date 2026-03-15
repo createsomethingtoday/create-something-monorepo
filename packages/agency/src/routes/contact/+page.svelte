@@ -48,7 +48,7 @@
 
 <SEO
   title="Start With the Right Workflow | CREATE SOMETHING .agency"
-  description="Book a workflow mapping session or send your workflow details. We’ll identify the safest starting wedge, the right level of reliability control, and whether enterprise extension is needed."
+  description="Book a workflow mapping session or send the workflow details. We’ll identify the safest starting wedge, the right reliability layer, and whether enterprise extension is justified."
   keywords="workflow mapping, production automation, reliability controls, enterprise workflows, custom mcp, automation risk"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -72,12 +72,12 @@
       <p class="hero-eyebrow">Contact</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Start with the right workflow.</h1>
+      <h1 class="hero-title">Bring the workflow your team keeps babysitting.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        Book a workflow mapping session or send your workflow details. We’ll scope the safest
-        starting wedge, then extend only where the risk justifies it.
+        Book a workflow mapping session or send the stack details. We’ll scope the smallest safe
+        wedge to ship first, then extend only where the risk actually justifies it.
       </p>
     </BlurFade>
   </div>
@@ -91,8 +91,8 @@
       <div class="contact-option">
         <h2>Book a Workflow Mapping Session</h2>
         <p>
-          20-minute mapping session. We map your tools, workflow bottlenecks, and risk profile to
-          identify the right starting wedge.
+          20 minutes to map the handoffs, failure points, and constraints around the workflow that
+          is creating the most drag right now.
         </p>
         <div class="cal-button">
           <SavvyCalButton variant="primary" size="lg" />
@@ -104,7 +104,7 @@
     <BlurFade delay={0.2}>
       <div class="contact-option">
         <h2>Send a message</h2>
-        <p>Not ready for a call? Send your stack, bottleneck, and current risk concerns.</p>
+        <p>Not ready for a call? Send the stack, the bottleneck, and what breaks when the workflow slips.</p>
 
         <form class="contact-form" onsubmit={handleSubmit}>
           <div class="form-field">
@@ -136,7 +136,7 @@
               >Which workflow needs attention first?</label
             >
             <p class="form-helper">
-              Tell us your stack, constraints, and bottleneck. We’ll map it to a scoped MCP wedge,
+              Tell us your stack, constraints, and bottleneck. We’ll map it to a scoped wedge,
               reliability controls, enterprise extension, or referral.
             </p>
             <textarea
@@ -145,7 +145,7 @@
               required
               rows="4"
               class="form-input form-textarea"
-              placeholder="e.g., HubSpot + Notion + Slack. This workflow breaks at handoff, and we need a safer MCP-based starting point before expanding automation."
+              placeholder="e.g., HubSpot + Notion + Slack. Leads move cleanly until handoff, then the team rebuilds context by hand. We need the first safe wedge before adding more automation."
             ></textarea>
           </div>
 

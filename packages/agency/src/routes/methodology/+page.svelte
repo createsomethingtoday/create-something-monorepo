@@ -9,9 +9,9 @@
 			domain: 'Implementation',
 			question: 'Have we built this before?',
 			action: 'Unify',
-	description:
-			'I audit your systems for redundant tools, duplicate workflows, and repeated data entry. If three teams use three different project management tools, that\'s duplication. If the same customer data lives in four systems, that\'s duplication. I map it, measure the cost, and design the unified architecture.',
-			outcome: 'Fewer systems, clearer data, lower costs.'
+			description:
+				'I look for duplicate tools, repeated workflows, and the same data being entered twice. If three teams solve the same problem three different ways, that is design debt. We map it, measure it, and collapse it into one clearer system.',
+			outcome: 'Less duplication, cleaner data, lower drag.'
 		},
 		{
 			level: 2,
@@ -19,9 +19,9 @@
 			domain: 'Artifact',
 			question: 'Does this earn its existence?',
 			action: 'Remove',
-	description:
-			'Named for Dieter Rams — "Weniger, aber besser" (Less, but better). Every tool, every workflow, every automation must justify its existence. I challenge each component: Does it produce outcomes? Is it used? Would anyone notice if it disappeared? The tools that survive this audit are the ones worth investing in.',
-			outcome: 'A leaner stack where every tool earns its place.'
+			description:
+				'Named for Dieter Rams: less, but better. Every tool, workflow, and automation has to justify its place in the stack. If nobody would miss it, trust it, or measure it, we stop carrying it.',
+			outcome: 'A leaner stack where every component earns its keep.'
 		},
 		{
 			level: 3,
@@ -30,7 +30,7 @@
 			question: 'Does this serve the whole?',
 			action: 'Reconnect',
 			description:
-				'Named for the hermeneutic circle — the principle that every part must serve the whole, and the whole gives meaning to every part. Surviving tools must connect into a coherent system. Data flows between them. Automations bridge them. The architecture becomes a living whole, not a collection of islands.',
+				'Named for the hermeneutic circle: every part must serve the whole, and the whole gives meaning to every part. The tools that survive the first two cuts must connect into one operating system, not a row of isolated islands.',
 			outcome: 'A connected system where every component serves the mission.'
 		}
 	];
@@ -85,7 +85,7 @@
 
 <SEO
 	title="Methodology | How I Think About Automation"
-	description="Most automation fails because it adds complexity. My methodology does the opposite: remove duplication, strip excess, reconnect what remains. Here's the framework behind every engagement."
+	description="Most automation fails because it adds complexity. My methodology does the opposite: remove duplication, strip excess, reconnect what remains, and only then automate."
 	keywords="AI automation methodology, systems design, automation audit, workflow optimization, tool consolidation, connected systems"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -103,13 +103,13 @@
 			<p class="hero-eyebrow">Methodology</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">Build Less. Connect What Matters.</h1>
+			<h1 class="hero-title">Remove what does not belong. Connect what remains.</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				Most automation projects fail because they add complexity — more tools, more workflows,
-				more moving parts. I do the opposite. Find what's redundant, strip what doesn't work,
-				and connect what remains into a system that actually serves your business.
+				Most automation projects fail because they add complexity: more tools, more workflows,
+				more moving parts. I do the opposite. First remove the waste. Then reconnect the systems
+				that matter. Only then do we automate.
 			</p>
 		</BlurFade>
 	</div>
@@ -122,9 +122,9 @@
 			<div class="principle-card">
 				<h2 class="principle-heading">The Core Principle</h2>
 			<p class="principle-body">
-				Most automation strategies fail because they <em>add</em> — more tools, more workflows,
-				more connections. The Subtractive Triad inverts this. I start by removing what
-				doesn't belong. What remains is the architecture.
+				Most automation strategies fail because they <em>add</em> more than they clarify. The
+				Subtractive Triad inverts that instinct. I remove what does not belong first. What
+				remains is the architecture worth trusting.
 			</p>
 			</div>
 		</BlurFade>
@@ -189,7 +189,7 @@
 		</BlurFade>
 		<BlurFade delay={0.15}>
 			<p class="section-subhead">
-				How the Triad maps to an engagement — eight weeks from audit to architecture.
+				How the Triad maps to an engagement, from audit through architecture.
 			</p>
 		</BlurFade>
 
@@ -253,7 +253,7 @@
 		</BlurFade>
 		<BlurFade delay={0.15}>
 			<p class="section-subhead">
-				Every part of your system does one of three things. Understanding which is the key to building automation that works.
+				Every part of your system does one of three jobs. Knowing which job it owns is how you keep automation legible.
 			</p>
 		</BlurFade>
 

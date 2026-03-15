@@ -245,7 +245,7 @@
 
 <SEO
 	title="Book a Workflow Mapping Session"
-	description="Schedule a workflow mapping session to identify the highest-risk workflow, the safest starting wedge, and the right level of reliability control."
+	description="Schedule a workflow mapping session to identify the workflow with the most drag, the safest starting wedge, and the right level of reliability control."
 	propertyName="agency"
 />
 
@@ -253,7 +253,7 @@
 	<header class="booking-header">
 		<h1 class="booking-title">Book a Workflow Mapping Session</h1>
 		<p class="booking-subtitle">
-			Bring the workflow with the most drag or risk. We’ll map the safest starting point together.
+			Bring the workflow with the most drag, risk, or manual handoff. We’ll map the smallest safe wedge to ship first.
 		</p>
 	</header>
 
@@ -309,8 +309,8 @@
 			<section class="step-content">
 				<h2 class="step-title">Your details and lane</h2>
 				<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
-					<p id="lane-intake-title" class="lane-intake-title">Which kind of workflow needs attention first?</p>
-					<p class="lane-intake-helper">This helps me prep. Most engagements start with one scoped workflow.</p>
+					<p id="lane-intake-title" class="lane-intake-title">Which workflow should we map first?</p>
+					<p class="lane-intake-helper">This helps me prep the session. Most engagements begin with one narrow workflow and clear operating constraints.</p>
 					<div class="lane-options">
 						{#each laneOptions as lane}
 							<label class="lane-option" class:selected={selectedLane === lane.value}>
