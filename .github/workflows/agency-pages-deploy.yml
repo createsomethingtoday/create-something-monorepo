@@ -1,0 +1,80 @@
+name: Agency Pages Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - 'codex/**'
+    paths:
+      - 'packages/agency/**'
+      - 'packages/canon/**'
+      - 'packages/tufte/**'
+      - 'scripts/run-wrangler.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/agency-pages-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agency-pages-deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' && secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Canon package
+        run: pnpm --filter @create-something/canon package
+
+      - name: Build Tufte package
+        run: pnpm --filter @create-something/tufte package
+
+      - name: Build Agency
+        run: pnpm --filter @create-something/agency build
+
+      - name: Resolve Pages branch alias
+        id: branch
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "alias=main" >> "$GITHUB_OUTPUT"
+          else
+            alias=$(printf '%s' "${GITHUB_REF_NAME}" | tr '/[:upper:]' '-[:lower:]')
+            echo "alias=${alias}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy Agency to Cloudflare Pages
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          pnpm exec wrangler pages deploy packages/agency/.svelte-kit/cloudflare \
+            --project-name=create-something-agency \
+            --branch="${{ steps.branch.outputs.alias }}"
+
+      - name: Emit preview URL
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && github.ref_name != 'main'
+        run: |
+          echo "Preview URL: https://${{ steps.branch.outputs.alias }}.create-something-agency.pages.dev"
