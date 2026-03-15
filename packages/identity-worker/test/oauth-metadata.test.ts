@@ -153,6 +153,33 @@ test('identity worker rejects authorize redirect_uris that were not registered',
 	assert.equal(body.error, 'invalid_redirect_uri');
 });
 
+test('identity worker allows legacy dynamic client ids for OpenAI-hosted redirect_uris', async () => {
+	const response = await identityWorker.fetch(
+		new Request(
+			'https://id.createsomething.space/oauth/authorize?response_type=code&client_id=oauth_chatgpt_abcdef123456&redirect_uri=https%3A%2F%2Fchat.openai.com%2Fa%2Fcallback&scope=openid%20mcp&resource=https%3A%2F%2Fmj.mcp.createsomething.agency%2Fmcp',
+		),
+		makeEnv(),
+	);
+
+	assert.equal(response.status, 200);
+	const text = await response.text();
+	assert.match(text, /Authorize MCP Access/);
+	assert.match(text, /Hub: https:\/\/mj\.mcp\.createsomething\.agency\/mcp/);
+});
+
+test('identity worker rejects legacy dynamic client ids for non-OpenAI redirect_uris', async () => {
+	const response = await identityWorker.fetch(
+		new Request(
+			'https://id.createsomething.space/oauth/authorize?response_type=code&client_id=oauth_chatgpt_abcdef123456&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&scope=openid%20mcp',
+		),
+		makeEnv(),
+	);
+
+	assert.equal(response.status, 400);
+	const body = await response.json() as Record<string, unknown>;
+	assert.equal(body.error, 'invalid_client');
+});
+
 test('identity worker rejects non-loopback insecure redirect_uris at registration time', async () => {
 	const env = makeEnv();
 	const response = await identityWorker.fetch(

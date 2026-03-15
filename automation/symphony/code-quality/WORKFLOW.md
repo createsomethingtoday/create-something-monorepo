@@ -49,7 +49,7 @@ Loom task:
 - Attempt: {{ attempt | default: "initial" }}
 
 Operating rules:
-- Work only inside the current git worktree.
+- Work only inside the current Symphony workspace.
 - Do not mutate Loom task state directly. Symphony has already claimed this task and will complete it when your run succeeds.
 - Preserve unrelated changes.
 - Prefer the smallest defensible fix that resolves the stated code-quality issue.
@@ -63,7 +63,7 @@ Operating rules:
 
 Before finishing:
 1. Run the smallest relevant verification set.
-2. Leave the worktree in a reviewable git state.
+2. Leave the workspace in a reviewable state. If git metadata is unavailable, name the touched files explicitly in your summary.
 3. Respond with a concise operator summary covering:
    - what changed
    - commands run
