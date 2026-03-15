@@ -29,3 +29,13 @@
 {"timestamp":"2026-03-15T14:53:11.735Z","phase":"service_created"}
 {"timestamp":"2026-03-15T14:53:11.912Z","phase":"run_once_started","startup_timeout_ms":10000}
 {"timestamp":"2026-03-15T14:53:12.174Z","phase":"startup_cleanup_skipped"}
+{"timestamp":"2026-03-15T15:04:15.308Z","phase":"cli_entered","once":true,"port":4780,"task_id":"lm-09b838de"}
+{"timestamp":"2026-03-15T15:04:17.549Z","phase":"workflow_resolved","workflow_path":"/Volumes/LaCie/Create Something/create-something-monorepo/automation/symphony/code-quality/WORKFLOW.md"}
+{"timestamp":"2026-03-15T15:04:18.327Z","phase":"service_created"}
+{"timestamp":"2026-03-15T15:04:19.193Z","phase":"run_once_started","startup_timeout_ms":10000}
+{"timestamp":"2026-03-15T15:04:19.967Z","phase":"startup_cleanup_skipped"}
+{"timestamp":"2026-03-15T15:07:31.224Z","phase":"cli_entered","once":true,"port":4780,"task_id":"lm-621b37c2"}
+{"timestamp":"2026-03-15T15:07:33.510Z","phase":"workflow_resolved","workflow_path":"/Volumes/LaCie/Create Something/create-something-monorepo/automation/symphony/code-quality/WORKFLOW.md"}
+{"timestamp":"2026-03-15T15:07:37.168Z","phase":"service_created"}
+{"timestamp":"2026-03-15T15:07:37.717Z","phase":"run_once_started","startup_timeout_ms":10000}
+{"timestamp":"2026-03-15T15:07:38.734Z","phase":"startup_cleanup_skipped"}
