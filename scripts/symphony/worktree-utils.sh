@@ -186,10 +186,21 @@ symphony_snapshot_selected_paths() {
   local repo_root="$1"
   local workspace_path="$2"
   shift 2
-  local -a snapshot_paths=("$@")
+  local path
+  local -a snapshot_paths=()
+
+  for path in "$@"; do
+    if [[ -e "${repo_root}/${path%/}" ]]; then
+      snapshot_paths+=("${path%/}")
+    fi
+  done
 
   rm -rf "${workspace_path}"
   mkdir -p "${workspace_path}"
+
+  if [[ "${#snapshot_paths[@]}" -eq 0 ]]; then
+    return 0
+  fi
 
   (
     cd "${repo_root}"
@@ -210,6 +221,10 @@ symphony_link_selected_paths() {
   mkdir -p "${workspace_path}"
 
   for path in "$@"; do
+    if [[ ! -e "${repo_root}/${path%/}" ]]; then
+      continue
+    fi
+
     target_path="${workspace_path}/${path%/}"
     target_parent="$(dirname "${target_path}")"
     mkdir -p "${target_parent}"
