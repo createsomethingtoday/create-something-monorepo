@@ -42,6 +42,7 @@ coverage
 *.tmp
 .cache
 .wrangler/
+.trigger/
 
 # Client apps (in development)
 # Keep apps ignored by default, but track Meeting Capture.

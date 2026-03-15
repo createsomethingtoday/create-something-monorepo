@@ -1,0 +1,45 @@
+{
+  "name": "@create-something/workflows-trigger",
+  "version": "0.1.0",
+  "description": "Trigger.dev-first orchestration foundation for CREATE SOMETHING agent workflows.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    ".env.example",
+    "trigger.config.ts",
+    "trigger"
+  ],
+  "scripts": {
+    "build": "pnpm run check && tsup",
+    "check": "tsc --noEmit",
+    "dev": "trigger dev",
+    "deploy": "trigger deploy"
+  },
+  "dependencies": {
+    "@trigger.dev/sdk": "^4.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@trigger.dev/build": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "trigger.dev": "^4.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.2"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/workflows-trigger"
+  }
+}
