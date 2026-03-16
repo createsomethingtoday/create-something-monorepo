@@ -80,6 +80,7 @@ test('resolveAccountContext resolves identity via session resolver in session_re
     assert.equal(context.tenantId, 'tenant_acme');
     assert.equal(context.userId, 'user_123');
     assert.equal(context.sessionId, 'ms_123');
+    assert.equal(context.authMode, 'session');
     assert.equal(context.boundHost, null);
     assert.equal(context.resourceHost, 'viv-blondish');
     assert.equal(context.identitySource, 'session');
@@ -143,6 +144,7 @@ test('resolveAccountContext prefers identity service binding when available', as
     assert.equal(capturedToken, 'ms_tok_binding');
     assert.equal(capturedResourceHost, 'cs-mcp-hub-remote');
     assert.equal(context.accountId, 'acct_binding');
+    assert.equal(context.authMode, 'session');
     assert.equal(context.identitySource, 'session');
     assert.deepEqual(context.allowedToolPrefixes, ['composio-toolkit-slack__']);
   } finally {
@@ -196,6 +198,7 @@ test('resolveAccountContext accepts managed bearer auth in session_required mode
     assert.equal(capturedToken, 'mcpu_lane_token');
     assert.equal(capturedResourceHost, 'morgan-young-c3-management');
     assert.equal(context.accountId, 'acct_lane');
+    assert.equal(context.authMode, 'resolved');
     assert.equal(context.boundHost, 'morgan-young-c3-management');
     assert.equal(context.resourceHost, 'morgan-young-c3-management');
   } finally {
@@ -212,6 +215,8 @@ test('resolveAccountContext keeps fallback behavior in compat mode', async () =>
   );
 
   assert.equal(context.accountId, 'acct_fallback');
+  assert.equal(context.authMode, 'fallback');
+  assert.equal(context.toolMode, 'read_write');
   assert.equal(context.resourceHost, null);
   assert.equal(context.identitySource, 'fallback');
 });
@@ -227,10 +232,27 @@ test('resolveAccountContext can disable compat header account override', async (
   );
 
   assert.equal(context.accountId, 'acct_fixed');
+  assert.equal(context.authMode, 'fallback');
+  assert.equal(context.toolMode, 'read_write');
   assert.equal(context.identitySource, 'fallback');
 });
 
-test('resolveAccountContext preserves unrestricted tool access for compat personal bearer tokens', async () => {
+test('resolveAccountContext can force compat fallback identities to read_only', async () => {
+  const context = await resolveAccountContext(
+    makeExtra({ 'x-mcp-account-id': 'acct_fallback' }),
+    {
+      HUB_IDENTITY_MODE: 'compat',
+      HUB_COMPAT_FALLBACK_TOOL_MODE: 'read_only',
+    } as any,
+  );
+
+  assert.equal(context.accountId, 'acct_fallback');
+  assert.equal(context.authMode, 'fallback');
+  assert.equal(context.toolMode, 'read_only');
+  assert.equal(context.identitySource, 'fallback');
+});
+
+test('resolveAccountContext preserves resolver-backed compat personal bearer identities', async () => {
   const originalFetch = globalThis.fetch;
 
   globalThis.fetch = async (): Promise<Response> =>
@@ -263,6 +285,7 @@ test('resolveAccountContext preserves unrestricted tool access for compat person
     );
 
     assert.equal(context.accountId, 'acct_personal');
+    assert.equal(context.authMode, 'legacy_key');
     assert.equal(context.identitySource, 'session');
     assert.equal(context.allowedToolPrefixes, null);
   } finally {
@@ -315,6 +338,7 @@ test('resolveAccountContext resolves compat bearer even when it matches HUB_API_
     );
 
     assert.equal(context.accountId, 'acct_reviewer');
+    assert.equal(context.authMode, 'managed_bearer');
     assert.equal(context.identitySource, 'session');
     assert.deepEqual(context.allowedToolPrefixes, ['webflow-template-review-mcp__template_review_assign_self']);
     assert.equal(capturedToken, 'mcpu_reviewer_lane_token');
@@ -356,7 +380,9 @@ test('resolveAccountContext falls back for compat static hub bearer when resolve
     );
 
     assert.equal(context.accountId, 'acct_lane');
+    assert.equal(context.authMode, 'fallback');
     assert.equal(context.identitySource, 'fallback');
+    assert.equal(context.toolMode, 'read_write');
     assert.equal(context.allowedToolPrefixes, null);
   } finally {
     globalThis.fetch = originalFetch;

@@ -251,6 +251,7 @@ type IdentitySessionResolveResponse = {
   tenant_id?: string;
   user_id?: string;
   bound_host?: string | null;
+  auth_mode?: string | null;
   tool_mode?: string;
   allowed_tool_prefixes?: unknown;
   service_tier?: string | null;
@@ -263,6 +264,7 @@ type ResolvedAccountContext = {
   tenantId: string | null;
   userId: string | null;
   sessionId: string | null;
+  authMode: string | null;
   toolMode: string | null;
   allowedToolPrefixes: string[] | null;
   boundHost: string | null;
@@ -2226,6 +2228,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           tenantId: accountContext.tenantId,
           userId: accountContext.userId,
           sessionId: accountContext.sessionId,
+          authMode: accountContext.authMode,
           identitySource: accountContext.identitySource,
         },
       });
@@ -2942,6 +2945,7 @@ export async function executeProxyRoute(params: {
     tenantId: accountContext.tenantId,
     userId: accountContext.userId,
     sessionId: accountContext.sessionId,
+    authMode: accountContext.authMode,
     identitySource: accountContext.identitySource,
     boundHost: accountContext.boundHost,
     resourceHost: accountContext.resourceHost,
@@ -4503,6 +4507,7 @@ async function resolveSessionAccountContext(
     tenantId: normalizeTraceValue(resolved.tenant_id),
     userId: normalizeTraceValue(resolved.user_id),
     sessionId: normalizeTraceValue(resolved.session_id),
+    authMode: normalizeResolvedAuthMode(resolved),
     toolMode: normalizeTraceValue(resolved.tool_mode),
     allowedToolPrefixes:
       resolved.allowed_tool_prefixes == null ? null : parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
@@ -4546,7 +4551,8 @@ function resolveFallbackAccountContext(
     tenantId: normalizeTraceValue(authInfo?.tenantId) ?? null,
     userId: normalizeTraceValue(authInfo?.sub) ?? null,
     sessionId: null,
-    toolMode: null,
+    authMode: 'fallback',
+    toolMode: resolveCompatFallbackToolMode(env),
     allowedToolPrefixes: null,
     boundHost: null,
     resourceHost,
@@ -4568,7 +4574,26 @@ export function resolveHubIdentityMode(env: Env): HubIdentityMode {
   if (raw === 'compat') {
     return 'compat';
   }
+  if (raw === 'resolved_identity_required') {
+    return 'session_required';
+  }
   return 'session_required';
+}
+
+function normalizeResolvedAuthMode(resolved: IdentitySessionResolveResponse): string | null {
+  const authMode = normalizeTraceValue(resolved.auth_mode);
+  if (authMode) {
+    return authMode;
+  }
+  return normalizeTraceValue(resolved.session_id) ? 'session' : 'resolved';
+}
+
+function resolveCompatFallbackToolMode(env: Env): string {
+  const raw = readEnvString(env, 'HUB_COMPAT_FALLBACK_TOOL_MODE')?.trim().toLowerCase();
+  if (raw === 'read_only') {
+    return 'read_only';
+  }
+  return 'read_write';
 }
 
 async function resolveSessionForBearerToken(

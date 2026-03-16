@@ -173,6 +173,7 @@ test('buildVisibleProxyRoutes applies session -> discovery -> max cap', () => {
     tenantId: null,
     userId: null,
     sessionId: 'session_1',
+    authMode: 'session',
     allowedToolPrefixes: ['server_a__'],
     identitySource: 'session' as const,
   };
@@ -195,6 +196,7 @@ test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', ()
     tenantId: null,
     userId: null,
     sessionId: 'session_1',
+    authMode: 'session',
     allowedToolPrefixes: ['server_a__'],
     identitySource: 'session' as const,
   };
@@ -264,8 +266,11 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only 
       tenantId: 'tenant_acme',
       userId: 'user_1',
       sessionId: 'session_1',
+      authMode: 'session',
       allowedToolPrefixes: null,
       toolMode: 'read_only',
+      serviceTier: null,
+      entitlementSnapshot: null,
       identitySource: 'session',
     },
     env: {} as any,
@@ -322,6 +327,7 @@ test('buildAuthorizedVisibleProxyRoutes blocks policy_os_only discovery for mcp-
       tenantId: 'tenant_acme',
       userId: 'user_1',
       sessionId: 'session_1',
+      authMode: 'session',
       allowedToolPrefixes: null,
       toolMode: 'read_write',
       serviceTier: 'mcp_only',
@@ -343,6 +349,82 @@ test('buildAuthorizedVisibleProxyRoutes blocks policy_os_only discovery for mcp-
   assert.deepEqual(visible.toolDefinitions.map((tool) => tool.name), []);
 });
 
+test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for compat fallback identities', async () => {
+  const readRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_get_spreadsheet',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_get_spreadsheet',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const writeRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_values_update',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['composio-toolkit-googlesheets'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        {
+          name: readRoute.proxyToolName,
+          description: '[googlesheets] get spreadsheet',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: writeRoute.proxyToolName,
+          description: '[googlesheets] update values',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+      routes: new Map([
+        [readRoute.proxyToolName, readRoute],
+        [writeRoute.proxyToolName, writeRoute],
+      ]),
+      warnings: [],
+    },
+  };
+
+  const visible = await buildAuthorizedVisibleProxyRoutes({
+    runtime: runtime as any,
+    prefs: {
+      mode: 'full',
+      activeServers: ['composio-toolkit-googlesheets'],
+      maxProxyTools: null,
+    },
+    accountContext: {
+      accountId: 'acct_fallback',
+      tenantId: null,
+      userId: null,
+      sessionId: null,
+      authMode: 'fallback',
+      allowedToolPrefixes: null,
+      toolMode: 'read_only',
+      serviceTier: null,
+      entitlementSnapshot: null,
+      identitySource: 'fallback',
+    },
+    env: { HUB_IDENTITY_MODE: 'compat' } as any,
+    trace,
+    entrypoint: 'hub_list_proxy_tools',
+  });
+
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet'],
+  );
+});
+
 test('searchProxyTools only searches visible routes', () => {
   const runtime = createRuntime();
   const prefs = {
@@ -355,6 +437,7 @@ test('searchProxyTools only searches visible routes', () => {
     tenantId: null,
     userId: null,
     sessionId: 'session_1',
+    authMode: 'session',
     allowedToolPrefixes: ['server_a__'],
     identitySource: 'session' as const,
   };
@@ -400,6 +483,10 @@ test('resolveIntentRouteCandidate prefers allowlisted route when visible', () =>
     tenantId: null,
     userId: null,
     sessionId: null,
+    authMode: 'fallback',
+    toolMode: 'read_only',
+    serviceTier: null,
+    entitlementSnapshot: null,
     allowedToolPrefixes: null,
     identitySource: 'fallback',
   });
@@ -420,6 +507,10 @@ test('resolveIntentRouteCandidate uses heuristic router for natural language int
     tenantId: null,
     userId: null,
     sessionId: null,
+    authMode: 'fallback',
+    toolMode: 'read_only',
+    serviceTier: null,
+    entitlementSnapshot: null,
     allowedToolPrefixes: null,
     identitySource: 'fallback',
   });
@@ -443,6 +534,10 @@ test('resolveIntentRouteCandidate falls back to discovery for unknown intents', 
     tenantId: null,
     userId: null,
     sessionId: null,
+    authMode: 'fallback',
+    toolMode: 'read_only',
+    serviceTier: null,
+    entitlementSnapshot: null,
     allowedToolPrefixes: null,
     identitySource: 'fallback',
   });
@@ -467,6 +562,10 @@ test('resolveIntentRouteCandidate de-prioritizes deprecated discovery tools', ()
     tenantId: null,
     userId: null,
     sessionId: null,
+    authMode: 'fallback',
+    toolMode: 'read_only',
+    serviceTier: null,
+    entitlementSnapshot: null,
     allowedToolPrefixes: null,
     identitySource: 'fallback',
   });
