@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export * from "./halfdozen.js";
+
 export const halfDozenScenarioSchema = z.enum([
   "fleet-watchdog",
   "inbox-triage",

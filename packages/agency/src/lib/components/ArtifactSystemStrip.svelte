@@ -3,6 +3,7 @@
     name: string;
     summary: string;
     tag?: string;
+    displayName?: string;
   };
 
   type Props = {
@@ -25,7 +26,7 @@
     },
     {
       name: 'outcome_contract.md',
-      summary: 'Success metrics, manual fallback, and ownership boundaries.',
+      summary: 'Success metrics, fallback triggers, and ownership boundaries.',
       tag: 'Outcome'
     },
     {
@@ -46,6 +47,23 @@
     description = 'Every engagement ships explicit artifacts so access, behavior, and recovery stay legible after the kickoff call.',
     items = DEFAULT_ITEMS
   }: Props = $props();
+
+  function splitArtifactLabel(label: string): string[] {
+    return label.split(/(?<=[._\-\s])/).filter(Boolean);
+  }
+
+  function escapeHtml(label: string): string {
+    return label
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function formatArtifactLabel(label: string): string {
+    return splitArtifactLabel(label).map(escapeHtml).join('<wbr>');
+  }
 </script>
 
 <div class="artifact-shell">
@@ -57,9 +75,10 @@
 
   <div class="artifact-grid" role="list">
     {#each items as item}
+      {@const label = item.displayName ?? item.name}
       <article class="artifact-card" role="listitem">
         <span class="artifact-tag">{item.tag ?? 'Artifact'}</span>
-        <h3>{item.name}</h3>
+        <h3 aria-label={label}>{@html formatArtifactLabel(label)}</h3>
         <p>{item.summary}</p>
       </article>
     {/each}
@@ -105,6 +124,9 @@
   }
 
   .artifact-card {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-rows: auto minmax(2.5rem, auto) 1fr;
     padding: 1.1rem;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -116,7 +138,7 @@
 
   .artifact-tag {
     display: inline-flex;
-    margin-bottom: 0.7rem;
+    width: fit-content;
     padding: 0.22rem 0.52rem;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -128,11 +150,14 @@
   }
 
   .artifact-card h3 {
-    margin: 0 0 0.55rem;
+    margin: 0;
     color: var(--color-fg-primary, #fff);
-    font-size: 1rem;
+    font-size: clamp(0.95rem, 0.2vw + 0.9rem, 1rem);
     line-height: 1.25;
-    word-break: break-word;
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+    text-wrap: balance;
   }
 
   .artifact-card p {
