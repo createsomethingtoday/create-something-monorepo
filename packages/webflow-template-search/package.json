@@ -1,0 +1,25 @@
+{
+  "name": "@create-something/webflow-template-search",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker search service for the Webflow template marketplace",
+  "scripts": {
+    "check": "pnpm run typecheck && pnpm run test",
+    "dev": "node ../../scripts/run-wrangler.mjs dev --config wrangler.toml",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy --config wrangler.toml",
+    "lint": "pnpm run typecheck",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260205.0",
+    "@types/node": "^24.10.9",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.64.0"
+  }
+}

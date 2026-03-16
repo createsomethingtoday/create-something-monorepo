@@ -12,6 +12,7 @@ Commands:
   claim --task-id <id> --agent <agent> [--json]
   release --task-id <id> [--json]
   complete --task-id <id> [--evidence <text>] [--json]
+  done --task-id <id> [--evidence <text>] [--json]
   summary [--label <label>] [--json]
 
 Environment:
@@ -134,6 +135,7 @@ function buildToolCall(command, options) {
         arguments: { task_id: required('--task-id', options.taskId) },
       };
     case 'complete':
+    case 'done':
       return {
         name: 'loom_complete',
         arguments: {

@@ -1,0 +1,31 @@
+name = "webflow-template-search"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "webflow-template-search"
+database_id = "REPLACE_ME"
+
+[vars]
+ENVIRONMENT = "development"
+AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+AIRTABLE_ASSETS_TABLE_ID = "tblRwzpWoLgE9MrUm"
+AIRTABLE_STYLES_TABLE_ID = "tblG7E9LbQj0sBX0o"
+AIRTABLE_CHILD_CATEGORIES_TABLE_ID = "tblWJXy3M6R8SeoFi"
+AIRTABLE_TAGS_TABLE_ID = "tblb4969G7O75gVWV"
+ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io"
+DEFAULT_PAGE_SIZE = "24"
+DEFAULT_CLIENT_MODE = "shadow"
+
+[triggers]
+crons = ["*/5 * * * *", "17 3 * * *"]
+
+# Secrets:
+# - AIRTABLE_API_KEY
+# - SYNC_ADMIN_TOKEN

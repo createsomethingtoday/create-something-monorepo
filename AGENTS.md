@@ -18,7 +18,11 @@ For shared remote Loom operations, use:
 pnpm loom:remote ready
 pnpm loom:remote list --status ready --label code-quality
 pnpm loom:remote create --title "..." --description "..." --label code-quality
+pnpm loom:remote done --task-id <id> --evidence "..."
 ```
+
+Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
+Do not use bare `lm done` for shared tasks in this repo; use `pnpm loom:remote done --task-id <id> --evidence "..."` instead.
 
 ## What this repo is
 
@@ -88,7 +92,7 @@ pnpm test
 ```
 
 For shared orchestration lanes, prefer remote Loom via `pnpm loom:remote ...`.
-Use local `lm` only when you intentionally mean the repo-local `.loom` database.
+Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
 
 ## Grounding discipline
 
