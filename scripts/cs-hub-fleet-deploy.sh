@@ -215,6 +215,13 @@ direct_proxy_prefixes_for_worker() {
   esac
 }
 
+required_discovery_servers_for_worker() {
+  case "$1" in
+    "cs-hub-danny") echo "halfdozen-operator-notion-mcp" ;;
+    *) echo "" ;;
+  esac
+}
+
 csv_to_json_array() {
   local csv="$1"
   if [[ -z "${csv// }" ]]; then
@@ -335,6 +342,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
   discovery_shared_pack="$(discovery_shared_pack_for_worker "$worker")"
   direct_proxy_enabled="$(direct_proxy_enabled_for_worker "$worker")"
   direct_proxy_prefixes="$(direct_proxy_prefixes_for_worker "$worker")"
+  required_discovery_servers="$(required_discovery_servers_for_worker "$worker")"
   echo "===== DEPLOY ${worker} ====="
   if [[ "$deploy_worker" != "$worker" ]]; then
     echo "deploy_target=${deploy_worker} (legacy alias)"
@@ -373,6 +381,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:compact" \
+      --var "HUB_REQUIRED_DISCOVERY_SERVERS:${required_discovery_servers}" \
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
       --var "HUB_CONNECT_CONCURRENCY:4" \
