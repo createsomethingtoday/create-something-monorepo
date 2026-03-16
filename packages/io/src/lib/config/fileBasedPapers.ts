@@ -108,6 +108,44 @@ export const fileBasedPapers: FileBasedPaper[] = [
       ╰───────────────────────────────────────────╯
            Creation over consumption.
 `
+	},
+	{
+		id: 'paper-mcp-hub-brokered-control-plane',
+		slug: 'mcp-hub-brokered-control-plane',
+		title: 'The MCP Hub as Brokered Control Plane',
+		description: 'Architecture paper for builders/operators showing how the CREATE SOMETHING Hub turns flat MCP catalogs into a governed house surface where discovery, identity, authorization, and execution policy converge.',
+		excerpt_short: 'The Hub matters when a tool call has to prove it should happen before it runs',
+		excerpt_long: 'The Hub becomes important when it stops being a convenience layer and starts being the place where a tool call has to prove it should happen. This paper explains why flat MCP catalogs break down, why the brokered flow is search then describe then execute, and how that flow gives CREATE SOMETHING one house surface for identity, authorization, budget posture, and traceability before downstream execution. It also keeps the maturity line honest: as of March 16, 2026, the Hub is a strong control-plane implementation, not yet a fully closed fleet-scale governance layer for hundreds of tools.',
+		category: 'Architecture',
+		tags: [
+			'MCP',
+			'Hub',
+			'Control Plane',
+			'Brokered Discovery',
+			'Policy as Artifact',
+			'Authorization',
+			'Remote MCP'
+		],
+		created_at: '2026-03-16T00:00:00Z',
+		updated_at: '2026-03-16T00:00:00Z',
+		reading_time_minutes: 19,
+		difficulty: 'advanced',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'rams-principle-2',
+			'subtractive-triad'
+		],
+		route: '/papers/mcp-hub-brokered-control-plane',
+		ascii_art: `
+        ╭────────────────────────────────────────────╮
+       ╱   raw catalog      brokered surface         ╲
+      │   provider tools -> Hub -> governed execute  │
+      │   legitimacy happens before the call runs    │
+      ╰───────────────────────────────────────────────╯
+           Control the boundary, not just the route.
+`
 	}
 ];
 

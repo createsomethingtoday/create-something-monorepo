@@ -1,0 +1,71 @@
+<svg width="1500" height="920" viewBox="0 0 1500 920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1500" height="920" rx="28" fill="#0D0F12"/>
+  <rect x="36" y="36" width="1428" height="848" rx="24" stroke="#2B3138" stroke-width="2"/>
+
+  <text x="80" y="102" fill="#F3F4F6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="36" font-weight="700">Direct Catalog vs Brokered Control Plane</text>
+  <text x="80" y="140" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">The architectural gain is not fewer endpoints.</text>
+  <text x="80" y="166" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">It is a governed house surface in the middle.</text>
+
+  <rect x="80" y="220" width="380" height="540" rx="24" fill="#12161B" stroke="#2B3138" stroke-width="2"/>
+  <text x="112" y="270" fill="#F3F4F6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="24" font-weight="700">Flat Direct Catalog</text>
+  <text x="112" y="304" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">Client sees provider-shaped</text>
+  <text x="112" y="328" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">tools directly</text>
+
+  <rect x="112" y="366" width="316" height="58" rx="14" fill="#0D0F12" stroke="#39414B"/>
+  <text x="132" y="402" fill="#E5E7EB" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">gmail__send_email</text>
+  <rect x="112" y="438" width="316" height="58" rx="14" fill="#0D0F12" stroke="#39414B"/>
+  <text x="132" y="474" fill="#E5E7EB" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">googlesheets__values_update</text>
+  <rect x="112" y="510" width="316" height="58" rx="14" fill="#0D0F12" stroke="#39414B"/>
+  <text x="132" y="546" fill="#E5E7EB" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">slack__send_message</text>
+  <rect x="112" y="582" width="316" height="58" rx="14" fill="#0D0F12" stroke="#39414B"/>
+  <text x="132" y="618" fill="#E5E7EB" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">zoom__delete_meeting</text>
+
+  <text x="112" y="696" fill="#FCA5A5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">No house boundary before invoke</text>
+  <text x="112" y="724" fill="#FCA5A5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">Provider vocabulary becomes interface</text>
+
+  <rect x="560" y="190" width="380" height="600" rx="28" fill="#151A20" stroke="#D1D5DB" stroke-width="2.5"/>
+  <text x="592" y="244" fill="#F9FAFB" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="26" font-weight="700">CREATE SOMETHING Hub</text>
+  <text x="592" y="278" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">Brokered house surface</text>
+
+  <rect x="592" y="324" width="316" height="78" rx="16" fill="#0D0F12" stroke="#4B5563"/>
+  <text x="622" y="356" fill="#F3F4F6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700">1. search</text>
+  <text x="622" y="382" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">visible proxy tools only</text>
+
+  <rect x="592" y="420" width="316" height="78" rx="16" fill="#0D0F12" stroke="#4B5563"/>
+  <text x="622" y="452" fill="#F3F4F6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700">2. describe</text>
+  <text x="622" y="478" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">schema + route metadata</text>
+
+  <rect x="592" y="516" width="316" height="78" rx="16" fill="#0D0F12" stroke="#4B5563"/>
+  <text x="622" y="548" fill="#F3F4F6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700">3. execute</text>
+  <text x="622" y="574" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">policy-bearing invocation</text>
+
+  <text x="592" y="660" fill="#86EFAC" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">identity, authz, rate/quota, tracing</text>
+  <text x="592" y="688" fill="#86EFAC" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">converge before downstream call</text>
+
+  <rect x="1040" y="220" width="380" height="540" rx="24" fill="#12161B" stroke="#2B3138" stroke-width="2"/>
+  <text x="1072" y="270" fill="#F3F4F6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="24" font-weight="700">Downstream MCP Fleet</text>
+  <text x="1072" y="304" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">Provider plumbing stays behind</text>
+  <text x="1072" y="328" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">the house surface</text>
+
+  <rect x="1072" y="366" width="316" height="86" rx="16" fill="#0D0F12" stroke="#39414B"/>
+  <text x="1100" y="398" fill="#E5E7EB" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">composio-toolkit-gmail</text>
+  <text x="1100" y="424" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">auth, token, and provider</text>
+  <text x="1100" y="446" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">semantics stay behind Hub</text>
+
+  <rect x="1072" y="468" width="316" height="86" rx="16" fill="#0D0F12" stroke="#39414B"/>
+  <text x="1100" y="500" fill="#E5E7EB" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">composio-toolkit-slack</text>
+  <text x="1100" y="526" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">tool schemas and provider</text>
+  <text x="1100" y="548" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">failure shapes stay behind</text>
+
+  <rect x="1072" y="570" width="316" height="86" rx="16" fill="#0D0F12" stroke="#39414B"/>
+  <text x="1100" y="602" fill="#E5E7EB" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">notion, telemetry, custom MCPs</text>
+  <text x="1100" y="628" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">house-owned and provider-owned</text>
+  <text x="1100" y="650" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">tools can mix behind the Hub</text>
+
+  <line x1="460" y1="490" x2="560" y2="490" stroke="#6B7280" stroke-width="3"/>
+  <polygon points="560,490 547,482 547,498" fill="#6B7280"/>
+  <line x1="940" y1="490" x2="1040" y2="490" stroke="#6B7280" stroke-width="3"/>
+  <polygon points="1040,490 1027,482 1027,498" fill="#6B7280"/>
+
+  <text x="80" y="842" fill="#9CA3AF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">Client sees Hub. Providers stay behind it. Governance gets a place to live.</text>
+</svg>

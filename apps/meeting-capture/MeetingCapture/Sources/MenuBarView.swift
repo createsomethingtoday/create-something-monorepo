@@ -4,33 +4,16 @@
  */
 
 import SwiftUI
-import AppKit
 
 struct MenuBarView: View {
     @ObservedObject var appDelegate: AppDelegate
-    private let resources = MeetingCaptureResources.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
-            HStack(alignment: .center, spacing: 10) {
-                if let image = resources.brandMarkImage {
-                    Image(nsImage: image)
-                        .resizable()
-                        .interpolation(.high)
-                        .frame(width: 24, height: 24)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                }
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(resources.branding.appName)
-                        .font(.headline)
-                    Text(resources.branding.tagline)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
+            HStack {
+                Text("Meeting Capture")
+                    .font(.headline)
                 Spacer()
                 Circle()
                     .fill(appDelegate.isRecording ? Color.red : Color.gray.opacity(0.3))
@@ -109,7 +92,7 @@ struct RecordingStatusView: View {
             }
 
             if let meeting = meeting {
-                Text(meeting.displayName)
+                Text(meeting.appName)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -147,15 +130,6 @@ struct RecordingStatusView: View {
 }
 
 struct IdleStatusView: View {
-    private let resources = MeetingCaptureResources.shared
-
-    private var supportedAppsText: String {
-        let apps = resources.metadataPresets.appTagMap.keys
-            .filter { $0 != "Manual Recording" }
-            .sorted()
-        return apps.isEmpty ? "Zoom, Google Meet, Microsoft Teams" : apps.joined(separator: ", ")
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -169,7 +143,7 @@ struct IdleStatusView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            Text(supportedAppsText)
+            Text("Zoom, Google Meet, Teams")
                 .font(.caption2)
                 .foregroundColor(.gray)
         }
@@ -177,44 +151,12 @@ struct IdleStatusView: View {
 }
 
 struct SettingsView: View {
-    private let resources = MeetingCaptureResources.shared
-
     @AppStorage("apiBaseURL") private var apiBaseURL = "https://create-something-meetings.createsomething.workers.dev"
     @AppStorage("autoStart") private var autoStart = true
     @AppStorage("deleteAfterUpload") private var deleteAfterUpload = true
-    @AppStorage("defaultProperty") private var defaultProperty = ""
-    @AppStorage("defaultProjectId") private var defaultProjectId = ""
-    @AppStorage("defaultTags") private var defaultTags = ""
-    @AppStorage("defaultParticipants") private var defaultParticipants = ""
-
-    private var permissionsGuideBody: String {
-        resources.permissionsGuide
-            .replacingOccurrences(of: "# Meeting Capture Permission Guide\n\n", with: "")
-            .replacingOccurrences(of: "# Meeting Capture Permission Guide", with: "")
-    }
 
     var body: some View {
         Form {
-            Section {
-                HStack(alignment: .center, spacing: 12) {
-                    if let image = resources.brandMarkImage {
-                        Image(nsImage: image)
-                            .resizable()
-                            .interpolation(.high)
-                            .frame(width: 36, height: 36)
-                            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    }
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(resources.branding.appName)
-                            .font(.headline)
-                        Text(resources.branding.tagline)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-
             Section("Server") {
                 TextField("API URL", text: $apiBaseURL)
                     .textFieldStyle(.roundedBorder)
@@ -225,50 +167,10 @@ struct SettingsView: View {
                 Toggle("Delete local file after upload", isOn: $deleteAfterUpload)
             }
 
-            Section("Metadata Defaults") {
-                Picker("Default Property", selection: $defaultProperty) {
-                    Text("None").tag("")
-                    ForEach(resources.metadataPresets.properties) { property in
-                        Text(property.label).tag(property.id)
-                    }
-                }
-
-                TextField("Default Project ID", text: $defaultProjectId, prompt: Text("weekly-sync"))
-                    .textFieldStyle(.roundedBorder)
-
-                if !resources.metadataPresets.projectHints.isEmpty {
-                    Text("Suggestions: \(resources.metadataPresets.projectHints.joined(separator: ", "))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                TextField(
-                    "Default Tags",
-                    text: $defaultTags,
-                    prompt: Text(resources.metadataPresets.suggestedTags.joined(separator: ", "))
-                )
-                .textFieldStyle(.roundedBorder)
-
-                TextField("Default Participants", text: $defaultParticipants, prompt: Text("alex, jordan"))
-                    .textFieldStyle(.roundedBorder)
-
-                Text("Tags and participants are comma-separated.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
             Section("Permissions") {
-                Text(resources.permissionsSummary)
+                Text("Primary capture uses Screen Recording + Automation. Microphone is only used as a fallback.")
                     .font(.caption)
                     .foregroundColor(.secondary)
-
-                ScrollView {
-                    Text(permissionsGuideBody)
-                        .font(.caption2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .textSelection(.enabled)
-                }
-                .frame(minHeight: 110)
 
                 HStack(spacing: 10) {
                     Button("Screen Recording") {
@@ -286,7 +188,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 460)
+        .frame(width: 400, height: 300)
         .padding()
     }
 }

@@ -60,6 +60,7 @@ const PAPERS: ContentItem[] = [
 	{ slug: 'hermeneutic-triad-review', title: 'Hermeneutic Triad Review', description: 'Reviewing the hermeneutic triad pattern in software design', category: 'methodology' },
 	{ slug: 'intellectual-genealogy', title: 'Intellectual Genealogy', description: 'Tracing the intellectual genealogy of AI-native development', category: 'theoretical' },
 	{ slug: 'kickstand-triad-audit', title: 'Kickstand Triad Audit', description: 'Auditing the Kickstand system using triad analysis', category: 'experiment' },
+	{ slug: 'mcp-hub-brokered-control-plane', title: 'The MCP Hub as Brokered Control Plane', description: 'How CREATE SOMETHING turns flat MCP catalogs into a governed house surface', category: 'architecture' },
 	{ slug: 'norvig-partnership', title: 'Norvig Partnership', description: 'Exploring the Norvig partnership model for AI collaboration', category: 'theoretical' },
 	{ slug: 'ralph-implementation', title: 'Ralph Implementation', description: 'Implementing the Ralph orchestration pattern', category: 'technical' },
 	{ slug: 'ralph-vs-gastown', title: 'Ralph vs Gastown', description: 'Comparing Ralph and Gastown orchestration approaches', category: 'experiment' },
