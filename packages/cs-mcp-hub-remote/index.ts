@@ -50,6 +50,10 @@ type HttpServerConfig = {
   headers?: StringMap;
   description?: string;
   tags?: string[];
+  catalog?: {
+    name?: string;
+    slug?: string;
+  };
 };
 
 type StdioServerConfig = {
@@ -242,11 +246,14 @@ type ProxyFailureDetails = {
 };
 
 type DiscoveryMode = 'compact' | 'full';
+type DiscoveryToolExposureMode = 'all' | 'service_first';
 
 type DiscoveryPreferences = {
   mode: DiscoveryMode;
   activeServers: string[];
   maxProxyTools: number | null;
+  toolExposureMode: DiscoveryToolExposureMode;
+  expandedServers: string[];
 };
 
 type DiscoveryPackDefinition = {
@@ -254,6 +261,8 @@ type DiscoveryPackDefinition = {
   mode?: DiscoveryMode;
   activeServers?: string[];
   maxProxyTools?: number | null;
+  toolExposureMode?: DiscoveryToolExposureMode;
+  expandedServers?: string[];
 };
 
 type DiscoveryPackRegistry = {
@@ -398,6 +407,8 @@ interface Env {
   HUB_DISCOVERY_MODE?: string;
   HUB_DISCOVERY_DEFAULT_SERVERS?: string;
   HUB_DISCOVERY_MAX_PROXY_TOOLS?: string;
+  HUB_DISCOVERY_TOOL_EXPOSURE_MODE?: string;
+  HUB_DISCOVERY_EXPANDED_SERVERS?: string;
   HUB_DISCOVERY_SHARED_PACK?: string;
   HUB_DISCOVERY_PAGE_SIZE?: string;
   HUB_ALLOW_DIRECT_PROXY_TOOLS?: string;
@@ -623,7 +634,7 @@ const MANAGEMENT_TOOL_DEFINITIONS: Tool[] = [
   {
     name: 'hub_set_discovery',
     description:
-      'Set tool discovery exposure (compact/full), choose active services, and limit visible proxy tools.',
+      'Set tool discovery exposure (compact/full), choose active services, control service-first tool exposure, and limit visible proxy tools.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -631,8 +642,26 @@ const MANAGEMENT_TOOL_DEFINITIONS: Tool[] = [
         mode: { type: 'string', enum: ['compact', 'full'] },
         activeServers: { type: 'array', items: { type: 'string' } },
         maxProxyTools: { type: 'number' },
+        toolExposureMode: { type: 'string', enum: ['all', 'service_first'] },
+        expandedServers: { type: 'array', items: { type: 'string' } },
+        expandServers: { type: 'array', items: { type: 'string' } },
+        collapseServers: { type: 'array', items: { type: 'string' } },
         reset: { type: 'boolean' },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'hub_expand_service',
+    description:
+      'Expand one or more named services from bootstrap discovery to fuller tool discovery. Accepts service labels, toolkit slugs, or server names.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        services: { type: 'array', items: { type: 'string' } },
+        focus: { type: 'boolean' },
+      },
+      required: ['services'],
       additionalProperties: false,
     },
   },
@@ -787,8 +816,10 @@ const MAX_CONNECT_CONCURRENCY = 32;
 const DEFAULT_TOOL_CALL_TIMEOUT_MS = 120_000;
 const SESSION_RESOLVE_CACHE_MS = 30000;
 const DEFAULT_DISCOVERY_MODE: DiscoveryMode = 'compact';
+const DEFAULT_DISCOVERY_TOOL_EXPOSURE_MODE: DiscoveryToolExposureMode = 'all';
 const DEFAULT_DISCOVERY_PAGE_SIZE = 100;
 const MAX_DISCOVERY_PAGE_SIZE = 500;
+const DEFAULT_DISCOVERY_BOOTSTRAP_TOOLS = ['connection_status', 'get_connect_link', 'toolkit_info'];
 const discoveryPreferencesByAccount = new Map<string, DiscoveryPreferences>();
 const HUB_DISCOVERY_KV_PREFIX = 'hub_discovery_v1::';
 const DEFAULT_REQUIRED_GLOBAL_SERVERS: string[] = ['composio-toolkit-notion'];
@@ -849,7 +880,9 @@ function hasMcpAuthenticationHeaders(extra: unknown): boolean {
     getHeaderValue(requestInfo, 'authorization')
     || getHeaderValue(requestInfo, 'x-mcp-session-token')
     || getHeaderValue(requestInfo, 'x-api-key')
-    || getHeaderValue(requestInfo, 'api-key'),
+    || getHeaderValue(requestInfo, 'api-key')
+    || getQueryValueFromRequestInfo(requestInfo, 'token')
+    || getQueryValueFromRequestInfo(requestInfo, 'mcp_access_token'),
   );
 }
 
@@ -1086,11 +1119,15 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   }
 
   const sessionHeaderToken = request.headers.get('x-mcp-session-token')?.trim() ?? null;
+  const queryIdentityToken = getQueryValueFromRequest(request, 'mcp_access_token');
   const authHeader = request.headers.get('authorization') ?? request.headers.get('Authorization');
   const bearerToken = authHeader ? parseBearerToken(authHeader) : null;
   const bearerIsHubToken =
     bearerToken && requiredToken ? timingSafeEqual(bearerToken, requiredToken) : false;
-  const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
+  const identityToken =
+    sessionHeaderToken ??
+    queryIdentityToken ??
+    (bearerToken && !bearerIsHubToken ? bearerToken : null);
   if (!identityToken) {
     return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
   }
@@ -1128,6 +1165,32 @@ function getRequestToken(request: Request): string | null {
 
   // Compatibility fallback for clients that send raw token in Authorization.
   return trimmedAuth;
+}
+
+function getQueryValueFromRequest(request: Request, name: string): string | null {
+  try {
+    return normalizeTraceValue(new URL(request.url).searchParams.get(name));
+  } catch {
+    return null;
+  }
+}
+
+function getQueryValueFromRequestInfo(requestInfo: unknown, name: string): string | null {
+  const infoRecord = asRecord(requestInfo);
+  const rawUrl = normalizeTraceValue(infoRecord?.url);
+  if (!rawUrl) return null;
+
+  try {
+    return normalizeTraceValue(new URL(rawUrl).searchParams.get(name));
+  } catch {
+    try {
+      return normalizeTraceValue(
+        new URL(rawUrl, 'https://create-something.invalid').searchParams.get(name),
+      );
+    } catch {
+      return null;
+    }
+  }
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -1629,6 +1692,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             mode: pack.preferences.mode,
             activeServers: pack.preferences.activeServers,
             maxProxyTools: pack.preferences.maxProxyTools,
+            toolExposureMode: pack.preferences.toolExposureMode,
+            expandedServers: pack.preferences.expandedServers,
           })),
         });
       }
@@ -1643,6 +1708,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
               mode: DEFAULT_DISCOVERY_MODE,
               activeServers: [],
               maxProxyTools: null,
+              toolExposureMode: DEFAULT_DISCOVERY_TOOL_EXPOSURE_MODE,
+              expandedServers: [],
             },
             visibleProxyToolCount: null,
             publicPreview: true,
@@ -2170,16 +2237,34 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             }
           }
           const basePrefs = appliedPack?.preferences ?? current;
+          const requestedActiveServers = optionalStringArrayArg(args.activeServers, 'activeServers');
+          const nextMode = parseDiscoveryMode(stringArg(args.mode)) ?? basePrefs.mode;
+          const explicitExpandedServers = optionalStringArrayArg(args.expandedServers, 'expandedServers');
+          const expandServers = optionalStringArrayArg(args.expandServers, 'expandServers') ?? [];
+          const collapseServers = new Set(
+            optionalStringArrayArg(args.collapseServers, 'collapseServers') ?? [],
+          );
           nextPrefs = {
-            mode: parseDiscoveryMode(stringArg(args.mode)) ?? basePrefs.mode,
+            mode: nextMode,
             activeServers: resolveDiscoveryActiveServers(
-              optionalStringArrayArg(args.activeServers, 'activeServers') ?? basePrefs.activeServers,
+              requestedActiveServers ?? basePrefs.activeServers,
               runtime,
             ),
             maxProxyTools: resolveDiscoveryMaxProxyTools(
               optionalNumberArg(args.maxProxyTools, 'maxProxyTools') ?? basePrefs.maxProxyTools,
             ),
+            toolExposureMode:
+              parseDiscoveryToolExposureMode(stringArg(args.toolExposureMode))
+              ?? basePrefs.toolExposureMode,
+            expandedServers:
+              explicitExpandedServers
+              ?? uniqueSortedStrings(
+                [...basePrefs.expandedServers, ...expandServers].filter(
+                  (serverName) => !collapseServers.has(serverName),
+                ),
+              ),
           };
+          nextPrefs = normalizeDiscoveryPreferences(nextPrefs, runtime, env);
           await persistDiscoveryPreferences(accountId, nextPrefs, env);
         }
 
@@ -2214,8 +2299,103 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             mode: nextPrefs.mode,
             activeServers: nextPrefs.activeServers,
             maxProxyTools: nextPrefs.maxProxyTools,
+            toolExposureMode: nextPrefs.toolExposureMode,
+            expandedServers: nextPrefs.expandedServers,
             reset,
             pack: appliedPack?.id ?? null,
+            visibleProxyToolCount: visibleTools.length,
+          },
+        });
+        return result;
+      }
+
+      if (toolName === 'hub_expand_service') {
+        const requestedServices = stringArrayArg(args.services, 'services');
+        if (requestedServices.length === 0) {
+          const message = '"services" must contain at least one service identifier';
+          const errorResult = toErrorResult(message);
+          await recordHubInvocationWithCtx({
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'management',
+              operation: 'expand_service',
+            },
+          });
+          return errorResult;
+        }
+
+        const current = await getDiscoveryPreferences(accountId, runtime, env);
+        const resolution = resolveDiscoveryServiceIdentifiers(requestedServices, runtime);
+        if (resolution.serverNames.length === 0) {
+          const message = `No matching services found for: ${requestedServices.join(', ')}`;
+          const errorResult = toErrorResult(message);
+          await recordHubInvocationWithCtx({
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'management',
+              operation: 'expand_service',
+              requestedServices,
+            },
+          });
+          return errorResult;
+        }
+
+        const focus = booleanArg(args.focus, false);
+        const nextPrefs = normalizeDiscoveryPreferences({
+          mode: current.mode,
+          activeServers: current.mode === 'full'
+            ? current.activeServers
+            : resolveDiscoveryActiveServers(
+              [...current.activeServers, ...resolution.serverNames],
+              runtime,
+            ),
+          maxProxyTools: current.maxProxyTools,
+          toolExposureMode: 'service_first',
+          expandedServers: focus
+            ? resolution.serverNames
+            : uniqueSortedStrings([...current.expandedServers, ...resolution.serverNames]),
+        }, runtime, env);
+        await persistDiscoveryPreferences(accountId, nextPrefs, env);
+
+        const visibleTools = buildVisibleProxyRoutes(runtime, nextPrefs, accountContext, env).toolDefinitions;
+        try {
+          await server.sendToolListChanged();
+        } catch {
+          // Best-effort hint for clients with long-lived sessions.
+        }
+
+        const result = toJsonResult({
+          discovery: nextPrefs,
+          expandedServices: resolution.services,
+          unmatchedServices: resolution.unmatchedIdentifiers,
+          visibleProxyToolCount: visibleTools.length,
+          totalProxyToolCount: runtime.proxies.toolDefinitions.length,
+          sampleVisibleProxyTools: visibleTools.slice(0, 25).map((tool) => tool.name),
+          note: 'Refresh tools/list to pick up the updated discovery view.',
+        });
+        await recordHubInvocationWithCtx({
+          accountId,
+          toolName,
+          success: true,
+          durationMs: Date.now() - startedAt,
+          trace,
+          metadata: {
+            type: 'management',
+            operation: 'expand_service',
+            requestedServices,
+            resolvedServers: resolution.serverNames,
+            unmatchedServices: resolution.unmatchedIdentifiers,
+            focus,
             visibleProxyToolCount: visibleTools.length,
           },
         });
@@ -2797,9 +2977,22 @@ export function buildVisibleProxyRoutes(
     ? tenantScoped
     : tenantScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
 
-  const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
-    ? discoveryScoped.slice(0, prefs.maxProxyTools)
+  const exposureScoped = prefs.toolExposureMode === 'service_first'
+    ? applyServiceFirstDiscoveryFilter(discoveryScoped, prefs.expandedServers)
     : discoveryScoped;
+
+  const capped = prefs.mode === 'compact'
+    ? applyCompactDiscoveryCap(
+      exposureScoped,
+      prefs.activeServers,
+      prefs.maxProxyTools,
+      prefs.toolExposureMode === 'service_first' ? prefs.expandedServers : [],
+    )
+    : (
+      prefs.maxProxyTools && prefs.maxProxyTools > 0
+        ? exposureScoped.slice(0, prefs.maxProxyTools)
+        : exposureScoped
+    );
 
   const toolDefinitions = capped.map((entry) => entry.tool);
   const routes = new Map(capped.map((entry) => [entry.route.proxyToolName, entry.route]));
@@ -2812,6 +3005,124 @@ export function buildVisibleProxyRoutes(
     definitionByName,
     aliasPlans,
   };
+}
+
+function applyServiceFirstDiscoveryFilter(
+  entries: VisibleProxyRouteEntry[],
+  expandedServers: string[],
+): VisibleProxyRouteEntry[] {
+  if (entries.length === 0) {
+    return entries;
+  }
+
+  const expanded = new Set(expandedServers);
+  const allowed = new Set<string>();
+  const entriesByServer = new Map<string, VisibleProxyRouteEntry[]>();
+
+  for (const entry of entries) {
+    const bucket = entriesByServer.get(entry.route.serverName);
+    if (bucket) {
+      bucket.push(entry);
+      continue;
+    }
+    entriesByServer.set(entry.route.serverName, [entry]);
+  }
+
+  for (const [serverName, bucket] of entriesByServer.entries()) {
+    if (expanded.has(serverName)) {
+      for (const entry of bucket) {
+        allowed.add(entry.route.proxyToolName);
+      }
+      continue;
+    }
+
+    const bootstrapEntries = bucket.filter((entry) =>
+      DEFAULT_DISCOVERY_BOOTSTRAP_TOOLS.includes(entry.route.downstreamToolName),
+    );
+    const seedEntries = bootstrapEntries.length > 0 ? bootstrapEntries : bucket.slice(0, 1);
+    for (const entry of seedEntries) {
+      allowed.add(entry.route.proxyToolName);
+    }
+  }
+
+  return entries.filter((entry) => allowed.has(entry.route.proxyToolName));
+}
+
+function applyCompactDiscoveryCap(
+  entries: VisibleProxyRouteEntry[],
+  activeServers: string[],
+  maxProxyTools: number | null,
+  uncappedServers: string[] = [],
+): VisibleProxyRouteEntry[] {
+  if (!maxProxyTools || maxProxyTools <= 0 || entries.length <= maxProxyTools) {
+    return entries;
+  }
+
+  const uncapped = new Set(uncappedServers);
+  if (uncapped.size > 0) {
+    const uncappedEntries = entries.filter((entry) => uncapped.has(entry.route.serverName));
+    const cappedEntries = entries.filter((entry) => !uncapped.has(entry.route.serverName));
+    if (uncappedEntries.length === 0) {
+      return applyCompactDiscoveryCap(cappedEntries, activeServers, maxProxyTools);
+    }
+    if (uncappedEntries.length >= maxProxyTools) {
+      return uncappedEntries;
+    }
+    return [
+      ...uncappedEntries,
+      ...applyCompactDiscoveryCap(
+        cappedEntries,
+        activeServers.filter((serverName) => !uncapped.has(serverName)),
+        maxProxyTools - uncappedEntries.length,
+      ),
+    ];
+  }
+
+  const entriesByServer = new Map<string, VisibleProxyRouteEntry[]>();
+  for (const entry of entries) {
+    const bucket = entriesByServer.get(entry.route.serverName);
+    if (bucket) {
+      bucket.push(entry);
+      continue;
+    }
+    entriesByServer.set(entry.route.serverName, [entry]);
+  }
+
+  const serverOrder = activeServers.filter((serverName) => entriesByServer.has(serverName));
+  for (const serverName of entriesByServer.keys()) {
+    if (!serverOrder.includes(serverName)) {
+      serverOrder.push(serverName);
+    }
+  }
+
+  const offsets = new Map(serverOrder.map((serverName) => [serverName, 0]));
+  const capped: VisibleProxyRouteEntry[] = [];
+
+  while (capped.length < maxProxyTools) {
+    let progressed = false;
+
+    for (const serverName of serverOrder) {
+      const bucket = entriesByServer.get(serverName);
+      const offset = offsets.get(serverName) ?? 0;
+      if (!bucket || offset >= bucket.length) {
+        continue;
+      }
+
+      capped.push(bucket[offset]);
+      offsets.set(serverName, offset + 1);
+      progressed = true;
+
+      if (capped.length >= maxProxyTools) {
+        break;
+      }
+    }
+
+    if (!progressed) {
+      break;
+    }
+  }
+
+  return capped;
 }
 
 export function buildDirectProxyRoutes(
@@ -3716,22 +4027,6 @@ export function resolveIntentRouteCandidate(
     };
   }
 
-  const allowlistMatch = findAllowlistIntentMatch(normalizedIntent);
-  if (allowlistMatch && visible.routes.has(allowlistMatch.definition.proxyToolName)) {
-    const route = visible.routes.get(allowlistMatch.definition.proxyToolName)!;
-    return {
-      source: 'allowlist',
-      intent,
-      normalizedIntent,
-      proxyToolName: route.proxyToolName,
-      serverName: route.serverName,
-      downstreamToolName: route.downstreamToolName,
-      description: allowlistMatch.definition.description ?? '',
-      reason: `Matched allowlisted intent "${allowlistMatch.intentId}".`,
-      alternatives: [],
-    };
-  }
-
   const aliasMatch = findVisibleAliasIntentMatch(visible.aliasPlans, normalizedIntent);
   if (aliasMatch) {
     const primary = aliasMatch.plan.candidates[0]!;
@@ -3759,6 +4054,22 @@ export function resolveIntentRouteCandidate(
         oauthApproval: candidate.oauthApproval,
         note: candidate.note,
       })),
+    };
+  }
+
+  const allowlistMatch = findAllowlistIntentMatch(normalizedIntent);
+  if (allowlistMatch && visible.routes.has(allowlistMatch.definition.proxyToolName)) {
+    const route = visible.routes.get(allowlistMatch.definition.proxyToolName)!;
+    return {
+      source: 'allowlist',
+      intent,
+      normalizedIntent,
+      proxyToolName: route.proxyToolName,
+      serverName: route.serverName,
+      downstreamToolName: route.downstreamToolName,
+      description: allowlistMatch.definition.description ?? '',
+      reason: `Matched allowlisted intent "${allowlistMatch.intentId}".`,
+      alternatives: [],
     };
   }
 
@@ -4085,6 +4396,103 @@ function findVisibleAliasIntentMatch(
   return best ? { plan: best.plan } : null;
 }
 
+function buildDiscoveryServiceDescriptors(runtime: HubRuntime): Array<{
+  serverName: string;
+  serviceName: string;
+  serviceSlug: string;
+  toolkitSlug: string | null;
+}> {
+  return runtime.connected.map((server) => {
+    const toolkitSlug = extractToolkitSlug(server.name);
+    const serviceSlug = server.config.catalog?.slug?.trim() || toolkitSlug;
+    return {
+      serverName: server.name,
+      serviceName: resolveDiscoveryServiceName(server),
+      serviceSlug,
+      toolkitSlug,
+    };
+  });
+}
+
+function resolveDiscoveryServiceName(server: ConnectedDownstream): string {
+  const catalogName = server.config.catalog?.name?.trim();
+  if (catalogName) {
+    return catalogName;
+  }
+
+  const description = typeof server.config.description === 'string' ? server.config.description : '';
+  const composioMatch = description.match(/^Composio toolkit gateway:\s*([^(]+?)\s*\([^)]+\)/i);
+  if (composioMatch?.[1]) {
+    return composioMatch[1].trim();
+  }
+
+  return humanizeServiceIdentifier(extractToolkitSlug(server.name));
+}
+
+function humanizeServiceIdentifier(value: string): string {
+  return value
+    .replace(/^composio-toolkit-/, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function resolveDiscoveryServiceIdentifiers(
+  requestedIdentifiers: string[],
+  runtime: HubRuntime,
+): {
+  serverNames: string[];
+  unmatchedIdentifiers: string[];
+  services: Array<{
+    serverName: string;
+    serviceName: string;
+    serviceSlug: string;
+    toolkitSlug: string | null;
+  }>;
+} {
+  const descriptors = buildDiscoveryServiceDescriptors(runtime);
+  const byIdentifier = new Map<string, typeof descriptors[number]>();
+  for (const descriptor of descriptors) {
+    const identifiers = [
+      descriptor.serverName,
+      descriptor.serviceName,
+      descriptor.serviceSlug,
+      descriptor.toolkitSlug ?? '',
+      humanizeServiceIdentifier(descriptor.serverName),
+    ];
+    for (const identifier of identifiers) {
+      const normalized = normalizeDiscoveryServiceIdentifier(identifier);
+      if (!normalized || byIdentifier.has(normalized)) {
+        continue;
+      }
+      byIdentifier.set(normalized, descriptor);
+    }
+  }
+
+  const matched = new Map<string, typeof descriptors[number]>();
+  const unmatchedIdentifiers: string[] = [];
+  for (const requested of requestedIdentifiers) {
+    const match = byIdentifier.get(normalizeDiscoveryServiceIdentifier(requested));
+    if (!match) {
+      unmatchedIdentifiers.push(requested);
+      continue;
+    }
+    matched.set(match.serverName, match);
+  }
+
+  const services = [...matched.values()].sort((a, b) => a.serviceName.localeCompare(b.serviceName));
+  return {
+    serverNames: services.map((service) => service.serverName),
+    unmatchedIdentifiers,
+    services,
+  };
+}
+
+function normalizeDiscoveryServiceIdentifier(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
 function buildDiscoveryServicesPayload(
   runtime: HubRuntime,
   prefs: DiscoveryPreferences,
@@ -4104,13 +4512,27 @@ function buildDiscoveryServicesPayload(
     visibleByServer.set(route.serverName, (visibleByServer.get(route.serverName) ?? 0) + 1);
   }
 
+  const discoveryActiveServers = prefs.mode === 'full'
+    ? new Set(runtime.connected.map((server) => server.name))
+    : new Set(prefs.activeServers);
+  const expandedServers = new Set(prefs.expandedServers);
+  const serviceDescriptors = buildDiscoveryServiceDescriptors(runtime);
+
   return {
     discovery: prefs,
-    services: runtime.connected.map((server) => ({
-      name: server.name,
-      totalProxyTools: byServer.get(server.name) ?? 0,
-      visibleProxyTools: visibleByServer.get(server.name) ?? 0,
-      activeInDiscovery: prefs.activeServers.includes(server.name),
+    services: serviceDescriptors.map((service) => ({
+      name: service.serviceName,
+      serverName: service.serverName,
+      serviceSlug: service.serviceSlug,
+      toolkitSlug: service.toolkitSlug,
+      totalProxyTools: byServer.get(service.serverName) ?? 0,
+      visibleProxyTools: visibleByServer.get(service.serverName) ?? 0,
+      activeInDiscovery: discoveryActiveServers.has(service.serverName),
+      expandedInDiscovery: expandedServers.has(service.serverName),
+      exposure:
+        prefs.toolExposureMode === 'service_first' && discoveryActiveServers.has(service.serverName)
+          ? (expandedServers.has(service.serverName) ? 'expanded' : 'bootstrap')
+          : 'all',
     })),
     totalProxyToolCount: runtime.proxies.toolDefinitions.length,
     visibleProxyToolCount: visible.toolDefinitions.length,
@@ -4175,6 +4597,11 @@ async function getDiscoveryPreferences(
               maxProxyTools: resolveDiscoveryMaxProxyTools(
                 typeof parsed.maxProxyTools === 'number' ? parsed.maxProxyTools : null,
               ),
+              toolExposureMode:
+                parseDiscoveryToolExposureMode(
+                  typeof parsed.toolExposureMode === 'string' ? parsed.toolExposureMode : null,
+                ) ?? DEFAULT_DISCOVERY_TOOL_EXPOSURE_MODE,
+              expandedServers: parseStateStringArray(parsed.expandedServers),
             },
             runtime,
             env,
@@ -4204,6 +4631,10 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
   const maxProxyToolsFromEnv = maxProxyToolsRaw !== undefined
     ? resolveDiscoveryMaxProxyTools(parsePositiveInt(maxProxyToolsRaw, 0))
     : undefined;
+  const toolExposureModeFromEnv = parseDiscoveryToolExposureMode(
+    readEnvString(env, 'HUB_DISCOVERY_TOOL_EXPOSURE_MODE'),
+  );
+  const expandedServersFromEnv = parseList(readEnvString(env, 'HUB_DISCOVERY_EXPANDED_SERVERS'));
 
   return normalizeDiscoveryPreferences({
     mode: modeFromEnv ?? sharedPack?.preferences.mode ?? DEFAULT_DISCOVERY_MODE,
@@ -4212,6 +4643,11 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
       runtime,
     ),
     maxProxyTools: maxProxyToolsFromEnv ?? sharedPack?.preferences.maxProxyTools ?? null,
+    toolExposureMode:
+      toolExposureModeFromEnv
+      ?? sharedPack?.preferences.toolExposureMode
+      ?? DEFAULT_DISCOVERY_TOOL_EXPOSURE_MODE,
+    expandedServers: expandedServersFromEnv ?? sharedPack?.preferences.expandedServers ?? [],
   }, runtime, env);
 }
 
@@ -4269,13 +4705,23 @@ function normalizeDiscoveryPreferences(
   env?: Env,
 ): DiscoveryPreferences {
   const requiredActiveServers = getRequiredDiscoveryServers(runtime, env);
+  const mode = prefs.mode;
+  const activeServers = resolveDiscoveryActiveServers(
+    [...prefs.activeServers, ...requiredActiveServers],
+    runtime,
+  );
+  const toolExposureMode = prefs.toolExposureMode ?? DEFAULT_DISCOVERY_TOOL_EXPOSURE_MODE;
   return {
-    mode: prefs.mode,
-    activeServers: resolveDiscoveryActiveServers(
-      [...prefs.activeServers, ...requiredActiveServers],
+    mode,
+    activeServers,
+    maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
+    toolExposureMode,
+    expandedServers: resolveDiscoveryExpandedServers(
+      prefs.expandedServers,
+      mode,
+      activeServers,
       runtime,
     ),
-    maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
   };
 }
 
@@ -4294,6 +4740,15 @@ function parseDiscoveryMode(value: string | null | undefined): DiscoveryMode | n
   return null;
 }
 
+function parseDiscoveryToolExposureMode(
+  value: string | null | undefined,
+): DiscoveryToolExposureMode | null {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (normalized === 'service_first') return 'service_first';
+  if (normalized === 'all') return 'all';
+  return null;
+}
+
 function resolveDiscoveryActiveServers(servers: string[], runtime: HubRuntime): string[] {
   const allowed = new Set(runtime.connected.map((server) => server.name));
   return uniqueSortedStrings(servers.filter((server) => allowed.has(server)));
@@ -4305,6 +4760,18 @@ function resolveDiscoveryMaxProxyTools(value: number | null): number | null {
   }
   const floored = Math.floor(value);
   return floored > 0 ? floored : null;
+}
+
+function resolveDiscoveryExpandedServers(
+  servers: string[],
+  mode: DiscoveryMode,
+  activeServers: string[],
+  runtime: HubRuntime,
+): string[] {
+  const allowed = mode === 'full'
+    ? new Set(runtime.connected.map((server) => server.name))
+    : new Set(activeServers);
+  return uniqueSortedStrings(servers.filter((server) => allowed.has(server)));
 }
 
 function resolveDiscoveryPageSize(env: Env): number {
@@ -4339,6 +4806,11 @@ function resolveDiscoveryPackDefinition(
   const maxProxyTools = resolveDiscoveryMaxProxyTools(
     typeof definition.maxProxyTools === 'number' ? definition.maxProxyTools : null,
   );
+  const toolExposureMode =
+    parseDiscoveryToolExposureMode(
+      typeof definition.toolExposureMode === 'string' ? definition.toolExposureMode : null,
+    ) ?? DEFAULT_DISCOVERY_TOOL_EXPOSURE_MODE;
+  const expandedServers = parseStateStringArray(definition.expandedServers);
 
   return {
     id: packId,
@@ -4347,6 +4819,8 @@ function resolveDiscoveryPackDefinition(
       mode,
       activeServers,
       maxProxyTools,
+      toolExposureMode,
+      expandedServers,
     }, runtime, env),
   };
 }
@@ -4903,6 +5377,7 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   const extraRecord = asRecord(extra);
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
   const sessionHeaderToken = getHeaderValue(extraRecord?.requestInfo, 'x-mcp-session-token');
+  const queryIdentityToken = getQueryValueFromRequestInfo(extraRecord?.requestInfo, 'mcp_access_token');
   const identityMode = resolveHubIdentityMode(env);
   const resourceHost = extractResourceHostFromExtra(extra);
 
@@ -4916,9 +5391,12 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
     const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
     const bearerIsHubToken =
       bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
-    const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
+    const identityToken =
+      sessionHeaderToken ??
+      queryIdentityToken ??
+      (bearerToken && !bearerIsHubToken ? bearerToken : null);
     if (!identityToken) {
-      throw new Error('Missing X-MCP-Session-Token header or bearer token.');
+      throw new Error('Missing X-MCP-Session-Token header, mcp_access_token query parameter, or bearer token.');
     }
     return resolveSessionAccountContext(env, identityToken, resourceHost);
   }
@@ -4927,7 +5405,7 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
   const bearerIsHubToken =
     bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
-  const compatIdentityToken = sessionHeaderToken ?? bearerToken;
+  const compatIdentityToken = sessionHeaderToken ?? queryIdentityToken ?? bearerToken;
 
   if (compatIdentityToken && isSessionResolverConfigured(env)) {
     try {
@@ -5198,10 +5676,10 @@ function normalizeTenantRoutingPolicy(policy: TenantRoutingPolicy | undefined): 
     return null;
   }
   return {
-    allowServers: normalizeRoutingList(policy.allowServers),
-    allowTags: normalizeRoutingList(policy.allowTags),
-    allowAccessTypes: normalizeRoutingList(policy.allowAccessTypes) as AuthorizationAccessType[] | null,
-    allowToolPrefixes: normalizeRoutingList(policy.allowToolPrefixes),
+    allowServers: normalizeRoutingList(policy.allowServers) ?? undefined,
+    allowTags: normalizeRoutingList(policy.allowTags) ?? undefined,
+    allowAccessTypes: (normalizeRoutingList(policy.allowAccessTypes) as AuthorizationAccessType[] | null) ?? undefined,
+    allowToolPrefixes: normalizeRoutingList(policy.allowToolPrefixes) ?? undefined,
   };
 }
 

@@ -19,6 +19,7 @@ Usage:
 
 Lanes:
   code-quality
+  code-quality-light
   hub-deploy
   policy
 
@@ -113,6 +114,10 @@ main() {
     code-quality)
       workflow_path="automation/symphony/code-quality/WORKFLOW.md"
       port="4780"
+      ;;
+    code-quality-light)
+      workflow_path="automation/symphony/code-quality-light/WORKFLOW.md"
+      port="4783"
       ;;
     hub-deploy)
       workflow_path="automation/symphony/hub-deploy/WORKFLOW.md"

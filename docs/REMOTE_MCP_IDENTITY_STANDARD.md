@@ -33,6 +33,7 @@ Accepted patterns:
 - MCP session token in first-party controlled flows
 - OAuth-delivered bearer token where host compatibility requires OAuth onboarding
 - operator-delivered managed bearer onboarding for approved white-glove customer setup, provided the credential still resolves through the same governed bearer model
+- approved named-lane passwordless `launch_url` delivery, provided the URL carries a per-user managed bearer that still resolves through the same governed bearer model
 
 ### 2. Runtime actor context
 
@@ -71,6 +72,8 @@ This layer should not redefine the actor model used by the Hub.
 
 The portable external credential for CREATE SOMETHING remote MCP access is the managed bearer token, not a raw upstream IdP token.
 
+For approved passwordless named-lane delivery, the `launch_url` is only a transport for that same managed bearer. It does not create a second anonymous credential model.
+
 ### Rule 2: OAuth is a delivery and delegation mechanism
 
 OAuth may be required by a host or a third-party integration, but it should map back into CREATE SOMETHING's managed identity model.
@@ -88,6 +91,8 @@ Not from arbitrary client-supplied account headers.
 ### Rule 4: Actor context must be normalized before tool execution
 
 Protected tool execution must not proceed without normalized actor context.
+
+Transport convenience does not change this rule. A passwordless named-lane URL still has to resolve `accountId`, `tenantId`, `userId`, host binding, and scope before execution.
 
 ### Rule 4a: Explicit tool prefixes are first-class identity scope
 

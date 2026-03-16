@@ -9,6 +9,13 @@ This workflow runs Symphony against Loom tasks labeled `policy`.
 - `pnpm` available on `PATH`
 - remote Loom reachable at `https://loom.mcp.createsomething.agency/mcp`
 
+Default execution runtime:
+
+- `codex-cli` via Symphony's `execution.runner` workflow setting
+- app-server is no longer the default for this lane
+- lightweight workspace bootstrap via `workspace.mode: lightweight`
+- dependency reuse via `workspace.dependency_mode: reuse`
+
 ## Task convention
 
 Create Loom tasks for this lane with the `policy` label. Example:
@@ -38,6 +45,14 @@ pnpm symphony:policy:once
 ```
 
 Runtime state is exposed on `http://127.0.0.1:4781/`.
+
+The policy lane now uses the CLI runner by default. This keeps Loom orchestration and lane semantics unchanged while moving policy work off the older app-server execution path.
+
+The lane also defaults to a lightweight workspace bootstrap:
+
+- snapshots the policy-relevant repo surface instead of creating a full worktree
+- reuses root `node_modules` when available instead of installing by default
+- preserves the old isolated path as a fallback if the workflow config changes back
 
 ## Running with Infisical
 

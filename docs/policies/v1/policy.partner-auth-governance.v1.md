@@ -51,6 +51,9 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 25. For auth-bound search providers such as Exa or PerplexityAI, the required prerequisite is a live auth-config mapping in `COMPOSIO_AUTH_CONFIG_MAP` plus a successful `get_connect_link` or equivalent governed auth path.
 26. For `NO_AUTH` providers such as `composio-toolkit-composio_search`, the required prerequisite is that the toolkit is enabled on the lane and at least one representative brokered tool call succeeds without customer auth.
 27. Search-provider choice MAY be lane-specific. A lane MAY expose Exa, PerplexityAI, Composio Search, or any approved combination, but the public contract, runbook, and delivery metadata MUST name the actual enabled provider set.
+28. Approved named lanes MAY opt into passwordless URL delivery for managed bearer access only when the lane metadata explicitly enables that transport and an approved exception record exists for the lane.
+29. Passwordless URL delivery MUST still resolve to one entitled user, one account, and one tenant through `identity-worker`. It MUST NOT become anonymous lane access, shared bearer delivery, or lane-only attribution.
+30. Partner delivery audit for passwordless named lanes MUST record the delivery transport, lane approval metadata, recipient, and masked launch URL preview without persisting the plaintext query credential.
 
 ## Enforcement Surfaces
 
@@ -80,6 +83,7 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 - Decision events in `mcp_policy_events`
 - Consent linkage in admin mint payloads and partner consent records
 - Delivery audit records in `partner_access_deliveries`
+- Delivery audit records showing `delivery_transport=passwordless_url_query` only when the lane approval metadata explicitly enabled that path
 - workflow or job traces showing pinned account and runtime identity selection
 - lane audit records showing lane slug, host key, and effective prefix set
 - observability traces showing `account_id`, `tenant_id`, and lane slug or bound host on issuance, deny, and routed-call records

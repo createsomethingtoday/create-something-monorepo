@@ -769,10 +769,16 @@ function mentionsAny(lower: string, phrases: string[]): boolean {
   return phrases.some((phrase) => lower.includes(phrase));
 }
 
-function extractAccountSlug(request: string): string | null {
+export function extractAccountSlug(request: string): string | null {
   const slugMatch = request.match(/\bslug\s*(?:is|=|:)?\s*["'`]?([a-zA-Z0-9_-]{2,64})["'`]?/i);
   if (slugMatch?.[1]) {
     return normalizeSlug(slugMatch[1]);
+  }
+  const renameWorkspaceMatch = request.match(
+    /\b(?:rename|relabel|change\s+(?:the\s+)?(?:label|display\s*name|name))\s+workspace\s+["'`]?([a-zA-Z0-9_-]{2,64})["'`]?/i,
+  );
+  if (renameWorkspaceMatch?.[1]) {
+    return normalizeSlug(renameWorkspaceMatch[1]);
   }
   const workspaceMatch = request.match(/\bworkspace\s*(?:named|name|called)\s*["'`]?([a-zA-Z0-9_-]{2,64})["'`]?/i);
   if (workspaceMatch?.[1]) {
@@ -781,7 +787,7 @@ function extractAccountSlug(request: string): string | null {
   return null;
 }
 
-function extractDisplayLabel(request: string): string | null {
+export function extractDisplayLabel(request: string): string | null {
   const renameToMatch = request.match(
     /\b(?:rename|relabel|change\s+(?:the\s+)?(?:label|display\s*name|name))\b[\s\S]*?\bto\s*["']([^"']{2,120})["']/i,
   );

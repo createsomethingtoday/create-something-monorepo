@@ -6,8 +6,9 @@ import {
 	getDomainConfig,
 	setSessionCookies,
 } from '@create-something/canon/auth';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ url, cookies, platform, request }) => {
+export const load: PageServerLoad = async ({ url, cookies, platform, request }) => {
 	const config = getAuth0Config(platform?.env);
 	if (!config) {
 		throw error(503, 'Auth0 is not configured');

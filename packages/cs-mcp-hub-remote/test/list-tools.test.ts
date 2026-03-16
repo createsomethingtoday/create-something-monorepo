@@ -77,3 +77,24 @@ test('buildListToolDefinitions appends authenticated direct-allowed proxy tools'
   assert.equal(tools.some((tool) => tool.name === 'halfdozen-operator-notion-mcp__operator_notion_accounts'), true);
   assert.equal(tools.some((tool) => tool.name === 'composio-toolkit-notion__notion_search'), false);
 });
+
+test('buildListToolDefinitions treats mcp_access_token query transport as authenticated', async () => {
+  const tools = await buildListToolDefinitions({
+    request: { id: 3 },
+    extra: {
+      requestInfo: {
+        headers: {},
+        url: 'https://viv-blondish.mcp.createsomething.agency/mcp?mcp_access_token=mcpu_query_auth',
+      },
+    },
+    runtime: makeRuntime(['halfdozen-operator-notion-mcp__operator_notion_accounts']),
+    env: {
+      HUB_IDENTITY_MODE: 'compat',
+      HUB_ALLOW_DIRECT_PROXY_TOOLS: 'true',
+      HUB_DIRECT_PROXY_ALLOWED_PREFIXES: 'halfdozen-operator-notion-mcp__',
+    } as any,
+  });
+
+  assert.equal(tools.some((tool) => tool.name === 'hub_status'), true);
+  assert.equal(tools.some((tool) => tool.name === 'halfdozen-operator-notion-mcp__operator_notion_accounts'), true);
+});

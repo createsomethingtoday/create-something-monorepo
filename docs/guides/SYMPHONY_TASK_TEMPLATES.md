@@ -5,7 +5,7 @@ Use Symphony as a Loom-backed execution layer for bounded work, not as a free-fo
 This guide defines the recommended task shapes for CREATE SOMETHING's current working style:
 
 - Loom is the system of record.
-- Symphony executes work inside isolated worktrees.
+- Symphony can execute work in either lightweight or broader bootstrap modes depending on the lane.
 - Policy remains an artifact, not just a prompt.
 - Tasks should map cleanly to one tier whenever possible: `Database`, `Automation`, or `Judgment`.
 
@@ -23,6 +23,14 @@ If a task spans multiple tiers, split it unless there is a strong reason not to.
 
 ## Lane selection
 
+Use `code-quality-light` for:
+
+- docs-only fixes
+- config updates
+- script or workflow fixes
+- package-scoped implementation issues that should stay on lightweight bootstrap
+- narrow package checks that do not need repo-wide verification
+
 Use `code-quality` for:
 
 - build failures
@@ -30,7 +38,8 @@ Use `code-quality` for:
 - lint regressions
 - test regressions
 - dependency or install gaps
-- narrow runtime or packaging issues
+- broader runtime or packaging issues
+- release-readiness or repo-wide verification work
 
 Use `policy` for:
 
@@ -419,6 +428,13 @@ Code-quality lane:
 ```bash
 pnpm symphony:code-quality:infisical:once
 pnpm symphony:code-quality:infisical
+```
+
+Code-quality-light lane:
+
+```bash
+pnpm symphony:code-quality-light:infisical:once
+pnpm symphony:code-quality-light:infisical
 ```
 
 Policy lane:

@@ -46,6 +46,8 @@ Optional runtime selection:
 - `HUB_DISCOVERY_MODE` (`compact` or `full`)
 - `HUB_DISCOVERY_DEFAULT_SERVERS` (comma list / JSON array override)
 - `HUB_DISCOVERY_MAX_PROXY_TOOLS` (positive int cap; unset for uncapped)
+- `HUB_DISCOVERY_TOOL_EXPOSURE_MODE` (`all` default, or `service_first` for named-service bootstrap discovery)
+- `HUB_DISCOVERY_EXPANDED_SERVERS` (comma list / JSON array of services that should start expanded under `service_first`)
 - `HUB_DISCOVERY_SHARED_PACK` (named default from `config/mcp-hub/discovery-packs.json`, for example `shared-auth-core`)
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
@@ -78,6 +80,12 @@ Compatibility note:
   - identity-issued personal bearer tokens are also accepted directly when `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` are configured
   - this is the preferred host-compatibility mode for Notion-style MCP clients that reliably send a bearer header but do not send `X-MCP-Session-Token`
 - `compat` mode no longer trusts client-supplied account headers; identity must come from the resolver, gateway auth, or explicit worker fallback configuration.
+
+Service-first discovery note:
+
+- `service_first` keeps the default visible surface small by exposing bootstrap tools per service first, then expanding a selected service progressively.
+- Bootstrap tools are the auth/discovery trio when available: `__connection_status`, `__get_connect_link`, and `__toolkit_info`.
+- Use `hub_list_services` for named services and `hub_expand_service` to widen one or more services without widening the whole catalog.
 
 Recommended production posture:
 
@@ -219,6 +227,14 @@ pnpm partner:access:rotate -- \
 That returns a `managed_bearer_bundle` for the client while leaving `HUB_API_TOKEN` as the worker/runtime guardrail.
 
 Use `--mode legacy` only for exception-governed fallback delivery.
+
+Approved named-lane passwordless delivery:
+
+- partner-managed named lanes may request `delivery_transport=url_query` on `POST /api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue`
+- the response still returns the normal managed bearer metadata and additionally returns a `launch_url`
+- `launch_url` carries the same per-user managed bearer using `mcp_access_token`, not the legacy `token` query parameter
+- this is a transport convenience for approved named lanes only; it is not anonymous execution and it does not replace header-bearer delivery as the default path
+- the hub resolves `mcp_access_token` through `identity-worker`, so bound-host rejection, user attribution, entitlement checks, and allowed-prefix enforcement still apply
 
 ## OAuth Host Rule
 

@@ -15,6 +15,8 @@ polling:
   interval_ms: 30000
 workspace:
   root: ./.symphony/workspaces/policy
+  mode: lightweight
+  dependency_mode: reuse
 hooks:
   after_create: bash ../../../../scripts/symphony/policy-after-create.sh
   before_remove: bash ../../../../scripts/symphony/policy-before-remove.sh
@@ -26,8 +28,9 @@ agent:
     claimed: 1
   max_turns: 8
   max_retry_backoff_ms: 300000
+execution:
+  runner: codex-cli
 codex:
-  command: codex app-server
   approval_policy: never
   thread_sandbox: danger-full-access
   turn_sandbox_policy:

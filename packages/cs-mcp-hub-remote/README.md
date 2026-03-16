@@ -42,6 +42,9 @@ It also exposes one MCP App UI resource:
 - `hub_run_intent` (route + execute in one call)
 - `hub_execute_proxy_tool` (execute one visible proxy tool by name with args)
 - `hub_run_proxy_tool` (compatibility alias for `hub_execute_proxy_tool`)
+- `hub_list_services` (named downstream services + current discovery exposure)
+- `hub_set_discovery` (apply packs, cap discovery, or switch service-first exposure)
+- `hub_expand_service` (progressively expand a named service from bootstrap tools to fuller discovery)
 - `hub_policy_status` (active policy/runtime limit settings)
 - `hub_list_discovery_packs` (list named discovery presets)
 - `hub_refresh_connections`
@@ -91,6 +94,8 @@ Environment variables:
 - `HUB_DISCOVERY_MODE` (optional): `compact` (default) or `full`
 - `HUB_DISCOVERY_DEFAULT_SERVERS` (optional): comma-separated or JSON array of server names
 - `HUB_DISCOVERY_MAX_PROXY_TOOLS` (optional): positive integer cap; unset/null means no cap
+- `HUB_DISCOVERY_TOOL_EXPOSURE_MODE` (optional): `all` (default) or `service_first`
+- `HUB_DISCOVERY_EXPANDED_SERVERS` (optional): comma-separated or JSON array of services that should start expanded when `service_first` is enabled
 - `HUB_DISCOVERY_SHARED_PACK` (optional): named default from `config/mcp-hub/discovery-packs.json`
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
@@ -110,8 +115,10 @@ Downstream auth variables are read dynamically from each registry server's `env_
 Shared discovery packs:
 
 - `shared-auth-core`: Dropbox, Gmail, Google Drive, Google Sheets, Notion, QuickBooks, Slack, YouTube, Zoom
+- `outerfields-shared-auth-clickup`: service-first Outerfields profile with ClickUp plus shared-auth core, bootstrap tools by default, and a bounded default cap
 - List available packs with `hub_list_discovery_packs`
 - Apply one with `hub_set_discovery` by setting `pack`
+- In `service_first` mode, `hub_list_services` exposes clean service names and `hub_expand_service` progressively expands one or more services without widening the whole catalog
 
 Intent routing:
 

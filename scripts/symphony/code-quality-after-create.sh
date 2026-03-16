@@ -6,6 +6,11 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 WORKSPACE_PATH="$(pwd)"
 source "${SCRIPT_DIR}/worktree-utils.sh"
 
+if [[ "${SYMPHONY_WORKSPACE_MODE:-isolated}" == "lightweight" && "${SYMPHONY_CODE_QUALITY_SCOPE:-full}" == "full" ]]; then
+  export SYMPHONY_WORKSPACE_BACKEND="${SYMPHONY_WORKSPACE_BACKEND:-snapshot}"
+  export SYMPHONY_CODE_QUALITY_SCOPE="symphony"
+fi
+
 export SYMPHONY_WORKSPACE_BACKEND="${SYMPHONY_WORKSPACE_BACKEND:-snapshot}"
 export SYMPHONY_CODE_QUALITY_SCOPE="${SYMPHONY_CODE_QUALITY_SCOPE:-full}"
 if [[ "${SYMPHONY_WORKSPACE_BACKEND}" == "snapshot" ]]; then

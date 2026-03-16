@@ -1,5 +1,6 @@
 import { HALF_DOZEN_PARTNER_KEY, postIdentityAdmin } from '$lib/server/partner-auth';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
+import type { PageServerLoad } from './$types';
 
 interface IdentityAuditFeed {
 	auth_events: Array<{
@@ -23,7 +24,7 @@ interface IdentityAuditFeed {
 	}>;
 }
 
-export const load = async ({ cookies, platform }) => {
+export const load: PageServerLoad = async ({ cookies, platform }) => {
 	await requireAgencyOperator({ cookies, platform });
 	const db = platform!.env.DB;
 	const deliveries = await db

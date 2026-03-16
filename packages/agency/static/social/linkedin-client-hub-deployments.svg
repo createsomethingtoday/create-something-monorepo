@@ -1,0 +1,82 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="vignette" x1="140" y1="60" x2="1080" y2="570" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#030303"/>
+      <stop offset="1" stop-color="#08090B"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="470" y1="372" x2="730" y2="372" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8AAE3A"/>
+      <stop offset="1" stop-color="#D7FF5C"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#000000"/>
+  <rect width="1200" height="630" fill="url(#vignette)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <text x="80" y="76" fill="rgba(255,255,255,0.62)" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="14" letter-spacing="1.8">createsomething.agency</text>
+  <text x="80" y="100" fill="rgba(255,255,255,0.38)" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="12" letter-spacing="2.4">SERVICES</text>
+
+  <g transform="translate(1048 56)">
+    <path d="M 32 0 L 64 18 L 32 36 L 0 18 Z" fill="#FFFFFF" fill-opacity="1"/>
+    <path d="M 0 18 L 32 36 L 32 72 L 0 54 Z" fill="#FFFFFF" fill-opacity="0.6"/>
+    <path d="M 32 36 L 64 18 L 64 54 L 32 72 Z" fill="#FFFFFF" fill-opacity="0.3"/>
+  </g>
+
+  <text x="80" y="170" fill="#FFFFFF" font-family="Stack Sans Notch, Helvetica Neue, Arial, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8">
+    One named Hub
+  </text>
+  <text x="80" y="234" fill="#FFFFFF" font-family="Stack Sans Notch, Helvetica Neue, Arial, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8">
+    per client.
+  </text>
+  <text x="80" y="274" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="18">
+    Clean client surface. Bounded discovery. Authz before execution.
+  </text>
+
+  <rect x="80" y="316" width="1040" height="242" rx="28" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.12)"/>
+  <text x="108" y="348" fill="#D7FF5C" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="12" letter-spacing="2.2">CLIENT OPERATING SURFACE</text>
+
+  <path d="M 492 408 L 560 408" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <path d="M 640 408 L 708 408" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <path d="M 492 466 L 560 466" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <path d="M 640 466 L 708 466" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <path d="M 600 366 L 600 392" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <path d="M 600 482 L 600 506" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+
+  <rect x="560" y="392" width="80" height="90" rx="18" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.14)"/>
+  <g transform="translate(568 408)">
+    <path d="M 32 0 L 56 14 L 32 28 L 8 14 Z" fill="#FFFFFF" fill-opacity="1"/>
+    <path d="M 8 14 L 32 28 L 32 56 L 8 42 Z" fill="#FFFFFF" fill-opacity="0.6"/>
+    <path d="M 32 28 L 56 14 L 56 42 L 32 56 Z" fill="#FFFFFF" fill-opacity="0.3"/>
+  </g>
+  <text x="581" y="496" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="11" letter-spacing="1.8">HOUSE</text>
+
+  <rect x="396" y="388" width="96" height="40" rx="20" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)"/>
+  <text x="425" y="412" fill="#FFFFFF" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="16">MAIL</text>
+  <rect x="708" y="388" width="96" height="40" rx="20" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)"/>
+  <text x="737" y="412" fill="#FFFFFF" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="16">DOCS</text>
+  <rect x="392" y="446" width="104" height="40" rx="20" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)"/>
+  <text x="420" y="470" fill="#FFFFFF" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="16">CRM</text>
+  <rect x="700" y="446" width="112" height="40" rx="20" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)"/>
+  <text x="720" y="470" fill="#FFFFFF" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="16">SEARCH</text>
+
+  <rect x="108" y="506" width="292" height="34" rx="17" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)"/>
+  <text x="126" y="528" fill="rgba(255,255,255,0.86)" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="13">NAMED LANE  //  host-bound route</text>
+  <rect x="454" y="506" width="292" height="34" rx="17" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)"/>
+  <text x="472" y="528" fill="rgba(255,255,255,0.86)" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="13">APPROVED SURFACE  //  bounded discovery</text>
+  <rect x="800" y="506" width="292" height="34" rx="17" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)"/>
+  <text x="818" y="528" fill="rgba(255,255,255,0.86)" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="13">GOVERNED CALLS  //  authz + trace</text>
+
+  <rect x="470" y="364" width="260" height="6" rx="3" fill="rgba(255,255,255,0.08)"/>
+  <rect x="470" y="364" width="200" height="6" rx="3" fill="url(#signal)"/>
+
+  <text x="80" y="590" fill="rgba(255,255,255,0.34)" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="12" letter-spacing="1.8">
+    clients see one governed surface / provider plumbing stays behind it
+  </text>
+  <text x="1002" y="590" fill="rgba(255,255,255,0.34)" font-family="JetBrains Mono, SFMono-Regular, monospace" font-size="12" letter-spacing="1.8">
+    CREATE SOMETHING
+  </text>
+</svg>

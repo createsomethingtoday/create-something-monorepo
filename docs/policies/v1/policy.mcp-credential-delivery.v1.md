@@ -66,6 +66,9 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 42. A managed-bearer compat lane MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` unless an explicit separately approved exception exists.
 43. A managed-bearer compat lane MUST preserve bound-host rejection and explicit `allowed_tool_prefixes` enforcement through the resolver-backed bearer path.
 44. Managed-bearer compat lanes are host-compatibility infrastructure, not legacy credential exceptions, and MUST NOT be governed as sunset-bounded legacy key lanes unless they also use approved legacy key delivery.
+45. Approved named lanes MAY deliver a managed bearer as a passwordless `launch_url` that carries the bearer in the `mcp_access_token` query parameter, but only when explicit lane approval metadata exists for that transport.
+46. Passwordless URL delivery MUST remain per-user, resolver-backed, host-bound managed bearer access. It MUST NOT create anonymous execution, shared lane credentials, or lane-only attribution.
+47. Passwordless URL delivery MUST preserve existing header-bearer, strict-session, and OAuth-delivered bearer flows for all clients that do not explicitly opt into the approved named-lane exception path.
 
 ## Enforcement Surfaces
 
@@ -94,6 +97,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - Hub discovery surfaces:
   - `GET /.well-known/oauth-authorization-server`
   - `GET /mcp/.well-known/oauth-authorization-server`
+  - `/mcp?mcp_access_token=<managed bearer>` on explicitly approved named lanes
 - Portal-managed MCP OAuth password surfaces:
   - `.agency` `MCP Access`
   - authenticated password set/rotate API for entitled users
@@ -112,6 +116,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `partner_access_deliveries` rows with non-secret metadata
 - `partner_access_deliveries` rows exposing named lane URL, host key, bound host, and effective prefix set without plaintext secret storage
 - `partner_access_deliveries` rows exposing `account_id`, `tenant_id`, lane URL, host key, bound host, and effective prefix set without plaintext secret storage
+- `partner_access_deliveries` rows exposing `delivery_transport`, approved exception metadata, and only masked `launch_url_preview` material for passwordless named-lane delivery
 - `partner_access_deliveries` rows identifying white-glove versus self-service handoff context and the delivery channel used for initial onboarding
 - `agency_mcp_entitlements` rows and operator mutation history
 - `partner_auth_clients` and `partner_auth_consents` records used for entitlement reconciliation

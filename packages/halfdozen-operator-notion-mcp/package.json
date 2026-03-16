@@ -9,7 +9,7 @@
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
-    "test:contract": "pnpm exec tsx --test src/composio-notion.contract.test.ts"
+    "test:contract": "pnpm exec tsx --test src/composio-notion.contract.test.ts src/tools.router.test.ts"
   },
   "dependencies": {
     "@composio/core": "^0.6.4",

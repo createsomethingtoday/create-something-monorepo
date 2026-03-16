@@ -67,6 +67,9 @@ Define the canonical user-experience contract for client-facing MCP access, tran
 23. Telemetry and Braintrust tracing are mandatory baseline observability controls for dedicated named lanes. They are operator-facing controls and MUST NOT expand the client-visible tool surface.
 24. When a hosted chat or concierge product is part of delivery, it MUST be implemented as a product surface separate from `.agency` control-plane routes and separate from MCP App DUI resources.
 25. Hosted chat or concierge products MUST follow [`policy.progressive-profile-governance.v1`](./policy.progressive-profile-governance.v1.md) for inferred-versus-confirmed field handling and dynamic widget selection.
+26. When a named lane is approved for passwordless URL delivery, the customer-facing UX MAY expose a one-step `launch_url`, but it MUST describe that flow as a transport convenience for managed bearer access, not as anonymous lane access.
+27. Customer-facing UX that says "no authentication" or equivalent MUST mean "no extra interactive login or token-paste step." It MUST NOT imply that CREATE SOMETHING stopped resolving per-user identity, entitlement, or host binding.
+28. Any surface that reveals a passwordless named-lane `launch_url` MUST treat that URL as a high-trust secret, show it only at issuance or regeneration time, and preserve revoke/regenerate controls continuously.
 
 ## Required User Surfaces
 
@@ -85,6 +88,7 @@ Must show:
 
 - bearer-token status
 - host configuration snippets
+- passwordless named-lane `launch_url` status when that transport is explicitly approved
 - MCP OAuth password status
 - linked hub URL or assigned access lane
 - transparent named-lane display name and URL when a named lane is assigned
@@ -107,6 +111,7 @@ Must show:
 - identity boundary
 - authorization model
 - credential separation
+- the fact that a passwordless named-lane URL is still a managed credential, not anonymous access
 - revoke and regenerate behavior
 - commercial and legal gating
 

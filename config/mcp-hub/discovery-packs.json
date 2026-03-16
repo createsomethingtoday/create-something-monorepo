@@ -19,7 +19,7 @@
       "maxProxyTools": null
     },
     "outerfields-shared-auth-clickup": {
-      "description": "Outerfields discovery pack: shared auth core plus ClickUp.",
+      "description": "Outerfields discovery pack: shared auth core plus ClickUp with named service-first discovery and progressive expansion.",
       "mode": "compact",
       "activeServers": [
         "composio-toolkit-clickup",
@@ -34,7 +34,8 @@
         "composio-toolkit-youtube",
         "composio-toolkit-zoom"
       ],
-      "maxProxyTools": null
+      "maxProxyTools": 64,
+      "toolExposureMode": "service_first"
     },
     "webflow-marketplace-review-phase-a": {
       "description": "Phase A reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus bounded reviewer-safe actions and metrics.",

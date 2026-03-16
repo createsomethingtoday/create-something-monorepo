@@ -3,10 +3,11 @@ import test from 'node:test';
 
 import { authorizeRequest, resolveAccountContext, resolveHubIdentityMode } from '../index.ts';
 
-function makeExtra(headers: Record<string, string>) {
+function makeExtra(headers: Record<string, string>, url?: string) {
   return {
     requestInfo: {
       headers,
+      ...(url ? { url } : {}),
     },
   };
 }
@@ -26,7 +27,7 @@ test('resolveAccountContext requires session token header or bearer token in ses
         HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
       } as any,
     ),
-    /Missing X-MCP-Session-Token header or bearer token\./,
+    /Missing X-MCP-Session-Token header, mcp_access_token query parameter, or bearer token\./,
   );
 });
 
@@ -196,6 +197,59 @@ test('resolveAccountContext accepts managed bearer auth in session_required mode
     assert.equal(capturedToken, 'mcpu_lane_token');
     assert.equal(capturedResourceHost, 'morgan-young-c3-management');
     assert.equal(context.accountId, 'acct_lane');
+    assert.equal(context.boundHost, 'morgan-young-c3-management');
+    assert.equal(context.resourceHost, 'morgan-young-c3-management');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('resolveAccountContext accepts managed bearer auth from mcp_access_token query param', async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        session_id: null,
+        account_id: 'acct_query_lane',
+        tenant_id: 'tenant_query_lane',
+        user_id: 'user_query_lane',
+        bound_host: 'morgan-young-c3-management',
+        allowed_tool_prefixes: ['composio-toolkit-gmail__'],
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const context = await resolveAccountContext(
+      makeExtra(
+        {},
+        'https://morgan-young-c3-management.mcp.createsomething.agency/mcp?mcp_access_token=mcpu_query_lane_token',
+      ),
+      {
+        HUB_IDENTITY_MODE: 'session_required',
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(capturedToken, 'mcpu_query_lane_token');
+    assert.equal(capturedResourceHost, 'morgan-young-c3-management');
+    assert.equal(context.accountId, 'acct_query_lane');
     assert.equal(context.boundHost, 'morgan-young-c3-management');
     assert.equal(context.resourceHost, 'morgan-young-c3-management');
   } finally {
@@ -486,6 +540,52 @@ test('authorizeRequest rejects an invalid personal bearer token when static auth
 
     assert.ok(failure instanceof Response);
     assert.equal(failure.status, 401);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('authorizeRequest accepts a resolved managed bearer token from mcp_access_token query param', async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        account_id: 'acct_query_authz',
+        tenant_id: 'tenant_query_authz',
+        user_id: 'user_query_authz',
+        bound_host: 'viv-blondish',
+        auth_mode: 'managed_bearer',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const failure = await authorizeRequest(
+      new Request('https://viv-blondish.mcp.createsomething.agency/mcp?mcp_access_token=mcpu_query_authz'),
+      {
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(failure, null);
+    assert.equal(capturedToken, 'mcpu_query_authz');
+    assert.equal(capturedResourceHost, 'viv-blondish');
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -20,7 +20,7 @@
     "src"
   ],
   "scripts": {
-    "check": "for f in src/*.js src/tracker/*.js test/*.mjs; do node --check \"$f\"; done",
+    "check": "for f in src/*.js src/tracker/*.js src/runners/*.js test/*.mjs; do node --check \"$f\"; done",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {

@@ -1,0 +1,5 @@
+{"timestamp":"2026-03-16T15:42:00.862Z","phase":"cli_entered","once":true,"port":null,"task_id":"lm-33ba6eba"}
+{"timestamp":"2026-03-16T15:42:00.863Z","phase":"workflow_resolved","workflow_path":"/Volumes/LaCie/Create Something/create-something-monorepo/automation/symphony/policy/WORKFLOW.md"}
+{"timestamp":"2026-03-16T15:42:00.864Z","phase":"service_created"}
+{"timestamp":"2026-03-16T15:42:00.892Z","phase":"run_once_started","startup_timeout_ms":10000}
+{"timestamp":"2026-03-16T15:42:00.909Z","phase":"startup_cleanup_skipped"}

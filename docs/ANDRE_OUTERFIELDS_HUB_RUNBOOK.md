@@ -6,7 +6,7 @@ Production runbook for provisioning and operating the client-isolated Hub worker
 - MCP URL: `https://andre-outerfields.mcp.createsomething.agency/mcp`
 - Health URL: `https://andre-outerfields.mcp.createsomething.agency/health`
 - Account fallback ID: `acct_andre_outerfields`
-- Rollout mode: discovery-first (`Outerfields + shared-auth-core + clickup + core`)
+- Rollout mode: discovery-first (`Outerfields + shared-auth-core + clickup + core`) with named service-first discovery and progressive expansion
 
 References:
 
@@ -47,6 +47,7 @@ Notes:
 - This runbook is client-isolated. Do not add this worker to `cs-hub-fleet-*` team scripts.
 - `core` enables `create-something`, `three-tier-framework`, and `playbook`.
 - `agency` enables `outerfields-pcn`.
+- `outerfields-shared-auth-clickup` now starts in service-first mode with a bounded default cap. Use `hub_list_services` and `hub_expand_service` instead of widening the full catalog by default.
 
 ## 3) Set Required Secrets
 

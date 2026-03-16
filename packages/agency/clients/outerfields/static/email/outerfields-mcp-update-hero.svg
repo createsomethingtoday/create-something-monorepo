@@ -1,0 +1,82 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="40" x2="1060" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#101114"/>
+      <stop offset="1" stop-color="#060709"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="260" y1="116" x2="940" y2="650" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1B1D22"/>
+      <stop offset="1" stop-color="#121419"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="672" y1="222" x2="930" y2="470" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8FF5B"/>
+      <stop offset="1" stop-color="#7FAF2D"/>
+    </linearGradient>
+    <filter id="shadow" x="170" y="70" width="860" height="620" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="18"/>
+      <feGaussianBlur stdDeviation="28"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.45 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="760" rx="32" fill="url(#bg)"/>
+  <circle cx="1052" cy="138" r="144" fill="#C4FF2D" fill-opacity="0.09"/>
+  <circle cx="168" cy="654" r="192" fill="#6BA9FF" fill-opacity="0.08"/>
+
+  <g filter="url(#shadow)">
+    <rect x="226" y="108" width="748" height="564" rx="28" fill="url(#panel)" stroke="rgba(255,255,255,0.08)"/>
+  </g>
+
+  <rect x="226" y="108" width="748" height="70" rx="28" fill="#181A1F"/>
+  <circle cx="266" cy="143" r="7" fill="#2C3037"/>
+  <circle cx="288" cy="143" r="7" fill="#2C3037"/>
+  <circle cx="310" cy="143" r="7" fill="#2C3037"/>
+  <rect x="352" y="126" width="222" height="34" rx="17" fill="#101216"/>
+  <text x="371" y="148" fill="#F6F7FA" font-size="17" font-family="Arial, Helvetica, sans-serif" font-weight="700">OUTERFIELDS MCP</text>
+  <rect x="860" y="126" width="84" height="34" rx="17" fill="#101216"/>
+  <text x="883" y="148" fill="#AEB5C4" font-size="15" font-family="Arial, Helvetica, sans-serif">Live</text>
+
+  <text x="286" y="228" fill="#F7F8FA" font-size="42" font-family="Arial, Helvetica, sans-serif" font-weight="700">Paste one URL.</text>
+  <text x="286" y="278" fill="#F7F8FA" font-size="42" font-family="Arial, Helvetica, sans-serif" font-weight="700">Start using tools.</text>
+  <text x="286" y="322" fill="#AAB2C0" font-size="22" font-family="Arial, Helvetica, sans-serif">A simpler setup for Claude Desktop and Codex.</text>
+
+  <rect x="286" y="370" width="282" height="214" rx="24" fill="#111317" stroke="rgba(255,255,255,0.08)"/>
+  <text x="314" y="410" fill="#F7F8FA" font-size="26" font-family="Arial, Helvetica, sans-serif" font-weight="700">Private link ready</text>
+  <text x="314" y="438" fill="#AAB2C0" font-size="17" font-family="Arial, Helvetica, sans-serif">Secure access, no extra login screen.</text>
+  <rect x="314" y="468" width="228" height="54" rx="18" fill="#0A0C0F" stroke="rgba(255,255,255,0.08)"/>
+  <text x="336" y="489" fill="#9DA6B5" font-size="13" font-family="Arial, Helvetica, sans-serif">SECURE SECRET LINK</text>
+  <text x="336" y="509" fill="#F7F8FA" font-size="15" font-family="Arial, Helvetica, sans-serif">https://app.infisical.com/shared/...</text>
+  <rect x="314" y="540" width="140" height="24" rx="12" fill="#1B2410"/>
+  <circle cx="330" cy="552" r="5" fill="#E8FF5B"/>
+  <text x="343" y="557" fill="#DCE7B6" font-size="13" font-family="Arial, Helvetica, sans-serif">Host-bound lane</text>
+
+  <rect x="610" y="214" width="316" height="348" rx="28" fill="#0F1115" stroke="rgba(255,255,255,0.08)"/>
+  <rect x="638" y="248" width="128" height="28" rx="14" fill="#1B2410"/>
+  <text x="660" y="267" fill="#DCE7B6" font-size="13" font-family="Arial, Helvetica, sans-serif" font-weight="700">SERVICE-FIRST VIEW</text>
+  <text x="638" y="314" fill="#F7F8FA" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="700">Start with named services</text>
+  <text x="638" y="342" fill="#AAB2C0" font-size="16" font-family="Arial, Helvetica, sans-serif">See what you need first. Expand deeper only when it matters.</text>
+
+  <rect x="638" y="378" width="88" height="38" rx="19" fill="#171A20"/>
+  <text x="664" y="402" fill="#F7F8FA" font-size="16" font-family="Arial, Helvetica, sans-serif">Mail</text>
+  <rect x="738" y="378" width="96" height="38" rx="19" fill="#171A20"/>
+  <text x="763" y="402" fill="#F7F8FA" font-size="16" font-family="Arial, Helvetica, sans-serif">Drive</text>
+  <rect x="846" y="378" width="56" height="38" rx="19" fill="#171A20"/>
+  <text x="862" y="402" fill="#F7F8FA" font-size="16" font-family="Arial, Helvetica, sans-serif">Chat</text>
+  <rect x="638" y="428" width="88" height="38" rx="19" fill="#171A20"/>
+  <text x="662" y="452" fill="#F7F8FA" font-size="16" font-family="Arial, Helvetica, sans-serif">Tasks</text>
+  <rect x="738" y="428" width="96" height="38" rx="19" fill="#171A20"/>
+  <text x="768" y="452" fill="#F7F8FA" font-size="16" font-family="Arial, Helvetica, sans-serif">Docs</text>
+  <rect x="846" y="428" width="56" height="38" rx="19" fill="#171A20"/>
+  <text x="862" y="452" fill="#F7F8FA" font-size="16" font-family="Arial, Helvetica, sans-serif">CRM</text>
+
+  <rect x="638" y="494" width="248" height="24" rx="12" fill="#171A20"/>
+  <rect x="638" y="494" width="178" height="24" rx="12" fill="url(#accent)"/>
+  <text x="638" y="546" fill="#AAB2C0" font-size="15" font-family="Arial, Helvetica, sans-serif">Only a small tool set is visible at first.</text>
+
+  <rect x="286" y="612" width="640" height="1" fill="rgba(255,255,255,0.08)"/>
+  <text x="286" y="646" fill="#8891A2" font-size="16" font-family="Arial, Helvetica, sans-serif">Private MCP delivery with secure secret sharing and progressive discovery.</text>
+</svg>

@@ -10,6 +10,8 @@
     "transparent_named_lane_required": true,
     "named_lane_pattern": "<person-slug>-<client-slug>",
     "host_bound_named_lane_credentials_required": true,
+    "passwordless_named_lane_launch_url_allowed": true,
+    "passwordless_named_lane_launch_url_requires_explicit_approval": true,
     "white_glove_initial_delivery_allowed": true,
     "white_glove_follow_on_self_service_surface": ".agency"
   },
@@ -58,6 +60,7 @@
   },
   "white_glove_onboarding_requirements": {
     "operator_delivered_initial_bearer_allowed": true,
+    "passwordless_named_lane_launch_url_allowed": true,
     "must_distinguish_initial_handoff_from_self_service": true,
     "must_route_ongoing_management_back_to_agency": true,
     "runtime_bootstrap_tokens_customer_visible_prohibited": true

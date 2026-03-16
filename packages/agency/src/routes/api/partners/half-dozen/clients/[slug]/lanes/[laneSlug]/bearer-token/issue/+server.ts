@@ -18,10 +18,18 @@ import {
 	tokenPreview,
 } from '$lib/server/partner-auth';
 import { reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
+import {
+	buildManagedBearerLaunchUrl,
+	buildManagedBearerLaunchUrlPreview,
+	normalizeManagedBearerDeliveryTransport,
+	resolvePasswordlessLaneUrlDeliveryApproval,
+	type ManagedBearerDeliveryTransport,
+} from '$lib/server/passwordless-lane-delivery';
 
 interface IssueLaneBearerTokenRequestBody {
 	tool_mode?: 'read_only' | 'read_write';
 	delivery_channel?: 'portal' | 'secure_note' | 'email' | 'manual';
+	delivery_transport?: ManagedBearerDeliveryTransport;
 	recipient?: string;
 	metadata?: Record<string, unknown>;
 }
@@ -110,6 +118,21 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		const allowedToolPrefixes = parseJsonStringArray(lane.allowed_tool_prefixes_json);
 		const authEmail = lane.owner_email ?? client.owner_email ?? null;
 		const observabilityBaseline = resolveObservabilityBaseline(laneMetadata);
+		const deliveryTransport = normalizeManagedBearerDeliveryTransport(body?.delivery_transport);
+		const passwordlessDeliveryApproval =
+			deliveryTransport === 'url_query'
+				? resolvePasswordlessLaneUrlDeliveryApproval(laneMetadata, lane.slug)
+				: null;
+		if (deliveryTransport === 'url_query' && !passwordlessDeliveryApproval) {
+			return json(
+				{
+					error: 'passwordless_delivery_not_approved',
+					message:
+						'This named lane is not approved for passwordless URL delivery. Enable metadata.passwordless_delivery for the lane first.',
+				},
+				{ status: 409 },
+			);
+		}
 
 		await reconcileAgencyMcpEntitlement(env.DB, {
 			authSubject: lane.identity_user_id,
@@ -124,6 +147,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				partner_access_lane_url: lane.hub_url,
 				partner_access_lane_host_key: lane.host_key,
 				approved_exception: laneMetadata.approved_exception ?? null,
+				passwordless_delivery: laneMetadata.passwordless_delivery ?? null,
 				observability_baseline: observabilityBaseline,
 			},
 		});
@@ -151,10 +175,29 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				credential_source: 'Partner-managed named lane',
 				consent_record_id: consent.id,
 				consent_granted_at: consent.granted_at,
+				delivery_transport: deliveryTransport,
+				passwordless_delivery_approval: passwordlessDeliveryApproval
+					? {
+							approved_by: passwordlessDeliveryApproval.approvedBy,
+							approved_at: passwordlessDeliveryApproval.approvedAt,
+							expiration_or_review_date: passwordlessDeliveryApproval.expirationOrReviewDate,
+							reason: passwordlessDeliveryApproval.reason,
+							allowed_scope: passwordlessDeliveryApproval.allowedScope,
+						}
+					: null,
 				observability_baseline: observabilityBaseline,
 				...metadata,
 			},
 		});
+		const tokenMaskedPreview = tokenPreview(issued.token);
+		const launchUrl =
+			deliveryTransport === 'url_query'
+				? buildManagedBearerLaunchUrl(lane.hub_url, issued.token)
+				: null;
+		const launchUrlPreview =
+			deliveryTransport === 'url_query'
+				? buildManagedBearerLaunchUrlPreview(lane.hub_url, tokenMaskedPreview)
+				: null;
 
 		const deliveryChannel = body?.delivery_channel ?? 'portal';
 		const recipient = body?.recipient?.trim() || authEmail || null;
@@ -173,11 +216,22 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				auth_subject: issued.auth_subject,
 				auth_email: issued.auth_email,
 				token_prefix: issued.token_prefix,
-				token_preview: tokenPreview(issued.token),
+				token_preview: tokenMaskedPreview,
 				tool_mode: issued.tool_mode,
 				toolkit_profile: issued.toolkit_profile,
 				allowed_tool_prefixes: issued.allowed_tool_prefixes,
 				bound_host: issued.bound_host ?? lane.host_key,
+				delivery_transport: deliveryTransport,
+				launch_url_preview: launchUrlPreview,
+				passwordless_delivery_approval: passwordlessDeliveryApproval
+					? {
+							approved_by: passwordlessDeliveryApproval.approvedBy,
+							approved_at: passwordlessDeliveryApproval.approvedAt,
+							expiration_or_review_date: passwordlessDeliveryApproval.expirationOrReviewDate,
+							reason: passwordlessDeliveryApproval.reason,
+							allowed_scope: passwordlessDeliveryApproval.allowedScope,
+						}
+					: null,
 				client_slug: client.slug,
 				lane_slug: lane.slug,
 				lane_display_name: lane.display_name,
@@ -201,6 +255,8 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				mode: 'managed_bearer',
 				mcp_url: lane.hub_url,
 				authorization: `Bearer ${issued.token}`,
+				delivery_transport: deliveryTransport,
+				launch_url: launchUrl,
 				token_id: issued.token_id,
 				token_prefix: issued.token_prefix,
 				account_id: issued.account_id,

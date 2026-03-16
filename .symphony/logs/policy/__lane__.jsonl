@@ -1,0 +1,2 @@
+{"timestamp":"2026-03-16T15:42:00.893Z","run_id":"sym-mmtcq94t-3i3t7kfy","lane":"policy","agent_id":"symphony-policy","correlation_id":"__lane__","task_id":"__lane__","phase":"poll","status":"started","details":{"operations":["poll","reconcile"]}}
+{"timestamp":"2026-03-16T15:42:01.723Z","run_id":"sym-mmtcq94t-3i3t7kfy","lane":"policy","agent_id":"symphony-policy","correlation_id":"__lane__","task_id":"__lane__","phase":"poll","status":"succeeded","details":{"candidate_count":1}}

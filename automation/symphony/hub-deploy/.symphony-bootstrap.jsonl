@@ -8,3 +8,8 @@
 {"timestamp":"2026-03-15T01:31:46.088Z","phase":"service_created"}
 {"timestamp":"2026-03-15T01:31:46.100Z","phase":"run_once_started","startup_timeout_ms":10000}
 {"timestamp":"2026-03-15T01:31:46.144Z","phase":"startup_cleanup_tracker_call"}
+{"timestamp":"2026-03-16T15:42:00.872Z","phase":"cli_entered","once":true,"port":null,"task_id":"lm-0a1bfad1"}
+{"timestamp":"2026-03-16T15:42:00.904Z","phase":"workflow_resolved","workflow_path":"/Volumes/LaCie/Create Something/create-something-monorepo/automation/symphony/hub-deploy/WORKFLOW.md"}
+{"timestamp":"2026-03-16T15:42:00.904Z","phase":"service_created"}
+{"timestamp":"2026-03-16T15:42:00.905Z","phase":"run_once_started","startup_timeout_ms":10000}
+{"timestamp":"2026-03-16T15:42:00.907Z","phase":"startup_cleanup_skipped"}
