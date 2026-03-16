@@ -30,6 +30,11 @@ Exit criteria:
 
 - existing Half Dozen smoke lanes can be called through a reusable module boundary instead of only a top-level script
 
+Status:
+
+- complete via `packages/workflows-trigger/src/halfdozen.ts`
+- the smoke script and Trigger.dev dispatch task now share the same runtime boundary
+
 ## Phase 1: Trigger.dev Foundation
 
 Goal:
@@ -41,6 +46,8 @@ Deliverables:
 - `packages/workflows-trigger`
 - `trigger.config.ts`
 - foundation tasks
+- declarative v4 queue definitions
+- declarative v4 schedule definition for the first read-only lane
 - Infisical-backed local/dev CLI wrapper
 
 Exit criteria:
@@ -68,6 +75,12 @@ Deliverables:
 Exit criteria:
 
 - one read-only production-safe scenario runs on schedule without manual babysitting
+
+Current implementation status:
+
+- Trigger.dev can now execute the shared runtime for `fleet-watchdog`
+- the phase gate is `CS_TRIGGER_ENABLE_LIVE_HALFDOZEN=true`
+- bounded-write scenarios are still intentionally blocked in Trigger.dev
 
 ## Phase 3: Trigger.dev Bounded Writes
 
