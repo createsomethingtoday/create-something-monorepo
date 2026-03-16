@@ -7,4 +7,11 @@ export default defineConfig({
   clean: true,
   splitting: false,
   sourcemap: true,
+  external: [
+    "@create-something/observability",
+    "@create-something/observability/openai-agents",
+    "@openai/agents",
+    "@trigger.dev/sdk",
+    "zod",
+  ],
 });

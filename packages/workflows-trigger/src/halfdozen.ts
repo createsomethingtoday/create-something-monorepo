@@ -8,8 +8,6 @@ import {
   getAllMcpTools,
 } from "@openai/agents";
 
-import { registerOpenAIAgentsBraintrustTracing } from "@create-something/observability/openai-agents";
-
 export type ServerKey = "telemetry" | "youtube" | "gmail" | "zoom" | "notion";
 export type ScenarioKey = "dedup" | "inbox-triage" | "fleet-watchdog";
 
@@ -188,6 +186,18 @@ export const MULTI_SERVER_GENERIC_BLOCKLIST = [
 export const DEFAULT_AGENT_NAME = "Half Dozen MCP Ops Agent";
 export const DEFAULT_AGENT_INSTRUCTIONS =
   "You are an operations agent for Half Dozen. Use MCP tools for factual claims. Keep output concise and evidence-based.";
+
+async function registerBraintrustTracing(
+  projectName: string,
+  tags: string[],
+): Promise<boolean> {
+  const module = await import("@create-something/observability/openai-agents");
+
+  return module.registerOpenAIAgentsBraintrustTracing({
+    projectName,
+    tags,
+  });
+}
 
 const SCENARIO_PRESETS: Record<ScenarioKey, ScenarioPreset> = {
   dedup: {
@@ -725,17 +735,16 @@ export async function runHalfDozenScenario(
       mcpServers: mcpServers.active,
     });
 
-    const braintrustTracingEnabled = registerOpenAIAgentsBraintrustTracing({
-      projectName:
-        options.traceProjectName ??
+    const braintrustTracingEnabled = await registerBraintrustTracing(
+      options.traceProjectName ??
         process.env.BRAINTRUST_PROJECT_NAME ??
         "Create Something",
-      tags: [
+      [
         "halfdozen",
         options.scenario ?? "custom",
         ...(options.traceTags ?? []),
       ],
-    });
+    );
 
     const runner = new Runner({ tracingDisabled: !braintrustTracingEnabled });
     const result = await runner.run(agent, options.query, {

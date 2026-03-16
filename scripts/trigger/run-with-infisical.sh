@@ -10,6 +10,7 @@ INFISICAL_ENV="${INFISICAL_ENV:-prod}"
 INFISICAL_PATH="${INFISICAL_PATH:-/}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
 INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
+TRIGGER_XDG_CONFIG_HOME="${TRIGGER_XDG_CONFIG_HOME:-/Volumes/LaCie/.config}"
 
 TRIGGER_SECRET_NAME="${TRIGGER_SECRET_NAME:-TRIGGER_SECRET_KEY}"
 TRIGGER_ACCESS_TOKEN_SECRET_NAME="${TRIGGER_ACCESS_TOKEN_SECRET_NAME:-TRIGGER_ACCESS_TOKEN}"
@@ -35,6 +36,8 @@ Environment:
   INFISICAL_PATH                          Infisical folder path (default: /)
   INFISICAL_PROJECT_ID                    Optional explicit Infisical project ID
   INFISICAL_INCLUDE_IMPORTS               Include imported secrets when exporting (default: true)
+  TRIGGER_XDG_CONFIG_HOME                Override XDG config root for Trigger CLI state
+                                         (default: /Volumes/LaCie/.config)
   TRIGGER_SECRET_NAME                     Secret name for TRIGGER_SECRET_KEY (default: TRIGGER_SECRET_KEY)
   TRIGGER_ACCESS_TOKEN_SECRET_NAME        Secret name for TRIGGER_ACCESS_TOKEN (default: TRIGGER_ACCESS_TOKEN)
   TRIGGER_PROJECT_REF_SECRET_NAME         Secret name for TRIGGER_PROJECT_REF (default: TRIGGER_PROJECT_REF)
@@ -80,7 +83,7 @@ resolve_secret_from_infisical() {
 
   payload="$("${export_cmd[@]}")"
 
-  PAYLOAD="$payload" SECRET_NAME="$secret_name" node <<'EOF'
+  PAYLOAD="$payload" SECRET_NAME="$secret_name" node -e '
 const payload = process.env.PAYLOAD ?? "";
 const secretName = process.env.SECRET_NAME ?? "";
 
@@ -105,11 +108,12 @@ if (typeof value !== "string" || value.length === 0) {
 }
 
 process.stdout.write(value);
-EOF
+'
 }
 
 main() {
   local subcommand="${1:-dev}"
+  local trigger_bin="${REPO_ROOT}/packages/workflows-trigger/node_modules/.bin/trigger"
   if [[ "$subcommand" == "--help" || "$subcommand" == "-h" ]]; then
     usage
     exit 0
@@ -119,7 +123,11 @@ main() {
   TRIGGER_RESOLVE_PROJECT_REF_FROM_INFISICAL="$(normalize_bool_or_fail "$TRIGGER_RESOLVE_PROJECT_REF_FROM_INFISICAL")"
 
   require_cmd node
-  require_cmd pnpm
+  export XDG_CONFIG_HOME="$TRIGGER_XDG_CONFIG_HOME"
+  if [[ ! -x "$trigger_bin" ]]; then
+    echo "missing trigger binary at: $trigger_bin" >&2
+    exit 1
+  fi
 
   if [[ -z "${TRIGGER_PROJECT_REF:-}" && "$TRIGGER_RESOLVE_PROJECT_REF_FROM_INFISICAL" == "true" ]]; then
     require_cmd infisical
@@ -145,7 +153,7 @@ main() {
   esac
 
   cd "$REPO_ROOT"
-  exec pnpm --filter @create-something/workflows-trigger exec trigger "$@"
+  exec "$trigger_bin" "$@"
 }
 
 main "$@"

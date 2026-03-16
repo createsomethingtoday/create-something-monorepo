@@ -7,5 +7,5 @@ export default defineConfig({
   clean: true,
   splitting: false,
   sourcemap: true,
-  external: ['@modelcontextprotocol/sdk']
+  external: ['@modelcontextprotocol/sdk', '@openai/agents', 'braintrust', 'langfuse']
 });
