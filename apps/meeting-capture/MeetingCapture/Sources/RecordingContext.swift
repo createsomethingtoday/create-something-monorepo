@@ -12,14 +12,17 @@ struct RecordingContext {
     let startTime: Date
     let origin: RecordingOrigin
 
-    func toUploadMetadata() -> MeetingMetadata {
+    func toUploadMetadata(
+        resources: MeetingCaptureResources = .shared,
+        defaults: UserMetadataDefaults = .current()
+    ) -> MeetingMetadata {
         MeetingMetadata(
             recordedAt: startTime,
             title: resolvedTitle(),
-            property: nil,
-            projectId: nil,
-            tags: nil,
-            participants: nil
+            property: resources.resolvedProperty(defaults.property),
+            projectId: resources.resolvedProjectId(defaults.projectId),
+            tags: resources.mergedTags(appName: appName, userTags: defaults.tags),
+            participants: resources.normalizedValues(defaults.participants)
         )
     }
 

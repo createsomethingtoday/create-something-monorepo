@@ -22,6 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
 
+    private let resources = MeetingCaptureResources.shared
     let meetingDetector = MeetingDetector()
     let audioRecorder = AudioRecorder()
     let uploader = MeetingUploader()
@@ -44,6 +45,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         setupMeetingDetection()
         requestNotificationPermission()
 
+        if let brandMarkImage = resources.brandMarkImage {
+            NSApplication.shared.applicationIconImage = brandMarkImage
+        }
+
         // Hide dock icon - menubar only
         NSApp.setActivationPolicy(.accessory)
     }
@@ -56,13 +61,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "Meeting Capture")
+            button.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: resources.branding.appName)
             button.action = #selector(togglePopover)
             button.target = self
         }
 
         popover = NSPopover()
-        popover?.contentSize = NSSize(width: 280, height: 200)
+        popover?.contentSize = NSSize(width: 300, height: 240)
         popover?.behavior = .transient
         popover?.contentViewController = NSHostingController(
             rootView: MenuBarView(appDelegate: self)
@@ -200,7 +205,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private func updateMenuBarIcon(recording: Bool) {
         if let button = statusItem?.button {
             let symbolName = recording ? "waveform.circle.fill" : "waveform"
-            button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Meeting Capture")
+            button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: resources.branding.appName)
 
             if recording {
                 button.contentTintColor = .systemRed
