@@ -1512,6 +1512,7 @@ async function issueManagedBearerToken(
 				? parseAllowedToolPrefixesOrNull(existing.allowed_tool_prefixes_json) ?? buildAllowedToolPrefixes(toolkitProfile)
 				: buildAllowedToolPrefixes(toolkitProfile);
 	const metadata = normalizeMetadata(input.metadata);
+	const eventUserId = await resolveOptionalEventUserId(db, input.authSubject);
 
 	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
 		policyId: POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID,
@@ -1595,7 +1596,7 @@ async function issueManagedBearerToken(
 	await createMcpAuthEvent(db, {
 		id: generateUUID(),
 		session_id: null,
-		user_id: input.authSubject,
+		user_id: eventUserId,
 		event_type: existing ? 'mcp_long_lived_token_regenerated' : 'mcp_long_lived_token_issued',
 		event_data_json: JSON.stringify({
 			token_id: tokenId,
@@ -1625,6 +1626,10 @@ async function issueManagedBearerToken(
 		allowedToolPrefixes,
 		policyDecision,
 	};
+}
+
+async function resolveOptionalEventUserId(db: D1Database, authSubject: string): Promise<string | null> {
+	return (await findUserById(db, authSubject))?.id ?? null;
 }
 
 async function handleAdminMcpAuditFeed(request: Request, env: Env): Promise<Response> {
@@ -1710,10 +1715,11 @@ async function handleRevokeMcpLongLivedToken(request: Request, env: Env, tokenId
 	}
 
 	const revoked = await revokeMcpLongLivedToken(db, tokenId);
+	const eventUserId = await resolveOptionalEventUserId(db, existing.auth_subject);
 	await createMcpAuthEvent(db, {
 		id: generateUUID(),
 		session_id: null,
-		user_id: existing.auth_subject,
+		user_id: eventUserId,
 		event_type: 'mcp_long_lived_token_revoked',
 		event_data_json: JSON.stringify({
 			token_id: tokenId,
@@ -2107,13 +2113,14 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 		if (!longLivedToken) {
 			return json({ valid: false, reason: 'token_not_found' });
 		}
+		const longLivedTokenEventUserId = await resolveOptionalEventUserId(db, longLivedToken.auth_subject);
 
 		const revoked = Boolean(longLivedToken.revoked_at);
 		if (revoked) {
 			await createMcpAuthEvent(db, {
 				id: generateUUID(),
 				session_id: null,
-				user_id: longLivedToken.auth_subject,
+				user_id: longLivedTokenEventUserId,
 				event_type: 'mcp_long_lived_token_resolve_rejected',
 				event_data_json: JSON.stringify({
 					token_id: longLivedToken.id,
@@ -2142,7 +2149,7 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			await createMcpAuthEvent(db, {
 				id: generateUUID(),
 				session_id: null,
-				user_id: longLivedToken.auth_subject,
+				user_id: longLivedTokenEventUserId,
 				event_type: 'mcp_long_lived_token_resolve_rejected',
 				event_data_json: JSON.stringify({
 					token_id: longLivedToken.id,
@@ -2174,7 +2181,7 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			await createMcpAuthEvent(db, {
 				id: generateUUID(),
 				session_id: null,
-				user_id: longLivedToken.auth_subject,
+				user_id: longLivedTokenEventUserId,
 				event_type: 'mcp_long_lived_token_resolve_rejected',
 				event_data_json: JSON.stringify({
 					token_id: longLivedToken.id,
@@ -2204,7 +2211,7 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 		await createMcpAuthEvent(db, {
 			id: generateUUID(),
 			session_id: null,
-			user_id: longLivedToken.auth_subject,
+			user_id: longLivedTokenEventUserId,
 			event_type: 'mcp_long_lived_token_resolved',
 			event_data_json: JSON.stringify({
 				token_id: longLivedToken.id,

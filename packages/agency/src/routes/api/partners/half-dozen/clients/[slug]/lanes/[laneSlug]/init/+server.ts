@@ -68,7 +68,10 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			body.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {};
 		const clientMetadata = parseJsonObject(client.metadata_json);
 		const clientRequiredToolkits = parseJsonArray(client.required_toolkits_json);
-		const baselineToolkitProfile = parseToolkitList([...clientRequiredToolkits, ...REQUIRED_LANE_TOOLKITS]);
+		const explicitLaneSurface =
+			body.toolkit_profile !== undefined || body.allowed_tool_prefixes !== undefined;
+		const defaultLaneToolkits = explicitLaneSurface ? clientRequiredToolkits : [...clientRequiredToolkits, ...REQUIRED_LANE_TOOLKITS];
+		const baselineToolkitProfile = parseToolkitList(defaultLaneToolkits);
 		const toolkitProfile =
 			body.toolkit_profile !== undefined
 				? parseToolkitList([...body.toolkit_profile, ...baselineToolkitProfile])
@@ -85,8 +88,9 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			body.allowed_tool_prefixes !== undefined
 				? normalizeAllowedToolPrefixes(body.allowed_tool_prefixes)
 				: existingAllowedToolPrefixes;
+		const defaultAllowedToolPrefixes = explicitLaneSurface ? [] : [`${notionServerName}__`];
 		const allowedToolPrefixes = resolveAllowedToolPrefixes(toolkitProfile, [
-			`${notionServerName}__`,
+			...defaultAllowedToolPrefixes,
 			...explicitAllowedToolPrefixes,
 		]);
 		const displayName =
@@ -139,7 +143,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			client_display_name: client.display_name,
 			lane_slug: laneSlug,
 			display_name: displayName,
-			required_toolkits: REQUIRED_LANE_TOOLKITS,
+			required_toolkits: baselineToolkitProfile,
 			observability_baseline: {
 				telemetry: true,
 				braintrust: true,
