@@ -127,77 +127,21 @@ test('CLI once mode completes a Loom-backed task end-to-end', async (t) => {
 
   await writeFile(
     fakeCodexPath,
-    `import readline from 'node:readline';
+    `import { writeFileSync } from 'node:fs';
 
-const rl = readline.createInterface({ input: process.stdin });
-
-function send(message) {
-  process.stdout.write(JSON.stringify(message) + '\\n');
+const args = process.argv.slice(2);
+const outputIndex = args.indexOf('--output-last-message');
+const outputPath = outputIndex === -1 ? null : args[outputIndex + 1];
+let prompt = '';
+for await (const chunk of process.stdin) {
+  prompt += String(chunk);
 }
-
-rl.on('line', (line) => {
-  const message = JSON.parse(line);
-  if (typeof message.id !== 'number') {
-    return;
-  }
-
-  if (message.method === 'initialize') {
-    send({ id: message.id, result: { ok: true } });
-    return;
-  }
-
-  if (message.method === 'thread/start') {
-    send({ id: message.id, result: { thread: { id: 'thread-1' } } });
-    return;
-  }
-
-  if (message.method === 'turn/start') {
-    send({ id: message.id, result: { turn: { id: 'turn-1' } } });
-    send({
-      method: 'item/started',
-      params: {
-        item: {
-          id: 'msg-1',
-          type: 'agentMessage',
-          text: '',
-        },
-      },
-    });
-    send({
-      method: 'thread/tokenUsage/updated',
-      params: {
-        input_tokens: 12,
-        output_tokens: 8,
-        total_tokens: 20,
-      },
-    });
-    send({
-      method: 'item/agentMessage/delta',
-      params: {
-        itemId: 'msg-1',
-        delta: ${JSON.stringify(completionMessage)},
-      },
-    });
-    send({
-      method: 'item/completed',
-      params: {
-        item: {
-          id: 'msg-1',
-          type: 'agentMessage',
-          text: ${JSON.stringify(completionMessage)},
-        },
-      },
-    });
-    send({
-      method: 'turn/completed',
-      params: {
-        turn: {
-          id: 'turn-1',
-        },
-      },
-    });
-  }
-});
+if (!outputPath) {
+  process.stderr.write('missing output path\\n');
+  process.exit(2);
+}
+writeFileSync(outputPath, ${JSON.stringify(completionMessage)});
+process.stdout.write(JSON.stringify({ type: 'turn.complete', promptLength: prompt.length }) + '\\n');
 `,
     'utf8',
   );
@@ -232,8 +176,10 @@ agent:
   max_concurrent_agents: 1
   max_turns: 1
   max_retry_backoff_ms: 100
-codex:
+execution:
+  runner: codex-cli
   command: ${JSON.stringify(codexCommand)}
+codex:
   approval_policy: never
   thread_sandbox: danger-full-access
   turn_sandbox_policy:
@@ -325,14 +271,8 @@ test('CLI once mode retries a stalled turn and completes on a later attempt', as
   await writeFile(
     fakeCodexPath,
     `import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import readline from 'node:readline';
-
+ 
 const counterPath = ${JSON.stringify(turnCounterPath)};
-const rl = readline.createInterface({ input: process.stdin });
-
-function send(message) {
-  process.stdout.write(JSON.stringify(message) + '\\n');
-}
 
 function nextAttempt() {
   const current = existsSync(counterPath) ? Number(readFileSync(counterPath, 'utf8')) || 0 : 0;
@@ -341,75 +281,28 @@ function nextAttempt() {
   return next;
 }
 
-rl.on('line', (line) => {
-  const message = JSON.parse(line);
-  if (typeof message.id !== 'number') {
-    return;
-  }
+const args = process.argv.slice(2);
+const outputIndex = args.indexOf('--output-last-message');
+const outputPath = outputIndex === -1 ? null : args[outputIndex + 1];
+let prompt = '';
+for await (const chunk of process.stdin) {
+  prompt += String(chunk);
+}
+const attempt = nextAttempt();
 
-  if (message.method === 'initialize') {
-    send({ id: message.id, result: { ok: true } });
-    return;
-  }
+if (attempt === 1) {
+  process.on('SIGTERM', () => process.exit(0));
+  setInterval(() => {}, 1000);
+  await new Promise(() => {});
+}
 
-  if (message.method === 'thread/start') {
-    send({ id: message.id, result: { thread: { id: 'thread-stall' } } });
-    return;
-  }
+if (!outputPath) {
+  process.stderr.write('missing output path\\n');
+  process.exit(2);
+}
 
-  if (message.method === 'turn/start') {
-    const attempt = nextAttempt();
-    send({ id: message.id, result: { turn: { id: 'turn-' + attempt } } });
-    send({
-      method: 'item/started',
-      params: {
-        item: {
-          id: 'msg-' + attempt,
-          type: 'agentMessage',
-          text: '',
-        },
-      },
-    });
-
-    if (attempt === 1) {
-      return;
-    }
-
-    send({
-      method: 'thread/tokenUsage/updated',
-      params: {
-        input_tokens: 14,
-        output_tokens: 9,
-        total_tokens: 23,
-      },
-    });
-    send({
-      method: 'item/agentMessage/delta',
-      params: {
-        itemId: 'msg-' + attempt,
-        delta: ${JSON.stringify(completionMessage)},
-      },
-    });
-    send({
-      method: 'item/completed',
-      params: {
-        item: {
-          id: 'msg-' + attempt,
-          type: 'agentMessage',
-          text: ${JSON.stringify(completionMessage)},
-        },
-      },
-    });
-    send({
-      method: 'turn/completed',
-      params: {
-        turn: {
-          id: 'turn-' + attempt,
-        },
-      },
-    });
-  }
-});
+writeFileSync(outputPath, ${JSON.stringify(completionMessage)});
+process.stdout.write(JSON.stringify({ type: 'turn.complete', promptLength: prompt.length, attempt }) + '\\n');
 `,
     'utf8',
   );
@@ -439,8 +332,10 @@ agent:
   max_concurrent_agents: 1
   max_turns: 1
   max_retry_backoff_ms: 25
-codex:
+execution:
+  runner: codex-cli
   command: ${JSON.stringify(codexCommand)}
+codex:
   approval_policy: never
   thread_sandbox: danger-full-access
   turn_sandbox_policy:
@@ -530,8 +425,8 @@ tracker:
   label: code-quality
 workspace:
   root: ${JSON.stringify(workspacesRoot)}
-codex:
-  command: codex app-server
+execution:
+  runner: codex-cli
 ---
 Status view only.
 `,

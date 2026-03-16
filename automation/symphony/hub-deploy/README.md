@@ -68,6 +68,11 @@ pnpm symphony:hub-deploy:once
 
 Runtime state is exposed on `http://127.0.0.1:4782/`.
 
+Default execution/runtime:
+
+- `codex-cli` via Symphony's `execution.runner`
+- existing hub-deploy bootstrap path remains in place for isolation and deploy-sensitive tasks
+
 ## Running with Infisical
 
 If `LOOM_MCP_API_TOKEN` is stored in Infisical instead of exported into your shell:

@@ -11,6 +11,7 @@ import { WorkspaceManager } from '../src/workspace.js';
 const BOOTSTRAP_MARKER = '.symphony-bootstrap-ready.json';
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 const CODE_QUALITY_AFTER_CREATE = join(REPO_ROOT, 'scripts', 'symphony', 'code-quality-after-create.sh');
+const POLICY_AFTER_CREATE = join(REPO_ROOT, 'scripts', 'symphony', 'policy-after-create.sh');
 
 function quoteShell(value) {
   return `'${String(value).replace(/'/g, `'\"'\"'`)}'`;
@@ -236,5 +237,101 @@ test('WorkspaceManager runs the real code-quality snapshot bootstrap hook for in
     assert.equal(await readlink(join(workspacePath, 'node_modules')), join(REPO_ROOT, 'node_modules'));
   } else {
     assert.equal(await pathExists(join(workspacePath, 'node_modules')), true);
+  }
+});
+
+test('WorkspaceManager runs the real code-quality lightweight bootstrap hook when workspace mode is lightweight', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-code-quality-light-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const workspaceRoot = join(tempRoot, 'workspaces');
+  const workspacePath = join(workspaceRoot, 'lm_code_quality_lightweight');
+  const manager = new WorkspaceManager(
+    {
+      workspace: {
+        root: workspaceRoot,
+        mode: 'lightweight',
+        dependency_mode: 'reuse',
+      },
+      hooks: {
+        after_create: `bash ${quoteShell(CODE_QUALITY_AFTER_CREATE)}`,
+        timeout_ms: 120_000,
+      },
+    },
+    createLogger(),
+  );
+
+  await mkdir(workspacePath, { recursive: true });
+  await writeFile(join(workspacePath, 'stale.txt'), 'stale\n', 'utf8');
+
+  await manager.ensure_workspace('lm code quality lightweight');
+
+  assert.equal(await pathExists(join(workspacePath, 'stale.txt')), false);
+  assert.equal(await pathExists(join(workspacePath, 'automation', 'symphony', 'code-quality', 'WORKFLOW.md')), true);
+  assert.equal(await pathExists(join(workspacePath, 'packages', 'symphony', 'package.json')), true);
+  assert.equal(await pathExists(join(workspacePath, 'scripts', 'symphony', 'worktree-utils.sh')), true);
+  assert.equal(await pathExists(join(workspacePath, 'docs', 'README.md')), false);
+  assert.equal(await pathExists(join(workspacePath, '.git')), false);
+
+  const marker = JSON.parse(await readFile(join(workspacePath, BOOTSTRAP_MARKER), 'utf8'));
+  assert.equal(marker.issue_identifier, 'lm code quality lightweight');
+
+  if (await pathExists(join(REPO_ROOT, 'node_modules'))) {
+    const stats = await lstat(join(workspacePath, 'node_modules'));
+    assert.equal(stats.isSymbolicLink(), true);
+    assert.equal(await readlink(join(workspacePath, 'node_modules')), join(REPO_ROOT, 'node_modules'));
+  }
+});
+
+test('WorkspaceManager runs the real policy lightweight bootstrap hook for incomplete workspaces', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-policy-script-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const workspaceRoot = join(tempRoot, 'workspaces');
+  const workspacePath = join(workspaceRoot, 'lm_policy_bootstrap_script');
+  const manager = new WorkspaceManager(
+    {
+      workspace: {
+        root: workspaceRoot,
+        mode: 'lightweight',
+        dependency_mode: 'reuse',
+      },
+      hooks: {
+        after_create: `bash ${quoteShell(POLICY_AFTER_CREATE)}`,
+        timeout_ms: 120_000,
+      },
+    },
+    createLogger(),
+  );
+
+  await mkdir(workspacePath, { recursive: true });
+  await writeFile(join(workspacePath, 'stale.txt'), 'stale\n', 'utf8');
+
+  await manager.ensure_workspace('lm policy bootstrap script');
+
+  assert.equal(await pathExists(join(workspacePath, 'stale.txt')), false);
+  assert.equal(await pathExists(join(workspacePath, 'docs', 'README.md')), true);
+  assert.equal(await pathExists(join(workspacePath, 'scripts', 'symphony', 'policy-after-create.sh')), true);
+  assert.equal(await pathExists(join(workspacePath, 'packages', 'policy-os-engine', 'package.json')), true);
+  assert.equal(await pathExists(join(workspacePath, 'packages', 'symphony', 'package.json')), true);
+  assert.equal(await pathExists(join(workspacePath, '.git')), false);
+
+  const marker = JSON.parse(await readFile(join(workspacePath, BOOTSTRAP_MARKER), 'utf8'));
+  assert.equal(marker.issue_identifier, 'lm policy bootstrap script');
+
+  if (await pathExists(join(REPO_ROOT, '.loom'))) {
+    const stats = await lstat(join(workspacePath, '.loom'));
+    assert.equal(stats.isSymbolicLink(), true);
+    assert.equal(await readlink(join(workspacePath, '.loom')), join(REPO_ROOT, '.loom'));
+  }
+
+  if (await pathExists(join(REPO_ROOT, 'node_modules'))) {
+    const stats = await lstat(join(workspacePath, 'node_modules'));
+    assert.equal(stats.isSymbolicLink(), true);
+    assert.equal(await readlink(join(workspacePath, 'node_modules')), join(REPO_ROOT, 'node_modules'));
   }
 });

@@ -6,7 +6,7 @@ import { LoomTrackerClient } from './tracker/loom.js';
 import { sanitize_workspace_key, validate_dispatch_config } from './config.js';
 import { WorkflowManager } from './workflow.js';
 import { WorkspaceManager } from './workspace.js';
-import { create_agent_worker_run } from './agent-worker.js';
+import { create_default_runner_factory } from './runners/index.js';
 import { create_telemetry } from './telemetry.js';
 function now_iso() {
     return new Date().toISOString();
@@ -72,7 +72,7 @@ export class SymphonyService {
     logger;
     workflow_manager;
     tracker_factory;
-    worker_factory;
+    runner_factory;
     current_definition;
     current_config;
     tracker;
@@ -111,9 +111,10 @@ export class SymphonyService {
                     logger: this.logger,
                 });
         this.tracker_factory = options.dependencies?.tracker_factory ?? default_tracker_factory;
-        this.worker_factory =
-            options.dependencies?.worker_factory ??
-                ((issue, attempt, workspace, prompt_template, config, tracker, workspace_manager, logger, on_event) => create_agent_worker_run(issue, attempt, workspace, prompt_template, config, tracker, workspace_manager, logger, on_event));
+        this.runner_factory =
+            options.dependencies?.runner_factory ??
+                options.dependencies?.worker_factory ??
+                create_default_runner_factory();
         this.requested_port = options.port ?? null;
         this.task_id_filter = typeof options.task_id_filter === 'string' && options.task_id_filter.trim()
             ? options.task_id_filter.trim()
@@ -591,7 +592,7 @@ export class SymphonyService {
             }
             throw error;
         }
-        const run = this.worker_factory(claimed_issue, attempt, workspace, this.current_definition.prompt_template, this.current_config, this.tracker, this.workspace_manager, this.logger, (event) => this.handle_codex_event(claimed_issue.id, event));
+        const run = this.runner_factory(claimed_issue, attempt, workspace, this.current_definition.prompt_template, this.current_config, this.tracker, this.workspace_manager, this.logger, (event) => this.handle_codex_event(claimed_issue.id, event));
         this.running.set(claimed_issue.id, {
             entry: to_running_entry(claimed_issue, attempt),
             run,

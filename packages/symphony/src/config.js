@@ -67,6 +67,20 @@ function normalizeHookTimeout(value) {
         return 60_000;
     return parsed;
 }
+function normalizeWorkspaceMode(value) {
+    const selected = asString(value) ?? 'isolated';
+    return selected === 'lightweight' ? 'lightweight' : 'isolated';
+}
+function normalizeDependencyMode(value) {
+    const selected = asString(value) ?? 'install-if-missing';
+    switch (selected) {
+        case 'reuse':
+        case 'install-if-missing':
+            return selected;
+        default:
+            return 'install-if-missing';
+    }
+}
 function normalizeServerPort(value) {
     const parsed = asInteger(value);
     if (parsed === null)
@@ -81,6 +95,7 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
     const workspace = asObject(workflow.config.workspace);
     const hooks = asObject(workflow.config.hooks);
     const agent = asObject(workflow.config.agent);
+    const execution = asObject(workflow.config.execution);
     const codex = asObject(workflow.config.codex);
     const server = asObject(workflow.config.server);
     const turn_sandbox_policy = asMaybeObject(codex.turn_sandbox_policy);
@@ -115,6 +130,8 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
         },
         workspace: {
             root: workspace_root,
+            mode: normalizeWorkspaceMode(workspace.mode),
+            dependency_mode: normalizeDependencyMode(workspace.dependency_mode),
         },
         hooks: {
             after_create: asString(hooks.after_create),
@@ -129,8 +146,12 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
             max_retry_backoff_ms: asInteger(agent.max_retry_backoff_ms) ?? 300_000,
             max_concurrent_agents_by_state: normalizeStateConcurrency(agent.max_concurrent_agents_by_state),
         },
+        execution: {
+            runner: asString(execution.runner) ?? 'codex-cli',
+            command: asString(execution.command),
+        },
         codex: {
-            command: asString(codex.command) ?? 'codex app-server',
+            command: asString(codex.command) ?? 'codex exec',
             approval_policy: asString(codex.approval_policy) ?? 'never',
             thread_sandbox: asString(codex.thread_sandbox) ?? 'danger-full-access',
             turn_sandbox_policy: turn_sandbox_policy ?? { type: 'dangerFullAccess' },
@@ -158,6 +179,9 @@ export function validate_dispatch_config(config) {
     }
     if (!config.codex.command.trim()) {
         throw new SymphonyError('codex_not_found', 'Missing Codex command.');
+    }
+    if (config.execution.runner !== 'codex-cli') {
+        throw new SymphonyError('unsupported_runner', `Unsupported Symphony runner: ${config.execution.runner}`);
     }
 }
 export function sanitize_workspace_key(identifier) {

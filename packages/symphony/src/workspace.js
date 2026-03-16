@@ -59,7 +59,7 @@ async function write_workspace_bootstrap_marker(workspace_path, issue_identifier
     };
     await writeFile(workspace_bootstrap_marker_path(workspace_path), `${JSON.stringify(marker)}\n`, 'utf8');
 }
-async function run_script(name, script, cwd, timeout_ms, logger, fatal, telemetry, context = {}) {
+async function run_script(name, script, cwd, timeout_ms, logger, fatal, telemetry, context = {}, env = undefined) {
     const started_at = Date.now();
     await telemetry?.emit({
         task_id: context.task_id ?? 'unknown',
@@ -73,6 +73,7 @@ async function run_script(name, script, cwd, timeout_ms, logger, fatal, telemetr
     });
     const child = spawn('bash', ['-lc', script], {
         cwd,
+        env: env ? { ...process.env, ...env } : process.env,
         stdio: ['ignore', 'pipe', 'pipe'],
     });
     const stdout = create_output_capture();
@@ -223,6 +224,9 @@ export class WorkspaceManager {
                 await run_script('after_create', this.config.hooks.after_create, workspace_path, this.config.hooks.timeout_ms, this.logger, true, this.telemetry, {
                     task_id: issue_identifier,
                     attempt,
+                }, {
+                    SYMPHONY_WORKSPACE_MODE: this.config.workspace.mode ?? 'isolated',
+                    SYMPHONY_DEPENDENCY_MODE: this.config.workspace.dependency_mode ?? 'install-if-missing',
                 });
                 await write_workspace_bootstrap_marker(workspace_path, issue_identifier, attempt);
             }

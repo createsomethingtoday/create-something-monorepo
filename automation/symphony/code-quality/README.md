@@ -39,7 +39,18 @@ pnpm symphony:code-quality:once
 
 Runtime state is exposed on `http://127.0.0.1:4780/`.
 
+Default execution/runtime:
+
+- `codex-cli` via Symphony's `execution.runner`
+- snapshot-backed bootstrap by default for broader code-quality tasks
+
 The `code-quality` lane now defaults to a snapshot-backed workspace bootstrap on this repo, which avoids Git worktree/clone stalls on external storage. Shared `node_modules` directories are linked into the workspace after the snapshot is created.
+
+Optional lightweight mode:
+
+- set `workspace.mode: lightweight` in a lane workflow when the task is narrow enough to avoid a full repo snapshot
+- keep the default mode for broader build, test, or dependency-sensitive work
+- lightweight mode maps the lane to the existing reduced `symphony` snapshot scope instead of the full snapshot path
 
 ## Running with Infisical
 

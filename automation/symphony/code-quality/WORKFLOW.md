@@ -26,8 +26,9 @@ agent:
     claimed: 2
   max_turns: 8
   max_retry_backoff_ms: 300000
+execution:
+  runner: codex-cli
 codex:
-  command: codex app-server
   approval_policy: never
   thread_sandbox: danger-full-access
   turn_sandbox_policy:
