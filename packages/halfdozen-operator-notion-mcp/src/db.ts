@@ -252,6 +252,21 @@ export async function setSyncEnabled(db: D1Database, accountId: string, enabled:
     .run();
 }
 
+export async function renameNotionAccountLabel(
+  db: D1Database,
+  accountId: string,
+  displayLabel: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE partner_auth_notion_accounts
+       SET display_label = ?, updated_at = datetime('now')
+       WHERE id = ?`
+    )
+    .bind(displayLabel, accountId)
+    .run();
+}
+
 export async function recordNotionEvent(
   db: D1Database,
   input: {

@@ -53,7 +53,7 @@ It also exposes one MCP App UI resource:
 By default this hub runs in broker-only mode:
 
 - Direct proxy tool calls like `<server>__<tool>` are not callable.
-- `tools/list` returns management tools only.
+- `tools/list` always returns management tools. When the caller is authenticated and direct proxy mode is enabled, it also includes the direct-allowed proxy tools.
 - Use this sequence for downstream actions:
   1. `hub_search_proxy_tools`
   2. `hub_describe_proxy_tool`
@@ -69,6 +69,7 @@ Optional direct proxy mode:
 
 - Set `HUB_ALLOW_DIRECT_PROXY_TOOLS=true` to allow direct `<server>__<tool>` calls.
 - Optionally set `HUB_DIRECT_PROXY_ALLOWED_PREFIXES` (CSV or JSON array) to restrict direct execution to specific proxy-tool name prefixes.
+- Authenticated `tools/list` responses include only those direct-allowed proxy tools; brokered-only proxy tools stay behind the `hub_search_proxy_tools` -> `hub_execute_proxy_tool` flow.
 
 ## Configuration
 

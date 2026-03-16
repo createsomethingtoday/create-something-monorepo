@@ -14,6 +14,7 @@ import {
   listNotionPins,
   normalizeSlug,
   parseJsonObject,
+  renameNotionAccountLabel,
   recordNotionEvent,
   refreshNotionAccountState,
   setNotionPin,
@@ -54,6 +55,7 @@ type RouterIntent =
   | 'wizard'
   | 'list_accounts'
   | 'get_status'
+  | 'rename_account'
   | 'pin_account'
   | 'sync_guidance'
   | 'help';
@@ -105,6 +107,7 @@ const accountToolSchema = {
     'wizard',
     'list_accounts',
     'get_status',
+    'rename_account',
     'create_connect_link',
     'disable_account',
     'pin_account',
@@ -127,7 +130,7 @@ const routerToolSchema = {
 };
 
 const routerAgentDecisionSchema = z.object({
-  intent: z.enum(['wizard', 'list_accounts', 'get_status', 'pin_account', 'sync_guidance', 'help']),
+  intent: z.enum(['wizard', 'list_accounts', 'get_status', 'rename_account', 'pin_account', 'sync_guidance', 'help']),
   account_slug: z.string().optional(),
   display_label: z.string().optional(),
   pin_tool_name: z.string().optional(),
@@ -150,7 +153,7 @@ export function registerOperatorNotionTools(server: McpServer, deps: OperatorNot
 
   server.tool(
     'operator_notion_accounts',
-    'Manage operator-bound Notion accounts, including a guided onboarding wizard for naming workspaces and connect-link/API-key flow.',
+    'Manage operator-bound Notion accounts, including onboarding, display-label renames, and connect-link/API-key flow.',
     accountToolSchema,
     async (params) => runAccountsTool(params.action as string, params.args as Record<string, unknown>, deps)
   );
@@ -219,6 +222,39 @@ async function runAccountsTool(
       const account = await requireAccount(deps.db, client.id, accountSlug);
       const refreshed = await refreshNotionAccountState(deps.db, deps.composio, account, { force: true });
       return toJsonResult({ ok: true, action, account: serializeAccount(refreshed) });
+    }
+    case 'rename_account': {
+      const accountSlug = normalizeSlug(String(args.account_slug ?? ''));
+      const displayLabel = sanitizeDisplayLabel(args.display_label);
+      if (!accountSlug) throw new Error('args.account_slug is required');
+      if (!displayLabel) throw new Error('args.display_label is required');
+      const account = await requireAccount(deps.db, client.id, accountSlug);
+      if (account.display_label === displayLabel) {
+        return toJsonResult({
+          ok: true,
+          action,
+          renamed: false,
+          account: serializeAccount(account),
+        });
+      }
+      await renameNotionAccountLabel(deps.db, account.id, displayLabel);
+      const renamedAccount = await requireAccount(deps.db, client.id, accountSlug);
+      await recordNotionEvent(deps.db, {
+        partnerClientId: client.id,
+        accountSlug,
+        eventType: 'account_renamed',
+        actor,
+        metadata: {
+          previous_display_label: account.display_label,
+          display_label: renamedAccount.display_label,
+        },
+      });
+      return toJsonResult({
+        ok: true,
+        action,
+        renamed: true,
+        account: serializeAccount(renamedAccount),
+      });
     }
     case 'create_connect_link': {
       const accountSlug = normalizeSlug(String(args.account_slug ?? ''));
@@ -482,6 +518,10 @@ async function runDeterministicRouter(
     return runRouterIntent('list_accounts', mergedArgs, deps);
   }
 
+  if (mentionsAny(lower, ['rename', 'relabel', 'change label', 'change display name', 'rename label'])) {
+    return runRouterIntent('rename_account', mergedArgs, deps);
+  }
+
   if (mentionsAny(lower, ['status', 'active', 'connected'])) {
     return runRouterIntent('get_status', mergedArgs, deps);
   }
@@ -522,6 +562,24 @@ async function runRouterIntent(
       });
     }
     return runAccountsTool('get_status', { account_slug: slug }, deps);
+  }
+
+  if (intent === 'rename_account') {
+    const slug = normalizeSlug(String(mergedArgs.account_slug ?? ''));
+    const displayLabel = sanitizeDisplayLabel(mergedArgs.display_label);
+    if (!slug || !displayLabel) {
+      return toJsonResult({
+        ok: true,
+        action: 'router',
+        intent: 'rename_account',
+        status: 'needs_input',
+        next_questions: [
+          'Which account_slug should be renamed?',
+          'What should the new display_label be?',
+        ],
+      });
+    }
+    return runAccountsTool('rename_account', { account_slug: slug, display_label: displayLabel }, deps);
   }
 
   if (intent === 'pin_account') {
@@ -569,7 +627,7 @@ async function runRouterIntent(
     intent: 'help',
     status: 'needs_input',
     message:
-      'I can help with: connect workspace, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
+      'I can help with: connect workspace, rename workspace labels, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
   });
 }
 
@@ -600,7 +658,7 @@ async function inferRouterIntentWithAgent(
       instructions: [
         'You route operator requests for Notion account management.',
         'Return only a single JSON object with keys: intent, account_slug, display_label, pin_tool_name.',
-        'Allowed intents: wizard, list_accounts, get_status, pin_account, sync_guidance, help.',
+        'Allowed intents: wizard, list_accounts, get_status, rename_account, pin_account, sync_guidance, help.',
         'If unsure, return intent=help.',
         'Never include prose or markdown.',
       ].join(' '),
@@ -724,6 +782,10 @@ function extractAccountSlug(request: string): string | null {
 }
 
 function extractDisplayLabel(request: string): string | null {
+  const renameToMatch = request.match(
+    /\b(?:rename|relabel|change\s+(?:the\s+)?(?:label|display\s*name|name))\b[\s\S]*?\bto\s*["']([^"']{2,120})["']/i,
+  );
+  if (renameToMatch?.[1]) return renameToMatch[1].trim();
   const labelMatch = request.match(/\b(?:display\s*name|name|label)\s*(?:is|=|:)?\s*["']([^"']{2,120})["']/i);
   if (labelMatch?.[1]) return labelMatch[1].trim();
   const unquotedDisplayName = request.match(/\bdisplay\s*name\s*(?:is|=|:)?\s*([a-zA-Z0-9][a-zA-Z0-9 _:-]{1,120})/i);

@@ -23,6 +23,7 @@ export function registerInfoResources(server: McpServer): void {
               notes: [
                 'Pinned tools resolve to configured account slugs and reject caller overrides.',
                 'operator_notion_accounts supports wizard-style onboarding (workspace naming + connect-link/API-key flow).',
+                'operator_notion_accounts supports post-onboarding display-label changes via action=rename_account.',
                 'operator_notion_sync supports page-content preview/copy flows after connection.',
                 'operator_notion_router supports natural-language routing for onboarding and account operations.',
               ],

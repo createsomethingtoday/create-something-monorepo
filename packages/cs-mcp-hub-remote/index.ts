@@ -1546,7 +1546,12 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
   server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
     const cursor = extractListCursor(request);
     const pageSize = resolveDiscoveryPageSize(env);
-    const allTools = MANAGEMENT_TOOLS;
+    const allTools = await buildListToolDefinitions({
+      request,
+      extra,
+      runtime,
+      env,
+    });
     const offset = decodeCursorOffset(cursor);
     const boundedOffset = Math.max(0, Math.min(offset, allTools.length));
     const nextOffset = boundedOffset + pageSize;
@@ -2809,6 +2814,30 @@ export function buildVisibleProxyRoutes(
   };
 }
 
+export function buildDirectProxyRoutes(
+  runtime: HubRuntime,
+  accountContext: ResolvedAccountContext,
+  env?: Env,
+): VisibleProxyCatalog {
+  const directEntries = runtime.proxies.toolDefinitions
+    .map((tool) => {
+      const route = runtime.proxies.routes.get(tool.name);
+      if (!route) return null;
+      return { tool, route };
+    })
+    .filter((entry): entry is VisibleProxyRouteEntry => Boolean(entry))
+    .filter((entry) => Boolean(env && isDirectProxyToolAllowed(env, entry.route.proxyToolName)))
+    .filter((entry) => isRouteAllowedForSession(entry.route, accountContext.allowedToolPrefixes))
+    .filter((entry) => isRouteAllowedForTenant(entry.route, accountContext, env, entry.tool));
+
+  return {
+    toolDefinitions: directEntries.map((entry) => entry.tool),
+    routes: new Map(directEntries.map((entry) => [entry.route.proxyToolName, entry.route])),
+    definitionByName: new Map(directEntries.map((entry) => [entry.tool.name, entry.tool])),
+    aliasPlans: [],
+  };
+}
+
 function hubAuthzHybridConfig(env: Env) {
   const fetchTimeoutRaw = readEnvString(env, 'OSO_FETCH_TIMEOUT_MS');
   const fetchTimeoutMillis = fetchTimeoutRaw ? parsePositiveInt(fetchTimeoutRaw, 5000) : undefined;
@@ -3073,6 +3102,89 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
     definitionByName: new Map(allowed.map((entry) => [entry.tool.name, entry.tool])),
     aliasPlans: buildVisibleTenantAliasPlans(allowed, params.accountContext, params.env),
   };
+}
+
+export async function buildAuthorizedDirectProxyRoutes(params: {
+  runtime: HubRuntime;
+  accountContext: ResolvedAccountContext;
+  env: Env;
+  trace: InvocationTrace;
+  entrypoint: string;
+}): Promise<VisibleProxyCatalog> {
+  const base = buildDirectProxyRoutes(params.runtime, params.accountContext, params.env);
+  if (base.toolDefinitions.length === 0) {
+    return base;
+  }
+
+  const rollout = await getHubRouteAuthzRollout(params.env);
+  const allowed: Array<{ tool: Tool; route: ProxyRoute }> = [];
+
+  for (const tool of base.toolDefinitions) {
+    const route = base.routes.get(tool.name);
+    if (!route) continue;
+    const evaluation = await evaluateHubRouteAuthorization({
+      env: params.env,
+      accountContext: params.accountContext,
+      route,
+      definition: tool,
+      trace: params.trace,
+      rollout,
+      actionName: 'discover',
+      entrypoint: params.entrypoint,
+      recordDecision: false,
+    });
+    if (evaluation.final.decision === 'allow') {
+      allowed.push({ tool, route });
+    } else {
+      await recordAuthzDecisionEvent(
+        params.env.TELEMETRY_DB,
+        toHubAuthzEvent({
+          policyId: evaluation.final.policyId,
+          accountContext: params.accountContext,
+          route,
+          trace: params.trace,
+          evaluation,
+          actionName: 'discover',
+          entrypoint: params.entrypoint,
+        }),
+      );
+    }
+  }
+
+  return {
+    toolDefinitions: allowed.map((entry) => entry.tool),
+    routes: new Map(allowed.map((entry) => [entry.route.proxyToolName, entry.route])),
+    definitionByName: new Map(allowed.map((entry) => [entry.tool.name, entry.tool])),
+    aliasPlans: [],
+  };
+}
+
+export async function buildListToolDefinitions(params: {
+  request: unknown;
+  extra: unknown;
+  runtime: HubRuntime;
+  env: Env;
+}): Promise<Tool[]> {
+  const tools = [...MANAGEMENT_TOOLS];
+  if (!hasMcpAuthenticationHeaders(params.extra)) {
+    return tools;
+  }
+
+  const accountContext = await resolveAccountContext(params.extra, params.env);
+  const direct = await buildAuthorizedDirectProxyRoutes({
+    runtime: params.runtime,
+    accountContext,
+    env: params.env,
+    trace: extractInvocationTrace(params.request, params.extra),
+    entrypoint: 'tools_list',
+  });
+
+  if (direct.toolDefinitions.length === 0) {
+    return tools;
+  }
+
+  tools.push(...direct.toolDefinitions);
+  return tools;
 }
 
 async function getAuthorizedExactVisibleProxyRoute(params: {

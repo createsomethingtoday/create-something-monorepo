@@ -38,6 +38,7 @@ Default Notion auth config ID in `worker/wrangler.toml`:
 - Pinned tools resolve through `partner_auth_notion_pins` and reject caller account overrides.
 - Account metadata and pins live in the agency D1 schema introduced by `0011_partner_notion_accounts.sql`.
 - `operator_notion_accounts` now supports onboarding wizard flow (`action=wizard`) for naming workspaces + connect-link/API-key steps.
+- `operator_notion_accounts` supports explicit display-label changes after onboarding via `action=rename_account`.
 - `operator_notion_sync` supports page-content preview/copy between managed accounts after connection.
 - `operator_notion_router` uses deterministic routing first, then optional OpenAI-agent fallback (timeout + in-memory cache) for ambiguous requests.
 - Account status refreshes are TTL-gated on hot paths to reduce Composio API load under frequent MCP traffic.
