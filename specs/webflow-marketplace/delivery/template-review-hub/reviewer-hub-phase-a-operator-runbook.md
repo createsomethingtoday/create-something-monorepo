@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This runbook is the operational implementation path for the five reviewer-specific Hub surfaces in Phase A.
+This runbook is the operational implementation path for the six reviewer-specific Hub surfaces in Phase A.
 
 Phase A outcome:
 
@@ -26,6 +26,7 @@ Phase A outcome:
 | Eric Unger | `wf-template-review-eric` | `cs-hub-wf-template-review-eric` | `wf-template-review-eric.mcp.createsomething.agency` |
 | Vicki Chen | `wf-template-review-vicki` | `cs-hub-wf-template-review-vicki` | `wf-template-review-vicki.mcp.createsomething.agency` |
 | Mariana Segura | `wf-template-review-mariana` | `cs-hub-wf-template-review-mariana` | `wf-template-review-mariana.mcp.createsomething.agency` |
+| Micah Johnson | `wf-template-review-micah` | `cs-hub-wf-template-review-micah` | `wf-template-review-micah.mcp.createsomething.agency` |
 
 ## 3. Repo artifacts created for this rollout
 
@@ -59,7 +60,36 @@ Optional environment:
 - `RATE_LIMIT_WINDOW_SECONDS`
 - `QUOTA_MAX_PROXY_CALLS_PER_PERIOD`
 
-## 5. Deploy all five reviewer Hubs
+Required reviewer mapping input for `webflow-template-review-mcp`:
+
+- merge Micah into the deployed worker's `REVIEWER_DIRECTORY_JSON`
+- use the live Airtable reviewer identity confirmed on `2026-03-17`:
+  - account id: `acct_wf_micah`
+  - collaborator id: `usr1b45eivydAeayI`
+  - email: `micah@webflow.com`
+  - lane: `wf-template-review-micah`
+
+Reviewer-directory entry to merge into the existing payload:
+
+```json
+{
+  "acct_wf_micah": {
+    "airtableCollaboratorId": "usr1b45eivydAeayI",
+    "email": "micah@webflow.com",
+    "name": "Micah Johnson",
+    "lane": "wf-template-review-micah"
+  }
+}
+```
+
+Suggested command after merging that entry into the full reviewer-directory payload:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-template-review-mcp/worker"
+pnpm exec wrangler secret put REVIEWER_DIRECTORY_JSON
+```
+
+## 5. Deploy all six reviewer Hubs
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
@@ -105,6 +135,15 @@ Expected verification posture:
 - `hub_list_services` shows `webflow-template-review-mcp`
 - `hub_search_proxy_tools` for `webflow-template-review-mcp` succeeds
 - reviewer runtime is compact and reviewer-scoped
+
+Micah-only demo verifier:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+REVIEWER=micah ./scripts/webflow-reviewer-demo-verify.sh
+```
+
+This helper checks the live reviewer hub URL, prints the current discovery posture, and returns the exact visible proxy tool list for the authenticated reviewer lane.
 
 ## 8. One-command path
 

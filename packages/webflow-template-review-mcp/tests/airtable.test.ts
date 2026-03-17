@@ -180,6 +180,33 @@ test('listMyQueueDetailed reads reviewer-owned versions directly and hydrates on
   assert.equal(queue.items[0]?.reviewOwner?.id, ericReviewer.id);
 });
 
+test('listMyQueueDetailed bounds reviewer scans to a buffered limit', async () => {
+  let capturedVersionUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        capturedVersionUrl = url;
+        return jsonResponse({ records: [] });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const queue = await client.listMyQueueDetailed({
+    limit: 10,
+    currentReviewer: ericReviewer,
+  });
+
+  assert.equal(queue.items.length, 0);
+  assert.ok(capturedVersionUrl);
+  assert.equal(capturedVersionUrl.searchParams.get('maxRecords'), '100');
+  assert.equal(capturedVersionUrl.searchParams.get('pageSize'), '100');
+});
+
 test('assignSelfToVersion rejects versions already owned by another reviewer', async () => {
   const client = new AirtableClient({
     apiKey: 'test',

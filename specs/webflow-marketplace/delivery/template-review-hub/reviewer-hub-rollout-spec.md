@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This document defines the rollout shape for the first five Webflow Marketplace reviewers using the template review Hub lane.
+This document defines the rollout shape for the first six Webflow Marketplace reviewers using the template review Hub lane.
 
 The goal is to make the pilot operationally safe before broader rollout by aligning the runtime with the documented policy model:
 
@@ -20,7 +20,7 @@ This spec should be treated as the concrete rollout plan for alpha.
 
 ## 2. Rollout decision
 
-The initial reviewer pilot should use **five reviewer-specific Hubs**, not one shared write-capable Hub.
+The initial reviewer pilot should use **six reviewer-specific Hubs**, not one shared write-capable Hub.
 
 Reason:
 
@@ -28,7 +28,7 @@ Reason:
 - the current MCP surface exposes direct mutation tools
 - a reviewer-specific Hub is the cleanest way to enforce identity, tool exposure, and audit attribution without blocking the pilot entirely
 
-This does **not** mean five materially different workflows. It means one workflow delivered through five reviewer-scoped Hub surfaces.
+This does **not** mean six materially different workflows. It means one workflow delivered through six reviewer-scoped Hub surfaces.
 
 ## 3. Reviewer to Hub mapping
 
@@ -39,6 +39,7 @@ This does **not** mean five materially different workflows. It means one workflo
 | Eric Unger | `eric.unger@webflow.com` | `wf-template-review-eric` | Eric Unger |
 | Vicki Chen | `vicki.chen@webflow.com` | `wf-template-review-vicki` | Vicki Chen |
 | Mariana Segura | `mariana.segura@webflow.com` | `wf-template-review-mariana` | Mariana Segura |
+| Micah Johnson | `micah@webflow.com` | `wf-template-review-micah` | Micah Johnson |
 
 Requirements for each reviewer Hub:
 
@@ -51,7 +52,7 @@ Requirements for each reviewer Hub:
 
 ### Phase 1: read-only alpha default
 
-Expose these tools to all five reviewer Hubs by default:
+Expose these tools to all six reviewer Hubs by default:
 
 - `template_review_health`
 - `template_review_list_queue`
@@ -157,8 +158,8 @@ The reviewer should be the approval owner for the write, and the workflow owner 
 
 ### Alpha week one
 
-- create the five reviewer-specific Hubs
-- keep all five Hubs read-only by default
+- create the six reviewer-specific Hubs
+- keep all six Hubs read-only by default
 - validate queue, asset, version, analysis, and release context
 - collect reviewer trust, false-positive, false-negative, and friction data
 - run at least one manual fallback drill per reviewer
@@ -177,7 +178,7 @@ The reviewer should be the approval owner for the write, and the workflow owner 
 
 ## 9. Operational rules
 
-During the five-reviewer pilot:
+During the six-reviewer pilot:
 
 - every reviewer override should be captured
 - every failed write should trigger manual fallback and be logged
@@ -195,7 +196,7 @@ Containment rules:
 
 Broader rollout should not happen until:
 
-- all five reviewer Hubs are in steady use
+- all six reviewer Hubs are in steady use
 - reviewer identity is consistently attributable on write traces
 - write-path audit fields are complete
 - unsupported mutation surfaces are hidden from reviewer-facing discovery
@@ -209,6 +210,6 @@ These must be answered before enabling writes broadly:
 - does the outer Hub layer already inject reviewer identity independent of the shared MCP bearer token?
 - where is the canonical write audit event stored and queried?
 - how are reviewer-specific tool exposure and discovery controlled operationally?
-- what is the exact rollback mechanism for reverting all five reviewer Hubs to read-only mode?
+- what is the exact rollback mechanism for reverting all six reviewer Hubs to read-only mode?
 
 Until those answers are demonstrated in runtime behavior, the reviewer-specific Hubs should be treated as read-only evidence lanes with manual Airtable fallback for official state changes.

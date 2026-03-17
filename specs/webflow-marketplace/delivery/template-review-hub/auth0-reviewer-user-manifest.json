@@ -78,5 +78,21 @@
       "workspace_account_id": "acct_wf_mariana",
       "reviewer_role": "template_reviewer"
     }
+  },
+  {
+    "email": "micah@webflow.com",
+    "name": "Micah Johnson",
+    "given_name": "Micah",
+    "family_name": "Johnson",
+    "email_verified": false,
+    "verify_email": true,
+    "app_metadata": {
+      "workflow": "template_review_hub_lane",
+      "hub_slug": "wf-template-review-micah",
+      "account_id": "acct_wf_micah",
+      "tenant_id": "tenant_webflow_marketplace",
+      "workspace_account_id": "acct_wf_micah",
+      "reviewer_role": "template_reviewer"
+    }
   }
 ]

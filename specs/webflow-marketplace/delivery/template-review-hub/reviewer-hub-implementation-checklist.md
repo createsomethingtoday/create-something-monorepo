@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This checklist turns the reviewer rollout policy into concrete Hub implementation work for the first five reviewer-specific Hubs.
+This checklist turns the reviewer rollout policy into concrete Hub implementation work for the first six reviewer-specific Hubs.
 
 Use it after the rollout spec and before enabling reviewer writes.
 
@@ -22,7 +22,7 @@ As of `2026-03-10`, the live Hub surface shows:
 
 That means the Hub already has the needed downstream server connected, but its default posture is still broader and looser than the reviewer rollout requires.
 
-## 3. Build the five reviewer-specific Hubs
+## 3. Build the six reviewer-specific Hubs
 
 Create one reviewer-scoped Hub surface per reviewer:
 
@@ -31,6 +31,7 @@ Create one reviewer-scoped Hub surface per reviewer:
 - `wf-template-review-eric`
 - `wf-template-review-vicki`
 - `wf-template-review-mariana`
+- `wf-template-review-micah`
 
 For each Hub:
 
@@ -240,12 +241,12 @@ Revert a reviewer Hub to read-only immediately if:
 - policy-denied actions are executing anyway
 - quota or rate-limit behavior is not functioning as configured
 
-If this affects more than one reviewer Hub, revert all five to read-only and triage centrally.
+If this affects more than one reviewer Hub, revert all six to read-only and triage centrally.
 
 ## 15. Suggested operator workflow
 
-1. Create the five reviewer-specific Hub surfaces.
-2. Put all five in read-only mode.
+1. Create the six reviewer-specific Hub surfaces.
+2. Put all six in read-only mode.
 3. Narrow discovery to review-only servers.
 4. Verify hidden write surfaces.
 5. Turn on rate limits and quotas.
@@ -261,7 +262,7 @@ If this affects more than one reviewer Hub, revert all five to read-only and tri
 
 Before broader rollout, operators should be able to hand the workflow owner:
 
-- the five Hub names
+- the six Hub names
 - the active server set per Hub
 - the visible tool list per Hub
 - the enabled write actions per Hub

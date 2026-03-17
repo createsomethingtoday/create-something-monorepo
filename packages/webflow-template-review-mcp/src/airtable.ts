@@ -469,6 +469,11 @@ function chunkArray<T>(values: T[], size: number): T[][] {
   return chunks;
 }
 
+function myQueueScanLimit(limit?: number): number {
+  const requested = Math.max(limit ?? 100, 1);
+  return Math.min(Math.max(requested * 5, 100), 500);
+}
+
 function recordIdsFormula(ids: string[]): string {
   if (ids.length === 0) return 'FALSE()';
   const clauses = ids.map((id) => `RECORD_ID() = '${escapeFormulaValue(id)}'`);
@@ -759,9 +764,10 @@ export class AirtableClient {
     );
   }
 
-  private async listVersionsAssignedToReviewer(currentReviewer: CollaboratorRef): Promise<TemplateReviewVersion[]> {
+  private async listVersionsAssignedToReviewer(currentReviewer: CollaboratorRef, limit?: number): Promise<TemplateReviewVersion[]> {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assetVersions,
+      limit,
       filterByFormula: reviewerLookupFormula(CONFIRMED_VERSION_FIELDS.reviewOwner, currentReviewer),
       sortField: CONFIRMED_VERSION_FIELDS.submissionDatetime,
       sortDirection: 'desc',
@@ -793,7 +799,12 @@ export class AirtableClient {
       onlyAssignedToCurrentReviewer: true,
     };
 
-    const assignedVersions = await this.listVersionsAssignedToReviewer(currentReviewer);
+    // Bound the reviewer-version scan so large historical queues do not time out
+    // before we can apply the requested queue limit.
+    const assignedVersions = await this.listVersionsAssignedToReviewer(
+      currentReviewer,
+      myQueueScanLimit(query.limit),
+    );
     const versionsByAsset = new Map<string, TemplateReviewVersion[]>();
     for (const version of assignedVersions) {
       if (!version.assetId) continue;

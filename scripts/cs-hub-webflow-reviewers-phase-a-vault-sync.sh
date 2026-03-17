@@ -11,6 +11,7 @@ INFISICAL_ENV="${INFISICAL_ENV:-prod}"
 INFISICAL_PATH="${INFISICAL_PATH:-/}"
 INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 DRY_RUN="${DRY_RUN:-false}"
+REVIEWER="${REVIEWER:-all}"
 
 REVIEWERS=(
   "WF_TEMPLATE_REVIEW_NATALIA|cs-hub-wf-template-review-natalia"
@@ -18,6 +19,7 @@ REVIEWERS=(
   "WF_TEMPLATE_REVIEW_ERIC|cs-hub-wf-template-review-eric"
   "WF_TEMPLATE_REVIEW_VICKI|cs-hub-wf-template-review-vicki"
   "WF_TEMPLATE_REVIEW_MARIANA|cs-hub-wf-template-review-mariana"
+  "WF_TEMPLATE_REVIEW_MICAH|cs-hub-wf-template-review-micah"
 )
 
 require_cmd() {
@@ -112,6 +114,17 @@ put_versioned_secret() {
     --yes
 }
 
+reviewer_key_matches() {
+  local reviewer_key="$1"
+  local reviewer="${2:-all}"
+  local reviewer_upper
+  if [[ "$reviewer" == "all" ]]; then
+    return 0
+  fi
+  reviewer_upper="$(printf '%s' "$reviewer" | tr '[:lower:]' '[:upper:]')"
+  [[ "$reviewer_key" == "WF_TEMPLATE_REVIEW_${reviewer_upper}" ]]
+}
+
 INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
 DRY_RUN="$(normalize_bool_or_fail "$DRY_RUN")"
 
@@ -126,11 +139,14 @@ require_secret "HUB_SESSION_RESOLVE_TOKEN" || missing=1
 require_secret "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" || missing=1
 require_secret "BRAINTRUST_API_KEY" || missing=1
 require_secret "BRAINTRUST_PROJECT_ID" || missing=1
-require_secret "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN" || missing=1
-require_secret "CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_API_TOKEN" || missing=1
-require_secret "CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN" || missing=1
-require_secret "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN" || missing=1
-require_secret "CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN" || missing=1
+
+for entry in "${REVIEWERS[@]}"; do
+  IFS='|' read -r reviewer_key _worker <<<"$entry"
+  if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
+    continue
+  fi
+  require_secret "CS_HUB_${reviewer_key}_API_TOKEN" || missing=1
+done
 
 if [[ "$missing" == "1" ]]; then
   echo "reviewer hub secret validation failed" >&2
@@ -139,6 +155,9 @@ fi
 
 for entry in "${REVIEWERS[@]}"; do
   IFS='|' read -r reviewer_key worker <<<"$entry"
+  if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
+    continue
+  fi
   reviewer_token_var="CS_HUB_${reviewer_key}_API_TOKEN"
   echo "syncing ${worker}"
   put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_token_var}"

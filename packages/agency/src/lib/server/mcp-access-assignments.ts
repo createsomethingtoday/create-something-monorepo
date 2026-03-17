@@ -108,6 +108,12 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-mariana',
 		bridgeUsername: 'acct_wf_mariana',
 	},
+	wf_micah: {
+		displayName: 'Micah Johnson',
+		hubSubdomain: 'wf-template-review-micah',
+		bridgeSubdomain: 'wf-template-review-micah',
+		bridgeUsername: 'acct_wf_micah',
+	},
 };
 
 function normalizeKey(value: string | null | undefined): string {

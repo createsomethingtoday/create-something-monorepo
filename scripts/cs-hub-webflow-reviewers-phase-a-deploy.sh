@@ -6,6 +6,7 @@ HUB_DIR="$ROOT_DIR/packages/cs-mcp-hub-remote"
 TEAM_CONFIG="$HUB_DIR/wrangler.team-hubs.toml"
 
 ACTION="${1:-all}"
+REVIEWER="${REVIEWER:-all}"
 SESSION_RESOLVE_URL="${SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
 BUNDLE_NAME="${BUNDLE_NAME:-webflow-marketplace-review-phase-a}"
 DISCOVERY_PACK="${DISCOVERY_PACK:-webflow-marketplace-review-phase-a}"
@@ -28,6 +29,7 @@ REVIEWERS=(
   "wf-template-review-eric|acct_wf_eric"
   "wf-template-review-vicki|acct_wf_vicki"
   "wf-template-review-mariana|acct_wf_mariana"
+  "wf-template-review-micah|acct_wf_micah"
 )
 
 require_cmd() {
@@ -35,6 +37,55 @@ require_cmd() {
     echo "missing required command: $1" >&2
     exit 1
   }
+}
+
+resolve_ip_for_url() {
+  local url="$1"
+  local host
+  local ip
+  host="${url#https://}"
+  host="${host%%/*}"
+
+  if [[ -n "${CURL_RESOLVE_IP:-}" ]]; then
+    printf '%s' "$CURL_RESOLVE_IP"
+    return 0
+  fi
+
+  if command -v dig >/dev/null 2>&1; then
+    ip="$(dig +short "$host" | awk 'NF { print; exit }')"
+    if [[ -n "$ip" ]]; then
+      printf '%s' "$ip"
+      return 0
+    fi
+
+    ip="$(dig @1.1.1.1 +short "$host" | awk 'NF { print; exit }')"
+    if [[ -n "$ip" ]]; then
+      printf '%s' "$ip"
+      return 0
+    fi
+  fi
+
+  if command -v nslookup >/dev/null 2>&1; then
+    nslookup "$host" 1.1.1.1 2>/dev/null | awk '/^Address: / && $2 !~ /#53$/ { print $2; exit }'
+  fi
+}
+
+curl_with_url() {
+  local url="$1"
+  shift
+
+  local host ip
+  local -a cmd=(curl)
+  host="${url#https://}"
+  host="${host%%/*}"
+  ip="$(resolve_ip_for_url "$url")"
+
+  if [[ -n "$ip" ]]; then
+    cmd+=(--resolve "${host}:443:${ip}")
+  fi
+
+  cmd+=("$@" "$url")
+  "${cmd[@]}"
 }
 
 json_array_from_csv() {
@@ -64,6 +115,15 @@ mcp_url_for_slug() {
 health_url_for_slug() {
   local slug="$1"
   echo "https://$(domain_for_slug "$slug")/health"
+}
+
+slug_matches_reviewer() {
+  local slug="$1"
+  local reviewer="${2:-all}"
+  if [[ "$reviewer" == "all" ]]; then
+    return 0
+  fi
+  [[ "$slug" == "wf-template-review-${reviewer}" ]]
 }
 
 deploy_one() {
@@ -120,7 +180,7 @@ normalize_one() {
 
   echo "===== NORMALIZE ${worker} ====="
 
-  curl -sS -X POST "$mcp_url" \
+  curl_with_url "$mcp_url" -sS -X POST \
     -H "Authorization: Bearer ${HUB_API_TOKEN}" \
     -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
     -H "Content-Type: application/json" \
@@ -138,7 +198,7 @@ normalize_one() {
       }
     }' | jq .
 
-  curl -sS -X POST "$mcp_url" \
+  curl_with_url "$mcp_url" -sS -X POST \
     -H "Authorization: Bearer ${HUB_API_TOKEN}" \
     -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
     -H "Content-Type: application/json" \
@@ -179,9 +239,9 @@ verify_one() {
   local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
 
   echo "===== VERIFY ${worker} ====="
-  curl -sS "$health_url" | jq .
+  curl_with_url "$health_url" -sS | jq .
 
-  curl -sS -X POST "$mcp_url" \
+  curl_with_url "$mcp_url" -sS -X POST \
     -H "Authorization: Bearer ${HUB_API_TOKEN}" \
     -H "X-MCP-Session-Token: ${session_token}" \
     -H "Content-Type: application/json" \
@@ -196,7 +256,7 @@ verify_one() {
       }
     }' | jq .
 
-  curl -sS -X POST "$mcp_url" \
+  curl_with_url "$mcp_url" -sS -X POST \
     -H "Authorization: Bearer ${HUB_API_TOKEN}" \
     -H "X-MCP-Session-Token: ${session_token}" \
     -H "Content-Type: application/json" \
@@ -231,6 +291,9 @@ esac
 for entry in "${REVIEWERS[@]}"; do
   slug="${entry%%|*}"
   account_id="${entry#*|}"
+  if ! slug_matches_reviewer "$slug" "$REVIEWER"; then
+    continue
+  fi
   if [[ "$ACTION" == "deploy" || "$ACTION" == "all" ]]; then
     deploy_one "$slug" "$account_id"
   fi

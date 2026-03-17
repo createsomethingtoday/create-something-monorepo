@@ -4,7 +4,7 @@ status: "working_draft"
 date: "2026-03-10"
 
 policy_intent:
-  summary: "Reviewer-specific Hub policy records for the five-reviewer Phase A rollout."
+  summary: "Reviewer-specific Hub policy records for the six-reviewer Phase A rollout."
   authoritative_scope: "Phase A only"
   rollout_mode: "narrow_reviewer_workflow_write_lane"
   notes:
@@ -108,6 +108,14 @@ reviewers:
     approval_owner: "Mariana Segura"
     access_mode: "narrow_reviewer_workflow_writes"
     policy_record_id: "wf_template_review_mariana_phase_a"
+
+  - reviewer_name: "Micah Johnson"
+    reviewer_email: "micah@webflow.com"
+    hub_slug: "wf-template-review-micah"
+    account_model: "per_user"
+    approval_owner: "Micah Johnson"
+    access_mode: "narrow_reviewer_workflow_writes"
+    policy_record_id: "wf_template_review_micah_phase_a"
 
 phase_b_prerequisites:
   - "webflow-site-analyzer-mcp enabled and verified in the live Hub"

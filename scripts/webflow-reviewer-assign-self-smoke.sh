@@ -14,6 +14,7 @@ reviewer_url() {
     eric) echo "https://wf-template-review-eric.mcp.createsomething.agency/mcp" ;;
     vicki) echo "https://wf-template-review-vicki.mcp.createsomething.agency/mcp" ;;
     mariana) echo "https://wf-template-review-mariana.mcp.createsomething.agency/mcp" ;;
+    micah) echo "https://wf-template-review-micah.mcp.createsomething.agency/mcp" ;;
     *) return 1 ;;
   esac
 }
@@ -25,6 +26,7 @@ reviewer_secret_name() {
     eric) echo "CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN" ;;
     vicki) echo "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN" ;;
     mariana) echo "CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN" ;;
+    micah) echo "CS_HUB_WF_TEMPLATE_REVIEW_MICAH_API_TOKEN" ;;
     *) return 1 ;;
   esac
 }
@@ -36,6 +38,7 @@ reviewer_version_id() {
     eric) echo "reckK8373eRd3cZyJ" ;;
     vicki) echo "recMzHVzKn9M7m7fH" ;;
     mariana) echo "recNGiYJ1fjpQ9Q8D" ;;
+    micah) echo "recA25E1MM9NOzkzs" ;;
     *) return 1 ;;
   esac
 }
@@ -47,6 +50,7 @@ reviewer_email() {
     eric) echo "eric.unger@webflow.com" ;;
     vicki) echo "vicki.chen@webflow.com" ;;
     mariana) echo "mariana.segura@webflow.com" ;;
+    micah) echo "micah@webflow.com" ;;
     *) return 1 ;;
   esac
 }
@@ -56,6 +60,55 @@ require_cmd() {
     echo "missing required command: $1" >&2
     exit 1
   fi
+}
+
+resolve_ip_for_url() {
+  local url="$1"
+  local host
+  local ip
+  host="${url#https://}"
+  host="${host%%/*}"
+
+  if [[ -n "${CURL_RESOLVE_IP:-}" ]]; then
+    printf '%s' "$CURL_RESOLVE_IP"
+    return 0
+  fi
+
+  if command -v dig >/dev/null 2>&1; then
+    ip="$(dig +short "$host" | awk 'NF { print; exit }')"
+    if [[ -n "$ip" ]]; then
+      printf '%s' "$ip"
+      return 0
+    fi
+
+    ip="$(dig @1.1.1.1 +short "$host" | awk 'NF { print; exit }')"
+    if [[ -n "$ip" ]]; then
+      printf '%s' "$ip"
+      return 0
+    fi
+  fi
+
+  if command -v nslookup >/dev/null 2>&1; then
+    nslookup "$host" 1.1.1.1 2>/dev/null | awk '/^Address: / && $2 !~ /#53$/ { print $2; exit }'
+  fi
+}
+
+curl_with_url() {
+  local url="$1"
+  shift
+
+  local host ip
+  local -a cmd=(curl)
+  host="${url#https://}"
+  host="${host%%/*}"
+  ip="$(resolve_ip_for_url "$url")"
+
+  if [[ -n "$ip" ]]; then
+    cmd+=(--resolve "${host}:443:${ip}")
+  fi
+
+  cmd+=("$@" "$url")
+  "${cmd[@]}"
 }
 
 resolve_token() {
@@ -92,7 +145,7 @@ mcp_call() {
   local tool_name="$3"
   local args_json="$4"
 
-  curl -sS -X POST "$hub_url" \
+  curl_with_url "$hub_url" -sS -X POST \
     -H "Authorization: Bearer ${token}" \
     -H 'Content-Type: application/json' \
     -d "$(jq -cn --arg name "$tool_name" --argjson args "$args_json" '{jsonrpc:"2.0",id:(now|tostring),method:"tools/call",params:{name:$name,arguments:$args}}')"
@@ -187,7 +240,7 @@ main() {
 
   local reviewers=()
   if [[ "$REVIEWER" == "all" ]]; then
-    reviewers=(natalia sudiksha eric vicki mariana)
+    reviewers=(natalia sudiksha eric vicki mariana micah)
   else
     reviewers=("$REVIEWER")
   fi

@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This document gives the exact Hub posture to use for the first five reviewer-specific Hub surfaces.
+This document gives the exact Hub posture to use for the first six reviewer-specific Hub surfaces.
 
 It is intended to answer:
 
@@ -37,8 +37,9 @@ Use one reviewer-specific Hub surface or account-scoped Hub posture per reviewer
 | Eric Unger | `eric.unger@webflow.com` | `wf-template-review-eric` |
 | Vicki Chen | `vicki.chen@webflow.com` | `wf-template-review-vicki` |
 | Mariana Segura | `mariana.segura@webflow.com` | `wf-template-review-mariana` |
+| Micah Johnson | `micah@webflow.com` | `wf-template-review-micah` |
 
-If these are implemented as separate custom-domain Hubs, keep the same posture across all five. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
+If these are implemented as separate custom-domain Hubs, keep the same posture across all six. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
 
 ## 4. Phase A: current-live-safe posture
 
@@ -336,18 +337,19 @@ Recommended order:
 3. Eric Unger
 4. Vicki Chen
 5. Mariana Segura
+6. Micah Johnson
 
 Reason:
 
 - start with one reviewer
 - validate traces and fallback
-- expand gradually instead of enabling all five write-capable at once
+- expand gradually instead of enabling all six write-capable at once
 
 ## 13. Recommended operator sequence
 
 1. Enable missing Webflow analysis servers in the Hub.
 2. Verify they are connected and searchable.
-3. Apply Phase A compact discovery posture to all five reviewer Hubs.
+3. Apply Phase A compact discovery posture to all six reviewer Hubs.
 4. Confirm write tools are not visible in reviewer discovery.
 5. Confirm reviewer sessions are read-only and actor-resolved.
 6. Turn on Hub rate limits and quotas.
@@ -366,4 +368,4 @@ Revert a reviewer Hub to Phase A immediately if:
 - write behavior is ambiguous
 - fallback is too slow or unclear
 
-If more than one reviewer Hub hits the same issue, revert all five to Phase A and pause write rollout.
+If more than one reviewer Hub hits the same issue, revert all six to Phase A and pause write rollout.
