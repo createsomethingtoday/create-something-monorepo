@@ -7,6 +7,7 @@ const MAX_BLOCKS_PER_REQUEST = 100;
 const DEFAULT_STATUS = 'Active';
 const DEFAULT_SOURCE = 'Internal';
 const DEFAULT_TYPE = 'Meeting';
+const DEFAULT_ATTENDEES_PROPERTY = 'Attendees';
 
 type BlockObject = Record<string, unknown>;
 type PageObject = Record<string, any>;
@@ -21,6 +22,17 @@ interface BlockListResult {
   results: BlockObject[];
   has_more?: boolean;
   next_cursor?: string | null;
+}
+
+interface HubRpcPayload {
+  result?: HubToolResult;
+  error?: unknown;
+}
+
+interface HubToolResult {
+  isError?: boolean;
+  content?: Array<{ type?: string; text?: string }>;
+  structuredContent?: Record<string, unknown>;
 }
 
 interface NotionTransport {
@@ -178,6 +190,7 @@ function buildPageProperties(
   parsedTranscript: ParsedTranscript,
 ): Record<string, unknown> {
   const attendees = parsedTranscript.speakers.join(', ');
+  const attendeesProperty = env.NOTION_ATTENDEES_PROPERTY?.trim() || DEFAULT_ATTENDEES_PROPERTY;
 
   const properties: Record<string, unknown> = {
     Item: {
@@ -216,7 +229,7 @@ function buildPageProperties(
   }
 
   if (attendees) {
-    properties.Attendees = {
+    properties[attendeesProperty] = {
       rich_text: [
         {
           text: {
@@ -414,6 +427,56 @@ function safeJson(value: unknown): string {
   }
 }
 
+function extractUnknownPropertyName(message: string): string | null {
+  const match = message.match(/"message":"(.+?) is not a property that exists\."/);
+  return match?.[1] ?? null;
+}
+
+function omitProperty(properties: Record<string, unknown>, propertyName: string): Record<string, unknown> {
+  const next = { ...properties };
+  delete next[propertyName];
+  return next;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function extractHubText(result: HubToolResult | undefined): string | null {
+  if (!result?.content || !Array.isArray(result.content)) {
+    return null;
+  }
+
+  const parts = result.content
+    .map((entry) => (typeof entry?.text === 'string' ? entry.text.trim() : ''))
+    .filter(Boolean);
+
+  return parts.length ? parts.join('\n') : null;
+}
+
+function unwrapHubPayload(value: Record<string, unknown>): Record<string, unknown> {
+  const nestedData = isRecord(value.data) ? value.data : null;
+  if (nestedData && isRecord(nestedData.data)) {
+    return nestedData.data;
+  }
+  if (nestedData) {
+    return nestedData;
+  }
+  return value;
+}
+
+function formatHubToolError(action: string, result: HubToolResult): string {
+  const text = extractHubText(result) ?? `Hub proxy call "${action}" failed without a text payload.`;
+  if (!isRecord(result.structuredContent) || Object.keys(result.structuredContent).length === 0) {
+    return `Hub proxy call "${action}" failed: ${text}`;
+  }
+  return `Hub proxy call "${action}" failed: ${text} (${safeJson(result.structuredContent)})`;
+}
+
+function isHubVisibilityError(message: string, proxyToolName: string): boolean {
+  return message.includes(`Proxy tool "${proxyToolName}" is unknown or not visible for this session.`);
+}
+
 class DirectNotionTransport implements NotionTransport {
   private readonly apiKey: string;
   private readonly databaseId: string;
@@ -434,14 +497,24 @@ class DirectNotionTransport implements NotionTransport {
   }
 
   async createPage(properties: Record<string, unknown>): Promise<PageObject> {
-    return this.request<PageObject>('/pages', 'POST', {
-      parent: { database_id: this.databaseId },
+    return this.requestWithOptionalPropertyFallback<PageObject>(
+      '/pages',
+      'POST',
       properties,
-    });
+      (nextProperties) => ({
+        parent: { database_id: this.databaseId },
+        properties: nextProperties,
+      }),
+    );
   }
 
   async updatePage(pageId: string, properties: Record<string, unknown>): Promise<PageObject> {
-    return this.request<PageObject>(`/pages/${pageId}`, 'PATCH', { properties });
+    return this.requestWithOptionalPropertyFallback<PageObject>(
+      `/pages/${pageId}`,
+      'PATCH',
+      properties,
+      (nextProperties) => ({ properties: nextProperties }),
+    );
   }
 
   async appendBlocks(blockId: string, children: BlockObject[]): Promise<void> {
@@ -457,6 +530,32 @@ class DirectNotionTransport implements NotionTransport {
 
   private async request<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
     return this.requestWithUrl<T>(`${NOTION_API_BASE}${path}`, method, body);
+  }
+
+  private async requestWithOptionalPropertyFallback<T>(
+    path: string,
+    method: string,
+    properties: Record<string, unknown>,
+    buildBody: (properties: Record<string, unknown>) => unknown,
+  ): Promise<T> {
+    let nextProperties = properties;
+    const skippedProperties = new Set<string>();
+
+    while (true) {
+      try {
+        return await this.request<T>(path, method, buildBody(nextProperties));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const unknownProperty = extractUnknownPropertyName(message);
+        if (!unknownProperty || skippedProperties.has(unknownProperty) || !(unknownProperty in nextProperties)) {
+          throw error;
+        }
+
+        console.warn(`Skipping unknown Notion property "${unknownProperty}" on ${method} ${path}`);
+        nextProperties = omitProperty(nextProperties, unknownProperty);
+        skippedProperties.add(unknownProperty);
+      }
+    }
   }
 
   private async requestWithUrl<T>(url: string, method = 'GET', body?: unknown): Promise<T> {
@@ -544,6 +643,32 @@ class HubNotionTransport implements NotionTransport {
   }
 
   private async call<T>(action: string, args: Record<string, unknown>): Promise<T> {
+    try {
+      return await this.callViaHubTool<T>('hub_execute_proxy_tool', {
+        proxyToolName: this.proxyToolName,
+        args: {
+          action,
+          args,
+        },
+      }, action);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!isHubVisibilityError(message, this.proxyToolName)) {
+        throw error;
+      }
+
+      return this.callViaHubTool<T>(this.proxyToolName, {
+        action,
+        args,
+      }, action);
+    }
+  }
+
+  private async callViaHubTool<T>(
+    toolName: string,
+    toolArgs: Record<string, unknown>,
+    action: string,
+  ): Promise<T> {
     const response = await fetch(this.hubUrl, {
       method: 'POST',
       headers: {
@@ -555,14 +680,8 @@ class HubNotionTransport implements NotionTransport {
         id: crypto.randomUUID(),
         method: 'tools/call',
         params: {
-          name: 'hub_execute_proxy_tool',
-          arguments: {
-            proxyToolName: this.proxyToolName,
-            args: {
-              action,
-              args,
-            },
-          },
+          name: toolName,
+          arguments: toolArgs,
         },
       }),
     });
@@ -572,18 +691,39 @@ class HubNotionTransport implements NotionTransport {
       throw new Error(`Hub Notion request failed (${response.status}): ${payload}`);
     }
 
-    const payload = await response.json<Record<string, any>>();
+    const payload = await response.json<HubRpcPayload>();
     if (payload.error) {
       throw new Error(`Hub RPC error: ${JSON.stringify(payload.error)}`);
     }
 
-    const text = payload.result?.content?.[0]?.text;
-    if (typeof text !== 'string') {
-      throw new Error(`Hub response for action "${action}" did not contain JSON text.`);
+    const result = payload.result;
+    if (!result) {
+      throw new Error(`Hub response for action "${action}" did not contain a result.`);
     }
 
-    const parsed = JSON.parse(text) as Record<string, any>;
-    return (parsed.data?.data ?? parsed.data ?? parsed) as T;
+    if (result.isError) {
+      throw new Error(formatHubToolError(action, result));
+    }
+
+    if (isRecord(result.structuredContent)) {
+      return unwrapHubPayload(result.structuredContent) as T;
+    }
+
+    const text = extractHubText(result);
+    if (!text) {
+      throw new Error(`Hub response for action "${action}" did not contain a JSON payload.`);
+    }
+
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      if (!isRecord(parsed)) {
+        throw new Error(`Hub response for action "${action}" was JSON but not an object.`);
+      }
+      return unwrapHubPayload(parsed) as T;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(`Hub response for action "${action}" was not JSON: ${text} (${reason})`);
+    }
   }
 }
 

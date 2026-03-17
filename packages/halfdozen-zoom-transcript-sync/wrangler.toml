@@ -28,12 +28,14 @@ crons = ["0 * * * *"]
 
 [vars]
 NOTION_DATABASE_ID = "27a01918-7ac5-80b7-97fe-c563c98afbbc"
-NOTION_WRITE_MODE = "hub"
-NOTION_HUB_URL = "https://danny.mcp.createsomething.agency/mcp"
-NOTION_HUB_PROXY_TOOL = "halfdozen-operator-notion-mcp__halfdozen_notion"
+NOTION_WRITE_MODE = "api"
+# Optional Hub-backed fallback:
+# NOTION_HUB_URL = "https://danny.mcp.createsomething.agency/mcp"
+# NOTION_HUB_PROXY_TOOL = "halfdozen-operator-notion-mcp__halfdozen_notion"
 NOTION_DEFAULT_STATUS = "Active"
 NOTION_DEFAULT_SOURCE = "Zoom"
 NOTION_DEFAULT_TYPE = "Meeting"
+NOTION_ATTENDEES_PROPERTY = "Attendees / Source Notes"
 ZOOM_LOOKBACK_DAYS = "3"
 ZOOM_PAGE_SIZE = "100"
 

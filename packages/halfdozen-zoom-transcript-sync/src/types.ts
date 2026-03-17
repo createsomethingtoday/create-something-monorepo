@@ -23,6 +23,7 @@ export interface Env {
   NOTION_DEFAULT_STATUS?: string;
   NOTION_DEFAULT_SOURCE?: string;
   NOTION_DEFAULT_TYPE?: string;
+  NOTION_ATTENDEES_PROPERTY?: string;
 }
 
 export interface TranscriptCandidate {
