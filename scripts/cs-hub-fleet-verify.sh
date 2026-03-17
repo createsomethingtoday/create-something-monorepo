@@ -706,10 +706,63 @@ check_compat_identity_without_session() {
   rm -f "$body_file"
 }
 
+extract_result_entity_id() {
+  local body_file="$1"
+  jq -r '
+    .result.structuredContent.entityId //
+    (.result.content[0].text | fromjson? | .entityId) //
+    empty
+  ' "$body_file"
+}
+
+search_visible_connection_status_tool() {
+  local mcp_url="$1"
+  local token="$2"
+  local session_token="${3:-}"
+
+  local body_file status
+  body_file="$(mktemp)"
+  if [[ -n "$session_token" ]]; then
+    status="$(
+      curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+        -H "Authorization: Bearer ${token}" \
+        -H "X-MCP-Session-Token: ${session_token}" \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
+        --data '{"jsonrpc":"2.0","id":"fleet-verify-search","method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"connection_status","limit":20}}}'
+    )"
+  else
+    status="$(
+      curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+        -H "Authorization: Bearer ${token}" \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
+        --data '{"jsonrpc":"2.0","id":"fleet-verify-search","method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"connection_status","limit":20}}}'
+    )"
+  fi
+
+  if [[ "$status" != "200" ]]; then
+    cat "$body_file" >&2
+    rm -f "$body_file"
+    return 1
+  fi
+
+  jq -r '
+    (
+      .result.structuredContent.tools //
+      (.result.content[0].text | fromjson? | .tools) //
+      []
+    )
+    | map(select((.proxyToolName // "") | endswith("__connection_status")))
+    | .[0].proxyToolName // empty
+  ' "$body_file"
+  rm -f "$body_file"
+}
+
 check_compat_account_routing() {
   local worker="$1"
   local expected_account_id mcp_url token_var_name token token_help
-  local probe_proxy_tool="${COMPAT_ACCOUNT_ROUTING_PROXY_TOOL_NAME:-composio-toolkit-gmail__connection_status}"
+  local probe_proxy_tool="${COMPAT_ACCOUNT_ROUTING_PROXY_TOOL_NAME:-}"
   if ! expected_account_id="$(expected_account_id_for_worker "$worker")"; then
     echo "account_routing=skipped reason=no_expected_account_mapping"
     return
@@ -722,6 +775,14 @@ check_compat_account_routing() {
   if [[ -z "$token" ]]; then
     echo "missing API token for ${worker} (${token_help})"
     failures=1
+    return
+  fi
+
+  if [[ -z "$probe_proxy_tool" ]]; then
+    probe_proxy_tool="$(search_visible_connection_status_tool "$mcp_url" "$token" || true)"
+  fi
+  if [[ -z "$probe_proxy_tool" ]]; then
+    echo "compat account routing check skipped for ${worker}: no visible connection_status probe tool"
     return
   fi
 
@@ -754,19 +815,15 @@ check_compat_account_routing() {
     return
   fi
 
-  actual_account_id="$(
-    jq -r '
-      .result.content[0].text
-      | fromjson?
-      | .entityId // empty
-    ' "$body_file"
-  )"
-  rm -f "$body_file"
+  actual_account_id="$(extract_result_entity_id "$body_file")"
   if [[ -z "$actual_account_id" ]]; then
     echo "compat account routing check failed for ${worker}: could not read entityId from tool response"
+    cat "$body_file"
     failures=1
+    rm -f "$body_file"
     return
   fi
+  rm -f "$body_file"
   if [[ "$actual_account_id" != "$expected_account_id" ]]; then
     echo "compat account routing mismatch for ${worker}"
     echo "expected=${expected_account_id}"
@@ -832,31 +889,9 @@ check_session_account_routing() {
     --data "$set_payload" >/dev/null || true
 
   local probe_body_file probe_status probe_proxy_tool
-  probe_body_file="$(mktemp)"
-  probe_status="$(
-    curl -sS -o "$probe_body_file" -w "%{http_code}" -X POST "$mcp_url" \
-      -H "Authorization: Bearer ${token}" \
-      -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
-      -H "Content-Type: application/json" \
-      -H "Accept: application/json" \
-      --data '{"jsonrpc":"2.0","id":"fleet-verify-search","method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"connection_status","limit":1}}}'
-  )"
-  if [[ "$probe_status" != "200" ]]; then
-    echo "probe search failed for ${worker} (status=${probe_status})"
-    cat "$probe_body_file"
-    failures=1
-    reset_discovery_preferences "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN"
-    rm -f "$probe_body_file"
-    return
-  fi
-  probe_proxy_tool="$(
-    jq -r '
-      .result.structuredContent.tools[0].proxyToolName //
-      (.result.content[0].text | fromjson? | .tools[0].proxyToolName) //
-      empty
-    ' "$probe_body_file"
-  )"
-  rm -f "$probe_body_file"
+  probe_body_file=""
+  probe_status=""
+  probe_proxy_tool="$(search_visible_connection_status_tool "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN" || true)"
   if [[ -z "$probe_proxy_tool" ]]; then
     if [[ "$worker" == "cs-mcp-hub-remote" ]]; then
       echo "account_routing=skipped reason=no_visible_proxy_tool"
@@ -901,13 +936,7 @@ check_session_account_routing() {
   fi
 
   local actual_account_id
-  actual_account_id="$(
-    jq -r '
-      .result.content[0].text
-      | fromjson?
-      | .entityId // empty
-    ' "$body_file"
-  )"
+  actual_account_id="$(extract_result_entity_id "$body_file")"
 
   if [[ -z "$actual_account_id" ]]; then
     echo "account routing mismatch for ${worker}"
