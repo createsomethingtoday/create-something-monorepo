@@ -1,0 +1,46 @@
+{
+  "name": "CREATE SOMETHING Monorepo",
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile",
+    "args": {
+      "NODE_VERSION": "22.21.1",
+      "PNPM_VERSION": "9.15.0",
+      "WRANGLER_VERSION": "4.64.0"
+    }
+  },
+  "forwardPorts": [3000, 3003, 5173, 8787],
+  "portsAttributes": {
+    "3000": {
+      "label": "App Preview",
+      "onAutoForward": "notify"
+    },
+    "3003": {
+      "label": "Agency Wrangler Dev",
+      "onAutoForward": "notify"
+    },
+    "5173": {
+      "label": "Vite Dev Server",
+      "onAutoForward": "notify"
+    },
+    "8787": {
+      "label": "Wrangler Local",
+      "onAutoForward": "silent"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "svelte.svelte-vscode"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "files.trimTrailingWhitespace": true
+      }
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh"
+}
