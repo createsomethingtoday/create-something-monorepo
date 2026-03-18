@@ -14,6 +14,7 @@ const zlib = require('zlib');
 
 const REPO = 'createsomethingtoday/create-something-monorepo';
 const VERSION = require('./package.json').version;
+const SKIP_INSTALL = process.env.GROUND_MCP_SKIP_BINARY_INSTALL === '1';
 
 // Platform mapping
 // Note: macOS Intel uses arm64 binary via Rosetta 2
@@ -92,6 +93,11 @@ async function extractZip(buffer, destDir) {
 }
 
 async function install() {
+  if (SKIP_INSTALL) {
+    console.log('Ground MCP: Skipping binary install because GROUND_MCP_SKIP_BINARY_INSTALL=1');
+    return;
+  }
+
   console.log('Ground MCP: Installing binary...');
   
   const binaryName = getBinaryName();
