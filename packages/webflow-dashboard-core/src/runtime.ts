@@ -11,6 +11,12 @@ export interface DashboardCloudflareEnv {
   ENVIRONMENT?: string;
   DEBUG_LOGS?: string;
   DEBUG_AIRTABLE?: string;
+  BASE_URL?: string;
+  ASSETS_PREFIX?: string;
+  NEXT_PUBLIC_BASE_PATH?: string;
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  TURNSTILE_EXPECTED_HOSTNAME?: string;
 }
 
 export async function getCloudflareEnv(

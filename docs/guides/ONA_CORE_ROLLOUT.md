@@ -8,6 +8,8 @@ This guide wires the CREATE SOMETHING monorepo into Ona Core without splitting t
 - `.ona/automations.yaml` defines the startup task plus the lane services and manual tasks.
 - `.nvmrc` pins the local and remote Node runtime to `22.21.1`.
 - `AGENTS.md` remains the primary agent instruction file for Ona agents.
+- Any app or package that Ona must build or deploy has to be Git-tracked.
+  If a target lives under `apps/`, make sure `.gitignore` explicitly allows it.
 
 ## Scope For Phase 1
 
@@ -77,6 +79,31 @@ Mirror these values from Infisical or the existing operational source into the `
 
 Use Ona user secrets for personal credentials such as developer-specific tokens.
 
+### Product Project Secrets
+
+If `apps/webflow-dashboard-cloud` will build or deploy from Ona, mirror the app runtime secrets into the
+`product` project as well.
+
+Use the current source of truth in `apps/webflow-dashboard-cloud/README.md`, including:
+
+- `AIRTABLE_API_KEY`
+- `AIRTABLE_BASE_ID`
+- `RESEND_API_KEY`
+- `CRON_SECRET`
+- `CSRF_TRUSTED_ORIGINS`
+- `ADMIN_EMAILS` when used
+- `ENVIRONMENT` when used
+- `DEBUG_LOGS` when used
+- `DEBUG_AIRTABLE` when used
+- `BASE_URL`
+- `ASSETS_PREFIX`
+- `NEXT_PUBLIC_BASE_PATH`
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` when Turnstile is enabled
+- `TURNSTILE_SECRET_KEY` when Turnstile is enabled
+- `TURNSTILE_EXPECTED_HOSTNAME` when hostname pinning is enabled
+- `CLOUDFLARE_ACCOUNT_ID` for preview/deploy tasks
+- `CLOUDFLARE_API_TOKEN` for preview/deploy tasks
+
 ### Secrets That Stay In Infisical
 
 Keep these outside Ona in phase 1:
@@ -92,7 +119,8 @@ When a shared runtime secret changes:
 1. Rotate it in Infisical first.
 2. Update the mirrored Ona project secret.
 3. Re-run the affected Ona task or service.
-4. For deploy secrets, run the `agency-deploy-preview` task and verify the preview still boots.
+4. For deploy secrets, run the affected preview task and verify the preview still boots.
+   For this rollout that means `agency-deploy-preview` and, when enabled, `webflow-dashboard-cloud-preview`.
 
 ## Guardrails
 
@@ -103,8 +131,9 @@ Configure these in Ona organization or project settings because they are not rep
   - `git clean -fdx`
   - broad recursive delete commands at repo root
   - destructive Cloudflare delete commands
-- Restrict deploy-capable Cloudflare credentials to the `agency` project only.
-- Keep `product`, `services`, and `platform` as dev-only projects unless they receive a narrower credential set later.
+- Restrict deploy-capable Cloudflare credentials to the project that owns the deploy task.
+  For this rollout that means `agency` and, only when needed for `apps/webflow-dashboard-cloud`, `product`.
+- Keep `services` and `platform` as dev-only projects unless they receive a narrower credential set later.
 
 ## Validation
 
@@ -116,6 +145,9 @@ Run this checklist after the projects are created:
 4. Start `agency-dev` and confirm the forwarded preview is reachable.
 5. Start `product-dev`, `services-dev`, and `platform-dev` and confirm each service launches from the shared monorepo environment.
 6. Run `agency-check`, `repo-lint`, and `repo-check`.
-7. In the `agency` project only, run `agency-build` and `agency-deploy-preview`.
+7. In the `product` project, run `webflow-dashboard-cloud-check` and `webflow-dashboard-cloud-build`.
+8. In the `product` project, start `webflow-dashboard-cloud-dev` and confirm the forwarded preview is reachable.
+9. If deploy credentials are present, run `webflow-dashboard-cloud-preview` and `webflow-dashboard-cloud-deploy`.
+10. In the `agency` project only, run `agency-build` and `agency-deploy-preview`.
 
 If the remote loop is still materially slow after this rollout, optimize the repo startup path next. Do not split the monorepo only to compensate for a storage bottleneck.

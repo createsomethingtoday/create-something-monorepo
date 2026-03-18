@@ -48,6 +48,13 @@ coverage
 apps/*
 !apps/meeting-capture/
 !apps/meeting-capture/**
+!apps/webflow-dashboard-cloud/
+!apps/webflow-dashboard-cloud/**
+apps/webflow-dashboard-cloud/node_modules/
+apps/webflow-dashboard-cloud/node_modules*/
+apps/webflow-dashboard-cloud/.next/
+apps/webflow-dashboard-cloud/.open-next/
+apps/webflow-dashboard-cloud/tsconfig.tsbuildinfo
 apps/meeting-capture/MeetingCapture/.build/
 apps/meeting-capture/MeetingCapture/.swiftpm/
 apps/meeting-capture/MeetingCapture/.codex-build-verify/

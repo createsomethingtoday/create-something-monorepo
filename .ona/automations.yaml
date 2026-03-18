@@ -27,6 +27,34 @@ tasks:
       - manual
     command: pnpm check
 
+  webflow-dashboard-cloud-check:
+    name: Webflow Dashboard Cloud check
+    description: Run the typed validation flow for the Webflow Cloud intake app.
+    triggeredBy:
+      - manual
+    command: pnpm --filter @create-something/webflow-dashboard-cloud check
+
+  webflow-dashboard-cloud-build:
+    name: Webflow Dashboard Cloud build
+    description: Build the Webflow Cloud app in the Ona environment.
+    triggeredBy:
+      - manual
+    command: pnpm --filter @create-something/webflow-dashboard-cloud build
+
+  webflow-dashboard-cloud-preview:
+    name: Webflow Dashboard Cloud preview
+    description: Build and preview the OpenNext Cloudflare bundle for the Webflow Cloud app.
+    triggeredBy:
+      - manual
+    command: pnpm --filter @create-something/webflow-dashboard-cloud preview
+
+  webflow-dashboard-cloud-deploy:
+    name: Webflow Dashboard Cloud deploy
+    description: Build and deploy the Webflow Cloud app from the Ona environment.
+    triggeredBy:
+      - manual
+    command: pnpm --filter @create-something/webflow-dashboard-cloud deploy
+
   agency-build:
     name: Agency build
     description: Build the agency package in the Ona environment.
@@ -42,6 +70,15 @@ tasks:
     command: pnpm --filter @create-something/agency deploy:preview
 
 services:
+  webflow-dashboard-cloud-dev:
+    name: Webflow Dashboard Cloud dev
+    description: Start the Webflow Cloud app development loop in the product lane.
+    triggeredBy:
+      - manual
+    commands:
+      start: pnpm --filter @create-something/webflow-dashboard-cloud dev
+      ready: curl -fsS http://127.0.0.1:3000 >/dev/null
+
   agency-dev:
     name: Agency dev
     description: Start the agency development loop with the packaged local libraries.

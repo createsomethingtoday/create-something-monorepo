@@ -218,7 +218,7 @@ These throttling rules are not enforced by static page logic alone. They appear 
 ### Required Changes
 
 - [x] Pick a real app host in the repo. The current target is `apps/webflow-dashboard-cloud`.
-- [ ] Replace hidden checkbox gates with explicit typed validation state.
+- [x] Replace hidden checkbox gates with explicit typed validation state.
 - [ ] Consolidate creator verification behind first-party APIs.
 - [ ] Define formal contracts for:
   - creator uniqueness
@@ -226,6 +226,7 @@ These throttling rules are not enforced by static page logic alone. They appear 
   - template-name availability
   - published-site crawl validation
 - [ ] Make creator-first sequencing explicit in route and backend flow, not just copy.
+- [x] Add optional Turnstile protection to the public creator/template submission flow.
 - [ ] Normalize review-time messaging across form UI and guidelines.
 
 ### Recommended Improvements
@@ -254,7 +255,7 @@ These throttling rules are not enforced by static page logic alone. They appear 
 
 ### Rationale
 
-The business logic is clear enough to transfer, but the current implementation is tightly coupled to Webflow embeds, hidden required checkboxes, and several external validation services. The repo now has a Webflow Cloud target and a first refactor pass in `apps/webflow-dashboard-cloud`, but the local CLI still does not expose `webflow cloud`, so deployment verification remains separate from the code migration itself.
+The business logic is clear enough to transfer, but the current implementation is tightly coupled to Webflow embeds and several external validation services. The repo now has a Webflow Cloud target and a working first refactor pass in `apps/webflow-dashboard-cloud`, including explicit validation state and optional Turnstile enforcement on the public creator/template submit routes. The local CLI still does not expose `webflow cloud`, so deployment verification remains separate from the code migration itself.
 
 ### Next Steps
 
