@@ -5,6 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXPECTED_NODE="v22.21.1"
 EXPECTED_PNPM="9.15.0"
 
+export PATH="/usr/local/bin:/usr/local/sbin:${PATH}"
+hash -r
+
 cd "$ROOT_DIR"
 
 actual_node="$(node -v)"
