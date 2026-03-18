@@ -10,6 +10,8 @@ v3 ships with:
   - `dm_composio_toolkit_inventory`
   - `dm_composio_connection_status`
   - `dm_composio_get_connect_link`
+- **Gmail utility tool**:
+  - `dm_gmail_list_recent_threads`
 
 Direct Drive sync integration and Drive cron sync were removed.
 
@@ -28,11 +30,11 @@ wrangler secret put COMPOSIO_API_KEY
 
 - `ENABLED_TOOLSETS=notion,composio`
 - `COMPOSIO_PROXY_MODE=allowlist` (recommended)
-- `COMPOSIO_ALLOWED_TOOLKITS=googledrive,zoom,slack,quickbooks,dropbox` (example)
+- `COMPOSIO_ALLOWED_TOOLKITS=googledrive,gmail,zoom,slack,quickbooks,dropbox` (example)
 - `COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY={...}` (optional per-entity override)
 - `COMPOSIO_ENTITY_ID=dm` (default entity fallback)
 - `COMPOSIO_TOOL_NAME_PREFIX=dm_composio`
-- `COMPOSIO_AUTH_CONFIG_MAP={...}` (required for `dm_composio_get_connect_link`, inject per environment)
+- `COMPOSIO_AUTH_CONFIG_MAP={...}` (required for `dm_composio_get_connect_link`; include `gmail` if you want DM-issued Gmail reconnect links)
 
 3. Run locally:
 
@@ -93,6 +95,12 @@ If `MCP_API_KEY` is missing in a deployment, the server returns `500` on MCP tra
 - `COMPOSIO_TOOL_NAME_PREFIX` (default `dm_composio`)
 - `COMPOSIO_TOOL_CACHE_SECONDS` (default `300`)
 - `COMPOSIO_AUTH_CONFIG_MAP` (JSON map `toolkit -> authConfigId`, used by connect-link tool)
+
+## Gmail Convenience
+
+- `dm_gmail_list_recent_threads` wraps the Gmail toolkit to return recent threads already sorted by latest message timestamp.
+- It uses existing Gmail primitives under the hood and is the preferred path for inbox triage over stitching together raw list/fetch calls.
+- Default behavior targets inbox threads (`label_ids=["INBOX"]`) and accepts `query`, `max_results`, `user_id`, `include_spam_trash`, and optional `connected_account_id`.
 
 ## Allow-list behavior
 
