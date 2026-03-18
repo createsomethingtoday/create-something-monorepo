@@ -5,7 +5,9 @@ ARG NODE_VERSION=22.21.1
 ARG PNPM_VERSION=9.15.0
 ARG WRANGLER_VERSION=4.64.0
 
-RUN apt-get update \
+RUN find /etc/apt/sources.list.d -maxdepth 1 -type f \
+        \( -iname '*yarn*' -o -iname '*dl_yarnpkg_com*' \) -delete \
+    && apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl gnupg jq xz-utils \
     && case "${TARGETARCH}" in \
         "amd64") NODE_ARCH="x64" ;; \
