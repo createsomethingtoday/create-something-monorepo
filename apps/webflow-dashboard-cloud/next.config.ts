@@ -6,9 +6,7 @@ const assetPrefix = process.env.ASSETS_PREFIX || process.env.BASE_URL || undefin
 const nextConfig: NextConfig = {
   assetPrefix,
   output: 'standalone',
-  experimental: {
-    outputFileTracingRoot: join(process.cwd(), '../..')
-  },
+  outputFileTracingRoot: join(process.cwd(), '../..'),
   images: {
     unoptimized: true
   },
