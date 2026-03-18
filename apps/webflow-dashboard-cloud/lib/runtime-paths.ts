@@ -1,15 +1,16 @@
-declare global {
-  interface Window {
-    __NEXT_DATA__?: {
-      assetPrefix?: string;
-    };
-  }
-}
-
 function normalizeBasePath(value: string | undefined | null): string {
   if (!value || value === '/') return '';
   const trimmed = value.endsWith('/') ? value.slice(0, -1) : value;
   return trimmed === '/' ? '' : trimmed;
+}
+
+function getNextAssetPrefix(): string | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  const nextData = window.__NEXT_DATA__ as { assetPrefix?: string } | undefined;
+  return typeof nextData?.assetPrefix === 'string' ? nextData.assetPrefix : undefined;
 }
 
 export function getServerBasePath(): string {
@@ -28,7 +29,7 @@ export function getClientBasePath(): string {
     return getServerBasePath();
   }
 
-  return normalizeBasePath(window.__NEXT_DATA__?.assetPrefix || getServerBasePath());
+  return normalizeBasePath(getNextAssetPrefix() || getServerBasePath());
 }
 
 export function appPath(pathname: string): string {

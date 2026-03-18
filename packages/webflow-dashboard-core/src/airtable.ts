@@ -83,6 +83,13 @@ export interface AirtableEnv {
   DEBUG_AIRTABLE?: string;
 }
 
+export interface AirtableEnvLike {
+  AIRTABLE_API_KEY?: string;
+  AIRTABLE_BASE_ID?: string;
+  ENVIRONMENT?: string;
+  DEBUG_AIRTABLE?: string;
+}
+
 export interface MarketplaceFreshnessMetadata {
   timestamp: string | null;
   source: 'field' | 'record-created-time' | 'none';
@@ -557,7 +564,7 @@ function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
   };
 }
 
-export function getAirtableClient(env: AirtableEnv | undefined) {
+export function getAirtableClient(env: AirtableEnvLike | undefined) {
   if (!env?.AIRTABLE_API_KEY || !env?.AIRTABLE_BASE_ID) {
     throw new Error('Airtable configuration missing');
   }
