@@ -9,7 +9,6 @@ declare global {
 				UPLOADS: R2Bucket;
 				AIRTABLE_API_KEY: string;
 				AIRTABLE_BASE_ID: string;
-				RESEND_API_KEY: string;
 				CRON_SECRET?: string;
 				ADMIN_EMAILS?: string;
 				CSRF_TRUSTED_ORIGINS?: string;

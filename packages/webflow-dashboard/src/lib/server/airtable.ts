@@ -538,8 +538,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		/**
 		 * Set verification token for user.
 		 *
-		 * Stores token in Airtable for verification. Email delivery is handled
-		 * by Resend in the login endpoint - this is purely for token storage.
+		 * Stores token in Airtable for verification. Delivery is handled by the
+		 * external automation path, so this is purely for token storage.
 		 */
 		async setVerificationToken(userId: string, token: string, expirationTime: Date): Promise<void> {
 			await base(TABLES.USERS).update([{
@@ -557,8 +557,6 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * Uses two-step process to trigger Airtable automation:
 		 * 1. Clear token (set to null)
 		 * 2. Set new token (null → value transition triggers automation)
-		 *
-		 * This is used as a fallback when Resend fails (e.g., suppressed emails).
 		 */
 		async triggerVerificationEmailAutomation(userId: string, token: string, expirationTime: Date): Promise<void> {
 			// Step 1: Clear token to reset automation trigger

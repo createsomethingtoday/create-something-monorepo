@@ -14,9 +14,11 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 
 	const airtable = getAirtableClient(platform.env);
 
-	// Fetch asset details
-	// Note: Original Next.js app does NOT verify ownership for viewing assets
-	// Ownership verification is only needed for editing operations
+	const isOwner = await airtable.verifyAssetOwnership(params.id, locals.user.email);
+	if (!isOwner) {
+		throw error(403, 'You do not have permission to view this asset');
+	}
+
 	const asset = await airtable.getAsset(params.id);
 	if (!asset) {
 		throw error(404, 'Asset not found');
