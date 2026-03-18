@@ -4,6 +4,7 @@ const assetPrefix = process.env.ASSETS_PREFIX || process.env.BASE_URL || undefin
 
 const nextConfig: NextConfig = {
   assetPrefix,
+  output: 'standalone',
   images: {
     unoptimized: true
   },
