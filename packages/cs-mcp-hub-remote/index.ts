@@ -27,7 +27,6 @@ import {
   type AuthzDecisionEventRecord,
   type AuthzRolloutRow,
 } from '@create-something/mcp-authz';
-import { flush as braintrustFlush, initLogger, type Logger, type Span } from 'braintrust';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
 import intentRoutesJson from '../../config/mcp-hub/intent-routes.json';
@@ -77,6 +76,31 @@ type HubState = {
   enabledBundles: string[];
   enabledServers: string[];
   disabledServers: string[];
+};
+
+type BraintrustSpan = {
+  log(payload: unknown): void;
+};
+
+type BraintrustLogger = {
+  flush(): Promise<void>;
+  traced(
+    callback: (span: BraintrustSpan) => void | Promise<void>,
+    options: { name: string; type: string },
+  ): Promise<void>;
+};
+
+type BraintrustLoggerConfig = {
+  apiKey: string;
+  projectName: string;
+  asyncFlush: boolean;
+  setCurrent: boolean;
+  projectId?: string;
+};
+
+type BraintrustModule = {
+  flush(): Promise<void>;
+  initLogger(config: BraintrustLoggerConfig): BraintrustLogger;
 };
 
 type StateResolution = {
@@ -715,8 +739,8 @@ const DEFAULT_REQUIRED_GLOBAL_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_REQUIRED_DISCOVERY_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let braintrustLogger: Logger<any> | null = null;
+let braintrustUnavailableLogged = false;
+let braintrustLogger: BraintrustLogger | null = null;
 let braintrustLoggerKey: string | null = null;
 
 export default {
@@ -4978,8 +5002,16 @@ function getCurrentPeriod(): string {
   return `${year}-${month}`;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getBraintrustLogger(env: Env): Logger<any> | null {
+async function loadBraintrustModule(): Promise<BraintrustModule | null> {
+  if (!braintrustUnavailableLogged) {
+    console.warn(`[${HUB_NAME}] braintrust disabled: package is not bundled in this worker build`);
+    braintrustUnavailableLogged = true;
+  }
+
+  return null;
+}
+
+async function getBraintrustLogger(env: Env): Promise<BraintrustLogger | null> {
   const rawEnabled = readEnvString(env, 'BRAINTRUST_ENABLED');
   if (rawEnabled && rawEnabled.trim().toLowerCase() === 'false') {
     return null;
@@ -4987,6 +5019,8 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
 
   const apiKey = readEnvString(env, 'BRAINTRUST_API_KEY')?.trim();
   if (!apiKey) return null;
+  const braintrust = await loadBraintrustModule();
+  if (!braintrust) return null;
 
   const projectName =
     readEnvString(env, 'BRAINTRUST_PROJECT_NAME')?.trim() || DEFAULT_BRAINTRUST_PROJECT_NAME;
@@ -4994,7 +5028,7 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
   const nextKey = `${apiKey}::${projectId ?? ''}::${projectName}`;
 
   if (!braintrustLogger || braintrustLoggerKey !== nextKey) {
-    const loggerConfig: Parameters<typeof initLogger>[0] = {
+    const loggerConfig: BraintrustLoggerConfig = {
       apiKey,
       projectName,
       asyncFlush: true,
@@ -5005,14 +5039,14 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
       (loggerConfig as Record<string, unknown>).projectId = projectId;
     }
 
-    braintrustLogger = initLogger(loggerConfig);
+    braintrustLogger = braintrust.initLogger(loggerConfig);
     braintrustLoggerKey = nextKey;
   }
 
   return braintrustLogger;
 }
 
-async function flushBraintrust(logger: Logger<any>): Promise<void> {
+async function flushBraintrust(logger: BraintrustLogger): Promise<void> {
   try {
     await logger.flush();
   } catch (error) {
@@ -5022,7 +5056,9 @@ async function flushBraintrust(logger: Logger<any>): Promise<void> {
   }
 
   try {
-    await braintrustFlush();
+    const braintrust = await loadBraintrustModule();
+    if (!braintrust) return;
+    await braintrust.flush();
   } catch (error) {
     console.warn(
       `[${HUB_NAME}] braintrust global flush failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -5039,12 +5075,12 @@ function enqueueWithWaitUntil(task: Promise<void>, executionCtx?: WaitUntilConte
 }
 
 async function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): Promise<void> {
-  const logger = getBraintrustLogger(env);
+  const logger = await getBraintrustLogger(env);
   if (!logger) return;
   const metadata = asRecord(log.metadata);
   try {
     await logger.traced(
-      (span: Span) => {
+      (span: BraintrustSpan) => {
         span.log({
           input: {
             tool: log.toolName,
@@ -5085,12 +5121,12 @@ async function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): P
 }
 
 async function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): Promise<void> {
-  const logger = getBraintrustLogger(env);
+  const logger = await getBraintrustLogger(env);
   if (!logger) return;
   const metadata = asRecord(log.metadata);
   try {
     await logger.traced(
-      (span: Span) => {
+      (span: BraintrustSpan) => {
         span.log({
           input: {
             downstreamServer: log.downstreamServer,

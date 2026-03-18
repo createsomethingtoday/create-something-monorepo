@@ -60,9 +60,9 @@
 ```
 
 **Compatibility Issues**:
-- The requested `webflow-cloud` workflow is not directly runnable in this repo today. The installed `webflow` CLI exposes `extension` and `devlink`, but not `cloud`.
-- There is no existing Webflow Cloud app package in the monorepo. The checked-in `webflow.json` files are Code Components library configs, not Cloud app configs.
-- Current live logic depends on repo-external services and hidden browser-only validation state. A transfer requires explicit server contracts, not a markup copy.
+- The requested `webflow-cloud` workflow is still not directly runnable from the local CLI environment. The installed `webflow` CLI exposes `extension` and `devlink`, but not `cloud`.
+- The monorepo now has a Next.js Cloud target at `apps/webflow-dashboard-cloud`, and the creator/template intake flow has been scaffolded there as a public `/submit` route.
+- Current live logic still depends on repo-external services and hidden browser-only validation state. The refactor replaces the hidden browser gates with explicit route contracts, but some external validation services remain source-of-truth.
 
 ---
 
@@ -217,7 +217,7 @@ These throttling rules are not enforced by static page logic alone. They appear 
 
 ### Required Changes
 
-- [ ] Pick a real app host in the repo. There is no existing Webflow Cloud app target today.
+- [x] Pick a real app host in the repo. The current target is `apps/webflow-dashboard-cloud`.
 - [ ] Replace hidden checkbox gates with explicit typed validation state.
 - [ ] Consolidate creator verification behind first-party APIs.
 - [ ] Define formal contracts for:
@@ -254,7 +254,7 @@ These throttling rules are not enforced by static page logic alone. They appear 
 
 ### Rationale
 
-The business logic is clear enough to transfer, but the current implementation is tightly coupled to Webflow embeds, hidden required checkboxes, and several external validation services. This repo also does not currently contain a Webflow Cloud app target, and the installed CLI does not expose `webflow cloud`. The right next move is to treat this as a migration/specification task first, not a direct copy.
+The business logic is clear enough to transfer, but the current implementation is tightly coupled to Webflow embeds, hidden required checkboxes, and several external validation services. The repo now has a Webflow Cloud target and a first refactor pass in `apps/webflow-dashboard-cloud`, but the local CLI still does not expose `webflow cloud`, so deployment verification remains separate from the code migration itself.
 
 ### Next Steps
 
@@ -268,7 +268,7 @@ The business logic is clear enough to transfer, but the current implementation i
 
 ## 7. Post-Translation
 
-**Target Package**: TBD. Recommended outcome is a new dedicated app package, not `packages/webflow-components/`.
+**Target Package**: `apps/webflow-dashboard-cloud`
 
 **DevLink Library**: Not applicable to the current flow.
 
