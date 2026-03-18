@@ -1,0 +1,76 @@
+tasks:
+  bootstrap:
+    name: Bootstrap workspace
+    description: Validate the pinned toolchain and ensure workspace dependencies are installed.
+    triggeredBy:
+      - postEnvironmentStart
+    command: ./.ona/scripts/bootstrap.sh
+
+  agency-check:
+    name: Agency check
+    description: Run the agency package validation flow.
+    triggeredBy:
+      - manual
+    command: pnpm --filter @create-something/agency check
+
+  repo-lint:
+    name: Repo lint
+    description: Run the workspace lint command from the monorepo root.
+    triggeredBy:
+      - manual
+    command: pnpm lint
+
+  repo-check:
+    name: Repo check
+    description: Run the workspace check command from the monorepo root.
+    triggeredBy:
+      - manual
+    command: pnpm check
+
+  agency-build:
+    name: Agency build
+    description: Build the agency package in the Ona environment.
+    triggeredBy:
+      - manual
+    command: pnpm --filter @create-something/agency build
+
+  agency-deploy-preview:
+    name: Agency deploy preview
+    description: Build and deploy the agency preview using project-scoped Cloudflare credentials.
+    triggeredBy:
+      - manual
+    command: pnpm --filter @create-something/agency deploy:preview
+
+services:
+  agency-dev:
+    name: Agency dev
+    description: Start the agency development loop with the packaged local libraries.
+    triggeredBy:
+      - manual
+    commands:
+      start: pnpm dev:agency
+      ready: curl -fsS http://127.0.0.1:5173 >/dev/null
+
+  product-dev:
+    name: Product lane dev
+    description: Start the product lane from the monorepo root.
+    triggeredBy:
+      - manual
+    commands:
+      start: pnpm dev:product
+
+  services-dev:
+    name: Services lane dev
+    description: Start the services lane from the monorepo root.
+    triggeredBy:
+      - manual
+    commands:
+      start: pnpm dev:services
+
+  platform-dev:
+    name: Platform lane dev
+    description: Start the platform lane from the monorepo root.
+    triggeredBy:
+      - manual
+    commands:
+      start: pnpm dev:platform
