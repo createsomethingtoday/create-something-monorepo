@@ -1,7 +1,4 @@
-import {
-  getAirtableClient,
-  type AirtableEnv
-} from '@create-something/webflow-dashboard-core';
+import { getAirtableClient } from '@create-something/webflow-dashboard-core';
 import { getEnvOrThrow } from './env';
 
 export async function getServerAirtable() {
@@ -10,5 +7,5 @@ export async function getServerAirtable() {
     throw new Error('Airtable runtime env not available');
   }
 
-  return getAirtableClient(env as AirtableEnv);
+  return getAirtableClient(env);
 }
