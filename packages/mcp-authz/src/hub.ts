@@ -8,21 +8,49 @@ const DESTRUCTIVE_PATTERN = /\b(delete|destroy|purge|wipe|drop|archive|trash|rem
 const WRITE_PATTERN = /\b(create|update|upsert|insert|append|send|post|publish|start|run|execute|sync|batch_update|values_update|set|assign|unassign|clear)\b/i;
 const AUTH_ADMIN_PATTERN = /\b(get_connect_link|oauth|authorize|auth|token|consent|credential|scope)\b/i;
 const CONTROL_PLANE_PATTERN = /\b(policy|rollout|registry|state|quota|rate_limit|discovery|bundle|trace)\b/i;
+const READ_ACTION_PREFIX_PATTERN = /^(list|get|fetch|describe|inspect|preview|validate|search|query|check|test)\b/i;
+const READ_METADATA_PATTERN = /\b(status|schema|health|info|details)\b/i;
 
-function joinedRouteText(route: {
-  proxyToolName: string;
-  serverName: string;
-  downstreamToolName: string;
-}, definition?: ToolLike): string {
-  return [
-    route.proxyToolName,
-    route.serverName,
-    route.downstreamToolName,
-    definition?.description ?? '',
-  ]
+function normalizeHubRouteText(...parts: Array<string | null | undefined>): string {
+  return parts
+    .map((part) => (typeof part === 'string' ? part.trim() : ''))
+    .filter((part) => part.length > 0)
     .join(' ')
     .replace(/[_:/.-]+/g, ' ')
     .toLowerCase();
+}
+
+function routeIdentifierText(route: {
+  proxyToolName: string;
+  serverName: string;
+  downstreamToolName: string;
+}): string {
+  return normalizeHubRouteText(
+    route.proxyToolName,
+    route.serverName,
+    route.downstreamToolName,
+  );
+}
+
+function classifyInvocationAccessType(invocationAction?: string | null): AuthorizationAccessType | null {
+  const text = normalizeHubRouteText(invocationAction);
+  if (!text) return null;
+  if (DESTRUCTIVE_PATTERN.test(text)) {
+    return 'destructive';
+  }
+  if (AUTH_ADMIN_PATTERN.test(text)) {
+    return 'auth_admin';
+  }
+  if (READ_ACTION_PREFIX_PATTERN.test(text) || (READ_METADATA_PATTERN.test(text) && !WRITE_PATTERN.test(text))) {
+    return 'read';
+  }
+  if (CONTROL_PLANE_PATTERN.test(text)) {
+    return 'control_plane';
+  }
+  if (WRITE_PATTERN.test(text)) {
+    return 'write';
+  }
+  return null;
 }
 
 export function classifyHubRoute(route: {
@@ -30,21 +58,30 @@ export function classifyHubRoute(route: {
   serverName: string;
   downstreamToolName: string;
   serverTags?: string[] | null;
-}, definition?: ToolLike): {
+}, definition?: ToolLike, options?: {
+  invocationAction?: string | null;
+}): {
   accessType: AuthorizationAccessType;
   oauthRequired: boolean;
   tags: string[];
 } {
-  const text = joinedRouteText(route, definition);
-  let accessType: AuthorizationAccessType = 'read';
-  if (DESTRUCTIVE_PATTERN.test(text)) {
-    accessType = 'destructive';
-  } else if (CONTROL_PLANE_PATTERN.test(text)) {
-    accessType = 'control_plane';
-  } else if (AUTH_ADMIN_PATTERN.test(text)) {
-    accessType = 'auth_admin';
-  } else if (WRITE_PATTERN.test(text)) {
-    accessType = 'write';
+  const invocationAccessType = classifyInvocationAccessType(options?.invocationAction);
+  let accessType: AuthorizationAccessType = invocationAccessType ?? 'read';
+  if (!invocationAccessType) {
+    // Classify from stable identifiers instead of free-form vendor descriptions.
+    // Descriptions frequently contain incidental nouns like "state" or "trash"
+    // in otherwise read-only tools, which creates false control-plane or
+    // destructive matches if we pattern-match the prose directly.
+    const text = routeIdentifierText(route);
+    if (DESTRUCTIVE_PATTERN.test(text)) {
+      accessType = 'destructive';
+    } else if (CONTROL_PLANE_PATTERN.test(text)) {
+      accessType = 'control_plane';
+    } else if (AUTH_ADMIN_PATTERN.test(text)) {
+      accessType = 'auth_admin';
+    } else if (WRITE_PATTERN.test(text)) {
+      accessType = 'write';
+    }
   }
 
   const oauthRequired =
@@ -78,6 +115,7 @@ export function buildHubAuthorizationRequest(input: {
   serverTags?: string[] | null;
   actionName: 'discover' | 'execute';
   definition?: ToolLike;
+  invocationAction?: string | null;
   context?: Record<string, unknown>;
 }): AuthorizationRequest {
   const classification = classifyHubRoute(
@@ -88,6 +126,9 @@ export function buildHubAuthorizationRequest(input: {
       serverTags: input.serverTags ?? null,
     },
     input.definition,
+    {
+      invocationAction: input.invocationAction,
+    },
   );
 
   return {
@@ -118,6 +159,7 @@ export function buildHubAuthorizationRequest(input: {
       tags: classification.tags,
       metadata: {
         description: input.definition?.description ?? null,
+        invocationAction: input.invocationAction ?? null,
       },
     },
     context: input.context,
