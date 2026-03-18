@@ -30,5 +30,5 @@ RUN find /etc/apt/sources.list.d -maxdepth 1 -type f \
     && apt-get install -y --no-install-recommends infisical \
     && corepack enable \
     && corepack prepare pnpm@${PNPM_VERSION} --activate \
-    && npm install -g wrangler@${WRANGLER_VERSION} \
+    && npm install -g pnpm@${PNPM_VERSION} wrangler@${WRANGLER_VERSION} \
     && rm -rf /var/lib/apt/lists/*

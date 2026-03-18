@@ -10,6 +10,11 @@
     }
   },
   "forwardPorts": [3000, 3003, 5173, 8787],
+  "remoteEnv": {
+    "PATH": "/usr/local/bin:/usr/local/sbin:${containerEnv:PATH}",
+    "NVM_BIN": "/usr/local/bin",
+    "NVM_INC": "/usr/local/include/node"
+  },
   "portsAttributes": {
     "3000": {
       "label": "App Preview",
