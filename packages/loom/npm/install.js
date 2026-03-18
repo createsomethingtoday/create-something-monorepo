@@ -13,6 +13,7 @@ const path = require('path');
 
 const REPO = 'createsomethingtoday/create-something-monorepo';
 const VERSION = require('./package.json').version;
+const SKIP_INSTALL = process.env.LOOM_MCP_SKIP_BINARY_INSTALL === '1';
 
 // Platform mapping
 // Note: macOS Intel uses arm64 binary via Rosetta 2
@@ -92,6 +93,11 @@ async function extractZip(buffer, destDir) {
 }
 
 async function install() {
+  if (SKIP_INSTALL) {
+    console.log('Loom MCP: Skipping binary install because LOOM_MCP_SKIP_BINARY_INSTALL=1');
+    return;
+  }
+
   console.log('Loom MCP: Installing binary...');
   
   const binaryName = getBinaryName();

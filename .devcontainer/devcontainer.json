@@ -13,7 +13,9 @@
   "remoteEnv": {
     "PATH": "/usr/local/bin:/usr/local/sbin:${containerEnv:PATH}",
     "NVM_BIN": "/usr/local/bin",
-    "NVM_INC": "/usr/local/include/node"
+    "NVM_INC": "/usr/local/include/node",
+    "GROUND_MCP_SKIP_BINARY_INSTALL": "1",
+    "LOOM_MCP_SKIP_BINARY_INSTALL": "1"
   },
   "portsAttributes": {
     "3000": {
