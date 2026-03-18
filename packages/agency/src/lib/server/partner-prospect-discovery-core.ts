@@ -1,5 +1,6 @@
 import {
 	deriveProspectServiceTier,
+	getProspectAvailabilityConflict,
 	getProspectClaimConflict,
 	resolveProspectClaimAuthorization,
 	type ProspectClaimAuthorization,
@@ -183,6 +184,10 @@ export async function listPartnerProspectClaimsForUser(
 				const identityAccountId = client.identity_account_id ?? client.workspace_account_id;
 				const identityTenantId = client.identity_tenant_id ?? client.slug;
 				const serviceTier = deriveProspectServiceTier(clientMetadata, deps.normalizeAgencyServiceTier);
+				const availabilityConflict = getProspectAvailabilityConflict({
+					clientStatus: client.status,
+					laneStatus: lane.status,
+				});
 				const claimConflict = getProspectClaimConflict({
 					userId: input.authSubject,
 					identityAccountId,
@@ -204,10 +209,10 @@ export async function listPartnerProspectClaimsForUser(
 						: 'claimable';
 				const blockedReason: ProspectClaimDiscoveryBlockedReason | null = claimedByOther
 					? 'already_claimed'
-					: claimConflict?.code ?? null;
+					: claimConflict?.code ?? availabilityConflict?.code ?? null;
 				const blockedMessage = claimedByOther
 					? 'This prospect is already claimed by another Auth0 subject.'
-					: claimConflict?.message ?? null;
+					: claimConflict?.message ?? availabilityConflict?.message ?? null;
 
 				results.push({
 					client: serializeClient(client, deps),

@@ -502,3 +502,70 @@ test('agency session user cannot claim across a manual entitlement override for 
 	const payload = await response.json();
 	assert.equal(payload.error, 'manual_override_conflict');
 });
+
+test('agency session user cannot claim a prospect lane that is paused', async () => {
+	const state = createState();
+	state.client = {
+		...state.client,
+		status: 'paused',
+	};
+	state.lane = {
+		...state.lane,
+		status: 'paused',
+	};
+	const db = createFakeDb(state);
+
+	const handler = createPartnerProspectClaimPostHandler({
+		partnerKey: 'half-dozen',
+		buildAgencyEntitlementSnapshot: () => {
+			throw new Error('buildAgencyEntitlementSnapshot should not be called');
+		},
+		evaluateAgencyMcpEntitlement: () => {
+			throw new Error('evaluateAgencyMcpEntitlement should not be called');
+		},
+		findAgencyIdentitySeedByEmail: async () => null,
+		findAgencyMcpEntitlementByAuthSubject: async () => null,
+		getPartnerAccessLaneBySlug: async () => state.lane,
+		getPartnerClientBySlug: async () => state.client,
+		isProspectGraduated: () => false,
+		isProspectRecord: () => true,
+		normalizeAgencyServiceTier: (value, fallback = 'mcp_only') => value ?? fallback,
+		normalizeEmail: (raw) => raw?.trim().toLowerCase() ?? null,
+		normalizePartnerAccessLaneSlug: (value) => value.trim().toLowerCase(),
+		normalizePartnerSlug: (value) => value.trim().toLowerCase(),
+		parseJsonArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
+		parseJsonObject: (raw) => (raw ? (JSON.parse(raw) as Record<string, unknown>) : {}),
+		parseJsonStringArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
+		reconcileAgencyMcpEntitlement: async () => {
+			throw new Error('reconcileAgencyMcpEntitlement should not be called');
+		},
+		requireAgencySessionUser: async () => ({
+			id: 'auth0|claimant',
+			email: 'owner@example.com',
+			source: 'io',
+		}),
+		upsertAgencyIdentitySeed: async () => {
+			throw new Error('upsertAgencyIdentitySeed should not be called');
+		},
+		upsertPartnerAccessLane: async () => {
+			throw new Error('upsertPartnerAccessLane should not be called');
+		},
+		isHttpError: (error): error is { status: number; code?: string; message?: string; body?: { message?: string } } =>
+			Boolean(error && typeof error === 'object' && 'status' in error),
+	});
+
+	const response = await handler({
+		cookies: {},
+		request: new Request('https://example.com/api/me/prospects/acme/claim', {
+			method: 'POST',
+			body: JSON.stringify({}),
+		}),
+		params: { slug: 'acme' },
+		platform: { env: { DB: db } },
+	} as any);
+
+	assert.equal(response.status, 409);
+	const payload = await response.json();
+	assert.equal(payload.error, 'prospect_unavailable');
+	assert.match(payload.message, /client status is paused/i);
+});

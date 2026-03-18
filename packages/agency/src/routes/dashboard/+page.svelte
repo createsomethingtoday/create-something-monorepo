@@ -20,19 +20,26 @@
 		client: {
 			slug: string;
 			display_name: string | null;
+			status: 'initialized' | 'active' | 'paused' | 'sunset' | 'disabled';
 			required_toolkits: string[];
 		};
 		lane: {
 			slug: string;
 			display_name: string;
 			hub_url: string;
+			status: 'initialized' | 'active' | 'paused' | 'sunset' | 'disabled';
 			allowed_tool_prefixes: string[];
 		};
 		prospect_claim: {
 			state: 'claimable' | 'claimed_by_you' | 'claimed_by_other';
 			can_claim_now: boolean;
 			authorized_via: 'owner_email' | 'claim_emails' | 'claim_email_domains';
-			blocked_reason: 'identity_seed_conflict' | 'manual_override_conflict' | 'already_claimed' | null;
+			blocked_reason:
+				| 'identity_seed_conflict'
+				| 'manual_override_conflict'
+				| 'prospect_unavailable'
+				| 'already_claimed'
+				| null;
 			blocked_message: string | null;
 			service_tier: string;
 		};
@@ -70,8 +77,27 @@
 		return value ? 'Access active' : 'Access blocked';
 	}
 
-	function prospectStateLabel(value: ProspectCandidate['prospect_claim']['state']): string {
-		switch (value) {
+	function prospectStateTone(
+		prospect: ProspectCandidate,
+	): 'claimable' | 'claimed_by_you' | 'claimed_by_other' | 'blocked' | 'unavailable' {
+		if (prospect.prospect_claim.blocked_reason === 'prospect_unavailable') {
+			return 'unavailable';
+		}
+		if (prospect.prospect_claim.state === 'claimable' && !prospect.prospect_claim.can_claim_now) {
+			return 'blocked';
+		}
+		return prospect.prospect_claim.state;
+	}
+
+	function prospectStateLabel(prospect: ProspectCandidate): string {
+		if (prospect.prospect_claim.blocked_reason === 'prospect_unavailable') {
+			return 'Unavailable';
+		}
+		if (prospect.prospect_claim.state === 'claimable' && !prospect.prospect_claim.can_claim_now) {
+			return 'Review required';
+		}
+
+		switch (prospect.prospect_claim.state) {
 			case 'claimable':
 				return 'Claimable now';
 			case 'claimed_by_you':
@@ -318,8 +344,8 @@
 
 	{#if prospects.length > 0}
 		<ReportSection
-			title="Claimable Prospect Workspaces"
-			description="Preprovisioned partner workspaces this Auth0 account can bind to before commercial graduation. Claiming binds identity; it does not issue customer credentials."
+			title="Prospect Workspaces"
+			description="Preprovisioned partner workspaces this Auth0 account can view or bind before commercial graduation. Claiming binds identity; it does not issue customer credentials."
 		>
 			<div class="prospect-grid">
 				{#each prospects as prospect}
@@ -329,8 +355,8 @@
 								<strong>{prospect.client.display_name ?? prospect.client.slug}</strong>
 								<p>{prospect.lane.display_name} · {prospect.client.slug}</p>
 							</div>
-							<span class={`prospect-state ${prospect.prospect_claim.state}`}>
-								{prospectStateLabel(prospect.prospect_claim.state)}
+							<span class={`prospect-state ${prospectStateTone(prospect)}`}>
+								{prospectStateLabel(prospect)}
 							</span>
 						</div>
 
@@ -346,6 +372,9 @@
 							</p>
 							<p>
 								<strong>Lane host:</strong> {prospect.lane.hub_url}
+							</p>
+							<p>
+								<strong>Lifecycle:</strong> {prospect.client.status} client · {prospect.lane.status} lane
 							</p>
 						</div>
 
@@ -366,7 +395,7 @@
 									{claimBusyKey === `${prospect.client.slug}:${prospect.lane.slug}` ? 'Claiming…' : 'Claim workspace'}
 								</button>
 							</div>
-						{:else if prospect.prospect_claim.state === 'claimed_by_you'}
+						{:else if prospect.prospect_claim.state === 'claimed_by_you' && !prospect.prospect_claim.blocked_message}
 							<p class="feedback success">This workspace is already bound to this Auth0 account.</p>
 						{/if}
 					</article>
@@ -589,12 +618,20 @@
 		color: #8de8a5;
 	}
 
+	.prospect-state.blocked {
+		color: #f3c97a;
+	}
+
 	.prospect-state.claimed_by_you {
 		color: #9dd7ff;
 	}
 
 	.prospect-state.claimed_by_other {
 		color: #ffb38a;
+	}
+
+	.prospect-state.unavailable {
+		color: #f3c97a;
 	}
 
 	:global(.table .badge) {

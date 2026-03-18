@@ -1,5 +1,9 @@
 export type ProspectClaimAuthorization = 'owner_email' | 'claim_emails' | 'claim_email_domains';
-export type ProspectClaimConflictCode = 'identity_seed_conflict' | 'manual_override_conflict';
+export type ProspectClaimConflictCode =
+	| 'identity_seed_conflict'
+	| 'manual_override_conflict'
+	| 'prospect_unavailable';
+export type ProspectSelfServiceStatus = 'initialized' | 'active';
 
 export interface ProspectClaimSeedLike {
 	auth_subject: string | null;
@@ -15,6 +19,10 @@ export interface ProspectClaimEntitlementLike {
 export interface ProspectClaimConflict {
 	code: ProspectClaimConflictCode;
 	message: string;
+}
+
+export function isProspectSelfServiceStatus(status: string): status is ProspectSelfServiceStatus {
+	return status === 'initialized' || status === 'active';
 }
 
 export function resolveProspectClaimAuthorization(input: {
@@ -121,6 +129,20 @@ export function getProspectClaimConflict(input: {
 	}
 
 	return null;
+}
+
+export function getProspectAvailabilityConflict(input: {
+	clientStatus: string;
+	laneStatus: string;
+}): ProspectClaimConflict | null {
+	if (isProspectSelfServiceStatus(input.clientStatus) && isProspectSelfServiceStatus(input.laneStatus)) {
+		return null;
+	}
+
+	return {
+		code: 'prospect_unavailable',
+		message: `This prospect workspace is not available for self-service claim while client status is ${input.clientStatus} and lane status is ${input.laneStatus}.`,
+	};
 }
 
 function readStringArray(value: unknown): string[] {

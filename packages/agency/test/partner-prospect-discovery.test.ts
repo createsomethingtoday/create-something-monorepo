@@ -168,3 +168,43 @@ test('prospect discovery surfaces identity conflicts that block immediate claim'
 	assert.equal(prospects[0]?.prospect_claim.can_claim_now, false);
 	assert.equal(prospects[0]?.prospect_claim.blocked_reason, 'identity_seed_conflict');
 });
+
+test('prospect discovery marks paused prospect workspaces unavailable for self-service claim', async () => {
+	const client = createClient({
+		id: 'pacli_paused',
+		slug: 'paused',
+		display_name: 'Paused',
+		status: 'paused',
+	});
+	const lane = createLane('pacli_paused', 'prospect-paused', {
+		status: 'paused',
+	});
+
+	const prospects = await listPartnerProspectClaimsForUser(
+		{
+			partnerKey: 'half-dozen',
+			findAgencyIdentitySeedByEmail: async () => null,
+			findAgencyMcpEntitlementByAuthSubject: async () => null,
+			listPartnerClients: async () => [client] as any[],
+			listPartnerAccessLanes: async () => [lane] as any[],
+			isProspectRecord: () => true,
+			isProspectGraduated: () => false,
+			normalizeAgencyServiceTier: (value, fallback = 'mcp_only') => value ?? fallback,
+			normalizeEmail: (raw) => raw?.trim().toLowerCase() ?? null,
+			parseJsonArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
+			parseJsonObject: (raw) => (raw ? (JSON.parse(raw) as Record<string, unknown>) : {}),
+			parseJsonStringArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
+		},
+		{
+			db: {} as D1Database,
+			authSubject: 'auth0|claimant',
+			email: 'owner@example.com',
+		},
+	);
+
+	assert.equal(prospects.length, 1);
+	assert.equal(prospects[0]?.prospect_claim.state, 'claimable');
+	assert.equal(prospects[0]?.prospect_claim.can_claim_now, false);
+	assert.equal(prospects[0]?.prospect_claim.blocked_reason, 'prospect_unavailable');
+	assert.match(prospects[0]?.prospect_claim.blocked_message ?? '', /client status is paused/i);
+});
