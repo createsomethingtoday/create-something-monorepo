@@ -62,6 +62,66 @@ test('hub route classification treats reviewer unassignment as write access', ()
   assert.equal(classification.accessType, 'write');
 });
 
+test('hub route classification ignores control-plane words inside read descriptions', () => {
+  const classification = classifyHubRoute(
+    {
+      proxyToolName: 'composio-toolkit-gmail__gmail_fetch_emails',
+      serverName: 'composio-toolkit-gmail',
+      downstreamToolName: 'gmail_fetch_emails',
+    },
+    {
+      description:
+        'Fetches Gmail messages. The messages field may be absent or empty (valid no-results state).',
+    },
+  );
+
+  assert.equal(classification.accessType, 'read');
+});
+
+test('hub route classification ignores destructive words inside read descriptions', () => {
+  const classification = classifyHubRoute(
+    {
+      proxyToolName: 'composio-toolkit-gmail__gmail_fetch_message_by_message_id',
+      serverName: 'composio-toolkit-gmail',
+      downstreamToolName: 'gmail_fetch_message_by_message_id',
+    },
+    {
+      description:
+        'Fetches a specific message by ID. Spam/trash messages are excluded unless requested upstream.',
+    },
+  );
+
+  assert.equal(classification.accessType, 'read');
+});
+
+test('hub route classification uses invocation action for multiplexed read management calls', () => {
+  const classification = classifyHubRoute(
+    {
+      proxyToolName: 'halfdozen-operator-notion-mcp__operator_notion_sync_contracts',
+      serverName: 'halfdozen-operator-notion-mcp',
+      downstreamToolName: 'operator_notion_sync_contracts',
+    },
+    { description: 'Manage Notion sync contracts.' },
+    { invocationAction: 'list_contracts' },
+  );
+
+  assert.equal(classification.accessType, 'read');
+});
+
+test('hub route classification preserves write access for multiplexed mutation actions', () => {
+  const classification = classifyHubRoute(
+    {
+      proxyToolName: 'halfdozen-operator-notion-mcp__operator_notion_sync_contracts',
+      serverName: 'halfdozen-operator-notion-mcp',
+      downstreamToolName: 'operator_notion_sync_contracts',
+    },
+    { description: 'Manage Notion sync contracts.' },
+    { invocationAction: 'run_sync_contract' },
+  );
+
+  assert.equal(classification.accessType, 'write');
+});
+
 test('hub route auth blocks mutation discovery for read-only sessions', async () => {
   const request = buildHubAuthorizationRequest({
     accountId: 'acct_1',
@@ -166,6 +226,79 @@ test('service-tier policy blocks paid write execution for mcp-only access', asyn
 
   assert.equal(result.final.decision, 'block');
   assert.match(result.final.reason, /mcp-only access does not include paid governed write/i);
+});
+
+test('service-tier policy allows mcp-only read execution for multiplexed management reads', async () => {
+  const request = buildHubAuthorizationRequest({
+    accountId: 'acct_1',
+    tenantId: 'tenant_1',
+    sessionId: 'session_1',
+    toolMode: 'read_write',
+    identitySource: 'session',
+    proxyToolName: 'halfdozen-operator-notion-mcp__operator_notion_sync_contracts',
+    serverName: 'halfdozen-operator-notion-mcp',
+    downstreamToolName: 'operator_notion_sync_contracts',
+    actionName: 'execute',
+    invocationAction: 'list_contracts',
+    context: {
+      serviceTier: 'mcp_only',
+      entitlementSnapshot: {
+        service_tier: 'mcp_only',
+        service_entitled: true,
+        policy_accepted: true,
+        contract_active: true,
+        billing_active: true,
+        approved_exception: { present: false },
+      },
+    },
+  });
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.service-tier-entitlement.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'allow');
+});
+
+test('service-tier policy allows mcp-only gmail read execution despite read-description keywords', async () => {
+  const request = buildHubAuthorizationRequest({
+    accountId: 'acct_1',
+    tenantId: 'tenant_1',
+    sessionId: 'session_1',
+    toolMode: 'read_write',
+    identitySource: 'session',
+    proxyToolName: 'composio-toolkit-gmail__gmail_fetch_emails',
+    serverName: 'composio-toolkit-gmail',
+    downstreamToolName: 'gmail_fetch_emails',
+    actionName: 'execute',
+    definition: {
+      description:
+        'Fetches Gmail messages. The messages field may be absent or empty (valid no-results state).',
+    },
+    context: {
+      serviceTier: 'mcp_only',
+      entitlementSnapshot: {
+        service_tier: 'mcp_only',
+        service_entitled: true,
+        policy_accepted: true,
+        contract_active: true,
+        billing_active: true,
+        approved_exception: { present: false },
+      },
+    },
+  });
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.service-tier-entitlement.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'allow');
 });
 
 test('service-tier policy blocks paid policy os access without billing', async () => {

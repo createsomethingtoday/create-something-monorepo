@@ -36,6 +36,75 @@
       ],
       "maxProxyTools": null
     },
+    "danny-shared-auth-plus-dm-and-operator-notion": {
+      "description": "Danny discovery pack: shared auth core plus Half Dozen DM and operator Notion services.",
+      "mode": "compact",
+      "activeServers": [
+        "halfdozen-operator-notion-mcp",
+        "composio-toolkit-notion",
+        "halfdozen-dm-mcp",
+        "composio-toolkit-dropbox",
+        "composio-toolkit-gmail",
+        "composio-toolkit-googledrive",
+        "composio-toolkit-googlesheets",
+        "composio-toolkit-linkedin",
+        "composio-toolkit-quickbooks",
+        "composio-toolkit-slack",
+        "composio-toolkit-youtube",
+        "composio-toolkit-zoom"
+      ],
+      "maxProxyTools": null
+    },
+    "c3denver-airtable-gmail-notion": {
+      "description": "C3 Denver discovery pack: compact Airtable, Gmail, and Notion lane.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-airtable",
+        "composio-toolkit-gmail",
+        "composio-toolkit-notion"
+      ],
+      "maxProxyTools": null
+    },
+    "mj-shared-auth-plus-ops-search-meetings-and-review": {
+      "description": "MJ discovery pack: full ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review.",
+      "mode": "full",
+      "activeServers": [
+        "composio-toolkit-airtable",
+        "composio-toolkit-dropbox",
+        "composio-toolkit-gmail",
+        "composio-toolkit-youtube",
+        "composio-toolkit-googlesheets",
+        "composio-toolkit-googledrive",
+        "composio-toolkit-zoom",
+        "composio-toolkit-slack",
+        "composio-toolkit-quickbooks",
+        "composio-toolkit-linkedin",
+        "composio-toolkit-notion",
+        "composio-toolkit-exa",
+        "loom-mcp",
+        "meetings",
+        "webflow-template-review-mcp"
+      ],
+      "maxProxyTools": null
+    },
+    "mj-legacy-shared-auth-plus-meetings": {
+      "description": "MJ legacy discovery pack: compact shared auth core plus Meetings.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-dropbox",
+        "composio-toolkit-gmail",
+        "composio-toolkit-youtube",
+        "composio-toolkit-googlesheets",
+        "composio-toolkit-googledrive",
+        "composio-toolkit-zoom",
+        "composio-toolkit-slack",
+        "composio-toolkit-quickbooks",
+        "composio-toolkit-linkedin",
+        "composio-toolkit-notion",
+        "meetings"
+      ],
+      "maxProxyTools": null
+    },
     "webflow-marketplace-review-phase-a": {
       "description": "Phase A reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus bounded reviewer-safe actions and metrics.",
       "mode": "compact",

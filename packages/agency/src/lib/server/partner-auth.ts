@@ -6,6 +6,12 @@ import {
 	type AuthorizationDecision,
 	type HybridEvaluatorConfig,
 } from '@create-something/mcp-authz';
+import {
+	getPartnerProspectIssuanceBlocker,
+	isPartnerProspectGraduated,
+	isPartnerProspectRecord,
+	type PartnerCredentialIssuanceSurface,
+} from './partner-prospect-issuance.js';
 
 export const HALF_DOZEN_PARTNER_KEY = 'half-dozen';
 
@@ -759,6 +765,9 @@ export function tokenPreview(value: string): string {
 	return value.slice(0, 10);
 }
 
+export type { PartnerCredentialIssuanceSurface } from './partner-prospect-issuance.js';
+export { isPartnerProspectGraduated, isPartnerProspectRecord } from './partner-prospect-issuance.js';
+
 export function defaultWorkspaceAccountId(slug: string): string {
 	return `acct_${slug.replace(/[^a-z0-9]/g, '_')}`;
 }
@@ -777,6 +786,23 @@ export function parseOptionalIsoTimestamp(raw: string | undefined): string | nul
 	const date = new Date(value);
 	if (!Number.isFinite(date.getTime())) return null;
 	return date.toISOString();
+}
+
+export function assertPartnerCredentialIssuanceAllowed(input: {
+	clientMetadata: Record<string, unknown>;
+	laneMetadata?: Record<string, unknown>;
+	surface: PartnerCredentialIssuanceSurface;
+}): void {
+	const blocker = getPartnerProspectIssuanceBlocker(input);
+	if (!blocker) {
+		return;
+	}
+
+	throw new PartnerAuthHttpError(
+		409,
+		'prospect_not_ready',
+		blocker,
+	);
 }
 
 function constantTimeEqual(a: string, b: string): boolean {

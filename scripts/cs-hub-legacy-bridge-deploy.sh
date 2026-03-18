@@ -123,6 +123,13 @@ enabled_servers_for_legacy_worker() {
   esac
 }
 
+discovery_shared_pack_for_legacy_worker() {
+  case "$1" in
+    "cs-hub-mj-legacy") echo "mj-legacy-shared-auth-plus-meetings" ;;
+    *) echo "shared-auth-core" ;;
+  esac
+}
+
 cd "$HUB_DIR"
 
 echo "Deploying legacy bridge hubs in compat mode..."
@@ -139,6 +146,7 @@ for worker in "${LEGACY_TEAM_WORKERS[@]}"; do
   fi
   account_id="$(account_id_for_legacy_worker "$worker")"
   enabled_servers="$(enabled_servers_for_legacy_worker "$worker")"
+  discovery_shared_pack="$(discovery_shared_pack_for_legacy_worker "$worker")"
   trust_headers="$(trust_headers_for_legacy_worker "$worker")"
   echo "compat_trust_client_account_headers=${trust_headers}"
 
@@ -153,7 +161,7 @@ for worker in "${LEGACY_TEAM_WORKERS[@]}"; do
     --var "HUB_IDENTITY_MODE:compat" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${trust_headers}" \
     --var "HUB_DISCOVERY_MODE:${LEGACY_DISCOVERY_MODE}" \
-    --var "HUB_DISCOVERY_SHARED_PACK:shared-auth-core" \
+    --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}" \
     --var "HUB_CONNECT_TIMEOUT_MS:10000" \
     --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
     --var "HUB_CONNECT_CONCURRENCY:4" \

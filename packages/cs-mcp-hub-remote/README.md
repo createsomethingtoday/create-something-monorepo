@@ -28,14 +28,15 @@ It also exposes one MCP App UI resource:
 - Loads downstream server registry from `config/mcp-hub/registry.json`
 - Resolves enabled bundles/servers from env vars (or registry defaults)
 - Connects to downstream HTTP MCP servers
-- Enforces broker-only execution via `hub_search_proxy_tools` -> `hub_describe_proxy_tool` -> `hub_execute_proxy_tool`
+- Enforces broker-only execution via `hub_list_services` -> `hub_search_proxy_tools` -> `hub_describe_proxy_tool` -> `hub_execute_proxy_tool`
 
 ## Management Tools
 
 - `hub_status`
 - `hub_list_registry`
+- `hub_list_services` (service-first discovery summary for current account/session)
 - `hub_list_proxy_tools` (visible proxy tools for current account/session)
-- `hub_search_proxy_tools` (visible query/server filter + cursor pagination)
+- `hub_search_proxy_tools` (visible query/server filter + cursor pagination; pass `serverName` whenever known)
 - `hub_route_intent` (map business intent to a proxy tool via allowlist + fallback discovery)
 - `hub_describe_proxy_tool` (schema + downstream route metadata for one visible proxy tool)
 - `hub_get_proxy_tool` (compatibility alias for `hub_describe_proxy_tool`)
@@ -55,15 +56,20 @@ By default this hub runs in broker-only mode:
 - Direct proxy tool calls like `<server>__<tool>` are not callable.
 - `tools/list` returns management tools only.
 - Use this sequence for downstream actions:
-  1. `hub_search_proxy_tools`
-  2. `hub_describe_proxy_tool`
-  3. `hub_execute_proxy_tool`
+  1. `hub_list_services`
+  2. `hub_search_proxy_tools` with `serverName` whenever known
+  3. `hub_describe_proxy_tool`
+  4. `hub_execute_proxy_tool`
+- For shared hubs, named discovery packs are the standard managed baseline:
+  - set `HUB_DISCOVERY_SHARED_PACK` on deploy
+  - use `hub_list_discovery_packs` before changing discovery scope
+  - reserve raw `hub_set_discovery` server overrides for temporary operator exceptions
 - For toolkit auth and reconnects, search for `__connection_status` or `__get_connect_link`, then execute that proxy tool with `hub_execute_proxy_tool`.
 - Present returned connect URLs to the user and stop; retry only after the user confirms auth completed.
 
 If a client attempts a direct proxy tool call, the hub returns:
 
-`Direct proxy tools are disabled. Use hub_search_proxy_tools to find the proxyToolName, then call hub_execute_proxy_tool with proxyToolName + args.`
+`Direct proxy tools are disabled. Use hub_list_services first, then hub_search_proxy_tools to find the proxyToolName, then call hub_execute_proxy_tool with proxyToolName + args.`
 
 Optional direct proxy mode:
 
@@ -75,7 +81,7 @@ Optional direct proxy mode:
 Environment variables:
 
 - `HUB_INSTANCE_ID` (recommended): unique id for this deployed hub worker; used to namespace hub state/discovery KV keys so team hubs do not overwrite each other.
-- `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`
+- `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`. For compatibility with clients that can only provide a signed endpoint URL, the gateway also accepts `?mcp_access_token=<token>`, but header bearer remains the standard path.
 - `HUB_IDENTITY_MODE` (optional): `session_required` (default) or `compat`
 - `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS` (optional): `true` (default). Set `false` to ignore client-provided account headers in `compat` mode and use resolver/auth/env-derived identity only.
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
@@ -90,7 +96,7 @@ Environment variables:
 - `HUB_DISCOVERY_MODE` (optional): `compact` (default) or `full`
 - `HUB_DISCOVERY_DEFAULT_SERVERS` (optional): comma-separated or JSON array of server names
 - `HUB_DISCOVERY_MAX_PROXY_TOOLS` (optional): positive integer cap; unset/null means no cap
-- `HUB_DISCOVERY_SHARED_PACK` (optional): named default from `config/mcp-hub/discovery-packs.json`
+- `HUB_DISCOVERY_SHARED_PACK` (standard for shared hubs): named default from `config/mcp-hub/discovery-packs.json`
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
 - `HUB_ACCOUNT_ID` (optional): fallback account ID written to hub telemetry rows
@@ -109,6 +115,11 @@ Downstream auth variables are read dynamically from each registry server's `env_
 Shared discovery packs:
 
 - `shared-auth-core`: Dropbox, Gmail, Google Drive, Google Sheets, Notion, QuickBooks, Slack, YouTube, Zoom
+- `c3denver-airtable-gmail-notion`: Airtable, Gmail, Notion
+- `danny-shared-auth-plus-dm-and-operator-notion`: shared auth core plus `halfdozen-dm-mcp` and `halfdozen-operator-notion-mcp`
+- `mj-legacy-shared-auth-plus-meetings`: compact legacy shared auth core plus Meetings
+- `mj-shared-auth-plus-ops-search-meetings-and-review`: full MJ ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review
+- `outerfields-shared-auth-clickup`: shared auth core plus ClickUp
 - List available packs with `hub_list_discovery_packs`
 - Apply one with `hub_set_discovery` by setting `pack`
 
@@ -199,12 +210,22 @@ https://cs-mcp-hub-remote.<your-workers-subdomain>.workers.dev/mcp
 
 ## Example Broker Calls
 
-Search visible tools:
+List services first:
+
+```json
+{
+  "name": "hub_list_services",
+  "arguments": {}
+}
+```
+
+Search visible tools within one service:
 
 ```json
 {
   "name": "hub_search_proxy_tools",
   "arguments": {
+    "serverName": "composio-toolkit-slack",
     "query": "send_message",
     "limit": 5
   }

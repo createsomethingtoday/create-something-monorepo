@@ -27,7 +27,6 @@ import {
   type AuthzDecisionEventRecord,
   type AuthzRolloutRow,
 } from '@create-something/mcp-authz';
-import { flush as braintrustFlush, initLogger, type Logger, type Span } from 'braintrust';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
 import intentRoutesJson from '../../config/mcp-hub/intent-routes.json';
@@ -79,6 +78,31 @@ type HubState = {
   disabledServers: string[];
 };
 
+type BraintrustSpan = {
+  log(payload: unknown): void;
+};
+
+type BraintrustLogger = {
+  flush(): Promise<void>;
+  traced(
+    callback: (span: BraintrustSpan) => void | Promise<void>,
+    options: { name: string; type: string },
+  ): Promise<void>;
+};
+
+type BraintrustLoggerConfig = {
+  apiKey: string;
+  projectName: string;
+  asyncFlush: boolean;
+  setCurrent: boolean;
+  projectId?: string;
+};
+
+type BraintrustModule = {
+  flush(): Promise<void>;
+  initLogger(config: BraintrustLoggerConfig): BraintrustLogger;
+};
+
 type StateResolution = {
   state: HubState;
   enabledServerNames: string[];
@@ -117,6 +141,11 @@ type VisibleProxyCatalog = {
   toolDefinitions: Tool[];
   routes: Map<string, ProxyRoute>;
   definitionByName: Map<string, Tool>;
+};
+
+type ProxyRouteDiscoveryFilters = {
+  query?: string | null;
+  serverName?: string | null;
 };
 
 type HubRuntime = {
@@ -400,7 +429,7 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   {
     name: 'hub_search_proxy_tools',
     description:
-      'Search visible proxy tools with optional server filter and cursor pagination. Use this first to find a proxyToolName, especially for brokered auth flows like __connection_status and __get_connect_link.',
+      'Search visible proxy tools with optional server filter and cursor pagination. Use hub_list_services first and pass serverName whenever known for scalable brokered discovery, especially for auth flows like __connection_status and __get_connect_link.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -525,7 +554,8 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   },
   {
     name: 'hub_list_services',
-    description: 'List connected downstream services and current discovery exposure settings.',
+    description:
+      'List connected downstream services and current discovery exposure settings. Use this first to pick a service, then call hub_search_proxy_tools with serverName.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -539,7 +569,7 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   },
   {
     name: 'hub_list_discovery_packs',
-    description: 'List available discovery packs that can be applied with hub_set_discovery.',
+    description: 'List available discovery packs. Discovery packs are the standard managed discovery baseline for shared hubs and can be applied with hub_set_discovery.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -549,7 +579,7 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   {
     name: 'hub_set_discovery',
     description:
-      'Set tool discovery exposure (compact/full), choose active services, and limit visible proxy tools.',
+      'Set tool discovery exposure. Prefer applying a named discovery pack first; raw activeServers/mode/maxProxyTools overrides are exception or debugging surfaces.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -652,7 +682,7 @@ export const HUB_RESOURCES: HubResourceDefinition[] = [
   {
     uri: 'hub://discovery',
     name: 'Discovery Settings',
-    description: 'Current discovery preferences and available discovery packs for this account.',
+    description: 'Current discovery preferences and available discovery packs for this account. Discovery packs are the standard managed baseline for shared hubs.',
     mimeType: 'application/json',
   },
   {
@@ -709,8 +739,8 @@ const DEFAULT_REQUIRED_GLOBAL_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_REQUIRED_DISCOVERY_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let braintrustLogger: Logger<any> | null = null;
+let braintrustUnavailableLogged = false;
+let braintrustLogger: BraintrustLogger | null = null;
 let braintrustLoggerKey: string | null = null;
 
 export default {
@@ -746,13 +776,14 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      const authFailure = await authorizeRequest(request, env);
+      const normalizedRequest = normalizeInboundMcpRequest(request);
+      const authFailure = await authorizeRequest(normalizedRequest, env);
       if (authFailure) {
         return withCors(authFailure);
       }
 
-      if (request.method === 'GET') {
-        const acceptHeader = (request.headers.get('accept') ?? '').toLowerCase();
+      if (normalizedRequest.method === 'GET') {
+        const acceptHeader = (normalizedRequest.headers.get('accept') ?? '').toLowerCase();
         if (!acceptHeader.includes('text/event-stream')) {
           return withCors(
             jsonResponse({ error: 'Not Acceptable: Client must accept text/event-stream' }, 406),
@@ -769,7 +800,7 @@ export default {
         });
 
         await server.connect(transport);
-        const transportRequest = ensureStreamableHttpAcceptHeader(request);
+        const transportRequest = ensureStreamableHttpAcceptHeader(normalizedRequest);
         return withCors(await transport.handleRequest(transportRequest));
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -901,8 +932,7 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   }
 
   const sessionHeaderToken = request.headers.get('x-mcp-session-token')?.trim() ?? null;
-  const authHeader = request.headers.get('authorization') ?? request.headers.get('Authorization');
-  const bearerToken = authHeader ? parseBearerToken(authHeader) : null;
+  const bearerToken = getRequestBearerToken(request);
   const bearerIsHubToken =
     bearerToken && requiredToken ? timingSafeEqual(bearerToken, requiredToken) : false;
   const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
@@ -918,16 +948,48 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
 }
 
-function getRequestToken(request: Request): string | null {
+export function normalizeInboundMcpRequest(request: Request): Request {
+  const carrierToken = getNonHeaderRequestToken(request);
+  if (!carrierToken) {
+    return request;
+  }
+
+  const headers = new Headers(request.headers);
+  if (headers.has('authorization')) {
+    return request;
+  }
+
+  headers.set(
+    'Authorization',
+    carrierToken.toLowerCase().startsWith('bearer ') ? carrierToken : `Bearer ${carrierToken}`,
+  );
+  return new Request(request, { headers });
+}
+
+function getNonHeaderRequestToken(request: Request): string | null {
   const url = new URL(request.url);
+  const mcpAccessToken = url.searchParams.get('mcp_access_token');
+  if (mcpAccessToken?.trim()) {
+    return mcpAccessToken.trim();
+  }
+
   const queryToken = url.searchParams.get('token');
-  if (queryToken) {
-    return queryToken;
+  if (queryToken?.trim()) {
+    return queryToken.trim();
   }
 
   const apiKeyHeader = request.headers.get('x-api-key') ?? request.headers.get('api-key');
-  if (apiKeyHeader && apiKeyHeader.trim()) {
+  if (apiKeyHeader?.trim()) {
     return apiKeyHeader.trim();
+  }
+
+  return null;
+}
+
+function getRequestToken(request: Request): string | null {
+  const carrierToken = getNonHeaderRequestToken(request);
+  if (carrierToken) {
+    return carrierToken;
   }
 
   const authHeader = request.headers.get('authorization') ?? request.headers.get('Authorization');
@@ -943,6 +1005,20 @@ function getRequestToken(request: Request): string | null {
 
   // Compatibility fallback for clients that send raw token in Authorization.
   return trimmedAuth;
+}
+
+function getRequestBearerToken(request: Request): string | null {
+  const carrierToken = getNonHeaderRequestToken(request);
+  if (carrierToken) {
+    return carrierToken;
+  }
+
+  const authHeader = request.headers.get('authorization') ?? request.headers.get('Authorization');
+  if (!authHeader || !authHeader.trim()) {
+    return null;
+  }
+
+  return parseBearerToken(authHeader) ?? authHeader.trim();
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -1526,6 +1602,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
 
       if (toolName === 'hub_search_proxy_tools') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
+        const filters = extractProxyRouteDiscoveryFilters(args);
         const visible = await buildAuthorizedVisibleProxyRoutes({
           runtime,
           prefs,
@@ -1533,6 +1610,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           env,
           trace,
           entrypoint: 'hub_search_proxy_tools',
+          filters,
         });
         const result = toJsonResult(searchProxyTools(visible, args));
         const query = stringArg(args.query);
@@ -1777,6 +1855,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           env,
           executionCtx,
           route,
+          definition: visible.definitionByName.get(route.proxyToolName),
           executionArgs,
           trace,
           accountContext,
@@ -1862,6 +1941,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           env,
           executionCtx,
           route: match.route,
+          definition: match.definition,
           executionArgs,
           trace,
           accountContext,
@@ -1877,14 +1957,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
 
       if (toolName === 'hub_list_services') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = await buildAuthorizedVisibleProxyRoutes({
-          runtime,
-          prefs,
-          accountContext,
-          env,
-          trace,
-          entrypoint: 'hub_list_services',
-        });
+        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
         const result = toJsonResult(buildDiscoveryServicesPayload(runtime, prefs, visible));
         await recordHubInvocationWithCtx({
           accountId,
@@ -1897,6 +1970,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             mode: prefs.mode,
             activeServerCount: prefs.activeServers.length,
             maxProxyTools: prefs.maxProxyTools,
+            visibleProxyToolCount: visible.toolDefinitions.length,
+            routeAuthorizationApplied: false,
           },
         });
         return result;
@@ -1933,6 +2008,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         let appliedPack: ResolvedDiscoveryPack | null = null;
         if (reset) {
           nextPrefs = await clearDiscoveryPreferences(accountId, runtime, env);
+          const defaultPackId = readEnvString(env, 'HUB_DISCOVERY_SHARED_PACK');
+          appliedPack = defaultPackId ? resolveDiscoveryPack(defaultPackId, runtime, env) : null;
         } else {
           const current = await getDiscoveryPreferences(accountId, runtime, env);
           if (packId) {
@@ -2120,7 +2197,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       if (directProxyRoute) {
         if (!isDirectProxyToolAllowed(env, toolName)) {
           const message =
-            'Direct proxy tools are disabled. Use hub_search_proxy_tools to find the proxyToolName, then call hub_execute_proxy_tool with proxyToolName + args.';
+            'Direct proxy tools are disabled. Use hub_list_services first, then hub_search_proxy_tools to find the proxyToolName, then call hub_execute_proxy_tool with proxyToolName + args.';
           const durationMs = Date.now() - startedAt;
           await Promise.all([
             recordHubInvocationWithCtx({
@@ -2157,7 +2234,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           return toErrorResult(message, {
             next_step: 'brokered_execution_required',
             instructions: [
-              'Call hub_search_proxy_tools to find the proxyToolName.',
+              'Call hub_list_services first, then hub_search_proxy_tools to find the proxyToolName.',
               'Optionally call hub_describe_proxy_tool if argument shape is unclear.',
               'Call hub_execute_proxy_tool with proxyToolName + args.',
             ],
@@ -2638,13 +2715,25 @@ function toHubAuthzEvent(params: {
   policyId: string;
   accountContext: ResolvedAccountContext;
   route: ProxyRoute;
+  definition?: Tool;
   trace: InvocationTrace;
   evaluation: Awaited<ReturnType<typeof evaluateAuthorizationRequest>>;
   actionName: 'discover' | 'execute';
   entrypoint: string;
+  invocationAction?: string | null;
 }): AuthzDecisionEventRecord {
-  const { policyId, accountContext, route, trace, evaluation, actionName, entrypoint } = params;
-  const classification = classifyHubRoute(route);
+  const {
+    policyId,
+    accountContext,
+    route,
+    definition,
+    trace,
+    evaluation,
+    actionName,
+    entrypoint,
+    invocationAction,
+  } = params;
+  const classification = classifyHubRoute(route, definition, { invocationAction });
   return {
     id: crypto.randomUUID(),
     scopeKey: `policy:${policyId}`,
@@ -2680,6 +2769,7 @@ function toHubAuthzEvent(params: {
       proxyToolName: route.proxyToolName,
       serverName: route.serverName,
       downstreamToolName: route.downstreamToolName,
+      invocationAction: invocationAction ?? null,
       oauthRequired: classification.oauthRequired,
       sessionId: accountContext.sessionId,
       toolMode: accountContext.toolMode,
@@ -2724,9 +2814,21 @@ async function evaluateHubRouteAuthorization(params: {
   rollout: AuthzRolloutRow;
   actionName: 'discover' | 'execute';
   entrypoint: string;
+  invocationAction?: string | null;
   recordDecision?: boolean;
 }): Promise<Awaited<ReturnType<typeof evaluateAuthorizationRequest>>> {
-  const { env, accountContext, route, definition, trace, rollout, actionName, entrypoint, recordDecision = true } = params;
+  const {
+    env,
+    accountContext,
+    route,
+    definition,
+    trace,
+    rollout,
+    actionName,
+    entrypoint,
+    invocationAction,
+    recordDecision = true,
+  } = params;
   const request = buildHubAuthorizationRequest({
     accountId: accountContext.accountId,
     tenantId: accountContext.tenantId,
@@ -2742,6 +2844,7 @@ async function evaluateHubRouteAuthorization(params: {
     serverTags: route.serverTags,
     actionName,
     definition,
+    invocationAction,
     context: {
       serviceTier: accountContext.serviceTier,
       entitlementSnapshot: accountContext.entitlementSnapshot,
@@ -2767,10 +2870,12 @@ async function evaluateHubRouteAuthorization(params: {
           policyId: SERVICE_TIER_AUTHZ_POLICY_ID,
           accountContext,
           route,
+          definition,
           trace,
           evaluation: serviceTierEvaluation,
           actionName,
           entrypoint,
+          invocationAction,
         }),
       );
     }
@@ -2794,10 +2899,12 @@ async function evaluateHubRouteAuthorization(params: {
         policyId: HUB_ROUTE_AUTHZ_POLICY_ID,
         accountContext,
         route,
+        definition,
         trace,
         evaluation,
         actionName,
         entrypoint,
+        invocationAction,
       }),
     );
   }
@@ -2812,8 +2919,12 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
   env: Env;
   trace: InvocationTrace;
   entrypoint: string;
+  filters?: ProxyRouteDiscoveryFilters;
 }): Promise<VisibleProxyCatalog> {
-  const base = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext);
+  const base = filterVisibleProxyCatalog(
+    buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext),
+    params.filters,
+  );
   if (base.toolDefinitions.length === 0) {
     return base;
   }
@@ -2844,6 +2955,7 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
           policyId: evaluation.final.policyId,
           accountContext: params.accountContext,
           route,
+          definition: tool,
           trace: params.trace,
           evaluation,
           actionName: 'discover',
@@ -2897,6 +3009,7 @@ async function getAuthorizedExactVisibleProxyRoute(params: {
       policyId: evaluation.final.policyId,
       accountContext: params.accountContext,
       route,
+      definition,
       trace: params.trace,
       evaluation,
       actionName: 'discover',
@@ -2911,6 +3024,7 @@ export async function executeProxyRoute(params: {
   env: Env;
   executionCtx?: WaitUntilContext;
   route: ProxyRoute;
+  definition?: Tool;
   executionArgs: Record<string, unknown>;
   trace: InvocationTrace;
   accountContext: ResolvedAccountContext;
@@ -2926,6 +3040,7 @@ export async function executeProxyRoute(params: {
     env,
     executionCtx,
     route,
+    definition,
     executionArgs,
     trace,
     accountContext,
@@ -2950,6 +3065,7 @@ export async function executeProxyRoute(params: {
     boundHost: accountContext.boundHost,
     resourceHost: accountContext.resourceHost,
   };
+  const invocationAction = extractRouteInvocationAction(executionArgs);
 
   if (!isRouteAllowedForSession(route, accountContext.allowedToolPrefixes)) {
     const message =
@@ -2994,7 +3110,7 @@ export async function executeProxyRoute(params: {
     return toErrorResult(message);
   }
 
-  const definition: Tool = {
+  const routeDefinition = definition ?? {
     name: route.proxyToolName,
     description: '',
     inputSchema: { type: 'object', properties: {} },
@@ -3003,11 +3119,12 @@ export async function executeProxyRoute(params: {
     env,
     accountContext,
     route,
-    definition,
+    definition: routeDefinition,
     trace,
     rollout: await getHubRouteAuthzRollout(env),
     actionName: 'execute',
     entrypoint,
+    invocationAction,
   });
   if (authzEvaluation.final.decision !== 'allow') {
     const durationMs = Date.now() - startedAt;
@@ -3036,6 +3153,7 @@ export async function executeProxyRoute(params: {
           evaluationPath: authzEvaluation.final.evaluationPath,
           fallbackReason: authzEvaluation.final.fallbackReason,
           matchedRuleIds: authzEvaluation.final.matchedRuleIds,
+          invocationAction,
           ...identityTraceMetadata,
         },
       }),
@@ -3052,6 +3170,7 @@ export async function executeProxyRoute(params: {
           blockedByPolicy: authzEvaluation.final.policyId,
           requiresHumanReview: requiresHumanReview(authzEvaluation.final),
           evaluationPath: authzEvaluation.final.evaluationPath,
+          invocationAction,
           ...identityTraceMetadata,
         },
       }),
@@ -3190,6 +3309,7 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
+          invocationAction,
           ...identityTraceMetadata,
           rateLimit: {
             scope: rateLimitDecision.scope,
@@ -3225,6 +3345,7 @@ export async function executeProxyRoute(params: {
         metadata: {
           proxyToolName: entryProxyToolName,
           entrypoint,
+          invocationAction,
           ...identityTraceMetadata,
           downstreamFailure: proxiedSuccess
             ? null
@@ -3269,6 +3390,7 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
+          invocationAction,
           ...identityTraceMetadata,
           downstreamFailure: {
             code: proxyFailure.code,
@@ -3288,6 +3410,7 @@ export async function executeProxyRoute(params: {
         metadata: {
           proxyToolName: entryProxyToolName,
           entrypoint,
+          invocationAction,
           ...identityTraceMetadata,
           downstreamFailure: {
             code: proxyFailure.code,
@@ -3314,8 +3437,9 @@ export function searchProxyTools(
   visible: VisibleProxyCatalog,
   args: Record<string, unknown>,
 ): Record<string, unknown> {
-  const query = stringArg(args.query);
-  const serverNameFilter = stringArg(args.serverName);
+  const filters = extractProxyRouteDiscoveryFilters(args);
+  const query = filters.query ?? null;
+  const serverNameFilter = filters.serverName ?? null;
   const cursor = stringArg(args.cursor);
   const limit = numberArg(args.limit, 25, 1, 100);
   const startIndex = cursor ? numberArg(Number(cursor), 0, 0, Number.MAX_SAFE_INTEGER) : 0;
@@ -3332,23 +3456,7 @@ export function searchProxyTools(
     })
     .sort((a, b) => a.proxyToolName.localeCompare(b.proxyToolName));
 
-  const filtered = all.filter((item) => {
-    if (serverNameFilter && item.serverName !== serverNameFilter) {
-      return false;
-    }
-
-    if (!query) {
-      return true;
-    }
-
-    const q = query.toLowerCase();
-    return (
-      item.proxyToolName.toLowerCase().includes(q) ||
-      item.serverName.toLowerCase().includes(q) ||
-      item.downstreamToolName.toLowerCase().includes(q) ||
-      item.description.toLowerCase().includes(q)
-    );
-  });
+  const filtered = all.filter((item) => matchesProxySearchItem(item, filters));
 
   const page = filtered.slice(startIndex, startIndex + limit);
   const nextCursor = startIndex + page.length < filtered.length
@@ -3363,6 +3471,81 @@ export function searchProxyTools(
     cursor: cursor ?? '0',
     nextCursor,
     tools: page,
+  };
+}
+
+function extractRouteInvocationAction(args: Record<string, unknown>): string | null {
+  return stringArg(args.action)
+    ?? stringArg(args.operation)
+    ?? stringArg(args.method);
+}
+
+function extractProxyRouteDiscoveryFilters(
+  args: Record<string, unknown>,
+): ProxyRouteDiscoveryFilters {
+  return {
+    query: stringArg(args.query),
+    serverName: stringArg(args.serverName),
+  };
+}
+
+function matchesProxySearchItem(
+  item: {
+    proxyToolName: string;
+    serverName: string;
+    downstreamToolName: string;
+    description: string;
+  },
+  filters: ProxyRouteDiscoveryFilters,
+): boolean {
+  if (filters.serverName && item.serverName !== filters.serverName) {
+    return false;
+  }
+
+  if (!filters.query) {
+    return true;
+  }
+
+  const query = filters.query.toLowerCase();
+  return (
+    item.proxyToolName.toLowerCase().includes(query) ||
+    item.serverName.toLowerCase().includes(query) ||
+    item.downstreamToolName.toLowerCase().includes(query) ||
+    item.description.toLowerCase().includes(query)
+  );
+}
+
+function filterVisibleProxyCatalog(
+  visible: VisibleProxyCatalog,
+  filters: ProxyRouteDiscoveryFilters | undefined,
+): VisibleProxyCatalog {
+  if (!filters?.query && !filters?.serverName) {
+    return visible;
+  }
+
+  const filteredEntries = visible.toolDefinitions
+    .map((tool) => {
+      const route = visible.routes.get(tool.name);
+      if (!route) return null;
+      return { tool, route };
+    })
+    .filter((entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry))
+    .filter((entry) =>
+      matchesProxySearchItem(
+        {
+          proxyToolName: entry.route.proxyToolName,
+          serverName: entry.route.serverName,
+          downstreamToolName: entry.route.downstreamToolName,
+          description: entry.tool.description ?? '',
+        },
+        filters,
+      ));
+
+  const toolDefinitions = filteredEntries.map((entry) => entry.tool);
+  return {
+    toolDefinitions,
+    routes: new Map(filteredEntries.map((entry) => [entry.route.proxyToolName, entry.route])),
+    definitionByName: new Map(toolDefinitions.map((tool) => [tool.name, tool])),
   };
 }
 
@@ -3686,6 +3869,12 @@ function buildDiscoveryServicesPayload(
 
   return {
     discovery: prefs,
+    recommendedFlow: [
+      'hub_list_services',
+      'hub_search_proxy_tools(serverName=<service>)',
+      'hub_describe_proxy_tool',
+      'hub_execute_proxy_tool',
+    ],
     services: runtime.connected.map((server) => ({
       name: server.name,
       totalProxyTools: byServer.get(server.name) ?? 0,
@@ -3694,6 +3883,8 @@ function buildDiscoveryServicesPayload(
     })),
     totalProxyToolCount: runtime.proxies.toolDefinitions.length,
     visibleProxyToolCount: visible.toolDefinitions.length,
+    note:
+      'Service visibility reflects session + discovery scope. Discovery packs are the standard managed baseline for shared hubs. Choose a service here, then call hub_search_proxy_tools with serverName for per-tool authorized discovery.',
   };
 }
 
@@ -4209,7 +4400,10 @@ function buildHubOverviewHtml(params: {
     visibleProxyToolCount,
     discovery: prefs,
     policy,
-    note: 'Use hub_search_proxy_tools -> hub_describe_proxy_tool -> hub_execute_proxy_tool for brokered execution.',
+    note:
+      'Use hub_list_services -> hub_search_proxy_tools (with serverName when known) -> hub_describe_proxy_tool -> hub_execute_proxy_tool for scalable brokered execution.',
+    discoveryPackNote:
+      'For shared hubs, use named discovery packs as the managed baseline and treat raw hub_set_discovery overrides as temporary operator exceptions.',
     authNote:
       'For toolkit auth or reconnects, search for __connection_status or __get_connect_link and execute that proxy tool via hub_execute_proxy_tool.',
   };
@@ -4245,9 +4439,15 @@ function buildHubOverviewHtml(params: {
 
 function buildHubAuthWorkflowHtml(): string {
   const defaultSequence = [
-    'Search for the right proxy tool with hub_search_proxy_tools.',
+    'List services with hub_list_services and choose the target service first.',
+    'Search for the right proxy tool with hub_search_proxy_tools and pass serverName whenever known.',
     'Describe it with hub_describe_proxy_tool if you need the exact schema.',
     'Execute it with hub_execute_proxy_tool using proxyToolName + args.',
+  ];
+  const discoveryAdminSequence = [
+    'For shared hubs, treat named discovery packs as the default managed baseline.',
+    'Use hub_list_discovery_packs before changing discovery scope.',
+    'Use hub_set_discovery(pack=...) for managed changes and reserve raw activeServers overrides for temporary operator exceptions.',
   ];
   const authSequence = [
     'Before first toolkit use, run __connection_status if the task depends on external auth.',
@@ -4346,6 +4546,10 @@ function buildHubAuthWorkflowHtml(): string {
     '      <section class="card">',
     '        <h2>Default Sequence</h2>',
              renderList(defaultSequence, true),
+    '      </section>',
+    '      <section class="card">',
+    '        <h2>Discovery Packs</h2>',
+             renderList(discoveryAdminSequence, true),
     '      </section>',
     '      <section class="card">',
     '        <h2>Auth Check</h2>',
@@ -4798,8 +5002,16 @@ function getCurrentPeriod(): string {
   return `${year}-${month}`;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getBraintrustLogger(env: Env): Logger<any> | null {
+async function loadBraintrustModule(): Promise<BraintrustModule | null> {
+  if (!braintrustUnavailableLogged) {
+    console.warn(`[${HUB_NAME}] braintrust disabled: package is not bundled in this worker build`);
+    braintrustUnavailableLogged = true;
+  }
+
+  return null;
+}
+
+async function getBraintrustLogger(env: Env): Promise<BraintrustLogger | null> {
   const rawEnabled = readEnvString(env, 'BRAINTRUST_ENABLED');
   if (rawEnabled && rawEnabled.trim().toLowerCase() === 'false') {
     return null;
@@ -4807,6 +5019,8 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
 
   const apiKey = readEnvString(env, 'BRAINTRUST_API_KEY')?.trim();
   if (!apiKey) return null;
+  const braintrust = await loadBraintrustModule();
+  if (!braintrust) return null;
 
   const projectName =
     readEnvString(env, 'BRAINTRUST_PROJECT_NAME')?.trim() || DEFAULT_BRAINTRUST_PROJECT_NAME;
@@ -4814,7 +5028,7 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
   const nextKey = `${apiKey}::${projectId ?? ''}::${projectName}`;
 
   if (!braintrustLogger || braintrustLoggerKey !== nextKey) {
-    const loggerConfig: Parameters<typeof initLogger>[0] = {
+    const loggerConfig: BraintrustLoggerConfig = {
       apiKey,
       projectName,
       asyncFlush: true,
@@ -4825,14 +5039,14 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
       (loggerConfig as Record<string, unknown>).projectId = projectId;
     }
 
-    braintrustLogger = initLogger(loggerConfig);
+    braintrustLogger = braintrust.initLogger(loggerConfig);
     braintrustLoggerKey = nextKey;
   }
 
   return braintrustLogger;
 }
 
-async function flushBraintrust(logger: Logger<any>): Promise<void> {
+async function flushBraintrust(logger: BraintrustLogger): Promise<void> {
   try {
     await logger.flush();
   } catch (error) {
@@ -4842,7 +5056,9 @@ async function flushBraintrust(logger: Logger<any>): Promise<void> {
   }
 
   try {
-    await braintrustFlush();
+    const braintrust = await loadBraintrustModule();
+    if (!braintrust) return;
+    await braintrust.flush();
   } catch (error) {
     console.warn(
       `[${HUB_NAME}] braintrust global flush failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -4859,12 +5075,12 @@ function enqueueWithWaitUntil(task: Promise<void>, executionCtx?: WaitUntilConte
 }
 
 async function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): Promise<void> {
-  const logger = getBraintrustLogger(env);
+  const logger = await getBraintrustLogger(env);
   if (!logger) return;
   const metadata = asRecord(log.metadata);
   try {
     await logger.traced(
-      (span: Span) => {
+      (span: BraintrustSpan) => {
         span.log({
           input: {
             tool: log.toolName,
@@ -4905,12 +5121,12 @@ async function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): P
 }
 
 async function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): Promise<void> {
-  const logger = getBraintrustLogger(env);
+  const logger = await getBraintrustLogger(env);
   if (!logger) return;
   const metadata = asRecord(log.metadata);
   try {
     await logger.traced(
-      (span: Span) => {
+      (span: BraintrustSpan) => {
         span.log({
           input: {
             downstreamServer: log.downstreamServer,

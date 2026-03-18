@@ -46,11 +46,14 @@ Use only when:
 
 Expose management and broker tools, then resolve downstream tools through:
 
-1. `search`
-2. `describe`
-3. `execute`
+1. `list_services`
+2. `search`
+3. `describe`
+4. `execute`
 
 This is the default for large or variable catalogs.
+
+Shared hubs should also treat named discovery packs as the default managed baseline for brokered discovery. Ad hoc server lists are an exception path, not the primary packaging contract.
 
 ### 3. Exception direct exposure
 
@@ -111,10 +114,12 @@ If a package uses direct registration, it must document:
 Brokered surfaces must provide:
 
 1. searchable registry metadata
-2. schema inspection before execution
-3. centralized authz before invocation
-4. quota and rate-limit enforcement at the gateway
-5. tracing and correlation on downstream execution
+2. service-summary discovery before proxy-tool search
+3. named discovery packs or equivalent managed discovery presets for shared hubs
+4. schema inspection before execution
+5. centralized authz before invocation
+6. quota and rate-limit enforcement at the gateway
+7. tracing and correlation on downstream execution
 
 ## Enforcement Guidance
 
@@ -144,10 +149,12 @@ This policy should be enforced primarily in:
 
 - [packages/cs-mcp-hub/README.md](../packages/cs-mcp-hub/README.md)
 - [docs/MCP_HUB_REMOTE_DEPLOY.md](./MCP_HUB_REMOTE_DEPLOY.md)
+- [config/mcp-hub/discovery-packs.json](../config/mcp-hub/discovery-packs.json)
 - [packages/composio-bridge/src/tool-factory.ts](../packages/composio-bridge/src/tool-factory.ts)
 
 ## Recommended Next Work
 
 1. Add a broker-required flag or equivalent registry metadata for large surfaces.
-2. Add a tool-count check in CI or registry validation for packages above threshold.
-3. Mark existing direct large-catalog packages for broker migration.
+2. Add a discovery-pack validation check in CI or fleet verification for shared hubs.
+3. Add a tool-count check in CI or registry validation for packages above threshold.
+4. Mark existing direct large-catalog packages for broker migration.

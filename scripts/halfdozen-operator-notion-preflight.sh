@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WRANGLER_FILE="$ROOT_DIR/packages/halfdozen-operator-notion-mcp/worker/wrangler.toml"
 MIGRATION_FILE="$ROOT_DIR/packages/agency/migrations/0011_partner_notion_accounts.sql"
+SYNC_MIGRATION_FILE="$ROOT_DIR/packages/agency/migrations/0020_partner_notion_sync_contracts.sql"
 EXPECTED_NOTION_AUTH_CONFIG_ID="${EXPECTED_NOTION_AUTH_CONFIG_ID:-ac_1fYSxzK38XeT}"
+EXPECTED_CLOUDFLARE_ACCOUNT_ID="${EXPECTED_CLOUDFLARE_ACCOUNT_ID:-9645bd52e640b8a4f40a3a55ff1dd75a}"
 INFISICAL_ENV="${INFISICAL_ENV:-prod}"
 INFISICAL_PATH="${INFISICAL_PATH:-/}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
@@ -161,21 +163,22 @@ check_remote_db_migration() {
 
   local output
   if ! output="$(
+    CLOUDFLARE_ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-$EXPECTED_CLOUDFLARE_ACCOUNT_ID}" \
     pnpm exec wrangler d1 execute "$config_db_name" \
       --remote \
-      --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('partner_auth_clients','partner_auth_notion_accounts') ORDER BY name;" \
+      --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('partner_auth_clients','partner_auth_notion_accounts','partner_auth_notion_sync_contracts','partner_auth_notion_sync_contract_fields','partner_auth_notion_sync_record_mappings','partner_auth_notion_sync_runs') ORDER BY name;" \
       --json 2>/dev/null
   )"; then
-    echo "failed to query ${config_db_name} D1. Ensure Cloudflare auth is configured (wrangler login/token)." >&2
+    echo "failed to query ${config_db_name} D1. Ensure Cloudflare auth is configured (wrangler login/token) and CLOUDFLARE_ACCOUNT_ID is set correctly." >&2
     return 1
   fi
 
-  if ! echo "$output" | jq -e '([.[0].results[].name] | sort) == ["partner_auth_clients","partner_auth_notion_accounts"]' >/dev/null 2>&1; then
-    echo "D1 migrations 0010/0011 not applied on ${config_db_name}: expected tables partner_auth_clients + partner_auth_notion_accounts." >&2
+  if ! echo "$output" | jq -e '([.[0].results[].name] | sort) == ["partner_auth_clients","partner_auth_notion_accounts","partner_auth_notion_sync_contract_fields","partner_auth_notion_sync_contracts","partner_auth_notion_sync_record_mappings","partner_auth_notion_sync_runs"]' >/dev/null 2>&1; then
+    echo "D1 migrations 0010/0011/0020 not applied on ${config_db_name}: expected partner_auth_clients, partner_auth_notion_accounts, and all partner_auth_notion_sync_* tables." >&2
     return 1
   fi
 
-  echo "ok: D1 migration tables exist (partner_auth_clients, partner_auth_notion_accounts)"
+  echo "ok: D1 migration tables exist (partner_auth_clients, partner_auth_notion_accounts, partner_auth_notion_sync_*)"
 }
 
 main() {
@@ -184,6 +187,10 @@ main() {
   require_cmd rg
   if [[ ! -f "$MIGRATION_FILE" ]]; then
     echo "missing migration file: $MIGRATION_FILE" >&2
+    exit 1
+  fi
+  if [[ ! -f "$SYNC_MIGRATION_FILE" ]]; then
+    echo "missing migration file: $SYNC_MIGRATION_FILE" >&2
     exit 1
   fi
 

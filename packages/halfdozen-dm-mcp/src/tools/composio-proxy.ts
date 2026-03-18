@@ -69,14 +69,28 @@ const MANAGEMENT_TOOL_NAMES = new Set([
   'dm_composio_toolkit_inventory',
   'dm_composio_connection_status',
   'dm_composio_get_connect_link',
+  'dm_gmail_list_recent_threads',
 ]);
 
-const CONTROL_ARG_KEYS = new Set([
+const GMAIL_TOOLKIT = 'gmail';
+const GMAIL_RECENT_THREADS_TOOL = 'dm_gmail_list_recent_threads';
+const GMAIL_FETCH_EMAILS_TOOL = 'gmail_fetch_emails';
+const GMAIL_FETCH_THREAD_TOOL = 'gmail_fetch_message_by_thread_id';
+
+const ENTITY_ARG_KEYS = new Set([
   'entity_id',
   'account_id',
   '__dm_entity_id',
+]);
+
+const CONNECTION_ARG_KEYS = new Set([
   'connected_account_id',
   'connectedAccountId',
+]);
+
+const CONTROL_ARG_KEYS = new Set([
+  ...ENTITY_ARG_KEYS,
+  ...CONNECTION_ARG_KEYS,
 ]);
 
 export async function registerComposioProxyTools(
@@ -441,6 +455,136 @@ function registerManagementTools(
       });
     }
   );
+
+  if (registeredToolkits.includes(GMAIL_TOOLKIT)) {
+    server.registerTool(
+      GMAIL_RECENT_THREADS_TOOL,
+      {
+        description:
+          'List recent Gmail threads sorted by latest message timestamp for the current entity.',
+        inputSchema: entitySchema.extend({
+          user_id: z.string().optional(),
+          query: z.string().optional(),
+          label_ids: z.array(z.string()).optional(),
+          max_results: z.number().int().min(1).max(50).optional(),
+          include_spam_trash: z.boolean().optional(),
+          connected_account_id: z.string().optional(),
+          connectedAccountId: z.string().optional(),
+        }),
+      },
+      async (params, extra) => {
+        const entityId = resolveEntityId(extra, params, deps.composioConfig.defaultEntityId);
+        const toolkit = GMAIL_TOOLKIT;
+        const allowedToolkits =
+          deps.composioConfig.proxyMode === 'all'
+            ? [...registeredToolkits]
+            : resolveAllowedToolkitsForEntity(entityId, deps.composioConfig);
+
+        if (deps.composioConfig.proxyMode === 'allowlist' && !allowedToolkits.includes(toolkit)) {
+          return toErrorResult(
+            `Toolkit "${toolkit}" is not allowed for entity "${entityId}". Allowed: ${
+              allowedToolkits.length > 0 ? allowedToolkits.join(', ') : '(none)'
+            }.`
+          );
+        }
+
+        const connectedAccountId = pickConnectedAccountId(params);
+        const userId = stringOrNull(params.user_id) ?? 'me';
+        const query = stringOrNull(params.query);
+        const labelIds = normalizeStringList(params.label_ids);
+        const includeSpamTrash = params.include_spam_trash === true;
+        const requestedMaxResults = clampInteger(params.max_results, 10, 1, 50);
+        const scanWindow = Math.min(Math.max(requestedMaxResults * 3, requestedMaxResults), 100);
+        const route: ProxyRoute = {
+          name: GMAIL_RECENT_THREADS_TOOL,
+          toolkit,
+          composioToolSlug: GMAIL_FETCH_EMAILS_TOOL,
+          description: 'List recent Gmail threads sorted by latest message timestamp.',
+          inputSchema: z.object({}).passthrough(),
+        };
+
+        try {
+          await validateConnectedAccountSelection(
+            deps.composioClient,
+            entityId,
+            toolkit,
+            connectedAccountId
+          );
+
+          const listResult = await deps.composioClient.executeTool(
+            GMAIL_FETCH_EMAILS_TOOL,
+            {
+              user_id: userId,
+              verbose: false,
+              ids_only: true,
+              include_payload: false,
+              include_spam_trash: includeSpamTrash,
+              max_results: scanWindow,
+              ...(labelIds.length > 0 ? { label_ids: labelIds } : { label_ids: ['INBOX'] }),
+              ...(query ? { query } : {}),
+            },
+            entityId,
+            connectedAccountId ?? undefined
+          );
+
+          const candidateThreadIds = extractGmailThreadIds(listResult);
+          const failures: Array<{ thread_id: string; error: string }> = [];
+          const settled = await Promise.allSettled(
+            candidateThreadIds.map(async (threadId) => {
+              const threadResult = await deps.composioClient.executeTool(
+                GMAIL_FETCH_THREAD_TOOL,
+                {
+                  user_id: userId,
+                  thread_id: threadId,
+                },
+                entityId,
+                connectedAccountId ?? undefined
+              );
+              return buildGmailRecentThreadSummary(threadId, threadResult);
+            })
+          );
+
+          const threads = settled
+            .flatMap((result, index) => {
+              if (result.status === 'fulfilled') {
+                return result.value ? [result.value] : [];
+              }
+              failures.push({
+                thread_id: candidateThreadIds[index] ?? '(unknown)',
+                error: describeError(result.reason),
+              });
+              return [];
+            })
+            .sort(compareGmailThreadSummariesNewestFirst)
+            .slice(0, requestedMaxResults);
+
+          return toJsonResult({
+            entityId,
+            toolkit,
+            user_id: userId,
+            query,
+            label_ids: labelIds.length > 0 ? labelIds : ['INBOX'],
+            include_spam_trash: includeSpamTrash,
+            requested_max_results: requestedMaxResults,
+            scan_window: scanWindow,
+            candidate_thread_count: candidateThreadIds.length,
+            returned_thread_count: threads.length,
+            failed_thread_count: failures.length,
+            ...(failures.length > 0 ? { failed_threads: failures } : {}),
+            threads,
+          });
+        } catch (error) {
+          return handleComposioExecutionFailure(
+            deps,
+            authConfigMap,
+            route,
+            entityId,
+            error
+          );
+        }
+      }
+    );
+  }
 }
 
 async function handleComposioExecutionFailure(
@@ -728,7 +872,9 @@ function resolveEntityId(
 }
 
 function pickEntityFromParams(params: Record<string, unknown>): string | null {
-  for (const key of CONTROL_ARG_KEYS) {
+  // Connection IDs disambiguate execution within an entity and must not change
+  // which entity the server resolves for allow-list and ownership checks.
+  for (const key of ENTITY_ARG_KEYS) {
     const value = params[key];
     if (typeof value === 'string' && value.trim().length > 0) {
       return value.trim();
@@ -751,6 +897,26 @@ function pickConnectedAccountId(params: Record<string, unknown>): string | null 
   if (typeof candidate !== 'string') return null;
   const trimmed = candidate.trim();
   return trimmed || null;
+}
+
+async function validateConnectedAccountSelection(
+  composioClient: ComposioClient,
+  entityId: string,
+  toolkit: string,
+  connectedAccountId: string | null
+): Promise<void> {
+  if (connectedAccountId) {
+    await assertConnectedAccountOwnership(composioClient, entityId, toolkit, connectedAccountId);
+    return;
+  }
+
+  const activeConnections = await composioClient.getConnectedAccountsForToolkit(entityId, toolkit);
+  const activeCount = activeConnections.filter((account) => account.status === 'active').length;
+  if (activeCount > 1) {
+    throw new Error(
+      `Toolkit "${toolkit}" has ${activeCount} active connections for entity "${entityId}". Pass connected_account_id to disambiguate execution.`
+    );
+  }
 }
 
 async function assertConnectedAccountOwnership(
@@ -833,11 +999,156 @@ function stringOrNull(value: unknown): string | null {
   return trimmed || null;
 }
 
+function clampInteger(value: unknown, fallback: number, min: number, max: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  const rounded = Math.trunc(value);
+  if (rounded < min) return min;
+  if (rounded > max) return max;
+  return rounded;
+}
+
+function normalizeStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const list = value
+    .filter((entry): entry is string => typeof entry === 'string')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  return Array.from(new Set(list));
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
   }
   return value as Record<string, unknown>;
+}
+
+function asRecordArray(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry) => asRecord(entry)).filter((entry): entry is Record<string, unknown> => entry !== null);
+}
+
+function extractGmailMessages(result: Record<string, unknown>): Record<string, unknown>[] {
+  const data = asRecord(result.data);
+  return asRecordArray(data?.messages ?? result.messages);
+}
+
+function extractGmailThreadIds(result: Record<string, unknown>): string[] {
+  const threadIds = extractGmailMessages(result)
+    .map((message) => stringOrNull(message.threadId ?? message.thread_id))
+    .filter((threadId): threadId is string => threadId !== null);
+  return Array.from(new Set(threadIds));
+}
+
+function buildGmailRecentThreadSummary(
+  fallbackThreadId: string,
+  result: Record<string, unknown>
+): Record<string, unknown> | null {
+  const messages = extractGmailMessages(result);
+  if (messages.length === 0) return null;
+
+  const normalizedMessages = messages.map((message) => {
+    const preview = asRecord(message.preview);
+    const timestamp = normalizeGmailTimestamp(message);
+    const attachmentList = asRecordArray(message.attachmentList);
+    const labelIds = normalizeStringList(message.labelIds ?? message.label_ids);
+    const threadId =
+      stringOrNull(message.threadId ?? message.thread_id) ??
+      fallbackThreadId;
+
+    return {
+      threadId,
+      messageId:
+        stringOrNull(message.messageId ?? message.message_id ?? message.id) ?? null,
+      timestamp,
+      subject:
+        stringOrNull(message.subject) ??
+        stringOrNull(preview?.subject) ??
+        null,
+      sender:
+        stringOrNull(message.sender) ??
+        stringOrNull(message.from) ??
+        null,
+      to: stringOrNull(message.to) ?? null,
+      preview:
+        stringOrNull(preview?.body) ??
+        stringOrNull(message.snippet) ??
+        null,
+      labelIds,
+      attachmentCount: attachmentList.length,
+      unread: labelIds.includes('UNREAD'),
+    };
+  });
+
+  normalizedMessages.sort((left, right) => {
+    const rightEpoch = right.timestamp.epochMs ?? 0;
+    const leftEpoch = left.timestamp.epochMs ?? 0;
+    return rightEpoch - leftEpoch;
+  });
+
+  const latest = normalizedMessages[0];
+  return {
+    thread_id: latest.threadId,
+    latest_message_id: latest.messageId,
+    latest_timestamp: latest.timestamp.value,
+    subject: latest.subject,
+    sender: latest.sender,
+    to: latest.to,
+    preview: latest.preview,
+    label_ids: latest.labelIds,
+    unread: latest.unread,
+    has_attachments: latest.attachmentCount > 0,
+    attachment_count: latest.attachmentCount,
+    message_count: normalizedMessages.length,
+  };
+}
+
+function normalizeGmailTimestamp(message: Record<string, unknown>): {
+  value: string | null;
+  epochMs: number | null;
+} {
+  const rawValue =
+    stringOrNull(message.messageTimestamp ?? message.message_timestamp) ??
+    stringOrNull(message.internalDate ?? message.internal_date) ??
+    null;
+  const parsed = parseTimestampValue(rawValue);
+  if (parsed === null) {
+    return {
+      value: rawValue,
+      epochMs: null,
+    };
+  }
+
+  return {
+    value: new Date(parsed).toISOString(),
+    epochMs: parsed,
+  };
+}
+
+function parseTimestampValue(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value !== 'string') return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^\d+$/.test(trimmed)) {
+    const numeric = Number.parseInt(trimmed, 10);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  const parsed = Date.parse(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function compareGmailThreadSummariesNewestFirst(
+  left: Record<string, unknown>,
+  right: Record<string, unknown>
+): number {
+  const rightEpoch = parseTimestampValue(right.latest_timestamp) ?? 0;
+  const leftEpoch = parseTimestampValue(left.latest_timestamp) ?? 0;
+  return rightEpoch - leftEpoch;
 }
 
 function describeError(error: unknown): string {

@@ -8,6 +8,11 @@ import { registerQuickBooksTools } from "./tools/quickbooks.js";
 import type { QBOClientGetter } from "./tools/quickbooks.js";
 import { registerNotionTools } from "./tools/notion.js";
 import { registerConnectionTools } from "./tools/connections.js";
+import {
+  resolveQuickBooksAuthConfigId,
+  selectActiveQuickBooksConnection,
+  type ComposioConnectedAccount,
+} from "./tools/composio.js";
 import { logger } from "./services/logger.js";
 import type { QBOCompanyInfo } from "./types.js";
 
@@ -18,6 +23,7 @@ export interface Env {
   QBO_REDIRECT_URI: string;
   NOTION_API_KEY: string;
   COMPOSIO_API_KEY: string;
+  COMPOSIO_QBO_AUTH_CONFIG_ID?: string;
   MCP_API_KEY: string;
   QBO_TOKENS: {
     get(key: string): Promise<string | null>;
@@ -219,6 +225,7 @@ export default {
         const body = await request.json() as {
           composio_user_id: string;
           realm_id: string;
+          connected_account_id?: string;
         };
 
         if (!body.composio_user_id || !body.realm_id) {
@@ -249,30 +256,19 @@ export default {
         }
 
         const composioData = await composioResp.json() as {
-          items: Array<{
-            id: string;
-            appUniqueId: string;
-            status: string;
-            connectionParams: {
-              access_token: string;
-              refresh_token: string;
-              token_type?: string;
-              x_refresh_token_expires_in?: number;
-            };
-          }>;
+          items: ComposioConnectedAccount[];
         };
 
-        // Find the QuickBooks connection
-        const qboConnection = composioData.items.find(
-          item => item.appUniqueId === "quickbooks" && item.status === "ACTIVE"
-        );
-
-        if (!qboConnection) {
+        const selection = selectActiveQuickBooksConnection(composioData.items, {
+          connectedAccountId: body.connected_account_id,
+        });
+        if (!selection.connection) {
           return Response.json(
-            { error: `No active QuickBooks connection found for Composio user "${body.composio_user_id}". Has the user completed the OAuth flow?` },
-            { status: 404 }
+            { error: selection.error },
+            { status: selection.status }
           );
         }
+        const qboConnection = selection.connection;
 
         const params = qboConnection.connectionParams;
         const token = {
@@ -364,7 +360,7 @@ export default {
         registerNotionTools(server, getClient, notion);
         registerConnectionTools(server, connManager, {
           composioApiKey: env.COMPOSIO_API_KEY,
-          composioAuthConfigId: "fa213136-0e16-4325-9090-355dd0ba2864",
+          composioAuthConfigId: resolveQuickBooksAuthConfigId(env.COMPOSIO_QBO_AUTH_CONFIG_ID) ?? undefined,
           qboClientSecret: env.QBO_CLIENT_SECRET,
           workerBaseUrl: baseUrl,
           qboEnvironment: env.QBO_ENVIRONMENT,

@@ -29,12 +29,11 @@ The tool recedes: a small icon in your menubar, invisible during normal use. Whe
 ```bash
 cd apps/meeting-capture/MeetingCapture
 
-# Build with Swift Package Manager
-swift build
-
-# Or open in Xcode
-open Package.swift
+# Build and install a bundled macOS app in /Applications with a stable signing identity when available
+pnpm meeting-capture:install
 ```
+
+For local iteration you can still use `swift build` or open `Package.swift` in Xcode, but macOS privacy permissions may not persist reliably for those development builds. Use the bundled `.app` from `dist/` or `/Applications/Meeting Capture.app` when testing Screen Recording behavior. If you prefer a user-local install, run `pnpm meeting-capture:install:user`.
 
 ## Permissions
 
@@ -108,7 +107,15 @@ For meetings in unsupported apps or browser-only calls:
 
 **"Recording not starting"**
 - Check Screen Recording permission is granted
-- Restart the app after granting permission
+- Re-launch the bundled app after granting permission
+- If you launched from `.build/` or Xcode, rebuild and install with `pnpm meeting-capture:install`
+
+**"Screen Recording prompt keeps coming back"**
+- Fully quit Meeting Capture after granting access, then reopen it from `/Applications/Meeting Capture.app` or the bundled copy in `dist/`
+- Replacing the app bundle or executable can invalidate macOS TCC approval when the app is ad hoc signed
+- For stable installs, sign the app with a persistent Apple Development or Developer ID identity before copying it into `/Applications`
+- If macOS is stuck on an old grant, reset it and re-grant: `tccutil reset ScreenCapture com.createsomething.meeting-capture`
+- If you are running from the raw SwiftPM or Xcode executable, install and launch `Meeting Capture.app` with `pnpm meeting-capture:install` instead
 
 **"Meeting not detected"**
 - Check Automation permission is granted

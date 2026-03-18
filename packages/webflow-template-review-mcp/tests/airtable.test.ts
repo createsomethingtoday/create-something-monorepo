@@ -6,6 +6,7 @@ import {
   CONFIRMED_ASSET_FIELDS,
   CONFIRMED_VERSION_FIELDS,
   CONFIRMED_WRITE_FIELD_IDS,
+  METRICS_ASSET_FIELD_IDS,
   TABLE_IDS,
 } from '../src/schema.js';
 
@@ -54,6 +55,234 @@ test('listAssetQueue paginates Airtable records beyond the first page', async ()
   assert.equal(queue.length, 150);
   assert.equal(queue[0]?.templateName, 'Template 0');
   assert.equal(queue[149]?.templateName, 'Template 149');
+});
+
+test('getMarketplaceMetrics reads id-keyed fields so analytics survive display-name drift', async () => {
+  let capturedUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      capturedUrl = url;
+
+      if (!url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+
+      return jsonResponse({
+        records: [
+          {
+            id: 'rec_metrics_asset',
+            createdTime: '2026-03-14T00:00:00.000Z',
+            fields: {
+              [METRICS_ASSET_FIELD_IDS.marketplaceStatus]: '3️⃣Published🚀',
+              [METRICS_ASSET_FIELD_IDS.latestReviewStatus]: '✅Approved',
+              [METRICS_ASSET_FIELD_IDS.latestReviewDate]: '2026-03-15T18:00:00.000Z',
+              [METRICS_ASSET_FIELD_IDS.qualityScore]: '✅Good',
+              [METRICS_ASSET_FIELD_IDS.submittedDate]: '2026-03-14T12:00:00.000Z',
+              [METRICS_ASSET_FIELD_IDS.publishedDate]: '2026-03-16T09:00:00.000Z',
+              [METRICS_ASSET_FIELD_IDS.decisionDate]: '2026-03-15T18:00:00.000Z',
+            },
+          },
+        ],
+      });
+    },
+  });
+
+  const metrics = await client.getMarketplaceMetrics({
+    days: 7,
+    end_date: '2026-03-17',
+  });
+
+  assert.ok(capturedUrl);
+  assert.equal(capturedUrl.searchParams.get('returnFieldsByFieldId'), 'true');
+  assert.deepEqual(capturedUrl.searchParams.getAll('fields[]'), [
+    METRICS_ASSET_FIELD_IDS.marketplaceStatus,
+    METRICS_ASSET_FIELD_IDS.latestReviewStatus,
+    METRICS_ASSET_FIELD_IDS.latestReviewDate,
+    METRICS_ASSET_FIELD_IDS.qualityScore,
+    METRICS_ASSET_FIELD_IDS.submittedDate,
+    METRICS_ASSET_FIELD_IDS.publishedDate,
+    METRICS_ASSET_FIELD_IDS.decisionDate,
+  ]);
+  assert.equal(metrics.totals.templatesScanned, 1);
+  assert.equal(metrics.totals.submissions, 1);
+  assert.equal(metrics.totals.decisions, 1);
+  assert.equal(metrics.totals.approvals, 1);
+  assert.equal(metrics.totals.published, 1);
+  assert.equal(metrics.reviewStatusActivity['✅Approved'], 1);
+  assert.equal(metrics.qualityRatingSnapshot['✅Good'], 1);
+  assert.equal(metrics.backlogSnapshot.approved, 1);
+  assert.equal(metrics.turnaround.decidedCount, 1);
+  assert.equal(metrics.turnaround.averageHours, 30);
+});
+
+test('getMarketplaceMetrics preserves Airtable list error details for schema drift debugging', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            type: 'UNKNOWN_FIELD_NAME',
+            message: 'Unknown field name: "📝Description"',
+          },
+        }),
+        {
+          status: 422,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
+  });
+
+  await assert.rejects(
+    client.getMarketplaceMetrics({
+      days: 7,
+      end_date: '2026-03-17',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'AIRTABLE_LIST_FAILED');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        tableId: TABLE_IDS.assets,
+        limit: 1000,
+        filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
+        fieldIds: [
+          METRICS_ASSET_FIELD_IDS.marketplaceStatus,
+          METRICS_ASSET_FIELD_IDS.latestReviewStatus,
+          METRICS_ASSET_FIELD_IDS.latestReviewDate,
+          METRICS_ASSET_FIELD_IDS.qualityScore,
+          METRICS_ASSET_FIELD_IDS.submittedDate,
+          METRICS_ASSET_FIELD_IDS.publishedDate,
+          METRICS_ASSET_FIELD_IDS.decisionDate,
+        ],
+        returnFieldsByFieldId: true,
+        airtable: {
+          error: {
+            type: 'UNKNOWN_FIELD_NAME',
+            message: 'Unknown field name: "📝Description"',
+          },
+        },
+      });
+      return true;
+    },
+  );
+});
+
+test('getAssetById maps current asset fields and compatibility aliases', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (!url.pathname.includes(`/${TABLE_IDS.assets}/rec_asset_current`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+
+      return jsonResponse({
+        id: 'rec_asset_current',
+        createdTime: '2026-03-17T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+          [CONFIRMED_ASSET_FIELDS.name]: 'Conicorn',
+          [CONFIRMED_ASSET_FIELDS.descriptionShort]: 'Short description',
+          [CONFIRMED_ASSET_FIELDS.descriptionLongHtml]: '<p>Long description</p>',
+          [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '✅Approved',
+          [CONFIRMED_ASSET_FIELDS.latestReviewDate]: '2026-03-16T18:00:00.000Z',
+          [CONFIRMED_ASSET_FIELDS.rejectionFeedback]: 'Plain rejection feedback',
+          [CONFIRMED_ASSET_FIELDS.publishedDate]: '2026-03-17',
+        },
+      });
+    },
+  });
+
+  const asset = await client.getAssetById('rec_asset_current');
+
+  assert.ok(asset);
+  assert.equal(asset.description, '<p>Long description</p>');
+  assert.equal(asset.descriptionLongHtml, '<p>Long description</p>');
+  assert.equal(asset.latestReviewDate, '2026-03-16T18:00:00.000Z');
+  assert.equal(asset.rejectionFeedbackHtml, 'Plain rejection feedback');
+  assert.equal(asset.publishedDate, '2026-03-17');
+});
+
+test('getVersionById maps the current version-side MRP field name', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (!url.pathname.includes(`/${TABLE_IDS.assetVersions}/rec_version_current`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+
+      return jsonResponse({
+        id: 'rec_version_current',
+        createdTime: '2026-03-17T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+          [CONFIRMED_VERSION_FIELDS.mrpIdOverwrite]: 'mrp_current_123',
+        },
+      });
+    },
+  });
+
+  const version = await client.getVersionById('rec_version_current');
+
+  assert.ok(version);
+  assert.equal(version.mrpIdOverwrite, 'mrp_current_123');
+});
+
+test('listReleases uses the stable Airtable release table id', async () => {
+  let capturedUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      capturedUrl = new URL(String(input));
+      return jsonResponse({ records: [] });
+    },
+  });
+
+  await client.listReleases();
+
+  assert.ok(capturedUrl);
+  assert.equal(capturedUrl.pathname, `/v0/appMoIgXMTTTNIc3p/tblhLAXcJiXrkZxUL`);
+});
+
+test('updateAssetMetadata maps legacy description input onto the current long-html field', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+
+      if (!url.pathname.includes(`/${TABLE_IDS.assets}/rec_asset_update`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+
+      assert.equal(init?.method, 'PATCH');
+      assert.deepEqual(JSON.parse(String(init?.body)), {
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.descriptionLongHtml]: '<p>Updated description</p>',
+        },
+      });
+
+      return jsonResponse({
+        id: 'rec_asset_update',
+        createdTime: '2026-03-17T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+          [CONFIRMED_ASSET_FIELDS.name]: 'Conicorn',
+          [CONFIRMED_ASSET_FIELDS.descriptionLongHtml]: '<p>Updated description</p>',
+        },
+      });
+    },
+  });
+
+  const asset = await client.updateAssetMetadata('rec_asset_update', {
+    description: '<p>Updated description</p>',
+  });
+
+  assert.equal(asset.description, '<p>Updated description</p>');
+  assert.equal(asset.descriptionLongHtml, '<p>Updated description</p>');
 });
 
 test('listAssetQueueDetailed selects the reviewer-assigned version for my_queue', async () => {

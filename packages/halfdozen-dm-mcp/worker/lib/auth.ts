@@ -2,15 +2,30 @@ export interface AuthEnv {
   MCP_API_KEY?: string;
 }
 
+function parseBearerToken(authHeader: string | null): string | null {
+  if (!authHeader) return null;
+
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+
+  const token = match[1]?.trim();
+  return token || null;
+}
+
 export function extractApiKey(request: Request): string | null {
-  const authHeader = request.headers.get('Authorization');
+  const bearerToken = parseBearerToken(request.headers.get('Authorization'));
+  if (bearerToken) return bearerToken;
+
   const apiKeyHeader = request.headers.get('X-API-Key');
+  const trimmed = apiKeyHeader?.trim();
+  return trimmed || null;
+}
 
-  if (authHeader?.startsWith('Bearer ')) {
-    return authHeader.slice(7);
-  }
-
-  return apiKeyHeader;
+export function resolveRequestAccountId(request: Request): string | null {
+  const accountHeader =
+    request.headers.get('x-mcp-account-id') ?? request.headers.get('x-account-id');
+  const trimmed = accountHeader?.trim();
+  return trimmed || null;
 }
 
 export function validateApiKey(request: Request, env: AuthEnv): Response | null {

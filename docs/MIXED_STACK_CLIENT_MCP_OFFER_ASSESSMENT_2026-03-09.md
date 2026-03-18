@@ -27,7 +27,8 @@ Present the offer as **CREATE SOMETHING Skills + MCP**, with one house MCP hub a
 1. Commodity SaaS connectivity goes through Composio-backed toolkit routes behind the hub.
 2. Client-specific workflows remain custom MCP surfaces and should not be flattened into raw provider-branded catalogs.
 3. Large or variable tool catalogs stay brokered through:
-   - `hub_search_proxy_tools`
+   - `hub_list_services`
+   - `hub_search_proxy_tools` scoped with `serverName` whenever the target service is known
    - `hub_describe_proxy_tool`
    - `hub_execute_proxy_tool`
 4. Partner delivery should use managed `.agency` bearer or OAuth-backed access, not direct Composio-hosted URLs as the default client surface.

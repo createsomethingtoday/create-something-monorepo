@@ -7,6 +7,7 @@ import Foundation
 import AVFoundation
 import ScreenCaptureKit
 import CoreMedia
+import CoreGraphics
 
 enum RecordingBackend: String {
     case systemAudio = "system-audio"
@@ -18,6 +19,23 @@ struct AudioRecordingResult {
     let backend: RecordingBackend
 }
 
+enum AudioRecorderStartResult {
+    case started
+    case missingScreenRecordingPermission
+    case failed
+}
+
+private enum ScreenRecordingPermission {
+    static func isGranted() -> Bool {
+        CGPreflightScreenCaptureAccess()
+    }
+
+    @discardableResult
+    static func requestAccess() -> Bool {
+        CGRequestScreenCaptureAccess()
+    }
+}
+
 final class AudioRecorder {
     private let systemAudioRecorder = SystemAudioRecorder()
     private let microphoneRecorder = MicrophoneAudioRecorder()
@@ -25,24 +43,45 @@ final class AudioRecorder {
     private(set) var isRecording = false
     private(set) var activeBackend: RecordingBackend?
 
-    func startRecording(meetingId: String) async -> Bool {
-        guard !isRecording else { return false }
+    func hasScreenRecordingPermission() -> Bool {
+        ScreenRecordingPermission.isGranted()
+    }
+
+    @discardableResult
+    func requestScreenRecordingAccess() -> Bool {
+        ScreenRecordingPermission.requestAccess()
+    }
+
+    func startRecording(
+        meetingId: String,
+        promptForScreenRecordingAccessIfNeeded: Bool = false
+    ) async -> AudioRecorderStartResult {
+        guard !isRecording else { return .failed }
+
+        guard ScreenRecordingPermission.isGranted() else {
+            if promptForScreenRecordingAccessIfNeeded {
+                _ = ScreenRecordingPermission.requestAccess()
+            }
+
+            activeBackend = nil
+            return .missingScreenRecordingPermission
+        }
 
         if await systemAudioRecorder.startRecording(meetingId: meetingId) {
             isRecording = true
             activeBackend = .systemAudio
-            return true
+            return .started
         }
 
         // Fallback path for environments where ScreenCaptureKit capture is unavailable.
         if microphoneRecorder.startRecording(meetingId: meetingId) {
             isRecording = true
             activeBackend = .microphone
-            return true
+            return .started
         }
 
         activeBackend = nil
-        return false
+        return .failed
     }
 
     func stopRecording() async -> AudioRecordingResult? {

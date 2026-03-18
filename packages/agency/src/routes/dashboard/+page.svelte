@@ -2,7 +2,7 @@
 	import { SEO } from '@create-something/canon';
 	import { HighDensityTable } from '@create-something/tufte';
 	import { invalidateAll } from '$app/navigation';
-	import { FactList, ReportSection, ReportShell, SummaryItem } from '$lib/components/access';
+	import { FactList, ProspectWorkspaceSection, ReportSection, ReportShell, SummaryItem } from '$lib/components/access';
 
 	let { data } = $props();
 	type AccessAssignment = {
@@ -20,6 +20,7 @@
 	let policyMessage = $state('');
 	let policyError = $state('');
 	const assignment = $derived(data.assignment as AccessAssignment);
+	const prospects = $derived((data.prospects ?? []) as unknown[]);
 
 	function formatDateTime(value: string | null | undefined): string {
 		if (!value) return 'Not set';
@@ -245,6 +246,10 @@
 	>
 		<FactList items={identityFacts} />
 	</ReportSection>
+
+	{#if prospects.length > 0}
+		<ProspectWorkspaceSection prospects={prospects} href="/prospects" actionLabel="Open Prospect Portal" />
+	{/if}
 
 	{#if assignmentFacts.length > 0}
 		<ReportSection

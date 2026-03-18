@@ -8,6 +8,7 @@ Remote MCP server for Webflow Template Review workflows, scoped to Airtable `Ass
 - Tables:
   - `👛Assets` (`tblRwzpWoLgE9MrUm`)
   - `🖌️Asset Versions` (`tblHxZ2hgSFLZxsZu`)
+  - `🚀Asset Releases` (`tblhLAXcJiXrkZxUL`)
 - Data policy:
   - templates-only filtering (`🆎Type = Template🏗️` in v1)
   - read/write for confirmed template asset fields
@@ -96,3 +97,19 @@ Rotate shared bearer token:
 cd packages/webflow-template-review-mcp/worker
 pnpm exec wrangler secret put MCP_API_KEY
 ```
+
+## Schema Audit
+
+Compare the checked-in template review schema contract against live Airtable metadata:
+
+```bash
+cd packages/webflow-template-review-mcp
+AIRTABLE_API_KEY=... pnpm audit:schema
+```
+
+This checks:
+- configured Airtable table IDs
+- confirmed asset/version/release field names
+- compatibility aliases used for legacy API shape
+- metrics field IDs
+- write field IDs

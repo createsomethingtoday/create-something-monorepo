@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "webflow-dashboard-cloud",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-03-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "webflow-dashboard-cloud",
+      "database_id": "auto-generated-by-webflow-cloud"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SESSIONS",
+      "id": "auto-generated-by-webflow-cloud"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "UPLOADS",
+      "bucket_name": "webflow-dashboard-cloud-uploads"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "production"
+  }
+}

@@ -17,10 +17,15 @@ import type { ConnectionManager } from "../services/connections.js";
 import { QuickBooksClient } from "../services/quickbooks.js";
 import type { QBOCompanyInfo } from "../types.js";
 import { toolResponse } from "../services/formatting.js";
+import {
+  resolveQuickBooksAuthConfigId,
+  selectActiveQuickBooksConnection,
+  type ComposioConnectedAccount,
+} from "./composio.js";
 
 interface ConnectionToolsConfig {
   composioApiKey: string;
-  composioAuthConfigId: string;
+  composioAuthConfigId?: string;
   qboClientSecret: string;
   workerBaseUrl: string;
   qboEnvironment: string;
@@ -42,7 +47,7 @@ export function registerConnectionTools(
 
 **Step 1**: Call this tool to generate an authorization link. Present it to the user. They click it, sign in to QuickBooks, and authorize access.
 
-**Step 2**: After the user authorizes, ask them for their Company ID. They can find it by pressing Ctrl+Alt+? (Windows) or Control+Option+? (Mac) anywhere in QuickBooks Online — a dialog pops up showing "Your Company ID is XXXX XXXX XXXX XXXX" with a Copy button. Then call qbo_complete_connection with their user_id and company_id.
+**Step 2**: After the user authorizes, ask them for their Company ID. They can find it by pressing Ctrl+Alt+? (Windows) or Control+Option+? (Mac) anywhere in QuickBooks Online — a dialog pops up showing "Your Company ID is XXXX XXXX XXXX XXXX" with a Copy button. Then call qbo_complete_connection with their user_id and company_id. If this tool returns a connection reference, pass it as connected_account_id so the exact Composio connection is bound.
 
 Multiple QuickBooks companies can be connected simultaneously. Each gets its own connection.`,
       inputSchema: z.object({
@@ -63,6 +68,13 @@ Multiple QuickBooks companies can be connected simultaneously. Each gets its own
             true
           );
         }
+        const authConfigId = resolveQuickBooksAuthConfigId(config.composioAuthConfigId);
+        if (!authConfigId) {
+          return toolResponse(
+            "Composio QuickBooks auth config not configured. Set COMPOSIO_QBO_AUTH_CONFIG_ID on the worker before generating connect links.",
+            true
+          );
+        }
 
         // Generate Composio connect link via API (v3 format)
         const response = await fetch("https://backend.composio.dev/api/v1/connectedAccounts", {
@@ -72,7 +84,7 @@ Multiple QuickBooks companies can be connected simultaneously. Each gets its own
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            integrationId: config.composioAuthConfigId,
+            integrationId: authConfigId,
             data: {
               userUuid: params.user_id,
             },
@@ -95,7 +107,8 @@ Multiple QuickBooks companies can be connected simultaneously. Each gets its own
             return toolResponse(
               `This user already has an active QuickBooks connection.\n\n` +
               `If they need to connect a **different** company, use \`qbo_disconnect\` first, then try again.\n\n` +
-              `Otherwise, ask for their Company ID and call \`qbo_complete_connection\`.`
+              `Otherwise, ask for their Company ID and call \`qbo_complete_connection\`` +
+              (data.connectedAccountId ? ` with \`connected_account_id="${data.connectedAccountId}"\`.` : `.`)
             );
           }
           return toolResponse(
@@ -109,6 +122,10 @@ Multiple QuickBooks companies can be connected simultaneously. Each gets its own
           `**Step 1 of 2**: Click the link below to authorize access to your QuickBooks Online account:\n\n` +
           `**[Authorize QuickBooks Access](${data.redirectUrl})**\n\n` +
           `After you authorize, come back here for Step 2.\n\n` +
+          (data.connectedAccountId
+            ? `**Connection reference**: \`${data.connectedAccountId}\`\n` +
+              `Pass this as \`connected_account_id\` to \`qbo_complete_connection\` so the exact Composio connection is used.\n\n`
+            : "") +
           `---\n\n` +
           `**Step 2**: Once authorized, I'll need your **QuickBooks Company ID**.\n\n` +
           `Open [QuickBooks Online](https://app.qbo.intuit.com) and find your Company ID:\n` +
@@ -137,10 +154,11 @@ Multiple QuickBooks companies can be connected simultaneously. Each gets its own
 
 This tool pulls the OAuth tokens from the auth provider and stores the connection with the correct Company ID. After this completes, all QBO tools will work for this user's company.
 
-The company_id should be the number the user copied from QuickBooks (e.g., "9341456366994696"). Strip any spaces.`,
+The company_id should be the number the user copied from QuickBooks (e.g., "9341456366994696"). Strip any spaces. If qbo_connect returned a connected_account_id, pass it here to bind the exact Composio account without guessing.`,
       inputSchema: z.object({
         user_id: z.string().min(1).describe("The same user_id used in qbo_connect."),
         company_id: z.string().min(5).describe("The QuickBooks Company ID (realmId). A 12-18 digit number from QuickBooks. Strip any spaces."),
+        connected_account_id: z.string().min(1).optional().describe("Optional Composio connected account ID returned by qbo_connect. Use this when available to bind the exact OAuth connection."),
       }).strict(),
       annotations: {
         readOnlyHint: false,
@@ -149,7 +167,7 @@ The company_id should be the number the user copied from QuickBooks (e.g., "9341
         openWorldHint: true,
       },
     },
-    async (params: { user_id: string; company_id: string }) => {
+    async (params: { user_id: string; company_id: string; connected_account_id?: string }) => {
       try {
         // Strip spaces from company ID (QBO shows it as "XXXX XXXX XXXX XXXX")
         const realmId = params.company_id.replace(/\s+/g, "");
@@ -158,47 +176,32 @@ The company_id should be the number the user copied from QuickBooks (e.g., "9341
           return toolResponse("Composio API key not configured.", true);
         }
 
-        // Fetch connected accounts from Composio — try user_id first, then fall back to broader search
-        const userIds = [params.user_id, "default"];
-        let qboConn: {
-          id: string;
-          appUniqueId: string;
-          status: string;
-          connectionParams: {
-            access_token: string;
-            refresh_token: string;
-            token_type?: string;
-            x_refresh_token_expires_in?: number;
-          };
-        } | undefined;
+        const composioResp = await fetch(
+          `https://backend.composio.dev/api/v1/connectedAccounts?user_uuid=${encodeURIComponent(params.user_id)}&showActiveOnly=true`,
+          { headers: { "x-api-key": config.composioApiKey } }
+        );
 
-        for (const uid of userIds) {
-          const composioResp = await fetch(
-            `https://backend.composio.dev/api/v1/connectedAccounts?user_uuid=${encodeURIComponent(uid)}&showActiveOnly=true`,
-            { headers: { "x-api-key": config.composioApiKey } }
+        if (!composioResp.ok) {
+          return toolResponse(
+            `Failed to fetch connected accounts: ${composioResp.status}`,
+            true
           );
-
-          if (!composioResp.ok) continue;
-
-          const composioData = await composioResp.json() as {
-            items: Array<typeof qboConn & {}>;
-          };
-
-          // Find most recent active QuickBooks connection
-          qboConn = composioData.items
-            .filter(item => item.appUniqueId === "quickbooks" && item.status === "ACTIVE")
-            .sort((a, b) => (b.id > a.id ? 1 : -1))[0] as typeof qboConn;
-
-          if (qboConn) break;
         }
 
-        if (!qboConn) {
+        const composioData = await composioResp.json() as {
+          items: ComposioConnectedAccount[];
+        };
+        const selection = selectActiveQuickBooksConnection(composioData.items, {
+          connectedAccountId: params.connected_account_id,
+        });
+        if (!selection.connection) {
           return toolResponse(
-            `No active QuickBooks connection found.\n\n` +
+            `${selection.error}\n\n` +
             `Make sure the user completed Step 1 (clicked the authorization link from \`qbo_connect\` and authorized in the browser).`,
             true
           );
         }
+        const qboConn = selection.connection;
 
         const cParams = qboConn.connectionParams;
         const token = {
@@ -233,6 +236,7 @@ The company_id should be the number the user copied from QuickBooks (e.g., "9341
           `## QuickBooks Connected!\n\n` +
           `**Company**: ${companyName}\n` +
           `**Company ID**: \`${realmId}\`\n` +
+          `**Connected Account ID**: \`${qboConn.id}\`\n` +
           (email ? `**Email**: ${email}\n` : "") +
           `\nAll QuickBooks tools are now ready. Try \`qbo_company_info\` to verify, or ask any question about your QuickBooks data.`
         );

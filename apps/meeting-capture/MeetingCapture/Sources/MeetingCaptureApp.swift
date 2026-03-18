@@ -7,13 +7,29 @@ import SwiftUI
 import AppKit
 import UserNotifications
 
+enum MeetingCaptureLaunchEnvironment {
+    static var isDevelopmentBuild: Bool {
+        let executableURL = URL(fileURLWithPath: CommandLine.arguments[0]).resolvingSymlinksInPath()
+        let path = executableURL.path
+        return path.contains("/.build/") || path.contains("/DerivedData/")
+    }
+
+    static var screenRecordingGuidance: String {
+        if isDevelopmentBuild {
+            return "This build is running from a development path. Install and relaunch the bundled app so macOS can persist Screen Recording permission correctly."
+        }
+
+        return "Enable Meeting Capture in System Settings, then quit and reopen the app."
+    }
+}
+
 @main
 struct MeetingCaptureApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
         Settings {
-            SettingsView()
+            SettingsView(appDelegate: appDelegate)
         }
     }
 }
@@ -28,8 +44,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     @Published var isRecording = false
     @Published var currentMeeting: DetectedMeeting?
+    @Published var screenRecordingPermissionGranted = false
 
     private var activeRecordingContext: RecordingContext?
+    private var hasShownScreenRecordingPermissionWarning = false
 
     private var autoStartEnabled: Bool {
         UserDefaults.standard.object(forKey: "autoStart") as? Bool ?? true
@@ -43,13 +61,51 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         setupMenuBar()
         setupMeetingDetection()
         requestNotificationPermission()
+        refreshPermissionState()
 
         // Hide dock icon - menubar only
         NSApp.setActivationPolicy(.accessory)
     }
 
+    func applicationDidBecomeActive(_ notification: Notification) {
+        refreshPermissionState()
+    }
+
     private func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
+
+    func refreshPermissionState() {
+        screenRecordingPermissionGranted = audioRecorder.hasScreenRecordingPermission()
+
+        if screenRecordingPermissionGranted {
+            hasShownScreenRecordingPermissionWarning = false
+        }
+    }
+
+    func openScreenRecordingSettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") else {
+            return
+        }
+
+        NSWorkspace.shared.open(url)
+    }
+
+    func requestScreenRecordingPermission() {
+        let granted = audioRecorder.requestScreenRecordingAccess()
+        refreshPermissionState()
+
+        if granted {
+            showNotification(
+                title: "Screen Recording Ready",
+                body: "If capture still does not start, quit and reopen Meeting Capture."
+            )
+        } else {
+            showNotification(
+                title: "Screen Recording Required",
+                body: MeetingCaptureLaunchEnvironment.screenRecordingGuidance
+            )
+        }
     }
 
     private func setupMenuBar() {
@@ -119,15 +175,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         guard !isRecording else { return }
 
         Task {
-            let started = await audioRecorder.startRecording(meetingId: context.meetingId)
+            let result = await audioRecorder.startRecording(
+                meetingId: context.meetingId,
+                promptForScreenRecordingAccessIfNeeded: context.origin == .manual
+            )
 
             await MainActor.run { [weak self] in
                 guard let self else { return }
+                self.refreshPermissionState()
 
-                guard started else {
+                switch result {
+                case .started:
+                    break
+
+                case .missingScreenRecordingPermission:
+                    self.handleMissingScreenRecordingPermission(for: context.origin)
+                    self.updateMenuBarIcon(recording: false)
+                    return
+
+                case .failed:
                     self.showNotification(
                         title: "Recording Failed",
-                        body: "Could not start audio capture. Check Screen Recording permission."
+                        body: "Could not start audio capture. Screen Recording may be unavailable."
                     )
                     self.updateMenuBarIcon(recording: false)
                     return
@@ -149,6 +218,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 )
             }
         }
+    }
+
+    private func handleMissingScreenRecordingPermission(for origin: RecordingOrigin) {
+        guard origin == .manual || !hasShownScreenRecordingPermissionWarning else {
+            return
+        }
+
+        showNotification(
+            title: "Screen Recording Required",
+            body: MeetingCaptureLaunchEnvironment.screenRecordingGuidance
+        )
+
+        hasShownScreenRecordingPermissionWarning = true
     }
 
     func stopRecording() {

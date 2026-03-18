@@ -42,7 +42,6 @@
 	// Secrets (set via: wrangler secret put <SECRET_NAME>)
 	// - AIRTABLE_API_KEY
 	// - AIRTABLE_BASE_ID
-	// - RESEND_API_KEY (for sending branded verification emails)
 	// - CRON_SECRET (required in production for /api/cron/* auth)
 	// Optional vars/secrets:
 	// - ADMIN_EMAILS (comma-separated allowlist for admin-only API reads)

@@ -26,7 +26,7 @@ struct MenuBarView: View {
             if appDelegate.isRecording {
                 RecordingStatusView(meeting: appDelegate.currentMeeting)
             } else {
-                IdleStatusView()
+                IdleStatusView(screenRecordingPermissionGranted: appDelegate.screenRecordingPermissionGranted)
             }
 
             Divider()
@@ -42,13 +42,32 @@ struct MenuBarView: View {
                 .buttonStyle(.plain)
                 .foregroundColor(.red)
             } else {
-                Button(action: { appDelegate.startManualRecording() }) {
-                    HStack {
-                        Image(systemName: "record.circle")
-                        Text("Start Manual Recording")
+                if appDelegate.screenRecordingPermissionGranted {
+                    Button(action: { appDelegate.startManualRecording() }) {
+                        HStack {
+                            Image(systemName: "record.circle")
+                            Text("Start Manual Recording")
+                        }
                     }
+                    .buttonStyle(.plain)
+                } else {
+                    Button(action: { appDelegate.requestScreenRecordingPermission() }) {
+                        HStack {
+                            Image(systemName: "lock.open.display")
+                            Text("Grant Screen Recording")
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: { appDelegate.openScreenRecordingSettings() }) {
+                        HStack {
+                            Image(systemName: "gearshape")
+                            Text("Open Privacy Settings")
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.secondary)
                 }
-                .buttonStyle(.plain)
             }
 
             Divider()
@@ -130,27 +149,47 @@ struct RecordingStatusView: View {
 }
 
 struct IdleStatusView: View {
+    let screenRecordingPermissionGranted: Bool
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "checkmark.circle")
-                    .foregroundColor(.green)
-                Text("Ready")
-                    .foregroundColor(.green)
+            if screenRecordingPermissionGranted {
+                HStack {
+                    Image(systemName: "checkmark.circle")
+                        .foregroundColor(.green)
+                    Text("Ready")
+                        .foregroundColor(.green)
+                }
+
+                Text("Monitoring for meetings...")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("Zoom, Google Meet, Teams")
+                    .font(.caption2)
+                    .foregroundColor(.gray)
+            } else {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text("Screen Recording Required")
+                        .foregroundColor(.orange)
+                }
+
+                Text("Enable access in System Settings, then quit and reopen the app.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("Automatic recording is paused until access is available.")
+                    .font(.caption2)
+                    .foregroundColor(.gray)
             }
-
-            Text("Monitoring for meetings...")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            Text("Zoom, Google Meet, Teams")
-                .font(.caption2)
-                .foregroundColor(.gray)
         }
     }
 }
 
 struct SettingsView: View {
+    @ObservedObject var appDelegate: AppDelegate
     @AppStorage("apiBaseURL") private var apiBaseURL = "https://create-something-meetings.createsomething.workers.dev"
     @AppStorage("autoStart") private var autoStart = true
     @AppStorage("deleteAfterUpload") private var deleteAfterUpload = true
@@ -168,15 +207,41 @@ struct SettingsView: View {
             }
 
             Section("Permissions") {
+                HStack {
+                    Label(
+                        appDelegate.screenRecordingPermissionGranted ? "Screen Recording Granted" : "Screen Recording Missing",
+                        systemImage: appDelegate.screenRecordingPermissionGranted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+                    )
+                    .foregroundColor(appDelegate.screenRecordingPermissionGranted ? .green : .orange)
+
+                    Spacer()
+
+                    Button("Refresh") {
+                        appDelegate.refreshPermissionState()
+                    }
+                }
+
+                if MeetingCaptureLaunchEnvironment.isDevelopmentBuild {
+                    Text("This copy is running from a development build. Install the bundled app in /Applications to make Screen Recording permission persist reliably.")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+
                 Text("Primary capture uses Screen Recording + Automation. Microphone is only used as a fallback.")
                     .font(.caption)
                     .foregroundColor(.secondary)
 
                 HStack(spacing: 10) {
-                    Button("Screen Recording") {
-                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
+                    Button("Grant Screen Recording") {
+                        appDelegate.requestScreenRecordingPermission()
                     }
 
+                    Button("Open Screen Recording Settings") {
+                        appDelegate.openScreenRecordingSettings()
+                    }
+                }
+
+                HStack(spacing: 10) {
                     Button("Automation") {
                         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!)
                     }

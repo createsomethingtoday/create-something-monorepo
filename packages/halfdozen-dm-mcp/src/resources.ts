@@ -29,6 +29,7 @@ export const DM_COMPOSIO_MANAGEMENT_TOOLS = [
   { name: 'dm_composio_toolkit_inventory', description: 'List DM Composio toolkit/tool inventory for the current entity' },
   { name: 'dm_composio_connection_status', description: 'Check Composio connection status for toolkit(s)' },
   { name: 'dm_composio_get_connect_link', description: 'Get a one-time Composio OAuth link for a toolkit' },
+  { name: 'dm_gmail_list_recent_threads', description: 'List recent Gmail threads sorted by latest message timestamp' },
 ] as const;
 
 export interface DmComposioProxyToolSummary {

@@ -201,6 +201,8 @@ Apply migrations in order:
 8. `worker/migrations/0008_judgment_event_correlation.sql`
 9. `worker/migrations/0009_security_response.sql`
 10. `worker/migrations/0010_security_incident_claims.sql`
+11. `worker/migrations/0011_authz_tables.sql`
+12. `worker/migrations/0012_policy_os_scaffold.sql`
 
 Ensure `worker/wrangler.toml` has a valid D1 `database_id` before deploy.
 Use `worker/migrations/ROLLOUT.md` for apply order, post-migration checks, and rollback guidance.

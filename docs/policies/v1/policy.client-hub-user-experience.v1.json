@@ -30,6 +30,15 @@
     "host_setup",
     "security_and_support"
   ],
+  "broker_discovery_defaults": {
+    "service_first_router_required": true,
+    "service_summary_before_proxy_search_required": true,
+    "server_scoped_proxy_search_when_service_known": true,
+    "full_catalog_proxy_authorization_before_service_selection_prohibited": true,
+    "named_discovery_packs_required_for_shared_hubs": true,
+    "discovery_reset_returns_to_managed_pack": true,
+    "manual_active_server_overrides_exception_only": true
+  },
   "self_service_actions": [
     "policy_acceptance",
     "managed_bearer_issue",

@@ -127,12 +127,14 @@ export default {
             version: '1.0.0',
             description:
               env.MCP_DESCRIPTION ??
-              'Operator-managed Notion accounts via Composio with pinned workspace tools and sync primitives.',
+              'Operator-managed Notion accounts via Composio with pinned workspace tools, deterministic sync contracts, and Codex automation-friendly run primitives.',
             tools: [
               env.PINNED_HALFDOZEN_TOOL_NAME ?? 'halfdozen_notion',
               env.PINNED_CLIENT_TOOL_NAME ?? 'blondish_notion',
               'operator_notion_accounts',
               'operator_notion_sync',
+              'operator_notion_sync_contracts',
+              'operator_notion_run_sync_contract',
               'operator_notion_router',
             ],
             partner: {

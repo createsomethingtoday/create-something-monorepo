@@ -19,6 +19,7 @@ This server gives AI agents (Claude, Cursor, Codex) secure, read-only access to 
 | Tool | Description |
 |------|-------------|
 | `qbo_connect` | Generate an OAuth URL to connect a new QuickBooks account |
+| `qbo_complete_connection` | Bind the authorized Composio connection to a QuickBooks Company ID |
 | `qbo_list_connections` | List all connected QBO companies with realmId, name, email |
 | `qbo_disconnect` | Remove a QuickBooks connection by realmId |
 
@@ -61,7 +62,8 @@ The production deployment at `https://quickbooks.mcp.workway.co` supports multi-
 2. In your AI session, ask the agent to connect your QuickBooks
 3. The agent calls `qbo_connect` and gives you an authorization link
 4. Click the link, authorize with your QuickBooks account in the browser
-5. Return to your AI session and verify with `qbo_company_info`
+5. Return to your AI session, provide your Company ID, and complete the bind with `qbo_complete_connection`
+6. Verify with `qbo_company_info`
 
 **Multiple users**: Each person connects their own QuickBooks account independently. All connections are stored and available via the `connection` parameter.
 
@@ -98,6 +100,9 @@ Create a `.env` file (or set env vars):
 QBO_CLIENT_ID=your_client_id
 QBO_CLIENT_SECRET=your_client_secret
 QBO_ENVIRONMENT=sandbox   # or 'production'
+
+# Composio QuickBooks connect-link flow (required for remote multi-connection)
+COMPOSIO_QBO_AUTH_CONFIG_ID=your_composio_quickbooks_auth_config_id
 
 # Notion (required)
 NOTION_API_KEY=your_notion_integration_token

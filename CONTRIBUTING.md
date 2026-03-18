@@ -6,11 +6,11 @@ Thank you for your interest in contributing. This document outlines how to contr
 
 All contributions are evaluated through three levels:
 
-| Level | Question | Action |
-|-------|----------|--------|
-| **DRY** | "Have I built this before?" | Unify—don't duplicate |
-| **Rams** | "Does this earn its existence?" | Remove—less, but better |
-| **Heidegger** | "Does this serve the whole?" | Reconnect—parts serve the system |
+| Level         | Question                        | Action                           |
+| ------------- | ------------------------------- | -------------------------------- |
+| **DRY**       | "Have I built this before?"     | Unify—don't duplicate            |
+| **Rams**      | "Does this earn its existence?" | Remove—less, but better          |
+| **Heidegger** | "Does this serve the whole?"    | Reconnect—parts serve the system |
 
 ## Before Contributing
 
@@ -28,8 +28,11 @@ cd create-something-monorepo
 # Install dependencies
 pnpm install
 
-# Start development
-pnpm dev:all
+# Start the default product lane
+pnpm dev
+
+# Or target a specific lane
+pnpm dev:services
 ```
 
 ## Making Changes
@@ -38,6 +41,7 @@ pnpm dev:all
 
 - Run `pnpm format` before committing
 - Run `pnpm check` to verify types
+- Run the relevant lane-specific `build` or `test` commands when your change is not covered by the default lanes
 - Follow existing patterns in the codebase
 
 ### Commit Messages
@@ -64,12 +68,14 @@ Types: `feat`, `fix`, `refactor`, `docs`, `security`, `perf`
 ## What We're Looking For
 
 **Good contributions:**
+
 - Bug fixes with minimal footprint
 - Performance improvements
 - Accessibility enhancements
 - Documentation clarifications
 
 **Contributions that need discussion first:**
+
 - New features (open an issue first)
 - Architectural changes
 - New dependencies
@@ -84,4 +90,4 @@ Open an issue for questions about contributing. We're happy to help.
 
 ---
 
-*"Weniger, aber besser"* — Every contribution should make the whole simpler, not more complex.
+_"Weniger, aber besser"_ — Every contribution should make the whole simpler, not more complex.

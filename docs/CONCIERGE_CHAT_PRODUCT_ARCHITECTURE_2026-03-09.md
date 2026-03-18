@@ -312,9 +312,10 @@ The chat product should not talk directly to raw providers.
 
 It should call the house hub through a server orchestration layer:
 
-1. `hub_search_proxy_tools`
-2. `hub_describe_proxy_tool`
-3. `hub_execute_proxy_tool`
+1. `hub_list_services`
+2. `hub_search_proxy_tools` scoped with `serverName` whenever the target service is known
+3. `hub_describe_proxy_tool`
+4. `hub_execute_proxy_tool`
 
 or `hub_route_intent` / `hub_run_intent` when the workflow is allowlisted.
 

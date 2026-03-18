@@ -1,10 +1,12 @@
 import {
+  ASSET_COMPATIBILITY_ALIASES,
   CONFIRMED_ASSET_FIELDS,
   CONFIRMED_RELEASE_FIELDS,
   CONFIRMED_WRITE_FIELD_IDS,
   CONFIRMED_VERSION_FIELDS,
   DEFAULT_AIRTABLE_BASE_ID,
   IMPROVEMENT_AREA_OPTIONS,
+  METRICS_ASSET_FIELD_IDS,
   QUALITY_RATING_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   TABLE_IDS,
@@ -231,6 +233,11 @@ interface AirtableRecord {
   fields: Record<string, unknown>;
 }
 
+type MetricsAssetSnapshot = Pick<
+  TemplateReviewAsset,
+  'submittedDate' | 'publishedDate' | 'decisionDate' | 'marketplaceStatus' | 'latestReviewStatus' | 'latestReviewDate' | 'qualityRating'
+>;
+
 const QUEUE_ASSET_FIELD_NAMES = [
   CONFIRMED_ASSET_FIELDS.type,
   CONFIRMED_ASSET_FIELDS.name,
@@ -344,7 +351,8 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
   return {
     assetId: record.id,
     templateName: firstString(fields[CONFIRMED_ASSET_FIELDS.name]) ?? '',
-    description: firstString(fields[CONFIRMED_ASSET_FIELDS.description]),
+    // Keep legacy API shape stable even though Airtable no longer has a separate plain description field.
+    description: firstString(fields[ASSET_COMPATIBILITY_ALIASES.description]),
     descriptionShort: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionShort]),
     descriptionLongHtml: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionLongHtml]),
     mrpId: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpId]),
@@ -356,7 +364,8 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     latestReviewDate: firstString(fields[CONFIRMED_ASSET_FIELDS.latestReviewDate]),
     latestReviewFeedback: firstString(fields[CONFIRMED_ASSET_FIELDS.latestReviewFeedback]),
     rejectionFeedback: firstString(fields[CONFIRMED_ASSET_FIELDS.rejectionFeedback]),
-    rejectionFeedbackHtml: firstString(fields[CONFIRMED_ASSET_FIELDS.rejectionFeedbackHtml]),
+    // Legacy alias retained for compatibility; Airtable now stores only the text field on the asset.
+    rejectionFeedbackHtml: firstString(fields[ASSET_COMPATIBILITY_ALIASES.rejectionFeedbackHtml]),
     qualityRating: firstString(fields[CONFIRMED_ASSET_FIELDS.qualityScore]),
     thumbnailImageUrl: attachmentUrls(fields[CONFIRMED_ASSET_FIELDS.thumbnailImage])[0],
     secondaryThumbnailUrls: attachmentUrls(fields[CONFIRMED_ASSET_FIELDS.thumbnailImageSecondary]),
@@ -573,6 +582,18 @@ function mapRelease(record: AirtableRecord): TemplateReviewRelease {
   };
 }
 
+function mapMetricsAsset(record: AirtableRecord): MetricsAssetSnapshot {
+  return {
+    submittedDate: firstString(record.fields[METRICS_ASSET_FIELD_IDS.submittedDate]),
+    publishedDate: firstString(record.fields[METRICS_ASSET_FIELD_IDS.publishedDate]),
+    decisionDate: firstString(record.fields[METRICS_ASSET_FIELD_IDS.decisionDate]),
+    marketplaceStatus: firstString(record.fields[METRICS_ASSET_FIELD_IDS.marketplaceStatus]),
+    latestReviewStatus: firstString(record.fields[METRICS_ASSET_FIELD_IDS.latestReviewStatus]),
+    latestReviewDate: firstString(record.fields[METRICS_ASSET_FIELD_IDS.latestReviewDate]),
+    qualityRating: firstString(record.fields[METRICS_ASSET_FIELD_IDS.qualityScore]),
+  };
+}
+
 export class AirtableClient {
   private apiKey: string;
   private baseId: string;
@@ -613,10 +634,12 @@ export class AirtableClient {
   private async listRecords(args: {
     tableId: string;
     fieldNames?: string[];
+    fieldIds?: string[];
     limit?: number;
     filterByFormula?: string;
     sortField?: string;
     sortDirection?: 'asc' | 'desc';
+    returnFieldsByFieldId?: boolean;
   }): Promise<AirtableRecord[]> {
     const records: AirtableRecord[] = [];
     let offset: string | undefined;
@@ -630,6 +653,8 @@ export class AirtableClient {
       params.set('pageSize', String(pageSize));
       if (args.filterByFormula) params.set('filterByFormula', args.filterByFormula);
       for (const field of args.fieldNames ?? []) params.append('fields[]', field);
+      for (const fieldId of args.fieldIds ?? []) params.append('fields[]', fieldId);
+      if (args.returnFieldsByFieldId) params.set('returnFieldsByFieldId', 'true');
       if (args.sortField) {
         params.set('sort[0][field]', args.sortField);
         params.set('sort[0][direction]', args.sortDirection ?? 'asc');
@@ -638,7 +663,18 @@ export class AirtableClient {
 
       const response = await this.request(`/${args.tableId}?${params.toString()}`);
       if (!response.ok) {
-        throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status);
+        const airtable = await this.readErrorDetails(response);
+        throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status, {
+          tableId: args.tableId,
+          ...(args.limit ? { limit: args.limit } : {}),
+          ...(args.filterByFormula ? { filterByFormula: args.filterByFormula } : {}),
+          ...(args.fieldNames?.length ? { fieldNames: args.fieldNames } : {}),
+          ...(args.fieldIds?.length ? { fieldIds: args.fieldIds } : {}),
+          ...(args.returnFieldsByFieldId ? { returnFieldsByFieldId: true } : {}),
+          ...(args.sortField ? { sortField: args.sortField, sortDirection: args.sortDirection ?? 'asc' } : {}),
+          ...(offset ? { offset } : {}),
+          ...(airtable === undefined ? {} : { airtable }),
+        });
       }
 
       const json = (await response.json()) as { records?: AirtableRecord[]; offset?: string };
@@ -846,11 +882,21 @@ export class AirtableClient {
 
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
-      fieldNames: Object.values(CONFIRMED_ASSET_FIELDS),
+      fieldIds: [
+        METRICS_ASSET_FIELD_IDS.marketplaceStatus,
+        METRICS_ASSET_FIELD_IDS.latestReviewStatus,
+        METRICS_ASSET_FIELD_IDS.latestReviewDate,
+        METRICS_ASSET_FIELD_IDS.qualityScore,
+        METRICS_ASSET_FIELD_IDS.submittedDate,
+        METRICS_ASSET_FIELD_IDS.publishedDate,
+        METRICS_ASSET_FIELD_IDS.decisionDate,
+      ],
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
       limit: 1000,
+      // Metrics reads use field ids so display-name drift does not break the analytics path.
+      returnFieldsByFieldId: true,
     });
-    const assets = records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
+    const assets = records.map((record) => mapMetricsAsset(record));
 
     const startMs = startDay.getTime();
     const endExclusiveMs = endExclusive.getTime();
@@ -1151,7 +1197,6 @@ export class AirtableClient {
     if (input.release_record_id !== undefined) {
       fields[CONFIRMED_WRITE_FIELD_IDS.versions.release] = input.release_record_id ? [input.release_record_id] : [];
     }
-    if (input.mrp_id_overwrite !== undefined) fields[CONFIRMED_VERSION_FIELDS.mrpIdOverwrite] = input.mrp_id_overwrite;
     if (input.reject_reason !== undefined) fields[CONFIRMED_VERSION_FIELDS.rejectReason] = input.reject_reason;
     if (input.rejection_feedback !== undefined) fields[CONFIRMED_VERSION_FIELDS.rejectionFeedback] = input.rejection_feedback;
 
@@ -1295,9 +1340,10 @@ export class AirtableClient {
   async updateAssetMetadata(assetId: string, input: TemplateAssetMetadataUpdateInput): Promise<TemplateReviewAsset> {
     const fields: Record<string, unknown> = {};
     if (input.template_name !== undefined) fields[CONFIRMED_ASSET_FIELDS.name] = input.template_name;
-    if (input.description !== undefined) fields[CONFIRMED_ASSET_FIELDS.description] = input.description;
+    if (input.description_long_html !== undefined || input.description !== undefined) {
+      fields[CONFIRMED_ASSET_FIELDS.descriptionLongHtml] = input.description_long_html ?? input.description;
+    }
     if (input.description_short !== undefined) fields[CONFIRMED_ASSET_FIELDS.descriptionShort] = input.description_short;
-    if (input.description_long_html !== undefined) fields[CONFIRMED_ASSET_FIELDS.descriptionLongHtml] = input.description_long_html;
     if (input.website_url !== undefined) fields[CONFIRMED_ASSET_FIELDS.websiteUrl] = input.website_url;
     if (input.preview_site_url !== undefined) fields[CONFIRMED_ASSET_FIELDS.previewSiteUrl] = input.preview_site_url;
     if (input.thumbnail_image_url !== undefined) {

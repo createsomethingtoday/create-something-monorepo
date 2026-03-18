@@ -2,11 +2,13 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import {
 	HALF_DOZEN_PARTNER_KEY,
+	assertPartnerCredentialIssuanceAllowed,
 	PartnerAuthHttpError,
 	getLatestActiveConsent,
 	getPartnerClientBySlug,
 	insertPartnerAccessDelivery,
 	normalizePartnerSlug,
+	parseJsonObject,
 	postIdentityAdmin,
 	randomId,
 	requirePartnerAdmin,
@@ -62,6 +64,10 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		if (!client) {
 			return json({ error: 'not_found', message: 'Partner client not found' }, { status: 404 });
 		}
+		assertPartnerCredentialIssuanceAllowed({
+			clientMetadata: parseJsonObject(client.metadata_json),
+			surface: 'legacy_key',
+		});
 		if (!client.identity_account_id) {
 			return json(
 				{

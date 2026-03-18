@@ -13,6 +13,11 @@
     "by_target_scope": true,
     "named_lane_allowlists_required": true
   },
+  "discovery_pack_defaults": {
+    "named_discovery_packs_standard_for_shared_hubs": true,
+    "discovery_reset_returns_to_assigned_pack": true,
+    "manual_active_server_overrides_exception_only": true
+  },
   "workflow_sync_preferences": {
     "prefer_dedicated_workflow_routes": true
   },

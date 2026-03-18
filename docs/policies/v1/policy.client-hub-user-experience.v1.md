@@ -67,6 +67,10 @@ Define the canonical user-experience contract for client-facing MCP access, tran
 23. Telemetry and Braintrust tracing are mandatory baseline observability controls for dedicated named lanes. They are operator-facing controls and MUST NOT expand the client-visible tool surface.
 24. When a hosted chat or concierge product is part of delivery, it MUST be implemented as a product surface separate from `.agency` control-plane routes and separate from MCP App DUI resources.
 25. Hosted chat or concierge products MUST follow [`policy.progressive-profile-governance.v1`](./policy.progressive-profile-governance.v1.md) for inferred-versus-confirmed field handling and dynamic widget selection.
+26. Client-facing Hub and MCP broker surfaces MUST use service-first discovery as the standard contract: list services first, then search tools within the chosen service, then describe and execute the selected proxy tool.
+27. When the target service is already known, brokered tool search MUST be scoped to that service. Full-catalog proxy authorization before service selection is prohibited as the default path.
+28. Shared hubs MUST use named discovery packs as the managed default discovery contract. `HUB_DISCOVERY_SHARED_PACK` or an equivalent applied pack selection is the standard baseline for shared lanes and hosted hubs.
+29. Manual `activeServers`, `mode`, or `maxProxyTools` overrides MAY exist for diagnostics or reviewed exceptions, but they MUST be treated as temporary overlays on a named discovery pack rather than the primary managed configuration model.
 
 ## Required User Surfaces
 
@@ -137,6 +141,12 @@ When the product includes a hosted chat experience, it must show:
   - `packages/cs-mcp-hub-remote/index.ts`
   - `ui://hub/overview`
   - `ui://hub/auth-workflow`
+  - `hub_list_services`
+  - `hub_list_discovery_packs`
+  - `hub_search_proxy_tools`
+  - `hub_describe_proxy_tool`
+  - `hub_execute_proxy_tool`
+  - `hub_set_discovery`
 - hosted product packages
   - `packages/concierge-chat/*`
 

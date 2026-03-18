@@ -8,6 +8,7 @@
     "webflow-template-review-mcp": "dist/index.js"
   },
   "scripts": {
+    "audit:schema": "node --import tsx scripts/audit-airtable-schema.ts",
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",

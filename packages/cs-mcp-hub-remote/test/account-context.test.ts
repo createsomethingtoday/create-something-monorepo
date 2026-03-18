@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { authorizeRequest, resolveAccountContext, resolveHubIdentityMode } from '../index.ts';
+import {
+  authorizeRequest,
+  normalizeInboundMcpRequest,
+  resolveAccountContext,
+  resolveHubIdentityMode,
+} from '../index.ts';
 
 function makeExtra(headers: Record<string, string>) {
   return {
@@ -9,6 +14,12 @@ function makeExtra(headers: Record<string, string>) {
       headers,
     },
   };
+}
+
+function makeExtraFromRequest(request: Request) {
+  const headers = Object.fromEntries(request.headers.entries());
+  headers.host ??= new URL(request.url).host;
+  return makeExtra(headers);
 }
 
 test('resolveHubIdentityMode defaults to session_required', () => {
@@ -436,6 +447,230 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
     assert.equal(capturedAuth, 'Bearer resolver_secret');
     assert.equal(capturedToken, 'mlk_personal_token_authz');
     assert.equal(capturedResourceHost, 'viv-blondish');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('authorizeRequest accepts the configured HUB_API_TOKEN via mcp_access_token query param', async () => {
+  const failure = await authorizeRequest(
+    new Request(
+      'https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=hub_static_token',
+    ),
+    {
+      HUB_API_TOKEN: 'hub_static_token',
+      HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+      HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+    } as any,
+  );
+
+  assert.equal(failure, null);
+});
+
+test('authorizeRequest accepts a resolved personal token via mcp_access_token query param', async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedAuth = '';
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    capturedAuth = request.headers.get('authorization') ?? '';
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        account_id: 'acct_personal',
+        tenant_id: 'tenant_acme',
+        user_id: 'user_legacy',
+        auth_mode: 'legacy_key',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const failure = await authorizeRequest(
+      new Request(
+        'https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=mlk_personal_token_query',
+      ),
+      {
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(failure, null);
+    assert.equal(capturedAuth, 'Bearer resolver_secret');
+    assert.equal(capturedToken, 'mlk_personal_token_query');
+    assert.equal(capturedResourceHost, 'aaron-outerfields');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('authorizeRequest accepts a resolved personal token via token query param', async () => {
+  const originalFetch = globalThis.fetch;
+  const token = 'mlk_personal_token_query_via_token';
+  let capturedAuth = '';
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    capturedAuth = request.headers.get('authorization') ?? '';
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        account_id: 'acct_personal',
+        tenant_id: 'tenant_acme',
+        user_id: 'user_legacy',
+        auth_mode: 'legacy_key',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const failure = await authorizeRequest(
+      new Request(`https://aaron-outerfields.mcp.createsomething.agency/mcp?token=${token}`),
+      {
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(failure, null);
+    assert.equal(capturedAuth, 'Bearer resolver_secret');
+    assert.equal(capturedToken, token);
+    assert.equal(capturedResourceHost, 'aaron-outerfields');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('authorizeRequest accepts a resolved personal token via x-api-key header', async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedAuth = '';
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    capturedAuth = request.headers.get('authorization') ?? '';
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        account_id: 'acct_personal',
+        tenant_id: 'tenant_acme',
+        user_id: 'user_legacy',
+        auth_mode: 'legacy_key',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const failure = await authorizeRequest(
+      new Request('https://aaron-outerfields.mcp.createsomething.agency/mcp', {
+        headers: {
+          'x-api-key': 'mlk_personal_token_header',
+        },
+      }),
+      {
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(failure, null);
+    assert.equal(capturedAuth, 'Bearer resolver_secret');
+    assert.equal(capturedToken, 'mlk_personal_token_header');
+    assert.equal(capturedResourceHost, 'aaron-outerfields');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('normalizeInboundMcpRequest exposes mcp_access_token to downstream account resolution', async () => {
+  const originalFetch = globalThis.fetch;
+  const token = 'mlk_personal_token_normalized';
+  let capturedAuth = '';
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    capturedAuth = request.headers.get('authorization') ?? '';
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        account_id: 'acct_personal',
+        tenant_id: 'tenant_acme',
+        user_id: 'user_legacy',
+        auth_mode: 'legacy_key',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const request = normalizeInboundMcpRequest(
+      new Request(`https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=${token}`),
+    );
+
+    assert.equal(request.headers.get('authorization'), `Bearer ${token}`);
+
+    const context = await resolveAccountContext(
+      makeExtraFromRequest(request),
+      {
+        HUB_IDENTITY_MODE: 'session_required',
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(capturedAuth, 'Bearer resolver_secret');
+    assert.equal(capturedToken, token);
+    assert.equal(capturedResourceHost, 'aaron-outerfields');
+    assert.equal(context.accountId, 'acct_personal');
+    assert.equal(context.tenantId, 'tenant_acme');
+    assert.equal(context.identitySource, 'session');
   } finally {
     globalThis.fetch = originalFetch;
   }

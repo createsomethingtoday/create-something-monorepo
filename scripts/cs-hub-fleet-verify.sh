@@ -205,6 +205,16 @@ expected_enabled_policy_label_for_worker() {
   esac
 }
 
+expected_discovery_pack_for_worker() {
+  case "$1" in
+    "cs-hub-danny") echo "danny-shared-auth-plus-dm-and-operator-notion" ;;
+    "cs-hub-c3denver") echo "c3denver-airtable-gmail-notion" ;;
+    "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "outerfields-shared-auth-clickup" ;;
+    "cs-hub-mj") echo "mj-shared-auth-plus-ops-search-meetings-and-review" ;;
+    *) echo "shared-auth-core" ;;
+  esac
+}
+
 load_infisical_env() {
   if ! command -v infisical >/dev/null 2>&1; then
     return 1
@@ -706,6 +716,81 @@ check_compat_identity_without_session() {
   rm -f "$body_file"
 }
 
+check_discovery_pack_reset() {
+  local worker="$1"
+  local expected_pack mcp_url token_var_name token token_help
+  expected_pack="$(expected_discovery_pack_for_worker "$worker")"
+  mcp_url="$(mcp_url_for_worker "$worker")"
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  token="$(resolve_worker_token "$worker")"
+  token_help="${token_var_name} (or HUB_API_TOKEN)"
+
+  if [[ -z "$token" ]]; then
+    echo "missing API token for ${worker} (${token_help})"
+    failures=1
+    return
+  fi
+
+  local body_file status
+  body_file="$(mktemp)"
+  local -a headers=(
+    -H "Authorization: Bearer ${token}"
+    -H "Content-Type: application/json"
+    -H "Accept: application/json"
+  )
+  if [[ "$(expected_identity_mode_for_worker "$worker")" == "session_required" ]]; then
+    if [[ -z "${FLEET_VERIFY_SESSION_TOKEN:-}" ]]; then
+      echo "discovery_pack=skipped reason=missing_fleet_verify_session_token"
+      rm -f "$body_file"
+      failures=1
+      return
+    fi
+    headers+=(-H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}")
+  fi
+
+  status="$(
+    curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      "${headers[@]}" \
+      --data '{"jsonrpc":"2.0","id":"fleet-verify-reset-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"reset":true}}}'
+  )"
+
+  if [[ "$status" != "200" ]]; then
+    echo "discovery pack reset failed for ${worker} (status=${status})"
+    cat "$body_file"
+    failures=1
+    rm -f "$body_file"
+    return
+  fi
+
+  if ! jq -e '.result != null and .error == null' "$body_file" >/dev/null 2>&1; then
+    echo "discovery pack reset returned JSON-RPC error for ${worker}"
+    cat "$body_file"
+    failures=1
+    rm -f "$body_file"
+    return
+  fi
+
+  local actual_pack
+  actual_pack="$(
+    jq -r '
+      .result.structuredContent.appliedPack.id //
+      (.result.content[0].text | fromjson? | .appliedPack.id) //
+      empty
+    ' "$body_file"
+  )"
+  rm -f "$body_file"
+
+  if [[ "$actual_pack" != "$expected_pack" ]]; then
+    echo "discovery pack mismatch for ${worker}"
+    echo "expected=${expected_pack}"
+    echo "actual=${actual_pack:-<missing>}"
+    failures=1
+    return
+  fi
+
+  echo "discovery_pack=${actual_pack}"
+}
+
 extract_result_entity_id() {
   local body_file="$1"
   jq -r '
@@ -720,43 +805,115 @@ search_visible_connection_status_tool() {
   local token="$2"
   local session_token="${3:-}"
 
-  local body_file status
-  body_file="$(mktemp)"
+  local services_body services_status
+  services_body="$(mktemp)"
   if [[ -n "$session_token" ]]; then
-    status="$(
-      curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+    services_status="$(
+      curl -sS -o "$services_body" -w "%{http_code}" -X POST "$mcp_url" \
         -H "Authorization: Bearer ${token}" \
         -H "X-MCP-Session-Token: ${session_token}" \
         -H "Content-Type: application/json" \
         -H "Accept: application/json" \
-        --data '{"jsonrpc":"2.0","id":"fleet-verify-search","method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"connection_status","limit":20}}}'
+        --data '{"jsonrpc":"2.0","id":"fleet-verify-services","method":"tools/call","params":{"name":"hub_list_services","arguments":{}}}'
     )"
   else
-    status="$(
-      curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+    services_status="$(
+      curl -sS -o "$services_body" -w "%{http_code}" -X POST "$mcp_url" \
         -H "Authorization: Bearer ${token}" \
         -H "Content-Type: application/json" \
         -H "Accept: application/json" \
-        --data '{"jsonrpc":"2.0","id":"fleet-verify-search","method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"connection_status","limit":20}}}'
+        --data '{"jsonrpc":"2.0","id":"fleet-verify-services","method":"tools/call","params":{"name":"hub_list_services","arguments":{}}}'
     )"
   fi
 
-  if [[ "$status" != "200" ]]; then
-    cat "$body_file" >&2
-    rm -f "$body_file"
+  if [[ "$services_status" != "200" ]]; then
+    cat "$services_body" >&2
+    rm -f "$services_body"
     return 1
   fi
 
-  jq -r '
-    (
-      .result.structuredContent.tools //
-      (.result.content[0].text | fromjson? | .tools) //
-      []
-    )
-    | map(select((.proxyToolName // "") | endswith("__connection_status")))
-    | .[0].proxyToolName // empty
-  ' "$body_file"
-  rm -f "$body_file"
+  local -a services=()
+  while IFS= read -r service_name; do
+    [[ -n "$service_name" ]] || continue
+    services+=("$service_name")
+  done < <(
+    jq -r '
+      (
+        .result.structuredContent.services //
+        (.result.content[0].text | fromjson? | .services) //
+        []
+      )
+      | map(select(.activeInDiscovery == true and ((.visibleProxyTools // 0) > 0)))
+      | .[].name
+    ' "$services_body"
+  )
+  rm -f "$services_body"
+
+  local service_name
+  for service_name in "${services[@]}"; do
+    local body_file status payload
+    body_file="$(mktemp)"
+    payload="$(
+      jq -cn --arg serverName "$service_name" '{
+        jsonrpc:"2.0",
+        id:"fleet-verify-search",
+        method:"tools/call",
+        params:{
+          name:"hub_search_proxy_tools",
+          arguments:{
+            serverName:$serverName,
+            query:"connection_status",
+            limit:20
+          }
+        }
+      }'
+    )"
+    if [[ -n "$session_token" ]]; then
+      status="$(
+        curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+          -H "Authorization: Bearer ${token}" \
+          -H "X-MCP-Session-Token: ${session_token}" \
+          -H "Content-Type: application/json" \
+          -H "Accept: application/json" \
+          --data "$payload"
+      )"
+    else
+      status="$(
+        curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+          -H "Authorization: Bearer ${token}" \
+          -H "Content-Type: application/json" \
+          -H "Accept: application/json" \
+          --data "$payload"
+      )"
+    fi
+
+    if [[ "$status" != "200" ]]; then
+      cat "$body_file" >&2
+      rm -f "$body_file"
+      return 1
+    fi
+
+    local proxy_tool_name
+    proxy_tool_name="$(
+      jq -r '
+        (
+          .result.structuredContent.tools //
+          (.result.content[0].text | fromjson? | .tools) //
+          []
+        )
+        | map(select((.proxyToolName // "") | endswith("__connection_status")))
+        | .[0].proxyToolName // empty
+      ' "$body_file"
+    )"
+    rm -f "$body_file"
+
+    if [[ -n "$proxy_tool_name" ]]; then
+      echo "$proxy_tool_name"
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 check_compat_account_routing() {
@@ -1069,6 +1226,13 @@ else
     echo
   done
 fi
+
+echo "Checking managed discovery pack reset..."
+for worker in "${WORKERS[@]}"; do
+  echo "===== DISCOVERY PACK ${worker} ====="
+  check_discovery_pack_reset "$worker"
+  echo
+done
 
 echo "Checking MCP protocol endpoints (initialize + resources/list)..."
 for worker in "${WORKERS[@]}"; do

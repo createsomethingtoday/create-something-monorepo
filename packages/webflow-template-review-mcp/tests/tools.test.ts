@@ -5,6 +5,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import type { AirtableClient } from '../src/airtable.js';
 import type { ReviewerProfile } from '../src/reviewer-directory.js';
+import { METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
 import { registerTools } from '../src/tools.js';
 
 type ToolResult = { content: Array<{ text: string }>; isError?: boolean };
@@ -236,4 +237,21 @@ test('save_draft_feedback writes review feedback without mutating improvement ar
     ],
   });
   assert.equal(parsePayload(result).ok, true);
+});
+
+test('get_field_map exposes stable table ids and metrics field ids', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_get_field_map')?.({});
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.deepEqual(payload.data?.tables, TABLE_IDS);
+  assert.deepEqual(payload.data?.metricsFieldIds, {
+    assets: METRICS_ASSET_FIELD_IDS,
+  });
 });
