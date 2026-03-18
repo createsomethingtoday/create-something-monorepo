@@ -5,7 +5,7 @@ import {
   fetchExternalSubmissionStatus,
   formatTimeUntil,
   type ExternalSubmissionStatus
-} from '@create-something/webflow-dashboard-core';
+} from '@create-something/webflow-dashboard-core/submission';
 import { AccountPanel } from '../../components/account-panel';
 import { AssetList } from '../../components/asset-list';
 import { getServerAirtable } from '../../lib/server/airtable';

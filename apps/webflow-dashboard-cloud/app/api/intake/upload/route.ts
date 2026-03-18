@@ -1,9 +1,9 @@
+import { uploadToR2 } from '@create-something/webflow-dashboard-core/r2';
 import {
   getWebPDimensions,
-  uploadToR2,
   validateMimeType,
   validateWebP
-} from '@create-something/webflow-dashboard-core';
+} from '@create-something/webflow-dashboard-core/upload-validation';
 import { getEnvOrThrow } from '../../../../lib/server/env';
 import { jsonNoStore } from '../../../../lib/server/responses';
 

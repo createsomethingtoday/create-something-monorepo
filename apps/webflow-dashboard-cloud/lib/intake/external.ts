@@ -1,4 +1,4 @@
-import { validateEmail } from '@create-something/webflow-dashboard-core';
+import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
 
 const EMAIL_CHECK_URL = 'https://check-asset-name.vercel.app/api/checkTemplateemail';
 const CREATOR_ELIGIBILITY_URL = 'https://webflow-api.createsomething.io/template/user';

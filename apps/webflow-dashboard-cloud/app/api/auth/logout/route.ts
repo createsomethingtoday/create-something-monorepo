@@ -1,4 +1,4 @@
-import { deleteSession } from '@create-something/webflow-dashboard-core';
+import { deleteSession } from '@create-something/webflow-dashboard-core/kv';
 import { NextRequest } from 'next/server';
 import { getOptionalEnv } from '../../../../lib/server/env';
 import { jsonNoStore } from '../../../../lib/server/responses';

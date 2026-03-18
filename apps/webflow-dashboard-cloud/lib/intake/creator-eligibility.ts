@@ -2,9 +2,9 @@ import {
   calculateLocalSubmissionData,
   fetchExternalSubmissionStatus,
   formatTimeUntil,
-  type Asset,
   type ExternalSubmissionStatus
-} from '@create-something/webflow-dashboard-core';
+} from '@create-something/webflow-dashboard-core/submission';
+import type { Asset } from '@create-something/webflow-dashboard-core/airtable';
 import { getServerAirtable } from '../server/airtable';
 import { checkRemoteCreatorEligibility, type RemoteCreatorEligibility } from './external';
 

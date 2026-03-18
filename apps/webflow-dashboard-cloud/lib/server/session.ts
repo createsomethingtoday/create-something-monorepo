@@ -1,8 +1,8 @@
 import {
   generateSessionToken,
-  getSession,
-  type DashboardCloudflareEnv
-} from '@create-something/webflow-dashboard-core';
+  getSession
+} from '@create-something/webflow-dashboard-core/kv';
+import type { DashboardCloudflareEnv } from '@create-something/webflow-dashboard-core/runtime';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NextResponse, type NextRequest } from 'next/server';

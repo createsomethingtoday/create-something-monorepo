@@ -1,4 +1,4 @@
-import { isAuthorizedCronRequest } from '@create-something/webflow-dashboard-core';
+import { isAuthorizedCronRequest } from '@create-something/webflow-dashboard-core/security';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getEnvOrThrow } from '../../../../lib/server/env';
 
