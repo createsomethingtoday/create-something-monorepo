@@ -78,6 +78,10 @@ csm/csm/.repo.git
 __pycache__/
 .dev.vars
 
+# Local tool caches
+.cache/toolchains/
+.cache/corepack/
+
 # Judgment Layer (policy packs + local Andon logs)
 .judgment/
 !.judgment/README.md

@@ -12,9 +12,18 @@ hash -r
 
 cd "$ROOT_DIR"
 
+print_runtime_alignment_help() {
+  cat >&2 <<'EOF'
+Use the repo-pinned runtime before rerunning the dev container post-create step:
+  - Preferred: rebuild/reopen the repository with .devcontainer/devcontainer.json so the pinned image is used
+  - Local fallback: install Node 22.21.1 from .nvmrc, then run corepack prepare "pnpm@9.15.0" --activate
+EOF
+}
+
 actual_node="$(node -v)"
 if [[ "$actual_node" != "$EXPECTED_NODE" ]]; then
   echo "Expected Node ${EXPECTED_NODE}, found ${actual_node}" >&2
+  print_runtime_alignment_help
   exit 1
 fi
 
@@ -24,6 +33,7 @@ corepack prepare "pnpm@${EXPECTED_PNPM}" --activate >/dev/null
 actual_pnpm="$(pnpm -v)"
 if [[ "$actual_pnpm" != "$EXPECTED_PNPM" ]]; then
   echo "Expected pnpm ${EXPECTED_PNPM}, found ${actual_pnpm}" >&2
+  print_runtime_alignment_help
   exit 1
 fi
 
