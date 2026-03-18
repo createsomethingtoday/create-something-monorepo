@@ -118,6 +118,7 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 			db,
 			authSubject: user.id,
 			email: user.email,
+			env: platform?.env,
 		}),
 	]);
 

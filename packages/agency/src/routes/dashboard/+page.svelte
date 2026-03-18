@@ -2,7 +2,7 @@
 	import { SEO } from '@create-something/canon';
 	import { HighDensityTable } from '@create-something/tufte';
 	import { invalidateAll } from '$app/navigation';
-	import { FactList, ReportSection, ReportShell, SummaryItem } from '$lib/components/access';
+	import { FactList, ProspectWorkspaceSection, ReportSection, ReportShell, SummaryItem } from '$lib/components/access';
 
 	let { data } = $props();
 	type AccessAssignment = {
@@ -16,47 +16,11 @@
 		tenantId: string | null;
 		workspaceAccountId: string | null;
 	} | null;
-	type ProspectCandidate = {
-		client: {
-			slug: string;
-			display_name: string | null;
-			status: 'initialized' | 'active' | 'paused' | 'sunset' | 'disabled';
-			required_toolkits: string[];
-		};
-		lane: {
-			slug: string;
-			display_name: string;
-			hub_url: string;
-			status: 'initialized' | 'active' | 'paused' | 'sunset' | 'disabled';
-			allowed_tool_prefixes: string[];
-		};
-		prospect_claim: {
-			state: 'claimable' | 'claimed_by_you' | 'claimed_by_other';
-			can_claim_now: boolean;
-			authorized_via: 'owner_email' | 'claim_emails' | 'claim_email_domains';
-			blocked_reason:
-				| 'identity_seed_conflict'
-				| 'manual_override_conflict'
-				| 'prospect_unavailable'
-				| 'already_claimed'
-				| null;
-			blocked_message: string | null;
-			service_tier: string;
-		};
-		issuance_state: {
-			ready: false;
-			blocked_reason: 'prospect_not_ready';
-			message: string;
-		};
-	};
 	let policyBusy = $state(false);
 	let policyMessage = $state('');
 	let policyError = $state('');
-	let claimBusyKey = $state<string | null>(null);
-	let claimMessage = $state('');
-	let claimError = $state('');
 	const assignment = $derived(data.assignment as AccessAssignment);
-	const prospects = $derived(data.prospects as ProspectCandidate[]);
+	const prospects = $derived((data.prospects ?? []) as unknown[]);
 
 	function formatDateTime(value: string | null | undefined): string {
 		if (!value) return 'Not set';
@@ -75,36 +39,6 @@
 
 	function accessStatusLabel(value: boolean): string {
 		return value ? 'Access active' : 'Access blocked';
-	}
-
-	function prospectStateTone(
-		prospect: ProspectCandidate,
-	): 'claimable' | 'claimed_by_you' | 'claimed_by_other' | 'blocked' | 'unavailable' {
-		if (prospect.prospect_claim.blocked_reason === 'prospect_unavailable') {
-			return 'unavailable';
-		}
-		if (prospect.prospect_claim.state === 'claimable' && !prospect.prospect_claim.can_claim_now) {
-			return 'blocked';
-		}
-		return prospect.prospect_claim.state;
-	}
-
-	function prospectStateLabel(prospect: ProspectCandidate): string {
-		if (prospect.prospect_claim.blocked_reason === 'prospect_unavailable') {
-			return 'Unavailable';
-		}
-		if (prospect.prospect_claim.state === 'claimable' && !prospect.prospect_claim.can_claim_now) {
-			return 'Review required';
-		}
-
-		switch (prospect.prospect_claim.state) {
-			case 'claimable':
-				return 'Claimable now';
-			case 'claimed_by_you':
-				return 'Claimed by this account';
-			case 'claimed_by_other':
-				return 'Claimed elsewhere';
-		}
 	}
 
 	function tokenStatusLabel(): string {
@@ -213,35 +147,6 @@
 			policyBusy = false;
 		}
 	}
-
-	async function claimProspect(prospect: ProspectCandidate) {
-		const key = `${prospect.client.slug}:${prospect.lane.slug}`;
-		claimBusyKey = key;
-		claimMessage = '';
-		claimError = '';
-
-		try {
-			const response = await fetch(`/api/me/prospects/${prospect.client.slug}/claim`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					lane_slug: prospect.lane.slug,
-				}),
-			});
-			const payload = (await response.json().catch(() => ({}))) as { message?: string };
-			if (!response.ok) {
-				throw new Error(payload.message ?? 'Failed to claim prospect workspace');
-			}
-			claimMessage = `${prospect.client.display_name ?? prospect.client.slug} is now bound to this Auth0 account.`;
-			await invalidateAll();
-		} catch (error) {
-			claimError = error instanceof Error ? error.message : 'Failed to claim prospect workspace';
-		} finally {
-			claimBusyKey = null;
-		}
-	}
 </script>
 
 <SEO
@@ -343,72 +248,7 @@
 	</ReportSection>
 
 	{#if prospects.length > 0}
-		<ReportSection
-			title="Prospect Workspaces"
-			description="Preprovisioned partner workspaces this Auth0 account can view or bind before commercial graduation. Claiming binds identity; it does not issue customer credentials."
-		>
-			<div class="prospect-grid">
-				{#each prospects as prospect}
-					<article class="prospect-card">
-						<div class="prospect-card-header">
-							<div>
-								<strong>{prospect.client.display_name ?? prospect.client.slug}</strong>
-								<p>{prospect.lane.display_name} · {prospect.client.slug}</p>
-							</div>
-							<span class={`prospect-state ${prospectStateTone(prospect)}`}>
-								{prospectStateLabel(prospect)}
-							</span>
-						</div>
-
-						<div class="prospect-card-body">
-							<p>
-								<strong>Authorized via:</strong> {humanizeReason(prospect.prospect_claim.authorized_via)}
-							</p>
-							<p>
-								<strong>Graduation target:</strong> {prospect.prospect_claim.service_tier}
-							</p>
-							<p>
-								<strong>Required toolkits:</strong> {prospect.client.required_toolkits.join(', ') || 'Not set'}
-							</p>
-							<p>
-								<strong>Lane host:</strong> {prospect.lane.hub_url}
-							</p>
-							<p>
-								<strong>Lifecycle:</strong> {prospect.client.status} client · {prospect.lane.status} lane
-							</p>
-						</div>
-
-						<p class="empty-copy">{prospect.issuance_state.message}</p>
-
-						{#if prospect.prospect_claim.blocked_message}
-							<p class="feedback error">{prospect.prospect_claim.blocked_message}</p>
-						{/if}
-
-						{#if prospect.prospect_claim.can_claim_now && prospect.prospect_claim.state !== 'claimed_by_you'}
-							<div class="callout-actions">
-								<button
-									type="button"
-									class="action-button"
-									disabled={claimBusyKey === `${prospect.client.slug}:${prospect.lane.slug}`}
-									onclick={() => claimProspect(prospect)}
-								>
-									{claimBusyKey === `${prospect.client.slug}:${prospect.lane.slug}` ? 'Claiming…' : 'Claim workspace'}
-								</button>
-							</div>
-						{:else if prospect.prospect_claim.state === 'claimed_by_you' && !prospect.prospect_claim.blocked_message}
-							<p class="feedback success">This workspace is already bound to this Auth0 account.</p>
-						{/if}
-					</article>
-				{/each}
-			</div>
-
-			{#if claimMessage}
-				<p class="feedback success">{claimMessage}</p>
-			{/if}
-			{#if claimError}
-				<p class="feedback error">{claimError}</p>
-			{/if}
-		</ReportSection>
+		<ProspectWorkspaceSection prospects={prospects} href="/prospects" actionLabel="Open Prospect Portal" />
 	{/if}
 
 	{#if assignmentFacts.length > 0}
@@ -566,72 +406,6 @@
 
 	.feedback.error {
 		color: #ff8a80;
-	}
-
-	.prospect-grid {
-		display: grid;
-		gap: 0.9rem;
-	}
-
-	.prospect-card {
-		display: grid;
-		gap: 0.75rem;
-		padding: 0.9rem 1rem;
-		border: 1px solid rgba(255, 255, 255, 0.08);
-		background: rgba(255, 255, 255, 0.02);
-	}
-
-	.prospect-card-header {
-		display: flex;
-		justify-content: space-between;
-		gap: 0.8rem;
-		align-items: start;
-	}
-
-	.prospect-card-header strong {
-		display: block;
-		font-size: 0.88rem;
-		font-weight: 560;
-	}
-
-	.prospect-card-header p,
-	.prospect-card-body p {
-		margin: 0.18rem 0 0;
-		font-size: 0.82rem;
-		line-height: 1.6;
-		color: var(--color-fg-muted);
-	}
-
-	.prospect-card-body {
-		display: grid;
-		gap: 0.3rem;
-	}
-
-	.prospect-state {
-		font-size: 0.72rem;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		white-space: nowrap;
-	}
-
-	.prospect-state.claimable {
-		color: #8de8a5;
-	}
-
-	.prospect-state.blocked {
-		color: #f3c97a;
-	}
-
-	.prospect-state.claimed_by_you {
-		color: #9dd7ff;
-	}
-
-	.prospect-state.claimed_by_other {
-		color: #ffb38a;
-	}
-
-	.prospect-state.unavailable {
-		color: #f3c97a;
 	}
 
 	:global(.table .badge) {

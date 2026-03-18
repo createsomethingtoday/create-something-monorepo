@@ -15,11 +15,13 @@ import {
 	normalizeAgencyServiceTier,
 } from './mcp-entitlements.js';
 import { listPartnerProspectClaimsForUser } from './partner-prospect-discovery-core.js';
+import { attachProspectToolkitAccountsForAgencyUser } from './partner-prospect-toolkit-status.js';
 
 export function listPartnerProspectClaimsForAgencyUser(input: {
 	db: D1Database;
 	authSubject: string;
 	email: string;
+	env?: App.Platform['env'];
 }) {
 	return listPartnerProspectClaimsForUser(
 		{
@@ -37,5 +39,11 @@ export function listPartnerProspectClaimsForAgencyUser(input: {
 			parseJsonStringArray,
 		},
 		input,
+	).then((prospects) =>
+		attachProspectToolkitAccountsForAgencyUser({
+			db: input.db,
+			env: input.env,
+			prospects,
+		}),
 	);
 }

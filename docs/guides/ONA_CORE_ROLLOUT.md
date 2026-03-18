@@ -53,6 +53,21 @@ Preferred local layouts:
 
 Avoid keeping the working tree on a spinning external drive and bind-mounting it into OrbStack. That keeps the slow host filesystem on the critical path.
 
+## Local Runtime Alignment
+
+Local bootstrap is expected to match the same runtime the repo dev container uses:
+
+- Node `22.21.1` from `.nvmrc`
+- pnpm `9.15.0` via Corepack
+
+If `.ona/scripts/bootstrap.sh` fails with `Expected Node v22.21.1`, the intended fix is:
+
+1. Open the repo through `.devcontainer/devcontainer.json`, or
+2. Run `./scripts/ona-bootstrap-local.sh` to bootstrap with a repo-cached Node `22.21.1` and pnpm `9.15.0`, or
+3. Install Node `22.21.1` locally, then run `corepack prepare "pnpm@9.15.0" --activate`
+
+The runtime pin is deliberate. Do not treat a newer local Node version as equivalent just because `package.json` allows a broader engine range.
+
 ## Secrets
 
 Use Ona project secrets only for internal engineering and runtime delivery. Do not use Ona as the client bearer-token distribution system in this phase.
@@ -140,6 +155,7 @@ Configure these in Ona organization or project settings because they are not rep
 Run this checklist after the projects are created:
 
 1. Start an environment from each Ona project and confirm the bootstrap task succeeds.
+   The repo bootstrap only hard-requires the pinned Node and pnpm toolchain plus a healthy workspace install. Missing `gh`, `infisical`, `jq`, or `wrangler` should surface as warnings unless you explicitly opt into strict mode with `ONA_BOOTSTRAP_REQUIRE_OPTIONAL_TOOLS=1`.
 2. Confirm `node -v` returns `v22.21.1`.
 3. Confirm `pnpm -v` returns `9.15.0`.
 4. Start `agency-dev` and confirm the forwarded preview is reachable.
@@ -151,3 +167,12 @@ Run this checklist after the projects are created:
 10. In the `agency` project only, run `agency-build` and `agency-deploy-preview`.
 
 If the remote loop is still materially slow after this rollout, optimize the repo startup path next. Do not split the monorepo only to compensate for a storage bottleneck.
+
+## Bootstrap Behavior
+
+- The repo bootstrap script lives at `.ona/scripts/bootstrap.sh`.
+- `./scripts/ona-bootstrap-local.sh` is the host-shell fallback when you need the pinned runtime without changing your global Node installation.
+- It validates the pinned Node and pnpm versions before doing any workspace work.
+- It treats `gh`, `infisical`, `jq`, and `wrangler` as optional by default because not every Ona project needs deploy or operator tooling during startup.
+- It writes a `node_modules/.pnpm-lock.sha256` stamp after a successful `pnpm install --frozen-lockfile` and reinstalls when that stamp no longer matches `pnpm-lock.yaml`.
+- Set `ONA_BOOTSTRAP_REQUIRE_OPTIONAL_TOOLS=1` if you want startup to fail fast when the optional operator/deploy commands are missing.

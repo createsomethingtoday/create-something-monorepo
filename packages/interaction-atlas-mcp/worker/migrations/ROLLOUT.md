@@ -22,6 +22,8 @@ Apply in this exact order:
 8. `0008_judgment_event_correlation.sql`
 9. `0009_security_response.sql`
 10. `0010_security_incident_claims.sql`
+11. `0011_authz_tables.sql`
+12. `0012_policy_os_scaffold.sql`
 
 ## Pre-flight checks
 
@@ -53,6 +55,9 @@ Run these checks:
 4. `approval_requests` only transitions out of `pending` once and requires decision fields.
 5. `automation_runs` cannot transition to `awaiting_approval` without a pending approval row.
 6. `policy_activations` accepts rows referencing existing `judgment_policy_versions`.
+7. `policy_os_manifest_versions` accepts compiled policy artifacts with unique `(account_id, policy_id, version)` tuples.
+8. `policy_os_bindings` resolves the highest-priority active row for a given account/environment selector set.
+9. `policy_os_approval_cases`, `policy_os_decision_events`, `policy_os_andon_events`, and `policy_os_entitlement_snapshots` accept inserts with expected foreign-key relationships.
 
 ## Rollback strategy
 

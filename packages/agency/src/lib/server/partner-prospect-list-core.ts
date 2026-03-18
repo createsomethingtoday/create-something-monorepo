@@ -22,6 +22,7 @@ export interface PartnerProspectListDeps {
 		db: D1Database;
 		authSubject: string;
 		email: string;
+		env?: App.Platform['env'];
 	}) => Promise<unknown[]>;
 }
 
@@ -37,6 +38,7 @@ export function createPartnerProspectListGetHandler(deps: PartnerProspectListDep
 			db,
 			authSubject: user.id,
 			email: user.email,
+			env: platform?.env,
 		});
 
 		return Response.json({
