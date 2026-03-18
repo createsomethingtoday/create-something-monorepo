@@ -17,10 +17,11 @@ Seed `.agency` users before invite, then bind them to their Auth0 subject as soo
 9. Internal aliases or exceptions, such as `micah@createsomething.io -> acct_mj`, must live in one canonical resolver and not be reimplemented route-by-route.
 10. Self-provisioning is acceptable only for controlled internal/testing lanes and preprovisioned prospect-claim flows. Client-facing production access should be seeded first.
 11. A preprovisioned prospect MAY be claimed by a signed-in `.agency` user only when that claim binds into the canonical seed and entitlement model for the preassigned account/tenant mapping. Prospect claim MUST NOT itself mint customer credentials or bypass graduation controls.
-12. If Auth0 subject churn occurs after delete/recreate for the same normalized email, remediation MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policies/v1/policy.auth0-subject-rebind-governance.v1.md) and the linked operator runbook instead of treating the user as a new MCP account.
-13. White-glove onboarding MAY deliver an already-governed customer credential before first portal login, but only after the canonical Auth0 subject, account mapping, entitlement state, and any credential-specific prerequisites are in place.
-14. White-glove onboarding MUST NOT rely on runtime worker guardrail tokens, bootstrap secrets, or other operator-only credentials as customer-facing artifacts.
-15. After white-glove initial delivery, `.agency` remains the canonical follow-on surface for revoke, regenerate, password rotation, and ongoing credential visibility unless an approved dedicated client shell replaces that surface.
+12. Prospect self-service discovery and claim MUST only present workspaces in `initialized` or `active` prospect status as immediately claimable. Paused, sunset, or disabled prospect records require operator action before claim can continue.
+13. If Auth0 subject churn occurs after delete/recreate for the same normalized email, remediation MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policies/v1/policy.auth0-subject-rebind-governance.v1.md) and the linked operator runbook instead of treating the user as a new MCP account.
+14. White-glove onboarding MAY deliver an already-governed customer credential before first portal login, but only after the canonical Auth0 subject, account mapping, entitlement state, and any credential-specific prerequisites are in place.
+15. White-glove onboarding MUST NOT rely on runtime worker guardrail tokens, bootstrap secrets, or other operator-only credentials as customer-facing artifacts.
+16. After white-glove initial delivery, `.agency` remains the canonical follow-on surface for revoke, regenerate, password rotation, and ongoing credential visibility unless an approved dedicated client shell replaces that surface.
 
 ## Seed Manifest
 

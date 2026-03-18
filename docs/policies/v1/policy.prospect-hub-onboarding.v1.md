@@ -30,6 +30,7 @@ Define how a potential client may be provisioned into a governed MCP-ready works
 11. Prospect graduation MUST bind canonical identity fields, verify entitlement readiness against the house entitlement model, and require an active partner consent record before the lifecycle marker is cleared.
 12. A signed-in `.agency` user MAY claim a preprovisioned prospect workspace only when the claimant email matches the prospect owner email or an explicit prospect claim allowlist. That claim flow MUST bind through the house identity-seed model and MUST NOT clear issuance blocks by itself.
 13. Discovery surfaces MAY show claimable prospect workspaces to the signed-in `.agency` user, but those surfaces MUST apply the same owner-email, allowlist, and conflict checks as the claim route.
+14. Prospect self-service discovery and claim surfaces MUST treat only `initialized` and `active` prospect records as immediately claimable. `paused`, `sunset`, and `disabled` records MUST NOT present as self-service-claimable until operator action restores them.
 
 ## Enforcement Surfaces
 
@@ -60,6 +61,8 @@ Define how a potential client may be provisioned into a governed MCP-ready works
 - `packages/agency/src/lib/server/partner-prospect-claim.ts`
 - `packages/agency/src/lib/server/partner-prospect-discovery-core.ts`
 - `packages/agency/src/lib/server/partner-prospect-discovery.ts`
+- `packages/agency/src/lib/server/partner-prospect-list-core.ts`
+- `packages/agency/src/lib/server/partner-prospect-list.ts`
 - `packages/agency/src/lib/server/partner-prospect-graduate-core.ts`
 - `packages/agency/src/lib/server/partner-prospect-graduate.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/prospects/[slug]/bootstrap/+server.ts`

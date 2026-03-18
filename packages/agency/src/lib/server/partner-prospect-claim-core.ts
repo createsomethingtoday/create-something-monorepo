@@ -1,5 +1,6 @@
 import {
 	deriveProspectServiceTier,
+	getProspectAvailabilityConflict,
 	getProspectClaimConflict,
 	resolveProspectClaimAuthorization,
 	type ProspectClaimAuthorization,
@@ -271,6 +272,19 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 			if (!deps.isProspectRecord(laneMetadata) || deps.isProspectGraduated(laneMetadata)) {
 				return jsonResponse(
 					{ error: 'lane_not_prospect', message: 'This lane is not marked as an active prospect lane.' },
+					409,
+				);
+			}
+			const availabilityConflict = getProspectAvailabilityConflict({
+				clientStatus: client.status,
+				laneStatus: lane.status,
+			});
+			if (availabilityConflict) {
+				return jsonResponse(
+					{
+						error: availabilityConflict.code,
+						message: availabilityConflict.message,
+					},
 					409,
 				);
 			}
