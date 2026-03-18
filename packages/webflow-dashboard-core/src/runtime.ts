@@ -21,7 +21,15 @@ export async function getCloudflareEnv(
   }
 
   try {
-    const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+    const moduleName = '@opennextjs/cloudflare';
+    const { getCloudflareContext } = (await import(moduleName)) as {
+      getCloudflareContext?: (options: { async: true }) => Promise<{ env?: DashboardCloudflareEnv }>;
+    };
+
+    if (!getCloudflareContext) {
+      return null;
+    }
+
     const context = await getCloudflareContext({ async: true });
     return (context?.env as DashboardCloudflareEnv | undefined) || null;
   } catch {

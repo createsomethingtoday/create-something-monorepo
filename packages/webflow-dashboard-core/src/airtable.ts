@@ -563,6 +563,16 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
   }
 
   const base = new Airtable({ apiKey: env.AIRTABLE_API_KEY }).base(env.AIRTABLE_BASE_ID);
+  type MutationFields = Record<string, unknown>;
+
+  async function updateRecords(tableId: string, records: Array<{ id: string; fields: MutationFields }>) {
+    return (await (base(tableId) as any).update(records)) as Airtable.Record<Airtable.FieldSet>[];
+  }
+
+  async function createRecords(tableId: string, records: Array<{ fields: MutationFields }>) {
+    return (await (base(tableId) as any).create(records)) as Airtable.Record<Airtable.FieldSet>[];
+  }
+
   const debugEnabled = env.DEBUG_AIRTABLE === 'true';
   const debugLog = (...args: unknown[]) => {
     if (debugEnabled) {
@@ -707,7 +717,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
       }
 
       try {
-        const records = await base(TABLES.ASSETS).update([{ id, fields }]);
+        const records = await updateRecords(TABLES.ASSETS, [{ id, fields }]);
         return mapAssetRecord(records[0]);
       } catch {
         return null;
@@ -765,7 +775,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
       }
 
       try {
-        const records = await base(TABLES.ASSETS).update([{ id, fields }]);
+        const records = await updateRecords(TABLES.ASSETS, [{ id, fields }]);
         return mapAssetRecord(records[0]);
       } catch (error) {
         console.error('[Airtable] Error updating asset with images:', error);
@@ -1040,7 +1050,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
       }
 
       try {
-        const records = await base(TABLES.CREATORS).update([{ id, fields }]);
+        const records = await updateRecords(TABLES.CREATORS, [{ id, fields }]);
         const record = records[0];
         return {
           id: record.id,
@@ -1074,7 +1084,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
         fields['fldyddTon9Lu8BR8G'] = [{ url: data.avatarUrl }];
       }
 
-      const records = await base(TABLES.CREATORS).create([{ fields }]);
+      const records = await createRecords(TABLES.CREATORS, [{ fields }]);
       const record = records[0];
 
       return {
@@ -1131,14 +1141,14 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
         fields['fldneaPyoRXBAVtS1'] = data.carouselImages.filter(Boolean).map((url) => ({ url }));
       }
 
-      const assetRecords = await base(TABLES.ASSETS).create([{ fields }]);
+      const assetRecords = await createRecords(TABLES.ASSETS, [{ fields }]);
       const assetRecord = assetRecords[0];
 
       let versionId: string | undefined;
       let warning: string | undefined;
 
       try {
-        const versionRecords = await base(TABLES.ASSET_VERSIONS).create([
+        const versionRecords = await createRecords(TABLES.ASSET_VERSIONS, [
           {
             fields: {
               '👛Asset': [assetRecord.id],

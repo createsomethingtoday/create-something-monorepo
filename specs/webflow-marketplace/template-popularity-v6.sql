@@ -13,7 +13,7 @@
 with params as (
     select
         to_date('2024-02-20') as reporting_start_date,
-        14 as conversion_maturity_days,
+        60 as conversion_maturity_days,
         20::float as conversion_prior_weight,
         0.319949964963::float as conversion_prior_mean,
         0.1::float as conversion_quality_exponent,
