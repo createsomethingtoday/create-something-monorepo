@@ -50,6 +50,8 @@ apps/*
 !apps/meeting-capture/**
 apps/meeting-capture/MeetingCapture/.build/
 apps/meeting-capture/MeetingCapture/.swiftpm/
+apps/meeting-capture/MeetingCapture/.codex-build-verify/
+apps/meeting-capture/MeetingCapture/dist/
 
 # Gastown nested repositories
 csm/.repo.git

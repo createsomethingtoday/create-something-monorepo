@@ -10,6 +10,11 @@ HUB_TOKEN_SECRET_NAME="${HUB_TOKEN_SECRET_NAME:-CS_HUB_DANNY_API_TOKEN}"
 PINNED_A="${PINNED_A:-halfdozen_notion}"
 PINNED_B="${PINNED_B:-blondish_notion}"
 ACCOUNTS_TOOL="${ACCOUNTS_TOOL:-operator_notion_accounts}"
+SYNC_CONTRACTS_TOOL="${SYNC_CONTRACTS_TOOL:-operator_notion_sync_contracts}"
+RUN_SYNC_TOOL="${RUN_SYNC_TOOL:-operator_notion_run_sync_contract}"
+OPERATOR_SERVER_NAME="${OPERATOR_SERVER_NAME:-halfdozen-operator-notion-mcp}"
+NOTION_SERVER_NAME="${NOTION_SERVER_NAME:-composio-toolkit-notion}"
+CURL_MAX_TIME="${CURL_MAX_TIME:-20}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -55,6 +60,7 @@ mcp_call() {
   local args_json="$3"
 
   curl -sS -X POST "$HUB_URL" \
+    --max-time "$CURL_MAX_TIME" \
     -H "Authorization: Bearer ${token}" \
     -H 'Content-Type: application/json' \
     -d "$(jq -cn --arg name "$tool_name" --argjson args "$args_json" '{jsonrpc:"2.0",id:(now|tostring),method:"tools/call",params:{name:$name,arguments:$args}}')"
@@ -70,8 +76,17 @@ find_proxy_tool() {
 assert_no_rpc_error() {
   local payload="$1"
   local context="$2"
+  if [[ -z "$payload" ]]; then
+    echo "empty response during ${context}" >&2
+    exit 1
+  fi
   if ! echo "$payload" | jq -e '.error == null' >/dev/null 2>&1; then
     echo "rpc error during ${context}:"
+    echo "$payload" | jq .
+    exit 1
+  fi
+  if echo "$payload" | jq -e '.result.isError == true' >/dev/null 2>&1; then
+    echo "tool error during ${context}:"
     echo "$payload" | jq .
     exit 1
   fi
@@ -87,38 +102,68 @@ main() {
     exit 1
   fi
 
-  echo "searching proxy tools..."
+  echo "listing services..."
+  local services_resp
+  services_resp="$(mcp_call "$token" "hub_list_services" '{}')"
+  assert_no_rpc_error "$services_resp" "hub_list_services"
+
+  if ! echo "$services_resp" | jq -e --arg server "$OPERATOR_SERVER_NAME" '.result.structuredContent.services[]? | select(.name == $server and .activeInDiscovery == true)' >/dev/null 2>&1; then
+    echo "operator service is missing from active discovery"
+    echo "$services_resp" | jq .
+    exit 1
+  fi
+
+  if ! echo "$services_resp" | jq -e --arg server "$NOTION_SERVER_NAME" '.result.structuredContent.services[]? | select(.name == $server and .activeInDiscovery == true)' >/dev/null 2>&1; then
+    echo "notion service is missing from active discovery"
+    echo "$services_resp" | jq .
+    exit 1
+  fi
+
+  echo "searching operator proxy tools..."
   local search_resp
-  search_resp="$(mcp_call "$token" "hub_search_proxy_tools" '{"query":"notion","limit":200}')"
+  search_resp="$(mcp_call "$token" "hub_search_proxy_tools" "{\"serverName\":\"$OPERATOR_SERVER_NAME\",\"limit\":200}")"
   assert_no_rpc_error "$search_resp" "hub_search_proxy_tools"
 
-  local tool_a tool_b tool_accounts
+  local tool_a tool_b tool_accounts tool_sync_contracts tool_run_sync
   tool_a="$(find_proxy_tool "$search_resp" "$PINNED_A")"
   tool_b="$(find_proxy_tool "$search_resp" "$PINNED_B")"
   tool_accounts="$(find_proxy_tool "$search_resp" "$ACCOUNTS_TOOL")"
+  tool_sync_contracts="$(find_proxy_tool "$search_resp" "$SYNC_CONTRACTS_TOOL")"
+  tool_run_sync="$(find_proxy_tool "$search_resp" "$RUN_SYNC_TOOL")"
 
-  if [[ -z "$tool_a" || -z "$tool_b" || -z "$tool_accounts" ]]; then
+  if [[ -z "$tool_a" || -z "$tool_b" || -z "$tool_accounts" || -z "$tool_sync_contracts" || -z "$tool_run_sync" ]]; then
     echo "missing required tools in discovery results"
     echo "found:"
     echo "  ${PINNED_A}: ${tool_a:-<missing>}"
     echo "  ${PINNED_B}: ${tool_b:-<missing>}"
     echo "  ${ACCOUNTS_TOOL}: ${tool_accounts:-<missing>}"
+    echo "  ${SYNC_CONTRACTS_TOOL}: ${tool_sync_contracts:-<missing>}"
+    echo "  ${RUN_SYNC_TOOL}: ${tool_run_sync:-<missing>}"
     exit 1
   fi
 
   echo "describing tools..."
-  local describe_a describe_b describe_accounts
+  local describe_a describe_b describe_accounts describe_sync_contracts describe_run_sync
   describe_a="$(mcp_call "$token" "hub_describe_proxy_tool" "{\"proxyToolName\":\"$tool_a\"}")"
   describe_b="$(mcp_call "$token" "hub_describe_proxy_tool" "{\"proxyToolName\":\"$tool_b\"}")"
   describe_accounts="$(mcp_call "$token" "hub_describe_proxy_tool" "{\"proxyToolName\":\"$tool_accounts\"}")"
+  describe_sync_contracts="$(mcp_call "$token" "hub_describe_proxy_tool" "{\"proxyToolName\":\"$tool_sync_contracts\"}")"
+  describe_run_sync="$(mcp_call "$token" "hub_describe_proxy_tool" "{\"proxyToolName\":\"$tool_run_sync\"}")"
   assert_no_rpc_error "$describe_a" "describe ${tool_a}"
   assert_no_rpc_error "$describe_b" "describe ${tool_b}"
   assert_no_rpc_error "$describe_accounts" "describe ${tool_accounts}"
+  assert_no_rpc_error "$describe_sync_contracts" "describe ${tool_sync_contracts}"
+  assert_no_rpc_error "$describe_run_sync" "describe ${tool_run_sync}"
 
   echo "executing operator accounts list..."
   local exec_accounts
   exec_accounts="$(mcp_call "$token" "hub_execute_proxy_tool" "{\"proxyToolName\":\"$tool_accounts\",\"args\":{\"action\":\"list_accounts\",\"args\":{}}}")"
   assert_no_rpc_error "$exec_accounts" "execute ${tool_accounts}"
+
+  echo "executing sync contract list..."
+  local exec_sync_contracts
+  exec_sync_contracts="$(mcp_call "$token" "hub_execute_proxy_tool" "{\"proxyToolName\":\"$tool_sync_contracts\",\"args\":{\"action\":\"list_contracts\",\"args\":{}}}")"
+  assert_no_rpc_error "$exec_sync_contracts" "execute ${tool_sync_contracts}"
 
   echo "executing pinned tool checks..."
   local exec_a exec_b
@@ -129,6 +174,8 @@ main() {
 
   echo "hub smoke check passed"
   echo "- accounts tool: $tool_accounts"
+  echo "- sync contracts tool: $tool_sync_contracts"
+  echo "- run sync tool: $tool_run_sync"
   echo "- pinned A: $tool_a"
   echo "- pinned B: $tool_b"
 }

@@ -3,7 +3,7 @@ export const DEFAULT_AIRTABLE_BASE_ID = 'appMoIgXMTTTNIc3p';
 export const TABLE_IDS = {
   assets: 'tblRwzpWoLgE9MrUm',
   assetVersions: 'tblHxZ2hgSFLZxsZu',
-  assetReleases: '🚀Asset Releases',
+  assetReleases: 'tblhLAXcJiXrkZxUL',
 } as const;
 
 export const CONFIRMED_RELEASE_FIELDS = {
@@ -15,27 +15,41 @@ export const CONFIRMED_RELEASE_FIELDS = {
 export const CONFIRMED_ASSET_FIELDS = {
   type: '⚙️🆎Type (Text)',
   name: 'Name',
-  description: '📝Description',
   descriptionShort: 'ℹ️Description (Short)',
   descriptionLongHtml: 'ℹ️Description (Long).html',
   websiteUrl: '🔗Website URL',
   previewSiteUrl: '🔗Preview Site URL',
   marketplaceStatus: '🚀Marketplace Status',
   latestReviewStatus: '📝Latest Review Status',
-  latestReviewDate: '📝Latest Review Date',
+  latestReviewDate: '🚀📅Latest Version Review Status LMT',
   latestReviewFeedback: '🖌️📝Latest Review Feedback',
   rejectionFeedback: '🚩Rejection Feedback',
-  rejectionFeedbackHtml: '🚩Rejection Feedback.html',
   qualityScore: '🖌️Initial Quality Score',
   thumbnailImage: '🖼️Thumbnail Image',
   thumbnailImageSecondary: '🖼️Thumbnail Image (Secondary)',
   carouselImages: '🖼️Carousel Images',
   submittedDate: '📅Submitted Date',
-  publishedDate: '📅Published Date',
+  publishedDate: '🚀📅Published Date',
   decisionDate: '🚀📅Decision Date',
   priceString: '🥞💲Template Price String (🏗️ only)',
   mrpId: 'ℹ️MRP ID',
   mrpIdOverride: '👀ℹ️MRP ID (Override)',
+} as const;
+
+export const ASSET_COMPATIBILITY_ALIASES = {
+  description: 'ℹ️Description (Long).html',
+  rejectionFeedbackHtml: '🚩Rejection Feedback',
+} as const;
+
+export const METRICS_ASSET_FIELD_IDS = {
+  type: 'fld7kubS6EE1LOC8d',
+  marketplaceStatus: 'fld51CeQNGDgW9b0D',
+  latestReviewStatus: 'fldZPFzH3q3KBAjNW',
+  latestReviewDate: 'fldBLCaNjRwnox0lT',
+  qualityScore: 'fldue77Ea5R8D5Nc4',
+  submittedDate: 'fldeE2tArgyRpGuqs',
+  publishedDate: 'fld4anS2bYjmdbKEG',
+  decisionDate: 'fldcmd1g1TwHXkHla',
 } as const;
 
 export const CONFIRMED_VERSION_FIELDS = {
@@ -56,7 +70,7 @@ export const CONFIRMED_VERSION_FIELDS = {
   decisionDate: '📅Decision Made Datetime',
   rejectReason: '🚩Rejection Reason',
   rejectionFeedback: '🚩Rejection Feedback',
-  mrpIdOverwrite: '👀ℹ️MRP ID (Override)',
+  mrpIdOverwrite: '❗ℹ️MRP ID',
 } as const;
 
 export const CONFIRMED_WRITE_FIELD_IDS = {
@@ -181,6 +195,12 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
   pending: {
     assets: PENDING_ASSET_FIELDS,
     versions: PENDING_VERSION_FIELDS,
+  },
+  compatibilityAliases: {
+    assets: ASSET_COMPATIBILITY_ALIASES,
+  },
+  metricsFieldIds: {
+    assets: METRICS_ASSET_FIELD_IDS,
   },
   hotspotGroups: HOTSPOT_GROUPS,
   statusOptions: {

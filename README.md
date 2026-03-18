@@ -1,40 +1,33 @@
 # Create Something Monorepo
 
-> **Hermeneutic ecosystem for AI-native development research and practice**
+CREATE SOMETHING is a `pnpm` monorepo for the platform, services, and product surfaces behind our MCP-first tooling. The repo also carries client-specific packages, operational tooling, and a small number of polyglot apps such as Meeting Capture.
 
-A unified monorepo containing the entire Create Something ecosystem: shared component library, design canon, research platform, interactive lab, and service platform.
+Start with the docs map in [docs/README.md](./docs/README.md). Strategy and operating model live in [docs/MCP_FIRST_THESIS.md](./docs/MCP_FIRST_THESIS.md) and [docs/THREE_TIER_FRAMEWORK.md](./docs/THREE_TIER_FRAMEWORK.md).
 
-## Philosophy
+## Workspace Model
 
-This monorepo embodies Heidegger's hermeneutic circle—understanding emerges through circular movement between parts and whole:
+The workspace is organized into five lanes defined in [config/workspace-lanes.json](./config/workspace-lanes.json):
 
-```
-@create-something/components (Vorverständnis - foundation)
-         ↓ (informs all)
-.ltd + .io + .space + .agency (four modes of being)
-         ↓ (validates and refines)
-    [feeds back to components]
-```
+- `platform`: shared MCP substrate, hub infrastructure, policy engines, orchestration
+- `product`: first-party apps and design system packages such as `canon`, `tufte`, `io`, `space`, `agency`
+- `services`: deployable MCP servers, workers, admin surfaces, service packages
+- `clients`: tenant-specific packages and partner integrations
+- `labs`: experiments, tools, scaffolds, and other non-core packages
 
-Each property represents a distinct mode of being:
-- **`.ltd`** - Being-as-Canon (design principles and standards)
-- **`.io`** - Being-as-Document (research and theory)
-- **`.space`** - Being-as-Experience (interactive practice)
-- **`.agency`** - Being-as-Service (commercial application)
+The `pnpm` workspace membership lives in [pnpm-workspace.yaml](./pnpm-workspace.yaml). Lane-aware root commands are powered by [scripts/workspace-lane-run.mjs](./scripts/workspace-lane-run.mjs).
 
-## Structure
+## Repository Shape
 
-```
+```text
 create-something-monorepo/
-├── packages/
-│   ├── components/    # Shared component library
-│   ├── ltd/           # Design canon (.ltd)
-│   ├── io/            # Research platform (.io)
-│   ├── space/         # Interactive lab (.space)
-│   └── agency/        # Service platform (.agency)
-├── package.json       # Root workspace configuration
-├── pnpm-workspace.yaml
-└── README.md
+├── apps/                  # Polyglot apps such as Meeting Capture
+├── packages/              # Workspace packages and nested workers/extensions
+├── config/                # Hub config and workspace lane metadata
+├── docs/                  # Strategy, policy, runbooks, internal context
+├── scripts/               # Root orchestration and verification scripts
+├── specs/                 # Specs and design notes
+├── package.json           # Root command surface
+└── pnpm-workspace.yaml    # Workspace package globs
 ```
 
 ## Getting Started
@@ -42,145 +35,81 @@ create-something-monorepo/
 ### Prerequisites
 
 - Node.js 20+
-- pnpm 9+
+- `pnpm` 9+
 
-### Installation
+### Install
 
 ```bash
-# Clone the repository
 git clone https://github.com/createsomethingtoday/create-something-monorepo.git
 cd create-something-monorepo
-
-# Install all dependencies
 pnpm install
 ```
 
 ### Development
 
 ```bash
-# Start all apps in development mode
-pnpm dev:all
+# Product surfaces
+pnpm dev
+pnpm dev:product
 
-# Or start individual properties:
-pnpm dev:components  # Component library demo
-pnpm dev:ltd         # Design canon
-pnpm dev:io          # Research platform
-pnpm dev:space       # Interactive lab
-pnpm dev:agency      # Service platform
+# Service packages and workers
+pnpm dev:services
+
+# Broader workspace lanes
+pnpm dev:platform
+pnpm dev:clients
+pnpm dev:labs
+
+# Default active lanes together
+pnpm dev:all
 ```
 
-### Building
+### Quality Gates
 
 ```bash
-# Build everything
+# Default lanes: platform + product + services
 pnpm build
+pnpm check
+pnpm test
 
-# Or build individually:
-pnpm build:lib       # Component library
-pnpm build:ltd       # .ltd
-pnpm build:io        # .io
-pnpm build:space     # .space
-pnpm build:agency    # .agency
+# Include clients and labs when needed
+pnpm check:all
+pnpm test:all
+
+# Lane-specific execution
+pnpm build:services
+pnpm check:clients
+pnpm test:labs
 ```
 
-## Development Workflow
+### Meeting Capture
 
-1. **Edit components** in `packages/components/src/lib/components/`
-2. **Changes hot-reload** across all running apps automatically
-3. **Build library**: `pnpm build:lib`
-4. **Run tests**: `pnpm test`
+Meeting Capture is a SwiftPM app under [apps/meeting-capture](./apps/meeting-capture).
 
-## Component Library
-
-The `@create-something/components` package provides shared components, utilities, and types:
-
-```typescript
-import { SEO, Navigation, Footer, PaperCard } from '@create-something/components';
+```bash
+pnpm meeting-capture:build
+pnpm meeting-capture:install
+pnpm meeting-capture:install:user
 ```
 
-All components embody canonical design principles:
-- **Dieter Rams**: "Weniger, aber besser" (Less, but better)
-- **Minimalism**: No decoration, only essential elements
-- **Accessibility**: Semantic HTML, ARIA compliance
-- **Performance**: Optimized for Cloudflare Workers edge runtime
+## Working In The Repo
 
-## Packages
+- Read [AGENTS.md](./AGENTS.md) before making coordinated changes.
+- Treat `docs/` as the system of record for architecture, policy, and runbooks.
+- Use `pnpm exports` to verify package exports before assuming symbol names.
+- Prefer lane commands over broad recursive commands when running checks locally.
 
-### [@create-something/components](./packages/components)
-Shared component library implementing canonical design principles. Contains SEO, Navigation, Footer, and paper-related components used across all properties.
+## Selected Packages
 
-### [@create-something/ltd](./packages/ltd)
-Design canon showcasing masters (Rams, Mies, Eames, Ive) and their principles. The philosophical foundation that informs all other properties.
-
-### [@create-something/io](./packages/io)
-Research platform publishing comprehensive papers on AI-native development, edge computing, and systematic methodology.
-
-### [@create-something/space](./packages/space)
-Interactive laboratory for hands-on practice. Features executable code environments with real-time metrics and progress tracking.
-
-### [@create-something/agency](./packages/agency)
-Service delivery platform applying validated research patterns to client projects. Demonstrates methodology in commercial context.
-
-## Scripts Reference
-
-| Command | Description |
-|---------|-------------|
-| `pnpm dev:all` | Start all packages in parallel |
-| `pnpm dev:components` | Start component library demo |
-| `pnpm dev:ltd` | Start .ltd in dev mode |
-| `pnpm dev:io` | Start .io in dev mode |
-| `pnpm dev:space` | Start .space in dev mode |
-| `pnpm dev:agency` | Start .agency in dev mode |
-| `pnpm build` | Build all packages |
-| `pnpm build:lib` | Build component library |
-| `pnpm check` | Run type checking across all packages |
-| `pnpm lint` | Lint all packages |
-| `pnpm format` | Format all code with Prettier |
-| `pnpm test` | Run tests across all packages |
-
-## Deployment
-
-Each property deploys independently to Cloudflare Pages:
-
-- **create-something-ltd** → `createsomething.ltd`
-- **create-something-io** → `createsomething.io`
-- **create-something-space** → `createsomething.space`
-- **create-something-agency** → `createsomething.agency`
-
-GitHub Actions workflows handle automated deployment on push to main.
-
-## Design Principles
-
-All code in this monorepo follows **Dieter Rams' 10 Principles of Good Design**:
-
-1. **Good design is innovative**
-2. **Good design makes a product useful**
-3. **Good design is aesthetic**
-4. **Good design makes a product understandable**
-5. **Good design is unobtrusive**
-6. **Good design is honest**
-7. **Good design is long-lasting**
-8. **Good design is thorough down to the last detail**
-9. **Good design is environmentally friendly**
-10. **Good design is as little design as possible**
+- [packages/canon](./packages/canon): design system and shared UI primitives
+- [packages/tufte](./packages/tufte): information design and visualization layer
+- [packages/cs-mcp-hub](./packages/cs-mcp-hub): local hub runtime
+- [packages/cs-mcp-hub-remote](./packages/cs-mcp-hub-remote): remote hub control plane
+- [packages/mcp-core](./packages/mcp-core): MCP shared primitives
+- [packages/mcp-authz](./packages/mcp-authz): authorization and policy support
+- [packages/create-something-mcp](./packages/create-something-mcp): deployable service package
+- [packages/agency](./packages/agency): first-party service/product surface
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-Quick start for contributors:
-
-1. Fork and clone the repository
-2. Create a feature branch
-3. Make changes in relevant packages
-4. Run `pnpm check` and `pnpm format`
-5. Submit PR with clear description
-6. Reference which canonical principles your changes embody
-
-## License
-
-MIT © Create Something
-
----
-
-**"Weniger, aber besser"** - Dieter Rams
+See [CONTRIBUTING.md](./CONTRIBUTING.md). At minimum, run the relevant lane checks for the code you changed.

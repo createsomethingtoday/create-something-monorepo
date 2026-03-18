@@ -1187,7 +1187,7 @@ async function findAgencyCommercialStateByEmail(
 	}
 }
 
-async function findAgencyIdentitySeedByEmail(
+export async function findAgencyIdentitySeedByEmail(
 	db: D1Database,
 	authEmail: string | null
 ): Promise<AgencyIdentitySeedRow | null> {

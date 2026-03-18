@@ -455,6 +455,36 @@ test('searchProxyTools only searches visible routes', () => {
   assert.equal(serverFiltered.tools[0]?.proxyToolName, 'server_a__beta');
 });
 
+test('buildAuthorizedVisibleProxyRoutes applies discovery filters before authorization output', async () => {
+  const runtime = createRuntime();
+  const visible = await buildAuthorizedVisibleProxyRoutes({
+    runtime: runtime as any,
+    prefs: {
+      mode: 'full',
+      activeServers: ['server_a', 'server_b'],
+      maxProxyTools: null,
+    },
+    accountContext: {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: null,
+      sessionId: 'session_1',
+      authMode: 'session',
+      allowedToolPrefixes: ['server_a__', 'server_b__'],
+      identitySource: 'session' as const,
+    },
+    env: {} as any,
+    trace,
+    entrypoint: 'hub_search_proxy_tools',
+    filters: {
+      serverName: 'server_a',
+      query: 'beta',
+    },
+  });
+
+  assert.deepEqual(visible.toolDefinitions.map((tool) => tool.name), ['server_a__beta']);
+});
+
 test('resolveDiscoveryPack returns normalized shared pack preferences', () => {
   const runtime = createRuntime();
   const shared = resolveDiscoveryPack('shared-auth-core', runtime as any);
@@ -464,6 +494,126 @@ test('resolveDiscoveryPack returns normalized shared pack preferences', () => {
   assert.equal(shared.preferences.mode, 'compact');
   assert.equal(shared.preferences.maxProxyTools, null);
   assert.deepEqual(shared.preferences.activeServers, []);
+});
+
+test('resolveDiscoveryPack returns Danny operator pack with the expected active services', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'halfdozen-operator-notion-mcp' },
+    { name: 'composio-toolkit-notion' },
+    { name: 'halfdozen-dm-mcp' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('danny-shared-auth-plus-dm-and-operator-notion', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'danny-shared-auth-plus-dm-and-operator-notion');
+  assert.equal(pack.preferences.mode, 'compact');
+  assert.deepEqual(pack.preferences.activeServers, [
+    'halfdozen-operator-notion-mcp',
+    'composio-toolkit-notion',
+    'halfdozen-dm-mcp',
+  ]);
+});
+
+test('resolveDiscoveryPack returns C3Denver pack with the expected active services', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'composio-toolkit-airtable' },
+    { name: 'composio-toolkit-gmail' },
+    { name: 'composio-toolkit-notion' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('c3denver-airtable-gmail-notion', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'c3denver-airtable-gmail-notion');
+  assert.equal(pack.preferences.mode, 'compact');
+  assert.deepEqual(pack.preferences.activeServers, [
+    'composio-toolkit-airtable',
+    'composio-toolkit-gmail',
+    'composio-toolkit-notion',
+  ]);
+});
+
+test('resolveDiscoveryPack returns MJ full ops pack with the expected active services', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'composio-toolkit-airtable' },
+    { name: 'composio-toolkit-dropbox' },
+    { name: 'composio-toolkit-gmail' },
+    { name: 'composio-toolkit-youtube' },
+    { name: 'composio-toolkit-googlesheets' },
+    { name: 'composio-toolkit-googledrive' },
+    { name: 'composio-toolkit-zoom' },
+    { name: 'composio-toolkit-slack' },
+    { name: 'composio-toolkit-quickbooks' },
+    { name: 'composio-toolkit-linkedin' },
+    { name: 'composio-toolkit-notion' },
+    { name: 'composio-toolkit-exa' },
+    { name: 'loom-mcp' },
+    { name: 'meetings' },
+    { name: 'webflow-template-review-mcp' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('mj-shared-auth-plus-ops-search-meetings-and-review', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'mj-shared-auth-plus-ops-search-meetings-and-review');
+  assert.equal(pack.preferences.mode, 'full');
+  assert.deepEqual(pack.preferences.activeServers, [
+    'composio-toolkit-airtable',
+    'composio-toolkit-dropbox',
+    'composio-toolkit-gmail',
+    'composio-toolkit-youtube',
+    'composio-toolkit-googlesheets',
+    'composio-toolkit-googledrive',
+    'composio-toolkit-zoom',
+    'composio-toolkit-slack',
+    'composio-toolkit-quickbooks',
+    'composio-toolkit-linkedin',
+    'composio-toolkit-notion',
+    'composio-toolkit-exa',
+    'loom-mcp',
+    'meetings',
+    'webflow-template-review-mcp',
+  ]);
+});
+
+test('resolveDiscoveryPack returns MJ legacy pack with the expected active services', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'composio-toolkit-dropbox' },
+    { name: 'composio-toolkit-gmail' },
+    { name: 'composio-toolkit-youtube' },
+    { name: 'composio-toolkit-googlesheets' },
+    { name: 'composio-toolkit-googledrive' },
+    { name: 'composio-toolkit-zoom' },
+    { name: 'composio-toolkit-slack' },
+    { name: 'composio-toolkit-quickbooks' },
+    { name: 'composio-toolkit-linkedin' },
+    { name: 'composio-toolkit-notion' },
+    { name: 'meetings' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('mj-legacy-shared-auth-plus-meetings', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'mj-legacy-shared-auth-plus-meetings');
+  assert.equal(pack.preferences.mode, 'compact');
+  assert.deepEqual(pack.preferences.activeServers, [
+    'composio-toolkit-dropbox',
+    'composio-toolkit-gmail',
+    'composio-toolkit-youtube',
+    'composio-toolkit-googlesheets',
+    'composio-toolkit-googledrive',
+    'composio-toolkit-zoom',
+    'composio-toolkit-slack',
+    'composio-toolkit-quickbooks',
+    'composio-toolkit-linkedin',
+    'composio-toolkit-notion',
+    'meetings',
+  ]);
 });
 
 test('resolveDiscoveryPack returns null for unknown pack ids', () => {

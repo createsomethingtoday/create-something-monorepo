@@ -101,14 +101,30 @@ Expected:
   - `composio-toolkit-gmail`
   - promised search provider(s): `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
 
-Verify proxy discovery is limited to the intended surface:
+Verify discovery is limited to the intended surface and reset returns to the managed pack baseline:
 
 ```bash
 curl -sS -X POST https://viv-blondish.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"limit":50}}}' | jq
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"reset":true}}}' | jq
+```
+
+```bash
+curl -sS -X POST https://viv-blondish.mcp.createsomething.agency/mcp \
+  -H "Authorization: Bearer $HUB_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hub_list_services","arguments":{}}}' | jq
+```
+
+```bash
+curl -sS -X POST https://viv-blondish.mcp.createsomething.agency/mcp \
+  -H "Authorization: Bearer $HUB_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"notion-halfdozen-blondish","limit":50}}}' | jq
 ```
 
 ## 5) Provision the Named Lane
@@ -165,11 +181,12 @@ Rules:
 Minimum success checks:
 
 1. `tools/list` succeeds with the lane bearer.
-2. `hub_search_proxy_tools` shows the client-specific Notion server.
-3. `hub_execute_proxy_tool` succeeds for a low-risk Notion read such as `notion_list_databases`.
-4. `composio-toolkit-gmail__connection_status` returns a governed result.
-5. Each promised auth-bound search provider returns either a governed connect link or an active connection status result.
-6. If Composio Search is promised, at least one representative brokered Composio Search call succeeds.
+2. `hub_list_services` shows the client-specific Notion service in discovery.
+3. `hub_search_proxy_tools` scoped to the client-specific Notion service succeeds.
+4. `hub_execute_proxy_tool` succeeds for a low-risk Notion read such as `notion_list_databases`.
+5. `composio-toolkit-gmail__connection_status` returns a governed result.
+6. Each promised auth-bound search provider returns either a governed connect link or an active connection status result.
+7. If Composio Search is promised, at least one representative brokered Composio Search call succeeds.
 
 ## 8) Trace Verification
 

@@ -8,6 +8,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck",
+    "test": "node --import tsx --test tests/**/*.test.ts worker/tests/**/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

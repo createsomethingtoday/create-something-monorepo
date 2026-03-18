@@ -38,17 +38,22 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 13. Braintrust auto-instrumentation MAY amplify operator visibility for LLM or tool spans, but it MUST NOT be treated as sufficient policy evidence unless the trace also includes house governance metadata for the routed call.
 14. For named-lane governed execution, the required governance trace fields SHOULD include `correlation_id`, route classification, and policy or review outcome in addition to `account_id`, `tenant_id`, and lane slug or bound host.
 15. Trace tags and summary fields SHOULD remain DRY and business-legible. Low-signal transport details SHOULD remain in metadata or raw logs instead of high-cardinality tags.
+16. Shared hubs and named lanes SHOULD express the default visible service set as a named discovery pack in addition to registry/routing policy. Ad hoc `activeServers` lists are an exception or debugging overlay, not the primary tenant-governance artifact.
+17. Discovery reset for a tenant or named lane SHOULD return to its assigned managed discovery pack unless an explicitly reviewed operator override is active.
+18. Skills, runbooks, and verification scripts that manipulate tenant discovery SHOULD prefer `hub_list_discovery_packs`, `hub_set_discovery(pack=...)`, and service-scoped search over raw full-catalog proxy search.
 
 ## Enforcement Surfaces
 
 - `config/mcp-hub/routing.json`
 - `config/mcp-hub/registry.json`
+- `config/mcp-hub/discovery-packs.json`
 - `packages/agency/src/lib/server/partner-auth.ts`
 - `packages/cs-mcp-hub-remote/index.ts`
 - Runtime env:
   - `HUB_TENANT_ID`
   - `HUB_ALLOW_PENDING_OAUTH_APPROVALS`
   - `CS_MCP_HUB_ROUTING`
+  - `HUB_DISCOVERY_SHARED_PACK`
 
 ## Evidence
 
@@ -65,3 +70,4 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 - `docs/policies/v1/policy.cross-workspace-sync-governance.v1.md`
 - `config/mcp-hub/routing.json`
 - `config/mcp-hub/registry.json`
+- `config/mcp-hub/discovery-packs.json`

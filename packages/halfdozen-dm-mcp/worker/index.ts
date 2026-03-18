@@ -25,7 +25,7 @@ import {
   type DmComposioRuntimeSummary,
 } from '../src/resources.js';
 import { registerTaskWorkflowPrompt } from '../src/prompts.js';
-import { validateApiKey } from './lib/auth.js';
+import { resolveRequestAccountId, validateApiKey } from './lib/auth.js';
 import type { DmConfig } from '../src/config.js';
 
 // =============================================================================
@@ -159,21 +159,8 @@ export class HalfDozenDmMcp extends McpAgent<Env> {
   private currentAccountId = 'operator';
 
   override async fetch(request: Request): Promise<Response> {
-    this.currentAccountId = this.getAccountIdFromRequest(request) ?? 'operator';
+    this.currentAccountId = resolveRequestAccountId(request) ?? 'operator';
     return super.fetch(request);
-  }
-
-  private getAccountIdFromRequest(request: Request): string | null {
-    const accountHeader = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-account-id');
-    if (accountHeader?.trim()) return accountHeader.trim();
-
-    const auth = request.headers.get('authorization');
-    if (auth?.toLowerCase().startsWith('bearer ')) {
-      const token = auth.slice(7).trim();
-      if (token) return token;
-    }
-
-    return null;
   }
 
   async init() {

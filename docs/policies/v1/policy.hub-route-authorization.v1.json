@@ -3,6 +3,12 @@
   "version": 1,
   "status": "draft",
   "engine": "polar_v1",
+  "classification_defaults": {
+    "service_first_discovery_required": true,
+    "service_summary_before_per_route_authorization_required": true,
+    "multiplexed_tool_execute_classification_must_consider_requested_action": true,
+    "named_discovery_packs_standard_for_shared_hubs": true
+  },
   "rules": [
     {
       "id": "hub_discover_readonly_blocks_mutations",

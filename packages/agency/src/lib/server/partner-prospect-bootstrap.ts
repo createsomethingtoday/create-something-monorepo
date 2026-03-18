@@ -1,0 +1,48 @@
+import {
+	HALF_DOZEN_PARTNER_KEY,
+	PartnerAuthHttpError,
+	buildPartnerLaneHubUrl,
+	defaultWorkspaceAccountId,
+	getPartnerAccessLaneBySlug,
+	getPartnerClientBySlug,
+	isPartnerProspectGraduated,
+	isPartnerProspectRecord,
+	normalizeAllowedToolPrefixes,
+	normalizeEmail,
+	normalizePartnerAccessLaneSlug,
+	normalizePartnerSlug,
+	parseJsonArray,
+	parseJsonObject,
+	parseJsonStringArray,
+	parseToolkitList,
+	randomId,
+	requirePartnerAdmin,
+	resolveAllowedToolPrefixes,
+	upsertPartnerAccessLane,
+} from './partner-auth.js';
+import { createPartnerProspectBootstrapPostHandler } from './partner-prospect-bootstrap-core.js';
+
+export function createPartnerProspectBootstrapPostHandlerWithDefaults() {
+	return createPartnerProspectBootstrapPostHandler({
+		partnerKey: HALF_DOZEN_PARTNER_KEY,
+		buildPartnerLaneHubUrl,
+		defaultWorkspaceAccountId,
+		getPartnerAccessLaneBySlug,
+		getPartnerClientBySlug,
+		isProspectGraduated: isPartnerProspectGraduated,
+		isProspectRecord: isPartnerProspectRecord,
+		normalizeAllowedToolPrefixes,
+		normalizeEmail,
+		normalizePartnerAccessLaneSlug,
+		normalizePartnerSlug,
+		parseJsonArray,
+		parseJsonObject,
+		parseJsonStringArray,
+		parseToolkitList,
+		randomId,
+		requirePartnerAdmin,
+		resolveAllowedToolPrefixes,
+		upsertPartnerAccessLane,
+		isHttpError: (error): error is PartnerAuthHttpError => error instanceof PartnerAuthHttpError,
+	});
+}

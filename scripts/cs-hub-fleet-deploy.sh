@@ -47,7 +47,6 @@ SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
 DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
 MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
-MJ_DISCOVERY_DEFAULT_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-exa,composio-toolkit-notion"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
 CORE_BUNDLES_CSV="core"
 CORE_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV}"
@@ -196,7 +195,10 @@ target_bundle_csv_for_worker() {
 
 discovery_shared_pack_for_worker() {
   case "$1" in
+    "cs-hub-danny") echo "danny-shared-auth-plus-dm-and-operator-notion" ;;
+    "cs-hub-c3denver") echo "c3denver-airtable-gmail-notion" ;;
     "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "outerfields-shared-auth-clickup" ;;
+    "cs-hub-mj") echo "mj-shared-auth-plus-ops-search-meetings-and-review" ;;
     *) echo "shared-auth-core" ;;
   esac
 }
@@ -353,7 +355,6 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:full" \
-      --var "HUB_DISCOVERY_DEFAULT_SERVERS:${MJ_DISCOVERY_DEFAULT_SERVERS_CSV}" \
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
       --var "HUB_CONNECT_CONCURRENCY:4" \

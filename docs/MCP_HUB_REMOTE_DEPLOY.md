@@ -14,6 +14,7 @@ Deploy the remote runtime for the CREATE SOMETHING MCP gateway (broker-only mode
 1. `tools/list` returns management tools only.
 2. Direct proxy tool calls (`<server>__<tool>`) are rejected.
 3. Downstream calls must go through:
+   - `hub_list_services`
    - `hub_search_proxy_tools`
    - `hub_describe_proxy_tool`
    - `hub_execute_proxy_tool`
@@ -46,7 +47,7 @@ Optional runtime selection:
 - `HUB_DISCOVERY_MODE` (`compact` or `full`)
 - `HUB_DISCOVERY_DEFAULT_SERVERS` (comma list / JSON array override)
 - `HUB_DISCOVERY_MAX_PROXY_TOOLS` (positive int cap; unset for uncapped)
-- `HUB_DISCOVERY_SHARED_PACK` (named default from `config/mcp-hub/discovery-packs.json`, for example `shared-auth-core`)
+- `HUB_DISCOVERY_SHARED_PACK` (named default from `config/mcp-hub/discovery-packs.json`, standard for managed shared hubs; for example `shared-auth-core`, `c3denver-airtable-gmail-notion`, or `mj-shared-auth-plus-ops-search-meetings-and-review`)
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
 - `HUB_IDENTITY_MODE` (`session_required` default, or `compat`)
@@ -86,6 +87,15 @@ Recommended production posture:
 - `HUB_SESSION_RESOLVE_TOKEN` set as a Worker secret and matched exactly with `identity-worker` `MCP_SESSION_RESOLVE_TOKEN`
 - `OSO_BOOTSTRAP_POLICY=false`
 - `ENGINE_FALLBACK_ENABLED=true`
+- Service-first discovery is the standard scalable default for all shared hubs:
+  - `hub_list_services` first
+  - `hub_search_proxy_tools` with `serverName` whenever known
+  - keep `HUB_DISCOVERY_MODE=compact` for team lanes unless a reviewed exception requires `full`
+- Discovery packs are the managed baseline for shared hubs:
+  - set `HUB_DISCOVERY_SHARED_PACK` on each deployed worker
+  - prefer `hub_list_discovery_packs` and pack selection when changing discovery scope
+  - treat raw `hub_set_discovery` server/mode overrides as temporary operator exceptions
+  - current fleet-specific examples include `c3denver-airtable-gmail-notion`, `danny-shared-auth-plus-dm-and-operator-notion`, `mj-shared-auth-plus-ops-search-meetings-and-review`, and `outerfields-shared-auth-clickup`
 
 Named-lane search provider baseline:
 
@@ -205,7 +215,7 @@ url = "https://cs-mcp-hub-remote.<your-workers-subdomain>.workers.dev/mcp"
 enabled = true
 ```
 
-If `HUB_API_TOKEN` is configured, include the bearer token header in your MCP client.
+If `HUB_API_TOKEN` is configured, include the bearer token header in your MCP client. The hub also accepts `?mcp_access_token=<token>` as a compatibility URL input for hosts that can only pass an endpoint string, but `Authorization: Bearer <token>` remains the standard.
 
 For partner delivery, prefer a managed `.agency` bearer token instead of distributing the shared hub token. The partner path is:
 

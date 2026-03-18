@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import {
 	HALF_DOZEN_PARTNER_KEY,
+	assertPartnerCredentialIssuanceAllowed,
 	PartnerAuthHttpError,
 	getLatestActiveConsent,
 	getPartnerAccessLaneBySlug,
@@ -63,6 +64,11 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		if (!lane) {
 			return json({ error: 'not_found', message: 'Named access lane not found' }, { status: 404 });
 		}
+		assertPartnerCredentialIssuanceAllowed({
+			clientMetadata: parseJsonObject(client.metadata_json),
+			laneMetadata: parseJsonObject(lane.metadata_json),
+			surface: 'managed_bearer',
+		});
 		if (!isIssuableStatus(client.status) || !isIssuableStatus(lane.status)) {
 			return json(
 				{

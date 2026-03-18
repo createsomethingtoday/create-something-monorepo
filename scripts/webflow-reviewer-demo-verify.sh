@@ -149,6 +149,11 @@ assert_no_rpc_error() {
     echo "$payload" | jq .
     exit 1
   fi
+  if echo "$payload" | jq -e '.result.isError == true' >/dev/null 2>&1; then
+    echo "tool error during ${context}:"
+    echo "$payload" | jq .
+    exit 1
+  fi
 }
 
 payload_json() {

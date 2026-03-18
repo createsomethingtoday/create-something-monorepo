@@ -480,6 +480,7 @@ function isHubVisibilityError(message: string, proxyToolName: string): boolean {
 class DirectNotionTransport implements NotionTransport {
   private readonly apiKey: string;
   private readonly databaseId: string;
+  private readonly optionalPropertyFallbacks: Set<string>;
 
   constructor(env: Env) {
     if (!env.NOTION_API_KEY?.trim()) {
@@ -487,6 +488,10 @@ class DirectNotionTransport implements NotionTransport {
     }
     this.apiKey = env.NOTION_API_KEY.trim();
     this.databaseId = env.NOTION_DATABASE_ID.trim();
+    this.optionalPropertyFallbacks = new Set(
+      [DEFAULT_ATTENDEES_PROPERTY, env.NOTION_ATTENDEES_PROPERTY?.trim()]
+        .filter((value): value is string => Boolean(value)),
+    );
   }
 
   async queryDatabase(filter: unknown, pageSize: number): Promise<QueryResult> {
@@ -547,7 +552,12 @@ class DirectNotionTransport implements NotionTransport {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         const unknownProperty = extractUnknownPropertyName(message);
-        if (!unknownProperty || skippedProperties.has(unknownProperty) || !(unknownProperty in nextProperties)) {
+        if (
+          !unknownProperty
+          || skippedProperties.has(unknownProperty)
+          || !(unknownProperty in nextProperties)
+          || !this.optionalPropertyFallbacks.has(unknownProperty)
+        ) {
           throw error;
         }
 

@@ -4,6 +4,7 @@ import { ensureAgencyMcpEntitlement } from '$lib/server/mcp-token';
 import { getSettledValue, loadManagedTokenSnapshot, loadPasswordSnapshot } from '$lib/server/access-state';
 import { resolveMcpAccessAssignment } from '$lib/server/mcp-access-assignments';
 import { normalizeAgencyServiceTier } from '$lib/server/mcp-entitlements';
+import { listPartnerProspectClaimsForAgencyUser } from '$lib/server/partner-prospect-discovery';
 
 interface CommercialStateRow {
 	service_tier: string | null;
@@ -52,7 +53,7 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 
 	const normalizedEmail = user.email.toLowerCase();
 
-	const [commercialResult, contractResult, partnerResult, tokenSnapshotResult, passwordSnapshotResult] =
+	const [commercialResult, contractResult, partnerResult, tokenSnapshotResult, passwordSnapshotResult, prospectsResult] =
 		await Promise.allSettled([
 		db
 			.prepare(
@@ -113,6 +114,11 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 			.first<PartnerSummaryRow>(),
 		loadManagedTokenSnapshot(platform, user.id),
 		loadPasswordSnapshot(platform, user.email),
+		listPartnerProspectClaimsForAgencyUser({
+			db,
+			authSubject: user.id,
+			email: user.email,
+		}),
 	]);
 
 	const commercial = getSettledValue(commercialResult, null);
@@ -131,6 +137,7 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 		available: false,
 		error: 'Password state is temporarily unavailable',
 	});
+	const prospects = getSettledValue(prospectsResult, []);
 	const assignment = await resolveMcpAccessAssignment(db, {
 		email: user.email,
 		accountId: entitlement.account_id,
@@ -164,6 +171,7 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 		commercial: commercial ?? null,
 		contract: contract ?? null,
 		partner: partner ?? null,
+		prospects,
 		assignment,
 	};
 };
