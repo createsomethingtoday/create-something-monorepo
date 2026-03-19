@@ -459,23 +459,67 @@ test('searchProxyTools only searches visible routes', () => {
   assert.equal(serverFiltered.tools[0]?.proxyToolName, 'server_a__beta');
 });
 
-test('buildAuthorizedVisibleProxyRoutes applies discovery filters before authorization output', async () => {
-  const runtime = createRuntime();
+test('buildAuthorizedVisibleProxyRoutes returns filtered routes that pass authorization', async () => {
+  const readRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_get_spreadsheet',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_get_spreadsheet',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const writeRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_values_update',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['composio-toolkit-googlesheets'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        {
+          name: readRoute.proxyToolName,
+          description: '[googlesheets] get spreadsheet',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: writeRoute.proxyToolName,
+          description: '[googlesheets] update values',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+      routes: new Map([
+        [readRoute.proxyToolName, readRoute],
+        [writeRoute.proxyToolName, writeRoute],
+      ]),
+      warnings: [],
+    },
+  };
+
   const visible = await buildAuthorizedVisibleProxyRoutes({
     runtime: runtime as any,
     prefs: {
       mode: 'full',
-      activeServers: ['server_a', 'server_b'],
+      activeServers: ['composio-toolkit-googlesheets'],
       maxProxyTools: null,
     },
     accountContext: {
       accountId: 'acct_1',
-      tenantId: null,
+      tenantId: 'tenant_acme',
       userId: 'user_1',
       sessionId: 'session_1',
       authMode: 'session',
-      toolMode: 'read_write',
-      allowedToolPrefixes: ['server_a__', 'server_b__'],
+      toolMode: 'read_only',
+      allowedToolPrefixes: null,
       boundHost: null,
       resourceHost: null,
       serviceTier: null,
@@ -486,12 +530,15 @@ test('buildAuthorizedVisibleProxyRoutes applies discovery filters before authori
     trace,
     entrypoint: 'hub_search_proxy_tools',
     filters: {
-      serverName: 'server_a',
-      query: 'beta',
+      serverName: 'composio-toolkit-googlesheets',
+      query: 'spreadsheet',
     },
   });
 
-  assert.deepEqual(visible.toolDefinitions.map((tool) => tool.name), ['server_a__beta']);
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet'],
+  );
 });
 
 test('resolveDiscoveryPack returns normalized shared pack preferences', () => {
