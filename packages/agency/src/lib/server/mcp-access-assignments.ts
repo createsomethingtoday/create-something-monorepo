@@ -1,7 +1,11 @@
 import {
 	buildPartnerLaneNotionBridgeUrl,
 	findPartnerAccessLaneForIdentity,
+	listPartnerAccessLanesForIdentity,
+	parseJsonArray,
 	parseJsonObject,
+	parseJsonStringArray,
+	buildComposioAllowedToolPrefixes,
 	type PartnerAuthAccessLaneAssignmentRow,
 } from '$lib/server/partner-auth';
 
@@ -14,15 +18,21 @@ type AccessAssignmentInput = {
 };
 
 export type McpAccessAssignment = {
+	source: 'partner_lane' | 'legacy';
+	partnerClientId: string | null;
+	clientSlug: string | null;
 	laneKey: string;
 	displayName: string;
 	hubUrl: string;
 	bridgeUrl: string;
 	bridgeUsername: string;
 	credentialSource: string;
+	hostKey: string | null;
 	accountId: string | null;
 	tenantId: string | null;
 	workspaceAccountId: string | null;
+	toolkitProfile: string[];
+	allowedToolPrefixes: string[];
 };
 
 type LaneConfig = {
@@ -146,15 +156,21 @@ function buildLegacyAssignment(input: AccessAssignmentInput): McpAccessAssignmen
 
 	const lane = LANE_CONFIGS[laneKey];
 	return {
+		source: 'legacy',
+		partnerClientId: null,
+		clientSlug: null,
 		laneKey,
 		displayName: lane.displayName,
 		hubUrl: `https://${lane.hubSubdomain}.mcp.createsomething.agency/mcp`,
 		bridgeUrl: `https://${lane.bridgeSubdomain}.mcp.createsomething.agency/mcp`,
 		bridgeUsername: lane.bridgeUsername,
 		credentialSource: DEFAULT_CREDENTIAL_SOURCE,
+		hostKey: lane.bridgeUsername,
 		accountId: input.accountId,
 		tenantId: input.tenantId,
 		workspaceAccountId: input.workspaceAccountId ?? input.accountId,
+		toolkitProfile: [],
+		allowedToolPrefixes: [],
 	};
 }
 
@@ -177,16 +193,53 @@ function buildLaneAssignment(
 			: DEFAULT_LANE_CREDENTIAL_SOURCE;
 
 	return {
+		source: 'partner_lane',
+		partnerClientId: lane.partner_client_id,
+		clientSlug: lane.client_slug,
 		laneKey: lane.slug,
 		displayName: lane.display_name,
 		hubUrl: lane.hub_url,
 		bridgeUrl: notionBridgeUrl,
 		bridgeUsername,
 		credentialSource,
+		hostKey: lane.host_key,
 		accountId: lane.identity_account_id ?? input.accountId,
 		tenantId: lane.identity_tenant_id ?? input.tenantId,
 		workspaceAccountId: lane.workspace_account_id ?? input.workspaceAccountId ?? input.accountId,
+		toolkitProfile: parseJsonArray(lane.toolkit_profile_json),
+		allowedToolPrefixes: normalizeAllowedToolPrefixesForAssignment(lane),
 	};
+}
+
+function normalizeAllowedToolPrefixesForAssignment(
+	lane: Pick<PartnerAuthAccessLaneAssignmentRow, 'toolkit_profile_json' | 'allowed_tool_prefixes_json'>,
+): string[] {
+	const explicit = parseJsonStringArray(lane.allowed_tool_prefixes_json);
+	if (explicit.length > 0) return explicit;
+	return buildComposioAllowedToolPrefixes(parseJsonArray(lane.toolkit_profile_json));
+}
+
+export async function listMcpAccessAssignments(
+	db: D1Database | null | undefined,
+	input: AccessAssignmentInput,
+): Promise<McpAccessAssignment[]> {
+	if (db) {
+		const lanes = await listPartnerAccessLanesForIdentity(
+			db,
+			{
+				authSubject: input.authSubject ?? null,
+				email: input.email,
+			},
+			{ limit: 20 },
+		);
+
+		if (lanes.length > 0) {
+			return lanes.map((lane) => buildLaneAssignment(lane, input));
+		}
+	}
+
+	const legacyAssignment = buildLegacyAssignment(input);
+	return legacyAssignment ? [legacyAssignment] : [];
 }
 
 export async function resolveMcpAccessAssignment(

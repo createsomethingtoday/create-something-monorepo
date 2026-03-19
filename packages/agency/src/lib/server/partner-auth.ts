@@ -403,6 +403,52 @@ export async function findPartnerAccessLaneForIdentity(
 		.first<PartnerAuthAccessLaneAssignmentRow>();
 }
 
+export async function listPartnerAccessLanesForIdentity(
+	db: D1Database,
+	input: {
+		authSubject?: string | null;
+		email?: string | null;
+	},
+	options: { limit?: number } = {},
+): Promise<PartnerAuthAccessLaneAssignmentRow[]> {
+	const normalizedEmail = normalizeEmail(input.email ?? undefined);
+	const authSubject = input.authSubject?.trim() || null;
+	const limit = Math.max(1, Math.min(100, options.limit ?? 20));
+
+	const result = await db
+		.prepare(
+			`SELECT
+	      lane.*,
+	      client.partner_key,
+	      client.slug AS client_slug,
+	      client.display_name AS client_display_name,
+	      client.workspace_account_id,
+	      client.identity_account_id,
+	      client.identity_tenant_id
+	     FROM partner_auth_access_lanes lane
+	     INNER JOIN partner_auth_clients client
+	       ON client.id = lane.partner_client_id
+	     WHERE (
+	         (? IS NOT NULL AND lane.identity_user_id = ?)
+	         OR (? IS NOT NULL AND lower(COALESCE(lane.owner_email, '')) = ?)
+	       )
+	     ORDER BY
+	       CASE lane.status
+	         WHEN 'active' THEN 0
+	         WHEN 'paused' THEN 1
+	         WHEN 'initialized' THEN 2
+	         WHEN 'sunset' THEN 3
+	         ELSE 4
+	       END,
+	       lane.updated_at DESC
+	     LIMIT ?`
+		)
+		.bind(authSubject, authSubject, normalizedEmail, normalizedEmail, limit)
+		.all<PartnerAuthAccessLaneAssignmentRow>();
+
+	return result.results ?? [];
+}
+
 export async function listPartnerClients(
 	db: D1Database,
 	partnerKey: string,
