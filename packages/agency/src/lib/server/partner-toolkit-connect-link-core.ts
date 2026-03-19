@@ -1,3 +1,5 @@
+import type { PartnerAuthClientRow, PartnerToolkitPolicyDecision, PlatformEnv } from './partner-auth.js';
+
 export interface PartnerToolkitConnectLinkHttpErrorLike {
   status: number;
   code: string;
@@ -13,12 +15,7 @@ interface ConnectLinkRequestBody {
 interface ConnectLinkRequestEventLike {
   request: Request;
   params: Record<string, string | undefined>;
-  platform?: {
-    env?: {
-      DB?: D1Database;
-      [key: string]: unknown;
-    };
-  };
+  platform?: App.Platform;
   url: URL;
 }
 
@@ -26,21 +23,17 @@ export interface PartnerToolkitConnectLinkDeps {
   partnerKey: string;
   authorizePartnerToolkitAdminAction: (input: {
     request: Request;
-    env: Record<string, unknown> & { DB: D1Database };
-    client: {
-      id: string;
-      slug: string;
-      workspace_account_id: string;
-    };
+    env: PlatformEnv;
+    client: PartnerAuthClientRow;
     actor: string;
     actionName: "create_toolkit_connect_link";
     accessType: "auth_admin";
     toolkit: string;
   }) => Promise<{
-    policy: Record<string, unknown>;
+    policy: PartnerToolkitPolicyDecision;
   }>;
   getComposioClient: (
-    env: Record<string, unknown> & { DB: D1Database },
+    env: PlatformEnv,
   ) => {
     connectedAccounts: {
       link: (
@@ -61,21 +54,17 @@ export interface PartnerToolkitConnectLinkDeps {
     db: D1Database,
     partnerKey: string,
     slug: string,
-  ) => Promise<{
-    id: string;
-    slug: string;
-    workspace_account_id: string;
-  } | null>;
+  ) => Promise<PartnerAuthClientRow | null>;
   normalizePartnerSlug: (value: string) => string;
   normalizeToolkitSlug: (value: string) => string;
   parseJsonObject: (raw: string | null | undefined) => Record<string, unknown>;
   randomId: (prefix: string) => string;
   requirePartnerAdmin: (
     request: Request,
-    env: Record<string, unknown> & { DB: D1Database },
+    env: PlatformEnv,
   ) => string;
   resolveAuthConfigId: (
-    env: Record<string, unknown> & { DB: D1Database },
+    env: PlatformEnv,
     toolkit: string,
   ) => string | null;
   isHttpError: (error: unknown) => error is PartnerToolkitConnectLinkHttpErrorLike;

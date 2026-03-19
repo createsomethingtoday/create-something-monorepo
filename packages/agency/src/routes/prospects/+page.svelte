@@ -1,21 +1,13 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { ProspectWorkspaceSection, ReportShell, SummaryItem } from '$lib/components/access';
+	import type { ProspectWorkspaceCandidate } from '$lib/types/prospect-workspace';
 
 	let { data } = $props();
 
-	type ProspectCandidate = {
-		prospect_claim: {
-			state: 'claimable' | 'claimed_by_you' | 'claimed_by_other';
-			can_claim_now: boolean;
-			blocked_reason: string | null;
-		};
-		toolkit_accounts: {
-			connected: boolean;
-		}[];
-	};
-
-	const prospects = $derived((Array.isArray(data.prospects) ? data.prospects : []) as ProspectCandidate[]);
+	const prospects = $derived(
+		(Array.isArray(data.prospects) ? data.prospects : []) as ProspectWorkspaceCandidate[],
+	);
 	const loginHref = '/login?redirect=%2Fprospects';
 	const signupHref = '/api/auth/signup?redirect=%2Fprospects';
 	const claimableCount = $derived(
@@ -29,6 +21,11 @@
 		prospects.filter(
 			(prospect) =>
 				prospect.prospect_claim.blocked_reason !== null && prospect.prospect_claim.state !== 'claimed_by_you',
+		).length,
+	);
+	const graduationReadyCount = $derived(
+		prospects.filter(
+			(prospect) => prospect.prospect_claim.state === 'claimed_by_you' && prospect.graduation_readiness?.ready,
 		).length,
 	);
 	const connectedToolkitCount = $derived(
@@ -74,6 +71,7 @@
 			<SummaryItem label="Claimable" value={String(claimableCount)} note="Ready to bind now" />
 			<SummaryItem label="Claimed" value={String(claimedCount)} note="Already bound to this Auth0 account" />
 			<SummaryItem label="Review" value={String(reviewCount)} note="Blocked or unavailable workspaces" />
+			<SummaryItem label="Grad Ready" value={String(graduationReadyCount)} note="Ready for operator promotion" />
 			<SummaryItem label="Connected Toolkits" value={String(connectedToolkitCount)} note="Active provider connections" />
 		</svelte:fragment>
 

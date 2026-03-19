@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -49,6 +50,105 @@ function findWorkspacePackageDir(workspaceRoot, pkgName) {
 	return null;
 }
 
+function readPackageManifest(packageDir) {
+	return JSON.parse(fs.readFileSync(path.join(packageDir, 'package.json'), 'utf8'));
+}
+
+function getWorkspaceDependencyNames(manifest) {
+	const dependencySets = [
+		manifest.dependencies,
+		manifest.optionalDependencies
+	];
+
+	return dependencySets
+		.flatMap((deps) => Object.entries(deps ?? {}))
+		.filter(([, version]) => typeof version === 'string' && version.startsWith('workspace:'))
+		.map(([pkgName]) => pkgName);
+}
+
+function collectExportTargets(value, targets) {
+	if (typeof value === 'string') {
+		targets.add(value);
+		return;
+	}
+
+	if (!value || typeof value !== 'object') return;
+
+	for (const nested of Object.values(value)) {
+		collectExportTargets(nested, targets);
+	}
+}
+
+function getRequiredOutputPaths(manifest) {
+	const outputs = new Set();
+
+	for (const candidate of [manifest.main, manifest.module, manifest.svelte, manifest.types, manifest.bin]) {
+		collectExportTargets(candidate, outputs);
+	}
+
+	collectExportTargets(manifest.exports, outputs);
+
+	return [...outputs].filter((target) => typeof target === 'string' && target.startsWith('./dist/'));
+}
+
+function outputPathExists(packageDir, relativePath) {
+	const normalized = relativePath.replace(/^\.\//, '');
+	const wildcardIndex = normalized.indexOf('*');
+	const candidate =
+		wildcardIndex === -1
+			? normalized
+			: normalized.slice(0, wildcardIndex).replace(/[/.]+$/, '');
+
+	if (!candidate) return true;
+
+	return fs.existsSync(path.join(packageDir, candidate));
+}
+
+function resolveWorkspaceBuildScript(manifest) {
+	if (manifest.scripts?.package) return 'package';
+	if (manifest.scripts?.build) return 'build';
+	if (manifest.scripts?.prepare) return 'prepare';
+	return null;
+}
+
+const preparedWorkspacePackages = new Set();
+
+function ensureWorkspacePackageReady(workspaceRoot, pkgName, packageDir, ancestry = []) {
+	if (preparedWorkspacePackages.has(pkgName)) return;
+	if (ancestry.includes(pkgName)) {
+		throw new Error(`Circular workspace dependency detected: ${[...ancestry, pkgName].join(' -> ')}`);
+	}
+
+	const manifest = readPackageManifest(packageDir);
+	const nextAncestry = [...ancestry, pkgName];
+
+	for (const dependencyName of getWorkspaceDependencyNames(manifest)) {
+		const dependencyDir = findWorkspacePackageDir(workspaceRoot, dependencyName);
+		if (!dependencyDir) continue;
+		ensureWorkspacePackageReady(workspaceRoot, dependencyName, dependencyDir, nextAncestry);
+	}
+
+	const requiredOutputs = getRequiredOutputPaths(manifest);
+	const missingOutputs = requiredOutputs.filter((outputPath) => !outputPathExists(packageDir, outputPath));
+
+	if (missingOutputs.length > 0) {
+		const buildScript = resolveWorkspaceBuildScript(manifest);
+		if (!buildScript) {
+			throw new Error(
+				`Workspace package ${pkgName} is missing built outputs (${missingOutputs.join(', ')}) and has no package/build/prepare script`
+			);
+		}
+
+		execFileSync('pnpm', ['--dir', packageDir, 'run', buildScript], {
+			cwd: workspaceRoot,
+			stdio: 'inherit',
+			env: process.env
+		});
+	}
+
+	preparedWorkspacePackages.add(pkgName);
+}
+
 function removeTarget(targetPath) {
 	try {
 		const stats = fs.lstatSync(targetPath);
@@ -76,10 +176,15 @@ const declared = {
 fs.mkdirSync(nodeModulesRoot, { recursive: true });
 
 for (const [pkgName, version] of Object.entries(declared)) {
-	const sourcePath = version.startsWith('workspace:')
+	const isWorkspaceDependency = version.startsWith('workspace:');
+	const sourcePath = isWorkspaceDependency
 		? findWorkspacePackageDir(workspaceRoot, pkgName)
 		: findInstalledStorePath(pnpmStore, pkgName, version);
 	if (!sourcePath) continue;
+
+	if (isWorkspaceDependency) {
+		ensureWorkspacePackageReady(workspaceRoot, pkgName, sourcePath);
+	}
 
 	const segments = pkgName.split('/');
 	const leaf = segments.pop();

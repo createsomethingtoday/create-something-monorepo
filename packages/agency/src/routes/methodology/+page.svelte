@@ -421,11 +421,6 @@
 		line-height: var(--leading-relaxed);
 	}
 
-	.principle-body em {
-		font-style: italic;
-		color: var(--color-fg-primary);
-	}
-
 	/* ─── Three Disciplines ─── */
 	.disciplines-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);

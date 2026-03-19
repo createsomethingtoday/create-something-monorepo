@@ -162,7 +162,7 @@ export interface PartnerToolkitPolicyDecision {
 	reason: string;
 }
 
-type PlatformEnv = App.Platform['env'];
+export type PlatformEnv = App.Platform['env'];
 
 const PARTNER_AUTH_GOVERNANCE_POLICY_ID = 'policy.partner-auth-governance.v1';
 

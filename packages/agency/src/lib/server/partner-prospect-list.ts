@@ -4,7 +4,11 @@ import { createPartnerProspectListGetHandler } from './partner-prospect-list-cor
 
 export function createPartnerProspectListGetHandlerWithDefaults() {
 	return createPartnerProspectListGetHandler({
-		requireAgencySessionUser,
+		requireAgencySessionUser: ({ cookies, platform }) =>
+			requireAgencySessionUser({
+				cookies: cookies as Parameters<typeof requireAgencySessionUser>[0]['cookies'],
+				platform,
+			}),
 		listPartnerProspectClaimsForAgencyUser,
 	});
 }

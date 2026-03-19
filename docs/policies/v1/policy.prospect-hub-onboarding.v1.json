@@ -1,0 +1,64 @@
+{
+  "policy_id": "policy.prospect-hub-onboarding.v1",
+  "version": 1,
+  "status": "draft",
+  "prospect_defaults": {
+    "bootstrap_status": "initialized",
+    "graduation_required_for_credential_issuance": true,
+    "canonical_identity_required_at_bootstrap": false,
+    "house_managed_auth_configs_default": true
+  },
+  "bootstrap_controls": {
+    "restricted_lane_required": true,
+    "explicit_allowed_tool_prefixes_required": true,
+    "prospect_lifecycle_metadata_required": true,
+    "identity_fields_may_be_preserved_without_unlocking_issuance": true
+  },
+  "self_service_controls": {
+    "auth0_session_required": true,
+    "claim_authorization_sources": [
+      "owner_email",
+      "allowed_claim_emails",
+      "allowed_claim_email_domains"
+    ],
+    "claimable_statuses": [
+      "initialized",
+      "active"
+    ],
+    "unavailable_statuses": [
+      "paused",
+      "sunset",
+      "disabled"
+    ],
+    "toolkit_connect_requires_claim": true,
+    "toolkit_connect_requires_enabled_toolkit": true,
+    "toolkit_connect_returns_connected_account_link_only": true
+  },
+  "graduation_requirements": {
+    "identity_fields": [
+      "identity_account_id",
+      "identity_user_id",
+      "identity_tenant_id"
+    ],
+    "entitlement_checks": [
+      "service_entitled",
+      "policy_accepted",
+      "contract_active",
+      "billing_active"
+    ],
+    "active_consent_required": true
+  },
+  "blocked_issuance_surfaces": [
+    "strict_session",
+    "managed_bearer",
+    "legacy_key"
+  ],
+  "evidence_fields": [
+    "partner_auth_clients.metadata_json",
+    "partner_auth_access_lanes.metadata_json",
+    "partner_auth_toolkit_accounts.last_checked_at",
+    "partner_auth_toolkit_accounts.connected_at",
+    "partner_auth_toolkit_events.event_type",
+    "agency_mcp_entitlements.denial_reason"
+  ]
+}
