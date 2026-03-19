@@ -319,7 +319,7 @@ export function TemplateIntake() {
   const creatorCountrySupported = creator.country ? isSupportedCountry(creator.country) : true;
   const previewUrlValid =
     template.previewUrl.trim() === '' ||
-    template.previewUrl.trim().startsWith('https://preview.webflow.com/preview/');
+    template.previewUrl.trim().includes('https://preview.webflow.com/preview/');
 
   function updateCreator<K extends keyof CreatorFormState>(key: K, value: CreatorFormState[K]) {
     setCreator((current) => ({ ...current, [key]: value }));
@@ -668,7 +668,7 @@ export function TemplateIntake() {
       }
 
       if (!previewUrlValid) {
-        throw new Error('Preview URL must start with https://preview.webflow.com/preview/.');
+        throw new Error('Preview URL must contain https://preview.webflow.com/preview/.');
       }
 
       if (turnstileEnabled && !turnstileTokens.template) {
@@ -1145,7 +1145,7 @@ export function TemplateIntake() {
                   />
                   {!previewUrlValid ? (
                     <div className="field-help" style={{ color: 'var(--color-error)' }}>
-                      Preview URLs must start with https://preview.webflow.com/preview/.
+                      Preview URLs must contain https://preview.webflow.com/preview/.
                     </div>
                   ) : null}
                 </div>

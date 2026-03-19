@@ -2,6 +2,7 @@ import { validateEmail } from '@create-something/webflow-dashboard-core';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
+import { checkRemoteTemplateNameAvailability } from '../../../../lib/intake/external';
 import { runPublishedUrlValidation } from '../../../../lib/intake/published-url';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
@@ -50,8 +51,8 @@ function toParagraphs(value: string): string {
 
 function normalizePreviewUrl(value: string): string {
   const trimmed = value.trim();
-  if (!trimmed.startsWith('https://preview.webflow.com/preview/')) {
-    throw new Error('Preview URL must start with https://preview.webflow.com/preview/.');
+  if (!trimmed.includes('https://preview.webflow.com/preview/')) {
+    throw new Error('Preview URL must contain https://preview.webflow.com/preview/.');
   }
 
   try {
@@ -167,8 +168,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const nameUniqueness = await airtable.checkAssetNameUniqueness(templateName);
-    if (!nameUniqueness.unique) {
+    const [nameUniqueness, remoteNameAvailability] = await Promise.all([
+      airtable.checkAssetNameUniqueness(templateName),
+      checkRemoteTemplateNameAvailability(templateName).catch(() => null)
+    ]);
+
+    if (!nameUniqueness.unique || remoteNameAvailability?.taken) {
       return jsonNoStore({ error: 'Template name is already in use.' }, { status: 409 });
     }
 
