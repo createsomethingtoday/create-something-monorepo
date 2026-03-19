@@ -1,12 +1,12 @@
 import {
   THUMBNAIL_ASPECT_RATIO,
   getWebPDimensions,
-  uploadToR2,
   validateFileSize,
   validateMimeType,
   validateThumbnailAspectRatio,
   validateWebP
-} from '@create-something/webflow-dashboard-core';
+} from '@create-something/webflow-dashboard-core/upload-validation';
+import { uploadToR2 } from '@create-something/webflow-dashboard-core/r2';
 import { jsonNoStore } from '../../../lib/server/responses';
 import { getEnvOrThrow } from '../../../lib/server/env';
 import { getUserFromRequest } from '../../../lib/server/session';

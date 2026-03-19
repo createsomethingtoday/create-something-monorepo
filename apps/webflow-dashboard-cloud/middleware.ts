@@ -1,4 +1,4 @@
-import { isTrustedRequestOrigin } from '@create-something/webflow-dashboard-core';
+import { isTrustedRequestOrigin } from '@create-something/webflow-dashboard-core/security';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PROTECTED_PAGE_PREFIXES = ['/dashboard', '/assets', '/marketplace'] as const;

@@ -1,4 +1,4 @@
-import { getEnvValue } from '@create-something/webflow-dashboard-core';
+import { getEnvValue } from '@create-something/webflow-dashboard-core/runtime';
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 

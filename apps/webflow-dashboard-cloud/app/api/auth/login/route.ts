@@ -1,7 +1,5 @@
-import {
-  checkRateLimit,
-  validateEmail
-} from '@create-something/webflow-dashboard-core';
+import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
+import { checkRateLimit } from '@create-something/webflow-dashboard-core/kv';
 import { NextRequest } from 'next/server';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { getEnvOrThrow } from '../../../../lib/server/env';

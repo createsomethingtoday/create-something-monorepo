@@ -1,6 +1,6 @@
 'use client';
 
-import type { Asset } from '@create-something/webflow-dashboard-core';
+import type { Asset } from '@create-something/webflow-dashboard-core/airtable';
 import { useMemo, useState } from 'react';
 import { appPath } from '../lib/runtime-paths';
 

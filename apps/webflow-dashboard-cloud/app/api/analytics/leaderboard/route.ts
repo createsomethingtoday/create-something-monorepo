@@ -1,4 +1,4 @@
-import { getSyncMetadata } from '@create-something/webflow-dashboard-core';
+import { getSyncMetadata } from '@create-something/webflow-dashboard-core/sync-schedule';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getUserFromRequest } from '../../../../lib/server/session';
 import { getServerAirtable } from '../../../../lib/server/airtable';
