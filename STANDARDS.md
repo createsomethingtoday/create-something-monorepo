@@ -632,6 +632,27 @@ Each publication candidate must keep these artifacts connected to the task:
 - Use the last known-good deployed state or revert commit
 - Record rollback rationale and incident reference in Loom and in the relevant policy artifact when policy enforcement is involved
 
+### 6.4 Git-Light Agent Delivery
+
+**Given:** AI agents can validate work directly in provisioned environments with runtime deploy access
+**Context:** Daily development, DEV verification, and preview iteration in the shared monorepo
+**Constraint:** Git is the default production promotion boundary, not a mandatory inner-loop checkpoint
+**Rationale:** Direct validation plus Loom evidence is a better signal than commit volume for non-production iteration
+
+**Rule:**
+
+- DEV and preview deploys MAY run directly from the current workspace after the narrow relevant checks pass
+- Each direct DEV or preview deploy MUST attach Loom evidence: task ID, target environment, commands run, deploy URL or ID, and rollback reference
+- Until remote Loom exposes append-only checkpoint evidence through the repo CLI, non-terminal DEV checkpoints MAY use `.loom/checkpoints/` as a bridge artifact and MUST reference that summary at completion or promotion time
+- Commit or push MUST NOT be required solely to checkpoint agent progress in DEV
+- Shared release and production promotion SHOULD still flow through branch and PR review unless an approved immutable release-artifact path exists
+- Production deploys from unreviewed local state are prohibited except under explicit human-directed incident response
+- Commit count, push count, or agent-completion status MUST NOT be treated as deploy or promotion signals
+
+**Source Anchor:**
+
+- `docs/policies/v1/policy.git-light-agent-delivery.v1.md`
+
 ---
 
 ## 7. Ecosystem Identity

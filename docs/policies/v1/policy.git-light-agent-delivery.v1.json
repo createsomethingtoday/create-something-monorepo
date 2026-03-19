@@ -1,0 +1,80 @@
+{
+  "policy_id": "policy.git-light-agent-delivery.v1",
+  "version": 1,
+  "status": "draft",
+  "artifact_classes": [
+    "code_change",
+    "dev_deploy",
+    "production_promotion"
+  ],
+  "source_of_truth": {
+    "task_system": "loom",
+    "dev_checkpoint_storage": "loom_evidence",
+    "production_promotion_boundary": "git_pr_or_approved_release_artifact"
+  },
+  "dev_inner_loop": {
+    "allows_direct_deploy_without_git_push": true,
+    "checkpoint_bridge_artifact_dir": ".loom/checkpoints",
+    "requires": [
+      "tracked_loom_task",
+      "relevant_quality_checks_passed",
+      "non_production_target",
+      "deploy_path_defined",
+      "deploy_evidence_recorded"
+    ],
+    "evidence": [
+      "loom_task_id",
+      "package_or_surface",
+      "target_environment",
+      "commands_run",
+      "deploy_url_or_identifier",
+      "log_path_or_trace_reference",
+      "rollback_reference"
+    ],
+    "blocks": [
+      "ambiguous_workspace_ownership",
+      "production_target",
+      "missing_deploy_evidence",
+      "unknown_rollback_path"
+    ]
+  },
+  "production_promotion": {
+    "default_boundary": "merge_to_main_via_pr",
+    "allows_direct_local_production_deploy": false,
+    "checkpoint_bridge_must_be_referenced_on_promotion": true,
+    "requires": [
+      "reviewable_immutable_source",
+      "human_approval_when_required",
+      "rollback_path_defined",
+      "post_deploy_verification_path_defined"
+    ],
+    "approved_alternatives": [
+      "explicitly_defined_release_artifact_promotion"
+    ],
+    "exceptions": [
+      "human_directed_incident_response"
+    ]
+  },
+  "worktree_policy": {
+    "preferred_for_parallel_work": true,
+    "commit_required": false
+  },
+  "rollback_authority": {
+    "allowed_roles": [
+      "human_reviewer",
+      "operator",
+      "admin"
+    ],
+    "requires": [
+      "rollback_rationale",
+      "incident_reference",
+      "last_known_good_reference_or_revert_commit"
+    ]
+  },
+  "prohibited_triggers": [
+    "commit_count",
+    "push_count",
+    "agent_completion_message",
+    "unreviewed_local_state_production_deploy"
+  ]
+}

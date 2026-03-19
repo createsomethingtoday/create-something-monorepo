@@ -101,6 +101,8 @@ A useful checkpoint captures:
 
 This makes pause/resume and handoff real instead of conversational.
 
+For DEV or preview work, a direct deploy with linked Loom evidence is a valid checkpoint. When the remote Loom CLI cannot append non-terminal evidence yet, use a `.loom/checkpoints/` artifact as the bridge. Do not force a commit just to manufacture state.
+
 ## Design rules
 
 ### Prefer structure over prompting harder
