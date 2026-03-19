@@ -15,6 +15,7 @@ const zlib = require('zlib');
 const REPO = 'createsomethingtoday/create-something-monorepo';
 const VERSION = require('./package.json').version;
 const SKIP_INSTALL = process.env.GROUND_MCP_SKIP_BINARY_INSTALL === '1';
+const IS_SOURCE_TREE_INSTALL = fs.existsSync(path.resolve(__dirname, '../Cargo.toml'));
 
 // Platform mapping
 // Note: macOS Intel uses arm64 binary via Rosetta 2
@@ -95,6 +96,11 @@ async function extractZip(buffer, destDir) {
 async function install() {
   if (SKIP_INSTALL) {
     console.log('Ground MCP: Skipping binary install because GROUND_MCP_SKIP_BINARY_INSTALL=1');
+    return;
+  }
+
+  if (IS_SOURCE_TREE_INSTALL) {
+    console.log('Ground MCP: Skipping binary install in source checkout');
     return;
   }
 
