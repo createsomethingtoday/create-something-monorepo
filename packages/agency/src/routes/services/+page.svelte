@@ -145,7 +145,6 @@
       <GovernedExecutionFlow
         title="Where Policy OS fits"
         description="Workflow Infrastructure gets the first handoff working. Policy OS decides what runs automatically, what needs review, and what stops."
-        description="Workflow Infrastructure gets the first handoff working. Policy OS decides what runs automatically, what needs review, and what stops."
       />
     </BlurFade>
   </div>
