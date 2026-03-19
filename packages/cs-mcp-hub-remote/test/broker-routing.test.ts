@@ -69,6 +69,10 @@ function createRuntime() {
   };
 }
 
+function assertActiveServers(pack: { preferences: { activeServers: string[] } }, expected: string[]) {
+  assert.deepEqual(pack.preferences.activeServers, [...expected].sort());
+}
+
 function createIntentRuntime() {
   const zoomRoute = {
     proxyToolName: 'composio-toolkit-zoom__zoom_create_a_meeting',
@@ -467,10 +471,15 @@ test('buildAuthorizedVisibleProxyRoutes applies discovery filters before authori
     accountContext: {
       accountId: 'acct_1',
       tenantId: null,
-      userId: null,
+      userId: 'user_1',
       sessionId: 'session_1',
       authMode: 'session',
+      toolMode: 'read_write',
       allowedToolPrefixes: ['server_a__', 'server_b__'],
+      boundHost: null,
+      resourceHost: null,
+      serviceTier: null,
+      entitlementSnapshot: null,
       identitySource: 'session' as const,
     },
     env: {} as any,
@@ -509,7 +518,7 @@ test('resolveDiscoveryPack returns Danny operator pack with the expected active 
   assert.ok(pack);
   assert.equal(pack.id, 'danny-shared-auth-plus-dm-and-operator-notion');
   assert.equal(pack.preferences.mode, 'compact');
-  assert.deepEqual(pack.preferences.activeServers, [
+  assertActiveServers(pack, [
     'halfdozen-operator-notion-mcp',
     'composio-toolkit-notion',
     'halfdozen-dm-mcp',
@@ -529,7 +538,7 @@ test('resolveDiscoveryPack returns C3Denver pack with the expected active servic
   assert.ok(pack);
   assert.equal(pack.id, 'c3denver-airtable-gmail-notion');
   assert.equal(pack.preferences.mode, 'compact');
-  assert.deepEqual(pack.preferences.activeServers, [
+  assertActiveServers(pack, [
     'composio-toolkit-airtable',
     'composio-toolkit-gmail',
     'composio-toolkit-notion',
@@ -561,7 +570,7 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
   assert.ok(pack);
   assert.equal(pack.id, 'mj-shared-auth-plus-ops-search-meetings-and-review');
   assert.equal(pack.preferences.mode, 'full');
-  assert.deepEqual(pack.preferences.activeServers, [
+  assertActiveServers(pack, [
     'composio-toolkit-airtable',
     'composio-toolkit-dropbox',
     'composio-toolkit-gmail',
@@ -601,7 +610,7 @@ test('resolveDiscoveryPack returns MJ legacy pack with the expected active servi
   assert.ok(pack);
   assert.equal(pack.id, 'mj-legacy-shared-auth-plus-meetings');
   assert.equal(pack.preferences.mode, 'compact');
-  assert.deepEqual(pack.preferences.activeServers, [
+  assertActiveServers(pack, [
     'composio-toolkit-dropbox',
     'composio-toolkit-gmail',
     'composio-toolkit-youtube',

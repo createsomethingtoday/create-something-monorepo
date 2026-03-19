@@ -2,6 +2,7 @@ import {
 	getProspectAvailabilityConflict,
 	type ProspectSelfServiceStatus,
 } from './partner-prospect-claim-shared.js';
+import type { PlatformEnv } from './partner-auth.js';
 
 interface ConnectLinkRequestBody {
 	lane_slug?: string;
@@ -14,12 +15,7 @@ interface ConnectLinkRequestBody {
 interface ConnectLinkRequestEventLike {
 	cookies: unknown;
 	params: Record<string, string | undefined>;
-	platform?: {
-		env?: {
-			DB?: D1Database;
-			[key: string]: unknown;
-		};
-	};
+	platform?: App.Platform;
 	request: Request;
 	url: URL;
 }
@@ -76,7 +72,7 @@ export interface PartnerProspectToolkitConnectLinkDeps {
 		input: { partnerClientId: string; toolkit: string; accountSlug: string },
 	) => Promise<ToolkitAccountRowLike | null>;
 	getComposioClient: (
-		env: Record<string, unknown> & { DB: D1Database },
+		env: PlatformEnv,
 	) => {
 		connectedAccounts: {
 			link: (
@@ -120,7 +116,7 @@ export interface PartnerProspectToolkitConnectLinkDeps {
 		platform: App.Platform | undefined;
 	}) => Promise<AgencySessionUserLike>;
 	resolveAuthConfigId: (
-		env: Record<string, unknown> & { DB: D1Database },
+		env: PlatformEnv,
 		toolkit: string,
 	) => string | null;
 	upsertToolkitAccount: (

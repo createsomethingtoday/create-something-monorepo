@@ -1,6 +1,7 @@
-import { validateEmail } from '@create-something/webflow-dashboard-core';
+import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
 
 const EMAIL_CHECK_URL = 'https://check-asset-name.vercel.app/api/checkTemplateemail';
+const TEMPLATE_NAME_CHECK_URL = 'https://check-asset-name.vercel.app/api/checkTemplatename';
 const CREATOR_ELIGIBILITY_URL = 'https://webflow-api.createsomething.io/template/user';
 const REQUEST_TIMEOUT_MS = 10_000;
 
@@ -12,6 +13,11 @@ export interface RemoteEmailAvailability {
 export interface RemoteCreatorEligibility {
   userExists: boolean;
   hasError: boolean;
+  message?: string;
+}
+
+export interface RemoteTemplateNameAvailability {
+  taken: boolean;
   message?: string;
 }
 
@@ -70,4 +76,30 @@ export async function checkRemoteCreatorEligibility(
       Referer: 'https://webflow.com/templates/submit-a-template?section=submit-today'
     }
   );
+}
+
+export async function checkRemoteTemplateNameAvailability(
+  name: string
+): Promise<RemoteTemplateNameAvailability> {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error('Template name is required.');
+  }
+
+  const data = await postJson<Record<string, unknown>>(TEMPLATE_NAME_CHECK_URL, {
+    templatename: trimmed
+  });
+
+  if (typeof data.taken !== 'boolean') {
+    throw new Error(
+      typeof data.message === 'string'
+        ? data.message
+        : 'Remote template-name service returned an invalid response.'
+    );
+  }
+
+  return {
+    taken: data.taken,
+    message: typeof data.message === 'string' ? data.message : undefined
+  };
 }

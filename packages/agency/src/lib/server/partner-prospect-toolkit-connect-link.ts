@@ -127,7 +127,11 @@ export function createPartnerProspectToolkitConnectLinkPostHandlerWithDefaults()
 		parseJsonArray,
 		parseJsonObject,
 		randomId,
-		requireAgencySessionUser,
+		requireAgencySessionUser: ({ cookies, platform }) =>
+			requireAgencySessionUser({
+				cookies: cookies as Parameters<typeof requireAgencySessionUser>[0]['cookies'],
+				platform,
+			}),
 		resolveAuthConfigId,
 		upsertToolkitAccount,
 		isHttpError: (error): error is PartnerAuthHttpError =>

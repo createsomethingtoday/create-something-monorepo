@@ -3,6 +3,7 @@
 	import { HighDensityTable } from '@create-something/tufte';
 	import { invalidateAll } from '$app/navigation';
 	import { FactList, ProspectWorkspaceSection, ReportSection, ReportShell, SummaryItem } from '$lib/components/access';
+	import type { ProspectWorkspaceCandidate } from '$lib/types/prospect-workspace';
 
 	let { data } = $props();
 	type AccessAssignment = {
@@ -20,7 +21,7 @@
 	let policyMessage = $state('');
 	let policyError = $state('');
 	const assignment = $derived(data.assignment as AccessAssignment);
-	const prospects = $derived((data.prospects ?? []) as unknown[]);
+	const prospects = $derived((Array.isArray(data.prospects) ? data.prospects : []) as ProspectWorkspaceCandidate[]);
 
 	function formatDateTime(value: string | null | undefined): string {
 		if (!value) return 'Not set';

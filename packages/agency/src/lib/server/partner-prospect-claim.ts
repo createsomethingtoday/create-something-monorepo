@@ -43,7 +43,11 @@ export function createPartnerProspectClaimPostHandlerWithDefaults() {
 		parseJsonObject,
 		parseJsonStringArray,
 		reconcileAgencyMcpEntitlement,
-		requireAgencySessionUser,
+		requireAgencySessionUser: ({ cookies, platform }) =>
+			requireAgencySessionUser({
+				cookies: cookies as Parameters<typeof requireAgencySessionUser>[0]['cookies'],
+				platform,
+			}),
 		upsertAgencyIdentitySeed,
 		upsertPartnerAccessLane,
 		isHttpError: (error): error is { status: number; code?: string; message?: string; body?: { message?: string } } =>

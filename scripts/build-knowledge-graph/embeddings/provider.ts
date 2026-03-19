@@ -74,7 +74,7 @@ function sleep(ms: number): Promise<void> {
  */
 function getCloudflareCredentials(): { accountId: string; apiToken: string } {
   let accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  let apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  let apiToken = process.env.CLOUDFLARE_API_TOKEN ?? process.env.CLOUDFLARE_WORKERS_API_TOKEN;
 
   // Try to get account ID from wrangler whoami if not in env
   if (!accountId) {
@@ -111,7 +111,7 @@ function getCloudflareCredentials(): { accountId: string; apiToken: string } {
     throw new Error(
       'Cloudflare credentials not found. Either:\n' +
       '  1. Run `wrangler login` to authenticate, or\n' +
-      '  2. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN environment variables.'
+      '  2. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN or CLOUDFLARE_WORKERS_API_TOKEN environment variables.'
     );
   }
 

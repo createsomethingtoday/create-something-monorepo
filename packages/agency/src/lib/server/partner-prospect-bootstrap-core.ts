@@ -1,3 +1,5 @@
+import type { PlatformEnv } from './partner-auth.js';
+
 const PROSPECT_GRADUATION_REQUIREMENTS = [
 	'service_entitled',
 	'policy_accepted',
@@ -29,12 +31,7 @@ interface ProspectBootstrapRequestBody {
 interface ProspectBootstrapRequestEventLike {
 	request: Request;
 	params: Record<string, string | undefined>;
-	platform?: {
-		env?: {
-			DB?: D1Database;
-			[key: string]: unknown;
-		};
-	};
+	platform?: App.Platform;
 }
 
 interface ProspectClientRowLike {
@@ -96,7 +93,7 @@ export interface PartnerProspectBootstrapDeps {
 	parseJsonStringArray: (raw: string | null | undefined) => string[];
 	parseToolkitList: (raw: unknown) => string[];
 	randomId: (prefix: string) => string;
-	requirePartnerAdmin: (request: Request, env: Record<string, unknown> & { DB: D1Database }) => string;
+	requirePartnerAdmin: (request: Request, env: PlatformEnv) => string;
 	resolveAllowedToolPrefixes: (toolkits: string[], explicitPrefixes?: string[]) => string[];
 	upsertPartnerAccessLane: (
 		db: D1Database,

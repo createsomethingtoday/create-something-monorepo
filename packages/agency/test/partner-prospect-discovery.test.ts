@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import {
+	buildAgencyEntitlementSnapshot,
+	evaluateAgencyMcpEntitlement,
+} from '../src/lib/server/mcp-entitlements.ts';
 import { listPartnerProspectClaimsForUser } from '../src/lib/server/partner-prospect-discovery-core.ts';
 
 function createClient(overrides: Partial<Record<string, unknown>> = {}) {
@@ -207,4 +211,67 @@ test('prospect discovery marks paused prospect workspaces unavailable for self-s
 	assert.equal(prospects[0]?.prospect_claim.can_claim_now, false);
 	assert.equal(prospects[0]?.prospect_claim.blocked_reason, 'prospect_unavailable');
 	assert.match(prospects[0]?.prospect_claim.blocked_message ?? '', /client status is paused/i);
+});
+
+test('prospect discovery surfaces graduation readiness for a claimed workspace', async () => {
+	const client = createClient({
+		id: 'pacli_claimed',
+		slug: 'claimed',
+		display_name: 'Claimed',
+		identity_user_id: 'auth0|claimant',
+		identity_account_id: 'acct_claimed',
+		identity_tenant_id: 'claimed',
+	});
+	const lane = createLane('pacli_claimed', 'prospect-claimed', {
+		identity_user_id: 'auth0|claimant',
+	});
+
+	const prospects = await listPartnerProspectClaimsForUser(
+		{
+			partnerKey: 'half-dozen',
+			findAgencyIdentitySeedByEmail: async () => null,
+			findAgencyMcpEntitlementByAuthSubject: async () => ({
+				auth_subject: 'auth0|claimant',
+				auth_email: 'owner@example.com',
+				account_id: 'acct_claimed',
+				tenant_id: 'claimed',
+				workspace_account_id: 'acct_claimed',
+				service_tier: 'policy_os_trial',
+				managed_bearer_allowed: 0,
+				org_membership_active: 1,
+				service_entitled: 0,
+				policy_accepted: 1,
+				contract_active: 0,
+				billing_active: 0,
+				denial_reason: 'service_not_entitled',
+				metadata_json: '{}',
+				created_at: '2026-03-18T00:00:00.000Z',
+				updated_at: '2026-03-18T00:00:00.000Z',
+			}),
+			listPartnerClients: async () => [client] as any[],
+			listPartnerAccessLanes: async () => [lane] as any[],
+			isProspectRecord: () => true,
+			isProspectGraduated: () => false,
+			normalizeAgencyServiceTier: (value, fallback = 'mcp_only') => value ?? fallback,
+			normalizeEmail: (raw) => raw?.trim().toLowerCase() ?? null,
+			parseJsonArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
+			parseJsonObject: (raw) => (raw ? (JSON.parse(raw) as Record<string, unknown>) : {}),
+			parseJsonStringArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
+			buildAgencyEntitlementSnapshot,
+			evaluateAgencyMcpEntitlement,
+		},
+		{
+			db: {} as D1Database,
+			authSubject: 'auth0|claimant',
+			email: 'owner@example.com',
+		},
+	);
+
+	assert.equal(prospects.length, 1);
+	assert.equal(prospects[0]?.prospect_claim.state, 'claimed_by_you');
+	assert.equal(prospects[0]?.graduation_readiness?.ready, false);
+	assert.equal(prospects[0]?.graduation_readiness?.blocked_reason, 'service_not_entitled');
+	assert.equal(prospects[0]?.graduation_readiness?.checks.service_entitled, false);
+	assert.equal(prospects[0]?.graduation_readiness?.snapshot?.service_tier, 'policy_os_trial');
+	assert.match(prospects[0]?.graduation_readiness?.blocked_message ?? '', /commercial entitlement/i);
 });

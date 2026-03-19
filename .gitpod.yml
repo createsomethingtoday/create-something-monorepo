@@ -1,0 +1,34 @@
+# Reuse the same pinned image and bootstrap path as the devcontainer so
+# Gitpod installs repo-owned Codex skills the same way fresh local containers do.
+image:
+  file: .devcontainer/Dockerfile
+  context: .
+
+env:
+  GROUND_MCP_SKIP_BINARY_INSTALL: "1"
+  LOOM_MCP_SKIP_BINARY_INSTALL: "1"
+
+tasks:
+  - name: bootstrap
+    init: bash .devcontainer/post-create.sh
+
+vscode:
+  extensions:
+    - dbaeumer.vscode-eslint
+    - esbenp.prettier-vscode
+    - bradlc.vscode-tailwindcss
+    - svelte.svelte-vscode
+
+ports:
+  - port: 3000
+    name: App Preview
+    onOpen: notify
+  - port: 3003
+    name: Agency Wrangler Dev
+    onOpen: notify
+  - port: 5173
+    name: Vite Dev Server
+    onOpen: notify
+  - port: 8787
+    name: Wrangler Local
+    onOpen: ignore

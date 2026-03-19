@@ -1,6 +1,6 @@
 'use client';
 
-import type { ApiKey, Creator } from '@create-something/webflow-dashboard-core';
+import type { ApiKey, Creator } from '@create-something/webflow-dashboard-core/airtable';
 import { useState } from 'react';
 import { appPath } from '../lib/runtime-paths';
 

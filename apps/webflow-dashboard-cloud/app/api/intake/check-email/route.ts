@@ -1,4 +1,4 @@
-import { validateEmail } from '@create-something/webflow-dashboard-core';
+import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { checkRemoteCreatorEmailAvailability } from '../../../../lib/intake/external';

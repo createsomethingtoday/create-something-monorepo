@@ -1,8 +1,8 @@
 import {
-  checkRateLimit,
   getAirtableClient,
   validateToken
-} from '@create-something/webflow-dashboard-core';
+} from '@create-something/webflow-dashboard-core/airtable';
+import { checkRateLimit, setSession } from '@create-something/webflow-dashboard-core/kv';
 import { NextRequest, NextResponse } from 'next/server';
 import { getEnvOrThrow } from '../../../../lib/server/env';
 import { jsonNoStore, withNoStore } from '../../../../lib/server/responses';
@@ -11,7 +11,6 @@ import {
   newSessionToken,
   setSessionCookie
 } from '../../../../lib/server/session';
-import { setSession } from '@create-something/webflow-dashboard-core';
 
 export async function POST(request: NextRequest) {
   try {

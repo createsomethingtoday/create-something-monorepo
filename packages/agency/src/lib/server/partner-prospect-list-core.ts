@@ -5,12 +5,7 @@ interface AgencySessionUserLike {
 
 interface ProspectClaimListEventLike {
 	cookies: unknown;
-	platform?: {
-		env?: {
-			DB?: D1Database;
-			[key: string]: unknown;
-		};
-	};
+	platform?: App.Platform;
 }
 
 export interface PartnerProspectListDeps {

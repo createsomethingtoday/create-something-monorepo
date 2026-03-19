@@ -5,6 +5,11 @@ import {
 	resolveProspectClaimAuthorization,
 	type ProspectClaimAuthorization,
 } from './partner-prospect-claim-shared.js';
+import type {
+	AgencyEntitlementSnapshot,
+	AgencyMcpEntitlementDecision,
+	AgencyMcpEntitlementRow,
+} from './mcp-entitlements.js';
 
 interface ProspectClaimRequestBody {
 	lane_slug?: string;
@@ -13,12 +18,7 @@ interface ProspectClaimRequestBody {
 interface ProspectClaimRequestEventLike {
 	cookies: unknown;
 	params: Record<string, string | undefined>;
-	platform?: {
-		env?: {
-			DB?: D1Database;
-			[key: string]: unknown;
-		};
-	};
+	platform?: App.Platform;
 	request: Request;
 }
 
@@ -80,63 +80,16 @@ interface AgencyIdentitySeedLike {
 	status: string;
 }
 
-interface AgencyMcpEntitlementRowLike {
-	auth_subject: string;
-	account_id: string | null;
-	tenant_id: string | null;
-	workspace_account_id: string | null;
-	service_tier: string;
-	managed_bearer_allowed: number;
-	org_membership_active: number;
-	service_entitled: number;
-	policy_accepted: number;
-	contract_active: number;
-	billing_active: number;
-	metadata_json: string;
-}
-
-interface AgencyMcpEntitlementDecisionLike {
-	allowed: boolean;
-	reason: string;
-	account_id: string | null;
-	tenant_id: string | null;
-	checks: {
-		managed_bearer_allowed: boolean;
-		org_membership_active: boolean;
-		service_entitled: boolean;
-		policy_accepted: boolean;
-		contract_active: boolean;
-		billing_active: boolean;
-	};
-}
-
-interface AgencyEntitlementSnapshotLike {
-	service_tier: string;
-	managed_bearer_allowed: boolean;
-	org_membership_active: boolean;
-	service_entitled: boolean;
-	policy_accepted: boolean;
-	contract_active: boolean;
-	billing_active: boolean;
-	approved_exception: {
-		present: boolean;
-		type: string | null;
-		allowed_scope: string | null;
-		graduation_target: string | null;
-		review_by: string | null;
-	};
-}
-
 export interface PartnerProspectClaimDeps {
 	partnerKey: string;
 	buildAgencyEntitlementSnapshot: (
-		row: AgencyMcpEntitlementRowLike | null,
-		decision: AgencyMcpEntitlementDecisionLike | null,
-	) => AgencyEntitlementSnapshotLike;
+		row: AgencyMcpEntitlementRow | null,
+		decision: AgencyMcpEntitlementDecision | null,
+	) => AgencyEntitlementSnapshot;
 	evaluateAgencyMcpEntitlement: (
-		row: AgencyMcpEntitlementRowLike | null,
+		row: AgencyMcpEntitlementRow | null,
 		expected?: { accountId?: string | null; tenantId?: string | null },
-	) => AgencyMcpEntitlementDecisionLike;
+	) => AgencyMcpEntitlementDecision;
 	findAgencyIdentitySeedByEmail: (
 		db: D1Database,
 		authEmail: string | null,
@@ -144,7 +97,7 @@ export interface PartnerProspectClaimDeps {
 	findAgencyMcpEntitlementByAuthSubject: (
 		db: D1Database,
 		authSubject: string,
-	) => Promise<AgencyMcpEntitlementRowLike | null>;
+	) => Promise<AgencyMcpEntitlementRow | null>;
 	getPartnerAccessLaneBySlug: (
 		db: D1Database,
 		partnerClientId: string,
@@ -175,7 +128,7 @@ export interface PartnerProspectClaimDeps {
 			serviceTier?: string | null;
 			metadata?: Record<string, unknown>;
 		},
-	) => Promise<AgencyMcpEntitlementRowLike | null>;
+	) => Promise<AgencyMcpEntitlementRow | null>;
 	requireAgencySessionUser: (input: {
 		cookies: unknown;
 		platform: App.Platform | undefined;

@@ -10,6 +10,8 @@ import {
 	parseJsonStringArray,
 } from './partner-auth.js';
 import {
+	buildAgencyEntitlementSnapshot,
+	evaluateAgencyMcpEntitlement,
 	findAgencyIdentitySeedByEmail,
 	findAgencyMcpEntitlementByAuthSubject,
 	normalizeAgencyServiceTier,
@@ -37,6 +39,8 @@ export function listPartnerProspectClaimsForAgencyUser(input: {
 			parseJsonArray,
 			parseJsonObject,
 			parseJsonStringArray,
+			buildAgencyEntitlementSnapshot,
+			evaluateAgencyMcpEntitlement,
 		},
 		input,
 	).then((prospects) =>

@@ -1,59 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import type { ProspectWorkspaceCandidate } from '$lib/types/prospect-workspace';
 	import ReportSection from './ReportSection.svelte';
-
-	type ProspectCandidate = {
-		client: {
-			slug: string;
-			display_name: string | null;
-			status: 'initialized' | 'active' | 'paused' | 'sunset' | 'disabled';
-			required_toolkits: string[];
-		};
-		lane: {
-			slug: string;
-			display_name: string;
-			hub_url: string;
-			status: 'initialized' | 'active' | 'paused' | 'sunset' | 'disabled';
-			toolkit_profile: string[];
-			allowed_tool_prefixes: string[];
-		};
-		prospect_claim: {
-			state: 'claimable' | 'claimed_by_you' | 'claimed_by_other';
-			can_claim_now: boolean;
-			authorized_via: 'owner_email' | 'claim_emails' | 'claim_email_domains';
-			blocked_reason:
-				| 'identity_seed_conflict'
-				| 'manual_override_conflict'
-				| 'prospect_unavailable'
-				| 'already_claimed'
-				| null;
-			blocked_message: string | null;
-			service_tier: string;
-		};
-		toolkit_accounts: {
-			id: string;
-			toolkit: string;
-			account_slug: string;
-			display_label: string | null;
-			composio_user_id: string;
-			auth_config_id: string | null;
-			connected_account_id: string | null;
-			connection_status: string;
-			connected: boolean;
-			status: 'active' | 'disabled' | 'revoked';
-			sync_enabled: boolean;
-			last_checked_at: string | null;
-			connected_at: string | null;
-			metadata: Record<string, unknown>;
-			created_at: string;
-			updated_at: string;
-		}[];
-		issuance_state: {
-			ready: false;
-			blocked_reason: 'prospect_not_ready';
-			message: string;
-		};
-	};
 
 	let {
 		prospects = [],
@@ -63,7 +11,7 @@
 		actionLabel = null,
 		emptyMessage = 'No prospect workspaces are currently authorized for this Auth0 account.',
 	}: {
-		prospects?: ProspectCandidate[];
+		prospects?: ProspectWorkspaceCandidate[];
 		title?: string;
 		description?: string;
 		href?: string | null;
@@ -77,6 +25,14 @@
 	let connectBusyKey = $state<string | null>(null);
 	let connectMessage = $state('');
 	let connectError = $state('');
+	const graduationCheckOrder = [
+		'service_entitled',
+		'policy_accepted',
+		'contract_active',
+		'billing_active',
+		'org_membership_active',
+		'managed_bearer_allowed',
+	] as const;
 
 	function formatDateTime(value: string | null | undefined): string {
 		if (!value) return 'Not set';
@@ -94,7 +50,7 @@
 	}
 
 	function prospectStateTone(
-		prospect: ProspectCandidate,
+		prospect: ProspectWorkspaceCandidate,
 	): 'claimable' | 'claimed_by_you' | 'claimed_by_other' | 'blocked' | 'unavailable' {
 		if (prospect.prospect_claim.blocked_reason === 'prospect_unavailable') {
 			return 'unavailable';
@@ -105,7 +61,7 @@
 		return prospect.prospect_claim.state;
 	}
 
-	function prospectStateLabel(prospect: ProspectCandidate): string {
+	function prospectStateLabel(prospect: ProspectWorkspaceCandidate): string {
 		if (prospect.prospect_claim.blocked_reason === 'prospect_unavailable') {
 			return 'Unavailable';
 		}
@@ -123,7 +79,7 @@
 		}
 	}
 
-	function prospectEnabledToolkits(prospect: ProspectCandidate): string[] {
+	function prospectEnabledToolkits(prospect: ProspectWorkspaceCandidate): string[] {
 		return [...new Set([...prospect.client.required_toolkits, ...prospect.lane.toolkit_profile])].filter(
 			(value): value is string => Boolean(value),
 		);
@@ -134,9 +90,9 @@
 	}
 
 	function preferredProspectToolkitAccount(
-		prospect: ProspectCandidate,
+		prospect: ProspectWorkspaceCandidate,
 		toolkit: string,
-	): ProspectCandidate['toolkit_accounts'][number] | null {
+	): ProspectWorkspaceCandidate['toolkit_accounts'][number] | null {
 		const matches = prospect.toolkit_accounts.filter((account) => account.toolkit === toolkit);
 		if (matches.length === 0) {
 			return null;
@@ -144,7 +100,7 @@
 		return [...matches].sort((left, right) => prospectToolkitAccountRank(right) - prospectToolkitAccountRank(left))[0] ?? null;
 	}
 
-	function prospectToolkitAccountRank(account: ProspectCandidate['toolkit_accounts'][number]): number {
+	function prospectToolkitAccountRank(account: ProspectWorkspaceCandidate['toolkit_accounts'][number]): number {
 		let rank = 0;
 		if (account.account_slug === 'primary') rank += 25;
 		if (account.status === 'active') rank += 15;
@@ -153,7 +109,7 @@
 		return rank;
 	}
 
-	function prospectToolkitState(prospect: ProspectCandidate, toolkit: string) {
+	function prospectToolkitState(prospect: ProspectWorkspaceCandidate, toolkit: string) {
 		const account = preferredProspectToolkitAccount(prospect, toolkit);
 		if (!account) {
 			return {
@@ -208,7 +164,29 @@
 		};
 	}
 
-	async function claimProspect(prospect: ProspectCandidate) {
+	function graduationReadinessLabel(prospect: ProspectWorkspaceCandidate): string {
+		if (!prospect.graduation_readiness) {
+			return 'Pending';
+		}
+		return prospect.graduation_readiness.ready ? 'Ready for graduation' : 'Graduation blocked';
+	}
+
+	function graduationReadinessTone(prospect: ProspectWorkspaceCandidate): 'connected' | 'attention' {
+		return prospect.graduation_readiness?.ready ? 'connected' : 'attention';
+	}
+
+	function graduationCheckEntries(prospect: ProspectWorkspaceCandidate) {
+		if (!prospect.graduation_readiness) {
+			return [];
+		}
+		return graduationCheckOrder.map((key) => ({
+			key,
+			label: humanizeReason(key),
+			ok: prospect.graduation_readiness?.checks[key] ?? false,
+		}));
+	}
+
+	async function claimProspect(prospect: ProspectWorkspaceCandidate) {
 		const key = `${prospect.client.slug}:${prospect.lane.slug}`;
 		claimBusyKey = key;
 		claimMessage = '';
@@ -237,7 +215,7 @@
 		}
 	}
 
-	async function connectProspectToolkit(prospect: ProspectCandidate, toolkit: string) {
+	async function connectProspectToolkit(prospect: ProspectWorkspaceCandidate, toolkit: string) {
 		const key = `${prospect.client.slug}:${prospect.lane.slug}:${toolkit}`;
 		connectBusyKey = key;
 		connectMessage = '';
@@ -310,6 +288,39 @@
 					</div>
 
 					<p class="empty-copy">{prospect.issuance_state.message}</p>
+
+					{#if prospect.prospect_claim.state === 'claimed_by_you' && prospect.graduation_readiness}
+						<div class="prospect-readiness">
+							<div class="prospect-readiness-header">
+								<strong>Graduation readiness</strong>
+								<span class={`prospect-toolkit-state ${graduationReadinessTone(prospect)}`}>
+									{graduationReadinessLabel(prospect)}
+								</span>
+							</div>
+							<p>{prospect.graduation_readiness.blocked_message}</p>
+							<p>
+								<strong>Entitlement binding:</strong>
+								{prospect.graduation_readiness.account_id ?? 'Unbound'} /
+								{prospect.graduation_readiness.tenant_id ?? 'Unbound'}
+							</p>
+							{#if prospect.graduation_readiness.snapshot}
+								<p>
+									<strong>Entitlement tier:</strong>
+									{prospect.graduation_readiness.snapshot.service_tier}
+								</p>
+							{/if}
+							<div class="prospect-readiness-grid">
+								{#each graduationCheckEntries(prospect) as check}
+									<div class="prospect-readiness-item">
+										<span>{check.label}</span>
+										<span class={`prospect-toolkit-state ${check.ok ? 'connected' : 'attention'}`}>
+											{check.ok ? 'Ready' : 'Blocked'}
+										</span>
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
 
 					{#if prospect.prospect_claim.blocked_message}
 						<p class="feedback error">{prospect.prospect_claim.blocked_message}</p>
@@ -467,6 +478,45 @@
 	.prospect-toolkit-list {
 		display: grid;
 		gap: 0.65rem;
+	}
+
+	.prospect-readiness {
+		display: grid;
+		gap: 0.45rem;
+		padding: 0.75rem 0.85rem;
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: rgba(255, 255, 255, 0.03);
+	}
+
+	.prospect-readiness-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.8rem;
+		flex-wrap: wrap;
+	}
+
+	.prospect-readiness p {
+		margin: 0;
+		font-size: 0.78rem;
+		line-height: 1.55;
+		color: var(--color-fg-muted);
+	}
+
+	.prospect-readiness-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+		gap: 0.45rem 0.7rem;
+	}
+
+	.prospect-readiness-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.7rem;
+		padding-top: 0.1rem;
+		font-size: 0.76rem;
+		color: var(--color-fg-muted);
 	}
 
 	.prospect-toolkit-row {

@@ -25,6 +25,7 @@ First-wave policies scaffolded here:
 17. `policy.progressive-profile-governance.v1`
 18. `policy.service-tier-entitlement.v1`
 19. `policy.cross-workspace-sync-governance.v1`
+20. `policy.prospect-hub-onboarding.v1`
 
 Each policy has:
 

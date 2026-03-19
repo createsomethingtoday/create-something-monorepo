@@ -6,6 +6,12 @@ import {
 	type ProspectClaimAuthorization,
 	type ProspectClaimConflictCode,
 } from './partner-prospect-claim-shared.js';
+import type {
+	AgencyCanonicalServiceTier,
+	AgencyEntitlementSnapshot,
+	AgencyMcpEntitlementDecision,
+	AgencyMcpEntitlementRow,
+} from './mcp-entitlements.js';
 
 interface ProspectClientRowLike {
 	id: string;
@@ -45,12 +51,6 @@ interface AgencyIdentitySeedLike {
 	auth_subject: string | null;
 	account_id: string;
 	tenant_id: string;
-}
-
-interface AgencyMcpEntitlementRowLike {
-	account_id: string | null;
-	tenant_id: string | null;
-	metadata_json: string;
 }
 
 export type ProspectClaimDiscoveryState = 'claimable' | 'claimed_by_you' | 'claimed_by_other';
@@ -94,13 +94,22 @@ export interface ProspectClaimDiscoveryItem {
 		authorized_via: ProspectClaimAuthorization;
 		blocked_reason: ProspectClaimDiscoveryBlockedReason | null;
 		blocked_message: string | null;
-		service_tier: string;
+		service_tier: AgencyCanonicalServiceTier;
 	};
 	issuance_state: {
 		ready: false;
 		blocked_reason: 'prospect_not_ready';
 		message: string;
 	};
+	graduation_readiness: {
+		ready: boolean;
+		blocked_reason: string | null;
+		blocked_message: string;
+		account_id: AgencyMcpEntitlementDecision['account_id'];
+		tenant_id: AgencyMcpEntitlementDecision['tenant_id'];
+		checks: AgencyMcpEntitlementDecision['checks'];
+		snapshot: AgencyEntitlementSnapshot | null;
+	} | null;
 }
 
 export interface PartnerProspectDiscoveryDeps {
@@ -112,7 +121,7 @@ export interface PartnerProspectDiscoveryDeps {
 	findAgencyMcpEntitlementByAuthSubject: (
 		db: D1Database,
 		authSubject: string,
-	) => Promise<AgencyMcpEntitlementRowLike | null>;
+	) => Promise<AgencyMcpEntitlementRow | null>;
 	listPartnerClients: (
 		db: D1Database,
 		partnerKey: string,
@@ -126,12 +135,20 @@ export interface PartnerProspectDiscoveryDeps {
 	isProspectGraduated: (metadata: Record<string, unknown>) => boolean;
 	normalizeAgencyServiceTier: (
 		value: string | null | undefined,
-		fallback?: 'mcp_only' | 'policy_os_trial' | 'policy_os_core',
-	) => string;
+		fallback?: AgencyCanonicalServiceTier,
+	) => AgencyCanonicalServiceTier;
 	normalizeEmail: (raw: string | undefined) => string | null;
 	parseJsonArray: (raw: string | null | undefined) => string[];
 	parseJsonObject: (raw: string | null | undefined) => Record<string, unknown>;
 	parseJsonStringArray: (raw: string | null | undefined) => string[];
+	buildAgencyEntitlementSnapshot?: (
+		row: AgencyMcpEntitlementRow | null,
+		decision: AgencyMcpEntitlementDecision | null,
+	) => AgencyEntitlementSnapshot;
+	evaluateAgencyMcpEntitlement?: (
+		row: AgencyMcpEntitlementRow | null,
+		expected?: { accountId?: string | null; tenantId?: string | null },
+	) => AgencyMcpEntitlementDecision;
 }
 
 export async function listPartnerProspectClaimsForUser(
@@ -183,7 +200,10 @@ export async function listPartnerProspectClaimsForUser(
 
 				const identityAccountId = client.identity_account_id ?? client.workspace_account_id;
 				const identityTenantId = client.identity_tenant_id ?? client.slug;
-				const serviceTier = deriveProspectServiceTier(clientMetadata, deps.normalizeAgencyServiceTier);
+				const serviceTier = deriveProspectServiceTier(
+					clientMetadata,
+					deps.normalizeAgencyServiceTier,
+				) as AgencyCanonicalServiceTier;
 				const availabilityConflict = getProspectAvailabilityConflict({
 					clientStatus: client.status,
 					laneStatus: lane.status,
@@ -213,6 +233,15 @@ export async function listPartnerProspectClaimsForUser(
 				const blockedMessage = claimedByOther
 					? 'This prospect is already claimed by another Auth0 subject.'
 					: claimConflict?.message ?? availabilityConflict?.message ?? null;
+				const graduationReadiness = claimedByYou
+					? buildProspectGraduationReadiness(
+							deps,
+							existingEntitlement,
+							identityAccountId,
+							identityTenantId,
+							serviceTier,
+						)
+					: null;
 
 				results.push({
 					client: serializeClient(client, deps),
@@ -231,6 +260,7 @@ export async function listPartnerProspectClaimsForUser(
 						message:
 							'Customer credential issuance remains blocked until prospect graduation is recorded and governed entitlement state is active.',
 					},
+					graduation_readiness: graduationReadiness,
 				});
 			}
 
@@ -241,6 +271,147 @@ export async function listPartnerProspectClaimsForUser(
 	return prospects
 		.flat()
 		.sort((left, right) => compareDiscoveryState(left.prospect_claim.state, right.prospect_claim.state));
+}
+
+function buildProspectGraduationReadiness(
+	deps: Pick<
+		PartnerProspectDiscoveryDeps,
+		'buildAgencyEntitlementSnapshot' | 'evaluateAgencyMcpEntitlement' | 'normalizeAgencyServiceTier'
+	>,
+	row: AgencyMcpEntitlementRow | null,
+	identityAccountId: string,
+	identityTenantId: string,
+	serviceTier: string,
+) {
+	const decision = deps.evaluateAgencyMcpEntitlement
+		? deps.evaluateAgencyMcpEntitlement(row, {
+				accountId: identityAccountId,
+				tenantId: identityTenantId,
+			})
+		: buildFallbackEntitlementDecision(row, identityAccountId, identityTenantId);
+	const snapshot =
+		deps.buildAgencyEntitlementSnapshot?.(row, decision) ??
+		buildFallbackEntitlementSnapshot(row, decision, serviceTier, deps.normalizeAgencyServiceTier);
+
+	return {
+		ready: decision.allowed,
+		blocked_reason: decision.allowed ? null : decision.reason,
+		blocked_message: describeGraduationReadiness(decision.reason),
+		account_id: decision.account_id,
+		tenant_id: decision.tenant_id,
+		checks: decision.checks,
+		snapshot,
+	};
+}
+
+function buildFallbackEntitlementDecision(
+	row: AgencyMcpEntitlementRow | null,
+	identityAccountId: string,
+	identityTenantId: string,
+): AgencyMcpEntitlementDecision {
+	const checks = {
+		managed_bearer_allowed: row?.managed_bearer_allowed === 1,
+		org_membership_active: row?.org_membership_active === 1,
+		service_entitled: row?.service_entitled === 1,
+		policy_accepted: row?.policy_accepted === 1,
+		contract_active: row?.contract_active === 1,
+		billing_active: row?.billing_active === 1,
+	};
+
+	if (!row) {
+		return {
+			allowed: false,
+			reason: 'missing_entitlement_record',
+			account_id: null,
+			tenant_id: null,
+			checks,
+		};
+	}
+	if (!checks.managed_bearer_allowed) {
+		return { allowed: false, reason: row.denial_reason ?? 'managed_bearer_disabled', account_id: row.account_id, tenant_id: row.tenant_id, checks };
+	}
+	if (!checks.org_membership_active) {
+		return { allowed: false, reason: row.denial_reason ?? 'org_membership_inactive', account_id: row.account_id, tenant_id: row.tenant_id, checks };
+	}
+	if (!checks.service_entitled) {
+		return { allowed: false, reason: row.denial_reason ?? 'service_not_entitled', account_id: row.account_id, tenant_id: row.tenant_id, checks };
+	}
+	if (!checks.policy_accepted) {
+		return { allowed: false, reason: row.denial_reason ?? 'policy_acceptance_required', account_id: row.account_id, tenant_id: row.tenant_id, checks };
+	}
+	if (!checks.contract_active) {
+		return { allowed: false, reason: row.denial_reason ?? 'contract_inactive', account_id: row.account_id, tenant_id: row.tenant_id, checks };
+	}
+	if (!checks.billing_active) {
+		return { allowed: false, reason: row.denial_reason ?? 'billing_inactive', account_id: row.account_id, tenant_id: row.tenant_id, checks };
+	}
+	if (row.account_id && row.account_id !== identityAccountId) {
+		return { allowed: false, reason: 'account_mismatch', account_id: row.account_id, tenant_id: row.tenant_id, checks };
+	}
+	if (row.tenant_id && row.tenant_id !== identityTenantId) {
+		return { allowed: false, reason: 'tenant_mismatch', account_id: row.account_id, tenant_id: row.tenant_id, checks };
+	}
+
+	return {
+		allowed: true,
+		reason: 'allowed',
+		account_id: row.account_id,
+		tenant_id: row.tenant_id,
+		checks,
+	};
+}
+
+function buildFallbackEntitlementSnapshot(
+	row: AgencyMcpEntitlementRow | null,
+	decision: AgencyMcpEntitlementDecision,
+	serviceTier: string,
+	normalizeAgencyServiceTier: PartnerProspectDiscoveryDeps['normalizeAgencyServiceTier'],
+): AgencyEntitlementSnapshot {
+	return {
+		service_tier: row?.service_tier
+			? normalizeAgencyServiceTier(row.service_tier)
+			: normalizeAgencyServiceTier(serviceTier),
+		managed_bearer_allowed: decision.checks.managed_bearer_allowed,
+		org_membership_active: decision.checks.org_membership_active,
+		service_entitled: decision.checks.service_entitled,
+		policy_accepted: decision.checks.policy_accepted,
+		contract_active: decision.checks.contract_active,
+		billing_active: decision.checks.billing_active,
+		approved_exception: {
+			present: false,
+			type: null,
+			allowed_scope: null,
+			graduation_target: null,
+			review_by: null,
+		},
+	};
+}
+
+function describeGraduationReadiness(reason: string): string {
+	switch (reason) {
+		case 'allowed':
+			return 'This workspace is ready for operator graduation once consent is active.';
+		case 'missing_entitlement_record':
+			return 'No governed entitlement record is bound to this Auth0 subject yet.';
+		case 'managed_bearer_disabled':
+			return 'Managed bearer issuance is still disabled for this workspace.';
+		case 'org_membership_inactive':
+			return 'Org membership is not active for this workspace yet.';
+		case 'service_not_entitled':
+			return 'Commercial entitlement is not active for this workspace yet.';
+		case 'policy_acceptance_required':
+			return 'Policy acceptance is still required before this workspace can graduate.';
+		case 'contract_inactive':
+			return 'The contract is not active for this workspace yet.';
+		case 'billing_inactive':
+			return 'Billing is not active for this workspace yet.';
+		case 'account_mismatch':
+			return 'The current entitlement record is bound to a different account.';
+		case 'tenant_mismatch':
+			return 'The current entitlement record is bound to a different tenant.';
+		default:
+			return `Graduation is blocked: ${reason.replace(/_/g, ' ')}.`;
+	}
 }
 
 function compareDiscoveryState(

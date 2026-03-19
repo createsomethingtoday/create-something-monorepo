@@ -1,5 +1,6 @@
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
+import { checkRemoteTemplateNameAvailability } from '../../../../lib/intake/external';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 
 export async function POST(request: Request) {
@@ -22,13 +23,28 @@ export async function POST(request: Request) {
 
   try {
     const airtable = await getServerAirtable();
-    const uniqueness = await airtable.checkAssetNameUniqueness(name);
+    const [uniqueness, remoteAvailability] = await Promise.all([
+      airtable.checkAssetNameUniqueness(name),
+      checkRemoteTemplateNameAvailability(name)
+        .then((result) => ({
+          taken: result.taken,
+          source: 'remote' as const
+        }))
+        .catch(() => null)
+    ]);
+
+    const takenRemotely = remoteAvailability?.taken === true;
+    const available = uniqueness.unique && !takenRemotely;
+    const errors = available
+      ? syntax.errors
+      : [...syntax.errors, 'Template name is already in use.'];
 
     return jsonNoStore({
-      valid: syntax.valid && uniqueness.unique,
-      available: uniqueness.unique,
-      errors: uniqueness.unique ? syntax.errors : [...syntax.errors, 'Template name is already in use.'],
-      matchedForbiddenTokens: syntax.matchedForbiddenTokens
+      valid: syntax.valid && available,
+      available,
+      errors,
+      matchedForbiddenTokens: syntax.matchedForbiddenTokens,
+      source: remoteAvailability ? 'hybrid' : 'local'
     });
   } catch (error) {
     return jsonNoStore(

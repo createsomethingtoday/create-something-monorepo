@@ -1,3 +1,10 @@
+import type {
+	AgencyEntitlementSnapshot,
+	AgencyMcpEntitlementDecision,
+	AgencyMcpEntitlementRow,
+} from './mcp-entitlements.js';
+import type { PlatformEnv } from './partner-auth.js';
+
 interface ProspectGraduateRequestBody {
 	display_name?: string;
 	owner_email?: string;
@@ -24,12 +31,7 @@ interface ProspectGraduateRequestBody {
 interface ProspectGraduateRequestEventLike {
 	request: Request;
 	params: Record<string, string | undefined>;
-	platform?: {
-		env?: {
-			DB?: D1Database;
-			[key: string]: unknown;
-		};
-	};
+	platform?: App.Platform;
 }
 
 interface ProspectGraduateHttpErrorLike {
@@ -77,60 +79,16 @@ interface ProspectConsentRowLike {
 	granted_at: string;
 }
 
-interface AgencyMcpEntitlementRowLike {
-	account_id: string | null;
-	tenant_id: string | null;
-	service_tier: string;
-	managed_bearer_allowed: number;
-	org_membership_active: number;
-	service_entitled: number;
-	policy_accepted: number;
-	contract_active: number;
-	billing_active: number;
-}
-
-interface AgencyMcpEntitlementDecisionLike {
-	allowed: boolean;
-	reason: string;
-	account_id: string | null;
-	tenant_id: string | null;
-	checks: {
-		managed_bearer_allowed: boolean;
-		org_membership_active: boolean;
-		service_entitled: boolean;
-		policy_accepted: boolean;
-		contract_active: boolean;
-		billing_active: boolean;
-	};
-}
-
-interface AgencyEntitlementSnapshotLike {
-	service_tier: string;
-	managed_bearer_allowed: boolean;
-	org_membership_active: boolean;
-	service_entitled: boolean;
-	policy_accepted: boolean;
-	contract_active: boolean;
-	billing_active: boolean;
-	approved_exception: {
-		present: boolean;
-		type: string | null;
-		allowed_scope: string | null;
-		graduation_target: string | null;
-		review_by: string | null;
-	};
-}
-
 export interface PartnerProspectGraduateDeps {
 	partnerKey: string;
 	buildAgencyEntitlementSnapshot: (
-		row: AgencyMcpEntitlementRowLike | null,
-		decision: AgencyMcpEntitlementDecisionLike | null,
-	) => AgencyEntitlementSnapshotLike;
+		row: AgencyMcpEntitlementRow | null,
+		decision: AgencyMcpEntitlementDecision | null,
+	) => AgencyEntitlementSnapshot;
 	evaluateAgencyMcpEntitlement: (
-		row: AgencyMcpEntitlementRowLike | null,
+		row: AgencyMcpEntitlementRow | null,
 		expected?: { accountId?: string | null; tenantId?: string | null },
-	) => AgencyMcpEntitlementDecisionLike;
+	) => AgencyMcpEntitlementDecision;
 	getLatestActiveConsent: (db: D1Database, partnerClientId: string) => Promise<ProspectConsentRowLike | null>;
 	getPartnerAccessLaneBySlug: (
 		db: D1Database,
@@ -163,8 +121,8 @@ export interface PartnerProspectGraduateDeps {
 			serviceTier?: string | null;
 			metadata?: Record<string, unknown>;
 		},
-	) => Promise<AgencyMcpEntitlementRowLike | null>;
-	requirePartnerAdmin: (request: Request, env: Record<string, unknown> & { DB: D1Database }) => string;
+	) => Promise<AgencyMcpEntitlementRow | null>;
+	requirePartnerAdmin: (request: Request, env: PlatformEnv) => string;
 	upsertPartnerAccessLane: (
 		db: D1Database,
 		input: {

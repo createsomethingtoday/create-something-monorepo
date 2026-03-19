@@ -4,12 +4,19 @@ This repository uses **Loom** (`lm`) for agent-native coordination.
 
 Important: local `lm` talks to the repo-local `.loom` database. Shared coordination for Symphony and other remote agent lanes now uses the remote Loom MCP control plane at `https://loom.mcp.createsomething.agency/mcp`.
 
-Start here:
+For a fresh local clone that has not initialized the repo-local `.loom` database yet:
 
 ```bash
 lm init
 lm ready
 lm claim <id>
+```
+
+For provisioned Ona or other shared remote environments, skip `lm init` and start with:
+
+```bash
+lm ready
+pnpm loom:remote ready
 ```
 
 For shared remote Loom operations, use:
@@ -22,6 +29,7 @@ pnpm loom:remote done --task-id <id> --evidence "..."
 ```
 
 Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
+If `lm init` reports that remote Loom is already provisioned, continue with `lm ready` and the `pnpm loom:remote ...` commands instead of retrying `lm init`.
 Do not use bare `lm done` for shared tasks in this repo; use `pnpm loom:remote done --task-id <id> --evidence "..."` instead.
 
 ## What this repo is

@@ -1,4 +1,4 @@
-import { getAirtableClient } from '@create-something/webflow-dashboard-core';
+import { getAirtableClient } from '@create-something/webflow-dashboard-core/airtable';
 import { getEnvOrThrow } from './env';
 
 export async function getServerAirtable() {
