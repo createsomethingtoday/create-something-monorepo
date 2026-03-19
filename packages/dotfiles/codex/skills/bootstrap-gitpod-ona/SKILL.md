@@ -1,9 +1,9 @@
 ---
-name: bootstrap-gitpod-osa
-description: Prepare Gitpod, Osa, and similar ephemeral cloud workspaces so repo-owned Codex skills, bootstrap commands, and verification checks are available before development begins. Use when Codex is running in Gitpod/Osa, a devcontainer, or another fresh workspace and needs to detect the environment, install repo-owned skills into $CODEX_HOME, verify workspace bootstrap, or adapt the same pattern to another project.
+name: bootstrap-gitpod-ona
+description: Prepare Gitpod, Ona, and similar ephemeral cloud workspaces so repo-owned Codex skills, bootstrap commands, and verification checks are available before development begins. Use when Codex is running in Gitpod/Ona, a devcontainer, or another fresh workspace and needs to detect the environment, install repo-owned skills into $CODEX_HOME, verify workspace bootstrap, or adapt the same pattern to another project.
 ---
 
-# Bootstrap Gitpod Osa
+# Bootstrap Gitpod Ona
 
 Use this skill before task work when the main risk is an unprepared workspace rather than missing application code.
 
@@ -78,6 +78,6 @@ Prefer a repo-level skill when the workflow is reused across multiple packages o
 Ask before:
 
 - writing secrets into shared workspace config
-- changing a platform-owned Gitpod or Osa image outside the current repo
+- changing a platform-owned Gitpod or Ona image outside the current repo
 - replacing an org-wide bootstrap path that other teams may depend on
 - installing duplicate skill trees from multiple sources into the same Codex home

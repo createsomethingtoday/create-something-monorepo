@@ -81,8 +81,8 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 1. Find or create tracked work in Loom.
 2. Verify symbols and import paths before using them.
 3. Run the relevant quality gates.
-4. Update Loom status.
-5. Push the work so it remains connected to the whole.
+4. Record evidence in Loom and use the narrowest trustworthy validation surface.
+5. Push or open/update a PR only when production promotion, shared review, or explicit user intent requires it.
 
 Core commands:
 
@@ -101,6 +101,15 @@ pnpm test
 
 For shared orchestration lanes, prefer remote Loom via `pnpm loom:remote ...`.
 Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
+
+## Git-light delivery
+
+- For DEV and preview work, prefer direct deploy from the current workspace after the relevant checks pass.
+- Record the Loom task ID, package or surface, target environment, commands run, deploy URL or ID, and rollback note in Loom.
+- For non-terminal deploy checkpoints, prefer the surface-specific `pnpm deploy:*:checkpoint` wrappers; use `pnpm loom:deploy:checkpoint` only for custom deploy paths.
+- Do not commit or push only to manufacture an agent checkpoint.
+- Use Git branches and PRs as the default production promotion boundary unless an approved immutable release path exists.
+- See `docs/policies/v1/policy.git-light-agent-delivery.v1.md` and `docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md`.
 
 ## Grounding discipline
 
