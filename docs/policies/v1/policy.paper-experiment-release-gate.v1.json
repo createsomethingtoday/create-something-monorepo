@@ -59,6 +59,11 @@
     "review_2_release_summary",
     "post_deploy_verification_summary"
   ],
+  "operational_notes": [
+    "policy_only_runs_may_validate_governance_and_ci_without_publishing_routes",
+    "policy_only_runs_still_require_review_and_human_approval",
+    "policy_only_runs_do_not_create_production_route_deployment_expectations"
+  ],
   "rollback_authority": {
     "allowed_roles": [
       "human_reviewer",

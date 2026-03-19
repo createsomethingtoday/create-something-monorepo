@@ -71,6 +71,7 @@
     "policy:artifacts:check": "node scripts/policy-artifact-check.mjs",
     "paper-cycle:context": "node scripts/io-paper-cycle-context.mjs",
     "paper-cycle:labels:sync": "node scripts/io-paper-cycle-labels.mjs",
+    "paper-cycle:review:bootstrap": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm --filter @create-something/spritz package && pnpm --filter @create-something/render-pipeline build && pnpm --filter @create-something/eslint-plugin-canon build && pnpm --filter @create-something/harness build && pnpm --filter @create-something/observability build && pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/mcp-core build && pnpm --filter @create-something/composio-bridge build && pnpm --filter @create-something/notion-tools build && pnpm --filter @create-something/simulation build",
     "paper-cycle:verify": "node scripts/io-paper-cycle-verify.mjs",
     "harness": "pnpm --filter @create-something/harness harness",
     "harness:start": "pnpm --filter @create-something/harness harness start",
