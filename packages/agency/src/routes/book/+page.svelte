@@ -42,7 +42,8 @@
 		{
 			value: 'reliability_and_control',
 			label: 'Policy OS',
-			description: 'Approval rules, release gates, and incident controls around live automation.'
+			description:
+				'Policy artifacts, approval rules, release gates, and incident controls around live automation.'
 		},
 		{
 			value: 'enterprise_extension',

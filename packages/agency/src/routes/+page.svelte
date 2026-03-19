@@ -22,7 +22,7 @@
     {
       name: 'Policy OS',
       description:
-        'The oversight layer: approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
+        'The oversight layer: policy artifacts, approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly governed execution layer'
@@ -326,8 +326,8 @@
             <span class="funnel-step-label">Lane 2</span>
             <h3>Policy OS</h3>
             <p>
-              I add approvals, release checks, blocked states, and incident review so automation
-              stays trustworthy as it expands.
+              I add policy artifacts, approvals, release checks, blocked states, and incident
+              review so automation stays trustworthy as it expands.
             </p>
           </div>
         </div>

@@ -168,7 +168,8 @@
 				<p class="hero-detail">
 					For teams already running MCPs or cross-system workflows, this is Policy OS: the
 					governed execution layer that keeps outcomes reliable after launch. We add prompt
-					optimization, policy controls, approval logic, escalation paths, and ongoing oversight.
+					optimization, policy controls, approval and escalation logic, and ongoing operational
+					oversight.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>

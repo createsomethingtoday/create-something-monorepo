@@ -32,7 +32,8 @@
 			title: 'Make it reliable',
 			paragraphs: [
 				'Connections are the start. Reliability is what makes them usable in real operations.',
-				'Policy OS keeps the workflow healthy over time: prompt tuning, policy updates, performance monitoring, and edge-case handling before problems become incidents.',
+				'Connections are the start. Reliability is what makes them usable in real operations.',
+				'Policy OS keeps the workflow healthy over time with prompt tuning, policy updates, performance monitoring, and edge-case handling before problems become incidents.',
 				'Your automation becomes more dependable as the business changes. $1,500\u2013$3,500/mo.'
 			]
 		}
