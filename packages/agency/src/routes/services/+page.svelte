@@ -41,7 +41,7 @@
     {
       name: 'Policy OS',
       description:
-        'Approvals, release checks, blocked states, and incident loops for workflows already in motion.',
+        'Approvals, policy artifacts, release checks, blocked states, and incident loops for workflows already in motion.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly'
@@ -75,7 +75,7 @@
     {
       question: 'When should we add Policy OS?',
       answer:
-        'Add it when the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
+        'Add it when failures become expensive or the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
     },
     {
       question: 'When do we need Enterprise Extension?',
@@ -145,6 +145,7 @@
       <GovernedExecutionFlow
         title="Where Policy OS fits"
         description="Workflow Infrastructure gets the first handoff working. Policy OS decides what runs automatically, what needs review, and what stops."
+        description="Workflow Infrastructure gets the first handoff working. Policy OS decides what runs automatically, what needs review, and what stops."
       />
     </BlurFade>
   </div>
@@ -208,7 +209,7 @@
             <article class="progression-card highlighted-card">
               <span class="progression-tag">Canonical package</span>
               <h3>Policy OS</h3>
-              <p>The approval and oversight layer that makes <strong>{deliveryVector.clientFacingLabel}</strong> safe to run faster in production.</p>
+              <p>The governed execution layer that makes <strong>{deliveryVector.clientFacingLabel}</strong> safe to run faster in production.</p>
               <ul class="retainer-list">
                 <li>Approval and block boundaries</li>
                 <li>Reason-coded access and blocked states</li>
@@ -228,7 +229,8 @@
           </div>
           <div class="retainer-callout">
             <p>
-              MCP-only gets you connected. Policy OS keeps the workflow safe as speed and volume increase.
+              MCP-only gets you connected. Policy OS turns execution into a managed product as
+              speed and volume increase.
             </p>
           </div>
         </div>
@@ -243,7 +245,7 @@
     <BlurFade>
       <ArtifactSystemStrip
         title="What ships with every governed engagement"
-        description="Every governed engagement ships as artifacts your team can inspect, inherit, and operate."
+        description="Every governed engagement ships as artifacts your team can inspect, run, inherit, and operate."
       />
     </BlurFade>
   </div>
