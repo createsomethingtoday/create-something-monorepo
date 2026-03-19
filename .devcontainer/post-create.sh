@@ -43,3 +43,4 @@ jq --version >/dev/null
 wrangler --version >/dev/null
 
 pnpm install --frozen-lockfile
+pnpm --filter @create-something/dotfiles install-codex-skills

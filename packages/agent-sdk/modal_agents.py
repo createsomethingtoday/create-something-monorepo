@@ -27,7 +27,7 @@ Manual Deployment:
 
 Required Secrets:
   - anthropic-api-key: For Claude agents
-  - cloudflare-api-token: For deployments (CLOUDFLARE_API_TOKEN)
+  - cloudflare-api-token: For deployments (CLOUDFLARE_API_TOKEN or CLOUDFLARE_WORKERS_API_TOKEN)
 """
 
 import modal
@@ -57,6 +57,13 @@ MODEL_COSTS = {
     "claude-3-5-haiku-20241022": (0.80, 4.0),  # (input, output) per million
     "claude-sonnet-4-20250514": (3.0, 15.0),
 }
+
+
+def get_cloudflare_api_token() -> str | None:
+    """Allow either the legacy or workers-scoped Cloudflare token name."""
+    import os
+
+    return os.environ.get("CLOUDFLARE_API_TOKEN") or os.environ.get("CLOUDFLARE_WORKERS_API_TOKEN")
 
 
 def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
@@ -949,11 +956,11 @@ def deploy(payload: dict = {}) -> dict:
         return {"skipped": True, "reason": "No deployable packages affected"}
 
     # Check for Cloudflare credentials
-    cf_token = os.environ.get("CLOUDFLARE_API_TOKEN")
+    cf_token = get_cloudflare_api_token()
     if not cf_token:
         return {
-            "error": "CLOUDFLARE_API_TOKEN not configured",
-            "setup": "Run: modal secret create cloudflare-api-token CLOUDFLARE_API_TOKEN=<token>"
+            "error": "CLOUDFLARE_API_TOKEN or CLOUDFLARE_WORKERS_API_TOKEN not configured",
+            "setup": "Run: modal secret create cloudflare-api-token CLOUDFLARE_WORKERS_API_TOKEN=<token>"
         }
 
     # Clone the repo
@@ -1124,12 +1131,12 @@ def deploy_package(package: str) -> dict:
         return {"error": f"Unknown package: {package}", "available": list(PACKAGE_TO_PROJECT.keys())}
 
     project_name = PACKAGE_TO_PROJECT[package]
-    cf_token = os.environ.get("CLOUDFLARE_API_TOKEN")
+    cf_token = get_cloudflare_api_token()
 
     if not cf_token:
         return {
-            "error": "CLOUDFLARE_API_TOKEN not configured",
-            "setup": "Run: modal secret create cloudflare-api-token CLOUDFLARE_API_TOKEN=<token>"
+            "error": "CLOUDFLARE_API_TOKEN or CLOUDFLARE_WORKERS_API_TOKEN not configured",
+            "setup": "Run: modal secret create cloudflare-api-token CLOUDFLARE_WORKERS_API_TOKEN=<token>"
         }
 
     repo_url = "https://github.com/createsomethingtoday/create-something-monorepo.git"

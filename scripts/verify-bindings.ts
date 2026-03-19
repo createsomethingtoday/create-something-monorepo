@@ -75,10 +75,10 @@ async function verifyProject(project: ProjectConfig): Promise<void> {
   console.log(`\n📋 Verifying: ${project.name} (${project.domain})`);
   console.log('─'.repeat(60));
 
-  const apiKey = process.env.CLOUDFLARE_API_TOKEN;
+  const apiKey = process.env.CLOUDFLARE_API_TOKEN ?? process.env.CLOUDFLARE_WORKERS_API_TOKEN;
   if (!apiKey) {
-    console.error('❌ CLOUDFLARE_API_TOKEN not set');
-    console.log('\nSet it with: export CLOUDFLARE_API_TOKEN=your_token_here');
+    console.error('❌ CLOUDFLARE_API_TOKEN or CLOUDFLARE_WORKERS_API_TOKEN not set');
+    console.log('\nSet it with: export CLOUDFLARE_WORKERS_API_TOKEN=your_token_here');
     return;
   }
 

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Gitpod Osa Bootstrap"
+  short_description: "Bootstrap Codex in Gitpod/Osa workspaces"
+  default_prompt: "Use $bootstrap-gitpod-osa to prepare this Gitpod or Osa workspace so repo-owned Codex skills and workspace checks are available."
+
+policy:
+  allow_implicit_invocation: false
