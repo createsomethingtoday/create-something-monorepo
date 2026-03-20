@@ -416,7 +416,7 @@ async function fetchComposioToolkitTools(
 	try {
 		const composio = getComposioClient(env);
 		const response = await (
-			composio.tools as {
+			composio.tools as unknown as {
 				getRawComposioTools: (args: Record<string, unknown>) => Promise<unknown>;
 			}
 		).getRawComposioTools({
