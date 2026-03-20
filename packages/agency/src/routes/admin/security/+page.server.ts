@@ -6,8 +6,9 @@ import {
 	listAgencyMcpEntitlements,
 } from '$lib/server/mcp-entitlements';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ cookies, platform }) => {
+export const load: PageServerLoad = async ({ cookies, platform }) => {
 	const operator = await requireAgencyOperator({ cookies, platform });
 	const db = platform!.env.DB;
 

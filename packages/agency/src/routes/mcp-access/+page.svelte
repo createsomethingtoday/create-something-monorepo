@@ -387,6 +387,8 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 		<ReportSection
 			title="Assigned MCP Access"
 			description="Lane assignment and bridge endpoints linked to this identity. Vault-held secrets remain out of band."
+			href="/mcp-access/tools"
+			actionLabel="Inspect tools"
 		>
 			<FactList items={assignmentFacts} />
 		</ReportSection>

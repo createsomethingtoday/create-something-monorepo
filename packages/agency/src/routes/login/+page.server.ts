@@ -1,9 +1,10 @@
 import { redirect } from '@sveltejs/kit';
 import { createSessionManager, getAuth0Config, PROPERTY_DOMAINS } from '@create-something/canon/auth';
+import type { PageServerLoad } from './$types';
 
 const DEFAULT_REDIRECT = '/dashboard';
 
-export const load = async ({ url, cookies, platform }) => {
+export const load: PageServerLoad = async ({ url, cookies, platform }) => {
 	const authProvider = getAuth0Config(platform?.env);
 	const session = createSessionManager(cookies, {
 		isProduction: platform?.env?.ENVIRONMENT === 'production',
