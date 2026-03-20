@@ -1,7 +1,11 @@
 import {
+	buildComposioAllowedToolPrefixes,
 	buildPartnerLaneNotionBridgeUrl,
 	findPartnerAccessLaneForIdentity,
+	listPartnerAccessLanesForIdentity,
+	parseJsonArray,
 	parseJsonObject,
+	parseJsonStringArray,
 	type PartnerAuthAccessLaneAssignmentRow,
 } from '$lib/server/partner-auth';
 
@@ -14,15 +18,21 @@ type AccessAssignmentInput = {
 };
 
 export type McpAccessAssignment = {
+	source: 'partner_lane' | 'legacy';
+	partnerClientId: string | null;
+	clientSlug: string | null;
 	laneKey: string;
 	displayName: string;
 	hubUrl: string;
 	bridgeUrl: string;
 	bridgeUsername: string;
 	credentialSource: string;
+	hostKey: string | null;
 	accountId: string | null;
 	tenantId: string | null;
 	workspaceAccountId: string | null;
+	toolkitProfile: string[];
+	allowedToolPrefixes: string[];
 };
 
 type LaneConfig = {
@@ -30,10 +40,29 @@ type LaneConfig = {
 	hubSubdomain: string;
 	bridgeSubdomain: string;
 	bridgeUsername: string;
+	defaultToolkitProfile: string[];
+};
+
+type BoundClientRow = {
+	id: string;
+	slug: string;
 };
 
 const DEFAULT_CREDENTIAL_SOURCE = 'Vault + private operator handoff';
 const DEFAULT_LANE_CREDENTIAL_SOURCE = 'Partner-managed named lane';
+const LEGACY_SHARED_AUTH_TOOLKITS = [
+	'dropbox',
+	'gmail',
+	'youtube',
+	'googlesheets',
+	'googledrive',
+	'zoom',
+	'slack',
+	'quickbooks',
+	'linkedin',
+	'notion',
+];
+const LEGACY_WEBFLOW_REVIEWER_TOOLKITS: string[] = [];
 
 const LANE_CONFIGS: Record<string, LaneConfig> = {
 	mj: {
@@ -41,78 +70,91 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		hubSubdomain: 'mj',
 		bridgeSubdomain: 'mj-notion',
 		bridgeUsername: 'acct_mj',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	lainy: {
 		displayName: 'Lainy',
 		hubSubdomain: 'lainy',
 		bridgeSubdomain: 'lainy-notion',
 		bridgeUsername: 'acct_lainy',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	august: {
 		displayName: 'August',
 		hubSubdomain: 'august',
 		bridgeSubdomain: 'august-notion',
 		bridgeUsername: 'acct_august',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	fillip: {
 		displayName: 'Fillip',
 		hubSubdomain: 'fillip',
 		bridgeSubdomain: 'fillip-notion',
 		bridgeUsername: 'acct_fillip',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	leah: {
 		displayName: 'Leah',
 		hubSubdomain: 'leah',
 		bridgeSubdomain: 'leah-notion',
 		bridgeUsername: 'acct_leah',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	danny: {
 		displayName: 'Danny',
 		hubSubdomain: 'danny',
 		bridgeSubdomain: 'danny-notion',
 		bridgeUsername: 'acct_danny',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	dm: {
 		displayName: 'Danny',
 		hubSubdomain: 'danny',
 		bridgeSubdomain: 'danny-notion',
 		bridgeUsername: 'acct_danny',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	wf_natalia: {
 		displayName: 'Natalia Ledford',
 		hubSubdomain: 'wf-template-review-natalia',
 		bridgeSubdomain: 'wf-template-review-natalia',
 		bridgeUsername: 'acct_wf_natalia',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_sudiksha: {
 		displayName: 'Sudiksha Khanduja',
 		hubSubdomain: 'wf-template-review-sudiksha',
 		bridgeSubdomain: 'wf-template-review-sudiksha',
 		bridgeUsername: 'acct_wf_sudiksha',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_eric: {
 		displayName: 'Eric Unger',
 		hubSubdomain: 'wf-template-review-eric',
 		bridgeSubdomain: 'wf-template-review-eric',
 		bridgeUsername: 'acct_wf_eric',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_vicki: {
 		displayName: 'Vicki Chen',
 		hubSubdomain: 'wf-template-review-vicki',
 		bridgeSubdomain: 'wf-template-review-vicki',
 		bridgeUsername: 'acct_wf_vicki',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_mariana: {
 		displayName: 'Mariana Segura',
 		hubSubdomain: 'wf-template-review-mariana',
 		bridgeSubdomain: 'wf-template-review-mariana',
 		bridgeUsername: 'acct_wf_mariana',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_micah: {
 		displayName: 'Micah Johnson',
 		hubSubdomain: 'wf-template-review-micah',
 		bridgeSubdomain: 'wf-template-review-micah',
 		bridgeUsername: 'acct_wf_micah',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 };
 
@@ -140,21 +182,50 @@ function resolveLegacyLaneKey(email: string, accountId: string | null): string |
 	return null;
 }
 
-function buildLegacyAssignment(input: AccessAssignmentInput): McpAccessAssignment | null {
+async function findClientBindingByWorkspaceAccountId(
+	db: D1Database,
+	workspaceAccountId: string,
+): Promise<BoundClientRow | null> {
+	return db
+		.prepare(
+			`SELECT id, slug
+			 FROM partner_auth_clients
+			 WHERE workspace_account_id = ?
+			 LIMIT 1`,
+		)
+		.bind(workspaceAccountId)
+		.first<BoundClientRow>();
+}
+
+async function buildLegacyAssignment(
+	db: D1Database | null | undefined,
+	input: AccessAssignmentInput,
+): Promise<McpAccessAssignment | null> {
 	const laneKey = resolveLegacyLaneKey(input.email, input.accountId);
 	if (!laneKey) return null;
 
 	const lane = LANE_CONFIGS[laneKey];
+	const toolkitProfile = [...lane.defaultToolkitProfile];
+	const workspaceAccountId = input.workspaceAccountId ?? input.accountId;
+	const boundClient =
+		db && workspaceAccountId ? await findClientBindingByWorkspaceAccountId(db, workspaceAccountId) : null;
+
 	return {
+		source: 'legacy',
+		partnerClientId: boundClient?.id ?? null,
+		clientSlug: boundClient?.slug ?? null,
 		laneKey,
 		displayName: lane.displayName,
 		hubUrl: `https://${lane.hubSubdomain}.mcp.createsomething.agency/mcp`,
 		bridgeUrl: `https://${lane.bridgeSubdomain}.mcp.createsomething.agency/mcp`,
 		bridgeUsername: lane.bridgeUsername,
 		credentialSource: DEFAULT_CREDENTIAL_SOURCE,
+		hostKey: lane.bridgeUsername,
 		accountId: input.accountId,
 		tenantId: input.tenantId,
-		workspaceAccountId: input.workspaceAccountId ?? input.accountId,
+		workspaceAccountId,
+		toolkitProfile,
+		allowedToolPrefixes: buildComposioAllowedToolPrefixes(toolkitProfile),
 	};
 }
 
@@ -177,16 +248,53 @@ function buildLaneAssignment(
 			: DEFAULT_LANE_CREDENTIAL_SOURCE;
 
 	return {
+		source: 'partner_lane',
+		partnerClientId: lane.partner_client_id,
+		clientSlug: lane.client_slug,
 		laneKey: lane.slug,
 		displayName: lane.display_name,
 		hubUrl: lane.hub_url,
 		bridgeUrl: notionBridgeUrl,
 		bridgeUsername,
 		credentialSource,
+		hostKey: lane.host_key,
 		accountId: lane.identity_account_id ?? input.accountId,
 		tenantId: lane.identity_tenant_id ?? input.tenantId,
 		workspaceAccountId: lane.workspace_account_id ?? input.workspaceAccountId ?? input.accountId,
+		toolkitProfile: parseJsonArray(lane.toolkit_profile_json),
+		allowedToolPrefixes: normalizeAllowedToolPrefixesForAssignment(lane),
 	};
+}
+
+function normalizeAllowedToolPrefixesForAssignment(
+	lane: Pick<PartnerAuthAccessLaneAssignmentRow, 'toolkit_profile_json' | 'allowed_tool_prefixes_json'>,
+): string[] {
+	const explicit = parseJsonStringArray(lane.allowed_tool_prefixes_json);
+	if (explicit.length > 0) return explicit;
+	return buildComposioAllowedToolPrefixes(parseJsonArray(lane.toolkit_profile_json));
+}
+
+export async function listMcpAccessAssignments(
+	db: D1Database | null | undefined,
+	input: AccessAssignmentInput,
+): Promise<McpAccessAssignment[]> {
+	if (db) {
+		const lanes = await listPartnerAccessLanesForIdentity(
+			db,
+			{
+				authSubject: input.authSubject ?? null,
+				email: input.email,
+			},
+			{ limit: 20 },
+		);
+
+		if (lanes.length > 0) {
+			return lanes.map((lane) => buildLaneAssignment(lane, input));
+		}
+	}
+
+	const legacyAssignment = await buildLegacyAssignment(db, input);
+	return legacyAssignment ? [legacyAssignment] : [];
 }
 
 export async function resolveMcpAccessAssignment(
@@ -204,5 +312,5 @@ export async function resolveMcpAccessAssignment(
 		}
 	}
 
-	return buildLegacyAssignment(input);
+	return buildLegacyAssignment(db, input);
 }
