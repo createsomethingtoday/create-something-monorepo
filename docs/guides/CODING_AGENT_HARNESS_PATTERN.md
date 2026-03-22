@@ -4,6 +4,8 @@ This guide captures the default CREATE SOMETHING pattern for running coding agen
 
 It is the local interpretation of "harness engineering" for this repository.
 
+Pi is the default terminal agent runtime for shared coding lanes. Loom remains the control plane.
+
 ## Goal
 
 Turn a coding agent from a one-shot assistant into a repeatable worker by giving it:
@@ -28,7 +30,7 @@ pnpm loom:remote get --task-id <id>
 
 The agent should start from a tracked task, not from an untracked conversation fragment.
 
-Note: local `lm` still talks to the repo-local `.loom` database. Use it only for local-only workflows, migration/export inputs, or rollback scenarios. Shared agent lanes and Symphony should use remote Loom.
+Note: local `lm` still talks to the repo-local `.loom` database. Use it only for local-only workflows, migration/export inputs, or rollback scenarios. Shared agent lanes should use remote Loom, typically with Pi as the terminal agent host.
 
 ## 2. Build context from repo artifacts
 
@@ -40,6 +42,13 @@ Before execution, gather:
 - any prior checkpoint or decision memo
 
 The agent should load a map, not a giant manual.
+
+For Pi-driven lanes, the repo-local map is:
+
+- `AGENTS.md`
+- `docs/guides/PI_WORKFLOW.md`
+- `automation/pi/<lane>/README.md`
+- `.pi/prompts/`
 
 ## 3. Execute in isolation
 
@@ -144,6 +153,7 @@ If the same correction appears repeatedly, turn it into:
 In this repo, harness engineering is the combination of:
 
 - Loom for coordination
+- Pi for terminal agent execution
 - worktrees for isolation
 - quality gates for evidence
 - observability and UI preview for legibility
@@ -154,5 +164,6 @@ In this repo, harness engineering is the combination of:
 
 - `../README.md`
 - `../THREE_TIER_FRAMEWORK.md`
+- `../guides/PI_WORKFLOW.md`
 - `../guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md`
 - `../../packages/harness/README.md`

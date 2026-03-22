@@ -43,4 +43,10 @@ jq --version >/dev/null
 wrangler --version >/dev/null
 
 pnpm install --frozen-lockfile
-pnpm --filter @create-something/dotfiles install-codex-skills
+
+cat <<'EOF'
+Pi is the default terminal agent runtime for this repository.
+Repo-local Pi config lives in `.pi/` and defaults to OpenAI.
+After installing Pi or authenticating with `/login`, run:
+  pnpm pi:doctor
+EOF

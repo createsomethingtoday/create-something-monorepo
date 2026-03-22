@@ -9,9 +9,9 @@
 --   lua/config/        - Core configuration
 --   lua/plugins/       - Plugin configurations
 --
--- Claude Code Integration:
+-- Agent Host Integration:
 --   - Minimal config for fast startup
---   - No heavy LSP (Claude Code handles intelligence)
+--   - No heavy LSP by default (external agent hosts handle higher-level assistance)
 --   - Focus: text editing, git, navigation
 
 -- ─────────────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Minimal plugins (Claude Code handles the heavy lifting)
+-- Minimal plugins (external agent hosts handle the heavy lifting)
 require("lazy").setup({
   -- Treesitter: syntax highlighting
   {

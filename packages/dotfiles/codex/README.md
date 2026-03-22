@@ -1,6 +1,6 @@
-# Codex Skills
+# Codex Skills Compatibility Layer
 
-Repo-owned Codex skills live here so CREATE SOMETHING can version its judgment layer alongside code.
+Pi is the primary repo-owned agent surface for this repository. This directory remains as a compatibility layer for Codex users who still want the repo-owned skill set installed into `~/.codex/skills`.
 
 ## Install
 
@@ -8,7 +8,7 @@ Repo-owned Codex skills live here so CREATE SOMETHING can version its judgment l
 pnpm --filter @create-something/dotfiles install-codex-skills
 ```
 
-This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelated global skills.
+This symlinks compatibility skills into `~/.codex/skills` without deleting unrelated global skills.
 
 ## Current Skills
 

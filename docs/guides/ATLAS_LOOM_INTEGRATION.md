@@ -154,6 +154,8 @@ Until then, use the label-based approach documented above.
 
 ## Related Documentation
 
+- [../../AGENTS.md](../../AGENTS.md) - Canonical repo workflow and Loom operating model
+- [PI Workflow](./PI_WORKFLOW.md) - Pi-first lane workflow
 - [Observability Setup](./OBSERVABILITY_SETUP.md) - Full observability stack
-- [Loom Patterns](../../.claude/rules/loom-patterns.md) - Loom CLI reference
-- [Harness Patterns](../../.claude/rules/harness-patterns.md) - Agent orchestration
+- [Loom Patterns](../../.claude/rules/loom-patterns.md) - Legacy Claude-oriented Loom reference
+- [Harness Patterns](../../.claude/rules/harness-patterns.md) - Legacy Claude-oriented harness reference

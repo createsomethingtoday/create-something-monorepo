@@ -1,8 +1,18 @@
-# Claude Code Skills: Hermeneutic Workflow Guide
+# Repo Skills: Hermeneutic Workflow Guide
 
-> **How to use Claude Code Skills within the CREATE Something methodology**
+> **How to use repo-owned skills within the CREATE SOMETHING methodology**
 
-This document explains how Claude Code Skills support the CREATE Something hermeneutic workflow—a circular interpretive process where understanding emerges through movement between parts and whole.
+This document explains how repo-owned skills support the CREATE SOMETHING hermeneutic workflow, where understanding emerges through movement between parts and whole.
+
+## Current Stance
+
+Pi is the canonical agent host for repo-owned workflow skills in this repository.
+
+- Canonical repo-owned workflow skills live in `.pi/skills/`.
+- `.ona/skills/` is a compatibility mirror for Ona-oriented or non-Pi host flows.
+- `packages/dotfiles/codex/skills/` is a compatibility layer for Codex-specific bootstrapping.
+
+This guide keeps the historical skill taxonomy, but examples and workflow language should now be read Pi-first unless a section explicitly calls out a compatibility host.
 
 ## The Hermeneutic Circle
 
@@ -248,7 +258,7 @@ sveltekit-project-manager (deploy)
 
 ### Explicit Invocation
 
-Tell Claude Code directly:
+Tell Pi, or whichever active host is reading the repo skill surface, directly:
 
 ```
 "Use the canon-maintenance skill to audit this component"
@@ -258,7 +268,7 @@ Tell Claude Code directly:
 
 ### Contextual Activation
 
-Skills activate automatically when context matches:
+Depending on the host, skills may activate automatically when context matches:
 
 | If you mention... | Skill activates |
 |-------------------|-----------------|

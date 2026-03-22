@@ -1,5 +1,7 @@
 # Migration Spec: [Migration Name]
 
+> Compatibility note: Pi plus Loom is the default repo workflow. Use this template only for the older Claude Code plus Beads path.
+
 ## Goal
 
 Migrate [source] to [target] with zero downtime and full data integrity.
@@ -93,7 +95,7 @@ Migrate [source] to [target] with zero downtime and full data integrity.
 ## Harness Instructions
 
 Migrations require extra caution:
-1. Create Beads issues for each phase
+1. Create Beads issues for each phase in the compatibility flow
 2. Include rollback as explicit issue
 3. Checkpoint after Phase 1 (before execution)
 4. Never proceed to Phase 2 without user confirmation

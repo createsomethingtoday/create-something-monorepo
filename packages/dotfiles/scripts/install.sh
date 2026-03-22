@@ -6,9 +6,13 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
+REPO_ROOT="$(cd "$DOTFILES_DIR/../.." && pwd)"
 
 echo "CREATE SOMETHING Dotfiles Installer"
 echo "──────────────────────────────────────"
+echo ""
+echo "Pi/OpenAI is the primary repo workflow."
+echo "Claude Code assets below remain available as compatibility surfaces."
 echo ""
 
 # ─────────────────────────────────────────────────────────────
@@ -128,7 +132,7 @@ if ! command -v gt &> /dev/null; then
     echo ""
     echo "  Gastown (gt) not found. Install with:"
     echo "    go install github.com/steveyegge/gastown/cmd/gt@latest"
-    echo "  Gastown provides multi-agent orchestration for Claude Code."
+    echo "  Gastown remains available for legacy Claude-oriented multi-agent workflows."
     echo ""
 fi
 
@@ -214,11 +218,19 @@ ln -sf "$DOTFILES_DIR/nvim" ~/.config/nvim
 echo "  Symlinked nvim → ~/.config/nvim"
 
 # ─────────────────────────────────────────────────────────────
-# Claude Code
+# Pi / Claude Compatibility
 # ─────────────────────────────────────────────────────────────
 
 echo ""
-echo "Installing Claude Code configuration..."
+echo "Pi is the primary repo-owned agent surface."
+echo "Repo-local Pi resources live at: $REPO_ROOT/.pi"
+if ! command -v pi &> /dev/null; then
+    echo "  Pi CLI not found. Install with:"
+    echo "    npm install -g @mariozechner/pi-coding-agent"
+    echo ""
+fi
+
+echo "Installing Claude Code compatibility configuration..."
 
 # Create claude directory
 mkdir -p ~/.claude
@@ -244,22 +256,25 @@ echo "  Copied MCP templates → ~/.claude/mcp-templates/"
 # Copy harness templates
 mkdir -p ~/.claude/harness-templates
 cp -r "$DOTFILES_DIR/claude-code/harness-templates/"* ~/.claude/harness-templates/
-echo "  Copied harness templates → ~/.claude/harness-templates/"
+echo "  Copied legacy harness templates → ~/.claude/harness-templates/"
 
 # Check if claude is installed
 if ! command -v claude &> /dev/null; then
     echo ""
-    echo "  Claude Code CLI not found. Install with:"
+    echo "  Claude Code CLI not found. Install only if you want the compatibility path:"
     echo "    npm install -g @anthropic-ai/claude-code"
     echo ""
 fi
 
 # ─────────────────────────────────────────────────────────────
-# Codex
+# Codex Compatibility
 # ─────────────────────────────────────────────────────────────
 
 echo ""
-"$SCRIPT_DIR/install-codex-skills.sh"
+echo "Codex compatibility skills are no longer installed by default."
+echo "Pi is the primary repo-owned agent surface."
+echo "If you still want the Codex compatibility layer, run:"
+echo "  pnpm --filter @create-something/dotfiles install-codex-skills"
 
 # ─────────────────────────────────────────────────────────────
 # Credentials Setup
@@ -311,20 +326,25 @@ echo "Signatures are version-controlled in the repo."
 echo "Edit them at: packages/dotfiles/neomutt/signatures/"
 echo ""
 echo "Next steps:"
-echo "  1. Configure email credentials if skipped: ~/.config/neomutt/credentials/"
-echo "  2. Configure Claude Code MCP servers: ~/.claude/settings.json"
+echo "  1. Verify the Pi/OpenAI path from the repo root:"
+echo "     - cd \"$REPO_ROOT\""
+echo "     - pnpm pi:doctor"
+echo "     - use pi or pnpm pi:code-quality / pnpm pi:policy for repo agent work"
+echo "  2. Configure email credentials if skipped: ~/.config/neomutt/credentials/"
+echo "  3. Configure Claude Code compatibility only if you still need it: ~/.claude/settings.json"
 echo "     - Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN for Cloudflare MCP"
 echo "     - See ~/.claude/mcp-templates/ for additional server configs"
-echo "  3. Set up Gastown (multi-agent orchestration):"
+echo "  4. Set up Gastown only if you still use the legacy multi-agent path:"
 echo "     - gt install ~/gt"
 echo "     - gt rig add csm /path/to/create-something-monorepo"
 echo "     - gt start (launches tmux sessions)"
-echo "  4. Launch tools to verify:"
+echo "  5. Launch tools to verify:"
+echo "     - pi (repo agent host)"
 echo "     - neomutt (email)"
 echo "     - wezterm (terminal)"
 echo "     - tmux (session persistence)"
-echo "     - claude (AI development)"
+echo "     - claude (compatibility host, optional)"
 echo ""
-echo "Harness templates available at: ~/.claude/harness-templates/"
-echo "Gastown documentation: .claude/rules/gastown-patterns.md"
+echo "Legacy Claude/Beads harness templates available at: ~/.claude/harness-templates/"
+echo "Gastown documentation (legacy multi-agent path): .claude/rules/gastown-patterns.md"
 echo ""

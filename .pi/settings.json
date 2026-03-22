@@ -1,0 +1,5 @@
+{
+  "defaultProvider": "openai",
+  "defaultThinkingLevel": "medium",
+  "transport": "sse"
+}

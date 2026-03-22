@@ -49,6 +49,7 @@ Read in this order when you need broad repo context:
 
 ### Agent execution, observability, and UI legibility
 
+- [guides/PI_WORKFLOW.md](./guides/PI_WORKFLOW.md)
 - [guides/AGENT_LEGIBILITY_CONTRACT.md](./guides/AGENT_LEGIBILITY_CONTRACT.md)
 - [guides/CODING_AGENT_HARNESS_PATTERN.md](./guides/CODING_AGENT_HARNESS_PATTERN.md)
 - [guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md](./guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md)
@@ -80,6 +81,7 @@ Read in this order when you need broad repo context:
 
 - [guides/EXAMPLES.md](./guides/EXAMPLES.md)
 - [guides/COMPONENT_GUIDE.md](./guides/COMPONENT_GUIDE.md)
+- [guides/PI_WORKFLOW.md](./guides/PI_WORKFLOW.md)
 - [guides/SKILLS.md](./guides/SKILLS.md)
 - [guides/STEEL_CLI.md](./guides/STEEL_CLI.md)
 - [guides/UNDERSTANDING_TEMPLATE.md](./guides/UNDERSTANDING_TEMPLATE.md)
@@ -123,6 +125,7 @@ docs/
   [guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md](./guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md)
 
 - **Working on agent reliability or visibility**:
+  [guides/PI_WORKFLOW.md](./guides/PI_WORKFLOW.md),
   [guides/AGENT_LEGIBILITY_CONTRACT.md](./guides/AGENT_LEGIBILITY_CONTRACT.md),
   [guides/CODING_AGENT_HARNESS_PATTERN.md](./guides/CODING_AGENT_HARNESS_PATTERN.md),
   [guides/RECURRING_CLEANUP_LOOPS.md](./guides/RECURRING_CLEANUP_LOOPS.md),

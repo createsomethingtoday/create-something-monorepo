@@ -1,5 +1,7 @@
 # Audit Spec: [Audit Name]
 
+> Compatibility note: Pi plus Loom is the default repo workflow. Use this template only for the older Claude Code plus Beads path.
+
 ## Goal
 
 Audit [scope] for [issue type] and fix all findings.
@@ -63,7 +65,7 @@ grep -r "bg-white\|bg-black\|text-white" --include="*.svelte" packages/
 
 - [ ] All P0 issues fixed
 - [ ] All P1 issues fixed or deferred with justification
-- [ ] P2 issues logged in Beads for future
+- [ ] P2 issues logged in Beads for future work in the compatibility flow
 - [ ] No regressions introduced
 - [ ] Build passes
 - [ ] Tests pass
@@ -72,7 +74,7 @@ grep -r "bg-white\|bg-black\|text-white" --include="*.svelte" packages/
 
 1. **Audit Report**: Summary of findings
 2. **Fixes**: Commits addressing each issue
-3. **Backlog**: Beads issues for deferred work
+3. **Backlog**: Beads issues for deferred work in the compatibility flow
 
 ---
 
@@ -80,7 +82,7 @@ grep -r "bg-white\|bg-black\|text-white" --include="*.svelte" packages/
 
 Audits generate many small fixes:
 1. First session: Scan and log all findings
-2. Create one Beads issue per finding (or per file for small fixes)
+2. Create one Beads issue per finding (or per file for small fixes) in the compatibility flow
 3. Work through P0 first, then P1
 4. Create backlog issues for P2
 5. Checkpoint after each priority tier

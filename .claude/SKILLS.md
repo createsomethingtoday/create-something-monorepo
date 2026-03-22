@@ -1,5 +1,7 @@
 # CREATE SOMETHING Skills Registry
 
+> Compatibility note: repo-owned workflow skills are now canonical in `.pi/skills/`. Use `AGENTS.md`, `docs/guides/PI_WORKFLOW.md`, and `docs/guides/SKILLS.md` for the primary Pi-first workflow. This registry remains for Claude-oriented compatibility surfaces.
+
 This index catalogs all available agent skills for the CREATE SOMETHING system. Skills are modular instruction sets that agents can load dynamically based on task context.
 
 ## Quick Reference

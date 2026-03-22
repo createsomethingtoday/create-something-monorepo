@@ -1,6 +1,7 @@
 # Harness Patterns
 
 > **NOTE**: Harness capabilities have been unified into **Loom**, the single coordination layer.
+> Pi plus Loom is the canonical repo workflow; this file remains as a Claude-oriented compatibility reference.
 > The patterns below remain valid, but use Loom tools instead:
 > - `loom_work` for quick single-agent work
 > - `loom_session_start` / `loom_checkpoint` for sessions
@@ -34,13 +35,13 @@ Loom handles the rest: picking the right model, running tests, creating checkpoi
 |-----------|---------|
 | Single issue to fix | `lm claim <id>` |
 | New feature idea | `lm create "Add dark mode toggle"` |
-| Spec file ready | `bd work --spec specs/auth.yaml` |
+| Legacy Claude/Beads spec file ready | `bd work --spec specs/auth.yaml` |
 | Complex work (architecture, refactors) | `run harness in the background: ultrathink` |
 | Multi-file parallel work | Use [Gastown](./gastown-patterns.md) instead |
 
 ---
 
-## Invocation Examples
+## Legacy Invocation Examples
 
 ```bash
 # Work on specific issue
@@ -50,7 +51,7 @@ run harness on cs-abc123
 run harness in the background: ultrathink
 
 # Parse spec file
-run harness on specs/auth-feature.yaml
+run harness on specs/auth.yaml
 
 # Create and work immediately
 run harness: create and work on "Add user settings page"

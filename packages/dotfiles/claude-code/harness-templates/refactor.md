@@ -1,5 +1,7 @@
 # Refactor Spec: [Refactor Name]
 
+> Compatibility note: Pi plus Loom is the default repo workflow. Use this template only for the older Claude Code plus Beads path.
+
 ## Goal
 
 [Describe the structural improvement without changing behavior]

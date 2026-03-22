@@ -12,11 +12,12 @@ This is where Zuhandenheit (ready-to-hand) manifests in terminal tooling. When c
 
 | Dependency | Why It Matters |
 |------------|----------------|
+| **Pi / .pi** | Primary repo-owned agent workflow surface |
 | **Beads** | Agent-native task management |
 | **Neomutt** | Email as communication, not inbox management |
 | **WezTerm** | Terminal emulator with Canon aesthetics |
 | **Neovim** | Text editing aligned with Canon principles |
-| **Claude Code** | AI-native development environment |
+| **Claude Code** | Compatibility host for older agent workflows |
 
 ## Enables Understanding Of
 
@@ -31,10 +32,11 @@ This is where Zuhandenheit (ready-to-hand) manifests in terminal tooling. When c
 
 ```
 packages/dotfiles/
+├── ../.pi/                    → Canonical repo-owned Pi workflow resources
 ├── claude-code/
 │   ├── settings.json           → MCP servers, permissions
 │   ├── mcp-templates/          → Pre-configured MCP servers
-│   └── harness-templates/      → Multi-session work templates
+│   └── harness-templates/      → Legacy Claude/Beads work templates
 ├── wezterm/
 │   ├── wezterm.lua             → Main configuration
 │   └── colors/                 → Canon color schemes
@@ -65,10 +67,15 @@ packages/dotfiles/
 
 ## To Understand This Package, Read
 
-**For Claude Code**:
-1. **`claude-code/settings.json`** — MCP servers and permissions
-2. **`claude-code/mcp-templates/`** — Pre-configured integrations
-3. **`claude-code/harness-templates/`** — Multi-session workflows
+**For repo agent workflow (primary)**:
+1. **`../../AGENTS.md`** — repo operating model
+2. **`../../docs/guides/PI_WORKFLOW.md`** — Pi-first workflow
+3. **`../../.pi/`** — repo-local Pi settings, skills, prompts, and sessions
+
+**For Claude Code compatibility**:
+1. **`claude-code/settings.json`** — compatibility MCP servers and permissions
+2. **`claude-code/mcp-templates/`** — pre-configured integrations
+3. **`claude-code/harness-templates/`** — legacy multi-session workflows
 
 **For Terminal (WezTerm)**:
 1. **`wezterm/wezterm.lua`** — Main configuration
@@ -77,11 +84,11 @@ packages/dotfiles/
 **For Email (Neomutt)**:
 1. **`neomutt/neomuttrc`** — Entry point
 2. **`neomutt/bindings/core.muttrc`** — Vim keybindings
-3. **`.claude/rules/neomutt-patterns.md`** — Full reference
+3. **`.claude/rules/neomutt-patterns.md`** — Compatibility and historical detailed reference
 
 **For Tasks (Beads)**:
 1. **`beads/config.yaml`** — Beads configuration
-2. **`.claude/rules/beads-patterns.md`** — Usage patterns
+2. **`.claude/rules/beads-patterns.md`** — Compatibility and historical usage patterns
 
 ## Keybinding Grammar
 
@@ -114,7 +121,7 @@ All tools use the Canon palette:
 | **Warning** | Flagged/due | `color136` (#aa8844) |
 | **Info** | Links/metadata | `color67` (#4477aa) |
 
-## Claude Code Configuration
+## Legacy Claude Code Compatibility Configuration
 
 ### MCP Server Templates
 
@@ -132,15 +139,15 @@ Pre-configured integrations for common services:
 
 ### Harness Templates
 
-Multi-session autonomous work templates:
+Legacy multi-session autonomous work templates:
 
 | Template | Use Case | Sessions |
 |----------|----------|----------|
-| `feature.yaml` | New feature implementation | 5-10 |
-| `migration.yaml` | Database/API migration | 10-20 |
-| `refactor.yaml` | Large-scale refactoring | 15-30 |
+| `feature.md` | New feature implementation | 5-10 |
+| `migration.md` | Database/API migration | 10-20 |
+| `refactor.md` | Large-scale refactoring | 15-30 |
 
-**Usage**: `harness start claude-code/harness-templates/feature.yaml`
+**Usage**: Copy one of the markdown templates into a working spec only when you intentionally use the older Claude plus Beads workflow. For current repo work, start with Loom and the Pi lane commands.
 
 ## WezTerm Configuration
 
@@ -159,7 +166,7 @@ Terminal emulator with Canon aesthetics:
 Agent-native task management. Beads replaces Taskwarrior because the primary user changed from human to AI agent.
 
 **Why Beads**:
-- Cross-session memory for Claude Code agents
+- Cross-session memory for AI agents and legacy Claude-oriented harnesses
 - Git-synced issue tracking (`.beads/issues.jsonl`)
 - Robot-optimized output (`--robot-priority`, `--robot-insights`)
 - Collision-resistant hash IDs (enables multi-agent work)
@@ -221,9 +228,10 @@ The `scripts/install.sh` script:
 
 1. Creates `~/.config/` directories
 2. Symlinks dotfiles → `~/.config/`
-3. Creates credential directories (gitignored)
-4. Prompts for sensitive values (passwords, tokens)
-5. Verifies installation
+3. Prints the Pi/OpenAI verification path for repo work
+4. Creates credential directories (gitignored)
+5. Prompts for sensitive values (passwords, tokens)
+6. Verifies installation
 
 **Symlinks created**:
 ```
@@ -275,7 +283,7 @@ Local webhook development and testing:
 | `stripe events list` | Recent webhook events |
 | `stripe trigger checkout.session.completed` | Test checkout event |
 
-**Stripe MCP** (via Claude Code):
+**Stripe MCP** (via an MCP-capable host such as Pi or a compatibility client):
 - Query production data: "List active subscriptions"
 - AI-assisted debugging: "Show failed webhook deliveries"
 - Uses OAuth (authenticates via browser)
@@ -308,7 +316,8 @@ dotfiles (Configuration) ◄── "Do tools recede?"     │
 | Task | Start Here |
 |------|------------|
 | Install dotfiles | `pnpm --filter=dotfiles install-dotfiles` |
-| Configure Claude Code MCP | `claude-code/mcp-templates/` |
+| Verify Pi/OpenAI repo workflow | `../../docs/guides/PI_WORKFLOW.md` |
+| Configure legacy Claude compatibility MCP | `claude-code/mcp-templates/` |
 | Set up email account | `neomutt/accounts/` |
 | Customize terminal colors | `wezterm/colors/` |
 | Add keybinding | `neomutt/bindings/` or `wezterm/wezterm.lua` |
@@ -348,9 +357,10 @@ Don't configure structure that doesn't need configuring (default Vim navigation 
 
 ## References
 
-- **[Dotfiles Conventions](../../.claude/rules/dotfiles-conventions.md)** — Full conventions
-- **[Neomutt Patterns](../../.claude/rules/neomutt-patterns.md)** — Email configuration
-- **[Beads Patterns](../../.claude/rules/beads-patterns.md)** — Task management
+- **[PI Workflow](../../docs/guides/PI_WORKFLOW.md)** — Canonical Pi-first repo workflow
+- **[Dotfiles Conventions](../../.claude/rules/dotfiles-conventions.md)** — Compatibility and historical conventions reference
+- **[Neomutt Patterns](../../.claude/rules/neomutt-patterns.md)** — Compatibility and historical email configuration reference
+- **[Beads Patterns](../../.claude/rules/beads-patterns.md)** — Compatibility and historical task management reference
 
 ---
 

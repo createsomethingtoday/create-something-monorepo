@@ -1,5 +1,7 @@
 # Research Spec: [Research Topic]
 
+> Compatibility note: Pi plus Loom is the default repo workflow. Use this template only for the older Claude Code plus Beads path.
+
 ## Research Question
 
 [The specific question to answer]

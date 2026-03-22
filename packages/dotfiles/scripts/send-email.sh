@@ -12,7 +12,7 @@
 #   --account halfdozen
 #   --account webflow
 #
-# Claude Code can invoke this to send email on your behalf.
+# Pi, Claude Code, or other terminal agents can invoke this to send email on your behalf.
 
 set -e
 

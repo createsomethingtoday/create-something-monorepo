@@ -2,13 +2,13 @@
 
 > *"Tools should be designed for their actual users."*
 
-Beads replaces Taskwarrior because the primary user changed: Claude Code agents need cross-session memory. Taskwarrior was designed for humans; Beads is designed for AI agents.
+Beads replaces Taskwarrior because the primary user changed: AI agents need cross-session memory. Taskwarrior was designed for humans; Beads is designed for agent-native workflows, including Pi-first repo work and legacy compatibility hosts.
 
 ## Why Beads
 
 | Principle | Application |
 |-----------|-------------|
-| **Rams #2** (Useful) | Designed for actual users—AI agents in Claude Code sessions |
+| **Rams #2** (Useful) | Designed for actual users—AI agents across Pi-first and compatibility sessions |
 | **Rams #5** (Unobtrusive) | Tool recedes; `bv --robot-priority` speaks machine to machine |
 | **Rams #10** (As little as possible) | One system replaces Taskwarrior + session-local tracking |
 | **Zuhandenheit** | Ready-to-hand; the tool disappears into the work |

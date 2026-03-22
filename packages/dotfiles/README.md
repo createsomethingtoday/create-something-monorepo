@@ -11,18 +11,26 @@ Terminal tooling follows the Subtractive Triad:
 
 ## Contents
 
-### claude-code/
+### .pi/ (repo root)
 
-Claude Code settings and templates:
+Canonical Pi workflow resources live at the repository root:
+- `.pi/settings.json` - project Pi defaults
+- `.pi/skills/` - canonical repo-owned workflow skills
+- `.pi/prompts/` - lane prompts and startup context
+- `scripts/pi/` - lane runners and diagnostics
+
+### claude-code/ (compatibility only)
+
+Claude Code settings and templates for legacy compatibility:
 - `settings.json` - MCP servers, permissions, custom instructions
 - `mcp-templates/` - Pre-configured MCP server configs (Slack, Linear, Stripe, etc.)
-- `harness-templates/` - Multi-session work templates (feature, migration, refactor)
+- `harness-templates/` - Legacy Claude plus Beads work templates
 
 ### codex/
 
-Repo-owned Codex assets:
+Compatibility-only Codex assets:
 - `skills/` - CREATE SOMETHING Codex skills and guardrails
-- `README.md` - installation and usage notes for Codex skills
+- `README.md` - installation and usage notes for Codex compatibility skills
 
 ### wezterm/
 
@@ -60,7 +68,15 @@ Neovim configuration (Canon-aligned).
 pnpm --filter=dotfiles install-dotfiles
 ```
 
-To install only the repo-owned Codex skills:
+This installs the shared terminal tooling, but it no longer auto-installs the Codex compatibility layer.
+
+For repo agent work, verify the Pi path separately from the repo root:
+
+```bash
+pnpm pi:doctor
+```
+
+To install only the compatibility Codex skills:
 
 ```bash
 pnpm --filter @create-something/dotfiles install-codex-skills
@@ -86,5 +102,6 @@ Consistent across all tools:
 
 ## Related
 
-- `.claude/rules/dotfiles-conventions.md` - Full conventions
-- `.claude/rules/neomutt-patterns.md` - Email configuration details
+- `docs/guides/PI_WORKFLOW.md` - Pi-first repo workflow
+- `.claude/rules/dotfiles-conventions.md` - Compatibility and historical conventions reference
+- `.claude/rules/neomutt-patterns.md` - Compatibility and historical email configuration reference

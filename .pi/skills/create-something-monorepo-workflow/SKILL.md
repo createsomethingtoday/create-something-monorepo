@@ -1,11 +1,9 @@
 ---
 name: create-something-monorepo-workflow
-description: Compatibility mirror of the CREATE SOMETHING monorepo workflow skill. Use when a non-Pi host reads .ona/skills, especially for Ona environment setup, lane selection, Loom coordination, or choosing repo tasks and services.
+description: Follow the CREATE SOMETHING monorepo workflow in Pi. Use when starting work in this repository, choosing a lane, coordinating Loom work, or deciding which repo task or service to run.
 ---
 
 # CREATE SOMETHING Monorepo Workflow
-
-This file is a compatibility mirror. The canonical repo-owned version lives at `.pi/skills/create-something-monorepo-workflow/SKILL.md`.
 
 Use this skill when the task is about operating inside this repository rather than only editing one isolated file.
 
@@ -13,7 +11,7 @@ Use this skill when the task is about operating inside this repository rather th
 
 1. Read `AGENTS.md` for the repo operating model.
 2. Read `docs/guides/PI_WORKFLOW.md` for the Pi host workflow in this repo.
-3. Read `docs/guides/ONA_CORE_ROLLOUT.md` when the task touches Ona environment setup, project layout, secrets, or runtime alignment.
+3. Read `docs/guides/ONA_CORE_ROLLOUT.md` when the task touches runtime setup, project layout, secrets, or service alignment.
 4. Treat `.ona/automations.yaml` as the source of truth for startup tasks, manual checks, and dev services.
 5. Treat `.devcontainer/devcontainer.json` and `.ona/scripts/bootstrap.sh` as the source of truth for the pinned runtime.
 
@@ -42,7 +40,7 @@ Use these first:
 - `bootstrap` for workspace startup
 - `repo-lint` for workspace linting
 - `repo-check` for workspace validation
-- `agency-check` and `agency-build` for agency-specific validation/builds
+- `agency-check` and `agency-build` for agency-specific validation and builds
 - `agency-dev`, `product-dev`, `services-dev`, or `platform-dev` for lane dev loops
 - `webflow-dashboard-cloud-*` tasks and service for the Webflow Cloud app
 
@@ -65,7 +63,7 @@ Only broaden to repo-wide commands when the work clearly spans multiple lanes.
 
 ## Anti-Patterns
 
-- Do not run `lm init` in a provisioned Ona environment that already has remote Loom.
+- Do not run `lm init` in a provisioned environment that already has remote Loom.
 - Do not use bare `lm done` for shared remote work in this repo.
 - Do not bypass `.ona/automations.yaml` with a custom command when an equivalent task or service already exists.
 - Do not treat a newer Node version as equivalent to the pinned toolchain.
@@ -77,6 +75,6 @@ Only broaden to repo-wide commands when the work clearly spans multiple lanes.
 Slow down and verify before proceeding when:
 
 - a remote Loom command fails because identity or task ownership is unclear
-- the required Ona project secret is missing
+- the required project secret is missing
 - the task spans multiple lanes and the narrowest owner is ambiguous
 - a deploy or preview action would use project-scoped credentials

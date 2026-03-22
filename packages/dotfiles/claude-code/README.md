@@ -1,5 +1,7 @@
 # Claude Code Configuration
 
+> Compatibility note: Pi is the canonical repo-owned agent host for this repository. Start with `AGENTS.md` and `docs/guides/PI_WORKFLOW.md` for the primary workflow. Use this directory only when you explicitly want the Claude compatibility path.
+
 Production-tested Claude Code settings from CREATE SOMETHING methodology.
 
 ## Installation

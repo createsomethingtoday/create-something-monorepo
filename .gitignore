@@ -88,6 +88,9 @@ __pycache__/
 !.judgment/policies/
 !.judgment/policies/**
 
+# Pi local session state
+.pi/sessions/
+
 # Python virtual environments
 venv/
 .venv/

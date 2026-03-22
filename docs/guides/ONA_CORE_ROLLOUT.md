@@ -7,6 +7,7 @@ This guide wires the CREATE SOMETHING monorepo into Ona Core without splitting t
 - `.devcontainer/` defines the shared monorepo environment.
 - `.ona/automations.yaml` defines the startup task plus the lane services and manual tasks.
 - `.ona/skills/` defines repo-local Ona workflows that agents discover on demand.
+- `.pi/skills/` defines the Pi-native equivalents for shared terminal-agent work in this repository.
 - `.nvmrc` pins the local and remote Node runtime to `22.21.1`.
 - `AGENTS.md` remains the primary agent instruction file for Ona agents.
 - Any app or package that Ona must build or deploy has to be Git-tracked.
@@ -35,6 +36,7 @@ Use these repo-tracked paths in each project:
 - Automations: `.ona/automations.yaml`
 - Agent instructions: `AGENTS.md`
 - Repo skills: `.ona/skills/`
+- Pi skills: `.pi/skills/`
 
 Project defaults to set in the Ona UI:
 

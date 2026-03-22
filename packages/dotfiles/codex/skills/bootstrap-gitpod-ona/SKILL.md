@@ -1,6 +1,6 @@
 ---
 name: bootstrap-gitpod-ona
-description: Prepare Gitpod, Ona, and similar ephemeral cloud workspaces so repo-owned Codex skills, bootstrap commands, and verification checks are available before development begins. Use when Codex is running in Gitpod/Ona, a devcontainer, or another fresh workspace and needs to detect the environment, install repo-owned skills into $CODEX_HOME, verify workspace bootstrap, or adapt the same pattern to another project.
+description: Prepare Gitpod, Ona, and similar ephemeral cloud workspaces when Codex compatibility is explicitly needed. Pi is the primary repo-owned agent surface; use this skill only when a Codex session still needs the compatibility skills installed into $CODEX_HOME.
 ---
 
 # Bootstrap Gitpod Ona
@@ -10,10 +10,11 @@ Use this skill before task work when the main risk is an unprepared workspace ra
 ## Start Here
 
 1. Detect whether the workspace is ephemeral or freshly provisioned.
-2. Find the canonical repo-owned Codex skill source.
-3. Install the skills into `${CODEX_HOME:-$HOME/.codex}/skills`.
-4. Verify the expected symlinks or copied directories exist.
-5. Only then rely on the installed skills during follow-up work.
+2. Confirm Codex compatibility is actually needed for this workspace.
+3. Find the repo-owned Codex compatibility skill source.
+4. Install the skills into `${CODEX_HOME:-$HOME/.codex}/skills`.
+5. Verify the expected symlinks or copied directories exist.
+6. Only then rely on the installed skills during follow-up work.
 
 Check these signals first:
 
@@ -26,10 +27,11 @@ Check these signals first:
 In CREATE SOMETHING repositories, use this order:
 
 1. Read `AGENTS.md` and the active workspace bootstrap files.
-2. Treat `packages/dotfiles/codex/skills/` as the canonical repo-owned Codex skill source.
-3. Use `pnpm --filter @create-something/dotfiles install-codex-skills` to link those skills into `${CODEX_HOME:-$HOME/.codex}/skills`.
-4. If the install is still manual, add the install command to the workspace bootstrap path instead of documenting another one-off setup step.
-5. After bootstrap, continue with the repo's normal coordination and quality workflow.
+2. Treat `.pi/` as the canonical repo-owned agent surface for this repository.
+3. Use the Codex compatibility layer only when the active session is actually running in Codex and needs repo-owned skills installed.
+4. If needed, use `pnpm --filter @create-something/dotfiles install-codex-skills` to link those compatibility skills into `${CODEX_HOME:-$HOME/.codex}/skills`.
+5. Do not add the compatibility install back into default workspace bootstrap unless the repo explicitly decides to make Codex primary again.
+6. After bootstrap, continue with the repo's normal coordination and quality workflow.
 
 ## Install And Verify
 
@@ -40,6 +42,8 @@ pnpm install --frozen-lockfile
 pnpm --filter @create-something/dotfiles install-codex-skills
 ls -la "${CODEX_HOME:-$HOME/.codex}/skills"
 ```
+
+Only run the compatibility install when Codex is the active host for the work.
 
 Use a temporary install root when you only need verification and do not want to touch the current home directory:
 
@@ -54,7 +58,7 @@ Confirm that:
 - the target directory exists
 - the expected skill names appear there
 - symlinks resolve back to the repo-owned source directory when the installer uses symlinks
-- the workspace bootstrap path runs the install automatically in fresh environments
+- the compatibility install was intentional rather than a default bootstrap side effect
 
 ## Adapt To Other Projects
 

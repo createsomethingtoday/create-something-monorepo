@@ -1,10 +1,12 @@
 # MCP Server Templates
 
+> Compatibility note: Pi is the canonical repo-owned agent host for this repository. Use these templates only when you intentionally configure the Claude compatibility path.
+
 Pre-configured Model Context Protocol (MCP) server templates for common integrations.
 
 ## Usage
 
-Copy the relevant server configuration to your `~/.claude/settings.json` under `mcpServers`.
+Copy the relevant server configuration to your `~/.claude/settings.json` under `mcpServers` only when you are using the Claude compatibility host.
 
 ## Available Templates
 

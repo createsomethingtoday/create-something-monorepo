@@ -1,6 +1,7 @@
 #!/bin/bash
-# Install repo-owned Codex skills without disturbing unrelated global skills.
-# Use symlinks so repo updates stay live and we avoid duplicating files.
+# Install Codex compatibility skills only when a Codex session explicitly needs
+# the repo-owned compatibility layer. Use symlinks so repo updates stay live
+# and we avoid duplicating files.
 
 set -euo pipefail
 
@@ -10,7 +11,8 @@ SOURCE_DIR="$DOTFILES_DIR/codex/skills"
 TARGET_ROOT="${CODEX_HOME:-$HOME/.codex}"
 TARGET_DIR="$TARGET_ROOT/skills"
 
-echo "Installing Codex skills..."
+echo "Installing Codex compatibility skills into $TARGET_DIR..."
+echo "Pi remains the default repo-owned agent workflow."
 
 mkdir -p "$TARGET_DIR"
 
@@ -18,7 +20,7 @@ shopt -s nullglob
 skill_paths=("$SOURCE_DIR"/*)
 
 if [ "${#skill_paths[@]}" -eq 0 ]; then
-    echo "  No repo-owned Codex skills found in $SOURCE_DIR"
+    echo "  No Codex compatibility skills found in $SOURCE_DIR"
     exit 0
 fi
 
@@ -37,4 +39,5 @@ for skill_path in "${skill_paths[@]}"; do
     installed_count=$((installed_count + 1))
 done
 
-echo "  Linked $installed_count repo-owned Codex skill(s)"
+echo "  Linked $installed_count Codex compatibility skill(s)"
+echo "  Use this only for explicit Codex compatibility sessions."

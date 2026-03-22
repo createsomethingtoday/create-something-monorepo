@@ -1,5 +1,7 @@
 # CREATE SOMETHING Rules Registry
 
+> Compatibility note: Pi is the primary repo-owned agent host. Use `AGENTS.md` and `docs/guides/PI_WORKFLOW.md` for the current repo workflow. This registry remains available for Claude-oriented compatibility and historical rule discovery.
+
 This index catalogs all domain-specific rules that agents should apply during development. Rules differ from skills: **skills are invocable procedures**, while **rules are always-active constraints**.
 
 ## Quick Reference by Impact Tier

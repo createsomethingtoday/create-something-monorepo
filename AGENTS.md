@@ -2,7 +2,7 @@
 
 This repository uses **Loom** (`lm`) for agent-native coordination.
 
-Important: local `lm` talks to the repo-local `.loom` database. Shared coordination for Symphony and other remote agent lanes now uses the remote Loom MCP control plane at `https://loom.mcp.createsomething.agency/mcp`.
+Important: local `lm` talks to the repo-local `.loom` database. Shared coordination for Pi and other remote agent lanes uses the remote Loom MCP control plane at `https://loom.mcp.createsomething.agency/mcp`.
 
 For a fresh local clone that has not initialized the repo-local `.loom` database yet:
 
@@ -19,7 +19,7 @@ lm ready
 pnpm loom:remote ready
 ```
 
-For shared remote Loom operations, use:
+Pi is now the default terminal agent runtime for shared coding lanes in this repo. For shared remote Loom operations, use:
 
 ```bash
 pnpm loom:remote ready
@@ -83,6 +83,15 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 3. Run the relevant quality gates.
 4. Record evidence in Loom and use the narrowest trustworthy validation surface.
 5. Push or open/update a PR only when production promotion, shared review, or explicit user intent requires it.
+
+For Pi-driven work, use the repo-local lane docs and prompt templates:
+
+- `.pi/settings.json`
+- `docs/guides/PI_WORKFLOW.md`
+- `automation/pi/code-quality/README.md`
+- `automation/pi/policy/README.md`
+- `.pi/prompts/`
+- `.pi/skills/`
 
 Core commands:
 

@@ -1,5 +1,7 @@
 # Feature Spec: [Feature Name]
 
+> Compatibility note: Pi plus Loom is the default repo workflow. Use this template only for the older Claude Code plus Beads path.
+
 ## Goal
 
 [One sentence describing what success looks like]
@@ -58,7 +60,7 @@
 ## Harness Instructions
 
 When working on this spec:
-1. Break into 3-7 Beads issues (one per logical unit)
+1. Break into 3-7 Beads issues (one per logical unit in the compatibility flow)
 2. Create dependency graph between issues
 3. Work through issues in order
 4. Commit after each issue completion

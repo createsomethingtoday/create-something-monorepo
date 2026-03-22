@@ -1,5 +1,7 @@
 # CREATE SOMETHING Monorepo
 
+> Compatibility note: Pi is the canonical repo-owned agent host for this repository. Start with `AGENTS.md` and `docs/guides/PI_WORKFLOW.md` for the current workflow. This file remains as a Claude-oriented compatibility entrypoint.
+
 ## Philosophy: The Subtractive Triad
 
 **Meta-principle**: Creation is the discipline of removing what obscures.
