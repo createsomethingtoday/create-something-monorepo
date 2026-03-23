@@ -3,8 +3,6 @@
   import {
     AnimatedGridPattern,
     BlurFade,
-    BorderBeam,
-    OrbitingCircles,
     ShimmerButton
   } from '@create-something/canon/magicui';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
@@ -12,17 +10,25 @@
   // Structured data for SEO/AEO
   const services = [
     {
-      name: 'Workflow Infrastructure',
+      name: 'Workflow Mapping Session',
       description:
-        'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
-      type: 'Implementation Sprint',
-      price: 'Custom',
-      priceDescription: 'Scoped build with optional ongoing support'
+        'A diagnostic session that maps handoffs, approval boundaries, failure modes, and the right implementation path.',
+      type: 'Diagnostic Session',
+      price: 'Scoped',
+      priceDescription: 'Booked directly'
+    },
+    {
+      name: 'Qualified MCP Hub Pilot',
+      description:
+        'A constrained pilot for one narrow workflow with clear ownership, manageable risk, and a defined checkpoint.',
+      type: 'Qualified Pilot',
+      price: 'Qualified',
+      priceDescription: 'Review required'
     },
     {
       name: 'Policy OS',
       description:
-        'The oversight layer: policy artifacts, approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
+        'The governed execution layer: approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly governed execution layer'
@@ -34,6 +40,24 @@
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation with optional ongoing support'
+    }
+  ];
+
+  const heroSignals = [
+    {
+      step: '01',
+      title: 'Trusted Connectivity',
+      copy: 'Custom MCP servers keep your data secure and control exactly what AI can see or touch.'
+    },
+    {
+      step: '02',
+      title: 'Governed Execution',
+      copy: 'Agent skills that follow strict runbooks. Safe actions clear automatically; high-risk edge cases wait for your approval.'
+    },
+    {
+      step: '03',
+      title: 'Guaranteed Outcomes',
+      copy: 'Production-grade infrastructure anchored by regression checks and monthly tuning.'
     }
   ];
 
@@ -152,9 +176,9 @@
 {/snippet}
 
 <SEO
-  title="Production-Safe Workflow Infrastructure | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency fixes the workflow your team keeps protecting by hand, then adds approvals and controls as the risk rises."
-  keywords="workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
+  title="Workflow Infrastructure for Ops and RevOps | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING .agency helps Ops and RevOps teams fix the workflow they still protect by hand, qualify low-risk pilots, and add Policy OS when approvals and auditability matter."
+  keywords="ops workflow infrastructure, revops automation, policy os, workflow mapping session, governed execution, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -176,125 +200,93 @@
   <div class="hero-container">
     <div class="hero-content">
       <BlurFade delay={0}>
-        <h1 class="hero-title">Fix the workflow your team still protects by hand.</h1>
+        <p class="hero-eyebrow">Workflow Infrastructure for Ops and RevOps</p>
       </BlurFade>
-      <BlurFade delay={0.2}>
+      <BlurFade delay={0.08}>
+        <h1 class="hero-title">Fix the workflow Ops still protects by hand.</h1>
+      </BlurFade>
+      <BlurFade delay={0.16}>
         <p class="hero-detail">
-          I turn broken handoffs, approval gaps, and cross-system drag into a workflow your team
-          can trust in production. Start with one workflow. Add Policy OS when speed needs
-          guardrails.
+          We build the connectivity and outcome layers between your tools and AI. Delegate complex
+          execution across your stack using custom MCP servers and governed agent skills, so your 
+          team can stop babysitting workflows.
         </p>
       </BlurFade>
-      <BlurFade delay={0.25}>
+      <BlurFade delay={0.24}>
+        <p class="hero-support">
+          For teams carrying risky work across CRM, docs, inboxes, and internal systems.
+        </p>
+      </BlurFade>
+      <BlurFade delay={0.32}>
         <div class="hero-cta">
           <ShimmerButton href="/book">Book Mapping Session</ShimmerButton>
-          <a href="#how" class="hero-link">See the three lanes →</a>
+          <a href="/contact" class="hero-link">See if your workflow qualifies for a pilot →</a>
         </div>
       </BlurFade>
     </div>
-    <BlurFade delay={0.4} class="hero-visual-wrapper">
-      <div class="hero-visual-frame">
-        <div class="hero-visual-glow" aria-hidden="true"></div>
-        <div class="hero-visual-container">
-          <BorderBeam
-            size={250}
-            duration={12}
-            colorFrom="rgba(96, 165, 250, 0.8)"
-            colorTo="rgba(167, 139, 250, 0.6)"
-          />
-          <div class="orbital-container">
-            <!-- FAR BACK LAYER -->
-            <div class="orbit-layer layer-far">
-              <OrbitingCircles radius={145} duration={50} startAngle={0}>
-                <div class="orbit-item orbit-far">
-                  {@render githubIcon()}
-                </div>
-              </OrbitingCircles>
-              <OrbitingCircles radius={145} duration={50} startAngle={90}>
-                <div class="orbit-item orbit-far">
-                  {@render figmaIcon()}
-                </div>
-              </OrbitingCircles>
-              <OrbitingCircles radius={145} duration={50} startAngle={180}>
-                <div class="orbit-item orbit-far">
-                  {@render stripeIcon()}
-                </div>
-              </OrbitingCircles>
-              <OrbitingCircles radius={145} duration={50} startAngle={270}>
-                <div class="orbit-item orbit-far">
-                  {@render dropboxIcon()}
-                </div>
-              </OrbitingCircles>
-            </div>
-            <!-- MAIN LAYER -->
-            <div class="orbit-layer layer-main">
-              <OrbitingCircles radius={110} duration={30} startAngle={0}>
-                <div class="orbit-item">
-                  {@render salesforceIcon()}
-                </div>
-              </OrbitingCircles>
-              <OrbitingCircles radius={110} duration={30} startAngle={90}>
-                <div class="orbit-item">
-                  {@render aiIcon()}
-                </div>
-              </OrbitingCircles>
-              <OrbitingCircles radius={110} duration={30} startAngle={180}>
-                <div class="orbit-item">
-                  {@render slackIcon()}
-                </div>
-              </OrbitingCircles>
-              <OrbitingCircles radius={110} duration={30} startAngle={270}>
-                <div class="orbit-item">
-                  {@render notionIcon()}
-                </div>
-              </OrbitingCircles>
-            </div>
-            <!-- CLOSE LAYER -->
-            <div class="orbit-layer layer-close">
-              <OrbitingCircles radius={75} duration={18} startAngle={45} reverse>
-                <div class="orbit-item orbit-close">
-                  {@render hubspotIcon()}
-                </div>
-              </OrbitingCircles>
-              <OrbitingCircles radius={75} duration={18} startAngle={135} reverse>
-                <div class="orbit-item orbit-close">
-                  {@render zapierIcon()}
-                </div>
-              </OrbitingCircles>
-              <OrbitingCircles radius={75} duration={18} startAngle={225} reverse>
-                <div class="orbit-item orbit-close">
-                  {@render googleIcon()}
-                </div>
-              </OrbitingCircles>
-              <OrbitingCircles radius={75} duration={18} startAngle={315} reverse>
-                <div class="orbit-item orbit-close">
-                  {@render airtableIcon()}
-                </div>
-              </OrbitingCircles>
-            </div>
-            <!-- Central hub -->
-            <div class="orbital-center">
-              <div class="center-icon">
-                {@render createSomethingLogo()}
-              </div>
-            </div>
+    <BlurFade delay={0.28} class="hero-visual-wrapper">
+      <div class="hero-artifact">
+        <div class="hero-artifact-header">
+          <span class="hero-artifact-label">Governed execution artifact</span>
+          <h2 class="hero-artifact-title">Policy OS</h2>
+          <p class="hero-artifact-copy">
+            The workflow moves only when the rule is explicit. Safe actions continue. Risky actions
+            wait for review. Disallowed actions stop with a reason.
+          </p>
+        </div>
+
+        <div class="hero-artifact-states">
+          <div class="hero-artifact-state">
+            <span class="hero-state-pill is-allow">Auto-run</span>
+            <p>Known action, valid tenant, no open exception.</p>
+          </div>
+          <div class="hero-artifact-state">
+            <span class="hero-state-pill is-review">Approval</span>
+            <p>Escalate when the workflow crosses a defined trust boundary.</p>
+          </div>
+          <div class="hero-artifact-state">
+            <span class="hero-state-pill is-block">Stop</span>
+            <p>Return a clear reason instead of turning the workflow into cleanup.</p>
           </div>
         </div>
+
+        <div class="hero-artifact-footer">
+          <span>Reason codes</span>
+          <span>Approval paths</span>
+          <span>Release checks</span>
+        </div>
+      </div>
+    </BlurFade>
+
+    <BlurFade delay={0.4} class="hero-signals-wrapper">
+      <div class="hero-signal-list" aria-label="Engagement progression">
+        {#each heroSignals as signal}
+          <article class="hero-signal">
+            <div class="hero-signal-top">
+              <span class="hero-signal-step">{signal.step}</span>
+              <span class="hero-signal-rule" aria-hidden="true"></span>
+            </div>
+            <div class="hero-signal-copy">
+              <strong>{signal.title}</strong>
+              <p>{signal.copy}</p>
+            </div>
+          </article>
+        {/each}
       </div>
     </BlurFade>
   </div>
 </section>
 
-<!-- How I Work -->
+<!-- How Engagements Progress -->
 <section id="how" class="process-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="section-heading">How I Work</h2>
+      <h2 class="section-heading">How Engagements Progress</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Start with the workflow creating the most drag. Add approvals as the risk rises. Extend
-        only when several systems have to stay in sync.
+        Start with the workflow creating the most drag. Map the trust boundary first. Only narrow,
+        low-risk workflows qualify for a pilot. Policy OS starts when governance matters.
       </p>
     </BlurFade>
 
@@ -306,11 +298,11 @@
             <div class="funnel-step-line"></div>
           </div>
           <div class="funnel-step-content">
-            <span class="funnel-step-label">Lane 1</span>
-            <h3>Workflow Infrastructure</h3>
+            <span class="funnel-step-label">Step 1</span>
+            <h3>Workflow Mapping Session</h3>
             <p>
-              I map the rules, owners, and handoffs around the workflow slowing your team down
-              most.
+              Most teams start here. I map handoffs, exceptions, approvals, and the right path into
+              pilot, Policy OS, or enterprise scope.
             </p>
           </div>
         </div>
@@ -323,11 +315,11 @@
             <div class="funnel-step-line"></div>
           </div>
           <div class="funnel-step-content">
-            <span class="funnel-step-label">Lane 2</span>
-            <h3>Policy OS</h3>
+            <span class="funnel-step-label">Step 2</span>
+            <h3>Qualified Pilot Path</h3>
             <p>
-              I add policy artifacts, approvals, release checks, blocked states, and incident
-              review so automation stays trustworthy as it expands.
+              If the workflow is narrow, the owner is clear, and the risk is manageable, it may
+              qualify for a constrained MCP Hub pilot.
             </p>
           </div>
         </div>
@@ -337,13 +329,30 @@
         <div class="funnel-step">
           <div class="funnel-step-indicator">
             <div class="funnel-step-num">3</div>
+            <div class="funnel-step-line"></div>
           </div>
           <div class="funnel-step-content">
-            <span class="funnel-step-label">Lane 3</span>
+            <span class="funnel-step-label">Step 3</span>
+            <h3>Policy OS</h3>
+            <p>
+              This is the paid product. It adds approvals, blocked states, release checks, and
+              reason-coded governance to live workflows.
+            </p>
+          </div>
+        </div>
+      </BlurFade>
+
+      <BlurFade delay={0.45}>
+        <div class="funnel-step">
+          <div class="funnel-step-indicator">
+            <div class="funnel-step-num">4</div>
+          </div>
+          <div class="funnel-step-content">
+            <span class="funnel-step-label">Step 4</span>
             <h3>Enterprise Extension</h3>
             <p>
-              I build the control layer for workflows that cross systems, teams, or compliance
-              boundaries.
+              Add this when several systems, teams, or compliance boundaries need one governed
+              operating model and clean recovery paths.
             </p>
           </div>
         </div>
@@ -356,12 +365,12 @@
 <section class="offerings-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="section-heading">What's Included</h2>
+      <h2 class="section-heading">Offer Ladder</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Each lane answers three questions: what gets fixed first, what needs review, and what your
-        team inherits after launch.
+        Each offer answers the same questions: what gets fixed first, what needs review, and what
+        your team inherits after launch.
       </p>
     </BlurFade>
 
@@ -369,20 +378,20 @@
       <BlurFade delay={0.15}>
         <div class="offering-card">
           <div class="offering-header">
-            <h3 class="offering-name">Workflow Infrastructure</h3>
+            <h3 class="offering-name">Workflow Mapping Session</h3>
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              One painful workflow rebuilt with clear rules, cleaner handoffs, and safer
-              automation.
+              The diagnostic path for ambiguous, risky, or cross-functional workflows that need a
+              clear trust boundary before build approval.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
               <ul>
-                <li>Workflow implementation</li>
-                <li>Business-rule mapping</li>
-                <li>Auth and access setup</li>
-                <li>Runbook and handoff artifacts</li>
+                <li>Handoff and failure-mode map</li>
+                <li>Approval boundary recommendation</li>
+                <li>Pilot versus Policy OS routing</li>
+                <li>30-day implementation direction</li>
               </ul>
             </div>
           </div>
@@ -390,6 +399,29 @@
       </BlurFade>
 
       <BlurFade delay={0.25}>
+        <div class="offering-card">
+          <div class="offering-header">
+            <h3 class="offering-name">Qualified MCP Hub Pilot</h3>
+          </div>
+          <div class="offering-body">
+            <p class="offering-description">
+              A constrained start for one narrow workflow with clear ownership, limited risk, and a
+              checkpoint before expansion.
+            </p>
+            <div class="offering-deliverables">
+              <span class="deliverables-label">Includes</span>
+              <ul>
+                <li>Workflow qualification review</li>
+                <li>Scoped host and integration setup</li>
+                <li>Constrained operating boundary</li>
+                <li>Checkpoint for promotion or stop</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </BlurFade>
+
+      <BlurFade delay={0.35}>
         <div class="offering-card offering-featured">
           <span class="offering-badge">The real product</span>
           <div class="offering-header">
@@ -413,7 +445,7 @@
         </div>
       </BlurFade>
 
-      <BlurFade delay={0.35}>
+      <BlurFade delay={0.45}>
         <div class="offering-card">
           <div class="offering-header">
             <h3 class="offering-name">Enterprise Extension</h3>
@@ -452,10 +484,11 @@
             Connecting tools is getting easier. Governing live workflows is not.
           </p>
           <p class="problem-text">
-            The hard part is deciding what can run automatically, what needs approval, and what
-            must stop with a reason. That is the work.
+            The hard part is deciding what can run automatically, what needs approval, what needs a
+            human checkpoint, and when the workflow should stop with a reason. That is the work.
           </p>
           <ul class="control-outcomes">
+            <li>Low-risk workflows can start narrow when the owner, boundary, and checkpoint are clear.</li>
             <li>Safe actions run automatically once the workflow and tenant are in good standing.</li>
             <li>Risky actions route to approval instead of becoming cleanup.</li>
             <li>Disallowed actions stop with a reason buyers and operators can both understand.</li>
@@ -503,7 +536,7 @@
     <BlurFade delay={0.2}>
       <div class="cta-buttons">
         <ShimmerButton href="/book">Book Mapping Session</ShimmerButton>
-        <a href="/services" class="cta-book-link"> See the engagement model → </a>
+        <a href="/contact" class="cta-book-link">See if your workflow qualifies for a pilot →</a>
       </div>
     </BlurFade>
   </div>
@@ -535,11 +568,11 @@
     line-height: var(--leading-relaxed);
   }
 
-  /* Hero with grid background - two column layout */
+  /* Hero with restrained support artifact */
   .hero {
     position: relative;
-    padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem)
-      var(--section-padding, 6rem);
+    padding: clamp(5rem, 9vw, 8rem) var(--container-padding, 1.5rem)
+      clamp(4rem, 7vw, 6rem);
     max-width: 100%;
     overflow: hidden;
   }
@@ -552,8 +585,8 @@
   }
 
   :global(.hero-animated-grid) {
-    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
-    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+    mask-image: radial-gradient(720px circle at 50% 32%, white, transparent);
+    -webkit-mask-image: radial-gradient(720px circle at 50% 32%, white, transparent);
   }
 
   .hero-container {
@@ -562,51 +595,72 @@
     max-width: min(var(--content-width-xl), calc(100vw - 2 * var(--container-padding)));
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--space-8, 3rem);
-    align-items: center;
+    gap: clamp(2.25rem, 4vw, 4rem);
+    align-items: start;
     margin: 0 auto;
   }
 
   @media (min-width: 901px) {
     .hero-container {
-      grid-template-columns: 1fr minmax(380px, 1fr);
+      grid-template-columns: minmax(0, 1.05fr) minmax(21rem, 0.95fr);
     }
   }
 
   .hero-content {
     min-width: 0;
-    max-width: 32em;
+    max-width: 36rem;
     text-align: left;
+    display: grid;
+    gap: 0;
+  }
+
+  .hero-eyebrow {
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--color-fg-muted);
+    margin-bottom: var(--space-4, 1rem);
   }
 
   .hero-title {
-    font-size: clamp(2.75rem, 5vw + 1.5rem, 5rem);
+    font-size: clamp(2.75rem, 5.5vw, 4.75rem);
     font-weight: var(--font-bold);
     color: var(--color-fg-primary);
-    max-width: 11ch;
-    margin-bottom: var(--space-6, 2rem);
-    line-height: 1.15;
-    letter-spacing: var(--tracking-tighter, -0.025em);
+    max-width: 9ch;
+    margin-bottom: var(--space-4, 1rem);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
   }
 
   .hero-detail {
-    font-size: var(--text-body-lg);
+    font-size: clamp(1rem, 1vw + 0.9rem, 1.2rem);
     color: var(--color-fg-secondary);
-    margin-bottom: var(--space-5, 1.5rem);
-    line-height: var(--leading-relaxed);
-    max-width: var(--content-width-sm);
+    margin-bottom: var(--space-4, 1rem);
+    line-height: 1.68;
+    max-width: 29rem;
+  }
+
+  .hero-support {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+    line-height: 1.7;
+    max-width: 28rem;
+    margin-bottom: var(--space-7, 2.5rem);
   }
 
   .hero-cta {
     display: flex;
-    align-items: center;
-    gap: var(--space-4, 1rem);
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--space-4, 1rem) var(--space-5, 1.5rem);
+    margin-bottom: var(--space-8, 3rem);
   }
 
   .hero-link {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
     text-decoration: none;
+    padding-top: 0.7rem;
     transition: color var(--duration-micro, 200ms) var(--ease-standard);
   }
 
@@ -614,158 +668,207 @@
     color: var(--color-fg-primary);
   }
 
-  /* Hero visual frame - contains glow + bordered container */
-  .hero-visual-frame {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  :global(.hero-signals-wrapper) {
+    grid-column: 1 / -1;
+    margin-top: var(--space-4, 1rem);
   }
 
-  .hero-visual-glow {
+  .hero-signal-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4, 1rem);
+    padding-top: var(--space-6, 2rem);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  @media (min-width: 768px) {
+    .hero-signal-list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .hero-signal {
+    display: grid;
+    gap: var(--space-4, 1rem);
+    min-width: 0;
+    padding: 1.05rem 1rem 1.15rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+      rgba(255, 255, 255, 0.02);
+  }
+
+  .hero-signal-top {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hero-signal-rule {
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .hero-signal-step {
+    font-size: 0.72rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-fg-muted);
+    flex-shrink: 0;
+  }
+
+  .hero-signal-copy strong {
+    display: block;
+    font-size: 1rem;
+    line-height: 1.25;
+    color: var(--color-fg-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-signal-copy p {
+    font-size: 0.94rem;
+    line-height: 1.62;
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+
+  .hero-artifact {
+    position: relative;
+    display: grid;
+    gap: var(--space-6, 2rem);
+    padding: clamp(1.5rem, 2vw, 2rem);
+    border-radius: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+      rgba(6, 8, 12, 0.88);
+    box-shadow:
+      0 32px 80px rgba(0, 0, 0, 0.38),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    max-width: 31rem;
+  }
+
+  .hero-artifact::before {
+    content: '';
     position: absolute;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(
-      ellipse at center,
-      rgba(96, 165, 250, 0.15) 0%,
-      rgba(167, 139, 250, 0.08) 40%,
-      transparent 70%
-    );
-    filter: blur(40px);
+    inset: 1px;
+    border-radius: 25px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 38%);
     pointer-events: none;
   }
 
-  .hero-visual-container {
-    position: relative;
-    padding: var(--space-6, 2rem);
-    border-radius: var(--radius-xl, 16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.02);
-  }
-
-  .orbital-container {
-    position: relative;
-    width: 300px;
-    height: 300px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .orbit-layer {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .orbit-layer.layer-far {
-    z-index: 1;
-    filter: blur(2px);
-    opacity: 0.5;
-  }
-
-  .orbit-layer.layer-main {
-    z-index: 5;
-  }
-
-  .orbit-layer.layer-close {
-    z-index: 8;
-    filter: blur(0.5px);
-    opacity: 0.85;
-  }
-
-  .orbital-center {
-    position: relative;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .center-icon {
-    width: 96px;
-    height: 96px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10, 10, 15, 0.9);
-    backdrop-filter: blur(20px) saturate(120%);
-    -webkit-backdrop-filter: blur(20px) saturate(120%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    color: white;
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-
-  .center-icon :global(svg) {
-    width: 52px;
-    height: 52px;
-  }
-
-  .orbit-item {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    color: white;
-    box-shadow:
-      0 4px 16px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    transition: all 0.3s ease;
-  }
-
-  .orbit-item :global(svg) {
-    width: 22px;
-    height: 22px;
-  }
-
-  .orbit-item.orbit-far {
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.08);
-  }
-
-  .orbit-item.orbit-far :global(svg) {
-    width: 16px;
-    height: 16px;
-  }
-
-  .orbit-item.orbit-close {
-    width: 38px;
-    height: 38px;
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .orbit-item.orbit-close :global(svg) {
-    width: 18px;
-    height: 18px;
-  }
-
   :global(.hero-visual-wrapper) {
-    display: none;
+    min-width: 0;
   }
 
-  @media (min-width: 901px) {
-    :global(.hero-visual-wrapper) {
-      display: block;
-      min-width: 0;
-    }
+  .hero-artifact-header {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: var(--space-3, 0.75rem);
+  }
+
+  .hero-artifact-label {
+    font-size: 0.68rem;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: rgba(255, 255, 255, 0.44);
+  }
+
+  .hero-artifact-title {
+    font-size: clamp(2rem, 2vw + 1.25rem, 2.9rem);
+    line-height: 1.04;
+    letter-spacing: -0.04em;
+    color: #ffffff;
+    margin: 0;
+  }
+
+  .hero-artifact-copy {
+    font-size: 0.98rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.72);
+    max-width: 28rem;
+    margin: 0;
+  }
+
+  .hero-artifact-states {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .hero-artifact-state {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1rem 1.1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .hero-artifact-state p {
+    margin: 0;
+    font-size: 0.93rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .hero-state-pill {
+    width: fit-content;
+    padding: 0.28rem 0.62rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .hero-state-pill.is-allow {
+    color: #8de5bb;
+    background: rgba(38, 98, 76, 0.35);
+    border: 1px solid rgba(141, 229, 187, 0.18);
+  }
+
+  .hero-state-pill.is-review {
+    color: #f4d98b;
+    background: rgba(111, 84, 28, 0.35);
+    border: 1px solid rgba(244, 217, 139, 0.18);
+  }
+
+  .hero-state-pill.is-block {
+    color: #f5a19d;
+    background: rgba(114, 43, 39, 0.35);
+    border: 1px solid rgba(245, 161, 157, 0.18);
+  }
+
+  .hero-artifact-footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .hero-artifact-footer span {
+    font-size: 0.76rem;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 0.55rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
   }
 
   /* How It Works — Funnel Steps */
   .process-section {
-    padding: var(--section-padding, 6rem) 0;
+    padding: var(--section-padding-lg, 8rem) 0 var(--section-padding, 6rem);
   }
 
   .funnel-steps {
@@ -838,117 +941,6 @@
     color: var(--color-fg-secondary);
     line-height: var(--leading-relaxed);
     margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  /* Offerings Grid */
-  .offerings-section {
-    padding: var(--section-padding, 6rem) 0;
-  }
-
-  .offerings-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-6, 2rem);
-    margin-top: var(--space-8, 3rem);
-  }
-
-  @media (min-width: 768px) {
-    .offerings-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-
-  .offering-card {
-    background: var(--color-bg-pure);
-    border-radius: var(--radius-xl, 16px);
-    padding: var(--space-6, 2rem);
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    transition:
-      transform var(--duration-fast, 300ms) var(--ease-standard),
-      border-color var(--duration-fast, 300ms) var(--ease-standard);
-  }
-
-  .offering-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--color-border-hover);
-  }
-
-  .offering-featured {
-    border-color: var(--color-border-emphasis);
-    box-shadow: 0 8px 32px rgba(96, 165, 250, 0.05);
-  }
-
-  .offering-badge {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--color-bg-inverse, #1a1a1a);
-    color: var(--color-fg-inverse, #ffffff);
-    font-size: var(--text-caption, 0.75rem);
-    font-weight: var(--font-medium);
-    padding: 4px 12px;
-    border-radius: var(--radius-full, 9999px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    white-space: nowrap;
-  }
-
-  .offering-header {
-    margin-bottom: var(--space-4, 1rem);
-  }
-
-  .offering-name {
-    font-size: var(--text-h3);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-  }
-
-  .offering-description {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    margin-bottom: var(--space-6, 2rem);
-  }
-
-  .offering-deliverables {
-    margin-top: auto;
-    background: var(--color-bg-subtle);
-    padding: var(--space-5, 1.5rem);
-    border-radius: var(--radius-lg, 8px);
-  }
-
-  .deliverables-label {
-    display: block;
-    font-size: var(--text-caption);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-fg-muted);
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .offering-deliverables ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2, 0.5rem);
-  }
-
-  .offering-deliverables li {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    padding-left: 1.5rem;
-    position: relative;
-  }
-
-  .offering-deliverables li::before {
-    content: '→';
-    position: absolute;
-    left: 0;
-    color: var(--color-fg-muted);
   }
 
   /* The Model Section */
@@ -1030,10 +1022,24 @@
 
   .offerings-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-8, 3rem);
+    grid-template-columns: 1fr;
+    gap: var(--space-6, 2rem);
     align-items: stretch;
     overflow: visible;
+  }
+
+  @media (min-width: 768px) {
+    .offerings-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-5, 1.5rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .offerings-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--space-5, 1.5rem);
+    }
   }
 
   /* BlurFade wrappers must stretch so grid equalizes row height */
@@ -1241,7 +1247,6 @@
 
     .offering-card.offering-featured {
       order: -1;
-      grid-column: 1 / -1;
     }
 
     .offering-card.offering-featured .offering-body {
@@ -1309,11 +1314,34 @@
     }
 
     .hero-title {
-      font-size: clamp(2.75rem, 8vw, 5rem);
+      font-size: clamp(3rem, 13vw, 4.5rem);
+      max-width: 8ch;
+    }
+
+    .hero-detail {
+      font-size: 1.05rem;
+    }
+
+    .hero-cta {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: var(--space-6, 2rem);
     }
 
     .hero-link {
-      display: none;
+      display: block;
+      padding-top: 0;
+    }
+
+    .hero-signal-list {
+      grid-template-columns: 1fr;
+      gap: var(--space-3, 0.75rem);
+      padding-top: var(--space-5, 1.5rem);
+    }
+
+    .hero-artifact {
+      padding: 1.25rem;
+      border-radius: 22px;
     }
 
     .offerings-grid {

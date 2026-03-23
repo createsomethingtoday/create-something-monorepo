@@ -49,7 +49,8 @@
   }: Props = $props();
 
   function splitArtifactLabel(label: string): string[] {
-    return label.split(/(?<=[._\-\s])/).filter(Boolean);
+    // Removed underscore (_) from breakable characters so filenames stay intact
+    return label.split(/(?<=[.\-\s])/).filter(Boolean);
   }
 
   function escapeHtml(label: string): string {
@@ -120,7 +121,15 @@
   .artifact-grid {
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .artifact-card:nth-child(-n+3) {
+    grid-column: span 2;
+  }
+
+  .artifact-card:nth-child(n+4) {
+    grid-column: span 3;
   }
 
   .artifact-card {
@@ -157,7 +166,7 @@
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
-    text-wrap: balance;
+    text-wrap: pretty;
   }
 
   .artifact-card p {
@@ -169,7 +178,11 @@
 
   @media (max-width: 1100px) {
     .artifact-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    
+    .artifact-card {
+      grid-column: auto !important;
     }
   }
 

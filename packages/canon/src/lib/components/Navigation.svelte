@@ -76,7 +76,12 @@
       <!-- Desktop Navigation Links -->
       <div class="nav-desktop hidden lg:flex items-center gap-2 ml-8">
         {#each links as link}
-          <a href={link.href} class="nav-link" class:active={isActive(link)}>
+          <a
+            href={link.href}
+            class="nav-link"
+            class:active={isActive(link)}
+            aria-current={isActive(link) ? 'page' : undefined}
+          >
             {link.label}
           </a>
         {/each}
@@ -132,6 +137,7 @@
             onclick={closeMobileMenu}
             class="nav-link py-2"
             class:active={isActive(link)}
+            aria-current={isActive(link) ? 'page' : undefined}
           >
             {link.label}
           </a>
@@ -190,9 +196,9 @@
 
   /* Logo */
   .nav-logo {
-    font-size: 1.25rem;
+    font-size: 1.3rem; /* slightly larger for better presence */
     font-weight: var(--font-bold);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
     color: var(--color-fg-primary);
     text-decoration: none;
   }
@@ -202,28 +208,32 @@
     color: var(--color-fg-tertiary);
   }
 
-  /* Navigation Links */
   .nav-link {
     font-size: var(--text-body-sm);
     font-weight: var(--font-medium);
-    color: var(--color-fg-secondary);
+    color: var(--color-fg-primary);
+    opacity: 0.85;
     text-decoration: none;
     border-radius: var(--radius-md);
     padding: 0.4rem 0.7rem;
     transition:
       color var(--duration-micro) var(--ease-standard),
+      opacity var(--duration-micro) var(--ease-standard),
       background-color var(--duration-micro) var(--ease-standard),
       border-color var(--duration-micro) var(--ease-standard);
   }
 
   .nav-link:hover {
     color: var(--color-fg-primary);
+    opacity: 1;
     background: var(--color-shell-surface-hover);
   }
 
   .nav-link.active {
     color: var(--color-fg-primary);
-    background: var(--color-shell-surface-tertiary);
+    opacity: 1;
+    background: var(--color-shell-surface-secondary);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); /* distinct active state */
   }
 
   .nav-link:focus-visible {

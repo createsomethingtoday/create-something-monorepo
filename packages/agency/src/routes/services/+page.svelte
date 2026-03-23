@@ -31,12 +31,20 @@
 
   const services = [
     {
-      name: 'Workflow Infrastructure',
+      name: 'Workflow Mapping Session',
       description:
-        'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
-      type: 'Implementation Sprint',
-      price: 'Custom',
-      priceDescription: 'Scoped build'
+        'The diagnostic session that maps workflow boundaries, approval rules, and the right next step before implementation.',
+      type: 'Diagnostic Session',
+      price: 'Scoped',
+      priceDescription: 'Booked directly'
+    },
+    {
+      name: 'Qualified MCP Hub Pilot',
+      description:
+        'A constrained entry wedge for one narrow workflow with clear ownership and manageable risk.',
+      type: 'Qualified Pilot',
+      price: 'Qualified',
+      priceDescription: 'Review required'
     },
     {
       name: 'Policy OS',
@@ -60,7 +68,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow Infrastructure fixes the first painful workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
+        'Policy OS is the core product. Most teams start with a Workflow Mapping Session so the trust boundary is clear first. Narrow, low-risk workflows may qualify for a constrained pilot.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
@@ -83,9 +91,9 @@
         'Use Enterprise Extension when several systems, teams, or compliance requirements must stay aligned and recover cleanly from failure.'
     },
     {
-      question: 'Do you still offer MCP-only?',
+      question: 'Do qualified pilots still exist?',
       answer:
-        'Yes. MCP-only still works for discovery, compliance-constrained pilots, or teams that need the connection before the operating layer.'
+        'Yes. Qualified pilots are still available for narrow, low-risk workflows. They are intentionally constrained and are not a substitute for Policy OS.'
     },
     {
       question: 'Do clients own the implementation?',
@@ -97,12 +105,64 @@
       answer: `Client-facing delivery is ${deliveryVector.clientFacingLabel}. MCP handles trust and connectivity. Skills carry behavior and workflow intent.`
     }
   ];
+
+  const offerLadder = [
+    {
+      step: '01',
+      tag: 'Default start',
+      name: 'Workflow Mapping Session',
+      description:
+        'Best for ambiguous, high-pressure, or multi-stakeholder workflows that need the trust boundary mapped before build approval.',
+      includes: [
+        'Workflow and handoff map',
+        'Approval boundary recommendation',
+        '30-day implementation direction'
+      ]
+    },
+    {
+      step: '02',
+      tag: 'Qualified path',
+      name: 'Qualified Pilot',
+      description:
+        'Available when the workflow is narrow, the owner is clear, and the risk can be contained responsibly.',
+      includes: [
+        'Single workflow wedge',
+        'Scoped host and integration setup',
+        'Checkpoint before expansion'
+      ]
+    },
+    {
+      step: '03',
+      tag: 'Core product',
+      name: 'Policy OS',
+      description:
+        'The governed execution layer that makes Skills + MCP safe to run faster in production.',
+      includes: [
+        'Approval and block boundaries',
+        'Reason-coded access and blocked states',
+        'Evals, release gates, and incident loops'
+      ],
+      featured: true
+    },
+    {
+      step: '04',
+      tag: 'High-stakes scale',
+      name: 'Enterprise Extension',
+      description:
+        'Apply when several systems, teams, or compliance requirements have to stay aligned.',
+      includes: [
+        'Custom trust boundaries',
+        'Cross-system orchestration',
+        'Deterministic retries and auditability'
+      ]
+    }
+  ];
 </script>
 
 <SEO
   title="How We Work | Production-Safe Workflow Infrastructure"
-  description="CREATE SOMETHING .agency starts with the workflow causing the most drag, adds approvals when failure gets expensive, and extends only when the risk profile demands it."
-  keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
+  description="CREATE SOMETHING .agency starts with a Workflow Mapping Session, qualifies narrow low-risk workflows for pilot access, and adds Policy OS when approvals and operational control matter."
+  keywords="workflow mapping session, policy os, ops revops automation, qualified mcp pilot, governed execution, enterprise automation architecture"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -124,15 +184,16 @@
   </div>
   <div class="hero-content">
     <BlurFade delay={0}>
-      <p class="hero-eyebrow">How I Work</p>
+      <p class="hero-eyebrow">How It Works</p>
     </BlurFade>
     <BlurFade delay={0.1}>
       <h1 class="hero-title">Start with the workflow creating the most drag.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Fix the first workflow. Add approvals and oversight when the risk rises. Reserve
-        Enterprise Extension for auditability, recovery, and cross-system coordination.
+        Most teams start with a Workflow Mapping Session. Narrow, low-risk workflows may qualify
+        for a constrained MCP Hub pilot. Policy OS begins when approvals, blocked states, and
+        ongoing oversight matter.
       </p>
     </BlurFade>
   </div>
@@ -144,7 +205,7 @@
     <BlurFade delay={0.3}>
       <GovernedExecutionFlow
         title="Where Policy OS fits"
-        description="Workflow Infrastructure gets the first handoff working. Policy OS decides what runs automatically, what needs review, and what stops."
+        description="The mapping session defines the trust boundary first. If the workflow is narrow enough, a qualified pilot can prove the wedge. Policy OS decides what runs automatically, what needs review, and what stops."
       />
     </BlurFade>
   </div>
@@ -181,57 +242,52 @@
 <section class="retainer-section">
   <div class="section-container">
     <BlurFade>
-      <div class="retainer-card">
+      <div class="ladder-shell">
         <BorderBeam size={300} duration={12} delay={9} />
-        <div class="retainer-header">
-          <div class="retainer-pricing offer-bridge">
-            <div class="retainer-price">Offer Ladder</div>
-            <div class="retainer-period">From wedge to governed execution</div>
-          </div>
-          <p class="retainer-note">
-            Start with the wedge that proves value. Add governed execution when the workflow starts
-            touching revenue, compliance, or customer trust.
+        <div class="ladder-copy">
+          <span class="ladder-eyebrow">Offer Ladder</span>
+          <h2 class="ladder-title">Start with diagnosis. Add governance when the workflow earns it.</h2>
+          <p class="ladder-intro">
+            Most teams should start with a mapping session. Qualified pilots stay narrow on
+            purpose. Policy OS becomes the product once the workflow starts touching revenue,
+            compliance, or customer trust.
           </p>
+          <div class="ladder-principles">
+            <div class="ladder-principle">
+              <span>Fix first</span>
+              <p>Map the trust boundary before deciding whether the workflow needs a pilot or governed execution.</p>
+            </div>
+            <div class="ladder-principle">
+              <span>Keep pilots narrow</span>
+              <p>Qualified pilots only make sense when the owner is clear, the risk is low, and the checkpoint is explicit.</p>
+            </div>
+            <div class="ladder-principle">
+              <span>Govern when stakes rise</span>
+              <p>Policy OS exists for approval paths, blocked states, release checks, and reliable recovery.</p>
+            </div>
+          </div>
         </div>
-        <div class="retainer-body">
-          <div class="progression-grid">
-            <article class="progression-card wedge-card">
-              <span class="progression-tag">Entry wedge</span>
-              <h3>MCP-only</h3>
-              <p>Use this when you need the connection first or your team will operate the workflow directly.</p>
-              <ul class="retainer-list">
-                <li>Connectivity validation</li>
-                <li>Scoped host setup</li>
-                <li>Read-only or constrained rollout</li>
+        <div class="ladder-list">
+          {#each offerLadder as item}
+            <article class:ladder-row={true} class:ladder-row-featured={item.featured}>
+              <div class="ladder-order">{item.step}</div>
+              <div class="ladder-summary">
+                <div class="ladder-summary-top">
+                  <span class="progression-tag">{item.tag}</span>
+                  {#if item.featured}
+                    <span class="ladder-featured-pill">Policy OS is the product</span>
+                  {/if}
+                </div>
+                <h3>{item.name}</h3>
+                <p>{item.description}</p>
+              </div>
+              <ul class="ladder-points" aria-label={`${item.name} includes`}>
+                {#each item.includes as point}
+                  <li>{point}</li>
+                {/each}
               </ul>
             </article>
-            <article class="progression-card highlighted-card">
-              <span class="progression-tag">Canonical package</span>
-              <h3>Policy OS</h3>
-              <p>The governed execution layer that makes <strong>{deliveryVector.clientFacingLabel}</strong> safe to run faster in production.</p>
-              <ul class="retainer-list">
-                <li>Approval and block boundaries</li>
-                <li>Reason-coded access and blocked states</li>
-                <li>Evals, release gates, and incident loops</li>
-              </ul>
-            </article>
-            <article class="progression-card">
-              <span class="progression-tag">High-stakes scale</span>
-              <h3>Enterprise Extension</h3>
-              <p>Apply when several systems, teams, or compliance requirements have to stay aligned.</p>
-              <ul class="retainer-list">
-                <li>Custom trust boundaries</li>
-                <li>Cross-system orchestration</li>
-                <li>Deterministic retries and auditability</li>
-              </ul>
-            </article>
-          </div>
-          <div class="retainer-callout">
-            <p>
-              MCP-only gets you connected. Policy OS turns execution into a managed product as
-              speed and volume increase.
-            </p>
-          </div>
+          {/each}
         </div>
       </div>
     </BlurFade>
@@ -254,16 +310,16 @@
 <section class="timeline-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="section-heading">What a Month Looks Like</h2>
+      <h2 class="section-heading">How the Engagement Expands</h2>
     </BlurFade>
 
     <div class="timeline-grid">
       <BlurFade delay={0.1}>
         <div class="timeline-card">
             <span class="timeline-label">Phase 1</span>
-          <h3>Workflow Infrastructure</h3>
+          <h3>Workflow Mapping Session</h3>
           <p>
-            Get the first high-value workflow working with clear rules, owners, and handoffs.
+            Map handoffs, approval rules, and the boundary between auto-allow, review, and block.
           </p>
         </div>
       </BlurFade>
@@ -271,9 +327,9 @@
       <BlurFade delay={0.2}>
           <div class="timeline-card">
             <span class="timeline-label">Phase 2</span>
-          <h3>Policy OS</h3>
+          <h3>Pilot qualification</h3>
           <p>
-            Add evals, approvals, release checks, and incident loops as the workflow touches real risk.
+            Decide whether the workflow is narrow and low-risk enough for a constrained pilot.
           </p>
         </div>
       </BlurFade>
@@ -281,10 +337,20 @@
       <BlurFade delay={0.3}>
         <div class="timeline-card">
           <span class="timeline-label">Phase 3</span>
-          <h3>Extension</h3>
+          <h3>Policy OS</h3>
           <p>
-            Extend into custom orchestration when several systems or teams need one operating
-            model.
+            Add approvals, blocked states, release checks, and incident loops to the live workflow.
+          </p>
+        </div>
+      </BlurFade>
+
+      <BlurFade delay={0.4}>
+        <div class="timeline-card">
+          <span class="timeline-label">Phase 4</span>
+          <h3>Enterprise Extension</h3>
+          <p>
+            Extend into custom orchestration when several systems, teams, or compliance rules need
+            one operating model.
           </p>
         </div>
       </BlurFade>
@@ -321,13 +387,14 @@
     <BlurFade delay={0.1}>
       <p class="cta-subtext">
         We’ll define the handoffs, approvals, failure modes, and escalation path before
-        implementation.
+        implementation. If the workflow is a genuine fit for a pilot, that will be clear in the
+        map.
       </p>
     </BlurFade>
     <BlurFade delay={0.2}>
       <div class="cta-buttons">
         <ShimmerButton href="/book">Book a Mapping Session</ShimmerButton>
-        <a href="/products" class="cta-secondary">See what I've built →</a>
+        <a href="/contact" class="cta-secondary">See if your workflow qualifies for a pilot →</a>
       </div>
     </BlurFade>
   </div>
@@ -389,7 +456,7 @@
     font-size: var(--text-display);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
-    max-width: 11ch;
+    max-width: 14ch;
     margin-bottom: var(--space-5, 1.5rem);
     margin-left: auto;
     margin-right: auto;
@@ -494,107 +561,176 @@
     color: var(--color-fg-primary);
   }
 
-  /* Retainer Card */
+  /* Offer Ladder */
   .retainer-section {
     padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
   }
 
-  .retainer-card {
-    max-width: 1080px;
+  .ladder-shell {
+    max-width: 1120px;
     margin: 0 auto;
-    border: 1px solid rgba(96, 165, 250, 0.3);
-    border-radius: var(--radius-xl, 16px);
-    background: linear-gradient(180deg, rgba(96, 165, 250, 0.04) 0%, var(--color-bg-pure) 100%);
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: start;
+    padding: clamp(1.25rem, 2vw, 2rem);
+    border: 1px solid rgba(96, 165, 250, 0.18);
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at top left, rgba(96, 165, 250, 0.08), transparent 42%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+      rgba(4, 8, 15, 0.92);
     box-shadow:
-      var(--glass-shine-standard),
-      0 0 0 1px rgba(96, 165, 250, 0.08);
-    overflow: visible;
+      0 24px 80px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
     position: relative;
   }
 
-  .retainer-card::before {
+  .ladder-shell::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 10%;
-    right: 10%;
+    left: 12%;
+    right: 12%;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.28), transparent);
   }
 
-  .retainer-header {
-    padding: var(--space-8, 3rem) var(--space-5, 1.5rem);
-    text-align: center;
-  }
-
-  .retainer-pricing {
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .retainer-price {
-    font-size: var(--text-display);
-    font-weight: var(--font-bold);
-    color: var(--color-fg-primary);
-    letter-spacing: var(--tracking-tighter, -0.025em);
-    line-height: 1;
-  }
-
-  .retainer-period {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-tertiary);
-    margin-top: var(--space-2, 0.5rem);
-  }
-
-  .retainer-note {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-    max-width: 480px;
-    margin: 0 auto;
-    line-height: var(--leading-relaxed);
-  }
-
-  .retainer-body {
-    padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
-  }
-
-  .progression-grid {
+  .ladder-copy {
+    position: relative;
+    z-index: 1;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-6, 2rem);
+    gap: 1rem;
+    padding: 0.5rem 0.25rem 0.5rem 0;
   }
 
-  .progression-card {
-    padding: 1.25rem;
-    border-radius: var(--radius-lg, 12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  .ladder-eyebrow {
+    font-size: 0.72rem;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: rgba(255, 255, 255, 0.52);
+  }
+
+  .ladder-title {
+    font-size: clamp(2.1rem, 3vw + 1rem, 3.25rem);
+    line-height: 1.03;
+    letter-spacing: -0.04em;
+    color: var(--color-fg-primary);
+    margin: 0;
+  }
+
+  .ladder-intro {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.72);
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  .ladder-principles {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 0.75rem;
+  }
+
+  .ladder-principle {
+    padding: 0.95rem 1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .ladder-principle span {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(96, 165, 250, 0.88);
+  }
+
+  .ladder-principle p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.62;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .ladder-list {
+    display: grid;
+    gap: 0.95rem;
+  }
+
+  .ladder-row {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1.1fr) minmax(13rem, 0.9fr);
+    gap: 1rem 1.25rem;
+    align-items: start;
+    padding: 1.15rem 1.2rem 1.2rem;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
       rgba(255, 255, 255, 0.02);
   }
 
-  .highlighted-card {
-    border-color: rgba(45, 212, 191, 0.2);
+  .ladder-row-featured {
+    border-color: rgba(96, 165, 250, 0.22);
     background:
-      radial-gradient(circle at top left, rgba(45, 212, 191, 0.14), transparent 50%),
+      radial-gradient(circle at top left, rgba(96, 165, 250, 0.14), transparent 50%),
       linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
       rgba(4, 8, 15, 0.86);
-    box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.08);
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.08);
   }
 
-  .wedge-card {
-    border-style: dashed;
+  .ladder-order {
+    padding-top: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
   }
 
-  .progression-card h3 {
-    font-size: var(--text-h4);
+  .ladder-summary {
+    min-width: 0;
+  }
+
+  .ladder-summary-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .ladder-featured-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.24rem 0.58rem;
+    border-radius: 999px;
+    border: 1px solid rgba(96, 165, 250, 0.22);
+    background: rgba(96, 165, 250, 0.08);
+    color: rgba(191, 219, 254, 0.92);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ladder-summary h3 {
+    font-size: clamp(1.25rem, 1.1vw + 1rem, 1.7rem);
     color: var(--color-fg-primary);
-    margin: 0 0 var(--space-3, 0.75rem);
+    line-height: 1.15;
+    margin: 0 0 0.6rem;
   }
 
-  .progression-card p {
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    margin: 0 0 var(--space-4, 1rem);
+  .ladder-summary p {
+    color: rgba(255, 255, 255, 0.72);
+    line-height: 1.68;
+    margin: 0;
   }
 
   .progression-tag {
@@ -605,55 +741,37 @@
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.04);
-    color: var(--color-fg-muted);
+    color: rgba(255, 255, 255, 0.58);
     font-size: 0.68rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
   }
 
-  .retainer-list {
+  .ladder-points {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2, 0.5rem);
+    display: grid;
+    gap: 0.6rem;
   }
 
-  .retainer-list li {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    padding-left: 1.25rem;
+  .ladder-points li {
+    font-size: 0.92rem;
+    color: rgba(255, 255, 255, 0.68);
+    line-height: 1.55;
+    padding-left: 1rem;
     position: relative;
   }
 
-  .retainer-list li::before {
+  .ladder-points li::before {
     content: '';
     position: absolute;
     left: 0;
     top: 0.55em;
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: rgba(96, 165, 250, 0.6);
-  }
-
-  .retainer-callout {
-    margin-top: var(--space-6, 2rem);
-    padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
-    border: 1px solid rgba(96, 165, 250, 0.1);
-    background: rgba(96, 165, 250, 0.03);
-    border-radius: var(--radius-md, 8px);
-    text-align: center;
-  }
-
-  .retainer-callout p {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    max-width: 600px;
-    margin: 0 auto;
   }
 
   /* Timeline */
@@ -663,7 +781,7 @@
 
   .timeline-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-6, 2rem);
     max-width: 900px;
     margin: 0 auto;
@@ -805,10 +923,9 @@
 
   /* Responsive */
   @media (max-width: 1024px) {
-    .progression-grid {
+    .ladder-shell {
       grid-template-columns: 1fr;
     }
-
   }
 
   @media (max-width: 768px) {
@@ -818,6 +935,20 @@
 
     .hero-title {
       font-size: var(--text-h1);
+    }
+
+    .ladder-row {
+      grid-template-columns: 1fr;
+      gap: 0.9rem;
+    }
+
+    .ladder-order {
+      padding-top: 0;
+    }
+
+    .ladder-points {
+      padding-top: 0.85rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .timeline-grid {
@@ -837,10 +968,6 @@
     .faq-section,
     .cta-section {
       padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
-    }
-
-    .retainer-price {
-      font-size: var(--text-h1);
     }
 
     .marquee-fade-left,
