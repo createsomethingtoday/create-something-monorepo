@@ -7,7 +7,7 @@ import {
 	setSessionCookies,
 } from '@create-something/canon/auth';
 
-export const load = async ({ url, cookies, platform, request }) => {
+export const load = async ({ url, cookies, platform, request }: { url: URL; cookies: import('@sveltejs/kit').Cookies; platform: App.Platform; request: Request }) => {
 	const config = getAuth0Config(platform?.env);
 	if (!config) {
 		throw error(503, 'Auth0 is not configured');

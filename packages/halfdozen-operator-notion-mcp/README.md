@@ -6,6 +6,11 @@ Composio-backed Notion MCP for operator-managed account bindings.
 
 - `halfdozen_notion`
 - `blondish_notion`
+- `c3_denver_notion`
+- `cracked_notion`
+- `kk_management_notion`
+- `hd_client_key_notion`
+- `six_notion`
 - `operator_notion_accounts`
 - `operator_notion_sync`
 - `operator_notion_sync_contracts`
@@ -19,6 +24,9 @@ Worker secrets / vars:
 - `COMPOSIO_API_KEY`
 - `COMPOSIO_NOTION_AUTH_CONFIG_ID`
 - `MCP_API_KEY`
+- `PINNED_HALFDOZEN_TOOL_NAME`
+- `PINNED_CLIENT_TOOL_NAME` (legacy single-tool fallback)
+- `PINNED_CLIENT_TOOL_NAMES` (comma-separated client-pinned tool names)
 - `PARTNER_KEY`
 - `PARTNER_CLIENT_SLUG`
 - `OPENAI_API_KEY` (optional, enables OpenAI-agent fallback in `operator_notion_router`)
@@ -33,6 +41,7 @@ Worker secrets / vars:
 Default Notion auth config ID in `worker/wrangler.toml`:
 
 - `COMPOSIO_NOTION_AUTH_CONFIG_ID = "ac_1fYSxzK38XeT"`
+- `PINNED_CLIENT_TOOL_NAMES = "blondish_notion,c3_denver_notion,cracked_notion,kk_management_notion,hd_client_key_notion,six_notion"`
 - `CONFIG_DB` points to `create-something-db` (`a74e70ae-6a94-43da-905e-b90719c8dfd2`)
 
 ## Notes
@@ -40,7 +49,12 @@ Default Notion auth config ID in `worker/wrangler.toml`:
 - Pinned tools resolve through `partner_auth_notion_pins` and reject caller account overrides.
 - Account metadata and pins live in the agency D1 schema introduced by `0011_partner_notion_accounts.sql`.
 - Sync contracts, field mappings, record mappings, and run history live in the agency D1 schema introduced by `0020_partner_notion_sync_contracts.sql`.
+- Resources now include:
+  - `notion://operator-accounts`
+  - `notion://two-way-sync-workflow`
+  - `notion://codex-two-way-sync-playbook`
 - `operator_notion_accounts` now supports onboarding wizard flow (`action=wizard`) for naming workspaces + connect-link/API-key steps.
+- `operator_notion_accounts` accepts optional `args.composio_user_id` so preprovisioned Composio identities can be reused instead of deriving `hd_notion_<partner>_<slug>`.
 - `operator_notion_sync` supports page-content preview/copy between managed accounts after connection.
 - `operator_notion_sync_contracts` manages deterministic pairwise data-source sync contracts for Codex automations:
   - discovery: `list_data_sources`, `get_data_source_schema`

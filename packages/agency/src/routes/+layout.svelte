@@ -35,22 +35,26 @@
 	});
 
 	const navLinks = [
-		{ label: 'How I Work', href: '/services' },
-		{ label: 'What I\'ve Built', href: '/products' },
+		{ label: 'How It Works', href: '/services' },
+		{ label: 'Proof', href: '/products' },
 		{ label: 'About', href: '/about' }
 	];
 
-	// Quick access items for unified search
-	const quickAccessItems = [
-		{ id: 'nav-services', label: 'How I Work', description: 'Workflow infrastructure, reliability, enterprise extension', href: '/services', icon: '🔨', keywords: ['workflow infrastructure', 'reliability', 'automation', 'pricing', 'services'] },
-		{ id: 'nav-products', label: 'What I\'ve Built', description: 'Artifact-backed production workflows', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations'] },
+	const prospectQuickAccessItems = [
+		{ id: 'nav-services', label: 'How It Works', description: 'Qualified pilot routing, Workflow Mapping Session, Policy OS, enterprise extension', href: '/services', icon: '🔨', keywords: ['workflow mapping', 'policy os', 'pilot', 'services', 'ops', 'revops'] },
+		{ id: 'nav-products', label: 'Proof', description: 'Workflow examples and technical proof', href: '/products', icon: '📦', keywords: ['proof', 'case studies', 'portfolio', 'tools', 'integrations'] },
 		{ id: 'nav-book', label: 'Book Mapping Session', description: 'Map workflow risk and operational fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session'] },
-		{ id: 'nav-mcp-access', label: 'MCP Access', description: 'Reveal, copy, rotate, and revoke your personal bearer token', href: '/mcp-access', icon: '🗝️', keywords: ['mcp access', 'bearer token', 'copy token', 'host setup', 'codex', 'claude', 'cursor'] },
+		{ id: 'nav-contact', label: 'Pilot Qualification', description: 'See whether a workflow qualifies for a constrained pilot', href: '/contact', icon: '🧭', keywords: ['pilot', 'qualification', 'workflow review', 'contact'] },
 		{ id: 'nav-security', label: 'Security', description: 'Identity boundaries, bearer-token governance, and operational controls', href: '/security', icon: '🛡️', keywords: ['security', 'trust', 'risk', 'controls', 'auth'] },
-		{ id: 'nav-bearer-token-policy', label: 'Bearer Token Policy', description: 'One long-lived token per user with live entitlement checks and revocation', href: '/bearer-token-policy', icon: '🔑', keywords: ['bearer token', 'token policy', 'mcp access', 'agent access', 'auth'] },
 		{ id: 'nav-space', label: 'Go to .space', description: 'MCP experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
 		{ id: 'nav-io', label: 'Go to .io', description: 'MCP patterns for builders', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
-		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Philosophy of automation', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
+		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Philosophy of automation', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] }
+	];
+
+	const authenticatedQuickAccessItems = [
+		...prospectQuickAccessItems,
+		{ id: 'nav-mcp-access', label: 'MCP Access', description: 'Reveal, copy, rotate, and revoke your personal bearer token', href: '/mcp-access', icon: '🗝️', keywords: ['mcp access', 'bearer token', 'copy token', 'host setup', 'codex', 'claude', 'cursor'] },
+		{ id: 'nav-bearer-token-policy', label: 'Bearer Token Policy', description: 'One long-lived token per user with live entitlement checks and revocation', href: '/bearer-token-policy', icon: '🔑', keywords: ['bearer token', 'token policy', 'mcp access', 'agent access', 'auth'] }
 	];
 
 	// Handle hash scrolling
@@ -132,7 +136,7 @@
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="agency" localItems={quickAccessItems} />
+<UnifiedSearch currentProperty="agency" localItems={data.user ? authenticatedQuickAccessItems : prospectQuickAccessItems} />
 
 <div class="layout-root min-h-screen">
 	<Navigation
@@ -156,15 +160,24 @@
 	<Footer
 		mode="agency"
 		showNewsletter={false}
-		aboutText="Production-safe workflow infrastructure for technical operators who need reliable automation, clear trust boundaries, and enterprise extension when workflows get risky."
-		quickLinks={[
-			{ label: 'How I Work', href: '/services' },
-			{ label: 'What I\'ve Built', href: '/products' },
-			{ label: 'About', href: '/about' },
-			{ label: 'Security', href: '/security' },
-			{ label: 'Bearer Token Policy', href: '/bearer-token-policy' },
-			{ label: 'Book Mapping Session', href: '/book' }
-		]}
+		aboutText="Production-safe workflow infrastructure for Ops, RevOps, and systems-minded operators who need reliable automation, clear trust boundaries, and enterprise extension when workflows get risky."
+		quickLinks={data.user
+			? [
+					{ label: 'How It Works', href: '/services' },
+					{ label: 'Proof', href: '/products' },
+					{ label: 'About', href: '/about' },
+					{ label: 'Security', href: '/security' },
+					{ label: 'MCP Access', href: '/mcp-access' },
+					{ label: 'Bearer Token Policy', href: '/bearer-token-policy' }
+				]
+			: [
+					{ label: 'How It Works', href: '/services' },
+					{ label: 'Proof', href: '/products' },
+					{ label: 'About', href: '/about' },
+					{ label: 'Security', href: '/security' },
+					{ label: 'Pilot Qualification', href: '/contact' },
+					{ label: 'Book Mapping Session', href: '/book' }
+				]}
 		showSocial={true}
 		isAuthenticated={!!data.user}
 	/>

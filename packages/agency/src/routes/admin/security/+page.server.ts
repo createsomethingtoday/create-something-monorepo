@@ -7,7 +7,7 @@ import {
 } from '$lib/server/mcp-entitlements';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 
-export const load = async ({ cookies, platform }) => {
+export const load = async ({ cookies, platform }: { cookies: import('@sveltejs/kit').Cookies; platform: App.Platform }) => {
 	const operator = await requireAgencyOperator({ cookies, platform });
 	const db = platform!.env.DB;
 

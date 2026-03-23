@@ -40,10 +40,26 @@ type LaneConfig = {
 	hubSubdomain: string;
 	bridgeSubdomain: string;
 	bridgeUsername: string;
+	defaultToolkitProfile: string[];
 };
 
 const DEFAULT_CREDENTIAL_SOURCE = 'Vault + private operator handoff';
 const DEFAULT_LANE_CREDENTIAL_SOURCE = 'Partner-managed named lane';
+// Legacy bridge hubs inherit their Composio scope from the shared-auth deployment pack.
+const LEGACY_SHARED_AUTH_TOOLKITS = [
+	'dropbox',
+	'gmail',
+	'youtube',
+	'googlesheets',
+	'googledrive',
+	'zoom',
+	'slack',
+	'quickbooks',
+	'linkedin',
+	'notion',
+];
+// Webflow reviewer legacy lanes currently use dedicated non-Composio review services only.
+const LEGACY_WEBFLOW_REVIEWER_TOOLKITS: string[] = [];
 
 const LANE_CONFIGS: Record<string, LaneConfig> = {
 	mj: {
@@ -51,78 +67,91 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		hubSubdomain: 'mj',
 		bridgeSubdomain: 'mj-notion',
 		bridgeUsername: 'acct_mj',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	lainy: {
 		displayName: 'Lainy',
 		hubSubdomain: 'lainy',
 		bridgeSubdomain: 'lainy-notion',
 		bridgeUsername: 'acct_lainy',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	august: {
 		displayName: 'August',
 		hubSubdomain: 'august',
 		bridgeSubdomain: 'august-notion',
 		bridgeUsername: 'acct_august',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	fillip: {
 		displayName: 'Fillip',
 		hubSubdomain: 'fillip',
 		bridgeSubdomain: 'fillip-notion',
 		bridgeUsername: 'acct_fillip',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	leah: {
 		displayName: 'Leah',
 		hubSubdomain: 'leah',
 		bridgeSubdomain: 'leah-notion',
 		bridgeUsername: 'acct_leah',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	danny: {
 		displayName: 'Danny',
 		hubSubdomain: 'danny',
 		bridgeSubdomain: 'danny-notion',
 		bridgeUsername: 'acct_danny',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	dm: {
 		displayName: 'Danny',
 		hubSubdomain: 'danny',
 		bridgeSubdomain: 'danny-notion',
 		bridgeUsername: 'acct_danny',
+		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
 	},
 	wf_natalia: {
 		displayName: 'Natalia Ledford',
 		hubSubdomain: 'wf-template-review-natalia',
 		bridgeSubdomain: 'wf-template-review-natalia',
 		bridgeUsername: 'acct_wf_natalia',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_sudiksha: {
 		displayName: 'Sudiksha Khanduja',
 		hubSubdomain: 'wf-template-review-sudiksha',
 		bridgeSubdomain: 'wf-template-review-sudiksha',
 		bridgeUsername: 'acct_wf_sudiksha',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_eric: {
 		displayName: 'Eric Unger',
 		hubSubdomain: 'wf-template-review-eric',
 		bridgeSubdomain: 'wf-template-review-eric',
 		bridgeUsername: 'acct_wf_eric',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_vicki: {
 		displayName: 'Vicki Chen',
 		hubSubdomain: 'wf-template-review-vicki',
 		bridgeSubdomain: 'wf-template-review-vicki',
 		bridgeUsername: 'acct_wf_vicki',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_mariana: {
 		displayName: 'Mariana Segura',
 		hubSubdomain: 'wf-template-review-mariana',
 		bridgeSubdomain: 'wf-template-review-mariana',
 		bridgeUsername: 'acct_wf_mariana',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 	wf_micah: {
 		displayName: 'Micah Johnson',
 		hubSubdomain: 'wf-template-review-micah',
 		bridgeSubdomain: 'wf-template-review-micah',
 		bridgeUsername: 'acct_wf_micah',
+		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 	},
 };
 
@@ -155,6 +184,7 @@ function buildLegacyAssignment(input: AccessAssignmentInput): McpAccessAssignmen
 	if (!laneKey) return null;
 
 	const lane = LANE_CONFIGS[laneKey];
+	const toolkitProfile = [...lane.defaultToolkitProfile];
 	return {
 		source: 'legacy',
 		partnerClientId: null,
@@ -169,8 +199,8 @@ function buildLegacyAssignment(input: AccessAssignmentInput): McpAccessAssignmen
 		accountId: input.accountId,
 		tenantId: input.tenantId,
 		workspaceAccountId: input.workspaceAccountId ?? input.accountId,
-		toolkitProfile: [],
-		allowedToolPrefixes: [],
+		toolkitProfile,
+		allowedToolPrefixes: buildComposioAllowedToolPrefixes(toolkitProfile),
 	};
 }
 

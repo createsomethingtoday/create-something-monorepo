@@ -10,9 +10,7 @@ export const AGENCY_MARKETING_COPY_EXPERIMENT = {
 		'/book',
 		'/products',
 		'/methodology',
-		'/contact',
-		'/use-cases/business',
-		'/use-cases/enterprise'
+		'/contact'
 	],
 } as const;
 

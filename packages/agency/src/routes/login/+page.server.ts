@@ -3,7 +3,7 @@ import { createSessionManager, getAuth0Config, PROPERTY_DOMAINS } from '@create-
 
 const DEFAULT_REDIRECT = '/dashboard';
 
-export const load = async ({ url, cookies, platform }) => {
+export const load = async ({ url, cookies, platform }: { url: URL; cookies: import('@sveltejs/kit').Cookies; platform: App.Platform }) => {
 	const authProvider = getAuth0Config(platform?.env);
 	const session = createSessionManager(cookies, {
 		isProduction: platform?.env?.ENVIRONMENT === 'production',

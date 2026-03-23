@@ -1,6 +1,7 @@
 import hubRegistryRaw from '../../../../../config/mcp-hub/registry.json';
 import { getComposioClient, normalizeToolkitSlug } from '$lib/server/partner-auth';
 import type { McpAccessAssignment } from '$lib/server/mcp-access-assignments';
+import { buildLegacyToolkitBindingId } from '$lib/server/mcp-legacy-toolkit-bindings';
 
 const COMPOSIO_SERVER_PREFIX = 'composio-toolkit-';
 const REGISTRY_SNAPSHOT_ID = `registry-v${String((hubRegistryRaw as { version?: number }).version ?? 1)}`;
@@ -422,7 +423,7 @@ async function fetchComposioToolkitTools(
 	try {
 		const composio = getComposioClient(env);
 		const response = await (
-			composio.tools as {
+			composio.tools as unknown as {
 				getRawComposioTools: (args: Record<string, unknown>) => Promise<unknown>;
 			}
 		).getRawComposioTools({
@@ -485,7 +486,9 @@ async function loadConnectionStatusByToolkit(
 	assignment: McpAccessAssignment,
 ): Promise<Map<string, HubConnectionStatus>> {
 	const map = new Map<string, HubConnectionStatus>();
-	if (!assignment.partnerClientId) {
+	const bindingId =
+		assignment.partnerClientId ?? (assignment.source === 'legacy' ? buildLegacyToolkitBindingId(assignment) : null);
+	if (!bindingId) {
 		return map;
 	}
 
@@ -501,7 +504,7 @@ async function loadConnectionStatusByToolkit(
 			 FROM partner_auth_toolkit_accounts
 			 WHERE partner_client_id = ?`,
 		)
-		.bind(assignment.partnerClientId)
+		.bind(bindingId)
 		.all<ToolkitConnectionRow>();
 
 	const grouped = new Map<string, ToolkitConnectionRow[]>();

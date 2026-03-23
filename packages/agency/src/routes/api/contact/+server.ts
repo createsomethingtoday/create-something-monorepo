@@ -5,6 +5,27 @@ import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('ContactAPI');
 
+function escapeHtml(value: string): string {
+	return value.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function buildContactSummary(input: ContactInput): string {
+	const lines = [
+		`Primary workflow: ${input.primary_workflow || 'Not provided'}`,
+		`Current stack: ${input.current_stack || 'Not provided'}`,
+		`Risk level: ${input.risk_level || 'Not provided'}`,
+		`Requested next step: ${input.desired_next_step || 'Not provided'}`,
+		`Recommended next step: ${input.recommended_next_step || 'Pending review'}`,
+		`Timeline: ${input.timeline || 'Not provided'}`
+	];
+
+	if (input.message.trim()) {
+		lines.push('', 'Additional context:', input.message.trim());
+	}
+
+	return lines.join('\n');
+}
+
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		// Validate request body with Zod schema
@@ -19,28 +40,83 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			);
 		}
 
-		const { name, email, message, service, company, assessment_id } = parseResult.data as ContactInput;
+			const {
+				name,
+				email,
+				message,
+				service,
+				company,
+				role,
+				assessment_id,
+				primary_workflow,
+				current_stack,
+				workflow_lane,
+				risk_level,
+				desired_next_step,
+				recommended_next_step,
+				timeline
+			} = parseResult.data as ContactInput;
+			const compiledMessage = buildContactSummary(parseResult.data as ContactInput);
+			const normalizedService = desired_next_step || workflow_lane || service || null;
 
-		// Access Cloudflare bindings via platform.env
-		if (!platform?.env) {
+			// Access Cloudflare bindings via platform.env
+			if (!platform?.env) {
 			throw error(500, 'Platform environment not available');
 		}
 
 		const env = platform.env;
 
-		// Store contact submission in D1 database (optional)
-		try {
-			await env.DB.prepare(
-				`
-        INSERT INTO contact_submissions (name, email, message, service, company, assessment_id, submitted_at)
-        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-      `
-			)
-				.bind(name, email, message, service || null, company || null, assessment_id || null)
-				.run();
+			// Store contact submission in D1 database (optional)
+			try {
+				try {
+					await env.DB.prepare(
+						`
+	        INSERT INTO contact_submissions (
+	          name, email, message, service, company, role, assessment_id,
+	          primary_workflow, current_stack, workflow_lane, risk_level,
+	          desired_next_step, recommended_next_step, timeline, submitted_at
+	        )
+	        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+	      `
+					)
+						.bind(
+							name,
+							email,
+							compiledMessage,
+							normalizedService,
+							company || null,
+							role || null,
+							assessment_id || null,
+							primary_workflow || null,
+							current_stack || null,
+							workflow_lane || null,
+							risk_level || null,
+							desired_next_step || null,
+							recommended_next_step || null,
+							timeline || null
+						)
+						.run();
+				} catch (insertError) {
+					logger.warn('Structured contact insert failed, falling back to legacy schema', { error: insertError });
+					await env.DB.prepare(
+						`
+	        INSERT INTO contact_submissions (name, email, message, service, company, assessment_id, submitted_at)
+	        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+	      `
+					)
+						.bind(
+							name,
+							email,
+							compiledMessage,
+							normalizedService,
+							company || null,
+							assessment_id || null
+						)
+						.run();
+				}
 
-			// Mark assessment as converted if present
-			if (assessment_id) {
+				// Mark assessment as converted if present
+				if (assessment_id) {
 				await env.DB.prepare(
 					`UPDATE assessment_responses SET converted_to_contact = 1 WHERE session_id = ?`
 				)
@@ -58,11 +134,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				Authorization: `Bearer ${env.RESEND_API_KEY || 're_JbMtKyRz_3n55bLDPciMmZfgaez38WzM7'}`,
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({
-				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
-				to: email,
-				subject: service ? `Re: ${service} Inquiry` : 'Thanks for reaching out',
-				html: `<!DOCTYPE html>
+				body: JSON.stringify({
+					from: 'CREATE SOMETHING .agency <hello@createsomething.agency>',
+					to: email,
+					subject: normalizedService ? `Re: ${normalizedService} inquiry` : 'Thanks for reaching out',
+					html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -74,18 +150,18 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="content">
-      <h1>Thanks for reaching out</h1>
-      <p>Hi ${name},</p>
-      <p>I've received your inquiry${service ? ` about ${service}` : ''} and will get back to you within 24 hours to scope your first outcome stack.</p>
-      <div class="message-box">
-        ${service ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Service: ${service}</p>` : ''}
-        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
-        <p style="color: rgba(255, 255, 255, 0.9);">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
-      </div>
-      <p>— Micah Johnson<br>CREATE SOMETHING Agency</p>
-    </div>
+	  <div class="container">
+	    <div class="content">
+	      <h1>Thanks for reaching out</h1>
+	      <p>Hi ${name},</p>
+	      <p>I’ve received your workflow details${normalizedService ? ` for ${normalizedService}` : ''} and will follow up with the next step for this workflow.</p>
+	      <div class="message-box">
+	        ${normalizedService ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Requested next step: ${escapeHtml(normalizedService)}</p>` : ''}
+	        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Workflow summary:</p>
+	        <p style="color: rgba(255, 255, 255, 0.9);">${escapeHtml(compiledMessage).replace(/\n/g, '<br>')}</p>
+	      </div>
+	      <p>— Micah Johnson<br>CREATE SOMETHING Agency</p>
+	    </div>
   </div>
 </body>
 </html>`
@@ -99,12 +175,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				Authorization: `Bearer ${env.RESEND_API_KEY || 're_JbMtKyRz_3n55bLDPciMmZfgaez38WzM7'}`,
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({
-				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
-				to: 'micah@createsomething.io',
-				replyTo: email,
-				subject: service ? `Service Inquiry: ${service} from ${name}` : `New Contact Form Submission from ${name}`,
-				html: `<!DOCTYPE html>
+				body: JSON.stringify({
+					from: 'CREATE SOMETHING .agency <hello@createsomething.agency>',
+					to: 'micah@createsomething.agency',
+					replyTo: email,
+					subject: normalizedService
+						? `Workflow inquiry: ${normalizedService} from ${name}`
+						: `New workflow inquiry from ${name}`,
+					html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -115,16 +193,20 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   </style>
 </head>
 <body>
-  <div class="header">
-    <h2>${service ? `Service Inquiry: ${service}` : 'New Contact Form Submission'}</h2>
-  </div>
-  <div class="content">
-    <p><strong>From:</strong> ${name} (${email})</p>
-    ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
-    ${service ? `<p><strong>Service:</strong> ${service}</p>` : ''}
-    <p><strong>Message:</strong><br>${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
-    <p><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
-  </div>
+	  <div class="header">
+	    <h2>${normalizedService ? `Workflow inquiry: ${escapeHtml(normalizedService)}` : 'New workflow inquiry'}</h2>
+	  </div>
+	  <div class="content">
+	    <p><strong>From:</strong> ${name} (${email})</p>
+	    ${company ? `<p><strong>Company:</strong> ${escapeHtml(company)}</p>` : ''}
+	    ${role ? `<p><strong>Role:</strong> ${escapeHtml(role)}</p>` : ''}
+	    ${risk_level ? `<p><strong>Risk level:</strong> ${escapeHtml(risk_level)}</p>` : ''}
+	    ${desired_next_step ? `<p><strong>Requested next step:</strong> ${escapeHtml(desired_next_step)}</p>` : ''}
+	    ${recommended_next_step ? `<p><strong>Recommended next step:</strong> ${escapeHtml(recommended_next_step)}</p>` : ''}
+	    ${timeline ? `<p><strong>Timeline:</strong> ${escapeHtml(timeline)}</p>` : ''}
+	    <p><strong>Workflow summary:</strong><br>${escapeHtml(compiledMessage).replace(/\n/g, '<br>')}</p>
+	    <p><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
+	  </div>
 </body>
 </html>`
 			})
@@ -153,7 +235,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			logger.error('Failed to send notification email', { email, error: errorData });
 		}
 
-		logger.info('Contact form submitted successfully', { email, name, service });
+			logger.info('Contact form submitted successfully', {
+				email,
+				name,
+				service: normalizedService,
+				riskLevel: risk_level,
+				recommendedNextStep: recommended_next_step
+			});
 
 		return json({
 			success: true,

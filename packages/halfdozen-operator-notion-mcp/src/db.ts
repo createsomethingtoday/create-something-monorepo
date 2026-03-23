@@ -829,17 +829,28 @@ export async function upsertNotionAccount(
 ): Promise<void> {
   const existing = await getNotionAccountBySlug(db, input.partnerClientId, input.accountSlug);
   if (existing) {
+    const composioUserChanged = existing.composio_user_id !== input.composioUserId;
     await db
       .prepare(
         `UPDATE partner_auth_notion_accounts
-         SET display_label = ?, auth_config_id = ?, sync_enabled = ?, metadata_json = ?, updated_at = datetime('now')
+         SET display_label = ?, composio_user_id = ?, auth_config_id = ?, sync_enabled = ?, metadata_json = ?,
+             connected_account_id = CASE WHEN ? THEN NULL ELSE connected_account_id END,
+             connection_status = CASE WHEN ? THEN 'INITIATED' ELSE connection_status END,
+             last_checked_at = CASE WHEN ? THEN NULL ELSE last_checked_at END,
+             connected_at = CASE WHEN ? THEN NULL ELSE connected_at END,
+             updated_at = datetime('now')
          WHERE id = ?`
       )
       .bind(
         input.displayLabel,
+        input.composioUserId,
         input.authConfigId,
         input.syncEnabled ? 1 : 0,
         JSON.stringify(input.metadata),
+        composioUserChanged ? 1 : 0,
+        composioUserChanged ? 1 : 0,
+        composioUserChanged ? 1 : 0,
+        composioUserChanged ? 1 : 0,
         existing.id,
       )
       .run();

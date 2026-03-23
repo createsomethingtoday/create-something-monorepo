@@ -1,7 +1,7 @@
 import { HALF_DOZEN_PARTNER_KEY, listPartnerClients, parseJsonArray, parseJsonObject } from '$lib/server/partner-auth';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 
-export const load = async ({ cookies, platform }) => {
+export const load = async ({ cookies, platform }: { cookies: import('@sveltejs/kit').Cookies; platform: App.Platform }) => {
 	await requireAgencyOperator({ cookies, platform });
 	const clients = await listPartnerClients(platform!.env.DB, HALF_DOZEN_PARTNER_KEY, { limit: 200 });
 	return {

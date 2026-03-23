@@ -17,6 +17,20 @@ References:
 - `/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/policies/v1/policy.client-hub-user-experience.v1.md`
 - `/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/policies/v1/policy.partner-auth-governance.v1.md`
 
+## Preferred Command Path
+
+Use the declarative lane workflow first:
+
+```bash
+pnpm mcp:hub:lane:deploy --lane morgan-young-c3-management --admin-key "$PARTNER_PORTAL_ADMIN_KEY"
+pnpm mcp:hub:lane:preflight --lane morgan-young-c3-management --admin-key "$PARTNER_PORTAL_ADMIN_KEY"
+pnpm mcp:hub:lane:verify --lane morgan-young-c3-management --admin-key "$PARTNER_PORTAL_ADMIN_KEY"
+```
+
+These commands read `config/mcp-hub/named-lanes.v1.json`, sync worker secrets, deploy the worker, normalize Hub state, initialize the lane record, and report `infrastructure_ready`, `customer_ready`, and `search_ready`.
+
+Use the manual steps below only for debugging or if the scripted workflow is blocked.
+
 ## 1) Deploy Worker + Domain
 
 ```bash

@@ -6,8 +6,8 @@
 
 <SEO
   title="About | Micah Johnson — Workflow Infrastructure"
-  description="I help Ops, RevOps, and systems-minded teams fix the workflow rules, approvals, and reliability controls that usually break after launch."
-  keywords="Micah Johnson, workflow infrastructure, production automation, technical operators, cross-system architecture, automation reliability"
+  description="I help Ops, RevOps, and systems-minded teams map risky workflows, tighten approval boundaries, and add the operating controls that usually break after launch."
+  keywords="Micah Johnson, workflow mapping, policy os, ops revops automation, workflow infrastructure, cross-system architecture"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -30,7 +30,7 @@
       <p class="hero-eyebrow">About</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">I help teams fix the part of automation that breaks after launch.</h1>
+      <h1 class="hero-title">I help Ops and RevOps teams fix the part of automation that breaks after launch.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
@@ -49,13 +49,13 @@
         <h2>The approach</h2>
         <p>
           Most teams do not need a giant platform initiative first. They need one workflow that
-          stops creating manual cleanup. I start there, then add controls only when the cost of
-          failure justifies the extra layer.
+          stops creating manual cleanup. I start there with a workflow map, then add controls only
+          when the cost of failure justifies the extra layer.
         </p>
         <p>
-          My methodology is the Subtractive Triad: remove duplication, excess, and disconnection
-          before adding automation. Cleaner systems reduce handoff risk. Better constraints make
-          automation more reliable.
+          In practice, that means three routes: a Workflow Mapping Session for ambiguous or
+          high-pressure work, a constrained pilot for qualified low-risk workflows, and Policy OS
+          when live automation needs approvals, blocked states, and oversight.
         </p>
       </div>
     </BlurFade>
@@ -145,7 +145,7 @@
             > — Tools and experiments
           </li>
           <li>
-            <strong>.agency</strong> — Workflow infrastructure, reliability controls, and enterprise extension
+            <strong>.agency</strong> — Workflow mapping, governed execution, and enterprise extension
             <span class="muted">(you are here)</span>
           </li>
         </ul>
@@ -163,15 +163,10 @@
   <div class="section-container">
     <BlurFade delay={0.1}>
       <div class="about-content">
-        <h2>Also building</h2>
+        <h2>Partner path</h2>
         <p>
-          I am also building <a
-            href="https://workway.co"
-            class="link"
-            target="_blank"
-            rel="noopener noreferrer">WORKWAY</a
-          >. When clients need full system development and onboarding as the primary engagement, I
-          provide a direct referral path to trusted partners, including Half Dozen.
+          When clients primarily need full system development and onboarding, I provide a direct
+          referral path to trusted partners, including Half Dozen.
         </p>
       </div>
     </BlurFade>
@@ -187,7 +182,7 @@
     <BlurFade delay={0.2}>
       <div class="cta-actions">
         <a href="/book" class="cta-link-primary">Book Mapping Session →</a>
-        <a href="/services" class="cta-link-secondary">See the engagement model →</a>
+        <a href="/contact" class="cta-link-secondary">See if a workflow qualifies for a pilot →</a>
       </div>
     </BlurFade>
   </div>

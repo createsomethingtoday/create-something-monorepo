@@ -38,9 +38,15 @@ interface ContentItem {
  */
 const SERVICES: ContentItem[] = [
 	{
-		slug: 'workflow-infrastructure',
-		title: 'Workflow Infrastructure',
-		description: 'CREATE SOMETHING builds production-safe workflow infrastructure for business-critical operations with clear trust boundaries.',
+		slug: 'qualified-mcp-hub-pilot',
+		title: 'Qualified MCP Hub Pilot',
+		description: 'Constrained pilot path for one narrow workflow with clear ownership, manageable risk, and a defined checkpoint.',
+		category: 'service'
+	},
+	{
+		slug: 'workflow-mapping-session',
+		title: 'Workflow Mapping Session',
+		description: 'Diagnostic session for mapping handoffs, approval boundaries, failure modes, and the right next implementation path.',
 		category: 'service'
 	},
 	{
@@ -62,9 +68,9 @@ const SERVICES: ContentItem[] = [
 		category: 'service'
 	},
 	{
-		slug: 'mcp-only-discovery',
-		title: 'MCP-only (Discovery/Compliance)',
-		description: 'Scoped entry wedge for read-only or limited-scope connectivity when teams need a safe workflow starting point before broader automation.',
+		slug: 'workflow-infrastructure',
+		title: 'Workflow Infrastructure (Legacy Alias)',
+		description: 'Compatibility alias for the Workflow Mapping Session and qualified pilot positioning during the current transition window.',
 		category: 'service'
 	}
 ];

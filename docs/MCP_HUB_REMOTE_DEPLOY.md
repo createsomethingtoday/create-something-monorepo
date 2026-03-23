@@ -150,6 +150,15 @@ Legacy bridge lane:
 - When using `compat` for a customer lane, keep `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` configured so managed bearers still resolve through `identity-worker` with host binding and governed prefix enforcement.
 - C3 Denver runs on the primary team-hub fleet path, not the legacy bridge lane. Its canonical account mapping is `acct_c3_denver`.
 
+Named-lane workflow:
+
+- Preferred operator entrypoints:
+  - `pnpm mcp:hub:lane:deploy --lane <slug> --admin-key "$PARTNER_PORTAL_ADMIN_KEY"`
+  - `pnpm mcp:hub:lane:preflight --lane <slug> --admin-key "$PARTNER_PORTAL_ADMIN_KEY"`
+  - `pnpm mcp:hub:lane:verify --lane <slug> --admin-key "$PARTNER_PORTAL_ADMIN_KEY"`
+- These commands read `config/mcp-hub/named-lanes.v1.json`, apply worker secrets, deploy dedicated workers when needed, normalize live Hub state, initialize the partner lane record, and separate `infrastructure_ready` from `customer_ready` and `search_ready`.
+- Use dedicated mode when a lane needs its own worker or hostname. Use shared mode for config-only lanes that bind to an existing shared Hub URL.
+
 State persistence:
 
 - Bind `HUB_STATE_KV` in `wrangler.toml` and set namespace IDs.

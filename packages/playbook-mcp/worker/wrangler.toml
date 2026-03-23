@@ -4,6 +4,11 @@ compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
+[triggers]
+# Runs at 14:00 and 15:00 UTC; worker code gates execution to 9:00 AM America/Chicago
+# so the automation stays pinned to Central Time across DST changes.
+crons = ["0 14 * * *", "0 15 * * *"]
+
 # Production URL: https://playbook.mcp.createsomething.ltd
 [[routes]]
 pattern = "playbook.mcp.createsomething.ltd"
@@ -39,6 +44,10 @@ BRAINTRUST_ENABLED = "true"
 # Required secrets for protected Half Dozen agent routes:
 # wrangler secret put OPENAI_API_KEY
 # wrangler secret put HALFDOZEN_AGENT_ROUTE_TOKEN
+# wrangler secret put GMAIL_UNREAD_SUMMARY_ROUTE_TOKEN
+# wrangler secret put CS_HUB_AUTH_TOKEN
+# Optional if using session-scoped auth instead of bearer:
+# wrangler secret put CS_HUB_SESSION_TOKEN
 
 # Optional Braintrust tracing:
 # wrangler secret put BRAINTRUST_API_KEY
@@ -54,3 +63,13 @@ BRAINTRUST_ENABLED = "true"
 # wrangler secret put HALFDOZEN_SLACK_SIGNING_SECRET
 # Optional workspace restriction:
 # wrangler secret put HALFDOZEN_SLACK_TEAM_ID
+
+# Optional Hub + delivery config for daily Gmail unread summary automation:
+# CS_HUB_MCP_URL = "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp"
+# GMAIL_UNREAD_SUMMARY_QUERY = "is:unread"
+# GMAIL_UNREAD_SUMMARY_MAX_RESULTS = "25"
+# GMAIL_UNREAD_SUMMARY_TIMEZONE = "America/Chicago"
+# GMAIL_UNREAD_SUMMARY_LOCAL_HOUR = "9"
+# GMAIL_UNREAD_SUMMARY_CONNECTED_ACCOUNT_ID = "ca_..."
+# GMAIL_UNREAD_SUMMARY_RECIPIENT_EMAIL = "you@example.com"
+# GMAIL_UNREAD_SUMMARY_WEBHOOK_URL = "https://hooks.slack.com/services/..."

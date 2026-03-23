@@ -28,6 +28,7 @@ import {
   runHalfDozenInboxTriage,
 } from './halfdozenFleetWatchdog.js';
 import type { HalfDozenScenarioRunResult } from './halfdozenFleetWatchdog.js';
+import { runGmailUnreadSummary } from './gmailUnreadSummary.js';
 
 // =============================================================================
 // Types
@@ -52,6 +53,18 @@ interface Env {
   HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL?: string;
   HALFDOZEN_SLACK_SIGNING_SECRET?: string;
   HALFDOZEN_SLACK_TEAM_ID?: string;
+  CS_HUB_MCP_URL?: string;
+  CS_HUB_AUTH_TOKEN?: string;
+  CS_HUB_SESSION_TOKEN?: string;
+  GMAIL_UNREAD_SUMMARY_ROUTE_TOKEN?: string;
+  GMAIL_UNREAD_SUMMARY_CONNECTED_ACCOUNT_ID?: string;
+  GMAIL_UNREAD_SUMMARY_QUERY?: string;
+  GMAIL_UNREAD_SUMMARY_MAX_RESULTS?: string;
+  GMAIL_UNREAD_SUMMARY_RECIPIENT_EMAIL?: string;
+  GMAIL_UNREAD_SUMMARY_WEBHOOK_URL?: string;
+  GMAIL_UNREAD_SUMMARY_TIMEZONE?: string;
+  GMAIL_UNREAD_SUMMARY_LOCAL_HOUR?: string;
+  GMAIL_UNREAD_SUMMARY_SEND_EMPTY?: string;
 }
 
 const JSON_HEADERS = {
@@ -63,6 +76,7 @@ const HALFDOZEN_FLEET_WATCHDOG_ROUTE = '/clients/halfdozen/agents/fleet-watchdog
 const HALFDOZEN_INBOX_TRIAGE_ROUTE = '/clients/halfdozen/agents/inbox-triage/run';
 const HALFDOZEN_DEDUP_ROUTE = '/clients/halfdozen/agents/dedup/run';
 const HALFDOZEN_SLACK_COMMAND_ROUTE = '/clients/halfdozen/slack/commands';
+const GMAIL_UNREAD_SUMMARY_ROUTE = '/automations/gmail-unread-summary/run';
 const SLACK_TIMESTAMP_TOLERANCE_SECONDS = 300;
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
@@ -923,6 +937,49 @@ export default {
       return slackJsonResponse(buildSlackAcceptedResponse(parsed.scenario, runId, parsed.query));
     }
 
+    if (url.pathname === GMAIL_UNREAD_SUMMARY_ROUTE) {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          headers: {
+            ...JSON_HEADERS,
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+            'Access-Control-Max-Age': '86400',
+          },
+        });
+      }
+
+      if (request.method !== 'POST') {
+        return jsonResponse(
+          {
+            success: false,
+            error: 'Method not allowed',
+            message: 'Use POST for this endpoint.',
+          },
+          405,
+          { Allow: 'POST, OPTIONS' },
+        );
+      }
+
+      const authError = validateRouteToken(request, env.GMAIL_UNREAD_SUMMARY_ROUTE_TOKEN);
+      if (authError) {
+        return authError;
+      }
+
+      let force = false;
+      const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
+      if (contentType.includes('application/json')) {
+        const raw = await request.text();
+        if (raw.trim().length > 0) {
+          const parsed = JSON.parse(raw) as { force?: boolean };
+          force = parsed.force === true;
+        }
+      }
+
+      const result = await runGmailUnreadSummary(env, { force });
+      return jsonResponse(result, result.ok ? 200 : 500);
+    }
+
     if (isHalfDozenScenarioRoute(url.pathname)) {
       const runId = crypto.randomUUID();
       if (request.method === 'OPTIONS') {
@@ -1028,13 +1085,18 @@ export default {
           halfdozen_inbox_triage: HALFDOZEN_INBOX_TRIAGE_ROUTE,
           halfdozen_dedup: HALFDOZEN_DEDUP_ROUTE,
           halfdozen_slack_commands: HALFDOZEN_SLACK_COMMAND_ROUTE,
+          gmail_unread_summary: GMAIL_UNREAD_SUMMARY_ROUTE,
         },
-        protectedRoutes: HALFDOZEN_PROTECTED_ROUTES,
+        protectedRoutes: [...HALFDOZEN_PROTECTED_ROUTES, GMAIL_UNREAD_SUMMARY_ROUTE],
         notifications: {
           halfdozenSlackWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_WEBHOOK_URL),
           halfdozenSlackEscalationWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL),
           halfdozenSlackCommandSigningConfigured: Boolean(env.HALFDOZEN_SLACK_SIGNING_SECRET),
           halfdozenSlackTeamRestricted: Boolean(env.HALFDOZEN_SLACK_TEAM_ID),
+          gmailUnreadSummaryRecipientConfigured: Boolean(env.GMAIL_UNREAD_SUMMARY_RECIPIENT_EMAIL),
+          gmailUnreadSummaryWebhookConfigured: Boolean(env.GMAIL_UNREAD_SUMMARY_WEBHOOK_URL),
+          gmailUnreadSummaryRouteTokenConfigured: Boolean(env.GMAIL_UNREAD_SUMMARY_ROUTE_TOKEN),
+          gmailUnreadSummaryHubAuthConfigured: Boolean(env.CS_HUB_AUTH_TOKEN || env.CS_HUB_SESSION_TOKEN),
         },
         tools: [
           'get_playbook',
@@ -1052,5 +1114,12 @@ export default {
     }
 
     return new Response('Not found', { status: 404 });
+  },
+
+  async scheduled(_event: ScheduledEvent, env: Env) {
+    const result = await runGmailUnreadSummary(env);
+    if (!result.ok) {
+      console.error('gmail unread summary automation failed', result);
+    }
   },
 };

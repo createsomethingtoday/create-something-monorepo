@@ -18,6 +18,9 @@
 	const selectedHub = $derived(hubs.find((hub) => hub.laneKey === data.selectedHub) ?? null);
 	const catalog = $derived(data.catalog as ComposioCatalogPayload);
 	const availability = $derived((data.availability ?? null) as HubToolAvailabilityPayload | null);
+	let connectBusy = $state(false);
+	let connectMessage = $state('');
+	let connectError = $state('');
 
 	function formatDateTime(value: string | null | undefined): string {
 		if (!value) return 'Not set';
@@ -53,12 +56,68 @@
 		return value.replace(/_/g, ' ');
 	}
 
+	function hubScopeModel(hub: McpAccessAssignment | null): string {
+		if (!hub) return 'Unavailable';
+		if (hub.source !== 'legacy') return 'Partner-managed';
+		return hub.toolkitProfile.length > 0 ? 'Legacy shared-auth defaults' : 'Legacy non-Composio review';
+	}
+
+	function legacyScopeNotice(hub: McpAccessAssignment | null): string | null {
+		if (!hub || hub.source !== 'legacy') return null;
+		if (hub.toolkitProfile.length > 0) {
+			return 'This legacy lane uses the shared-auth bridge default for Composio toolkit scope. Authorization is explicit here, but live Hub discovery remains unverified.';
+		}
+		return 'This legacy lane is active for non-Composio review services only. The catalog stays available, but Hub-scoped Composio readiness is expected to remain empty.';
+	}
+
+	const selectedHubLegacyNotice = $derived(legacyScopeNotice(selectedHub));
+	const selectedHubHasComposioScope = $derived(Boolean(selectedHub?.toolkitProfile.length));
+	const servicesEmptyNote = $derived(
+		selectedHub?.source === 'legacy' && !selectedHubHasComposioScope
+			? 'This legacy reviewer lane has no Composio toolkit scope, so this table is expected to stay empty.'
+			: 'No scoped services were derived for this lane.',
+	);
+	const selectedToolkitEmptyNote = $derived(
+		data.selectedToolkit
+			? selectedHub?.source === 'legacy' && !selectedHubHasComposioScope
+				? 'This legacy reviewer lane does not authorize Composio toolkits. Selected catalog toolkits will remain out of scope here.'
+				: 'No live tools were returned for the selected toolkit.'
+			: 'Choose a toolkit to inspect per-tool readiness in the selected Hub.',
+	);
+	const selectedToolkitCanSelfServeConnect = $derived(
+		Boolean(
+			selectedHub &&
+				selectedHub.source === 'legacy' &&
+				selectedHubHasComposioScope &&
+				data.selectedToolkit &&
+				catalog.selectedToolkit?.requiresAuth &&
+				availability?.selectedToolkit?.authorized,
+		),
+	);
+	const selectedToolkitConnectLabel = $derived(
+		availability?.selectedToolkit?.connectionStatus === 'active' ? 'Reconnect toolkit' : 'Connect toolkit',
+	);
+	const selectedToolkitConnectNote = $derived(
+		!catalog.selectedToolkit
+			? 'Choose a toolkit to evaluate connection options.'
+			: !catalog.selectedToolkit.requiresAuth
+				? 'This toolkit does not require a Composio account connection.'
+				: selectedHub?.source !== 'legacy'
+					? 'Self-serve connect is only available for legacy shared-auth lanes right now.'
+					: !selectedHubHasComposioScope
+						? 'This legacy lane does not expose any self-serve Composio toolkit scope.'
+						: availability?.selectedToolkit && !availability.selectedToolkit.authorized
+							? 'This toolkit is outside the selected lane scope.'
+							: 'Launch the provider authorization flow for this toolkit from this legacy lane.',
+	);
+
 	const hubFacts = $derived(
 		selectedHub
 			? [
 					{ label: 'Lane', value: selectedHub.displayName },
 					{ label: 'Lane Key', value: selectedHub.laneKey },
 					{ label: 'Source', value: selectedHub.source },
+					{ label: 'Scope Model', value: hubScopeModel(selectedHub) },
 					{ label: 'Hub URL', value: selectedHub.hubUrl },
 					{ label: 'Host Key', value: selectedHub.hostKey ?? 'Not set' },
 					{ label: 'Toolkit Scope', value: joinList(selectedHub.toolkitProfile) },
@@ -66,6 +125,45 @@
 				]
 			: [],
 	);
+
+	async function connectSelectedToolkit() {
+		if (!selectedHub || !data.selectedToolkit || !selectedToolkitCanSelfServeConnect) return;
+
+		connectBusy = true;
+		connectMessage = '';
+		connectError = '';
+
+		try {
+			const response = await fetch(
+				`/api/me/hubs/${encodeURIComponent(selectedHub.laneKey)}/toolkits/${encodeURIComponent(data.selectedToolkit)}/connect-link`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						callback_url: window.location.href,
+					}),
+				},
+			);
+			const payload = (await response.json().catch(() => ({}))) as {
+				message?: string;
+				connect_link?: string;
+			};
+			if (!response.ok) {
+				throw new Error(payload.message ?? `Failed to start ${data.selectedToolkit} connection`);
+			}
+			if (!payload.connect_link) {
+				throw new Error(`No ${data.selectedToolkit} connect link was returned`);
+			}
+			connectMessage = `Opening ${data.selectedToolkit} connection flow...`;
+			window.location.assign(payload.connect_link);
+		} catch (error) {
+			connectError = error instanceof Error ? error.message : `Failed to start ${data.selectedToolkit} connection`;
+		} finally {
+			connectBusy = false;
+		}
+	}
 </script>
 
 <SEO
@@ -150,6 +248,12 @@
 		{#if hubFacts.length > 0}
 			<div class="facts-wrap">
 				<FactList items={hubFacts} />
+			</div>
+		{/if}
+
+		{#if selectedHubLegacyNotice}
+			<div class="warning-block legacy-block">
+				<p>{selectedHubLegacyNotice}</p>
 			</div>
 		{/if}
 	</ReportSection>
@@ -275,33 +379,37 @@
 				</div>
 			</div>
 
-			<table class="data-table">
-				<thead>
-					<tr>
-						<th>Service</th>
-						<th>Authorized</th>
-						<th>Registered</th>
-						<th>Connection</th>
-						<th>Ready by policy</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each availability.services as service}
+			{#if availability.services.length > 0}
+				<table class="data-table">
+					<thead>
 						<tr>
-							<td>
-								<div class="tool-cell">
-									<strong>{service.name}</strong>
-									<span>{service.serverName}</span>
-								</div>
-							</td>
-							<td>{yesNo(service.authorized)}</td>
-							<td>{yesNo(service.registered)}</td>
-							<td>{statusLabel(service.connectionStatus)}</td>
-							<td>{yesNo(service.readyByPolicy)}</td>
+							<th>Service</th>
+							<th>Authorized</th>
+							<th>Registered</th>
+							<th>Connection</th>
+							<th>Ready by policy</th>
 						</tr>
-					{/each}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{#each availability.services as service}
+							<tr>
+								<td>
+									<div class="tool-cell">
+										<strong>{service.name}</strong>
+										<span>{service.serverName}</span>
+									</div>
+								</td>
+								<td>{yesNo(service.authorized)}</td>
+								<td>{yesNo(service.registered)}</td>
+								<td>{statusLabel(service.connectionStatus)}</td>
+								<td>{yesNo(service.readyByPolicy)}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{:else}
+				<p class="empty-note">{servicesEmptyNote}</p>
+			{/if}
 		</ReportSection>
 
 		<ReportSection
@@ -316,6 +424,26 @@
 					<span>Registered: {yesNo(availability.selectedToolkit.registered)}</span>
 					<span>Connection: {statusLabel(availability.selectedToolkit.connectionStatus)}</span>
 					<span>Ready by policy: {yesNo(availability.selectedToolkit.readyByPolicy)}</span>
+				</div>
+
+				<div class="toolkit-action-card">
+					<p class="panel-note">{selectedToolkitConnectNote}</p>
+					{#if connectError}
+						<p class="feedback error">{connectError}</p>
+					{/if}
+					{#if connectMessage}
+						<p class="feedback success">{connectMessage}</p>
+					{/if}
+					{#if selectedToolkitCanSelfServeConnect}
+						<button
+							type="button"
+							class="primary-button"
+							disabled={connectBusy}
+							onclick={connectSelectedToolkit}
+						>
+							{connectBusy ? 'Opening connect flow...' : selectedToolkitConnectLabel}
+						</button>
+					{/if}
 				</div>
 			{/if}
 
@@ -350,7 +478,7 @@
 					</tbody>
 				</table>
 			{:else}
-				<p class="empty-note">Choose a toolkit to inspect per-tool readiness in the selected Hub.</p>
+				<p class="empty-note">{selectedToolkitEmptyNote}</p>
 			{/if}
 		</ReportSection>
 	{/if}
@@ -407,6 +535,11 @@
 		border-radius: 0.65rem;
 		padding: 0.72rem 0.95rem;
 		cursor: pointer;
+	}
+
+	button:disabled {
+		opacity: 0.7;
+		cursor: progress;
 	}
 
 	.chip-list {
@@ -481,6 +614,10 @@
 		background: rgba(255, 255, 255, 0.03);
 	}
 
+	.legacy-block {
+		margin-top: 1rem;
+	}
+
 	.data-table {
 		width: 100%;
 		border-collapse: collapse;
@@ -516,7 +653,8 @@
 	}
 
 	.summary-card,
-	.selected-toolkit-card {
+	.selected-toolkit-card,
+	.toolkit-action-card {
 		display: grid;
 		gap: 0.25rem;
 		padding: 0.85rem 0.95rem;
@@ -534,6 +672,31 @@
 	.summary-card strong,
 	.selected-toolkit-card strong {
 		font-size: 1.05rem;
+	}
+
+	.toolkit-action-card {
+		gap: 0.7rem;
+		margin-top: 0.9rem;
+	}
+
+	.primary-button {
+		justify-self: start;
+		background: rgba(255, 255, 255, 0.92);
+		color: #111;
+	}
+
+	.feedback {
+		margin: 0;
+		font-size: 0.88rem;
+		line-height: 1.55;
+	}
+
+	.feedback.error {
+		color: #ff8a80;
+	}
+
+	.feedback.success {
+		color: #9fd7b8;
 	}
 
 	.facts-wrap {

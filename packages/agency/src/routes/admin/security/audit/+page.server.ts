@@ -23,7 +23,7 @@ interface IdentityAuditFeed {
 	}>;
 }
 
-export const load = async ({ cookies, platform }) => {
+export const load = async ({ cookies, platform }: { cookies: import('@sveltejs/kit').Cookies; platform: App.Platform }) => {
 	await requireAgencyOperator({ cookies, platform });
 	const db = platform!.env.DB;
 	const deliveries = await db

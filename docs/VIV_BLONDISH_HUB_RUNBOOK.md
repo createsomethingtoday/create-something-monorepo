@@ -7,7 +7,7 @@ Production runbook for the transparent named-lane Hub worker:
 - Health URL: `https://viv-blondish.mcp.createsomething.agency/health`
 - Fallback account ID: `acct_viv_blondish`
 - Lane slug / host key: `viv-blondish`
-- Allowed client surface: `notion-halfdozen-blondish`, `composio-toolkit-gmail`, and approved search provider(s) `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
+- Allowed client surface: `notion-halfdozen-blondish`, `composio-toolkit-gmail`, `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and `composio-toolkit-composio_search`
 - Observability baseline: Cloudflare telemetry + Braintrust tracing
 - Host compatibility mode: `compat` for Notion-style bearer-auth MCP hosts
 
@@ -16,6 +16,20 @@ References:
 - `/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/MCP_HUB_REMOTE_DEPLOY.md`
 - `/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/policies/v1/policy.client-hub-user-experience.v1.md`
 - `/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/policies/v1/policy.partner-auth-governance.v1.md`
+
+## Preferred Command Path
+
+Use the declarative lane workflow first:
+
+```bash
+pnpm mcp:hub:lane:deploy --lane viv-blondish --admin-key "$PARTNER_PORTAL_ADMIN_KEY"
+pnpm mcp:hub:lane:preflight --lane viv-blondish --admin-key "$PARTNER_PORTAL_ADMIN_KEY"
+pnpm mcp:hub:lane:verify --lane viv-blondish --admin-key "$PARTNER_PORTAL_ADMIN_KEY"
+```
+
+These commands read `config/mcp-hub/named-lanes.v1.json`, sync worker secrets, deploy the worker, normalize Hub state, initialize the lane record, and report `infrastructure_ready`, `customer_ready`, and `search_ready`.
+
+Use the manual steps below only for debugging or if the scripted workflow is blocked.
 
 ## 1) Deploy Worker + Domain
 
@@ -29,12 +43,12 @@ pnpm exec wrangler deploy \
   --domain viv-blondish.mcp.createsomething.agency \
   --var HUB_ACCOUNT_ID:acct_viv_blondish \
   --var 'HUB_ENABLED_BUNDLES:[]' \
-  --var HUB_ENABLED_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-exa \
+  --var HUB_ENABLED_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-exa,composio-toolkit-perplexityai,composio-toolkit-composio_search \
   --var HUB_DISABLED_SERVERS:composio-toolkit-notion \
   --var 'HUB_REQUIRED_GLOBAL_SERVERS:' \
   --var 'HUB_REQUIRED_DISCOVERY_SERVERS:' \
   --var HUB_DISCOVERY_MODE:compact \
-  --var HUB_DISCOVERY_DEFAULT_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-exa \
+  --var HUB_DISCOVERY_DEFAULT_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-exa,composio-toolkit-perplexityai,composio-toolkit-composio_search \
   --var HUB_IDENTITY_MODE:compat \
   --var HUB_SESSION_RESOLVE_URL:https://id.createsomething.space/v1/mcp/sessions/resolve \
   --keep-vars
@@ -46,10 +60,8 @@ Notes:
 - This lane intentionally overrides the template default `HUB_IDENTITY_MODE=session_required` with `compat` so Notion bearer-auth MCP connections behave like the older Half Dozen lanes.
 - Keep `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` configured in compat mode so managed bearers still resolve through `identity-worker` with bound-host and allowed-prefix enforcement.
 - `HUB_ENABLED_BUNDLES=[]` is required so the registry default `core` and `observability` bundles do not leak extra servers onto the lane.
-- `HUB_DISABLED_SERVERS`, `HUB_REQUIRED_GLOBAL_SERVERS`, and `HUB_REQUIRED_DISCOVERY_SERVERS` explicitly remove the default `composio-toolkit-notion` requirement; the lane should expose only the custom BLOND:ISH Notion bridge plus Gmail and Exa.
+- `HUB_DISABLED_SERVERS`, `HUB_REQUIRED_GLOBAL_SERVERS`, and `HUB_REQUIRED_DISCOVERY_SERVERS` explicitly remove the default `composio-toolkit-notion` requirement; the lane should expose only the custom BLOND:ISH Notion bridge plus Gmail, Exa, PerplexityAI, and Composio Search.
 - Do not add this worker to the shared team-hub fleet deploy script.
-- If PerplexityAI is enabled for this lane, add `composio-toolkit-perplexityai` to both `HUB_ENABLED_SERVERS` and `HUB_DISCOVERY_DEFAULT_SERVERS`.
-- If Composio Search is enabled for this lane, add `composio-toolkit-composio_search` to both `HUB_ENABLED_SERVERS` and `HUB_DISCOVERY_DEFAULT_SERVERS`.
 
 ## 2) Required Secrets
 
@@ -80,7 +92,9 @@ curl -sS -X POST https://viv-blondish.mcp.createsomething.agency/mcp \
         "setServers":[
           "notion-halfdozen-blondish",
           "composio-toolkit-gmail",
-          "composio-toolkit-exa"
+          "composio-toolkit-exa",
+          "composio-toolkit-perplexityai",
+          "composio-toolkit-composio_search"
         ]
       }
     }
@@ -99,7 +113,9 @@ Expected:
 - `enabled_servers` only:
   - `notion-halfdozen-blondish`
   - `composio-toolkit-gmail`
-  - promised search provider(s): `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
+  - `composio-toolkit-exa`
+  - `composio-toolkit-perplexityai`
+  - `composio-toolkit-composio_search`
 
 Verify discovery is limited to the intended surface and reset returns to the managed pack baseline:
 

@@ -91,17 +91,91 @@ function getRequiredOutputPaths(manifest) {
 	return [...outputs].filter((target) => typeof target === 'string' && target.startsWith('./dist/'));
 }
 
-function outputPathExists(packageDir, relativePath) {
+function resolveOutputCandidate(relativePath) {
 	const normalized = relativePath.replace(/^\.\//, '');
 	const wildcardIndex = normalized.indexOf('*');
-	const candidate =
-		wildcardIndex === -1
-			? normalized
-			: normalized.slice(0, wildcardIndex).replace(/[/.]+$/, '');
+	return wildcardIndex === -1
+		? normalized
+		: normalized.slice(0, wildcardIndex).replace(/[/.]+$/, '');
+}
+
+function outputPathExists(packageDir, relativePath) {
+	const candidate = resolveOutputCandidate(relativePath);
 
 	if (!candidate) return true;
 
 	return fs.existsSync(path.join(packageDir, candidate));
+}
+
+const IGNORED_BUILD_ARTIFACT_DIRS = new Set([
+	'dist',
+	'node_modules',
+	'.svelte-kit',
+	'.wrangler',
+	'.turbo',
+	'coverage',
+	'playwright-report',
+	'test-results'
+]);
+
+function getNewestMtimeMs(targetPath, options = {}) {
+	const { ignoredDirs = new Set() } = options;
+
+	try {
+		const stats = fs.lstatSync(targetPath);
+		if (!stats.isDirectory() || stats.isSymbolicLink()) {
+			return stats.mtimeMs;
+		}
+
+		let newest = stats.mtimeMs;
+		for (const entry of fs.readdirSync(targetPath, { withFileTypes: true })) {
+			if (entry.isDirectory() && ignoredDirs.has(entry.name)) continue;
+
+			const childNewest = getNewestMtimeMs(path.join(targetPath, entry.name), options);
+			if (childNewest !== null) {
+				newest = Math.max(newest, childNewest);
+			}
+		}
+
+		return newest;
+	} catch (error) {
+		if (error && error.code === 'ENOENT') {
+			return null;
+		}
+
+		throw error;
+	}
+}
+
+function getWorkspaceSourceTimestamp(packageDir) {
+	return getNewestMtimeMs(packageDir, { ignoredDirs: IGNORED_BUILD_ARTIFACT_DIRS });
+}
+
+function getWorkspaceOutputTimestamp(packageDir, requiredOutputs) {
+	let newest = null;
+
+	for (const outputPath of requiredOutputs) {
+		const candidate = resolveOutputCandidate(outputPath);
+		if (!candidate) continue;
+
+		const candidateNewest = getNewestMtimeMs(path.join(packageDir, candidate));
+		if (candidateNewest === null) continue;
+
+		newest = newest === null ? candidateNewest : Math.max(newest, candidateNewest);
+	}
+
+	return newest;
+}
+
+function workspacePackageNeedsBuild(packageDir, requiredOutputs) {
+	const sourceTimestamp = getWorkspaceSourceTimestamp(packageDir);
+	const outputTimestamp = getWorkspaceOutputTimestamp(packageDir, requiredOutputs);
+
+	if (sourceTimestamp === null || outputTimestamp === null) {
+		return false;
+	}
+
+	return sourceTimestamp > outputTimestamp;
 }
 
 function resolveWorkspaceBuildScript(manifest) {
@@ -130,14 +204,22 @@ function ensureWorkspacePackageReady(workspaceRoot, pkgName, packageDir, ancestr
 
 	const requiredOutputs = getRequiredOutputPaths(manifest);
 	const missingOutputs = requiredOutputs.filter((outputPath) => !outputPathExists(packageDir, outputPath));
+	const hasStaleOutputs = missingOutputs.length === 0 && workspacePackageNeedsBuild(packageDir, requiredOutputs);
 
-	if (missingOutputs.length > 0) {
+	if (missingOutputs.length > 0 || hasStaleOutputs) {
 		const buildScript = resolveWorkspaceBuildScript(manifest);
 		if (!buildScript) {
+			const reason =
+				missingOutputs.length > 0
+					? `missing built outputs (${missingOutputs.join(', ')})`
+					: 'stale built outputs';
 			throw new Error(
-				`Workspace package ${pkgName} is missing built outputs (${missingOutputs.join(', ')}) and has no package/build/prepare script`
+				`Workspace package ${pkgName} has ${reason} and no package/build/prepare script`
 			);
 		}
+
+		const reason = missingOutputs.length > 0 ? `missing outputs: ${missingOutputs.join(', ')}` : 'source newer than dist';
+		console.log(`[prepare-local-deps] rebuilding ${pkgName} (${reason})`);
 
 		execFileSync('pnpm', ['--dir', packageDir, 'run', buildScript], {
 			cwd: workspaceRoot,

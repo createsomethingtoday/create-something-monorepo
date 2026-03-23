@@ -12,6 +12,13 @@ interface CreateEventRequest {
 	email: string;
 	timezone: string;
 	company?: string;
+	role?: string;
+	primary_workflow?: string;
+	current_stack?: string;
+	risk_level?: string;
+	desired_next_step?: string;
+	recommended_next_step?: string;
+	timeline?: string;
 	notes?: string;
 	experiment_id?: string;
 	tag_id?: string;
@@ -42,7 +49,24 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	// Validate required fields
-	const { start_at, end_at, name, email, timezone, company, notes, experiment_id, tag_id } = body;
+		const {
+			start_at,
+			end_at,
+			name,
+			email,
+			timezone,
+			company,
+			role,
+			primary_workflow,
+			current_stack,
+			risk_level,
+			desired_next_step,
+			recommended_next_step,
+			timeline,
+			notes,
+			experiment_id,
+			tag_id
+		} = body;
 
 	if (!start_at || !end_at || !name || !email || !timezone) {
 		throw error(400, 'Missing required fields: start_at, end_at, name, email, timezone');
@@ -55,13 +79,34 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	try {
 		// Build questions object for additional fields
-		const questions: Record<string, string> = {};
-		if (company) {
-			questions.company = company;
-		}
-		if (notes) {
-			questions.notes = notes;
-		}
+			const questions: Record<string, string> = {};
+			if (company) {
+				questions.company = company;
+			}
+			if (role) {
+				questions.role = role;
+			}
+			if (primary_workflow) {
+				questions.primary_workflow = primary_workflow;
+			}
+			if (current_stack) {
+				questions.current_stack = current_stack;
+			}
+			if (risk_level) {
+				questions.risk_level = risk_level;
+			}
+			if (desired_next_step) {
+				questions.desired_next_step = desired_next_step;
+			}
+			if (recommended_next_step) {
+				questions.recommended_next_step = recommended_next_step;
+			}
+			if (timeline) {
+				questions.timeline = timeline;
+			}
+			if (notes) {
+				questions.notes = notes;
+			}
 
 		// Get the link ID first
 		const linkId = await getLinkId(apiKey);
@@ -132,13 +177,16 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 						'agency',
 						'/book',
 						experiment_id || null,
-						tag_id || null,
-						JSON.stringify({
-							event_id: event.id,
-							email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3') // Partial redaction
-						})
-					)
-					.run();
+							tag_id || null,
+							JSON.stringify({
+								event_id: event.id,
+								email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+								desired_next_step: desired_next_step || null,
+								recommended_next_step: recommended_next_step || null,
+								risk_level: risk_level || null
+							})
+						)
+						.run();
 			} catch (analyticsError) {
 				// Don't fail booking if analytics fails
 				logger.warn('Analytics tracking failed', { error: analyticsError });
