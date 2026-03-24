@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "defaults": {
+    "partnerKey": "half-dozen",
+    "partnerApiBaseUrl": "https://agency.createsomething.agency",
+    "hubDomainSuffix": "mcp.createsomething.agency",
+    "hubRuntimeDir": "packages/cs-mcp-hub-remote",
+    "hubRuntimeConfig": "packages/cs-mcp-hub-remote/wrangler.team-hubs.toml",
+    "sessionResolveUrl": "https://id.createsomething.space/v1/mcp/sessions/resolve",
+    "connectTimeoutMs": 10000,
+    "listToolsTimeoutMs": 15000,
+    "connectConcurrency": 4
+  },
+  "lanes": {
+    "viv-blondish": {
+      "clientSlug": "blondish",
+      "displayName": "Viv - BLOND:ISH",
+      "deploymentMode": "dedicated",
+      "identityMode": "compat",
+      "fallbackAccountId": "acct_viv_blondish",
+      "primaryService": "notion-halfdozen-blondish",
+      "enabledServers": [
+        "notion-halfdozen-blondish",
+        "composio-toolkit-gmail",
+        "composio-toolkit-exa",
+        "composio-toolkit-perplexityai",
+        "composio-toolkit-composio_search"
+      ],
+      "disabledServers": [
+        "composio-toolkit-notion"
+      ],
+      "requiredGlobalServers": [],
+      "requiredDiscoveryServers": [],
+      "discoveryMode": "compact",
+      "discoveryPack": "named-lane-viv-blondish",
+      "discoveryDefaultServers": [
+        "notion-halfdozen-blondish",
+        "composio-toolkit-gmail",
+        "composio-toolkit-exa",
+        "composio-toolkit-perplexityai",
+        "composio-toolkit-composio_search"
+      ],
+      "toolkitProfile": [
+        "gmail",
+        "exa",
+        "perplexityai",
+        "composio_search"
+      ],
+      "allowedToolPrefixes": [],
+      "searchProviders": [
+        {
+          "id": "exa",
+          "toolkit": "exa",
+          "serverName": "composio-toolkit-exa",
+          "authConfigRequired": true
+        },
+        {
+          "id": "perplexityai",
+          "toolkit": "perplexityai",
+          "serverName": "composio-toolkit-perplexityai",
+          "authConfigRequired": true
+        },
+        {
+          "id": "composio_search",
+          "toolkit": "composio_search",
+          "serverName": "composio-toolkit-composio_search",
+          "authConfigRequired": false
+        }
+      ],
+      "approvedException": {
+        "approvedBy": "mj",
+        "graduationTarget": "policy_os_trial"
+      }
+    },
+    "morgan-young-c3-management": {
+      "clientSlug": "c3-management",
+      "displayName": "Morgan Young - C3 Management",
+      "deploymentMode": "dedicated",
+      "identityMode": "compat",
+      "fallbackAccountId": "acct_morgan_young_c3_management",
+      "primaryService": "notion-halfdozen-c3-management",
+      "enabledServers": [
+        "notion-halfdozen-c3-management",
+        "composio-toolkit-gmail",
+        "composio-toolkit-exa"
+      ],
+      "disabledServers": [
+        "composio-toolkit-notion"
+      ],
+      "requiredGlobalServers": [],
+      "requiredDiscoveryServers": [],
+      "discoveryMode": "compact",
+      "discoveryPack": "named-lane-morgan-young-c3-management",
+      "discoveryDefaultServers": [
+        "notion-halfdozen-c3-management",
+        "composio-toolkit-gmail",
+        "composio-toolkit-exa"
+      ],
+      "toolkitProfile": [
+        "gmail",
+        "exa"
+      ],
+      "allowedToolPrefixes": [],
+      "searchProviders": [
+        {
+          "id": "exa",
+          "toolkit": "exa",
+          "serverName": "composio-toolkit-exa",
+          "authConfigRequired": true
+        }
+      ],
+      "approvedException": {
+        "approvedBy": "mj",
+        "graduationTarget": "policy_os_trial"
+      }
+    }
+  }
+}

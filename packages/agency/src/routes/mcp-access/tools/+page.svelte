@@ -1,8 +1,15 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
 	import { SEO } from '@create-something/canon';
-	import { FactList, ReportSection, ReportShell, SummaryItem } from '$lib/components/access';
-	import type { ComposioCatalogPayload, HubToolAvailabilityPayload } from '$lib/server/mcp-tools';
+	import {
+		FactList,
+		ReportSection,
+		ReportShell,
+		SummaryItem,
+	} from '$lib/components/access';
+	import type {
+		ComposioCatalogPayload,
+		HubToolAvailabilityPayload,
+	} from '$lib/server/mcp-tools';
 	import type { McpAccessAssignment } from '$lib/server/mcp-access-assignments';
 
 	let { data } = $props();
@@ -11,8 +18,6 @@
 	const selectedHub = $derived(hubs.find((hub) => hub.laneKey === data.selectedHub) ?? null);
 	const catalog = $derived(data.catalog as ComposioCatalogPayload);
 	const availability = $derived((data.availability ?? null) as HubToolAvailabilityPayload | null);
-	const selectedToolkitSummary = $derived(availability?.selectedToolkit ?? null);
-	const selectedToolkitLabel = $derived(catalog.selectedToolkit?.name ?? data.selectedToolkit ?? 'Selected toolkit');
 	let connectBusy = $state(false);
 	let connectMessage = $state('');
 	let connectError = $state('');
@@ -79,20 +84,31 @@
 				: 'No live tools were returned for the selected toolkit.'
 			: 'Choose a toolkit to inspect per-tool readiness in the selected Hub.',
 	);
-	const canSelfServeLegacyConnect = $derived(
+	const selectedToolkitCanSelfServeConnect = $derived(
 		Boolean(
 			selectedHub &&
 				selectedHub.source === 'legacy' &&
+				selectedHubHasComposioScope &&
 				data.selectedToolkit &&
-				selectedToolkitSummary?.authorized &&
-				selectedToolkitSummary.registered &&
-				selectedToolkitSummary.requiresAuth,
+				catalog.selectedToolkit?.requiresAuth &&
+				availability?.selectedToolkit?.authorized,
 		),
 	);
-	const connectActionLabel = $derived(
-		selectedToolkitSummary?.connectionStatus === 'active'
-			? `Reconnect ${selectedToolkitLabel}`
-			: `Connect ${selectedToolkitLabel}`,
+	const selectedToolkitConnectLabel = $derived(
+		availability?.selectedToolkit?.connectionStatus === 'active' ? 'Reconnect toolkit' : 'Connect toolkit',
+	);
+	const selectedToolkitConnectNote = $derived(
+		!catalog.selectedToolkit
+			? 'Choose a toolkit to evaluate connection options.'
+			: !catalog.selectedToolkit.requiresAuth
+				? 'This toolkit does not require a Composio account connection.'
+				: selectedHub?.source !== 'legacy'
+					? 'Self-serve connect is only available for legacy shared-auth lanes right now.'
+					: !selectedHubHasComposioScope
+						? 'This legacy lane does not expose any self-serve Composio toolkit scope.'
+						: availability?.selectedToolkit && !availability.selectedToolkit.authorized
+							? 'This toolkit is outside the selected lane scope.'
+							: 'Launch the provider authorization flow for this toolkit from this legacy lane.',
 	);
 
 	const hubFacts = $derived(
@@ -111,7 +127,7 @@
 	);
 
 	async function connectSelectedToolkit() {
-		if (!selectedHub || !data.selectedToolkit) return;
+		if (!selectedHub || !data.selectedToolkit || !selectedToolkitCanSelfServeConnect) return;
 
 		connectBusy = true;
 		connectMessage = '';
@@ -119,7 +135,7 @@
 
 		try {
 			const response = await fetch(
-				`/api/me/hubs/${selectedHub.laneKey}/toolkits/${data.selectedToolkit}/connect-link`,
+				`/api/me/hubs/${encodeURIComponent(selectedHub.laneKey)}/toolkits/${encodeURIComponent(data.selectedToolkit)}/connect-link`,
 				{
 					method: 'POST',
 					headers: {
@@ -135,16 +151,15 @@
 				connect_link?: string;
 			};
 			if (!response.ok) {
-				throw new Error(payload.message ?? `Failed to start ${selectedToolkitLabel} connection`);
+				throw new Error(payload.message ?? `Failed to start ${data.selectedToolkit} connection`);
 			}
 			if (!payload.connect_link) {
-				throw new Error(`No ${selectedToolkitLabel} connect link was returned`);
+				throw new Error(`No ${data.selectedToolkit} connect link was returned`);
 			}
-			connectMessage = `Opening ${selectedToolkitLabel} connection flow…`;
-			await invalidateAll();
+			connectMessage = `Opening ${data.selectedToolkit} connection flow...`;
 			window.location.assign(payload.connect_link);
 		} catch (error) {
-			connectError = error instanceof Error ? error.message : `Failed to start ${selectedToolkitLabel} connection`;
+			connectError = error instanceof Error ? error.message : `Failed to start ${data.selectedToolkit} connection`;
 		} finally {
 			connectBusy = false;
 		}
@@ -181,7 +196,11 @@
 			value={catalog.selectedToolkit?.name ?? 'Choose a toolkit'}
 			note={catalog.selectedToolkit?.slug ?? 'Catalog search'}
 		/>
-		<SummaryItem label="Visibility" value="Unverified" note="Authorization + registration + connection only" />
+		<SummaryItem
+			label="Visibility"
+			value="Unverified"
+			note="Authorization + registration + connection only"
+		/>
 	</svelte:fragment>
 
 	<ReportSection
@@ -407,28 +426,25 @@
 					<span>Ready by policy: {yesNo(availability.selectedToolkit.readyByPolicy)}</span>
 				</div>
 
-				{#if canSelfServeLegacyConnect}
-					<div class="action-block">
-						<p class="panel-note">
-							This legacy shared-auth lane can start the provider connect flow self-serve for the selected toolkit.
-						</p>
-						<div class="action-row">
-							<button type="button" disabled={connectBusy} onclick={connectSelectedToolkit}>
-								{connectBusy ? 'Opening…' : connectActionLabel}
-							</button>
-						</div>
-						{#if connectMessage}
-							<p class="feedback success">{connectMessage}</p>
-						{/if}
-						{#if connectError}
-							<p class="feedback error">{connectError}</p>
-						{/if}
-					</div>
-				{:else if selectedHub?.source === 'legacy' && availability.selectedToolkit.requiresAuth}
-					<p class="empty-note">
-						Self-serve connect is available only when the selected toolkit is both in scope and registered for this legacy lane.
-					</p>
-				{/if}
+				<div class="toolkit-action-card">
+					<p class="panel-note">{selectedToolkitConnectNote}</p>
+					{#if connectError}
+						<p class="feedback error">{connectError}</p>
+					{/if}
+					{#if connectMessage}
+						<p class="feedback success">{connectMessage}</p>
+					{/if}
+					{#if selectedToolkitCanSelfServeConnect}
+						<button
+							type="button"
+							class="primary-button"
+							disabled={connectBusy}
+							onclick={connectSelectedToolkit}
+						>
+							{connectBusy ? 'Opening connect flow...' : selectedToolkitConnectLabel}
+						</button>
+					{/if}
+				</div>
 			{/if}
 
 			{#if availability.tools.length > 0}
@@ -522,8 +538,8 @@
 	}
 
 	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
+		opacity: 0.7;
+		cursor: progress;
 	}
 
 	.chip-list {
@@ -638,23 +654,13 @@
 
 	.summary-card,
 	.selected-toolkit-card,
-	.action-block {
+	.toolkit-action-card {
 		display: grid;
 		gap: 0.25rem;
 		padding: 0.85rem 0.95rem;
 		border: 1px solid rgba(255, 255, 255, 0.08);
 		border-radius: 0.8rem;
 		background: rgba(255, 255, 255, 0.02);
-	}
-
-	.action-block {
-		margin-top: 0.95rem;
-	}
-
-	.action-row {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.65rem;
 	}
 
 	.summary-card span,
@@ -668,17 +674,29 @@
 		font-size: 1.05rem;
 	}
 
-	.feedback {
-		margin: 0;
-		font-size: 0.84rem;
+	.toolkit-action-card {
+		gap: 0.7rem;
+		margin-top: 0.9rem;
 	}
 
-	.feedback.success {
-		color: #8de8a5;
+	.primary-button {
+		justify-self: start;
+		background: rgba(255, 255, 255, 0.92);
+		color: #111;
+	}
+
+	.feedback {
+		margin: 0;
+		font-size: 0.88rem;
+		line-height: 1.55;
 	}
 
 	.feedback.error {
 		color: #ff8a80;
+	}
+
+	.feedback.success {
+		color: #9fd7b8;
 	}
 
 	.facts-wrap {

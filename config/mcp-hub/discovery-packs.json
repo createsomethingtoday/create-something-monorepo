@@ -105,6 +105,28 @@
       ],
       "maxProxyTools": null
     },
+    "named-lane-viv-blondish": {
+      "description": "Viv BLOND:ISH named lane: custom Notion bridge plus Gmail, Exa, PerplexityAI, and Composio Search.",
+      "mode": "compact",
+      "activeServers": [
+        "notion-halfdozen-blondish",
+        "composio-toolkit-gmail",
+        "composio-toolkit-exa",
+        "composio-toolkit-perplexityai",
+        "composio-toolkit-composio_search"
+      ],
+      "maxProxyTools": null
+    },
+    "named-lane-morgan-young-c3-management": {
+      "description": "Morgan Young C3 Management named lane: custom Notion bridge plus Gmail and Exa.",
+      "mode": "compact",
+      "activeServers": [
+        "notion-halfdozen-c3-management",
+        "composio-toolkit-gmail",
+        "composio-toolkit-exa"
+      ],
+      "maxProxyTools": null
+    },
     "webflow-marketplace-review-phase-a": {
       "description": "Phase A reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus bounded reviewer-safe actions and metrics.",
       "mode": "compact",

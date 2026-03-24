@@ -16,6 +16,13 @@ import {
   accountSnapshot,
 } from './resources.js';
 import {
+  extractPinnedToolNameFromRequest as extractConfiguredPinnedToolName,
+  formatPinnedToolNames,
+  listPinnedToolNames,
+  resolvePinnedToolName as resolveConfiguredPinnedToolName,
+} from './pinned-tools.js';
+import { resolveComposioUserId } from './composio-user-id.js';
+import {
   completeNotionSyncRun,
   createNotionSyncContract,
   disableNotionAccount,
@@ -65,7 +72,7 @@ export interface OperatorNotionToolsDeps {
   partnerClientSlug: string;
   notionAuthConfigId?: string;
   pinnedHalfdozenToolName: string;
-  pinnedClientToolName: string;
+  pinnedClientToolNames: string[];
   routerOpenAiApiKey?: string;
   routerOpenAiModel?: string;
   routerOpenAiTimeoutMs?: number;
@@ -283,19 +290,25 @@ interface SyncRunState {
 }
 
 export function registerOperatorNotionTools(server: McpServer, deps: OperatorNotionToolsDeps): void {
-  server.tool(
-    deps.pinnedHalfdozenToolName,
-    'Pinned Notion workspace tool for Half Dozen. Rejects caller workspace/account overrides.',
-    pinnedToolSchema,
-    async (params) => runPinnedTool(params.action as PinnedNotionAction, params.args as Record<string, unknown>, deps.pinnedHalfdozenToolName, deps)
-  );
+  for (const toolName of listPinnedToolNames(deps)) {
+    const description =
+      toolName === deps.pinnedHalfdozenToolName
+        ? 'Pinned Notion workspace tool for Half Dozen. Rejects caller workspace/account overrides.'
+        : 'Pinned Notion workspace tool for a configured client account. Rejects caller workspace/account overrides.';
 
-  server.tool(
-    deps.pinnedClientToolName,
-    'Pinned Notion workspace tool for the client account configured on this deployment. Rejects caller workspace/account overrides.',
-    pinnedToolSchema,
-    async (params) => runPinnedTool(params.action as PinnedNotionAction, params.args as Record<string, unknown>, deps.pinnedClientToolName, deps)
-  );
+    server.tool(
+      toolName,
+      description,
+      pinnedToolSchema,
+      async (params) =>
+        runPinnedTool(
+          params.action as PinnedNotionAction,
+          params.args as Record<string, unknown>,
+          toolName,
+          deps,
+        ),
+    );
+  }
 
   server.tool(
     'operator_notion_accounts',
@@ -391,7 +404,11 @@ async function runAccountsTool(
       const authConfigId = String(args.auth_config_id ?? deps.notionAuthConfigId ?? '').trim();
       if (!authConfigId) throw new Error('No Notion auth config ID configured for this deployment.');
       const metadata = isPlainObject(args.metadata) ? args.metadata : {};
-      const composioUserId = `hd_notion_${client.slug.replace(/-/g, '_')}_${accountSlug.replace(/-/g, '_')}`;
+      const composioUserId = resolveComposioUserId({
+        accountSlug,
+        partnerClientSlug: client.slug,
+        composioUserId: args.composio_user_id,
+      });
       await upsertNotionAccount(deps.db, {
         partnerClientId: client.id,
         accountSlug,
@@ -436,10 +453,10 @@ async function runAccountsTool(
     }
     case 'pin_account': {
       const accountSlug = normalizeSlug(String(args.account_slug ?? ''));
-      const toolName = String(args.tool_name ?? '').trim();
+      const toolName = normalizePinToolName(args.tool_name, deps);
       if (!accountSlug) throw new Error('args.account_slug is required');
-      if (!toolName || ![deps.pinnedHalfdozenToolName, deps.pinnedClientToolName].includes(toolName)) {
-        throw new Error(`args.tool_name must be one of: ${deps.pinnedHalfdozenToolName}, ${deps.pinnedClientToolName}`);
+      if (!toolName) {
+        throw new Error(`args.tool_name must be one of: ${formatPinnedToolNames(deps)}`);
       }
       const account = await requireActiveAccount(deps, client.id, accountSlug, { requireSyncEnabled: false });
       await setNotionPin(deps.db, {
@@ -489,7 +506,7 @@ async function runAccountsWizard(
   const authConfigId = String(args.auth_config_id ?? deps.notionAuthConfigId ?? '').trim();
   const syncEnabled = typeof args.sync_enabled === 'boolean' ? args.sync_enabled : true;
   const metadata = isPlainObject(args.metadata) ? args.metadata : {};
-  const pinToolName = String(args.pin_tool_name ?? '').trim();
+  const pinToolName = normalizePinToolName(args.pin_tool_name, deps);
 
   const missing: string[] = [];
   if (!accountSlug) missing.push('account_slug');
@@ -509,7 +526,11 @@ async function runAccountsWizard(
     });
   }
 
-  const composioUserId = `hd_notion_${deps.partnerClientSlug.replace(/-/g, '_')}_${accountSlug.replace(/-/g, '_')}`;
+  const composioUserId = resolveComposioUserId({
+    accountSlug,
+    partnerClientSlug: deps.partnerClientSlug,
+    composioUserId: args.composio_user_id,
+  });
   await upsertNotionAccount(deps.db, {
     partnerClientId,
     accountSlug,
@@ -550,9 +571,6 @@ async function runAccountsWizard(
 
   let pinResult: Record<string, unknown> | null = null;
   if (pinToolName) {
-    if (![deps.pinnedHalfdozenToolName, deps.pinnedClientToolName].includes(pinToolName)) {
-      throw new Error(`args.pin_tool_name must be one of: ${deps.pinnedHalfdozenToolName}, ${deps.pinnedClientToolName}`);
-    }
     await setNotionPin(deps.db, {
       partnerClientId,
       toolName: pinToolName,
@@ -578,7 +596,7 @@ async function runAccountsWizard(
     pinned: pinResult,
     instructions: [
       'Workspace is connected.',
-      'Operator can now choose workflows using halfdozen_notion / blondish_notion and other available Notion tools.',
+      `Operator can now choose workflows using pinned tools: ${formatPinnedToolNames(deps)}.`,
     ],
   });
 }
@@ -627,6 +645,8 @@ async function runDeterministicRouter(
   mergedArgs: Record<string, unknown>,
   deps: OperatorNotionToolsDeps,
 ): Promise<{ content: Array<{ type: 'text'; text: string }> } | null> {
+  const hintedPinTool = normalizePinToolName(mergedArgs.pin_tool_name, deps);
+
   if (
     mentionsAny(lower, [
       'list accounts',
@@ -649,7 +669,10 @@ async function runDeterministicRouter(
     return runRouterIntent('get_status', mergedArgs, deps);
   }
 
-  if (mentionsAny(lower, ['pin ', 'set pinned', 'use for halfdozen', 'use for blondish', 'pin workspace'])) {
+  if (
+    mentionsAny(lower, ['pin ', 'set pinned', 'pin workspace']) ||
+    (hintedPinTool !== null && mentionsAny(lower, ['use for ', 'route to ']))
+  ) {
     return runRouterIntent('pin_account', mergedArgs, deps);
   }
 
@@ -698,7 +721,7 @@ async function runRouterIntent(
         status: 'needs_input',
         next_questions: [
           'Which account_slug should be pinned?',
-          `Which pin tool should be used? (${deps.pinnedHalfdozenToolName} or ${deps.pinnedClientToolName})`,
+          `Which pin tool should be used? (${formatPinnedToolNames(deps)})`,
         ],
       });
     }
@@ -2489,12 +2512,7 @@ function extractDisplayLabel(request: string): string | null {
 }
 
 function extractPinToolName(request: string, deps: OperatorNotionToolsDeps): string | null {
-  const lower = request.toLowerCase();
-  if (lower.includes('halfdozen_notion') || lower.includes('half dozen')) return deps.pinnedHalfdozenToolName;
-  if (lower.includes('blondish_notion') || lower.includes('blond:ish') || lower.includes('blondish')) {
-    return deps.pinnedClientToolName;
-  }
-  return null;
+  return extractConfiguredPinnedToolName(request, deps);
 }
 
 async function requirePartnerClient(deps: OperatorNotionToolsDeps) {
@@ -2568,17 +2586,7 @@ async function requireActiveAccount(
 }
 
 function normalizePinToolName(value: unknown, deps: OperatorNotionToolsDeps): string | null {
-  const raw = String(value ?? '').trim();
-  if (!raw) return null;
-  if (raw === deps.pinnedHalfdozenToolName || raw === deps.pinnedClientToolName) return raw;
-  const lower = raw.toLowerCase();
-  if (lower === 'halfdozen' || lower === 'halfdozen_notion' || lower === 'half-dozen') {
-    return deps.pinnedHalfdozenToolName;
-  }
-  if (lower === 'blondish' || lower === 'blondish_notion' || lower === 'blond:ish') {
-    return deps.pinnedClientToolName;
-  }
-  return null;
+  return resolveConfiguredPinnedToolName(value, deps);
 }
 
 async function loadAgentsSdk(): Promise<AgentsSdk> {
@@ -2620,7 +2628,7 @@ function buildRouterAgentPrompt(
 
   return [
     'Classify this operator request into one allowed intent and extract optional fields.',
-    `Pinned tools: ${deps.pinnedHalfdozenToolName}, ${deps.pinnedClientToolName}.`,
+    `Pinned tools: ${formatPinnedToolNames(deps)}.`,
     `Request: ${request}`,
     `Context: ${JSON.stringify(slimContext)}`,
     'Return JSON only.',

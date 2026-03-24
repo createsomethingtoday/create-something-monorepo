@@ -1,4 +1,4 @@
 import type { RequestHandler } from './$types';
-import { createLegacyLaneToolkitConnectLinkPostHandlerWithDefaults } from '$lib/server/legacy-lane-toolkit-connect-link';
+import { createLegacyMcpToolkitConnectLinkPostHandlerWithDefaults } from '$lib/server/mcp-legacy-toolkit-connect-link';
 
-export const POST: RequestHandler = createLegacyLaneToolkitConnectLinkPostHandlerWithDefaults();
+export const POST: RequestHandler = createLegacyMcpToolkitConnectLinkPostHandlerWithDefaults();

@@ -1,11 +1,11 @@
 import {
-	buildComposioAllowedToolPrefixes,
 	buildPartnerLaneNotionBridgeUrl,
 	findPartnerAccessLaneForIdentity,
 	listPartnerAccessLanesForIdentity,
 	parseJsonArray,
 	parseJsonObject,
 	parseJsonStringArray,
+	buildComposioAllowedToolPrefixes,
 	type PartnerAuthAccessLaneAssignmentRow,
 } from '$lib/server/partner-auth';
 
@@ -209,7 +209,6 @@ async function buildLegacyAssignment(
 	const workspaceAccountId = input.workspaceAccountId ?? input.accountId;
 	const boundClient =
 		db && workspaceAccountId ? await findClientBindingByWorkspaceAccountId(db, workspaceAccountId) : null;
-
 	return {
 		source: 'legacy',
 		partnerClientId: boundClient?.id ?? null,

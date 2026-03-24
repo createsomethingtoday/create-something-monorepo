@@ -1,6 +1,7 @@
 import hubRegistryRaw from '../../../../../config/mcp-hub/registry.json';
 import { getComposioClient, normalizeToolkitSlug } from '$lib/server/partner-auth';
 import type { McpAccessAssignment } from '$lib/server/mcp-access-assignments';
+import { buildLegacyToolkitBindingId } from '$lib/server/mcp-legacy-toolkit-bindings';
 
 const COMPOSIO_SERVER_PREFIX = 'composio-toolkit-';
 const REGISTRY_SNAPSHOT_ID = `registry-v${String((hubRegistryRaw as { version?: number }).version ?? 1)}`;
@@ -170,7 +171,9 @@ export async function buildComposioCatalogPayload(input: {
 	const allToolkits = listComposioToolkitsFromRegistry();
 	const filteredToolkits = allToolkits.filter((entry) => matchesToolkitSearch(entry, query));
 	const { page, nextCursor } = paginate(filteredToolkits, cursor, limit);
-	const selectedToolkit = toolkit ? allToolkits.find((entry) => entry.slug === toolkit) ?? null : null;
+	const selectedToolkit = toolkit
+		? allToolkits.find((entry) => entry.slug === toolkit) ?? null
+		: null;
 
 	let tools: ComposioCatalogTool[] = [];
 	if (toolkit) {
@@ -248,7 +251,11 @@ export async function buildHubToolAvailabilityPayload(input: {
 		.map((toolkit) => {
 			const registryEntry = registryToolkits.get(toolkit);
 			const requiresAuth = registryEntry?.requiresAuth ?? true;
-			const connectionStatus = resolveToolkitConnectionStatus(toolkit, registryEntry, connectionStatusByToolkit);
+			const connectionStatus = resolveToolkitConnectionStatus(
+				toolkit,
+				registryEntry,
+				connectionStatusByToolkit,
+			);
 			const registered = Boolean(registryEntry);
 			const authorized = isToolkitAuthorized(input.assignment, toolkit);
 			return {
@@ -427,7 +434,7 @@ async function fetchComposioToolkitTools(
 		const items = Array.isArray(response)
 			? response.filter((item): item is Record<string, unknown> => isRecord(item))
 			: Array.isArray((response as { items?: unknown[] })?.items)
-				? (response as { items: unknown[] }).items.filter((item): item is Record<string, unknown> => isRecord(item))
+				? ((response as { items: unknown[] }).items.filter((item): item is Record<string, unknown> => isRecord(item)))
 				: [];
 		return items
 			.map((item) => normalizeComposioTool(toolkit, item))
@@ -479,7 +486,9 @@ async function loadConnectionStatusByToolkit(
 	assignment: McpAccessAssignment,
 ): Promise<Map<string, HubConnectionStatus>> {
 	const map = new Map<string, HubConnectionStatus>();
-	if (!assignment.partnerClientId) {
+	const bindingId =
+		assignment.partnerClientId ?? (assignment.source === 'legacy' ? buildLegacyToolkitBindingId(assignment) : null);
+	if (!bindingId) {
 		return map;
 	}
 
@@ -495,7 +504,7 @@ async function loadConnectionStatusByToolkit(
 			 FROM partner_auth_toolkit_accounts
 			 WHERE partner_client_id = ?`,
 		)
-		.bind(assignment.partnerClientId)
+		.bind(bindingId)
 		.all<ToolkitConnectionRow>();
 
 	const grouped = new Map<string, ToolkitConnectionRow[]>();

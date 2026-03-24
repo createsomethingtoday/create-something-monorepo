@@ -6,6 +6,7 @@ import { registerInfoResources } from '../src/resources.js';
 import { registerOperatorNotionTools } from '../src/tools.js';
 import { validateApiKey } from './lib/auth.js';
 import { ComposioNotionDispatcher } from '../src/composio-notion.js';
+import { listPinnedToolNames, resolvePinnedToolConfig } from '../src/pinned-tools.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
@@ -24,6 +25,7 @@ interface Env {
   MCP_DESCRIPTION?: string;
   PINNED_HALFDOZEN_TOOL_NAME?: string;
   PINNED_CLIENT_TOOL_NAME?: string;
+  PINNED_CLIENT_TOOL_NAMES?: string;
   OPENAI_API_KEY?: string;
   ROUTER_OPENAI_MODEL?: string;
   ROUTER_OPENAI_TIMEOUT_MS?: string;
@@ -88,6 +90,11 @@ export class OperatorNotionMcp extends McpAgent<Env> {
       ...(this.env.COMPOSIO_BASE_URL?.trim() ? { baseURL: this.env.COMPOSIO_BASE_URL.trim() } : {}),
     });
     const dispatcher = new ComposioNotionDispatcher(this.env.COMPOSIO_API_KEY);
+    const pinnedToolConfig = resolvePinnedToolConfig({
+      pinnedHalfdozenToolName: this.env.PINNED_HALFDOZEN_TOOL_NAME,
+      pinnedClientToolName: this.env.PINNED_CLIENT_TOOL_NAME,
+      pinnedClientToolNames: this.env.PINNED_CLIENT_TOOL_NAMES,
+    });
 
     registerOperatorNotionTools(this.server, {
       db: this.env.CONFIG_DB,
@@ -96,21 +103,25 @@ export class OperatorNotionMcp extends McpAgent<Env> {
       partnerKey: this.env.PARTNER_KEY?.trim() || 'half-dozen',
       partnerClientSlug: this.env.PARTNER_CLIENT_SLUG?.trim() || 'blondish',
       notionAuthConfigId: this.env.COMPOSIO_NOTION_AUTH_CONFIG_ID?.trim(),
-      pinnedHalfdozenToolName: this.env.PINNED_HALFDOZEN_TOOL_NAME?.trim() || 'halfdozen_notion',
-      pinnedClientToolName: this.env.PINNED_CLIENT_TOOL_NAME?.trim() || 'blondish_notion',
+      ...pinnedToolConfig,
       routerOpenAiApiKey: this.env.OPENAI_API_KEY?.trim(),
       routerOpenAiModel: this.env.ROUTER_OPENAI_MODEL?.trim(),
       routerOpenAiTimeoutMs: parsePositiveInt(this.env.ROUTER_OPENAI_TIMEOUT_MS),
       routerOpenAiCacheTtlMs: parsePositiveInt(this.env.ROUTER_OPENAI_CACHE_TTL_MS),
       getActor: () => this.currentAccountId,
     });
-    registerInfoResources(this.server);
+    registerInfoResources(this.server, listPinnedToolNames(pinnedToolConfig));
   }
 }
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+    const pinnedToolConfig = resolvePinnedToolConfig({
+      pinnedHalfdozenToolName: env.PINNED_HALFDOZEN_TOOL_NAME,
+      pinnedClientToolName: env.PINNED_CLIENT_TOOL_NAME,
+      pinnedClientToolNames: env.PINNED_CLIENT_TOOL_NAMES,
+    });
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
       const authError = validateApiKey(request, env);
@@ -129,8 +140,7 @@ export default {
               env.MCP_DESCRIPTION ??
               'Operator-managed Notion accounts via Composio with pinned workspace tools, deterministic sync contracts, and Codex automation-friendly run primitives.',
             tools: [
-              env.PINNED_HALFDOZEN_TOOL_NAME ?? 'halfdozen_notion',
-              env.PINNED_CLIENT_TOOL_NAME ?? 'blondish_notion',
+              ...listPinnedToolNames(pinnedToolConfig),
               'operator_notion_accounts',
               'operator_notion_sync',
               'operator_notion_sync_contracts',
