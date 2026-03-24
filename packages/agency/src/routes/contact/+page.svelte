@@ -74,24 +74,6 @@
     return 'policy_os';
   }
 
-  function buildWorkflowSummary(formData: FormData, recommendedNextStep: DesiredNextStep): string {
-    const lines = [
-      `Primary workflow: ${String(formData.get('primary_workflow') || '').trim()}`,
-      `Current stack: ${String(formData.get('current_stack') || '').trim()}`,
-      `Risk level: ${String(formData.get('risk_level') || '').trim()}`,
-      `Requested next step: ${String(formData.get('desired_next_step') || '').trim()}`,
-      `Recommended next step: ${recommendedNextStep}`,
-      `Timeline: ${String(formData.get('timeline') || 'No timeline yet').trim()}`
-    ];
-
-    const message = String(formData.get('message') || '').trim();
-    if (message) {
-      lines.push('', 'Additional context:', message);
-    }
-
-    return lines.join('\n');
-  }
-
   async function handleSubmit(event: Event) {
     event.preventDefault();
     submitting = true;
@@ -123,7 +105,7 @@
           recommended_next_step: recommendedNextStep,
           timeline: formData.get('timeline'),
           service: formData.get('desired_next_step'),
-          message: buildWorkflowSummary(formData, recommendedNextStep)
+          message: formData.get('message')
         })
       });
 
