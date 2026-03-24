@@ -33,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
     steps:
       - name: Checkout
@@ -109,9 +110,8 @@ jobs:
           fi
 
       - name: Deploy IO via Wrangler fallback
-        if: steps.context.outputs.publishable == 'true' && steps.pr.outputs.publish_approved == 'true' && vars.IO_PAGES_USE_WRANGLER_DEPLOY == 'true' && secrets.CLOUDFLARE_API_TOKEN != ''
+        if: steps.context.outputs.publishable == 'true' && steps.pr.outputs.publish_approved == 'true' && vars.IO_PAGES_USE_WRANGLER_DEPLOY == 'true' && env.CLOUDFLARE_API_TOKEN != ''
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           pnpm --filter @create-something/io build

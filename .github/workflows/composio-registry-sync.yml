@@ -16,36 +16,65 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+      COMPOSIO_TOOLKIT_MCP_BASE_URL: ${{ vars.COMPOSIO_TOOLKIT_MCP_BASE_URL }}
+
     steps:
+      - name: Check sync prerequisites
+        id: prereqs
+        run: |
+          missing=0
+
+          if [ -z "${COMPOSIO_API_KEY}" ]; then
+            echo "COMPOSIO_API_KEY is unset; skipping registry sync."
+            missing=1
+          fi
+
+          if [ -z "${COMPOSIO_TOOLKIT_MCP_BASE_URL}" ]; then
+            echo "COMPOSIO_TOOLKIT_MCP_BASE_URL is unset; skipping registry sync."
+            missing=1
+          fi
+
+          if [ "$missing" -eq 1 ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.prereqs.outputs.enabled == 'true'
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup pnpm
+        if: steps.prereqs.outputs.enabled == 'true'
         uses: pnpm/action-setup@v4
         with:
           version: 9.15.0
 
       - name: Setup Node
+        if: steps.prereqs.outputs.enabled == 'true'
         uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'pnpm'
 
       - name: Install dependencies
+        if: steps.prereqs.outputs.enabled == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Sync Composio toolkit registry
+        if: steps.prereqs.outputs.enabled == 'true'
         run: pnpm mcp:composio:sync-and-generate
-        env:
-          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
-          COMPOSIO_TOOLKIT_MCP_BASE_URL: ${{ vars.COMPOSIO_TOOLKIT_MCP_BASE_URL }}
 
       - name: Validate registry artifacts
+        if: steps.prereqs.outputs.enabled == 'true'
         run: pnpm mcp:registry:check
 
       - name: Create Pull Request
+        if: steps.prereqs.outputs.enabled == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           branch: codex/composio-registry-sync
