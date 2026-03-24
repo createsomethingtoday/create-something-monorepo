@@ -44,6 +44,7 @@
     "blondish_allow_servers": [
       "notion-halfdozen-blondish",
       "composio-toolkit-gmail",
+      "composio-toolkit-whatsapp",
       "composio-toolkit-exa",
       "composio-toolkit-perplexityai",
       "composio-toolkit-composio_search"

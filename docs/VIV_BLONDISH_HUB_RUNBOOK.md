@@ -7,7 +7,7 @@ Production runbook for the transparent named-lane Hub worker:
 - Health URL: `https://viv-blondish.mcp.createsomething.agency/health`
 - Fallback account ID: `acct_viv_blondish`
 - Lane slug / host key: `viv-blondish`
-- Allowed client surface: `notion-halfdozen-blondish`, `composio-toolkit-gmail`, and approved search provider(s) `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
+- Allowed client surface: `notion-halfdozen-blondish`, `composio-toolkit-gmail`, `composio-toolkit-whatsapp`, and approved search provider(s) `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
 - Observability baseline: Cloudflare telemetry + Braintrust tracing
 - Host compatibility mode: `compat` for Notion-style bearer-auth MCP hosts
 
@@ -29,12 +29,12 @@ pnpm exec wrangler deploy \
   --domain viv-blondish.mcp.createsomething.agency \
   --var HUB_ACCOUNT_ID:acct_viv_blondish \
   --var 'HUB_ENABLED_BUNDLES:[]' \
-  --var HUB_ENABLED_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-exa \
+  --var HUB_ENABLED_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-whatsapp,composio-toolkit-exa \
   --var HUB_DISABLED_SERVERS:composio-toolkit-notion \
   --var 'HUB_REQUIRED_GLOBAL_SERVERS:' \
   --var 'HUB_REQUIRED_DISCOVERY_SERVERS:' \
   --var HUB_DISCOVERY_MODE:compact \
-  --var HUB_DISCOVERY_DEFAULT_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-exa \
+  --var HUB_DISCOVERY_DEFAULT_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-whatsapp,composio-toolkit-exa \
   --var HUB_IDENTITY_MODE:compat \
   --var HUB_SESSION_RESOLVE_URL:https://id.createsomething.space/v1/mcp/sessions/resolve \
   --keep-vars
@@ -46,7 +46,7 @@ Notes:
 - This lane intentionally overrides the template default `HUB_IDENTITY_MODE=session_required` with `compat` so Notion bearer-auth MCP connections behave like the older Half Dozen lanes.
 - Keep `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` configured in compat mode so managed bearers still resolve through `identity-worker` with bound-host and allowed-prefix enforcement.
 - `HUB_ENABLED_BUNDLES=[]` is required so the registry default `core` and `observability` bundles do not leak extra servers onto the lane.
-- `HUB_DISABLED_SERVERS`, `HUB_REQUIRED_GLOBAL_SERVERS`, and `HUB_REQUIRED_DISCOVERY_SERVERS` explicitly remove the default `composio-toolkit-notion` requirement; the lane should expose only the custom BLOND:ISH Notion bridge plus Gmail and Exa.
+- `HUB_DISABLED_SERVERS`, `HUB_REQUIRED_GLOBAL_SERVERS`, and `HUB_REQUIRED_DISCOVERY_SERVERS` explicitly remove the default `composio-toolkit-notion` requirement; the lane should expose only the custom BLOND:ISH Notion bridge plus Gmail, WhatsApp, and the approved search provider set.
 - Do not add this worker to the shared team-hub fleet deploy script.
 - If PerplexityAI is enabled for this lane, add `composio-toolkit-perplexityai` to both `HUB_ENABLED_SERVERS` and `HUB_DISCOVERY_DEFAULT_SERVERS`.
 - If Composio Search is enabled for this lane, add `composio-toolkit-composio_search` to both `HUB_ENABLED_SERVERS` and `HUB_DISCOVERY_DEFAULT_SERVERS`.
@@ -80,6 +80,7 @@ curl -sS -X POST https://viv-blondish.mcp.createsomething.agency/mcp \
         "setServers":[
           "notion-halfdozen-blondish",
           "composio-toolkit-gmail",
+          "composio-toolkit-whatsapp",
           "composio-toolkit-exa"
         ]
       }
@@ -99,6 +100,7 @@ Expected:
 - `enabled_servers` only:
   - `notion-halfdozen-blondish`
   - `composio-toolkit-gmail`
+  - `composio-toolkit-whatsapp`
   - promised search provider(s): `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
 
 Verify discovery is limited to the intended surface and reset returns to the managed pack baseline:
@@ -135,7 +137,7 @@ curl -sS -X POST "https://agency.createsomething.agency/api/partners/half-dozen/
   -H "Content-Type: application/json" \
   -d '{
     "display_name":"Viv — BLOND:ISH",
-    "toolkit_profile":["gmail","exa"],
+    "toolkit_profile":["gmail","whatsapp","exa"],
     "metadata":{
       "approved_exception":{
         "approved_by":"mj",
@@ -156,21 +158,23 @@ curl -sS -X POST "https://agency.createsomething.agency/api/partners/half-dozen/
 
 Use `access/mint` only for operator testing or temporary strict-session debugging.
 
-## 6) Search + Auth Config Baseline
+## 6) Messaging + Search Auth Baseline
 
-Before calling the lane onboarding-complete, verify the promised search provider prerequisites:
+Before calling the lane onboarding-complete, verify the promised messaging and search prerequisites:
 
+- WhatsApp auth config ID: resolved from live `COMPOSIO_AUTH_CONFIG_MAP.whatsapp`
 - Exa auth config ID: `ac_6P0uExNakGbD`
 - PerplexityAI auth config ID: `ac_F_aj7f1MFici`
 - Composio Search toolkit slug: `COMPOSIO_SEARCH` (`composio-toolkit-composio_search`, `NO_AUTH`)
 
 Rules:
 
-1. If the lane promises Exa, `COMPOSIO_AUTH_CONFIG_MAP` must include an `exa` entry and `composio-toolkit-exa__get_connect_link` must succeed.
-2. If the lane promises PerplexityAI, `COMPOSIO_AUTH_CONFIG_MAP` must include a `perplexityai` entry and `composio-toolkit-perplexityai__get_connect_link` must succeed.
-3. If the lane promises Composio Search, execute at least one representative brokered search tool successfully. No auth config is required.
-4. If the lane promises multiple providers, each provider-specific check must pass.
-5. If a promised provider fails its prerequisite check, the lane may still be infrastructure-ready, but it is not onboarding-complete for search.
+1. Because the lane promises WhatsApp, `COMPOSIO_AUTH_CONFIG_MAP` must include a `whatsapp` entry and `composio-toolkit-whatsapp__get_connect_link` must succeed.
+2. If the lane promises Exa, `COMPOSIO_AUTH_CONFIG_MAP` must include an `exa` entry and `composio-toolkit-exa__get_connect_link` must succeed.
+3. If the lane promises PerplexityAI, `COMPOSIO_AUTH_CONFIG_MAP` must include a `perplexityai` entry and `composio-toolkit-perplexityai__get_connect_link` must succeed.
+4. If the lane promises Composio Search, execute at least one representative brokered search tool successfully. No auth config is required.
+5. If the lane promises multiple auth-bound providers, each provider-specific check must pass.
+6. If a promised provider fails its prerequisite check, the lane may still be infrastructure-ready, but it is not onboarding-complete.
 
 ## 7) Host-Binding Smoke Check
 
@@ -185,8 +189,9 @@ Minimum success checks:
 3. `hub_search_proxy_tools` scoped to the client-specific Notion service succeeds.
 4. `hub_execute_proxy_tool` succeeds for a low-risk Notion read such as `notion_list_databases`.
 5. `composio-toolkit-gmail__connection_status` returns a governed result.
-6. Each promised auth-bound search provider returns either a governed connect link or an active connection status result.
-7. If Composio Search is promised, at least one representative brokered Composio Search call succeeds.
+6. `composio-toolkit-whatsapp__connection_status` returns a governed result, and `composio-toolkit-whatsapp__get_connect_link` succeeds when the account is not connected.
+7. Each promised auth-bound search provider returns either a governed connect link or an active connection status result.
+8. If Composio Search is promised, at least one representative brokered Composio Search call succeeds.
 
 ## 8) Trace Verification
 

@@ -10,6 +10,7 @@
       "allowServers": [
         "notion-halfdozen-blondish",
         "composio-toolkit-gmail",
+        "composio-toolkit-whatsapp",
         "composio-toolkit-exa",
         "composio-toolkit-perplexityai",
         "composio-toolkit-composio_search"
@@ -17,6 +18,7 @@
       "allowToolPrefixes": [
         "notion-halfdozen-blondish__",
         "composio-toolkit-gmail__",
+        "composio-toolkit-whatsapp__",
         "composio-toolkit-exa__",
         "composio-toolkit-perplexityai__",
         "composio-toolkit-composio_search__"

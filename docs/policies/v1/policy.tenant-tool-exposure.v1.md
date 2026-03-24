@@ -27,6 +27,7 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 8. BLOND:ISH and C3 Management named-lane pilots MUST default-deny all other servers and tool prefixes except:
    - `notion-halfdozen-blondish` or `notion-halfdozen-c3-management`
    - `composio-toolkit-gmail`
+   - `composio-toolkit-whatsapp` for BLOND:ISH where the lane contract explicitly promises WhatsApp access
    - approved search providers:
      - `composio-toolkit-exa`
      - `composio-toolkit-perplexityai`
@@ -60,7 +61,7 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
 - Effective candidate set per tenant
 - Rejected candidate reasons (blocked, pending, out-of-scope)
 - visible workflow-control routes versus hidden raw provider routes for governed syncs
-- named-lane allowlists showing only custom Notion + Gmail + the approved search-provider set for BLOND:ISH and C3 Management
+- named-lane allowlists showing only custom Notion + Gmail + WhatsApp where contracted + the approved search-provider set for BLOND:ISH and C3 Management
 - trace evidence showing lane host key or bound host on routed calls
 - trace evidence showing `account_id` and `tenant_id` aligned with the lane host key or bound host on routed calls
 
