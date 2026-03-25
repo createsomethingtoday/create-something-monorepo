@@ -81,10 +81,13 @@ initMcpTracing();
 // Create provider manager
 let providerManager: ProviderManager | null = null;
 let registry: RegistryManager | null = null;
+const PRIMARY_API_TOKEN_ENV_VAR = 'WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN';
+const LEGACY_API_TOKEN_ENV_VAR = 'WEBFLOW_SITE_ANALYZER_MCP_API_KEY';
 
 function getApiKey(): string | null {
   const value =
-    process.env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY?.trim() ??
+    process.env[PRIMARY_API_TOKEN_ENV_VAR]?.trim() ??
+    process.env[LEGACY_API_TOKEN_ENV_VAR]?.trim() ??
     process.env.MCP_API_KEY?.trim() ??
     '';
   return value ? value : null;
@@ -2029,7 +2032,7 @@ export function getAnalyzerHealth(): Record<string, unknown> {
     registryPath: getRegistryPath() ?? '.webflow-analyzer/registry.json',
     auth: {
       configured: Boolean(getApiKey()),
-      header: 'Authorization: Bearer <WEBFLOW_SITE_ANALYZER_MCP_API_KEY>'
+      header: `Authorization: Bearer <${PRIMARY_API_TOKEN_ENV_VAR}>`
     }
   };
 }

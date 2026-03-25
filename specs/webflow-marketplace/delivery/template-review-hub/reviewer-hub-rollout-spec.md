@@ -39,7 +39,7 @@ This does **not** mean six materially different workflows. It means one workflow
 | Eric Unger | `eric.unger@webflow.com` | `wf-template-review-eric` | Eric Unger |
 | Vicki Chen | `vicki.chen@webflow.com` | `wf-template-review-vicki` | Vicki Chen |
 | Mariana Segura | `mariana.segura@webflow.com` | `wf-template-review-mariana` | Mariana Segura |
-| Micah Johnson | `micah@webflow.com` | `wf-template-review-micah` | Micah Johnson |
+| Micah Johnson | `micah@createsomething.io` | `wf-template-review-micah` | Micah Johnson |
 
 Requirements for each reviewer Hub:
 

@@ -406,32 +406,33 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
-    "webflow-local": {
-      "transport": "stdio",
-      "command": "node",
-      "args": [
-        "./packages/webflow-mcp/dist/index.js"
-      ],
-      "description": "Local Webflow MCP from this monorepo",
+    "webflow-originality-mcp": {
+      "transport": "http",
+      "url_env_var": "WEBFLOW_ORIGINALITY_MCP_URL",
+      "bearer_token_env_var": "WEBFLOW_ORIGINALITY_MCP_API_TOKEN",
+      "description": "Hosted Webflow Originality MCP for reviewer analysis and originality workflows",
       "tags": [
-        "local",
-        "dev",
-        "webflow"
+        "webflow",
+        "analysis",
+        "phase-b",
+        "remote",
+        "review",
+        "originality"
       ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
     "webflow-site-analyzer-mcp": {
-      "transport": "stdio",
-      "command": "node",
-      "args": [
-        "./packages/webflow-site-analyzer-mcp/dist/index.js"
-      ],
-      "description": "Local Webflow Site Analyzer MCP from this monorepo",
+      "transport": "http",
+      "url_env_var": "WEBFLOW_SITE_ANALYZER_MCP_URL",
+      "bearer_token_env_var": "WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN",
+      "description": "Hosted Webflow Site Analyzer MCP for reviewer rubric analysis workflows",
       "tags": [
-        "local",
-        "dev",
-        "webflow"
+        "webflow",
+        "analysis",
+        "phase-b",
+        "remote",
+        "review"
       ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -13140,7 +13141,7 @@
       "quickbooks-notion-mcp-server"
     ],
     "local-dev": [
-      "webflow-local",
+      "webflow-originality-mcp",
       "webflow-site-analyzer-mcp",
       "lsmcp"
     ],
@@ -13150,7 +13151,7 @@
     "webflow-marketplace-review-phase-b": [
       "webflow-template-review-mcp",
       "webflow-site-analyzer-mcp",
-      "webflow-local"
+      "webflow-originality-mcp"
     ],
     "webflow-marketplace-app-review-phase-a": [
       "webflow-app-review-mcp"

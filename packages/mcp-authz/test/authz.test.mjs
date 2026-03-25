@@ -108,6 +108,16 @@ test('hub route classification uses invocation action for multiplexed read manag
   assert.equal(classification.accessType, 'read');
 });
 
+test('hub route classification treats read-only policy fetch routes as read access', () => {
+  const classification = classifyHubRoute({
+    proxyToolName: 'webflow-site-analyzer-mcp__get_webflow_review_policy',
+    serverName: 'webflow-site-analyzer-mcp',
+    downstreamToolName: 'get_webflow_review_policy',
+  });
+
+  assert.equal(classification.accessType, 'read');
+});
+
 test('hub route classification preserves write access for multiplexed mutation actions', () => {
   const classification = classifyHubRoute(
     {
@@ -166,6 +176,28 @@ test('hub route auth requires human review for destructive execution', async () 
 
   assert.equal(result.final.decision, 'require_human_review');
   assert.match(result.final.reason, /human review/i);
+});
+
+test('hub route auth allows read-only policy fetch execution without human review', async () => {
+  const request = buildHubAuthorizationRequest({
+    accountId: 'acct_1',
+    sessionId: 'session_1',
+    toolMode: 'read_write',
+    identitySource: 'session',
+    proxyToolName: 'webflow-site-analyzer-mcp__get_webflow_review_policy',
+    serverName: 'webflow-site-analyzer-mcp',
+    downstreamToolName: 'get_webflow_review_policy',
+    actionName: 'execute',
+  });
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.hub-route-authorization.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'allow');
 });
 
 test('hub route auth blocks unresolved protected route context', async () => {

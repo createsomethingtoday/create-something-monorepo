@@ -64,18 +64,18 @@ Required reviewer mapping input for `webflow-template-review-mcp`:
 
 - merge Micah into the deployed worker's `REVIEWER_DIRECTORY_JSON`
 - use the live Airtable reviewer identity confirmed on `2026-03-17`:
-  - account id: `acct_wf_micah`
+  - account id: `acct_mj`
   - collaborator id: `usr1b45eivydAeayI`
-  - email: `micah@webflow.com`
+  - email: `micah@createsomething.io`
   - lane: `wf-template-review-micah`
 
 Reviewer-directory entry to merge into the existing payload:
 
 ```json
 {
-  "acct_wf_micah": {
+  "acct_mj": {
     "airtableCollaboratorId": "usr1b45eivydAeayI",
-    "email": "micah@webflow.com",
+    "email": "micah@createsomething.io",
     "name": "Micah Johnson",
     "lane": "wf-template-review-micah"
   }
@@ -183,9 +183,15 @@ Do not enable broad reviewer mutation tools in Phase A. Keep approval/rejection/
 This runbook does not create a full analysis lane because the live remote Hub does not currently have:
 
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
+- `webflow-originality-mcp`
 
 Those remain Phase B prerequisites.
+
+When those servers are hosted and ready, use the Phase B wrappers instead of the Phase A scripts:
+
+- `scripts/cs-hub-webflow-reviewers-phase-b-vault-sync.sh`
+- `scripts/cs-hub-webflow-reviewers-phase-b-deploy.sh`
+- `scripts/webflow-template-review-phase-b-smoke.sh`
 
 ## 11. Rollback
 

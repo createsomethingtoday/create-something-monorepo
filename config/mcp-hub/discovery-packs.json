@@ -141,7 +141,7 @@
       "activeServers": [
         "webflow-template-review-mcp",
         "webflow-site-analyzer-mcp",
-        "webflow-local"
+        "webflow-originality-mcp"
       ],
       "maxProxyTools": 30
     },

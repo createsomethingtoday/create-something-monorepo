@@ -9,6 +9,7 @@
 
 import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, CrossDomainToken, User } from './types';
 import { hashPassword, verifyPassword, generateUUID, hashToken, generateSecureToken } from './services/crypto';
+import { prepareManagedBearerToken } from './managed-bearers';
 import { createSignedToken, generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
 import {
 	type AuthorizationDecisionType,
@@ -653,6 +654,7 @@ interface AdminIssueMcpLongLivedTokenBody {
 	tenant_id?: string;
 	account_id?: string;
 	bound_host?: string;
+	existing_token?: string;
 	toolkit_profile?: string[];
 	allowed_tool_prefixes?: string[];
 	tool_mode?: McpToolMode;
@@ -742,6 +744,7 @@ type ManagedBearerIssueResult =
 		toolkitProfile: string[];
 		allowedToolPrefixes: string[];
 		boundHost: string | null;
+		tokenSource: 'adopted' | 'generated';
 		policyDecision: DecisionTelemetry;
 	}
 	| {
@@ -1389,6 +1392,7 @@ async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Pr
 		tenantId: body.tenant_id ?? null,
 		accountId: body.account_id ?? null,
 		boundHost: body.bound_host ?? null,
+		existingToken: body.existing_token ?? null,
 		toolkitProfile: body.toolkit_profile,
 		allowedToolPrefixes: body.allowed_tool_prefixes,
 		toolMode: body.tool_mode,
@@ -1413,6 +1417,7 @@ async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Pr
 		toolkit_profile: issued.toolkitProfile,
 		allowed_tool_prefixes: issued.allowedToolPrefixes,
 		bound_host: issued.boundHost,
+		token_source: issued.tokenSource,
 		policy: issued.policyDecision,
 	});
 }
@@ -1464,6 +1469,7 @@ async function issueManagedBearerToken(
 		tenantId?: string | null;
 		accountId?: string | null;
 		boundHost?: string | null;
+		existingToken?: string | null;
 		toolkitProfile?: string[];
 		allowedToolPrefixes?: string[];
 		toolMode?: McpToolMode;
@@ -1512,6 +1518,11 @@ async function issueManagedBearerToken(
 				? parseAllowedToolPrefixesOrNull(existing.allowed_tool_prefixes_json) ?? buildAllowedToolPrefixes(toolkitProfile)
 				: buildAllowedToolPrefixes(toolkitProfile);
 	const metadata = normalizeMetadata(input.metadata);
+	const auditUserId = await resolveManagedBearerAuditUserId(
+		db,
+		input.authSubject,
+		normalizeNullableString(input.authEmail) ?? existing?.auth_email ?? null,
+	);
 
 	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
 		policyId: POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID,
@@ -1572,9 +1583,9 @@ async function issueManagedBearerToken(
 	}
 
 	const tokenId = `mlt_${generateUUID().replace(/-/g, '')}`;
-	const rawToken = `mcpu_${generateSecureToken(48)}`;
-	const tokenHash = await hashToken(rawToken);
-	const tokenPrefix = rawToken.slice(0, 14);
+	const preparedToken = prepareManagedBearerToken(input.existingToken);
+	const tokenHash = await hashToken(preparedToken.rawToken);
+	const tokenPrefix = preparedToken.tokenPrefix;
 
 	await upsertMcpLongLivedToken(db, {
 		id: tokenId,
@@ -1595,7 +1606,7 @@ async function issueManagedBearerToken(
 	await createMcpAuthEvent(db, {
 		id: generateUUID(),
 		session_id: null,
-		user_id: input.authSubject,
+		user_id: auditUserId,
 		event_type: existing ? 'mcp_long_lived_token_regenerated' : 'mcp_long_lived_token_issued',
 		event_data_json: JSON.stringify({
 			token_id: tokenId,
@@ -1607,13 +1618,14 @@ async function issueManagedBearerToken(
 			policy: policyDecision,
 			issued_via: metadata.issued_via ?? null,
 			allowed_tool_prefixes: allowedToolPrefixes,
+			token_source: preparedToken.tokenSource,
 		}),
 	});
 
 	return {
 		ok: true,
 		tokenId,
-		token: rawToken,
+		token: preparedToken.rawToken,
 		tokenPrefix: tokenPrefix,
 		accountId,
 		tenantId,
@@ -1623,6 +1635,7 @@ async function issueManagedBearerToken(
 		toolMode,
 		toolkitProfile,
 		allowedToolPrefixes,
+		tokenSource: preparedToken.tokenSource,
 		policyDecision,
 	};
 }
@@ -1710,10 +1723,11 @@ async function handleRevokeMcpLongLivedToken(request: Request, env: Env, tokenId
 	}
 
 	const revoked = await revokeMcpLongLivedToken(db, tokenId);
+	const auditUserId = await resolveManagedBearerAuditUserId(db, existing.auth_subject, existing.auth_email);
 	await createMcpAuthEvent(db, {
 		id: generateUUID(),
 		session_id: null,
-		user_id: existing.auth_subject,
+		user_id: auditUserId,
 		event_type: 'mcp_long_lived_token_revoked',
 		event_data_json: JSON.stringify({
 			token_id: tokenId,
@@ -2107,13 +2121,18 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 		if (!longLivedToken) {
 			return json({ valid: false, reason: 'token_not_found' });
 		}
+		const auditUserId = await resolveManagedBearerAuditUserId(
+			db,
+			longLivedToken.auth_subject,
+			longLivedToken.auth_email,
+		);
 
 		const revoked = Boolean(longLivedToken.revoked_at);
 		if (revoked) {
 			await createMcpAuthEvent(db, {
 				id: generateUUID(),
 				session_id: null,
-				user_id: longLivedToken.auth_subject,
+				user_id: auditUserId,
 				event_type: 'mcp_long_lived_token_resolve_rejected',
 				event_data_json: JSON.stringify({
 					token_id: longLivedToken.id,
@@ -2142,7 +2161,7 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			await createMcpAuthEvent(db, {
 				id: generateUUID(),
 				session_id: null,
-				user_id: longLivedToken.auth_subject,
+				user_id: auditUserId,
 				event_type: 'mcp_long_lived_token_resolve_rejected',
 				event_data_json: JSON.stringify({
 					token_id: longLivedToken.id,
@@ -2174,7 +2193,7 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			await createMcpAuthEvent(db, {
 				id: generateUUID(),
 				session_id: null,
-				user_id: longLivedToken.auth_subject,
+				user_id: auditUserId,
 				event_type: 'mcp_long_lived_token_resolve_rejected',
 				event_data_json: JSON.stringify({
 					token_id: longLivedToken.id,
@@ -2204,7 +2223,7 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 		await createMcpAuthEvent(db, {
 			id: generateUUID(),
 			session_id: null,
-			user_id: longLivedToken.auth_subject,
+			user_id: auditUserId,
 			event_type: 'mcp_long_lived_token_resolved',
 			event_data_json: JSON.stringify({
 				token_id: longLivedToken.id,
@@ -3601,6 +3620,28 @@ function parseStringArray(raw: string): string[] {
 function parseAllowedToolPrefixesOrNull(raw: string): string[] | null {
 	const values = parseStringArray(raw);
 	return values.length > 0 ? values : null;
+}
+
+async function resolveManagedBearerAuditUserId(
+	db: D1Database,
+	authSubject: string | null | undefined,
+	authEmail: string | null | undefined,
+): Promise<string | null> {
+	if (authSubject) {
+		const directUser = await findUserById(db, authSubject);
+		if (directUser) {
+			return directUser.id;
+		}
+	}
+
+	if (authEmail) {
+		const emailUser = await findUserByEmail(db, authEmail);
+		if (emailUser) {
+			return emailUser.id;
+		}
+	}
+
+	return null;
 }
 
 function isMcpResolveAuthorized(

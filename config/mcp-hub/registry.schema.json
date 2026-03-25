@@ -147,13 +147,21 @@
     },
     "httpServer": {
       "type": "object",
-      "required": ["transport", "url"],
+      "required": ["transport"],
+      "anyOf": [
+        { "required": ["url"] },
+        { "required": ["url_env_var"] }
+      ],
       "additionalProperties": false,
       "properties": {
         "transport": {
           "const": "http"
         },
         "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url_env_var": {
           "type": "string",
           "minLength": 1
         },

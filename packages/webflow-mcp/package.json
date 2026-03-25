@@ -11,7 +11,9 @@
     "prebuild": "pnpm --filter @create-something/observability build",
     "build": "tsc",
     "dev": "tsc --watch",
+    "dev:http": "tsx src/http.ts",
     "start": "node dist/index.js",
+    "start:http": "node dist/http.js",
     "test": "pnpm run build && node --test --test-concurrency=1 test/*.test.mjs"
   },
   "dependencies": {
@@ -20,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.0"
   },
   "keywords": [

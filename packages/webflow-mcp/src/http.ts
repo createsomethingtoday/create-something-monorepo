@@ -4,11 +4,14 @@ import { createServer as createHttpServer, type IncomingMessage, type ServerResp
 
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
-import { createAnalyzerServer, getAnalyzerHealth, shutdownAnalyzerServer } from './index.js';
+import {
+  WEBFLOW_ORIGINALITY_SERVER_NAME,
+  createWebflowMcpServer,
+} from './server.js';
 
-const DEFAULT_PORT = 8788;
-const PRIMARY_API_TOKEN_ENV_VAR = 'WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN';
-const LEGACY_API_TOKEN_ENV_VAR = 'WEBFLOW_SITE_ANALYZER_MCP_API_KEY';
+const DEFAULT_PORT = 8789;
+const PRIMARY_API_TOKEN_ENV_VAR = 'WEBFLOW_ORIGINALITY_MCP_API_TOKEN';
+const LEGACY_API_TOKEN_ENV_VAR = 'WEBFLOW_LOCAL_MCP_API_TOKEN';
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
@@ -68,7 +71,7 @@ async function handleMcp(request: IncomingMessage, response: ServerResponse): Pr
     return;
   }
 
-  const server = createAnalyzerServer();
+  const server = createWebflowMcpServer();
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
@@ -95,7 +98,8 @@ async function main(): Promise<void> {
 
     if (url.pathname === '/' || url.pathname === '/health') {
       json(response, 200, {
-        ...getAnalyzerHealth(),
+        ok: true,
+        name: WEBFLOW_ORIGINALITY_SERVER_NAME,
         transport: 'streamable-http',
         endpoint: '/mcp',
       });
@@ -103,13 +107,6 @@ async function main(): Promise<void> {
     }
 
     if (url.pathname === '/mcp') {
-      if (request.method === 'GET') {
-        json(response, 405, {
-          error: 'GET event streams are not supported on this deployment. Use POST JSON-RPC on /mcp.',
-        });
-        return;
-      }
-
       try {
         await handleMcp(request, response);
       } catch (error) {
@@ -123,29 +120,12 @@ async function main(): Promise<void> {
     json(response, 404, { error: 'Not found. MCP endpoint is /mcp.' });
   });
 
-  const closeAndExit = async (exitCode: number): Promise<void> => {
-    await new Promise<void>((resolve) => {
-      httpServer.close(() => resolve());
-    });
-    await shutdownAnalyzerServer();
-    process.exit(exitCode);
-  };
-
-  process.on('SIGINT', () => {
-    closeAndExit(0).catch(() => process.exit(1));
-  });
-
-  process.on('SIGTERM', () => {
-    closeAndExit(0).catch(() => process.exit(1));
-  });
-
   httpServer.listen(port, () => {
-    console.error(`Webflow Site Analyzer MCP server running on Streamable HTTP :${port}/mcp`);
+    console.error(`${WEBFLOW_ORIGINALITY_SERVER_NAME} server running on Streamable HTTP :${port}/mcp`);
   });
 }
 
-main().catch(async (error) => {
-  console.error('[webflow-site-analyzer-mcp:http] fatal error:', error);
-  await shutdownAnalyzerServer();
+main().catch((error) => {
+  console.error(`[${WEBFLOW_ORIGINALITY_SERVER_NAME}:http] fatal error:`, error);
   process.exit(1);
 });

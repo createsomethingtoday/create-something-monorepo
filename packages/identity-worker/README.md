@@ -35,6 +35,8 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | POST | `/v1/mcp/legacy-keys/issue` | Issue legacy bearer key (API key + policy gated) |
 | POST | `/v1/mcp/legacy-keys/:id/revoke` | Revoke legacy bearer key (API key + policy gated) |
 
+`POST /v1/mcp/long-lived-tokens/admin-issue` also supports adoption of an existing plaintext bearer via `existing_token`, so operator-run migrations can preserve the current token value while moving governance into `mcp_long_lived_tokens`.
+
 ## Stack
 
 - **Runtime**: Cloudflare Workers

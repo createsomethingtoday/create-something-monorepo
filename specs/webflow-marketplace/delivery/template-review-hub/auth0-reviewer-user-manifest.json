@@ -80,7 +80,7 @@
     }
   },
   {
-    "email": "micah@webflow.com",
+    "email": "micah@createsomething.io",
     "name": "Micah Johnson",
     "given_name": "Micah",
     "family_name": "Johnson",
@@ -89,9 +89,9 @@
     "app_metadata": {
       "workflow": "template_review_hub_lane",
       "hub_slug": "wf-template-review-micah",
-      "account_id": "acct_wf_micah",
-      "tenant_id": "tenant_webflow_marketplace",
-      "workspace_account_id": "acct_wf_micah",
+      "account_id": "acct_mj",
+      "tenant_id": "tenant_createsomething_io",
+      "workspace_account_id": "acct_mj",
       "reviewer_role": "template_reviewer"
     }
   }

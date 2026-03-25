@@ -22,7 +22,7 @@ As of `2026-03-10`, the live remote Hub currently shows:
 
 - `webflow-template-review-mcp` connected
 - `webflow-site-analyzer-mcp` not connected
-- `webflow-local` not connected
+- `webflow-originality-mcp` not connected
 
 That means the only safe exact runtime posture today is a **template-review-context plus narrow reviewer workflow write** lane unless the other Webflow servers are enabled and verified first.
 
@@ -37,7 +37,7 @@ Use one reviewer-specific Hub surface or account-scoped Hub posture per reviewer
 | Eric Unger | `eric.unger@webflow.com` | `wf-template-review-eric` |
 | Vicki Chen | `vicki.chen@webflow.com` | `wf-template-review-vicki` |
 | Mariana Segura | `mariana.segura@webflow.com` | `wf-template-review-mariana` |
-| Micah Johnson | `micah@webflow.com` | `wf-template-review-micah` |
+| Micah Johnson | `micah@createsomething.io` | `wf-template-review-micah` |
 
 If these are implemented as separate custom-domain Hubs, keep the same posture across all six. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
 
@@ -92,12 +92,12 @@ Use this only after the missing Webflow analysis servers are enabled and verifie
 
 - `webflow-template-review-mcp`
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
+- `webflow-originality-mcp`
 
 ### Discovery mode
 
 - `mode`: `compact`
-- `activeServers`: `["webflow-template-review-mcp", "webflow-site-analyzer-mcp", "webflow-local"]`
+- `activeServers`: `["webflow-template-review-mcp", "webflow-site-analyzer-mcp", "webflow-originality-mcp"]`
 - `maxProxyTools`: `30`
 
 ### Reviewer-visible tool target
@@ -106,7 +106,7 @@ Phase B should still default to a narrow review surface:
 
 - all Phase A read tools
 - selected analysis tools from `webflow-site-analyzer-mcp`
-- selected originality/plagiarism tools from `webflow-local`
+- selected originality/plagiarism tools from `webflow-originality-mcp`
 
 Do not expose entire raw tool catalogs if the reviewer workflow only needs a few actions.
 
@@ -118,6 +118,26 @@ Even in Phase B, reviewer Hubs should begin read-only and move to write enableme
 
 If the live remote Hub is missing the analysis servers, use this operator sequence first.
 
+### Prerequisite: hosted Phase B analysis endpoints
+
+The remote Hub cannot use repo-local `stdio` servers for reviewer lanes. Before enabling Phase B, provide hosted HTTP MCP endpoints for:
+
+- `webflow-site-analyzer-mcp`
+- `webflow-originality-mcp`
+
+Registry entries now support env-driven HTTP targets through these worker vars/secrets:
+
+- `WEBFLOW_SITE_ANALYZER_MCP_URL`
+- `WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN`
+- `WEBFLOW_ORIGINALITY_MCP_URL`
+- `WEBFLOW_ORIGINALITY_MCP_API_TOKEN`
+
+Recommended deployment posture:
+
+- keep the API tokens as Worker secrets
+- pass the MCP URLs as Worker vars during reviewer-hub deploy
+- verify the hosted analyzer exposes `/health` and `/mcp`
+
 ### Enable required servers
 
 Use `hub_update_state` with:
@@ -127,7 +147,7 @@ Use `hub_update_state` with:
   "enableServers": [
     "webflow-template-review-mcp",
     "webflow-site-analyzer-mcp",
-    "webflow-local"
+    "webflow-originality-mcp"
   ]
 }
 ```
@@ -141,9 +161,41 @@ Then verify:
 - `hub_search_proxy_tools` with `serverName` set to each of:
   - `webflow-template-review-mcp`
   - `webflow-site-analyzer-mcp`
-  - `webflow-local`
+  - `webflow-originality-mcp`
 
 Do not move to Phase B until all three resolve and return usable proxy tools.
+
+### Phase B reviewer deploy wrapper
+
+Once the hosted MCP URLs are available, deploy reviewer Hubs with:
+
+```bash
+WEBFLOW_SITE_ANALYZER_MCP_URL=https://your-analyzer-host.example.com/mcp \
+WEBFLOW_ORIGINALITY_MCP_URL=https://your-webflow-originality-host.example.com/mcp \
+./scripts/cs-hub-webflow-reviewers-phase-b-deploy.sh all
+```
+
+The Phase B deploy wrapper now performs a post-normalize `hub_refresh_connections` and waits for all enabled and discovery-active servers to reconnect before verification. That avoids the cold-lane state where `/health` shows the right config but `connected_servers` and discovery remain empty for several seconds after deploy.
+
+If a lane later goes cold without any config drift, use the refresh-only recovery path:
+
+```bash
+REVIEWER=micah \
+bash ./scripts/cs-hub-webflow-reviewers-phase-b-deploy.sh refresh
+```
+
+Then smoke-check one reviewer lane with:
+
+```bash
+REVIEWER=micah WF_TEMPLATE_REVIEW_MICAH=... \
+./scripts/webflow-template-review-phase-b-smoke.sh
+```
+
+If the reviewer workers do not already have the Phase B downstream bearer secrets, sync them first:
+
+```bash
+./scripts/cs-hub-webflow-reviewers-phase-b-vault-sync.sh
+```
 
 ## 7. Reviewer discovery posture
 
@@ -167,7 +219,7 @@ After the other Webflow servers are connected and tested, move the reviewer to P
   "activeServers": [
     "webflow-template-review-mcp",
     "webflow-site-analyzer-mcp",
-    "webflow-local"
+    "webflow-originality-mcp"
   ],
   "maxProxyTools": 30
 }

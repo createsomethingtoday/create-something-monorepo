@@ -1,0 +1,8 @@
+name = "webflow-originality-mcp"
+main = "index.ts"
+compatibility_date = "2026-03-24"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true

@@ -110,7 +110,7 @@ reviewers:
     policy_record_id: "wf_template_review_mariana_phase_a"
 
   - reviewer_name: "Micah Johnson"
-    reviewer_email: "micah@webflow.com"
+    reviewer_email: "micah@createsomething.io"
     hub_slug: "wf-template-review-micah"
     account_model: "per_user"
     approval_owner: "Micah Johnson"
@@ -119,7 +119,7 @@ reviewers:
 
 phase_b_prerequisites:
   - "webflow-site-analyzer-mcp enabled and verified in the live Hub"
-  - "webflow-local enabled and verified in the live Hub"
+  - "webflow-originality-mcp enabled and verified in the live Hub"
   - "reviewer-attributed trace verification for approval-required actions"
   - "manual fallback drill completed"
   - "Marketplace review lead signoff"

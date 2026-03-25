@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "tenant_id": "tenant_webflow_marketplace",
+  "allowed_tool_prefixes": [
+    "webflow-template-review-mcp__",
+    "webflow-site-analyzer-mcp__",
+    "webflow-originality-mcp__"
+  ],
+  "reviewers": [
+    {
+      "reviewer": "natalia",
+      "reviewer_name": "Natalia Ledford",
+      "email": "natalia.ledford@webflow.com",
+      "account_id": "acct_wf_natalia",
+      "hub_slug": "wf-template-review-natalia",
+      "worker_name": "cs-hub-wf-template-review-natalia",
+      "bearer_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN",
+      "gateway_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_GATEWAY_API_TOKEN"
+    },
+    {
+      "reviewer": "sudiksha",
+      "reviewer_name": "Sudiksha Khanduja",
+      "email": "sudiksha.khanduja@webflow.com",
+      "account_id": "acct_wf_sudiksha",
+      "hub_slug": "wf-template-review-sudiksha",
+      "worker_name": "cs-hub-wf-template-review-sudiksha",
+      "bearer_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_API_TOKEN",
+      "gateway_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_GATEWAY_API_TOKEN"
+    },
+    {
+      "reviewer": "eric",
+      "reviewer_name": "Eric Unger",
+      "email": "eric.unger@webflow.com",
+      "account_id": "acct_wf_eric",
+      "hub_slug": "wf-template-review-eric",
+      "worker_name": "cs-hub-wf-template-review-eric",
+      "bearer_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN",
+      "gateway_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_ERIC_GATEWAY_API_TOKEN"
+    },
+    {
+      "reviewer": "vicki",
+      "reviewer_name": "Vicki Chen",
+      "email": "vicki.chen@webflow.com",
+      "account_id": "acct_wf_vicki",
+      "hub_slug": "wf-template-review-vicki",
+      "worker_name": "cs-hub-wf-template-review-vicki",
+      "bearer_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN",
+      "gateway_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_GATEWAY_API_TOKEN"
+    },
+    {
+      "reviewer": "mariana",
+      "reviewer_name": "Mariana Segura",
+      "email": "mariana.segura@webflow.com",
+      "account_id": "acct_wf_mariana",
+      "hub_slug": "wf-template-review-mariana",
+      "worker_name": "cs-hub-wf-template-review-mariana",
+      "bearer_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN",
+      "gateway_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_GATEWAY_API_TOKEN"
+    },
+    {
+      "reviewer": "micah",
+      "reviewer_name": "Micah Johnson",
+      "email": "micah@createsomething.io",
+      "account_id": "acct_mj",
+      "tenant_id": "tenant_createsomething_io",
+      "hub_slug": "wf-template-review-micah",
+      "worker_name": "cs-hub-wf-template-review-micah",
+      "bearer_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_MICAH_API_TOKEN",
+      "gateway_secret_name": "CS_HUB_WF_TEMPLATE_REVIEW_MICAH_GATEWAY_API_TOKEN"
+    }
+  ]
+}

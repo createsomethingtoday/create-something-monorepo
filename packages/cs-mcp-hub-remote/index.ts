@@ -36,7 +36,8 @@ type StringMap = Record<string, string>;
 
 type HttpServerConfig = {
   transport: 'http';
-  url: string;
+  url?: string;
+  url_env_var?: string;
   http_headers?: StringMap;
   env_http_headers?: StringMap;
   bearer_token_env_var?: string;
@@ -1120,7 +1121,7 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
   connected.sort((a, b) => a.name.localeCompare(b.name));
   failed.sort((a, b) => a.name.localeCompare(b.name));
 
-  const proxies = buildProxyCatalog(connected);
+  const proxies = buildProxyCatalog(connected, env);
   proxies.warnings.unshift(...warnings);
 
   return {
@@ -1162,6 +1163,7 @@ async function connectSingleDownstream(
   config: HttpServerConfig,
   env: Env,
 ): Promise<ConnectedDownstream | DownstreamFailure> {
+  const targetUrl = resolveHttpServerUrl(name, config, env);
   const connectTimeoutMs = resolveConnectTimeoutMs(config, env);
   const listToolsTimeoutMs = resolveListToolsTimeoutMs(config, env);
   const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
@@ -1179,7 +1181,7 @@ async function connectSingleDownstream(
     });
 
     try {
-      const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
+      const transport = new StreamableHTTPClientTransport(new URL(targetUrl), { requestInit });
       await withTimeout(
         client.connect(transport),
         connectTimeoutMs,
@@ -1255,6 +1257,18 @@ function resolveHttpHeaders(
   return headers;
 }
 
+function resolveHttpServerUrl(serverName: string, config: HttpServerConfig, env: Env): string {
+  if (config.url) return config.url;
+  if (config.url_env_var) {
+    const value = readEnvString(env, config.url_env_var);
+    if (value) return value;
+    throw new Error(
+      `Server "${serverName}" is missing required URL env var "${config.url_env_var}"`,
+    );
+  }
+  throw new Error(`Server "${serverName}" is missing both "url" and "url_env_var"`);
+}
+
 function resolveToolCallTimeoutMs(config: HttpServerConfig, env: Env): number {
   const fallback = parsePositiveInt(
     readEnvString(env, 'HUB_TOOL_CALL_TIMEOUT_MS'),
@@ -1324,6 +1338,7 @@ async function callDownstreamToolWithTrace(
   args: Record<string, unknown>,
   trace: InvocationTrace,
   accountId: string,
+  env: Env,
 ): Promise<any> {
   const client = new Client({
     name: `${HUB_NAME}:${server.name}:proxy`,
@@ -1341,11 +1356,14 @@ async function callDownstreamToolWithTrace(
     'x-hub-account-id': accountId,
   };
 
-  const transport = new StreamableHTTPClientTransport(new URL(server.config.url), {
+  const transport = new StreamableHTTPClientTransport(
+    new URL(resolveHttpServerUrl(server.name, server.config, env)),
+    {
     requestInit: {
       headers,
     },
-  });
+    },
+  );
 
   await client.connect(transport);
   try {
@@ -1374,7 +1392,7 @@ async function callDownstreamToolWithTrace(
   }
 }
 
-function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalog {
+function buildProxyCatalog(connectedServers: ConnectedDownstream[], env: Env): ProxyCatalog {
   const toolDefinitions: Tool[] = [];
   const routes = new Map<string, ProxyRoute>();
   const warnings: string[] = [];
@@ -1397,7 +1415,7 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
         downstreamToolName: tool.name,
         serverTags: [...(server.config.tags ?? [])],
         call: (args, trace, accountId) =>
-          callDownstreamToolWithTrace(server, tool.name, args, trace, accountId),
+          callDownstreamToolWithTrace(server, tool.name, args, trace, accountId, env),
       });
     }
   }
@@ -2342,7 +2360,10 @@ function buildRegistryPayload(currentRegistry: McpBundleRegistry): Record<string
     .map(([name, config]) => ({
       name,
       transport: config.transport,
-      target: config.transport === 'http' ? config.url : `${config.command} ${(config.args ?? []).join(' ')}`.trim(),
+      target:
+        config.transport === 'http'
+          ? config.url ?? `$${config.url_env_var ?? 'UNCONFIGURED_HTTP_URL'}`
+          : `${config.command} ${(config.args ?? []).join(' ')}`.trim(),
       tags: config.tags ?? [],
       description: config.description ?? '',
     }));

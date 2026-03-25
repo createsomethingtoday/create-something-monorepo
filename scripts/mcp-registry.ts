@@ -35,7 +35,8 @@ type BaseServer = {
 
 type HttpServer = BaseServer & {
   transport: 'http';
-  url: string;
+  url?: string;
+  url_env_var?: string;
   http_headers?: Record<string, string>;
   env_http_headers?: Record<string, string>;
   bearer_token_env_var?: string;
@@ -185,8 +186,10 @@ function validateRegistry(data: Registry): string[] {
     }
 
     if (server.transport === 'http') {
-      if (typeof server.url !== 'string' || server.url.length === 0) {
-        errors.push(`server ${serverName}: http transport requires non-empty url`);
+      const hasUrl = typeof server.url === 'string' && server.url.length > 0;
+      const hasUrlEnvVar = typeof server.url_env_var === 'string' && server.url_env_var.length > 0;
+      if (!hasUrl && !hasUrlEnvVar) {
+        errors.push(`server ${serverName}: http transport requires non-empty url or url_env_var`);
       }
     } else if (server.transport === 'stdio') {
       if (typeof server.command !== 'string' || server.command.length === 0) {

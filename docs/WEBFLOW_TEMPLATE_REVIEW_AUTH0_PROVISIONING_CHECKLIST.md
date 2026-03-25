@@ -11,7 +11,7 @@ Provision the six Webflow Marketplace template reviewers into `.agency`, create 
 - `eric.unger@webflow.com` -> `acct_wf_eric` -> `wf-template-review-eric`
 - `vicki.chen@webflow.com` -> `acct_wf_vicki` -> `wf-template-review-vicki`
 - `mariana.segura@webflow.com` -> `acct_wf_mariana` -> `wf-template-review-mariana`
-- `micah@webflow.com` -> `acct_wf_micah` -> `wf-template-review-micah`
+- `micah@createsomething.io` -> `acct_mj` -> `wf-template-review-micah`
 
 Shared tenant:
 
@@ -21,6 +21,7 @@ Shared tenant:
 
 - `.agency` seed manifest: `docs/examples/webflow-template-review-user-seed.csv`
 - Auth0 user manifest: `specs/webflow-marketplace/delivery/template-review-hub/auth0-reviewer-user-manifest.json`
+- Managed bearer manifest: `specs/webflow-marketplace/delivery/template-review-hub/reviewer-managed-bearer-manifest.json`
 
 ## Workflow
 
@@ -88,6 +89,22 @@ Before enabling any write path, confirm:
 - rate limits and quotas are enabled before write rollout
 - traces include reviewer identity and `correlation_id`
 - manual fallback is rehearsed
+
+## Repeatable bearer adoption
+
+To preserve the current reviewer bearer plaintext while moving governance into `identity-worker`, use:
+
+```bash
+scripts/cs-hub-webflow-reviewers-managed-bearer-adopt.sh all
+```
+
+That workflow:
+
+- reads the reviewer manifest
+- resolves each lane's canonical `identity_user_id` from `.agency`
+- adopts the existing Infisical bearer into `mcp_long_lived_tokens`
+- ensures a separate `*_GATEWAY_API_TOKEN` exists for the worker `HUB_API_TOKEN`
+- re-syncs worker secrets and runs bearer-first Phase B smoke verification
 
 ## Open assumptions to confirm
 

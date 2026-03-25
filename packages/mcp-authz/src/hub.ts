@@ -10,6 +10,7 @@ const AUTH_ADMIN_PATTERN = /\b(get_connect_link|oauth|authorize|auth|token|conse
 const CONTROL_PLANE_PATTERN = /\b(policy|rollout|registry|state|quota|rate_limit|discovery|bundle|trace)\b/i;
 const READ_ACTION_PREFIX_PATTERN = /^(list|get|fetch|describe|inspect|preview|validate|search|query|check|test)\b/i;
 const READ_METADATA_PATTERN = /\b(status|schema|health|info|details)\b/i;
+const POLICY_READ_ACTION_PATTERN = /\b(list|get|fetch|describe|inspect|preview|read)\b/i;
 
 function normalizeHubRouteText(...parts: Array<string | null | undefined>): string {
   return parts
@@ -29,6 +30,17 @@ function routeIdentifierText(route: {
     route.proxyToolName,
     route.serverName,
     route.downstreamToolName,
+  );
+}
+
+function isReadOnlyPolicyLookup(text: string): boolean {
+  return (
+    CONTROL_PLANE_PATTERN.test(text) &&
+    /\bpolicy\b/i.test(text) &&
+    POLICY_READ_ACTION_PATTERN.test(text) &&
+    !WRITE_PATTERN.test(text) &&
+    !DESTRUCTIVE_PATTERN.test(text) &&
+    !AUTH_ADMIN_PATTERN.test(text)
   );
 }
 
@@ -75,6 +87,8 @@ export function classifyHubRoute(route: {
     const text = routeIdentifierText(route);
     if (DESTRUCTIVE_PATTERN.test(text)) {
       accessType = 'destructive';
+    } else if (isReadOnlyPolicyLookup(text)) {
+      accessType = 'read';
     } else if (CONTROL_PLANE_PATTERN.test(text)) {
       accessType = 'control_plane';
     } else if (AUTH_ADMIN_PATTERN.test(text)) {

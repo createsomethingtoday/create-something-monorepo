@@ -467,6 +467,26 @@ test('authorizeRequest accepts the configured HUB_API_TOKEN via mcp_access_token
   assert.equal(failure, null);
 });
 
+test('authorizeRequest prefers the configured HUB_API_TOKEN from mcp_access_token when Authorization carries a reviewer bearer', async () => {
+  const failure = await authorizeRequest(
+    new Request(
+      'https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=hub_static_token',
+      {
+        headers: {
+          Authorization: 'Bearer mcpu_reviewer_bearer',
+        },
+      },
+    ),
+    {
+      HUB_API_TOKEN: 'hub_static_token',
+      HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+      HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+    } as any,
+  );
+
+  assert.equal(failure, null);
+});
+
 test('authorizeRequest accepts a resolved personal token via mcp_access_token query param', async () => {
   const originalFetch = globalThis.fetch;
   let capturedAuth = '';

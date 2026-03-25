@@ -12,6 +12,7 @@ INFISICAL_PATH="${INFISICAL_PATH:-/}"
 INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 DRY_RUN="${DRY_RUN:-false}"
 REVIEWER="${REVIEWER:-all}"
+PHASE_B_SYNC="${PHASE_B_SYNC:-false}"
 
 REVIEWERS=(
   "WF_TEMPLATE_REVIEW_NATALIA|cs-hub-wf-template-review-natalia"
@@ -125,8 +126,14 @@ reviewer_key_matches() {
   [[ "$reviewer_key" == "WF_TEMPLATE_REVIEW_${reviewer_upper}" ]]
 }
 
+reviewer_gateway_token_var_name() {
+  local reviewer_key="$1"
+  printf 'CS_HUB_%s_GATEWAY_API_TOKEN' "$reviewer_key"
+}
+
 INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
 DRY_RUN="$(normalize_bool_or_fail "$DRY_RUN")"
+PHASE_B_SYNC="$(normalize_bool_or_fail "$PHASE_B_SYNC")"
 
 require_cmd pnpm
 require_cmd jq
@@ -139,13 +146,17 @@ require_secret "HUB_SESSION_RESOLVE_TOKEN" || missing=1
 require_secret "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" || missing=1
 require_secret "BRAINTRUST_API_KEY" || missing=1
 require_secret "BRAINTRUST_PROJECT_ID" || missing=1
+if [[ "$PHASE_B_SYNC" == "true" ]]; then
+  require_secret "WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN" || missing=1
+  require_secret "WEBFLOW_ORIGINALITY_MCP_API_TOKEN" || missing=1
+fi
 
 for entry in "${REVIEWERS[@]}"; do
   IFS='|' read -r reviewer_key _worker <<<"$entry"
   if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
     continue
   fi
-  require_secret "CS_HUB_${reviewer_key}_API_TOKEN" || missing=1
+  require_secret "$(reviewer_gateway_token_var_name "$reviewer_key")" || missing=1
 done
 
 if [[ "$missing" == "1" ]]; then
@@ -158,13 +169,17 @@ for entry in "${REVIEWERS[@]}"; do
   if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
     continue
   fi
-  reviewer_token_var="CS_HUB_${reviewer_key}_API_TOKEN"
+  reviewer_gateway_token_var="$(reviewer_gateway_token_var_name "$reviewer_key")"
   echo "syncing ${worker}"
-  put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_token_var}"
+  put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_gateway_token_var}"
   put_versioned_secret "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
   put_versioned_secret "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
   put_versioned_secret "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
   put_versioned_secret "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"
+  if [[ "$PHASE_B_SYNC" == "true" ]]; then
+    put_versioned_secret "$worker" "WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN" "$WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN"
+    put_versioned_secret "$worker" "WEBFLOW_ORIGINALITY_MCP_API_TOKEN" "$WEBFLOW_ORIGINALITY_MCP_API_TOKEN"
+  fi
 done
 
 echo "webflow reviewer hub vault sync complete."

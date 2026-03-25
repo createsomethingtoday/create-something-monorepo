@@ -85,7 +85,7 @@ The analyzer supports multiple browser automation providers:
 STEEL_API_KEY=your-steel-api-key
 
 # Optional: Streamable HTTP auth + runtime settings (remote mode)
-# WEBFLOW_SITE_ANALYZER_MCP_API_KEY=your-shared-bearer-token
+# WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN=your-shared-bearer-token
 # PORT=8788
 # WEBFLOW_ANALYZER_REGISTRY_PATH=/var/lib/webflow-site-analyzer/registry.json
 
@@ -175,7 +175,7 @@ The package now also supports a hosted Streamable HTTP endpoint for Hub/downstre
 
 ```bash
 pnpm build
-WEBFLOW_SITE_ANALYZER_MCP_API_KEY=your-token \
+WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN=your-token \
 STEEL_API_KEY=your-steel-key \
 PORT=8788 \
 pnpm start:http
@@ -191,7 +191,7 @@ Protected MCP endpoint:
 
 ```bash
 curl -sS -X POST http://localhost:8788/mcp \
-  -H "Authorization: Bearer $WEBFLOW_SITE_ANALYZER_MCP_API_KEY" \
+  -H "Authorization: Bearer $WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
@@ -205,7 +205,7 @@ Hosted client config:
     "webflow-site-analyzer": {
       "url": "https://your-host.example.com/mcp",
       "headers": {
-        "Authorization": "Bearer ${WEBFLOW_SITE_ANALYZER_MCP_API_KEY}"
+        "Authorization": "Bearer ${WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN}"
       }
     }
   }
@@ -213,9 +213,9 @@ Hosted client config:
 ```
 
 Notes:
-- `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` is preferred for remote auth. `MCP_API_KEY` is still accepted as a fallback.
+- `WEBFLOW_SITE_ANALYZER_MCP_API_TOKEN` is the preferred remote auth secret. `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` and `MCP_API_KEY` remain fallback names for older deployments.
 - `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
-- This package is now remote-capable, but the reviewer hub cannot use it until an actual hosted URL is deployed and the Hub registry entry is switched from `stdio` to `http`.
+- This package is remote-capable once an actual hosted URL and bearer secret are deployed for the Hub to consume.
 
 ## Tools
 
