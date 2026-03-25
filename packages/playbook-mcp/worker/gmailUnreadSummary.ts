@@ -385,26 +385,29 @@ export async function runGmailUnreadSummary(
 ): Promise<GmailUnreadSummaryRunResult> {
   const config = resolveConfig(env);
   const now = new Date();
-  const local = getLocalTimeParts(now, config.timezone);
-
-  if (!options.force && local.hour !== config.localHour) {
-    return {
-      ok: true,
-      status: 'outside_schedule_window',
-      query: config.query,
-      timezone: config.timezone,
-      localHour: config.localHour,
-      localDate: local.date,
-      unreadCount: 0,
-      markedReadCount: 0,
-      deliveredVia: [],
-      summary: '',
-      messages: [],
-      details: `Local hour ${local.hour} does not match scheduled hour ${config.localHour}.`,
-    };
-  }
+  let localDateFallback = now.toISOString().slice(0, 10);
 
   try {
+    const local = getLocalTimeParts(now, config.timezone);
+    localDateFallback = local.date;
+
+    if (!options.force && local.hour !== config.localHour) {
+      return {
+        ok: true,
+        status: 'outside_schedule_window',
+        query: config.query,
+        timezone: config.timezone,
+        localHour: config.localHour,
+        localDate: local.date,
+        unreadCount: 0,
+        markedReadCount: 0,
+        deliveredVia: [],
+        summary: '',
+        messages: [],
+        details: `Local hour ${local.hour} does not match scheduled hour ${config.localHour}.`,
+      };
+    }
+
     const messages = await fetchUnreadMessages(config);
     const summary = formatSummary(messages, config, now);
 
@@ -461,7 +464,7 @@ export async function runGmailUnreadSummary(
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const isConfigError = /Missing Hub auth/i.test(message);
+    const isConfigError = /Missing Hub auth|Invalid time zone/i.test(message);
 
     return {
       ok: false,
@@ -469,7 +472,7 @@ export async function runGmailUnreadSummary(
       query: config.query,
       timezone: config.timezone,
       localHour: config.localHour,
-      localDate: local.date,
+      localDate: localDateFallback,
       unreadCount: 0,
       markedReadCount: 0,
       deliveredVia: [],

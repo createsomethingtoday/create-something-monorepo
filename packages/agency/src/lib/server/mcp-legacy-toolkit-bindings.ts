@@ -1,4 +1,3 @@
-import { normalizeToolkitSlug } from './partner-auth.js';
 import type { McpAccessAssignment } from './mcp-access-assignments.js';
 
 function normalizeLegacyIdentifier(value: string): string {
@@ -7,6 +6,15 @@ function normalizeLegacyIdentifier(value: string): string {
 		.toLowerCase()
 		.replace(/[^a-z0-9_]+/g, '_')
 		.replace(/^_+|_+$/g, '');
+}
+
+function normalizeToolkitSlug(raw: string): string {
+	return raw
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9_]/g, '_')
+		.replace(/^_+|_+$/g, '')
+		.slice(0, 64);
 }
 
 export function normalizeLegacyLaneKey(value: string): string {

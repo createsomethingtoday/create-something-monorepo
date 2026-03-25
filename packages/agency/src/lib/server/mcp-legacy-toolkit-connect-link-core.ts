@@ -2,7 +2,7 @@ import type { McpAccessAssignment } from './mcp-access-assignments.js';
 import {
 	hasLegacySelfServeToolkitScope,
 	isToolkitAuthorizedForAssignment,
-} from './mcp-legacy-toolkit-bindings.js';
+} from './mcp-legacy-toolkit-bindings.ts';
 import type { PlatformEnv } from './partner-auth.js';
 
 interface ConnectLinkRequestBody {
