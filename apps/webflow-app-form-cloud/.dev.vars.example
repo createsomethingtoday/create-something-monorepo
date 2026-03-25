@@ -1,0 +1,9 @@
+# OpenNext/Workers local development
+NEXTJS_ENV=development
+
+# Runtime secrets used by the current app
+ADMIN_API_TOKEN=your-long-random-admin-token
+AIRTABLE_API_KEY=your-airtable-api-key
+WEBHOOK_URL=https://hooks.airtable.com/workflows/v1/genericWebhook/...
+CRON_SECRET=your-secure-random-string
+FORM_UPLOADS_PUBLIC_URL=https://your-public-r2-base-url.example.com

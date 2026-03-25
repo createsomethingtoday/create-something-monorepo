@@ -1,0 +1,517 @@
+/* Custom Form Styles to match the original Webflow design */
+
+/* Form wrapper and structure */
+.form-wrapper {
+  width: 100%;
+  max-width: none;
+  margin-bottom: 0;
+}
+
+.form-section {
+  margin-bottom: var(--_layout---spacing--margin-xl, 2.5rem);
+}
+
+.heading-component {
+  margin-bottom: var(--_layout---spacing--margin-md, 1.5rem);
+}
+
+/* Input groups and labels */
+.input-group {
+  margin-bottom: var(--_components---input--bottom-margin, var(--_layout---grid--gap-md, 1.25rem));
+  display: block;
+}
+
+.cc-checkbox-fieldset {
+  border: 0;
+  padding: 0;
+  margin-inline: 0;
+}
+
+.input-label {
+  color: var(--colors--text, var(--_color---neutral--black, #080808));
+  font-family: var(--_components---input-label--font, var(--_typography---fonts--primary-font, "WF Visual Sans Variable", Arial, sans-serif));
+  font-size: var(--_components---input-label--font-size, 0.9rem);
+  line-height: var(--_components---input-label--line-height, 1.4em);
+  font-weight: var(--_components---input-label--font-weight, 500);
+  letter-spacing: var(--_components---input-label--letter-spacing, 0em);
+  margin-bottom: 5px;
+  display: block;
+}
+
+.dyn-asterisk {
+  color: var(--colors--primary-accent, var(--_color---primary--webflow-blue, #146ef5));
+  margin-left: 0.2em;
+}
+
+/* Position relative container for overlay elements */
+.u-position-relative {
+  position: relative;
+}
+
+/* Form overlay button (for Client ID verification) */
+.btn.cc-form-overlay.w-button {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  padding: 0.5rem 1rem !important;
+  font-size: 0.875rem !important;
+  height: auto !important;
+  background-color: var(--colors--primary-accent, var(--_color---primary--webflow-blue, #146ef5)) !important;
+  color: var(--_color---neutral--white, #ffffff) !important;
+  border-radius: var(--_components---button--border-radius, 0.25rem) !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  z-index: 10;
+}
+
+.btn.cc-form-overlay.w-button:hover {
+  background-color: var(--_color---primary--blue-600, #1058c7) !important;
+}
+
+.btn.cc-form-overlay.w-button:disabled {
+  opacity: 0.65;
+  filter: saturate(0.65);
+  cursor: not-allowed !important;
+}
+
+/* Success text styling */
+.cc-success-text {
+  color: var(--_color---secondary--green, #00d722) !important;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+/* Enhanced input styles */
+.input.w-input {
+  border: 1px solid var(--colors--border, var(--_color---neutral--gray-400, #898989)) !important;
+  border-radius: var(--_components---input--border-radius, 0.25rem) !important;
+  font-family: var(--_components---input--font, var(--_typography---fonts--primary-font, "WF Visual Sans Variable", Arial, sans-serif)) !important;
+  color: var(--colors--text, var(--_color---neutral--black, #080808)) !important;
+  background-color: var(--colors--background, var(--_color---neutral--white, #ffffff)) !important;
+  font-size: var(--_components---input--font-size, 1rem) !important;
+  line-height: var(--_components---input--line-height, 1.5em) !important;
+  font-weight: var(--_components---input--font-weight, 400) !important;
+  letter-spacing: var(--_components---input--letter-spacing, 0em) !important;
+  padding: 1.5rem !important;
+  width: 100%;
+  margin-bottom: 0 !important;
+  height: auto !important;
+}
+
+.input.w-input:focus {
+  border-color: var(--colors--primary-accent, var(--_color---primary--webflow-blue, #146ef5)) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--colors--primary-accent, #146ef5) 20%, transparent) !important;
+}
+
+/* Select inputs */
+.input.cc-select.w-select {
+  border: 1px solid var(--colors--border, var(--_color---neutral--gray-400, #898989)) !important;
+  border-radius: var(--_components---input--border-radius, 0.25rem) !important;
+  font-family: var(--_components---input--font, var(--_typography---fonts--primary-font, "WF Visual Sans Variable", Arial, sans-serif)) !important;
+  color: var(--colors--text, var(--_color---neutral--black, #080808)) !important;
+  background-color: var(--colors--background, var(--_color---neutral--white, #ffffff)) !important;
+  font-size: var(--_components---input--font-size, 1rem) !important;
+  padding: 1.5rem !important;
+  width: 100%;
+  height: auto !important;
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+  background-image: none !important;
+  color-scheme: light !important;
+}
+
+.input.cc-select.w-select:focus {
+  border-color: var(--colors--primary-accent, var(--_color---primary--webflow-blue, #146ef5)) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--colors--primary-accent, #146ef5) 20%, transparent) !important;
+}
+
+.input.cc-select.w-select option,
+.input.cc-select.w-select optgroup {
+  color: var(--_color---neutral--black, #080808);
+  background-color: var(--_color---neutral--white, #ffffff);
+}
+
+.select-field {
+  position: relative;
+}
+
+.select-field::after {
+  content: "";
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-right: 2px solid var(--colors--text, var(--_color---neutral--black, #080808));
+  border-bottom: 2px solid var(--colors--text, var(--_color---neutral--black, #080808));
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.select-field > .input.cc-select.w-select {
+  padding-right: 3.5rem !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: none !important;
+}
+
+.select-field > .input.cc-select.w-select::-ms-expand {
+  display: none;
+}
+
+.scope-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.scope-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--_components---input--border-radius, 0.25rem);
+  border: 1px solid color-mix(in srgb, var(--colors--primary-accent, #146ef5) 35%, transparent);
+  background-color: color-mix(in srgb, var(--colors--primary-accent, #146ef5) 10%, var(--colors--background, #ffffff));
+  color: var(--colors--text, var(--_color---neutral--black, #080808));
+  font-size: 0.875rem;
+}
+
+.scope-chip-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  padding: 0;
+  line-height: 1;
+  font-size: 1.125rem;
+}
+
+.scope-chip-remove:hover {
+  opacity: 1;
+}
+
+/* Textarea styles */
+textarea.input.w-input {
+  min-height: 120px !important;
+  resize: vertical !important;
+  font-family: var(--_components---input--font, var(--_typography---fonts--primary-font, "WF Visual Sans Variable", Arial, sans-serif)) !important;
+}
+
+/* Utility classes */
+.u-mt-sm {
+  margin-top: var(--_layout---spacing--margin-sm, 1rem) !important;
+}
+
+/* Button styles */
+.btn.w-button {
+  padding: var(--_components---button--vertical-padding, 1em) var(--_components---button--horizontal-padding, 1.5em) !important;
+  border-radius: var(--_components---button--border-radius, 0.25rem) !important;
+  background-color: var(--colors--primary-accent, var(--_color---primary--webflow-blue, #146ef5)) !important;
+  font-family: var(--_components---button--font, var(--_typography---fonts--primary-font, "WF Visual Sans Variable", Arial, sans-serif)) !important;
+  color: var(--_color---neutral--white, #ffffff) !important;
+  font-size: var(--_components---button--font-size, 1rem) !important;
+  line-height: var(--_components---button--line-height, 1.2em) !important;
+  font-weight: var(--_components---button--font-weight, 500) !important;
+  letter-spacing: var(--_components---button--letter-spacing, -0.01em) !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn.w-button:hover {
+  background-color: var(--_color---primary--blue-600, #1058c7) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn.w-button:focus-visible,
+.btn.cc-form-overlay.w-button:focus-visible,
+.form-file_upload-button.w-file-upload-label:focus-visible,
+.w-file-remove-link:focus-visible,
+.w-checkbox input[type="checkbox"]:focus-visible,
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--colors--primary-accent, var(--_color---primary--webflow-blue, #146ef5));
+  outline-offset: 2px;
+}
+
+/* Form container */
+.u-mb-0.w-form {
+  background-color: var(--colors--background, var(--_color---neutral--white, #ffffff)) !important;
+  color: var(--colors--text, var(--_color---neutral--black, #080808)) !important;
+  margin-bottom: 0;
+}
+
+/* Checkbox styling for Payment Type and Visibility */
+.w-checkbox.input-group.cc-toggle {
+  margin-bottom: var(--_layout---grid--gap-sm, 1rem);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.w-checkbox-input.w-checkbox-input--inputType-custom.input-check {
+  border: 1px solid var(--colors--border, var(--_color---neutral--gray-400, #898989)) !important;
+  background-color: var(--colors--background, var(--_color---neutral--white, #ffffff)) !important;
+  border-radius: 0.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0 !important;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Checkbox checked state */
+.w-checkbox input:checked + .w-checkbox-input.input-check,
+.w-checkbox input:checked ~ .w-checkbox-input.input-check {
+  background-color: var(--colors--primary-accent, var(--_color---primary--webflow-blue, #146ef5)) !important;
+  border-color: var(--colors--primary-accent, var(--_color---primary--webflow-blue, #146ef5)) !important;
+}
+
+/* Checkmark icon */
+.w-checkbox input:checked + .w-checkbox-input.input-check::after,
+.w-checkbox input:checked ~ .w-checkbox-input.input-check::after {
+  content: "✓";
+  color: white;
+  font-size: 0.875rem;
+  font-weight: bold;
+  position: absolute;
+}
+
+.input-label.cc-toggle.w-form-label {
+  margin-bottom: 0;
+  font-weight: var(--_components---input-label--font-weight, 500);
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+/* Row and column layout for checkboxes */
+.row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.col.col-shrink {
+  flex: 0 0 auto;
+}
+
+/* Screen reader only class for hidden validation checkbox */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* File upload styles */
+input[type="file"].w-input {
+  border: 1px solid var(--colors--border, var(--_color---neutral--gray-400, #898989)) !important;
+  border-radius: var(--_components---input--border-radius, 0.25rem) !important;
+  background-color: var(--colors--background, var(--_color---neutral--white, #ffffff)) !important;
+  color: var(--colors--text, var(--_color---neutral--black, #080808)) !important;
+  padding: 1rem !important;
+}
+
+/* Labels */
+.field-label {
+  color: var(--colors--text, var(--_color---neutral--black, #080808)) !important;
+  font-family: var(--_components---input--font, var(--_typography---fonts--primary-font, "WF Visual Sans Variable", Arial, sans-serif)) !important;
+}
+
+/* Rich text editor */
+.ql-toolbar {
+  border-color: var(--colors--border, var(--_color---neutral--gray-400, #898989)) !important;
+  background-color: var(--colors--secondary-background, var(--_color---neutral--gray-100, #f0f0f0)) !important;
+  border-radius: var(--_components---input--border-radius, 0.25rem) var(--_components---input--border-radius, 0.25rem) 0 0;
+}
+
+.ql-container {
+  border-color: var(--colors--border, var(--_color---neutral--gray-400, #898989)) !important;
+  background-color: var(--colors--background, var(--_color---neutral--white, #ffffff)) !important;
+  color: var(--colors--text, var(--_color---neutral--black, #080808)) !important;
+  border-radius: 0 0 var(--_components---input--border-radius, 0.25rem) var(--_components---input--border-radius, 0.25rem);
+  font-family: var(--_components---input--font, var(--_typography---fonts--primary-font, "WF Visual Sans Variable", Arial, sans-serif)) !important;
+}
+
+.ql-editor {
+  padding: 1.5rem !important;
+  min-height: 120px;
+}
+
+/* Warning banner */
+.warning-banner {
+  background-color: color-mix(in srgb, var(--_color---secondary--yellow, #ffae13) 10%, transparent);
+  border-left: 4px solid var(--_color---secondary--yellow, #ffae13);
+  padding: 1rem 1.5rem;
+  margin-bottom: var(--_layout---grid--gap-md, 1.25rem);
+  border-radius: var(--_components---input--border-radius, 0.25rem);
+}
+
+.warning-banner strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--colors--text, var(--_color---neutral--black, #080808));
+}
+
+.warning-banner p {
+  margin: 0;
+  color: var(--colors--text-secondary, var(--_color---neutral--gray-600, #5a5a5a));
+  font-size: 0.9rem;
+}
+
+.warning-text {
+  color: color-mix(in srgb, var(--_color---secondary--yellow, #ffae13) 90%, black);
+  background-color: color-mix(in srgb, var(--_color---secondary--yellow, #ffae13) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--_color---secondary--yellow, #ffae13) 40%, transparent);
+  border-radius: var(--_components---input--border-radius, 0.25rem);
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+/* Error states */
+.w-input.error {
+  border-color: var(--_color---secondary--red, #ee1d36) !important;
+}
+
+.error-message,
+.cc-error_text,
+.validation-error-message {
+  color: var(--_color---secondary--red, #ee1d36) !important;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+.cc-help-text,
+.cc-character-count {
+  color: var(--colors--text-secondary, var(--_color---neutral--gray-600, #5a5a5a));
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.status-banner {
+  border: 1px solid transparent;
+  border-radius: var(--_components---input--border-radius, 0.25rem);
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.status-banner-success {
+  color: var(--_color---secondary--green, #00d722);
+  background-color: color-mix(in srgb, var(--_color---secondary--green, #00d722) 12%, transparent);
+  border-color: color-mix(in srgb, var(--_color---secondary--green, #00d722) 30%, transparent);
+}
+
+.status-banner-error {
+  color: var(--_color---secondary--red, #ee1d36);
+  background-color: color-mix(in srgb, var(--_color---secondary--red, #ee1d36) 12%, transparent);
+  border-color: color-mix(in srgb, var(--_color---secondary--red, #ee1d36) 30%, transparent);
+}
+
+.status-banner-info {
+  color: var(--colors--primary-accent, var(--_color---primary--webflow-blue, #146ef5));
+  background-color: color-mix(in srgb, var(--_color---primary--webflow-blue, #146ef5) 10%, transparent);
+  border-color: color-mix(in srgb, var(--_color---primary--webflow-blue, #146ef5) 26%, transparent);
+}
+
+.form-file_upload-button.w-file-upload-label,
+.w-file-remove-link {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Success states */
+.w-input.success {
+  border-color: var(--_color---secondary--green, #00d722) !important;
+}
+
+/* Rich text components */
+.rich-text-component,
+.rich-text,
+.w-richtext,
+.rich-text p,
+.w-richtext p,
+.rich-text span,
+.w-richtext span {
+  color: var(--colors--text, var(--_color---neutral--black, #080808)) !important;
+}
+
+.paragraph-sm {
+  color: var(--colors--text-secondary, var(--_color---neutral--gray-600, #5a5a5a)) !important;
+}
+
+/* Dark mode support via explicit class so native form controls stay in sync */
+.dark-mode {
+  --colors--background: var(--_color---neutral--black, #080808);
+  --colors--text: var(--_color---neutral--white, #ffffff);
+  --colors--text-secondary: var(--_color---neutral--gray-300, #ababab);
+  --colors--border: var(--_color---neutral--gray-600, #5a5a5a);
+  --colors--secondary-background: var(--_color---neutral--gray-900, #171717);
+  color-scheme: dark;
+}
+
+.dark-mode .input.cc-select.w-select {
+  background-image: none !important;
+  color-scheme: dark !important;
+}
+
+.dark-mode .input.cc-select.w-select option,
+.dark-mode .input.cc-select.w-select optgroup {
+  color: var(--_color---neutral--white, #ffffff);
+  background-color: var(--_color---neutral--gray-900, #171717);
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .input.w-input,
+  .input.cc-select.w-select {
+    padding: 1rem !important;
+  }
+
+  .btn.w-button:not(#Check-Client-ID) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .form-section {
+    margin-bottom: var(--_layout---spacing--margin-lg, 2rem);
+  }
+
+  .w-checkbox.input-group.cc-toggle {
+    min-height: 44px;
+  }
+}
