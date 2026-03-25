@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import type { Asset } from '$lib/server/airtable';
+  import type { Asset, AssetUpdateData } from '$lib/server/airtable';
   import { goto, invalidate } from '$app/navigation';
   import { onMount } from 'svelte';
   import {
@@ -35,6 +35,25 @@
     (data.assets || []).filter((asset) => ['Scheduled', 'Upcoming'].includes(asset.status)).length
   );
   const rejectedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Rejected').length);
+  const uniqueAssetTypes = $derived(
+    Array.from(new Set((data.assets || []).map((asset) => asset.type).filter(Boolean)))
+  );
+  const heroAssetLabel = $derived(
+    uniqueAssetTypes.length === 1 ? uniqueAssetTypes[0].toLowerCase() : 'asset'
+  );
+  const heroAssetLabelPlural = $derived(
+    heroAssetLabel === 'library'
+      ? 'libraries'
+      : heroAssetLabel === 'asset'
+        ? 'assets'
+        : `${heroAssetLabel}s`
+  );
+  const heroTitle = $derived(`Your Webflow ${heroAssetLabel} portfolio`);
+  const heroSubtitle = $derived(
+    heroAssetLabel === 'asset'
+      ? 'Track published assets, upcoming submissions, and marketplace signals in one place.'
+      : `Track published ${heroAssetLabelPlural}, upcoming submissions, and marketplace signals in one place.`
+  );
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -124,16 +143,7 @@
     currentEditingAsset = null;
   }
 
-  async function handleEditSave(updateData: {
-    name?: string;
-    descriptionShort?: string;
-    descriptionLongHtml?: string;
-    websiteUrl?: string;
-    previewUrl?: string;
-    thumbnailUrl?: string | null;
-    secondaryThumbnailUrl?: string | null;
-    carouselImages?: string[];
-  }): Promise<void> {
+  async function handleEditSave(updateData: AssetUpdateData): Promise<void> {
     if (!currentEditingAsset) return;
 
     const response = await fetch(`/api/assets/${currentEditingAsset.id}`, {
@@ -212,9 +222,9 @@
           <div class="page-header page-intro page-intro--dashboard">
             <div class="header-text">
               <span class="page-kicker">Portfolio overview</span>
-              <h1 class="page-title page-intro__title">Your Webflow template portfolio</h1>
+              <h1 class="page-title page-intro__title">{heroTitle}</h1>
               <p class="page-subtitle page-intro__subtitle">
-                Track published assets, upcoming submissions, and marketplace signals in one place.
+                {heroSubtitle}
                 <DataFreshnessIndicator variant="tooltip" />
               </p>
               <div class="intro-support">

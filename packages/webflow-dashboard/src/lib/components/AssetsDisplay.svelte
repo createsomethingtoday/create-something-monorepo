@@ -227,7 +227,7 @@
   <div class="section-header">
     <div class="section-heading">
       <h2 class="section-title">Your Assets</h2>
-      <p class="section-description">Search, sort, and review the templates in your portfolio, grouped by type.</p>
+      <p class="section-description">Search, sort, and review the assets in your portfolio, grouped by type.</p>
     </div>
     <div class="section-actions">
       <div class="section-search">
@@ -291,7 +291,7 @@
           {:else}
             <Package size={64} strokeWidth={1.5} />
             <h3>No assets yet</h3>
-            <p>Your published and pending templates will appear here after sync.</p>
+            <p>Your published and pending assets will appear here after sync.</p>
             {#if onRefresh}
               <div class="empty-actions">
                 <Button variant="secondary" onclick={onRefresh}>

@@ -10,6 +10,17 @@
 			// Detect iframe embedding early to prevent layout flash
 			if (window.self !== window.top) {
 				document.documentElement.classList.add('embedded');
+			} else {
+				// Cloudflare's beacon adds noisy cross-origin errors when the dashboard
+				// is embedded inside Webflow's iframe shell, so only load it top-level.
+				var analyticsScript = document.createElement('script');
+				analyticsScript.defer = true;
+				analyticsScript.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+				analyticsScript.setAttribute(
+					'data-cf-beacon',
+					'{"token": "qP810MpTi30mggC5hkJgcSgZRdEFMi_MgCBze8ic"}'
+				);
+				document.head.appendChild(analyticsScript);
 			}
 		</script>
 		<style>

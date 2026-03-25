@@ -25,20 +25,19 @@
 		handoffUrl?: string;
 	}
 
-	type DocumentWithStorageAccess = Document & {
+	type StorageAccessDocument = Document & {
+		hasStorageAccess?: () => Promise<boolean>;
 		requestStorageAccess?: () => Promise<void>;
 	};
 
+	type UIStatus = 'verifying' | 'success' | 'error' | 'blocked' | 'no-token' | 'action-required';
+	type ContinueMode = 'verify' | 'dashboard';
+
 	let { data } = $props<{ data: PageData }>();
 
-	// Map server status to UI status
-	type UIStatus = 'verifying' | 'success' | 'error' | 'blocked' | 'no-token';
-
 	function getInitialStatus(serverStatus: VerifyStatus, serverError: string | null): UIStatus {
-		// If server already determined an error, show it immediately
 		if (serverStatus === 'no-token') return 'no-token';
 		if (serverError) return 'error';
-		// Otherwise, show verifying while we confirm the session cookie is available.
 		return 'verifying';
 	}
 
@@ -47,13 +46,28 @@
 	let status = $state<UIStatus>('verifying');
 	let errorMessage = $state<string | null>(null);
 	let fallbackUrl = $state<string | null>(null);
+	let actionMessage = $state<string | null>(null);
+	let continueMode = $state<ContinueMode>('verify');
 	let isEmbedded = $state(false);
 	let canRequestStorageAccess = $state(false);
+	let pendingToken = $state<string | null>(null);
+	let tokenInput = $state('');
 
 	$effect(() => {
 		status = getInitialStatus(serverStatus, serverError);
 		errorMessage = serverError;
+		actionMessage = null;
+		continueMode = 'verify';
+		pendingToken = null;
 	});
+
+	function setActionRequired(mode: ContinueMode, message: string, token: string | null = null) {
+		status = 'action-required';
+		actionMessage = message;
+		errorMessage = null;
+		continueMode = mode;
+		pendingToken = token;
+	}
 
 	async function waitForAuthenticatedSession(maxAttempts = 5, delayMs = 250): Promise<boolean> {
 		for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -79,6 +93,66 @@
 		return false;
 	}
 
+	function buildAbsolutePath(pathname: string): string {
+		return new URL(pathname, window.location.origin).toString();
+	}
+
+	function navigateToTopLevel(pathname: string) {
+		const absoluteUrl = buildAbsolutePath(pathname);
+
+		if (window.self === window.top) {
+			window.location.assign(absoluteUrl);
+			return;
+		}
+
+		try {
+			window.top?.location.assign(absoluteUrl);
+			return;
+		} catch {
+			window.open(absoluteUrl, '_top');
+		}
+	}
+
+	function buildVerifyPath(token: string): string {
+		return `/verify?token=${encodeURIComponent(token)}`;
+	}
+
+	async function getEmbeddedStorageAccessState(): Promise<boolean | null> {
+		if (!isEmbedded) return true;
+
+		const storageDocument = document as StorageAccessDocument;
+		if (typeof storageDocument.hasStorageAccess !== 'function') {
+			return null;
+		}
+
+		try {
+			return await storageDocument.hasStorageAccess();
+		} catch {
+			return false;
+		}
+	}
+
+	async function requestEmbeddedStorageAccess(): Promise<boolean | null> {
+		if (!isEmbedded) return true;
+
+		const accessState = await getEmbeddedStorageAccessState();
+		if (accessState === true) {
+			return true;
+		}
+
+		const storageDocument = document as StorageAccessDocument;
+		if (typeof storageDocument.requestStorageAccess !== 'function') {
+			return null;
+		}
+
+		try {
+			await storageDocument.requestStorageAccess();
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
 	function navigateToDashboard() {
 		window.location.assign('/dashboard');
 	}
@@ -98,11 +172,16 @@
 		const currentUrl = new URL(window.location.href);
 		currentUrl.searchParams.delete('token');
 		currentUrl.searchParams.set('handoff', handoff);
-		window.history.replaceState(window.history.state, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+		window.history.replaceState(
+			window.history.state,
+			'',
+			`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`
+		);
 	}
 
 	function showSessionRecovery() {
 		status = 'blocked';
+		actionMessage = null;
 		errorMessage = isEmbedded
 			? 'Safari blocked the embedded sign-in cookie. Allow sign-in in Safari or continue in a new tab to finish logging in.'
 			: 'Verification succeeded, but your session was not available yet. Continue to the dashboard to finish signing in.';
@@ -123,28 +202,23 @@
 		}, 750);
 	}
 
-	async function requestEmbeddedStorageAccess() {
-		const storageDocument = document as DocumentWithStorageAccess;
-		if (!storageDocument.requestStorageAccess) {
-			window.open(getRecoveryUrl(), '_blank', 'noopener,noreferrer');
+	async function handleBlockedRecovery() {
+		status = 'verifying';
+		errorMessage = null;
+
+		if ((await requestEmbeddedStorageAccess()) === true) {
+			await finalizeAuthenticatedSession();
 			return;
 		}
 
-		status = 'verifying';
-		errorMessage = null;
-
-		try {
-			await storageDocument.requestStorageAccess();
-			await finalizeAuthenticatedSession();
-		} catch {
-			showSessionRecovery();
-		}
+		showSessionRecovery();
 	}
 
-	// Client-side verification fallback for manual token entry
 	async function verifyToken(token: string) {
 		status = 'verifying';
 		errorMessage = null;
+		actionMessage = null;
+		pendingToken = token;
 
 		try {
 			const response = await fetch('/api/auth/verify-token', {
@@ -168,12 +242,27 @@
 		}
 	}
 
-	// Handle case where token was in URL but needs client-side verification
+	async function handleActionRequired() {
+		const token = pendingToken || tokenInput.trim();
+
+		if (continueMode === 'verify' && token) {
+			if ((await requestEmbeddedStorageAccess()) === true) {
+				await verifyToken(token);
+				return;
+			}
+
+			navigateToTopLevel(buildVerifyPath(token));
+			return;
+		}
+
+		navigateToTopLevel(getRecoveryUrl());
+	}
+
 	onMount(async () => {
 		fallbackUrl = data.handoffUrl ?? null;
 		isEmbedded = window.self !== window.top;
 		canRequestStorageAccess =
-			isEmbedded && typeof (document as DocumentWithStorageAccess).requestStorageAccess === 'function';
+			isEmbedded && typeof (document as StorageAccessDocument).requestStorageAccess === 'function';
 
 		const token = $page.url.searchParams.get('token');
 
@@ -183,20 +272,35 @@
 			return;
 		}
 
-		// If we have a token but status is still verifying, try client-side
-		// This handles edge cases where server-side verification wasn't possible
 		if (token && status === 'verifying') {
+			pendingToken = token;
+
+			if (isEmbedded && (await getEmbeddedStorageAccessState()) === false) {
+				setActionRequired(
+					'verify',
+					'Safari and other browsers may block dashboard cookies inside the embedded Webflow frame. Continue in a full page to finish signing in.',
+					token
+				);
+				return;
+			}
+
 			await verifyToken(token);
 		}
 	});
 
-	// Token input for manual entry
-	let tokenInput = $state('');
-
-	function handleSubmit(e: Event) {
+	async function handleSubmit(e: Event) {
 		e.preventDefault();
-		if (tokenInput.trim()) {
-			verifyToken(tokenInput.trim());
+		const token = tokenInput.trim();
+
+		if (token) {
+			pendingToken = token;
+
+			if (isEmbedded && (await requestEmbeddedStorageAccess()) === false) {
+				navigateToTopLevel(buildVerifyPath(token));
+				return;
+			}
+
+			await verifyToken(token);
 		}
 	}
 </script>
@@ -211,68 +315,80 @@
 			<WebflowLogo />
 		</div>
 
-	{#if status === 'verifying'}
-		<div class="status-message">
-			<div class="spinner"></div>
-			<h1>Verifying your email</h1>
-			<p class="subtitle">Please wait while we verify your login...</p>
-		</div>
-	{:else if status === 'success'}
-		<div class="status-message success">
-			<CheckCircle2 size={48} />
-			<h1>Verification successful</h1>
-			<p class="subtitle">Redirecting to dashboard...</p>
-		</div>
-	{:else if status === 'blocked'}
-		<div class="status-message error">
-			<XCircle size={48} />
-			<h1>Continue sign-in</h1>
-			<p class="subtitle">{errorMessage}</p>
-			<div class="action-group">
-				{#if canRequestStorageAccess}
-					<button type="button" class="verify-button" onclick={requestEmbeddedStorageAccess}>
-						Allow sign-in in Safari
-					</button>
-				{/if}
-				<a
-					href={getRecoveryUrl()}
-					class="verify-button verify-button--secondary"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					Open dashboard in a new tab
+		{#if status === 'verifying'}
+			<div class="status-message">
+				<div class="spinner"></div>
+				<h1>Verifying your email</h1>
+				<p class="subtitle">Please wait while we verify your login...</p>
+			</div>
+		{:else if status === 'success'}
+			<div class="status-message success">
+				<CheckCircle2 size={48} />
+				<h1>Verification successful</h1>
+				<p class="subtitle">Redirecting to dashboard...</p>
+			</div>
+		{:else if status === 'blocked'}
+			<div class="status-message error">
+				<XCircle size={48} />
+				<h1>Continue sign-in</h1>
+				<p class="subtitle">{errorMessage}</p>
+				<div class="action-group">
+					{#if canRequestStorageAccess}
+						<button type="button" class="verify-button" onclick={handleBlockedRecovery}>
+							Allow sign-in in Safari
+						</button>
+					{/if}
+					<a
+						href={getRecoveryUrl()}
+						class="verify-button verify-button--secondary"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						Open dashboard in a new tab
+					</a>
+				</div>
+				<a href="/login" class="retry-link">Try logging in again</a>
+			</div>
+		{:else if status === 'action-required'}
+			<div class="status-message">
+				<Lock size={48} />
+				<h1>{continueMode === 'verify' ? 'Continue sign in' : 'Open your dashboard'}</h1>
+				<p class="subtitle">{actionMessage}</p>
+				<button type="button" class="verify-button" onclick={handleActionRequired}>
+					{continueMode === 'verify' ? 'Continue in full page' : 'Open dashboard in full page'}
+				</button>
+				<a href="/login" class="retry-link">
+					{continueMode === 'verify' ? 'Request a new verification email' : 'Try logging in again'}
 				</a>
 			</div>
-			<a href="/login" class="retry-link">Try logging in again</a>
-		</div>
-	{:else if status === 'no-token'}
-		<div class="status-message">
-			<Lock size={48} />
-			<h1>Enter verification token</h1>
-			<p class="subtitle">Paste your verification token from the email</p>
-			<form class="token-form" onsubmit={handleSubmit}>
-				<input
-					type="text"
-					class="token-input"
-					bind:value={tokenInput}
-					placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-					autocomplete="off"
-					spellcheck="false"
-				/>
-				<button type="submit" class="verify-button" disabled={!tokenInput.trim()}>
-					Verify
-				</button>
-			</form>
-			<a href="/login" class="retry-link">Request a new verification email</a>
-		</div>
-	{:else}
-		<div class="status-message error">
-			<XCircle size={48} />
-			<h1>Verification failed</h1>
-			<p class="subtitle">{errorMessage}</p>
-			<a href="/login" class="retry-link">Try logging in again</a>
-		</div>
-	{/if}
+		{:else if status === 'no-token'}
+			<div class="status-message">
+				<Lock size={48} />
+				<h1>Enter verification token</h1>
+				<p class="subtitle">Paste your verification token from the email</p>
+				<form class="token-form" onsubmit={handleSubmit}>
+					<input
+						type="text"
+						class="token-input"
+						bind:value={tokenInput}
+						placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+						autocomplete="off"
+						spellcheck="false"
+					/>
+					<button type="submit" class="verify-button" disabled={!tokenInput.trim()}>
+						Verify
+					</button>
+				</form>
+				<a href="/login" class="retry-link">Request a new verification email</a>
+			</div>
+		{:else}
+			<div class="status-message error">
+				<XCircle size={48} />
+				<h1>Verification failed</h1>
+				<p class="subtitle">{errorMessage}</p>
+				<a href="/login" class="retry-link">Try logging in again</a>
+			</div>
+		{/if}
 	</div>
 </main>
 

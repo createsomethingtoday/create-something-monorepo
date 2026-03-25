@@ -1,24 +1,26 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getAirtableClient } from '$lib/server/airtable';
+import { getAirtableClient, type AssetVersionSnapshot } from '$lib/server/airtable';
 
 interface VersionDiff {
 	field: string;
-	oldValue: string | string[] | undefined;
-	newValue: string | string[] | undefined;
+	oldValue: unknown;
+	newValue: unknown;
 	changed: boolean;
 }
 
 function compareVersions(
-	oldSnapshot: Record<string, string | string[] | undefined>,
-	newSnapshot: Record<string, string | string[] | undefined>
+	oldSnapshot: AssetVersionSnapshot,
+	newSnapshot: AssetVersionSnapshot
 ): VersionDiff[] {
-	const fields = new Set([...Object.keys(oldSnapshot), ...Object.keys(newSnapshot)]);
+	const oldRecord = oldSnapshot as Record<string, unknown>;
+	const newRecord = newSnapshot as Record<string, unknown>;
+	const fields = new Set([...Object.keys(oldRecord), ...Object.keys(newRecord)]);
 	const diffs: VersionDiff[] = [];
 
 	for (const field of fields) {
-		const oldValue = oldSnapshot[field];
-		const newValue = newSnapshot[field];
+		const oldValue = oldRecord[field];
+		const newValue = newRecord[field];
 
 		// Deep comparison for arrays
 		let changed = false;
