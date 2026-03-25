@@ -108,7 +108,7 @@
     margin: 0;
     color: var(--color-fg-primary, #fff);
     font-size: clamp(1.55rem, 2.6vw, 2.4rem);
-    line-height: 1.06;
+    line-height: 1.2;
   }
 
   .artifact-copy p {

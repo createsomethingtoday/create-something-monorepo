@@ -74,7 +74,7 @@
       </a>
 
       <!-- Desktop Navigation Links -->
-      <div class="nav-desktop hidden lg:flex items-center gap-2 ml-8">
+      <div class="nav-desktop hidden lg:flex items-center gap-4 ml-8">
         {#each links as link}
           <a href={link.href} class="nav-link" class:active={isActive(link)}>
             {link.label}
@@ -233,7 +233,7 @@
 
   /* CTA Button */
   .nav-cta {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.25rem;
     background: var(--color-fg-primary);
     color: var(--color-bg-pure);
     font-size: var(--text-body-sm);
