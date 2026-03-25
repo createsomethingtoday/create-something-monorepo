@@ -63,6 +63,7 @@ export const CONFIRMED_VERSION_FIELDS = {
   qualityRating: '✨ Quality Rating',
   improvementAreas: '✨Improvement Areas',
   reviewFeedback: '📝Review Feedback',
+  agentReviewFeedback: '📝Agent Review Feedback',
   reviewChecklist: '📝Review Checklist',
   publishingChecklist: '🚀Publishing Checklist',
   release: '🚀Release',
@@ -80,6 +81,7 @@ export const CONFIRMED_WRITE_FIELD_IDS = {
   versions: {
     reviewStatus: 'flde8Huk5NRIdm2wZ',
     reviewFeedback: 'fldHxIGHMHn4xb9U4',
+    agentReviewFeedback: 'fld6OITvSQPxfXJ0Z',
     release: 'fld3CQjSWa9lVBLgT',
   },
 } as const;

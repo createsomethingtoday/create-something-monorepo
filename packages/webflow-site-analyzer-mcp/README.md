@@ -75,8 +75,8 @@ The analyzer supports multiple browser automation providers:
 
 | Provider | Best For | Session Duration | Cost |
 |----------|----------|------------------|------|
-| **Steel** (recommended) | Production, complex extractions | 24 hours | $0.10/hr, 100 free hrs/mo |
-| **Browserless** | Local development, testing | Variable | $0.29/hr |
+| **Steel** (preferred) | Default production path, long-running review sessions | 24 hours | Lower browser-hour cost |
+| **Browserless** (fallback) | Operational fallback when Steel is unavailable | Variable | Higher browser-hour cost |
 
 ### Environment Variables
 
@@ -89,11 +89,16 @@ STEEL_API_KEY=your-steel-api-key
 # PORT=8788
 # WEBFLOW_ANALYZER_REGISTRY_PATH=/var/lib/webflow-site-analyzer/registry.json
 
-# Alternative: Browserless (local dev)
+# Fallback / local dev: Browserless
 BROWSERLESS_TOKEN=your-browserless-token
+# BROWSERLESS_API_KEY=your-browserless-token
 
 # Optional: Custom Browserless endpoint
 BROWSERLESS_ENDPOINT=wss://chrome.browserless.io
+
+# Optional: queued template-review runtime controls
+# WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS=2
+# WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE=100
 
 # Optional: MCP telemetry stream
 MCP_TELEMETRY_ENABLED=true
@@ -109,9 +114,10 @@ BRAINTRUST_API_KEY=your-braintrust-api-key
 ### Provider Selection
 
 The system automatically selects the provider based on available credentials:
-1. If `STEEL_API_KEY` is set → Uses Steel (recommended)
-2. If only `BROWSERLESS_TOKEN` is set → Uses Browserless
-3. You can also explicitly choose via the ProviderManager API
+1. If `STEEL_API_KEY` is set → Steel is preferred as the primary provider
+2. If `BROWSERLESS_TOKEN` or `BROWSERLESS_API_KEY` is set → Browserless is available as fallback
+3. If Steel errors at runtime, the provider manager can fail over to Browserless automatically
+4. If Steel is not configured, Browserless becomes the active provider
 
 ### Integration test (opt-in)
 
@@ -216,6 +222,26 @@ Notes:
 - `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` is preferred for remote auth. `MCP_API_KEY` is still accepted as a fallback.
 - `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
 - This package is now remote-capable, but the reviewer hub cannot use it until an actual hosted URL is deployed and the Hub registry entry is switched from `stdio` to `http`.
+
+#### Container-backed Remote Host
+
+This repo now includes a dedicated Cloudflare Containers deploy surface for browser-backed remote execution:
+
+```bash
+pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run prepare:runtime
+pnpm run deploy:webflow-site-analyzer-mcp-remote
+```
+
+Files:
+- `packages/webflow-site-analyzer-mcp/workers/remote/src/index.ts`
+- `packages/webflow-site-analyzer-mcp/workers/remote/wrangler.jsonc`
+- `packages/webflow-site-analyzer-mcp/workers/remote/Dockerfile`
+- `packages/webflow-site-analyzer-mcp/scripts/prepare-remote-runtime.mjs`
+
+Runtime notes:
+- `prepare:runtime` builds `@create-something/observability`, builds this package, and materializes a standalone runtime tree into `workers/remote/runtime/` using `pnpm deploy`.
+- The Worker is a thin proxy. The actual MCP server runs inside the container via `node dist/http.js`.
+- The deployment requires a local Docker-compatible engine because Wrangler builds the container image locally before upload.
 
 ## Tools
 
@@ -572,6 +598,7 @@ Check browser provider health and session metrics.
 {
   provider: string,
   isHealthy: boolean,
+  mode: "passive",
   metrics: [{
     provider: string,
     isHealthy: boolean,
@@ -589,6 +616,86 @@ Check browser provider health and session metrics.
     pageLoadErrors: number
   }
 }
+```
+
+### `enqueue_template_review`
+
+Queue an async template-review job. This is the preferred production entrypoint.
+
+```typescript
+// Input
+{
+  previewUrl: string,
+  publishedUrl: string,
+  timeout?: number,
+  includeManual?: boolean,
+  crawlMaxPages?: number,
+  crawlMaxDepth?: number
+}
+
+// Output
+{
+  jobId: string,
+  status: "queued" | "running" | "succeeded" | "failed" | "canceled",
+  queuedAt: string,
+  progress: {
+    phase: "queued" | "precheck" | "designer" | "published" | "normalizing" | "completed" | "failed",
+    progress: number,
+    total: number,
+    message: string,
+    updatedAt: string
+  }
+}
+```
+
+### `get_template_review_job`
+
+Fetch one queued review job by ID.
+
+```typescript
+// Input
+{ jobId: string }
+
+// Output
+{
+  jobId: string,
+  status: "queued" | "running" | "succeeded" | "failed" | "canceled",
+  queuedAt: string,
+  startedAt?: string,
+  completedAt?: string,
+  progress: {
+    phase: string,
+    progress: number,
+    total: number,
+    message: string,
+    updatedAt: string
+  },
+  error?: string,
+  result?: {
+    provider: string,
+    providerMetrics: {
+      sessionsCreated: number,
+      browserMinutes: number
+    },
+    summary: {...},
+    published: {...}
+  }
+}
+```
+
+### `list_template_review_jobs`
+
+List recent queued review jobs.
+
+```typescript
+// Input
+{
+  status?: "queued" | "running" | "succeeded" | "failed" | "canceled",
+  limit?: number
+}
+
+// Output
+TemplateReviewJobRecord[]
 ```
 
 ## Intelligence Layer Tools
@@ -814,6 +921,8 @@ Analysis-level quality metrics are still recorded through `@create-something/obs
 | `seo_score` | SEO health score (0-100) |
 | `image_optimization_score` | Image optimization score (0-100) |
 | `touchpoint_count` | Number of interactive elements |
+| `template_review_job_status` | Async review queue state |
+| `template_review_browser_minutes` | Per-review browser budget usage |
 
 ### Events Logged
 
@@ -840,12 +949,9 @@ Uses AI Interaction Atlas vocabulary:
 
 ## Cost Tracking
 
-Browser time is tracked and cost estimated based on Browserless pricing (~$0.09/hour):
+Browser time is tracked per provider session and surfaced on template-review reports via `providerMetrics.browserMinutes`.
 
-```typescript
-const costPerMinute = 0.0015; // USD
-const estimatedCost = browserMinutes * costPerMinute;
-```
+The current runtime is optimized to keep Steel as the primary, lower-cost path and only invoke Browserless when Steel is unavailable or errors.
 
 ## Development
 

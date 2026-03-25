@@ -23,6 +23,7 @@ Phase 1 is intentionally conservative:
 - field-map and hotspot resources are supported
 - reviewer assignment helpers are active
 - reviewer-safe workflow helpers (`request changes`, `set review status`, `save draft feedback`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
+- supplemental agent-feedback writes are supported for `📝Agent Review Feedback`
 - some broader write surfaces still depend on remaining field verification and policy rollout
 
 ## Auth
@@ -113,3 +114,18 @@ This checks:
 - compatibility aliases used for legacy API shape
 - metrics field IDs
 - write field IDs
+
+## Agent Feedback Script
+
+Generate and save supplemental internal reviewer notes into `📝Agent Review Feedback` on `🖌️Asset Versions`:
+
+```bash
+OPENAI_API_KEY=... AIRTABLE_API_KEY=... pnpm template-review:agent-feedback --dry-run
+OPENAI_API_KEY=... AIRTABLE_API_KEY=... pnpm template-review:agent-feedback --limit 5
+OPENAI_API_KEY=... AIRTABLE_API_KEY=... pnpm template-review:agent-feedback --version-id recXXXXXXXXXXXXXX --overwrite
+```
+
+Behavior:
+- targets `🆕Ready for Review` rows by default
+- skips rows that already have agent feedback unless `--overwrite` is set
+- does lightweight same-origin page discovery from the asset `Website URL` or preview URL when available, so the draft is not limited to a single page when no sitemap exists
