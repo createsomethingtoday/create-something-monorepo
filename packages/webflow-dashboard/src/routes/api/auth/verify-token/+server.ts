@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient, validateToken } from '$lib/server/airtable';
-import { setSession, generateSessionToken, checkRateLimit } from '$lib/server/kv';
+import { createSessionHandoff, setSession, generateSessionToken, checkRateLimit } from '$lib/server/kv';
 
 /**
  * POST /api/auth/verify-token
@@ -78,6 +78,7 @@ export const POST: RequestHandler = async ({ request, platform, cookies, getClie
 
 		// Store session in KV (2-hour TTL)
 		await setSession(sessions, sessionToken, result.email);
+		const handoffToken = await createSessionHandoff(sessions, sessionToken, result.email);
 
 		// Set HTTP-only cookie
 		// Note: sameSite 'none' required for cross-origin Webflow integration
@@ -95,7 +96,10 @@ export const POST: RequestHandler = async ({ request, platform, cookies, getClie
 			await airtable.clearVerificationToken(user.id);
 		}
 
-		return json({ message: 'Authentication successful' });
+		return json({
+			message: 'Authentication successful',
+			handoffUrl: `/auth/complete?handoff=${encodeURIComponent(handoffToken)}`
+		});
 	} catch (error) {
 		console.error('Token verification error:', error);
 		return json({ error: 'An error occurred during verification' }, { status: 500 });

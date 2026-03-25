@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { checkRateLimit } from './kv';
+import { checkRateLimit, consumeSessionHandoff, createSessionHandoff } from './kv';
 
 describe('checkRateLimit', () => {
 	it('fails closed by default when KV operations throw', async () => {
@@ -49,5 +49,36 @@ describe('checkRateLimit', () => {
 		expect(second.allowed).toBe(false);
 		expect(second.remaining).toBe(0);
 		expect(second.retryAfter).toBeGreaterThan(0);
+	});
+});
+
+describe('session handoff', () => {
+	it('creates and consumes a one-time handoff token', async () => {
+		const store = new Map<string, string>();
+		const kv = {
+			get: vi.fn(async (key: string, type?: 'json' | 'text') => {
+				const value = store.get(key) ?? null;
+				if (!value) return null;
+				return type === 'json' ? JSON.parse(value) : value;
+			}),
+			put: vi.fn(async (key: string, value: string) => {
+				store.set(key, value);
+			}),
+			delete: vi.fn(async (key: string) => {
+				store.delete(key);
+			})
+		} as unknown as KVNamespace;
+
+		const handoffToken = await createSessionHandoff(kv, 'session_123', 'creator@example.com');
+		expect(handoffToken).toMatch(/^handoff_/);
+
+		const handoffData = await consumeSessionHandoff(kv, handoffToken);
+		expect(handoffData).toMatchObject({
+			sessionToken: 'session_123',
+			email: 'creator@example.com'
+		});
+
+		const secondRead = await consumeSessionHandoff(kv, handoffToken);
+		expect(secondRead).toBeNull();
 	});
 });

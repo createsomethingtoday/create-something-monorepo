@@ -1,21 +1,31 @@
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getAirtableClient, validateToken } from '$lib/server/airtable';
-import { setSession, generateSessionToken, checkRateLimit } from '$lib/server/kv';
+import { createSessionHandoff, setSession, generateSessionToken, checkRateLimit } from '$lib/server/kv';
 
 /**
  * Server-side token verification.
  *
  * Handles the case where users click a verification link directly from email.
- * If token is valid, creates session and redirects to dashboard.
+ * If token is valid, creates the session and renders a recoverable verify page
+ * so Safari can recover from blocked third-party cookies.
  * If invalid/expired, renders the error page.
  */
 export const load: PageServerLoad = async ({ url, platform, cookies, getClientAddress }) => {
 	const token = url.searchParams.get('token');
+	const handoff = url.searchParams.get('handoff');
 	const sessions = platform?.env?.SESSIONS;
 
-	// If no token, show the verify page (user may paste token manually)
+	// If no token, show the verify page (user may paste token manually) or
+	// resume a Safari recovery flow when a handoff token is already present.
 	if (!token) {
+		if (handoff) {
+			return {
+				status: 'session-created' as const,
+				error: null,
+				handoffUrl: `/auth/complete?handoff=${encodeURIComponent(handoff)}`
+			};
+		}
+
 		return {
 			status: 'no-token' as const,
 			error: null
@@ -84,6 +94,7 @@ export const load: PageServerLoad = async ({ url, platform, cookies, getClientAd
 
 		// Store session in KV (2-hour TTL)
 		await setSession(sessions, sessionToken, result.email);
+		const handoffToken = await createSessionHandoff(sessions, sessionToken, result.email);
 
 		// Set HTTP-only cookie
 		// Note: sameSite 'none' required for cross-origin Webflow integration
@@ -101,14 +112,12 @@ export const load: PageServerLoad = async ({ url, platform, cookies, getClientAd
 			await airtable.clearVerificationToken(user.id);
 		}
 
-		// Redirect to dashboard on success
-		throw redirect(302, '/dashboard');
+		return {
+			status: 'session-created' as const,
+			error: null,
+			handoffUrl: `/auth/complete?handoff=${encodeURIComponent(handoffToken)}`
+		};
 	} catch (err) {
-		// Re-throw redirects
-		if (err instanceof Response || (err && typeof err === 'object' && 'status' in err)) {
-			throw err;
-		}
-
 		console.error('Token verification error:', err);
 		return {
 			status: 'error' as const,

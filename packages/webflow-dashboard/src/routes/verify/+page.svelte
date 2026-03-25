@@ -4,22 +4,41 @@
 	import { CheckCircle2, Lock, XCircle } from 'lucide-svelte';
 	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
 
+	type VerifyStatus =
+		| 'no-token'
+		| 'session-created'
+		| 'rate-limited'
+		| 'invalid'
+		| 'not-found'
+		| 'expired'
+		| 'error';
+
 	interface PageData {
-		status: 'no-token' | 'rate-limited' | 'invalid' | 'not-found' | 'expired' | 'error';
+		status: VerifyStatus;
 		error: string | null;
 		retryAfter?: number;
+		handoffUrl?: string;
 	}
+
+	interface VerifyResponse {
+		error?: string;
+		handoffUrl?: string;
+	}
+
+	type DocumentWithStorageAccess = Document & {
+		requestStorageAccess?: () => Promise<void>;
+	};
 
 	let { data } = $props<{ data: PageData }>();
 
 	// Map server status to UI status
-	type UIStatus = 'verifying' | 'success' | 'error' | 'no-token';
+	type UIStatus = 'verifying' | 'success' | 'error' | 'blocked' | 'no-token';
 
-	function getInitialStatus(serverStatus: PageData['status'], serverError: string | null): UIStatus {
+	function getInitialStatus(serverStatus: VerifyStatus, serverError: string | null): UIStatus {
 		// If server already determined an error, show it immediately
 		if (serverStatus === 'no-token') return 'no-token';
 		if (serverError) return 'error';
-		// Otherwise, show verifying (though server-side should have redirected on success)
+		// Otherwise, show verifying while we confirm the session cookie is available.
 		return 'verifying';
 	}
 
@@ -27,6 +46,9 @@
 	const serverError = $derived(data.error);
 	let status = $state<UIStatus>('verifying');
 	let errorMessage = $state<string | null>(null);
+	let fallbackUrl = $state<string | null>(null);
+	let isEmbedded = $state(false);
+	let canRequestStorageAccess = $state(false);
 
 	$effect(() => {
 		status = getInitialStatus(serverStatus, serverError);
@@ -61,6 +83,64 @@
 		window.location.assign('/dashboard');
 	}
 
+	function getRecoveryUrl(): string {
+		return fallbackUrl || '/login';
+	}
+
+	function persistRecoveryUrl(nextHandoffUrl?: string) {
+		if (!nextHandoffUrl) return;
+
+		fallbackUrl = nextHandoffUrl;
+
+		const handoff = new URL(nextHandoffUrl, window.location.origin).searchParams.get('handoff');
+		if (!handoff) return;
+
+		const currentUrl = new URL(window.location.href);
+		currentUrl.searchParams.delete('token');
+		currentUrl.searchParams.set('handoff', handoff);
+		window.history.replaceState(window.history.state, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+	}
+
+	function showSessionRecovery() {
+		status = 'blocked';
+		errorMessage = isEmbedded
+			? 'Safari blocked the embedded sign-in cookie. Allow sign-in in Safari or continue in a new tab to finish logging in.'
+			: 'Verification succeeded, but your session was not available yet. Continue to the dashboard to finish signing in.';
+	}
+
+	async function finalizeAuthenticatedSession(nextHandoffUrl?: string) {
+		persistRecoveryUrl(nextHandoffUrl);
+
+		const sessionReady = await waitForAuthenticatedSession();
+		if (!sessionReady) {
+			showSessionRecovery();
+			return;
+		}
+
+		status = 'success';
+		setTimeout(() => {
+			navigateToDashboard();
+		}, 750);
+	}
+
+	async function requestEmbeddedStorageAccess() {
+		const storageDocument = document as DocumentWithStorageAccess;
+		if (!storageDocument.requestStorageAccess) {
+			window.open(getRecoveryUrl(), '_blank', 'noopener,noreferrer');
+			return;
+		}
+
+		status = 'verifying';
+		errorMessage = null;
+
+		try {
+			await storageDocument.requestStorageAccess();
+			await finalizeAuthenticatedSession();
+		} catch {
+			showSessionRecovery();
+		}
+	}
+
 	// Client-side verification fallback for manual token entry
 	async function verifyToken(token: string) {
 		status = 'verifying';
@@ -74,26 +154,13 @@
 				body: JSON.stringify({ token })
 			});
 
-			const responseData = await response.json();
+			const responseData = (await response.json().catch(() => ({}))) as VerifyResponse;
 
 			if (response.ok) {
-				const sessionReady = await waitForAuthenticatedSession();
-
-				if (!sessionReady) {
-					status = 'error';
-					errorMessage =
-						'Verification succeeded, but your session was not established. Please try again in your mobile browser.';
-					return;
-				}
-
-				status = 'success';
-				setTimeout(() => {
-					navigateToDashboard();
-				}, 750);
+				await finalizeAuthenticatedSession(responseData.handoffUrl);
 			} else {
 				status = 'error';
-				const errorData = responseData as { error?: string };
-				errorMessage = errorData.error || 'Verification failed';
+				errorMessage = responseData.error || 'Verification failed';
 			}
 		} catch {
 			status = 'error';
@@ -103,7 +170,18 @@
 
 	// Handle case where token was in URL but needs client-side verification
 	onMount(async () => {
+		fallbackUrl = data.handoffUrl ?? null;
+		isEmbedded = window.self !== window.top;
+		canRequestStorageAccess =
+			isEmbedded && typeof (document as DocumentWithStorageAccess).requestStorageAccess === 'function';
+
 		const token = $page.url.searchParams.get('token');
+
+		if (serverStatus === 'session-created') {
+			persistRecoveryUrl(data.handoffUrl);
+			await finalizeAuthenticatedSession(data.handoffUrl);
+			return;
+		}
 
 		// If we have a token but status is still verifying, try client-side
 		// This handles edge cases where server-side verification wasn't possible
@@ -144,6 +222,28 @@
 			<CheckCircle2 size={48} />
 			<h1>Verification successful</h1>
 			<p class="subtitle">Redirecting to dashboard...</p>
+		</div>
+	{:else if status === 'blocked'}
+		<div class="status-message error">
+			<XCircle size={48} />
+			<h1>Continue sign-in</h1>
+			<p class="subtitle">{errorMessage}</p>
+			<div class="action-group">
+				{#if canRequestStorageAccess}
+					<button type="button" class="verify-button" onclick={requestEmbeddedStorageAccess}>
+						Allow sign-in in Safari
+					</button>
+				{/if}
+				<a
+					href={getRecoveryUrl()}
+					class="verify-button verify-button--secondary"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Open dashboard in a new tab
+				</a>
+			</div>
+			<a href="/login" class="retry-link">Try logging in again</a>
 		</div>
 	{:else if status === 'no-token'}
 		<div class="status-message">
@@ -273,6 +373,14 @@
 		margin-top: var(--space-md);
 	}
 
+	.action-group {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+		width: 100%;
+		margin-top: var(--space-md);
+	}
+
 	.token-input {
 		width: 100%;
 		padding: var(--space-sm);
@@ -305,6 +413,9 @@
 
 	.verify-button {
 		width: 100%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		padding: var(--space-sm);
 		background: var(--color-info);
 		border: 1px solid var(--color-info);
@@ -327,6 +438,17 @@
 	.verify-button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.verify-button--secondary {
+		background: var(--color-bg-surface);
+		color: var(--color-info);
+		text-decoration: none;
+	}
+
+	.verify-button--secondary:hover {
+		background: var(--color-info-muted);
+		color: #0055d4;
 	}
 
 	@media (max-width: 640px) {

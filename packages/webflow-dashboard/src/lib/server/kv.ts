@@ -6,8 +6,15 @@
  */
 
 const SESSION_TTL = 7200; // 2 hours in seconds
+const SESSION_HANDOFF_TTL = 300; // 5 minutes in seconds
 
 export interface SessionData {
+	email: string;
+	createdAt: number;
+}
+
+export interface SessionHandoffData {
+	sessionToken: string;
 	email: string;
 	createdAt: number;
 }
@@ -42,6 +49,51 @@ export async function setSession(
 	await kv.put(sessionToken, JSON.stringify(data), {
 		expirationTtl: SESSION_TTL
 	});
+}
+
+/**
+ * Create a short-lived, one-time handoff token that can bootstrap an
+ * authenticated session in a top-level browsing context.
+ */
+export async function createSessionHandoff(
+	kv: KVNamespace,
+	sessionToken: string,
+	email: string
+): Promise<string> {
+	const handoffToken = `handoff_${crypto.randomUUID()}`;
+	const data: SessionHandoffData = {
+		sessionToken,
+		email,
+		createdAt: Date.now()
+	};
+
+	await kv.put(`handoff:${handoffToken}`, JSON.stringify(data), {
+		expirationTtl: SESSION_HANDOFF_TTL
+	});
+
+	return handoffToken;
+}
+
+/**
+ * Consume a one-time session handoff token.
+ */
+export async function consumeSessionHandoff(
+	kv: KVNamespace,
+	handoffToken: string
+): Promise<SessionHandoffData | null> {
+	if (!handoffToken) return null;
+
+	const storageKey = `handoff:${handoffToken}`;
+
+	try {
+		const data = await kv.get(storageKey, 'json');
+		if (!data) return null;
+
+		await kv.delete(storageKey);
+		return data as SessionHandoffData;
+	} catch {
+		return null;
+	}
 }
 
 /**
