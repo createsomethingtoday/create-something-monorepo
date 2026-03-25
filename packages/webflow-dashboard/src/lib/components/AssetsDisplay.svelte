@@ -16,7 +16,14 @@
   import Search from './Search.svelte';
   import type { Asset } from '$lib/server/airtable';
   import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
-  import { getAssetActionConfig, normalizeAssetStatus, sortAssetStatuses } from '$lib/utils/asset-actions';
+  import {
+    getAssetActionConfig,
+    groupAssetsByTypeAndStatus,
+    normalizeAssetStatus,
+    sortAssetStatuses,
+    sortAssetTypes,
+    type AssetTypeSortDirection
+  } from '$lib/utils/asset-actions';
   import { trackEvent } from '$lib/utils/analytics';
   import {
     BarChart3,
@@ -44,7 +51,8 @@
   let { assets, searchTerm = '', onSearch, onView, onEdit, onArchive, onRefresh }: Props = $props();
 
   let showPerformance = $state(false);
-  let expandedStatuses = $state<string[]>([]);
+  let expandedGroups = $state<string[]>([]);
+  let typeSortDirection = $state<AssetTypeSortDirection>('asc');
   let sortConfig = $state<{ key: string; direction: 'asc' | 'desc' }>({
     key: 'submittedDate',
     direction: 'desc'
@@ -71,53 +79,56 @@
     );
   });
 
-  // Group assets by status
-  const groupedAssets = $derived.by(() => {
-    const groups: Record<string, Asset[]> = {};
+  function sortAssetsForDisplay(assetList: Asset[]): Asset[] {
+    return [...assetList].sort((a, b) => {
+      const aVal = a[sortConfig.key as keyof Asset];
+      const bVal = b[sortConfig.key as keyof Asset];
 
-    for (const asset of filteredAssets) {
-      const status = asset.status;
-      if (!groups[status]) {
-        groups[status] = [];
+      if (sortConfig.key === 'submittedDate' || sortConfig.key === 'publishedDate') {
+        const dateA = aVal ? new Date(aVal as string).getTime() : 0;
+        const dateB = bVal ? new Date(bVal as string).getTime() : 0;
+        return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
       }
-      groups[status].push(asset);
-    }
 
-    // Sort each group
-    for (const status of Object.keys(groups)) {
-      groups[status].sort((a, b) => {
-        const aVal = a[sortConfig.key as keyof Asset];
-        const bVal = b[sortConfig.key as keyof Asset];
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
 
-        if (sortConfig.key === 'submittedDate' || sortConfig.key === 'publishedDate') {
-          const dateA = aVal ? new Date(aVal as string).getTime() : 0;
-          const dateB = bVal ? new Date(bVal as string).getTime() : 0;
-          return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
-        }
+      const strA = String(aVal || '');
+      const strB = String(bVal || '');
+      return sortConfig.direction === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA);
+    });
+  }
 
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
-        }
+  const groupedAssetsByType = $derived.by(() => {
+    const groups = groupAssetsByTypeAndStatus(filteredAssets);
 
-        const strA = String(aVal || '');
-        const strB = String(bVal || '');
-        return sortConfig.direction === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA);
-      });
-    }
+    return sortAssetTypes(Object.keys(groups), typeSortDirection)
+      .map((type) => {
+        const statusGroups = sortAssetStatuses(Object.keys(groups[type] || {})).map((status) => ({
+          key: getGroupKey(type, status),
+          status,
+          assets: sortAssetsForDisplay(groups[type][status] || [])
+        }));
 
-    return groups;
+        return {
+          type,
+          totalCount: statusGroups.reduce((total, group) => total + group.assets.length, 0),
+          statuses: statusGroups
+        };
+      })
+      .filter((group) => group.statuses.length > 0);
   });
 
-  // Get sorted status keys
-  const sortedStatuses = $derived.by(() => {
-    return sortAssetStatuses(Object.keys(groupedAssets)).filter((status) => groupedAssets[status]?.length > 0);
-  });
+  function getGroupKey(type: string, status: string): string {
+    return `${type}::${status}`;
+  }
 
-  function toggleStatus(status: string) {
-    if (expandedStatuses.includes(status)) {
-      expandedStatuses = expandedStatuses.filter((s) => s !== status);
+  function toggleGroup(groupKey: string) {
+    if (expandedGroups.includes(groupKey)) {
+      expandedGroups = expandedGroups.filter((key) => key !== groupKey);
     } else {
-      expandedStatuses = [...expandedStatuses, status];
+      expandedGroups = [...expandedGroups, groupKey];
     }
   }
 
@@ -134,12 +145,11 @@
     return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
   }
 
-  function getVisibleAssets(status: string): Asset[] {
-    const all = groupedAssets[status] || [];
-    if (expandedStatuses.includes(status)) {
-      return all;
+  function getVisibleAssets(groupKey: string, allAssets: Asset[]): Asset[] {
+    if (expandedGroups.includes(groupKey)) {
+      return allAssets;
     }
-    return all.slice(0, 10);
+    return allAssets.slice(0, 10);
   }
 
   function calculateTotals(assets: Asset[]): {
@@ -159,6 +169,10 @@
 
   function clearSearch() {
     onSearch?.('');
+  }
+
+  function toggleTypeSortDirection() {
+    typeSortDirection = typeSortDirection === 'asc' ? 'desc' : 'asc';
   }
 
   function runPrimaryAction(asset: Asset, action: AssetActionDescriptor) {
@@ -193,13 +207,17 @@
     return `${fieldMap[sortConfig.key] ?? sortConfig.key} (${directionLabel})`;
   }
 
+  function getTypeOrderLabel() {
+    return typeSortDirection === 'asc' ? 'A-Z' : 'Z-A';
+  }
+
 </script>
 
 <div class="assets-display">
   <div class="section-header">
     <div class="section-heading">
       <h2 class="section-title">Your Assets</h2>
-      <p class="section-description">Search, sort, and review the templates in your portfolio.</p>
+      <p class="section-description">Search, sort, and review the templates in your portfolio, grouped by type.</p>
     </div>
     <div class="section-actions">
       <div class="section-search">
@@ -210,6 +228,10 @@
           ariaLabel="Filter assets"
         />
       </div>
+      <Button variant="outline" size="sm" onclick={toggleTypeSortDirection}>
+        <Package size={16} />
+        Type {getTypeOrderLabel()}
+      </Button>
       <Button
         variant={showPerformance ? 'secondary' : 'outline'}
         size="sm"
@@ -221,7 +243,7 @@
     </div>
   </div>
 
-  {#if sortedStatuses.length === 0}
+  {#if groupedAssetsByType.length === 0}
     <Card>
       <CardContent>
         <div class="empty-state">
@@ -255,232 +277,246 @@
       </CardContent>
     </Card>
   {:else}
-    {#each sortedStatuses as status}
-      {@const statusAssets = groupedAssets[status] || []}
-      {@const visibleAssets = getVisibleAssets(status)}
-      {@const config = statusConfig[status]}
-      {@const normalizedStatus = normalizeAssetStatus(status)}
-      {@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(normalizedStatus)}
-      {@const totals = showTotals ? calculateTotals(visibleAssets) : null}
-
-      <section class="status-section">
-        <div class="status-header">
-          <div class="status-info">
-            <div class="status-icon {config?.bgClass || ''}">
-              {#if config?.icon}
-                <config.icon size={15} />
-              {:else}
-                <span>•</span>
-              {/if}
-            </div>
-            <div class="status-meta">
-              <div class="status-line">
-                <h3 class="status-title">{status} {statusAssets.length}</h3>
-              </div>
-              <span class="sort-summary">{getSortLabel()}</span>
-            </div>
+    {#each groupedAssetsByType as typeGroup}
+      <section class="type-section">
+        <div class="type-header">
+          <div class="type-meta">
+            <h3 class="type-title">{typeGroup.type}</h3>
+            <span class="type-summary">{typeGroup.totalCount} {typeGroup.totalCount === 1 ? 'asset' : 'assets'}</span>
           </div>
         </div>
 
-        <Card>
-          <div class="table-container desktop-table">
-            <Table>
-              <colgroup>
-                <col class="thumb-col" />
-                <col class="name-col" />
-                <col class="submitted-col" />
-                <col class="type-col" />
-                {#if showPerformance}
-                  <col class="metric-col" />
-                  <col class="metric-col" />
-                  <col class="metric-col" />
-                {/if}
-                <col class="more-col" />
-              </colgroup>
-              <TableHeader>
-                <TableRow>
-                  <TableHead class="w-12"></TableHead>
-                  <TableHead>
-                    <button
-                      type="button"
-                      class="sort-btn"
-                      class:active={sortConfig.key === 'name'}
-                      aria-label="Sort by name"
-                      onclick={() => requestSort('name')}
-                    >
-                      Name{getSortIndicator('name')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button
-                      type="button"
-                      class="sort-btn"
-                      class:active={sortConfig.key === 'submittedDate'}
-                      aria-label="Sort by submitted date"
-                      onclick={() => requestSort('submittedDate')}
-                    >
-                      Submitted{getSortIndicator('submittedDate')}
-                    </button>
-                  </TableHead>
-                  <TableHead>Type</TableHead>
-                  {#if showPerformance}
-                  <TableHead align="right">
-                      <button
-                        type="button"
-                        class="sort-btn"
-                        class:active={sortConfig.key === 'uniqueViewers'}
-                        aria-label="Sort by viewers"
-                        onclick={() => requestSort('uniqueViewers')}
-                      >
-                        Viewers{getSortIndicator('uniqueViewers')}
-                      </button>
-                    </TableHead>
-                    <TableHead align="right">
-                      <button
-                        type="button"
-                        class="sort-btn"
-                        class:active={sortConfig.key === 'cumulativePurchases'}
-                        aria-label="Sort by purchases"
-                        onclick={() => requestSort('cumulativePurchases')}
-                      >
-                        Purchases{getSortIndicator('cumulativePurchases')}
-                      </button>
-                    </TableHead>
-                    <TableHead align="right">
-                      <div class="revenue-header">
-                        <button
-                          type="button"
-                          class="sort-btn"
-                          class:active={sortConfig.key === 'cumulativeRevenue'}
-                          aria-label="Sort by revenue"
-                          onclick={() => requestSort('cumulativeRevenue')}
+        <div class="type-statuses">
+          {#each typeGroup.statuses as statusGroup}
+            {@const statusAssets = statusGroup.assets}
+            {@const visibleAssets = getVisibleAssets(statusGroup.key, statusAssets)}
+            {@const normalizedStatus = normalizeAssetStatus(statusGroup.status)}
+            {@const config = statusConfig[normalizedStatus]}
+            {@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(normalizedStatus)}
+            {@const totals = showTotals ? calculateTotals(visibleAssets) : null}
+
+            <section class="status-section">
+              <div class="status-header">
+                <div class="status-info">
+                  <div class="status-icon {config?.bgClass || ''}">
+                    {#if config?.icon}
+                      <config.icon size={15} />
+                    {:else}
+                      <span>•</span>
+                    {/if}
+                  </div>
+                  <div class="status-meta">
+                    <div class="status-line">
+                      <h4 class="status-title">{normalizedStatus}</h4>
+                      <span class="status-count">{statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}</span>
+                    </div>
+                    <span class="sort-summary">{getSortLabel()}</span>
+                  </div>
+                </div>
+              </div>
+
+              <Card>
+                <div class="table-container desktop-table">
+                  <Table>
+                    <colgroup>
+                      <col class="thumb-col" />
+                      <col class="name-col" />
+                      <col class="submitted-col" />
+                      <col class="type-col" />
+                      {#if showPerformance}
+                        <col class="metric-col" />
+                        <col class="metric-col" />
+                        <col class="metric-col" />
+                      {/if}
+                      <col class="more-col" />
+                    </colgroup>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead class="w-12"></TableHead>
+                        <TableHead>
+                          <button
+                            type="button"
+                            class="sort-btn"
+                            class:active={sortConfig.key === 'name'}
+                            aria-label="Sort by name"
+                            onclick={() => requestSort('name')}
+                          >
+                            Name{getSortIndicator('name')}
+                          </button>
+                        </TableHead>
+                        <TableHead>
+                          <button
+                            type="button"
+                            class="sort-btn"
+                            class:active={sortConfig.key === 'submittedDate'}
+                            aria-label="Sort by submitted date"
+                            onclick={() => requestSort('submittedDate')}
+                          >
+                            Submitted{getSortIndicator('submittedDate')}
+                          </button>
+                        </TableHead>
+                        <TableHead>Type</TableHead>
+                        {#if showPerformance}
+                        <TableHead align="right">
+                            <button
+                              type="button"
+                              class="sort-btn"
+                              class:active={sortConfig.key === 'uniqueViewers'}
+                              aria-label="Sort by viewers"
+                              onclick={() => requestSort('uniqueViewers')}
+                            >
+                              Viewers{getSortIndicator('uniqueViewers')}
+                            </button>
+                          </TableHead>
+                          <TableHead align="right">
+                            <button
+                              type="button"
+                              class="sort-btn"
+                              class:active={sortConfig.key === 'cumulativePurchases'}
+                              aria-label="Sort by purchases"
+                              onclick={() => requestSort('cumulativePurchases')}
+                            >
+                              Purchases{getSortIndicator('cumulativePurchases')}
+                            </button>
+                          </TableHead>
+                          <TableHead align="right">
+                            <div class="revenue-header">
+                              <button
+                                type="button"
+                                class="sort-btn"
+                                class:active={sortConfig.key === 'cumulativeRevenue'}
+                                aria-label="Sort by revenue"
+                                onclick={() => requestSort('cumulativeRevenue')}
+                              >
+                                Revenue{getSortIndicator('cumulativeRevenue')}
+                              </button>
+                              <DataFreshnessIndicator variant="tooltip" />
+                            </div>
+                          </TableHead>
+                        {/if}
+                        <TableHead align="center" class="w-12 more-head">More</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {#each visibleAssets as asset (asset.id)}
+                        <AssetTableRow
+                          {asset}
+                          {showPerformance}
+                          {onView}
+                          {onEdit}
+                          {onArchive}
+                        />
+                      {/each}
+                      {#if totals}
+                        <TableRow class="totals-row">
+                          <TableCell>
+                            <div class="totals-icon">
+                              <TrendingUp size={16} />
+                            </div>
+                          </TableCell>
+                          <TableCell><strong>Total</strong></TableCell>
+                          <TableCell></TableCell>
+                          <TableCell></TableCell>
+                          <TableCell class="text-center"
+                            ><strong>{totals.viewers.toLocaleString()}</strong></TableCell
+                          >
+                          <TableCell class="text-center"
+                            ><strong>{totals.purchases.toLocaleString()}</strong></TableCell
+                          >
+                          <TableCell class="text-center"
+                            ><strong>${totals.revenue.toLocaleString()}</strong></TableCell
+                          >
+                          <TableCell class="more-cell"></TableCell>
+                        </TableRow>
+                      {/if}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div class="mobile-cards">
+                  {#each visibleAssets as asset (asset.id)}
+                    {@const actionConfig = getAssetActionConfig(asset.status)}
+                    <article class="asset-card-mobile">
+                      <div class="mobile-header-row">
+                        <div class="mobile-asset-meta">
+                          <h4 class="mobile-asset-name">{asset.name}</h4>
+                          <p class="mobile-asset-type">{asset.type}</p>
+                        </div>
+                        <StatusBadge status={asset.status} size="sm" />
+                      </div>
+
+                      <div class="mobile-stats">
+                        <div>
+                          <span class="mobile-label">Submitted</span>
+                          <span class="mobile-value">
+                            {asset.submittedDate
+                              ? new Date(asset.submittedDate).toLocaleDateString()
+                              : 'N/A'}
+                          </span>
+                        </div>
+                        {#if showPerformance &&
+                          !['Upcoming', 'Rejected'].includes(normalizeAssetStatus(asset.status))}
+                          <div>
+                            <span class="mobile-label">Viewers</span>
+                            <span class="mobile-value"
+                              >{asset.uniqueViewers?.toLocaleString() ?? '0'}</span
+                            >
+                          </div>
+                          <div>
+                            <span class="mobile-label">Purchases</span>
+                            <span class="mobile-value"
+                              >{asset.cumulativePurchases?.toLocaleString() ?? '0'}</span
+                            >
+                          </div>
+                          <div>
+                            <span class="mobile-label">Revenue</span>
+                            <span class="mobile-value"
+                              >${asset.cumulativeRevenue?.toLocaleString() ?? '0'}</span
+                            >
+                          </div>
+                        {/if}
+                      </div>
+
+                      <div class="mobile-actions">
+                        <Button
+                          size="sm"
+                          variant={actionConfig.primary.handler === 'edit' ? 'default' : 'secondary'}
+                          onclick={() => runPrimaryAction(asset, actionConfig.primary)}
                         >
-                          Revenue{getSortIndicator('cumulativeRevenue')}
-                        </button>
-                        <DataFreshnessIndicator variant="tooltip" />
+                          {actionConfig.primary.label}
+                        </Button>
+                        {#each actionConfig.secondary as action}
+                          <Button
+                            size="sm"
+                            variant={action.handler === 'archive' ? 'destructive' : 'outline'}
+                            onclick={() =>
+                              action.handler === 'view'
+                                ? onView?.(asset.id)
+                                : action.handler === 'edit'
+                                  ? onEdit?.(asset.id)
+                                  : onArchive?.(asset.id)}
+                          >
+                            {action.label}
+                          </Button>
+                        {/each}
                       </div>
-                    </TableHead>
-                  {/if}
-                  <TableHead align="center" class="w-12 more-head">More</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {#each visibleAssets as asset (asset.id)}
-                  <AssetTableRow
-                    {asset}
-                    {showPerformance}
-                    {onView}
-                    {onEdit}
-                    {onArchive}
-                  />
-                {/each}
-                {#if totals}
-                  <TableRow class="totals-row">
-                    <TableCell>
-                      <div class="totals-icon">
-                        <TrendingUp size={16} />
-                      </div>
-                    </TableCell>
-                    <TableCell><strong>Total</strong></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell class="text-center"
-                      ><strong>{totals.viewers.toLocaleString()}</strong></TableCell
-                    >
-                    <TableCell class="text-center"
-                      ><strong>{totals.purchases.toLocaleString()}</strong></TableCell
-                    >
-                    <TableCell class="text-center"
-                      ><strong>${totals.revenue.toLocaleString()}</strong></TableCell
-                    >
-                    <TableCell class="more-cell"></TableCell>
-                  </TableRow>
-                {/if}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div class="mobile-cards">
-            {#each visibleAssets as asset (asset.id)}
-              {@const actionConfig = getAssetActionConfig(asset.status)}
-              <article class="asset-card-mobile">
-                <div class="mobile-header-row">
-                  <div class="mobile-asset-meta">
-                    <h4 class="mobile-asset-name">{asset.name}</h4>
-                    <p class="mobile-asset-type">{asset.type}</p>
-                  </div>
-                  <StatusBadge status={asset.status} size="sm" />
-                </div>
-
-                <div class="mobile-stats">
-                  <div>
-                    <span class="mobile-label">Submitted</span>
-                    <span class="mobile-value">
-                      {asset.submittedDate
-                        ? new Date(asset.submittedDate).toLocaleDateString()
-                        : 'N/A'}
-                    </span>
-                  </div>
-                  {#if showPerformance &&
-                    !['Upcoming', 'Rejected'].includes(normalizeAssetStatus(asset.status))}
-                    <div>
-                      <span class="mobile-label">Viewers</span>
-                      <span class="mobile-value"
-                        >{asset.uniqueViewers?.toLocaleString() ?? '0'}</span
-                      >
-                    </div>
-                    <div>
-                      <span class="mobile-label">Purchases</span>
-                      <span class="mobile-value"
-                        >{asset.cumulativePurchases?.toLocaleString() ?? '0'}</span
-                      >
-                    </div>
-                    <div>
-                      <span class="mobile-label">Revenue</span>
-                      <span class="mobile-value"
-                        >${asset.cumulativeRevenue?.toLocaleString() ?? '0'}</span
-                      >
-                    </div>
-                  {/if}
-                </div>
-
-                <div class="mobile-actions">
-                  <Button
-                    size="sm"
-                    variant={actionConfig.primary.handler === 'edit' ? 'default' : 'secondary'}
-                    onclick={() => runPrimaryAction(asset, actionConfig.primary)}
-                  >
-                    {actionConfig.primary.label}
-                  </Button>
-                  {#each actionConfig.secondary as action}
-                    <Button
-                      size="sm"
-                      variant={action.handler === 'archive' ? 'destructive' : 'outline'}
-                      onclick={() =>
-                        action.handler === 'view'
-                          ? onView?.(asset.id)
-                          : action.handler === 'edit'
-                            ? onEdit?.(asset.id)
-                            : onArchive?.(asset.id)}
-                    >
-                      {action.label}
-                    </Button>
+                    </article>
                   {/each}
                 </div>
-              </article>
-            {/each}
-          </div>
 
-          {#if statusAssets.length > 10}
-            <div class="show-more">
-              <Button variant="outline" onclick={() => toggleStatus(status)}>
-                {expandedStatuses.includes(status)
-                  ? 'Show Less'
-                  : `Show ${statusAssets.length - 10} More`}
-              </Button>
-            </div>
-          {/if}
-        </Card>
+                {#if statusAssets.length > 10}
+                  <div class="show-more">
+                    <Button variant="outline" onclick={() => toggleGroup(statusGroup.key)}>
+                      {expandedGroups.includes(statusGroup.key)
+                        ? 'Show Less'
+                        : `Show ${statusAssets.length - 10} More`}
+                    </Button>
+                  </div>
+                {/if}
+              </Card>
+            </section>
+          {/each}
+        </div>
       </section>
     {/each}
   {/if}
@@ -533,6 +569,48 @@
   .section-search {
     width: min(25rem, 100%);
     min-width: 18rem;
+  }
+
+  .type-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .type-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+  }
+
+  .type-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .type-title {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: clamp(1.2rem, 0.95vw + 1rem, 1.45rem);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.02em;
+    color: var(--color-fg-primary);
+  }
+
+  .type-summary,
+  .status-count {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .type-statuses {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
   }
 
   .status-section {

@@ -3,6 +3,7 @@ import type { Asset } from '$lib/server/airtable';
 export type AssetStatus = Asset['status'];
 export type AssetActionKey = 'view' | 'edit' | 'review-feedback' | 'archive';
 export type AssetActionHandler = 'view' | 'edit' | 'archive';
+export type AssetTypeSortDirection = 'asc' | 'desc';
 
 export interface AssetActionDescriptor {
   key: AssetActionKey;
@@ -45,6 +46,37 @@ export function sortAssetStatuses(statuses: string[]): string[] {
 
     return normalizedLeft.localeCompare(normalizedRight);
   });
+}
+
+export function sortAssetTypes(
+  types: string[],
+  direction: AssetTypeSortDirection = 'asc'
+): string[] {
+  return [...types].sort((left, right) => {
+    const comparison = left.localeCompare(right, undefined, { sensitivity: 'base' });
+    return direction === 'asc' ? comparison : -comparison;
+  });
+}
+
+export function groupAssetsByTypeAndStatus(assets: Asset[]): Record<string, Record<string, Asset[]>> {
+  const groups: Record<string, Record<string, Asset[]>> = {};
+
+  for (const asset of assets) {
+    const type = asset.type?.trim() || 'Other';
+    const status = normalizeAssetStatus(asset.status);
+
+    if (!groups[type]) {
+      groups[type] = {};
+    }
+
+    if (!groups[type][status]) {
+      groups[type][status] = [];
+    }
+
+    groups[type][status].push(asset);
+  }
+
+  return groups;
 }
 
 export function getAssetActionConfig(status: string): {
