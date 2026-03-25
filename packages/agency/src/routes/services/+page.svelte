@@ -10,13 +10,8 @@
   import GovernedExecutionFlow from '$lib/components/GovernedExecutionFlow.svelte';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
   import BrandLogo from '$lib/components/BrandLogo.svelte';
-
-  // Structured data for SEO/AEO
-  const deliveryVector = {
-    canonicalPhrase: 'Skills on MCP',
-    clientFacingLabel: 'Skills + MCP',
-    technicalLabel: 'MCP + Skills'
-  };
+  import { deliveryVector } from '$lib/content/deliveryVector';
+  import { coreServiceLanes } from '$lib/content/serviceLanes';
 
   const stackItems = [
     { name: 'Model Context Protocol', type: 'Connectivity' },
@@ -29,32 +24,7 @@
     { name: 'Notion API', type: 'Operating Interface' }
   ];
 
-  const services = [
-    {
-      name: 'Workflow Infrastructure',
-      description:
-        'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
-      type: 'Implementation Sprint',
-      price: 'Custom',
-      priceDescription: 'Scoped build'
-    },
-    {
-      name: 'Policy OS',
-      description:
-        'Approvals, policy artifacts, release checks, blocked states, and incident loops for workflows already in motion.',
-      type: 'Governed Execution Retainer',
-      price: 'Custom',
-      priceDescription: 'Monthly'
-    },
-    {
-      name: 'Enterprise Extension',
-      description:
-        'Audit-ready orchestration for regulated, high-volume, or multi-system workflows that need deterministic recovery.',
-      type: 'Project + Managed',
-      price: 'Custom',
-      priceDescription: 'Scoped implementation'
-    }
-  ];
+  const services = coreServiceLanes;
 
   const faqItems = [
     {
@@ -100,9 +70,9 @@
 </script>
 
 <SEO
-  title="How We Work | Production-Safe Workflow Infrastructure"
-  description="CREATE SOMETHING .agency starts with the workflow causing the most drag, adds approvals when failure gets expensive, and extends only when the risk profile demands it."
-  keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
+  title="Automation Agency Services | Production-Safe Workflow Infrastructure"
+  description="CREATE SOMETHING is an automation agency that starts with the workflow causing the most drag, then adds AI, approvals, and governance where the risk profile demands it."
+  keywords="automation agency, ai automation agency, workflow automation agency, custom ai automation, ai governance for automation, enterprise automation architecture"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -131,9 +101,24 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Fix the first workflow. Add approvals and oversight when the risk rises. Reserve
-        Enterprise Extension for auditability, recovery, and cross-system coordination.
+        Fix the first workflow. Add approvals and oversight when the risk rises. CREATE SOMETHING
+        operates as an automation agency for teams that need workflow reliability first and AI
+        only where it materially improves the operating path.
       </p>
+    </BlurFade>
+    <BlurFade delay={0.25}>
+      <p class="hero-translation">
+        If you are looking for an AI automation agency or automation agency, start here: these are
+        the service lanes, controls, and delivery surfaces behind that work.
+      </p>
+    </BlurFade>
+    <BlurFade delay={0.3}>
+      <div class="hero-search-links" aria-label="Service landing pages">
+        <a href="/ai-automation-agency" class="hero-chip">AI Automation Agency</a>
+        <a href="/automation-agency" class="hero-chip">Automation Agency</a>
+        <a href="/use-cases/business" class="hero-chip">Business Workflows</a>
+        <a href="/use-cases/enterprise" class="hero-chip">Enterprise Workflows</a>
+      </div>
     </BlurFade>
   </div>
 </section>
@@ -403,6 +388,39 @@
     max-width: 600px;
     margin: 0 auto;
     line-height: var(--leading-relaxed);
+  }
+
+  .hero-translation {
+    font-size: var(--text-body-md);
+    color: var(--color-fg-secondary);
+    max-width: 640px;
+    margin: var(--space-4, 1rem) auto 0;
+    line-height: var(--leading-relaxed);
+  }
+
+  .hero-search-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: var(--space-5, 1.5rem);
+  }
+
+  .hero-chip {
+    color: var(--color-fg-secondary);
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 999px;
+    padding: 0.65rem 0.95rem;
+    transition:
+      color var(--duration-micro, 200ms) var(--ease-standard),
+      border-color var(--duration-micro, 200ms) var(--ease-standard);
+  }
+
+  .hero-chip:hover {
+    color: var(--color-fg-primary);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 
   /* Flow Section */

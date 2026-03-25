@@ -3,12 +3,6 @@
 	import { IntegrationFlow } from '@create-something/canon/interactive';
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
 
-	const deliveryVector = {
-		canonicalPhrase: 'Skills on MCP',
-		clientFacingLabel: 'Skills + MCP',
-		technicalLabel: 'MCP + Skills'
-	};
-
 	// Integration flow — judgment layer architecture
 	const integrations = [
 		{ label: 'DB', name: 'Database Layer' },
@@ -146,9 +140,9 @@
 </script>
 
 <SEO
-	title="Policy OS For Enterprise Judgment Operations | CREATE SOMETHING .agency"
-	description="Policy OS for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the first workflow wedge is live."
-	keywords="enterprise automation reliability, workflow controls, policy operations, ai governance, mcp wedge"
+	title="AI Governance For Automation | Policy OS For Enterprise Workflows"
+	description="AI governance for automation through Policy OS: approval rules, escalation logic, and reliability controls for teams already running live workflows."
+	keywords="ai governance for automation, enterprise automation reliability, workflow controls, policy operations, ai governance, governed execution"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -170,6 +164,12 @@
 					governed execution layer that keeps outcomes reliable after launch. We add prompt
 					optimization, policy controls, approval and escalation logic, and ongoing operational
 					oversight.
+				</p>
+			</BlurFade>
+			<BlurFade delay={0.24}>
+				<p class="hero-detail hero-support">
+					If you are looking for AI governance for automation, this is the service layer behind
+					that phrase.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -368,6 +368,7 @@
 				<ShimmerButton href="https://createsomething.agency/book">
 					Book Mapping Session
 				</ShimmerButton>
+				<a href="/ai-governance-for-automation" class="cta-secondary">AI governance for automation →</a>
 				<a href="/services" class="cta-secondary">Need a constrained start? Use an MCP-only wedge →</a>
 			</div>
 		</BlurFade>
@@ -457,6 +458,12 @@
 		margin-bottom: var(--space-6, 2rem);
 		line-height: var(--leading-relaxed);
 		max-width: var(--content-width-xl);
+	}
+
+	.hero-support {
+		font-size: var(--text-body-md);
+		margin-top: calc(var(--space-6, 2rem) * -0.5);
+		margin-bottom: var(--space-5, 1.5rem);
 	}
 	
 	.hero-cta {

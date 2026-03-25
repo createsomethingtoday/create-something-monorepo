@@ -86,7 +86,7 @@
 <SEO
 	title="Methodology | How I Think About Automation"
 	description="Most automation gets worse because it adds more tools and more handoff risk. My methodology removes duplication, strips excess, reconnects what remains, and only then automates."
-	keywords="AI automation methodology, systems design, automation audit, workflow optimization, tool consolidation, connected systems"
+	keywords="AI automation methodology, custom ai automation, systems design, automation audit, workflow optimization, tool consolidation, connected systems"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[
@@ -305,6 +305,9 @@
 				<ShimmerButton href="/book">
 					Book Mapping Session
 				</ShimmerButton>
+				<a href="/custom-ai-automation" class="cta-secondary">
+					Custom AI automation →
+				</a>
 				<a href="/services" class="cta-secondary">
 					How I work →
 				</a>

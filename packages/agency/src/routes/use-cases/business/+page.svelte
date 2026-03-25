@@ -1,12 +1,7 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { AnimatedGridPattern, BlurFade, BorderBeam, OrbitingCircles, ShimmerButton } from '@create-something/canon/magicui';
-
-	const deliveryVector = {
-		canonicalPhrase: 'Skills on MCP',
-		clientFacingLabel: 'Skills + MCP',
-		technicalLabel: 'MCP + Skills'
-	};
+	import { deliveryVector } from '$lib/content/deliveryVector';
 
 	const chapters = [
 		{
@@ -126,9 +121,9 @@
 {/snippet}
 
 <SEO
-	title="Your tools don't talk to each other. We fix that. | CREATE SOMETHING"
-	description="We help small teams turn one painful workflow into a reliable system, starting with a scoped wedge and expanding only when the workflow proves out."
-	keywords="small business automation, workflow integration, custom mcp, HubSpot automation, Notion integration, ops automation, SMB AI"
+	title="Custom AI Automation For Small-Team Workflows | CREATE SOMETHING"
+	description="Custom AI automation for small teams that need one painful workflow turned into a reliable operating path across HubSpot, Notion, Slack, and internal systems."
+	keywords="custom ai automation, ai workflow automation, small business automation, workflow integration, HubSpot automation, Notion integration, ops automation"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -159,6 +154,12 @@
 					We turn one painful workflow into a reliable system instead of asking your team to keep
 					bridging the gap by hand. If your team is stitching together HubSpot, Notion, Slack,
 					and spreadsheets, we start with the smallest wedge that removes the manual bridge.
+				</p>
+			</BlurFade>
+			<BlurFade delay={0.24}>
+				<p class="hero-detail hero-support">
+					This is the starting point for custom AI automation when the workflow is real, the
+					systems are messy, and generic templates stop holding up.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -363,6 +364,7 @@
 					Map Your Workflow
 				</ShimmerButton>
 				<a href="/services" class="cta-link">See all services &rarr;</a>
+				<a href="/custom-ai-automation" class="cta-link">Custom AI automation →</a>
 				<a href="/book" class="cta-link cta-link-secondary">Have questions? Book a mapping session</a>
 			</div>
 		</BlurFade>
@@ -455,6 +457,13 @@
 		margin-bottom: var(--space-8, 3rem);
 		line-height: var(--leading-relaxed);
 		max-width: var(--content-width-sm);
+	}
+
+	.hero-support {
+		font-size: var(--text-body-md);
+		margin-top: calc(var(--space-8, 3rem) * -0.5);
+		margin-bottom: var(--space-6, 2rem);
+		max-width: 34rem;
 	}
 	
 	.hero-cta {

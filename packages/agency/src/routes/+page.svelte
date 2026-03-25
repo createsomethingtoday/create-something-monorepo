@@ -9,33 +9,9 @@
   } from '@create-something/canon/magicui';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
+  import { coreServiceLanes } from '$lib/content/serviceLanes';
   // Structured data for SEO/AEO
-  const services = [
-    {
-      name: 'Workflow Infrastructure',
-      description:
-        'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
-      type: 'Implementation Sprint',
-      price: 'Custom',
-      priceDescription: 'Scoped build with optional ongoing support'
-    },
-    {
-      name: 'Policy OS',
-      description:
-        'The oversight layer: policy artifacts, approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
-      type: 'Governed Execution Retainer',
-      price: 'Custom',
-      priceDescription: 'Monthly governed execution layer'
-    },
-    {
-      name: 'Enterprise Extension',
-      description:
-        'Cross-system control for regulated, high-volume, or multi-team workflows where auditability and recovery matter.',
-      type: 'Project + Managed',
-      price: 'Custom',
-      priceDescription: 'Scoped implementation with optional ongoing support'
-    }
-  ];
+  const services = coreServiceLanes;
 
 </script>
 
@@ -152,9 +128,9 @@
 {/snippet}
 
 <SEO
-  title="Production-Safe Workflow Infrastructure | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency fixes the workflow your team keeps protecting by hand, then adds approvals and controls as the risk rises."
-  keywords="workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
+  title="AI Automation Agency For Production Workflows"
+  description="CREATE SOMETHING is an AI automation agency that fixes the workflow your team still protects by hand, then adds approvals and controls as the risk rises."
+  keywords="ai automation agency, automation agency, custom ai automation, ai workflow automation agency, ai governance for automation, production automation"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -184,6 +160,18 @@
           can trust in production. Start with one workflow. Add Policy OS when speed needs
           guardrails.
         </p>
+      </BlurFade>
+      <BlurFade delay={0.23}>
+        <p class="hero-search-bridge">
+          CREATE SOMETHING is an AI automation agency for teams that need custom AI workflows,
+          approval boundaries, and cross-system reliability instead of brittle point solutions.
+        </p>
+      </BlurFade>
+      <BlurFade delay={0.24}>
+        <div class="hero-search-links" aria-label="SEO landing pages">
+          <a href="/ai-automation-agency" class="hero-chip">AI Automation Agency</a>
+          <a href="/automation-agency" class="hero-chip">Automation Agency</a>
+        </div>
       </BlurFade>
       <BlurFade delay={0.25}>
         <div class="hero-cta">
@@ -592,9 +580,41 @@
   .hero-detail {
     font-size: var(--text-body-lg);
     color: var(--color-fg-secondary);
-    margin-bottom: var(--space-5, 1.5rem);
+    margin-bottom: var(--space-4, 1rem);
     line-height: var(--leading-relaxed);
     max-width: var(--content-width-sm);
+  }
+
+  .hero-search-bridge {
+    font-size: var(--text-body-md);
+    color: var(--color-fg-secondary);
+    margin-bottom: var(--space-4, 1rem);
+    line-height: var(--leading-relaxed);
+    max-width: 42rem;
+  }
+
+  .hero-search-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: var(--space-5, 1.5rem);
+  }
+
+  .hero-chip {
+    color: var(--color-fg-secondary);
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 999px;
+    padding: 0.65rem 0.95rem;
+    transition:
+      color var(--duration-micro, 200ms) var(--ease-standard),
+      border-color var(--duration-micro, 200ms) var(--ease-standard);
+  }
+
+  .hero-chip:hover {
+    color: var(--color-fg-primary);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 
   .hero-cta {

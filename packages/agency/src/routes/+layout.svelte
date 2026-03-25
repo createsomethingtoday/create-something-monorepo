@@ -36,6 +36,7 @@
 
 	const navLinks = [
 		{ label: 'How I Work', href: '/services' },
+		{ label: 'AI Automation', href: '/ai-automation-agency' },
 		{ label: 'What I\'ve Built', href: '/products' },
 		{ label: 'About', href: '/about' }
 	];
@@ -43,6 +44,10 @@
 	// Quick access items for unified search
 	const quickAccessItems = [
 		{ id: 'nav-services', label: 'How I Work', description: 'Workflow infrastructure, reliability, enterprise extension', href: '/services', icon: '🔨', keywords: ['workflow infrastructure', 'reliability', 'automation', 'pricing', 'services'] },
+		{ id: 'nav-ai-automation-agency', label: 'AI Automation Agency', description: 'Custom AI workflows, approvals, and cross-system reliability', href: '/ai-automation-agency', icon: '🤖', keywords: ['ai automation agency', 'custom ai automation', 'ai workflow automation agency', 'ai workflows'] },
+		{ id: 'nav-automation-agency', label: 'Automation Agency', description: 'Workflow automation for teams dealing with brittle handoffs', href: '/automation-agency', icon: '⚙️', keywords: ['automation agency', 'workflow automation agency', 'ops automation', 'revops automation'] },
+		{ id: 'nav-ai-governance', label: 'AI Governance', description: 'Approval rules, escalation logic, and governed execution', href: '/ai-governance-for-automation', icon: '🛡️', keywords: ['ai governance for automation', 'policy os', 'governed execution', 'workflow controls'] },
+		{ id: 'nav-custom-ai-automation', label: 'Custom AI Automation', description: 'Implementation for workflows generic templates cannot hold', href: '/custom-ai-automation', icon: '🧩', keywords: ['custom ai automation', 'ai workflow automation', 'workflow wedge', 'systems integration'] },
 		{ id: 'nav-products', label: 'What I\'ve Built', description: 'Artifact-backed production workflows', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations'] },
 		{ id: 'nav-book', label: 'Book Mapping Session', description: 'Map workflow risk and operational fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session'] },
 		{ id: 'nav-mcp-access', label: 'MCP Access', description: 'Reveal, copy, rotate, and revoke your personal bearer token', href: '/mcp-access', icon: '🗝️', keywords: ['mcp access', 'bearer token', 'copy token', 'host setup', 'codex', 'claude', 'cursor'] },
@@ -159,10 +164,13 @@
 		aboutText="Production-safe workflow infrastructure for technical operators who need reliable automation, clear trust boundaries, and enterprise extension when workflows get risky."
 		quickLinks={[
 			{ label: 'How I Work', href: '/services' },
+			{ label: 'AI Automation Agency', href: '/ai-automation-agency' },
+			{ label: 'Automation Agency', href: '/automation-agency' },
+			{ label: 'AI Governance', href: '/ai-governance-for-automation' },
+			{ label: 'Custom AI Automation', href: '/custom-ai-automation' },
 			{ label: 'What I\'ve Built', href: '/products' },
 			{ label: 'About', href: '/about' },
 			{ label: 'Security', href: '/security' },
-			{ label: 'Bearer Token Policy', href: '/bearer-token-policy' },
 			{ label: 'Book Mapping Session', href: '/book' }
 		]}
 		showSocial={true}
