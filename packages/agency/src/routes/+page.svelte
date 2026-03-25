@@ -570,13 +570,15 @@
     font-size: clamp(2.75rem, 5vw + 1.5rem, 5rem);
     font-weight: var(--font-bold);
     color: var(--color-fg-primary);
-    max-width: 15ch;
+    max-width: 24ch;
     margin-bottom: var(--space-6, 2rem);
     line-height: 1.15;
+    letter-spacing: normal;
   }
 
   .hero-detail {
     font-size: var(--text-body-lg);
+    font-family: var(--font-sans, system-ui, sans-serif);
     color: var(--color-fg-secondary);
     margin-bottom: var(--space-4, 1rem);
     line-height: var(--leading-relaxed);
@@ -585,6 +587,7 @@
 
   .hero-search-bridge {
     font-size: var(--text-body-sm);
+    font-family: var(--font-sans, system-ui, sans-serif);
     color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.5));
     margin-top: var(--space-4, 1rem);
     margin-bottom: var(--space-4, 1rem);

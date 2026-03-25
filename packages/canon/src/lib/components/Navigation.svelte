@@ -74,22 +74,26 @@
       </a>
 
       <!-- Desktop Navigation Links -->
-      <div class="nav-desktop hidden lg:flex items-center gap-4 ml-8">
-        {#each links as link}
-          <a href={link.href} class="nav-link" class:active={isActive(link)}>
-            {link.label}
-          </a>
-        {/each}
-        {#if ctaLabel && ctaHref}
-          <a href={ctaHref} class="nav-cta">
-            {ctaLabel}
-          </a>
-        {/if}
-        {#if user}
-          <UserMenu {user} onLogout={onLogout ?? (() => {})} settingsHref={accountHref} />
-        {:else if showLogin}
-          <a href={loginHref} class="nav-link"> Sign in </a>
-        {/if}
+      <div class="hidden lg:flex items-center gap-4 ml-8">
+        <div class="nav-desktop flex items-center gap-1">
+          {#each links as link}
+            <a href={link.href} class="nav-link" class:active={isActive(link)}>
+              {link.label}
+            </a>
+          {/each}
+        </div>
+        <div class="flex items-center gap-3">
+          {#if ctaLabel && ctaHref}
+            <a href={ctaHref} class="nav-cta">
+              {ctaLabel}
+            </a>
+          {/if}
+          {#if user}
+            <UserMenu {user} onLogout={onLogout ?? (() => {})} settingsHref={accountHref} />
+          {:else if showLogin}
+            <a href={loginHref} class="nav-link sign-in-link"> Sign in </a>
+          {/if}
+        </div>
       </div>
 
       <!-- Mobile Menu Button (44px minimum touch target) -->
@@ -241,6 +245,7 @@
     border-radius: var(--radius-lg);
     border: 1px solid transparent;
     text-decoration: none;
+    white-space: nowrap;
     transition:
       opacity var(--duration-micro) var(--ease-standard),
       transform var(--duration-micro) var(--ease-standard);
