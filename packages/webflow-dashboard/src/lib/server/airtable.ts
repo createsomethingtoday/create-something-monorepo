@@ -269,21 +269,6 @@ export function cleanMarketplaceStatus(rawStatus: string): string {
 		.trim();
 }
 
-export function cleanMarketplaceType(rawType: unknown): Asset['type'] {
-	const candidates = toStringArray(rawType);
-	const value = candidates[0]?.toLowerCase() || String(rawType || '').toLowerCase();
-
-	if (value.includes('library')) {
-		return 'Library';
-	}
-
-	if (value.includes('app')) {
-		return 'App';
-	}
-
-	return 'Template';
-}
-
 function normalizeFieldName(fieldName: string): string {
 	return fieldName.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
@@ -318,6 +303,39 @@ function toStringArray(value: unknown): string[] {
 
 function isAirtableRecordId(value: string): boolean {
 	return /^(rec|tbl|viw|fld)[A-Za-z0-9]{10,}$/.test(value);
+}
+
+function detectMarketplaceType(rawType: unknown): Asset['type'] | null {
+	const directCandidates = typeof rawType === 'string' ? [rawType] : [];
+	const candidates = [...toStringArray(rawType), ...directCandidates]
+		.map((candidate) => candidate.trim())
+		.filter(Boolean);
+
+	for (const candidate of candidates) {
+		if (isAirtableRecordId(candidate)) {
+			continue;
+		}
+
+		const value = candidate.toLowerCase();
+
+		if (value.includes('library')) {
+			return 'Library';
+		}
+
+		if (value.includes('app')) {
+			return 'App';
+		}
+
+		if (value.includes('template')) {
+			return 'Template';
+		}
+	}
+
+	return null;
+}
+
+export function cleanMarketplaceType(rawType: unknown): Asset['type'] {
+	return detectMarketplaceType(rawType) || 'Template';
 }
 
 function cleanCategoryToken(value: string): string | null {
@@ -510,10 +528,22 @@ export interface AssetVersion {
 	};
 }
 
-function resolveAssetType(fields: Airtable.FieldSet): Asset['type'] {
-	return cleanMarketplaceType(
-		fields['🆎Type'] ?? fields['⚙️🆎Type (Text)'] ?? fields['Type'] ?? fields['type']
-	);
+export function resolveAssetType(fields: Airtable.FieldSet): Asset['type'] {
+	const candidates = [
+		fields['⚙️🆎Type (Text)'],
+		fields['🆎Type'],
+		fields['Type'],
+		fields['type']
+	];
+
+	for (const candidate of candidates) {
+		const resolvedType = detectMarketplaceType(candidate);
+		if (resolvedType) {
+			return resolvedType;
+		}
+	}
+
+	return 'Template';
 }
 
 // ==================== AIRTABLE CLIENT ====================
