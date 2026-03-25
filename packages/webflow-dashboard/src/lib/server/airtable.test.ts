@@ -47,6 +47,12 @@ describe('cleanMarketplaceStatus', () => {
 		expect(cleanMarketplaceStatus('1️⃣🆕Upcoming')).toBe('Upcoming');
 		expect(cleanMarketplaceStatus('3️⃣🚀Published')).toBe('Published');
 	});
+
+	it('handles Airtable-style array and object values without throwing', () => {
+		expect(cleanMarketplaceStatus(['4️⃣☠️Delisted'])).toBe('Delisted');
+		expect(cleanMarketplaceStatus({ name: '2️⃣📅Scheduled' })).toBe('Scheduled');
+		expect(cleanMarketplaceStatus(undefined)).toBe('');
+	});
 });
 
 describe('Airtable asset formulas', () => {

@@ -272,8 +272,14 @@ export function validateToken(token: string): string {
  * Airtable statuses often include prefixes like "3️⃣🚀Published" or "1️⃣🆕Upcoming"
  * This extracts just the status name (e.g., "Published", "Upcoming")
  */
-export function cleanMarketplaceStatus(rawStatus: string): string {
-	return rawStatus
+export function cleanMarketplaceStatus(rawStatus: unknown): string {
+	const normalizedStatus = firstString(rawStatus) || '';
+
+	if (!normalizedStatus) {
+		return '';
+	}
+
+	return normalizedStatus
 		// Remove keycap number prefix (e.g., "3️⃣" = digit + variation selector + combining enclosing keycap)
 		.replace(/^\d[\uFE0F]?[\u20E3]?/u, '')
 		// Remove any remaining leading digits
@@ -784,8 +790,7 @@ function getScreenshotAltTexts(fields: Airtable.FieldSet): string[] {
 }
 
 function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
-	const rawStatus = (record.fields['🚀Marketplace Status'] as string) || 'Draft';
-	const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
+	const cleanedStatus = cleanMarketplaceStatus(record.fields['🚀Marketplace Status']) as Asset['status'];
 	const category = extractPrimaryCategory(record.fields);
 	const subcategory = extractPrimarySubcategory(record.fields);
 	const thumbnailImages = extractAttachmentUrls(record.fields['🖼️Thumbnail Image']);
@@ -796,10 +801,10 @@ function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
 
 	return {
 		id: record.id,
-		name: (record.fields['Name'] as string) || '',
-		description: (record.fields['📝Description'] as string) || '',
-		descriptionShort: (record.fields['ℹ️Description (Short)'] as string) || '',
-		descriptionLongHtml: (record.fields['ℹ️Description (Long).html'] as string) || '',
+		name: firstString(record.fields['Name']) || '',
+		description: firstString(record.fields['📝Description']) || '',
+		descriptionShort: firstString(record.fields['ℹ️Description (Short)']) || '',
+		descriptionLongHtml: firstString(record.fields['ℹ️Description (Long).html']) || '',
 		type,
 		category,
 		subcategory,
@@ -1078,7 +1083,20 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				})
 				.all();
 
-			return records.map((record) => mapAssetRecord(record));
+			return records.flatMap((record) => {
+				try {
+					return [mapAssetRecord(record)];
+				} catch (error) {
+					console.error('[Airtable] Failed to map asset record for dashboard', {
+						email,
+						recordId: record.id,
+						marketplaceStatus: record.fields['🚀Marketplace Status'],
+						assetType: record.fields['⚙️🆎Type (Text)'] ?? record.fields['🆎Type'],
+						error: error instanceof Error ? error.message : String(error)
+					});
+					return [];
+				}
+			});
 		},
 
 		/**
