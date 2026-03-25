@@ -1,4 +1,9 @@
 import {
+  normalizeTemplateReviewQueueStatus,
+  TEMPLATE_REVIEW_STATUS_OPTIONS,
+  type TemplateReviewQueueStatus,
+} from '@create-something/webflow-marketplace-core';
+import {
   ASSET_COMPATIBILITY_ALIASES,
   CONFIRMED_ASSET_FIELDS,
   CONFIRMED_RELEASE_FIELDS,
@@ -8,7 +13,6 @@ import {
   IMPROVEMENT_AREA_OPTIONS,
   METRICS_ASSET_FIELD_IDS,
   QUALITY_RATING_OPTIONS,
-  REVIEW_STATUS_OPTIONS,
   TABLE_IDS,
   isTemplateLikeAsset,
 } from './schema.js';
@@ -19,7 +23,6 @@ type CollaboratorRef = {
   name?: string;
 };
 
-export type TemplateReviewQueueStatus = 'ready_to_review' | 'in_review' | 'changes_requested' | 'approved' | 'published';
 export type TemplateReviewQueueAssignmentFilter = 'any' | 'assigned' | 'unassigned';
 export type TemplateReviewQueueSort = 'submittedDate_desc' | 'submittedDate_asc' | 'decisionDate_desc' | 'decisionDate_asc';
 
@@ -437,21 +440,11 @@ function selectQueueVersion(
 }
 
 function normalizeQueueStatus(asset: TemplateReviewAsset, version?: TemplateReviewVersion | null): TemplateReviewQueueStatus | null {
-  const candidates = [
+  return normalizeTemplateReviewQueueStatus([
     version?.reviewStatus,
     asset.latestReviewStatus,
     asset.marketplaceStatus,
-  ].filter((value): value is string => Boolean(value));
-
-  for (const candidate of candidates) {
-    if (/ready/i.test(candidate)) return 'ready_to_review';
-    if (/in review/i.test(candidate)) return 'in_review';
-    if (/changes requested|response to review/i.test(candidate)) return 'changes_requested';
-    if (/approved/i.test(candidate)) return 'approved';
-    if (/published|live/i.test(candidate)) return 'published';
-  }
-
-  return null;
+  ]);
 }
 
 function queueSortToAirtableSort(sort: TemplateReviewQueueSort): {
@@ -730,7 +723,7 @@ export class AirtableClient {
       scope: 'templates-only',
       sampleAssetsRead: records.length,
       templateAssetsMatched: templateSample.length,
-      supportedStatusOptions: [...REVIEW_STATUS_OPTIONS],
+      supportedStatusOptions: [...TEMPLATE_REVIEW_STATUS_OPTIONS],
     };
   }
 
@@ -901,7 +894,9 @@ export class AirtableClient {
     const startMs = startDay.getTime();
     const endExclusiveMs = endExclusive.getTime();
 
-    const reviewStatusActivity = Object.fromEntries(REVIEW_STATUS_OPTIONS.map((status) => [status, 0]));
+    const reviewStatusActivity = Object.fromEntries(
+      TEMPLATE_REVIEW_STATUS_OPTIONS.map((status: string) => [status, 0]),
+    );
     const qualityRatingSnapshot = Object.fromEntries(QUALITY_RATING_OPTIONS.map((rating) => [rating, 0]));
     const backlogSnapshot = {
       ready_to_review: 0,
@@ -932,7 +927,10 @@ export class AirtableClient {
         qualityRatingSnapshot[asset.qualityRating] += 1;
       }
 
-      const normalizedStatus = normalizeQueueStatus(asset);
+      const normalizedStatus = normalizeTemplateReviewQueueStatus([
+        asset.latestReviewStatus,
+        asset.marketplaceStatus,
+      ]);
       if (normalizedStatus) backlogSnapshot[normalizedStatus] += 1;
       else backlogSnapshot.unknown += 1;
 
@@ -1156,10 +1154,10 @@ export class AirtableClient {
     }
 
     if (input.review_status !== undefined) {
-      if (!(REVIEW_STATUS_OPTIONS as readonly string[]).includes(input.review_status)) {
+      if (!(TEMPLATE_REVIEW_STATUS_OPTIONS as readonly string[]).includes(input.review_status)) {
         throw new AirtableClientError('INVALID_REVIEW_STATUS', 'Unsupported review status.', 400, {
           value: input.review_status,
-          allowed: REVIEW_STATUS_OPTIONS,
+          allowed: TEMPLATE_REVIEW_STATUS_OPTIONS,
         });
       }
       fields[CONFIRMED_VERSION_FIELDS.reviewStatus] = input.review_status;

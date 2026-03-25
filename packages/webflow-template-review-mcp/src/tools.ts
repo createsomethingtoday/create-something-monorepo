@@ -1,19 +1,16 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import {
+  REVIEWER_CONTROLLED_TEMPLATE_REVIEW_STATUS_OPTIONS,
+  TEMPLATE_REVIEW_QUEUE_STATUSES,
+} from '@create-something/webflow-marketplace-core';
 
 import type { AirtableClient } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
-
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
-
-const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
-  '🏃🏾In Review',
-  '👀Admin Feedback Review',
-  '🔁Response to Review',
-] as const;
 
 function jsonContent(value: unknown, isError = false) {
   return {
@@ -118,7 +115,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'template_review_list_queue',
     'List compact template review queue summaries using confirmed template Airtable fields.',
     {
-      status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
+      status: z.enum(TEMPLATE_REVIEW_QUEUE_STATUSES).optional(),
       assigned: z.enum(['any', 'assigned', 'unassigned']).optional(),
       sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),
       limit: z.number().int().min(1).max(500).optional(),
@@ -149,7 +146,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'template_review_my_queue',
     'List compact template review queue summaries currently assigned to the authenticated reviewer.',
     {
-      status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
+      status: z.enum(TEMPLATE_REVIEW_QUEUE_STATUSES).optional(),
       sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),
       limit: z.number().int().min(1).max(500).optional(),
     },
@@ -277,7 +274,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'Reviewer-safe write: set a reviewer-controlled template review status after ownership has been established through self-assignment.',
     {
       version_id: z.string().min(1),
-      review_status: z.enum(REVIEWER_CONTROLLED_STATUS_OPTIONS),
+      review_status: z.enum(REVIEWER_CONTROLLED_TEMPLATE_REVIEW_STATUS_OPTIONS),
     },
     async ({ version_id, review_status }) => {
       try {

@@ -1,6 +1,19 @@
-# Webflow Marketplace Form - Production Application
+# Webflow Marketplace App Form
 
-A production-grade Next.js application for managing Webflow marketplace app submissions with automatic retry, file storage, database tracking, and comprehensive error handling.
+Production Next.js application for Webflow Marketplace app submissions, now imported into the CREATE SOMETHING monorepo as the canonical app surface for this workflow.
+
+## Monorepo Role
+
+This app is the hosted submission surface for Marketplace app intake. It is intentionally separate from `apps/webflow-dashboard-cloud`, which owns creator dashboard and template-intake flows.
+
+Use these companion artifacts when changing behavior:
+
+- `docs/WEBFLOW_MARKETPLACE_SYSTEM_OVERVIEW.md`
+- `docs/WEBFLOW_MARKETPLACE_SURFACE_REGISTRY.md`
+- `docs/policies/v1/policy.webflow-marketplace-intake-governance.v1.md`
+- `packages/webflow-marketplace-core/`
+
+Local operating guidance for agents lives in `AGENTS.md` in this app directory.
 
 ## Overview
 
@@ -51,7 +64,7 @@ User Submission → Form Processing → Database Record → File Upload (Vercel 
 
 ### 1. Install Dependencies
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Configure Environment Variables
@@ -81,17 +94,16 @@ Or use the Vercel dashboard to run the SQL in `scripts/init-db.sql`.
 
 ### 4. Run Locally
 ```bash
-npm run dev
+pnpm --filter @create-something/webflow-app-form-cloud dev
 # Visit http://localhost:3000
 ```
 
-### 5. Deploy to Vercel
+### 5. Build
 ```bash
-npm run build
-vercel --prod
+pnpm --filter @create-something/webflow-app-form-cloud build
 ```
 
-The cron jobs will automatically be configured from `vercel.json`.
+The Vercel deployment path still exists in the imported codebase, but this repo treats Webflow Cloud compatibility as the preferred long-term host shape.
 
 ## Webflow Cloud
 
@@ -135,6 +147,12 @@ webflow cloud deploy
 - `BASE_URL` and `ASSETS_PREFIX` are used for in-product mounting; the app defaults to root paths when they are unset.
 
 ## Environment Variables
+
+The imported app still reflects a mixed runtime history:
+
+- Vercel Postgres and Vercel Blob are active dependencies in the codebase
+- Webflow Cloud compatibility files are present for the current target app shape
+- shared Marketplace policy and contract work now lives in this monorepo and should be updated before changing source-of-truth validation behavior
 
 ### Required Variables
 

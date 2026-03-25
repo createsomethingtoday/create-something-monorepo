@@ -7,7 +7,10 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true
   },
-  transpilePackages: ['@create-something/webflow-dashboard-core']
+  transpilePackages: [
+    '@create-something/webflow-dashboard-core',
+    '@create-something/webflow-marketplace-core'
+  ]
 };
 
 export default nextConfig;

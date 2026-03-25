@@ -2,6 +2,11 @@ import { db } from '../../../lib/db';
 import { trackEvent } from '../../../lib/analytics';
 import { getEnvValue } from '../../../lib/cloudflareRuntime';
 import { buildSubmissionWebhookData, sendSubmissionWebhook } from '../../../lib/submissionPayload';
+import {
+  MARKETPLACE_RETRY_POLICY,
+  MARKETPLACE_SUBMISSION_STATUS,
+  needsManualReview,
+} from '@create-something/webflow-marketplace-core';
 
 /**
  * Automatic retry cron job for failed webhook submissions
@@ -34,7 +39,7 @@ export default async function handler(req, res) {
     console.log('Starting automatic retry job...');
 
     // Get failed submissions eligible for retry
-    const failedSubmissions = await db.getFailedSubmissions(3);
+    const failedSubmissions = await db.getFailedSubmissions(MARKETPLACE_RETRY_POLICY.maxAttempts);
 
     if (failedSubmissions.length === 0) {
       console.log('No failed submissions to retry');
@@ -58,7 +63,9 @@ export default async function handler(req, res) {
     // Process each submission
     for (const submission of failedSubmissions) {
       try {
-        console.log(`Processing submission ${submission.id}, attempt ${submission.retry_count + 1}/3`);
+        console.log(
+          `Processing submission ${submission.id}, attempt ${submission.retry_count + 1}/${MARKETPLACE_RETRY_POLICY.maxAttempts}`,
+        );
 
         // Verify blobs still exist
         if (!submission.blob_urls || submission.blob_urls.length === 0 || submission.blobs_cleaned_at) {
@@ -84,7 +91,7 @@ export default async function handler(req, res) {
 
         // Update database: retry succeeded
         await db.updateSubmission(submission.id, {
-          status: 'webhook_success',
+          status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_SUCCESS,
           airtableSubmissionId: airtableSubmissionId,
           webhookResponse: webhookResponse,
           webhookSentAt: new Date().toISOString(),
@@ -108,15 +115,17 @@ export default async function handler(req, res) {
 
         // Update database: retry failed
         await db.updateSubmission(submission.id, {
-          status: 'webhook_failed',
+          status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED,
           errorMessage: `Auto-retry ${newRetryCount} failed: ${retryError.message}`,
           webhookSentAt: new Date().toISOString(),
           retryCount: newRetryCount
         });
 
-        if (newRetryCount >= 3) {
+        if (needsManualReview(newRetryCount)) {
           results.maxRetriesReached++;
-          console.log(`Submission ${submission.id} reached max retries (3), needs manual review`);
+          console.log(
+            `Submission ${submission.id} reached max retries (${MARKETPLACE_RETRY_POLICY.maxAttempts}), needs manual review`,
+          );
         } else {
           results.failed++;
         }
@@ -133,7 +142,7 @@ export default async function handler(req, res) {
           retryAttempt: newRetryCount,
           appName: submission.app_name,
           error: retryError.message,
-          needsManualReview: newRetryCount >= 3
+          needsManualReview: needsManualReview(newRetryCount)
         });
       }
     }

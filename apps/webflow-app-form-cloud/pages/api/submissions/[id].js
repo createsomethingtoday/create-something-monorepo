@@ -1,5 +1,9 @@
 import { db } from '../../../lib/db';
 import { requireAdminApiToken } from '../../../lib/apiAuth';
+import {
+  canRetrySubmission,
+  needsManualReview,
+} from '@create-something/webflow-marketplace-core';
 
 /**
  * Get single submission by ID
@@ -87,8 +91,8 @@ export default async function handler(req, res) {
         retryCount: submission.retry_count,
 
         // Helper flags
-        canRetry: submission.status === 'webhook_failed' && submission.retry_count < 3,
-        needsManualReview: submission.retry_count >= 3,
+        canRetry: canRetrySubmission(submission.status, submission.retry_count),
+        needsManualReview: needsManualReview(submission.retry_count),
         hasBlobsForRetry: submission.blob_urls && submission.blob_urls.length > 0 && !submission.blobs_cleaned_at
       }
     });

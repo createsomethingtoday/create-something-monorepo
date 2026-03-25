@@ -3,6 +3,7 @@ import { uploadPublicFile, deletePublicFile } from "./lib/blobStore";
 import { trackEvent } from "./lib/analytics";
 import { buildSubmissionWebhookData, sendSubmissionWebhook, getFieldValue } from "./lib/submissionPayload";
 import { handleRuntimeSubmit } from "./lib/submitFormRuntime";
+import { MARKETPLACE_SUBMISSION_STATUS } from "@create-something/webflow-marketplace-core";
 
 const CLIENT_ID_PATTERN = /^[a-f0-9]{64}$/i;
 const MAX_FILENAME_LENGTH = 100;
@@ -177,14 +178,14 @@ async function handleCloudflareSubmit(request: Request, env: unknown) {
       creatorEmail: getFieldValue(fields.creatorContactEmail) || null,
       formData: fields,
       blobUrls: [],
-      status: "processing"
+      status: MARKETPLACE_SUBMISSION_STATUS.PROCESSING
     }, { env });
 
     blobUrls = await uploadWorkerFiles(files, env);
 
     submissionRecord = await db.updateSubmission(submissionRecord.id, {
       blobUrls,
-      status: "pending"
+      status: MARKETPLACE_SUBMISSION_STATUS.PENDING
     }, { env });
 
     const { airtableSubmissionId, webhookData } = buildSubmissionWebhookData({
@@ -198,7 +199,7 @@ async function handleCloudflareSubmit(request: Request, env: unknown) {
       const webhookResponse = await sendSubmissionWebhook(webhookData, { env });
 
       await db.updateSubmission(submissionRecord.id, {
-        status: "webhook_success",
+        status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_SUCCESS,
         airtableSubmissionId,
         webhookResponse,
         webhookSentAt: new Date().toISOString()
@@ -219,7 +220,7 @@ async function handleCloudflareSubmit(request: Request, env: unknown) {
       });
     } catch (webhookError: any) {
       await db.updateSubmission(submissionRecord.id, {
-        status: "webhook_failed",
+        status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED,
         errorMessage: webhookError.message,
         webhookSentAt: new Date().toISOString(),
         retryCount: 0
@@ -244,7 +245,7 @@ async function handleCloudflareSubmit(request: Request, env: unknown) {
 
     if (submissionRecord) {
       await db.updateSubmission(submissionRecord.id, {
-        status: "webhook_failed",
+        status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED,
         errorMessage: `Processing error: ${error.message}`,
         retryCount: 0
       }, { env }).catch((dbError: any) => console.error("Failed to update DB on error:", dbError));

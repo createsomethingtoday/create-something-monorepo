@@ -1,0 +1,29 @@
+{
+  "policy_id": "policy.webflow-marketplace-intake-governance.v1",
+  "version": 1,
+  "status": "draft",
+  "surface_owners": {
+    "webflow_app_form_cloud": "apps/webflow-app-form-cloud",
+    "webflow_dashboard_cloud": "apps/webflow-dashboard-cloud"
+  },
+  "shared_contract_package": "@create-something/webflow-marketplace-core",
+  "governed_changes": [
+    "submission_statuses",
+    "retry_limits",
+    "retry_cooldowns",
+    "manual_review_thresholds",
+    "hard_block_validation_rules",
+    "surface_ownership"
+  ],
+  "requirements": {
+    "manual_review_required_after_retry_ceiling": true,
+    "surface_registry_update_required_on_ownership_change": true,
+    "policy_update_required_for_hard_block_change": true
+  },
+  "allowed_consumers": [
+    "hosted_apps",
+    "mcps",
+    "designer_extensions",
+    "automation_workers"
+  ]
+}

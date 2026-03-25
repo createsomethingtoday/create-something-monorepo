@@ -1,4 +1,7 @@
 import {
+  calculateRemainingSubmissionSlots,
+} from '@create-something/webflow-marketplace-core';
+import {
   SUBMISSION_LIMIT,
   calculateLocalSubmissionData,
   calculateWarningLevel,
@@ -42,10 +45,9 @@ export default async function DashboardPage() {
 
   const remainingSubmissions = externalSubmissionStatus.hasError
     ? localSubmission.remainingSubmissions
-    : Math.max(
-        0,
-        (externalSubmissionStatus.isWhitelisted ? Number.POSITIVE_INFINITY : SUBMISSION_LIMIT) -
-          externalSubmissionStatus.assetsSubmitted30
+    : calculateRemainingSubmissionSlots(
+        externalSubmissionStatus.assetsSubmitted30,
+        Boolean(externalSubmissionStatus.isWhitelisted)
       );
 
   const isAtLimit = externalSubmissionStatus.hasError

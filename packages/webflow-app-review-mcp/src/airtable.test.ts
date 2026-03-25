@@ -1,4 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
+import {
+  APP_REVIEW_STATUS_OPTIONS,
+  normalizeAppReviewQueueStatus,
+} from '@create-something/webflow-marketplace-core';
 
 import { AirtableClient, AirtableClientError, assertScopedTable, type CollaboratorRef } from './airtable.js';
 import { FIELD_IDS, TABLE_IDS } from './schema.js';
@@ -48,6 +52,13 @@ function assetRecord(
 }
 
 describe('AirtableClient scope and validation', () => {
+  it('reuses shared app-review status helpers', () => {
+    expect(normalizeAppReviewQueueStatus(['👀Admin Feedback Review'])).toBe('in_review');
+    expect(normalizeAppReviewQueueStatus(['📤Changes Requested'])).toBe('changes_requested');
+    expect(normalizeAppReviewQueueStatus(['❌Rejected'])).toBe('rejected');
+    expect(APP_REVIEW_STATUS_OPTIONS.includes('✅Approved')).toBe(true);
+  });
+
   it('enforces scoped table IDs', () => {
     expect(() => assertScopedTable('tblRwzpWoLgE9MrUm')).not.toThrow();
     expect(() => assertScopedTable('tblInvalidTable')).toThrowError(AirtableClientError);

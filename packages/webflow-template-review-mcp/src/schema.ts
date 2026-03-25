@@ -1,3 +1,5 @@
+import { TEMPLATE_REVIEW_STATUS_OPTIONS } from '@create-something/webflow-marketplace-core';
+
 export const DEFAULT_AIRTABLE_BASE_ID = 'appMoIgXMTTTNIc3p';
 
 export const TABLE_IDS = {
@@ -104,17 +106,6 @@ export const PENDING_ASSET_FIELDS = {
   adminThumbnailImage: 'pending_verification',
 } as const;
 
-export const REVIEW_STATUS_OPTIONS = [
-  '🆕Ready for Review',
-  '🏃🏾In Review',
-  '👀Admin Feedback Review',
-  '📤Changes Requested',
-  '🔁Response to Review',
-  '✅Approved',
-  '❌Rejected',
-  '☠️Archived',
-] as const;
-
 export const QUALITY_RATING_OPTIONS = [
   '❌Low quality',
   '⚠️Satisfactory',
@@ -204,7 +195,7 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
   },
   hotspotGroups: HOTSPOT_GROUPS,
   statusOptions: {
-    reviewStatus: REVIEW_STATUS_OPTIONS,
+    reviewStatus: TEMPLATE_REVIEW_STATUS_OPTIONS,
     qualityRating: QUALITY_RATING_OPTIONS,
     improvementAreas: IMPROVEMENT_AREA_OPTIONS,
   },

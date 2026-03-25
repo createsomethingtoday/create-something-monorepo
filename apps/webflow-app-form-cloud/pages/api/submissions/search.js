@@ -1,5 +1,9 @@
 import { db } from '../../../lib/db';
 import { requireAdminApiToken } from '../../../lib/apiAuth';
+import {
+  MARKETPLACE_SUBMISSION_STATUSES,
+  isMarketplaceSubmissionStatus,
+} from '@create-something/webflow-marketplace-core';
 
 /**
  * Search submissions API
@@ -51,8 +55,8 @@ export default async function handler(req, res) {
     if (offset < 0) offset = 0;
 
     // Validate status if provided
-    const validStatuses = ['processing', 'pending', 'webhook_success', 'webhook_failed'];
-    if (status && !validStatuses.includes(status)) {
+    const validStatuses = [...MARKETPLACE_SUBMISSION_STATUSES];
+    if (status && !isMarketplaceSubmissionStatus(status)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid status value',

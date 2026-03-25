@@ -2,6 +2,10 @@ import { db } from '../../../lib/db';
 import { deletePublicFile } from '../../../lib/blobStore';
 import { trackEvent } from '../../../lib/analytics';
 import { getEnvValue } from '../../../lib/cloudflareRuntime';
+import {
+  MARKETPLACE_RETRY_POLICY,
+  MARKETPLACE_SUBMISSION_STATUS,
+} from '@create-something/webflow-marketplace-core';
 
 /**
  * Automatic blob cleanup cron job
@@ -115,7 +119,9 @@ export default async function handler(req, res) {
         await trackEvent('Blobs Cleaned Up', {
           submissionId: submission.id,
           blobsDeleted: deletedCount,
-          totalBlobs: blobUrls.length
+          totalBlobs: blobUrls.length,
+          cleanupDelayHours: MARKETPLACE_RETRY_POLICY.cleanupDelayHours,
+          sourceStatus: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_SUCCESS
         });
 
       } catch (submissionError) {

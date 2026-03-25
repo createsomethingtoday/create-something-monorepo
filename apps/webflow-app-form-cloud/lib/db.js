@@ -1,4 +1,8 @@
 import { getCloudflareEnv } from './cloudflareRuntime';
+import {
+  MARKETPLACE_RETRY_POLICY,
+  MARKETPLACE_SUBMISSION_STATUS,
+} from '@create-something/webflow-marketplace-core';
 
 function nowIso() {
   return new Date().toISOString();
@@ -81,7 +85,7 @@ export const db = {
     creatorEmail,
     formData,
     blobUrls = [],
-    status = 'processing'
+    status = MARKETPLACE_SUBMISSION_STATUS.PROCESSING
   }, runtime = {}) {
     const driver = await getRuntime(runtime);
     const id = crypto.randomUUID();
@@ -299,49 +303,52 @@ export const db = {
 
   async getFailedSubmissions(maxRetries = 3, runtime = {}) {
     const driver = await getRuntime(runtime);
+    const cooldownMinutes = MARKETPLACE_RETRY_POLICY.cooldownMinutes;
+    const retryLimit = maxRetries ?? MARKETPLACE_RETRY_POLICY.maxAttempts;
 
     if (driver.type === 'd1') {
       const result = await driver.db.prepare(`
         SELECT * FROM submissions
-        WHERE status = 'webhook_failed'
+        WHERE status = '${MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED}'
           AND retry_count < ?
           AND (
             webhook_sent_at IS NULL
-            OR datetime(webhook_sent_at) < datetime('now', '-15 minutes')
+            OR datetime(webhook_sent_at) < datetime('now', '-${cooldownMinutes} minutes')
           )
         ORDER BY datetime(created_at) ASC
         LIMIT 10
-      `).bind(maxRetries).all();
+      `).bind(retryLimit).all();
 
       return (result.results || []).map(normalizeSubmission);
     }
 
     const { rows } = await driver.sql.query(`
       SELECT * FROM submissions
-      WHERE status = 'webhook_failed'
+      WHERE status = '${MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED}'
         AND retry_count < $1
         AND (
           webhook_sent_at IS NULL
-          OR webhook_sent_at < NOW() - INTERVAL '15 minutes'
+          OR webhook_sent_at < NOW() - INTERVAL '${cooldownMinutes} minutes'
         )
       ORDER BY created_at ASC
       LIMIT 10
-    `, [maxRetries]);
+    `, [retryLimit]);
 
     return rows.map(normalizeSubmission);
   },
 
   async getSubmissionsForBlobCleanup(runtime = {}) {
     const driver = await getRuntime(runtime);
+    const cleanupDelayHours = MARKETPLACE_RETRY_POLICY.cleanupDelayHours;
 
     if (driver.type === 'd1') {
       const result = await driver.db.prepare(`
         SELECT id, blob_urls, blobs_cleaned_at, created_at
         FROM submissions
-        WHERE status = 'webhook_success'
+        WHERE status = '${MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_SUCCESS}'
           AND blob_urls IS NOT NULL
           AND blobs_cleaned_at IS NULL
-          AND datetime(created_at) < datetime('now', '-24 hours')
+          AND datetime(created_at) < datetime('now', '-${cleanupDelayHours} hours')
         LIMIT 100
       `).all();
 
@@ -351,10 +358,10 @@ export const db = {
     const { rows } = await driver.sql.query(`
       SELECT id, blob_urls, blobs_cleaned_at, created_at
       FROM submissions
-      WHERE status = 'webhook_success'
+      WHERE status = '${MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_SUCCESS}'
         AND blob_urls IS NOT NULL
         AND blobs_cleaned_at IS NULL
-        AND created_at < NOW() - INTERVAL '24 hours'
+        AND created_at < NOW() - INTERVAL '${cleanupDelayHours} hours'
       LIMIT 100
     `);
 
@@ -407,7 +414,7 @@ export const db = {
         WHERE client_id = ?
           AND submission_type = ?
           AND datetime(created_at) > datetime(?)
-          AND status != 'webhook_failed'
+          AND status != '${MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED}'
         ORDER BY datetime(created_at) DESC
         LIMIT 1
       `).bind(clientId, submissionType, cutoffTime).first();
@@ -420,7 +427,7 @@ export const db = {
       WHERE client_id = $1
         AND submission_type = $2
         AND created_at > $3
-        AND status NOT IN ('webhook_failed')
+        AND status NOT IN ('${MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED}')
       ORDER BY created_at DESC
       LIMIT 1
     `, [clientId, submissionType, cutoffTime]);

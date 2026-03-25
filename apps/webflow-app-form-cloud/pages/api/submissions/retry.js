@@ -2,6 +2,11 @@ import { db } from '../../../lib/db';
 import { requireAdminApiToken } from '../../../lib/apiAuth';
 import { trackEvent } from '../../../lib/analytics';
 import { buildSubmissionWebhookData, sendSubmissionWebhook } from '../../../lib/submissionPayload';
+import {
+  MARKETPLACE_RETRY_POLICY,
+  MARKETPLACE_SUBMISSION_STATUS,
+  canRetrySubmission,
+} from '@create-something/webflow-marketplace-core';
 
 /**
  * Retry failed webhook submission
@@ -45,17 +50,17 @@ export default async function handler(req, res) {
     }
 
     // Verify submission can be retried
-    if (submission.status === 'webhook_success') {
+    if (submission.status === MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_SUCCESS) {
       return res.status(400).json({
         success: false,
         message: 'Submission already succeeded, cannot retry'
       });
     }
 
-    if (submission.retry_count >= 3) {
+    if (!canRetrySubmission(MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED, submission.retry_count)) {
       return res.status(400).json({
         success: false,
-        message: 'Maximum retry attempts (3) reached. Manual review required.',
+        message: `Maximum retry attempts (${MARKETPLACE_RETRY_POLICY.maxAttempts}) reached. Manual review required.`,
         submissionId: submission.id,
         retryCount: submission.retry_count
       });
@@ -78,7 +83,9 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`Retrying submission ${submission.id}, attempt ${submission.retry_count + 1}/3`);
+    console.log(
+      `Retrying submission ${submission.id}, attempt ${submission.retry_count + 1}/${MARKETPLACE_RETRY_POLICY.maxAttempts}`,
+    );
 
     const { airtableSubmissionId, webhookData } = buildSubmissionWebhookData({
       fields: submission.form_data,
@@ -94,7 +101,7 @@ export default async function handler(req, res) {
 
       // Update database: retry succeeded
       await db.updateSubmission(submission.id, {
-        status: 'webhook_success',
+        status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_SUCCESS,
         airtableSubmissionId: airtableSubmissionId,
         webhookResponse: webhookResponse,
         webhookSentAt: new Date().toISOString(),
@@ -123,7 +130,7 @@ export default async function handler(req, res) {
 
       // Update database: retry failed
       await db.updateSubmission(submission.id, {
-        status: 'webhook_failed',
+        status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED,
         errorMessage: `Retry ${submission.retry_count + 1} failed: ${webhookError.message}`,
         webhookSentAt: new Date().toISOString(),
         retryCount: submission.retry_count + 1
@@ -143,7 +150,10 @@ export default async function handler(req, res) {
         submissionId: submission.id,
         retryAttempt: submission.retry_count + 1,
         error: webhookError.message,
-        canRetryAgain: submission.retry_count + 1 < 3
+        canRetryAgain: canRetrySubmission(
+          MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED,
+          submission.retry_count + 1,
+        )
       });
     }
 

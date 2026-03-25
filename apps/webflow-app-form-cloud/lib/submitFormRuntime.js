@@ -2,6 +2,9 @@ import { db } from './db';
 import { uploadPublicFile, deletePublicFile } from './blobStore';
 import { trackEvent } from './analytics';
 import { buildSubmissionWebhookData, sendSubmissionWebhook, getFieldValue } from './submissionPayload';
+import {
+  MARKETPLACE_SUBMISSION_STATUS,
+} from '@create-something/webflow-marketplace-core';
 
 const CLIENT_ID_PATTERN = /^[a-f0-9]{64}$/i;
 const MAX_FILENAME_LENGTH = 100;
@@ -206,7 +209,7 @@ export async function handleRuntimeSubmit(request, runtime = {}) {
       creatorEmail: getFieldValue(fields.creatorContactEmail) || null,
       formData: fields,
       blobUrls: [],
-      status: 'processing'
+      status: MARKETPLACE_SUBMISSION_STATUS.PROCESSING
     }, runtime);
 
     const uploadResult = await uploadSubmissionFiles(files, runtime);
@@ -215,7 +218,7 @@ export async function handleRuntimeSubmit(request, runtime = {}) {
 
     submissionRecord = await db.updateSubmission(submissionRecord.id, {
       blobUrls,
-      status: 'pending'
+      status: MARKETPLACE_SUBMISSION_STATUS.PENDING
     }, runtime);
 
     const { airtableSubmissionId, webhookData } = buildSubmissionWebhookData({
@@ -229,7 +232,7 @@ export async function handleRuntimeSubmit(request, runtime = {}) {
       const webhookResponse = await sendSubmissionWebhook(webhookData, runtime);
 
       await db.updateSubmission(submissionRecord.id, {
-        status: 'webhook_success',
+        status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_SUCCESS,
         airtableSubmissionId,
         webhookResponse,
         webhookSentAt: new Date().toISOString()
@@ -250,7 +253,7 @@ export async function handleRuntimeSubmit(request, runtime = {}) {
       });
     } catch (webhookError) {
       await db.updateSubmission(submissionRecord.id, {
-        status: 'webhook_failed',
+        status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED,
         errorMessage: webhookError.message,
         webhookSentAt: new Date().toISOString(),
         retryCount: 0
@@ -275,7 +278,7 @@ export async function handleRuntimeSubmit(request, runtime = {}) {
 
     if (submissionRecord) {
       await db.updateSubmission(submissionRecord.id, {
-        status: 'webhook_failed',
+        status: MARKETPLACE_SUBMISSION_STATUS.WEBHOOK_FAILED,
         errorMessage: `Processing error: ${error.message}`,
         retryCount: 0
       }, runtime).catch((dbError) => console.error('Failed to update DB on error:', dbError));

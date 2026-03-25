@@ -1,5 +1,11 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import {
+  APP_REVIEW_QUEUE_STATUSES,
+  APP_REVIEW_REQUEST_CHANGES_STATUS_OPTIONS,
+  APP_REVIEW_REVIEWER_CONTROLLED_STATUS_OPTIONS,
+  APP_REVIEW_STATUS_OPTIONS,
+} from '@create-something/webflow-marketplace-core';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
@@ -9,7 +15,6 @@ import {
   CAPABILITIES_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
-  REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
   VISIBILITY_OPTIONS,
   getReadOnlyAssetWriteHint,
@@ -22,37 +27,11 @@ const collaboratorRefSchema = z.object({
   id: z.string().min(1),
 });
 
-const APP_REVIEW_QUEUE_STATUS_OPTIONS = [
-  'ready_to_review',
-  'in_review',
-  'changes_requested',
-  'approved',
-  'rejected',
-  'on_hold',
-  'archived',
-] as const;
-
 const APP_REVIEW_QUEUE_SORT_OPTIONS = [
   'submissionDatetime_desc',
   'submissionDatetime_asc',
   'versionNumber_desc',
   'versionNumber_asc',
-] as const;
-
-const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
-  '🏃🏾In Review',
-  'Training Check',
-  '👀Admin Feedback Review',
-  '👀Managed Feedback Review',
-  '🔁Response to Review',
-  '👀Admin Approval Review',
-  '👀Admin Rejection Review',
-  '⏸️On Hold',
-] as const;
-
-const REQUEST_CHANGES_STATUS_OPTIONS = [
-  '📤Changes Requested',
-  '📤Changes Requested (No Notification)',
 ] as const;
 
 function jsonContent(value: unknown) {
@@ -161,14 +140,14 @@ function reviewerPayload(reviewer: ReviewerProfile) {
 
 function ensureRequestChangesStatus(value: string | undefined) {
   if (value === undefined) return;
-  if ((REQUEST_CHANGES_STATUS_OPTIONS as readonly string[]).includes(value)) return;
+  if ((APP_REVIEW_REQUEST_CHANGES_STATUS_OPTIONS as readonly string[]).includes(value)) return;
   throw new AirtableClientError(
     'INVALID_REQUEST_CHANGES_STATUS',
     'request_changes only supports the changes-requested statuses.',
     400,
     {
       value,
-      allowed: REQUEST_CHANGES_STATUS_OPTIONS,
+      allowed: APP_REVIEW_REQUEST_CHANGES_STATUS_OPTIONS,
     },
   );
 }
@@ -288,7 +267,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'app_review_my_queue',
     'List app review queue items currently assigned to the authenticated reviewer.',
     {
-      status: z.enum(APP_REVIEW_QUEUE_STATUS_OPTIONS).optional(),
+      status: z.enum(APP_REVIEW_QUEUE_STATUSES).optional(),
       sort: z.enum(APP_REVIEW_QUEUE_SORT_OPTIONS).optional(),
       limit: z.number().int().min(1).max(500).optional(),
     },
@@ -414,7 +393,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'Set a reviewer-controlled app review status after ownership has been established through self-assignment.',
     {
       version_id: z.string().min(1),
-      review_status: z.enum(REVIEWER_CONTROLLED_STATUS_OPTIONS),
+      review_status: z.enum(APP_REVIEW_REVIEWER_CONTROLLED_STATUS_OPTIONS),
     },
     async ({ version_id, review_status }) => {
       try {
@@ -443,7 +422,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       version_id: z.string().min(1),
       review_feedback: z.string().min(1),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS).optional(),
-      review_status: z.enum(REQUEST_CHANGES_STATUS_OPTIONS).optional(),
+      review_status: z.enum(APP_REVIEW_REQUEST_CHANGES_STATUS_OPTIONS).optional(),
     },
     async ({ version_id, review_feedback, rejection_reason, review_status }) => {
       try {
@@ -535,7 +514,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'Update review fields on an Asset Version record.',
     {
       version_id: z.string().min(1),
-      review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
+      review_status: z.enum(APP_REVIEW_STATUS_OPTIONS).optional(),
       review_type: z.enum(REVIEW_TYPE_OPTIONS).optional(),
       reviewer: z.union([collaboratorRefSchema, z.null()]).optional(),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS).optional(),
@@ -607,7 +586,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       preview_site_url: z.string().url().optional(),
       promo_video_url: z.string().url().optional(),
       marketplace_status: z.enum(MARKETPLACE_STATUS_OPTIONS).optional(),
-      latest_review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
+      latest_review_status: z.enum(APP_REVIEW_STATUS_OPTIONS).optional(),
       days_in_current_review_stage: z.number().optional(),
       workspace_dashboard_url: z.string().optional(),
       app_id: z.string().optional(),
