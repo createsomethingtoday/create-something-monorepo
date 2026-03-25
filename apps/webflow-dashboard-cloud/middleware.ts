@@ -12,7 +12,23 @@ const NO_STORE_HEADERS = {
 
 function normalizeBasePath(value: string | undefined): string {
   if (!value || value === '/') return '';
-  return value.endsWith('/') ? value.slice(0, -1) : value;
+
+  let path = value.trim();
+  if (!path) return '';
+
+  if (/^https?:\/\//i.test(path)) {
+    try {
+      path = new URL(path).pathname;
+    } catch {
+      return '';
+    }
+  }
+
+  if (!path.startsWith('/')) {
+    path = `/${path}`;
+  }
+
+  return path.endsWith('/') ? path.slice(0, -1) : path;
 }
 
 function withBasePath(pathname: string): string {
