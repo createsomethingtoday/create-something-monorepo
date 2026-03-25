@@ -11,8 +11,7 @@
     "plugins": [{ "name": "next" }],
     "baseUrl": ".",
     "paths": {
-      "@create-something/webflow-dashboard-core": ["../../packages/webflow-dashboard-core/src/index.ts"],
-      "@create-something/webflow-marketplace-core": ["../../packages/webflow-marketplace-core/src/index.ts"]
+      "@create-something/webflow-dashboard-core": ["../../packages/webflow-dashboard-core/src/index.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

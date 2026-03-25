@@ -37,7 +37,6 @@ const assetPrefix = process.env.ASSETS_PREFIX
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@create-something/webflow-marketplace-core'],
   basePath: basePath || undefined,
   assetPrefix: assetPrefix || undefined,
   env: {

@@ -21,6 +21,15 @@ The goal is to let:
 
 depend on the same core vocabulary without importing app-internal modules.
 
+## Consumer Boundary
+
+`@create-something/webflow-marketplace-core` is a shared package, not an app-source alias target.
+
+- Hosted apps should import the package name directly.
+- Hosted apps should not add TS `paths` aliases that point to `packages/webflow-marketplace-core/src/index.ts`.
+- Next apps should not add this package to `transpilePackages` unless they are intentionally compiling package source.
+- MCP and other Node consumers should rely on the built package entry in `dist/`.
+
 ## Current Exports
 
 - `MARKETPLACE_SUBMISSION_STATUSES`

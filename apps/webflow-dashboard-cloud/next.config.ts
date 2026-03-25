@@ -8,8 +8,7 @@ const nextConfig: NextConfig = {
     unoptimized: true
   },
   transpilePackages: [
-    '@create-something/webflow-dashboard-core',
-    '@create-something/webflow-marketplace-core'
+    '@create-something/webflow-dashboard-core'
   ]
 };
 
