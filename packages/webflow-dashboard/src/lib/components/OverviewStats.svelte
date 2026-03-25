@@ -70,7 +70,7 @@
 <div class="overview-stats">
   <!-- Performance Summary -->
   {#if totals.viewers > 0 || totals.purchases > 0 || totals.revenue > 0}
-    <div>
+    <section class="overview-panel overview-panel--performance">
       <Card>
         <CardHeader>
           <div class="header-with-indicator">
@@ -105,12 +105,12 @@
           </div>
         </CardContent>
       </Card>
-    </div>
+    </section>
   {/if}
 
   <!-- Status Distribution -->
   {#if sortedStatuses.length > 0}
-    <div>
+    <section class="overview-panel overview-panel--distribution">
       <Card>
         <CardHeader>
           <div class="distribution-heading">
@@ -147,15 +147,19 @@
           </div>
         </CardContent>
       </Card>
-    </div>
+    </section>
   {/if}
 </div>
 
 <style>
   .overview-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: var(--space-md);
+  }
+
+  .overview-panel {
+    width: 100%;
   }
 
   .header-with-indicator {
@@ -168,21 +172,27 @@
 
   .performance-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 0.75rem 1.25rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem 1.5rem;
   }
 
   .performance-item {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 0 0.25rem;
+    min-height: 4.5rem;
+    padding: 0.25rem 0;
     background: transparent;
     border: none;
     border-radius: 0;
     transition:
       border-color var(--duration-micro) var(--ease-standard),
       background-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .performance-item:not(:first-child) {
+    padding-left: 1.5rem;
+    border-left: 1px solid var(--color-shell-border-default);
   }
 
   .performance-item:hover {
@@ -301,8 +311,15 @@
   }
 
   @media (max-width: 900px) {
-    .overview-stats {
+    .performance-grid {
       grid-template-columns: 1fr;
+    }
+
+    .performance-item:not(:first-child) {
+      padding-left: 0;
+      padding-top: 1rem;
+      border-left: none;
+      border-top: 1px solid var(--color-shell-border-default);
     }
   }
 
