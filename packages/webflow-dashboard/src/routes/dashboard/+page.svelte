@@ -13,6 +13,7 @@
   } from '$lib/components';
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
+  import { getPortfolioTitle } from '$lib/utils/portfolio-title';
 
   let { data }: { data: PageData } = $props();
 
@@ -48,12 +49,12 @@
         ? 'assets'
         : `${heroAssetLabel}s`
   );
-  const heroTitle = $derived(`Your Webflow ${heroAssetLabel} portfolio`);
   const heroSubtitle = $derived(
     heroAssetLabel === 'asset'
       ? 'Track published assets, upcoming submissions, and marketplace signals in one place.'
       : `Track published ${heroAssetLabelPlural}, upcoming submissions, and marketplace signals in one place.`
   );
+  const portfolioTitle = $derived(getPortfolioTitle(data.assets || []));
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -222,7 +223,7 @@
           <div class="page-header page-intro page-intro--dashboard">
             <div class="header-text">
               <span class="page-kicker">Portfolio overview</span>
-              <h1 class="page-title page-intro__title">{heroTitle}</h1>
+              <h1 class="page-title page-intro__title">{portfolioTitle}</h1>
               <p class="page-subtitle page-intro__subtitle">
                 {heroSubtitle}
                 <DataFreshnessIndicator variant="tooltip" />
