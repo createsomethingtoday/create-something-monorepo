@@ -305,6 +305,19 @@ function isAirtableRecordId(value: string): boolean {
 	return /^(rec|tbl|viw|fld)[A-Za-z0-9]{10,}$/.test(value);
 }
 
+function dedupeEmails(...values: Array<string | null | undefined>): string[] {
+	const unique = new Set<string>();
+
+	for (const value of values) {
+		if (!value || typeof value !== 'string') continue;
+		const trimmed = value.trim().toLowerCase();
+		if (!trimmed) continue;
+		unique.add(trimmed);
+	}
+
+	return [...unique];
+}
+
 function detectMarketplaceType(rawType: unknown): Asset['type'] | null {
 	const directCandidates = typeof rawType === 'string' ? [rawType] : [];
 	const candidates = [...toStringArray(rawType), ...directCandidates]
@@ -481,6 +494,17 @@ export interface Creator {
 	avatarUrl?: string;
 	biography?: string;
 	legalName?: string;
+	websiteUrl?: string;
+}
+
+export interface CreateCreatorInput {
+	email: string;
+	webflowEmail: string;
+	name: string;
+	legalName: string;
+	biography: string;
+	avatarUrl?: string | null;
+	websiteUrl?: string;
 }
 
 export interface ApiKey {
@@ -583,6 +607,29 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			return {
 				id: records[0].id,
 				email: records[0].fields['Email'] as string
+			};
+		},
+
+		/**
+		 * Create a login-capable user record for email verification.
+		 */
+		async createUserByEmail(email: string, creatorId?: string): Promise<{ id: string; email: string }> {
+			const normalizedEmail = validateEmail(email);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const fields: Record<string, any> = {
+				Email: normalizedEmail
+			};
+
+			if (creatorId) {
+				fields['🎨Creators'] = [creatorId];
+			}
+
+			const records = await base(TABLES.USERS).create([{ fields }]);
+			const record = records[0];
+
+			return {
+				id: record.id,
+				email: (record.fields['Email'] as string) || normalizedEmail
 			};
 		},
 
@@ -1218,7 +1265,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					emails: (record.fields['📧Emails'] as string)?.split(',').map(e => e.trim()),
 					avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
 					biography: (record.fields['ℹ️Biography'] as string), // Match original: 'ℹ️Biography' not '📝Biography'
-					legalName: (record.fields['ℹ️Legal Name'] as string) // Match original: 'ℹ️Legal Name' not '📜Legal Name'
+					legalName: (record.fields['ℹ️Legal Name'] as string), // Match original: 'ℹ️Legal Name' not '📜Legal Name'
+					websiteUrl: (record.fields['🔗Personal Site'] as string)
 				};
 				
 				debugLog('[Airtable] Returning creator:', {
@@ -1244,7 +1292,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * Update creator profile.
 		 * Uses the same field names as the original Next.js implementation.
 		 */
-		async updateCreator(id: string, data: Partial<Pick<Creator, 'name' | 'biography' | 'legalName' | 'avatarUrl'>>): Promise<Creator | null> {
+		async updateCreator(id: string, data: Partial<Pick<Creator, 'name' | 'biography' | 'legalName' | 'avatarUrl' | 'websiteUrl'>>): Promise<Creator | null> {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const fields: Record<string, any> = {};
 
@@ -1252,6 +1300,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			if (data.name !== undefined) fields['Name'] = data.name;
 			if (data.biography !== undefined) fields['ℹ️Biography'] = data.biography;
 			if (data.legalName !== undefined) fields['ℹ️Legal Name'] = data.legalName;
+			if (data.websiteUrl !== undefined) fields['🔗Personal Site'] = data.websiteUrl;
 			// Airtable attachment fields require array of {url} objects
 			// Use field ID (fldyddTon9Lu8BR8G) to match original Next.js dashboard exactly
 			if (data.avatarUrl !== undefined) {
@@ -1281,7 +1330,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					emails: (record.fields['📧Emails'] as string)?.split(',').map(e => e.trim()),
 					avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
 					biography: (record.fields['ℹ️Biography'] as string), // Match original field name
-					legalName: (record.fields['ℹ️Legal Name'] as string) // Match original field name
+					legalName: (record.fields['ℹ️Legal Name'] as string), // Match original field name
+					websiteUrl: (record.fields['🔗Personal Site'] as string)
 				};
 			} catch (err) {
 				console.error('[Airtable] Error updating creator:', err);
@@ -1296,6 +1346,46 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				});
 				return null;
 			}
+		},
+
+		/**
+		 * Create a new creator profile.
+		 */
+		async createCreator(data: CreateCreatorInput): Promise<Creator> {
+			const email = validateEmail(data.email);
+			const webflowEmail = validateEmail(data.webflowEmail);
+			const emails = dedupeEmails(email, webflowEmail);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const fields: Record<string, any> = {
+				Name: data.name.trim(),
+				'📧Email': email,
+				'📧WF Account Email': webflowEmail,
+				'📧Emails': emails.join(', '),
+				'ℹ️Biography': data.biography.trim(),
+				'ℹ️Legal Name': data.legalName.trim()
+			};
+
+			if (data.websiteUrl) {
+				fields['🔗Personal Site'] = data.websiteUrl.trim();
+			}
+
+			if (data.avatarUrl) {
+				fields['fldyddTon9Lu8BR8G'] = [{ url: data.avatarUrl }];
+			}
+
+			const records = await base(TABLES.CREATORS).create([{ fields }]);
+			const record = records[0];
+
+			return {
+				id: record.id,
+				name: (record.fields['Name'] as string) || '',
+				email,
+				emails,
+				avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
+				biography: (record.fields['ℹ️Biography'] as string),
+				legalName: (record.fields['ℹ️Legal Name'] as string),
+				websiteUrl: (record.fields['🔗Personal Site'] as string)
+			};
 		},
 
 		// ==================== API KEYS ====================

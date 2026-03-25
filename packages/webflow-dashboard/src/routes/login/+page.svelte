@@ -77,6 +77,11 @@
 		<p class="footer-text">
 			Only authorized Webflow template creators can access this dashboard.
 		</p>
+
+		<p class="signup-text">
+			Need access?
+			<a href="/signup">Create a creator account</a>
+		</p>
 	</div>
 </main>
 
@@ -230,6 +235,22 @@
 		color: var(--color-fg-muted);
 		text-align: center;
 		margin: var(--space-lg) 0 0;
+	}
+
+	.signup-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		text-align: center;
+		margin: var(--space-sm) 0 0;
+	}
+
+	.signup-text a {
+		color: var(--color-info);
+		text-decoration: none;
+	}
+
+	.signup-text a:hover {
+		text-decoration: underline;
 	}
 
 	@media (max-width: 640px) {
