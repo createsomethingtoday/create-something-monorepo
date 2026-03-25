@@ -10,10 +10,15 @@
 		retryAfter?: number;
 	}
 
+	type StorageAccessDocument = Document & {
+		requestStorageAccess?: () => Promise<void>;
+	};
+
 	let { data } = $props<{ data: PageData }>();
 
 	// Map server status to UI status
-	type UIStatus = 'verifying' | 'success' | 'error' | 'no-token';
+	type UIStatus = 'verifying' | 'success' | 'error' | 'no-token' | 'action-required';
+	type ContinueMode = 'verify' | 'dashboard';
 
 	function getInitialStatus(serverStatus: PageData['status'], serverError: string | null): UIStatus {
 		// If server already determined an error, show it immediately
@@ -27,11 +32,26 @@
 	const serverError = $derived(data.error);
 	let status = $state<UIStatus>('verifying');
 	let errorMessage = $state<string | null>(null);
+	let actionMessage = $state<string | null>(null);
+	let continueMode = $state<ContinueMode>('verify');
+	let isEmbedded = $state(false);
+	let pendingToken = $state<string | null>(null);
 
 	$effect(() => {
 		status = getInitialStatus(serverStatus, serverError);
 		errorMessage = serverError;
+		actionMessage = null;
+		continueMode = 'verify';
+		pendingToken = null;
 	});
+
+	function setActionRequired(mode: ContinueMode, message: string, token: string | null = null) {
+		status = 'action-required';
+		actionMessage = message;
+		errorMessage = null;
+		continueMode = mode;
+		pendingToken = token;
+	}
 
 	async function waitForAuthenticatedSession(maxAttempts = 5, delayMs = 250): Promise<boolean> {
 		for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -57,6 +77,66 @@
 		return false;
 	}
 
+	function buildAbsolutePath(pathname: string): string {
+		return new URL(pathname, window.location.origin).toString();
+	}
+
+	function navigateToTopLevel(pathname: string) {
+		const absoluteUrl = buildAbsolutePath(pathname);
+
+		if (window.self === window.top) {
+			window.location.assign(absoluteUrl);
+			return;
+		}
+
+		try {
+			window.top?.location.assign(absoluteUrl);
+			return;
+		} catch {
+			window.open(absoluteUrl, '_top');
+		}
+	}
+
+	function buildVerifyPath(token: string): string {
+		return `/verify?token=${encodeURIComponent(token)}`;
+	}
+
+	async function getEmbeddedStorageAccessState(): Promise<boolean | null> {
+		if (!isEmbedded) return true;
+
+		const storageDocument = document as StorageAccessDocument;
+		if (typeof storageDocument.hasStorageAccess !== 'function') {
+			return null;
+		}
+
+		try {
+			return await storageDocument.hasStorageAccess();
+		} catch {
+			return false;
+		}
+	}
+
+	async function requestEmbeddedStorageAccess(): Promise<boolean | null> {
+		if (!isEmbedded) return true;
+
+		const accessState = await getEmbeddedStorageAccessState();
+		if (accessState === true) {
+			return true;
+		}
+
+		const storageDocument = document as StorageAccessDocument;
+		if (typeof storageDocument.requestStorageAccess !== 'function') {
+			return null;
+		}
+
+		try {
+			await storageDocument.requestStorageAccess();
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
 	function navigateToDashboard() {
 		window.location.assign('/dashboard');
 	}
@@ -65,6 +145,8 @@
 	async function verifyToken(token: string) {
 		status = 'verifying';
 		errorMessage = null;
+		actionMessage = null;
+		pendingToken = token;
 
 		try {
 			const response = await fetch('/api/auth/verify-token', {
@@ -74,15 +156,22 @@
 				body: JSON.stringify({ token })
 			});
 
-			const responseData = await response.json();
+			const responseData = (await response.json().catch(() => ({}))) as { error?: string };
 
 			if (response.ok) {
 				const sessionReady = await waitForAuthenticatedSession();
 
 				if (!sessionReady) {
+					if (isEmbedded) {
+						setActionRequired(
+							'dashboard',
+							'Verification succeeded, but the embedded Webflow frame could not confirm your session. Continue in a full page to finish opening the dashboard.'
+						);
+						return;
+					}
+
 					status = 'error';
-					errorMessage =
-						'Verification succeeded, but your session was not established. Please try again in your mobile browser.';
+					errorMessage = 'Verification succeeded, but your session was not established. Please try again.';
 					return;
 				}
 
@@ -92,8 +181,7 @@
 				}, 750);
 			} else {
 				status = 'error';
-				const errorData = responseData as { error?: string };
-				errorMessage = errorData.error || 'Verification failed';
+				errorMessage = responseData.error || 'Verification failed';
 			}
 		} catch {
 			status = 'error';
@@ -101,13 +189,42 @@
 		}
 	}
 
+	async function handleActionRequired() {
+		const token = pendingToken || tokenInput.trim();
+
+		if (continueMode === 'verify' && token) {
+			if ((await requestEmbeddedStorageAccess()) === true) {
+				await verifyToken(token);
+				return;
+			}
+
+			navigateToTopLevel(buildVerifyPath(token));
+			return;
+		}
+
+		navigateToTopLevel('/dashboard');
+	}
+
 	// Handle case where token was in URL but needs client-side verification
 	onMount(async () => {
+		isEmbedded = window.self !== window.top;
+
 		const token = $page.url.searchParams.get('token');
 
 		// If we have a token but status is still verifying, try client-side
 		// This handles edge cases where server-side verification wasn't possible
 		if (token && status === 'verifying') {
+			pendingToken = token;
+
+			if (isEmbedded && (await getEmbeddedStorageAccessState()) === false) {
+				setActionRequired(
+					'verify',
+					'Safari and other browsers may block dashboard cookies inside the embedded Webflow frame. Continue in a full page to finish signing in.',
+					token
+				);
+				return;
+			}
+
 			await verifyToken(token);
 		}
 	});
@@ -115,10 +232,19 @@
 	// Token input for manual entry
 	let tokenInput = $state('');
 
-	function handleSubmit(e: Event) {
+	async function handleSubmit(e: Event) {
 		e.preventDefault();
-		if (tokenInput.trim()) {
-			verifyToken(tokenInput.trim());
+		const token = tokenInput.trim();
+
+		if (token) {
+			pendingToken = token;
+
+			if (isEmbedded && (await requestEmbeddedStorageAccess()) === false) {
+				navigateToTopLevel(buildVerifyPath(token));
+				return;
+			}
+
+			await verifyToken(token);
 		}
 	}
 </script>
@@ -144,6 +270,18 @@
 			<CheckCircle2 size={48} />
 			<h1>Verification successful</h1>
 			<p class="subtitle">Redirecting to dashboard...</p>
+		</div>
+	{:else if status === 'action-required'}
+		<div class="status-message">
+			<Lock size={48} />
+			<h1>{continueMode === 'verify' ? 'Continue sign in' : 'Open your dashboard'}</h1>
+			<p class="subtitle">{actionMessage}</p>
+			<button type="button" class="verify-button" onclick={handleActionRequired}>
+				{continueMode === 'verify' ? 'Continue in full page' : 'Open dashboard in full page'}
+			</button>
+			<a href="/login" class="retry-link">
+				{continueMode === 'verify' ? 'Request a new verification email' : 'Try logging in again'}
+			</a>
 		</div>
 	{:else if status === 'no-token'}
 		<div class="status-message">

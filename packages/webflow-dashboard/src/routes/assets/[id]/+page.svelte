@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import type { Asset } from '$lib/server/airtable';
+  import type { Asset, AssetUpdateData } from '$lib/server/airtable';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import DOMPurify from 'isomorphic-dompurify';
@@ -168,17 +168,6 @@
 
   function handleEditClose() {
     showEditModal = false;
-  }
-
-  interface AssetUpdateData {
-    name?: string;
-    descriptionShort?: string;
-    descriptionLongHtml?: string;
-    websiteUrl?: string;
-    previewUrl?: string;
-    thumbnailUrl?: string | null;
-    secondaryThumbnailUrl?: string | null;
-    carouselImages?: string[];
   }
 
   async function handleEditSave(updateData: AssetUpdateData): Promise<void> {
