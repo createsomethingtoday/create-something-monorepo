@@ -214,7 +214,11 @@
 </svelte:head>
 
 <div class="dashboard">
-  <Header onLogout={handleLogout} onProfileClick={handleProfileClick} />
+  <Header
+    onLogout={handleLogout}
+    onProfileClick={handleProfileClick}
+    showMarketplace={data.hasTemplateAsset}
+  />
 
   <main class="main-content">
     <div class="content-wrapper">
@@ -243,9 +247,11 @@
                 <div class="quick-actions">
                   <Button variant="secondary" size="sm" onclick={handleReviewAssets}>Review assets</Button>
                   <Button variant="outline" size="sm" onclick={handleOpenValidation}>Open validation</Button>
-                  <Button variant="outline" size="sm" onclick={handleExploreMarketplace}
-                    >Explore marketplace</Button
-                  >
+                  {#if data.hasTemplateAsset}
+                    <Button variant="outline" size="sm" onclick={handleExploreMarketplace}
+                      >Explore marketplace</Button
+                    >
+                  {/if}
                 </div>
               </div>
             </div>

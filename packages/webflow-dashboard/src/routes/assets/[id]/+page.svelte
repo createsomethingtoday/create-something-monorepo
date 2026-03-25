@@ -306,7 +306,7 @@
 </svelte:head>
 
 <div class="detail-page">
-  <Header onLogout={handleLogout} />
+  <Header onLogout={handleLogout} showMarketplace={data.hasTemplateAsset} />
 
   <main class="main-content">
     <div class="content-wrapper">

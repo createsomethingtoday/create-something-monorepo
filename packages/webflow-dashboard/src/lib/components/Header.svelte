@@ -7,15 +7,18 @@
   interface Props {
     onLogout?: () => void;
     onProfileClick?: () => void;
+    showMarketplace?: boolean;
   }
 
-  let { onLogout, onProfileClick }: Props = $props();
+  let { onLogout, onProfileClick, showMarketplace = true }: Props = $props();
 
-  const navItems = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/marketplace', label: 'Marketplace' },
-    { href: '/validation', label: 'Validation' }
-  ];
+  const navItems = $derived.by(() =>
+    [
+      { href: '/dashboard', label: 'Dashboard' },
+      showMarketplace ? { href: '/marketplace', label: 'Marketplace' } : null,
+      { href: '/validation', label: 'Validation' }
+    ].filter((item): item is { href: string; label: string } => item !== null)
+  );
 </script>
 
 <header class="header">

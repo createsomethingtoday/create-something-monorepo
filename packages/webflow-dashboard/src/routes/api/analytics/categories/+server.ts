@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { requireTemplateAssetAccess } from '$lib/server/template-access';
 import { getSyncMetadata } from '$lib/utils/sync-schedule';
 
 const noCacheHeaders = {
@@ -27,6 +28,8 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 	}
 
 	try {
+		await requireTemplateAssetAccess(locals.user.email, platform?.env);
+
 		const airtable = getAirtableClient(platform?.env);
 
 		// Fetch category performance data

@@ -1082,6 +1082,25 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
+		 * Determine whether a user owns at least one template asset.
+		 */
+		async hasTemplateAssetByEmail(email: string): Promise<boolean> {
+			const escapedEmail = escapeAirtableString(email.toLowerCase());
+			const formula = `AND(FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)})), {🆎Type} = 'Template🏗️')`;
+
+			const records = await base(TABLES.ASSETS)
+				.select({
+					view: VIEWS.ASSETS,
+					filterByFormula: formula,
+					fields: ['Name'],
+					maxRecords: 1
+				})
+				.all();
+
+			return records.length > 0;
+		},
+
+		/**
 		 * Get all assets for analytics snapshots (any asset that has been published).
 		 * Used by the cron job to capture daily metrics.
 		 */
