@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { getAssetActionConfig, sortAssetStatuses } from './asset-actions';
+import {
+  getAssetActionConfig,
+  groupAssetsByTypeAndStatus,
+  sortAssetStatuses,
+  sortAssetTypes
+} from './asset-actions';
 
 describe('getAssetActionConfig', () => {
   it('maps published assets to view-first actions', () => {
@@ -54,5 +59,48 @@ describe('sortAssetStatuses', () => {
       '1️⃣🆕Upcoming',
       '3️⃣🚀Published'
     ]);
+  });
+});
+
+describe('sortAssetTypes', () => {
+  it('orders asset types alphabetically by default', () => {
+    expect(sortAssetTypes(['Template', 'App', 'Library'])).toEqual(['App', 'Library', 'Template']);
+  });
+
+  it('supports reverse type ordering', () => {
+    expect(sortAssetTypes(['Template', 'App', 'Library'], 'desc')).toEqual([
+      'Template',
+      'Library',
+      'App'
+    ]);
+  });
+});
+
+describe('groupAssetsByTypeAndStatus', () => {
+  it('nests assets under type first and normalized status second', () => {
+    const grouped = groupAssetsByTypeAndStatus([
+      {
+        id: '1',
+        name: 'Alpha Template',
+        type: 'Template',
+        status: 'Published'
+      },
+      {
+        id: '2',
+        name: 'Beta App',
+        type: 'App',
+        status: '❌Rejected'
+      },
+      {
+        id: '3',
+        name: 'Gamma Template',
+        type: 'Template',
+        status: '1️⃣🆕Upcoming'
+      }
+    ] as Parameters<typeof groupAssetsByTypeAndStatus>[0]);
+
+    expect(sortAssetTypes(Object.keys(grouped))).toEqual(['App', 'Template']);
+    expect(sortAssetStatuses(Object.keys(grouped.Template))).toEqual(['Upcoming', 'Published']);
+    expect(grouped.App.Rejected.map((asset) => asset.id)).toEqual(['2']);
   });
 });
