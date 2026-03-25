@@ -74,6 +74,15 @@ const CREATOR_EMAIL_FIELDS_PRIORITY = [
 	'CREATOR_EMAIL'
 ] as const;
 
+// Only include fields that are guaranteed to exist in the Airtable base when
+// constructing filter formulas. Referencing optional/legacy field names causes
+// Airtable to reject the entire query with INVALID_FILTER_BY_FORMULA.
+const CREATOR_EMAIL_FORMULA_FIELDS = [
+	'🎨📧 Creator Email',
+	'🎨📧 Creator WF Account Email',
+	'📧Emails (from 🎨Creator)'
+] as const;
+
 const CATEGORY_FIELDS_PRIORITY = [
 	'🏷️Category',
 	'🏷️Categories',
@@ -215,7 +224,7 @@ export function escapeAirtableString(input: string): string {
 export function buildCreatorEmailMatchFormula(email: string): string {
 	const normalizedEmail = email.trim().toLowerCase();
 	const escapedEmail = escapeAirtableString(normalizedEmail);
-	const clauses = CREATOR_EMAIL_FIELDS_PRIORITY.map(
+	const clauses = CREATOR_EMAIL_FORMULA_FIELDS.map(
 		(field) =>
 			`FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({${field}}, ",")), IFERROR(LOWER({${field}}), ""))) > 0`
 	);
@@ -1103,8 +1112,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * Determine whether a user owns at least one template asset.
 		 */
 		async hasTemplateAssetByEmail(email: string): Promise<boolean> {
-			const escapedEmail = escapeAirtableString(email.toLowerCase());
-			const formula = `AND(FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)})), {🆎Type} = 'Template🏗️')`;
+			const formula = `AND(${buildCreatorEmailMatchFormula(email)}, {🆎Type} = 'Template🏗️')`;
 
 			const records = await base(TABLES.ASSETS)
 				.select({
