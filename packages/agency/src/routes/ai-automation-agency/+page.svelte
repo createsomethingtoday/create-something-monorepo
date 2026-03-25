@@ -324,7 +324,6 @@
   }
 
   .section-header p,
-  .panel p,
   .cta-copy {
     font-size: var(--text-body-lg);
     line-height: var(--leading-relaxed);
