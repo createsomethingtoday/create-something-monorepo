@@ -64,6 +64,8 @@ describe('Airtable asset formulas', () => {
 		expect(formula).toContain('{🎨📧 Creator WF Account Email}');
 		expect(formula).toContain('{📧Emails (from 🎨Creator)}');
 		expect(formula).not.toContain('{CREATOR_EMAIL}');
+		expect(formula).not.toContain('IFERROR');
+		expect(formula).toContain('LOWER(ARRAYJOIN(');
 	});
 
 	it('escapes single quotes and leaves asset type filtering to the caller', () => {

@@ -225,8 +225,7 @@ export function buildCreatorEmailMatchFormula(email: string): string {
 	const normalizedEmail = email.trim().toLowerCase();
 	const escapedEmail = escapeAirtableString(normalizedEmail);
 	const clauses = CREATOR_EMAIL_FORMULA_FIELDS.map(
-		(field) =>
-			`FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({${field}}, ",")), IFERROR(LOWER({${field}}), ""))) > 0`
+		(field) => `FIND('${escapedEmail}', LOWER(ARRAYJOIN({${field}}, ","))) > 0`
 	);
 
 	return `OR(${clauses.join(', ')})`;
