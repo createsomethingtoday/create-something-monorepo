@@ -1,0 +1,216 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1880" height="1180" viewBox="0 0 1880 1180" role="img" aria-labelledby="title desc">
+  <title id="title">Webflow Template Review Hub reviewer parallel visualization</title>
+  <desc id="desc">Monochrome CREATE SOMETHING diagram showing one reviewer request fanning into parallel Hub lanes for analytics, queue assignment, and context plus template primitives, with App Validator and WebMCP upstream and publishing plus marketplace management downstream.</desc>
+  <defs>
+    <linearGradient id="panelGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#171717" />
+      <stop offset="100%" stop-color="#0a0a0a" />
+    </linearGradient>
+    <linearGradient id="hubGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#262626" />
+      <stop offset="50%" stop-color="#171717" />
+      <stop offset="100%" stop-color="#262626" />
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
+    <style>
+      .bg { fill: #000000; }
+      .frame { fill: none; stroke: #262626; stroke-width: 1.5; }
+      .panel { fill: url(#panelGlow); stroke: #404040; stroke-width: 1.5; }
+      .hub { fill: url(#hubGlow); stroke: #ffffff; stroke-width: 1.5; }
+      .card { fill: #0a0a0a; stroke: #404040; stroke-width: 1.25; }
+      .card-soft { fill: #111111; stroke: #262626; stroke-width: 1; }
+      .line { stroke: #171717; stroke-width: 1; }
+      
+      .flow-track { stroke: #262626; stroke-width: 2; fill: none; }
+      .flow-track-muted { stroke: #1a1a1a; stroke-width: 1.5; fill: none; }
+      
+      .flow { stroke: #d4d4d4; stroke-width: 2; fill: none; stroke-dasharray: 4 8; animation: flowMarch 1s linear infinite; marker-end: url(#arrow); }
+      .flow-muted { stroke: #737373; stroke-width: 1.5; fill: none; stroke-dasharray: 4 8; animation: flowMarch 1s linear infinite; marker-end: url(#arrowMuted); }
+      
+      .junction { fill: #d4d4d4; }
+      .junction-muted { fill: #737373; }
+
+      .guard { stroke: #a3a3a3; stroke-width: 1.5; fill: none; stroke-dasharray: 8 8; }
+      .label { fill: #ffffff; font-family: "Stack Sans Notch", "Helvetica Neue", Arial, sans-serif; }
+      .mono { fill: #a3a3a3; font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace; }
+      .title { font-size: 56px; font-weight: 600; letter-spacing: 1.5px; }
+      .subtitle { font-size: 18px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; }
+      .section { font-size: 22px; font-weight: 600; letter-spacing: 1.5px; }
+      .body { font-size: 18px; font-weight: 400; }
+      .small { font-size: 15px; font-weight: 400; }
+      .micro { font-size: 13px; font-weight: 400; letter-spacing: 1.2px; text-transform: uppercase; }
+
+      @keyframes flowMarch {
+        from { stroke-dashoffset: 12; }
+        to { stroke-dashoffset: 0; }
+      }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d4d4d4" />
+    </marker>
+    <marker id="arrowMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#737373" />
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1880" height="1180" />
+  <rect class="frame" x="28" y="28" width="1824" height="1124" rx="26" />
+
+  <text class="label subtitle" x="74" y="96">WEBFLOW TEMPLATE REVIEW // REVIEWER EDUCATION PIECE</text>
+  <text class="label title" x="74" y="160">How The Hub Helps Reviewers</text>
+  <text class="mono body" x="76" y="198">Start with the reviewer packet.</text>
+  <text class="mono body" x="76" y="224">Point the story toward AI-native review from submission through publishing and management.</text>
+
+  <line class="line" x1="72" y1="252" x2="1780" y2="252" />
+
+  <!-- REVIEWER ASK PANEL -->
+  <rect class="panel" x="72" y="288" width="320" height="652" rx="28" filter="url(#softShadow)" />
+  <text class="label section" x="106" y="342">Reviewer Ask</text>
+  <text class="mono micro" x="106" y="368">NOW // REVIEWER ENTRY</text>
+  <text class="mono small" x="106" y="392">One ask starts the governed workflow.</text>
+
+  <rect class="card-soft" x="106" y="420" width="252" height="148" rx="16" />
+  <text class="label body" x="128" y="456">Example ask</text>
+  <text class="mono small" x="128" y="486">Show queue analytics.</text>
+  <text class="mono small" x="128" y="510">Package my next 5 templates</text>
+  <text class="mono small" x="128" y="534">with preview, site, and</text>
+  <text class="mono small" x="128" y="558">review context.</text>
+
+  <rect class="card-soft" x="106" y="592" width="252" height="126" rx="16" />
+  <text class="label body" x="128" y="628">Immediate value</text>
+  <text class="mono small" x="128" y="658">Reduce queue triage,</text>
+  <text class="mono small" x="128" y="682">context hunting, and</text>
+  <text class="mono small" x="128" y="706">repeatable prep work.</text>
+
+  <rect class="card-soft" x="106" y="742" width="252" height="164" rx="16" />
+  <text class="label body" x="128" y="778">Human boundary</text>
+  <text class="mono small" x="128" y="808">The Hub prepares work,</text>
+  <text class="mono small" x="128" y="832">evidence, and packaging.</text>
+  <text class="mono small" x="128" y="856">The reviewer still owns</text>
+  <text class="mono small" x="128" y="880">the official decision.</text>
+
+
+  <!-- CREATE SOMETHING HUB PANEL -->
+  <rect class="hub" x="430" y="272" width="980" height="686" rx="34" filter="url(#softShadow)" />
+  <text class="label section" x="468" y="326">CREATE SOMETHING Hub</text>
+  <text class="mono micro" x="468" y="352">NOW -> FAN OUT -> PACKET // GOVERNED MCP ORCHESTRATION</text>
+  <text class="mono small" x="468" y="376">Current reviewer-safe runtime now. Fuller AI-native stack later.</text>
+
+  <rect class="card" x="468" y="404" width="904" height="104" rx="18" />
+  <text class="label body" x="494" y="436">Upstream source plus fan-out</text>
+  <text class="mono small" x="494" y="464">Submission enters through App Validator plus WebMCP primitives.</text>
+  <text class="mono small" x="494" y="486">The Hub fans that ask into reviewer lanes, then merges one reviewer packet.</text>
+
+  <rect class="card" x="468" y="540" width="274" height="186" rx="18" />
+  <text class="label body" x="492" y="584">Queue metrics</text>
+  <text class="mono small" x="492" y="614">Backlog</text>
+  <text class="mono small" x="492" y="642">Approvals and rejections</text>
+  <text class="mono small" x="492" y="666">Turnaround</text>
+  <text class="mono small" x="492" y="690">Queue-shape context</text>
+
+  <rect class="card" x="786" y="540" width="274" height="186" rx="18" />
+  <text class="label body" x="810" y="584">Queue + assignment</text>
+  <text class="mono small" x="810" y="614">Select the next 5</text>
+  <text class="mono small" x="810" y="642">Assign reviewer or self</text>
+  <text class="mono small" x="810" y="666">Repeat per version id</text>
+  <text class="mono small" x="810" y="690">Package the next work set</text>
+
+  <rect class="card" x="1104" y="540" width="268" height="186" rx="18" />
+  <text class="label body" x="1128" y="584">Review context</text>
+  <text class="mono small" x="1128" y="614">Preview URL + site URL</text>
+  <text class="mono small" x="1128" y="642">Template primitives</text>
+  <text class="mono small" x="1128" y="666">Reviewer capabilities</text>
+  <text class="mono small" x="1128" y="690">Evidence-ready context</text>
+
+  <rect class="card-soft" x="468" y="770" width="904" height="154" rx="18" />
+  <text class="label body" x="494" y="812">Reviewer packet</text>
+  <text class="mono small" x="494" y="842">Five proposed or assigned template versions.</text>
+  <text class="mono small" x="494" y="866">Preview and site links plus compact evidence and primitive summary.</text>
+  <text class="mono small" x="494" y="890">Ready for `Auto`, `Partial`, and `Manual` framing.</text>
+
+
+  <!-- REVIEWER ACTIONS PANEL -->
+  <rect class="panel" x="1450" y="288" width="330" height="652" rx="28" filter="url(#softShadow)" />
+  <text class="label section" x="1484" y="342">Reviewer Actions</text>
+  <text class="mono micro" x="1484" y="368">TARGET // APPROVAL, PUBLISHING,</text>
+  <text class="mono micro" x="1484" y="386">MANAGEMENT</text>
+
+  <rect class="card" x="1484" y="420" width="262" height="146" rx="16" />
+  <text class="label body" x="1506" y="456">Inspect and decide</text>
+  <text class="mono small" x="1506" y="486">Open preview and site links.</text>
+  <text class="mono small" x="1506" y="510">Inspect evidence and primitives.</text>
+  <text class="mono small" x="1506" y="534">Add subjective judgment.</text>
+
+  <rect class="card" x="1484" y="590" width="262" height="206" rx="16" />
+  <text class="label body" x="1506" y="626">Reviewer-owned writes</text>
+  <text class="mono small" x="1506" y="656">Request changes</text>
+  <text class="mono small" x="1506" y="680">Approve version</text>
+  <text class="mono small" x="1506" y="704">Reject version</text>
+  <text class="mono small" x="1506" y="728">Complete publishing</text>
+  <text class="mono small" x="1506" y="754">Still explicit reviewer</text>
+  <text class="mono small" x="1506" y="774">action.</text>
+
+  <rect class="card-soft" x="1484" y="820" width="262" height="110" rx="16" />
+  <text class="label body" x="1506" y="856">Not autonomous</text>
+  <text class="mono small" x="1506" y="886">The Hub compresses</text>
+  <text class="mono small" x="1506" y="910">parallel prep work.</text>
+
+  <!-- BOTTOM CAPTION PANEL -->
+  <rect class="panel" x="72" y="980" width="1708" height="126" rx="22" />
+  <text class="mono small" x="106" y="1020">Now: a governed reviewer packet built from parallel Hub reads.</text>
+  <text class="mono small" x="106" y="1050">Target: submission -> validator plus WebMCP primitives -> Hub -> reviewer approval -> publishing -> marketplace management.</text>
+  <text class="mono small" x="106" y="1080">Explain the destination clearly without overstating what is already live in the reviewer runtime.</text>
+
+  
+  <!-- FLOW CONNECTIONS -->
+
+  <!-- Flow 1: Ask to Hub -->
+  <path class="flow-track" d="M 358 494 C 413 494, 413 456, 468 456" />
+  <path class="flow" d="M 358 494 C 413 494, 413 456, 468 456" />
+  <circle cx="358" cy="494" r="3" class="junction" />
+  <circle cx="468" cy="456" r="3" class="junction" />
+
+  <!-- Flow 2: Hub Fan-Out -->
+  <!-- Track Layer -->
+  <path class="flow-track" d="M 920 508 C 920 524, 605 524, 605 540" />
+  <path class="flow-track" d="M 920 508 L 920 540" />
+  <path class="flow-track" d="M 920 508 C 920 524, 1238 524, 1238 540" />
+  <!-- Data Flow Layer -->
+  <path class="flow" d="M 920 508 C 920 524, 605 524, 605 540" />
+  <path class="flow" d="M 920 508 L 920 540" />
+  <path class="flow" d="M 920 508 C 920 524, 1238 524, 1238 540" />
+  <circle cx="920" cy="508" r="3" class="junction" />
+  <circle cx="605" cy="540" r="3" class="junction" />
+  <circle cx="920" cy="540" r="3" class="junction" />
+  <circle cx="1238" cy="540" r="3" class="junction" />
+
+  <!-- Flow 3: Hub Merge-In (Muted) -->
+  <!-- Track Layer -->
+  <path class="flow-track-muted" d="M 605 726 C 605 748, 820 748, 820 770" />
+  <path class="flow-track-muted" d="M 920 726 L 920 770" />
+  <path class="flow-track-muted" d="M 1238 726 C 1238 748, 1020 748, 1020 770" />
+  <!-- Data Flow Layer -->
+  <path class="flow-muted" d="M 605 726 C 605 748, 820 748, 820 770" />
+  <path class="flow-muted" d="M 920 726 L 920 770" />
+  <path class="flow-muted" d="M 1238 726 C 1238 748, 1020 748, 1020 770" />
+  <circle cx="605" cy="726" r="3" class="junction-muted" />
+  <circle cx="920" cy="726" r="3" class="junction-muted" />
+  <circle cx="1238" cy="726" r="3" class="junction-muted" />
+  <circle cx="820" cy="770" r="3" class="junction-muted" />
+  <circle cx="920" cy="770" r="3" class="junction-muted" />
+  <circle cx="1020" cy="770" r="3" class="junction-muted" />
+
+  <!-- Flow 4: Hub to Reviewer Actions -->
+  <path class="flow-track" d="M 1372 847 C 1428 847, 1428 493, 1484 493" />
+  <path class="flow" d="M 1372 847 C 1428 847, 1428 493, 1484 493" />
+  <circle cx="1372" cy="847" r="3" class="junction" />
+  <circle cx="1484" cy="493" r="3" class="junction" />
+
+  <!-- Policy Guard -->
+  <path class="guard" d="M 1430 414 L 1430 930" />
+  <text class="mono micro" transform="rotate(-90 1448 900)" x="1448" y="900">POLICY GATE BEFORE REVIEWER WRITES</text>
+
+  <text class="mono micro" x="960" y="1140">Derived from `packages/webflow-template-review-mcp` + reviewer delivery pack + live Hub service surface on 2026-03-24</text>
+</svg>

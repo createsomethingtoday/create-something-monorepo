@@ -41,6 +41,8 @@ The Hub is the operating surface that:
 - standardizes policy boundaries for reads, recommendations, and writes
 - gives the team a safe pilot path before broader adoption
 
+Use `docs/WEBFLOW_TEMPLATE_REVIEW_HUB_REVIEWER_PARALLEL_VISUALIZATION.md` as the opening frame for the meeting. It shows the core reviewer value in one pass, while still naming the destination state: a WebMCP-rich, AI-native review lane from submission through publishing and marketplace management.
+
 ## 4. Demo sequence
 
 1. Show the review lane entry point and explain which systems are connected.

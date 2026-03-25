@@ -91,6 +91,7 @@ Skill-led onboarding sequence for reviewers and operators, including what is inc
 
 - `specs/webflow-marketplace/OVERVIEW.md`
 - `docs/webflow-template-checklist-mcp-coverage.md`
+- `docs/WEBFLOW_TEMPLATE_REVIEW_HUB_REVIEWER_PARALLEL_VISUALIZATION.md`
 - `docs/MCP_HUB_CONTROL_PLANE.md`
 - `docs/HUB_EXECUTION_GOVERNANCE_PLAN.md`
 - `packages/webflow-template-review-mcp/README.md`
