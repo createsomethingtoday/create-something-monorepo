@@ -269,6 +269,21 @@ export function cleanMarketplaceStatus(rawStatus: string): string {
 		.trim();
 }
 
+export function cleanMarketplaceType(rawType: unknown): Asset['type'] {
+	const candidates = toStringArray(rawType);
+	const value = candidates[0]?.toLowerCase() || String(rawType || '').toLowerCase();
+
+	if (value.includes('library')) {
+		return 'Library';
+	}
+
+	if (value.includes('app')) {
+		return 'App';
+	}
+
+	return 'Template';
+}
+
 function normalizeFieldName(fieldName: string): string {
 	return fieldName.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
@@ -495,6 +510,12 @@ export interface AssetVersion {
 	};
 }
 
+function resolveAssetType(fields: Airtable.FieldSet): Asset['type'] {
+	return cleanMarketplaceType(
+		fields['🆎Type'] ?? fields['⚙️🆎Type (Text)'] ?? fields['Type'] ?? fields['type']
+	);
+}
+
 // ==================== AIRTABLE CLIENT ====================
 
 /**
@@ -624,7 +645,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 */
 		async getAssetsByEmail(email: string): Promise<Asset[]> {
 			const escapedEmail = escapeAirtableString(email.toLowerCase());
-			const formula = `AND(FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)})), {🆎Type} = 'Template🏗️')`;
+			const formula = `FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)}))`;
 
 			const records = await base(TABLES.ASSETS)
 				.select({
@@ -643,7 +664,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					id: record.id,
 					name: record.fields['Name'] as string || '',
 					description: record.fields['📝Description'] as string || '',
-					type: 'Template' as Asset['type'],
+					type: resolveAssetType(record.fields),
 					category,
 					subcategory,
 					status: cleanedStatus || 'Draft',
@@ -706,7 +727,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					description: record.fields['📝Description'] as string || '',
 					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
 					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
-					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
+					type: resolveAssetType(record.fields),
 					category,
 					subcategory,
 					status: cleanedStatus,
@@ -771,7 +792,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					description: record.fields['📝Description'] as string || '',
 					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
 					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
-					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
+					type: resolveAssetType(record.fields),
 					category,
 					subcategory,
 					status: cleanedStatus,
@@ -873,7 +894,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					description: record.fields['📝Description'] as string || '',
 					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
 					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
-					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
+					type: resolveAssetType(record.fields),
 					category,
 					subcategory,
 					status: cleanedStatus,
