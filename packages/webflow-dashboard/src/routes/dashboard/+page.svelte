@@ -252,6 +252,7 @@
       <section class="assets-section" id="asset-portfolio">
         <AssetsDisplay
           assets={data.assets || []}
+          errorMessage={data.assetsError}
           {searchTerm}
           onSearch={handleSearch}
           onView={handleViewAsset}

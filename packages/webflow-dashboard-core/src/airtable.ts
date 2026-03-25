@@ -291,6 +291,21 @@ export function escapeAirtableString(input: string): string {
   return input.replace(/'/g, "''");
 }
 
+export function buildCreatorEmailMatchFormula(email: string): string {
+  const normalizedEmail = email.trim().toLowerCase();
+  const escapedEmail = escapeAirtableString(normalizedEmail);
+  const clauses = CREATOR_EMAIL_FIELDS_PRIORITY.map(
+    (field) =>
+      `FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({${field}}, ",")), IFERROR(LOWER({${field}}), ""))) > 0`
+  );
+
+  return `OR(${clauses.join(', ')})`;
+}
+
+export function buildAssetListFormula(email: string): string {
+  return `AND(${buildCreatorEmailMatchFormula(email)}, {🆎Type} = 'Template🏗️')`;
+}
+
 export function validateEmail(email: string): string {
   if (!email || typeof email !== 'string') {
     throw new Error('Email must be a non-empty string');
@@ -677,8 +692,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     },
 
     async getAssetsByEmail(email: string): Promise<Asset[]> {
-      const escapedEmail = escapeAirtableString(email.toLowerCase());
-      const formula = `AND(FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)})), {🆎Type} = 'Template🏗️')`;
+      const formula = buildAssetListFormula(email);
 
       const records = await base(TABLES.ASSETS)
         .select({
@@ -792,13 +806,12 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
     async verifyAssetOwnership(assetId: string, email: string): Promise<boolean> {
       const normalizedEmail = email.toLowerCase();
-      const escapedEmail = escapeAirtableString(normalizedEmail);
       const escapedAssetId = escapeAirtableString(assetId);
 
       try {
         const dashboardLikeFormula = `AND(
           RECORD_ID() = '${escapedAssetId}',
-          FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)}))
+          ${buildCreatorEmailMatchFormula(normalizedEmail)}
         )`;
         const dashboardMatches = await base(TABLES.ASSETS)
           .select({ filterByFormula: dashboardLikeFormula, maxRecords: 1 })
@@ -837,11 +850,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       try {
         const formula = `AND(
           RECORD_ID() = '${escapedAssetId}',
-          OR(
-            FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator Email}, ",")), IFERROR(LOWER({🎨📧 Creator Email}), ""))) > 0,
-            FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator WF Account Email}, ",")), IFERROR(LOWER({🎨📧 Creator WF Account Email}), ""))) > 0,
-            FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({📧Emails (from 🎨Creator)}, ",")), IFERROR(LOWER({📧Emails (from 🎨Creator)}), ""))) > 0
-          )
+          ${buildCreatorEmailMatchFormula(normalizedEmail)}
         )`;
         const matches = await base(TABLES.ASSETS)
           .select({ filterByFormula: formula, maxRecords: 1 })
@@ -910,14 +919,13 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         }
       }
 
-      const escapedEmail = escapeAirtableString(normalizedEmail);
       const escapedAssetId = escapeAirtableString(assetId);
 
       let dashboardLikeFormulaMatched = false;
       try {
         const dashboardLikeFormula = `AND(
           RECORD_ID() = '${escapedAssetId}',
-          FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)}))
+          ${buildCreatorEmailMatchFormula(normalizedEmail)}
         )`;
         const matches = await base(TABLES.ASSETS)
           .select({ filterByFormula: dashboardLikeFormula, maxRecords: 1 })
@@ -931,11 +939,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       try {
         const formula = `AND(
           RECORD_ID() = '${escapedAssetId}',
-          OR(
-            FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator Email}, ",")), IFERROR(LOWER({🎨📧 Creator Email}), ""))) > 0,
-            FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator WF Account Email}, ",")), IFERROR(LOWER({🎨📧 Creator WF Account Email}), ""))) > 0,
-            FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({📧Emails (from 🎨Creator)}, ",")), IFERROR(LOWER({📧Emails (from 🎨Creator)}), ""))) > 0
-          )
+          ${buildCreatorEmailMatchFormula(normalizedEmail)}
         )`;
         const matches = await base(TABLES.ASSETS)
           .select({ filterByFormula: formula, maxRecords: 1 })

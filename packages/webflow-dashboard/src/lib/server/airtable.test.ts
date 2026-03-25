@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
-
-import { cleanMarketplaceStatus, cleanMarketplaceType, resolveAssetType } from './airtable';
+import {
+	buildAssetListFormula,
+	buildCreatorEmailMatchFormula,
+	cleanMarketplaceStatus,
+	cleanMarketplaceType,
+	resolveAssetType
+} from './airtable';
 
 describe('cleanMarketplaceType', () => {
 	it('normalizes template-like Airtable values to Template', () => {
@@ -41,5 +46,25 @@ describe('cleanMarketplaceStatus', () => {
 	it('removes emoji prefixes from statuses', () => {
 		expect(cleanMarketplaceStatus('1️⃣🆕Upcoming')).toBe('Upcoming');
 		expect(cleanMarketplaceStatus('3️⃣🚀Published')).toBe('Published');
+	});
+});
+
+describe('Airtable asset formulas', () => {
+	it('matches creator emails across all dashboard ownership fields', () => {
+		const formula = buildCreatorEmailMatchFormula('Creator@Example.com');
+
+		expect(formula).toContain("FIND('creator@example.com'");
+		expect(formula).toContain('{🎨📧 Creator Email}');
+		expect(formula).toContain('{🎨📧 Creator WF Account Email}');
+		expect(formula).toContain('{📧Emails (from 🎨Creator)}');
+		expect(formula).toContain('{CREATOR_EMAIL}');
+	});
+
+	it('escapes single quotes and leaves asset type filtering to the caller', () => {
+		const formula = buildAssetListFormula("o'connor@example.com");
+
+		expect(formula).toContain("o''connor@example.com");
+		expect(formula).not.toContain("{🆎Type} = 'Template🏗️'");
+		expect(formula.startsWith('OR(')).toBe(true);
 	});
 });

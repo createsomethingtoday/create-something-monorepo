@@ -40,6 +40,7 @@
 
   interface Props {
     assets: Asset[];
+    errorMessage?: string | null;
     searchTerm?: string;
     onSearch?: (term: string) => void;
     onView?: (id: string) => void;
@@ -48,7 +49,16 @@
     onRefresh?: () => void;
   }
 
-  let { assets, searchTerm = '', onSearch, onView, onEdit, onArchive, onRefresh }: Props = $props();
+  let {
+    assets,
+    errorMessage = null,
+    searchTerm = '',
+    onSearch,
+    onView,
+    onEdit,
+    onArchive,
+    onRefresh
+  }: Props = $props();
 
   let showPerformance = $state(false);
   let expandedGroups = $state<string[]>([]);
@@ -243,7 +253,25 @@
     </div>
   </div>
 
-  {#if groupedAssetsByType.length === 0}
+  {#if errorMessage}
+    <Card>
+      <CardContent>
+        <div class="empty-state empty-state--error">
+          <AlertTriangle size={64} strokeWidth={1.5} />
+          <h3>Assets unavailable</h3>
+          <p>{errorMessage}</p>
+          {#if onRefresh}
+            <div class="empty-actions">
+              <Button variant="secondary" onclick={onRefresh}>
+                <RefreshCw size={14} />
+                Refresh assets
+              </Button>
+            </div>
+          {/if}
+        </div>
+      </CardContent>
+    </Card>
+  {:else if groupedAssetsByType.length === 0}
     <Card>
       <CardContent>
         <div class="empty-state">
