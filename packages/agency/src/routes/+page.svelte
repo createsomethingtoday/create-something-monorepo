@@ -152,7 +152,7 @@
   <div class="hero-container">
     <div class="hero-content">
       <BlurFade delay={0}>
-        <h1 class="hero-title">Fix the workflow your team still protects by hand.</h1>
+        <h1 class="hero-title">Fix your team workflows.</h1>
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-detail">
