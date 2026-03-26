@@ -826,7 +826,7 @@ async function runLocalAnalyzerReview(
         '--published-url',
         asset.websiteUrl ?? '',
         '--mode',
-        'async',
+        'sync',
         '--crawl-max-pages',
         String(args.crawlMaxPages),
         '--crawl-max-depth',
