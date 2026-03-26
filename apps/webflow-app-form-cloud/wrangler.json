@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "webflow-app-form",
+  "main": "custom-worker.ts",
+  "compatibility_date": "2026-03-17",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "SUBMISSIONS_DB",
+      "database_name": "webflow-app-form",
+      "database_id": "auto-generated-by-webflow-cloud",
+      "migrations_dir": "./scripts/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FORM_UPLOADS",
+      "bucket_name": "webflow-app-form-uploads"
+    }
+  ]
+}

@@ -1,10 +1,14 @@
 import {
+  APP_REVIEW_STATUS_OPTIONS,
+  normalizeAppReviewQueueStatus,
+  type AppReviewQueueStatus,
+} from '@create-something/webflow-marketplace-core';
+import {
   CAPABILITIES_OPTIONS,
   DEFAULT_AIRTABLE_BASE_ID,
   FIELD_IDS,
   MARKETPLACE_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
-  REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
   TABLE_IDS,
   VISIBILITY_OPTIONS,
@@ -177,15 +181,6 @@ export interface AppReviewVersion {
   daysInCurrentStage?: number;
   createdTime?: string;
 }
-
-export type AppReviewQueueStatus =
-  | 'ready_to_review'
-  | 'in_review'
-  | 'changes_requested'
-  | 'approved'
-  | 'rejected'
-  | 'on_hold'
-  | 'archived';
 
 export type AppReviewQueueAssignmentFilter = 'any' | 'assigned' | 'unassigned';
 export type AppReviewQueueSort = 'submissionDatetime_desc' | 'submissionDatetime_asc' | 'versionNumber_desc' | 'versionNumber_asc';
@@ -399,26 +394,12 @@ function mapVersionRecord(record: AirtableRecord): AppReviewVersion {
 }
 
 function normalizeQueueStatus(asset: AppReviewAsset, version?: AppReviewVersion | null): AppReviewQueueStatus | null {
-  const candidates = [
+  return normalizeAppReviewQueueStatus([
     version?.reviewStatus,
     asset.latestReviewStatus,
     ...(asset.openReviewStatus ?? []),
     asset.marketplaceStatus,
-  ].filter((value): value is string => Boolean(value));
-
-  for (const candidate of candidates) {
-    if (/ready/i.test(candidate)) return 'ready_to_review';
-    if (/training check|in review|admin feedback review|managed feedback review|admin approval review|admin rejection review/i.test(candidate)) {
-      return 'in_review';
-    }
-    if (/changes requested|response to review/i.test(candidate)) return 'changes_requested';
-    if (/approved/i.test(candidate)) return 'approved';
-    if (/rejected/i.test(candidate)) return 'rejected';
-    if (/on hold/i.test(candidate)) return 'on_hold';
-    if (/archived/i.test(candidate)) return 'archived';
-  }
-
-  return null;
+  ]);
 }
 
 function toQueueItem(
@@ -945,10 +926,10 @@ export class AirtableClient {
     const fields: Record<string, unknown> = {};
 
     if (input.review_status !== undefined) {
-      if (!(REVIEW_STATUS_OPTIONS as readonly string[]).includes(input.review_status)) {
+      if (!(APP_REVIEW_STATUS_OPTIONS as readonly string[]).includes(input.review_status)) {
         throw new AirtableClientError('INVALID_REVIEW_STATUS', 'Unsupported review status.', 400, {
           value: input.review_status,
-          allowed: REVIEW_STATUS_OPTIONS,
+          allowed: APP_REVIEW_STATUS_OPTIONS,
         });
       }
       fields[FIELD_IDS.versions.reviewStatus] = input.review_status;

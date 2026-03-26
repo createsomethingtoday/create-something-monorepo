@@ -16,6 +16,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@create-something/webflow-marketplace-core": "file:../webflow-marketplace-core",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "zod": "^3.23.0"
   },

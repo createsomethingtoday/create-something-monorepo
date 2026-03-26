@@ -1,3 +1,8 @@
+import {
+  calculateMarketplaceWarningLevel,
+  MARKETPLACE_TEMPLATE_SUBMISSION_POLICY,
+} from '@create-something/webflow-marketplace-core';
+
 export interface AssetSubmissionLike {
   id: string;
   name: string;
@@ -23,9 +28,9 @@ export interface ExternalSubmissionStatus {
   isWhitelisted?: boolean;
 }
 
-export const SUBMISSION_LIMIT = 6;
-export const ROLLING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
-export const WARNING_THRESHOLD = 2;
+export const SUBMISSION_LIMIT = MARKETPLACE_TEMPLATE_SUBMISSION_POLICY.submissionLimit;
+export const ROLLING_WINDOW_MS = MARKETPLACE_TEMPLATE_SUBMISSION_POLICY.rollingWindowMs;
+export const WARNING_THRESHOLD = MARKETPLACE_TEMPLATE_SUBMISSION_POLICY.warningThreshold;
 export const SUBMISSION_STATUS_URL = 'https://check-asset-name.vercel.app/api/checkTemplateuser';
 
 export function formatTimeUntil(ms: number | null): string {
@@ -52,10 +57,7 @@ export function calculateWarningLevel(
   remaining: number,
   isWhitelisted: boolean
 ): 'none' | 'caution' | 'critical' {
-  if (isWhitelisted) return 'none';
-  if (remaining <= 0) return 'critical';
-  if (remaining <= WARNING_THRESHOLD) return 'caution';
-  return 'none';
+  return calculateMarketplaceWarningLevel(remaining, isWhitelisted);
 }
 
 export function calculateLocalSubmissionData(assets: AssetSubmissionLike[]) {

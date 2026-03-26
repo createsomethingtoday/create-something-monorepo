@@ -31,6 +31,8 @@ Read in this order when you need broad repo context:
 ### Architecture and control planes
 
 - [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md)
+- [WEBFLOW_MARKETPLACE_SYSTEM_OVERVIEW.md](./WEBFLOW_MARKETPLACE_SYSTEM_OVERVIEW.md)
+- [WEBFLOW_MARKETPLACE_SURFACE_REGISTRY.md](./WEBFLOW_MARKETPLACE_SURFACE_REGISTRY.md)
 - [MCP_HUB_CONTROL_PLANE.md](./MCP_HUB_CONTROL_PLANE.md)
 - [HUB_CODEX_MCP_VISUALIZATION.md](./HUB_CODEX_MCP_VISUALIZATION.md)
 - [HUB_EXECUTION_GOVERNANCE_PLAN.md](./HUB_EXECUTION_GOVERNANCE_PLAN.md)
@@ -42,6 +44,7 @@ Read in this order when you need broad repo context:
 ### Policy and judgment
 
 - [policies/README.md](./policies/README.md)
+- [policies/v1/policy.webflow-marketplace-intake-governance.v1.md](./policies/v1/policy.webflow-marketplace-intake-governance.v1.md)
 - [guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md](./guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md)
 - [MCP_CATALOG_EXPOSURE_POLICY.md](./MCP_CATALOG_EXPOSURE_POLICY.md)
 - [AGENCY_USER_PROVISIONING_POLICY.md](./AGENCY_USER_PROVISIONING_POLICY.md)

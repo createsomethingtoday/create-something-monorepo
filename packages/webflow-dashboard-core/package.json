@@ -22,6 +22,7 @@
     "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
+    "@create-something/webflow-marketplace-core": "file:../webflow-marketplace-core",
     "airtable": "^0.12.2"
   },
   "devDependencies": {

@@ -1,0 +1,458 @@
+[
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1758811949769_a3nha"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1758811949770_oxzrp"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1758902308614_modiu"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1758902308616_4lzc5"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1758993232343_5ltig"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1758993232343_gww2j"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1759515968051_cs4be"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1759515968052_6jv1f"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1760022013906_ukk0t"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1760022013907_ai7d3"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1760113588714_9gp8h"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1760113588714_mqb30"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1760362854296_hpnw2"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1760362854298_dlbso"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1760452399258_mb4rg"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1760452399259_qf0h0"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1760577977347_odiwl"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1760577977347_0f4dy"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1761586133784_m43ig"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1761586133784_tst82"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1761686987835_7ic3m"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1761686987835_jwiqj"
+  },
+  {
+    "name": "High Failure Rate",
+    "condition": {
+      "metric": "failure_rate",
+      "operator": "gt",
+      "threshold": 0.2,
+      "timeWindowMinutes": 60
+    },
+    "severity": "high",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 30,
+    "id": "rule_1761755398895_aynlx"
+  },
+  {
+    "name": "Slow Execution",
+    "condition": {
+      "metric": "duration",
+      "operator": "gt",
+      "threshold": 300000,
+      "timeWindowMinutes": 30
+    },
+    "severity": "medium",
+    "channels": [
+      {
+        "type": "console",
+        "config": {}
+      }
+    ],
+    "enabled": true,
+    "cooldownMinutes": 15,
+    "id": "rule_1761755398897_4jegc"
+  }
+]

@@ -1,4 +1,8 @@
 import {
+  calculateRemainingSubmissionSlots,
+  isMarketplaceTemplateActiveReviewStatus,
+} from '@create-something/webflow-marketplace-core';
+import {
   calculateLocalSubmissionData,
   fetchExternalSubmissionStatus,
   formatTimeUntil,
@@ -21,14 +25,7 @@ export interface CreatorEligibilityResult {
 }
 
 function isActiveReviewAsset(asset: Asset): boolean {
-  const status = (asset.status || '').toLowerCase();
-  if (!status) return false;
-
-  if (status.includes('published') || status.includes('rejected') || status.includes('delisted')) {
-    return false;
-  }
-
-  return /ready|review|submitted|changes requested|response/i.test(status);
+  return isMarketplaceTemplateActiveReviewStatus(asset.status || '');
 }
 
 function localEligibilityMessage(remainingSubmissions: number, activeReviewCount: number, publishedCount: number) {
@@ -88,9 +85,10 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
 
   const remainingSubmissions = externalSubmission.hasError
     ? localSubmission.remainingSubmissions
-    : externalSubmission.isWhitelisted
-      ? Number.POSITIVE_INFINITY
-      : Math.max(0, 6 - externalSubmission.assetsSubmitted30);
+    : calculateRemainingSubmissionSlots(
+        externalSubmission.assetsSubmitted30,
+        Boolean(externalSubmission.isWhitelisted)
+      );
 
   try {
     const remote = await checkRemoteCreatorEligibility(email);

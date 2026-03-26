@@ -1,3 +1,5 @@
+import { APP_REVIEW_STATUS_OPTIONS } from '@create-something/webflow-marketplace-core';
+
 export const DEFAULT_AIRTABLE_BASE_ID = 'appMoIgXMTTTNIc3p';
 
 export const TABLE_IDS = {
@@ -78,31 +80,7 @@ export const CAPABILITIES_OPTIONS = [
   'Hybrid',
 ] as const;
 
-export const REVIEW_STATUS_OPTIONS = [
-  '🆕Ready for Review',
-  '🏃🏾In Review',
-  'Training Check',
-  '👀Admin Feedback Review',
-  '👀Managed Feedback Review',
-  '📤Changes Requested',
-  '📤Changes Requested (No Notification)',
-  '🔁Response to Review',
-  '👀Admin Approval Review',
-  '✅Approved',
-  '✅Approved (No Notification)',
-  '⏸️On Hold',
-  '👀Admin Rejection Review',
-  '❌Rejected',
-  '❌Rejected (No Notification)',
-  '🚨Error: Reason Missing',
-  '🚨Error: Release Missing',
-  '🚨Error: Feedback Missing',
-  '🚨Error: Review Not Started',
-  '🚨Error: Field Missing (Email, Type, etc.)',
-  '🚨Error: Publishing Checklist Incomplete',
-  '☠️Archived',
-  '☠️Archived (Auto)',
-] as const;
+export const REVIEW_STATUS_OPTIONS = APP_REVIEW_STATUS_OPTIONS;
 
 export const REVIEW_TYPE_OPTIONS = [
   'New Asset',
@@ -352,4 +330,3 @@ export const APP_REVIEW_FIELD_MAP = {
     rejectionReason: REJECTION_REASON_OPTIONS,
   },
 } as const;
-

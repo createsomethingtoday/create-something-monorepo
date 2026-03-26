@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {
+  normalizeTemplateReviewQueueStatus,
+  TEMPLATE_REVIEW_STATUS_OPTIONS,
+} from '@create-something/webflow-marketplace-core';
 
 import { AirtableClient } from '../src/airtable.js';
 import {
@@ -115,6 +119,22 @@ test('getMarketplaceMetrics reads id-keyed fields so analytics survive display-n
   assert.equal(metrics.backlogSnapshot.approved, 1);
   assert.equal(metrics.turnaround.decidedCount, 1);
   assert.equal(metrics.turnaround.averageHours, 30);
+});
+
+test('shared review status helpers normalize reviewer and marketplace labels', () => {
+  assert.equal(
+    normalizeTemplateReviewQueueStatus(['🏃🏾In Review']),
+    'in_review',
+  );
+  assert.equal(
+    normalizeTemplateReviewQueueStatus(['📤Changes Requested']),
+    'changes_requested',
+  );
+  assert.equal(
+    normalizeTemplateReviewQueueStatus(['3️⃣Published🚀']),
+    'published',
+  );
+  assert.ok(TEMPLATE_REVIEW_STATUS_OPTIONS.includes('✅Approved'));
 });
 
 test('getMarketplaceMetrics preserves Airtable list error details for schema drift debugging', async () => {
