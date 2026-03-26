@@ -340,6 +340,62 @@ function asStringArray(value: unknown, limit = 8): string[] {
     .slice(0, limit);
 }
 
+function normalizeUnifiedTemplateReviewReport(
+  value: unknown,
+  depth = 0,
+): UnifiedTemplateReviewReport | null {
+  if (depth > 3) return null;
+
+  const record = asRecord(value);
+  const hasCoreFields =
+    typeof record.generatedAt === 'string' &&
+    typeof record.provider === 'string' &&
+    typeof record.previewUrl === 'string' &&
+    typeof record.publishedUrl === 'string';
+
+  if (hasCoreFields) {
+    return record as unknown as UnifiedTemplateReviewReport;
+  }
+
+  if (record.result) {
+    const nested = normalizeUnifiedTemplateReviewReport(record.result, depth + 1);
+    if (nested) return nested;
+  }
+
+  if (record.report) {
+    const nested = normalizeUnifiedTemplateReviewReport(record.report, depth + 1);
+    if (nested) return nested;
+  }
+
+  return null;
+}
+
+function normalizeTemplateReviewJobRecord(value: unknown, depth = 0): TemplateReviewJobRecord | null {
+  if (depth > 3) return null;
+
+  const record = asRecord(value);
+  const hasCoreFields =
+    typeof record.jobId === 'string' &&
+    typeof record.status === 'string' &&
+    typeof record.queuedAt === 'string';
+
+  if (hasCoreFields) {
+    return record as unknown as TemplateReviewJobRecord;
+  }
+
+  if (record.result) {
+    const nested = normalizeTemplateReviewJobRecord(record.result, depth + 1);
+    if (nested) return nested;
+  }
+
+  if (record.job) {
+    const nested = normalizeTemplateReviewJobRecord(record.job, depth + 1);
+    if (nested) return nested;
+  }
+
+  return null;
+}
+
 function normalizeUrl(raw: string, origin: string): string | null {
   try {
     const url = new URL(raw, origin);
@@ -559,26 +615,41 @@ function serializeAnalyzerReport(result: AnalyzerReviewOutcome | null): Record<s
     };
   }
 
-  const designer = asRecord(result.report.designer);
+  const report = normalizeUnifiedTemplateReviewReport(result.report);
+  if (!report) {
+    return {
+      status: 'error',
+      source: result.source,
+      tool: result.tool,
+      error: 'Analyzer returned an unrecognized report payload.',
+      rawKeys: Object.keys(asRecord(result.report)).slice(0, 20),
+    };
+  }
+
+  const designer = asRecord(report.designer);
   const designerMetadataSummary = asRecord(designer.metadataSummary);
   const designerSummary = asRecord(designer.summary);
+  const precheck = asRecord(report.precheck);
+  const published = asRecord(report.published);
+  const publishedPages = Array.isArray(published.pages) ? published.pages.map((page) => asRecord(page)) : [];
+  const rows = Array.isArray(report.rows) ? report.rows : [];
 
   return {
     status: 'ok',
     source: result.source,
     tool: result.tool,
-    provider: result.report.provider,
-    generatedAt: result.report.generatedAt,
-    summary: result.report.summary,
-    precheck: result.report.precheck
+    provider: report.provider,
+    generatedAt: report.generatedAt,
+    summary: report.summary,
+    precheck: Object.keys(precheck).length > 0
       ? {
-          discoveredUrls: result.report.precheck.discoveredUrls.slice(0, 12),
-          requiredPages: result.report.precheck.requiredPages,
-          sitemap: result.report.precheck.sitemap,
-          errors: result.report.precheck.errors,
+          discoveredUrls: asStringArray(precheck.discoveredUrls, 12),
+          requiredPages: precheck.requiredPages ?? null,
+          sitemap: precheck.sitemap ?? null,
+          errors: asStringArray(precheck.errors, 12),
         }
       : null,
-    providerMetrics: result.report.providerMetrics ?? null,
+    providerMetrics: report.providerMetrics ?? null,
     designer: {
       metadataSummary: {
         siteName:
@@ -602,24 +673,27 @@ function serializeAnalyzerReport(result: AnalyzerReviewOutcome | null): Record<s
       },
       summary: designerSummary,
     },
-    published: {
-      visitedPages: result.report.published.visitedPages,
-      auditedPages: result.report.published.auditedPages,
-      pagesWithSnippet: result.report.published.pagesWithSnippet,
-      failingPages: result.report.published.failingPages,
-      snippetVersion: result.report.published.snippetVersion,
-      sitemapStatus: result.report.published.sitemapStatus,
-      issueCounts: result.report.published.issueCounts,
-      samplePages: result.report.published.pages.slice(0, 6).map((page) => ({
-        url: page.url,
-        statusCode: page.statusCode,
-        hasSnippet: page.hasSnippet,
-        failCount: page.summary?.failCount ?? 0,
-        failReasons: page.summary?.failReasons?.slice(0, 5) ?? [],
-        error: page.error ?? null,
-      })),
-    },
-    keyRows: result.report.rows
+    published:
+      Object.keys(published).length > 0
+        ? {
+            visitedPages: typeof published.visitedPages === 'number' ? published.visitedPages : publishedPages.length,
+            auditedPages: typeof published.auditedPages === 'number' ? published.auditedPages : null,
+            pagesWithSnippet: typeof published.pagesWithSnippet === 'number' ? published.pagesWithSnippet : null,
+            failingPages: typeof published.failingPages === 'number' ? published.failingPages : null,
+            snippetVersion: typeof published.snippetVersion === 'string' ? published.snippetVersion : null,
+            sitemapStatus: published.sitemapStatus ?? null,
+            issueCounts: published.issueCounts ?? null,
+            samplePages: publishedPages.slice(0, 6).map((page) => ({
+              url: typeof page.url === 'string' ? page.url : null,
+              statusCode: typeof page.statusCode === 'number' ? page.statusCode : null,
+              hasSnippet: page.hasSnippet === true,
+              failCount: asRecord(page.summary).failCount ?? 0,
+              failReasons: asStringArray(asRecord(page.summary).failReasons, 5),
+              error: typeof page.error === 'string' ? page.error : null,
+            })),
+          }
+        : null,
+    keyRows: rows
       .filter((row) => row.status === 'fail' || row.status === 'partial')
       .slice(0, 14)
       .map((row) => ({
@@ -650,7 +724,8 @@ function formatFeedback(model: string, body: string): string {
 
 function parseToolJson(result: unknown): unknown {
   const record = asRecord(result);
-  const structuredContent = asRecord(record.structuredContent);
+  const hasStructuredContent = Object.prototype.hasOwnProperty.call(record, 'structuredContent');
+  const structuredContent = hasStructuredContent ? record.structuredContent : undefined;
   const content = Array.isArray(record.content) ? record.content : [];
   const rawText = content
     .map((entry) => asRecord(entry))
@@ -659,8 +734,8 @@ function parseToolJson(result: unknown): unknown {
     .join('\n')
     .trim();
 
-  let parsed: unknown = structuredContent ?? null;
-  if (!parsed && rawText) {
+  let parsed: unknown = structuredContent;
+  if (parsed == null && rawText) {
     try {
       parsed = JSON.parse(rawText);
     } catch {
@@ -802,7 +877,10 @@ async function runLocalAnalyzerReview(
       }
 
       try {
-        const report = JSON.parse(stdout.trim()) as UnifiedTemplateReviewReport;
+        const report = normalizeUnifiedTemplateReviewReport(JSON.parse(stdout.trim()));
+        if (!report) {
+          throw new Error('Local analyzer produced an unrecognized report payload.');
+        }
         resolve({
           ok: true,
           source: 'stdio',
@@ -1088,12 +1166,12 @@ async function runAnalyzerReview(
       };
 
       if (context.toolNames.has('run_template_review')) {
-        const reviewData = (await context.callTool(
+        const reviewData = normalizeUnifiedTemplateReviewReport(await context.callTool(
           'run_template_review',
           toolArgs,
-        )) as UnifiedTemplateReviewReport | null;
+        ));
         if (!reviewData) {
-          throw new Error('Analyzer returned an empty synchronous review payload.');
+          throw new Error('Analyzer returned an unrecognized synchronous review payload.');
         }
 
         return {
@@ -1119,11 +1197,11 @@ async function runAnalyzerReview(
         const startedAt = Date.now();
         let lastProgressSignature = '';
         while (Date.now() - startedAt < args.analyzerMaxWaitMs) {
-          const jobData = (await context.callTool('get_template_review_job', {
+          const jobData = normalizeTemplateReviewJobRecord(await context.callTool('get_template_review_job', {
             jobId,
-          })) as TemplateReviewJobRecord | null;
+          }));
           if (!jobData) {
-            throw new Error(`Analyzer returned an empty job payload for ${jobId}.`);
+            throw new Error(`Analyzer returned an unrecognized job payload for ${jobId}.`);
           }
 
           const progress = jobData.progress;
@@ -1138,6 +1216,10 @@ async function runAnalyzerReview(
           }
 
           if (jobData.status === 'succeeded' && jobData.result) {
+            const report = normalizeUnifiedTemplateReviewReport(jobData.result);
+            if (!report) {
+              throw new Error(`Analyzer job ${jobId} succeeded without a recognizable review report.`);
+            }
             console.error(
               `[template-review:agent-feedback] analyzer job ${jobId} succeeded in ${Date.now() - startedAt}ms`,
             );
@@ -1145,7 +1227,7 @@ async function runAnalyzerReview(
               ok: true,
               source: context.source,
               tool: 'enqueue_template_review',
-              report: jobData.result,
+              report,
             };
           }
           if (jobData.status === 'failed' || jobData.status === 'canceled') {
