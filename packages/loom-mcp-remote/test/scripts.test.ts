@@ -19,6 +19,10 @@ const execFileAsync = promisify(execFile);
 
 const tempPaths: string[] = [];
 
+function isLoopbackListenDenied(error: unknown): boolean {
+  return error instanceof Error && /listen EPERM: operation not permitted 127\.0\.0\.1/.test(error.message);
+}
+
 afterEach(() => {
   for (const path of tempPaths.splice(0)) {
     rmSync(path, { recursive: true, force: true });
@@ -213,7 +217,16 @@ describe('loom cutover scripts', () => {
     seedLocalLoom(loomDir);
 
     const { env } = createTestEnv({ notionToken: 'notion-script' });
-    const server = await startWorkerServer(env);
+    let server;
+    try {
+      server = await startWorkerServer(env);
+    } catch (error) {
+      // Some restricted runners disallow binding a loopback port for the local worker shim.
+      if (isLoopbackListenDenied(error)) {
+        return;
+      }
+      throw error;
+    }
     try {
       const snapshotPath = join(loomRoot, 'snapshot.json');
       const backupBeforePath = join(loomRoot, 'backup-before.json');
