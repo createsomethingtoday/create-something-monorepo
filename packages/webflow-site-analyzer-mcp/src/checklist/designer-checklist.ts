@@ -277,13 +277,23 @@ export function scoreDesignerChecklist(
       [`found=${hasStyleGuidePage}`]
     )
   );
+  const hasAdvancedInteractions = metadata.totalInteractions > 0;
+  const instructionsStatus: ChecklistResult = hasAdvancedInteractions
+    ? hasInstructionsPage
+      ? 'pass'
+      : 'fail'
+    : 'pass'; // Not required when no advanced interactions/components are used
   checks.push(
     check(
       'pages.instructions_exists',
       'Required Pages',
       'Instructions page exists when advanced interactions/components are used',
-      hasInstructionsPage ? 'pass' : 'fail',
-      [`found=${hasInstructionsPage}`]
+      instructionsStatus,
+      [
+        `found=${hasInstructionsPage}`,
+        `hasAdvancedInteractions=${hasAdvancedInteractions}`,
+        `totalInteractions=${metadata.totalInteractions}`
+      ]
     )
   );
   checks.push(
@@ -413,7 +423,8 @@ export function scoreDesignerChecklist(
       totalCMSCollections: metadata.cmsCollections.length,
       totalCMSItems: metadata.totalCMSItems,
       totalAssets: metadata.totalAssets,
-      breakpoints: metadata.breakpoints
+      breakpoints: metadata.breakpoints,
+      pages: metadata.pages.map((page) => ({ name: page.name, type: page.type }))
     },
     summary: {
       pass,

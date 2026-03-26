@@ -470,6 +470,7 @@ export interface DesignerChecklistReport {
     totalCMSItems: number;
     totalAssets: number;
     breakpoints: string[];
+    pages: Array<{ name: string; type: string }>;
   };
   summary: DesignerChecklistSummary;
   checks: DesignerChecklistCheck[];
@@ -579,6 +580,12 @@ export interface PublishedSnippetPageResult {
   hasRequiredLicenseText?: boolean | null;
   error?: string | null;
   summary?: PublishedSnippetPageSummary | null;
+  policyChecks?: {
+    hasPoweredByWebflow?: boolean;
+    affiliateLinks?: string[];
+    hasGsap?: boolean;
+    hasCustomCode?: boolean;
+  };
 }
 
 export interface PublishedSnippetCrawlResult {
@@ -604,6 +611,13 @@ export interface PublishedSnippetCrawlResult {
       }
     | { ok: false; error: string };
   issueCounts: PublishedSnippetIssueCounts;
+  policyChecks: {
+    hasPoweredByWebflow: boolean;
+    affiliateLinkCount: number;
+    affiliateLinks: string[];
+    hasGsap: boolean;
+    hasCustomCode: boolean;
+  };
   pages: PublishedSnippetPageResult[];
 }
 

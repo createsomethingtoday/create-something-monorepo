@@ -598,8 +598,154 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     ? bodyText.includes(REQUIRED_LICENSE_TEXT)
     : null;
 
+  // Policy checks: deterministic, run regardless of __wfReview availability
+  const poweredByBadge = document.querySelector('.w-webflow-badge') ||
+    document.querySelector('a[href*="webflow.com"][class*="badge"]') ||
+    document.querySelector('a[href*="webflow.com"]');
+  const hasPoweredByWebflow = Boolean(
+    poweredByBadge &&
+    (poweredByBadge.textContent || '').toLowerCase().includes('webflow')
+  );
+
+  const allHrefs = Array.from(document.querySelectorAll('a[href]'))
+    .map(a => (a.getAttribute('href') || '').toLowerCase());
+  const affiliatePatterns = [
+    'ref=', 'affiliate', 'aff=', 'partner=', 'referral',
+    'utm_source=affiliate', 'tap_a=', 'idev_id=', 'click_id='
+  ];
+  const affiliateLinks = allHrefs.filter(href =>
+    affiliatePatterns.some(p => href.includes(p))
+  );
+
+  const scriptEls = Array.from(document.querySelectorAll('script'));
+  const scriptSrcs = scriptEls.map(s => s.src || '').filter(Boolean);
+  const inlineCode = scriptEls.map(s => (s.textContent || '').slice(0, 2000)).join(' ');
+  const hasGsap = scriptSrcs.some(src => src.toLowerCase().includes('gsap')) ||
+    inlineCode.includes('gsap') || inlineCode.includes('ScrollTrigger') ||
+    inlineCode.includes('ScrollSmoother');
+  const hasCustomCode = scriptEls.some(s =>
+    !s.src && (s.textContent || '').trim().length > 50 &&
+    !s.getAttribute('data-wf-domain')
+  );
+
   const api = window.__wfReview;
   if (!api) {
+    // DOM fallback: extract page-level signals directly when __wfReview is missing
+    const headingEls = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    const headingLevels = Array.from(headingEls).map(el => parseInt(el.tagName[1], 10));
+    const h1Count = headingLevels.filter(l => l === 1).length;
+    let skippedLevels = 0;
+    const seenLevels = new Set();
+    for (const level of headingLevels) {
+      if (level > 1 && !seenLevels.has(level - 1) && level - 1 !== 0) {
+        // Check if any heading of the preceding level exists
+        if (!headingLevels.includes(level - 1)) skippedLevels++;
+      }
+      seenLevels.add(level);
+    }
+    const emptyHeadings = Array.from(headingEls).filter(el => !(el.textContent || '').trim()).length;
+
+    const imgEls = Array.from(document.querySelectorAll('img'));
+    const missingAlt = imgEls.filter(img => !img.hasAttribute('alt') || img.alt === '').length;
+    const missingDimensions = imgEls.filter(img =>
+      !img.hasAttribute('width') && !img.hasAttribute('height') &&
+      !img.style.aspectRatio && !(img.getAttribute('style') || '').includes('aspect-ratio')
+    ).length;
+    const aboveFoldLazy = imgEls.filter(img => {
+      const rect = img.getBoundingClientRect();
+      return rect.top < window.innerHeight && img.loading === 'lazy';
+    }).length;
+    const imgFormats = {};
+    for (const img of imgEls) {
+      const src = img.currentSrc || img.src || '';
+      const ext = src.split('?')[0].split('.').pop()?.toLowerCase() || 'unknown';
+      imgFormats[ext] = (imgFormats[ext] || 0) + 1;
+    }
+
+    const linkEls = Array.from(document.querySelectorAll('a'));
+    const emptyHref = linkEls.filter(a => {
+      const href = a.getAttribute('href');
+      return href === '' || href === null;
+    }).length;
+    const placeholderHref = linkEls.filter(a => (a.getAttribute('href') || '').startsWith('#')).length;
+    const blankTargetMissingRel = linkEls.filter(a =>
+      a.target === '_blank' && !(a.getAttribute('rel') || '').includes('noopener')
+    ).length;
+    const missingAccessibleName = linkEls.filter(a =>
+      !(a.textContent || '').trim() && !a.getAttribute('aria-label') && !a.querySelector('img[alt]')
+    ).length;
+
+    const metaTitle = document.querySelector('meta[property="og:title"]');
+    const metaDesc = document.querySelector('meta[name="description"]');
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    const metaMissing = [];
+    if (!metaTitle) metaMissing.push('og:title');
+    if (!metaDesc) metaMissing.push('description');
+    if (!ogImage) metaMissing.push('og:image');
+
+    const formFields = document.querySelectorAll('input, textarea, select');
+    const missingLabels = Array.from(formFields).filter(field => {
+      if (field.type === 'hidden' || field.type === 'submit') return false;
+      const id = field.id;
+      const hasLabel = id && document.querySelector('label[for="' + id + '"]');
+      const parentLabel = field.closest('label');
+      const ariaLabel = field.getAttribute('aria-label') || field.getAttribute('aria-labelledby');
+      return !hasLabel && !parentLabel && !ariaLabel;
+    }).length;
+
+    const videoEls = Array.from(document.querySelectorAll('video'));
+    const autoplayNoControls = videoEls.filter(v => v.autoplay && !v.controls).length;
+    const bgVideoMissing = videoEls.filter(v =>
+      v.muted && v.autoplay && v.loop && !v.controls
+    ).length;
+
+    const domAudit = {
+      meta: { missing: metaMissing },
+      headings: {
+        summary: {
+          headings: headingEls.length,
+          h1: h1Count,
+          missingH1: h1Count === 0,
+          multipleH1: h1Count > 1,
+          skippedHeadingLevels: skippedLevels,
+          emptyHeadings
+        }
+      },
+      links: {
+        summary: {
+          links: linkEls.length,
+          emptyHref,
+          placeholderHref,
+          blankTargetMissingRel,
+          missingAccessibleName
+        }
+      },
+      images: {
+        summary: {
+          images: imgEls.length,
+          missingAlt,
+          missingDimensions,
+          aboveFoldLazy,
+          belowFoldNotLazy: 0
+        },
+        formats: imgFormats
+      },
+      forms: {
+        summary: {
+          fields: formFields.length,
+          missingLabels
+        }
+      },
+      media: {
+        summary: {
+          videos: videoEls.length,
+          autoplayWithoutControls: autoplayNoControls,
+          backgroundVideosMissingControl: bgVideoMissing
+        }
+      },
+      interactions: { ix2: { summary: {} }, ix3: { summary: {} } }
+    };
+
     return {
       url: window.location.href,
       title,
@@ -607,7 +753,17 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
       snippetVersion: null,
       tools: [],
       links: dedupedLinks,
-      hasRequiredLicenseText
+      hasRequiredLicenseText,
+      audit: domAudit,
+      auditError: null,
+      sitemap: null,
+      audit404: null,
+      policyChecks: {
+        hasPoweredByWebflow,
+        affiliateLinks,
+        hasGsap,
+        hasCustomCode
+      }
     };
   }
 
@@ -646,7 +802,13 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     audit,
     auditError,
     sitemap,
-    audit404
+    audit404,
+    policyChecks: {
+      hasPoweredByWebflow,
+      affiliateLinks,
+      hasGsap,
+      hasCustomCode
+    }
   };
 })()
 `;
@@ -663,6 +825,12 @@ type PublishedPageEval = {
   auditError?: string | null;
   sitemap?: unknown;
   audit404?: unknown;
+  policyChecks?: {
+    hasPoweredByWebflow?: boolean;
+    affiliateLinks?: string[];
+    hasGsap?: boolean;
+    hasCustomCode?: boolean;
+  };
 };
 
 type PageAuditSummary = NonNullable<PublishedSnippetPageResult['summary']>;
@@ -1083,6 +1251,14 @@ async function crawlPublishedWebMcp(
         pageResult.snippetVersion = raw?.snippetVersion ?? null;
         pageResult.hasRequiredLicenseText =
           typeof raw?.hasRequiredLicenseText === 'boolean' ? raw.hasRequiredLicenseText : null;
+        if (raw?.policyChecks) {
+          pageResult.policyChecks = {
+            hasPoweredByWebflow: Boolean(raw.policyChecks.hasPoweredByWebflow),
+            affiliateLinks: Array.isArray(raw.policyChecks.affiliateLinks) ? raw.policyChecks.affiliateLinks : [],
+            hasGsap: Boolean(raw.policyChecks.hasGsap),
+            hasCustomCode: Boolean(raw.policyChecks.hasCustomCode)
+          };
+        }
 
         if (pageResult.hasSnippet) {
           if (!snippetVersion) snippetVersion = raw?.snippetVersion ?? null;
@@ -1120,8 +1296,11 @@ async function crawlPublishedWebMcp(
           } else {
             pageResult.summary = summarizePublishedPageAudit(raw?.audit);
           }
+        } else if (raw?.audit) {
+          // DOM fallback audit is available even without __wfReview
+          pageResult.summary = summarizePublishedPageAudit(raw.audit);
         } else {
-          pageResult.error = 'window.__wfReview is not available on this page';
+          pageResult.error = 'window.__wfReview is not available and DOM fallback failed';
         }
 
         const rawLinks = Array.isArray(raw?.links) ? raw.links : [];
@@ -1176,6 +1355,23 @@ async function crawlPublishedWebMcp(
   const pagesWithSnippet = pages.filter((page) => page.hasSnippet).length;
   const failingPages = pages.filter((page) => (page.summary?.failCount || 0) > 0).length;
 
+  // Aggregate policy checks across all pages
+  const allAffiliateLinks: string[] = [];
+  let anyPageHasPoweredBy = false;
+  let anyPageHasGsap = false;
+  let anyPageHasCustomCode = false;
+  for (const page of pages) {
+    if (page.policyChecks) {
+      if (page.policyChecks.hasPoweredByWebflow) anyPageHasPoweredBy = true;
+      if (page.policyChecks.hasGsap) anyPageHasGsap = true;
+      if (page.policyChecks.hasCustomCode) anyPageHasCustomCode = true;
+      if (page.policyChecks.affiliateLinks) {
+        allAffiliateLinks.push(...page.policyChecks.affiliateLinks);
+      }
+    }
+  }
+  const uniqueAffiliateLinks = Array.from(new Set(allAffiliateLinks));
+
   return {
     startUrl,
     origin,
@@ -1190,6 +1386,13 @@ async function crawlPublishedWebMcp(
     sitemapStatus,
     audit404,
     issueCounts,
+    policyChecks: {
+      hasPoweredByWebflow: anyPageHasPoweredBy,
+      affiliateLinkCount: uniqueAffiliateLinks.length,
+      affiliateLinks: uniqueAffiliateLinks,
+      hasGsap: anyPageHasGsap,
+      hasCustomCode: anyPageHasCustomCode
+    },
     pages
   };
 }
@@ -1398,18 +1601,36 @@ function unifyRows(
     dComboDepth.confidence
   );
 
-  const homeTitleCompliant =
-    homeTitle.includes(' - Webflow HTML website template') ||
-    homeTitle.includes(' - Webflow Ecommerce website template');
+  const htmlSuffix = ' - Webflow HTML website template';
+  const ecomSuffix = ' - Webflow Ecommerce website template';
+  const hasSuffix = homeTitle.includes(htmlSuffix) || homeTitle.includes(ecomSuffix);
+  const siteName = designer.metadataSummary.siteName || '';
+  const titlePrefix = homeTitle.includes(htmlSuffix)
+    ? homeTitle.split(htmlSuffix)[0]?.trim()
+    : homeTitle.includes(ecomSuffix)
+      ? homeTitle.split(ecomSuffix)[0]?.trim()
+      : '';
+  const nameMatchesSite =
+    !siteName || !titlePrefix
+      ? false
+      : titlePrefix.toLowerCase() === siteName.toLowerCase();
+  const homeTitleCompliant = hasSuffix && (nameMatchesSite || !siteName);
+  const homeTitleEvidence = [
+    `homeTitle=${homeTitle || 'n/a'}`,
+    `siteName=${siteName || 'n/a'}`,
+    `hasSuffix=${hasSuffix}`,
+    `titlePrefix=${titlePrefix || 'n/a'}`,
+    `nameMatchesSite=${nameMatchesSite}`
+  ];
   pushRow(
     'pages.home_seo_title_formula',
     'Page Level Checks',
     'Home SEO title matches required naming formula',
-    homeTitleCompliant ? 'pass' : 'fail',
-    [`homeTitle=${homeTitle || 'n/a'}`],
+    homeTitleCompliant ? 'pass' : hasSuffix && !nameMatchesSite ? 'partial' : 'fail',
+    homeTitleEvidence,
     ['published-webmcp-crawl'],
-    0.85,
-    'Set homepage title to "{Template Name} - Webflow HTML website template" (or Ecommerce variant).'
+    homeTitleCompliant ? 0.92 : hasSuffix ? 0.7 : 0.85,
+    'Set homepage title to "{Template Name} - Webflow HTML website template" (or Ecommerce variant). The prefix must match the template name.'
   );
 
   pushRow(
@@ -1569,6 +1790,62 @@ function unifyRows(
     0.2
   );
 
+  // Policy checks (deterministic)
+  const policy = published.policyChecks;
+  pushRow(
+    'policy.powered_by_webflow',
+    'Submission Policy',
+    '"Powered by Webflow" badge is present and visible',
+    policy.hasPoweredByWebflow ? 'pass' : 'fail',
+    [`hasPoweredByWebflow=${policy.hasPoweredByWebflow}`],
+    ['published-webmcp-crawl'],
+    0.9,
+    'Do not remove the "Powered by Webflow" badge. It must remain visible on the published site.'
+  );
+  pushRow(
+    'policy.no_affiliate_links',
+    'Submission Policy',
+    'No affiliate or referral links found',
+    policy.affiliateLinkCount === 0 ? 'pass' : 'fail',
+    [
+      `affiliateLinkCount=${policy.affiliateLinkCount}`,
+      ...(policy.affiliateLinks.length > 0
+        ? [`examples=${policy.affiliateLinks.slice(0, 5).join(' | ')}`]
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.85,
+    'Remove all affiliate and referral links before submission.'
+  );
+  pushRow(
+    'policy.gsap_detected',
+    'Submission Policy',
+    'GSAP/ScrollTrigger usage detected (requires instructions page and library attachment)',
+    policy.hasGsap ? 'partial' : 'pass',
+    [
+      `hasGsap=${policy.hasGsap}`,
+      ...(policy.hasGsap
+        ? ['GSAP detected: ensure an Instructions page explains setup and GSAP is attached as a library.']
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    policy.hasGsap ? 0.75 : 0.85
+  );
+  pushRow(
+    'policy.custom_code_detected',
+    'Submission Policy',
+    'Custom code is present (requires instructions page)',
+    policy.hasCustomCode ? 'partial' : 'pass',
+    [
+      `hasCustomCode=${policy.hasCustomCode}`,
+      ...(policy.hasCustomCode
+        ? ['Custom code detected: ensure an Instructions page documents custom code usage.']
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    policy.hasCustomCode ? 0.7 : 0.85
+  );
+
   return includeManual ? rows : rows.filter((row) => row.status !== 'manual');
 }
 
@@ -1611,11 +1888,27 @@ async function executeTemplateReview(
 
   if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
 
+  // Derive published URLs from Designer page names to improve crawl coverage
+  const publishedOrigin = new URL(input.publishedUrl).origin;
+  const designerPageSlugs = designer.metadataSummary.pages
+    .filter((p) => p.type === 'static' || p.type === 'utility')
+    .map((p) => {
+      const slug = p.name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      return slug === 'home' ? publishedOrigin : `${publishedOrigin}/${slug}`;
+    })
+    .filter(Boolean);
+  const allSeedUrls = Array.from(new Set([...precheck.discoveredUrls, ...designerPageSlugs]));
+
   const published = await crawlPublishedWebMcp(input.publishedUrl, {
     timeout: input.timeout,
     crawlMaxPages: input.crawlMaxPages,
     crawlMaxDepth: input.crawlMaxDepth,
-    seedUrls: precheck.discoveredUrls,
+    seedUrls: allSeedUrls,
     onProgress: reportProgress
       ? async (processedPages, maxPages, message) => {
           const cappedMax = Math.max(1, maxPages);
