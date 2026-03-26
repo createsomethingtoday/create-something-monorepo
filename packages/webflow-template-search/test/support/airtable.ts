@@ -8,6 +8,38 @@ interface MockDataset {
   tags?: Array<{ id: string; fields: Record<string, unknown> }>;
 }
 
+function paginateRecords(records: Array<{ id: string; fields: Record<string, unknown> }>, url: URL) {
+  const pageSize = Number(url.searchParams.get('pageSize') ?? '100') || 100;
+  const offsetParam = url.searchParams.get('offset');
+  const startIndex = offsetParam ? Number(offsetParam.replace('mock-offset-', '')) || 0 : 0;
+  const page = records.slice(startIndex, startIndex + pageSize);
+  const nextOffset = startIndex + page.length < records.length ? `mock-offset-${startIndex + page.length}` : undefined;
+
+  return {
+    records: page,
+    offset: nextOffset,
+  };
+}
+
+function applySnapshotFilter(
+  records: Array<{ id: string; fields: Record<string, unknown> }>,
+  formula: string,
+): Array<{ id: string; fields: Record<string, unknown> }> {
+  const match = formula.match(/IS_BEFORE\(\{📅LMT\},\s*DATETIME_PARSE\("([^"]+)"/);
+  if (!match) return records;
+
+  const cutoffTime = Date.parse(match[1]);
+  if (!Number.isFinite(cutoffTime)) return records;
+
+  return records.filter((record) => {
+    const value = record.fields['📅LMT'];
+    if (typeof value !== 'string' || value.length === 0) return true;
+    const modifiedTime = Date.parse(value);
+    if (!Number.isFinite(modifiedTime)) return true;
+    return modifiedTime <= cutoffTime;
+  });
+}
+
 export function installAirtableFetchMock(dataset: MockDataset) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
@@ -19,9 +51,11 @@ export function installAirtableFetchMock(dataset: MockDataset) {
     }
 
     if (tableId === 'tblRwzpWoLgE9MrUm') {
-      return Response.json({
-        records: formula.includes('IS_AFTER(') ? dataset.incrementalAssets ?? [] : dataset.publishedAssets,
-      });
+      const records =
+        formula.includes('IS_AFTER(')
+          ? dataset.incrementalAssets ?? []
+          : applySnapshotFilter(dataset.publishedAssets, formula);
+      return Response.json(paginateRecords(records, url));
     }
 
     if (tableId === 'tblG7E9LbQj0sBX0o') {

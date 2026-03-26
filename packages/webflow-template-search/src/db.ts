@@ -31,6 +31,7 @@ const UPSERT_TEMPLATE_SQL = `
     popularity_score,
     unique_viewers,
     cumulative_purchases,
+    cumulative_revenue,
     price,
     published_date,
     marketplace_status,
@@ -41,7 +42,7 @@ const UPSERT_TEMPLATE_SQL = `
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -71,6 +72,7 @@ const UPSERT_TEMPLATE_SQL = `
     popularity_score = excluded.popularity_score,
     unique_viewers = excluded.unique_viewers,
     cumulative_purchases = excluded.cumulative_purchases,
+    cumulative_revenue = excluded.cumulative_revenue,
     price = excluded.price,
     published_date = excluded.published_date,
     marketplace_status = excluded.marketplace_status,
@@ -98,12 +100,23 @@ export async function clearIndex(db: D1Database): Promise<void> {
   `);
 }
 
-export async function upsertTemplateDocuments(db: D1Database, documents: TemplateDocumentInput[]): Promise<void> {
+interface UpsertOptions {
+  removeExistingRelations?: boolean;
+}
+
+export async function upsertTemplateDocuments(
+  db: D1Database,
+  documents: TemplateDocumentInput[],
+  options: UpsertOptions = {},
+): Promise<void> {
   const statements: D1PreparedStatement[] = [];
+  const removeExistingRelations = options.removeExistingRelations ?? true;
 
   for (const document of documents) {
-    statements.push(db.prepare('DELETE FROM template_styles WHERE template_document_id = ?').bind(document.id));
-    statements.push(db.prepare('DELETE FROM template_child_categories WHERE template_document_id = ?').bind(document.id));
+    if (removeExistingRelations) {
+      statements.push(db.prepare('DELETE FROM template_styles WHERE template_document_id = ?').bind(document.id));
+      statements.push(db.prepare('DELETE FROM template_child_categories WHERE template_document_id = ?').bind(document.id));
+    }
     statements.push(
       db.prepare(UPSERT_TEMPLATE_SQL).bind(
         document.id,
@@ -134,6 +147,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.popularityScore,
         document.uniqueViewers,
         document.cumulativePurchases,
+        document.cumulativeRevenue,
         document.price,
         document.publishedDate,
         document.marketplaceStatus,
@@ -172,6 +186,30 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
   }
 }
 
+export async function getSyncStateValue<T>(db: D1Database, key: string): Promise<T | null> {
+  const row = await db.prepare('SELECT value_json FROM sync_state WHERE key = ?').bind(key).first<{ value_json: string }>();
+  if (!row?.value_json) return null;
+
+  try {
+    return JSON.parse(row.value_json) as T;
+  } catch {
+    return null;
+  }
+}
+
+export async function setSyncStateValue(db: D1Database, key: string, value: unknown): Promise<void> {
+  await db
+    .prepare(
+      'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
+    )
+    .bind(key, JSON.stringify(value), nowIso())
+    .run();
+}
+
+export async function deleteSyncStateValue(db: D1Database, key: string): Promise<void> {
+  await db.prepare('DELETE FROM sync_state WHERE key = ?').bind(key).run();
+}
+
 export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Promise<void> {
   if (ids.length === 0) return;
 
@@ -187,32 +225,16 @@ export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Pr
 }
 
 export async function getSyncCursor(db: D1Database, key = 'airtable_last_modified_cursor'): Promise<string | null> {
-  const row = await db.prepare('SELECT value_json FROM sync_state WHERE key = ?').bind(key).first<{ value_json: string }>();
-  if (!row?.value_json) return null;
-  try {
-    const parsed = JSON.parse(row.value_json) as { cursor?: string };
-    return parsed.cursor ?? null;
-  } catch {
-    return null;
-  }
+  const parsed = await getSyncStateValue<{ cursor?: string }>(db, key);
+  return parsed?.cursor ?? null;
 }
 
 export async function setSyncCursor(db: D1Database, cursor: string, key = 'airtable_last_modified_cursor'): Promise<void> {
-  await db
-    .prepare(
-      'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
-    )
-    .bind(key, JSON.stringify({ cursor }), nowIso())
-    .run();
+  await setSyncStateValue(db, key, { cursor });
 }
 
 export async function recordSyncSummary(db: D1Database, summary: unknown, key: string): Promise<void> {
-  await db
-    .prepare(
-      'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
-    )
-    .bind(key, JSON.stringify(summary), nowIso())
-    .run();
+  await setSyncStateValue(db, key, summary);
 }
 
 export async function resolveAlias(db: D1Database, slugType: AliasType, input: string | null): Promise<string | null> {

@@ -1,9 +1,55 @@
-import { fetchModifiedAssetsSince, fetchPublishedTemplateAssets, loadLookupMaps } from './airtable.js';
-import { clearIndex, deleteTemplateDocuments, getSyncCursor, recordSyncSummary, setSyncCursor, upsertTemplateDocuments } from './db.js';
+import { fetchModifiedAssetsSince, fetchPublishedTemplateAssetsPage, loadLookupMaps } from './airtable.js';
+import {
+  clearIndex,
+  deleteSyncStateValue,
+  deleteTemplateDocuments,
+  getSyncCursor,
+  getSyncStateValue,
+  recordSyncSummary,
+  setSyncCursor,
+  setSyncStateValue,
+  upsertTemplateDocuments,
+} from './db.js';
 import { stripHtml } from './html.js';
+import { getSearchRankingConfig, truncateSearchText } from './ranking.js';
 import { canonicalizeCategoryGroupSlug } from './slug.js';
-import type { AirtableAssetFields, AirtableRecord, Env, LookupMaps, SyncSummary, TemplateDocumentInput } from './types.js';
+import type {
+  AirtableAssetFields,
+  AirtableRecord,
+  Env,
+  LookupMaps,
+  SearchRankingConfig,
+  SyncSummary,
+  TemplateDocumentInput,
+} from './types.js';
 import { ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
+
+const FULL_SYNC_PROGRESS_KEY = 'airtable_full_sync_progress';
+const LOOKUP_CACHE_KEY = 'airtable_lookup_cache';
+
+interface FullSyncProgress {
+  started_at: string;
+  next_offset: string | null;
+  fetched_records: number;
+  indexed_records: number;
+  pages_completed: number;
+}
+
+interface LookupCachePayload {
+  fetched_at: string;
+  styles: Array<{ id: string; name: string; slug: string }>;
+  child_categories: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    category: string;
+    displayName: string;
+    parentCategoryName: string;
+    categoryGroups: string[];
+    relatedKeywords: string[];
+  }>;
+  tags: Array<{ id: string; name: string; slug: string }>;
+}
 
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
@@ -25,6 +71,7 @@ function attachmentUrls(value: unknown): string[] {
 function normalizeTemplateRecord(
   record: AirtableRecord<AirtableAssetFields>,
   lookups: LookupMaps,
+  rankingConfig: SearchRankingConfig,
   syncedAt: string,
 ): TemplateDocumentInput | null {
   if (!isPublishedTemplate(record)) return null;
@@ -52,6 +99,10 @@ function normalizeTemplateRecord(
 
   const descriptionShort = String(record.fields['ℹ️Description (Short)'] ?? '').trim();
   const descriptionLongHtml = String(record.fields['ℹ️Description (Long).html'] ?? '').trim();
+  const descriptionLongText = truncateSearchText(
+    stripHtml(descriptionLongHtml),
+    rankingConfig.controls.longDescriptionMaxChars,
+  );
   const templateType =
     typeof record.fields['🥞Template Type (🏗️ only)'] === 'string' ? record.fields['🥞Template Type (🏗️ only)'] : null;
 
@@ -68,7 +119,7 @@ function normalizeTemplateRecord(
     carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),
     descriptionShort,
     descriptionLongHtml,
-    descriptionLongText: stripHtml(descriptionLongHtml),
+    descriptionLongText,
     categoryGroups,
     categoryGroupSlugs,
     childCategories: childCategories.map((entry) => entry.displayName),
@@ -86,6 +137,7 @@ function normalizeTemplateRecord(
     popularityScore: ensureNumber(record.fields['🖌️Popularity Score']),
     uniqueViewers: ensureNumber(record.fields['📋 Unique Viewers']),
     cumulativePurchases: ensureNumber(record.fields['📋 Cumulative Purchases']),
+    cumulativeRevenue: ensureNumber(record.fields['📋 Cumulative Revenue']),
     price: ensureNumber(record.fields['🥞💲Template Price Filter (🏗️ only)']),
     publishedDate: typeof record.fields['🚀📅Published Date'] === 'string' ? record.fields['🚀📅Published Date'] : null,
     marketplaceStatus:
@@ -95,42 +147,166 @@ function normalizeTemplateRecord(
   };
 }
 
-async function runFullSync(env: Env): Promise<SyncSummary> {
-  const startedAt = nowIso();
-  const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchPublishedTemplateAssets(env)]);
-  const documents = assets
-    .map((record) => normalizeTemplateRecord(record, lookups, startedAt))
-    .filter((value): value is NonNullable<typeof value> => Boolean(value));
+function getFullSyncPageLimit(env: Env): number {
+  const parsed = Number(env.FULL_SYNC_PAGE_LIMIT ?? '2');
+  if (!Number.isFinite(parsed)) return 2;
+  return Math.max(1, Math.min(20, Math.floor(parsed)));
+}
 
-  await clearIndex(env.DB);
-  await upsertTemplateDocuments(env.DB, documents);
+function getFullSyncPageSize(env: Env): number {
+  const parsed = Number(env.FULL_SYNC_PAGE_SIZE ?? '100');
+  if (!Number.isFinite(parsed)) return 100;
+  return Math.max(1, Math.min(100, Math.floor(parsed)));
+}
+
+function getLookupCacheTtlSeconds(env: Env): number {
+  const parsed = Number(env.LOOKUP_CACHE_TTL_SECONDS ?? '21600');
+  if (!Number.isFinite(parsed)) return 21600;
+  return Math.max(0, Math.min(31_536_000, Math.floor(parsed)));
+}
+
+function serializeLookupMaps(lookups: LookupMaps): LookupCachePayload {
+  return {
+    fetched_at: nowIso(),
+    styles: Array.from(lookups.styles.values()),
+    child_categories: Array.from(lookups.childCategories.values()),
+    tags: Array.from(lookups.tags.values()),
+  };
+}
+
+function deserializeLookupMaps(cache: LookupCachePayload): LookupMaps {
+  return {
+    styles: new Map(cache.styles.map((entry) => [entry.id, entry])),
+    childCategories: new Map(cache.child_categories.map((entry) => [entry.id, entry])),
+    tags: new Map(cache.tags.map((entry) => [entry.id, entry])),
+  };
+}
+
+function isLookupCacheFresh(cache: LookupCachePayload, ttlSeconds: number): boolean {
+  if (ttlSeconds <= 0) return false;
+  const fetchedAt = Date.parse(cache.fetched_at);
+  if (!Number.isFinite(fetchedAt)) return false;
+  return fetchedAt + ttlSeconds * 1000 > Date.now();
+}
+
+async function loadLookupMapsCached(env: Env): Promise<LookupMaps> {
+  const ttlSeconds = getLookupCacheTtlSeconds(env);
+  if (ttlSeconds > 0) {
+    const cached = await getSyncStateValue<LookupCachePayload>(env.DB, LOOKUP_CACHE_KEY);
+    if (cached && isLookupCacheFresh(cached, ttlSeconds)) {
+      return deserializeLookupMaps(cached);
+    }
+  }
+
+  const lookups = await loadLookupMaps(env);
+  if (ttlSeconds > 0) {
+    await setSyncStateValue(env.DB, LOOKUP_CACHE_KEY, serializeLookupMaps(lookups));
+  }
+  return lookups;
+}
+
+async function runFullSync(env: Env): Promise<SyncSummary> {
+  let progress = await getSyncStateValue<FullSyncProgress>(env.DB, FULL_SYNC_PROGRESS_KEY);
+
+  if (!progress) {
+    const startedAt = nowIso();
+    progress = {
+      started_at: startedAt,
+      next_offset: null,
+      fetched_records: 0,
+      indexed_records: 0,
+      pages_completed: 0,
+    };
+
+    await clearIndex(env.DB);
+    await setSyncStateValue(env.DB, FULL_SYNC_PROGRESS_KEY, progress);
+  }
+
+  if (!progress) {
+    throw new Error('Failed to initialize full sync progress.');
+  }
+
+  const rankingConfig = getSearchRankingConfig(env);
+  const lookups = await loadLookupMapsCached(env);
+  const pageLimit = getFullSyncPageLimit(env);
+  const pageSize = getFullSyncPageSize(env);
+  const startedAt = progress.started_at;
+
+  let nextOffset = progress.next_offset ?? undefined;
+
+  for (let pageIndex = 0; pageIndex < pageLimit; pageIndex += 1) {
+    const page = await fetchPublishedTemplateAssetsPage(env, nextOffset, pageSize, startedAt);
+    const documents = page.records
+      .map((record) => normalizeTemplateRecord(record, lookups, rankingConfig, startedAt))
+      .filter((value): value is NonNullable<typeof value> => Boolean(value));
+
+    if (documents.length > 0) {
+      await upsertTemplateDocuments(env.DB, documents, { removeExistingRelations: false });
+    }
+
+    progress = {
+      ...progress,
+      next_offset: page.offset,
+      fetched_records: progress.fetched_records + page.records.length,
+      indexed_records: progress.indexed_records + documents.length,
+      pages_completed: progress.pages_completed + 1,
+    };
+
+    await setSyncStateValue(env.DB, FULL_SYNC_PROGRESS_KEY, progress);
+
+    if (!page.offset) break;
+    nextOffset = page.offset;
+  }
+
+  if (progress.next_offset) {
+    return {
+      mode: 'full',
+      started_at: progress.started_at,
+      finished_at: nowIso(),
+      fetched_records: progress.fetched_records,
+      indexed_records: progress.indexed_records,
+      removed_records: 0,
+      cursor: progress.started_at,
+      complete: false,
+      next_offset: progress.next_offset,
+    };
+  }
+
+  const finishedAt = nowIso();
 
   const summary: SyncSummary = {
     mode: 'full',
-    started_at: startedAt,
-    finished_at: nowIso(),
-    fetched_records: assets.length,
-    indexed_records: documents.length,
+    started_at: progress.started_at,
+    finished_at: finishedAt,
+    fetched_records: progress.fetched_records,
+    indexed_records: progress.indexed_records,
     removed_records: 0,
-    cursor: startedAt,
+    cursor: finishedAt,
+    complete: true,
+    next_offset: null,
   };
 
-  await setSyncCursor(env.DB, startedAt);
+  await setSyncCursor(env.DB, finishedAt);
   await recordSyncSummary(env.DB, summary, 'last_full_sync');
+  await deleteSyncStateValue(env.DB, FULL_SYNC_PROGRESS_KEY);
   return summary;
 }
 
 async function runIncrementalSync(env: Env): Promise<SyncSummary> {
+  const inProgressFullSync = await getSyncStateValue<FullSyncProgress>(env.DB, FULL_SYNC_PROGRESS_KEY);
+  if (inProgressFullSync) return runFullSync(env);
+
   const currentCursor = await getSyncCursor(env.DB);
   if (!currentCursor) return runFullSync(env);
 
   const startedAt = nowIso();
-  const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchModifiedAssetsSince(env, currentCursor)]);
+  const rankingConfig = getSearchRankingConfig(env);
+  const [lookups, assets] = await Promise.all([loadLookupMapsCached(env), fetchModifiedAssetsSince(env, currentCursor)]);
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
 
   for (const record of assets) {
-    const normalized = normalizeTemplateRecord(record, lookups, startedAt);
+    const normalized = normalizeTemplateRecord(record, lookups, rankingConfig, startedAt);
     if (normalized) {
       toUpsert.push(normalized);
     } else {

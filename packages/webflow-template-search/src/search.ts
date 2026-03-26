@@ -1,4 +1,5 @@
 import { lookupPublicSlugMap, resolveAlias } from './db.js';
+import { getSearchRankingConfig } from './ranking.js';
 import type {
   DocumentCountRow,
   DocumentRow,
@@ -6,6 +7,7 @@ import type {
   FacetStyleRow,
   FacetTypeRow,
   PillRow,
+  SearchRankingConfig,
   SearchItem,
   SearchParams,
   SearchResponsePayload,
@@ -31,8 +33,9 @@ function sortClause(sort: TemplateSort): string {
       return "CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) ASC, COALESCE(d.popularity_score, 0) DESC, d.id ASC";
     case 'price_desc':
       return "CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) DESC, COALESCE(d.popularity_score, 0) DESC, d.id ASC";
+    case 'popular':
     default:
-      return "COALESCE(d.popularity_score, 0) DESC, COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.published_date, '') DESC, d.id ASC";
+      return "COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.cumulative_revenue, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.published_date, '') DESC, d.id ASC";
   }
 }
 
@@ -108,6 +111,183 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
 
 function queryOrderClause(params: SearchParams, queryMode: boolean): string {
   return queryMode ? `text_rank ASC, ${sortClause(params.sort)}` : sortClause(params.sort);
+}
+
+function queryBucketOrderClause(queryMode: boolean, preferTaxonomy: boolean): string {
+  if (!queryMode) return '';
+  const buckets = [];
+  if (preferTaxonomy) buckets.push('taxonomy_query_match DESC');
+  buckets.push('name_query_match DESC');
+  return buckets.length > 0 ? `${buckets.join(', ')}, ` : '';
+}
+
+function sqlNumber(value: number): string {
+  return Number.isFinite(value) ? String(value) : '0';
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, '\\$&');
+}
+
+function buildQueryLikePattern(query: string | null): string | null {
+  const normalized = query?.trim().toLowerCase();
+  if (!normalized) return null;
+  return `%${escapeLikePattern(normalized)}%`;
+}
+
+function buildBm25Expression(config: SearchRankingConfig): string {
+  const { textWeights } = config;
+  return `bm25(template_documents_fts, ${sqlNumber(textWeights.name)}, ${sqlNumber(textWeights.descriptionShort)}, ${sqlNumber(
+    textWeights.descriptionLong,
+  )}, ${sqlNumber(textWeights.categoryGroups)}, ${sqlNumber(textWeights.childCategories)}, ${sqlNumber(
+    textWeights.styles,
+  )}, ${sqlNumber(textWeights.tags)})`;
+}
+
+function reciprocalRankExpression(weight: number, rankColumn: string, offset: number): string {
+  if (weight <= 0) return '0';
+  return `${sqlNumber(weight)} * (1.0 / (${rankColumn} + ${sqlNumber(offset)}))`;
+}
+
+function buildConversionRateExpression(config: SearchRankingConfig, valuePrefix: string): string {
+  return `(
+    COALESCE(${valuePrefix}.cumulative_purchases, 0) * 1.0
+    / (COALESCE(${valuePrefix}.unique_viewers, 0) + ${sqlNumber(config.controls.conversionRateSmoothingViews)})
+  )`;
+}
+
+function buildPopularScoreExpression(config: SearchRankingConfig, queryMode: boolean): string {
+  const offset = config.controls.reciprocalRankOffset;
+  const parts = [
+    queryMode ? reciprocalRankExpression(config.signalWeights.text, 'ranked.text_rank_position', offset) : '0',
+    reciprocalRankExpression(config.signalWeights.popularity, 'ranked.popularity_rank_position', offset),
+    reciprocalRankExpression(config.signalWeights.views, 'ranked.views_rank_position', offset),
+    reciprocalRankExpression(config.signalWeights.purchases, 'ranked.purchases_rank_position', offset),
+    reciprocalRankExpression(config.signalWeights.conversionRate, 'ranked.conversion_rate_rank_position', offset),
+    reciprocalRankExpression(config.signalWeights.revenue, 'ranked.revenue_rank_position', offset),
+    reciprocalRankExpression(config.signalWeights.exactTitle, 'ranked.exact_title_rank_position', offset),
+    queryMode ? reciprocalRankExpression(config.signalWeights.categoryMatch, 'ranked.category_match_rank_position', offset) : '0',
+  ];
+
+  const totalWeight =
+    (queryMode ? config.signalWeights.text : 0) +
+    config.signalWeights.popularity +
+    config.signalWeights.views +
+    config.signalWeights.purchases +
+    config.signalWeights.conversionRate +
+    config.signalWeights.revenue +
+    config.signalWeights.exactTitle +
+    (queryMode ? config.signalWeights.categoryMatch : 0);
+
+  if (totalWeight <= 0) return '0';
+  return `(${parts.join(' + ')}) / ${sqlNumber(totalWeight)}`;
+}
+
+async function loadDocumentRows(
+  env: Env,
+  sqlParts: SqlParts,
+  params: SearchParams,
+  offset: number,
+  rankingConfig: SearchRankingConfig,
+): Promise<{ results: DocumentRow[] }> {
+  const normalizedQuery = (params.q ?? '').trim().toLowerCase();
+  const queryLikePattern = buildQueryLikePattern(normalizedQuery);
+  const queryHasText = normalizedQuery.length > 0;
+  const preferTaxonomyBuckets =
+    queryHasText &&
+    (normalizedQuery.includes(' ') ||
+      normalizedQuery.length >= rankingConfig.controls.taxonomyPrecedenceMinQueryLength);
+  const nameQueryMatchExpression = queryLikePattern
+    ? "CASE WHEN lower(d.name) LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END"
+    : '0';
+  const taxonomyQueryMatchExpression = queryLikePattern
+    ? `(
+        CASE WHEN EXISTS (SELECT 1 FROM json_each(d.category_groups_json) WHERE lower(json_each.value) LIKE ? ESCAPE '\\') THEN 1 ELSE 0 END
+        + CASE WHEN EXISTS (SELECT 1 FROM json_each(d.child_categories_json) WHERE lower(json_each.value) LIKE ? ESCAPE '\\') THEN 2 ELSE 0 END
+      )`
+    : '0';
+  const exactTitleMatchExpression = queryHasText
+    ? `CASE
+        WHEN lower(d.name) = ? THEN 2
+        WHEN lower(d.name) LIKE ? ESCAPE '\\' THEN 1
+        ELSE 0
+      END`
+    : '0';
+  const queryMatchBinds: string[] = [];
+  if (queryLikePattern) {
+    queryMatchBinds.push(queryLikePattern, queryLikePattern, queryLikePattern);
+  }
+  if (queryHasText) {
+    const exactTitlePattern = `%${escapeLikePattern(normalizedQuery)}%`;
+    queryMatchBinds.push(normalizedQuery, exactTitlePattern);
+  }
+  const bucketOrderClause = queryBucketOrderClause(sqlParts.queryMode, preferTaxonomyBuckets);
+
+  if (params.sort !== 'popular') {
+    const textRankExpression = sqlParts.queryMode ? buildBm25Expression(rankingConfig) : 'NULL';
+    return env.DB
+      .prepare(`
+        SELECT
+          d.*,
+          ${nameQueryMatchExpression} AS name_query_match,
+          ${taxonomyQueryMatchExpression} AS taxonomy_query_match,
+          ${exactTitleMatchExpression} AS exact_title_match,
+          ${textRankExpression} AS text_rank
+        ${sqlParts.fromClause}
+        ${sqlParts.whereClause}
+        ORDER BY ${bucketOrderClause}${queryOrderClause(params, sqlParts.queryMode)}
+        LIMIT ? OFFSET ?
+      `)
+      .bind(...queryMatchBinds, ...sqlParts.binds, params.pageSize, offset)
+      .all<DocumentRow>();
+  }
+
+  const textRankExpression = sqlParts.queryMode ? buildBm25Expression(rankingConfig) : 'NULL';
+  const popularScoreExpression = buildPopularScoreExpression(rankingConfig, sqlParts.queryMode);
+  const conversionRateExpression = buildConversionRateExpression(rankingConfig, 'filtered');
+
+  return env.DB
+    .prepare(`
+      WITH filtered AS (
+        SELECT
+          d.*,
+        ${nameQueryMatchExpression} AS name_query_match,
+        ${taxonomyQueryMatchExpression} AS taxonomy_query_match,
+        ${exactTitleMatchExpression} AS exact_title_match,
+        ${textRankExpression} AS text_rank
+        ${sqlParts.fromClause}
+        ${sqlParts.whereClause}
+      ),
+      ranked AS (
+        SELECT
+          filtered.*,
+          ${sqlParts.queryMode ? 'ROW_NUMBER() OVER (ORDER BY COALESCE(filtered.text_rank, 1000000000) ASC, filtered.id ASC)' : 'NULL'} AS text_rank_position,
+          ROW_NUMBER() OVER (ORDER BY COALESCE(filtered.popularity_score, 0) DESC, filtered.id ASC) AS popularity_rank_position,
+          ROW_NUMBER() OVER (ORDER BY COALESCE(filtered.unique_viewers, 0) DESC, filtered.id ASC) AS views_rank_position,
+          ROW_NUMBER() OVER (ORDER BY COALESCE(filtered.cumulative_purchases, 0) DESC, filtered.id ASC) AS purchases_rank_position,
+          ROW_NUMBER() OVER (ORDER BY ${conversionRateExpression} DESC, filtered.id ASC) AS conversion_rate_rank_position,
+          ROW_NUMBER() OVER (ORDER BY COALESCE(filtered.cumulative_revenue, 0) DESC, filtered.id ASC) AS revenue_rank_position,
+          ROW_NUMBER() OVER (ORDER BY filtered.exact_title_match DESC, filtered.id ASC) AS exact_title_rank_position,
+          ${sqlParts.queryMode ? 'ROW_NUMBER() OVER (ORDER BY COALESCE(filtered.taxonomy_query_match, 0) DESC, filtered.id ASC)' : 'NULL'} AS category_match_rank_position
+        FROM filtered
+      )
+      SELECT
+        ranked.*,
+        ${popularScoreExpression} AS blended_rank
+      FROM ranked
+      ORDER BY
+        ${bucketOrderClause}
+        blended_rank DESC,
+        COALESCE(ranked.cumulative_purchases, 0) DESC,
+        COALESCE(ranked.cumulative_revenue, 0) DESC,
+        COALESCE(ranked.unique_viewers, 0) DESC,
+        COALESCE(ranked.popularity_score, 0) DESC,
+        COALESCE(ranked.published_date, '') DESC,
+        ranked.id ASC
+      LIMIT ? OFFSET ?
+    `)
+    .bind(...queryMatchBinds, ...sqlParts.binds, params.pageSize, offset)
+    .all<DocumentRow>();
 }
 
 async function getTotalCount(db: D1Database, sqlParts: SqlParts): Promise<number> {
@@ -251,23 +431,12 @@ function buildChildCategories(
 export async function searchTemplates(env: Env, rawParams: SearchParams): Promise<SearchResponsePayload> {
   const params = await resolveAliases(env, rawParams);
   const sqlParts = buildSqlParts(params);
+  const rankingConfig = getSearchRankingConfig(env);
   const offset = (params.page - 1) * params.pageSize;
-  const orderClause = queryOrderClause(params, sqlParts.queryMode);
 
   const [totalItems, rows, styleFacets, typeFacets, pills] = await Promise.all([
     getTotalCount(env.DB, sqlParts),
-    env.DB
-      .prepare(`
-        SELECT
-          d.*,
-          ${sqlParts.queryMode ? 'bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)' : 'NULL'} AS text_rank
-        ${sqlParts.fromClause}
-        ${sqlParts.whereClause}
-        ORDER BY ${orderClause}
-        LIMIT ? OFFSET ?
-      `)
-      .bind(...sqlParts.binds, params.pageSize, offset)
-      .all<DocumentRow>(),
+    loadDocumentRows(env, sqlParts, params, offset, rankingConfig),
     loadFacetStyles(env, params),
     loadFacetTypes(env, params),
     loadSubcategoryPills(env, params),
@@ -307,6 +476,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       popularity_score: row.popularity_score,
       unique_viewers: row.unique_viewers,
       cumulative_purchases: row.cumulative_purchases,
+      cumulative_revenue: row.cumulative_revenue,
       published_date: row.published_date,
       category_groups: buildCategoryGroups(categoryGroups, categoryGroupSlugs),
       child_categories: buildChildCategories(childCategories, childCategorySlugs, childSlugMap),

@@ -14,6 +14,10 @@ export interface Env {
   DEFAULT_PAGE_SIZE?: string;
   DEFAULT_CLIENT_MODE?: string;
   ENVIRONMENT?: string;
+  FULL_SYNC_PAGE_LIMIT?: string;
+  FULL_SYNC_PAGE_SIZE?: string;
+  LOOKUP_CACHE_TTL_SECONDS?: string;
+  SEARCH_RANKING_CONFIG_JSON?: string;
   SYNC_ADMIN_TOKEN?: string;
 }
 
@@ -34,6 +38,11 @@ export interface AirtableListResponse<TFields extends Record<string, unknown> = 
   offset?: string;
 }
 
+export interface AirtablePageResult<TFields extends Record<string, unknown> = Record<string, unknown>> {
+  records: Array<AirtableRecord<TFields>>;
+  offset: string | null;
+}
+
 export interface AirtableAssetFields extends Record<string, unknown> {
   'Name'?: string;
   '⚙️🆎Type (Text)'?: string;
@@ -52,6 +61,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '🖌️Popularity Score'?: number;
   '📋 Unique Viewers'?: number;
   '📋 Cumulative Purchases'?: number;
+  '📋 Cumulative Revenue'?: number;
   '🥞💲Template Price Filter (🏗️ only)'?: number;
   '🚀📅Published Date'?: string;
   '🥞CMS Slug (formula)'?: string;
@@ -114,11 +124,40 @@ export interface TemplateDocumentInput {
   popularityScore: number | null;
   uniqueViewers: number | null;
   cumulativePurchases: number | null;
+  cumulativeRevenue: number | null;
   price: number | null;
   publishedDate: string | null;
   marketplaceStatus: string | null;
   sourceLastModifiedTime: string | null;
   syncedAt: string;
+}
+
+export interface SearchRankingConfig {
+  textWeights: {
+    name: number;
+    descriptionShort: number;
+    descriptionLong: number;
+    categoryGroups: number;
+    childCategories: number;
+    styles: number;
+    tags: number;
+  };
+  signalWeights: {
+    text: number;
+    popularity: number;
+    views: number;
+    purchases: number;
+    conversionRate: number;
+    revenue: number;
+    exactTitle: number;
+    categoryMatch: number;
+  };
+  controls: {
+    longDescriptionMaxChars: number;
+    reciprocalRankOffset: number;
+    conversionRateSmoothingViews: number;
+    taxonomyPrecedenceMinQueryLength: number;
+  };
 }
 
 export interface SearchParams {
@@ -151,6 +190,7 @@ export interface SearchItem {
   popularity_score: number | null;
   unique_viewers: number | null;
   cumulative_purchases: number | null;
+  cumulative_revenue: number | null;
   published_date: string | null;
   category_groups: Array<{ name: string; slug: string; url: string }>;
   child_categories: Array<{ name: string; slug: string; url: string }>;
@@ -193,6 +233,8 @@ export interface SyncSummary {
   indexed_records: number;
   removed_records: number;
   cursor: string;
+  complete?: boolean;
+  next_offset?: string | null;
 }
 
 export interface DocumentRow {
@@ -224,6 +266,7 @@ export interface DocumentRow {
   popularity_score: number | null;
   unique_viewers: number | null;
   cumulative_purchases: number | null;
+  cumulative_revenue: number | null;
   price: number | null;
   published_date: string | null;
   marketplace_status: string | null;

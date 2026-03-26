@@ -2,7 +2,7 @@ import worker from '../../src/index.js';
 import type { Env } from '../../src/types.js';
 import { closeTestD1, createTestD1 } from './d1.js';
 
-export function createTestEnv() {
+export function createTestEnv(overrides: Partial<Env> = {}) {
   const db = createTestD1();
   const env: Env = {
     DB: db,
@@ -15,6 +15,10 @@ export function createTestEnv() {
     SYNC_ADMIN_TOKEN: 'sync-token',
     DEFAULT_PAGE_SIZE: '24',
     DEFAULT_CLIENT_MODE: 'shadow',
+    FULL_SYNC_PAGE_LIMIT: '2',
+    FULL_SYNC_PAGE_SIZE: '100',
+    LOOKUP_CACHE_TTL_SECONDS: '21600',
+    ...overrides,
   };
 
   return {

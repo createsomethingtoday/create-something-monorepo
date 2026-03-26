@@ -10,7 +10,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "webflow-template-search"
-database_id = "REPLACE_ME"
+database_id = "bffab674-a86b-456b-a72d-f620b2755396"
 
 [vars]
 ENVIRONMENT = "development"
@@ -22,6 +22,10 @@ AIRTABLE_TAGS_TABLE_ID = "tblb4969G7O75gVWV"
 ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io"
 DEFAULT_PAGE_SIZE = "24"
 DEFAULT_CLIENT_MODE = "shadow"
+FULL_SYNC_PAGE_LIMIT = "1"
+FULL_SYNC_PAGE_SIZE = "100"
+LOOKUP_CACHE_TTL_SECONDS = "21600"
+SEARCH_RANKING_CONFIG_JSON = '''{"textWeights":{"name":9,"descriptionShort":2,"descriptionLong":0.1,"categoryGroups":5,"childCategories":12,"styles":1.3,"tags":0.8},"signalWeights":{"text":4.5,"popularity":0,"views":0.05,"purchases":1.15,"conversionRate":0.95,"revenue":0.7,"exactTitle":0.85,"categoryMatch":2.5},"controls":{"longDescriptionMaxChars":350,"reciprocalRankOffset":20,"conversionRateSmoothingViews":50,"taxonomyPrecedenceMinQueryLength":5}}'''
 
 [triggers]
 crons = ["*/5 * * * *", "17 3 * * *"]

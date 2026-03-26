@@ -1,6 +1,7 @@
 import type {
   AirtableAssetFields,
   AirtableListResponse,
+  AirtablePageResult,
   AirtableRecord,
   ChildCategoryLookupValue,
   Env,
@@ -19,6 +20,7 @@ const DEFAULT_ASSETS_TABLE_ID = 'tblRwzpWoLgE9MrUm';
 const DEFAULT_STYLES_TABLE_ID = 'tblG7E9LbQj0sBX0o';
 const DEFAULT_CHILD_CATEGORIES_TABLE_ID = 'tblWJXy3M6R8SeoFi';
 const DEFAULT_TAGS_TABLE_ID = 'tblb4969G7O75gVWV';
+const AIRTABLE_ISO_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS[Z]';
 
 export const ASSET_FIELDS = [
   'Name',
@@ -38,6 +40,7 @@ export const ASSET_FIELDS = [
   '🖌️Popularity Score',
   '📋 Unique Viewers',
   '📋 Cumulative Purchases',
+  '📋 Cumulative Revenue',
   '🥞💲Template Price Filter (🏗️ only)',
   '🚀📅Published Date',
   '🥞CMS Slug (formula)',
@@ -57,12 +60,24 @@ function assertAirtableConfigured(env: Env): asserts env is Env & { AIRTABLE_API
   }
 }
 
-function buildPublishedTemplateFormula(): string {
-  return 'AND({⚙️🆎Type (Text)}="Template🏗️",{🚀Marketplace Status}="3️⃣Published🚀")';
+function escapeFormulaString(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function buildDateParseExpression(value: string): string {
+  return `DATETIME_PARSE("${escapeFormulaString(value)}", "${AIRTABLE_ISO_DATETIME_FORMAT}")`;
+}
+
+function buildPublishedTemplateFormula(snapshotBefore?: string): string {
+  const publishedTemplateFilter = '{⚙️🆎Type (Text)}="Template🏗️",{🚀Marketplace Status}="3️⃣Published🚀"';
+  if (!snapshotBefore) return `AND(${publishedTemplateFilter})`;
+
+  const parsedSnapshot = buildDateParseExpression(snapshotBefore);
+  return `AND(${publishedTemplateFilter},OR({📅LMT}=BLANK(),IS_BEFORE({📅LMT}, ${parsedSnapshot}),IS_SAME({📅LMT}, ${parsedSnapshot}, 'second')))`;
 }
 
 function buildModifiedAfterFormula(cursor: string): string {
-  return `IS_AFTER({📅LMT}, DATETIME_PARSE("${cursor}"))`;
+  return `IS_AFTER({📅LMT}, ${buildDateParseExpression(cursor)})`;
 }
 
 function splitLookupText(value: unknown): string[] {
@@ -77,55 +92,90 @@ interface FetchOptions {
   tableId: string;
   fields: string[];
   formula?: string;
+  offset?: string;
+  pageSize?: number;
   sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+}
+
+async function fetchAirtablePage<TFields extends Record<string, unknown>>(
+  env: Env,
+  options: FetchOptions,
+): Promise<AirtablePageResult<TFields>> {
+  assertAirtableConfigured(env);
+
+  const params = new URLSearchParams();
+  params.set('pageSize', String(options.pageSize ?? 100));
+  options.fields.forEach((field) => params.append('fields[]', field));
+  if (options.formula) params.set('filterByFormula', options.formula);
+  if (options.sortField) {
+    params.set('sort[0][field]', options.sortField);
+    params.set('sort[0][direction]', options.sortDirection ?? 'asc');
+  }
+  if (options.offset) params.set('offset', options.offset);
+
+  const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(options.tableId)}?${params.toString()}`;
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Airtable request failed (${response.status}): ${await response.text()}`);
+  }
+
+  const payload = (await response.json()) as AirtableListResponse<TFields>;
+  return {
+    records: payload.records,
+    offset: payload.offset ?? null,
+  };
 }
 
 async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
   env: Env,
   options: FetchOptions,
 ): Promise<Array<AirtableRecord<TFields>>> {
-  assertAirtableConfigured(env);
-
   const records: Array<AirtableRecord<TFields>> = [];
-  let offset: string | undefined;
+  let offset = options.offset;
 
   do {
-    const params = new URLSearchParams();
-    params.set('pageSize', '100');
-    options.fields.forEach((field) => params.append('fields[]', field));
-    if (options.formula) params.set('filterByFormula', options.formula);
-    if (options.sortField) {
-      params.set('sort[0][field]', options.sortField);
-      params.set('sort[0][direction]', 'asc');
-    }
-    if (offset) params.set('offset', offset);
-
-    const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(options.tableId)}?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Airtable request failed (${response.status}): ${await response.text()}`);
-    }
-
-    const payload = (await response.json()) as AirtableListResponse<TFields>;
+    const payload = await fetchAirtablePage<TFields>(env, { ...options, offset });
     records.push(...payload.records);
-    offset = payload.offset;
+    offset = payload.offset ?? undefined;
   } while (offset);
 
   return records;
 }
 
-export async function fetchPublishedTemplateAssets(env: Env): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
+export async function fetchPublishedTemplateAssets(
+  env: Env,
+  snapshotBefore?: string,
+): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
     fields: ASSET_FIELDS,
-    formula: buildPublishedTemplateFormula(),
+    formula: buildPublishedTemplateFormula(snapshotBefore),
     sortField: '📅LMT',
+    sortDirection: 'desc',
+  });
+}
+
+export async function fetchPublishedTemplateAssetsPage(
+  env: Env,
+  offset?: string,
+  pageSize = 100,
+  snapshotBefore?: string,
+): Promise<AirtablePageResult<AirtableAssetFields>> {
+  return fetchAirtablePage<AirtableAssetFields>(env, {
+    tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
+    fields: ASSET_FIELDS,
+    formula: buildPublishedTemplateFormula(snapshotBefore),
+    offset,
+    pageSize,
+    sortField: '📅LMT',
+    sortDirection: 'desc',
   });
 }
 
