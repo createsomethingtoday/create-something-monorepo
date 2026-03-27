@@ -1,5 +1,12 @@
 import { Eval, type Score } from 'braintrust';
-import { bearerHeaders, httpProbe, parseJsonRecord, readEnv, readOptionalEnv } from './shared.js';
+import {
+  bearerHeaders,
+  httpProbe,
+  parseJsonRecord,
+  readEnv,
+  readOptionalEnv,
+  readOptionalEnvOrInfisicalSecret,
+} from './shared.js';
 
 type ContractInput = {
   name: string;
@@ -19,6 +26,7 @@ type ContractOutput = {
   successIsTrue: boolean;
   durationMs: number;
   error?: string;
+  responseMessage?: string;
 };
 
 const DEFAULT_ROUTE_URL =
@@ -29,7 +37,14 @@ const TELEMETRY_CONTRACT_CASES = [
     input: {
       name: 'playbook-inbox-triage',
       routeUrl: readEnv('MCP_FLEET_CONTRACT_URL', DEFAULT_ROUTE_URL),
-      routeToken: readOptionalEnv('HALFDOZEN_AGENT_ROUTE_TOKEN'),
+      routeToken: readOptionalEnvOrInfisicalSecret('HALFDOZEN_AGENT_ROUTE_TOKEN', {
+        secretName: readOptionalEnv('MCP_FLEET_CONTRACT_INFISICAL_SECRET_NAME') ?? 'HALFDOZEN_AGENT_ROUTE_TOKEN',
+        environment:
+          readOptionalEnv('MCP_FLEET_CONTRACT_INFISICAL_ENV') ?? readOptionalEnv('INFISICAL_ENV') ?? 'prod',
+        path: readOptionalEnv('MCP_FLEET_CONTRACT_INFISICAL_PATH') ?? readOptionalEnv('INFISICAL_PATH') ?? '/',
+        projectId:
+          readOptionalEnv('MCP_FLEET_CONTRACT_INFISICAL_PROJECT_ID') ?? readOptionalEnv('INFISICAL_PROJECT_ID'),
+      }),
       query: readEnv(
         'MCP_FLEET_CONTRACT_QUERY',
         'Braintrust eval contract check: return a structured successful response.',
@@ -107,7 +122,8 @@ void Eval<ContractInput, ContractOutput>('create-something-mcp-fleet', {
     if (!input.routeToken) {
       return {
         skipped: true,
-        reason: 'Set HALFDOZEN_AGENT_ROUTE_TOKEN (or provide a custom MCP_FLEET_CONTRACT_URL + auth) to run.',
+        reason:
+          'Set HALFDOZEN_AGENT_ROUTE_TOKEN or ensure the Infisical CLI can resolve it for the current context.',
         probeStatus: null,
         probeOk: false,
         hasStructuredJson: false,
@@ -129,6 +145,8 @@ void Eval<ContractInput, ContractOutput>('create-something-mcp-fleet', {
     });
 
     const success = probe.json?.success;
+    const responseError = typeof probe.json?.error === 'string' ? probe.json.error : undefined;
+    const responseMessage = typeof probe.json?.message === 'string' ? probe.json.message : undefined;
 
     return {
       skipped: false,
@@ -138,7 +156,8 @@ void Eval<ContractInput, ContractOutput>('create-something-mcp-fleet', {
       successFlagPresent: typeof success === 'boolean',
       successIsTrue: success === true,
       durationMs: probe.durationMs,
-      error: probe.error,
+      error: probe.error ?? responseError,
+      responseMessage,
     };
   },
   scores: [

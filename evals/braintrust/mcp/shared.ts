@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process';
+
 export type JsonRecord = Record<string, unknown>;
 
 export type HttpProbeInput = {
@@ -26,6 +28,74 @@ export function readEnv(name: string, fallback = ''): string {
 export function readOptionalEnv(name: string): string | undefined {
   const value = process.env[name]?.trim();
   return value && value.length > 0 ? value : undefined;
+}
+
+type InfisicalLookupOptions = {
+  secretName?: string;
+  environment?: string;
+  path?: string;
+  projectId?: string;
+};
+
+function parseInfisicalSecretValue(raw: string): string | undefined {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (Array.isArray(parsed)) {
+      for (const item of parsed) {
+        if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+        const secretValue = (item as JsonRecord).secretValue;
+        if (typeof secretValue === 'string' && secretValue.trim().length > 0) {
+          return secretValue.trim();
+        }
+      }
+    }
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const secretValue = (parsed as JsonRecord).secretValue;
+      if (typeof secretValue === 'string' && secretValue.trim().length > 0) {
+        return secretValue.trim();
+      }
+    }
+  } catch {
+    // Ignore malformed CLI output and fall back to undefined.
+  }
+  return undefined;
+}
+
+export function readOptionalEnvOrInfisicalSecret(name: string, options: InfisicalLookupOptions = {}): string | undefined {
+  const envValue = readOptionalEnv(name);
+  if (envValue) return envValue;
+
+  const secretName = options.secretName ?? name;
+  const environment = options.environment ?? readOptionalEnv('INFISICAL_ENV') ?? 'prod';
+  const path = options.path ?? readOptionalEnv('INFISICAL_PATH') ?? '/';
+  const projectId = options.projectId;
+
+  const attempts: string[][] = [
+    ['secrets', 'get', secretName, '--env', environment, '--path', path, '--silent', '--output=json'],
+    ...(projectId
+      ? [['secrets', 'get', secretName, '--env', environment, '--path', path, '--projectId', projectId, '--silent', '--output=json']]
+      : []),
+  ];
+
+  const seen = new Set<string>();
+  for (const args of attempts) {
+    const key = args.join('\0');
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    try {
+      const raw = execFileSync('infisical', args, {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      const secretValue = parseInfisicalSecretValue(raw);
+      if (secretValue) return secretValue;
+    } catch {
+      // Ignore CLI lookup errors and fall through to the next attempt.
+    }
+  }
+
+  return undefined;
 }
 
 export function bearerHeaders(token?: string): Record<string, string> {
