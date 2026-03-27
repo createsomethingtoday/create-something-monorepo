@@ -44,7 +44,9 @@
         "update sheet",
         "write to sheet",
         "write values to sheet",
-        "add values to spreadsheet"
+        "add values to spreadsheet",
+        "write values in sheets",
+        "write values in spreadsheets"
       ],
       "preferredServer": "composio-toolkit-googlesheets",
       "fallbackQuery": "googlesheets batch update"
@@ -56,7 +58,8 @@
         "write formula in sheet",
         "set sheet formula",
         "update formula cell",
-        "enter formula in google sheet"
+        "enter formula in google sheet",
+        "create a google sheet and write a formula"
       ],
       "preferredServer": "composio-toolkit-googlesheets",
       "fallbackQuery": "googlesheets values update formula"
@@ -67,7 +70,9 @@
       "synonyms": [
         "get sheet values",
         "read spreadsheet",
-        "fetch sheet data"
+        "fetch sheet data",
+        "search spreadsheets",
+        "search_spreadsheets"
       ],
       "preferredServer": "composio-toolkit-googlesheets",
       "fallbackQuery": "googlesheets values get"

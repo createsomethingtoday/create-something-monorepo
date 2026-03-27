@@ -52,11 +52,14 @@ For production smoke, you should additionally see:
 
 ## 3) Run MCP Eval Scaffolds
 
-This repo now includes three Braintrust eval scaffolds for MCP integration checks:
+This repo now includes six Braintrust eval scaffolds for MCP integration checks:
 
-- `fleet_telemetry_contract`
-- `fleet_error_path_tracing`
-- `account_isolation`
+- `fleet_telemetry_contract` — protected playbook route returns a structured success payload
+- `fleet_error_path_tracing` — protected playbook route returns a structured auth failure
+- `account_isolation` — live Hub account-routing check that verifies lane tokens resolve the expected account and ignore spoofed account headers
+- `exa_workload_latency` — live Hub + Exa proxy latency and structured output checks
+- `hub_coverage_matrix` — lane-by-lane Hub reachability, tool visibility, and latency
+- `hub_intent_routing_quality` — deterministic routing-quality regression for known intent phrases
 
 Load env defaults (edit for your routes first):
 
@@ -82,12 +85,22 @@ Run all MCP eval scaffolds locally without uploading logs:
 pnpm braintrust:eval:mcp:local
 ```
 
+Notes:
+
+- `fleet_telemetry_contract` will try `HALFDOZEN_AGENT_ROUTE_TOKEN` from env first, then fall back to the Infisical CLI when the token is not exported into the shell.
+- `account_isolation` now defaults to live Hub account-routing checks using existing `CS_HUB_*_API_TOKEN` / `CS_HUB_*_AUTH_TOKEN` secrets. Set `MCP_ACCOUNT_ISOLATION_MODE=legacy_echo` to use a custom echo fixture instead.
+- `hub_coverage_matrix` reuses existing `CS_HUB_*_API_TOKEN` / `CS_HUB_*_AUTH_TOKEN` env vars.
+- `hub_intent_routing_quality` does not require live credentials.
+
 Run one eval scaffold:
 
 ```bash
 pnpm braintrust:eval:mcp:contract
 pnpm braintrust:eval:mcp:error-path
 pnpm braintrust:eval:mcp:account-isolation
+pnpm braintrust:eval:mcp:exa
+pnpm braintrust:eval:mcp:hub-coverage
+pnpm braintrust:eval:mcp:intent-routing
 ```
 
 ## 4) Integrate In Your App
