@@ -205,7 +205,7 @@ test('getAssetById maps current asset fields and compatibility aliases', async (
   assert.equal(asset.publishedDate, '2026-03-17');
 });
 
-test('getVersionById maps the current version-side MRP field name', async () => {
+test('getVersionById maps the current version-side MRP and agent feedback fields', async () => {
   const client = new AirtableClient({
     apiKey: 'test',
     fetchFn: async (input) => {
@@ -221,6 +221,7 @@ test('getVersionById maps the current version-side MRP field name', async () => 
         fields: {
           [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
           [CONFIRMED_VERSION_FIELDS.mrpIdOverwrite]: 'mrp_current_123',
+          [CONFIRMED_VERSION_FIELDS.agentReviewFeedback]: 'AI draft feedback',
         },
       });
     },
@@ -230,6 +231,41 @@ test('getVersionById maps the current version-side MRP field name', async () => 
 
   assert.ok(version);
   assert.equal(version.mrpIdOverwrite, 'mrp_current_123');
+  assert.equal(version.agentReviewFeedback, 'AI draft feedback');
+});
+
+test('listVersionsForAgentFeedback filters for ready rows without existing agent feedback by default', async () => {
+  let capturedUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      capturedUrl = new URL(String(input));
+      return jsonResponse({
+        records: [
+          {
+            id: 'rec_version_ready',
+            createdTime: '2026-03-17T00:00:00.000Z',
+            fields: {
+              [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+              [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+            },
+          },
+        ],
+      });
+    },
+  });
+
+  const versions = await client.listVersionsForAgentFeedback({ limit: 5, viewId: 'viw_ready_queue' });
+
+  assert.ok(capturedUrl);
+  assert.equal(capturedUrl.searchParams.get('view'), 'viw_ready_queue');
+  assert.match(
+    capturedUrl.searchParams.get('filterByFormula') ?? '',
+    /LEN\(TRIM\(\{📝Agent Review Feedback\} & ""\)\) = 0/,
+  );
+  assert.equal(capturedUrl.searchParams.get('sort[0][field]'), CONFIRMED_VERSION_FIELDS.submissionDatetime);
+  assert.equal(versions.length, 1);
+  assert.equal(versions[0]?.reviewStatus, '🆕Ready for Review');
 });
 
 test('listReleases uses the stable Airtable release table id', async () => {
@@ -608,4 +644,36 @@ test('updateVersionReview includes Airtable error details on failed updates', as
       return true;
     },
   );
+});
+
+test('updateVersionReview writes agent review feedback to the confirmed field id', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+
+      assert.match(url.pathname, new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_agent_feedback$`));
+      assert.equal(init?.method, 'PATCH');
+      assert.deepEqual(JSON.parse(String(init?.body)), {
+        fields: {
+          [CONFIRMED_WRITE_FIELD_IDS.versions.agentReviewFeedback]: 'AI supplemental draft',
+        },
+      });
+
+      return jsonResponse({
+        id: 'rec_version_agent_feedback',
+        createdTime: '2026-03-18T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+          [CONFIRMED_VERSION_FIELDS.agentReviewFeedback]: 'AI supplemental draft',
+        },
+      });
+    },
+  });
+
+  const version = await client.updateVersionReview('rec_version_agent_feedback', {
+    agent_review_feedback: 'AI supplemental draft',
+  });
+
+  assert.equal(version.agentReviewFeedback, 'AI supplemental draft');
 });

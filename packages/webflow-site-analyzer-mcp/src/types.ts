@@ -223,6 +223,17 @@ export interface AnalyzeOptions {
   quality?: number;
 }
 
+export interface BrowserSessionInit {
+  url?: string;
+  options?: AnalyzeOptions;
+}
+
+export interface BrowserSessionEvaluateOptions {
+  target?: 'main' | 'preview-frame' | 'auto';
+  waitForSelector?: string;
+  timeout?: number;
+}
+
 export interface BrowserSession {
   id: string;
   provider: string;
@@ -231,12 +242,36 @@ export interface BrowserSession {
   status: 'active' | 'closed' | 'error';
 }
 
+export interface BrowserSessionHandle {
+  id: string;
+  provider: string;
+  goto(url: string, options?: AnalyzeOptions): Promise<void>;
+  evaluate<T>(script: string, options?: BrowserSessionEvaluateOptions): Promise<T>;
+  getPageUrl(): string | null;
+  close(): Promise<void>;
+}
+
 export interface BrowserProvider {
   name: string;
   
   // Core operations
   analyze<T>(url: string, script: string, options?: AnalyzeOptions): Promise<T>;
   screenshot(url: string, options?: AnalyzeOptions): Promise<Buffer>;
+  extractDesignerMetadata?(
+    url: string,
+    timeout?: number
+  ): Promise<{
+    siteName: string;
+    sitePlan: string;
+    pages: Array<{ name: string; type: string; category?: string }>;
+    styleClasses: Array<{ name: string; isGlobal: boolean }>;
+    components: Array<{ name: string; instanceCount: number; isUnused: boolean }>;
+    interactions: Array<{ trigger: string; targetElement: string; type: string }>;
+    cmsCollections: Array<{ name: string; itemCount: number }>;
+    assets: Array<{ filename: string; type: string }>;
+    breakpoints: string[];
+  }>;
+  openSession?(input?: BrowserSessionInit): Promise<BrowserSessionHandle>;
   
   // Lifecycle
   healthCheck(): Promise<boolean>;
@@ -435,6 +470,7 @@ export interface DesignerChecklistReport {
     totalCMSItems: number;
     totalAssets: number;
     breakpoints: string[];
+    pages: Array<{ name: string; type: string }>;
   };
   summary: DesignerChecklistSummary;
   checks: DesignerChecklistCheck[];
@@ -544,6 +580,12 @@ export interface PublishedSnippetPageResult {
   hasRequiredLicenseText?: boolean | null;
   error?: string | null;
   summary?: PublishedSnippetPageSummary | null;
+  policyChecks?: {
+    hasPoweredByWebflow?: boolean;
+    affiliateLinks?: string[];
+    hasGsap?: boolean;
+    hasCustomCode?: boolean;
+  };
 }
 
 export interface PublishedSnippetCrawlResult {
@@ -569,7 +611,32 @@ export interface PublishedSnippetCrawlResult {
       }
     | { ok: false; error: string };
   issueCounts: PublishedSnippetIssueCounts;
+  policyChecks: {
+    hasPoweredByWebflow: boolean;
+    affiliateLinkCount: number;
+    affiliateLinks: string[];
+    hasGsap: boolean;
+    hasCustomCode: boolean;
+  };
   pages: PublishedSnippetPageResult[];
+}
+
+export interface PublishedSitePrecheckResult {
+  startUrl: string;
+  origin: string;
+  discoveredUrls: string[];
+  requiredPages: {
+    licenses: boolean;
+    instructions: boolean;
+    changelog: boolean;
+  };
+  sitemap: {
+    ok: boolean;
+    count?: number;
+    source?: string;
+    error?: string;
+  };
+  errors: string[];
 }
 
 export interface UnifiedTemplateReviewSummary {
@@ -582,10 +649,26 @@ export interface UnifiedTemplateReviewSummary {
 }
 
 export interface UnifiedTemplateReviewReport {
+  jobId?: string;
+  status?: TemplateReviewJobStatus;
+  queuedAt?: string;
+  startedAt?: string;
+  completedAt?: string;
   generatedAt: string;
   provider: string;
   previewUrl: string;
   publishedUrl: string;
+  precheck?: PublishedSitePrecheckResult;
+  providerMetrics?: {
+    sessionsCreated: number;
+    sessionsClosed: number;
+    sessionErrors: number;
+    totalDurationMs: number;
+    averageDurationMs: number;
+    pageLoadsCompleted: number;
+    pageLoadErrors: number;
+    browserMinutes: number;
+  };
   summary: UnifiedTemplateReviewSummary;
   designer: DesignerChecklistReport;
   published: PublishedSnippetCrawlResult;
@@ -599,4 +682,42 @@ export interface RunTemplateReviewInput {
   includeManual?: boolean;
   crawlMaxPages?: number;
   crawlMaxDepth?: number;
+}
+
+export interface EnqueueTemplateReviewInput extends RunTemplateReviewInput {}
+
+export type TemplateReviewJobStatus =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'canceled';
+
+export interface TemplateReviewJobProgress {
+  phase: 'queued' | 'precheck' | 'designer' | 'published' | 'normalizing' | 'completed' | 'failed';
+  progress: number;
+  total: number;
+  message: string;
+  updatedAt: string;
+}
+
+export interface TemplateReviewJobRecord {
+  jobId: string;
+  status: TemplateReviewJobStatus;
+  input: RunTemplateReviewInput;
+  queuedAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  progress: TemplateReviewJobProgress;
+  error?: string;
+  result?: UnifiedTemplateReviewReport;
+}
+
+export interface GetTemplateReviewJobInput {
+  jobId: string;
+}
+
+export interface ListTemplateReviewJobsInput {
+  status?: TemplateReviewJobStatus;
+  limit?: number;
 }

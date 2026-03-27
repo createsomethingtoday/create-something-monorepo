@@ -1,0 +1,22 @@
+{
+  "name": "webflow-site-analyzer-mcp-remote",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:runtime": "node ../../scripts/prepare-remote-runtime.mjs",
+    "typecheck": "tsc --project tsconfig.json",
+    "dev": "pnpm run prepare:runtime && node ../../../../scripts/run-wrangler.mjs dev",
+    "deploy": "pnpm run prepare:runtime && node ../../../../scripts/run-wrangler.mjs deploy",
+    "tail": "node ../../../../scripts/run-wrangler.mjs tail"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "0.2.0",
+    "@cloudflare/sandbox": "*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^4.0.0"
+  }
+}

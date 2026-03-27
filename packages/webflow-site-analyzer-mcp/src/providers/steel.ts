@@ -17,13 +17,17 @@
  */
 
 import Steel from 'steel-sdk';
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import { type Browser, type Frame, type Page } from 'puppeteer-core';
 import type {
   BrowserProvider,
   BrowserProviderConfig,
   AnalyzeOptions,
+  BrowserSessionEvaluateOptions,
+  BrowserSessionHandle,
+  BrowserSessionInit,
   BrowserSessionMetrics
 } from '../types.js';
+import { connectPuppeteer } from './puppeteer-runtime.js';
 import {
   deriveSiteName,
   parseComponents,
@@ -92,18 +96,174 @@ export class SteelBrowserProvider implements BrowserProvider {
   /**
    * Create a Steel session and connect Puppeteer
    */
-  private async createSession(): Promise<{ session: { id: string }, browser: Browser }> {
+  private async createSession(timeoutMs = 900000): Promise<{ session: { id: string }, browser: Browser }> {
     // Create Steel session with optimal settings for Webflow
     const session = await this.client.sessions.create({
-      timeout: 900000,  // 15 minutes (max for hobby plan)
+      timeout: timeoutMs,
     });
 
     // Connect Puppeteer to the Steel session via WebSocket (API key required)
-    const browser = await puppeteer.connect({
+    const browser = await connectPuppeteer({
       browserWSEndpoint: this.getWebSocketUrl(session.id)
-    });
+    }) as Browser;
 
     return { session, browser };
+  }
+
+  private async configurePage(page: Page, options?: AnalyzeOptions): Promise<void> {
+    if (options?.viewport) {
+      await page.setViewport(options.viewport);
+    } else {
+      await page.setViewport({ width: 1920, height: 1080 });
+    }
+
+    if (options?.userAgent) {
+      await page.setUserAgent(options.userAgent);
+    }
+
+    if (options?.cookies && options.cookies.length > 0) {
+      await page.setCookie(...options.cookies);
+    }
+  }
+
+  private async navigate(page: Page, url: string, options?: AnalyzeOptions): Promise<void> {
+    await page.goto(url, {
+      waitUntil: options?.waitForNavigation ? 'networkidle2' : 'domcontentloaded',
+      timeout: options?.timeout || this.config.timeout
+    });
+
+    if (options?.waitForSelector) {
+      await page.waitForSelector(options.waitForSelector, {
+        timeout: options?.timeout || this.config.timeout
+      });
+    }
+
+    await this.wait(page, 1000);
+    this.metrics.pageLoadsCompleted++;
+  }
+
+  private async resolveEvaluationTarget(
+    page: Page,
+    currentUrl: string | null,
+    options?: BrowserSessionEvaluateOptions
+  ): Promise<Page | Frame> {
+    const target = options?.target ?? 'auto';
+    const shouldUsePreviewFrame =
+      target === 'preview-frame' || (target === 'auto' && currentUrl ? this.isWebflowPreview(currentUrl) : false);
+
+    if (!shouldUsePreviewFrame) {
+      return page;
+    }
+
+    await page.waitForSelector('#site-iframe-next', {
+      timeout: options?.timeout || 30000
+    });
+    await this.wait(page, 3000);
+
+    const iframeHandle = await page.$('#site-iframe-next');
+    if (!iframeHandle) {
+      throw new Error('Webflow preview iframe not found');
+    }
+
+    const frame = await iframeHandle.contentFrame();
+    if (!frame) {
+      throw new Error('Could not access Webflow preview iframe content');
+    }
+
+    await frame.waitForSelector('body', { timeout: options?.timeout || 10000 });
+    return frame;
+  }
+
+  async openSession(input?: BrowserSessionInit): Promise<BrowserSessionHandle> {
+    const startTime = Date.now();
+    let browser: Browser | null = null;
+    let sessionId: string | null = null;
+    let currentUrl: string | null = null;
+    let closed = false;
+
+    this.metrics.sessionsCreated++;
+
+    try {
+      const { session, browser: connectedBrowser } = await this.createSession(
+        input?.options?.timeout ?? 900000
+      );
+      browser = connectedBrowser;
+      sessionId = session.id;
+
+      const page = await browser.newPage();
+      await this.configurePage(page, input?.options);
+
+      if (input?.url) {
+        await this.navigate(page, input.url, input.options);
+        currentUrl = input.url;
+      }
+
+      const close = async () => {
+        if (closed) return;
+        closed = true;
+
+        if (browser) {
+          await browser.close();
+          this.metrics.sessionsClosed++;
+        }
+
+        if (sessionId) {
+          try {
+            await this.client.sessions.release(sessionId);
+          } catch {
+            // Session may have already been released
+          }
+        }
+
+        const duration = Date.now() - startTime;
+        this.metrics.totalDurationMs += duration;
+        this.metrics.averageDurationMs = this.metrics.totalDurationMs / this.metrics.sessionsCreated;
+      };
+
+      return {
+        id: session.id,
+        provider: this.name,
+        goto: async (url: string, options?: AnalyzeOptions) => {
+          try {
+            await this.configurePage(page, options);
+            await this.navigate(page, url, options);
+            currentUrl = url;
+          } catch (error) {
+            this.metrics.pageLoadErrors++;
+            throw error;
+          }
+        },
+        evaluate: async <T>(script: string, options?: BrowserSessionEvaluateOptions): Promise<T> => {
+          try {
+            const target = await this.resolveEvaluationTarget(page, currentUrl, options);
+            if (options?.waitForSelector) {
+              await target.waitForSelector(options.waitForSelector, {
+                timeout: options.timeout || this.config.timeout
+              });
+            }
+            return await target.evaluate(script) as T;
+          } catch (error) {
+            this.metrics.pageLoadErrors++;
+            throw error;
+          }
+        },
+        getPageUrl: () => currentUrl,
+        close
+      };
+    } catch (error) {
+      this.metrics.sessionErrors++;
+      if (browser) {
+        await browser.close().catch(() => {});
+        this.metrics.sessionsClosed++;
+      }
+      if (sessionId) {
+        await this.client.sessions.release(sessionId).catch(() => {});
+      }
+      const duration = Date.now() - startTime;
+      this.metrics.totalDurationMs += duration;
+      this.metrics.averageDurationMs = this.metrics.totalDurationMs / this.metrics.sessionsCreated;
+      throw error;
+    }
   }
 
   /**
@@ -111,100 +271,18 @@ export class SteelBrowserProvider implements BrowserProvider {
    * Handles Webflow preview URLs by extracting from the site iframe
    */
   async analyze<T>(url: string, script: string, options?: AnalyzeOptions): Promise<T> {
-    const startTime = Date.now();
-    let browser: Browser | null = null;
-    let sessionId: string | null = null;
-
+    const session = await this.openSession({ url, options });
     try {
-      this.metrics.sessionsCreated++;
-
-      const { session, browser: b } = await this.createSession();
-      browser = b;
-      sessionId = session.id;
-
-      const page = await browser.newPage();
-
-      // Set viewport
-      if (options?.viewport) {
-        await page.setViewport(options.viewport);
-      } else {
-        await page.setViewport({ width: 1920, height: 1080 });
-      }
-
-      // Set user agent if provided
-      if (options?.userAgent) {
-        await page.setUserAgent(options.userAgent);
-      }
-
-      // Navigate to URL
-      await page.goto(url, {
-        waitUntil: options?.waitForNavigation ? 'networkidle2' : 'domcontentloaded',
-        timeout: options?.timeout || this.config.timeout
+      return await session.evaluate<T>(script, {
+        target: this.isWebflowPreview(url) ? 'preview-frame' : 'main',
+        waitForSelector: options?.waitForSelector,
+        timeout: options?.timeout
       });
-
-      // Wait for specific selector if provided
-      if (options?.waitForSelector) {
-        await page.waitForSelector(options.waitForSelector, {
-          timeout: options?.timeout || this.config.timeout
-        });
-      }
-
-      // Allow page to settle
-      await this.wait(page, 1000);
-
-      this.metrics.pageLoadsCompleted++;
-
-      let result: T;
-
-      // Handle Webflow preview URLs - content is in an iframe
-      if (this.isWebflowPreview(url)) {
-        await page.waitForSelector('#site-iframe-next', {
-          timeout: options?.timeout || 30000
-        });
-
-        await this.wait(page, 3000);
-
-        const iframeHandle = await page.$('#site-iframe-next');
-        if (!iframeHandle) {
-          throw new Error('Webflow preview iframe not found');
-        }
-
-        const frame = await iframeHandle.contentFrame();
-        if (!frame) {
-          throw new Error('Could not access Webflow preview iframe content');
-        }
-
-        await frame.waitForSelector('body', { timeout: 10000 });
-        result = await frame.evaluate(script) as T;
-      } else {
-        result = await page.evaluate(script) as T;
-      }
-
-      return result;
-
     } catch (error) {
       this.metrics.sessionErrors++;
-      this.metrics.pageLoadErrors++;
       throw error;
-
     } finally {
-      if (browser) {
-        await browser.close();
-        this.metrics.sessionsClosed++;
-      }
-
-      // Release the Steel session
-      if (sessionId) {
-        try {
-          await this.client.sessions.release(sessionId);
-        } catch {
-          // Session may have already been released
-        }
-      }
-
-      const duration = Date.now() - startTime;
-      this.metrics.totalDurationMs += duration;
-      this.metrics.averageDurationMs = this.metrics.totalDurationMs / this.metrics.sessionsCreated;
+      await session.close();
     }
   }
 
@@ -316,9 +394,9 @@ export class SteelBrowserProvider implements BrowserProvider {
       });
       sessionId = session.id;
 
-      browser = await puppeteer.connect({
+      browser = await connectPuppeteer({
         browserWSEndpoint: this.getWebSocketUrl(session.id)
-      });
+      }) as Browser;
 
       const page = await browser.newPage();
       await page.setViewport({ width: 1920, height: 1080 });
@@ -363,11 +441,15 @@ export class SteelBrowserProvider implements BrowserProvider {
       // Helper to click a visible UI control by text/label
       const clickControl = async (labels: string[]): Promise<boolean> => {
         const handles = await page.$$('button, [role="tab"], [role="button"]');
-        for (const handle of handles) {
-          const payload = await handle.evaluate((el) => ({
+        const payloads = await page.evaluate(`(() =>
+          Array.from(document.querySelectorAll('button, [role="tab"], [role="button"]')).map((el) => ({
             text: (el.textContent || '').trim(),
             aria: (el.getAttribute('aria-label') || '').trim()
-          }));
+          }))
+        )()`) as Array<{ text: string; aria: string }>;
+
+        for (const [index, handle] of handles.entries()) {
+          const payload = payloads[index] ?? { text: '', aria: '' };
           const combined = `${payload.text} ${payload.aria}`.toLowerCase();
           const match = labels.some((label) => combined.includes(label.toLowerCase()));
           if (!match) continue;
@@ -637,9 +719,14 @@ export class SteelBrowserProvider implements BrowserProvider {
 
       // ===== SITE PLAN (from Settings) =====
       const allButtons = await page.$$('button, [role="button"], [role="tab"]');
+      const allButtonAriaLabels = await page.evaluate(`(() =>
+        Array.from(document.querySelectorAll('button, [role="button"], [role="tab"]')).map((el) =>
+          el.getAttribute('aria-label')
+        )
+      )()`) as Array<string | null>;
       let sitePlan = 'Unknown';
-      for (const btn of allButtons) {
-        const ariaLabel = await btn.evaluate(el => el.getAttribute('aria-label'));
+      for (const [index, btn] of allButtons.entries()) {
+        const ariaLabel = allButtonAriaLabels[index] ?? null;
         if (ariaLabel?.includes('Settings')) {
           await btn.click();
           await this.wait(page, 1500);
@@ -701,9 +788,9 @@ export class SteelBrowserProvider implements BrowserProvider {
         timeout: 60000 // 1 minute test session
       });
       
-      const browser = await puppeteer.connect({
+      const browser = await connectPuppeteer({
         browserWSEndpoint: this.getWebSocketUrl(session.id)
-      });
+      }) as Browser;
       
       const page = await browser.newPage();
       await page.goto('about:blank', { timeout: 10000 });

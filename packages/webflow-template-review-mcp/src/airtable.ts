@@ -91,6 +91,7 @@ export interface TemplateReviewVersion {
   qualityRating?: string;
   improvementAreas?: string[];
   reviewFeedback?: string;
+  agentReviewFeedback?: string;
   reviewChecklist?: string;
   publishingChecklist?: string;
   releaseDate?: string;
@@ -192,6 +193,7 @@ export interface VersionReviewUpdateInput {
   quality_rating?: string;
   improvement_areas?: string[];
   review_feedback?: string;
+  agent_review_feedback?: string;
   review_checklist?: unknown;
   publishing_checklist?: unknown;
   release_date?: string;
@@ -225,6 +227,13 @@ export interface AirtableClientOptions {
   apiKey: string;
   baseId?: string;
   fetchFn?: typeof fetch;
+}
+
+export interface AgentFeedbackQueueQuery {
+  limit?: number;
+  includeStatuses?: string[];
+  includeExistingFeedback?: boolean;
+  viewId?: string;
 }
 
 interface AirtableRecord {
@@ -436,7 +445,10 @@ function selectQueueVersion(
   return versions[0] ?? null;
 }
 
-function normalizeQueueStatus(asset: TemplateReviewAsset, version?: TemplateReviewVersion | null): TemplateReviewQueueStatus | null {
+function normalizeQueueStatus(
+  asset: Pick<TemplateReviewAsset, 'latestReviewStatus' | 'marketplaceStatus'>,
+  version?: TemplateReviewVersion | null,
+): TemplateReviewQueueStatus | null {
   const candidates = [
     version?.reviewStatus,
     asset.latestReviewStatus,
@@ -558,6 +570,7 @@ function mapVersion(record: AirtableRecord): TemplateReviewVersion {
     qualityRating: firstString(record.fields[CONFIRMED_VERSION_FIELDS.qualityRating]),
     improvementAreas: stringArray(record.fields[CONFIRMED_VERSION_FIELDS.improvementAreas]),
     reviewFeedback: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewFeedback]),
+    agentReviewFeedback: firstString(record.fields[CONFIRMED_VERSION_FIELDS.agentReviewFeedback]),
     reviewChecklist: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewChecklist]),
     publishingChecklist: firstString(record.fields[CONFIRMED_VERSION_FIELDS.publishingChecklist]),
     releaseDate: firstString(record.fields[CONFIRMED_VERSION_FIELDS.releaseDate]),
@@ -636,6 +649,7 @@ export class AirtableClient {
     fieldNames?: string[];
     fieldIds?: string[];
     limit?: number;
+    viewId?: string;
     filterByFormula?: string;
     sortField?: string;
     sortDirection?: 'asc' | 'desc';
@@ -651,6 +665,7 @@ export class AirtableClient {
 
       if (args.limit) params.set('maxRecords', String(args.limit));
       params.set('pageSize', String(pageSize));
+      if (args.viewId) params.set('view', args.viewId);
       if (args.filterByFormula) params.set('filterByFormula', args.filterByFormula);
       for (const field of args.fieldNames ?? []) params.append('fields[]', field);
       for (const fieldId of args.fieldIds ?? []) params.append('fields[]', fieldId);
@@ -667,6 +682,7 @@ export class AirtableClient {
         throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status, {
           tableId: args.tableId,
           ...(args.limit ? { limit: args.limit } : {}),
+          ...(args.viewId ? { viewId: args.viewId } : {}),
           ...(args.filterByFormula ? { filterByFormula: args.filterByFormula } : {}),
           ...(args.fieldNames?.length ? { fieldNames: args.fieldNames } : {}),
           ...(args.fieldIds?.length ? { fieldIds: args.fieldIds } : {}),
@@ -1042,6 +1058,33 @@ export class AirtableClient {
       .sort((a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0));
   }
 
+  async listVersionsForAgentFeedback(query: AgentFeedbackQueueQuery = {}): Promise<TemplateReviewVersion[]> {
+    const statuses = query.includeStatuses?.length ? query.includeStatuses : [REVIEW_STATUS_OPTIONS[0]];
+    const statusFormula =
+      statuses.length === 1
+        ? `{${CONFIRMED_VERSION_FIELDS.reviewStatus}} = '${escapeFormulaValue(statuses[0]!)}'`
+        : `OR(${statuses
+            .map((status) => `{${CONFIRMED_VERSION_FIELDS.reviewStatus}} = '${escapeFormulaValue(status)}'`)
+            .join(', ')})`;
+
+    const formulaParts = [statusFormula];
+    if (!query.includeExistingFeedback) {
+      formulaParts.push(`LEN(TRIM({${CONFIRMED_VERSION_FIELDS.agentReviewFeedback}} & "")) = 0`);
+    }
+
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assetVersions,
+      fieldNames: Object.values(CONFIRMED_VERSION_FIELDS),
+      limit: query.limit ?? 50,
+      viewId: query.viewId,
+      filterByFormula: formulaParts.length === 1 ? formulaParts[0]! : `AND(${formulaParts.join(', ')})`,
+      sortField: CONFIRMED_VERSION_FIELDS.submissionDatetime,
+      sortDirection: 'asc',
+    });
+
+    return records.map((record) => mapVersion(record));
+  }
+
   async getVersionById(versionId: string): Promise<TemplateReviewVersion | null> {
     const record = await this.getRecord(TABLE_IDS.assetVersions, versionId);
     return record ? mapVersion(record) : null;
@@ -1189,6 +1232,9 @@ export class AirtableClient {
     }
     if (input.review_feedback !== undefined) {
       fields[CONFIRMED_WRITE_FIELD_IDS.versions.reviewFeedback] = input.review_feedback;
+    }
+    if (input.agent_review_feedback !== undefined) {
+      fields[CONFIRMED_WRITE_FIELD_IDS.versions.agentReviewFeedback] = input.agent_review_feedback;
     }
     if (input.review_checklist !== undefined) fields[CONFIRMED_VERSION_FIELDS.reviewChecklist] = coerceLongText(input.review_checklist);
     if (input.publishing_checklist !== undefined) {

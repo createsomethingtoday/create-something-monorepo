@@ -137,19 +137,33 @@ export class RegistryManager {
   }
 
   /**
-   * Merge loaded registry with base scripts
+   * Merge loaded registry with base scripts.
+   *
+   * Ensures new scripts are added AND that the v1.0.0 base version code
+   * stays in sync with the source-of-truth TypeScript files. Without this,
+   * bug fixes to extraction scripts would be ignored until the persisted
+   * registry is manually deleted.
    */
   private mergeWithBase(loaded: ScriptRegistry): ScriptRegistry {
     const base = this.createInitialRegistry();
-    
-    // Ensure all base scripts exist
+
     for (const [name, entry] of Object.entries(base.scripts)) {
       if (!loaded.scripts[name]) {
+        // New script — add entirely
         loaded.scripts[name] = entry;
         loaded.activeVersions[name] = base.activeVersions[name];
+      } else {
+        // Existing script — keep persisted versions/metrics but update
+        // the base v1.0.0 code so source-level fixes propagate.
+        const baseVersion = entry.versions[0]; // v1.0.0 from source
+        const loadedEntry = loaded.scripts[name];
+        const loadedBase = loadedEntry.versions.find(v => v.id === baseVersion.id);
+        if (loadedBase && loadedBase.code !== baseVersion.code) {
+          loadedBase.code = baseVersion.code;
+        }
       }
     }
-    
+
     return loaded;
   }
 

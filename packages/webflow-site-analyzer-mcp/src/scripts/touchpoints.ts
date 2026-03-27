@@ -145,16 +145,26 @@ export const touchpointScript = `
     return rect.top < viewportHeight;
   }
 
+  // Root-level elements that should never be classified as touchpoints
+  const rootTags = new Set(['html', 'body', 'head']);
+
   // Process all elements
   const touchpoints = Array.from(elements).map(el => {
+    const tag = el.tagName.toLowerCase();
+
+    // Skip root-level container elements (e.g. html.w-mod-js, body)
+    if (rootTags.has(tag)) {
+      return null;
+    }
+
     const rect = el.getBoundingClientRect();
     const computedStyle = window.getComputedStyle(el);
-    
+
     // Skip hidden elements unless they're forms (which might be hidden initially)
-    if (computedStyle.display === 'none' || 
+    if (computedStyle.display === 'none' ||
         computedStyle.visibility === 'hidden' ||
         computedStyle.opacity === '0') {
-      if (el.tagName.toLowerCase() !== 'form') {
+      if (tag !== 'form') {
         return null;
       }
     }
