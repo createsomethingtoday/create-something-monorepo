@@ -297,7 +297,7 @@
     font-size: var(--text-display);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
-    max-width: 14ch;
+    max-width: 20ch;
     margin-left: auto;
     margin-right: auto;
     margin-bottom: var(--space-5, 1.5rem);
