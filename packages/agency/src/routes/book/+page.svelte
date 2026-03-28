@@ -246,7 +246,7 @@
 
 <SEO
 	title="Book a Workflow Mapping Session"
-	description="Schedule a workflow mapping session to identify the workflow with the most drag, the safest starting wedge, and the right level of reliability control."
+	description="Schedule a scoped workflow diagnostic to identify the workflow with the most drag, the safest starting wedge, and the right level of reliability control."
 	propertyName="agency"
 />
 
@@ -254,7 +254,8 @@
 	<header class="booking-header">
 		<h1 class="booking-title">Book a Workflow Mapping Session</h1>
 		<p class="booking-subtitle">
-			Bring the workflow with the most drag, risk, or manual handoff. We’ll map the smallest safe wedge to ship first.
+			Bring the workflow with the most drag, risk, or manual handoff. This is a scoped diagnostic
+			for one safer operating path, not an open-ended consulting check-in.
 		</p>
 	</header>
 

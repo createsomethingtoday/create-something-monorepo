@@ -16,7 +16,7 @@
 
 <SEO
   title="Proof in Production | Workflow Systems and MCPs"
-  description="Tools, connectors, and client builds that prove the operating model behind CREATE SOMETHING .agency."
+  description="Tools, connectors, and client builds that show the operating model behind CREATE SOMETHING .agency is real, inspectable, and already in use."
   keywords="AI integrations, business tool automation, Notion AI, Gmail AI, Zoom AI, Salesforce AI, custom AI development, MCP servers"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -44,8 +44,8 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Tools, connectors, and client builds that show how I design cleaner handoffs, safer
-        automation, and workflows that can survive real use.
+        Tools, connectors, and client builds that show the work is real and inspectable, not just
+        pitch language.
       </p>
     </BlurFade>
   </div>
@@ -58,8 +58,7 @@
       <div class="section-header">
         <h2 class="section-eyebrow">Flagship Tools</h2>
         <p class="section-desc">
-          Reusable patterns from real client work. Proof that the operating model exists beyond
-          pitch language.
+          Reusable patterns from real client work. Proof buyers can inspect before they commit.
         </p>
       </div>
     </BlurFade>

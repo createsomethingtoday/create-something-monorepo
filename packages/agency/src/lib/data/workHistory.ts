@@ -222,7 +222,7 @@ export const workHistory: WorkHistoryItem[] = [
 	{
 		id: 'webflow-system-architect',
 		date: 'Dec 2024 – Present',
-		role: 'System Architect',
+		role: 'Senior Systems Architect',
 		org: 'Webflow',
 		subtitle: 'Marketplace data infrastructure · Pipelines (Census/Snowflake/Amplitude/Segment)',
 		bullets: [
@@ -310,7 +310,7 @@ export const workHistoryMilestones = {
 		{ date: '2008', label: 'A&M', description: 'Domain systems', highlight: false },
 		{ date: '2018', label: 'Webflow', description: 'Support → Education', highlight: false },
 		{ date: '2023', label: 'Marketplace', description: 'Ops systems', highlight: false },
-		{ date: '2024', label: 'System Architect', description: 'Data infra', highlight: true },
+		{ date: '2024', label: 'Sr Systems Arch', description: 'Data infra', highlight: true },
 		{ date: '2018', label: 'Create Something', description: 'Web + APIs', highlight: true },
 		{ date: '2025', label: 'WORKWAY', description: 'Automation infra', highlight: true }
 	],

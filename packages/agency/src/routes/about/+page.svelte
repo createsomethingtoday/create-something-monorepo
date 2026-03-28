@@ -5,9 +5,9 @@
 </script>
 
 <SEO
-  title="About | Micah Johnson — Workflow Infrastructure"
-  description="I help Ops, RevOps, and systems-minded teams fix the workflow rules, approvals, and reliability controls that usually break after launch."
-  keywords="Micah Johnson, workflow infrastructure, production automation, technical operators, cross-system architecture, automation reliability"
+  title="About | Micah Johnson — Governed Workflow Infrastructure"
+  description="I build the control layer that keeps high-performance automation safe, legible, and useful in real operations."
+  keywords="Micah Johnson, governed workflow infrastructure, production automation, systems architecture, automation reliability, workflow governance"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -30,32 +30,40 @@
       <p class="hero-eyebrow">About</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">I help teams fix the part of automation that breaks after launch.</h1>
+      <h1 class="hero-title">
+        I build the control layer that keeps high-performance automation from spinning out.
+      </h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        The rules, approvals, handoffs, and recovery paths that decide whether automation becomes
-        leverage or cleanup.
+        Power without governance is a liability. I help teams pair speed with clear approvals,
+        safer handoffs, and recovery paths they can actually operate.
       </p>
     </BlurFade>
   </div>
 </section>
 
-<!-- The Approach -->
+<!-- Philosophy -->
 <section class="about-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
       <div class="about-content">
-        <h2>The approach</h2>
+        <h2>The philosophy</h2>
         <p>
-          Most teams do not need a giant platform initiative first. They need one workflow that
-          stops creating manual cleanup. I start there, then add controls only when the cost of
-          failure justifies the extra layer.
+          I grew up riding to school in a Porsche 930 Turbo. It was unforgettable and famously
+          unforgiving. That lesson stuck early: raw power only works when the chassis, brakes, and
+          control surfaces are as serious as the engine.
         </p>
         <p>
-          My methodology is the Subtractive Triad: remove duplication, excess, and disconnection
-          before adding automation. Cleaner systems reduce handoff risk. Better constraints make
-          automation more reliable.
+          I grew up around emergency medicine, too. My father worked as an ER physician, and I
+          later worked as an equine veterinary technician. Clinical work teaches the same thing
+          from a different angle: triage matters, protocols matter, and when the stakes rise you
+          design for continuity of care, not improvisation.
+        </p>
+        <p>
+          CREATE SOMETHING .agency sits at that intersection. AI is the power source. The work is
+          building the operating layer that keeps it safe, legible, and useful in real business
+          conditions.
         </p>
       </div>
     </BlurFade>
@@ -69,16 +77,16 @@
       <div class="about-content">
         <h2>Background</h2>
         <p>
-          Micah Johnson. I work as a System Architect on the Marketplace Team at Webflow, where I
-          build internal tooling, onboarding systems, and platform infrastructure serving millions
-          of users. The problems are familiar: brittle handoffs, unclear ownership, and systems
-          that look automated until exceptions show up.
+          Micah Johnson. I am a Senior Systems Architect on the Marketplace Team at Webflow, where
+          I build internal tooling, onboarding systems, and platform infrastructure serving
+          millions of users. The problems are familiar: brittle handoffs, unclear ownership, and
+          systems that look automated until exceptions show up.
         </p>
         <p>
           I have shipped integrations across Salesforce, HubSpot, Notion, Slack, Procore, and
           internal systems. That work informs where native tooling is enough, where MCP is the
           right wedge, and where approvals, policies, and recovery paths are the difference
-          between launch and reliability.
+          between launch and long-term reliability.
         </p>
         <p>Based in Texas. Working with businesses across the US.</p>
         <p>
@@ -89,6 +97,52 @@
             rel="noopener noreferrer">LinkedIn</a
           >
           · <a href="mailto:micah@createsomething.agency" class="link">Email</a>
+        </p>
+      </div>
+    </BlurFade>
+  </div>
+</section>
+
+<!-- The Approach -->
+<section class="about-section">
+  <div class="section-container">
+    <BlurFade delay={0.1}>
+      <div class="about-content">
+        <h2>The approach</h2>
+        <p>
+          Most teams do not need a giant AI program first. They need one workflow that stops
+          creating manual cleanup. I start there, then add controls only when the cost of failure
+          justifies the extra layer.
+        </p>
+        <p>
+          My methodology is the Subtractive Triad: remove duplication, excess, and disconnection
+          before adding automation. Cleaner systems reduce handoff risk. Better constraints make
+          automation more reliable.
+        </p>
+        <p>
+          The goal is not more automation. The goal is one operating path your team can trust.
+        </p>
+      </div>
+    </BlurFade>
+  </div>
+</section>
+
+<!-- Engagement Model -->
+<section class="about-section">
+  <div class="section-container">
+    <BlurFade delay={0.1}>
+      <div class="about-content">
+        <h2>How clients experience the work</h2>
+        <p>
+          CREATE SOMETHING is a specialist engineering room, not staff augmentation. Clients bring
+          the workflow, the operating constraints, and the approval owner. I map the rules, build
+          the control layer, and ship the artifacts your team needs to operate and inherit the
+          system.
+        </p>
+        <p>
+          That means visibility comes through runbooks, approval states, release evidence, and
+          working software, not meeting theater. If a client primarily needs an embedded admin or
+          a full internal delivery team, I route that work to a better-fit partner.
         </p>
       </div>
     </BlurFade>
@@ -118,7 +172,10 @@
     <BlurFade delay={0.1}>
       <div class="about-content">
         <h2>The system behind the work</h2>
-        <p>CREATE SOMETHING operates as a connected system. Each property has a distinct job, and each one sharpens the rest:</p>
+        <p>
+          CREATE SOMETHING operates as a connected system. Each property has a distinct job, and
+          each one sharpens the rest:
+        </p>
         <ul class="circle-list">
           <li>
             <a
@@ -145,7 +202,8 @@
             > — Tools and experiments
           </li>
           <li>
-            <strong>.agency</strong> — Workflow infrastructure, reliability controls, and enterprise extension
+            <strong>.agency</strong> — Governed workflow infrastructure, reliability controls, and
+            enterprise extension
             <span class="muted">(you are here)</span>
           </li>
         </ul>

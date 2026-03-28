@@ -42,7 +42,7 @@
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-services', label: 'How I Work', description: 'Workflow infrastructure, reliability, enterprise extension', href: '/services', icon: '🔨', keywords: ['workflow infrastructure', 'reliability', 'automation', 'pricing', 'services'] },
+		{ id: 'nav-services', label: 'How I Work', description: 'Scoped workflow infrastructure and governed execution', href: '/services', icon: '🔨', keywords: ['workflow infrastructure', 'governed execution', 'automation', 'pricing', 'services'] },
 		{ id: 'nav-products', label: 'What I\'ve Built', description: 'Artifact-backed production workflows', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations'] },
 		{ id: 'nav-book', label: 'Book Mapping Session', description: 'Map workflow risk and operational fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session'] },
 		{ id: 'nav-mcp-access', label: 'MCP Access', description: 'Reveal, copy, rotate, and revoke your personal bearer token', href: '/mcp-access', icon: '🗝️', keywords: ['mcp access', 'bearer token', 'copy token', 'host setup', 'codex', 'claude', 'cursor'] },
@@ -156,7 +156,7 @@
 	<Footer
 		mode="agency"
 		showNewsletter={false}
-		aboutText="Production-safe workflow infrastructure for technical operators who need reliable automation, clear trust boundaries, and enterprise extension when workflows get risky."
+		aboutText="Governed workflow infrastructure for ops-minded teams that need faster automation, clear trust boundaries, and artifact-backed delivery."
 		quickLinks={[
 			{ label: 'How I Work', href: '/services' },
 			{ label: 'What I\'ve Built', href: '/products' },

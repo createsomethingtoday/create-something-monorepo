@@ -152,9 +152,9 @@
 {/snippet}
 
 <SEO
-  title="Production-Safe Workflow Infrastructure | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency fixes the workflow your team keeps protecting by hand, then adds approvals and controls as the risk rises."
-  keywords="workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
+  title="Governed Workflow Infrastructure | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING .agency helps ops-minded teams turn brittle handoffs and approval gaps into governed workflows they can trust in production."
+  keywords="governed workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -180,9 +180,9 @@
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-detail">
-          I turn broken handoffs, approval gaps, and cross-system drag into a workflow your team
-          can trust in production. Start with one workflow. Add Policy OS when speed needs
-          guardrails.
+          I help Ops, RevOps, and systems leaders turn broken handoffs, approval gaps, and
+          cross-system drag into governed workflows their teams can trust in production. Start with
+          one workflow. Add Policy OS when speed needs guardrails.
         </p>
       </BlurFade>
       <BlurFade delay={0.25}>
@@ -293,8 +293,9 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Start with the workflow creating the most drag. Add approvals as the risk rises. Extend
-        only when several systems have to stay in sync.
+        Built for the person carrying the downside when automation misfires: fix the first
+        workflow, add approvals as risk rises, and extend only when several systems have to stay
+        in sync.
       </p>
     </BlurFade>
 
@@ -360,8 +361,8 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Each lane answers three questions: what gets fixed first, what needs review, and what your
-        team inherits after launch.
+        Each lane answers three questions: what gets fixed first, what stays visible, and what
+        your team inherits after launch.
       </p>
     </BlurFade>
 
@@ -453,7 +454,8 @@
           </p>
           <p class="problem-text">
             The hard part is deciding what can run automatically, what needs approval, and what
-            must stop with a reason. That is the work.
+            must stop with a reason. That is the work, especially when one operator is carrying the
+            downside for the whole team.
           </p>
           <ul class="control-outcomes">
             <li>Safe actions run automatically once the workflow and tenant are in good standing.</li>

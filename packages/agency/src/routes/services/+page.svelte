@@ -63,14 +63,19 @@
         'Workflow Infrastructure fixes the first painful workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
     },
     {
+      question: 'Are you joining our team or running internal ops?',
+      answer:
+        'No. I operate as an external specialist. You get scoped delivery, artifact-backed visibility, approval points, and a clean handoff instead of open-ended staff augmentation.'
+    },
+    {
       question: 'Do you build full business systems and run onboarding?',
       answer:
-        'When full system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen.'
+        'When full system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen. .agency is optimized for workflow infrastructure and governed execution, not ongoing admin coverage.'
     },
     {
       question: 'What does .agency own?',
       answer:
-        '.agency owns the rules, approvals, handoffs, release controls, and operating artifacts around the workflow.'
+        '.agency owns the rules, approvals, handoffs, release controls, and operating artifacts around the workflow. Your team keeps business context, approval ownership, and long-term control.'
     },
     {
       question: 'When should we add Policy OS?',
@@ -100,8 +105,8 @@
 </script>
 
 <SEO
-  title="How We Work | Production-Safe Workflow Infrastructure"
-  description="CREATE SOMETHING .agency starts with the workflow causing the most drag, adds approvals when failure gets expensive, and extends only when the risk profile demands it."
+  title="How I Work | Governed Workflow Infrastructure"
+  description="CREATE SOMETHING .agency offers scoped specialist engagements that fix one workflow first, then add governed execution as operational risk rises."
   keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -131,9 +136,31 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Fix the first workflow. Add approvals and oversight when the risk rises. Reserve
-        Enterprise Extension for auditability, recovery, and cross-system coordination.
+        This is a specialist engagement: scoped, artifact-backed, and designed to give your team a
+        safer operating path, not another person to manage. Fix the first workflow, add oversight
+        when the risk rises, and extend only when several systems must stay in sync.
       </p>
+    </BlurFade>
+  </div>
+</section>
+
+<!-- Engagement Model -->
+<section class="boundary-section">
+  <div class="section-container">
+    <BlurFade delay={0.25}>
+      <div class="boundary-card">
+        <p class="boundary-eyebrow">Engagement Model</p>
+        <h2 class="boundary-heading">You are not hiring an internal admin.</h2>
+        <p class="boundary-copy">
+          You are bringing in a specialist to diagnose, rebuild, and govern one critical operating
+          path. The work is scoped, visible, and designed for your team to inherit.
+        </p>
+        <ul class="boundary-list">
+          <li>You bring the workflow, constraints, and approval owner.</li>
+          <li>I map the rules, build the control layer, and ship the operating artifacts.</li>
+          <li>Your team gets visibility through runbooks, approvals, release evidence, and working software.</li>
+        </ul>
+      </div>
     </BlurFade>
   </div>
 </section>
@@ -254,7 +281,7 @@
 <section class="timeline-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="section-heading">What a Month Looks Like</h2>
+      <h2 class="section-heading">How Engagements Expand</h2>
     </BlurFade>
 
     <div class="timeline-grid">
@@ -403,6 +430,59 @@
     max-width: 600px;
     margin: 0 auto;
     line-height: var(--leading-relaxed);
+  }
+
+  /* Engagement boundary */
+  .boundary-section {
+    padding: 0 var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+  }
+
+  .boundary-card {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-xl, 16px);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+  }
+
+  .boundary-eyebrow {
+    font-size: var(--text-body-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-fg-muted);
+    margin-bottom: var(--space-3, 0.75rem);
+  }
+
+  .boundary-heading {
+    font-size: var(--text-h2, 2rem);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin-bottom: var(--space-4, 1rem);
+    line-height: 1.15;
+  }
+
+  .boundary-copy {
+    font-size: var(--text-body);
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    margin-bottom: var(--space-4, 1rem);
+    max-width: 60ch;
+  }
+
+  .boundary-list {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .boundary-list li {
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    margin-bottom: var(--space-2, 0.5rem);
+  }
+
+  .boundary-list li:last-child {
+    margin-bottom: 0;
   }
 
   /* Flow Section */
