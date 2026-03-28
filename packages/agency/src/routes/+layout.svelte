@@ -3,6 +3,7 @@
 	import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
 	import { UnifiedSearch } from '@create-something/canon/navigation';
 	import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
+	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate, disableScrollHandling, goto, onNavigate } from '$app/navigation';
@@ -44,7 +45,7 @@
 	const quickAccessItems = [
 		{ id: 'nav-services', label: 'How I Work', description: 'Scoped workflow infrastructure and governed execution', href: '/services', icon: '🔨', keywords: ['workflow infrastructure', 'governed execution', 'automation', 'pricing', 'services'] },
 		{ id: 'nav-products', label: 'What I\'ve Built', description: 'Artifact-backed production workflows', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations'] },
-		{ id: 'nav-book', label: 'Book Mapping Session', description: 'Map workflow risk and operational fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session'] },
+		{ id: 'nav-book', label: agencyCoreMessaging.bookMappingSessionLabel, description: 'Map workflow risk and operational fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session'] },
 		{ id: 'nav-mcp-access', label: 'MCP Access', description: 'Reveal, copy, rotate, and revoke your personal bearer token', href: '/mcp-access', icon: '🗝️', keywords: ['mcp access', 'bearer token', 'copy token', 'host setup', 'codex', 'claude', 'cursor'] },
 		{ id: 'nav-security', label: 'Security', description: 'Identity boundaries, bearer-token governance, and operational controls', href: '/security', icon: '🛡️', keywords: ['security', 'trust', 'risk', 'controls', 'auth'] },
 		{ id: 'nav-bearer-token-policy', label: 'Bearer Token Policy', description: 'One long-lived token per user with live entitlement checks and revocation', href: '/bearer-token-policy', icon: '🔑', keywords: ['bearer token', 'token policy', 'mcp access', 'agent access', 'auth'] },
@@ -141,7 +142,7 @@
 		links={navLinks}
 		currentPath={$page.url.pathname}
 		fixed={true}
-		ctaLabel="Book Mapping Session"
+		ctaLabel={agencyCoreMessaging.bookMappingSessionLabel}
 		ctaHref="/book"
 		user={data.user}
 		onLogout={handleLogout}
@@ -163,7 +164,7 @@
 			{ label: 'About', href: '/about' },
 			{ label: 'Security', href: '/security' },
 			{ label: 'Bearer Token Policy', href: '/bearer-token-policy' },
-			{ label: 'Book Mapping Session', href: '/book' }
+			{ label: agencyCoreMessaging.bookMappingSessionLabel, href: '/book' }
 		]}
 		showSocial={true}
 		isAuthenticated={!!data.user}

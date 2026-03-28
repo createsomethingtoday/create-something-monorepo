@@ -9,6 +9,7 @@
   } from '@create-something/canon/magicui';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
+  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   // Structured data for SEO/AEO
   const services = [
     {
@@ -152,8 +153,8 @@
 {/snippet}
 
 <SEO
-  title="Governed Workflow Infrastructure | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency helps ops-minded teams turn brittle handoffs and approval gaps into governed workflows they can trust in production."
+  title={`${agencyCoreMessaging.categoryLabel} | CREATE SOMETHING .agency`}
+  description="CREATE SOMETHING .agency helps ops-minded teams make critical workflows safe enough to trust in production."
   keywords="governed workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -176,19 +177,21 @@
   <div class="hero-container">
     <div class="hero-content">
       <BlurFade delay={0}>
-        <h1 class="hero-title">Fix the workflow your team still protects by hand.</h1>
+        <p class="hero-eyebrow">{agencyCoreMessaging.categoryLabel}</p>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h1 class="hero-title">Make the workflow safe enough to trust.</h1>
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-detail">
-          I help Ops, RevOps, and systems leaders turn broken handoffs, approval gaps, and
-          cross-system drag into governed workflows their teams can trust in production. Start with
-          one workflow. Add Policy OS when speed needs guardrails.
+          For the operator who has to answer for what happens next. I fix the workflow creating the
+          most drag, then add approvals, visibility, and recovery paths as the stakes rise.
         </p>
       </BlurFade>
       <BlurFade delay={0.25}>
         <div class="hero-cta">
-          <ShimmerButton href="/book">Book Mapping Session</ShimmerButton>
-          <a href="#how" class="hero-link">See the three lanes →</a>
+          <ShimmerButton href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</ShimmerButton>
+          <a href="#how" class="hero-link">See how it works →</a>
         </div>
       </BlurFade>
     </div>
@@ -293,9 +296,8 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Built for the person carrying the downside when automation misfires: fix the first
-        workflow, add approvals as risk rises, and extend only when several systems have to stay
-        in sync.
+        Start with one workflow your team cannot keep babysitting. Make it reliable. Add
+        governance only when the risk justifies it.
       </p>
     </BlurFade>
 
@@ -310,8 +312,8 @@
             <span class="funnel-step-label">Lane 1</span>
             <h3>Workflow Infrastructure</h3>
             <p>
-              I map the rules, owners, and handoffs around the workflow slowing your team down
-              most.
+              I map the rules, owners, and handoffs around the workflow your team still has to
+              watch too closely.
             </p>
           </div>
         </div>
@@ -327,8 +329,8 @@
             <span class="funnel-step-label">Lane 2</span>
             <h3>Policy OS</h3>
             <p>
-              I add policy artifacts, approvals, release checks, blocked states, and incident
-              review so automation stays trustworthy as it expands.
+              I add approvals, release checks, blocked states, and review loops so speed does not
+              turn into cleanup.
             </p>
           </div>
         </div>
@@ -343,8 +345,8 @@
             <span class="funnel-step-label">Lane 3</span>
             <h3>Enterprise Extension</h3>
             <p>
-              I build the control layer for workflows that cross systems, teams, or compliance
-              boundaries.
+              I extend the control layer when several systems, teams, or compliance boundaries
+              have to stay aligned.
             </p>
           </div>
         </div>
@@ -357,12 +359,11 @@
 <section class="offerings-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="section-heading">What's Included</h2>
+      <h2 class="section-heading">What Your Team Gets</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Each lane answers three questions: what gets fixed first, what stays visible, and what
-        your team inherits after launch.
+        Clear deliverables, visible controls, and artifacts your team can inherit after launch.
       </p>
     </BlurFade>
 
@@ -374,8 +375,8 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              One painful workflow rebuilt with clear rules, cleaner handoffs, and safer
-              automation.
+              One workflow rebuilt with clearer rules, safer handoffs, and less manual
+              protection.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -392,14 +393,14 @@
 
       <BlurFade delay={0.25}>
         <div class="offering-card offering-featured">
-          <span class="offering-badge">The real product</span>
+          <span class="offering-badge">Core engagement</span>
           <div class="offering-header">
             <h3 class="offering-name">Policy OS</h3>
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              The approval and oversight layer that keeps a live workflow trustworthy as volume,
-              risk, and exceptions increase.
+              The oversight layer for a live workflow once volume, exceptions, or trust risk start
+              to climb.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -421,8 +422,8 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              Cross-system control for workflows that need audit trails, recovery paths, and
-              coordination across teams.
+              Cross-system coordination for workflows that need audit trails, recovery paths, and
+              steadier control.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -444,30 +445,29 @@
 <section class="problem-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="section-heading">The Model</h2>
+      <h2 class="section-heading">Why Governance Matters</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
       <div class="problem-statements model-grid">
         <div class="model-copy">
           <p class="problem-text">
-            Connecting tools is getting easier. Governing live workflows is not.
+            Connecting tools is getting easier. Getting your team to trust the result is harder.
           </p>
           <p class="problem-text">
-            The hard part is deciding what can run automatically, what needs approval, and what
-            must stop with a reason. That is the work, especially when one operator is carrying the
-            downside for the whole team.
+            The hard part is deciding what can run automatically, what needs a person in the loop,
+            and what should stop with a clear reason. That is where governance starts.
           </p>
           <ul class="control-outcomes">
-            <li>Safe actions run automatically once the workflow and tenant are in good standing.</li>
-            <li>Risky actions route to approval instead of becoming cleanup.</li>
-            <li>Disallowed actions stop with a reason buyers and operators can both understand.</li>
+            <li>Safe actions run automatically when the workflow is healthy.</li>
+            <li>Risky actions pause for review instead of becoming cleanup.</li>
+            <li>Disallowed actions stop with a reason your team can understand.</li>
           </ul>
           <p class="problem-text">
-            When a client primarily needs full system development and team onboarding, I refer that
-            engagement to Half Dozen directly.
+            If what you need is a full internal delivery team, I will route you to a better-fit
+            partner.
           </p>
           <p class="problem-punchline">
-            Reliable workflows are the product. Operational leverage is the outcome.
+            Trust is the product. Speed is the outcome.
           </p>
         </div>
         <div class="mcp-flow-wrapper">
@@ -483,8 +483,8 @@
   <div class="section-container">
     <BlurFade>
       <ArtifactSystemStrip
-        title="What makes the workflow dependable"
-        description="The buyer promise is backed by explicit contracts, runbooks, and release evidence, not by founder memory or hidden prompts."
+        title="How trust stays visible"
+        description="Every engagement ships with runbooks, approval boundaries, and release evidence your team can inspect, inherit, and operate."
       />
     </BlurFade>
   </div>
@@ -494,18 +494,15 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="cta-heading">Map the workflow your team still protects by hand.</h2>
+      <h2 class="cta-heading">{agencyCoreMessaging.workflowCtaHeading}</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <p class="cta-subtext">
-        In one session, I will map the handoffs, approval points, failure modes, and artifact
-        bundle the workflow needs.
-      </p>
+      <p class="cta-subtext">{agencyCoreMessaging.workflowCtaDetail}</p>
     </BlurFade>
     <BlurFade delay={0.2}>
       <div class="cta-buttons">
-        <ShimmerButton href="/book">Book Mapping Session</ShimmerButton>
-        <a href="/services" class="cta-book-link"> See the engagement model → </a>
+        <ShimmerButton href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</ShimmerButton>
+        <a href="/services" class="cta-book-link"> {agencyCoreMessaging.engagementModelLabel} </a>
       </div>
     </BlurFade>
   </div>
@@ -581,14 +578,23 @@
     text-align: left;
   }
 
+  .hero-eyebrow {
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-fg-muted);
+    margin-bottom: var(--space-3, 0.75rem);
+  }
+
   .hero-title {
     font-size: clamp(2.75rem, 5vw + 1.5rem, 5rem);
     font-weight: var(--font-bold);
     color: var(--color-fg-primary);
-    max-width: 11ch;
+    max-width: 13ch;
     margin-bottom: var(--space-6, 2rem);
-    line-height: 1.15;
+    line-height: 1.05;
     letter-spacing: var(--tracking-tighter, -0.025em);
+    text-wrap: balance;
   }
 
   .hero-detail {
@@ -596,7 +602,8 @@
     color: var(--color-fg-secondary);
     margin-bottom: var(--space-5, 1.5rem);
     line-height: var(--leading-relaxed);
-    max-width: var(--content-width-sm);
+    max-width: 34ch;
+    text-wrap: pretty;
   }
 
   .hero-cta {

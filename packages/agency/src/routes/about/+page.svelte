@@ -2,11 +2,12 @@
   import { SEO } from '@create-something/canon';
   import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
   import WorkHistoryTimeline from '$lib/components/WorkHistoryTimeline.svelte';
+  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 </script>
 
 <SEO
-  title="About | Micah Johnson — Governed Workflow Infrastructure"
-  description="I build the control layer that keeps high-performance automation safe, legible, and useful in real operations."
+  title={`About | Micah Johnson — ${agencyCoreMessaging.categoryLabel}`}
+  description="I design workflows people can trust under pressure, with the controls, visibility, and recovery paths real teams need."
   keywords="Micah Johnson, governed workflow infrastructure, production automation, systems architecture, automation reliability, workflow governance"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -30,40 +31,36 @@
       <p class="hero-eyebrow">About</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">
-        I build the control layer that keeps high-performance automation from spinning out.
-      </h1>
+      <h1 class="hero-title">I design workflows people can trust under pressure.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        Power without governance is a liability. I help teams pair speed with clear approvals,
-        safer handoffs, and recovery paths they can actually operate.
+        My work sits between high-performance systems and clinical discipline: make things faster,
+        but never at the expense of clarity, control, or recovery.
       </p>
     </BlurFade>
   </div>
 </section>
 
-<!-- Philosophy -->
+<!-- Why This Work -->
 <section class="about-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
       <div class="about-content">
-        <h2>The philosophy</h2>
+        <h2>Why I work this way</h2>
         <p>
-          I grew up riding to school in a Porsche 930 Turbo. It was unforgettable and famously
-          unforgiving. That lesson stuck early: raw power only works when the chassis, brakes, and
-          control surfaces are as serious as the engine.
+          I grew up between two reference points: a Porsche 930 Turbo and emergency medicine. One
+          taught me that power needs control. The other taught me that when pressure rises, clear
+          protocols matter more than improvisation.
         </p>
         <p>
-          I grew up around emergency medicine, too. My father worked as an ER physician, and I
-          later worked as an equine veterinary technician. Clinical work teaches the same thing
-          from a different angle: triage matters, protocols matter, and when the stakes rise you
-          design for continuity of care, not improvisation.
+          Later, as an equine veterinary technician, I learned what continuity of care, logging,
+          and operating discipline actually feel like in the real world. That stays with me in
+          systems work now.
         </p>
         <p>
-          CREATE SOMETHING .agency sits at that intersection. AI is the power source. The work is
-          building the operating layer that keeps it safe, legible, and useful in real business
-          conditions.
+          Today that shows up in the kind of workflows I build: fast when they should be, visible
+          when they need review, and recoverable when something goes wrong.
         </p>
       </div>
     </BlurFade>
@@ -75,18 +72,18 @@
   <div class="section-container">
     <BlurFade delay={0.1}>
       <div class="about-content">
-        <h2>Background</h2>
+        <h2>What I do now</h2>
         <p>
           Micah Johnson. I am a Senior Systems Architect on the Marketplace Team at Webflow, where
           I build internal tooling, onboarding systems, and platform infrastructure serving
           millions of users. The problems are familiar: brittle handoffs, unclear ownership, and
-          systems that look automated until exceptions show up.
+          systems that look automated until the exceptions show up.
         </p>
         <p>
           I have shipped integrations across Salesforce, HubSpot, Notion, Slack, Procore, and
           internal systems. That work informs where native tooling is enough, where MCP is the
           right wedge, and where approvals, policies, and recovery paths are the difference
-          between launch and long-term reliability.
+          between a launch and a system people actually trust.
         </p>
         <p>Based in Texas. Working with businesses across the US.</p>
         <p>
@@ -108,9 +105,9 @@
   <div class="section-container">
     <BlurFade delay={0.1}>
       <div class="about-content">
-        <h2>The approach</h2>
+        <h2>How I approach the work</h2>
         <p>
-          Most teams do not need a giant AI program first. They need one workflow that stops
+          Most teams do not need a giant AI initiative first. They need one workflow that stops
           creating manual cleanup. I start there, then add controls only when the cost of failure
           justifies the extra layer.
         </p>
@@ -134,15 +131,14 @@
       <div class="about-content">
         <h2>How clients experience the work</h2>
         <p>
-          CREATE SOMETHING is a specialist engineering room, not staff augmentation. Clients bring
-          the workflow, the operating constraints, and the approval owner. I map the rules, build
-          the control layer, and ship the artifacts your team needs to operate and inherit the
-          system.
+          Clients do not hire me to become another internal admin. They bring the workflow, the
+          operating constraints, and the approval owner. I bring the diagnosis, the control layer,
+          and the artifacts your team needs to run and inherit the system.
         </p>
         <p>
-          That means visibility comes through runbooks, approval states, release evidence, and
-          working software, not meeting theater. If a client primarily needs an embedded admin or
-          a full internal delivery team, I route that work to a better-fit partner.
+          Visibility comes through runbooks, approval states, release evidence, and working
+          software, not meeting theater. If what a client needs is a full internal delivery team,
+          I route that work to a better-fit partner.
         </p>
       </div>
     </BlurFade>
@@ -156,9 +152,9 @@
       <div class="about-content">
         <h2>Timeline</h2>
         <p>
-          The through-line: using tools to abstract complexity while still understanding the
-          complexity underneath. That pattern shows up in science, creative work, client services,
-          marketplace systems, and now AI integrations.
+          The through-line is not AI. It is learning how to turn messy systems into operating paths
+          people can trust. That pattern shows up in science, creative work, client services,
+          marketplaces, and now automation.
         </p>
       </div>
     </BlurFade>
@@ -171,10 +167,10 @@
   <div class="section-container">
     <BlurFade delay={0.1}>
       <div class="about-content">
-        <h2>The system behind the work</h2>
+        <h2>The rest of CREATE SOMETHING</h2>
         <p>
           CREATE SOMETHING operates as a connected system. Each property has a distinct job, and
-          each one sharpens the rest:
+          each one sharpens the others:
         </p>
         <ul class="circle-list">
           <li>
@@ -209,7 +205,7 @@
         </ul>
         <p>
           Client work informs the research. Research sharpens the methodology. The methodology
-          raises the bar on client work. Every part serves the whole.
+          raises the bar on client work.
         </p>
       </div>
     </BlurFade>
@@ -228,8 +224,8 @@
             class="link"
             target="_blank"
             rel="noopener noreferrer">WORKWAY</a
-          >. When clients need full system development and onboarding as the primary engagement, I
-          provide a direct referral path to trusted partners, including Half Dozen.
+          >. When clients need fuller system development and onboarding than .agency is meant to
+          carry, I provide a direct referral path to trusted partners, including Half Dozen.
         </p>
       </div>
     </BlurFade>
@@ -240,12 +236,15 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
-      <h2 class="cta-heading">Map the workflow your team is still babysitting.</h2>
+      <h2 class="cta-heading">{agencyCoreMessaging.workflowCtaHeading}</h2>
     </BlurFade>
     <BlurFade delay={0.2}>
+      <p class="cta-detail">{agencyCoreMessaging.workflowCtaDetail}</p>
+    </BlurFade>
+    <BlurFade delay={0.3}>
       <div class="cta-actions">
-        <a href="/book" class="cta-link-primary">Book Mapping Session →</a>
-        <a href="/services" class="cta-link-secondary">See the engagement model →</a>
+        <a href="/book" class="cta-link-primary">{agencyCoreMessaging.bookMappingSessionLabel} →</a>
+        <a href="/services" class="cta-link-secondary">{agencyCoreMessaging.engagementModelLabel}</a>
       </div>
     </BlurFade>
   </div>
@@ -298,17 +297,22 @@
     font-size: var(--text-display);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
+    max-width: 14ch;
+    margin-left: auto;
+    margin-right: auto;
     margin-bottom: var(--space-5, 1.5rem);
     line-height: 1.1;
     letter-spacing: var(--tracking-tighter, -0.025em);
+    text-wrap: balance;
   }
 
   .hero-detail {
     font-size: var(--text-body-lg);
     color: var(--color-fg-secondary);
     line-height: var(--leading-relaxed);
-    max-width: 38em;
+    max-width: 34ch;
     margin: 0 auto;
+    text-wrap: pretty;
   }
 
   /* About Sections */
@@ -377,7 +381,15 @@
     font-size: var(--text-h1);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
-    margin-bottom: var(--space-5, 1.5rem);
+    margin-bottom: var(--space-3, 0.75rem);
+  }
+
+  .cta-detail {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 32ch;
+    margin: 0 auto;
   }
 
   .cta-actions {
@@ -385,6 +397,7 @@
     flex-direction: column;
     align-items: center;
     gap: var(--space-4, 1rem);
+    margin-top: var(--space-5, 1.5rem);
   }
 
   .cta-link-primary {
