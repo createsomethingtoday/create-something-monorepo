@@ -120,7 +120,16 @@
   .artifact-grid {
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .artifact-card:nth-child(1),
+  .artifact-card:nth-child(2) {
+    grid-column: span 3;
+  }
+
+  .artifact-card:nth-child(n + 3) {
+    grid-column: span 2;
   }
 
   .artifact-card {
@@ -170,6 +179,12 @@
   @media (max-width: 1100px) {
     .artifact-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .artifact-card:nth-child(1),
+    .artifact-card:nth-child(2),
+    .artifact-card:nth-child(n + 3) {
+      grid-column: auto;
     }
   }
 
