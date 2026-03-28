@@ -1051,7 +1051,7 @@
     align-content: start;
     gap: 0.65rem;
     min-height: 5.35rem;
-    padding: 1.1rem 1.2rem 0.85rem;
+    padding: 2rem 1.2rem 0.85rem;
     text-align: left;
   }
 
