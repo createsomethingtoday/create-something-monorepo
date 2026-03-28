@@ -384,30 +384,6 @@
 
     <div class="offerings-grid">
       <BlurFade delay={0.15}>
-        <div class="offering-card offering-featured">
-          <span class="offering-badge">Most teams start here</span>
-          <div class="offering-header">
-            <h3 class="offering-name">Workflow Infrastructure</h3>
-          </div>
-          <div class="offering-body">
-            <p class="offering-description">
-              The first reliable operating path: one workflow rebuilt with clearer rules, safer
-              handoffs, and less manual protection.
-            </p>
-            <div class="offering-deliverables">
-              <span class="deliverables-label">Includes</span>
-              <ul>
-                <li>Workflow implementation</li>
-                <li>Business-rule mapping</li>
-                <li>Auth and access setup</li>
-                <li>Runbook and handoff artifacts</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </BlurFade>
-
-      <BlurFade delay={0.25}>
         <div class="offering-card">
           <div class="offering-header">
             <h3 class="offering-name">Policy OS</h3>
@@ -424,6 +400,30 @@
                 <li>Policy and approval boundaries</li>
                 <li>Postmortem loops</li>
                 <li>Monthly tuning</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </BlurFade>
+
+      <BlurFade delay={0.25}>
+        <div class="offering-card offering-featured">
+          <div class="offering-header">
+            <span class="offering-badge">Most teams start here</span>
+            <h3 class="offering-name">Workflow Infrastructure</h3>
+          </div>
+          <div class="offering-body">
+            <p class="offering-description">
+              The first reliable operating path: one workflow rebuilt with clearer rules, safer
+              handoffs, and less manual protection.
+            </p>
+            <div class="offering-deliverables">
+              <span class="deliverables-label">Includes</span>
+              <ul>
+                <li>Workflow implementation</li>
+                <li>Business-rule mapping</li>
+                <li>Auth and access setup</li>
+                <li>Runbook and handoff artifacts</li>
               </ul>
             </div>
           </div>
@@ -1055,10 +1055,12 @@
 
   .offerings-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-8, 3rem);
+    grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.06fr) minmax(0, 0.98fr);
+    gap: clamp(1.25rem, 2.4vw, 1.75rem);
     align-items: stretch;
     overflow: visible;
+    max-width: 80rem;
+    margin: var(--space-8, 3rem) auto 0;
   }
 
   /* BlurFade wrappers must stretch so grid equalizes row height */
@@ -1073,10 +1075,13 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-xl, 16px);
-    background: var(--color-bg-pure);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
+      rgba(14, 14, 16, 0.94);
     box-shadow: var(--glass-shine-soft);
     overflow: visible;
     flex: 1;
+    border: 1px solid rgba(214, 182, 132, 0.08);
     transition:
       border-color var(--duration-standard) var(--ease-standard),
       box-shadow var(--duration-standard) var(--ease-standard),
@@ -1094,80 +1099,91 @@
   }
 
   .offering-card:hover {
-    border-color: var(--color-border-emphasis);
-    box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+    border-color: rgba(214, 182, 132, 0.18);
+    box-shadow: var(--glass-shine-standard), 0 20px 40px rgba(0, 0, 0, 0.22);
     transform: translateY(-3px);
   }
 
   /* Featured offering — elevated z-index so badge is visible above siblings */
   .offering-card.offering-featured {
     z-index: 1;
-    border-color: rgba(96, 165, 250, 0.3);
-    background: linear-gradient(180deg, rgba(96, 165, 250, 0.04) 0%, var(--color-bg-pure) 100%);
+    border-color: rgba(214, 182, 132, 0.2);
+    background:
+      radial-gradient(circle at top center, rgba(214, 182, 132, 0.08), transparent 58%),
+      linear-gradient(180deg, rgba(214, 182, 132, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%),
+      rgba(16, 15, 13, 0.96);
     box-shadow:
       var(--glass-shine-standard),
-      0 0 0 1px rgba(96, 165, 250, 0.08);
+      0 0 0 1px rgba(214, 182, 132, 0.08),
+      0 22px 48px rgba(0, 0, 0, 0.22);
   }
 
   .offering-card.offering-featured:hover {
-    border-color: rgba(96, 165, 250, 0.5);
+    border-color: rgba(214, 182, 132, 0.28);
     box-shadow:
       var(--glass-shine-strong),
-      0 0 0 1px rgba(96, 165, 250, 0.15),
-      0 8px 32px rgba(96, 165, 250, 0.1);
+      0 0 0 1px rgba(214, 182, 132, 0.12),
+      0 24px 52px rgba(0, 0, 0, 0.26);
     transform: translateY(-4px);
   }
 
   .offering-card.offering-featured::before {
-    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(214, 182, 132, 0.22), transparent);
   }
 
   .offering-badge {
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
+    display: inline-flex;
+    align-self: flex-start;
     font-size: 0.65rem;
     font-weight: var(--font-semibold);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: rgba(96, 165, 250, 1);
-    background: rgba(10, 14, 20, 0.95);
+    color: rgba(214, 182, 132, 0.96);
+    background: rgba(45, 36, 20, 0.36);
     backdrop-filter: blur(12px) saturate(120%);
     -webkit-backdrop-filter: blur(12px) saturate(120%);
-    border: 1px solid rgba(96, 165, 250, 0.3);
+    border: 1px solid rgba(214, 182, 132, 0.22);
     border-radius: var(--radius-full, 9999px);
-    padding: 0.2rem 0.75rem;
+    padding: 0.28rem 0.7rem;
     white-space: nowrap;
-    z-index: 10;
   }
 
   .offering-header {
-    padding: var(--space-4, 1rem) var(--space-4, 1rem) var(--space-3, 0.75rem);
-    text-align: center;
+    display: grid;
+    align-content: start;
+    gap: var(--space-4, 1rem);
+    min-height: 7rem;
+    padding: 1.35rem 1.4rem 1rem;
+    text-align: left;
+  }
+
+  .offering-card:not(.offering-featured) .offering-header::before {
+    content: '';
+    display: block;
+    height: 1.95rem;
   }
 
   .offering-name {
-    font-size: var(--text-body-lg);
+    font-size: clamp(1.45rem, 0.75vw + 1.2rem, 1.9rem);
     font-weight: var(--font-bold);
     color: var(--color-fg-primary);
-    margin-top: var(--space-2, 0.5rem);
+    line-height: 1.08;
+    margin: 0;
   }
 
   .offering-body {
-    padding: 0 var(--space-4, 1rem) var(--space-4, 1rem);
+    padding: 1rem 1.4rem 1.4rem;
     flex: 1;
     display: flex;
     flex-direction: column;
-    border-top: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
+    border-top: 1px solid rgba(214, 182, 132, 0.08);
   }
 
   .offering-description {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-body);
     color: var(--color-fg-secondary);
     line-height: var(--leading-relaxed);
-    padding-top: var(--space-3, 0.75rem);
-    margin-bottom: var(--space-4, 1rem);
+    margin-bottom: var(--space-5, 1.5rem);
   }
 
   .offering-deliverables {
@@ -1207,7 +1223,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: rgba(96, 165, 250, 0.6);
+    background: rgba(214, 182, 132, 0.55);
   }
 
   /* Problem Section */
