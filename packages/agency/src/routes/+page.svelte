@@ -189,9 +189,12 @@
         </p>
       </BlurFade>
       <BlurFade delay={0.25}>
-        <div class="hero-cta">
-          <ShimmerButton href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</ShimmerButton>
-          <a href="#how" class="hero-link">See how it works →</a>
+        <div class="hero-actions">
+          <div class="hero-cta">
+            <ShimmerButton href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</ShimmerButton>
+            <a href="#how" class="hero-link">See how it works →</a>
+          </div>
+          <p class="hero-cta-note">{agencyCoreMessaging.workflowCtaDetail}</p>
         </div>
       </BlurFade>
     </div>
@@ -296,8 +299,8 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Start with one workflow your team cannot keep babysitting. Make it reliable. Add
-        governance only when the risk justifies it.
+        Start with one workflow your team still has to watch too closely. Make the handoffs
+        reliable first. Add governance only where the risk justifies it.
       </p>
     </BlurFade>
 
@@ -355,6 +358,18 @@
   </div>
 </section>
 
+<!-- Proof -->
+<section class="audience-section">
+  <div class="section-container">
+    <BlurFade>
+      <ArtifactSystemStrip
+        title="How trust stays visible"
+        description="Every engagement ships with runbooks, approval boundaries, and release evidence your team can review, inherit, and run after launch."
+      />
+    </BlurFade>
+  </div>
+</section>
+
 <!-- What You Get -->
 <section class="offerings-section">
   <div class="section-container">
@@ -363,20 +378,21 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Clear deliverables, visible controls, and artifacts your team can inherit after launch.
+        One clear entry point, visible controls, and artifacts your team can inherit after launch.
       </p>
     </BlurFade>
 
     <div class="offerings-grid">
       <BlurFade delay={0.15}>
-        <div class="offering-card">
+        <div class="offering-card offering-featured">
+          <span class="offering-badge">Most teams start here</span>
           <div class="offering-header">
             <h3 class="offering-name">Workflow Infrastructure</h3>
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              One workflow rebuilt with clearer rules, safer handoffs, and less manual
-              protection.
+              The first reliable operating path: one workflow rebuilt with clearer rules, safer
+              handoffs, and less manual protection.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -392,15 +408,14 @@
       </BlurFade>
 
       <BlurFade delay={0.25}>
-        <div class="offering-card offering-featured">
-          <span class="offering-badge">Core engagement</span>
+        <div class="offering-card">
           <div class="offering-header">
             <h3 class="offering-name">Policy OS</h3>
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              The oversight layer for a live workflow once volume, exceptions, or trust risk start
-              to climb.
+              Add the oversight layer once the workflow is live and volume, exceptions, or trust
+              risk start to climb.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -463,8 +478,8 @@
             <li>Disallowed actions stop with a reason your team can understand.</li>
           </ul>
           <p class="problem-text">
-            If what you need is a full internal delivery team, I will route you to a better-fit
-            partner.
+            If what you need is staff augmentation or a full internal delivery team, I will route
+            you to a better-fit partner.
           </p>
           <p class="problem-punchline">
             Trust is the product. Speed is the outcome.
@@ -474,18 +489,6 @@
           <HubMcpFlow />
         </div>
       </div>
-    </BlurFade>
-  </div>
-</section>
-
-<!-- Proof -->
-<section class="audience-section">
-  <div class="section-container">
-    <BlurFade>
-      <ArtifactSystemStrip
-        title="How trust stays visible"
-        description="Every engagement ships with runbooks, approval boundaries, and release evidence your team can inspect, inherit, and operate."
-      />
     </BlurFade>
   </div>
 </section>
@@ -606,9 +609,17 @@
     text-wrap: pretty;
   }
 
+  .hero-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3, 0.75rem);
+  }
+
   .hero-cta {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--space-4, 1rem);
   }
 
@@ -621,6 +632,15 @@
 
   .hero-link:hover {
     color: var(--color-fg-primary);
+  }
+
+  .hero-cta-note {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+    line-height: var(--leading-relaxed);
+    max-width: 34ch;
+    margin: 0;
+    text-wrap: pretty;
   }
 
   /* Hero visual frame - contains glow + bordered container */
