@@ -384,6 +384,29 @@
 
     <div class="offerings-grid">
       <BlurFade delay={0.15}>
+        <div class="offering-card">
+          <div class="offering-header">
+            <h3 class="offering-name">Policy OS</h3>
+          </div>
+          <div class="offering-body">
+            <p class="offering-description">
+              Add the oversight layer once the workflow is live and volume, exceptions, or trust
+              risk start to climb.
+            </p>
+            <div class="offering-deliverables">
+              <span class="deliverables-label">Includes</span>
+              <ul>
+                <li>Pre-release quality gates</li>
+                <li>Policy and approval boundaries</li>
+                <li>Postmortem loops</li>
+                <li>Monthly tuning</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </BlurFade>
+
+      <BlurFade delay={0.25}>
         <div class="offering-card offering-featured">
           <div class="offering-header">
             <span class="offering-badge">Most teams start here</span>
@@ -401,29 +424,6 @@
                 <li>Business-rule mapping</li>
                 <li>Auth and access setup</li>
                 <li>Runbook and handoff artifacts</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </BlurFade>
-
-      <BlurFade delay={0.25}>
-        <div class="offering-card">
-          <div class="offering-header">
-            <h3 class="offering-name">Policy OS</h3>
-          </div>
-          <div class="offering-body">
-            <p class="offering-description">
-              Add the oversight layer once the workflow is live and volume, exceptions, or trust
-              risk start to climb.
-            </p>
-            <div class="offering-deliverables">
-              <span class="deliverables-label">Includes</span>
-              <ul>
-                <li>Pre-release quality gates</li>
-                <li>Policy and approval boundaries</li>
-                <li>Postmortem loops</li>
-                <li>Monthly tuning</li>
               </ul>
             </div>
           </div>
@@ -603,6 +603,7 @@
     color: var(--color-fg-secondary);
     margin-bottom: var(--space-5, 1.5rem);
     line-height: var(--leading-relaxed);
+    max-width: 38ch;
     text-wrap: pretty;
   }
 
@@ -635,6 +636,7 @@
     font-size: var(--text-body-sm);
     color: var(--color-fg-muted);
     line-height: var(--leading-relaxed);
+    max-width: 38ch;
     margin: 0;
     text-wrap: pretty;
   }
@@ -947,7 +949,6 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: clamp(1rem, 1.8vw, 1.75rem);
     align-items: stretch;
-    overflow: visible;
     max-width: 74rem;
     margin: var(--space-8, 3rem) auto 0;
   }
@@ -956,7 +957,6 @@
   .offerings-grid > :global(*) {
     display: flex;
     flex-direction: column;
-    overflow: visible;
   }
 
   .offering-card {
@@ -969,7 +969,7 @@
       linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.012)),
       rgba(11, 11, 13, 0.95);
     box-shadow: var(--glass-shine-soft);
-    overflow: visible;
+    overflow: hidden;
     flex: 1;
     border: 1px solid rgba(255, 255, 255, 0.07);
     transition:
@@ -996,7 +996,6 @@
   }
 
   .offering-card.offering-featured {
-    z-index: 2;
     border-color: rgba(255, 255, 255, 0.12);
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.032) 0%, rgba(255, 255, 255, 0.012) 100%),
@@ -1021,38 +1020,31 @@
   }
 
   .offering-badge {
-    position: absolute;
-    top: 0;
-    left: 1.2rem;
-    transform: translateY(calc(-50% - 1px));
-    z-index: 3;
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    align-self: flex-start;
     font-size: 0.58rem;
     font-weight: var(--font-semibold);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: rgba(255, 255, 255, 0.68);
-    background: rgba(8, 8, 10, 0.98);
-    backdrop-filter: blur(10px) saturate(110%);
-    -webkit-backdrop-filter: blur(10px) saturate(110%);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7);
     border-radius: var(--radius-full, 9999px);
-    padding: 0.24rem 0.58rem;
+    padding: 0.24rem 0.62rem;
     white-space: nowrap;
   }
 
   .offering-header {
-    position: relative;
-    z-index: 1;
     display: grid;
     align-content: start;
-    gap: 0.65rem;
-    min-height: 5.35rem;
-    padding: 2rem 1.2rem 0.85rem;
+    gap: 0.5rem;
+    padding: 1.4rem 1.2rem 0.85rem;
     text-align: left;
+  }
+
+  /* Reserve space for badge row so titles align across cards */
+  .offering-card:not(.offering-featured) .offering-header {
+    padding-top: calc(1.4rem + 1.35rem);
   }
 
   .offering-name {
