@@ -36,36 +36,38 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 15. Delivery must be recorded with channel, actor, recipient, and artifact reference.
 16. White-glove delivery records MUST also identify whether the credential is an initial onboarding handoff and where the customer will perform ongoing self-service management.
 17. Revocation actions MUST remain available regardless of legacy/sunset state.
-18. Production credential sync/rotation MUST use Infisical for runtime secrets. Doppler MAY exist only as a one-time migration source.
-19. Managed bearer-token issuance for partner-linked users MUST reconcile against current `partner_auth_clients` status and active consent before issuance or request-time allow.
-20. Free `MCP-only` versus paid `Policy OS` credential scope MUST follow [`policy.service-tier-entitlement.v1`](./policy.service-tier-entitlement.v1.md); credential delivery alone MUST NOT imply paid governed access.
-21. Vault migration cutover MUST include:
+18. Managed bearer create or issue flows MUST NOT silently rotate an already-active customer bearer. Rotation must be explicit in the issuing API or operator action.
+19. Routine vault sync, deploy, or verification flows MUST retain currently deployed runtime secrets by default. Runtime secret replacement MUST happen only during an explicit rotation action or in response to suspected or confirmed compromise, misuse, or remediation work.
+20. Production credential sync/rotation MUST use Infisical for runtime secrets. Doppler MAY exist only as a one-time migration source.
+21. Managed bearer-token issuance for partner-linked users MUST reconcile against current `partner_auth_clients` status and active consent before issuance or request-time allow.
+22. Free `MCP-only` versus paid `Policy OS` credential scope MUST follow [`policy.service-tier-entitlement.v1`](./policy.service-tier-entitlement.v1.md); credential delivery alone MUST NOT imply paid governed access.
+23. Vault migration cutover MUST include:
    - a dry-run import
    - an executed import
    - verification results showing no missing or mismatched keys before production sync
-22. CI/CD and unattended automation MUST use non-interactive Infisical machine identity auth; interactive login is prohibited for production automation.
-23. Vault sync/rotation executions MUST produce auditable run context (`provider`, `source project/config`, `target env/path`, `dry_run`, `result`) without exposing plaintext secret values.
-24. When a third-party host requires OAuth, OAuth MAY be used as the credential-delivery mechanism for `managed_bearer_bundle`; in that case the delivered OAuth `access_token` MUST be the same managed bearer artifact already governed by `.agency` and `identity-worker`.
-25. OAuth delivery MUST NOT require replacing the existing direct bearer-token experience for current MCP clients.
-26. OAuth discovery, authorization, token, registration, and OIDC endpoints MUST NOT expose or deliver shared worker/runtime guardrail tokens such as `HUB_API_TOKEN`.
-27. Any UI that surfaces managed bearer credentials MUST only reveal plaintext at issuance or regeneration time, while keeping revoke and regenerate controls continuously available.
-28. The interactive password used by `identity-worker` OAuth login MUST be governed as a separate credential from the managed bearer token and from the Auth0 portal session.
-29. `.agency` MUST provide a self-service surface for entitled users to set or rotate that OAuth login password without exposing previously stored plaintext password material.
-30. The OAuth authorization code issued during host onboarding MAY be a signed `identity-worker` token instead of a database-persisted opaque code.
-31. If signed authorization codes are used, token exchange MUST validate the signed code against the original OAuth request context, including `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material carried by the authorization flow.
-32. Existing compat bearer tokens stored in an approved runtime vault MAY be migrated into `mcp_long_lived_tokens` without rotating the plaintext token, provided the credential is rebound to one canonical Auth0 subject and one canonical `.agency` account/tenant mapping.
-33. After managed-token migration, `mcp_long_lived_tokens` becomes the source of truth for token state, while Infisical or another approved vault MAY continue storing the same plaintext value only for runtime compatibility.
-34. Credential-delivery migration MUST include duplicate-subject cleanup so that stale entitlement rows, stale token rows, and stale legacy aliases no longer resolve for the same email or account.
-35. Auth0 delete/recreate incidents for the same normalized email MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md) so delivery artifacts preserve canonical account context while stale old-subject credentials are revoked or deactivated.
-36. If a lane advertises third-party search access, at least one approved search provider MUST be named explicitly in the delivery contract and runbook. The approved provider set is Exa (`composio-toolkit-exa`), PerplexityAI (`composio-toolkit-perplexityai`), and Composio Search (`composio-toolkit-composio_search`).
-37. A promised auth-bound search provider MUST NOT be represented as onboarding-complete until its auth-config mapping is live and the lane can produce a governed connect link or equivalent operator-approved auth path for that provider.
-38. A promised `NO_AUTH` search provider MUST NOT be represented as onboarding-complete until the lane can execute at least one representative brokered tool call successfully for that provider.
-39. Delivery metadata for a lane that includes search MUST expose the effective provider set so operators can distinguish `exa`, `perplexityai`, `composio_search`, or mixed-provider lanes during onboarding and support.
-40. Approved customer lanes MAY run the hub in `HUB_IDENTITY_MODE=compat` when a third-party host reliably forwards `Authorization: Bearer <managed bearer>` but does not reliably send `X-MCP-Session-Token`.
-41. A managed-bearer compat lane MUST keep `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` configured so the bearer still resolves through `identity-worker` rather than degrading to static worker-token identity.
-42. A managed-bearer compat lane MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` unless an explicit separately approved exception exists.
-43. A managed-bearer compat lane MUST preserve bound-host rejection and explicit `allowed_tool_prefixes` enforcement through the resolver-backed bearer path.
-44. Managed-bearer compat lanes are host-compatibility infrastructure, not legacy credential exceptions, and MUST NOT be governed as sunset-bounded legacy key lanes unless they also use approved legacy key delivery.
+24. CI/CD and unattended automation MUST use non-interactive Infisical machine identity auth; interactive login is prohibited for production automation.
+25. Vault sync/rotation executions MUST produce auditable run context (`provider`, `source project/config`, `target env/path`, `dry_run`, `result`) without exposing plaintext secret values.
+26. When a third-party host requires OAuth, OAuth MAY be used as the credential-delivery mechanism for `managed_bearer_bundle`; in that case the delivered OAuth `access_token` MUST be the same managed bearer artifact already governed by `.agency` and `identity-worker`.
+27. OAuth delivery MUST NOT require replacing the existing direct bearer-token experience for current MCP clients.
+28. OAuth discovery, authorization, token, registration, and OIDC endpoints MUST NOT expose or deliver shared worker/runtime guardrail tokens such as `HUB_API_TOKEN`.
+29. Any UI that surfaces managed bearer credentials MUST only reveal plaintext at issuance or regeneration time, while keeping revoke and regenerate controls continuously available.
+30. The interactive password used by `identity-worker` OAuth login MUST be governed as a separate credential from the managed bearer token and from the Auth0 portal session.
+31. `.agency` MUST provide a self-service surface for entitled users to set or rotate that OAuth login password without exposing previously stored plaintext password material.
+32. The OAuth authorization code issued during host onboarding MAY be a signed `identity-worker` token instead of a database-persisted opaque code.
+33. If signed authorization codes are used, token exchange MUST validate the signed code against the original OAuth request context, including `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material carried by the authorization flow.
+34. Existing compat bearer tokens stored in an approved runtime vault MAY be migrated into `mcp_long_lived_tokens` without rotating the plaintext token, provided the credential is rebound to one canonical Auth0 subject and one canonical `.agency` account/tenant mapping.
+35. After managed-token migration, `mcp_long_lived_tokens` becomes the source of truth for token state, while Infisical or another approved vault MAY continue storing the same plaintext value only for runtime compatibility.
+36. Credential-delivery migration MUST include duplicate-subject cleanup so that stale entitlement rows, stale token rows, and stale legacy aliases no longer resolve for the same email or account.
+37. Auth0 delete/recreate incidents for the same normalized email MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md) so delivery artifacts preserve canonical account context while stale old-subject credentials are revoked or deactivated.
+38. If a lane advertises third-party search access, at least one approved search provider MUST be named explicitly in the delivery contract and runbook. The approved provider set is Exa (`composio-toolkit-exa`), PerplexityAI (`composio-toolkit-perplexityai`), and Composio Search (`composio-toolkit-composio_search`).
+39. A promised auth-bound search provider MUST NOT be represented as onboarding-complete until its auth-config mapping is live and the lane can produce a governed connect link or equivalent operator-approved auth path for that provider.
+40. A promised `NO_AUTH` search provider MUST NOT be represented as onboarding-complete until the lane can execute at least one representative brokered tool call successfully for that provider.
+41. Delivery metadata for a lane that includes search MUST expose the effective provider set so operators can distinguish `exa`, `perplexityai`, `composio_search`, or mixed-provider lanes during onboarding and support.
+42. Approved customer lanes MAY run the hub in `HUB_IDENTITY_MODE=compat` when a third-party host reliably forwards `Authorization: Bearer <managed bearer>` but does not reliably send `X-MCP-Session-Token`.
+43. A managed-bearer compat lane MUST keep `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` configured so the bearer still resolves through `identity-worker` rather than degrading to static worker-token identity.
+44. A managed-bearer compat lane MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` unless an explicit separately approved exception exists.
+45. A managed-bearer compat lane MUST preserve bound-host rejection and explicit `allowed_tool_prefixes` enforcement through the resolver-backed bearer path.
+46. Managed-bearer compat lanes are host-compatibility infrastructure, not legacy credential exceptions, and MUST NOT be governed as sunset-bounded legacy key lanes unless they also use approved legacy key delivery.
 
 ## Enforcement Surfaces
 

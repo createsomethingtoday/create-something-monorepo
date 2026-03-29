@@ -37,6 +37,10 @@
   "lifecycle_controls": {
     "revocation_required": true,
     "regeneration_required": true,
+    "retain_active_token_by_default": true,
+    "silent_rotation_prohibited": true,
+    "explicit_rotation_required": true,
+    "rotation_incident_ticket_required": false,
     "regeneration_invalidates_previous_token": true,
     "compromise_response_required": true,
     "oauth_password_rotation_independent_from_bearer_rotation": true

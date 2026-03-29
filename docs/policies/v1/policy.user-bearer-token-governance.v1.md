@@ -41,24 +41,26 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 11. Regeneration and revocation MUST remain available regardless of billing, sunset, or host state so that compromised tokens can always be terminated.
 12. Bearer-token access MUST fail closed when legal or commercial prerequisites are no longer satisfied.
 13. Customer-facing legal terms, security language, and operational documentation MUST disclose that bearer tokens are high-trust credentials, long-lived, revocable, continuously governed, and unsuitable for sharing.
-14. For hosts that require OAuth, CREATE SOMETHING MAY deliver the managed bearer token through an OAuth facade; in that case the OAuth `access_token` MAY itself be long-lived because it is the governed managed bearer artifact.
-15. OAuth delivery MUST preserve current hub bearer semantics so that existing bearer-token clients continue to function without OAuth migration.
-16. OAuth delivery for third-party hosts MUST NOT depend on custom headers such as `X-MCP-Session-Token`; bearer authorization remains the portable host contract.
-17. Shared runtime guardrail tokens such as `HUB_API_TOKEN` MUST NOT be exposed as user-facing OAuth artifacts.
-18. The password a user enters on the OAuth authorize page is a separate `identity-worker` login secret and MUST NOT be treated as the bearer token itself.
-19. `.agency` SHOULD expose that MCP OAuth password as a managed self-service control linked to the same entitled email, account, and tenant context used for bearer-token governance.
-20. The OAuth authorization code MAY be implemented as a signed self-contained token minted by `identity-worker` rather than as a database-stored opaque code, provided it remains bound to the OAuth request context required for exchange.
-21. When signed authorization codes are used, the signed claims MUST at minimum bind `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material required for token exchange.
-22. Existing vault-backed compat bearer tokens MAY be adopted into the managed-token system without rotating the plaintext token, but only after the user is reconciled to one canonical Auth0 subject and one canonical `.agency` entitlement row.
-23. After adoption, `identity-worker.mcp_long_lived_tokens` becomes the authoritative registry for bearer-token status, last use, revoke, and regenerate behavior; vault storage is runtime support only and MUST NOT be treated as the governance source of truth.
-24. Duplicate entitlement rows or duplicate token rows for the same user email under different subjects MUST be removed or deactivated during migration so bearer resolution remains canonical.
-25. Auth0 delete/recreate incidents for the same normalized email MUST be governed by [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md); bearer access continuity should preserve MCP account context while revoking stale old-subject credentials.
-26. Managed bearer issuance and regeneration MUST support explicit `allowed_tool_prefixes` for non-Composio or reviewer-specific lanes whose visible tool surface cannot be derived from `toolkit_profile` alone.
-27. When explicit `allowed_tool_prefixes` are used, the issued token record MUST persist them as first-class governed scope data and the resolver MUST return the same effective prefix set transparently at request time.
-28. Managed bearer delivery UIs and APIs SHOULD surface the effective `allowed_tool_prefixes` alongside `toolkit_profile` so operators can verify the actor-visible lane without relying on inferred behavior.
-29. For third-party hosts that do not reliably send `X-MCP-Session-Token` but do reliably forward `Authorization: Bearer <managed bearer>`, CREATE SOMETHING MAY expose the Hub in `compat` identity mode as a host-compatibility measure.
-30. In host-compatibility `compat` mode, bearer authorization MUST still resolve through `identity-worker`, and the resulting actor context MUST preserve `bound_host` rejection and effective `allowed_tool_prefixes`.
-31. Host-compatibility `compat` mode MUST NOT rely on client-supplied account headers and MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default.
+14. Existing active bearer tokens SHOULD be retained by default. Create or issue flows MUST NOT silently rotate an already-active managed bearer token.
+15. Bearer-token rotation or regeneration MUST be an explicit lifecycle action by the user or operator, or a response to suspected or confirmed compromise, misuse, or subject-remediation work. A formal incident ticket is not required to perform that explicit rotation.
+16. For hosts that require OAuth, CREATE SOMETHING MAY deliver the managed bearer token through an OAuth facade; in that case the OAuth `access_token` MAY itself be long-lived because it is the governed managed bearer artifact.
+17. OAuth delivery MUST preserve current hub bearer semantics so that existing bearer-token clients continue to function without OAuth migration.
+18. OAuth delivery for third-party hosts MUST NOT depend on custom headers such as `X-MCP-Session-Token`; bearer authorization remains the portable host contract.
+19. Shared runtime guardrail tokens such as `HUB_API_TOKEN` MUST NOT be exposed as user-facing OAuth artifacts.
+20. The password a user enters on the OAuth authorize page is a separate `identity-worker` login secret and MUST NOT be treated as the bearer token itself.
+21. `.agency` SHOULD expose that MCP OAuth password as a managed self-service control linked to the same entitled email, account, and tenant context used for bearer-token governance.
+22. The OAuth authorization code MAY be implemented as a signed self-contained token minted by `identity-worker` rather than as a database-stored opaque code, provided it remains bound to the OAuth request context required for exchange.
+23. When signed authorization codes are used, the signed claims MUST at minimum bind `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material required for token exchange.
+24. Existing vault-backed compat bearer tokens MAY be adopted into the managed-token system without rotating the plaintext token, but only after the user is reconciled to one canonical Auth0 subject and one canonical `.agency` entitlement row.
+25. After adoption, `identity-worker.mcp_long_lived_tokens` becomes the authoritative registry for bearer-token status, last use, revoke, and regenerate behavior; vault storage is runtime support only and MUST NOT be treated as the governance source of truth.
+26. Duplicate entitlement rows or duplicate token rows for the same user email under different subjects MUST be removed or deactivated during migration so bearer resolution remains canonical.
+27. Auth0 delete/recreate incidents for the same normalized email MUST be governed by [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md); bearer access continuity should preserve MCP account context while revoking stale old-subject credentials.
+28. Managed bearer issuance and regeneration MUST support explicit `allowed_tool_prefixes` for non-Composio or reviewer-specific lanes whose visible tool surface cannot be derived from `toolkit_profile` alone.
+29. When explicit `allowed_tool_prefixes` are used, the issued token record MUST persist them as first-class governed scope data and the resolver MUST return the same effective prefix set transparently at request time.
+30. Managed bearer delivery UIs and APIs SHOULD surface the effective `allowed_tool_prefixes` alongside `toolkit_profile` so operators can verify the actor-visible lane without relying on inferred behavior.
+31. For third-party hosts that do not reliably send `X-MCP-Session-Token` but do reliably forward `Authorization: Bearer <managed bearer>`, CREATE SOMETHING MAY expose the Hub in `compat` identity mode as a host-compatibility measure.
+32. In host-compatibility `compat` mode, bearer authorization MUST still resolve through `identity-worker`, and the resulting actor context MUST preserve `bound_host` rejection and effective `allowed_tool_prefixes`.
+33. Host-compatibility `compat` mode MUST NOT rely on client-supplied account headers and MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default.
 
 ## Required Legal Alignment
 

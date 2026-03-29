@@ -4732,7 +4732,7 @@ function resolveFallbackAccountContext(
   const authInfo = asRecord(extraRecord?.authInfo);
   const trustClientAccountHeaders = parseBooleanWithDefault(
     readEnvString(env, 'HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS'),
-    true,
+    false,
   );
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
   const accountHeader = trustClientAccountHeaders

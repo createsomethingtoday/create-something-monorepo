@@ -102,6 +102,12 @@ Run from repo root:
 pnpm mcp:hub:vault:sync
 ```
 
+Default maintenance path:
+
+- `pnpm mcp:hub:vault:sync` is the steady-state sync path. It should preserve the currently deployed runtime secrets.
+- Do not rotate runtime or compat bearer material during ordinary sync, deploy, or verify work.
+- Replace an existing runtime secret only when you are intentionally executing an explicit rotation action or responding to suspected or confirmed compromise, misuse, or remediation work.
+
 Useful options:
 
 ```bash
@@ -163,6 +169,7 @@ Notes:
 
 - `pnpm mcp:hub:fleet:deploy` strict normalization requires `MCP_SESSION_TOKEN` or `IDENTITY_ACCESS_TOKEN`.
 - Keep resolver token rotation (`HUB_SESSION_RESOLVE_TOKEN`) coordinated with identity-worker.
+- This command is an explicit rotation workflow, not the default redeploy or sync path.
 - Use `--exclude-team` or `EXCLUDE_TEAM_KEYS` only when you intentionally need to defer a worker-token rotation for a specific team.
 - Named-lane worker tokens such as `CS_HUB_VIV_BLONDISH_API_TOKEN` and `CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN` are runtime/operator secrets bound to the dedicated client Hub workers, not customer-facing bearer artifacts.
 

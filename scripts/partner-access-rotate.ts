@@ -55,6 +55,7 @@ async function rotateManaged(
 		{
 			tool_mode: resolveInput(args, 'tool-mode', 'PARTNER_MINT_TOOL_MODE'),
 			toolkit_profile: toolkitProfile.length > 0 ? toolkitProfile : undefined,
+			rotate_existing: true,
 			delivery_channel: resolveInput(args, 'delivery-channel', 'PARTNER_DELIVERY_CHANNEL'),
 			recipient: resolveInput(args, 'recipient', 'PARTNER_DELIVERY_RECIPIENT'),
 			metadata: {

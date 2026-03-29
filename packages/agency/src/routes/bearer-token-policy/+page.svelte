@@ -6,6 +6,7 @@
   const controls = [
     'One active bearer token per authenticated user',
     'Long-lived token issued by .agency, not raw Auth0 access tokens',
+    'Retain the active token by default; rotation is explicit or compromise-driven',
     'Immediate revoke and regenerate controls',
     'Live checks for org membership, policy acceptance, contract status, billing status, and service entitlement',
     'Opaque token format with protected server-side storage',
@@ -49,6 +50,8 @@
         Each bearer token is personal to one authenticated user, governed by `.agency`, and continuously
         checked against current organization, legal, policy, and billing state. A valid token does not
         guarantee access unless the user and organization remain in good standing at the time of each request.
+        Existing active bearer tokens are retained by default; replacement is an explicit regenerate action or
+        a response to suspected compromise or misuse.
       </p>
     </article>
 

@@ -18,13 +18,19 @@ import {
 	requirePartnerAdmin,
 	tokenPreview,
 } from '$lib/server/partner-auth';
+import { requireExplicitManagedBearerRotation, type ManagedBearerTokenMetadata } from '$lib/server/managed-bearer-issuance';
 import { reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
 
 interface IssueLaneBearerTokenRequestBody {
 	tool_mode?: 'read_only' | 'read_write';
+	rotate_existing?: boolean;
 	delivery_channel?: 'portal' | 'secure_note' | 'email' | 'manual';
 	recipient?: string;
 	metadata?: Record<string, unknown>;
+}
+
+interface TokenMetadataResponse {
+	token: ManagedBearerTokenMetadata | null;
 }
 
 interface IssueManagedTokenResponse {
@@ -134,6 +140,17 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			},
 		});
 
+		const existing = await postIdentityAdmin<TokenMetadataResponse>(env, '/v1/mcp/long-lived-tokens/admin-get', {
+			auth_subject: lane.identity_user_id,
+		});
+		const issuanceDecision = requireExplicitManagedBearerRotation({
+			existingToken: existing.token,
+			rotateExisting: body?.rotate_existing === true,
+		});
+		if (!issuanceDecision.ok) {
+			return json(issuanceDecision.body, { status: issuanceDecision.status });
+		}
+
 		const issued = await postIdentityAdmin<IssueManagedTokenResponse>(env, '/v1/mcp/long-lived-tokens/admin-issue', {
 			auth_subject: lane.identity_user_id,
 			auth_email: authEmail,
@@ -158,6 +175,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				consent_record_id: consent.id,
 				consent_granted_at: consent.granted_at,
 				observability_baseline: observabilityBaseline,
+				rotation_requested: body?.rotate_existing === true,
 				...metadata,
 			},
 		});

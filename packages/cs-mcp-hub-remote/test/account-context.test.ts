@@ -217,7 +217,7 @@ test('resolveAccountContext accepts managed bearer auth in session_required mode
   }
 });
 
-test('resolveAccountContext keeps fallback behavior in compat mode', async () => {
+test('resolveAccountContext ignores compat header account override by default', async () => {
   const context = await resolveAccountContext(
     makeExtra({ 'x-mcp-account-id': 'acct_fallback' }),
     {
@@ -225,10 +225,25 @@ test('resolveAccountContext keeps fallback behavior in compat mode', async () =>
     } as any,
   );
 
-  assert.equal(context.accountId, 'acct_fallback');
+  assert.equal(context.accountId, 'operator');
   assert.equal(context.authMode, 'fallback');
   assert.equal(context.toolMode, 'read_write');
   assert.equal(context.resourceHost, null);
+  assert.equal(context.identitySource, 'fallback');
+});
+
+test('resolveAccountContext can opt into compat header account override', async () => {
+  const context = await resolveAccountContext(
+    makeExtra({ 'x-mcp-account-id': 'acct_header_override' }),
+    {
+      HUB_IDENTITY_MODE: 'compat',
+      HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS: 'true',
+    } as any,
+  );
+
+  assert.equal(context.accountId, 'acct_header_override');
+  assert.equal(context.authMode, 'fallback');
+  assert.equal(context.toolMode, 'read_write');
   assert.equal(context.identitySource, 'fallback');
 });
 
@@ -253,6 +268,7 @@ test('resolveAccountContext can force compat fallback identities to read_only', 
     makeExtra({ 'x-mcp-account-id': 'acct_fallback' }),
     {
       HUB_IDENTITY_MODE: 'compat',
+      HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS: 'true',
       HUB_COMPAT_FALLBACK_TOOL_MODE: 'read_only',
     } as any,
   );
