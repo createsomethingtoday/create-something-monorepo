@@ -50,9 +50,16 @@
 <style>
 	/* Base Button */
 	.btn {
-		border-radius: 10px;
+		border-radius: 999px;
+		border: 1px solid transparent;
 		font-weight: var(--font-semibold);
-		transition: all var(--duration-micro) var(--ease-standard);
+		letter-spacing: 0.02em;
+		transition:
+			transform var(--duration-micro) var(--ease-standard),
+			background var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard),
+			box-shadow var(--duration-micro) var(--ease-standard),
+			color var(--duration-micro) var(--ease-standard);
 		-webkit-tap-highlight-color: transparent;
 	}
 
@@ -76,48 +83,53 @@
 
 	/* Primary Variant */
 	.btn-primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: linear-gradient(180deg, #ffffff, #eceef7);
+		color: #090909;
+		border-color: rgba(255, 255, 255, 0.28);
+		box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
 	}
 
 	.btn-primary:hover:not(:disabled) {
-		transform: scale(var(--scale-micro));
-		opacity: 0.95;
+		transform: translateY(-1px);
+		box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
 	}
 
 	.btn-primary:active:not(:disabled) {
-		transform: scale(var(--scale-subtle));
+		transform: translateY(0);
 	}
 
 	/* Secondary Variant */
 	.btn-secondary {
-		background: transparent;
+		background: color-mix(in srgb, var(--color-shell-surface-secondary) 88%, transparent);
 		color: var(--color-fg-primary);
-		border: 2px solid var(--color-fg-primary);
+		border-color: var(--color-shell-border-default);
 	}
 
 	.btn-secondary:hover:not(:disabled) {
-		transform: scale(var(--scale-micro));
-		background: var(--color-active);
+		transform: translateY(-1px);
+		background: var(--color-shell-surface-hover);
+		border-color: var(--color-shell-border-strong);
 	}
 
 	.btn-secondary:active:not(:disabled) {
-		transform: scale(var(--scale-subtle));
+		transform: translateY(0);
 	}
 
 	/* Ghost Variant */
 	.btn-ghost {
 		background: transparent;
 		color: var(--color-fg-primary);
+		border-color: var(--color-shell-border-subtle);
 	}
 
 	.btn-ghost:hover:not(:disabled) {
-		transform: scale(var(--scale-micro));
+		transform: translateY(-1px);
 		background: var(--color-hover);
+		border-color: var(--color-shell-border-default);
 	}
 
 	.btn-ghost:active:not(:disabled) {
-		transform: scale(var(--scale-subtle));
+		transform: translateY(0);
 	}
 
 	/* Focus states for accessibility */

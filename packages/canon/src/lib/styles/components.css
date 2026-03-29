@@ -709,6 +709,170 @@
     color: var(--color-fg-secondary);
     text-decoration: none;
   }
+
+  /* ==========================================================================
+     Product Surfaces
+     Reusable marketing/product shells for CREATE SOMETHING properties.
+     ========================================================================== */
+  .product-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-fg-muted);
+  }
+
+  .product-kicker::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--radius-full);
+    background: var(--color-brand-primary);
+    box-shadow: 0 0 18px rgba(49, 92, 255, 0.5);
+    flex: 0 0 auto;
+  }
+
+  .product-surface {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--color-shell-border-default);
+    border-radius: var(--radius-2xl);
+    background:
+      radial-gradient(circle at top left, rgba(49, 92, 255, 0.12), transparent 34%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+      color-mix(in srgb, var(--color-shell-surface-secondary) 92%, transparent);
+    box-shadow: var(--color-shell-shadow);
+  }
+
+  .product-surface::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 28%);
+    opacity: 0.5;
+  }
+
+  .product-surface--soft {
+    background:
+      radial-gradient(circle at top left, rgba(49, 92, 255, 0.08), transparent 30%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+      color-mix(in srgb, var(--color-shell-surface) 88%, transparent);
+  }
+
+  .product-surface--accent {
+    border-color: var(--color-brand-primary-border);
+    box-shadow:
+      0 18px 42px rgba(0, 0, 0, 0.42),
+      0 0 0 1px rgba(49, 92, 255, 0.12),
+      0 0 48px rgba(49, 92, 255, 0.12);
+  }
+
+  .product-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .product-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    padding: 0.42rem 0.72rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-shell-border-default);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-fg-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.03em;
+  }
+
+  .product-list {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .product-list li {
+    position: relative;
+    padding-left: 1rem;
+    color: var(--color-fg-secondary);
+    line-height: 1.6;
+  }
+
+  .product-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: var(--radius-full);
+    background: var(--color-brand-secondary);
+  }
+
+  .terminal-surface {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--color-shell-border-default);
+    border-radius: calc(var(--radius-2xl) + 4px);
+    background:
+      radial-gradient(circle at top left, rgba(49, 92, 255, 0.16), transparent 30%),
+      linear-gradient(180deg, rgba(17, 17, 19, 0.98), rgba(7, 7, 9, 0.98));
+    box-shadow: var(--color-shell-shadow-strong);
+  }
+
+  .terminal-surface__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--color-shell-border-subtle);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .terminal-surface__title {
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .terminal-surface__dots {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .terminal-surface__dots span {
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .terminal-surface__dots span:nth-child(1) {
+    background: rgba(255, 95, 87, 0.9);
+  }
+
+  .terminal-surface__dots span:nth-child(2) {
+    background: rgba(254, 188, 46, 0.9);
+  }
+
+  .terminal-surface__dots span:nth-child(3) {
+    background: rgba(40, 200, 64, 0.9);
+  }
 }
 
 /* ==========================================================================

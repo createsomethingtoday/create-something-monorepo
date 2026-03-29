@@ -61,6 +61,16 @@
   --color-shell-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   --color-shell-shadow-strong: 0 20px 50px rgba(0, 0, 0, 0.55);
 
+  /* Product accent - restrained cobalt surface language
+   * Used for productized shells, proof panels, and governance surfaces.
+   */
+  --color-brand-primary: #315cff;
+  --color-brand-primary-soft: rgba(49, 92, 255, 0.14);
+  --color-brand-primary-muted: rgba(49, 92, 255, 0.08);
+  --color-brand-primary-border: rgba(49, 92, 255, 0.28);
+  --color-brand-secondary: #a7b8ff;
+  --color-brand-ink: #dce4ff;
+
   /* Semantic colors - Functional, not decorative
    * All colors are WCAG AA compliant (4.5:1+ on pure black).
    */
