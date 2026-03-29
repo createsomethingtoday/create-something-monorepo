@@ -1,35 +1,26 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
-  import {
-    AnimatedGridPattern,
-    BlurFade,
-    ShimmerButton,
-    BorderBeam,
-    Marquee
-  } from '@create-something/canon/magicui';
-  import GovernedExecutionFlow from '$lib/components/GovernedExecutionFlow.svelte';
+  import { Button, SEO } from '@create-something/canon';
+  import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
-  import BrandLogo from '$lib/components/BrandLogo.svelte';
+  import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
+  import GovernedExecutionFlow from '$lib/components/GovernedExecutionFlow.svelte';
+  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  // Structured data for SEO/AEO
   const deliveryVector = {
     canonicalPhrase: 'Skills on MCP',
     clientFacingLabel: 'Skills + MCP',
     technicalLabel: 'MCP + Skills'
   };
 
-  const stackItems = [
-    { name: 'Model Context Protocol', type: 'Connectivity' },
-    { name: 'Cloudflare Workers', type: 'Compute' },
-    { name: 'Cloudflare D1', type: 'Persistence' },
-    { name: 'Anthropic Claude', type: 'Intelligence' },
-    { name: 'Durable Objects', type: 'State Coordination' },
-    { name: 'SvelteKit', type: 'Client Runtime' },
-    { name: 'TypeScript', type: 'Safety' },
-    { name: 'Notion API', type: 'Operating Interface' }
-  ];
-
   const services = [
+    {
+      name: 'MCP-only',
+      description:
+        'A narrow discovery or compliance wedge when the client needs trusted connectivity before the operating layer.',
+      type: 'Entry wedge',
+      price: 'Custom',
+      priceDescription: 'Scoped host setup'
+    },
     {
       name: 'Workflow Infrastructure',
       description:
@@ -54,6 +45,59 @@
       price: 'Custom',
       priceDescription: 'Scoped implementation'
     }
+  ];
+
+  const offerCards = [
+    {
+      tag: 'Entry wedge',
+      title: 'MCP-only',
+      summary: 'Use this when the connection is the job and your team will operate the workflow directly.',
+      points: [
+        'Connectivity validation',
+        'Scoped host setup',
+        'Read-only or constrained rollout'
+      ]
+    },
+    {
+      tag: 'Start here',
+      title: 'Workflow Infrastructure',
+      summary: 'Fix the first workflow your team still protects by hand and make the handoffs reliable.',
+      points: [
+        'Business-rule mapping',
+        'Workflow implementation',
+        'Auth and access setup',
+        'Portable runbooks and handoff artifacts'
+      ],
+      featured: true
+    },
+    {
+      tag: 'Default paid offer',
+      title: 'Policy OS',
+      summary: `The governed execution layer that makes ${deliveryVector.clientFacingLabel} safe to run faster in production.`,
+      points: [
+        'Approval and block boundaries',
+        'Reason-coded access decisions',
+        'Release checks and incident loops',
+        'Evals tied to real workflow behavior'
+      ]
+    },
+    {
+      tag: 'High-stakes scale',
+      title: 'Enterprise Extension',
+      summary: 'Add this when several systems, teams, or compliance requirements must stay aligned.',
+      points: [
+        'Cross-system orchestration',
+        'Custom trust boundaries',
+        'Deterministic retries and recovery',
+        'Auditability for multi-team operations'
+      ]
+    }
+  ];
+
+  const boundaryPoints = [
+    'You bring the workflow, constraints, and approval owner.',
+    'CREATE SOMETHING maps the rules, builds the control layer, and ships the operating artifacts.',
+    'Your team gets visibility through runbooks, approvals, release evidence, and working software.'
   ];
 
   const faqItems = [
@@ -83,11 +127,6 @@
         'Add it when failures become expensive or the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
     },
     {
-      question: 'When do we need Enterprise Extension?',
-      answer:
-        'Use Enterprise Extension when several systems, teams, or compliance requirements must stay aligned and recover cleanly from failure.'
-    },
-    {
       question: 'Do you still offer MCP-only?',
       answer:
         'Yes. MCP-only still works for discovery, compliance-constrained pilots, or teams that need the connection before the operating layer.'
@@ -95,7 +134,7 @@
     {
       question: 'Do clients own the implementation?',
       answer:
-        'Yes. Clients retain ownership of code, workflows, and operating documentation. We optimize for portability and long-term control.'
+        'Yes. Clients retain ownership of code, workflows, and operating documentation. The delivery is meant to stay portable after launch.'
     },
     {
       question: 'Why the phrase Skills + MCP?',
@@ -114,160 +153,141 @@
   {faqItems}
 />
 
-<!-- Hero -->
-<section class="hero">
-  <div class="hero-grid-container">
-    <AnimatedGridPattern
-      numSquares={25}
-      maxOpacity={0.08}
-      duration={4}
-      repeatDelay={2}
-      width={60}
-      height={60}
-      class="hero-animated-grid"
-    />
-  </div>
-  <div class="hero-content">
-    <BlurFade delay={0}>
-      <p class="hero-eyebrow">How I Work</p>
-    </BlurFade>
-    <BlurFade delay={0.1}>
-      <h1 class="hero-title">Start with the workflow creating the most drag.</h1>
-    </BlurFade>
-    <BlurFade delay={0.2}>
-      <p class="hero-subtitle">
-        This is a specialist engagement: scoped, artifact-backed, and designed to give your team a
-        safer operating path, not another person to manage. Fix the first workflow, add oversight
-        when the risk rises, and extend only when several systems must stay in sync.
-      </p>
-    </BlurFade>
-  </div>
-</section>
+<section class="hero-page">
+  <div class="shell-inner-pad hero-layout">
+    <div class="hero-copy">
+      <BlurFade delay={0}>
+        <span class="product-kicker">How I Work</span>
+      </BlurFade>
 
-<!-- Engagement Model -->
-<section class="boundary-section">
-  <div class="section-container">
-    <BlurFade delay={0.25}>
-      <div class="boundary-card">
-        <p class="boundary-eyebrow">Engagement Model</p>
-        <h2 class="boundary-heading">You are not hiring an internal admin.</h2>
-        <p class="boundary-copy">
-          You are bringing in a specialist to diagnose, rebuild, and govern one critical operating
-          path. The work is scoped, visible, and designed for your team to inherit.
+      <BlurFade delay={0.05}>
+        <h1 class="hero-title">Start with the workflow creating the most drag.</h1>
+      </BlurFade>
+
+      <BlurFade delay={0.1}>
+        <p class="hero-detail">
+          This is a specialist engagement: scoped, artifact-backed, and designed to give your team
+          a safer operating path, not another person to manage. Fix the first workflow, add
+          oversight when the risk rises, and extend only when several systems must stay in sync.
         </p>
-        <ul class="boundary-list">
-          <li>You bring the workflow, constraints, and approval owner.</li>
-          <li>I map the rules, build the control layer, and ship the operating artifacts.</li>
-          <li>Your team gets visibility through runbooks, approvals, release evidence, and working software.</li>
-        </ul>
-      </div>
-    </BlurFade>
-  </div>
-</section>
+      </BlurFade>
 
-<!-- Flow Visualization -->
-<section class="flow-section">
-  <div class="section-container">
-    <BlurFade delay={0.3}>
-      <GovernedExecutionFlow
-        title="Where Policy OS fits"
-        description="Workflow Infrastructure gets the first handoff working. Policy OS decides what runs automatically, what needs review, and what stops."
+      <BlurFade delay={0.15}>
+        <div class="hero-actions">
+          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href="/products" variant="secondary">See What I've Built</Button>
+        </div>
+      </BlurFade>
+
+      <BlurFade delay={0.2}>
+        <p class="hero-note">External specialist. Scoped delivery. Production boundaries.</p>
+      </BlurFade>
+    </div>
+
+    <BlurFade delay={0.2}>
+      <ExecutionWorkbench
+        eyebrow="Offer logic"
+        title="What the engagement actually controls"
+        description="The same workflow can move through different commercial shapes. The question is whether you need connectivity, implementation, or governed execution."
       />
     </BlurFade>
   </div>
 </section>
 
-<!-- Operating Stack -->
-<section class="stack-section">
-  <div class="section-container">
-    <BlurFade delay={0.4}>
-      <h2 class="section-heading-sm">The Reliability Stack</h2>
-    </BlurFade>
-  </div>
-
-  <BlurFade delay={0.5}>
-    <div class="marquee-wrapper">
-      <div class="marquee-fade-left"></div>
-      <div class="marquee-fade-right"></div>
-      <Marquee pauseOnHover={true} duration={40} gap={24} repeat={2} class="stack-marquee">
-        {#each stackItems as item}
-          <div class="stack-card">
-            <span class="stack-type">{item.type}</span>
-            <div class="stack-name-group">
-              <BrandLogo name={item.name} size={18} className="text-white/70" />
-              <span class="stack-name">{item.name}</span>
-            </div>
-          </div>
-        {/each}
-      </Marquee>
-    </div>
-  </BlurFade>
-</section>
-
-<!-- The Retainer -->
-<section class="retainer-section">
-  <div class="section-container">
-    <BlurFade>
-      <div class="retainer-card">
-        <BorderBeam size={300} duration={12} delay={9} />
-        <div class="retainer-header">
-          <div class="retainer-pricing offer-bridge">
-            <div class="retainer-price">Offer Ladder</div>
-            <div class="retainer-period">From wedge to governed execution</div>
-          </div>
-          <p class="retainer-note">
-            Start with the wedge that proves value. Add governed execution when the workflow starts
-            touching revenue, compliance, or customer trust.
+<section class="boundary-section">
+  <div class="shell-inner-pad">
+    <div class="product-surface product-surface--soft boundary-panel">
+      <div class="section-lead">
+        <BlurFade>
+          <span class="product-kicker">Relationship boundary</span>
+        </BlurFade>
+        <BlurFade delay={0.05}>
+          <h2>You are not hiring an internal admin.</h2>
+        </BlurFade>
+        <BlurFade delay={0.1}>
+          <p>
+            You are bringing in a specialist to diagnose, rebuild, and govern one critical
+            operating path. The work is scoped, visible, and designed for your team to inherit.
           </p>
-        </div>
-        <div class="retainer-body">
-          <div class="progression-grid">
-            <article class="progression-card wedge-card">
-              <span class="progression-tag">Entry wedge</span>
-              <h3>MCP-only</h3>
-              <p>Use this when you need the connection first or your team will operate the workflow directly.</p>
-              <ul class="retainer-list">
-                <li>Connectivity validation</li>
-                <li>Scoped host setup</li>
-                <li>Read-only or constrained rollout</li>
-              </ul>
-            </article>
-            <article class="progression-card highlighted-card">
-              <span class="progression-tag">Canonical package</span>
-              <h3>Policy OS</h3>
-              <p>The governed execution layer that makes <strong>{deliveryVector.clientFacingLabel}</strong> safe to run faster in production.</p>
-              <ul class="retainer-list">
-                <li>Approval and block boundaries</li>
-                <li>Reason-coded access and blocked states</li>
-                <li>Evals, release gates, and incident loops</li>
-              </ul>
-            </article>
-            <article class="progression-card">
-              <span class="progression-tag">High-stakes scale</span>
-              <h3>Enterprise Extension</h3>
-              <p>Apply when several systems, teams, or compliance requirements have to stay aligned.</p>
-              <ul class="retainer-list">
-                <li>Custom trust boundaries</li>
-                <li>Cross-system orchestration</li>
-                <li>Deterministic retries and auditability</li>
-              </ul>
-            </article>
-          </div>
-          <div class="retainer-callout">
-            <p>
-              MCP-only gets you connected. Policy OS turns execution into a managed product as
-              speed and volume increase.
-            </p>
-          </div>
-        </div>
+        </BlurFade>
       </div>
+
+      <BlurFade delay={0.15}>
+        <ul class="product-list boundary-list">
+          {#each boundaryPoints as point}
+            <li>{point}</li>
+          {/each}
+        </ul>
+      </BlurFade>
+    </div>
+  </div>
+</section>
+
+<section class="offer-section">
+  <div class="shell-inner-pad">
+    <div class="section-lead section-lead--center">
+      <BlurFade>
+        <span class="product-kicker">Offer ladder</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>From connection wedge to governed execution.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          Start with the narrowest offer that proves value. Add Policy OS when the workflow starts
+          touching revenue, compliance, or customer trust.
+        </p>
+      </BlurFade>
+    </div>
+
+    <div class="offer-grid">
+      {#each offerCards as offer, index}
+        <BlurFade delay={0.15 + index * 0.06}>
+          <article class="product-surface offer-card" class:offerFeatured={offer.featured}>
+            <span class="offer-tag">{offer.tag}</span>
+            <h3>{offer.title}</h3>
+            <p>{offer.summary}</p>
+            <ul class="product-list">
+              {#each offer.points as point}
+                <li>{point}</li>
+              {/each}
+            </ul>
+          </article>
+        </BlurFade>
+      {/each}
+    </div>
+  </div>
+</section>
+
+<section class="flow-section">
+  <div class="shell-inner-pad flow-layout">
+    <div class="section-lead">
+      <BlurFade>
+        <span class="product-kicker">Governed execution</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Where Policy OS fits.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          Workflow Infrastructure gets the first handoff working. Policy OS decides what runs
+          automatically, what needs review, and what stops. That is the point where speed stops
+          being a demo and becomes an operating path.
+        </p>
+      </BlurFade>
+    </div>
+
+    <BlurFade delay={0.15}>
+      <GovernedExecutionFlow
+        title="Policy OS"
+        description="Hub MCP routes the request, and Policy OS decides what can run automatically, what waits for approval, and what stops with a reason."
+      />
     </BlurFade>
   </div>
 </section>
 
-<!-- Trust Artifacts -->
-<section class="retainer-section">
-  <div class="section-container">
+<section class="artifact-section">
+  <div class="shell-inner-pad">
     <BlurFade>
       <ArtifactSystemStrip
         title="What ships with every governed engagement"
@@ -277,666 +297,234 @@
   </div>
 </section>
 
-<!-- What a Month Looks Like -->
-<section class="timeline-section">
-  <div class="section-container">
-    <BlurFade>
-      <h2 class="section-heading">How Engagements Expand</h2>
-    </BlurFade>
-
-    <div class="timeline-grid">
-      <BlurFade delay={0.1}>
-        <div class="timeline-card">
-            <span class="timeline-label">Phase 1</span>
-          <h3>Workflow Infrastructure</h3>
-          <p>
-            Get the first high-value workflow working with clear rules, owners, and handoffs.
-          </p>
-        </div>
+<section class="faq-section">
+  <div class="shell-inner-pad">
+    <div class="section-lead section-lead--center">
+      <BlurFade>
+        <span class="product-kicker">Questions</span>
       </BlurFade>
-
-      <BlurFade delay={0.2}>
-          <div class="timeline-card">
-            <span class="timeline-label">Phase 2</span>
-          <h3>Policy OS</h3>
-          <p>
-            Add evals, approvals, release checks, and incident loops as the workflow touches real risk.
-          </p>
-        </div>
-      </BlurFade>
-
-      <BlurFade delay={0.3}>
-        <div class="timeline-card">
-          <span class="timeline-label">Phase 3</span>
-          <h3>Extension</h3>
-          <p>
-            Extend into custom orchestration when several systems or teams need one operating
-            model.
-          </p>
-        </div>
+      <BlurFade delay={0.05}>
+        <h2>What buyers usually need clarified before the first call.</h2>
       </BlurFade>
     </div>
-  </div>
-</section>
-
-<!-- FAQ -->
-<section class="faq-section">
-  <div class="section-container">
-    <BlurFade>
-      <h2 class="section-heading">Questions</h2>
-    </BlurFade>
 
     <div class="faq-grid">
-      {#each faqItems as faq, i}
-        <BlurFade delay={0.1 + i * 0.05}>
-          <div class="faq-item">
+      {#each faqItems as faq, index}
+        <BlurFade delay={0.1 + index * 0.04}>
+          <article class="product-surface product-surface--soft faq-card">
             <h3>{faq.question}</h3>
             <p>{faq.answer}</p>
-          </div>
+          </article>
         </BlurFade>
       {/each}
     </div>
   </div>
 </section>
 
-<!-- CTA -->
 <section class="cta-section">
-  <div class="section-container">
-    <BlurFade>
-      <h2 class="cta-heading">Map the workflow that's creating the most drag.</h2>
-    </BlurFade>
-    <BlurFade delay={0.1}>
-      <p class="cta-subtext">
-        We’ll define the handoffs, approvals, failure modes, and escalation path before
-        implementation.
-      </p>
-    </BlurFade>
-    <BlurFade delay={0.2}>
-      <div class="cta-buttons">
-        <ShimmerButton href="/book">Book a Mapping Session</ShimmerButton>
-        <a href="/products" class="cta-secondary">See what I've built →</a>
-      </div>
-    </BlurFade>
+  <div class="shell-inner-pad">
+    <div class="product-surface product-surface--accent cta-panel">
+      <BlurFade>
+        <span class="product-kicker">Map the workflow</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Map the workflow that's creating the most drag.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          We will define the handoffs, approvals, failure modes, and escalation path before any
+          implementation work starts.
+        </p>
+      </BlurFade>
+      <BlurFade delay={0.15}>
+        <div class="hero-actions hero-actions--center">
+          <Button href="/book">Book Mapping Session</Button>
+          <Button href="/products" variant="secondary">See What I've Built</Button>
+        </div>
+      </BlurFade>
+    </div>
   </div>
 </section>
 
 <style>
-  /* Section containers */
-  .section-container {
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
-    padding: 0 var(--container-padding, 1.5rem);
+  .hero-page,
+  .boundary-section,
+  .offer-section,
+  .flow-section,
+  .artifact-section,
+  .faq-section,
+  .cta-section {
+    padding-top: clamp(1.25rem, 3vw, 2rem);
+    padding-bottom: clamp(3.5rem, 6vw, 5rem);
   }
 
-  .section-heading {
-    font-size: var(--text-h1);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    text-align: center;
-    margin-bottom: var(--space-8, 3rem);
-    letter-spacing: var(--tracking-tight, -0.015em);
+  .hero-page {
+    padding-top: clamp(6rem, 10vw, 8rem);
   }
 
-  /* Hero */
-  .hero {
-    position: relative;
-    padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem)
-      var(--section-padding, 6rem);
-    overflow: hidden;
+  .hero-layout,
+  .flow-layout {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    align-items: center;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   }
 
-  .hero-grid-container {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-
-  :global(.hero-animated-grid) {
-    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
-    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
-  }
-
-  .hero-content {
-    position: relative;
-    text-align: center;
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
-  }
-
-  .hero-eyebrow {
-    font-size: var(--text-body-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--color-fg-muted);
-    margin-bottom: var(--space-5, 1.5rem);
+  .hero-copy {
+    display: grid;
+    gap: 1.1rem;
+    max-width: 38rem;
   }
 
   .hero-title {
-    font-size: var(--text-display);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    max-width: 11ch;
-    margin-bottom: var(--space-5, 1.5rem);
+    margin: 0;
+    font-size: clamp(3rem, 4vw + 1.2rem, 5.2rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+  }
+
+  .hero-detail,
+  .section-lead p,
+  .faq-card p,
+  .cta-panel p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    line-height: 1.72;
+    text-wrap: pretty;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    align-items: center;
+  }
+
+  .hero-actions--center {
+    justify-content: center;
+  }
+
+  .hero-note {
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .boundary-panel,
+  .cta-panel {
+    display: grid;
+    gap: 1rem;
+    padding: clamp(1.1rem, 3vw, 1.7rem);
+  }
+
+  .section-lead {
+    display: grid;
+    gap: 0.85rem;
+    max-width: 44rem;
+  }
+
+  .section-lead--center {
     margin-left: auto;
     margin-right: auto;
-    line-height: 1.1;
-    letter-spacing: var(--tracking-tighter, -0.025em);
+    text-align: center;
   }
 
-  .hero-subtitle {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: var(--leading-relaxed);
-  }
-
-  /* Engagement boundary */
-  .boundary-section {
-    padding: 0 var(--container-padding, 1.5rem) var(--section-padding, 6rem);
-  }
-
-  .boundary-card {
-    max-width: 920px;
-    margin: 0 auto;
-    padding: clamp(1.25rem, 3vw, 2rem);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-xl, 16px);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
-  }
-
-  .boundary-eyebrow {
-    font-size: var(--text-body-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--color-fg-muted);
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .boundary-heading {
-    font-size: var(--text-h2, 2rem);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-4, 1rem);
-    line-height: 1.15;
-  }
-
-  .boundary-copy {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    margin-bottom: var(--space-4, 1rem);
-    max-width: 60ch;
+  .section-lead h2,
+  .cta-panel h2 {
+    margin: 0;
+    line-height: 1.02;
+    text-wrap: balance;
   }
 
   .boundary-list {
-    margin: 0;
-    padding-left: 1.25rem;
+    max-width: 46rem;
   }
 
-  .boundary-list li {
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    margin-bottom: var(--space-2, 0.5rem);
+  .offer-grid,
+  .faq-grid {
+    display: grid;
+    gap: 1rem;
   }
 
-  .boundary-list li:last-child {
-    margin-bottom: 0;
+  .offer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Flow Section */
-  .flow-section {
-    padding: 0 var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+  .offer-card,
+  .faq-card {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.15rem;
   }
 
-  /* Stack Marquee */
-  .stack-section {
-    padding: var(--space-8, 3rem) 0 var(--section-padding, 6rem);
-    overflow: hidden;
-  }
-
-  .section-heading-sm {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
+  .offer-tag {
     color: var(--color-fg-muted);
-    text-align: center;
-    margin-bottom: var(--space-6, 2rem);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-  }
-
-  .marquee-wrapper {
-    position: relative;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    isolation: isolate;
-  }
-
-  .marquee-fade-left,
-  .marquee-fade-right {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: clamp(2.5rem, 10vw, 9rem);
-    z-index: 2;
-    pointer-events: none;
-  }
-
-  .marquee-fade-left {
-    left: 0;
-    background: linear-gradient(to right, var(--color-bg-pure, #000000), transparent);
-  }
-
-  .marquee-fade-right {
-    right: 0;
-    background: linear-gradient(to left, var(--color-bg-pure, #000000), transparent);
-  }
-
-  .stack-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: var(--space-4, 1rem) var(--space-6, 2rem);
-    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
-    border-radius: var(--radius-lg, 12px);
-    background: rgba(255, 255, 255, 0.02);
-    box-shadow: var(--glass-shine-soft);
-    min-width: clamp(210px, 30vw, 280px);
-    height: 80px;
-    transition: border-color var(--duration-standard) var(--ease-standard);
-  }
-
-  .stack-card:hover {
-    border-color: rgba(96, 165, 250, 0.4);
-    background: rgba(96, 165, 250, 0.04);
-  }
-
-  .stack-type {
-    font-size: 0.65rem;
-    font-weight: var(--font-semibold);
-    text-transform: uppercase;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
     letter-spacing: 0.1em;
-    color: rgba(96, 165, 250, 0.8);
-    margin-bottom: 0.25rem;
+    text-transform: uppercase;
   }
 
-  .stack-name-group {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2, 0.5rem);
+  .offer-card h3,
+  .faq-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    line-height: 1.18;
   }
 
-  .stack-name {
-    font-size: var(--text-body);
-    font-weight: var(--font-medium);
-    color: var(--color-fg-primary);
+  .offer-card p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    line-height: 1.68;
   }
 
-  /* Retainer Card */
-  .retainer-section {
-    padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-  }
-
-  .retainer-card {
-    max-width: 1080px;
-    margin: 0 auto;
-    border: 1px solid rgba(96, 165, 250, 0.3);
-    border-radius: var(--radius-xl, 16px);
-    background: linear-gradient(180deg, rgba(96, 165, 250, 0.04) 0%, var(--color-bg-pure) 100%);
+  .offer-card.offerFeatured {
+    border-color: var(--color-brand-primary-border);
     box-shadow:
-      var(--glass-shine-standard),
-      0 0 0 1px rgba(96, 165, 250, 0.08);
-    overflow: visible;
-    position: relative;
-  }
-
-  .retainer-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 10%;
-    right: 10%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
-  }
-
-  .retainer-header {
-    padding: var(--space-8, 3rem) var(--space-5, 1.5rem);
-    text-align: center;
-  }
-
-  .retainer-pricing {
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .retainer-price {
-    font-size: var(--text-display);
-    font-weight: var(--font-bold);
-    color: var(--color-fg-primary);
-    letter-spacing: var(--tracking-tighter, -0.025em);
-    line-height: 1;
-  }
-
-  .retainer-period {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-tertiary);
-    margin-top: var(--space-2, 0.5rem);
-  }
-
-  .retainer-note {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-    max-width: 480px;
-    margin: 0 auto;
-    line-height: var(--leading-relaxed);
-  }
-
-  .retainer-body {
-    padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
-  }
-
-  .progression-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-6, 2rem);
-  }
-
-  .progression-card {
-    padding: 1.25rem;
-    border-radius: var(--radius-lg, 12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
-      rgba(255, 255, 255, 0.02);
-  }
-
-  .highlighted-card {
-    border-color: rgba(45, 212, 191, 0.2);
-    background:
-      radial-gradient(circle at top left, rgba(45, 212, 191, 0.14), transparent 50%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
-      rgba(4, 8, 15, 0.86);
-    box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.08);
-  }
-
-  .wedge-card {
-    border-style: dashed;
-  }
-
-  .progression-card h3 {
-    font-size: var(--text-h4);
-    color: var(--color-fg-primary);
-    margin: 0 0 var(--space-3, 0.75rem);
-  }
-
-  .progression-card p {
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    margin: 0 0 var(--space-4, 1rem);
-  }
-
-  .progression-tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.24rem 0.58rem;
-    margin-bottom: var(--space-4, 1rem);
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--color-fg-muted);
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-
-  .retainer-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2, 0.5rem);
-  }
-
-  .retainer-list li {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    padding-left: 1.25rem;
-    position: relative;
-  }
-
-  .retainer-list li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.55em;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgba(96, 165, 250, 0.6);
-  }
-
-  .retainer-callout {
-    margin-top: var(--space-6, 2rem);
-    padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
-    border: 1px solid rgba(96, 165, 250, 0.1);
-    background: rgba(96, 165, 250, 0.03);
-    border-radius: var(--radius-md, 8px);
-    text-align: center;
-  }
-
-  .retainer-callout p {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    max-width: 600px;
-    margin: 0 auto;
-  }
-
-  /* Timeline */
-  .timeline-section {
-    padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-  }
-
-  .timeline-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-6, 2rem);
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  .timeline-grid > :global(*) {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .timeline-card {
-    padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
-    border-radius: var(--radius-lg, 12px);
-    background: var(--color-bg-pure);
-    box-shadow: var(--glass-shine-soft);
-    flex: 1;
-    transition:
-      border-color var(--duration-standard) var(--ease-standard),
-      box-shadow var(--duration-standard) var(--ease-standard),
-      transform var(--duration-bounce) var(--ease-bounce);
-  }
-
-  .timeline-card:hover {
-    border-color: var(--color-border-emphasis);
-    box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-    transform: translateY(-2px);
-  }
-
-  .timeline-label {
-    font-size: var(--text-caption);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: rgba(96, 165, 250, 0.9);
-    font-weight: var(--font-semibold);
-    display: block;
-    margin-bottom: var(--space-2, 0.5rem);
-  }
-
-  .timeline-card h3 {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .timeline-card p {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-  }
-
-  /* FAQ */
-  .faq-section {
-    padding: var(--section-padding, 6rem) 0;
+      0 18px 38px rgba(0, 0, 0, 0.42),
+      0 0 0 1px rgba(49, 92, 255, 0.14),
+      0 0 44px rgba(49, 92, 255, 0.12);
   }
 
   .faq-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-4, 1rem);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .faq-grid > :global(*) {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .faq-item {
-    padding: var(--space-5, 1.5rem);
-    border-radius: var(--radius-lg, 12px);
-    background: var(--color-bg-pure);
-    box-shadow: var(--glass-shine-soft);
-    flex: 1;
-    transition:
-      border-color var(--duration-standard) var(--ease-standard),
-      box-shadow var(--duration-standard) var(--ease-standard),
-      transform var(--duration-bounce) var(--ease-bounce);
-  }
-
-  .faq-item:hover {
-    border-color: var(--color-border-emphasis);
-    box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-    transform: translateY(-2px);
-  }
-
-  .faq-item h3 {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .faq-item p {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-  }
-
-  /* CTA */
-  .cta-section {
-    padding: var(--section-padding, 6rem) 0;
+  .cta-panel {
     text-align: center;
   }
 
-  .cta-heading {
-    font-size: var(--text-h1);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .cta-subtext {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    margin-bottom: var(--space-6, 2rem);
-    max-width: var(--content-width-sm);
-    margin-left: auto;
-    margin-right: auto;
-    line-height: var(--leading-relaxed);
-  }
-
-  .cta-buttons {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-4, 1rem);
-  }
-
-  .cta-secondary {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-    text-decoration: none;
-    transition: color var(--duration-standard) var(--ease-standard);
-  }
-
-  .cta-secondary:hover {
-    color: var(--color-fg-secondary);
-  }
-
-  /* Responsive */
-  @media (max-width: 1024px) {
-    .progression-grid {
+  @media (max-width: 1080px) {
+    .hero-layout,
+    .flow-layout {
       grid-template-columns: 1fr;
     }
 
+    .hero-copy,
+    .section-lead {
+      max-width: none;
+    }
   }
 
   @media (max-width: 768px) {
-    .hero {
-      padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
-    }
-
-    .hero-title {
-      font-size: var(--text-h1);
-    }
-
-    .timeline-grid {
-      grid-template-columns: 1fr;
-      max-width: 480px;
-      margin-left: auto;
-      margin-right: auto;
-      gap: var(--space-5, 1.5rem);
-    }
-
+    .offer-grid,
     .faq-grid {
       grid-template-columns: 1fr;
     }
 
-    .retainer-section,
-    .timeline-section,
-    .faq-section,
-    .cta-section {
-      padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+    .hero-title {
+      font-size: clamp(2.6rem, 10vw, 4rem);
     }
 
-    .retainer-price {
-      font-size: var(--text-h1);
-    }
-
-    .marquee-fade-left,
-    .marquee-fade-right {
-      width: 2.5rem;
-    }
-
-    .stack-card {
-      min-width: 220px;
-      min-height: 76px;
-      height: auto;
-      padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-    }
-
-    .stack-name {
-      font-size: var(--text-body-sm);
+    .offer-card,
+    .faq-card,
+    .boundary-panel,
+    .cta-panel {
+      padding: 1rem;
     }
   }
 </style>

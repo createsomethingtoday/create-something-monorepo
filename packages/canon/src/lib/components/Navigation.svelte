@@ -171,7 +171,7 @@
   }
 
   .nav-inner {
-    padding: 0.875rem var(--container-padding, 1.5rem);
+    padding: 0.75rem 0.875rem;
     display: flex;
     flex-direction: column;
   }
@@ -183,33 +183,43 @@
     right: 0;
     width: 100%;
     z-index: var(--z-fixed);
-    background-color: var(--color-bg-pure);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: color-mix(in srgb, var(--color-shell-surface) 84%, transparent);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-bottom: 1px solid var(--color-shell-border-default);
   }
 
   /* Logo */
   .nav-logo {
-    font-size: 1.25rem;
-    font-weight: var(--font-bold);
-    letter-spacing: -0.02em;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.12rem;
+    font-size: 1.08rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: -0.03em;
     color: var(--color-fg-primary);
     text-decoration: none;
   }
 
   .nav-logo-suffix {
-    font-weight: normal;
-    color: var(--color-fg-tertiary);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-fg-muted);
   }
 
   /* Navigation Links */
   .nav-link {
-    font-size: var(--text-body-sm);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
     font-weight: var(--font-medium);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: var(--color-fg-secondary);
     text-decoration: none;
-    border-radius: var(--radius-md);
-    padding: 0.4rem 0.7rem;
+    border-radius: var(--radius-full);
+    padding: 0.55rem 0.82rem;
     transition:
       color var(--duration-micro) var(--ease-standard),
       background-color var(--duration-micro) var(--ease-standard),
@@ -233,22 +243,25 @@
 
   /* CTA Button */
   .nav-cta {
-    padding: 0.5rem 1rem;
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    font-size: var(--text-body-sm);
+    padding: 0.68rem 1rem;
+    background: linear-gradient(180deg, #ffffff, #eceef7);
+    color: #090909;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
     font-weight: var(--font-semibold);
-    border-radius: var(--radius-lg);
-    border: 1px solid transparent;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     text-decoration: none;
     transition:
-      opacity var(--duration-micro) var(--ease-standard),
-      transform var(--duration-micro) var(--ease-standard);
+      transform var(--duration-micro) var(--ease-standard),
+      box-shadow var(--duration-micro) var(--ease-standard);
   }
 
   .nav-cta:hover {
-    opacity: 0.9;
     transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   }
 
   .nav-cta:focus-visible {
@@ -257,15 +270,18 @@
   }
 
   .nav-desktop {
-    background: color-mix(in srgb, var(--color-shell-surface-secondary) 88%, transparent);
+    background: color-mix(in srgb, var(--color-shell-surface-secondary) 86%, transparent);
+    border: 1px solid var(--color-shell-border-subtle);
     border-radius: var(--radius-full);
     padding: 0.25rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   /* Mobile Menu Button */
   .nav-menu-button {
     color: var(--color-fg-primary);
     background: var(--color-shell-surface-tertiary);
+    border: 1px solid var(--color-shell-border-subtle);
     border-radius: var(--radius-md);
     transition:
       color var(--duration-micro) var(--ease-standard),
@@ -286,6 +302,7 @@
   /* Mobile Menu */
   .nav-mobile-menu {
     background: var(--color-shell-surface-secondary);
+    border: 1px solid var(--color-shell-border-default);
     border-radius: var(--radius-lg);
     padding-left: var(--space-sm);
     padding-right: var(--space-sm);
@@ -343,5 +360,22 @@
 
   .nav-mobile-logout:hover {
     opacity: 0.8;
+  }
+
+  @media (min-width: 768px) {
+    .nav-inner {
+      padding: 0.65rem 0.95rem;
+    }
+
+    .nav-fixed {
+      top: 1rem;
+      left: 50%;
+      right: auto;
+      width: min(1240px, calc(100% - 2rem));
+      transform: translateX(-50%);
+      border: 1px solid var(--color-shell-border-default);
+      border-radius: 1.25rem;
+      box-shadow: var(--color-shell-shadow);
+    }
   }
 </style>

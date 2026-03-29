@@ -1,447 +1,571 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
-  import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
+  import { Button, SEO } from '@create-something/canon';
+  import { BlurFade } from '@create-something/canon/magicui';
+  import RuntimeWorkbench from '$lib/components/RuntimeWorkbench.svelte';
 
-  const tools = [
+  type ToolCard = {
+    name: string;
+    href: string;
+    description: string;
+    tag: string;
+    icon: string;
+  };
+
+  type OperatingLoop = {
+    title: string;
+    summary: string;
+    points: string[];
+  };
+
+  type EcosystemCard = {
+    eyebrow: string;
+    title: string;
+    body: string;
+    href: string;
+  };
+
+  const proofMetrics = [
+    { value: '5', label: 'live tools and surfaces' },
+    { value: '3', label: 'runtime loops previewed in the shell' },
+    { value: '100%', label: 'Cloudflare Workers-first execution' },
+    { value: 'Direct', label: 'inspectable routes, outputs, and state' }
+  ];
+
+  const tools: ToolCard[] = [
     {
       name: 'Code Playground',
       href: '/playground',
       description:
-        'Execute JavaScript directly in the Cloudflare Workers runtime. Console output, async/await, ES2022.',
-      status: 'live',
+        'Execute JavaScript directly in the Workers runtime with console streaming, async support, and an inspectable request surface.',
+      tag: 'Execution',
       icon: 'M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
     },
     {
       name: 'Praxis',
       href: '/praxis',
       description:
-        'Learn integration patterns through graded code challenges. Subtractive Triad validation — DRY, Rams, Heidegger.',
-      status: 'live',
+        'Learn integration patterns through guided challenges that turn runtime ideas into operator habits instead of abstract lessons.',
+      tag: 'Guided practice',
       icon: 'M13 10V3L4 14h7v7l9-11h-7z'
     },
     {
       name: 'Motion Lab',
       href: '/motion',
       description:
-        'Analyze CSS animations from any URL. Puppeteer extraction with timing, easing, and property analysis.',
-      status: 'live',
+        'Analyze animation systems from any public URL with extracted timing, easing, sequencing, and motion architecture notes.',
+      tag: 'Inspection',
       icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z'
     },
     {
       name: 'Data Studio',
-      href: '/data',
+      href: '/data/nba',
       description:
-        'Live data dashboards with real-time updates. NBA analytics with caching, rate limiting, and historical snapshots.',
-      status: 'live',
+        'Work with live dashboards, historical snapshots, and derived metrics that stay useful under real refresh and caching conditions.',
+      tag: 'Realtime data',
       icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
     },
     {
       name: 'Discover',
       href: '/discover',
       description:
-        'Explore concepts across CREATE SOMETHING properties. Cross-property mapping and hermeneutic spiral visualization.',
-      status: 'live',
+        'Map concepts across CREATE SOMETHING properties and use the network to move from idea to implementation and back again.',
+      tag: 'Concept graph',
       icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+    }
+  ];
+
+  const operatingLoops: OperatingLoop[] = [
+    {
+      title: 'Execute live',
+      summary:
+        'The tool should do real work against a real runtime. If it only exists as a screenshot, it has not earned the pattern.',
+      points: [
+        'Prefer edge-safe execution surfaces over mocked behavior',
+        'Return enough output to make the system inspectable',
+        'Keep request and response shapes visible to the user'
+      ]
+    },
+    {
+      title: 'Inspect the system',
+      summary:
+        'A useful workbench exposes timing, state, policy assumptions, and the limits of the runtime instead of smoothing them away.',
+      points: [
+        'Capture timing and state transitions as first-class output',
+        'Make failure modes discoverable before they become user pain',
+        'Treat observability as part of the interface'
+      ]
+    },
+    {
+      title: 'Promote what survives',
+      summary:
+        'The experiments that hold up here are the ones that move into research, policy artifacts, or governed delivery.',
+      points: [
+        'Validated ideas roll into .io as documented patterns',
+        'High-stakes workflows graduate into .agency delivery',
+        'The workbench stays close to the implementation edge'
+      ]
+    }
+  ];
+
+  const ecosystemCards: EcosystemCard[] = [
+    {
+      eyebrow: '.io',
+      title: 'Read the pattern',
+      body: 'When a tool surface reveals a repeatable pattern, the research property documents it and gives it a legible frame.',
+      href: 'https://createsomething.io'
+    },
+    {
+      eyebrow: '.agency',
+      title: 'Ship the workflow',
+      body: 'When the pattern matters commercially, operationally, or reputationally, it moves into governed delivery.',
+      href: 'https://createsomething.agency'
+    },
+    {
+      eyebrow: '.ltd',
+      title: 'See the thesis',
+      body: 'The editorial layer explains why the workbench exists and how it fits the broader CREATE SOMETHING worldview.',
+      href: 'https://createsomething.ltd'
     }
   ];
 </script>
 
 <SEO
-  title="The Workbench"
-  description="Build, test, and analyze with live tools. Code playground, motion analysis, data dashboards, and pattern learning — all running on Cloudflare Workers."
-  keywords="developer tools, code playground, motion analysis, data studio, Cloudflare Workers, live sandbox, workbench"
+  title="Workbench | CREATE SOMETHING .space"
+  description="CREATE SOMETHING .space is the live workbench for testing tools, runtimes, and interaction patterns on Cloudflare Workers."
+  keywords="developer tools, code playground, motion analysis, realtime dashboards, Cloudflare Workers, live workbench, automation practice"
   ogImage="/og-image.svg"
   propertyName="space"
 />
 
-<!-- Hero -->
-<section class="hero relative overflow-hidden pt-24 pb-32 px-6">
-  <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-    <AnimatedGridPattern
-      numSquares={25}
-      maxOpacity={0.08}
-      duration={4}
-      repeatDelay={2}
-      width={60}
-      height={60}
-      class="hero-animated-grid"
-    />
-  </div>
-  <div class="hero-container relative z-10">
-    <BlurFade delay={0}>
-      <div class="hero-eyebrow">CREATE SOMETHING SPACE</div>
-    </BlurFade>
+<section class="hero-page">
+  <div class="shell-inner-pad hero-layout">
+    <div class="hero-copy">
+      <BlurFade delay={0}>
+        <span class="product-kicker">CREATE SOMETHING .space</span>
+      </BlurFade>
 
-    <BlurFade delay={0.1}>
-      <h1 class="hero-headline">The Workbench</h1>
-    </BlurFade>
+      <BlurFade delay={0.05}>
+        <h1 class="hero-title">A public workbench for trying the runtime in the open.</h1>
+      </BlurFade>
+
+      <BlurFade delay={0.1}>
+        <p class="hero-detail">
+          CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested
+          against real execution surfaces. The point is not a polished demo. It is a live place to
+          run code, inspect motion, and stress ideas before they become patterns or products.
+        </p>
+      </BlurFade>
+
+      <BlurFade delay={0.15}>
+        <div class="hero-actions">
+          <Button href="/playground">Open The Playground</Button>
+          <Button href="/praxis" variant="secondary">Start Praxis</Button>
+        </div>
+      </BlurFade>
+
+      <BlurFade delay={0.2}>
+        <p class="hero-note">Live routes. Workers-first execution. Inspectable outputs.</p>
+      </BlurFade>
+    </div>
 
     <BlurFade delay={0.2}>
-      <p class="hero-description">
-        Live tools for building, testing, and analyzing automation infrastructure. Every tool runs
-        on Cloudflare Workers. Pick one and start working.
-      </p>
+      <RuntimeWorkbench />
     </BlurFade>
   </div>
-</section>
 
-<!-- Tool Grid -->
-<section class="tools-section">
-  <div class="tools-container">
-    <div class="tools-grid">
-      {#each tools as tool, index}
-        <a href={tool.href} class="tool-card animate-reveal" style="--delay: {3 + index}">
-          <div class="tool-icon">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d={tool.icon} />
-            </svg>
-          </div>
-
-          <div class="tool-content">
-            <div class="tool-header">
-              <h2 class="tool-name">{tool.name}</h2>
-              <span class="tool-status">{tool.status}</span>
-            </div>
-            <p class="tool-description">{tool.description}</p>
-          </div>
-
-          <div class="tool-arrow">
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </div>
-        </a>
+  <div class="shell-inner-pad">
+    <div class="metric-grid">
+      {#each proofMetrics as metric, index}
+        <BlurFade delay={0.25 + index * 0.05}>
+          <article class="product-surface product-surface--soft metric-card">
+            <span class="metric-value">{metric.value}</span>
+            <span class="metric-label">{metric.label}</span>
+          </article>
+        </BlurFade>
       {/each}
     </div>
   </div>
 </section>
 
-<!-- Ecosystem -->
-<section class="ecosystem">
-  <div class="ecosystem-container">
-    <p class="ecosystem-label">The Hermeneutic Circle</p>
-    <h2 class="ecosystem-heading">.io reads. .space does.</h2>
-    <p class="ecosystem-description">
-      Research and documentation live on .io. The workbench lives here. Patterns validated here
-      become documented patterns there.
-    </p>
+<section class="tool-section">
+  <div class="shell-inner-pad">
+    <div class="section-lead">
+      <BlurFade>
+        <span class="product-kicker">Live surfaces</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Pick a route and work with the system directly.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          The workbench is organized around live routes that expose execution, analysis, or
+          learning loops. Each surface should feel like a working tool, not a static marketing
+          panel.
+        </p>
+      </BlurFade>
+    </div>
+
+    <div class="tool-grid">
+      {#each tools as tool, index}
+        <BlurFade delay={0.15 + index * 0.05}>
+          <a href={tool.href} class="product-surface tool-card">
+            <div class="tool-header">
+              <div class="tool-icon" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d={tool.icon} />
+                </svg>
+              </div>
+              <span class="tool-tag">{tool.tag}</span>
+            </div>
+
+            <div class="tool-body">
+              <h3>{tool.name}</h3>
+              <p>{tool.description}</p>
+            </div>
+
+            <span class="tool-link">Open route</span>
+          </a>
+        </BlurFade>
+      {/each}
+    </div>
+  </div>
+</section>
+
+<section class="loop-section">
+  <div class="shell-inner-pad">
+    <div class="section-lead section-lead--center">
+      <BlurFade>
+        <span class="product-kicker">Operating loop</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>The workbench has a job beyond showing off.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          The practice layer should reveal how the system behaves, where it breaks, and which ideas
+          are strong enough to carry into documentation or governed delivery.
+        </p>
+      </BlurFade>
+    </div>
+
+    <div class="loop-grid">
+      {#each operatingLoops as loop, index}
+        <BlurFade delay={0.15 + index * 0.06}>
+          <article class="product-surface product-surface--soft loop-card">
+            <h3>{loop.title}</h3>
+            <p>{loop.summary}</p>
+            <ul class="product-list">
+              {#each loop.points as point}
+                <li>{point}</li>
+              {/each}
+            </ul>
+          </article>
+        </BlurFade>
+      {/each}
+    </div>
+  </div>
+</section>
+
+<section class="ecosystem-section">
+  <div class="shell-inner-pad">
+    <div class="section-lead section-lead--center">
+      <BlurFade>
+        <span class="product-kicker">Cross-property handoff</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Practice here, then move the result into the right layer.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          The best workbench patterns do not stay trapped on the playground. They transfer into the
+          research, delivery, and editorial properties that complete the system.
+        </p>
+      </BlurFade>
+    </div>
 
     <div class="ecosystem-grid">
-      <a
-        href="https://createsomething.io"
-        class="ecosystem-card animate-reveal"
-        style="--delay: 0"
-        target="_blank"
-        rel="noopener"
-      >
-        <span class="property-tag">.io</span>
-        <h3 class="property-name">Read</h3>
-        <p class="property-desc">Research papers, MCP patterns, reference implementations.</p>
-      </a>
+      {#each ecosystemCards as card, index}
+        <BlurFade delay={0.15 + index * 0.06}>
+          <a
+            href={card.href}
+            class="product-surface product-surface--soft ecosystem-card"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="ecosystem-eyebrow">{card.eyebrow}</span>
+            <h3>{card.title}</h3>
+            <p>{card.body}</p>
+            <span class="ecosystem-link">Open property</span>
+          </a>
+        </BlurFade>
+      {/each}
+    </div>
+  </div>
+</section>
 
-      <a
-        href="https://createsomething.agency"
-        class="ecosystem-card animate-reveal"
-        style="--delay: 1"
-        target="_blank"
-        rel="noopener"
-      >
-        <span class="property-tag">.agency</span>
-        <h3 class="property-name">Build</h3>
-        <p class="property-desc">Custom MCP development. The creation moat as a service.</p>
-      </a>
-
-      <a
-        href="https://createsomething.ltd"
-        class="ecosystem-card animate-reveal"
-        style="--delay: 2"
-        target="_blank"
-        rel="noopener"
-      >
-        <span class="property-tag">.ltd</span>
-        <h3 class="property-name">Philosophy</h3>
-        <p class="property-desc">Why creation matters more than consumption.</p>
-      </a>
+<section class="cta-section">
+  <div class="shell-inner-pad">
+    <div class="product-surface product-surface--accent cta-panel">
+      <BlurFade>
+        <span class="product-kicker">Pick a surface</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Start with the runtime you want to inspect.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          Open the playground if you want to execute code, motion if you want to inspect interaction
+          systems, or data if you want to work against a live refresh loop.
+        </p>
+      </BlurFade>
+      <BlurFade delay={0.15}>
+        <div class="hero-actions hero-actions--center">
+          <Button href="/motion">Inspect Motion</Button>
+          <Button href="/data/nba" variant="secondary">Open Data Studio</Button>
+        </div>
+      </BlurFade>
     </div>
   </div>
 </section>
 
 <style>
-  :global(.hero-animated-grid) {
-    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
-    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+  .hero-page,
+  .tool-section,
+  .loop-section,
+  .ecosystem-section,
+  .cta-section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
   }
 
-  /* Hero */
-  .hero {
-    padding: 6rem 1.5rem 3rem;
+  .hero-page {
+    padding-top: clamp(5.5rem, 10vw, 7rem);
   }
 
-  .hero-container {
-    max-width: 48rem;
-    margin: 0 auto;
+  .hero-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+    gap: clamp(2rem, 4vw, 3.5rem);
+    align-items: center;
+  }
+
+  .hero-copy,
+  .section-lead,
+  .cta-panel,
+  .tool-body {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .hero-title,
+  .section-lead h2,
+  .cta-panel h2 {
+    margin: 0;
+    font-size: clamp(2.6rem, 5vw, 4.75rem);
+    line-height: 0.96;
+    letter-spacing: -0.04em;
+    color: var(--color-fg-primary);
+  }
+
+  .hero-detail,
+  .section-lead p,
+  .cta-panel p,
+  .tool-card p,
+  .loop-card p,
+  .ecosystem-card p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: 0.35rem;
+  }
+
+  .hero-actions--center {
+    justify-content: center;
+  }
+
+  .hero-note {
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-size: 0.92rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .metric-grid,
+  .tool-grid,
+  .loop-grid,
+  .ecosystem-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .metric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: clamp(1.8rem, 4vw, 2.5rem);
+  }
+
+  .metric-card {
+    display: grid;
+    gap: 0.5rem;
+    min-height: 10rem;
+    align-content: end;
+  }
+
+  .metric-value {
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: var(--color-fg-primary);
+  }
+
+  .metric-label {
+    color: var(--color-fg-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .section-lead {
+    max-width: 46rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-lead--center {
+    margin-inline: auto;
     text-align: center;
   }
 
-  .hero-eyebrow {
-    font-size: var(--text-body-sm);
-    font-weight: 500;
-    color: var(--color-fg-muted);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    margin-bottom: var(--space-md);
+  .section-lead h2,
+  .cta-panel h2 {
+    font-size: clamp(2.2rem, 4vw, 3.45rem);
+    line-height: 1;
   }
 
-  .hero-headline {
-    font-size: var(--text-display);
-    font-weight: var(--font-bold);
-    color: var(--color-fg-primary);
-    line-height: var(--leading-tight);
-    margin-bottom: var(--space-md);
-  }
-
-  .hero-description {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
-    max-width: 36rem;
-    margin: 0 auto;
-  }
-
-  /* Tools */
-  .tools-section {
-    padding: 0 1.5rem 4rem;
-  }
-
-  .tools-container {
-    max-width: 64rem;
-    margin: 0 auto;
-  }
-
-  .tools-grid {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
-    gap: var(--space-md);
-  }
-
-  @media (min-width: 768px) {
-    .tools-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .tools-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
+  .tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .tool-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    padding: var(--space-lg);
-    background-color: var(--glass-bg-light);
-    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-    border: 1px solid var(--glass-border-light);
-    border-radius: var(--radius-lg);
-    transition: all var(--duration-standard) var(--ease-standard);
-    position: relative;
+    display: grid;
+    gap: 1.1rem;
+    text-decoration: none;
+    opacity: 1;
+    transition:
+      transform var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard),
+      background var(--duration-micro) var(--ease-standard);
   }
 
-  .tool-card:hover {
-    background-color: var(--glass-bg-medium);
-    border-color: var(--glass-border-medium);
-    box-shadow: var(--glass-shadow-sm);
+  .tool-card:hover,
+  .ecosystem-card:hover {
+    opacity: 1;
     transform: translateY(-2px);
-  }
-
-  .tool-card:active {
-    transform: translateY(0);
-  }
-
-  .tool-icon {
-    color: var(--color-fg-muted);
-    width: 2.5rem;
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-md);
-  }
-
-  .tool-content {
-    flex: 1;
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .tool-header {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-xs);
+    justify-content: space-between;
+    gap: 1rem;
   }
 
-  .tool-name {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
+  .tool-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
     color: var(--color-fg-primary);
   }
 
-  .tool-status {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
-    padding: 0.125rem 0.5rem;
-    border-radius: var(--radius-full);
+  .tool-icon svg {
+    width: 1.4rem;
+    height: 1.4rem;
   }
 
-  .tool-description {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
-  }
-
-  .tool-arrow {
-    color: var(--color-fg-subtle);
-    align-self: flex-end;
-    transition: transform var(--duration-micro) var(--ease-standard);
-  }
-
-  .tool-card:hover .tool-arrow {
-    color: var(--color-fg-tertiary);
-    transform: translateX(4px);
-  }
-
-  /* Ecosystem */
-  .ecosystem {
-    padding: 4rem 1.5rem;
-  }
-
-  .ecosystem-container {
-    max-width: 64rem;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .ecosystem-label {
-    font-size: var(--text-caption);
+  .tool-tag,
+  .tool-link,
+  .ecosystem-eyebrow,
+  .ecosystem-link {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
     color: var(--color-fg-muted);
-    margin-bottom: var(--space-sm);
   }
 
-  .ecosystem-heading {
-    font-size: var(--text-h2);
-    font-weight: var(--font-semibold);
+  .tool-card h3,
+  .loop-card h3,
+  .ecosystem-card h3 {
+    margin: 0;
+    font-size: clamp(1.35rem, 2vw, 1.7rem);
+    line-height: 1.08;
     color: var(--color-fg-primary);
-    margin-bottom: var(--space-sm);
   }
 
-  .ecosystem-description {
-    font-size: var(--text-body);
-    color: var(--color-fg-tertiary);
-    max-width: 36rem;
-    margin: 0 auto var(--space-xl);
-  }
-
+  .loop-grid,
   .ecosystem-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .loop-card,
+  .ecosystem-card {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-lg);
+    gap: 1rem;
   }
 
   .ecosystem-card {
-    display: block;
-    padding: var(--space-lg);
-    border-radius: var(--radius-lg);
-    text-align: left;
-    transition: all var(--duration-micro) var(--ease-standard);
-    opacity: 0;
-    animation: cardReveal var(--duration-standard) var(--ease-standard) forwards;
-    animation-delay: calc(var(--index, 0) * var(--cascade-step));
+    text-decoration: none;
+    opacity: 1;
+    transition:
+      transform var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard),
+      background var(--duration-micro) var(--ease-standard);
   }
 
-  .ecosystem-card:hover {
-    transform: scale(var(--scale-micro));
-    border-color: var(--color-border-emphasis);
-    background: transparent;
+  .cta-panel {
+    justify-items: center;
+    text-align: center;
+    padding: clamp(1.7rem, 4vw, 2.4rem);
   }
 
-  @keyframes cardReveal {
-    from {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .ecosystem-card {
-      animation: none;
-      opacity: 1;
-    }
-  }
-
-  .property-tag {
-    font-size: var(--text-caption);
-    font-family: monospace;
-    color: var(--color-fg-muted);
-  }
-
-  .property-name {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin: var(--space-xs) 0;
-  }
-
-  .property-desc {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
-  }
-
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
+    .hero-layout,
+    .metric-grid,
+    .loop-grid,
     .ecosystem-grid {
       grid-template-columns: 1fr;
     }
-  }
 
-  /* Staggered reveal */
-  .animate-reveal {
-    opacity: 0;
-    transform: translateY(16px);
-    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
-    animation-delay: calc(var(--delay, 0) * 100ms);
-  }
-
-  @keyframes reveal {
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    .tool-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .animate-reveal {
-      animation: none;
-      opacity: 1;
-      transform: none;
+  @media (max-width: 720px) {
+    .tool-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-title,
+    .section-lead h2,
+    .cta-panel h2 {
+      line-height: 1.02;
+    }
+
+    .hero-actions {
+      flex-direction: column;
     }
   }
 </style>
