@@ -22,6 +22,7 @@ export * from './inview.js';
 
 // Svelte components - Primitives
 export { default as IsometricBox } from './IsometricBox.svelte';
+export { default as HeroSignalField } from './HeroSignalField.svelte';
 
 // Svelte components - Compositions
 export { default as IsometricAssembly } from './IsometricAssembly.svelte';
