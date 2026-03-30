@@ -3,35 +3,13 @@
   import KineticNumber from './KineticNumber.svelte';
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import type { Asset } from '$lib/server/airtable';
-  import { sortAssetStatuses } from '$lib/utils/asset-actions';
-  import { getStatusColorTheme } from '$lib/utils/status-presentation';
+  import { sortAssetTypes } from '$lib/utils/asset-actions';
 
   interface Props {
     assets: Asset[];
   }
 
   let { assets }: Props = $props();
-
-  // Calculate stats by status
-  const statusBreakdown = $derived.by(() => {
-    const breakdown: Record<
-      string,
-      { count: number; viewers: number; purchases: number; revenue: number }
-    > = {};
-
-    for (const asset of assets) {
-      const status = asset.status;
-      if (!breakdown[status]) {
-        breakdown[status] = { count: 0, viewers: 0, purchases: 0, revenue: 0 };
-      }
-      breakdown[status].count++;
-      breakdown[status].viewers += asset.uniqueViewers || 0;
-      breakdown[status].purchases += asset.cumulativePurchases || 0;
-      breakdown[status].revenue += asset.cumulativeRevenue || 0;
-    }
-
-    return breakdown;
-  });
 
   // Calculate totals
   const totals = $derived.by(() => {
@@ -51,19 +29,57 @@
     return { viewers, purchases, revenue };
   });
 
-  const sortedStatuses = $derived.by(() => {
-    return sortAssetStatuses(Object.keys(statusBreakdown)).filter((status) => statusBreakdown[status]?.count > 0);
-  });
+  function getAssetTypeTheme(type: string): { accent: string } {
+    const normalizedType = type.trim().toLowerCase();
 
-  // Calculate percentage for visual bar
-  function getPercentage(count: number): number {
-    const total = assets.length;
-    if (total === 0) return 0;
-    return Math.round((count / total) * 100);
+    switch (normalizedType) {
+      case 'app':
+        return { accent: 'var(--color-data-1)' };
+      case 'library':
+        return { accent: 'var(--color-data-2)' };
+      case 'template':
+        return { accent: 'var(--color-data-3)' };
+      default:
+        return { accent: 'var(--color-data-4)' };
+    }
   }
 
-  function getStatusLabel(status: string, count: number): string {
-    return `${status} ${count}`;
+  const typeBreakdown = $derived.by(() => {
+    const breakdown: Record<string, number> = {};
+
+    for (const asset of assets) {
+      const type = asset.type?.trim() || 'Other';
+      breakdown[type] = (breakdown[type] || 0) + 1;
+    }
+
+    return sortAssetTypes(Object.keys(breakdown))
+      .filter((type) => breakdown[type] > 0)
+      .map((type) => {
+        const count = breakdown[type];
+        const share = assets.length === 0 ? 0 : (count / assets.length) * 100;
+
+        return {
+          type,
+          count,
+          share,
+          percentage: Math.round(share),
+          theme: getAssetTypeTheme(type)
+        };
+      });
+  });
+
+  const distributionAriaLabel = $derived.by(() => {
+    if (typeBreakdown.length === 0) {
+      return 'No assets in portfolio';
+    }
+
+    return `Portfolio distribution: ${typeBreakdown
+      .map((entry) => `${entry.type} ${entry.count} ${entry.count === 1 ? 'asset' : 'assets'} ${entry.percentage}%`)
+      .join(', ')}`;
+  });
+
+  function getAssetCountLabel(count: number): string {
+    return count === 1 ? '1 asset' : `${count} assets`;
   }
 </script>
 
@@ -108,8 +124,8 @@
     </section>
   {/if}
 
-  <!-- Status Distribution -->
-  {#if sortedStatuses.length > 0}
+  <!-- Asset Distribution -->
+  {#if typeBreakdown.length > 0}
     <section class="overview-panel overview-panel--distribution">
       <Card>
         <CardHeader>
@@ -119,31 +135,32 @@
           </div>
         </CardHeader>
         <CardContent>
-          <div class="distribution-list">
-            {#each sortedStatuses as status}
-              {@const data = statusBreakdown[status]}
-              {@const percentage = getPercentage(data.count)}
-              {@const theme = getStatusColorTheme(status)}
-              <div class="distribution-item">
-                <div class="distribution-meta">
-                  <span class="distribution-label" style="--status-color: {theme.accent}"
-                    >{getStatusLabel(status, data.count)}</span
-                  >
-                  <span class="distribution-count"
-                    >{data.count === 1 ? '1 template' : `${data.count} templates`}</span
-                  >
-                </div>
-                <div class="distribution-track-row">
-                  <div class="distribution-bar" aria-hidden="true">
-                    <div
-                      class="distribution-fill"
-                      style="width: {percentage}%; background-color: {theme.accent}"
-                    ></div>
+          <div class="distribution-stack">
+            <div class="distribution-bar distribution-bar--stacked" role="img" aria-label={distributionAriaLabel}>
+              {#each typeBreakdown as entry}
+                <div
+                  class="distribution-segment"
+                  style="width: {entry.share}%; background-color: {entry.theme.accent}"
+                  title={`${entry.type}: ${entry.count} ${entry.count === 1 ? 'asset' : 'assets'} (${entry.percentage}%)`}
+                ></div>
+              {/each}
+            </div>
+
+            <div class="distribution-list">
+              {#each typeBreakdown as entry}
+                <div class="distribution-item">
+                  <div class="distribution-legend-row">
+                    <div class="distribution-meta">
+                      <span class="distribution-label" style="--distribution-color: {entry.theme.accent}"
+                        >{entry.type}</span
+                      >
+                      <span class="distribution-count">{getAssetCountLabel(entry.count)}</span>
+                    </div>
+                    <span class="distribution-percentage">{entry.percentage}%</span>
                   </div>
-                  <span class="distribution-percentage">{percentage}%</span>
                 </div>
-              </div>
-            {/each}
+              {/each}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -224,13 +241,17 @@
   .distribution-list {
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
+    gap: 0.85rem;
+  }
+
+  .distribution-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   .distribution-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+    display: block;
   }
 
   .distribution-heading {
@@ -247,10 +268,18 @@
     letter-spacing: 0.03em;
   }
 
+  .distribution-legend-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
   .distribution-meta {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    flex-wrap: wrap;
     gap: var(--space-md);
   }
 
@@ -270,7 +299,7 @@
     width: 0.4rem;
     height: 0.4rem;
     border-radius: 999px;
-    background: var(--status-color, var(--color-fg-muted));
+    background: var(--distribution-color, var(--color-fg-muted));
     transform: translateY(-50%);
   }
 
@@ -279,13 +308,6 @@
     color: var(--color-fg-muted);
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
-  }
-
-  .distribution-track-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.75rem;
   }
 
   .distribution-percentage {
@@ -298,15 +320,19 @@
   }
 
   .distribution-bar {
-    height: 0.36rem;
+    width: 100%;
     background: var(--color-bg-subtle);
     border-radius: var(--radius-full);
     overflow: hidden;
   }
 
-  .distribution-fill {
+  .distribution-bar--stacked {
+    display: flex;
+    height: 0.75rem;
+  }
+
+  .distribution-segment {
     height: 100%;
-    border-radius: var(--radius-full);
     transition: width var(--duration-standard) var(--ease-standard);
   }
 
@@ -321,11 +347,25 @@
       border-left: none;
       border-top: 1px solid var(--color-shell-border-default);
     }
+
+    .distribution-legend-row {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+
+    .distribution-meta {
+      gap: 0.35rem 0.75rem;
+    }
+
+    .distribution-percentage {
+      min-width: 0;
+      text-align: left;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .performance-item,
-    .distribution-fill {
+    .distribution-segment {
       transition: none;
     }
   }
