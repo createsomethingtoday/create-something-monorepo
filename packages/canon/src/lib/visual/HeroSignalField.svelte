@@ -1023,8 +1023,8 @@
     --hero-field-accent: rgba(37, 86, 255, 0.26);
     --hero-field-accent-soft: rgba(70, 154, 255, 0.18);
     --hero-field-edge: rgba(118, 223, 255, 0.2);
-    --hero-field-canvas-opacity: 0.68;
-    --hero-field-guides-opacity: 0.64;
+    --hero-field-canvas-opacity: 0.78;
+    --hero-field-guides-opacity: 0.7;
   }
 
   .hero-signal-field--io {
@@ -1044,9 +1044,9 @@
       linear-gradient(
         180deg,
         rgba(5, 5, 6, 0.99) 0%,
-        rgba(5, 5, 6, 0.94) 18%,
-        rgba(5, 5, 6, 0.76) 48%,
-        rgba(5, 5, 6, 0.94) 100%
+        rgba(5, 5, 6, 0.92) 18%,
+        rgba(5, 5, 6, 0.68) 48%,
+        rgba(5, 5, 6, 0.88) 100%
       ),
       radial-gradient(
         circle at 77% 54%,
@@ -1063,10 +1063,10 @@
       linear-gradient(
         90deg,
         rgba(5, 5, 6, 0.995) 0%,
-        rgba(5, 5, 6, 0.98) 36%,
-        rgba(5, 5, 6, 0.88) 52%,
-        rgba(5, 5, 6, 0.42) 72%,
-        rgba(5, 5, 6, 0.68) 100%
+        rgba(5, 5, 6, 0.97) 36%,
+        rgba(5, 5, 6, 0.8) 52%,
+        rgba(5, 5, 6, 0.24) 72%,
+        rgba(5, 5, 6, 0.42) 100%
       ),
       linear-gradient(
         90deg,
@@ -1075,7 +1075,7 @@
         rgba(70, 154, 255, 0.14) 76%,
         rgba(5, 5, 6, 0) 100%
       );
-    opacity: 0.88;
+    opacity: 0.78;
   }
 
   .hero-signal-field--agency .hero-signal-field__guides {
@@ -1331,8 +1331,8 @@
     }
 
     .hero-signal-field--agency {
-      --hero-field-canvas-opacity: 0.64;
-      --hero-field-guides-opacity: 0.62;
+      --hero-field-canvas-opacity: 0.72;
+      --hero-field-guides-opacity: 0.66;
     }
 
     .hero-signal-field--agency .hero-signal-field__fallback {
@@ -1340,9 +1340,9 @@
         linear-gradient(
           180deg,
           rgba(5, 5, 6, 0.995) 0%,
-          rgba(5, 5, 6, 0.96) 20%,
-          rgba(5, 5, 6, 0.86) 52%,
-          rgba(5, 5, 6, 0.96) 100%
+          rgba(5, 5, 6, 0.94) 20%,
+          rgba(5, 5, 6, 0.76) 52%,
+          rgba(5, 5, 6, 0.92) 100%
         ),
         radial-gradient(
           circle at 80% 54%,
@@ -1359,10 +1359,10 @@
         linear-gradient(
           90deg,
           rgba(5, 5, 6, 0.995) 0%,
-          rgba(5, 5, 6, 0.985) 46%,
-          rgba(5, 5, 6, 0.9) 64%,
-          rgba(5, 5, 6, 0.5) 82%,
-          rgba(5, 5, 6, 0.74) 100%
+          rgba(5, 5, 6, 0.975) 46%,
+          rgba(5, 5, 6, 0.82) 64%,
+          rgba(5, 5, 6, 0.32) 82%,
+          rgba(5, 5, 6, 0.5) 100%
         ),
         linear-gradient(
           90deg,
@@ -1371,7 +1371,7 @@
           rgba(70, 154, 255, 0.1) 82%,
           rgba(5, 5, 6, 0) 100%
         );
-      opacity: 0.82;
+      opacity: 0.74;
     }
 
     .hero-signal-field--agency .hero-signal-field__guides {
