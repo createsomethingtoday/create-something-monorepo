@@ -18,6 +18,7 @@ import {
 	requirePartnerAdmin,
 	tokenPreview,
 } from '$lib/server/partner-auth';
+import { resolveCanonicalAccessScopeForPartnerLane } from '$lib/server/mcp-access-assignments';
 
 interface MintLaneAccessRequestBody {
 	tool_mode?: 'read_only' | 'read_write';
@@ -113,8 +114,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		const metadata =
 			body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {};
 		const laneMetadata = parseJsonObject(lane.metadata_json);
-		const toolkitProfile = parseJsonArray(lane.toolkit_profile_json);
-		const allowedToolPrefixes = parseJsonStringArray(lane.allowed_tool_prefixes_json);
+		const scope = resolveCanonicalAccessScopeForPartnerLane(lane);
 		const observabilityBaseline = resolveObservabilityBaseline(laneMetadata);
 
 		const mintResponse = await postIdentityAdmin<AdminMintResponse>(env, '/v1/mcp/sessions/admin-mint', {
@@ -123,8 +123,8 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			bound_host: lane.host_key,
 			tool_mode: body?.tool_mode ?? 'read_write',
 			ttl_seconds: body?.ttl_seconds,
-			toolkit_profile: toolkitProfile,
-			allowed_tool_prefixes: allowedToolPrefixes,
+			toolkit_profile: scope.toolkitProfile,
+			allowed_tool_prefixes: scope.allowedToolPrefixes,
 			consent_record_id: consent.id,
 			consent_granted_at: consent.granted_at,
 			actor,

@@ -81,6 +81,29 @@ describe('AirtableClient scope and validation', () => {
 });
 
 describe('AirtableClient retry behavior', () => {
+  it('uses a worker-safe default fetch binding', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(function (this: typeof globalThis, input: RequestInfo | URL, init?: RequestInit) {
+        if (this !== globalThis) {
+          throw new TypeError('Illegal invocation: function called with incorrect `this` reference');
+        }
+        return jsonResponse({
+          records: [{ id: 'rec1', fields: { [FIELD_IDS.assets.name]: 'App One' } }],
+        });
+      }) as typeof fetch,
+    );
+
+    try {
+      const client = new AirtableClient({ apiKey: 'token' });
+      const health = await client.healthCheck();
+      expect(health.ok).toBe(true);
+      expect(globalThis.fetch).toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('retries retryable status codes with backoff and succeeds', async () => {
     const sleeps: number[] = [];
     let callCount = 0;

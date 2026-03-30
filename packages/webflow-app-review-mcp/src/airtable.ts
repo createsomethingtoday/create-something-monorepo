@@ -241,6 +241,8 @@ function defaultSleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const workerFetch: FetchFn = (input, init) => globalThis.fetch(input, init);
+
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
 }
@@ -510,7 +512,7 @@ export class AirtableClient {
   constructor(options: AirtableClientOptions) {
     this.apiKey = options.apiKey;
     this.baseId = options.baseId ?? DEFAULT_AIRTABLE_BASE_ID;
-    this.fetchFn = options.fetchFn ?? fetch;
+    this.fetchFn = options.fetchFn ?? workerFetch;
     this.sleepFn = options.sleepFn ?? defaultSleep;
     this.maxRetries = options.maxRetries ?? 3;
   }

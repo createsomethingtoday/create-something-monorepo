@@ -15,6 +15,7 @@ import {
 	requirePartnerAdmin,
 	tokenPreview,
 } from '$lib/server/partner-auth';
+import { resolveCanonicalAccessScopeForLegacyIdentity } from '$lib/server/mcp-access-assignments';
 import { reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
 
 interface IssueBearerTokenRequestBody {
@@ -89,10 +90,15 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		}
 
 		const body = (await request.json().catch(() => null)) as IssueBearerTokenRequestBody | null;
-		const toolkitProfile =
+		const requestedToolkitProfile =
 			Array.isArray(body?.toolkit_profile) && body?.toolkit_profile.length > 0
 				? body.toolkit_profile
 				: parseJsonArray(client.required_toolkits_json);
+		const scope = resolveCanonicalAccessScopeForLegacyIdentity(
+			client.owner_email,
+			client.identity_account_id,
+			requestedToolkitProfile,
+		);
 		const metadata =
 			body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {};
 
@@ -110,7 +116,8 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			auth_email: client.owner_email,
 			account_id: client.identity_account_id,
 			tenant_id: client.identity_tenant_id,
-			toolkit_profile: toolkitProfile,
+			toolkit_profile: scope.toolkitProfile,
+			allowed_tool_prefixes: scope.allowedToolPrefixes,
 			tool_mode: body?.tool_mode ?? 'read_write',
 			actor,
 			metadata: {

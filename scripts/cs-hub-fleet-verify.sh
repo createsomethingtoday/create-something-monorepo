@@ -55,9 +55,9 @@ join_by_comma() {
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
-DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
+DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},composio-toolkit-whatsapp,halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
-MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
+MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp,webflow-site-analyzer-mcp"
 VERIFY_IDENTITY_MODE="${HUB_VERIFY_IDENTITY_MODE:-compat}"
 VERIFY_IDENTITY_MODE="$(printf '%s' "$VERIFY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]')"
 
@@ -763,6 +763,11 @@ check_discovery_pack_reset() {
   fi
 
   if ! jq -e '.result != null and .error == null' "$body_file" >/dev/null 2>&1; then
+    if [[ "$worker" == "cs-mcp-hub-remote" ]] && grep -qi 'host_mismatch' "$body_file"; then
+      echo "discovery_pack=skipped reason=host_bound_fleet_verify_token"
+      rm -f "$body_file"
+      return
+    fi
     echo "discovery pack reset returned JSON-RPC error for ${worker}"
     cat "$body_file"
     failures=1

@@ -17,7 +17,7 @@ DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-18}"
 RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
 QUOTA_MAX_PROXY_CALLS_PER_PERIOD="${QUOTA_MAX_PROXY_CALLS_PER_PERIOD:-10000}"
-REVIEWER_IDENTITY_MODE="${REVIEWER_IDENTITY_MODE:-compat}"
+REVIEWER_IDENTITY_MODE="${REVIEWER_IDENTITY_MODE:-session_required}"
 REQUIRED_GLOBAL_SERVERS_SENTINEL="${REQUIRED_GLOBAL_SERVERS_SENTINEL:-__none__}"
 REQUIRED_DISCOVERY_SERVERS_SENTINEL="${REQUIRED_DISCOVERY_SERVERS_SENTINEL:-__none__}"
 SKIP_NORMALIZE="${SKIP_NORMALIZE:-0}"
@@ -32,11 +32,29 @@ REVIEWERS=(
   "wf-template-review-micah|acct_wf_micah"
 )
 
+INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/}"
+INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
+
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
     echo "missing required command: $1" >&2
     exit 1
   }
+}
+
+normalize_bool_or_fail() {
+  local raw="${1:-}"
+  local lowered
+  lowered="$(echo "$raw" | tr '[:upper:]' '[:lower:]')"
+  case "$lowered" in
+    true | false) echo "$lowered" ;;
+    *)
+      echo "invalid boolean: ${raw} (expected true|false)" >&2
+      exit 1
+      ;;
+  esac
 }
 
 resolve_ip_for_url() {
@@ -126,6 +144,55 @@ slug_matches_reviewer() {
   [[ "$slug" == "wf-template-review-${reviewer}" ]]
 }
 
+reviewer_secret_name_for_slug() {
+  case "$1" in
+    "wf-template-review-natalia") echo "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN" ;;
+    "wf-template-review-sudiksha") echo "CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_API_TOKEN" ;;
+    "wf-template-review-eric") echo "CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN" ;;
+    "wf-template-review-vicki") echo "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN" ;;
+    "wf-template-review-mariana") echo "CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN" ;;
+    "wf-template-review-micah") echo "CS_HUB_WF_TEMPLATE_REVIEW_MICAH_API_TOKEN" ;;
+    *)
+      echo "unknown reviewer slug: $1" >&2
+      exit 1
+      ;;
+  esac
+}
+
+resolve_reviewer_token() {
+  local slug="$1"
+  local secret_name
+  secret_name="$(reviewer_secret_name_for_slug "$slug")"
+
+  if [[ -n "${!secret_name:-}" ]]; then
+    echo "${!secret_name}"
+    return 0
+  fi
+
+  if command -v infisical >/dev/null 2>&1; then
+    local token
+    local -a cmd=(
+      infisical secrets get "$secret_name"
+      --plain
+      --silent
+      --env="$INFISICAL_ENV"
+      --path="$INFISICAL_PATH"
+      --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+    )
+    if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+      cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+    fi
+    token="$("${cmd[@]}" 2>/dev/null || true)"
+    if [[ -n "$token" ]]; then
+      echo "$token"
+      return 0
+    fi
+  fi
+
+  echo "missing reviewer token secret ${secret_name} for ${slug}" >&2
+  exit 1
+}
+
 deploy_one() {
   local slug="$1"
   local account_id="$2"
@@ -162,27 +229,28 @@ normalize_one() {
   local slug="$1"
   local worker
   local mcp_url
+  local hub_token
   local enabled_servers_json
   local discovery_active_servers_json
+  local -a auth_headers
   worker="$(worker_name_for_slug "$slug")"
   mcp_url="$(mcp_url_for_slug "$slug")"
+  hub_token="$(resolve_reviewer_token "$slug")"
   enabled_servers_json="$(json_array_from_csv "$ENABLED_SERVERS")"
   discovery_active_servers_json="$(json_array_from_csv "$DISCOVERY_ACTIVE_SERVERS")"
-
-  if [[ -z "${HUB_API_TOKEN:-}" ]]; then
-    echo "missing HUB_API_TOKEN; cannot normalize ${worker}" >&2
-    exit 1
-  fi
-  if [[ -z "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
-    echo "missing SESSION_TOKEN_FOR_NORMALIZE; cannot normalize ${worker} in session_required mode" >&2
-    exit 1
+  auth_headers=(-H "Authorization: Bearer ${hub_token}")
+  if [[ "$REVIEWER_IDENTITY_MODE" == "session_required" ]]; then
+    if [[ -z "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
+      echo "missing SESSION_TOKEN_FOR_NORMALIZE; cannot normalize ${worker} in session_required mode" >&2
+      exit 1
+    fi
+    auth_headers+=(-H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}")
   fi
 
   echo "===== NORMALIZE ${worker} ====="
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -199,8 +267,7 @@ normalize_one() {
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d "{
@@ -224,26 +291,27 @@ verify_one() {
   local worker
   local health_url
   local mcp_url
+  local hub_token
+  local -a auth_headers
   worker="$(worker_name_for_slug "$slug")"
   health_url="$(health_url_for_slug "$slug")"
   mcp_url="$(mcp_url_for_slug "$slug")"
-
-  if [[ -z "${HUB_API_TOKEN:-}" ]]; then
-    echo "missing HUB_API_TOKEN; cannot verify ${worker}" >&2
-    exit 1
+  hub_token="$(resolve_reviewer_token "$slug")"
+  auth_headers=(-H "Authorization: Bearer ${hub_token}")
+  if [[ "$REVIEWER_IDENTITY_MODE" == "session_required" ]]; then
+    if [[ -z "${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}" ]]; then
+      echo "missing SESSION_TOKEN_FOR_VERIFY or SESSION_TOKEN_FOR_NORMALIZE; cannot verify ${worker}" >&2
+      exit 1
+    fi
+    local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
+    auth_headers+=(-H "X-MCP-Session-Token: ${session_token}")
   fi
-  if [[ -z "${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}" ]]; then
-    echo "missing SESSION_TOKEN_FOR_VERIFY or SESSION_TOKEN_FOR_NORMALIZE; cannot verify ${worker}" >&2
-    exit 1
-  fi
-  local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
 
   echo "===== VERIFY ${worker} ====="
   curl_with_url "$health_url" -sS | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -257,8 +325,7 @@ verify_one() {
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -278,6 +345,7 @@ verify_one() {
 require_cmd pnpm
 require_cmd jq
 require_cmd curl
+INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
 
 case "$ACTION" in
   deploy|normalize|verify|all)

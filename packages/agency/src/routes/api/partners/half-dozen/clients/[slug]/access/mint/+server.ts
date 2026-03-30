@@ -16,6 +16,7 @@ import {
 	requirePartnerAdmin,
 	tokenPreview,
 } from '$lib/server/partner-auth';
+import { resolveCanonicalAccessScopeForLegacyIdentity } from '$lib/server/mcp-access-assignments';
 
 interface MintAccessRequestBody {
 	host?: string;
@@ -95,15 +96,21 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 
 		const body = await request.json().catch(() => null) as MintAccessRequestBody | null;
 		const requiredToolkits = parseJsonArray(client.required_toolkits_json);
-		const toolkitProfile =
+		const requestedToolkitProfile =
 			body?.toolkit_profile !== undefined ? parseToolkitList(body.toolkit_profile) : requiredToolkits;
+		const scope = resolveCanonicalAccessScopeForLegacyIdentity(
+			client.owner_email,
+			client.identity_account_id,
+			requestedToolkitProfile,
+		);
 
 		const mintResponse = await postIdentityAdmin<AdminMintResponse>(env, '/v1/mcp/sessions/admin-mint', {
 			account_id: client.identity_account_id,
 			host: body?.host ?? `partner_${slug}`,
 			tool_mode: body?.tool_mode ?? 'read_write',
 			ttl_seconds: body?.ttl_seconds,
-			toolkit_profile: toolkitProfile,
+			toolkit_profile: scope.toolkitProfile,
+			allowed_tool_prefixes: scope.allowedToolPrefixes,
 			consent_record_id: consent.id,
 			consent_granted_at: consent.granted_at,
 			actor,

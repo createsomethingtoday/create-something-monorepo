@@ -6,6 +6,7 @@ import {
 	parseJsonArray,
 	parseJsonObject,
 	parseJsonStringArray,
+	resolveAllowedToolPrefixes,
 	type PartnerAuthAccessLaneAssignmentRow,
 } from '$lib/server/partner-auth';
 
@@ -41,6 +42,17 @@ type LaneConfig = {
 	bridgeSubdomain: string;
 	bridgeUsername: string;
 	defaultToolkitProfile: string[];
+	extraAllowedToolPrefixes?: string[];
+};
+
+export type PartnerLaneAssignmentLike = Pick<
+	PartnerAuthAccessLaneAssignmentRow,
+	'slug' | 'host_key' | 'metadata_json' | 'toolkit_profile_json' | 'allowed_tool_prefixes_json'
+>;
+
+export type EffectiveLaneAccessScope = {
+	toolkitProfile: string[];
+	allowedToolPrefixes: string[];
 };
 
 type BoundClientRow = {
@@ -62,7 +74,20 @@ const LEGACY_SHARED_AUTH_TOOLKITS = [
 	'linkedin',
 	'notion',
 ];
+const LEGACY_DANNY_TOOLKITS = [...LEGACY_SHARED_AUTH_TOOLKITS, 'whatsapp'];
+const LEGACY_MJ_TOOLKITS = [...LEGACY_SHARED_AUTH_TOOLKITS, 'airtable', 'exa'];
 const LEGACY_WEBFLOW_REVIEWER_TOOLKITS: string[] = [];
+const LEGACY_DANNY_EXTRA_ALLOWED_TOOL_PREFIXES = [
+	'halfdozen-dm-mcp__',
+	'halfdozen-operator-notion-mcp__',
+];
+const LEGACY_MJ_EXTRA_ALLOWED_TOOL_PREFIXES = [
+	'loom-mcp__',
+	'meetings__',
+	'webflow-site-analyzer-mcp__',
+	'webflow-template-review-mcp__',
+];
+const LEGACY_WEBFLOW_REVIEWER_ALLOWED_TOOL_PREFIXES = ['webflow-template-review-mcp__'];
 
 const LANE_CONFIGS: Record<string, LaneConfig> = {
 	mj: {
@@ -70,7 +95,8 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		hubSubdomain: 'mj',
 		bridgeSubdomain: 'mj-notion',
 		bridgeUsername: 'acct_mj',
-		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
+		defaultToolkitProfile: LEGACY_MJ_TOOLKITS,
+		extraAllowedToolPrefixes: LEGACY_MJ_EXTRA_ALLOWED_TOOL_PREFIXES,
 	},
 	lainy: {
 		displayName: 'Lainy',
@@ -105,14 +131,16 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		hubSubdomain: 'danny',
 		bridgeSubdomain: 'danny-notion',
 		bridgeUsername: 'acct_danny',
-		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
+		defaultToolkitProfile: LEGACY_DANNY_TOOLKITS,
+		extraAllowedToolPrefixes: LEGACY_DANNY_EXTRA_ALLOWED_TOOL_PREFIXES,
 	},
 	dm: {
 		displayName: 'Danny',
 		hubSubdomain: 'danny',
 		bridgeSubdomain: 'danny-notion',
 		bridgeUsername: 'acct_danny',
-		defaultToolkitProfile: LEGACY_SHARED_AUTH_TOOLKITS,
+		defaultToolkitProfile: LEGACY_DANNY_TOOLKITS,
+		extraAllowedToolPrefixes: LEGACY_DANNY_EXTRA_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_natalia: {
 		displayName: 'Natalia Ledford',
@@ -120,6 +148,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-natalia',
 		bridgeUsername: 'acct_wf_natalia',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		extraAllowedToolPrefixes: LEGACY_WEBFLOW_REVIEWER_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_sudiksha: {
 		displayName: 'Sudiksha Khanduja',
@@ -127,6 +156,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-sudiksha',
 		bridgeUsername: 'acct_wf_sudiksha',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		extraAllowedToolPrefixes: LEGACY_WEBFLOW_REVIEWER_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_eric: {
 		displayName: 'Eric Unger',
@@ -134,6 +164,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-eric',
 		bridgeUsername: 'acct_wf_eric',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		extraAllowedToolPrefixes: LEGACY_WEBFLOW_REVIEWER_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_vicki: {
 		displayName: 'Vicki Chen',
@@ -141,6 +172,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-vicki',
 		bridgeUsername: 'acct_wf_vicki',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		extraAllowedToolPrefixes: LEGACY_WEBFLOW_REVIEWER_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_mariana: {
 		displayName: 'Mariana Segura',
@@ -148,6 +180,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-mariana',
 		bridgeUsername: 'acct_wf_mariana',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		extraAllowedToolPrefixes: LEGACY_WEBFLOW_REVIEWER_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_micah: {
 		displayName: 'Micah Johnson',
@@ -155,6 +188,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-micah',
 		bridgeUsername: 'acct_wf_micah',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		extraAllowedToolPrefixes: LEGACY_WEBFLOW_REVIEWER_ALLOWED_TOOL_PREFIXES,
 	},
 };
 
@@ -180,6 +214,76 @@ function resolveLegacyLaneKey(email: string, accountId: string | null): string |
 	}
 
 	return null;
+}
+
+function mergeToolkitProfiles(toolkitProfile: string[], laneConfig: LaneConfig | null): string[] {
+	if (!laneConfig) {
+		return [...new Set(toolkitProfile)];
+	}
+	return [...new Set([...toolkitProfile, ...laneConfig.defaultToolkitProfile])];
+}
+
+function resolveLaneConfigForAssignment(lane: Pick<PartnerAuthAccessLaneAssignmentRow, 'slug' | 'host_key' | 'metadata_json'>): LaneConfig | null {
+	const metadata = parseJsonObject(lane.metadata_json);
+	const candidates = [
+		lane.slug,
+		lane.host_key,
+		typeof metadata.hub_slug === 'string' ? metadata.hub_slug : null,
+		typeof metadata.lane_key === 'string' ? metadata.lane_key : null,
+	].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+	const normalizedCandidates = new Set(candidates.map((value) => normalizeKey(value)));
+	for (const [laneKey, config] of Object.entries(LANE_CONFIGS)) {
+		const configKeys = [
+			laneKey,
+			config.hubSubdomain,
+			config.bridgeSubdomain,
+			config.bridgeUsername,
+		].map((value) => normalizeKey(value));
+		if (configKeys.some((value) => normalizedCandidates.has(value))) {
+			return config;
+		}
+	}
+
+	return null;
+}
+
+function resolveEffectiveToolkitProfileForAssignment(lane: Pick<PartnerAuthAccessLaneAssignmentRow, 'slug' | 'host_key' | 'metadata_json' | 'toolkit_profile_json'>): string[] {
+	const storedToolkitProfile = parseJsonArray(lane.toolkit_profile_json);
+	const laneConfig = resolveLaneConfigForAssignment(lane);
+	return mergeToolkitProfiles(storedToolkitProfile, laneConfig);
+}
+
+export function resolveCanonicalAccessScopeForLegacyIdentity(
+	email: string | null | undefined,
+	accountId: string | null,
+	toolkitProfile: string[],
+): EffectiveLaneAccessScope {
+	const laneKey = resolveLegacyLaneKey(email ?? '', accountId);
+	const laneConfig = laneKey ? LANE_CONFIGS[laneKey] : null;
+	const effectiveToolkitProfile = mergeToolkitProfiles(toolkitProfile, laneConfig);
+	return {
+		toolkitProfile: effectiveToolkitProfile,
+		allowedToolPrefixes: resolveAllowedToolPrefixes(
+			effectiveToolkitProfile,
+			laneConfig?.extraAllowedToolPrefixes ?? [],
+		),
+	};
+}
+
+export function resolveCanonicalAccessScopeForPartnerLane(
+	lane: PartnerLaneAssignmentLike,
+): EffectiveLaneAccessScope {
+	const explicit = parseJsonStringArray(lane.allowed_tool_prefixes_json);
+	const toolkitProfile = resolveEffectiveToolkitProfileForAssignment(lane);
+	const laneConfig = resolveLaneConfigForAssignment(lane);
+	return {
+		toolkitProfile,
+		allowedToolPrefixes:
+			explicit.length > 0
+				? explicit
+				: resolveAllowedToolPrefixes(toolkitProfile, laneConfig?.extraAllowedToolPrefixes ?? []),
+	};
 }
 
 async function findClientBindingByWorkspaceAccountId(
@@ -225,7 +329,7 @@ async function buildLegacyAssignment(
 		tenantId: input.tenantId,
 		workspaceAccountId,
 		toolkitProfile,
-		allowedToolPrefixes: buildComposioAllowedToolPrefixes(toolkitProfile),
+		allowedToolPrefixes: resolveAllowedToolPrefixes(toolkitProfile, lane.extraAllowedToolPrefixes ?? []),
 	};
 }
 
@@ -234,6 +338,7 @@ function buildLaneAssignment(
 	input: AccessAssignmentInput,
 ): McpAccessAssignment {
 	const metadata = parseJsonObject(lane.metadata_json);
+	const scope = resolveCanonicalAccessScopeForPartnerLane(lane);
 	const notionBridgeUrl =
 		typeof metadata.notion_bridge_url === 'string' && metadata.notion_bridge_url.trim().length > 0
 			? metadata.notion_bridge_url.trim()
@@ -261,17 +366,15 @@ function buildLaneAssignment(
 		accountId: lane.identity_account_id ?? input.accountId,
 		tenantId: lane.identity_tenant_id ?? input.tenantId,
 		workspaceAccountId: lane.workspace_account_id ?? input.workspaceAccountId ?? input.accountId,
-		toolkitProfile: parseJsonArray(lane.toolkit_profile_json),
-		allowedToolPrefixes: normalizeAllowedToolPrefixesForAssignment(lane),
+		toolkitProfile: scope.toolkitProfile,
+		allowedToolPrefixes: scope.allowedToolPrefixes,
 	};
 }
 
 function normalizeAllowedToolPrefixesForAssignment(
-	lane: Pick<PartnerAuthAccessLaneAssignmentRow, 'toolkit_profile_json' | 'allowed_tool_prefixes_json'>,
+	lane: PartnerLaneAssignmentLike,
 ): string[] {
-	const explicit = parseJsonStringArray(lane.allowed_tool_prefixes_json);
-	if (explicit.length > 0) return explicit;
-	return buildComposioAllowedToolPrefixes(parseJsonArray(lane.toolkit_profile_json));
+	return resolveCanonicalAccessScopeForPartnerLane(lane).allowedToolPrefixes;
 }
 
 export async function listMcpAccessAssignments(

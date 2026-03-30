@@ -18,6 +18,7 @@ import {
 	requirePartnerAdmin,
 	tokenPreview,
 } from '$lib/server/partner-auth';
+import { resolveCanonicalAccessScopeForPartnerLane } from '$lib/server/mcp-access-assignments';
 import { reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
 
 interface IssueLaneBearerTokenRequestBody {
@@ -112,8 +113,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		const metadata =
 			body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {};
 		const laneMetadata = parseJsonObject(lane.metadata_json);
-		const toolkitProfile = parseJsonArray(lane.toolkit_profile_json);
-		const allowedToolPrefixes = parseJsonStringArray(lane.allowed_tool_prefixes_json);
+		const scope = resolveCanonicalAccessScopeForPartnerLane(lane);
 		const authEmail = lane.owner_email ?? client.owner_email ?? null;
 		const observabilityBaseline = resolveObservabilityBaseline(laneMetadata);
 
@@ -139,8 +139,8 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			auth_email: authEmail,
 			account_id: client.identity_account_id,
 			tenant_id: client.identity_tenant_id,
-			toolkit_profile: toolkitProfile,
-			allowed_tool_prefixes: allowedToolPrefixes,
+			toolkit_profile: scope.toolkitProfile,
+			allowed_tool_prefixes: scope.allowedToolPrefixes,
 			bound_host: lane.host_key,
 			tool_mode: body?.tool_mode ?? 'read_write',
 			actor,

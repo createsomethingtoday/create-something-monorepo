@@ -37,12 +37,13 @@
       "maxProxyTools": null
     },
     "danny-shared-auth-plus-dm-and-operator-notion": {
-      "description": "Danny discovery pack: shared auth core plus Half Dozen DM and operator Notion services.",
+      "description": "Danny discovery pack: shared auth core plus WhatsApp, Half Dozen DM, and operator Notion services.",
       "mode": "compact",
       "activeServers": [
         "halfdozen-operator-notion-mcp",
         "composio-toolkit-notion",
         "halfdozen-dm-mcp",
+        "composio-toolkit-whatsapp",
         "composio-toolkit-dropbox",
         "composio-toolkit-gmail",
         "composio-toolkit-googledrive",
@@ -66,7 +67,7 @@
       "maxProxyTools": null
     },
     "mj-shared-auth-plus-ops-search-meetings-and-review": {
-      "description": "MJ discovery pack: full ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review.",
+      "description": "MJ discovery pack: full ops lane with shared auth core, Airtable, Exa, Loom, Meetings, Webflow template review, and Webflow site analyzer.",
       "mode": "full",
       "activeServers": [
         "composio-toolkit-airtable",
@@ -83,7 +84,8 @@
         "composio-toolkit-exa",
         "loom-mcp",
         "meetings",
-        "webflow-template-review-mcp"
+        "webflow-template-review-mcp",
+        "webflow-site-analyzer-mcp"
       ],
       "maxProxyTools": null
     },
