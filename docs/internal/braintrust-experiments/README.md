@@ -36,8 +36,15 @@ Sample size: `1000` rows
 | EXP-04 | `EXP-04-control-plane-latency-dashboard.md` | `refresh_p95_ms`, `update_state_p95_ms` | `<= 8,000`, `<= 15,000` for 7 days |
 | EXP-05 | `EXP-05-arg-auto-repair-dashboard.md` | `repair_success_rate` | `>= 0.90` over trailing 50 repairs |
 
+## Cross-Cutting Promotion Experiment
+
+This experiment does not change the Mar 2026 stabilization ranking above. It defines the promotion scorecard needed to compare future MCP or harness candidates without weakening governance.
+
+| Experiment | Spec | Primary Success Metric | Target |
+|---|---|---|---|
+| EXP-06 | `EXP-06-governed-promotion-scorecard.md` | `heldout_primary_metric_delta`, `governed_trace_completeness_rate` | `> 0`, `1.00` |
+
 ## Evidence Assets
 
 - Snapshot dashboard (HTML): `docs/BRAINTRUST_CREATE_SOMETHING_TRACE_DASHBOARD_2026-03-04.html`
 - Snapshot dashboard (PNG): `docs/BRAINTRUST_CREATE_SOMETHING_TRACE_DASHBOARD_2026-03-04.png`
-

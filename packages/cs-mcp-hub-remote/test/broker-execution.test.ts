@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { executeProxyRoute } from '../index.ts';
+import { buildHubTelemetryMetadata, executeProxyRoute, extractInvocationTrace } from '../index.ts';
 
 const disabledRateLimitPolicy = {
   enabled: false,
@@ -23,6 +23,114 @@ const trace = {
   correlationId: 'corr_1',
   transportRequestId: 'req_1',
 };
+
+test('extractInvocationTrace reads experiment context from headers, meta, and args', () => {
+  const trace = extractInvocationTrace(
+    {
+      id: 'request_1',
+      params: {
+        _meta: {
+          candidate_id: 'cand_request',
+          phase: 'pilot',
+          'io.modelcontextprotocol/related-task': {
+            taskId: 'corr_related_task',
+          },
+        },
+      },
+    },
+    {
+      requestId: 'transport_1',
+      requestInfo: {
+        headers: {
+          'x-request-id': 'req_header',
+          'x-experiment-id': 'exp_header',
+          'x-cohort': 'holdout',
+        },
+      },
+      _meta: {
+        baselineId: 'base_extra',
+      },
+    },
+    {
+      candidateId: 'cand_args',
+      phase: 'candidate',
+    },
+  );
+
+  assert.deepEqual(trace, {
+    requestId: 'req_header',
+    correlationId: 'corr_related_task',
+    transportRequestId: 'transport_1',
+    experimentId: 'exp_header',
+    candidateId: 'cand_request',
+    baselineId: 'base_extra',
+    cohort: 'holdout',
+    phase: 'pilot',
+  });
+});
+
+test('buildHubTelemetryMetadata emits canonical governance and experiment fields', () => {
+  const metadata = buildHubTelemetryMetadata({
+    accountId: 'acct_1',
+    trace: {
+      requestId: 'req_1',
+      correlationId: 'corr_1',
+      transportRequestId: 'transport_1',
+      experimentId: 'exp_1',
+      candidateId: 'cand_1',
+      baselineId: 'base_1',
+      cohort: 'holdout',
+      phase: 'pilot',
+    },
+    metadata: {
+      tenantId: 'tenant_1',
+      user_id: 'user_1',
+      sessionId: 'session_1',
+      policyId: 'policy.hub-route-authorization.v1',
+      routeClassification: 'write',
+      authzDecision: 'require_human_review',
+      laneSlug: 'exp-06',
+      boundHost: 'acme',
+      entrypoint: 'hub_execute_proxy_tool',
+      custom: 'keep-me',
+    },
+  });
+
+  assert.equal(metadata.account_id, 'acct_1');
+  assert.equal(metadata.accountId, 'acct_1');
+  assert.equal(metadata.tenant_id, 'tenant_1');
+  assert.equal(metadata.tenantId, 'tenant_1');
+  assert.equal(metadata.user_id, 'user_1');
+  assert.equal(metadata.userId, 'user_1');
+  assert.equal(metadata.session_id, 'session_1');
+  assert.equal(metadata.sessionId, 'session_1');
+  assert.equal(metadata.correlation_id, 'corr_1');
+  assert.equal(metadata.correlationId, 'corr_1');
+  assert.equal(metadata.request_id, 'req_1');
+  assert.equal(metadata.requestId, 'req_1');
+  assert.equal(metadata.transport_request_id, 'transport_1');
+  assert.equal(metadata.transportRequestId, 'transport_1');
+  assert.equal(metadata.policy_id, 'policy.hub-route-authorization.v1');
+  assert.equal(metadata.policyId, 'policy.hub-route-authorization.v1');
+  assert.equal(metadata.route_classification, 'write');
+  assert.equal(metadata.routeClassification, 'write');
+  assert.equal(metadata.authz_decision, 'review');
+  assert.equal(metadata.authzDecision, 'review');
+  assert.equal(metadata.lane_slug, 'exp-06');
+  assert.equal(metadata.laneSlug, 'exp-06');
+  assert.equal(metadata.bound_host, 'acme');
+  assert.equal(metadata.boundHost, 'acme');
+  assert.equal(metadata.entrypoint, 'hub_execute_proxy_tool');
+  assert.equal(metadata.experiment_id, 'exp_1');
+  assert.equal(metadata.experimentId, 'exp_1');
+  assert.equal(metadata.candidate_id, 'cand_1');
+  assert.equal(metadata.candidateId, 'cand_1');
+  assert.equal(metadata.baseline_id, 'base_1');
+  assert.equal(metadata.baselineId, 'base_1');
+  assert.equal(metadata.cohort, 'holdout');
+  assert.equal(metadata.phase, 'pilot');
+  assert.equal(metadata.custom, 'keep-me');
+});
 
 test('executeProxyRoute executes visible route and returns downstream payload', async () => {
   let callCount = 0;

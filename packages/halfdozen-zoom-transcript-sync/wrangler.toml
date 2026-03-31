@@ -28,10 +28,18 @@ crons = ["0 * * * *"]
 
 [vars]
 NOTION_DATABASE_ID = "27a01918-7ac5-80b7-97fe-c563c98afbbc"
-NOTION_WRITE_MODE = "api"
-# Optional Hub-backed fallback:
+# NOTION_WRITE_MODE is intentionally unset here.
+# The worker infers `hub` when NOTION_HUB_URL + NOTION_HUB_API_TOKEN + NOTION_HUB_PROXY_TOOL are present.
+# Set NOTION_WRITE_MODE explicitly only when you need to force `api` or `hub`.
+# Optional Hub-backed routing:
 # NOTION_HUB_URL = "https://danny.mcp.createsomething.agency/mcp"
 # NOTION_HUB_PROXY_TOOL = "halfdozen-operator-notion-mcp__halfdozen_notion"
+# Optional experiment metadata for governed hub traces:
+# NOTION_HUB_EXPERIMENT_ID = "halfdozen-zoom-transcript-sync"
+# NOTION_HUB_CANDIDATE_ID = "production"
+# NOTION_HUB_BASELINE_ID = "candidate-baseline"
+# NOTION_HUB_COHORT = "scheduled"
+# NOTION_HUB_PHASE = "production"
 NOTION_DEFAULT_STATUS = "Active"
 NOTION_DEFAULT_SOURCE = "Zoom"
 NOTION_DEFAULT_TYPE = "Meeting"
@@ -53,5 +61,12 @@ ZOOM_PAGE_SIZE = "100"
 # NOTION_HUB_URL
 # NOTION_HUB_API_TOKEN
 # NOTION_HUB_PROXY_TOOL
+# Optional trace metadata synced as secrets or vars:
+# NOTION_WRITE_MODE
+# NOTION_HUB_EXPERIMENT_ID
+# NOTION_HUB_CANDIDATE_ID
+# NOTION_HUB_BASELINE_ID
+# NOTION_HUB_COHORT
+# NOTION_HUB_PHASE
 # Optional governance metadata set as a secret if needed:
 # NOTION_RUNTIME_CONNECTION_REF

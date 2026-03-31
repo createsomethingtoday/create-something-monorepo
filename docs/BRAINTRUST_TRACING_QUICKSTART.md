@@ -4,6 +4,8 @@ This repo now includes a small smoke script and a thin wrapper module to help yo
 
 Use this as operator-facing observability amplification for LLM spans, evals, and smoke runs. Do not treat Braintrust auto-instrumentation as the authoritative policy trace for governed MCP execution.
 
+If you are deciding where Braintrust fits relative to house telemetry, Langfuse, Pi, Emdash, and meta-harness style optimization, read [CREATE_SOMETHING_OBSERVABILITY_AND_EXPERIMENTATION_ARCHITECTURE.md](./CREATE_SOMETHING_OBSERVABILITY_AND_EXPERIMENTATION_ARCHITECTURE.md) first. This quickstart is about implementation mechanics, not the system boundary.
+
 ## 1) Set Environment Variables
 
 Required:
@@ -154,9 +156,23 @@ If you use Braintrust in an MCP or Hub path that is subject to policy enforcemen
 
 When using `@create-something/observability/mcp`, prefer `getTraceContext(...)` so those fields are attached consistently without duplicating noisy tags.
 
+The same wrapper path now supports candidate-comparison metadata for direct querying in Braintrust or downstream dashboards:
+
+- `experiment_id`
+- `candidate_id`
+- `baseline_id`
+- `cohort`
+- `phase`
+
 ## Production Caution
 
 Braintrust can log full prompts, inputs, and outputs. For production named lanes, review payload handling before enabling broad auto-instrumentation and avoid treating raw prompt capture as a default-safe setting.
+
+## Related Docs
+
+- [CREATE_SOMETHING_OBSERVABILITY_AND_EXPERIMENTATION_ARCHITECTURE.md](./CREATE_SOMETHING_OBSERVABILITY_AND_EXPERIMENTATION_ARCHITECTURE.md)
+- [guides/OBSERVABILITY_SETUP.md](./guides/OBSERVABILITY_SETUP.md)
+- [docs/internal/braintrust-experiments/README.md](./internal/braintrust-experiments/README.md)
 
 ## Runbook (Production Checklist)
 

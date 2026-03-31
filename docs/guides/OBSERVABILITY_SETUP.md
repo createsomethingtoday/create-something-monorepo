@@ -2,6 +2,8 @@
 
 This guide covers the observability stack for CREATE SOMETHING agents, combining Cloudflare Workers Automatic Tracing with Langfuse for governed MCP execution visibility and Braintrust for LLM and eval trace amplification.
 
+For the operating boundary, promotion rules, and experimentation model that sit above this setup guide, pair it with [CREATE_SOMETHING_OBSERVABILITY_AND_EXPERIMENTATION_ARCHITECTURE.md](../CREATE_SOMETHING_OBSERVABILITY_AND_EXPERIMENTATION_ARCHITECTURE.md).
+
 ## Architecture
 
 ```text
@@ -235,6 +237,14 @@ Required fields for governed execution traces:
 - policy or review outcome when applicable
 - lane slug or bound host for named-lane traffic
 
+Supported experiment fields for candidate runs:
+
+- `experiment_id`
+- `candidate_id`
+- `baseline_id`
+- `cohort`
+- `phase`
+
 Recommended wrapper usage:
 
 ```typescript
@@ -248,6 +258,11 @@ const { wrapToolHandler } = createInstrumentedMcpServer({
     policyId: 'policy.hub-route-authorization.v1',
     authzDecision: String(args.authzDecision ?? ''),
     laneSlug: String(args.laneSlug ?? ''),
+    experimentId: String(args.experimentId ?? ''),
+    candidateId: String(args.candidateId ?? ''),
+    baselineId: String(args.baselineId ?? ''),
+    cohort: String(args.cohort ?? ''),
+    phase: String(args.phase ?? ''),
   }),
 });
 ```
@@ -324,6 +339,7 @@ Braintrust is not the source of truth for policy enforcement. Shared telemetry p
 
 ## Related Documentation
 
+- [CREATE_SOMETHING_OBSERVABILITY_AND_EXPERIMENTATION_ARCHITECTURE.md](../CREATE_SOMETHING_OBSERVABILITY_AND_EXPERIMENTATION_ARCHITECTURE.md) - operating boundary and promotion model
 - [MCP First Thesis](../MCP_FIRST_THESIS.md) - Strategic context
 - [docs/BRAINTRUST_TRACING_QUICKSTART.md](../BRAINTRUST_TRACING_QUICKSTART.md) - Braintrust quickstart
 - [docs/HUB_EXECUTION_GOVERNANCE_PLAN.md](../HUB_EXECUTION_GOVERNANCE_PLAN.md) - Governance execution order

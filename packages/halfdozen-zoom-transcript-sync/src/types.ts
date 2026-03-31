@@ -19,6 +19,11 @@ export interface Env {
   NOTION_HUB_URL?: string;
   NOTION_HUB_API_TOKEN?: string;
   NOTION_HUB_PROXY_TOOL?: string;
+  NOTION_HUB_EXPERIMENT_ID?: string;
+  NOTION_HUB_CANDIDATE_ID?: string;
+  NOTION_HUB_BASELINE_ID?: string;
+  NOTION_HUB_COHORT?: string;
+  NOTION_HUB_PHASE?: string;
   NOTION_RUNTIME_CONNECTION_REF?: string;
   NOTION_DEFAULT_STATUS?: string;
   NOTION_DEFAULT_SOURCE?: string;

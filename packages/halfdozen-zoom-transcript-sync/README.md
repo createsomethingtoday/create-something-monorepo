@@ -23,6 +23,63 @@ Notion writes support two transport modes:
 
 `hub` is the practical default for current Half Dozen operator-managed access. `NOTION_RUNTIME_CONNECTION_REF` can be carried as an approved runtime handle for rollout governance, but this package does not yet resolve raw `ntn_...` refs directly.
 
+`NOTION_WRITE_MODE` is intentionally optional. If it is unset, runtime mode is inferred in this order:
+
+- `hub` when `NOTION_HUB_URL`, `NOTION_HUB_API_TOKEN`, and `NOTION_HUB_PROXY_TOOL` are all configured
+- `api` when `NOTION_API_KEY` is configured
+
+Set `NOTION_WRITE_MODE=api` or `NOTION_WRITE_MODE=hub` only when you need to force a rollout posture.
+
+When `hub` mode is active, the worker now emits deterministic hub trace headers per transcript sync:
+
+- `X-Correlation-ID` ties all Notion writes for one transcript job together
+- `X-Request-ID` is unique per hub request and action
+- `X-Experiment-ID`, `X-Candidate-ID`, `X-Baseline-ID`, `X-Experiment-Cohort`, and `X-Experiment-Phase` can be populated from:
+  - `NOTION_HUB_EXPERIMENT_ID`
+  - `NOTION_HUB_CANDIDATE_ID`
+  - `NOTION_HUB_BASELINE_ID`
+  - `NOTION_HUB_COHORT`
+  - `NOTION_HUB_PHASE`
+
+Defaults are opinionated for live traces:
+
+- `experiment_id`: `halfdozen-zoom-transcript-sync`
+- `candidate_id`: `production`
+- `cohort`: `scheduled`, `replay`, or `manual`, derived from the sync trigger
+- `phase`: `production`
+
+## Deploying with Infisical
+
+The worker now has a dedicated vault sync path:
+
+```bash
+INFISICAL_ENV=prod pnpm halfdozen:zoom-transcript:vault:sync
+```
+
+or from the package directory:
+
+```bash
+pnpm vault:sync
+```
+
+The sync script can pull from Infisical or the current shell environment:
+
+- `VAULT_PROVIDER=infisical|env` defaults to `infisical`
+- `LOAD_FROM_VAULT=true|false` defaults to `true`
+- `INFISICAL_PROJECT_ID` is optional
+- `INFISICAL_ENV` defaults to `prod`
+- `INFISICAL_PATH` defaults to `/`
+- `DRY_RUN=true` shows the `wrangler secret put` commands without changing Cloudflare
+
+It validates and syncs:
+
+- `SYNC_API_KEY`
+- one supported Zoom credential set
+- direct Notion credentials for `api` mode, or hub credentials for `hub` mode
+- optional hub experiment fields and `NOTION_RUNTIME_CONNECTION_REF`
+
+The sync script treats hub routing fields like `NOTION_HUB_URL` and `NOTION_HUB_PROXY_TOOL` as runtime secrets so the worker can switch into hub mode without requiring per-environment `wrangler.toml` edits.
+
 ## Zoom scopes
 
 For the default Server-to-Server account discovery path, the Zoom app needs these scopes:

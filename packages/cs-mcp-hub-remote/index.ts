@@ -267,10 +267,15 @@ type HubResourceDefinition = {
   mimeType: string;
 };
 
-type InvocationTrace = {
+export type InvocationTrace = {
   requestId: string;
   correlationId: string;
   transportRequestId: string;
+  experimentId?: string;
+  candidateId?: string;
+  baselineId?: string;
+  cohort?: string;
+  phase?: string;
 };
 
 type IdentitySessionResolveResponse = {
@@ -1534,7 +1539,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const toolName = request.params.name;
     const args = normalizeArgs(request.params.arguments);
-    const trace = extractInvocationTrace(request, extra);
+    const trace = extractInvocationTrace(request, extra, args);
     const accountContext = await resolveAccountContext(extra, env);
     const accountId = accountContext.accountId;
     const startedAt = Date.now();
@@ -3056,6 +3061,13 @@ export async function executeProxyRoute(params: {
     recordHubInvocation(env, log, executionCtx);
   const recordHubRouteInvocationWithCtx = (log: HubRouteLog): Promise<void> =>
     recordHubRouteInvocation(env, log, executionCtx);
+  const invocationAction = extractRouteInvocationAction(executionArgs);
+  const routeDefinition = definition ?? {
+    name: route.proxyToolName,
+    description: '',
+    inputSchema: { type: 'object', properties: {} },
+  };
+  const routeClassification = classifyHubRoute(route, routeDefinition, { invocationAction });
   const identityTraceMetadata = {
     tenantId: accountContext.tenantId,
     userId: accountContext.userId,
@@ -3065,7 +3077,11 @@ export async function executeProxyRoute(params: {
     boundHost: accountContext.boundHost,
     resourceHost: accountContext.resourceHost,
   };
-  const invocationAction = extractRouteInvocationAction(executionArgs);
+  const governanceTraceMetadata = {
+    ...identityTraceMetadata,
+    routeClassification: routeClassification.accessType,
+    oauthRequired: routeClassification.oauthRequired,
+  };
 
   if (!isRouteAllowedForSession(route, accountContext.allowedToolPrefixes)) {
     const message =
@@ -3087,7 +3103,8 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
-          ...identityTraceMetadata,
+          authzDecision: 'block',
+          ...governanceTraceMetadata,
           allowedToolPrefixes: accountContext.allowedToolPrefixes ?? null,
         },
       }),
@@ -3103,18 +3120,13 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           blockedByPolicy: 'session_scope',
           entrypoint,
-          ...identityTraceMetadata,
+          authzDecision: 'block',
+          ...governanceTraceMetadata,
         },
       }),
     ]);
     return toErrorResult(message);
   }
-
-  const routeDefinition = definition ?? {
-    name: route.proxyToolName,
-    description: '',
-    inputSchema: { type: 'object', properties: {} },
-  };
   const authzEvaluation = await evaluateHubRouteAuthorization({
     env,
     accountContext,
@@ -3126,6 +3138,13 @@ export async function executeProxyRoute(params: {
     entrypoint,
     invocationAction,
   });
+  const authzTraceMetadata = {
+    policyId: authzEvaluation.final.policyId,
+    policyHash: authzEvaluation.final.policyHash,
+    evaluationPath: authzEvaluation.final.evaluationPath,
+    matchedRuleIds: authzEvaluation.final.matchedRuleIds,
+    authzDecision: normalizeHubAuthzDecision(authzEvaluation.final.decision),
+  };
   if (authzEvaluation.final.decision !== 'allow') {
     const durationMs = Date.now() - startedAt;
     const message = requiresHumanReview(authzEvaluation.final)
@@ -3148,13 +3167,10 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
-          policyId: authzEvaluation.final.policyId,
-          policyHash: authzEvaluation.final.policyHash,
-          evaluationPath: authzEvaluation.final.evaluationPath,
           fallbackReason: authzEvaluation.final.fallbackReason,
-          matchedRuleIds: authzEvaluation.final.matchedRuleIds,
           invocationAction,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
         },
       }),
       recordHubRouteInvocationWithCtx({
@@ -3169,9 +3185,9 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           blockedByPolicy: authzEvaluation.final.policyId,
           requiresHumanReview: requiresHumanReview(authzEvaluation.final),
-          evaluationPath: authzEvaluation.final.evaluationPath,
           invocationAction,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
         },
       }),
     ]);
@@ -3207,7 +3223,8 @@ export async function executeProxyRoute(params: {
           resetAt: rateLimitDecision.resetAt,
           maxCalls: rateLimitDecision.maxCalls,
           windowSeconds: rateLimitDecision.windowSeconds,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
         },
       }),
       recordHubRouteInvocationWithCtx({
@@ -3227,7 +3244,8 @@ export async function executeProxyRoute(params: {
           resetAt: rateLimitDecision.resetAt,
           maxCalls: rateLimitDecision.maxCalls,
           windowSeconds: rateLimitDecision.windowSeconds,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
         },
       }),
     ]);
@@ -3262,7 +3280,8 @@ export async function executeProxyRoute(params: {
           currentCount: quotaDecision.currentCount,
           maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
           period: quotaDecision.period,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
         },
       }),
       recordHubRouteInvocationWithCtx({
@@ -3282,7 +3301,8 @@ export async function executeProxyRoute(params: {
           currentCount: quotaDecision.currentCount,
           maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
           period: quotaDecision.period,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
         },
       }),
     ]);
@@ -3310,7 +3330,8 @@ export async function executeProxyRoute(params: {
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
           invocationAction,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
           rateLimit: {
             scope: rateLimitDecision.scope,
             remaining: rateLimitDecision.remaining,
@@ -3346,7 +3367,8 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           entrypoint,
           invocationAction,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
           downstreamFailure: proxiedSuccess
             ? null
             : {
@@ -3391,7 +3413,8 @@ export async function executeProxyRoute(params: {
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
           invocationAction,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
           downstreamFailure: {
             code: proxyFailure.code,
             missingScopes: proxyFailure.missingScopes,
@@ -3411,7 +3434,8 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           entrypoint,
           invocationAction,
-          ...identityTraceMetadata,
+          ...governanceTraceMetadata,
+          ...authzTraceMetadata,
           downstreamFailure: {
             code: proxyFailure.code,
             missingScopes: proxyFailure.missingScopes,
@@ -4621,11 +4645,20 @@ function reserveProxyName(baseName: string, routes: Map<string, ProxyRoute>, war
   return candidate;
 }
 
-function extractInvocationTrace(request: unknown, extra: unknown): InvocationTrace {
+export function extractInvocationTrace(
+  request: unknown,
+  extra: unknown,
+  args?: Record<string, unknown>,
+): InvocationTrace {
   const requestRecord = asRecord(request);
+  const requestParams = asRecord(requestRecord?.params);
   const extraRecord = asRecord(extra);
+  const requestMeta = asRecord(requestParams?._meta);
   const meta = asRecord(extraRecord?._meta);
-  const relatedTask = asRecord(meta?.['io.modelcontextprotocol/related-task']);
+  const relatedTask = asRecord(
+    requestMeta?.['io.modelcontextprotocol/related-task'] ??
+      meta?.['io.modelcontextprotocol/related-task'],
+  );
 
   const headerRequestId = getHeaderValue(extraRecord?.requestInfo, 'x-request-id');
   const requestId =
@@ -4637,13 +4670,46 @@ function extractInvocationTrace(request: unknown, extra: unknown): InvocationTra
   const correlationId =
     getHeaderValue(extraRecord?.requestInfo, 'x-correlation-id') ??
     normalizeTraceValue(relatedTask?.taskId) ??
+    normalizeTraceValue(requestMeta?.progressToken) ??
     normalizeTraceValue(meta?.progressToken) ??
     requestId;
+  const experimentId =
+    getHeaderValue(extraRecord?.requestInfo, 'x-experiment-id') ??
+    readTraceContextValue(requestMeta, ['experimentId', 'experiment_id']) ??
+    readTraceContextValue(meta, ['experimentId', 'experiment_id']) ??
+    readTraceContextValue(args, ['experimentId', 'experiment_id']);
+  const candidateId =
+    getHeaderValue(extraRecord?.requestInfo, 'x-candidate-id') ??
+    readTraceContextValue(requestMeta, ['candidateId', 'candidate_id']) ??
+    readTraceContextValue(meta, ['candidateId', 'candidate_id']) ??
+    readTraceContextValue(args, ['candidateId', 'candidate_id']);
+  const baselineId =
+    getHeaderValue(extraRecord?.requestInfo, 'x-baseline-id') ??
+    readTraceContextValue(requestMeta, ['baselineId', 'baseline_id']) ??
+    readTraceContextValue(meta, ['baselineId', 'baseline_id']) ??
+    readTraceContextValue(args, ['baselineId', 'baseline_id']);
+  const cohort =
+    getHeaderValue(extraRecord?.requestInfo, 'x-experiment-cohort') ??
+    getHeaderValue(extraRecord?.requestInfo, 'x-cohort') ??
+    readTraceContextValue(requestMeta, ['cohort']) ??
+    readTraceContextValue(meta, ['cohort']) ??
+    readTraceContextValue(args, ['cohort']);
+  const phase =
+    getHeaderValue(extraRecord?.requestInfo, 'x-experiment-phase') ??
+    getHeaderValue(extraRecord?.requestInfo, 'x-phase') ??
+    readTraceContextValue(requestMeta, ['phase']) ??
+    readTraceContextValue(meta, ['phase']) ??
+    readTraceContextValue(args, ['phase']);
 
   return {
     requestId,
     correlationId,
     transportRequestId: normalizeTraceValue(extraRecord?.requestId) ?? requestId,
+    ...(experimentId ? { experimentId } : {}),
+    ...(candidateId ? { candidateId } : {}),
+    ...(baselineId ? { baselineId } : {}),
+    ...(cohort ? { cohort } : {}),
+    ...(phase ? { phase } : {}),
   };
 }
 
@@ -5187,8 +5253,94 @@ function buildHubBraintrustTags(
     typeof metadata?.entrypoint === 'string' && metadata.entrypoint.length > 0
       ? `entry:${metadata.entrypoint}`
       : null;
+  const routeClassification = readTraceContextValue(metadata, ['route_classification', 'routeClassification']);
+  const authzDecision = normalizeHubAuthzDecision(
+    readTraceContextValue(metadata, ['authz_decision', 'authzDecision']),
+  );
+  const laneSlug = readTraceContextValue(metadata, ['lane_slug', 'laneSlug']);
 
-  return [...baseTags, policy, type, entrypoint].filter((value): value is string => Boolean(value));
+  return [
+    ...baseTags,
+    policy,
+    type,
+    entrypoint,
+    routeClassification ? `route:${routeClassification}` : null,
+    authzDecision ? `authz:${authzDecision}` : null,
+    laneSlug ? `lane:${laneSlug}` : null,
+  ].filter((value): value is string => Boolean(value));
+}
+
+export function buildHubTelemetryMetadata(params: {
+  accountId: string;
+  trace: InvocationTrace;
+  metadata?: Record<string, unknown>;
+}): Record<string, unknown> {
+  const metadata = asRecord(params.metadata);
+  const normalized: Record<string, unknown> = metadata ? { ...metadata } : {};
+
+  const accountId =
+    normalizeTraceValue(params.accountId) ??
+    readTraceContextValue(metadata, ['accountId', 'account_id']) ??
+    'operator';
+  const tenantId = readTraceContextValue(metadata, ['tenantId', 'tenant_id']);
+  const userId = readTraceContextValue(metadata, ['userId', 'user_id']);
+  const sessionId = readTraceContextValue(metadata, ['sessionId', 'session_id']);
+  const policyId = readTraceContextValue(metadata, ['policyId', 'policy_id']);
+  const routeClassification = readTraceContextValue(metadata, ['routeClassification', 'route_classification']);
+  const authzDecision = normalizeHubAuthzDecision(
+    readTraceContextValue(metadata, ['authzDecision', 'authz_decision']),
+  );
+  const laneSlug = readTraceContextValue(metadata, ['laneSlug', 'lane_slug']);
+  const boundHost = readTraceContextValue(metadata, ['boundHost', 'bound_host']);
+  const entrypoint = readTraceContextValue(metadata, ['entrypoint']);
+  const experimentId =
+    params.trace.experimentId ??
+    readTraceContextValue(metadata, ['experimentId', 'experiment_id']);
+  const candidateId =
+    params.trace.candidateId ??
+    readTraceContextValue(metadata, ['candidateId', 'candidate_id']);
+  const baselineId =
+    params.trace.baselineId ??
+    readTraceContextValue(metadata, ['baselineId', 'baseline_id']);
+  const cohort = params.trace.cohort ?? readTraceContextValue(metadata, ['cohort']);
+  const phase = params.trace.phase ?? readTraceContextValue(metadata, ['phase']);
+
+  setTraceMetadataValue(normalized, 'account_id', accountId);
+  setTraceMetadataValue(normalized, 'tenant_id', tenantId);
+  setTraceMetadataValue(normalized, 'user_id', userId);
+  setTraceMetadataValue(normalized, 'session_id', sessionId);
+  setTraceMetadataValue(normalized, 'correlation_id', params.trace.correlationId);
+  setTraceMetadataValue(normalized, 'request_id', params.trace.requestId);
+  setTraceMetadataValue(normalized, 'transport_request_id', params.trace.transportRequestId);
+  setTraceMetadataValue(normalized, 'policy_id', policyId);
+  setTraceMetadataValue(normalized, 'route_classification', routeClassification);
+  setTraceMetadataValue(normalized, 'authz_decision', authzDecision);
+  setTraceMetadataValue(normalized, 'lane_slug', laneSlug);
+  setTraceMetadataValue(normalized, 'bound_host', boundHost);
+  setTraceMetadataValue(normalized, 'entrypoint', entrypoint);
+  setTraceMetadataValue(normalized, 'experiment_id', experimentId);
+  setTraceMetadataValue(normalized, 'candidate_id', candidateId);
+  setTraceMetadataValue(normalized, 'baseline_id', baselineId);
+  setTraceMetadataValue(normalized, 'cohort', cohort);
+  setTraceMetadataValue(normalized, 'phase', phase);
+
+  setTraceMetadataValue(normalized, 'accountId', accountId);
+  setTraceMetadataValue(normalized, 'tenantId', tenantId);
+  setTraceMetadataValue(normalized, 'userId', userId);
+  setTraceMetadataValue(normalized, 'sessionId', sessionId);
+  setTraceMetadataValue(normalized, 'correlationId', params.trace.correlationId);
+  setTraceMetadataValue(normalized, 'requestId', params.trace.requestId);
+  setTraceMetadataValue(normalized, 'transportRequestId', params.trace.transportRequestId);
+  setTraceMetadataValue(normalized, 'policyId', policyId);
+  setTraceMetadataValue(normalized, 'routeClassification', routeClassification);
+  setTraceMetadataValue(normalized, 'authzDecision', authzDecision);
+  setTraceMetadataValue(normalized, 'laneSlug', laneSlug);
+  setTraceMetadataValue(normalized, 'boundHost', boundHost);
+  setTraceMetadataValue(normalized, 'experimentId', experimentId);
+  setTraceMetadataValue(normalized, 'candidateId', candidateId);
+  setTraceMetadataValue(normalized, 'baselineId', baselineId);
+
+  return normalized;
 }
 
 async function recordHubInvocation(
@@ -5196,15 +5348,23 @@ async function recordHubInvocation(
   log: HubInvocationLog,
   executionCtx?: WaitUntilContext,
 ): Promise<void> {
-  enqueueWithWaitUntil(emitHubInvocationToBraintrust(env, log), executionCtx);
+  const normalizedLog: HubInvocationLog = {
+    ...log,
+    metadata: buildHubTelemetryMetadata({
+      accountId: log.accountId,
+      trace: log.trace,
+      metadata: log.metadata,
+    }),
+  };
+  enqueueWithWaitUntil(emitHubInvocationToBraintrust(env, normalizedLog), executionCtx);
 
   const db = env.TELEMETRY_DB;
   if (!db) return;
 
-  const accountId = (log.accountId || 'operator').slice(0, 256);
+  const accountId = (normalizedLog.accountId || 'operator').slice(0, 256);
   const period = getCurrentPeriod();
-  const errorMessage = log.errorMessage ? log.errorMessage.slice(0, 500) : null;
-  const metadataJson = safeJsonStringify(log.metadata);
+  const errorMessage = normalizedLog.errorMessage ? normalizedLog.errorMessage.slice(0, 500) : null;
+  const metadataJson = safeJsonStringify(normalizedLog.metadata);
 
   try {
     await db
@@ -5230,12 +5390,12 @@ async function recordHubInvocation(
       .bind(
         HUB_NAME,
         accountId,
-        log.toolName,
-        log.success ? 1 : 0,
-        Math.max(0, Math.floor(log.durationMs)),
+        normalizedLog.toolName,
+        normalizedLog.success ? 1 : 0,
+        Math.max(0, Math.floor(normalizedLog.durationMs)),
         errorMessage,
-        log.trace.correlationId,
-        log.trace.requestId,
+        normalizedLog.trace.correlationId,
+        normalizedLog.trace.requestId,
         metadataJson,
       )
       .run();
@@ -5261,12 +5421,12 @@ async function recordHubInvocation(
           .bind(
             HUB_NAME,
             accountId,
-            log.toolName,
-            log.success ? 1 : 0,
-            Math.max(0, Math.floor(log.durationMs)),
+            normalizedLog.toolName,
+            normalizedLog.success ? 1 : 0,
+            Math.max(0, Math.floor(normalizedLog.durationMs)),
             errorMessage,
-            log.trace.correlationId,
-            log.trace.requestId,
+            normalizedLog.trace.correlationId,
+            normalizedLog.trace.requestId,
           )
           .run();
         return;
@@ -5293,9 +5453,9 @@ async function recordHubInvocation(
       .bind(
         HUB_NAME,
         accountId,
-        log.toolName,
-        log.success ? 1 : 0,
-        Math.max(0, Math.floor(log.durationMs)),
+        normalizedLog.toolName,
+        normalizedLog.success ? 1 : 0,
+        Math.max(0, Math.floor(normalizedLog.durationMs)),
         errorMessage,
       )
       .run();
@@ -5350,7 +5510,15 @@ async function recordHubRouteInvocation(
   log: HubRouteLog,
   executionCtx?: WaitUntilContext,
 ): Promise<void> {
-  enqueueWithWaitUntil(emitHubRouteToBraintrust(env, log), executionCtx);
+  const normalizedLog: HubRouteLog = {
+    ...log,
+    metadata: buildHubTelemetryMetadata({
+      accountId: log.accountId,
+      trace: log.trace,
+      metadata: log.metadata,
+    }),
+  };
+  enqueueWithWaitUntil(emitHubRouteToBraintrust(env, normalizedLog), executionCtx);
 
   const db = env.TELEMETRY_DB;
   if (!db) return;
@@ -5380,15 +5548,15 @@ async function recordHubRouteInvocation(
       )
       .bind(
         HUB_NAME,
-        (log.accountId || 'operator').slice(0, 256),
-        log.downstreamServer,
-        log.downstreamTool,
-        log.success ? 1 : 0,
-        Math.max(0, Math.floor(log.durationMs)),
-        log.errorMessage ? log.errorMessage.slice(0, 500) : null,
-        log.trace.correlationId,
-        log.trace.requestId,
-        safeJsonStringify(log.metadata),
+        (normalizedLog.accountId || 'operator').slice(0, 256),
+        normalizedLog.downstreamServer,
+        normalizedLog.downstreamTool,
+        normalizedLog.success ? 1 : 0,
+        Math.max(0, Math.floor(normalizedLog.durationMs)),
+        normalizedLog.errorMessage ? normalizedLog.errorMessage.slice(0, 500) : null,
+        normalizedLog.trace.correlationId,
+        normalizedLog.trace.requestId,
+        safeJsonStringify(normalizedLog.metadata),
       )
       .run();
   } catch (error) {
@@ -5961,6 +6129,38 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value;
 }
 
+function readTraceContextValue(
+  record: Record<string, unknown> | null | undefined,
+  keys: string[],
+): string | null {
+  if (!record) return null;
+  for (const key of keys) {
+    const normalized = normalizeTraceValue(record[key]);
+    if (normalized) {
+      return normalized;
+    }
+  }
+  return null;
+}
+
+function setTraceMetadataValue(metadata: Record<string, unknown>, key: string, value: unknown): void {
+  if (typeof value === 'string') {
+    if (value.length > 0) {
+      metadata[key] = value;
+    }
+    return;
+  }
+  if (value !== undefined && value !== null) {
+    metadata[key] = value;
+  }
+}
+
+function normalizeHubAuthzDecision(value: unknown): string | null {
+  const decision = normalizeTraceValue(value);
+  if (!decision) return null;
+  return decision === 'require_human_review' ? 'review' : decision;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -5991,6 +6191,13 @@ function withCors(response: Response): Response {
       'X-Hub-Account-ID',
       'X-Correlation-ID',
       'X-Request-ID',
+      'X-Experiment-ID',
+      'X-Candidate-ID',
+      'X-Baseline-ID',
+      'X-Experiment-Cohort',
+      'X-Cohort',
+      'X-Experiment-Phase',
+      'X-Phase',
       'X-API-Key',
       'API-Key',
     ].join(', '),

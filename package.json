@@ -125,6 +125,7 @@
     "mcp:halfdozen-operator-notion:preflight": "bash scripts/halfdozen-operator-notion-preflight.sh",
     "mcp:halfdozen-operator-notion:test-contract": "pnpm --filter @create-something/halfdozen-operator-notion-mcp test:contract",
     "mcp:halfdozen-operator-notion:smoke": "bash scripts/halfdozen-operator-notion-hub-smoke.sh",
+    "halfdozen:zoom-transcript:vault:sync": "bash scripts/halfdozen-zoom-transcript-sync-vault-sync.sh",
     "mcp:registry:validate": "tsx scripts/mcp-registry.ts validate",
     "mcp:registry:generate": "tsx scripts/mcp-registry.ts generate",
     "mcp:registry:check": "tsx scripts/mcp-registry.ts check",

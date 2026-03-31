@@ -10,6 +10,11 @@ import type { AtlasMetadata } from './atlas.js';
 
 // Re-export Atlas types
 export * from './atlas.js';
+export type {
+  ExperimentPhase,
+  ExperimentTraceContext,
+  GovernanceTraceContext,
+} from './trace-context.js';
 
 // =============================================================================
 // Configuration

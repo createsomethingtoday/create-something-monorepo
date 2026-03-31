@@ -229,7 +229,17 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
 
   try {
     const canonicalPage = await getCanonicalMeetingPage(env.DB, payload.canonicalMeetingKey, payload.meetingDate);
-    const notionWrite = await syncTranscriptToNotion(env, payload, parsedTranscript, transcriptHash, canonicalPage);
+    const notionWrite = await syncTranscriptToNotion(
+      env,
+      payload,
+      parsedTranscript,
+      transcriptHash,
+      canonicalPage,
+      {
+        runId: payload.runId,
+        replay: payload.replay,
+      },
+    );
     if (notionWrite.action === 'skipped') {
       await markLedgerSkipped(
         env.DB,

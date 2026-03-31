@@ -1,0 +1,95 @@
+title: Meta-Harness Governed Improvement Loop
+
+overview: |
+  Establish the first CREATE SOMETHING experiment lane for improving MCPs,
+  harness behavior, and policy-linked execution with Braintrust plus house
+  telemetry.
+
+  This spec treats Pi as the preferred inner-loop proposer runtime, Emdash as
+  an optional operator cockpit, and CREATE SOMETHING's harness, orchestration,
+  judgment-layer, and Hub as the authoritative execution and promotion path.
+
+property: harness
+complexity: standard
+
+features:
+  - title: Standardize governed trace context on candidate surfaces
+    description: |
+      Ensure governed MCP and agent surfaces attach the required governance
+      metadata through the observability wrappers, then add experiment metadata
+      for baseline versus candidate comparisons.
+    complexity: standard
+    priority: 1
+    files:
+      - packages/observability/src/mcp.ts
+      - packages/observability/src/braintrust.ts
+      - docs/guides/OBSERVABILITY_SETUP.md
+      - docs/BRAINTRUST_TRACING_QUICKSTART.md
+    acceptance:
+      - Governed traces carry account_id, tenant_id, correlation_id, route classification, authz decision, and lane slug or bound host
+      - Candidate runs can attach experiment_id, candidate_id, baseline_id, cohort, and phase metadata without weakening existing policy tags
+      - Docs show the default getTraceContext pattern for MCP servers
+
+  - title: Define a combined MCP and harness scorecard
+    description: |
+      Combine existing Braintrust eval scaffolds, Promptfoo Hub checks, Ground
+      outputs, and house telemetry into one promotion scorecard for
+      experiments.
+    complexity: standard
+    priority: 1
+    files:
+      - evals/braintrust/mcp/fleet-telemetry-contract.eval.ts
+      - evals/braintrust/mcp/fleet-error-path-tracing.eval.ts
+      - evals/braintrust/mcp/account-isolation.eval.ts
+      - evals/braintrust/mcp/exa-workload-latency.eval.ts
+      - evals/braintrust/mcp/hub-coverage-matrix.eval.ts
+      - evals/braintrust/mcp/hub-intent-routing-quality.eval.ts
+      - evals/promptfoo/hub/promptfooconfig.yaml
+      - packages/ground/README.md
+    acceptance:
+      - Scorecard includes one primary metric plus guardrails for policy compliance, latency, operator interrupts, and cost
+      - Search set and holdout set are defined separately
+      - Promotion requires no regressions in account isolation or governed trace completeness
+
+  - title: Create the outer-loop experiment workflow
+    description: |
+      Define how Pi, meta-harness runs, and optional Emdash supervision propose
+      artifact changes, evaluate candidates, and promote only reviewed
+      results.
+    complexity: complex
+    priority: 1
+    files:
+      - packages/harness/README.md
+      - packages/orchestration/README.md
+      - packages/judgment-layer/README.md
+      - docs/CREATE_SOMETHING_OBSERVABILITY_AND_EXPERIMENTATION_ARCHITECTURE.md
+      - docs/internal/braintrust-experiments/README.md
+    acceptance:
+      - Candidate artifact allowlist includes harness, orchestration, judgment-layer, observability, MCP wrappers, and policy docs
+      - Human review remains required for auth, entitlement, destructive policy, and client-visible exposure changes
+      - Experiment reports record hypothesis, treatment, baseline, result, and promotion decision
+
+  - title: Pilot one repeatable governed improvement lane
+    description: |
+      Use the new loop on a single governed surface first to prove the workflow
+      before broad rollout.
+    complexity: simple
+    priority: 2
+    files:
+      - evals/braintrust/mcp/hub-intent-routing-quality.eval.ts
+      - evals/braintrust/mcp/hub-coverage-matrix.eval.ts
+      - docs/internal/braintrust-experiments/README.md
+    acceptance:
+      - Choose one target surface such as Hub intent routing or a named-lane MCP package
+      - Baseline metrics are captured before any candidate changes
+      - At least one held-out evaluation report is produced before the promotion decision
+
+requirements:
+  - "Documentation maps Braintrust as amplification, not the policy source of truth"
+  - "Promotion gates include Braintrust evals, house telemetry, and existing quality checks"
+  - "Any production rollout preserves explicit governance metadata on governed traces"
+
+success:
+  - Candidate harness or MCP changes can be compared on fixed search and holdout sets
+  - Promotion decisions are evidence-backed and repeatable
+  - Business-facing metrics can be tied to technical experiments without bypassing policy review

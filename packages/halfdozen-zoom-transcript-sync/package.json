@@ -9,8 +9,10 @@
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
     "tail": "node ../../scripts/run-wrangler.mjs tail",
     "types": "node ../../scripts/run-wrangler.mjs types",
+    "vault:sync": "bash ../../scripts/halfdozen-zoom-transcript-sync-vault-sync.sh",
     "check": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251128.0",

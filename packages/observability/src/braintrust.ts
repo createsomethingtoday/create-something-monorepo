@@ -36,6 +36,13 @@ import {
   type Span,
 } from 'braintrust';
 import type { AITaskType, AtlasMetadata } from './atlas.js';
+import {
+  traceContextMetadata,
+  traceContextTags,
+  type ExperimentPhase,
+  type ExperimentTraceContext,
+  type GovernanceTraceContext,
+} from './trace-context.js';
 
 // =============================================================================
 // Configuration
@@ -172,54 +179,6 @@ export interface ToolInvocationEvent {
   traceContext?: GovernanceTraceContext;
 }
 
-export interface GovernanceTraceContext {
-  accountId?: string;
-  tenantId?: string;
-  userId?: string;
-  sessionId?: string;
-  correlationId?: string;
-  requestId?: string;
-  policyId?: string;
-  routeClassification?: string;
-  authzDecision?: 'allow' | 'review' | 'block' | string;
-  laneSlug?: string;
-  boundHost?: string;
-  entrypoint?: string;
-}
-
-function governanceMetadata(
-  traceContext: GovernanceTraceContext | undefined,
-): Record<string, string> {
-  if (!traceContext) return {};
-
-  return Object.fromEntries(
-    Object.entries({
-      tenantId: traceContext.tenantId,
-      userId: traceContext.userId,
-      sessionId: traceContext.sessionId,
-      correlationId: traceContext.correlationId,
-      requestId: traceContext.requestId,
-      policyId: traceContext.policyId,
-      routeClassification: traceContext.routeClassification,
-      authzDecision: traceContext.authzDecision,
-      laneSlug: traceContext.laneSlug,
-      boundHost: traceContext.boundHost,
-      entrypoint: traceContext.entrypoint,
-    }).filter(([, value]) => typeof value === 'string' && value.length > 0),
-  ) as Record<string, string>;
-}
-
-function governanceTags(traceContext: GovernanceTraceContext | undefined): string[] {
-  if (!traceContext) return [];
-
-  return [
-    traceContext.policyId ? `policy:${traceContext.policyId}` : null,
-    traceContext.routeClassification ? `route:${traceContext.routeClassification}` : null,
-    traceContext.authzDecision ? `authz:${traceContext.authzDecision}` : null,
-    traceContext.laneSlug ? `lane:${traceContext.laneSlug}` : null,
-  ].filter((value): value is string => Boolean(value));
-}
-
 /**
  * Emit a single MCP tool invocation as a Braintrust span.
  * Best-effort: failures are swallowed so tool execution is never blocked.
@@ -241,7 +200,7 @@ export async function emitToolInvocation(event: ToolInvocationEvent): Promise<vo
             event.serverName,
             event.toolName,
             event.success ? 'success' : 'error',
-            ...governanceTags(event.traceContext),
+            ...traceContextTags(event.traceContext),
           ],
           metadata: {
             server: event.serverName,
@@ -250,7 +209,7 @@ export async function emitToolInvocation(event: ToolInvocationEvent): Promise<vo
             durationMs: event.durationMs,
             success: event.success,
             aiTaskType: event.aiTaskType,
-            ...governanceMetadata(event.traceContext),
+            ...traceContextMetadata(event.traceContext),
             ...event.atlasMetadata,
           },
         });
@@ -311,13 +270,13 @@ export function wrapMcpToolWithBraintrust<TArgs extends Record<string, unknown>,
       async (span: Span) => {
         span.log({
           input: args,
-          tags: ['mcp', options.serverName, options.toolName, ...governanceTags(traceContext)],
+          tags: ['mcp', options.serverName, options.toolName, ...traceContextTags(traceContext)],
           metadata: {
             server: options.serverName,
             tool: options.toolName,
             accountId: accountId || 'operator',
             aiTaskType: options.aiTaskType,
-            ...governanceMetadata(traceContext),
+            ...traceContextMetadata(traceContext),
             ...options.atlasMetadata,
           },
         });
@@ -329,7 +288,7 @@ export function wrapMcpToolWithBraintrust<TArgs extends Record<string, unknown>,
             metadata: {
               success: true,
               durationMs: Date.now() - start,
-              ...governanceMetadata(traceContext),
+              ...traceContextMetadata(traceContext),
             },
           });
           return result;
@@ -345,7 +304,7 @@ export function wrapMcpToolWithBraintrust<TArgs extends Record<string, unknown>,
               success: false,
               durationMs,
               error: errorMessage,
-              ...governanceMetadata(traceContext),
+              ...traceContextMetadata(traceContext),
             },
           });
 
@@ -365,3 +324,4 @@ export function wrapMcpToolWithBraintrust<TArgs extends Record<string, unknown>,
 // =============================================================================
 
 export type { AITaskType, AtlasMetadata } from './atlas.js';
+export type { ExperimentPhase, ExperimentTraceContext, GovernanceTraceContext } from './trace-context.js';

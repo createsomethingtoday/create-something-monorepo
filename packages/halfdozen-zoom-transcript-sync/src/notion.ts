@@ -8,6 +8,9 @@ const DEFAULT_STATUS = 'Active';
 const DEFAULT_SOURCE = 'Internal';
 const DEFAULT_TYPE = 'Meeting';
 const DEFAULT_ATTENDEES_PROPERTY = 'Attendees';
+const DEFAULT_NOTION_HUB_EXPERIMENT_ID = 'halfdozen-zoom-transcript-sync';
+const DEFAULT_NOTION_HUB_CANDIDATE_ID = 'production';
+const DEFAULT_NOTION_HUB_PHASE = 'production';
 
 type BlockObject = Record<string, unknown>;
 type PageObject = Record<string, any>;
@@ -35,6 +38,36 @@ interface HubToolResult {
   structuredContent?: Record<string, unknown>;
 }
 
+type HubTraceSeed = {
+  runId?: number | null;
+  replay?: boolean;
+};
+
+export interface NotionHubTraceContext {
+  correlationId: string;
+  requestIdBase: string;
+  experimentId: string;
+  candidateId: string;
+  baselineId?: string;
+  cohort: string;
+  phase: string;
+}
+
+export interface NotionHubToolCallRequest {
+  requestId: string;
+  headers: Record<string, string>;
+  body: {
+    jsonrpc: '2.0';
+    id: string;
+    method: 'tools/call';
+    params: {
+      name: string;
+      arguments: Record<string, unknown>;
+      _meta: Record<string, unknown>;
+    };
+  };
+}
+
 interface NotionTransport {
   queryDatabase(filter: unknown, pageSize: number): Promise<QueryResult>;
   createPage(properties: Record<string, unknown>): Promise<PageObject>;
@@ -49,8 +82,9 @@ export async function syncTranscriptToNotion(
   parsedTranscript: ParsedTranscript,
   transcriptHash: string,
   existingPageHint?: { pageId: string; pageUrl: string | null } | null,
+  hubTraceSeed: HubTraceSeed = {},
 ): Promise<NotionWriteResult> {
-  const notion = createNotionTransport(env);
+  const notion = createNotionTransport(env, candidate, hubTraceSeed);
   const existing = existingPageHint
     ? {
       id: existingPageHint.pageId,
@@ -103,10 +137,14 @@ export async function syncTranscriptToNotion(
   };
 }
 
-function createNotionTransport(env: Env): NotionTransport {
+function createNotionTransport(
+  env: Env,
+  candidate: TranscriptCandidate,
+  hubTraceSeed: HubTraceSeed = {},
+): NotionTransport {
   const mode = resolveWriteMode(env);
   if (mode === 'hub') {
-    return new HubNotionTransport(env);
+    return new HubNotionTransport(env, buildNotionHubTraceContext(env, candidate, hubTraceSeed));
   }
   return new DirectNotionTransport(env);
 }
@@ -588,13 +626,94 @@ class DirectNotionTransport implements NotionTransport {
   }
 }
 
+export function buildNotionHubTraceContext(
+  env: Pick<
+    Env,
+    | 'NOTION_HUB_EXPERIMENT_ID'
+    | 'NOTION_HUB_CANDIDATE_ID'
+    | 'NOTION_HUB_BASELINE_ID'
+    | 'NOTION_HUB_COHORT'
+    | 'NOTION_HUB_PHASE'
+  >,
+  candidate: Pick<TranscriptCandidate, 'dedupKey'>,
+  seed: HubTraceSeed = {},
+): NotionHubTraceContext {
+  const runSegment = resolveNotionHubRunSegment(seed);
+  const dedupSegment = sanitizeTraceSegment(candidate.dedupKey, 'unknown');
+
+  return {
+    correlationId: joinTraceSegments(['halfdozen_zoom_transcript_sync', runSegment, dedupSegment]),
+    requestIdBase: joinTraceSegments(['halfdozen_zoom_transcript_sync', 'notion_hub', runSegment, dedupSegment]),
+    experimentId: normalizeTraceHeaderValue(env.NOTION_HUB_EXPERIMENT_ID) ?? DEFAULT_NOTION_HUB_EXPERIMENT_ID,
+    candidateId: normalizeTraceHeaderValue(env.NOTION_HUB_CANDIDATE_ID) ?? DEFAULT_NOTION_HUB_CANDIDATE_ID,
+    ...(normalizeTraceHeaderValue(env.NOTION_HUB_BASELINE_ID)
+      ? { baselineId: normalizeTraceHeaderValue(env.NOTION_HUB_BASELINE_ID) }
+      : {}),
+    cohort: normalizeTraceHeaderValue(env.NOTION_HUB_COHORT) ?? resolveDefaultNotionHubCohort(seed),
+    phase: normalizeTraceHeaderValue(env.NOTION_HUB_PHASE) ?? DEFAULT_NOTION_HUB_PHASE,
+  };
+}
+
+export function buildNotionHubToolCallRequest(params: {
+  hubToken: string;
+  toolName: string;
+  toolArgs: Record<string, unknown>;
+  action: string;
+  traceContext: NotionHubTraceContext;
+  requestSequence: number;
+}): NotionHubToolCallRequest {
+  const requestId = joinTraceSegments([
+    params.traceContext.requestIdBase,
+    sanitizeTraceSegment(params.action, 'action'),
+    String(Math.max(1, Math.floor(params.requestSequence))),
+  ]);
+  const meta: Record<string, unknown> = {
+    experimentId: params.traceContext.experimentId,
+    candidateId: params.traceContext.candidateId,
+    cohort: params.traceContext.cohort,
+    phase: params.traceContext.phase,
+    progressToken: requestId,
+    'io.modelcontextprotocol/related-task': {
+      taskId: params.traceContext.correlationId,
+    },
+    ...(params.traceContext.baselineId ? { baselineId: params.traceContext.baselineId } : {}),
+  };
+
+  return {
+    requestId,
+    headers: {
+      Authorization: `Bearer ${params.hubToken}`,
+      'Content-Type': 'application/json',
+      'X-Correlation-ID': params.traceContext.correlationId,
+      'X-Request-ID': requestId,
+      'X-Experiment-ID': params.traceContext.experimentId,
+      'X-Candidate-ID': params.traceContext.candidateId,
+      'X-Experiment-Cohort': params.traceContext.cohort,
+      'X-Experiment-Phase': params.traceContext.phase,
+      ...(params.traceContext.baselineId ? { 'X-Baseline-ID': params.traceContext.baselineId } : {}),
+    },
+    body: {
+      jsonrpc: '2.0',
+      id: requestId,
+      method: 'tools/call',
+      params: {
+        name: params.toolName,
+        arguments: params.toolArgs,
+        _meta: meta,
+      },
+    },
+  };
+}
+
 class HubNotionTransport implements NotionTransport {
   private readonly hubUrl: string;
   private readonly hubToken: string;
   private readonly proxyToolName: string;
   private readonly databaseId: string;
+  private readonly traceContext: NotionHubTraceContext;
+  private requestSequence = 0;
 
-  constructor(env: Env) {
+  constructor(env: Env, traceContext: NotionHubTraceContext) {
     if (!env.NOTION_HUB_URL?.trim() || !env.NOTION_HUB_API_TOKEN?.trim() || !env.NOTION_HUB_PROXY_TOOL?.trim()) {
       throw new Error('Hub-backed Notion writes require NOTION_HUB_URL, NOTION_HUB_API_TOKEN, and NOTION_HUB_PROXY_TOOL.');
     }
@@ -603,6 +722,7 @@ class HubNotionTransport implements NotionTransport {
     this.hubToken = env.NOTION_HUB_API_TOKEN.trim();
     this.proxyToolName = env.NOTION_HUB_PROXY_TOOL.trim();
     this.databaseId = env.NOTION_DATABASE_ID.trim();
+    this.traceContext = traceContext;
   }
 
   async queryDatabase(filter: unknown, pageSize: number): Promise<QueryResult> {
@@ -679,21 +799,19 @@ class HubNotionTransport implements NotionTransport {
     toolArgs: Record<string, unknown>,
     action: string,
   ): Promise<T> {
+    this.requestSequence += 1;
+    const request = buildNotionHubToolCallRequest({
+      hubToken: this.hubToken,
+      toolName,
+      toolArgs,
+      action,
+      traceContext: this.traceContext,
+      requestSequence: this.requestSequence,
+    });
     const response = await fetch(this.hubUrl, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.hubToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: crypto.randomUUID(),
-        method: 'tools/call',
-        params: {
-          name: toolName,
-          arguments: toolArgs,
-        },
-      }),
+      headers: request.headers,
+      body: JSON.stringify(request.body),
     });
 
     if (!response.ok) {
@@ -772,4 +890,49 @@ function toComposioPropertyList(properties: Record<string, unknown>): Array<{ na
   }
 
   return rows;
+}
+
+function resolveNotionHubRunSegment(seed: HubTraceSeed): string {
+  if (typeof seed.runId === 'number' && Number.isFinite(seed.runId) && seed.runId > 0) {
+    return `run_${Math.floor(seed.runId)}`;
+  }
+  if (seed.replay) {
+    return 'replay';
+  }
+  return 'manual';
+}
+
+function resolveDefaultNotionHubCohort(seed: HubTraceSeed): string {
+  if (seed.replay) {
+    return 'replay';
+  }
+  if (typeof seed.runId === 'number' && Number.isFinite(seed.runId) && seed.runId > 0) {
+    return 'scheduled';
+  }
+  return 'manual';
+}
+
+function normalizeTraceHeaderValue(value: string | undefined): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, 256) : undefined;
+}
+
+function sanitizeTraceSegment(value: string | undefined | null, fallback: string): string {
+  if (!value) {
+    return fallback;
+  }
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80);
+  return normalized || fallback;
+}
+
+function joinTraceSegments(parts: string[]): string {
+  return parts.filter(Boolean).join(':').slice(0, 256);
 }
