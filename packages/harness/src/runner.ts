@@ -1020,16 +1020,28 @@ export function sanitizeIssueIdForRef(issueId: string): string {
   return sanitized || 'issue';
 }
 
-export function buildSwarmBranchName(harnessId: string, issueId: string): string {
+export function buildSwarmBranchName(harnessId: string, issueId: string, workerId?: string): string {
   const harnessPart = sanitizeIssueIdForRef(harnessId).slice(0, 24);
   const issuePart = sanitizeIssueIdForRef(issueId).slice(0, 40);
-  return `harness/swarm/${harnessPart}/${issuePart}`;
+  const branchBase = `harness/swarm/${harnessPart}/${issuePart}`;
+  if (!workerId) {
+    return branchBase;
+  }
+
+  const workerPart = sanitizeIssueIdForRef(workerId).slice(0, 48);
+  return `${branchBase}/${workerPart}`;
 }
 
-export function buildSwarmWorktreePath(repoRoot: string, harnessId: string, issueId: string): string {
+export function buildSwarmWorktreePath(repoRoot: string, harnessId: string, issueId: string, workerId?: string): string {
   const harnessPart = sanitizeIssueIdForRef(harnessId).slice(0, 24);
   const issuePart = sanitizeIssueIdForRef(issueId).slice(0, 60);
-  return join(repoRoot, '.harness', 'worktrees', harnessPart, issuePart);
+  const worktreeBase = join(repoRoot, '.harness', 'worktrees', harnessPart, issuePart);
+  if (!workerId) {
+    return worktreeBase;
+  }
+
+  const workerPart = sanitizeIssueIdForRef(workerId).slice(0, 48);
+  return join(worktreeBase, workerPart);
 }
 
 export function findDuplicateSwarmIssueIds(
@@ -1060,9 +1072,16 @@ export function assertUniqueSwarmIssueIds(
   );
 }
 
-async function createSwarmWorktree(repoRoot: string, harnessId: string, issueId: string): Promise<SwarmWorktree> {
-  const branch = buildSwarmBranchName(harnessId, issueId);
-  const path = buildSwarmWorktreePath(repoRoot, harnessId, issueId);
+async function createSwarmWorktree(
+  repoRoot: string,
+  harnessId: string,
+  issueId: string,
+  swarmBatchId: string,
+  agentId: string
+): Promise<SwarmWorktree> {
+  const workerId = `${swarmBatchId}-${agentId}`;
+  const branch = buildSwarmBranchName(harnessId, issueId, workerId);
+  const path = buildSwarmWorktreePath(repoRoot, harnessId, issueId, workerId);
   await mkdir(dirname(path), { recursive: true });
   await rm(path, { recursive: true, force: true });
   await execAsync(
@@ -1123,7 +1142,7 @@ export async function runParallelSessions(
 
     try {
       if (!options.dryRun && executionMode === 'isolated_worktree') {
-        worktree = await createSwarmWorktree(options.cwd, harnessState.id, issue.id);
+        worktree = await createSwarmWorktree(options.cwd, harnessState.id, issue.id, batchId, agentId);
         sessionCwd = worktree.path;
         console.log(`  [${agentId}] Worktree: ${worktree.path}`);
       }
