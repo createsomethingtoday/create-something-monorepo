@@ -6,7 +6,7 @@
 
 import { exec } from 'node:child_process';
 import { readFile, mkdir, rm } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 import type {
   HarnessState,
@@ -1026,15 +1026,44 @@ export function buildSwarmBranchName(harnessId: string, issueId: string): string
   return `harness/swarm/${harnessPart}/${issuePart}`;
 }
 
-export function buildSwarmWorktreePath(repoRoot: string, issueId: string): string {
+export function buildSwarmWorktreePath(repoRoot: string, harnessId: string, issueId: string): string {
+  const harnessPart = sanitizeIssueIdForRef(harnessId).slice(0, 24);
   const issuePart = sanitizeIssueIdForRef(issueId).slice(0, 60);
-  return join(repoRoot, '.harness', 'worktrees', issuePart);
+  return join(repoRoot, '.harness', 'worktrees', harnessPart, issuePart);
+}
+
+export function findDuplicateSwarmIssueIds(
+  issues: Array<Pick<BeadsIssue, 'id'>>
+): string[] {
+  const issueCounts = new Map<string, number>();
+
+  for (const issue of issues) {
+    issueCounts.set(issue.id, (issueCounts.get(issue.id) ?? 0) + 1);
+  }
+
+  return [...issueCounts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([issueId]) => issueId)
+    .sort();
+}
+
+export function assertUniqueSwarmIssueIds(
+  issues: Array<Pick<BeadsIssue, 'id'>>
+): void {
+  const duplicateIssueIds = findDuplicateSwarmIssueIds(issues);
+  if (duplicateIssueIds.length === 0) {
+    return;
+  }
+
+  throw new Error(
+    `Swarm batch contains duplicate issue ids: ${duplicateIssueIds.join(', ')}`
+  );
 }
 
 async function createSwarmWorktree(repoRoot: string, harnessId: string, issueId: string): Promise<SwarmWorktree> {
   const branch = buildSwarmBranchName(harnessId, issueId);
-  const path = buildSwarmWorktreePath(repoRoot, issueId);
-  await mkdir(join(repoRoot, '.harness', 'worktrees'), { recursive: true });
+  const path = buildSwarmWorktreePath(repoRoot, harnessId, issueId);
+  await mkdir(dirname(path), { recursive: true });
   await rm(path, { recursive: true, force: true });
   await execAsync(
     `git -C ${quoteForShell(repoRoot)} worktree add --force --detach ${quoteForShell(path)}`
@@ -1068,6 +1097,8 @@ export async function runParallelSessions(
     harnessConfig?: HarnessConfig;
   }
 ): Promise<SessionResult[]> {
+  assertUniqueSwarmIssueIds(issues);
+
   const maxParallel = options.maxParallel ?? DEFAULT_SWARM_CONFIG.maxParallelAgents;
   const executionMode = options.executionMode ?? DEFAULT_SWARM_CONFIG.executionMode;
   const batchSize = Math.min(issues.length, maxParallel);
