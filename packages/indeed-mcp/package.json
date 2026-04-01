@@ -1,0 +1,42 @@
+{
+  "name": "@create-something/indeed-mcp",
+  "version": "0.1.0",
+  "description": "Indeed Apply MCP for Abundance nurse staffing",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true
+  },
+  "main": "dist/index.js",
+  "bin": {
+    "indeed-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "prebuild": "pnpm --filter=@create-something/mcp-core build",
+    "pretypecheck": "pnpm --filter=@create-something/mcp-core build",
+    "prestart": "pnpm --filter=@create-something/mcp-core build",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/**/*.test.ts"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "indeed",
+    "indeed-apply",
+    "nurse-staffing"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}
+

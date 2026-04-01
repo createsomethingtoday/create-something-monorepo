@@ -1,0 +1,26 @@
+name = "indeed-mcp"
+main = "index.ts"
+compatibility_date = "2025-11-15"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[vars]
+INDEED_ACCOUNT_ID = "abundance"
+INDEED_FEED_PUBLISHER = "CREATE SOMETHING"
+INDEED_FEED_PUBLISHER_URL = "https://createsomething.agency"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "create-something-assets"
+
+# Secrets set via `wrangler secret put`:
+# - INDEED_APPLY_CLIENT_ID
+# - INDEED_APPLY_SECRET
+# - INDEED_MCP_API_KEY
+# Optional secret:
+# - INDEED_APPLY_BASE_URL

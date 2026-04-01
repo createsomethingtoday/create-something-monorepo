@@ -1423,6 +1423,44 @@ importers:
         specifier: ^4.64.0
         version: 4.64.0(@cloudflare/workers-types@4.20260128.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/indeed-mcp:
+    dependencies:
+      '@create-something/mcp-core':
+        specifier: workspace:*
+        version: link:../mcp-core
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@3.25.76)
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/indeed-mcp/worker:
+    dependencies:
+      '@create-something/indeed-mcp':
+        specifier: workspace:*
+        version: link:..
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.0.0
+        version: 4.20260317.1
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.0.0
+        version: 4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
   packages/interaction-atlas-mcp:
     dependencies:
       '@create-something/mcp-authz':
