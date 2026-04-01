@@ -3,11 +3,15 @@ import type { AccountContext, ScopedMcpServer } from '@create-something/mcp-core
 
 import { buildIndeedApplyQueryString } from '../feed.js';
 import {
+  IndeedApplicationListInputSchema,
+  IndeedApplicationListToolShape,
   IndeedDispositionInputSchema,
   IndeedDispositionToolShape,
   IndeedFeedInputSchema,
   IndeedFeedToolShape,
   IndeedJobInputSchema,
+  IndeedJobListInputSchema,
+  IndeedJobListToolShape,
   IndeedJobLookupInputSchema,
   IndeedJobLookupToolShape,
   IndeedJobToolShape,
@@ -19,6 +23,8 @@ import {
   expireJob,
   generateLocalId,
   getJobByLocalId,
+  listApplications,
+  listJobs,
   recordDisposition,
   renderFeedFromStorage,
   updateJobQuestions,
@@ -40,6 +46,31 @@ async function buildFeedRuntime(ctx: AccountContext) {
 }
 
 export function registerTools(server: ScopedMcpServer): void {
+  server.tool(
+    'indeed_apply_list_jobs',
+    'List stored Indeed jobs, including draft, active, and expired entries when requested.',
+    IndeedJobListToolShape,
+    async (params, ctx) => {
+      try {
+        const db = requireDb(ctx);
+        const input = IndeedJobListInputSchema.parse(params);
+        const jobs = await listJobs(db, ctx.accountId, {
+          statuses: input.statuses,
+          search: input.search,
+          limit: input.limit ?? 50,
+        });
+
+        return jsonContent({
+          count: jobs.length,
+          jobs,
+        });
+      } catch (error) {
+        return toolError(error);
+      }
+    },
+    { readOnly: true },
+  );
+
   server.tool(
     'indeed_apply_upsert_job',
     'Create or update an Indeed Apply job configuration and return the generated metadata snippet.',
@@ -176,6 +207,33 @@ export function registerTools(server: ScopedMcpServer): void {
   );
 
   server.tool(
+    'indeed_apply_list_applications',
+    'List stored Indeed applications with optional job, applicant, or disposition filters.',
+    IndeedApplicationListToolShape,
+    async (params, ctx) => {
+      try {
+        const db = requireDb(ctx);
+        const input = IndeedApplicationListInputSchema.parse(params);
+        const applications = await listApplications(db, ctx.accountId, {
+          localJobId: input.local_job_id,
+          applicantEmail: input.applicant_email,
+          dispositionStatus: input.disposition_status,
+          search: input.search,
+          limit: input.limit ?? 50,
+        });
+
+        return jsonContent({
+          count: applications.length,
+          applications,
+        });
+      } catch (error) {
+        return toolError(error);
+      }
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
     'indeed_apply_record_disposition',
     'Record a recruiter disposition locally for a received Indeed application.',
     IndeedDispositionToolShape,
@@ -225,4 +283,3 @@ export function registerTools(server: ScopedMcpServer): void {
     { readOnly: true },
   );
 }
-

@@ -84,6 +84,12 @@ export interface IndeedApplicationRecord {
   updated_at: string;
 }
 
+export interface IndeedApplicationListRecord extends IndeedApplicationRecord {
+  job_title: string | null;
+  job_company_name: string | null;
+  job_status: string | null;
+}
+
 export interface IndeedWebhookEventRecord {
   id: number;
   account_id: string;
@@ -96,4 +102,3 @@ export interface IndeedWebhookEventRecord {
   payload_json: string;
   created_at: string;
 }
-

@@ -9,6 +9,7 @@ This package is the Indeed Apply side of the Abundance staffing integration. It 
 - application delivery intake via `postUrl`
 - `X-Indeed-Signature` verification
 - local disposition tracking so recruiter state is visible even before remote disposition sync is wired
+- read-only listing of stored jobs and applications
 
 This package does **not** attempt Sponsored Jobs or other employer APIs yet. Those require a separate Indeed OAuth 2.0 app.
 

@@ -39,6 +39,17 @@ export const IndeedJobLookupInputSchema = z.object({
 
 export const IndeedJobLookupToolShape = IndeedJobLookupInputSchema.shape;
 
+export const IndeedJobListInputSchema = z.object({
+  statuses: z.array(z.enum(['draft', 'active', 'expired'])).optional(),
+  search: z
+    .string()
+    .optional()
+    .describe('Optional text filter against title, company, reference number, requisition, and location fields.'),
+  limit: z.number().int().min(1).max(200).optional(),
+});
+
+export const IndeedJobListToolShape = IndeedJobListInputSchema.shape;
+
 export const IndeedQuestionsInputSchema = z.object({
   local_job_id: z.string(),
   questions_json: z.string().describe('The full Indeed Apply screener questions JSON document.'),
@@ -61,6 +72,19 @@ export const IndeedDispositionInputSchema = z.object({
 });
 
 export const IndeedDispositionToolShape = IndeedDispositionInputSchema.shape;
+
+export const IndeedApplicationListInputSchema = z.object({
+  local_job_id: z.string().optional(),
+  applicant_email: z.string().email().optional(),
+  disposition_status: z.string().optional(),
+  search: z
+    .string()
+    .optional()
+    .describe('Optional text filter against applicant name, email, phone, or Indeed apply ID.'),
+  limit: z.number().int().min(1).max(200).optional(),
+});
+
+export const IndeedApplicationListToolShape = IndeedApplicationListInputSchema.shape;
 
 const ResumeFileSchema = z
   .object({
@@ -122,4 +146,3 @@ export const IndeedApplyWebhookPayloadSchema = z
 
 export type IndeedJobInput = z.infer<typeof IndeedJobInputSchema>;
 export type IndeedApplyWebhookPayload = z.infer<typeof IndeedApplyWebhookPayloadSchema>;
-

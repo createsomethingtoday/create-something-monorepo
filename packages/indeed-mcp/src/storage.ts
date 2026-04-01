@@ -3,6 +3,7 @@ import type { D1Database } from '@create-something/mcp-core';
 import { renderIndeedApplyFeed } from './feed.js';
 import type { IndeedSignatureResult } from './signature.js';
 import type {
+  IndeedApplicationListRecord,
   IndeedApplicationRecord,
   IndeedJobRecord,
   IndeedWebhookEventRecord,
@@ -209,12 +210,15 @@ export async function getJobByLocalId(db: D1Database, accountId: string, localJo
 export async function listJobs(
   db: D1Database,
   accountId: string,
-  options: { includeDrafts?: boolean; localJobIds?: string[] } = {},
+  options: { includeDrafts?: boolean; localJobIds?: string[]; statuses?: string[]; search?: string; limit?: number } = {},
 ): Promise<IndeedJobRecord[]> {
   const clauses = ['account_id = ?'];
   const bindings: unknown[] = [accountId];
 
-  if (!options.includeDrafts) {
+  if (options.statuses && options.statuses.length > 0) {
+    clauses.push(`status IN (${options.statuses.map(() => '?').join(', ')})`);
+    bindings.push(...options.statuses);
+  } else if (!options.includeDrafts) {
     clauses.push(`status = 'active'`);
   } else {
     clauses.push(`status IN ('draft', 'active')`);
@@ -225,8 +229,19 @@ export async function listJobs(
     bindings.push(...options.localJobIds);
   }
 
+  if (options.search?.trim()) {
+    const search = `%${options.search.trim()}%`;
+    clauses.push(
+      `(id LIKE ? OR title LIKE ? OR company_name LIKE ? OR reference_number LIKE ? OR requisition_id LIKE ? OR city LIKE ? OR state LIKE ? OR postal_code LIKE ?)`,
+    );
+    bindings.push(search, search, search, search, search, search, search, search);
+  }
+
+  const limit = Math.max(1, Math.min(options.limit ?? 200, 200));
+  bindings.push(limit);
+
   const result = await db
-    .prepare(`SELECT * FROM indeed_staffing_jobs WHERE ${clauses.join(' AND ')} ORDER BY updated_at DESC`)
+    .prepare(`SELECT * FROM indeed_staffing_jobs WHERE ${clauses.join(' AND ')} ORDER BY updated_at DESC LIMIT ?`)
     .bind(...bindings)
     .all<IndeedJobRecord>();
 
@@ -519,6 +534,67 @@ export async function getApplicationByLocalId(
     .first<IndeedJobRecord>();
 
   return { ...application, job: job ?? null };
+}
+
+export async function listApplications(
+  db: D1Database,
+  accountId: string,
+  options: {
+    localJobId?: string;
+    applicantEmail?: string;
+    dispositionStatus?: string;
+    search?: string;
+    limit?: number;
+  } = {},
+): Promise<IndeedApplicationListRecord[]> {
+  const clauses = ['a.account_id = ?'];
+  const bindings: unknown[] = [accountId];
+
+  if (options.localJobId) {
+    clauses.push('a.job_id = ?');
+    bindings.push(options.localJobId);
+  }
+
+  if (options.applicantEmail) {
+    clauses.push('a.applicant_email = ?');
+    bindings.push(options.applicantEmail);
+  }
+
+  if (options.dispositionStatus) {
+    clauses.push('a.disposition_status = ?');
+    bindings.push(options.dispositionStatus);
+  }
+
+  if (options.search?.trim()) {
+    const search = `%${options.search.trim()}%`;
+    clauses.push(
+      `(a.id LIKE ? OR a.indeed_apply_id LIKE ? OR a.applicant_full_name LIKE ? OR a.applicant_email LIKE ? OR a.applicant_phone LIKE ?)`,
+    );
+    bindings.push(search, search, search, search, search);
+  }
+
+  const limit = Math.max(1, Math.min(options.limit ?? 200, 200));
+  bindings.push(limit);
+
+  const result = await db
+    .prepare(
+      `SELECT
+         a.*,
+         j.title AS job_title,
+         j.company_name AS job_company_name,
+         j.status AS job_status
+       FROM indeed_staffing_applications a
+       LEFT JOIN indeed_staffing_jobs j
+         ON j.account_id = a.account_id
+        AND j.id = a.job_id
+       WHERE ${clauses.join(' AND ')}
+       ORDER BY a.created_at DESC
+       LIMIT ?`,
+    )
+    .bind(...bindings)
+    .all<IndeedApplicationListRecord>();
+
+  return result.results;
 }
 
 export async function recordDisposition(
