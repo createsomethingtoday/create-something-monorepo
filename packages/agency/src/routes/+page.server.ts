@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '$lib/types/paper';
+import { hasMissingD1TableError } from '$lib/utils/d1';
 
 export const load: PageServerLoad = async ({ platform }) => {
 	if (!platform?.env?.DB) {
@@ -40,6 +41,10 @@ export const load: PageServerLoad = async ({ platform }) => {
 
 		return { papers, categories };
 	} catch (error) {
+		if (hasMissingD1TableError(error, ['papers'])) {
+			return { papers: [], categories: [] };
+		}
+
 		console.error('Error fetching papers from D1:', error);
 		return { papers: [], categories: [] };
 	}

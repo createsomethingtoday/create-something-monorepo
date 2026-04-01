@@ -367,7 +367,7 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 		border-radius: 12px;
 		border: 1px solid rgba(255,255,255,0.14);
 		background: rgba(255,255,255,0.03);
-		color: #fff;
+		color: var(--color-fg-primary);
 		padding: 0.8rem 0.9rem;
 		font: inherit;
 	}
@@ -397,7 +397,7 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 		border-radius: 999px;
 		padding: 0.75rem 1rem;
 		background: rgba(255,255,255,0.95);
-		color: #111;
+		color: var(--color-bg-pure);
 		font: inherit;
 		cursor: pointer;
 	}
@@ -433,10 +433,10 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 		color: var(--color-fg-secondary, rgba(255,255,255,0.72));
 	}
 	.success {
-		color: #8de8a5;
+		color: var(--color-success);
 	}
 	.error {
-		color: #ff8a80;
+		color: var(--color-error);
 		white-space: pre-wrap;
 	}
 	.import-copy {

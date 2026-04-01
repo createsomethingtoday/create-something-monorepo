@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/canon/types';
 import { getPlatform } from '@create-something/canon/platform';
 import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
+import { hasMissingD1TableError } from '$lib/utils/d1';
 
 function sortByFeaturedThenDate<T extends { featured?: number; published_at?: string | null; created_at?: string }>(
 	items: T[]
@@ -39,7 +40,9 @@ export const load: PageServerLoad = async ({ platform }) => {
 		const merged = [...fileBasedExperiments, ...databaseExperiments];
 		return { papers: sortByFeaturedThenDate(merged) };
 	} catch (error) {
-		console.error('Error fetching experiments:', error);
+		if (!hasMissingD1TableError(error, 'papers')) {
+			console.error('Error fetching experiments:', error);
+		}
 		return { papers: sortByFeaturedThenDate(fileBasedExperiments) };
 	}
 };

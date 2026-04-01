@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import type { Master } from '$lib/types';
+import { hasMissingD1TableError } from '$lib/utils/d1';
 
 export const load: PageServerLoad = async ({ platform }) => {
 	const db = platform?.env?.DB;
@@ -24,7 +25,9 @@ export const load: PageServerLoad = async ({ platform }) => {
 			masters: result.results || []
 		};
 	} catch (error) {
-		console.error('Error loading masters:', error);
+		if (!hasMissingD1TableError(error, 'masters')) {
+			console.error('Error loading masters:', error);
+		}
 		return { masters: [] };
 	}
 };

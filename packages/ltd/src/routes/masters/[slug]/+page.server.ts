@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Master, Principle, Quote, Example, Resource } from '$lib/types';
+import { hasMissingD1TableError } from '$lib/utils/d1';
 
 export const load: PageServerLoad = async ({ params, platform }) => {
 	// arena-taste content lives at /taste, not /masters
@@ -53,7 +54,9 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 			resources: resourcesResult.results || []
 		};
 	} catch (error) {
-		console.error('Error loading master:', error);
+		if (!hasMissingD1TableError(error, ['masters', 'principles', 'quotes', 'examples', 'resources'])) {
+			console.error('Error loading master:', error);
+		}
 		return { master: null, principles: [], quotes: [], examples: [], resources: [] };
 	}
 };

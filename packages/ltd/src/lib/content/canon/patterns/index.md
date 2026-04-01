@@ -34,6 +34,7 @@ published: true
 <p class="comparison-example">FormLayout, LoadingSkeleton, ErrorBoundary</p>
 </div>
 </div>
+</section>
 
 
 <section class="pattern-grid-section">
@@ -119,6 +120,7 @@ published: true
 <span class="badge">Planned</span>
 </div>
 </div>
+</section>
 
 
 <section class="structure-section">
@@ -152,6 +154,7 @@ published: true
 <p>Common mistakes to avoid and why they cause problems.</p>
 </div>
 </div>
+</section>
 
 
 <section class="triad-section">
@@ -182,6 +185,7 @@ published: true
 			</p>
 </div>
 </div>
+</section>
 
 
 <section class="canon-section">
@@ -193,4 +197,4 @@ published: true
 		Patterns reduce cognitive load by providing proven solutions. A well-designed pattern is
 		one you never think about because it simply works.
 	</p>
-
+</section>

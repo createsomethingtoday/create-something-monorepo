@@ -206,4 +206,4 @@ published: true
 <a href="/patterns/breakdown-and-repair">Pattern: Breakdown and Repair</a>
 </li>
 </ul>
-
+</section>

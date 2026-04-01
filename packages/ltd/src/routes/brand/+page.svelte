@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { browser } from '$app/environment';
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
   import { SEO } from '@create-something/canon';
 
   // Asset definitions
@@ -63,12 +64,41 @@
     }
   ];
 
-  const colors = [
-    { name: 'Pure Black', value: '#000000', token: '--color-bg-pure' },
-    { name: 'Elevated', value: '#0a0a0a', token: '--color-bg-elevated' },
-    { name: 'Surface', value: '#111111', token: '--color-bg-surface' },
-    { name: 'Pure White', value: '#ffffff', token: '--color-fg-primary' }
-  ];
+  const colorDefinitions = [
+    { name: 'Pure Black', token: '--color-bg-pure' },
+    { name: 'Elevated', token: '--color-bg-elevated' },
+    { name: 'Surface', token: '--color-bg-surface' },
+    { name: 'Pure White', token: '--color-fg-primary' }
+  ] as const;
+
+  type BrandColor = {
+    name: string;
+    token: string;
+    cssValue: string;
+    resolvedValue: string;
+  };
+
+  let colors = $state<BrandColor[]>(
+    colorDefinitions.map((color) => ({
+      ...color,
+      cssValue: `var(${color.token})`,
+      resolvedValue: color.token
+    }))
+  );
+
+  function syncResolvedColors() {
+    if (!browser) return;
+    const styles = getComputedStyle(document.documentElement);
+    colors = colorDefinitions.map((color) => ({
+      ...color,
+      cssValue: `var(${color.token})`,
+      resolvedValue: styles.getPropertyValue(color.token).trim() || color.token
+    }));
+  }
+
+  onMount(() => {
+    syncResolvedColors();
+  });
 
   function copyToClipboard(text: string) {
     if (browser) {
@@ -166,14 +196,14 @@
       {#each colors as color}
         <button
           class="color-card"
-          onclick={() => copyToClipboard(color.value)}
+          onclick={() => copyToClipboard(color.resolvedValue)}
           type="button"
           title="Click to copy"
         >
-          <div class="color-swatch" style="background-color: {color.value}"></div>
+          <div class="color-swatch" style="background-color: {color.cssValue}"></div>
           <div class="color-info">
             <span class="color-name">{color.name}</span>
-            <span class="color-value">{color.value}</span>
+            <span class="color-value">{color.resolvedValue}</span>
             <span class="color-token">{color.token}</span>
           </div>
         </button>
@@ -295,7 +325,7 @@
   }
 
   .asset-preview.light {
-    background: #ffffff;
+    background: var(--color-fg-primary);
   }
 
   .preview-image {

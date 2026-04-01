@@ -148,7 +148,7 @@
 
 	.primary-action {
 		background: rgba(255, 255, 255, 0.92);
-		color: #111;
+		color: var(--color-bg-pure);
 	}
 
 	.secondary-action {
@@ -168,6 +168,6 @@
 	}
 
 	.feedback.error {
-		color: #ff8a80;
+		color: var(--color-error);
 	}
 </style>

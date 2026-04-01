@@ -223,6 +223,7 @@ published: true
 				Theming guide
 			</li>
 </ul>
+</section>
 
 
 <section class="versioning">
@@ -252,6 +253,7 @@ published: true
 </tr>
 </tbody>
 </table>
+</section>
 
 
 <section class="legend">
@@ -282,4 +284,4 @@ published: true
 <span>Vulnerability fixes</span>
 </div>
 </div>
-
+</section>

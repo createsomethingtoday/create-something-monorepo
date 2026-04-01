@@ -108,7 +108,12 @@
     <p>{description}</p>
   </div>
 
-  <div class="flow-diagram" bind:clientWidth={containerWidth} class:compact={isCompact}>
+  <div
+    class="flow-diagram"
+    data-testid="governed-execution-flow"
+    bind:clientWidth={containerWidth}
+    class:compact={isCompact}
+  >
     <div class="grid-box" style={`width:${layout.width}px; height:${layout.height}px;`}>
       {#each flowInitiators as initiator, index}
         <AnimatedBeam
@@ -154,14 +159,22 @@
 
       {#each flowInitiators as initiator, index}
         <BlurFade delay={0.15 + index * 0.12}>
-          <div class="node side-node" style={`left:${initiator.x}px; top:${initiator.y}px;`}>
+          <div
+            class="node side-node"
+            data-testid="governed-execution-node"
+            style={`left:${initiator.x}px; top:${initiator.y}px;`}
+          >
             {initiator.name}
           </div>
         </BlurFade>
       {/each}
 
       <BlurFade delay={0.55}>
-        <div class="node hub-node" style={`left:${layout.hub.x}px; top:${layout.hub.y}px;`}>
+        <div
+          class="node hub-node"
+          data-testid="governed-execution-node"
+          style={`left:${layout.hub.x}px; top:${layout.hub.y}px;`}
+        >
           <span class="node-kicker">Routes</span>
           <div class="lockup">
             <span class="node-title">Hub MCP</span>
@@ -171,7 +184,11 @@
       </BlurFade>
 
       <BlurFade delay={0.9}>
-        <div class="node control-node" style={`left:${layout.control.x}px; top:${layout.control.y}px;`}>
+        <div
+          class="node control-node"
+          data-testid="governed-execution-node"
+          style={`left:${layout.control.x}px; top:${layout.control.y}px;`}
+        >
           <BorderBeam size={160} duration={8} colorFrom={primaryBeam} colorTo={secondaryBeam} />
             <span class="node-kicker">Decides</span>
           <div class="lockup">
@@ -188,7 +205,11 @@
 
       {#each flowDestinations as destination, index}
         <BlurFade delay={1.2 + index * 0.12}>
-          <div class="node side-node" style={`left:${destination.x}px; top:${destination.y}px;`}>
+          <div
+            class="node side-node"
+            data-testid="governed-execution-node"
+            style={`left:${destination.x}px; top:${destination.y}px;`}
+          >
             {destination.name}
           </div>
         </BlurFade>

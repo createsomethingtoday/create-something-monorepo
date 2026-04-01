@@ -43,6 +43,7 @@ This experiment does not change the Mar 2026 stabilization ranking above. It def
 | Experiment | Spec | Primary Success Metric | Target |
 |---|---|---|---|
 | EXP-06 | `EXP-06-governed-promotion-scorecard.md` | `heldout_primary_metric_delta`, `governed_trace_completeness_rate` | `> 0`, `1.00` |
+| EXP-07 | `EXP-07-design-governance-scorecard.md` | `cross_property_design_drift_rate`, `responsive_review_coverage_rate` | `< baseline`, `>= baseline` |
 
 ## Evidence Assets
 

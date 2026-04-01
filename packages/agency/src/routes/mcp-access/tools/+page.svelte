@@ -674,11 +674,11 @@
 	}
 
 	.feedback.success {
-		color: #8de8a5;
+		color: var(--color-success);
 	}
 
 	.feedback.error {
-		color: #ff8a80;
+		color: var(--color-error);
 	}
 
 	.facts-wrap {

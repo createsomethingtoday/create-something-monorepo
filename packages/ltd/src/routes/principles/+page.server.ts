@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import type { Principle, Master } from '$lib/types';
+import { hasMissingD1TableError } from '$lib/utils/d1';
 
 interface PrincipleWithMaster extends Principle {
 	master_name: string;
@@ -33,7 +34,9 @@ export const load: PageServerLoad = async ({ platform }) => {
 			principles: result.results || []
 		};
 	} catch (error) {
-		console.error('Error loading principles:', error);
+		if (!hasMissingD1TableError(error, ['principles', 'masters'])) {
+			console.error('Error loading principles:', error);
+		}
 		return { principles: [] };
 	}
 };

@@ -788,9 +788,9 @@
 			rgba(251, 191, 36, 0.15) 50%,
 			rgba(251, 191, 36, 0.4) 100%
 		);
-		mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+		mask: linear-gradient(var(--color-fg-primary) 0 0) content-box, linear-gradient(var(--color-fg-primary) 0 0);
 		mask-composite: exclude;
-		-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+		-webkit-mask: linear-gradient(var(--color-fg-primary) 0 0) content-box, linear-gradient(var(--color-fg-primary) 0 0);
 		-webkit-mask-composite: xor;
 		animation: border-shimmer 3s ease-in-out infinite;
 		pointer-events: none;

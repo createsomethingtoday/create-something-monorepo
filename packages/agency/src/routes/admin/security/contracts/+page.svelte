@@ -258,17 +258,17 @@
 	.toggles label { display: flex; align-items: center; gap: 0.65rem; }
 	.actions, .toolbar, .records-header { display: flex; gap: 0.75rem; align-items: center; }
 	.records-header { justify-content: space-between; margin-bottom: 1rem; }
-	button { border: 0; border-radius: 999px; padding: 0.75rem 1rem; font: inherit; font-weight: 600; background: #f3f1e8; color: #111; }
+	button { border: 0; border-radius: 999px; padding: 0.75rem 1rem; font: inherit; font-weight: 600; background: rgba(255,255,255,0.92); color: var(--color-bg-pure); }
 	.table-wrap { overflow-x: auto; }
 	table { width: 100%; border-collapse: collapse; }
 	th, td { padding: 0.95rem 0.8rem; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,0.08); }
 	tbody tr { cursor: pointer; }
 	tbody tr:hover { background: rgba(255,255,255,0.03); }
 	.muted { color: rgba(255,255,255,0.58); font-size: 0.85rem; margin-top: 0.25rem; }
-	.good { color: #8fd19e; }
-	.bad { color: #ff9d9d; }
-	.success { color: #8fd19e; margin-top: 1rem; }
-	.error { color: #ff9d9d; margin-top: 1rem; }
+	.good { color: var(--color-success); }
+	.bad { color: var(--color-error); }
+	.success { color: var(--color-success); margin-top: 1rem; }
+	.error { color: var(--color-error); margin-top: 1rem; }
 	@media (max-width: 980px) {
 		.layout { grid-template-columns: 1fr; }
 		.records-header, .toolbar { flex-direction: column; align-items: stretch; }

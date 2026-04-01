@@ -93,7 +93,12 @@ html {
 body {
   background:
     radial-gradient(circle at top, rgba(49, 92, 255, 0.12), transparent 28%),
-    linear-gradient(180deg, #0c0c10 0%, #060608 48%, #000000 100%);
+    linear-gradient(
+      180deg,
+      var(--color-shell-surface) 0%,
+      var(--color-bg-elevated) 48%,
+      var(--color-bg-pure) 100%
+    );
   letter-spacing: var(--tracking-tight, -0.015em);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

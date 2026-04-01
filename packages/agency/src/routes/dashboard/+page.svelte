@@ -367,7 +367,7 @@
 	.action-button {
 		border: 1px solid rgba(255, 255, 255, 0.18);
 		background: rgba(255, 255, 255, 0.92);
-		color: #111;
+		color: var(--color-bg-pure);
 		padding: 0.6rem 0.82rem;
 		font: inherit;
 		font-size: 0.78rem;
@@ -402,11 +402,11 @@
 	}
 
 	.feedback.success {
-		color: #8de8a5;
+		color: var(--color-success);
 	}
 
 	.feedback.error {
-		color: #ff8a80;
+		color: var(--color-error);
 	}
 
 	:global(.table .badge) {
@@ -418,11 +418,11 @@
 	}
 
 	:global(.table .badge.pass) {
-		color: #8de8a5;
+		color: var(--color-success);
 	}
 
 	:global(.table .badge.fail) {
-		color: #ff8a80;
+		color: var(--color-error);
 	}
 
 	@media (max-width: 860px) {

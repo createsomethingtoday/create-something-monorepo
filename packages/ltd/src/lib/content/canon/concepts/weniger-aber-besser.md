@@ -174,4 +174,4 @@ published: true
 <a href="/patterns/subtractive-triad-audit">Pattern: Subtractive Triad Audit</a>
 </li>
 </ul>
-
+</section>

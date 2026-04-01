@@ -64,4 +64,4 @@ published: true
 		</p>
 <span class="concept-origin">Hermeneutic Tradition</span>
 </a>
-
+</section>

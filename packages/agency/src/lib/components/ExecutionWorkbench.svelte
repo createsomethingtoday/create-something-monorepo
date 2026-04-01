@@ -405,19 +405,19 @@
   }
 
   .status-chip.allow {
-    color: #d7f1d7;
+    color: var(--color-fg-primary);
     background: rgba(68, 170, 68, 0.18);
     border-color: rgba(68, 170, 68, 0.28);
   }
 
   .status-chip.review {
-    color: #f2e6c9;
+    color: var(--color-fg-primary);
     background: rgba(170, 136, 68, 0.18);
     border-color: rgba(170, 136, 68, 0.28);
   }
 
   .status-chip.block {
-    color: #f2d2d2;
+    color: var(--color-fg-primary);
     background: rgba(212, 77, 77, 0.18);
     border-color: rgba(212, 77, 77, 0.28);
   }

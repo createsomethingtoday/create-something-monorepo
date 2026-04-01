@@ -100,7 +100,7 @@
 	table { width: 100%; border-collapse: collapse; }
 	th, td { padding: 0.9rem 0.7rem; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,0.08); }
 	.muted { color: rgba(255,255,255,0.58); font-size: 0.85rem; margin-top: 0.25rem; }
-	.good { color: #8fd19e; }
-	.bad { color: #ff9d9d; }
+	.good { color: var(--color-success); }
+	.bad { color: var(--color-error); }
 	.empty { color: rgba(255,255,255,0.58); }
 </style>

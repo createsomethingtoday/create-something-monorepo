@@ -62,6 +62,7 @@ published: true
 </svg>
 </div>
 </a>
+</section>
 
 
 <section class="principles">
@@ -83,6 +84,7 @@ published: true
 <p>Good tools get out of the way. You should focus on your work, not ours.</p>
 </div>
 </div>
+</section>
 
 
 <section class="token-reference">
@@ -115,4 +117,4 @@ published: true
 <code>--radius-lg</code>
 </div>
 </div>
-
+</section>

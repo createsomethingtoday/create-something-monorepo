@@ -625,7 +625,7 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 	.form-stack input {
 		border: 1px solid rgba(255, 255, 255, 0.12);
 		background: rgba(8, 10, 12, 0.55);
-		color: #fff;
+		color: var(--color-fg-primary);
 		padding: 0.82rem 0.9rem;
 		font: inherit;
 		text-transform: none;
@@ -640,13 +640,13 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		background: rgba(255, 255, 255, 0.92);
-		color: #111;
+		color: var(--color-bg-pure);
 		cursor: pointer;
 	}
 
 	.secondary {
 		background: transparent;
-		color: #fff;
+		color: var(--color-fg-primary);
 	}
 
 	.small {
@@ -661,7 +661,7 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 
 	.host-tab.active {
 		background: rgba(255, 255, 255, 0.92);
-		color: #111;
+		color: var(--color-bg-pure);
 	}
 
 	.reveal-panel,
@@ -698,13 +698,13 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 	code {
 		display: block;
 		overflow-wrap: anywhere;
-		color: #f5f5f5;
+		color: var(--color-fg-primary);
 	}
 
 	pre {
 		margin: 0;
 		overflow-x: auto;
-		color: #f5f5f5;
+		color: var(--color-fg-primary);
 	}
 
 	.feedback {
@@ -713,11 +713,11 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 	}
 
 	.feedback.success {
-		color: #8de8a5;
+		color: var(--color-success);
 	}
 
 	.feedback.error {
-		color: #ff8a80;
+		color: var(--color-error);
 	}
 
 	.host-setup {

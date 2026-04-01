@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/canon/types';
 import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
+import { hasMissingD1TableError } from '$lib/utils/d1';
 
 export const load: PageServerLoad = async ({ platform }) => {
 	const fileBasedExperiments = getFileBasedExperiments();
@@ -46,7 +47,10 @@ export const load: PageServerLoad = async ({ platform }) => {
 
 		return { papers, categories };
 	} catch (error) {
-		console.error('Error fetching papers from D1:', error);
+		// Local preview can run before the papers table is seeded; keep the file-based fallback quiet.
+		if (!hasMissingD1TableError(error, 'papers')) {
+			console.error('Error fetching papers from D1:', error);
+		}
 		return { papers: fileBasedExperiments, categories: [] };
 	}
 };

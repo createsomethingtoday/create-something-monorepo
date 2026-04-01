@@ -4,6 +4,7 @@ import type { Paper } from '@create-something/canon/types';
 import { getPlatform } from '@create-something/canon/platform';
 import { isFileBasedExperiment, getFileBasedExperiment } from '$lib/config/fileBasedExperiments';
 import { transformExperimentToPaper } from '@create-something/canon';
+import { hasMissingD1TableError } from '$lib/utils/d1';
 
 // Load all experiment content markdown files at build time
 const contentFiles = import.meta.glob('/content/experiments/*.md', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
@@ -127,6 +128,9 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 	} catch (err) {
 		if (err && typeof err === 'object' && 'status' in err) {
 			throw err;
+		}
+		if (hasMissingD1TableError(err, 'papers')) {
+			throw error(404, 'Experiment not found');
 		}
 		console.error('Error fetching experiment:', err);
 		throw error(500, 'Failed to load experiment');

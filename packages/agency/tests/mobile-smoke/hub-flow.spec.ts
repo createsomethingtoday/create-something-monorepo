@@ -8,14 +8,15 @@ for (const route of ROUTES) {
 		expect(response, `No response when loading route ${route}`).not.toBeNull();
 		expect(response!.ok(), `Route ${route} returned HTTP ${response!.status()}`).toBeTruthy();
 
-		const flow = page.locator('.mcp-viz-container').first();
+		const flow = page.getByTestId('governed-execution-flow').first();
 		await expect(flow).toBeVisible();
 		await flow.scrollIntoViewIfNeeded();
 		await page.waitForTimeout(300);
 
 		const result = await flow.evaluate((container) => {
 			const bounds = container.getBoundingClientRect();
-			const nodes = [...container.querySelectorAll<HTMLElement>('.node')].map((node) => {
+			const nodes = [...container.querySelectorAll<HTMLElement>('[data-testid="governed-execution-node"]')].map(
+				(node) => {
 				const rect = node.getBoundingClientRect();
 				return {
 					label: node.textContent?.replace(/\s+/g, ' ').trim() ?? 'unknown',
@@ -25,7 +26,8 @@ for (const route of ROUTES) {
 						rect.top >= bounds.top &&
 						rect.bottom <= bounds.bottom
 				};
-			});
+				}
+			);
 
 			return {
 				nodeCount: nodes.length,

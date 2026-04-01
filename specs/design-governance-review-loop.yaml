@@ -1,0 +1,67 @@
+title: Design Governance Review Loop
+
+overview: |
+  Establish a governed CREATE SOMETHING lane for cross-property design
+  consistency, design drift review, and mobile/responsive review.
+
+  This spec treats Canon as the shared design source of truth, Ground as the
+  preferred code-level drift detector, UI Preview as the remediation feedback
+  loop, and property-level mobile smoke plus reviewer checklists as the
+  responsive verification layer.
+
+property: canon
+complexity: standard
+
+features:
+  - title: Add a shared cross-property design audit entrypoint
+    description: |
+      Create one repo-local command that reports Canon consumption, drift
+      signals, existing audit baselines, and mobile smoke coverage for the
+      main CREATE SOMETHING properties.
+    complexity: standard
+    priority: 1
+    files:
+      - scripts/design-governance-audit.mjs
+      - package.json
+    acceptance:
+      - One command summarizes `.agency`, `.io`, `.space`, and `.ltd`
+      - Output includes drift signals and responsive review readiness
+      - JSON output is available for later telemetry or dashboard ingestion
+
+  - title: Define the design governance architecture
+    description: |
+      Document how Canon, Ground, UI Preview, responsive checks, and human
+      review fit together as one governed loop.
+    complexity: standard
+    priority: 1
+    files:
+      - docs/CREATE_SOMETHING_DESIGN_GOVERNANCE_AND_DRIFT_ARCHITECTURE.md
+      - docs/README.md
+    acceptance:
+      - The doc identifies the Database, Automation, and Judgment role of each design surface
+      - Promotion rules define when drift and responsive regressions block rollout
+      - The audit command is documented as the default review entrypoint
+
+  - title: Add the design governance scorecard
+    description: |
+      Define the experiment and promotion scorecard for reducing drift and
+      increasing responsive coverage across properties.
+    complexity: simple
+    priority: 2
+    files:
+      - docs/internal/braintrust-experiments/README.md
+      - docs/internal/braintrust-experiments/EXP-07-design-governance-scorecard.md
+    acceptance:
+      - One primary metric is defined
+      - Guardrails include responsive coverage and mobile smoke pass rate
+      - Search and holdout expectations are explicit
+
+requirements:
+  - "Canon remains the shared design source of truth"
+  - "Responsive review is explicit per property rather than assumed"
+  - "Undocumented local design divergence is treated as drift"
+
+success:
+  - CREATE SOMETHING has one repeatable lane for design consistency and responsive review
+  - Drift and mobile coverage gaps become tracked work rather than reviewer folklore
+  - Promotion decisions can reference explicit design evidence

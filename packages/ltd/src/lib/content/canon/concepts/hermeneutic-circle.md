@@ -274,4 +274,4 @@ published: true
 <a href="/canon/concepts/zuhandenheit">Canon Concept: Zuhandenheit</a>
 </li>
 </ul>
-
+</section>
