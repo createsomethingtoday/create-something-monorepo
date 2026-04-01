@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
+  import HeroRuntimeStage from '$lib/components/HeroRuntimeStage.svelte';
   import RuntimeWorkbench from '$lib/components/RuntimeWorkbench.svelte';
 
   type ToolCard = {
@@ -169,7 +170,7 @@
     </div>
 
     <BlurFade delay={0.2}>
-      <RuntimeWorkbench />
+      <HeroRuntimeStage />
     </BlurFade>
   </div>
 
@@ -184,6 +185,30 @@
         </BlurFade>
       {/each}
     </div>
+  </div>
+</section>
+
+<section class="workbench-section">
+  <div class="shell-inner-pad">
+    <div class="section-lead">
+      <BlurFade>
+        <span class="product-kicker">Runtime workbench</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Give the runtime preview a full section of its own.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          The workbench visualization is too large and information-dense to live inside the hero.
+          It works better as a dedicated section where the route states, runtime checks, and outputs
+          can carry the layout on their own.
+        </p>
+      </BlurFade>
+    </div>
+
+    <BlurFade delay={0.15}>
+      <RuntimeWorkbench />
+    </BlurFade>
   </div>
 </section>
 
@@ -330,6 +355,7 @@
 
 <style>
   .hero-page,
+  .workbench-section,
   .tool-section,
   .loop-section,
   .ecosystem-section,
@@ -346,6 +372,10 @@
     grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
     gap: clamp(2rem, 4vw, 3.5rem);
     align-items: center;
+  }
+
+  .workbench-section {
+    padding-top: clamp(1rem, 3vw, 2rem);
   }
 
   .hero-copy,
