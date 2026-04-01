@@ -86,6 +86,105 @@ export const IndeedApplicationListInputSchema = z.object({
 
 export const IndeedApplicationListToolShape = IndeedApplicationListInputSchema.shape;
 
+const SponsoredJobsEmployerInputSchema = z.object({
+  employer_id: z
+    .string()
+    .optional()
+    .describe(
+      'Indeed employer ID to scope the OAuth token to. Optional if INDEED_SPONSORED_JOBS_EMPLOYER_ID is already configured.',
+    ),
+});
+
+export const SponsoredJobsSubaccountsInputSchema = z.object({
+  per_page: z.number().int().min(1).max(500).optional(),
+  start: z.string().optional(),
+});
+
+export const SponsoredJobsSubaccountsToolShape = SponsoredJobsSubaccountsInputSchema.shape;
+
+export const SponsoredJobsAccountInputSchema = SponsoredJobsEmployerInputSchema.extend({
+  fields: z
+    .array(
+      z.enum(['id', 'employerId', 'email', 'contact', 'company', 'jobSourceList', 'billingActive', 'currencyCode']),
+    )
+    .optional(),
+});
+
+export const SponsoredJobsAccountToolShape = SponsoredJobsAccountInputSchema.shape;
+
+export const SponsoredJobsQuotaUsageInputSchema = SponsoredJobsEmployerInputSchema.extend({
+  month_year: z
+    .string()
+    .regex(/^(0[1-9]|1[0-2])\d{4}$/)
+    .optional()
+    .describe('Month in MMyyyy format, for example 042026.'),
+});
+
+export const SponsoredJobsQuotaUsageToolShape = SponsoredJobsQuotaUsageInputSchema.shape;
+
+export const SponsoredJobsAccountBudgetUpdateInputSchema = SponsoredJobsEmployerInputSchema.extend({
+  jobs_monthly_budget: z.number().positive(),
+});
+
+export const SponsoredJobsAccountBudgetUpdateToolShape = SponsoredJobsAccountBudgetUpdateInputSchema.shape;
+
+export const SponsoredJobsCampaignListInputSchema = SponsoredJobsEmployerInputSchema.extend({
+  per_page: z.number().int().min(1).max(500).optional(),
+  start: z.string().optional(),
+  status: z.string().optional(),
+  type: z.string().optional(),
+});
+
+export const SponsoredJobsCampaignListToolShape = SponsoredJobsCampaignListInputSchema.shape;
+
+export const SponsoredJobsCampaignLookupInputSchema = SponsoredJobsEmployerInputSchema.extend({
+  campaign_id: z.string(),
+});
+
+export const SponsoredJobsCampaignLookupToolShape = SponsoredJobsCampaignLookupInputSchema.shape;
+
+export const SponsoredJobsCampaignStatsInputSchema = SponsoredJobsCampaignLookupInputSchema.extend({
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  merge: z.boolean().optional(),
+});
+
+export const SponsoredJobsCampaignStatsToolShape = SponsoredJobsCampaignStatsInputSchema.shape;
+
+export const SponsoredJobsCampaignPayloadInputSchema = SponsoredJobsEmployerInputSchema.extend({
+  payload_json: z
+    .string()
+    .describe('Raw JSON body for the Sponsored Jobs campaign API request, matching Indeed documentation.'),
+});
+
+export const SponsoredJobsCampaignCreateToolShape = SponsoredJobsCampaignPayloadInputSchema.shape;
+
+export const SponsoredJobsCampaignUpdateInputSchema = SponsoredJobsCampaignLookupInputSchema.extend({
+  payload_json: z
+    .string()
+    .describe('Raw JSON body for the Sponsored Jobs update-campaign API request, matching Indeed documentation.'),
+});
+
+export const SponsoredJobsCampaignUpdateToolShape = SponsoredJobsCampaignUpdateInputSchema.shape;
+
+export const SponsoredJobsCampaignBudgetUpdateInputSchema = SponsoredJobsCampaignLookupInputSchema.extend({
+  budget_onetime_limit: z.number().positive().optional(),
+  budget_monthly_limit: z.number().positive().optional(),
+  budget_first_month_behavior: z
+    .enum(['startNowFullAmount', 'startNowProratedAmount', 'startNextMonthFullAmount'])
+    .optional(),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  fixed_end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+export const SponsoredJobsCampaignBudgetUpdateToolShape = SponsoredJobsCampaignBudgetUpdateInputSchema.shape;
+
+export const SponsoredJobsApiAccessInputSchema = SponsoredJobsEmployerInputSchema.extend({
+  api_access_status: z.enum(['ACTIVE', 'BLOCKED']),
+});
+
+export const SponsoredJobsApiAccessToolShape = SponsoredJobsApiAccessInputSchema.shape;
+
 const ResumeFileSchema = z
   .object({
     fileName: z.string().optional(),

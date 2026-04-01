@@ -6,7 +6,7 @@
 
 **Mode of Being**: Operational MCP package
 
-This package makes the current Indeed access legible and governable inside the Abundance nurse staffing workflow. It does not claim more than the credential set supports. Right now that means Indeed Apply feed generation, screener hosting, webhook intake, and local disposition state.
+This package makes the current Indeed access legible and governable inside the Abundance nurse staffing workflow. It now covers Indeed Apply feed generation, screener hosting, webhook intake, local disposition state, and Sponsored Jobs OAuth operations for account, campaign, budget, and reporting access.
 
 ## Depends On
 
@@ -28,6 +28,7 @@ src/
 ├── runtime.ts           → typed runtime metadata accessors
 ├── schemas/             → tool and webhook input contracts
 ├── feed.ts              → Indeed Apply metadata and XML feed rendering
+├── sponsored-jobs.ts    → Sponsored Jobs OAuth token handling and API requests
 ├── signature.ts         → Indeed Apply signature verification
 ├── storage.ts           → D1/R2 persistence helpers
 ├── tools/               → automation tier handlers

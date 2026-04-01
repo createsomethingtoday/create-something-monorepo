@@ -16,6 +16,9 @@ export interface IndeedEnv {
   STORAGE?: R2BucketLike;
   INDEED_APPLY_CLIENT_ID?: string;
   INDEED_APPLY_SECRET?: string;
+  INDEED_SPONSORED_JOBS_CLIENT_ID?: string;
+  INDEED_SPONSORED_JOBS_SECRET?: string;
+  INDEED_SPONSORED_JOBS_EMPLOYER_ID?: string;
   INDEED_APPLY_BASE_URL?: string;
   INDEED_MCP_API_KEY?: string;
   MCP_API_KEY?: string;

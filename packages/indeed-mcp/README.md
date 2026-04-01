@@ -1,8 +1,8 @@
 # Indeed MCP
 
-Indeed Apply MCP for Abundance nurse staffing.
+Indeed MCP for Abundance nurse staffing.
 
-This package is the Indeed Apply side of the Abundance staffing integration. It focuses on the parts unlocked by the current client credential set:
+This package covers the Indeed surfaces currently available for the Abundance staffing integration:
 
 - XML feed generation for Indeed Apply jobs
 - HTTPS-hosted screener question JSON
@@ -10,8 +10,9 @@ This package is the Indeed Apply side of the Abundance staffing integration. It 
 - `X-Indeed-Signature` verification
 - local disposition tracking so recruiter state is visible even before remote disposition sync is wired
 - read-only listing of stored jobs and applications
+- Sponsored Jobs OAuth account, campaign, budget, and reporting operations
 
-This package does **not** attempt Sponsored Jobs or other employer APIs yet. Those require a separate Indeed OAuth 2.0 app.
+This package now includes Sponsored Jobs support for the separate Indeed OAuth 2.0 app, in addition to the Indeed Apply credential set.
 
 ## Framework Tier
 
@@ -56,6 +57,9 @@ Optional:
 
 - `INDEED_ACCOUNT_ID`
 - `INDEED_APPLY_BASE_URL`
+- `INDEED_SPONSORED_JOBS_CLIENT_ID`
+- `INDEED_SPONSORED_JOBS_SECRET`
+- `INDEED_SPONSORED_JOBS_EMPLOYER_ID`
 - `INDEED_FEED_PUBLISHER`
 - `INDEED_FEED_PUBLISHER_URL`
 
@@ -67,12 +71,14 @@ Recommended Infisical path:
 
 ## Current Scope
 
-The current implementation is intentionally limited to the Indeed Apply credential set already issued for Abundance. That means:
+The current implementation now spans two separate Indeed credential sets already issued for Abundance:
 
 - the package can generate feed metadata and host question JSON now
 - the package can receive and store applications now
 - the package can record recruiter dispositions locally now
-- a separate OAuth 2.0 app is still needed before remote employer APIs or Sponsored Jobs are added
+- the package can use a separate Sponsored Jobs OAuth 2.0 app for employer account, campaign, budget, and reporting operations
+- remote Indeed Apply disposition sync is still not wired
+- Sponsored Jobs calls still depend on Indeed allowing outbound requests from the runtime and, for employer-scoped operations, an employer ID
 
 ## Production Behavior
 

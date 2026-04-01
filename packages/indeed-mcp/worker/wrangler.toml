@@ -21,6 +21,9 @@ bucket_name = "create-something-assets"
 # Secrets set via `wrangler secret put`:
 # - INDEED_APPLY_CLIENT_ID
 # - INDEED_APPLY_SECRET
+# - INDEED_SPONSORED_JOBS_CLIENT_ID
+# - INDEED_SPONSORED_JOBS_SECRET
 # - INDEED_MCP_API_KEY
 # Optional secret:
 # - INDEED_APPLY_BASE_URL
+# - INDEED_SPONSORED_JOBS_EMPLOYER_ID
