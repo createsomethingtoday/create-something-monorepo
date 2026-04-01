@@ -47,13 +47,6 @@
     }
   ];
 
-  const engagementMetrics = [
-    { value: '4', label: 'engagement shapes' },
-    { value: '1', label: 'workflow fixed first' },
-    { value: '100%', label: 'portable delivery' },
-    { value: '0', label: 'interest in staff aug' }
-  ];
-
   const offerCards = [
     {
       tag: 'Entry wedge',
@@ -161,8 +154,8 @@
 />
 
 <section class="hero-page">
-  <div class="hero-stage">
-    <HeroSignalField variant="agency" focus="right" />
+  <div class="hero-stage hero-stage--services">
+    <HeroSignalField variant="services" focus="right" />
 
     <div class="shell-inner-pad hero-layout">
       <div class="hero-copy">
@@ -171,7 +164,7 @@
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Make the engagement fit the workflow.</h1>
+          <h1 class="hero-title">Start with the workflow creating the most drag.</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
@@ -190,22 +183,9 @@
         </BlurFade>
 
         <BlurFade delay={0.2}>
-          <p class="hero-note">Specialist engagement. Clear offer boundaries. Portable artifacts.</p>
+          <p class="hero-note">External specialist. Scoped delivery. Production boundaries.</p>
         </BlurFade>
       </div>
-    </div>
-  </div>
-
-  <div class="shell-inner-pad">
-    <div class="metric-grid">
-      {#each engagementMetrics as metric, index}
-        <BlurFade delay={0.25 + index * 0.05}>
-          <article class="product-surface product-surface--soft metric-card">
-            <span class="metric-value">{metric.value}</span>
-            <span class="metric-label">{metric.label}</span>
-          </article>
-        </BlurFade>
-      {/each}
     </div>
   </div>
 </section>
@@ -243,16 +223,16 @@
   <div class="shell-inner-pad showcase-stack">
     <div class="section-lead">
       <BlurFade>
-        <span class="product-kicker">Inspect the offer surface</span>
+        <span class="product-kicker">Offer logic</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>The terminal view belongs below the fold.</h2>
+        <h2>See how the engagement changes as the stakes rise.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The hero should establish the commercial frame first. The workbench can then show how
-          the same workflow moves between connectivity, implementation, approvals, and blocked
-          states without competing with the page introduction.
+          The detailed surface below shows when the work is just connectivity, when it becomes
+          implementation, and when it needs governed execution with explicit review and blocked
+          states.
         </p>
       </BlurFade>
     </div>
@@ -409,12 +389,12 @@
 
   .hero-stage {
     position: relative;
-    min-height: clamp(34rem, 58vw, 43rem);
+    min-height: clamp(31rem, 54vw, 39rem);
     overflow: clip;
     isolation: isolate;
   }
 
-  .hero-stage::after {
+  .hero-stage--services::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -424,35 +404,41 @@
       linear-gradient(
         180deg,
         rgba(3, 3, 4, 1) 0%,
-        rgba(3, 3, 4, 0.86) 8%,
-        rgba(3, 3, 4, 0.28) 20%,
-        rgba(3, 3, 4, 0) 34%,
-        rgba(3, 3, 4, 0) 66%,
-        rgba(3, 3, 4, 0.32) 80%,
-        rgba(3, 3, 4, 0.82) 92%,
+        rgba(3, 3, 4, 0.9) 10%,
+        rgba(3, 3, 4, 0.32) 22%,
+        rgba(3, 3, 4, 0) 36%,
+        rgba(3, 3, 4, 0) 68%,
+        rgba(3, 3, 4, 0.34) 82%,
+        rgba(3, 3, 4, 0.84) 94%,
         rgba(3, 3, 4, 1) 100%
       ),
       linear-gradient(
         90deg,
         rgba(3, 3, 4, 1) 0%,
-        rgba(3, 3, 4, 0.965) 28%,
-        rgba(3, 3, 4, 0.68) 52%,
-        rgba(3, 3, 4, 0.18) 72%,
-        rgba(3, 3, 4, 0.34) 88%,
-        rgba(3, 3, 4, 0.52) 100%
+        rgba(3, 3, 4, 0.968) 30%,
+        rgba(3, 3, 4, 0.78) 48%,
+        rgba(3, 3, 4, 0.34) 70%,
+        rgba(3, 3, 4, 0.4) 88%,
+        rgba(3, 3, 4, 0.56) 100%
       ),
       radial-gradient(
-        circle at 74% 54%,
-        rgba(3, 3, 4, 0) 0%,
-        rgba(3, 3, 4, 0.08) 22%,
-        rgba(3, 3, 4, 0.24) 58%,
-        rgba(3, 3, 4, 0.46) 100%
+        circle at 74% 48%,
+        rgba(18, 184, 166, 0.14) 0%,
+        rgba(18, 184, 166, 0.06) 18%,
+        rgba(3, 3, 4, 0) 42%
       ),
-      radial-gradient(circle at 16% 52%, rgba(3, 3, 4, 0.18) 0%, transparent 38%);
+      radial-gradient(
+        circle at 66% 54%,
+        rgba(3, 3, 4, 0) 0%,
+        rgba(3, 3, 4, 0.08) 26%,
+        rgba(3, 3, 4, 0.24) 62%,
+        rgba(3, 3, 4, 0.44) 100%
+      ),
+      radial-gradient(circle at 18% 48%, rgba(3, 3, 4, 0.18) 0%, transparent 40%);
   }
 
-  .hero-stage :global(.hero-signal-field) {
-    inset: -2rem -4rem -3rem -2rem;
+  .hero-stage--services :global(.hero-signal-field) {
+    inset: -1.25rem -3rem -2.25rem -1.5rem;
   }
 
   .hero-layout {
@@ -460,8 +446,8 @@
     z-index: 2;
     display: block;
     width: 100%;
-    padding-top: clamp(2rem, 4vw, 3rem);
-    padding-bottom: clamp(3rem, 6vw, 4.5rem);
+    padding-top: clamp(2.2rem, 4vw, 3.2rem);
+    padding-bottom: clamp(3rem, 6vw, 4rem);
   }
 
   .flow-layout {
@@ -473,47 +459,37 @@
 
   .hero-copy {
     display: grid;
-    gap: 1.15rem;
-    max-width: 47rem;
+    gap: 1.05rem;
+    max-width: 39rem;
   }
 
   .hero-copy .product-kicker {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
     width: fit-content;
-    padding: 0.38rem 0.7rem 0.4rem;
-    border: 1px solid rgba(91, 125, 255, 0.16);
+    padding: 0.34rem 0.62rem 0.36rem;
+    border: 1px solid rgba(127, 240, 220, 0.14);
     border-radius: 999px;
-    background: rgba(8, 10, 14, 0.62);
+    background: rgba(7, 10, 13, 0.54);
     box-shadow:
       inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-      0 10px 30px rgba(0, 0, 0, 0.18);
+      0 8px 24px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(12px);
-  }
-
-  .hero-copy .product-kicker::before {
-    content: '';
-    width: 0.38rem;
-    height: 0.38rem;
-    border-radius: 999px;
-    background: rgba(59, 109, 255, 0.96);
-    box-shadow: 0 0 14px rgba(70, 154, 255, 0.38);
   }
 
   .hero-title {
     margin: 0;
-    font-size: clamp(3rem, 5vw + 1rem, 5.6rem);
-    line-height: 0.96;
+    font-size: clamp(3rem, 4.4vw + 1rem, 5.1rem);
+    line-height: 0.97;
     letter-spacing: -0.045em;
     text-wrap: balance;
   }
 
   .hero-detail {
     margin: 0;
-    max-width: 34rem;
+    max-width: 38rem;
     color: var(--color-fg-secondary);
-    font-size: clamp(1.05rem, 1vw + 0.9rem, 1.2rem);
+    font-size: clamp(1rem, 0.9vw + 0.92rem, 1.16rem);
     line-height: 1.72;
     text-wrap: pretty;
   }
@@ -536,35 +512,6 @@
     font-size: 0.78rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
-
-  .metric-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.9rem;
-    margin-top: 1.1rem;
-  }
-
-  .metric-card {
-    display: grid;
-    gap: 0.35rem;
-    padding: 1rem 1.05rem;
-  }
-
-  .metric-value {
-    color: var(--color-fg-primary);
-    font-family: var(--font-mono);
-    font-size: 1.45rem;
-    letter-spacing: -0.05em;
-  }
-
-  .metric-label {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    line-height: 1.45;
   }
 
   .boundary-panel,
@@ -681,7 +628,7 @@
       min-height: clamp(30rem, 112vw, 40rem);
     }
 
-    .hero-stage::after {
+    .hero-stage--services::after {
       background:
         linear-gradient(
           180deg,
@@ -697,13 +644,19 @@
         linear-gradient(
           90deg,
           rgba(3, 3, 4, 1) 0%,
-          rgba(3, 3, 4, 0.972) 42%,
-          rgba(3, 3, 4, 0.7) 66%,
-          rgba(3, 3, 4, 0.26) 82%,
-          rgba(3, 3, 4, 0.46) 100%
+          rgba(3, 3, 4, 0.978) 42%,
+          rgba(3, 3, 4, 0.78) 62%,
+          rgba(3, 3, 4, 0.34) 80%,
+          rgba(3, 3, 4, 0.5) 100%
         ),
         radial-gradient(
-          circle at 76% 56%,
+          circle at 78% 50%,
+          rgba(18, 184, 166, 0.1) 0%,
+          rgba(18, 184, 166, 0.04) 18%,
+          rgba(3, 3, 4, 0) 34%
+        ),
+        radial-gradient(
+          circle at 72% 58%,
           rgba(3, 3, 4, 0) 0%,
           rgba(3, 3, 4, 0.12) 24%,
           rgba(3, 3, 4, 0.34) 64%,
@@ -712,7 +665,7 @@
         radial-gradient(circle at 18% 42%, rgba(3, 3, 4, 0.2) 0%, transparent 36%);
     }
 
-    .hero-stage :global(.hero-signal-field) {
+    .hero-stage--services :global(.hero-signal-field) {
       inset: 0 -2.5rem -2rem -1rem;
     }
 
@@ -721,7 +674,6 @@
       padding-bottom: 3.5rem;
     }
 
-    .metric-grid,
     .offer-grid,
     .faq-grid {
       grid-template-columns: 1fr;
@@ -735,11 +687,10 @@
     }
 
     .hero-title {
-      font-size: clamp(2.6rem, 11vw, 4rem);
+      font-size: clamp(2.6rem, 10vw, 4rem);
     }
 
     .hero-copy .product-kicker {
-      gap: 0.38rem;
       padding: 0.34rem 0.58rem 0.36rem;
     }
   }

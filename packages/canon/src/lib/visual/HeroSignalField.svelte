@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  type HeroSignalVariant = 'agency' | 'io' | 'space';
+  type HeroSignalVariant = 'agency' | 'services' | 'io' | 'space';
   type HeroSignalFocus = 'balanced' | 'left' | 'right';
 
   interface AnchorConfig {
@@ -83,6 +83,44 @@
         { label: 'observe', top: 25, left: 70 },
         { label: 'approve', top: 41, left: 79, emphasis: true },
         { label: 'release', top: 61, left: 72 }
+      ]
+    },
+    services: {
+      accent: 'rgba(40, 186, 165, 0.22)',
+      accentSoft: 'rgba(127, 240, 220, 0.16)',
+      edgeGlow: 'rgba(188, 255, 241, 0.18)',
+      palette: ['#2167ff', '#16b8a6', '#69e3c8', '#d8fff6'],
+      defaultFocus: 'right',
+      laneCounts: {
+        balanced: { left: 4, right: 5 },
+        left: { left: 5, right: 4 },
+        right: { left: 2, right: 6 }
+      },
+      barsPerLane: 9,
+      centerGap: 5.9,
+      laneSpacing: 1.18,
+      laneJitter: 0.36,
+      ySpread: 7.4,
+      heightRange: [3.8, 8.8],
+      widthRange: [0.05, 0.11],
+      speed: 2.08,
+      angle: 0.24,
+      cameraDrift: 0.18,
+      cameraLift: 0.07,
+      xDrift: 0.1,
+      yDrift: 0.12,
+      resetZ: 5.6,
+      farZ: -36,
+      depthStep: 1.72,
+      particleCount: 138,
+      particleSpread: 17,
+      pointerPull: 0.2,
+      pointerRadius: 5,
+      anchors: [
+        { label: 'connect', top: 22, left: 67 },
+        { label: 'implement', top: 39, left: 78, emphasis: true },
+        { label: 'govern', top: 58, left: 71 },
+        { label: 'scale', top: 73, left: 82 }
       ]
     },
     io: {
@@ -1027,6 +1065,14 @@
     --hero-field-guides-opacity: 0.7;
   }
 
+  .hero-signal-field--services {
+    --hero-field-accent: rgba(40, 186, 165, 0.22);
+    --hero-field-accent-soft: rgba(127, 240, 220, 0.16);
+    --hero-field-edge: rgba(188, 255, 241, 0.18);
+    --hero-field-canvas-opacity: 0.74;
+    --hero-field-guides-opacity: 0.62;
+  }
+
   .hero-signal-field--io {
     --hero-field-accent: rgba(83, 110, 255, 0.18);
     --hero-field-accent-soft: rgba(175, 190, 255, 0.14);
@@ -1173,6 +1219,135 @@
     );
     box-shadow: 0 0 18px rgba(120, 216, 255, 0.2);
     animation: hero-telemetry-sweep-y 8.8s ease-in-out infinite;
+  }
+
+  .hero-signal-field--services .hero-signal-field__fallback {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(5, 5, 6, 0.99) 0%,
+        rgba(5, 5, 6, 0.92) 20%,
+        rgba(5, 5, 6, 0.72) 54%,
+        rgba(5, 5, 6, 0.88) 100%
+      ),
+      radial-gradient(
+        circle at 74% 48%,
+        rgba(22, 184, 166, 0.18) 0%,
+        rgba(22, 184, 166, 0.08) 18%,
+        transparent 42%
+      ),
+      radial-gradient(
+        circle at var(--hero-field-pointer-x) var(--hero-field-pointer-y),
+        rgba(129, 240, 220, 0.14) 0%,
+        rgba(129, 240, 220, 0.05) 13%,
+        transparent 30%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(5, 5, 6, 0.995) 0%,
+        rgba(5, 5, 6, 0.97) 32%,
+        rgba(5, 5, 6, 0.8) 52%,
+        rgba(5, 5, 6, 0.26) 74%,
+        rgba(5, 5, 6, 0.44) 100%
+      ),
+      linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 54%,
+        rgba(127, 240, 220, 0.12) 74%,
+        rgba(5, 5, 6, 0) 100%
+      );
+    opacity: 0.76;
+  }
+
+  .hero-signal-field--services .hero-signal-field__guides {
+    background:
+      radial-gradient(
+        circle at var(--hero-field-pointer-x) var(--hero-field-pointer-y),
+        rgba(129, 240, 220, 0.13) 0%,
+        rgba(129, 240, 220, 0.07) 10%,
+        rgba(255, 255, 255, 0) 28%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0) 44%,
+        rgba(127, 240, 220, 0.09) 64%,
+        rgba(255, 255, 255, 0) 100%
+      ),
+      repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 0 30px,
+        rgba(127, 240, 220, 0.08) 30px 31px,
+        rgba(255, 255, 255, 0) 31px 60px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0 40px,
+        rgba(66, 150, 255, 0.03) 40px 41px,
+        rgba(255, 255, 255, 0) 41px 80px
+      );
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.32) 18%,
+      rgba(0, 0, 0, 0.84) 34%,
+      black 52%,
+      black 82%,
+      rgba(0, 0, 0, 0.84) 92%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.32) 18%,
+      rgba(0, 0, 0, 0.84) 34%,
+      black 52%,
+      black 82%,
+      rgba(0, 0, 0, 0.84) 92%,
+      transparent 100%
+    );
+  }
+
+  .hero-signal-field--services .hero-signal-field__guides::before {
+    inset: 18% 12% 16% 46%;
+    border: 0;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(127, 240, 220, 0.05) 18%,
+        rgba(255, 255, 255, 0) 52%
+      ),
+      repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 0 42px,
+        rgba(127, 240, 220, 0.08) 42px 43px,
+        rgba(255, 255, 255, 0) 43px 84px
+      );
+    mask-image: linear-gradient(180deg, transparent 0%, black 14%, black 86%, transparent 100%);
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      transparent 0%,
+      black 14%,
+      black 86%,
+      transparent 100%
+    );
+  }
+
+  .hero-signal-field--services .hero-signal-field__guides::after {
+    top: 18%;
+    bottom: 16%;
+    right: 18%;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      rgba(127, 240, 220, 0),
+      rgba(127, 240, 220, 0.92),
+      rgba(127, 240, 220, 0)
+    );
+    box-shadow: 0 0 18px rgba(127, 240, 220, 0.22);
+    animation: hero-telemetry-sweep 9s ease-in-out infinite;
   }
 
   .hero-signal-field--focus-balanced .hero-signal-field__guides {
@@ -1427,6 +1602,97 @@
       left: 64%;
       right: 8%;
       top: 42%;
+    }
+
+    .hero-signal-field--services {
+      --hero-field-canvas-opacity: 0.7;
+      --hero-field-guides-opacity: 0.56;
+    }
+
+    .hero-signal-field--services .hero-signal-field__fallback {
+      background:
+        linear-gradient(
+          180deg,
+          rgba(5, 5, 6, 0.995) 0%,
+          rgba(5, 5, 6, 0.94) 22%,
+          rgba(5, 5, 6, 0.78) 54%,
+          rgba(5, 5, 6, 0.92) 100%
+        ),
+        radial-gradient(
+          circle at 78% 50%,
+          rgba(22, 184, 166, 0.13) 0%,
+          rgba(22, 184, 166, 0.05) 16%,
+          transparent 34%
+        ),
+        linear-gradient(
+          90deg,
+          rgba(5, 5, 6, 0.995) 0%,
+          rgba(5, 5, 6, 0.978) 44%,
+          rgba(5, 5, 6, 0.84) 62%,
+          rgba(5, 5, 6, 0.36) 82%,
+          rgba(5, 5, 6, 0.52) 100%
+        ),
+        linear-gradient(
+          90deg,
+          transparent 0%,
+          transparent 62%,
+          rgba(127, 240, 220, 0.09) 82%,
+          rgba(5, 5, 6, 0) 100%
+        );
+      opacity: 0.74;
+    }
+
+    .hero-signal-field--services .hero-signal-field__guides {
+      background:
+        radial-gradient(
+          circle at var(--hero-field-pointer-x) var(--hero-field-pointer-y),
+          rgba(129, 240, 220, 0.11) 0%,
+          rgba(129, 240, 220, 0.05) 10%,
+          rgba(255, 255, 255, 0) 22%
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0) 54%,
+          rgba(127, 240, 220, 0.08) 78%,
+          rgba(255, 255, 255, 0) 100%
+        ),
+        repeating-linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0) 0 24px,
+          rgba(127, 240, 220, 0.07) 24px 25px,
+          rgba(255, 255, 255, 0) 25px 48px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0) 0 30px,
+          rgba(66, 150, 255, 0.024) 30px 31px,
+          rgba(255, 255, 255, 0) 31px 60px
+        );
+      mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 48%,
+        rgba(0, 0, 0, 0.58) 62%,
+        black 82%,
+        transparent 100%
+      );
+      -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 48%,
+        rgba(0, 0, 0, 0.58) 62%,
+        black 82%,
+        transparent 100%
+      );
+    }
+
+    .hero-signal-field--services .hero-signal-field__guides::before {
+      inset: 20% 8% 18% 58%;
+    }
+
+    .hero-signal-field--services .hero-signal-field__guides::after {
+      right: 12%;
     }
   }
 
