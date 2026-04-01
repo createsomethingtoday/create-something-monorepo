@@ -6,10 +6,10 @@
 	let {
 		prospects = [],
 		title = 'Prospect Workspaces',
-		description = 'Preprovisioned partner workspaces this Auth0 account can view or bind before commercial graduation. Claiming binds identity; it does not issue customer credentials.',
+		description = 'Preprovisioned workspaces your signed-in account can claim during onboarding. Claiming links the workspace to your account. Customer credentials stay off until activation.',
 		href = null,
 		actionLabel = null,
-		emptyMessage = 'No prospect workspaces are currently authorized for this Auth0 account.',
+		emptyMessage = 'No prospect workspaces are currently assigned to this account.',
 	}: {
 		prospects?: ProspectWorkspaceCandidate[];
 		title?: string;
@@ -55,6 +55,9 @@
 		if (prospect.prospect_claim.blocked_reason === 'prospect_unavailable') {
 			return 'unavailable';
 		}
+		if (prospect.prospect_claim.blocked_reason === 'inconsistent_claim_state') {
+			return 'blocked';
+		}
 		if (prospect.prospect_claim.state === 'claimable' && !prospect.prospect_claim.can_claim_now) {
 			return 'blocked';
 		}
@@ -64,6 +67,9 @@
 	function prospectStateLabel(prospect: ProspectWorkspaceCandidate): string {
 		if (prospect.prospect_claim.blocked_reason === 'prospect_unavailable') {
 			return 'Unavailable';
+		}
+		if (prospect.prospect_claim.blocked_reason === 'inconsistent_claim_state') {
+			return 'Repair needed';
 		}
 		if (prospect.prospect_claim.state === 'claimable' && !prospect.prospect_claim.can_claim_now) {
 			return 'Review required';
@@ -87,6 +93,10 @@
 
 	function prospectConnectionStatusLabel(value: string): string {
 		return humanizeReason(value.trim().toLowerCase());
+	}
+
+	function joinNotes(...parts: Array<string | null | undefined>): string {
+		return parts.filter((part): part is string => Boolean(part && part.trim())).join(' ');
 	}
 
 	function preferredProspectToolkitAccount(
@@ -133,11 +143,10 @@
 			return {
 				label: 'Connected',
 				tone: 'connected' as const,
-				note: account.connected_at
-					? `Connected ${formatDateTime(account.connected_at)}`
-					: account.last_checked_at
-						? `Verified ${formatDateTime(account.last_checked_at)}`
-						: 'Connection is active.',
+				note: joinNotes(
+					account.connected_at ? `Connected ${formatDateTime(account.connected_at)}.` : 'Connection is active.',
+					account.verification_message,
+				),
 				canConnect: true,
 				buttonLabel: `Reconnect ${toolkit}`,
 			};
@@ -146,9 +155,12 @@
 			return {
 				label: 'Awaiting completion',
 				tone: 'pending' as const,
-				note: account.last_checked_at
-					? `Last checked ${formatDateTime(account.last_checked_at)}`
-					: 'Return from the provider flow to complete this connection.',
+				note: joinNotes(
+					account.last_checked_at
+						? `Waiting for provider completion. Last known state ${formatDateTime(account.last_checked_at)}.`
+						: 'Return from the provider flow to complete this connection.',
+					account.verification_message,
+				),
 				canConnect: true,
 				buttonLabel: `Continue ${toolkit}`,
 			};
@@ -156,12 +168,19 @@
 		return {
 			label: prospectConnectionStatusLabel(account.connection_status),
 			tone: 'attention' as const,
-			note: account.last_checked_at
-				? `Last checked ${formatDateTime(account.last_checked_at)}`
-				: 'This connection needs attention.',
+			note: joinNotes(
+				account.last_checked_at
+					? `This connection needs attention. Last known state ${formatDateTime(account.last_checked_at)}.`
+					: 'This connection needs attention.',
+				account.verification_message,
+			),
 			canConnect: true,
 			buttonLabel: `Reconnect ${toolkit}`,
 		};
+	}
+
+	function claimButtonLabel(prospect: ProspectWorkspaceCandidate): string {
+		return prospect.prospect_claim.requires_repair ? 'Repair claim' : 'Claim workspace';
 	}
 
 	function graduationReadinessLabel(prospect: ProspectWorkspaceCandidate): string {
@@ -206,7 +225,7 @@
 			if (!response.ok) {
 				throw new Error(payload.message ?? 'Failed to claim prospect workspace');
 			}
-			claimMessage = `${prospect.client.display_name ?? prospect.client.slug} is now bound to this Auth0 account.`;
+				claimMessage = `${prospect.client.display_name ?? prospect.client.slug} is now linked to this account.`;
 			await invalidateAll();
 		} catch (error) {
 			claimError = error instanceof Error ? error.message : 'Failed to claim prospect workspace';
@@ -269,37 +288,46 @@
 						</span>
 					</div>
 
-					<div class="prospect-card-body">
-						<p>
-							<strong>Authorized via:</strong> {humanizeReason(prospect.prospect_claim.authorized_via)}
-						</p>
-						<p>
-							<strong>Graduation target:</strong> {prospect.prospect_claim.service_tier}
-						</p>
-						<p>
-							<strong>Enabled toolkits:</strong> {prospectEnabledToolkits(prospect).join(', ') || 'Not set'}
-						</p>
-						<p>
-							<strong>Lane host:</strong> {prospect.lane.hub_url}
-						</p>
-						<p>
-							<strong>Lifecycle:</strong> {prospect.client.status} client · {prospect.lane.status} lane
-						</p>
-					</div>
-
-					<p class="empty-copy">{prospect.issuance_state.message}</p>
-
-					{#if prospect.prospect_claim.state === 'claimed_by_you' && prospect.graduation_readiness}
-						<div class="prospect-readiness">
-							<div class="prospect-readiness-header">
-								<strong>Graduation readiness</strong>
-								<span class={`prospect-toolkit-state ${graduationReadinessTone(prospect)}`}>
-									{graduationReadinessLabel(prospect)}
-								</span>
-							</div>
-							<p>{prospect.graduation_readiness.blocked_message}</p>
+						<div class="prospect-card-body">
 							<p>
-								<strong>Entitlement binding:</strong>
+								<strong>Enabled services:</strong> {prospectEnabledToolkits(prospect).join(', ') || 'Not set'}
+							</p>
+							<p>
+								<strong>Access:</strong> Customer credentials stay off until this workspace is activated.
+							</p>
+						</div>
+
+						<p class="empty-copy">{prospect.issuance_state.message}</p>
+
+						<details class="prospect-details">
+							<summary>Workspace details</summary>
+							<div class="prospect-details-grid">
+								<p>
+									<strong>Authorized via:</strong> {humanizeReason(prospect.prospect_claim.authorized_via)}
+								</p>
+								<p>
+									<strong>Activation target:</strong> {prospect.prospect_claim.service_tier}
+								</p>
+								<p>
+									<strong>Workspace endpoint:</strong> {prospect.lane.hub_url}
+								</p>
+								<p>
+									<strong>Status:</strong> {prospect.client.status} workspace · {prospect.lane.status} lane
+								</p>
+							</div>
+						</details>
+
+						{#if prospect.prospect_claim.state === 'claimed_by_you' && prospect.graduation_readiness}
+							<details class="prospect-readiness">
+								<summary class="prospect-readiness-header">
+									<strong>Graduation readiness</strong>
+									<span class={`prospect-toolkit-state ${graduationReadinessTone(prospect)}`}>
+										{graduationReadinessLabel(prospect)}
+									</span>
+								</summary>
+								<p>{prospect.graduation_readiness.blocked_message}</p>
+								<p>
+									<strong>Entitlement binding:</strong>
 								{prospect.graduation_readiness.account_id ?? 'Unbound'} /
 								{prospect.graduation_readiness.tenant_id ?? 'Unbound'}
 							</p>
@@ -316,11 +344,11 @@
 										<span class={`prospect-toolkit-state ${check.ok ? 'connected' : 'attention'}`}>
 											{check.ok ? 'Ready' : 'Blocked'}
 										</span>
-									</div>
-								{/each}
-							</div>
-						</div>
-					{/if}
+										</div>
+									{/each}
+								</div>
+							</details>
+						{/if}
 
 					{#if prospect.prospect_claim.blocked_message}
 						<p class="feedback error">{prospect.prospect_claim.blocked_message}</p>
@@ -334,11 +362,13 @@
 								disabled={claimBusyKey === `${prospect.client.slug}:${prospect.lane.slug}`}
 								onclick={() => claimProspect(prospect)}
 							>
-								{claimBusyKey === `${prospect.client.slug}:${prospect.lane.slug}` ? 'Claiming…' : 'Claim workspace'}
+								{claimBusyKey === `${prospect.client.slug}:${prospect.lane.slug}`
+									? 'Claiming…'
+									: claimButtonLabel(prospect)}
 							</button>
 						</div>
-					{:else if prospect.prospect_claim.state === 'claimed_by_you' && prospect.prospect_claim.can_claim_now}
-						<p class="feedback success">This workspace is already bound to this Auth0 account.</p>
+					{:else if prospect.prospect_claim.state === 'claimed_by_you'}
+						<p class="feedback success">This workspace is already linked to this account.</p>
 						{#if prospectEnabledToolkits(prospect).length > 0}
 							<div class="prospect-toolkit-list">
 								{#each prospectEnabledToolkits(prospect) as toolkit}
@@ -475,6 +505,45 @@
 		gap: 0.3rem;
 	}
 
+	.prospect-details,
+	.prospect-readiness {
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: rgba(255, 255, 255, 0.03);
+	}
+
+	.prospect-details summary,
+	.prospect-readiness summary {
+		cursor: pointer;
+		list-style: none;
+	}
+
+	.prospect-details summary::-webkit-details-marker,
+	.prospect-readiness summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.prospect-details {
+		padding: 0.7rem 0.85rem;
+	}
+
+	.prospect-details summary {
+		font-size: 0.78rem;
+		font-weight: 560;
+	}
+
+	.prospect-details-grid {
+		display: grid;
+		gap: 0.25rem;
+		margin-top: 0.6rem;
+	}
+
+	.prospect-details-grid p {
+		margin: 0;
+		font-size: 0.78rem;
+		line-height: 1.55;
+		color: var(--color-fg-muted);
+	}
+
 	.prospect-toolkit-list {
 		display: grid;
 		gap: 0.65rem;
@@ -484,8 +553,6 @@
 		display: grid;
 		gap: 0.45rem;
 		padding: 0.75rem 0.85rem;
-		border: 1px solid rgba(255, 255, 255, 0.08);
-		background: rgba(255, 255, 255, 0.03);
 	}
 
 	.prospect-readiness-header {

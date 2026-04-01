@@ -1,4 +1,5 @@
 import {
+	assessProspectClaimBinding,
 	getProspectAvailabilityConflict,
 	type ProspectSelfServiceStatus,
 } from './partner-prospect-claim-shared.js';
@@ -216,7 +217,22 @@ export function createPartnerProspectToolkitConnectLinkPostHandler(
 				);
 			}
 
-			if (client.identity_user_id !== user.id && lane.identity_user_id !== user.id) {
+			const bindingAssessment = assessProspectClaimBinding({
+				userId: user.id,
+				clientIdentityUserId: client.identity_user_id,
+				laneIdentityUserId: lane.identity_user_id,
+			});
+			if (bindingAssessment.repairableByYou) {
+				return jsonResponse(
+					{
+						error: 'inconsistent_claim_state',
+						message:
+							'This workspace has a partial claim binding. Re-run claim to repair it before connecting services.',
+					},
+					409,
+				);
+			}
+			if (!bindingAssessment.fullyClaimedByYou) {
 				return jsonResponse(
 					{
 						error: 'prospect_not_claimed',
@@ -266,13 +282,16 @@ export function createPartnerProspectToolkitConnectLinkPostHandler(
 				);
 			}
 
-			const callbackUrl = body?.callback_url?.trim() || url.searchParams.get('callback_url') || undefined;
+			const callbackResolution = resolveProspectCallbackUrl(
+				url,
+				body?.callback_url?.trim() || url.searchParams.get('callback_url') || undefined,
+			);
 			const composioUserId =
 				existing?.composio_user_id ?? deps.defaultToolkitComposioUserId(client.slug, toolkit, accountSlug);
 			const displayLabel = body?.display_label?.trim() || existing?.display_label || `${toolkit}:${accountSlug}`;
 			const composio = deps.getComposioClient(env);
 			const connectionRequest = await composio.connectedAccounts.link(composioUserId, authConfigId, {
-				...(callbackUrl ? { callbackUrl } : {}),
+				callbackUrl: callbackResolution.url,
 			});
 			if (!connectionRequest.redirectUrl) {
 				return jsonResponse(
@@ -316,7 +335,8 @@ export function createPartnerProspectToolkitConnectLinkPostHandler(
 				metadata: {
 					auth_config_id: authConfigId,
 					connection_request_id: connectionRequest.id ?? null,
-					callback_url: callbackUrl ?? null,
+					callback_path: callbackResolution.path,
+					callback_source: callbackResolution.source,
 					issued_via: 'prospect_self_service',
 					lane_slug: lane.slug,
 				},
@@ -345,5 +365,44 @@ export function createPartnerProspectToolkitConnectLinkPostHandler(
 				500,
 			);
 		}
+	};
+}
+
+const DEFAULT_PROSPECT_CALLBACK_PATH = '/prospects';
+const APPROVED_PROSPECT_CALLBACK_PATHS = new Set(['/dashboard', '/prospects']);
+
+function resolveProspectCallbackUrl(requestUrl: URL, candidate: string | undefined | null) {
+	const fallback = new URL(DEFAULT_PROSPECT_CALLBACK_PATH, requestUrl.origin);
+	if (!candidate) {
+		return {
+			url: fallback.toString(),
+			path: fallback.pathname,
+			source: 'default' as const,
+		};
+	}
+
+	let parsed: URL;
+	try {
+		parsed = new URL(candidate, requestUrl.origin);
+	} catch {
+		throw {
+			status: 400,
+			code: 'invalid_callback_url',
+			message: 'Callback URL must be a valid same-origin portal URL.',
+		} satisfies PartnerProspectToolkitConnectLinkHttpErrorLike;
+	}
+
+	if (parsed.origin !== requestUrl.origin || !APPROVED_PROSPECT_CALLBACK_PATHS.has(parsed.pathname)) {
+		throw {
+			status: 400,
+			code: 'invalid_callback_url',
+			message: 'Callback URL must use an approved same-origin portal path.',
+		} satisfies PartnerProspectToolkitConnectLinkHttpErrorLike;
+	}
+
+	return {
+		url: parsed.toString(),
+		path: `${parsed.pathname}${parsed.search}`,
+		source: 'validated_same_origin' as const,
 	};
 }

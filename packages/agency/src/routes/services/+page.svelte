@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, SEO } from '@create-something/canon';
+  import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
   import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
@@ -45,6 +45,13 @@
       price: 'Custom',
       priceDescription: 'Scoped implementation'
     }
+  ];
+
+  const engagementMetrics = [
+    { value: '4', label: 'engagement shapes' },
+    { value: '1', label: 'workflow fixed first' },
+    { value: '100%', label: 'portable delivery' },
+    { value: '0', label: 'interest in staff aug' }
   ];
 
   const offerCards = [
@@ -154,43 +161,52 @@
 />
 
 <section class="hero-page">
-  <div class="shell-inner-pad hero-layout">
-    <div class="hero-copy">
-      <BlurFade delay={0}>
-        <span class="product-kicker">How I Work</span>
-      </BlurFade>
+  <div class="hero-stage">
+    <HeroSignalField variant="agency" focus="right" />
 
-      <BlurFade delay={0.05}>
-        <h1 class="hero-title">Start with the workflow creating the most drag.</h1>
-      </BlurFade>
+    <div class="shell-inner-pad hero-layout">
+      <div class="hero-copy">
+        <BlurFade delay={0}>
+          <span class="product-kicker">How I Work</span>
+        </BlurFade>
 
-      <BlurFade delay={0.1}>
-        <p class="hero-detail">
-          This is a specialist engagement: scoped, artifact-backed, and designed to give your team
-          a safer operating path, not another person to manage. Fix the first workflow, add
-          oversight when the risk rises, and extend only when several systems must stay in sync.
-        </p>
-      </BlurFade>
+        <BlurFade delay={0.05}>
+          <h1 class="hero-title">Make the engagement fit the workflow.</h1>
+        </BlurFade>
 
-      <BlurFade delay={0.15}>
-        <div class="hero-actions">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="/products" variant="secondary">See What I've Built</Button>
-        </div>
-      </BlurFade>
+        <BlurFade delay={0.1}>
+          <p class="hero-detail">
+            This is a specialist engagement: scoped, artifact-backed, and designed to give your
+            team a safer operating path, not another person to manage. Fix the first workflow, add
+            oversight when the risk rises, and extend only when several systems must stay in sync.
+          </p>
+        </BlurFade>
 
-      <BlurFade delay={0.2}>
-        <p class="hero-note">External specialist. Scoped delivery. Production boundaries.</p>
-      </BlurFade>
+        <BlurFade delay={0.15}>
+          <div class="hero-actions">
+            <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+            <Button href="/products" variant="secondary">See What I've Built</Button>
+          </div>
+        </BlurFade>
+
+        <BlurFade delay={0.2}>
+          <p class="hero-note">Specialist engagement. Clear offer boundaries. Portable artifacts.</p>
+        </BlurFade>
+      </div>
     </div>
+  </div>
 
-    <BlurFade delay={0.2}>
-      <ExecutionWorkbench
-        eyebrow="Offer logic"
-        title="What the engagement actually controls"
-        description="The same workflow can move through different commercial shapes. The question is whether you need connectivity, implementation, or governed execution."
-      />
-    </BlurFade>
+  <div class="shell-inner-pad">
+    <div class="metric-grid">
+      {#each engagementMetrics as metric, index}
+        <BlurFade delay={0.25 + index * 0.05}>
+          <article class="product-surface product-surface--soft metric-card">
+            <span class="metric-value">{metric.value}</span>
+            <span class="metric-label">{metric.label}</span>
+          </article>
+        </BlurFade>
+      {/each}
+    </div>
   </div>
 </section>
 
@@ -220,6 +236,34 @@
         </ul>
       </BlurFade>
     </div>
+  </div>
+</section>
+
+<section class="control-section">
+  <div class="shell-inner-pad showcase-stack">
+    <div class="section-lead">
+      <BlurFade>
+        <span class="product-kicker">Inspect the offer surface</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>The terminal view belongs below the fold.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          The hero should establish the commercial frame first. The workbench can then show how
+          the same workflow moves between connectivity, implementation, approvals, and blocked
+          states without competing with the page introduction.
+        </p>
+      </BlurFade>
+    </div>
+
+    <BlurFade delay={0.15}>
+      <ExecutionWorkbench
+        eyebrow="Offer logic"
+        title="What the engagement actually controls"
+        description="The same workflow can move through different commercial shapes. The question is whether you need connectivity, implementation, or governed execution."
+      />
+    </BlurFade>
   </div>
 </section>
 
@@ -347,8 +391,8 @@
 </section>
 
 <style>
-  .hero-page,
   .boundary-section,
+  .control-section,
   .offer-section,
   .flow-section,
   .artifact-section,
@@ -360,9 +404,66 @@
 
   .hero-page {
     padding-top: clamp(6rem, 10vw, 8rem);
+    padding-bottom: clamp(2.5rem, 6vw, 4rem);
   }
 
-  .hero-layout,
+  .hero-stage {
+    position: relative;
+    min-height: clamp(34rem, 58vw, 43rem);
+    overflow: clip;
+    isolation: isolate;
+  }
+
+  .hero-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3, 3, 4, 1) 0%,
+        rgba(3, 3, 4, 0.86) 8%,
+        rgba(3, 3, 4, 0.28) 20%,
+        rgba(3, 3, 4, 0) 34%,
+        rgba(3, 3, 4, 0) 66%,
+        rgba(3, 3, 4, 0.32) 80%,
+        rgba(3, 3, 4, 0.82) 92%,
+        rgba(3, 3, 4, 1) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(3, 3, 4, 1) 0%,
+        rgba(3, 3, 4, 0.965) 28%,
+        rgba(3, 3, 4, 0.68) 52%,
+        rgba(3, 3, 4, 0.18) 72%,
+        rgba(3, 3, 4, 0.34) 88%,
+        rgba(3, 3, 4, 0.52) 100%
+      ),
+      radial-gradient(
+        circle at 74% 54%,
+        rgba(3, 3, 4, 0) 0%,
+        rgba(3, 3, 4, 0.08) 22%,
+        rgba(3, 3, 4, 0.24) 58%,
+        rgba(3, 3, 4, 0.46) 100%
+      ),
+      radial-gradient(circle at 16% 52%, rgba(3, 3, 4, 0.18) 0%, transparent 38%);
+  }
+
+  .hero-stage :global(.hero-signal-field) {
+    inset: -2rem -4rem -3rem -2rem;
+  }
+
+  .hero-layout {
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    padding-top: clamp(2rem, 4vw, 3rem);
+    padding-bottom: clamp(3rem, 6vw, 4.5rem);
+  }
+
   .flow-layout {
     display: grid;
     gap: clamp(1.5rem, 3vw, 2.5rem);
@@ -372,24 +473,47 @@
 
   .hero-copy {
     display: grid;
-    gap: 1.1rem;
-    max-width: 38rem;
+    gap: 1.15rem;
+    max-width: 47rem;
+  }
+
+  .hero-copy .product-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: fit-content;
+    padding: 0.38rem 0.7rem 0.4rem;
+    border: 1px solid rgba(91, 125, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(8, 10, 14, 0.62);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 10px 30px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(12px);
+  }
+
+  .hero-copy .product-kicker::before {
+    content: '';
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 999px;
+    background: rgba(59, 109, 255, 0.96);
+    box-shadow: 0 0 14px rgba(70, 154, 255, 0.38);
   }
 
   .hero-title {
     margin: 0;
-    font-size: clamp(3rem, 4vw + 1.2rem, 5.2rem);
-    line-height: 0.98;
+    font-size: clamp(3rem, 5vw + 1rem, 5.6rem);
+    line-height: 0.96;
     letter-spacing: -0.045em;
     text-wrap: balance;
   }
 
-  .hero-detail,
-  .section-lead p,
-  .faq-card p,
-  .cta-panel p {
+  .hero-detail {
     margin: 0;
+    max-width: 34rem;
     color: var(--color-fg-secondary);
+    font-size: clamp(1.05rem, 1vw + 0.9rem, 1.2rem);
     line-height: 1.72;
     text-wrap: pretty;
   }
@@ -414,11 +538,45 @@
     text-transform: uppercase;
   }
 
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1.1rem;
+  }
+
+  .metric-card {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1rem 1.05rem;
+  }
+
+  .metric-value {
+    color: var(--color-fg-primary);
+    font-family: var(--font-mono);
+    font-size: 1.45rem;
+    letter-spacing: -0.05em;
+  }
+
+  .metric-label {
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    line-height: 1.45;
+  }
+
   .boundary-panel,
   .cta-panel {
     display: grid;
     gap: 1rem;
     padding: clamp(1.1rem, 3vw, 1.7rem);
+  }
+
+  .showcase-stack {
+    display: grid;
+    gap: 1rem;
   }
 
   .section-lead {
@@ -438,6 +596,15 @@
     margin: 0;
     line-height: 1.02;
     text-wrap: balance;
+  }
+
+  .section-lead p,
+  .faq-card p,
+  .cta-panel p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    line-height: 1.72;
+    text-wrap: pretty;
   }
 
   .boundary-list {
@@ -499,7 +666,6 @@
   }
 
   @media (max-width: 1080px) {
-    .hero-layout,
     .flow-layout {
       grid-template-columns: 1fr;
     }
@@ -511,13 +677,54 @@
   }
 
   @media (max-width: 768px) {
+    .hero-stage {
+      min-height: clamp(30rem, 112vw, 40rem);
+    }
+
+    .hero-stage::after {
+      background:
+        linear-gradient(
+          180deg,
+          rgba(3, 3, 4, 1) 0%,
+          rgba(3, 3, 4, 0.9) 10%,
+          rgba(3, 3, 4, 0.38) 22%,
+          rgba(3, 3, 4, 0) 34%,
+          rgba(3, 3, 4, 0) 68%,
+          rgba(3, 3, 4, 0.4) 82%,
+          rgba(3, 3, 4, 0.9) 94%,
+          rgba(3, 3, 4, 1) 100%
+        ),
+        linear-gradient(
+          90deg,
+          rgba(3, 3, 4, 1) 0%,
+          rgba(3, 3, 4, 0.972) 42%,
+          rgba(3, 3, 4, 0.7) 66%,
+          rgba(3, 3, 4, 0.26) 82%,
+          rgba(3, 3, 4, 0.46) 100%
+        ),
+        radial-gradient(
+          circle at 76% 56%,
+          rgba(3, 3, 4, 0) 0%,
+          rgba(3, 3, 4, 0.12) 24%,
+          rgba(3, 3, 4, 0.34) 64%,
+          rgba(3, 3, 4, 0.58) 100%
+        ),
+        radial-gradient(circle at 18% 42%, rgba(3, 3, 4, 0.2) 0%, transparent 36%);
+    }
+
+    .hero-stage :global(.hero-signal-field) {
+      inset: 0 -2.5rem -2rem -1rem;
+    }
+
+    .hero-layout {
+      padding-top: 2.25rem;
+      padding-bottom: 3.5rem;
+    }
+
+    .metric-grid,
     .offer-grid,
     .faq-grid {
       grid-template-columns: 1fr;
-    }
-
-    .hero-title {
-      font-size: clamp(2.6rem, 10vw, 4rem);
     }
 
     .offer-card,
@@ -525,6 +732,15 @@
     .boundary-panel,
     .cta-panel {
       padding: 1rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2.6rem, 11vw, 4rem);
+    }
+
+    .hero-copy .product-kicker {
+      gap: 0.38rem;
+      padding: 0.34rem 0.58rem 0.36rem;
     }
   }
 </style>

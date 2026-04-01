@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, SEO } from '@create-something/canon';
+  import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
   import BrandLogo from '$lib/components/BrandLogo.svelte';
@@ -151,39 +151,39 @@
 />
 
 <section class="hero-page">
-  <div class="shell-inner-pad hero-layout">
-    <div class="hero-copy">
-      <BlurFade delay={0}>
-        <span class="product-kicker">{agencyCoreMessaging.categoryLabel}</span>
-      </BlurFade>
+  <div class="hero-stage">
+    <HeroSignalField variant="agency" focus="right" />
 
-      <BlurFade delay={0.05}>
-        <h1 class="hero-title">Make the workflow safe enough to trust.</h1>
-      </BlurFade>
+    <div class="shell-inner-pad hero-layout">
+      <div class="hero-copy">
+        <BlurFade delay={0}>
+          <span class="product-kicker">{agencyCoreMessaging.categoryLabel}</span>
+        </BlurFade>
 
-      <BlurFade delay={0.1}>
-        <p class="hero-detail">
-          For the operator who has to answer for what happens next. CREATE SOMETHING fixes the
-          workflow creating the most drag, then adds approvals, visibility, and recovery paths as
-          the stakes rise.
-        </p>
-      </BlurFade>
+        <BlurFade delay={0.05}>
+          <h1 class="hero-title">Make the workflow safe enough to trust.</h1>
+        </BlurFade>
 
-      <BlurFade delay={0.15}>
-        <div class="hero-actions">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="/services" variant="secondary">See The Engagement Model</Button>
-        </div>
-      </BlurFade>
+        <BlurFade delay={0.1}>
+          <p class="hero-detail">
+            For the operator who has to answer for what happens next. CREATE SOMETHING fixes the
+            workflow creating the most drag, then adds approvals, visibility, and recovery paths as
+            the stakes rise.
+          </p>
+        </BlurFade>
 
-      <BlurFade delay={0.2}>
-        <p class="hero-note">Scoped delivery. Clear controls. Portable artifacts.</p>
-      </BlurFade>
+        <BlurFade delay={0.15}>
+          <div class="hero-actions">
+            <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+            <Button href="/services" variant="secondary">See The Engagement Model</Button>
+          </div>
+        </BlurFade>
+
+        <BlurFade delay={0.2}>
+          <p class="hero-note">Scoped delivery. Clear controls. Portable artifacts.</p>
+        </BlurFade>
+      </div>
     </div>
-
-    <BlurFade delay={0.2}>
-      <ExecutionWorkbench />
-    </BlurFade>
   </div>
 
   <div class="shell-inner-pad">
@@ -220,6 +220,29 @@
         {/each}
       </div>
     </div>
+  </div>
+</section>
+
+<section class="control-section">
+  <div class="shell-inner-pad showcase-stack">
+    <div class="section-lead">
+      <BlurFade>
+        <span class="product-kicker">Inspect the full control room</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>The detailed decision surface belongs below the fold.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          Once the hero establishes the workflow boundaries, the full surface can show tabs,
+          checks, artifacts, and release logic without crushing the copy.
+        </p>
+      </BlurFade>
+    </div>
+
+    <BlurFade delay={0.15}>
+      <ExecutionWorkbench />
+    </BlurFade>
   </div>
 </section>
 
@@ -368,17 +391,91 @@
     padding-bottom: clamp(2.5rem, 6vw, 4rem);
   }
 
+  .hero-stage {
+    position: relative;
+    min-height: clamp(34rem, 58vw, 43rem);
+    overflow: clip;
+    isolation: isolate;
+  }
+
+  .hero-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3, 3, 4, 1) 0%,
+        rgba(3, 3, 4, 0.86) 8%,
+        rgba(3, 3, 4, 0.28) 20%,
+        rgba(3, 3, 4, 0) 34%,
+        rgba(3, 3, 4, 0) 66%,
+        rgba(3, 3, 4, 0.32) 80%,
+        rgba(3, 3, 4, 0.82) 92%,
+        rgba(3, 3, 4, 1) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(3, 3, 4, 1) 0%,
+        rgba(3, 3, 4, 0.965) 28%,
+        rgba(3, 3, 4, 0.68) 52%,
+        rgba(3, 3, 4, 0.18) 72%,
+        rgba(3, 3, 4, 0.34) 88%,
+        rgba(3, 3, 4, 0.52) 100%
+      ),
+      radial-gradient(
+        circle at 74% 54%,
+        rgba(3, 3, 4, 0) 0%,
+        rgba(3, 3, 4, 0.08) 22%,
+        rgba(3, 3, 4, 0.24) 58%,
+        rgba(3, 3, 4, 0.46) 100%
+      ),
+      radial-gradient(circle at 16% 52%, rgba(3, 3, 4, 0.18) 0%, transparent 38%);
+  }
+
+  .hero-stage :global(.hero-signal-field) {
+    inset: -2rem -4rem -3rem -2rem;
+  }
+
   .hero-layout {
-    display: grid;
-    gap: clamp(1.5rem, 3vw, 2.5rem);
-    align-items: center;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    padding-top: clamp(2rem, 4vw, 3rem);
+    padding-bottom: clamp(3rem, 6vw, 4.5rem);
   }
 
   .hero-copy {
     display: grid;
     gap: 1.15rem;
-    max-width: 39rem;
+    max-width: 47rem;
+  }
+
+  .hero-copy .product-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: fit-content;
+    padding: 0.38rem 0.7rem 0.4rem;
+    border: 1px solid rgba(91, 125, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(8, 10, 14, 0.62);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 10px 30px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(12px);
+  }
+
+  .hero-copy .product-kicker::before {
+    content: '';
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 999px;
+    background: rgba(59, 109, 255, 0.96);
+    box-shadow: 0 0 14px rgba(70, 154, 255, 0.38);
   }
 
   .hero-title {
@@ -448,6 +545,7 @@
   }
 
   .signal-section,
+  .control-section,
   .capability-section,
   .offer-section,
   .governance-section,
@@ -461,6 +559,11 @@
     display: grid;
     gap: 1.2rem;
     padding: 1.35rem;
+  }
+
+  .showcase-stack {
+    display: grid;
+    gap: 1rem;
   }
 
   .signal-header {
@@ -616,18 +719,60 @@
   }
 
   @media (max-width: 1100px) {
-    .hero-layout,
     .governance-grid {
       grid-template-columns: 1fr;
     }
 
-    .hero-copy,
     .governance-copy {
       max-width: none;
     }
   }
 
   @media (max-width: 768px) {
+    .hero-stage {
+      min-height: clamp(30rem, 112vw, 40rem);
+    }
+
+    .hero-stage::after {
+      background:
+        linear-gradient(
+          180deg,
+          rgba(3, 3, 4, 1) 0%,
+          rgba(3, 3, 4, 0.9) 10%,
+          rgba(3, 3, 4, 0.38) 22%,
+          rgba(3, 3, 4, 0) 34%,
+          rgba(3, 3, 4, 0) 68%,
+          rgba(3, 3, 4, 0.4) 82%,
+          rgba(3, 3, 4, 0.9) 94%,
+          rgba(3, 3, 4, 1) 100%
+        ),
+        linear-gradient(
+          90deg,
+          rgba(3, 3, 4, 1) 0%,
+          rgba(3, 3, 4, 0.972) 42%,
+          rgba(3, 3, 4, 0.7) 66%,
+          rgba(3, 3, 4, 0.26) 82%,
+          rgba(3, 3, 4, 0.46) 100%
+        ),
+        radial-gradient(
+          circle at 76% 56%,
+          rgba(3, 3, 4, 0) 0%,
+          rgba(3, 3, 4, 0.12) 24%,
+          rgba(3, 3, 4, 0.34) 64%,
+          rgba(3, 3, 4, 0.58) 100%
+        ),
+        radial-gradient(circle at 18% 42%, rgba(3, 3, 4, 0.2) 0%, transparent 36%);
+    }
+
+    .hero-stage :global(.hero-signal-field) {
+      inset: 0 -2.5rem -2rem -1rem;
+    }
+
+    .hero-layout {
+      padding-top: 2.25rem;
+      padding-bottom: 3.5rem;
+    }
+
     .metric-grid,
     .capability-grid,
     .offer-grid {
@@ -636,6 +781,11 @@
 
     .hero-title {
       font-size: clamp(2.6rem, 11vw, 4rem);
+    }
+
+    .hero-copy .product-kicker {
+      gap: 0.38rem;
+      padding: 0.34rem 0.58rem 0.36rem;
     }
 
     .signal-shell,

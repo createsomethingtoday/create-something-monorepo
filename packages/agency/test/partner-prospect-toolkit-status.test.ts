@@ -72,13 +72,14 @@ test('prospect toolkit status helper promotes INITIATED bindings to ACTIVE when 
 	assert.equal(prospects.length, 1);
 	assert.equal(prospects[0]?.toolkit_accounts.length, 1);
 	assert.equal(prospects[0]?.toolkit_accounts[0]?.connection_status, 'ACTIVE');
-	assert.equal(prospects[0]?.toolkit_accounts[0]?.connected, true);
-	assert.equal(prospects[0]?.toolkit_accounts[0]?.connected_account_id, 'connacct_123');
-	assert.equal(prospects[0]?.toolkit_accounts[0]?.connected_at, '2026-03-18T12:00:00.000Z');
-	assert.equal(prospects[0]?.toolkit_accounts[0]?.last_checked_at, '2026-03-18T12:10:00.000Z');
-	assert.equal(updates.length, 1);
-	assert.equal(updates[0]?.connectionStatus, 'ACTIVE');
-});
+		assert.equal(prospects[0]?.toolkit_accounts[0]?.connected, true);
+		assert.equal(prospects[0]?.toolkit_accounts[0]?.connected_account_id, 'connacct_123');
+		assert.equal(prospects[0]?.toolkit_accounts[0]?.connected_at, '2026-03-18T12:00:00.000Z');
+		assert.equal(prospects[0]?.toolkit_accounts[0]?.last_checked_at, '2026-03-18T12:10:00.000Z');
+		assert.equal(prospects[0]?.toolkit_accounts[0]?.verification_state, 'live');
+		assert.equal(updates.length, 1);
+		assert.equal(updates[0]?.connectionStatus, 'ACTIVE');
+	});
 
 test('prospect toolkit status helper falls back to stored state when Composio refresh fails', async () => {
 	const updates: Array<Record<string, unknown>> = [];
@@ -106,9 +107,9 @@ test('prospect toolkit status helper falls back to stored state when Composio re
 	assert.equal(prospects[0]?.toolkit_accounts.length, 1);
 	assert.equal(prospects[0]?.toolkit_accounts[0]?.connection_status, 'INITIATED');
 	assert.equal(prospects[0]?.toolkit_accounts[0]?.connected, false);
-	assert.equal(prospects[0]?.toolkit_accounts[0]?.last_checked_at, '2026-03-18T12:10:00.000Z');
-	assert.equal(updates.length, 1);
-	assert.equal(updates[0]?.connectionStatus, 'INITIATED');
+	assert.equal(prospects[0]?.toolkit_accounts[0]?.last_checked_at, null);
+	assert.equal(prospects[0]?.toolkit_accounts[0]?.verification_state, 'refresh_failed');
+	assert.equal(updates.length, 0);
 });
 
 test('prospect toolkit status helper matches by stored binding when the remote toolkit label does not normalize to the stored slug', async () => {
@@ -147,4 +148,42 @@ test('prospect toolkit status helper matches by stored binding when the remote t
 	assert.equal(prospects[0]?.toolkit_accounts[0]?.toolkit, 'ona');
 	assert.equal(prospects[0]?.toolkit_accounts[0]?.connection_status, 'ACTIVE');
 	assert.equal(prospects[0]?.toolkit_accounts[0]?.connected_account_id, 'connacct_ona');
+	assert.equal(prospects[0]?.toolkit_accounts[0]?.verification_state, 'live');
+});
+
+test('prospect toolkit status helper can load toolkit accounts for multiple clients in one batched query', async () => {
+	let batchedCalls = 0;
+
+	const prospects = await attachProspectToolkitAccounts(
+		{
+			listToolkitAccounts: async () => {
+				throw new Error('listToolkitAccounts should not be called when batched helper is provided');
+			},
+			listToolkitAccountsForClientIds: async (_db, clientIds) => {
+				batchedCalls += 1;
+				return clientIds.flatMap((clientId) => [
+					createToolkitAccount({
+						id: `acct_${clientId}`,
+						partner_client_id: clientId,
+						composio_user_id: `user_${clientId}`,
+					}),
+				]) as any[];
+			},
+			normalizeToolkitSlug: (value) => value.trim().toLowerCase(),
+			parseJsonObject: (raw) => (raw ? (JSON.parse(raw) as Record<string, unknown>) : {}),
+			now: () => '2026-03-18T12:10:00.000Z',
+		},
+		{
+			db: {} as D1Database,
+			prospects: [
+				createProspect({ client: { id: 'pacli_one', slug: 'one' } }),
+				createProspect({ client: { id: 'pacli_two', slug: 'two' } }),
+			] as any[],
+		},
+	);
+
+	assert.equal(batchedCalls, 1);
+	assert.equal(prospects.length, 2);
+	assert.equal(prospects[0]?.toolkit_accounts.length, 1);
+	assert.equal(prospects[1]?.toolkit_accounts.length, 1);
 });

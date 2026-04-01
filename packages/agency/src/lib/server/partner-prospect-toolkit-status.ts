@@ -41,6 +41,26 @@ async function listToolkitAccounts(
 	return result.results ?? [];
 }
 
+async function listToolkitAccountsForClientIds(
+	db: D1Database,
+	partnerClientIds: string[],
+): Promise<PartnerAuthToolkitAccountRow[]> {
+	if (partnerClientIds.length === 0) {
+		return [];
+	}
+
+	const placeholders = partnerClientIds.map(() => '?').join(', ');
+	const result = await db
+		.prepare(
+			`SELECT * FROM partner_auth_toolkit_accounts
+	       WHERE partner_client_id IN (${placeholders})
+	       ORDER BY partner_client_id ASC, toolkit ASC, account_slug ASC`,
+		)
+		.bind(...partnerClientIds)
+		.all<PartnerAuthToolkitAccountRow>();
+	return result.results ?? [];
+}
+
 async function updateToolkitAccountSyncState(
 	db: D1Database,
 	input: {
@@ -99,11 +119,12 @@ export async function attachProspectToolkitAccountsForAgencyUser<TProspect exten
 		prospects: TProspect[];
 	},
 ): Promise<Array<ProspectWithToolkitAccounts<TProspect>>> {
-	return attachProspectToolkitAccounts(
-		{
-			listToolkitAccounts,
-			listConnectedAccounts: createConnectedAccountLister(input.env),
-			normalizeToolkitSlug,
+		return attachProspectToolkitAccounts(
+			{
+				listToolkitAccounts,
+				listToolkitAccountsForClientIds,
+				listConnectedAccounts: createConnectedAccountLister(input.env),
+				normalizeToolkitSlug,
 			parseJsonObject,
 			updateToolkitAccountSyncState,
 		},

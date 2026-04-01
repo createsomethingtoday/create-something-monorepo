@@ -1,10 +1,13 @@
 import {
+	assessProspectClaimBinding,
 	deriveProspectServiceTier,
 	getProspectAvailabilityConflict,
 	getProspectClaimConflict,
 	resolveProspectClaimAuthorization,
+	type ProspectBindingBlockedReason,
 	type ProspectClaimAuthorization,
 	type ProspectClaimConflictCode,
+	type ProspectClaimState,
 } from './partner-prospect-claim-shared.js';
 import type {
 	AgencyCanonicalServiceTier,
@@ -53,8 +56,10 @@ interface AgencyIdentitySeedLike {
 	tenant_id: string;
 }
 
-export type ProspectClaimDiscoveryState = 'claimable' | 'claimed_by_you' | 'claimed_by_other';
-export type ProspectClaimDiscoveryBlockedReason = ProspectClaimConflictCode | 'already_claimed';
+export type ProspectClaimDiscoveryState = ProspectClaimState;
+export type ProspectClaimDiscoveryBlockedReason =
+	| ProspectClaimConflictCode
+	| ProspectBindingBlockedReason;
 
 export interface ProspectClaimDiscoveryItem {
 	client: {
@@ -88,14 +93,15 @@ export interface ProspectClaimDiscoveryItem {
 		created_at: string;
 		updated_at: string;
 	};
-	prospect_claim: {
-		state: ProspectClaimDiscoveryState;
-		can_claim_now: boolean;
-		authorized_via: ProspectClaimAuthorization;
-		blocked_reason: ProspectClaimDiscoveryBlockedReason | null;
-		blocked_message: string | null;
-		service_tier: AgencyCanonicalServiceTier;
-	};
+		prospect_claim: {
+			state: ProspectClaimDiscoveryState;
+			can_claim_now: boolean;
+			authorized_via: ProspectClaimAuthorization;
+			blocked_reason: ProspectClaimDiscoveryBlockedReason | null;
+			blocked_message: string | null;
+			service_tier: AgencyCanonicalServiceTier;
+			requires_repair: boolean;
+		};
 	issuance_state: {
 		ready: false;
 		blocked_reason: 'prospect_not_ready';
@@ -130,6 +136,10 @@ export interface PartnerProspectDiscoveryDeps {
 	listPartnerAccessLanes: (
 		db: D1Database,
 		partnerClientId: string,
+	) => Promise<ProspectLaneRowLike[]>;
+	listPartnerAccessLanesForClientIds?: (
+		db: D1Database,
+		partnerClientIds: string[],
 	) => Promise<ProspectLaneRowLike[]>;
 	isProspectRecord: (metadata: Record<string, unknown>) => boolean;
 	isProspectGraduated: (metadata: Record<string, unknown>) => boolean;
@@ -170,15 +180,16 @@ export async function listPartnerProspectClaimsForUser(
 		deps.findAgencyMcpEntitlementByAuthSubject(input.db, input.authSubject),
 	]);
 	const existingEntitlementMetadata = deps.parseJsonObject(existingEntitlement?.metadata_json);
+	const prospectClients = clients.filter((client) => {
+		const clientMetadata = deps.parseJsonObject(client.metadata_json);
+		return deps.isProspectRecord(clientMetadata) && !deps.isProspectGraduated(clientMetadata);
+	});
+	const lanesByClient = await loadProspectLanesByClient(deps, input.db, prospectClients);
 
 	const prospects = await Promise.all(
-		clients.map(async (client) => {
+		prospectClients.map(async (client) => {
 			const clientMetadata = deps.parseJsonObject(client.metadata_json);
-			if (!deps.isProspectRecord(clientMetadata) || deps.isProspectGraduated(clientMetadata)) {
-				return [] as ProspectClaimDiscoveryItem[];
-			}
-
-			const lanes = await deps.listPartnerAccessLanes(input.db, client.id);
+			const lanes = lanesByClient.get(client.id) ?? [];
 			const results: ProspectClaimDiscoveryItem[] = [];
 			for (const lane of lanes) {
 				const laneMetadata = deps.parseJsonObject(lane.metadata_json);
@@ -208,35 +219,36 @@ export async function listPartnerProspectClaimsForUser(
 					clientStatus: client.status,
 					laneStatus: lane.status,
 				});
-				const claimConflict = getProspectClaimConflict({
-					userId: input.authSubject,
-					identityAccountId,
-					identityTenantId,
-					existingSeed,
-					existingEntitlement,
-					existingEntitlementMetadata,
-				});
-				const claimedByOther =
-					(client.identity_user_id && client.identity_user_id !== input.authSubject) ||
-					(lane.identity_user_id && lane.identity_user_id !== input.authSubject);
-				const claimedByYou =
-					!claimedByOther &&
-					(client.identity_user_id === input.authSubject || lane.identity_user_id === input.authSubject);
-				const state: ProspectClaimDiscoveryState = claimedByOther
-					? 'claimed_by_other'
-					: claimedByYou
-						? 'claimed_by_you'
-						: 'claimable';
-				const blockedReason: ProspectClaimDiscoveryBlockedReason | null = claimedByOther
-					? 'already_claimed'
-					: claimConflict?.code ?? availabilityConflict?.code ?? null;
-				const blockedMessage = claimedByOther
-					? 'This prospect is already claimed by another Auth0 subject.'
-					: claimConflict?.message ?? availabilityConflict?.message ?? null;
-				const graduationReadiness = claimedByYou
-					? buildProspectGraduationReadiness(
-							deps,
-							existingEntitlement,
+					const claimConflict = getProspectClaimConflict({
+						userId: input.authSubject,
+						identityAccountId,
+						identityTenantId,
+						existingSeed,
+						existingEntitlement,
+						existingEntitlementMetadata,
+					});
+					const bindingAssessment = assessProspectClaimBinding({
+						userId: input.authSubject,
+						clientIdentityUserId: client.identity_user_id,
+						laneIdentityUserId: lane.identity_user_id,
+					});
+					const blockedReason: ProspectClaimDiscoveryBlockedReason | null =
+						claimConflict?.code ??
+						availabilityConflict?.code ??
+						bindingAssessment.blockedReason;
+					const blockedMessage =
+						claimConflict?.message ??
+						availabilityConflict?.message ??
+						bindingAssessment.blockedMessage;
+					const canClaimNow =
+						!bindingAssessment.fullyClaimedByYou &&
+						!bindingAssessment.claimedByOther &&
+						!claimConflict &&
+						!availabilityConflict;
+					const graduationReadiness = bindingAssessment.fullyClaimedByYou
+						? buildProspectGraduationReadiness(
+								deps,
+								existingEntitlement,
 							identityAccountId,
 							identityTenantId,
 							serviceTier,
@@ -244,17 +256,18 @@ export async function listPartnerProspectClaimsForUser(
 					: null;
 
 				results.push({
-					client: serializeClient(client, deps),
-					lane: serializeLane(lane, deps),
-					prospect_claim: {
-						state,
-						can_claim_now: blockedReason === null,
-						authorized_via: authorizedVia,
-						blocked_reason: blockedReason,
-						blocked_message: blockedMessage,
-						service_tier: serviceTier,
-					},
-					issuance_state: {
+						client: serializeClient(client, deps),
+						lane: serializeLane(lane, deps),
+						prospect_claim: {
+							state: bindingAssessment.state,
+							can_claim_now: canClaimNow,
+							authorized_via: authorizedVia,
+							blocked_reason: blockedReason,
+							blocked_message: blockedMessage,
+							service_tier: serviceTier,
+							requires_repair: bindingAssessment.repairableByYou,
+						},
+						issuance_state: {
 						ready: false,
 						blocked_reason: 'prospect_not_ready',
 						message:
@@ -271,6 +284,40 @@ export async function listPartnerProspectClaimsForUser(
 	return prospects
 		.flat()
 		.sort((left, right) => compareDiscoveryState(left.prospect_claim.state, right.prospect_claim.state));
+}
+
+async function loadProspectLanesByClient(
+	deps: Pick<
+		PartnerProspectDiscoveryDeps,
+		'listPartnerAccessLanes' | 'listPartnerAccessLanesForClientIds'
+	>,
+	db: D1Database,
+	clients: ProspectClientRowLike[],
+): Promise<Map<string, ProspectLaneRowLike[]>> {
+	const lanesByClient = new Map<string, ProspectLaneRowLike[]>();
+	if (clients.length === 0) {
+		return lanesByClient;
+	}
+
+	if (deps.listPartnerAccessLanesForClientIds) {
+		const rows = await deps.listPartnerAccessLanesForClientIds(
+			db,
+			clients.map((client) => client.id),
+		);
+		for (const row of rows) {
+			const existing = lanesByClient.get(row.partner_client_id) ?? [];
+			existing.push(row);
+			lanesByClient.set(row.partner_client_id, existing);
+		}
+		return lanesByClient;
+	}
+
+	await Promise.all(
+		clients.map(async (client) => {
+			lanesByClient.set(client.id, await deps.listPartnerAccessLanes(db, client.id));
+		}),
+	);
+	return lanesByClient;
 }
 
 function buildProspectGraduationReadiness(

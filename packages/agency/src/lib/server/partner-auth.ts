@@ -360,6 +360,35 @@ export async function listPartnerAccessLanes(
 	return result.results ?? [];
 }
 
+export async function listPartnerAccessLanesForClientIds(
+	db: D1Database,
+	partnerClientIds: string[],
+): Promise<PartnerAuthAccessLaneRow[]> {
+	if (partnerClientIds.length === 0) {
+		return [];
+	}
+
+	const placeholders = partnerClientIds.map(() => '?').join(', ');
+	const result = await db
+		.prepare(
+			`SELECT * FROM partner_auth_access_lanes
+	       WHERE partner_client_id IN (${placeholders})
+	       ORDER BY
+	         partner_client_id ASC,
+	         CASE status
+	           WHEN 'active' THEN 0
+	           WHEN 'paused' THEN 1
+	           WHEN 'initialized' THEN 2
+	           WHEN 'sunset' THEN 3
+	           ELSE 4
+	         END,
+	         updated_at DESC`,
+		)
+		.bind(...partnerClientIds)
+		.all<PartnerAuthAccessLaneRow>();
+	return result.results ?? [];
+}
+
 export async function findPartnerAccessLaneForIdentity(
 	db: D1Database,
 	input: {

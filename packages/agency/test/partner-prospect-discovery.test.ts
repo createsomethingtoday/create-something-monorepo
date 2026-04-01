@@ -100,6 +100,7 @@ test('prospect discovery lists claimable workspaces for the signed-in agency use
 		['pacli_delta', [createLane('pacli_delta', 'prospect-delta', { owner_email: 'outside@example.net' })]],
 		['pacli_echo', [createLane('pacli_echo', 'prospect-echo')]],
 	]);
+	let batchCalls = 0;
 
 	const prospects = await listPartnerProspectClaimsForUser(
 		{
@@ -107,7 +108,13 @@ test('prospect discovery lists claimable workspaces for the signed-in agency use
 			findAgencyIdentitySeedByEmail: async () => null,
 			findAgencyMcpEntitlementByAuthSubject: async () => null,
 			listPartnerClients: async () => clients as any[],
-			listPartnerAccessLanes: async (_db, clientId) => lanesByClient.get(clientId) ?? [],
+			listPartnerAccessLanes: async () => {
+				throw new Error('listPartnerAccessLanes should not be called when batched lookup is available');
+			},
+			listPartnerAccessLanesForClientIds: async (_db, clientIds) => {
+				batchCalls += 1;
+				return clientIds.flatMap((clientId) => lanesByClient.get(clientId) ?? []) as any[];
+			},
 			isProspectRecord: (metadata) => metadata.onboarding_mode === 'prospect' || metadata.lifecycle_stage === 'prospect',
 			isProspectGraduated: (metadata) => metadata.lifecycle_stage === 'graduated' || metadata.lifecycle_stage === 'active',
 			normalizeAgencyServiceTier: (value, fallback = 'mcp_only') => (value?.includes('trial') ? 'policy_os_trial' : fallback),
@@ -123,10 +130,12 @@ test('prospect discovery lists claimable workspaces for the signed-in agency use
 		},
 	);
 
+	assert.equal(batchCalls, 1);
 	assert.equal(prospects.length, 3);
 	assert.equal(prospects[0]?.client.slug, 'acme');
 	assert.equal(prospects[0]?.prospect_claim.state, 'claimable');
 	assert.equal(prospects[0]?.prospect_claim.authorized_via, 'owner_email');
+	assert.equal(prospects[0]?.prospect_claim.requires_repair, false);
 	assert.equal(prospects[1]?.client.slug, 'bravo');
 	assert.equal(prospects[1]?.prospect_claim.authorized_via, 'claim_email_domains');
 	assert.equal(prospects[2]?.client.slug, 'charlie');
@@ -211,6 +220,47 @@ test('prospect discovery marks paused prospect workspaces unavailable for self-s
 	assert.equal(prospects[0]?.prospect_claim.can_claim_now, false);
 	assert.equal(prospects[0]?.prospect_claim.blocked_reason, 'prospect_unavailable');
 	assert.match(prospects[0]?.prospect_claim.blocked_message ?? '', /client status is paused/i);
+});
+
+test('prospect discovery surfaces repairable partial claim bindings without treating them as fully claimed', async () => {
+	const client = createClient({
+		id: 'pacli_repair',
+		slug: 'repair',
+		display_name: 'Repair',
+		identity_user_id: 'auth0|claimant',
+	});
+	const lane = createLane('pacli_repair', 'prospect-repair', {
+		identity_user_id: null,
+	});
+
+	const prospects = await listPartnerProspectClaimsForUser(
+		{
+			partnerKey: 'half-dozen',
+			findAgencyIdentitySeedByEmail: async () => null,
+			findAgencyMcpEntitlementByAuthSubject: async () => null,
+			listPartnerClients: async () => [client] as any[],
+			listPartnerAccessLanes: async () => [lane] as any[],
+			isProspectRecord: () => true,
+			isProspectGraduated: () => false,
+			normalizeAgencyServiceTier: (value, fallback = 'mcp_only') => value ?? fallback,
+			normalizeEmail: (raw) => raw?.trim().toLowerCase() ?? null,
+			parseJsonArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
+			parseJsonObject: (raw) => (raw ? (JSON.parse(raw) as Record<string, unknown>) : {}),
+			parseJsonStringArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
+		},
+		{
+			db: {} as D1Database,
+			authSubject: 'auth0|claimant',
+			email: 'owner@example.com',
+		},
+	);
+
+	assert.equal(prospects.length, 1);
+	assert.equal(prospects[0]?.prospect_claim.state, 'claimable');
+	assert.equal(prospects[0]?.prospect_claim.can_claim_now, true);
+	assert.equal(prospects[0]?.prospect_claim.requires_repair, true);
+	assert.equal(prospects[0]?.prospect_claim.blocked_reason, 'inconsistent_claim_state');
+	assert.equal(prospects[0]?.graduation_readiness, null);
 });
 
 test('prospect discovery surfaces graduation readiness for a claimed workspace', async () => {

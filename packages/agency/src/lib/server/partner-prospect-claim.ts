@@ -10,7 +10,6 @@ import {
 	parseJsonArray,
 	parseJsonObject,
 	parseJsonStringArray,
-	upsertPartnerAccessLane,
 } from './partner-auth.js';
 import {
 	buildAgencyEntitlementSnapshot,
@@ -49,7 +48,6 @@ export function createPartnerProspectClaimPostHandlerWithDefaults() {
 				platform,
 			}),
 		upsertAgencyIdentitySeed,
-		upsertPartnerAccessLane,
 		isHttpError: (error): error is { status: number; code?: string; message?: string; body?: { message?: string } } =>
 			Boolean(error && typeof error === 'object' && 'status' in error),
 	});

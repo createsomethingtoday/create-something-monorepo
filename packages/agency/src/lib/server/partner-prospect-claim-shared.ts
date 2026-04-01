@@ -3,6 +3,8 @@ export type ProspectClaimConflictCode =
 	| 'identity_seed_conflict'
 	| 'manual_override_conflict'
 	| 'prospect_unavailable';
+export type ProspectClaimState = 'claimable' | 'claimed_by_you' | 'claimed_by_other';
+export type ProspectBindingBlockedReason = 'already_claimed' | 'inconsistent_claim_state';
 export type ProspectSelfServiceStatus = 'initialized' | 'active';
 
 export interface ProspectClaimSeedLike {
@@ -19,6 +21,15 @@ export interface ProspectClaimEntitlementLike {
 export interface ProspectClaimConflict {
 	code: ProspectClaimConflictCode;
 	message: string;
+}
+
+export interface ProspectClaimBindingAssessment {
+	state: ProspectClaimState;
+	fullyClaimedByYou: boolean;
+	repairableByYou: boolean;
+	claimedByOther: boolean;
+	blockedReason: ProspectBindingBlockedReason | null;
+	blockedMessage: string | null;
 }
 
 export function isProspectSelfServiceStatus(status: string): status is ProspectSelfServiceStatus {
@@ -142,6 +153,67 @@ export function getProspectAvailabilityConflict(input: {
 	return {
 		code: 'prospect_unavailable',
 		message: `This prospect workspace is not available for self-service claim while client status is ${input.clientStatus} and lane status is ${input.laneStatus}.`,
+	};
+}
+
+export function assessProspectClaimBinding(input: {
+	userId: string;
+	clientIdentityUserId: string | null;
+	laneIdentityUserId: string | null;
+}): ProspectClaimBindingAssessment {
+	const clientClaimedByYou = input.clientIdentityUserId === input.userId;
+	const laneClaimedByYou = input.laneIdentityUserId === input.userId;
+	const clientClaimedByOther =
+		Boolean(input.clientIdentityUserId) && input.clientIdentityUserId !== input.userId;
+	const laneClaimedByOther =
+		Boolean(input.laneIdentityUserId) && input.laneIdentityUserId !== input.userId;
+	const claimedByOther = clientClaimedByOther || laneClaimedByOther;
+	const fullyClaimedByYou = clientClaimedByYou && laneClaimedByYou;
+	const repairableByYou =
+		!claimedByOther &&
+		((clientClaimedByYou && !input.laneIdentityUserId) || (!input.clientIdentityUserId && laneClaimedByYou));
+
+	if (claimedByOther) {
+		return {
+			state: 'claimed_by_other',
+			fullyClaimedByYou: false,
+			repairableByYou: false,
+			claimedByOther: true,
+			blockedReason: 'already_claimed',
+			blockedMessage: 'This prospect is already claimed by another Auth0 subject.',
+		};
+	}
+
+	if (fullyClaimedByYou) {
+		return {
+			state: 'claimed_by_you',
+			fullyClaimedByYou: true,
+			repairableByYou: false,
+			claimedByOther: false,
+			blockedReason: null,
+			blockedMessage: null,
+		};
+	}
+
+	if (repairableByYou) {
+		return {
+			state: 'claimable',
+			fullyClaimedByYou: false,
+			repairableByYou: true,
+			claimedByOther: false,
+			blockedReason: 'inconsistent_claim_state',
+			blockedMessage:
+				'This workspace has a partial claim binding. Re-run claim to repair it before connecting services.',
+		};
+	}
+
+	return {
+		state: 'claimable',
+		fullyClaimedByYou: false,
+		repairableByYou: false,
+		claimedByOther: false,
+		blockedReason: null,
+		blockedMessage: null,
 	};
 }
 

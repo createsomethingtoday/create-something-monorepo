@@ -33,9 +33,9 @@
 	);
 </script>
 
-<SEO
-	title="Prospect Portal | CREATE SOMETHING AGENCY"
-	description="Claim preprovisioned prospect workspaces and connect approved toolkit accounts before graduation."
+	<SEO
+		title="Prospect Portal | CREATE SOMETHING AGENCY"
+		description="Claim preprovisioned workspaces and connect approved services during onboarding."
 	propertyName="agency"
 	noindex={true}
 />
@@ -45,41 +45,41 @@
 		<div class="portal-card">
 			<p class="eyebrow">Prospect Portal</p>
 			<h1>Claim your workspace and connect approved services.</h1>
-			<p class="lede">
-				If your workspace was preprovisioned for onboarding, sign in with the authorized email to claim it,
-				review enabled toolkits, and complete provider connections before commercial graduation.
-			</p>
+				<p class="lede">
+					If your workspace was preprovisioned for onboarding, sign in with the authorized email to claim it,
+					review approved services, and complete provider connections before activation.
+				</p>
 			<div class="portal-actions">
 				<a class="primary-action" href={loginHref}>Sign in</a>
 				<a class="secondary-action" href={signupHref}>Create account</a>
 			</div>
-			<p class="footnote">
-				Workspace claim and toolkit connection are governed. Customer credential issuance remains blocked until graduation.
-			</p>
-		</div>
-	</section>
-{:else}
+				<p class="footnote">
+					Workspace claim and service connection are governed. Customer credential issuance remains blocked until activation.
+				</p>
+			</div>
+		</section>
+	{:else}
 	<ReportShell
-		eyebrow="Prospect Portal"
-		title="Prospect Workspaces"
-		lede="Claim preprovisioned workspaces, connect approved services, and keep the onboarding path governed until commercial graduation."
-		sideLabel="Signed in as"
-		sideValue={data.user.email}
+			eyebrow="Prospect Portal"
+			title="Prospect Workspaces"
+			lede="Claim preprovisioned workspaces, connect approved services, and keep onboarding governed until activation."
+			sideLabel="Signed in as"
+			sideValue={data.user.email}
 		sideMeta={data.error ? `Status: ${data.error}` : `${prospects.length} workspace${prospects.length === 1 ? '' : 's'}`}
 	>
-		<svelte:fragment slot="summary">
-			<SummaryItem label="Claimable" value={String(claimableCount)} note="Ready to bind now" />
-			<SummaryItem label="Claimed" value={String(claimedCount)} note="Already bound to this Auth0 account" />
-			<SummaryItem label="Review" value={String(reviewCount)} note="Blocked or unavailable workspaces" />
-			<SummaryItem label="Grad Ready" value={String(graduationReadyCount)} note="Ready for operator promotion" />
-			<SummaryItem label="Connected Toolkits" value={String(connectedToolkitCount)} note="Active provider connections" />
+			<svelte:fragment slot="summary">
+				<SummaryItem label="Claimable" value={String(claimableCount)} note="Ready to bind now" />
+				<SummaryItem label="Claimed" value={String(claimedCount)} note="Already linked to this account" />
+				<SummaryItem label="Review" value={String(reviewCount)} note="Blocked or unavailable workspaces" />
+				<SummaryItem label="Grad Ready" value={String(graduationReadyCount)} note="Ready for operator promotion" />
+				<SummaryItem label="Connected Toolkits" value={String(connectedToolkitCount)} note="Active provider connections" />
 		</svelte:fragment>
 
 		{#if data.error}
 			<p class="feedback error">{data.error}</p>
 		{/if}
 
-		<ProspectWorkspaceSection prospects={prospects} emptyMessage="No prospect workspaces are currently assigned to this Auth0 account." />
+			<ProspectWorkspaceSection prospects={prospects} emptyMessage="No prospect workspaces are currently assigned to this account." />
 	</ReportShell>
 {/if}
 

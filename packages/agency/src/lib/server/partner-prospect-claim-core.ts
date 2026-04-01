@@ -1,4 +1,5 @@
 import {
+	assessProspectClaimBinding,
 	deriveProspectServiceTier,
 	getProspectAvailabilityConflict,
 	getProspectClaimConflict,
@@ -77,8 +78,31 @@ interface AgencyIdentitySeedLike {
 	tenant_id: string;
 	workspace_account_id: string | null;
 	service_tier: string;
+	managed_bearer_allowed?: number;
+	org_membership_active?: number;
+	service_entitled?: number;
+	policy_accepted?: number;
+	contract_active?: number;
+	billing_active?: number;
 	status: string;
+	invited_at?: string | null;
+	bound_at?: string | null;
+	metadata_json?: string;
 }
+
+interface ProspectClaimRollbackContext {
+	client: ProspectClientRowLike;
+	lane: ProspectLaneRowLike;
+	claimedByUserId: string;
+	normalizedEmail: string;
+	previousSeed: AgencyIdentitySeedLike | null;
+	previousEntitlement: AgencyMcpEntitlementRow | null;
+}
+
+type ProspectClaimBindingRollbackContext = Pick<
+	ProspectClaimRollbackContext,
+	'client' | 'lane' | 'claimedByUserId'
+>;
 
 export interface PartnerProspectClaimDeps {
 	partnerKey: string;
@@ -154,23 +178,6 @@ export interface PartnerProspectClaimDeps {
 			metadata?: Record<string, unknown>;
 		},
 	) => Promise<AgencyIdentitySeedLike | null>;
-	upsertPartnerAccessLane: (
-		db: D1Database,
-		input: {
-			id: string;
-			partnerClientId: string;
-			slug: string;
-			displayName: string;
-			identityUserId: string | null;
-			ownerEmail: string | null;
-			hubUrl: string;
-			hostKey: string;
-			status: ProspectLaneRowLike['status'];
-			toolkitProfile: string[];
-			allowedToolPrefixes: string[];
-			metadata: Record<string, unknown>;
-		},
-	) => Promise<ProspectLaneRowLike>;
 	isHttpError: (error: unknown) => error is ProspectClaimHttpErrorLike;
 }
 
@@ -180,8 +187,11 @@ function jsonResponse(body: Record<string, unknown>, status = 200): Response {
 
 export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaimDeps) {
 	return async ({ cookies, params, platform, request }: ProspectClaimRequestEventLike): Promise<Response> => {
+		let db: D1Database | undefined;
+		let rollbackContext: ProspectClaimRollbackContext | null = null;
+
 		try {
-			const db = platform?.env?.DB;
+			db = platform?.env?.DB;
 			if (!db) {
 				return jsonResponse({ error: 'unavailable', message: 'Database is unavailable' }, 503);
 			}
@@ -265,16 +275,21 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 				);
 			}
 
-			if (client.identity_user_id && client.identity_user_id !== user.id) {
-				return jsonResponse(
-					{
-						error: 'already_claimed',
-						message: 'This prospect is already claimed by another Auth0 subject.',
-					},
-					409,
-				);
-			}
-			if (lane.identity_user_id && lane.identity_user_id !== user.id) {
+			const bindingAssessment = assessProspectClaimBinding({
+				userId: user.id,
+				clientIdentityUserId: client.identity_user_id,
+				laneIdentityUserId: lane.identity_user_id,
+			});
+			if (bindingAssessment.claimedByOther) {
+				if (client.identity_user_id && client.identity_user_id !== user.id) {
+					return jsonResponse(
+						{
+							error: 'already_claimed',
+							message: 'This prospect is already claimed by another Auth0 subject.',
+						},
+						409,
+					);
+				}
 				return jsonResponse(
 					{
 						error: 'lane_already_claimed',
@@ -282,6 +297,13 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 					},
 					409,
 				);
+			}
+			if (bindingAssessment.repairableByYou) {
+				console.warn('Prospect claim repair requested for partially claimed workspace', {
+					clientSlug: client.slug,
+					laneSlug: lane.slug,
+					userId: user.id,
+				});
 			}
 
 			const identityAccountId = client.identity_account_id ?? client.workspace_account_id;
@@ -308,12 +330,47 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 			}
 
 			const now = new Date().toISOString();
+			rollbackContext = {
+				client,
+				lane,
+				claimedByUserId: user.id,
+				normalizedEmail: normalizedUserEmail,
+				previousSeed: existingSeed,
+				previousEntitlement: existingEntitlement,
+			};
+			let claimedClient = client;
+			let claimedLane = lane;
+			if (!bindingAssessment.fullyClaimedByYou) {
+				const claimBinding = await applyProspectClaimBinding(deps, db, {
+					partnerKey: deps.partnerKey,
+					client,
+					clientMetadata,
+					lane,
+					laneMetadata,
+					now,
+					user,
+					authorizedVia,
+					normalizedUserEmail,
+				});
+				if (!claimBinding.ok) {
+					return jsonResponse(
+						{
+							error: claimBinding.error,
+							message: claimBinding.message,
+						},
+						claimBinding.status,
+					);
+				}
+				claimedClient = claimBinding.client;
+				claimedLane = claimBinding.lane;
+			}
+
 			const seed = await deps.upsertAgencyIdentitySeed(db, {
 				authEmail: normalizedUserEmail,
 				authSubject: user.id,
 				accountId: identityAccountId,
 				tenantId: identityTenantId,
-				workspaceAccountId: client.workspace_account_id,
+				workspaceAccountId: claimedClient.workspace_account_id,
 				serviceTier,
 				managedBearerAllowed: false,
 				orgMembershipActive: true,
@@ -326,8 +383,8 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 				metadata: {
 					source: 'partner_prospect_claim',
 					partner_key: deps.partnerKey,
-					client_slug: client.slug,
-					lane_slug: lane.slug,
+					client_slug: claimedClient.slug,
+					lane_slug: claimedLane.slug,
 					claim_authorized_via: authorizedVia,
 					claimed_at: now,
 					claimed_by_auth_subject: user.id,
@@ -335,57 +392,18 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 				},
 			});
 
-			await updateProspectClient(db, {
-				client,
-				ownerEmail: client.owner_email ?? normalizedUserEmail,
-				identityAccountId,
-				identityUserId: user.id,
-				identityTenantId,
-				metadata: buildClaimedMetadata({
-					existingMetadata: clientMetadata,
-					now,
-					user,
-					authorizedVia,
-				}),
-			});
-
-			const claimedLane = await deps.upsertPartnerAccessLane(db, {
-				id: lane.id,
-				partnerClientId: client.id,
-				slug: lane.slug,
-				displayName: lane.display_name,
-				identityUserId: user.id,
-				ownerEmail: lane.owner_email ?? client.owner_email ?? normalizedUserEmail,
-				hubUrl: lane.hub_url,
-				hostKey: lane.host_key,
-				status: lane.status,
-				toolkitProfile: deps.parseJsonArray(lane.toolkit_profile_json),
-				allowedToolPrefixes: deps.parseJsonStringArray(lane.allowed_tool_prefixes_json),
-				metadata: buildClaimedMetadata({
-					existingMetadata: laneMetadata,
-					now,
-					user,
-					authorizedVia,
-				}),
-			});
-
-			const claimedClient = await deps.getPartnerClientBySlug(db, deps.partnerKey, slug);
-			if (!claimedClient) {
-				return jsonResponse({ error: 'internal_error', message: 'Failed to reload claimed prospect' }, 500);
-			}
-
 			const entitlementRow = await deps.reconcileAgencyMcpEntitlement(db, {
 				authSubject: user.id,
 				authEmail: normalizedUserEmail,
 				accountId: identityAccountId,
 				tenantId: identityTenantId,
-				workspaceAccountId: client.workspace_account_id,
+				workspaceAccountId: claimedClient.workspace_account_id,
 				serviceTier,
 				metadata: {
 					source: 'partner_prospect_claim',
 					partner_key: deps.partnerKey,
-					client_slug: client.slug,
-					lane_slug: lane.slug,
+					client_slug: claimedClient.slug,
+					lane_slug: claimedLane.slug,
 					claim_authorized_via: authorizedVia,
 					claimed_at: now,
 				},
@@ -395,6 +413,7 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 				tenantId: identityTenantId,
 			});
 			const entitlementSnapshot = deps.buildAgencyEntitlementSnapshot(entitlementRow, entitlementDecision);
+			rollbackContext = null;
 
 			return jsonResponse({
 				prospect_claim: {
@@ -412,6 +431,18 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 				},
 			});
 		} catch (error) {
+			if (db && rollbackContext) {
+				try {
+					await rollbackProspectClaimArtifacts(db, rollbackContext);
+				} catch (rollbackError) {
+					console.warn('Failed to roll back prospect claim binding after error', {
+						clientSlug: rollbackContext.client.slug,
+						laneSlug: rollbackContext.lane.slug,
+						userId: rollbackContext.claimedByUserId,
+						error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+					});
+				}
+			}
 			if (deps.isHttpError(error)) {
 				const status = typeof error.status === 'number' ? error.status : 500;
 				const message = error.message ?? error.body?.message ?? 'Request failed';
@@ -424,35 +455,6 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 			);
 		}
 	};
-}
-
-function updateProspectClient(
-	db: D1Database,
-	input: {
-		client: ProspectClientRowLike;
-		ownerEmail: string | null;
-		identityAccountId: string;
-		identityUserId: string;
-		identityTenantId: string;
-		metadata: Record<string, unknown>;
-	},
-) {
-	return db
-		.prepare(
-			`UPDATE partner_auth_clients
-       SET owner_email = ?, identity_account_id = ?, identity_user_id = ?, identity_tenant_id = ?,
-           metadata_json = ?, updated_at = datetime('now')
-       WHERE id = ?`,
-		)
-		.bind(
-			input.ownerEmail,
-			input.identityAccountId,
-			input.identityUserId,
-			input.identityTenantId,
-			JSON.stringify(input.metadata),
-			input.client.id,
-		)
-		.run();
 }
 
 function buildClaimedMetadata(input: {
@@ -519,4 +521,378 @@ function asMetadataObject(value: unknown): Record<string, unknown> {
 		return {};
 	}
 	return value as Record<string, unknown>;
+}
+
+async function applyProspectClaimBinding(
+	deps: Pick<
+		PartnerProspectClaimDeps,
+		'getPartnerAccessLaneBySlug' | 'getPartnerClientBySlug' | 'parseJsonArray' | 'parseJsonStringArray'
+	>,
+	db: D1Database,
+	input: {
+		partnerKey: string;
+		client: ProspectClientRowLike;
+		clientMetadata: Record<string, unknown>;
+		lane: ProspectLaneRowLike;
+		laneMetadata: Record<string, unknown>;
+		now: string;
+		user: AgencySessionUserLike;
+		authorizedVia: ProspectClaimAuthorization;
+		normalizedUserEmail: string;
+	},
+): Promise<
+	| {
+			ok: true;
+			client: ProspectClientRowLike;
+			lane: ProspectLaneRowLike;
+	  }
+	| {
+			ok: false;
+			status: number;
+			error: string;
+			message: string;
+	  }
+> {
+	await executeStatements(db, [
+		buildProspectClientClaimStatement(db, {
+			client: input.client,
+			ownerEmail: input.client.owner_email ?? input.normalizedUserEmail,
+			identityAccountId: input.client.identity_account_id ?? input.client.workspace_account_id,
+			identityUserId: input.user.id,
+			identityTenantId: input.client.identity_tenant_id ?? input.client.slug,
+			metadata: buildClaimedMetadata({
+				existingMetadata: input.clientMetadata,
+				now: input.now,
+				user: input.user,
+				authorizedVia: input.authorizedVia,
+			}),
+		}),
+		buildProspectLaneClaimStatement(db, {
+			lane: input.lane,
+			partnerClientId: input.client.id,
+			ownerEmail: input.lane.owner_email ?? input.client.owner_email ?? input.normalizedUserEmail,
+			identityUserId: input.user.id,
+			metadata: buildClaimedMetadata({
+				existingMetadata: input.laneMetadata,
+				now: input.now,
+				user: input.user,
+				authorizedVia: input.authorizedVia,
+			}),
+			toolkitProfile: deps.parseJsonArray(input.lane.toolkit_profile_json),
+			allowedToolPrefixes: deps.parseJsonStringArray(input.lane.allowed_tool_prefixes_json),
+		}),
+	]);
+
+	const [claimedClient, claimedLane] = await Promise.all([
+		deps.getPartnerClientBySlug(db, input.partnerKey, input.client.slug),
+		deps.getPartnerAccessLaneBySlug(db, input.client.id, input.lane.slug),
+	]);
+	if (!claimedClient || !claimedLane) {
+		await rollbackProspectClaimBinding(db, {
+			client: input.client,
+			lane: input.lane,
+			claimedByUserId: input.user.id,
+		});
+		return {
+			ok: false,
+			status: 500,
+			error: 'internal_error',
+			message: 'Failed to reload claimed prospect after applying claim binding.',
+		};
+	}
+
+	const bindingAssessment = assessProspectClaimBinding({
+		userId: input.user.id,
+		clientIdentityUserId: claimedClient.identity_user_id,
+		laneIdentityUserId: claimedLane.identity_user_id,
+	});
+	if (bindingAssessment.fullyClaimedByYou) {
+		return {
+			ok: true,
+			client: claimedClient,
+			lane: claimedLane,
+		};
+	}
+
+	console.warn('Prospect claim write detected inconsistent binding state', {
+		clientSlug: claimedClient.slug,
+		laneSlug: claimedLane.slug,
+		userId: input.user.id,
+		bindingState: bindingAssessment,
+	});
+	await rollbackProspectClaimBinding(db, {
+		client: input.client,
+		lane: input.lane,
+		claimedByUserId: input.user.id,
+	});
+
+	if (claimedClient.identity_user_id && claimedClient.identity_user_id !== input.user.id) {
+		return {
+			ok: false,
+			status: 409,
+			error: 'already_claimed',
+			message: 'This prospect is already claimed by another Auth0 subject.',
+		};
+	}
+	if (claimedLane.identity_user_id && claimedLane.identity_user_id !== input.user.id) {
+		return {
+			ok: false,
+			status: 409,
+			error: 'lane_already_claimed',
+			message: 'This prospect lane is already claimed by another Auth0 subject.',
+		};
+	}
+	return {
+		ok: false,
+		status: 409,
+		error: 'inconsistent_claim_state',
+		message:
+			bindingAssessment.blockedMessage ??
+			'This prospect has a partial claim binding. Re-run claim to repair it before continuing.',
+	};
+}
+
+function buildProspectClientClaimStatement(
+	db: D1Database,
+	input: {
+		client: ProspectClientRowLike;
+		ownerEmail: string | null;
+		identityAccountId: string;
+		identityUserId: string;
+		identityTenantId: string;
+		metadata: Record<string, unknown>;
+	},
+) {
+	return db
+		.prepare(
+			`UPDATE partner_auth_clients
+	       SET owner_email = ?, identity_account_id = ?, identity_user_id = ?, identity_tenant_id = ?,
+	           metadata_json = ?, updated_at = datetime('now')
+	       WHERE id = ? AND (identity_user_id IS NULL OR identity_user_id = ?)`,
+		)
+		.bind(
+			input.ownerEmail,
+			input.identityAccountId,
+			input.identityUserId,
+			input.identityTenantId,
+			JSON.stringify(input.metadata),
+			input.client.id,
+			input.identityUserId,
+		);
+}
+
+function buildProspectLaneClaimStatement(
+	db: D1Database,
+	input: {
+		lane: ProspectLaneRowLike;
+		partnerClientId: string;
+		identityUserId: string;
+		ownerEmail: string | null;
+		metadata: Record<string, unknown>;
+		toolkitProfile: string[];
+		allowedToolPrefixes: string[];
+	},
+) {
+	return db
+		.prepare(
+			`UPDATE partner_auth_access_lanes
+	       SET display_name = ?, identity_user_id = ?, owner_email = ?, hub_url = ?, host_key = ?, status = ?,
+	           toolkit_profile_json = ?, allowed_tool_prefixes_json = ?, metadata_json = ?, updated_at = datetime('now')
+	       WHERE id = ? AND (identity_user_id IS NULL OR identity_user_id = ?)
+	         AND EXISTS (
+	           SELECT 1 FROM partner_auth_clients
+	           WHERE id = ? AND identity_user_id = ?
+	         )`,
+		)
+		.bind(
+			input.lane.display_name,
+			input.identityUserId,
+			input.ownerEmail,
+			input.lane.hub_url,
+			input.lane.host_key,
+			input.lane.status,
+			JSON.stringify(input.toolkitProfile),
+			JSON.stringify(input.allowedToolPrefixes),
+			JSON.stringify(input.metadata),
+			input.lane.id,
+			input.identityUserId,
+			input.partnerClientId,
+			input.identityUserId,
+		);
+}
+
+async function rollbackProspectClaimBinding(db: D1Database, input: ProspectClaimBindingRollbackContext) {
+	const statements: D1PreparedStatement[] = [];
+	if (input.client.identity_user_id !== input.claimedByUserId) {
+		statements.push(
+			db
+				.prepare(
+					`UPDATE partner_auth_clients
+	         SET owner_email = ?, identity_account_id = ?, identity_user_id = ?, identity_tenant_id = ?,
+	             metadata_json = ?, updated_at = datetime('now')
+	         WHERE id = ? AND identity_user_id = ?`,
+				)
+				.bind(
+					input.client.owner_email,
+					input.client.identity_account_id,
+					input.client.identity_user_id,
+					input.client.identity_tenant_id,
+					input.client.metadata_json,
+					input.client.id,
+					input.claimedByUserId,
+				),
+		);
+	}
+	if (input.lane.identity_user_id !== input.claimedByUserId) {
+		statements.push(
+			db
+				.prepare(
+					`UPDATE partner_auth_access_lanes
+	         SET display_name = ?, identity_user_id = ?, owner_email = ?, hub_url = ?, host_key = ?, status = ?,
+	             toolkit_profile_json = ?, allowed_tool_prefixes_json = ?, metadata_json = ?, updated_at = datetime('now')
+	         WHERE id = ? AND identity_user_id = ?`,
+				)
+				.bind(
+					input.lane.display_name,
+					input.lane.identity_user_id,
+					input.lane.owner_email,
+					input.lane.hub_url,
+					input.lane.host_key,
+					input.lane.status,
+					input.lane.toolkit_profile_json,
+					input.lane.allowed_tool_prefixes_json,
+					input.lane.metadata_json,
+					input.lane.id,
+					input.claimedByUserId,
+				),
+		);
+	}
+	if (statements.length > 0) {
+		await executeStatements(db, statements);
+	}
+}
+
+async function rollbackProspectClaimArtifacts(db: D1Database, input: ProspectClaimRollbackContext) {
+	await rollbackProspectClaimBinding(db, input);
+	await restoreAgencyIdentitySeed(db, input.normalizedEmail, input.previousSeed);
+	await restoreAgencyMcpEntitlement(db, input.claimedByUserId, input.previousEntitlement);
+}
+
+async function restoreAgencyIdentitySeed(
+	db: D1Database,
+	normalizedEmail: string,
+	previousSeed: AgencyIdentitySeedLike | null,
+) {
+	if (!previousSeed) {
+		await db.prepare(`DELETE FROM agency_identity_seeds WHERE normalized_email = ?`).bind(normalizedEmail).run();
+		return;
+	}
+	await db
+		.prepare(
+			`INSERT INTO agency_identity_seeds (
+	       normalized_email, auth_subject, account_id, tenant_id, workspace_account_id, service_tier,
+	       managed_bearer_allowed, org_membership_active, service_entitled, policy_accepted,
+	       contract_active, billing_active, status, invited_at, bound_at, metadata_json
+	     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	     ON CONFLICT(normalized_email) DO UPDATE SET
+	       auth_subject = excluded.auth_subject,
+	       account_id = excluded.account_id,
+	       tenant_id = excluded.tenant_id,
+	       workspace_account_id = excluded.workspace_account_id,
+	       service_tier = excluded.service_tier,
+	       managed_bearer_allowed = excluded.managed_bearer_allowed,
+	       org_membership_active = excluded.org_membership_active,
+	       service_entitled = excluded.service_entitled,
+	       policy_accepted = excluded.policy_accepted,
+	       contract_active = excluded.contract_active,
+	       billing_active = excluded.billing_active,
+	       status = excluded.status,
+	       invited_at = excluded.invited_at,
+	       bound_at = excluded.bound_at,
+	       metadata_json = excluded.metadata_json,
+	       updated_at = datetime('now')`,
+		)
+		.bind(
+			previousSeed.normalized_email,
+			previousSeed.auth_subject,
+			previousSeed.account_id,
+			previousSeed.tenant_id,
+			previousSeed.workspace_account_id,
+			previousSeed.service_tier,
+			previousSeed.managed_bearer_allowed ?? 1,
+			previousSeed.org_membership_active ?? 1,
+			previousSeed.service_entitled ?? 1,
+			previousSeed.policy_accepted ?? 0,
+			previousSeed.contract_active ?? 1,
+			previousSeed.billing_active ?? 1,
+			previousSeed.status,
+			previousSeed.invited_at ?? null,
+			previousSeed.bound_at ?? null,
+			previousSeed.metadata_json ?? '{}',
+		)
+		.run();
+}
+
+async function restoreAgencyMcpEntitlement(
+	db: D1Database,
+	authSubject: string,
+	previousEntitlement: AgencyMcpEntitlementRow | null,
+) {
+	if (!previousEntitlement) {
+		await db.prepare(`DELETE FROM agency_mcp_entitlements WHERE auth_subject = ?`).bind(authSubject).run();
+		return;
+	}
+	await db
+		.prepare(
+			`INSERT INTO agency_mcp_entitlements (
+	       auth_subject, auth_email, account_id, tenant_id, workspace_account_id, service_tier,
+	       managed_bearer_allowed, org_membership_active, service_entitled, policy_accepted,
+	       contract_active, billing_active, denial_reason, metadata_json
+	     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	     ON CONFLICT(auth_subject) DO UPDATE SET
+	       auth_email = excluded.auth_email,
+	       account_id = excluded.account_id,
+	       tenant_id = excluded.tenant_id,
+	       workspace_account_id = excluded.workspace_account_id,
+	       service_tier = excluded.service_tier,
+	       managed_bearer_allowed = excluded.managed_bearer_allowed,
+	       org_membership_active = excluded.org_membership_active,
+	       service_entitled = excluded.service_entitled,
+	       policy_accepted = excluded.policy_accepted,
+	       contract_active = excluded.contract_active,
+	       billing_active = excluded.billing_active,
+	       denial_reason = excluded.denial_reason,
+	       metadata_json = excluded.metadata_json,
+	       updated_at = datetime('now')`,
+		)
+		.bind(
+			previousEntitlement.auth_subject,
+			previousEntitlement.auth_email,
+			previousEntitlement.account_id,
+			previousEntitlement.tenant_id,
+			previousEntitlement.workspace_account_id,
+			previousEntitlement.service_tier,
+			previousEntitlement.managed_bearer_allowed,
+			previousEntitlement.org_membership_active,
+			previousEntitlement.service_entitled,
+			previousEntitlement.policy_accepted,
+			previousEntitlement.contract_active,
+			previousEntitlement.billing_active,
+			previousEntitlement.denial_reason,
+			previousEntitlement.metadata_json,
+		)
+		.run();
+}
+
+async function executeStatements(db: D1Database, statements: D1PreparedStatement[]) {
+	if (statements.length === 0) {
+		return;
+	}
+	if (typeof db.batch === 'function') {
+		await db.batch(statements);
+		return;
+	}
+	for (const statement of statements) {
+		await statement.run();
+	}
 }

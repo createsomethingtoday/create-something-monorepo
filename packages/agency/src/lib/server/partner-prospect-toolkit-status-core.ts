@@ -54,6 +54,8 @@ interface NormalizedConnectedAccount {
 	updated_at: string | null;
 }
 
+export type ProspectToolkitVerificationState = 'live' | 'stale' | 'refresh_failed';
+
 export interface ProspectToolkitAccountStatus {
 	id: string;
 	toolkit: string;
@@ -68,6 +70,8 @@ export interface ProspectToolkitAccountStatus {
 	sync_enabled: boolean;
 	last_checked_at: string | null;
 	connected_at: string | null;
+	verification_state: ProspectToolkitVerificationState;
+	verification_message: string | null;
 	metadata: Record<string, unknown>;
 	created_at: string;
 	updated_at: string;
@@ -81,6 +85,10 @@ export interface PartnerProspectToolkitStatusDeps {
 	listToolkitAccounts: (
 		db: D1Database,
 		partnerClientId: string,
+	) => Promise<ToolkitAccountRowLike[]>;
+	listToolkitAccountsForClientIds?: (
+		db: D1Database,
+		partnerClientIds: string[],
 	) => Promise<ToolkitAccountRowLike[]>;
 	listConnectedAccounts?: (userIds: string[]) => Promise<ConnectedAccountShape[]>;
 	normalizeToolkitSlug: (value: string) => string;
@@ -100,6 +108,12 @@ export interface PartnerProspectToolkitStatusDeps {
 
 const TOOLKIT_STATUS_REFRESH_MS = 5 * 60 * 1000;
 
+interface ConnectedAccountLookupResult {
+	accounts: NormalizedConnectedAccount[];
+	refreshFailed: boolean;
+	refreshPerformed: boolean;
+}
+
 export async function attachProspectToolkitAccounts<TProspect extends ProspectLike>(
 	deps: PartnerProspectToolkitStatusDeps,
 	input: {
@@ -115,25 +129,27 @@ export async function attachProspectToolkitAccounts<TProspect extends ProspectLi
 		return input.prospects.map((prospect) => ({ ...prospect, toolkit_accounts: [] }));
 	}
 
-	const toolkitAccountsByClient = new Map<string, ToolkitAccountRowLike[]>();
-	await Promise.all(
-		claimedProspects.map(async (prospect) => {
-			const accounts = await deps.listToolkitAccounts(input.db, prospect.client.id);
-			toolkitAccountsByClient.set(prospect.client.id, accounts);
-		}),
+	const toolkitAccountsByClient = await loadToolkitAccountsByClient(
+		deps,
+		input.db,
+		claimedProspects.map((prospect) => prospect.client.id),
 	);
 
 	const refreshableRows = [...toolkitAccountsByClient.values()]
 		.flat()
 		.filter((row) => shouldRefreshToolkitAccount(row, now));
-	const remoteAccounts = deps.listConnectedAccounts
+	const remoteLookup = deps.listConnectedAccounts
 		? await listConnectedAccountsSafely(deps, refreshableRows)
-		: [];
+		: {
+				accounts: [],
+				refreshFailed: false,
+				refreshPerformed: false,
+			};
 
 	const accountsByClient = new Map<string, ProspectToolkitAccountStatus[]>();
 	for (const [clientId, rows] of toolkitAccountsByClient) {
 		const hydrated = await Promise.all(
-			rows.map((row) => hydrateToolkitAccount(row, remoteAccounts, input.db, deps, now)),
+			rows.map((row) => hydrateToolkitAccount(row, remoteLookup, input.db, deps, now)),
 		);
 		accountsByClient.set(clientId, hydrated);
 	}
@@ -147,44 +163,79 @@ export async function attachProspectToolkitAccounts<TProspect extends ProspectLi
 async function listConnectedAccountsSafely(
 	deps: PartnerProspectToolkitStatusDeps,
 	rows: ToolkitAccountRowLike[],
-): Promise<NormalizedConnectedAccount[]> {
+): Promise<ConnectedAccountLookupResult> {
 	if (!deps.listConnectedAccounts || rows.length === 0) {
-		return [];
+		return {
+			accounts: [],
+			refreshFailed: false,
+			refreshPerformed: false,
+		};
 	}
 
 	const userIds = [...new Set(rows.map((row) => row.composio_user_id).filter(Boolean))];
 	if (userIds.length === 0) {
-		return [];
+		return {
+			accounts: [],
+			refreshFailed: false,
+			refreshPerformed: false,
+		};
 	}
 
 	try {
 		const remoteAccounts = await deps.listConnectedAccounts(userIds);
-		return remoteAccounts
-			.map((account) => normalizeConnectedAccount(account, deps))
-			.filter((account): account is NormalizedConnectedAccount => Boolean(account));
+		return {
+			accounts: remoteAccounts
+				.map((account) => normalizeConnectedAccount(account, deps))
+				.filter((account): account is NormalizedConnectedAccount => Boolean(account)),
+			refreshFailed: false,
+			refreshPerformed: true,
+		};
 	} catch {
-		return [];
+		return {
+			accounts: [],
+			refreshFailed: true,
+			refreshPerformed: true,
+		};
 	}
 }
 
 async function hydrateToolkitAccount(
 	row: ToolkitAccountRowLike,
-	remoteAccounts: NormalizedConnectedAccount[],
+	remoteLookup: ConnectedAccountLookupResult,
 	db: D1Database,
 	deps: PartnerProspectToolkitStatusDeps,
 	now: string,
 ): Promise<ProspectToolkitAccountStatus> {
-	const remoteMatch = findBestConnectedAccountMatch(row, remoteAccounts);
-	const lastCheckedAt = shouldRefreshToolkitAccount(row, now) ? now : row.last_checked_at;
+	const refreshNeeded = shouldRefreshToolkitAccount(row, now);
+	const refreshPerformed = refreshNeeded && remoteLookup.refreshPerformed;
+	const refreshFailed = refreshPerformed && remoteLookup.refreshFailed;
+	const remoteMatch = !refreshPerformed || refreshFailed
+		? null
+		: findBestConnectedAccountMatch(row, remoteLookup.accounts);
+	const lastCheckedAt = refreshPerformed && !refreshFailed ? now : row.last_checked_at;
 	const connectionStatus = remoteMatch?.status ?? row.connection_status;
 	const connectedAccountId = remoteMatch?.connected_account_id ?? row.connected_account_id;
 	const connectedAt =
 		connectionStatus === 'ACTIVE'
 			? row.connected_at ?? remoteMatch?.created_at ?? now
 			: row.connected_at;
+	const verificationState: ProspectToolkitVerificationState = refreshFailed
+		? 'refresh_failed'
+		: refreshPerformed
+			? 'live'
+			: 'stale';
+	const verificationMessage = describeVerificationState({
+		row,
+		refreshNeeded,
+		refreshPerformed,
+		refreshFailed,
+		lastCheckedAt,
+	});
 
 	if (
 		deps.updateToolkitAccountSyncState &&
+		refreshPerformed &&
+		!refreshFailed &&
 		shouldPersistToolkitAccountSync(row, {
 			connectedAccountId,
 			connectionStatus,
@@ -215,6 +266,8 @@ async function hydrateToolkitAccount(
 		sync_enabled: Boolean(row.sync_enabled),
 		last_checked_at: lastCheckedAt,
 		connected_at: connectedAt,
+		verification_state: verificationState,
+		verification_message: verificationMessage,
 		metadata: deps.parseJsonObject(row.metadata_json),
 		created_at: row.created_at,
 		updated_at: row.updated_at,
@@ -360,4 +413,60 @@ function shouldPersistToolkitAccountSync(
 		row.last_checked_at !== input.lastCheckedAt ||
 		row.connected_at !== input.connectedAt
 	);
+}
+
+async function loadToolkitAccountsByClient(
+	deps: Pick<
+		PartnerProspectToolkitStatusDeps,
+		'listToolkitAccounts' | 'listToolkitAccountsForClientIds'
+	>,
+	db: D1Database,
+	clientIds: string[],
+): Promise<Map<string, ToolkitAccountRowLike[]>> {
+	const accountsByClient = new Map<string, ToolkitAccountRowLike[]>();
+	if (clientIds.length === 0) {
+		return accountsByClient;
+	}
+
+	if (deps.listToolkitAccountsForClientIds) {
+		const rows = await deps.listToolkitAccountsForClientIds(db, clientIds);
+		for (const row of rows) {
+			const existing = accountsByClient.get(row.partner_client_id) ?? [];
+			existing.push(row);
+			accountsByClient.set(row.partner_client_id, existing);
+		}
+		return accountsByClient;
+	}
+
+	await Promise.all(
+		clientIds.map(async (clientId) => {
+			accountsByClient.set(clientId, await deps.listToolkitAccounts(db, clientId));
+		}),
+	);
+	return accountsByClient;
+}
+
+function describeVerificationState(input: {
+	row: ToolkitAccountRowLike;
+	refreshNeeded: boolean;
+	refreshPerformed: boolean;
+	refreshFailed: boolean;
+	lastCheckedAt: string | null;
+}): string | null {
+	if (input.refreshFailed) {
+		return 'Live provider verification is temporarily unavailable. Showing the last known local state.';
+	}
+	if (input.refreshPerformed) {
+		return 'Live provider verification completed during this request.';
+	}
+	if (input.refreshNeeded) {
+		return 'Live provider verification is unavailable in this environment. Showing the stored connection state.';
+	}
+	if (input.lastCheckedAt) {
+		return 'Showing the last known local state from the most recent provider check.';
+	}
+	if (input.row.sync_enabled && input.row.status === 'active') {
+		return 'This connection has not been verified live yet.';
+	}
+	return 'Showing the stored connection state.';
 }
