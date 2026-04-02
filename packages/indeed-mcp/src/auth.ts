@@ -50,19 +50,6 @@ export class IndeedAuthProvider implements AuthProvider<IndeedEnv> {
       process.env.INDEED_APPLY_SECRET,
       'INDEED_APPLY_SECRET',
     );
-    const indeedSponsoredJobsClientId = readOptionalSecret(
-      env?.INDEED_SPONSORED_JOBS_CLIENT_ID,
-      process.env.INDEED_SPONSORED_JOBS_CLIENT_ID,
-    );
-    const indeedSponsoredJobsSecret = readOptionalSecret(
-      env?.INDEED_SPONSORED_JOBS_SECRET,
-      process.env.INDEED_SPONSORED_JOBS_SECRET,
-    );
-    const indeedSponsoredJobsEmployerId = readOptionalSecret(
-      env?.INDEED_SPONSORED_JOBS_EMPLOYER_ID,
-      process.env.INDEED_SPONSORED_JOBS_EMPLOYER_ID,
-    );
-
     const requestUrl = request ? new URL(request.url) : null;
     const requestBaseUrl = requestUrl ? `${requestUrl.protocol}//${requestUrl.host}` : undefined;
 
@@ -75,9 +62,6 @@ export class IndeedAuthProvider implements AuthProvider<IndeedEnv> {
         db: env?.DB,
         storage: env?.STORAGE,
         indeedApplySecret,
-        indeedSponsoredJobsClientId,
-        indeedSponsoredJobsSecret,
-        indeedSponsoredJobsEmployerId,
         requestBaseUrl,
         publicBaseUrl:
           env?.INDEED_APPLY_BASE_URL?.trim() ||
@@ -94,7 +78,7 @@ export class IndeedAuthProvider implements AuthProvider<IndeedEnv> {
       },
       policy: {
         ...defaultPolicy(),
-        scopes: ['indeed:apply', 'indeed:feed', 'indeed:webhooks', 'indeed:dispositions', 'indeed:sponsored-jobs'],
+        scopes: ['indeed:apply', 'indeed:feed', 'indeed:webhooks', 'indeed:dispositions'],
       },
     };
   }
