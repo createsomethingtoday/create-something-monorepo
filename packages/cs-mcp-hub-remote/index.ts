@@ -1655,15 +1655,15 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         }
 
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = await buildAuthorizedVisibleProxyRoutes({
+        const { candidate, visible } = await resolveAuthorizedIntentRouteCandidate({
           runtime,
           prefs,
           accountContext,
           env,
           trace,
           entrypoint: 'hub_route_intent',
+          args,
         });
-        const candidate = resolveIntentRouteCandidate(visible, args);
         const result = toJsonResult(candidateToRoutePayload(candidate, visible));
         await recordHubInvocationWithCtx({
           accountId,
@@ -1797,16 +1797,16 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         }
 
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = await buildAuthorizedVisibleProxyRoutes({
+        const { candidate, route, definition } = await resolveAuthorizedIntentRouteCandidate({
           runtime,
           prefs,
           accountContext,
           env,
           trace,
           entrypoint: 'hub_run_intent',
+          args,
         });
-        const candidate = resolveIntentRouteCandidate(visible, args);
-        if (!candidate.proxyToolName) {
+        if (!candidate.proxyToolName || !route || !definition) {
           const message = candidate.reason || `No route found for intent "${intent}".`;
           const errorResult = toErrorResult(message);
           await recordHubInvocationWithCtx({
@@ -1827,35 +1827,12 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           return errorResult;
         }
 
-        const route = visible.routes.get(candidate.proxyToolName);
-        if (!route) {
-          const message = `Resolved proxy tool "${candidate.proxyToolName}" is not visible for this session.`;
-          const errorResult = toErrorResult(message);
-          await recordHubInvocationWithCtx({
-            accountId,
-            toolName,
-            success: false,
-            durationMs: Date.now() - startedAt,
-            trace,
-            errorMessage: message,
-            metadata: {
-              type: 'management',
-              operation: 'run_intent',
-              source: candidate.source,
-              intent: candidate.intent,
-              normalizedIntent: candidate.normalizedIntent,
-              proxyToolName: candidate.proxyToolName,
-            },
-          });
-          return errorResult;
-        }
-
         const executionArgs = normalizeArgs(args.args);
         return executeProxyRoute({
           env,
           executionCtx,
           route,
-          definition: visible.definitionByName.get(route.proxyToolName),
+          definition,
           executionArgs,
           trace,
           accountContext,
@@ -2982,8 +2959,28 @@ async function getAuthorizedExactVisibleProxyRoute(params: {
   proxyToolName: string;
 }): Promise<{ route: ProxyRoute; definition: Tool } | null> {
   const base = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext);
-  const route = base.routes.get(params.proxyToolName);
-  const definition = base.definitionByName.get(params.proxyToolName);
+  return authorizeVisibleProxyRoute({
+    visible: base,
+    accountContext: params.accountContext,
+    env: params.env,
+    trace: params.trace,
+    entrypoint: params.entrypoint,
+    proxyToolName: params.proxyToolName,
+    rollout: await getHubRouteAuthzRollout(params.env),
+  });
+}
+
+async function authorizeVisibleProxyRoute(params: {
+  visible: VisibleProxyCatalog;
+  accountContext: ResolvedAccountContext;
+  env: Env;
+  trace: InvocationTrace;
+  entrypoint: string;
+  proxyToolName: string;
+  rollout: AuthzRolloutRow;
+}): Promise<{ route: ProxyRoute; definition: Tool } | null> {
+  const route = params.visible.routes.get(params.proxyToolName);
+  const definition = params.visible.definitionByName.get(params.proxyToolName);
   if (!route || !definition) {
     return null;
   }
@@ -2994,7 +2991,7 @@ async function getAuthorizedExactVisibleProxyRoute(params: {
     route,
     definition,
     trace: params.trace,
-    rollout: await getHubRouteAuthzRollout(params.env),
+    rollout: params.rollout,
     actionName: 'discover',
     entrypoint: params.entrypoint,
     recordDecision: false,
@@ -3018,6 +3015,166 @@ async function getAuthorizedExactVisibleProxyRoute(params: {
   );
 
   return null;
+}
+
+function removeVisibleProxyTool(
+  visible: VisibleProxyCatalog,
+  proxyToolName: string,
+): VisibleProxyCatalog {
+  if (!visible.routes.has(proxyToolName)) {
+    return visible;
+  }
+
+  const routes = new Map(visible.routes);
+  routes.delete(proxyToolName);
+
+  const definitionByName = new Map(visible.definitionByName);
+  definitionByName.delete(proxyToolName);
+
+  return {
+    toolDefinitions: visible.toolDefinitions.filter((tool) => tool.name !== proxyToolName),
+    routes,
+    definitionByName,
+  };
+}
+
+function buildIntentAlternative(
+  route: ProxyRoute,
+  definition: Tool,
+): IntentRouteCandidate['alternatives'][number] {
+  return {
+    proxyToolName: route.proxyToolName,
+    serverName: route.serverName,
+    downstreamToolName: route.downstreamToolName,
+    description: definition.description ?? '',
+  };
+}
+
+async function filterAuthorizedIntentAlternatives(params: {
+  candidate: IntentRouteCandidate;
+  visible: VisibleProxyCatalog;
+  primary: { route: ProxyRoute; definition: Tool };
+  accountContext: ResolvedAccountContext;
+  env: Env;
+  trace: InvocationTrace;
+  entrypoint: string;
+  rollout: AuthzRolloutRow;
+}): Promise<IntentRouteCandidate> {
+  if (params.candidate.source !== 'discovery' || params.candidate.alternatives.length === 0) {
+    return params.candidate;
+  }
+
+  const authorizedAlternatives = [
+    {
+      ...buildIntentAlternative(params.primary.route, params.primary.definition),
+      description: params.candidate.description || (params.primary.definition.description ?? ''),
+    },
+  ];
+  const maxAlternatives = params.candidate.alternatives.length;
+  const seenProxyTools = new Set([params.primary.route.proxyToolName]);
+
+  for (const alternative of params.candidate.alternatives) {
+    if (seenProxyTools.has(alternative.proxyToolName)) {
+      continue;
+    }
+    seenProxyTools.add(alternative.proxyToolName);
+
+    const match = await authorizeVisibleProxyRoute({
+      visible: params.visible,
+      accountContext: params.accountContext,
+      env: params.env,
+      trace: params.trace,
+      entrypoint: params.entrypoint,
+      proxyToolName: alternative.proxyToolName,
+      rollout: params.rollout,
+    });
+    if (!match) {
+      continue;
+    }
+
+    authorizedAlternatives.push({
+      ...buildIntentAlternative(match.route, match.definition),
+      description: alternative.description || (match.definition.description ?? ''),
+    });
+
+    if (authorizedAlternatives.length >= maxAlternatives) {
+      break;
+    }
+  }
+
+  return {
+    ...params.candidate,
+    alternatives: authorizedAlternatives,
+  };
+}
+
+export async function resolveAuthorizedIntentRouteCandidate(params: {
+  runtime: HubRuntime;
+  prefs: DiscoveryPreferences;
+  accountContext: ResolvedAccountContext;
+  env: Env;
+  trace: InvocationTrace;
+  entrypoint: string;
+  args: Record<string, unknown>;
+}): Promise<{
+  visible: VisibleProxyCatalog;
+  candidate: IntentRouteCandidate;
+  route: ProxyRoute | null;
+  definition: Tool | null;
+}> {
+  let visible = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext);
+  const rollout = await getHubRouteAuthzRollout(params.env);
+
+  while (true) {
+    const candidate = resolveIntentRouteCandidate(visible, params.args);
+    if (!candidate.proxyToolName) {
+      return {
+        visible,
+        candidate,
+        route: null,
+        definition: null,
+      };
+    }
+
+    const primary = await authorizeVisibleProxyRoute({
+      visible,
+      accountContext: params.accountContext,
+      env: params.env,
+      trace: params.trace,
+      entrypoint: params.entrypoint,
+      proxyToolName: candidate.proxyToolName,
+      rollout,
+    });
+    if (primary) {
+      return {
+        visible,
+        candidate: await filterAuthorizedIntentAlternatives({
+          candidate,
+          visible,
+          primary,
+          accountContext: params.accountContext,
+          env: params.env,
+          trace: params.trace,
+          entrypoint: params.entrypoint,
+          rollout,
+        }),
+        route: primary.route,
+        definition: primary.definition,
+      };
+    }
+
+    const nextVisible = removeVisibleProxyTool(visible, candidate.proxyToolName);
+    if (nextVisible.toolDefinitions.length === visible.toolDefinitions.length) {
+      return {
+        visible: nextVisible,
+        candidate: resolveIntentRouteCandidate(nextVisible, params.args),
+        route: null,
+        definition: null,
+      };
+    }
+
+    visible = nextVisible;
+  }
 }
 
 export async function executeProxyRoute(params: {

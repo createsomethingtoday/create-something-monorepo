@@ -5,6 +5,7 @@ import {
   buildAuthorizedVisibleProxyRoutes,
   buildVisibleProxyRoutes,
   resolveDiscoveryPack,
+  resolveAuthorizedIntentRouteCandidate,
   resolveIntentRouteCandidate,
   searchProxyTools,
 } from '../index.ts';
@@ -550,6 +551,90 @@ test('buildAuthorizedVisibleProxyRoutes returns filtered routes that pass author
   assert.deepEqual(
     visible.toolDefinitions.map((tool) => tool.name),
     ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet'],
+  );
+});
+
+test('resolveAuthorizedIntentRouteCandidate skips unauthorized discovery matches until one is allowed', async () => {
+  const readRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_get_spreadsheet',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_get_spreadsheet',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const writeRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_values_update',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['composio-toolkit-googlesheets'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        {
+          name: writeRoute.proxyToolName,
+          description: '[googlesheets] update spreadsheet values',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: readRoute.proxyToolName,
+          description: '[googlesheets] update audit view for spreadsheet',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+      routes: new Map([
+        [writeRoute.proxyToolName, writeRoute],
+        [readRoute.proxyToolName, readRoute],
+      ]),
+      warnings: [],
+    },
+  };
+
+  const resolved = await resolveAuthorizedIntentRouteCandidate({
+    runtime: runtime as any,
+    prefs: {
+      mode: 'full',
+      activeServers: ['composio-toolkit-googlesheets'],
+      maxProxyTools: null,
+    },
+    accountContext: {
+      accountId: 'acct_1',
+      tenantId: 'tenant_acme',
+      userId: 'user_1',
+      sessionId: 'session_1',
+      authMode: 'session',
+      allowedToolPrefixes: null,
+      toolMode: 'read_only',
+      serviceTier: null,
+      entitlementSnapshot: null,
+      identitySource: 'session',
+    },
+    env: {} as any,
+    trace,
+    entrypoint: 'hub_route_intent',
+    args: {
+      intent: 'workflow synchronization task',
+      query: 'update',
+      serverName: 'composio-toolkit-googlesheets',
+    },
+  });
+
+  assert.equal(resolved.candidate.source, 'discovery');
+  assert.equal(resolved.candidate.proxyToolName, readRoute.proxyToolName);
+  assert.equal(resolved.route?.proxyToolName, readRoute.proxyToolName);
+  assert.deepEqual(
+    resolved.candidate.alternatives.map((alternative) => alternative.proxyToolName),
+    [readRoute.proxyToolName],
   );
 });
 
