@@ -178,10 +178,13 @@ New pattern:
    - `args` payload
    - compatibility alias: `hub_run_proxy_tool`
 
-Low-context intent pattern (recommended for small allowlisted workflows):
+Low-context intent pattern (recommended only for small allowlisted business workflows):
 
 1. Resolve route via `hub_route_intent`
-2. Execute directly via `hub_run_intent` (or pass returned `proxyToolName` into `hub_execute_proxy_tool`)
+2. If the route source is `allowlist`, execute via `hub_run_intent`
+3. Otherwise pass the returned `proxyToolName` into `hub_execute_proxy_tool`
+
+Do not use `hub_run_intent` for auth, reconnect, or connection-status checks. For those flows, search for `__connection_status` or `__get_connect_link` and execute the exact proxy tool directly.
 
 ## Telemetry
 

@@ -37,10 +37,10 @@ It also exposes one MCP App UI resource:
 - `hub_list_services` (service-first discovery summary for current account/session)
 - `hub_list_proxy_tools` (visible proxy tools for current account/session)
 - `hub_search_proxy_tools` (visible query/server filter + cursor pagination; pass `serverName` whenever known)
-- `hub_route_intent` (map business intent to a proxy tool via allowlist + fallback discovery)
+- `hub_route_intent` (map business intent to a proxy tool via allowlist + fallback discovery; inspect discovery results before execution)
 - `hub_describe_proxy_tool` (schema + downstream route metadata for one visible proxy tool)
 - `hub_get_proxy_tool` (compatibility alias for `hub_describe_proxy_tool`)
-- `hub_run_intent` (route + execute in one call)
+- `hub_run_intent` (route + execute one allowlisted intent in one call; not for auth/status or discovery-fallback execution)
 - `hub_execute_proxy_tool` (execute one visible proxy tool by name with args)
 - `hub_run_proxy_tool` (compatibility alias for `hub_execute_proxy_tool`)
 - `hub_policy_status` (active policy/runtime limit settings)
@@ -66,6 +66,7 @@ By default this hub runs in broker-only mode:
   - reserve raw `hub_set_discovery` server overrides for temporary operator exceptions
 - For toolkit auth and reconnects, search for `__connection_status` or `__get_connect_link`, then execute that proxy tool with `hub_execute_proxy_tool`.
 - Present returned connect URLs to the user and stop; retry only after the user confirms auth completed.
+- Do not use `hub_run_intent` for auth or connection-status checks.
 
 If a client attempts a direct proxy tool call, the hub returns:
 
@@ -127,10 +128,12 @@ Intent routing:
 
 - Allowlisted intent routes are loaded from `config/mcp-hub/intent-routes.json`
 - Resolve intent only: `hub_route_intent`
-- Resolve + execute: `hub_run_intent`
-- Typical pattern for low-context workflows:
+- Resolve + execute allowlisted actions only: `hub_run_intent`
+- Typical pattern:
   1. `hub_route_intent`
-  2. `hub_run_intent` (or `hub_execute_proxy_tool` with returned `proxyToolName`)
+  2. If the source is `allowlist`, optionally use `hub_run_intent`
+  3. Otherwise execute the returned `proxyToolName` with `hub_execute_proxy_tool`
+- For auth or connection-status flows, skip intent execution and use the exact proxy tool found via `hub_search_proxy_tools`
 
 Account forwarding:
 
@@ -258,7 +261,7 @@ Execute one tool:
 }
 ```
 
-Run one allowlisted intent in a single call:
+Run one allowlisted business intent in a single call:
 
 ```json
 {

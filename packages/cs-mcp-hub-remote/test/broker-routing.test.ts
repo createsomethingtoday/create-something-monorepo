@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   buildAuthorizedVisibleProxyRoutes,
   buildVisibleProxyRoutes,
+  explainRunIntentExecutionBlock,
   resolveDiscoveryPack,
   resolveAuthorizedIntentRouteCandidate,
   resolveIntentRouteCandidate,
@@ -636,6 +637,40 @@ test('resolveAuthorizedIntentRouteCandidate skips unauthorized discovery matches
     resolved.candidate.alternatives.map((alternative) => alternative.proxyToolName),
     [readRoute.proxyToolName],
   );
+});
+
+test('explainRunIntentExecutionBlock allows allowlisted candidates', () => {
+  const message = explainRunIntentExecutionBlock({
+    source: 'allowlist',
+    intent: 'create_zoom_meeting',
+    normalizedIntent: 'create_zoom_meeting',
+    proxyToolName: 'composio-toolkit-zoom__zoom_create_a_meeting',
+    serverName: 'composio-toolkit-zoom',
+    downstreamToolName: 'zoom_create_a_meeting',
+    description: 'Create a scheduled Zoom meeting.',
+    reason: 'Matched allowlisted intent "create_zoom_meeting".',
+    alternatives: [],
+  });
+
+  assert.equal(message, null);
+});
+
+test('explainRunIntentExecutionBlock rejects discovery fallback candidates', () => {
+  const message = explainRunIntentExecutionBlock({
+    source: 'discovery',
+    intent: 'check gmail connection',
+    normalizedIntent: 'check_gmail_connection',
+    proxyToolName: 'composio-toolkit-gmail__connection_status',
+    serverName: 'composio-toolkit-gmail',
+    downstreamToolName: 'connection_status',
+    description: 'Check Gmail connection status.',
+    reason: 'Selected discovery fallback for intent "check gmail connection".',
+    alternatives: [],
+  });
+
+  assert.match(message ?? '', /hub_run_intent executes allowlisted intents only/i);
+  assert.match(message ?? '', /hub_execute_proxy_tool/);
+  assert.match(message ?? '', /__connection_status|__get_connect_link/);
 });
 
 test('resolveDiscoveryPack returns normalized shared pack preferences', () => {

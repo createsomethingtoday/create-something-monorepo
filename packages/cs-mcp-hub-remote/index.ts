@@ -449,7 +449,7 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   {
     name: 'hub_route_intent',
     description:
-      'Route a business intent to a preferred proxy tool using allowlisted mappings with optional discovery fallback.',
+      'Route a business intent to a preferred proxy tool using allowlisted mappings with optional discovery fallback. Use this to inspect discovery results before executing via hub_execute_proxy_tool.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -496,7 +496,7 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   {
     name: 'hub_run_intent',
     description:
-      'Route a business intent and execute the resolved proxy tool in one call (allowlist first, discovery fallback optional).',
+      'Route a business intent and execute one allowlisted proxy tool in a single call. Use hub_execute_proxy_tool for auth/status checks and for discovery-fallback routes.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1806,8 +1806,30 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           entrypoint: 'hub_run_intent',
           args,
         });
+        const blockedReason = explainRunIntentExecutionBlock(candidate);
+        if (blockedReason) {
+          const errorResult = toErrorResult(blockedReason);
+          await recordHubInvocationWithCtx({
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: blockedReason,
+            metadata: {
+              type: 'management',
+              operation: 'run_intent',
+              source: candidate.source,
+              intent: candidate.intent,
+              normalizedIntent: candidate.normalizedIntent,
+              proxyToolName: candidate.proxyToolName,
+            },
+          });
+          return errorResult;
+        }
+
         if (!candidate.proxyToolName || !route || !definition) {
-          const message = candidate.reason || `No route found for intent "${intent}".`;
+          const message = `Resolved allowlisted proxy tool "${candidate.proxyToolName ?? 'unknown'}" is not visible for this session.`;
           const errorResult = toErrorResult(message);
           await recordHubInvocationWithCtx({
             accountId,
@@ -1822,6 +1844,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
               source: candidate.source,
               intent: candidate.intent,
               normalizedIntent: candidate.normalizedIntent,
+              proxyToolName: candidate.proxyToolName,
             },
           });
           return errorResult;
@@ -3175,6 +3198,26 @@ export async function resolveAuthorizedIntentRouteCandidate(params: {
 
     visible = nextVisible;
   }
+}
+
+export function explainRunIntentExecutionBlock(candidate: IntentRouteCandidate): string | null {
+  if (candidate.source === 'allowlist') {
+    return null;
+  }
+
+  if (candidate.source === 'none') {
+    return candidate.reason || `No route found for intent "${candidate.intent}".`;
+  }
+
+  const fallbackTarget = candidate.proxyToolName
+    ? ` to "${candidate.proxyToolName}"`
+    : '';
+  return (
+    `Intent "${candidate.intent}" resolved via discovery fallback${fallbackTarget}. ` +
+    'hub_run_intent executes allowlisted intents only. ' +
+    'Use hub_route_intent to inspect the candidate, then call hub_execute_proxy_tool with proxyToolName + args. ' +
+    'For auth or connection checks, search for __connection_status or __get_connect_link and execute that proxy tool directly.'
+  );
 }
 
 export async function executeProxyRoute(params: {
@@ -4621,6 +4664,7 @@ function buildHubAuthWorkflowHtml(): string {
     'Direct proxy tools may be disabled even when they exist in the catalog.',
     'When the hub returns a connect link, present it to the user instead of continuing silently.',
     'Treat auth config missing errors as deployment/configuration issues, not user errors.',
+    'Do not use hub_run_intent for auth or connection-status checks; search for the exact proxy tool and execute it directly.',
   ];
 
   const renderList = (items: string[], ordered = false) => {
