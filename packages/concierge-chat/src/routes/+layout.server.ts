@@ -34,6 +34,7 @@ export const load: LayoutServerLoad = async (event) => {
 
 	return {
 		...sessionData,
+		currentPath: event.url.pathname,
 		intakeAccess,
 		intakeVerification: getIntakeVerificationSupport(event.platform),
 		agencyAccess: await getAgencyAccessStateForRequest({

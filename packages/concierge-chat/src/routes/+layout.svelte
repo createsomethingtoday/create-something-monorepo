@@ -11,19 +11,25 @@
 
 	export let data: LayoutData;
 
-	const navItems = [
-		{ href: '/', label: 'Home' },
-		{ href: '/apply', label: 'Apply' },
-		{ href: '/chat', label: 'Workspace' },
-		{ href: '/settings', label: 'Settings' }
-	];
-
 	$: controlPlaneTone = getAgencyAccessTone(data.agencyAccess);
 	$: controlPlaneHref = buildControlPlaneBridgeHref(
 		getAgencyAccessControlPlaneSurface(data.agencyAccess)
 	);
 	$: controlPlaneLabel = getAgencyAccessStatusLabel(data.agencyAccess);
 	$: controlPlaneMeta = getAgencyAccessMeta(data.agencyAccess, data.user);
+	$: isPublicIntakeRoute =
+		data.currentPath === '/' || data.currentPath === '/apply' || data.currentPath.startsWith('/apply/');
+	$: navItems = isPublicIntakeRoute
+		? [
+				{ href: '/', label: 'Home' },
+				{ href: '/apply', label: 'Apply' }
+			]
+		: [
+				{ href: '/', label: 'Home' },
+				{ href: '/apply', label: 'Apply' },
+				{ href: '/chat', label: 'Workspace' },
+				{ href: '/settings', label: 'Settings' }
+			];
 </script>
 
 <div class="app-shell">
@@ -34,24 +40,28 @@
 			<div class="brand-note">Nurse staffing product plane</div>
 		</div>
 
-		<div class="nav-cluster">
-			<nav>
-				{#each navItems as item}
-					<a href={item.href}>{item.label}</a>
-				{/each}
-			</nav>
+			<div class="nav-cluster">
+				<nav>
+					{#each navItems as item}
+						<a href={item.href}>{item.label}</a>
+					{/each}
+				</nav>
 
-			<a
-				class={`session-link ${data.agencyAccess.status}`}
-				href={controlPlaneHref}
-				target="_blank"
-				rel="noreferrer"
-			>
-				<span class={`status-pill ${controlPlaneTone}`}>{controlPlaneLabel}</span>
-				<span class="session-meta">{controlPlaneMeta}</span>
-			</a>
-		</div>
-	</header>
+				<a
+					class={`session-link ${data.agencyAccess.status} ${isPublicIntakeRoute ? 'public' : ''}`}
+					href={controlPlaneHref}
+					target="_blank"
+					rel="noreferrer"
+				>
+					{#if isPublicIntakeRoute}
+						<span class="session-public-label">Staff sign-in</span>
+					{:else}
+						<span class={`status-pill ${controlPlaneTone}`}>{controlPlaneLabel}</span>
+						<span class="session-meta">{controlPlaneMeta}</span>
+					{/if}
+				</a>
+			</div>
+		</header>
 
 	<main>
 		<slot />
@@ -126,6 +136,24 @@
 		text-decoration: none;
 	}
 
+	.session-link.public {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.55rem 0.95rem;
+		border-radius: 999px;
+		background: rgba(18, 22, 36, 0.72);
+		border: 1px solid var(--line);
+	}
+
+	.session-public-label {
+		color: var(--accent-warm);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
 	.session-meta {
 		color: var(--muted);
 		font-size: 0.82rem;
@@ -149,6 +177,10 @@
 
 		.session-link {
 			justify-items: start;
+		}
+
+		.session-link.public {
+			justify-content: flex-start;
 		}
 	}
 </style>
