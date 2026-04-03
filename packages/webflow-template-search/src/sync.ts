@@ -103,6 +103,9 @@ function normalizeTemplateRecord(
     stripHtml(descriptionLongHtml),
     rankingConfig.controls.longDescriptionMaxChars,
   );
+  const childCategorySearchTerms = uniqueStrings(
+    childCategories.flatMap((entry) => [entry.displayName, ...entry.relatedKeywords]).map((entry) => entry.trim()),
+  );
   const templateType =
     typeof record.fields['🥞Template Type (🏗️ only)'] === 'string' ? record.fields['🥞Template Type (🏗️ only)'] : null;
 
@@ -124,6 +127,7 @@ function normalizeTemplateRecord(
     categoryGroupSlugs,
     childCategories: childCategories.map((entry) => entry.displayName),
     childCategorySlugs: childCategories.map((entry) => entry.slug),
+    childCategorySearchTerms,
     styles: styles.map((entry) => entry.name),
     styleSlugs: styles.map((entry) => entry.slug),
     tags: tags.map((entry) => entry.name),

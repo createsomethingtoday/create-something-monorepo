@@ -113,6 +113,7 @@ export interface TemplateDocumentInput {
   categoryGroupSlugs: string[];
   childCategories: string[];
   childCategorySlugs: string[];
+  childCategorySearchTerms: string[];
   styles: string[];
   styleSlugs: string[];
   tags: string[];
@@ -149,14 +150,39 @@ export interface SearchRankingConfig {
     purchases: number;
     conversionRate: number;
     revenue: number;
+    freshness: number;
+    creatorTrackRecord: number;
+    creatorDiversity: number;
     exactTitle: number;
     categoryMatch: number;
+    intentCoverage: number;
+    querySaturation: number;
   };
   controls: {
     longDescriptionMaxChars: number;
     reciprocalRankOffset: number;
     conversionRateSmoothingViews: number;
+    conversionRateSmoothingPurchases: number;
     taxonomyPrecedenceMinQueryLength: number;
+    shortQueryMaxTokens: number;
+    shortQueryMaxChars: number;
+    shortQueryTextWeightMultiplier: number;
+    shortQueryExactTitleWeightMultiplier: number;
+    shortQueryCategoryWeightMultiplier: number;
+    purchaseSmoothingViews: number;
+    purchaseSmoothingPrior: number;
+    revenueSmoothingViews: number;
+    revenueSmoothingPrior: number;
+    freshnessHalfLifeDays: number;
+    querySaturationThreshold: number;
+    creatorDiversityRerankWindowSize: number;
+    creatorDiversityRerankMaxPages: number;
+    creatorDiversityRerankPenalty: number;
+    creatorDiversityRerankScoreTolerance: number;
+    creatorTrackRecordMinTemplates: number;
+    relaxedQueryMinTokens: number;
+    relaxedQueryMaxTokens: number;
+    relaxedQueryResultThreshold: number;
   };
 }
 
@@ -271,6 +297,14 @@ export interface DocumentRow {
   published_date: string | null;
   marketplace_status: string | null;
   source_last_modified_time: string | null;
+  name_query_match?: number | null;
+  taxonomy_query_match?: number | null;
+  exact_title_match?: number | null;
+  intent_query_coverage?: number | null;
+  query_saturation?: number | null;
+  text_rank?: number | null;
+  blended_rank?: number | null;
+  creator_track_record_score?: number | null;
 }
 
 export interface DocumentCountRow {

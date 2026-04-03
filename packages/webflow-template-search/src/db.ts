@@ -154,7 +154,7 @@ export async function upsertTemplateDocuments(
         document.sourceLastModifiedTime,
         document.syncedAt,
         document.categoryGroups.join(' '),
-        document.childCategories.join(' '),
+        document.childCategorySearchTerms.join(' '),
         document.styles.join(' '),
         document.tags.join(' '),
       ),
