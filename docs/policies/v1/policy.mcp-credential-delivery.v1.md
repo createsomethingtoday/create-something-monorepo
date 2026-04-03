@@ -67,7 +67,11 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 43. A managed-bearer compat lane MUST keep `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` configured so the bearer still resolves through `identity-worker` rather than degrading to static worker-token identity.
 44. A managed-bearer compat lane MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` unless an explicit separately approved exception exists.
 45. A managed-bearer compat lane MUST preserve bound-host rejection and explicit `allowed_tool_prefixes` enforcement through the resolver-backed bearer path.
-46. Managed-bearer compat lanes are host-compatibility infrastructure, not legacy credential exceptions, and MUST NOT be governed as sunset-bounded legacy key lanes unless they also use approved legacy key delivery.
+46. A managed-bearer compat lane MUST treat `Authorization: Bearer <managed bearer>` as the foundation transport contract.
+47. `HUB_ALLOW_X_API_KEY_AUTH` MAY be enabled only as an explicit approved exception for host compatibility and MUST default `false`.
+48. `HUB_ALLOW_QUERY_TOKEN_AUTH` MAY be enabled only as an explicit approved exception for endpoint-string-only hosts and MUST default `false`.
+49. Raw `Authorization` values without the `Bearer` scheme MUST NOT be accepted for managed-bearer compat lanes.
+50. Managed-bearer compat lanes are host-compatibility infrastructure, not legacy credential exceptions, and MUST NOT be governed as sunset-bounded legacy key lanes unless they also use approved legacy key delivery.
 
 ## Enforcement Surfaces
 
@@ -132,6 +136,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - portal or operator evidence showing lane infrastructure ready while customer credential delivery remained blocked pending identity mapping or consent
 - Braintrust and telemetry traces showing explicit `account_id`, `tenant_id`, and lane host attribution for named-lane issuance and resolution events
 - lane onboarding evidence showing the promised search provider set and successful auth-config/connect-link validation for each promised provider
+- deploy and health evidence showing bearer-first transport with any `X-API-Key` or query-token exception flags explicitly recorded
 
 ## Source Anchors
 

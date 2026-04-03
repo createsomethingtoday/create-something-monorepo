@@ -81,7 +81,9 @@ Optional direct proxy mode:
 Environment variables:
 
 - `HUB_INSTANCE_ID` (recommended): unique id for this deployed hub worker; used to namespace hub state/discovery KV keys so team hubs do not overwrite each other.
-- `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`. For compatibility with clients that can only provide a signed endpoint URL, the gateway also accepts `?mcp_access_token=<token>`, but header bearer remains the standard path.
+- `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`. Raw `Authorization` values without the `Bearer` scheme are rejected.
+- `HUB_ALLOW_X_API_KEY_AUTH` (optional): `false` (default). Set `true` only for an explicitly approved host-compatibility exception that must accept `X-API-Key` or `Api-Key` as a bearer-equivalent carrier.
+- `HUB_ALLOW_QUERY_TOKEN_AUTH` (optional): `false` (default). Set `true` only for an explicitly approved endpoint-string-only host that must pass `mcp_access_token` or `token` as a query carrier.
 - `HUB_IDENTITY_MODE` (optional): `session_required` (default) or `compat`
 - `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS` (optional): `false` (default). Set `true` only for a tightly controlled compat exception that is explicitly approved.
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
@@ -118,7 +120,7 @@ Shared discovery packs:
 - `c3denver-airtable-gmail-notion`: Airtable, Gmail, Notion
 - `danny-shared-auth-plus-dm-and-operator-notion`: shared auth core plus `halfdozen-dm-mcp` and `halfdozen-operator-notion-mcp`
 - `mj-legacy-shared-auth-plus-meetings`: compact legacy shared auth core plus Meetings
-- `mj-shared-auth-plus-ops-search-meetings-and-review`: full MJ ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review
+- `mj-shared-auth-plus-ops-search-meetings-and-review`: full MJ ops lane with shared auth core, Airtable, Exa, Loom, Meetings, Webflow template review, and Webflow site analyzer
 - `outerfields-shared-auth-clickup`: shared auth core plus ClickUp
 - List available packs with `hub_list_discovery_packs`
 - Apply one with `hub_set_discovery` by setting `pack`
@@ -141,8 +143,11 @@ Session-scoped identity (optional):
 - In `session_required` mode (default), callers must provide `X-MCP-Session-Token`.
   The hub resolves `account_id`, `tenant_id`, and `allowed_tool_prefixes` from identity-worker.
 - In `session_required`, resolver configuration (`HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN`) is required.
-- In `compat` mode, the hub keeps legacy fallback identity behavior and accepts session token in
-  `X-MCP-Session-Token` or bearer (when bearer is not the configured `HUB_API_TOKEN`).
+- In `compat` mode, the hub keeps resolver-backed host-compatibility behavior:
+  - gateway auth remains `Authorization: Bearer <HUB_API_TOKEN>`
+  - `X-MCP-Session-Token` still works when supplied
+  - a bearer that is not the configured `HUB_API_TOKEN` can resolve through `identity-worker`
+  - `X-API-Key` and query-token carriers are default-off exceptions gated by `HUB_ALLOW_X_API_KEY_AUTH` and `HUB_ALLOW_QUERY_TOKEN_AUTH`
 - Proxy tools are filtered/enforced by `allowed_tool_prefixes` when identity is session-resolved.
 
 ## Telemetry + Correlation
@@ -177,6 +182,8 @@ pnpm mcp:hub:fleet:verify
 Fleet deploy defaults:
 
 - `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` (defensive default; override only for controlled exceptions).
+- `HUB_ALLOW_X_API_KEY_AUTH=false` (bearer-first baseline; override only for explicit host exceptions).
+- `HUB_ALLOW_QUERY_TOKEN_AUTH=false` (default-off endpoint-string compatibility exception).
 
 Legacy compat lane deploy:
 

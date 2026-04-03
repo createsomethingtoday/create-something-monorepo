@@ -23,7 +23,10 @@ Govern temporary legacy compatibility lanes for bearer-only MCP hosts and force 
 4. Each legacy bundle MUST carry explicit expiry and sunset metadata in delivery outputs.
 5. Legacy exceptions MUST be removable by revocation and tracked in audit records.
 6. Compat workers MUST default `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false`; any per-client override requires explicit operator exception approval.
-7. This policy governs legacy key or shared-runtime-token compatibility paths, not managed-bearer compat lanes used to accommodate bearer-only third-party hosts.
+7. Legacy compat workers MUST still treat `Authorization: Bearer <token>` as the foundation transport contract.
+8. `X-API-Key` and query-token carriers MAY be enabled only as explicit operator-approved exceptions and MUST default off.
+9. Raw `Authorization` values without the `Bearer` scheme MUST be rejected.
+10. This policy governs legacy key or shared-runtime-token compatibility paths, not managed-bearer compat lanes used to accommodate bearer-only third-party hosts.
 
 ## Enforcement Surfaces
 
@@ -40,6 +43,7 @@ Govern temporary legacy compatibility lanes for bearer-only MCP hosts and force 
 - `mcp_policy_events` entries for sunset policy decisions
 - Legacy worker deploy vars include `HUB_LEGACY_SUNSET_AT`
 - Legacy worker deploy vars include `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default
+- Legacy worker deploy vars include `HUB_ALLOW_X_API_KEY_AUTH=false` and `HUB_ALLOW_QUERY_TOKEN_AUTH=false` by default unless an approved exception exists
 - Delivery bundles include `sunset_at`
 
 ## Source Anchors

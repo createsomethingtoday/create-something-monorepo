@@ -51,6 +51,8 @@ Optional runtime selection:
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
 - `HUB_IDENTITY_MODE` (`session_required` default, or `compat`)
+- `HUB_ALLOW_X_API_KEY_AUTH` (`false` default; explicit compat exception for `X-API-Key` or `Api-Key` carriers)
+- `HUB_ALLOW_QUERY_TOKEN_AUTH` (`false` default; explicit compat exception for `mcp_access_token` or `token` query carriers)
 - `HUB_SESSION_RESOLVE_URL` (identity-worker resolver endpoint, e.g. `https://id.createsomething.space/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (shared secret used to authorize resolver calls)
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (default `5000`)
@@ -75,8 +77,10 @@ Compatibility note:
   - keep `Authorization: Bearer <HUB_API_TOKEN>` for gateway auth
   - pass MCP session token in `X-MCP-Session-Token`
 - `compat` mode:
-  - shared worker token still works via `Authorization`, `X-API-Key`, or query `token`
+  - shared worker token still works via `Authorization: Bearer <HUB_API_TOKEN>`
   - identity-issued personal bearer tokens are also accepted directly when `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` are configured
+  - `X-API-Key` and query-token carriers are explicit, default-off exceptions controlled by `HUB_ALLOW_X_API_KEY_AUTH` and `HUB_ALLOW_QUERY_TOKEN_AUTH`
+  - raw `Authorization` values without the `Bearer` scheme are rejected
   - this is the preferred host-compatibility mode for Notion-style MCP clients that reliably send a bearer header but do not send `X-MCP-Session-Token`
 - `compat` mode no longer trusts client-supplied account headers; identity must come from the resolver, gateway auth, or explicit worker fallback configuration.
 
@@ -87,6 +91,8 @@ Recommended production posture:
 - `HUB_SESSION_RESOLVE_TOKEN` set as a Worker secret and matched exactly with `identity-worker` `MCP_SESSION_RESOLVE_TOKEN`
 - `OSO_BOOTSTRAP_POLICY=false`
 - `ENGINE_FALLBACK_ENABLED=true`
+- `HUB_ALLOW_X_API_KEY_AUTH=false`
+- `HUB_ALLOW_QUERY_TOKEN_AUTH=false`
 - Service-first discovery is the standard scalable default for all shared hubs:
   - `hub_list_services` first
   - `hub_search_proxy_tools` with `serverName` whenever known
@@ -143,6 +149,7 @@ Legacy bridge lane:
 - Use:
   - `pnpm mcp:hub:legacy:deploy`
 - Deploy scripts set `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default so compat workers do not trust client-supplied account headers.
+- Deploy scripts set `HUB_ALLOW_X_API_KEY_AUTH=false` and `HUB_ALLOW_QUERY_TOKEN_AUTH=false` by default so bearer remains the baseline transport contract.
 - Set explicit sunset:
   - `HUB_LEGACY_SUNSET_AT=YYYY-MM-DDTHH:MM:SSZ`
 - Default to `session_required` for first-party and operator-controlled hosts.
@@ -215,7 +222,7 @@ url = "https://cs-mcp-hub-remote.<your-workers-subdomain>.workers.dev/mcp"
 enabled = true
 ```
 
-If `HUB_API_TOKEN` is configured, include the bearer token header in your MCP client. The hub also accepts `?mcp_access_token=<token>` as a compatibility URL input for hosts that can only pass an endpoint string, but `Authorization: Bearer <token>` remains the standard.
+If `HUB_API_TOKEN` is configured, include `Authorization: Bearer <token>` in your MCP client. `X-API-Key` and query-token carriers are compatibility exceptions that remain disabled by default and should be enabled only for reviewed host constraints.
 
 For partner delivery, prefer a managed `.agency` bearer token instead of distributing the shared hub token. The partner path is:
 

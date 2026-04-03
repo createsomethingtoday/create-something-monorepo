@@ -622,6 +622,7 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
     { name: 'loom-mcp' },
     { name: 'meetings' },
     { name: 'webflow-template-review-mcp' },
+    { name: 'webflow-site-analyzer-mcp' },
   ] as any;
 
   const pack = resolveDiscoveryPack('mj-shared-auth-plus-ops-search-meetings-and-review', runtime as any);
@@ -645,6 +646,7 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
     'loom-mcp',
     'meetings',
     'webflow-template-review-mcp',
+    'webflow-site-analyzer-mcp',
   ]);
 });
 

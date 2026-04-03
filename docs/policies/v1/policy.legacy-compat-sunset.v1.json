@@ -6,6 +6,10 @@
     "enabled_via_separate_endpoints": true,
     "strict_hubs_unchanged": true,
     "compat_trust_client_account_headers_default": false,
+    "foundation_transport": "authorization_bearer",
+    "compat_api_key_exception_default": false,
+    "compat_query_token_exception_default": false,
+    "raw_authorization_without_bearer_allowed": false,
     "excludes_managed_bearer_host_compat_lanes": true
   },
   "sunset_requirements": {

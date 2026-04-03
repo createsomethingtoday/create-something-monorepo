@@ -40,6 +40,9 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 
 # Optional. If set, /mcp requires Authorization: Bearer <token>
 # HUB_API_TOKEN = ""
+# Optional compat transport exceptions. Defaults are false so bearer remains the baseline.
+# HUB_ALLOW_X_API_KEY_AUTH = "false"
+# HUB_ALLOW_QUERY_TOKEN_AUTH = "false"
 
 # Comma-separated or JSON array strings.
 # Defaults to registry defaults when unset.

@@ -338,6 +338,8 @@ interface Env {
   HUB_API_TOKEN?: string;
   OAUTH_ISSUER_URL?: string;
   HUB_IDENTITY_MODE?: string;
+  HUB_ALLOW_X_API_KEY_AUTH?: string;
+  HUB_ALLOW_QUERY_TOKEN_AUTH?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
   HUB_SESSION_RESOLVE_TIMEOUT_MS?: string;
@@ -776,7 +778,7 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      const normalizedRequest = normalizeInboundMcpRequest(request);
+      const normalizedRequest = normalizeInboundMcpRequest(request, env);
       const authFailure = await authorizeRequest(normalizedRequest, env);
       if (authFailure) {
         return withCors(authFailure);
@@ -823,6 +825,11 @@ export default {
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
             identity_mode: resolveHubIdentityMode(env),
+            auth_transport: {
+              foundation: 'authorization_bearer',
+              x_api_key_exception_enabled: isCompatApiKeyExceptionEnabled(env),
+              query_token_exception_enabled: isCompatQueryTokenExceptionEnabled(env),
+            },
             legacy_bridge: {
               enabled: readEnvString(env, 'HUB_LEGACY_BRIDGE_ENABLED') === 'true',
               sunset_at: readEnvString(env, 'HUB_LEGACY_SUNSET_AT') ?? null,
@@ -922,7 +929,7 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
     return null;
   }
 
-  const providedToken = getRequestToken(request);
+  const providedToken = getRequestToken(request, env);
   if (providedToken && timingSafeEqual(providedToken, requiredToken)) {
     return null;
   }
@@ -932,7 +939,7 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   }
 
   const sessionHeaderToken = request.headers.get('x-mcp-session-token')?.trim() ?? null;
-  const bearerToken = getRequestBearerToken(request);
+  const bearerToken = getRequestBearerToken(request, env);
   const bearerIsHubToken =
     bearerToken && requiredToken ? timingSafeEqual(bearerToken, requiredToken) : false;
   const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
@@ -948,8 +955,8 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
 }
 
-export function normalizeInboundMcpRequest(request: Request): Request {
-  const carrierToken = getNonHeaderRequestToken(request);
+export function normalizeInboundMcpRequest(request: Request, env: Env): Request {
+  const carrierToken = getNonHeaderRequestToken(request, env);
   if (!carrierToken) {
     return request;
   }
@@ -966,28 +973,32 @@ export function normalizeInboundMcpRequest(request: Request): Request {
   return new Request(request, { headers });
 }
 
-function getNonHeaderRequestToken(request: Request): string | null {
-  const url = new URL(request.url);
-  const mcpAccessToken = url.searchParams.get('mcp_access_token');
-  if (mcpAccessToken?.trim()) {
-    return mcpAccessToken.trim();
+function getNonHeaderRequestToken(request: Request, env: Env): string | null {
+  if (isCompatQueryTokenExceptionEnabled(env)) {
+    const url = new URL(request.url);
+    const mcpAccessToken = url.searchParams.get('mcp_access_token');
+    if (mcpAccessToken?.trim()) {
+      return mcpAccessToken.trim();
+    }
+
+    const queryToken = url.searchParams.get('token');
+    if (queryToken?.trim()) {
+      return queryToken.trim();
+    }
   }
 
-  const queryToken = url.searchParams.get('token');
-  if (queryToken?.trim()) {
-    return queryToken.trim();
-  }
-
-  const apiKeyHeader = request.headers.get('x-api-key') ?? request.headers.get('api-key');
-  if (apiKeyHeader?.trim()) {
-    return apiKeyHeader.trim();
+  if (isCompatApiKeyExceptionEnabled(env)) {
+    const apiKeyHeader = request.headers.get('x-api-key') ?? request.headers.get('api-key');
+    if (apiKeyHeader?.trim()) {
+      return apiKeyHeader.trim();
+    }
   }
 
   return null;
 }
 
-function getRequestToken(request: Request): string | null {
-  const carrierToken = getNonHeaderRequestToken(request);
+function getRequestToken(request: Request, env: Env): string | null {
+  const carrierToken = getNonHeaderRequestToken(request, env);
   if (carrierToken) {
     return carrierToken;
   }
@@ -1003,12 +1014,11 @@ function getRequestToken(request: Request): string | null {
     return bearerMatch[1].trim();
   }
 
-  // Compatibility fallback for clients that send raw token in Authorization.
-  return trimmedAuth;
+  return null;
 }
 
-function getRequestBearerToken(request: Request): string | null {
-  const carrierToken = getNonHeaderRequestToken(request);
+function getRequestBearerToken(request: Request, env: Env): string | null {
+  const carrierToken = getNonHeaderRequestToken(request, env);
   if (carrierToken) {
     return carrierToken;
   }
@@ -1018,7 +1028,15 @@ function getRequestBearerToken(request: Request): string | null {
     return null;
   }
 
-  return parseBearerToken(authHeader) ?? authHeader.trim();
+  return parseBearerToken(authHeader);
+}
+
+function isCompatApiKeyExceptionEnabled(env: Env): boolean {
+  return parseBooleanWithDefault(readEnvString(env, 'HUB_ALLOW_X_API_KEY_AUTH'), false);
+}
+
+function isCompatQueryTokenExceptionEnabled(env: Env): boolean {
+  return parseBooleanWithDefault(readEnvString(env, 'HUB_ALLOW_QUERY_TOKEN_AUTH'), false);
 }
 
 function timingSafeEqual(a: string, b: string): boolean {

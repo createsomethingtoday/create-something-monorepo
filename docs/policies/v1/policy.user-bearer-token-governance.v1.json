@@ -14,7 +14,11 @@
     "oauth_delivery_allowed": true,
     "oauth_access_token_may_equal_managed_bearer": true,
     "oauth_requires_portable_bearer_auth": true,
-    "oauth_login_password_separate_from_bearer": true
+    "oauth_login_password_separate_from_bearer": true,
+    "foundation_transport": "authorization_bearer",
+    "compat_api_key_exception_allowed": true,
+    "compat_query_token_exception_allowed": true,
+    "raw_authorization_without_bearer_allowed": false
   },
   "authorization_requirements": {
     "live_check_per_request": true,
@@ -22,6 +26,8 @@
     "compat_mode_preserves_bound_host_rejection": true,
     "compat_mode_preserves_allowed_tool_prefixes": true,
     "compat_mode_trust_client_account_headers": false,
+    "compat_api_key_exception_default": false,
+    "compat_query_token_exception_default": false,
     "required_checks": [
       "token_status",
       "user_status",

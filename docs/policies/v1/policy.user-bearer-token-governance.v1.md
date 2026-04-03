@@ -61,6 +61,10 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 31. For third-party hosts that do not reliably send `X-MCP-Session-Token` but do reliably forward `Authorization: Bearer <managed bearer>`, CREATE SOMETHING MAY expose the Hub in `compat` identity mode as a host-compatibility measure.
 32. In host-compatibility `compat` mode, bearer authorization MUST still resolve through `identity-worker`, and the resulting actor context MUST preserve `bound_host` rejection and effective `allowed_tool_prefixes`.
 33. Host-compatibility `compat` mode MUST NOT rely on client-supplied account headers and MUST keep `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default.
+34. Managed bearer host access MUST treat `Authorization: Bearer <token>` as the foundation transport contract.
+35. `X-API-Key` or `Api-Key` carrier support MAY be enabled only as an explicitly approved host-compatibility exception and MUST default off.
+36. Query-token carriers such as `mcp_access_token` or `token` MAY be enabled only as an explicitly approved endpoint-string exception and MUST default off.
+37. Raw `Authorization` values without the `Bearer` scheme MUST be rejected.
 
 ## Required Legal Alignment
 
@@ -126,6 +130,7 @@ The following artifacts MUST remain aligned with this policy before production l
 - Password set or rotate actions for the OAuth login remaining auditable and distinct from bearer-token lifecycle events
 - Migration records showing canonical Auth0 subject binding for users adopted from compat vault tokens
 - Verification output confirming one active managed token row and no stale legacy token row for each migrated user
+- Verification output showing bearer as the foundation transport and any `X-API-Key` or query-token exceptions disabled unless explicitly approved
 
 ## Source Anchors
 

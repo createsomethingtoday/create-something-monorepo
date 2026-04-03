@@ -57,15 +57,37 @@ SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
 DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
-MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
+MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp,webflow-site-analyzer-mcp"
 VERIFY_IDENTITY_MODE="${HUB_VERIFY_IDENTITY_MODE:-compat}"
+VERIFY_ALLOW_X_API_KEY_AUTH="${HUB_VERIFY_ALLOW_X_API_KEY_AUTH:-false}"
+VERIFY_ALLOW_QUERY_TOKEN_AUTH="${HUB_VERIFY_ALLOW_QUERY_TOKEN_AUTH:-false}"
 VERIFY_IDENTITY_MODE="$(printf '%s' "$VERIFY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]')"
+VERIFY_ALLOW_X_API_KEY_AUTH="$(printf '%s' "$VERIFY_ALLOW_X_API_KEY_AUTH" | tr '[:upper:]' '[:lower:]')"
+VERIFY_ALLOW_QUERY_TOKEN_AUTH="$(printf '%s' "$VERIFY_ALLOW_QUERY_TOKEN_AUTH" | tr '[:upper:]' '[:lower:]')"
 
 case "$VERIFY_IDENTITY_MODE" in
   "compat"|"session_required")
     ;;
   *)
     echo "invalid HUB_VERIFY_IDENTITY_MODE=${VERIFY_IDENTITY_MODE}; expected compat|session_required" >&2
+    exit 1
+    ;;
+esac
+
+case "$VERIFY_ALLOW_X_API_KEY_AUTH" in
+  "true"|"false")
+    ;;
+  *)
+    echo "invalid HUB_VERIFY_ALLOW_X_API_KEY_AUTH=${VERIFY_ALLOW_X_API_KEY_AUTH}; expected true|false" >&2
+    exit 1
+    ;;
+esac
+
+case "$VERIFY_ALLOW_QUERY_TOKEN_AUTH" in
+  "true"|"false")
+    ;;
+  *)
+    echo "invalid HUB_VERIFY_ALLOW_QUERY_TOKEN_AUTH=${VERIFY_ALLOW_QUERY_TOKEN_AUTH}; expected true|false" >&2
     exit 1
     ;;
 esac
@@ -1159,14 +1181,24 @@ for worker in "${WORKERS[@]}"; do
   built_at="$(echo "$health_json" | jq -r '.built_at // "unknown"')"
   auth_required="$(echo "$health_json" | jq -r '.auth_required // "false"')"
   identity_mode="$(echo "$health_json" | jq -r '.identity_mode // "unknown"')"
+  auth_transport_foundation="$(echo "$health_json" | jq -r '.auth_transport.foundation // "unknown"')"
+  x_api_key_exception_enabled="$(
+    echo "$health_json" | jq -r '.auth_transport.x_api_key_exception_enabled // "false"'
+  )"
+  query_token_exception_enabled="$(
+    echo "$health_json" | jq -r '.auth_transport.query_token_exception_enabled // "false"'
+  )"
   expected_identity_mode="$(expected_identity_mode_for_worker "$worker")"
   telemetry_db="$(echo "$health_json" | jq -r '.policy.quota.telemetryDbConfigured // "false"')"
   echo "built_at=${built_at}"
   echo "auth_required=${auth_required}"
   echo "identity_mode=${identity_mode}"
+  echo "auth_transport_foundation=${auth_transport_foundation}"
+  echo "x_api_key_exception_enabled=${x_api_key_exception_enabled}"
+  echo "query_token_exception_enabled=${query_token_exception_enabled}"
   echo "telemetryDbConfigured=${telemetry_db}"
 
-  if [[ "$auth_required" != "true" || "$telemetry_db" != "true" || "$identity_mode" != "$expected_identity_mode" ]]; then
+  if [[ "$auth_required" != "true" || "$telemetry_db" != "true" || "$identity_mode" != "$expected_identity_mode" || "$auth_transport_foundation" != "authorization_bearer" || "$x_api_key_exception_enabled" != "$VERIFY_ALLOW_X_API_KEY_AUTH" || "$query_token_exception_enabled" != "$VERIFY_ALLOW_QUERY_TOKEN_AUTH" ]]; then
     echo "health check failed for ${worker}"
     failures=1
   fi

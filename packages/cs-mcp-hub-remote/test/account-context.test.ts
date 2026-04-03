@@ -468,13 +468,27 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
   }
 });
 
-test('authorizeRequest accepts the configured HUB_API_TOKEN via mcp_access_token query param', async () => {
+test('authorizeRequest rejects mcp_access_token query param by default', async () => {
   const failure = await authorizeRequest(
     new Request(
       'https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=hub_static_token',
     ),
     {
       HUB_API_TOKEN: 'hub_static_token',
+    } as any,
+  );
+
+  assert.equal(failure?.status, 401);
+});
+
+test('authorizeRequest accepts the configured HUB_API_TOKEN via mcp_access_token query param when query-token exception is enabled', async () => {
+  const failure = await authorizeRequest(
+    new Request(
+      'https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=hub_static_token',
+    ),
+    {
+      HUB_API_TOKEN: 'hub_static_token',
+      HUB_ALLOW_QUERY_TOKEN_AUTH: 'true',
       HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
       HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
     } as any,
@@ -483,7 +497,7 @@ test('authorizeRequest accepts the configured HUB_API_TOKEN via mcp_access_token
   assert.equal(failure, null);
 });
 
-test('authorizeRequest accepts a resolved personal token via mcp_access_token query param', async () => {
+test('authorizeRequest accepts a resolved personal token via mcp_access_token query param when query-token exception is enabled', async () => {
   const originalFetch = globalThis.fetch;
   let capturedAuth = '';
   let capturedToken = '';
@@ -519,6 +533,7 @@ test('authorizeRequest accepts a resolved personal token via mcp_access_token qu
       ),
       {
         HUB_API_TOKEN: 'hub_static_token',
+        HUB_ALLOW_QUERY_TOKEN_AUTH: 'true',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
         HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
       } as any,
@@ -533,7 +548,7 @@ test('authorizeRequest accepts a resolved personal token via mcp_access_token qu
   }
 });
 
-test('authorizeRequest accepts a resolved personal token via token query param', async () => {
+test('authorizeRequest accepts a resolved personal token via token query param when query-token exception is enabled', async () => {
   const originalFetch = globalThis.fetch;
   const token = 'mlk_personal_token_query_via_token';
   let capturedAuth = '';
@@ -568,6 +583,7 @@ test('authorizeRequest accepts a resolved personal token via token query param',
       new Request(`https://aaron-outerfields.mcp.createsomething.agency/mcp?token=${token}`),
       {
         HUB_API_TOKEN: 'hub_static_token',
+        HUB_ALLOW_QUERY_TOKEN_AUTH: 'true',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
         HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
       } as any,
@@ -582,7 +598,22 @@ test('authorizeRequest accepts a resolved personal token via token query param',
   }
 });
 
-test('authorizeRequest accepts a resolved personal token via x-api-key header', async () => {
+test('authorizeRequest rejects x-api-key header by default', async () => {
+  const failure = await authorizeRequest(
+    new Request('https://aaron-outerfields.mcp.createsomething.agency/mcp', {
+      headers: {
+        'x-api-key': 'mlk_personal_token_header',
+      },
+    }),
+    {
+      HUB_API_TOKEN: 'hub_static_token',
+    } as any,
+  );
+
+  assert.equal(failure?.status, 401);
+});
+
+test('authorizeRequest accepts a resolved personal token via x-api-key header when exception is enabled', async () => {
   const originalFetch = globalThis.fetch;
   let capturedAuth = '';
   let capturedToken = '';
@@ -620,6 +651,7 @@ test('authorizeRequest accepts a resolved personal token via x-api-key header', 
       }),
       {
         HUB_API_TOKEN: 'hub_static_token',
+        HUB_ALLOW_X_API_KEY_AUTH: 'true',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
         HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
       } as any,
@@ -634,7 +666,17 @@ test('authorizeRequest accepts a resolved personal token via x-api-key header', 
   }
 });
 
-test('normalizeInboundMcpRequest exposes mcp_access_token to downstream account resolution', async () => {
+test('normalizeInboundMcpRequest leaves query tokens untouched when query-token exception is disabled', () => {
+  const token = 'mlk_personal_token_normalized';
+  const request = normalizeInboundMcpRequest(
+    new Request(`https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=${token}`),
+    {} as any,
+  );
+
+  assert.equal(request.headers.get('authorization'), null);
+});
+
+test('normalizeInboundMcpRequest exposes mcp_access_token to downstream account resolution when query-token exception is enabled', async () => {
   const originalFetch = globalThis.fetch;
   const token = 'mlk_personal_token_normalized';
   let capturedAuth = '';
@@ -667,6 +709,9 @@ test('normalizeInboundMcpRequest exposes mcp_access_token to downstream account 
   try {
     const request = normalizeInboundMcpRequest(
       new Request(`https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=${token}`),
+      {
+        HUB_ALLOW_QUERY_TOKEN_AUTH: 'true',
+      } as any,
     );
 
     assert.equal(request.headers.get('authorization'), `Bearer ${token}`);
@@ -690,6 +735,21 @@ test('normalizeInboundMcpRequest exposes mcp_access_token to downstream account 
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('authorizeRequest rejects raw Authorization tokens without the Bearer scheme', async () => {
+  const failure = await authorizeRequest(
+    new Request('https://aaron-outerfields.mcp.createsomething.agency/mcp', {
+      headers: {
+        Authorization: 'hub_static_token',
+      },
+    }),
+    {
+      HUB_API_TOKEN: 'hub_static_token',
+    } as any,
+  );
+
+  assert.equal(failure?.status, 401);
 });
 
 test('authorizeRequest rejects host-mismatched managed bearer tokens', async () => {

@@ -46,15 +46,23 @@ join_by_comma() {
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
 DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
-MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
+MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp,webflow-site-analyzer-mcp"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
 CORE_BUNDLES_CSV="core"
 CORE_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV}"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
 SESSION_TOKEN_FOR_NORMALIZE="${MCP_SESSION_TOKEN:-}"
+ALLOW_X_API_KEY_AUTH="${HUB_ALLOW_X_API_KEY_AUTH:-false}"
+ALLOW_QUERY_TOKEN_AUTH="${HUB_ALLOW_QUERY_TOKEN_AUTH:-false}"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="${HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:-false}"
 TEAM_HUB_DEPLOY_IDENTITY_MODE="${TEAM_HUB_DEPLOY_IDENTITY_MODE:-${HUB_DEPLOY_IDENTITY_MODE:-compat}}"
 CORE_HUB_DEPLOY_IDENTITY_MODE="${CORE_HUB_DEPLOY_IDENTITY_MODE:-session_required}"
+ALLOW_X_API_KEY_AUTH="$(
+  printf '%s' "$ALLOW_X_API_KEY_AUTH" | tr '[:upper:]' '[:lower:]'
+)"
+ALLOW_QUERY_TOKEN_AUTH="$(
+  printf '%s' "$ALLOW_QUERY_TOKEN_AUTH" | tr '[:upper:]' '[:lower:]'
+)"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="$(
   printf '%s' "$COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS" | tr '[:upper:]' '[:lower:]'
 )"
@@ -70,6 +78,24 @@ case "${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" in
     ;;
   *)
     echo "invalid HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}; expected true|false" >&2
+    exit 1
+    ;;
+esac
+
+case "${ALLOW_X_API_KEY_AUTH}" in
+  "true"|"false")
+    ;;
+  *)
+    echo "invalid HUB_ALLOW_X_API_KEY_AUTH=${ALLOW_X_API_KEY_AUTH}; expected true|false" >&2
+    exit 1
+    ;;
+esac
+
+case "${ALLOW_QUERY_TOKEN_AUTH}" in
+  "true"|"false")
+    ;;
+  *)
+    echo "invalid HUB_ALLOW_QUERY_TOKEN_AUTH=${ALLOW_QUERY_TOKEN_AUTH}; expected true|false" >&2
     exit 1
     ;;
 esac
@@ -158,21 +184,24 @@ resolve_worker_token() {
   echo "$token"
 }
 
-resolve_deploy_worker_name() {
+resolve_deploy_worker_names() {
   local worker="$1"
   if [[ "$worker" != "cs-hub-fillip" ]]; then
     echo "$worker"
     return 0
   fi
+  local found=0
   if pnpm exec wrangler secret list --name "cs-hub-fillip" >/dev/null 2>&1; then
     echo "cs-hub-fillip"
-    return 0
+    found=1
   fi
   if pnpm exec wrangler secret list --name "cs-hub-filip" >/dev/null 2>&1; then
     echo "cs-hub-filip"
-    return 0
+    found=1
   fi
-  echo "cs-hub-fillip"
+  if [[ "$found" -eq 0 ]]; then
+    echo "cs-hub-fillip"
+  fi
 }
 
 target_server_csv_for_worker() {
@@ -330,57 +359,68 @@ cd "$HUB_DIR"
 echo "Deploying team hub workers with hardened routing config..."
 echo "team_identity_mode=${TEAM_HUB_DEPLOY_IDENTITY_MODE}"
 echo "core_identity_mode=${CORE_HUB_DEPLOY_IDENTITY_MODE}"
+echo "allow_x_api_key_auth=${ALLOW_X_API_KEY_AUTH}"
+echo "allow_query_token_auth=${ALLOW_QUERY_TOKEN_AUTH}"
 echo "compat_trust_client_account_headers=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}"
 for worker in "${TEAM_WORKERS[@]}"; do
-  deploy_worker="$(resolve_deploy_worker_name "$worker")"
+  mapfile -t deploy_workers < <(resolve_deploy_worker_names "$worker")
   target_servers_csv="$(target_server_csv_for_worker "$worker")"
   discovery_shared_pack="$(discovery_shared_pack_for_worker "$worker")"
   direct_proxy_enabled="$(direct_proxy_enabled_for_worker "$worker")"
   direct_proxy_prefixes="$(direct_proxy_prefixes_for_worker "$worker")"
-  echo "===== DEPLOY ${worker} ====="
-  if [[ "$deploy_worker" != "$worker" ]]; then
-    echo "deploy_target=${deploy_worker} (legacy alias)"
-  fi
   account_id="$(account_id_for_worker "$worker")"
-  if [[ "$worker" == "cs-hub-mj" ]]; then
-    pnpm exec wrangler deploy \
-      --config "$TEAM_CONFIG" \
-      --name "$deploy_worker" \
-      --var "HUB_INSTANCE_ID:${deploy_worker}" \
-      --var "HUB_ACCOUNT_ID:${account_id}" \
-      --var "HUB_ENABLED_BUNDLES:[]" \
-      --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
-      --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-webflow,halfdozen-dm-mcp,schedule-mcp,substrate-mcp" \
-      --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
-      --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
-      --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
-      --var "HUB_DISCOVERY_MODE:full" \
-      --var "HUB_CONNECT_TIMEOUT_MS:10000" \
-      --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
-      --var "HUB_CONNECT_CONCURRENCY:4" \
-      --var "HUB_ALLOW_DIRECT_PROXY_TOOLS:${direct_proxy_enabled}" \
-      --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
-      --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
-  else
-    pnpm exec wrangler deploy \
-      --config "$TEAM_CONFIG" \
-      --name "$deploy_worker" \
-      --var "HUB_INSTANCE_ID:${deploy_worker}" \
-      --var "HUB_ACCOUNT_ID:${account_id}" \
-      --var "HUB_ENABLED_BUNDLES:[]" \
-      --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
-      --var "HUB_DISABLED_SERVERS:[]" \
-      --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
-      --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
-      --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
-      --var "HUB_DISCOVERY_MODE:compact" \
-      --var "HUB_CONNECT_TIMEOUT_MS:10000" \
-      --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
-      --var "HUB_CONNECT_CONCURRENCY:4" \
-      --var "HUB_ALLOW_DIRECT_PROXY_TOOLS:${direct_proxy_enabled}" \
-      --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
-      --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
+  if [[ "${#deploy_workers[@]}" -gt 1 ]]; then
+    echo "deploy_targets=$(printf '%s,' "${deploy_workers[@]}" | sed 's/,$//') (alias set)"
   fi
+  for deploy_worker in "${deploy_workers[@]}"; do
+    echo "===== DEPLOY ${worker} ====="
+    if [[ "$deploy_worker" != "$worker" ]]; then
+      echo "deploy_target=${deploy_worker} (legacy alias)"
+    fi
+    if [[ "$worker" == "cs-hub-mj" ]]; then
+      pnpm exec wrangler deploy \
+        --config "$TEAM_CONFIG" \
+        --name "$deploy_worker" \
+        --var "HUB_INSTANCE_ID:${deploy_worker}" \
+        --var "HUB_ACCOUNT_ID:${account_id}" \
+        --var "HUB_ENABLED_BUNDLES:[]" \
+        --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
+        --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-webflow,halfdozen-dm-mcp,schedule-mcp,substrate-mcp" \
+        --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
+        --var "HUB_ALLOW_X_API_KEY_AUTH:${ALLOW_X_API_KEY_AUTH}" \
+        --var "HUB_ALLOW_QUERY_TOKEN_AUTH:${ALLOW_QUERY_TOKEN_AUTH}" \
+        --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
+        --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
+        --var "HUB_DISCOVERY_MODE:full" \
+        --var "HUB_CONNECT_TIMEOUT_MS:10000" \
+        --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
+        --var "HUB_CONNECT_CONCURRENCY:4" \
+        --var "HUB_ALLOW_DIRECT_PROXY_TOOLS:${direct_proxy_enabled}" \
+        --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
+        --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
+    else
+      pnpm exec wrangler deploy \
+        --config "$TEAM_CONFIG" \
+        --name "$deploy_worker" \
+        --var "HUB_INSTANCE_ID:${deploy_worker}" \
+        --var "HUB_ACCOUNT_ID:${account_id}" \
+        --var "HUB_ENABLED_BUNDLES:[]" \
+        --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
+        --var "HUB_DISABLED_SERVERS:[]" \
+        --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
+        --var "HUB_ALLOW_X_API_KEY_AUTH:${ALLOW_X_API_KEY_AUTH}" \
+        --var "HUB_ALLOW_QUERY_TOKEN_AUTH:${ALLOW_QUERY_TOKEN_AUTH}" \
+        --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
+        --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
+        --var "HUB_DISCOVERY_MODE:compact" \
+        --var "HUB_CONNECT_TIMEOUT_MS:10000" \
+        --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
+        --var "HUB_CONNECT_CONCURRENCY:4" \
+        --var "HUB_ALLOW_DIRECT_PROXY_TOOLS:${direct_proxy_enabled}" \
+        --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
+        --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
+    fi
+  done
   echo "----- NORMALIZE STATE ${worker} -----"
   normalize_worker_state "$worker"
   echo
@@ -396,6 +436,8 @@ for worker in "${CORE_WORKERS[@]}"; do
     --name "$worker" \
     --var "HUB_INSTANCE_ID:${worker}" \
     --var "HUB_IDENTITY_MODE:${CORE_HUB_DEPLOY_IDENTITY_MODE}" \
+    --var "HUB_ALLOW_X_API_KEY_AUTH:${ALLOW_X_API_KEY_AUTH}" \
+    --var "HUB_ALLOW_QUERY_TOKEN_AUTH:${ALLOW_QUERY_TOKEN_AUTH}" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
     --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
     --var "HUB_ENABLED_BUNDLES:${target_bundles_csv}" \
