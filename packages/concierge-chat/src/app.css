@@ -1,33 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 :root {
-  --bg: #f5f0e8;
-  --surface: rgba(255, 252, 246, 0.88);
-  --surface-strong: #fffaf2;
-  --ink: #1f1b16;
-  --muted: #62574a;
-  --line: rgba(63, 46, 29, 0.14);
-  --accent: #b8572f;
-  --accent-soft: rgba(184, 87, 47, 0.12);
-  --good: #2b6b56;
-  --warn: #8a5d14;
-  --danger: #a23d35;
-  --radius: 18px;
-  --shadow: 0 20px 50px rgba(63, 46, 29, 0.12);
-  --font-sans: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
-  --font-ui: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --bg: #06070c;
+  --bg-depth: #0c1018;
+  --surface: linear-gradient(180deg, rgba(18, 24, 37, 0.9) 0%, rgba(10, 14, 22, 0.94) 100%);
+  --surface-strong: rgba(19, 25, 38, 0.88);
+  --surface-soft: rgba(26, 34, 50, 0.78);
+  --surface-overlay: rgba(167, 184, 255, 0.08);
+  --surface-overlay-strong: rgba(167, 184, 255, 0.14);
+  --surface-contrast: rgba(7, 10, 16, 0.92);
+  --field-bg: rgba(14, 19, 30, 0.92);
+  --ink: #f2f5ff;
+  --ink-soft: #dbe3ff;
+  --muted: #9ea8c9;
+  --muted-strong: #c0c9e8;
+  --line: rgba(167, 184, 255, 0.16);
+  --line-strong: rgba(167, 184, 255, 0.28);
+  --line-accent: rgba(167, 184, 255, 0.62);
+  --accent: #6c84ff;
+  --accent-strong: #a7b8ff;
+  --accent-soft: rgba(167, 184, 255, 0.14);
+  --accent-gradient: linear-gradient(90deg, #5f79ff 0%, #a7b8ff 100%);
+  --good: #79d9b0;
+  --good-soft: rgba(121, 217, 176, 0.14);
+  --warn: #f1c56b;
+  --warn-soft: rgba(241, 197, 107, 0.16);
+  --danger: #ff9690;
+  --danger-soft: rgba(255, 150, 144, 0.16);
+  --button-bg: linear-gradient(135deg, #a7b8ff 0%, #6c84ff 100%);
+  --button-ink: #06070c;
+  --focus: rgba(167, 184, 255, 0.72);
+  --radius: 20px;
+  --shadow: 0 28px 72px rgba(0, 0, 0, 0.42);
+  --font-heading: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
 }
 
 html {
-  font-family: var(--font-ui);
+  font-family: var(--font-sans);
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(184, 87, 47, 0.12), transparent 28%),
-    radial-gradient(circle at top right, rgba(43, 107, 86, 0.1), transparent 24%),
-    linear-gradient(180deg, #f8f3eb 0%, var(--bg) 100%);
+    radial-gradient(circle at top, rgba(49, 92, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 85% 12%, rgba(167, 184, 255, 0.12), transparent 20%),
+    linear-gradient(180deg, #0c0c10 0%, #06070c 52%, #000000 100%);
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top, rgba(49, 92, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, #0c0c10 0%, #06070c 52%, #000000 100%);
+  letter-spacing: -0.012em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -45,28 +76,65 @@ select {
   font: inherit;
 }
 
+button,
+textarea,
+input,
+select {
+  color: var(--ink);
+}
+
 button {
-  border: 0;
+  border: 1px solid rgba(167, 184, 255, 0.18);
   border-radius: 999px;
-  background: var(--ink);
-  color: #fff;
+  background: var(--button-bg);
+  color: var(--button-ink);
   cursor: pointer;
   padding: 0.8rem 1.2rem;
-  transition: transform 140ms ease, opacity 140ms ease, background 140ms ease;
+  font-weight: 600;
+  transition:
+    transform 140ms ease,
+    opacity 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease;
+  box-shadow: 0 16px 34px rgba(49, 92, 255, 0.22);
 }
 
 button:hover {
   transform: translateY(-1px);
+  box-shadow: 0 18px 36px rgba(49, 92, 255, 0.28);
 }
 
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
+}
+
+textarea,
+input,
+select {
+  border: 1px solid var(--line);
+  background: var(--field-bg);
+}
+
+textarea::placeholder,
+input::placeholder {
+  color: var(--muted);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 * {
   box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(167, 184, 255, 0.28);
 }
 
 .app-shell {
@@ -77,7 +145,7 @@ button:disabled {
 
 .glass {
   background: var(--surface);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -87,26 +155,30 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.78rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.65);
-  color: var(--muted);
-  font-size: 0.76rem;
-  letter-spacing: 0.08em;
+  background: var(--surface-overlay);
+  border: 1px solid var(--line);
+  color: var(--muted-strong);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .page-title {
-  font-family: var(--font-sans);
+  font-family: var(--font-display);
   font-size: clamp(2.4rem, 5vw, 4.6rem);
   line-height: 0.95;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.05em;
   margin: 0;
 }
 
 .section-title {
-  font-family: var(--font-sans);
-  font-size: clamp(1.4rem, 2vw, 2rem);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
   margin: 0;
 }
 
@@ -124,23 +196,30 @@ button:disabled {
   gap: 0.35rem;
   border-radius: 999px;
   padding: 0.3rem 0.7rem;
-  font-size: 0.82rem;
+  border: 1px solid rgba(167, 184, 255, 0.14);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   background: var(--accent-soft);
-  color: var(--ink);
+  color: var(--ink-soft);
 }
 
 .status-pill.good {
-  background: rgba(43, 107, 86, 0.14);
+  background: var(--good-soft);
+  border-color: rgba(121, 217, 176, 0.18);
   color: var(--good);
 }
 
 .status-pill.warn {
-  background: rgba(138, 93, 20, 0.14);
+  background: var(--warn-soft);
+  border-color: rgba(241, 197, 107, 0.18);
   color: var(--warn);
 }
 
 .status-pill.danger {
-  background: rgba(162, 61, 53, 0.14);
+  background: var(--danger-soft);
+  border-color: rgba(255, 150, 144, 0.2);
   color: var(--danger);
 }
 

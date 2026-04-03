@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>%sveltekit.status% · Abundance Concierge</title>
+		<style>
+			:root {
+				--bg: #06070c;
+				--bg-depth: #0c1018;
+				--surface: linear-gradient(180deg, rgba(18, 24, 37, 0.94) 0%, rgba(10, 14, 22, 0.98) 100%);
+				--surface-strong: rgba(19, 25, 38, 0.88);
+				--surface-contrast: rgba(7, 10, 16, 0.92);
+				--surface-overlay: rgba(167, 184, 255, 0.08);
+				--ink: #f2f5ff;
+				--ink-soft: #dbe3ff;
+				--muted: #9ea8c9;
+				--muted-strong: #c0c9e8;
+				--line: rgba(167, 184, 255, 0.16);
+				--line-strong: rgba(167, 184, 255, 0.28);
+				--accent-soft: rgba(167, 184, 255, 0.14);
+				--button-bg: linear-gradient(135deg, #a7b8ff 0%, #6c84ff 100%);
+				--button-ink: #06070c;
+				--warn: #f1c56b;
+				--warn-soft: rgba(241, 197, 107, 0.16);
+				--danger: #ff9690;
+				--danger-soft: rgba(255, 150, 144, 0.16);
+				--radius: 20px;
+				--shadow: 0 28px 72px rgba(0, 0, 0, 0.42);
+				--font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+				--font-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				margin: 0;
+				min-height: 100%;
+			}
+
+			body {
+				font-family: var(--font-sans);
+				color: var(--ink);
+				background:
+					radial-gradient(circle at top, rgba(49, 92, 255, 0.16), transparent 28%),
+					radial-gradient(circle at 85% 12%, rgba(167, 184, 255, 0.12), transparent 20%),
+					linear-gradient(180deg, #0c0c10 0%, #06070c 52%, #000000 100%);
+				letter-spacing: -0.012em;
+				text-rendering: optimizeLegibility;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+
+			a {
+				color: inherit;
+			}
+
+			p {
+				margin: 0;
+				line-height: 1.6;
+			}
+
+			.error-shell {
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 1.5rem;
+			}
+
+			.error-card {
+				width: min(960px, 100%);
+				display: grid;
+				gap: 1.25rem;
+				padding: 1.4rem;
+				background: var(--surface);
+				backdrop-filter: blur(20px);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow);
+			}
+
+			.error-top {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1rem;
+				flex-wrap: wrap;
+			}
+
+			.eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				padding: 0.4rem 0.78rem;
+				border-radius: 999px;
+				background: var(--surface-overlay);
+				border: 1px solid var(--line);
+				color: var(--muted-strong);
+				font-family: var(--font-mono);
+				font-size: 0.74rem;
+				letter-spacing: 0.14em;
+				text-transform: uppercase;
+			}
+
+			.status-pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.35rem;
+				border-radius: 999px;
+				padding: 0.3rem 0.7rem;
+				border: 1px solid rgba(167, 184, 255, 0.14);
+				font-family: var(--font-mono);
+				font-size: 0.72rem;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				background: var(--accent-soft);
+				color: var(--ink-soft);
+			}
+
+			.status-pill.warn {
+				background: var(--warn-soft);
+				border-color: rgba(241, 197, 107, 0.18);
+				color: var(--warn);
+			}
+
+			.status-pill.danger {
+				background: var(--danger-soft);
+				border-color: rgba(255, 150, 144, 0.2);
+				color: var(--danger);
+			}
+
+			.page-title {
+				font-size: clamp(2.4rem, 5vw, 4.6rem);
+				line-height: 0.95;
+				letter-spacing: -0.05em;
+				margin: 0;
+			}
+
+			.error-lead {
+				max-width: 44rem;
+				font-size: 1.02rem;
+				color: var(--muted-strong);
+			}
+
+			.error-detail {
+				display: grid;
+				gap: 0.7rem;
+				padding: 1rem 1.05rem;
+				border-radius: calc(var(--radius) - 6px);
+				background: var(--surface-contrast);
+				border: 1px solid var(--line);
+			}
+
+			.error-detail p {
+				color: var(--muted-strong);
+			}
+
+			.error-actions {
+				display: flex;
+				gap: 0.85rem;
+				flex-wrap: wrap;
+			}
+
+			.cta-link {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 3.1rem;
+				padding: 0.85rem 1.2rem;
+				border-radius: 999px;
+				text-decoration: none;
+				font-weight: 600;
+				transition:
+					transform 140ms ease,
+					border-color 140ms ease,
+					background 140ms ease,
+					box-shadow 140ms ease;
+			}
+
+			.cta-link:hover {
+				transform: translateY(-1px);
+			}
+
+			.cta-link.primary {
+				background: var(--button-bg);
+				color: var(--button-ink);
+				box-shadow: 0 16px 34px rgba(49, 92, 255, 0.22);
+			}
+
+			.cta-link.secondary {
+				background: var(--surface-overlay);
+				color: var(--ink-soft);
+				border: 1px solid var(--line);
+			}
+
+			.error-grid {
+				display: grid;
+				gap: 1rem;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+
+			.error-note {
+				display: grid;
+				gap: 0.7rem;
+				padding: 1rem 1.05rem;
+				background: var(--surface-strong);
+				border: 1px solid var(--line);
+				border-radius: calc(var(--radius) - 6px);
+			}
+
+			.error-note p {
+				color: var(--muted-strong);
+			}
+
+			@media (max-width: 760px) {
+				.error-grid {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>
+	</head>
+	<body data-status="%sveltekit.status%">
+		<div class="error-shell">
+			<section class="error-card">
+				<div class="error-top">
+					<div id="eyebrow" class="eyebrow">Governed Intake Access</div>
+					<div id="status-pill" class="status-pill">%sveltekit.status%</div>
+				</div>
+
+				<h1 id="title" class="page-title">Abundance Concierge unavailable</h1>
+				<p id="lead" class="error-lead">
+					A governed access rule interrupted this request before the nurse staffing workflow
+					could continue.
+				</p>
+
+				<section class="error-detail">
+					<div class="eyebrow">Runtime Detail</div>
+					<p id="detail">%sveltekit.error.message%</p>
+				</section>
+
+				<div class="error-actions">
+					<a
+						id="primary-action"
+						class="cta-link primary"
+						href="/control-plane/dashboard?source=abundance-concierge"
+					>
+						Open .agency
+					</a>
+					<a id="secondary-action" class="cta-link secondary" href="/chat">Open chat workspace</a>
+				</div>
+
+				<div class="error-grid">
+					<article class="error-note">
+						<div id="note-1-label" class="eyebrow">Nurse Candidates</div>
+						<p id="note-1-copy">
+							Return to the apply flow and complete the secure email verification step
+							before retrying the protected route.
+						</p>
+					</article>
+
+					<article class="error-note">
+						<div id="note-2-label" class="eyebrow">Operators</div>
+						<p id="note-2-copy">
+							Use .agency for governed access, or issue a direct secure entry link when a
+							recruiter-assisted fast path is still needed.
+						</p>
+					</article>
+				</div>
+			</section>
+		</div>
+
+		<script>
+			const status = Number(document.body.dataset.status || '0');
+			const detail = document.getElementById('detail')?.textContent || '';
+			const detailLower = detail.toLowerCase();
+			const eyebrow = document.getElementById('eyebrow');
+			const title = document.getElementById('title');
+			const lead = document.getElementById('lead');
+			const statusPill = document.getElementById('status-pill');
+			const primaryAction = document.getElementById('primary-action');
+			const secondaryAction = document.getElementById('secondary-action');
+			const note1Label = document.getElementById('note-1-label');
+			const note1Copy = document.getElementById('note-1-copy');
+			const note2Label = document.getElementById('note-2-label');
+			const note2Copy = document.getElementById('note-2-copy');
+
+			const setAction = (element, label, href) => {
+				if (!element) return;
+				element.textContent = label;
+				element.setAttribute('href', href);
+			};
+
+			if (statusPill && status === 403) {
+				statusPill.classList.add('warn');
+			}
+
+			if (statusPill && status >= 500) {
+				statusPill.classList.add('danger');
+			}
+
+			if (status === 500 && detailLower.includes('signing secret')) {
+				if (eyebrow) eyebrow.textContent = 'Runtime Configuration';
+				if (title) title.textContent = 'Runtime configuration required';
+				if (lead) {
+					lead.textContent =
+						'The production runtime is missing required signing configuration, so nurse intake cannot open safely yet.';
+				}
+				if (note1Label) note1Label.textContent = 'Production State';
+				if (note1Copy) {
+					note1Copy.textContent =
+						'The deployment is reachable, but the intake signing secret is missing, so nurse traffic is being held behind the governed access boundary.';
+				}
+				if (note2Label) note2Label.textContent = 'Next Step';
+				if (note2Copy) {
+					note2Copy.textContent =
+						'Complete the runtime security configuration, then retry the signed intake entry link.';
+				}
+				setAction(primaryAction, 'Open .agency security', '/control-plane/security?source=abundance-concierge');
+				setAction(secondaryAction, 'Open .agency dashboard', '/control-plane/dashboard?source=abundance-concierge');
+			} else if (status === 404) {
+				if (eyebrow) eyebrow.textContent = 'Route Unavailable';
+				if (title) title.textContent = 'Requested route unavailable';
+				if (lead) {
+					lead.textContent =
+						'This route is not active for the current governed session.';
+				}
+				if (note1Label) note1Label.textContent = 'Next Step';
+				if (note1Copy) {
+					note1Copy.textContent =
+						'Retry the governed session route or return to the main chat workspace.';
+				}
+				if (note2Label) note2Label.textContent = 'Operations';
+				if (note2Copy) {
+					note2Copy.textContent =
+						'Use .agency to inspect access, security posture, and downstream staffing controls.';
+				}
+				setAction(primaryAction, 'Open chat workspace', '/chat');
+				setAction(secondaryAction, 'Open .agency', '/control-plane/dashboard?source=abundance-concierge');
+			} else if (
+				status === 403 &&
+				(detailLower.includes('signed intake') || detailLower.includes('secure verification'))
+			) {
+				if (eyebrow) eyebrow.textContent = 'Governed Intake Access';
+				if (title) title.textContent = 'Secure verification required';
+				if (lead) {
+					lead.textContent =
+						'Abundance Concierge allows public nurse entry, but this step still requires secure verification before protected credentials or staffing progression can continue.';
+				}
+				setAction(primaryAction, 'Open .agency', '/control-plane/dashboard?source=abundance-concierge');
+				setAction(secondaryAction, 'Check account', '/control-plane/account?source=abundance-concierge');
+			}
+		</script>
+	</body>
+</html>

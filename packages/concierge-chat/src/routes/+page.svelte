@@ -1,49 +1,88 @@
 <script lang="ts">
-	import { getLatestDemoThread, listDemoThreads } from '$server/threads/demo';
+	import type { PageData } from './$types';
 
-	const latestThread = getLatestDemoThread();
-	const threads = listDemoThreads();
+	export let data: PageData;
+
+	$: verificationTone = data.intakeAccess.granted
+		? 'good'
+		: data.intakeAccess.reason === 'missing_secret'
+			? 'danger'
+			: 'warn';
+	$: verificationLabel = data.intakeAccess.granted
+		? 'Verified intake active'
+		: data.intakeAccess.reason === 'missing_secret'
+			? 'Verification unavailable'
+			: 'Public start, secure finish';
+	$: verificationDetail = data.intakeAccess.granted
+		? 'This browser already has secure intake verification, so document upload and recruiter progression are unlocked.'
+		: data.intakeAccess.reason === 'missing_secret'
+			? 'The runtime is missing its secure verification secret. Public browsing still works, but protected intake steps are unavailable until that is fixed.'
+			: 'Any nurse can start an application here. A one-time email verification step is required later for document upload and recruiter review.';
 </script>
 
 <section class="hero glass panel">
-	<div class="eyebrow">Hosted Product Plane</div>
-	<h1 class="page-title">AI-native concierge chat for progressive profiling.</h1>
-	<p class="lede">
-		Instead of forcing a busy nurse through a rigid intake form, the conversation builds the
-		profile invisibly and only renders structured tools when policy or confidence requires them.
-	</p>
+	<div class="hero-copy">
+		<div class="eyebrow">Public Nurse Intake</div>
+		<h1 class="page-title">Start your next nursing application without a paperwork wall.</h1>
+		<p class="lede">
+			Abundance turns the first intake into a guided conversation. Nurses can begin from a public
+			link, share role preferences and credentials progressively, and only cross a secure
+			verification boundary when protected documents or staffing escalation are required.
+		</p>
 
-	<div class="hero-actions">
-		<a class="link-button" href={latestThread ? `/chat/${latestThread.id}` : '/chat'}>Open demo thread</a>
-		<a class="link-secondary" href="/chat">View thread list</a>
+		<div class="hero-actions">
+			<a class="link-button" href="/apply">Start application</a>
+			{#if data.workspace?.latestThreadId}
+				<a class="link-secondary" href={`/chat/${data.workspace.latestThreadId}`}>
+					Continue application
+				</a>
+			{:else}
+				<a class="link-secondary" href="/chat">Open workspace</a>
+			{/if}
+		</div>
+	</div>
+
+	<div class="hero-aside">
+		<div class="hero-card">
+			<span class={`status-pill ${verificationTone}`}>{verificationLabel}</span>
+			<p>{verificationDetail}</p>
+		</div>
+		<div class="hero-card">
+			<strong>What opens immediately</strong>
+			<p>Conversation, profile capture, preference collection, and nurse-guided corrections.</p>
+		</div>
+		<div class="hero-card">
+			<strong>What stays protected</strong>
+			<p>Credential uploads, recruiter review, staffing submission, and downstream handoff.</p>
+		</div>
 	</div>
 </section>
 
 <section class="grid-3 section-gap">
 	<div class="glass panel">
-		<div class="eyebrow">Control Plane</div>
-		<h2 class="section-title">.agency owns access</h2>
+		<div class="eyebrow">1. Start Publicly</div>
+		<h2 class="section-title">Open from any campaign</h2>
 		<p class="muted">
-			Credentials, entitlements, security posture, and partner admin remain outside the chat
-			product.
+			Marketing links can send nurses straight to `/apply` with no recruiter-issued token required
+			up front.
 		</p>
 	</div>
 
 	<div class="glass panel">
-		<div class="eyebrow">Product Plane</div>
-		<h2 class="section-title">Concierge owns the session</h2>
+		<div class="eyebrow">2. Build the Profile</div>
+		<h2 class="section-title">Progressive intake</h2>
 		<p class="muted">
-			Threads, profile progress, dynamic widgets, and handoff all live here as the end-user
-			experience.
+			The chat collects licenses, specialties, shift preference, availability, and corrections as a
+			conversation instead of a rigid form.
 		</p>
 	</div>
 
 	<div class="glass panel">
-		<div class="eyebrow">Execution Plane</div>
-		<h2 class="section-title">Hub owns governed tool use</h2>
+		<div class="eyebrow">3. Verify Securely</div>
+		<h2 class="section-title">Trust escalates later</h2>
 		<p class="muted">
-			MCP discovery, route authorization, auth recovery, and tenant-safe execution stay behind
-			the hosted app.
+			Protected steps stay behind secure verification so sensitive uploads and staffing actions do
+			not run on anonymous traffic.
 		</p>
 	</div>
 </section>
@@ -51,28 +90,29 @@
 <section class="glass panel section-gap">
 	<div class="section-header">
 		<div>
-			<div class="eyebrow">Demo Threads</div>
-			<h2 class="section-title">Scaffolded flows</h2>
+			<div class="eyebrow">Candidate Journey</div>
+			<h2 class="section-title">What nurses experience</h2>
 		</div>
-		<span class="status-pill">{threads.length} seeded threads</span>
+		<a class="inline-link" href="/apply">Enter the intake workspace</a>
 	</div>
 
-	<div class="thread-list">
-		{#each threads as thread}
-			<a class="thread-card" href={`/chat/${thread.id}`}>
-				<div class="thread-top">
-					<strong>{thread.title}</strong>
-					<span class={`status-pill ${thread.status === 'handoff_ready' ? 'danger' : 'warn'}`}>
-						{thread.status.replace('_', ' ')}
-					</span>
-				</div>
-				<p>{thread.subtitle}</p>
-				<div class="thread-meta">
-					<span>{thread.profileCompletion}% complete</span>
-					<span>{thread.pendingAction}</span>
-				</div>
-			</a>
-		{/each}
+	<div class="journey-grid">
+		<div class="journey-card">
+			<strong>Discover</strong>
+			<p>Visit from ads, email, referral links, or a recruiter share.</p>
+		</div>
+		<div class="journey-card">
+			<strong>Apply</strong>
+			<p>Start the conversation, clarify profile fields, and capture preferences.</p>
+		</div>
+		<div class="journey-card">
+			<strong>Verify</strong>
+			<p>Request a one-time email code when it is time to upload protected documents or move to recruiter review.</p>
+		</div>
+		<div class="journey-card">
+			<strong>Advance</strong>
+			<p>Once verified and entitled, Abundance can move the thread into staffing and onboarding.</p>
+		</div>
 	</div>
 </section>
 
@@ -82,11 +122,40 @@
 	}
 
 	.hero {
+		display: grid;
+		grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.9fr);
+		gap: 1rem;
 		padding: 1.8rem;
 	}
 
+	.hero-copy,
+	.hero-aside,
+	.hero-card,
+	.journey-card {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.hero-aside {
+		align-content: start;
+	}
+
+	.hero-card,
+	.journey-card {
+		padding: 1rem;
+		border-radius: 18px;
+		background: var(--surface-soft);
+		border: 1px solid var(--line);
+	}
+
+	.hero-card p,
+	.journey-card p {
+		margin: 0;
+		color: var(--muted);
+	}
+
 	.lede {
-		max-width: 48rem;
+		max-width: 46rem;
 		font-size: 1.08rem;
 		color: var(--muted);
 	}
@@ -95,7 +164,7 @@
 		display: flex;
 		gap: 0.75rem;
 		flex-wrap: wrap;
-		margin-top: 1.5rem;
+		margin-top: 1.1rem;
 	}
 
 	.link-button,
@@ -106,24 +175,29 @@
 		padding: 0.8rem 1.2rem;
 		border-radius: 999px;
 		text-decoration: none;
+		border: none;
+		cursor: pointer;
+		font: inherit;
 	}
 
 	.link-button {
-		background: var(--ink);
-		color: white;
+		background: var(--button-bg);
+		color: var(--button-ink);
+		border: 1px solid rgba(167, 184, 255, 0.18);
+		box-shadow: 0 16px 34px rgba(49, 92, 255, 0.22);
 	}
 
 	.link-secondary {
-		background: rgba(255, 255, 255, 0.6);
+		background: var(--surface-overlay);
+		color: var(--ink);
+		border: 1px solid var(--line);
 	}
 
 	.section-gap {
 		margin-top: 1rem;
 	}
 
-	.section-header,
-	.thread-top,
-	.thread-meta {
+	.section-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -131,21 +205,17 @@
 		flex-wrap: wrap;
 	}
 
-	.thread-list {
+	.journey-grid {
 		display: grid;
-		gap: 0.85rem;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 0.9rem;
 		margin-top: 1rem;
 	}
 
-	.thread-card {
-		padding: 1rem 1.1rem;
-		border-radius: 18px;
-		text-decoration: none;
-		background: rgba(255, 255, 255, 0.58);
-		border: 1px solid rgba(31, 27, 22, 0.08);
-	}
-
-	p {
-		line-height: 1.6;
+	@media (max-width: 900px) {
+		.hero,
+		.journey-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

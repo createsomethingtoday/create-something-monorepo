@@ -1,7 +1,26 @@
 <script lang="ts">
+	import { runThreadAction } from '$chat/client-actions';
 	import type { WidgetOf } from './types';
 
 	export let widget: WidgetOf<'consent'>;
+	export let threadId = '';
+
+	let pending = false;
+	let actionError = '';
+
+	async function captureConsent() {
+		pending = true;
+		actionError = '';
+
+		try {
+			await runThreadAction(threadId, { type: 'capture_consent' });
+		} catch (error) {
+			actionError =
+				error instanceof Error ? error.message : 'Unable to capture consent right now.';
+		} finally {
+			pending = false;
+		}
+	}
 </script>
 
 <div class="stack">
@@ -10,7 +29,12 @@
 	</span>
 	<p>{widget.data.body}</p>
 	<div class="policy">Policy: {widget.data.policyReference}</div>
-	<button disabled>{widget.data.confirmLabel}</button>
+	<button type="button" on:click={captureConsent} disabled={pending}>
+		{pending ? 'Capturing...' : widget.data.confirmLabel}
+	</button>
+	{#if actionError}
+		<p class="error-text">{actionError}</p>
+	{/if}
 </div>
 
 <style>
@@ -26,5 +50,11 @@
 
 	p {
 		margin: 0;
+	}
+
+	.error-text {
+		margin: 0;
+		color: var(--danger);
+		font-size: 0.92rem;
 	}
 </style>

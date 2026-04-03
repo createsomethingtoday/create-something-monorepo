@@ -12,10 +12,10 @@ This package is the end-user conversation surface, not the control plane and not
 
 | Dependency | Why It Matters |
 |------------|----------------|
-| SvelteKit | Route structure and product shell runtime |
+| SvelteKit + Canon auth loader + `.agency` entitlement snapshot | Route structure, product shell runtime, optional shared session awareness, and governed staffing gating |
 | policy docs for progressive-profile governance | Define what the chat experience is allowed to ask, render, and hand off |
 | widget registry and renderer | Control which in-chat UI elements are allowed to execute |
-| demo concierge data model | Current stand-in for persistence and workflow state |
+| session engine, public-apply access boundary, self-serve intake verification helper, intake-claim bridge, Indeed MCP writeback helper, matching/booking model, staffing queue, facility-response, and onboarding progression, handoff packet model, D1 persistence layer, attachment storage adapter, and non-production demo concierge data model | Current workflow state and storage contract |
 
 ## Enables Understanding Of
 
@@ -29,8 +29,21 @@ This package is the end-user conversation surface, not the control plane and not
 
 ```text
 src/
-├── routes/                   → chat, intake, profile, handoff, and settings shells
-├── lib/demo/concierge.ts     → demo data model and flow state
+├── routes/                   → public landing, apply workspace, claim continuation, chat, profile, handoff, settings, control-plane bridge shells, and optional shared session/entitlement-aware layout
+├── routes/api/intake-verification/ → self-serve verification request/verify endpoints
+├── routes/api/intake-claims/ → trusted inbound claim creation for sourced applicants
+├── routes/api/threads/       → server mutation and attachment surface for the hosted prototype
+├── lib/chat/prototype-session.ts → cookie-scoped server session state
+├── lib/server/intake-access.ts → signed intake grant verification and secure-link enforcement for protected actions
+├── lib/server/intake-verification.ts → one-time email verification challenges and grant issuance
+├── lib/server/intake-claims.ts → D1-backed claim storage and secure continuation links for imported applicants
+├── lib/server/indeed-mcp.ts → server-side JSON-RPC client for terminal Indeed disposition writeback
+├── lib/chat/matching-model.ts → shortlist, recruiter review, and review-completion state
+├── lib/handoff/create-packet.ts → handoff packet shaping for escalations, staffing queueing, onboarding, and placement outcomes
+├── lib/server/agency-access.ts → live `.agency` entitlement fetch, non-production preview override handling, and local session bridge
+├── lib/server/threads/persistence.ts → D1 storage adapter and session serialization
+├── lib/server/attachments/storage.ts → R2 or local attachment storage adapter
+├── lib/demo/concierge.ts     → non-production seed data model and nurse staffing demo flows
 ├── lib/widgets/ / registry   → approved widget types and rendering
 └── ...                       → UI support modules
 ```
@@ -38,19 +51,31 @@ src/
 ## To Understand This Package, Read
 
 1. **`README.md`** — current scope and route-level validation paths
-2. **`src/routes/+page.svelte`** — top-level app entry
-3. **`src/lib/demo/concierge.ts`** — current conversation/demo state model
-4. **architecture and policy docs referenced in the README** — product and governance context
+2. **`INDEED_MCP_INTEGRATION_MAP.md`** — concrete stage-to-tool map for the custom Indeed Apply MCP
+3. **`src/routes/+layout.server.ts`** — shared `.agency` session loader, optional secure-intake resolution, and live entitlement snapshot for the Abundance shell
+4. **`src/lib/server/intake-access.ts`** — signed secure-link verification and protected-action boundary
+5. **`src/lib/server/intake-verification.ts`** — self-serve email verification, challenge storage, and grant issuance
+6. **`src/lib/server/intake-claims.ts`** — secure continuation-link storage and claim resolution for imported applicants
+7. **`src/lib/server/indeed-mcp.ts`** — outbound terminal disposition sync to the custom Indeed Apply MCP
+8. **`src/lib/server/agency-access.ts`** — cross-property access lookup, non-production preview override handling, and governed-action gating boundary
+9. **`src/routes/+page.svelte`** — top-level app entry
+10. **`src/lib/chat/prototype-session.ts`** — server-owned session state and mutation logic
+11. **`src/lib/chat/matching-model.ts`** — shortlist and recruiter review state shape
+12. **`src/lib/handoff/create-packet.ts`** — escalated vs staffing-queue handoff packet shaping
+13. **`src/lib/server/threads/persistence.ts`** — D1 persistence contract
+14. **`src/lib/server/attachments/storage.ts`** — attachment storage boundary for R2/local preview
+15. **`src/lib/demo/concierge.ts`** — non-production seed conversation/demo state model
+16. **architecture and policy docs referenced in the README** — product and governance context
 
 ## Agent Legibility Contract
 
 | Field | Value |
 |-------|-------|
-| Entry point | `README.md`, `UNDERSTANDING.md`, `src/routes/+page.svelte`, `src/lib/demo/concierge.ts` |
+| Entry point | `README.md`, `UNDERSTANDING.md`, `src/routes/+page.svelte`, `src/lib/chat/prototype-session.ts`, `src/lib/chat/matching-model.ts`, `src/lib/handoff/create-packet.ts`, `src/lib/server/intake-verification.ts`, `src/lib/server/intake-claims.ts`, `src/lib/server/threads/persistence.ts`, `src/lib/server/attachments/storage.ts`, `src/routes/api/threads/+server.ts`, `src/routes/api/intake-verification/request/+server.ts`, `src/routes/api/intake-claims/+server.ts` |
 | Boot command | `pnpm --filter @create-something/concierge-chat dev` |
-| Smoke command | `pnpm --filter @create-something/concierge-chat check` |
-| Validation surfaces | Svelte typecheck output, route rendering, widget registry compilation, route-level UI inspection |
-| UI validation path | `/`, `/chat`, `/chat/demo-intake`, `/chat/demo-intake/profile`, `/chat/demo-intake/handoff` |
+| Smoke command | `pnpm --filter @create-something/concierge-chat smoke` |
+| Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, control-plane redirect behavior, public-apply routing, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback, route-level UI inspection |
+| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/chat`, `/chat/demo-intake`, `/chat/demo-intake/profile`, `/chat/demo-intake/handoff` |
 | Escalation rule | Stop if a new widget requires arbitrary executable UI, or if a workflow requires real persistence/auth without an agreed data contract and governance rule. |
 
 ## Key Concepts
@@ -66,7 +91,7 @@ src/
 
 - how governed chat UX is separated from the control plane and MCP layer
 - where widget constraints and product policy touch the conversation flow
-- how to validate the current concierge shell without assuming production persistence
+- how to validate the current concierge shell, including public nurse entry, self-serve email verification, persisted attachment flows, recruiter-review booking, staffing coordinator progression, facility-response capture, onboarding handoff progression, terminal Indeed disposition writeback, staffing-handoff packet generation, secure-intake verification, and `.agency` entitlement-gated progression or local preview overrides, without assuming a second auth stack inside the product
 
 ## Common Tasks
 
@@ -76,7 +101,8 @@ src/
 | inspect chat flow state | `src/lib/demo/concierge.ts` |
 | inspect route shell behavior | `src/routes/` |
 | validate UI flow | listed demo-intake routes |
+| sync geo fallback secret from Infisical | `pnpm --filter @create-something/concierge-chat geo:secret:sync` |
 
 ---
 
-*Last validated: 2026-03-09*
+*Last validated: 2026-04-03*
