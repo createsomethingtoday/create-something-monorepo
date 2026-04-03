@@ -62,6 +62,7 @@ declare global {
 				COMPOSIO_API_KEY?: string;
 				COMPOSIO_BASE_URL?: string;
 				COMPOSIO_AUTH_CONFIG_MAP_JSON?: string;
+				COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON?: string;
 				OSO_URL?: string;
 				OSO_API_KEY?: string;
 				OSO_FETCH_TIMEOUT_MS?: string;

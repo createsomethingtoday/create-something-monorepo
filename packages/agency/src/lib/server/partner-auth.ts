@@ -744,8 +744,7 @@ export function getComposioClient(env: PlatformEnv): Composio {
 	return client;
 }
 
-export function getAuthConfigMap(env: PlatformEnv): Record<string, string> {
-	const raw = env.COMPOSIO_AUTH_CONFIG_MAP_JSON?.trim();
+function parseAuthConfigMap(raw: string | null | undefined): Record<string, string> {
 	if (!raw) return {};
 	try {
 		const parsed = JSON.parse(raw) as unknown;
@@ -760,6 +759,13 @@ export function getAuthConfigMap(env: PlatformEnv): Record<string, string> {
 	} catch {
 		return {};
 	}
+}
+
+export function getAuthConfigMap(env: PlatformEnv): Record<string, string> {
+	return {
+		...parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP_JSON?.trim()),
+		...parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON?.trim()),
+	};
 }
 
 export function resolveAuthConfigId(env: PlatformEnv, toolkit: string): string | null {
