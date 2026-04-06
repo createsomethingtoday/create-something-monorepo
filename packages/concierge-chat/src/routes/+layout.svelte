@@ -17,13 +17,15 @@
 	);
 	$: controlPlaneLabel = getAgencyAccessStatusLabel(data.agencyAccess);
 	$: controlPlaneMeta = getAgencyAccessMeta(data.agencyAccess, data.user);
+	$: showInternalNavigation = data.agencyAccess.status !== 'anonymous';
 	$: isPublicIntakeRoute =
 		data.currentPath === '/' || data.currentPath === '/apply' || data.currentPath.startsWith('/apply/');
-	$: navItems = isPublicIntakeRoute
+	$: showCompactStaffAccess = isPublicIntakeRoute || !showInternalNavigation;
+	$: navItems = isPublicIntakeRoute || !showInternalNavigation
 		? [
-				{ href: '/', label: 'Home' },
-				{ href: '/apply', label: 'Apply' }
-			]
+					{ href: '/', label: 'Home' },
+					{ href: '/apply', label: 'Apply' }
+				]
 		: [
 				{ href: '/', label: 'Home' },
 				{ href: '/apply', label: 'Apply' },
@@ -34,34 +36,34 @@
 
 <div class="app-shell">
 	<header class="app-nav glass">
-		<div>
-			<div class="eyebrow">CREATE SOMETHING .agency</div>
-			<div class="brand">Abundance Concierge</div>
-			<div class="brand-note">Nurse staffing product plane</div>
+	<div>
+		<div class="eyebrow">CREATE SOMETHING .agency</div>
+		<div class="brand">Abundance Concierge</div>
+		<div class="brand-note">Nurse staffing product plane</div>
+	</div>
+
+		<div class="nav-cluster">
+			<nav>
+				{#each navItems as item}
+					<a href={item.href}>{item.label}</a>
+				{/each}
+			</nav>
+
+			<a
+				class={`session-link ${data.agencyAccess.status} ${showCompactStaffAccess ? 'public' : ''}`}
+				href={controlPlaneHref}
+				target="_blank"
+				rel="noreferrer"
+			>
+				{#if showCompactStaffAccess}
+					<span class="session-public-label">Staff sign-in</span>
+				{:else}
+					<span class={`status-pill ${controlPlaneTone}`}>{controlPlaneLabel}</span>
+					<span class="session-meta">{controlPlaneMeta}</span>
+				{/if}
+			</a>
 		</div>
-
-			<div class="nav-cluster">
-				<nav>
-					{#each navItems as item}
-						<a href={item.href}>{item.label}</a>
-					{/each}
-				</nav>
-
-				<a
-					class={`session-link ${data.agencyAccess.status} ${isPublicIntakeRoute ? 'public' : ''}`}
-					href={controlPlaneHref}
-					target="_blank"
-					rel="noreferrer"
-				>
-					{#if isPublicIntakeRoute}
-						<span class="session-public-label">Staff sign-in</span>
-					{:else}
-						<span class={`status-pill ${controlPlaneTone}`}>{controlPlaneLabel}</span>
-						<span class="session-meta">{controlPlaneMeta}</span>
-					{/if}
-				</a>
-			</div>
-		</header>
+	</header>
 
 	<main>
 		<slot />

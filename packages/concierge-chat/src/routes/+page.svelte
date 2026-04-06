@@ -3,21 +3,13 @@
 
 	export let data: PageData;
 
-	$: verificationTone = data.intakeAccess.granted
-		? 'good'
-		: data.intakeAccess.reason === 'missing_secret'
-			? 'danger'
-			: 'warn';
+	$: verificationTone = data.intakeAccess.granted ? 'good' : 'warn';
 	$: verificationLabel = data.intakeAccess.granted
-		? 'Verified intake active'
-		: data.intakeAccess.reason === 'missing_secret'
-			? 'Verification unavailable'
-			: 'Public start, secure finish';
+		? 'Already verified in this browser'
+		: 'Public start, secure finish';
 	$: verificationDetail = data.intakeAccess.granted
-		? 'This browser already has secure intake verification, so document upload and recruiter progression are unlocked.'
-		: data.intakeAccess.reason === 'missing_secret'
-			? 'The runtime is missing its secure verification secret. Public browsing still works, but protected intake steps are unavailable until that is fixed.'
-			: 'Any nurse can start an application here. A one-time email verification step is required later for document upload and recruiter review.';
+		? 'This browser can continue secure steps without another code if your conversation reaches uploads or recruiter review.'
+		: 'Any nurse can start here. One-time email verification only appears later, when documents or recruiter review are actually needed.';
 </script>
 
 <section class="hero glass panel">

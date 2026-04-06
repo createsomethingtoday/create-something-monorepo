@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { createConciergeThreadClient } from '$chat/client-actions';
-	import IntakeVerificationPanel from '$lib/intake/IntakeVerificationPanel.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -22,47 +21,46 @@
 		}
 	}
 
-	$: verificationTone = data.intakeAccess.granted
-		? 'good'
-		: data.intakeAccess.reason === 'missing_secret'
-			? 'danger'
-			: 'warn';
-	$: verificationLabel = data.intakeAccess.granted
-		? 'Secure verification active'
-		: data.intakeAccess.reason === 'missing_secret'
-			? 'Verification unavailable'
-			: 'Verification required later';
-	$: verificationDetail = data.intakeAccess.granted
-		? 'This session is already verified for protected uploads and recruiter progression.'
-		: data.intakeAccess.reason === 'missing_secret'
-			? 'Protected steps are temporarily unavailable because the runtime verification secret is missing.'
-			: 'You can start intake now. A one-time email verification step will unlock document upload and recruiter review later.';
+	$: latestThread = data.latestThreadId
+		? data.threadSummaries.find((thread) => thread.id === data.latestThreadId) ?? data.threadSummaries[0] ?? null
+		: data.threadSummaries[0] ?? null;
+	$: savedThreadCount = data.threadSummaries.length;
+	$: trustTone = data.intakeAccess.granted ? 'good' : 'warn';
+	$: trustLabel = data.intakeAccess.granted ? 'Verified in this browser' : 'Public start, secure finish';
+	$: trustDetail = data.intakeAccess.granted
+		? 'This browser is already verified, so secure uploads and recruiter scheduling can continue without another code.'
+		: 'Start the conversation now. One-time email verification only appears later, when documents or recruiter review are actually needed.';
 </script>
 
-<section class="glass panel">
+<section class="glass panel hero">
 	<div class="section-header">
 		<div>
 			<div class="eyebrow">Apply</div>
-			<h1 class="section-title">Start or continue your nursing application</h1>
+			<h1 class="section-title">Pick up your nursing application in chat</h1>
 		</div>
 		<div class="actions">
-			{#if data.latestThreadId}
-				<a class="cta" href={`/chat/${data.latestThreadId}`}>Resume latest thread</a>
+			{#if latestThread}
+				<a class="cta" href={`/chat/${latestThread.id}`}>Continue application</a>
 			{/if}
 			<button class="cta secondary" type="button" on:click={startNewThread} disabled={creatingThread}>
-				{creatingThread ? 'Starting intake...' : 'Start new intake'}
+				{creatingThread
+					? 'Starting intake...'
+					: latestThread
+						? 'Start fresh application'
+						: 'Start application'}
 			</button>
 		</div>
 	</div>
 
-	<p class="muted">
-		Begin with a public conversation. Abundance will gather your role preferences, experience, and
-		profile corrections before asking for protected credential steps.
+	<p class="muted lede">
+		Tell Concierge what kind of nursing role you want, where you want to work, and what schedule
+		you prefer. When a document or confirmation is needed, the chat will ask for it in the same
+		thread.
 	</p>
 
-	<div class={`verification-banner ${verificationTone}`}>
-		<span class={`status-pill ${verificationTone}`}>{verificationLabel}</span>
-		<p>{verificationDetail}</p>
+	<div class={`trust-strip ${trustTone}`}>
+		<span class={`status-pill ${trustTone}`}>{trustLabel}</span>
+		<p>{trustDetail}</p>
 	</div>
 
 	{#if actionError}
@@ -70,53 +68,54 @@
 	{/if}
 </section>
 
-<IntakeVerificationPanel
-	accessGranted={data.intakeAccess.granted}
-	verifiedEmail={data.intakeAccess.grant?.email ?? null}
-	verificationSupport={data.intakeVerification}
-	title="Verify before protected credential steps"
-	description="Send a one-time code to your email whenever you are ready to unlock secure uploads and recruiter review."
-/>
+{#if latestThread}
+	<section class="glass panel resume-panel">
+		<div class="resume-header">
+			<div>
+				<div class="eyebrow">Continue where you left off</div>
+				<h2 class="section-title">{latestThread.title}</h2>
+			</div>
+			<span class={`status-pill ${latestThread.status === 'handoff_ready' ? 'danger' : 'warn'}`}>
+				{latestThread.status.replace('_', ' ')}
+			</span>
+		</div>
 
-{#if data.threadSummaries.length === 0}
-	<section class="glass panel empty-state">
-		<div class="eyebrow">Application Ready</div>
-		<h2 class="section-title">No active nurse sessions yet</h2>
 		<p class="muted">
-			Start a new intake when you are ready. Once the conversation begins, the thread will appear
-			here and in the chat workspace.
+			{latestThread.subtitle}. Resume the same conversation and Concierge will guide the next step.
 		</p>
+
+		<div class="meter" aria-hidden="true">
+			<div class="fill" style={`width: ${latestThread.profileCompletion}%`}></div>
+		</div>
+
+		<div class="resume-meta">
+			<span>{latestThread.profileCompletion}% complete</span>
+			<span>{latestThread.pendingAction}</span>
+		</div>
+
+		{#if latestThread.badges.length > 0}
+			<div class="badges">
+				{#each latestThread.badges as badge}
+					<span class="chip">{badge}</span>
+				{/each}
+			</div>
+		{/if}
+
+		{#if savedThreadCount > 1}
+			<p class="muted helper">
+				This browser has {savedThreadCount} saved application threads. Continue the latest one here,
+				or start fresh if you want a clean conversation.
+			</p>
+		{/if}
 	</section>
 {:else}
-	<section class="thread-grid">
-		{#each data.threadSummaries as thread}
-			<a class="glass thread-card" href={`/chat/${thread.id}`}>
-				<div class="thread-header">
-					<div>
-						<strong>{thread.title}</strong>
-						<div class="muted">{thread.subtitle}</div>
-					</div>
-					<span class={`status-pill ${thread.status === 'handoff_ready' ? 'danger' : 'warn'}`}>
-						{thread.status.replace('_', ' ')}
-					</span>
-				</div>
-
-				<div class="meter" aria-hidden="true">
-					<div class="fill" style={`width: ${thread.profileCompletion}%`}></div>
-				</div>
-
-				<div class="thread-footer">
-					<span>{thread.profileCompletion}% complete</span>
-					<span>{thread.pendingAction}</span>
-				</div>
-
-				<div class="badges">
-					{#each thread.badges as badge}
-						<span class="chip">{badge}</span>
-					{/each}
-				</div>
-			</a>
-		{/each}
+	<section class="glass panel next-steps">
+		<div class="eyebrow">What happens next</div>
+		<ul>
+			<li>Start by chatting naturally about role, location, and shift preferences.</li>
+			<li>Review or correct the details Concierge captures along the way.</li>
+			<li>Verify by email only when protected uploads or recruiter review are needed.</li>
+		</ul>
 	</section>
 {/if}
 
@@ -125,9 +124,16 @@
 		padding: 1.3rem;
 	}
 
+	.hero,
+	.resume-panel,
+	.next-steps {
+		display: grid;
+		gap: 1rem;
+	}
+
 	.section-header,
-	.thread-header,
-	.thread-footer {
+	.resume-header,
+	.resume-meta {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -163,46 +169,31 @@
 		flex-wrap: wrap;
 	}
 
-	.verification-banner {
-		display: grid;
-		gap: 0.6rem;
-		margin-top: 1rem;
-		padding: 1rem;
+	.lede {
+		max-width: 48rem;
+		font-size: 1.02rem;
+	}
+
+	.trust-strip {
+		display: flex;
+		align-items: center;
+		gap: 0.9rem;
+		flex-wrap: wrap;
+		padding: 1rem 1.05rem;
 		border-radius: 18px;
 		background: var(--surface-soft);
 		border: 1px solid var(--line);
 	}
 
-	.verification-banner.good {
+	.trust-strip.good {
 		border-color: rgba(107, 201, 152, 0.24);
 	}
 
-	.verification-banner.warn {
+	.trust-strip.warn {
 		border-color: rgba(255, 214, 153, 0.24);
 	}
 
-	.verification-banner.danger {
-		border-color: rgba(255, 150, 144, 0.24);
-	}
-
-	.thread-grid {
-		display: grid;
-		gap: 1rem;
-		margin-top: 1rem;
-	}
-
-	.empty-state {
-		margin-top: 1rem;
-		padding: 1.3rem;
-	}
-
-	.thread-card {
-		padding: 1.15rem;
-		text-decoration: none;
-	}
-
 	.meter {
-		margin: 1rem 0;
 		height: 0.65rem;
 		border-radius: 999px;
 		background: var(--surface-overlay);
@@ -218,7 +209,6 @@
 		display: flex;
 		gap: 0.5rem;
 		flex-wrap: wrap;
-		margin-top: 1rem;
 	}
 
 	.chip {
@@ -229,8 +219,18 @@
 		font-size: 0.88rem;
 	}
 
+	.helper,
 	.error-text {
-		margin-top: 1rem;
+		margin: 0;
+	}
+
+	.error-text {
 		color: var(--danger);
+	}
+
+	ul {
+		margin: 0;
+		padding-left: 1.1rem;
+		line-height: 1.7;
 	}
 </style>

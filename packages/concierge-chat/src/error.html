@@ -147,7 +147,7 @@
 			}
 
 			.error-detail {
-				display: grid;
+				display: none;
 				gap: 0.7rem;
 				padding: 1rem 1.05rem;
 				border-radius: calc(var(--radius) - 6px);
@@ -224,54 +224,46 @@
 		</style>
 	</head>
 	<body data-status="%sveltekit.status%">
-		<div class="error-shell">
-			<section class="error-card">
-				<div class="error-top">
-					<div id="eyebrow" class="eyebrow">Governed Intake Access</div>
-					<div id="status-pill" class="status-pill">%sveltekit.status%</div>
-				</div>
+			<div class="error-shell">
+				<section class="error-card">
+					<div class="error-top">
+						<div id="eyebrow" class="eyebrow">Application Interrupted</div>
+						<div id="status-pill" class="status-pill">%sveltekit.status%</div>
+					</div>
 
-				<h1 id="title" class="page-title">Abundance Concierge unavailable</h1>
-				<p id="lead" class="error-lead">
-					A governed access rule interrupted this request before the nurse staffing workflow
-					could continue.
-				</p>
+					<h1 id="title" class="page-title">Abundance Concierge is temporarily unavailable</h1>
+					<p id="lead" class="error-lead">
+						The application hit an unexpected problem before the conversation could continue.
+					</p>
 
-				<section class="error-detail">
-					<div class="eyebrow">Runtime Detail</div>
-					<p id="detail">%sveltekit.error.message%</p>
+					<section id="detail-section" class="error-detail">
+						<div class="eyebrow">What happened</div>
+						<p id="detail">%sveltekit.error.message%</p>
+					</section>
+
+					<div class="error-actions">
+						<a id="primary-action" class="cta-link primary" href="/apply">Open application</a>
+						<a id="secondary-action" class="cta-link secondary" href="/">Return home</a>
+					</div>
+
+					<div class="error-grid">
+						<article class="error-note">
+							<div id="note-1-label" class="eyebrow">What to do next</div>
+							<p id="note-1-copy">
+								Return to your application and try the step again there.
+							</p>
+						</article>
+
+						<article class="error-note">
+							<div id="note-2-label" class="eyebrow">For staff</div>
+							<p id="note-2-copy">
+								Internal team members can use Staff sign-in from the home page if they need the
+								control plane.
+							</p>
+						</article>
+					</div>
 				</section>
-
-				<div class="error-actions">
-					<a
-						id="primary-action"
-						class="cta-link primary"
-						href="/control-plane/dashboard?source=abundance-concierge"
-					>
-						Open .agency
-					</a>
-					<a id="secondary-action" class="cta-link secondary" href="/chat">Open chat workspace</a>
-				</div>
-
-				<div class="error-grid">
-					<article class="error-note">
-						<div id="note-1-label" class="eyebrow">Nurse Candidates</div>
-						<p id="note-1-copy">
-							Return to the apply flow and complete the secure email verification step
-							before retrying the protected route.
-						</p>
-					</article>
-
-					<article class="error-note">
-						<div id="note-2-label" class="eyebrow">Operators</div>
-						<p id="note-2-copy">
-							Use .agency for governed access, or issue a direct secure entry link when a
-							recruiter-assisted fast path is still needed.
-						</p>
-					</article>
-				</div>
-			</section>
-		</div>
+			</div>
 
 		<script>
 			const status = Number(document.body.dataset.status || '0');
@@ -302,56 +294,65 @@
 				statusPill.classList.add('danger');
 			}
 
-			if (status === 500 && detailLower.includes('signing secret')) {
-				if (eyebrow) eyebrow.textContent = 'Runtime Configuration';
-				if (title) title.textContent = 'Runtime configuration required';
-				if (lead) {
-					lead.textContent =
-						'The production runtime is missing required signing configuration, so nurse intake cannot open safely yet.';
+				if (status === 500 && detailLower.includes('signing secret')) {
+					if (eyebrow) eyebrow.textContent = 'Secure Steps Unavailable';
+					if (title) title.textContent = 'Secure intake is temporarily unavailable';
+					if (lead) {
+						lead.textContent =
+							'The application is reachable, but secure steps are temporarily offline. Please try again shortly.';
+					}
+					if (note1Label) note1Label.textContent = 'What to do next';
+					if (note1Copy) {
+						note1Copy.textContent =
+							'Return to the application later and try the protected step again once secure verification is back online.';
+					}
+					if (note2Label) note2Label.textContent = 'For staff';
+					if (note2Copy) {
+						note2Copy.textContent =
+							'Internal team members can use Staff sign-in from the home page if they need the control plane.';
+					}
+					setAction(primaryAction, 'Open application', '/apply');
+					setAction(secondaryAction, 'Return home', '/');
+				} else if (status === 404) {
+					if (eyebrow) eyebrow.textContent = 'Page Unavailable';
+					if (title) title.textContent = 'That page is not available';
+					if (lead) {
+						lead.textContent =
+							'This page is not active for the current application state.';
+					}
+					if (note1Label) note1Label.textContent = 'What to do next';
+					if (note1Copy) {
+						note1Copy.textContent =
+							'Return to the application and continue from the main conversation instead of this direct route.';
+					}
+					if (note2Label) note2Label.textContent = 'For staff';
+					if (note2Copy) {
+						note2Copy.textContent =
+							'Internal team members can use Staff sign-in from the home page if they need the control plane.';
+					}
+					setAction(primaryAction, 'Open application', '/apply');
+					setAction(secondaryAction, 'Return home', '/');
+				} else if (
+					status === 403 &&
+					(detailLower.includes('signed intake') || detailLower.includes('secure verification'))
+				) {
+					if (eyebrow) eyebrow.textContent = 'Verification Needed';
+					if (title) title.textContent = 'Verify to continue';
+					if (lead) {
+						lead.textContent =
+							'Return to your application and complete the one-time email verification step there before retrying this protected page.';
+					}
+					if (note1Copy) {
+						note1Copy.textContent =
+							'Open your application, finish verification there, and then retry this step.';
+					}
+					if (note2Copy) {
+						note2Copy.textContent =
+							'Internal team members can use Staff sign-in from the home page if they need the control plane.';
+					}
+					setAction(primaryAction, 'Continue application', '/apply');
+					setAction(secondaryAction, 'Return home', '/');
 				}
-				if (note1Label) note1Label.textContent = 'Production State';
-				if (note1Copy) {
-					note1Copy.textContent =
-						'The deployment is reachable, but the intake signing secret is missing, so nurse traffic is being held behind the governed access boundary.';
-				}
-				if (note2Label) note2Label.textContent = 'Next Step';
-				if (note2Copy) {
-					note2Copy.textContent =
-						'Complete the runtime security configuration, then retry the signed intake entry link.';
-				}
-				setAction(primaryAction, 'Open .agency security', '/control-plane/security?source=abundance-concierge');
-				setAction(secondaryAction, 'Open .agency dashboard', '/control-plane/dashboard?source=abundance-concierge');
-			} else if (status === 404) {
-				if (eyebrow) eyebrow.textContent = 'Route Unavailable';
-				if (title) title.textContent = 'Requested route unavailable';
-				if (lead) {
-					lead.textContent =
-						'This route is not active for the current governed session.';
-				}
-				if (note1Label) note1Label.textContent = 'Next Step';
-				if (note1Copy) {
-					note1Copy.textContent =
-						'Retry the governed session route or return to the main chat workspace.';
-				}
-				if (note2Label) note2Label.textContent = 'Operations';
-				if (note2Copy) {
-					note2Copy.textContent =
-						'Use .agency to inspect access, security posture, and downstream staffing controls.';
-				}
-				setAction(primaryAction, 'Open chat workspace', '/chat');
-				setAction(secondaryAction, 'Open .agency', '/control-plane/dashboard?source=abundance-concierge');
-			} else if (
-				status === 403 &&
-				(detailLower.includes('signed intake') || detailLower.includes('secure verification'))
-			) {
-				if (eyebrow) eyebrow.textContent = 'Governed Intake Access';
-				if (title) title.textContent = 'Secure verification required';
-				if (lead) {
-					lead.textContent =
-						'Abundance Concierge allows public nurse entry, but this step still requires secure verification before protected credentials or staffing progression can continue.';
-				}
-				setAction(primaryAction, 'Open .agency', '/control-plane/dashboard?source=abundance-concierge');
-				setAction(secondaryAction, 'Check account', '/control-plane/account?source=abundance-concierge');
 			}
 		</script>
 	</body>

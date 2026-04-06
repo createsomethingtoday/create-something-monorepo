@@ -1,39 +1,43 @@
 <script lang="ts">
-	import { buildControlPlaneBridgeHref } from '$lib/control-plane';
+	import { dev } from '$app/environment';
 	import '../app.css';
 
 	export let error: App.Error;
 	export let status: number;
-
-	const dashboardHref = buildControlPlaneBridgeHref('dashboard');
-	const securityHref = buildControlPlaneBridgeHref('security');
-	const accountHref = buildControlPlaneBridgeHref('account');
 
 	$: detail = error?.message ?? 'An unexpected error interrupted the Abundance workflow.';
 	$: isAccessDenied = status === 403;
 	$: isMissingSecret = status === 500 && detail.includes('signing secret');
 	$: isNotFound = status === 404;
 	$: eyebrow = isAccessDenied
-		? 'Governed Intake Access'
+		? 'Verification Needed'
 		: isMissingSecret
-			? 'Runtime Configuration'
+			? 'Secure Steps Unavailable'
 			: isNotFound
-				? 'Route Unavailable'
-				: 'Service Interruption';
+				? 'Page Unavailable'
+				: 'Temporary Problem';
 	$: pageTitle = isAccessDenied
-		? 'Secure verification required'
+		? 'Verify to continue'
 		: isMissingSecret
-			? 'Runtime configuration required'
+			? 'Secure intake is temporarily unavailable'
 			: isNotFound
-				? 'Requested route unavailable'
-				: 'Abundance Concierge unavailable';
+				? 'That page is not available'
+				: 'Something interrupted the application';
 	$: lead = isAccessDenied
-		? 'Abundance Concierge allows public nurse entry, but this step still requires secure verification before protected credentials or staffing progression can continue.'
+		? 'Return to your application and complete the one-time email verification step there before retrying this protected page.'
 		: isMissingSecret
-			? 'The production runtime is missing required signing configuration, so nurse intake cannot open safely yet.'
+			? 'The application is reachable, but secure steps are temporarily offline. Please try again shortly.'
 			: isNotFound
-				? 'This route is not active for the current governed session.'
-				: 'The concierge hit an unexpected runtime error before the workflow could continue.';
+				? 'This page is not active for the current application state.'
+				: 'The application hit an unexpected problem before the conversation could continue.';
+	$: primaryHref = isNotFound ? '/apply' : '/apply';
+	$: primaryLabel = isAccessDenied
+		? 'Continue application'
+		: isNotFound
+			? 'Start application'
+			: 'Open application';
+	$: secondaryHref = '/';
+	$: secondaryLabel = 'Return home';
 </script>
 
 <svelte:head>
@@ -52,78 +56,36 @@
 		<h1 class="page-title">{pageTitle}</h1>
 		<p class="error-lead">{lead}</p>
 
-		<section class="error-detail">
-			<div class="eyebrow">Runtime Detail</div>
-			<p>{detail}</p>
-		</section>
+		{#if dev}
+			<section class="error-detail">
+				<div class="eyebrow">Technical detail</div>
+				<p>{detail}</p>
+			</section>
+		{/if}
 
 		<div class="error-actions">
-			{#if isAccessDenied}
-				<a class="cta-link primary" href={dashboardHref} target="_blank" rel="noreferrer">
-					Open .agency
-				</a>
-				<a class="cta-link secondary" href={accountHref} target="_blank" rel="noreferrer">
-					Check Account
-				</a>
-			{:else if isMissingSecret}
-				<a class="cta-link primary" href={securityHref} target="_blank" rel="noreferrer">
-					Open .agency security
-				</a>
-				<a class="cta-link secondary" href={dashboardHref} target="_blank" rel="noreferrer">
-					Open .agency dashboard
-				</a>
-			{:else}
-				<a class="cta-link primary" href="/chat">Open chat workspace</a>
-				<a class="cta-link secondary" href={dashboardHref} target="_blank" rel="noreferrer">
-					Open .agency
-				</a>
-			{/if}
+			<a class="cta-link primary" href={primaryHref}>{primaryLabel}</a>
+			<a class="cta-link secondary" href={secondaryHref}>{secondaryLabel}</a>
 		</div>
 
 		<div class="error-grid">
-			{#if isAccessDenied}
-				<article class="error-note glass">
-					<div class="eyebrow">Nurse Candidates</div>
-					<p>
-						Return to the apply flow and complete the secure email verification step before
-						retrying the protected route.
-					</p>
-				</article>
+			<article class="error-note glass">
+				<div class="eyebrow">What to do next</div>
+				<p>
+					{#if isAccessDenied}
+						Open your application, finish verification there, and then retry this step.
+					{:else if isNotFound}
+						Return to the application and continue from the main chat thread instead of this direct route.
+					{:else}
+						Return to the application and try the step again. If it still fails, start again from the home page.
+					{/if}
+				</p>
+			</article>
 
-				<article class="error-note glass">
-					<div class="eyebrow">Operators</div>
-					<p>
-						Use `.agency` for governed access, or issue a direct secure entry link when a
-						recruiter-assisted fast path is still needed.
-					</p>
-				</article>
-			{:else if isMissingSecret}
-				<article class="error-note glass">
-					<div class="eyebrow">Production State</div>
-					<p>
-						The deployment is reachable, but the intake signing secret is missing, so nurse
-						traffic is being held behind the governed access boundary.
-					</p>
-				</article>
-
-				<article class="error-note glass">
-					<div class="eyebrow">Next Step</div>
-					<p>
-						Complete the runtime security configuration, then retry the signed intake entry
-						link.
-					</p>
-				</article>
-			{:else}
-				<article class="error-note glass">
-					<div class="eyebrow">Next Step</div>
-					<p>Retry the governed session route or return to the main chat workspace.</p>
-				</article>
-
-				<article class="error-note glass">
-					<div class="eyebrow">Operations</div>
-					<p>Use .agency to inspect access, security posture, and downstream staffing controls.</p>
-				</article>
-			{/if}
+			<article class="error-note glass">
+				<div class="eyebrow">For staff</div>
+				<p>Internal team members can use Staff sign-in from the home page if they need the control plane.</p>
+			</article>
 		</div>
 	</section>
 </div>
