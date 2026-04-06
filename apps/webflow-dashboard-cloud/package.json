@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:cloudflare": "opennextjs-cloudflare build && node ./scripts/patch-opennext-worker.mjs",
     "start": "next start",
     "check": "tsc --noEmit",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "preview": "pnpm build:cloudflare && opennextjs-cloudflare preview",
+    "deploy": "pnpm build:cloudflare && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@create-something/webflow-dashboard-core": "file:../../packages/webflow-dashboard-core",

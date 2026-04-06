@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "webflow-dashboard-cloud",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-03-18",
   "compatibility_flags": ["nodejs_compat"],
@@ -12,13 +13,13 @@
     {
       "binding": "DB",
       "database_name": "webflow-dashboard-cloud",
-      "database_id": "auto-generated-by-webflow-cloud"
+      "database_id": "e6de1237-da7c-4e21-9dd0-4739bae8a322"
     }
   ],
   "kv_namespaces": [
     {
       "binding": "SESSIONS",
-      "id": "auto-generated-by-webflow-cloud"
+      "id": "3989460a54f04e619b6c34a87303df74"
     }
   ],
   "r2_buckets": [

@@ -24,12 +24,13 @@ The canonical parity inventory lives in [specs/webflow-dashboard-cloud-parity-ma
 
 ## Runtime bindings
 
-Webflow Cloud should provision these Cloudflare bindings from [wrangler.json](/Volumes/LaCie/Create%20Something/create-something-monorepo/apps/webflow-dashboard-cloud/wrangler.json):
+Direct Wrangler deploys for this app target the `Create Something` Cloudflare account and use the
+bindings committed in [wrangler.json](/Volumes/LaCie/Create%20Something/create-something-monorepo/apps/webflow-dashboard-cloud/wrangler.json):
 
 - `ASSETS`: OpenNext static asset binding for the generated Next.js build
-- `DB`: D1 database for future app-owned persistence
-- `SESSIONS`: KV namespace for login rate limits and session storage
-- `UPLOADS`: R2 bucket for dashboard uploads
+- `DB`: D1 database `webflow-dashboard-cloud` (`e6de1237-da7c-4e21-9dd0-4739bae8a322`) for future app-owned persistence
+- `SESSIONS`: KV namespace `WEBFLOW_DASHBOARD_CLOUD_SESSIONS` (`3989460a54f04e619b6c34a87303df74`) for login rate limits and session storage
+- `UPLOADS`: R2 bucket `webflow-dashboard-cloud-uploads` for dashboard uploads
 
 ## Environment variables
 
@@ -70,7 +71,9 @@ pnpm --filter @create-something/webflow-dashboard-core test
 pnpm --filter @create-something/webflow-dashboard-cloud dev
 pnpm --filter @create-something/webflow-dashboard-cloud check
 pnpm --filter @create-something/webflow-dashboard-cloud build
+pnpm --filter @create-something/webflow-dashboard-cloud build:cloudflare
 pnpm --filter @create-something/webflow-dashboard-cloud preview
+pnpm --filter @create-something/webflow-dashboard-cloud deploy
 ```
 
 ## Route surface
@@ -128,5 +131,6 @@ API routes:
 - Keep business logic in standard route handlers and server components. Do not add `runtime = "edge"` to app routes.
 - Webflow Cloud injects the mount path. The app reads `BASE_URL`, `ASSETS_PREFIX`, and `window.__NEXT_DATA__.assetPrefix` to resolve paths correctly under a prefixed deployment.
 - The app now includes [open-next.config.ts](/Volumes/LaCie/Create%20Something/create-something-monorepo/apps/webflow-dashboard-cloud/open-next.config.ts) and [cloudflare-env.d.ts](/Volumes/LaCie/Create%20Something/create-something-monorepo/apps/webflow-dashboard-cloud/cloudflare-env.d.ts) to match the current Webflow Cloud Next.js deployment docs.
+- `build:cloudflare` runs [scripts/patch-opennext-worker.mjs](/Volumes/LaCie/Create%20Something/create-something-monorepo/apps/webflow-dashboard-cloud/scripts/patch-opennext-worker.mjs) after `opennextjs-cloudflare build` to remove the broken `process.chdir("")` bootstrap emitted by `@opennextjs/cloudflare@1.8.0`.
 - The Cloud app depends on [packages/webflow-dashboard-core](/Volumes/LaCie/Create%20Something/create-something-monorepo/packages/webflow-dashboard-core) through a local `file:` dependency so a subdirectory npm install has a better chance of working in Webflow Cloud.
 - The cron cleanup route exists, but scheduling should stay external until Webflow Cloud scheduling is confirmed for this app.
