@@ -21,6 +21,55 @@ Full rebuilds are resumable. Each `POST /api/templates/admin/rebuild` invocation
 Set `FULL_SYNC_PAGE_LIMIT` and `FULL_SYNC_PAGE_SIZE` to control how much Airtable data is processed per rebuild invocation.
 Set `LOOKUP_CACHE_TTL_SECONDS` to cache styles, child categories, and tags in D1 `sync_state` instead of refetching them on every sync.
 
+## Client takeover
+
+This worker is designed to replace the existing Webflow-native search experience in place, on the same public marketplace URLs:
+
+- `/templates/search?query=agency`
+- `/templates/category/<slug>`
+- `/templates/subcategory/<slug>`
+- `/templates/featured`
+- `/templates/free`
+
+The client script already understands Webflow's current `query` URL parameter and preserves that public URL shape during interactions, while using the worker API behind the scenes.
+
+### Rollout
+
+1. Start in `shadow` mode to compare the worker results against the current page without changing the UI.
+2. Switch to `active` mode to let the worker render the results grid, facet controls, pills, and pagination.
+3. Keep the public URL unchanged. Do not move the experience to a separate `/search` route unless you also plan a redirect or canonical migration.
+
+### Integration snippet
+
+```html
+<script>
+  window.__WEBFLOW_TEMPLATE_SEARCH__ = {
+    mode: 'active',
+    apiBaseUrl: 'https://webflow-template-search.createsomething.workers.dev',
+    queryParamKey: 'query'
+  };
+</script>
+<script defer src="https://webflow-template-search.createsomething.workers.dev/client.js"></script>
+```
+
+### Expected DOM hooks
+
+The client script can reuse the current marketplace markup, but the takeover is more reliable if the page exposes stable hooks:
+
+- `data-template-search-results`
+- `data-template-search-result-item`
+- `data-template-search-card-template`
+- `data-template-search-pagination`
+- `data-template-search-subcategory-pills`
+- `data-template-search-input`
+- `data-template-search-sort`
+- `data-template-search-style`
+- `data-template-search-type`
+- `data-template-search-free`
+- `data-template-search-empty`
+
+If those hooks are not available, the script falls back to the current `.tm-*` marketplace selectors where possible.
+
 ## Ranking config
 
 Set `SEARCH_RANKING_CONFIG_JSON` to tune text-field weights, business-signal weights, and long-description indexing limits.

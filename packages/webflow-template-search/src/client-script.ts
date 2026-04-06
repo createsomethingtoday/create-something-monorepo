@@ -3,6 +3,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
   const config = window.__WEBFLOW_TEMPLATE_SEARCH__ || {};
   const mode = config.mode || ${JSON.stringify(defaultMode)};
   const apiBaseUrl = (config.apiBaseUrl || '').replace(/\/$/, '') || new URL(document.currentScript.src).origin;
+  const defaultQueryParamKey = config.queryParamKey || 'query';
   const selectors = Object.assign(
     {
       results: '[data-template-search-results], .tm-templates_grid',
@@ -27,10 +28,18 @@ export function getClientScript(defaultMode = 'shadow'): string {
     return value || 'popular';
   }
 
+  function inferQueryParamKey(url) {
+    if (url.searchParams.has('query')) return 'query';
+    if (url.searchParams.has('q')) return 'q';
+    if (url.searchParams.has('search')) return 'search';
+    return defaultQueryParamKey;
+  }
+
   function parseRouteState() {
     const url = new URL(window.location.href);
     const state = {
       q: url.searchParams.get('q') || url.searchParams.get('query') || url.searchParams.get('search') || '',
+      query_param_key: inferQueryParamKey(url),
       scope: 'all',
       category_group_slug: null,
       child_category_slug: null,
@@ -72,6 +81,25 @@ export function getClientScript(defaultMode = 'shadow'): string {
     if (state.page_size) url.searchParams.set('page_size', String(state.page_size));
     state.styles.forEach((value) => url.searchParams.append('styles', value));
     state.types.forEach((value) => url.searchParams.append('types', value));
+    return url;
+  }
+
+  function buildPublicUrl(state, page) {
+    const url = new URL(window.location.href);
+    const nextState = Object.assign({}, state);
+    if (typeof page === 'number') nextState.page = page;
+
+    ['q', 'query', 'search', 'styles', 'types', 'free_only', 'sort', 'page', 'page_size'].forEach((key) =>
+      url.searchParams.delete(key)
+    );
+
+    if (nextState.q) url.searchParams.set(nextState.query_param_key || defaultQueryParamKey, nextState.q);
+    if (nextState.sort && nextState.sort !== 'popular') url.searchParams.set('sort', nextState.sort);
+    if (nextState.free_only) url.searchParams.set('free_only', 'true');
+    if (nextState.page > 1) url.searchParams.set('page', String(nextState.page));
+    if (nextState.page_size && nextState.page_size !== 24) url.searchParams.set('page_size', String(nextState.page_size));
+    nextState.styles.forEach((value) => url.searchParams.append('styles', value));
+    nextState.types.forEach((value) => url.searchParams.append('types', value));
     return url;
   }
 
@@ -136,9 +164,10 @@ export function getClientScript(defaultMode = 'shadow'): string {
       compareShadowResults(payload);
       return;
     }
+    const cardTemplate = cloneCardTemplate();
     container.innerHTML = '';
     payload.items.forEach((item) => {
-      const card = cloneCardTemplate();
+      const card = cardTemplate ? cardTemplate.cloneNode(true) : null;
       if (!card) {
         const fallback = document.createElement('a');
         fallback.href = item.url || '#';
@@ -150,6 +179,89 @@ export function getClientScript(defaultMode = 'shadow'): string {
     });
     const emptyState = document.querySelector(selectors.emptyState);
     if (emptyState) emptyState.style.display = payload.items.length === 0 ? 'block' : 'none';
+  }
+
+  function buildPaginationPages(pagination) {
+    const totalPages = pagination.total_pages || 0;
+    const currentPage = pagination.page || 1;
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
+
+    const pages = [1];
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) pages.push(null);
+    for (let page = start; page <= end; page += 1) pages.push(page);
+    if (end < totalPages - 1) pages.push(null);
+    pages.push(totalPages);
+
+    return pages;
+  }
+
+  function createPaginationLink(label, state, page, current, disabled) {
+    if (disabled) {
+      const disabledNode = document.createElement('span');
+      disabledNode.textContent = label;
+      disabledNode.setAttribute('aria-disabled', 'true');
+      disabledNode.setAttribute('data-template-search-page-link', 'disabled');
+      return disabledNode;
+    }
+
+    const link = document.createElement('a');
+    link.href = buildPublicUrl(state, page).toString();
+    link.textContent = label;
+    link.setAttribute('data-template-search-page-link', String(page));
+    if (current) link.setAttribute('aria-current', 'page');
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (page === state.page) return;
+      state.page = page;
+      updateUrl(state);
+      load(state);
+    });
+    return link;
+  }
+
+  function renderPagination(payload, state) {
+    const root = document.querySelector(selectors.pagination);
+    if (!root || mode === 'shadow') return;
+
+    root.innerHTML = '';
+    const pagination = payload.pagination;
+    if (!pagination || pagination.total_pages <= 1) {
+      root.style.display = 'none';
+      return;
+    }
+
+    root.style.display = '';
+    const nav = document.createElement('nav');
+    nav.setAttribute('aria-label', 'Template search pagination');
+    const list = document.createElement('div');
+    list.setAttribute('data-template-search-pagination-list', '');
+
+    list.appendChild(
+      createPaginationLink('Previous', state, Math.max(1, pagination.page - 1), false, !pagination.has_previous_page)
+    );
+
+    buildPaginationPages(pagination).forEach((page) => {
+      if (page === null) {
+        const ellipsis = document.createElement('span');
+        ellipsis.textContent = '...';
+        ellipsis.setAttribute('aria-hidden', 'true');
+        ellipsis.setAttribute('data-template-search-page-ellipsis', '');
+        list.appendChild(ellipsis);
+        return;
+      }
+
+      list.appendChild(createPaginationLink(String(page), state, page, page === pagination.page, false));
+    });
+
+    list.appendChild(
+      createPaginationLink('Next', state, pagination.page + 1, false, !pagination.has_next_page)
+    );
+
+    nav.appendChild(list);
+    root.appendChild(nav);
   }
 
   function renderPills(payload) {
@@ -189,29 +301,21 @@ export function getClientScript(defaultMode = 'shadow'): string {
   }
 
   function updateUrl(state) {
-    const url = new URL(window.location.href);
-    ['q', 'query', 'search', 'styles', 'types', 'free_only', 'sort', 'page'].forEach((key) => url.searchParams.delete(key));
-    if (state.q) url.searchParams.set('q', state.q);
-    if (state.sort && state.sort !== 'popular') url.searchParams.set('sort', state.sort);
-    if (state.free_only) url.searchParams.set('free_only', 'true');
-    if (state.page > 1) url.searchParams.set('page', String(state.page));
-    state.styles.forEach((value) => url.searchParams.append('styles', value));
-    state.types.forEach((value) => url.searchParams.append('types', value));
-    window.history.replaceState({}, '', url.toString());
+    window.history.replaceState({}, '', buildPublicUrl(state).toString());
   }
 
-  async function load() {
-    const state = parseRouteState();
-    const response = await fetch(buildSearchUrl(state).toString(), { credentials: 'omit' });
+  async function load(state) {
+    const nextState = state || parseRouteState();
+    const response = await fetch(buildSearchUrl(nextState).toString(), { credentials: 'omit' });
     if (!response.ok) return;
     const payload = await response.json();
     renderResults(payload);
     renderPills(payload);
     populateFacetControls(payload);
+    renderPagination(payload, nextState);
   }
 
-  function wireControls() {
-    const state = parseRouteState();
+  function wireControls(state) {
     const searchInput = document.querySelector(selectors.searchInput);
     const sortSelect = document.querySelector(selectors.sortSelect);
     const styleSelect = document.querySelector(selectors.styleSelect);
@@ -228,7 +332,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
           state.q = value.trim();
           state.page = 1;
           updateUrl(state);
-          load();
+          load(state);
         }, 200);
       });
     }
@@ -239,7 +343,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
         state.sort = normalizeSort(event.target.value || 'popular');
         state.page = 1;
         updateUrl(state);
-        load();
+        load(state);
       });
     }
 
@@ -248,7 +352,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
         state.styles = event.target.value ? [event.target.value] : [];
         state.page = 1;
         updateUrl(state);
-        load();
+        load(state);
       });
     }
 
@@ -257,7 +361,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
         state.types = event.target.value ? [event.target.value] : [];
         state.page = 1;
         updateUrl(state);
-        load();
+        load(state);
       });
     }
 
@@ -267,19 +371,21 @@ export function getClientScript(defaultMode = 'shadow'): string {
         state.free_only = Boolean(event.target.checked);
         state.page = 1;
         updateUrl(state);
-        load();
+        load(state);
       });
     }
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      wireControls();
-      load();
+      const state = parseRouteState();
+      wireControls(state);
+      load(state);
     });
   } else {
-    wireControls();
-    load();
+    const state = parseRouteState();
+    wireControls(state);
+    load(state);
   }
 })();`;
 }
