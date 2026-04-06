@@ -1,6 +1,10 @@
 import Airtable from 'airtable';
 import { randomBytes, createHash } from 'node:crypto';
-import { wouldTriggerAirtableAutomation } from '$lib/utils/airtable-automation';
+import {
+  extractAirtableAutomationChanges,
+  wouldTriggerAirtableAutomation
+} from '$lib/utils/airtable-automation';
+import { pickChangedAssetImageUpdateData } from '$lib/utils/asset-image-updates';
 
 // Airtable table IDs
 const TABLES = {
@@ -1227,32 +1231,43 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
         })
       );
 
-      const currentAsset = requiresCurrentSupportRecord(data) ? await this.getAsset(id) : null;
+      const requiresCurrentImageState =
+        data.thumbnailUrl !== undefined ||
+        data.secondaryThumbnails !== undefined ||
+        data.secondaryThumbnailUrl !== undefined ||
+        data.carouselImages !== undefined;
+      const currentAsset =
+        requiresCurrentSupportRecord(data) || requiresCurrentImageState ? await this.getAsset(id) : null;
       const fields = buildAssetUpdateFields(data, currentAsset);
+      const imageUpdates = currentAsset ? pickChangedAssetImageUpdateData(currentAsset, data) : {};
 
       // Image fields - Airtable expects array of { url: string }
       // Use field IDs (not names) to match old dashboard exactly
-      if (data.thumbnailUrl !== undefined) {
+      if (imageUpdates.thumbnailUrl !== undefined) {
         debugLog(
           '[Airtable] Setting thumbnail field fld43LxLHMZb2yF7F to:',
-          data.thumbnailUrl ? `[{ url: "${data.thumbnailUrl.substring(0, 50)}..." }]` : '[]'
+          imageUpdates.thumbnailUrl
+            ? `[{ url: "${imageUpdates.thumbnailUrl.substring(0, 50)}..." }]`
+            : '[]'
         );
-        fields['fld43LxLHMZb2yF7F'] = data.thumbnailUrl ? [{ url: data.thumbnailUrl }] : [];
-      }
-      // Handle secondary thumbnails - prefer array over single URL for multiple image support
-      if (data.secondaryThumbnails !== undefined) {
-        // Use the array format - supports multiple secondary thumbnails
-        fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnails
-          .filter((url) => url) // Filter out empty strings
-          .map((url) => ({ url }));
-      } else if (data.secondaryThumbnailUrl !== undefined) {
-        // Fallback to single URL for backward compatibility
-        fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
-          ? [{ url: data.secondaryThumbnailUrl }]
+        fields['fld43LxLHMZb2yF7F'] = imageUpdates.thumbnailUrl
+          ? [{ url: imageUpdates.thumbnailUrl }]
           : [];
       }
-      if (data.carouselImages !== undefined) {
-        fields['fldneaPyoRXBAVtS1'] = data.carouselImages.map((url) => ({ url }));
+      // Handle secondary thumbnails - prefer array over single URL for multiple image support
+      if (imageUpdates.secondaryThumbnails !== undefined) {
+        // Use the array format - supports multiple secondary thumbnails
+        fields['fldzKxNCXcgCnEwxu'] = imageUpdates.secondaryThumbnails
+          .filter((url) => url) // Filter out empty strings
+          .map((url) => ({ url }));
+      } else if (imageUpdates.secondaryThumbnailUrl !== undefined) {
+        // Fallback to single URL for backward compatibility
+        fields['fldzKxNCXcgCnEwxu'] = imageUpdates.secondaryThumbnailUrl
+          ? [{ url: imageUpdates.secondaryThumbnailUrl }]
+          : [];
+      }
+      if (imageUpdates.carouselImages !== undefined) {
+        fields['fldneaPyoRXBAVtS1'] = imageUpdates.carouselImages.map((url) => ({ url }));
       }
 
       debugLog('[Airtable] Fields to update:', Object.keys(fields));
@@ -2043,7 +2058,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
         }
         debugLog('[Airtable] Asset found:', asset.name);
 
-        if (!wouldTriggerAirtableAutomation(asset.status, changes)) {
+        const normalizedChanges =
+          typeof changes === 'string' ? changes : extractAirtableAutomationChanges(changes);
+
+        if (!wouldTriggerAirtableAutomation(asset.status, normalizedChanges)) {
           debugLog(
             '[Airtable] Change set does not trigger Airtable automation, skipping version creation'
           );
@@ -2106,9 +2124,9 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
         // IMPORTANT: Store changes in same format as v1 - just the structured changes object
         // The Airtable automation expects: {"fld43LxLHMZb2yF7F":{"added":[...],"removed":0},...}
         const changesJson =
-          typeof changes === 'string'
-            ? JSON.stringify({ changes, snapshot, createdBy }) // Legacy format for string changes
-            : JSON.stringify(changes); // V1 format - just the structured changes
+          typeof normalizedChanges === 'string'
+            ? JSON.stringify({ changes: normalizedChanges, snapshot, createdBy }) // Legacy format for string changes
+            : JSON.stringify(normalizedChanges); // V1 format - just the structured changes
 
         debugLog('[Airtable] Creating version record with fields:', {
           fldemWilqCQcOCh5s: [assetId],
@@ -2126,7 +2144,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
         });
         debugLog('[Airtable] Version record created:', records.id);
 
-        const changesStr = typeof changes === 'string' ? changes : JSON.stringify(changes);
+        const changesStr =
+          typeof normalizedChanges === 'string'
+            ? normalizedChanges
+            : JSON.stringify(normalizedChanges);
         return {
           id: records.id,
           assetId: assetId,

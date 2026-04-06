@@ -1,6 +1,7 @@
 'use client';
 
 import type { Asset } from '@create-something/webflow-dashboard-core/airtable';
+import { pickChangedAssetImageUpdateData } from '@create-something/webflow-dashboard-core/asset-image-updates';
 import { useMemo, useState } from 'react';
 import { appPath } from '../lib/runtime-paths';
 
@@ -55,17 +56,28 @@ export function AssetEditor({ asset }: { asset: Asset }) {
         carouselFiles.length > 0
           ? await Promise.all(carouselFiles.map((file) => uploadFile(file, 'image')))
           : existingCarouselImages;
+      const imageUpdates = pickChangedAssetImageUpdateData(asset, {
+        thumbnailUrl: thumbnailUrl || null,
+        secondaryThumbnails,
+        carouselImages
+      });
 
       const payload = {
         name: String(formData.get('name') || ''),
         descriptionShort: String(formData.get('descriptionShort') || ''),
         descriptionLongHtml: String(formData.get('descriptionLongHtml') || ''),
         websiteUrl: String(formData.get('websiteUrl') || ''),
-        previewUrl: String(formData.get('previewUrl') || ''),
-        thumbnailUrl: thumbnailUrl || null,
-        secondaryThumbnails,
-        carouselImages
+        previewUrl: String(formData.get('previewUrl') || '')
       };
+      if (imageUpdates.thumbnailUrl !== undefined) {
+        Object.assign(payload, { thumbnailUrl: imageUpdates.thumbnailUrl });
+      }
+      if (imageUpdates.secondaryThumbnails !== undefined) {
+        Object.assign(payload, { secondaryThumbnails: imageUpdates.secondaryThumbnails });
+      }
+      if (imageUpdates.carouselImages !== undefined) {
+        Object.assign(payload, { carouselImages: imageUpdates.carouselImages });
+      }
 
       const response = await fetch(appPath(`/api/assets/${asset.id}`), {
         method: 'PUT',

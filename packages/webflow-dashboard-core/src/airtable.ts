@@ -1,5 +1,6 @@
 import Airtable from 'airtable';
 import { createHash, randomBytes } from 'node:crypto';
+import { pickChangedAssetImageUpdateData } from './asset-image-updates';
 
 const TABLES = {
   USERS: 'tbldQNGszIyOjt9a1',
@@ -762,6 +763,13 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     ): Promise<Asset | null> {
       debugLog('[Airtable] updateAssetWithImages', { id, keys: Object.keys(data) });
 
+      const requiresCurrentImageState =
+        data.thumbnailUrl !== undefined ||
+        data.secondaryThumbnails !== undefined ||
+        data.secondaryThumbnailUrl !== undefined ||
+        data.carouselImages !== undefined;
+      const currentAsset = requiresCurrentImageState ? await this.getAsset(id) : null;
+      const imageUpdates = currentAsset ? pickChangedAssetImageUpdateData(currentAsset, data) : {};
       const fields: Record<string, unknown> = {};
 
       if (data.name !== undefined) fields['Name'] = data.name;
@@ -773,22 +781,24 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
       if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
 
-      if (data.thumbnailUrl !== undefined) {
-        fields['fld43LxLHMZb2yF7F'] = data.thumbnailUrl ? [{ url: data.thumbnailUrl }] : [];
-      }
-
-      if (data.secondaryThumbnails !== undefined) {
-        fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnails
-          .filter(Boolean)
-          .map((url) => ({ url }));
-      } else if (data.secondaryThumbnailUrl !== undefined) {
-        fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
-          ? [{ url: data.secondaryThumbnailUrl }]
+      if (imageUpdates.thumbnailUrl !== undefined) {
+        fields['fld43LxLHMZb2yF7F'] = imageUpdates.thumbnailUrl
+          ? [{ url: imageUpdates.thumbnailUrl }]
           : [];
       }
 
-      if (data.carouselImages !== undefined) {
-        fields['fldneaPyoRXBAVtS1'] = data.carouselImages.map((url) => ({ url }));
+      if (imageUpdates.secondaryThumbnails !== undefined) {
+        fields['fldzKxNCXcgCnEwxu'] = imageUpdates.secondaryThumbnails
+          .filter(Boolean)
+          .map((url) => ({ url }));
+      } else if (imageUpdates.secondaryThumbnailUrl !== undefined) {
+        fields['fldzKxNCXcgCnEwxu'] = imageUpdates.secondaryThumbnailUrl
+          ? [{ url: imageUpdates.secondaryThumbnailUrl }]
+          : [];
+      }
+
+      if (imageUpdates.carouselImages !== undefined) {
+        fields['fldneaPyoRXBAVtS1'] = imageUpdates.carouselImages.map((url) => ({ url }));
       }
 
       if (Object.keys(fields).length === 0) {

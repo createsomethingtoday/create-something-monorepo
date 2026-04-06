@@ -1,4 +1,5 @@
 export * from './airtable';
+export * from './asset-image-updates';
 export * from './hash';
 export * from './kv';
 export * from './r2';

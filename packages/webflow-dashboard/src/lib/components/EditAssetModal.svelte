@@ -7,7 +7,11 @@
   import { toast } from '$lib/stores/toast';
   import { onMount } from 'svelte';
   import { trackEvent } from '$lib/utils/analytics';
-  import { wouldTriggerAirtableAutomation } from '$lib/utils/airtable-automation';
+  import {
+    extractAirtableAutomationChanges,
+    wouldTriggerAirtableAutomation
+  } from '$lib/utils/airtable-automation';
+  import { pickChangedAssetImageUpdateData } from '$lib/utils/asset-image-updates';
 
   const APP_CAPABILITY_OPTIONS = ['Data Client v2', 'Designer Extension', 'Hybrid'] as const;
   const APP_SCOPE_OPTIONS = [
@@ -617,14 +621,16 @@
         };
       }
 
+      const airtableAutomationChanges = extractAirtableAutomationChanges(structuredChanges);
+
       if (
         changedFields.length > 0 &&
-        wouldTriggerAirtableAutomation(asset.status, structuredChanges)
+        wouldTriggerAirtableAutomation(asset.status, airtableAutomationChanges)
       ) {
         fetch(`/api/assets/${asset.id}/versions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ changes: structuredChanges })
+          body: JSON.stringify({ changes: airtableAutomationChanges })
         }).catch(() => {
           // Ignore version creation failures during save.
         });
@@ -641,13 +647,24 @@
         has_carousel_change: !arraysEqual(asset.carouselImages || [], carouselImages)
       });
 
+      const imageUpdates = pickChangedAssetImageUpdateData(asset, {
+        thumbnailUrl,
+        carouselImages,
+        ...(isAppAsset ? {} : { secondaryThumbnails: [...secondaryThumbnails] })
+      });
+
       const payload: AssetUpdateData = {
         descriptionShort: formData.descriptionShort,
         descriptionLongHtml: formData.descriptionLongHtml,
-        websiteUrl: formData.websiteUrl,
-        thumbnailUrl,
-        carouselImages
+        websiteUrl: formData.websiteUrl
       };
+
+      if (imageUpdates.thumbnailUrl !== undefined) {
+        payload.thumbnailUrl = imageUpdates.thumbnailUrl;
+      }
+      if (imageUpdates.carouselImages !== undefined) {
+        payload.carouselImages = imageUpdates.carouselImages;
+      }
 
       if (canEditName) {
         payload.name = formData.name.trim();
@@ -676,8 +693,10 @@
         payload.appScreenshotAltTexts = formData.appScreenshotAltTexts.slice(0, 5);
       } else {
         payload.previewUrl = formData.previewUrl;
-        payload.secondaryThumbnailUrl = secondaryThumbnails[0] || null;
-        payload.secondaryThumbnails = [...secondaryThumbnails];
+        if (imageUpdates.secondaryThumbnails !== undefined) {
+          payload.secondaryThumbnails = imageUpdates.secondaryThumbnails;
+          payload.secondaryThumbnailUrl = imageUpdates.secondaryThumbnails[0] || null;
+        }
       }
 
       await onSave(payload);

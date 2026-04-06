@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./airtable": "./src/airtable.ts",
+    "./asset-image-updates": "./src/asset-image-updates.ts",
     "./hash": "./src/hash.ts",
     "./kv": "./src/kv.ts",
     "./r2": "./src/r2.ts",

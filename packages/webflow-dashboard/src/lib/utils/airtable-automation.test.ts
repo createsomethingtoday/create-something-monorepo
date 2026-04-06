@@ -1,5 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { wouldTriggerAirtableAutomation } from './airtable-automation';
+import {
+  extractAirtableAutomationChanges,
+  wouldTriggerAirtableAutomation
+} from './airtable-automation';
+
+describe('extractAirtableAutomationChanges', () => {
+  it('keeps only the historical checklist payload fields', () => {
+    expect(
+      extractAirtableAutomationChanges({
+        'ℹ️Description (Short)': { from: 'Before', to: 'After' },
+        'ℹ️Description (Long).html': { from: 'Old', to: 'New' },
+        '🔗Website URL': { from: 'https://before.test', to: 'https://after.test' },
+        fld43LxLHMZb2yF7F: {
+          added: [{ url: 'https://example.com/thumb.webp' }],
+          removed: 0
+        },
+        fldneaPyoRXBAVtS1: {
+          added: [{ url: 'https://example.com/carousel.webp' }],
+          removed: 0
+        }
+      })
+    ).toEqual({
+      'ℹ️Description (Short)': { from: 'Before', to: 'After' },
+      'ℹ️Description (Long).html': { from: 'Old', to: 'New' },
+      fld43LxLHMZb2yF7F: {
+        added: [{ url: 'https://example.com/thumb.webp' }],
+        removed: 0
+      },
+      fldneaPyoRXBAVtS1: {
+        added: [{ url: 'https://example.com/carousel.webp' }],
+        removed: 0
+      }
+    });
+  });
+});
 
 describe('wouldTriggerAirtableAutomation', () => {
   it('triggers for short description changes on non-upcoming assets', () => {
@@ -74,5 +108,14 @@ describe('wouldTriggerAirtableAutomation', () => {
   it('keeps legacy string changes eligible outside upcoming status', () => {
     expect(wouldTriggerAirtableAutomation('Published', 'Rollback to version 2')).toBe(true);
     expect(wouldTriggerAirtableAutomation('Upcoming', 'Rollback to version 2')).toBe(false);
+  });
+
+  it('still triggers when short description changes alongside ignored fields', () => {
+    expect(
+      wouldTriggerAirtableAutomation('Published', {
+        'ℹ️Description (Short)': { from: 'Before', to: 'After' },
+        '🔗Website URL': { from: 'https://before.test', to: 'https://after.test' }
+      })
+    ).toBe(true);
   });
 });
