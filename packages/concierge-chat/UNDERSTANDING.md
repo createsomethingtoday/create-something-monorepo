@@ -23,13 +23,13 @@ This package is the end-user conversation surface, not the control plane and not
 |----------|----------------------------|
 | product engineers | How the concierge experience is structured as routes and widget states |
 | policy work | Where governed widget behavior touches the end-user UI |
-| agent systems | Which UI routes and demo flows are available for validation today |
+| agent systems | Which UI routes and production-facing validation paths are available today |
 
 ## Internal Structure
 
 ```text
 src/
-├── routes/                   → public landing, apply workspace, claim continuation, chat, profile, handoff, settings, control-plane bridge shells, and optional shared session/entitlement-aware layout
+├── routes/                   → public landing, apply entry, claim continuation, candidate chat/details, internal handoff/settings, control-plane bridge shells, and optional shared session/entitlement-aware layout
 ├── routes/api/intake-verification/ → self-serve verification request/verify endpoints
 ├── routes/api/intake-claims/ → trusted inbound claim creation for sourced applicants
 ├── routes/api/threads/       → server mutation and attachment surface for the hosted prototype
@@ -74,8 +74,8 @@ src/
 | Entry point | `README.md`, `UNDERSTANDING.md`, `src/routes/+page.svelte`, `src/lib/chat/prototype-session.ts`, `src/lib/chat/matching-model.ts`, `src/lib/handoff/create-packet.ts`, `src/lib/server/intake-verification.ts`, `src/lib/server/intake-claims.ts`, `src/lib/server/threads/persistence.ts`, `src/lib/server/attachments/storage.ts`, `src/routes/api/threads/+server.ts`, `src/routes/api/intake-verification/request/+server.ts`, `src/routes/api/intake-claims/+server.ts` |
 | Boot command | `pnpm --filter @create-something/concierge-chat dev` |
 | Smoke command | `pnpm --filter @create-something/concierge-chat smoke` |
-| Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, control-plane redirect behavior, public-apply routing, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback, route-level UI inspection |
-| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/chat`, `/chat/demo-intake`, `/chat/demo-intake/profile`, `/chat/demo-intake/handoff` |
+| Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, control-plane redirect behavior, public-apply routing, anonymous redirects from `/chat` and `/settings`, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback, route-level UI inspection |
+| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
 | Escalation rule | Stop if a new widget requires arbitrary executable UI, or if a workflow requires real persistence/auth without an agreed data contract and governance rule. |
 
 ## Key Concepts
@@ -91,18 +91,18 @@ src/
 
 - how governed chat UX is separated from the control plane and MCP layer
 - where widget constraints and product policy touch the conversation flow
-- how to validate the current concierge shell, including public nurse entry, self-serve email verification, persisted attachment flows, recruiter-review booking, staffing coordinator progression, facility-response capture, onboarding handoff progression, terminal Indeed disposition writeback, staffing-handoff packet generation, secure-intake verification, and `.agency` entitlement-gated progression or local preview overrides, without assuming a second auth stack inside the product
+- how to validate the current concierge shell, including public nurse entry, self-serve email verification, persisted attachment flows, recruiter-review booking, staffing coordinator progression, facility-response capture, onboarding handoff progression, terminal Indeed disposition writeback, staffing-handoff packet generation, secure-intake verification, anonymous redirects away from internal routes, and `.agency` entitlement-gated progression or local preview overrides, without assuming a second auth stack inside the product
 
 ## Common Tasks
 
 | Task | Start Here |
 |------|------------|
 | inspect current product scope | `README.md` |
-| inspect chat flow state | `src/lib/demo/concierge.ts` |
+| inspect seeded non-production chat flow state | `src/lib/demo/concierge.ts` |
 | inspect route shell behavior | `src/routes/` |
-| validate UI flow | listed demo-intake routes |
+| validate UI flow | listed current production routes |
 | sync geo fallback secret from Infisical | `pnpm --filter @create-something/concierge-chat geo:secret:sync` |
 
 ---
 
-*Last validated: 2026-04-03*
+*Last validated: 2026-04-06*

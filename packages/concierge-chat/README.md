@@ -9,8 +9,8 @@ This package is the end-user conversation product. It is distinct from:
 
 ## Current Scope
 
-- hosted nurse-intake chat surface for threads, profile audit, handoff, and settings
-- public marketing landing at `/` and public nurse-start workspace at `/apply`
+- hosted nurse-intake chat surface for the public landing, candidate conversation threads, candidate-safe application details, and staff-only handoff/settings routes
+- public marketing landing at `/` and public nurse-start entry at `/apply`
 - approved widget registry and renderer with server-routed actions
 - cookie-scoped, server-owned session updates with a secure-verification boundary for protected nurse actions
 - self-serve one-time email verification for protected nurse actions, backed by D1 challenge storage when `DB` is bound and a local preview fallback when it is not
@@ -23,6 +23,7 @@ This package is the end-user conversation product. It is distinct from:
 - local `/control-plane/*` bridge routes that redirect Abundance control-plane actions into real `.agency` dashboard, MCP access, and security surfaces
 - root layout now reads the optional shared `.agency` browser session and live `.agency` entitlement snapshot so the Abundance shell can show whether governed staffing access is active, blocked, or unavailable
 - governed recruiter, staffing, facility-response, and onboarding actions remain read-only until `.agency` reports an active entitlement decision for the current browser session
+- anonymous `/chat` and `/settings` access now routes back into `/apply` so the candidate path stays conversation-first
 - demo seed threads and local `.agency` access preview overrides stay available only outside production mode
 - implementation-ready Indeed Apply integration guidance in `INDEED_MCP_INTEGRATION_MAP.md`
 - conversation-first product shell aligned with:
@@ -42,7 +43,7 @@ This package is the end-user conversation product. It is distinct from:
 - set `ABUNDANCE_GEO_MAPBOX_ACCESS_TOKEN` to enable server-side external preferred-location recovery when the internal market catalog cannot normalize a nurse's location message confidently; this path stores normalized results in-thread, so it is intended for a Mapbox token allowed for permanent geocoding
 - the canonical Infisical path for that token is `/agency/abundance/geo`; once the secret exists there, run `pnpm --filter @create-something/concierge-chat geo:secret:sync` to promote it into the Pages project
 - set `ABUNDANCE_INTAKE_EMAIL_FROM` if the verification sender should differ from the runtime default
-- local anonymous demos can use the Settings `Preview Entitlement` controls to mint a cookie-scoped `.agency` access override for recruiter, staffing, and onboarding walkthroughs without a live `.agency` session
+- local non-production staff sessions can use the Settings `Preview Entitlement` controls to mint a cookie-scoped `.agency` access override for recruiter, staffing, and onboarding walkthroughs without a live `.agency` session
 - production mode disables the Settings preview override route and boots nurse sessions with no seeded demo threads
 - apply the schema with `pnpm --filter @create-something/concierge-chat db:migrate:local` or `pnpm --filter @create-something/concierge-chat db:migrate`
 
@@ -53,6 +54,6 @@ This package is the end-user conversation product. It is distinct from:
 | Entry point | `README.md`, `src/routes/+page.svelte`, `src/lib/chat/prototype-session.ts`, `src/lib/chat/matching-model.ts`, `src/lib/handoff/create-packet.ts`, `src/lib/server/intake-verification.ts`, `src/lib/server/intake-claims.ts`, `src/lib/server/threads/persistence.ts`, `src/lib/server/attachments/storage.ts`, `src/routes/api/threads/+server.ts`, `src/routes/api/intake-verification/request/+server.ts`, `src/routes/api/intake-claims/+server.ts` |
 | Boot command | `pnpm --filter @create-something/concierge-chat dev` |
 | Smoke command | `pnpm --filter @create-something/concierge-chat smoke` |
-| Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, public-apply routing, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback |
-| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/chat`, `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` |
+| Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, public-apply routing, anonymous redirects from `/chat` and `/settings`, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback |
+| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
 | Escalation rule | stop if a new widget requires arbitrary executable UI or if a workflow needs real persistence/auth without an agreed data contract |

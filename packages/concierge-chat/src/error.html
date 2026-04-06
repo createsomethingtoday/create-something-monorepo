@@ -146,19 +146,6 @@
 				color: var(--muted-strong);
 			}
 
-			.error-detail {
-				display: none;
-				gap: 0.7rem;
-				padding: 1rem 1.05rem;
-				border-radius: calc(var(--radius) - 6px);
-				background: var(--surface-contrast);
-				border: 1px solid var(--line);
-			}
-
-			.error-detail p {
-				color: var(--muted-strong);
-			}
-
 			.error-actions {
 				display: flex;
 				gap: 0.85rem;
@@ -236,11 +223,6 @@
 						The application hit an unexpected problem before the conversation could continue.
 					</p>
 
-					<section id="detail-section" class="error-detail">
-						<div class="eyebrow">What happened</div>
-						<p id="detail">%sveltekit.error.message%</p>
-					</section>
-
 					<div class="error-actions">
 						<a id="primary-action" class="cta-link primary" href="/apply">Open application</a>
 						<a id="secondary-action" class="cta-link secondary" href="/">Return home</a>
@@ -265,46 +247,44 @@
 				</section>
 			</div>
 
-		<script>
-			const status = Number(document.body.dataset.status || '0');
-			const detail = document.getElementById('detail')?.textContent || '';
-			const detailLower = detail.toLowerCase();
-			const eyebrow = document.getElementById('eyebrow');
-			const title = document.getElementById('title');
-			const lead = document.getElementById('lead');
-			const statusPill = document.getElementById('status-pill');
-			const primaryAction = document.getElementById('primary-action');
-			const secondaryAction = document.getElementById('secondary-action');
-			const note1Label = document.getElementById('note-1-label');
-			const note1Copy = document.getElementById('note-1-copy');
-			const note2Label = document.getElementById('note-2-label');
-			const note2Copy = document.getElementById('note-2-copy');
+			<script>
+				const status = Number(document.body.dataset.status || '0');
+				const eyebrow = document.getElementById('eyebrow');
+				const title = document.getElementById('title');
+				const lead = document.getElementById('lead');
+				const statusPill = document.getElementById('status-pill');
+				const primaryAction = document.getElementById('primary-action');
+				const secondaryAction = document.getElementById('secondary-action');
+				const note1Label = document.getElementById('note-1-label');
+				const note1Copy = document.getElementById('note-1-copy');
+				const note2Label = document.getElementById('note-2-label');
+				const note2Copy = document.getElementById('note-2-copy');
 
-			const setAction = (element, label, href) => {
-				if (!element) return;
-				element.textContent = label;
-				element.setAttribute('href', href);
-			};
+				const setAction = (element, label, href) => {
+					if (!element) return;
+					element.textContent = label;
+					element.setAttribute('href', href);
+				};
 
-			if (statusPill && status === 403) {
-				statusPill.classList.add('warn');
-			}
+				if (statusPill && status === 403) {
+					statusPill.classList.add('warn');
+				}
 
-			if (statusPill && status >= 500) {
-				statusPill.classList.add('danger');
-			}
+				if (statusPill && status >= 500) {
+					statusPill.classList.add('danger');
+				}
 
-				if (status === 500 && detailLower.includes('signing secret')) {
-					if (eyebrow) eyebrow.textContent = 'Secure Steps Unavailable';
-					if (title) title.textContent = 'Secure intake is temporarily unavailable';
+				if (status >= 500) {
+					if (eyebrow) eyebrow.textContent = 'Temporary Problem';
+					if (title) title.textContent = 'Abundance Concierge is temporarily unavailable';
 					if (lead) {
 						lead.textContent =
-							'The application is reachable, but secure steps are temporarily offline. Please try again shortly.';
+							'The application hit an unexpected problem before the conversation could continue. Please try again shortly.';
 					}
 					if (note1Label) note1Label.textContent = 'What to do next';
 					if (note1Copy) {
 						note1Copy.textContent =
-							'Return to the application later and try the protected step again once secure verification is back online.';
+							'Return to your application and try the step again. If it still fails, start again from the home page.';
 					}
 					if (note2Label) note2Label.textContent = 'For staff';
 					if (note2Copy) {
@@ -332,10 +312,7 @@
 					}
 					setAction(primaryAction, 'Open application', '/apply');
 					setAction(secondaryAction, 'Return home', '/');
-				} else if (
-					status === 403 &&
-					(detailLower.includes('signed intake') || detailLower.includes('secure verification'))
-				) {
+				} else if (status === 403) {
 					if (eyebrow) eyebrow.textContent = 'Verification Needed';
 					if (title) title.textContent = 'Verify to continue';
 					if (lead) {
@@ -353,7 +330,6 @@
 					setAction(primaryAction, 'Continue application', '/apply');
 					setAction(secondaryAction, 'Return home', '/');
 				}
-			}
-		</script>
-	</body>
+			</script>
+		</body>
 </html>
