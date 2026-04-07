@@ -58,10 +58,19 @@ class AcceptanceClient {
 	constructor(baseUrl) {
 		this.baseUrl = baseUrl;
 		this.jar = new CookieJar();
+		this.forwardedIp = [
+			'198',
+			String(Math.floor(Math.random() * 200) + 1),
+			String(Math.floor(Math.random() * 200) + 1),
+			String(Math.floor(Math.random() * 200) + 1)
+		].join('.');
 	}
 
 	async request(pathname, options = {}) {
 		const headers = new Headers(options.headers ?? {});
+		if (!headers.has('x-forwarded-for')) {
+			headers.set('x-forwarded-for', this.forwardedIp);
+		}
 		const cookieHeader = this.jar.toHeader();
 		if (cookieHeader) {
 			headers.set('cookie', cookieHeader);
@@ -161,16 +170,16 @@ async function captureConsentIfNeeded(client, threadId, threadView) {
 	return consent.body.threadView;
 }
 
-async function verifySession(client) {
+async function verifySession(client, email) {
 	const requestChallenge = await client.postJson('/api/intake-verification/request', {
-		email: 'candidate@example.com'
+		email
 	});
 	assertOk(requestChallenge, 'Failed to request verification code');
 	assert.equal(requestChallenge.body.mode, 'preview', 'Expected preview verification mode locally');
 	assert.ok(requestChallenge.body.previewCode, 'Expected preview verification code');
 
 	const verifyChallenge = await client.postJson('/api/intake-verification/verify', {
-		email: 'candidate@example.com',
+		email,
 		code: requestChallenge.body.previewCode
 	});
 	assertOk(verifyChallenge, 'Failed to verify challenge');
@@ -199,6 +208,7 @@ async function uploadRequiredDocuments(client, threadId) {
 async function prepareBookedCandidateThread(client) {
 	const reset = await client.postJson('/api/threads/reset', {});
 	assertOk(reset, 'Failed to reset session');
+	const email = `candidate+${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
 	const applyPage = await client.get('/apply');
 	assert.equal(applyPage.status, 200, 'Expected /apply to render');
@@ -217,7 +227,7 @@ async function prepareBookedCandidateThread(client) {
 	threadView = await confirmIfNeeded(client, threadId, threadView);
 	threadView = await captureConsentIfNeeded(client, threadId, threadView);
 
-	await verifySession(client);
+	await verifySession(client, email);
 	threadView = await uploadRequiredDocuments(client, threadId);
 	threadView = await confirmIfNeeded(client, threadId, threadView);
 
@@ -334,15 +344,14 @@ async function main() {
 	assert.ok(['candidate', 'internal', 'all'].includes(mode), 'Use candidate, internal, or all.');
 
 	const preview = await startPreviewServer();
-	const client = new AcceptanceClient(baseUrl);
 
 	try {
 		if (mode === 'candidate' || mode === 'all') {
-			await runCandidateAcceptance(client);
+			await runCandidateAcceptance(new AcceptanceClient(baseUrl));
 		}
 
 		if (mode === 'internal' || mode === 'all') {
-			await runInternalAcceptance(client);
+			await runInternalAcceptance(new AcceptanceClient(baseUrl));
 		}
 	} finally {
 		if (preview) {

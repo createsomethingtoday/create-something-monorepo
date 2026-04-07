@@ -85,12 +85,12 @@ export function getExistingConciergeSessionId(cookies: Cookies) {
 }
 
 async function ensureSessionState(sessionId: string, platform?: App.Platform) {
-	if (hasConciergeSessionState(sessionId)) {
-		return;
-	}
-
 	const seedMode = getConciergeSeedMode(platform);
 	const db = platform?.env?.DB;
+
+	if (!db && hasConciergeSessionState(sessionId)) {
+		return;
+	}
 
 	if (!db) {
 		initializeConciergeSession(sessionId, seedMode);
