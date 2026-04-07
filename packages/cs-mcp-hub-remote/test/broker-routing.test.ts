@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  buildDiscoveryServicesPayload,
   buildAuthorizedVisibleProxyRoutes,
   buildVisibleProxyRoutes,
   resolveDiscoveryPack,
@@ -221,6 +222,53 @@ test('buildVisibleProxyRoutes prioritizes activeServers order before maxProxyToo
   const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
   assert.equal(visible.toolDefinitions.length, 1);
   assert.equal(visible.toolDefinitions[0]?.name, 'server_b__gamma');
+});
+
+test('buildDiscoveryServicesPayload lists enabled servers while runtime is warming', () => {
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['server_a', 'server_b'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [],
+      routes: new Map(),
+      warnings: ['Downstream runtime is warming; proxy tool metadata may be temporarily incomplete.'],
+    },
+    warming: true,
+  };
+
+  const payload = buildDiscoveryServicesPayload(
+    runtime as any,
+    {
+      mode: 'compact',
+      activeServers: ['server_b'],
+      maxProxyTools: 10,
+    },
+    {
+      toolDefinitions: [],
+      routes: new Map(),
+      definitionByName: new Map(),
+    },
+  ) as any;
+
+  assert.equal(payload.runtimeState, 'warming');
+  assert.equal(payload.services.length, 2);
+  assert.deepEqual(
+    payload.services.map((service: any) => ({
+      name: service.name,
+      activeInDiscovery: service.activeInDiscovery,
+      connectionState: service.connectionState,
+    })),
+    [
+      { name: 'server_a', activeInDiscovery: false, connectionState: 'warming' },
+      { name: 'server_b', activeInDiscovery: true, connectionState: 'warming' },
+    ],
+  );
 });
 
 test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', () => {

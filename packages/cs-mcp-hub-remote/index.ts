@@ -154,6 +154,7 @@ type HubRuntime = {
   connected: ConnectedDownstream[];
   failed: DownstreamFailure[];
   proxies: ProxyCatalog;
+  warming?: boolean;
 };
 
 type RateLimitScope = 'account' | 'account_server' | 'account_server_tool';
@@ -738,10 +739,46 @@ const HUB_DISCOVERY_KV_PREFIX = 'hub_discovery_v1::';
 const DEFAULT_REQUIRED_GLOBAL_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_REQUIRED_DISCOVERY_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const FAST_PATH_MANAGEMENT_TOOLS = new Set([
+  'hub_list_services',
+  'hub_status',
+  'hub_list_registry',
+  'hub_policy_status',
+  'hub_list_discovery_packs',
+]);
 
 let braintrustUnavailableLogged = false;
 let braintrustLogger: BraintrustLogger | null = null;
 let braintrustLoggerKey: string | null = null;
+
+async function extractFastPathManagementToolName(request: Request): Promise<string | null> {
+  if (request.method !== 'POST') {
+    return null;
+  }
+
+  const contentType = (request.headers.get('content-type') ?? '').toLowerCase();
+  if (!contentType.includes('application/json')) {
+    return null;
+  }
+
+  try {
+    const body = await request.clone().json();
+    const payload = asRecord(body);
+    if (!payload || payload.method !== 'tools/call') {
+      return null;
+    }
+
+    const params = asRecord(payload.params);
+    if (!params) {
+      return null;
+    }
+
+    const toolName = typeof params.name === 'string' ? params.name : null;
+    return toolName && FAST_PATH_MANAGEMENT_TOOLS.has(toolName) ? toolName : null;
+  } catch {
+    return null;
+  }
+}
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -792,7 +829,10 @@ export default {
       }
 
       try {
-        const runtime = await getHubRuntime(env);
+        const fastPathToolName = await extractFastPathManagementToolName(normalizedRequest);
+        const runtime = fastPathToolName
+          ? await getHubRuntimeSnapshot(env, { warm: true, executionCtx: ctx })
+          : await getHubRuntime(env);
         const server = buildHubServer(runtime, env, ctx);
         const transport = new WebStandardStreamableHTTPServerTransport({
           sessionIdGenerator: undefined,
@@ -1038,7 +1078,7 @@ async function getHubRuntime(env: Env, options: { force?: boolean } = {}): Promi
   const persistedState = await readHubState(env, registry);
   const resolution = resolveState(registry, persistedState);
   const key = buildRuntimeCacheKey(env, resolution.state);
-  const ttlMs = parsePositiveInt(readEnvString(env, 'HUB_REFRESH_SECONDS'), DEFAULT_REFRESH_SECONDS) * 1000;
+  const ttlMs = resolveHubRefreshTtlMs(env);
 
   if (!options.force && runtimeCache && runtimeCache.key === key && Date.now() - runtimeCache.builtAt <= ttlMs) {
     return runtimeCache.runtime;
@@ -1069,6 +1109,87 @@ async function getHubRuntime(env: Env, options: { force?: boolean } = {}): Promi
 
   pendingRuntimeLoad = { key, promise };
   return promise;
+}
+
+function resolveHubRefreshTtlMs(env: Env): number {
+  return parsePositiveInt(readEnvString(env, 'HUB_REFRESH_SECONDS'), DEFAULT_REFRESH_SECONDS) * 1000;
+}
+
+function buildRuntimeCacheSnapshot(
+  key: string,
+  ttlMs: number,
+): { runtime: HubRuntime | null; isFresh: boolean } {
+  if (!runtimeCache || runtimeCache.key !== key) {
+    return { runtime: null, isFresh: false };
+  }
+
+  return {
+    runtime: runtimeCache.runtime,
+    isFresh: Date.now() - runtimeCache.builtAt <= ttlMs,
+  };
+}
+
+function buildLightweightHubRuntime(stateResolution: StateResolution): HubRuntime {
+  return {
+    builtAt: Date.now(),
+    stateResolution,
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [],
+      routes: new Map(),
+      warnings: ['Downstream runtime is warming; proxy tool metadata may be temporarily incomplete.'],
+    },
+    warming: true,
+  };
+}
+
+async function getHubRuntimeSnapshot(
+  env: Env,
+  options: { warm?: boolean; executionCtx?: WaitUntilContext } = {},
+): Promise<HubRuntime> {
+  const persistedState = await readHubState(env, registry);
+  const resolution = resolveState(registry, persistedState);
+  const key = buildRuntimeCacheKey(env, resolution.state);
+  const ttlMs = resolveHubRefreshTtlMs(env);
+  const cached = buildRuntimeCacheSnapshot(key, ttlMs);
+
+  if (cached.runtime && cached.isFresh) {
+    return cached.runtime;
+  }
+
+  if (options.warm) {
+    const warmup = getHubRuntime(env)
+      .then(() => undefined)
+      .catch((error) => {
+        console.warn(
+          `[${HUB_NAME}] background runtime warmup failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      });
+    if (options.executionCtx) {
+      options.executionCtx.waitUntil(warmup);
+    } else {
+      void warmup;
+    }
+  }
+
+  if (cached.runtime) {
+    return {
+      ...cached.runtime,
+      warming: true,
+      proxies: {
+        ...cached.runtime.proxies,
+        warnings: uniqueSortedStrings([
+          ...cached.runtime.proxies.warnings,
+          'Returning cached runtime metadata while downstream connections refresh in the background.',
+        ]),
+      },
+    };
+  }
+
+  return buildLightweightHubRuntime(resolution);
 }
 
 async function buildHubRuntime(env: Env, stateResolution: StateResolution): Promise<HubRuntime> {
@@ -2331,6 +2452,7 @@ function buildStatusPayload(runtime: HubRuntime): Record<string, unknown> {
     failedServers: runtime.failed,
     proxyToolCount: runtime.proxies.toolDefinitions.length,
     warnings: runtime.proxies.warnings,
+    runtimeState: runtime.warming ? 'warming' : 'ready',
     builtAt: new Date(runtime.builtAt).toISOString(),
     note: 'Use hub_update_state for live toggles and hub_refresh_connections to force reconnect + rebuild proxy catalog.',
   };
@@ -3856,7 +3978,7 @@ function findAllowlistIntentMatch(
     : null;
 }
 
-function buildDiscoveryServicesPayload(
+export function buildDiscoveryServicesPayload(
   runtime: HubRuntime,
   prefs: DiscoveryPreferences,
   visible: VisibleProxyCatalog,
@@ -3875,6 +3997,9 @@ function buildDiscoveryServicesPayload(
     visibleByServer.set(route.serverName, (visibleByServer.get(route.serverName) ?? 0) + 1);
   }
 
+  const connectedByName = new Map(runtime.connected.map((server) => [server.name, server] as const));
+  const failedByName = new Map(runtime.failed.map((server) => [server.name, server] as const));
+
   return {
     discovery: prefs,
     recommendedFlow: [
@@ -3883,16 +4008,27 @@ function buildDiscoveryServicesPayload(
       'hub_describe_proxy_tool',
       'hub_execute_proxy_tool',
     ],
-    services: runtime.connected.map((server) => ({
-      name: server.name,
-      totalProxyTools: byServer.get(server.name) ?? 0,
-      visibleProxyTools: visibleByServer.get(server.name) ?? 0,
-      activeInDiscovery: prefs.activeServers.includes(server.name),
+    services: runtime.stateResolution.enabledServerNames.map((serverName) => ({
+      name: serverName,
+      totalProxyTools: byServer.get(serverName) ?? 0,
+      visibleProxyTools: visibleByServer.get(serverName) ?? 0,
+      activeInDiscovery: prefs.activeServers.includes(serverName),
+      connectionState: connectedByName.has(serverName)
+        ? 'connected'
+        : failedByName.has(serverName)
+          ? 'failed'
+          : runtime.warming
+            ? 'warming'
+            : 'pending',
+      error: failedByName.get(serverName)?.error ?? null,
     })),
     totalProxyToolCount: runtime.proxies.toolDefinitions.length,
     visibleProxyToolCount: visible.toolDefinitions.length,
+    runtimeState: runtime.warming ? 'warming' : 'ready',
     note:
-      'Service visibility reflects session + discovery scope. Discovery packs are the standard managed baseline for shared hubs. Choose a service here, then call hub_search_proxy_tools with serverName for per-tool authorized discovery.',
+      runtime.warming
+        ? 'Service visibility reflects session + discovery scope. Downstream runtime is warming, so tool counts may be incomplete. Choose a service here, then retry hub_search_proxy_tools with serverName once runtimeState=ready.'
+        : 'Service visibility reflects session + discovery scope. Discovery packs are the standard managed baseline for shared hubs. Choose a service here, then call hub_search_proxy_tools with serverName for per-tool authorized discovery.',
   };
 }
 
