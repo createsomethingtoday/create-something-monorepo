@@ -66,6 +66,10 @@ function formatExampleValue(value: unknown): string {
 
 function formatExample(example: PublishedSnippetExample): string {
   const preferredKeys = [
+    'field',
+    'code',
+    'length',
+    'value',
     'selector',
     'text',
     'href',
@@ -210,6 +214,11 @@ function buildSnippetEvidence(published: PublishedSnippetCrawlResult): string[] 
 export function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
   const root = asRecord(audit);
   const meta = asRecord(root.meta);
+  const metaTitle = asRecord(meta.title);
+  const metaDescription = asRecord(meta.description);
+  const metaCanonical = asRecord(meta.canonical);
+  const metaRobots = asRecord(meta.robots);
+  const metaOpenGraph = asRecord(meta.openGraph);
   const headingsRoot = asRecord(root.headings);
   const headings = asRecord(headingsRoot.summary);
   const linksRoot = asRecord(root.links);
@@ -218,16 +227,24 @@ export function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
   const images = asRecord(imagesRoot.summary);
   const formsRoot = asRecord(root.forms);
   const forms = asRecord(formsRoot.summary);
+  const controlsRoot = asRecord(root.controls);
+  const controls = asRecord(controlsRoot.summary);
   const mediaRoot = asRecord(root.media);
   const media = asRecord(mediaRoot.summary);
+  const structuredDataRoot = asRecord(root.structuredData);
+  const structuredData = asRecord(structuredDataRoot.summary);
   const interactions = asRecord(root.interactions);
   const ix2 = asRecord(interactions.ix2);
   const ix3 = asRecord(interactions.ix3);
   const ix2Summary = asRecord(ix2.summary);
   const ix3Summary = asRecord(ix3.summary);
   const imageFormats = asRecord(imagesRoot.formats);
+  const structuredDataTypes = asStringArray(structuredData.types);
 
   const metaMissing = asStringArray(meta.missing);
+  const metaWarnings = normalizeExamples(meta.warnings);
+  const canonicalPresent = Boolean(metaCanonical.present);
+  const robotsPresent = Boolean(metaRobots.present);
   const failReasons: string[] = [];
 
   if (metaMissing.length > 0) failReasons.push(`meta_missing:${metaMissing.join(',')}`);
@@ -266,6 +283,18 @@ export function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
   if (asFiniteNumber(forms.missingLabels) > 0) {
     failReasons.push(`forms_missing_labels:${asFiniteNumber(forms.missingLabels)}`);
   }
+  if (asFiniteNumber(controls.missingAccessibleName) > 0) {
+    failReasons.push(
+      `controls_missing_accessible_name:${asFiniteNumber(controls.missingAccessibleName)}`,
+    );
+  }
+  if (asFiniteNumber(controls.roleButtonMissingKeyboardAccess) > 0) {
+    failReasons.push(
+      `controls_missing_keyboard_access:${asFiniteNumber(
+        controls.roleButtonMissingKeyboardAccess,
+      )}`,
+    );
+  }
   if (asFiniteNumber(media.autoplayWithoutControls) > 0) {
     failReasons.push(`media_autoplay_without_controls:${asFiniteNumber(media.autoplayWithoutControls)}`);
   }
@@ -274,11 +303,47 @@ export function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
       `bg_video_missing_controls:${asFiniteNumber(media.backgroundVideosMissingControl)}`,
     );
   }
+  if (asFiniteNumber(structuredData.parseErrors) > 0) {
+    failReasons.push(`structured_data_parse_errors:${asFiniteNumber(structuredData.parseErrors)}`);
+  }
 
   return {
     failCount: failReasons.length,
     failReasons,
     metaMissing,
+    meta: {
+      missing: metaMissing,
+      titlePresent: Boolean(metaTitle.present),
+      titleLength: asFiniteNumber(metaTitle.length),
+      descriptionPresent: Boolean(metaDescription.present),
+      descriptionLength: asFiniteNumber(metaDescription.length),
+      canonicalPresent,
+      canonicalHref:
+        typeof metaCanonical.href === 'string' && metaCanonical.href.length > 0
+          ? metaCanonical.href
+          : null,
+      robotsPresent,
+      robotsContent:
+        typeof metaRobots.content === 'string' && metaRobots.content.length > 0
+          ? metaRobots.content
+          : null,
+      openGraph: {
+        titlePresent:
+          typeof metaOpenGraph.title === 'string' && metaOpenGraph.title.length > 0,
+        descriptionPresent:
+          typeof metaOpenGraph.description === 'string' && metaOpenGraph.description.length > 0,
+        imagePresent:
+          typeof metaOpenGraph.image === 'string' && metaOpenGraph.image.length > 0,
+        urlPresent: typeof metaOpenGraph.url === 'string' && metaOpenGraph.url.length > 0,
+        typePresent: typeof metaOpenGraph.type === 'string' && metaOpenGraph.type.length > 0,
+      },
+      warnings: metaWarnings,
+      examples: buildExampleMap([
+        ['missing', metaMissing.map((field) => ({ field }))],
+        ['warnings', metaWarnings],
+        ['canonicalMissing', canonicalPresent ? [] : [{ href: null }]],
+      ]),
+    },
     headings: {
       headings: asFiniteNumber(headings.headings),
       h1: asFiniteNumber(headings.h1),
@@ -325,6 +390,17 @@ export function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
       missingLabels: asFiniteNumber(forms.missingLabels),
       examples: buildExampleMap([['missingLabels', formsRoot.missingLabels]]),
     },
+    controls: {
+      controls: asFiniteNumber(controls.controls),
+      missingAccessibleName: asFiniteNumber(controls.missingAccessibleName),
+      roleButtonMissingKeyboardAccess: asFiniteNumber(
+        controls.roleButtonMissingKeyboardAccess,
+      ),
+      examples: buildExampleMap([
+        ['missingAccessibleName', controlsRoot.missingAccessibleName],
+        ['roleButtonMissingKeyboardAccess', controlsRoot.roleButtonMissingKeyboardAccess],
+      ]),
+    },
     media: {
       videos: asFiniteNumber(media.videos),
       autoplayWithoutControls: asFiniteNumber(media.autoplayWithoutControls),
@@ -332,6 +408,17 @@ export function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
       examples: buildExampleMap([
         ['autoplayWithoutControls', mediaRoot.autoplayWithoutControls],
         ['backgroundVideosMissingControl', mediaRoot.backgroundVideosMissingControl],
+      ]),
+    },
+    structuredData: {
+      scripts: asFiniteNumber(structuredData.scripts),
+      validScripts: asFiniteNumber(structuredData.validScripts),
+      parseErrors: asFiniteNumber(structuredData.parseErrors),
+      nodes: asFiniteNumber(structuredData.nodes),
+      types: structuredDataTypes,
+      examples: buildExampleMap([
+        ['parseErrors', structuredDataRoot.parseErrors],
+        ['types', structuredDataRoot.itemTypes],
       ]),
     },
     ix2: {
@@ -377,8 +464,11 @@ export function emptyIssueCounts(): PublishedSnippetIssueCounts {
     imagesAboveFoldLazy: 0,
     imagesBelowFoldNotLazy: 0,
     formsMissingLabels: 0,
+    controlsMissingAccessibleName: 0,
+    controlsRoleButtonMissingKeyboardAccess: 0,
     autoplayWithoutControls: 0,
     backgroundVideosMissingControl: 0,
+    structuredDataParseErrors: 0,
   };
 }
 
@@ -389,6 +479,7 @@ export function unifyRows(
 ): UnifiedReviewRow[] {
   const home = published.pages.find((page) => page.url === published.startUrl) || published.pages[0] || null;
   const homeTitle = home?.title || '';
+  const homeMeta = home?.summary?.meta ?? null;
   const formatKeys = Array.from(
     new Set(
       published.pages.flatMap((page) =>
@@ -433,6 +524,17 @@ export function unifyRows(
   const missingRequiredSnippetTools = REQUIRED_SNIPPET_TOOLS.filter(
     (toolName) => !reviewApiTools.includes(toolName),
   );
+  const pagesWithMissingCanonical = published.pages.filter(
+    (page) => page.summary?.meta && !page.summary.meta.canonicalPresent,
+  ).length;
+  const pagesWithTitleLengthWarnings = published.pages.filter((page) =>
+    page.summary?.meta?.warnings.some((warning) => warning.code === 'title_too_long'),
+  ).length;
+  const pagesWithDescriptionLengthWarnings = published.pages.filter((page) =>
+    page.summary?.meta?.warnings.some(
+      (warning) => warning.code === 'description_length_out_of_range',
+    ),
+  ).length;
   const runtimeInjectionPages =
     published.pagesWithRuntimeInjection ??
     published.pages.filter(
@@ -450,6 +552,15 @@ export function unifyRows(
           missingRequiredSnippetTools.length > 0
         ? 'partial'
         : 'pass';
+  const metaStaticStatus: UnifiedReviewStatus =
+    published.issueCounts.metaMissing > 0
+      ? 'fail'
+      : pagesWithMissingCanonical > 0 ||
+          pagesWithTitleLengthWarnings > 0 ||
+          pagesWithDescriptionLengthWarnings > 0
+        ? 'partial'
+        : 'pass';
+
   pushRow(
     'webflow_audit.snippet_operational',
     'Webflow Audit Panel',
@@ -561,6 +672,35 @@ export function unifyRows(
     ['published-webmcp-crawl'],
     0.88,
     'Add visible labels or aria-label/aria-labelledby attributes to every form field.',
+  );
+
+  const controlIssueCount =
+    published.issueCounts.controlsMissingAccessibleName +
+    published.issueCounts.controlsRoleButtonMissingKeyboardAccess;
+  pushRow(
+    'webflow_audit.controls_accessible',
+    'Webflow Audit Panel',
+    'Buttons and button-like controls have accessible names and keyboard access',
+    controlIssueCount > 0 ? 'fail' : 'pass',
+    [
+      `pagesWithControlMissingAccessibleName=${published.issueCounts.controlsMissingAccessibleName}`,
+      `pagesWithRoleButtonMissingKeyboardAccess=${published.issueCounts.controlsRoleButtonMissingKeyboardAccess}`,
+      ...collectExampleEvidence(
+        published.pages,
+        'controlMissingAccessibleName',
+        (summary) => summary.controls?.examples?.missingAccessibleName ?? [],
+        1,
+      ),
+      ...collectExampleEvidence(
+        published.pages,
+        'roleButtonMissingKeyboardAccess',
+        (summary) => summary.controls?.examples?.roleButtonMissingKeyboardAccess ?? [],
+        1,
+      ),
+    ],
+    ['published-webmcp-crawl'],
+    0.87,
+    'Give icon-only or custom controls an accessible name, and ensure custom role=button controls are keyboard focusable.',
   );
 
   pushRow(
@@ -860,12 +1000,71 @@ export function unifyRows(
   pushRow(
     'pages.meta_tags_static',
     'Page Level Checks',
-    'Each static page has meta title, meta description and Open Graph tags',
-    published.issueCounts.metaMissing > 0 ? 'fail' : 'pass',
-    [`pagesWithMissingMeta=${published.issueCounts.metaMissing}`],
+    'Each static page has complete title, description, Open Graph, and canonical metadata',
+    metaStaticStatus,
+    [
+      `pagesWithMissingMeta=${published.issueCounts.metaMissing}`,
+      `pagesWithMissingCanonical=${pagesWithMissingCanonical}`,
+      `pagesWithTitleLengthWarnings=${pagesWithTitleLengthWarnings}`,
+      `pagesWithDescriptionLengthWarnings=${pagesWithDescriptionLengthWarnings}`,
+      `homeCanonicalPresent=${homeMeta?.canonicalPresent ?? false}`,
+      `homeRobotsPresent=${homeMeta?.robotsPresent ?? false}`,
+      `homeOgUrlPresent=${homeMeta?.openGraph.urlPresent ?? false}`,
+      `homeOgTypePresent=${homeMeta?.openGraph.typePresent ?? false}`,
+      ...collectExampleEvidence(
+        published.pages,
+        'missingMeta',
+        (summary) => summary.meta?.examples?.missing ?? [],
+        2,
+      ),
+      ...collectExampleEvidence(
+        published.pages,
+        'metaWarning',
+        (summary) => summary.meta?.examples?.warnings ?? [],
+        2,
+      ),
+      ...collectExampleEvidence(
+        published.pages,
+        'missingCanonical',
+        (summary) => summary.meta?.examples?.canonicalMissing ?? [],
+        1,
+      ),
+    ],
     ['published-webmcp-crawl'],
-    0.9,
-    'Add missing Open Graph/meta tags per page, including og:image.',
+    metaStaticStatus === 'pass' ? 0.9 : metaStaticStatus === 'partial' ? 0.78 : 0.9,
+    'Add missing Open Graph/meta tags per page, add canonicals, and tighten title/description length where warnings exist.',
+  );
+
+  const homeStructuredData = home?.summary?.structuredData ?? null;
+  const pagesWithStructuredData = published.pages.filter(
+    (page) => (page.summary?.structuredData?.scripts ?? 0) > 0,
+  ).length;
+  const structuredDataStatus: UnifiedReviewStatus =
+    published.issueCounts.structuredDataParseErrors > 0
+      ? 'fail'
+      : (homeStructuredData?.scripts ?? 0) > 0
+        ? 'pass'
+        : 'partial';
+  pushRow(
+    'pages.structured_data',
+    'Page Level Checks',
+    'Homepage structured data is present and JSON-LD is parseable',
+    structuredDataStatus,
+    [
+      `homeStructuredDataScripts=${homeStructuredData?.scripts ?? 0}`,
+      `homeStructuredDataTypes=${homeStructuredData?.types.join(',') || 'none'}`,
+      `pagesWithStructuredData=${pagesWithStructuredData}`,
+      `pagesWithStructuredDataParseErrors=${published.issueCounts.structuredDataParseErrors}`,
+      ...collectExampleEvidence(
+        published.pages,
+        'structuredDataParseError',
+        (summary) => summary.structuredData?.examples?.parseErrors ?? [],
+        1,
+      ),
+    ],
+    ['published-webmcp-crawl'],
+    structuredDataStatus === 'pass' ? 0.8 : structuredDataStatus === 'partial' ? 0.62 : 0.86,
+    'Add valid homepage JSON-LD structured data and fix any malformed schema blocks.',
   );
 
   pushRow(
@@ -994,7 +1193,12 @@ export function unifyRows(
     'Submission Policy',
     '"Powered by Webflow" badge is present and visible',
     policy.hasPoweredByWebflow ? 'pass' : 'fail',
-    [`hasPoweredByWebflow=${policy.hasPoweredByWebflow}`],
+    [
+      `hasPoweredByWebflow=${policy.hasPoweredByWebflow}`,
+      ...(policy.poweredByExamples && policy.poweredByExamples.length > 0
+        ? [`example=${formatExample(policy.poweredByExamples[0])}`]
+        : []),
+    ],
     ['published-webmcp-crawl'],
     0.9,
     'Do not remove the "Powered by Webflow" badge. It must remain visible on the published site.',
@@ -1021,6 +1225,9 @@ export function unifyRows(
     policy.hasGsap ? 'partial' : 'pass',
     [
       `hasGsap=${policy.hasGsap}`,
+      ...(policy.gsapEvidence && policy.gsapEvidence.length > 0
+        ? [`gsapEvidence=${policy.gsapEvidence.join(' | ')}`]
+        : []),
       ...(policy.hasGsap
         ? ['GSAP detected: ensure an Instructions page explains setup and GSAP is attached as a library.']
         : []),
@@ -1035,6 +1242,9 @@ export function unifyRows(
     policy.hasCustomCode ? 'partial' : 'pass',
     [
       `hasCustomCode=${policy.hasCustomCode}`,
+      ...(policy.customCodeExamples && policy.customCodeExamples.length > 0
+        ? policy.customCodeExamples.map((example, index) => `customCodeExample${index + 1}=${formatExample(example)}`)
+        : []),
       ...(policy.hasCustomCode
         ? ['Custom code detected: ensure an Instructions page documents custom code usage.']
         : []),

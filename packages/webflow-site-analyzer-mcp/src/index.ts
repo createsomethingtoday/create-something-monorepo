@@ -68,6 +68,7 @@ import type {
   TemplateReviewJobRecord,
   TemplateReviewJobStatus,
   PublishedSnippetCrawlResult,
+  PublishedSnippetExample,
   PublishedSnippetPageResult,
   PublishedSitePrecheckResult,
   RunTemplateReviewInput,
@@ -109,6 +110,27 @@ function getApiKey(): string | null {
     process.env.MCP_API_KEY?.trim() ??
     '';
   return value ? value : null;
+}
+
+function readBooleanEnv(name: string): boolean {
+  const value = process.env[name]?.trim().toLowerCase();
+  return value === '1' || value === 'true' || value === 'yes';
+}
+
+function isRemoteHttpRuntime(): boolean {
+  return readBooleanEnv('WEBFLOW_SITE_ANALYZER_REMOTE_HTTP');
+}
+
+function supportsSynchronousTemplateReview(): boolean {
+  return !isRemoteHttpRuntime();
+}
+
+function getRemoteSyncTemplateReviewError(): string {
+  return 'run_template_review is unavailable on the remote HTTP deployment because long-running synchronous review calls can be terminated by the edge proxy. Use enqueue_template_review with get_template_review_job instead, or use the local analyzer for synchronous debugging.';
+}
+
+export function shouldExposeRunTemplateReviewTool(): boolean {
+  return supportsSynchronousTemplateReview();
 }
 
 function getRegistryPath(): string | undefined {
@@ -624,6 +646,21 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     ? bodyText.includes(REQUIRED_LICENSE_TEXT)
     : null;
 
+  const describePolicyEl = (el) => {
+    if (!el || !(el instanceof Element)) return null;
+    const tag = el.tagName.toLowerCase();
+    const id = el.getAttribute('id') || null;
+    const className = el.getAttribute('class') || null;
+    const href = typeof el.getAttribute === 'function' ? el.getAttribute('href') || null : null;
+    const text = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 140) || null;
+    const selector = id
+      ? '#' + id
+      : className
+        ? tag + '.' + className.split(/\s+/).filter(Boolean).slice(0, 3).join('.')
+        : tag;
+    return { tag, id, className, selector, href, text };
+  };
+
   // Policy checks: deterministic, run regardless of __wfReview availability
   const poweredByBadge = document.querySelector('.w-webflow-badge') ||
     document.querySelector('a[href*="webflow.com"][class*="badge"]') ||
@@ -632,6 +669,7 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     poweredByBadge &&
     (poweredByBadge.textContent || '').toLowerCase().includes('webflow')
   );
+  const poweredByExamples = poweredByBadge ? [describePolicyEl(poweredByBadge)].filter(Boolean) : [];
 
   const allHrefs = Array.from(document.querySelectorAll('a[href]'))
     .map(a => (a.getAttribute('href') || '').toLowerCase());
@@ -649,10 +687,28 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   const hasGsap = scriptSrcs.some(src => src.toLowerCase().includes('gsap')) ||
     inlineCode.includes('gsap') || inlineCode.includes('ScrollTrigger') ||
     inlineCode.includes('ScrollSmoother');
+  const gsapEvidence = Array.from(
+    new Set([
+      ...scriptSrcs.filter((src) => src.toLowerCase().includes('gsap')).slice(0, 5),
+      ...(inlineCode.includes('gsap') ? ['inline:gsap'] : []),
+      ...(inlineCode.includes('ScrollTrigger') ? ['inline:ScrollTrigger'] : []),
+      ...(inlineCode.includes('ScrollSmoother') ? ['inline:ScrollSmoother'] : []),
+    ]),
+  ).slice(0, 5);
   const hasCustomCode = scriptEls.some(s =>
     !s.src && (s.textContent || '').trim().length > 50 &&
     !s.getAttribute('data-wf-domain')
   );
+  const customCodeExamples = scriptEls
+    .filter(
+      (s) => !s.src && (s.textContent || '').trim().length > 50 && !s.getAttribute('data-wf-domain')
+    )
+    .slice(0, 3)
+    .map((s) => ({
+      tag: 'script',
+      src: s.src || null,
+      inlinePreview: (s.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 140) || null,
+    }));
 
   const isReviewApi = (candidate) =>
     Boolean(
@@ -832,7 +888,10 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
         hasPoweredByWebflow,
         affiliateLinks,
         hasGsap,
-        hasCustomCode
+        hasCustomCode,
+        poweredByExamples,
+        gsapEvidence,
+        customCodeExamples
       }
     };
   }
@@ -883,7 +942,10 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
       hasPoweredByWebflow,
       affiliateLinks,
       hasGsap,
-      hasCustomCode
+      hasCustomCode,
+      poweredByExamples,
+      gsapEvidence,
+      customCodeExamples
     }
   };
 })()
@@ -912,6 +974,9 @@ type PublishedPageEval = {
     affiliateLinks?: string[];
     hasGsap?: boolean;
     hasCustomCode?: boolean;
+    poweredByExamples?: unknown[];
+    gsapEvidence?: string[];
+    customCodeExamples?: unknown[];
   };
 };
 
@@ -945,6 +1010,29 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function asFiniteNumber(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item)).filter(Boolean);
+}
+
+function dedupeExampleObjects(
+  values: PublishedSnippetExample[],
+  limit = 5,
+): PublishedSnippetExample[] {
+  const seen = new Set<string>();
+  const result: PublishedSnippetExample[] = [];
+
+  for (const value of values) {
+    const key = JSON.stringify(value);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(value);
+    if (result.length >= limit) break;
+  }
+
+  return result;
 }
 
 function normalizeSameOriginUrl(candidate: string, origin: string): string | null {
@@ -1212,7 +1300,14 @@ async function crawlPublishedWebMcp(
             hasPoweredByWebflow: Boolean(raw.policyChecks.hasPoweredByWebflow),
             affiliateLinks: Array.isArray(raw.policyChecks.affiliateLinks) ? raw.policyChecks.affiliateLinks : [],
             hasGsap: Boolean(raw.policyChecks.hasGsap),
-            hasCustomCode: Boolean(raw.policyChecks.hasCustomCode)
+            hasCustomCode: Boolean(raw.policyChecks.hasCustomCode),
+            poweredByExamples: Array.isArray(raw.policyChecks.poweredByExamples)
+              ? (raw.policyChecks.poweredByExamples as PublishedSnippetExample[])
+              : [],
+            gsapEvidence: asStringArray(raw.policyChecks.gsapEvidence),
+            customCodeExamples: Array.isArray(raw.policyChecks.customCodeExamples)
+              ? (raw.policyChecks.customCodeExamples as PublishedSnippetExample[])
+              : [],
           };
         }
 
@@ -1310,9 +1405,18 @@ async function crawlPublishedWebMcp(
     if ((summary.images?.aboveFoldLazy || 0) > 0) issueCounts.imagesAboveFoldLazy += 1;
     if ((summary.images?.belowFoldNotLazy || 0) > 0) issueCounts.imagesBelowFoldNotLazy += 1;
     if ((summary.forms?.missingLabels || 0) > 0) issueCounts.formsMissingLabels += 1;
+    if ((summary.controls?.missingAccessibleName || 0) > 0) {
+      issueCounts.controlsMissingAccessibleName += 1;
+    }
+    if ((summary.controls?.roleButtonMissingKeyboardAccess || 0) > 0) {
+      issueCounts.controlsRoleButtonMissingKeyboardAccess += 1;
+    }
     if ((summary.media?.autoplayWithoutControls || 0) > 0) issueCounts.autoplayWithoutControls += 1;
     if ((summary.media?.backgroundVideosMissingControl || 0) > 0) {
       issueCounts.backgroundVideosMissingControl += 1;
+    }
+    if ((summary.structuredData?.parseErrors || 0) > 0) {
+      issueCounts.structuredDataParseErrors += 1;
     }
   }
 
@@ -1331,6 +1435,9 @@ async function crawlPublishedWebMcp(
 
   // Aggregate policy checks across all pages
   const allAffiliateLinks: string[] = [];
+  const allPoweredByExamples: PublishedSnippetExample[] = [];
+  const allGsapEvidence: string[] = [];
+  const allCustomCodeExamples: PublishedSnippetExample[] = [];
   let anyPageHasPoweredBy = false;
   let anyPageHasGsap = false;
   let anyPageHasCustomCode = false;
@@ -1342,9 +1449,19 @@ async function crawlPublishedWebMcp(
       if (page.policyChecks.affiliateLinks) {
         allAffiliateLinks.push(...page.policyChecks.affiliateLinks);
       }
+      if (page.policyChecks.poweredByExamples) {
+        allPoweredByExamples.push(...page.policyChecks.poweredByExamples);
+      }
+      if (page.policyChecks.gsapEvidence) {
+        allGsapEvidence.push(...page.policyChecks.gsapEvidence);
+      }
+      if (page.policyChecks.customCodeExamples) {
+        allCustomCodeExamples.push(...page.policyChecks.customCodeExamples);
+      }
     }
   }
   const uniqueAffiliateLinks = Array.from(new Set(allAffiliateLinks));
+  const uniqueGsapEvidence = Array.from(new Set(allGsapEvidence)).slice(0, 5);
 
   return {
     startUrl,
@@ -1371,7 +1488,10 @@ async function crawlPublishedWebMcp(
       affiliateLinkCount: uniqueAffiliateLinks.length,
       affiliateLinks: uniqueAffiliateLinks,
       hasGsap: anyPageHasGsap,
-      hasCustomCode: anyPageHasCustomCode
+      hasCustomCode: anyPageHasCustomCode,
+      poweredByExamples: dedupeExampleObjects(allPoweredByExamples, 3),
+      gsapEvidence: uniqueGsapEvidence,
+      customCodeExamples: dedupeExampleObjects(allCustomCodeExamples, 3),
     },
     pages
   };
@@ -1523,8 +1643,11 @@ function getTemplateReviewJob(input: GetTemplateReviewJobInput): TemplateReviewJ
   const job = manager.get(input.jobId);
   if (!job) {
     const diagnostics = manager.getDiagnostics();
+    const syncRecoveryHint = supportsSynchronousTemplateReview()
+      ? 'prefer run_template_review or retry against the same analyzer runtime.'
+      : 'retry against the same analyzer runtime.';
     throw new Error(
-      `Template review job not found: ${input.jobId}. Async review jobs are stored in ${diagnostics.stateScope} on analyzer runtime ${diagnostics.runtimeInstanceId}; if the runtime restarted or you are polling through a different instance, prefer run_template_review or retry against the same analyzer runtime.`,
+      `Template review job not found: ${input.jobId}. Async review jobs are stored in ${diagnostics.stateScope} on analyzer runtime ${diagnostics.runtimeInstanceId}; if the runtime restarted or you are polling through a different instance, ${syncRecoveryHint}`,
     );
   }
   return job;
@@ -1858,46 +1981,48 @@ export function createAnalyzerServer(): Server {
           },
         }
       },
-      {
-        name: 'run_template_review',
-        description: 'Synchronous template review execution for debugging or manual use. Production automation should prefer enqueue_template_review.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            previewUrl: {
-              type: 'string',
-              description: 'Optional Webflow preview URL for Designer extraction/scoring.'
-            },
-            publishedUrl: {
-              type: 'string',
-              description: 'Published site URL audited with the runtime-injected review API.'
-            },
-            timeout: {
-              type: 'number',
-              description: 'Optional per-page timeout in milliseconds (default: 90000).'
-            },
-            includeManual: {
-              type: 'boolean',
-              description: 'Include manual rows in final output (default: true).'
-            },
-            crawlMaxPages: {
-              type: 'number',
-              description: 'Maximum published pages to crawl (default: 20, max: 50).'
-            },
-            crawlMaxDepth: {
-              type: 'number',
-              description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
-            },
-            designerMode: {
-              type: 'string',
-              enum: ['required', 'best-effort', 'skip'],
-              description:
-                'How to treat the Designer leg. `best-effort` continues with published crawl if preview extraction fails or is omitted (default).'
+      ...(shouldExposeRunTemplateReviewTool()
+        ? [{
+            name: 'run_template_review',
+            description: 'Synchronous template review execution for debugging or manual use. Production automation should prefer enqueue_template_review.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                previewUrl: {
+                  type: 'string',
+                  description: 'Optional Webflow preview URL for Designer extraction/scoring.'
+                },
+                publishedUrl: {
+                  type: 'string',
+                  description: 'Published site URL audited with the runtime-injected review API.'
+                },
+                timeout: {
+                  type: 'number',
+                  description: 'Optional per-page timeout in milliseconds (default: 90000).'
+                },
+                includeManual: {
+                  type: 'boolean',
+                  description: 'Include manual rows in final output (default: true).'
+                },
+                crawlMaxPages: {
+                  type: 'number',
+                  description: 'Maximum published pages to crawl (default: 20, max: 50).'
+                },
+                crawlMaxDepth: {
+                  type: 'number',
+                  description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
+                },
+                designerMode: {
+                  type: 'string',
+                  enum: ['required', 'best-effort', 'skip'],
+                  description:
+                    'How to treat the Designer leg. `best-effort` continues with published crawl if preview extraction fails or is omitted (default).'
+                }
+              },
+              required: ['publishedUrl']
             }
-          },
-          required: ['publishedUrl']
-        }
-      },
+          }]
+        : []),
       {
         name: 'enqueue_template_review',
         description: 'Queue an async template review job with bounded concurrency. This is the production entrypoint for automated review orchestration. Responses include runtime-local diagnostics so callers can poll the same analyzer instance.',
@@ -2153,6 +2278,9 @@ export function createAnalyzerServer(): Server {
           result = await scoreDesignerChecklistTool(safeArgs as unknown as ScoreDesignerChecklistInput);
           break;
         case 'run_template_review':
+          if (!supportsSynchronousTemplateReview()) {
+            throw new Error(getRemoteSyncTemplateReviewError());
+          }
           assertBrowserAutomationSupported(name);
           result = await runTemplateReviewTool(safeArgs as unknown as RunTemplateReviewInput, {
             reportProgress: createProgressReporter(extra as RequestHandlerExtraLike)
@@ -2256,6 +2384,7 @@ export function getAnalyzerHealth(): Record<string, unknown> {
     },
     templateReview: {
       browserAutomationSupported: isBrowserAutomationSupported(),
+      syncTemplateReviewSupported: supportsSynchronousTemplateReview(),
       maxConcurrentJobs: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS, 2),
       maxQueueSize: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE, 100)
     }

@@ -47,6 +47,7 @@ function buildAnalyzerEnv(env: Env): Record<string, string> {
   const result: Record<string, string> = {};
 
   setIfPresent(result, 'PORT', String(getUpstreamPort(env)));
+  result.WEBFLOW_SITE_ANALYZER_REMOTE_HTTP = '1';
   setIfPresent(result, 'WEBFLOW_SITE_ANALYZER_MCP_API_KEY', env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY);
   setIfPresent(result, 'MCP_API_KEY', env.MCP_API_KEY);
   setIfPresent(result, 'STEEL_API_KEY', env.STEEL_API_KEY);

@@ -288,6 +288,124 @@
     };
   }
 
+  function getAriaLabelledByText(el) {
+    try {
+      if (!el || !(el instanceof Element)) return '';
+      const ids = normalizeText(el.getAttribute('aria-labelledby') || '')
+        .split(/\s+/)
+        .filter(Boolean);
+      if (!ids.length) return '';
+
+      const text = ids
+        .map((id) => normalizeText(document.getElementById(id)?.textContent || ''))
+        .filter(Boolean)
+        .join(' ');
+
+      return normalizeText(text);
+    } catch {
+      return '';
+    }
+  }
+
+  function getAccessibleName(el) {
+    try {
+      if (!el || !(el instanceof Element)) return '';
+
+      const ariaLabel = normalizeText(el.getAttribute('aria-label') || '');
+      if (ariaLabel) return ariaLabel;
+
+      const labelledBy = getAriaLabelledByText(el);
+      if (labelledBy) return labelledBy;
+
+      if (el instanceof HTMLInputElement) {
+        const type = normalizeText(el.getAttribute('type') || 'text').toLowerCase();
+        if (type === 'button' || type === 'submit' || type === 'reset') {
+          const value = normalizeText(el.value || el.getAttribute('value') || '');
+          if (value) return value;
+        }
+      }
+
+      const text = normalizeText(el.textContent || '');
+      if (text) return text;
+
+      const imgAlt = Array.from(el.querySelectorAll('img[alt]'))
+        .map((img) => normalizeText(img.getAttribute('alt') || ''))
+        .filter(Boolean)
+        .join(' ');
+      if (imgAlt) return normalizeText(imgAlt);
+
+      const title = normalizeText(el.getAttribute('title') || '');
+      if (title) return title;
+
+      return '';
+    } catch {
+      return '';
+    }
+  }
+
+  function isInherentlyKeyboardFocusable(el) {
+    try {
+      if (!el || !(el instanceof Element)) return false;
+      if (el.hasAttribute('disabled')) return false;
+
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'a') return Boolean(el.getAttribute('href'));
+      if (tag === 'button' || tag === 'select' || tag === 'textarea' || tag === 'summary') return true;
+      if (tag === 'input') {
+        const type = normalizeText(el.getAttribute('type') || 'text').toLowerCase();
+        return type !== 'hidden';
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  function hasKeyboardFocusSupport(el) {
+    try {
+      if (!el || !(el instanceof Element)) return false;
+      if (isInherentlyKeyboardFocusable(el)) return true;
+
+      const tabindex = el.getAttribute('tabindex');
+      if (tabindex == null) return false;
+      if (tabindex.trim() === '') return false;
+
+      const parsed = Number.parseInt(tabindex, 10);
+      return Number.isFinite(parsed) && parsed >= 0;
+    } catch {
+      return false;
+    }
+  }
+
+  function collectStructuredDataTypes(node, output) {
+    if (Array.isArray(node)) {
+      let count = 0;
+      for (const item of node) {
+        count += collectStructuredDataTypes(item, output);
+      }
+      return count;
+    }
+
+    if (!node || typeof node !== 'object') return 0;
+
+    let count = 1;
+    const typeValue = node['@type'];
+    if (Array.isArray(typeValue)) {
+      for (const entry of typeValue) {
+        if (typeof entry === 'string' && entry) output.push(entry);
+      }
+    } else if (typeof typeValue === 'string' && typeValue) {
+      output.push(typeValue);
+    }
+
+    if (Array.isArray(node['@graph'])) {
+      count += collectStructuredDataTypes(node['@graph'], output);
+    }
+
+    return count;
+  }
+
   const tools = Object.create(null);
 
   function registerTool(tool) {
@@ -817,6 +935,66 @@
   });
 
   registerTool({
+    name: 'audit_controls',
+    description:
+      'Audit buttons and button-like controls for accessible names and keyboard focus support.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxExamples: {
+          type: 'integer',
+          description: 'Maximum examples to include',
+          default: 20,
+        },
+      },
+      additionalProperties: false,
+    },
+    execute: async ({ maxExamples = 20 } = {}) => {
+      const controls = Array.from(
+        document.querySelectorAll(
+          'button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"]'
+        )
+      );
+
+      const missingAccessibleName = [];
+      const roleButtonMissingKeyboardAccess = [];
+
+      for (const control of controls) {
+        const accessibleName = getAccessibleName(control);
+        const role = normalizeText(control.getAttribute('role') || '').toLowerCase() || null;
+        const desc = {
+          ...describeEl(control, { maxText: 120 }),
+          role,
+          name: accessibleName || null,
+          tabindex: control.getAttribute('tabindex') || null,
+        };
+
+        if (!accessibleName && missingAccessibleName.length < maxExamples) {
+          missingAccessibleName.push(desc);
+        }
+
+        if (
+          role === 'button' &&
+          !hasKeyboardFocusSupport(control) &&
+          roleButtonMissingKeyboardAccess.length < maxExamples
+        ) {
+          roleButtonMissingKeyboardAccess.push(desc);
+        }
+      }
+
+      return {
+        summary: {
+          controls: controls.length,
+          missingAccessibleName: missingAccessibleName.length,
+          roleButtonMissingKeyboardAccess: roleButtonMissingKeyboardAccess.length,
+        },
+        missingAccessibleName,
+        roleButtonMissingKeyboardAccess,
+      };
+    },
+  });
+
+  registerTool({
     name: 'audit_media',
     description: 'Audit video elements for autoplay/controls and background video pause controls.',
     inputSchema: {
@@ -883,6 +1061,78 @@
   });
 
   registerTool({
+    name: 'audit_structured_data',
+    description: 'Audit JSON-LD structured data blocks for presence, parse errors, and schema types.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxExamples: {
+          type: 'integer',
+          description: 'Maximum examples to include',
+          default: 20,
+        },
+      },
+      additionalProperties: false,
+    },
+    execute: async ({ maxExamples = 20 } = {}) => {
+      const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+      const parseErrors = [];
+      const itemTypes = [];
+      let validScripts = 0;
+      let nodes = 0;
+
+      for (const script of scripts) {
+        const raw = (script.textContent || '').trim();
+        const desc = describeEl(script, { maxText: 0 }) || {
+          tag: 'script',
+          id: null,
+          className: null,
+          text: null,
+          selector: 'script[type="application/ld+json"]',
+        };
+
+        if (!raw) {
+          if (parseErrors.length < maxExamples) {
+            parseErrors.push({
+              ...desc,
+              error: 'Empty JSON-LD script',
+            });
+          }
+          continue;
+        }
+
+        try {
+          const parsed = JSON.parse(raw);
+          validScripts += 1;
+          nodes += collectStructuredDataTypes(parsed, itemTypes);
+        } catch (error) {
+          if (parseErrors.length < maxExamples) {
+            parseErrors.push({
+              ...desc,
+              error: error instanceof Error ? error.message : String(error),
+              text: truncateText(raw, 140) || null,
+            });
+          }
+        }
+      }
+
+      const uniqueTypes = Array.from(new Set(itemTypes));
+
+      return {
+        summary: {
+          scripts: scripts.length,
+          validScripts,
+          parseErrors: parseErrors.length,
+          nodes,
+          types: uniqueTypes.slice(0, maxExamples),
+        },
+        parseErrors,
+        itemTypes: uniqueTypes.slice(0, maxExamples).map((type) => ({ type })),
+      };
+    },
+  });
+
+  registerTool({
     name: 'audit_404',
     description: 'Probe a non-existent path to confirm the site serves a 404 page (status + basic structure).',
     inputSchema: {
@@ -933,7 +1183,7 @@
   registerTool({
     name: 'audit_webflow_way',
     description:
-      'Run a consolidated Webflow Way-focused audit (published-site checks): meta, headings, DOM, links, images, forms, media, interactions.',
+      'Run a consolidated Webflow Way-focused audit (published-site checks): meta, headings, DOM, links, images, forms, controls, media, structured data, interactions.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -963,7 +1213,9 @@
       const links = await callTool('audit_links', { maxExamples });
       const images = await callTool('audit_images', { maxExamples });
       const forms = await callTool('audit_forms', { maxExamples });
+      const controls = await callTool('audit_controls', { maxExamples });
       const media = await callTool('audit_media', { maxExamples });
+      const structuredData = await callTool('audit_structured_data', { maxExamples });
 
       const ix2 = await callTool('audit_ix2', { maxItems: maxExamples });
       const ix3 = await callTool('audit_ix3', { maxItems: maxExamples });
@@ -980,7 +1232,9 @@
         links,
         images,
         forms,
+        controls,
         media,
+        structuredData,
         interactions: { ix2, ix3 },
         sitemap,
       };

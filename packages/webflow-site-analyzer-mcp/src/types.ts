@@ -523,14 +523,37 @@ export interface PublishedSnippetIssueCounts {
   imagesAboveFoldLazy: number;
   imagesBelowFoldNotLazy: number;
   formsMissingLabels: number;
+  controlsMissingAccessibleName: number;
+  controlsRoleButtonMissingKeyboardAccess: number;
   autoplayWithoutControls: number;
   backgroundVideosMissingControl: number;
+  structuredDataParseErrors: number;
 }
 
 export interface PublishedSnippetPageSummary {
   failCount: number;
   failReasons: string[];
   metaMissing: string[];
+  meta: {
+    missing: string[];
+    titlePresent: boolean;
+    titleLength: number;
+    descriptionPresent: boolean;
+    descriptionLength: number;
+    canonicalPresent: boolean;
+    canonicalHref: string | null;
+    robotsPresent: boolean;
+    robotsContent: string | null;
+    openGraph: {
+      titlePresent: boolean;
+      descriptionPresent: boolean;
+      imagePresent: boolean;
+      urlPresent: boolean;
+      typePresent: boolean;
+    };
+    warnings: PublishedSnippetExample[];
+    examples: PublishedSnippetIssueExamples;
+  } | null;
   headings: {
     headings: number;
     h1: number;
@@ -562,10 +585,24 @@ export interface PublishedSnippetPageSummary {
     missingLabels: number;
     examples: PublishedSnippetIssueExamples;
   } | null;
+  controls: {
+    controls: number;
+    missingAccessibleName: number;
+    roleButtonMissingKeyboardAccess: number;
+    examples: PublishedSnippetIssueExamples;
+  } | null;
   media: {
     videos: number;
     autoplayWithoutControls: number;
     backgroundVideosMissingControl: number;
+    examples: PublishedSnippetIssueExamples;
+  } | null;
+  structuredData: {
+    scripts: number;
+    validScripts: number;
+    parseErrors: number;
+    nodes: number;
+    types: string[];
     examples: PublishedSnippetIssueExamples;
   } | null;
   ix2: {
@@ -608,6 +645,9 @@ export interface PublishedSnippetPageResult {
     affiliateLinks?: string[];
     hasGsap?: boolean;
     hasCustomCode?: boolean;
+    poweredByExamples?: PublishedSnippetExample[];
+    gsapEvidence?: string[];
+    customCodeExamples?: PublishedSnippetExample[];
   };
 }
 
@@ -646,6 +686,9 @@ export interface PublishedSnippetCrawlResult {
     affiliateLinks: string[];
     hasGsap: boolean;
     hasCustomCode: boolean;
+    poweredByExamples?: PublishedSnippetExample[];
+    gsapEvidence?: string[];
+    customCodeExamples?: PublishedSnippetExample[];
   };
   pages: PublishedSnippetPageResult[];
 }

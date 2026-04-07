@@ -71,6 +71,33 @@ function createIssueHeavyAudit() {
   return {
     meta: {
       missing: ['description'],
+      title: {
+        present: true,
+        value:
+          'Helpbot helps teams ship faster with AI-powered customer support flows and layered workflow automation',
+        length: 98,
+      },
+      description: {
+        present: false,
+        value: null,
+        length: 0,
+      },
+      canonical: {
+        present: false,
+        href: null,
+      },
+      robots: {
+        present: true,
+        content: 'index,follow',
+      },
+      openGraph: {
+        title: 'Helpbot template',
+        description: 'AI support template',
+        image: 'https://cdn.example.com/og-helpbot.jpg',
+        url: null,
+        type: null,
+      },
+      warnings: [{ code: 'title_too_long', length: 98 }],
     },
     headings: {
       summary: {
@@ -129,6 +156,17 @@ function createIssueHeavyAudit() {
         { selector: 'input.email', fieldTag: 'input', fieldType: 'email', name: 'email' },
       ],
     },
+    controls: {
+      summary: {
+        controls: 3,
+        missingAccessibleName: 1,
+        roleButtonMissingKeyboardAccess: 1,
+      },
+      missingAccessibleName: [{ selector: 'button.icon-only', role: null, name: null }],
+      roleButtonMissingKeyboardAccess: [
+        { selector: 'div.fake-button', role: 'button', tabindex: null, name: 'Toggle pricing' },
+      ],
+    },
     media: {
       summary: {
         videos: 1,
@@ -139,6 +177,17 @@ function createIssueHeavyAudit() {
       backgroundVideosMissingControl: [
         { selector: 'video.bg', autoplay: true, muted: true, loop: true, controls: false },
       ],
+    },
+    structuredData: {
+      summary: {
+        scripts: 1,
+        validScripts: 0,
+        parseErrors: 1,
+        nodes: 0,
+        types: [],
+      },
+      parseErrors: [{ selector: 'script', error: 'Unexpected token } in JSON at position 19' }],
+      itemTypes: [],
     },
     interactions: {
       ix2: {
@@ -174,6 +223,32 @@ function createCleanAudit() {
   return {
     meta: {
       missing: [],
+      title: {
+        present: true,
+        value: 'License',
+        length: 7,
+      },
+      description: {
+        present: true,
+        value: 'License terms for included assets and template usage.',
+        length: 52,
+      },
+      canonical: {
+        present: true,
+        href: 'https://demo.webflow.io/license',
+      },
+      robots: {
+        present: true,
+        content: 'index,follow',
+      },
+      openGraph: {
+        title: 'License',
+        description: 'License terms',
+        image: 'https://cdn.example.com/og-license.jpg',
+        url: 'https://demo.webflow.io/license',
+        type: 'website',
+      },
+      warnings: [],
     },
     headings: {
       summary: {
@@ -210,12 +285,29 @@ function createCleanAudit() {
         missingLabels: 0,
       },
     },
+    controls: {
+      summary: {
+        controls: 1,
+        missingAccessibleName: 0,
+        roleButtonMissingKeyboardAccess: 0,
+      },
+    },
     media: {
       summary: {
         videos: 0,
         autoplayWithoutControls: 0,
         backgroundVideosMissingControl: 0,
       },
+    },
+    structuredData: {
+      summary: {
+        scripts: 1,
+        validScripts: 1,
+        parseErrors: 0,
+        nodes: 1,
+        types: ['WebSite'],
+      },
+      itemTypes: [{ type: 'WebSite' }],
     },
     interactions: {
       ix2: {
@@ -273,6 +365,9 @@ function createPublishedResult(): PublishedSnippetCrawlResult {
         affiliateLinks: [],
         hasGsap: false,
         hasCustomCode: false,
+        poweredByExamples: [{ selector: 'a.w-webflow-badge', href: 'https://webflow.com' }],
+        gsapEvidence: [],
+        customCodeExamples: [],
       },
     },
     {
@@ -296,6 +391,9 @@ function createPublishedResult(): PublishedSnippetCrawlResult {
         affiliateLinks: [],
         hasGsap: false,
         hasCustomCode: false,
+        poweredByExamples: [{ selector: 'a.w-webflow-badge', href: 'https://webflow.com' }],
+        gsapEvidence: [],
+        customCodeExamples: [],
       },
     },
   ];
@@ -340,15 +438,21 @@ function createPublishedResult(): PublishedSnippetCrawlResult {
       imagesAboveFoldLazy: 1,
       imagesBelowFoldNotLazy: 1,
       formsMissingLabels: 1,
+      controlsMissingAccessibleName: 1,
+      controlsRoleButtonMissingKeyboardAccess: 1,
       autoplayWithoutControls: 1,
       backgroundVideosMissingControl: 1,
+      structuredDataParseErrors: 1,
     },
     policyChecks: {
       hasPoweredByWebflow: true,
       affiliateLinkCount: 0,
       affiliateLinks: [],
-      hasGsap: false,
-      hasCustomCode: false,
+      hasGsap: true,
+      hasCustomCode: true,
+      poweredByExamples: [{ selector: 'a.w-webflow-badge', href: 'https://webflow.com' }],
+      gsapEvidence: ['https://cdn.example.com/gsap.min.js', 'inline:ScrollTrigger'],
+      customCodeExamples: [{ tag: 'script', inlinePreview: 'window.customTheme=true;' }],
     },
     pages,
   };
@@ -360,13 +464,24 @@ test('summarizePublishedPageAudit preserves capped issue examples from the injec
   assert.equal(summary.failCount > 0, true);
   assert.ok(summary.failReasons.includes('images_below_fold_not_lazy:1'));
   assert.deepEqual(summary.metaMissing, ['description']);
+  assert.equal(summary.meta?.canonicalPresent, false);
+  assert.equal(summary.meta?.openGraph.urlPresent, false);
+  assert.equal(summary.meta?.warnings[0]?.code, 'title_too_long');
+  assert.equal(summary.meta?.examples.missing[0]?.field, 'description');
+  assert.equal(summary.meta?.examples.canonicalMissing[0]?.href, null);
 
   assert.equal(summary.headings?.examples.skippedHeadingLevels.length, 5);
   assert.equal(summary.images?.examples.missingAlt.length, 5);
   assert.equal(summary.images?.examples.missingAlt[0]?.selector, 'img.hero-0');
   assert.equal(summary.links?.examples.missingAccessibleName[0]?.selector, 'a.icon-only');
   assert.equal(summary.forms?.examples.missingLabels[0]?.fieldType, 'email');
+  assert.equal(summary.controls?.examples.missingAccessibleName[0]?.selector, 'button.icon-only');
+  assert.equal(
+    summary.controls?.examples.roleButtonMissingKeyboardAccess[0]?.selector,
+    'div.fake-button',
+  );
   assert.equal(summary.media?.examples.autoplayWithoutControls[0]?.selector, 'video.hero');
+  assert.equal(summary.structuredData?.examples.parseErrors[0]?.selector, 'script');
   assert.equal(summary.ix2?.examples.missingActionLists[0]?.actionListId, 'ix2-missing-1');
   assert.equal(summary.ix3?.examples.missingTimelines[0]?.timelineId, 'ix3-timeline-1');
 });
@@ -417,6 +532,25 @@ test('unifyRows promotes snippet health and preserved published examples into re
     ),
   );
 
+  const controlsRow = findRow(rows, 'webflow_audit.controls_accessible');
+  assert.equal(controlsRow.status, 'fail');
+  assert.ok(controlsRow.evidence.includes('pagesWithControlMissingAccessibleName=1'));
+  assert.ok(controlsRow.evidence.includes('pagesWithRoleButtonMissingKeyboardAccess=1'));
+  assert.ok(
+    controlsRow.evidence.some(
+      (line) =>
+        line.includes('controlMissingAccessibleNameExample=https://demo.webflow.io/') &&
+        line.includes('selector=button.icon-only'),
+    ),
+  );
+  assert.ok(
+    controlsRow.evidence.some(
+      (line) =>
+        line.includes('roleButtonMissingKeyboardAccessExample=https://demo.webflow.io/') &&
+        line.includes('selector=div.fake-button'),
+    ),
+  );
+
   const imageLoadingRow = findRow(rows, 'pages.image_loading_strategy');
   assert.equal(imageLoadingRow.status, 'fail');
   assert.ok(imageLoadingRow.evidence.includes('pagesWithBelowFoldNotLazy=1'));
@@ -424,7 +558,37 @@ test('unifyRows promotes snippet health and preserved published examples into re
     imageLoadingRow.evidence.some(
       (line) =>
         line.includes('belowFoldNotLazyExample=https://demo.webflow.io/') &&
-        line.includes('selector=img.footer'),
+      line.includes('selector=img.footer'),
+    ),
+  );
+
+  const metaRow = findRow(rows, 'pages.meta_tags_static');
+  assert.equal(metaRow.status, 'fail');
+  assert.ok(metaRow.evidence.includes('pagesWithMissingMeta=1'));
+  assert.ok(metaRow.evidence.includes('pagesWithMissingCanonical=1'));
+  assert.ok(metaRow.evidence.includes('pagesWithTitleLengthWarnings=1'));
+  assert.ok(metaRow.evidence.includes('pagesWithDescriptionLengthWarnings=0'));
+  assert.ok(metaRow.evidence.includes('homeCanonicalPresent=false'));
+  assert.ok(metaRow.evidence.includes('homeOgUrlPresent=false'));
+  assert.ok(
+    metaRow.evidence.some(
+      (line) =>
+        line.includes('missingMetaExample=https://demo.webflow.io/') &&
+        line.includes('field=description'),
+    ),
+  );
+  assert.ok(
+    metaRow.evidence.some(
+      (line) =>
+        line.includes('metaWarningExample=https://demo.webflow.io/') &&
+        line.includes('code=title_too_long'),
+    ),
+  );
+  assert.ok(
+    metaRow.evidence.some(
+      (line) =>
+        line.includes('missingCanonicalExample=https://demo.webflow.io/') &&
+        line.includes('href=null'),
     ),
   );
 
@@ -459,6 +623,44 @@ test('unifyRows promotes snippet health and preserved published examples into re
         line.includes('auditSource=installed-fallback'),
     ),
   );
+
+  const structuredDataRow = findRow(rows, 'pages.structured_data');
+  assert.equal(structuredDataRow.status, 'fail');
+  assert.ok(structuredDataRow.evidence.includes('pagesWithStructuredDataParseErrors=1'));
+  assert.ok(
+    structuredDataRow.evidence.some(
+      (line) =>
+        line.includes('structuredDataParseErrorExample=https://demo.webflow.io/') &&
+        line.includes('selector=script'),
+    ),
+  );
+
+  const badgeRow = findRow(rows, 'policy.powered_by_webflow');
+  assert.ok(
+    badgeRow.evidence.some(
+      (line) => line.includes('example=selector=a.w-webflow-badge') && line.includes('href=https://webflow.com'),
+    ),
+  );
+
+  const gsapRow = findRow(rows, 'policy.gsap_detected');
+  assert.equal(gsapRow.status, 'partial');
+  assert.ok(
+    gsapRow.evidence.some(
+      (line) =>
+        line.includes('gsapEvidence=https://cdn.example.com/gsap.min.js') &&
+        line.includes('inline:ScrollTrigger'),
+    ),
+  );
+
+  const customCodeRow = findRow(rows, 'policy.custom_code_detected');
+  assert.equal(customCodeRow.status, 'partial');
+  assert.ok(
+    customCodeRow.evidence.some(
+      (line) =>
+        line.includes('customCodeExample1=tag=script') &&
+        line.includes('inlinePreview=window.customTheme=true;'),
+    ),
+  );
 });
 
 test('unifyRows treats runtime injection as primary even when no installed snippet is present', () => {
@@ -487,6 +689,31 @@ test('unifyRows treats runtime injection as primary even when no installed snipp
   assert.ok(snippetRow.evidence.includes('runtimeInjectionPages=2/2'));
   assert.ok(snippetRow.evidence.includes('installedSnippetPages=0/2'));
   assert.ok(snippetRow.evidence.includes('installedFallbackPages=0'));
+});
+
+test('unifyRows marks static meta as partial when required tags exist but hygiene issues remain', () => {
+  const published = createPublishedResult();
+  const homePage = published.pages[0];
+
+  assert.ok(homePage?.summary?.meta);
+  if (!homePage?.summary?.meta) return;
+
+  homePage.summary.meta.missing = [];
+  homePage.summary.meta.examples.missing = [];
+  homePage.summary.meta.canonicalPresent = false;
+  homePage.summary.meta.examples.canonicalMissing = [{ href: null }];
+  homePage.summary.meta.warnings = [{ code: 'title_too_long', length: 98 }];
+  homePage.summary.meta.examples.warnings = [{ code: 'title_too_long', length: 98 }];
+  published.issueCounts.metaMissing = 0;
+  published.failingPages = 0;
+
+  const rows = unifyRows(createDesignerReport(), published, true);
+  const metaRow = findRow(rows, 'pages.meta_tags_static');
+
+  assert.equal(metaRow.status, 'partial');
+  assert.ok(metaRow.evidence.includes('pagesWithMissingMeta=0'));
+  assert.ok(metaRow.evidence.includes('pagesWithMissingCanonical=1'));
+  assert.ok(metaRow.evidence.includes('pagesWithTitleLengthWarnings=1'));
 });
 
 test('unifyRows downgrades custom 404 to manual when the 404 audit is unavailable', () => {
