@@ -5,19 +5,6 @@ type CheckResult = {
   detail: string;
 };
 
-const DEFAULT_HOSTS = [
-  'https://lainy.mcp.createsomething.agency',
-  'https://danny.mcp.createsomething.agency',
-  'https://august.mcp.createsomething.agency',
-  'https://c3denver.mcp.createsomething.agency',
-  'https://aaron-outerfields.mcp.createsomething.agency',
-  'https://andre-outerfields.mcp.createsomething.agency',
-  'https://fillip.mcp.createsomething.agency',
-  'https://leah.mcp.createsomething.agency',
-  'https://mj.mcp.createsomething.agency',
-  'https://cs-mcp-hub-remote.createsomething.workers.dev',
-];
-
 const REQUIRED_PATHS = [
   '/.well-known/oauth-authorization-server',
   '/mcp/.well-known/oauth-authorization-server',
@@ -27,7 +14,7 @@ const REQUIRED_PATHS = [
 
 function parseHosts(argv: string[]): string[] {
   const hostFlag = argv.find((arg) => arg.startsWith('--hosts='));
-  if (!hostFlag) return DEFAULT_HOSTS;
+  if (!hostFlag) return [];
   return hostFlag
     .slice('--hosts='.length)
     .split(',')
@@ -61,6 +48,13 @@ async function checkUrl(url: string): Promise<CheckResult> {
 
 async function main() {
   const hosts = parseHosts(process.argv.slice(2));
+  if (hosts.length === 0) {
+    console.error(
+      'Pass --hosts=<comma-separated-origins>. OAuth discovery is lane-specific and should be verified only for lanes that intentionally enable it.',
+    );
+    process.exitCode = 1;
+    return;
+  }
   const urls = hosts.flatMap((host) => REQUIRED_PATHS.map((path) => `${host}${path}`));
   const results = await Promise.all(urls.map((url) => checkUrl(url)));
   const failures = results.filter((result) => !result.ok);

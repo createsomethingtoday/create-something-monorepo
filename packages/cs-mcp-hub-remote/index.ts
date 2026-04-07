@@ -337,6 +337,7 @@ interface Env {
   HUB_INSTANCE_ID?: string;
   HUB_API_TOKEN?: string;
   OAUTH_ISSUER_URL?: string;
+  HUB_OAUTH_DISCOVERY_ENABLED?: string;
   HUB_IDENTITY_MODE?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
@@ -752,6 +753,9 @@ export default {
     }
 
     if (isOAuthAuthorizationServerPath(url.pathname)) {
+      if (!isHubOAuthDiscoveryEnabled(env)) {
+        return withCors(new Response('Not found', { status: 404 }));
+      }
       return withCors(
         new Response(JSON.stringify(buildHubOAuthAuthorizationServerMetadata(url, env)), {
           status: 200,
@@ -764,6 +768,9 @@ export default {
     }
 
     if (isOAuthProtectedResourcePath(url.pathname)) {
+      if (!isHubOAuthDiscoveryEnabled(env)) {
+        return withCors(new Response('Not found', { status: 404 }));
+      }
       return withCors(
         new Response(JSON.stringify(buildHubOAuthProtectedResourceMetadata(url, env)), {
           status: 200,
@@ -813,6 +820,7 @@ export default {
         const runtime = await getHubRuntime(env);
         const rateLimitPolicy = resolveRateLimitPolicy(env);
         const quotaPolicy = resolveQuotaPolicy(env);
+        const oauthDiscoveryEnabled = isHubOAuthDiscoveryEnabled(env);
         return withCors(
           jsonResponse({
             name: HUB_NAME,
@@ -823,6 +831,10 @@ export default {
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
             identity_mode: resolveHubIdentityMode(env),
+            oauth_discovery: {
+              enabled: oauthDiscoveryEnabled,
+              issuer: oauthDiscoveryEnabled ? resolveHubOAuthIssuer(env) : null,
+            },
             legacy_bridge: {
               enabled: readEnvString(env, 'HUB_LEGACY_BRIDGE_ENABLED') === 'true',
               sunset_at: readEnvString(env, 'HUB_LEGACY_SUNSET_AT') ?? null,
@@ -871,13 +883,21 @@ export default {
 };
 
 export function buildHubOAuthAuthorizationServerMetadata(url: URL, env: Env): Record<string, unknown> {
-  const issuer = normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
+  const issuer = resolveHubOAuthIssuer(env);
   return buildOAuthAuthorizationServerMetadata(url.origin, { issuer, resourcePath: '/mcp' });
 }
 
 export function buildHubOAuthProtectedResourceMetadata(url: URL, env: Env): Record<string, unknown> {
-  const issuer = normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
+  const issuer = resolveHubOAuthIssuer(env);
   return buildOAuthProtectedResourceMetadata(url.origin, { issuer, resourcePath: '/mcp' });
+}
+
+function resolveHubOAuthIssuer(env: Env): string {
+  return normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
+}
+
+function isHubOAuthDiscoveryEnabled(env: Env): boolean {
+  return parseBooleanWithDefault(readEnvString(env, 'HUB_OAUTH_DISCOVERY_ENABLED'), false);
 }
 
 function normalizeHubOAuthIssuer(value: string): string {
@@ -913,9 +933,8 @@ function ensureStreamableHttpAcceptHeader(request: Request): Request {
 }
 
 export async function authorizeRequest(request: Request, env: Env): Promise<Response | null> {
-  const protectedResourceMetadataUrl = `${new URL(request.url).origin}/mcp/.well-known/oauth-protected-resource`;
   const unauthorizedHeaders = {
-    'WWW-Authenticate': `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`,
+    'WWW-Authenticate': buildHubWwwAuthenticateHeader(request, env),
   };
   const requiredToken = readEnvString(env, 'HUB_API_TOKEN');
   if (!requiredToken) {
@@ -946,6 +965,15 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   }
 
   return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
+}
+
+function buildHubWwwAuthenticateHeader(request: Request, env: Env): string {
+  if (!isHubOAuthDiscoveryEnabled(env)) {
+    return 'Bearer realm="create-something-hub"';
+  }
+
+  const protectedResourceMetadataUrl = `${new URL(request.url).origin}/mcp/.well-known/oauth-protected-resource`;
+  return `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`;
 }
 
 export function normalizeInboundMcpRequest(request: Request): Request {

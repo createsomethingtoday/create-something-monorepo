@@ -51,6 +51,7 @@ Optional runtime selection:
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
 - `HUB_IDENTITY_MODE` (`session_required` default, or `compat`)
+- `HUB_OAUTH_DISCOVERY_ENABLED` (`false` default; set `true` only for OAuth-host exceptions such as ChatGPT or other hosts that require OAuth onboarding)
 - `HUB_SESSION_RESOLVE_URL` (identity-worker resolver endpoint, e.g. `https://id.createsomething.space/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (shared secret used to authorize resolver calls)
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (default `5000`)
@@ -78,11 +79,15 @@ Compatibility note:
   - shared worker token still works via `Authorization`, `X-API-Key`, or query `token`
   - identity-issued personal bearer tokens are also accepted directly when `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` are configured
   - this is the preferred host-compatibility mode for Notion-style MCP clients that reliably send a bearer header but do not send `X-MCP-Session-Token`
+- Bearer-first default:
+  - leave `HUB_OAUTH_DISCOVERY_ENABLED=false` for ordinary bearer lanes so 401s do not point clients at OAuth unless the lane explicitly supports it
+  - set `HUB_OAUTH_DISCOVERY_ENABLED=true` only for hosts that actually require OAuth onboarding
 - `compat` mode no longer trusts client-supplied account headers; identity must come from the resolver, gateway auth, or explicit worker fallback configuration.
 
 Recommended production posture:
 
 - `HUB_IDENTITY_MODE=session_required`
+- `HUB_OAUTH_DISCOVERY_ENABLED=false`
 - `HUB_SESSION_RESOLVE_URL=https://id.createsomething.space/v1/mcp/sessions/resolve`
 - `HUB_SESSION_RESOLVE_TOKEN` set as a Worker secret and matched exactly with `identity-worker` `MCP_SESSION_RESOLVE_TOKEN`
 - `OSO_BOOTSTRAP_POLICY=false`
@@ -246,7 +251,7 @@ Required behavior:
 
 Required discovery surfaces:
 
-- Hub custom domain:
+- Hub custom domain, only when `HUB_OAUTH_DISCOVERY_ENABLED=true` for that lane:
   - `GET /.well-known/oauth-authorization-server`
   - `GET /mcp/.well-known/oauth-authorization-server`
 - Identity worker:

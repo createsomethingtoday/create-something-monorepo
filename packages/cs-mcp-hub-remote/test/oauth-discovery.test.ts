@@ -21,6 +21,7 @@ test('hub worker serves oauth authorization server metadata from custom-domain d
   const response = await hubWorker.fetch(
     new Request('https://mj.mcp.createsomething.agency/.well-known/oauth-authorization-server'),
     {
+      HUB_OAUTH_DISCOVERY_ENABLED: 'true',
       OAUTH_ISSUER_URL: 'https://id.createsomething.space',
     } as any,
     {
@@ -50,6 +51,7 @@ test('hub worker serves oauth protected resource metadata from MCP discovery pat
   const response = await hubWorker.fetch(
     new Request('https://mj.mcp.createsomething.agency/mcp/.well-known/oauth-protected-resource'),
     {
+      HUB_OAUTH_DISCOVERY_ENABLED: 'true',
       OAUTH_ISSUER_URL: 'https://id.createsomething.space',
     } as any,
     {
@@ -72,6 +74,7 @@ test('unauthorized MCP responses advertise oauth protected resource metadata', a
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
     }),
     {
+      HUB_OAUTH_DISCOVERY_ENABLED: 'true',
       OAUTH_ISSUER_URL: 'https://id.createsomething.space',
       HUB_API_TOKEN: 'secret',
       HUB_SESSION_RESOLVE_URL: 'https://id.createsomething.space/v1/mcp/sessions/resolve',
@@ -87,4 +90,47 @@ test('unauthorized MCP responses advertise oauth protected resource metadata', a
     response.headers.get('WWW-Authenticate') ?? '',
     /resource_metadata="https:\/\/mj\.mcp\.createsomething\.agency\/mcp\/\.well-known\/oauth-protected-resource"/,
   );
+});
+
+test('oauth discovery endpoints are disabled by default', async () => {
+  const authServerResponse = await hubWorker.fetch(
+    new Request('https://mj.mcp.createsomething.agency/.well-known/oauth-authorization-server'),
+    {} as any,
+    {
+      waitUntil() {},
+    } as any,
+  );
+  assert.equal(authServerResponse.status, 404);
+
+  const protectedResourceResponse = await hubWorker.fetch(
+    new Request('https://mj.mcp.createsomething.agency/mcp/.well-known/oauth-protected-resource'),
+    {} as any,
+    {
+      waitUntil() {},
+    } as any,
+  );
+  assert.equal(protectedResourceResponse.status, 404);
+});
+
+test('unauthorized MCP responses default to plain bearer challenge when oauth discovery is disabled', async () => {
+  const response = await hubWorker.fetch(
+    new Request('https://mj.mcp.createsomething.agency/mcp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+    }),
+    {
+      HUB_API_TOKEN: 'secret',
+      HUB_SESSION_RESOLVE_URL: 'https://id.createsomething.space/v1/mcp/sessions/resolve',
+      HUB_SESSION_RESOLVE_TOKEN: 'resolve-token',
+    } as any,
+    {
+      waitUntil() {},
+    } as any,
+  );
+
+  assert.equal(response.status, 401);
+  assert.equal(response.headers.get('WWW-Authenticate'), 'Bearer realm="create-something-hub"');
 });

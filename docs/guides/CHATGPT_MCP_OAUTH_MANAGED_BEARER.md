@@ -41,7 +41,7 @@ OAuth in this model does not imply short-lived Hub-only session tokens.
 
 ### Hub
 
-Each Hub custom domain should expose OAuth discovery metadata and MCP endpoint metadata, but the Hub should not become the primary token issuer.
+Each Hub custom domain should expose OAuth discovery metadata and MCP endpoint metadata only when that lane intentionally supports OAuth onboarding. Set `HUB_OAUTH_DISCOVERY_ENABLED=true` for those exception lanes; bearer-first lanes should leave it disabled.
 
 Hub discovery responses should point back to the shared identity service for:
 

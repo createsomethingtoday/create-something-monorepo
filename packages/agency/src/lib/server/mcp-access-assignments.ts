@@ -41,6 +41,7 @@ type LaneConfig = {
 	bridgeSubdomain: string;
 	bridgeUsername: string;
 	defaultToolkitProfile: string[];
+	credentialSource?: string;
 };
 
 type BoundClientRow = {
@@ -50,6 +51,7 @@ type BoundClientRow = {
 
 const DEFAULT_CREDENTIAL_SOURCE = 'Vault + private operator handoff';
 const DEFAULT_LANE_CREDENTIAL_SOURCE = 'Partner-managed named lane';
+const REVIEWER_LANE_CREDENTIAL_SOURCE = 'Managed bearer reviewer lane';
 const LEGACY_SHARED_AUTH_TOOLKITS = [
 	'dropbox',
 	'gmail',
@@ -120,6 +122,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-natalia',
 		bridgeUsername: 'acct_wf_natalia',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
 	},
 	wf_sudiksha: {
 		displayName: 'Sudiksha Khanduja',
@@ -127,6 +130,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-sudiksha',
 		bridgeUsername: 'acct_wf_sudiksha',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
 	},
 	wf_eric: {
 		displayName: 'Eric Unger',
@@ -134,6 +138,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-eric',
 		bridgeUsername: 'acct_wf_eric',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
 	},
 	wf_vicki: {
 		displayName: 'Vicki Chen',
@@ -141,6 +146,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-vicki',
 		bridgeUsername: 'acct_wf_vicki',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
 	},
 	wf_mariana: {
 		displayName: 'Mariana Segura',
@@ -148,6 +154,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-mariana',
 		bridgeUsername: 'acct_wf_mariana',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
 	},
 	wf_micah: {
 		displayName: 'Micah Johnson',
@@ -155,6 +162,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-micah',
 		bridgeUsername: 'acct_wf_micah',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
 	},
 };
 
@@ -219,7 +227,7 @@ async function buildLegacyAssignment(
 		hubUrl: `https://${lane.hubSubdomain}.mcp.createsomething.agency/mcp`,
 		bridgeUrl: `https://${lane.bridgeSubdomain}.mcp.createsomething.agency/mcp`,
 		bridgeUsername: lane.bridgeUsername,
-		credentialSource: DEFAULT_CREDENTIAL_SOURCE,
+		credentialSource: lane.credentialSource ?? DEFAULT_CREDENTIAL_SOURCE,
 		hostKey: lane.bridgeUsername,
 		accountId: input.accountId,
 		tenantId: input.tenantId,

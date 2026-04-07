@@ -98,7 +98,8 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 
 This deploys each reviewer worker with:
 
-- `HUB_IDENTITY_MODE=session_required`
+- `HUB_IDENTITY_MODE=compat`
+- `HUB_OAUTH_DISCOVERY_ENABLED=false`
 - `HUB_ENABLED_SERVERS=webflow-template-review-mcp`
 - `HUB_DISCOVERY_SHARED_PACK=webflow-marketplace-review-phase-a`
 - compact discovery
