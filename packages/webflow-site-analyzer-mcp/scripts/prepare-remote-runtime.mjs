@@ -10,6 +10,14 @@ const packageRoot = path.resolve(scriptDir, '..');
 const workspaceRoot = path.resolve(packageRoot, '..', '..');
 const remoteRoot = path.join(packageRoot, 'workers', 'remote');
 const runtimeDir = path.join(remoteRoot, 'runtime');
+const runtimeWebflowReviewDir = path.join(runtimeDir, 'webflow-review', 'snippet');
+const webflowReviewSnippetSource = path.join(
+  workspaceRoot,
+  'packages',
+  'webflow-review',
+  'snippet',
+  'webflow-review-snippet.js',
+);
 
 function run(command, args, cwd = workspaceRoot) {
   const result = spawnSync(command, args, {
@@ -29,17 +37,26 @@ function resetRuntimeDirectory() {
 }
 
 function pruneRuntimeDirectory() {
-  const keep = new Set(['dist', 'node_modules', 'package.json']);
+  const keep = new Set(['dist', 'node_modules', 'package.json', 'webflow-review']);
   for (const entry of fs.readdirSync(runtimeDir)) {
     if (keep.has(entry)) continue;
     fs.rmSync(path.join(runtimeDir, entry), { recursive: true, force: true });
   }
 }
 
+function copyRuntimeAssets() {
+  fs.mkdirSync(runtimeWebflowReviewDir, { recursive: true });
+  fs.copyFileSync(
+    webflowReviewSnippetSource,
+    path.join(runtimeWebflowReviewDir, 'webflow-review-snippet.js'),
+  );
+}
+
 resetRuntimeDirectory();
 run('pnpm', ['--filter', '@create-something/observability', 'build']);
 run('pnpm', ['--filter', '@create-something/webflow-site-analyzer-mcp', 'build']);
 run('pnpm', ['--filter', '@create-something/webflow-site-analyzer-mcp', '--prod', 'deploy', runtimeDir]);
+copyRuntimeAssets();
 pruneRuntimeDirectory();
 
 console.log(`[prepare-remote-runtime] runtime prepared at ${path.relative(workspaceRoot, runtimeDir)}`);

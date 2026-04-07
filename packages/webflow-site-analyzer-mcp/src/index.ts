@@ -155,6 +155,23 @@ function getTemplateReviewJobManager(): TemplateReviewJobManager {
   return templateReviewJobs;
 }
 
+function readRuntimeReviewSnippetSource(): string {
+  const candidates = [
+    new URL('../../webflow-review/snippet/webflow-review-snippet.js', import.meta.url),
+    new URL('../webflow-review/snippet/webflow-review-snippet.js', import.meta.url),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      return readFileSync(candidate, 'utf8');
+    } catch {
+      // Try the next candidate path.
+    }
+  }
+
+  return '';
+}
+
 // =============================================================================
 // Versioned Script Execution Helper
 // =============================================================================
@@ -579,18 +596,7 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
 (async () => {
   const REQUIRED_LICENSE_TEXT =
     "All graphical assets in this template are licensed for personal and commercial use. If you'd like to use a specific asset, please check the license below.";
-  const runtimeReviewSnippetSource = ${JSON.stringify(
-    (() => {
-      try {
-        return readFileSync(
-          new URL('../../webflow-review/snippet/webflow-review-snippet.js', import.meta.url),
-          'utf8',
-        );
-      } catch {
-        return '';
-      }
-    })(),
-  )};
+  const runtimeReviewSnippetSource = ${JSON.stringify(readRuntimeReviewSnippetSource())};
 
   const toInternalAbsolute = (href) => {
     try {
