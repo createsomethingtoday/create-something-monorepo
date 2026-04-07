@@ -55,6 +55,7 @@ SESSION_TOKEN_FOR_NORMALIZE="${MCP_SESSION_TOKEN:-}"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="${HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:-false}"
 TEAM_HUB_DEPLOY_IDENTITY_MODE="${TEAM_HUB_DEPLOY_IDENTITY_MODE:-${HUB_DEPLOY_IDENTITY_MODE:-compat}}"
 CORE_HUB_DEPLOY_IDENTITY_MODE="${CORE_HUB_DEPLOY_IDENTITY_MODE:-session_required}"
+SKIP_NORMALIZE="${SKIP_NORMALIZE:-0}"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="$(
   printf '%s' "$COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS" | tr '[:upper:]' '[:lower:]'
 )"
@@ -383,8 +384,12 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
       --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
   fi
-  echo "----- NORMALIZE STATE ${worker} -----"
-  normalize_worker_state "$worker"
+  if [[ "$SKIP_NORMALIZE" == "1" ]]; then
+    echo "----- SKIP NORMALIZE STATE ${worker} -----"
+  else
+    echo "----- NORMALIZE STATE ${worker} -----"
+    normalize_worker_state "$worker"
+  fi
   echo
 done
 
