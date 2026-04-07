@@ -14,15 +14,17 @@ type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult>;
 function createServerHarness() {
   const names: string[] = [];
   const handlers = new Map<string, ToolHandler>();
+  const schemas = new Map<string, Record<string, unknown>>();
 
   const server = {
-    tool(name: string, _description: string, _schema: unknown, handler: ToolHandler) {
+    tool(name: string, _description: string, schema: unknown, handler: ToolHandler) {
       names.push(name);
+      schemas.set(name, (schema ?? {}) as Record<string, unknown>);
       handlers.set(name, handler);
     },
   } as unknown as McpServer;
 
-  return { server, names, handlers };
+  return { server, names, handlers, schemas };
 }
 
 function parsePayload(result: ToolResult) {
@@ -192,6 +194,23 @@ test('save_draft_feedback rejects empty payloads before any mutation runs', asyn
   assert.equal(payload.error?.code, 'NO_MUTATION_FIELDS');
 });
 
+test('reviewer-safe draft feedback schema exposes enumerated improvement areas for AI callers', () => {
+  const { server, schemas } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const schema = schemas.get('template_review_save_draft_feedback');
+  assert.ok(schema);
+
+  const improvementAreasSchema = schema.improvement_areas as {
+    safeParse: (value: unknown) => { success: boolean };
+  };
+
+  assert.equal(improvementAreasSchema.safeParse(['Template: Accessibility']).success, true);
+  assert.equal(improvementAreasSchema.safeParse(['Accessibility fixes']).success, false);
+});
+
 test('save_draft_feedback writes review feedback without mutating improvement areas', async () => {
   const { server, handlers } = createServerHarness();
   const calls: Array<{ method: string; args: unknown[] }> = [];
@@ -237,6 +256,28 @@ test('save_draft_feedback writes review feedback without mutating improvement ar
     ],
   });
   assert.equal(parsePayload(result).ok, true);
+});
+
+test('update_version_review schema exposes enum-backed reviewer fields', () => {
+  const { server, schemas } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const schema = schemas.get('template_review_update_version_review');
+  assert.ok(schema);
+
+  const reviewStatusSchema = schema.review_status as {
+    safeParse: (value: unknown) => { success: boolean };
+  };
+  const qualityRatingSchema = schema.quality_rating as {
+    safeParse: (value: unknown) => { success: boolean };
+  };
+
+  assert.equal(reviewStatusSchema.safeParse('✅Approved').success, true);
+  assert.equal(reviewStatusSchema.safeParse('Approved').success, false);
+  assert.equal(qualityRatingSchema.safeParse('✅Good').success, true);
+  assert.equal(qualityRatingSchema.safeParse('Good').success, false);
 });
 
 test('get_field_map exposes stable table ids and metrics field ids', async () => {

@@ -70,7 +70,7 @@ function createRuntime() {
 }
 
 function assertActiveServers(pack: { preferences: { activeServers: string[] } }, expected: string[]) {
-  assert.deepEqual(pack.preferences.activeServers, [...expected].sort());
+  assert.deepEqual(pack.preferences.activeServers, expected);
 }
 
 function createIntentRuntime() {
@@ -199,6 +199,28 @@ test('buildVisibleProxyRoutes applies session -> discovery -> max cap', () => {
   assert.equal(visible.toolDefinitions.length, 1);
   assert.equal(visible.toolDefinitions[0]?.name, 'server_a__alpha');
   assert.equal(visible.routes.has('server_b__gamma'), false);
+});
+
+test('buildVisibleProxyRoutes prioritizes activeServers order before maxProxyTools cap', () => {
+  const runtime = createRuntime();
+  const prefs = {
+    mode: 'compact' as const,
+    activeServers: ['server_b', 'server_a'],
+    maxProxyTools: 1,
+  };
+  const accountContext = {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: ['server_a__', 'server_b__'],
+    identitySource: 'session' as const,
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
+  assert.equal(visible.toolDefinitions.length, 1);
+  assert.equal(visible.toolDefinitions[0]?.name, 'server_b__gamma');
 });
 
 test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', () => {
@@ -681,6 +703,27 @@ test('resolveDiscoveryPack returns MJ legacy pack with the expected active servi
     'composio-toolkit-linkedin',
     'composio-toolkit-notion',
     'meetings',
+  ]);
+});
+
+test('resolveDiscoveryPack preserves phase-b reviewer/analyzer server priority and cap', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'webflow-template-review-mcp' },
+    { name: 'webflow-site-analyzer-mcp' },
+    { name: 'webflow-local' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('webflow-marketplace-review-phase-b', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'webflow-marketplace-review-phase-b');
+  assert.equal(pack.preferences.mode, 'compact');
+  assert.equal(pack.preferences.maxProxyTools, 40);
+  assert.deepEqual(pack.preferences.activeServers, [
+    'webflow-template-review-mcp',
+    'webflow-site-analyzer-mcp',
+    'webflow-local',
   ]);
 });
 

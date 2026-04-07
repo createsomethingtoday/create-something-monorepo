@@ -126,8 +126,8 @@ export class SteelBrowserProvider implements BrowserProvider {
     }
   }
 
-  private async navigate(page: Page, url: string, options?: AnalyzeOptions): Promise<void> {
-    await page.goto(url, {
+  private async navigate(page: Page, url: string, options?: AnalyzeOptions): Promise<number | null> {
+    const response = await page.goto(url, {
       waitUntil: options?.waitForNavigation ? 'networkidle2' : 'domcontentloaded',
       timeout: options?.timeout || this.config.timeout
     });
@@ -140,6 +140,7 @@ export class SteelBrowserProvider implements BrowserProvider {
 
     await this.wait(page, 1000);
     this.metrics.pageLoadsCompleted++;
+    return response?.status() ?? null;
   }
 
   private async resolveEvaluationTarget(
@@ -179,6 +180,7 @@ export class SteelBrowserProvider implements BrowserProvider {
     let browser: Browser | null = null;
     let sessionId: string | null = null;
     let currentUrl: string | null = null;
+    let lastStatusCode: number | null = null;
     let closed = false;
 
     this.metrics.sessionsCreated++;
@@ -194,7 +196,7 @@ export class SteelBrowserProvider implements BrowserProvider {
       await this.configurePage(page, input?.options);
 
       if (input?.url) {
-        await this.navigate(page, input.url, input.options);
+        lastStatusCode = await this.navigate(page, input.url, input.options);
         currentUrl = input.url;
       }
 
@@ -226,7 +228,7 @@ export class SteelBrowserProvider implements BrowserProvider {
         goto: async (url: string, options?: AnalyzeOptions) => {
           try {
             await this.configurePage(page, options);
-            await this.navigate(page, url, options);
+            lastStatusCode = await this.navigate(page, url, options);
             currentUrl = url;
           } catch (error) {
             this.metrics.pageLoadErrors++;
@@ -248,6 +250,7 @@ export class SteelBrowserProvider implements BrowserProvider {
           }
         },
         getPageUrl: () => currentUrl,
+        getLastStatusCode: () => lastStatusCode,
         close
       };
     } catch (error) {

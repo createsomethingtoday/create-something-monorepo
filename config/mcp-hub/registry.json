@@ -422,17 +422,27 @@
       "estimated_tool_count": 0
     },
     "webflow-site-analyzer-mcp": {
-      "transport": "stdio",
-      "command": "node",
-      "args": [
-        "./packages/webflow-site-analyzer-mcp/dist/index.js"
-      ],
-      "description": "Local Webflow Site Analyzer MCP from this monorepo",
+      "transport": "http",
+      "url": "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "WEBFLOW_SITE_ANALYZER_MCP_API_KEY",
+      "description": "Remote Webflow Site Analyzer MCP for published review and SEO analysis",
       "tags": [
-        "local",
-        "dev",
-        "webflow"
+        "webflow",
+        "review",
+        "analyzer",
+        "cs"
       ],
+      "catalog": {
+        "include": true,
+        "name": "Webflow Site Analyzer",
+        "slug": "webflow-site-analyzer",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http"
+        ]
+      },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },

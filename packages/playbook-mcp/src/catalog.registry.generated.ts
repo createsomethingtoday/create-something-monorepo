@@ -91,6 +91,31 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
+    "name": "Webflow App Review",
+    "slug": "webflow-app-review",
+    "url": "https://webflow-app-review-mcp.createsomething.workers.dev",
+    "description": "Webflow App Review MCP for app asset and version workflows",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
+    "name": "Webflow Site Analyzer",
+    "slug": "webflow-site-analyzer",
+    "url": "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev",
+    "description": "Remote Webflow Site Analyzer MCP for published review and SEO analysis",
+    "category": "create-something",
+    "transports": [
+      "http"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Webflow Template Review",
     "slug": "webflow-template-review",
     "url": "https://webflow-template-review-mcp.createsomething.workers.dev",

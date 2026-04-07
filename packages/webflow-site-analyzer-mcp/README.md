@@ -644,9 +644,21 @@ Queue an async template-review job. This is the preferred production entrypoint.
     total: number,
     message: string,
     updatedAt: string
+  },
+  diagnostics: {
+    stateScope: "runtime-memory",
+    runtimeInstanceId: string,
+    activeJobs: number,
+    queuedJobs: number,
+    concurrency: number,
+    queuePosition: number | null
   }
 }
 ```
+
+Notes:
+- Async template-review jobs are stored in runtime memory today. Poll the same analyzer runtime that enqueued the job.
+- `diagnostics.runtimeInstanceId` is the caller-safe hint for sticky polling and debugging cross-runtime misses.
 
 ### `get_template_review_job`
 
@@ -669,6 +681,14 @@ Fetch one queued review job by ID.
     total: number,
     message: string,
     updatedAt: string
+  },
+  diagnostics: {
+    stateScope: "runtime-memory",
+    runtimeInstanceId: string,
+    activeJobs: number,
+    queuedJobs: number,
+    concurrency: number,
+    queuePosition: number | null
   },
   error?: string,
   result?: {
@@ -697,6 +717,8 @@ List recent queued review jobs.
 // Output
 TemplateReviewJobRecord[]
 ```
+
+Each listed job also includes `diagnostics`, so agents can tell whether a queued job is still on the same runtime instance and where it sits in the local queue.
 
 ## Intelligence Layer Tools
 

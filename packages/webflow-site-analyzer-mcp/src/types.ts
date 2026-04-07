@@ -248,6 +248,7 @@ export interface BrowserSessionHandle {
   goto(url: string, options?: AnalyzeOptions): Promise<void>;
   evaluate<T>(script: string, options?: BrowserSessionEvaluateOptions): Promise<T>;
   getPageUrl(): string | null;
+  getLastStatusCode(): number | null;
   close(): Promise<void>;
 }
 
@@ -500,6 +501,12 @@ export interface UnifiedReviewRow {
   fixHint?: string;
 }
 
+export type PublishedSnippetExample = Record<string, unknown>;
+
+export interface PublishedSnippetIssueExamples {
+  [issueName: string]: PublishedSnippetExample[];
+}
+
 export interface PublishedSnippetIssueCounts {
   metaMissing: number;
   missingH1: number;
@@ -512,6 +519,7 @@ export interface PublishedSnippetIssueCounts {
   linksPlaceholderHref: number;
   imagesMissingDimensions: number;
   imagesAboveFoldLazy: number;
+  imagesBelowFoldNotLazy: number;
   formsMissingLabels: number;
   autoplayWithoutControls: number;
   backgroundVideosMissingControl: number;
@@ -528,6 +536,7 @@ export interface PublishedSnippetPageSummary {
     multipleH1: boolean;
     skippedHeadingLevels: number;
     emptyHeadings: number;
+    examples: PublishedSnippetIssueExamples;
   } | null;
   links: {
     links: number;
@@ -535,6 +544,7 @@ export interface PublishedSnippetPageSummary {
     placeholderHref: number;
     blankTargetMissingRel: number;
     missingAccessibleName: number;
+    examples: PublishedSnippetIssueExamples;
   } | null;
   images: {
     images: number;
@@ -542,16 +552,19 @@ export interface PublishedSnippetPageSummary {
     missingDimensions: number;
     aboveFoldLazy: number;
     belowFoldNotLazy: number;
+    examples: PublishedSnippetIssueExamples;
   } | null;
   imageFormats: Record<string, number>;
   forms: {
     fields: number;
     missingLabels: number;
+    examples: PublishedSnippetIssueExamples;
   } | null;
   media: {
     videos: number;
     autoplayWithoutControls: number;
     backgroundVideosMissingControl: number;
+    examples: PublishedSnippetIssueExamples;
   } | null;
   ix2: {
     events: number;
@@ -560,6 +573,7 @@ export interface PublishedSnippetPageSummary {
     unusedActionLists: number;
     missingTargets: number;
     missingActionLists: number;
+    examples: PublishedSnippetIssueExamples;
   } | null;
   ix3: {
     interactions: number;
@@ -567,6 +581,7 @@ export interface PublishedSnippetPageSummary {
     missingTimelines: number;
     deletedInteractions: number;
     missingTargetSelectors: number;
+    examples: PublishedSnippetIssueExamples;
   } | null;
 }
 
@@ -576,6 +591,7 @@ export interface PublishedSnippetPageResult {
   title: string | null;
   statusCode: number | null;
   hasSnippet: boolean;
+  auditSource: 'snippet' | 'dom-fallback' | 'none';
   snippetVersion: string | null;
   hasRequiredLicenseText?: boolean | null;
   error?: string | null;
@@ -701,6 +717,15 @@ export interface TemplateReviewJobProgress {
   updatedAt: string;
 }
 
+export interface TemplateReviewJobDiagnostics {
+  stateScope: 'runtime-memory';
+  runtimeInstanceId: string;
+  activeJobs: number;
+  queuedJobs: number;
+  concurrency: number;
+  queuePosition: number | null;
+}
+
 export interface TemplateReviewJobRecord {
   jobId: string;
   status: TemplateReviewJobStatus;
@@ -711,6 +736,7 @@ export interface TemplateReviewJobRecord {
   progress: TemplateReviewJobProgress;
   error?: string;
   result?: UnifiedTemplateReviewReport;
+  diagnostics?: TemplateReviewJobDiagnostics;
 }
 
 export interface GetTemplateReviewJobInput {

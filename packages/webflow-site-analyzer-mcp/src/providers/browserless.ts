@@ -89,8 +89,8 @@ export class BrowserlessProvider implements BrowserProvider {
     }
   }
 
-  private async navigate(page: Page, url: string, options?: AnalyzeOptions): Promise<void> {
-    await page.goto(url, {
+  private async navigate(page: Page, url: string, options?: AnalyzeOptions): Promise<number | null> {
+    const response = await page.goto(url, {
       waitUntil: options?.waitForNavigation ? 'networkidle2' : 'domcontentloaded',
       timeout: options?.timeout || this.config.timeout
     });
@@ -103,6 +103,7 @@ export class BrowserlessProvider implements BrowserProvider {
 
     await page.evaluate('new Promise((resolve) => setTimeout(resolve, 1000))');
     this.metrics.pageLoadsCompleted++;
+    return response?.status() ?? null;
   }
 
   private async resolveEvaluationTarget(
@@ -141,6 +142,7 @@ export class BrowserlessProvider implements BrowserProvider {
     const startTime = Date.now();
     let browser: Browser | null = null;
     let currentUrl: string | null = null;
+    let lastStatusCode: number | null = null;
     let closed = false;
 
     this.metrics.sessionsCreated++;
@@ -154,7 +156,7 @@ export class BrowserlessProvider implements BrowserProvider {
       await this.configurePage(page, input?.options);
 
       if (input?.url) {
-        await this.navigate(page, input.url, input.options);
+        lastStatusCode = await this.navigate(page, input.url, input.options);
         currentUrl = input.url;
       }
 
@@ -178,7 +180,7 @@ export class BrowserlessProvider implements BrowserProvider {
         goto: async (url: string, options?: AnalyzeOptions) => {
           try {
             await this.configurePage(page, options);
-            await this.navigate(page, url, options);
+            lastStatusCode = await this.navigate(page, url, options);
             currentUrl = url;
           } catch (error) {
             this.metrics.pageLoadErrors++;
@@ -200,6 +202,7 @@ export class BrowserlessProvider implements BrowserProvider {
           }
         },
         getPageUrl: () => currentUrl,
+        getLastStatusCode: () => lastStatusCode,
         close
       };
     } catch (error) {

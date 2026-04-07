@@ -114,14 +114,14 @@
       "maxProxyTools": 18
     },
     "webflow-marketplace-review-phase-b": {
-      "description": "Phase B reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus selected analysis/originality tools.",
+      "description": "Phase B reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads and reviewer-safe writes plus selected analyzer tools.",
       "mode": "compact",
       "activeServers": [
         "webflow-template-review-mcp",
         "webflow-site-analyzer-mcp",
         "webflow-local"
       ],
-      "maxProxyTools": 30
+      "maxProxyTools": 40
     },
     "webflow-marketplace-app-review-phase-a": {
       "description": "Phase A reviewer pack for Webflow Marketplace app review. Read-only app review context only.",

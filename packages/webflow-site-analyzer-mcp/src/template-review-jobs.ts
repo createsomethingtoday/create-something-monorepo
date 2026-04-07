@@ -1,4 +1,5 @@
 import type {
+  TemplateReviewJobDiagnostics,
   RunTemplateReviewInput,
   TemplateReviewJobProgress,
   TemplateReviewJobRecord,
@@ -10,7 +11,12 @@ type JobExecutor = (
   input: RunTemplateReviewInput,
   context: {
     jobId: string;
-    reportProgress?: (progress: number, total: number, message: string) => Promise<void>;
+    reportProgress?: (
+      phase: TemplateReviewJobProgress['phase'],
+      progress: number,
+      total: number,
+      message: string
+    ) => Promise<void>;
   }
 ) => Promise<UnifiedTemplateReviewReport>;
 
@@ -38,20 +44,15 @@ function createProgress(
   };
 }
 
-function derivePhase(progress: number, total: number): TemplateReviewJobProgress['phase'] {
-  if (progress <= 0) return 'queued';
-  const ratio = total > 0 ? progress / total : 0;
-  if (ratio < 0.1) return 'precheck';
-  if (ratio < 0.35) return 'designer';
-  if (ratio < 0.92) return 'published';
-  if (ratio < 1) return 'normalizing';
-  return 'completed';
+function createRuntimeInstanceId(): string {
+  return `template-review-runtime-${process.pid}-${Date.now().toString(36)}`;
 }
 
 export class TemplateReviewJobManager {
   private readonly jobs = new Map<string, TemplateReviewJobRecord>();
   private readonly queue: string[] = [];
   private activeCount = 0;
+  private readonly runtimeInstanceId = createRuntimeInstanceId();
 
   constructor(
     private readonly execute: JobExecutor,
@@ -76,11 +77,12 @@ export class TemplateReviewJobManager {
     this.jobs.set(jobId, record);
     this.queue.push(jobId);
     this.schedule();
-    return record;
+    return this.decorate(record);
   }
 
   get(jobId: string): TemplateReviewJobRecord | null {
-    return this.jobs.get(jobId) ?? null;
+    const job = this.jobs.get(jobId);
+    return job ? this.decorate(job) : null;
   }
 
   list(options: { status?: TemplateReviewJobStatus; limit?: number } = {}): TemplateReviewJobRecord[] {
@@ -88,7 +90,20 @@ export class TemplateReviewJobManager {
     return Array.from(this.jobs.values())
       .filter((job) => (options.status ? job.status === options.status : true))
       .sort((a, b) => b.queuedAt.localeCompare(a.queuedAt))
+      .map((job) => this.decorate(job))
       .slice(0, limit);
+  }
+
+  getDiagnostics(jobId?: string): TemplateReviewJobDiagnostics {
+    const queueIndex = jobId ? this.queue.indexOf(jobId) : -1;
+    return {
+      stateScope: 'runtime-memory',
+      runtimeInstanceId: this.runtimeInstanceId,
+      activeJobs: this.activeCount,
+      queuedJobs: this.queue.length,
+      concurrency: this.config.concurrency,
+      queuePosition: queueIndex >= 0 ? queueIndex + 1 : null,
+    };
   }
 
   private schedule(): void {
@@ -111,8 +126,8 @@ export class TemplateReviewJobManager {
     try {
       const result = await this.execute(job.input, {
         jobId,
-        reportProgress: async (progress, total, message) => {
-          job.progress = createProgress(derivePhase(progress, total), progress, total, message);
+        reportProgress: async (phase, progress, total, message) => {
+          job.progress = createProgress(phase, progress, total, message);
         },
       });
 
@@ -136,5 +151,12 @@ export class TemplateReviewJobManager {
       this.activeCount -= 1;
       this.schedule();
     }
+  }
+
+  private decorate(job: TemplateReviewJobRecord): TemplateReviewJobRecord {
+    return {
+      ...job,
+      diagnostics: this.getDiagnostics(job.jobId),
+    };
   }
 }

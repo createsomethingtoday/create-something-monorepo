@@ -2037,7 +2037,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           nextPrefs = {
             mode: parseDiscoveryMode(stringArg(args.mode)) ?? basePrefs.mode,
             activeServers: resolveDiscoveryActiveServers(
-              optionalStringArrayArg(args.activeServers, 'activeServers') ?? basePrefs.activeServers,
+              optionalOrderedStringArrayArg(args.activeServers, 'activeServers') ?? basePrefs.activeServers,
               runtime,
             ),
             maxProxyTools: resolveDiscoveryMaxProxyTools(
@@ -2655,7 +2655,15 @@ export function buildVisibleProxyRoutes(
 
   const discoveryScoped = prefs.mode === 'full'
     ? sessionScoped
-    : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
+    : sessionScoped
+      .filter((entry) => prefs.activeServers.includes(entry.route.serverName))
+      .map((entry, index) => ({ ...entry, index }))
+      .sort((left, right) => {
+        const leftRank = prefs.activeServers.indexOf(left.route.serverName);
+        const rightRank = prefs.activeServers.indexOf(right.route.serverName);
+        if (leftRank !== rightRank) return leftRank - rightRank;
+        return left.index - right.index;
+      });
 
   const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
     ? discoveryScoped.slice(0, prefs.maxProxyTools)
@@ -3919,7 +3927,7 @@ async function getDiscoveryPreferences(
           const fromKv = normalizeDiscoveryPreferences(
             {
               mode: parseDiscoveryMode(typeof parsed.mode === 'string' ? parsed.mode : null) ?? DEFAULT_DISCOVERY_MODE,
-              activeServers: parseStateStringArray(parsed.activeServers),
+              activeServers: parseOrderedStringArray(parsed.activeServers),
               maxProxyTools: resolveDiscoveryMaxProxyTools(
                 typeof parsed.maxProxyTools === 'number' ? parsed.maxProxyTools : null,
               ),
@@ -4044,7 +4052,7 @@ function parseDiscoveryMode(value: string | null | undefined): DiscoveryMode | n
 
 function resolveDiscoveryActiveServers(servers: string[], runtime: HubRuntime): string[] {
   const allowed = new Set(runtime.connected.map((server) => server.name));
-  return uniqueSortedStrings(servers.filter((server) => allowed.has(server)));
+  return uniqueStringsPreserveOrder(servers.filter((server) => allowed.has(server)));
 }
 
 function resolveDiscoveryMaxProxyTools(value: number | null): number | null {
@@ -4083,7 +4091,7 @@ function resolveDiscoveryPackDefinition(
 ): ResolvedDiscoveryPack | null {
   if (!definition) return null;
   const mode = parseDiscoveryMode(typeof definition.mode === 'string' ? definition.mode : null) ?? DEFAULT_DISCOVERY_MODE;
-  const activeServers = parseStateStringArray(definition.activeServers);
+  const activeServers = parseOrderedStringArray(definition.activeServers);
   const maxProxyTools = resolveDiscoveryMaxProxyTools(
     typeof definition.maxProxyTools === 'number' ? definition.maxProxyTools : null,
   );
@@ -4155,6 +4163,19 @@ function stringArrayArg(raw: unknown, fieldName: string): string[] {
 function optionalStringArrayArg(raw: unknown, fieldName: string): string[] | undefined {
   if (raw === undefined) return undefined;
   return stringArrayArg(raw, fieldName);
+}
+
+function orderedStringArrayArg(raw: unknown, fieldName: string): string[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw) || raw.some((entry) => typeof entry !== 'string')) {
+    throw new Error(`"${fieldName}" must be an array of strings`);
+  }
+  return uniqueStringsPreserveOrder(raw as string[]);
+}
+
+function optionalOrderedStringArrayArg(raw: unknown, fieldName: string): string[] | undefined {
+  if (raw === undefined) return undefined;
+  return orderedStringArrayArg(raw, fieldName);
 }
 
 function optionalNumberArg(raw: unknown, fieldName: string): number | null | undefined {
@@ -5882,6 +5903,16 @@ function parseStateStringArray(value: unknown): string[] {
   );
 }
 
+function parseOrderedStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return uniqueStringsPreserveOrder(
+    value
+      .filter((entry) => typeof entry === 'string')
+      .map((entry) => String(entry).trim())
+      .filter(Boolean),
+  );
+}
+
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
   if (!raw) {
     return fallback;
@@ -5919,6 +5950,10 @@ async function closeHubRuntime(runtime: HubRuntime): Promise<void> {
 
 function uniqueSortedStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort();
+}
+
+function uniqueStringsPreserveOrder(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 function resolveHubInstanceId(env: Env): string {

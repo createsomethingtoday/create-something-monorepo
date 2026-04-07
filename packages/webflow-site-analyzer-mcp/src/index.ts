@@ -46,6 +46,11 @@ import {
 import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy/index.js';
 import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
+import {
+  emptyIssueCounts,
+  summarizePublishedPageAudit,
+  unifyRows,
+} from './template-review-published.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -54,13 +59,11 @@ import type {
   PerformanceMetrics,
   DesignerMetadata,
   DesignerChecklistReport,
-  UnifiedReviewStatus,
-  UnifiedReviewRow,
+  TemplateReviewJobProgress,
   UnifiedTemplateReviewReport,
   TemplateReviewJobRecord,
   TemplateReviewJobStatus,
   PublishedSnippetCrawlResult,
-  PublishedSnippetIssueCounts,
   PublishedSnippetPageResult,
   PublishedSitePrecheckResult,
   RunTemplateReviewInput,
@@ -833,9 +836,12 @@ type PublishedPageEval = {
   };
 };
 
-type PageAuditSummary = NonNullable<PublishedSnippetPageResult['summary']>;
-
-type ProgressReporter = (progress: number, total: number, message: string) => Promise<void>;
+type ProgressReporter = (
+  phase: TemplateReviewJobProgress['phase'],
+  progress: number,
+  total: number,
+  message: string
+) => Promise<void>;
 
 type RunTemplateReviewOptions = {
   reportProgress?: ProgressReporter;
@@ -858,153 +864,8 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
-function asStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.map((item) => String(item)).filter(Boolean);
-}
-
 function asFiniteNumber(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
-}
-
-function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
-  const root = asRecord(audit);
-  const meta = asRecord(root.meta);
-  const headingsRoot = asRecord(root.headings);
-  const headings = asRecord(headingsRoot.summary);
-  const linksRoot = asRecord(root.links);
-  const links = asRecord(linksRoot.summary);
-  const imagesRoot = asRecord(root.images);
-  const images = asRecord(imagesRoot.summary);
-  const formsRoot = asRecord(root.forms);
-  const forms = asRecord(formsRoot.summary);
-  const mediaRoot = asRecord(root.media);
-  const media = asRecord(mediaRoot.summary);
-  const interactions = asRecord(root.interactions);
-  const ix2 = asRecord(interactions.ix2);
-  const ix3 = asRecord(interactions.ix3);
-  const ix2Summary = asRecord(ix2.summary);
-  const ix3Summary = asRecord(ix3.summary);
-  const imageFormats = asRecord(imagesRoot.formats);
-
-  const metaMissing = asStringArray(meta.missing);
-  const failReasons: string[] = [];
-
-  if (metaMissing.length > 0) failReasons.push(`meta_missing:${metaMissing.join(',')}`);
-  if (Boolean(headings.missingH1)) failReasons.push('missing_h1');
-  if (Boolean(headings.multipleH1)) failReasons.push('multiple_h1');
-  if (asFiniteNumber(headings.skippedHeadingLevels) > 0) {
-    failReasons.push(`skipped_heading_levels:${asFiniteNumber(headings.skippedHeadingLevels)}`);
-  }
-  if (asFiniteNumber(headings.emptyHeadings) > 0) {
-    failReasons.push(`empty_headings:${asFiniteNumber(headings.emptyHeadings)}`);
-  }
-  if (asFiniteNumber(images.images) > 0 && asFiniteNumber(images.missingAlt) > 0) {
-    failReasons.push(`images_missing_alt:${asFiniteNumber(images.missingAlt)}`);
-  }
-  if (asFiniteNumber(links.blankTargetMissingRel) > 0) {
-    failReasons.push(`blank_target_missing_rel:${asFiniteNumber(links.blankTargetMissingRel)}`);
-  }
-  if (asFiniteNumber(links.missingAccessibleName) > 0) {
-    failReasons.push(`links_missing_accessible_name:${asFiniteNumber(links.missingAccessibleName)}`);
-  }
-  if (asFiniteNumber(links.emptyHref) > 0) {
-    failReasons.push(`links_empty_href:${asFiniteNumber(links.emptyHref)}`);
-  }
-  if (asFiniteNumber(links.placeholderHref) > 0) {
-    failReasons.push(`links_placeholder_href:${asFiniteNumber(links.placeholderHref)}`);
-  }
-  if (asFiniteNumber(images.missingDimensions) > 0) {
-    failReasons.push(`images_missing_dimensions:${asFiniteNumber(images.missingDimensions)}`);
-  }
-  if (asFiniteNumber(images.aboveFoldLazy) > 0) {
-    failReasons.push(`images_above_fold_lazy:${asFiniteNumber(images.aboveFoldLazy)}`);
-  }
-  if (asFiniteNumber(forms.missingLabels) > 0) {
-    failReasons.push(`forms_missing_labels:${asFiniteNumber(forms.missingLabels)}`);
-  }
-  if (asFiniteNumber(media.autoplayWithoutControls) > 0) {
-    failReasons.push(`media_autoplay_without_controls:${asFiniteNumber(media.autoplayWithoutControls)}`);
-  }
-  if (asFiniteNumber(media.backgroundVideosMissingControl) > 0) {
-    failReasons.push(
-      `bg_video_missing_controls:${asFiniteNumber(media.backgroundVideosMissingControl)}`
-    );
-  }
-
-  return {
-    failCount: failReasons.length,
-    failReasons,
-    metaMissing,
-    headings: {
-      headings: asFiniteNumber(headings.headings),
-      h1: asFiniteNumber(headings.h1),
-      missingH1: Boolean(headings.missingH1),
-      multipleH1: Boolean(headings.multipleH1),
-      skippedHeadingLevels: asFiniteNumber(headings.skippedHeadingLevels),
-      emptyHeadings: asFiniteNumber(headings.emptyHeadings)
-    },
-    links: {
-      links: asFiniteNumber(links.links),
-      emptyHref: asFiniteNumber(links.emptyHref),
-      placeholderHref: asFiniteNumber(links.placeholderHref),
-      blankTargetMissingRel: asFiniteNumber(links.blankTargetMissingRel),
-      missingAccessibleName: asFiniteNumber(links.missingAccessibleName)
-    },
-    images: {
-      images: asFiniteNumber(images.images),
-      missingAlt: asFiniteNumber(images.missingAlt),
-      missingDimensions: asFiniteNumber(images.missingDimensions),
-      aboveFoldLazy: asFiniteNumber(images.aboveFoldLazy),
-      belowFoldNotLazy: asFiniteNumber(images.belowFoldNotLazy)
-    },
-    imageFormats: Object.fromEntries(
-      Object.entries(imageFormats).map(([key, value]) => [key, asFiniteNumber(value)])
-    ),
-    forms: {
-      fields: asFiniteNumber(forms.fields),
-      missingLabels: asFiniteNumber(forms.missingLabels)
-    },
-    media: {
-      videos: asFiniteNumber(media.videos),
-      autoplayWithoutControls: asFiniteNumber(media.autoplayWithoutControls),
-      backgroundVideosMissingControl: asFiniteNumber(media.backgroundVideosMissingControl)
-    },
-    ix2: {
-      events: asFiniteNumber(ix2Summary.events),
-      actionLists: asFiniteNumber(ix2Summary.actionLists),
-      usedActionLists: asFiniteNumber(ix2Summary.usedActionLists),
-      unusedActionLists: asFiniteNumber(ix2Summary.unusedActionLists),
-      missingTargets: asFiniteNumber(ix2Summary.missingTargets),
-      missingActionLists: asFiniteNumber(ix2Summary.missingActionLists)
-    },
-    ix3: {
-      interactions: asFiniteNumber(ix3Summary.interactions),
-      timelines: asFiniteNumber(ix3Summary.timelines),
-      missingTimelines: asFiniteNumber(ix3Summary.missingTimelines),
-      deletedInteractions: asFiniteNumber(ix3Summary.deletedInteractions),
-      missingTargetSelectors: asFiniteNumber(ix3Summary.missingTargetSelectors)
-    }
-  };
-}
-
-function emptyIssueCounts(): PublishedSnippetIssueCounts {
-  return {
-    metaMissing: 0,
-    missingH1: 0,
-    multipleH1: 0,
-    skippedHeadingLevels: 0,
-    imagesMissingAlt: 0,
-    linksMissingRel: 0,
-    linksMissingAccessibleName: 0,
-    linksEmptyHref: 0,
-    linksPlaceholderHref: 0,
-    imagesMissingDimensions: 0,
-    imagesAboveFoldLazy: 0,
-    formsMissingLabels: 0,
-    autoplayWithoutControls: 0,
-    backgroundVideosMissingControl: 0
-  };
 }
 
 function normalizeSameOriginUrl(candidate: string, origin: string): string | null {
@@ -1220,6 +1081,7 @@ async function crawlPublishedWebMcp(
         title: null,
         statusCode: null,
         hasSnippet: false,
+        auditSource: 'none',
         snippetVersion: null,
         hasRequiredLicenseText: null,
         error: null,
@@ -1235,6 +1097,7 @@ async function crawlPublishedWebMcp(
               waitForNavigation: false
             });
           }
+          pageResult.statusCode = session.getLastStatusCode();
           raw = await session.evaluate<PublishedPageEval>(PUBLISHED_WEBMCP_PAGE_SCRIPT, {
             target: 'main',
             timeout
@@ -1262,8 +1125,10 @@ async function crawlPublishedWebMcp(
 
         if (pageResult.hasSnippet) {
           if (!snippetVersion) snippetVersion = raw?.snippetVersion ?? null;
-          if (snippetTools.length === 0 && Array.isArray(raw?.tools)) {
-            snippetTools = raw.tools.map((tool) => String(tool));
+          if (Array.isArray(raw?.tools)) {
+            snippetTools = Array.from(
+              new Set([...snippetTools, ...raw.tools.map((tool) => String(tool))]),
+            );
           }
 
           if (sitemapStatus.error === 'Sitemap check was not executed' || sitemapStatus.ok === false) {
@@ -1294,10 +1159,12 @@ async function crawlPublishedWebMcp(
           if (typeof raw?.auditError === 'string' && raw.auditError) {
             pageResult.error = raw.auditError;
           } else {
+            pageResult.auditSource = 'snippet';
             pageResult.summary = summarizePublishedPageAudit(raw?.audit);
           }
         } else if (raw?.audit) {
           // DOM fallback audit is available even without __wfReview
+          pageResult.auditSource = 'dom-fallback';
           pageResult.summary = summarizePublishedPageAudit(raw.audit);
         } else {
           pageResult.error = 'window.__wfReview is not available and DOM fallback failed';
@@ -1344,6 +1211,7 @@ async function crawlPublishedWebMcp(
     if ((summary.links?.placeholderHref || 0) > 0) issueCounts.linksPlaceholderHref += 1;
     if ((summary.images?.missingDimensions || 0) > 0) issueCounts.imagesMissingDimensions += 1;
     if ((summary.images?.aboveFoldLazy || 0) > 0) issueCounts.imagesAboveFoldLazy += 1;
+    if ((summary.images?.belowFoldNotLazy || 0) > 0) issueCounts.imagesBelowFoldNotLazy += 1;
     if ((summary.forms?.missingLabels || 0) > 0) issueCounts.formsMissingLabels += 1;
     if ((summary.media?.autoplayWithoutControls || 0) > 0) issueCounts.autoplayWithoutControls += 1;
     if ((summary.media?.backgroundVideosMissingControl || 0) > 0) {
@@ -1397,458 +1265,6 @@ async function crawlPublishedWebMcp(
   };
 }
 
-function mapDesignerStatus(
-  designer: DesignerChecklistReport,
-  id: string
-): { status: UnifiedReviewStatus; evidence: string[]; confidence: number } {
-  const check = designer.checks.find((item) => item.id === id);
-  if (!check) {
-    return {
-      status: 'manual',
-      evidence: [`Designer check not found: ${id}`],
-      confidence: 0.2
-    };
-  }
-  if (check.result === 'pass') return { status: 'pass', evidence: check.evidence, confidence: 0.93 };
-  if (check.result === 'fail') return { status: 'fail', evidence: check.evidence, confidence: 0.93 };
-  return { status: 'manual', evidence: check.evidence, confidence: 0.2 };
-}
-
-function unifyRows(
-  designer: DesignerChecklistReport,
-  published: PublishedSnippetCrawlResult,
-  includeManual: boolean
-): UnifiedReviewRow[] {
-  const home = published.pages.find((page) => page.url === published.startUrl) || published.pages[0] || null;
-  const homeTitle = home?.title || '';
-  const formatKeys = Array.from(
-    new Set(
-      published.pages.flatMap((page) =>
-        Object.keys(page.summary?.imageFormats || {}).map((key) => key.toLowerCase())
-      )
-    )
-  ).sort();
-
-  const hasLicensePage = published.pages.some((page) => page.url.toLowerCase().includes('/license'));
-  const licensePages = published.pages.filter((page) => page.url.toLowerCase().includes('/license'));
-  const hasKnownLicenseTextResult = licensePages.some(
-    (page) => typeof page.hasRequiredLicenseText === 'boolean'
-  );
-  const hasRequiredLicenseText = licensePages.some((page) => page.hasRequiredLicenseText === true);
-
-  const rows: UnifiedReviewRow[] = [];
-  const pushRow = (
-    id: string,
-    section: string,
-    requirement: string,
-    status: UnifiedReviewStatus,
-    evidence: string[],
-    source: string[],
-    confidence: number,
-    fixHint?: string
-  ) => {
-    rows.push({ id, section, requirement, status, evidence, source, confidence, fixHint });
-  };
-
-  const dNavFooter = mapDesignerStatus(designer, 'components.nav_footer_cta');
-  const dComponentNames = mapDesignerStatus(designer, 'components.title_case_naming');
-  const dVarReusable = mapDesignerStatus(designer, 'variables.defined_reusable');
-  const dVarTitle = mapDesignerStatus(designer, 'variables.title_case_naming');
-  const dVarBreakpoints = mapDesignerStatus(designer, 'variables.breakpoint_modes');
-  const dStylesUnused = mapDesignerStatus(designer, 'styles.unused_classes_cleaned');
-  const dStylesBase = mapDesignerStatus(designer, 'styles.base_tag_selectors');
-  const dComboDepth = mapDesignerStatus(designer, 'styles.combo_class_depth');
-  const dCmsRel = mapDesignerStatus(designer, 'cms.collection_pages_present');
-
-  pushRow(
-    'webflow_audit.h1_hierarchy',
-    'Webflow Audit Panel',
-    'One H1 per page; no skipped heading levels',
-    published.issueCounts.missingH1 > 0 ||
-      published.issueCounts.multipleH1 > 0 ||
-      published.issueCounts.skippedHeadingLevels > 0
-      ? 'fail'
-      : 'pass',
-    [
-      `missingH1Pages=${published.issueCounts.missingH1}`,
-      `multipleH1Pages=${published.issueCounts.multipleH1}`,
-      `skippedHeadingLevelsPages=${published.issueCounts.skippedHeadingLevels}`
-    ],
-    ['published-webmcp-crawl'],
-    0.9,
-    'Fix heading hierarchy per page and keep a single primary H1.'
-  );
-
-  pushRow(
-    'webflow_audit.alt_text',
-    'Webflow Audit Panel',
-    'No missing alt texts',
-    published.issueCounts.imagesMissingAlt > 0 ? 'fail' : 'pass',
-    [`pagesWithMissingAlt=${published.issueCounts.imagesMissingAlt}`],
-    ['published-webmcp-crawl'],
-    0.9,
-    'Add descriptive alt text for informative images and mark decorative images appropriately.'
-  );
-
-  pushRow(
-    'components.nav_footer_cta',
-    'Components Panel',
-    'Nav, Footer and CTAs are Components',
-    dNavFooter.status,
-    dNavFooter.evidence,
-    ['designer-mcp'],
-    dNavFooter.confidence
-  );
-
-  pushRow(
-    'components.title_case_names',
-    'Components Panel',
-    'Components use title casing in names',
-    dComponentNames.status,
-    dComponentNames.evidence,
-    ['designer-mcp'],
-    dComponentNames.confidence,
-    'Rename components/variants to Title Case with concise human-readable labels.'
-  );
-
-  const ix2MissingTargets = home?.summary?.ix2?.missingTargets ?? 0;
-  const ix2Unused = home?.summary?.ix2?.unusedActionLists ?? 0;
-  const ix3MissingSelectors = home?.summary?.ix3?.missingTargetSelectors ?? 0;
-  const interactionsStatus: UnifiedReviewStatus =
-    ix2Unused > 0
-      ? 'fail'
-      : ix2MissingTargets > 0 || ix3MissingSelectors > 0
-        ? 'partial'
-        : 'pass';
-  pushRow(
-    'interactions.unused_cleaned',
-    'Interactions Panel',
-    'Interactions are cleaned of unused animations',
-    interactionsStatus,
-    [
-      `home.ix2.unusedActionLists=${ix2Unused}`,
-      `home.ix2.missingTargets=${ix2MissingTargets}`,
-      `home.ix3.missingTargetSelectors=${ix3MissingSelectors}`,
-      'Strict unused/deleted state still needs Designer panel confirmation.'
-    ],
-    ['published-webmcp-crawl', 'designer-mcp'],
-    interactionsStatus === 'partial' ? 0.6 : 0.82,
-    'Remove orphaned targets/action lists and verify in Designer Interactions panel.'
-  );
-
-  pushRow(
-    'variables.defined_reusable',
-    'Variables Panel',
-    'Color, typography, and spacing variables are defined and reusable',
-    dVarReusable.status,
-    dVarReusable.evidence,
-    ['designer-mcp'],
-    dVarReusable.confidence
-  );
-  pushRow(
-    'variables.title_case',
-    'Variables Panel',
-    'Variables use Title Case, human readable naming',
-    dVarTitle.status,
-    dVarTitle.evidence,
-    ['designer-mcp'],
-    dVarTitle.confidence
-  );
-  pushRow(
-    'variables.breakpoint_modes',
-    'Variables Panel',
-    'Variable Modes exist for tablet, mobile landscape, portrait breakpoints',
-    dVarBreakpoints.status,
-    dVarBreakpoints.evidence,
-    ['designer-mcp'],
-    dVarBreakpoints.confidence
-  );
-
-  pushRow(
-    'styles.unused_classes',
-    'Styles Selector',
-    'Unused styles/classes are cleaned up',
-    dStylesUnused.status,
-    dStylesUnused.evidence,
-    ['designer-mcp'],
-    dStylesUnused.confidence
-  );
-  pushRow(
-    'styles.base_tag_styles',
-    'Styles Selector',
-    'Base styles applied to HTML tags',
-    dStylesBase.status,
-    dStylesBase.evidence,
-    ['designer-mcp'],
-    dStylesBase.confidence
-  );
-  pushRow(
-    'styles.base_uses_variables',
-    'Styles Selector',
-    'Variables are used to define base tag styles',
-    'manual',
-    ['Variable linkage is not currently extracted by this MCP pipeline.'],
-    ['designer-mcp'],
-    0.2
-  );
-  pushRow(
-    'styles.combo_depth',
-    'Styles Selector',
-    'No more than 3-4 combo classes stacked per element',
-    dComboDepth.status,
-    dComboDepth.evidence,
-    ['designer-mcp'],
-    dComboDepth.confidence
-  );
-
-  const htmlSuffix = ' - Webflow HTML website template';
-  const ecomSuffix = ' - Webflow Ecommerce website template';
-  const hasSuffix = homeTitle.includes(htmlSuffix) || homeTitle.includes(ecomSuffix);
-  const siteName = designer.metadataSummary.siteName || '';
-  const titlePrefix = homeTitle.includes(htmlSuffix)
-    ? homeTitle.split(htmlSuffix)[0]?.trim()
-    : homeTitle.includes(ecomSuffix)
-      ? homeTitle.split(ecomSuffix)[0]?.trim()
-      : '';
-  const nameMatchesSite =
-    !siteName || !titlePrefix
-      ? false
-      : titlePrefix.toLowerCase() === siteName.toLowerCase();
-  const homeTitleCompliant = hasSuffix && (nameMatchesSite || !siteName);
-  const homeTitleEvidence = [
-    `homeTitle=${homeTitle || 'n/a'}`,
-    `siteName=${siteName || 'n/a'}`,
-    `hasSuffix=${hasSuffix}`,
-    `titlePrefix=${titlePrefix || 'n/a'}`,
-    `nameMatchesSite=${nameMatchesSite}`
-  ];
-  pushRow(
-    'pages.home_seo_title_formula',
-    'Page Level Checks',
-    'Home SEO title matches required naming formula',
-    homeTitleCompliant ? 'pass' : hasSuffix && !nameMatchesSite ? 'partial' : 'fail',
-    homeTitleEvidence,
-    ['published-webmcp-crawl'],
-    homeTitleCompliant ? 0.92 : hasSuffix ? 0.7 : 0.85,
-    'Set homepage title to "{Template Name} - Webflow HTML website template" (or Ecommerce variant). The prefix must match the template name.'
-  );
-
-  pushRow(
-    'pages.license_text_exact',
-    'Page Level Checks',
-    'License page includes the exact required opening text',
-    !hasLicensePage
-      ? 'fail'
-      : hasKnownLicenseTextResult
-        ? hasRequiredLicenseText
-          ? 'pass'
-          : 'fail'
-        : 'partial',
-    [
-      `licensePageFound=${hasLicensePage}`,
-      `hasKnownLicenseTextResult=${hasKnownLicenseTextResult}`,
-      `hasRequiredLicenseText=${hasRequiredLicenseText}`
-    ],
-    ['published-webmcp-crawl', 'designer-mcp'],
-    hasKnownLicenseTextResult ? 0.85 : 0.5,
-    'Ensure /licenses page exists and starts with the required exact text.'
-  );
-
-  pushRow(
-    'pages.image_loading_strategy',
-    'Page Level Checks',
-    'Below-the-fold images are lazy-loaded and above-the-fold essentials are eager',
-    published.issueCounts.imagesAboveFoldLazy > 0 ? 'fail' : 'pass',
-    [`pagesWithAboveFoldLazy=${published.issueCounts.imagesAboveFoldLazy}`],
-    ['published-webmcp-crawl'],
-    0.87,
-    'Set hero/critical images to eager and keep below-fold images lazy.'
-  );
-
-  const videoControlsFail =
-    published.issueCounts.autoplayWithoutControls > 0 ||
-    published.issueCounts.backgroundVideosMissingControl > 0;
-  pushRow(
-    'pages.videos_controls',
-    'Page Level Checks',
-    'No autoplay without controls; background videos have pause/skip controls',
-    videoControlsFail ? 'fail' : 'pass',
-    [
-      `pagesWithAutoplayWithoutControls=${published.issueCounts.autoplayWithoutControls}`,
-      `pagesWithBackgroundVideoMissingControl=${published.issueCounts.backgroundVideosMissingControl}`
-    ],
-    ['published-webmcp-crawl'],
-    0.86
-  );
-
-  pushRow(
-    'pages.meta_tags_static',
-    'Page Level Checks',
-    'Each static page has meta title, meta description and Open Graph tags',
-    published.issueCounts.metaMissing > 0 ? 'fail' : 'pass',
-    [`pagesWithMissingMeta=${published.issueCounts.metaMissing}`],
-    ['published-webmcp-crawl'],
-    0.9,
-    'Add missing Open Graph/meta tags per page, including og:image.'
-  );
-
-  pushRow(
-    'pages.meta_tags_cms_dynamic',
-    'Page Level Checks',
-    'CMS pages use dynamic SEO tags',
-    'partial',
-    [
-      `cmsCollectionsDetected=${designer.metadataSummary.totalCMSCollections}`,
-      'Dynamic field binding cannot be confirmed from current payloads.'
-    ],
-    ['designer-mcp', 'published-webmcp-crawl'],
-    0.55
-  );
-
-  const a404 = published.audit404;
-  const a404Status = asFiniteNumber((a404 as Record<string, unknown>).status);
-  const a404NavCount = asFiniteNumber((a404 as Record<string, unknown>).navCount);
-  const a404LinkCount = asFiniteNumber((a404 as Record<string, unknown>).linkCount);
-  const hasHealthy404 =
-    a404.ok === true &&
-    a404Status === 404 &&
-    a404NavCount > 0 &&
-    a404LinkCount > 0;
-  pushRow(
-    'pages.custom_404',
-    'Page Level Checks',
-    'Custom branded 404 page exists with nav and CTAs',
-    hasHealthy404 ? 'pass' : 'fail',
-    [
-      `status=${a404Status || 'n/a'}`,
-      `navCount=${a404NavCount || 'n/a'}`,
-      `linkCount=${a404LinkCount || 'n/a'}`
-    ],
-    ['published-webmcp-crawl'],
-    0.92
-  );
-
-  pushRow(
-    'pages.image_dimensions',
-    'Page Level Checks',
-    'Images have explicit width/height or aspect-ratio hints',
-    published.issueCounts.imagesMissingDimensions > 0 ? 'fail' : 'pass',
-    [`pagesWithMissingImageDimensions=${published.issueCounts.imagesMissingDimensions}`],
-    ['published-webmcp-crawl'],
-    0.9,
-    'Add width/height attributes or explicit aspect-ratio to image elements.'
-  );
-
-  pushRow(
-    'pages.transition_simple',
-    'Page Level Checks',
-    'Simple CSS transitions are used for hover/press states',
-    'manual',
-    ['Transition-property linting is not included in this tool yet.'],
-    ['published-webmcp-crawl'],
-    0.2
-  );
-
-  pushRow(
-    'pages.wcag_contrast',
-    'Page Level Checks',
-    'WCAG contrast is met for default/hover/focus/active states',
-    'manual',
-    ['Color contrast computation is not included in this tool yet.'],
-    ['published-webmcp-crawl'],
-    0.2
-  );
-
-  pushRow(
-    'pages.cms_used_relational',
-    'Page Level Checks',
-    'CMS is used for repeatable/relational content',
-    dCmsRel.status,
-    dCmsRel.evidence,
-    ['designer-mcp'],
-    dCmsRel.confidence
-  );
-
-  const modernFormats = ['webp', 'avif', 'jpg', 'jpeg', 'png'];
-  pushRow(
-    'assets.modern_formats',
-    'Page Level Checks',
-    'Modern image formats are used (WebP, AVIF, JPEG, PNG)',
-    formatKeys.some((format) => modernFormats.includes(format)) ? 'pass' : 'fail',
-    [`detectedFormats=${formatKeys.join(',') || 'none'}`],
-    ['published-webmcp-crawl'],
-    0.86
-  );
-
-  pushRow(
-    'responsive.multi_breakpoint_check',
-    'Page Level Checks',
-    'Responsive checks have been run on homepage and at least one additional page',
-    'manual',
-    ['This run does not include multi-viewport screenshot assertions.'],
-    ['published-webmcp-crawl'],
-    0.2
-  );
-
-  // Policy checks (deterministic)
-  const policy = published.policyChecks;
-  pushRow(
-    'policy.powered_by_webflow',
-    'Submission Policy',
-    '"Powered by Webflow" badge is present and visible',
-    policy.hasPoweredByWebflow ? 'pass' : 'fail',
-    [`hasPoweredByWebflow=${policy.hasPoweredByWebflow}`],
-    ['published-webmcp-crawl'],
-    0.9,
-    'Do not remove the "Powered by Webflow" badge. It must remain visible on the published site.'
-  );
-  pushRow(
-    'policy.no_affiliate_links',
-    'Submission Policy',
-    'No affiliate or referral links found',
-    policy.affiliateLinkCount === 0 ? 'pass' : 'fail',
-    [
-      `affiliateLinkCount=${policy.affiliateLinkCount}`,
-      ...(policy.affiliateLinks.length > 0
-        ? [`examples=${policy.affiliateLinks.slice(0, 5).join(' | ')}`]
-        : [])
-    ],
-    ['published-webmcp-crawl'],
-    0.85,
-    'Remove all affiliate and referral links before submission.'
-  );
-  pushRow(
-    'policy.gsap_detected',
-    'Submission Policy',
-    'GSAP/ScrollTrigger usage detected (requires instructions page and library attachment)',
-    policy.hasGsap ? 'partial' : 'pass',
-    [
-      `hasGsap=${policy.hasGsap}`,
-      ...(policy.hasGsap
-        ? ['GSAP detected: ensure an Instructions page explains setup and GSAP is attached as a library.']
-        : [])
-    ],
-    ['published-webmcp-crawl'],
-    policy.hasGsap ? 0.75 : 0.85
-  );
-  pushRow(
-    'policy.custom_code_detected',
-    'Submission Policy',
-    'Custom code is present (requires instructions page)',
-    policy.hasCustomCode ? 'partial' : 'pass',
-    [
-      `hasCustomCode=${policy.hasCustomCode}`,
-      ...(policy.hasCustomCode
-        ? ['Custom code detected: ensure an Instructions page documents custom code usage.']
-        : [])
-    ],
-    ['published-webmcp-crawl'],
-    policy.hasCustomCode ? 0.7 : 0.85
-  );
-
-  return includeManual ? rows : rows.filter((row) => row.status !== 'manual');
-}
-
 async function runTemplateReviewTool(
   input: RunTemplateReviewInput,
   options: RunTemplateReviewOptions = {}
@@ -1871,14 +1287,14 @@ async function executeTemplateReview(
   const reportProgress = options.reportProgress;
   const timeout = input.timeout ?? 90000;
 
-  if (reportProgress) await reportProgress(0, 100, 'Starting unified template review');
+  if (reportProgress) await reportProgress('precheck', 0, 100, 'Starting unified template review');
   const precheck = await runPublishedPrecheck(input.publishedUrl, Math.min(timeout, 30000));
   if (precheck.errors.length > 0) {
     throw new Error(`Published precheck failed: ${precheck.errors.join('; ')}`);
   }
 
-  if (reportProgress) await reportProgress(5, 100, 'Published precheck complete');
-  if (reportProgress) await reportProgress(5, 100, 'Running Designer checklist extraction');
+  if (reportProgress) await reportProgress('precheck', 5, 100, 'Published precheck complete');
+  if (reportProgress) await reportProgress('designer', 10, 100, 'Running Designer checklist extraction');
 
   const designer = await scoreDesignerChecklistTool({
     url: input.previewUrl,
@@ -1886,7 +1302,7 @@ async function executeTemplateReview(
     includeManual: true
   });
 
-  if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
+  if (reportProgress) await reportProgress('designer', 35, 100, 'Designer checklist extraction complete');
 
   // Derive published URLs from Designer page names to improve crawl coverage
   const publishedOrigin = new URL(input.publishedUrl).origin;
@@ -1914,12 +1330,12 @@ async function executeTemplateReview(
           const cappedMax = Math.max(1, maxPages);
           const ratio = Math.min(1, processedPages / cappedMax);
           const progress = 35 + Math.round(ratio * 55);
-          await reportProgress(progress, 100, message);
+          await reportProgress('published', progress, 100, message);
         }
       : undefined
   });
 
-  if (reportProgress) await reportProgress(92, 100, 'Normalizing unified checklist rows');
+  if (reportProgress) await reportProgress('normalizing', 92, 100, 'Normalizing unified checklist rows');
 
   const rows = unifyRows(designer, published, includeManual);
   const summary = rows.reduce(
@@ -1936,7 +1352,7 @@ async function executeTemplateReview(
   summary.humanInLoop = summary.partial + summary.manual;
   const providerMetrics = diffProviderMetrics(metricsBefore, provider.getSessionMetrics());
 
-  if (reportProgress) await reportProgress(100, 100, 'Unified template review complete');
+  if (reportProgress) await reportProgress('completed', 100, 100, 'Unified template review complete');
 
   return {
     generatedAt: new Date().toISOString(),
@@ -1957,9 +1373,13 @@ function enqueueTemplateReview(input: EnqueueTemplateReviewInput): TemplateRevie
 }
 
 function getTemplateReviewJob(input: GetTemplateReviewJobInput): TemplateReviewJobRecord {
-  const job = getTemplateReviewJobManager().get(input.jobId);
+  const manager = getTemplateReviewJobManager();
+  const job = manager.get(input.jobId);
   if (!job) {
-    throw new Error(`Template review job not found: ${input.jobId}`);
+    const diagnostics = manager.getDiagnostics();
+    throw new Error(
+      `Template review job not found: ${input.jobId}. Async review jobs are stored in ${diagnostics.stateScope} on analyzer runtime ${diagnostics.runtimeInstanceId}; if the runtime restarted or you are polling through a different instance, prefer run_template_review or retry against the same analyzer runtime.`,
+    );
   }
   return job;
 }
@@ -2125,7 +1545,7 @@ function createProgressReporter(extra?: RequestHandlerExtraLike): ProgressReport
   const progressToken = meta.progressToken;
   if (typeof progressToken !== 'string' && typeof progressToken !== 'number') return undefined;
 
-  return async (progress: number, total: number, message: string) => {
+  return async (phase, progress, total, message) => {
     try {
       await sendNotification({
         method: 'notifications/progress',
@@ -2133,7 +1553,7 @@ function createProgressReporter(extra?: RequestHandlerExtraLike): ProgressReport
           progressToken,
           progress: Math.max(0, progress),
           total: Math.max(1, total),
-          message
+          message: message.startsWith('[') ? message : `[${phase}] ${message}`
         }
       });
     } catch {
@@ -2328,7 +1748,7 @@ export function createAnalyzerServer(): Server {
       },
       {
         name: 'enqueue_template_review',
-        description: 'Queue an async template review job with bounded concurrency. This is the production entrypoint for automated review orchestration.',
+        description: 'Queue an async template review job with bounded concurrency. This is the production entrypoint for automated review orchestration. Responses include runtime-local diagnostics so callers can poll the same analyzer instance.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -2362,7 +1782,7 @@ export function createAnalyzerServer(): Server {
       },
       {
         name: 'get_template_review_job',
-        description: 'Fetch a queued template review job by ID, including progress and final report when complete.',
+        description: 'Fetch a queued template review job by ID, including progress, runtime-local diagnostics, and the final report when complete. Async jobs are stored in runtime memory unless a durable backend is added.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -2376,7 +1796,7 @@ export function createAnalyzerServer(): Server {
       },
       {
         name: 'list_template_review_jobs',
-        description: 'List recent template review jobs, optionally filtered by status.',
+        description: 'List recent template review jobs, optionally filtered by status. Each record includes runtime-local diagnostics such as analyzer instance id and queue position.',
         inputSchema: {
           type: 'object',
           properties: {

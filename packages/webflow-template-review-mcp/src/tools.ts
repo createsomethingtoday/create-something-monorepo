@@ -3,7 +3,12 @@ import { z } from 'zod';
 
 import type { AirtableClient } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
-import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
+import {
+  IMPROVEMENT_AREA_OPTIONS,
+  QUALITY_RATING_OPTIONS,
+  REVIEW_STATUS_OPTIONS,
+  TEMPLATE_REVIEW_FIELD_MAP,
+} from './schema.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
 
 type ClientFactory = () => AirtableClient;
@@ -14,6 +19,10 @@ const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '👀Admin Feedback Review',
   '🔁Response to Review',
 ] as const;
+
+const anyReviewStatusSchema = z.enum(REVIEW_STATUS_OPTIONS).optional();
+const qualityRatingSchema = z.enum(QUALITY_RATING_OPTIONS).optional();
+const improvementAreasSchema = z.array(z.enum(IMPROVEMENT_AREA_OPTIONS)).optional();
 
 function jsonContent(value: unknown, isError = false) {
   return {
@@ -249,7 +258,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     {
       version_id: z.string().min(1),
       review_feedback: z.string().min(1),
-      improvement_areas: z.array(z.string()).optional(),
+      improvement_areas: improvementAreasSchema,
     },
     async ({ version_id, review_feedback, improvement_areas }) => {
       try {
@@ -304,7 +313,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     {
       version_id: z.string().min(1),
       review_feedback: z.string().min(1).optional(),
-      improvement_areas: z.array(z.string()).optional(),
+      improvement_areas: improvementAreasSchema,
     },
     async ({ version_id, review_feedback, improvement_areas }) => {
       try {
@@ -615,9 +624,9 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     {
       version_id: z.string().min(1),
       review_owner: z.unknown().optional(),
-      review_status: z.string().optional(),
-      quality_rating: z.string().optional(),
-      improvement_areas: z.array(z.string()).optional(),
+      review_status: anyReviewStatusSchema,
+      quality_rating: qualityRatingSchema,
+      improvement_areas: improvementAreasSchema,
       review_feedback: z.string().optional(),
       review_checklist: z.unknown().optional(),
       publishing_checklist: z.unknown().optional(),

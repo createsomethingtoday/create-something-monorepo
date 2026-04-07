@@ -22,6 +22,7 @@
     "teach": "npx tsx teach-mode.ts",
     "replay": "npx tsx replay-recipe.ts",
     "review": "npx tsx review-mode.ts",
+    "test": "node --import tsx --test tests/**/*.test.ts",
     "test:integration": "npx tsx integration-test.ts",
     "test:designer-mcp": "node scripts/test-designer-mcp.mjs",
     "test:template-review": "node scripts/test-template-review-mcp.mjs"
