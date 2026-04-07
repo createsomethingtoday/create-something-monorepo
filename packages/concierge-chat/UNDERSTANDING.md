@@ -38,6 +38,8 @@ src/
 ├── lib/server/intake-verification.ts → one-time email verification challenges and grant issuance
 ├── lib/server/intake-claims.ts → D1-backed claim storage and secure continuation links for imported applicants
 ├── lib/server/indeed-mcp.ts → server-side JSON-RPC client for terminal Indeed disposition writeback
+├── lib/server/public-write-limits.ts → public write-path throttling and attachment byte budgets
+├── lib/server/observability.ts → structured production event logging helpers
 ├── lib/chat/matching-model.ts → shortlist, recruiter review, and review-completion state
 ├── lib/handoff/create-packet.ts → handoff packet shaping for escalations, staffing queueing, onboarding, and placement outcomes
 ├── lib/server/agency-access.ts → live `.agency` entitlement fetch, non-production preview override handling, and local session bridge
@@ -51,21 +53,22 @@ src/
 ## To Understand This Package, Read
 
 1. **`README.md`** — current scope and route-level validation paths
-2. **`INDEED_MCP_INTEGRATION_MAP.md`** — concrete stage-to-tool map for the custom Indeed Apply MCP
+2. **`PRODUCTION_RUNBOOK.md`** — secrets, validation, recovery, and rollback for live operations
 3. **`src/routes/+layout.server.ts`** — shared `.agency` session loader, optional secure-intake resolution, and live entitlement snapshot for the Abundance shell
 4. **`src/lib/server/intake-access.ts`** — signed secure-link verification and protected-action boundary
 5. **`src/lib/server/intake-verification.ts`** — self-serve email verification, challenge storage, and grant issuance
 6. **`src/lib/server/intake-claims.ts`** — secure continuation-link storage and claim resolution for imported applicants
-7. **`src/lib/server/indeed-mcp.ts`** — outbound terminal disposition sync to the custom Indeed Apply MCP
-8. **`src/lib/server/agency-access.ts`** — cross-property access lookup, non-production preview override handling, and governed-action gating boundary
-9. **`src/routes/+page.svelte`** — top-level app entry
-10. **`src/lib/chat/prototype-session.ts`** — server-owned session state and mutation logic
-11. **`src/lib/chat/matching-model.ts`** — shortlist and recruiter review state shape
-12. **`src/lib/handoff/create-packet.ts`** — escalated vs staffing-queue handoff packet shaping
-13. **`src/lib/server/threads/persistence.ts`** — D1 persistence contract
-14. **`src/lib/server/attachments/storage.ts`** — attachment storage boundary for R2/local preview
-15. **`src/lib/demo/concierge.ts`** — non-production seed conversation/demo state model
-16. **architecture and policy docs referenced in the README** — product and governance context
+7. **`src/lib/server/public-write-limits.ts`** — rate limiting and protected upload budgets
+8. **`src/lib/server/observability.ts`** — structured lifecycle logging for production routes
+9. **`src/lib/server/agency-access.ts`** — cross-property access lookup, non-production preview override handling, and governed-action gating boundary
+10. **`src/routes/+page.svelte`** — top-level app entry
+11. **`src/lib/chat/prototype-session.ts`** — server-owned session state and mutation logic
+12. **`src/lib/chat/matching-model.ts`** — shortlist and recruiter review state shape
+13. **`src/lib/handoff/create-packet.ts`** — escalated vs staffing-queue handoff packet shaping
+14. **`src/lib/server/threads/persistence.ts`** — D1 persistence contract
+15. **`src/lib/server/attachments/storage.ts`** — attachment storage boundary for R2/local preview
+16. **`src/lib/demo/concierge.ts`** — non-production seed conversation/demo state model
+17. **architecture and policy docs referenced in the README** — product and governance context
 
 ## Agent Legibility Contract
 
@@ -74,7 +77,8 @@ src/
 | Entry point | `README.md`, `UNDERSTANDING.md`, `src/routes/+page.svelte`, `src/lib/chat/prototype-session.ts`, `src/lib/chat/matching-model.ts`, `src/lib/handoff/create-packet.ts`, `src/lib/server/intake-verification.ts`, `src/lib/server/intake-claims.ts`, `src/lib/server/threads/persistence.ts`, `src/lib/server/attachments/storage.ts`, `src/routes/api/threads/+server.ts`, `src/routes/api/intake-verification/request/+server.ts`, `src/routes/api/intake-claims/+server.ts` |
 | Boot command | `pnpm --filter @create-something/concierge-chat dev` |
 | Smoke command | `pnpm --filter @create-something/concierge-chat smoke` |
-| Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, control-plane redirect behavior, public-apply routing, anonymous redirects from `/chat` and `/settings`, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback, route-level UI inspection |
+| Acceptance command | `pnpm --filter @create-something/concierge-chat acceptance` |
+| Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, control-plane redirect behavior, public-apply routing, anonymous redirects from `/chat` and `/settings`, candidate acceptance flow, internal staffing acceptance flow, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback, route-level UI inspection |
 | UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
 | Escalation rule | Stop if a new widget requires arbitrary executable UI, or if a workflow requires real persistence/auth without an agreed data contract and governance rule. |
 
@@ -105,4 +109,4 @@ src/
 
 ---
 
-*Last validated: 2026-04-06*
+*Last validated: 2026-04-07*

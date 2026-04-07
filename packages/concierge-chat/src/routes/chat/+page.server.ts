@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ depends, cookies, platform, url, pa
 		platform
 	);
 
-	if (parentData.agencyAccess.status === 'anonymous') {
+	if (parentData.agencyAccess.status !== 'allowed') {
 		throw redirect(303, pageData.latestThreadId ? `/chat/${pageData.latestThreadId}` : '/apply');
 	}
 

@@ -17,7 +17,7 @@
 	);
 	$: controlPlaneLabel = getAgencyAccessStatusLabel(data.agencyAccess);
 	$: controlPlaneMeta = getAgencyAccessMeta(data.agencyAccess, data.user);
-	$: showInternalNavigation = data.agencyAccess.status !== 'anonymous';
+	$: showInternalNavigation = data.agencyAccess.status === 'allowed';
 	$: isPublicIntakeRoute =
 		data.currentPath === '/' || data.currentPath === '/apply' || data.currentPath.startsWith('/apply/');
 	$: showCompactStaffAccess = isPublicIntakeRoute || !showInternalNavigation;

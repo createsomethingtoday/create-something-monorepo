@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ depends, cookies, platform, url, pa
 	depends(CONCIERGE_SESSION_DEPENDENCY);
 	const parentData = await parent();
 
-	if (parentData.agencyAccess.status === 'anonymous') {
+	if (parentData.agencyAccess.status !== 'allowed') {
 		throw redirect(303, '/apply');
 	}
 
