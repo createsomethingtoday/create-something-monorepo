@@ -5,6 +5,7 @@ import {
   buildDiscoveryServicesPayload,
   buildAuthorizedVisibleProxyRoutes,
   buildVisibleProxyRoutes,
+  normalizeDiscoveryPreferences,
   resolveDiscoveryPack,
   resolveIntentRouteCandidate,
   searchProxyTools,
@@ -773,6 +774,33 @@ test('resolveDiscoveryPack preserves phase-b reviewer/analyzer server priority a
     'webflow-site-analyzer-mcp',
     'webflow-local',
   ]);
+});
+
+test('normalizeDiscoveryPreferences applies the shared reviewer pack floor over persisted phase-a settings', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'webflow-template-review-mcp' },
+    { name: 'webflow-site-analyzer-mcp' },
+  ] as any;
+
+  const prefs = normalizeDiscoveryPreferences(
+    {
+      mode: 'full',
+      activeServers: ['webflow-template-review-mcp'],
+      maxProxyTools: 18,
+    },
+    runtime as any,
+    {
+      HUB_DISCOVERY_SHARED_PACK: 'webflow-marketplace-review-phase-b',
+    } as any,
+  );
+
+  assert.equal(prefs.mode, 'full');
+  assert.deepEqual(prefs.activeServers, [
+    'webflow-template-review-mcp',
+    'webflow-site-analyzer-mcp',
+  ]);
+  assert.equal(prefs.maxProxyTools, 40);
 });
 
 test('resolveDiscoveryPack returns null for unknown pack ids', () => {

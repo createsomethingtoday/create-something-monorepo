@@ -225,6 +225,10 @@ type DiscoveryPackRegistry = {
   packs: Record<string, DiscoveryPackDefinition>;
 };
 
+type NormalizeDiscoveryPreferencesOptions = {
+  applySharedPackFloor?: boolean;
+};
+
 type ResolvedDiscoveryPack = {
   id: string;
   description: string;
@@ -4088,8 +4092,7 @@ async function getDiscoveryPreferences(
 }
 
 function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): DiscoveryPreferences {
-  const sharedPackId = readEnvString(env, 'HUB_DISCOVERY_SHARED_PACK');
-  const sharedPack = sharedPackId ? resolveDiscoveryPack(sharedPackId, runtime, env) : null;
+  const sharedPack = getSharedDiscoveryPack(runtime, env);
   const modeFromEnv = parseDiscoveryMode(readEnvString(env, 'HUB_DISCOVERY_MODE'));
   const activeServersFromEnv = parseList(readEnvString(env, 'HUB_DISCOVERY_DEFAULT_SERVERS'));
   const maxProxyToolsRaw = readEnvString(env, 'HUB_DISCOVERY_MAX_PROXY_TOOLS');
@@ -4104,7 +4107,22 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
       runtime,
     ),
     maxProxyTools: maxProxyToolsFromEnv ?? sharedPack?.preferences.maxProxyTools ?? null,
-  }, runtime, env);
+  }, runtime, env, { applySharedPackFloor: false });
+}
+
+function getSharedDiscoveryPack(runtime: HubRuntime, env?: Env): ResolvedDiscoveryPack | null {
+  if (!env) return null;
+  const sharedPackId = readEnvString(env, 'HUB_DISCOVERY_SHARED_PACK');
+  return sharedPackId ? resolveDiscoveryPack(sharedPackId, runtime, env) : null;
+}
+
+function resolveDiscoveryMaxProxyToolsFloor(
+  value: number | null,
+  floor: number | null,
+): number | null {
+  if (value === null) return null;
+  if (floor === null) return value;
+  return Math.max(value, floor);
 }
 
 function getRequiredGlobalServers(currentRegistry: McpBundleRegistry, env?: Env): string[] {
@@ -4155,19 +4173,29 @@ async function clearDiscoveryPreferences(
   return defaults;
 }
 
-function normalizeDiscoveryPreferences(
+export function normalizeDiscoveryPreferences(
   prefs: DiscoveryPreferences,
   runtime: HubRuntime,
   env?: Env,
+  options: NormalizeDiscoveryPreferencesOptions = {},
 ): DiscoveryPreferences {
   const requiredActiveServers = getRequiredDiscoveryServers(runtime, env);
+  const sharedPack =
+    options.applySharedPackFloor === false ? null : getSharedDiscoveryPack(runtime, env);
+  const sharedActiveServers = sharedPack?.preferences.activeServers ?? [];
+  const requestedMaxProxyTools = resolveDiscoveryMaxProxyTools(prefs.maxProxyTools);
+  const sharedPackMaxProxyTools = resolveDiscoveryMaxProxyTools(
+    sharedPack?.preferences.maxProxyTools ?? null,
+  );
   return {
     mode: prefs.mode,
     activeServers: resolveDiscoveryActiveServers(
-      [...prefs.activeServers, ...requiredActiveServers],
+      [...sharedActiveServers, ...prefs.activeServers, ...requiredActiveServers],
       runtime,
     ),
-    maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
+    maxProxyTools: resolveDiscoveryMaxProxyTools(
+      resolveDiscoveryMaxProxyToolsFloor(requestedMaxProxyTools, sharedPackMaxProxyTools),
+    ),
   };
 }
 
@@ -4239,7 +4267,7 @@ function resolveDiscoveryPackDefinition(
       mode,
       activeServers,
       maxProxyTools,
-    }, runtime, env),
+    }, runtime, env, { applySharedPackFloor: false }),
   };
 }
 
