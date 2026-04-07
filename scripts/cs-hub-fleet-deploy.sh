@@ -21,6 +21,11 @@ CORE_WORKERS=(
   "cs-mcp-hub-remote"
 )
 
+INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
+LOAD_FROM_INFISICAL="${LOAD_FROM_INFISICAL:-auto}"
+
 SHARED_AUTH_SERVERS=(
   "composio-toolkit-dropbox"
   "composio-toolkit-gmail"
@@ -156,6 +161,84 @@ resolve_worker_token() {
     token="${HUB_API_TOKEN:-}"
   fi
   echo "$token"
+}
+
+load_infisical_env() {
+  if ! command -v infisical >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local payload
+  payload="$(
+    infisical export \
+      --format=json \
+      --env="$INFISICAL_ENV" \
+      --path="$INFISICAL_PATH" \
+      --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+  )" || return 1
+
+  while IFS=$'\t' read -r key value; do
+    if [[ -z "${!key:-}" ]]; then
+      export "${key}=${value}"
+    fi
+  done < <(
+    printf '%s' "$payload" | jq -r '
+      def wanted:
+        test("^(HUB_API_TOKEN|CS_HUB_[A-Z0-9_]+_API_TOKEN|CS_MCP_HUB_REMOTE_API_TOKEN|MCP_SESSION_TOKEN)$");
+      if type == "array" then
+        .[] | select(.key != null and (.key | wanted)) | [.key, (.value | tostring)]
+      else
+        to_entries[] | select(.key | wanted) | [.key, (.value | tostring)]
+      end
+      | @tsv
+    '
+  )
+}
+
+fleet_tokens_available() {
+  if [[ -n "${HUB_API_TOKEN:-}" ]]; then
+    return 0
+  fi
+
+  local worker token_var_name
+  for worker in "${TEAM_WORKERS[@]}"; do
+    token_var_name="$(token_env_var_for_worker "$worker")" || continue
+    if [[ "$worker" == "cs-hub-fillip" && -n "${CS_HUB_FILIP_API_TOKEN:-}" ]]; then
+      continue
+    fi
+    if [[ -z "${!token_var_name:-}" ]]; then
+      return 1
+    fi
+  done
+
+  return 0
+}
+
+maybe_load_supporting_env() {
+  local mode need_load=0
+  mode="$(printf '%s' "$LOAD_FROM_INFISICAL" | tr '[:upper:]' '[:lower:]')"
+
+  if [[ "$mode" == "false" ]]; then
+    return 0
+  fi
+
+  if ! fleet_tokens_available; then
+    need_load=1
+  fi
+  if [[ "$TEAM_HUB_DEPLOY_IDENTITY_MODE" == "session_required" && -z "${MCP_SESSION_TOKEN:-}" ]]; then
+    need_load=1
+  fi
+
+  if [[ "$mode" == "true" || "$need_load" -eq 1 ]]; then
+    if ! load_infisical_env; then
+      if [[ "$mode" == "true" ]]; then
+        echo "failed to load fleet deploy secrets from Infisical" >&2
+        exit 1
+      fi
+      return 0
+    fi
+    echo "supporting_env=infisical env=${INFISICAL_ENV} path=${INFISICAL_PATH}"
+  fi
 }
 
 resolve_deploy_worker_name() {
@@ -326,6 +409,7 @@ normalize_worker_state() {
 }
 
 cd "$HUB_DIR"
+maybe_load_supporting_env
 
 echo "Deploying team hub workers with hardened routing config..."
 echo "team_identity_mode=${TEAM_HUB_DEPLOY_IDENTITY_MODE}"

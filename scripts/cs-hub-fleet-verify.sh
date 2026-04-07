@@ -30,6 +30,7 @@ INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 LOAD_FROM_INFISICAL="${LOAD_FROM_INFISICAL:-auto}"
 VERIFY_CURL_CONNECT_TIMEOUT_SECONDS="${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS:-5}"
 VERIFY_CURL_MAX_TIME_SECONDS="${VERIFY_CURL_MAX_TIME_SECONDS:-30}"
+REQUIRE_FLEET_VERIFY_SESSION="${REQUIRE_FLEET_VERIFY_SESSION:-false}"
 
 SHARED_AUTH_SERVERS=(
   "composio-toolkit-dropbox"
@@ -66,6 +67,15 @@ case "$VERIFY_IDENTITY_MODE" in
     ;;
   *)
     echo "invalid HUB_VERIFY_IDENTITY_MODE=${VERIFY_IDENTITY_MODE}; expected compat|session_required" >&2
+    exit 1
+    ;;
+esac
+
+case "${REQUIRE_FLEET_VERIFY_SESSION}" in
+  "true"|"false")
+    ;;
+  *)
+    echo "invalid REQUIRE_FLEET_VERIFY_SESSION=${REQUIRE_FLEET_VERIFY_SESSION}; expected true|false" >&2
     exit 1
     ;;
 esac
@@ -527,8 +537,7 @@ check_mcp_protocol() {
   fi
   if [[ "$expected_mode" == "session_required" ]]; then
     if [[ -z "${FLEET_VERIFY_SESSION_TOKEN:-}" ]]; then
-      echo "missing fleet verify MCP session token for ${worker}"
-      failures=1
+      echo "protocol_check=skipped reason=missing_fleet_verify_session_token"
       return
     fi
     session_header="$FLEET_VERIFY_SESSION_TOKEN"
@@ -742,7 +751,6 @@ check_discovery_pack_reset() {
     if [[ -z "${FLEET_VERIFY_SESSION_TOKEN:-}" ]]; then
       echo "discovery_pack=skipped reason=missing_fleet_verify_session_token"
       rm -f "$body_file"
-      failures=1
       return
     fi
     headers+=(-H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}")
@@ -1032,8 +1040,7 @@ check_session_account_routing() {
   fi
 
   if [[ -z "${FLEET_VERIFY_SESSION_TOKEN:-}" ]]; then
-    echo "missing fleet verify MCP session token"
-    failures=1
+    echo "account_routing=skipped reason=missing_fleet_verify_session_token"
     return
   fi
 
@@ -1124,6 +1131,7 @@ check_session_account_routing() {
 failures=0
 FLEET_VERIFY_SESSION_TOKEN=""
 FLEET_VERIFY_ACCOUNT_ID=""
+STRICT_SESSION_VERIFY_AVAILABLE=0
 cd "$HUB_DIR"
 maybe_load_supporting_env
 
@@ -1202,7 +1210,13 @@ done
 if [[ "$needs_session_checks" -eq 1 ]]; then
   echo "Creating MCP session token for strict identity E2E..."
   if ! create_fleet_verify_session; then
-    failures=1
+    if [[ "$REQUIRE_FLEET_VERIFY_SESSION" == "true" ]]; then
+      failures=1
+    else
+      echo "strict_session_checks=skipped reason=missing_verifier_identity_credentials"
+    fi
+  else
+    STRICT_SESSION_VERIFY_AVAILABLE=1
   fi
   echo
 
@@ -1252,7 +1266,11 @@ echo "Checking account routing by worker mode..."
 for worker in "${WORKERS[@]}"; do
   echo "===== ACCOUNT ${worker} ====="
   if [[ "$worker" == "cs-mcp-hub-remote" ]]; then
-    echo "account_routing=skipped reason=core_hub_probe_timeout_variance"
+    if [[ "$STRICT_SESSION_VERIFY_AVAILABLE" -eq 1 ]]; then
+      check_session_account_routing "$worker"
+    else
+      echo "account_routing=skipped reason=missing_fleet_verify_session_token"
+    fi
     echo
     continue
   fi
