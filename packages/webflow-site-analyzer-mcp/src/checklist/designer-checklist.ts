@@ -2,12 +2,13 @@ import type {
   ChecklistResult,
   DesignerChecklistCheck,
   DesignerChecklistReport,
+  DesignerChecklistSource,
   DesignerMetadata
 } from '../types.js';
 
 type ScoreOptions = {
   includeManual?: boolean;
-  source?: 'live-extraction' | 'provided-metadata';
+  source?: DesignerChecklistSource;
 };
 
 function normalize(value: string): string {
@@ -458,5 +459,57 @@ export function scoreDesignerChecklist(
       passRate
     },
     checks: filteredChecks
+  };
+}
+
+export function createSkippedDesignerChecklistReport(reason: string): DesignerChecklistReport {
+  const evaluatedAt = new Date().toISOString();
+  const base = scoreDesignerChecklist(
+    {
+      url: '',
+      timestamp: evaluatedAt,
+      siteName: '',
+      sitePlan: '',
+      pages: [],
+      totalPages: 0,
+      styleClasses: [],
+      totalClasses: 0,
+      globalClasses: 0,
+      customClasses: 0,
+      components: [],
+      totalComponents: 0,
+      unusedComponents: 0,
+      interactions: [],
+      totalInteractions: 0,
+      cmsCollections: [],
+      totalCMSItems: 0,
+      assets: [],
+      totalAssets: 0,
+      breakpoints: [],
+    },
+    {
+      includeManual: true,
+      source: 'skipped',
+    },
+  );
+
+  const checks = base.checks.map((check) => ({
+    ...check,
+    result: 'manual' as const,
+    evidence: [reason],
+  }));
+
+  return {
+    ...base,
+    evaluatedAt,
+    source: 'skipped',
+    summary: {
+      pass: 0,
+      fail: 0,
+      manual: checks.length,
+      scored: 0,
+      passRate: 0,
+    },
+    checks,
   };
 }

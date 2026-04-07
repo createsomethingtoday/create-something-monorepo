@@ -5,8 +5,9 @@
  *
  * Usage:
  *   node scripts/test-template-review-mcp.mjs \
- *     --preview-url "https://preview.webflow.com/preview/..." \
  *     --published-url "https://example.webflow.io/" \
+ *     [--preview-url "https://preview.webflow.com/preview/..."] \
+ *     [--designer-mode best-effort|required|skip] \
  *     [--mode sync|async]
  */
 
@@ -46,6 +47,7 @@ function parseToolResult(result) {
 async function main() {
   const previewUrl = getArg('--preview-url');
   const publishedUrl = getArg('--published-url');
+  const designerMode = getArg('--designer-mode') || 'best-effort';
   const mode = getArg('--mode') || 'sync';
   const timeoutMs = Number(getArg('--timeout-ms') || 300000);
   const maxTotalTimeoutMs = Number(getArg('--max-total-timeout-ms') || 1800000);
@@ -55,8 +57,8 @@ async function main() {
   const pollIntervalMs = Number(getArg('--poll-interval-ms') || 3000);
   const output = getArg('--output') || 'summary';
 
-  if (!previewUrl || !publishedUrl) {
-    throw new Error('Provide --preview-url and --published-url.');
+  if (!publishedUrl || (!previewUrl && designerMode === 'required')) {
+    throw new Error('Provide --published-url and, when --designer-mode required, --preview-url.');
   }
 
   const childEnv = Object.fromEntries(
@@ -80,6 +82,7 @@ async function main() {
     const toolArgs = {
       previewUrl,
       publishedUrl,
+      designerMode,
       timeout: timeoutMs,
       crawlMaxPages,
       crawlMaxDepth,
@@ -168,6 +171,7 @@ async function main() {
           mode,
           previewUrl,
           publishedUrl,
+          designerMode,
           timeoutMs,
           maxTotalTimeoutMs,
           crawlMaxPages,

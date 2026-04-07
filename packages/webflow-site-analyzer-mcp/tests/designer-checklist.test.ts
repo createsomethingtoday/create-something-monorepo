@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { scoreDesignerChecklist } from '../src/checklist/designer-checklist.ts';
+import {
+  createSkippedDesignerChecklistReport,
+  scoreDesignerChecklist,
+} from '../src/checklist/designer-checklist.ts';
 import type { DesignerMetadata } from '../src/types.ts';
 
 function createMetadataWithMissingPageInventory(): DesignerMetadata {
@@ -69,4 +72,19 @@ test('scoreDesignerChecklist downgrades page-dependent checks when Designer page
 
   const evidence = findCheck(report.checks, 'pages.style_guide_exists').evidence;
   assert.deepEqual(evidence, ['Designer page list is unavailable from the current extraction.']);
+});
+
+test('createSkippedDesignerChecklistReport downgrades every Designer check to manual with a shared reason', () => {
+  const report = createSkippedDesignerChecklistReport('Designer checklist skipped in best-effort mode.');
+
+  assert.equal(report.source, 'skipped');
+  assert.ok(report.checks.length > 0);
+  assert.equal(report.summary.pass, 0);
+  assert.equal(report.summary.fail, 0);
+  assert.equal(report.summary.manual, report.checks.length);
+
+  for (const check of report.checks) {
+    assert.equal(check.result, 'manual');
+    assert.deepEqual(check.evidence, ['Designer checklist skipped in best-effort mode.']);
+  }
 });

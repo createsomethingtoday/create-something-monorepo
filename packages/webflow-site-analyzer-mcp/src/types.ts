@@ -457,9 +457,11 @@ export interface DesignerChecklistSummary {
   passRate: number;
 }
 
+export type DesignerChecklistSource = 'live-extraction' | 'provided-metadata' | 'skipped';
+
 export interface DesignerChecklistReport {
   evaluatedAt: string;
-  source: 'live-extraction' | 'provided-metadata';
+  source: DesignerChecklistSource;
   metadataSummary: {
     siteName: string;
     sitePlan: string;
@@ -683,7 +685,7 @@ export interface UnifiedTemplateReviewReport {
   completedAt?: string;
   generatedAt: string;
   provider: string;
-  previewUrl: string;
+  previewUrl: string | null;
   publishedUrl: string;
   precheck?: PublishedSitePrecheckResult;
   providerMetrics?: {
@@ -703,12 +705,13 @@ export interface UnifiedTemplateReviewReport {
 }
 
 export interface RunTemplateReviewInput {
-  previewUrl: string;
+  previewUrl?: string;
   publishedUrl: string;
   timeout?: number;
   includeManual?: boolean;
   crawlMaxPages?: number;
   crawlMaxDepth?: number;
+  designerMode?: 'required' | 'best-effort' | 'skip';
 }
 
 export interface EnqueueTemplateReviewInput extends RunTemplateReviewInput {}

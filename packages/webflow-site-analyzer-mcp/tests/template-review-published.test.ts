@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { createSkippedDesignerChecklistReport } from '../src/checklist/designer-checklist.ts';
 import {
   summarizePublishedPageAudit,
   unifyRows,
@@ -524,4 +525,19 @@ test('unifyRows downgrades custom 404 to manual when the 404 audit is unavailabl
   assert.ok(custom404Row.evidence.includes('error=404 audit was not executed'));
   assert.ok(custom404Row.evidence.includes('crawled404Page=https://demo.webflow.io/404'));
   assert.ok(custom404Row.evidence.includes('crawled404Title=404 - Helpbot'));
+});
+
+test('unifyRows preserves published findings when the Designer leg is skipped', () => {
+  const rows = unifyRows(
+    createSkippedDesignerChecklistReport('Designer checklist unavailable during preview extraction.'),
+    createPublishedResult(),
+    true,
+  );
+
+  assert.equal(findRow(rows, 'components.nav_footer_cta').status, 'manual');
+  assert.deepEqual(findRow(rows, 'components.nav_footer_cta').evidence, [
+    'Designer checklist unavailable during preview extraction.',
+  ]);
+  assert.equal(findRow(rows, 'pages.http_status_ok').status, 'fail');
+  assert.equal(findRow(rows, 'webflow_audit.alt_text').status, 'fail');
 });

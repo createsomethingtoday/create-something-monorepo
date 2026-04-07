@@ -350,7 +350,7 @@ function normalizeUnifiedTemplateReviewReport(
   const hasCoreFields =
     typeof record.generatedAt === 'string' &&
     typeof record.provider === 'string' &&
-    typeof record.previewUrl === 'string' &&
+    (typeof record.previewUrl === 'string' || record.previewUrl === null) &&
     typeof record.publishedUrl === 'string';
 
   if (hasCoreFields) {
