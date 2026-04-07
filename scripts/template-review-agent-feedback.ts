@@ -678,15 +678,36 @@ function serializeAnalyzerReport(result: AnalyzerReviewOutcome | null): Record<s
         ? {
             visitedPages: typeof published.visitedPages === 'number' ? published.visitedPages : publishedPages.length,
             auditedPages: typeof published.auditedPages === 'number' ? published.auditedPages : null,
-            pagesWithSnippet: typeof published.pagesWithSnippet === 'number' ? published.pagesWithSnippet : null,
+            pagesWithRuntimeInjection:
+              typeof published.pagesWithRuntimeInjection === 'number'
+                ? published.pagesWithRuntimeInjection
+                : null,
+            pagesWithInstalledFallback:
+              typeof published.pagesWithInstalledFallback === 'number'
+                ? published.pagesWithInstalledFallback
+                : null,
+            pagesWithInstalledSnippet:
+              typeof published.pagesWithInstalledSnippet === 'number'
+                ? published.pagesWithInstalledSnippet
+                : typeof published.pagesWithSnippet === 'number'
+                  ? published.pagesWithSnippet
+                  : null,
             failingPages: typeof published.failingPages === 'number' ? published.failingPages : null,
-            snippetVersion: typeof published.snippetVersion === 'string' ? published.snippetVersion : null,
+            reviewApiVersion:
+              typeof published.reviewApiVersion === 'string'
+                ? published.reviewApiVersion
+                : typeof published.snippetVersion === 'string'
+                  ? published.snippetVersion
+                  : null,
             sitemapStatus: published.sitemapStatus ?? null,
             issueCounts: published.issueCounts ?? null,
             samplePages: publishedPages.slice(0, 6).map((page) => ({
               url: typeof page.url === 'string' ? page.url : null,
               statusCode: typeof page.statusCode === 'number' ? page.statusCode : null,
-              hasSnippet: page.hasSnippet === true,
+              hasInstalledSnippet:
+                page.hasInstalledSnippet === true || page.hasSnippet === true,
+              runtimeInjectionSucceeded: page.runtimeInjectionSucceeded === true,
+              auditSource: typeof page.auditSource === 'string' ? page.auditSource : null,
               failCount: asRecord(page.summary).failCount ?? 0,
               failReasons: asStringArray(asRecord(page.summary).failReasons, 5),
               error: typeof page.error === 'string' ? page.error : null,

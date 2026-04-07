@@ -591,8 +591,13 @@ export interface PublishedSnippetPageResult {
   title: string | null;
   statusCode: number | null;
   hasSnippet: boolean;
-  auditSource: 'snippet' | 'dom-fallback' | 'none';
+  hasInstalledSnippet?: boolean;
+  runtimeInjectionSucceeded?: boolean;
+  runtimeInjectionError?: string | null;
+  auditSource: 'runtime-injected' | 'installed-fallback' | 'snippet' | 'dom-fallback' | 'none';
   snippetVersion: string | null;
+  reviewApiVersion?: string | null;
+  installedSnippetVersion?: string | null;
   hasRequiredLicenseText?: boolean | null;
   error?: string | null;
   summary?: PublishedSnippetPageSummary | null;
@@ -612,9 +617,15 @@ export interface PublishedSnippetCrawlResult {
   visitedPages: number;
   auditedPages: number;
   pagesWithSnippet: number;
+  pagesWithInstalledSnippet?: number;
+  pagesWithRuntimeInjection?: number;
+  pagesWithInstalledFallback?: number;
+  runtimeInjectionFailures?: number;
   failingPages: number;
   snippetVersion: string | null;
+  reviewApiVersion?: string | null;
   snippetTools: string[];
+  reviewApiTools?: string[];
   sitemapStatus: { ok: boolean; count?: number; error?: string };
   audit404:
     | {

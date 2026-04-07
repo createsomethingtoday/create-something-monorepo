@@ -149,24 +149,61 @@ function mapDesignerStatus(
 }
 
 function buildSnippetEvidence(published: PublishedSnippetCrawlResult): string[] {
+  const reviewApiTools = published.reviewApiTools ?? published.snippetTools;
   const missingRequiredTools = REQUIRED_SNIPPET_TOOLS.filter(
-    (toolName) => !published.snippetTools.includes(toolName),
+    (toolName) => !reviewApiTools.includes(toolName),
   );
-  const snippetAuditPages = published.pages.filter((page) => page.auditSource === 'snippet').length;
+  const runtimeInjectionPages =
+    published.pagesWithRuntimeInjection ??
+    published.pages.filter(
+      (page) => page.runtimeInjectionSucceeded || page.auditSource === 'runtime-injected' || page.auditSource === 'snippet',
+    ).length;
+  const installedSnippetPages =
+    published.pagesWithInstalledSnippet ??
+    published.pagesWithSnippet ??
+    published.pages.filter((page) => page.hasInstalledSnippet === true || page.hasSnippet === true)
+      .length;
+  const installedFallbackAuditPages =
+    published.pagesWithInstalledFallback ??
+    published.pages.filter((page) => page.auditSource === 'installed-fallback').length;
+  const reviewApiAuditPages = published.pages.filter(
+    (page) =>
+      page.auditSource === 'runtime-injected' ||
+      page.auditSource === 'installed-fallback' ||
+      page.auditSource === 'snippet',
+  ).length;
   const domFallbackAuditPages = published.pages.filter(
     (page) => page.auditSource === 'dom-fallback',
   ).length;
   const noAuditPages = published.pages.filter((page) => page.auditSource === 'none').length;
+  const runtimeInjectionFailures =
+    published.runtimeInjectionFailures ??
+    published.pages.filter(
+      (page) => typeof page.runtimeInjectionError === 'string' && page.runtimeInjectionError.length > 0,
+    ).length;
+  const runtimeInjectionErrorEvidence = published.pages
+    .filter(
+      (page) => typeof page.runtimeInjectionError === 'string' && page.runtimeInjectionError.length > 0,
+    )
+    .slice(0, EVIDENCE_EXAMPLE_LIMIT)
+    .map(
+      (page) =>
+        `runtimeInjectionError=${page.url} :: ${truncateText(page.runtimeInjectionError as string, 140)}`,
+    );
 
   return [
-    `pagesWithSnippet=${published.pagesWithSnippet}/${published.visitedPages}`,
-    `snippetAuditPages=${snippetAuditPages}`,
+    `runtimeInjectionPages=${runtimeInjectionPages}/${published.visitedPages}`,
+    `installedFallbackPages=${installedFallbackAuditPages}`,
+    `installedSnippetPages=${installedSnippetPages}/${published.visitedPages}`,
+    `reviewApiAuditPages=${reviewApiAuditPages}`,
     `domFallbackAuditPages=${domFallbackAuditPages}`,
     `noAuditPages=${noAuditPages}`,
     `auditedPages=${published.auditedPages}`,
-    `snippetVersion=${published.snippetVersion || 'unknown'}`,
-    `snippetTools=${published.snippetTools.join(',') || 'none'}`,
+    `runtimeInjectionFailures=${runtimeInjectionFailures}`,
+    `reviewApiVersion=${published.reviewApiVersion || published.snippetVersion || 'unknown'}`,
+    `reviewApiTools=${reviewApiTools.join(',') || 'none'}`,
     `missingRequiredTools=${missingRequiredTools.join(',') || 'none'}`,
+    ...runtimeInjectionErrorEvidence,
   ];
 }
 
@@ -392,24 +429,36 @@ export function unifyRows(
   const dComboDepth = mapDesignerStatus(designer, 'styles.combo_class_depth');
   const dCmsRel = mapDesignerStatus(designer, 'cms.collection_pages_present');
 
+  const reviewApiTools = published.reviewApiTools ?? published.snippetTools;
   const missingRequiredSnippetTools = REQUIRED_SNIPPET_TOOLS.filter(
-    (toolName) => !published.snippetTools.includes(toolName),
+    (toolName) => !reviewApiTools.includes(toolName),
   );
+  const runtimeInjectionPages =
+    published.pagesWithRuntimeInjection ??
+    published.pages.filter(
+      (page) => page.runtimeInjectionSucceeded || page.auditSource === 'runtime-injected' || page.auditSource === 'snippet',
+    ).length;
+  const installedFallbackPages =
+    published.pagesWithInstalledFallback ??
+    published.pages.filter((page) => page.auditSource === 'installed-fallback').length;
   const snippetStatus: UnifiedReviewStatus =
-    published.pagesWithSnippet === 0 || missingRequiredSnippetTools.includes('audit_webflow_way')
+    (runtimeInjectionPages === 0 && installedFallbackPages === 0) ||
+    missingRequiredSnippetTools.includes('audit_webflow_way')
       ? 'fail'
-      : published.pagesWithSnippet < published.visitedPages || missingRequiredSnippetTools.length > 0
+      : runtimeInjectionPages < published.visitedPages ||
+          installedFallbackPages > 0 ||
+          missingRequiredSnippetTools.length > 0
         ? 'partial'
         : 'pass';
   pushRow(
     'webflow_audit.snippet_operational',
     'Webflow Audit Panel',
-    'Injected review snippet is installed and exposes required published audit tools',
+    'Runtime-injected review API loads and exposes required published audit tools',
     snippetStatus,
     snippetEvidence,
     ['published-webmcp-crawl'],
     snippetStatus === 'pass' ? 0.92 : snippetStatus === 'partial' ? 0.72 : 0.86,
-    'Install the latest WebMCP review snippet on the published site and verify audit_webflow_way, get_sitemap_urls, and audit_404 are available.',
+    'Runtime injection is the primary path. If it fails, investigate CSP or page-runtime errors; only use a site-installed review snippet as fallback, and verify audit_webflow_way, get_sitemap_urls, and audit_404 are available.',
   );
 
   pushRow(
@@ -836,23 +885,37 @@ export function unifyRows(
   const a404Status = asFiniteNumber((a404 as Record<string, unknown>).status);
   const a404NavCount = asFiniteNumber((a404 as Record<string, unknown>).navCount);
   const a404LinkCount = asFiniteNumber((a404 as Record<string, unknown>).linkCount);
+  const crawled404Page =
+    published.pages.find((page) => page.url.replace(/\/+$/, '').endsWith('/404')) ??
+    published.pages.find((page) => page.title?.toLowerCase().includes('404'));
   const hasHealthy404 =
     a404.ok === true &&
     a404Status === 404 &&
     a404NavCount > 0 &&
     a404LinkCount > 0;
+  const custom404Status: UnifiedReviewStatus =
+    a404.ok === true ? (hasHealthy404 ? 'pass' : 'fail') : 'manual';
+  const custom404FallbackError = 'error' in a404 ? a404.error : 'unknown';
   pushRow(
     'pages.custom_404',
     'Page Level Checks',
     'Custom branded 404 page exists with nav and CTAs',
-    hasHealthy404 ? 'pass' : 'fail',
-    [
-      `status=${a404Status || 'n/a'}`,
-      `navCount=${a404NavCount || 'n/a'}`,
-      `linkCount=${a404LinkCount || 'n/a'}`,
-    ],
+    custom404Status,
+    a404.ok === true
+      ? [
+          `status=${a404Status || 'n/a'}`,
+          `navCount=${a404NavCount || 'n/a'}`,
+          `linkCount=${a404LinkCount || 'n/a'}`,
+        ]
+      : [
+          `audit404Available=false`,
+          `error=${custom404FallbackError}`,
+          `crawled404Page=${crawled404Page?.url || 'none'}`,
+          `crawled404Title=${crawled404Page?.title || 'n/a'}`,
+        ],
     ['published-webmcp-crawl'],
-    0.92,
+    a404.ok === true ? 0.92 : 0.45,
+    'Confirm the branded 404 route manually, or restore the runtime-injected review API so audit_404 can verify nav and CTA structure. Use a site-installed snippet only as fallback.',
   );
 
   pushRow(

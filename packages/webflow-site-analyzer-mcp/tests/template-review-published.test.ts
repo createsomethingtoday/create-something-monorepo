@@ -256,9 +256,14 @@ function createPublishedResult(): PublishedSnippetCrawlResult {
       depth: 0,
       title: 'Helpbot - Webflow HTML website template',
       statusCode: 200,
-      hasSnippet: true,
-      auditSource: 'snippet',
+      hasSnippet: false,
+      hasInstalledSnippet: false,
+      runtimeInjectionSucceeded: true,
+      runtimeInjectionError: null,
+      auditSource: 'runtime-injected',
       snippetVersion: 'wf-review@2.1.0',
+      reviewApiVersion: 'wf-review@2.1.0',
+      installedSnippetVersion: null,
       hasRequiredLicenseText: null,
       error: null,
       summary: homeSummary,
@@ -274,9 +279,14 @@ function createPublishedResult(): PublishedSnippetCrawlResult {
       depth: 1,
       title: 'License',
       statusCode: 404,
-      hasSnippet: false,
-      auditSource: 'dom-fallback',
-      snippetVersion: null,
+      hasSnippet: true,
+      hasInstalledSnippet: true,
+      runtimeInjectionSucceeded: false,
+      runtimeInjectionError: 'Eval blocked by page policy',
+      auditSource: 'installed-fallback',
+      snippetVersion: 'wf-review@0.1.5',
+      reviewApiVersion: 'wf-review@0.1.5',
+      installedSnippetVersion: 'wf-review@0.1.5',
       hasRequiredLicenseText: true,
       error: null,
       summary: licenseSummary,
@@ -297,9 +307,15 @@ function createPublishedResult(): PublishedSnippetCrawlResult {
     visitedPages: pages.length,
     auditedPages: pages.length,
     pagesWithSnippet: 1,
+    pagesWithInstalledSnippet: 1,
+    pagesWithRuntimeInjection: 1,
+    pagesWithInstalledFallback: 1,
+    runtimeInjectionFailures: 1,
     failingPages: 1,
     snippetVersion: 'wf-review@2.1.0',
-    snippetTools: ['audit_webflow_way', 'audit_404'],
+    reviewApiVersion: 'wf-review@2.1.0',
+    snippetTools: ['audit_webflow_way', 'audit_404', 'get_sitemap_urls'],
+    reviewApiTools: ['audit_webflow_way', 'audit_404', 'get_sitemap_urls'],
     sitemapStatus: { ok: true, count: 2 },
     audit404: {
       ok: true,
@@ -359,11 +375,24 @@ test('unifyRows promotes snippet health and preserved published examples into re
 
   const snippetRow = findRow(rows, 'webflow_audit.snippet_operational');
   assert.equal(snippetRow.status, 'partial');
-  assert.ok(snippetRow.evidence.includes('pagesWithSnippet=1/2'));
-  assert.ok(snippetRow.evidence.includes('snippetAuditPages=1'));
-  assert.ok(snippetRow.evidence.includes('domFallbackAuditPages=1'));
-  assert.ok(snippetRow.evidence.includes('snippetVersion=wf-review@2.1.0'));
-  assert.ok(snippetRow.evidence.includes('snippetTools=audit_webflow_way,audit_404'));
+  assert.ok(snippetRow.evidence.includes('runtimeInjectionPages=1/2'));
+  assert.ok(snippetRow.evidence.includes('installedFallbackPages=1'));
+  assert.ok(snippetRow.evidence.includes('installedSnippetPages=1/2'));
+  assert.ok(snippetRow.evidence.includes('reviewApiAuditPages=2'));
+  assert.ok(snippetRow.evidence.includes('domFallbackAuditPages=0'));
+  assert.ok(snippetRow.evidence.includes('runtimeInjectionFailures=1'));
+  assert.ok(snippetRow.evidence.includes('reviewApiVersion=wf-review@2.1.0'));
+  assert.ok(
+    snippetRow.evidence.includes('reviewApiTools=audit_webflow_way,audit_404,get_sitemap_urls'),
+  );
+  assert.ok(snippetRow.evidence.includes('missingRequiredTools=none'));
+  assert.ok(
+    snippetRow.evidence.some(
+      (line) =>
+        line.includes('runtimeInjectionError=https://demo.webflow.io/license') &&
+        line.includes('Eval blocked by page policy'),
+    ),
+  );
 
   const linkRow = findRow(rows, 'webflow_audit.link_hygiene');
   assert.equal(linkRow.status, 'fail');
@@ -426,7 +455,73 @@ test('unifyRows promotes snippet health and preserved published examples into re
       (line) =>
         line.includes('pageStatus=https://demo.webflow.io/license') &&
         line.includes('status=404') &&
-        line.includes('auditSource=dom-fallback'),
+        line.includes('auditSource=installed-fallback'),
     ),
   );
+});
+
+test('unifyRows treats runtime injection as primary even when no installed snippet is present', () => {
+  const published = createPublishedResult();
+  published.pages = published.pages.map((page) => ({
+    ...page,
+    hasSnippet: false,
+    hasInstalledSnippet: false,
+    runtimeInjectionSucceeded: true,
+    runtimeInjectionError: null,
+    auditSource: 'runtime-injected',
+    snippetVersion: 'wf-review@2.1.0',
+    reviewApiVersion: 'wf-review@2.1.0',
+    installedSnippetVersion: null,
+  }));
+  published.pagesWithSnippet = 0;
+  published.pagesWithInstalledSnippet = 0;
+  published.pagesWithRuntimeInjection = published.pages.length;
+  published.pagesWithInstalledFallback = 0;
+  published.runtimeInjectionFailures = 0;
+
+  const rows = unifyRows(createDesignerReport(), published, true);
+  const snippetRow = findRow(rows, 'webflow_audit.snippet_operational');
+
+  assert.equal(snippetRow.status, 'pass');
+  assert.ok(snippetRow.evidence.includes('runtimeInjectionPages=2/2'));
+  assert.ok(snippetRow.evidence.includes('installedSnippetPages=0/2'));
+  assert.ok(snippetRow.evidence.includes('installedFallbackPages=0'));
+});
+
+test('unifyRows downgrades custom 404 to manual when the 404 audit is unavailable', () => {
+  const published = createPublishedResult();
+  published.audit404 = {
+    ok: false,
+    error: '404 audit was not executed',
+  };
+  published.pages = [
+    ...published.pages,
+    {
+      url: 'https://demo.webflow.io/404',
+      depth: 1,
+      title: '404 - Helpbot',
+      statusCode: 200,
+      hasSnippet: false,
+      auditSource: 'dom-fallback',
+      snippetVersion: null,
+      hasRequiredLicenseText: null,
+      error: null,
+      summary: summarizePublishedPageAudit(createCleanAudit()),
+      policyChecks: {
+        hasPoweredByWebflow: true,
+        affiliateLinks: [],
+        hasGsap: false,
+        hasCustomCode: false,
+      },
+    },
+  ];
+
+  const rows = unifyRows(createDesignerReport(), published, true);
+  const custom404Row = findRow(rows, 'pages.custom_404');
+
+  assert.equal(custom404Row.status, 'manual');
+  assert.ok(custom404Row.evidence.includes('audit404Available=false'));
+  assert.ok(custom404Row.evidence.includes('error=404 audit was not executed'));
+  assert.ok(custom404Row.evidence.includes('crawled404Page=https://demo.webflow.io/404'));
+  assert.ok(custom404Row.evidence.includes('crawled404Title=404 - Helpbot'));
 });

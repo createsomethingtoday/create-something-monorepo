@@ -13,6 +13,7 @@
  */
 
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -574,6 +575,18 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
 (async () => {
   const REQUIRED_LICENSE_TEXT =
     "All graphical assets in this template are licensed for personal and commercial use. If you'd like to use a specific asset, please check the license below.";
+  const runtimeReviewSnippetSource = ${JSON.stringify(
+    (() => {
+      try {
+        return readFileSync(
+          new URL('../../webflow-review/snippet/webflow-review-snippet.js', import.meta.url),
+          'utf8',
+        );
+      } catch {
+        return '';
+      }
+    })(),
+  )};
 
   const toInternalAbsolute = (href) => {
     try {
@@ -631,7 +644,45 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     !s.getAttribute('data-wf-domain')
   );
 
-  const api = window.__wfReview;
+  const isReviewApi = (candidate) =>
+    Boolean(
+      candidate &&
+      typeof candidate === 'object' &&
+      typeof candidate.listTools === 'function' &&
+      typeof candidate.callTool === 'function'
+    );
+
+  const installedApi = isReviewApi(window.__wfReview) ? window.__wfReview : null;
+  const hasInstalledSnippet = Boolean(installedApi);
+  const installedSnippetVersion = installedApi?.version ?? null;
+  let api = null;
+  let auditSource = 'none';
+  let runtimeInjectionSucceeded = false;
+  let runtimeInjectionError = null;
+
+  if (runtimeReviewSnippetSource) {
+    try {
+      (0, eval)(runtimeReviewSnippetSource);
+      const injectedApi = isReviewApi(window.__wfReview) ? window.__wfReview : null;
+      if (injectedApi) {
+        api = injectedApi;
+        auditSource = 'runtime-injected';
+        runtimeInjectionSucceeded = true;
+      } else {
+        runtimeInjectionError = 'Runtime-injected review script did not expose a usable __wfReview API';
+      }
+    } catch (err) {
+      runtimeInjectionError = err?.message || String(err);
+    }
+  } else {
+    runtimeInjectionError = 'Runtime review snippet source is unavailable';
+  }
+
+  if (!api && installedApi) {
+    api = installedApi;
+    auditSource = 'installed-fallback';
+  }
+
   if (!api) {
     // DOM fallback: extract page-level signals directly when __wfReview is missing
     const headingEls = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
@@ -752,8 +803,14 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     return {
       url: window.location.href,
       title,
-      hasSnippet: false,
+      hasSnippet: hasInstalledSnippet,
+      hasInstalledSnippet,
+      runtimeInjectionSucceeded,
+      runtimeInjectionError,
+      auditSource: 'dom-fallback',
       snippetVersion: null,
+      reviewApiVersion: null,
+      installedSnippetVersion,
       tools: [],
       links: dedupedLinks,
       hasRequiredLicenseText,
@@ -797,8 +854,14 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   return {
     url: window.location.href,
     title,
-    hasSnippet: true,
+    hasSnippet: hasInstalledSnippet,
+    hasInstalledSnippet,
+    runtimeInjectionSucceeded,
+    runtimeInjectionError,
+    auditSource,
     snippetVersion: api.version ?? null,
+    reviewApiVersion: api.version ?? null,
+    installedSnippetVersion,
     tools,
     links: dedupedLinks,
     hasRequiredLicenseText,
@@ -820,7 +883,13 @@ type PublishedPageEval = {
   url?: string;
   title?: string | null;
   hasSnippet?: boolean;
+  hasInstalledSnippet?: boolean;
+  runtimeInjectionSucceeded?: boolean;
+  runtimeInjectionError?: string | null;
+  auditSource?: PublishedSnippetPageResult['auditSource'];
   snippetVersion?: string | null;
+  reviewApiVersion?: string | null;
+  installedSnippetVersion?: string | null;
   tools?: string[];
   links?: string[];
   hasRequiredLicenseText?: boolean | null;
@@ -1050,8 +1119,8 @@ async function crawlPublishedWebMcp(
   const seen = new Set<string>(initialUrls);
   const pages: PublishedSnippetPageResult[] = [];
 
-  let snippetVersion: string | null = null;
-  let snippetTools: string[] = [];
+  let reviewApiVersion: string | null = null;
+  let reviewApiTools: string[] = [];
   let sitemapStatus: PublishedSnippetCrawlResult['sitemapStatus'] = {
     ok: false,
     error: 'Sitemap check was not executed'
@@ -1081,8 +1150,13 @@ async function crawlPublishedWebMcp(
         title: null,
         statusCode: null,
         hasSnippet: false,
+        hasInstalledSnippet: false,
+        runtimeInjectionSucceeded: false,
+        runtimeInjectionError: null,
         auditSource: 'none',
         snippetVersion: null,
+        reviewApiVersion: null,
+        installedSnippetVersion: null,
         hasRequiredLicenseText: null,
         error: null,
         summary: null
@@ -1111,7 +1185,16 @@ async function crawlPublishedWebMcp(
 
         pageResult.title = raw?.title ?? null;
         pageResult.hasSnippet = Boolean(raw?.hasSnippet);
+        pageResult.hasInstalledSnippet = Boolean(raw?.hasInstalledSnippet ?? raw?.hasSnippet);
+        pageResult.runtimeInjectionSucceeded = Boolean(raw?.runtimeInjectionSucceeded);
+        pageResult.runtimeInjectionError =
+          typeof raw?.runtimeInjectionError === 'string' && raw.runtimeInjectionError
+            ? raw.runtimeInjectionError
+            : null;
+        pageResult.auditSource = raw?.auditSource ?? 'none';
         pageResult.snippetVersion = raw?.snippetVersion ?? null;
+        pageResult.reviewApiVersion = raw?.reviewApiVersion ?? raw?.snippetVersion ?? null;
+        pageResult.installedSnippetVersion = raw?.installedSnippetVersion ?? null;
         pageResult.hasRequiredLicenseText =
           typeof raw?.hasRequiredLicenseText === 'boolean' ? raw.hasRequiredLicenseText : null;
         if (raw?.policyChecks) {
@@ -1123,11 +1206,16 @@ async function crawlPublishedWebMcp(
           };
         }
 
-        if (pageResult.hasSnippet) {
-          if (!snippetVersion) snippetVersion = raw?.snippetVersion ?? null;
+        const usedReviewApi =
+          pageResult.auditSource === 'runtime-injected' ||
+          pageResult.auditSource === 'installed-fallback' ||
+          pageResult.auditSource === 'snippet';
+
+        if (usedReviewApi) {
+          if (!reviewApiVersion) reviewApiVersion = raw?.reviewApiVersion ?? raw?.snippetVersion ?? null;
           if (Array.isArray(raw?.tools)) {
-            snippetTools = Array.from(
-              new Set([...snippetTools, ...raw.tools.map((tool) => String(tool))]),
+            reviewApiTools = Array.from(
+              new Set([...reviewApiTools, ...raw.tools.map((tool) => String(tool))]),
             );
           }
 
@@ -1159,15 +1247,14 @@ async function crawlPublishedWebMcp(
           if (typeof raw?.auditError === 'string' && raw.auditError) {
             pageResult.error = raw.auditError;
           } else {
-            pageResult.auditSource = 'snippet';
             pageResult.summary = summarizePublishedPageAudit(raw?.audit);
           }
         } else if (raw?.audit) {
-          // DOM fallback audit is available even without __wfReview
+          // DOM fallback audit is available even without a usable review API
           pageResult.auditSource = 'dom-fallback';
           pageResult.summary = summarizePublishedPageAudit(raw.audit);
         } else {
-          pageResult.error = 'window.__wfReview is not available and DOM fallback failed';
+          pageResult.error = 'Runtime review injection and fallback DOM audit both failed';
         }
 
         const rawLinks = Array.isArray(raw?.links) ? raw.links : [];
@@ -1220,7 +1307,16 @@ async function crawlPublishedWebMcp(
   }
 
   const auditedPages = pages.filter((page) => Boolean(page.summary)).length;
-  const pagesWithSnippet = pages.filter((page) => page.hasSnippet).length;
+  const pagesWithInstalledSnippet = pages.filter(
+    (page) => page.hasInstalledSnippet === true || page.hasSnippet === true,
+  ).length;
+  const pagesWithRuntimeInjection = pages.filter((page) => page.runtimeInjectionSucceeded).length;
+  const pagesWithInstalledFallback = pages.filter(
+    (page) => page.auditSource === 'installed-fallback',
+  ).length;
+  const runtimeInjectionFailures = pages.filter(
+    (page) => typeof page.runtimeInjectionError === 'string' && page.runtimeInjectionError.length > 0,
+  ).length;
   const failingPages = pages.filter((page) => (page.summary?.failCount || 0) > 0).length;
 
   // Aggregate policy checks across all pages
@@ -1247,10 +1343,16 @@ async function crawlPublishedWebMcp(
     maxDepth,
     visitedPages: pages.length,
     auditedPages,
-    pagesWithSnippet,
+    pagesWithSnippet: pagesWithInstalledSnippet,
+    pagesWithInstalledSnippet,
+    pagesWithRuntimeInjection,
+    pagesWithInstalledFallback,
+    runtimeInjectionFailures,
     failingPages,
-    snippetVersion,
-    snippetTools,
+    snippetVersion: reviewApiVersion,
+    reviewApiVersion,
+    snippetTools: reviewApiTools,
+    reviewApiTools,
     sitemapStatus,
     audit404,
     issueCounts,

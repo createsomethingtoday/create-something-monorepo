@@ -66,6 +66,7 @@ export function scoreDesignerChecklist(
   options: ScoreOptions = {}
 ): DesignerChecklistReport {
   const includeManual = options.includeManual !== false;
+  const hasPageInventory = metadata.totalPages > 0 || metadata.pages.length > 0;
   const componentNames = metadata.components.map((component) => component.name);
   const componentNamesLower = toLowerList(componentNames);
   const pageNames = metadata.pages.map((page) => page.name);
@@ -250,13 +251,15 @@ export function scoreDesignerChecklist(
       'pages.title_case_naming',
       'Required Pages',
       'Page names use Title Case',
-      invalidPageNames.length === 0 ? 'pass' : 'fail',
-      invalidPageNames.length === 0
-        ? ['all page names passed title-case heuristic']
-        : [
-            `invalidCount=${invalidPageNames.length}`,
-            `examples=${invalidPageNames.slice(0, 6).join(' | ')}`
-          ]
+      !hasPageInventory ? 'manual' : invalidPageNames.length === 0 ? 'pass' : 'fail',
+      !hasPageInventory
+        ? ['Designer page list is unavailable from the current extraction.']
+        : invalidPageNames.length === 0
+          ? ['all page names passed title-case heuristic']
+          : [
+              `invalidCount=${invalidPageNames.length}`,
+              `examples=${invalidPageNames.slice(0, 6).join(' | ')}`
+            ]
     )
   );
 
@@ -273,15 +276,19 @@ export function scoreDesignerChecklist(
       'pages.style_guide_exists',
       'Required Pages',
       'Style Guide page exists',
-      hasStyleGuidePage ? 'pass' : 'fail',
-      [`found=${hasStyleGuidePage}`]
+      !hasPageInventory ? 'manual' : hasStyleGuidePage ? 'pass' : 'fail',
+      !hasPageInventory
+        ? ['Designer page list is unavailable from the current extraction.']
+        : [`found=${hasStyleGuidePage}`]
     )
   );
   const hasAdvancedInteractions = metadata.totalInteractions > 0;
   const instructionsStatus: ChecklistResult = hasAdvancedInteractions
-    ? hasInstructionsPage
-      ? 'pass'
-      : 'fail'
+    ? !hasPageInventory
+      ? 'manual'
+      : hasInstructionsPage
+        ? 'pass'
+        : 'fail'
     : 'pass'; // Not required when no advanced interactions/components are used
   checks.push(
     check(
@@ -289,11 +296,17 @@ export function scoreDesignerChecklist(
       'Required Pages',
       'Instructions page exists when advanced interactions/components are used',
       instructionsStatus,
-      [
-        `found=${hasInstructionsPage}`,
-        `hasAdvancedInteractions=${hasAdvancedInteractions}`,
-        `totalInteractions=${metadata.totalInteractions}`
-      ]
+      !hasPageInventory && hasAdvancedInteractions
+        ? [
+            'Designer page list is unavailable from the current extraction.',
+            `hasAdvancedInteractions=${hasAdvancedInteractions}`,
+            `totalInteractions=${metadata.totalInteractions}`
+          ]
+        : [
+            `found=${hasInstructionsPage}`,
+            `hasAdvancedInteractions=${hasAdvancedInteractions}`,
+            `totalInteractions=${metadata.totalInteractions}`
+          ]
     )
   );
   checks.push(
@@ -301,8 +314,10 @@ export function scoreDesignerChecklist(
       'pages.licenses_exists',
       'Required Pages',
       'Licenses page exists',
-      hasLicensePage ? 'pass' : 'fail',
-      [`found=${hasLicensePage}`]
+      !hasPageInventory ? 'manual' : hasLicensePage ? 'pass' : 'fail',
+      !hasPageInventory
+        ? ['Designer page list is unavailable from the current extraction.']
+        : [`found=${hasLicensePage}`]
     )
   );
 
@@ -312,8 +327,17 @@ export function scoreDesignerChecklist(
       'cms.collection_pages_present',
       'CMS Structure',
       'Collection pages are used for repeatable/relational content',
-      cmsTemplatePages > 0 ? 'pass' : 'fail',
-      [`cmsTemplatePages=${cmsTemplatePages}`, `cmsCollections=${metadata.cmsCollections.length}`]
+      metadata.cmsCollections.length > 0 && !hasPageInventory
+        ? 'manual'
+        : cmsTemplatePages > 0
+          ? 'pass'
+          : 'fail',
+      metadata.cmsCollections.length > 0 && !hasPageInventory
+        ? [
+            'Designer page list is unavailable from the current extraction.',
+            `cmsCollections=${metadata.cmsCollections.length}`
+          ]
+        : [`cmsTemplatePages=${cmsTemplatePages}`, `cmsCollections=${metadata.cmsCollections.length}`]
     )
   );
 

@@ -181,8 +181,11 @@ async function main() {
             ? {
                 visitedPages: published.visitedPages,
                 auditedPages: published.auditedPages,
-                pagesWithSnippet: published.pagesWithSnippet,
+                pagesWithRuntimeInjection: published.pagesWithRuntimeInjection ?? null,
+                pagesWithInstalledFallback: published.pagesWithInstalledFallback ?? null,
+                pagesWithInstalledSnippet: published.pagesWithInstalledSnippet ?? published.pagesWithSnippet,
                 failingPages: published.failingPages,
+                reviewApiVersion: published.reviewApiVersion ?? published.snippetVersion ?? null,
                 sitemapStatus: published.sitemapStatus
               }
             : null
