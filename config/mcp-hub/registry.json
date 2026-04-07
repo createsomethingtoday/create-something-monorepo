@@ -425,6 +425,7 @@
       "transport": "http",
       "url": "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "WEBFLOW_SITE_ANALYZER_MCP_API_KEY",
+      "tool_call_timeout_ms": 900000,
       "description": "Remote Webflow Site Analyzer MCP for published review and SEO analysis",
       "tags": [
         "webflow",
