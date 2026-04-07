@@ -13,6 +13,7 @@ test('template reviewer legacy lanes report managed bearer credential source', a
 	assert.ok(assignment);
 	assert.equal(assignment?.laneKey, 'wf_natalia');
 	assert.equal(assignment?.credentialSource, 'Managed bearer reviewer lane');
+	assert.equal(assignment?.claudeConnectionMode, 'mcp_remote');
 });
 
 test('shared auth legacy lanes keep private handoff credential source', async () => {
@@ -25,4 +26,5 @@ test('shared auth legacy lanes keep private handoff credential source', async ()
 	assert.ok(assignment);
 	assert.equal(assignment?.laneKey, 'danny');
 	assert.equal(assignment?.credentialSource, 'Vault + private operator handoff');
+	assert.equal(assignment?.claudeConnectionMode, 'direct_http');
 });

@@ -55,17 +55,41 @@
 		accountId: string | null;
 		tenantId: string | null;
 		workspaceAccountId: string | null;
+		claudeConnectionMode: 'direct_http' | 'mcp_remote';
 	} | null;
 
 	type HostId = 'codex' | 'claude' | 'cursor' | 'notion';
 
 	const hostOptions: Array<{ id: HostId; label: string }> = [
 		{ id: 'codex', label: 'Codex' },
-		{ id: 'claude', label: 'Claude Desktop' },
+		{ id: 'claude', label: 'Claude Code' },
 		{ id: 'cursor', label: 'Cursor' },
 		{ id: 'notion', label: 'Notion AI' },
 	];
 	const fallbackHostUrl = 'https://YOUR-MCP-URL/mcp';
+
+	function resolveSnippetServerName(assignment: AccessAssignment): string {
+		if (assignment?.hubUrl) {
+			try {
+				const hostname = new URL(assignment.hubUrl).hostname;
+				const match = hostname.match(/^([^.]+)\.mcp\.createsomething\.agency$/);
+				if (match?.[1]) return match[1];
+			} catch {
+				// ignore malformed URLs and fall through to lane key / default
+			}
+		}
+
+		return assignment?.laneKey ?? 'create-something';
+	}
+
+	function buildAuthHeaderEnvVarName(serverName: string): string {
+		const normalized = serverName.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').toUpperCase();
+		return `${normalized || 'CREATE_SOMETHING'}_AUTH_HEADER`;
+	}
+
+	function formatTomlKey(key: string): string {
+		return /^[A-Za-z0-9_]+$/.test(key) ? key : JSON.stringify(key);
+	}
 
 	let token = $state<ManagedToken>(data.access.token ?? null);
 	let busy = $state(false);
@@ -94,6 +118,11 @@
 
 	const activeHost = $derived(hostOptions.find((host) => host.id === selectedHost) ?? hostOptions[0]);
 	const activeHostUrl = $derived(assignment?.hubUrl ?? fallbackHostUrl);
+	const snippetServerName = $derived(resolveSnippetServerName(assignment));
+	const tokenValue = $derived(revealedToken || 'PASTE_YOUR_BEARER_TOKEN_HERE');
+	const snippetBearerHeaderValue = $derived(`Bearer ${tokenValue}`);
+	const claudeBridgeEnvVarName = $derived(buildAuthHeaderEnvVarName(snippetServerName));
+	const claudeUsesBridge = $derived(assignment?.claudeConnectionMode === 'mcp_remote');
 	const oauthHostEmail = $derived(oauthPassword?.email ?? data.user.email ?? 'your-linked-email@example.com');
 	const tokenModeLabel = $derived(token?.tool_mode === 'read_write' ? 'Read + write' : 'Read only');
 	const tokenStatus = $derived(
@@ -110,15 +139,14 @@
 				? 'Password set'
 				: 'Password not set',
 	);
-	const tokenValue = $derived(revealedToken || 'PASTE_YOUR_BEARER_TOKEN_HERE');
 	const codexSnippet = $derived(`\
-[mcp_servers.create_something]
+[mcp_servers.${formatTomlKey(snippetServerName)}]
 url = "${activeHostUrl}"
 bearer_token = "${tokenValue}"`);
-	const claudeSnippet = $derived(`\
+	const claudeDirectSnippet = $derived(`\
 {
   "mcpServers": {
-    "create-something": {
+    "${snippetServerName}": {
       "url": "${activeHostUrl}",
       "headers": {
         "Authorization": "Bearer ${tokenValue}"
@@ -126,10 +154,32 @@ bearer_token = "${tokenValue}"`);
     }
   }
 }`);
+	const claudeBridgeSnippet = $derived(`\
+{
+  "mcpServers": {
+    "${snippetServerName}": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "${activeHostUrl}",
+        "--transport",
+        "http-only",
+        "--header",
+        "Authorization:\${${claudeBridgeEnvVarName}}",
+        "--silent"
+      ],
+      "env": {
+        "${claudeBridgeEnvVarName}": "${snippetBearerHeaderValue}"
+      }
+    }
+  }
+}`);
+	const claudeSnippet = $derived(claudeUsesBridge ? claudeBridgeSnippet : claudeDirectSnippet);
 	const cursorSnippet = $derived(`\
 {
   "mcpServers": {
-    "create-something": {
+    "${snippetServerName}": {
       "url": "${activeHostUrl}",
       "headers": {
         "Authorization": "Bearer ${tokenValue}"
@@ -194,6 +244,7 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 					{ label: 'Hub URL', value: assignment.hubUrl },
 					{ label: 'Notion Bridge', value: assignment.bridgeUrl },
 					{ label: 'Bridge Username', value: assignment.bridgeUsername },
+					{ label: 'Claude Mode', value: assignment.claudeConnectionMode === 'mcp_remote' ? 'mcp-remote bridge' : 'Direct HTTP' },
 					{ label: 'Workspace Account', value: assignment.workspaceAccountId ?? assignment.accountId ?? 'Not linked' },
 					{ label: 'Credential Source', value: assignment.credentialSource },
 				]
@@ -545,13 +596,21 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 							<strong>{activeHostUrl}</strong>
 						</div>
 						<div class="instruction-row">
+							<span>Connection Mode</span>
+							<strong>{selectedHost === 'claude' && claudeUsesBridge ? 'Local stdio bridge via npx mcp-remote' : 'Direct remote HTTP with bearer auth'}</strong>
+						</div>
+						<div class="instruction-row">
 							<span>Bearer token</span>
-							<strong>{selectedHost === 'notion' ? (revealedToken ? 'Use in Authorization header below' : 'Insert your current token into the Authorization header') : (revealedToken ? 'Fresh value in snippet below' : 'Insert your current token')}</strong>
+							<strong>{selectedHost === 'notion'
+								? (revealedToken ? 'Use in Authorization header below' : 'Insert your current token into the Authorization header')
+								: selectedHost === 'claude' && claudeUsesBridge
+									? (revealedToken ? 'Fresh value is embedded in the env block below as a Bearer header' : 'Insert your current token into the env block below as a Bearer header')
+									: (revealedToken ? 'Fresh value in snippet below' : 'Insert your current token')}</strong>
 						</div>
 				</div>
 
 				<p class="annotation-copy">
-					Auth0 remains the portal identity boundary. The snippet below configures only the MCP host connection. For Notion AI, use bearer auth by default; the OAuth host password above is only for hosts that require an authorize flow.
+					Auth0 remains the portal identity boundary. The snippet below configures only the MCP host connection. For reviewer lanes in Claude Code, use the local `mcp-remote` bridge so bearer auth stays authoritative and Claude does not fall back into an OAuth discovery flow. For Notion AI, use bearer auth by default; the OAuth host password above is only for hosts that require an authorize flow.
 				</p>
 			</div>
 
@@ -559,7 +618,11 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 				<div class="panel-head">
 					<div>
 						<h3>{activeHost.label} configuration</h3>
-						<p>{selectedHost === 'notion' ? 'Use the provisioned MCP URL and send the bearer token in the Authorization header. OAuth remains available only when the host requires it.' : 'Copy the template, then replace the MCP URL placeholder with the provisioned endpoint.'}</p>
+						<p>{selectedHost === 'notion'
+							? 'Use the provisioned MCP URL and send the bearer token in the Authorization header. OAuth remains available only when the host requires it.'
+							: selectedHost === 'claude' && claudeUsesBridge
+								? 'This reviewer lane uses a local stdio bridge through npx mcp-remote. Keep the no-space Authorization header form exactly as shown.'
+								: 'Copy the provisioned endpoint and token as shown below.'}</p>
 					</div>
 					<button class="secondary small" type="button" onclick={() => copyText(activeSnippet, `${activeHost.label} snippet`, 'snippet')}>
 						Copy snippet

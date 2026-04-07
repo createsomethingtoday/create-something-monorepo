@@ -33,6 +33,7 @@ export type McpAccessAssignment = {
 	workspaceAccountId: string | null;
 	toolkitProfile: string[];
 	allowedToolPrefixes: string[];
+	claudeConnectionMode: 'direct_http' | 'mcp_remote';
 };
 
 type LaneConfig = {
@@ -42,6 +43,7 @@ type LaneConfig = {
 	bridgeUsername: string;
 	defaultToolkitProfile: string[];
 	credentialSource?: string;
+	claudeConnectionMode?: 'direct_http' | 'mcp_remote';
 };
 
 type BoundClientRow = {
@@ -123,6 +125,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeUsername: 'acct_wf_natalia',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
+		claudeConnectionMode: 'mcp_remote',
 	},
 	wf_sudiksha: {
 		displayName: 'Sudiksha Khanduja',
@@ -131,6 +134,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeUsername: 'acct_wf_sudiksha',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
+		claudeConnectionMode: 'mcp_remote',
 	},
 	wf_eric: {
 		displayName: 'Eric Unger',
@@ -139,6 +143,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeUsername: 'acct_wf_eric',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
+		claudeConnectionMode: 'mcp_remote',
 	},
 	wf_vicki: {
 		displayName: 'Vicki Chen',
@@ -147,6 +152,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeUsername: 'acct_wf_vicki',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
+		claudeConnectionMode: 'mcp_remote',
 	},
 	wf_mariana: {
 		displayName: 'Mariana Segura',
@@ -155,6 +161,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeUsername: 'acct_wf_mariana',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
+		claudeConnectionMode: 'mcp_remote',
 	},
 	wf_micah: {
 		displayName: 'Micah Johnson',
@@ -163,6 +170,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeUsername: 'acct_wf_micah',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 		credentialSource: REVIEWER_LANE_CREDENTIAL_SOURCE,
+		claudeConnectionMode: 'mcp_remote',
 	},
 };
 
@@ -234,7 +242,14 @@ async function buildLegacyAssignment(
 		workspaceAccountId,
 		toolkitProfile,
 		allowedToolPrefixes: buildComposioAllowedToolPrefixes(toolkitProfile),
+		claudeConnectionMode: lane.claudeConnectionMode ?? 'direct_http',
 	};
+}
+
+function resolveClaudeConnectionModeFromMetadata(
+	metadata: Record<string, unknown>,
+): 'direct_http' | 'mcp_remote' {
+	return metadata.claude_connection_mode === 'mcp_remote' ? 'mcp_remote' : 'direct_http';
 }
 
 function buildLaneAssignment(
@@ -271,6 +286,7 @@ function buildLaneAssignment(
 		workspaceAccountId: lane.workspace_account_id ?? input.workspaceAccountId ?? input.accountId,
 		toolkitProfile: parseJsonArray(lane.toolkit_profile_json),
 		allowedToolPrefixes: normalizeAllowedToolPrefixesForAssignment(lane),
+		claudeConnectionMode: resolveClaudeConnectionModeFromMetadata(metadata),
 	};
 }
 

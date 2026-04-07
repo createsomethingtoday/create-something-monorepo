@@ -1,0 +1,100 @@
+{
+  "mcpServers": {
+    "wf-template-review-natalia": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://wf-template-review-natalia.mcp.createsomething.agency/mcp",
+        "--transport",
+        "http-only",
+        "--header",
+        "Authorization:${WF_TEMPLATE_REVIEW_NATALIA_AUTH_HEADER}",
+        "--silent"
+      ],
+      "env": {
+        "WF_TEMPLATE_REVIEW_NATALIA_AUTH_HEADER": "Bearer PASTE_NATALIA_REVIEWER_TOKEN_HERE"
+      }
+    },
+    "wf-template-review-sudiksha": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://wf-template-review-sudiksha.mcp.createsomething.agency/mcp",
+        "--transport",
+        "http-only",
+        "--header",
+        "Authorization:${WF_TEMPLATE_REVIEW_SUDIKSHA_AUTH_HEADER}",
+        "--silent"
+      ],
+      "env": {
+        "WF_TEMPLATE_REVIEW_SUDIKSHA_AUTH_HEADER": "Bearer PASTE_SUDIKSHA_REVIEWER_TOKEN_HERE"
+      }
+    },
+    "wf-template-review-eric": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://wf-template-review-eric.mcp.createsomething.agency/mcp",
+        "--transport",
+        "http-only",
+        "--header",
+        "Authorization:${WF_TEMPLATE_REVIEW_ERIC_AUTH_HEADER}",
+        "--silent"
+      ],
+      "env": {
+        "WF_TEMPLATE_REVIEW_ERIC_AUTH_HEADER": "Bearer PASTE_ERIC_REVIEWER_TOKEN_HERE"
+      }
+    },
+    "wf-template-review-vicki": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://wf-template-review-vicki.mcp.createsomething.agency/mcp",
+        "--transport",
+        "http-only",
+        "--header",
+        "Authorization:${WF_TEMPLATE_REVIEW_VICKI_AUTH_HEADER}",
+        "--silent"
+      ],
+      "env": {
+        "WF_TEMPLATE_REVIEW_VICKI_AUTH_HEADER": "Bearer PASTE_VICKI_REVIEWER_TOKEN_HERE"
+      }
+    },
+    "wf-template-review-mariana": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://wf-template-review-mariana.mcp.createsomething.agency/mcp",
+        "--transport",
+        "http-only",
+        "--header",
+        "Authorization:${WF_TEMPLATE_REVIEW_MARIANA_AUTH_HEADER}",
+        "--silent"
+      ],
+      "env": {
+        "WF_TEMPLATE_REVIEW_MARIANA_AUTH_HEADER": "Bearer PASTE_MARIANA_REVIEWER_TOKEN_HERE"
+      }
+    },
+    "wf-template-review-micah": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://wf-template-review-micah.mcp.createsomething.agency/mcp",
+        "--transport",
+        "http-only",
+        "--header",
+        "Authorization:${WF_TEMPLATE_REVIEW_MICAH_AUTH_HEADER}",
+        "--silent"
+      ],
+      "env": {
+        "WF_TEMPLATE_REVIEW_MICAH_AUTH_HEADER": "Bearer PASTE_MICAH_REVIEWER_TOKEN_HERE"
+      }
+    }
+  }
+}
