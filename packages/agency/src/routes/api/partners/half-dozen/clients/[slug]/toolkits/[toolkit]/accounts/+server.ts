@@ -4,6 +4,7 @@ import {
 	HALF_DOZEN_PARTNER_KEY,
 	PartnerAuthHttpError,
 	authorizePartnerToolkitAdminAction,
+	getComposioClient,
 	defaultToolkitComposioUserId,
 	getPartnerClientBySlug,
 	normalizePartnerSlug,
@@ -15,6 +16,11 @@ import {
 	type PartnerAuthToolkitAccountRow,
 	type PartnerAuthToolkitPinRow,
 } from '$lib/server/partner-auth';
+import {
+	hydrateToolkitAccounts,
+	resolveToolkitAccountUpsert,
+	type PartnerToolkitAccountStatusDeps,
+} from '$lib/server/partner-toolkit-account-core';
 
 interface CreateToolkitAccountBody {
 	account_slug?: string;
@@ -66,6 +72,11 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 		)
 			.bind(client.id, toolkit)
 			.all<PartnerAuthToolkitPinRow>();
+		const hydratedAccounts = await hydrateToolkitAccounts(createToolkitAccountStatusDeps(env), {
+			db: env.DB,
+			partnerClientId: client.id,
+			toolkit,
+		});
 
 		return json({
 			client: {
@@ -75,23 +86,7 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 			},
 			toolkit,
 			auth_config_id: resolveAuthConfigId(env, toolkit),
-			accounts: (accounts.results ?? []).map((row) => ({
-				id: row.id,
-				account_slug: row.account_slug,
-				display_label: row.display_label,
-				composio_user_id: row.composio_user_id,
-				auth_config_id: row.auth_config_id,
-				connected_account_id: row.connected_account_id,
-				connection_status: row.connection_status,
-				status: row.status,
-				sync_enabled: Boolean(row.sync_enabled),
-				last_checked_at: row.last_checked_at,
-				connected_at: row.connected_at,
-				disabled_at: row.disabled_at,
-				metadata: parseJsonObject(row.metadata_json),
-				created_at: row.created_at,
-				updated_at: row.updated_at,
-			})),
+			accounts: hydratedAccounts,
 			pins: (pins.results ?? []).map((row) => ({
 				tool_name: row.tool_name,
 				account_slug: row.account_slug,
@@ -166,24 +161,34 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			);
 		}
 
-		const displayLabel = body?.display_label?.trim() || existing?.display_label || accountSlug;
-		const syncEnabled =
-			typeof body?.sync_enabled === 'boolean' ? body.sync_enabled : Boolean(existing?.sync_enabled ?? 1);
+		const metadata =
+			body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {};
+		const resolved = resolveToolkitAccountUpsert({
+			existing,
+			accountSlug,
+			actor,
+			displayLabel: body?.display_label,
+			syncEnabled: body?.sync_enabled,
+			metadata,
+			parseJsonObject,
+		});
 		const composioUserId =
 			existing?.composio_user_id || defaultToolkitComposioUserId(client.slug, toolkit, accountSlug);
-		const metadata = {
-			...parseJsonObject(existing?.metadata_json),
-			...(body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {}),
-			last_updated_by: actor,
-		};
 
 		if (existing) {
 			await env.DB.prepare(
 				`UPDATE partner_auth_toolkit_accounts
-				 SET display_label = ?, auth_config_id = ?, sync_enabled = ?, metadata_json = ?, updated_at = datetime('now')
+				 SET display_label = ?, auth_config_id = ?, sync_enabled = ?, status = 'active',
+				     disabled_at = NULL, metadata_json = ?, updated_at = datetime('now')
 				 WHERE id = ?`
 			)
-				.bind(displayLabel, authConfigId, syncEnabled ? 1 : 0, JSON.stringify(metadata), existing.id)
+				.bind(
+					resolved.displayLabel,
+					authConfigId,
+					resolved.syncEnabled ? 1 : 0,
+					JSON.stringify(resolved.metadata),
+					existing.id,
+				)
 				.run();
 		} else {
 			await env.DB.prepare(
@@ -197,11 +202,11 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 					client.id,
 					toolkit,
 					accountSlug,
-					displayLabel,
+					resolved.displayLabel,
 					composioUserId,
 					authConfigId,
-					syncEnabled ? 1 : 0,
-					JSON.stringify(metadata)
+					resolved.syncEnabled ? 1 : 0,
+					JSON.stringify(resolved.metadata)
 				)
 				.run();
 		}
@@ -218,7 +223,11 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				accountSlug,
 				existing ? 'account_updated' : 'account_created',
 				actor,
-				JSON.stringify({ auth_config_id: authConfigId, sync_enabled: syncEnabled })
+				JSON.stringify({
+					auth_config_id: authConfigId,
+					sync_enabled: resolved.syncEnabled,
+					reactivated: resolved.reactivated,
+				})
 			)
 			.run();
 
@@ -226,9 +235,12 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			client_slug: client.slug,
 			toolkit,
 			account_slug: accountSlug,
+			display_label: resolved.displayLabel,
 			composio_user_id: composioUserId,
 			auth_config_id: authConfigId,
-			sync_enabled: syncEnabled,
+			sync_enabled: resolved.syncEnabled,
+			status: resolved.status,
+			reactivated: resolved.reactivated,
 			policy: authz.policy,
 		});
 	} catch (error) {
@@ -242,3 +254,75 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		);
 	}
 };
+
+function createToolkitAccountStatusDeps(env: App.Platform['env']): PartnerToolkitAccountStatusDeps {
+	const listConnectedAccounts = createConnectedAccountLister(env);
+	return {
+		listToolkitAccounts: async (db, partnerClientId, toolkit) => {
+			const result = await db
+				.prepare(
+					`SELECT * FROM partner_auth_toolkit_accounts
+					 WHERE partner_client_id = ? AND toolkit = ?
+					 ORDER BY account_slug ASC`
+				)
+				.bind(partnerClientId, toolkit)
+				.all<PartnerAuthToolkitAccountRow>();
+			return result.results ?? [];
+		},
+		listConnectedAccounts,
+		normalizeToolkitSlug,
+		parseJsonObject,
+		...(listConnectedAccounts
+			? {
+					updateToolkitAccountSyncState: async (db: D1Database, input: {
+						id: string;
+						connectedAccountId: string | null;
+						connectionStatus: string;
+						lastCheckedAt: string;
+						connectedAt: string | null;
+					}) => {
+						await db
+							.prepare(
+								`UPDATE partner_auth_toolkit_accounts
+								 SET connected_account_id = ?,
+								     connection_status = ?,
+								     last_checked_at = ?,
+								     connected_at = ?,
+								     updated_at = datetime('now')
+								 WHERE id = ?`
+							)
+							.bind(
+								input.connectedAccountId,
+								input.connectionStatus,
+								input.lastCheckedAt,
+								input.connectedAt,
+								input.id,
+							)
+							.run();
+					},
+				}
+			: {}),
+	};
+}
+
+function createConnectedAccountLister(
+	env: App.Platform['env']
+): PartnerToolkitAccountStatusDeps['listConnectedAccounts'] {
+	if (!env?.COMPOSIO_API_KEY?.trim()) {
+		return undefined;
+	}
+
+	return async (userIds: string[]) => {
+		if (userIds.length === 0) {
+			return [];
+		}
+
+		const composio = getComposioClient(env);
+		const response = await composio.connectedAccounts.list({ userIds });
+		return Array.isArray((response as { items?: unknown[] }).items)
+			? ((response as { items: unknown[] }).items as any[])
+			: Array.isArray(response)
+				? (response as any[])
+				: [];
+	};
+}

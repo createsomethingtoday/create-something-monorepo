@@ -4,6 +4,7 @@ import {
 	HALF_DOZEN_PARTNER_KEY,
 	PartnerAuthHttpError,
 	authorizePartnerToolkitAdminAction,
+	getComposioClient,
 	getPartnerClientBySlug,
 	normalizePartnerSlug,
 	normalizeToolkitSlug,
@@ -13,6 +14,10 @@ import {
 	type PartnerAuthToolkitAccountRow,
 	type PartnerAuthToolkitPinRow,
 } from '$lib/server/partner-auth';
+import {
+	hydrateToolkitAccount,
+	type PartnerToolkitAccountStatusDeps,
+} from '$lib/server/partner-toolkit-account-core';
 
 interface PinAccountBody {
 	tool_name?: string;
@@ -68,6 +73,21 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		if (account.status !== 'active') {
 			return json({ error: 'invalid_state', message: 'Only active accounts can be pinned.' }, { status: 409 });
 		}
+		const hydratedAccount = await hydrateToolkitAccount(createToolkitAccountStatusDeps(env), {
+			db: env.DB,
+			partnerClientId: client.id,
+			toolkit,
+			accountSlug,
+		});
+		if (!hydratedAccount?.connected) {
+			return json(
+				{
+					error: 'invalid_state',
+					message: `Workspace "${accountSlug}" is not connected. Issue a connect link and complete ${toolkit} auth before pinning.`,
+				},
+				{ status: 409 }
+			);
+		}
 
 		const existing = await env.DB.prepare(
 			`SELECT * FROM partner_auth_toolkit_pins
@@ -119,7 +139,8 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			client_slug: client.slug,
 			toolkit,
 			tool_name: toolName,
-			account_slug: accountSlug,
+			account_slug: hydratedAccount.account_slug,
+			connection_status: hydratedAccount.connection_status,
 			policy: authz.policy,
 		});
 	} catch (error) {
@@ -133,3 +154,75 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		);
 	}
 };
+
+function createToolkitAccountStatusDeps(env: App.Platform['env']): PartnerToolkitAccountStatusDeps {
+	const listConnectedAccounts = createConnectedAccountLister(env);
+	return {
+		listToolkitAccounts: async (db, partnerClientId, toolkit) => {
+			const result = await db
+				.prepare(
+					`SELECT * FROM partner_auth_toolkit_accounts
+					 WHERE partner_client_id = ? AND toolkit = ?
+					 ORDER BY account_slug ASC`
+				)
+				.bind(partnerClientId, toolkit)
+				.all<PartnerAuthToolkitAccountRow>();
+			return result.results ?? [];
+		},
+		listConnectedAccounts,
+		normalizeToolkitSlug,
+		parseJsonObject,
+		...(listConnectedAccounts
+			? {
+					updateToolkitAccountSyncState: async (db: D1Database, input: {
+						id: string;
+						connectedAccountId: string | null;
+						connectionStatus: string;
+						lastCheckedAt: string;
+						connectedAt: string | null;
+					}) => {
+						await db
+							.prepare(
+								`UPDATE partner_auth_toolkit_accounts
+								 SET connected_account_id = ?,
+								     connection_status = ?,
+								     last_checked_at = ?,
+								     connected_at = ?,
+								     updated_at = datetime('now')
+								 WHERE id = ?`
+							)
+							.bind(
+								input.connectedAccountId,
+								input.connectionStatus,
+								input.lastCheckedAt,
+								input.connectedAt,
+								input.id,
+							)
+							.run();
+					},
+				}
+			: {}),
+	};
+}
+
+function createConnectedAccountLister(
+	env: App.Platform['env']
+): PartnerToolkitAccountStatusDeps['listConnectedAccounts'] {
+	if (!env?.COMPOSIO_API_KEY?.trim()) {
+		return undefined;
+	}
+
+	return async (userIds: string[]) => {
+		if (userIds.length === 0) {
+			return [];
+		}
+
+		const composio = getComposioClient(env);
+		const response = await composio.connectedAccounts.list({ userIds });
+		return Array.isArray((response as { items?: unknown[] }).items)
+			? ((response as { items: unknown[] }).items as any[])
+			: Array.isArray(response)
+				? (response as any[])
+				: [];
+	};
+}
