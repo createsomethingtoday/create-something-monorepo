@@ -7,6 +7,7 @@ export interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID: string;
   AIRTABLE_ASSETS_TABLE_ID?: string;
+  AIRTABLE_CREATORS_TABLE_ID?: string;
   AIRTABLE_STYLES_TABLE_ID?: string;
   AIRTABLE_CHILD_CATEGORIES_TABLE_ID?: string;
   AIRTABLE_TAGS_TABLE_ID?: string;
@@ -25,6 +26,11 @@ export interface AirtableAttachment {
   id?: string;
   url: string;
   filename?: string;
+}
+
+export interface AirtableUrlValue {
+  label?: string;
+  url?: string;
 }
 
 export interface AirtableRecord<TFields extends Record<string, unknown> = Record<string, unknown>> {
@@ -65,14 +71,27 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '🥞💲Template Price Filter (🏗️ only)'?: number;
   '🚀📅Published Date'?: string;
   '🥞CMS Slug (formula)'?: string;
+  '🎨Creator'?: string[];
   '🎨Creator Name'?: string;
+  '⚙️🎨Creator Record ID'?: string | string[];
   '🖼️Thumbnail Image'?: AirtableAttachment[];
   '🖼️Thumbnail Image (Secondary)'?: AirtableAttachment[];
   '🖼️Carousel Images'?: AirtableAttachment[];
+  '🕸️View Asset Listing'?: AirtableUrlValue | AirtableUrlValue[] | string;
+  '🕸️Template Profile Page '?: AirtableUrlValue | AirtableUrlValue[] | string;
   '🔗Preview Site URL'?: string;
   '🔗Listing URL'?: string;
   '🔗Website URL'?: string;
   '📅LMT'?: string;
+}
+
+export interface AirtableCreatorFields extends Record<string, unknown> {
+  '⚙️🎨Creator Record ID'?: string;
+  '🖼️Avatar (Primary)'?: AirtableAttachment[];
+  '🖼️Avatar (Secondary)'?: AirtableAttachment[];
+  '🖼️Avatar Alt Text'?: string;
+  '🔗Creator Profile (📚 only)'?: AirtableUrlValue | AirtableUrlValue[] | string;
+  '❓🔗Templates Page'?: AirtableUrlValue | AirtableUrlValue[] | string;
 }
 
 export interface LookupValue {
@@ -102,7 +121,11 @@ export interface TemplateDocumentInput {
   listingUrl: string | null;
   previewUrl: string | null;
   websiteUrl: string | null;
+  creatorRecordId: string | null;
   creatorName: string | null;
+  creatorProfileUrl: string | null;
+  creatorAvatarUrl: string | null;
+  creatorAvatarAlt: string | null;
   thumbnailImageUrl: string | null;
   thumbnailImageSecondaryUrl: string | null;
   carouselImageUrls: string[];
@@ -133,6 +156,25 @@ export interface TemplateDocumentInput {
   syncedAt: string;
 }
 
+export interface SearchHeadTermConceptBucketConfig {
+  id: string;
+  phrases: string[];
+  structuredPhrases?: string[];
+  requiredPhraseGroups?: string[][];
+}
+
+export interface SearchHeadTermProfileConfig {
+  id: string;
+  triggers: string[];
+  ftsPhrases: string[];
+  taxonomyPhrases: string[];
+  conceptBuckets?: SearchHeadTermConceptBucketConfig[];
+  corroborationPhrases?: string[];
+  corroborationPenaltyConcepts?: string[];
+  protectedSlotConceptCaps?: Record<string, number>;
+  protectedSlotCount?: number;
+}
+
 export interface SearchRankingConfig {
   textWeights: {
     name: number;
@@ -143,6 +185,15 @@ export interface SearchRankingConfig {
     styles: number;
     tags: number;
   };
+  conceptFieldWeights: {
+    name: number;
+    descriptionShort: number;
+    descriptionLong: number;
+    categoryGroups: number;
+    childCategories: number;
+    tags: number;
+  };
+  headTermProfiles: SearchHeadTermProfileConfig[];
   signalWeights: {
     text: number;
     popularity: number;
@@ -179,6 +230,12 @@ export interface SearchRankingConfig {
     creatorDiversityRerankMaxPages: number;
     creatorDiversityRerankPenalty: number;
     creatorDiversityRerankScoreTolerance: number;
+    headTermConceptRerankWindowSize: number;
+    headTermConceptRerankMaxPages: number;
+    headTermConceptRerankPenalty: number;
+    headTermConceptRerankScoreTolerance: number;
+    headTermConceptProtectedSlots: number;
+    headTermCorroborationPenalty: number;
     creatorTrackRecordMinTemplates: number;
     relaxedQueryMinTokens: number;
     relaxedQueryMaxTokens: number;
@@ -206,7 +263,10 @@ export interface SearchItem {
   url: string | null;
   preview_url: string | null;
   website_url: string | null;
+  creator_profile_url: string | null;
   creator_name: string | null;
+  creator_avatar_url: string | null;
+  creator_avatar_alt: string | null;
   thumbnail_image_url: string | null;
   thumbnail_image_secondary_url: string | null;
   price: number | null;
@@ -270,7 +330,11 @@ export interface DocumentRow {
   listing_url: string | null;
   preview_url: string | null;
   website_url: string | null;
+  creator_record_id: string | null;
   creator_name: string | null;
+  creator_profile_url: string | null;
+  creator_avatar_url: string | null;
+  creator_avatar_alt: string | null;
   thumbnail_image_url: string | null;
   thumbnail_image_secondary_url: string | null;
   carousel_image_urls_json: string;

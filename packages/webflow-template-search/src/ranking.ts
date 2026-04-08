@@ -1,4 +1,33 @@
-import type { Env, SearchRankingConfig } from './types.js';
+import { DEFAULT_SEARCH_CONCEPT_FIELD_WEIGHTS, DEFAULT_SEARCH_HEAD_TERM_PROFILES } from './head-terms.js';
+import type {
+  Env,
+  SearchHeadTermConceptBucketConfig,
+  SearchHeadTermProfileConfig,
+  SearchRankingConfig,
+} from './types.js';
+
+function cloneConceptBucket(bucket: SearchHeadTermConceptBucketConfig): SearchHeadTermConceptBucketConfig {
+  return {
+    id: bucket.id,
+    phrases: [...bucket.phrases],
+    structuredPhrases: bucket.structuredPhrases ? [...bucket.structuredPhrases] : undefined,
+    requiredPhraseGroups: bucket.requiredPhraseGroups?.map((group) => [...group]),
+  };
+}
+
+function cloneHeadTermProfile(profile: SearchHeadTermProfileConfig): SearchHeadTermProfileConfig {
+  return {
+    id: profile.id,
+    triggers: [...profile.triggers],
+    ftsPhrases: [...profile.ftsPhrases],
+    taxonomyPhrases: [...profile.taxonomyPhrases],
+    conceptBuckets: profile.conceptBuckets?.map(cloneConceptBucket),
+    corroborationPhrases: profile.corroborationPhrases ? [...profile.corroborationPhrases] : undefined,
+    corroborationPenaltyConcepts: profile.corroborationPenaltyConcepts ? [...profile.corroborationPenaltyConcepts] : undefined,
+    protectedSlotConceptCaps: profile.protectedSlotConceptCaps ? { ...profile.protectedSlotConceptCaps } : undefined,
+    protectedSlotCount: profile.protectedSlotCount,
+  };
+}
 
 const DEFAULT_SEARCH_RANKING_CONFIG: SearchRankingConfig = {
   textWeights: {
@@ -10,6 +39,15 @@ const DEFAULT_SEARCH_RANKING_CONFIG: SearchRankingConfig = {
     styles: 1.3,
     tags: 0.8,
   },
+  conceptFieldWeights: {
+    name: DEFAULT_SEARCH_CONCEPT_FIELD_WEIGHTS.name,
+    descriptionShort: DEFAULT_SEARCH_CONCEPT_FIELD_WEIGHTS.descriptionShort,
+    descriptionLong: DEFAULT_SEARCH_CONCEPT_FIELD_WEIGHTS.descriptionLong,
+    categoryGroups: DEFAULT_SEARCH_CONCEPT_FIELD_WEIGHTS.categoryGroups,
+    childCategories: DEFAULT_SEARCH_CONCEPT_FIELD_WEIGHTS.childCategories,
+    tags: DEFAULT_SEARCH_CONCEPT_FIELD_WEIGHTS.tags,
+  },
+  headTermProfiles: DEFAULT_SEARCH_HEAD_TERM_PROFILES.map(cloneHeadTermProfile),
   signalWeights: {
     text: 4.5,
     popularity: 0,
@@ -46,6 +84,12 @@ const DEFAULT_SEARCH_RANKING_CONFIG: SearchRankingConfig = {
     creatorDiversityRerankMaxPages: 2,
     creatorDiversityRerankPenalty: 0.25,
     creatorDiversityRerankScoreTolerance: 0.2,
+    headTermConceptRerankWindowSize: 96,
+    headTermConceptRerankMaxPages: 2,
+    headTermConceptRerankPenalty: 1,
+    headTermConceptRerankScoreTolerance: 0.5,
+    headTermConceptProtectedSlots: 5,
+    headTermCorroborationPenalty: 1.25,
     creatorTrackRecordMinTemplates: 2,
     relaxedQueryMinTokens: 3,
     relaxedQueryMaxTokens: 6,
@@ -62,6 +106,133 @@ function sanitizeNumber(value: unknown, fallback: number, minimum = 0, maximum =
   return Math.min(maximum, Math.max(minimum, value));
 }
 
+function sanitizeString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
+}
+
+function sanitizeStringArray(value: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(value)) return [...fallback];
+  const sanitized = value
+    .filter((entry): entry is string => typeof entry === 'string')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  return sanitized.length > 0 ? Array.from(new Set(sanitized)) : [...fallback];
+}
+
+function sanitizeNumberRecord(
+  value: unknown,
+  fallback: Record<string, number> | undefined,
+  minimum = 0,
+  maximum = 100_000,
+): Record<string, number> | undefined {
+  const object = asObject(value);
+  if (!object) return fallback ? { ...fallback } : undefined;
+
+  const sanitizedEntries = Object.entries(object)
+    .map(([key, entry]) => [key.trim(), sanitizeNumber(entry, Number.NaN, minimum, maximum)] as const)
+    .filter(([key, entry]) => key.length > 0 && Number.isFinite(entry));
+
+  if (sanitizedEntries.length === 0) return fallback ? { ...fallback } : undefined;
+  return Object.fromEntries(sanitizedEntries);
+}
+
+function sanitizeHeadTermConceptBucket(
+  value: unknown,
+  fallback?: SearchHeadTermConceptBucketConfig,
+): SearchHeadTermConceptBucketConfig | null {
+  const object = asObject(value);
+  if (!object) return fallback ? cloneConceptBucket(fallback) : null;
+
+  const id = sanitizeString(object.id, fallback?.id ?? '');
+  if (!id) return fallback ? cloneConceptBucket(fallback) : null;
+
+  return {
+    id,
+    phrases: sanitizeStringArray(object.phrases, fallback?.phrases ?? []),
+    structuredPhrases: sanitizeStringArray(object.structuredPhrases, fallback?.structuredPhrases ?? []),
+    requiredPhraseGroups: Array.isArray(object.requiredPhraseGroups)
+      ? object.requiredPhraseGroups
+          .map((group) => sanitizeStringArray(group, []))
+          .filter((group) => group.length > 0)
+      : fallback?.requiredPhraseGroups?.map((group) => [...group]),
+  };
+}
+
+function sanitizeHeadTermConceptBuckets(
+  value: unknown,
+  fallback: SearchHeadTermConceptBucketConfig[] | undefined,
+): SearchHeadTermConceptBucketConfig[] | undefined {
+  if (!Array.isArray(value)) return fallback?.map(cloneConceptBucket);
+
+  const fallbackBuckets = fallback?.map(cloneConceptBucket) ?? [];
+  const byId = new Map(fallbackBuckets.map((bucket) => [bucket.id, bucket]));
+  const order = fallbackBuckets.map((bucket) => bucket.id);
+
+  for (const entry of value) {
+    const object = asObject(entry);
+    const rawId = sanitizeString(object?.id, '');
+    const sanitized = sanitizeHeadTermConceptBucket(entry, rawId ? byId.get(rawId) : undefined);
+    if (!sanitized) continue;
+    byId.set(sanitized.id, sanitized);
+    if (!order.includes(sanitized.id)) order.push(sanitized.id);
+  }
+
+  return order.map((id) => byId.get(id)).filter((bucket): bucket is SearchHeadTermConceptBucketConfig => Boolean(bucket));
+}
+
+function sanitizeHeadTermProfile(
+  value: unknown,
+  fallback?: SearchHeadTermProfileConfig,
+): SearchHeadTermProfileConfig | null {
+  const object = asObject(value);
+  if (!object) return fallback ? cloneHeadTermProfile(fallback) : null;
+
+  const id = sanitizeString(object.id, fallback?.id ?? '');
+  if (!id) return fallback ? cloneHeadTermProfile(fallback) : null;
+
+  return {
+    id,
+    triggers: sanitizeStringArray(object.triggers, fallback?.triggers ?? []),
+    ftsPhrases: sanitizeStringArray(object.ftsPhrases, fallback?.ftsPhrases ?? []),
+    taxonomyPhrases: sanitizeStringArray(object.taxonomyPhrases, fallback?.taxonomyPhrases ?? []),
+    conceptBuckets: sanitizeHeadTermConceptBuckets(object.conceptBuckets, fallback?.conceptBuckets),
+    corroborationPhrases: sanitizeStringArray(object.corroborationPhrases, fallback?.corroborationPhrases ?? []),
+    corroborationPenaltyConcepts: sanitizeStringArray(
+      object.corroborationPenaltyConcepts,
+      fallback?.corroborationPenaltyConcepts ?? [],
+    ),
+    protectedSlotConceptCaps: sanitizeNumberRecord(object.protectedSlotConceptCaps, fallback?.protectedSlotConceptCaps),
+    protectedSlotCount:
+      typeof object.protectedSlotCount === 'number'
+        ? sanitizeNumber(object.protectedSlotCount, fallback?.protectedSlotCount ?? 0, 1, 100)
+        : fallback?.protectedSlotCount,
+  };
+}
+
+function sanitizeHeadTermProfiles(
+  value: unknown,
+  fallback: SearchHeadTermProfileConfig[],
+): SearchHeadTermProfileConfig[] {
+  const fallbackProfiles = fallback.map(cloneHeadTermProfile);
+  if (!Array.isArray(value)) return fallbackProfiles;
+
+  const byId = new Map(fallbackProfiles.map((profile) => [profile.id, profile]));
+  const order = fallbackProfiles.map((profile) => profile.id);
+
+  for (const entry of value) {
+    const object = asObject(entry);
+    const rawId = sanitizeString(object?.id, '');
+    const sanitized = sanitizeHeadTermProfile(entry, rawId ? byId.get(rawId) : undefined);
+    if (!sanitized) continue;
+    byId.set(sanitized.id, sanitized);
+    if (!order.includes(sanitized.id)) order.push(sanitized.id);
+  }
+
+  return order
+    .map((id) => byId.get(id))
+    .filter((profile): profile is SearchHeadTermProfileConfig => Boolean(profile));
+}
+
 export function getSearchRankingConfig(env: Pick<Env, 'SEARCH_RANKING_CONFIG_JSON'>): SearchRankingConfig {
   const raw = env.SEARCH_RANKING_CONFIG_JSON?.trim();
   if (!raw) return DEFAULT_SEARCH_RANKING_CONFIG;
@@ -72,6 +243,7 @@ export function getSearchRankingConfig(env: Pick<Env, 'SEARCH_RANKING_CONFIG_JSO
     if (!object) return DEFAULT_SEARCH_RANKING_CONFIG;
 
     const textWeights = asObject(object.textWeights);
+    const conceptFieldWeights = asObject(object.conceptFieldWeights);
     const signalWeights = asObject(object.signalWeights);
     const controls = asObject(object.controls);
 
@@ -97,6 +269,36 @@ export function getSearchRankingConfig(env: Pick<Env, 'SEARCH_RANKING_CONFIG_JSO
         styles: sanitizeNumber(textWeights?.styles, DEFAULT_SEARCH_RANKING_CONFIG.textWeights.styles),
         tags: sanitizeNumber(textWeights?.tags, DEFAULT_SEARCH_RANKING_CONFIG.textWeights.tags),
       },
+      conceptFieldWeights: {
+        name: sanitizeNumber(
+          conceptFieldWeights?.name,
+          DEFAULT_SEARCH_RANKING_CONFIG.conceptFieldWeights.name,
+        ),
+        descriptionShort: sanitizeNumber(
+          conceptFieldWeights?.descriptionShort,
+          DEFAULT_SEARCH_RANKING_CONFIG.conceptFieldWeights.descriptionShort,
+        ),
+        descriptionLong: sanitizeNumber(
+          conceptFieldWeights?.descriptionLong,
+          DEFAULT_SEARCH_RANKING_CONFIG.conceptFieldWeights.descriptionLong,
+        ),
+        categoryGroups: sanitizeNumber(
+          conceptFieldWeights?.categoryGroups,
+          DEFAULT_SEARCH_RANKING_CONFIG.conceptFieldWeights.categoryGroups,
+        ),
+        childCategories: sanitizeNumber(
+          conceptFieldWeights?.childCategories,
+          DEFAULT_SEARCH_RANKING_CONFIG.conceptFieldWeights.childCategories,
+        ),
+        tags: sanitizeNumber(
+          conceptFieldWeights?.tags,
+          DEFAULT_SEARCH_RANKING_CONFIG.conceptFieldWeights.tags,
+        ),
+      },
+      headTermProfiles: sanitizeHeadTermProfiles(
+        object.headTermProfiles,
+        DEFAULT_SEARCH_RANKING_CONFIG.headTermProfiles,
+      ),
       signalWeights: {
         text: sanitizeNumber(signalWeights?.text, DEFAULT_SEARCH_RANKING_CONFIG.signalWeights.text),
         popularity: sanitizeNumber(signalWeights?.popularity, DEFAULT_SEARCH_RANKING_CONFIG.signalWeights.popularity),
@@ -246,6 +448,42 @@ export function getSearchRankingConfig(env: Pick<Env, 'SEARCH_RANKING_CONFIG_JSO
           DEFAULT_SEARCH_RANKING_CONFIG.controls.creatorDiversityRerankScoreTolerance,
           0,
           10,
+        ),
+        headTermConceptRerankWindowSize: sanitizeNumber(
+          controls?.headTermConceptRerankWindowSize,
+          DEFAULT_SEARCH_RANKING_CONFIG.controls.headTermConceptRerankWindowSize,
+          1,
+          500,
+        ),
+        headTermConceptRerankMaxPages: sanitizeNumber(
+          controls?.headTermConceptRerankMaxPages,
+          DEFAULT_SEARCH_RANKING_CONFIG.controls.headTermConceptRerankMaxPages,
+          1,
+          20,
+        ),
+        headTermConceptRerankPenalty: sanitizeNumber(
+          controls?.headTermConceptRerankPenalty,
+          DEFAULT_SEARCH_RANKING_CONFIG.controls.headTermConceptRerankPenalty,
+          0,
+          100,
+        ),
+        headTermConceptRerankScoreTolerance: sanitizeNumber(
+          controls?.headTermConceptRerankScoreTolerance,
+          DEFAULT_SEARCH_RANKING_CONFIG.controls.headTermConceptRerankScoreTolerance,
+          0,
+          10,
+        ),
+        headTermConceptProtectedSlots: sanitizeNumber(
+          controls?.headTermConceptProtectedSlots,
+          DEFAULT_SEARCH_RANKING_CONFIG.controls.headTermConceptProtectedSlots,
+          1,
+          50,
+        ),
+        headTermCorroborationPenalty: sanitizeNumber(
+          controls?.headTermCorroborationPenalty,
+          DEFAULT_SEARCH_RANKING_CONFIG.controls.headTermCorroborationPenalty,
+          0,
+          100,
         ),
         creatorTrackRecordMinTemplates: sanitizeNumber(
           controls?.creatorTrackRecordMinTemplates,

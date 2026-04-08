@@ -1,5 +1,6 @@
 import type {
   AirtableAssetFields,
+  AirtableCreatorFields,
   AirtableListResponse,
   AirtablePageResult,
   AirtableRecord,
@@ -17,6 +18,7 @@ import {
 import { ensureStringArray, uniqueStrings } from './utils.js';
 
 const DEFAULT_ASSETS_TABLE_ID = 'tblRwzpWoLgE9MrUm';
+const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
 const DEFAULT_STYLES_TABLE_ID = 'tblG7E9LbQj0sBX0o';
 const DEFAULT_CHILD_CATEGORIES_TABLE_ID = 'tblWJXy3M6R8SeoFi';
 const DEFAULT_TAGS_TABLE_ID = 'tblb4969G7O75gVWV';
@@ -44,14 +46,27 @@ export const ASSET_FIELDS = [
   '🥞💲Template Price Filter (🏗️ only)',
   '🚀📅Published Date',
   '🥞CMS Slug (formula)',
+  '🎨Creator',
   '🎨Creator Name',
+  '⚙️🎨Creator Record ID',
   '🖼️Thumbnail Image',
   '🖼️Thumbnail Image (Secondary)',
   '🖼️Carousel Images',
+  '🕸️View Asset Listing',
+  '🕸️Template Profile Page ',
   '🔗Preview Site URL',
   '🔗Listing URL',
   '🔗Website URL',
   '📅LMT',
+];
+
+const CREATOR_FIELDS = [
+  '⚙️🎨Creator Record ID',
+  '🖼️Avatar (Primary)',
+  '🖼️Avatar (Secondary)',
+  '🖼️Avatar Alt Text',
+  '🔗Creator Profile (📚 only)',
+  '❓🔗Templates Page',
 ];
 
 function assertAirtableConfigured(env: Env): asserts env is Env & { AIRTABLE_API_KEY: string } {
@@ -189,6 +204,220 @@ export async function fetchModifiedAssetsSince(
     formula: buildModifiedAfterFormula(cursor),
     sortField: '📅LMT',
   });
+}
+
+function buildRecordIdsFormula(recordIds: string[]): string {
+  const clauses = recordIds.map((recordId) => `RECORD_ID()="${escapeFormulaString(recordId)}"`);
+  if (clauses.length === 0) return 'FALSE()';
+  return clauses.length === 1 ? clauses[0]! : `OR(${clauses.join(',')})`;
+}
+
+export async function fetchAssetImageUrlsByRecordIds(
+  env: Env,
+  recordIds: string[],
+): Promise<Map<string, { primary: string | null; secondary: string | null; carousel: string[] }>> {
+  const uniqueRecordIds = Array.from(new Set(recordIds.filter(Boolean)));
+  if (uniqueRecordIds.length === 0) return new Map();
+
+  const chunks: string[][] = [];
+  for (let index = 0; index < uniqueRecordIds.length; index += 50) {
+    chunks.push(uniqueRecordIds.slice(index, index + 50));
+  }
+
+  const records = (
+    await Promise.all(
+      chunks.map((chunk) =>
+        fetchAirtableRecords<AirtableAssetFields>(env, {
+          tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
+          fields: ['🖼️Thumbnail Image', '🖼️Thumbnail Image (Secondary)', '🖼️Carousel Images'],
+          formula: buildRecordIdsFormula(chunk),
+          pageSize: chunk.length,
+        }),
+      ),
+    )
+  ).flat();
+
+  return new Map(
+    records.map((record) => [
+      record.id,
+      {
+        primary: Array.isArray(record.fields['🖼️Thumbnail Image']) ? String(record.fields['🖼️Thumbnail Image']?.[0]?.url ?? '') || null : null,
+        secondary: Array.isArray(record.fields['🖼️Thumbnail Image (Secondary)'])
+          ? String(record.fields['🖼️Thumbnail Image (Secondary)']?.[0]?.url ?? '') || null
+          : null,
+        carousel: Array.isArray(record.fields['🖼️Carousel Images'])
+          ? record.fields['🖼️Carousel Images']
+              .map((entry) => String(entry?.url ?? ''))
+              .filter(Boolean)
+          : [],
+      },
+    ]),
+  );
+}
+
+function extractAssetCreatorRecordId(record: AirtableRecord<AirtableAssetFields>): string | null {
+  const formulaValue = record.fields['⚙️🎨Creator Record ID'];
+  if (typeof formulaValue === 'string') {
+    const trimmed = formulaValue.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+
+  if (Array.isArray(formulaValue)) {
+    const resolved = formulaValue.map((entry) => String(entry ?? '').trim()).find(Boolean);
+    if (resolved) return resolved;
+  }
+
+  const linkedCreatorIds = ensureStringArray(record.fields['🎨Creator']);
+  return linkedCreatorIds[0] ?? null;
+}
+
+function attachmentUrl(value: unknown): string | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const first = value[0] as { url?: string } | undefined;
+  return typeof first?.url === 'string' && first.url.length > 0 ? first.url : null;
+}
+
+function extractUrlValue(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const resolved = extractUrlValue(entry);
+      if (resolved) return resolved;
+    }
+    return null;
+  }
+
+  if (value && typeof value === 'object' && 'url' in value) {
+    const raw = (value as { url?: unknown }).url;
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    }
+  }
+
+  return null;
+}
+
+export interface AirtableCreatorMetadata {
+  recordId: string;
+  creatorRecordId: string | null;
+  profileUrl: string | null;
+  templatesPageUrl: string | null;
+  avatarPrimaryUrl: string | null;
+  avatarSecondaryUrl: string | null;
+  avatarAlt: string | null;
+}
+
+export interface AirtableAssetMetadata {
+  recordId: string;
+  listingUrl: string | null;
+  previewUrl: string | null;
+  websiteUrl: string | null;
+  creatorRecordId: string | null;
+  creatorName: string | null;
+  creatorProfileUrl: string | null;
+  thumbnailImageUrl: string | null;
+  thumbnailImageSecondaryUrl: string | null;
+}
+
+export async function fetchAssetMetadataByRecordIds(
+  env: Env,
+  recordIds: string[],
+): Promise<Map<string, AirtableAssetMetadata>> {
+  const uniqueRecordIds = Array.from(new Set(recordIds.filter(Boolean)));
+  if (uniqueRecordIds.length === 0) return new Map();
+
+  const chunks: string[][] = [];
+  for (let index = 0; index < uniqueRecordIds.length; index += 50) {
+    chunks.push(uniqueRecordIds.slice(index, index + 50));
+  }
+
+  const records = (
+    await Promise.all(
+      chunks.map((chunk) =>
+        fetchAirtableRecords<AirtableAssetFields>(env, {
+          tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
+          fields: [
+            '🎨Creator',
+            '🎨Creator Name',
+            '⚙️🎨Creator Record ID',
+            '🖼️Thumbnail Image',
+            '🖼️Thumbnail Image (Secondary)',
+            '🕸️View Asset Listing',
+            '🕸️Template Profile Page ',
+            '🔗Preview Site URL',
+            '🔗Listing URL',
+            '🔗Website URL',
+          ],
+          formula: buildRecordIdsFormula(chunk),
+          pageSize: chunk.length,
+        }),
+      ),
+    )
+  ).flat();
+
+  return new Map(
+    records.map((record) => [
+      record.id,
+      {
+        recordId: record.id,
+        listingUrl: extractUrlValue(record.fields['🕸️View Asset Listing']) ?? extractUrlValue(record.fields['🔗Listing URL']),
+        previewUrl: typeof record.fields['🔗Preview Site URL'] === 'string' ? record.fields['🔗Preview Site URL'] : null,
+        websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
+        creatorRecordId: extractAssetCreatorRecordId(record),
+        creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
+        creatorProfileUrl: extractUrlValue(record.fields['🕸️Template Profile Page ']),
+        thumbnailImageUrl: attachmentUrl(record.fields['🖼️Thumbnail Image']),
+        thumbnailImageSecondaryUrl: attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']),
+      },
+    ]),
+  );
+}
+
+export async function fetchCreatorMetadataByRecordIds(
+  env: Env,
+  recordIds: string[],
+): Promise<Map<string, AirtableCreatorMetadata>> {
+  const uniqueRecordIds = Array.from(new Set(recordIds.filter(Boolean)));
+  if (uniqueRecordIds.length === 0) return new Map();
+
+  const chunks: string[][] = [];
+  for (let index = 0; index < uniqueRecordIds.length; index += 50) {
+    chunks.push(uniqueRecordIds.slice(index, index + 50));
+  }
+
+  const records = (
+    await Promise.all(
+      chunks.map((chunk) =>
+        fetchAirtableRecords<AirtableCreatorFields>(env, {
+          tableId: env.AIRTABLE_CREATORS_TABLE_ID ?? DEFAULT_CREATORS_TABLE_ID,
+          fields: CREATOR_FIELDS,
+          formula: buildRecordIdsFormula(chunk),
+          pageSize: chunk.length,
+        }),
+      ),
+    )
+  ).flat();
+
+  return new Map(
+    records.map((record) => [
+      record.id,
+      {
+        recordId: record.id,
+        creatorRecordId:
+          typeof record.fields['⚙️🎨Creator Record ID'] === 'string' ? record.fields['⚙️🎨Creator Record ID'] : null,
+        profileUrl: extractUrlValue(record.fields['🔗Creator Profile (📚 only)']),
+        templatesPageUrl: extractUrlValue(record.fields['❓🔗Templates Page']),
+        avatarPrimaryUrl: attachmentUrl(record.fields['🖼️Avatar (Primary)']),
+        avatarSecondaryUrl: attachmentUrl(record.fields['🖼️Avatar (Secondary)']),
+        avatarAlt: typeof record.fields['🖼️Avatar Alt Text'] === 'string' ? record.fields['🖼️Avatar Alt Text'] : null,
+      },
+    ]),
+  );
 }
 
 export async function loadLookupMaps(env: Env): Promise<LookupMaps> {

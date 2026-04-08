@@ -32,7 +32,9 @@ function validateAdminToken(request: Request, env: Env): Response | null {
 async function handleSearch(request: Request, env: Env): Promise<Response> {
   const defaultPageSize = Number(env.DEFAULT_PAGE_SIZE ?? '24') || 24;
   const params = parseSearchParams(new URL(request.url), defaultPageSize);
-  return jsonResponse(request, env, await searchTemplates(env, params));
+  const response = jsonResponse(request, env, await searchTemplates(env, params));
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  return response;
 }
 
 async function handleManualSync(request: Request, env: Env, mode: 'full' | 'incremental'): Promise<Response> {

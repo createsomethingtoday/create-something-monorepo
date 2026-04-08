@@ -1,4 +1,9 @@
-import { fetchModifiedAssetsSince, fetchPublishedTemplateAssetsPage, loadLookupMaps } from './airtable.js';
+import {
+  fetchCreatorMetadataByRecordIds,
+  fetchModifiedAssetsSince,
+  fetchPublishedTemplateAssetsPage,
+  loadLookupMaps,
+} from './airtable.js';
 import {
   clearIndex,
   deleteSyncStateValue,
@@ -51,6 +56,16 @@ interface LookupCachePayload {
   tags: Array<{ id: string; name: string; slug: string }>;
 }
 
+interface CreatorMetadata {
+  recordId: string;
+  creatorRecordId: string | null;
+  profileUrl: string | null;
+  templatesPageUrl: string | null;
+  avatarPrimaryUrl: string | null;
+  avatarSecondaryUrl: string | null;
+  avatarAlt: string | null;
+}
+
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
 }
@@ -68,11 +83,53 @@ function attachmentUrls(value: unknown): string[] {
     .filter(Boolean);
 }
 
+function extractUrlValue(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const resolved = extractUrlValue(entry);
+      if (resolved) return resolved;
+    }
+    return null;
+  }
+
+  if (value && typeof value === 'object' && 'url' in value) {
+    const raw = (value as { url?: unknown }).url;
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    }
+  }
+
+  return null;
+}
+
+function extractCreatorRecordId(record: AirtableRecord<AirtableAssetFields>): string | null {
+  const formulaValue = record.fields['⚙️🎨Creator Record ID'];
+  if (typeof formulaValue === 'string') {
+    const trimmed = formulaValue.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+
+  if (Array.isArray(formulaValue)) {
+    const resolved = formulaValue.map((entry) => String(entry ?? '').trim()).find(Boolean);
+    if (resolved) return resolved;
+  }
+
+  const linkedCreatorIds = ensureStringArray(record.fields['🎨Creator']);
+  return linkedCreatorIds[0] ?? null;
+}
+
 function normalizeTemplateRecord(
   record: AirtableRecord<AirtableAssetFields>,
   lookups: LookupMaps,
   rankingConfig: SearchRankingConfig,
   syncedAt: string,
+  creatorMetadataById: Map<string, CreatorMetadata>,
 ): TemplateDocumentInput | null {
   if (!isPublishedTemplate(record)) return null;
 
@@ -108,15 +165,26 @@ function normalizeTemplateRecord(
   );
   const templateType =
     typeof record.fields['🥞Template Type (🏗️ only)'] === 'string' ? record.fields['🥞Template Type (🏗️ only)'] : null;
+  const creatorRecordId = extractCreatorRecordId(record);
+  const creatorMetadata = creatorRecordId ? creatorMetadataById.get(creatorRecordId) ?? null : null;
+  const creatorName = typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null;
 
   return {
     id: record.id,
     templateSlug,
     name,
-    listingUrl: typeof record.fields['🔗Listing URL'] === 'string' ? record.fields['🔗Listing URL'] : null,
+    listingUrl: extractUrlValue(record.fields['🕸️View Asset Listing']) ?? extractUrlValue(record.fields['🔗Listing URL']),
     previewUrl: typeof record.fields['🔗Preview Site URL'] === 'string' ? record.fields['🔗Preview Site URL'] : null,
     websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
-    creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
+    creatorRecordId,
+    creatorName,
+    creatorProfileUrl:
+      extractUrlValue(record.fields['🕸️Template Profile Page ']) ??
+      creatorMetadata?.templatesPageUrl ??
+      creatorMetadata?.profileUrl ??
+      null,
+    creatorAvatarUrl: creatorMetadata?.avatarPrimaryUrl ?? creatorMetadata?.avatarSecondaryUrl ?? null,
+    creatorAvatarAlt: creatorMetadata?.avatarAlt ?? creatorName,
     thumbnailImageUrl: attachmentUrl(record.fields['🖼️Thumbnail Image']),
     thumbnailImageSecondaryUrl: attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']),
     carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),
@@ -149,6 +217,15 @@ function normalizeTemplateRecord(
     sourceLastModifiedTime: typeof record.fields['📅LMT'] === 'string' ? record.fields['📅LMT'] : null,
     syncedAt,
   };
+}
+
+async function loadCreatorMetadataByAssetRecords(
+  env: Env,
+  records: Array<AirtableRecord<AirtableAssetFields>>,
+): Promise<Map<string, CreatorMetadata>> {
+  const creatorRecordIds = uniqueStrings(records.map((record) => extractCreatorRecordId(record) ?? '').filter(Boolean));
+  if (creatorRecordIds.length === 0) return new Map();
+  return fetchCreatorMetadataByRecordIds(env, creatorRecordIds);
 }
 
 function getFullSyncPageLimit(env: Env): number {
@@ -240,8 +317,9 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
 
   for (let pageIndex = 0; pageIndex < pageLimit; pageIndex += 1) {
     const page = await fetchPublishedTemplateAssetsPage(env, nextOffset, pageSize, startedAt);
+    const creatorMetadataById = await loadCreatorMetadataByAssetRecords(env, page.records);
     const documents = page.records
-      .map((record) => normalizeTemplateRecord(record, lookups, rankingConfig, startedAt))
+      .map((record) => normalizeTemplateRecord(record, lookups, rankingConfig, startedAt, creatorMetadataById))
       .filter((value): value is NonNullable<typeof value> => Boolean(value));
 
     if (documents.length > 0) {
@@ -306,11 +384,12 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   const startedAt = nowIso();
   const rankingConfig = getSearchRankingConfig(env);
   const [lookups, assets] = await Promise.all([loadLookupMapsCached(env), fetchModifiedAssetsSince(env, currentCursor)]);
+  const creatorMetadataById = await loadCreatorMetadataByAssetRecords(env, assets);
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
 
   for (const record of assets) {
-    const normalized = normalizeTemplateRecord(record, lookups, rankingConfig, startedAt);
+    const normalized = normalizeTemplateRecord(record, lookups, rankingConfig, startedAt, creatorMetadataById);
     if (normalized) {
       toUpsert.push(normalized);
     } else {

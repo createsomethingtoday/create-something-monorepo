@@ -1,3 +1,4 @@
+import { fetchAssetMetadataByRecordIds, fetchCreatorMetadataByRecordIds } from './airtable.js';
 import { lookupPublicSlugMap, resolveAlias } from './db.js';
 import { getSearchRankingConfig } from './ranking.js';
 import type {
@@ -7,6 +8,7 @@ import type {
   FacetStyleRow,
   FacetTypeRow,
   PillRow,
+  SearchHeadTermProfileConfig,
   SearchRankingConfig,
   SearchItem,
   SearchParams,
@@ -57,6 +59,10 @@ function uniqueStrings(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
+function normalizeQueryFocus(input: string): string {
+  return filterQueryTokens(tokenizeQuery(normalizeQueryWhitespace(input.toLowerCase()))).join(' ');
+}
+
 function buildSingularTokenVariant(token: string): string | null {
   if (token.length < 5) return null;
   if (token.endsWith('ies') && token.length > 5) return `${token.slice(0, -3)}y`;
@@ -99,9 +105,43 @@ function buildRelaxedFtsQueryFromTokens(tokens: string[]): string {
   return subsetQueries.length === 1 ? subsetQueries[0]! : subsetQueries.map((query) => `(${query})`).join(' OR ');
 }
 
+function buildFtsQueryClausesFromPhrases(phrases: string[]): string[] {
+  return uniqueStrings(
+    phrases
+      .map((phrase) => buildStrictFtsQueryFromTokens(filterQueryTokens(tokenizeQuery(phrase))))
+      .filter((query) => query !== '""'),
+  );
+}
+
+function joinFtsClausesWithOr(clauses: string[]): string {
+  const normalizedClauses = uniqueStrings(clauses.filter(Boolean));
+  if (normalizedClauses.length === 0) return '""';
+  if (normalizedClauses.length === 1) return normalizedClauses[0]!;
+  return normalizedClauses.map((clause) => `(${clause})`).join(' OR ');
+}
+
 function buildFtsQuery(input: string): string {
   const tokens = filterQueryTokens(tokenizeQuery(input));
   return buildStrictFtsQueryFromTokens(tokens);
+}
+
+type CuratedHeadTermExpansion = SearchHeadTermProfileConfig;
+function resolveCuratedHeadTermExpansion(
+  query: string,
+  headTermProfiles: SearchHeadTermProfileConfig[],
+): CuratedHeadTermExpansion | null {
+  const focus = normalizeQueryFocus(query);
+  return headTermProfiles.find((profile) => profile.triggers.some((trigger) => normalizeQueryFocus(trigger) === focus)) ?? null;
+}
+
+function buildEffectiveFtsQuery(
+  queryTokens: string[],
+  headTermExpansion: CuratedHeadTermExpansion | null,
+  useRelaxedBase = false,
+): string {
+  const baseQuery = useRelaxedBase ? buildRelaxedFtsQueryFromTokens(queryTokens) : buildStrictFtsQueryFromTokens(queryTokens);
+  if (!headTermExpansion) return baseQuery;
+  return joinFtsClausesWithOr([baseQuery, ...buildFtsQueryClausesFromPhrases(headTermExpansion.ftsPhrases)]);
 }
 
 function sortClause(sort: TemplateSort): string {
@@ -146,6 +186,7 @@ interface DocumentQueryWindow {
   queryLimit: number;
   sliceOffset: number;
   applyPageLocalCreatorDiversity: boolean;
+  applyHeadTermConceptDiversity: boolean;
 }
 
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
@@ -302,11 +343,17 @@ function buildNormalizedTitleExpression(column: string): string {
   return `' ' || trim(replace(replace(replace(replace(lower(${column}), '&', ' '), '-', ' '), '/', ' '), '''', '')) || ' '`;
 }
 
-function buildQueryIntentProfile(query: string, config: SearchRankingConfig): QueryIntentProfile {
+function buildQueryIntentProfile(
+  query: string,
+  config: SearchRankingConfig,
+  headTermExpansion: CuratedHeadTermExpansion | null = null,
+): QueryIntentProfile {
   const normalizedQuery = normalizeQueryWhitespace(query.toLowerCase());
   const tokens = filterQueryTokens(tokenizeQuery(normalizedQuery));
   const queryFocus = tokens.join(' ');
+  const isHeadTermDiscoveryQuery = Boolean(headTermExpansion);
   const isShortTitleQuery =
+    !isHeadTermDiscoveryQuery &&
     tokens.length > 0 &&
     tokens.length <= config.controls.shortQueryMaxTokens &&
     queryFocus.length <= config.controls.shortQueryMaxChars;
@@ -314,8 +361,9 @@ function buildQueryIntentProfile(query: string, config: SearchRankingConfig): Qu
   return {
     isShortTitleQuery,
     preferTaxonomyBuckets:
-      !isShortTitleQuery &&
-      (queryFocus.includes(' ') || queryFocus.length >= config.controls.taxonomyPrecedenceMinQueryLength),
+      isHeadTermDiscoveryQuery ||
+      (!isShortTitleQuery &&
+        (queryFocus.includes(' ') || queryFocus.length >= config.controls.taxonomyPrecedenceMinQueryLength)),
     textWeight:
       config.signalWeights.text * (isShortTitleQuery ? config.controls.shortQueryTextWeightMultiplier : 1),
     exactTitleWeight:
@@ -425,32 +473,43 @@ function buildCreatorDiversityOrderClause(
   return parts.join(', ');
 }
 
-function buildDocumentQueryWindow(params: SearchParams, config: SearchRankingConfig): DocumentQueryWindow {
+function buildDocumentQueryWindow(
+  params: SearchParams,
+  config: SearchRankingConfig,
+  headTermExpansion: CuratedHeadTermExpansion | null,
+): DocumentQueryWindow {
   const offset = (params.page - 1) * params.pageSize;
   const shouldApplyPageLocalCreatorDiversity =
     params.sort === 'popular' &&
     config.signalWeights.creatorDiversity > 0 &&
     params.page <= config.controls.creatorDiversityRerankMaxPages;
+  const shouldApplyHeadTermConceptDiversity =
+    params.sort === 'popular' &&
+    Boolean(headTermExpansion?.conceptBuckets?.length) &&
+    params.page <= config.controls.headTermConceptRerankMaxPages;
 
-  if (!shouldApplyPageLocalCreatorDiversity) {
+  if (!shouldApplyPageLocalCreatorDiversity && !shouldApplyHeadTermConceptDiversity) {
     return {
       queryOffset: offset,
       queryLimit: params.pageSize,
       sliceOffset: 0,
       applyPageLocalCreatorDiversity: false,
+      applyHeadTermConceptDiversity: false,
     };
   }
 
   const queryLimit = Math.max(
     params.page * params.pageSize,
-    config.controls.creatorDiversityRerankWindowSize,
+    shouldApplyPageLocalCreatorDiversity ? config.controls.creatorDiversityRerankWindowSize : 0,
+    shouldApplyHeadTermConceptDiversity ? config.controls.headTermConceptRerankWindowSize : 0,
   );
 
   return {
     queryOffset: 0,
     queryLimit,
     sliceOffset: offset,
-    applyPageLocalCreatorDiversity: true,
+    applyPageLocalCreatorDiversity: shouldApplyPageLocalCreatorDiversity,
+    applyHeadTermConceptDiversity: shouldApplyHeadTermConceptDiversity,
   };
 }
 
@@ -469,6 +528,154 @@ function shouldUseRelaxedFtsQuery(
 function getCreatorDiversityKey(row: DocumentRow): string {
   const creatorName = row.creator_name?.trim().toLowerCase();
   return creatorName && creatorName.length > 0 ? creatorName : row.id;
+}
+
+function normalizeConceptText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+interface HeadTermConceptSignals {
+  name: string;
+  descriptionShort: string;
+  descriptionLong: string;
+  categoryGroups: string[];
+  childCategories: string[];
+  tags: string[];
+}
+
+function buildHeadTermConceptSignals(row: DocumentRow): HeadTermConceptSignals {
+  return {
+    name: normalizeConceptText(row.name),
+    descriptionShort: normalizeConceptText(row.description_short),
+    descriptionLong: normalizeConceptText(row.description_long_text),
+    categoryGroups: uniqueStrings(parseJsonArray(row.category_groups_json).map((value) => normalizeConceptText(value))),
+    childCategories: uniqueStrings(parseJsonArray(row.child_categories_json).map((value) => normalizeConceptText(value))),
+    tags: uniqueStrings(parseJsonArray(row.tags_json).map((value) => normalizeConceptText(value))),
+  };
+}
+
+function getConceptPhraseWeight(phrase: string): number {
+  const normalizedPhrase = normalizeConceptText(phrase);
+  if (!normalizedPhrase) return 0;
+  return normalizedPhrase.includes(' ') ? 2 : 1;
+}
+
+function matchesConceptPhrase(text: string, phrase: string): boolean {
+  const normalizedPhrase = normalizeConceptText(phrase);
+  if (!normalizedPhrase) return false;
+  return (` ${text} `).includes(` ${normalizedPhrase} `);
+}
+
+function scoreConceptMatches(values: string[], phrases: string[], fieldWeight: number): number {
+  if (values.length === 0 || phrases.length === 0 || fieldWeight <= 0) return 0;
+
+  let score = 0;
+  for (const phrase of uniqueStrings(phrases.map((value) => normalizeConceptText(value)).filter(Boolean))) {
+    if (!values.some((value) => matchesConceptPhrase(value, phrase))) continue;
+    score += getConceptPhraseWeight(phrase) * fieldWeight;
+  }
+
+  return score;
+}
+
+function matchesAnyConceptPhrase(values: string[], phrases: string[]): boolean {
+  if (values.length === 0 || phrases.length === 0) return false;
+
+  return uniqueStrings(phrases.map((value) => normalizeConceptText(value)).filter(Boolean)).some((phrase) =>
+    values.some((value) => matchesConceptPhrase(value, phrase)),
+  );
+}
+
+function getHeadTermSignalCorpus(signals: HeadTermConceptSignals): string[] {
+  return [
+    signals.name,
+    signals.descriptionShort,
+    signals.descriptionLong,
+    ...signals.categoryGroups,
+    ...signals.childCategories,
+    ...signals.tags,
+  ].filter(Boolean);
+}
+
+function getHeadTermConceptKey(
+  row: DocumentRow,
+  rankingConfig: SearchRankingConfig,
+  headTermExpansion: CuratedHeadTermExpansion | null,
+  cache: Map<string, string | null>,
+): string | null {
+  if (!headTermExpansion?.conceptBuckets?.length) return null;
+  if (cache.has(row.id)) return cache.get(row.id) ?? null;
+
+  const signals = buildHeadTermConceptSignals(row);
+  const fieldWeights = rankingConfig.conceptFieldWeights;
+  let bestConceptKey: string | null = null;
+  let bestConceptScore = 0;
+  let bestStructuredScore = 0;
+  let bestSpecificity = 0;
+  const signalCorpus = getHeadTermSignalCorpus(signals);
+
+  for (const bucket of headTermExpansion.conceptBuckets) {
+    const requiredPhraseGroups = bucket.requiredPhraseGroups ?? [];
+    const hasRequiredGroups =
+      requiredPhraseGroups.length === 0 ||
+      requiredPhraseGroups.every((group) => matchesAnyConceptPhrase(signalCorpus, group));
+    if (!hasRequiredGroups) continue;
+
+    const structuredPhrases = uniqueStrings([...(bucket.structuredPhrases ?? []), ...bucket.phrases]);
+    const structuredScore =
+      scoreConceptMatches(signals.categoryGroups, structuredPhrases, fieldWeights.categoryGroups) +
+      scoreConceptMatches(signals.childCategories, structuredPhrases, fieldWeights.childCategories) +
+      scoreConceptMatches(signals.tags, structuredPhrases, fieldWeights.tags);
+    const textScore =
+      scoreConceptMatches([signals.name], bucket.phrases, fieldWeights.name) +
+      scoreConceptMatches([signals.descriptionShort], bucket.phrases, fieldWeights.descriptionShort) +
+      scoreConceptMatches([signals.descriptionLong], bucket.phrases, fieldWeights.descriptionLong);
+    const conceptScore = structuredScore + textScore;
+    const specificity = requiredPhraseGroups.length;
+
+    if (
+      conceptScore > bestConceptScore ||
+      (conceptScore === bestConceptScore &&
+        (structuredScore > bestStructuredScore ||
+          (structuredScore === bestStructuredScore && specificity > bestSpecificity)))
+    ) {
+      bestConceptScore = conceptScore;
+      bestStructuredScore = structuredScore;
+      bestSpecificity = specificity;
+      bestConceptKey = bucket.id;
+    }
+  }
+
+  cache.set(row.id, bestConceptKey);
+  return bestConceptKey;
+}
+
+function getHeadTermCorroborationScore(
+  row: DocumentRow,
+  rankingConfig: SearchRankingConfig,
+  headTermExpansion: CuratedHeadTermExpansion | null,
+  cache: Map<string, number>,
+): number {
+  if (!headTermExpansion?.corroborationPhrases?.length) return 0;
+  if (cache.has(row.id)) return cache.get(row.id) ?? 0;
+
+  const signals = buildHeadTermConceptSignals(row);
+  const fieldWeights = rankingConfig.conceptFieldWeights;
+  const corroborationScore =
+    scoreConceptMatches(signals.categoryGroups, headTermExpansion.corroborationPhrases, fieldWeights.categoryGroups) +
+    scoreConceptMatches(signals.childCategories, headTermExpansion.corroborationPhrases, fieldWeights.childCategories) +
+    scoreConceptMatches(signals.tags, headTermExpansion.corroborationPhrases, fieldWeights.tags) +
+    scoreConceptMatches([signals.name], headTermExpansion.corroborationPhrases, fieldWeights.name) +
+    scoreConceptMatches([signals.descriptionShort], headTermExpansion.corroborationPhrases, fieldWeights.descriptionShort) +
+    scoreConceptMatches([signals.descriptionLong], headTermExpansion.corroborationPhrases, fieldWeights.descriptionLong);
+
+  cache.set(row.id, corroborationScore);
+  return corroborationScore;
 }
 
 function getPageLocalBucketKey(row: DocumentRow, queryIntent: QueryIntentProfile, queryMode: boolean): string {
@@ -493,9 +700,8 @@ function rerankRowsForPageLocalCreatorDiversity(
   params: SearchParams,
   queryIntent: QueryIntentProfile,
   config: SearchRankingConfig,
-  sliceOffset: number,
 ): DocumentRow[] {
-  if (rows.length <= 1) return rows.slice(sliceOffset, sliceOffset + params.pageSize);
+  if (rows.length <= 1) return rows.slice();
 
   const visibleCount = rows.length;
   const selectedRows: DocumentRow[] = [];
@@ -580,7 +786,163 @@ function rerankRowsForPageLocalCreatorDiversity(
     }
   }
 
-  return selectedRows.slice(sliceOffset, sliceOffset + params.pageSize);
+  return selectedRows;
+}
+
+function rerankRowsForHeadTermConceptDiversity(
+  rows: DocumentRow[],
+  params: SearchParams,
+  queryIntent: QueryIntentProfile,
+  config: SearchRankingConfig,
+  headTermExpansion: CuratedHeadTermExpansion | null,
+): DocumentRow[] {
+  if (rows.length <= 1 || !headTermExpansion?.conceptBuckets?.length) return rows.slice();
+
+  const visibleCount = rows.length;
+  const selectedRows: DocumentRow[] = [];
+  const conceptKeyCache = new Map<string, string | null>();
+  const corroborationScoreCache = new Map<string, number>();
+  const penaltyConcepts = new Set(headTermExpansion.corroborationPenaltyConcepts ?? []);
+  const protectedSlotConceptCaps = headTermExpansion.protectedSlotConceptCaps ?? {};
+  const protectedSlotCount = headTermExpansion.protectedSlotCount ?? config.controls.headTermConceptProtectedSlots;
+  let cursor = 0;
+
+  while (cursor < visibleCount) {
+    const bucketKey = getPageLocalBucketKey(rows[cursor]!, queryIntent, Boolean(params.q));
+    const bucketRows: Array<{ row: DocumentRow; baseScore: number; originalIndex: number }> = [];
+
+    while (cursor < visibleCount && getPageLocalBucketKey(rows[cursor]!, queryIntent, Boolean(params.q)) === bucketKey) {
+      bucketRows.push({
+        row: rows[cursor]!,
+        baseScore: getBaseDiversificationScore(rows[cursor]!, cursor),
+        originalIndex: cursor,
+      });
+      cursor += 1;
+    }
+
+    const conceptCounts = new Map<string, number>();
+    const remaining = bucketRows.slice();
+
+    while (remaining.length > 0) {
+      const protectedSlotsActive = selectedRows.length < protectedSlotCount;
+      const unseenConceptCandidates = protectedSlotsActive
+        ? remaining.filter((entry) => {
+            const conceptKey = getHeadTermConceptKey(entry.row, config, headTermExpansion, conceptKeyCache);
+            if (!conceptKey) return false;
+            return !conceptCounts.has(conceptKey);
+          })
+        : [];
+      const prioritizeUnseenConcepts = unseenConceptCandidates.length > 0;
+
+      const findBestCandidateIndex = (requireUnseenConcept: boolean): number => {
+        let bestIndex = -1;
+        let bestScore = Number.NEGATIVE_INFINITY;
+
+        for (let index = 0; index < remaining.length; index += 1) {
+          const candidate = remaining[index]!;
+          const conceptKey = getHeadTermConceptKey(candidate.row, config, headTermExpansion, conceptKeyCache);
+          if (requireUnseenConcept && (!conceptKey || conceptCounts.has(conceptKey))) {
+            continue;
+          }
+          const repeatCount = conceptKey ? conceptCounts.get(conceptKey) ?? 0 : 0;
+          const conceptCap = conceptKey ? protectedSlotConceptCaps[conceptKey] : undefined;
+          if (
+            protectedSlotsActive &&
+            conceptKey &&
+            typeof conceptCap === 'number' &&
+            repeatCount >= conceptCap &&
+            remaining.some((entry) => {
+              const alternativeConceptKey = getHeadTermConceptKey(entry.row, config, headTermExpansion, conceptKeyCache);
+              if (!alternativeConceptKey || alternativeConceptKey === conceptKey) return false;
+              const alternativeCap = protectedSlotConceptCaps[alternativeConceptKey];
+              const alternativeCount = conceptCounts.get(alternativeConceptKey) ?? 0;
+              return typeof alternativeCap !== 'number' || alternativeCount < alternativeCap;
+            })
+          ) {
+            continue;
+          }
+          const corroborationScore = getHeadTermCorroborationScore(
+            candidate.row,
+            config,
+            headTermExpansion,
+            corroborationScoreCache,
+          );
+          let adjustedScore = candidate.baseScore;
+
+          if (conceptKey && penaltyConcepts.has(conceptKey) && corroborationScore <= 0) {
+            adjustedScore = adjustedScore / (1 + config.controls.headTermCorroborationPenalty);
+          }
+
+          if (conceptKey && repeatCount > 0) {
+            const hasUnseenConceptAlternative = remaining.some((entry) => {
+              const alternativeConceptKey = getHeadTermConceptKey(entry.row, config, headTermExpansion, conceptKeyCache);
+              if (!alternativeConceptKey) return false;
+              return alternativeConceptKey !== conceptKey && !conceptCounts.has(alternativeConceptKey);
+            });
+
+            if (protectedSlotsActive && hasUnseenConceptAlternative) {
+              adjustedScore = adjustedScore / (1 + (repeatCount + 1) * config.controls.headTermConceptRerankPenalty);
+            }
+
+            const bestDifferentConcept = remaining.reduce<{
+              baseScore: number;
+              row: DocumentRow | null;
+            }>(
+              (best, entry) => {
+                if (getHeadTermConceptKey(entry.row, config, headTermExpansion, conceptKeyCache) === conceptKey) return best;
+                if (entry.baseScore > best.baseScore) {
+                  return { baseScore: entry.baseScore, row: entry.row };
+                }
+                return best;
+              },
+              { baseScore: Number.NEGATIVE_INFINITY, row: null },
+            );
+
+            const shouldApplyPenalty =
+              Number.isFinite(bestDifferentConcept.baseScore) &&
+              candidate.baseScore <=
+                bestDifferentConcept.baseScore * (1 + config.controls.headTermConceptRerankScoreTolerance);
+
+            if (shouldApplyPenalty) {
+              adjustedScore = Math.min(
+                adjustedScore,
+                candidate.baseScore / (1 + repeatCount * config.controls.headTermConceptRerankPenalty),
+              );
+            }
+          }
+
+          if (
+            adjustedScore > bestScore ||
+            (adjustedScore === bestScore &&
+              (bestIndex === -1 || candidate.originalIndex < remaining[bestIndex]!.originalIndex))
+          ) {
+            bestScore = adjustedScore;
+            bestIndex = index;
+          }
+        }
+
+        return bestIndex;
+      };
+
+      let bestIndex = findBestCandidateIndex(prioritizeUnseenConcepts);
+      if (bestIndex === -1 && prioritizeUnseenConcepts) {
+        bestIndex = findBestCandidateIndex(false);
+      }
+      if (bestIndex === -1) {
+        bestIndex = 0;
+      }
+
+      const [chosen] = remaining.splice(bestIndex, 1);
+      if (!chosen) break;
+      const conceptKey = getHeadTermConceptKey(chosen.row, config, headTermExpansion, conceptKeyCache);
+      if (conceptKey) {
+        conceptCounts.set(conceptKey, (conceptCounts.get(conceptKey) ?? 0) + 1);
+      }
+      selectedRows.push(chosen.row);
+    }
+  }
+
+  return selectedRows;
 }
 
 function buildPopularScoreExpression(
@@ -630,6 +992,8 @@ async function loadDocumentRows(
   params: SearchParams,
   queryWindow: DocumentQueryWindow,
   rankingConfig: SearchRankingConfig,
+  queryIntent: QueryIntentProfile,
+  headTermExpansion: CuratedHeadTermExpansion | null,
 ): Promise<{ results: DocumentRow[] }> {
   const rawNormalizedQuery = normalizeQueryWhitespace((params.q ?? '').toLowerCase());
   const normalizedQueryTokens = filterQueryTokens(tokenizeQuery(rawNormalizedQuery));
@@ -643,10 +1007,14 @@ async function loadDocumentRows(
     .map((variants) =>
       variants.map((variant) => buildQueryLikePattern(variant)).filter((value): value is string => Boolean(value)),
     );
+  const headTermTaxonomyPatterns = headTermExpansion
+    ? headTermExpansion.taxonomyPhrases
+        .map((phrase) => buildQueryLikePattern(phrase))
+        .filter((value): value is string => Boolean(value))
+    : [];
   const queryPrefixPatterns = queryTerms.map((term) => buildQueryPrefixPattern(term));
   const queryWordPatterns = queryTerms.map((term) => buildQueryWordPattern(term));
   const queryHasText = normalizedQuery.length > 0;
-  const queryIntent = buildQueryIntentProfile(rawNormalizedQuery, rankingConfig);
   const descriptionQueryOccurrenceExpression = queryHasText
     ? `(
         ${buildQueryOccurrenceExpression('d.description_short', normalizedQuery.length)}
@@ -663,8 +1031,29 @@ async function loadDocumentRows(
     ? `(
         ${buildTokenCoverageExpression('d.category_groups_text', queryTokenLikePatternSets)}
         + ${buildTokenCoverageExpression('d.child_categories_text', queryTokenLikePatternSets, 2)}
+        + ${
+          headTermTaxonomyPatterns.length > 0
+            ? `CASE
+                WHEN (${buildAnyLikeCondition('d.category_groups_text', headTermTaxonomyPatterns.length)} OR ${buildAnyLikeCondition(
+                    'd.child_categories_text',
+                    headTermTaxonomyPatterns.length,
+                  )})
+                THEN 1
+                ELSE 0
+              END`
+            : '0'
+        }
       )`
-    : '0';
+    : headTermTaxonomyPatterns.length > 0
+      ? `CASE
+          WHEN (${buildAnyLikeCondition('d.category_groups_text', headTermTaxonomyPatterns.length)} OR ${buildAnyLikeCondition(
+              'd.child_categories_text',
+              headTermTaxonomyPatterns.length,
+            )})
+          THEN 1
+          ELSE 0
+        END`
+      : '0';
   const intentQueryCoverageExpression = queryTokenLikePatternSets.length > 0
     ? buildDistinctTokenCoverageExpression(
         ['d.name', 'd.category_groups_text', 'd.child_categories_text'],
@@ -689,6 +1078,9 @@ async function loadDocumentRows(
       ...flatTokenPatterns,
       ...flatTokenPatterns,
     );
+  }
+  if (headTermTaxonomyPatterns.length > 0) {
+    queryMatchBinds.push(...headTermTaxonomyPatterns, ...headTermTaxonomyPatterns);
   }
   if (queryHasText) {
     const intentCoverageTokenPatterns = queryTokenLikePatternSets.flatMap((patterns) => [
@@ -969,12 +1361,15 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   const rankingConfig = getSearchRankingConfig(env);
   const normalizedQuery = normalizeQueryWhitespace((params.q ?? '').toLowerCase());
   const queryTokens = filterQueryTokens(tokenizeQuery(normalizedQuery));
-  let effectiveFtsQuery = params.q ? buildStrictFtsQueryFromTokens(queryTokens) : null;
+  const headTermExpansion = params.q
+    ? resolveCuratedHeadTermExpansion(normalizedQuery, rankingConfig.headTermProfiles)
+    : null;
+  let effectiveFtsQuery = params.q ? buildEffectiveFtsQuery(queryTokens, headTermExpansion) : null;
   let sqlParts = buildSqlParts(params, effectiveFtsQuery ? { ftsQuery: effectiveFtsQuery } : {});
   let totalItems = await getTotalCount(env.DB, sqlParts);
 
   if (effectiveFtsQuery && shouldUseRelaxedFtsQuery(queryTokens, totalItems, rankingConfig)) {
-    const relaxedFtsQuery = buildRelaxedFtsQueryFromTokens(queryTokens);
+    const relaxedFtsQuery = buildEffectiveFtsQuery(queryTokens, headTermExpansion, true);
     if (relaxedFtsQuery !== effectiveFtsQuery) {
       effectiveFtsQuery = relaxedFtsQuery;
       sqlParts = buildSqlParts(params, { ftsQuery: effectiveFtsQuery });
@@ -982,25 +1377,57 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     }
   }
 
-  const queryWindow = buildDocumentQueryWindow(params, rankingConfig);
-  const queryIntent = buildQueryIntentProfile(normalizedQuery, rankingConfig);
+  const queryWindow = buildDocumentQueryWindow(params, rankingConfig, headTermExpansion);
+  const queryIntent = buildQueryIntentProfile(normalizedQuery, rankingConfig, headTermExpansion);
 
   const [rows, styleFacets, typeFacets, pills] = await Promise.all([
-    loadDocumentRows(env, sqlParts, params, queryWindow, rankingConfig),
+    loadDocumentRows(env, sqlParts, params, queryWindow, rankingConfig, queryIntent, headTermExpansion),
     loadFacetStyles(env, params, effectiveFtsQuery),
     loadFacetTypes(env, params, effectiveFtsQuery),
     loadSubcategoryPills(env, params, effectiveFtsQuery),
   ]);
 
   const loadedRows = rows.results ?? [];
-  const rowResults = queryWindow.applyPageLocalCreatorDiversity
-    ? rerankRowsForPageLocalCreatorDiversity(loadedRows, params, queryIntent, rankingConfig, queryWindow.sliceOffset)
+  const creatorRerankedRows = queryWindow.applyPageLocalCreatorDiversity
+    ? rerankRowsForPageLocalCreatorDiversity(loadedRows, params, queryIntent, rankingConfig)
     : loadedRows;
-  const childSlugMap = await lookupPublicSlugMap(
-    env.DB,
-    'child_category',
-    rowResults.flatMap((row) => parseJsonArray(row.child_category_slugs_json)).concat(pills.map((pill) => pill.slug)),
-  );
+  const conceptRerankedRows = queryWindow.applyHeadTermConceptDiversity
+    ? rerankRowsForHeadTermConceptDiversity(
+        creatorRerankedRows,
+        params,
+        queryIntent,
+        rankingConfig,
+        headTermExpansion,
+      )
+    : creatorRerankedRows;
+  const slicedRows = conceptRerankedRows.slice(queryWindow.sliceOffset, queryWindow.sliceOffset + params.pageSize);
+  const rowResults = slicedRows;
+  const [childSlugMap, freshAssetMetadataById] = await Promise.all([
+    lookupPublicSlugMap(
+      env.DB,
+      'child_category',
+      rowResults.flatMap((row) => parseJsonArray(row.child_category_slugs_json)).concat(pills.map((pill) => pill.slug)),
+    ),
+    env.AIRTABLE_API_KEY
+      ? fetchAssetMetadataByRecordIds(
+          env,
+          rowResults.map((row) => row.id),
+        ).catch(() => new Map())
+      : Promise.resolve(new Map()),
+  ]);
+  const creatorRecordIds = env.AIRTABLE_API_KEY
+    ? Array.from(
+        new Set(
+          rowResults
+            .map((row) => freshAssetMetadataById.get(row.id)?.creatorRecordId ?? row.creator_record_id ?? '')
+            .filter(Boolean),
+        ),
+      )
+    : [];
+  const freshCreatorMetadataById =
+    env.AIRTABLE_API_KEY && creatorRecordIds.length > 0
+      ? await fetchCreatorMetadataByRecordIds(env, creatorRecordIds).catch(() => new Map())
+      : new Map();
 
   const items: SearchItem[] = rowResults.map((row) => {
     const categoryGroups = parseJsonArray(row.category_groups_json);
@@ -1011,17 +1438,33 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     const styleSlugs = parseJsonArray(row.style_slugs_json);
     const tags = parseJsonArray(row.tags_json);
     const tagSlugs = parseJsonArray(row.tag_slugs_json);
+    const freshAssetMetadata = freshAssetMetadataById.get(row.id);
+    const resolvedCreatorRecordId = freshAssetMetadata?.creatorRecordId ?? row.creator_record_id;
+    const freshCreatorMetadata = resolvedCreatorRecordId ? freshCreatorMetadataById.get(resolvedCreatorRecordId) : null;
+    const creatorName = freshAssetMetadata?.creatorName ?? row.creator_name;
 
     return {
       id: row.id,
       template_slug: row.template_slug,
       name: row.name,
-      url: toTemplateUrl(row),
-      preview_url: row.preview_url,
-      website_url: row.website_url,
-      creator_name: row.creator_name,
-      thumbnail_image_url: row.thumbnail_image_url,
-      thumbnail_image_secondary_url: row.thumbnail_image_secondary_url,
+      url: freshAssetMetadata?.listingUrl ?? toTemplateUrl(row),
+      preview_url: freshAssetMetadata?.previewUrl ?? row.preview_url,
+      website_url: freshAssetMetadata?.websiteUrl ?? row.website_url,
+      creator_profile_url:
+        freshAssetMetadata?.creatorProfileUrl ??
+        row.creator_profile_url ??
+        freshCreatorMetadata?.templatesPageUrl ??
+        freshCreatorMetadata?.profileUrl ??
+        null,
+      creator_name: creatorName,
+      creator_avatar_url:
+        freshCreatorMetadata?.avatarPrimaryUrl ??
+        freshCreatorMetadata?.avatarSecondaryUrl ??
+        row.creator_avatar_url,
+      creator_avatar_alt: freshCreatorMetadata?.avatarAlt ?? row.creator_avatar_alt ?? creatorName,
+      thumbnail_image_url: freshAssetMetadata?.thumbnailImageUrl ?? row.thumbnail_image_url,
+      thumbnail_image_secondary_url:
+        freshAssetMetadata?.thumbnailImageSecondaryUrl ?? row.thumbnail_image_secondary_url,
       price: row.price,
       is_free: row.is_free === 1,
       is_featured: row.is_featured === 1,

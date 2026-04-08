@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { upsertTemplateDocuments } from '../src/db.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callWorker, createTestEnv } from './support/worker.js';
 
@@ -33,6 +34,36 @@ const LOOKUPS = {
   tags: [{ id: 'tag-automation', fields: { Name: 'Automation', '🥞CMS Slug': 'automation' } }],
 };
 
+const CREATORS = [
+  {
+    id: 'creBrix',
+    fields: {
+      '⚙️🎨Creator Record ID': 'creBrix',
+      '🖼️Avatar (Primary)': [{ url: 'https://example.com/brix-avatar.png' }],
+      '🖼️Avatar Alt Text': 'BRIX Templates avatar',
+      '❓🔗Templates Page': 'https://webflow.com/templates/designers/brix-templates',
+    },
+  },
+  {
+    id: 'creArini',
+    fields: {
+      '⚙️🎨Creator Record ID': 'creArini',
+      '🖼️Avatar (Primary)': [{ url: 'https://example.com/arini-avatar.png' }],
+      '🖼️Avatar Alt Text': 'Arini Studio avatar',
+      '❓🔗Templates Page': 'https://webflow.com/templates/designers/arini-studio',
+    },
+  },
+  {
+    id: 'creTemlis',
+    fields: {
+      '⚙️🎨Creator Record ID': 'creTemlis',
+      '🖼️Avatar (Primary)': [{ url: 'https://example.com/temlis-avatar.png' }],
+      '🖼️Avatar Alt Text': 'Temlis avatar',
+      '❓🔗Templates Page': 'https://webflow.com/templates/designers/temlis',
+    },
+  },
+];
+
 const PUBLISHED_ASSETS = [
   {
     id: 'recAgentflow',
@@ -58,8 +89,12 @@ const PUBLISHED_ASSETS = [
       '🥞💲Template Price Filter (🏗️ only)': 169,
       '🚀📅Published Date': '2026-03-01',
       '🥞CMS Slug (formula)': 'agentflow-website-template',
+      '🎨Creator': ['creBrix'],
       '🎨Creator Name': 'BRIX Templates',
+      '⚙️🎨Creator Record ID': 'creBrix',
       '🖼️Thumbnail Image': [{ url: 'https://example.com/agentflow.png' }],
+      '🕸️View Asset Listing': { url: 'https://webflow.com/templates/html/agentflow-public-listing', label: 'View asset' },
+      '🕸️Template Profile Page ': 'https://webflow.com/templates/designers/brix-templates',
       '🔗Listing URL': 'https://webflow.com/templates/html/agentflow-website-template',
       '🔗Preview Site URL': 'https://agentflow.example.com',
       '🔗Website URL': 'https://webflow.com/templates/html/agentflow-website-template',
@@ -90,8 +125,12 @@ const PUBLISHED_ASSETS = [
       '🥞💲Template Price Filter (🏗️ only)': 79,
       '🚀📅Published Date': '2026-02-15',
       '🥞CMS Slug (formula)': 'setrex-website-template',
+      '🎨Creator': ['creArini'],
       '🎨Creator Name': 'Arini Studio',
+      '⚙️🎨Creator Record ID': 'creArini',
       '🖼️Thumbnail Image': [{ url: 'https://example.com/setrex.png' }],
+      '🕸️View Asset Listing': { url: 'https://webflow.com/templates/html/setrex-public-listing', label: 'View asset' },
+      '🕸️Template Profile Page ': 'https://webflow.com/templates/designers/arini-studio',
       '🔗Listing URL': 'https://webflow.com/templates/html/setrex-website-template',
       '🔗Preview Site URL': 'https://setrex.example.com',
       '🔗Website URL': 'https://webflow.com/templates/html/setrex-website-template',
@@ -122,8 +161,12 @@ const PUBLISHED_ASSETS = [
       '🥞💲Template Price Filter (🏗️ only)': 0,
       '🚀📅Published Date': '2026-03-10',
       '🥞CMS Slug (formula)': 'catalis-website-template',
+      '🎨Creator': ['creTemlis'],
       '🎨Creator Name': 'Temlis',
+      '⚙️🎨Creator Record ID': 'creTemlis',
       '🖼️Thumbnail Image': [{ url: 'https://example.com/catalis.png' }],
+      '🕸️View Asset Listing': { url: 'https://webflow.com/templates/html/catalis-public-listing', label: 'View asset' },
+      '🕸️Template Profile Page ': 'https://webflow.com/templates/designers/temlis',
       '🔗Listing URL': 'https://webflow.com/templates/html/catalis-website-template',
       '🔗Preview Site URL': 'https://catalis.example.com',
       '🔗Website URL': 'https://webflow.com/templates/html/catalis-website-template',
@@ -150,6 +193,7 @@ describe('webflow-template-search worker', () => {
   it('rebuilds the index and serves filtered search results', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: PUBLISHED_ASSETS,
+      creators: CREATORS,
       styles: LOOKUPS.styles,
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
@@ -184,9 +228,125 @@ describe('webflow-template-search worker', () => {
       expect(categoryPayload.subcategory_pills.find((pill) => pill.slug === 'ai-websites')?.active).toBe(true);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
-      const searchPayload = (await search.json()) as { items: Array<{ name: string; cumulative_revenue: number }> };
+      const searchPayload = (await search.json()) as {
+        items: Array<{
+          name: string;
+          url: string | null;
+          creator_profile_url: string | null;
+          creator_avatar_url: string | null;
+          creator_avatar_alt: string | null;
+          cumulative_revenue: number;
+        }>;
+      };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(searchPayload.items[0]?.url).toBe('https://webflow.com/templates/html/agentflow-public-listing');
+      expect(searchPayload.items[0]?.creator_profile_url).toBe('https://webflow.com/templates/designers/brix-templates');
+      expect(searchPayload.items[0]?.creator_avatar_url).toBe('https://example.com/brix-avatar.png');
+      expect(searchPayload.items[0]?.creator_avatar_alt).toBe('BRIX Templates avatar');
       expect(searchPayload.items[0]?.cumulative_revenue).toBe(1890);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('refreshes canonical listing URLs and creator avatars from Airtable for stale indexed rows', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recWorkplace',
+          fields: {
+            Name: 'Workplace X',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            '🎨Creator': ['creBrix'],
+            '🎨Creator Name': 'BRIX Templates',
+            '⚙️🎨Creator Record ID': 'creBrix',
+            '🖼️Thumbnail Image': [{ url: 'https://example.com/workplace-fresh.png' }],
+            '🕸️View Asset Listing': {
+              url: 'https://webflow.com/templates/html/workplace-x-directory-website-template',
+              label: 'View asset',
+            },
+            '🕸️Template Profile Page ': 'https://webflow.com/templates/designers/brix-templates',
+            '🔗Preview Site URL': 'https://workplacex.example.com',
+            '🔗Website URL': 'https://webflow.com/templates/html/workplace-x-directory-website-template',
+          },
+        },
+      ],
+      creators: CREATORS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await upsertTemplateDocuments(env.DB, [
+        {
+          id: 'recWorkplace',
+          templateSlug: 'workplacetemplate-website-template',
+          name: 'Workplace X',
+          listingUrl: null,
+          previewUrl: 'https://stale-preview.example.com',
+          websiteUrl: 'https://stale-website.example.com',
+          creatorRecordId: null,
+          creatorName: 'BRIX Templates',
+          creatorProfileUrl: null,
+          creatorAvatarUrl: null,
+          creatorAvatarAlt: null,
+          thumbnailImageUrl: null,
+          thumbnailImageSecondaryUrl: null,
+          carouselImageUrls: [],
+          descriptionShort: 'Directory platform template',
+          descriptionLongHtml: '<p>Directory platform template</p>',
+          descriptionLongText: 'Directory platform template',
+          categoryGroups: ['Technology'],
+          categoryGroupSlugs: ['technology-websites'],
+          childCategories: ['AI'],
+          childCategorySlugs: ['ai-websites'],
+          childCategorySearchTerms: ['AI', 'automation', 'agent'],
+          styles: ['Modern'],
+          styleSlugs: ['modern'],
+          tags: ['Automation'],
+          tagSlugs: ['automation'],
+          templateType: 'Multi Layout',
+          isFree: false,
+          isFeatured: false,
+          isLandingPage: false,
+          popularityScore: 50,
+          uniqueViewers: 100,
+          cumulativePurchases: 5,
+          cumulativeRevenue: 395,
+          price: 79,
+          publishedDate: '2026-03-01',
+          marketplaceStatus: '3️⃣Published🚀',
+          sourceLastModifiedTime: '2026-03-16T05:13:07.000Z',
+          syncedAt: '2026-04-08T00:00:00.000Z',
+        },
+      ]);
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workplace'), env);
+      const payload = (await search.json()) as {
+        items: Array<{
+          name: string;
+          url: string | null;
+          creator_profile_url: string | null;
+          creator_avatar_url: string | null;
+          creator_avatar_alt: string | null;
+          thumbnail_image_url: string | null;
+          preview_url: string | null;
+          website_url: string | null;
+        }>;
+      };
+
+      expect(payload.items.map((item) => item.name)).toEqual(['Workplace X']);
+      expect(payload.items[0]?.url).toBe('https://webflow.com/templates/html/workplace-x-directory-website-template');
+      expect(payload.items[0]?.creator_profile_url).toBe('https://webflow.com/templates/designers/brix-templates');
+      expect(payload.items[0]?.creator_avatar_url).toBe('https://example.com/brix-avatar.png');
+      expect(payload.items[0]?.creator_avatar_alt).toBe('BRIX Templates avatar');
+      expect(payload.items[0]?.thumbnail_image_url).toBe('https://example.com/workplace-fresh.png');
+      expect(payload.items[0]?.preview_url).toBe('https://workplacex.example.com');
+      expect(payload.items[0]?.website_url).toBe('https://webflow.com/templates/html/workplace-x-directory-website-template');
     } finally {
       fetchMock.mockRestore();
       close();
@@ -902,6 +1062,1468 @@ describe('webflow-template-search worker', () => {
       const payload = (await response.json()) as { items: Array<{ name: string }> };
 
       expect(payload.items[0]?.name).toBe('CraftMaster');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('uses curated head-term mapping for marketplace-style discovery queries', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recPersona',
+          fields: {
+            Name: 'Persona',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Portfolio template for marketplace creators',
+            'ℹ️Description (Long).html': '<p>A polished site for template marketplace sellers.</p>',
+            '🪣Category Group(s) Display Name': ['Portfolio & Agency'],
+            '🪣Category Group(s) CMS Slug': ['portfolio-and-agency-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-ai'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 9000,
+            '📋 Cumulative Purchases': 40,
+            '📋 Cumulative Revenue': 1960,
+            '🥞CMS Slug (formula)': 'persona-template',
+            '📅LMT': '2026-03-16T05:10:00.000Z',
+          },
+        },
+        {
+          id: 'recDirectoryHub',
+          fields: {
+            Name: 'Directory Hub',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Business listing template',
+            'ℹ️Description (Long).html': '<p>Create a professional listing destination.</p>',
+            '🪣Category Group(s) Display Name': ['Professional Services'],
+            '🪣Category Group(s) CMS Slug': ['professional-services-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 800,
+            '📋 Cumulative Purchases': 8,
+            '📋 Cumulative Revenue': 392,
+            '🥞CMS Slug (formula)': 'directory-hub-template',
+            '📅LMT': '2026-03-16T05:11:00.000Z',
+          },
+        },
+        {
+          id: 'recTalentBoard',
+          fields: {
+            Name: 'Talent Lane',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Recruitment template for hiring teams',
+            'ℹ️Description (Long).html': '<p>Launch a modern careers destination.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 700,
+            '📋 Cumulative Purchases': 6,
+            '📋 Cumulative Revenue': 294,
+            '🥞CMS Slug (formula)': 'talent-lane-template',
+            '📅LMT': '2026-03-16T05:12:00.000Z',
+          },
+        },
+        {
+          id: 'recVendorLane',
+          fields: {
+            Name: 'Vendor Lane',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Multi-vendor product catalog template',
+            'ℹ️Description (Long).html': '<p>Sell inventory from multiple vendors in one storefront.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 650,
+            '📋 Cumulative Purchases': 5,
+            '📋 Cumulative Revenue': 245,
+            '🥞CMS Slug (formula)': 'vendor-lane-template',
+            '📅LMT': '2026-03-16T05:13:00.000Z',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: [
+        ...LOOKUPS.childCategories,
+        {
+          id: 'child-directory',
+          fields: {
+            Category: 'Directory',
+            'Display name': 'Directory',
+            'Parent Category Name': 'Professional Services',
+            '🪣Category Groups': 'professional-services-websites,retail-and-e-commerce-websites',
+            'Related Keywords': 'marketplace, listing, classifieds',
+          },
+        },
+        {
+          id: 'child-jobs',
+          fields: {
+            Category: 'Job Portal',
+            'Display name': 'Job Portal',
+            'Parent Category Name': 'HR & Hiring',
+            '🪣Category Groups': 'hr-and-hiring-websites',
+            'Related Keywords': 'job board, careers, hiring',
+          },
+        },
+      ],
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv({
+      SEARCH_RANKING_CONFIG_JSON: JSON.stringify({
+        signalWeights: {
+          text: 0,
+          popularity: 0,
+          views: 0,
+          purchases: 0,
+          conversionRate: 0,
+          revenue: 0,
+          freshness: 0,
+          creatorTrackRecord: 0,
+          creatorDiversity: 0,
+          exactTitle: 0,
+          categoryMatch: 5,
+          intentCoverage: 0,
+          querySaturation: 0,
+        },
+      }),
+    });
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=marketplace'), env);
+      const payload = (await response.json()) as { items: Array<{ name: string }> };
+
+      expect(payload.items[0]?.name).toBe('Directory Hub');
+      expect(payload.items.slice(0, 3).map((item) => item.name)).toEqual(
+        expect.arrayContaining(['Directory Hub', 'Talent Lane', 'Vendor Lane']),
+      );
+      expect(payload.items[3]?.name).toBe('Persona');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('applies concept diversity for broad marketplace head terms', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recTalentLane',
+          fields: {
+            Name: 'Talent Lane',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Recruitment template for hiring teams',
+            'ℹ️Description (Long).html': '<p>Launch a modern careers destination.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 900,
+            '📋 Cumulative Purchases': 20,
+            '📋 Cumulative Revenue': 980,
+            '🥞CMS Slug (formula)': 'talent-lane-template',
+            '📅LMT': '2026-03-16T05:12:00.000Z',
+          },
+        },
+        {
+          id: 'recHiringBoard',
+          fields: {
+            Name: 'Hiring Board',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Recruitment template for growing teams',
+            'ℹ️Description (Long).html': '<p>Launch a branded hiring destination.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 850,
+            '📋 Cumulative Purchases': 18,
+            '📋 Cumulative Revenue': 882,
+            '🥞CMS Slug (formula)': 'hiring-board-template',
+            '📅LMT': '2026-03-16T05:13:00.000Z',
+          },
+        },
+        {
+          id: 'recDirectoryHub',
+          fields: {
+            Name: 'Directory Hub',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Business listing template',
+            'ℹ️Description (Long).html': '<p>Create a professional listing destination.</p>',
+            '🪣Category Group(s) Display Name': ['Professional Services'],
+            '🪣Category Group(s) CMS Slug': ['professional-services-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 700,
+            '📋 Cumulative Purchases': 11,
+            '📋 Cumulative Revenue': 539,
+            '🥞CMS Slug (formula)': 'directory-hub-template',
+            '📅LMT': '2026-03-16T05:14:00.000Z',
+          },
+        },
+        {
+          id: 'recVendorLane',
+          fields: {
+            Name: 'Vendor Lane',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Multi-vendor storefront template',
+            'ℹ️Description (Long).html': '<p>Sell products from multiple vendors in one retail storefront.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 680,
+            '📋 Cumulative Purchases': 10,
+            '📋 Cumulative Revenue': 490,
+            '🥞CMS Slug (formula)': 'vendor-lane-template',
+            '📅LMT': '2026-03-16T05:15:00.000Z',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: [
+        ...LOOKUPS.childCategories,
+        {
+          id: 'child-directory',
+          fields: {
+            Category: 'Directory',
+            'Display name': 'Directory',
+            'Parent Category Name': 'Professional Services',
+            '🪣Category Groups': 'professional-services-websites,retail-and-e-commerce-websites',
+            'Related Keywords': 'marketplace, listing, classifieds',
+          },
+        },
+        {
+          id: 'child-jobs',
+          fields: {
+            Category: 'Job Portal',
+            'Display name': 'Job Portal',
+            'Parent Category Name': 'HR & Hiring',
+            '🪣Category Groups': 'hr-and-hiring-websites',
+            'Related Keywords': 'job board, careers, hiring',
+          },
+        },
+      ],
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv({
+      SEARCH_RANKING_CONFIG_JSON: JSON.stringify({
+        signalWeights: {
+          text: 0,
+          popularity: 0,
+          views: 0,
+          purchases: 1,
+          conversionRate: 0,
+          revenue: 0,
+          freshness: 0,
+          creatorTrackRecord: 0,
+          creatorDiversity: 0,
+          exactTitle: 0,
+          categoryMatch: 5,
+          intentCoverage: 0,
+          querySaturation: 0,
+        },
+        controls: {
+          headTermConceptRerankPenalty: 1,
+          headTermConceptRerankScoreTolerance: 0.5,
+          headTermConceptRerankWindowSize: 24,
+        },
+      }),
+    });
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=marketplace'), env);
+      const payload = (await response.json()) as { items: Array<{ name: string }> };
+
+      const topFourNames = payload.items.slice(0, 4).map((item) => item.name);
+      expect(topFourNames.slice(0, 3)).toEqual(expect.arrayContaining(['Talent Lane', 'Directory Hub', 'Vendor Lane']));
+      expect(topFourNames.slice(0, 3)).not.toContain('Hiring Board');
+      expect(topFourNames[3]).toBe('Hiring Board');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('front-loads unseen concepts into protected marketplace slots before repeating a concept', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recTalentLane',
+          fields: {
+            Name: 'Talent Lane',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Recruitment template for hiring teams',
+            'ℹ️Description (Long).html': '<p>Launch a modern careers destination.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1500,
+            '📋 Cumulative Purchases': 36,
+            '📋 Cumulative Revenue': 1764,
+            '🥞CMS Slug (formula)': 'talent-lane-template',
+            '📅LMT': '2026-03-16T05:19:00.000Z',
+          },
+        },
+        {
+          id: 'recHiringBoard',
+          fields: {
+            Name: 'Hiring Board',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Recruitment template for growing teams',
+            'ℹ️Description (Long).html': '<p>Launch a branded hiring destination.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1450,
+            '📋 Cumulative Purchases': 34,
+            '📋 Cumulative Revenue': 1666,
+            '🥞CMS Slug (formula)': 'hiring-board-template',
+            '📅LMT': '2026-03-16T05:20:00.000Z',
+          },
+        },
+        {
+          id: 'recDirectoryHub',
+          fields: {
+            Name: 'Directory Hub',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Business listing template',
+            'ℹ️Description (Long).html': '<p>Create a professional listing destination.</p>',
+            '🪣Category Group(s) Display Name': ['Professional Services'],
+            '🪣Category Group(s) CMS Slug': ['professional-services-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 820,
+            '📋 Cumulative Purchases': 12,
+            '📋 Cumulative Revenue': 588,
+            '🥞CMS Slug (formula)': 'directory-hub-template',
+            '📅LMT': '2026-03-16T05:21:00.000Z',
+          },
+        },
+        {
+          id: 'recVendorLane',
+          fields: {
+            Name: 'Vendor Lane',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Multi-vendor storefront template',
+            'ℹ️Description (Long).html': '<p>Create a retail marketplace with multiple vendors and a product catalog.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 790,
+            '📋 Cumulative Purchases': 11,
+            '📋 Cumulative Revenue': 539,
+            '🥞CMS Slug (formula)': 'vendor-lane-template',
+            '📅LMT': '2026-03-16T05:22:00.000Z',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: [
+        ...LOOKUPS.childCategories,
+        {
+          id: 'child-directory',
+          fields: {
+            Category: 'Directory',
+            'Display name': 'Directory',
+            'Parent Category Name': 'Professional Services',
+            '🪣Category Groups': 'professional-services-websites,retail-and-e-commerce-websites',
+            'Related Keywords': 'marketplace, listing, classifieds',
+          },
+        },
+        {
+          id: 'child-jobs',
+          fields: {
+            Category: 'Job Portal',
+            'Display name': 'Job Portal',
+            'Parent Category Name': 'HR & Hiring',
+            '🪣Category Groups': 'hr-and-hiring-websites',
+            'Related Keywords': 'job board, careers, hiring',
+          },
+        },
+      ],
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv({
+      SEARCH_RANKING_CONFIG_JSON: JSON.stringify({
+        signalWeights: {
+          text: 0,
+          popularity: 0,
+          views: 0,
+          purchases: 1,
+          conversionRate: 0,
+          revenue: 0,
+          freshness: 0,
+          creatorTrackRecord: 0,
+          creatorDiversity: 0,
+          exactTitle: 0,
+          categoryMatch: 5,
+          intentCoverage: 0,
+          querySaturation: 0,
+        },
+        controls: {
+          headTermConceptRerankPenalty: 1,
+          headTermConceptRerankScoreTolerance: 0.5,
+          headTermConceptProtectedSlots: 3,
+          headTermConceptRerankWindowSize: 24,
+        },
+      }),
+    });
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=marketplace'), env);
+      const payload = (await response.json()) as { items: Array<{ name: string }> };
+
+      const topFourNames = payload.items.slice(0, 4).map((item) => item.name);
+      expect(topFourNames.slice(0, 3)).toEqual(expect.arrayContaining(['Talent Lane', 'Directory Hub', 'Vendor Lane']));
+      expect(topFourNames.slice(0, 3)).not.toContain('Hiring Board');
+      expect(topFourNames[3]).toBe('Hiring Board');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('uses tags and child categories ahead of misleading retail copy for marketplace concept assignment', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recCareerBazaar',
+          fields: {
+            Name: 'Career Bazaar',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)':
+              'Launch a multi-vendor marketplace store with product catalogs, ecommerce flows, online shop pages, and retail storefront experiences.',
+            'ℹ️Description (Long).html':
+              '<p>Sell products from vendors with a modern storefront, retail catalog, and online store experience.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-job-portal', 'tag-recruitment'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 2100,
+            '📋 Cumulative Purchases': 50,
+            '📋 Cumulative Revenue': 2450,
+            '🥞CMS Slug (formula)': 'career-bazaar-template',
+            '📅LMT': '2026-03-16T05:29:00.000Z',
+          },
+        },
+        {
+          id: 'recHiringBoard',
+          fields: {
+            Name: 'Hiring Board',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Recruitment template for growing teams',
+            'ℹ️Description (Long).html': '<p>Launch a branded hiring destination.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-job-portal', 'tag-recruitment'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 2050,
+            '📋 Cumulative Purchases': 49,
+            '📋 Cumulative Revenue': 2401,
+            '🥞CMS Slug (formula)': 'hiring-board-template',
+            '📅LMT': '2026-03-16T05:30:00.000Z',
+          },
+        },
+        {
+          id: 'recJobSphere',
+          fields: {
+            Name: 'Job Sphere',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Job board template for recruiting teams',
+            'ℹ️Description (Long).html': '<p>Build a modern job portal for hiring and careers.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-job-portal', 'tag-recruitment'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 2000,
+            '📋 Cumulative Purchases': 48,
+            '📋 Cumulative Revenue': 2352,
+            '🥞CMS Slug (formula)': 'job-sphere-template',
+            '📅LMT': '2026-03-16T05:31:00.000Z',
+          },
+        },
+        {
+          id: 'recVendorHarbor',
+          fields: {
+            Name: 'Vendor Harbor',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Retail storefront template',
+            'ℹ️Description (Long).html': '<p>Sell products in a modern retail storefront.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-retail'],
+            'ℹ️🏷️Tags (Multi)': ['tag-retail', 'tag-marketplace'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 900,
+            '📋 Cumulative Purchases': 20,
+            '📋 Cumulative Revenue': 980,
+            '🥞CMS Slug (formula)': 'vendor-harbor-template',
+            '📅LMT': '2026-03-16T05:32:00.000Z',
+          },
+        },
+        {
+          id: 'recDirectoryAtlas',
+          fields: {
+            Name: 'Directory Atlas',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Business listing template',
+            'ℹ️Description (Long).html': '<p>Create a professional listing destination.</p>',
+            '🪣Category Group(s) Display Name': ['Professional Services'],
+            '🪣Category Group(s) CMS Slug': ['professional-services-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 850,
+            '📋 Cumulative Purchases': 19,
+            '📋 Cumulative Revenue': 931,
+            '🥞CMS Slug (formula)': 'directory-atlas-template',
+            '📅LMT': '2026-03-16T05:33:00.000Z',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: [
+        ...LOOKUPS.childCategories,
+        {
+          id: 'child-directory',
+          fields: {
+            Category: 'Directory',
+            'Display name': 'Directory',
+            'Parent Category Name': 'Professional Services',
+            '🪣Category Groups': 'professional-services-websites',
+            'Related Keywords': 'marketplace, listing, classifieds',
+          },
+        },
+        {
+          id: 'child-jobs',
+          fields: {
+            Category: 'Job Portal',
+            'Display name': 'Job Portal',
+            'Parent Category Name': 'HR & Hiring',
+            '🪣Category Groups': 'hr-and-hiring-websites',
+            'Related Keywords': 'job board, careers, hiring',
+          },
+        },
+        {
+          id: 'child-retail',
+          fields: {
+            Category: 'Physical products store',
+            'Display name': 'Physical products store',
+            'Parent Category Name': 'Retail & E-Commerce',
+            '🪣Category Groups': 'retail-and-e-commerce-websites',
+            'Related Keywords': 'store, shop, retail',
+          },
+        },
+      ],
+      tags: [
+        ...LOOKUPS.tags,
+        {
+          id: 'tag-directory',
+          fields: {
+            Name: 'Directory',
+            'CMS Slug': 'directory-websites',
+          },
+        },
+        {
+          id: 'tag-marketplace',
+          fields: {
+            Name: 'Marketplace',
+            'CMS Slug': 'marketplace',
+          },
+        },
+        {
+          id: 'tag-retail',
+          fields: {
+            Name: 'Retail',
+            'CMS Slug': 'retail-websites',
+          },
+        },
+        {
+          id: 'tag-job-portal',
+          fields: {
+            Name: 'Job Portal',
+            'CMS Slug': 'job-portal-websites',
+          },
+        },
+        {
+          id: 'tag-recruitment',
+          fields: {
+            Name: 'Recruitment',
+            'CMS Slug': 'recruitment-websites',
+          },
+        },
+      ],
+    });
+    const { env, close } = createTestEnv({
+      SEARCH_RANKING_CONFIG_JSON: JSON.stringify({
+        signalWeights: {
+          text: 0,
+          popularity: 0,
+          views: 0,
+          purchases: 1,
+          conversionRate: 0,
+          revenue: 0,
+          freshness: 0,
+          creatorTrackRecord: 0,
+          creatorDiversity: 0,
+          exactTitle: 0,
+          categoryMatch: 5,
+          intentCoverage: 0,
+          querySaturation: 0,
+        },
+        controls: {
+          headTermConceptProtectedSlots: 4,
+          headTermConceptRerankPenalty: 1,
+          headTermConceptRerankScoreTolerance: 0.5,
+          headTermConceptRerankWindowSize: 24,
+        },
+      }),
+    });
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=marketplace'), env);
+      const payload = (await response.json()) as { items: Array<{ name: string }> };
+
+      const topFourNames = payload.items.slice(0, 4).map((item) => item.name);
+      expect(topFourNames).toEqual(
+        expect.arrayContaining(['Career Bazaar', 'Vendor Harbor', 'Directory Atlas', 'Hiring Board']),
+      );
+      expect(topFourNames).not.toContain('Job Sphere');
+      expect(payload.items[4]?.name).toBe('Job Sphere');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('merges head-term profile overrides from SEARCH_RANKING_CONFIG_JSON by profile id', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recWorkplaceX',
+          fields: {
+            Name: 'Workplace X',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Hiring marketplace template',
+            'ℹ️Description (Long).html': '<p>Launch a branded hiring destination.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 2000,
+            '📋 Cumulative Purchases': 40,
+            '📋 Cumulative Revenue': 1960,
+            '🥞CMS Slug (formula)': 'workplace-x-template',
+            '📅LMT': '2026-03-16T05:34:00.000Z',
+          },
+        },
+        {
+          id: 'recJobBoardlyX',
+          fields: {
+            Name: 'JobBoardly X',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Modern job board template',
+            'ℹ️Description (Long).html': '<p>Run a modern recruitment marketplace.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1900,
+            '📋 Cumulative Purchases': 38,
+            '📋 Cumulative Revenue': 1862,
+            '🥞CMS Slug (formula)': 'jobboardly-x-template',
+            '📅LMT': '2026-03-16T05:35:00.000Z',
+          },
+        },
+        {
+          id: 'recVendorHarbor',
+          fields: {
+            Name: 'Vendor Harbor',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Retail storefront template',
+            'ℹ️Description (Long).html': '<p>Sell products in a modern retail storefront.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-retail'],
+            'ℹ️🏷️Tags (Multi)': ['tag-retail', 'tag-marketplace'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 900,
+            '📋 Cumulative Purchases': 20,
+            '📋 Cumulative Revenue': 980,
+            '🥞CMS Slug (formula)': 'vendor-harbor-template',
+            '📅LMT': '2026-03-16T05:36:00.000Z',
+          },
+        },
+        {
+          id: 'recDirectoryAtlas',
+          fields: {
+            Name: 'Directory Atlas',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Business listing template',
+            'ℹ️Description (Long).html': '<p>Create a professional listing destination.</p>',
+            '🪣Category Group(s) Display Name': ['Professional Services'],
+            '🪣Category Group(s) CMS Slug': ['professional-services-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 850,
+            '📋 Cumulative Purchases': 19,
+            '📋 Cumulative Revenue': 931,
+            '🥞CMS Slug (formula)': 'directory-atlas-template',
+            '📅LMT': '2026-03-16T05:37:00.000Z',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: [
+        ...LOOKUPS.childCategories,
+        {
+          id: 'child-directory',
+          fields: {
+            Category: 'Directory',
+            'Display name': 'Directory',
+            'Parent Category Name': 'Professional Services',
+            '🪣Category Groups': 'professional-services-websites',
+            'Related Keywords': 'marketplace, listing, classifieds',
+          },
+        },
+        {
+          id: 'child-jobs',
+          fields: {
+            Category: 'Job Portal',
+            'Display name': 'Job Portal',
+            'Parent Category Name': 'HR & Hiring',
+            '🪣Category Groups': 'hr-and-hiring-websites',
+            'Related Keywords': 'job board, careers, hiring',
+          },
+        },
+        {
+          id: 'child-retail',
+          fields: {
+            Category: 'Physical products store',
+            'Display name': 'Physical products store',
+            'Parent Category Name': 'Retail & E-Commerce',
+            '🪣Category Groups': 'retail-and-e-commerce-websites',
+            'Related Keywords': 'store, shop, retail',
+          },
+        },
+      ],
+      tags: [
+        ...LOOKUPS.tags,
+        {
+          id: 'tag-directory',
+          fields: {
+            Name: 'Directory',
+            'CMS Slug': 'directory-websites',
+          },
+        },
+        {
+          id: 'tag-marketplace',
+          fields: {
+            Name: 'Marketplace',
+            'CMS Slug': 'marketplace',
+          },
+        },
+        {
+          id: 'tag-retail',
+          fields: {
+            Name: 'Retail',
+            'CMS Slug': 'retail-websites',
+          },
+        },
+      ],
+    });
+    const { env, close } = createTestEnv({
+      SEARCH_RANKING_CONFIG_JSON: JSON.stringify({
+        signalWeights: {
+          text: 0,
+          popularity: 0,
+          views: 0,
+          purchases: 1,
+          conversionRate: 0,
+          revenue: 0,
+          freshness: 0,
+          creatorTrackRecord: 0,
+          creatorDiversity: 0,
+          exactTitle: 0,
+          categoryMatch: 5,
+          intentCoverage: 0,
+          querySaturation: 0,
+        },
+        headTermProfiles: [
+          {
+            id: 'marketplace',
+            protectedSlotCount: 4,
+            protectedSlotConceptCaps: { 'job-directory': 1, jobs: 1 },
+          },
+        ],
+        controls: {
+          headTermConceptProtectedSlots: 4,
+          headTermConceptRerankPenalty: 1,
+          headTermConceptRerankScoreTolerance: 0.5,
+          headTermConceptRerankWindowSize: 24,
+        },
+      }),
+    });
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=marketplace'), env);
+      const payload = (await response.json()) as { items: Array<{ name: string }> };
+
+      const topFourNames = payload.items.slice(0, 4).map((item) => item.name);
+      expect(topFourNames).toEqual(expect.arrayContaining(['Workplace X', 'Vendor Harbor', 'Directory Atlas']));
+      expect(topFourNames).not.toContain('JobBoardly X');
+      expect(payload.items[4]?.name).toBe('JobBoardly X');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('caps repeated job concepts in protected marketplace slots when strong alternatives exist', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recWorkplaceX',
+          fields: {
+            Name: 'Workplace X',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Hiring marketplace template',
+            'ℹ️Description (Long).html': '<p>Launch a branded hiring destination.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 2000,
+            '📋 Cumulative Purchases': 40,
+            '📋 Cumulative Revenue': 1960,
+            '🥞CMS Slug (formula)': 'workplace-x-template',
+            '📅LMT': '2026-03-16T05:23:00.000Z',
+          },
+        },
+        {
+          id: 'recJobBoardlyX',
+          fields: {
+            Name: 'JobBoardly X',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Modern job board template',
+            'ℹ️Description (Long).html': '<p>Run a modern recruitment marketplace.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1900,
+            '📋 Cumulative Purchases': 38,
+            '📋 Cumulative Revenue': 1862,
+            '🥞CMS Slug (formula)': 'jobboardly-x-template',
+            '📅LMT': '2026-03-16T05:24:00.000Z',
+          },
+        },
+        {
+          id: 'recJobPort',
+          fields: {
+            Name: 'Job Port',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Recruitment template with marketplace positioning',
+            'ℹ️Description (Long).html': '<p>Launch a job portal marketplace for modern teams.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-marketplace', 'tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1800,
+            '📋 Cumulative Purchases': 36,
+            '📋 Cumulative Revenue': 1764,
+            '🥞CMS Slug (formula)': 'job-port-template',
+            '📅LMT': '2026-03-16T05:25:00.000Z',
+          },
+        },
+        {
+          id: 'recClassifiedHub',
+          fields: {
+            Name: 'CLASSIFIED TNC',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Classified marketplace template',
+            'ℹ️Description (Long).html': '<p>Build a directory marketplace with classified listings.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            'ℹ️🏷️Tags (Multi)': ['tag-marketplace'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1200,
+            '📋 Cumulative Purchases': 14,
+            '📋 Cumulative Revenue': 686,
+            '🥞CMS Slug (formula)': 'classified-tnc-template',
+            '📅LMT': '2026-03-16T05:26:00.000Z',
+          },
+        },
+        {
+          id: 'recGearz',
+          fields: {
+            Name: 'Gearz',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Retail storefront template',
+            'ℹ️Description (Long).html': '<p>Sell products in a modern retail storefront.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-retail'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1100,
+            '📋 Cumulative Purchases': 13,
+            '📋 Cumulative Revenue': 637,
+            '🥞CMS Slug (formula)': 'gearz-template',
+            '📅LMT': '2026-03-16T05:27:00.000Z',
+          },
+        },
+        {
+          id: 'recMeteora',
+          fields: {
+            Name: 'Meteora',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Digital products storefront template',
+            'ℹ️Description (Long).html': '<p>Create a digital products store with a retail catalog.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-retail'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1050,
+            '📋 Cumulative Purchases': 12,
+            '📋 Cumulative Revenue': 588,
+            '🥞CMS Slug (formula)': 'meteora-template',
+            '📅LMT': '2026-03-16T05:28:00.000Z',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: [
+        ...LOOKUPS.childCategories,
+        {
+          id: 'child-directory',
+          fields: {
+            Category: 'Directory',
+            'Display name': 'Directory',
+            'Parent Category Name': 'Professional Services',
+            '🪣Category Groups': 'professional-services-websites,retail-and-e-commerce-websites',
+            'Related Keywords': 'marketplace, listing, classifieds',
+          },
+        },
+        {
+          id: 'child-jobs',
+          fields: {
+            Category: 'Job Portal',
+            'Display name': 'Job Portal',
+            'Parent Category Name': 'HR & Hiring',
+            '🪣Category Groups': 'hr-and-hiring-websites',
+            'Related Keywords': 'job board, careers, hiring',
+          },
+        },
+        {
+          id: 'child-retail',
+          fields: {
+            Category: 'Physical products store',
+            'Display name': 'Physical products store',
+            'Parent Category Name': 'Retail & E-Commerce',
+            '🪣Category Groups': 'retail-and-e-commerce-websites',
+            'Related Keywords': 'store, shop, retail',
+          },
+        },
+      ],
+      tags: [
+        ...LOOKUPS.tags,
+        {
+          id: 'tag-directory',
+          fields: {
+            Name: 'Directory',
+            'CMS Slug': 'directory-websites',
+          },
+        },
+        {
+          id: 'tag-marketplace',
+          fields: {
+            Name: 'Marketplace',
+            'CMS Slug': 'marketplace',
+          },
+        },
+      ],
+    });
+    const { env, close } = createTestEnv({
+      SEARCH_RANKING_CONFIG_JSON: JSON.stringify({
+        signalWeights: {
+          text: 0,
+          popularity: 0,
+          views: 0,
+          purchases: 1,
+          conversionRate: 0,
+          revenue: 0,
+          freshness: 0,
+          creatorTrackRecord: 0,
+          creatorDiversity: 0,
+          exactTitle: 0,
+          categoryMatch: 5,
+          intentCoverage: 0,
+          querySaturation: 0,
+        },
+        controls: {
+          headTermConceptProtectedSlots: 5,
+          headTermConceptRerankPenalty: 1,
+          headTermConceptRerankScoreTolerance: 0.5,
+          headTermConceptRerankWindowSize: 24,
+        },
+      }),
+    });
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=marketplace'), env);
+      const payload = (await response.json()) as { items: Array<{ name: string }> };
+
+      const topFiveNames = payload.items.slice(0, 5).map((item) => item.name);
+      expect(topFiveNames).toEqual(expect.arrayContaining(['Workplace X', 'CLASSIFIED TNC', 'JobBoardly X', 'Gearz', 'Meteora']));
+      expect(topFiveNames).not.toContain('Job Port');
+      expect(payload.items[5]?.name).toBe('Job Port');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('keeps job-board directories out of protected directory slots when general directory options exist', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recWorkplaceX',
+          fields: {
+            Name: 'Workplace X',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Hiring directory template',
+            'ℹ️Description (Long).html': '<p>Launch a modern job portal for hiring teams.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 2400,
+            '📋 Cumulative Purchases': 48,
+            '📋 Cumulative Revenue': 2352,
+            '🥞CMS Slug (formula)': 'workplace-x-template',
+            '📅LMT': '2026-03-16T05:23:00.000Z',
+          },
+        },
+        {
+          id: 'recJobBoardlyX',
+          fields: {
+            Name: 'JobBoardly X',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Job board directory template',
+            'ℹ️Description (Long).html': '<p>Run a recruitment marketplace with directory browsing.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 2200,
+            '📋 Cumulative Purchases': 44,
+            '📋 Cumulative Revenue': 2156,
+            '🥞CMS Slug (formula)': 'jobboardly-x-template',
+            '📅LMT': '2026-03-16T05:24:00.000Z',
+          },
+        },
+        {
+          id: 'recDirectoryAtlas',
+          fields: {
+            Name: 'Directory Atlas',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Business listings template',
+            'ℹ️Description (Long).html': '<p>Build a modern directory with local listings and a classifieds hub.</p>',
+            '🪣Category Group(s) Display Name': ['Professional Services'],
+            '🪣Category Group(s) CMS Slug': ['professional-services-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1200,
+            '📋 Cumulative Purchases': 18,
+            '📋 Cumulative Revenue': 882,
+            '🥞CMS Slug (formula)': 'directory-atlas-template',
+            '📅LMT': '2026-03-16T05:25:00.000Z',
+          },
+        },
+        {
+          id: 'recStoreDirectory',
+          fields: {
+            Name: 'Store Directory',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Retail directory template',
+            'ℹ️Description (Long).html': '<p>Create a listings website for stores, products, and local classifieds.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            'ℹ️🏷️Tags (Multi)': ['tag-directory', 'tag-marketplace'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1100,
+            '📋 Cumulative Purchases': 17,
+            '📋 Cumulative Revenue': 833,
+            '🥞CMS Slug (formula)': 'store-directory-template',
+            '📅LMT': '2026-03-16T05:26:00.000Z',
+          },
+        },
+        {
+          id: 'recClassifiedHub',
+          fields: {
+            Name: 'Classified Hub',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Classifieds and listings template',
+            'ℹ️Description (Long).html': '<p>Run a directory with classifieds, listings, and a vendor marketplace.</p>',
+            '🪣Category Group(s) Display Name': ['Professional Services'],
+            '🪣Category Group(s) CMS Slug': ['professional-services-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            'ℹ️🏷️Tags (Multi)': ['tag-marketplace'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1000,
+            '📋 Cumulative Purchases': 16,
+            '📋 Cumulative Revenue': 784,
+            '🥞CMS Slug (formula)': 'classified-hub-template',
+            '📅LMT': '2026-03-16T05:27:00.000Z',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: [
+        ...LOOKUPS.childCategories,
+        {
+          id: 'child-directory',
+          fields: {
+            Category: 'Directory',
+            'Display name': 'Directory',
+            'Parent Category Name': 'Professional Services',
+            '🪣Category Groups': 'professional-services-websites,retail-and-e-commerce-websites',
+            'Related Keywords': 'directory, listing, classifieds',
+          },
+        },
+        {
+          id: 'child-jobs',
+          fields: {
+            Category: 'Job Portal',
+            'Display name': 'Job Portal',
+            'Parent Category Name': 'HR & Hiring',
+            '🪣Category Groups': 'hr-and-hiring-websites',
+            'Related Keywords': 'job board, careers, hiring',
+          },
+        },
+      ],
+      tags: [
+        ...LOOKUPS.tags,
+        {
+          id: 'tag-directory',
+          fields: {
+            Name: 'Directory',
+            'CMS Slug': 'directory-websites',
+          },
+        },
+        {
+          id: 'tag-marketplace',
+          fields: {
+            Name: 'Marketplace',
+            'CMS Slug': 'marketplace',
+          },
+        },
+      ],
+    });
+    const { env, close } = createTestEnv({
+      SEARCH_RANKING_CONFIG_JSON: JSON.stringify({
+        signalWeights: {
+          text: 0,
+          popularity: 0,
+          views: 0,
+          purchases: 1,
+          conversionRate: 0,
+          revenue: 0,
+          freshness: 0,
+          creatorTrackRecord: 0,
+          creatorDiversity: 0,
+          exactTitle: 0,
+          categoryMatch: 5,
+          intentCoverage: 0,
+          querySaturation: 0,
+        },
+        headTermProfiles: [
+          {
+            id: 'directory',
+            protectedSlotCount: 3,
+            protectedSlotConceptCaps: { 'job-directory': 0, jobs: 0 },
+          },
+        ],
+        controls: {
+          headTermConceptProtectedSlots: 3,
+          headTermConceptRerankPenalty: 1,
+          headTermConceptRerankScoreTolerance: 0.5,
+          headTermConceptRerankWindowSize: 24,
+        },
+      }),
+    });
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const responsePageThree = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=directory&page_size=3'),
+        env,
+      );
+      const payloadPageThree = (await responsePageThree.json()) as { items: Array<{ name: string }> };
+
+      const responsePageFive = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=directory&page_size=5'),
+        env,
+      );
+      const payloadPageFive = (await responsePageFive.json()) as { items: Array<{ name: string }> };
+
+      const topThreeNames = payloadPageThree.items.map((item) => item.name);
+      expect(topThreeNames).toEqual(
+        expect.arrayContaining(['Directory Atlas', 'Store Directory', 'Classified Hub']),
+      );
+      expect(topThreeNames).not.toContain('Workplace X');
+      expect(topThreeNames).not.toContain('JobBoardly X');
+      expect(payloadPageFive.items.slice(0, 3).map((item) => item.name)).toEqual(topThreeNames);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('penalizes pure job-board matches for the exact marketplace head term when corroboration is missing', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recJobBoardAlpha',
+          fields: {
+            Name: 'Job Board Alpha',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Recruitment template for hiring teams',
+            'ℹ️Description (Long).html': '<p>Launch a modern job portal for careers and hiring.</p>',
+            '🪣Category Group(s) Display Name': ['HR & Hiring'],
+            '🪣Category Group(s) CMS Slug': ['hr-and-hiring-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-jobs'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 1200,
+            '📋 Cumulative Purchases': 24,
+            '📋 Cumulative Revenue': 1176,
+            '🥞CMS Slug (formula)': 'job-board-alpha-template',
+            '📅LMT': '2026-03-16T05:16:00.000Z',
+          },
+        },
+        {
+          id: 'recClassifiedHub',
+          fields: {
+            Name: 'Classified Hub',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Classified marketplace and directory template',
+            'ℹ️Description (Long).html': '<p>Build a listing marketplace with directory and classifieds support.</p>',
+            '🪣Category Group(s) Display Name': ['Professional Services'],
+            '🪣Category Group(s) CMS Slug': ['professional-services-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 900,
+            '📋 Cumulative Purchases': 16,
+            '📋 Cumulative Revenue': 784,
+            '🥞CMS Slug (formula)': 'classified-hub-template',
+            '📅LMT': '2026-03-16T05:17:00.000Z',
+          },
+        },
+        {
+          id: 'recVendorLane',
+          fields: {
+            Name: 'Vendor Lane',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            'ℹ️Description (Short)': 'Multi-vendor storefront template',
+            'ℹ️Description (Long).html': '<p>Create a retail marketplace with multiple vendors and a product catalog.</p>',
+            '🪣Category Group(s) Display Name': ['Retail & E-Commerce'],
+            '🪣Category Group(s) CMS Slug': ['retail-and-e-commerce-websites'],
+            '🔍Algolia Child Category (🏗️ only)': ['child-directory'],
+            '🥞Template Type (🏗️ only)': 'Multi Page',
+            '📋 Unique Viewers': 870,
+            '📋 Cumulative Purchases': 15,
+            '📋 Cumulative Revenue': 735,
+            '🥞CMS Slug (formula)': 'vendor-lane-template',
+            '📅LMT': '2026-03-16T05:18:00.000Z',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: [
+        ...LOOKUPS.childCategories,
+        {
+          id: 'child-directory',
+          fields: {
+            Category: 'Directory',
+            'Display name': 'Directory',
+            'Parent Category Name': 'Professional Services',
+            '🪣Category Groups': 'professional-services-websites,retail-and-e-commerce-websites',
+            'Related Keywords': 'marketplace, listing, classifieds',
+          },
+        },
+        {
+          id: 'child-jobs',
+          fields: {
+            Category: 'Job Portal',
+            'Display name': 'Job Portal',
+            'Parent Category Name': 'HR & Hiring',
+            '🪣Category Groups': 'hr-and-hiring-websites',
+            'Related Keywords': 'job board, careers, hiring',
+          },
+        },
+      ],
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv({
+      SEARCH_RANKING_CONFIG_JSON: JSON.stringify({
+        signalWeights: {
+          text: 0,
+          popularity: 0,
+          views: 0,
+          purchases: 1,
+          conversionRate: 0,
+          revenue: 0,
+          freshness: 0,
+          creatorTrackRecord: 0,
+          creatorDiversity: 0,
+          exactTitle: 0,
+          categoryMatch: 5,
+          intentCoverage: 0,
+          querySaturation: 0,
+        },
+        controls: {
+          headTermConceptRerankPenalty: 1,
+          headTermConceptRerankScoreTolerance: 0.5,
+          headTermCorroborationPenalty: 2,
+          headTermConceptRerankWindowSize: 24,
+        },
+      }),
+    });
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=marketplace'), env);
+      const payload = (await response.json()) as { items: Array<{ name: string }> };
+
+      expect(payload.items.slice(0, 3).map((item) => item.name)).toEqual([
+        'Classified Hub',
+        'Vendor Lane',
+        'Job Board Alpha',
+      ]);
     } finally {
       fetchMock.mockRestore();
       close();

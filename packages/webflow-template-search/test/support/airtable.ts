@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 interface MockDataset {
   publishedAssets: Array<{ id: string; fields: Record<string, unknown> }>;
   incrementalAssets?: Array<{ id: string; fields: Record<string, unknown> }>;
+  creators?: Array<{ id: string; fields: Record<string, unknown> }>;
   styles?: Array<{ id: string; fields: Record<string, unknown> }>;
   childCategories?: Array<{ id: string; fields: Record<string, unknown> }>;
   tags?: Array<{ id: string; fields: Record<string, unknown> }>;
@@ -40,6 +41,17 @@ function applySnapshotFilter(
   });
 }
 
+function applyRecordIdsFilter(
+  records: Array<{ id: string; fields: Record<string, unknown> }>,
+  formula: string,
+): Array<{ id: string; fields: Record<string, unknown> }> {
+  const recordIds = Array.from(formula.matchAll(/RECORD_ID\(\)="([^"]+)"/g)).map((match) => match[1]).filter(Boolean);
+  if (recordIds.length === 0) return records;
+
+  const allowedIds = new Set(recordIds);
+  return records.filter((record) => allowedIds.has(record.id));
+}
+
 export function installAirtableFetchMock(dataset: MockDataset) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
@@ -55,7 +67,11 @@ export function installAirtableFetchMock(dataset: MockDataset) {
         formula.includes('IS_AFTER(')
           ? dataset.incrementalAssets ?? []
           : applySnapshotFilter(dataset.publishedAssets, formula);
-      return Response.json(paginateRecords(records, url));
+      return Response.json(paginateRecords(applyRecordIdsFilter(records, formula), url));
+    }
+
+    if (tableId === 'tbljt0plqxdMARZXb') {
+      return Response.json(paginateRecords(applyRecordIdsFilter(dataset.creators ?? [], formula), url));
     }
 
     if (tableId === 'tblG7E9LbQj0sBX0o') {

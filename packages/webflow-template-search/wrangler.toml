@@ -25,7 +25,105 @@ DEFAULT_CLIENT_MODE = "shadow"
 FULL_SYNC_PAGE_LIMIT = "1"
 FULL_SYNC_PAGE_SIZE = "100"
 LOOKUP_CACHE_TTL_SECONDS = "21600"
-SEARCH_RANKING_CONFIG_JSON = '''{"textWeights":{"name":9,"descriptionShort":2,"descriptionLong":0.1,"categoryGroups":5,"childCategories":12,"styles":1.3,"tags":0.8},"signalWeights":{"text":4.5,"popularity":0,"views":0.05,"purchases":1.15,"conversionRate":0.95,"revenue":0.7,"freshness":0.35,"creatorTrackRecord":0.3,"creatorDiversity":0.4,"exactTitle":0.85,"categoryMatch":2.5,"intentCoverage":1.2,"querySaturation":0.35},"controls":{"longDescriptionMaxChars":350,"reciprocalRankOffset":20,"conversionRateSmoothingViews":50,"conversionRateSmoothingPurchases":1,"taxonomyPrecedenceMinQueryLength":5,"shortQueryMaxTokens":1,"shortQueryMaxChars":12,"shortQueryTextWeightMultiplier":0.2,"shortQueryExactTitleWeightMultiplier":2,"shortQueryCategoryWeightMultiplier":0.35,"purchaseSmoothingViews":1200,"purchaseSmoothingPrior":0.5,"revenueSmoothingViews":1200,"revenueSmoothingPrior":25,"freshnessHalfLifeDays":45,"querySaturationThreshold":3,"creatorDiversityRerankWindowSize":72,"creatorDiversityRerankMaxPages":2,"creatorDiversityRerankPenalty":0.25,"creatorDiversityRerankScoreTolerance":0.2,"creatorTrackRecordMinTemplates":2,"relaxedQueryMinTokens":3,"relaxedQueryMaxTokens":6,"relaxedQueryResultThreshold":12}}'''
+SEARCH_RANKING_CONFIG_JSON = '''
+{
+  "textWeights": {
+    "name": 9,
+    "descriptionShort": 2,
+    "descriptionLong": 0.1,
+    "categoryGroups": 5,
+    "childCategories": 12,
+    "styles": 1.3,
+    "tags": 0.8
+  },
+  "conceptFieldWeights": {
+    "name": 2.5,
+    "descriptionShort": 0.75,
+    "descriptionLong": 0.25,
+    "categoryGroups": 5,
+    "childCategories": 8,
+    "tags": 7
+  },
+  "signalWeights": {
+    "text": 4.5,
+    "popularity": 0,
+    "views": 0.05,
+    "purchases": 1.15,
+    "conversionRate": 0.95,
+    "revenue": 0.7,
+    "freshness": 0.35,
+    "creatorTrackRecord": 0.3,
+    "creatorDiversity": 0.4,
+    "exactTitle": 0.85,
+    "categoryMatch": 2.5,
+    "intentCoverage": 1.2,
+    "querySaturation": 0.35
+  },
+  "controls": {
+    "longDescriptionMaxChars": 350,
+    "reciprocalRankOffset": 20,
+    "conversionRateSmoothingViews": 50,
+    "conversionRateSmoothingPurchases": 1,
+    "taxonomyPrecedenceMinQueryLength": 5,
+    "shortQueryMaxTokens": 1,
+    "shortQueryMaxChars": 12,
+    "shortQueryTextWeightMultiplier": 0.2,
+    "shortQueryExactTitleWeightMultiplier": 2,
+    "shortQueryCategoryWeightMultiplier": 0.35,
+    "purchaseSmoothingViews": 1200,
+    "purchaseSmoothingPrior": 0.5,
+    "revenueSmoothingViews": 1200,
+    "revenueSmoothingPrior": 25,
+    "freshnessHalfLifeDays": 45,
+    "querySaturationThreshold": 3,
+    "creatorDiversityRerankWindowSize": 72,
+    "creatorDiversityRerankMaxPages": 2,
+    "creatorDiversityRerankPenalty": 0.25,
+    "creatorDiversityRerankScoreTolerance": 0.2,
+    "headTermConceptRerankWindowSize": 96,
+    "headTermConceptRerankMaxPages": 2,
+    "headTermConceptRerankPenalty": 1.15,
+    "headTermConceptRerankScoreTolerance": 0.35,
+    "headTermConceptProtectedSlots": 6,
+    "headTermCorroborationPenalty": 1.25,
+    "creatorTrackRecordMinTemplates": 2,
+    "relaxedQueryMinTokens": 3,
+    "relaxedQueryMaxTokens": 6,
+    "relaxedQueryResultThreshold": 12
+  },
+  "headTermProfiles": [
+    {
+      "id": "marketplace",
+      "protectedSlotCount": 10,
+      "protectedSlotConceptCaps": {
+        "job-directory": 1,
+        "jobs": 0,
+        "directory": 3
+      }
+    },
+    {
+      "id": "directory",
+      "protectedSlotCount": 8,
+      "protectedSlotConceptCaps": {
+        "job-directory": 0,
+        "jobs": 0
+      },
+      "corroborationPhrases": [
+        "directory",
+        "directories",
+        "listing",
+        "listings",
+        "classified",
+        "classifieds",
+        "marketplace"
+      ],
+      "corroborationPenaltyConcepts": [
+        "jobs"
+      ]
+    }
+  ]
+}
+'''
 
 [triggers]
 crons = ["*/5 * * * *", "17 3 * * *"]
