@@ -40,7 +40,7 @@ Default Notion auth config ID in `worker/wrangler.toml`:
 - Pinned tools resolve through `partner_auth_notion_pins` and reject caller account overrides.
 - Account metadata and pins live in the agency D1 schema introduced by `0011_partner_notion_accounts.sql`.
 - Sync contracts, field mappings, record mappings, and run history live in the agency D1 schema introduced by `0020_partner_notion_sync_contracts.sql`.
-- `operator_notion_accounts` now supports onboarding wizard flow (`action=wizard`) for naming workspaces + connect-link/API-key steps.
+- `operator_notion_accounts` supports API-first workspace registration (`action=upsert_account`) plus optional connect-link issuance; guided wizard flow remains available when conversational onboarding is useful.
 - `operator_notion_sync` supports page-content preview/copy between managed accounts after connection.
 - `operator_notion_sync_contracts` manages deterministic pairwise data-source sync contracts for Codex automations:
   - discovery: `list_data_sources`, `get_data_source_schema`
@@ -89,12 +89,13 @@ Supported v1 field types:
 
 ## Example Flow
 
-1. Connect both workspaces with `operator_notion_accounts`.
-2. Discover data sources with `operator_notion_sync_contracts(action=list_data_sources)`.
-3. Inspect schemas with `operator_notion_sync_contracts(action=get_data_source_schema)`.
-4. Create or validate a contract with field mappings and conflict policy.
-5. Dry-run with `operator_notion_sync_contracts(action=preview_run)` or `operator_notion_run_sync_contract(dry_run=true)`.
-6. Let a Codex Apps automation call `operator_notion_run_sync_contract` on its schedule.
+1. Register each workspace with `operator_notion_accounts(action=upsert_account)`.
+2. Issue connect links as needed with `operator_notion_accounts(action=create_connect_link)` and confirm `ACTIVE` via `action=get_status`.
+3. Discover data sources with `operator_notion_sync_contracts(action=list_data_sources)`.
+4. Inspect schemas with `operator_notion_sync_contracts(action=get_data_source_schema)`.
+5. Create or validate a contract with field mappings and conflict policy.
+6. Dry-run with `operator_notion_sync_contracts(action=preview_run)` or `operator_notion_run_sync_contract(dry_run=true)`.
+7. Let a Codex Apps automation call `operator_notion_run_sync_contract` on its schedule.
 
 ## Quality Gates
 

@@ -832,7 +832,8 @@ export async function upsertNotionAccount(
     await db
       .prepare(
         `UPDATE partner_auth_notion_accounts
-         SET display_label = ?, auth_config_id = ?, sync_enabled = ?, metadata_json = ?, updated_at = datetime('now')
+         SET display_label = ?, auth_config_id = ?, sync_enabled = ?, status = 'active',
+             disabled_at = NULL, metadata_json = ?, updated_at = datetime('now')
          WHERE id = ?`
       )
       .bind(

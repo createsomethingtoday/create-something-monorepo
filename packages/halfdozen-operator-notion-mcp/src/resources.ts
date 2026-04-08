@@ -24,7 +24,7 @@ export function registerInfoResources(server: McpServer): void {
               ],
               notes: [
                 'Pinned tools resolve to configured account slugs and reject caller overrides.',
-                'operator_notion_accounts supports wizard-style onboarding (workspace naming + connect-link/API-key flow).',
+                'operator_notion_accounts supports API-first workspace upsert plus optional connect-link issuance; wizard flow remains available for guided onboarding.',
                 'operator_notion_sync supports page-content preview/copy flows after connection.',
                 'operator_notion_sync_contracts manages pairwise data-source sync contracts for Codex automations.',
                 'operator_notion_run_sync_contract executes a stored contract or dry-run preview without owning schedule/cron state.',

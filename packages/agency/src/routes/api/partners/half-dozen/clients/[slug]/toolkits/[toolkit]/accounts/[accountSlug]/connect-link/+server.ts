@@ -61,6 +61,15 @@ export const POST: RequestHandler = async ({ request, params, platform, url }) =
 		if (!account) {
 			return json({ error: 'not_found', message: 'Toolkit account binding not found' }, { status: 404 });
 		}
+		if (account.status !== 'active') {
+			return json(
+				{
+					error: 'invalid_state',
+					message: 'Only active toolkit account bindings can issue a connect link. Re-enable the binding first.',
+				},
+				{ status: 409 }
+			);
+		}
 
 		const body = (await request.json().catch(() => null)) as ConnectLinkBody | null;
 		const callbackUrl = body?.callback_url?.trim() || url.searchParams.get('callback_url') || undefined;

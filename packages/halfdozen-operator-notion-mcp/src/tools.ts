@@ -85,6 +85,7 @@ const PARTNER_CACHE_MAX_ENTRIES = 256;
 
 type RouterIntent =
   | 'wizard'
+  | 'upsert_account'
   | 'list_accounts'
   | 'get_status'
   | 'pin_account'
@@ -140,6 +141,7 @@ const pinnedToolSchema = {
 const accountToolSchema = {
   action: z.enum([
     'wizard',
+    'upsert_account',
     'list_accounts',
     'get_status',
     'create_connect_link',
@@ -186,7 +188,7 @@ const routerToolSchema = {
 };
 
 const routerAgentDecisionSchema = z.object({
-  intent: z.enum(['wizard', 'list_accounts', 'get_status', 'pin_account', 'sync_guidance', 'help']),
+  intent: z.enum(['wizard', 'upsert_account', 'list_accounts', 'get_status', 'pin_account', 'sync_guidance', 'help']),
   account_slug: z.string().optional(),
   display_label: z.string().optional(),
   pin_tool_name: z.string().optional(),
@@ -299,7 +301,7 @@ export function registerOperatorNotionTools(server: McpServer, deps: OperatorNot
 
   server.tool(
     'operator_notion_accounts',
-    'Manage operator-bound Notion accounts, including a guided onboarding wizard for naming workspaces and connect-link/API-key flow.',
+    'Manage operator-bound Notion accounts, including API-first workspace upsert, optional connect-link issuance, and guided onboarding when useful.',
     accountToolSchema,
     async (params) => runAccountsTool(params.action as string, params.args as Record<string, unknown>, deps)
   );
@@ -368,6 +370,9 @@ async function runAccountsTool(
   const actor = deps.getActor();
 
   switch (action) {
+    case 'upsert_account': {
+      return runAccountUpsert(args, deps, client.id, actor);
+    }
     case 'wizard': {
       return runAccountsWizard(args, deps, client.id, actor);
     }
@@ -390,6 +395,7 @@ async function runAccountsTool(
       const syncEnabled = typeof args.sync_enabled === 'boolean' ? args.sync_enabled : true;
       const authConfigId = String(args.auth_config_id ?? deps.notionAuthConfigId ?? '').trim();
       if (!authConfigId) throw new Error('No Notion auth config ID configured for this deployment.');
+      const existing = await getNotionAccountBySlug(deps.db, client.id, accountSlug);
       const metadata = isPlainObject(args.metadata) ? args.metadata : {};
       const composioUserId = `hd_notion_${client.slug.replace(/-/g, '_')}_${accountSlug.replace(/-/g, '_')}`;
       await upsertNotionAccount(deps.db, {
@@ -399,7 +405,11 @@ async function runAccountsTool(
         composioUserId,
         authConfigId,
         syncEnabled,
-        metadata: { ...metadata, created_via: 'operator_notion_accounts' },
+        metadata: {
+          ...parseJsonObject(existing?.metadata_json),
+          ...metadata,
+          created_via: 'operator_notion_accounts',
+        },
       });
       const account = await requireAccount(deps.db, client.id, accountSlug);
       const connectionRequest = await deps.composio.connectedAccounts.link(account.composio_user_id, authConfigId, {});
@@ -478,6 +488,58 @@ async function runAccountsTool(
   }
 }
 
+async function runAccountUpsert(
+  args: Record<string, unknown>,
+  deps: OperatorNotionToolsDeps,
+  partnerClientId: string,
+  actor: string,
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  const accountSlug = normalizeSlug(String(args.account_slug ?? ''));
+  if (!accountSlug) throw new Error('args.account_slug is required');
+
+  const displayLabel = String(args.display_label ?? accountSlug).trim() || accountSlug;
+  const syncEnabled = typeof args.sync_enabled === 'boolean' ? args.sync_enabled : true;
+  const authConfigId = String(args.auth_config_id ?? deps.notionAuthConfigId ?? '').trim();
+  if (!authConfigId) throw new Error('No Notion auth config ID configured for this deployment.');
+
+  const existing = await getNotionAccountBySlug(deps.db, partnerClientId, accountSlug);
+  const metadata = isPlainObject(args.metadata) ? args.metadata : {};
+  const composioUserId = `hd_notion_${deps.partnerClientSlug.replace(/-/g, '_')}_${accountSlug.replace(/-/g, '_')}`;
+  await upsertNotionAccount(deps.db, {
+    partnerClientId,
+    accountSlug,
+    displayLabel,
+    composioUserId,
+    authConfigId,
+    syncEnabled,
+    metadata: {
+      ...parseJsonObject(existing?.metadata_json),
+      ...metadata,
+      created_via: existing ? 'operator_notion_accounts_upsert' : 'operator_notion_accounts',
+    },
+  });
+  const account = await requireAccount(deps.db, partnerClientId, accountSlug);
+  const reactivated = Boolean(existing && existing.status !== 'active');
+  await recordNotionEvent(deps.db, {
+    partnerClientId,
+    accountSlug,
+    eventType: existing ? 'account_updated' : 'account_created',
+    actor,
+    metadata: { auth_config_id: authConfigId, sync_enabled: syncEnabled, reactivated },
+  });
+
+  return toJsonResult({
+    ok: true,
+    action: 'upsert_account',
+    created: !existing,
+    reactivated,
+    account: serializeAccount(account),
+    next_actions: [
+      { tool: 'operator_notion_accounts', action: 'create_connect_link', args: { account_slug: accountSlug } },
+    ],
+  });
+}
+
 async function runAccountsWizard(
   args: Record<string, unknown>,
   deps: OperatorNotionToolsDeps,
@@ -485,7 +547,7 @@ async function runAccountsWizard(
   actor: string,
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const accountSlug = normalizeSlug(String(args.account_slug ?? ''));
-  const displayLabel = String(args.display_label ?? '').trim();
+  const displayLabel = String(args.display_label ?? accountSlug).trim() || accountSlug;
   const authConfigId = String(args.auth_config_id ?? deps.notionAuthConfigId ?? '').trim();
   const syncEnabled = typeof args.sync_enabled === 'boolean' ? args.sync_enabled : true;
   const metadata = isPlainObject(args.metadata) ? args.metadata : {};
@@ -493,7 +555,6 @@ async function runAccountsWizard(
 
   const missing: string[] = [];
   if (!accountSlug) missing.push('account_slug');
-  if (!displayLabel) missing.push('display_label');
   if (!authConfigId) missing.push('auth_config_id');
 
   if (missing.length > 0) {
@@ -503,13 +564,15 @@ async function runAccountsWizard(
       status: 'needs_input',
       next_questions: buildAccountWizardQuestions(missing, deps),
       instructions: [
-        'Provide workspace slug and display label first.',
+        'Provide workspace slug first.',
+        'display_label is optional; account_slug is used when no label is provided.',
         'If auth_config_id is omitted, deployment default COMPOSIO_NOTION_AUTH_CONFIG_ID is used.',
       ],
     });
   }
 
   const composioUserId = `hd_notion_${deps.partnerClientSlug.replace(/-/g, '_')}_${accountSlug.replace(/-/g, '_')}`;
+  const existing = await getNotionAccountBySlug(deps.db, partnerClientId, accountSlug);
   await upsertNotionAccount(deps.db, {
     partnerClientId,
     accountSlug,
@@ -517,7 +580,11 @@ async function runAccountsWizard(
     composioUserId,
     authConfigId,
     syncEnabled,
-    metadata: { ...metadata, created_via: 'operator_notion_accounts_wizard' },
+    metadata: {
+      ...parseJsonObject(existing?.metadata_json),
+      ...metadata,
+      created_via: 'operator_notion_accounts_wizard',
+    },
   });
 
   const account = await requireAccount(deps.db, partnerClientId, accountSlug);
@@ -618,7 +685,7 @@ async function runRouterTool(
     intent: 'fallback',
     status: 'needs_input',
     message:
-      'I can help with: connect workspace, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
+      'I can help with: add workspace, issue connect links, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
   });
 }
 
@@ -653,11 +720,15 @@ async function runDeterministicRouter(
     return runRouterIntent('pin_account', mergedArgs, deps);
   }
 
+  if (mentionsAny(lower, ['add workspace', 'new workspace', 'register workspace'])) {
+    return runRouterIntent('upsert_account', mergedArgs, deps);
+  }
+
   if (mentionsAny(lower, ['sync', 'workflow'])) {
     return runRouterIntent('sync_guidance', mergedArgs, deps);
   }
 
-  if (mentionsAny(lower, ['connect', 'add workspace', 'new workspace', 'api key', 'onboard'])) {
+  if (mentionsAny(lower, ['connect', 'connect link', 'api key', 'onboard'])) {
     return runRouterIntent('wizard', mergedArgs, deps);
   }
 
@@ -671,6 +742,20 @@ async function runRouterIntent(
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   if (intent === 'list_accounts') {
     return runAccountsTool('list_accounts', {}, deps);
+  }
+
+  if (intent === 'upsert_account') {
+    const slug = normalizeSlug(String(mergedArgs.account_slug ?? ''));
+    if (!slug) {
+      return toJsonResult({
+        ok: true,
+        action: 'router',
+        intent: 'upsert_account',
+        status: 'needs_input',
+        next_questions: ['What internal workspace slug should be added?'],
+      });
+    }
+    return runAccountsTool('upsert_account', { ...mergedArgs, account_slug: slug }, deps);
   }
 
   if (intent === 'get_status') {
@@ -712,9 +797,10 @@ async function runRouterIntent(
       intent: 'sync_guidance',
       status: 'info',
       message:
-        'Use operator_notion_accounts wizard to connect workspaces first. Then use operator_notion_sync_contracts to define, validate, and preview a reusable two-way sync contract.',
+        'Use operator_notion_accounts action=upsert_account to register each workspace. Then issue connect links, confirm ACTIVE status, and use operator_notion_sync_contracts to define, validate, and preview a reusable sync contract.',
       next_actions: [
-        { tool: 'operator_notion_accounts', action: 'wizard', args: mergedArgs },
+        { tool: 'operator_notion_accounts', action: 'upsert_account', args: mergedArgs },
+        { tool: 'operator_notion_accounts', action: 'create_connect_link', args: mergedArgs },
         { tool: 'operator_notion_sync_contracts', action: 'validate_contract', args: mergedArgs },
       ],
     });
@@ -733,7 +819,7 @@ async function runRouterIntent(
     intent: 'help',
     status: 'needs_input',
     message:
-      'I can help with: connect workspace, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
+      'I can help with: add workspace, issue connect links, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
   });
 }
 
@@ -764,7 +850,7 @@ async function inferRouterIntentWithAgent(
       instructions: [
         'You route operator requests for Notion account management.',
         'Return only a single JSON object with keys: intent, account_slug, display_label, pin_tool_name.',
-        'Allowed intents: wizard, list_accounts, get_status, pin_account, sync_guidance, help.',
+        'Allowed intents: wizard, upsert_account, list_accounts, get_status, pin_account, sync_guidance, help.',
         'If unsure, return intent=help.',
         'Never include prose or markdown.',
       ].join(' '),
@@ -2451,8 +2537,6 @@ function buildAccountWizardQuestions(missing: string[], deps: OperatorNotionTool
   for (const field of missing) {
     if (field === 'account_slug') {
       questions.push('What internal workspace slug should be used? (example: halfdozen, blondish, c3)');
-    } else if (field === 'display_label') {
-      questions.push('What display name should this workspace use? (example: Half Dozen Workspace)');
     } else if (field === 'auth_config_id') {
       questions.push(
         `Which Notion auth config ID should be used? (default from deployment: ${deps.notionAuthConfigId ?? 'not configured'})`,

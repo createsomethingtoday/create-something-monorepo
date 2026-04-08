@@ -14,6 +14,11 @@ import {
 	type PartnerAuthNotionAccountRow,
 	type PartnerAuthNotionPinRow,
 } from '$lib/server/partner-auth';
+import {
+	hydrateNotionAccounts,
+	resolveNotionAccountUpsert,
+	type PartnerNotionAccountStatusDeps,
+} from '$lib/server/partner-notion-account-core';
 
 interface CreateNotionAccountBody {
 	account_slug?: string;
@@ -64,6 +69,10 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 		)
 			.bind(client.id)
 			.all<PartnerAuthNotionPinRow>();
+		const hydratedAccounts = await hydrateNotionAccounts(createNotionAccountStatusDeps(env), {
+			db: env.DB,
+			accounts: accounts.results ?? [],
+		});
 
 		return json({
 			client: {
@@ -72,23 +81,7 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 				display_name: client.display_name,
 			},
 			auth_config_id: resolveAuthConfigId(env, 'notion'),
-			accounts: (accounts.results ?? []).map((row) => ({
-				id: row.id,
-				account_slug: row.account_slug,
-				display_label: row.display_label,
-				composio_user_id: row.composio_user_id,
-				auth_config_id: row.auth_config_id,
-				connected_account_id: row.connected_account_id,
-				connection_status: row.connection_status,
-				status: row.status,
-				sync_enabled: Boolean(row.sync_enabled),
-				last_checked_at: row.last_checked_at,
-				connected_at: row.connected_at,
-				disabled_at: row.disabled_at,
-				metadata: parseJsonObject(row.metadata_json),
-				created_at: row.created_at,
-				updated_at: row.updated_at,
-			})),
+			accounts: hydratedAccounts,
 			pins: (pins.results ?? []).map((row) => ({
 				tool_name: row.tool_name,
 				account_slug: row.account_slug,
@@ -162,24 +155,34 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			);
 		}
 
-		const displayLabel = body?.display_label?.trim() || existing?.display_label || accountSlug;
-		const syncEnabled =
-			typeof body?.sync_enabled === 'boolean' ? body.sync_enabled : Boolean(existing?.sync_enabled ?? 1);
-		const composioUserId =
-			existing?.composio_user_id || `hd_notion_${client.slug.replace(/-/g, '_')}_${accountSlug.replace(/-/g, '_')}`;
-		const metadata = {
-			...parseJsonObject(existing?.metadata_json),
-			...(body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {}),
-			last_updated_by: actor,
-		};
+		const metadata =
+			body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {};
+		const resolved = resolveNotionAccountUpsert({
+			existing,
+			accountSlug,
+			clientSlug: client.slug,
+			actor,
+			authConfigId,
+			displayLabel: body?.display_label,
+			syncEnabled: body?.sync_enabled,
+			metadata,
+			parseJsonObject,
+		});
 
 		if (existing) {
 			await env.DB.prepare(
 				`UPDATE partner_auth_notion_accounts
-				 SET display_label = ?, auth_config_id = ?, sync_enabled = ?, metadata_json = ?, updated_at = datetime('now')
+				 SET display_label = ?, auth_config_id = ?, sync_enabled = ?, status = 'active',
+				     disabled_at = NULL, metadata_json = ?, updated_at = datetime('now')
 				 WHERE id = ?`
 			)
-				.bind(displayLabel, authConfigId, syncEnabled ? 1 : 0, JSON.stringify(metadata), existing.id)
+				.bind(
+					resolved.displayLabel,
+					authConfigId,
+					resolved.syncEnabled ? 1 : 0,
+					JSON.stringify(resolved.metadata),
+					existing.id,
+				)
 				.run();
 		} else {
 			await env.DB.prepare(
@@ -192,11 +195,11 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 					randomId('panotion'),
 					client.id,
 					accountSlug,
-					displayLabel,
-					composioUserId,
+					resolved.displayLabel,
+					resolved.composioUserId,
 					authConfigId,
-					syncEnabled ? 1 : 0,
-					JSON.stringify(metadata)
+					resolved.syncEnabled ? 1 : 0,
+					JSON.stringify(resolved.metadata)
 				)
 				.run();
 		}
@@ -212,16 +215,23 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				accountSlug,
 				existing ? 'account_updated' : 'account_created',
 				actor,
-				JSON.stringify({ auth_config_id: authConfigId, sync_enabled: syncEnabled }),
+				JSON.stringify({
+					auth_config_id: authConfigId,
+					sync_enabled: resolved.syncEnabled,
+					reactivated: resolved.reactivated,
+				}),
 			)
 			.run();
 
 		return json({
 			client_slug: client.slug,
 			account_slug: accountSlug,
-			composio_user_id: composioUserId,
+			display_label: resolved.displayLabel,
+			composio_user_id: resolved.composioUserId,
 			auth_config_id: authConfigId,
-			sync_enabled: syncEnabled,
+			sync_enabled: resolved.syncEnabled,
+			status: resolved.status,
+			reactivated: resolved.reactivated,
 			policy: authz.policy,
 		});
 	} catch (error) {
@@ -235,3 +245,66 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		);
 	}
 };
+
+function createNotionAccountStatusDeps(env: App.Platform['env']): PartnerNotionAccountStatusDeps {
+	const listConnectedAccounts = createConnectedAccountLister(env);
+	return {
+		listConnectedAccounts,
+		parseJsonObject,
+		...(listConnectedAccounts
+			? {
+					updateNotionAccountSyncState: async (db: D1Database, input: {
+						id: string;
+						authConfigId: string | null;
+						connectedAccountId: string | null;
+						connectionStatus: string;
+						lastCheckedAt: string;
+						connectedAt: string | null;
+					}) => {
+						await db
+							.prepare(
+								`UPDATE partner_auth_notion_accounts
+								 SET auth_config_id = COALESCE(?, auth_config_id),
+								     connected_account_id = ?,
+								     connection_status = ?,
+								     last_checked_at = ?,
+								     connected_at = ?,
+								     updated_at = datetime('now')
+								 WHERE id = ?`
+							)
+							.bind(
+								input.authConfigId,
+								input.connectedAccountId,
+								input.connectionStatus,
+								input.lastCheckedAt,
+								input.connectedAt,
+								input.id,
+							)
+							.run();
+					},
+				}
+			: {}),
+	};
+}
+
+function createConnectedAccountLister(
+	env: App.Platform['env']
+): PartnerNotionAccountStatusDeps['listConnectedAccounts'] {
+	if (!env?.COMPOSIO_API_KEY?.trim()) {
+		return undefined;
+	}
+
+	return async (userIds: string[]) => {
+		if (userIds.length === 0) {
+			return [];
+		}
+
+		const composio = getComposioClient(env);
+		const response = await composio.connectedAccounts.list({ userIds });
+		return Array.isArray((response as { items?: unknown[] }).items)
+			? ((response as { items: unknown[] }).items as any[])
+			: Array.isArray(response)
+				? (response as any[])
+				: [];
+	};
+}
