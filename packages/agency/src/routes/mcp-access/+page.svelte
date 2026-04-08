@@ -91,6 +91,54 @@
 		return /^[A-Za-z0-9_]+$/.test(key) ? key : JSON.stringify(key);
 	}
 
+	function shellQuote(value: string): string {
+		return `'${value}'`;
+	}
+
+	function indentBlock(value: string, prefix: string): string {
+		return value
+			.split('\n')
+			.map((line) => `${prefix}${line}`)
+			.join('\n');
+	}
+
+	function buildClaudeBridgeServerName(serverName: string): string {
+		return serverName.endsWith('-bridge') ? serverName : `${serverName}-bridge`;
+	}
+
+	function buildClaudeBridgeServerConfig(
+		url: string,
+		envVarName: string,
+		authHeaderValue: string,
+	) {
+		return {
+			type: 'stdio',
+			command: 'npx',
+			args: [
+				'-y',
+				'mcp-remote',
+				url,
+				'--transport',
+				'http-only',
+				'--header',
+				`Authorization:\${${envVarName}}`,
+				'--silent',
+			],
+			env: {
+				[envVarName]: authHeaderValue,
+			},
+		};
+	}
+
+	function buildClaudeConfigSnippet(serverName: string, serverJson: string): string {
+		return `{
+  "mcpServers": {
+    "${serverName}":
+${indentBlock(serverJson, '      ')}
+  }
+}`;
+	}
+
 	let token = $state<ManagedToken>(data.access.token ?? null);
 	let busy = $state(false);
 	let revealedToken = $state('');
@@ -113,7 +161,7 @@
 	});
 	let newPassword = $state('');
 	let confirmPassword = $state('');
-	let selectedHost = $state<HostId>('codex');
+	let selectedHost = $state<HostId>(data.assignment?.claudeConnectionMode === 'mcp_remote' ? 'claude' : 'codex');
 	const assignment = $derived(data.assignment as AccessAssignment);
 
 	const activeHost = $derived(hostOptions.find((host) => host.id === selectedHost) ?? hostOptions[0]);
@@ -123,6 +171,19 @@
 	const snippetBearerHeaderValue = $derived(`Bearer ${tokenValue}`);
 	const claudeBridgeEnvVarName = $derived(buildAuthHeaderEnvVarName(snippetServerName));
 	const claudeUsesBridge = $derived(assignment?.claudeConnectionMode === 'mcp_remote');
+	const claudeBridgeServerName = $derived(buildClaudeBridgeServerName(snippetServerName));
+	const claudeBridgeServerConfig = $derived(
+		buildClaudeBridgeServerConfig(activeHostUrl, claudeBridgeEnvVarName, snippetBearerHeaderValue),
+	);
+	const claudeBridgeServerJson = $derived(JSON.stringify(claudeBridgeServerConfig, null, 2));
+	const claudeInstallCommand = $derived(
+		`claude mcp add-json --scope user ${claudeBridgeServerName} ${shellQuote(JSON.stringify(claudeBridgeServerConfig))}`,
+	);
+	const claudeProjectInstallCommand = $derived(
+		`claude mcp add-json --scope project ${claudeBridgeServerName} ${shellQuote(JSON.stringify(claudeBridgeServerConfig))}`,
+	);
+	const claudeRemoveCommand = $derived(`claude mcp remove --scope user ${claudeBridgeServerName}`);
+	const claudeVerifyCommand = $derived(`claude mcp get ${claudeBridgeServerName}`);
 	const oauthHostEmail = $derived(oauthPassword?.email ?? data.user.email ?? 'your-linked-email@example.com');
 	const tokenModeLabel = $derived(token?.tool_mode === 'read_write' ? 'Read + write' : 'Read only');
 	const tokenStatus = $derived(
@@ -154,27 +215,9 @@ bearer_token = "${tokenValue}"`);
     }
   }
 }`);
-	const claudeBridgeSnippet = $derived(`\
-{
-  "mcpServers": {
-    "${snippetServerName}": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "${activeHostUrl}",
-        "--transport",
-        "http-only",
-        "--header",
-        "Authorization:\${${claudeBridgeEnvVarName}}",
-        "--silent"
-      ],
-      "env": {
-        "${claudeBridgeEnvVarName}": "${snippetBearerHeaderValue}"
-      }
-    }
-  }
-}`);
+	const claudeBridgeSnippet = $derived(
+		buildClaudeConfigSnippet(claudeBridgeServerName, claudeBridgeServerJson),
+	);
 	const claudeSnippet = $derived(claudeUsesBridge ? claudeBridgeSnippet : claudeDirectSnippet);
 	const cursorSnippet = $derived(`\
 {
@@ -566,74 +609,165 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 		title="Host Setup"
 		description="Use the account-specific MCP URL with either bearer auth or the OAuth host flow, depending on the client."
 		fullWidth={true}
-		>
-			<div class="host-setup">
-				<div class="host-controls">
-					<div class="host-tabs" role="group" aria-label="Host setup examples">
-						{#each hostOptions as host}
-							<button
-								type="button"
-								aria-pressed={selectedHost === host.id}
-								class:active={selectedHost === host.id}
-								class="host-tab secondary"
-								onclick={() => {
-									selectedHost = host.id;
-									snippetCopiedState = '';
-								}}
-							>
-								{host.label}
+	>
+		<div class="host-setup">
+			<div class="host-controls">
+				<div class="host-tabs" role="group" aria-label="Host setup examples">
+					{#each hostOptions as host}
+						<button
+							type="button"
+							aria-pressed={selectedHost === host.id}
+							class:active={selectedHost === host.id}
+							class="host-tab secondary"
+							onclick={() => {
+								selectedHost = host.id;
+								snippetCopiedState = '';
+							}}
+						>
+							{host.label}
 						</button>
 					{/each}
 				</div>
 
-					<div class="host-table">
+				<div class="host-table">
+					<div class="instruction-row">
+						<span>Host</span>
+						<strong>{activeHost.label}</strong>
+					</div>
+					<div class="instruction-row">
+						<span>MCP URL</span>
+						<strong>{activeHostUrl}</strong>
+					</div>
+					<div class="instruction-row">
+						<span>Connection Mode</span>
+						<strong>{selectedHost === 'claude' && claudeUsesBridge ? 'Local stdio bridge via npx mcp-remote' : 'Direct remote HTTP with bearer auth'}</strong>
+					</div>
+					{#if selectedHost === 'claude' && claudeUsesBridge}
 						<div class="instruction-row">
-							<span>Host</span>
-							<strong>{activeHost.label}</strong>
+							<span>Recommended Scope</span>
+							<strong>User config</strong>
 						</div>
 						<div class="instruction-row">
-							<span>MCP URL</span>
-							<strong>{activeHostUrl}</strong>
+							<span>Server Name</span>
+							<strong>{claudeBridgeServerName}</strong>
 						</div>
-						<div class="instruction-row">
-							<span>Connection Mode</span>
-							<strong>{selectedHost === 'claude' && claudeUsesBridge ? 'Local stdio bridge via npx mcp-remote' : 'Direct remote HTTP with bearer auth'}</strong>
-						</div>
-						<div class="instruction-row">
-							<span>Bearer token</span>
-							<strong>{selectedHost === 'notion'
-								? (revealedToken ? 'Use in Authorization header below' : 'Insert your current token into the Authorization header')
-								: selectedHost === 'claude' && claudeUsesBridge
-									? (revealedToken ? 'Fresh value is embedded in the env block below as a Bearer header' : 'Insert your current token into the env block below as a Bearer header')
-									: (revealedToken ? 'Fresh value in snippet below' : 'Insert your current token')}</strong>
-						</div>
+					{/if}
+					<div class="instruction-row">
+						<span>Bearer token</span>
+						<strong>{selectedHost === 'notion'
+							? (revealedToken ? 'Use in Authorization header below' : 'Insert your current token into the Authorization header')
+							: selectedHost === 'claude' && claudeUsesBridge
+								? (revealedToken ? 'Fresh value is embedded in the install command below' : 'Replace the placeholder in the install command with your current token')
+								: (revealedToken ? 'Fresh value in snippet below' : 'Insert your current token')}</strong>
+					</div>
 				</div>
 
 				<p class="annotation-copy">
-					Auth0 remains the portal identity boundary. The snippet below configures only the MCP host connection. For reviewer lanes in Claude Code, use the local `mcp-remote` bridge so bearer auth stays authoritative and Claude does not fall back into an OAuth discovery flow. For Notion AI, use bearer auth by default; the OAuth host password above is only for hosts that require an authorize flow.
+					{selectedHost === 'claude' && claudeUsesBridge
+						? 'Reviewers do not deploy anything. Run the install command once in Terminal, then restart Claude Code or rerun /mcp.'
+						: 'Auth0 remains the portal identity boundary. The snippet below configures only the MCP host connection. For Notion AI, use bearer auth by default; the OAuth host password above is only for hosts that require an authorize flow.'}
 				</p>
 			</div>
 
-			<div class="snippet-panel">
-				<div class="panel-head">
-					<div>
-						<h3>{activeHost.label} configuration</h3>
-						<p>{selectedHost === 'notion'
-							? 'Use the provisioned MCP URL and send the bearer token in the Authorization header. OAuth remains available only when the host requires it.'
-							: selectedHost === 'claude' && claudeUsesBridge
-								? 'This reviewer lane uses a local stdio bridge through npx mcp-remote. Keep the no-space Authorization header form exactly as shown.'
-								: 'Copy the provisioned endpoint and token as shown below.'}</p>
+			{#if selectedHost === 'claude' && claudeUsesBridge}
+				<div class="command-stack">
+					<div class="snippet-panel">
+						<div class="panel-head">
+							<div>
+								<h3>1. Install in Claude Code</h3>
+								<p>{revealedToken
+									? 'Run this once in Terminal. The current bearer token is already embedded.'
+									: 'Run this once in Terminal after replacing PASTE_YOUR_BEARER_TOKEN_HERE with your current bearer token.'}</p>
+							</div>
+							<button class="secondary small" type="button" onclick={() => copyText(claudeInstallCommand, 'Claude Code install command', 'snippet')}>
+								Copy install
+							</button>
+						</div>
+						<pre><code>{claudeInstallCommand}</code></pre>
 					</div>
-					<button class="secondary small" type="button" onclick={() => copyText(activeSnippet, `${activeHost.label} snippet`, 'snippet')}>
-						Copy snippet
-					</button>
-				</div>
 
-				<pre><code>{activeSnippet}</code></pre>
-				{#if snippetCopiedState}
-					<p class="feedback">{snippetCopiedState}</p>
-				{/if}
-			</div>
+					<div class="snippet-panel">
+						<div class="panel-head">
+							<div>
+								<h3>2. Remove later if needed</h3>
+								<p>Run this only if you want to uninstall the reviewer lane from your personal Claude Code config.</p>
+							</div>
+							<button class="secondary small" type="button" onclick={() => copyText(claudeRemoveCommand, 'Claude Code remove command', 'snippet')}>
+								Copy remove
+							</button>
+						</div>
+						<pre><code>{claudeRemoveCommand}</code></pre>
+					</div>
+
+					<div class="snippet-panel">
+						<div class="panel-head">
+							<div>
+								<h3>3. Verify</h3>
+								<p>Run this after install. Expected output includes `Scope: User config`, then restart Claude Code or rerun `/mcp`.</p>
+							</div>
+							<button class="secondary small" type="button" onclick={() => copyText(claudeVerifyCommand, 'Claude Code verify command', 'snippet')}>
+								Copy verify
+							</button>
+						</div>
+						<pre><code>{claudeVerifyCommand}</code></pre>
+					</div>
+
+					<details class="advanced-panel">
+						<summary>Advanced and troubleshooting</summary>
+						<div class="advanced-content">
+							<p class="annotation-copy">
+								User scope is the default because reviewer access is personal and should work across repos. Use project scope only if you intentionally want one repo to carry the bridge name locally.
+							</p>
+
+							<div class="snippet-panel">
+								<div class="panel-head">
+									<div>
+										<h3>Project-scope install</h3>
+										<p>Use this only for a repo-local setup. The `-bridge` suffix avoids collisions with repo `.mcp.json` entries.</p>
+									</div>
+									<button class="secondary small" type="button" onclick={() => copyText(claudeProjectInstallCommand, 'Claude Code project install command', 'snippet')}>
+										Copy project install
+									</button>
+								</div>
+								<pre><code>{claudeProjectInstallCommand}</code></pre>
+							</div>
+
+							<div class="snippet-panel">
+								<div class="panel-head">
+									<div>
+										<h3>Equivalent JSON config</h3>
+										<p>This is the underlying user-scoped bridge config. Most reviewers should use the install command above instead of editing JSON directly.</p>
+									</div>
+									<button class="secondary small" type="button" onclick={() => copyText(claudeBridgeSnippet, 'Claude Code bridge config', 'snippet')}>
+										Copy JSON
+									</button>
+								</div>
+								<pre><code>{claudeBridgeSnippet}</code></pre>
+							</div>
+						</div>
+					</details>
+				</div>
+			{:else}
+				<div class="snippet-panel">
+					<div class="panel-head">
+						<div>
+							<h3>{activeHost.label} configuration</h3>
+							<p>{selectedHost === 'notion'
+								? 'Use the provisioned MCP URL and send the bearer token in the Authorization header. OAuth remains available only when the host requires it.'
+								: 'Copy the provisioned endpoint and token as shown below.'}</p>
+						</div>
+						<button class="secondary small" type="button" onclick={() => copyText(activeSnippet, `${activeHost.label} snippet`, 'snippet')}>
+							Copy snippet
+						</button>
+					</div>
+
+					<pre><code>{activeSnippet}</code></pre>
+				</div>
+			{/if}
+
+			{#if snippetCopiedState}
+				<p class="feedback">{snippetCopiedState}</p>
+			{/if}
 		</div>
 	</ReportSection>
 </ReportShell>
@@ -669,6 +803,12 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.55rem;
+	}
+
+	.command-stack,
+	.advanced-content {
+		display: grid;
+		gap: 0.9rem;
 	}
 
 	.form-stack {
@@ -730,6 +870,24 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 	.reveal-panel,
 	.snippet-panel {
 		padding: 0.9rem 1rem;
+	}
+
+	.advanced-panel {
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: rgba(255, 255, 255, 0.015);
+		padding: 0.9rem 1rem;
+	}
+
+	.advanced-panel summary {
+		cursor: pointer;
+		font-size: 0.8rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-fg-muted);
+	}
+
+	.advanced-content {
+		margin-top: 0.9rem;
 	}
 
 	.panel-head {
