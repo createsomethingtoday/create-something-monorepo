@@ -254,6 +254,7 @@ export interface SearchParams {
   sort: TemplateSort;
   page: number;
   pageSize: number;
+  includeFacets: boolean;
 }
 
 export interface SearchItem {

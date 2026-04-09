@@ -250,6 +250,113 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('exposes server timing headers for search requests', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      creators: CREATORS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
+      expect(search.status).toBe(200);
+      expect(search.headers.get('Cache-Control')).toBe('no-store, no-cache, must-revalidate, max-age=0');
+
+      const serverTiming = search.headers.get('Server-Timing') || '';
+      expect(serverTiming).toContain('total;dur=');
+      expect(serverTiming).toContain('count;dur=');
+      expect(serverTiming).toContain('db;dur=');
+      expect(serverTiming).toContain('rerank;dur=');
+      expect(serverTiming).toContain('assets;dur=');
+      expect(serverTiming).toContain('creators;dur=');
+      expect(serverTiming).toContain('build;dur=');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('can skip facet and pill payloads for faster search responses', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      creators: CREATORS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const search = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=workflow&include_facets=false'),
+        env,
+      );
+      const payload = (await search.json()) as {
+        available_facets: { styles: Array<unknown>; types: Array<unknown> };
+        subcategory_pills: Array<unknown>;
+      };
+
+      expect(payload.available_facets.styles).toEqual([]);
+      expect(payload.available_facets.types).toEqual([]);
+      expect(payload.subcategory_pills).toEqual([]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('skips Airtable metadata refresh for search results that already have fresh metadata indexed', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      creators: CREATORS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      fetchMock.mockClear();
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
+      expect(search.status).toBe(200);
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('refreshes canonical listing URLs and creator avatars from Airtable for stale indexed rows', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [
@@ -347,6 +454,104 @@ describe('webflow-template-search worker', () => {
       expect(payload.items[0]?.thumbnail_image_url).toBe('https://example.com/workplace-fresh.png');
       expect(payload.items[0]?.preview_url).toBe('https://workplacex.example.com');
       expect(payload.items[0]?.website_url).toBe('https://webflow.com/templates/html/workplace-x-directory-website-template');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('refreshes expiring Airtable attachment URLs before they break on the page', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          id: 'recExpiring',
+          fields: {
+            Name: 'Expiring Asset',
+            '⚙️🆎Type (Text)': 'Template🏗️',
+            '🚀Marketplace Status': '3️⃣Published🚀',
+            '🎨Creator': ['creBrix'],
+            '🎨Creator Name': 'BRIX Templates',
+            '⚙️🎨Creator Record ID': 'creBrix',
+            '🖼️Thumbnail Image': [{ url: 'https://example.com/expiring-asset-fresh.png' }],
+            '🕸️View Asset Listing': {
+              url: 'https://webflow.com/templates/html/expiring-asset-public-listing',
+              label: 'View asset',
+            },
+            '🕸️Template Profile Page ': 'https://webflow.com/templates/designers/brix-templates',
+            '🔗Preview Site URL': 'https://expiring-asset.example.com',
+            '🔗Website URL': 'https://webflow.com/templates/html/expiring-asset-public-listing',
+          },
+        },
+      ],
+      creators: CREATORS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await upsertTemplateDocuments(env.DB, [
+        {
+          id: 'recExpiring',
+          templateSlug: 'expiring-asset-website-template',
+          name: 'Expiring Asset',
+          listingUrl: 'https://webflow.com/templates/html/expiring-asset-public-listing',
+          previewUrl: 'https://expiring-asset.example.com',
+          websiteUrl: 'https://webflow.com/templates/html/expiring-asset-public-listing',
+          creatorRecordId: 'creBrix',
+          creatorName: 'BRIX Templates',
+          creatorProfileUrl: 'https://webflow.com/templates/designers/brix-templates',
+          creatorAvatarUrl:
+            'https://v5.airtableusercontent.com/v3/u/52/52/1710000000000/stale-avatar/example-avatar-token',
+          creatorAvatarAlt: 'BRIX Templates avatar',
+          thumbnailImageUrl:
+            'https://v5.airtableusercontent.com/v3/u/52/52/1710000000000/stale-thumb/example-thumb-token',
+          thumbnailImageSecondaryUrl: null,
+          carouselImageUrls: [],
+          descriptionShort: 'Directory platform template',
+          descriptionLongHtml: '<p>Directory platform template</p>',
+          descriptionLongText: 'Directory platform template',
+          categoryGroups: ['Technology'],
+          categoryGroupSlugs: ['technology-websites'],
+          childCategories: ['AI'],
+          childCategorySlugs: ['ai-websites'],
+          childCategorySearchTerms: ['AI', 'automation', 'agent'],
+          styles: ['Modern'],
+          styleSlugs: ['modern'],
+          tags: ['Automation'],
+          tagSlugs: ['automation'],
+          templateType: 'Multi Layout',
+          isFree: false,
+          isFeatured: false,
+          isLandingPage: false,
+          popularityScore: 50,
+          uniqueViewers: 100,
+          cumulativePurchases: 5,
+          cumulativeRevenue: 395,
+          price: 79,
+          publishedDate: '2026-03-01',
+          marketplaceStatus: '3️⃣Published🚀',
+          sourceLastModifiedTime: '2026-03-16T05:13:07.000Z',
+          syncedAt: '2026-04-08T00:00:00.000Z',
+        },
+      ]);
+
+      fetchMock.mockClear();
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=expiring'), env);
+      const payload = (await search.json()) as {
+        items: Array<{
+          name: string;
+          creator_avatar_url: string | null;
+          thumbnail_image_url: string | null;
+        }>;
+      };
+
+      expect(fetchMock).toHaveBeenCalled();
+      expect(payload.items.map((item) => item.name)).toEqual(['Expiring Asset']);
+      expect(payload.items[0]?.creator_avatar_url).toBe('https://example.com/brix-avatar.png');
+      expect(payload.items[0]?.thumbnail_image_url).toBe('https://example.com/expiring-asset-fresh.png');
     } finally {
       fetchMock.mockRestore();
       close();

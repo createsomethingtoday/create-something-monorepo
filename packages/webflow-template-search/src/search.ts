@@ -1,5 +1,5 @@
 import { fetchAssetMetadataByRecordIds, fetchCreatorMetadataByRecordIds } from './airtable.js';
-import { lookupPublicSlugMap, resolveAlias } from './db.js';
+import { lookupPublicSlugMap, patchTemplateDocumentMetadata, resolveAlias } from './db.js';
 import { getSearchRankingConfig } from './ranking.js';
 import type {
   DocumentCountRow,
@@ -16,6 +16,23 @@ import type {
   TemplateSort,
 } from './types.js';
 import { parseJsonArray } from './utils.js';
+
+interface SearchExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
+}
+
+export interface SearchExecutionResult {
+  payload: SearchResponsePayload;
+  timing: {
+    totalMs: number;
+    countMs: number;
+    dbMs: number;
+    rerankMs: number;
+    assetRefreshMs: number;
+    creatorRefreshMs: number;
+    buildMs: number;
+  };
+}
 
 const QUERY_STOPWORDS = new Set([
   'a',
@@ -1324,6 +1341,46 @@ function toTemplateUrl(row: DocumentRow): string | null {
   return row.listing_url ?? `https://webflow.com/templates/html/${row.template_slug}`;
 }
 
+const AIRTABLE_ATTACHMENT_REFRESH_WINDOW_MS = 6 * 60 * 60 * 1000;
+
+function extractAirtableAttachmentExpiryTimestamp(url: string | null | undefined): number | null {
+  if (!url) return null;
+  if (!url.includes('airtableusercontent.com')) return null;
+
+  const match = url.match(/\/(\d{13})(?:\/|$)/);
+  if (!match) return null;
+
+  const expiresAt = Number(match[1]);
+  return Number.isFinite(expiresAt) ? expiresAt : null;
+}
+
+function isExpiringAirtableAttachmentUrl(url: string | null | undefined, now = Date.now()): boolean {
+  const expiresAt = extractAirtableAttachmentExpiryTimestamp(url);
+  if (!expiresAt) return false;
+  return expiresAt <= now + AIRTABLE_ATTACHMENT_REFRESH_WINDOW_MS;
+}
+
+function needsFreshAssetMetadata(row: DocumentRow): boolean {
+  return (
+    !row.listing_url ||
+    !row.creator_record_id ||
+    !row.creator_profile_url ||
+    !row.thumbnail_image_url ||
+    isExpiringAirtableAttachmentUrl(row.thumbnail_image_url) ||
+    isExpiringAirtableAttachmentUrl(row.thumbnail_image_secondary_url)
+  );
+}
+
+function needsFreshCreatorMetadata(row: DocumentRow): boolean {
+  return (
+    !row.creator_record_id ||
+    !row.creator_profile_url ||
+    !row.creator_avatar_url ||
+    !row.creator_avatar_alt ||
+    isExpiringAirtableAttachmentUrl(row.creator_avatar_url)
+  );
+}
+
 function buildCategoryGroups(names: string[], slugs: string[]): Array<{ name: string; slug: string; url: string }> {
   return names.map((name, index) => ({
     name,
@@ -1356,7 +1413,12 @@ function buildChildCategories(
   });
 }
 
-export async function searchTemplates(env: Env, rawParams: SearchParams): Promise<SearchResponsePayload> {
+export async function searchTemplates(
+  env: Env,
+  rawParams: SearchParams,
+  ctx?: SearchExecutionContext,
+): Promise<SearchExecutionResult> {
+  const totalStartedAt = performance.now();
   const params = await resolveAliases(env, rawParams);
   const rankingConfig = getSearchRankingConfig(env);
   const normalizedQuery = normalizeQueryWhitespace((params.q ?? '').toLowerCase());
@@ -1366,6 +1428,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     : null;
   let effectiveFtsQuery = params.q ? buildEffectiveFtsQuery(queryTokens, headTermExpansion) : null;
   let sqlParts = buildSqlParts(params, effectiveFtsQuery ? { ftsQuery: effectiveFtsQuery } : {});
+  const countStartedAt = performance.now();
   let totalItems = await getTotalCount(env.DB, sqlParts);
 
   if (effectiveFtsQuery && shouldUseRelaxedFtsQuery(queryTokens, totalItems, rankingConfig)) {
@@ -1376,17 +1439,21 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       totalItems = await getTotalCount(env.DB, sqlParts);
     }
   }
+  const countMs = performance.now() - countStartedAt;
 
   const queryWindow = buildDocumentQueryWindow(params, rankingConfig, headTermExpansion);
   const queryIntent = buildQueryIntentProfile(normalizedQuery, rankingConfig, headTermExpansion);
 
+  const dbStartedAt = performance.now();
   const [rows, styleFacets, typeFacets, pills] = await Promise.all([
     loadDocumentRows(env, sqlParts, params, queryWindow, rankingConfig, queryIntent, headTermExpansion),
-    loadFacetStyles(env, params, effectiveFtsQuery),
-    loadFacetTypes(env, params, effectiveFtsQuery),
-    loadSubcategoryPills(env, params, effectiveFtsQuery),
+    params.includeFacets ? loadFacetStyles(env, params, effectiveFtsQuery) : Promise.resolve([]),
+    params.includeFacets ? loadFacetTypes(env, params, effectiveFtsQuery) : Promise.resolve([]),
+    params.includeFacets ? loadSubcategoryPills(env, params, effectiveFtsQuery) : Promise.resolve([]),
   ]);
+  const dbMs = performance.now() - dbStartedAt;
 
+  const rerankStartedAt = performance.now();
   const loadedRows = rows.results ?? [];
   const creatorRerankedRows = queryWindow.applyPageLocalCreatorDiversity
     ? rerankRowsForPageLocalCreatorDiversity(loadedRows, params, queryIntent, rankingConfig)
@@ -1402,33 +1469,40 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     : creatorRerankedRows;
   const slicedRows = conceptRerankedRows.slice(queryWindow.sliceOffset, queryWindow.sliceOffset + params.pageSize);
   const rowResults = slicedRows;
+  const rerankMs = performance.now() - rerankStartedAt;
+  const assetRefreshRowIds = env.AIRTABLE_API_KEY
+    ? rowResults.filter((row) => needsFreshAssetMetadata(row)).map((row) => row.id)
+    : [];
+  const assetRefreshStartedAt = performance.now();
   const [childSlugMap, freshAssetMetadataById] = await Promise.all([
     lookupPublicSlugMap(
       env.DB,
       'child_category',
-      rowResults.flatMap((row) => parseJsonArray(row.child_category_slugs_json)).concat(pills.map((pill) => pill.slug)),
+        rowResults.flatMap((row) => parseJsonArray(row.child_category_slugs_json)).concat(pills.map((pill) => pill.slug)),
     ),
-    env.AIRTABLE_API_KEY
-      ? fetchAssetMetadataByRecordIds(
-          env,
-          rowResults.map((row) => row.id),
-        ).catch(() => new Map())
+    env.AIRTABLE_API_KEY && assetRefreshRowIds.length > 0
+      ? fetchAssetMetadataByRecordIds(env, assetRefreshRowIds).catch(() => new Map())
       : Promise.resolve(new Map()),
   ]);
+  const assetRefreshMs = performance.now() - assetRefreshStartedAt;
   const creatorRecordIds = env.AIRTABLE_API_KEY
     ? Array.from(
         new Set(
           rowResults
+            .filter((row) => needsFreshCreatorMetadata(row) || freshAssetMetadataById.has(row.id))
             .map((row) => freshAssetMetadataById.get(row.id)?.creatorRecordId ?? row.creator_record_id ?? '')
             .filter(Boolean),
         ),
       )
     : [];
+  const creatorRefreshStartedAt = performance.now();
   const freshCreatorMetadataById =
     env.AIRTABLE_API_KEY && creatorRecordIds.length > 0
       ? await fetchCreatorMetadataByRecordIds(env, creatorRecordIds).catch(() => new Map())
       : new Map();
+  const creatorRefreshMs = performance.now() - creatorRefreshStartedAt;
 
+  const buildStartedAt = performance.now();
   const items: SearchItem[] = rowResults.map((row) => {
     const categoryGroups = parseJsonArray(row.category_groups_json);
     const categoryGroupSlugs = parseJsonArray(row.category_group_slugs_json);
@@ -1481,9 +1555,71 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     };
   });
 
-  const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / params.pageSize);
+  if (ctx && freshAssetMetadataById.size > 0) {
+    const patches = rowResults
+      .map((row) => {
+        const freshAssetMetadata = freshAssetMetadataById.get(row.id);
+        if (!freshAssetMetadata) return null;
 
-  return {
+        const resolvedCreatorRecordId = freshAssetMetadata.creatorRecordId ?? row.creator_record_id;
+        const freshCreatorMetadata = resolvedCreatorRecordId ? freshCreatorMetadataById.get(resolvedCreatorRecordId) : null;
+        const creatorName = freshAssetMetadata.creatorName ?? row.creator_name;
+        const nextListingUrl = freshAssetMetadata.listingUrl ?? row.listing_url;
+        const nextPreviewUrl = freshAssetMetadata.previewUrl ?? row.preview_url;
+        const nextWebsiteUrl = freshAssetMetadata.websiteUrl ?? row.website_url;
+        const nextCreatorProfileUrl =
+          freshAssetMetadata.creatorProfileUrl ??
+          row.creator_profile_url ??
+          freshCreatorMetadata?.templatesPageUrl ??
+          freshCreatorMetadata?.profileUrl ??
+          null;
+        const nextCreatorAvatarUrl =
+          freshCreatorMetadata?.avatarPrimaryUrl ??
+          freshCreatorMetadata?.avatarSecondaryUrl ??
+          row.creator_avatar_url;
+        const nextCreatorAvatarAlt = freshCreatorMetadata?.avatarAlt ?? row.creator_avatar_alt ?? creatorName;
+        const nextThumbnailImageUrl = freshAssetMetadata.thumbnailImageUrl ?? row.thumbnail_image_url;
+        const nextThumbnailImageSecondaryUrl =
+          freshAssetMetadata.thumbnailImageSecondaryUrl ?? row.thumbnail_image_secondary_url;
+
+        const changed =
+          nextListingUrl !== row.listing_url ||
+          nextPreviewUrl !== row.preview_url ||
+          nextWebsiteUrl !== row.website_url ||
+          resolvedCreatorRecordId !== row.creator_record_id ||
+          creatorName !== row.creator_name ||
+          nextCreatorProfileUrl !== row.creator_profile_url ||
+          nextCreatorAvatarUrl !== row.creator_avatar_url ||
+          nextCreatorAvatarAlt !== row.creator_avatar_alt ||
+          nextThumbnailImageUrl !== row.thumbnail_image_url ||
+          nextThumbnailImageSecondaryUrl !== row.thumbnail_image_secondary_url;
+
+        if (!changed) return null;
+
+        return {
+          id: row.id,
+          listingUrl: nextListingUrl,
+          previewUrl: nextPreviewUrl,
+          websiteUrl: nextWebsiteUrl,
+          creatorRecordId: resolvedCreatorRecordId,
+          creatorName,
+          creatorProfileUrl: nextCreatorProfileUrl,
+          creatorAvatarUrl: nextCreatorAvatarUrl,
+          creatorAvatarAlt: nextCreatorAvatarAlt,
+          thumbnailImageUrl: nextThumbnailImageUrl,
+          thumbnailImageSecondaryUrl: nextThumbnailImageSecondaryUrl,
+        };
+      })
+      .filter((patch): patch is NonNullable<typeof patch> => Boolean(patch));
+
+    if (patches.length > 0) {
+      ctx.waitUntil(patchTemplateDocumentMetadata(env.DB, patches).catch(() => undefined));
+    }
+  }
+  const buildMs = performance.now() - buildStartedAt;
+
+  const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / params.pageSize);
+  const payload: SearchResponsePayload = {
     items,
     pagination: {
       page: params.page,
@@ -1517,5 +1653,18 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
         active: publicSlug === (params.childCategorySlug ? childSlugMap[params.childCategorySlug] ?? params.childCategorySlug : ''),
       };
     }),
+  };
+
+  return {
+    payload,
+    timing: {
+      totalMs: performance.now() - totalStartedAt,
+      countMs,
+      dbMs,
+      rerankMs,
+      assetRefreshMs,
+      creatorRefreshMs,
+      buildMs,
+    },
   };
 }

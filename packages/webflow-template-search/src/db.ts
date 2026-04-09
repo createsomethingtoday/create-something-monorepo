@@ -112,6 +112,20 @@ interface UpsertOptions {
   removeExistingRelations?: boolean;
 }
 
+interface TemplateDocumentMetadataPatch {
+  id: string;
+  listingUrl: string | null;
+  previewUrl: string | null;
+  websiteUrl: string | null;
+  creatorRecordId: string | null;
+  creatorName: string | null;
+  creatorProfileUrl: string | null;
+  creatorAvatarUrl: string | null;
+  creatorAvatarAlt: string | null;
+  thumbnailImageUrl: string | null;
+  thumbnailImageSecondaryUrl: string | null;
+}
+
 export async function upsertTemplateDocuments(
   db: D1Database,
   documents: TemplateDocumentInput[],
@@ -192,6 +206,48 @@ export async function upsertTemplateDocuments(
       );
     }
   }
+
+  for (const group of chunk(statements, 50)) {
+    await db.batch(group);
+  }
+}
+
+export async function patchTemplateDocumentMetadata(
+  db: D1Database,
+  patches: TemplateDocumentMetadataPatch[],
+): Promise<void> {
+  if (patches.length === 0) return;
+
+  const statements = patches.map((patch) =>
+    db
+      .prepare(
+        `UPDATE template_documents
+         SET listing_url = ?,
+             preview_url = ?,
+             website_url = ?,
+             creator_record_id = ?,
+             creator_name = ?,
+             creator_profile_url = ?,
+             creator_avatar_url = ?,
+             creator_avatar_alt = ?,
+             thumbnail_image_url = ?,
+             thumbnail_image_secondary_url = ?
+         WHERE id = ?`,
+      )
+      .bind(
+        patch.listingUrl,
+        patch.previewUrl,
+        patch.websiteUrl,
+        patch.creatorRecordId,
+        patch.creatorName,
+        patch.creatorProfileUrl,
+        patch.creatorAvatarUrl,
+        patch.creatorAvatarAlt,
+        patch.thumbnailImageUrl,
+        patch.thumbnailImageSecondaryUrl,
+        patch.id,
+      ),
+  );
 
   for (const group of chunk(statements, 50)) {
     await db.batch(group);

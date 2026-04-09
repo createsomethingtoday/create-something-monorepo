@@ -77,6 +77,31 @@ describe('client takeover script', () => {
     expect(script).toContain('page_size: clampPageSize(Math.max(requestedPageSize, minimumPageSizeValue), defaultPageSizeValue)');
   });
 
+  it('skips facet queries when the page does not render facet controls', () => {
+    const script = getClientScript('active');
+
+    expect(script).toContain('function shouldIncludeFacets()');
+    expect(script).toContain('document.querySelector(selectors.styleSelect)');
+    expect(script).toContain('document.querySelector(selectors.typeSelect)');
+    expect(script).toContain('document.querySelector(selectors.subcategoryPills)');
+    expect(script).toContain("if (!shouldIncludeFacets()) url.searchParams.set('include_facets', 'false');");
+  });
+
+  it('batches result rendering and defers link validation off the first paint', () => {
+    const script = getClientScript('active');
+
+    expect(script).toContain('function scheduleBackgroundWork(callback)');
+    expect(script).toContain("if (typeof window.requestIdleCallback === 'function')");
+    expect(script).toContain("window.requestIdleCallback(() => callback(), { timeout: 1500 });");
+    expect(script).toContain("window.setTimeout(callback, 0);");
+    expect(script).toContain("const fragment = document.createDocumentFragment();");
+    expect(script).toContain('fragment.appendChild(boundCard);');
+    expect(script).toContain('container.replaceChildren(fragment);');
+    expect(script).toContain("scheduleBackgroundWork(() => scheduleCardDestinationValidation(boundCard, item));");
+    expect(script).toContain("image.loading = 'lazy';");
+    expect(script).toContain("image.decoding = 'async';");
+  });
+
   it('can restrict active takeover to specific query values and hand back to native search', () => {
     const script = getClientScript('active');
 
@@ -151,5 +176,11 @@ describe('client takeover script', () => {
     expect(script).toContain("trackEvent('Template Search DOM Mismatch'");
     expect(script).toContain("trackEvent('Template Search Result Clicked'");
     expect(script).toContain("trackEvent('Template Search Request Failed'");
+    expect(script).toContain('function parseServerTimingHeader(value)');
+    expect(script).toContain("response.headers.get('server-timing')");
+    expect(script).toContain('worker_total_ms: workerTiming.total || null');
+    expect(script).toContain('worker_db_ms: workerTiming.db || null');
+    expect(script).toContain('fetch_ms: roundTiming(fetchCompletedAt - fetchStartedAt)');
+    expect(script).toContain('render_ms: roundTiming(renderCompletedAt - renderStartedAt)');
   });
 });

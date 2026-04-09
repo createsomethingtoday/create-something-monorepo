@@ -22,6 +22,7 @@ export function withCorsHeaders(request: Request, env: Env, headers: HeadersInit
   base.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   base.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, Accept');
   base.set('Access-Control-Max-Age', '86400');
+  base.set('Access-Control-Expose-Headers', 'Server-Timing, Cache-Control');
   return base;
 }
 

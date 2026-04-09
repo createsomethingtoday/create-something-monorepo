@@ -9,6 +9,34 @@ import type { Env } from './types.js';
 const INCREMENTAL_CRON = '*/5 * * * *';
 const FULL_REBUILD_CRON = '17 3 * * *';
 
+interface RequestExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
+}
+
+function formatTimingDuration(value: number): string {
+  return Math.max(0, Math.round(value * 10) / 10).toFixed(1);
+}
+
+function buildServerTimingHeader(timing: {
+  totalMs: number;
+  countMs: number;
+  dbMs: number;
+  rerankMs: number;
+  assetRefreshMs: number;
+  creatorRefreshMs: number;
+  buildMs: number;
+}): string {
+  return [
+    `total;dur=${formatTimingDuration(timing.totalMs)}`,
+    `count;dur=${formatTimingDuration(timing.countMs)}`,
+    `db;dur=${formatTimingDuration(timing.dbMs)}`,
+    `rerank;dur=${formatTimingDuration(timing.rerankMs)}`,
+    `assets;dur=${formatTimingDuration(timing.assetRefreshMs)}`,
+    `creators;dur=${formatTimingDuration(timing.creatorRefreshMs)}`,
+    `build;dur=${formatTimingDuration(timing.buildMs)}`,
+  ].join(', ');
+}
+
 function parseBearerToken(request: Request): string | null {
   const auth = request.headers.get('Authorization');
   if (!auth?.startsWith('Bearer ')) return null;
@@ -29,11 +57,13 @@ function validateAdminToken(request: Request, env: Env): Response | null {
   return jsonResponse(request, env, { error: 'Unauthorized' }, 401);
 }
 
-async function handleSearch(request: Request, env: Env): Promise<Response> {
+async function handleSearch(request: Request, env: Env, ctx?: RequestExecutionContext): Promise<Response> {
   const defaultPageSize = Number(env.DEFAULT_PAGE_SIZE ?? '24') || 24;
   const params = parseSearchParams(new URL(request.url), defaultPageSize);
-  const response = jsonResponse(request, env, await searchTemplates(env, params));
+  const result = await searchTemplates(env, params, ctx);
+  const response = jsonResponse(request, env, result.payload);
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  response.headers.set('Server-Timing', buildServerTimingHeader(result.timing));
   return response;
 }
 
@@ -44,7 +74,7 @@ async function handleManualSync(request: Request, env: Env, mode: 'full' | 'incr
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx?: RequestExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     try {
       if (request.method === 'OPTIONS') return corsPreflight(request, env);
@@ -59,7 +89,7 @@ export default {
       }
 
       if (url.pathname === '/api/templates/search' && request.method === 'GET') {
-        return handleSearch(request, env);
+        return handleSearch(request, env, ctx);
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {

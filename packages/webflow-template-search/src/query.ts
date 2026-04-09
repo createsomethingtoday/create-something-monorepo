@@ -14,6 +14,14 @@ function toBoolean(value: string | null): boolean {
   return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
 }
 
+function parseOptionalBoolean(value: string | null, fallback: boolean): boolean {
+  if (value == null) return fallback;
+  const normalized = value.toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return fallback;
+}
+
 function parseScope(params: URLSearchParams): TemplateScope {
   const rawScope = params.get('scope');
   if (rawScope && VALID_SCOPES.has(rawScope as TemplateScope)) {
@@ -41,5 +49,6 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
     sort: normalizeSort(params.get('sort')),
     page: clamp(Number(params.get('page') ?? 1) || 1, 1, 500),
     pageSize: clamp(Number(params.get('page_size') ?? defaultPageSize) || defaultPageSize, 1, 100),
+    includeFacets: parseOptionalBoolean(params.get('include_facets'), true),
   };
 }

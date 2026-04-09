@@ -58,6 +58,14 @@ export function getClientScript(defaultMode = 'shadow'): string {
   const defaultPageSizeValue = clampPageSize(config.pageSize ?? config.defaultPageSize ?? 24, 24);
   const minimumPageSizeValue = clampPageSize(config.minimumPageSize ?? defaultPageSizeValue, defaultPageSizeValue);
 
+  function scheduleBackgroundWork(callback) {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => callback(), { timeout: 1500 });
+      return;
+    }
+    window.setTimeout(callback, 0);
+  }
+
   function sanitizeSplit(value) {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return null;
@@ -249,9 +257,18 @@ export function getClientScript(defaultMode = 'shadow'): string {
     if (state.sort) url.searchParams.set('sort', state.sort);
     if (state.page > 1) url.searchParams.set('page', String(state.page));
     if (state.page_size) url.searchParams.set('page_size', String(state.page_size));
+    if (!shouldIncludeFacets()) url.searchParams.set('include_facets', 'false');
     state.styles.forEach((value) => url.searchParams.append('styles', value));
     state.types.forEach((value) => url.searchParams.append('types', value));
     return url;
+  }
+
+  function shouldIncludeFacets() {
+    return Boolean(
+      document.querySelector(selectors.styleSelect) ||
+      document.querySelector(selectors.typeSelect) ||
+      document.querySelector(selectors.subcategoryPills)
+    );
   }
 
   function buildPublicUrl(state, page) {
@@ -657,12 +674,20 @@ export function getClientScript(defaultMode = 'shadow'): string {
       });
 
     const image = card.querySelector('[data-template-card-image], .tm-card_image, img');
+    if (image) {
+      image.loading = 'lazy';
+      image.decoding = 'async';
+    }
     if (image && item.thumbnail_image_url) {
       image.src = item.thumbnail_image_url;
       image.alt = item.name;
       image.classList.remove('w-dyn-bind-empty');
     }
     const secondaryImage = card.querySelector('.tm-card_image_secondary');
+    if (secondaryImage) {
+      secondaryImage.loading = 'lazy';
+      secondaryImage.decoding = 'async';
+    }
     if (secondaryImage && item.thumbnail_image_secondary_url) {
       secondaryImage.src = item.thumbnail_image_secondary_url;
       secondaryImage.alt = item.name;
@@ -675,6 +700,8 @@ export function getClientScript(defaultMode = 'shadow'): string {
     if (creator) creator.textContent = item.creator_name || (nativeMetadata && nativeMetadata.creatorName) || '';
     const creatorImage = card.querySelector('.tm-templates-creator-icon, [data-template-card-creator-image]');
     if (creatorImage) {
+      creatorImage.loading = 'lazy';
+      creatorImage.decoding = 'async';
       const creatorImageUrl = item.creator_avatar_url || (nativeMetadata && nativeMetadata.creatorImageUrl);
       const creatorAlt = item.creator_avatar_alt || item.creator_name || (nativeMetadata && nativeMetadata.creatorName) || '';
 
@@ -748,14 +775,14 @@ export function getClientScript(defaultMode = 'shadow'): string {
       return payload.items.length;
     }
     const cardTemplate = cloneCardTemplate();
-    container.innerHTML = '';
+    const fragment = document.createDocumentFragment();
     payload.items.forEach((item, index) => {
       const card = cardTemplate ? cardTemplate.cloneNode(true) : null;
       if (!card) {
         const fallback = document.createElement('a');
         fallback.href = item.url || '#';
         fallback.textContent = item.name;
-        container.appendChild(fallback);
+        fragment.appendChild(fallback);
         return;
       }
       const rank = ((payload.pagination && payload.pagination.page ? payload.pagination.page : 1) - 1) *
@@ -767,11 +794,12 @@ export function getClientScript(defaultMode = 'shadow'): string {
         page: payload.pagination && payload.pagination.page ? payload.pagination.page : 1,
         rank
       });
-      container.appendChild(boundCard);
+      fragment.appendChild(boundCard);
       if (index < linkValidationMaxItems) {
-        scheduleCardDestinationValidation(boundCard, item);
+        scheduleBackgroundWork(() => scheduleCardDestinationValidation(boundCard, item));
       }
     });
+    container.replaceChildren(fragment);
     return countVisibleResultItems(container);
   }
 
@@ -898,14 +926,42 @@ export function getClientScript(defaultMode = 'shadow'): string {
     window.history.replaceState({}, '', buildPublicUrl(state).toString());
   }
 
+  function nowMs() {
+    return typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
+  }
+
+  function roundTiming(value) {
+    return Math.round(Number(value || 0) * 10) / 10;
+  }
+
+  function parseServerTimingHeader(value) {
+    const timing = {};
+    String(value || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .forEach((entry) => {
+        const [name, ...params] = entry.split(';').map((part) => part.trim());
+        if (!name) return;
+        const durationParam = params.find((part) => part.startsWith('dur='));
+        const durationValue = durationParam ? Number(durationParam.slice(4)) : NaN;
+        if (Number.isFinite(durationValue)) {
+          timing[name] = roundTiming(durationValue);
+        }
+      });
+    return timing;
+  }
+
   async function load(state) {
     const nextState = state || parseRouteState();
     if (mode !== 'shadow') syncQueryText(nextState);
-    const startedAt = Date.now();
+    const startedAt = nowMs();
     trackExperimentExposure(nextState);
 
     try {
+      const fetchStartedAt = nowMs();
       const response = await fetch(buildSearchUrl(nextState).toString(), { credentials: 'omit' });
+      const fetchCompletedAt = nowMs();
       if (!response.ok) {
         trackEvent('Template Search Request Failed', {
           query: nextState.q,
@@ -916,13 +972,18 @@ export function getClientScript(defaultMode = 'shadow'): string {
         return;
       }
 
+      const workerTiming = parseServerTimingHeader(response.headers.get('server-timing'));
+      const parseStartedAt = nowMs();
       const payload = await response.json();
+      const parseCompletedAt = nowMs();
       payload.query = nextState.q || '';
+      const renderStartedAt = nowMs();
       const visibleDomResultCount = renderResults(payload);
       renderPills(payload);
       populateFacetControls(payload);
       renderPagination(payload, nextState);
       renderPageChrome(nextState, payload);
+      const renderCompletedAt = nowMs();
 
       trackEvent('Template Search Performed', {
         query: nextState.q,
@@ -933,7 +994,17 @@ export function getClientScript(defaultMode = 'shadow'): string {
         api_total_items: payload.pagination ? payload.pagination.total_items : payload.items.length,
         visible_dom_result_count: visibleDomResultCount,
         zero_results: payload.items.length === 0,
-        duration_ms: Date.now() - startedAt,
+        duration_ms: roundTiming(nowMs() - startedAt),
+        fetch_ms: roundTiming(fetchCompletedAt - fetchStartedAt),
+        json_parse_ms: roundTiming(parseCompletedAt - parseStartedAt),
+        render_ms: roundTiming(renderCompletedAt - renderStartedAt),
+        worker_total_ms: workerTiming.total || null,
+        worker_count_ms: workerTiming.count || null,
+        worker_db_ms: workerTiming.db || null,
+        worker_rerank_ms: workerTiming.rerank || null,
+        worker_asset_refresh_ms: workerTiming.assets || null,
+        worker_creator_refresh_ms: workerTiming.creators || null,
+        worker_build_ms: workerTiming.build || null,
         category_group_slug: nextState.category_group_slug || '',
         child_category_slug: nextState.child_category_slug || ''
       });
