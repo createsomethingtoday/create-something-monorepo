@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { Button, SEO } from '@create-something/canon';
+	import { marked } from 'marked';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	marked.use({
+		breaks: true,
+		gfm: true
+	});
 
 	const completedMilestones = $derived.by(() => data.milestones.filter((row) => row.status === 'done'));
 	const openMilestones = $derived.by(() =>
@@ -35,6 +41,7 @@
 	let answer = $state('');
 	let requestError = $state('');
 	let submitting = $state(false);
+	const answerHtml = $derived.by(() => renderAnswer(answer));
 
 	function formatLabel(value: string) {
 		return value
@@ -67,6 +74,73 @@
 	const buildFee = $derived.by(() => formatMoney(data.commercial?.buildFee));
 	const monthlyFee = $derived.by(() => formatMoney(data.commercial?.monthlyFee));
 
+	function escapeRawHtml(value: string) {
+		return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	}
+
+	function renderAnswer(value: string) {
+		if (!value.trim()) return '';
+		const rendered = marked.parse(escapeRawHtml(value));
+		return typeof rendered === 'string' ? rendered : '';
+	}
+
+	function consumeSseFrame(frame: string) {
+		if (!frame.trim()) return;
+
+		let eventName = 'message';
+		const dataLines: string[] = [];
+
+		for (const line of frame.split('\n')) {
+			if (line.startsWith('event:')) {
+				eventName = line.slice(6).trim();
+			} else if (line.startsWith('data:')) {
+				dataLines.push(line.slice(5).trim());
+			}
+		}
+
+		const data = dataLines.join('\n');
+		if (!data || data === '[DONE]') return;
+
+		const payload = JSON.parse(data) as { delta?: string; message?: string };
+		if (eventName === 'chunk' && payload.delta) {
+			answer += payload.delta;
+		}
+		if (eventName === 'error' && payload.message) {
+			requestError = payload.message;
+		}
+	}
+
+	async function streamAnswer(response: Response) {
+		if (!response.body) return;
+
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
+
+		try {
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+
+				buffer += decoder.decode(value, { stream: true });
+
+				while (true) {
+					const boundaryIndex = buffer.indexOf('\n\n');
+					if (boundaryIndex === -1) break;
+					const frame = buffer.slice(0, boundaryIndex);
+					buffer = buffer.slice(boundaryIndex + 2);
+					consumeSseFrame(frame);
+				}
+			}
+
+			if (buffer.trim()) {
+				consumeSseFrame(buffer);
+			}
+		} finally {
+			reader.releaseLock();
+		}
+	}
+
 	async function submitQuestion() {
 		if (!question.trim() || submitting) return;
 
@@ -78,12 +152,21 @@
 			const response = await fetch(`/api/delivery/${data.slug}/chat`, {
 				method: 'POST',
 				headers: {
+					accept: 'text/event-stream',
 					'content-type': 'application/json'
 				},
 				body: JSON.stringify({
 					question
 				})
 			});
+
+			if (response.headers.get('content-type')?.includes('text/event-stream') && response.body) {
+				await streamAnswer(response);
+				if (!response.ok && !requestError) {
+					requestError = 'The delivery agent could not answer right now.';
+				}
+				return;
+			}
 
 			const payload = (await response.json().catch(() => null)) as
 				| { answer?: string; error?: string }
@@ -220,7 +303,7 @@
 					<div class="row between">
 						<span class="muted">Client-safe answers only, based on this shared delivery context.</span>
 						<button type="submit" class="submit-button" disabled={submitting || !question.trim()}>
-							{submitting ? 'Thinking…' : 'Ask agent'}
+							{submitting ? 'Streaming…' : 'Ask agent'}
 						</button>
 					</div>
 				</form>
@@ -228,7 +311,12 @@
 					<div class="response error">{requestError}</div>
 				{/if}
 				{#if answer}
-					<div class="response">{answer}</div>
+					<div class="response markdown-response">
+						{@html answerHtml}
+						{#if submitting}
+							<span class="stream-cursor" aria-hidden="true"></span>
+						{/if}
+					</div>
 				{/if}
 			{:else}
 				<div class="response muted-block">
@@ -691,13 +779,47 @@
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		background: rgba(255, 255, 255, 0.04);
 		color: rgba(255, 255, 255, 0.84);
-		white-space: pre-wrap;
 	}
 
 	.response.error {
 		color: #ffcbcb;
 		border-color: rgba(255, 172, 172, 0.3);
 		background: rgba(255, 172, 172, 0.08);
+	}
+
+	.markdown-response :global(p),
+	.markdown-response :global(ul),
+	.markdown-response :global(ol) {
+		margin: 0 0 0.8rem;
+	}
+
+	.markdown-response :global(ul),
+	.markdown-response :global(ol) {
+		padding-left: 1.2rem;
+	}
+
+	.markdown-response :global(li) {
+		margin-bottom: 0.45rem;
+	}
+
+	.markdown-response :global(strong) {
+		color: rgba(255, 255, 255, 0.96);
+	}
+
+	.markdown-response :global(a) {
+		color: #b7c5ff;
+		text-decoration: underline;
+	}
+
+	.stream-cursor {
+		display: inline-block;
+		width: 0.7ch;
+		height: 1.05em;
+		margin-left: 0.12rem;
+		vertical-align: -0.16em;
+		border-radius: 999px;
+		background: rgba(159, 180, 255, 0.9);
+		animation: pulse-cursor 0.9s ease-in-out infinite;
 	}
 
 	.item-card {
@@ -771,6 +893,17 @@
 	@media (max-width: 640px) {
 		.stat-grid {
 			grid-template-columns: 1fr;
+		}
+	}
+
+	@keyframes pulse-cursor {
+		0%,
+		100% {
+			opacity: 0.25;
+		}
+
+		50% {
+			opacity: 1;
 		}
 	}
 </style>
