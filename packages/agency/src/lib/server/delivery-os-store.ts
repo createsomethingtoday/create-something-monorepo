@@ -1227,11 +1227,14 @@ export async function getDeliverySharePage(shareSlug: string) {
   const clientRisks = deliveryRisks.filter(
     (row) => row.engagementId === engagement.id && row.owner === 'client' && row.status !== 'closed'
   );
-  const clientActions = deliveryAccessItems.filter((row) => {
+  const clientAccessItems = deliveryAccessItems.filter((row) => {
+    const componentRow = deliveryComponents.find((component) => component.id === row.componentId);
+    return componentRow?.engagementId === engagement.id && row.owner === 'client';
+  });
+  const clientActions = clientAccessItems.filter((row) => {
     const componentRow = deliveryComponents.find((component) => component.id === row.componentId);
     return (
       componentRow?.engagementId === engagement.id &&
-      row.owner === 'client' &&
       row.status !== 'granted' &&
       row.status !== 'revoked'
     );
@@ -1248,6 +1251,7 @@ export async function getDeliverySharePage(shareSlug: string) {
     milestones,
     integrations,
     clientRisks,
+    clientAccessItems,
     clientActions,
     commercial
   };

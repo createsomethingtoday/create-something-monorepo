@@ -20,6 +20,21 @@
 	);
 	const nextMilestone = $derived.by(() => openMilestones[0] ?? null);
 	const openClientNeedCount = $derived.by(() => data.clientActions.length + data.clientRisks.length);
+	const suggestedQuestions = $derived.by(() => {
+		const prompts = ['What is live right now?', 'What happens next after this stage?'];
+		if (integrationsInProgress.length) {
+			prompts.push('Which services are being connected next?');
+		}
+		if (openClientNeedCount > 0) {
+			prompts.push('What do you still need from our team?');
+		}
+		return prompts.slice(0, 4);
+	});
+
+	let question = $state('');
+	let answer = $state('');
+	let requestError = $state('');
+	let submitting = $state(false);
 
 	function formatLabel(value: string) {
 		return value
@@ -51,6 +66,46 @@
 
 	const buildFee = $derived.by(() => formatMoney(data.commercial?.buildFee));
 	const monthlyFee = $derived.by(() => formatMoney(data.commercial?.monthlyFee));
+
+	async function submitQuestion() {
+		if (!question.trim() || submitting) return;
+
+		submitting = true;
+		requestError = '';
+		answer = '';
+
+		try {
+			const response = await fetch(`/api/delivery/${data.slug}/chat`, {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json'
+				},
+				body: JSON.stringify({
+					question
+				})
+			});
+
+			const payload = (await response.json().catch(() => null)) as
+				| { answer?: string; error?: string }
+				| null;
+
+			if (!response.ok) {
+				requestError = payload?.error ?? 'The delivery agent could not answer right now.';
+				return;
+			}
+
+			answer = payload?.answer ?? '';
+		} catch {
+			requestError = 'The delivery agent could not answer right now.';
+		} finally {
+			submitting = false;
+		}
+	}
+
+	function usePrompt(prompt: string) {
+		question = prompt;
+		requestError = '';
+	}
 </script>
 
 <SEO
@@ -133,6 +188,55 @@
 				{/if}
 			</div>
 		</header>
+
+		<section class="panel chat-panel">
+			<div class="panel-header">
+				<h2>Ask about this delivery</h2>
+				<p class="panel-intro">
+					Ask plain-language questions about this project’s scope, shared documents, timing, connected
+					systems, or what still needs to happen next.
+				</p>
+			</div>
+			{#if data.chatEnabled}
+				<div class="prompt-row">
+					{#each suggestedQuestions as prompt}
+						<button type="button" class="prompt-chip" onclick={() => usePrompt(prompt)}>
+							{prompt}
+						</button>
+					{/each}
+				</div>
+				<form
+					class="chat-form"
+					onsubmit={(event) => {
+						event.preventDefault();
+						void submitQuestion();
+					}}
+				>
+					<textarea
+						bind:value={question}
+						rows="4"
+						placeholder="Ask a question about this delivery page."
+					></textarea>
+					<div class="row between">
+						<span class="muted">Client-safe answers only, based on this shared delivery context.</span>
+						<button type="submit" class="submit-button" disabled={submitting || !question.trim()}>
+							{submitting ? 'Thinking…' : 'Ask agent'}
+						</button>
+					</div>
+				</form>
+				{#if requestError}
+					<div class="response error">{requestError}</div>
+				{/if}
+				{#if answer}
+					<div class="response">{answer}</div>
+				{/if}
+			{:else}
+				<div class="response muted-block">
+					The delivery agent is not configured in this environment yet, but the shared docs and delivery
+					status above are still current.
+				</div>
+			{/if}
+		</section>
 
 		<section class="grid-two">
 			<section class="panel">
@@ -512,6 +616,88 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
+	}
+
+	.chat-panel {
+		margin-bottom: 1rem;
+	}
+
+	.chat-form {
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
+	}
+
+	.chat-form textarea {
+		width: 100%;
+		min-height: 8rem;
+		padding: 1rem 1.1rem;
+		border-radius: 18px;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		background: rgba(255, 255, 255, 0.03);
+		color: rgba(255, 255, 255, 0.92);
+		resize: vertical;
+	}
+
+	.chat-form textarea:focus {
+		outline: none;
+		border-color: rgba(159, 180, 255, 0.55);
+		box-shadow: 0 0 0 3px rgba(159, 180, 255, 0.14);
+	}
+
+	.prompt-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.65rem;
+		margin-bottom: 0.9rem;
+	}
+
+	.prompt-chip,
+	.submit-button {
+		border-radius: 999px;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		background: rgba(255, 255, 255, 0.04);
+		color: rgba(255, 255, 255, 0.86);
+		padding: 0.75rem 1rem;
+		font: inherit;
+		cursor: pointer;
+		transition: border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+	}
+
+	.prompt-chip:hover,
+	.submit-button:hover:not(:disabled) {
+		border-color: rgba(159, 180, 255, 0.45);
+		background: rgba(159, 180, 255, 0.1);
+	}
+
+	.submit-button {
+		background: rgba(159, 180, 255, 0.92);
+		border-color: rgba(159, 180, 255, 0.92);
+		color: #11131f;
+		font-weight: 600;
+	}
+
+	.submit-button:disabled,
+	.prompt-chip:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.response,
+	.muted-block {
+		margin-top: 1rem;
+		padding: 1rem 1.05rem;
+		border-radius: 18px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: rgba(255, 255, 255, 0.04);
+		color: rgba(255, 255, 255, 0.84);
+		white-space: pre-wrap;
+	}
+
+	.response.error {
+		color: #ffcbcb;
+		border-color: rgba(255, 172, 172, 0.3);
+		background: rgba(255, 172, 172, 0.08);
 	}
 
 	.item-card {

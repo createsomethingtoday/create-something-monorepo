@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import { runDeliveryOsAgent } from '@create-something/delivery-os';
 import { z } from 'zod';
 
+import { extractAnswer, parseVectorStoreIds } from '$lib/server/delivery-os-chat';
 import { createSeedDeliveryOsStore, deliveryClients } from '$lib/server/delivery-os-store';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 import type { RequestHandler } from './$types';
@@ -10,32 +11,6 @@ const requestSchema = z.object({
 	engagementId: z.string().trim().min(1),
 	question: z.string().trim().min(3).max(4000)
 });
-
-function parseVectorStoreIds(raw: string | undefined): string[] {
-	return (raw ?? '')
-		.split(',')
-		.map((value) => value.trim())
-		.filter(Boolean);
-}
-
-function extractAnswer(output: unknown): string {
-	if (typeof output === 'string') return output.trim();
-	if (Array.isArray(output)) {
-		const joined = output.map((item) => extractAnswer(item)).filter(Boolean).join('\n\n');
-		return joined.trim();
-	}
-	if (!output || typeof output !== 'object') return '';
-
-	const candidate = output as Record<string, unknown>;
-	for (const key of ['output_text', 'text', 'content', 'value', 'finalOutput']) {
-		if (key in candidate) {
-			const result = extractAnswer(candidate[key]);
-			if (result) return result;
-		}
-	}
-
-	return JSON.stringify(output, null, 2);
-}
 
 export const POST: RequestHandler = async ({ cookies, platform, request }) => {
 	await requireAgencyOperator({ cookies, platform });
