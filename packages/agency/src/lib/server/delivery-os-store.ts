@@ -623,7 +623,7 @@ export const deliveryMilestones: DeliveryMilestone[] = [
     'engagement-abundance',
     'Kickoff payment and access collection',
     'active',
-    'Waiting on client approval, deposit, ad account access, and service credentials.',
+    'Core service logins are now in hand. Remaining kickoff items are client approval, deposit, Facebook ad account access, and connection work inside the live system.',
     {
       targetDate: '2026-04-17'
     }
@@ -759,8 +759,8 @@ export const deliveryIntegrations: DeliveryIntegration[] = [
     'Mailchimp',
     'Marketing funnel and candidate nurture routing.',
     'bidirectional',
-    'needed',
-    'Client approval and access still required.'
+    'requested',
+    'Login details received. Audience, automation, and nurture routing still need to be connected and validated.'
   ),
   integration(
     'integration-abundance-paylocity',
@@ -768,8 +768,8 @@ export const deliveryIntegrations: DeliveryIntegration[] = [
     'Paylocity',
     'Downstream employer and workforce data connection.',
     'bidirectional',
-    'needed',
-    'Planned for the next service connection phase.'
+    'requested',
+    'Login details received. Employer and workforce connection still needs to be wired and validated.'
   ),
   integration(
     'integration-abundance-jotform',
@@ -777,7 +777,8 @@ export const deliveryIntegrations: DeliveryIntegration[] = [
     'Jotform',
     'Structured intake and document routing where needed.',
     'bidirectional',
-    'needed'
+    'requested',
+    'Login details received. Form routing and document handoff still need to be connected where needed.'
   ),
   integration(
     'integration-abundance-facebook',
@@ -891,7 +892,7 @@ export const deliveryRisks: DeliveryRisk[] = [
     'risk-abundance-service-access',
     'engagement-abundance',
     'medium',
-    'Mailchimp, Paylocity, and Jotform credentials are not yet provisioned.',
+    'Mailchimp, Paylocity, and Jotform login details are in hand, but those services still need to be connected and validated in the system.',
     'operator',
     'component-abundance-product'
   ),
@@ -952,8 +953,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'component-abundance-product',
     'Mailchimp',
     'api_access',
-    'needed',
-    'Required for nurture and funnel orchestration.',
+    'granted',
+    'Login details received. Connection and validation are now in progress.',
     { owner: 'client' }
   ),
   accessItem(
@@ -961,8 +962,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'component-abundance-product',
     'Paylocity',
     'api_access',
-    'needed',
-    'Needed for employer/workforce system connection.',
+    'granted',
+    'Login details received. Employer and workforce connection is pending implementation.',
     { owner: 'client' }
   ),
   accessItem(
@@ -970,8 +971,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'component-abundance-product',
     'Jotform',
     'workspace_access',
-    'needed',
-    'Needed if form-based intake supplements the guided flow.',
+    'granted',
+    'Login details received. Form routing will be connected as part of the service sprint.',
     { owner: 'client' }
   ),
   accessItem(
