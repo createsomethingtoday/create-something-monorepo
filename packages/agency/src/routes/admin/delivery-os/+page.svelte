@@ -206,6 +206,12 @@
 										· {selectedClient.industry}
 									{/if}
 								</p>
+								{#if data.selectedSharePath}
+									<p class="muted">
+										Client page:
+										<a href={data.selectedSharePath} target="_blank" rel="noreferrer">{data.selectedSharePath}</a>
+									</p>
+								{/if}
 							</div>
 							<div class={`status-pill ${statusTone(selectedEngagement.status)}`}>
 								{formatLabel(selectedEngagement.status)}

@@ -36,16 +36,20 @@ function engagement(
   name: string,
   status: EngagementStatus,
   summary: string,
-  targetLaunchDate?: string
+  targetLaunchDate?: string,
+  options: Partial<DeliveryEngagement> = {}
 ): DeliveryEngagement {
   return {
     id,
     clientId,
     name,
     status,
+    startDate: options.startDate ?? null,
+    commercialOwner: options.commercialOwner ?? null,
+    deliveryOwner: options.deliveryOwner ?? null,
     summary,
     targetLaunchDate: targetLaunchDate ?? null,
-    metadata: {}
+    metadata: options.metadata ?? {}
   };
 }
 
@@ -166,16 +170,18 @@ function accessItem(
   system: string,
   accessType: string,
   status: DeliveryAccessItem['status'],
-  notes?: string
+  notes?: string,
+  options: Partial<DeliveryAccessItem> = {}
 ): DeliveryAccessItem {
   return {
     id,
     componentId,
     system,
     accessType,
+    owner: options.owner ?? null,
     status,
     notes: notes ?? null,
-    metadata: {}
+    metadata: options.metadata ?? {}
   };
 }
 
@@ -211,7 +217,12 @@ export const deliveryEngagements: DeliveryEngagement[] = [
     'Abundance AI-native staffing pipeline',
     'onboarding',
     'Public nurse intake is live. Next phase is service connection, location-targeted marketing, and operator workflow expansion.',
-    '2026-05-08'
+    '2026-05-08',
+    {
+      metadata: {
+        shareSlug: 'abundance'
+      }
+    }
   ),
   engagement(
     'engagement-outerfields-pcn',
@@ -219,7 +230,12 @@ export const deliveryEngagements: DeliveryEngagement[] = [
     'Outerfields PCN platform',
     'managed',
     'Member platform is operating, but the operator handoff pack and documentation system need consolidation.',
-    '2026-04-18'
+    '2026-04-18',
+    {
+      metadata: {
+        shareSlug: 'outerfields-pcn'
+      }
+    }
   ),
   engagement(
     'engagement-shivworks-pcn',
@@ -227,7 +243,12 @@ export const deliveryEngagements: DeliveryEngagement[] = [
     'ShivWorks PCN network',
     'building',
     'PCN implementation is being built on the proven Outerfields pattern. Main missing piece is the client-facing and operator-facing documentation pack.',
-    '2026-04-25'
+    '2026-04-25',
+    {
+      metadata: {
+        shareSlug: 'shivworks-pcn'
+      }
+    }
   ),
   engagement(
     'engagement-the-stack',
@@ -235,7 +256,12 @@ export const deliveryEngagements: DeliveryEngagement[] = [
     'The Stack site delivery',
     'live',
     'Site delivery is complete and serves as the lighter-weight site-only version of the same delivery model.',
-    '2026-03-28'
+    '2026-03-28',
+    {
+      metadata: {
+        shareSlug: 'the-stack'
+      }
+    }
   ),
   engagement(
     'engagement-tether',
@@ -243,7 +269,12 @@ export const deliveryEngagements: DeliveryEngagement[] = [
     'Tether Shopify sync app',
     'building',
     'Embedded Shopify app syncing Shopify data into Airtable and Notion, with OAuth bridges, background sync, and production hardening still in progress.',
-    '2026-05-02'
+    '2026-05-02',
+    {
+      metadata: {
+        shareSlug: 'tether'
+      }
+    }
   )
 ];
 
@@ -459,6 +490,15 @@ export const deliveryArtifacts: DeliveryArtifact[] = [
     'Needs consolidation from platform docs, deployment notes, MCP setup, and admin workflows.'
   ),
   artifact(
+    'artifact-outerfields-client-brief',
+    'engagement-outerfields-pcn',
+    'notes',
+    'Outerfields PCN delivery brief',
+    'approved',
+    'client',
+    'Client-facing delivery summary covering live platform scope, current managed-state posture, and remaining documentation consolidation.'
+  ),
+  artifact(
     'artifact-shivworks-repo',
     'engagement-shivworks-pcn',
     'notes',
@@ -470,6 +510,15 @@ export const deliveryArtifacts: DeliveryArtifact[] = [
       sourceSystem: 'external',
       sourceUrl: 'https://github.com/createsomethingtoday/shivworks-network'
     }
+  ),
+  artifact(
+    'artifact-shivworks-client-brief',
+    'engagement-shivworks-pcn',
+    'notes',
+    'ShivWorks build and launch brief',
+    'draft',
+    'client',
+    'Shareable build brief for the ShivWorks PCN rollout, current phase, and next handoff deliverables.'
   ),
   artifact(
     'artifact-shivworks-handoff',
@@ -488,6 +537,15 @@ export const deliveryArtifacts: DeliveryArtifact[] = [
     'approved',
     'operator',
     'Reference site-only delivery using the same commercial and handoff pattern.'
+  ),
+  artifact(
+    'artifact-stack-client-summary',
+    'engagement-the-stack',
+    'notes',
+    'The Stack delivery summary',
+    'approved',
+    'client',
+    'Client-facing summary of the completed site delivery and the lighter-weight site-only version of the model.'
   ),
   artifact(
     'artifact-tether-readme',
@@ -514,6 +572,15 @@ export const deliveryArtifacts: DeliveryArtifact[] = [
       componentId: 'component-tether-product',
       sourceSystem: 'native'
     }
+  ),
+  artifact(
+    'artifact-tether-client-brief',
+    'engagement-tether',
+    'notes',
+    'Tether production readiness brief',
+    'review',
+    'client',
+    'Client-safe overview of the Shopify app scope, current production hardening, and the remaining approval/deployment items.'
   ),
   artifact(
     'artifact-tether-operator-pack',
@@ -877,7 +944,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'Facebook Ads',
     'ad_account',
     'needed',
-    'Client-owned ad account, spend, and management access.'
+    'Client-owned ad account, spend, and management access.',
+    { owner: 'client' }
   ),
   accessItem(
     'access-abundance-mailchimp',
@@ -885,7 +953,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'Mailchimp',
     'api_access',
     'needed',
-    'Required for nurture and funnel orchestration.'
+    'Required for nurture and funnel orchestration.',
+    { owner: 'client' }
   ),
   accessItem(
     'access-abundance-paylocity',
@@ -893,7 +962,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'Paylocity',
     'api_access',
     'needed',
-    'Needed for employer/workforce system connection.'
+    'Needed for employer/workforce system connection.',
+    { owner: 'client' }
   ),
   accessItem(
     'access-abundance-jotform',
@@ -901,7 +971,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'Jotform',
     'workspace_access',
     'needed',
-    'Needed if form-based intake supplements the guided flow.'
+    'Needed if form-based intake supplements the guided flow.',
+    { owner: 'client' }
   ),
   accessItem(
     'access-shivworks-operator',
@@ -909,7 +980,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'ShivWorks operator docs',
     'handoff_pack',
     'needed',
-    'Need to create and deliver the operator runbook and support guide.'
+    'Need to create and deliver the operator runbook and support guide.',
+    { owner: 'operator' }
   ),
   accessItem(
     'access-tether-shopify',
@@ -917,7 +989,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'Shopify Partner + dev store',
     'platform_access',
     'granted',
-    'Required for embedded app configuration, scopes, and deployment.'
+    'Required for embedded app configuration, scopes, and deployment.',
+    { owner: 'operator' }
   ),
   accessItem(
     'access-tether-airtable',
@@ -925,7 +998,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'Airtable OAuth app',
     'oauth_credentials',
     'granted',
-    'Needed for Airtable auth and stable callback bridge configuration.'
+    'Needed for Airtable auth and stable callback bridge configuration.',
+    { owner: 'operator' }
   ),
   accessItem(
     'access-tether-notion',
@@ -933,7 +1007,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'Notion OAuth app',
     'oauth_credentials',
     'granted',
-    'Needed for Notion auth and stable callback bridge configuration.'
+    'Needed for Notion auth and stable callback bridge configuration.',
+    { owner: 'operator' }
   ),
   accessItem(
     'access-tether-hosting',
@@ -941,7 +1016,8 @@ export const deliveryAccessItems: DeliveryAccessItem[] = [
     'Production hosting env',
     'deploy_access',
     'needed',
-    'Need final production runtime configuration with persistent DB and encryption key.'
+    'Need final production runtime configuration with persistent DB and encryption key.',
+    { owner: 'operator' }
   )
 ];
 
@@ -960,6 +1036,34 @@ export const deliveryOsSeed = {
   accessItems: deliveryAccessItems,
   commercials: deliveryCommercials
 };
+
+function getEngagementShareSlug(engagement: DeliveryEngagement): string {
+  const candidate = engagement.metadata?.shareSlug;
+  if (typeof candidate === 'string' && candidate.trim().length > 0) {
+    return candidate.trim().toLowerCase();
+  }
+
+  return engagement.id.replace(/^engagement-/, '');
+}
+
+export function getDeliverySharePath(engagement: DeliveryEngagement): string {
+  return `/delivery/${getEngagementShareSlug(engagement)}`;
+}
+
+export type DeliverySharePage = Awaited<ReturnType<typeof getDeliverySharePage>>;
+
+export function listShareableDeliveries() {
+  return deliveryEngagements.map((engagement) => {
+    const client = getClientById(engagement.clientId) ?? null;
+
+    return {
+      slug: getEngagementShareSlug(engagement),
+      path: getDeliverySharePath(engagement),
+      engagement,
+      client
+    };
+  });
+}
 
 function matchesFilter(
   component: { engagementId?: string | null; componentId?: string | null; status?: string | null },
@@ -1101,6 +1205,49 @@ export async function getDeliveryWorkspace(engagementId?: string) {
     integrations,
     risks,
     accessItems,
+    commercial
+  };
+}
+
+export async function getDeliverySharePage(shareSlug: string) {
+  const engagement = deliveryEngagements.find((row) => getEngagementShareSlug(row) === shareSlug);
+  if (!engagement) return null;
+
+  const client = getClientById(engagement.clientId) ?? null;
+  const components = deliveryComponents.filter((row) => row.engagementId === engagement.id);
+  const artifacts = deliveryArtifacts.filter(
+    (row) => row.engagementId === engagement.id && row.visibility === 'client'
+  );
+  const milestones = deliveryMilestones.filter((row) => row.engagementId === engagement.id);
+  const integrations = deliveryIntegrations.filter((row) => {
+    const componentRow = deliveryComponents.find((component) => component.id === row.componentId);
+    return componentRow?.engagementId === engagement.id;
+  });
+  const clientRisks = deliveryRisks.filter(
+    (row) => row.engagementId === engagement.id && row.owner === 'client' && row.status !== 'closed'
+  );
+  const clientActions = deliveryAccessItems.filter((row) => {
+    const componentRow = deliveryComponents.find((component) => component.id === row.componentId);
+    return (
+      componentRow?.engagementId === engagement.id &&
+      row.owner === 'client' &&
+      row.status !== 'granted' &&
+      row.status !== 'revoked'
+    );
+  });
+  const commercial = deliveryCommercials.find((row) => row.engagementId === engagement.id) ?? null;
+
+  return {
+    slug: getEngagementShareSlug(engagement),
+    path: getDeliverySharePath(engagement),
+    engagement,
+    client,
+    components,
+    artifacts,
+    milestones,
+    integrations,
+    clientRisks,
+    clientActions,
     commercial
   };
 }

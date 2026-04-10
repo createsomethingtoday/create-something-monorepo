@@ -1,4 +1,4 @@
-import { getDeliveryWorkspace } from '$lib/server/delivery-os-store';
+import { getDeliverySharePath, getDeliveryWorkspace } from '$lib/server/delivery-os-store';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 import type { PageServerLoad } from './$types';
 
@@ -8,6 +8,9 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 
 	return {
 		...workspace,
+		selectedSharePath: workspace.selectedEngagement
+			? getDeliverySharePath(workspace.selectedEngagement)
+			: null,
 		operator: {
 			email: operator.email
 		},
