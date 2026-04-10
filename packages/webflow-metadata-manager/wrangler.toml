@@ -1,0 +1,12 @@
+name = "webflow-metadata-manager"
+main = "src/index.ts"
+compatibility_date = "2026-04-10"
+workers_dev = true
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[vars]
+ALLOWED_ORIGINS = ""
+DEFAULT_OVERRIDES_JSON = ""
