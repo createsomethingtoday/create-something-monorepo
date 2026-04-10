@@ -1,0 +1,62 @@
+{
+  "name": "@create-something/delivery-os",
+  "version": "0.1.0",
+  "description": "Reusable delivery operating system schema, Notion blueprint, and OpenAI-native agent scaffold for site, platform, and product engagements.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "import": "./dist/schema.js"
+    },
+    "./notion": {
+      "types": "./dist/notion.d.ts",
+      "import": "./dist/notion.js"
+    },
+    "./agent": {
+      "types": "./dist/agent.d.ts",
+      "import": "./dist/agent.js"
+    },
+    "./prompt": {
+      "types": "./dist/prompt.d.ts",
+      "import": "./dist/prompt.js"
+    },
+    "./retrieval": {
+      "types": "./dist/retrieval.d.ts",
+      "import": "./dist/retrieval.js"
+    }
+  },
+  "files": [
+    "dist",
+    "migrations",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "lint": "pnpm run check"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.4.10",
+    "openai": "^6.22.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "keywords": [
+    "delivery-os",
+    "openai",
+    "agents",
+    "notion",
+    "d1",
+    "postgres",
+    "mcp"
+  ],
+  "license": "MIT"
+}

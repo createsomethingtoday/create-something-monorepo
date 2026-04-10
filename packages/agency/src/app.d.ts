@@ -85,6 +85,8 @@ declare global {
 				AUTH0_REDIRECT_URI?: string;
 				AGENCY_INTERNAL_API_KEY?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
+				OPENAI_API_KEY?: string;
+				DELIVERY_OS_VECTOR_STORE_IDS?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

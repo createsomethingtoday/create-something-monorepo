@@ -11,6 +11,7 @@ Multi-agent orchestration infrastructure. Coordination protocols for swarm-based
 ```
 agents/
 └── coordination/    # Agent communication patterns
+└── delivery-os/     # Delivery operating system schema + OpenAI-native agent scaffold
 ```
 
 ## Status

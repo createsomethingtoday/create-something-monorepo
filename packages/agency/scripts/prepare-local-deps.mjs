@@ -34,16 +34,24 @@ function findWorkspacePackageDir(workspaceRoot, pkgName) {
 	const packagesDir = path.join(workspaceRoot, 'packages');
 	if (!fs.existsSync(packagesDir)) return null;
 
-	for (const entry of fs.readdirSync(packagesDir, { withFileTypes: true })) {
-		if (!entry.isDirectory()) continue;
+	const queue = [packagesDir];
+	while (queue.length > 0) {
+		const currentDir = queue.shift();
+		if (!currentDir) break;
 
-		const candidate = path.join(packagesDir, entry.name);
-		const manifestPath = path.join(candidate, 'package.json');
-		if (!fs.existsSync(manifestPath)) continue;
+		for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+			if (!entry.isDirectory()) continue;
 
-		const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-		if (manifest.name === pkgName) {
-			return candidate;
+			const candidate = path.join(currentDir, entry.name);
+			const manifestPath = path.join(candidate, 'package.json');
+			if (fs.existsSync(manifestPath)) {
+				const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+				if (manifest.name === pkgName) {
+					return candidate;
+				}
+			}
+
+			queue.push(candidate);
 		}
 	}
 

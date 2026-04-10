@@ -12,6 +12,17 @@ Use the root `/templates` directory as the source of truth. This folder exists s
 4. `golden_tasks.yaml`
 5. `runbook.md`
 
+## Delivery OS additions
+
+For repeatable client delivery across site, platform, and product work, pair the canonical bundle with:
+
+1. `delivery-os-notion-structure.md`
+2. `delivery-os-engagement-hub.md`
+
+The reusable native schema and OpenAI-native agent scaffold live in:
+
+- `packages/agents/delivery-os`
+
 Each artifact must carry the Policy OS metadata required by the canonical bundle:
 
 - `package_name`
