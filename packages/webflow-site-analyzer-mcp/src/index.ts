@@ -736,6 +736,19 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     if (!metaDesc) metaMissing.push('description');
     if (!ogImage) metaMissing.push('og:image');
 
+    // Canonical URL
+    const canonicalLink = document.querySelector('link[rel="canonical"]');
+    const hasCanonical = Boolean(canonicalLink && canonicalLink.getAttribute('href'));
+
+    // Structured data (JSON-LD)
+    const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+    const hasStructuredData = jsonLdScripts.length > 0;
+
+    // ARIA landmarks
+    const mainLandmark = document.querySelector('main, [role="main"]');
+    const navLandmark = document.querySelector('nav, [role="navigation"]');
+    const hasAriaLandmarks = Boolean(mainLandmark) && Boolean(navLandmark);
+
     const formFields = document.querySelectorAll('input, textarea, select');
     const missingLabels = Array.from(formFields).filter(field => {
       if (field.type === 'hidden' || field.type === 'submit') return false;
@@ -775,7 +788,7 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     }
 
     const domAudit = {
-      meta: { missing: metaMissing },
+      meta: { missing: metaMissing, hasCanonical, hasStructuredData, hasAriaLandmarks },
       headings: {
         summary: {
           headings: headingEls.length,
@@ -1155,6 +1168,9 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
   const imageFormats = asRecord(imagesRoot.formats);
 
   const metaMissing = asStringArray(meta.missing);
+  const hasCanonical = Boolean(meta.hasCanonical);
+  const hasStructuredData = Boolean(meta.hasStructuredData);
+  const hasAriaLandmarks = Boolean(meta.hasAriaLandmarks);
   const failReasons: string[] = [];
 
   if (metaMissing.length > 0) failReasons.push(`meta_missing:${metaMissing.join(',')}`);
@@ -1908,6 +1924,8 @@ function unifyRows(
     'policy.gsap_detected': 'info',
     'policy.custom_code_detected': 'info',
     'pages.meta_tags_cms_dynamic': 'info',
+    // Accessibility
+    'a11y.link_accessible_names': 'major',
     // Links & forms
     'links.no_empty_href': 'major',
     'links.no_broken_internal': 'major',
@@ -2585,6 +2603,21 @@ function unifyRows(
     0.85,
     brokenInternalLinks.length > 0
       ? `${brokenInternalLinks.length} internal link(s) resolve to 404. Fix or remove these links.`
+      : undefined
+  );
+
+  // Accessible link names: links without text, aria-label, or img alt
+  const missingAccessibleNameCount = published.issueCounts.linksMissingAccessibleName;
+  pushRow(
+    'a11y.link_accessible_names',
+    'Accessibility',
+    'All links have accessible names (text, aria-label, or nested img alt)',
+    missingAccessibleNameCount === 0 ? 'pass' : 'fail',
+    [`pagesWithIssue=${missingAccessibleNameCount}/${totalAudited}`],
+    ['published-webmcp-crawl'],
+    0.85,
+    missingAccessibleNameCount > 0
+      ? 'Add text content, aria-label, or nested img with alt to all links.'
       : undefined
   );
 
