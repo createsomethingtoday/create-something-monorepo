@@ -37,8 +37,13 @@ const MEETUP_W_URLS = [
 const START_URL = MEETUP_W_URLS[0];
 
 async function main() {
-  const hasKey = Boolean(process.env.WEBFLOW_OPENAI_API_KEY);
-  console.log(`WEBFLOW_OPENAI_API_KEY: ${hasKey ? 'set' : 'NOT SET'}\n`);
+  const hasGroqKey = Boolean(process.env.WEBFLOW_GROQ_API_KEY);
+  const hasOpenAIKey = Boolean(process.env.WEBFLOW_OPENAI_API_KEY);
+  const hasKey = hasGroqKey || hasOpenAIKey;
+  const provider = hasGroqKey ? 'Groq (llama-3.3-70b)' : hasOpenAIKey ? 'OpenAI (gpt-4o-mini)' : 'none';
+  console.log(`GROQ_API_KEY: ${hasGroqKey ? 'set' : 'NOT SET'}`);
+  console.log(`WEBFLOW_OPENAI_API_KEY: ${hasOpenAIKey ? 'set' : 'NOT SET'}`);
+  console.log(`Provider: ${provider}\n`);
 
   // Deterministic baseline
   console.log('== Deterministic Classification ==');
@@ -52,13 +57,13 @@ async function main() {
   console.log(`  (${detMs}ms)\n`);
 
   if (!hasKey) {
-    console.log('Skipping LLM test — WEBFLOW_OPENAI_API_KEY not set.');
+    console.log('Skipping LLM test — no GROQ_API_KEY or WEBFLOW_OPENAI_API_KEY set.');
     console.log('Run: infisical run -- node scripts/test-url-classifier-live.mjs');
     return;
   }
 
   // LLM classification
-  console.log('== LLM Classification (gpt-4o-mini) ==');
+  console.log(`== LLM Classification (${provider}) ==`);
   const llmStart = Date.now();
   const llmResults = await classifyUrls(MEETUP_W_URLS, START_URL, { useLLM: true });
   const llmMs = Date.now() - llmStart;

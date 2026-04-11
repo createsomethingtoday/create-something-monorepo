@@ -109,11 +109,13 @@ URLs to classify:
 `;
 
 export interface LLMClassifierOptions {
-  /** OpenAI API key. If not provided, falls back to deterministic. */
+  /** API key. If not provided, falls back to deterministic. */
   apiKey?: string;
-  /** Model to use. Default: gpt-4o-mini (fast + cheap). */
+  /** Model to use. Default: llama-3.3-70b-versatile (Groq) or gpt-4o-mini (OpenAI). */
   model?: string;
-  /** Timeout in ms. Default: 15000. */
+  /** API base URL. Default: Groq if GROQ_API_KEY set, else OpenAI. */
+  baseUrl?: string;
+  /** Timeout in ms. Default: 10000 (Groq is fast enough for 10s). */
   timeout?: number;
 }
 
@@ -127,13 +129,20 @@ export async function classifyUrlsWithLLM(
   startUrl: string,
   options: LLMClassifierOptions = {}
 ): Promise<ClassifiedUrl[]> {
-  const apiKey = options.apiKey || process.env.WEBFLOW_OPENAI_API_KEY;
+  // Prefer Groq (fast, cheap) → OpenAI fallback → deterministic
+  const groqKey = process.env.WEBFLOW_GROQ_API_KEY;
+  const openaiKey = process.env.WEBFLOW_OPENAI_API_KEY;
+  const apiKey = options.apiKey || groqKey || openaiKey;
   if (!apiKey || urls.length === 0) {
     return classifyUrlsDeterministic(urls, startUrl);
   }
 
-  const model = options.model || 'gpt-4o-mini';
-  const timeout = options.timeout || 15000;
+  const useGroq = !options.baseUrl && (options.apiKey === groqKey || (!options.apiKey && groqKey));
+  const baseUrl = options.baseUrl || (useGroq
+    ? 'https://api.groq.com/openai/v1'
+    : 'https://api.openai.com/v1');
+  const model = options.model || (useGroq ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini');
+  const timeout = options.timeout || 10000;
 
   // Only send paths (not full URLs) to minimize tokens
   const origin = new URL(startUrl).origin;
@@ -148,7 +157,7 @@ export async function classifyUrlsWithLLM(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -158,7 +167,10 @@ export async function classifyUrlsWithLLM(
         model,
         max_tokens: 2048,
         temperature: 0,
-        response_format: { type: 'json_object' },
+        // Groq supports json_mode on llama models
+        ...(useGroq
+          ? { response_format: { type: 'json_object' } }
+          : { response_format: { type: 'json_object' } }),
         messages: [
           {
             role: 'system',
@@ -252,7 +264,7 @@ export async function classifyUrls(
   options: ClassifyOptions = {}
 ): Promise<ClassifiedUrl[]> {
   const useLLM = options.useLLM ?? Boolean(
-    options.apiKey || process.env.WEBFLOW_OPENAI_API_KEY
+    options.apiKey || process.env.WEBFLOW_GROQ_API_KEY || process.env.WEBFLOW_OPENAI_API_KEY
   );
 
   if (useLLM) {

@@ -16,6 +16,7 @@ import { createAnalyzerServer, getAnalyzerHealth, shutdownAnalyzerServer } from 
 interface Env {
   STEEL_API_KEY?: string;
   WEBFLOW_SITE_ANALYZER_MCP_API_KEY?: string;
+  WEBFLOW_GROQ_API_KEY?: string;
   WEBFLOW_OPENAI_API_KEY?: string;
   BRAINTRUST_API_KEY?: string;
   BRAINTRUST_PROJECT_ID?: string;
@@ -62,6 +63,7 @@ function injectEnvSecrets(env: Env): void {
   const keys: (keyof Env)[] = [
     'STEEL_API_KEY',
     'WEBFLOW_SITE_ANALYZER_MCP_API_KEY',
+    'WEBFLOW_GROQ_API_KEY',
     'WEBFLOW_OPENAI_API_KEY',
     'BRAINTRUST_API_KEY',
     'BRAINTRUST_PROJECT_ID',

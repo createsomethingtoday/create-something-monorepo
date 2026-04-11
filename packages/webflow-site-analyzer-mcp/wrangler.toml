@@ -25,5 +25,6 @@ ENVIRONMENT = "production"
 # Secrets (set via `wrangler secret put`):
 # - STEEL_API_KEY
 # - WEBFLOW_SITE_ANALYZER_MCP_API_KEY
-# - WEBFLOW_OPENAI_API_KEY
+# - WEBFLOW_GROQ_API_KEY (preferred for URL classifier — fast + cheap)
+# - WEBFLOW_OPENAI_API_KEY (fallback for URL classifier)
 # - BRAINTRUST_API_KEY (optional, for observability)
