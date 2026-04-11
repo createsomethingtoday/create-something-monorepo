@@ -1,0 +1,29 @@
+# Webflow Site Analyzer MCP — Cloudflare Worker
+# Uses nodejs_compat for Steel SDK + puppeteer-core WebSocket connections.
+# Unbound usage model for long-running browser analysis jobs (1-5 min).
+
+name = "webflow-site-analyzer-mcp"
+main = "src/worker.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat_v2"]
+
+# Unbound: no CPU time limit, billed per duration.
+# Required for browser crawl jobs that take 1-5 minutes.
+usage_model = "unbound"
+
+[observability]
+enabled = true
+
+# Custom domain: analyzer.mcp.createsomething.agency
+[[routes]]
+pattern = "analyzer.mcp.createsomething.agency"
+custom_domain = true
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (set via `wrangler secret put`):
+# - STEEL_API_KEY
+# - WEBFLOW_SITE_ANALYZER_MCP_API_KEY
+# - WEBFLOW_OPENAI_API_KEY
+# - BRAINTRUST_API_KEY (optional, for observability)
