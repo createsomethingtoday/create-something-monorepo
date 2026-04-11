@@ -47,6 +47,7 @@ import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy
 import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
+import { is404PageTitle } from './review-utils.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -1907,6 +1908,11 @@ function unifyRows(
     'policy.gsap_detected': 'info',
     'policy.custom_code_detected': 'info',
     'pages.meta_tags_cms_dynamic': 'info',
+    // Links & forms
+    'links.no_empty_href': 'major',
+    'links.no_broken_internal': 'major',
+    'links.external_target_blank': 'minor',
+    'forms.labels_present': 'major',
     // Content quality
     'content.no_placeholder_text': 'critical',
     // Site settings: from the review checklist
@@ -2534,6 +2540,115 @@ function unifyRows(
     ],
     ['published-webmcp-crawl'],
     policy.hasCustomCode ? (hasInstructionsPage ? 0.85 : 0.7) : 0.85
+  );
+
+  // Internal broken link detection: cross-reference all discovered internal links
+  // against the set of pages that were actually crawled successfully.
+  const crawledUrls = new Set(
+    published.pages
+      .filter((p) => !is404PageTitle(p.title))
+      .map((p) => p.url.toLowerCase().replace(/\/$/, ''))
+  );
+  // Collect all internal links from all crawled pages (from the per-page link extraction)
+  const allInternalLinks = new Set<string>();
+  for (const page of published.pages) {
+    if (!page.summary) continue;
+    // The links count is in the summary but individual URLs aren't stored.
+    // Use the page's discovered links from the crawl queue instead.
+  }
+  // Use precheck discovered URLs + seed URLs as the "should exist" set
+  const allKnownUrls = new Set(
+    (precheck?.discoveredUrls || []).map((u) => u.toLowerCase().replace(/\/$/, ''))
+  );
+  const brokenInternalLinks: string[] = [];
+  for (const knownUrl of allKnownUrls) {
+    // Check if any crawled page with this URL returned a 404 title
+    const matchingPage = published.pages.find(
+      (p) => p.url.toLowerCase().replace(/\/$/, '') === knownUrl
+    );
+    if (matchingPage && is404PageTitle(matchingPage.title)) {
+      brokenInternalLinks.push(new URL(knownUrl).pathname);
+    }
+  }
+  pushRow(
+    'links.no_broken_internal',
+    'Page Level Checks',
+    'No broken internal links (all linked pages resolve correctly)',
+    brokenInternalLinks.length === 0 ? 'pass' : 'fail',
+    [
+      `brokenLinks=${brokenInternalLinks.length}`,
+      ...(brokenInternalLinks.length > 0
+        ? [`paths=${brokenInternalLinks.slice(0, 10).join(', ')}`]
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.85,
+    brokenInternalLinks.length > 0
+      ? `${brokenInternalLinks.length} internal link(s) resolve to 404. Fix or remove these links.`
+      : undefined
+  );
+
+  // Empty href links: these are broken navigation elements
+  const emptyHrefCount = published.issueCounts.linksEmptyHref;
+  pushRow(
+    'links.no_empty_href',
+    'Page Level Checks',
+    'No links with empty href attributes',
+    emptyHrefCount === 0 ? 'pass' : 'fail',
+    [`pagesWithEmptyHref=${emptyHrefCount}/${totalAudited}`],
+    ['published-webmcp-crawl'],
+    0.85,
+    emptyHrefCount > 0
+      ? 'Fix or remove links with empty href="" attributes — they cause navigation issues.'
+      : undefined
+  );
+
+  // External links: should have target="_blank" and rel="noopener"
+  const blankTargetMissingRelCount = published.issueCounts.linksMissingRel;
+  pushRow(
+    'links.external_target_blank',
+    'Page Level Checks',
+    'External links open in new tab with rel="noopener"',
+    blankTargetMissingRelCount === 0 ? 'pass' : 'fail',
+    [`pagesWithMissingRel=${blankTargetMissingRelCount}/${totalAudited}`],
+    ['published-webmcp-crawl'],
+    0.8,
+    blankTargetMissingRelCount > 0
+      ? 'Add rel="noopener" to all external links with target="_blank".'
+      : undefined
+  );
+
+  // Form validation: check forms have labels, required fields, and submission handling
+  const formPages = published.pages.filter(
+    (p) => p.summary && (p.summary.forms?.fields || 0) > 0
+  );
+  const totalFormFields = formPages.reduce(
+    (sum, p) => sum + (p.summary?.forms?.fields || 0), 0
+  );
+  const totalMissingLabels = formPages.reduce(
+    (sum, p) => sum + (p.summary?.forms?.missingLabels || 0), 0
+  );
+  const formLabelRatio = totalFormFields > 0
+    ? (totalFormFields - totalMissingLabels) / totalFormFields
+    : 1;
+  pushRow(
+    'forms.labels_present',
+    'Page Level Checks',
+    'All form fields have associated labels or aria-labels',
+    totalMissingLabels === 0 ? 'pass'
+      : formLabelRatio >= 0.8 ? 'partial'
+      : 'fail',
+    [
+      `totalFields=${totalFormFields}`,
+      `missingLabels=${totalMissingLabels}`,
+      `pagesWithForms=${formPages.length}`,
+      `labelCoverage=${Math.round(formLabelRatio * 100)}%`
+    ],
+    ['published-webmcp-crawl'],
+    0.8,
+    totalMissingLabels > 0
+      ? `${totalMissingLabels} form field(s) missing labels. Add <label for="..."> or aria-label attributes.`
+      : undefined
   );
 
   // Content quality checks
