@@ -631,6 +631,43 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     !s.getAttribute('data-wf-domain')
   );
 
+  // Site settings checks (run regardless of __wfReview availability)
+  const faviconLink = document.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
+  const hasCustomFavicon = Boolean(faviconLink && !((faviconLink.getAttribute('href') || '').includes('webflow')));
+
+  const fontLinks = Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"], link[href*="use.typekit.net"]'));
+  const customFontStyles = Array.from(document.querySelectorAll('style')).filter(s =>
+    (s.textContent || '').includes('@font-face')
+  );
+  const hasCustomFonts = fontLinks.length > 0 || customFontStyles.length > 0;
+  const customFontSources = fontLinks.map(l => l.getAttribute('href') || '').filter(Boolean);
+
+  // Connected apps detection (third-party integrations that should be removed)
+  const connectedAppPatterns = [
+    { name: 'Google Analytics', pattern: /google-analytics\.com|googletagmanager\.com|gtag/ },
+    { name: 'Facebook Pixel', pattern: /connect\.facebook\.net|fbevents\.js/ },
+    { name: 'Hotjar', pattern: /hotjar\.com|static\.hotjar/ },
+    { name: 'Intercom', pattern: /intercom\.io|widget\.intercom/ },
+    { name: 'Drift', pattern: /drift\.com|js\.driftt/ },
+    { name: 'Crisp', pattern: /crisp\.chat/ },
+    { name: 'HubSpot', pattern: /hubspot\.com|hs-scripts/ },
+    { name: 'Mailchimp', pattern: /mailchimp\.com|chimpstatic/ },
+  ];
+  const allScriptSrcsAndInline = [
+    ...scriptSrcs,
+    ...scriptEls.map(s => (s.textContent || '').slice(0, 500))
+  ].join(' ');
+  const detectedApps = connectedAppPatterns
+    .filter(app => app.pattern.test(allScriptSrcsAndInline))
+    .map(app => app.name);
+
+  // Placeholder content detection
+  const bodyTextForPlaceholder = (document.body?.textContent || '').toLowerCase();
+  const loremIpsumPatterns = ['lorem ipsum', 'dolor sit amet', 'consectetur adipiscing', 'sed do eiusmod'];
+  const hasLoremIpsum = loremIpsumPatterns.some(p => bodyTextForPlaceholder.includes(p));
+  const placeholderPatterns = ['your text here', 'placeholder text', 'insert text', 'add your', 'example text', 'sample text'];
+  const hasPlaceholderText = placeholderPatterns.some(p => bodyTextForPlaceholder.includes(p));
+
   const api = window.__wfReview;
   if (!api) {
     // DOM fallback: extract page-level signals directly when __wfReview is missing
@@ -892,6 +929,16 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
         affiliateLinks,
         hasGsap,
         hasCustomCode
+      },
+      siteSettings: {
+        hasCustomFavicon,
+        hasCustomFonts,
+        customFontSources,
+        detectedApps
+      },
+      contentQuality: {
+        hasLoremIpsum,
+        hasPlaceholderText
       }
     };
   }
@@ -932,6 +979,12 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     auditError,
     sitemap,
     audit404,
+    siteSettings: {
+      hasCustomFavicon,
+      hasCustomFonts,
+      customFontSources,
+      detectedApps
+    },
     policyChecks: {
       hasPoweredByWebflow,
       affiliateLinks,
@@ -959,6 +1012,16 @@ type PublishedPageEval = {
     affiliateLinks?: string[];
     hasGsap?: boolean;
     hasCustomCode?: boolean;
+  };
+  siteSettings?: {
+    hasCustomFavicon?: boolean;
+    hasCustomFonts?: boolean;
+    customFontSources?: string[];
+    detectedApps?: string[];
+  };
+  contentQuality?: {
+    hasLoremIpsum?: boolean;
+    hasPlaceholderText?: boolean;
   };
 };
 
@@ -1536,6 +1599,20 @@ async function crawlPublishedWebMcp(
             hasCustomCode: Boolean(raw.policyChecks.hasCustomCode)
           };
         }
+        if (raw?.contentQuality) {
+          pageResult.contentQuality = {
+            hasLoremIpsum: Boolean(raw.contentQuality.hasLoremIpsum),
+            hasPlaceholderText: Boolean(raw.contentQuality.hasPlaceholderText)
+          };
+        }
+        if (raw?.siteSettings) {
+          pageResult.siteSettings = {
+            hasCustomFavicon: Boolean(raw.siteSettings.hasCustomFavicon),
+            hasCustomFonts: Boolean(raw.siteSettings.hasCustomFonts),
+            customFontSources: Array.isArray(raw.siteSettings.customFontSources) ? raw.siteSettings.customFontSources : [],
+            detectedApps: Array.isArray(raw.siteSettings.detectedApps) ? raw.siteSettings.detectedApps : []
+          };
+        }
 
         if (pageResult.hasSnippet) {
           if (!snippetVersion) snippetVersion = raw?.snippetVersion ?? null;
@@ -1685,6 +1762,30 @@ async function crawlPublishedWebMcp(
   }
   const uniqueAffiliateLinks = Array.from(new Set(allAffiliateLinks));
 
+  // Aggregate site settings across all pages
+  let anyPageHasCustomFavicon = false;
+  let anyPageHasCustomFonts = false;
+  const allCustomFontSources: string[] = [];
+  const allDetectedApps: string[] = [];
+  for (const page of pages) {
+    if (page.siteSettings) {
+      if (page.siteSettings.hasCustomFavicon) anyPageHasCustomFavicon = true;
+      if (page.siteSettings.hasCustomFonts) anyPageHasCustomFonts = true;
+      if (page.siteSettings.customFontSources) {
+        allCustomFontSources.push(...page.siteSettings.customFontSources);
+      }
+      if (page.siteSettings.detectedApps) {
+        allDetectedApps.push(...page.siteSettings.detectedApps);
+      }
+    }
+  }
+  const uniqueFontSources = Array.from(new Set(allCustomFontSources));
+  const uniqueDetectedApps = Array.from(new Set(allDetectedApps));
+
+  // Aggregate content quality signals
+  const pagesWithLorem = pages.filter((p) => p.contentQuality?.hasLoremIpsum);
+  const pagesWithPlaceholder = pages.filter((p) => p.contentQuality?.hasPlaceholderText);
+
   // Collect URLs that were discovered but not crawled (maxPages cap)
   const visitedUrls = new Set(pages.map((p) => p.url));
   const skippedUrls = Array.from(seen).filter((url) => !visitedUrls.has(url));
@@ -1710,6 +1811,12 @@ async function crawlPublishedWebMcp(
       affiliateLinks: uniqueAffiliateLinks,
       hasGsap: anyPageHasGsap,
       hasCustomCode: anyPageHasCustomCode
+    },
+    siteSettings: {
+      hasCustomFavicon: anyPageHasCustomFavicon,
+      hasCustomFonts: anyPageHasCustomFonts,
+      customFontSources: uniqueFontSources,
+      detectedApps: uniqueDetectedApps
     },
     pages
   };
@@ -1800,6 +1907,12 @@ function unifyRows(
     'policy.gsap_detected': 'info',
     'policy.custom_code_detected': 'info',
     'pages.meta_tags_cms_dynamic': 'info',
+    // Content quality
+    'content.no_placeholder_text': 'critical',
+    // Site settings: from the review checklist
+    'settings.custom_favicon': 'minor',
+    'settings.custom_fonts': 'major',
+    'settings.no_connected_apps': 'major',
     // Coverage: critical — incomplete coverage means the review is not complete
     'coverage.all_pages_crawled': 'critical',
   };
@@ -2421,6 +2534,93 @@ function unifyRows(
     ],
     ['published-webmcp-crawl'],
     policy.hasCustomCode ? (hasInstructionsPage ? 0.85 : 0.7) : 0.85
+  );
+
+  // Content quality checks
+  const loremPages = published.pages.filter((p) => p.contentQuality?.hasLoremIpsum);
+  const placeholderPages = published.pages.filter((p) => p.contentQuality?.hasPlaceholderText);
+  const loremPaths = loremPages
+    .map((p) => p.url.replace(published.origin, ''))
+    .slice(0, 5);
+  const placeholderPaths = placeholderPages
+    .map((p) => p.url.replace(published.origin, ''))
+    .slice(0, 5);
+  const hasContentIssues = loremPages.length > 0 || placeholderPages.length > 0;
+  pushRow(
+    'content.no_placeholder_text',
+    'Content Quality',
+    'No Lorem Ipsum or placeholder text on any page',
+    hasContentIssues ? 'fail' : 'pass',
+    [
+      `pagesWithLoremIpsum=${loremPages.length}/${totalAudited}`,
+      `pagesWithPlaceholderText=${placeholderPages.length}/${totalAudited}`,
+      ...(loremPaths.length > 0 ? [`loremPages=${loremPaths.join(', ')}`] : []),
+      ...(placeholderPaths.length > 0 ? [`placeholderPages=${placeholderPaths.join(', ')}`] : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.9,
+    hasContentIssues
+      ? 'Remove all Lorem Ipsum and placeholder text before submission. Replace with real sample content.'
+      : undefined
+  );
+
+  // Site settings checks (from review checklist: favicons, fonts, connected apps)
+  const settings = published.siteSettings;
+  pushRow(
+    'settings.custom_favicon',
+    'Site Settings',
+    'Custom favicon is set (not the default Webflow favicon)',
+    settings.hasCustomFavicon ? 'pass' : 'fail',
+    [`hasCustomFavicon=${settings.hasCustomFavicon}`],
+    ['published-webmcp-crawl'],
+    0.85,
+    'Upload a custom favicon in Site Settings to replace the default Webflow icon.'
+  );
+
+  // Custom fonts: if present, they need a license page or to be from a free source
+  const hasLicensedFonts = settings.hasCustomFonts && (
+    settings.customFontSources.some((s) => s.includes('fonts.googleapis.com')) ||
+    hasLicensePage
+  );
+  pushRow(
+    'settings.custom_fonts',
+    'Site Settings',
+    'No custom fonts, or custom fonts have proper licensing documented',
+    !settings.hasCustomFonts ? 'pass'
+      : hasLicensedFonts ? 'pass'
+      : 'fail',
+    [
+      `hasCustomFonts=${settings.hasCustomFonts}`,
+      ...(settings.customFontSources.length > 0
+        ? [`sources=${settings.customFontSources.slice(0, 3).map((s) => new URL(s).hostname).join(', ')}`]
+        : []),
+      ...(settings.hasCustomFonts && !hasLicensedFonts
+        ? ['Custom fonts detected without license documentation']
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.8,
+    settings.hasCustomFonts && !hasLicensedFonts
+      ? 'Document font licenses on the License page, or use free fonts (Google Fonts).'
+      : undefined
+  );
+
+  pushRow(
+    'settings.no_connected_apps',
+    'Site Settings',
+    'No connected third-party apps or tracking scripts',
+    settings.detectedApps.length === 0 ? 'pass' : 'fail',
+    [
+      `detectedApps=${settings.detectedApps.length}`,
+      ...(settings.detectedApps.length > 0
+        ? [`apps=${settings.detectedApps.join(', ')}`]
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.85,
+    settings.detectedApps.length > 0
+      ? `Remove connected apps before submission: ${settings.detectedApps.join(', ')}`
+      : undefined
   );
 
   // Coverage check: flag if any pages were not crawled

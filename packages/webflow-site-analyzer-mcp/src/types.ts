@@ -608,6 +608,16 @@ export interface PublishedSnippetPageResult {
     hasGsap?: boolean;
     hasCustomCode?: boolean;
   };
+  siteSettings?: {
+    hasCustomFavicon?: boolean;
+    hasCustomFonts?: boolean;
+    customFontSources?: string[];
+    detectedApps?: string[];
+  };
+  contentQuality?: {
+    hasLoremIpsum?: boolean;
+    hasPlaceholderText?: boolean;
+  };
 }
 
 export interface PublishedSnippetCrawlResult {
@@ -641,6 +651,12 @@ export interface PublishedSnippetCrawlResult {
     affiliateLinks: string[];
     hasGsap: boolean;
     hasCustomCode: boolean;
+  };
+  siteSettings: {
+    hasCustomFavicon: boolean;
+    hasCustomFonts: boolean;
+    customFontSources: string[];
+    detectedApps: string[];
   };
   pages: PublishedSnippetPageResult[];
 }
