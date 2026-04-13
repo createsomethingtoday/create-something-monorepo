@@ -322,6 +322,7 @@ body {
   font-size: 8px;
   line-height: 1;
   flex-shrink: 0;
+  transition: color var(--duration-default) var(--ease-in-out);
 }
 
 .bridge-status-badge.active {
