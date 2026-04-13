@@ -11,6 +11,8 @@ import {
 interface Env {
   COMPOSIO_API_KEY?: string;
   COMPOSIO_AUTH_CONFIG_MAP?: string;
+  COMPOSIO_AUTH_CONFIG_MAP_PATCH?: string;
+  COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON?: string;
   COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?: string;
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_ENTITY_RESOLUTION_MODE?: string;
@@ -1984,7 +1986,11 @@ function parseAuthConfigMap(raw: string | undefined): Record<string, string> {
 }
 
 function buildAuthConfigMap(env: Env): Record<string, string> {
-  const authConfigMap = parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP);
+  const authConfigMap = {
+    ...parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP),
+    ...parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP_PATCH),
+    ...parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON),
+  };
   const airtableAuthConfigId = env.COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?.trim();
   if (airtableAuthConfigId) {
     authConfigMap.airtable = airtableAuthConfigId;
