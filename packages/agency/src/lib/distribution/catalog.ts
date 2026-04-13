@@ -6,6 +6,7 @@ import {
 	getDistributionGooseExportCommand,
 	getDistributionGooseExportOutputDir,
 	type DistributionCatalogEntry,
+	type DistributionGooseQuickstartStep,
 	type DistributionHost,
 	type DistributionInstallAction,
 	type DistributionTargetHost,
@@ -14,11 +15,13 @@ import {
 	getDistributionCompatibilityHosts,
 	getDistributionCompatibilityInstallActions,
 	getDistributionGooseInstallActions,
+	getDistributionGooseQuickstart,
 	getRelatedDistributionArtifacts
 } from '@create-something/playbook-mcp/distribution';
 
 export type {
 	DistributionCatalogEntry,
+	DistributionGooseQuickstartStep,
 	DistributionHost,
 	DistributionInstallAction,
 	DistributionTargetHost
@@ -100,6 +103,10 @@ export function getGooseExportCommand(entry: DistributionCatalogEntry): string {
 
 export function getGooseExportOutputDir(entry: DistributionCatalogEntry): string {
 	return getDistributionGooseExportOutputDir(entry);
+}
+
+export function getGooseQuickstart(entry: DistributionCatalogEntry): DistributionGooseQuickstartStep[] {
+	return getDistributionGooseQuickstart(entry);
 }
 
 export function getInstallPayload(action: DistributionInstallAction): string {

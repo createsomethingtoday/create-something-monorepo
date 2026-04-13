@@ -25,5 +25,5 @@ pnpm distribution:goose:export -- --artifact create-something-distro
 That command materializes a repo-local Goose test bundle under `.goose-bundles/` with:
 
 - `bundle-manifest.json` for the full artifact payload
-- `README.md` with the local Goose steps
+- `README.md` with the ordered local Goose quickstart
 - copied recipe, policy-pack, and distro files referenced by the artifact

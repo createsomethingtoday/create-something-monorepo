@@ -72,7 +72,7 @@ Goose-first packaging tools that read from the generated distribution catalog an
 |------|---------|
 | `list_distribution_artifacts` | List distribution artifacts across extensions, policy packs, recipes, and distro starters. Supports kind, host, and visibility filtering. |
 | `get_distribution_artifact` | Inspect one artifact with its metadata, Goose install actions, related bundle pieces, and verification guidance. |
-| `generate_goose_bundle` | Emit the canonical Goose install payloads for one artifact plus its direct related bundle pieces and the repo-local Goose Desktop export command. |
+| `generate_goose_bundle` | Emit the canonical Goose install payloads for one artifact plus its direct related bundle pieces, the repo-local Goose Desktop export command, and an ordered Goose quickstart. |
 | `generate_compatibility_adapter` | Emit the host-specific compatibility adapter payloads for Cursor, Claude, Codex, Windsurf, or VS Code from the same catalog row. |
 
 ## Prompts (Judgment Tier)

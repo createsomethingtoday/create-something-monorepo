@@ -64,6 +64,14 @@ export type DistributionInstallAction = {
   args?: readonly string[];
 };
 
+export type DistributionGooseQuickstartStep = {
+  id: string;
+  title: string;
+  instruction: string;
+  payload: string;
+  kind: 'command' | 'deeplink' | 'file' | 'verify';
+};
+
 export const DEFAULT_DISTRIBUTION_GOOSE_EXPORT_BASE_DIR = '.goose-bundles';
 
 export const DISTRIBUTION_HOST_LABELS: Record<DistributionTargetHost, string> = {
@@ -194,6 +202,95 @@ export function getDistributionGooseExportCommand(
   return `pnpm distribution:goose:export -- --artifact ${entry.id} --output ${outputDir}`;
 }
 
+export function getDistributionGooseExportReadmePath(
+  entry: DistributionCatalogEntry,
+  baseDir = DEFAULT_DISTRIBUTION_GOOSE_EXPORT_BASE_DIR,
+): string {
+  return `${getDistributionGooseExportOutputDir(entry, baseDir)}/README.md`;
+}
+
+export function getDistributionGooseQuickstart(
+  entry: DistributionCatalogEntry,
+  baseDir = DEFAULT_DISTRIBUTION_GOOSE_EXPORT_BASE_DIR,
+): DistributionGooseQuickstartStep[] {
+  const steps: DistributionGooseQuickstartStep[] = [
+    {
+      id: 'export',
+      title: 'Export the Goose bundle',
+      instruction:
+        'Materialize the repo-local Goose bundle so the desktop app can reference copied policy, recipe, and distro files.',
+      payload: getDistributionGooseExportCommand(entry, baseDir),
+      kind: 'command',
+    },
+    {
+      id: 'readme',
+      title: 'Open the generated bundle README',
+      instruction:
+        'Use the exported README as the single local checklist for this artifact and its directly bundled pieces.',
+      payload: getDistributionGooseExportReadmePath(entry, baseDir),
+      kind: 'file',
+    },
+  ];
+
+  const primaryAction = getPrimaryDistributionGooseAction(entry);
+
+  if (primaryAction) {
+    steps.push({
+      id: 'primary',
+      title: getPrimaryQuickstartTitle(entry, primaryAction),
+      instruction: getPrimaryQuickstartInstruction(entry, primaryAction),
+      payload: primaryAction.payload,
+      kind: getQuickstartKind(primaryAction),
+    });
+  }
+
+  const relatedArtifacts = getRelatedDistributionArtifacts(entry);
+  const policyPack = relatedArtifacts.find((artifact) => artifact.kind === 'policy_pack');
+  const recipe = relatedArtifacts.find((artifact) => artifact.kind === 'recipe');
+
+  if (policyPack) {
+    steps.push({
+      id: 'policy-pack',
+      title: 'Apply the matching policy pack',
+      instruction:
+        'Use the copied policy-pack files for persistent instructions, prompt templates, and adversary rules so behavior travels with the tool.',
+      payload: getDistributionGooseExportReadmePath(entry, baseDir),
+      kind: 'file',
+    });
+  }
+
+  if (recipe) {
+    const recipeAction = getPrimaryDistributionGooseAction(recipe);
+
+    if (recipeAction) {
+      steps.push({
+        id: 'recipe',
+        title: 'Open the bundled recipe',
+        instruction:
+          'Launch the matching Goose recipe after the extension and policy files are in place so the workflow boundary is explicit.',
+        payload: recipeAction.payload,
+        kind: getQuickstartKind(recipeAction),
+      });
+    }
+  }
+
+  const firstVerificationStep = entry.verification.steps[0];
+
+  if (firstVerificationStep) {
+    steps.push({
+      id: 'verify',
+      title: 'Run the first verification step',
+      instruction: entry.verification.summary,
+      payload: 'command' in firstVerificationStep
+        ? firstVerificationStep.command
+        : firstVerificationStep.prompt,
+      kind: 'verify',
+    });
+  }
+
+  return steps;
+}
+
 function getCompatibility(
   entry: DistributionCatalogEntry,
 ): DistributionCompatibility | undefined {
@@ -212,4 +309,87 @@ function toInstallAction(
     command: 'command' in mode ? mode.command : undefined,
     args: 'args' in mode ? mode.args : undefined,
   };
+}
+
+function getPrimaryDistributionGooseAction(
+  entry: DistributionCatalogEntry,
+): DistributionInstallAction | undefined {
+  const actions = getDistributionGooseInstallActions(entry);
+
+  return (
+    actions.find((action) => action.type === 'goose_extension')
+    ?? actions.find((action) => action.type === 'goose_recipe')
+    ?? actions.find((action) => action.type === 'goose_distro')
+    ?? actions.find((action) => action.type === 'goose_bundle')
+    ?? actions[0]
+  );
+}
+
+function getQuickstartKind(
+  action: DistributionInstallAction,
+): DistributionGooseQuickstartStep['kind'] {
+  if (action.type === 'goose_extension') {
+    return 'deeplink';
+  }
+
+  if (
+    action.type === 'goose_recipe'
+    || action.type === 'stdio_command'
+    || action.type === 'codex_command'
+    || action.type === 'claude_code_command'
+  ) {
+    return 'command';
+  }
+
+  return 'file';
+}
+
+function getPrimaryQuickstartTitle(
+  entry: DistributionCatalogEntry,
+  action: DistributionInstallAction,
+): string {
+  if (action.type === 'goose_extension') {
+    return 'Install the Goose extension';
+  }
+
+  if (action.type === 'goose_recipe') {
+    return 'Open the Goose recipe';
+  }
+
+  if (action.type === 'goose_distro') {
+    return entry.kind === 'distro'
+      ? 'Review the distro starter'
+      : 'Open the distro asset';
+  }
+
+  if (entry.kind === 'policy_pack') {
+    return 'Inspect the policy-pack files';
+  }
+
+  return 'Open the primary Goose asset';
+}
+
+function getPrimaryQuickstartInstruction(
+  entry: DistributionCatalogEntry,
+  action: DistributionInstallAction,
+): string {
+  if (action.type === 'goose_extension') {
+    return 'Use the Goose deeplink to install the extension directly into the desktop app.';
+  }
+
+  if (action.type === 'goose_recipe') {
+    return 'Open the recipe in Goose CLI or Desktop once the related extension and policy files are ready.';
+  }
+
+  if (action.type === 'goose_distro') {
+    return entry.kind === 'distro'
+      ? 'Start from the distro init-config so first-run defaults are explicit before local testing.'
+      : 'Use the distro asset as the primary Goose packaging artifact for this bundle.';
+  }
+
+  if (entry.kind === 'policy_pack') {
+    return 'Start from the copied policy-pack directory so the persistent instructions and prompt templates stay together.';
+  }
+
+  return 'Open the primary Goose asset for this artifact before moving to bundled policy and recipe steps.';
 }

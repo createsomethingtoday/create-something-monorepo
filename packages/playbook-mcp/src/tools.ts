@@ -22,6 +22,7 @@ import {
   getDistributionCompatibilityInstallActions,
   getDistributionGooseExportCommand,
   getDistributionGooseInstallActions,
+  getDistributionGooseQuickstart,
   getRelatedDistributionArtifacts,
   summarizeDistributionArtifact,
 } from './distribution.js';
@@ -909,10 +910,11 @@ export function registerTools(server: McpServer) {
               note:
                 'Use this when Goose Desktop is installed locally and you want the extension, policy-pack files, recipe files, and distro assets materialized into one repo-local test bundle.',
             },
+            gooseQuickstart: getDistributionGooseQuickstart(artifact),
             bundleArtifacts: relatedArtifacts,
             verification: artifact.verification,
             agentAction:
-              'Present these Goose actions in order. Launch deeplinks when present. For local Goose Desktop testing, run the export command to materialize the related policy-pack and recipe assets into one repo-local bundle.',
+              'Present the Goose quickstart in order. Launch deeplinks when present. For local Goose Desktop testing, begin with the export command so the related policy-pack and recipe assets are materialized into one repo-local bundle.',
           }, null, 2),
         }],
       };

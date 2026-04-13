@@ -11,9 +11,8 @@
 		getArtifactsByKind,
 		getCompatibilityActions,
 		getCompatibilityHosts,
-		getGooseExportCommand,
-		getGooseExportOutputDir,
 		getGooseInstallActions,
+		getGooseQuickstart,
 		getInstallActionLabel,
 		getInstallModeNote,
 		getInstallPayload,
@@ -133,8 +132,7 @@
 						{@const artifactLink = getArtifactLink(entry)}
 						{@const packageName = getArtifactField(entry, 'npmPackage')}
 						{@const gooseActions = getGooseInstallActions(entry)}
-						{@const gooseExportCommand = getGooseExportCommand(entry)}
-						{@const gooseExportOutputDir = getGooseExportOutputDir(entry)}
+						{@const gooseQuickstart = getGooseQuickstart(entry)}
 						{@const relatedEntries = getRelatedEntries(entry)}
 						{@const compatibilityHosts = getCompatibilityHosts(entry)}
 						{@const compatibilityActions = getCompatibilityActions(entry)}
@@ -161,6 +159,39 @@
 							</div>
 
 							<div class="goose-grid">
+								<section class="mode-card mode-card--goose mode-card--quickstart">
+									<div class="mode-head">
+										<div>
+											<p class="mode-label">Goose quickstart</p>
+											<p class="mode-meta">Ordered local setup</p>
+										</div>
+									</div>
+
+									<ol class="quickstart-list">
+										{#each gooseQuickstart as step}
+											{@const actionKey = `${entry.id}:goose:quickstart:${step.id}`}
+											<li class="quickstart-item">
+												<div class="quickstart-copy">
+													<p class="mode-label">{step.title}</p>
+													<p class="mode-note">{step.instruction}</p>
+												</div>
+
+												<button type="button" class="mode-action" onclick={() => copyToClipboard(actionKey, step.payload)}>
+													{copiedActionKey === actionKey
+														? 'Copied'
+														: step.kind === 'deeplink'
+															? 'Copy deeplink'
+															: step.kind === 'verify'
+																? 'Copy verification step'
+																: 'Copy step'}
+												</button>
+
+												<pre class="mode-payload"><code>{step.payload}</code></pre>
+											</li>
+										{/each}
+									</ol>
+								</section>
+
 								{#each gooseActions as action, index}
 									{@const payload = getInstallPayload(action)}
 									{@const actionKey = `${entry.id}:goose:${index}`}
@@ -186,29 +217,6 @@
 										<pre class="mode-payload"><code>{payload}</code></pre>
 									</section>
 								{/each}
-
-								<section class="mode-card mode-card--goose">
-									<div class="mode-head">
-										<div>
-											<p class="mode-label">Materialize local Goose bundle</p>
-											<p class="mode-meta">Desktop test path</p>
-										</div>
-
-										<button
-											type="button"
-											class="mode-action"
-											onclick={() => copyToClipboard(`${entry.id}:goose:export`, gooseExportCommand)}
-										>
-											{copiedActionKey === `${entry.id}:goose:export` ? 'Copied' : 'Copy export command'}
-										</button>
-									</div>
-
-									<p class="mode-note">
-										Build a repo-local Goose bundle with this artifact and its direct policy-pack and recipe assets.
-									</p>
-									<pre class="mode-payload"><code>{gooseExportCommand}</code></pre>
-									<p class="mode-note">Default output: <code>{gooseExportOutputDir}</code></p>
-								</section>
 							</div>
 
 							{#if relatedEntries.length > 0}
@@ -531,6 +539,10 @@
 		border-color: rgba(145, 169, 255, 0.28);
 	}
 
+	.mode-card--quickstart {
+		grid-column: 1 / -1;
+	}
+
 	.mode-head {
 		display: flex;
 		justify-content: space-between;
@@ -580,6 +592,19 @@
 		line-height: 1.55;
 		white-space: pre-wrap;
 		overflow-wrap: anywhere;
+	}
+
+	.quickstart-list {
+		list-style: decimal;
+		margin: 0;
+		padding-left: 1.25rem;
+		display: grid;
+		gap: 1rem;
+	}
+
+	.quickstart-item {
+		display: grid;
+		gap: 0.75rem;
 	}
 
 	.related-shell {

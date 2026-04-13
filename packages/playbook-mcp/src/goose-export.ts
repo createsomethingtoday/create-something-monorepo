@@ -11,10 +11,12 @@ import {
   getDistributionGooseExportCommand,
   getDistributionGooseExportOutputDir,
   getDistributionGooseInstallActions,
+  getDistributionGooseQuickstart,
   getRelatedDistributionArtifacts,
   summarizeDistributionArtifact,
   type DistributionCatalogEntry,
   type DistributionInstallAction,
+  type DistributionGooseQuickstartStep,
 } from './distribution.js';
 
 type GooseBundleExportAsset = {
@@ -27,6 +29,7 @@ export type GooseBundleExportResult = {
   artifact: ReturnType<typeof summarizeDistributionArtifact>;
   outputDir: string;
   includeRelated: boolean;
+  gooseQuickstart: DistributionGooseQuickstartStep[];
   bundleArtifacts: Array<{
     artifact: ReturnType<typeof summarizeDistributionArtifact>;
     gooseInstallActions: DistributionInstallAction[];
@@ -74,6 +77,10 @@ export async function exportGooseBundle(options: {
   const bundleArtifacts = includeRelated
     ? getRelatedDistributionArtifacts(artifact)
     : [];
+  const gooseQuickstart = getDistributionGooseQuickstart(
+    artifact,
+    normalizePath(path.relative(repoRoot, path.dirname(resolvedOutputDir)) || '.'),
+  );
   const entries = [artifact, ...bundleArtifacts];
   const copiedAssets = await copyLocalAssets(entries, repoRoot, resolvedOutputDir);
   const manifestPath = path.join(resolvedOutputDir, 'bundle-manifest.json');
@@ -91,6 +98,7 @@ export async function exportGooseBundle(options: {
         rerunCommand,
         artifact: summarizeDistributionArtifact(artifact),
         gooseInstallActions: getDistributionGooseInstallActions(artifact),
+        gooseQuickstart,
         bundleArtifacts: bundleArtifacts.map((entry) => ({
           artifact: summarizeDistributionArtifact(entry),
           gooseInstallActions: getDistributionGooseInstallActions(entry),
@@ -118,6 +126,7 @@ export async function exportGooseBundle(options: {
     artifact: summarizeDistributionArtifact(artifact),
     outputDir: resolvedOutputDir,
     includeRelated,
+    gooseQuickstart,
     gooseInstallActions: getDistributionGooseInstallActions(artifact),
     bundleArtifacts: bundleArtifacts.map((entry) => ({
       artifact: summarizeDistributionArtifact(entry),
@@ -219,6 +228,10 @@ function buildBundleReadme(options: {
     rerunCommand,
   } = options;
   const artifactActions = getDistributionGooseInstallActions(artifact);
+  const quickstart = getDistributionGooseQuickstart(
+    artifact,
+    normalizePath(path.relative(DEFAULT_REPO_ROOT, path.dirname(outputDir)) || '.'),
+  );
   const outputDirLabel = normalizePath(path.relative(DEFAULT_REPO_ROOT, outputDir) || '.');
   const lines = [
     `# ${artifact.title} Goose Test Bundle`,
@@ -232,6 +245,10 @@ function buildBundleReadme(options: {
     `- Output directory: \`${outputDirLabel}\``,
     `- Related artifacts included: ${includeRelated ? 'yes' : 'no'}`,
     `- Rebuild command: \`${rerunCommand}\``,
+    '',
+    '## Goose Quickstart',
+    '',
+    ...formatQuickstart(quickstart),
     '',
     '## Primary Goose Actions',
     '',
@@ -273,6 +290,18 @@ function buildBundleReadme(options: {
   }
 
   return lines.join('\n');
+}
+
+function formatQuickstart(
+  steps: readonly DistributionGooseQuickstartStep[],
+): string[] {
+  const lines: string[] = [];
+
+  for (const [index, step] of steps.entries()) {
+    lines.push(`${index + 1}. **${step.title}**`, `   ${step.instruction}`, `   \`${step.payload}\``);
+  }
+
+  return lines;
 }
 
 function formatActionList(
