@@ -744,10 +744,15 @@ async function installBridge() {
     setToolbarStatus('🔄 Installing bridge...', 'neutral');
     try {
         const correlationId = createCorrelationId();
-        // Use the Worker as a proxy to call the Webflow Custom Code API.
-        // The Worker holds the app's OAuth credentials and performs:
-        //   1. POST /sites/{siteId}/registered_scripts/hosted  (register snippet)
-        //   2. PUT  /sites/{siteId}/custom_code                (apply to head)
+        // Get the ID token from the Webflow Designer Extension API.
+        // The Worker exchanges this for an access token to call the Data API.
+        const webflow = window.webflow;
+        let idToken = null;
+        try {
+            idToken = await webflow?.getIdToken?.();
+        } catch (e) {
+            console.warn('getIdToken failed:', e);
+        }
         bridgeStatus = await fetchJsonWithRetry(`${APP_VALIDATOR_BASE}/app-validator/snippet/install`, {
             method: 'POST',
             headers: {
@@ -758,7 +763,8 @@ async function installBridge() {
                 siteId: bridgeContext.siteId,
                 siteName: bridgeContext.siteName,
                 installTarget: 'head',
-                mode: 'webflow-api',
+                mode: idToken ? 'webflow-api' : 'programmatic',
+                idToken: idToken || undefined,
             }),
         }, { timeoutMs: NETWORK_TIMEOUT_MS, retries: MAX_NETWORK_RETRIES });
         renderBridgeStatus(bridgeStatus);
