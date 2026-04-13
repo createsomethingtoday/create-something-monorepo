@@ -1,0 +1,36 @@
+{
+  "name": "@create-something/webflow-template-validation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Webflow Way Validator app with companion Designer extension and Cloudflare worker",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "check": "tsc --noEmit",
+    "dev:extension": "pnpm --filter @create-something/webflow-template-validation-extension dev",
+    "build:extension": "pnpm --filter @create-something/webflow-template-validation-extension build",
+    "bundle:extension": "pnpm --filter @create-something/webflow-template-validation-extension bundle",
+    "serve:extension": "pnpm --filter @create-something/webflow-template-validation-extension serve",
+    "dev:worker": "pnpm --filter @create-something/webflow-template-validation-worker dev",
+    "deploy:worker": "pnpm --filter @create-something/webflow-template-validation-worker deploy",
+    "test:worker": "pnpm --filter @create-something/webflow-template-validation-worker test"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "next": "15.5.12",
+    "postcss": "^8.4.49",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.25.64"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.12",
+    "typescript": "^5"
+  }
+}

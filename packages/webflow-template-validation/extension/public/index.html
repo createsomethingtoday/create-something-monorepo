@@ -1,0 +1,133 @@
+<!-- Webflow Way Validator - Tufte-style Density -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<div class="validator-container">
+  <!-- Header: Action-only -->
+  <header class="validator-header">
+    <div class="header-actions">
+      <button id="options-btn" class="options-btn" aria-expanded="false" aria-controls="options-panel">
+        Options
+      </button>
+      <button id="validate-btn" class="validate-btn">Validate Project</button>
+    </div>
+
+    <div id="options-panel" class="options-panel" hidden>
+      <div class="options-section">
+        <div class="options-title">Validation</div>
+        <label class="option-row">
+          <input type="checkbox" id="opt-run-designer" />
+          <span>Designer checks</span>
+        </label>
+        <label class="option-row">
+          <input type="checkbox" id="opt-run-assets" />
+          <span>Assets & Images</span>
+        </label>
+        <label class="option-row">
+          <input type="checkbox" id="opt-run-content" />
+          <span>Content & Accessibility</span>
+        </label>
+      </div>
+
+      <div class="options-section" id="content-options">
+        <div class="options-title">Content Checks</div>
+        <label class="option-row">
+          <input type="checkbox" id="opt-content-lorem" />
+          <span>Lorem/placeholder</span>
+        </label>
+        <label class="option-row">
+          <input type="checkbox" id="opt-content-headings" />
+          <span>Headings</span>
+        </label>
+        <label class="option-row">
+          <input type="checkbox" id="opt-content-altText" />
+          <span>Alt text</span>
+        </label>
+        <label class="option-row">
+          <input type="checkbox" id="opt-content-seo" />
+          <span>SEO</span>
+        </label>
+        <label class="option-row">
+          <input type="checkbox" id="opt-content-links" />
+          <span>Links</span>
+        </label>
+        <label class="option-row">
+          <input type="checkbox" id="opt-content-contentQuality" />
+          <span>Content quality</span>
+        </label>
+        <label class="option-row">
+          <input type="checkbox" id="opt-exclude-style-guide" />
+          <span>Exclude Style Guide page</span>
+        </label>
+
+        <div class="options-divider"></div>
+
+        <div class="options-title">Page Scope</div>
+        <label class="option-row">
+          <input type="radio" name="opt-page-scope" id="opt-page-scope-all" value="all" />
+          <span>All pages</span>
+        </label>
+        <label class="option-row">
+          <input type="radio" name="opt-page-scope" id="opt-page-scope-current" value="current" />
+          <span>Current page only</span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <section id="review-bridge" class="review-bridge">
+    <div class="review-bridge-header">
+      <div class="review-bridge-title">Review Bridge</div>
+      <span id="bridge-status-badge" class="bridge-status-badge neutral">Checking...</span>
+    </div>
+    <div id="bridge-message" class="bridge-message">Checking bridge install status for this site...</div>
+    <div class="review-bridge-actions">
+      <button id="bridge-install-btn" class="secondary-btn">Install Bridge</button>
+      <button id="bridge-rotate-btn" class="secondary-btn">Rotate Token</button>
+      <button id="bridge-recheck-btn" class="secondary-btn">Re-check</button>
+    </div>
+    <div id="bridge-token-row" class="bridge-token-row" style="display:none;">
+      <span class="token-label">Bridge Token:</span>
+      <code id="bridge-token-value" class="bridge-token-value"></code>
+    </div>
+    <details id="bridge-snippet-wrap" class="bridge-snippet-wrap" style="display:none;">
+      <summary>Manual snippet payload</summary>
+      <pre id="bridge-snippet-code" class="bridge-snippet-code"></pre>
+    </details>
+    <div id="bridge-progress" class="bridge-progress" style="display:none;">
+      <div class="bridge-progress-head">
+        <span id="bridge-progress-state">Queued</span>
+        <span id="bridge-progress-percent">0%</span>
+      </div>
+      <div class="bridge-progress-track">
+        <div id="bridge-progress-fill" class="bridge-progress-fill"></div>
+      </div>
+      <div id="bridge-progress-message" class="bridge-progress-message"></div>
+    </div>
+  </section>
+
+  <!-- Status Bar: Single-line density -->
+  <div id="status-bar" class="status-bar" style="display:none">
+    <span id="status-summary"></span>
+  </div>
+
+  <!-- Error State -->
+  <div id="error-display" class="error-display" style="display:none">
+    <span id="error-message"></span>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loading-display" class="loading-display" style="display:none">
+    <div class="loading-spinner"></div>
+    <span>Validating...</span>
+  </div>
+
+  <!-- Results: Actionable Checklist -->
+  <main id="results-display" class="results-display" style="display:none">
+    <!-- Populated by JavaScript -->
+  </main>
+</div>
+
+<link rel="stylesheet" href="styles.css">
+<script src="index.js"></script>
