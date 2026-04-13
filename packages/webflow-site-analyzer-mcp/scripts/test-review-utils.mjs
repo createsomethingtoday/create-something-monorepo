@@ -297,6 +297,55 @@ test('batch classification preserves order and excludes nothing', () => {
 });
 
 // =============================================================================
+console.log('\n== validateTemplateName ==');
+
+const { validateTemplateName } = require('../dist/name-validator.js');
+
+test('"Meetora" is compliant', () => {
+  const r = validateTemplateName('Meetora');
+  assert.equal(r.compliant, true);
+  assert.equal(r.issues.length, 0);
+});
+
+test('"Agency" is forbidden (primary tag)', () => {
+  const r = validateTemplateName('Agency');
+  assert.equal(r.compliant, false);
+  assert.ok(r.issues[0].includes('Agency'));
+});
+
+test('"My Portfolio" is forbidden (contains Portfolio)', () => {
+  const r = validateTemplateName('My Portfolio');
+  assert.equal(r.compliant, false);
+});
+
+test('"meetora" fails capitalization', () => {
+  const r = validateTemplateName('meetora');
+  assert.equal(r.compliant, false);
+  assert.ok(r.issues[0].includes('capitalized'));
+});
+
+test('"Smart AI Hub" fails AI rule', () => {
+  const r = validateTemplateName('Smart AI Hub');
+  assert.equal(r.compliant, false);
+  assert.ok(r.issues.some(i => i.includes('AI')));
+});
+
+test('"Livep0wer" is compliant', () => {
+  const r = validateTemplateName('Livep0wer');
+  assert.equal(r.compliant, true);
+});
+
+test('"Meetup W" fails (Meetup derives from forbidden "Events, Conferences & Meetups")', () => {
+  const r = validateTemplateName('Meetup W');
+  assert.equal(r.compliant, false);
+});
+
+test('empty name fails', () => {
+  const r = validateTemplateName('');
+  assert.equal(r.compliant, false);
+});
+
+// =============================================================================
 console.log('\n== computeScore ==');
 
 test('all pass = score 100, grade A', () => {
