@@ -46,6 +46,7 @@ Use `dryRun: true` to inspect matched message IDs before updating Gmail.
 - `connection_status` now returns per-toolkit connection details, including duplicate active accounts and a recommended `connectedAccountId`.
 - `get_connect_link` is idempotent against existing active connections and, by default, against pending requests. Use `forceNew: true` only when you intentionally want a fresh link after cleaning up stale pending requests.
 - All toolkit tools accept optional `connectedAccountId` to pin execution when multiple active connected accounts exist for the same entity/toolkit.
+- Toolkits can optionally run through a shared connected account via `COMPOSIO_SHARED_CONNECTED_ACCOUNT_MAP_JSON`; when configured, `connection_status` and `get_connect_link` report the shared state and tool execution uses the shared account owner instead of the caller's entity.
 
 ## Identity resolution
 
@@ -69,6 +70,7 @@ Compatibility mode (`COMPOSIO_ENTITY_RESOLUTION_MODE=compat`) resolves in this o
 
 - `COMPOSIO_AUTH_CONFIG_MAP` (JSON string, toolkit -> auth config id)
 - `COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON` (JSON string merged on top of `COMPOSIO_AUTH_CONFIG_MAP`)
+- `COMPOSIO_SHARED_CONNECTED_ACCOUNT_MAP_JSON` (JSON string, toolkit -> `{ entityId, connectedAccountId }` for shared execution)
 - `COMPOSIO_AIRTABLE_AUTH_CONFIG_ID` (explicit Airtable auth config fallback)
 - `COMPOSIO_DEFAULT_ENTITY_ID`
 - `COMPOSIO_ENTITY_RESOLUTION_MODE` (`header_required` default, or `compat`)

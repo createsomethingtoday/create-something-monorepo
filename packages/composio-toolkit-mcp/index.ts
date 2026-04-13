@@ -4,6 +4,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@model
 import { initLogger, type Logger, type Span } from 'braintrust';
 import {
   ComposioClient,
+  type ComposioAccount,
   type ComposioToolDef,
   type ComposioToolkitSummary,
 } from '@create-something/composio-bridge';
@@ -12,6 +13,7 @@ interface Env {
   COMPOSIO_API_KEY?: string;
   COMPOSIO_AUTH_CONFIG_MAP?: string;
   COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON?: string;
+  COMPOSIO_SHARED_CONNECTED_ACCOUNT_MAP_JSON?: string;
   COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?: string;
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_ENTITY_RESOLUTION_MODE?: string;
@@ -36,6 +38,11 @@ type ToolRoute = {
 };
 
 type EntityResolutionMode = 'header_required' | 'compat';
+
+type SharedConnectedAccountConfig = {
+  entityId: string;
+  connectedAccountId: string;
+};
 
 const SERVER_NAME = 'composio-toolkit-mcp';
 const SERVER_VERSION = '0.1.0';
@@ -81,6 +88,7 @@ export default {
           configured: {
             composioApiKey: Boolean(env.COMPOSIO_API_KEY),
             authConfigMapEntries: Object.keys(buildAuthConfigMap(env)).length,
+            sharedConnectedAccountEntries: Object.keys(buildSharedConnectedAccountMap(env)).length,
             defaultEntity: env.COMPOSIO_DEFAULT_ENTITY_ID ?? 'default',
             entityResolutionMode: resolveEntityResolutionMode(env),
             braintrustApiKey: Boolean(env.BRAINTRUST_API_KEY),
@@ -143,6 +151,8 @@ export default {
 function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request): Server {
   const client = new ComposioClient({ apiKey: env.COMPOSIO_API_KEY! });
   const authConfigMap = buildAuthConfigMap(env);
+  const sharedConnectedAccountMap = buildSharedConnectedAccountMap(env);
+  const sharedConnectedAccount = sharedConnectedAccountMap[runtime.toolkitSlug.toLowerCase()] ?? null;
   const logger = getBraintrustLogger(env);
   const isZoomToolkit = runtime.toolkitSlug === 'zoom';
 
@@ -388,6 +398,43 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
       entityId = resolveEntityId(extra, request, env);
 
       if (toolName === 'connection_status') {
+        if (sharedConnectedAccount) {
+          const sharedState = await getSharedConnectedAccountState({
+            client,
+            toolkitSlug: runtime.toolkitSlug,
+            config: sharedConnectedAccount,
+          });
+          const sharedConnection = sharedState.connection;
+          const connected = sharedConnection?.status === 'active';
+          const pending = sharedConnection?.status === 'pending';
+          return emitAndReturn(toJsonResult({
+            toolkitSlug: runtime.toolkitSlug,
+            entityId,
+            executionEntityId: sharedConnectedAccount.entityId,
+            sharedConnection: true,
+            sharedConnectedAccountId: sharedConnectedAccount.connectedAccountId,
+            connected,
+            connectionCount: sharedConnection ? 1 : 0,
+            activeConnectionCount: connected ? 1 : 0,
+            pendingConnectionCount: pending ? 1 : 0,
+            ambiguous: false,
+            recommendedConnectedAccountId: sharedConnectedAccount.connectedAccountId,
+            connections: sharedConnection
+              ? [{
+                  connectionId: sharedConnection.connectionId,
+                  status: sharedConnection.status,
+                  rawStatus: sharedConnection.rawStatus ?? null,
+                  createdAt: sharedConnection.createdAt ?? null,
+                }]
+              : [],
+            message: connected
+              ? `Toolkit "${runtime.toolkitSlug}" uses shared connected account "${sharedConnectedAccount.connectedAccountId}" owned by Composio user "${sharedConnectedAccount.entityId}". No per-user connection is required.`
+              : pending
+                ? `Toolkit "${runtime.toolkitSlug}" is configured to use shared connected account "${sharedConnectedAccount.connectedAccountId}" owned by Composio user "${sharedConnectedAccount.entityId}", but that shared connection is still pending. Admin must complete the shared auth flow.`
+                : `Toolkit "${runtime.toolkitSlug}" is configured to use shared connected account "${sharedConnectedAccount.connectedAccountId}" owned by Composio user "${sharedConnectedAccount.entityId}", but that shared connection is not active. Admin must reconnect it in Composio.`,
+          }));
+        }
+
         const connections = await client.getConnectedAccountsForToolkit(entityId, runtime.toolkitSlug);
         const activeConnections = connections.filter((account) => account.status === 'active');
         const pendingConnections = connections.filter((account) => account.status === 'pending');
@@ -420,6 +467,38 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
 
       if (toolName === 'get_connect_link') {
         const authConfigId = authConfigMap[runtime.toolkitSlug] ?? authConfigMap[runtime.toolkitSlug.toLowerCase()];
+        if (sharedConnectedAccount) {
+          const sharedState = await getSharedConnectedAccountState({
+            client,
+            toolkitSlug: runtime.toolkitSlug,
+            config: sharedConnectedAccount,
+          });
+          const sharedConnection = sharedState.connection;
+          const rawStatus = sharedConnection?.rawStatus ?? null;
+          const status = sharedConnection?.status?.toUpperCase() ?? 'NOT_CONNECTED';
+          const connected = sharedConnection?.status === 'active';
+          const pending = sharedConnection?.status === 'pending';
+          return emitAndReturn(toJsonResult({
+            toolkitSlug: runtime.toolkitSlug,
+            entityId,
+            executionEntityId: sharedConnectedAccount.entityId,
+            authConfigId: authConfigId ?? null,
+            sharedConnection: true,
+            sharedConnectedAccountId: sharedConnectedAccount.connectedAccountId,
+            alreadyConnected: connected,
+            link: null,
+            status,
+            requestId: sharedConnection?.connectionId ?? null,
+            recommendedConnectedAccountId: sharedConnectedAccount.connectedAccountId,
+            rawStatus,
+            message: connected
+              ? `Toolkit "${runtime.toolkitSlug}" uses shared connected account "${sharedConnectedAccount.connectedAccountId}" owned by Composio user "${sharedConnectedAccount.entityId}". No per-user auth link is required.`
+              : pending
+                ? `Toolkit "${runtime.toolkitSlug}" is configured to use shared connected account "${sharedConnectedAccount.connectedAccountId}" owned by Composio user "${sharedConnectedAccount.entityId}", but that shared connection is still pending. Admin must complete the shared auth flow.`
+                : `Toolkit "${runtime.toolkitSlug}" is configured to use shared connected account "${sharedConnectedAccount.connectedAccountId}" owned by Composio user "${sharedConnectedAccount.entityId}", but that shared connection is not active. Admin must reconnect it in Composio. Per-user auth links are disabled for this toolkit.`,
+          }));
+        }
+
         if (!authConfigId) {
           return emitAndReturn(toJsonResult({
             toolkitSlug: runtime.toolkitSlug,
@@ -522,6 +601,12 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           builtAt: new Date(runtime.builtAt).toISOString(),
           toolCount: runtime.toolDefs.length,
           toolkit: runtime.toolkitInfo,
+          sharedExecution: sharedConnectedAccount
+            ? {
+                entityId: sharedConnectedAccount.entityId,
+                connectedAccountId: sharedConnectedAccount.connectedAccountId,
+              }
+            : null,
         }));
       }
 
@@ -572,6 +657,13 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           connectedAccountId,
           toolkitSlug: runtime.toolkitSlug,
         });
+      } else if (sharedConnectedAccount) {
+        await assertConnectedAccountOwnership({
+          client,
+          entityId: sharedConnectedAccount.entityId,
+          connectedAccountId: sharedConnectedAccount.connectedAccountId,
+          toolkitSlug: runtime.toolkitSlug,
+        });
       } else {
         const activeConnections = await client.getConnectedAccountsForToolkit(entityId, runtime.toolkitSlug);
         const activeCount = activeConnections.filter((account) => account.status === 'active').length;
@@ -585,8 +677,8 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
       const result = await client.executeTool(
         route.composioToolSlug,
         stripConnectedAccountArg(args),
-        entityId,
-        connectedAccountId ?? undefined,
+        sharedConnectedAccount && !connectedAccountId ? sharedConnectedAccount.entityId : entityId,
+        connectedAccountId ?? sharedConnectedAccount?.connectedAccountId ?? undefined,
       );
       return emitAndReturn(toJsonResult(result), route.composioToolSlug);
     } catch (error) {
@@ -1961,6 +2053,31 @@ function stripConnectedAccountArg(args: Record<string, unknown>): Record<string,
   return out;
 }
 
+function parseSharedConnectedAccountMap(raw: string | undefined): Record<string, SharedConnectedAccountConfig> {
+  if (!raw) return {};
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const out: Record<string, SharedConnectedAccountConfig> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+      const normalizedKey = key.trim().toLowerCase();
+      const record = value as Record<string, unknown>;
+      const entityId = stringOrNull(record.entityId);
+      const connectedAccountId = stringOrNull(record.connectedAccountId);
+      if (!normalizedKey || !entityId || !connectedAccountId) continue;
+      out[normalizedKey] = { entityId, connectedAccountId };
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
 function parseAuthConfigMap(raw: string | undefined): Record<string, string> {
   if (!raw) return {};
 
@@ -1996,6 +2113,24 @@ function buildAuthConfigMap(env: Env): Record<string, string> {
     mergedAuthConfigMap.airtable = airtableAuthConfigId;
   }
   return mergedAuthConfigMap;
+}
+
+function buildSharedConnectedAccountMap(env: Env): Record<string, SharedConnectedAccountConfig> {
+  return parseSharedConnectedAccountMap(env.COMPOSIO_SHARED_CONNECTED_ACCOUNT_MAP_JSON);
+}
+
+async function getSharedConnectedAccountState(params: {
+  client: ComposioClient;
+  toolkitSlug: string;
+  config: SharedConnectedAccountConfig;
+}): Promise<{
+  connection: ComposioAccount | null;
+}> {
+  const { client, toolkitSlug, config } = params;
+  const connections = await client.getConnectedAccountsForToolkit(config.entityId, toolkitSlug);
+  return {
+    connection: connections.find((account) => account.connectionId === config.connectedAccountId) ?? null,
+  };
 }
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
