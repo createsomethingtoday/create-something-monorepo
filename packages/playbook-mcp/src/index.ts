@@ -22,6 +22,7 @@ import { registerTools } from './tools.js';
 import { registerPrompts } from './prompts.js';
 import { HOST_PLAYBOOKS } from './playbooks.js';
 import { MCP_CATALOG } from './catalog.js';
+import { DISTRIBUTION_CATALOG } from './distribution.js';
 import { WORKFLOWS } from './workflows.js';
 import { OUTCOME_PLAYBOOKS } from './outcome-playbooks.js';
 
@@ -48,5 +49,5 @@ await server.connect(transport);
 
 console.error('Playbook MCP running on stdio');
 console.error(
-  `Content: ${HOST_PLAYBOOKS.length} host playbooks, ${OUTCOME_PLAYBOOKS.length} outcome playbooks, ${MCP_CATALOG.length} catalog entries, 14 tools, 3 prompts, ${RESOURCE_COUNT} resources`,
+  `Content: ${HOST_PLAYBOOKS.length} host playbooks, ${OUTCOME_PLAYBOOKS.length} outcome playbooks, ${MCP_CATALOG.length} registry entries, ${DISTRIBUTION_CATALOG.length} distribution artifacts, 18 tools, 3 prompts, ${RESOURCE_COUNT} resources`,
 );

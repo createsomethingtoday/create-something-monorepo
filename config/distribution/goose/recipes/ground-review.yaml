@@ -1,0 +1,23 @@
+version: "1.0.0"
+title: "Grounded Code Review"
+description: "Review a codebase using Ground verification and CREATE SOMETHING guardrails."
+instructions: |
+  Use Ground before making claims about duplicates, dead code, unused exports,
+  or disconnected modules. Treat Ground output as required evidence for those
+  claims.
+prompt: |
+  Review the current workspace. Verify any claim about duplicates, dead code,
+  or disconnected modules with Ground before reporting it.
+activities:
+  - "message: Choose a grounded review flow."
+  - "Review duplicate functions with evidence"
+  - "Find dead exports with evidence"
+  - "Check disconnected modules"
+extensions:
+  - type: stdio
+    name: ground
+    cmd: npx
+    args:
+      - "@createsomething/ground-mcp"
+    timeout: 300
+    description: "Grounded code analysis for CREATE SOMETHING"

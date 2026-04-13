@@ -20,7 +20,8 @@ const config = {
 			alias: {
 				// Resolve workspace packages from source so app builds do not depend on generated dist files.
 				'@create-something/mcp-authz': '../mcp-authz/src/index.ts',
-				'@create-something/policy-os-engine': '../policy-os-engine/src/index.ts'
+				'@create-something/policy-os-engine': '../policy-os-engine/src/index.ts',
+				'@create-something/playbook-mcp/distribution': '../playbook-mcp/src/distribution.ts'
 			}
 		}
 	};

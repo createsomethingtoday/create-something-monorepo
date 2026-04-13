@@ -117,7 +117,9 @@ Shared discovery packs:
 - `shared-auth-core`: Dropbox, Gmail, Google Drive, Google Sheets, Notion, QuickBooks, Slack, YouTube, Zoom
 - `c3denver-airtable-gmail-notion`: Airtable, Gmail, Notion
 - `danny-shared-auth-plus-dm-and-operator-notion`: shared auth core plus `halfdozen-dm-mcp` and `halfdozen-operator-notion-mcp`
+- `halfdozen-shared-auth-plus-current-mcps`: each Half Dozen team hub's current shared-auth lane plus the current Half Dozen MCP fleet (`notion-halfdozen-create-something`, `halfdozen-operator-notion-mcp`, `halfdozen-dm-mcp`, `half-dozen-youtube-sync`, `halfdozen-gmail-sync-*`, `halfdozen-zoom-sync`, `halfdozen-telemetry`)
 - `mj-legacy-shared-auth-plus-meetings`: compact legacy shared auth core plus Meetings
+- `mj-shared-auth-plus-current-mcps-ops-search-meetings-and-review`: MJ ops lane plus the current Half Dozen MCP fleet, Airtable, Exa, Loom, Meetings, and Webflow template review
 - `mj-shared-auth-plus-ops-search-meetings-and-review`: full MJ ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review
 - `outerfields-shared-auth-clickup`: shared auth core plus ClickUp
 - List available packs with `hub_list_discovery_packs`

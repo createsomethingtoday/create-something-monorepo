@@ -38,6 +38,7 @@
 	const navLinks = [
 		{ label: 'How I Work', href: '/services' },
 		{ label: 'What I\'ve Built', href: '/products' },
+		{ label: 'Install', href: '/install' },
 		{ label: 'About', href: '/about' }
 	];
 
@@ -45,6 +46,9 @@
 	const quickAccessItems = [
 		{ id: 'nav-services', label: 'How I Work', description: 'Scoped workflow infrastructure and governed execution', href: '/services', icon: '🔨', keywords: ['workflow infrastructure', 'governed execution', 'automation', 'pricing', 'services'] },
 		{ id: 'nav-products', label: 'What I\'ve Built', description: 'Artifact-backed production workflows', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations'] },
+		{ id: 'nav-install', label: 'Install', description: 'Goose-standard distribution catalog with bundle, recipe, and compatibility adapter actions', href: '/install', icon: '🧩', keywords: ['install', 'catalog', 'mcp install', 'distribution', 'recipe', 'policy pack', 'goose'] },
+		{ id: 'nav-recipes', label: 'Recipes', description: 'Goose workflow recipes that bundle MCPs, policy packs, and verification paths', href: '/recipes', icon: '🧭', keywords: ['recipes', 'workflow', 'goose recipe', 'bundle', 'policy pack'] },
+		{ id: 'nav-observability', label: 'Observability', description: 'Telemetry keys, verification coverage, and bundle-level operator visibility', href: '/observability', icon: '📡', keywords: ['observability', 'telemetry', 'verification', 'bundle', 'audit'] },
 		{ id: 'nav-book', label: agencyCoreMessaging.bookMappingSessionLabel, description: 'Map workflow risk and operational fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session'] },
 		{ id: 'nav-mcp-access', label: 'MCP Access', description: 'Reveal, copy, rotate, and revoke your personal bearer token', href: '/mcp-access', icon: '🗝️', keywords: ['mcp access', 'bearer token', 'copy token', 'host setup', 'codex', 'claude', 'cursor'] },
 		{ id: 'nav-security', label: 'Security', description: 'Identity boundaries, bearer-token governance, and operational controls', href: '/security', icon: '🛡️', keywords: ['security', 'trust', 'risk', 'controls', 'auth'] },
@@ -161,6 +165,9 @@
 		quickLinks={[
 			{ label: 'How I Work', href: '/services' },
 			{ label: 'What I\'ve Built', href: '/products' },
+			{ label: 'Install', href: '/install' },
+			{ label: 'Recipes', href: '/recipes' },
+			{ label: 'Observability', href: '/observability' },
 			{ label: 'About', href: '/about' },
 			{ label: 'Security', href: '/security' },
 			{ label: 'Bearer Token Policy', href: '/bearer-token-policy' },

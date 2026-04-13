@@ -95,7 +95,7 @@ Recommended production posture:
   - set `HUB_DISCOVERY_SHARED_PACK` on each deployed worker
   - prefer `hub_list_discovery_packs` and pack selection when changing discovery scope
   - treat raw `hub_set_discovery` server/mode overrides as temporary operator exceptions
-  - current fleet-specific examples include `c3denver-airtable-gmail-notion`, `danny-shared-auth-plus-dm-and-operator-notion`, `mj-shared-auth-plus-ops-search-meetings-and-review`, and `outerfields-shared-auth-clickup`
+  - current fleet-specific examples include `c3denver-airtable-gmail-notion`, `halfdozen-shared-auth-plus-current-mcps`, `mj-shared-auth-plus-current-mcps-ops-search-meetings-and-review`, and `outerfields-shared-auth-clickup`
 
 Named-lane search provider baseline:
 

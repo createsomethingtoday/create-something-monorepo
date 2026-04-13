@@ -7,7 +7,8 @@
   "exports": {
     ".": "./dist/index.js",
     "./playbooks": "./dist/playbooks.js",
-    "./catalog": "./dist/catalog.js"
+    "./catalog": "./dist/catalog.js",
+    "./distribution": "./dist/distribution.js"
   },
   "bin": {
     "playbook-mcp": "dist/index.js"

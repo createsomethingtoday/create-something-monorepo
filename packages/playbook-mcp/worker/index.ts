@@ -22,6 +22,9 @@ import { registerTools } from '../src/tools.js';
 import { registerPrompts } from '../src/prompts.js';
 import { HOST_PLAYBOOKS } from '../src/playbooks.js';
 import { MCP_CATALOG } from '../src/catalog.js';
+import { DISTRIBUTION_CATALOG } from '../src/distribution.js';
+import { WORKFLOWS } from '../src/workflows.js';
+import { OUTCOME_PLAYBOOKS } from '../src/outcome-playbooks.js';
 import {
   runHalfDozenDedup,
   runHalfDozenFleetWatchdog,
@@ -104,6 +107,12 @@ type SlackResponsePayload = SlackPayload & {
   response_type?: 'ephemeral' | 'in_channel';
   replace_original?: boolean;
 };
+
+const RESOURCE_COUNT =
+  HOST_PLAYBOOKS.length +
+  5 +
+  (WORKFLOWS.length * 2) +
+  (OUTCOME_PLAYBOOKS.length * 2);
 
 type SlackCommandFields = {
   command?: string;
@@ -1018,9 +1027,10 @@ export default {
       return jsonResponse({
         name: 'playbook',
         version: '1.5.0',
-        description: 'Host workflow playbooks and installation guidance for MCP onboarding',
+        description: 'Host workflow playbooks plus Goose-first distribution guidance for MCP onboarding',
         hosts: HOST_PLAYBOOKS.map((p) => p.name),
         catalogEntries: MCP_CATALOG.length,
+        distributionArtifacts: DISTRIBUTION_CATALOG.length,
         endpoints: {
           mcp: '/mcp',
           sse: '/sse',
@@ -1040,13 +1050,23 @@ export default {
           'get_playbook',
           'compare_hosts',
           'get_folder_structure',
+          'list_workflows',
+          'get_workflow',
+          'export_workflow_atlas_studio',
+          'list_outcome_playbooks',
+          'get_outcome_playbook',
+          'export_outcome_playbook_atlas_studio',
           'detect_host',
           'list_available_mcps',
           'generate_mcp_config',
           'scaffold_project',
           'verify_mcp_connection',
+          'list_distribution_artifacts',
+          'get_distribution_artifact',
+          'generate_goose_bundle',
+          'generate_compatibility_adapter',
         ],
-        resources: HOST_PLAYBOOKS.length + 3,
+        resources: RESOURCE_COUNT,
         prompts: ['workflow_setup', 'host_comparison', 'project_structure'],
       });
     }

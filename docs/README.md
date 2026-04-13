@@ -18,6 +18,7 @@ Read in this order when you need broad repo context:
 ### Strategy and positioning
 
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)
+- [DISTRIBUTION_PLANE_PRODUCT_SPEC_2026-04-13.md](./DISTRIBUTION_PLANE_PRODUCT_SPEC_2026-04-13.md)
 - [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md)
 - [AGENCY_CODEX_VECTOR_STRATEGY.md](./AGENCY_CODEX_VECTOR_STRATEGY.md)
 - [MIXED_STACK_CLIENT_MCP_OFFER_ASSESSMENT_2026-03-09.md](./MIXED_STACK_CLIENT_MCP_OFFER_ASSESSMENT_2026-03-09.md)
@@ -78,6 +79,7 @@ Read in this order when you need broad repo context:
 
 ### Guides and reference material
 
+- [DISTRIBUTION_CATALOG.generated.md](./DISTRIBUTION_CATALOG.generated.md)
 - [guides/EXAMPLES.md](./guides/EXAMPLES.md)
 - [guides/COMPONENT_GUIDE.md](./guides/COMPONENT_GUIDE.md)
 - [guides/SKILLS.md](./guides/SKILLS.md)

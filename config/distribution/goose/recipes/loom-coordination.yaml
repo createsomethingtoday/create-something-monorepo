@@ -1,0 +1,23 @@
+version: "1.0.0"
+title: "Loom Coordination Kickoff"
+description: "Start a coordinated execution lane with Loom checkpoints and CREATE SOMETHING guardrails."
+instructions: |
+  Use Loom as the task memory for meaningful work. Start by locating or
+  claiming the relevant task, then checkpoint meaningful progress with
+  evidence.
+prompt: |
+  Coordinate the current task using Loom. Check ready work, claim the relevant
+  task, and record checkpoints as progress is made.
+activities:
+  - "message: Choose a coordination pattern."
+  - "List ready work and claim the best next task"
+  - "Create a progress checkpoint with evidence"
+  - "Summarize blockers and next actions"
+extensions:
+  - type: stdio
+    name: loom
+    cmd: npx
+    args:
+      - "@createsomething/loom-mcp"
+    timeout: 300
+    description: "Shared memory and coordination for CREATE SOMETHING agents"

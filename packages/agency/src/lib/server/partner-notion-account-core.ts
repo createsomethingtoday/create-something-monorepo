@@ -239,12 +239,12 @@ async function listConnectedAccountsSafely(
 
 	try {
 		const remoteAccounts = await deps.listConnectedAccounts(userIds);
-		return remoteAccounts
-			.map(normalizeConnectedAccount)
-			.filter(
-				(account): account is NormalizedConnectedAccount =>
-					Boolean(account) && account.toolkit === 'notion',
-			);
+			return remoteAccounts
+				.map(normalizeConnectedAccount)
+				.filter(
+					(account): account is NormalizedConnectedAccount =>
+						account !== null && account.toolkit === 'notion',
+				);
 	} catch {
 		return [];
 	}

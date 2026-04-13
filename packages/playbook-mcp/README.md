@@ -9,7 +9,7 @@ Lightweight by design — ships alongside client MCPs for onboarding. No philoso
 | Tier | MCP Primitive | Role in This Server |
 |------|---------------|---------------------|
 | **Database** | Resources | Host playbooks (one resource per host) + list + comparison matrix + graduation path |
-| **Automation** | Tools | 14 tools: host playbooks + outcome playbooks + Atlas exports (9) + installation guidance (5) |
+| **Automation** | Tools | 18 tools: host playbooks + outcome playbooks + Atlas exports (9) + installation guidance (5) + distribution guidance (4) |
 | **Judgment** | Prompts | 3 prompts: workflow setup, host comparison, project structure guidance |
 
 ## Resources (Database Tier)
@@ -63,6 +63,17 @@ Generation-only tools that return config content, file manifests, and instructio
 | `generate_mcp_config` | Generate the exact config entry (JSON or TOML) to install an MCP server into a specific host. |
 | `scaffold_project` | Generate a complete folder/file manifest for a new AI-assisted project. Domain and team-size aware. |
 | `verify_mcp_connection` | Ping an MCP server URL to check if it's reachable and responding. |
+
+### Distribution Tools
+
+Goose-first packaging tools that read from the generated distribution catalog and emit canonical Goose bundles plus secondary host adapters from the same artifact row.
+
+| Tool | Purpose |
+|------|---------|
+| `list_distribution_artifacts` | List distribution artifacts across extensions, policy packs, recipes, and distro starters. Supports kind, host, and visibility filtering. |
+| `get_distribution_artifact` | Inspect one artifact with its metadata, Goose install actions, related bundle pieces, and verification guidance. |
+| `generate_goose_bundle` | Emit the canonical Goose install payloads for one artifact plus its direct related bundle pieces. |
+| `generate_compatibility_adapter` | Emit the host-specific compatibility adapter payloads for Cursor, Claude, Codex, Windsurf, or VS Code from the same catalog row. |
 
 ## Prompts (Judgment Tier)
 
@@ -228,7 +239,7 @@ Two transports, one codebase:
 | **Slack Command Route** | `.../clients/halfdozen/slack/commands` | Slack slash command and interactive scenario triggers |
 | **stdio** | `dist/index.js` | Local development |
 
-Zero external data dependencies. Playbook content and MCP catalog are embedded in source. The Worker runs on Cloudflare's edge network. Pure workflow knowledge served through protocol.
+Zero external data dependencies. Playbook content, MCP catalog data, and Goose-first distribution metadata are embedded in source. The Worker runs on Cloudflare's edge network. Pure workflow knowledge served through protocol.
 
 ## MCP Catalog
 
@@ -239,6 +250,17 @@ The server includes a built-in catalog of 15 MCP servers across three categories
 - **Third-Party** (5): Cloudflare Docs, Cloudflare Bindings, Cloudflare Agents, Webflow, Stripe
 
 Use `list_available_mcps` to browse and `generate_mcp_config` to install.
+
+## Distribution Catalog
+
+The server also ships a Goose-first distribution catalog for packaging MCPs, policy packs, recipes, and distro starters.
+
+- `extension` is the canonical MCP install unit.
+- `policy_pack` packages persistent instructions, prompt templates, and adversary rules.
+- `recipe` packages a shareable Goose workflow.
+- `distro` packages a full CREATE SOMETHING Goose starter bundle.
+
+Use `list_distribution_artifacts` to browse the packaging layer, `generate_goose_bundle` to emit the canonical Goose install payloads, and `generate_compatibility_adapter` when a non-Goose host still needs a generated adapter.
 
 ## Verification
 
@@ -254,3 +276,10 @@ After configuring, verify the server is working:
 2. "List available MCP servers" (catalog)
 3. "Generate the config to install the three-tier-framework MCP in Cursor" (config generation)
 4. "Verify the playbook MCP is reachable" (connection check)
+
+### Distribution flow test
+
+1. "List distribution artifacts for Goose" (package discovery)
+2. "Get the ground-extension distribution artifact" (artifact inspection)
+3. "Generate the Goose bundle for ground-extension" (canonical package payloads)
+4. "Generate the Cursor compatibility adapter for ground-extension" (secondary host adapter)

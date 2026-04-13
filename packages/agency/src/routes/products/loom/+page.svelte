@@ -1,20 +1,6 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-
-	// Cursor deep link - base64 encoded config for npx @createsomething/loom-mcp
-	const cursorDeepLink = 'cursor://anysphere.cursor-deeplink/mcp/install?name=loom&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2xvb20tbWNwIl19';
-
-	// Copy states
-	let copiedNpm = $state(false);
-	let copiedClaude = $state(false);
-	let copiedWindsurf = $state(false);
-	let copiedCodex = $state(false);
-
-	function copyToClipboard(text: string, setter: (v: boolean) => void) {
-		navigator.clipboard.writeText(text);
-		setter(true);
-		setTimeout(() => setter(false), 2000);
-	}
+	import DistributionInstallPanel from '$lib/components/DistributionInstallPanel.svelte';
 </script>
 
 <SEO
@@ -37,134 +23,12 @@
 		</p>
 	</section>
 
-	<!-- Install Section -->
-	<section class="install-section">
-		<h2 class="section-title">Install in 2 minutes</h2>
-		<p class="section-subtitle">One-click for your agent platform of choice</p>
-
-		<!-- Featured: One-click install (Tufte: primary action gets visual prominence) -->
-		<div class="install-featured">
-			<div class="install-card featured">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.86a.5.5 0 0 0-.85.35Z" fill="currentColor"/>
-						</svg>
-					</span>
-					<span class="card-name">Cursor</span>
-					<span class="card-badge">One-click</span>
-				</div>
-				<a href={cursorDeepLink} class="install-button primary">
-					Install in Cursor
-				</a>
-				<p class="card-note">Opens Cursor with install prompt</p>
-			</div>
-		</div>
-
-		<!-- Secondary options: Small multiples with consistent structure -->
-		<div class="install-grid">
-			<!-- Claude Desktop -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M12 3L13.5 8.5L19 7L14.5 11L19 15L13.5 13.5L12 19L10.5 13.5L5 15L9.5 11L5 7L10.5 8.5L12 3Z" fill="currentColor"/>
-						</svg>
-					</span>
-					<span class="card-name">Claude Desktop</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('npx --yes @createsomething/loom-mcp', (v) => copiedClaude = v)}
-				>
-					{copiedClaude ? 'Copied!' : 'Copy command'}
-				</button>
-				<p class="card-note">Add to claude_desktop_config.json</p>
-			</div>
-
-			<!-- Windsurf -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M3 12C3 12 5 8 9 8C13 8 12 12 16 12C20 12 21 9 21 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-							<path d="M3 17C3 17 5 13 9 13C13 13 12 17 16 17C20 17 21 14 21 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-						</svg>
-					</span>
-					<span class="card-name">Windsurf</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('{"mcpServers":{"loom":{"command":"npx","args":["@createsomething/loom-mcp"]}}}', (v) => copiedWindsurf = v)}
-				>
-					{copiedWindsurf ? 'Copied!' : 'Copy config'}
-				</button>
-				<p class="card-note">Settings → MCP → View raw config</p>
-			</div>
-
-			<!-- VS Code + Copilot -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M17 2L7 11L17 20L19 18.5V3.5L17 2Z" fill="currentColor"/>
-							<path d="M7 11L2 8V14L7 11Z" fill="currentColor" opacity="0.7"/>
-							<path d="M17 2L7 11L2 8L17 2Z" fill="currentColor" opacity="0.85"/>
-							<path d="M17 20L7 11L2 14L17 20Z" fill="currentColor" opacity="0.85"/>
-						</svg>
-					</span>
-					<span class="card-name">VS Code</span>
-				</div>
-				<a href="vscode:extension/GitHub.copilot" class="install-button secondary">
-					Open Extensions
-				</a>
-				<p class="card-note">MCP Server → search "loom"</p>
-			</div>
-
-			<!-- Codex CLI -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor" opacity="0.15"/>
-							<rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
-							<path d="M6 9L10 12L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M12 15H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-						</svg>
-					</span>
-					<span class="card-name">Codex CLI</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('codex mcp add loom --command "npx @createsomething/loom-mcp"', (v) => copiedCodex = v)}
-				>
-					{copiedCodex ? 'Copied!' : 'Copy command'}
-				</button>
-				<p class="card-note">codex mcp add loom</p>
-			</div>
-
-			<!-- npm (fallback) -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect x="2" y="6" width="20" height="12" rx="1" fill="currentColor"/>
-							<path d="M5 15V9H8V14H9.5V9H11V15H5Z" fill="var(--color-bg-surface)"/>
-							<path d="M12.5 9V15H15.5V10.5H17V15H19V9H12.5Z" fill="var(--color-bg-surface)"/>
-						</svg>
-					</span>
-					<span class="card-name">npm</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('npm install -g @createsomething/loom-mcp', (v) => copiedNpm = v)}
-				>
-					{copiedNpm ? 'Copied!' : 'Copy command'}
-				</button>
-				<p class="card-note">Works with any MCP client</p>
-			</div>
-		</div>
-	</section>
+	<DistributionInstallPanel
+		entryId="loom-extension"
+		title="Package Loom In Goose"
+		subtitle="Install the Loom extension in Goose, then bundle the matching CREATE SOMETHING coordination policy pack and Loom recipe."
+		detailHref="/install#artifact-loom-extension"
+	/>
 
 	<!-- How It Works -->
 	<section class="how-section">
@@ -443,149 +307,6 @@
 		margin-bottom: var(--space-lg);
 	}
 
-	/* Install Section - Tufte: Clear hierarchy, Golden Ratio proportions */
-	.install-section {
-		padding: var(--space-xl) 0;
-	}
-
-	/* Featured card container - Golden Ratio: ~61.8% width centered */
-	.install-featured {
-		max-width: var(--content-width-xl);
-		margin: 0 auto var(--space-lg);
-	}
-
-	/* Featured card - elevated prominence for one-click action */
-	.install-card.featured {
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-lg);
-		transition: border-color var(--duration-micro) var(--ease-standard);
-		text-align: center;
-	}
-
-	.install-card.featured .card-header {
-		justify-content: center;
-	}
-
-	.install-card.featured:hover {
-		border-color: var(--color-border-strong);
-	}
-
-	.install-card.featured .card-badge {
-		color: var(--color-success);
-		background: var(--color-success-muted);
-	}
-
-	/* Secondary cards grid - 6-column grid for flexible row layouts */
-	.install-grid {
-		display: grid;
-		grid-template-columns: repeat(6, 1fr);
-		gap: var(--space-sm);
-	}
-
-	/* Top row: 3 cards, each spans 2 columns */
-	.install-grid .install-card:nth-child(-n+3) {
-		grid-column: span 2;
-	}
-
-	/* Bottom row: 2 cards, each spans 3 columns (fills full width) */
-	.install-grid .install-card:nth-child(n+4) {
-		grid-column: span 3;
-	}
-
-	/* Secondary cards - uniform structure, reduced visual weight */
-	.install-card {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		transition: border-color var(--duration-micro) var(--ease-standard);
-	}
-
-	.install-card:hover {
-		border-color: var(--color-border-emphasis);
-	}
-
-	/* Card header - tighter spacing for secondary cards */
-	.card-header {
-		display: flex;
-		align-items: center;
-		gap: var(--space-xs);
-		margin-bottom: var(--space-xs);
-	}
-
-	.card-icon {
-		color: var(--color-fg-muted);
-		flex-shrink: 0;
-	}
-
-	.card-name {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		flex-grow: 1;
-		white-space: nowrap;
-	}
-
-	/* Featured card uses larger name */
-	.install-card.featured .card-name {
-		font-size: var(--text-body);
-	}
-
-	.card-badge {
-		font-size: var(--text-caption);
-		padding: 0.125rem 0.5rem;
-		border-radius: var(--radius-full);
-	}
-
-	/* Buttons - consistent across all cards */
-	.install-button {
-		display: block;
-		width: 100%;
-		padding: var(--space-xs) var(--space-sm);
-		font-size: var(--text-caption);
-		font-weight: var(--font-semibold);
-		text-align: center;
-		border-radius: var(--radius-sm);
-		border: none;
-		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
-	}
-
-	.install-card.featured .install-button {
-		padding: var(--space-sm) var(--space-md);
-		font-size: var(--text-body-sm);
-		border-radius: var(--radius-md);
-	}
-
-	.install-button:hover {
-		opacity: 0.9;
-	}
-
-	.install-button.primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-	}
-
-	.install-button.secondary {
-		background: var(--color-bg-subtle);
-		color: var(--color-fg-secondary);
-	}
-
-	/* Card note - Tufte: minimal ink, maximum information */
-	.card-note {
-		font-size: 0.6875rem;
-		color: var(--color-fg-muted);
-		line-height: 1.3;
-	}
-
-	.install-card.featured .card-note {
-		font-size: var(--text-caption);
-	}
-
 	/* How Section */
 	.how-section {
 		padding: var(--space-xl) 0;
@@ -862,21 +583,6 @@
 			font-size: var(--text-h1);
 		}
 
-		/* Reset to simple 2-column grid on mobile */
-		.install-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-
-		.install-grid .install-card:nth-child(-n+3),
-		.install-grid .install-card:nth-child(n+4) {
-			grid-column: span 1;
-		}
-
-		/* Last card spans full width if odd count */
-		.install-grid .install-card:last-child:nth-child(odd) {
-			grid-column: span 2;
-		}
-
 		.how-grid {
 			grid-template-columns: 1fr;
 		}
@@ -900,13 +606,4 @@
 		}
 	}
 
-	@media (max-width: 480px) {
-		.install-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.install-featured {
-			max-width: 100%;
-		}
-	}
 </style>

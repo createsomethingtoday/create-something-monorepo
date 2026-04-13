@@ -11,6 +11,24 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { HOST_PLAYBOOKS, HOST_COMPARISONS, GRADUATION_PATH, MCP_HOST_PATTERNS } from './playbooks.js';
 import type { HostPlaybook } from './playbooks.js';
 import { MCP_CATALOG, getCatalogByCategory, getCatalogEntry } from './catalog.js';
+import {
+  DISTRIBUTION_ARTIFACT_KIND_VALUES,
+  DISTRIBUTION_COMPATIBILITY_HOST_VALUES,
+  DISTRIBUTION_HOST_LABELS,
+  DISTRIBUTION_TARGET_HOST_VALUES,
+  getDistributionArtifact,
+  getDistributionArtifacts,
+  getDistributionCompatibilityHosts,
+  getDistributionCompatibilityInstallActions,
+  getDistributionGooseInstallActions,
+  getRelatedDistributionArtifacts,
+  summarizeDistributionArtifact,
+} from './distribution.js';
+import type {
+  DistributionCatalogEntry,
+  DistributionHost,
+  DistributionInstallAction,
+} from './distribution.js';
 import { WORKFLOW_IDS, WORKFLOWS, getWorkflowById } from './workflows.js';
 import { exportWorkflowToAtlasStudio, exportOutcomePlaybookToAtlasStudio } from './atlas-studio.js';
 import { OUTCOME_PLAYBOOK_IDS, OUTCOME_PLAYBOOKS, getOutcomePlaybookById } from './outcome-playbooks.js';
@@ -20,6 +38,10 @@ export function registerTools(server: McpServer) {
     .describe('Stable workflow id. Use list_workflows to discover available ids.');
   const outcomePlaybookIdSchema = z.enum(OUTCOME_PLAYBOOK_IDS as [string, ...string[]])
     .describe('Stable outcome playbook id. Use list_outcome_playbooks to discover available ids.');
+  const distributionKindSchema = z.enum(DISTRIBUTION_ARTIFACT_KIND_VALUES)
+    .describe('Distribution artifact kind.');
+  const distributionCompatibilityHostSchema = z.enum(DISTRIBUTION_COMPATIBILITY_HOST_VALUES)
+    .describe('Compatibility host. Goose is handled separately as the canonical package layer.');
 
   // ==========================================================================
   // get_playbook — retrieve workflow guidance for a specific host
@@ -758,6 +780,267 @@ export function registerTools(server: McpServer) {
       };
     }
   );
+
+  // ==========================================================================
+  // list_distribution_artifacts — Goose-first package catalog
+  // ==========================================================================
+
+  server.tool(
+    'list_distribution_artifacts',
+    'List Goose-standard distribution artifacts from the CREATE SOMETHING packaging catalog. Use this to discover extensions, policy packs, recipes, and distro starters before generating install payloads.',
+    {
+      kind: distributionKindSchema.optional()
+        .describe('Filter by artifact kind (default: all kinds).'),
+      host: z.enum(DISTRIBUTION_TARGET_HOST_VALUES).optional()
+        .describe('Filter by installation target. Use `goose` for the canonical package path or a compatibility host for adapter coverage.'),
+      visibility: z.enum(['public', 'gated', 'internal', 'all']).optional()
+        .describe('Filter by visibility (default: all).'),
+    },
+    async ({ kind, host, visibility }) => {
+      const selectedVisibility = visibility && visibility !== 'all' ? visibility : undefined;
+
+      const artifacts = getDistributionArtifacts().filter((entry) => {
+        if (kind && entry.kind !== kind) return false;
+        if (selectedVisibility && entry.visibility !== selectedVisibility) return false;
+        if (!host || host === 'goose') return true;
+        return getDistributionCompatibilityHosts(entry).includes(host);
+      });
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            total: artifacts.length,
+            kind: kind || 'all',
+            host: host || 'all',
+            visibility: selectedVisibility || 'all',
+            artifacts: artifacts.map((entry) => summarizeDistributionArtifact(entry)),
+            nextActions: [
+              'Use `get_distribution_artifact` for the full artifact record.',
+              host === 'goose'
+                ? 'Use `generate_goose_bundle` to emit the canonical Goose install actions.'
+                : host
+                  ? `Use \`generate_compatibility_adapter\` with host \`${host}\` to emit the host-specific adapter payloads.`
+                  : 'Use `generate_goose_bundle` for Goose installs or `generate_compatibility_adapter` for host-specific adapter payloads.',
+            ],
+          }, null, 2),
+        }],
+      };
+    },
+  );
+
+  // ==========================================================================
+  // get_distribution_artifact — inspect one Goose-first artifact
+  // ==========================================================================
+
+  server.tool(
+    'get_distribution_artifact',
+    'Get one distribution artifact from the Goose-first packaging catalog. Returns full metadata, Goose install actions, compatibility coverage, related bundle pieces, and verification guidance.',
+    {
+      artifact_id: z.string()
+        .describe('Artifact id. Use `list_distribution_artifacts` to discover valid ids.'),
+    },
+    async ({ artifact_id }) => {
+      const artifact = getDistributionArtifact(artifact_id);
+
+      if (!artifact) {
+        return buildUnknownDistributionArtifactResponse(artifact_id);
+      }
+
+      const relatedArtifacts = getRelatedDistributionArtifacts(artifact);
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            artifact: serializeDistributionArtifact(artifact),
+            relatedArtifacts: relatedArtifacts.map((entry) => serializeDistributionArtifact(entry, false)),
+            nextActions: [
+              'Use `generate_goose_bundle` to emit canonical Goose install payloads for this artifact.',
+              getDistributionCompatibilityHosts(artifact).length > 0
+                ? 'Use `generate_compatibility_adapter` when you need a non-Goose host payload.'
+                : 'This artifact is Goose-only; there are no compatibility adapters declared.',
+            ],
+          }, null, 2),
+        }],
+      };
+    },
+  );
+
+  // ==========================================================================
+  // generate_goose_bundle — emit canonical Goose install payloads
+  // ==========================================================================
+
+  server.tool(
+    'generate_goose_bundle',
+    'Generate Goose-standard install payloads for a distribution artifact. Returns the primary Goose actions plus direct related bundle pieces such as policy packs, recipes, or distro starter assets.',
+    {
+      artifact_id: z.string()
+        .describe('Artifact id. Use `list_distribution_artifacts` to discover valid ids.'),
+      include_related: z.boolean().optional()
+        .describe('Include direct related bundle artifacts (default: true).'),
+    },
+    async ({ artifact_id, include_related }) => {
+      const artifact = getDistributionArtifact(artifact_id);
+
+      if (!artifact) {
+        return buildUnknownDistributionArtifactResponse(artifact_id);
+      }
+
+      const includeBundleArtifacts = include_related !== false;
+      const relatedArtifacts = includeBundleArtifacts
+        ? getRelatedDistributionArtifacts(artifact).map((entry) => ({
+            artifact: summarizeDistributionArtifact(entry),
+            gooseInstallActions: getDistributionGooseInstallActions(entry),
+          }))
+        : [];
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            canonicalHost: 'goose',
+            artifact: summarizeDistributionArtifact(artifact),
+            gooseInstallActions: getDistributionGooseInstallActions(artifact),
+            bundleArtifacts: relatedArtifacts,
+            verification: artifact.verification,
+            agentAction:
+              'Present these Goose actions in order. Launch deeplinks when present. For file or command payloads, copy the payload exactly and keep related policy-pack and recipe assets adjacent to the extension.',
+          }, null, 2),
+        }],
+      };
+    },
+  );
+
+  // ==========================================================================
+  // generate_compatibility_adapter — emit host-specific adapter payloads
+  // ==========================================================================
+
+  server.tool(
+    'generate_compatibility_adapter',
+    'Generate host-specific compatibility adapter payloads for a distribution artifact. Goose remains the canonical packaging layer; this tool emits the secondary host adapter from the same catalog row.',
+    {
+      artifact_id: z.string()
+        .describe('Artifact id. Use `list_distribution_artifacts` to discover valid ids.'),
+      host: distributionCompatibilityHostSchema,
+    },
+    async ({ artifact_id, host }) => {
+      const artifact = getDistributionArtifact(artifact_id);
+
+      if (!artifact) {
+        return buildUnknownDistributionArtifactResponse(artifact_id);
+      }
+
+      const adapterActions = getDistributionCompatibilityInstallActions(artifact, host);
+
+      if (adapterActions.length === 0) {
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              error: `Artifact ${artifact_id} does not declare a compatibility adapter for ${host}.`,
+              artifact: summarizeDistributionArtifact(artifact),
+              supportedHosts: getDistributionCompatibilityHosts(artifact),
+              gooseInstallActions: getDistributionGooseInstallActions(artifact),
+              relatedArtifacts: getRelatedDistributionArtifacts(artifact).map((entry) =>
+                summarizeDistributionArtifact(entry),
+              ),
+            }, null, 2),
+          }],
+        };
+      }
+
+      const hostConfig = HOST_CONFIG_MAP[host];
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            artifact: summarizeDistributionArtifact(artifact),
+            host,
+            hostLabel: DISTRIBUTION_HOST_LABELS[host],
+            hostConfig: hostConfig
+              ? {
+                  displayName: hostConfig.displayName,
+                  configPath: hostConfig.configPath,
+                  configFormat: hostConfig.configFormat,
+                  restartInstruction: hostConfig.restartInstruction,
+                }
+              : undefined,
+            adapterActions,
+            gooseStandard: {
+              artifactId: artifact.id,
+              gooseInstallActions: getDistributionGooseInstallActions(artifact),
+              relatedArtifacts: getRelatedDistributionArtifacts(artifact).map((entry) =>
+                summarizeDistributionArtifact(entry),
+              ),
+            },
+            verification: artifact.verification,
+            agentAction: buildCompatibilityAgentAction(host, adapterActions),
+          }, null, 2),
+        }],
+      };
+    },
+  );
+}
+
+// ============================================================================
+// Distribution helpers
+// ============================================================================
+
+function serializeDistributionArtifact(
+  artifact: DistributionCatalogEntry,
+  includeInstallActions = true,
+) {
+  return {
+    ...summarizeDistributionArtifact(artifact),
+    policyRefs: [...artifact.policyRefs],
+    artifacts: artifact.artifacts ?? {},
+    verification: artifact.verification,
+    ...(includeInstallActions
+      ? {
+          gooseInstallActions: getDistributionGooseInstallActions(artifact),
+          compatibilityInstallActions: getDistributionCompatibilityInstallActions(artifact),
+        }
+      : {}),
+  };
+}
+
+function buildUnknownDistributionArtifactResponse(artifactId: string) {
+  return {
+    content: [{
+      type: 'text' as const,
+      text: JSON.stringify({
+        error: `Unknown artifact_id: ${artifactId}`,
+        availableArtifactIds: getDistributionArtifacts().map((entry) => entry.id),
+      }, null, 2),
+    }],
+  };
+}
+
+function buildCompatibilityAgentAction(
+  host: DistributionHost,
+  adapterActions: DistributionInstallAction[],
+): string {
+  const hostConfig = HOST_CONFIG_MAP[host];
+
+  if (adapterActions.some((action) => action.type === 'cursor_deeplink')) {
+    return `Open the deeplink in ${DISTRIBUTION_HOST_LABELS[host]} and confirm the install prompt is accepted.`;
+  }
+
+  if (adapterActions.some((action) => action.type.endsWith('_command'))) {
+    return `Run or present the returned command for ${DISTRIBUTION_HOST_LABELS[host]}, then verify the host lists the server.`;
+  }
+
+  if (adapterActions.some((action) => action.type.endsWith('_config')) && hostConfig) {
+    return `Read or create ${hostConfig.configPath}, merge the returned config payload, save the file, then ${hostConfig.restartInstruction.toLowerCase()}.`;
+  }
+
+  if (adapterActions.some((action) => action.type === 'vscode_extension_hint')) {
+    return 'Present the hint to the user and confirm the MCP extension search result matches the artifact name.';
+  }
+
+  return `Use the returned compatibility payloads for ${DISTRIBUTION_HOST_LABELS[host]}.`;
 }
 
 // ============================================================================

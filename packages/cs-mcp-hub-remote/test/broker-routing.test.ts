@@ -584,6 +584,42 @@ test('resolveDiscoveryPack returns Danny operator pack with the expected active 
   ]);
 });
 
+test('resolveDiscoveryPack returns Half Dozen current MCP pack with the expected active services', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'notion-halfdozen-create-something' },
+    { name: 'halfdozen-operator-notion-mcp' },
+    { name: 'halfdozen-dm-mcp' },
+    { name: 'half-dozen-youtube-sync' },
+    { name: 'halfdozen-gmail-sync-danny' },
+    { name: 'halfdozen-gmail-sync-fillip' },
+    { name: 'halfdozen-gmail-sync-leah' },
+    { name: 'halfdozen-zoom-sync' },
+    { name: 'halfdozen-telemetry' },
+    { name: 'composio-toolkit-gmail' },
+    { name: 'composio-toolkit-notion' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('halfdozen-shared-auth-plus-current-mcps', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'halfdozen-shared-auth-plus-current-mcps');
+  assert.equal(pack.preferences.mode, 'compact');
+  assertActiveServers(pack, [
+    'notion-halfdozen-create-something',
+    'halfdozen-operator-notion-mcp',
+    'halfdozen-dm-mcp',
+    'half-dozen-youtube-sync',
+    'halfdozen-gmail-sync-danny',
+    'halfdozen-gmail-sync-fillip',
+    'halfdozen-gmail-sync-leah',
+    'halfdozen-zoom-sync',
+    'halfdozen-telemetry',
+    'composio-toolkit-gmail',
+    'composio-toolkit-notion',
+  ]);
+});
+
 test('resolveDiscoveryPack returns C3Denver pack with the expected active services', () => {
   const runtime = createRuntime();
   runtime.connected = [
@@ -631,6 +667,71 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
   assert.equal(pack.preferences.mode, 'full');
   assertActiveServers(pack, [
     'composio-toolkit-airtable',
+    'composio-toolkit-dropbox',
+    'composio-toolkit-gmail',
+    'composio-toolkit-youtube',
+    'composio-toolkit-googlesheets',
+    'composio-toolkit-googledrive',
+    'composio-toolkit-zoom',
+    'composio-toolkit-slack',
+    'composio-toolkit-quickbooks',
+    'composio-toolkit-linkedin',
+    'composio-toolkit-notion',
+    'composio-toolkit-exa',
+    'loom-mcp',
+    'meetings',
+    'webflow-template-review-mcp',
+  ]);
+});
+
+test('resolveDiscoveryPack returns MJ Half Dozen ops pack with the expected active services', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'composio-toolkit-airtable' },
+    { name: 'notion-halfdozen-create-something' },
+    { name: 'halfdozen-operator-notion-mcp' },
+    { name: 'halfdozen-dm-mcp' },
+    { name: 'half-dozen-youtube-sync' },
+    { name: 'halfdozen-gmail-sync-danny' },
+    { name: 'halfdozen-gmail-sync-fillip' },
+    { name: 'halfdozen-gmail-sync-leah' },
+    { name: 'halfdozen-zoom-sync' },
+    { name: 'halfdozen-telemetry' },
+    { name: 'composio-toolkit-dropbox' },
+    { name: 'composio-toolkit-gmail' },
+    { name: 'composio-toolkit-youtube' },
+    { name: 'composio-toolkit-googlesheets' },
+    { name: 'composio-toolkit-googledrive' },
+    { name: 'composio-toolkit-zoom' },
+    { name: 'composio-toolkit-slack' },
+    { name: 'composio-toolkit-quickbooks' },
+    { name: 'composio-toolkit-linkedin' },
+    { name: 'composio-toolkit-notion' },
+    { name: 'composio-toolkit-exa' },
+    { name: 'loom-mcp' },
+    { name: 'meetings' },
+    { name: 'webflow-template-review-mcp' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack(
+    'mj-shared-auth-plus-current-mcps-ops-search-meetings-and-review',
+    runtime as any,
+  );
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'mj-shared-auth-plus-current-mcps-ops-search-meetings-and-review');
+  assert.equal(pack.preferences.mode, 'full');
+  assertActiveServers(pack, [
+    'composio-toolkit-airtable',
+    'notion-halfdozen-create-something',
+    'halfdozen-operator-notion-mcp',
+    'halfdozen-dm-mcp',
+    'half-dozen-youtube-sync',
+    'halfdozen-gmail-sync-danny',
+    'halfdozen-gmail-sync-fillip',
+    'halfdozen-gmail-sync-leah',
+    'halfdozen-zoom-sync',
+    'halfdozen-telemetry',
     'composio-toolkit-dropbox',
     'composio-toolkit-gmail',
     'composio-toolkit-youtube',

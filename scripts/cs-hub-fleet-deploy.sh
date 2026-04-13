@@ -37,6 +37,17 @@ OUTERFIELDS_CLICKUP_SERVERS=(
   "${SHARED_AUTH_SERVERS[@]}"
   "composio-toolkit-clickup"
 )
+HALFDOZEN_CURRENT_MCP_SERVERS=(
+  "notion-halfdozen-create-something"
+  "halfdozen-operator-notion-mcp"
+  "halfdozen-dm-mcp"
+  "half-dozen-youtube-sync"
+  "halfdozen-gmail-sync-danny"
+  "halfdozen-gmail-sync-fillip"
+  "halfdozen-gmail-sync-leah"
+  "halfdozen-zoom-sync"
+  "halfdozen-telemetry"
+)
 
 join_by_comma() {
   local IFS=','
@@ -45,8 +56,9 @@ join_by_comma() {
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
-DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
-MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
+HALFDOZEN_CURRENT_MCP_SERVERS_CSV="$(join_by_comma "${HALFDOZEN_CURRENT_MCP_SERVERS[@]}")"
+HALFDOZEN_TEAM_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},${HALFDOZEN_CURRENT_MCP_SERVERS_CSV}"
+MJ_SERVERS_CSV="composio-toolkit-airtable,${HALFDOZEN_TEAM_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
 CORE_BUNDLES_CSV="core"
 CORE_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV}"
@@ -179,7 +191,7 @@ target_server_csv_for_worker() {
   case "$1" in
     "cs-mcp-hub-remote") echo "$CORE_SERVERS_CSV" ;;
     "cs-hub-c3denver") echo "$C3DENVER_SERVERS_CSV" ;;
-    "cs-hub-danny") echo "$DANNY_SERVERS_CSV" ;;
+    "cs-hub-lainy"|"cs-hub-danny"|"cs-hub-august"|"cs-hub-fillip"|"cs-hub-leah") echo "$HALFDOZEN_TEAM_SERVERS_CSV" ;;
     "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "$OUTERFIELDS_CLICKUP_SERVERS_CSV" ;;
     "cs-hub-mj") echo "$MJ_SERVERS_CSV" ;;
     *) echo "$SHARED_AUTH_SERVERS_CSV" ;;
@@ -195,10 +207,10 @@ target_bundle_csv_for_worker() {
 
 discovery_shared_pack_for_worker() {
   case "$1" in
-    "cs-hub-danny") echo "danny-shared-auth-plus-dm-and-operator-notion" ;;
+    "cs-hub-lainy"|"cs-hub-danny"|"cs-hub-august"|"cs-hub-fillip"|"cs-hub-leah") echo "halfdozen-shared-auth-plus-current-mcps" ;;
     "cs-hub-c3denver") echo "c3denver-airtable-gmail-notion" ;;
     "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "outerfields-shared-auth-clickup" ;;
-    "cs-hub-mj") echo "mj-shared-auth-plus-ops-search-meetings-and-review" ;;
+    "cs-hub-mj") echo "mj-shared-auth-plus-current-mcps-ops-search-meetings-and-review" ;;
     *) echo "shared-auth-core" ;;
   esac
 }

@@ -1,0 +1,340 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://create-something.dev/schemas/distribution-catalog.schema.json",
+  "title": "CREATE SOMETHING Goose-First Distribution Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "artifacts"
+  ],
+  "properties": {
+    "version": {
+      "const": 2
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    }
+  },
+  "$defs": {
+    "host": {
+      "type": "string",
+      "enum": [
+        "claude-code",
+        "cursor",
+        "claude-desktop",
+        "windsurf",
+        "vscode",
+        "codex",
+        "goose"
+      ]
+    },
+    "artifactKind": {
+      "type": "string",
+      "enum": [
+        "extension",
+        "policy_pack",
+        "recipe",
+        "distro"
+      ]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "gated",
+        "internal"
+      ]
+    },
+    "entitlement": {
+      "type": "string",
+      "enum": [
+        "public",
+        "mcp_only",
+        "policy_os"
+      ]
+    },
+    "gooseInstallModeType": {
+      "type": "string",
+      "enum": [
+        "goose_extension",
+        "goose_recipe",
+        "goose_distro",
+        "goose_bundle",
+        "stdio_command",
+        "persistent_instructions_file",
+        "prompt_template_file",
+        "adversary_rule_file"
+      ]
+    },
+    "compatibilityInstallModeType": {
+      "type": "string",
+      "enum": [
+        "remote_mcp_url",
+        "cursor_deeplink",
+        "cursor_config",
+        "codex_config",
+        "codex_command",
+        "claude_desktop_config",
+        "claude_code_command",
+        "windsurf_config",
+        "vscode_extension_hint"
+      ]
+    },
+    "installModeBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "label"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "host": {
+          "$ref": "#/$defs/host"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "value"
+          ]
+        },
+        {
+          "required": [
+            "command"
+          ]
+        }
+      ]
+    },
+    "gooseInstallMode": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/installModeBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "$ref": "#/$defs/gooseInstallModeType"
+            }
+          }
+        }
+      ]
+    },
+    "compatibilityInstallMode": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/installModeBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "$ref": "#/$defs/compatibilityInstallModeType"
+            }
+          }
+        }
+      ]
+    },
+    "verificationStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "command"
+          ]
+        },
+        {
+          "required": [
+            "prompt"
+          ]
+        }
+      ]
+    },
+    "goosePackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "installModes"
+      ],
+      "properties": {
+        "installModes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/gooseInstallMode"
+          }
+        }
+      }
+    },
+    "compatibilityPackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hosts",
+        "installModes"
+      ],
+      "properties": {
+        "hosts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/host"
+          }
+        },
+        "installModes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/compatibilityInstallMode"
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "title",
+        "description",
+        "ownerPackage",
+        "visibility",
+        "entitlement",
+        "docsRef",
+        "policyRefs",
+        "telemetryKey",
+        "goose",
+        "verification"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "$ref": "#/$defs/artifactKind"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerPackage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visibility": {
+          "$ref": "#/$defs/visibility"
+        },
+        "entitlement": {
+          "$ref": "#/$defs/entitlement"
+        },
+        "docsRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policyRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "telemetryKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "packageRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "artifacts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "goose": {
+          "$ref": "#/$defs/goosePackage"
+        },
+        "compatibility": {
+          "$ref": "#/$defs/compatibilityPackage"
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "summary",
+            "steps"
+          ],
+          "properties": {
+            "summary": {
+              "type": "string",
+              "minLength": 1
+            },
+            "steps": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/verificationStep"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
