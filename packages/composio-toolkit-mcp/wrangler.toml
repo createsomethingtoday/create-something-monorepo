@@ -20,6 +20,10 @@ enabled = true
 # Example: {"gmail":"ac_xxx","notion":"ac_yyy"}
 # COMPOSIO_AUTH_CONFIG_MAP = "{}"
 
+# Optional JSON patch merged on top of COMPOSIO_AUTH_CONFIG_MAP at runtime.
+# Use this when operators need to add or rotate specific toolkit mappings without rewriting the base map.
+# COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON = "{}"
+
 # Optional explicit Airtable auth config id fallback. Merged into COMPOSIO_AUTH_CONFIG_MAP at runtime.
 # COMPOSIO_AIRTABLE_AUTH_CONFIG_ID = "ac_xxx"
 

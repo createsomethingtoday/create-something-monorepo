@@ -68,6 +68,7 @@ Compatibility mode (`COMPOSIO_ENTITY_RESOLUTION_MODE=compat`) resolves in this o
 ## Optional env
 
 - `COMPOSIO_AUTH_CONFIG_MAP` (JSON string, toolkit -> auth config id)
+- `COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON` (JSON string merged on top of `COMPOSIO_AUTH_CONFIG_MAP`)
 - `COMPOSIO_AIRTABLE_AUTH_CONFIG_ID` (explicit Airtable auth config fallback)
 - `COMPOSIO_DEFAULT_ENTITY_ID`
 - `COMPOSIO_ENTITY_RESOLUTION_MODE` (`header_required` default, or `compat`)
