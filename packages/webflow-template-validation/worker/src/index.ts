@@ -535,13 +535,13 @@ async function handleSnippetInstall(
 		})
 	);
 
-	if (body.mode === 'programmatic') {
+	if (body.mode === 'programmatic' || body.mode === 'webflow-api') {
 		const programmatic = await attemptProgrammaticSnippetInstall(env, body.siteId, snippet, correlationId);
 		if (programmatic.ok) {
 			record.installMethod = 'webflow-api';
 			record.status = 'active';
 			record.installed = true;
-			record.message = 'Published review surface installed programmatically.';
+			record.message = programmatic.message;
 		} else {
 			record.message = programmatic.message;
 		}
@@ -1929,35 +1929,115 @@ async function attemptProgrammaticSnippetInstall(
 		};
 	}
 
-	try {
-		const response = await fetch(`${webflowApiBase}/v2/sites/${siteId}/custom-code`, {
-			method: 'PUT',
-			headers: {
-				Authorization: `Bearer ${webflowApiToken}`,
-				'Content-Type': 'application/json',
-				accept: 'application/json'
-			},
-			body: JSON.stringify({
-				headCode: snippet
-			})
-		});
+	const headers = {
+		Authorization: `Bearer ${webflowApiToken}`,
+		'Content-Type': 'application/json',
+		accept: 'application/json'
+	};
 
-		if (!response.ok) {
-			const errorText = await response.text().catch(() => '');
+	try {
+		// Step 1: Register the review snippet as a hosted script.
+		// The snippet JS is hosted at the Worker's public asset path.
+		const snippetUrl = `${readEnvString(env, 'WORKER_PUBLIC_URL') || 'https://validation-worker.createsomething.workers.dev'}${REVIEW_SNIPPET_ASSET_PATH}`;
+		const displayName = 'Webflow Way Review Bridge';
+		const version = REVIEW_SNIPPET_VERSION;
+
+		// Generate integrity hash for the hosted script
+		const integrityHash = await generateSRI(snippetUrl);
+
+		const registerResponse = await fetch(
+			`${webflowApiBase}/beta/sites/${siteId}/registered_scripts/hosted`,
+			{
+				method: 'POST',
+				headers,
+				body: JSON.stringify({
+					hostedLocation: snippetUrl,
+					integrityHash,
+					version,
+					displayName,
+					canCopy: false
+				})
+			}
+		);
+
+		let scriptId: string;
+		if (registerResponse.ok) {
+			const registerData = (await registerResponse.json()) as { id?: string };
+			scriptId = registerData.id || displayName.toLowerCase().replace(/\s+/g, '_');
+		} else if (registerResponse.status === 400) {
+			// Script may already be registered — use the derived ID
+			scriptId = displayName.toLowerCase().replace(/\s+/g, '_');
+		} else {
+			const errorText = await registerResponse.text().catch(() => '');
 			return {
 				ok: false,
-				message: `Manual install required: Webflow API install failed (${response.status}) ${errorText}`
+				message: `Script registration failed (${registerResponse.status}): ${errorText}`
 			};
 		}
 
-		return { ok: true, message: 'Installed programmatically via Webflow API.' };
+		// Step 2: Apply the registered script to the site's head code.
+		// Also inject the bridge config inline script via the snippet payload.
+		const applyResponse = await fetch(
+			`${webflowApiBase}/beta/sites/${siteId}/custom_code`,
+			{
+				method: 'PUT',
+				headers,
+				body: JSON.stringify({
+					scripts: [
+						{
+							id: scriptId,
+							location: 'header',
+							version
+						}
+					]
+				})
+			}
+		);
+
+		if (!applyResponse.ok) {
+			const errorText = await applyResponse.text().catch(() => '');
+			// Fall back to legacy v2 custom-code endpoint
+			const legacyResponse = await fetch(
+				`${webflowApiBase}/v2/sites/${siteId}/custom-code`,
+				{
+					method: 'PUT',
+					headers,
+					body: JSON.stringify({ headCode: snippet })
+				}
+			);
+			if (!legacyResponse.ok) {
+				const legacyError = await legacyResponse.text().catch(() => '');
+				return {
+					ok: false,
+					message: `Custom code apply failed (beta: ${applyResponse.status}, legacy: ${legacyResponse.status}): ${errorText} / ${legacyError}`
+				};
+			}
+			return { ok: true, message: 'Installed via legacy custom-code API. Publish to activate.' };
+		}
+
+		return { ok: true, message: 'Installed via Webflow Registered Scripts API. Publish to activate.' };
 	} catch (error) {
 		return {
 			ok: false,
-			message: `Manual install required: ${
+			message: `Install failed: ${
 				error instanceof Error ? error.message : String(error)
 			} (correlationId=${correlationId})`
 		};
+	}
+}
+
+/** Generate a Sub-Resource Integrity hash for a hosted script URL. */
+async function generateSRI(url: string): Promise<string> {
+	try {
+		const response = await fetch(url);
+		if (!response.ok) return '';
+		const buffer = await response.arrayBuffer();
+		const hashBuffer = await crypto.subtle.digest('SHA-384', buffer);
+		const hashArray = Array.from(new Uint8Array(hashBuffer));
+		const hashBase64 = btoa(String.fromCharCode(...hashArray));
+		return `sha384-${hashBase64}`;
+	} catch {
+		return '';
 	}
 }
 

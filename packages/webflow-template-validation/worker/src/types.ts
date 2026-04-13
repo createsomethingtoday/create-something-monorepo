@@ -84,7 +84,7 @@ export interface SnippetInstallRequest {
 	siteId: string;
 	siteName?: string;
 	installTarget: 'head';
-	mode: 'programmatic' | 'manual-fallback';
+	mode: 'programmatic' | 'webflow-api' | 'manual-fallback';
 }
 
 export interface SnippetInstallResponse {
