@@ -5,25 +5,25 @@
  * Used by the unified search indexer to know which content to index.
  *
  * ┌─────────────────────────────────────────────────────────────────────┐
- * │ IMPORTANT: IO papers are STATIC SVELTE ROUTES with interactive     │
- * │ components (IsometricSpiral, custom visualizations, etc.)          │
+ * │ IMPORTANT: IO publication is route-based, not D1-backed.           │
  * │                                                                     │
- * │ They CANNOT be served from D1 - the content includes Svelte        │
- * │ components that must be compiled at build time.                    │
+ * │ Papers may be implemented as static Svelte routes or as            │
+ * │ markdown-backed dynamic routes. This manifest covers both.         │
  * │                                                                     │
  * │ This manifest provides metadata for the search indexer.            │
  * └─────────────────────────────────────────────────────────────────────┘
  *
  * WHEN ADDING A NEW PAPER:
- * 1. Create the static route: src/routes/papers/{slug}/+page.svelte
- * 2. Add an entry to the PAPERS array below
- * 3. The search indexer will pick it up on the next re-index (every 6 hours)
+ * 1. Create either a static route or a markdown-backed file-based paper
+ * 2. Ensure the slug is included in this manifest output
+ * 3. The search indexer will pick it up on the next re-index
  *
  * GET /api/manifest
  */
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { fileBasedPapers } from '$lib/config/fileBasedPapers';
 
 interface ContentItem {
 	slug: string;
@@ -72,6 +72,13 @@ const PAPERS: ContentItem[] = [
 	{ slug: 'workers-vs-python-sdk-plagiarism-detection', title: 'Workers vs Python SDK: Plagiarism Detection', description: 'Comparing Cloudflare Workers and Python SDK for plagiarism detection', category: 'experiment' }
 ];
 
+const FILE_BASED_PAPERS: ContentItem[] = fileBasedPapers.map((paper) => ({
+	slug: paper.slug,
+	title: paper.title,
+	description: paper.description,
+	category: String(paper.category || '').toLowerCase().replace(/\s+/g, '-')
+}));
+
 // Experiments with static routes in src/routes/experiments/
 const EXPERIMENTS: ContentItem[] = [
 	{ slug: 'agent-operations', title: 'Agent Operations', description: 'Interactive experiment for agent operation patterns', category: 'interactive' },
@@ -91,12 +98,16 @@ const EXPERIMENTS: ContentItem[] = [
 ];
 
 export const GET: RequestHandler = async () => {
+	const mergedPapers = [...PAPERS, ...FILE_BASED_PAPERS].filter(
+		(paper, index, all) => all.findIndex((candidate) => candidate.slug === paper.slug) === index
+	);
+
 	return json({
 		property: 'io',
-		papers: PAPERS,
+		papers: mergedPapers,
 		experiments: EXPERIMENTS,
 		// Legacy format for backward compatibility
-		paperSlugs: PAPERS.map(p => p.slug),
+		paperSlugs: mergedPapers.map(p => p.slug),
 		experimentSlugs: EXPERIMENTS.map(e => e.slug),
 		generated: new Date().toISOString()
 	});

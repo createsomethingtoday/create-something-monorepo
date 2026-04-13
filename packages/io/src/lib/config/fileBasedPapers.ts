@@ -21,6 +21,45 @@ export type FileBasedPaper = FileBasedExperiment;
  */
 export const fileBasedPapers: FileBasedPaper[] = [
 	{
+		id: 'paper-analyzer-mcp-review-architecture',
+		slug: 'analyzer-mcp-review-architecture',
+		title: 'The Analyzer MCP: A Policy-Grounded Review Architecture',
+		description: 'How CREATE SOMETHING turned Webflow template review into a multi-surface MCP system that joins Designer state, published-site evidence, policy ingestion, and governed review output.',
+		excerpt_short: 'A review system, not just a site analyzer',
+		excerpt_long: 'This case study explains how the Webflow Site Analyzer MCP was created, the review problem it solves, and the architectural pattern it demonstrates for other system architects. The key move was treating review as a governed MCP system across three surfaces: published pages, Designer-only metadata, and external policy that changes over time.',
+		category: 'Case Study',
+		tags: [
+			'Analyzer MCP',
+			'Webflow',
+			'MCP',
+			'Three-Tier Framework',
+			'Policy as Artifact',
+			'Review Systems',
+			'Observability'
+		],
+		created_at: '2026-04-13T00:00:00Z',
+		updated_at: '2026-04-13T00:00:00Z',
+		reading_time_minutes: 16,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'verification-first'
+		],
+		route: '/papers/analyzer-mcp-review-architecture',
+		ascii_art: `
+        ╭──────────────────────────────────────────────╮
+       ╱  Published site   Designer   Policy snapshot  ╲
+      │       ↓               ↓             ↓            │
+      │          Unified review artifact via MCP        │
+      │     Observable, queued, and manually bounded    │
+      ╰──────────────────────────────────────────────────╯
+           Review as architecture.
+`
+	},
+	{
 		id: 'paper-andon-protocol',
 		slug: 'andon-protocol',
 		title: 'The Andon Protocol',
