@@ -50,13 +50,13 @@ export const fileBasedPapers: FileBasedPaper[] = [
 		],
 		route: '/papers/analyzer-mcp-review-architecture',
 		ascii_art: `
-        ╭──────────────────────────────────────────────╮
-       ╱  Published site   Designer   Policy snapshot  ╲
-      │       ↓               ↓             ↓            │
-      │          Unified review artifact via MCP        │
-      │     Observable, queued, and manually bounded    │
-      ╰──────────────────────────────────────────────────╯
-           Review as architecture.
+╭──────────────────────────────────────────────────────────────╮
+│ PUBLISHED SITE   DESIGNER STATE   POLICY SNAPSHOT           │
+│      │                 │                 │                  │
+│      └──────────┬──────┴──────┬──────────┘                  │
+│                 ANALYZER MCP REVIEW ARTIFACT                │
+│        observable • queued • versioned • manual-bounded    │
+╰──────────────────────────────────────────────────────────────╯
 `
 	},
 	{
