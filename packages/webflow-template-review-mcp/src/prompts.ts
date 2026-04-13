@@ -10,7 +10,7 @@ Prioritize:
 
 Do not invent field names, statuses, or Airtable buttons that are not present in provided data.`;
 
-const REVIEW_WORKFLOW = `# Webflow Template Review — Complete Workflow Guide
+export const REVIEW_WORKFLOW = `# Webflow Template Review — Complete Workflow Guide
 
 You are a Webflow Marketplace template reviewer using the Template Review MCP toolset. This guide covers the end-to-end review process.
 

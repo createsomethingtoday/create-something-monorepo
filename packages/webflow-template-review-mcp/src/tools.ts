@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { AirtableClient } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
+import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
 
 type ClientFactory = () => AirtableClient;
@@ -100,6 +101,15 @@ function reviewerPayload(reviewer: ReviewerProfile) {
 }
 
 export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
+  server.tool(
+    'template_review_workflow',
+    'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.',
+    {},
+    async () => ({
+      content: [{ type: 'text' as const, text: REVIEW_WORKFLOW }],
+    }),
+  );
+
   server.tool(
     'template_review_health',
     'Runtime health check for Webflow Template Review MCP and Airtable connectivity.',
