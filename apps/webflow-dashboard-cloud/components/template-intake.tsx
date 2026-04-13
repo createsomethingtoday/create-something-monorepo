@@ -3,6 +3,7 @@
 import Script from 'next/script';
 import { useEffect, useRef, useState } from 'react';
 import { appPath } from '../lib/runtime-paths';
+import { THEME_CHANGE_EVENT, readResolvedTheme } from '../lib/theme';
 import {
   ALL_COUNTRIES,
   CATEGORY_OPTIONS,
@@ -162,6 +163,9 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 export function TemplateIntake() {
   const turnstileEnabled = Boolean(TURNSTILE_SITE_KEY);
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() =>
+    typeof document === 'undefined' ? 'light' : readResolvedTheme(document)
+  );
   const [step, setStep] = useState<'creator' | 'template'>('creator');
   const [creator, setCreator] = useState<CreatorFormState>(initialCreatorState);
   const [template, setTemplate] = useState<TemplateFormState>(initialTemplateState);
@@ -206,6 +210,23 @@ export function TemplateIntake() {
       }
     }
     setUtm(captured);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const syncTheme = () => {
+      setResolvedTheme(readResolvedTheme(document));
+    };
+
+    syncTheme();
+    window.addEventListener(THEME_CHANGE_EVENT, syncTheme);
+
+    return () => {
+      window.removeEventListener(THEME_CHANGE_EVENT, syncTheme);
+    };
   }, []);
 
   function setTurnstileToken(stepName: TurnstileStep, token: string) {
@@ -279,7 +300,7 @@ export function TemplateIntake() {
     const widgetId = window.turnstile.render(container, {
       sitekey: TURNSTILE_SITE_KEY,
       action,
-      theme: 'light',
+      theme: resolvedTheme,
       callback: (token) => setTurnstileToken(stepName, token),
       'expired-callback': () => clearTurnstileToken(stepName),
       'error-callback': () => clearTurnstileToken(stepName)
@@ -293,12 +314,10 @@ export function TemplateIntake() {
       return;
     }
 
-    const activeStep: TurnstileStep = step;
-    const inactiveStep: TurnstileStep = step === 'creator' ? 'template' : 'creator';
-
-    removeTurnstile(inactiveStep);
-    ensureTurnstile(activeStep);
-  }, [step, turnstileEnabled, turnstileReady]);
+    removeTurnstile('creator');
+    removeTurnstile('template');
+    ensureTurnstile(step);
+  }, [resolvedTheme, step, turnstileEnabled, turnstileReady]);
 
   useEffect(() => {
     return () => {
