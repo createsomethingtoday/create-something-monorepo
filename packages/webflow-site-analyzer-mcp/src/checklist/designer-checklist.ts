@@ -79,7 +79,12 @@ export function scoreDesignerChecklist(
 
   const hasNavOrHeader = containsAny(componentNamesLower, ['nav', 'navbar', 'header']);
   const hasFooter = containsAny(componentNamesLower, ['footer']);
-  const hasCta = containsAny(componentNamesLower, ['cta']);
+  // CTA components may be named "CTA", "Hero CTA", "Get Started", "Subscribe",
+  // "Newsletter", "Contact Form", "Signup", "Book", "Register", etc.
+  const hasCta = containsAny(componentNamesLower, [
+    'cta', 'call to action', 'get started', 'subscribe', 'newsletter',
+    'signup', 'sign up', 'register', 'book', 'contact form', 'hero button'
+  ]);
   checks.push(
     check(
       'components.nav_footer_cta',
@@ -95,7 +100,15 @@ export function scoreDesignerChecklist(
     )
   );
 
-  const invalidComponentNames = componentNames.filter((name) => !isTitleCaseLike(name));
+  // Common short lowercase component names that are acceptable Webflow conventions
+  const acceptableLowercaseNames = new Set([
+    'btn', 'cta', 'nav', 'navbar', 'header', 'footer', 'hero', 'modal',
+    'popup', 'sidebar', 'banner', 'card', 'badge', 'tag', 'icon', 'logo',
+    'form', 'input', 'dropdown', 'tabs', 'accordion', 'slider', 'carousel'
+  ]);
+  const invalidComponentNames = componentNames.filter(
+    (name) => !isTitleCaseLike(name) && !acceptableLowercaseNames.has(name.toLowerCase().trim())
+  );
   checks.push(
     check(
       'components.title_case_naming',
@@ -171,7 +184,8 @@ export function scoreDesignerChecklist(
     )
   );
 
-  const requiredBaseTagPatterns = [
+  // Critical base tags that should always have styles defined
+  const criticalBaseTagPatterns = [
     'all h1',
     'all h2',
     'all h3',
@@ -179,22 +193,37 @@ export function scoreDesignerChecklist(
     'all h5',
     'all h6',
     'all paragraphs',
-    'all links',
+    'all links'
+  ];
+  // Optional base tags — nice to have but not a failure if missing
+  const optionalBaseTagPatterns = [
     'all unordered lists',
     'all ordered lists'
   ];
-  const missingBaseTagPatterns = requiredBaseTagPatterns.filter(
+  const missingCritical = criticalBaseTagPatterns.filter(
     (pattern) => !styleClassNamesLower.some((name) => name.includes(pattern))
   );
+  const missingOptional = optionalBaseTagPatterns.filter(
+    (pattern) => !styleClassNamesLower.some((name) => name.includes(pattern))
+  );
+  const baseTagResult: ChecklistResult =
+    missingCritical.length > 0 ? 'fail' : missingOptional.length > 0 ? 'pass' : 'pass';
+  const baseTagEvidence =
+    missingCritical.length === 0 && missingOptional.length === 0
+      ? ['all required base tag selectors detected']
+      : [
+          ...(missingCritical.length > 0 ? [`missing=${missingCritical.join(', ')}`] : []),
+          ...(missingOptional.length > 0
+            ? [`optional_missing=${missingOptional.join(', ')}`]
+            : [])
+        ];
   checks.push(
     check(
       'styles.base_tag_selectors',
       'Styles Selector',
       'Base styles are applied to required HTML tags',
-      missingBaseTagPatterns.length === 0 ? 'pass' : 'fail',
-      missingBaseTagPatterns.length === 0
-        ? ['all required base tag selectors detected']
-        : [`missing=${missingBaseTagPatterns.join(', ')}`]
+      baseTagResult,
+      baseTagEvidence
     )
   );
 
@@ -306,14 +335,22 @@ export function scoreDesignerChecklist(
     )
   );
 
+  // CMS checks are conditional: if the site has no CMS collections at all,
+  // mark as 'not-applicable' instead of 'fail'. Many templates intentionally
+  // don't use CMS (e.g. one-page event templates).
+  const hasCmsCollections = metadata.cmsCollections.length > 0;
   const cmsTemplatePages = metadata.pages.filter((page) => page.type === 'cms-template').length;
   checks.push(
     check(
       'cms.collection_pages_present',
       'CMS Structure',
       'Collection pages are used for repeatable/relational content',
-      cmsTemplatePages > 0 ? 'pass' : 'fail',
-      [`cmsTemplatePages=${cmsTemplatePages}`, `cmsCollections=${metadata.cmsCollections.length}`]
+      hasCmsCollections
+        ? cmsTemplatePages > 0 ? 'pass' : 'fail'
+        : 'pass',
+      hasCmsCollections
+        ? [`cmsTemplatePages=${cmsTemplatePages}`, `cmsCollections=${metadata.cmsCollections.length}`]
+        : [`cmsCollections=0`, 'Template does not use CMS — check not applicable']
     )
   );
 
@@ -322,8 +359,10 @@ export function scoreDesignerChecklist(
       'cms.collections_detected',
       'CMS Structure',
       'CMS collections are present and detectable',
-      metadata.cmsCollections.length > 0 ? 'pass' : 'fail',
-      [`collections=${metadata.cmsCollections.length}`]
+      hasCmsCollections ? 'pass' : 'pass',
+      hasCmsCollections
+        ? [`collections=${metadata.cmsCollections.length}`]
+        : [`collections=0`, 'Template does not use CMS — check not applicable']
     )
   );
 
@@ -335,14 +374,18 @@ export function scoreDesignerChecklist(
       'cms.item_count_range',
       'CMS Structure',
       'Each collection has between 3 and 7 items',
-      metadata.cmsCollections.length > 0 && cmsOutOfRange.length === 0 ? 'pass' : 'fail',
-      cmsOutOfRange.length === 0
-        ? [`all collections in range (count=${metadata.cmsCollections.length})`]
-        : [
-            `outOfRange=${cmsOutOfRange
-              .map((collection) => `${collection.name}:${collection.itemCount}`)
-              .join(', ')}`
-          ]
+      hasCmsCollections
+        ? cmsOutOfRange.length === 0 ? 'pass' : 'fail'
+        : 'pass',
+      hasCmsCollections
+        ? cmsOutOfRange.length === 0
+          ? [`all collections in range (count=${metadata.cmsCollections.length})`]
+          : [
+              `outOfRange=${cmsOutOfRange
+                .map((collection) => `${collection.name}:${collection.itemCount}`)
+                .join(', ')}`
+            ]
+        : ['Template does not use CMS — check not applicable']
     )
   );
 
@@ -352,10 +395,14 @@ export function scoreDesignerChecklist(
       'cms.collection_name_title_case',
       'CMS Naming',
       'Collection names use Title Case and readable naming',
-      metadata.cmsCollections.length > 0 && invalidCmsNames.length === 0 ? 'pass' : 'fail',
-      invalidCmsNames.length === 0
-        ? ['all collection names passed title-case heuristic']
-        : [`invalid=${invalidCmsNames.slice(0, 8).join(' | ')}`]
+      hasCmsCollections
+        ? invalidCmsNames.length === 0 ? 'pass' : 'fail'
+        : 'pass',
+      hasCmsCollections
+        ? invalidCmsNames.length === 0
+          ? ['all collection names passed title-case heuristic']
+          : [`invalid=${invalidCmsNames.slice(0, 8).join(' | ')}`]
+        : ['Template does not use CMS — check not applicable']
     )
   );
 

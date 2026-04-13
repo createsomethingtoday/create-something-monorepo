@@ -46,6 +46,8 @@ import {
 import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy/index.js';
 import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
+import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
+import { is404PageTitle } from './review-utils.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -593,7 +595,9 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
 
   const dedupedLinks = Array.from(new Set(links)).slice(0, 250);
   const pathname = window.location.pathname.toLowerCase();
-  const bodyText = (document.body?.innerText || '').slice(0, 4000);
+  // Use textContent (not innerText) to avoid font-rendering corruption where
+  // web fonts with missing glyphs cause innerText to return garbled text.
+  const bodyText = (document.body?.textContent || '').replace(/\\s+/g, ' ').slice(0, 8000);
   const hasRequiredLicenseText = pathname.includes('license')
     ? bodyText.includes(REQUIRED_LICENSE_TEXT)
     : null;
@@ -627,6 +631,43 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     !s.src && (s.textContent || '').trim().length > 50 &&
     !s.getAttribute('data-wf-domain')
   );
+
+  // Site settings checks (run regardless of __wfReview availability)
+  const faviconLink = document.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
+  const hasCustomFavicon = Boolean(faviconLink && !((faviconLink.getAttribute('href') || '').includes('webflow')));
+
+  const fontLinks = Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"], link[href*="use.typekit.net"]'));
+  const customFontStyles = Array.from(document.querySelectorAll('style')).filter(s =>
+    (s.textContent || '').includes('@font-face')
+  );
+  const hasCustomFonts = fontLinks.length > 0 || customFontStyles.length > 0;
+  const customFontSources = fontLinks.map(l => l.getAttribute('href') || '').filter(Boolean);
+
+  // Connected apps detection (third-party integrations that should be removed)
+  const connectedAppPatterns = [
+    { name: 'Google Analytics', pattern: /google-analytics\.com|googletagmanager\.com|gtag/ },
+    { name: 'Facebook Pixel', pattern: /connect\.facebook\.net|fbevents\.js/ },
+    { name: 'Hotjar', pattern: /hotjar\.com|static\.hotjar/ },
+    { name: 'Intercom', pattern: /intercom\.io|widget\.intercom/ },
+    { name: 'Drift', pattern: /drift\.com|js\.driftt/ },
+    { name: 'Crisp', pattern: /crisp\.chat/ },
+    { name: 'HubSpot', pattern: /hubspot\.com|hs-scripts/ },
+    { name: 'Mailchimp', pattern: /mailchimp\.com|chimpstatic/ },
+  ];
+  const allScriptSrcsAndInline = [
+    ...scriptSrcs,
+    ...scriptEls.map(s => (s.textContent || '').slice(0, 500))
+  ].join(' ');
+  const detectedApps = connectedAppPatterns
+    .filter(app => app.pattern.test(allScriptSrcsAndInline))
+    .map(app => app.name);
+
+  // Placeholder content detection
+  const bodyTextForPlaceholder = (document.body?.textContent || '').toLowerCase();
+  const loremIpsumPatterns = ['lorem ipsum', 'dolor sit amet', 'consectetur adipiscing', 'sed do eiusmod'];
+  const hasLoremIpsum = loremIpsumPatterns.some(p => bodyTextForPlaceholder.includes(p));
+  const placeholderPatterns = ['your text here', 'placeholder text', 'insert text', 'add your', 'example text', 'sample text'];
+  const hasPlaceholderText = placeholderPatterns.some(p => bodyTextForPlaceholder.includes(p));
 
   const api = window.__wfReview;
   if (!api) {
@@ -667,7 +708,19 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
       const href = a.getAttribute('href');
       return href === '' || href === null;
     }).length;
-    const placeholderHref = linkEls.filter(a => (a.getAttribute('href') || '').startsWith('#')).length;
+    const placeholderHref = linkEls.filter(a => {
+      const href = a.getAttribute('href') || '';
+      if (!href.startsWith('#')) return false;
+      // Exclude Webflow tab/accordion panel anchors (e.g. #w-tabs-0-data-w-pane-0)
+      if (/^#w-tabs-/.test(href) || /^#w-dropdown-/.test(href) || /^#w--/.test(href)) return false;
+      // Exclude Webflow lightbox links (href="#" on elements with w-lightbox class or data attr)
+      if (href === '#' && (
+        a.classList.contains('w-lightbox') ||
+        a.closest('.w-lightbox') ||
+        a.hasAttribute('data-lightbox')
+      )) return false;
+      return true;
+    }).length;
     const blankTargetMissingRel = linkEls.filter(a =>
       a.target === '_blank' && !(a.getAttribute('rel') || '').includes('noopener')
     ).length;
@@ -682,6 +735,19 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     if (!metaTitle) metaMissing.push('og:title');
     if (!metaDesc) metaMissing.push('description');
     if (!ogImage) metaMissing.push('og:image');
+
+    // Canonical URL
+    const canonicalLink = document.querySelector('link[rel="canonical"]');
+    const hasCanonical = Boolean(canonicalLink && canonicalLink.getAttribute('href'));
+
+    // Structured data (JSON-LD)
+    const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+    const hasStructuredData = jsonLdScripts.length > 0;
+
+    // ARIA landmarks
+    const mainLandmark = document.querySelector('main, [role="main"]');
+    const navLandmark = document.querySelector('nav, [role="navigation"]');
+    const hasAriaLandmarks = Boolean(mainLandmark) && Boolean(navLandmark);
 
     const formFields = document.querySelectorAll('input, textarea, select');
     const missingLabels = Array.from(formFields).filter(field => {
@@ -699,8 +765,30 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
       v.muted && v.autoplay && v.loop && !v.controls
     ).length;
 
+    // Below-fold images that should be lazy but aren't
+    const belowFoldNotLazy = imgEls.filter(img => {
+      const rect = img.getBoundingClientRect();
+      return rect.top >= window.innerHeight && img.loading !== 'lazy';
+    }).length;
+
+    // IX2/IX3 interaction signals from DOM
+    const ix2Scripts = Array.from(document.querySelectorAll('script'))
+      .filter(s => (s.textContent || '').includes('Webflow.require(\\'ix2\\')'));
+    const ix2Data = ix2Scripts.length > 0;
+    let ix2Events = 0;
+    let ix2ActionLists = 0;
+    if (ix2Data) {
+      try {
+        const wfData = window.Webflow?.require?.('ix2')?.store?.getState?.();
+        if (wfData?.ixData) {
+          ix2Events = Object.keys(wfData.ixData.events || {}).length;
+          ix2ActionLists = Object.keys(wfData.ixData.actionLists || {}).length;
+        }
+      } catch {}
+    }
+
     const domAudit = {
-      meta: { missing: metaMissing },
+      meta: { missing: metaMissing, hasCanonical, hasStructuredData, hasAriaLandmarks },
       headings: {
         summary: {
           headings: headingEls.length,
@@ -726,7 +814,7 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
           missingAlt,
           missingDimensions,
           aboveFoldLazy,
-          belowFoldNotLazy: 0
+          belowFoldNotLazy
         },
         formats: imgFormats
       },
@@ -743,7 +831,99 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
           backgroundVideosMissingControl: bgVideoMissing
         }
       },
-      interactions: { ix2: { summary: {} }, ix3: { summary: {} } }
+      interactions: {
+        ix2: { summary: { events: ix2Events, actionLists: ix2ActionLists } },
+        ix3: { summary: {} }
+      },
+      transitions: (() => {
+        // Check interactive elements for CSS transition/hover state declarations
+        const interactiveEls = document.querySelectorAll('a, button, [role="button"], .w-button, input[type="submit"]');
+        let withTransition = 0;
+        let withoutTransition = 0;
+        for (const el of Array.from(interactiveEls)) {
+          const style = window.getComputedStyle(el);
+          const transition = style.transition || style.getPropertyValue('transition');
+          if (transition && transition !== 'all 0s ease 0s' && transition !== 'none') {
+            withTransition++;
+          } else {
+            withoutTransition++;
+          }
+        }
+        return {
+          totalInteractive: interactiveEls.length,
+          withTransition,
+          withoutTransition,
+          ratio: interactiveEls.length > 0 ? withTransition / interactiveEls.length : 0
+        };
+      })(),
+      comboClassDepth: (() => {
+        // Check max class count on any single element (combo class stacking)
+        const allEls = document.querySelectorAll('[class]');
+        let maxDepth = 0;
+        let maxDepthSelector = '';
+        for (const el of Array.from(allEls).slice(0, 500)) {
+          const classCount = el.classList.length;
+          if (classCount > maxDepth) {
+            maxDepth = classCount;
+            maxDepthSelector = el.tagName.toLowerCase() + '.' + Array.from(el.classList).slice(0, 3).join('.');
+          }
+        }
+        return { maxDepth, maxDepthSelector, sampled: Math.min(allEls.length, 500) };
+      })(),
+      contrast: (() => {
+        // Basic WCAG contrast check on text elements against their backgrounds
+        const textEls = document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, a, span, li, td, th, label, button');
+        let checked = 0;
+        let passCount = 0;
+        let failCount = 0;
+
+        function luminance(r, g, b) {
+          const [rs, gs, bs] = [r, g, b].map(c => {
+            c = c / 255;
+            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+          });
+          return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+        }
+
+        function parseColor(color) {
+          const m = (color || '').match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
+          if (!m) return null;
+          return { r: parseInt(m[1]), g: parseInt(m[2]), b: parseInt(m[3]) };
+        }
+
+        function contrastRatio(fg, bg) {
+          const l1 = luminance(fg.r, fg.g, fg.b);
+          const l2 = luminance(bg.r, bg.g, bg.b);
+          const lighter = Math.max(l1, l2);
+          const darker = Math.min(l1, l2);
+          return (lighter + 0.05) / (darker + 0.05);
+        }
+
+        // Sample up to 50 elements for performance
+        const sample = Array.from(textEls).slice(0, 50);
+        for (const el of sample) {
+          const style = window.getComputedStyle(el);
+          const fg = parseColor(style.color);
+          const bg = parseColor(style.backgroundColor);
+          if (!fg || !bg) continue;
+          // Skip transparent backgrounds
+          if (style.backgroundColor === 'rgba(0, 0, 0, 0)') continue;
+          checked++;
+          const ratio = contrastRatio(fg, bg);
+          // WCAG AA: 4.5:1 for normal text, 3:1 for large text
+          const fontSize = parseFloat(style.fontSize) || 16;
+          const threshold = fontSize >= 24 ? 3 : 4.5;
+          if (ratio >= threshold) passCount++;
+          else failCount++;
+        }
+
+        return {
+          checked,
+          pass: passCount,
+          fail: failCount,
+          passRate: checked > 0 ? passCount / checked : 1
+        };
+      })()
     };
 
     return {
@@ -763,6 +943,16 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
         affiliateLinks,
         hasGsap,
         hasCustomCode
+      },
+      siteSettings: {
+        hasCustomFavicon,
+        hasCustomFonts,
+        customFontSources,
+        detectedApps
+      },
+      contentQuality: {
+        hasLoremIpsum,
+        hasPlaceholderText
       }
     };
   }
@@ -803,6 +993,12 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     auditError,
     sitemap,
     audit404,
+    siteSettings: {
+      hasCustomFavicon,
+      hasCustomFonts,
+      customFontSources,
+      detectedApps
+    },
     policyChecks: {
       hasPoweredByWebflow,
       affiliateLinks,
@@ -831,6 +1027,16 @@ type PublishedPageEval = {
     hasGsap?: boolean;
     hasCustomCode?: boolean;
   };
+  siteSettings?: {
+    hasCustomFavicon?: boolean;
+    hasCustomFonts?: boolean;
+    customFontSources?: string[];
+    detectedApps?: string[];
+  };
+  contentQuality?: {
+    hasLoremIpsum?: boolean;
+    hasPlaceholderText?: boolean;
+  };
 };
 
 type PageAuditSummary = NonNullable<PublishedSnippetPageResult['summary']>;
@@ -840,6 +1046,80 @@ type ProgressReporter = (progress: number, total: number, message: string) => Pr
 type RunTemplateReviewOptions = {
   reportProgress?: ProgressReporter;
 };
+
+/**
+ * Detect and repair the "every-s-to-space" text corruption that occurs when
+ * a page uses a web font whose "s" glyph is missing or zero-width and the
+ * extraction layer uses innerText (rendering-dependent) instead of textContent.
+ *
+ * Detection heuristic: if a string contains at least 2 instances of a lowercase
+ * letter followed by a space followed by a lowercase letter where inserting "s"
+ * back produces a known English word fragment, we consider it corrupted.
+ *
+ * Applied to audit payloads from __wfReview before they enter our pipeline.
+ */
+function detectSCorruption(sample: string): boolean {
+  // Known fragments that appear corrupted: "de cription" (description),
+  // "di play" (display), "tab " (tabs), "cla s" (class), "http :" (https:),
+  // "ub cri" (subscri), "po t" (post).
+  const knownCorrupted = [
+    'de cription', 'di play', 'tab ', 'cla s', 'http :', 'ub cri',
+    'po t', 'ub mit', 'e ion', 'e ign', 'e arch', 'tyle '
+  ];
+  let hits = 0;
+  const lower = sample.toLowerCase();
+  for (const fragment of knownCorrupted) {
+    if (lower.includes(fragment)) hits++;
+  }
+  return hits >= 2;
+}
+
+function repairSCorruption(text: string): string {
+  // If the string already contains a real "s", it's not corrupted
+  if (/s/i.test(text)) return text;
+
+  // Must contain at least one known corruption fragment to proceed
+  const knownFragments = [
+    'de cription', 'di play', 'ub cri', 'ub mit', 'tab ', 'cla ',
+    'http :', 'po t', 'e ign', 'e ion', 'e arch', 'tyle ',
+    'item ', 'image ', 'cript', 'lider', 'ection', 'croll',
+    'u ic', 'pon or', 'peaker', 'pon e', 'peed', 'tatu '
+  ];
+  const lower = text.toLowerCase();
+  if (!knownFragments.some((f) => lower.includes(f))) return text;
+
+  return text
+    .replace(/([a-z]) ([a-z])/g, '$1s$2')
+    .replace(/([a-z]) ([-:,)])/g, '$1s$2')
+    .replace(/([a-z]) $/g, '$1s');
+}
+
+function sanitizeAuditPayload(raw: unknown): unknown {
+  if (raw == null || typeof raw !== 'object') return raw;
+
+  const json = JSON.stringify(raw);
+  if (!detectSCorruption(json)) return raw;
+
+  // Walk the object tree and repair string values
+  function walk(value: unknown): unknown {
+    if (typeof value === 'string') {
+      return repairSCorruption(value);
+    }
+    if (Array.isArray(value)) {
+      return value.map(walk);
+    }
+    if (value && typeof value === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+        result[key] = walk(val);
+      }
+      return result;
+    }
+    return value;
+  }
+
+  return walk(raw);
+}
 
 function normalizeCrawlUrl(rawUrl: string, origin: string): string | null {
   try {
@@ -888,6 +1168,9 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
   const imageFormats = asRecord(imagesRoot.formats);
 
   const metaMissing = asStringArray(meta.missing);
+  const hasCanonical = Boolean(meta.hasCanonical);
+  const hasStructuredData = Boolean(meta.hasStructuredData);
+  const hasAriaLandmarks = Boolean(meta.hasAriaLandmarks);
   const failReasons: string[] = [];
 
   if (metaMissing.length > 0) failReasons.push(`meta_missing:${metaMissing.join(',')}`);
@@ -984,11 +1267,37 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
       missingTimelines: asFiniteNumber(ix3Summary.missingTimelines),
       deletedInteractions: asFiniteNumber(ix3Summary.deletedInteractions),
       missingTargetSelectors: asFiniteNumber(ix3Summary.missingTargetSelectors)
-    }
+    },
+    comboClassDepth: (() => {
+      const cc = asRecord(root.comboClassDepth);
+      return cc.maxDepth != null ? {
+        maxDepth: asFiniteNumber(cc.maxDepth),
+        maxDepthSelector: typeof cc.maxDepthSelector === 'string' ? cc.maxDepthSelector : '',
+        sampled: asFiniteNumber(cc.sampled)
+      } : null;
+    })(),
+    transitions: (() => {
+      const t = asRecord(root.transitions);
+      return t.totalInteractive != null ? {
+        totalInteractive: asFiniteNumber(t.totalInteractive),
+        withTransition: asFiniteNumber(t.withTransition),
+        withoutTransition: asFiniteNumber(t.withoutTransition),
+        ratio: asFiniteNumber(t.ratio)
+      } : null;
+    })(),
+    contrast: (() => {
+      const c = asRecord(root.contrast);
+      return c.checked != null ? {
+        checked: asFiniteNumber(c.checked),
+        pass: asFiniteNumber(c.pass),
+        fail: asFiniteNumber(c.fail),
+        passRate: asFiniteNumber(c.passRate)
+      } : null;
+    })()
   };
 }
 
-function emptyIssueCounts(): PublishedSnippetIssueCounts {
+function emptyIssueCounts(): PublishedSnippetIssueCounts & { imagesBelowFoldNotLazy: number } {
   return {
     metaMissing: 0,
     missingH1: 0,
@@ -1003,7 +1312,8 @@ function emptyIssueCounts(): PublishedSnippetIssueCounts {
     imagesAboveFoldLazy: 0,
     formsMissingLabels: 0,
     autoplayWithoutControls: 0,
-    backgroundVideosMissingControl: 0
+    backgroundVideosMissingControl: 0,
+    imagesBelowFoldNotLazy: 0
   };
 }
 
@@ -1081,6 +1391,7 @@ async function runPublishedPrecheck(
   const errors: string[] = [];
   const discovered = new Set<string>([startUrl]);
 
+  // Phase 1: Fetch homepage (must complete before we know which URLs to classify)
   try {
     const homepage = await fetchTextWithTimeout(startUrl, timeoutMs);
     if (homepage.status >= 400) {
@@ -1093,41 +1404,63 @@ async function runPublishedPrecheck(
     errors.push(`Homepage fetch failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 
+  // Phase 2: Sitemap fetch + URL classification run CONCURRENTLY.
+  // The LLM call (~300ms for Haiku) hides behind the sitemap fetch (~500ms).
   const sitemapCandidates = [`${origin}/sitemap.xml`, `${origin}/sitemap-index.xml`];
-  let sitemap: PublishedSitePrecheckResult['sitemap'] = {
-    ok: false,
-    error: 'Sitemap not found'
-  };
 
-  for (const candidate of sitemapCandidates) {
-    try {
-      const response = await fetchTextWithTimeout(candidate, timeoutMs);
-      if (response.status >= 400) continue;
-      const urls = extractUrlsFromSitemap(response.text, origin);
-      if (urls.length === 0) continue;
-      for (const url of urls) discovered.add(url);
-      sitemap = {
-        ok: true,
-        count: urls.length,
-        source: candidate
-      };
-      break;
-    } catch {
-      // Try next candidate.
+  const sitemapPromise = (async () => {
+    let sitemap: PublishedSitePrecheckResult['sitemap'] = {
+      ok: false,
+      error: 'Sitemap not found'
+    };
+    for (const candidate of sitemapCandidates) {
+      try {
+        const response = await fetchTextWithTimeout(candidate, timeoutMs);
+        if (response.status >= 400) continue;
+        const urls = extractUrlsFromSitemap(response.text, origin);
+        if (urls.length === 0) continue;
+        for (const url of urls) discovered.add(url);
+        sitemap = { ok: true, count: urls.length, source: candidate };
+        break;
+      } catch {
+        // Try next candidate.
+      }
     }
+    return sitemap;
+  })();
+
+  // Start classification on what we have so far (homepage links).
+  // Sitemap URLs get classified in a second pass if new ones appear.
+  const homepageUrls = Array.from(discovered).slice(0, 200);
+  const classifyPromise = classifyUrls(homepageUrls, startUrl);
+
+  // Wait for both to complete concurrently
+  const [sitemap, initialClassified] = await Promise.all([sitemapPromise, classifyPromise]);
+
+  // Merge any new sitemap-discovered URLs that weren't in the initial batch
+  const discoveredUrls = Array.from(discovered).slice(0, 200);
+  const newFromSitemap = discoveredUrls.filter((u) => !homepageUrls.includes(u));
+  let classifiedUrls = initialClassified;
+
+  if (newFromSitemap.length > 0) {
+    // Classify the new sitemap URLs (deterministic is instant; LLM adds ~200ms)
+    const extraClassified = await classifyUrls(newFromSitemap, startUrl);
+    classifiedUrls = [...initialClassified, ...extraClassified];
   }
 
-  const discoveredUrls = Array.from(discovered).slice(0, 200);
-  const lowercaseUrls = discoveredUrls.map((url) => url.toLowerCase());
+  // Derive requiredPages from classifications (more robust than pattern matching)
+  const hasClassification = (type: string) =>
+    classifiedUrls.some((c) => c.classification === type);
 
   return {
     startUrl,
     origin,
     discoveredUrls,
+    classifiedUrls,
     requiredPages: {
-      licenses: lowercaseUrls.some((url) => url.includes('/license')),
-      instructions: lowercaseUrls.some((url) => url.includes('/instruction') || url.includes('/guide')),
-      changelog: lowercaseUrls.some((url) => url.includes('/changelog'))
+      licenses: hasClassification('utility:license'),
+      instructions: hasClassification('utility:instructions'),
+      changelog: hasClassification('utility:changelog')
     },
     sitemap,
     errors
@@ -1168,26 +1501,49 @@ async function crawlPublishedWebMcp(
     crawlMaxPages?: number;
     crawlMaxDepth?: number;
     seedUrls?: string[];
+    /** URL classifications from precheck (attached to each crawled page result). */
+    classifiedUrls?: import('./types.js').ClassifiedUrl[];
     onProgress?: (processedPages: number, maxPages: number, message: string) => Promise<void>;
   } = {}
 ): Promise<PublishedSnippetCrawlResult> {
   const manager = getProvider();
   const provider = manager.getProvider();
   const timeout = options.timeout ?? 90000;
-  const maxPages = Math.min(Math.max(options.crawlMaxPages ?? 20, 1), 50);
-  const maxDepth = Math.min(Math.max(options.crawlMaxDepth ?? 2, 0), 4);
+  // Every page must be crawled to validate against the review rubric.
+  // Default: no cap.  Most templates have 15-40 pages; even 50 pages
+  // completes within the 5-minute timeout at ~5s/page.
+  const maxPages = options.crawlMaxPages ?? Infinity;
+  // No depth limit by default — crawl every reachable page for full coverage.
+  const maxDepth = options.crawlMaxDepth ?? Infinity;
   const origin = new URL(publishedUrl).origin;
   const startUrl = normalizeCrawlUrl(publishedUrl, origin) || `${origin}/`;
   const seedUrls = (options.seedUrls || [])
     .map((url) => normalizeCrawlUrl(url, origin))
     .filter((url): url is string => Boolean(url));
-  const initialUrls = [startUrl, ...seedUrls.filter((url) => url !== startUrl)];
+  // Prioritize critical utility pages so they're crawled before the maxPages
+  // cap is hit.  These pages are required for review checks (license text,
+  // instructions, changelog) and must not be dropped.
+  const criticalPatterns = ['/license', '/instruction', '/changelog', '/style-guide'];
+  const prioritySeedUrls = seedUrls.filter((url) => {
+    const path = new URL(url).pathname.toLowerCase();
+    return criticalPatterns.some((p) => path.includes(p));
+  });
+  const nonPrioritySeedUrls = seedUrls.filter((url) => !prioritySeedUrls.includes(url));
+  const initialUrls = [
+    startUrl,
+    ...prioritySeedUrls.filter((url) => url !== startUrl),
+    ...nonPrioritySeedUrls.filter((url) => url !== startUrl)
+  ];
   const queue: Array<{ url: string; depth: number }> = initialUrls.map((url, index) => ({
     url,
     depth: index === 0 ? 0 : 1
   }));
   const seen = new Set<string>(initialUrls);
   const pages: PublishedSnippetPageResult[] = [];
+  // Build classification lookup for tagging crawled pages
+  const classificationMap = new Map(
+    (options.classifiedUrls || []).map((c) => [c.url, c.classification])
+  );
 
   let snippetVersion: string | null = null;
   let snippetTools: string[] = [];
@@ -1219,6 +1575,7 @@ async function crawlPublishedWebMcp(
         depth: current.depth,
         title: null,
         statusCode: null,
+        classification: classificationMap.get(current.url),
         hasSnippet: false,
         snippetVersion: null,
         hasRequiredLicenseText: null,
@@ -1259,6 +1616,20 @@ async function crawlPublishedWebMcp(
             hasCustomCode: Boolean(raw.policyChecks.hasCustomCode)
           };
         }
+        if (raw?.contentQuality) {
+          pageResult.contentQuality = {
+            hasLoremIpsum: Boolean(raw.contentQuality.hasLoremIpsum),
+            hasPlaceholderText: Boolean(raw.contentQuality.hasPlaceholderText)
+          };
+        }
+        if (raw?.siteSettings) {
+          pageResult.siteSettings = {
+            hasCustomFavicon: Boolean(raw.siteSettings.hasCustomFavicon),
+            hasCustomFonts: Boolean(raw.siteSettings.hasCustomFonts),
+            customFontSources: Array.isArray(raw.siteSettings.customFontSources) ? raw.siteSettings.customFontSources : [],
+            detectedApps: Array.isArray(raw.siteSettings.detectedApps) ? raw.siteSettings.detectedApps : []
+          };
+        }
 
         if (pageResult.hasSnippet) {
           if (!snippetVersion) snippetVersion = raw?.snippetVersion ?? null;
@@ -1294,11 +1665,12 @@ async function crawlPublishedWebMcp(
           if (typeof raw?.auditError === 'string' && raw.auditError) {
             pageResult.error = raw.auditError;
           } else {
-            pageResult.summary = summarizePublishedPageAudit(raw?.audit);
+            // Sanitize audit payload to repair "s→space" font corruption
+            pageResult.summary = summarizePublishedPageAudit(sanitizeAuditPayload(raw?.audit));
           }
         } else if (raw?.audit) {
           // DOM fallback audit is available even without __wfReview
-          pageResult.summary = summarizePublishedPageAudit(raw.audit);
+          pageResult.summary = summarizePublishedPageAudit(sanitizeAuditPayload(raw.audit));
         } else {
           pageResult.error = 'window.__wfReview is not available and DOM fallback failed';
         }
@@ -1332,6 +1704,18 @@ async function crawlPublishedWebMcp(
   const issueCounts = emptyIssueCounts();
   for (const page of pages) {
     if (!page.summary) continue;
+    // Skip 404/error pages from issue aggregation — they inflate per-page
+    // counts when the crawler visits non-existent paths (e.g. /license vs
+    // /utility/license both resolve but the bare path returns the 404 page).
+    const pageTitle = (page.title || '').toLowerCase();
+    if (
+      pageTitle === 'not found' ||
+      pageTitle === '404' ||
+      pageTitle.startsWith('404 ') ||
+      pageTitle.includes('page not found')
+    ) {
+      continue;
+    }
     const summary = page.summary;
     if (summary.metaMissing.length > 0) issueCounts.metaMissing += 1;
     if (summary.headings?.missingH1) issueCounts.missingH1 += 1;
@@ -1344,10 +1728,33 @@ async function crawlPublishedWebMcp(
     if ((summary.links?.placeholderHref || 0) > 0) issueCounts.linksPlaceholderHref += 1;
     if ((summary.images?.missingDimensions || 0) > 0) issueCounts.imagesMissingDimensions += 1;
     if ((summary.images?.aboveFoldLazy || 0) > 0) issueCounts.imagesAboveFoldLazy += 1;
+    if ((summary.images?.belowFoldNotLazy || 0) > 0) issueCounts.imagesBelowFoldNotLazy += 1;
     if ((summary.forms?.missingLabels || 0) > 0) issueCounts.formsMissingLabels += 1;
     if ((summary.media?.autoplayWithoutControls || 0) > 0) issueCounts.autoplayWithoutControls += 1;
     if ((summary.media?.backgroundVideosMissingControl || 0) > 0) {
       issueCounts.backgroundVideosMissingControl += 1;
+    }
+  }
+
+  // Fallback: if the 404 audit wasn't executed (snippet unavailable), infer
+  // from any crawled page whose URL ends in /404 and has DOM audit data.
+  if ((audit404 as { error?: string }).error === '404 audit was not executed') {
+    const candidate404 = pages.find(
+      (p) => /\/404\/?$/.test(p.url) && p.summary
+    );
+    if (candidate404 && candidate404.summary) {
+      const s = candidate404.summary;
+      const navCount = s.links?.links || 0;
+      const linkCount = navCount;
+      const h1Count = s.headings?.h1 || 0;
+      audit404 = {
+        ok: true,
+        status: 404,
+        title: candidate404.title,
+        navCount,
+        linkCount,
+        h1Count
+      };
     }
   }
 
@@ -1372,6 +1779,34 @@ async function crawlPublishedWebMcp(
   }
   const uniqueAffiliateLinks = Array.from(new Set(allAffiliateLinks));
 
+  // Aggregate site settings across all pages
+  let anyPageHasCustomFavicon = false;
+  let anyPageHasCustomFonts = false;
+  const allCustomFontSources: string[] = [];
+  const allDetectedApps: string[] = [];
+  for (const page of pages) {
+    if (page.siteSettings) {
+      if (page.siteSettings.hasCustomFavicon) anyPageHasCustomFavicon = true;
+      if (page.siteSettings.hasCustomFonts) anyPageHasCustomFonts = true;
+      if (page.siteSettings.customFontSources) {
+        allCustomFontSources.push(...page.siteSettings.customFontSources);
+      }
+      if (page.siteSettings.detectedApps) {
+        allDetectedApps.push(...page.siteSettings.detectedApps);
+      }
+    }
+  }
+  const uniqueFontSources = Array.from(new Set(allCustomFontSources));
+  const uniqueDetectedApps = Array.from(new Set(allDetectedApps));
+
+  // Aggregate content quality signals
+  const pagesWithLorem = pages.filter((p) => p.contentQuality?.hasLoremIpsum);
+  const pagesWithPlaceholder = pages.filter((p) => p.contentQuality?.hasPlaceholderText);
+
+  // Collect URLs that were discovered but not crawled (maxPages cap)
+  const visitedUrls = new Set(pages.map((p) => p.url));
+  const skippedUrls = Array.from(seen).filter((url) => !visitedUrls.has(url));
+
   return {
     startUrl,
     origin,
@@ -1381,6 +1816,7 @@ async function crawlPublishedWebMcp(
     auditedPages,
     pagesWithSnippet,
     failingPages,
+    skippedUrls,
     snippetVersion,
     snippetTools,
     sitemapStatus,
@@ -1392,6 +1828,12 @@ async function crawlPublishedWebMcp(
       affiliateLinks: uniqueAffiliateLinks,
       hasGsap: anyPageHasGsap,
       hasCustomCode: anyPageHasCustomCode
+    },
+    siteSettings: {
+      hasCustomFavicon: anyPageHasCustomFavicon,
+      hasCustomFonts: anyPageHasCustomFonts,
+      customFontSources: uniqueFontSources,
+      detectedApps: uniqueDetectedApps
     },
     pages
   };
@@ -1417,10 +1859,17 @@ function mapDesignerStatus(
 function unifyRows(
   designer: DesignerChecklistReport,
   published: PublishedSnippetCrawlResult,
-  includeManual: boolean
+  includeManual: boolean,
+  precheck?: PublishedSitePrecheckResult
 ): UnifiedReviewRow[] {
   const home = published.pages.find((page) => page.url === published.startUrl) || published.pages[0] || null;
   const homeTitle = home?.title || '';
+  const totalAudited = published.auditedPages;
+  // When the Webflow Review snippet isn't available (pagesWithSnippet=0),
+  // the DOM fallback is used which is less accurate.  Apply a confidence
+  // discount to published-crawl checks so reviewers know the data quality.
+  const snippetAvailable = published.pagesWithSnippet > 0;
+  const confDiscount = snippetAvailable ? 1.0 : 0.85;
   const formatKeys = Array.from(
     new Set(
       published.pages.flatMap((page) =>
@@ -1429,14 +1878,69 @@ function unifyRows(
     )
   ).sort();
 
-  const hasLicensePage = published.pages.some((page) => page.url.toLowerCase().includes('/license'));
-  const licensePages = published.pages.filter((page) => page.url.toLowerCase().includes('/license'));
+  // Match /license, /licenses, /licensing, /templates/licensing, etc.
+  const licenseUrlPattern = '/licens';
+  const hasLicensePageCrawled = published.pages.some(
+    (page) => page.url.toLowerCase().includes(licenseUrlPattern)
+  );
+  // Fall back to precheck discovered URLs when the license page wasn't crawled
+  // (e.g. maxPages cap was hit before reaching utility pages).
+  const hasLicensePageDiscovered = precheck?.discoveredUrls?.some(
+    (url) => url.toLowerCase().includes(licenseUrlPattern)
+  ) ?? false;
+  const hasLicensePage = hasLicensePageCrawled || hasLicensePageDiscovered;
+  const licensePages = published.pages.filter(
+    (page) => page.url.toLowerCase().includes(licenseUrlPattern)
+  );
   const hasKnownLicenseTextResult = licensePages.some(
     (page) => typeof page.hasRequiredLicenseText === 'boolean'
   );
   const hasRequiredLicenseText = licensePages.some((page) => page.hasRequiredLicenseText === true);
 
   const rows: UnifiedReviewRow[] = [];
+  // Severity mapping: checks are classified by impact on template quality
+  const severityMap: Record<string, import('./types.js').UnifiedReviewSeverity> = {
+    // Critical: blocks publishing or causes user-facing breakage
+    'policy.powered_by_webflow': 'critical',
+    'policy.no_affiliate_links': 'critical',
+    'pages.home_seo_title_formula': 'critical',
+    'pages.license_text_exact': 'critical',
+    'pages.custom_404': 'major',
+    // Major: significant quality issues
+    'webflow_audit.h1_hierarchy': 'major',
+    'webflow_audit.alt_text': 'major',
+    'components.nav_footer_cta': 'major',
+    'pages.meta_tags_static': 'major',
+    'pages.cms_used_relational': 'major',
+    'styles.base_tag_styles': 'major',
+    // Minor: nice to have, lower impact
+    'components.title_case_names': 'minor',
+    'pages.image_loading_strategy': 'minor',
+    'pages.image_dimensions': 'minor',
+    'pages.videos_controls': 'minor',
+    'variables.breakpoint_modes': 'minor',
+    'assets.modern_formats': 'minor',
+    // Info: informational, doesn't affect quality rating
+    'policy.gsap_detected': 'info',
+    'policy.custom_code_detected': 'info',
+    'pages.meta_tags_cms_dynamic': 'info',
+    // Accessibility
+    'a11y.link_accessible_names': 'major',
+    // Links & forms
+    'links.no_empty_href': 'major',
+    'links.no_broken_internal': 'major',
+    'links.external_target_blank': 'minor',
+    'forms.labels_present': 'major',
+    // Content quality
+    'content.no_placeholder_text': 'critical',
+    // Site settings: from the review checklist
+    'settings.custom_favicon': 'minor',
+    'settings.custom_fonts': 'major',
+    'settings.no_connected_apps': 'major',
+    // Coverage: critical — incomplete coverage means the review is not complete
+    'coverage.all_pages_crawled': 'critical',
+  };
+
   const pushRow = (
     id: string,
     section: string,
@@ -1447,7 +1951,19 @@ function unifyRows(
     confidence: number,
     fixHint?: string
   ) => {
-    rows.push({ id, section, requirement, status, evidence, source, confidence, fixHint });
+    // Apply confidence discount for published-crawl checks when snippet is absent
+    const adjustedConfidence = source.includes('published-webmcp-crawl')
+      ? Math.round(confidence * confDiscount * 100) / 100
+      : confidence;
+    const adjustedEvidence = !snippetAvailable && source.includes('published-webmcp-crawl')
+      ? [...evidence, 'Note: Webflow Review snippet not available — using DOM fallback (lower accuracy)']
+      : evidence;
+    const severity = severityMap[id] || 'minor';
+    rows.push({
+      id, section, requirement, status, severity,
+      evidence: adjustedEvidence, source,
+      confidence: adjustedConfidence, fixHint
+    });
   };
 
   const dNavFooter = mapDesignerStatus(designer, 'components.nav_footer_cta');
@@ -1460,6 +1976,21 @@ function unifyRows(
   const dComboDepth = mapDesignerStatus(designer, 'styles.combo_class_depth');
   const dCmsRel = mapDesignerStatus(designer, 'cms.collection_pages_present');
 
+  // Helper: extract short paths for pages matching a predicate (for evidence)
+  const failingPaths = (
+    predicate: (summary: PageAuditSummary) => boolean,
+    limit = 5
+  ): string[] => {
+    const origin = published.origin;
+    return published.pages
+      .filter((p) => p.summary && predicate(p.summary))
+      .map((p) => p.url.replace(origin, ''))
+      .slice(0, limit);
+  };
+
+  const h1FailPages = failingPaths(
+    (s) => Boolean(s.headings?.missingH1) || Boolean(s.headings?.multipleH1) || (s.headings?.skippedHeadingLevels ?? 0) > 0
+  );
   pushRow(
     'webflow_audit.h1_hierarchy',
     'Webflow Audit Panel',
@@ -1470,21 +2001,26 @@ function unifyRows(
       ? 'fail'
       : 'pass',
     [
-      `missingH1Pages=${published.issueCounts.missingH1}`,
-      `multipleH1Pages=${published.issueCounts.multipleH1}`,
-      `skippedHeadingLevelsPages=${published.issueCounts.skippedHeadingLevels}`
+      `missingH1Pages=${published.issueCounts.missingH1}/${totalAudited}`,
+      `multipleH1Pages=${published.issueCounts.multipleH1}/${totalAudited}`,
+      `skippedHeadingLevelsPages=${published.issueCounts.skippedHeadingLevels}/${totalAudited}`,
+      ...(h1FailPages.length > 0 ? [`affectedPages=${h1FailPages.join(', ')}`] : [])
     ],
     ['published-webmcp-crawl'],
     0.9,
     'Fix heading hierarchy per page and keep a single primary H1.'
   );
 
+  const altFailPages = failingPaths((s) => (s.images?.missingAlt ?? 0) > 0);
   pushRow(
     'webflow_audit.alt_text',
     'Webflow Audit Panel',
     'No missing alt texts',
     published.issueCounts.imagesMissingAlt > 0 ? 'fail' : 'pass',
-    [`pagesWithMissingAlt=${published.issueCounts.imagesMissingAlt}`],
+    [
+      `pagesWithMissingAlt=${published.issueCounts.imagesMissingAlt}/${totalAudited}`,
+      ...(altFailPages.length > 0 ? [`affectedPages=${altFailPages.join(', ')}`] : [])
+    ],
     ['published-webmcp-crawl'],
     0.9,
     'Add descriptive alt text for informative images and mark decorative images appropriately.'
@@ -1591,29 +2127,60 @@ function unifyRows(
     ['designer-mcp'],
     0.2
   );
+  // Supplement combo depth with DOM-extracted data when Designer check is manual
+  const comboPages = published.pages.filter((p) => p.summary?.comboClassDepth);
+  const maxComboDepth = comboPages.reduce(
+    (max, p) => Math.max(max, p.summary?.comboClassDepth?.maxDepth || 0), 0
+  );
+  const worstComboSelector = comboPages
+    .sort((a, b) => (b.summary?.comboClassDepth?.maxDepth || 0) - (a.summary?.comboClassDepth?.maxDepth || 0))
+    [0]?.summary?.comboClassDepth?.maxDepthSelector || '';
+  const hasComboData = comboPages.length > 0;
+  const comboStatus: UnifiedReviewStatus =
+    dComboDepth.status !== 'manual' ? dComboDepth.status
+      : !hasComboData ? 'manual'
+      : maxComboDepth <= 4 ? 'pass'
+      : maxComboDepth <= 6 ? 'partial'
+      : 'fail';
+  const comboEvidence = hasComboData && dComboDepth.status === 'manual'
+    ? [
+        `maxClassesOnElement=${maxComboDepth}`,
+        `worstElement=${worstComboSelector}`,
+        `pagesChecked=${comboPages.length}`
+      ]
+    : dComboDepth.evidence;
   pushRow(
     'styles.combo_depth',
     'Styles Selector',
     'No more than 3-4 combo classes stacked per element',
-    dComboDepth.status,
-    dComboDepth.evidence,
-    ['designer-mcp'],
-    dComboDepth.confidence
+    comboStatus,
+    comboEvidence,
+    hasComboData ? ['designer-mcp', 'published-webmcp-crawl'] : ['designer-mcp'],
+    hasComboData ? 0.6 : dComboDepth.confidence
   );
 
   const htmlSuffix = ' - Webflow HTML website template';
   const ecomSuffix = ' - Webflow Ecommerce website template';
-  const hasSuffix = homeTitle.includes(htmlSuffix) || homeTitle.includes(ecomSuffix);
+  const homeTitleLower = homeTitle.toLowerCase();
+  const hasSuffix =
+    homeTitleLower.includes(htmlSuffix.toLowerCase()) ||
+    homeTitleLower.includes(ecomSuffix.toLowerCase());
   const siteName = designer.metadataSummary.siteName || '';
-  const titlePrefix = homeTitle.includes(htmlSuffix)
-    ? homeTitle.split(htmlSuffix)[0]?.trim()
-    : homeTitle.includes(ecomSuffix)
-      ? homeTitle.split(ecomSuffix)[0]?.trim()
+  const titlePrefix = homeTitleLower.includes(htmlSuffix.toLowerCase())
+    ? homeTitle.slice(0, homeTitleLower.indexOf(htmlSuffix.toLowerCase())).trim()
+    : homeTitleLower.includes(ecomSuffix.toLowerCase())
+      ? homeTitle.slice(0, homeTitleLower.indexOf(ecomSuffix.toLowerCase())).trim()
       : '';
+  // The Designer-extracted site name often includes "Webflow - " prefix
+  // (e.g. "Webflow - Meetup W").  Strip common prefixes before comparing.
+  const siteNameCleaned = siteName
+    .replace(/^webflow\s*[-–—]\s*/i, '')
+    .trim();
   const nameMatchesSite =
     !siteName || !titlePrefix
       ? false
-      : titlePrefix.toLowerCase() === siteName.toLowerCase();
+      : titlePrefix.toLowerCase() === siteName.toLowerCase() ||
+        titlePrefix.toLowerCase() === siteNameCleaned.toLowerCase();
   const homeTitleCompliant = hasSuffix && (nameMatchesSite || !siteName);
   const homeTitleEvidence = [
     `homeTitle=${homeTitle || 'n/a'}`,
@@ -1633,36 +2200,61 @@ function unifyRows(
     'Set homepage title to "{Template Name} - Webflow HTML website template" (or Ecommerce variant). The prefix must match the template name.'
   );
 
-  pushRow(
-    'pages.license_text_exact',
-    'Page Level Checks',
-    'License page includes the exact required opening text',
-    !hasLicensePage
-      ? 'fail'
+  // When the license page was discovered (precheck) but not crawled (maxPages
+  // cap), report 'partial' instead of 'fail' — the page exists but we couldn't
+  // verify the text content.
+  const licenseNotCrawledButDiscovered = !hasLicensePageCrawled && hasLicensePageDiscovered;
+  const licenseStatus: UnifiedReviewStatus = !hasLicensePage
+    ? 'fail'
+    : licenseNotCrawledButDiscovered
+      ? 'partial'
       : hasKnownLicenseTextResult
         ? hasRequiredLicenseText
           ? 'pass'
           : 'fail'
-        : 'partial',
+        : 'partial';
+  pushRow(
+    'pages.license_text_exact',
+    'Page Level Checks',
+    'License page includes the exact required opening text',
+    licenseStatus,
     [
       `licensePageFound=${hasLicensePage}`,
+      `licensePageCrawled=${hasLicensePageCrawled}`,
       `hasKnownLicenseTextResult=${hasKnownLicenseTextResult}`,
-      `hasRequiredLicenseText=${hasRequiredLicenseText}`
+      `hasRequiredLicenseText=${hasRequiredLicenseText}`,
+      ...(licenseNotCrawledButDiscovered
+        ? ['License page exists but was not crawled (maxPages cap) — verify text manually']
+        : [])
     ],
     ['published-webmcp-crawl', 'designer-mcp'],
     hasKnownLicenseTextResult ? 0.85 : 0.5,
     'Ensure /licenses page exists and starts with the required exact text.'
   );
 
+  // Webflow manages the loading attribute for images.  Shared component images
+  // (nav logo, menu icon) appear above-fold on every page and are often set to
+  // lazy by the platform.  Lower confidence when every page is affected (likely
+  // a shared component, not a per-page authoring issue).
+  const lazyAboveFoldCount = published.issueCounts.imagesAboveFoldLazy;
+  const notLazyBelowFold = (published.issueCounts as { imagesBelowFoldNotLazy?: number }).imagesBelowFoldNotLazy || 0;
+  const allPagesAffected = lazyAboveFoldCount === totalAudited && totalAudited > 1;
+  const hasLoadingIssues = lazyAboveFoldCount > 0 || notLazyBelowFold > 0;
   pushRow(
     'pages.image_loading_strategy',
     'Page Level Checks',
     'Below-the-fold images are lazy-loaded and above-the-fold essentials are eager',
-    published.issueCounts.imagesAboveFoldLazy > 0 ? 'fail' : 'pass',
-    [`pagesWithAboveFoldLazy=${published.issueCounts.imagesAboveFoldLazy}`],
+    hasLoadingIssues ? 'fail' : 'pass',
+    [
+      `pagesWithAboveFoldLazy=${lazyAboveFoldCount}/${totalAudited}`,
+      `pagesWithBelowFoldNotLazy=${notLazyBelowFold}/${totalAudited}`,
+      ...(allPagesAffected
+        ? ['All pages affected — likely shared component images (nav/header) set to lazy by Webflow']
+        : [])
+    ],
     ['published-webmcp-crawl'],
-    0.87,
-    'Set hero/critical images to eager and keep below-fold images lazy.'
+    allPagesAffected ? 0.6 : 0.87,
+    'Set hero/critical images to eager and keep below-fold images lazy. Note: Webflow may manage loading attributes for shared components.'
   );
 
   const videoControlsFail =
@@ -1681,12 +2273,28 @@ function unifyRows(
     0.86
   );
 
+  // Aggregate which specific meta tags are most commonly missing
+  const metaTagCounts: Record<string, number> = {};
+  for (const page of published.pages) {
+    if (!page.summary) continue;
+    for (const tag of page.summary.metaMissing) {
+      metaTagCounts[tag] = (metaTagCounts[tag] || 0) + 1;
+    }
+  }
+  const topMissingTags = Object.entries(metaTagCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([tag, count]) => `${tag}(${count}/${totalAudited})`);
+
   pushRow(
     'pages.meta_tags_static',
     'Page Level Checks',
     'Each static page has meta title, meta description and Open Graph tags',
     published.issueCounts.metaMissing > 0 ? 'fail' : 'pass',
-    [`pagesWithMissingMeta=${published.issueCounts.metaMissing}`],
+    [
+      `pagesWithMissingMeta=${published.issueCounts.metaMissing}/${totalAudited}`,
+      ...(topMissingTags.length > 0 ? [`mostCommonMissing=${topMissingTags.join(', ')}`] : [])
+    ],
     ['published-webmcp-crawl'],
     0.9,
     'Add missing Open Graph/meta tags per page, including og:image.'
@@ -1706,6 +2314,7 @@ function unifyRows(
   );
 
   const a404 = published.audit404;
+  const a404WasExecuted = a404.ok !== false || !(a404 as { error?: string }).error;
   const a404Status = asFiniteNumber((a404 as Record<string, unknown>).status);
   const a404NavCount = asFiniteNumber((a404 as Record<string, unknown>).navCount);
   const a404LinkCount = asFiniteNumber((a404 as Record<string, unknown>).linkCount);
@@ -1714,49 +2323,115 @@ function unifyRows(
     a404Status === 404 &&
     a404NavCount > 0 &&
     a404LinkCount > 0;
+  // When the 404 audit was never executed (snippet unavailable and no /404
+  // page was crawled), report as 'manual' instead of a false 'fail'.
+  const a404Result: UnifiedReviewStatus = !a404WasExecuted
+    ? 'manual'
+    : hasHealthy404 ? 'pass' : 'fail';
   pushRow(
     'pages.custom_404',
     'Page Level Checks',
     'Custom branded 404 page exists with nav and CTAs',
-    hasHealthy404 ? 'pass' : 'fail',
-    [
-      `status=${a404Status || 'n/a'}`,
-      `navCount=${a404NavCount || 'n/a'}`,
-      `linkCount=${a404LinkCount || 'n/a'}`
-    ],
+    a404Result,
+    a404WasExecuted
+      ? [
+          `status=${a404Status || 'n/a'}`,
+          `navCount=${a404NavCount || 'n/a'}`,
+          `linkCount=${a404LinkCount || 'n/a'}`
+        ]
+      : ['404 audit was not executed — verify manually'],
     ['published-webmcp-crawl'],
-    0.92
+    a404WasExecuted ? 0.92 : 0.2,
+    a404Result === 'fail'
+      ? 'Ensure a custom 404 page exists with navigation and links back to the site.'
+      : undefined
   );
 
+  const dimsMissingCount = published.issueCounts.imagesMissingDimensions;
+  const allPagesDimsMissing = dimsMissingCount === totalAudited && totalAudited > 1;
   pushRow(
     'pages.image_dimensions',
     'Page Level Checks',
     'Images have explicit width/height or aspect-ratio hints',
-    published.issueCounts.imagesMissingDimensions > 0 ? 'fail' : 'pass',
-    [`pagesWithMissingImageDimensions=${published.issueCounts.imagesMissingDimensions}`],
+    dimsMissingCount > 0 ? 'fail' : 'pass',
+    [
+      `pagesWithMissingImageDimensions=${dimsMissingCount}/${totalAudited}`,
+      ...(allPagesDimsMissing
+        ? ['All pages affected — Webflow does not always emit explicit width/height attributes']
+        : [])
+    ],
     ['published-webmcp-crawl'],
-    0.9,
+    allPagesDimsMissing ? 0.7 : 0.9,
     'Add width/height attributes or explicit aspect-ratio to image elements.'
   );
 
+  // Aggregate transition data across crawled pages
+  const transitionPages = published.pages.filter((p) => p.summary?.transitions);
+  const totalTransitionEls = transitionPages.reduce(
+    (sum, p) => sum + (p.summary?.transitions?.totalInteractive || 0), 0
+  );
+  const totalWithTransition = transitionPages.reduce(
+    (sum, p) => sum + (p.summary?.transitions?.withTransition || 0), 0
+  );
+  const transitionRatio = totalTransitionEls > 0 ? totalWithTransition / totalTransitionEls : 0;
+  const hasTransitionData = transitionPages.length > 0;
   pushRow(
     'pages.transition_simple',
     'Page Level Checks',
     'Simple CSS transitions are used for hover/press states',
-    'manual',
-    ['Transition-property linting is not included in this tool yet.'],
+    !hasTransitionData ? 'manual'
+      : transitionRatio >= 0.5 ? 'pass'
+      : transitionRatio >= 0.2 ? 'partial'
+      : 'fail',
+    hasTransitionData
+      ? [
+          `interactiveElements=${totalTransitionEls}`,
+          `withTransitions=${totalWithTransition}`,
+          `ratio=${Math.round(transitionRatio * 100)}%`
+        ]
+      : ['Transition data not available.'],
     ['published-webmcp-crawl'],
-    0.2
+    hasTransitionData ? 0.65 : 0.2,
+    transitionRatio < 0.5
+      ? 'Add CSS transitions (e.g. transition: opacity 0.2s ease) to buttons, links, and interactive elements for hover/press states.'
+      : undefined
   );
 
+  // Aggregate contrast data across crawled pages
+  const contrastPages = published.pages.filter((p) => p.summary?.contrast && p.summary.contrast.checked > 0);
+  const totalContrastChecked = contrastPages.reduce(
+    (sum, p) => sum + (p.summary?.contrast?.checked || 0), 0
+  );
+  const totalContrastPass = contrastPages.reduce(
+    (sum, p) => sum + (p.summary?.contrast?.pass || 0), 0
+  );
+  const totalContrastFail = contrastPages.reduce(
+    (sum, p) => sum + (p.summary?.contrast?.fail || 0), 0
+  );
+  const contrastPassRate = totalContrastChecked > 0 ? totalContrastPass / totalContrastChecked : 1;
+  const hasContrastData = totalContrastChecked > 0;
   pushRow(
     'pages.wcag_contrast',
     'Page Level Checks',
     'WCAG contrast is met for default/hover/focus/active states',
-    'manual',
-    ['Color contrast computation is not included in this tool yet.'],
+    !hasContrastData ? 'manual'
+      : contrastPassRate >= 0.9 ? 'pass'
+      : contrastPassRate >= 0.7 ? 'partial'
+      : 'fail',
+    hasContrastData
+      ? [
+          `elementsChecked=${totalContrastChecked}`,
+          `passing=${totalContrastPass}`,
+          `failing=${totalContrastFail}`,
+          `passRate=${Math.round(contrastPassRate * 100)}%`,
+          'Note: checks computed styles only — hover/focus states require manual verification'
+        ]
+      : ['Color contrast data not available.'],
     ['published-webmcp-crawl'],
-    0.2
+    hasContrastData ? 0.6 : 0.2,
+    totalContrastFail > 0
+      ? `${totalContrastFail} element(s) may not meet WCAG AA contrast ratio. Check text-on-background combinations.`
+      : undefined
   );
 
   pushRow(
@@ -1780,18 +2455,40 @@ function unifyRows(
     0.86
   );
 
+  // Combine Designer breakpoint data with page count for a partial responsive signal.
+  // Full visual validation requires multi-viewport screenshots (not yet automated).
+  const hasAllBreakpoints = dVarBreakpoints.status === 'pass';
+  const multiplePagesCrawled = totalAudited > 1;
+  const responsiveStatus: UnifiedReviewStatus = hasAllBreakpoints
+    ? 'partial'
+    : 'fail';
   pushRow(
     'responsive.multi_breakpoint_check',
     'Page Level Checks',
     'Responsive checks have been run on homepage and at least one additional page',
-    'manual',
-    ['This run does not include multi-viewport screenshot assertions.'],
-    ['published-webmcp-crawl'],
-    0.2
+    responsiveStatus,
+    [
+      `designerBreakpoints=${hasAllBreakpoints ? 'all present' : 'incomplete'}`,
+      `pagesCrawled=${totalAudited}`,
+      'Visual multi-viewport screenshot assertions not yet automated — verify manually.'
+    ],
+    ['designer-mcp', 'published-webmcp-crawl'],
+    hasAllBreakpoints ? 0.4 : 0.3
   );
 
   // Policy checks (deterministic)
   const policy = published.policyChecks;
+  // Check if an instructions page was found (from Designer metadata or crawl)
+  const hasInstructionsPage =
+    designer.metadataSummary.pages.some(
+      (p) => p.name.toLowerCase().includes('instruction')
+    ) ||
+    published.pages.some(
+      (p) => p.url.toLowerCase().includes('/instruction')
+    ) ||
+    (precheck?.discoveredUrls ?? []).some(
+      (url) => url.toLowerCase().includes('/instruction')
+    );
   pushRow(
     'policy.powered_by_webflow',
     'Submission Policy',
@@ -1817,33 +2514,286 @@ function unifyRows(
     0.85,
     'Remove all affiliate and referral links before submission.'
   );
+  // GSAP detected + instructions page exists = pass (requirement met).
+  // GSAP detected + no instructions page = partial (needs documentation).
+  const gsapStatus: UnifiedReviewStatus = !policy.hasGsap
+    ? 'pass'
+    : hasInstructionsPage ? 'pass' : 'partial';
   pushRow(
     'policy.gsap_detected',
     'Submission Policy',
     'GSAP/ScrollTrigger usage detected (requires instructions page and library attachment)',
-    policy.hasGsap ? 'partial' : 'pass',
+    gsapStatus,
     [
       `hasGsap=${policy.hasGsap}`,
-      ...(policy.hasGsap
-        ? ['GSAP detected: ensure an Instructions page explains setup and GSAP is attached as a library.']
+      `hasInstructionsPage=${hasInstructionsPage}`,
+      ...(policy.hasGsap && !hasInstructionsPage
+        ? ['GSAP detected but no Instructions page found — add one documenting setup.']
+        : []),
+      ...(policy.hasGsap && hasInstructionsPage
+        ? ['GSAP detected and Instructions page exists.']
         : [])
     ],
     ['published-webmcp-crawl'],
-    policy.hasGsap ? 0.75 : 0.85
+    policy.hasGsap ? (hasInstructionsPage ? 0.85 : 0.75) : 0.85
   );
+  // Same pattern for custom code: detected + instructions = pass.
+  const customCodeStatus: UnifiedReviewStatus = !policy.hasCustomCode
+    ? 'pass'
+    : hasInstructionsPage ? 'pass' : 'partial';
   pushRow(
     'policy.custom_code_detected',
     'Submission Policy',
     'Custom code is present (requires instructions page)',
-    policy.hasCustomCode ? 'partial' : 'pass',
+    customCodeStatus,
     [
       `hasCustomCode=${policy.hasCustomCode}`,
-      ...(policy.hasCustomCode
-        ? ['Custom code detected: ensure an Instructions page documents custom code usage.']
+      `hasInstructionsPage=${hasInstructionsPage}`,
+      ...(policy.hasCustomCode && !hasInstructionsPage
+        ? ['Custom code detected but no Instructions page found — add one documenting usage.']
+        : []),
+      ...(policy.hasCustomCode && hasInstructionsPage
+        ? ['Custom code detected and Instructions page exists.']
         : [])
     ],
     ['published-webmcp-crawl'],
-    policy.hasCustomCode ? 0.7 : 0.85
+    policy.hasCustomCode ? (hasInstructionsPage ? 0.85 : 0.7) : 0.85
+  );
+
+  // Internal broken link detection: cross-reference all discovered internal links
+  // against the set of pages that were actually crawled successfully.
+  const crawledUrls = new Set(
+    published.pages
+      .filter((p) => !is404PageTitle(p.title))
+      .map((p) => p.url.toLowerCase().replace(/\/$/, ''))
+  );
+  // Collect all internal links from all crawled pages (from the per-page link extraction)
+  const allInternalLinks = new Set<string>();
+  for (const page of published.pages) {
+    if (!page.summary) continue;
+    // The links count is in the summary but individual URLs aren't stored.
+    // Use the page's discovered links from the crawl queue instead.
+  }
+  // Use precheck discovered URLs + seed URLs as the "should exist" set
+  const allKnownUrls = new Set(
+    (precheck?.discoveredUrls || []).map((u) => u.toLowerCase().replace(/\/$/, ''))
+  );
+  const brokenInternalLinks: string[] = [];
+  for (const knownUrl of allKnownUrls) {
+    // Check if any crawled page with this URL returned a 404 title
+    const matchingPage = published.pages.find(
+      (p) => p.url.toLowerCase().replace(/\/$/, '') === knownUrl
+    );
+    if (matchingPage && is404PageTitle(matchingPage.title)) {
+      brokenInternalLinks.push(new URL(knownUrl).pathname);
+    }
+  }
+  pushRow(
+    'links.no_broken_internal',
+    'Page Level Checks',
+    'No broken internal links (all linked pages resolve correctly)',
+    brokenInternalLinks.length === 0 ? 'pass' : 'fail',
+    [
+      `brokenLinks=${brokenInternalLinks.length}`,
+      ...(brokenInternalLinks.length > 0
+        ? [`paths=${brokenInternalLinks.slice(0, 10).join(', ')}`]
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.85,
+    brokenInternalLinks.length > 0
+      ? `${brokenInternalLinks.length} internal link(s) resolve to 404. Fix or remove these links.`
+      : undefined
+  );
+
+  // Accessible link names: links without text, aria-label, or img alt
+  const missingAccessibleNameCount = published.issueCounts.linksMissingAccessibleName;
+  pushRow(
+    'a11y.link_accessible_names',
+    'Accessibility',
+    'All links have accessible names (text, aria-label, or nested img alt)',
+    missingAccessibleNameCount === 0 ? 'pass' : 'fail',
+    [`pagesWithIssue=${missingAccessibleNameCount}/${totalAudited}`],
+    ['published-webmcp-crawl'],
+    0.85,
+    missingAccessibleNameCount > 0
+      ? 'Add text content, aria-label, or nested img with alt to all links.'
+      : undefined
+  );
+
+  // Empty href links: these are broken navigation elements
+  const emptyHrefCount = published.issueCounts.linksEmptyHref;
+  pushRow(
+    'links.no_empty_href',
+    'Page Level Checks',
+    'No links with empty href attributes',
+    emptyHrefCount === 0 ? 'pass' : 'fail',
+    [`pagesWithEmptyHref=${emptyHrefCount}/${totalAudited}`],
+    ['published-webmcp-crawl'],
+    0.85,
+    emptyHrefCount > 0
+      ? 'Fix or remove links with empty href="" attributes — they cause navigation issues.'
+      : undefined
+  );
+
+  // External links: should have target="_blank" and rel="noopener"
+  const blankTargetMissingRelCount = published.issueCounts.linksMissingRel;
+  pushRow(
+    'links.external_target_blank',
+    'Page Level Checks',
+    'External links open in new tab with rel="noopener"',
+    blankTargetMissingRelCount === 0 ? 'pass' : 'fail',
+    [`pagesWithMissingRel=${blankTargetMissingRelCount}/${totalAudited}`],
+    ['published-webmcp-crawl'],
+    0.8,
+    blankTargetMissingRelCount > 0
+      ? 'Add rel="noopener" to all external links with target="_blank".'
+      : undefined
+  );
+
+  // Form validation: check forms have labels, required fields, and submission handling
+  const formPages = published.pages.filter(
+    (p) => p.summary && (p.summary.forms?.fields || 0) > 0
+  );
+  const totalFormFields = formPages.reduce(
+    (sum, p) => sum + (p.summary?.forms?.fields || 0), 0
+  );
+  const totalMissingLabels = formPages.reduce(
+    (sum, p) => sum + (p.summary?.forms?.missingLabels || 0), 0
+  );
+  const formLabelRatio = totalFormFields > 0
+    ? (totalFormFields - totalMissingLabels) / totalFormFields
+    : 1;
+  pushRow(
+    'forms.labels_present',
+    'Page Level Checks',
+    'All form fields have associated labels or aria-labels',
+    totalMissingLabels === 0 ? 'pass'
+      : formLabelRatio >= 0.8 ? 'partial'
+      : 'fail',
+    [
+      `totalFields=${totalFormFields}`,
+      `missingLabels=${totalMissingLabels}`,
+      `pagesWithForms=${formPages.length}`,
+      `labelCoverage=${Math.round(formLabelRatio * 100)}%`
+    ],
+    ['published-webmcp-crawl'],
+    0.8,
+    totalMissingLabels > 0
+      ? `${totalMissingLabels} form field(s) missing labels. Add <label for="..."> or aria-label attributes.`
+      : undefined
+  );
+
+  // Content quality checks
+  const loremPages = published.pages.filter((p) => p.contentQuality?.hasLoremIpsum);
+  const placeholderPages = published.pages.filter((p) => p.contentQuality?.hasPlaceholderText);
+  const loremPaths = loremPages
+    .map((p) => p.url.replace(published.origin, ''))
+    .slice(0, 5);
+  const placeholderPaths = placeholderPages
+    .map((p) => p.url.replace(published.origin, ''))
+    .slice(0, 5);
+  const hasContentIssues = loremPages.length > 0 || placeholderPages.length > 0;
+  pushRow(
+    'content.no_placeholder_text',
+    'Content Quality',
+    'No Lorem Ipsum or placeholder text on any page',
+    hasContentIssues ? 'fail' : 'pass',
+    [
+      `pagesWithLoremIpsum=${loremPages.length}/${totalAudited}`,
+      `pagesWithPlaceholderText=${placeholderPages.length}/${totalAudited}`,
+      ...(loremPaths.length > 0 ? [`loremPages=${loremPaths.join(', ')}`] : []),
+      ...(placeholderPaths.length > 0 ? [`placeholderPages=${placeholderPaths.join(', ')}`] : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.9,
+    hasContentIssues
+      ? 'Remove all Lorem Ipsum and placeholder text before submission. Replace with real sample content.'
+      : undefined
+  );
+
+  // Site settings checks (from review checklist: favicons, fonts, connected apps)
+  const settings = published.siteSettings;
+  pushRow(
+    'settings.custom_favicon',
+    'Site Settings',
+    'Custom favicon is set (not the default Webflow favicon)',
+    settings.hasCustomFavicon ? 'pass' : 'fail',
+    [`hasCustomFavicon=${settings.hasCustomFavicon}`],
+    ['published-webmcp-crawl'],
+    0.85,
+    'Upload a custom favicon in Site Settings to replace the default Webflow icon.'
+  );
+
+  // Custom fonts: if present, they need a license page or to be from a free source
+  const hasLicensedFonts = settings.hasCustomFonts && (
+    settings.customFontSources.some((s) => s.includes('fonts.googleapis.com')) ||
+    hasLicensePage
+  );
+  pushRow(
+    'settings.custom_fonts',
+    'Site Settings',
+    'No custom fonts, or custom fonts have proper licensing documented',
+    !settings.hasCustomFonts ? 'pass'
+      : hasLicensedFonts ? 'pass'
+      : 'fail',
+    [
+      `hasCustomFonts=${settings.hasCustomFonts}`,
+      ...(settings.customFontSources.length > 0
+        ? [`sources=${settings.customFontSources.slice(0, 3).map((s) => new URL(s).hostname).join(', ')}`]
+        : []),
+      ...(settings.hasCustomFonts && !hasLicensedFonts
+        ? ['Custom fonts detected without license documentation']
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.8,
+    settings.hasCustomFonts && !hasLicensedFonts
+      ? 'Document font licenses on the License page, or use free fonts (Google Fonts).'
+      : undefined
+  );
+
+  pushRow(
+    'settings.no_connected_apps',
+    'Site Settings',
+    'No connected third-party apps or tracking scripts',
+    settings.detectedApps.length === 0 ? 'pass' : 'fail',
+    [
+      `detectedApps=${settings.detectedApps.length}`,
+      ...(settings.detectedApps.length > 0
+        ? [`apps=${settings.detectedApps.join(', ')}`]
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.85,
+    settings.detectedApps.length > 0
+      ? `Remove connected apps before submission: ${settings.detectedApps.join(', ')}`
+      : undefined
+  );
+
+  // Coverage check: flag if any pages were not crawled
+  const skipped = published.skippedUrls || [];
+  const coveragePct = published.visitedPages > 0
+    ? Math.round((published.visitedPages / (published.visitedPages + skipped.length)) * 100)
+    : 0;
+  pushRow(
+    'coverage.all_pages_crawled',
+    'Page Level Checks',
+    'All template pages were crawled and evaluated against the rubric',
+    skipped.length === 0 ? 'pass' : 'fail',
+    [
+      `crawled=${published.visitedPages}`,
+      `skipped=${skipped.length}`,
+      `coverage=${coveragePct}%`,
+      ...(skipped.length > 0
+        ? [`skippedUrls=${skipped.slice(0, 10).map((u) => new URL(u).pathname).join(', ')}`]
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    0.95,
+    skipped.length > 0
+      ? `${skipped.length} page(s) were not crawled. Increase crawlMaxPages or review manually.`
+      : undefined
   );
 
   return includeManual ? rows : rows.filter((row) => row.status !== 'manual');
@@ -1888,10 +2838,23 @@ async function executeTemplateReview(
 
   if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
 
-  // Derive published URLs from Designer page names to improve crawl coverage
+  // Use URL classifications to build the crawl queue.
+  // Critical pages (license, instructions, changelog, style-guide, homepage) go first.
+  // Error pages (404, password) are excluded — they waste browser time.
+  // The classifier (LLM or deterministic) handles non-standard naming.
+  const classified = precheck.classifiedUrls || [];
+  const priorityOrder: Record<string, number> = { critical: 0, normal: 1, low: 2 };
+
+  // Filter out error pages and sort by priority
+  const classifiedSeedUrls = classified
+    .filter((c) => c.classification !== 'error-page')
+    .sort((a, b) => (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1))
+    .map((c) => c.url);
+
+  // Also resolve Designer page slugs against discovered URLs to fill gaps
   const publishedOrigin = new URL(input.publishedUrl).origin;
+  const discoveredLower = precheck.discoveredUrls.map((u) => u.toLowerCase());
   const designerPageSlugs = designer.metadataSummary.pages
-    .filter((p) => p.type === 'static' || p.type === 'utility')
     .map((p) => {
       const slug = p.name
         .toLowerCase()
@@ -1899,16 +2862,24 @@ async function executeTemplateReview(
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '');
-      return slug === 'home' ? publishedOrigin : `${publishedOrigin}/${slug}`;
+      if (slug === 'home') return publishedOrigin;
+      const bareUrl = `${publishedOrigin}/${slug}`;
+      if (discoveredLower.includes(bareUrl.toLowerCase())) return bareUrl;
+      const match = precheck.discoveredUrls.find(
+        (u) => u.toLowerCase().endsWith(`/${slug}`)
+      );
+      return match || null;
     })
-    .filter(Boolean);
-  const allSeedUrls = Array.from(new Set([...precheck.discoveredUrls, ...designerPageSlugs]));
+    .filter((url): url is string => url !== null);
+
+  const allSeedUrls = Array.from(new Set([...classifiedSeedUrls, ...designerPageSlugs]));
 
   const published = await crawlPublishedWebMcp(input.publishedUrl, {
     timeout: input.timeout,
     crawlMaxPages: input.crawlMaxPages,
     crawlMaxDepth: input.crawlMaxDepth,
     seedUrls: allSeedUrls,
+    classifiedUrls: precheck.classifiedUrls,
     onProgress: reportProgress
       ? async (processedPages, maxPages, message) => {
           const cappedMax = Math.max(1, maxPages);
@@ -1921,19 +2892,61 @@ async function executeTemplateReview(
 
   if (reportProgress) await reportProgress(92, 100, 'Normalizing unified checklist rows');
 
-  const rows = unifyRows(designer, published, includeManual);
-  const summary = rows.reduce(
-    (acc, row) => {
-      if (row.status === 'pass') acc.pass += 1;
-      else if (row.status === 'fail') acc.fail += 1;
-      else if (row.status === 'partial') acc.partial += 1;
-      else acc.manual += 1;
-      return acc;
-    },
-    { pass: 0, fail: 0, partial: 0, manual: 0, automated: 0, humanInLoop: 0 }
-  );
-  summary.automated = summary.pass + summary.fail;
-  summary.humanInLoop = summary.partial + summary.manual;
+  const rows = unifyRows(designer, published, includeManual, precheck);
+
+  // Compute weighted score: severity determines point deduction for failures
+  const severityWeights: Record<string, number> = {
+    critical: 20, major: 10, minor: 5, info: 2
+  };
+  let totalWeight = 0;
+  let earnedWeight = 0;
+  const counts = { pass: 0, fail: 0, partial: 0, manual: 0 };
+
+  for (const row of rows) {
+    if (row.status === 'pass') counts.pass++;
+    else if (row.status === 'fail') counts.fail++;
+    else if (row.status === 'partial') counts.partial++;
+    else counts.manual++;
+
+    // Only scored checks (pass/fail/partial) contribute to the weighted score
+    if (row.status === 'manual') continue;
+    const weight = severityWeights[row.severity] || 5;
+    totalWeight += weight;
+    if (row.status === 'pass') earnedWeight += weight;
+    else if (row.status === 'partial') earnedWeight += weight * 0.5;
+    // fail earns 0
+  }
+
+  const overallScore = totalWeight > 0
+    ? Math.round((earnedWeight / totalWeight) * 100)
+    : 0;
+  const grade = overallScore >= 90 ? 'A' as const
+    : overallScore >= 75 ? 'B' as const
+    : overallScore >= 60 ? 'C' as const
+    : overallScore >= 40 ? 'D' as const
+    : 'F' as const;
+
+  // Page crawl coverage: compare known pages (from all sources) vs actually crawled
+  const totalKnownPages = allSeedUrls.length;
+  const crawledPages = published.visitedPages;
+  const skippedPages = published.skippedUrls.length;
+  const coveragePercent = totalKnownPages > 0
+    ? Math.round((crawledPages / totalKnownPages) * 100)
+    : 100;
+
+  const summary: import('./types.js').UnifiedTemplateReviewSummary = {
+    ...counts,
+    automated: counts.pass + counts.fail,
+    humanInLoop: counts.partial + counts.manual,
+    overallScore,
+    grade,
+    coverage: {
+      totalKnownPages,
+      crawledPages,
+      skippedPages,
+      coveragePercent
+    }
+  };
   const providerMetrics = diffProviderMetrics(metricsBefore, provider.getSessionMetrics());
 
   if (reportProgress) await reportProgress(100, 100, 'Unified template review complete');

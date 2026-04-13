@@ -1,0 +1,193 @@
+/**
+ * Pure utility functions for template review logic.
+ * Extracted for testability — no side effects, no browser dependencies.
+ */
+
+// =============================================================================
+// Text sanitization: repair "s → space" font corruption
+// =============================================================================
+
+/**
+ * Detect the "every-s-to-space" text corruption pattern.
+ * Returns true when ≥2 known corrupted fragments are found.
+ */
+export function detectSCorruption(sample: string): boolean {
+  const knownCorrupted = [
+    'de cription', 'di play', 'tab ', 'cla s', 'http :', 'ub cri',
+    'po t', 'ub mit', 'e ion', 'e ign', 'e arch', 'tyle '
+  ];
+  let hits = 0;
+  const lower = sample.toLowerCase();
+  for (const fragment of knownCorrupted) {
+    if (lower.includes(fragment)) hits++;
+  }
+  return hits >= 2;
+}
+
+/**
+ * Repair text where every "s" was replaced with a space.
+ *
+ * Conservative: only repairs strings that contain at least one known
+ * corruption fragment AND have zero "s" characters.  This avoids
+ * corrupting clean text like "hello world" which legitimately has no "s".
+ */
+export function repairSCorruption(text: string): string {
+  // If the string already contains a real "s", it's not corrupted
+  if (/s/i.test(text)) return text;
+
+  // Must contain at least one known corruption pattern to proceed
+  const knownFragments = [
+    'de cription', 'di play', 'ub cri', 'ub mit', 'tab ', 'cla ',
+    'http :', 'po t', 'e ign', 'e ion', 'e arch', 'tyle ',
+    'item ', 'image ', 'cript', 'lider', 'ection', 'croll',
+    'u ic', 'pon or', 'peaker', 'pon e', 'peed', 'tatu '
+  ];
+  const lower = text.toLowerCase();
+  if (!knownFragments.some((f) => lower.includes(f))) return text;
+
+  return text
+    .replace(/([a-z]) ([a-z])/g, '$1s$2')
+    .replace(/([a-z]) ([-:,)])/g, '$1s$2')
+    .replace(/([a-z]) $/g, '$1s');
+}
+
+/**
+ * Walk an object tree and repair all string values affected by s-corruption.
+ * Returns the input unchanged if corruption is not detected.
+ */
+export function sanitizeAuditPayload(raw: unknown): unknown {
+  if (raw == null || typeof raw !== 'object') return raw;
+
+  const json = JSON.stringify(raw);
+  if (!detectSCorruption(json)) return raw;
+
+  function walk(value: unknown): unknown {
+    if (typeof value === 'string') return repairSCorruption(value);
+    if (Array.isArray(value)) return value.map(walk);
+    if (value && typeof value === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+        result[key] = walk(val);
+      }
+      return result;
+    }
+    return value;
+  }
+
+  return walk(raw);
+}
+
+// =============================================================================
+// 404 page detection
+// =============================================================================
+
+/**
+ * Determine if a page title indicates a 404/error page.
+ */
+export function is404PageTitle(title: string | null | undefined): boolean {
+  if (!title) return false;
+  const lower = title.toLowerCase();
+  return (
+    lower === 'not found' ||
+    lower === '404' ||
+    lower.startsWith('404 ') ||
+    lower.includes('page not found')
+  );
+}
+
+// =============================================================================
+// URL pattern matching
+// =============================================================================
+
+/**
+ * Check if a URL matches any of the critical utility page patterns.
+ */
+export function isCriticalUtilityUrl(url: string): boolean {
+  const path = url.toLowerCase();
+  const patterns = ['/licens', '/instruction', '/changelog', '/style-guide', '/styleguide'];
+  return patterns.some((p) => path.includes(p));
+}
+
+/**
+ * Check if a URL looks like a Webflow tab/accordion/lightbox anchor
+ * that should not be counted as a placeholder href.
+ */
+export function isWebflowComponentAnchor(href: string): boolean {
+  if (!href.startsWith('#')) return false;
+  if (/^#w-tabs-/.test(href)) return true;
+  if (/^#w-dropdown-/.test(href)) return true;
+  if (/^#w--/.test(href)) return true;
+  return false;
+}
+
+// =============================================================================
+// Slug resolution
+// =============================================================================
+
+/**
+ * Resolve a Designer page slug against precheck discovered URLs.
+ * Returns the real URL if a match is found, or null if the slug would
+ * produce a phantom 404 probe.
+ */
+export function resolveDesignerSlug(
+  slug: string,
+  origin: string,
+  discoveredUrls: string[]
+): string | null {
+  if (slug === 'home') return origin;
+
+  const bareUrl = `${origin}/${slug}`;
+  const discoveredLower = discoveredUrls.map((u) => u.toLowerCase());
+
+  // Direct match
+  if (discoveredLower.includes(bareUrl.toLowerCase())) return bareUrl;
+
+  // Suffix match (e.g. "/templates/licensing" matches slug "licensing")
+  const match = discoveredUrls.find(
+    (u) => u.toLowerCase().endsWith(`/${slug}`)
+  );
+  if (match) return match;
+
+  // No match — skip to avoid phantom 404
+  return null;
+}
+
+// =============================================================================
+// Scoring
+// =============================================================================
+
+export type Severity = 'critical' | 'major' | 'minor' | 'info';
+
+const SEVERITY_WEIGHTS: Record<Severity, number> = {
+  critical: 20,
+  major: 10,
+  minor: 5,
+  info: 2
+};
+
+/**
+ * Compute a weighted overall score (0-100) and letter grade from check results.
+ */
+export function computeScore(
+  checks: Array<{ status: string; severity: Severity }>
+): { score: number; grade: 'A' | 'B' | 'C' | 'D' | 'F' } {
+  let totalWeight = 0;
+  let earnedWeight = 0;
+
+  for (const check of checks) {
+    if (check.status === 'manual') continue;
+    const weight = SEVERITY_WEIGHTS[check.severity] || 5;
+    totalWeight += weight;
+    if (check.status === 'pass') earnedWeight += weight;
+    else if (check.status === 'partial') earnedWeight += weight * 0.5;
+  }
+
+  const score = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
+  const grade = score >= 90 ? 'A' as const
+    : score >= 75 ? 'B' as const
+    : score >= 60 ? 'C' as const
+    : score >= 40 ? 'D' as const
+    : 'F' as const;
+
+  return { score, grade };
+}

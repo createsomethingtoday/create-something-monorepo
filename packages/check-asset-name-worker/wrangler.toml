@@ -1,0 +1,26 @@
+# Check Asset Name Worker
+# Template and library name validation + creator lookup APIs.
+# Replaces check-asset-name.vercel.app with Cloudflare Workers.
+
+name = "check-asset-name"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+main = "src/worker.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[routes]]
+pattern = "check-asset-name.mcp.createsomething.agency"
+custom_domain = true
+
+[vars]
+AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+AIRTABLE_TABLE_ID = "tblRwzpWoLgE9MrUm"
+AIRTABLE_VIEW_ID = "viwHnsM1aqC0UvxUG"
+ALLOWED_ORIGINS = "https://wf-form-validation-with-airtable-databa.webflow.io,https://template-marketplace.webflow.io,https://template-marketplace.design.webflow.com,https://webflow.com,https://marketing-main.webflow.io,https://analyzer.mcp.createsomething.agency,https://webflow-site-analyzer-mcp.createsomething.workers.dev"
+
+# Secrets (set via `wrangler secret put`):
+# - AIRTABLE_API_KEY

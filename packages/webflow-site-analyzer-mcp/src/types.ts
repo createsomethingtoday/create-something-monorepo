@@ -489,11 +489,14 @@ export interface ScoreDesignerChecklistInput {
 
 export type UnifiedReviewStatus = 'pass' | 'fail' | 'partial' | 'manual';
 
+export type UnifiedReviewSeverity = 'critical' | 'major' | 'minor' | 'info';
+
 export interface UnifiedReviewRow {
   id: string;
   section: string;
   requirement: string;
   status: UnifiedReviewStatus;
+  severity: UnifiedReviewSeverity;
   confidence: number; // 0..1 heuristic confidence
   source: string[];
   evidence: string[];
@@ -568,6 +571,23 @@ export interface PublishedSnippetPageSummary {
     deletedInteractions: number;
     missingTargetSelectors: number;
   } | null;
+  comboClassDepth: {
+    maxDepth: number;
+    maxDepthSelector: string;
+    sampled: number;
+  } | null;
+  transitions: {
+    totalInteractive: number;
+    withTransition: number;
+    withoutTransition: number;
+    ratio: number;
+  } | null;
+  contrast: {
+    checked: number;
+    pass: number;
+    fail: number;
+    passRate: number;
+  } | null;
 }
 
 export interface PublishedSnippetPageResult {
@@ -575,6 +595,8 @@ export interface PublishedSnippetPageResult {
   depth: number;
   title: string | null;
   statusCode: number | null;
+  /** Page classification from the URL classifier. */
+  classification?: PageClassification;
   hasSnippet: boolean;
   snippetVersion: string | null;
   hasRequiredLicenseText?: boolean | null;
@@ -585,6 +607,16 @@ export interface PublishedSnippetPageResult {
     affiliateLinks?: string[];
     hasGsap?: boolean;
     hasCustomCode?: boolean;
+  };
+  siteSettings?: {
+    hasCustomFavicon?: boolean;
+    hasCustomFonts?: boolean;
+    customFontSources?: string[];
+    detectedApps?: string[];
+  };
+  contentQuality?: {
+    hasLoremIpsum?: boolean;
+    hasPlaceholderText?: boolean;
   };
 }
 
@@ -597,6 +629,8 @@ export interface PublishedSnippetCrawlResult {
   auditedPages: number;
   pagesWithSnippet: number;
   failingPages: number;
+  /** URLs that were discovered but not crawled (e.g. maxPages cap). */
+  skippedUrls: string[];
   snippetVersion: string | null;
   snippetTools: string[];
   sitemapStatus: { ok: boolean; count?: number; error?: string };
@@ -618,13 +652,43 @@ export interface PublishedSnippetCrawlResult {
     hasGsap: boolean;
     hasCustomCode: boolean;
   };
+  siteSettings: {
+    hasCustomFavicon: boolean;
+    hasCustomFonts: boolean;
+    customFontSources: string[];
+    detectedApps: string[];
+  };
   pages: PublishedSnippetPageResult[];
+}
+
+export type PageClassification =
+  | 'homepage'
+  | 'content'
+  | 'utility:license'
+  | 'utility:instructions'
+  | 'utility:changelog'
+  | 'utility:style-guide'
+  | 'utility:other'
+  | 'cms-listing'
+  | 'cms-detail'
+  | 'ecommerce'
+  | 'error-page'
+  | 'other';
+
+export interface ClassifiedUrl {
+  url: string;
+  classification: PageClassification;
+  confidence: number;
+  /** Whether this URL should be prioritized in the crawl queue. */
+  priority: 'critical' | 'normal' | 'low';
 }
 
 export interface PublishedSitePrecheckResult {
   startUrl: string;
   origin: string;
   discoveredUrls: string[];
+  /** Agent-classified URLs with page type and crawl priority. */
+  classifiedUrls?: ClassifiedUrl[];
   requiredPages: {
     licenses: boolean;
     instructions: boolean;
@@ -646,6 +710,21 @@ export interface UnifiedTemplateReviewSummary {
   manual: number;
   automated: number;
   humanInLoop: number;
+  /** Weighted score 0-100 based on check severity and pass rate. */
+  overallScore: number;
+  /** Qualitative grade derived from overallScore. */
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  /** Page crawl coverage metrics. */
+  coverage: {
+    /** Total unique pages known (from Designer + sitemap + link discovery). */
+    totalKnownPages: number;
+    /** Pages actually crawled and audited. */
+    crawledPages: number;
+    /** Pages discovered but not crawled. */
+    skippedPages: number;
+    /** Coverage percentage (crawled / known). */
+    coveragePercent: number;
+  };
 }
 
 export interface UnifiedTemplateReviewReport {
