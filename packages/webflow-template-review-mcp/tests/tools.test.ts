@@ -83,6 +83,68 @@ test('assign_self routes through reviewer-safe self-assignment', async () => {
   assert.equal(parsePayload(result).ok, true);
 });
 
+test('list_queue surfaces reviewer identity state alongside queue counts', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {
+    listAssetQueueDetailed: async () => ({
+      sortApplied: 'submittedDate_desc',
+      items: [
+        {
+          assetId: 'rec_asset_1',
+          templateName: 'Collected',
+          canAssign: false,
+        },
+      ],
+      totalMatchingCount: 2,
+    }),
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => null);
+
+  const result = await handlers.get('template_review_list_queue')?.({
+    limit: 1,
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.data?.reviewerIdentityResolved, false);
+  assert.equal(payload.data?.totalMatchingCount, 2);
+  assert.equal(payload.data?.returnedCount, 1);
+  assert.equal(payload.data?.currentReviewer, null);
+});
+
+test('get_review_context exposes reviewer identity resolution explicitly', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {
+    getReviewContext: async () => ({
+      versionId: 'rec_version_1',
+      canAssign: false,
+      canReview: true,
+      canPublish: false,
+      isAssignedToCurrentReviewer: false,
+      currentReviewer: null,
+      reviewerIdentityResolved: false,
+      version: {
+        versionId: 'rec_version_1',
+        rawFields: {},
+      },
+    }),
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => null);
+
+  const result = await handlers.get('template_review_get_review_context')?.({
+    version_id: 'rec_version_1',
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.data?.reviewerIdentityResolved, false);
+  assert.equal(payload.data?.currentReviewer, null);
+});
+
 test('request_changes requires reviewer ownership before mutation', async () => {
   const { server, handlers } = createServerHarness();
   const calls: Array<{ method: string; args: unknown[] }> = [];

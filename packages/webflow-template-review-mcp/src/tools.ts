@@ -77,6 +77,14 @@ function currentReviewerAsCollaborator(getReviewer: ReviewerFactory) {
   };
 }
 
+function currentReviewerState(getReviewer: ReviewerFactory) {
+  const currentReviewer = currentReviewerAsCollaborator(getReviewer);
+  return {
+    currentReviewer,
+    reviewerIdentityResolved: Boolean(currentReviewer?.id),
+  };
+}
+
 function requireResolvedReviewer(getReviewer: ReviewerFactory) {
   const reviewer = getReviewer();
   if (!reviewer) {
@@ -125,18 +133,23 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ limit, status, assigned, sort }) => {
       try {
+        const reviewerState = currentReviewerState(getReviewer);
         const queue = await getClient().listAssetQueueDetailed({
           limit: limit ?? 100,
           status: status ?? 'ready_to_review',
           assigned: assigned ?? 'unassigned',
           sort: sort ?? 'submittedDate_desc',
-          currentReviewer: currentReviewerAsCollaborator(getReviewer),
+          currentReviewer: reviewerState.currentReviewer,
         });
         return asSuccess({
           count: queue.items.length,
+          returnedCount: queue.items.length,
+          totalMatchingCount: queue.totalMatchingCount,
           sortApplied: queue.sortApplied,
           statusApplied: status ?? 'ready_to_review',
           assignedApplied: assigned ?? 'unassigned',
+          reviewerIdentityResolved: reviewerState.reviewerIdentityResolved,
+          currentReviewer: reviewerState.currentReviewer,
           items: queue.items,
         });
       } catch (error) {
@@ -155,7 +168,8 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ limit, status, sort }) => {
       try {
-        const currentReviewer = currentReviewerAsCollaborator(getReviewer);
+        const reviewerState = currentReviewerState(getReviewer);
+        const currentReviewer = reviewerState.currentReviewer;
         if (!currentReviewer?.id) {
           throw new AirtableClientError(
             'REVIEWER_IDENTITY_UNAVAILABLE',
@@ -171,9 +185,13 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         });
         return asSuccess({
           count: queue.items.length,
+          returnedCount: queue.items.length,
+          totalMatchingCount: queue.totalMatchingCount,
           sortApplied: queue.sortApplied,
           statusApplied: status ?? null,
           assignedApplied: 'assigned_to_current_reviewer',
+          reviewerIdentityResolved: reviewerState.reviewerIdentityResolved,
+          currentReviewer,
           items: queue.items,
         });
       } catch (error) {
@@ -190,8 +208,11 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ version_id }) => {
       try {
+        const reviewerState = currentReviewerState(getReviewer);
         return asSuccess({
-          context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+          reviewerIdentityResolved: reviewerState.reviewerIdentityResolved,
+          currentReviewer: reviewerState.currentReviewer,
+          context: await getClient().getReviewContext(version_id, reviewerState.currentReviewer),
         });
       } catch (error) {
         return asError(error);

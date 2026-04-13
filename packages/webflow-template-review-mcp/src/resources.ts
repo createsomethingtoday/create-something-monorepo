@@ -48,20 +48,26 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
       mimeType: 'application/json',
     },
     async (uri: URL) => {
+      const reviewer = getReviewer();
+      const currentReviewer = reviewer
+        ? {
+            id: reviewer.airtableCollaboratorId,
+            email: reviewer.email,
+            name: reviewer.name,
+          }
+        : null;
       const queue = await getClient().listAssetQueueDetailed({
         limit: 100,
-        currentReviewer: getReviewer()
-          ? {
-              id: getReviewer()!.airtableCollaboratorId,
-              email: getReviewer()!.email,
-              name: getReviewer()!.name,
-            }
-          : null,
+        currentReviewer,
       });
       return asJsonResource(uri, {
         count: queue.items.length,
+        returnedCount: queue.items.length,
+        totalMatchingCount: queue.totalMatchingCount,
         generatedAt: new Date().toISOString(),
         sortApplied: queue.sortApplied,
+        reviewerIdentityResolved: Boolean(currentReviewer?.id),
+        currentReviewer,
         records: queue.items,
       });
     },

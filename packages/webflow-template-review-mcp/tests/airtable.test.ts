@@ -117,6 +117,53 @@ test('getMarketplaceMetrics reads id-keyed fields so analytics survive display-n
   assert.equal(metrics.turnaround.averageHours, 30);
 });
 
+test('getMarketplaceMetrics paginates the full asset base and preserves unexpected live statuses', async () => {
+  const requestedOffsets: Array<string | null> = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      requestedOffsets.push(url.searchParams.get('offset'));
+
+      if (!url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+
+      const isSecondPage = url.searchParams.get('offset') === 'next-page';
+      return jsonResponse({
+        records: [
+          {
+            id: isSecondPage ? 'rec_metrics_asset_page_2' : 'rec_metrics_asset_page_1',
+            createdTime: '2026-03-14T00:00:00.000Z',
+            fields: {
+              [METRICS_ASSET_FIELD_IDS.marketplaceStatus]: isSecondPage ? '2️⃣Approved' : '1️⃣Needs review',
+              [METRICS_ASSET_FIELD_IDS.latestReviewStatus]: isSecondPage ? 'Training Check' : '✅Approved',
+              [METRICS_ASSET_FIELD_IDS.latestReviewDate]: isSecondPage ? '2026-03-16T18:00:00.000Z' : '2026-03-15T18:00:00.000Z',
+              [METRICS_ASSET_FIELD_IDS.qualityScore]: '✅Good',
+              [METRICS_ASSET_FIELD_IDS.submittedDate]: isSecondPage ? '2026-03-15T12:00:00.000Z' : '2026-03-14T12:00:00.000Z',
+              [METRICS_ASSET_FIELD_IDS.publishedDate]: null,
+              [METRICS_ASSET_FIELD_IDS.decisionDate]: isSecondPage ? '2026-03-16T18:00:00.000Z' : '2026-03-15T18:00:00.000Z',
+            },
+          },
+        ],
+        ...(isSecondPage ? {} : { offset: 'next-page' }),
+      });
+    },
+  });
+
+  const metrics = await client.getMarketplaceMetrics({
+    days: 7,
+    end_date: '2026-03-17',
+  });
+
+  assert.deepEqual(requestedOffsets, [null, 'next-page']);
+  assert.equal(metrics.totals.templatesScanned, 2);
+  assert.equal(metrics.totals.submissions, 2);
+  assert.equal(metrics.totals.decisions, 2);
+  assert.equal(metrics.reviewStatusActivity['✅Approved'], 1);
+  assert.equal(metrics.reviewStatusActivity['Training Check'], 1);
+});
+
 test('getMarketplaceMetrics preserves Airtable list error details for schema drift debugging', async () => {
   const client = new AirtableClient({
     apiKey: 'test',
@@ -144,7 +191,6 @@ test('getMarketplaceMetrics preserves Airtable list error details for schema dri
       assert.equal((error as { code?: string }).code, 'AIRTABLE_LIST_FAILED');
       assert.deepEqual((error as { details?: unknown }).details, {
         tableId: TABLE_IDS.assets,
-        limit: 1000,
         filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
         fieldIds: [
           METRICS_ASSET_FIELD_IDS.marketplaceStatus,
@@ -386,6 +432,7 @@ test('listAssetQueueDetailed selects the reviewer-assigned version for my_queue'
   assert.equal(queue.items[0]?.assignableVersionId, 'rec_finoraa_v0');
   assert.equal(queue.items[0]?.reviewOwner?.id, ericReviewer.id);
   assert.equal(queue.items[0]?.isAssignedToCurrentReviewer, true);
+  assert.equal(queue.totalMatchingCount, 1);
 });
 
 test('listMyQueueDetailed reads reviewer-owned versions directly and hydrates only matching assets', async () => {
@@ -443,6 +490,90 @@ test('listMyQueueDetailed reads reviewer-owned versions directly and hydrates on
   assert.equal(queue.items[0]?.templateName, 'Finoraa');
   assert.equal(queue.items[0]?.assignableVersionId, 'rec_finoraa_v0');
   assert.equal(queue.items[0]?.reviewOwner?.id, ericReviewer.id);
+  assert.equal(queue.totalMatchingCount, 1);
+});
+
+test('listAssetQueueDetailed counts shared-queue matches before applying the response limit', async () => {
+  let capturedVersionUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        capturedVersionUrl = url;
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_finoraa_v0',
+              createdTime: '2026-03-10T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_finoraa',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 0,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: null,
+                [CONFIRMED_VERSION_FIELDS.submissionDatetime]: '2026-03-10T12:00:00.000Z',
+              },
+            },
+            {
+              id: 'rec_collected_v0',
+              createdTime: '2026-03-11T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_collected',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 0,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: null,
+                [CONFIRMED_VERSION_FIELDS.submissionDatetime]: '2026-03-11T12:00:00.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_asset_finoraa',
+              createdTime: '2026-03-10T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Finoraa',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-10T12:00:00.000Z',
+              },
+            },
+            {
+              id: 'rec_asset_collected',
+              createdTime: '2026-03-11T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Collected',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-11T12:00:00.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const queue = await client.listAssetQueueDetailed({
+    status: 'ready_to_review',
+    assigned: 'unassigned',
+    sort: 'submittedDate_desc',
+    limit: 1,
+  });
+
+  assert.ok(capturedVersionUrl);
+  assert.match(capturedVersionUrl.searchParams.get('filterByFormula') ?? '', /SEARCH\("ready"/i);
+  assert.match(capturedVersionUrl.searchParams.get('filterByFormula') ?? '', /ARRAYJOIN/);
+  assert.equal(queue.items.length, 1);
+  assert.equal(queue.items[0]?.templateName, 'Collected');
+  assert.equal(queue.totalMatchingCount, 2);
 });
 
 test('listMyQueueDetailed bounds reviewer scans to a buffered limit', async () => {

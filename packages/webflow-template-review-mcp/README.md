@@ -20,6 +20,7 @@ Phase 1 is intentionally conservative:
 
 - confirmed asset reads and updates are supported
 - queue and version inspection are supported
+- queue counts now distinguish returned rows from total matching rows, and shared reads expose whether reviewer identity was resolved
 - field-map and hotspot resources are supported
 - reviewer assignment helpers are active
 - reviewer-safe workflow helpers (`request changes`, `set review status`, `save draft feedback`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
@@ -129,3 +130,9 @@ Behavior:
 - targets `🆕Ready for Review` rows by default
 - skips rows that already have agent feedback unless `--overwrite` is set
 - does lightweight same-origin page discovery from the asset `Website URL` or preview URL when available, so the draft is not limited to a single page when no sitemap exists
+
+## Queue / Metrics Notes
+
+- `template_review_list_queue` and `template_review_my_queue` return both `returnedCount` and `totalMatchingCount`.
+- Shared queue and review-context reads also return `reviewerIdentityResolved` so callers can tell whether reviewer-gated capability flags are trustworthy for the current runtime.
+- Marketplace metrics now scan the full paginated template asset base instead of truncating after the first 1000 rows.
