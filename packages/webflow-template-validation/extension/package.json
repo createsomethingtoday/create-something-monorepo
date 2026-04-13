@@ -1,0 +1,28 @@
+{
+  "name": "@create-something/webflow-template-validation-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Webflow Designer Extension for validating projects against Webflow Way best practices",
+  "main": "public/index.js",
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "dev": "tsc --watch",
+    "bundle": "webflow extension bundle",
+    "serve": "webflow extension serve"
+  },
+  "devDependencies": {
+    "@webflow/webflow-cli": "^1.8.38",
+    "@types/node": "^25.3.3",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "webflow",
+    "extension",
+    "validation",
+    "webflow-way",
+    "designer"
+  ],
+  "author": "Webflow Way Validator",
+  "license": "MIT"
+}

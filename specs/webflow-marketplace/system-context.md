@@ -1,6 +1,6 @@
 # Webflow Marketplace System Context
 
-**Last Updated:** 2026-01-19  
+**Last Updated:** 2026-04-13  
 **Author:** Micah Johnson (System Architect, Marketplace Team)
 
 ---
@@ -28,7 +28,7 @@ As System Architect on the Marketplace Team, you own/maintain:
 |--------|----------|------------|---------|
 | **Asset Dashboard** | `packages/webflow-dashboard/` | SvelteKit + Cloudflare | Creator view of assets & review progress |
 | **App Form** | `wf-bl-app-form-cloud` (external) | Next.js + Vercel | App submission form with retry system |
-| **Template Validation** | `wf-template-validation-app` (external) | Designer Extension + CF Worker | Pre-submission validation |
+| **Template Validation** | `packages/webflow-template-validation/` | Next.js + Designer Extension + CF Worker | Pre-submission validation |
 | **Agentic Layer** | This spec directory | Various | AI-native automation (in exploration) |
 
 ### Related Systems (Joey)
@@ -280,8 +280,8 @@ User → Form → Vercel Postgres → Blob Storage → Webhook → Airtable
 
 ### 3. Template Validation App (Designer Extension)
 
-**Location:** `/Users/micahjohnson/Documents/Github/Webflow/wf-template-validation-app`  
-**Stack:** Designer Extension + Cloudflare Worker  
+**Location:** `packages/webflow-template-validation/`  
+**Stack:** Next.js + Designer Extension + Cloudflare Worker  
 **Purpose:** Validate templates against "Webflow Way" before submission
 
 **Architecture:**
@@ -314,6 +314,7 @@ Designer Extension → Collect Data → Cloudflare Worker → Validators → Res
 ## Related Files
 
 - `packages/webflow-dashboard/` - Asset Dashboard (SvelteKit)
+- `packages/webflow-template-validation/` - Template Validation app
 - `packages/bundle-scanner/` - Security Scanner Code Component
 - `packages/bundle-scanner-core/` - Scanner logic library
 - `docs/internal/EXPERIMENT_04_IC_MVP_PIPELINE.md` - IC MVP translation experiment
@@ -321,4 +322,6 @@ Designer Extension → Collect Data → Cloudflare Worker → Validators → Res
 
 ### External Repos (System Architect owned)
 - `/Users/micahjohnson/Documents/Github/Webflow/wf-bl-app-form-cloud` - App Form
-- `/Users/micahjohnson/Documents/Github/Webflow/wf-template-validation-app` - Template Validation
+
+### Legacy Source Mirror
+- `/Users/micahjohnson/Documents/Github/Webflow/wf-template-validation-app` - Original Template Validation source mirror, now imported to `packages/webflow-template-validation/`

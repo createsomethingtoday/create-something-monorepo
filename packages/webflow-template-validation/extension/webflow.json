@@ -1,0 +1,19 @@
+{
+  "name": "Webflow Way Validator",
+  "apiVersion": "2",
+  "slug": "webflow-way-validator",
+  "version": "1.0.0",
+  "manifestVersion": 1,
+  "size": "large",
+  "publicDir": "public",
+  "designer": {
+    "publicDir": "public",
+    "panels": [
+      {
+        "name": "Webflow Way",
+        "location": "right",
+        "entry": "index.html"
+      }
+    ]
+  }
+}

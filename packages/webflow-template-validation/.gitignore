@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Extension bundle (will be rebuilt)
+extension/bundle.zip
+extension/bundle-upload.zip
+worker/test-results/
+worker/.wrangler/
+
+# Temporary files
+*.tmp
+*.temp
+*.tsbuildinfo
+.vercel
+.env*.local

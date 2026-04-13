@@ -1,0 +1,30 @@
+{
+	"name": "@create-something/webflow-template-validation-worker",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"deploy": "node ../../../scripts/run-wrangler.mjs deploy --config wrangler.jsonc",
+		"dev": "node ../../../scripts/run-wrangler.mjs dev --config wrangler.jsonc",
+		"start": "pnpm run dev",
+		"tail": "node ../../../scripts/run-wrangler.mjs tail --config wrangler.jsonc",
+		"check": "tsc --noEmit",
+		"test": "vitest run",
+		"cf-typegen": "node ../../../scripts/run-wrangler.mjs types --config wrangler.jsonc",
+		"test:suite": "node test-suite.js",
+		"test:suite:dev": "WORKER_URL=http://localhost:8787 node test-suite.js",
+		"test:sample": "node test-sample.js",
+		"test:full": "node run-tests.js --mode full",
+		"test:quick": "node run-tests.js --mode sample",
+		"test:validate": "node run-tests.js --validate",
+		"test:dev": "WORKER_URL=http://localhost:8787 node run-tests.js --mode sample",
+		"analyze": "node test-analyzer.js"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"@cloudflare/workers-types": "^4.20250924.0",
+		"typescript": "^5.5.2",
+		"vitest": "~3.0.7",
+		"wrangler": "^4.40.0"
+	}
+}
