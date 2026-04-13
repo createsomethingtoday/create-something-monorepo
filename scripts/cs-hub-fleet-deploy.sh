@@ -176,12 +176,12 @@ resolve_deploy_worker_name() {
     echo "$worker"
     return 0
   fi
-  if pnpm exec wrangler secret list --name "cs-hub-fillip" >/dev/null 2>&1; then
-    echo "cs-hub-fillip"
-    return 0
-  fi
   if pnpm exec wrangler secret list --name "cs-hub-filip" >/dev/null 2>&1; then
     echo "cs-hub-filip"
+    return 0
+  fi
+  if pnpm exec wrangler secret list --name "cs-hub-fillip" >/dev/null 2>&1; then
+    echo "cs-hub-fillip"
     return 0
   fi
   echo "cs-hub-fillip"
@@ -362,7 +362,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ACCOUNT_ID:${account_id}" \
       --var "HUB_ENABLED_BUNDLES:[]" \
       --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
-      --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-webflow,halfdozen-dm-mcp,schedule-mcp,substrate-mcp" \
+      --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-webflow,schedule-mcp,substrate-mcp" \
       --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
@@ -393,8 +393,12 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
       --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
   fi
-  echo "----- NORMALIZE STATE ${worker} -----"
-  normalize_worker_state "$worker"
+  echo "----- SYNC STATE ${worker} -----"
+  if [[ -n "$(resolve_worker_token "$worker")" ]]; then
+    normalize_worker_state "$worker"
+  else
+    write_worker_state_to_kv "$deploy_worker" "" "$target_servers_csv" ""
+  fi
   echo
 done
 
@@ -416,7 +420,7 @@ for worker in "${CORE_WORKERS[@]}"; do
     --var "HUB_DISCOVERY_MODE:compact" \
     --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
   echo "----- SYNC KV STATE ${worker} -----"
-  write_worker_state_to_kv "$worker" "$target_bundles_csv" "$target_servers_csv" "[]"
+  write_worker_state_to_kv "$worker" "$target_bundles_csv" "$target_servers_csv" ""
   echo
 done
 
