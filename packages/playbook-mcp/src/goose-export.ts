@@ -232,6 +232,9 @@ function buildBundleReadme(options: {
     artifact,
     normalizePath(path.relative(DEFAULT_REPO_ROOT, path.dirname(outputDir)) || '.'),
   );
+  const actionPayloadMap = new Map(
+    artifactActions.map((action) => [action.payload, formatActionPayload(action, outputDir)]),
+  );
   const outputDirLabel = normalizePath(path.relative(DEFAULT_REPO_ROOT, outputDir) || '.');
   const lines = [
     `# ${artifact.title} Goose Test Bundle`,
@@ -248,11 +251,11 @@ function buildBundleReadme(options: {
     '',
     '## Goose Quickstart',
     '',
-    ...formatQuickstart(quickstart),
+    ...formatQuickstart(quickstart, actionPayloadMap),
     '',
     '## Primary Goose Actions',
     '',
-    ...formatActionList(artifact.title, artifactActions),
+    ...formatActionList(artifact.title, artifactActions, outputDir),
   ];
 
   if (bundleArtifacts.length > 0) {
@@ -285,7 +288,10 @@ function buildBundleReadme(options: {
   if (bundleArtifacts.length > 0) {
     lines.push('', '## Related Artifact Actions', '');
     for (const entry of bundleArtifacts) {
-      lines.push(...formatActionList(entry.title, getDistributionGooseInstallActions(entry)), '');
+      lines.push(
+        ...formatActionList(entry.title, getDistributionGooseInstallActions(entry), outputDir),
+        '',
+      );
     }
   }
 
@@ -294,11 +300,16 @@ function buildBundleReadme(options: {
 
 function formatQuickstart(
   steps: readonly DistributionGooseQuickstartStep[],
+  actionPayloadMap: ReadonlyMap<string, string>,
 ): string[] {
   const lines: string[] = [];
 
   for (const [index, step] of steps.entries()) {
-    lines.push(`${index + 1}. **${step.title}**`, `   ${step.instruction}`, `   \`${step.payload}\``);
+    lines.push(
+      `${index + 1}. **${step.title}**`,
+      `   ${step.instruction}`,
+      `   \`${actionPayloadMap.get(step.payload) ?? step.payload}\``,
+    );
   }
 
   return lines;
@@ -307,15 +318,56 @@ function formatQuickstart(
 function formatActionList(
   title: string,
   actions: readonly DistributionInstallAction[],
+  outputDir: string,
 ): string[] {
   const lines = [`### ${title}`, ''];
 
   for (const action of actions) {
     lines.push(`- **${action.label}** (\`${action.type}\`)`);
-    lines.push(`  \`${action.payload}\``);
+    lines.push(`  \`${formatActionPayload(action, outputDir)}\``);
   }
 
   return lines;
+}
+
+function formatActionPayload(
+  action: DistributionInstallAction,
+  outputDir: string,
+): string {
+  if (action.command) {
+    const args = (action.args ?? []).map((arg) => resolveBundleLocalArg(arg, outputDir));
+    return [action.command, ...args].join(' ');
+  }
+
+  return resolveBundleLocalPayload(action, outputDir);
+}
+
+function resolveBundleLocalPayload(
+  action: DistributionInstallAction,
+  outputDir: string,
+): string {
+  if (isLocalActionPayload(action) && isLocalAssetCandidate(action.payload)) {
+    const bundlePath = path.join(outputDir, action.payload);
+    if (existsSync(bundlePath)) {
+      return normalizePath(bundlePath);
+    }
+  }
+
+  return action.payload;
+}
+
+function resolveBundleLocalArg(
+  arg: string,
+  outputDir: string,
+): string {
+  if (isLocalAssetCandidate(arg)) {
+    const bundlePath = path.join(outputDir, arg);
+    if (existsSync(bundlePath)) {
+      return normalizePath(bundlePath);
+    }
+  }
+
+  return arg;
 }
 
 function buildRerunCommand(

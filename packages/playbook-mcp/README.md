@@ -268,10 +268,13 @@ When Goose Desktop is installed locally, materialize a repo-local bundle instead
 
 ```bash
 pnpm distribution:goose:export -- --artifact create-something-distro
+pnpm distribution:goose:export -- --artifact mj-hub-extension
 pnpm distribution:goose:export -- --artifact ground-extension --output .goose-bundles/ground-extension
 ```
 
 The export command writes a `bundle-manifest.json`, a `README.md`, and every local Goose asset referenced by the artifact into `.goose-bundles/<artifact-id>/`.
+
+For authenticated hub lanes such as `mj-hub-extension`, the exported README resolves the copied bridge script to an absolute bundle-local path and wraps the launch command with `infisical run`, so Goose Desktop does not need to store the bearer token in its own config.
 
 ## Verification
 

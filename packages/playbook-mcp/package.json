@@ -9,11 +9,13 @@
     "./playbooks": "./dist/playbooks.js",
     "./catalog": "./dist/catalog.js",
     "./distribution": "./dist/distribution.js",
-    "./goose-export": "./dist/goose-export.js"
+    "./goose-export": "./dist/goose-export.js",
+    "./goose-mcp-bridge": "./dist/goose-mcp-bridge.js"
   },
   "bin": {
     "playbook-mcp": "dist/index.js",
-    "playbook-goose-export": "dist/goose-export.js"
+    "playbook-goose-export": "dist/goose-export.js",
+    "playbook-goose-mcp-bridge": "dist/goose-mcp-bridge.js"
   },
   "scripts": {
     "build": "tsc",

@@ -395,6 +395,72 @@ export const DISTRIBUTION_CATALOG_ENTRIES = [
     }
   },
   {
+    "id": "mj-hub-extension",
+    "kind": "extension",
+    "title": "MJ Hub Extension",
+    "description": "Infisical-backed Goose bridge for MJ's authenticated CREATE SOMETHING hub lane, keeping the bearer token out of Goose config while exposing the live tool fleet.",
+    "ownerPackage": "packages/playbook-mcp",
+    "visibility": "public",
+    "entitlement": "mcp_only",
+    "docsRef": "config/distribution/goose/extensions/mj-hub/README.md",
+    "policyRefs": [
+      "docs/MCP_CATALOG_EXPOSURE_POLICY.md",
+      "docs/policies/v1/policy.mcp-credential-delivery.v1.md"
+    ],
+    "telemetryKey": "distribution.mj-hub.extension",
+    "packageRefs": [
+      "create-something-distro"
+    ],
+    "artifacts": {
+      "remoteMcpUrl": "https://mj.mcp.createsomething.agency/mcp",
+      "bearerEnvVar": "CS_HUB_MJ_API_TOKEN",
+      "bridgeCommand": "playbook-goose-mcp-bridge"
+    },
+    "goose": {
+      "installModes": [
+        {
+          "type": "stdio_command",
+          "label": "Infisical + local Goose bridge",
+          "command": "infisical",
+          "args": [
+            "run",
+            "--env=prod",
+            "--path=/",
+            "--",
+            "node",
+            "packages/playbook-mcp/dist/goose-mcp-bridge.js",
+            "--url",
+            "https://mj.mcp.createsomething.agency/mcp",
+            "--bearer-env-var",
+            "CS_HUB_MJ_API_TOKEN",
+            "--server-name",
+            "mj-hub"
+          ]
+        },
+        {
+          "type": "goose_bundle",
+          "label": "MJ hub bridge docs",
+          "value": "config/distribution/goose/extensions/mj-hub"
+        }
+      ]
+    },
+    "verification": {
+      "summary": "Verify Goose can start the Infisical-backed MJ hub bridge and expose the current tool surface.",
+      "steps": [
+        {
+          "label": "Confirm the Goose bridge is enabled",
+          "prompt": "Open the Goose extension list and confirm the MJ Hub bridge is installed and enabled without an auth error.",
+          "expected": "Goose shows the MJ Hub bridge as enabled."
+        },
+        {
+          "label": "Run a hub status call",
+          "prompt": "Ask Goose to call `hub_status` or `hub_list_proxy_tools`.",
+          "expected": "The bridge returns MJ hub status or the current proxy tool catalog instead of an auth failure."
+        }
+      ]
+    }
+  },
+  {
     "id": "ground-policy-pack",
     "kind": "policy_pack",
     "title": "Ground Policy Pack",
@@ -666,6 +732,7 @@ export const DISTRIBUTION_CATALOG_ENTRIES = [
       "loom-extension",
       "playbook-extension",
       "create-something-extension",
+      "mj-hub-extension",
       "ground-policy-pack",
       "loom-policy-pack",
       "ground-review-recipe",

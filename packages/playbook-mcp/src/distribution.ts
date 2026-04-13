@@ -318,6 +318,7 @@ function getPrimaryDistributionGooseAction(
 
   return (
     actions.find((action) => action.type === 'goose_extension')
+    ?? actions.find((action) => action.type === 'stdio_command')
     ?? actions.find((action) => action.type === 'goose_recipe')
     ?? actions.find((action) => action.type === 'goose_distro')
     ?? actions.find((action) => action.type === 'goose_bundle')
@@ -348,6 +349,10 @@ function getPrimaryQuickstartTitle(
   entry: DistributionCatalogEntry,
   action: DistributionInstallAction,
 ): string {
+  if (action.type === 'stdio_command') {
+    return 'Configure the Goose command-line extension';
+  }
+
   if (action.type === 'goose_extension') {
     return 'Install the Goose extension';
   }
@@ -373,6 +378,12 @@ function getPrimaryQuickstartInstruction(
   entry: DistributionCatalogEntry,
   action: DistributionInstallAction,
 ): string {
+  if (action.type === 'stdio_command') {
+    return entry.kind === 'extension'
+      ? 'Add the command-line extension in Goose. This path can layer Infisical ahead of the local bridge so authenticated hubs do not store bearer tokens in Goose.'
+      : 'Run the local command-line entrypoint for this Goose artifact.';
+  }
+
   if (action.type === 'goose_extension') {
     return 'Use the Goose deeplink to install the extension directly into the desktop app.';
   }

@@ -4,6 +4,7 @@ This directory is the Goose-standard packaging surface for CREATE SOMETHING.
 
 Layout:
 
+- `extensions/` contains Goose-specific install notes for authenticated or local-command extensions.
 - `policies/` contains policy-pack assets such as persistent instructions,
   prompt templates, and adversary rules.
 - `recipes/` contains shareable Goose recipe YAML files.
@@ -12,6 +13,7 @@ Layout:
 Design rule:
 
 - MCP servers are packaged as Goose extensions.
+- Authenticated hub lanes can be packaged as local Goose command-line bridges that resolve credentials through Infisical.
 - Policies are packaged as Goose-compatible files and then bundled by recipes or distros.
 - Workflows are packaged as Goose recipes.
 - Audience- or org-specific installs are packaged as Goose distros.

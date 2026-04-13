@@ -11,11 +11,12 @@
 | `loom-extension` | `extension` | `packages/loom` | goose_extension, stdio_command | cursor, claude-code, claude-desktop, windsurf, vscode, codex | loom-policy-pack, loom-coordination-recipe, create-something-distro |
 | `playbook-extension` | `extension` | `packages/playbook-mcp` | goose_extension, goose_bundle | cursor, claude-code, claude-desktop, windsurf, codex | create-something-distro |
 | `create-something-extension` | `extension` | `packages/create-something-mcp` | goose_extension, goose_bundle | cursor, claude-code, claude-desktop, windsurf, codex | create-something-distro |
+| `mj-hub-extension` | `extension` | `packages/playbook-mcp` | stdio_command, goose_bundle | goose-only | create-something-distro |
 | `ground-policy-pack` | `policy_pack` | `packages/judgment-layer` | goose_bundle, persistent_instructions_file, prompt_template_file, prompt_template_file, adversary_rule_file | goose-only | ground-extension, ground-review-recipe, create-something-distro |
 | `loom-policy-pack` | `policy_pack` | `packages/judgment-layer` | goose_bundle, persistent_instructions_file, prompt_template_file, prompt_template_file, adversary_rule_file | goose-only | loom-extension, loom-coordination-recipe, create-something-distro |
 | `ground-review-recipe` | `recipe` | `packages/playbook-mcp` | goose_recipe, goose_bundle | goose-only | ground-extension, ground-policy-pack, create-something-distro |
 | `loom-coordination-recipe` | `recipe` | `packages/playbook-mcp` | goose_recipe, goose_bundle | goose-only | loom-extension, loom-policy-pack, create-something-distro |
-| `create-something-distro` | `distro` | `packages/agency` | goose_distro, goose_bundle | goose-only | ground-extension, loom-extension, playbook-extension, create-something-extension, ground-policy-pack, loom-policy-pack, ground-review-recipe, loom-coordination-recipe |
+| `create-something-distro` | `distro` | `packages/agency` | goose_distro, goose_bundle | goose-only | ground-extension, loom-extension, playbook-extension, create-something-extension, mj-hub-extension, ground-policy-pack, loom-policy-pack, ground-review-recipe, loom-coordination-recipe |
 
 ## Artifact Details
 
@@ -311,6 +312,47 @@ url = "https://mcp.createsomething.ltd/mcp"
 1. Confirm the Goose extension is listed. Prompt: Open the Goose extension list and confirm `create-something` is installed. Expected: Goose lists `create-something` as an available extension.
 2. Run a content search. Prompt: Call `search` for `three-tier framework`. Expected: The extension returns matching CREATE SOMETHING documents.
 
+### MJ Hub Extension (`mj-hub-extension`)
+
+- Kind: `extension`
+- Owner package: `packages/playbook-mcp`
+- Visibility: `public`
+- Entitlement: `mcp_only`
+- Docs: `config/distribution/goose/extensions/mj-hub/README.md`
+- Policy refs: `docs/MCP_CATALOG_EXPOSURE_POLICY.md`, `docs/policies/v1/policy.mcp-credential-delivery.v1.md`
+- Telemetry key: `distribution.mj-hub.extension`
+- Related packages: `create-something-distro`
+- Verification summary: Verify Goose can start the Infisical-backed MJ hub bridge and expose the current tool surface.
+
+#### Goose Packaging
+
+- `stdio_command` — Infisical + local Goose bridge (Goose)
+
+```text
+infisical run --env=prod --path=/ -- node packages/playbook-mcp/dist/goose-mcp-bridge.js --url https://mj.mcp.createsomething.agency/mcp --bearer-env-var CS_HUB_MJ_API_TOKEN --server-name mj-hub
+```
+
+- `goose_bundle` — MJ hub bridge docs (Goose)
+
+```text
+config/distribution/goose/extensions/mj-hub
+```
+
+#### Artifact Refs
+
+- remoteMcpUrl: `https://mj.mcp.createsomething.agency/mcp`
+- bearerEnvVar: `CS_HUB_MJ_API_TOKEN`
+- bridgeCommand: `playbook-goose-mcp-bridge`
+
+#### Compatibility
+
+- Goose-only artifact.
+
+#### Verification
+
+1. Confirm the Goose bridge is enabled. Prompt: Open the Goose extension list and confirm the MJ Hub bridge is installed and enabled without an auth error. Expected: Goose shows the MJ Hub bridge as enabled.
+2. Run a hub status call. Prompt: Ask Goose to call `hub_status` or `hub_list_proxy_tools`. Expected: The bridge returns MJ hub status or the current proxy tool catalog instead of an auth failure.
+
 ### Ground Policy Pack (`ground-policy-pack`)
 
 - Kind: `policy_pack`
@@ -520,7 +562,7 @@ config/distribution/goose/recipes/loom-coordination.yaml
 - Docs: `config/distribution/goose/distros/create-something/README.md`
 - Policy refs: `docs/DISTRIBUTION_PLANE_PRODUCT_SPEC_2026-04-13.md`
 - Telemetry key: `distribution.create-something.distro`
-- Related packages: `ground-extension`, `loom-extension`, `playbook-extension`, `create-something-extension`, `ground-policy-pack`, `loom-policy-pack`, `ground-review-recipe`, `loom-coordination-recipe`
+- Related packages: `ground-extension`, `loom-extension`, `playbook-extension`, `create-something-extension`, `mj-hub-extension`, `ground-policy-pack`, `loom-policy-pack`, `ground-review-recipe`, `loom-coordination-recipe`
 - Verification summary: Verify the distro bundle includes extensions, policy packs, and recipes in one place.
 
 #### Goose Packaging
