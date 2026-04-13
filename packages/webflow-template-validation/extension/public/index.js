@@ -740,9 +740,14 @@ async function installBridge() {
     if (!bridgeContext?.siteId)
         return;
     setBridgeActionsDisabled(true);
-    setBridgeMessage('Installing bridge...');
+    setBridgeMessage('Installing bridge via Webflow API...');
+    setToolbarStatus('🔄 Installing bridge...', 'neutral');
     try {
         const correlationId = createCorrelationId();
+        // Use the Worker as a proxy to call the Webflow Custom Code API.
+        // The Worker holds the app's OAuth credentials and performs:
+        //   1. POST /sites/{siteId}/registered_scripts/hosted  (register snippet)
+        //   2. PUT  /sites/{siteId}/custom_code                (apply to head)
         bridgeStatus = await fetchJsonWithRetry(`${APP_VALIDATOR_BASE}/app-validator/snippet/install`, {
             method: 'POST',
             headers: {
@@ -753,15 +758,20 @@ async function installBridge() {
                 siteId: bridgeContext.siteId,
                 siteName: bridgeContext.siteName,
                 installTarget: 'head',
-                mode: 'programmatic',
+                mode: 'webflow-api',
             }),
         }, { timeoutMs: NETWORK_TIMEOUT_MS, retries: MAX_NETWORK_RETRIES });
         renderBridgeStatus(bridgeStatus);
+        if (bridgeStatus.status === 'active' || bridgeStatus.status === 'pending_publish') {
+            setBridgeMessage('Bridge installed. Publish your site to activate.');
+            setToolbarStatus('🟡 Publish to activate bridge', 'warning');
+        }
     }
     catch (error) {
         console.warn('Bridge install failed:', error);
         setBridgeBadge('failed');
         setBridgeMessage('Bridge install failed. Use Re-check or manual install.');
+        setToolbarStatus('🔴 Bridge install failed', 'failed');
     }
     finally {
         setBridgeActionsDisabled(false);
