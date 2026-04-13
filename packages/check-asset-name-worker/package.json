@@ -1,0 +1,14 @@
+{
+  "name": "@create-something/check-asset-name-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker for template/library name validation and creator lookup",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test src/*.test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

@@ -157,7 +157,7 @@ export async function checkNameUniqueness(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    const response = await fetch('https://check-asset-name.vercel.app/api/checkTemplatename', {
+    const response = await fetch('https://check-asset-name.createsomething.workers.dev/api/checkTemplatename', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ templatename: name }),
