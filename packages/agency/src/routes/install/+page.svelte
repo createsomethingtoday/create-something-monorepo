@@ -11,6 +11,8 @@
 		getArtifactsByKind,
 		getCompatibilityActions,
 		getCompatibilityHosts,
+		getGooseExportCommand,
+		getGooseExportOutputDir,
 		getGooseInstallActions,
 		getInstallActionLabel,
 		getInstallModeNote,
@@ -131,6 +133,8 @@
 						{@const artifactLink = getArtifactLink(entry)}
 						{@const packageName = getArtifactField(entry, 'npmPackage')}
 						{@const gooseActions = getGooseInstallActions(entry)}
+						{@const gooseExportCommand = getGooseExportCommand(entry)}
+						{@const gooseExportOutputDir = getGooseExportOutputDir(entry)}
 						{@const relatedEntries = getRelatedEntries(entry)}
 						{@const compatibilityHosts = getCompatibilityHosts(entry)}
 						{@const compatibilityActions = getCompatibilityActions(entry)}
@@ -182,6 +186,29 @@
 										<pre class="mode-payload"><code>{payload}</code></pre>
 									</section>
 								{/each}
+
+								<section class="mode-card mode-card--goose">
+									<div class="mode-head">
+										<div>
+											<p class="mode-label">Materialize local Goose bundle</p>
+											<p class="mode-meta">Desktop test path</p>
+										</div>
+
+										<button
+											type="button"
+											class="mode-action"
+											onclick={() => copyToClipboard(`${entry.id}:goose:export`, gooseExportCommand)}
+										>
+											{copiedActionKey === `${entry.id}:goose:export` ? 'Copied' : 'Copy export command'}
+										</button>
+									</div>
+
+									<p class="mode-note">
+										Build a repo-local Goose bundle with this artifact and its direct policy-pack and recipe assets.
+									</p>
+									<pre class="mode-payload"><code>{gooseExportCommand}</code></pre>
+									<p class="mode-note">Default output: <code>{gooseExportOutputDir}</code></p>
+								</section>
 							</div>
 
 							{#if relatedEntries.length > 0}

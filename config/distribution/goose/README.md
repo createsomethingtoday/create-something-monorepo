@@ -15,3 +15,15 @@ Design rule:
 - Policies are packaged as Goose-compatible files and then bundled by recipes or distros.
 - Workflows are packaged as Goose recipes.
 - Audience- or org-specific installs are packaged as Goose distros.
+
+Local desktop testing:
+
+```bash
+pnpm distribution:goose:export -- --artifact create-something-distro
+```
+
+That command materializes a repo-local Goose test bundle under `.goose-bundles/` with:
+
+- `bundle-manifest.json` for the full artifact payload
+- `README.md` with the local Goose steps
+- copied recipe, policy-pack, and distro files referenced by the artifact

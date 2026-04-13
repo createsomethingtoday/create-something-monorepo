@@ -132,6 +132,7 @@
     "distribution:validate": "node scripts/distribution-catalog.mjs validate",
     "distribution:generate": "node scripts/distribution-catalog.mjs generate",
     "distribution:check": "node scripts/distribution-catalog.mjs check",
+    "distribution:goose:export": "pnpm --filter @create-something/playbook-mcp run build && node packages/playbook-mcp/dist/goose-export.js",
     "storage:relief": "bash scripts/storage-relief.sh",
     "shell:secrets:sync": "bash scripts/shell-secrets-sync.sh",
     "mcp:composio:sync": "tsx scripts/composio-registry-sync.ts",

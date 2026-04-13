@@ -7,6 +7,8 @@
 		getArtifactLink,
 		getCompatibilityActions,
 		getCompatibilityHosts,
+		getGooseExportCommand,
+		getGooseExportOutputDir,
 		getGooseInstallActions,
 		getInstallActionLabel,
 		getInstallModeNote,
@@ -33,6 +35,8 @@
 
 	const entry = $derived.by(() => getArtifactById(entryId));
 	const gooseActions = $derived.by(() => (entry ? getGooseInstallActions(entry) : []));
+	const gooseExportCommand = $derived.by(() => (entry ? getGooseExportCommand(entry) : null));
+	const gooseExportOutputDir = $derived.by(() => (entry ? getGooseExportOutputDir(entry) : null));
 	const relatedEntries = $derived.by(() => (entry ? getRelatedEntries(entry) : []));
 	const compatibilityHosts = $derived.by(() => (entry ? getCompatibilityHosts(entry) : []));
 	const compatibilityActions = $derived.by(() => (entry ? getCompatibilityActions(entry) : []));
@@ -95,6 +99,25 @@
 						<pre class="payload-block"><code>{payload}</code></pre>
 					</article>
 				{/each}
+
+				{#if gooseExportCommand && gooseExportOutputDir}
+					{@const actionKey = `${entry.id}:export`}
+					<article class="install-card primary-card">
+						<div class="card-copy">
+							<p class="card-label">Materialize local Goose bundle</p>
+							<p class="card-note">
+								Build a repo-local desktop test bundle with this artifact and its direct policy-pack and recipe pieces.
+							</p>
+						</div>
+
+						<button type="button" class="install-button primary" onclick={() => copyToClipboard(actionKey, gooseExportCommand)}>
+							{copiedActionKey === actionKey ? 'Copied!' : 'Copy export command'}
+						</button>
+
+						<pre class="payload-block"><code>{gooseExportCommand}</code></pre>
+						<p class="card-note">Default output: <code>{gooseExportOutputDir}</code></p>
+					</article>
+				{/if}
 			</div>
 		</div>
 

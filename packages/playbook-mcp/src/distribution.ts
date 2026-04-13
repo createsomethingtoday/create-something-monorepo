@@ -64,6 +64,8 @@ export type DistributionInstallAction = {
   args?: readonly string[];
 };
 
+export const DEFAULT_DISTRIBUTION_GOOSE_EXPORT_BASE_DIR = '.goose-bundles';
+
 export const DISTRIBUTION_HOST_LABELS: Record<DistributionTargetHost, string> = {
   goose: 'Goose',
   cursor: 'Cursor',
@@ -172,6 +174,24 @@ export function summarizeDistributionArtifact(entry: DistributionCatalogEntry) {
     ),
     relatedArtifactIds: [...(entry.packageRefs ?? [])],
   };
+}
+
+export function getDistributionGooseExportOutputDir(
+  entry: DistributionCatalogEntry,
+  baseDir = DEFAULT_DISTRIBUTION_GOOSE_EXPORT_BASE_DIR,
+): string {
+  const normalizedBaseDir = baseDir.replace(/\/+$/, '');
+
+  return `${normalizedBaseDir}/${entry.id}`;
+}
+
+export function getDistributionGooseExportCommand(
+  entry: DistributionCatalogEntry,
+  baseDir = DEFAULT_DISTRIBUTION_GOOSE_EXPORT_BASE_DIR,
+): string {
+  const outputDir = getDistributionGooseExportOutputDir(entry, baseDir);
+
+  return `pnpm distribution:goose:export -- --artifact ${entry.id} --output ${outputDir}`;
 }
 
 function getCompatibility(

@@ -72,7 +72,7 @@ Goose-first packaging tools that read from the generated distribution catalog an
 |------|---------|
 | `list_distribution_artifacts` | List distribution artifacts across extensions, policy packs, recipes, and distro starters. Supports kind, host, and visibility filtering. |
 | `get_distribution_artifact` | Inspect one artifact with its metadata, Goose install actions, related bundle pieces, and verification guidance. |
-| `generate_goose_bundle` | Emit the canonical Goose install payloads for one artifact plus its direct related bundle pieces. |
+| `generate_goose_bundle` | Emit the canonical Goose install payloads for one artifact plus its direct related bundle pieces and the repo-local Goose Desktop export command. |
 | `generate_compatibility_adapter` | Emit the host-specific compatibility adapter payloads for Cursor, Claude, Codex, Windsurf, or VS Code from the same catalog row. |
 
 ## Prompts (Judgment Tier)
@@ -261,6 +261,17 @@ The server also ships a Goose-first distribution catalog for packaging MCPs, pol
 - `distro` packages a full CREATE SOMETHING Goose starter bundle.
 
 Use `list_distribution_artifacts` to browse the packaging layer, `generate_goose_bundle` to emit the canonical Goose install payloads, and `generate_compatibility_adapter` when a non-Goose host still needs a generated adapter.
+
+### Local Goose Desktop testing
+
+When Goose Desktop is installed locally, materialize a repo-local bundle instead of copying paths by hand:
+
+```bash
+pnpm distribution:goose:export -- --artifact create-something-distro
+pnpm distribution:goose:export -- --artifact ground-extension --output .goose-bundles/ground-extension
+```
+
+The export command writes a `bundle-manifest.json`, a `README.md`, and every local Goose asset referenced by the artifact into `.goose-bundles/<artifact-id>/`.
 
 ## Verification
 

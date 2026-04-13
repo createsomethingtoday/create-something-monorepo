@@ -8,14 +8,17 @@
     ".": "./dist/index.js",
     "./playbooks": "./dist/playbooks.js",
     "./catalog": "./dist/catalog.js",
-    "./distribution": "./dist/distribution.js"
+    "./distribution": "./dist/distribution.js",
+    "./goose-export": "./dist/goose-export.js"
   },
   "bin": {
-    "playbook-mcp": "dist/index.js"
+    "playbook-mcp": "dist/index.js",
+    "playbook-goose-export": "dist/goose-export.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "goose:export": "pnpm run build && node dist/goose-export.js",
     "lint": "pnpm run typecheck",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit"

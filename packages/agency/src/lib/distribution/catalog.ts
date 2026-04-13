@@ -3,6 +3,8 @@ import {
 	DISTRIBUTION_CATALOG,
 	DISTRIBUTION_HOST_LABELS,
 	DISTRIBUTION_TARGET_HOST_VALUES,
+	getDistributionGooseExportCommand,
+	getDistributionGooseExportOutputDir,
 	type DistributionCatalogEntry,
 	type DistributionHost,
 	type DistributionInstallAction,
@@ -90,6 +92,14 @@ export function getCompatibilityActions(
 	host?: DistributionHost
 ): DistributionInstallAction[] {
 	return getDistributionCompatibilityInstallActions(entry, host);
+}
+
+export function getGooseExportCommand(entry: DistributionCatalogEntry): string {
+	return getDistributionGooseExportCommand(entry);
+}
+
+export function getGooseExportOutputDir(entry: DistributionCatalogEntry): string {
+	return getDistributionGooseExportOutputDir(entry);
 }
 
 export function getInstallPayload(action: DistributionInstallAction): string {
