@@ -135,7 +135,11 @@ body {
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: opacity var(--duration-default) var(--ease-in-out);
+  transition: opacity var(--duration-default) var(--ease-in-out),
+              transform var(--duration-default) var(--ease-in-out);
+  /* PayPal-style button shadow for depth */
+  box-shadow: 0 0.5px 0.5px rgba(255, 255, 255, 0.15) inset,
+              0 0.5px 1px rgba(0, 0, 0, 0.6);
 }
 
 .validate-btn:focus-visible {
@@ -148,10 +152,16 @@ body {
   opacity: var(--opacity-hover);
 }
 
+/* Tactile press feedback (from PayPal pattern) */
+.validate-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .validate-btn:disabled {
   opacity: var(--opacity-disabled);
   cursor: not-allowed;
   pointer-events: none;
+  box-shadow: none;
 }
 
 /* Options Dropdown */
@@ -166,7 +176,12 @@ body {
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background var(--duration-default) var(--ease-in-out),
-              border-color var(--duration-default) var(--ease-in-out);
+              border-color var(--duration-default) var(--ease-in-out),
+              transform var(--duration-default) var(--ease-in-out);
+}
+
+.options-btn:active {
+  transform: scale(0.98);
 }
 
 .options-btn:hover {
@@ -331,6 +346,10 @@ body {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.secondary-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .secondary-btn:disabled {
   opacity: var(--opacity-disabled);
   cursor: not-allowed;
@@ -419,7 +438,7 @@ body {
   color: var(--text-muted);
 }
 
-/* Status Bar: Single-line density */
+/* Status Bar: Single-line density with slide-in */
 .status-bar {
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-xs);
@@ -427,6 +446,18 @@ body {
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  animation: status-slide-in var(--duration-200) var(--ease-in-out);
+}
+
+@keyframes status-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .status-bar .error-count { color: var(--error); font-weight: var(--font-weight-semibold); }
@@ -464,6 +495,35 @@ body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Skeleton loading shimmer (from PayPal pattern) */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-line {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface) 25%,
+    var(--bg-elevated) 50%,
+    var(--bg-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s var(--ease-in-out) infinite;
+  border-radius: var(--radius-xs);
+  height: 12px;
+}
+
+.skeleton-line.wide { width: 80%; }
+.skeleton-line.medium { width: 60%; }
+.skeleton-line.short { width: 40%; }
+.skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
 }
 
 /* Results Display */
@@ -1272,15 +1332,35 @@ body {
 .severity-count.info { color: var(--text-muted); }
 
 .severity-content {
-  display: none;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-200) var(--ease-in-out);
+}
+
+.severity-content > * {
+  overflow: hidden;
 }
 
 .severity-section.expanded .severity-content {
-  display: block;
+  grid-template-rows: 1fr;
 }
 
 .severity-section.expanded .severity-header {
   border-bottom: 1px solid var(--border);
+}
+
+/* Animated chevron for severity toggle */
+.severity-header::after {
+  content: '▸';
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  transition: transform var(--duration-200) var(--ease-in-out);
+  margin-left: auto;
+  padding-left: var(--space-2);
+}
+
+.severity-section.expanded .severity-header::after {
+  transform: rotate(90deg);
 }
 
 /* Category Sub-groups (within severity sections) */
