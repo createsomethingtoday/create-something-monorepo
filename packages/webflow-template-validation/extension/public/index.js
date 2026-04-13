@@ -94,10 +94,53 @@ async function validateProject() {
         else {
             console.warn('⚠️ No site URL available - Worker validation will be skipped');
         }
-        if (!bridgeStatus || bridgeStatus.status !== 'active') {
-            setBridgeMessage('Bridge is not active yet. Validation will still run using fallback methods.');
-        }
+        const bridgeActive = bridgeStatus && bridgeStatus.status === 'active';
         const correlationId = createCorrelationId();
+
+        if (!bridgeActive) {
+            // Bridge not installed — run Designer checks only, prompt for install
+            setValidationProgress({ status: 'running', progress: 20, message: 'Running Designer checks (bridge required for full validation)...' });
+            showBridgeDrawer();
+            setToolbarStatus('🟡 Bridge required for full validation', 'warning');
+            const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
+            designerResults.collectedData = [projectData];
+            enhanceValidationResults(designerResults, projectData);
+
+            // Add a synthetic category explaining what's missing
+            if (!designerResults.categories) designerResults.categories = [];
+            designerResults.categories.push({
+                category: 'Published Site Checks (Requires Bridge)',
+                passed: false,
+                issues: [{
+                    id: 'bridge-required',
+                    category: 'Published Site Checks',
+                    severity: 'warning',
+                    message: '22 additional checks require the Review Bridge to be installed',
+                    details: {
+                        howToFix: 'Click "Install Bridge" above, then re-run validation. The bridge enables: image loading strategy, WCAG contrast, broken link detection, custom 404, SEO title formula, license text verification, favicon check, connected app detection, placeholder content scan, and more.',
+                    }
+                }],
+                stats: { checked: 0, available: 22, status: 'bridge_required' }
+            });
+            if (!designerResults.summary) designerResults.summary = { errors: 0, warnings: 0, infos: 0, passedCategories: 0, failedCategories: 0 };
+            designerResults.summary.warnings = (designerResults.summary.warnings || 0) + 1;
+            designerResults.summary.failedCategories = (designerResults.summary.failedCategories || 0) + 1;
+
+            setValidationProgress({ status: 'completed', progress: 100, message: 'Designer validation complete. Install bridge for full coverage.' });
+            showResults(designerResults);
+            void submitValidationResults({
+                siteId: bridgeContext?.siteId || projectData.siteInfo?.id || null,
+                siteName: bridgeContext?.siteName || projectData.siteInfo?.name || undefined,
+                siteUrl,
+                validationResults: designerResults,
+                correlationId,
+            });
+            return;
+        }
+
+        // Bridge active — run full validation (Designer + published site)
+        hideBridgeDrawer();
+        setToolbarStatus('🟢 Running full validation...', 'active');
         const validationResults = await runUnifiedValidation({
             siteUrl,
             projectData,
@@ -761,6 +804,15 @@ function renderBridgeStatus(status) {
             ? 'Bridge not fully active. Manual snippet update may be required.'
             : 'Bridge install failed or unavailable.';
     setBridgeMessage(status.message || defaultMessage);
+
+    // Toolbar status reflects bridge state
+    if (status.status === 'active') {
+        setToolbarStatus('Bridge active — full validation available', 'active');
+        hideBridgeDrawer();
+    } else {
+        setToolbarStatus('Bridge required for full validation', 'warning');
+        showBridgeDrawer();
+    }
     const tokenRow = document.getElementById('bridge-token-row');
     const tokenValue = document.getElementById('bridge-token-value');
     const snippetWrap = document.getElementById('bridge-snippet-wrap');
@@ -814,6 +866,28 @@ function setBridgeMessage(message) {
     const messageEl = document.getElementById('bridge-message');
     if (messageEl)
         messageEl.textContent = message;
+}
+function showBridgeDrawer() {
+    const drawer = document.getElementById('review-bridge');
+    if (drawer) drawer.style.display = 'flex';
+}
+function hideBridgeDrawer() {
+    const drawer = document.getElementById('review-bridge');
+    if (drawer) drawer.style.display = 'none';
+}
+function setToolbarStatus(text, type) {
+    const statusText = document.getElementById('toolbar-status-text');
+    const badge = document.getElementById('bridge-status-badge');
+    if (statusText) {
+        statusText.textContent = text;
+        statusText.classList.add('updated');
+        setTimeout(() => statusText.classList.remove('updated'), 300);
+    }
+    if (badge) {
+        badge.classList.remove('active', 'pending_manual', 'failed', 'neutral');
+        badge.classList.add(type === 'active' ? 'active' : type === 'warning' ? 'pending_manual' : 'neutral');
+        badge.textContent = '●';
+    }
 }
 function mergeEnhancedValidation(designerResults, enhancedResults) {
     try {
