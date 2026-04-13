@@ -536,7 +536,7 @@ async function handleSnippetInstall(
 	);
 
 	if (body.mode === 'programmatic' || body.mode === 'webflow-api') {
-		const programmatic = await attemptProgrammaticSnippetInstall(env, body.siteId, snippet, correlationId);
+		const programmatic = await attemptProgrammaticSnippetInstall(env, body.siteId, snippet, correlationId, body.idToken);
 		if (programmatic.ok) {
 			record.installMethod = 'webflow-api';
 			record.status = 'active';
@@ -1917,15 +1917,47 @@ async function attemptProgrammaticSnippetInstall(
 	env: unknown,
 	siteId: string,
 	snippet: string,
-	correlationId: string
+	correlationId: string,
+	idToken?: string
 ): Promise<{ ok: boolean; message: string }> {
-	const webflowApiToken = readEnvString(env, 'WEBFLOW_DATA_API_TOKEN');
 	const webflowApiBase = readEnvString(env, 'WEBFLOW_DATA_API_BASE') || 'https://api.webflow.com';
+
+	// Resolve the access token. Priority:
+	// 1. Exchange the extension's ID token for a site-scoped access token
+	// 2. Fall back to static WEBFLOW_DATA_API_TOKEN
+	let webflowApiToken = readEnvString(env, 'WEBFLOW_DATA_API_TOKEN');
+
+	if (idToken) {
+		const clientId = readEnvString(env, 'WEBFLOW_APP_CLIENT_ID');
+		const clientSecret = readEnvString(env, 'WEBFLOW_APP_CLIENT_SECRET');
+		if (clientId && clientSecret) {
+			try {
+				const tokenResponse = await fetch(`${webflowApiBase}/oauth/access_token`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						client_id: clientId,
+						client_secret: clientSecret,
+						grant_type: 'authorization_code',
+						code: idToken
+					})
+				});
+				if (tokenResponse.ok) {
+					const tokenData = (await tokenResponse.json()) as { access_token?: string };
+					if (tokenData.access_token) {
+						webflowApiToken = tokenData.access_token;
+					}
+				}
+			} catch (e) {
+				console.warn('ID token exchange failed, using static token:', e);
+			}
+		}
+	}
+
 	if (!webflowApiToken) {
 		return {
 			ok: false,
-			message:
-				'Manual install required: server has no WEBFLOW_DATA_API_TOKEN configured.'
+			message: 'Manual install required: no API token available. Ensure the app is authorized with custom_code:write scope.'
 		};
 	}
 

@@ -85,6 +85,8 @@ export interface SnippetInstallRequest {
 	siteName?: string;
 	installTarget: 'head';
 	mode: 'programmatic' | 'webflow-api' | 'manual-fallback';
+	/** ID token from webflow.getIdToken() — exchanged for an access token. */
+	idToken?: string;
 }
 
 export interface SnippetInstallResponse {
