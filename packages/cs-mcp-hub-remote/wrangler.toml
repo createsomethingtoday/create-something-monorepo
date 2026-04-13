@@ -49,6 +49,9 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 # HUB_DISCOVERY_DEFAULT_SERVERS = "composio-toolkit-gmail,composio-toolkit-googledrive"
 # HUB_DISCOVERY_MAX_PROXY_TOOLS = "200"
 # HUB_ACCOUNT_ID = "operator"
+# Worker-scoped downstream account forwarding exceptions:
+# wrangler secret put HUB_SERVER_ACCOUNT_ID_OVERRIDES
+# Example secret value: {"composio-toolkit-firecrawl":"acct_admin"}
 # HUB_SESSION_RESOLVE_URL = "https://id.createsomething.space/v1/mcp/sessions/resolve"
 # HUB_SESSION_RESOLVE_TOKEN = ""
 # HUB_SESSION_RESOLVE_TIMEOUT_MS = "5000"

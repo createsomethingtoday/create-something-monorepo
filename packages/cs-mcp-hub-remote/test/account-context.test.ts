@@ -6,6 +6,7 @@ import {
   normalizeInboundMcpRequest,
   resolveAccountContext,
   resolveHubIdentityMode,
+  resolveServerAccountIdOverrides,
 } from '../index.ts';
 
 function makeExtra(headers: Record<string, string>) {
@@ -25,6 +26,30 @@ function makeExtraFromRequest(request: Request) {
 test('resolveHubIdentityMode defaults to session_required', () => {
   const mode = resolveHubIdentityMode({} as any);
   assert.equal(mode, 'session_required');
+});
+
+test('resolveServerAccountIdOverrides parses worker-scoped downstream account maps', () => {
+  const overrides = resolveServerAccountIdOverrides({
+    HUB_SERVER_ACCOUNT_ID_OVERRIDES: JSON.stringify({
+      'composio-toolkit-firecrawl': 'acct_admin',
+      'composio-toolkit-slack': ' acct_shared ',
+      ignoredNumber: 42,
+      ignoredEmpty: '   ',
+    }),
+  } as any);
+
+  assert.deepEqual(overrides, {
+    'composio-toolkit-firecrawl': 'acct_admin',
+    'composio-toolkit-slack': 'acct_shared',
+  });
+});
+
+test('resolveServerAccountIdOverrides ignores invalid JSON payloads', () => {
+  const overrides = resolveServerAccountIdOverrides({
+    HUB_SERVER_ACCOUNT_ID_OVERRIDES: '{not-json',
+  } as any);
+
+  assert.deepEqual(overrides, {});
 });
 
 test('resolveAccountContext requires session token header or bearer token in session_required mode', async () => {

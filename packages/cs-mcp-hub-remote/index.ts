@@ -118,6 +118,7 @@ type ConnectedDownstream = {
   name: string;
   config: HttpServerConfig;
   baseHeaders: Record<string, string>;
+  forwardedAccountIdOverride: string | null;
   toolCallTimeoutMs: number;
   client: Client;
   tools: Tool[];
@@ -352,6 +353,7 @@ interface Env {
   HUB_REFRESH_SECONDS?: string;
   HUB_CACHE_BUST?: string;
   HUB_ACCOUNT_ID?: string;
+  HUB_SERVER_ACCOUNT_ID_OVERRIDES?: string;
   HUB_DISCOVERY_MODE?: string;
   HUB_DISCOVERY_DEFAULT_SERVERS?: string;
   HUB_DISCOVERY_MAX_PROXY_TOOLS?: string;
@@ -1075,6 +1077,7 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
   const connected: ConnectedDownstream[] = [];
   const failed: DownstreamFailure[] = [];
   const warnings = [...stateResolution.warnings];
+  const serverAccountIdOverrides = resolveServerAccountIdOverrides(env);
 
   const connectConcurrency = resolveConnectConcurrency(env);
   const connectionResults = await mapWithConcurrency(
@@ -1096,7 +1099,12 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
       };
     }
 
-    const result = await connectSingleDownstream(serverName, config, env);
+    const result = await connectSingleDownstream(
+      serverName,
+      config,
+      env,
+      serverAccountIdOverrides[serverName] ?? null,
+    );
     if ('client' in result) {
       return { kind: 'connected' as const, connected: result };
     }
@@ -1161,6 +1169,7 @@ async function connectSingleDownstream(
   name: string,
   config: HttpServerConfig,
   env: Env,
+  forwardedAccountIdOverride: string | null,
 ): Promise<ConnectedDownstream | DownstreamFailure> {
   const connectTimeoutMs = resolveConnectTimeoutMs(config, env);
   const listToolsTimeoutMs = resolveListToolsTimeoutMs(config, env);
@@ -1192,7 +1201,15 @@ async function connectSingleDownstream(
         `List tools from downstream "${name}"`,
       );
 
-      return { name, config, baseHeaders: headers, toolCallTimeoutMs, client, tools };
+      return {
+        name,
+        config,
+        baseHeaders: headers,
+        forwardedAccountIdOverride,
+        toolCallTimeoutMs,
+        client,
+        tools,
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const shouldRetry =
@@ -1329,6 +1346,7 @@ async function callDownstreamToolWithTrace(
     name: `${HUB_NAME}:${server.name}:proxy`,
     version: HUB_VERSION,
   });
+  const forwardedAccountId = server.forwardedAccountIdOverride ?? accountId;
 
   const headers: Record<string, string> = {
     ...server.baseHeaders,
@@ -1337,9 +1355,12 @@ async function callDownstreamToolWithTrace(
     'x-hub-server': HUB_NAME,
     'x-hub-downstream-server': server.name,
     'x-hub-downstream-tool': toolName,
-    'x-mcp-account-id': accountId,
-    'x-hub-account-id': accountId,
+    'x-mcp-account-id': forwardedAccountId,
+    'x-hub-account-id': forwardedAccountId,
   };
+  if (forwardedAccountId !== accountId) {
+    headers['x-hub-source-account-id'] = accountId;
+  }
 
   const transport = new StreamableHTTPClientTransport(new URL(server.config.url), {
     requestInit: {
@@ -2327,6 +2348,7 @@ function buildStatusPayload(runtime: HubRuntime): Record<string, unknown> {
     connectedServers: runtime.connected.map((server) => ({
       name: server.name,
       toolCount: server.tools.length,
+      forwardedAccountIdOverride: server.forwardedAccountIdOverride ?? undefined,
     })),
     failedServers: runtime.failed,
     proxyToolCount: runtime.proxies.toolDefinitions.length,
@@ -3880,6 +3902,7 @@ function buildDiscoveryServicesPayload(
       totalProxyTools: byServer.get(server.name) ?? 0,
       visibleProxyTools: visibleByServer.get(server.name) ?? 0,
       activeInDiscovery: prefs.activeServers.includes(server.name),
+      forwardedAccountIdOverride: server.forwardedAccountIdOverride ?? undefined,
     })),
     totalProxyToolCount: runtime.proxies.toolDefinitions.length,
     visibleProxyToolCount: visible.toolDefinitions.length,
@@ -5927,6 +5950,37 @@ function resolveHubInstanceId(env: Env): string {
 
 function buildHubStateKvKey(env: Env): string {
   return `${HUB_STATE_KV_PREFIX}::${resolveHubInstanceId(env)}`;
+}
+
+export function resolveServerAccountIdOverrides(env: Env): Record<string, string> {
+  const raw = readEnvString(env, 'HUB_SERVER_ACCOUNT_ID_OVERRIDES');
+  if (!raw) {
+    return {};
+  }
+
+  const parsed = parseJsonObject(raw);
+  if (!parsed) {
+    console.warn(
+      `[${HUB_NAME}] invalid HUB_SERVER_ACCOUNT_ID_OVERRIDES payload; expected a JSON object map.`,
+    );
+    return {};
+  }
+
+  const overrides: Record<string, string> = {};
+  for (const [serverName, value] of Object.entries(parsed)) {
+    if (typeof value !== 'string') {
+      continue;
+    }
+
+    const accountId = value.trim();
+    if (!accountId) {
+      continue;
+    }
+
+    overrides[serverName] = accountId;
+  }
+
+  return overrides;
 }
 
 function readEnvString(env: Env, key: string): string | undefined {

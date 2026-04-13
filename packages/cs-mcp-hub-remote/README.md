@@ -100,6 +100,7 @@ Environment variables:
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
 - `HUB_ACCOUNT_ID` (optional): fallback account ID written to hub telemetry rows
+- `HUB_SERVER_ACCOUNT_ID_OVERRIDES` (optional): JSON object mapping downstream server names to forwarded account IDs for worker-scoped exceptions, e.g. `{"composio-toolkit-firecrawl":"acct_admin"}`
 - `HUB_ALLOW_DIRECT_PROXY_TOOLS` (optional): `false` (default). Set `true` to allow direct proxy tool calls.
 - `HUB_DIRECT_PROXY_ALLOWED_PREFIXES` (optional): CSV/JSON list of proxy-tool prefixes allowed for direct execution.
 - `HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW` (optional): enable per-window proxy call limits when > 0
@@ -135,6 +136,7 @@ Intent routing:
 Account forwarding:
 
 - Proxied tool calls forward `x-mcp-account-id` and `x-hub-account-id` to downstream MCPs.
+- When `HUB_SERVER_ACCOUNT_ID_OVERRIDES` is set, the matching downstream servers receive the configured forwarded account ID instead of the hub caller account. The hub still keeps its own telemetry and policy identity.
 
 Session-scoped identity (optional):
 
