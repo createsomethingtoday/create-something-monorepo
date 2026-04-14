@@ -76,7 +76,10 @@
 	// The footer does not earn its existence there: the sidebar already
 	// provides navigation, and documentation is a dwelling for study,
 	// not marketing. Weniger, aber besser.
-	const isCanonRoute = $derived((data?.pathname || '/').startsWith('/canon'));
+	const pathname = $derived(data?.pathname || '/');
+	const isCanonRoute = $derived(pathname.startsWith('/canon'));
+	const isEmbedRoute = $derived(pathname.startsWith('/embed'));
+	const showPropertyChrome = $derived(!isCanonRoute && !isEmbedRoute);
 </script>
 
 <LayoutSEO property="ltd" />
@@ -84,10 +87,12 @@
 <Analytics property="ltd" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="ltd" localItems={quickAccessItems} />
+{#if showPropertyChrome}
+	<UnifiedSearch currentProperty="ltd" localItems={quickAccessItems} />
+{/if}
 
 <div class="min-h-screen flex flex-col">
-	{#if !isCanonRoute}
+	{#if showPropertyChrome}
 		<Navigation
 			logo="CREATE SOMETHING"
 			logoSuffix=".ltd"
@@ -105,7 +110,7 @@
 		{@render children()}
 	</main>
 
-	{#if !isCanonRoute}
+	{#if showPropertyChrome}
 		<Footer
 			mode="ltd"
 			showNewsletter={false}
