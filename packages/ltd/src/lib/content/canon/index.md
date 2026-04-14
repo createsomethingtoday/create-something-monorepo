@@ -41,7 +41,7 @@ published: true
 <p>Ready-to-use buttons, cards, navigation, and form elements with code examples.</p>
 </a>
 <!-- Patterns -->
-<a class="feature-card feature-card-disabled" href="/canon/patterns">
+<a class="feature-card" href="/canon/patterns">
 <div class="card-icon">
 <svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="24">
 <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
@@ -51,7 +51,6 @@ published: true
 </div>
 <h3>Patterns</h3>
 <p>How to handle forms, loading states, and navigation across your application.</p>
-<span class="badge">Coming Soon</span>
 </a>
 <!-- Philosophy -->
 <a class="feature-card" href="/canon/foundations/philosophy">
@@ -122,4 +121,3 @@ published: true
 </div>
 </div>
 </div>
-

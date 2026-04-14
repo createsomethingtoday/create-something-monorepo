@@ -6,7 +6,7 @@ description: "Complete reference of all Canon design tokens. CSS custom properti
 lead: "Complete list of Canon's CSS custom properties. Copy tokens directly
 		or download the full token file."
 publishedAt: "2026-01-08"
-published: true
+published: false
 ---
 
 
@@ -113,4 +113,3 @@ border-radius: var(--radius-lg);
 padding: var(--space-sm);</code></pre>
 </div>
 </div>
-
