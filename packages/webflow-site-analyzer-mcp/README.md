@@ -221,7 +221,8 @@ Hosted client config:
 Notes:
 - `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` is preferred for remote auth. `MCP_API_KEY` is still accepted as a fallback.
 - `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
-- This package is now remote-capable, but the reviewer hub cannot use it until an actual hosted URL is deployed and the Hub registry entry is switched from `stdio` to `http`.
+- This package is deployed at `analyzer.mcp.createsomething.agency` and is part of the production reviewer Hub surface.
+- If `/health` reports `auth.configured: false` or `provider: null` after a deploy, rerun `scripts/webflow-site-analyzer-secret-sync.sh` so the active Worker version picks up `STEEL_API_KEY`, `BROWSERLESS_API_KEY`, and the analyzer auth token.
 
 #### Container-backed Remote Host
 

@@ -791,13 +791,32 @@ export async function createMcpAuthEvent(
 		event_data_json: string;
 	}
 ): Promise<void> {
-	await db
-		.prepare(
-			`INSERT INTO mcp_auth_events (id, session_id, user_id, event_type, event_data_json)
+	const insert = (userId: string | null) =>
+		db
+			.prepare(
+				`INSERT INTO mcp_auth_events (id, session_id, user_id, event_type, event_data_json)
        VALUES (?, ?, ?, ?, ?)`
-		)
-		.bind(event.id, event.session_id, event.user_id, event.event_type, event.event_data_json)
-		.run();
+			)
+			.bind(event.id, event.session_id, userId, event.event_type, event.event_data_json)
+			.run();
+
+	try {
+		await insert(event.user_id);
+	} catch (error) {
+		if (!event.user_id || !isForeignKeyConstraintError(error)) {
+			throw error;
+		}
+
+		await insert(null);
+	}
+}
+
+function isForeignKeyConstraintError(error: unknown): boolean {
+	if (!(error instanceof Error)) return false;
+	return (
+		error.message.includes('FOREIGN KEY constraint failed') ||
+		error.message.includes('SQLITE_CONSTRAINT_FOREIGNKEY')
+	);
 }
 
 export async function listMcpAuthEvents(db: D1Database, sessionId: string): Promise<McpAuthEvent[]> {

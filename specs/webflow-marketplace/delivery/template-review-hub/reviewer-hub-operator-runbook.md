@@ -37,6 +37,8 @@ Production outcome:
   - `webflow-marketplace-review`
 - Deploy script:
   - `scripts/cs-hub-webflow-reviewers-deploy.sh`
+- Entitlement sync:
+  - `scripts/webflow-reviewer-entitlement-sync.sh`
 
 ## 4. Preconditions
 
@@ -102,7 +104,23 @@ This applies:
   - `activeServers=["webflow-template-review-mcp","webflow-site-analyzer-mcp"]`
   - `maxProxyTools=30`
 
-## 7. Verify each reviewer Hub
+## 7. Sync reviewer entitlements
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+./scripts/webflow-reviewer-entitlement-sync.sh all
+```
+
+This backfills any missing reviewer `agency_mcp_entitlements` rows from the existing reviewer long-lived bearer records without rotating bearer keys.
+
+Default behavior:
+
+- preserves existing entitlement rows
+- inserts only missing reviewer rows
+- skips archived `acct_wf_sudiksha` by default
+- seeds the row as a reviewer rollout manual override so the reviewer bearer remains stable across routine MCP updates
+
+## 8. Verify each reviewer Hub
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
@@ -126,7 +144,7 @@ REVIEWER=mariana ./scripts/webflow-reviewer-demo-verify.sh
 REVIEWER=mariana ./scripts/webflow-reviewer-assign-self-smoke.sh
 ```
 
-## 8. One-command path
+## 9. One-command path
 
 If all required environment variables are present:
 
@@ -135,7 +153,14 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 ./scripts/cs-hub-webflow-reviewers-deploy.sh all
 ```
 
-## 9. Expected reviewer-visible surface
+Then sync reviewer entitlements:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+./scripts/webflow-reviewer-entitlement-sync.sh all
+```
+
+## 10. Expected reviewer-visible surface
 
 Reviewer Hubs should expose:
 
@@ -149,17 +174,18 @@ Do not expose:
 - approval or publishing completion routes outside the approved reviewer-safe workflow
 - raw non-reviewer tool catalogs
 
-## 10. Boundary
+## 11. Boundary
 
 `webflow-local` is intentionally excluded from the production reviewer Hub posture because the remote Hub only supports HTTP downstream servers. Do not add it back to reviewer discovery until it has a hosted HTTP surface or is replaced with a supported remote originality service.
 
-## 11. Recovery
+## 12. Recovery
 
 If a reviewer Hub is misconfigured:
 
 1. redeploy the worker
 2. rerun normalization
-3. rerun verification
+3. rerun reviewer entitlement sync
+4. rerun verification
 
 If the issue is broader:
 
