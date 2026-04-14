@@ -83,14 +83,43 @@ const PARTNER_CLIENT_CACHE_TTL_MS = 300_000;
 const PARTNER_PIN_CACHE_TTL_MS = 60_000;
 const PARTNER_CACHE_MAX_ENTRIES = 256;
 
-type RouterIntent =
+export type RouterIntent =
   | 'wizard'
   | 'upsert_account'
   | 'list_accounts'
+  | 'get_pin_status'
   | 'get_status'
   | 'pin_account'
   | 'sync_guidance'
   | 'help';
+
+type PinHealthState = 'ready' | 'warning' | 'blocked' | 'unconfigured';
+
+export interface OperatorActionRef {
+  tool: 'operator_notion_accounts';
+  action: string;
+  args: Record<string, unknown>;
+}
+
+export interface PinStatusPayload {
+  tool_name: string;
+  configured: boolean;
+  state: PinHealthState;
+  message: string;
+  account_slug: string | null;
+  display_label: string | null;
+  account_status: NotionAccountRow['status'] | null;
+  connection_status: string | null;
+  sync_enabled: boolean | null;
+  last_checked_at: string | null;
+  connected_account_id: string | null;
+  composio_user_id: string | null;
+  pin_metadata: Record<string, unknown>;
+  account_metadata: Record<string, unknown>;
+  issues: string[];
+  warnings: string[];
+  next_actions: OperatorActionRef[];
+}
 
 interface RouterAgentDecision {
   intent: RouterIntent;
@@ -143,6 +172,7 @@ const accountToolSchema = {
     'wizard',
     'upsert_account',
     'list_accounts',
+    'get_pin_status',
     'get_status',
     'create_connect_link',
     'disable_account',
@@ -188,7 +218,7 @@ const routerToolSchema = {
 };
 
 const routerAgentDecisionSchema = z.object({
-  intent: z.enum(['wizard', 'upsert_account', 'list_accounts', 'get_status', 'pin_account', 'sync_guidance', 'help']),
+  intent: z.enum(['wizard', 'upsert_account', 'list_accounts', 'get_pin_status', 'get_status', 'pin_account', 'sync_guidance', 'help']),
   account_slug: z.string().optional(),
   display_label: z.string().optional(),
   pin_tool_name: z.string().optional(),
@@ -358,7 +388,7 @@ async function runPinnedTool(
     metadata: { tool_name: toolName, action },
   });
 
-  return toJsonResult({ ok: true, tool: toolName, workspace: account.account_slug, action, data, meta: responseMeta(account) });
+  return toJsonResult({ ok: true, tool: toolName, workspace: account.account_slug, action, data, meta: responseMeta(account, toolName) });
 }
 
 async function runAccountsTool(
@@ -379,7 +409,27 @@ async function runAccountsTool(
     case 'list_accounts': {
       const accounts = await syncAllAccounts(deps, client.id);
       const pins = await listNotionPins(deps.db, client.id);
-      return toJsonResult({ ok: true, action, client_slug: client.slug, ...accountSnapshot(accounts, pins) });
+      return toJsonResult({
+        ok: true,
+        action,
+        client_slug: client.slug,
+        ...accountSnapshot(accounts, pins),
+        pin_status: buildPinStatusMap(accounts, pins, [deps.pinnedHalfdozenToolName, deps.pinnedClientToolName]),
+      });
+    }
+    case 'get_pin_status': {
+      const accounts = await syncAllAccounts(deps, client.id);
+      const pins = await listNotionPins(deps.db, client.id);
+      const pinStatus = buildPinStatusMap(accounts, pins, [deps.pinnedHalfdozenToolName, deps.pinnedClientToolName]);
+      const requestedToolName = args.tool_name;
+      const toolName = requestedToolName === undefined ? null : normalizePinToolName(requestedToolName, deps);
+      if (requestedToolName !== undefined && !toolName) {
+        throw new Error(`args.tool_name must be one of: ${deps.pinnedHalfdozenToolName}, ${deps.pinnedClientToolName}`);
+      }
+      if (toolName) {
+        return toJsonResult({ ok: true, action, client_slug: client.slug, tool_name: toolName, pin_status: pinStatus[toolName] });
+      }
+      return toJsonResult({ ok: true, action, client_slug: client.slug, pin_status: pinStatus });
     }
     case 'get_status': {
       const accountSlug = normalizeSlug(String(args.account_slug ?? ''));
@@ -451,7 +501,39 @@ async function runAccountsTool(
       if (!toolName || ![deps.pinnedHalfdozenToolName, deps.pinnedClientToolName].includes(toolName)) {
         throw new Error(`args.tool_name must be one of: ${deps.pinnedHalfdozenToolName}, ${deps.pinnedClientToolName}`);
       }
-      const account = await requireActiveAccount(deps, client.id, accountSlug, { requireSyncEnabled: false });
+      const accounts = await syncAllAccounts(deps, client.id);
+      const pins = await listNotionPins(deps.db, client.id);
+      const previousPin = buildPinStatusMap(accounts, pins, [toolName])[toolName];
+      const account = accounts.find((entry) => entry.account_slug === accountSlug) ?? (await requireAccount(deps.db, client.id, accountSlug));
+      const requestedTarget = buildToolTargetStatus({
+        toolName,
+        configured: true,
+        accountSlug,
+        pinMetadata: {},
+        account,
+      });
+      if (requestedTarget.state === 'blocked') {
+        return toJsonResult({
+          ok: true,
+          action,
+          status: 'blocked',
+          tool_name: toolName,
+          previous_pin: previousPin,
+          requested_target: requestedTarget,
+          next_actions: requestedTarget.next_actions,
+        });
+      }
+      if (previousPin.configured && previousPin.account_slug === accountSlug) {
+        return toJsonResult({
+          ok: true,
+          action,
+          status: 'unchanged',
+          tool_name: toolName,
+          previous_pin: previousPin,
+          current_pin: previousPin,
+          message: `${toolName} is already pinned to "${accountSlug}".`,
+        });
+      }
       await setNotionPin(deps.db, {
         partnerClientId: client.id,
         toolName,
@@ -466,7 +548,16 @@ async function runAccountsTool(
         actor,
         metadata: { tool_name: toolName },
       });
-      return toJsonResult({ ok: true, action, tool_name: toolName, account_slug: accountSlug });
+      const refreshedPins = await listNotionPins(deps.db, client.id);
+      const currentPin = buildPinStatusMap(accounts, refreshedPins, [toolName])[toolName];
+      return toJsonResult({
+        ok: true,
+        action,
+        status: 'updated',
+        tool_name: toolName,
+        previous_pin: previousPin,
+        current_pin: currentPin,
+      });
     }
     case 'set_sync_enabled': {
       const accountSlug = normalizeSlug(String(args.account_slug ?? ''));
@@ -615,7 +706,7 @@ async function runAccountsWizard(
     });
   }
 
-  let pinResult: Record<string, unknown> | null = null;
+  let pinResult: PinStatusPayload | null = null;
   if (pinToolName) {
     if (![deps.pinnedHalfdozenToolName, deps.pinnedClientToolName].includes(pinToolName)) {
       throw new Error(`args.pin_tool_name must be one of: ${deps.pinnedHalfdozenToolName}, ${deps.pinnedClientToolName}`);
@@ -634,7 +725,12 @@ async function runAccountsWizard(
       actor,
       metadata: { tool_name: pinToolName },
     });
-    pinResult = { tool_name: pinToolName, account_slug: refreshed.account_slug };
+    pinResult = buildToolTargetStatus({
+      toolName: pinToolName,
+      configured: true,
+      account: refreshed,
+      pinMetadata: { pinned_by: actor, via: 'wizard' },
+    });
   }
 
   return toJsonResult({
@@ -685,7 +781,7 @@ async function runRouterTool(
     intent: 'fallback',
     status: 'needs_input',
     message:
-      'I can help with: add workspace, issue connect links, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
+      'I can help with: add workspace, issue connect links, inspect current pin targets, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
   });
 }
 
@@ -694,42 +790,9 @@ async function runDeterministicRouter(
   mergedArgs: Record<string, unknown>,
   deps: OperatorNotionToolsDeps,
 ): Promise<{ content: Array<{ type: 'text'; text: string }> } | null> {
-  if (
-    mentionsAny(lower, [
-      'list accounts',
-      'show accounts',
-      'what accounts',
-      'which accounts',
-      'list workspaces',
-      'show workspaces',
-      'what workspaces',
-      'which workspaces',
-      'linked workspaces',
-      'workspace inventory',
-      'inventory of linked workspaces',
-    ])
-  ) {
-    return runRouterIntent('list_accounts', mergedArgs, deps);
-  }
-
-  if (mentionsAny(lower, ['status', 'active', 'connected'])) {
-    return runRouterIntent('get_status', mergedArgs, deps);
-  }
-
-  if (mentionsAny(lower, ['pin ', 'set pinned', 'use for halfdozen', 'use for blondish', 'pin workspace'])) {
-    return runRouterIntent('pin_account', mergedArgs, deps);
-  }
-
-  if (mentionsAny(lower, ['add workspace', 'new workspace', 'register workspace'])) {
-    return runRouterIntent('upsert_account', mergedArgs, deps);
-  }
-
-  if (mentionsAny(lower, ['sync', 'workflow'])) {
-    return runRouterIntent('sync_guidance', mergedArgs, deps);
-  }
-
-  if (mentionsAny(lower, ['connect', 'connect link', 'api key', 'onboard'])) {
-    return runRouterIntent('wizard', mergedArgs, deps);
+  const intent = detectDeterministicRouterIntent(lower);
+  if (intent) {
+    return runRouterIntent(intent, mergedArgs, deps);
   }
 
   return null;
@@ -742,6 +805,20 @@ async function runRouterIntent(
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   if (intent === 'list_accounts') {
     return runAccountsTool('list_accounts', {}, deps);
+  }
+
+  if (intent === 'get_pin_status') {
+    const toolName = normalizePinToolName(mergedArgs.pin_tool_name, deps);
+    if (!toolName) {
+      return toJsonResult({
+        ok: true,
+        action: 'router',
+        intent: 'get_pin_status',
+        status: 'needs_input',
+        next_questions: [`Which pin tool should I inspect? (${deps.pinnedHalfdozenToolName} or ${deps.pinnedClientToolName})`],
+      });
+    }
+    return runAccountsTool('get_pin_status', { tool_name: toolName }, deps);
   }
 
   if (intent === 'upsert_account') {
@@ -819,7 +896,7 @@ async function runRouterIntent(
     intent: 'help',
     status: 'needs_input',
     message:
-      'I can help with: add workspace, issue connect links, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
+      'I can help with: add workspace, issue connect links, inspect current pin targets, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
   });
 }
 
@@ -850,7 +927,7 @@ async function inferRouterIntentWithAgent(
       instructions: [
         'You route operator requests for Notion account management.',
         'Return only a single JSON object with keys: intent, account_slug, display_label, pin_tool_name.',
-        'Allowed intents: wizard, upsert_account, list_accounts, get_status, pin_account, sync_guidance, help.',
+        'Allowed intents: wizard, upsert_account, list_accounts, get_pin_status, get_status, pin_account, sync_guidance, help.',
         'If unsure, return intent=help.',
         'Never include prose or markdown.',
       ].join(' '),
@@ -2665,6 +2742,246 @@ function normalizePinToolName(value: unknown, deps: OperatorNotionToolsDeps): st
   return null;
 }
 
+function buildOperatorAction(action: string, args: Record<string, unknown> = {}): OperatorActionRef {
+  return { tool: 'operator_notion_accounts', action, args };
+}
+
+function dedupeOperatorActions(actions: OperatorActionRef[]): OperatorActionRef[] {
+  const seen = new Set<string>();
+  return actions.filter((actionRef) => {
+    const key = `${actionRef.tool}:${actionRef.action}:${JSON.stringify(actionRef.args)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function buildPinStatusMessage(
+  toolName: string,
+  accountSlug: string | null,
+  state: PinHealthState,
+  issues: string[],
+  warnings: string[],
+): string {
+  if (state === 'unconfigured') {
+    return `No account is currently pinned for "${toolName}".`;
+  }
+
+  if (!accountSlug) {
+    return `No usable account context is available for "${toolName}".`;
+  }
+
+  if (issues.includes('account_missing')) {
+    return `Configured account "${accountSlug}" for "${toolName}" could not be found.`;
+  }
+  if (issues.includes('account_disabled')) {
+    return `Account "${accountSlug}" cannot be used for "${toolName}" because it is disabled.`;
+  }
+  if (issues.includes('account_revoked')) {
+    return `Account "${accountSlug}" cannot be used for "${toolName}" because it is revoked.`;
+  }
+  if (issues.includes('not_connected')) {
+    return `Account "${accountSlug}" cannot be used for "${toolName}" because it is not connected to Notion.`;
+  }
+  if (warnings.includes('sync_disabled')) {
+    return `Account "${accountSlug}" can be used for "${toolName}", but sync jobs are disabled.`;
+  }
+  if (warnings.includes('status_refresh_failed')) {
+    return `Account "${accountSlug}" is configured for "${toolName}", but its latest Notion status could not be refreshed.`;
+  }
+  return `Account "${accountSlug}" is ready for "${toolName}".`;
+}
+
+export function buildToolTargetStatus(input: {
+  toolName: string;
+  account: NotionAccountRow | null;
+  configured?: boolean;
+  accountSlug?: string | null;
+  pinMetadata?: Record<string, unknown>;
+  refreshError?: string | null;
+}): PinStatusPayload {
+  const configured = input.configured ?? false;
+  const account = input.account;
+  const accountSlug = account?.account_slug ?? input.accountSlug ?? null;
+  const pinMetadata = input.pinMetadata ?? {};
+
+  if (!configured) {
+    return {
+      tool_name: input.toolName,
+      configured: false,
+      state: 'unconfigured',
+      message: buildPinStatusMessage(input.toolName, null, 'unconfigured', [], []),
+      account_slug: null,
+      display_label: null,
+      account_status: null,
+      connection_status: null,
+      sync_enabled: null,
+      last_checked_at: null,
+      connected_account_id: null,
+      composio_user_id: null,
+      pin_metadata: pinMetadata,
+      account_metadata: {},
+      issues: ['pin_missing'],
+      warnings: [],
+      next_actions: [buildOperatorAction('list_accounts')],
+    };
+  }
+
+  if (!account) {
+    const issues = ['account_missing'];
+    return {
+      tool_name: input.toolName,
+      configured: true,
+      state: 'blocked',
+      message: buildPinStatusMessage(input.toolName, accountSlug, 'blocked', issues, []),
+      account_slug: accountSlug,
+      display_label: null,
+      account_status: null,
+      connection_status: null,
+      sync_enabled: null,
+      last_checked_at: null,
+      connected_account_id: null,
+      composio_user_id: null,
+      pin_metadata: pinMetadata,
+      account_metadata: {},
+      issues,
+      warnings: [],
+      next_actions: [buildOperatorAction('list_accounts')],
+    };
+  }
+
+  const issues: string[] = [];
+  const warnings: string[] = [];
+  const nextActions: OperatorActionRef[] = [];
+  if (account.status !== 'active') {
+    issues.push(`account_${account.status}`);
+    nextActions.push(
+      buildOperatorAction('upsert_account', {
+        account_slug: account.account_slug,
+        display_label: account.display_label ?? account.account_slug,
+      }),
+    );
+  }
+  if (account.connection_status !== 'ACTIVE') {
+    issues.push('not_connected');
+    nextActions.push(buildOperatorAction('create_connect_link', { account_slug: account.account_slug }));
+    nextActions.push(buildOperatorAction('get_status', { account_slug: account.account_slug }));
+  }
+  if (!Boolean(account.sync_enabled)) {
+    warnings.push('sync_disabled');
+    nextActions.push(buildOperatorAction('set_sync_enabled', { account_slug: account.account_slug, sync_enabled: true }));
+  }
+  if (input.refreshError) {
+    warnings.push('status_refresh_failed');
+    nextActions.push(buildOperatorAction('get_status', { account_slug: account.account_slug }));
+  }
+
+  const state: PinHealthState = issues.length > 0 ? 'blocked' : warnings.length > 0 ? 'warning' : 'ready';
+  return {
+    tool_name: input.toolName,
+    configured: true,
+    state,
+    message: buildPinStatusMessage(input.toolName, account.account_slug, state, issues, warnings),
+    account_slug: account.account_slug,
+    display_label: account.display_label,
+    account_status: account.status,
+    connection_status: account.connection_status,
+    sync_enabled: Boolean(account.sync_enabled),
+    last_checked_at: account.last_checked_at,
+    connected_account_id: account.connected_account_id,
+    composio_user_id: account.composio_user_id,
+    pin_metadata: pinMetadata,
+    account_metadata: parseJsonObject(account.metadata_json),
+    issues,
+    warnings,
+    next_actions: dedupeOperatorActions(nextActions),
+  };
+}
+
+export function buildPinStatusMap(
+  accounts: NotionAccountRow[],
+  pins: NotionPinRow[],
+  toolNames: string[],
+): Record<string, PinStatusPayload> {
+  const accountBySlug = new Map(accounts.map((account) => [account.account_slug, account]));
+  const pinByTool = new Map(pins.map((pin) => [pin.tool_name, pin]));
+  return Object.fromEntries(
+    toolNames.map((toolName) => {
+      const pin = pinByTool.get(toolName) ?? null;
+      return [
+        toolName,
+        buildToolTargetStatus({
+          toolName,
+          configured: Boolean(pin),
+          accountSlug: pin?.account_slug ?? null,
+          pinMetadata: parseJsonObject(pin?.metadata_json),
+          account: pin ? (accountBySlug.get(pin.account_slug) ?? null) : null,
+        }),
+      ];
+    }),
+  );
+}
+
+export function detectDeterministicRouterIntent(lower: string): RouterIntent | null {
+  if (
+    mentionsAny(lower, [
+      'list accounts',
+      'show accounts',
+      'what accounts',
+      'which accounts',
+      'list workspaces',
+      'show workspaces',
+      'what workspaces',
+      'which workspaces',
+      'linked workspaces',
+      'workspace inventory',
+      'inventory of linked workspaces',
+    ])
+  ) {
+    return 'list_accounts';
+  }
+
+  if (
+    mentionsAny(lower, [
+      'wrong account pinned',
+      'wrong workspace pinned',
+      'current pin',
+      'current mapping',
+      'pin status',
+      'which account is',
+      'what account is',
+      'where is',
+      'pointed to',
+      'pinned to',
+      'mapped to',
+    ])
+  ) {
+    return 'get_pin_status';
+  }
+
+  if (mentionsAny(lower, ['repoint', 're-pin', 'repin', 'switch', 'pin ', 'set pinned', 'use for halfdozen', 'use for blondish', 'pin workspace'])) {
+    return 'pin_account';
+  }
+
+  if (mentionsAny(lower, ['status', 'active', 'connected'])) {
+    return 'get_status';
+  }
+
+  if (mentionsAny(lower, ['add workspace', 'new workspace', 'register workspace'])) {
+    return 'upsert_account';
+  }
+
+  if (mentionsAny(lower, ['sync', 'workflow'])) {
+    return 'sync_guidance';
+  }
+
+  if (mentionsAny(lower, ['connect', 'connect link', 'api key', 'onboard'])) {
+    return 'wizard';
+  }
+
+  return null;
+}
+
 async function loadAgentsSdk(): Promise<AgentsSdk> {
   if (agentsSdkPromise) return agentsSdkPromise;
 
@@ -2826,9 +3143,14 @@ function rejectControlArgs(args: Record<string, unknown>): void {
   }
 }
 
-function responseMeta(account: NotionAccountRow): Record<string, unknown> {
+function responseMeta(account: NotionAccountRow, toolName?: string): Record<string, unknown> {
   return {
     provider: 'composio',
+    tool_name: toolName ?? null,
+    account_slug: account.account_slug,
+    display_label: account.display_label,
+    connection_status: account.connection_status,
+    sync_enabled: Boolean(account.sync_enabled),
     composio_user_id: account.composio_user_id,
     connected_account_id: account.connected_account_id,
   };

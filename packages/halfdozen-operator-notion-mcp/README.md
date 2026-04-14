@@ -41,6 +41,7 @@ Default Notion auth config ID in `worker/wrangler.toml`:
 - Account metadata and pins live in the agency D1 schema introduced by `0011_partner_notion_accounts.sql`.
 - Sync contracts, field mappings, record mappings, and run history live in the agency D1 schema introduced by `0020_partner_notion_sync_contracts.sql`.
 - `operator_notion_accounts` supports API-first workspace registration (`action=upsert_account`) plus optional connect-link issuance; guided wizard flow remains available when conversational onboarding is useful.
+- `operator_notion_accounts(action=get_pin_status)` inspects what `halfdozen_notion` or `blondish_notion` is currently targeting and returns repair steps when the target is missing, disconnected, or otherwise unhealthy.
 - `operator_notion_sync` supports page-content preview/copy between managed accounts after connection.
 - `operator_notion_sync_contracts` manages deterministic pairwise data-source sync contracts for Codex automations:
   - discovery: `list_data_sources`, `get_data_source_schema`
@@ -49,7 +50,7 @@ Default Notion auth config ID in `worker/wrangler.toml`:
 - `operator_notion_run_sync_contract` executes a stored contract or dry-run preview; Codex Apps automations own cadence and prompting.
 - Contract execution uses mapping-table identity only in v1 and normalizes delete propagation to archive/tombstone behavior.
 - Validation rejects unsupported Notion field types such as relations, rollups, formulas, and files.
-- `operator_notion_router` uses deterministic routing first, then optional OpenAI-agent fallback (timeout + in-memory cache) for ambiguous requests.
+- `operator_notion_router` uses deterministic routing first, then optional OpenAI-agent fallback (timeout + in-memory cache) for ambiguous requests, including phrases like “wrong account pinned” and “what is blondish_notion pointed to?”.
 - Account status refreshes are TTL-gated on hot paths to reduce Composio API load under frequent MCP traffic.
 - Partner client and pinned-tool bindings are short-TTL cached in-process to reduce repeated D1 reads on high-frequency pinned tool calls.
 - MCP tool telemetry and feedback are exported to Braintrust when `BRAINTRUST_API_KEY` is configured.

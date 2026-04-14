@@ -328,7 +328,7 @@ function hasAnyParameter(parameters: ComposioToolDef['parameters'], keys: string
 
 function hasAnyRequiredParameter(parameters: ComposioToolDef['parameters'], keys: string[]): boolean {
   if (!Array.isArray(parameters.required)) return false;
-  return parameters.required.some((key) => keys.includes(key));
+  return parameters.required.some((key: unknown) => typeof key === 'string' && keys.includes(key));
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
