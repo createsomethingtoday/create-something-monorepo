@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { env } from '$env/dynamic/public';
   import type { PageData } from './$types';
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
   import { goto, invalidate } from '$app/navigation';
@@ -14,6 +15,8 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { getPortfolioTitle } from '$lib/utils/portfolio-title';
+
+  const DEFAULT_TEMPLATE_SUBMIT_URL = 'https://webflow-dashboard-cloud.createsomething.workers.dev/submit';
 
   let { data }: { data: PageData } = $props();
 
@@ -194,6 +197,30 @@
     goto('/validation');
   }
 
+  function buildTemplateDraftUrl() {
+    const configuredUrl = env.PUBLIC_TEMPLATE_SUBMIT_URL?.trim() || DEFAULT_TEMPLATE_SUBMIT_URL;
+
+    try {
+      const url =
+        configuredUrl.startsWith('http://') || configuredUrl.startsWith('https://')
+          ? new URL(configuredUrl)
+          : new URL(configuredUrl, window.location.origin);
+
+      url.searchParams.set('utm_source', 'webflow_dashboard');
+      url.searchParams.set('utm_medium', 'internal');
+      url.searchParams.set('utm_campaign', 'create_template_draft');
+
+      return url.toString();
+    } catch {
+      return configuredUrl;
+    }
+  }
+
+  function handleCreateTemplateDraft() {
+    trackEvent('dashboard_quick_action_clicked', { action: 'create_template_draft' });
+    window.location.href = buildTemplateDraftUrl();
+  }
+
   function handleExploreMarketplace() {
     trackEvent('dashboard_quick_action_clicked', { action: 'explore_marketplace' });
     goto('/marketplace');
@@ -245,6 +272,7 @@
                   <span><strong>{(data.assets || []).length}</strong> total assets</span>
                 </div>
                 <div class="quick-actions">
+                  <Button size="sm" onclick={handleCreateTemplateDraft}>Create template draft</Button>
                   <Button variant="secondary" size="sm" onclick={handleReviewAssets}>Review assets</Button>
                   <Button variant="outline" size="sm" onclick={handleOpenValidation}>Open validation</Button>
                   {#if data.hasTemplateAsset}
@@ -272,6 +300,7 @@
           errorMessage={data.assetsError}
           {searchTerm}
           onSearch={handleSearch}
+          onCreateDraft={handleCreateTemplateDraft}
           onView={handleViewAsset}
           onEdit={handleEditAsset}
           onArchive={handleArchiveAsset}

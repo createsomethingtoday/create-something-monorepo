@@ -43,6 +43,7 @@
     errorMessage?: string | null;
     searchTerm?: string;
     onSearch?: (term: string) => void;
+    onCreateDraft?: () => void;
     onView?: (id: string) => void;
     onEdit?: (id: string) => void;
     onArchive?: (id: string) => Promise<void>;
@@ -54,6 +55,7 @@
     errorMessage = null,
     searchTerm = '',
     onSearch,
+    onCreateDraft,
     onView,
     onEdit,
     onArchive,
@@ -292,12 +294,17 @@
             <Package size={64} strokeWidth={1.5} />
             <h3>No assets yet</h3>
             <p>Your published and pending assets will appear here after sync.</p>
-            {#if onRefresh}
+            {#if onCreateDraft || onRefresh}
               <div class="empty-actions">
-                <Button variant="secondary" onclick={onRefresh}>
-                  <RefreshCw size={14} />
-                  Refresh assets
-                </Button>
+                {#if onCreateDraft}
+                  <Button onclick={onCreateDraft}>Create template draft</Button>
+                {/if}
+                {#if onRefresh}
+                  <Button variant="secondary" onclick={onRefresh}>
+                    <RefreshCw size={14} />
+                    Refresh assets
+                  </Button>
+                {/if}
               </div>
             {/if}
           {/if}

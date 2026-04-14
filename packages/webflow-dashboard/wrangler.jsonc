@@ -32,7 +32,8 @@
 
 	// Environment variables (secrets set via wrangler secret put)
 	"vars": {
-		"ENVIRONMENT": "production"
+		"ENVIRONMENT": "production",
+		"PUBLIC_TEMPLATE_SUBMIT_URL": "https://webflow-dashboard-cloud.createsomething.workers.dev/submit"
 	}
 
 	// Cron triggers: Configure in Cloudflare Dashboard > Workers & Pages > webflow-dashboard > Triggers

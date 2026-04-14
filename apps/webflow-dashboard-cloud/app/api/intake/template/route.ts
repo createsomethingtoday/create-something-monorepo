@@ -3,11 +3,17 @@ import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
 import { checkRemoteTemplateNameAvailability } from '../../../../lib/intake/external';
+import { buildTemplateDetailsHtml, buildTemplateSummary } from '../../../../lib/intake/template-content';
 import { runPublishedUrlValidation } from '../../../../lib/intake/published-url';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
+import { getEnvOrThrow } from '../../../../lib/server/env';
+import { getUserFromRequest } from '../../../../lib/server/session';
+import { verifyTemplateDraftAccessToken } from '../../../../lib/server/template-draft-access';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
 
 type TemplateSubmissionBody = {
+  draftId?: string;
+  draftAccessToken?: string;
   creatorName?: string;
   creatorEmail?: string;
   templateName?: string;
@@ -31,24 +37,6 @@ type TemplateSubmissionBody = {
   utm?: Record<string, string>;
 };
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function toParagraphs(value: string): string {
-  return value
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
-    .join('');
-}
-
 function normalizePreviewUrl(value: string): string {
   const trimmed = value.trim();
   if (!trimmed.includes('https://preview.webflow.com/preview/')) {
@@ -66,6 +54,26 @@ function ensureArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.map((item) => String(item).trim()).filter(Boolean)
     : [];
+}
+
+async function canSubmitDraft(
+  request: Request,
+  assetId: string,
+  creatorEmail: string,
+  draftAccessToken: string | undefined,
+  airtable: Awaited<ReturnType<typeof getServerAirtable>>
+): Promise<boolean> {
+  const requestUser = await getUserFromRequest(request);
+  if (requestUser && (await airtable.verifyAssetOwnership(assetId, requestUser.email))) {
+    return true;
+  }
+
+  const env = await getEnvOrThrow();
+  if (!verifyTemplateDraftAccessToken(assetId, creatorEmail, env.AIRTABLE_API_KEY || '', draftAccessToken)) {
+    return false;
+  }
+
+  return airtable.verifyAssetOwnership(assetId, creatorEmail);
 }
 
 export async function POST(request: Request) {
@@ -145,6 +153,36 @@ export async function POST(request: Request) {
       );
     }
 
+    let draftAssetId: string | undefined;
+    if (body.draftId) {
+      const existingDraft = await airtable.getAsset(body.draftId);
+      if (!existingDraft) {
+        return jsonNoStore({ error: 'Draft not found.' }, { status: 404 });
+      }
+
+      const draftOwnerEmail = validateEmail(existingDraft.creatorContactEmail || creatorEmail);
+      if (draftOwnerEmail !== creatorEmail) {
+        return jsonNoStore(
+          { error: 'Draft owner email does not match the current creator email.' },
+          { status: 409 }
+        );
+      }
+
+      if (
+        String(existingDraft.status || '')
+          .trim()
+          .toLowerCase() !== 'draft'
+      ) {
+        return jsonNoStore({ error: 'This draft is no longer editable.' }, { status: 409 });
+      }
+
+      if (!(await canSubmitDraft(request, existingDraft.id, creatorEmail, body.draftAccessToken, airtable))) {
+        return jsonNoStore({ error: 'You do not have permission to submit this draft.' }, { status: 403 });
+      }
+
+      draftAssetId = existingDraft.id;
+    }
+
     const eligibility = await evaluateCreatorEligibility(creatorEmail);
     if (!eligibility.allowed) {
       return jsonNoStore(
@@ -169,7 +207,7 @@ export async function POST(request: Request) {
     }
 
     const [nameUniqueness, remoteNameAvailability] = await Promise.all([
-      airtable.checkAssetNameUniqueness(templateName),
+      airtable.checkAssetNameUniqueness(templateName, draftAssetId),
       checkRemoteTemplateNameAvailability(templateName).catch(() => null)
     ]);
 
@@ -191,43 +229,30 @@ export async function POST(request: Request) {
       combinedFeatures.add('gsap');
     }
 
-    const detailsHtml = [
-      `<h2>Submission notes</h2>${toParagraphs(longDescription)}`,
-      notes ? `<h3>Internal notes</h3>${toParagraphs(notes)}` : '',
-      '<h3>Metadata</h3>',
-      '<ul>',
-      category ? `<li>Category: ${escapeHtml(category)}</li>` : '',
-      tags.length > 0 ? `<li>Tags: ${escapeHtml(tags.join(', '))}</li>` : '',
-      styleTags.length > 0 ? `<li>Style tags: ${escapeHtml(styleTags.join(', '))}</li>` : '',
-      siteTypes.length > 0 ? `<li>Site types: ${escapeHtml(siteTypes.join(', '))}</li>` : '',
-      combinedFeatures.size > 0
-        ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
-        : '',
-      `<li>Published URL verified: ${escapeHtml(publishedValidation.normalizedUrl)}</li>`,
-      publishedValidation.summary.gsapDetected
-        ? '<li>GSAP detected during published-site crawl.</li>'
-        : '',
-      '</ul>'
-    ]
-      .filter(Boolean)
-      .join('');
-
-    const submission = await airtable.createTemplateSubmission({
+    const submissionInput = {
       creatorEmail,
       creatorWebflowEmail:
         creator.emails?.find((value) => value !== creatorEmail) || creatorEmail,
       name: templateName,
-      description: [
-        category ? `Category: ${category}` : '',
-        tags.length > 0 ? `Tags: ${tags.join(', ')}` : '',
-        siteTypes.length > 0 ? `Site types: ${siteTypes.join(', ')}` : '',
-        combinedFeatures.size > 0 ? `Features: ${[...combinedFeatures].join(', ')}` : '',
-        notes ? `Notes: ${notes}` : ''
-      ]
-        .filter(Boolean)
-        .join('\n'),
+      description: buildTemplateSummary({
+        category,
+        tags,
+        siteTypes,
+        featureFlags: [...combinedFeatures],
+        notes
+      }),
       descriptionShort: shortDescription,
-      descriptionLongHtml: detailsHtml,
+      descriptionLongHtml: buildTemplateDetailsHtml({
+        longDescription,
+        notes,
+        category,
+        tags,
+        styleTags,
+        siteTypes,
+        featureFlags: [...combinedFeatures],
+        publishedUrl: publishedValidation.normalizedUrl,
+        gsapDetected: publishedValidation.summary.gsapDetected
+      }),
       websiteUrl: publishedValidation.normalizedUrl,
       previewUrl,
       priceString: priceModel,
@@ -246,7 +271,15 @@ export async function POST(request: Request) {
         notes,
         utm: body.utm || {}
       }
-    });
+    };
+
+    const submission = draftAssetId
+      ? await airtable.submitTemplateDraft(draftAssetId, submissionInput)
+      : await airtable.createTemplateSubmission(submissionInput);
+
+    if (!submission) {
+      return jsonNoStore({ error: 'Failed to submit template.' }, { status: 500 });
+    }
 
     return jsonNoStore({
       asset: submission.asset,

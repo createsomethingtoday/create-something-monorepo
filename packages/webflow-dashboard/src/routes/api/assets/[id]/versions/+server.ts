@@ -63,7 +63,7 @@ export const POST: RequestHandler = async ({ params, request, locals, platform }
 		);
 
 		if (!version) {
-			throw error(500, 'Failed to create version');
+			return json({ version: null, skipped: true });
 		}
 
 		return json({ version });

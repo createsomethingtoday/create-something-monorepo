@@ -1173,7 +1173,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			const fields = buildAssetUpdateFields(data, currentAsset);
 
 			if (Object.keys(fields).length === 0) {
-				return null;
+				return this.getAsset(id);
 			}
 
 			try {
@@ -1230,8 +1230,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			debugLog('[Airtable] Fields to update:', Object.keys(fields));
 
 			if (Object.keys(fields).length === 0) {
-				debugLog('[Airtable] No fields to update, returning null');
-				return null;
+				debugLog('[Airtable] No fields to update, returning current asset');
+				return this.getAsset(id);
 			}
 
 			try {
@@ -1965,11 +1965,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				}
 				debugLog('[Airtable] Asset found:', asset.name);
 
-				// Check if asset is "Upcoming" - don't create versions for upcoming assets
-				// Matches v1 logic: pages/api/asset/createVersion/[id].js lines 50-57
-				const cleanStatus = asset.status.replace(/^\d️⃣/u, '').replace(/🆕|🚀/gu, '').trim();
-				if (cleanStatus === 'Upcoming') {
-					debugLog('[Airtable] Asset is Upcoming, skipping version creation');
+				// Draft and Upcoming assets are still being worked on, so skip snapshot versions.
+				const cleanStatus = cleanMarketplaceStatus(asset.status);
+				if (cleanStatus === 'Draft' || cleanStatus === 'Upcoming') {
+					debugLog('[Airtable] Asset is not versioned yet, skipping version creation', {
+						status: cleanStatus
+					});
 					return null;
 				}
 

@@ -126,6 +126,8 @@ export interface Asset {
   rejectionFeedbackHtml?: string;
   qualityScore?: string;
   priceString?: string;
+  creatorName?: string;
+  creatorContactEmail?: string;
 }
 
 export interface Creator {
@@ -147,10 +149,10 @@ export interface CreateCreatorInput {
   avatarUrl?: string | null;
 }
 
-export interface CreateTemplateSubmissionInput {
+interface TemplateAssetMutationInput {
   creatorEmail: string;
   creatorWebflowEmail?: string;
-  name: string;
+  name?: string;
   description?: string;
   descriptionShort?: string;
   descriptionLongHtml?: string;
@@ -163,6 +165,12 @@ export interface CreateTemplateSubmissionInput {
   carouselImages?: string[];
   metadata?: Record<string, unknown>;
 }
+
+export interface CreateTemplateSubmissionInput extends TemplateAssetMutationInput {
+  name: string;
+}
+
+export interface CreateTemplateDraftInput extends TemplateAssetMutationInput {}
 
 export interface TemplateSubmissionRecord {
   asset: Asset;
@@ -527,6 +535,68 @@ function buildSubmissionSummary(metadata: Record<string, unknown> | undefined): 
   return entries.join('\n');
 }
 
+function resolveTemplateAssetName(name: string | undefined, fallback = 'Untitled Draft'): string {
+  const trimmed = name?.trim();
+  return trimmed || fallback;
+}
+
+function buildTemplateAssetFields(
+  data: TemplateAssetMutationInput,
+  options: {
+    status: string;
+    submittedAt?: string;
+    forceName?: boolean;
+    fallbackName?: string;
+  }
+): Record<string, unknown> {
+  const emails = dedupeEmails(data.creatorEmail, data.creatorWebflowEmail);
+  const metadataSummary = buildSubmissionSummary(data.metadata);
+  const fields: Record<string, unknown> = {
+    '🆎Type': 'Template🏗️',
+    '⚙️🆎Type (Text)': 'Template🏗️',
+    '📝Description': metadataSummary || data.description || '',
+    'ℹ️Description (Short)': data.descriptionShort || '',
+    'ℹ️Description (Long).html': data.descriptionLongHtml || '',
+    '🔗Website URL': data.websiteUrl || '',
+    '🔗Preview Site URL': data.previewUrl || '',
+    '🚀Marketplace Status': options.status,
+    '🥞💲Template Price String (🏗️ only)': data.priceString || '',
+    '🎨📧 Creator Email': data.creatorEmail.trim().toLowerCase(),
+    '🎨📧 Creator WF Account Email': (data.creatorWebflowEmail || data.creatorEmail)
+      .trim()
+      .toLowerCase(),
+    '📧Emails (from 🎨Creator)': emails.join(', ')
+  };
+
+  if (options.forceName || data.name !== undefined) {
+    fields['Name'] = resolveTemplateAssetName(data.name, options.fallbackName);
+  }
+
+  if (options.submittedAt) {
+    fields['📅Submitted Date'] = options.submittedAt;
+  }
+
+  if (data.thumbnailUrl !== undefined) {
+    fields['fld43LxLHMZb2yF7F'] = data.thumbnailUrl ? [{ url: data.thumbnailUrl }] : [];
+  }
+
+  if (data.secondaryThumbnails !== undefined) {
+    fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnails
+      .filter(Boolean)
+      .map((url) => ({ url }));
+  } else if (data.secondaryThumbnailUrl !== undefined) {
+    fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
+      ? [{ url: data.secondaryThumbnailUrl }]
+      : [];
+  }
+
+  if (data.carouselImages !== undefined) {
+    fields['fldneaPyoRXBAVtS1'] = data.carouselImages.filter(Boolean).map((url) => ({ url }));
+  }
+
+  return fields;
+}
+
 function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
   const carouselImages =
     (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map((image) => image.url) ||
@@ -575,7 +645,11 @@ function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
       (record.fields['🚩Rejection Feedback.html'] as string) ||
       (record.fields['🖌Rejection Feedback.html'] as string),
     qualityScore: record.fields['🖌️Initial Quality Score'] as string,
-    priceString: record.fields['🥞💲Template Price String (🏗️ only)'] as string
+    priceString: record.fields['🥞💲Template Price String (🏗️ only)'] as string,
+    creatorName: record.fields['🎨Creator Name'] as string,
+    creatorContactEmail:
+      (record.fields['🎨📧 Creator Email'] as string) ||
+      (record.fields['CREATOR_EMAIL'] as string)
   };
 }
 
@@ -601,6 +675,36 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       console.log(...args);
     }
   };
+
+  async function createInitialSubmissionVersion(
+    assetRecordId: string,
+    submittedAt: string
+  ): Promise<{ versionId?: string; warning?: string }> {
+    try {
+      const versionRecords = await createRecords(TABLES.ASSET_VERSIONS, [
+        {
+          fields: {
+            '👛Asset': [assetRecordId],
+            '⚙️👛Asset Record ID': assetRecordId,
+            'ℹ️Version #': 1,
+            '📅Submission Datetime': submittedAt,
+            '📝Review Status': '🆕Ready for Review'
+          }
+        }
+      ]);
+
+      return {
+        versionId: versionRecords[0]?.id
+      };
+    } catch (error) {
+      return {
+        warning:
+          error instanceof Error
+            ? `Asset created, but review queue version creation failed: ${error.message}`
+            : 'Asset created, but review queue version creation failed.'
+      };
+    }
+  }
 
   return {
     async findUserByEmail(email: string): Promise<{ id: string; email: string } | null> {
@@ -734,7 +838,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
 
       if (Object.keys(fields).length === 0) {
-        return null;
+        return this.getAsset(id);
       }
 
       try {
@@ -792,7 +896,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       }
 
       if (Object.keys(fields).length === 0) {
-        return null;
+        return this.getAsset(id);
       }
 
       try {
@@ -1109,80 +1213,81 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       };
     },
 
+    async createTemplateDraft(
+      data: CreateTemplateDraftInput
+    ): Promise<Asset> {
+      const fields = buildTemplateAssetFields(data, {
+        status: 'Draft',
+        forceName: true,
+        fallbackName: 'Untitled Draft'
+      });
+
+      const assetRecords = await createRecords(TABLES.ASSETS, [{ fields }]);
+      return mapAssetRecord(assetRecords[0]);
+    },
+
+    async updateTemplateDraft(
+      assetId: string,
+      data: CreateTemplateDraftInput
+    ): Promise<Asset | null> {
+      const fields = buildTemplateAssetFields(data, {
+        status: 'Draft',
+        fallbackName: 'Untitled Draft'
+      });
+
+      try {
+        const records = await updateRecords(TABLES.ASSETS, [{ id: assetId, fields }]);
+        return mapAssetRecord(records[0]);
+      } catch {
+        return null;
+      }
+    },
+
     async createTemplateSubmission(
       data: CreateTemplateSubmissionInput
     ): Promise<TemplateSubmissionRecord> {
       const submittedAt = new Date().toISOString();
-      const emails = dedupeEmails(data.creatorEmail, data.creatorWebflowEmail);
-      const metadataSummary = buildSubmissionSummary(data.metadata);
-      const fields: Record<string, unknown> = {
-        '🆎Type': 'Template🏗️',
-        '⚙️🆎Type (Text)': 'Template🏗️',
-        Name: data.name.trim(),
-        '📝Description': metadataSummary || data.description || '',
-        'ℹ️Description (Short)': data.descriptionShort || '',
-        'ℹ️Description (Long).html': data.descriptionLongHtml || '',
-        '🔗Website URL': data.websiteUrl || '',
-        '🔗Preview Site URL': data.previewUrl || '',
-        '🚀Marketplace Status': '🆕Ready for Review',
-        '📅Submitted Date': submittedAt,
-        '🥞💲Template Price String (🏗️ only)': data.priceString || '',
-        '🎨📧 Creator Email': data.creatorEmail.trim().toLowerCase(),
-        '🎨📧 Creator WF Account Email': (data.creatorWebflowEmail || data.creatorEmail)
-          .trim()
-          .toLowerCase(),
-        '📧Emails (from 🎨Creator)': emails.join(', ')
-      };
-
-      if (data.thumbnailUrl !== undefined) {
-        fields['fld43LxLHMZb2yF7F'] = data.thumbnailUrl ? [{ url: data.thumbnailUrl }] : [];
-      }
-
-      if (data.secondaryThumbnails !== undefined) {
-        fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnails
-          .filter(Boolean)
-          .map((url) => ({ url }));
-      } else if (data.secondaryThumbnailUrl !== undefined) {
-        fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
-          ? [{ url: data.secondaryThumbnailUrl }]
-          : [];
-      }
-
-      if (data.carouselImages !== undefined) {
-        fields['fldneaPyoRXBAVtS1'] = data.carouselImages.filter(Boolean).map((url) => ({ url }));
-      }
+      const fields = buildTemplateAssetFields(data, {
+        status: '🆕Ready for Review',
+        submittedAt,
+        forceName: true
+      });
 
       const assetRecords = await createRecords(TABLES.ASSETS, [{ fields }]);
       const assetRecord = assetRecords[0];
-
-      let versionId: string | undefined;
-      let warning: string | undefined;
-
-      try {
-        const versionRecords = await createRecords(TABLES.ASSET_VERSIONS, [
-          {
-            fields: {
-              '👛Asset': [assetRecord.id],
-              '⚙️👛Asset Record ID': assetRecord.id,
-              'ℹ️Version #': 1,
-              '📅Submission Datetime': submittedAt,
-              '📝Review Status': '🆕Ready for Review'
-            }
-          }
-        ]);
-        versionId = versionRecords[0]?.id;
-      } catch (error) {
-        warning =
-          error instanceof Error
-            ? `Asset created, but review queue version creation failed: ${error.message}`
-            : 'Asset created, but review queue version creation failed.';
-      }
+      const { versionId, warning } = await createInitialSubmissionVersion(assetRecord.id, submittedAt);
 
       return {
         asset: mapAssetRecord(assetRecord),
         versionId,
         warning
       };
+    },
+
+    async submitTemplateDraft(
+      assetId: string,
+      data: CreateTemplateSubmissionInput
+    ): Promise<TemplateSubmissionRecord | null> {
+      const submittedAt = new Date().toISOString();
+      const fields = buildTemplateAssetFields(data, {
+        status: '🆕Ready for Review',
+        submittedAt,
+        forceName: true
+      });
+
+      try {
+        const assetRecords = await updateRecords(TABLES.ASSETS, [{ id: assetId, fields }]);
+        const assetRecord = assetRecords[0];
+        const { versionId, warning } = await createInitialSubmissionVersion(assetRecord.id, submittedAt);
+
+        return {
+          asset: mapAssetRecord(assetRecord),
+          versionId,
+          warning
+        };
+      } catch {
+        return null;
+      }
     },
 
     async generateApiKey(

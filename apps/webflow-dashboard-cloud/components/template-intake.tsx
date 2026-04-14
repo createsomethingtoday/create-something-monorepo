@@ -11,6 +11,13 @@ import {
   SITE_TYPE_OPTIONS,
   isSupportedCountry
 } from '../lib/intake/constants';
+import {
+  TEMPLATE_DRAFT_STORAGE_KEY,
+  normalizeTemplateDraftPayload,
+  normalizeTemplateDraftVerificationState,
+  type TemplateDraftPayload,
+  type TemplateDraftVerificationState
+} from '../lib/intake/template-draft';
 
 type Tone = 'success' | 'error' | 'info';
 
@@ -73,11 +80,19 @@ type TemplateFormState = {
 type VerificationState = {
   primaryEmailVerified: string;
   webflowEmailVerified: string;
-  creatorEligibilityEmail: string;
-  templateNameVerified: string;
-  publishedUrlVerified: string;
-  publishedUrlMessage: string;
-  gsapDetected: boolean;
+} & TemplateDraftVerificationState;
+
+type TemplateDraftReference = {
+  draftId: string;
+  draftAccessToken: string;
+  creatorEmail: string;
+  savedAt?: string;
+};
+
+type StagedTemplateMedia = {
+  thumbnailUrl: string;
+  secondaryThumbnailUrl: string;
+  galleryUrls: string[];
 };
 
 declare global {
@@ -120,11 +135,27 @@ const initialTemplateState: TemplateFormState = {
   agreementConfirmed: false
 };
 
+const initialVerificationState: VerificationState = {
+  primaryEmailVerified: '',
+  webflowEmailVerified: '',
+  ...normalizeTemplateDraftVerificationState(undefined)
+};
+
+const emptyStagedTemplateMedia: StagedTemplateMedia = {
+  thumbnailUrl: '',
+  secondaryThumbnailUrl: '',
+  galleryUrls: []
+};
+
 function splitCommaList(value: string) {
   return value
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function joinCommaList(value: string[]) {
+  return value.join(', ');
 }
 
 async function uploadIntakeFile(
@@ -165,19 +196,18 @@ export function TemplateIntake() {
   const [step, setStep] = useState<'creator' | 'template'>('creator');
   const [creator, setCreator] = useState<CreatorFormState>(initialCreatorState);
   const [template, setTemplate] = useState<TemplateFormState>(initialTemplateState);
-  const [verification, setVerification] = useState<VerificationState>({
-    primaryEmailVerified: '',
-    webflowEmailVerified: '',
-    creatorEligibilityEmail: '',
-    templateNameVerified: '',
-    publishedUrlVerified: '',
-    publishedUrlMessage: '',
-    gsapDetected: false
-  });
+  const [verification, setVerification] = useState<VerificationState>(initialVerificationState);
   const [creatorStatus, setCreatorStatus] = useState<StatusMessage | null>(null);
   const [templateStatus, setTemplateStatus] = useState<StatusMessage | null>(null);
   const [creatorSubmitting, setCreatorSubmitting] = useState(false);
+  const [draftSaving, setDraftSaving] = useState(false);
+  const [draftHydrating, setDraftHydrating] = useState(true);
   const [templateSubmitting, setTemplateSubmitting] = useState(false);
+  const [draftRef, setDraftRef] = useState<TemplateDraftReference | null>(null);
+  const [stagedMedia, setStagedMedia] = useState<StagedTemplateMedia>(emptyStagedTemplateMedia);
+  const [thumbnailInputKey, setThumbnailInputKey] = useState(0);
+  const [secondaryThumbnailInputKey, setSecondaryThumbnailInputKey] = useState(0);
+  const [galleryInputKey, setGalleryInputKey] = useState(0);
   const [utm, setUtm] = useState<Record<string, string>>({});
   const [turnstileReady, setTurnstileReady] = useState(!turnstileEnabled);
   const [turnstileTokens, setTurnstileTokens] = useState<Record<TurnstileStep, string>>({
@@ -206,6 +236,143 @@ export function TemplateIntake() {
       }
     }
     setUtm(captured);
+  }, []);
+
+  function persistDraftReference(nextDraftRef: TemplateDraftReference | null) {
+    setDraftRef(nextDraftRef);
+    if (typeof window === 'undefined') return;
+
+    if (nextDraftRef) {
+      window.localStorage.setItem(TEMPLATE_DRAFT_STORAGE_KEY, JSON.stringify(nextDraftRef));
+    } else {
+      window.localStorage.removeItem(TEMPLATE_DRAFT_STORAGE_KEY);
+    }
+  }
+
+  function resetTemplateUploadInputs() {
+    setThumbnailInputKey((current) => current + 1);
+    setSecondaryThumbnailInputKey((current) => current + 1);
+    setGalleryInputKey((current) => current + 1);
+  }
+
+  function clearSelectedTemplateFiles() {
+    setTemplate((current) => ({
+      ...current,
+      thumbnailFile: null,
+      secondaryThumbnailFile: null,
+      galleryFiles: []
+    }));
+    resetTemplateUploadInputs();
+  }
+
+  function applyDraftPayload(nextDraft: TemplateDraftPayload, nextDraftRef: TemplateDraftReference) {
+    const normalizedDraft = normalizeTemplateDraftPayload(nextDraft);
+
+    setStep('template');
+    setTemplate({
+      creatorName: normalizedDraft.creatorName,
+      creatorEmail: normalizedDraft.creatorEmail,
+      templateName: normalizedDraft.templateName,
+      publishedUrl: normalizedDraft.publishedUrl,
+      previewUrl: normalizedDraft.previewUrl,
+      priceModel: normalizedDraft.priceModel,
+      category: normalizedDraft.category,
+      tags: joinCommaList(normalizedDraft.tags),
+      styleTags: joinCommaList(normalizedDraft.styleTags),
+      shortDescription: normalizedDraft.shortDescription,
+      longDescription: normalizedDraft.longDescription,
+      notes: normalizedDraft.notes,
+      siteTypes: normalizedDraft.siteTypes,
+      featureFlags: normalizedDraft.featureFlags,
+      thumbnailFile: null,
+      secondaryThumbnailFile: null,
+      galleryFiles: [],
+      checklistConfirmed: normalizedDraft.checklistConfirmed,
+      agreementConfirmed: normalizedDraft.agreementConfirmed
+    });
+    setVerification((current) => ({
+      ...current,
+      ...normalizeTemplateDraftVerificationState(normalizedDraft.verification)
+    }));
+    setStagedMedia({
+      thumbnailUrl: normalizedDraft.thumbnailUrl,
+      secondaryThumbnailUrl: normalizedDraft.secondaryThumbnailUrl,
+      galleryUrls: normalizedDraft.galleryUrls
+    });
+    persistDraftReference(nextDraftRef);
+    resetTemplateUploadInputs();
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSavedDraft() {
+      if (typeof window === 'undefined') {
+        setDraftHydrating(false);
+        return;
+      }
+
+      const storedRef = window.localStorage.getItem(TEMPLATE_DRAFT_STORAGE_KEY);
+      if (!storedRef) {
+        setDraftHydrating(false);
+        return;
+      }
+
+      try {
+        const parsedRef = JSON.parse(storedRef) as Partial<TemplateDraftReference>;
+        if (!parsedRef?.draftId || !parsedRef?.draftAccessToken || !parsedRef?.creatorEmail) {
+          throw new Error('Stored draft reference is invalid.');
+        }
+
+        const params = new URLSearchParams({
+          id: parsedRef.draftId,
+          email: parsedRef.creatorEmail,
+          token: parsedRef.draftAccessToken
+        });
+        const response = await fetch(appPath(`/api/intake/template/draft?${params.toString()}`), {
+          cache: 'no-store'
+        });
+        const data = (await response.json().catch(() => ({}))) as {
+          draft?: TemplateDraftPayload;
+          draftId?: string;
+          draftAccessToken?: string;
+          error?: string;
+        };
+
+        if (!response.ok || !data.draft || !data.draftId || !data.draftAccessToken) {
+          throw new Error(data.error || 'Saved draft is no longer available.');
+        }
+
+        if (cancelled) return;
+
+        applyDraftPayload(data.draft, {
+          draftId: data.draftId,
+          draftAccessToken: data.draftAccessToken,
+          creatorEmail: data.draft.creatorEmail,
+          savedAt: data.draft.savedAt
+        });
+        setTemplateStatus({
+          tone: 'info',
+          message: data.draft.savedAt
+            ? `Resumed your saved draft from ${new Date(data.draft.savedAt).toLocaleString()}.`
+            : 'Resumed your saved draft.'
+        });
+      } catch {
+        if (!cancelled) {
+          persistDraftReference(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setDraftHydrating(false);
+        }
+      }
+    }
+
+    void loadSavedDraft();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function setTurnstileToken(stepName: TurnstileStep, token: string) {
@@ -555,6 +722,79 @@ export function TemplateIntake() {
     });
   }
 
+  function getActiveDraftReference(creatorEmail: string) {
+    const normalizedCreatorEmail = creatorEmail.trim().toLowerCase();
+    if (!draftRef || !normalizedCreatorEmail) {
+      return null;
+    }
+
+    return draftRef.creatorEmail === normalizedCreatorEmail ? draftRef : null;
+  }
+
+  function buildCurrentDraftPayload(media: StagedTemplateMedia): TemplateDraftPayload {
+    return normalizeTemplateDraftPayload({
+      creatorName: template.creatorName,
+      creatorEmail: template.creatorEmail,
+      templateName: template.templateName,
+      publishedUrl: template.publishedUrl,
+      previewUrl: template.previewUrl,
+      priceModel: template.priceModel,
+      category: template.category,
+      tags: splitCommaList(template.tags),
+      styleTags: splitCommaList(template.styleTags),
+      siteTypes: template.siteTypes,
+      featureFlags: template.featureFlags,
+      shortDescription: template.shortDescription,
+      longDescription: template.longDescription,
+      notes: template.notes,
+      thumbnailUrl: media.thumbnailUrl,
+      secondaryThumbnailUrl: media.secondaryThumbnailUrl,
+      galleryUrls: media.galleryUrls,
+      checklistConfirmed: template.checklistConfirmed,
+      agreementConfirmed: template.agreementConfirmed,
+      verification: normalizeTemplateDraftVerificationState({
+        creatorEligibilityEmail: verification.creatorEligibilityEmail,
+        templateNameVerified: verification.templateNameVerified,
+        publishedUrlVerified: verification.publishedUrlVerified,
+        publishedUrlMessage: verification.publishedUrlMessage,
+        gsapDetected: verification.gsapDetected
+      })
+    });
+  }
+
+  async function stageTemplateMedia(creatorEmail: string): Promise<StagedTemplateMedia> {
+    const normalizedCreatorEmail = creatorEmail.trim().toLowerCase();
+    const nextMedia: StagedTemplateMedia = {
+      thumbnailUrl: stagedMedia.thumbnailUrl,
+      secondaryThumbnailUrl: stagedMedia.secondaryThumbnailUrl,
+      galleryUrls: [...stagedMedia.galleryUrls]
+    };
+
+    if (template.thumbnailFile) {
+      nextMedia.thumbnailUrl = await uploadIntakeFile(
+        template.thumbnailFile,
+        'thumbnail',
+        normalizedCreatorEmail
+      );
+    }
+
+    if (template.secondaryThumbnailFile) {
+      nextMedia.secondaryThumbnailUrl = await uploadIntakeFile(
+        template.secondaryThumbnailFile,
+        'secondary-thumbnail',
+        normalizedCreatorEmail
+      );
+    }
+
+    if (template.galleryFiles.length > 0) {
+      nextMedia.galleryUrls = await Promise.all(
+        template.galleryFiles.map((file) => uploadIntakeFile(file, 'gallery', normalizedCreatorEmail))
+      );
+    }
+
+    return nextMedia;
+  }
+
   async function submitCreator(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setCreatorSubmitting(true);
@@ -638,6 +878,64 @@ export function TemplateIntake() {
     }
   }
 
+  async function saveTemplateDraft() {
+    setDraftSaving(true);
+    setTemplateStatus(null);
+
+    try {
+      const creatorEmail = template.creatorEmail.trim().toLowerCase();
+      if (!creatorEmail) {
+        throw new Error('Enter the creator email before saving a draft.');
+      }
+
+      const nextStagedMedia = await stageTemplateMedia(creatorEmail);
+      setStagedMedia(nextStagedMedia);
+
+      const currentDraftRef = getActiveDraftReference(creatorEmail);
+      const response = await fetch(appPath('/api/intake/template/draft'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...buildCurrentDraftPayload(nextStagedMedia),
+          draftId: currentDraftRef?.draftId,
+          draftAccessToken: currentDraftRef?.draftAccessToken
+        })
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        draft?: TemplateDraftPayload;
+        draftId?: string;
+        draftAccessToken?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !data.draft || !data.draftId || !data.draftAccessToken) {
+        throw new Error(data.error || 'Failed to save draft.');
+      }
+
+      applyDraftPayload(data.draft, {
+        draftId: data.draftId,
+        draftAccessToken: data.draftAccessToken,
+        creatorEmail: data.draft.creatorEmail,
+        savedAt: data.draft.savedAt
+      });
+      clearSelectedTemplateFiles();
+      setTemplateStatus({
+        tone: 'success',
+        message: data.draft.savedAt
+          ? `Draft saved at ${new Date(data.draft.savedAt).toLocaleString()}.`
+          : 'Draft saved.'
+      });
+    } catch (error) {
+      setTemplateStatus({
+        tone: 'error',
+        message: error instanceof Error ? error.message : 'Failed to save draft.'
+      });
+    } finally {
+      setDraftSaving(false);
+    }
+  }
+
   async function submitTemplate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTemplateSubmitting(true);
@@ -659,11 +957,11 @@ export function TemplateIntake() {
         throw new Error('Validate the published URL before submitting.');
       }
 
-      if (!template.thumbnailFile) {
+      if (!template.thumbnailFile && !stagedMedia.thumbnailUrl) {
         throw new Error('Upload the primary thumbnail before submitting.');
       }
 
-      if (template.galleryFiles.length === 0) {
+      if (template.galleryFiles.length === 0 && stagedMedia.galleryUrls.length === 0) {
         throw new Error('Upload at least one gallery image before submitting.');
       }
 
@@ -676,15 +974,9 @@ export function TemplateIntake() {
       }
 
       const creatorEmail = template.creatorEmail.trim();
-      const [thumbnailUrl, secondaryThumbnailUrl, galleryUrls] = await Promise.all([
-        uploadIntakeFile(template.thumbnailFile, 'thumbnail', creatorEmail),
-        template.secondaryThumbnailFile
-          ? uploadIntakeFile(template.secondaryThumbnailFile, 'secondary-thumbnail', creatorEmail)
-          : Promise.resolve(''),
-        Promise.all(
-          template.galleryFiles.map((file) => uploadIntakeFile(file, 'gallery', creatorEmail))
-        )
-      ]);
+      const nextStagedMedia = await stageTemplateMedia(creatorEmail);
+      setStagedMedia(nextStagedMedia);
+      const currentDraftRef = getActiveDraftReference(creatorEmail);
       shouldResetTurnstile = turnstileEnabled;
 
       const response = await fetch(appPath('/api/intake/template'), {
@@ -705,11 +997,13 @@ export function TemplateIntake() {
           shortDescription: template.shortDescription,
           longDescription: template.longDescription,
           notes: template.notes,
-          thumbnailUrl,
-          secondaryThumbnailUrl,
-          galleryUrls,
+          thumbnailUrl: nextStagedMedia.thumbnailUrl,
+          secondaryThumbnailUrl: nextStagedMedia.secondaryThumbnailUrl,
+          galleryUrls: nextStagedMedia.galleryUrls,
           checklistConfirmed: template.checklistConfirmed,
           agreementConfirmed: template.agreementConfirmed,
+          draftId: currentDraftRef?.draftId,
+          draftAccessToken: currentDraftRef?.draftAccessToken,
           turnstileToken: turnstileTokens.template,
           utm
         })
@@ -734,6 +1028,9 @@ export function TemplateIntake() {
           ? `Template submitted. ${data.warning}`
           : 'Template submitted for review.'
       });
+      persistDraftReference(null);
+      setStagedMedia(emptyStagedTemplateMedia);
+      clearSelectedTemplateFiles();
       setTemplate((current) => ({
         ...initialTemplateState,
         creatorEmail: current.creatorEmail,
@@ -1314,32 +1611,42 @@ export function TemplateIntake() {
                   <label className="field-label" htmlFor="thumbnailFile">
                     Primary thumbnail
                   </label>
-                  <input
-                    className="field-input"
-                    id="thumbnailFile"
-                    type="file"
-                    accept="image/webp"
-                    onChange={(event) => updateTemplate('thumbnailFile', event.target.files?.[0] || null)}
-                    required
-                  />
-                  <div className="field-help">WebP only, exactly 750x995, max 300KB.</div>
-                </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="secondaryThumbnailFile">
-                    Secondary thumbnail
-                  </label>
-                  <input
-                    className="field-input"
-                    id="secondaryThumbnailFile"
-                    type="file"
-                    accept="image/webp"
-                    onChange={(event) =>
-                      updateTemplate('secondaryThumbnailFile', event.target.files?.[0] || null)
-                    }
-                  />
-                  <div className="field-help">Optional. Same 750x995 WebP constraint.</div>
-                </div>
+                <input
+                  className="field-input"
+                  id="thumbnailFile"
+                  key={thumbnailInputKey}
+                  type="file"
+                  accept="image/webp"
+                  onChange={(event) => updateTemplate('thumbnailFile', event.target.files?.[0] || null)}
+                  required={!stagedMedia.thumbnailUrl}
+                />
+                <div className="field-help">WebP only, exactly 750x995, max 300KB.</div>
+                {stagedMedia.thumbnailUrl ? (
+                  <div className="field-help">Using the saved draft thumbnail unless you replace it.</div>
+                ) : null}
               </div>
+              <div className="field">
+                <label className="field-label" htmlFor="secondaryThumbnailFile">
+                  Secondary thumbnail
+                </label>
+                <input
+                  className="field-input"
+                  id="secondaryThumbnailFile"
+                  key={secondaryThumbnailInputKey}
+                  type="file"
+                  accept="image/webp"
+                  onChange={(event) =>
+                    updateTemplate('secondaryThumbnailFile', event.target.files?.[0] || null)
+                  }
+                />
+                <div className="field-help">Optional. Same 750x995 WebP constraint.</div>
+                {stagedMedia.secondaryThumbnailUrl ? (
+                  <div className="field-help">
+                    Using the saved draft secondary thumbnail unless you replace it.
+                  </div>
+                ) : null}
+              </div>
+            </div>
 
               <div className="field">
                 <label className="field-label" htmlFor="galleryFiles">
@@ -1348,6 +1655,7 @@ export function TemplateIntake() {
                 <input
                   className="field-input"
                   id="galleryFiles"
+                  key={galleryInputKey}
                   type="file"
                   accept="image/webp"
                   multiple
@@ -1357,11 +1665,18 @@ export function TemplateIntake() {
                       Array.from(event.target.files || []).slice(0, 5)
                     )
                   }
-                  required
+                  required={stagedMedia.galleryUrls.length === 0}
                 />
                 <div className="field-help">
                   Upload 1 to 5 WebP images, each exactly 1440x900 and max 250KB.
                 </div>
+                {stagedMedia.galleryUrls.length > 0 ? (
+                  <div className="field-help">
+                    {`Using ${stagedMedia.galleryUrls.length} saved draft gallery image${
+                      stagedMedia.galleryUrls.length === 1 ? '' : 's'
+                    } unless you replace them.`}
+                  </div>
+                ) : null}
               </div>
 
               <label className="checkbox-row">
@@ -1398,13 +1713,26 @@ export function TemplateIntake() {
               ) : null}
 
               <div className="form-actions">
-                <button className="button button-primary" type="submit" disabled={templateSubmitting}>
+                <button
+                  className="button button-primary"
+                  type="submit"
+                  disabled={templateSubmitting || draftSaving || draftHydrating}
+                >
                   {templateSubmitting ? 'Submitting…' : 'Submit template'}
                 </button>
                 <button
                   className="button button-secondary"
                   type="button"
+                  onClick={saveTemplateDraft}
+                  disabled={draftSaving || templateSubmitting || draftHydrating}
+                >
+                  {draftSaving ? 'Saving draft…' : 'Save draft'}
+                </button>
+                <button
+                  className="button button-secondary"
+                  type="button"
                   onClick={() => setStep('creator')}
+                  disabled={templateSubmitting || draftSaving}
                 >
                   Back to creator profile
                 </button>

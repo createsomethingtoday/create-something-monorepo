@@ -116,8 +116,8 @@
   // Can show metrics for non-Upcoming and non-Rejected statuses
   const canShowMetrics = $derived(!['Upcoming', 'Rejected'].includes(asset.status));
 
-  // Can only edit Published templates
-  const canEdit = $derived(asset.status === 'Published');
+  // Draft, scheduled, upcoming, and published assets can all open the editor.
+  const canEdit = $derived(['Draft', 'Upcoming', 'Scheduled', 'Published'].includes(asset.status));
 
   // Can archive if not already delisted
   const canArchive = $derived(!asset.status.includes('Delisted'));
