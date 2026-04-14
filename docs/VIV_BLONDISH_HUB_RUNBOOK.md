@@ -7,7 +7,7 @@ Production runbook for the transparent named-lane Hub worker:
 - Health URL: `https://viv-blondish.mcp.createsomething.agency/health`
 - Fallback account ID: `acct_viv_blondish`
 - Lane slug / host key: `viv-blondish`
-- Allowed client surface: `notion-halfdozen-blondish`, `composio-toolkit-gmail`, and approved search provider(s) `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
+- Allowed client surface: `notion-halfdozen-blondish`, `composio-toolkit-firecrawl`, `composio-toolkit-gmail`, and approved search provider(s) `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
 - Observability baseline: Cloudflare telemetry + Braintrust tracing
 - Host compatibility mode: `compat` for Notion-style bearer-auth MCP hosts
 
@@ -29,12 +29,12 @@ pnpm exec wrangler deploy \
   --domain viv-blondish.mcp.createsomething.agency \
   --var HUB_ACCOUNT_ID:acct_viv_blondish \
   --var 'HUB_ENABLED_BUNDLES:[]' \
-  --var HUB_ENABLED_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-exa \
+  --var HUB_ENABLED_SERVERS:notion-halfdozen-blondish,composio-toolkit-firecrawl,composio-toolkit-gmail,composio-toolkit-exa \
   --var HUB_DISABLED_SERVERS:composio-toolkit-notion \
   --var 'HUB_REQUIRED_GLOBAL_SERVERS:' \
   --var 'HUB_REQUIRED_DISCOVERY_SERVERS:' \
   --var HUB_DISCOVERY_MODE:compact \
-  --var HUB_DISCOVERY_DEFAULT_SERVERS:notion-halfdozen-blondish,composio-toolkit-gmail,composio-toolkit-exa \
+  --var HUB_DISCOVERY_DEFAULT_SERVERS:notion-halfdozen-blondish,composio-toolkit-firecrawl,composio-toolkit-gmail,composio-toolkit-exa \
   --var HUB_IDENTITY_MODE:compat \
   --var HUB_SESSION_RESOLVE_URL:https://id.createsomething.space/v1/mcp/sessions/resolve \
   --keep-vars
@@ -79,6 +79,7 @@ curl -sS -X POST https://viv-blondish.mcp.createsomething.agency/mcp \
         "setBundles":[],
         "setServers":[
           "notion-halfdozen-blondish",
+          "composio-toolkit-firecrawl",
           "composio-toolkit-gmail",
           "composio-toolkit-exa"
         ]
@@ -98,6 +99,7 @@ Expected:
 - `auth_required: true`
 - `enabled_servers` only:
   - `notion-halfdozen-blondish`
+  - `composio-toolkit-firecrawl`
   - `composio-toolkit-gmail`
   - promised search provider(s): `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
 
@@ -135,7 +137,7 @@ curl -sS -X POST "https://agency.createsomething.agency/api/partners/half-dozen/
   -H "Content-Type: application/json" \
   -d '{
     "display_name":"Viv — BLOND:ISH",
-    "toolkit_profile":["gmail","exa"],
+    "toolkit_profile":["firecrawl","gmail","exa"],
     "metadata":{
       "approved_exception":{
         "approved_by":"mj",
@@ -158,7 +160,11 @@ Use `access/mint` only for operator testing or temporary strict-session debuggin
 
 ## 6) Search + Auth Config Baseline
 
-Before calling the lane onboarding-complete, verify the promised search provider prerequisites:
+Before calling the lane onboarding-complete, verify the promised Firecrawl and search provider prerequisites:
+
+- Firecrawl auth config ID: `ac_pVhh-z2s8o--`
+- Firecrawl shared Composio user: `acct_admin`
+- Firecrawl shared connected account ID: `ca_fAE0iVpldq30`
 
 - Exa auth config ID: `ac_6P0uExNakGbD`
 - PerplexityAI auth config ID: `ac_F_aj7f1MFici`
@@ -166,11 +172,12 @@ Before calling the lane onboarding-complete, verify the promised search provider
 
 Rules:
 
-1. If the lane promises Exa, `COMPOSIO_AUTH_CONFIG_MAP` must include an `exa` entry and `composio-toolkit-exa__get_connect_link` must succeed.
-2. If the lane promises PerplexityAI, `COMPOSIO_AUTH_CONFIG_MAP` must include a `perplexityai` entry and `composio-toolkit-perplexityai__get_connect_link` must succeed.
-3. If the lane promises Composio Search, execute at least one representative brokered search tool successfully. No auth config is required.
-4. If the lane promises multiple providers, each provider-specific check must pass.
-5. If a promised provider fails its prerequisite check, the lane may still be infrastructure-ready, but it is not onboarding-complete for search.
+1. If the lane promises Firecrawl, `composio-toolkit-firecrawl__connection_status` for `acct_admin` must report the shared connected account `ca_fAE0iVpldq30`. No per-user Firecrawl connection is required.
+2. If the lane promises Exa, `COMPOSIO_AUTH_CONFIG_MAP` must include an `exa` entry and `composio-toolkit-exa__get_connect_link` must succeed.
+3. If the lane promises PerplexityAI, `COMPOSIO_AUTH_CONFIG_MAP` must include a `perplexityai` entry and `composio-toolkit-perplexityai__get_connect_link` must succeed.
+4. If the lane promises Composio Search, execute at least one representative brokered search tool successfully. No auth config is required.
+5. If the lane promises multiple providers, each provider-specific check must pass.
+6. If a promised provider fails its prerequisite check, the lane may still be infrastructure-ready, but it is not onboarding-complete for search.
 
 ## 7) Host-Binding Smoke Check
 
@@ -184,9 +191,10 @@ Minimum success checks:
 2. `hub_list_services` shows the client-specific Notion service in discovery.
 3. `hub_search_proxy_tools` scoped to the client-specific Notion service succeeds.
 4. `hub_execute_proxy_tool` succeeds for a low-risk Notion read such as `notion_list_databases`.
-5. `composio-toolkit-gmail__connection_status` returns a governed result.
-6. Each promised auth-bound search provider returns either a governed connect link or an active connection status result.
-7. If Composio Search is promised, at least one representative brokered Composio Search call succeeds.
+5. `composio-toolkit-firecrawl__connection_status` reports the shared `acct_admin` connection and `ca_fAE0iVpldq30`.
+6. `composio-toolkit-gmail__connection_status` returns a governed result.
+7. Each promised auth-bound search provider returns either a governed connect link or an active connection status result.
+8. If Composio Search is promised, at least one representative brokered Composio Search call succeeds.
 
 ## 8) Trace Verification
 

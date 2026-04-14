@@ -33,6 +33,7 @@ VERIFY_CURL_MAX_TIME_SECONDS="${VERIFY_CURL_MAX_TIME_SECONDS:-30}"
 
 SHARED_AUTH_SERVERS=(
   "composio-toolkit-dropbox"
+  "composio-toolkit-firecrawl"
   "composio-toolkit-gmail"
   "composio-toolkit-youtube"
   "composio-toolkit-googlesheets"
@@ -56,7 +57,7 @@ join_by_comma() {
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
 DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
-C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
+C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-firecrawl,composio-toolkit-gmail,composio-toolkit-notion"
 MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
 VERIFY_IDENTITY_MODE="${HUB_VERIFY_IDENTITY_MODE:-compat}"
 VERIFY_IDENTITY_MODE="$(printf '%s' "$VERIFY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]')"
@@ -301,7 +302,7 @@ create_fleet_verify_session() {
   local identity_admin_token="${IDENTITY_API_KEY:-${IDENTITY_WORKER_ADMIN_API_KEY:-}}"
   local tenant_id="${MCP_SESSION_TENANT_ID:-fleet_verify}"
   local host="${MCP_SESSION_HOST:-fleet_verify}"
-  local toolkit_profile_json="${MCP_SESSION_TOOLKIT_PROFILE_JSON:-[\"dropbox\",\"gmail\",\"youtube\",\"googlesheets\",\"googledrive\",\"zoom\",\"slack\",\"quickbooks\",\"linkedin\",\"notion\"]}"
+  local toolkit_profile_json="${MCP_SESSION_TOOLKIT_PROFILE_JSON:-[\"dropbox\",\"firecrawl\",\"gmail\",\"youtube\",\"googlesheets\",\"googledrive\",\"zoom\",\"slack\",\"quickbooks\",\"linkedin\",\"notion\"]}"
 
   if [[ -n "${MCP_SESSION_TOKEN:-}" ]]; then
     FLEET_VERIFY_SESSION_TOKEN="$MCP_SESSION_TOKEN"

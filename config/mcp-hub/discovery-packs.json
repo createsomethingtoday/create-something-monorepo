@@ -2,10 +2,11 @@
   "version": 1,
   "packs": {
     "shared-auth-core": {
-      "description": "Shared CREATE SOMETHING auth pack for Dropbox, Gmail, Google Drive, Google Sheets, LinkedIn, Notion, QuickBooks, Slack, YouTube, and Zoom.",
+      "description": "Shared CREATE SOMETHING auth pack for Dropbox, Firecrawl, Gmail, Google Drive, Google Sheets, LinkedIn, Notion, QuickBooks, Slack, YouTube, and Zoom.",
       "mode": "compact",
       "activeServers": [
         "composio-toolkit-dropbox",
+        "composio-toolkit-firecrawl",
         "composio-toolkit-gmail",
         "composio-toolkit-googledrive",
         "composio-toolkit-googlesheets",
@@ -24,6 +25,7 @@
       "activeServers": [
         "composio-toolkit-clickup",
         "composio-toolkit-dropbox",
+        "composio-toolkit-firecrawl",
         "composio-toolkit-gmail",
         "composio-toolkit-googledrive",
         "composio-toolkit-googlesheets",
@@ -37,13 +39,14 @@
       "maxProxyTools": null
     },
     "danny-shared-auth-plus-dm-and-operator-notion": {
-      "description": "Danny discovery pack: shared auth core plus Half Dozen DM and operator Notion services.",
+      "description": "Danny discovery pack: shared auth core, Firecrawl, plus Half Dozen DM and operator Notion services.",
       "mode": "compact",
       "activeServers": [
         "halfdozen-operator-notion-mcp",
         "composio-toolkit-notion",
         "halfdozen-dm-mcp",
         "composio-toolkit-dropbox",
+        "composio-toolkit-firecrawl",
         "composio-toolkit-gmail",
         "composio-toolkit-googledrive",
         "composio-toolkit-googlesheets",
@@ -56,21 +59,23 @@
       "maxProxyTools": null
     },
     "c3denver-airtable-gmail-notion": {
-      "description": "C3 Denver discovery pack: compact Airtable, Gmail, and Notion lane.",
+      "description": "C3 Denver discovery pack: compact Airtable, Firecrawl, Gmail, and Notion lane.",
       "mode": "compact",
       "activeServers": [
         "composio-toolkit-airtable",
+        "composio-toolkit-firecrawl",
         "composio-toolkit-gmail",
         "composio-toolkit-notion"
       ],
       "maxProxyTools": null
     },
     "mj-shared-auth-plus-ops-search-meetings-and-review": {
-      "description": "MJ discovery pack: full ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review.",
+      "description": "MJ discovery pack: full ops lane with shared auth core, Firecrawl, Airtable, Exa, Loom, Meetings, and Webflow template review.",
       "mode": "full",
       "activeServers": [
         "composio-toolkit-airtable",
         "composio-toolkit-dropbox",
+        "composio-toolkit-firecrawl",
         "composio-toolkit-gmail",
         "composio-toolkit-youtube",
         "composio-toolkit-googlesheets",
@@ -88,10 +93,11 @@
       "maxProxyTools": null
     },
     "mj-legacy-shared-auth-plus-meetings": {
-      "description": "MJ legacy discovery pack: compact shared auth core plus Meetings.",
+      "description": "MJ legacy discovery pack: compact shared auth core, Firecrawl, plus Meetings.",
       "mode": "compact",
       "activeServers": [
         "composio-toolkit-dropbox",
+        "composio-toolkit-firecrawl",
         "composio-toolkit-gmail",
         "composio-toolkit-youtube",
         "composio-toolkit-googlesheets",

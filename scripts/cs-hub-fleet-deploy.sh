@@ -23,6 +23,7 @@ CORE_WORKERS=(
 
 SHARED_AUTH_SERVERS=(
   "composio-toolkit-dropbox"
+  "composio-toolkit-firecrawl"
   "composio-toolkit-gmail"
   "composio-toolkit-youtube"
   "composio-toolkit-googlesheets"
@@ -47,7 +48,7 @@ SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
 DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
 MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
-C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
+C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-firecrawl,composio-toolkit-gmail,composio-toolkit-notion"
 CORE_BUNDLES_CSV="core"
 CORE_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV}"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
