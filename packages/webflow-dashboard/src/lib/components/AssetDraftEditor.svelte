@@ -13,13 +13,27 @@
 		joinDraftList,
 		normalizeAppDraftData,
 		normalizeTemplateDraftData,
-		parseDraftListInput,
+	parseDraftListInput,
 		type AppAssetDraftData,
 		type AssetDraftRecord,
 		type AssetDraftType,
 		type TemplateAssetDraftData
 	} from '$lib/drafts';
-	import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Tabs, TabsContent, TabsList, TabsTrigger, Textarea } from './ui';
+	import {
+		Badge,
+		Button,
+		Card,
+		CardContent,
+		CardHeader,
+		CardTitle,
+		Input,
+		Label,
+		Tabs,
+		TabsContent,
+		TabsList,
+		TabsTrigger,
+		Textarea
+	} from './ui';
 	import ImageUploader from './ImageUploader.svelte';
 	import CarouselUploader from './CarouselUploader.svelte';
 	import SecondaryThumbnailUploader from './SecondaryThumbnailUploader.svelte';
@@ -460,6 +474,31 @@
 		void goto('/dashboard');
 	}
 
+	function getEditorTitle() {
+		const trimmedName = currentName.trim();
+		if (trimmedName) {
+			return trimmedName;
+		}
+
+		return isExistingDraft ? `${activeType} draft` : `New ${activeType.toLowerCase()} draft`;
+	}
+
+	function getEditorDescription() {
+		if (activeType === 'Template') {
+			return 'Shape the marketplace story, taxonomy, and visuals before you create the Airtable template asset.';
+		}
+
+		return 'Shape the marketplace listing, install context, and visuals before you create the Airtable app asset.';
+	}
+
+	function getEditorWorkflowLabel() {
+		if (isExistingDraft) {
+			return 'Continue your saved draft in the dashboard';
+		}
+
+		return 'Start a progressive draft in Cloudflare';
+	}
+
 	$effect(() => {
 		return () => {
 			if (nameCheckTimeout) {
@@ -469,27 +508,29 @@
 	});
 </script>
 
-<div class="draft-card">
-	<Card>
-		<CardHeader>
+<div class="draft-editor">
+	<Card class="draft-card">
+		<CardHeader class="draft-header">
 			<div class="header-row">
-				<div>
-					<CardTitle>{isExistingDraft ? 'Edit draft' : 'Create draft'}</CardTitle>
+				<div class="header-copy">
+					<span class="editor-kicker">Draft workspace</span>
+					<CardTitle class="editor-title">{getEditorTitle()}</CardTitle>
 					<p class="draft-description">
-						Build out templates and apps here, save them in Cloudflare, and only create the Airtable
-						asset when you are ready.
+						{getEditorWorkflowLabel()}. {getEditorDescription()}
 					</p>
 				</div>
 				<div class="header-meta">
-					<span class="draft-pill">{activeType}</span>
-					{#if savedAtLabel}
-						<span class="saved-at">Saved {savedAtLabel}</span>
-					{/if}
+					<div class="header-badges">
+						<Badge variant="info">{activeType}</Badge>
+						<Badge variant="outline">Cloudflare draft</Badge>
+						<Badge variant="outline">Airtable on promotion</Badge>
+					</div>
+					<span class="saved-at">{savedAtLabel ? `Saved ${savedAtLabel}` : 'Not saved yet'}</span>
 				</div>
 			</div>
 		</CardHeader>
 
-		<CardContent>
+		<CardContent class="draft-content">
 			{#if error}
 				<div class="error-message">{error}</div>
 			{/if}
@@ -521,7 +562,13 @@
 				<Tabs value={activeType}>
 					<TabsContent value="Template" active={activeType === 'Template'}>
 					<div class="form-section">
-						<h3 class="section-title">Basic Information</h3>
+						<div class="section-header">
+							<p class="section-kicker">Core setup</p>
+							<h3 class="section-title">Basic Information</h3>
+							<p class="section-description">
+								Name the entry, shape the review copy, and lock the primary URLs before you promote it.
+							</p>
+						</div>
 						<div class="form-field">
 							<Label for="template-name">Template Name</Label>
 							<Input
@@ -604,7 +651,13 @@
 					</div>
 
 					<div class="form-section">
-						<h3 class="section-title">Classification</h3>
+						<div class="section-header">
+							<p class="section-kicker">Marketplace organization</p>
+							<h3 class="section-title">Classification</h3>
+							<p class="section-description">
+								Capture the tags and taxonomy that will matter once this draft becomes a live asset.
+							</p>
+						</div>
 						<div class="form-row">
 							<div class="form-field">
 								<Label for="template-category">Category</Label>
@@ -681,7 +734,13 @@
 					</div>
 
 					<div class="form-section">
-						<h3 class="section-title">Images</h3>
+						<div class="section-header">
+							<p class="section-kicker">Visuals</p>
+							<h3 class="section-title">Images</h3>
+							<p class="section-description">
+								Stage the storefront imagery now so the Airtable asset is ready with the right media.
+							</p>
+						</div>
 						<ImageUploader
 							value={templateDraft.thumbnailUrl || null}
 							onchange={handleTemplateThumbnailChange}
@@ -711,7 +770,13 @@
 
 					<TabsContent value="App" active={activeType === 'App'}>
 					<div class="form-section">
-						<h3 class="section-title">Basic Information</h3>
+						<div class="section-header">
+							<p class="section-kicker">Core setup</p>
+							<h3 class="section-title">Basic Information</h3>
+							<p class="section-description">
+								Set the app name, marketplace copy, and the public links reviewers will need first.
+							</p>
+						</div>
 						<div class="form-field">
 							<Label for="app-name">App Name</Label>
 							<Input
@@ -773,7 +838,13 @@
 					</div>
 
 					<div class="form-section">
-						<h3 class="section-title">Capabilities & Access</h3>
+						<div class="section-header">
+							<p class="section-kicker">Review access</p>
+							<h3 class="section-title">Capabilities & Access</h3>
+							<p class="section-description">
+								Document install details, scopes, and credentials so the review handoff is already prepared.
+							</p>
+						</div>
 						<div class="form-field">
 							<Label for="app-capabilities">App Capabilities</Label>
 							<select
@@ -845,12 +916,18 @@
 					</div>
 
 					<div class="form-section">
-						<h3 class="section-title">Marketplace Settings</h3>
+						<div class="section-header">
+							<p class="section-kicker">Marketplace fit</p>
+							<h3 class="section-title">Marketplace Settings</h3>
+							<p class="section-description">
+								Choose the categories and commercial settings that should carry into the Airtable draft.
+							</p>
+						</div>
 						<div class="form-field">
 							<Label>Payment Type</Label>
 							<div class="option-grid">
 								{#each PAYMENT_TYPE_OPTIONS as option}
-									<label class="option-card">
+									<label class="option-card" class:selected={appDraft.paymentType.includes(option)}>
 										<input
 											type="checkbox"
 											checked={appDraft.paymentType.includes(option)}
@@ -866,7 +943,7 @@
 							<Label>Marketplace Visibility</Label>
 							<div class="option-grid">
 								{#each VISIBILITY_OPTIONS as option}
-									<label class="option-card">
+									<label class="option-card" class:selected={appDraft.visibility === option}>
 										<input
 											type="checkbox"
 											checked={appDraft.visibility === option}
@@ -912,7 +989,13 @@
 					</div>
 
 					<div class="form-section">
-						<h3 class="section-title">Creator & Support</h3>
+						<div class="section-header">
+							<p class="section-kicker">Ownership</p>
+							<h3 class="section-title">Creator & Support</h3>
+							<p class="section-description">
+								Keep the creator, support, and policy contacts close to the draft so nothing gets lost.
+							</p>
+						</div>
 						<div class="form-row">
 							<div class="form-field">
 								<Label for="app-creator-name">Creator Name</Label>
@@ -973,7 +1056,13 @@
 					</div>
 
 					<div class="form-section">
-						<h3 class="section-title">Images</h3>
+						<div class="section-header">
+							<p class="section-kicker">Visuals</p>
+							<h3 class="section-title">Images</h3>
+							<p class="section-description">
+								Upload the icon and screenshots here so the Airtable asset is visually complete on promotion.
+							</p>
+						</div>
 						<ImageUploader
 							value={appDraft.thumbnailUrl || null}
 							onchange={handleAppThumbnailChange}
@@ -1054,8 +1143,18 @@
 </div>
 
 <style>
-	.draft-card {
-		border: 1px solid var(--color-border-default);
+	.draft-editor {
+		min-width: 0;
+	}
+
+	:global(.draft-card) {
+		background: var(--color-shell-surface);
+		box-shadow: var(--color-shell-shadow);
+	}
+
+	:global(.draft-header) {
+		padding-bottom: var(--space-sm);
+		border-bottom: 1px solid var(--color-shell-border-default);
 	}
 
 	.header-row {
@@ -1065,39 +1164,58 @@
 		gap: var(--space-md);
 	}
 
+	.header-copy {
+		display: flex;
+		flex-direction: column;
+		gap: 0.45rem;
+		min-width: 0;
+	}
+
 	.header-meta {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
+		gap: 0.55rem;
+	}
+
+	.header-badges {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
 		gap: var(--space-xs);
 	}
 
-	.draft-description {
-		margin: var(--space-xs) 0 0;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		max-width: 38rem;
-	}
-
-	.draft-pill {
+	.editor-kicker {
 		display: inline-flex;
 		align-items: center;
-		padding: 0.3rem 0.7rem;
-		border-radius: 999px;
-		background: var(--color-shell-surface-secondary);
-		border: 1px solid var(--color-border-default);
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
+		font-size: 0.72rem;
+		font-weight: var(--font-semibold);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-fg-muted);
+	}
+
+	:global(.editor-title) {
+		font-size: clamp(1.4rem, 1.1vw + 1rem, 1.9rem);
+		letter-spacing: 0.01em;
+	}
+
+	.draft-description {
+		margin: 0;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		line-height: 1.6;
+		max-width: 56ch;
 	}
 
 	.saved-at {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.error-message {
 		padding: var(--space-sm);
-		margin-bottom: var(--space-md);
 		background: color-mix(in srgb, var(--color-error) 12%, transparent);
 		border: 1px solid color-mix(in srgb, var(--color-error) 35%, transparent);
 		border-radius: var(--radius-md);
@@ -1105,29 +1223,75 @@
 		font-size: var(--text-body-sm);
 	}
 
+	:global(.draft-content) {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-lg);
+		padding-top: var(--space-md);
+	}
+
 	.draft-type-tabs {
-		margin-bottom: var(--space-lg);
+		display: inline-flex;
+		padding: 0.25rem;
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--color-shell-border-default);
+		background: color-mix(in srgb, var(--color-shell-surface-tertiary) 72%, transparent);
+	}
+
+	.draft-type-tabs :global(.tabs-list) {
+		border: none;
+		background: transparent;
 	}
 
 	.form {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-lg);
+		gap: var(--space-md);
 	}
 
 	.form-section {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-md);
+		padding: clamp(1rem, 1.15vw, 1.35rem);
+		border: 1px solid var(--color-shell-border-default);
+		border-radius: var(--radius-lg);
+		background: color-mix(in srgb, var(--color-shell-surface-tertiary) 70%, var(--color-bg-surface));
+		box-shadow: inset 0 1px 0 var(--glass-border-light);
+	}
+
+	.section-header {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		padding-bottom: var(--space-sm);
+		border-bottom: 1px solid var(--color-shell-border-default);
+	}
+
+	.section-kicker {
+		margin: 0;
+		font-size: 0.72rem;
+		font-weight: var(--font-semibold);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-fg-muted);
 	}
 
 	.section-title {
 		margin: 0;
-		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
-		font-size: var(--text-body);
+		padding-bottom: 0;
+		border-bottom: none;
+		font-size: clamp(1.02rem, 0.35vw + 0.95rem, 1.16rem);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+	}
+
+	.section-description {
+		margin: 0;
+		max-width: 60ch;
+		font-size: var(--text-body-sm);
+		line-height: 1.55;
+		color: var(--color-fg-tertiary);
 	}
 
 	.form-field {
@@ -1175,6 +1339,21 @@
 		background: var(--color-shell-surface-secondary);
 		color: var(--color-fg-secondary);
 		cursor: pointer;
+		transition:
+			border-color var(--duration-micro) var(--ease-standard),
+			background-color var(--duration-micro) var(--ease-standard),
+			color var(--duration-micro) var(--ease-standard);
+	}
+
+	.option-card:hover {
+		border-color: var(--color-shell-border-strong);
+		background: var(--color-bg-surface);
+	}
+
+	.option-card.selected {
+		border-color: var(--color-info-soft-border);
+		background: var(--color-info-soft-bg);
+		color: var(--color-info-soft-text);
 	}
 
 	.option-card input {
@@ -1206,6 +1385,16 @@
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
 		cursor: pointer;
+		transition:
+			border-color var(--duration-micro) var(--ease-standard),
+			background-color var(--duration-micro) var(--ease-standard),
+			color var(--duration-micro) var(--ease-standard);
+	}
+
+	.scope-chip:hover {
+		border-color: var(--color-shell-border-strong);
+		background: var(--color-bg-surface);
+		color: var(--color-fg-primary);
 	}
 
 	.stacked-fields {
@@ -1218,7 +1407,9 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--space-md);
-		padding: 0 var(--space-lg) var(--space-lg);
+		padding: var(--space-md);
+		border-top: 1px solid var(--color-shell-border-default);
+		background: color-mix(in srgb, var(--color-shell-surface-tertiary) 60%, transparent);
 	}
 
 	.footer-left,
@@ -1237,6 +1428,22 @@
 
 		.header-meta {
 			align-items: flex-start;
+		}
+
+		.header-badges {
+			justify-content: flex-start;
+		}
+
+		.draft-type-tabs {
+			width: 100%;
+		}
+
+		.draft-type-tabs :global(.tabs-list) {
+			width: 100%;
+		}
+
+		.draft-type-tabs :global(.tabs-trigger) {
+			flex: 1 1 50%;
 		}
 
 		.form-row,
