@@ -20,6 +20,41 @@ import type {
 	McpPolicyEvent,
 } from '../types';
 
+type LongLivedTokenSubjectColumn = 'auth_subject' | 'identity_subject';
+
+const longLivedTokenSubjectColumnCache = new WeakMap<D1Database, Promise<LongLivedTokenSubjectColumn>>();
+
+function normalizeMcpLongLivedToken(token: McpLongLivedToken | null): McpLongLivedToken | null {
+	if (!token) return null;
+	const authSubject = token.auth_subject ?? token.identity_subject ?? null;
+	if (!authSubject) return token;
+	return {
+		...token,
+		auth_subject: authSubject,
+	};
+}
+
+async function detectLongLivedTokenSubjectColumn(db: D1Database): Promise<LongLivedTokenSubjectColumn> {
+	try {
+		const result = await db
+			.prepare('PRAGMA table_info(mcp_long_lived_tokens)')
+			.all<{ name?: string | null }>();
+		const columns = result.results?.map((column) => column.name?.trim()).filter(Boolean) ?? [];
+		if (columns.includes('auth_subject')) return 'auth_subject';
+		if (columns.includes('identity_subject')) return 'identity_subject';
+	} catch {}
+	return 'auth_subject';
+}
+
+function getLongLivedTokenSubjectColumn(db: D1Database): Promise<LongLivedTokenSubjectColumn> {
+	let pending = longLivedTokenSubjectColumnCache.get(db);
+	if (!pending) {
+		pending = detectLongLivedTokenSubjectColumn(db);
+		longLivedTokenSubjectColumnCache.set(db, pending);
+	}
+	return pending;
+}
+
 // User queries
 export async function findUserByEmail(db: D1Database, email: string): Promise<User | null> {
 	return db
@@ -564,14 +599,15 @@ export async function upsertMcpLongLivedToken(
 		metadata_json: string;
 	}
 ): Promise<void> {
+	const subjectColumn = await getLongLivedTokenSubjectColumn(db);
 	await db
 		.prepare(
 			`INSERT INTO mcp_long_lived_tokens (
-         id, auth_subject, auth_email, tenant_id, account_id, bound_host, tool_mode,
+         id, ${subjectColumn}, auth_email, tenant_id, account_id, bound_host, tool_mode,
          toolkit_profile_json, allowed_tool_prefixes_json, token_hash, token_prefix,
          issued_by, metadata_json, revoked_at
        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-       ON CONFLICT(auth_subject) DO UPDATE SET
+       ON CONFLICT(${subjectColumn}) DO UPDATE SET
          id = excluded.id,
          auth_email = excluded.auth_email,
          tenant_id = excluded.tenant_id,
@@ -610,18 +646,20 @@ export async function findMcpLongLivedTokenByAuthSubject(
 	db: D1Database,
 	authSubject: string
 ): Promise<McpLongLivedToken | null> {
-	return db
+	const subjectColumn = await getLongLivedTokenSubjectColumn(db);
+	const token = await db
 		.prepare(
 			`SELECT * FROM mcp_long_lived_tokens
-       WHERE auth_subject = ?
+       WHERE ${subjectColumn} = ?
        LIMIT 1`
 		)
 		.bind(authSubject)
 		.first<McpLongLivedToken>();
+	return normalizeMcpLongLivedToken(token);
 }
 
 export async function findMcpLongLivedTokenById(db: D1Database, id: string): Promise<McpLongLivedToken | null> {
-	return db
+	const token = await db
 		.prepare(
 			`SELECT * FROM mcp_long_lived_tokens
        WHERE id = ?
@@ -629,13 +667,14 @@ export async function findMcpLongLivedTokenById(db: D1Database, id: string): Pro
 		)
 		.bind(id)
 		.first<McpLongLivedToken>();
+	return normalizeMcpLongLivedToken(token);
 }
 
 export async function findMcpLongLivedTokenByTokenHash(
 	db: D1Database,
 	tokenHash: string
 ): Promise<McpLongLivedToken | null> {
-	return db
+	const token = await db
 		.prepare(
 			`SELECT * FROM mcp_long_lived_tokens
        WHERE token_hash = ?
@@ -643,6 +682,7 @@ export async function findMcpLongLivedTokenByTokenHash(
 		)
 		.bind(tokenHash)
 		.first<McpLongLivedToken>();
+	return normalizeMcpLongLivedToken(token);
 }
 
 export async function markMcpLongLivedTokenUsed(db: D1Database, id: string): Promise<void> {

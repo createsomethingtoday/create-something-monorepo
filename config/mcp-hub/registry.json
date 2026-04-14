@@ -13151,13 +13151,9 @@
       "webflow-site-analyzer-mcp",
       "lsmcp"
     ],
-    "webflow-marketplace-review-phase-a": [
-      "webflow-template-review-mcp"
-    ],
-    "webflow-marketplace-review-phase-b": [
+    "webflow-marketplace-review": [
       "webflow-template-review-mcp",
-      "webflow-site-analyzer-mcp",
-      "webflow-local"
+      "webflow-site-analyzer-mcp"
     ],
     "webflow-marketplace-app-review-phase-a": [
       "webflow-app-review-mcp"

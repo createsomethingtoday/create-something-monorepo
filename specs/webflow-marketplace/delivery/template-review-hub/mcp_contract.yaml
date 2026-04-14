@@ -9,12 +9,11 @@ client:
   workflow_owner: "Marketplace review lead"
 
 scope:
-  objective: "Reduce objective checklist time and improve consistency in template review by delivering a governed Phase A MCP Hub lane for reviewers."
-  workflow_boundary: "Phase A starts when a template submission enters the review queue and ends when the reviewer validates template-review context, may assign the Asset Version to themselves, may record bounded reviewer feedback and controlled 📝Review Status updates, and completes any broader official decision outside the Hub."
+  objective: "Reduce objective checklist time and improve consistency in template review by delivering a governed production MCP Hub lane for reviewers."
+  workflow_boundary: "The reviewer workflow starts when a template submission enters the review queue and ends when the reviewer validates template-review context, may assign the Asset Version to themselves, may gather read-only analyzer evidence, may record bounded reviewer feedback and controlled 📝Review Status updates, and completes any broader official decision outside the Hub."
   out_of_scope:
-    - "Preview and published-site analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
-    - "Originality or plagiarism analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
-    - "Broad Airtable mutation beyond explicit reviewer-safe write verbs during Phase A"
+    - "Originality or plagiarism analysis through unsupported local or non-HTTP reviewer services"
+    - "Broad Airtable mutation beyond explicit reviewer-safe write verbs"
     - "Subjective design judgment and final taste decisions"
     - "Autonomous creator-facing communication"
     - "Direct control-plane mutation by reviewers"
@@ -33,13 +32,13 @@ systems:
       notes: "House entrypoint, broker, and governance surface for reviewer workflows."
     - name: "webflow-template-review-mcp"
       role: "workflow"
-      notes: "Queue, asset, version, and release operations for template review. This is the only confirmed live reviewer-Hub downstream in Phase A."
+      notes: "Queue, asset, version, and release operations for template review. This is the primary workflow server in the production reviewer lane."
     - name: "webflow-site-analyzer-mcp"
       role: "analysis"
-      notes: "Planned Phase B analysis server. Not yet required for authoritative Phase A rollout."
+      notes: "Read-only analysis server for preview and published-site evidence in the production reviewer lane."
     - name: "webflow-local"
       role: "analysis"
-      notes: "Planned Phase B analysis server backing webflow-local runtime tools. Not yet required for authoritative Phase A rollout."
+      notes: "Excluded from the remote reviewer Hub posture until it has a supported HTTP surface."
     - name: "Composio"
       role: "integration"
       notes: "Optional connectivity and auth plumbing behind the house Hub. Not a reviewer-facing surface in this pilot."
@@ -88,6 +87,22 @@ resources:
     access: "read"
     pii: false
 tools:
+  - name: "template_review_workflow"
+    description: "Return the reviewer onboarding playbook and tool-by-tool workflow guide."
+    action_type: "read"
+    systems_touched:
+      - "CREATE SOMETHING MCP Hub"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.workflow.read"
+    input_schema_summary:
+      required: []
+      optional: []
+    output_contract:
+      success_shape: "Returns the full reviewer workflow guide including sequence, analyzer interpretation, and decision criteria."
+      error_shape: "Returns structured MCP transport error if the workflow guide cannot be loaded."
+    idempotency_expectation: "Pure read operation."
+    fallback_behavior: "Use template-review://reviewer-workflow or template-review://host-playbook if the tool path is unavailable."
   - name: "template_review_get_metrics"
     description: "Return compact marketplace template review metrics for a recent date window."
     action_type: "read"
@@ -281,35 +296,34 @@ tools:
     idempotency_expectation: "Idempotent when the same draft feedback payload is already stored."
     fallback_behavior: "Reviewer stores draft notes outside the Hub if the narrow draft-save path fails."
 
-  - name: "phase_b_review_analysis"
-    description: "Deferred Phase B capability for preview/published-site analysis and originality checks after the analysis servers are enabled in the live reviewer Hub."
-    action_type: "deferred"
+  - name: "review_analysis"
+    description: "Read-only preview and published-site analysis through the connected reviewer analyzer service."
+    action_type: "read"
     systems_touched:
       - "webflow-site-analyzer-mcp"
-      - "webflow-local"
-    approval_mode: "not_available_in_phase_a"
+    approval_mode: "read_only"
     input_schema_summary:
       required: []
       optional: []
     output_contract:
-      success_shape: "N/A in Phase A."
-      error_shape: "N/A in Phase A."
-    idempotency_expectation: "N/A in Phase A."
-    fallback_behavior: "Reviewer performs analysis manually until Phase B is enabled."
+      success_shape: "Returns analyzer evidence that can be used as reviewer input without mutating official review state."
+      error_shape: "Returns analyzer-unavailable, policy deny, or dependency failure error."
+    idempotency_expectation: "Idempotent for the same read request against the same analyzed target."
+    fallback_behavior: "Reviewer continues with template-review context and manual inspection if analyzer evidence is unavailable."
 
-  - name: "phase_a_review_state_changes"
-    description: "Broad official review-state changes beyond explicit reviewer-safe verbs remain manual in Airtable during Phase A."
+  - name: "manual_review_state_changes"
+    description: "Broad official review-state changes beyond explicit reviewer-safe verbs remain manual in Airtable."
     action_type: "manual"
     systems_touched:
       - "Airtable Marketplace Assets"
-    approval_mode: "manual_only_in_phase_a"
+    approval_mode: "manual_only"
     input_schema_summary:
       required: []
       optional: []
     output_contract:
-      success_shape: "N/A in Phase A."
-      error_shape: "N/A in Phase A."
-    idempotency_expectation: "N/A in Phase A."
+      success_shape: "N/A."
+      error_shape: "N/A."
+    idempotency_expectation: "N/A."
     fallback_behavior: "Reviewer handles approval, rejection, publishing completion, and any unsupported review-field mutation directly in Airtable."
 
 prompts:
@@ -327,7 +341,7 @@ auth:
   auth_notes:
     - "Reviewers should authenticate through the house Hub surface rather than direct downstream MCP endpoints."
     - "Composio-backed auth may support selected connector plumbing behind the Hub but should not become the reviewer-facing delivery abstraction."
-    - "Phase A reviewer Hubs support narrow reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates while retaining manual Airtable fallback for broader official state changes."
+    - "Reviewer Hubs support narrow reviewer assignment, bounded feedback writes, controlled 📝Review Status updates, and read-only analyzer evidence while retaining manual fallback for broader official state changes."
 
 policy_integration:
   control_surface: "agent_contract.yaml"
@@ -373,4 +387,4 @@ acceptance:
     - "Manual fallback path verified"
     - "Reviewer playbook reviewed with pilot reviewers"
     - "Trace visibility confirmed for reads, writes, and escalations"
-    - "Phase B analysis servers enabled and verified before any contract expansion beyond Phase A"
+    - "Connected analyzer services verified before any contract expansion beyond the current reviewer-safe workflow"

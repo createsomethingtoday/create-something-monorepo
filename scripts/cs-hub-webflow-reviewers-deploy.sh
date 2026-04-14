@@ -8,16 +8,16 @@ TEAM_CONFIG="$HUB_DIR/wrangler.team-hubs.toml"
 ACTION="${1:-all}"
 REVIEWER="${REVIEWER:-all}"
 SESSION_RESOLVE_URL="${SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
-BUNDLE_NAME="${BUNDLE_NAME:-webflow-marketplace-review-phase-a}"
-DISCOVERY_PACK="${DISCOVERY_PACK:-webflow-marketplace-review-phase-a}"
-ENABLED_SERVERS="${ENABLED_SERVERS:-webflow-template-review-mcp}"
-DISABLED_SERVERS="${DISABLED_SERVERS:-webflow-local,webflow-site-analyzer-mcp}"
+BUNDLE_NAME="${BUNDLE_NAME:-webflow-marketplace-review}"
+DISCOVERY_PACK="${DISCOVERY_PACK:-webflow-marketplace-review}"
+ENABLED_SERVERS="${ENABLED_SERVERS:-webflow-template-review-mcp,webflow-site-analyzer-mcp}"
+DISABLED_SERVERS="${DISABLED_SERVERS:-webflow-local}"
 DISCOVERY_ACTIVE_SERVERS="${DISCOVERY_ACTIVE_SERVERS:-$ENABLED_SERVERS}"
-DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-18}"
+DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-30}"
 RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
 QUOTA_MAX_PROXY_CALLS_PER_PERIOD="${QUOTA_MAX_PROXY_CALLS_PER_PERIOD:-10000}"
-REVIEWER_IDENTITY_MODE="${REVIEWER_IDENTITY_MODE:-compat}"
+REVIEWER_IDENTITY_MODE="${REVIEWER_IDENTITY_MODE:-session_required}"
 REQUIRED_GLOBAL_SERVERS_SENTINEL="${REQUIRED_GLOBAL_SERVERS_SENTINEL:-__none__}"
 REQUIRED_DISCOVERY_SERVERS_SENTINEL="${REQUIRED_DISCOVERY_SERVERS_SENTINEL:-__none__}"
 SKIP_NORMALIZE="${SKIP_NORMALIZE:-0}"
@@ -163,26 +163,29 @@ normalize_one() {
   local worker
   local mcp_url
   local enabled_servers_json
+  local disabled_servers_json
   local discovery_active_servers_json
+  local -a auth_headers
   worker="$(worker_name_for_slug "$slug")"
   mcp_url="$(mcp_url_for_slug "$slug")"
   enabled_servers_json="$(json_array_from_csv "$ENABLED_SERVERS")"
+  disabled_servers_json="$(json_array_from_csv "$DISABLED_SERVERS")"
   discovery_active_servers_json="$(json_array_from_csv "$DISCOVERY_ACTIVE_SERVERS")"
 
   if [[ -z "${HUB_API_TOKEN:-}" ]]; then
     echo "missing HUB_API_TOKEN; cannot normalize ${worker}" >&2
     exit 1
   fi
-  if [[ -z "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
-    echo "missing SESSION_TOKEN_FOR_NORMALIZE; cannot normalize ${worker} in session_required mode" >&2
-    exit 1
+
+  auth_headers=(-H "Authorization: Bearer ${HUB_API_TOKEN}")
+  if [[ -n "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
+    auth_headers+=(-H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}")
   fi
 
   echo "===== NORMALIZE ${worker} ====="
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -193,14 +196,14 @@ normalize_one() {
         "name":"hub_update_state",
         "arguments":{
           "setBundles":["'"${BUNDLE_NAME}"'"],
-          "setServers":'"${enabled_servers_json}"'
+          "setServers":'"${enabled_servers_json}"',
+          "disableServers":'"${disabled_servers_json}"'
         }
       }
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d "{
@@ -224,6 +227,8 @@ verify_one() {
   local worker
   local health_url
   local mcp_url
+  local session_token
+  local -a auth_headers
   worker="$(worker_name_for_slug "$slug")"
   health_url="$(health_url_for_slug "$slug")"
   mcp_url="$(mcp_url_for_slug "$slug")"
@@ -232,23 +237,22 @@ verify_one() {
     echo "missing HUB_API_TOKEN; cannot verify ${worker}" >&2
     exit 1
   fi
-  if [[ -z "${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}" ]]; then
-    echo "missing SESSION_TOKEN_FOR_VERIFY or SESSION_TOKEN_FOR_NORMALIZE; cannot verify ${worker}" >&2
-    exit 1
+  session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}"
+  auth_headers=(-H "Authorization: Bearer ${HUB_API_TOKEN}")
+  if [[ -n "$session_token" ]]; then
+    auth_headers+=(-H "X-MCP-Session-Token: ${session_token}")
   fi
-  local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
 
   echo "===== VERIFY ${worker} ====="
   curl_with_url "$health_url" -sS | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
       "jsonrpc":"2.0",
-      "id":"phase-a-services",
+      "id":"review-services",
       "method":"tools/call",
       "params":{
         "name":"hub_list_services",
@@ -257,18 +261,34 @@ verify_one() {
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
       "jsonrpc":"2.0",
-      "id":"phase-a-search",
+      "id":"review-template-search",
       "method":"tools/call",
       "params":{
         "name":"hub_search_proxy_tools",
         "arguments":{
           "serverName":"webflow-template-review-mcp",
+          "limit":20
+        }
+      }
+    }' | jq .
+
+  curl_with_url "$mcp_url" -sS -X POST \
+    "${auth_headers[@]}" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json, text/event-stream" \
+    -d '{
+      "jsonrpc":"2.0",
+      "id":"review-analyzer-search",
+      "method":"tools/call",
+      "params":{
+        "name":"hub_search_proxy_tools",
+        "arguments":{
+          "serverName":"webflow-site-analyzer-mcp",
           "limit":20
         }
       }
@@ -309,4 +329,4 @@ for entry in "${REVIEWERS[@]}"; do
   fi
 done
 
-echo "webflow reviewer Phase A hub action complete: ${ACTION}"
+echo "webflow reviewer hub action complete: ${ACTION}"

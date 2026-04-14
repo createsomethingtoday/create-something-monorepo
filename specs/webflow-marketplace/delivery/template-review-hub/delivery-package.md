@@ -16,13 +16,13 @@ For the first reviewer rollout, that workflow should be delivered through **revi
 The delivered lane combines:
 
 - queue and Airtable review context from `webflow-template-review-mcp`
+- preview and published-site analysis from `webflow-site-analyzer-mcp`
 - reviewer-specific Hub policy records for the first six reviewers
 - skill-led onboarding for reviewer and operator use of the Hub lane
-- manual Airtable fallback for official review-state changes during Phase A
+- manual fallback for broader official review-state changes outside the reviewer-safe workflow
 
-Planned but not authoritative for Phase A:
+Explicitly out of the current remote reviewer Hub posture:
 
-- preview and published-site analysis from `webflow-site-analyzer-mcp`
 - plagiarism and framework checks from `webflow-local`
 - policy-gated write actions through the Hub
 - reviewer-controlled feedback drafting and decision validation

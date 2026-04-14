@@ -16,7 +16,7 @@ That is not enough for reliable MCP usage.
 
 Onboarding should use reusable skills so hosts and operators apply the same defaults every time:
 
-- safe Phase A queue and self-assignment flow
+- safe production queue and self-assignment flow
 - consistent evidence framing
 - exact fallback behavior
 - explicit separation between reviewer and operator responsibilities
@@ -30,7 +30,7 @@ Use:
 1. `$webflow-template-review-reviewer`
 2. `$webflow-template-review-pilot-triage`
 
-Reviewer onboarding should stop here for Phase A.
+Reviewer onboarding should stop here for the current production lane.
 
 Do not expose Hub control-plane skills to Marketplace reviewers.
 
@@ -62,7 +62,6 @@ Create now, include later:
 Include `$webflow-template-review-analysis-calibration` only after the live reviewer Hub exposes:
 
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
 
 Until then, reviewers should not be onboarded into an analysis-led workflow.
 
@@ -79,12 +78,13 @@ Do not onboard reviewers into write behavior that still depends on manual Airtab
 
 ## Onboarding sequence
 
-### Phase A reviewer sequence
+### Reviewer sequence
 
-1. teach queue -> assign -> context -> my_queue -> unassign
-2. teach `Auto` vs `Partial` vs `Manual`
-3. teach override and escalation rules
-4. teach exact manual fallback behavior
+1. teach `template_review_workflow` as the first call
+2. teach queue -> assign -> context -> my_queue -> unassign
+3. teach `Auto` vs `Partial` vs `Manual`
+4. teach override and escalation rules
+5. teach exact manual fallback behavior
 
 ### Pilot operator sequence
 
@@ -92,7 +92,7 @@ Do not onboard reviewers into write behavior that still depends on manual Airtab
 2. teach `hub-mcp` for posture, discovery, and trace verification
 3. keep reviewer-facing tool exposure narrow
 
-### Phase B add-ons
+### Later add-ons
 
 Add analysis calibration first.
 

@@ -1,5 +1,6 @@
 export interface AgencyMcpEntitlementRow {
 	auth_subject: string;
+	identity_subject?: string | null;
 	auth_email: string | null;
 	account_id: string | null;
 	tenant_id: string | null;
@@ -107,6 +108,7 @@ export interface AgencyCommercialStateRow {
 export interface AgencyIdentitySeedRow {
 	normalized_email: string;
 	auth_subject: string | null;
+	identity_subject?: string | null;
 	account_id: string;
 	tenant_id: string;
 	workspace_account_id: string | null;
@@ -147,6 +149,7 @@ export interface AgencyIdentitySeedUpsertInput {
 export interface AgencyContractStateRow {
 	id: string;
 	auth_subject: string | null;
+	identity_subject?: string | null;
 	normalized_email: string | null;
 	account_id: string | null;
 	tenant_id: string | null;
@@ -160,6 +163,50 @@ export interface AgencyContractStateRow {
 	metadata_json: string;
 	created_at: string;
 	updated_at: string;
+}
+
+type SubjectColumn = 'auth_subject' | 'identity_subject';
+type SubjectColumnTable = 'agency_mcp_entitlements' | 'agency_identity_seeds' | 'agency_contract_state';
+
+const subjectColumnCache = new WeakMap<D1Database, Map<SubjectColumnTable, Promise<SubjectColumn>>>();
+
+function normalizeSubjectRow<T extends { auth_subject?: string | null; identity_subject?: string | null }>(
+	row: T | null
+): T | null {
+	if (!row) return null;
+	const authSubject = row.auth_subject ?? row.identity_subject ?? null;
+	if (!authSubject) return row;
+	return {
+		...row,
+		auth_subject: authSubject,
+	};
+}
+
+async function detectSubjectColumn(db: D1Database, tableName: SubjectColumnTable): Promise<SubjectColumn> {
+	try {
+		const result = await db.prepare(`PRAGMA table_info(${tableName})`).all<{ name?: string | null }>();
+		const columns = result.results?.map((column) => column.name?.trim()).filter(Boolean) ?? [];
+		if (columns.includes('auth_subject')) return 'auth_subject';
+		if (columns.includes('identity_subject')) return 'identity_subject';
+	} catch {}
+
+	return 'auth_subject';
+}
+
+function getSubjectColumn(db: D1Database, tableName: SubjectColumnTable): Promise<SubjectColumn> {
+	let tableCache = subjectColumnCache.get(db);
+	if (!tableCache) {
+		tableCache = new Map();
+		subjectColumnCache.set(db, tableCache);
+	}
+
+	let pending = tableCache.get(tableName);
+	if (!pending) {
+		pending = detectSubjectColumn(db, tableName);
+		tableCache.set(tableName, pending);
+	}
+
+	return pending;
 }
 
 function toFlag(value: number | null | undefined): boolean {
@@ -241,10 +288,12 @@ export async function findAgencyMcpEntitlementByAuthSubject(
 	db: D1Database,
 	authSubject: string
 ): Promise<AgencyMcpEntitlementRow | null> {
-	return db
-		.prepare('SELECT * FROM agency_mcp_entitlements WHERE auth_subject = ? LIMIT 1')
+	const subjectColumn = await getSubjectColumn(db, 'agency_mcp_entitlements');
+	const row = await db
+		.prepare(`SELECT * FROM agency_mcp_entitlements WHERE ${subjectColumn} = ? LIMIT 1`)
 		.bind(authSubject)
 		.first<AgencyMcpEntitlementRow>();
+	return normalizeSubjectRow(row);
 }
 
 export async function findAgencyMcpEntitlementByEmail(
@@ -254,7 +303,7 @@ export async function findAgencyMcpEntitlementByEmail(
 	const normalizedEmail = normalizeEmail(authEmail);
 	if (!normalizedEmail) return null;
 
-	return db
+	const row = await db
 		.prepare(
 			`SELECT * FROM agency_mcp_entitlements
        WHERE lower(COALESCE(auth_email, '')) = ?
@@ -263,6 +312,7 @@ export async function findAgencyMcpEntitlementByEmail(
 		)
 		.bind(normalizedEmail)
 		.first<AgencyMcpEntitlementRow>();
+	return normalizeSubjectRow(row);
 }
 
 export async function upsertAgencyMcpEntitlement(
@@ -277,12 +327,13 @@ export async function upsertAgencyMcpEntitlement(
 		metadata?: Record<string, unknown>;
 	}
 ): Promise<AgencyMcpEntitlementRow> {
+	const subjectColumn = await getSubjectColumn(db, 'agency_mcp_entitlements');
 	await db
 		.prepare(
 			`INSERT INTO agency_mcp_entitlements (
-         auth_subject, auth_email, account_id, tenant_id, workspace_account_id, service_tier, metadata_json
+         ${subjectColumn}, auth_email, account_id, tenant_id, workspace_account_id, service_tier, metadata_json
        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(auth_subject) DO UPDATE SET
+       ON CONFLICT(${subjectColumn}) DO UPDATE SET
          auth_email = excluded.auth_email,
          account_id = COALESCE(excluded.account_id, agency_mcp_entitlements.account_id),
          tenant_id = COALESCE(excluded.tenant_id, agency_mcp_entitlements.tenant_id),
@@ -309,6 +360,7 @@ export async function listAgencyMcpEntitlements(
 	db: D1Database,
 	options: { limit?: number; search?: string } = {}
 ): Promise<AgencyMcpEntitlementRow[]> {
+	const subjectColumn = await getSubjectColumn(db, 'agency_mcp_entitlements');
 	const limit = Math.max(1, Math.min(250, options.limit ?? 100));
 	const search = options.search?.trim();
 	if (search) {
@@ -316,7 +368,7 @@ export async function listAgencyMcpEntitlements(
 		const result = await db
 			.prepare(
 				`SELECT * FROM agency_mcp_entitlements
-         WHERE lower(auth_subject) LIKE ?
+         WHERE lower(${subjectColumn}) LIKE ?
             OR lower(COALESCE(auth_email, '')) LIKE ?
             OR lower(COALESCE(account_id, '')) LIKE ?
             OR lower(COALESCE(tenant_id, '')) LIKE ?
@@ -326,7 +378,7 @@ export async function listAgencyMcpEntitlements(
 			.bind(pattern, pattern, pattern, pattern, limit)
 			.all<AgencyMcpEntitlementRow>();
 		return (result.results ?? []).map((row) => ({
-			...row,
+			...normalizeSubjectRow(row)!,
 			service_tier: normalizeAgencyServiceTier(row.service_tier),
 		}));
 	}
@@ -340,7 +392,7 @@ export async function listAgencyMcpEntitlements(
 		.bind(limit)
 		.all<AgencyMcpEntitlementRow>();
 	return (result.results ?? []).map((row) => ({
-		...row,
+		...normalizeSubjectRow(row)!,
 		service_tier: normalizeAgencyServiceTier(row.service_tier),
 	}));
 }
@@ -349,6 +401,7 @@ export async function listAgencyContractState(
 	db: D1Database,
 	options: { limit?: number; search?: string } = {}
 ): Promise<AgencyContractStateRow[]> {
+	const subjectColumn = await getSubjectColumn(db, 'agency_contract_state');
 	const limit = Math.max(1, Math.min(250, options.limit ?? 100));
 	const search = options.search?.trim();
 	if (search) {
@@ -356,7 +409,7 @@ export async function listAgencyContractState(
 		const result = await db
 			.prepare(
 				`SELECT * FROM agency_contract_state
-         WHERE lower(COALESCE(auth_subject, '')) LIKE ?
+         WHERE lower(COALESCE(${subjectColumn}, '')) LIKE ?
             OR lower(COALESCE(normalized_email, '')) LIKE ?
             OR lower(COALESCE(account_id, '')) LIKE ?
             OR lower(contract_reference) LIKE ?
@@ -365,14 +418,14 @@ export async function listAgencyContractState(
 			)
 			.bind(pattern, pattern, pattern, pattern, limit)
 			.all<AgencyContractStateRow>();
-		return result.results ?? [];
+		return (result.results ?? []).map((row) => normalizeSubjectRow(row)!);
 	}
 
 	const result = await db
 		.prepare('SELECT * FROM agency_contract_state ORDER BY updated_at DESC LIMIT ?')
 		.bind(limit)
 		.all<AgencyContractStateRow>();
-	return result.results ?? [];
+	return (result.results ?? []).map((row) => normalizeSubjectRow(row)!);
 }
 
 export async function listAgencyCommercialState(
@@ -415,6 +468,7 @@ export async function listAgencyIdentitySeeds(
 	db: D1Database,
 	options: { limit?: number; search?: string } = {}
 ): Promise<AgencyIdentitySeedRow[]> {
+	const subjectColumn = await getSubjectColumn(db, 'agency_identity_seeds');
 	const limit = Math.max(1, Math.min(250, options.limit ?? 100));
 	const search = options.search?.trim().toLowerCase();
 
@@ -427,14 +481,14 @@ export async function listAgencyIdentitySeeds(
          WHERE normalized_email LIKE ?
             OR account_id LIKE ?
             OR tenant_id LIKE ?
-            OR COALESCE(auth_subject, '') LIKE ?
+            OR COALESCE(${subjectColumn}, '') LIKE ?
          ORDER BY updated_at DESC
          LIMIT ?`
 				)
 				.bind(pattern, pattern, pattern, pattern, limit)
 				.all<AgencyIdentitySeedRow>();
 			return (result.results ?? []).map((row) => ({
-				...row,
+				...normalizeSubjectRow(row)!,
 				service_tier: normalizeAgencyServiceTier(row.service_tier),
 			}));
 		}
@@ -448,7 +502,7 @@ export async function listAgencyIdentitySeeds(
 			.bind(limit)
 			.all<AgencyIdentitySeedRow>();
 		return (result.results ?? []).map((row) => ({
-			...row,
+			...normalizeSubjectRow(row)!,
 			service_tier: normalizeAgencyServiceTier(row.service_tier),
 		}));
 	} catch (error) {
@@ -469,15 +523,16 @@ export async function upsertAgencyIdentitySeed(
 	}
 
 	try {
+		const subjectColumn = await getSubjectColumn(db, 'agency_identity_seeds');
 		await db
 			.prepare(
 				`INSERT INTO agency_identity_seeds (
-         normalized_email, auth_subject, account_id, tenant_id, workspace_account_id, service_tier,
+         normalized_email, ${subjectColumn}, account_id, tenant_id, workspace_account_id, service_tier,
          managed_bearer_allowed, org_membership_active, service_entitled, policy_accepted,
          contract_active, billing_active, status, invited_at, bound_at, metadata_json
        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(normalized_email) DO UPDATE SET
-         auth_subject = COALESCE(excluded.auth_subject, agency_identity_seeds.auth_subject),
+         ${subjectColumn} = COALESCE(excluded.${subjectColumn}, agency_identity_seeds.${subjectColumn}),
          account_id = excluded.account_id,
          tenant_id = excluded.tenant_id,
          workspace_account_id = excluded.workspace_account_id,
@@ -514,7 +569,7 @@ export async function upsertAgencyIdentitySeed(
 			)
 			.run();
 
-		return await db
+		const row = await db
 			.prepare(
 				`SELECT * FROM agency_identity_seeds
        WHERE normalized_email = ?
@@ -522,6 +577,7 @@ export async function upsertAgencyIdentitySeed(
 			)
 			.bind(normalizedEmail)
 			.first<AgencyIdentitySeedRow>();
+		return normalizeSubjectRow(row);
 	} catch (error) {
 		if (isMissingD1TableError(error, 'agency_identity_seeds')) {
 			return null;
@@ -548,14 +604,15 @@ export async function upsertAgencyContractState(
 	}
 ): Promise<void> {
 	const normalizedEmail = normalizeEmail(input.authEmail);
+	const subjectColumn = await getSubjectColumn(db, 'agency_contract_state');
 	await db
 		.prepare(
 			`INSERT INTO agency_contract_state (
-         id, auth_subject, normalized_email, account_id, tenant_id, contract_reference, contract_status,
+         id, ${subjectColumn}, normalized_email, account_id, tenant_id, contract_reference, contract_status,
          contract_active, service_entitled, policy_accepted, effective_at, expires_at, metadata_json
        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(contract_reference) DO UPDATE SET
-         auth_subject = COALESCE(excluded.auth_subject, agency_contract_state.auth_subject),
+         ${subjectColumn} = COALESCE(excluded.${subjectColumn}, agency_contract_state.${subjectColumn}),
          normalized_email = COALESCE(excluded.normalized_email, agency_contract_state.normalized_email),
          account_id = COALESCE(excluded.account_id, agency_contract_state.account_id),
          tenant_id = COALESCE(excluded.tenant_id, agency_contract_state.tenant_id),
@@ -600,6 +657,7 @@ export async function updateAgencyMcpEntitlement(
 		...(input.metadata ?? {}),
 		manual_override: true,
 	};
+	const subjectColumn = await getSubjectColumn(db, 'agency_mcp_entitlements');
 
 	await db
 		.prepare(
@@ -618,7 +676,7 @@ export async function updateAgencyMcpEntitlement(
            denial_reason = ?,
            metadata_json = ?,
            updated_at = datetime('now')
-       WHERE auth_subject = ?`
+       WHERE ${subjectColumn} = ?`
 		)
 		.bind(
 			input.authEmail ?? existing.auth_email,
@@ -655,6 +713,7 @@ export async function reconcileAgencyMcpEntitlement(
 ): Promise<AgencyMcpEntitlementRow | null> {
 	const existing = await findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
 	const existingMetadata = existing ? safeParseMetadata(existing.metadata_json) : {};
+	const entitlementSubjectColumn = await getSubjectColumn(db, 'agency_mcp_entitlements');
 	if (existingMetadata.manual_override === true && existing) {
 		return existing;
 	}
@@ -688,7 +747,7 @@ export async function reconcileAgencyMcpEntitlement(
              billing_active = ?,
              denial_reason = ?,
              updated_at = datetime('now')
-         WHERE auth_subject = ?`
+         WHERE ${entitlementSubjectColumn} = ?`
 			)
 			.bind(
 				seed.managed_bearer_allowed,
@@ -758,7 +817,7 @@ export async function reconcileAgencyMcpEntitlement(
                policy_accepted = ?,
                denial_reason = ?,
                updated_at = datetime('now')
-           WHERE auth_subject = ?`
+           WHERE ${entitlementSubjectColumn} = ?`
 				)
 				.bind(
 					input.authEmail ?? existing.auth_email,
@@ -814,7 +873,7 @@ export async function reconcileAgencyMcpEntitlement(
                billing_active = ?,
                denial_reason = ?,
                updated_at = datetime('now')
-           WHERE auth_subject = ?`
+           WHERE ${entitlementSubjectColumn} = ?`
 				)
 				.bind(
 					commerciallyAllowed && serviceEntitled && policyAccepted ? 1 : 0,
@@ -901,7 +960,7 @@ export async function reconcileAgencyMcpEntitlement(
              billing_active = ?,
              denial_reason = ?,
              updated_at = datetime('now')
-         WHERE auth_subject = ?`
+         WHERE ${entitlementSubjectColumn} = ?`
 			)
 			.bind(
 				hasAccess && contractActive && billingActive && serviceEntitled && policyAccepted ? 1 : 0,
@@ -1197,7 +1256,7 @@ export async function findAgencyIdentitySeedByEmail(
 	}
 
 	try {
-		return await db
+		const row = await db
 			.prepare(
 				`SELECT * FROM agency_identity_seeds
        WHERE normalized_email = ?
@@ -1205,6 +1264,7 @@ export async function findAgencyIdentitySeedByEmail(
 			)
 			.bind(normalizedEmail)
 			.first<AgencyIdentitySeedRow>();
+		return normalizeSubjectRow(row);
 	} catch (error) {
 		if (isMissingD1TableError(error, 'agency_identity_seeds')) {
 			return null;
@@ -1220,10 +1280,11 @@ async function bindAgencyIdentitySeed(
 	authSubject: string
 ): Promise<void> {
 	try {
+		const subjectColumn = await getSubjectColumn(db, 'agency_identity_seeds');
 		await db
 			.prepare(
 				`UPDATE agency_identity_seeds
-       SET auth_subject = ?,
+       SET ${subjectColumn} = ?,
            status = 'bound',
            bound_at = COALESCE(bound_at, datetime('now')),
            updated_at = datetime('now')
@@ -1249,10 +1310,11 @@ async function findAgencyContractState(
 ): Promise<AgencyContractStateRow | null> {
 	const normalizedEmail = normalizeEmail(authEmail);
 	try {
+		const subjectColumn = await getSubjectColumn(db, 'agency_contract_state');
 		const result = await db
 			.prepare(
 				`SELECT * FROM agency_contract_state
-       WHERE (auth_subject IS NOT NULL AND auth_subject = ?)
+       WHERE (${subjectColumn} IS NOT NULL AND ${subjectColumn} = ?)
           OR (? IS NOT NULL AND normalized_email = ?)
           OR (? IS NOT NULL AND account_id = ? AND (? IS NULL OR tenant_id = ?))
        ORDER BY
@@ -1264,7 +1326,7 @@ async function findAgencyContractState(
 			)
 			.bind(authSubject, normalizedEmail, normalizedEmail, accountId, accountId, tenantId, tenantId)
 			.first<AgencyContractStateRow>();
-		return result;
+		return normalizeSubjectRow(result);
 	} catch (error) {
 		if (isMissingD1TableError(error, 'agency_contract_state')) {
 			console.warn('agency_contract_state table is unavailable; continuing without contract state');

@@ -227,6 +227,7 @@ export interface McpLegacyKey {
 export interface McpLongLivedToken {
 	id: string;
 	auth_subject: string;
+	identity_subject?: string;
 	auth_email: string | null;
 	tenant_id: string;
 	account_id: string;

@@ -1,25 +1,28 @@
 version: "0.1"
 artifact: "reviewer_hub_policy_records"
 status: "working_draft"
-date: "2026-03-10"
+date: "2026-04-14"
 
 policy_intent:
-  summary: "Reviewer-specific Hub policy records for the six-reviewer Phase A rollout."
-  authoritative_scope: "Phase A only"
-  rollout_mode: "narrow_reviewer_workflow_write_lane"
+  summary: "Reviewer-specific Hub policy records for the six-reviewer production rollout."
+  authoritative_scope: "Production reviewer lane"
+  rollout_mode: "compact_reviewer_lane"
   notes:
     - "These records are reviewer-specific, not one shared reviewer template."
-    - "Phase A allows template-review-context tools plus narrow reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates from webflow-template-review-mcp."
-    - "Broad official review-state writes beyond the explicit reviewer-safe verbs remain manual until reviewer-attributed traces and write gates are proven."
-    - "Any reviewer write route must enforce reviewer ownership of the assigned Asset Version server-side."
+    - "The production reviewer lane includes webflow-template-review-mcp and webflow-site-analyzer-mcp."
+    - "Reviewer-safe writes stay narrow and explicit on webflow-template-review-mcp."
+    - "Analyzer output is read-only evidence and must not widen write scope."
+    - "webflow-local is intentionally excluded from the remote reviewer Hub until it has a supported HTTP surface."
 
-shared_phase_a_policy:
+shared_policy:
   discovery:
     mode: "compact"
     active_servers:
       - "webflow-template-review-mcp"
-    max_proxy_tools: 18
+      - "webflow-site-analyzer-mcp"
+    max_proxy_tools: 30
   allowed_proxy_tools:
+    - "webflow-template-review-mcp__template_review_workflow"
     - "webflow-template-review-mcp__template_review_health"
     - "webflow-template-review-mcp__template_review_get_metrics"
     - "webflow-template-review-mcp__template_review_list_queue"
@@ -38,6 +41,8 @@ shared_phase_a_policy:
     - "webflow-template-review-mcp__template_review_request_changes"
     - "webflow-template-review-mcp__template_review_set_review_status"
     - "webflow-template-review-mcp__template_review_save_draft_feedback"
+  allowed_server_classes:
+    - "selected read-only analysis tools from webflow-site-analyzer-mcp"
   blocked_proxy_tools:
     - "webflow-template-review-mcp__template_review_approve_version"
     - "webflow-template-review-mcp__template_review_reject_version"
@@ -66,7 +71,7 @@ shared_phase_a_policy:
     - "current reviewer must own the Asset Version assignment"
     - "write route must be narrow and explicit, never broad update_version_review exposure"
     - "missing reviewer identity or assignment mismatch must fail closed"
-    - "one-lane smoke and revert validation must pass before reviewer-wide rollout"
+    - "one-lane smoke validation must pass before reviewer-wide rollout"
 
 reviewers:
   - reviewer_name: "Natalia Ledford"
@@ -75,7 +80,7 @@ reviewers:
     account_model: "per_user"
     approval_owner: "Natalia Ledford"
     access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_natalia_phase_a"
+    policy_record_id: "wf_template_review_natalia"
 
   - reviewer_name: "Sudiksha Khanduja"
     reviewer_email: "sudiksha.khanduja@webflow.com"
@@ -83,7 +88,7 @@ reviewers:
     account_model: "per_user"
     approval_owner: "Sudiksha Khanduja"
     access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_sudiksha_phase_a"
+    policy_record_id: "wf_template_review_sudiksha"
 
   - reviewer_name: "Eric Unger"
     reviewer_email: "eric.unger@webflow.com"
@@ -91,7 +96,7 @@ reviewers:
     account_model: "per_user"
     approval_owner: "Eric Unger"
     access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_eric_phase_a"
+    policy_record_id: "wf_template_review_eric"
 
   - reviewer_name: "Vicki Chen"
     reviewer_email: "vicki.chen@webflow.com"
@@ -99,7 +104,7 @@ reviewers:
     account_model: "per_user"
     approval_owner: "Vicki Chen"
     access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_vicki_phase_a"
+    policy_record_id: "wf_template_review_vicki"
 
   - reviewer_name: "Mariana Segura"
     reviewer_email: "mariana.segura@webflow.com"
@@ -107,7 +112,7 @@ reviewers:
     account_model: "per_user"
     approval_owner: "Mariana Segura"
     access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_mariana_phase_a"
+    policy_record_id: "wf_template_review_mariana"
 
   - reviewer_name: "Micah Johnson"
     reviewer_email: "micah@webflow.com"
@@ -115,11 +120,10 @@ reviewers:
     account_model: "per_user"
     approval_owner: "Micah Johnson"
     access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_micah_phase_a"
+    policy_record_id: "wf_template_review_micah"
 
-phase_b_prerequisites:
-  - "webflow-site-analyzer-mcp enabled and verified in the live Hub"
-  - "webflow-local enabled and verified in the live Hub"
-  - "reviewer-attributed trace verification for approval-required actions"
+future_surface_prerequisites:
+  - "any additional originality or plagiarism service must have a supported HTTP surface"
+  - "reviewer-attributed trace verification for any new approval-required action"
   - "manual fallback drill completed"
   - "Marketplace review lead signoff"

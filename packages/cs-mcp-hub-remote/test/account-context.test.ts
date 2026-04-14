@@ -217,6 +217,62 @@ test('resolveAccountContext accepts managed bearer auth in session_required mode
   }
 });
 
+test('resolveAccountContext resolves session_required bearer even when it matches HUB_API_TOKEN', async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedToken = '';
+  let capturedResourceHost = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const request = _input instanceof Request ? _input : new Request(String(_input), init);
+    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    capturedToken = body.token ?? '';
+    capturedResourceHost = body.resource_host ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        session_id: null,
+        account_id: 'acct_reviewer',
+        tenant_id: 'tenant_webflow_marketplace',
+        user_id: 'auth0|reviewer',
+        tool_mode: 'read_write',
+        allowed_tool_prefixes: ['webflow-template-review-mcp__template_review_assign_self'],
+        auth_mode: 'managed_bearer',
+        bound_host: 'wf-template-review-eric',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const context = await resolveAccountContext(
+      makeExtra({
+        authorization: 'Bearer mcpu_reviewer_lane_token_session_required',
+        host: 'wf-template-review-mariana.mcp.createsomething.agency',
+      }),
+      {
+        HUB_IDENTITY_MODE: 'session_required',
+        HUB_API_TOKEN: 'mcpu_reviewer_lane_token_session_required',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(context.accountId, 'acct_reviewer');
+    assert.equal(context.authMode, 'managed_bearer');
+    assert.equal(context.identitySource, 'session');
+    assert.deepEqual(context.allowedToolPrefixes, ['webflow-template-review-mcp__template_review_assign_self']);
+    assert.equal(capturedToken, 'mcpu_reviewer_lane_token_session_required');
+    assert.equal(capturedResourceHost, 'wf-template-review-mariana');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('resolveAccountContext ignores compat header account override by default', async () => {
   const context = await resolveAccountContext(
     makeExtra({ 'x-mcp-account-id': 'acct_fallback' }),

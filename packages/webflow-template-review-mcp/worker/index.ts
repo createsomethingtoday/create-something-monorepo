@@ -15,6 +15,10 @@ interface Env {
   TELEMETRY_DB?: D1Database;
   MCP_ACCOUNT_ID?: string;
   MCP_API_KEY?: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_PROJECT_ID?: string;
+  BRAINTRUST_ENABLED?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
@@ -31,6 +35,19 @@ export function validateApiKey(request: Request, env: Env): Response | null {
   return validateBearerToken(request, env.MCP_API_KEY);
 }
 
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+
+function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
+  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
+
+function isBraintrustEnabled(env: Env): boolean {
+  const enabled = env.BRAINTRUST_ENABLED?.trim().toLowerCase();
+  if (enabled === 'false' || enabled === '0' || enabled === 'off') return false;
+  return Boolean(env.BRAINTRUST_API_KEY);
+}
+
 export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProps> {
   server = new McpServer({
     name: 'webflow-template-review-mcp',
@@ -44,6 +61,12 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         this.env.TELEMETRY_DB as unknown as Parameters<typeof enableTelemetry>[1],
         'webflow-template-review-mcp',
         () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
+        {
+          apiKey: this.env.BRAINTRUST_API_KEY,
+          projectName: resolveBraintrustProjectName(this.env),
+          projectId: this.env.BRAINTRUST_PROJECT_ID,
+          enabled: isBraintrustEnabled(this.env),
+        },
       );
     }
 

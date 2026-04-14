@@ -59,13 +59,13 @@ Operator checklist for Hub identity, discovery, trace validation, rate limits, q
 Exact Hub server, discovery, and rollout posture for the six reviewer-specific Hub surfaces.
 
 15. `reviewer-hub-policy-records.yaml`
-Six separate reviewer-specific policy records for the authoritative Phase A rollout.
+Six separate reviewer-specific policy records for the production reviewer rollout.
 
-16. `reviewer-hub-phase-a-operator-runbook.md`
-Exact deploy, normalize, and verify path for the six Phase A reviewer Hub surfaces.
+16. `reviewer-hub-operator-runbook.md`
+Exact deploy, normalize, and verify path for the six production reviewer Hub surfaces.
 
 17. `onboarding-skills.md`
-Skill-led onboarding sequence for reviewers and operators, including what is included now versus gated for later rollout phases.
+Skill-led onboarding sequence for reviewers and operators, including the production reviewer posture and current boundaries.
 
 ## Reading order
 
@@ -84,7 +84,7 @@ Skill-led onboarding sequence for reviewers and operators, including what is inc
 13. `reviewer-hub-implementation-checklist.md`
 14. `reviewer-hub-runtime-posture.md`
 15. `reviewer-hub-policy-records.yaml`
-16. `reviewer-hub-phase-a-operator-runbook.md`
+16. `reviewer-hub-operator-runbook.md`
 17. `onboarding-skills.md`
 
 ## Related source material

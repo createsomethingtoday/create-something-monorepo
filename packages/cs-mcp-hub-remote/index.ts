@@ -740,6 +740,7 @@ const DEFAULT_REQUIRED_DISCOVERY_SERVERS: string[] = ['composio-toolkit-notion']
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
 let braintrustUnavailableLogged = false;
+let braintrustModulePromise: Promise<BraintrustModule | null> | null = null;
 let braintrustLogger: BraintrustLogger | null = null;
 let braintrustLoggerKey: string | null = null;
 
@@ -4661,10 +4662,7 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
       );
     }
     const bearerToken = authorization ? parseBearerToken(authorization) : null;
-    const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
-    const bearerIsHubToken =
-      bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
-    const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
+    const identityToken = sessionHeaderToken ?? bearerToken;
     if (!identityToken) {
       throw new Error('Missing X-MCP-Session-Token header or bearer token.');
     }
@@ -5003,12 +5001,56 @@ function getCurrentPeriod(): string {
 }
 
 async function loadBraintrustModule(): Promise<BraintrustModule | null> {
-  if (!braintrustUnavailableLogged) {
-    console.warn(`[${HUB_NAME}] braintrust disabled: package is not bundled in this worker build`);
-    braintrustUnavailableLogged = true;
+  if (!braintrustModulePromise) {
+    braintrustModulePromise = import('braintrust')
+      .then((module): BraintrustModule => ({
+        flush: () => module.flush(),
+        initLogger: (config) => {
+          const logger = module.initLogger(config);
+          return {
+            flush: () => logger.flush(),
+            traced: async (callback, options) => {
+              await logger.traced(
+                async (span) => {
+                  await callback({
+                    log(payload) {
+                      span.log(payload as Record<string, unknown>);
+                    },
+                  });
+                },
+                {
+                  name: options.name,
+                  type: options.type as
+                    | 'function'
+                    | 'automation'
+                    | 'review'
+                    | 'task'
+                    | 'score'
+                    | 'llm'
+                    | 'eval'
+                    | 'tool'
+                    | 'facet'
+                    | 'preprocessor'
+                    | 'classifier',
+                  setCurrent: true,
+                },
+              );
+            },
+          };
+        },
+      }))
+      .catch((error) => {
+        if (!braintrustUnavailableLogged) {
+          console.warn(
+            `[${HUB_NAME}] braintrust disabled: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          braintrustUnavailableLogged = true;
+        }
+        return null;
+      });
   }
 
-  return null;
+  return braintrustModulePromise;
 }
 
 async function getBraintrustLogger(env: Env): Promise<BraintrustLogger | null> {

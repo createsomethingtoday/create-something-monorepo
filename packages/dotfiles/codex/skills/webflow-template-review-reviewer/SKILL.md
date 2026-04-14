@@ -1,6 +1,6 @@
 ---
 name: webflow-template-review-reviewer
-description: Guide reviewers through the safe Phase A Webflow Template Review Hub flow using queue, self-assignment, review context, resume, and release actions without relying on raw Airtable semantics or unavailable analysis tools.
+description: Guide reviewers through the production Webflow Template Review Hub flow using queue, self-assignment, review context, release actions, and approved analyzer evidence without relying on raw Airtable semantics.
 ---
 
 # Webflow Template Review Reviewer
@@ -9,32 +9,32 @@ Use this skill for Marketplace reviewers working inside the reviewer Hub lane.
 
 ## Core Rule
 
-Default to the live-safe Phase A flow unless runtime evidence proves Phase B analysis tools are connected and approved for reviewer use.
+Default to the production reviewer flow:
 
-Phase A guarantees:
+- use `webflow-template-review-mcp` for official reviewer workflow actions
+- use approved `webflow-site-analyzer-mcp` reads for deterministic site evidence
+- keep writes narrow and explicit
 
-- queue reads
-- self-assignment
-- self-unassignment
-- normalized review context
+Do not invent broader approval-state writes, raw Airtable semantics, or unsupported originality tooling.
 
-Do not invent analysis, feedback drafting, or approval-state writes when the live Hub only exposes `webflow-template-review-mcp`.
+## Default Sequence
 
-## Phase A Default Sequence
-
-1. Call `template_review_list_queue` with no filters.
-2. Pick a row and use `assignableVersionId` as the assignment target.
-3. Call `template_review_assign_self` with that `version_id`.
-4. Call `template_review_get_review_context` with the same `version_id`.
-5. Read reviewer fields from `data.context`, not top-level `data`.
-6. Use `template_review_my_queue` when the reviewer asks for their assigned work.
-7. Use `template_review_unassign_self` only when the reviewer intentionally wants to release the version.
+1. Call `template_review_workflow` first to load the reviewer playbook and tool sequence.
+2. Call `template_review_list_queue` with no filters.
+3. Pick a row and use `assignableVersionId` as the assignment target.
+4. Call `template_review_assign_self` with that `version_id`.
+5. Call `template_review_get_review_context` with the same `version_id`.
+6. Read reviewer fields from `data.context`, not top-level `data`.
+7. Use `template_review_my_queue` when the reviewer asks for their assigned work.
+8. Use `template_review_unassign_self` only when the reviewer intentionally wants to release the version.
+9. Use connected analyzer tools only when they provide direct review evidence for the current asset or version.
 
 ## Response Rules
 
 - Treat `assignableVersionId` as the assignment target, not the asset id.
 - Read reviewer ownership from `data.context.currentReviewer`, `data.context.reviewOwner`, and `data.context.isAssignedToCurrentReviewer`.
 - Explain the workflow in reviewer language, not Airtable field language.
+- Treat analyzer output as evidence, not as a replacement for reviewer judgment.
 - Stop and route to manual fallback when identity, mapping, or evidence is missing.
 
 ## Evidence Classes
@@ -72,13 +72,12 @@ Escalate when:
 - a tool suggests a write action outside current reviewer scope
 - the Hub seems to assume fields that are not present in `data.context`
 
-Use [reviewer-playbook.md](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/webflow-marketplace/delivery/template-review-hub/reviewer-playbook.md) and [runbook.md](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/webflow-marketplace/delivery/template-review-hub/runbook.md) as the operating source of truth.
+Use `specs/webflow-marketplace/delivery/template-review-hub/reviewer-playbook.md` and `specs/webflow-marketplace/delivery/template-review-hub/runbook.md` as the operating source of truth.
 
-## Phase Awareness
+## Availability Check
 
-Before using any richer review flow, confirm the reviewer Hub actually exposes:
+Before relying on analyzer evidence, confirm the reviewer Hub actually exposes:
 
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
 
-If those servers are not connected, stay in Phase A context mode and manual review for broader checklist work.
+If analyzer tools are unavailable, continue with `webflow-template-review-mcp` context and manual review instead of improvising missing evidence.

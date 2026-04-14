@@ -9,6 +9,8 @@ enabled = true
 
 [vars]
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
+BRAINTRUST_ENABLED = "true"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"

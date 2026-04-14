@@ -32,8 +32,8 @@ Pilot posture:
 
 - queue entries can be loaded
 - asset and version context can be loaded
-- Phase A reviewer-visible template-review-context tools are confirmed
-- any analysis or originality capability not yet connected is treated as out of scope for Phase A
+- reviewer-visible template-review context tools are confirmed
+- connected analyzer capability is available when required, and unsupported originality tooling is treated as out of scope
 
 ### Action safety
 

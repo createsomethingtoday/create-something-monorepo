@@ -9,6 +9,7 @@ REVIEWER="${REVIEWER:-micah}"
 SERVER_NAME="${SERVER_NAME:-webflow-template-review-mcp}"
 SEARCH_LIMIT="${SEARCH_LIMIT:-200}"
 SESSION_TOKEN="${SESSION_TOKEN:-${SESSION_TOKEN_FOR_VERIFY:-}}"
+REQUIRED_PROXY_TOOLS="${REQUIRED_PROXY_TOOLS:-webflow-template-review-mcp__template_review_workflow}"
 
 reviewer_url() {
   case "$1" in
@@ -169,6 +170,31 @@ print_tool_list() {
   done < <(printf '%s' "$payload" | jq -r '.[]?')
 }
 
+assert_required_proxy_tools() {
+  local payload="$1"
+  local context="$2"
+  local tools_json="$3"
+  local required_csv="$4"
+  local tool_name
+  local -a required=()
+
+  if [[ -z "$required_csv" ]]; then
+    return 0
+  fi
+
+  IFS=',' read -r -a required <<<"$required_csv"
+  for tool_name in "${required[@]}"; do
+    tool_name="${tool_name#"${tool_name%%[![:space:]]*}"}"
+    tool_name="${tool_name%"${tool_name##*[![:space:]]}"}"
+    [[ -n "$tool_name" ]] || continue
+    if ! printf '%s' "$tools_json" | jq -e --arg tool "$tool_name" 'index($tool) != null' >/dev/null 2>&1; then
+      echo "missing required proxy tool during ${context}: ${tool_name}" >&2
+      echo "$payload" | jq .
+      exit 1
+    fi
+  done
+}
+
 verify_reviewer() {
   local reviewer="$1"
   local hub_url health_url secret_name token
@@ -211,6 +237,7 @@ verify_reviewer() {
   local visible_tools_json filtered_tools_json
   visible_tools_json="$(echo "$list_resp" | payload_json | jq -c '.proxyTools // []')"
   filtered_tools_json="$(echo "$search_resp" | payload_json | jq -c '[.tools[]?.proxyToolName]')"
+  assert_required_proxy_tools "$list_resp" "hub_list_proxy_tools ${reviewer}" "$visible_tools_json" "$REQUIRED_PROXY_TOOLS"
 
   echo "== reviewer demo verify: ${reviewer} =="
   echo "hub_url=${hub_url}"
@@ -227,6 +254,18 @@ verify_reviewer() {
   echo "$services_resp" | payload_json | jq -r '.services[]? | "- \(.name) active=\(.activeInDiscovery) visible=\(.visibleProxyTools)/\(.totalProxyTools)"'
   echo "visible_proxy_tools:"
   print_tool_list "$visible_tools_json" "- "
+  if [[ -n "$REQUIRED_PROXY_TOOLS" ]]; then
+    echo "required_proxy_tools:"
+    local required_tool
+    local -a required_tools=()
+    IFS=',' read -r -a required_tools <<<"$REQUIRED_PROXY_TOOLS"
+    for required_tool in "${required_tools[@]}"; do
+      required_tool="${required_tool#"${required_tool%%[![:space:]]*}"}"
+      required_tool="${required_tool%"${required_tool##*[![:space:]]}"}"
+      [[ -n "$required_tool" ]] || continue
+      echo "- ${required_tool}"
+    done
+  fi
   echo "visible_proxy_tools_filtered server=${SERVER_NAME}:"
   print_tool_list "$filtered_tools_json" "- "
 }
