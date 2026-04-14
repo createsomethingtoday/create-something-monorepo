@@ -440,6 +440,7 @@ test('listMyQueueDetailed reads reviewer-owned versions directly and hydrates on
   });
 
   assert.equal(queue.items.length, 1);
+  assert.equal(queue.totalAvailable, 1);
   assert.equal(queue.items[0]?.templateName, 'Finoraa');
   assert.equal(queue.items[0]?.assignableVersionId, 'rec_finoraa_v0');
   assert.equal(queue.items[0]?.reviewOwner?.id, ericReviewer.id);
@@ -467,9 +468,86 @@ test('listMyQueueDetailed bounds reviewer scans to a buffered limit', async () =
   });
 
   assert.equal(queue.items.length, 0);
+  assert.equal(queue.totalAvailable, 0);
   assert.ok(capturedVersionUrl);
   assert.equal(capturedVersionUrl.searchParams.get('maxRecords'), '100');
   assert.equal(capturedVersionUrl.searchParams.get('pageSize'), '100');
+});
+
+test('listMyQueueDetailed reports totalAvailable before applying the requested limit', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_finoraa_v0',
+              createdTime: '2026-03-10T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_finoraa',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 0,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🔁Response to Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+                [CONFIRMED_VERSION_FIELDS.submissionDatetime]: '2026-03-08T21:08:33.000Z',
+              },
+            },
+            {
+              id: 'rec_conicorn_v0',
+              createdTime: '2026-03-09T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_conicorn',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 0,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+                [CONFIRMED_VERSION_FIELDS.submissionDatetime]: '2026-03-07T21:08:33.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_asset_finoraa',
+              createdTime: '2026-03-08T21:08:20.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Finoraa',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🔁Response to Review',
+                [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-08T21:08:20.000Z',
+              },
+            },
+            {
+              id: 'rec_asset_conicorn',
+              createdTime: '2026-03-07T21:08:20.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Conicorn',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-07T21:08:20.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const queue = await client.listMyQueueDetailed({
+    limit: 1,
+    currentReviewer: ericReviewer,
+  });
+
+  assert.equal(queue.totalAvailable, 2);
+  assert.equal(queue.items.length, 1);
+  assert.equal(queue.items[0]?.templateName, 'Finoraa');
 });
 
 test('assignSelfToVersion rejects versions already owned by another reviewer', async () => {

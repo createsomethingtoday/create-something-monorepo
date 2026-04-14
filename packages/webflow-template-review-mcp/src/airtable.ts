@@ -832,6 +832,7 @@ export class AirtableClient {
 
   async listMyQueueDetailed(query: TemplateReviewQueueQuery = {}): Promise<{
     sortApplied: TemplateReviewQueueSort;
+    totalAvailable: number;
     items: TemplateReviewQueueItem[];
   }> {
     const currentReviewer = query.currentReviewer;
@@ -882,6 +883,7 @@ export class AirtableClient {
     const sorted = sortQueueItems(items, sort);
     return {
       sortApplied: sort,
+      totalAvailable: sorted.length,
       items: query.limit ? sorted.slice(0, query.limit) : sorted,
     };
   }

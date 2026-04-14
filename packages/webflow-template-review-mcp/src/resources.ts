@@ -106,7 +106,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Call template_review_get_review_context with the same version_id.',
           'Call enqueue_template_review with the preview and published URLs from reviewer context, then poll get_template_review_job until the analyzer report is complete.',
           'Use template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes for narrow reviewer-safe writes while the version remains assigned to the current reviewer.',
-          'Call template_review_my_queue to resume work already assigned to the current reviewer.',
+          'Call template_review_my_queue to resume work already assigned to the current reviewer. The default response is intentionally compact and may be truncated; use the returned metadata before requesting more.',
           'Call template_review_unassign_self if the reviewer intentionally wants to release the version back to the shared queue.',
         ],
         notes: {
@@ -215,12 +215,14 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
         toolResponseNotes: {
           listQueue: 'Queue rows include assignableVersionId and normalized booleans such as canAssign, canReview, canPublish, isAssignedToCurrentReviewer, and isBlockedByOtherReviewer.',
           reviewContext: 'Reviewer context is nested under data.context, not top-level data.',
-          myQueue: 'Returns only versions assigned to the current reviewer.',
+          myQueue:
+            'Returns only versions assigned to the current reviewer. By default it returns compact rows plus totalAvailable/truncated metadata; use template_review_get_review_context for full reviewer ownership, published URL, and prior feedback.',
         },
         promptTemplate: [
           'When helping a reviewer, start with template_review_list_queue unless they explicitly ask for their assigned work.',
           'If they want their current workload, use template_review_my_queue.',
           'When a queue row is chosen, use assignableVersionId rather than assetId for write actions.',
+          'Treat template_review_my_queue as a resume-work summary, not as the source of full review context.',
           'When analyzer evidence is needed, use enqueue_template_review plus get_template_review_job rather than run_template_review.',
           'Treat template_review_assign_self, template_review_unassign_self, template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes as the primary reviewer-safe write lane.',
           'Never ask the reviewer for an Airtable collaborator id.',

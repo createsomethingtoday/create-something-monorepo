@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import type { AirtableClient } from './airtable.js';
+import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
@@ -9,12 +9,34 @@ import type { ReviewerProfile } from './reviewer-directory.js';
 
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
+type QueueDetail = 'compact' | 'full';
 
 const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '🏃🏾In Review',
   '👀Admin Feedback Review',
   '🔁Response to Review',
 ] as const;
+
+const DEFAULT_MY_QUEUE_LIMIT = 25;
+
+function toCompactMyQueueItem(item: TemplateReviewQueueItem) {
+  return {
+    assetId: item.assetId,
+    templateName: item.templateName,
+    latestReviewStatus: item.latestReviewStatus,
+    latestReviewDate: item.latestReviewDate,
+    qualityRating: item.qualityRating,
+    previewSiteUrl: item.previewSiteUrl,
+    submittedDate: item.submittedDate,
+    marketplaceStatus: item.marketplaceStatus,
+    decisionDate: item.decisionDate,
+    priceString: item.priceString,
+    assignableVersionId: item.assignableVersionId,
+    normalizedStatus: item.normalizedStatus,
+    canReview: item.canReview,
+    canPublish: item.canPublish,
+  };
+}
 
 function jsonContent(value: unknown, isError = false) {
   return {
@@ -157,13 +179,14 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_my_queue',
-    'List compact template review queue summaries currently assigned to the authenticated reviewer.',
+    'List compact template review queue summaries currently assigned to the authenticated reviewer. Defaults to a trimmed row shape and a smaller limit; use detail=full only when you intentionally need the larger payload.',
     {
       status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
       sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),
       limit: z.number().int().min(1).max(500).optional(),
+      detail: z.enum(['compact', 'full']).optional(),
     },
-    async ({ limit, status, sort }) => {
+    async ({ detail, limit, status, sort }) => {
       try {
         const currentReviewer = currentReviewerAsCollaborator(getReviewer);
         if (!currentReviewer?.id) {
@@ -173,18 +196,24 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
             503,
           );
         }
+        const limitApplied = limit ?? DEFAULT_MY_QUEUE_LIMIT;
+        const detailApplied: QueueDetail = detail ?? 'compact';
         const queue = await getClient().listMyQueueDetailed({
           status,
           sort: sort ?? 'submittedDate_desc',
-          limit: limit ?? 100,
+          limit: limitApplied,
           currentReviewer,
         });
         return asSuccess({
           count: queue.items.length,
+          totalAvailable: queue.totalAvailable,
+          truncated: queue.totalAvailable > queue.items.length,
+          limitApplied,
+          detailApplied,
           sortApplied: queue.sortApplied,
           statusApplied: status ?? null,
           assignedApplied: 'assigned_to_current_reviewer',
-          items: queue.items,
+          items: detailApplied === 'full' ? queue.items : queue.items.map((item) => toCompactMyQueueItem(item)),
         });
       } catch (error) {
         return asError(error);

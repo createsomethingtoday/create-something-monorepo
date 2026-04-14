@@ -154,11 +154,12 @@ tools:
     input_schema_summary:
       required: []
       optional:
+        - "detail"
         - "limit"
         - "status"
         - "sort"
     output_contract:
-      success_shape: "Returns compact normalized queue records filtered to items assigned to the current reviewer. Queue responses exclude bulky asset-detail fields such as long descriptions, HTML bodies, and image arrays; hosts should use get_asset, get_version, or get_review_context for detailed inspection."
+      success_shape: "Returns compact normalized queue records filtered to items assigned to the current reviewer. Default detail=compact returns a trimmed row shape with totalAvailable, limitApplied, and truncated metadata so hosts do not ingest oversized assigned queues by accident; use detail=full only when the larger row payload is intentionally required. Queue responses exclude bulky asset-detail fields such as long descriptions, HTML bodies, and image arrays; hosts should use get_asset, get_version, or get_review_context for detailed inspection."
       error_shape: "Returns reviewer identity unavailable or Airtable failure error."
     idempotency_expectation: "Pure read operation."
     fallback_behavior: "Use Airtable filtered by reviewer if Hub read path fails."

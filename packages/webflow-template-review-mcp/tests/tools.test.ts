@@ -239,6 +239,141 @@ test('save_draft_feedback writes review feedback without mutating improvement ar
   assert.equal(parsePayload(result).ok, true);
 });
 
+test('my_queue defaults to a compact assigned-work summary with truncation metadata', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<Record<string, unknown>> = [];
+  const client = {
+    listMyQueueDetailed: async (args: Record<string, unknown>) => {
+      calls.push(args);
+      return {
+        sortApplied: 'submittedDate_desc',
+        totalAvailable: 37,
+        items: [
+          {
+            assetId: 'rec_asset_1',
+            templateName: 'REELUP',
+            latestReviewStatus: '🆕Ready for Review',
+            latestReviewFeedback: 'This should not be included in compact mode.',
+            latestReviewDate: '2026-04-12T00:23:19.000Z',
+            qualityRating: '✅Good',
+            websiteUrl: 'https://reeluptemplate.webflow.io/',
+            previewSiteUrl: 'https://preview.webflow.com/preview/reeluptemplate',
+            submittedDate: '2026-04-12T00:23:10.000Z',
+            marketplaceStatus: '1️⃣Upcoming🆕',
+            decisionDate: '2026-04-13T00:23:10.000Z',
+            priceString: '$29 USD',
+            assignableVersionId: 'rec_version_1',
+            reviewOwner: { id: 'usr_eric', email: 'eric.unger@webflow.com', name: 'Eric Unger' },
+            normalizedStatus: 'ready_to_review',
+            canReview: true,
+            canPublish: false,
+            isAssignedToCurrentReviewer: true,
+          },
+        ],
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_my_queue')?.({});
+
+  assert.ok(result);
+  assert.deepEqual(calls, [
+    {
+      status: undefined,
+      sort: 'submittedDate_desc',
+      limit: 25,
+      currentReviewer: {
+        id: 'usr_eric',
+        email: 'eric.unger@webflow.com',
+        name: 'Eric Unger',
+      },
+    },
+  ]);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.data?.detailApplied, 'compact');
+  assert.equal(payload.data?.limitApplied, 25);
+  assert.equal(payload.data?.count, 1);
+  assert.equal(payload.data?.totalAvailable, 37);
+  assert.equal(payload.data?.truncated, true);
+
+  const items = payload.data?.items as Array<Record<string, unknown>>;
+  assert.deepEqual(items, [
+    {
+      assetId: 'rec_asset_1',
+      templateName: 'REELUP',
+      latestReviewStatus: '🆕Ready for Review',
+      latestReviewDate: '2026-04-12T00:23:19.000Z',
+      qualityRating: '✅Good',
+      previewSiteUrl: 'https://preview.webflow.com/preview/reeluptemplate',
+      submittedDate: '2026-04-12T00:23:10.000Z',
+      marketplaceStatus: '1️⃣Upcoming🆕',
+      decisionDate: '2026-04-13T00:23:10.000Z',
+      priceString: '$29 USD',
+      assignableVersionId: 'rec_version_1',
+      normalizedStatus: 'ready_to_review',
+      canReview: true,
+      canPublish: false,
+    },
+  ]);
+});
+
+test('my_queue detail=full preserves the larger queue row shape when explicitly requested', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {
+    listMyQueueDetailed: async () => ({
+      sortApplied: 'submittedDate_desc',
+      totalAvailable: 1,
+      items: [
+        {
+          assetId: 'rec_asset_1',
+          templateName: 'REELUP',
+          latestReviewStatus: '🆕Ready for Review',
+          latestReviewFeedback: 'Keep this in full mode.',
+          latestReviewDate: '2026-04-12T00:23:19.000Z',
+          qualityRating: '✅Good',
+          websiteUrl: 'https://reeluptemplate.webflow.io/',
+          previewSiteUrl: 'https://preview.webflow.com/preview/reeluptemplate',
+          submittedDate: '2026-04-12T00:23:10.000Z',
+          marketplaceStatus: '1️⃣Upcoming🆕',
+          priceString: '$29 USD',
+          assignableVersionId: 'rec_version_1',
+          reviewOwner: { id: 'usr_eric', email: 'eric.unger@webflow.com', name: 'Eric Unger' },
+          normalizedStatus: 'ready_to_review',
+          canReview: true,
+          canPublish: false,
+          isAssignedToCurrentReviewer: true,
+        },
+      ],
+    }),
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_my_queue')?.({
+    detail: 'full',
+    limit: 10,
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.data?.detailApplied, 'full');
+  assert.equal(payload.data?.limitApplied, 10);
+
+  const items = payload.data?.items as Array<Record<string, unknown>>;
+  assert.equal(items[0]?.latestReviewFeedback, 'Keep this in full mode.');
+  assert.deepEqual(items[0]?.reviewOwner, {
+    id: 'usr_eric',
+    email: 'eric.unger@webflow.com',
+    name: 'Eric Unger',
+  });
+  assert.equal(items[0]?.websiteUrl, 'https://reeluptemplate.webflow.io/');
+});
+
 test('get_field_map exposes stable table ids and metrics field ids', async () => {
   const { server, handlers } = createServerHarness();
   const client = {} as AirtableClient;
