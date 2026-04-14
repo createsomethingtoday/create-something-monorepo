@@ -294,11 +294,11 @@
             <Package size={64} strokeWidth={1.5} />
             <h3>No assets yet</h3>
             <p>Your published and pending assets will appear here after sync.</p>
-            {#if onCreateDraft || onRefresh}
-              <div class="empty-actions">
-                {#if onCreateDraft}
-                  <Button onclick={onCreateDraft}>Create template draft</Button>
-                {/if}
+	            {#if onCreateDraft || onRefresh}
+	              <div class="empty-actions">
+	                {#if onCreateDraft}
+	                  <Button onclick={onCreateDraft}>Create draft</Button>
+	                {/if}
                 {#if onRefresh}
                   <Button variant="secondary" onclick={onRefresh}>
                     <RefreshCw size={14} />

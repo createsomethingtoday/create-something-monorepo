@@ -60,11 +60,13 @@ export const handle: Handle = async ({ event, resolve }) => {
   // Protected routes check
   const protectedPaths = [
     '/dashboard',
+    '/drafts',
     '/assets',
     '/profile',
     '/api/profile',
     '/api/keys',
     '/api/assets',
+    '/api/drafts',
     '/api/analytics',
     '/api/feedback'
   ];

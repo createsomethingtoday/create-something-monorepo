@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { env } from '$env/dynamic/public';
   import type { PageData } from './$types';
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
   import { goto, invalidate } from '$app/navigation';
@@ -9,6 +8,7 @@
     Button,
     AssetsDisplay,
     OverviewStats,
+    SavedDraftsPanel,
     SubmissionTracker,
     DataFreshnessIndicator
   } from '$lib/components';
@@ -16,14 +16,13 @@
   import { trackEvent } from '$lib/utils/analytics';
   import { getPortfolioTitle } from '$lib/utils/portfolio-title';
 
-  const DEFAULT_TEMPLATE_SUBMIT_URL = 'https://webflow-dashboard-cloud.createsomething.workers.dev/submit';
-
   let { data }: { data: PageData } = $props();
 
   let searchTerm = $state('');
   let isProfileOpen = $state(false);
   let isEditModalOpen = $state(false);
   let isLoadingEditAsset = $state(false);
+  let draftActionId = $state<string | null>(null);
   let currentEditingAsset = $state<Asset | null>(null);
 
   // Lazy-loaded modal components
@@ -197,28 +196,60 @@
     goto('/validation');
   }
 
-  function buildTemplateDraftUrl() {
-    const configuredUrl = env.PUBLIC_TEMPLATE_SUBMIT_URL?.trim() || DEFAULT_TEMPLATE_SUBMIT_URL;
+  function handleCreateDraft() {
+    trackEvent('dashboard_quick_action_clicked', { action: 'create_draft' });
+    goto('/dashboard/drafts/new');
+  }
+
+  function handleOpenDraft(id: string) {
+    trackEvent('dashboard_draft_opened', { draft_id: id });
+    goto(`/dashboard/drafts/${id}`);
+  }
+
+  async function handlePromoteDraft(id: string) {
+    draftActionId = id;
 
     try {
-      const url =
-        configuredUrl.startsWith('http://') || configuredUrl.startsWith('https://')
-          ? new URL(configuredUrl)
-          : new URL(configuredUrl, window.location.origin);
+      const response = await fetch(`/api/drafts/${id}/promote`, { method: 'POST' });
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as { message?: string; error?: string };
+        throw new Error(errorData.message || errorData.error || 'Failed to create Airtable asset');
+      }
 
-      url.searchParams.set('utm_source', 'webflow_dashboard');
-      url.searchParams.set('utm_medium', 'internal');
-      url.searchParams.set('utm_campaign', 'create_template_draft');
-
-      return url.toString();
-    } catch {
-      return configuredUrl;
+      const result = (await response.json()) as { asset: Asset };
+      toast.success(`${result.asset.type} draft promoted to Airtable`);
+      await Promise.all([invalidate('app:drafts'), invalidate('app:assets')]);
+      goto(`/assets/${result.asset.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create Airtable asset';
+      toast.error(message);
+    } finally {
+      draftActionId = null;
     }
   }
 
-  function handleCreateTemplateDraft() {
-    trackEvent('dashboard_quick_action_clicked', { action: 'create_template_draft' });
-    window.location.href = buildTemplateDraftUrl();
+  async function handleDeleteDraft(id: string) {
+    if (!confirm('Delete this draft? This cannot be undone.')) {
+      return;
+    }
+
+    draftActionId = id;
+
+    try {
+      const response = await fetch(`/api/drafts/${id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as { message?: string; error?: string };
+        throw new Error(errorData.message || errorData.error || 'Failed to delete draft');
+      }
+
+      toast.info('Draft deleted');
+      await invalidate('app:drafts');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete draft';
+      toast.error(message);
+    } finally {
+      draftActionId = null;
+    }
   }
 
   function handleExploreMarketplace() {
@@ -231,7 +262,8 @@
     trackEvent('dashboard_loaded', {
       total_assets: assets.length,
       published_assets: assets.filter((asset) => asset.status === 'Published').length,
-      draft_assets: assets.filter((asset) => asset.status === 'Draft').length
+      draft_assets: assets.filter((asset) => asset.status === 'Draft').length,
+      saved_drafts: (data.drafts || []).length
     });
   });
 </script>
@@ -269,10 +301,13 @@
                   {#if rejectedCount > 0}
                     <span><strong>{rejectedCount}</strong> rejected</span>
                   {/if}
+                  {#if (data.drafts || []).length > 0}
+                    <span><strong>{(data.drafts || []).length}</strong> saved drafts</span>
+                  {/if}
                   <span><strong>{(data.assets || []).length}</strong> total assets</span>
                 </div>
                 <div class="quick-actions">
-                  <Button size="sm" onclick={handleCreateTemplateDraft}>Create template draft</Button>
+                  <Button size="sm" onclick={handleCreateDraft}>Create draft</Button>
                   <Button variant="secondary" size="sm" onclick={handleReviewAssets}>Review assets</Button>
                   <Button variant="outline" size="sm" onclick={handleOpenValidation}>Open validation</Button>
                   {#if data.hasTemplateAsset}
@@ -294,13 +329,27 @@
         </div>
       </section>
 
+      {#if data.draftsError}
+        <div class="drafts-error">
+          {data.draftsError}
+        </div>
+      {/if}
+
+      <SavedDraftsPanel
+        drafts={data.drafts || []}
+        busyDraftId={draftActionId}
+        onOpen={handleOpenDraft}
+        onPromote={handlePromoteDraft}
+        onDelete={handleDeleteDraft}
+      />
+
       <section class="assets-section" id="asset-portfolio">
         <AssetsDisplay
           assets={data.assets || []}
           errorMessage={data.assetsError}
           {searchTerm}
           onSearch={handleSearch}
-          onCreateDraft={handleCreateTemplateDraft}
+          onCreateDraft={handleCreateDraft}
           onView={handleViewAsset}
           onEdit={handleEditAsset}
           onArchive={handleArchiveAsset}
@@ -341,6 +390,16 @@
     flex-direction: column;
     gap: var(--space-md);
     margin-bottom: var(--space-xl);
+  }
+
+  .drafts-error {
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid color-mix(in srgb, var(--color-error) 35%, transparent);
+    background: color-mix(in srgb, var(--color-error) 12%, transparent);
+    color: var(--color-error);
+    font-size: var(--text-body-sm);
   }
 
   .page-header {

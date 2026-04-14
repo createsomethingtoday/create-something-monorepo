@@ -572,6 +572,27 @@ export interface AssetUpdateData {
 	appScreenshotAltTexts?: string[];
 }
 
+export interface CreateTemplateAssetDraftInput {
+	name: string;
+	description?: string;
+	descriptionShort?: string;
+	descriptionLongHtml?: string;
+	websiteUrl?: string;
+	previewUrl?: string;
+	priceString?: string;
+	thumbnailUrl?: string | null;
+	secondaryThumbnailUrl?: string | null;
+	secondaryThumbnails?: string[];
+	carouselImages?: string[];
+	creatorEmail: string;
+	creatorWebflowEmail?: string;
+}
+
+export interface CreateAppAssetDraftInput extends AssetUpdateData {
+	name: string;
+	creatorContactEmail: string;
+}
+
 export interface Creator {
 	id: string;
 	name: string;
@@ -931,6 +952,55 @@ function buildAssetUpdateFields(
 	return fields;
 }
 
+function applyAssetImageFields(
+	fields: Record<string, AirtableWritableValue>,
+	data: Pick<
+		AssetUpdateData,
+		'thumbnailUrl' | 'secondaryThumbnailUrl' | 'secondaryThumbnails' | 'carouselImages'
+	>
+) {
+	if (data.thumbnailUrl !== undefined) {
+		fields['fld43LxLHMZb2yF7F'] = data.thumbnailUrl ? [{ url: data.thumbnailUrl }] : [];
+	}
+
+	if (data.secondaryThumbnails !== undefined) {
+		fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnails
+			.filter(Boolean)
+			.map((url) => ({ url }));
+	} else if (data.secondaryThumbnailUrl !== undefined) {
+		fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
+			? [{ url: data.secondaryThumbnailUrl }]
+			: [];
+	}
+
+	if (data.carouselImages !== undefined) {
+		fields['fldneaPyoRXBAVtS1'] = data.carouselImages
+			.filter(Boolean)
+			.map((url) => ({ url }));
+	}
+}
+
+function buildBaseDraftCreateFields(
+	typeValue: string,
+	name: string | undefined,
+	creatorEmail: string,
+	creatorWebflowEmail?: string
+): Record<string, AirtableWritableValue> {
+	const normalizedCreatorEmail = validateEmail(creatorEmail);
+	const normalizedCreatorWebflowEmail = validateEmail(creatorWebflowEmail || normalizedCreatorEmail);
+	const emails = dedupeEmails(normalizedCreatorEmail, normalizedCreatorWebflowEmail);
+
+	return {
+		Name: name?.trim() || 'Untitled Draft',
+		'🆎Type': typeValue,
+		'⚙️🆎Type (Text)': typeValue,
+		'🚀Marketplace Status': 'Draft',
+		'🎨📧 Creator Email': normalizedCreatorEmail,
+		'🎨📧 Creator WF Account Email': normalizedCreatorWebflowEmail,
+		'📧Emails (from 🎨Creator)': emails.join(', ')
+	};
+}
+
 // ==================== AIRTABLE CLIENT ====================
 
 /**
@@ -1245,7 +1315,56 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				console.error('[Airtable] Error updating asset with images:', err);
 				console.error('[Airtable] Error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
 				return null;
+				}
+			},
+
+		async createTemplateAssetDraft(data: CreateTemplateAssetDraftInput): Promise<Asset> {
+			const fields = buildBaseDraftCreateFields(
+				'Template🏗️',
+				data.name,
+				data.creatorEmail,
+				data.creatorWebflowEmail
+			);
+
+			fields['📝Description'] = data.description || '';
+			fields['ℹ️Description (Short)'] = data.descriptionShort || '';
+			fields['ℹ️Description (Long).html'] = data.descriptionLongHtml || '';
+			fields['🔗Website URL'] = data.websiteUrl || '';
+			fields['🔗Preview Site URL'] = data.previewUrl || '';
+			fields['🥞💲Template Price String (🏗️ only)'] = data.priceString || '';
+
+			applyAssetImageFields(fields, {
+				thumbnailUrl: data.thumbnailUrl,
+				secondaryThumbnailUrl: data.secondaryThumbnailUrl,
+				secondaryThumbnails: data.secondaryThumbnails,
+				carouselImages: data.carouselImages
+			});
+
+			const records = (await base(TABLES.ASSETS).create([
+				{ fields: fields as Airtable.FieldSet }
+			])) as Airtable.Record<Airtable.FieldSet>[];
+			return mapAssetRecord(records[0]);
+		},
+
+		async createAppAssetDraft(data: CreateAppAssetDraftInput): Promise<Asset> {
+			const fields = buildBaseDraftCreateFields('App🖥️', data.name, data.creatorContactEmail);
+			Object.assign(fields, buildAssetUpdateFields(data, null));
+
+			if (data.description !== undefined) {
+				fields['📝Description'] = data.description;
+			} else if (data.descriptionShort || data.descriptionLongHtml) {
+				fields['📝Description'] = data.descriptionShort || data.descriptionLongHtml || '';
 			}
+
+			applyAssetImageFields(fields, {
+				thumbnailUrl: data.thumbnailUrl,
+				carouselImages: data.carouselImages
+			});
+
+			const records = (await base(TABLES.ASSETS).create([
+				{ fields: fields as Airtable.FieldSet }
+			])) as Airtable.Record<Airtable.FieldSet>[];
+			return mapAssetRecord(records[0]);
 		},
 
 		/**
