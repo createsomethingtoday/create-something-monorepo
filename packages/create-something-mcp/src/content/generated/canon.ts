@@ -8,6 +8,83 @@ import type { CanonPage } from '../types.js';
 
 export const CANON_PAGES: CanonPage[] = [
   {
+    slug: "components/button",
+    section: "components",
+    title: "Button",
+    description: "Action controls for primary, secondary, and ghost interactions.",
+    content: `## What Ships Today
+
+- \`variant\`: \`primary\`, \`secondary\`, \`ghost\`
+- \`size\`: \`sm\`, \`md\`, \`lg\`
+- \`href\`: render link navigation with button treatment
+- \`disabled\`: preserve state and suppress interaction
+- \`fullWidth\`: stretch to the container when layout needs it
+
+## Example
+
+\`\`\`svelte
+<script lang="ts">
+  import { Button } from '@create-something/canon';
+</script>
+
+<Button>Save changes</Button>
+<Button variant="secondary">Preview</Button>
+<Button variant="ghost" href="/canon/components">Browse components</Button>
+\`\`\`
+
+## Selection Rules
+
+1. Use \`primary\` for the one action that moves the user forward.
+2. Use \`secondary\` when the choice matters but should not dominate the screen.
+3. Use \`ghost\` for supporting actions, dense toolbars, or low-emphasis UI.
+
+## Related
+
+- [Card](/canon/components/card)
+- [Navigation](/canon/components/navigation)
+- [Get Started](/canon/resources/get-started)`
+  },
+  {
+    slug: "components/card",
+    section: "components",
+    title: "Card",
+    description: "Flexible containers for grouping related content with controlled emphasis.",
+    content: `## What Ships Today
+
+- \`variant\`: \`standard\`, \`elevated\`, \`outlined\`, \`glass\`
+- \`radius\`: \`sm\`, \`md\`, \`lg\`, \`xl\`
+- \`padding\`: \`none\`, \`sm\`, \`md\`, \`lg\`, \`xl\`
+- \`hover\`: opt into interactive lift when the whole card is actionable
+- \`href\`: render the card as a link target
+
+## Example
+
+\`\`\`svelte
+<script lang="ts">
+  import { Card, Button } from '@create-something/canon';
+</script>
+
+<Card variant="elevated" padding="lg">
+  <h2>Deployment Ready</h2>
+  <p>Record evidence, then promote with the narrowest trustworthy validation surface.</p>
+  <Button variant="secondary">Review checklist</Button>
+</Card>
+\`\`\`
+
+## When To Reach For Each Variant
+
+1. Use \`standard\` for most content groupings.
+2. Use \`elevated\` when the card needs stronger separation from the canvas.
+3. Use \`outlined\` when you want structure without added depth.
+4. Use \`glass\` sparingly for automation, shell, or overlay surfaces.
+
+## Related
+
+- [Button](/canon/components/button)
+- [Navigation](/canon/components/navigation)
+- [Layout](/canon/foundations/layout)`
+  },
+  {
     slug: "components/index",
     section: "components",
     title: "Components",
@@ -121,6 +198,79 @@ export const CANON_PAGES: CanonPage[] = [
 <code>--radius-lg</code>
 </div>
 </div>`
+  },
+  {
+    slug: "components/navigation",
+    section: "components",
+    title: "Navigation",
+    description: "Wayfinding surfaces for headers, breadcrumbs, and tabbed interfaces.",
+    content: `## Available Surfaces
+
+- \`Navigation\`: primary site header with desktop and mobile states
+- \`Breadcrumbs\`: hierarchical wayfinding with optional home icon
+- \`Tabs\`: WAI-ARIA tab panels with keyboard navigation and bindable active state
+
+## Primary Navigation Example
+
+\`\`\`svelte
+<script lang="ts">
+  import { Navigation } from '@create-something/canon';
+
+  const links = [
+    { label: 'Canon', href: '/canon' },
+    { label: 'Principles', href: '/principles' }
+  ];
+</script>
+
+<Navigation
+  logo="CREATE"
+  logoSuffix=".something"
+  {links}
+  currentPath="/canon"
+  ctaLabel="Contact"
+  ctaHref="/contact"
+/>
+\`\`\`
+
+## Breadcrumbs and Tabs
+
+\`\`\`svelte
+<script lang="ts">
+  import { Breadcrumbs, Tabs } from '@create-something/canon';
+
+  const items = [
+    { label: 'Canon', href: '/canon' },
+    { label: 'Navigation' }
+  ];
+
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'api', label: 'API' }
+  ];
+
+  let activeTab = 'overview';
+</script>
+
+<Breadcrumbs {items} showHomeIcon={true} />
+
+<Tabs {tabs} bind:activeTab>
+  {#snippet children(tabId)}
+    <p>{tabId} content</p>
+  {/snippet}
+</Tabs>
+\`\`\`
+
+## Design Guidance
+
+1. Keep the primary header focused on top-level choices.
+2. Use breadcrumbs when the user needs a clear sense of depth.
+3. Use tabs for peer content, not for hiding unrelated workflows.
+
+## Related
+
+- [Layout](/canon/foundations/layout)
+- [Content](/canon/guidelines/content)
+- [Responsive](/canon/guidelines/responsive)`
   },
   {
     slug: "concepts/complementarity",
@@ -3082,7 +3232,7 @@ Respect user's system preference:
 <p>Ready-to-use buttons, cards, navigation, and form elements with code examples.</p>
 </a>
 <!-- Patterns -->
-<a class="feature-card feature-card-disabled" href="/canon/patterns">
+<a class="feature-card" href="/canon/patterns">
 <div class="card-icon">
 <svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="24">
 <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
@@ -3092,7 +3242,6 @@ Respect user's system preference:
 </div>
 <h3>Patterns</h3>
 <p>How to handle forms, loading states, and navigation across your application.</p>
-<span class="badge">Coming Soon</span>
 </a>
 <!-- Philosophy -->
 <a class="feature-card" href="/canon/foundations/philosophy">
@@ -3163,6 +3312,49 @@ Respect user's system preference:
 </div>
 </div>
 </div>`
+  },
+  {
+    slug: "patterns/forms",
+    section: "patterns",
+    title: "Forms",
+    description: "Composed patterns for form structure, validation, and multi-step flows.",
+    content: `## Pattern Set
+
+- \`FormLayout\`: shared structure for grouped fields and supporting copy
+- \`FormValidation\`: validation framing for errors and recovery states
+- \`MultiStepForm\`: step-based flows when a single screen would overwhelm the user
+
+Canon also ships the field primitives these patterns compose with, including \`TextField\`, \`TextArea\`, \`Checkbox\`, \`CheckboxGroup\`, \`RadioGroup\`, \`Select\`, and \`Switch\`.
+
+## Import Surface
+
+\`\`\`svelte
+<script lang="ts">
+  import {
+    FormLayout,
+    FormValidation,
+    MultiStepForm,
+    TextField,
+    CheckboxGroup
+  } from '@create-something/canon';
+</script>
+\`\`\`
+
+## Pattern Selection
+
+1. Use \`FormLayout\` when the fields are straightforward and the job is clarity.
+2. Add \`FormValidation\` when users need fast recovery from mistakes.
+3. Use \`MultiStepForm\` only when chunking reduces cognitive load more than it adds navigation cost.
+
+## Documentation Status
+
+Expanded usage examples are still being documented. For now, treat this page as the stable surface map for the form patterns that already ship in the package.
+
+## Related
+
+- [Loading](/canon/patterns/loading)
+- [Accessibility](/canon/guidelines/accessibility)
+- [Content](/canon/guidelines/content)`
   },
   {
     slug: "patterns/index",
@@ -3356,6 +3548,46 @@ Respect user's system preference:
 		Patterns reduce cognitive load by providing proven solutions. A well-designed pattern is
 		one you never think about because it simply works.
 	</p>`
+  },
+  {
+    slug: "patterns/loading",
+    section: "patterns",
+    title: "Loading",
+    description: "Patterns for waiting states, perceived progress, and handoff between system and user.",
+    content: `## Pattern Set
+
+- \`LoadingSkeleton\`: preserve layout while content is on the way
+- \`LoadingOverlay\`: communicate temporary lock states without replacing the entire screen
+- \`Spinner\`, \`Skeleton\`, and \`Progress\`: lower-level feedback primitives for smaller status moments
+
+## Import Surface
+
+\`\`\`svelte
+<script lang="ts">
+  import {
+    LoadingSkeleton,
+    LoadingOverlay,
+    Spinner,
+    Progress
+  } from '@create-something/canon';
+</script>
+\`\`\`
+
+## Selection Rules
+
+1. Use skeletons when you already know the shape of the arriving content.
+2. Use overlays when the user stays on the current surface and needs continuity.
+3. Use spinners and progress indicators for compact status moments, not as a substitute for structure.
+
+## Documentation Status
+
+Expanded examples for async tables, upload flows, and inline refresh states are still being documented. The route is now live so the docs surface matches the package surface.
+
+## Related
+
+- [Forms](/canon/patterns/forms)
+- [Motion](/canon/foundations/motion)
+- [Accessibility](/canon/guidelines/accessibility)`
   },
   {
     slug: "resources/changelog",
@@ -3868,6 +4100,37 @@ refactor(components): simplify Card props\`}</code></pre>
 </div>`
   },
   {
+    slug: "resources/figma",
+    section: "resources",
+    title: "Figma Integration",
+    description: "How the Canon token files map into design tooling today.",
+    content: `## Source Of Truth
+
+Start from \`packages/canon/src/lib/styles/tokens.css\`. The additional artifacts exist to move that same token system into other tools.
+
+## Files To Use
+
+- \`packages/canon/src/lib/styles/tokens.figma.json\` for Tokens Studio style imports
+- \`packages/canon/src/lib/styles/tokens.dtcg.json\` for standards-oriented token pipelines
+- \`@create-something/canon/styles/tokens.figma.json\` and \`@create-something/canon/styles/tokens.dtcg.json\` from the packaged library surface
+
+## Recommended Workflow
+
+1. Change tokens in code first.
+2. Treat exported JSON files as derived artifacts, not hand-edited sources.
+3. Re-import the Figma-facing artifact when token values change.
+
+## Documentation Status
+
+The long-form walkthrough for Tokens Studio and end-to-end sync is still being rewritten. This page is live now so the Canon resources section no longer points at a 404.
+
+## Related
+
+- [Token Reference](/canon/resources/tokens)
+- [Theming](/canon/guidelines/theming)
+- [Contributing](/canon/resources/contributing)`
+  },
+  {
     slug: "resources/get-started",
     section: "resources",
     title: "Get Started",
@@ -4024,5 +4287,48 @@ refactor(components): simplify Card props\`}</code></pre>
 <p>Complete token list</p>
 </a>
 </div>`
+  },
+  {
+    slug: "resources/tokens",
+    section: "resources",
+    title: "Token Reference",
+    description: "Entry point for the Canon token files and the formats they ship in today.",
+    content: `## Canonical Artifacts
+
+- \`@create-something/canon/styles/tokens.css\`
+- \`@create-something/canon/styles/canon.css\`
+- \`@create-something/canon/styles/tokens.scss\`
+- \`@create-something/canon/styles/tokens.dtcg.json\`
+- \`@create-something/canon/styles/tokens.figma.json\`
+
+In the monorepo, the source files live under \`packages/canon/src/lib/styles/\`.
+
+## Recommended Imports
+
+\`\`\`css
+@import '@create-something/canon/styles/tokens.css';
+\`\`\`
+
+\`\`\`css
+@import '@create-something/canon/styles/canon.css';
+\`\`\`
+
+## What The Token Files Cover
+
+- core backgrounds, foregrounds, borders, and interactive states
+- shell surfaces and product accent layers
+- semantic status colors
+- spacing, radius, shadows, z-index, and motion scales
+- glass and liquid-glass surface values
+
+## Documentation Status
+
+The full generated token tables are still being rebuilt. This page is live now so linked documentation resolves, and it points to the stable files that already exist in the package.
+
+## Related
+
+- [Get Started](/canon/resources/get-started)
+- [Theming](/canon/guidelines/theming)
+- [Figma](/canon/resources/figma)`
   }
 ];

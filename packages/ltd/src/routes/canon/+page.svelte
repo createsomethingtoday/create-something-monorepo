@@ -1,9 +1,5 @@
 <script lang="ts">
-	import { canonNavigation } from '$lib/canon/navigation.js';
 	import { SEO } from '@create-something/canon';
-
-	// Filter to show only main sections for quick access
-	const quickLinks = canonNavigation.slice(1, 4); // Foundations, Components, Patterns
 </script>
 
 <SEO
@@ -66,7 +62,7 @@
 		</a>
 
 		<!-- Patterns -->
-		<a href="/canon/patterns" class="feature-card feature-card-disabled">
+		<a href="/canon/patterns" class="feature-card">
 			<div class="card-icon">
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<path d="M12 2L2 7l10 5 10-5-10-5z" />
@@ -76,7 +72,6 @@
 			</div>
 			<h3>Patterns</h3>
 			<p>How to handle forms, loading states, and navigation across your application.</p>
-			<span class="badge">Coming Soon</span>
 		</a>
 
 		<!-- Philosophy -->
@@ -253,11 +248,6 @@
 		transform: translateY(-2px);
 	}
 
-	.feature-card-disabled {
-		opacity: 0.6;
-		pointer-events: none;
-	}
-
 	.card-icon {
 		width: 48px;
 		height: 48px;
@@ -282,17 +272,6 @@
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
 		margin: 0;
-	}
-
-	.badge {
-		position: absolute;
-		top: var(--space-sm);
-		right: var(--space-sm);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		background: var(--color-bg-subtle);
-		padding: 2px 8px;
-		border-radius: var(--radius-sm);
 	}
 
 	/* Principles */
