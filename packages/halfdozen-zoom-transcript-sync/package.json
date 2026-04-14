@@ -9,6 +9,7 @@
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
     "tail": "node ../../scripts/run-wrangler.mjs tail",
     "types": "node ../../scripts/run-wrangler.mjs types",
+    "test": "tsx --test tests/**/*.test.ts",
     "check": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },

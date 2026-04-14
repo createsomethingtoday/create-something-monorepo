@@ -1,4 +1,5 @@
 import {
+  EMPTY_TRANSCRIPT_REASON,
   acquireLock,
   completeSyncRun,
   createSyncRun,
@@ -209,7 +210,14 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
   const rawTranscript = await downloadTranscript(env, payload);
   const parsedTranscript = parseTranscript(rawTranscript, payload.transcriptFileExtension);
   if (!parsedTranscript.plainText.trim()) {
-    await markLedgerSkipped(env.DB, payload.dedupKey, ledger.notion_page_id, ledger.notion_page_url, null, 'Transcript file was empty');
+    await markLedgerSkipped(
+      env.DB,
+      payload.dedupKey,
+      ledger.notion_page_id,
+      ledger.notion_page_url,
+      null,
+      EMPTY_TRANSCRIPT_REASON,
+    );
     if (payload.runId) {
       await incrementRunCounter(env.DB, payload.runId, 'skipped_count');
     }

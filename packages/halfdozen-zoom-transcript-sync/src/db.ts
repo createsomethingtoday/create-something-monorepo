@@ -1,5 +1,7 @@
 import type { LedgerRow, SyncRunRow, TranscriptCandidate } from './types';
 
+export const EMPTY_TRANSCRIPT_REASON = 'Transcript file was empty';
+
 const SCHEMA_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS sync_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -259,7 +261,9 @@ export async function discoverTranscript(
     existing.transcript_file_type !== candidate.transcriptFileType ||
     existing.transcript_file_extension !== candidate.transcriptFileExtension;
 
-  const isTerminalStatus = existing.status === 'synced' || existing.status === 'skipped';
+  const isTerminalStatus =
+    existing.status === 'synced' ||
+    (existing.status === 'skipped' && existing.last_error !== EMPTY_TRANSCRIPT_REASON);
   const hasFreshQueueDelivery =
     existing.status === 'queued' &&
     existing.enqueued_at !== null &&
