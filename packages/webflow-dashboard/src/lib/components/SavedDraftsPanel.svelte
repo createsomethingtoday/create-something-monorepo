@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from './ui';
 	import type { AssetDraftRecord } from '$lib/drafts';
+	import { formatStableDraftDateTime } from '$lib/utils/format';
 
 	interface Props {
 		drafts: AssetDraftRecord[];
@@ -59,7 +60,7 @@
 									{/if}
 								</div>
 								<h3>{draft.title}</h3>
-								<p>Last saved {new Date(draft.updatedAt).toLocaleString()}</p>
+								<p>Last saved {formatStableDraftDateTime(draft.updatedAt)}</p>
 							</div>
 						</div>
 						<div class="draft-actions">

@@ -40,6 +40,28 @@ export function formatLongDate(date: Date | string | null | undefined): string {
   }
 }
 
+export function formatStableDraftDateTime(date: Date | string | null | undefined): string {
+  if (!date) return '';
+
+  try {
+    const resolvedDate = typeof date === 'string' ? new Date(date) : date;
+    if (Number.isNaN(resolvedDate.getTime())) return '';
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[resolvedDate.getUTCMonth()];
+    const day = resolvedDate.getUTCDate();
+    const year = resolvedDate.getUTCFullYear();
+    const minutes = String(resolvedDate.getUTCMinutes()).padStart(2, '0');
+    const hour24 = resolvedDate.getUTCHours();
+    const hour12 = hour24 % 12 || 12;
+    const meridiem = hour24 >= 12 ? 'PM' : 'AM';
+
+    return `${month} ${day}, ${year}, ${hour12}:${minutes} ${meridiem} UTC`;
+  } catch {
+    return '';
+  }
+}
+
 export function formatCompactNumber(num?: number | null): string {
   if (num === undefined || num === null) return '0';
   if (Math.abs(num) >= 1000000) return `${(num / 1000000).toFixed(1)}M`;

@@ -39,6 +39,7 @@
 	import SecondaryThumbnailUploader from './SecondaryThumbnailUploader.svelte';
 	import { toast } from '$lib/stores/toast';
 	import { trackEvent } from '$lib/utils/analytics';
+	import { formatStableDraftDateTime } from '$lib/utils/format';
 
 	interface Props {
 		userEmail: string;
@@ -80,9 +81,7 @@
 	);
 	const currentName = $derived(activeType === 'Template' ? templateDraft.name : appDraft.name);
 	const currentTypeLabel = $derived(activeType === 'Template' ? 'template' : 'app');
-	const savedAtLabel = $derived(
-		savedAt ? new Date(savedAt).toLocaleString() : null
-	);
+	const savedAtLabel = $derived(savedAt ? formatStableDraftDateTime(savedAt) : null);
 
 	function syncTemplateListInputs() {
 		templateTagsInput = joinDraftList(templateDraft.tags);

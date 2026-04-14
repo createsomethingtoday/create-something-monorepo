@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { Header, BackNavigation } from '$lib/components';
 	import AssetDraftEditor from '$lib/components/AssetDraftEditor.svelte';
+	import { formatStableDraftDateTime } from '$lib/utils/format';
 
 	let { data }: { data: PageData } = $props();
 
@@ -11,10 +12,7 @@
 	}
 
 	function getSavedAtLabel() {
-		return new Date(data.draft.updatedAt).toLocaleString([], {
-			dateStyle: 'medium',
-			timeStyle: 'short'
-		});
+		return formatStableDraftDateTime(data.draft.updatedAt);
 	}
 </script>
 

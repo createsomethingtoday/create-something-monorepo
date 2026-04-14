@@ -23,7 +23,7 @@
 			<BackNavigation />
 			<section class="page-intro draft-intro">
 				<div class="draft-intro__copy">
-					<span class="draft-kicker">Saved draft workspace</span>
+					<span class="draft-kicker">New draft workspace</span>
 					<h1 class="page-intro__title">Create a draft in the dashboard</h1>
 					<p class="page-intro__subtitle">
 						Start a template or app without leaving the dashboard. Save progressive work in Cloudflare and
