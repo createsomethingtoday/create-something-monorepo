@@ -51,7 +51,7 @@ Every review follows these phases:
 
 | Tool | What it does | When |
 |------|-------------|------|
-| \`enqueue_template_review\` | Queue a browser-backed analyzer job on \`webflow-site-analyzer-mcp\` | Start analysis |
+| \`template_review_enqueue_analysis\` | Resolve analyzer inputs from review context and queue a browser-backed analyzer job | Start analysis |
 | \`get_template_review_job\` | Read one queued analyzer job by \`jobId\` | Poll after ~90s |
 | \`list_template_review_jobs\` | List recent analyzer jobs | Recover or inspect prior runs |
 
@@ -91,10 +91,11 @@ The analyzer crawls **every page** and runs 39 automated checks:
 
 ### Production reviewer-hub rule
 
-- Use \`enqueue_template_review\` on the remote reviewer hub. It is the production path and supports running multiple template reviews in parallel.
+- Prefer \`template_review_enqueue_analysis\` on the remote reviewer hub. It resolves the preview and published URLs from reviewer context and uses the production async analyzer path.
 - Use \`get_template_review_job\` to poll each returned \`jobId\` until the report is complete.
+- Use \`list_template_review_jobs\` to recover recent job ids if polling context is lost.
 - \`run_template_review\` is a synchronous debug tool and should not be used from the remote reviewer hubs.
-- Get the preview and published URLs from reviewer context before enqueueing an analyzer job.
+- Only call \`enqueue_template_review\` directly when the helper tool is unavailable and you already have source-of-truth URLs.
 
 **Common failure patterns that mean Changes Requested:**
 - Pervasive missing alt text across all pages
@@ -145,7 +146,7 @@ If the current reviewer host does not expose approve, reject, or publish tools:
 1. \`template_review_health\` — confirm connected
 2. \`template_review_list_queue\` — find work
 3. \`template_review_get_review_context\` — check capabilities
-4. \`enqueue_template_review\` — start analyzer jobs
+4. \`template_review_enqueue_analysis\` — start analyzer jobs from \`version_id\`
 5. \`get_template_review_job\` — read analyzer results (~90s)
 6. \`template_review_assign_self\` — claim the version
 7. \`template_review_request_changes\` / \`template_review_save_draft_feedback\` / \`template_review_set_review_status\` — record the reviewer outcome
@@ -154,7 +155,7 @@ If the current reviewer host does not expose approve, reject, or publish tools:
 
 1. You must call \`template_review_assign_self\` before any reviewer-safe write action
 2. You cannot assign yourself if another reviewer is already assigned
-3. Use \`enqueue_template_review\` plus \`get_template_review_job\` for remote reviewer-hub analysis
+3. Use \`template_review_enqueue_analysis\` plus \`get_template_review_job\` for remote reviewer-hub analysis
 4. The analyzer is a tool, not a judge — use human judgment for design quality
 5. Lead with data: cite specific check IDs, page paths, and metrics
 6. Feedback must be actionable: tell creators exactly what to fix

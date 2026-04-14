@@ -58,6 +58,7 @@ If these are implemented as separate custom-domain Hubs, keep the same posture a
 Visible tools should be limited to:
 
 - `webflow-template-review-mcp__template_review_workflow`
+- `webflow-template-review-mcp__template_review_enqueue_analysis`
 - reviewer queue, asset, version, release, and review-context reads from `webflow-template-review-mcp`
 - reviewer-safe write verbs from `webflow-template-review-mcp`
 - `webflow-site-analyzer-mcp__extract_seo`

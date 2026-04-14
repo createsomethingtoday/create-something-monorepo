@@ -4,6 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { AirtableClient } from './airtable.js';
+import { createAnalyzerClient } from './analyzer-client.js';
 import { DEFAULT_AIRTABLE_BASE_ID } from './schema.js';
 import { registerPrompts } from './prompts.js';
 import { registerResources } from './resources.js';
@@ -25,6 +26,11 @@ async function main() {
     apiKey,
     baseId,
   });
+  const getAnalyzerClient = () =>
+    createAnalyzerClient({
+      baseUrl: process.env.WEBFLOW_SITE_ANALYZER_BASE_URL,
+      apiKey: process.env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY,
+    });
 
   const server = new McpServer({
     name: 'webflow-template-review-mcp',
@@ -32,7 +38,7 @@ async function main() {
   });
 
   registerResources(server, () => client);
-  registerTools(server, () => client);
+  registerTools(server, () => client, () => null, { getAnalyzerClient });
   registerPrompts(server);
 
   const transport = new StdioServerTransport();

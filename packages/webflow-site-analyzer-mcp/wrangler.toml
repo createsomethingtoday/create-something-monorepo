@@ -14,10 +14,8 @@ workers_dev = true
 [observability]
 enabled = true
 
-# Custom domain: analyzer.mcp.createsomething.agency
-[[routes]]
-pattern = "analyzer.mcp.createsomething.agency"
-custom_domain = true
+# The production MCP route is now served by packages/webflow-site-analyzer-mcp/workers/remote.
+# Keep this worker on workers.dev only so future deploys do not steal analyzer.mcp.createsomething.agency.
 
 [vars]
 ENVIRONMENT = "production"

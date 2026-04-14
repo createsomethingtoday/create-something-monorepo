@@ -135,6 +135,7 @@ Default behavior:
 
 - adds the async analyzer queue tools needed for parallel reviewer runs
 - keeps `webflow-template-review-mcp__template_review_workflow` present
+- keeps `webflow-template-review-mcp__template_review_enqueue_analysis` present so hosts can start analyzer jobs from `version_id`
 - removes stale `webflow-mcp__plagiarism_*` reviewer entries
 - removes `webflow-site-analyzer-mcp__run_template_review` from reviewer bearers
 - skips archived `acct_wf_sudiksha` by default
@@ -152,6 +153,7 @@ Expected verification posture:
 - `hub_list_services` shows `webflow-template-review-mcp` and `webflow-site-analyzer-mcp`
 - `hub_search_proxy_tools` succeeds for both connected reviewer servers
 - `webflow-template-review-mcp__template_review_workflow` is visible to reviewer bearers
+- `webflow-template-review-mcp__template_review_enqueue_analysis` is visible to reviewer bearers
 - `webflow-site-analyzer-mcp__enqueue_template_review`, `webflow-site-analyzer-mcp__get_template_review_job`, and `webflow-site-analyzer-mcp__list_template_review_jobs` are visible to reviewer bearers
 - `webflow-site-analyzer-mcp__run_template_review` is not visible to reviewer bearers
 - reviewer runtime is compact and reviewer-scoped
@@ -193,6 +195,7 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 Reviewer Hubs should expose:
 
 - queue, asset, version, release, and review-context reads from `webflow-template-review-mcp`
+- `template_review_enqueue_analysis` from `webflow-template-review-mcp` so hosts can enqueue analyzer work without assembling URLs
 - reviewer-safe write verbs from `webflow-template-review-mcp`
 - async analyzer queue tools and selected read-only evidence tools from `webflow-site-analyzer-mcp`
 

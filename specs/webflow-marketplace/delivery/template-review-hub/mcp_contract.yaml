@@ -182,6 +182,30 @@ tools:
     idempotency_expectation: "Pure read operation."
     fallback_behavior: "Open the version directly in Airtable if Hub read path fails."
 
+  - name: "template_review_enqueue_analysis"
+    description: "Resolve analyzer URLs from review context and enqueue an async template review job without asking the host to assemble preview or published URLs."
+    action_type: "read"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+      - "webflow-site-analyzer-mcp"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.version.read"
+      - "review.analysis.read"
+    input_schema_summary:
+      required:
+        - "version_id"
+      optional:
+        - "timeout"
+        - "includeManual"
+        - "crawlMaxPages"
+        - "crawlMaxDepth"
+    output_contract:
+      success_shape: "Returns the resolved preview/published URLs plus the queued analyzer job record so the host can poll get_template_review_job."
+      error_shape: "Returns reviewer assignment conflict, missing analyzer URL, analyzer misconfiguration, or downstream enqueue failure error."
+    idempotency_expectation: "Safe read-side orchestration; repeated calls may enqueue additional analyzer jobs for the same version."
+    fallback_behavior: "Use template_review_get_review_context plus enqueue_template_review manually if the helper path is unavailable."
+
   - name: "template_review_assign_self"
     description: "Assign the currently authenticated reviewer to a template Asset Version."
     action_type: "write"

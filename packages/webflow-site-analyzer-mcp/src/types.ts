@@ -787,6 +787,7 @@ export interface TemplateReviewJobRecord {
   queuedAt: string;
   startedAt?: string;
   completedAt?: string;
+  retentionExpiresAt?: string;
   progress: TemplateReviewJobProgress;
   error?: string;
   result?: UnifiedTemplateReviewReport;

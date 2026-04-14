@@ -9,7 +9,7 @@ This MCP server operates at the following tiers of the [Three-Tier Framework](..
 | Tier | Role in This Server |
 |------|---------------------|
 | **Database** | Web pages (URLs) as the source of truth — site structure, SEO metadata, touchpoints, images, performance data, and Webflow Designer metadata (pages, CSS classes, components, CMS collections, assets) |
-| **Automation** | Versioned extraction scripts executed via browser automation (`analyze_touchpoints`, `extract_seo`, `get_page_structure`, `analyze_images`, `get_performance`, `capture_screenshot`, `extract_designer_metadata`); Steel.dev and Browserless browser providers; Temporal workflows for durable execution |
+| **Automation** | Versioned extraction scripts executed via browser automation (`analyze_touchpoints`, `extract_seo`, `get_page_structure`, `analyze_images`, `get_performance`, `capture_screenshot`, `extract_designer_metadata`); Steel.dev and Browserless browser providers; remote durable queue orchestration for async template-review jobs |
 | **Judgment** | Self-improving intelligence layer — feedback collection (`record_feedback`), pattern analysis (`run_analysis_cycle`), script version comparison (`compare_versions`), autonomous improvement proposals, and A/B testing of extraction scripts (`promote_version`, `create_script_version`) |
 
 **Primary tier**: Automation — the server's core value is its suite of versioned browser-based extraction tools, though its Judgment tier (self-improvement loop) is a distinguishing architectural feature.
@@ -99,6 +99,9 @@ BROWSERLESS_ENDPOINT=wss://chrome.browserless.io
 # Optional: queued template-review runtime controls
 # WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS=2
 # WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE=100
+# WEBFLOW_TEMPLATE_REVIEW_COMPLETED_JOB_RETENTION_MS=86400000
+# WEBFLOW_TEMPLATE_REVIEW_STALE_RUNNING_MS=1200000
+# WEBFLOW_TEMPLATE_REVIEW_RESUME_SWEEP_MS=60000
 
 # Optional: MCP telemetry stream
 MCP_TELEMETRY_ENABLED=true
@@ -221,7 +224,7 @@ Hosted client config:
 Notes:
 - `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` is preferred for remote auth. `MCP_API_KEY` is still accepted as a fallback.
 - `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
-- This package is deployed at `analyzer.mcp.createsomething.agency` and is part of the production reviewer Hub surface.
+- The production reviewer-Hub route `analyzer.mcp.createsomething.agency` is owned by `packages/webflow-site-analyzer-mcp/workers/remote`; keep the base worker on `workers.dev` only unless you intentionally mean to replace that remote surface.
 - If `/health` reports `auth.configured: false` or `provider: null` after a deploy, rerun `scripts/webflow-site-analyzer-secret-sync.sh` so the active Worker version picks up `STEEL_API_KEY`, `BROWSERLESS_API_KEY`, and the analyzer auth token.
 
 #### Container-backed Remote Host
@@ -242,6 +245,7 @@ Files:
 Runtime notes:
 - `prepare:runtime` builds `@create-something/observability`, builds this package, and materializes a standalone runtime tree into `workers/remote/runtime/` using `pnpm deploy`.
 - The Worker is a thin proxy. The actual MCP server runs inside the container via `node dist/http.js`.
+- The remote Worker owns the production custom domain `analyzer.mcp.createsomething.agency`.
 - The deployment requires a local Docker-compatible engine because Wrangler builds the container image locally before upload.
 
 ## Tools
@@ -639,6 +643,7 @@ Queue an async template-review job. This is the preferred production entrypoint.
   jobId: string,
   status: "queued" | "running" | "succeeded" | "failed" | "canceled",
   queuedAt: string,
+  retentionExpiresAt?: string,
   progress: {
     phase: "queued" | "precheck" | "designer" | "published" | "normalizing" | "completed" | "failed",
     progress: number,
@@ -664,6 +669,7 @@ Fetch one queued review job by ID.
   queuedAt: string,
   startedAt?: string,
   completedAt?: string,
+  retentionExpiresAt?: string,
   progress: {
     phase: string,
     progress: number,
@@ -698,6 +704,8 @@ List recent queued review jobs.
 // Output
 TemplateReviewJobRecord[]
 ```
+
+The production remote deployment persists queued and completed analyzer jobs in the `AnalyzerContainer` Durable Object instead of in process memory. Completed and failed jobs remain retrievable until `retentionExpiresAt`, which defaults to 24 hours.
 
 ## Intelligence Layer Tools
 

@@ -32,6 +32,7 @@ shared_policy:
     - "webflow-site-analyzer-mcp__get_template_review_job"
     - "webflow-site-analyzer-mcp__list_template_review_jobs"
     - "webflow-site-analyzer-mcp__score_designer_checklist"
+    - "webflow-template-review-mcp__template_review_enqueue_analysis"
     - "webflow-template-review-mcp__template_review_workflow"
     - "webflow-template-review-mcp__template_review_health"
     - "webflow-template-review-mcp__template_review_get_metrics"

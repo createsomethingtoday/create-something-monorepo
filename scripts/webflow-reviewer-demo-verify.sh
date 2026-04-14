@@ -9,7 +9,7 @@ REVIEWER="${REVIEWER:-micah}"
 SERVER_NAME="${SERVER_NAME:-webflow-template-review-mcp}"
 SEARCH_LIMIT="${SEARCH_LIMIT:-200}"
 SESSION_TOKEN="${SESSION_TOKEN:-${SESSION_TOKEN_FOR_VERIFY:-}}"
-REQUIRED_PROXY_TOOLS="${REQUIRED_PROXY_TOOLS:-webflow-template-review-mcp__template_review_workflow,webflow-site-analyzer-mcp__enqueue_template_review,webflow-site-analyzer-mcp__get_template_review_job,webflow-site-analyzer-mcp__list_template_review_jobs}"
+REQUIRED_PROXY_TOOLS="${REQUIRED_PROXY_TOOLS:-webflow-template-review-mcp__template_review_workflow,webflow-template-review-mcp__template_review_enqueue_analysis,webflow-site-analyzer-mcp__enqueue_template_review,webflow-site-analyzer-mcp__get_template_review_job,webflow-site-analyzer-mcp__list_template_review_jobs}"
 FORBIDDEN_PROXY_TOOLS="${FORBIDDEN_PROXY_TOOLS:-webflow-site-analyzer-mcp__run_template_review}"
 SKIP_REVIEWERS_CSV="${SKIP_REVIEWERS_CSV:-sudiksha}"
 

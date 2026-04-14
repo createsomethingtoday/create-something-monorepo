@@ -27,7 +27,7 @@ Do not invent broader approval-state writes, raw Airtable semantics, or unsuppor
 6. Read reviewer fields from `data.context`, not top-level `data`.
 7. Use `template_review_my_queue` when the reviewer asks for their assigned work.
 8. Use `template_review_unassign_self` only when the reviewer intentionally wants to release the version.
-9. Use `enqueue_template_review` to start remote analyzer jobs and `get_template_review_job` to poll them.
+9. Use `template_review_enqueue_analysis` to start remote analyzer jobs from `version_id`, and `get_template_review_job` to poll them.
 10. Use connected analyzer tools only when they provide direct review evidence for the current asset or version.
 
 ## Response Rules
@@ -80,7 +80,7 @@ Use `specs/webflow-marketplace/delivery/template-review-hub/reviewer-playbook.md
 Before relying on analyzer evidence, confirm the reviewer Hub actually exposes:
 
 - `webflow-site-analyzer-mcp`
-- `enqueue_template_review`
+- `template_review_enqueue_analysis`
 - `get_template_review_job`
 - `list_template_review_jobs`
 

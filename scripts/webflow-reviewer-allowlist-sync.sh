@@ -6,7 +6,7 @@ IDENTITY_DB_CONFIG="${IDENTITY_DB_CONFIG:-packages/identity-worker/wrangler.toml
 ACTION="${1:-all}"
 REVIEWER_ACCOUNT_PATTERN="${REVIEWER_ACCOUNT_PATTERN:-acct_wf_%}"
 SKIP_ACCOUNTS_CSV="${SKIP_ACCOUNTS_CSV:-acct_wf_sudiksha}"
-REQUIRED_TOOLS_CSV="${REQUIRED_TOOLS_CSV:-webflow-template-review-mcp__template_review_workflow,webflow-site-analyzer-mcp__enqueue_template_review,webflow-site-analyzer-mcp__get_template_review_job,webflow-site-analyzer-mcp__list_template_review_jobs}"
+REQUIRED_TOOLS_CSV="${REQUIRED_TOOLS_CSV:-webflow-template-review-mcp__template_review_workflow,webflow-template-review-mcp__template_review_enqueue_analysis,webflow-site-analyzer-mcp__enqueue_template_review,webflow-site-analyzer-mcp__get_template_review_job,webflow-site-analyzer-mcp__list_template_review_jobs}"
 FORBIDDEN_TOOLS_CSV="${FORBIDDEN_TOOLS_CSV:-webflow-site-analyzer-mcp__run_template_review,webflow-mcp__plagiarism_confidence,webflow-mcp__plagiarism_detect_frameworks,webflow-mcp__plagiarism_health,webflow-mcp__plagiarism_scan}"
 
 require_cmd() {

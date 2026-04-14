@@ -11,6 +11,7 @@ enabled = true
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
 BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
 BRAINTRUST_ENABLED = "true"
+WEBFLOW_SITE_ANALYZER_BASE_URL = "https://analyzer.mcp.createsomething.agency/mcp"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"

@@ -16,7 +16,7 @@ Remote MCP server for Webflow Template Review workflows, scoped to Airtable `Ass
 
 ## Current Status
 
-Phase 1 is intentionally conservative:
+The production reviewer lane is intentionally conservative:
 
 - confirmed asset reads and updates are supported
 - queue and version inspection are supported
@@ -45,6 +45,8 @@ Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
 - `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by `template_review_assign_self` and reviewer resources)
+- `WEBFLOW_SITE_ANALYZER_BASE_URL` (defaults to `https://analyzer.mcp.createsomething.agency/mcp`)
+- `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` (required for `template_review_enqueue_analysis`)
 
 ## Tools
 
@@ -58,6 +60,7 @@ Optional:
 - `template_review_list_versions`
 - `template_review_get_version`
 - `template_review_get_review_context`
+- `template_review_enqueue_analysis`
 - `template_review_list_releases`
 - `template_review_complete_publishing`
 - `template_review_assign_reviewer`
@@ -86,6 +89,7 @@ Optional:
 ```bash
 cd packages/webflow-template-review-mcp/worker
 pnpm install
+pnpm deploy:secrets
 pnpm dev
 pnpm deploy
 ```

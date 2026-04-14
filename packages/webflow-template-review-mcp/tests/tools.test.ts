@@ -374,6 +374,102 @@ test('my_queue detail=full preserves the larger queue row shape when explicitly 
   assert.equal(items[0]?.websiteUrl, 'https://reeluptemplate.webflow.io/');
 });
 
+test('template_review_enqueue_analysis resolves analyzer URLs from review context and forwards enqueue options', async () => {
+  const { server, handlers } = createServerHarness();
+  const analyzerCalls: Array<Record<string, unknown>> = [];
+  const client = {
+    getReviewContext: async (versionId: string, currentReviewer: Record<string, unknown> | null) => ({
+      versionId,
+      assetId: 'rec_asset_1',
+      templateName: 'REELUP',
+      reviewOwner: { id: 'usr_eric' },
+      canAssign: false,
+      canReview: true,
+      canPublish: false,
+      isAssignedToCurrentReviewer: true,
+      currentReviewer,
+      asset: {
+        previewSiteUrl: 'https://preview.webflow.com/preview/reeluptemplate',
+        websiteUrl: 'https://reeluptemplate.webflow.io/',
+      },
+    }),
+  } as unknown as AirtableClient;
+  const analyzerClient = {
+    enqueueTemplateReview: async (input: Record<string, unknown>) => {
+      analyzerCalls.push(input);
+      return {
+        jobId: 'template-review-123abc',
+        status: 'queued',
+      };
+    },
+  };
+
+  registerTools(server, () => client, () => reviewer, {
+    getAnalyzerClient: () => analyzerClient,
+  });
+
+  const result = await handlers.get('template_review_enqueue_analysis')?.({
+    version_id: 'rec_version_1',
+    timeout: 120000,
+    includeManual: true,
+    crawlMaxPages: 12,
+  });
+
+  assert.ok(result);
+  assert.deepEqual(analyzerCalls, [
+    {
+      previewUrl: 'https://preview.webflow.com/preview/reeluptemplate',
+      publishedUrl: 'https://reeluptemplate.webflow.io/',
+      timeout: 120000,
+      includeManual: true,
+      crawlMaxPages: 12,
+    },
+  ]);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.data?.version_id, 'rec_version_1');
+  assert.equal(payload.data?.asset_id, 'rec_asset_1');
+  assert.equal(payload.data?.template_name, 'REELUP');
+  assert.equal(payload.data?.previewUrl, 'https://preview.webflow.com/preview/reeluptemplate');
+  assert.equal(payload.data?.publishedUrl, 'https://reeluptemplate.webflow.io/');
+  assert.equal((payload.data?.job as Record<string, unknown>)?.jobId, 'template-review-123abc');
+});
+
+test('template_review_enqueue_analysis fails closed when the version is not reviewable from this lane', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {
+    getReviewContext: async () => ({
+      assetId: 'rec_asset_2',
+      reviewOwner: { id: 'usr_other' },
+      canReview: false,
+      isAssignedToCurrentReviewer: false,
+      asset: {
+        previewSiteUrl: 'https://preview.webflow.com/preview/healen',
+        websiteUrl: 'https://healen.webflow.io/',
+      },
+    }),
+  } as unknown as AirtableClient;
+  const analyzerClient = {
+    enqueueTemplateReview: async () => {
+      throw new Error('should not run');
+    },
+  };
+
+  registerTools(server, () => client, () => reviewer, {
+    getAnalyzerClient: () => analyzerClient,
+  });
+
+  const result = await handlers.get('template_review_enqueue_analysis')?.({
+    version_id: 'rec_version_2',
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.error?.code, 'REVIEWER_ASSIGNMENT_CONFLICT');
+});
+
 test('get_field_map exposes stable table ids and metrics field ids', async () => {
   const { server, handlers } = createServerHarness();
   const client = {} as AirtableClient;

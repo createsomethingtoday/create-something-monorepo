@@ -4,6 +4,7 @@ import { enableTelemetry } from '@create-something/mcp-core';
 
 import { misconfiguredResponse, validateBearerToken } from '../src/auth.js';
 import { AirtableClient } from '../src/airtable.js';
+import { createAnalyzerClient } from '../src/analyzer-client.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
 import { registerPrompts } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
@@ -21,6 +22,8 @@ interface Env {
   BRAINTRUST_ENABLED?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
+  WEBFLOW_SITE_ANALYZER_BASE_URL?: string;
+  WEBFLOW_SITE_ANALYZER_MCP_API_KEY?: string;
   REVIEWER_DIRECTORY_JSON?: string;
 }
 
@@ -82,9 +85,14 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
 
     const reviewerDirectory = parseReviewerDirectory(this.env.REVIEWER_DIRECTORY_JSON);
     const getReviewer = () => getReviewerProfileForAccount(reviewerDirectory, this.props?.accountId ?? null);
+    const getAnalyzerClient = () =>
+      createAnalyzerClient({
+        baseUrl: this.env.WEBFLOW_SITE_ANALYZER_BASE_URL,
+        apiKey: this.env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY,
+      });
 
     registerResources(this.server, getClient, getReviewer);
-    registerTools(this.server, getClient, getReviewer);
+    registerTools(this.server, getClient, getReviewer, { getAnalyzerClient });
     registerPrompts(this.server);
   }
 }

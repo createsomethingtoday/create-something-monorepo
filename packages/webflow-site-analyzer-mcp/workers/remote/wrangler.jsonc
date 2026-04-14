@@ -3,11 +3,18 @@
   "name": "webflow-site-analyzer-mcp-remote",
   "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
   "main": "src/index.ts",
+  "workers_dev": true,
   "compatibility_date": "2025-11-15",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true
   },
+  "routes": [
+    {
+      "pattern": "analyzer.mcp.createsomething.agency",
+      "custom_domain": true
+    }
+  ],
   "containers": [
     {
       "class_name": "AnalyzerContainer",
@@ -32,6 +39,9 @@
   ],
   "vars": {
     "SANDBOX_SLEEP_AFTER": "never",
-    "UPSTREAM_PORT": "8788"
+    "UPSTREAM_PORT": "8788",
+    "WEBFLOW_TEMPLATE_REVIEW_COMPLETED_JOB_RETENTION_MS": "86400000",
+    "WEBFLOW_TEMPLATE_REVIEW_STALE_RUNNING_MS": "1200000",
+    "WEBFLOW_TEMPLATE_REVIEW_RESUME_SWEEP_MS": "60000"
   }
 }

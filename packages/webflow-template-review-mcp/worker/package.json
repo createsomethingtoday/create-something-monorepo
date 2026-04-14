@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node ../../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
+    "deploy:secrets": "../../../scripts/webflow-template-review-secret-sync.sh",
     "tail": "node ../../../scripts/run-wrangler.mjs tail"
   },
   "dependencies": {

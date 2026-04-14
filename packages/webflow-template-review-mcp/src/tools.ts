@@ -3,13 +3,18 @@ import { z } from 'zod';
 
 import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import type { AnalyzerClient, AnalyzerTemplateReviewInput } from './analyzer-client.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
 
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
+type AnalyzerFactory = () => AnalyzerClient | null;
 type QueueDetail = 'compact' | 'full';
+type ToolDependencies = {
+  getAnalyzerClient?: AnalyzerFactory;
+};
 
 const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '🏃🏾In Review',
@@ -122,7 +127,37 @@ function reviewerPayload(reviewer: ReviewerProfile) {
   };
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
+function requireAnalyzerClient(getAnalyzerClient?: AnalyzerFactory): AnalyzerClient {
+  const analyzerClient = getAnalyzerClient?.() ?? null;
+  if (analyzerClient) return analyzerClient;
+  throw new AirtableClientError(
+    'ANALYZER_MCP_NOT_CONFIGURED',
+    'Analyzer enqueue is not configured for this MCP runtime.',
+    503,
+  );
+}
+
+function buildAnalyzerEnqueueInput(
+  previewUrl: string,
+  publishedUrl: string,
+  options: Omit<AnalyzerTemplateReviewInput, 'previewUrl' | 'publishedUrl'>,
+): AnalyzerTemplateReviewInput {
+  return {
+    previewUrl,
+    publishedUrl,
+    ...(options.timeout === undefined ? {} : { timeout: options.timeout }),
+    ...(options.includeManual === undefined ? {} : { includeManual: options.includeManual }),
+    ...(options.crawlMaxPages === undefined ? {} : { crawlMaxPages: options.crawlMaxPages }),
+    ...(options.crawlMaxDepth === undefined ? {} : { crawlMaxDepth: options.crawlMaxDepth }),
+  };
+}
+
+export function registerTools(
+  server: McpServer,
+  getClient: ClientFactory,
+  getReviewer: ReviewerFactory = () => null,
+  dependencies: ToolDependencies = {},
+): void {
   server.tool(
     'template_review_workflow',
     'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.',
@@ -231,6 +266,76 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         return asSuccess({
           context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_enqueue_analysis',
+    'Resolve analyzer inputs from template review context and enqueue an async browser-backed review job without making the host assemble preview or published URLs.',
+    {
+      version_id: z.string().min(1),
+      timeout: z.number().int().min(1).optional(),
+      includeManual: z.boolean().optional(),
+      crawlMaxPages: z.number().int().min(1).optional(),
+      crawlMaxDepth: z.number().int().min(1).optional(),
+    },
+    async ({ version_id, timeout, includeManual, crawlMaxPages, crawlMaxDepth }) => {
+      try {
+        const reviewer = currentReviewerAsCollaborator(getReviewer);
+        const context = await getClient().getReviewContext(version_id, reviewer);
+
+        if (!context.canReview) {
+          throw new AirtableClientError(
+            'REVIEWER_ASSIGNMENT_CONFLICT',
+            'Version is assigned to a different reviewer and cannot be analyzed from this lane.',
+            409,
+            {
+              version_id,
+              current_reviewer_id: reviewer?.id ?? null,
+              assigned_reviewer_id: context.reviewOwner?.id ?? null,
+            },
+          );
+        }
+
+        const previewUrl = context.asset?.previewSiteUrl?.trim();
+        const publishedUrl = context.asset?.websiteUrl?.trim();
+        if (!previewUrl || !publishedUrl) {
+          throw new AirtableClientError(
+            'ANALYZER_URLS_UNAVAILABLE',
+            'Review context is missing the preview or published URL required for analyzer enqueue.',
+            409,
+            {
+              version_id,
+              asset_id: context.assetId,
+              preview_url_present: Boolean(previewUrl),
+              published_url_present: Boolean(publishedUrl),
+            },
+          );
+        }
+
+        const analyzerClient = requireAnalyzerClient(dependencies.getAnalyzerClient);
+        const job = await analyzerClient.enqueueTemplateReview(
+          buildAnalyzerEnqueueInput(previewUrl, publishedUrl, {
+            timeout,
+            includeManual,
+            crawlMaxPages,
+            crawlMaxDepth,
+          }),
+        );
+
+        return asSuccess({
+          version_id,
+          asset_id: context.assetId,
+          template_name: context.templateName,
+          previewUrl,
+          publishedUrl,
+          canReview: context.canReview,
+          isAssignedToCurrentReviewer: context.isAssignedToCurrentReviewer,
+          job,
         });
       } catch (error) {
         return asError(error);
