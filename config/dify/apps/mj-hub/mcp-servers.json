@@ -1,0 +1,79 @@
+{
+  "appId": "mj-hub",
+  "servers": [
+    {
+      "id": "mj_hub",
+      "displayName": "MJ HUB",
+      "transport": "http",
+      "urlEnvVar": "MJ_HUB_MCP_URL",
+      "defaultUrl": "https://mj.mcp.createsomething.agency/mcp",
+      "authentication": {
+        "type": "bearer",
+        "header": "Authorization",
+        "scheme": "Bearer",
+        "tokenEnvVar": "MJ_HUB_MANAGED_BEARER_TOKEN",
+        "managedBy": "CREATE SOMETHING identity-worker"
+      },
+      "provider": {
+        "providerType": "mcp",
+        "providerId": "mj_hub",
+        "providerName": "MJ HUB"
+      },
+      "toolContract": {
+        "serviceFirstDiscovery": true,
+        "enabledTools": [
+          "hub_status",
+          "hub_list_registry",
+          "hub_list_proxy_tools",
+          "hub_search_proxy_tools",
+          "hub_route_intent",
+          "hub_describe_proxy_tool",
+          "hub_get_proxy_tool",
+          "hub_run_intent",
+          "hub_execute_proxy_tool",
+          "hub_run_proxy_tool",
+          "hub_list_services",
+          "hub_list_discovery_packs",
+          "hub_set_discovery",
+          "hub_refresh_connections",
+          "hub_update_state",
+          "hub_trace_lookup",
+          "hub_policy_status"
+        ],
+        "toolClasses": {
+          "overview": [
+            "hub_status",
+            "hub_list_registry",
+            "hub_list_services",
+            "hub_list_discovery_packs",
+            "hub_policy_status",
+            "hub_trace_lookup"
+          ],
+          "brokeredDiscovery": [
+            "hub_list_proxy_tools",
+            "hub_search_proxy_tools",
+            "hub_describe_proxy_tool",
+            "hub_get_proxy_tool",
+            "hub_route_intent"
+          ],
+          "brokeredExecution": [
+            "hub_run_intent",
+            "hub_execute_proxy_tool",
+            "hub_run_proxy_tool"
+          ],
+          "controlPlane": [
+            "hub_set_discovery",
+            "hub_refresh_connections",
+            "hub_update_state"
+          ]
+        },
+        "preferredFlow": [
+          "hub_list_services",
+          "hub_search_proxy_tools",
+          "hub_describe_proxy_tool",
+          "hub_execute_proxy_tool"
+        ]
+      }
+    }
+  ]
+}

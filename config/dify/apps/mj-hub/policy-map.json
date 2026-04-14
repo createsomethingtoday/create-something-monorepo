@@ -1,0 +1,109 @@
+{
+  "appId": "mj-hub",
+  "displayName": "MJ HUB",
+  "host": "dify",
+  "sourceArtifacts": {
+    "difyDsl": "./app.dify.dsl.yaml",
+    "envContract": "./env.contract.json",
+    "mcpServers": "./mcp-servers.json",
+    "publishChecklist": "./publish.md"
+  },
+  "appBehavior": {
+    "mode": "agent-chat",
+    "model": {
+      "provider": "langgenius/anthropic/anthropic",
+      "name": "claude-sonnet-4-20250514"
+    },
+    "prePromptRules": [
+      "Use Hub MCP for third-party actions and data retrieval.",
+      "Prefer hub_list_services before full tool search.",
+      "Keep tool calls minimal and parallelize independent reads.",
+      "Follow tool schemas exactly and correct bad arguments on retry.",
+      "Use Hub auth and reconnect tooling when delegated auth is required.",
+      "Default to drafting for review instead of sending or mutating external state."
+    ]
+  },
+  "policyRefs": [
+    {
+      "id": "policy.client-hub-user-experience.v1",
+      "appliesTo": [
+        "Hosted Dify shell",
+        "Service-first discovery UX",
+        "Client-facing blocked-state messaging"
+      ]
+    },
+    {
+      "id": "policy.user-bearer-token-governance.v1",
+      "appliesTo": [
+        "Managed bearer used by Dify to authenticate to the MJ Hub"
+      ]
+    },
+    {
+      "id": "policy.mcp-credential-delivery.v1",
+      "appliesTo": [
+        "Delivery, rotation, and revoke posture for the Dify-side Hub credential"
+      ]
+    },
+    {
+      "id": "policy.service-tier-entitlement.v1",
+      "appliesTo": [
+        "Client lane entitlement checks before publish and bearer issue"
+      ]
+    },
+    {
+      "id": "policy.tenant-tool-exposure.v1",
+      "appliesTo": [
+        "Curated MJ Hub allowlist",
+        "Named-lane discovery-pack posture",
+        "Default-deny tool exposure"
+      ]
+    },
+    {
+      "id": "policy.hub-route-authorization.v1",
+      "appliesTo": [
+        "Brokered tool discovery",
+        "Route classification",
+        "Hub-governed execution and review boundaries"
+      ]
+    },
+    {
+      "id": "policy.policy-lifecycle-governance.v1",
+      "appliesTo": [
+        "Separate policy promotion from Dify publish"
+      ]
+    }
+  ],
+  "toolGovernance": {
+    "providerId": "mj_hub",
+    "serviceFirstDiscovery": true,
+    "overviewTools": [
+      "hub_status",
+      "hub_list_registry",
+      "hub_list_services",
+      "hub_list_discovery_packs",
+      "hub_policy_status",
+      "hub_trace_lookup"
+    ],
+    "brokeredDiscoveryTools": [
+      "hub_list_proxy_tools",
+      "hub_search_proxy_tools",
+      "hub_describe_proxy_tool",
+      "hub_get_proxy_tool",
+      "hub_route_intent"
+    ],
+    "brokeredExecutionTools": [
+      "hub_run_intent",
+      "hub_execute_proxy_tool",
+      "hub_run_proxy_tool"
+    ],
+    "controlPlaneTools": [
+      "hub_set_discovery",
+      "hub_refresh_connections",
+      "hub_update_state"
+    ],
+    "notes": [
+      "Execution approval remains route-classification-driven inside CREATE SOMETHING Hub; the Dify app is not the final authorization authority.",
+      "Control-plane tools are included in the example export because this is an operator-grade app; client-facing variants should narrow this set further."
+    ]
+  }
+}
