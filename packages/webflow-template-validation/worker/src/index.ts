@@ -1968,86 +1968,51 @@ async function attemptProgrammaticSnippetInstall(
 	};
 
 	try {
-		// Step 1: Register the review snippet as a hosted script.
-		// The snippet JS is hosted at the Worker's public asset path.
-		const snippetUrl = `${readEnvString(env, 'WORKER_PUBLIC_URL') || 'https://validation-worker.createsomething.workers.dev'}${REVIEW_SNIPPET_ASSET_PATH}`;
-		const displayName = 'Webflow Way Review Bridge';
-		const version = REVIEW_SNIPPET_VERSION;
-
-		// Generate integrity hash for the hosted script
-		const integrityHash = await generateSRI(snippetUrl);
+		// Single API call: add_inline_site_script registers AND applies in one step.
+		// The inline script sets the bridge config and loads the hosted review.js.
+		// Validated against Template Marketplace (5e593fb060cf87bbaf75dd20).
+		const reviewScriptUrl = `${readEnvString(env, 'WORKER_PUBLIC_URL') || 'https://validation-worker.createsomething.workers.dev'}${REVIEW_SNIPPET_ASSET_PATH}`;
+		const inlineSource = `window.__WF_REVIEW_BRIDGE={version:"${REVIEW_SNIPPET_VERSION}",marker:"${REVIEW_SNIPPET_MARKER}",bridgeToken:"${siteId.slice(0, 8)}",reviewSurface:"published-review",reviewScriptUrl:"${reviewScriptUrl}"};var s=document.createElement("script");s.src="${reviewScriptUrl}";document.head.appendChild(s);`;
 
 		const registerResponse = await fetch(
-			`${webflowApiBase}/beta/sites/${siteId}/registered_scripts/hosted`,
+			`${webflowApiBase}/beta/sites/${siteId}/registered_scripts/inline`,
 			{
 				method: 'POST',
 				headers,
 				body: JSON.stringify({
-					hostedLocation: snippetUrl,
-					integrityHash,
-					version,
-					displayName,
+					sourceCode: inlineSource,
+					version: REVIEW_SNIPPET_VERSION,
+					displayName: 'WF Review Bridge',
+					location: 'header',
 					canCopy: false
 				})
 			}
 		);
 
-		let scriptId: string;
 		if (registerResponse.ok) {
-			const registerData = (await registerResponse.json()) as { id?: string };
-			scriptId = registerData.id || displayName.toLowerCase().replace(/\s+/g, '_');
-		} else if (registerResponse.status === 400) {
-			// Script may already be registered — use the derived ID
-			scriptId = displayName.toLowerCase().replace(/\s+/g, '_');
-		} else {
-			const errorText = await registerResponse.text().catch(() => '');
-			return {
-				ok: false,
-				message: `Script registration failed (${registerResponse.status}): ${errorText}`
-			};
+			return { ok: true, message: 'Bridge installed via Webflow Scripts API. Publish to activate.' };
 		}
 
-		// Step 2: Apply the registered script to the site's head code.
-		// Also inject the bridge config inline script via the snippet payload.
-		const applyResponse = await fetch(
-			`${webflowApiBase}/beta/sites/${siteId}/custom_code`,
+		// If inline registration fails (e.g. already registered), fall back to legacy
+		const errorText = await registerResponse.text().catch(() => '');
+		console.warn(`Inline script registration failed (${registerResponse.status}): ${errorText}`);
+
+		const legacyResponse = await fetch(
+			`${webflowApiBase}/v2/sites/${siteId}/custom-code`,
 			{
 				method: 'PUT',
 				headers,
-				body: JSON.stringify({
-					scripts: [
-						{
-							id: scriptId,
-							location: 'header',
-							version
-						}
-					]
-				})
+				body: JSON.stringify({ headCode: snippet })
 			}
 		);
-
-		if (!applyResponse.ok) {
-			const errorText = await applyResponse.text().catch(() => '');
-			// Fall back to legacy v2 custom-code endpoint
-			const legacyResponse = await fetch(
-				`${webflowApiBase}/v2/sites/${siteId}/custom-code`,
-				{
-					method: 'PUT',
-					headers,
-					body: JSON.stringify({ headCode: snippet })
-				}
-			);
-			if (!legacyResponse.ok) {
-				const legacyError = await legacyResponse.text().catch(() => '');
-				return {
-					ok: false,
-					message: `Custom code apply failed (beta: ${applyResponse.status}, legacy: ${legacyResponse.status}): ${errorText} / ${legacyError}`
-				};
-			}
-			return { ok: true, message: 'Installed via legacy custom-code API. Publish to activate.' };
+		if (!legacyResponse.ok) {
+			const legacyError = await legacyResponse.text().catch(() => '');
+			return {
+				ok: false,
+				message: `Install failed (scripts: ${registerResponse.status}, legacy: ${legacyResponse.status}): ${errorText} / ${legacyError}`
+			};
 		}
-
-		return { ok: true, message: 'Installed via Webflow Registered Scripts API. Publish to activate.' };
+		return { ok: true, message: 'Bridge installed via legacy API. Publish to activate.' };
 	} catch (error) {
 		return {
 			ok: false,
@@ -2055,21 +2020,6 @@ async function attemptProgrammaticSnippetInstall(
 				error instanceof Error ? error.message : String(error)
 			} (correlationId=${correlationId})`
 		};
-	}
-}
-
-/** Generate a Sub-Resource Integrity hash for a hosted script URL. */
-async function generateSRI(url: string): Promise<string> {
-	try {
-		const response = await fetch(url);
-		if (!response.ok) return '';
-		const buffer = await response.arrayBuffer();
-		const hashBuffer = await crypto.subtle.digest('SHA-384', buffer);
-		const hashArray = Array.from(new Uint8Array(hashBuffer));
-		const hashBase64 = btoa(String.fromCharCode(...hashArray));
-		return `sha384-${hashBase64}`;
-	} catch {
-		return '';
 	}
 }
 
