@@ -79,7 +79,7 @@
 		},
 		{
 			label: 'Ready',
-			title: 'The record is match-ready',
+			title: 'The record is review-ready',
 			messages: [
 				{
 					sender: 'nurse',
@@ -89,7 +89,7 @@
 				{
 					sender: 'system',
 					content:
-						'Profile is ready for shortlist generation once resume and consent are attached. Missing items stay visible.'
+						'Profile is ready for eligibility review once resume and consent are attached. Missing items stay visible.'
 				}
 			],
 			confirmed: [
@@ -102,8 +102,8 @@
 				'Compact license'
 			],
 			pending: ['Resume attached', 'Consent recorded'],
-			status: 'Ready for shortlist',
-			note: 'Structured second. The conversation becomes a working profile with explicit remaining proof.'
+			status: 'Ready for eligibility review',
+			note: 'Structured second. The conversation becomes a working profile with explicit remaining proof before recruiter release.'
 		}
 	];
 

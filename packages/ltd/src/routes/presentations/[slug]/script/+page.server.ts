@@ -44,7 +44,7 @@ const presentations: Record<string, { title: string; subtitle: string }> = {
 	},
 	'abundance-system': {
 		title: 'ABUNDANCE',
-		subtitle: 'The nurse staffing system, explained simply'
+		subtitle: 'The nurse acquisition operating layer, explained simply'
 	},
 	'developer-onboarding': {
 		title: 'Developer Onboarding',

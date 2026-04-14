@@ -15,6 +15,11 @@ import {
 	loginSchema,
 	signupSchema,
 	magicLinkSchema,
+	nurseIntakeSchema,
+	nurseMessageIntakeSchema,
+	nurseInboundEmailSchema,
+	nurseInboxActionSchema,
+	nurseHandoffActionSchema,
 	paginationSchema,
 	parseBody,
 	parseQuery
@@ -331,6 +336,169 @@ describe('paginationSchema', () => {
 		const result = paginationSchema.safeParse({
 			offset: '-5'
 		});
+		expect(result.success).toBe(false);
+	});
+});
+
+describe('nurseIntakeSchema', () => {
+	it('validates a web-first intake payload', () => {
+		const result = nurseIntakeSchema.safeParse({
+			person: {
+				name: 'Jamie Nurse',
+				email: 'jamie@example.com'
+			},
+			profile: {
+				profession: 'rn',
+				specialty_primary: 'ICU',
+				specialties: ['ICU', 'Telemetry'],
+				home_state: 'TX',
+				compact_license: true,
+				pay_floor_weekly: 2200
+			},
+			documents: {
+				resume_url: 'https://example.com/resume.pdf'
+			},
+			consent: {
+				granted: true,
+				scope: 'candidate_intake'
+			},
+			context: {
+				intake_channel: 'web'
+			}
+		});
+
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.person.primary_role).toBe('candidate');
+			expect(result.data.context.intake_channel).toBe('web');
+		}
+	});
+
+	it('rejects payloads without phone or email', () => {
+		const result = nurseIntakeSchema.safeParse({
+			person: {
+				name: 'Jamie Nurse'
+			},
+			profile: {
+				profession: 'rn'
+			}
+		});
+
+		expect(result.success).toBe(false);
+	});
+});
+
+describe('nurseMessageIntakeSchema', () => {
+	it('validates an sms/email style message intake payload', () => {
+		const result = nurseMessageIntakeSchema.safeParse({
+			channel: 'email',
+			contact: {
+				email: 'jamie@example.com',
+				name: 'Jamie Nurse'
+			},
+			message: {
+				content: 'I have ICU experience and I can start next month.',
+				subject: 'Travel RN availability'
+			},
+			context: {
+				intake_channel: 'email'
+			}
+		});
+
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.channel).toBe('email');
+			expect(result.data.contact.email).toBe('jamie@example.com');
+		}
+	});
+
+	it('rejects message intake without a contact surface', () => {
+		const result = nurseMessageIntakeSchema.safeParse({
+			channel: 'sms',
+			contact: {
+				name: 'Jamie Nurse'
+			},
+			message: {
+				content: 'Hello'
+			}
+		});
+
+		expect(result.success).toBe(false);
+	});
+});
+
+describe('nurseInboundEmailSchema', () => {
+	it('validates a generic inbound email payload', () => {
+		const result = nurseInboundEmailSchema.safeParse({
+			provider: 'postmark',
+			from: 'Jamie Nurse <jamie@example.com>',
+			subject: 'Travel RN availability',
+			text: 'I can start in May and I have ICU experience.'
+		});
+
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.provider).toBe('postmark');
+			expect(result.data.from).toContain('jamie@example.com');
+		}
+	});
+
+	it('rejects payloads without subject or body', () => {
+		const result = nurseInboundEmailSchema.safeParse({
+			from: 'jamie@example.com'
+		});
+
+		expect(result.success).toBe(false);
+	});
+});
+
+describe('nurseInboxActionSchema', () => {
+	it('validates a mark reviewed action', () => {
+		const result = nurseInboxActionSchema.safeParse({
+			action: 'mark_reviewed',
+			candidate_profile_id: 'candidate_123',
+			note: 'Reviewed and ready for next step.'
+		});
+
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.action).toBe('mark_reviewed');
+			expect(result.data.candidate_profile_id).toBe('candidate_123');
+		}
+	});
+
+	it('requires a recruiter when assigning a recruiter', () => {
+		const result = nurseInboxActionSchema.safeParse({
+			action: 'assign_recruiter',
+			candidate_profile_id: 'candidate_123'
+		});
+
+		expect(result.success).toBe(false);
+	});
+});
+
+describe('nurseHandoffActionSchema', () => {
+	it('validates a handoff accept action', () => {
+		const result = nurseHandoffActionSchema.safeParse({
+			handoff_id: 'handoff_123',
+			action: 'accept',
+			recruiter_person_id: 'recruiter_123',
+			note: 'Picking this up now.'
+		});
+
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.action).toBe('accept');
+			expect(result.data.handoff_id).toBe('handoff_123');
+		}
+	});
+
+	it('rejects invalid handoff actions', () => {
+		const result = nurseHandoffActionSchema.safeParse({
+			handoff_id: 'handoff_123',
+			action: 'assign'
+		});
+
 		expect(result.success).toBe(false);
 	});
 });

@@ -33,18 +33,18 @@
 	const termMap = [
 		{
 			codeTerm: 'Seeker',
-			clientTerm: 'Open role / existing demand',
-			note: 'The side asking for help. For this client, that demand already exists. The opportunity is filling it faster with better nurse intake and matching.'
+			clientTerm: 'Approved opening / existing demand',
+			note: 'The demand side. In this package, that comes from approved openings, recruiter demand, or imported facility demand.'
 		},
 		{
 			codeTerm: 'Talent',
 			clientTerm: 'Nurse / clinician side',
-			note: 'The side that can fill the work. The concierge intake pattern can be used here to build the nurse profile conversationally.'
+			note: 'The side that can fill the work. The concierge intake pattern is used here to build a nurse profile before recruiter handoff.'
 		},
 		{
 			codeTerm: 'Match',
 			clientTerm: 'Recommended placement',
-			note: 'A scored pairing between a request and a nurse, with the reasons kept visible.'
+			note: 'A scored pairing between an opening and a nurse, with the reasons kept visible.'
 		},
 		{
 			codeTerm: 'Intake',
@@ -86,14 +86,14 @@
 
 <Presentation
 	title="ABUNDANCE"
-	subtitle="The nurse staffing system, explained simply."
+	subtitle="The nurse acquisition operating layer, explained simply."
 	scriptUrl="/presentations/abundance-system/script"
 >
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>ABUNDANCE</h1>
-		<p class="subtitle">The nurse staffing system, explained simply.</p>
-		<p class="tagline">Conversation. Matching. Safety rails.</p>
+		<p class="subtitle">The nurse acquisition operating layer, explained simply.</p>
+		<p class="tagline">Conversation. Qualification. Safety rails.</p>
 	</Slide>
 
 	<Slide type="content">
@@ -118,7 +118,9 @@
 			Abundance is not one feature. It is <span class="em">three coordinated jobs</span>.
 		</p>
 		<SystemPillars items={systemPillars} />
-		<p class="muted">For this client, the practical scope is nurse acquisition and matching. Demand is already there.</p>
+		<p class="muted">
+			For this client, the practical scope is nurse acquisition, qualification, and recruiter handoff on top of existing demand.
+		</p>
 	</Slide>
 
 	<Slide type="content">
@@ -144,16 +146,16 @@
 
 	<Slide type="content">
 		<span class="number">06</span>
-		<h2>What the System Keeps</h2>
+		<h2>What the Operating Layer Needs to Keep</h2>
 		<p>
-			Abundance keeps the facts it needs to keep the workflow moving.
+			To keep the workflow moving, the operating layer has to remember the facts that survive from intake through handoff.
 		</p>
 		<ul>
-			<li>Stable identity, currently anchored to phone-first intake</li>
+			<li>Stable identity from first message through recruiter handoff</li>
 			<li>Profile facts, with confirmed versus inferred status</li>
 			<li>Availability and preference updates over time</li>
-			<li>Past intakes, so returning users do not start from zero</li>
-			<li>Match history, status, and feedback</li>
+			<li>Approved openings and downstream application paths</li>
+			<li>Past intakes, match history, and recruiter handoff state</li>
 		</ul>
 		<p class="muted">The goal is memory with discipline, not data hoarding.</p>
 	</Slide>
@@ -162,11 +164,13 @@
 		<span class="number">07</span>
 		<h2>How Matching Stays Legible</h2>
 		<p>
-			The current engine is simple enough to explain.
-			<span class="em">Every shortlist comes with visible reasons.</span>
+			The current foundation is simple enough to explain.
+			<span class="em">Every shortlist should come with visible reasons.</span>
 		</p>
 		<MatchingShortlistVisual />
-		<p class="muted">The code keeps this simple on purpose so every score can be explained and audited.</p>
+		<p class="muted">
+			The scoring stays explainable, but a nurse package still needs hard license, credential, specialty, and document gates before ranking.
+		</p>
 	</Slide>
 
 	<Slide type="content">
@@ -218,21 +222,22 @@
 		<div class="left">
 			<h2>Already real in code</h2>
 			<ul class="compact-list">
-				<li>profile creation and updates</li>
-				<li>matching API and status tracking</li>
+				<li>generic profile creation and updates</li>
+				<li>generic matching API and status tracking</li>
 				<li>WhatsApp-ready intake webhook</li>
 				<li>intake history for returning users</li>
 				<li>human handoff and blocked-state patterns</li>
 			</ul>
 		</div>
 		<div class="right">
-			<h2>Specialized for nurse acquisition</h2>
+			<h2>Add before nurse rollout</h2>
 			<ul class="compact-list">
+				<li>stable person identity across role changes</li>
+				<li>approved opening ingest and dedupe</li>
 				<li>nurse credential rules and verifications</li>
 				<li>specialty, shift, and pay-package fit</li>
 				<li>resume, consent, and document collection</li>
-				<li>recruiter handoff for exceptions and follow-up</li>
-				<li>healthcare-specific audit outputs</li>
+				<li>recruiter handoff and healthcare audit outputs</li>
 			</ul>
 		</div>
 	</Slide>
@@ -241,11 +246,11 @@
 		<span class="number">12</span>
 		<h2>What Nurse Acquisition Likely Costs</h2>
 		<p>
-			The client already has demand. This budget is about attracting and qualifying more nurses.
+			The client already has demand. This budget is about attracting and qualifying more nurses into existing openings.
 		</p>
 		<BudgetAllocationVisual />
 		<p class="muted">
-			Research note: these ranges are candidate-side only. That is the funnel we are helping optimize.
+			Research note: these ranges are candidate-side only. They sit on top of existing job boards, agency inventory, and recruiter demand.
 		</p>
 		<p class="source-note">
 			Directional ranges pulled from Recruiters Websites, Staffing Industry Analysts, PPC Chief,
@@ -257,7 +262,7 @@
 		<span class="number">13</span>
 		<h2>Recommended First 90 Days</h2>
 		<p>
-			The first 90 days are about improving nurse-side intake quality, recruiter handoff speed, and application flow.
+			The first 90 days are about approved source selection, nurse-side intake quality, recruiter handoff speed, and application flow.
 		</p>
 		<RolloutTimelineVisual />
 	</Slide>
@@ -267,8 +272,8 @@
 		<h1>The Claim</h1>
 		<p class="subtitle">Less form fatigue for nurses.</p>
 		<p class="subtitle">Less manual re-entry for recruiters.</p>
-		<p class="subtitle">Faster matching with visible safety rails.</p>
-		<p class="tagline">A real nurse-acquisition path, with research-backed budget ranges.</p>
+		<p class="subtitle">A governed layer above approved demand.</p>
+		<p class="tagline">A real nurse-acquisition operating path, with research-backed budget ranges.</p>
 	</Slide>
 </Presentation>
 

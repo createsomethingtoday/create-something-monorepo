@@ -13,8 +13,9 @@
 
 import { json, text } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import type { Seeker, Talent, Intake, ApiResponse } from '$lib/types/abundance';
 import { generateId } from '$lib/abundance/matching';
+import type { CandidateProfileStatus } from '$lib/types/abundance';
+import { findCandidateIdentity, processNurseMessageIntake } from '$lib/abundance/nurse-intake';
 
 // Types for WhatsApp webhook payloads
 interface WhatsAppWebhookEntry {
@@ -66,9 +67,21 @@ interface ProcessedMessage {
 	timestamp: string;
 	type: string;
 	content: string;
-	user_type?: 'seeker' | 'talent' | 'unknown';
+	user_type?: 'candidate' | 'seeker' | 'talent' | 'unknown';
 	user_id?: string;
+	person_id?: string;
+	candidate_profile_id?: string;
+	profile_status?: CandidateProfileStatus;
 	is_new_user: boolean;
+}
+
+interface LookupResult {
+	userId: string;
+	userType: 'candidate' | 'seeker' | 'talent' | 'unknown';
+	personId?: string;
+	candidateProfileId?: string;
+	profileStatus?: CandidateProfileStatus;
+	isNew: boolean;
 }
 
 /**
@@ -159,10 +172,23 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					}
 
 					// Look up user in database
-					const { userId, userType, isNew } = await lookupOrCreateUser(
+					const {
+						userId,
+						userType,
+						personId,
+						candidateProfileId,
+						profileStatus,
+						isNew
+					} = await lookupOrCreateUser(
 						platform.env.DB,
 						phone,
-						contactName
+						contactName,
+						{
+							message_id: message.id,
+							timestamp: message.timestamp,
+							type: message.type,
+							content
+						}
 					);
 
 					const processedMessage: ProcessedMessage = {
@@ -174,12 +200,20 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 						content,
 						user_type: userType,
 						user_id: userId,
+						person_id: personId,
+						candidate_profile_id: candidateProfileId,
+						profile_status: profileStatus,
 						is_new_user: isNew
 					};
 
 					processedMessages.push(processedMessage);
 
-					// Store intake for conversation tracking
+					// Nurse candidates now flow through the shared channel-message pipeline.
+					if (userType === 'candidate') {
+						continue;
+					}
+
+					// Legacy seeker/talent records still use the old intake log.
 					const intakeUserType: 'seeker' | 'talent' = userType === 'talent' ? 'talent' : 'seeker';
 					await storeIntake(platform.env.DB, {
 						user_id: userId,
@@ -218,8 +252,26 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 async function lookupOrCreateUser(
 	db: D1Database,
 	phone: string,
-	name: string
-): Promise<{ userId: string; userType: 'seeker' | 'talent' | 'unknown'; isNew: boolean }> {
+	name: string,
+	messageMetadata: {
+		message_id: string;
+		timestamp: string;
+		type: string;
+		content: string;
+	}
+): Promise<LookupResult> {
+	const candidate = await findCandidateIdentity(db, { phone });
+	if (candidate) {
+		return {
+			userId: candidate.person_id,
+			userType: 'candidate',
+			personId: candidate.person_id,
+			candidateProfileId: candidate.candidate_profile_id,
+			profileStatus: candidate.profile_status,
+			isNew: false
+		};
+	}
+
 	// Check seekers first
 	const seeker = await db.prepare(
 		'SELECT id FROM seekers WHERE phone = ?'
@@ -238,19 +290,38 @@ async function lookupOrCreateUser(
 		return { userId: talent.id, userType: 'talent', isNew: false };
 	}
 
-	// New user - create as seeker in onboarding status
-	// (Can be converted to talent later through conversation)
-	const id = generateId();
-	await db.prepare(`
-		INSERT INTO seekers (id, phone, name, status)
-		VALUES (?, ?, ?, 'onboarding')
-	`).bind(id, phone, name).run();
+	const intakeResult = await processNurseMessageIntake(db, {
+		channel: 'whatsapp',
+		contact: {
+			name,
+			phone,
+			source: 'whatsapp'
+		},
+		message: {
+			message_id: messageMetadata.message_id,
+			message_type: messageMetadata.type,
+			content: messageMetadata.content,
+			received_at: messageMetadata.timestamp,
+			raw_payload: messageMetadata
+		},
+		context: {
+			intake_channel: 'whatsapp',
+			source: 'whatsapp'
+		}
+	});
 
-	return { userId: id, userType: 'seeker', isNew: true };
+	return {
+		userId: intakeResult.person_id,
+		userType: 'candidate',
+		personId: intakeResult.person_id,
+		candidateProfileId: intakeResult.candidate_profile_id,
+		profileStatus: intakeResult.profile_status,
+		isNew: intakeResult.is_new_candidate
+	};
 }
 
 /**
- * Store intake record for conversation tracking
+ * Store intake record for legacy seeker/talent conversation tracking.
  */
 async function storeIntake(
 	db: D1Database,

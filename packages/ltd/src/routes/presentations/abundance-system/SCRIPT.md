@@ -4,7 +4,7 @@
 
 Abundance.
 
-This is the nurse staffing system, explained in plain language.
+This is the nurse acquisition operating layer, explained in plain language.
 
 Not the implementation details first.
 Not a wall of product jargon.
@@ -37,6 +37,9 @@ Third, it controls when the system is allowed to write, escalate, or stop.
 
 Think of it as conversation plus matching plus guardrails.
 
+For this client, it sits on top of existing demand sources and recruiter workflows.
+It is not a replacement for every job board or agency system.
+
 ---
 
 ## Slide 4: Translating the code
@@ -48,11 +51,11 @@ Talent.
 Match.
 Intake.
 
-In nurse staffing terms, that becomes the open role, the nurse available to fill it, the recommended pairing, and the running intake history.
+In nurse staffing terms, that becomes the approved opening, the nurse available to fill it, the recommended pairing, and the running intake history.
 
 For this client, the important note is that demand already exists.
 We are not trying to generate the facility side.
-We are improving how nurses are acquired and matched into it.
+We are improving how nurses are acquired, qualified, and matched into it.
 
 That translation matters because the engine is generic by design, but the workflow can be specialized.
 
@@ -72,37 +75,41 @@ It does not force a 20-question form before it becomes useful.
 
 ---
 
-## Slide 6: What the system keeps
+## Slide 6: What the operating layer needs to keep
 
-The system keeps the facts it needs to keep working:
+To keep the workflow moving, the operating layer has to keep the facts that survive from intake through handoff:
 
 who you are,
 what you can do,
 when you are available,
 what has been confirmed,
 what still needs proof,
-and what happened in previous conversations.
+which approved openings are in play,
+and what happened in previous conversations and recruiter handoffs.
 
-In the repo, that shows up as profiles, matches, and intakes.
-It is meant to remember progress, not just collect data.
+In the repo today, the generic foundation shows up as profiles, matches, and intakes.
+The nurse package needs to extend that with opening-source and credential state.
 
 ---
 
 ## Slide 7: How matching stays legible
 
-The current matching engine is not magic.
+The current matching foundation is not magic.
 It is simple math.
 
 Skills count for forty percent.
 Budget counts for thirty percent.
 Availability counts for thirty percent.
 
-In a nurse staffing deployment, that maps cleanly to specialty and credential fit, pay fit, and shift or start-date availability.
+That foundation is useful because you can explain it, audit it, and improve it.
 
-Simple scoring is a feature here.
-You can explain it.
-You can audit it.
-You can improve it without pretending it is a black box.
+But a real nurse rollout needs hard gates before scoring:
+license,
+credential,
+specialty,
+shift,
+start-date,
+and missing-document checks.
 
 ---
 
@@ -154,9 +161,11 @@ One place to stop execution when policy, billing, contract, or security state sa
 ## Slide 11: What is real now versus what gets specialized
 
 What is already real in code:
-profiles, intake history, matching, WhatsApp-ready identity, human handoff, governed widgets, and controlled execution.
+generic profiles, intake history, generic matching, WhatsApp-ready identity, human handoff, governed widgets, and controlled execution.
 
-What gets specialized for this engagement:
+What still needs to be added for nurse operations:
+stable person identity across role changes,
+approved opening ingest and dedupe,
 nurse credential rules, specialty and shift fit, pay-package logic, resume and consent collection, recruiter handoff, and healthcare audit outputs.
 
 That distinction is important.
@@ -170,7 +179,7 @@ It is a real system with a clear adaptation path.
 We also have enough research to budget this honestly.
 
 The client already has demand.
-So this budget is about nurse acquisition, not a two-sided marketplace launch.
+So this budget is about nurse acquisition into existing openings, not a two-sided marketplace launch.
 
 A focused working range is roughly six to twelve thousand dollars a month.
 A broader signal-generating range is roughly twelve to twenty thousand.
@@ -193,14 +202,14 @@ Better signal-generating budget:
 twelve to twenty thousand dollars per month.
 
 Channel order is straightforward:
-job channels first,
+approved opening sources and job channels first,
 search second,
 Meta retargeting for completion and reactivation,
 and LinkedIn only where specialty targeting matters.
 
-Month one is message testing.
-Month two is budget reallocation around nurse quality.
-Month three is scaling the best specialty and geography combinations.
+Month one is source approval and message testing.
+Month two is budget reallocation around nurse quality and eligibility gates.
+Month three is scaling the best specialty and geography combinations while improving recruiter handoff.
 
 ---
 
@@ -209,9 +218,9 @@ Month three is scaling the best specialty and geography combinations.
 For nurses, less form fatigue.
 For recruiters, less retyping.
 For operators, fewer hidden blockers.
-For leadership, a system that is faster without becoming opaque.
+For leadership, a governed layer above existing demand instead of another disconnected tool.
 
 The claim is simple:
-Abundance turns staffing from repeated intake and manual guesswork into guided matching with visible safety rails.
+Abundance becomes the intake, qualification, and matching layer above approved openings and recruiter workflows.
 
 And now the nurse-acquisition path includes a research-backed budget range, not just a product story.

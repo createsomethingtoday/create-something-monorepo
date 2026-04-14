@@ -8,7 +8,7 @@
 		{
 			label: 'Broader signal range',
 			total: '$12k-$20k / month',
-			note: 'Enough to compare creative, geography, and specialty lanes without guessing from one campaign.'
+			note: 'Enough to compare channel, geography, and specialty lanes without guessing from one campaign.'
 		}
 	];
 
@@ -42,7 +42,10 @@
 		<p class="eyebrow">Scope</p>
 		<h3>Demand already exists</h3>
 		<p class="scope-copy">
-			The paid question is how to acquire more nurses, not how to create facility demand.
+			The paid question is how to acquire more nurses into existing demand, not how to create facility demand from zero.
+		</p>
+		<p class="scope-copy">
+			This operating layer sits on top of approved job sources, recruiter inventories, and direct employer demand.
 		</p>
 
 		<div class="benchmark-block">

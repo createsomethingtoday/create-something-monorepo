@@ -2,10 +2,10 @@
 	const phases = [
 		{
 			label: 'Month 1',
-			title: 'Validate the intake story',
+			title: 'Define the source and intake wedge',
 			points: [
+				'Approve the initial opening sources and dedupe rules',
 				'Test nurse-side messaging by specialty and market',
-				'Confirm which missing facts are worth asking for early',
 				'Measure click-to-apply and apply-to-conversation rates'
 			]
 		},
@@ -14,7 +14,7 @@
 			title: 'Reallocate around nurse quality',
 			points: [
 				'Shift budget into the best nurse channels',
-				'Tighten specialty, geography, and shift targeting',
+				'Tighten specialty, geography, shift, and eligibility gates',
 				'Add retargeting for resume, consent, and recruiter follow-up'
 			]
 		},
@@ -23,8 +23,8 @@
 			title: 'Scale the winning lanes',
 			points: [
 				'Expand the best specialty and geography combinations',
-				'Improve apply-to-shortlist speed for recruiters',
-				'Cut low-signal channels instead of broadening too early'
+				'Improve shortlist-to-handoff speed for recruiters',
+				'Add direct source integrations only where signal stays strong'
 			]
 		}
 	];

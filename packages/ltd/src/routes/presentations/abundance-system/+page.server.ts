@@ -3,9 +3,9 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async () => {
 	return {
 		meta: {
-			title: 'ABUNDANCE | Nurse Staffing System',
+			title: 'ABUNDANCE | Nurse Acquisition Operating Layer',
 			description:
-				'A client-facing walkthrough of how Abundance captures profile data, ranks matches, uses policy controls, and frames directional budget ranges for nurse staffing.',
+				'A client-facing walkthrough of how Abundance sits above approved openings, captures nurse-side profile data, enforces qualification gates, and frames directional budget ranges for acquisition.',
 			author: 'CREATE SOMETHING'
 		}
 	};
