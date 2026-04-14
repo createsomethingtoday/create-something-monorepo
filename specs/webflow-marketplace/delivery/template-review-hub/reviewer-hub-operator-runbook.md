@@ -39,6 +39,8 @@ Production outcome:
   - `scripts/cs-hub-webflow-reviewers-deploy.sh`
 - Entitlement sync:
   - `scripts/webflow-reviewer-entitlement-sync.sh`
+- Reviewer allowlist sync:
+  - `scripts/webflow-reviewer-allowlist-sync.sh`
 
 ## 4. Preconditions
 
@@ -120,7 +122,24 @@ Default behavior:
 - skips archived `acct_wf_sudiksha` by default
 - seeds the row as a reviewer rollout manual override so the reviewer bearer remains stable across routine MCP updates
 
-## 8. Verify each reviewer Hub
+## 8. Sync reviewer allowlists
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+./scripts/webflow-reviewer-allowlist-sync.sh all
+```
+
+This keeps the active reviewer bearers aligned with the production reviewer tool lane without rotating bearer keys.
+
+Default behavior:
+
+- adds the async analyzer queue tools needed for parallel reviewer runs
+- keeps `webflow-template-review-mcp__template_review_workflow` present
+- removes stale `webflow-mcp__plagiarism_*` reviewer entries
+- removes `webflow-site-analyzer-mcp__run_template_review` from reviewer bearers
+- skips archived `acct_wf_sudiksha` by default
+
+## 9. Verify each reviewer Hub
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
@@ -133,6 +152,8 @@ Expected verification posture:
 - `hub_list_services` shows `webflow-template-review-mcp` and `webflow-site-analyzer-mcp`
 - `hub_search_proxy_tools` succeeds for both connected reviewer servers
 - `webflow-template-review-mcp__template_review_workflow` is visible to reviewer bearers
+- `webflow-site-analyzer-mcp__enqueue_template_review`, `webflow-site-analyzer-mcp__get_template_review_job`, and `webflow-site-analyzer-mcp__list_template_review_jobs` are visible to reviewer bearers
+- `webflow-site-analyzer-mcp__run_template_review` is not visible to reviewer bearers
 - reviewer runtime is compact and reviewer-scoped
 - `webflow-local` is no longer enabled in the reviewer runtime
 
@@ -144,7 +165,7 @@ REVIEWER=mariana ./scripts/webflow-reviewer-demo-verify.sh
 REVIEWER=mariana ./scripts/webflow-reviewer-assign-self-smoke.sh
 ```
 
-## 9. One-command path
+## 10. One-command path
 
 If all required environment variables are present:
 
@@ -160,32 +181,41 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 ./scripts/webflow-reviewer-entitlement-sync.sh all
 ```
 
-## 10. Expected reviewer-visible surface
+Then sync reviewer allowlists:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+./scripts/webflow-reviewer-allowlist-sync.sh all
+```
+
+## 11. Expected reviewer-visible surface
 
 Reviewer Hubs should expose:
 
 - queue, asset, version, release, and review-context reads from `webflow-template-review-mcp`
 - reviewer-safe write verbs from `webflow-template-review-mcp`
-- selected read-only analysis tools from `webflow-site-analyzer-mcp`
+- async analyzer queue tools and selected read-only evidence tools from `webflow-site-analyzer-mcp`
 
 Do not expose:
 
 - broad template metadata mutation
 - approval or publishing completion routes outside the approved reviewer-safe workflow
+- `webflow-site-analyzer-mcp__run_template_review`
 - raw non-reviewer tool catalogs
 
-## 11. Boundary
+## 12. Boundary
 
 `webflow-local` is intentionally excluded from the production reviewer Hub posture because the remote Hub only supports HTTP downstream servers. Do not add it back to reviewer discovery until it has a hosted HTTP surface or is replaced with a supported remote originality service.
 
-## 12. Recovery
+## 13. Recovery
 
 If a reviewer Hub is misconfigured:
 
 1. redeploy the worker
 2. rerun normalization
 3. rerun reviewer entitlement sync
-4. rerun verification
+4. rerun reviewer allowlist sync
+5. rerun verification
 
 If the issue is broader:
 

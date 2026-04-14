@@ -104,6 +104,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Pick a queue row and use assignableVersionId as the assignment target.',
           'Call template_review_assign_self with that version_id.',
           'Call template_review_get_review_context with the same version_id.',
+          'Call enqueue_template_review with the preview and published URLs from reviewer context, then poll get_template_review_job until the analyzer report is complete.',
           'Use template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes for narrow reviewer-safe writes while the version remains assigned to the current reviewer.',
           'Call template_review_my_queue to resume work already assigned to the current reviewer.',
           'Call template_review_unassign_self if the reviewer intentionally wants to release the version back to the shared queue.',
@@ -115,6 +116,11 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             'template_review_set_review_status',
             'template_review_save_draft_feedback',
             'template_review_request_changes',
+          ],
+          analyzerTools: [
+            'enqueue_template_review',
+            'get_template_review_job',
+            'list_template_review_jobs',
           ],
           queueDefaults: {
             status: 'ready_to_review',
@@ -164,6 +170,18 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             expectation: 'Read reviewer-facing fields from data.context.',
           },
           {
+            step: 'analyze',
+            tool: 'enqueue_template_review',
+            args: { previewUrl: '<previewUrl>', publishedUrl: '<publishedUrl>' },
+            expectation: 'Use the async analyzer job path on the reviewer hub instead of run_template_review.',
+          },
+          {
+            step: 'poll_analyzer',
+            tool: 'get_template_review_job',
+            args: { jobId: '<jobId>' },
+            expectation: 'Poll until the queued analyzer report reaches a terminal state.',
+          },
+          {
             step: 'resume',
             tool: 'template_review_my_queue',
             args: {},
@@ -203,6 +221,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'When helping a reviewer, start with template_review_list_queue unless they explicitly ask for their assigned work.',
           'If they want their current workload, use template_review_my_queue.',
           'When a queue row is chosen, use assignableVersionId rather than assetId for write actions.',
+          'When analyzer evidence is needed, use enqueue_template_review plus get_template_review_job rather than run_template_review.',
           'Treat template_review_assign_self, template_review_unassign_self, template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes as the primary reviewer-safe write lane.',
           'Never ask the reviewer for an Airtable collaborator id.',
           'Do not offer broad mutation tools that are not visible in reviewer discovery.',
@@ -211,6 +230,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Do not treat assetId as the write target for assignment tools.',
           'Do not read currentReviewer from top-level data when using template_review_get_review_context.',
           'Do not infer assignment ownership from raw Airtable fields when normalized booleans are available.',
+          'Do not use run_template_review on the remote reviewer hub.',
         ],
       }),
   );

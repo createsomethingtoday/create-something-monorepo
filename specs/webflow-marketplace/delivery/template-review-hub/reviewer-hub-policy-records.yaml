@@ -22,6 +22,16 @@ shared_policy:
       - "webflow-site-analyzer-mcp"
     max_proxy_tools: 30
   allowed_proxy_tools:
+    - "webflow-site-analyzer-mcp__analyze_images"
+    - "webflow-site-analyzer-mcp__enqueue_template_review"
+    - "webflow-site-analyzer-mcp__extract_designer_metadata"
+    - "webflow-site-analyzer-mcp__extract_seo"
+    - "webflow-site-analyzer-mcp__get_page_structure"
+    - "webflow-site-analyzer-mcp__get_performance"
+    - "webflow-site-analyzer-mcp__get_provider_status"
+    - "webflow-site-analyzer-mcp__get_template_review_job"
+    - "webflow-site-analyzer-mcp__list_template_review_jobs"
+    - "webflow-site-analyzer-mcp__score_designer_checklist"
     - "webflow-template-review-mcp__template_review_workflow"
     - "webflow-template-review-mcp__template_review_health"
     - "webflow-template-review-mcp__template_review_get_metrics"
@@ -41,9 +51,8 @@ shared_policy:
     - "webflow-template-review-mcp__template_review_request_changes"
     - "webflow-template-review-mcp__template_review_set_review_status"
     - "webflow-template-review-mcp__template_review_save_draft_feedback"
-  allowed_server_classes:
-    - "selected read-only analysis tools from webflow-site-analyzer-mcp"
   blocked_proxy_tools:
+    - "webflow-site-analyzer-mcp__run_template_review"
     - "webflow-template-review-mcp__template_review_approve_version"
     - "webflow-template-review-mcp__template_review_reject_version"
     - "webflow-template-review-mcp__template_review_complete_publishing"

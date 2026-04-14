@@ -51,9 +51,9 @@ Every review follows these phases:
 
 | Tool | What it does | When |
 |------|-------------|------|
-| \`template_review_enqueue_analyzer_review\` | Queue browser-backed analysis | Start analysis |
-| \`template_review_get_analyzer_review\` | Get results for a specific job | Poll after ~90s |
-| \`template_review_list_analyzer_reviews\` | List all jobs for a version | Check prior runs |
+| \`enqueue_template_review\` | Queue a browser-backed analyzer job on \`webflow-site-analyzer-mcp\` | Start analysis |
+| \`get_template_review_job\` | Read one queued analyzer job by \`jobId\` | Poll after ~90s |
+| \`list_template_review_jobs\` | List recent analyzer jobs | Recover or inspect prior runs |
 
 The analyzer crawls **every page** and runs 39 automated checks:
 - **Structure**: H1 hierarchy, heading levels, required pages (license, instructions, changelog, style guide)
@@ -89,6 +89,13 @@ The analyzer crawls **every page** and runs 39 automated checks:
 - **C (60-74)**: Needs changes
 - **D/F (<60)**: Significant issues
 
+### Production reviewer-hub rule
+
+- Use \`enqueue_template_review\` on the remote reviewer hub. It is the production path and supports running multiple template reviews in parallel.
+- Use \`get_template_review_job\` to poll each returned \`jobId\` until the report is complete.
+- \`run_template_review\` is a synchronous debug tool and should not be used from the remote reviewer hubs.
+- Get the preview and published URLs from reviewer context before enqueueing an analyzer job.
+
 **Common failure patterns that mean Changes Requested:**
 - Pervasive missing alt text across all pages
 - Skipped heading levels on most pages
@@ -97,9 +104,9 @@ The analyzer crawls **every page** and runs 39 automated checks:
 - Lorem ipsum or placeholder text detected
 - Connected third-party apps (GA, FB Pixel, etc.)
 
-## Phase 5 — Take Ownership & Decide
+## Phase 5 — Take Ownership & Record Reviewer Outcome
 
-**You must call \`assign_self\` before any write action.**
+**You must call \`template_review_assign_self\` before any write action.**
 
 | Tool | What it does |
 |------|-------------|
@@ -107,16 +114,13 @@ The analyzer crawls **every page** and runs 39 automated checks:
 | \`template_review_set_review_status\` | Update status (e.g. In Review) |
 | \`template_review_save_draft_feedback\` | Save notes without changing status |
 | \`template_review_request_changes\` | Send back with feedback |
-| \`template_review_approve_version\` | Approve |
-| \`template_review_reject_version\` | Reject with reasons |
+| \`template_review_unassign_self\` | Release the version back to the queue |
 
-### Decision Guide
+The current production reviewer hub is intentionally narrow:
 
-**APPROVE** if: No critical failures, few major failures, grade B+, design quality is "Good", responsive works.
-
-**REQUEST CHANGES** if: Any critical failures, 3+ major failures, missing required pages, placeholder content, connected apps, design below "Good".
-
-**REJECT** if: Fundamentally below bar, non-functional, guidelines violated.
+- official reviewer-safe writes are assignment, review status, draft feedback, and request-changes
+- approval, rejection, and publishing completion are not part of the current reviewer-visible tool lane
+- if the host does not expose an approval or publishing tool, capture the evidence and follow the official manual or operator path instead of inventing a missing write
 
 ### Quality Rating
 
@@ -128,34 +132,33 @@ The analyzer crawls **every page** and runs 39 automated checks:
 
 **Edge case:** Visually strong but pervasive automated failures → default to Changes Requested. Creators can usually fix technical issues quickly.
 
-## Phase 6 — Publishing (after approval)
+## Phase 6 — Manual Handoff When Needed
 
-| Tool | What it does |
-|------|-------------|
-| \`template_review_list_releases\` | Available releases to attach |
-| \`template_review_update_asset_metadata\` | Update name, description, thumbnails |
-| \`template_review_update_asset_publishing\` | Update MRP ID override |
-| \`template_review_complete_publishing\` | Mark checklist complete + attach release |
+If the current reviewer host does not expose approve, reject, or publish tools:
+
+- keep the analyzer report, reviewer notes, and requested changes in the Hub-visible workflow
+- use the official manual or operator path for the broader Marketplace state change
+- do not invent hidden tools or broad Airtable mutations
 
 ## Quick Reference Checklist
 
 1. \`template_review_health\` — confirm connected
 2. \`template_review_list_queue\` — find work
 3. \`template_review_get_review_context\` — check capabilities
-4. \`template_review_enqueue_analyzer_review\` — start analysis
-5. \`template_review_get_analyzer_review\` — read results (~90s)
+4. \`enqueue_template_review\` — start analyzer jobs
+5. \`get_template_review_job\` — read analyzer results (~90s)
 6. \`template_review_assign_self\` — claim the version
-7. \`template_review_request_changes\` / \`approve_version\` / \`reject_version\` — decide
+7. \`template_review_request_changes\` / \`template_review_save_draft_feedback\` / \`template_review_set_review_status\` — record the reviewer outcome
 
 ## Rules
 
-1. You must call \`assign_self\` before any write action
+1. You must call \`template_review_assign_self\` before any reviewer-safe write action
 2. You cannot assign yourself if another reviewer is already assigned
-3. \`canPublish\` is only true after approval
+3. Use \`enqueue_template_review\` plus \`get_template_review_job\` for remote reviewer-hub analysis
 4. The analyzer is a tool, not a judge — use human judgment for design quality
 5. Lead with data: cite specific check IDs, page paths, and metrics
 6. Feedback must be actionable: tell creators exactly what to fix
-7. When in doubt, request changes rather than rejecting`;
+7. When in doubt, request changes rather than inventing a hidden approval path`;
 
 export function registerPrompts(server: McpServer): void {
   // Workflow orchestration prompt — teaches agents the full review process.

@@ -9,7 +9,9 @@ REVIEWER="${REVIEWER:-micah}"
 SERVER_NAME="${SERVER_NAME:-webflow-template-review-mcp}"
 SEARCH_LIMIT="${SEARCH_LIMIT:-200}"
 SESSION_TOKEN="${SESSION_TOKEN:-${SESSION_TOKEN_FOR_VERIFY:-}}"
-REQUIRED_PROXY_TOOLS="${REQUIRED_PROXY_TOOLS:-webflow-template-review-mcp__template_review_workflow}"
+REQUIRED_PROXY_TOOLS="${REQUIRED_PROXY_TOOLS:-webflow-template-review-mcp__template_review_workflow,webflow-site-analyzer-mcp__enqueue_template_review,webflow-site-analyzer-mcp__get_template_review_job,webflow-site-analyzer-mcp__list_template_review_jobs}"
+FORBIDDEN_PROXY_TOOLS="${FORBIDDEN_PROXY_TOOLS:-webflow-site-analyzer-mcp__run_template_review}"
+SKIP_REVIEWERS_CSV="${SKIP_REVIEWERS_CSV:-sudiksha}"
 
 reviewer_url() {
   case "$1" in
@@ -195,6 +197,31 @@ assert_required_proxy_tools() {
   done
 }
 
+assert_forbidden_proxy_tools() {
+  local payload="$1"
+  local context="$2"
+  local tools_json="$3"
+  local forbidden_csv="$4"
+  local tool_name
+  local -a forbidden=()
+
+  if [[ -z "$forbidden_csv" ]]; then
+    return 0
+  fi
+
+  IFS=',' read -r -a forbidden <<<"$forbidden_csv"
+  for tool_name in "${forbidden[@]}"; do
+    tool_name="${tool_name#"${tool_name%%[![:space:]]*}"}"
+    tool_name="${tool_name%"${tool_name##*[![:space:]]}"}"
+    [[ -n "$tool_name" ]] || continue
+    if printf '%s' "$tools_json" | jq -e --arg tool "$tool_name" 'index($tool) != null' >/dev/null 2>&1; then
+      echo "forbidden proxy tool visible during ${context}: ${tool_name}" >&2
+      echo "$payload" | jq .
+      exit 1
+    fi
+  done
+}
+
 verify_reviewer() {
   local reviewer="$1"
   local hub_url health_url secret_name token
@@ -238,6 +265,7 @@ verify_reviewer() {
   visible_tools_json="$(echo "$list_resp" | payload_json | jq -c '.proxyTools // []')"
   filtered_tools_json="$(echo "$search_resp" | payload_json | jq -c '[.tools[]?.proxyToolName]')"
   assert_required_proxy_tools "$list_resp" "hub_list_proxy_tools ${reviewer}" "$visible_tools_json" "$REQUIRED_PROXY_TOOLS"
+  assert_forbidden_proxy_tools "$list_resp" "hub_list_proxy_tools ${reviewer}" "$visible_tools_json" "$FORBIDDEN_PROXY_TOOLS"
 
   echo "== reviewer demo verify: ${reviewer} =="
   echo "hub_url=${hub_url}"
@@ -266,6 +294,18 @@ verify_reviewer() {
       echo "- ${required_tool}"
     done
   fi
+  if [[ -n "$FORBIDDEN_PROXY_TOOLS" ]]; then
+    echo "forbidden_proxy_tools:"
+    local forbidden_tool
+    local -a forbidden_tools=()
+    IFS=',' read -r -a forbidden_tools <<<"$FORBIDDEN_PROXY_TOOLS"
+    for forbidden_tool in "${forbidden_tools[@]}"; do
+      forbidden_tool="${forbidden_tool#"${forbidden_tool%%[![:space:]]*}"}"
+      forbidden_tool="${forbidden_tool%"${forbidden_tool##*[![:space:]]}"}"
+      [[ -n "$forbidden_tool" ]] || continue
+      echo "- ${forbidden_tool}"
+    done
+  fi
   echo "visible_proxy_tools_filtered server=${SERVER_NAME}:"
   print_tool_list "$filtered_tools_json" "- "
 }
@@ -281,8 +321,27 @@ main() {
     reviewers=("$REVIEWER")
   fi
 
+  local -a skip_reviewers=()
+  if [[ -n "$SKIP_REVIEWERS_CSV" ]]; then
+    IFS=',' read -r -a skip_reviewers <<<"$SKIP_REVIEWERS_CSV"
+  fi
+
   local reviewer
   for reviewer in "${reviewers[@]}"; do
+    local skip_reviewer=0
+    local skipped
+    for skipped in "${skip_reviewers[@]}"; do
+      skipped="${skipped#"${skipped%%[![:space:]]*}"}"
+      skipped="${skipped%"${skipped##*[![:space:]]}"}"
+      if [[ -n "$skipped" && "$reviewer" == "$skipped" ]]; then
+        echo "skipping reviewer demo verify for archived reviewer=${reviewer}"
+        skip_reviewer=1
+        break
+      fi
+    done
+    if [[ "$skip_reviewer" == "1" ]]; then
+      continue
+    fi
     verify_reviewer "$reviewer"
   done
 

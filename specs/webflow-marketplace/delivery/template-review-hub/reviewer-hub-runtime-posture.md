@@ -60,12 +60,22 @@ Visible tools should be limited to:
 - `webflow-template-review-mcp__template_review_workflow`
 - reviewer queue, asset, version, release, and review-context reads from `webflow-template-review-mcp`
 - reviewer-safe write verbs from `webflow-template-review-mcp`
-- selected read-only analysis tools from `webflow-site-analyzer-mcp`
+- `webflow-site-analyzer-mcp__extract_seo`
+- `webflow-site-analyzer-mcp__get_page_structure`
+- `webflow-site-analyzer-mcp__analyze_images`
+- `webflow-site-analyzer-mcp__get_performance`
+- `webflow-site-analyzer-mcp__get_provider_status`
+- `webflow-site-analyzer-mcp__extract_designer_metadata`
+- `webflow-site-analyzer-mcp__score_designer_checklist`
+- `webflow-site-analyzer-mcp__enqueue_template_review`
+- `webflow-site-analyzer-mcp__get_template_review_job`
+- `webflow-site-analyzer-mcp__list_template_review_jobs`
 
 Do not expose:
 
 - broad template metadata mutation
 - approval or publishing completion routes outside the reviewer-safe workflow
+- `webflow-site-analyzer-mcp__run_template_review`
 - raw analyzer catalogs that are not relevant to reviewer decisions
 - unsupported local or stdio-only services
 
