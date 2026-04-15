@@ -116,8 +116,8 @@
   // Can show metrics for non-Upcoming and non-Rejected statuses
   const canShowMetrics = $derived(!['Upcoming', 'Rejected'].includes(asset.status));
 
-  // Can only edit Published templates
-  const canEdit = $derived(asset.status === 'Published');
+  const EDITABLE_STATUSES = ['Draft', 'Upcoming', 'Scheduled', 'Published'];
+  const canEdit = $derived(EDITABLE_STATUSES.includes(asset.status));
 
   // Can archive if not already delisted
   const canArchive = $derived(!asset.status.includes('Delisted'));
@@ -342,8 +342,12 @@
               {/if}
               {#if canShowMetrics && showPerformance}
                 <span><strong>{formatCompactNumber(asset.uniqueViewers)}</strong> viewers</span>
-                <span><strong>{formatCompactNumber(asset.cumulativePurchases)}</strong> purchases</span>
-                <span><strong>{formatCompactCurrency(asset.cumulativeRevenue)}</strong> revenue</span>
+                <span
+                  ><strong>{formatCompactNumber(asset.cumulativePurchases)}</strong> purchases</span
+                >
+                <span
+                  ><strong>{formatCompactCurrency(asset.cumulativeRevenue)}</strong> revenue</span
+                >
               {/if}
             </div>
           </div>
@@ -503,13 +507,17 @@
                         <span class="detail-label detail-label--with-freshness"
                           >Total Purchases <DataFreshnessIndicator variant="tooltip" /></span
                         >
-                        <span class="detail-value">{formatWholeNumber(asset.cumulativePurchases)}</span>
+                        <span class="detail-value"
+                          >{formatWholeNumber(asset.cumulativePurchases)}</span
+                        >
                       </div>
                       <div class="detail-item">
                         <span class="detail-label detail-label--with-freshness"
                           >Total Revenue <DataFreshnessIndicator variant="tooltip" /></span
                         >
-                        <span class="detail-value">{formatCompactCurrency(asset.cumulativeRevenue)}</span>
+                        <span class="detail-value"
+                          >{formatCompactCurrency(asset.cumulativeRevenue)}</span
+                        >
                       </div>
                     {/if}
                   </div>
@@ -613,7 +621,9 @@
                       <div class="stat-item purchases">
                         <div class="stat-header">
                           <ShoppingCart size={14} class="stat-icon" />
-                          <span class="stat-number">{formatWholeNumber(asset.cumulativePurchases)}</span>
+                          <span class="stat-number"
+                            >{formatWholeNumber(asset.cumulativePurchases)}</span
+                          >
                           <DataFreshnessIndicator variant="tooltip" />
                         </div>
                         <span class="stat-label">Purchases</span>
@@ -624,7 +634,9 @@
                       <div class="stat-item revenue">
                         <div class="stat-header">
                           <DollarSign size={14} class="stat-icon" />
-                          <span class="stat-number">{formatCompactCurrency(asset.cumulativeRevenue)}</span>
+                          <span class="stat-number"
+                            >{formatCompactCurrency(asset.cumulativeRevenue)}</span
+                          >
                           <DataFreshnessIndicator variant="tooltip" />
                         </div>
                         <span class="stat-label">Revenue</span>
@@ -637,7 +649,9 @@
                       <div class="derived-stat">
                         <TrendingUp size={14} class="derived-icon" />
                         <span class="derived-label">Avg Order:</span>
-                        <span class="derived-value">{formatCompactCurrency(avgOrderValue() ?? 0)}</span>
+                        <span class="derived-value"
+                          >{formatCompactCurrency(avgOrderValue() ?? 0)}</span
+                        >
                       </div>
                     {/if}
                   </CardContent>

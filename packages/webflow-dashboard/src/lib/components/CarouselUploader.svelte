@@ -1,520 +1,553 @@
 <script lang="ts">
-	import { Button } from './ui';
-	import { toast } from '$lib/stores/toast';
-	import {
-		validateWebP,
-		validateFileSize,
-		validateMimeType,
-		getImageDimensions
-	} from '$lib/utils/upload-validation';
-	import { X, Upload } from 'lucide-svelte';
+  import { toast } from '$lib/stores/toast';
+  import {
+    validateWebP,
+    validateFileSize,
+    validateMimeType,
+    getImageDimensions
+  } from '$lib/utils/upload-validation';
+  import { X, Upload } from 'lucide-svelte';
 
-	interface Props {
-		value?: string[];
-		onchange?: (urls: string[]) => void;
-		minImages?: number;
-		maxImages?: number;
-		disabled?: boolean;
-		aspectRatio?: { width: number; height: number } | null;
-	}
+  interface Props {
+    value?: string[];
+    onchange?: (urls: string[]) => void;
+    minImages?: number;
+    maxImages?: number;
+    disabled?: boolean;
+    aspectRatio?: { width: number; height: number } | null;
+    exactDimensions?: { width: number; height: number } | null;
+    maxSize?: number;
+    label?: string;
+    description?: string;
+    uploadType?: 'carousel' | 'gallery';
+  }
 
-	interface UploadItem {
-		file: File;
-		status: 'pending' | 'uploading' | 'complete' | 'error';
-		progress: number;
-		url?: string;
-		error?: string;
-	}
+  interface UploadItem {
+    file: File;
+    status: 'pending' | 'uploading' | 'complete' | 'error';
+    progress: number;
+    url?: string;
+    error?: string;
+  }
 
-	let {
-		value = [],
-		onchange,
-		minImages = 3,
-		maxImages = 8,
-		disabled = false,
-		aspectRatio = null
-	}: Props = $props();
+  let {
+    value = [],
+    onchange,
+    minImages = 3,
+    maxImages = 8,
+    disabled = false,
+    aspectRatio = null,
+    exactDimensions = null,
+    maxSize = 10 * 1024 * 1024,
+    label = 'Carousel Images',
+    description = '',
+    uploadType = 'carousel'
+  }: Props = $props();
 
-	let uploadQueue = $state<UploadItem[]>([]);
-	let isDragOver = $state(false);
-	let fileInput: HTMLInputElement | undefined = $state();
+  let uploadQueue = $state<UploadItem[]>([]);
+  let isDragOver = $state(false);
+  let fileInput: HTMLInputElement | undefined = $state();
 
-	/**
-	 * Validate file on the client side before uploading.
-	 */
-	async function validateFile(file: File): Promise<string | null> {
-		// Validate file type
-		if (!validateMimeType(file.type)) {
-			return 'Invalid file type. Only WebP images are accepted';
-		}
+  /**
+   * Validate file on the client side before uploading.
+   */
+  async function validateFile(file: File): Promise<string | null> {
+    // Validate file type
+    if (!validateMimeType(file.type)) {
+      return 'Invalid file type. Only WebP images are accepted';
+    }
 
-		// Validate file size (10MB)
-		if (!validateFileSize(file.size, 10 * 1024 * 1024)) {
-			return 'File too large. Maximum size is 10MB';
-		}
+    if (!validateFileSize(file.size, maxSize)) {
+      const maxSizeKb = Math.round(maxSize / 1024);
+      if (maxSizeKb < 1024) {
+        return `File too large. Maximum size is ${maxSizeKb}KB`;
+      }
+      return `File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB`;
+    }
 
-		// Deep WebP validation - check magic bytes
-		try {
-			const buffer = await file.arrayBuffer();
-			if (!validateWebP(buffer)) {
-				return 'Invalid WebP file format';
-			}
-		} catch {
-			return 'Failed to read file';
-		}
+    // Deep WebP validation - check magic bytes
+    try {
+      const buffer = await file.arrayBuffer();
+      if (!validateWebP(buffer)) {
+        return 'Invalid WebP file format';
+      }
+    } catch {
+      return 'Failed to read file';
+    }
 
-		// Get image dimensions for aspect ratio validation if needed
-		if (aspectRatio) {
-			const dimensions = await getImageDimensions(file);
-			if (!dimensions) {
-				return 'Failed to read image dimensions';
-			}
+    const dimensions = await getImageDimensions(file);
+    if ((aspectRatio || exactDimensions) && !dimensions) {
+      return 'Failed to read image dimensions';
+    }
 
-			const actualRatio = dimensions.width / dimensions.height;
-			const expectedRatio = aspectRatio.width / aspectRatio.height;
-			const tolerance = 0.02; // 2% tolerance
+    if (exactDimensions && dimensions) {
+      if (
+        dimensions.width !== exactDimensions.width ||
+        dimensions.height !== exactDimensions.height
+      ) {
+        return `Invalid image dimensions (${dimensions.width}x${dimensions.height}). Expected exactly ${exactDimensions.width}x${exactDimensions.height}.`;
+      }
+    } else if (aspectRatio && dimensions) {
+      const actualRatio = dimensions.width / dimensions.height;
+      const expectedRatio = aspectRatio.width / aspectRatio.height;
+      const tolerance = 0.02;
 
-			if (Math.abs(actualRatio - expectedRatio) > tolerance) {
-				return `Invalid aspect ratio. Expected ${aspectRatio.width}:${aspectRatio.height}`;
-			}
-		}
+      if (Math.abs(actualRatio - expectedRatio) > tolerance) {
+        return `Invalid aspect ratio. Expected ${aspectRatio.width}:${aspectRatio.height}`;
+      }
+    }
 
-		return null;
-	}
+    return null;
+  }
 
-	/**
-	 * Upload a single file with progress tracking
-	 */
-	async function uploadSingleImage(item: UploadItem): Promise<void> {
-		item.status = 'uploading';
+  /**
+   * Upload a single file with progress tracking
+   */
+  async function uploadSingleImage(item: UploadItem): Promise<void> {
+    item.status = 'uploading';
 
-		// Client-side validation
-		const validationError = await validateFile(item.file);
-		if (validationError) {
-			item.status = 'error';
-			item.error = validationError;
-			return;
-		}
+    // Client-side validation
+    const validationError = await validateFile(item.file);
+    if (validationError) {
+      item.status = 'error';
+      item.error = validationError;
+      return;
+    }
 
-		try {
-			// Get dimensions for server-side validation
-			const dimensions = await getImageDimensions(item.file);
+    try {
+      // Get dimensions for server-side validation
+      const dimensions = await getImageDimensions(item.file);
 
-			const formData = new FormData();
-			formData.append('file', item.file);
-			formData.append('type', 'carousel');
+      const formData = new FormData();
+      formData.append('file', item.file);
+      formData.append('type', uploadType);
 
-			if (dimensions) {
-				formData.append('width', dimensions.width.toString());
-				formData.append('height', dimensions.height.toString());
-			}
+      if (dimensions) {
+        formData.append('width', dimensions.width.toString());
+        formData.append('height', dimensions.height.toString());
+      }
 
-			// Simulate progress for better UX
-			const progressInterval = setInterval(() => {
-				if (item.progress < 90) {
-					item.progress += 10;
-				}
-			}, 100);
+      // Simulate progress for better UX
+      const progressInterval = setInterval(() => {
+        if (item.progress < 90) {
+          item.progress += 10;
+        }
+      }, 100);
 
-			const response = await fetch('/api/upload', {
-				method: 'POST',
-				body: formData
-			});
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
 
-			clearInterval(progressInterval);
+      clearInterval(progressInterval);
 
-			if (!response.ok) {
-				const errorData = (await response.json().catch(() => ({}))) as { message?: string };
-				throw new Error(errorData.message || 'Upload failed');
-			}
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
+        throw new Error(errorData.message || errorData.error || 'Upload failed');
+      }
 
-			const data = (await response.json()) as { url: string; key: string; size: number };
-			item.progress = 100;
-			item.status = 'complete';
-			item.url = data.url;
+      const data = (await response.json()) as { url: string; key: string; size: number };
+      item.progress = 100;
+      item.status = 'complete';
+      item.url = data.url;
 
-			// Add to value array
-			onchange?.([...value, data.url]);
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Upload failed';
-			item.status = 'error';
-			item.error = message;
-		}
-	}
+      // Add to value array
+      onchange?.([...value, data.url]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      item.status = 'error';
+      item.error = message;
+    }
+  }
 
-	/**
-	 * Process upload queue in parallel batches
-	 */
-	async function processUploadQueue(): Promise<void> {
-		const concurrent = 3;
-		const pendingItems = uploadQueue.filter((i) => i.status === 'pending');
+  /**
+   * Process upload queue in parallel batches
+   */
+  async function processUploadQueue(): Promise<void> {
+    const concurrent = 3;
+    const pendingItems = uploadQueue.filter((i) => i.status === 'pending');
 
-		// Process in chunks of 3
-		for (let i = 0; i < pendingItems.length; i += concurrent) {
-			const chunk = pendingItems.slice(i, i + concurrent);
-			await Promise.all(chunk.map((item) => uploadSingleImage(item)));
-		}
+    // Process in chunks of 3
+    for (let i = 0; i < pendingItems.length; i += concurrent) {
+      const chunk = pendingItems.slice(i, i + concurrent);
+      await Promise.all(chunk.map((item) => uploadSingleImage(item)));
+    }
 
-		// Remove completed items after a delay
-		setTimeout(() => {
-			uploadQueue = uploadQueue.filter((i) => i.status !== 'complete');
-		}, 1000);
-	}
+    // Remove completed items after a delay
+    setTimeout(() => {
+      uploadQueue = uploadQueue.filter((i) => i.status !== 'complete');
+    }, 1000);
+  }
 
-	/**
-	 * Handle multiple files selection
-	 */
-	async function handleMultipleFiles(files: File[]): Promise<void> {
-		// Validate count
-		if (value.length + files.length > maxImages) {
-			toast.error(`Maximum ${maxImages} images allowed`);
-			return;
-		}
+  /**
+   * Handle multiple files selection
+   */
+  async function handleMultipleFiles(files: File[]): Promise<void> {
+    // Validate count
+    if (value.length + files.length > maxImages) {
+      toast.error(`Maximum ${maxImages} images allowed`);
+      return;
+    }
 
-		// Add to queue
-		const newItems: UploadItem[] = files.map((file) => ({
-			file,
-			status: 'pending',
-			progress: 0,
-			error: undefined
-		}));
+    // Add to queue
+    const newItems: UploadItem[] = files.map((file) => ({
+      file,
+      status: 'pending',
+      progress: 0,
+      error: undefined
+    }));
 
-		uploadQueue = [...uploadQueue, ...newItems];
+    uploadQueue = [...uploadQueue, ...newItems];
 
-		// Process queue
-		await processUploadQueue();
-	}
+    // Process queue
+    await processUploadQueue();
+  }
 
-	function handleFileSelect(event: Event) {
-		const input = event.target as HTMLInputElement;
-		const files = Array.from(input.files || []);
-		if (files.length > 0) {
-			handleMultipleFiles(files);
-		}
-		// Reset input so same files can be selected again
-		input.value = '';
-	}
+  function handleFileSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+    if (files.length > 0) {
+      handleMultipleFiles(files);
+    }
+    // Reset input so same files can be selected again
+    input.value = '';
+  }
 
-	function handleDragOver(event: DragEvent) {
-		event.preventDefault();
-		if (!disabled && value.length < maxImages) {
-			isDragOver = true;
-		}
-	}
+  function handleDragOver(event: DragEvent) {
+    event.preventDefault();
+    if (!disabled && value.length < maxImages) {
+      isDragOver = true;
+    }
+  }
 
-	function handleDragLeave() {
-		isDragOver = false;
-	}
+  function handleDragLeave() {
+    isDragOver = false;
+  }
 
-	function handleDrop(event: DragEvent) {
-		event.preventDefault();
-		isDragOver = false;
+  function handleDrop(event: DragEvent) {
+    event.preventDefault();
+    isDragOver = false;
 
-		if (disabled || value.length >= maxImages) return;
+    if (disabled || value.length >= maxImages) return;
 
-		const files = Array.from(event.dataTransfer?.files || []);
-		if (files.length > 0) {
-			handleMultipleFiles(files);
-		}
-	}
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (files.length > 0) {
+      handleMultipleFiles(files);
+    }
+  }
 
-	function handleRemove(index: number) {
-		const newUrls = value.filter((_, i) => i !== index);
-		onchange?.(newUrls);
-		toast.info('Image removed');
-	}
+  function handleRemove(index: number) {
+    const newUrls = value.filter((_, i) => i !== index);
+    onchange?.(newUrls);
+    toast.info('Image removed');
+  }
 
-	function handleClick() {
-		if (!disabled && value.length < maxImages && uploadQueue.length === 0) {
-			fileInput?.click();
-		}
-	}
+  function handleClick() {
+    if (!disabled && value.length < maxImages && uploadQueue.length === 0) {
+      fileInput?.click();
+    }
+  }
 </script>
 
 <div class="carousel-uploader">
-	<p class="uploader-label">
-		Carousel Images
-		{#if minImages > 0}
-			<span class="label-hint">({value.length}/{maxImages} uploaded, min {minImages})</span>
-		{:else}
-			<span class="label-hint">({value.length}/{maxImages} uploaded)</span>
-		{/if}
-	</p>
+  <p class="uploader-label">
+    {label}
+    {#if minImages > 0}
+      <span class="label-hint">({value.length}/{maxImages} uploaded, min {minImages})</span>
+    {:else}
+      <span class="label-hint">({value.length}/{maxImages} uploaded)</span>
+    {/if}
+  </p>
+  {#if description}
+    <p class="uploader-description">{description}</p>
+  {/if}
 
-	{#if uploadQueue.length > 0}
-		<div class="upload-queue">
-			{#each uploadQueue as item}
-				<div class="upload-item" class:error={item.status === 'error'}>
-					<div class="upload-info">
-						<span class="upload-filename">{item.file.name}</span>
-						{#if item.status === 'uploading'}
-							<div class="progress-bar-container">
-								<div class="progress-bar" style="width: {item.progress}%"></div>
-							</div>
-						{:else if item.status === 'error'}
-							<span class="upload-error">{item.error}</span>
-						{:else if item.status === 'complete'}
-							<span class="upload-success">✓ Uploaded</span>
-						{/if}
-					</div>
-				</div>
-			{/each}
-		</div>
-	{/if}
+  {#if uploadQueue.length > 0}
+    <div class="upload-queue">
+      {#each uploadQueue as item}
+        <div class="upload-item" class:error={item.status === 'error'}>
+          <div class="upload-info">
+            <span class="upload-filename">{item.file.name}</span>
+            {#if item.status === 'uploading'}
+              <div class="progress-bar-container">
+                <div class="progress-bar" style="width: {item.progress}%"></div>
+              </div>
+            {:else if item.status === 'error'}
+              <span class="upload-error">{item.error}</span>
+            {:else if item.status === 'complete'}
+              <span class="upload-success">✓ Uploaded</span>
+            {/if}
+          </div>
+        </div>
+      {/each}
+    </div>
+  {/if}
 
-	{#if value.length > 0}
-		<div class="image-grid">
-			{#each value as url, index}
-				<div class="image-card">
-					<img src={url} alt="Carousel {index + 1}" class="image-preview" />
-				<button
-					type="button"
-					class="image-remove"
-					aria-label="Remove image {index + 1}"
-					onclick={() => handleRemove(index)}
-					disabled={disabled}
-				>
-					<X size={16} />
-				</button>
-				</div>
-			{/each}
-		</div>
-	{/if}
+  {#if value.length > 0}
+    <div class="image-grid">
+      {#each value as url, index}
+        <div class="image-card">
+          <img src={url} alt="Carousel {index + 1}" class="image-preview" />
+          <button
+            type="button"
+            class="image-remove"
+            aria-label="Remove image {index + 1}"
+            onclick={() => handleRemove(index)}
+            {disabled}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      {/each}
+    </div>
+  {/if}
 
-	{#if value.length < maxImages}
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			class="dropzone"
-			class:drag-over={isDragOver}
-			class:disabled
-			ondragover={handleDragOver}
-			ondragleave={handleDragLeave}
-			ondrop={handleDrop}
-			onclick={handleClick}
-		>
-			<input
-				bind:this={fileInput}
-				type="file"
-				accept="image/webp"
-				multiple
-				onchange={handleFileSelect}
-				disabled={disabled}
-				class="file-input"
-			/>
+  {#if value.length < maxImages}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="dropzone"
+      class:drag-over={isDragOver}
+      class:disabled
+      ondragover={handleDragOver}
+      ondragleave={handleDragLeave}
+      ondrop={handleDrop}
+      onclick={handleClick}
+    >
+      <input
+        bind:this={fileInput}
+        type="file"
+        accept="image/webp"
+        multiple
+        onchange={handleFileSelect}
+        {disabled}
+        class="file-input"
+      />
 
-		<Upload class="upload-icon" size={32} />
-		<p class="dropzone-text">
-			{isDragOver ? 'Drop images here' : 'Drag & drop or click to upload'}
-		</p>
-		<p class="dropzone-hint">
-			WebP images only • Max {maxImages} images • 10MB per image
-		</p>
-		</div>
-	{/if}
+      <Upload class="upload-icon" size={32} />
+      <p class="dropzone-text">
+        {isDragOver ? 'Drop images here' : 'Drag & drop or click to upload'}
+      </p>
+      <p class="dropzone-hint">
+        WebP images only • Max {maxImages} images •
+        {maxSize < 1024 * 1024
+          ? `${Math.round(maxSize / 1024)}KB per image`
+          : `${Math.round(maxSize / 1024 / 1024)}MB per image`}
+      </p>
+    </div>
+  {/if}
 
-	{#if value.length < minImages}
-		<p class="requirement-hint">
-			{minImages - value.length} more image(s) required
-		</p>
-	{/if}
+  {#if value.length < minImages}
+    <p class="requirement-hint">
+      {minImages - value.length} more image(s) required
+    </p>
+  {/if}
 </div>
 
 <style>
-	.carousel-uploader {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);
-	}
+  .carousel-uploader {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
 
-	.uploader-label {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-		display: flex;
-		align-items: center;
-		gap: var(--space-xs);
-	}
+  .uploader-label {
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-fg-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
 
-	.label-hint {
-		font-size: var(--text-caption);
-		font-weight: var(--font-normal);
-		color: var(--color-fg-muted);
-	}
+  .label-hint {
+    font-size: var(--text-caption);
+    font-weight: var(--font-normal);
+    color: var(--color-fg-muted);
+  }
 
-	.upload-queue {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-	}
+  .uploader-description {
+    font-size: var(--text-caption);
+    color: var(--color-fg-secondary);
+    margin: calc(-1 * var(--space-sm)) 0 0;
+  }
 
-	.upload-item {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		background: var(--color-bg-elevated);
-		border-radius: var(--radius-sm);
-	}
+  .upload-queue {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
 
-	.upload-item.error {
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-	}
+  .upload-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--color-bg-elevated);
+    border-radius: var(--radius-sm);
+  }
 
-	.upload-info {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-	}
+  .upload-item.error {
+    background: var(--color-error-muted);
+    border: 1px solid var(--color-error-border);
+  }
 
-	.upload-filename {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
+  .upload-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
 
-	.progress-bar-container {
-		width: 100%;
-		height: 4px;
-		background: var(--color-border-default);
-		border-radius: var(--radius-full);
-		overflow: hidden;
-	}
+  .upload-filename {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-	.progress-bar {
-		height: 100%;
-		background: var(--color-fg-primary);
-		border-radius: var(--radius-full);
-		transition: width var(--duration-micro) var(--ease-standard);
-	}
+  .progress-bar-container {
+    width: 100%;
+    height: 4px;
+    background: var(--color-border-default);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
 
-	.upload-error {
-		font-size: var(--text-caption);
-		color: var(--color-error);
-	}
+  .progress-bar {
+    height: 100%;
+    background: var(--color-fg-primary);
+    border-radius: var(--radius-full);
+    transition: width var(--duration-micro) var(--ease-standard);
+  }
 
-	.upload-success {
-		font-size: var(--text-caption);
-		color: var(--color-success);
-	}
+  .upload-error {
+    font-size: var(--text-caption);
+    color: var(--color-error);
+  }
 
-	.image-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-		gap: var(--space-sm);
-	}
+  .upload-success {
+    font-size: var(--text-caption);
+    color: var(--color-success);
+  }
 
-	.image-card {
-		position: relative;
-		border-radius: var(--radius-md);
-		overflow: hidden;
-		border: 1px solid var(--color-border-default);
-		background: var(--color-bg-surface);
-	}
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--space-sm);
+  }
 
-	.image-preview {
-		width: 100%;
-		aspect-ratio: 16/10;
-		object-fit: cover;
-		display: block;
-	}
+  .image-card {
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border-default);
+    background: var(--color-bg-surface);
+  }
 
-	.image-remove {
-		position: absolute;
-		top: var(--space-xs);
-		right: var(--space-xs);
-		width: 24px;
-		height: 24px;
-		border-radius: 50%;
-		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
-		color: var(--color-fg-secondary);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
+  .image-preview {
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    display: block;
+  }
 
-	.image-remove:hover:not(:disabled) {
-		background: var(--color-error-muted);
-		border-color: var(--color-error-border);
-		color: var(--color-error);
-	}
+  .image-remove {
+    position: absolute;
+    top: var(--space-xs);
+    right: var(--space-xs);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-bg-pure);
+    border: 1px solid var(--color-border-default);
+    color: var(--color-fg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
 
-	.image-remove:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
+  .image-remove:hover:not(:disabled) {
+    background: var(--color-error-muted);
+    border-color: var(--color-error-border);
+    color: var(--color-error);
+  }
 
-	.image-remove:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
-	}
+  .image-remove:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
-	.dropzone {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-lg);
-		border: 2px dashed var(--color-border-default);
-		border-radius: var(--radius-lg);
-		background: var(--color-bg-surface);
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
+  .image-remove:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
 
-	.dropzone:hover:not(.disabled) {
-		border-color: var(--color-border-emphasis);
-		background: var(--color-hover);
-	}
+  .dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+    border: 2px dashed var(--color-border-default);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-surface);
+    cursor: pointer;
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
 
-	.dropzone.drag-over {
-		border-color: var(--color-border-strong);
-		background: var(--color-active);
-	}
+  .dropzone:hover:not(.disabled) {
+    border-color: var(--color-border-emphasis);
+    background: var(--color-hover);
+  }
 
-	.dropzone.disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
+  .dropzone.drag-over {
+    border-color: var(--color-border-strong);
+    background: var(--color-active);
+  }
 
-	.file-input {
-		display: none;
-	}
+  .dropzone.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
-	:global(.upload-icon) {
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-sm);
-	}
+  .file-input {
+    display: none;
+  }
 
-	.dropzone-text {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-secondary);
-		margin: 0;
-	}
+  :global(.upload-icon) {
+    color: var(--color-fg-muted);
+    margin-bottom: var(--space-sm);
+  }
 
-	.dropzone-hint {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin: var(--space-xs) 0 0;
-		text-align: center;
-	}
+  .dropzone-text {
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-fg-secondary);
+    margin: 0;
+  }
 
-	.requirement-hint {
-		font-size: var(--text-body-sm);
-		color: var(--color-warning);
-		margin: 0;
-		text-align: center;
-	}
+  .dropzone-hint {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    margin: var(--space-xs) 0 0;
+    text-align: center;
+  }
+
+  .requirement-hint {
+    font-size: var(--text-body-sm);
+    color: var(--color-warning);
+    margin: 0;
+    text-align: center;
+  }
 </style>
