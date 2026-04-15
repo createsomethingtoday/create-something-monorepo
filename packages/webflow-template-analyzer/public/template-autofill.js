@@ -502,6 +502,88 @@
     return true;
   }
 
+  // ─── Screenshot autofill ─────────────────────────────────────────────────
+
+  var SCREENSHOT_MAP = [
+    { key: "primary",   inputId: "Thumbnail-Image" },
+    { key: "secondary", inputId: "Thumbnail-Image-Secondary" },
+    { key: "gallery-0", inputId: "Gallery-Image-1" },
+    { key: "gallery-1", inputId: "Gallery-Image-2" },
+    { key: "gallery-2", inputId: "Gallery-Image-3" },
+    { key: "gallery-3", inputId: "Gallery-Image-4" },
+    { key: "gallery-4", inputId: "Gallery-Image-5" }
+  ];
+
+  function extractFilename(path) {
+    return String(path).split("/").pop();
+  }
+
+  function setWebflowFileUploadState(fileInput, filename) {
+    var uploadWidget = fileInput.closest(".w-file-upload");
+    if (!uploadWidget) return;
+
+    var defaultState = uploadWidget.querySelector(".w-file-upload-default");
+    var successState = uploadWidget.querySelector(".w-file-upload-success");
+    var fileNameEl = uploadWidget.querySelector(".w-file-upload-file-name");
+
+    if (defaultState) defaultState.classList.add("w-hidden");
+    if (successState) {
+      successState.classList.remove("w-hidden");
+      successState.removeAttribute("tabindex");
+    }
+    if (fileNameEl) fileNameEl.textContent = filename;
+  }
+
+  async function fillFileInput(inputId, blobUrl, filename) {
+    var fileInput = getEl(inputId);
+    if (!fileInput) return false;
+
+    try {
+      var response = await fetch(blobUrl);
+      if (!response.ok) return false;
+
+      var blob = await response.blob();
+      var file = new File([blob], filename, { type: "image/webp" });
+      var dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+
+      setWebflowFileUploadState(fileInput, filename);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function fillScreenshots(screenshots) {
+    if (!screenshots || typeof screenshots !== "object") return;
+
+    var tasks = [];
+
+    SCREENSHOT_MAP.forEach(function (entry) {
+      var path;
+      if (entry.key === "primary") {
+        path = screenshots.primary;
+      } else if (entry.key === "secondary") {
+        path = screenshots.secondary;
+      } else if (entry.key.indexOf("gallery-") === 0) {
+        var idx = parseInt(entry.key.split("-")[1], 10);
+        path = Array.isArray(screenshots.gallery) ? screenshots.gallery[idx] : null;
+      }
+
+      if (!path) return;
+
+      var filename = extractFilename(path);
+      var url = API_BASE + "/screenshots/" + filename;
+      tasks.push(fillFileInput(entry.inputId, url, filename));
+    });
+
+    await Promise.allSettled(tasks);
+  }
+
+  // ─── Fill all form fields from API result ──────────────────────────────────
+
   function fillForm(result) {
     if (!result || typeof result !== "object") return;
 
@@ -561,6 +643,11 @@
       }
     });
     updateCounter("category-counter", countCheckedCategories(), MAX_CATEGORIES, "categories");
+
+    // Screenshots (async, runs after form fields are set)
+    if (result.screenshots) {
+      fillScreenshots(result.screenshots);
+    }
   }
 
   async function waitForValidationSuccess(token, expectedUrl) {
