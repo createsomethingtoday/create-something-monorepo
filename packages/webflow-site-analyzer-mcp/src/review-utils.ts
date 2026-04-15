@@ -153,6 +153,48 @@ export function resolveDesignerSlug(
 }
 
 // =============================================================================
+// WCAG Contrast Utilities (testable outside of browser context)
+// =============================================================================
+
+/**
+ * Calculate relative luminance per WCAG 2.1.
+ * Input: sRGB values 0-255.
+ */
+export function wcagLuminance(r: number, g: number, b: number): number {
+  const [rs, gs, bs] = [r, g, b].map((c) => {
+    c = c / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+
+/**
+ * Calculate WCAG contrast ratio between two colors.
+ * Returns a value >= 1 (e.g., 4.5 means 4.5:1).
+ */
+export function wcagContrastRatio(
+  fg: { r: number; g: number; b: number },
+  bg: { r: number; g: number; b: number }
+): number {
+  const l1 = wcagLuminance(fg.r, fg.g, fg.b);
+  const l2 = wcagLuminance(bg.r, bg.g, bg.b);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Determine the WCAG AA contrast threshold for text.
+ * Normal text: 4.5:1
+ * Large text (>=24px, or >=18.66px if bold): 3:1
+ */
+export function wcagThreshold(fontSizePx: number, isBold: boolean): number {
+  if (fontSizePx >= 24) return 3;
+  if (fontSizePx >= 18.66 && isBold) return 3;
+  return 4.5;
+}
+
+// =============================================================================
 // Scoring
 // =============================================================================
 
