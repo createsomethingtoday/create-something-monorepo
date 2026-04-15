@@ -19,7 +19,10 @@ import json
 import io
 import base64
 import time
+from dataclasses import dataclass
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Any, Iterator
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -27,6 +30,11 @@ load_dotenv()
 from PIL import Image
 import anthropic
 from playwright.sync_api import sync_playwright, Page
+
+try:
+    from steel import Steel
+except ImportError:
+    Steel = None
 
 # ─── Form field mappings (exact IDs from the Webflow submission form) ─────────
 
@@ -89,6 +97,103 @@ CATEGORIES = [
 
 RETRYABLE_ANTHROPIC_STATUS_CODES = {429, 500, 503, 504, 529}
 MAX_ANTHROPIC_ATTEMPTS = 3
+DEFAULT_VIEWPORT = {"width": 1440, "height": 900}
+DEFAULT_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/124.0.0.0 Safari/537.36"
+)
+DEFAULT_STEEL_SESSION_TIMEOUT_MS = 20 * 60 * 1000
+
+
+@dataclass
+class BrowserPageSession:
+    browser: Any
+    page: Page
+    provider: str
+    steel_client: Any | None = None
+    steel_session: Any | None = None
+
+    @property
+    def viewer_url(self) -> str | None:
+        if not self.steel_session:
+            return None
+        session_id = getattr(self.steel_session, "id", None)
+        return (
+            getattr(self.steel_session, "session_viewer_url", None)
+            or getattr(self.steel_session, "sessionViewerUrl", None)
+            or (f"https://app.steel.dev/sessions/{session_id}" if session_id else None)
+        )
+
+
+def steel_enabled() -> bool:
+    return bool(os.environ.get("STEEL_API_KEY"))
+
+
+def browser_provider_name() -> str:
+    return "steel" if steel_enabled() else "playwright"
+
+
+def steel_session_timeout_ms() -> int:
+    raw = os.environ.get("STEEL_SESSION_TIMEOUT_MS", "").strip()
+    if not raw:
+        return DEFAULT_STEEL_SESSION_TIMEOUT_MS
+    try:
+        parsed = int(raw)
+    except ValueError:
+        return DEFAULT_STEEL_SESSION_TIMEOUT_MS
+    return parsed if parsed > 0 else DEFAULT_STEEL_SESSION_TIMEOUT_MS
+
+
+@contextmanager
+def open_browser_page(*, headless: bool, slow_mo: int = 0) -> Iterator[BrowserPageSession]:
+    with sync_playwright() as p:
+        session: BrowserPageSession | None = None
+        try:
+            if headless and steel_enabled():
+                if Steel is None:
+                    raise RuntimeError("STEEL_API_KEY is set but steel-sdk is not installed.")
+
+                steel_client = Steel(steel_api_key=os.environ["STEEL_API_KEY"])
+                steel_session = steel_client.sessions.create(timeout=steel_session_timeout_ms())
+                browser = p.chromium.connect_over_cdp(
+                    f"wss://connect.steel.dev?apiKey={os.environ['STEEL_API_KEY']}&sessionId={steel_session.id}"
+                )
+                context = browser.contexts[0] if browser.contexts else browser.new_context()
+                page = context.pages[0] if context.pages else context.new_page()
+                page.set_viewport_size(DEFAULT_VIEWPORT)
+                session = BrowserPageSession(
+                    browser=browser,
+                    page=page,
+                    provider="steel",
+                    steel_client=steel_client,
+                    steel_session=steel_session,
+                )
+            else:
+                browser = p.chromium.launch(headless=headless, slow_mo=slow_mo)
+                context = browser.new_context(
+                    viewport=DEFAULT_VIEWPORT,
+                    user_agent=DEFAULT_USER_AGENT,
+                )
+                session = BrowserPageSession(
+                    browser=browser,
+                    page=context.new_page(),
+                    provider="playwright",
+                )
+
+            yield session
+        finally:
+            if session:
+                try:
+                    session.browser.close()
+                except Exception:
+                    pass
+
+                if session.steel_client and session.steel_session:
+                    try:
+                        session.steel_client.sessions.release(session.steel_session.id)
+                    except Exception:
+                        pass
 
 # ─── Image helpers ────────────────────────────────────────────────────────────
 
@@ -146,17 +251,9 @@ def analyze_template(url: str) -> dict:
     """
     print(f"\nLoading {url} ...")
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        ctx = browser.new_context(
-            viewport={"width": 1440, "height": 900},
-            user_agent=(
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0.0.0 Safari/537.36"
-            ),
-        )
-        page = ctx.new_page()
+    with open_browser_page(headless=True) as browser_session:
+        page = browser_session.page
+        print(f"✓ Browser provider: {browser_session.provider}")
 
         try:
             page.goto(url, wait_until="networkidle", timeout=60_000)
@@ -267,7 +364,6 @@ def analyze_template(url: str) -> dict:
             )
             screenshots["gallery"].append(str(dest))
 
-        browser.close()
         print("✓ Screenshots saved to ./output/")
 
         # ── Claude analysis ───────────────────────────────────────────────────
@@ -486,9 +582,8 @@ def open_form_in_browser(result: dict, template_url: str) -> None:
     Blocks until the user closes the page (or 1 hour elapses) so the browser
     stays alive. Meant to be called in a background thread from the API server.
     """
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, slow_mo=80)
-        page = browser.new_context(viewport={"width": 1440, "height": 900}).new_page()
+    with open_browser_page(headless=False, slow_mo=80) as browser_session:
+        page = browser_session.page
         page.goto(FORM_URL, wait_until="networkidle")
         page.wait_for_timeout(2000)
 
@@ -506,10 +601,6 @@ def open_form_in_browser(result: dict, template_url: str) -> None:
             page.wait_for_event("close", timeout=3_600_000)
         except Exception:
             pass
-        try:
-            browser.close()
-        except Exception:
-            pass
 
 
 # ─── Direct mode: analyze first, then open form ───────────────────────────────
@@ -524,9 +615,8 @@ def direct_mode(template_url: str) -> None:
         return
 
     print("\nOpening Webflow submission form...")
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, slow_mo=80)
-        page = browser.new_context(viewport={"width": 1440, "height": 900}).new_page()
+    with open_browser_page(headless=False, slow_mo=80) as browser_session:
+        page = browser_session.page
         page.goto(FORM_URL, wait_until="networkidle")
         page.wait_for_timeout(2000)
 
@@ -542,15 +632,13 @@ def direct_mode(template_url: str) -> None:
         _post_fill_instructions(result)
 
         input("Press Enter to close the browser...")
-        browser.close()
 
 
 # ─── Interactive mode: open form first, wait for "Generate" button ────────────
 
 def interactive_mode() -> None:
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, slow_mo=60)
-        page = browser.new_context(viewport={"width": 1440, "height": 900}).new_page()
+    with open_browser_page(headless=False, slow_mo=60) as browser_session:
+        page = browser_session.page
 
         # We'll receive the URL via a custom CDP / evaluate trick.
         # The injected button sets window.__ai_url and we poll for it.
@@ -627,7 +715,6 @@ def interactive_mode() -> None:
                 }
             }""")
             input("Press Enter to close the browser...")
-            browser.close()
             return
 
         print_summary(result)
@@ -647,7 +734,6 @@ def interactive_mode() -> None:
 
         _post_fill_instructions(result)
         input("Press Enter to close the browser...")
-        browser.close()
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────────

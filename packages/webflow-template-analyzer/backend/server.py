@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Webflow Template Analyzer — local API server (Designer Extension edition).
+Webflow Template Analyzer — hosted API with optional extension UI.
 
 Usage
 -----
@@ -8,13 +8,13 @@ Usage
 
 Routes
 ------
-  GET  /extension          Designer Extension UI (served into Webflow Designer)
+  GET  /                   Hosted analyzer UI
+  GET  /extension          Extension-facing analyzer UI
   POST /analyze            Run analysis on a template URL
   POST /open-form          Open Webflow submission form pre-filled in a visible browser
   GET  /screenshots/...    Serve / download screenshots
   GET  /install            Tampermonkey install page (legacy, still included)
   GET  /analyzer.user.js   Tampermonkey userscript (legacy, still included)
-  GET  /                   Standalone web UI (static/index.html)
 """
 
 import asyncio
@@ -34,7 +34,7 @@ from pydantic import BaseModel
 
 load_dotenv()
 
-from analyze import analyze_template, open_form_in_browser  # noqa: E402
+from analyze import analyze_template, browser_provider_name, open_form_in_browser, steel_enabled  # noqa: E402
 
 # ─── App setup ────────────────────────────────────────────────────────────────
 
@@ -60,6 +60,12 @@ def visible_browser_enabled() -> bool:
     return os.environ.get("ALLOW_VISIBLE_BROWSER", "true").lower() in {"1", "true", "yes"}
 
 
+def read_ui_html() -> str:
+    if not EXTENSION_HTML.exists():
+        raise HTTPException(status_code=404, detail="Analyzer UI not found")
+    return EXTENSION_HTML.read_text()
+
+
 # ─── Models ───────────────────────────────────────────────────────────────────
 
 class AnalyzeRequest(BaseModel):
@@ -78,16 +84,35 @@ async def health():
     return {
         "status": "ok",
         "key_set": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        "steel_key_set": steel_enabled(),
+        "browser_provider": browser_provider_name(),
         "visible_browser": visible_browser_enabled(),
     }
 
 
+@app.get("/", response_class=HTMLResponse)
+async def serve_root():
+    """Serve the hosted analyzer UI."""
+    return HTMLResponse(read_ui_html())
+
+
 @app.get("/extension", response_class=HTMLResponse)
 async def serve_extension():
-    """Serve the Designer Extension UI."""
-    if not EXTENSION_HTML.exists():
-        raise HTTPException(status_code=404, detail="Extension HTML not found")
-    return HTMLResponse(EXTENSION_HTML.read_text())
+    """Serve the extension-facing analyzer UI."""
+    return HTMLResponse(read_ui_html())
+
+
+@app.get("/template-autofill.js")
+async def serve_autofill_script():
+    """Serve the form autofill script for embedding on the submission page."""
+    script_path = BASE_DIR.parent / "public" / "template-autofill.js"
+    if not script_path.exists():
+        raise HTTPException(status_code=404, detail="Autofill script not found")
+    return Response(
+        content=script_path.read_text(),
+        media_type="application/javascript",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @app.post("/analyze")

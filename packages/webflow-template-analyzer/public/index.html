@@ -74,25 +74,10 @@
     }
     #status.error { color: #f87171; }
 
-    .config-panel {
-      margin-bottom: 10px;
-      border: 1px solid #1c1c1f;
-      border-radius: 6px;
-      background: #131316;
-      padding: 10px;
-    }
-    .config-panel > summary {
-      cursor: pointer;
-      list-style: none;
-      font-size: 11px;
-      color: #9ca3af;
-    }
-    .config-panel > summary::-webkit-details-marker { display: none; }
-    .config-panel[open] > summary { margin-bottom: 10px; }
-    .config-note {
+    .helper-note {
       font-size: 11px;
       color: #6b7280;
-      margin-top: 6px;
+      margin-top: 8px;
       line-height: 1.4;
     }
 
@@ -201,15 +186,9 @@
   <label for="url-input">Template URL</label>
   <input type="text" id="url-input" placeholder="https://your-template-url.com">
 </div>
-
-<details class="config-panel">
-  <summary>Backend settings</summary>
-  <div class="field-row">
-    <label for="api-input">API base URL</label>
-    <input type="text" id="api-input" placeholder="https://your-analyzer-api.onrender.com">
-  </div>
-  <div class="config-note" id="api-note"></div>
-</details>
+<div class="helper-note">
+  Send any published Webflow template URL to the hosted analyzer API and use the returned JSON to update your form UI.
+</div>
 
 <button class="btn btn-primary" id="analyze-btn" onclick="runAnalysis()">
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -280,10 +259,6 @@
     Download all screenshots (ZIP)
   </button>
 
-  <hr class="divider" id="open-form-divider">
-  <button class="btn btn-green" id="open-form-btn" onclick="openSubmissionForm()">
-    Open submission form →
-  </button>
 </div>
 
 <!-- Lightbox -->
@@ -295,9 +270,8 @@
 <script>
   // ── Config ────────────────────────────────────────────────────────────────
   const LOCAL_API = 'http://localhost:7860';
-  const RENDER_API = 'https://create-something-template-analyzer-api.onrender.com';
-  const API_STORAGE_KEY = 'templateAnalyzerApiBase';
-  let API = resolveInitialApi();
+  const REMOTE_API = 'https://create-something-template-analyzer-api.onrender.com';
+  const API = resolveApiBase();
 
   const STEPS = [
     [0,     'Connecting to your template…'],
@@ -310,61 +284,12 @@
   let _currentResult = null;
   let _templateUrl   = '';
 
-  function normalizeApiBase(value) {
-    return (value || '').trim().replace(/\/+$/, '');
+  function resolveApiBase() {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return LOCAL_API;
+    if (typeof webflow !== 'undefined') return REMOTE_API;
+    return window.location.origin;
   }
-
-  function resolveInitialApi() {
-    const persisted = normalizeApiBase(window.localStorage.getItem(API_STORAGE_KEY));
-    if (persisted) return persisted;
-    return window.location.hostname === 'localhost' ? LOCAL_API : RENDER_API;
-  }
-
-  function isLocalApiBase(value) {
-    try {
-      const host = new URL(normalizeApiBase(value)).hostname;
-      return host === 'localhost' || host === '127.0.0.1';
-    } catch (error) {
-      return false;
-    }
-  }
-
-  function saveApiBase(value) {
-    const normalized = normalizeApiBase(value);
-    if (!normalized) {
-      window.localStorage.removeItem(API_STORAGE_KEY);
-      API = window.location.hostname === 'localhost' ? LOCAL_API : RENDER_API;
-    } else {
-      API = normalized;
-      window.localStorage.setItem(API_STORAGE_KEY, API);
-    }
-    syncApiUi();
-  }
-
-  function syncApiUi() {
-    const apiInput = document.getElementById('api-input');
-    const apiNote = document.getElementById('api-note');
-    const openFormDivider = document.getElementById('open-form-divider');
-    const openFormBtn = document.getElementById('open-form-btn');
-    const localMode = isLocalApiBase(API);
-
-    if (apiInput) apiInput.value = API;
-    if (apiNote) {
-      apiNote.textContent = localMode
-        ? 'Local mode. The extension talks to your machine, and “Open submission form” stays available.'
-        : 'Remote mode. The extension talks to the hosted API. “Open submission form” is hidden because it only works from a local backend.';
-    }
-    if (openFormDivider) openFormDivider.style.display = localMode ? '' : 'none';
-    if (openFormBtn) openFormBtn.style.display = localMode ? 'flex' : 'none';
-  }
-
-  const apiInput = document.getElementById('api-input');
-  if (apiInput) {
-    apiInput.value = API;
-    apiInput.addEventListener('change', (event) => saveApiBase(event.target.value));
-    apiInput.addEventListener('blur', (event) => saveApiBase(event.target.value));
-  }
-  syncApiUi();
 
   // ── Auto-fill URL from Webflow Designer ──────────────────────────────────
   (async () => {
@@ -499,22 +424,6 @@
     a.href = `${API}/screenshots/download`;
     a.download = 'template-screenshots.zip';
     a.click();
-  }
-
-  // ── Open submission form ───────────────────────────────────────────────────
-  async function openSubmissionForm() {
-    if (!_currentResult) return;
-    if (!isLocalApiBase(API)) {
-      setStatus('Open submission form only works with a local analyzer backend.', true);
-      return;
-    }
-    try {
-      await fetch(`${API}/open-form`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: _templateUrl, result: _currentResult }),
-      });
-    } catch (e) {}
   }
 
   // ── Lightbox ───────────────────────────────────────────────────────────────

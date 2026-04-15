@@ -7,7 +7,10 @@ interface Env {
   AnalyzerContainer: DurableObjectNamespace<AnalyzerContainer>;
   UPSTREAM_PORT?: string;
   SANDBOX_SLEEP_AFTER?: string;
+  ALLOW_VISIBLE_BROWSER?: string;
   ANTHROPIC_API_KEY?: string;
+  STEEL_API_KEY?: string;
+  STEEL_SESSION_TIMEOUT_MS?: string;
 }
 
 type AnalyzerContainerStub = DurableObjectStub<AnalyzerContainer>;
@@ -32,6 +35,7 @@ function normalizeSleepAfter(value: string | undefined): string {
 function buildContainerEnv(env: Env): Record<string, string> {
   const vars: Record<string, string> = {
     PORT: String(normalizePort(env.UPSTREAM_PORT)),
+    ALLOW_VISIBLE_BROWSER: env.ALLOW_VISIBLE_BROWSER?.trim() || 'false',
   };
 
   const anthropicApiKey = env.ANTHROPIC_API_KEY?.trim();
@@ -39,21 +43,38 @@ function buildContainerEnv(env: Env): Record<string, string> {
     vars.ANTHROPIC_API_KEY = anthropicApiKey;
   }
 
+  const steelApiKey = env.STEEL_API_KEY?.trim();
+  if (steelApiKey) {
+    vars.STEEL_API_KEY = steelApiKey;
+  }
+
+  const steelSessionTimeoutMs = env.STEEL_SESSION_TIMEOUT_MS?.trim();
+  if (steelSessionTimeoutMs) {
+    vars.STEEL_SESSION_TIMEOUT_MS = steelSessionTimeoutMs;
+  }
+
   return vars;
 }
 
 async function ensureAnalyzerServer(container: AnalyzerContainerStub, env: Env): Promise<void> {
-  await container.startAndWaitForPorts({
-    startOptions: {
+  const upstreamPort = normalizePort(env.UPSTREAM_PORT);
+
+  try {
+    await container.start({
       entrypoint: START_ENTRYPOINT,
       enableInternet: true,
       envVars: buildContainerEnv(env),
-    },
-    ports: [normalizePort(env.UPSTREAM_PORT)],
-    cancellationOptions: {
-      portReadyTimeoutMS: 120_000,
-      waitInterval: 1_000,
-    },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes('already running')) {
+      throw error;
+    }
+  }
+
+  await container.startAndWaitForPorts(upstreamPort, {
+    portReadyTimeoutMS: 120_000,
+    waitInterval: 1_000,
   });
 }
 
@@ -93,7 +114,7 @@ export default {
 
     try {
       await ensureAnalyzerServer(container, env);
-      return withCors(await container.fetch(request));
+      return withCors(await container.containerFetch(request, normalizePort(env.UPSTREAM_PORT)));
     } catch (error) {
       return Response.json(
         {

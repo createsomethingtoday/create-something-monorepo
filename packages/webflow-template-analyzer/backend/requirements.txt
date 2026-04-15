@@ -4,3 +4,4 @@ uvicorn[standard]>=0.30.0
 playwright>=1.48.0
 Pillow>=10.0.0
 python-dotenv>=1.0.0
+steel-sdk>=0.15.0

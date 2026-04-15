@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "webflow-template-analyzer",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
   "main": "src/index.ts",
   "compatibility_date": "2026-04-15",
   "compatibility_flags": [
@@ -35,6 +36,8 @@
   ],
   "vars": {
     "UPSTREAM_PORT": "7860",
-    "SANDBOX_SLEEP_AFTER": "20m"
+    "SANDBOX_SLEEP_AFTER": "20m",
+    "ALLOW_VISIBLE_BROWSER": "false",
+    "STEEL_SESSION_TIMEOUT_MS": "1200000"
   }
 }

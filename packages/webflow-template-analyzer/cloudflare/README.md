@@ -20,8 +20,11 @@ This directory provides a Cloudflare deployment path for the existing analyzer b
 Set as Worker secrets/vars in this Cloudflare project:
 
 - `ANTHROPIC_API_KEY` (secret, required)
+- `STEEL_API_KEY` (secret, optional, enables Steel-backed remote browser sessions)
 - `UPSTREAM_PORT` (var, optional, default `7860`)
 - `SANDBOX_SLEEP_AFTER` (var, optional, default `20m`)
+- `ALLOW_VISIBLE_BROWSER` (var, optional, default `false`)
+- `STEEL_SESSION_TIMEOUT_MS` (var, optional, default `1200000`)
 
 ## Deploy
 
@@ -37,7 +40,7 @@ This runs:
 1. `prepare-runtime` to stage current analyzer files into `cloudflare/runtime/`
 2. `wrangler deploy` to publish Worker + Container config
 
-After deploy, set the extension frontend API base URL (currently hardcoded in `public/index.html`) to your deployed Worker URL.
+The hosted UI uses same-origin when it is opened directly from the Worker URL. The bundled Webflow Designer extension still uses the remote fallback URL in `public/index.html`, so point that constant at the Worker URL if you want the extension to use Cloudflare instead of Render.
 
 ## Local Cloudflare dev
 

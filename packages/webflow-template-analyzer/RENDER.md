@@ -42,6 +42,11 @@ The initial Blueprint uses Render's `free` plan so the service can be created wi
 
    `curl https://create-something-template-analyzer-api.onrender.com/health`
 
-## Extension override
+## Extension API routing
 
-The Designer extension now includes a `Backend settings` panel. If the final Render URL differs from the default URL above, paste the deployed API base URL there once and it will persist in local storage.
+The Designer extension auto-detects the API base:
+- **localhost** → `http://localhost:7860` (local dev)
+- **Render origin** → same origin (self-hosted UI)
+- **Everywhere else** (Webflow Designer iframe) → `https://create-something-template-analyzer-api.onrender.com`
+
+No manual configuration needed. If the Render URL changes, update `HOSTED_API` in `public/index.html` and re-bundle.
