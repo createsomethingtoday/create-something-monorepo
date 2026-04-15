@@ -587,6 +587,14 @@ export interface PublishedSnippetPageSummary {
     pass: number;
     fail: number;
     passRate: number;
+    failures?: Array<{
+      text: string;
+      tag: string;
+      ratio: number;
+      required: number;
+      fg: string;
+      bg: string;
+    }>;
   } | null;
 }
 

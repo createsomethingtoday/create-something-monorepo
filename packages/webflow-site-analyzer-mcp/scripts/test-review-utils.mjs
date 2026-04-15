@@ -346,6 +346,59 @@ test('empty name fails', () => {
 });
 
 // =============================================================================
+console.log('\n== wcagContrastRatio ==');
+
+const { wcagContrastRatio, wcagThreshold, wcagLuminance } = require('../dist/review-utils.js');
+
+test('black on white = 21:1', () => {
+  const ratio = wcagContrastRatio({ r: 0, g: 0, b: 0 }, { r: 255, g: 255, b: 255 });
+  assert.ok(Math.abs(ratio - 21) < 0.1, `Expected ~21, got ${ratio}`);
+});
+
+test('white on white = 1:1', () => {
+  const ratio = wcagContrastRatio({ r: 255, g: 255, b: 255 }, { r: 255, g: 255, b: 255 });
+  assert.equal(ratio, 1);
+});
+
+test('#666 on #1a1a1a has low contrast', () => {
+  const ratio = wcagContrastRatio({ r: 102, g: 102, b: 102 }, { r: 26, g: 26, b: 26 });
+  assert.ok(ratio < 4.5, `Expected <4.5, got ${ratio}`);
+});
+
+test('#f5f5f5 on #1e1e1e has high contrast (dark theme)', () => {
+  const ratio = wcagContrastRatio({ r: 245, g: 245, b: 245 }, { r: 30, g: 30, b: 30 });
+  assert.ok(ratio > 4.5, `Expected >4.5, got ${ratio}`);
+});
+
+test('wcagThreshold: normal text = 4.5', () => {
+  assert.equal(wcagThreshold(16, false), 4.5);
+});
+
+test('wcagThreshold: large text (24px) = 3', () => {
+  assert.equal(wcagThreshold(24, false), 3);
+});
+
+test('wcagThreshold: bold text at 19px = 3 (large text)', () => {
+  assert.equal(wcagThreshold(19, true), 3);
+});
+
+test('wcagThreshold: bold text at 18px = 4.5 (not large enough)', () => {
+  assert.equal(wcagThreshold(18, true), 4.5);
+});
+
+test('wcagThreshold: non-bold at 20px = 4.5 (not large enough)', () => {
+  assert.equal(wcagThreshold(20, false), 4.5);
+});
+
+test('luminance of pure black = 0', () => {
+  assert.equal(wcagLuminance(0, 0, 0), 0);
+});
+
+test('luminance of pure white = 1', () => {
+  assert.ok(Math.abs(wcagLuminance(255, 255, 255) - 1) < 0.001);
+});
+
+// =============================================================================
 console.log('\n== computeScore ==');
 
 test('all pass = score 100, grade A', () => {

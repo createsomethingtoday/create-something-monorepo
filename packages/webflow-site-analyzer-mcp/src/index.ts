@@ -871,11 +871,13 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
         return { maxDepth, maxDepthSelector, sampled: Math.min(allEls.length, 500) };
       })(),
       contrast: (() => {
-        // Basic WCAG contrast check on text elements against their backgrounds
+        // WCAG AA contrast check with ancestor background walk-up,
+        // bold text threshold, and visibility filtering.
         const textEls = document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, a, span, li, td, th, label, button');
         let checked = 0;
         let passCount = 0;
         let failCount = 0;
+        const failures = [];
 
         function luminance(r, g, b) {
           const [rs, gs, bs] = [r, g, b].map(c => {
@@ -891,6 +893,31 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
           return { r: parseInt(m[1]), g: parseInt(m[2]), b: parseInt(m[3]) };
         }
 
+        function isTransparent(color) {
+          return !color || color === 'rgba(0, 0, 0, 0)' || color === 'transparent';
+        }
+
+        // Walk up the DOM tree to find the first ancestor with a
+        // non-transparent background color (the effective background).
+        function findEffectiveBg(el) {
+          let current = el;
+          let depth = 0;
+          while (current && current !== document.documentElement && depth < 20) {
+            const style = window.getComputedStyle(current);
+            if (!isTransparent(style.backgroundColor)) {
+              return parseColor(style.backgroundColor);
+            }
+            current = current.parentElement;
+            depth++;
+          }
+          // Default to white if no background found (common for light themes)
+          // or black for dark themes — check the body/html
+          const bodyBg = window.getComputedStyle(document.body).backgroundColor;
+          const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor;
+          const resolved = parseColor(bodyBg) || parseColor(htmlBg);
+          return resolved || { r: 255, g: 255, b: 255 };
+        }
+
         function contrastRatio(fg, bg) {
           const l1 = luminance(fg.r, fg.g, fg.b);
           const l2 = luminance(bg.r, bg.g, bg.b);
@@ -899,29 +926,76 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
           return (lighter + 0.05) / (darker + 0.05);
         }
 
-        // Sample up to 50 elements for performance
-        const sample = Array.from(textEls).slice(0, 50);
-        for (const el of sample) {
+        function isVisible(el) {
+          const style = window.getComputedStyle(el);
+          if (style.display === 'none') return false;
+          if (style.visibility === 'hidden') return false;
+          if (style.opacity === '0') return false;
+          const rect = el.getBoundingClientRect();
+          if (rect.width === 0 && rect.height === 0) return false;
+          return true;
+        }
+
+        // WCAG AA thresholds:
+        // Normal text: 4.5:1
+        // Large text (>=24px normal, or >=18.66px bold): 3:1
+        function getThreshold(style) {
+          const fontSize = parseFloat(style.fontSize) || 16;
+          const fontWeight = parseInt(style.fontWeight) || 400;
+          const isBold = fontWeight >= 700;
+          if (fontSize >= 24) return 3;
+          if (fontSize >= 18.66 && isBold) return 3;
+          return 4.5;
+        }
+
+        // Sample up to 80 visible elements
+        let sampled = 0;
+        for (const el of Array.from(textEls)) {
+          if (sampled >= 80) break;
+          if (!isVisible(el)) continue;
+
+          // Skip elements with no meaningful text
+          const text = (el.textContent || '').trim();
+          if (!text || text.length === 0) continue;
+
+          sampled++;
           const style = window.getComputedStyle(el);
           const fg = parseColor(style.color);
-          const bg = parseColor(style.backgroundColor);
-          if (!fg || !bg) continue;
-          // Skip transparent backgrounds
-          if (style.backgroundColor === 'rgba(0, 0, 0, 0)') continue;
+          if (!fg) continue;
+
+          // Walk up to find effective background
+          const bg = findEffectiveBg(el);
+          if (!bg) continue;
+
           checked++;
           const ratio = contrastRatio(fg, bg);
-          // WCAG AA: 4.5:1 for normal text, 3:1 for large text
-          const fontSize = parseFloat(style.fontSize) || 16;
-          const threshold = fontSize >= 24 ? 3 : 4.5;
-          if (ratio >= threshold) passCount++;
-          else failCount++;
+          const threshold = getThreshold(style);
+
+          if (ratio >= threshold) {
+            passCount++;
+          } else {
+            failCount++;
+            if (failures.length < 5) {
+              const tag = el.tagName.toLowerCase();
+              const snippet = text.slice(0, 30);
+              failures.push({
+                text: snippet,
+                tag,
+                ratio: Math.round(ratio * 100) / 100,
+                required: threshold,
+                fg: 'rgb(' + fg.r + ',' + fg.g + ',' + fg.b + ')',
+                bg: 'rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')'
+              });
+            }
+          }
         }
 
         return {
           checked,
           pass: passCount,
           fail: failCount,
-          passRate: checked > 0 ? passCount / checked : 1
+          passRate: checked > 0 ? passCount / checked : 1,
+          failures
         };
       })()
     };
@@ -2410,10 +2484,18 @@ function unifyRows(
   );
   const contrastPassRate = totalContrastChecked > 0 ? totalContrastPass / totalContrastChecked : 1;
   const hasContrastData = totalContrastChecked > 0;
+  // Collect worst failures across all pages for evidence
+  const allContrastFailures = contrastPages
+    .flatMap((p) => p.summary?.contrast?.failures || [])
+    .sort((a, b) => a.ratio - b.ratio)
+    .slice(0, 5);
+  const failureEvidence = allContrastFailures.map(
+    (f) => `"${f.text}" (${f.tag}): ${f.ratio}:1 on ${f.bg}, needs ${f.required}:1`
+  );
   pushRow(
     'pages.wcag_contrast',
     'Page Level Checks',
-    'WCAG contrast is met for default/hover/focus/active states',
+    'WCAG AA contrast met (4.5:1 normal text, 3:1 large/bold text)',
     !hasContrastData ? 'manual'
       : contrastPassRate >= 0.9 ? 'pass'
       : contrastPassRate >= 0.7 ? 'partial'
@@ -2424,11 +2506,12 @@ function unifyRows(
           `passing=${totalContrastPass}`,
           `failing=${totalContrastFail}`,
           `passRate=${Math.round(contrastPassRate * 100)}%`,
-          'Note: checks computed styles only — hover/focus states require manual verification'
+          ...(failureEvidence.length > 0 ? failureEvidence : []),
+          'Note: uses ancestor background walk-up; hover/focus states require manual verification'
         ]
       : ['Color contrast data not available.'],
     ['published-webmcp-crawl'],
-    hasContrastData ? 0.6 : 0.2,
+    hasContrastData ? 0.7 : 0.2,
     totalContrastFail > 0
       ? `${totalContrastFail} element(s) may not meet WCAG AA contrast ratio. Check text-on-background combinations.`
       : undefined
