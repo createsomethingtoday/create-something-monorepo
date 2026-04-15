@@ -317,6 +317,19 @@
     }
   }
 
+  function setCheckedDomState(inputEl, checked) {
+    if (!inputEl) return;
+
+    inputEl.checked = checked;
+    inputEl.defaultChecked = checked;
+
+    if (checked) {
+      inputEl.setAttribute("checked", "checked");
+    } else {
+      inputEl.removeAttribute("checked");
+    }
+  }
+
   function syncVisual(inputEl) {
     if (!inputEl) return;
     var label = inputEl.closest("label");
@@ -326,8 +339,10 @@
 
     if (inputEl.checked) {
       vizDiv.classList.add("w--redirected-checked");
+      vizDiv.setAttribute("aria-checked", "true");
     } else {
       vizDiv.classList.remove("w--redirected-checked");
+      vizDiv.setAttribute("aria-checked", "false");
     }
   }
 
@@ -411,12 +426,12 @@
 
     withMutation(function () {
       var changedViaClick = false;
-      if (inputEl.checked !== checked && !inputEl.disabled) {
+      if (inputEl.type === "radio" && inputEl.checked !== checked && !inputEl.disabled) {
         changedViaClick = clickChoice(inputEl);
       }
 
-      if (inputEl.checked !== checked) {
-        inputEl.checked = checked;
+      if (inputEl.checked !== checked || inputEl.defaultChecked !== checked) {
+        setCheckedDomState(inputEl, checked);
       }
 
       setManagedFlag(inputEl, managed && checked);
@@ -508,6 +523,56 @@
     counter.textContent = count + " of " + max + " " + label + " selected";
   }
 
+  function writeFieldValue(id, value) {
+    var el = getEl(id);
+    if (!el) return;
+
+    var nextValue = value || "";
+    withMutation(function () {
+      el.value = nextValue;
+      el.setAttribute(MANAGED_VALUE_ATTR, nextValue);
+      dispatchInputEvents(el);
+    });
+  }
+
+  function collectCheckedNames(mapping) {
+    return Object.keys(mapping).filter(function (name) {
+      var el = getEl(mapping[name]);
+      return el && el.checked;
+    });
+  }
+
+  function collectCheckedCategoryNames() {
+    var wrapper = getEl("Categories-Wrapper");
+    if (!wrapper) return [];
+
+    var checked = wrapper.querySelectorAll('input[type="checkbox"]:checked');
+    return Array.prototype.map.call(checked, function (checkbox) {
+      var label = checkbox.closest("label");
+      var text = label ? label.textContent : "";
+      return String(text || "").trim();
+    }).filter(Boolean);
+  }
+
+  function syncKnownCheckboxVisuals() {
+    Object.keys(STYLE_IDS).forEach(function (name) {
+      syncVisual(getEl(STYLE_IDS[name]));
+    });
+
+    Object.keys(FEATURE_IDS).forEach(function (name) {
+      syncVisual(getEl(FEATURE_IDS[name]));
+    });
+
+    syncVisual(getEl("Type-CMS"));
+    syncVisual(getEl("Type-Ecommerce"));
+
+    var wrapper = getEl("Categories-Wrapper");
+    if (!wrapper) return;
+
+    var categoryInputs = wrapper.querySelectorAll('input[type="checkbox"]');
+    categoryInputs.forEach(syncVisual);
+  }
+
   function syncManagedVisuals() {
     var managedInputs = document.querySelectorAll('input[' + MANAGED_ATTR + '="true"]');
     managedInputs.forEach(function (inputEl) {
@@ -517,6 +582,24 @@
       }
 
       syncVisual(inputEl);
+    });
+  }
+
+  function syncSelectedHiddenFields() {
+    writeFieldValue("Selected-Styles", collectCheckedNames(STYLE_IDS).join(", "));
+    writeFieldValue("Selected-Features", collectCheckedNames(FEATURE_IDS).join(", "));
+    writeFieldValue("Selected-Categories-Hidden", collectCheckedCategoryNames().join(", "));
+  }
+
+  function syncSelectionState() {
+    syncManagedVisuals();
+    syncKnownCheckboxVisuals();
+    syncSelectedHiddenFields();
+  }
+
+  function scheduleSelectionStateSync() {
+    [0, 80, 200, 500, 1000].forEach(function (delay) {
+      setTimeout(syncSelectionState, delay);
     });
   }
 
@@ -690,9 +773,8 @@
     });
     updateCounter("category-counter", countCheckedCategories(), MAX_CATEGORIES, "categories");
 
-    syncManagedVisuals();
-    setTimeout(syncManagedVisuals, 0);
-    setTimeout(syncManagedVisuals, 80);
+    syncSelectionState();
+    scheduleSelectionStateSync();
 
     // Screenshots (async, runs after form fields are set)
     if (result.screenshots) {
@@ -823,18 +905,9 @@
     var token = watchToken + 1;
     watchToken = token;
 
-    showProgress("Waiting for template validation to finish…");
-    dispatchAutofillEvent("pending", {
-      url: validated.value,
-      apiBase: API_BASE
-    });
-
-    var verifiedUrl = await waitForValidationSuccess(token, validated.value);
-    if (!verifiedUrl || token !== watchToken) {
-      return;
-    }
-
-    await runAutofill(verifiedUrl, token);
+    // Run autofill immediately — don't wait for the validator to finish.
+    // The analyzer API does its own URL crawling independently.
+    await runAutofill(validated.value, token);
   }
 
   function bindManualOverrideTracking() {
