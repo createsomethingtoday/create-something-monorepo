@@ -1,11 +1,13 @@
 (function () {
   "use strict";
 
-  var API_BASE = "https://create-something-template-analyzer-api.onrender.com";
+  var DEFAULT_CLOUDFLARE_API_BASE = "https://webflow-template-analyzer.createsomething.workers.dev";
   var MAX_CATEGORIES = 2;
   var MAX_STYLES = 2;
-
-  // ─── Form field ID mappings (match the Webflow submission form) ────────────
+  var VALIDATION_WAIT_TIMEOUT_MS = 11 * 60 * 1000;
+  var VALIDATION_POLL_INTERVAL_MS = 400;
+  var MANAGED_ATTR = "data-template-autofill";
+  var MANAGED_VALUE_ATTR = "data-template-autofill-value";
 
   var STYLE_IDS = {
     "Bold": "Styles-Bold",
@@ -43,28 +45,285 @@
     "multi_layout": "Multi-layout"
   };
 
-  // ─── DOM helpers (Webflow custom controls) ─────────────────────────────────
+  var ANALYZE_STEPS = [
+    [0, "Loading the published template…"],
+    [5000, "Reviewing the page structure…"],
+    [15000, "Capturing screenshots…"],
+    [30000, "Generating submission details…"],
+    [55000, "Applying the results to the form…"]
+  ];
+
+  var watchToken = 0;
+  var mutationDepth = 0;
 
   function getEl(id) {
     return document.getElementById(id);
   }
 
-  function tryFill(id, value) {
-    var el = getEl(id);
-    if (!el || !value) return;
-    el.value = value;
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
   }
 
-  // Webflow renders custom checkboxes/radios as a hidden <input> + visible
-  // sibling <div class="w-checkbox-input"> or <div class="w-form-formradioinput">.
-  // We must toggle w--redirected-checked on that div for visual feedback.
+  function dispatchAutofillEvent(name, detail) {
+    window.dispatchEvent(
+      new CustomEvent("template-analyzer:" + name, {
+        detail: detail || {}
+      })
+    );
+  }
+
+  function findCurrentScript() {
+    if (document.currentScript) {
+      return document.currentScript;
+    }
+
+    var scripts = document.getElementsByTagName("script");
+    for (var i = scripts.length - 1; i >= 0; i -= 1) {
+      var src = scripts[i].getAttribute("src") || "";
+      if (src.indexOf("template-autofill.js") !== -1) {
+        return scripts[i];
+      }
+    }
+
+    return null;
+  }
+
+  function isLocalOrigin(origin) {
+    return (
+      origin === "http://localhost" ||
+      origin.indexOf("http://localhost:") === 0 ||
+      origin === "http://127.0.0.1" ||
+      origin.indexOf("http://127.0.0.1:") === 0
+    );
+  }
+
+  function resolveApiBase() {
+    if (typeof window.TEMPLATE_ANALYZER_API_BASE === "string" && window.TEMPLATE_ANALYZER_API_BASE.trim()) {
+      return window.TEMPLATE_ANALYZER_API_BASE.trim().replace(/\/$/, "");
+    }
+
+    var currentScript = findCurrentScript();
+    var attributeBase = currentScript && currentScript.getAttribute("data-api-base");
+    if (attributeBase && attributeBase.trim()) {
+      return attributeBase.trim().replace(/\/$/, "");
+    }
+
+    if (currentScript) {
+      try {
+        var scriptOrigin = new URL(currentScript.src, window.location.href).origin;
+        if (isLocalOrigin(scriptOrigin)) {
+          return scriptOrigin;
+        }
+      } catch (error) {
+        // Fall through to the default Cloudflare endpoint.
+      }
+    }
+
+    if (isLocalOrigin(window.location.origin)) {
+      return window.location.origin;
+    }
+
+    return DEFAULT_CLOUDFLARE_API_BASE;
+  }
+
+  var API_BASE = resolveApiBase();
+
+  function isVisible(el) {
+    if (!el) return false;
+    return window.getComputedStyle(el).display !== "none";
+  }
+
+  function getValidatorState() {
+    return {
+      input: getEl("Published-URL"),
+      button: getEl("Check-URL"),
+      success: getEl("Published-Check-Success"),
+      progress: getEl("Published-Check-Progress"),
+      error: getEl("Published-Check-Error"),
+      verified: getEl("Published-URL-Check-Success")
+    };
+  }
+
+  function ensureStatusNodes() {
+    var existing = getEl("Template-Autofill-Status");
+    if (existing) {
+      return {
+        container: existing,
+        progress: getEl("Template-Autofill-Progress"),
+        success: getEl("Template-Autofill-Success"),
+        error: getEl("Template-Autofill-Error")
+      };
+    }
+
+    var validator = getValidatorState();
+    var agencyDetails = getEl("Agency-details");
+    if (!agencyDetails) return null;
+
+    var container = document.createElement("div");
+    container.id = "Template-Autofill-Status";
+    container.innerHTML =
+      '<div id="Template-Autofill-Progress" class="cc-progress-text" style="display:none;"></div>' +
+      '<div id="Template-Autofill-Success" class="cc-success-text" style="display:none;"></div>' +
+      '<div id="Template-Autofill-Error" class="cc-error_text" style="display:none;"></div>';
+
+    if (validator.progress && validator.progress.parentNode) {
+      validator.progress.parentNode.insertBefore(container, validator.progress.nextSibling);
+    } else {
+      agencyDetails.appendChild(container);
+    }
+
+    return {
+      container: container,
+      progress: getEl("Template-Autofill-Progress"),
+      success: getEl("Template-Autofill-Success"),
+      error: getEl("Template-Autofill-Error")
+    };
+  }
+
+  function hide(el) {
+    if (!el) return;
+    el.style.display = "none";
+  }
+
+  function show(el, text) {
+    if (!el) return;
+    el.textContent = text;
+    el.style.display = "block";
+  }
+
+  function clearStatus() {
+    var nodes = ensureStatusNodes();
+    if (!nodes) return;
+    hide(nodes.progress);
+    hide(nodes.success);
+    hide(nodes.error);
+  }
+
+  function showProgress(text) {
+    var nodes = ensureStatusNodes();
+    if (!nodes) return;
+    hide(nodes.success);
+    hide(nodes.error);
+    show(nodes.progress, text);
+  }
+
+  function showSuccess(text) {
+    var nodes = ensureStatusNodes();
+    if (!nodes) return;
+    hide(nodes.progress);
+    hide(nodes.error);
+    show(nodes.success, text);
+  }
+
+  function showError(text) {
+    var nodes = ensureStatusNodes();
+    if (!nodes) return;
+    hide(nodes.progress);
+    hide(nodes.success);
+    show(nodes.error, text);
+  }
+
+  function normalizePublishedUrl(rawValue) {
+    if (typeof rawValue !== "string" || rawValue.trim() === "") {
+      throw new Error("Published URL is required.");
+    }
+
+    var trimmed = rawValue.trim();
+    var matched = trimmed.match(/https:\/\/[a-z0-9-]+\.webflow\.io(?:\/[^\s]*)?/i);
+    var candidate = matched ? matched[0] : trimmed;
+    var parsed;
+
+    try {
+      parsed = new URL(candidate);
+    } catch (error) {
+      throw new Error("Enter a valid published Webflow URL.");
+    }
+
+    if (parsed.protocol !== "https:") {
+      throw new Error("URL must start with 'https://'.");
+    }
+
+    if (!parsed.hostname || !parsed.hostname.toLowerCase().endsWith(".webflow.io")) {
+      throw new Error("URL must use a '.webflow.io' hostname.");
+    }
+
+    parsed.hash = "";
+    if (!parsed.pathname) {
+      parsed.pathname = "/";
+    }
+
+    return parsed.toString();
+  }
+
+  function validateFormat(rawValue) {
+    try {
+      return {
+        value: normalizePublishedUrl(rawValue),
+        error: null
+      };
+    } catch (error) {
+      return {
+        value: null,
+        error: error && error.message ? error.message : "Enter a valid published Webflow URL."
+      };
+    }
+  }
+
+  function urlsMatch(left, right) {
+    if (!left || !right) return false;
+
+    try {
+      return normalizePublishedUrl(left) === normalizePublishedUrl(right);
+    } catch (error) {
+      return left === right;
+    }
+  }
+
+  function isVerifiedForUrl(expectedUrl) {
+    var validator = getValidatorState();
+    if (!validator.verified || !validator.verified.checked) {
+      return false;
+    }
+
+    var verifiedUrl = validator.verified.getAttribute("data-last-verified-url");
+    if (!verifiedUrl) {
+      return true;
+    }
+
+    return urlsMatch(verifiedUrl, expectedUrl);
+  }
+
+  function withMutation(fn) {
+    mutationDepth += 1;
+    try {
+      return fn();
+    } finally {
+      mutationDepth -= 1;
+    }
+  }
+
+  function getManagedFlag(el) {
+    return el && el.getAttribute(MANAGED_ATTR) === "true";
+  }
+
+  function setManagedFlag(el, managed) {
+    if (!el) return;
+    if (managed) {
+      el.setAttribute(MANAGED_ATTR, "true");
+    } else {
+      el.removeAttribute(MANAGED_ATTR);
+    }
+  }
+
   function syncVisual(inputEl) {
+    if (!inputEl) return;
     var label = inputEl.closest("label");
     if (!label) return;
     var vizDiv = label.querySelector(".w-checkbox-input, .w-form-formradioinput");
     if (!vizDiv) return;
+
     if (inputEl.checked) {
       vizDiv.classList.add("w--redirected-checked");
     } else {
@@ -72,252 +331,430 @@
     }
   }
 
-  // For radio buttons: clear visual state on all siblings first
   function syncRadioGroupVisual(inputEl) {
-    if (inputEl.type !== "radio" || !inputEl.name) return;
-    var allInGroup = document.querySelectorAll('input[name="' + inputEl.name + '"]');
+    if (!inputEl || inputEl.type !== "radio" || !inputEl.name) return;
+
+    var allInGroup = document.querySelectorAll('input[name="' + inputEl.name.replace(/"/g, '\\"') + '"]');
     allInGroup.forEach(function (radio) {
       var label = radio.closest("label");
       if (!label) return;
       var vizDiv = label.querySelector(".w-form-formradioinput");
-      if (vizDiv) vizDiv.classList.remove("w--redirected-checked");
+      if (vizDiv) {
+        vizDiv.classList.remove("w--redirected-checked");
+      }
     });
+
     syncVisual(inputEl);
   }
 
-  function wfCheck(id) {
-    var el = getEl(id);
+  function dispatchInputEvents(el) {
     if (!el) return;
-    if (!el.checked) {
-      el.checked = true;
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-    if (el.type === "radio") {
-      syncRadioGroupVisual(el);
-    } else {
-      syncVisual(el);
-    }
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
-  function wfUncheck(id) {
-    var el = getEl(id);
-    if (!el) return;
-    if (el.checked) {
-      el.checked = false;
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-    syncVisual(el);
+  function shouldFillText(el) {
+    if (!el) return false;
+    var current = (el.value || "").trim();
+    var previous = el.getAttribute(MANAGED_VALUE_ATTR) || "";
+    return current === "" || current === previous;
   }
 
-  // ─── Progress messages ─────────────────────────────────────────────────────
+  function fillText(id, value, options) {
+    var el = getEl(id);
+    if (!el || !value) return false;
 
-  var STEPS = [
-    [0,     "Connecting to template\u2026"],
-    [5000,  "Scrolling through sections\u2026"],
-    [13000, "Taking screenshots\u2026"],
-    [23000, "Generating details with Claude\u2026"],
-    [52000, "Almost there\u2026"]
-  ];
-
-  // ─── Fill form fields from API result ──────────────────────────────────────
-
-  function fillForm(result) {
-    // Template name (only if empty)
-    var nameEl = getEl("Template-Name");
-    if (nameEl && !nameEl.value) {
-      tryFill("Template-Name", result.template_name);
+    var onlyIfSafe = !options || options.onlyIfSafe !== false;
+    if (onlyIfSafe && !shouldFillText(el)) {
+      return false;
     }
 
-    // Short description
-    tryFill("Short-Description", (result.short_description || "").substring(0, 250));
+    withMutation(function () {
+      el.value = value;
+      el.setAttribute(MANAGED_VALUE_ATTR, value);
+      dispatchInputEvents(el);
+    });
 
-    // Long description — Quill editor + hidden textarea
-    var longDesc = result.long_description || "";
-    tryFill("Long-Description", longDesc);
+    return true;
+  }
+
+  function clearManagedGroupByName(name) {
+    if (!name) return;
+    var radios = document.querySelectorAll('input[name="' + name.replace(/"/g, '\\"') + '"]');
+    radios.forEach(function (radio) {
+      if (getManagedFlag(radio)) {
+        withMutation(function () {
+          radio.checked = false;
+          setManagedFlag(radio, false);
+          syncVisual(radio);
+          radio.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+      }
+    });
+  }
+
+  function setCheckedState(inputEl, checked, managed) {
+    if (!inputEl) return;
+
+    withMutation(function () {
+      inputEl.checked = checked;
+      setManagedFlag(inputEl, managed && checked);
+
+      if (inputEl.type === "radio") {
+        if (checked) {
+          syncRadioGroupVisual(inputEl);
+        } else {
+          syncVisual(inputEl);
+        }
+      } else {
+        syncVisual(inputEl);
+      }
+
+      inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
+
+  function clearManagedIds(ids) {
+    ids.forEach(function (id) {
+      var el = getEl(id);
+      if (el && getManagedFlag(el)) {
+        setCheckedState(el, false, false);
+      }
+    });
+  }
+
+  function findCategoryCheckbox(categoryName) {
+    var wrapper = getEl("Categories-Wrapper");
+    if (!wrapper) return null;
+
+    var inputs = wrapper.querySelectorAll('input[type="checkbox"]');
+    for (var i = 0; i < inputs.length; i += 1) {
+      if (inputs[i].name === "Category-" + categoryName) {
+        return inputs[i];
+      }
+    }
+
+    return null;
+  }
+
+  function clearManagedCategories() {
+    var wrapper = getEl("Categories-Wrapper");
+    if (!wrapper) return;
+
+    var inputs = wrapper.querySelectorAll('input[type="checkbox"]');
+    inputs.forEach(function (checkbox) {
+      if (getManagedFlag(checkbox)) {
+        setCheckedState(checkbox, false, false);
+      }
+    });
+  }
+
+  function countCheckedIds(ids) {
+    return ids.reduce(function (count, id) {
+      var el = getEl(id);
+      return el && el.checked ? count + 1 : count;
+    }, 0);
+  }
+
+  function countCheckedCategories() {
+    var wrapper = getEl("Categories-Wrapper");
+    if (!wrapper) return 0;
+    return wrapper.querySelectorAll('input[type="checkbox"]:checked').length;
+  }
+
+  function countManualCheckedIds(ids) {
+    return ids.reduce(function (count, id) {
+      var el = getEl(id);
+      return el && el.checked && !getManagedFlag(el) ? count + 1 : count;
+    }, 0);
+  }
+
+  function countManualCheckedCategories() {
+    var wrapper = getEl("Categories-Wrapper");
+    if (!wrapper) return 0;
+
+    var inputs = wrapper.querySelectorAll('input[type="checkbox"]');
+    return Array.prototype.reduce.call(inputs, function (count, checkbox) {
+      return checkbox.checked && !getManagedFlag(checkbox) ? count + 1 : count;
+    }, 0);
+  }
+
+  function updateCounter(id, count, max, label) {
+    var counter = getEl(id);
+    if (!counter) return;
+    counter.textContent = count + " of " + max + " " + label + " selected";
+  }
+
+  function fillLongDescription(value) {
+    var didFill = fillText("Long-Description", value, { onlyIfSafe: true });
+    if (!didFill) return false;
+
     var quillEditor = document.querySelector("#quillArea .ql-editor");
     if (quillEditor) {
-      quillEditor.innerHTML = "<p>" + longDesc.replace(/\n/g, "</p><p>") + "</p>";
-      quillEditor.classList.remove("ql-blank");
+      withMutation(function () {
+        var safeHtml = "<p>" + String(value).replace(/\n+/g, "</p><p>") + "</p>";
+        quillEditor.innerHTML = safeHtml;
+        quillEditor.classList.remove("ql-blank");
+        quillEditor.dispatchEvent(new Event("input", { bubbles: true }));
+      });
     }
 
-    // Pricing (radio buttons)
-    if (result.pricing === "Free") {
-      wfCheck("Free");
-    } else {
-      wfCheck("Paid");
+    return true;
+  }
+
+  function fillForm(result) {
+    if (!result || typeof result !== "object") return;
+
+    fillText("Template-Name", result.template_name || "", { onlyIfSafe: true });
+    fillText("Short-Description", (result.short_description || "").substring(0, 250), { onlyIfSafe: true });
+    fillLongDescription(result.long_description || "");
+
+    clearManagedGroupByName("Free-or-Paid");
+    setCheckedState(getEl(result.pricing === "Free" ? "Free" : "Paid"), true, true);
+
+    clearManagedGroupByName("Static");
+    setCheckedState(getEl(PAGE_TYPE_IDS[result.page_type] || "Multi"), true, true);
+
+    clearManagedIds(["Type-CMS", "Type-Ecommerce"]);
+    if (result.webflow_features_cms) {
+      setCheckedState(getEl("Type-CMS"), true, true);
+    }
+    if (result.webflow_features_ecommerce) {
+      setCheckedState(getEl("Type-Ecommerce"), true, true);
     }
 
-    // Page type (radio buttons)
-    var ptId = PAGE_TYPE_IDS[result.page_type] || "Multi";
-    wfCheck(ptId);
-
-    // CMS / Ecommerce (checkboxes)
-    if (result.webflow_features_cms) wfCheck("Type-CMS");
-    else wfUncheck("Type-CMS");
-    if (result.webflow_features_ecommerce) wfCheck("Type-Ecommerce");
-    else wfUncheck("Type-Ecommerce");
-
-    // Trigger pricing recalculation if the form has that function
     if (typeof window.updatePricingOptions === "function") {
       setTimeout(window.updatePricingOptions, 100);
     }
 
-    // Styles (max 2, with visual sync)
-    Object.keys(STYLE_IDS).forEach(function (name) {
-      wfUncheck(STYLE_IDS[name]);
+    var styleIds = Object.keys(STYLE_IDS).map(function (key) {
+      return STYLE_IDS[key];
     });
-    var stylesToSet = (result.styles || []).slice(0, MAX_STYLES);
+    clearManagedIds(styleIds);
+    var remainingStyleSlots = Math.max(0, MAX_STYLES - countManualCheckedIds(styleIds));
+    var stylesToSet = Array.isArray(result.styles) ? result.styles.slice(0, remainingStyleSlots) : [];
     stylesToSet.forEach(function (name) {
-      if (STYLE_IDS[name]) wfCheck(STYLE_IDS[name]);
-    });
-    // Update style counter if present
-    var styleCounter = getEl("style-counter");
-    if (styleCounter) {
-      styleCounter.textContent = stylesToSet.length + " of " + MAX_STYLES + " styles selected";
-    }
-
-    // Features (checkboxes with visual sync)
-    (result.features || []).forEach(function (name) {
-      if (FEATURE_IDS[name]) wfCheck(FEATURE_IDS[name]);
-    });
-
-    // Categories — check by name attribute "Category-{name}" in #Categories-Wrapper
-    var catWrapper = getEl("Categories-Wrapper");
-    if (catWrapper) {
-      var catsToSet = (result.categories || []).slice(0, MAX_CATEGORIES);
-      catsToSet.forEach(function (cat) {
-        var checkbox = catWrapper.querySelector('input[name="Category-' + cat + '"]');
-        if (checkbox && !checkbox.checked) {
-          checkbox.checked = true;
-          syncVisual(checkbox);
-          checkbox.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-      });
-      // Update category counter if present
-      var catCounter = getEl("category-counter");
-      if (catCounter) {
-        var checkedCount = catWrapper.querySelectorAll('input[type="checkbox"]:checked').length;
-        catCounter.textContent = checkedCount + " of " + MAX_CATEGORIES + " categories selected";
+      var id = STYLE_IDS[name];
+      if (id) {
+        setCheckedState(getEl(id), true, true);
       }
-    }
-  }
-
-  // ─── Main flow ─────────────────────────────────────────────────────────────
-
-  function createUI() {
-    // Don't double-init
-    if (getEl("autofill-btn")) return;
-
-    // Insert right after the Agency-details div
-    var agencyDetails = getEl("Agency-details");
-    if (!agencyDetails) return;
-
-    // Create the autofill UI block
-    var wrapper = document.createElement("div");
-    wrapper.id = "autofill-panel";
-    wrapper.style.cssText = "margin-top:16px;padding:14px 16px;background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;";
-
-    wrapper.innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
-        '<span style="font-size:13px;font-weight:600;color:#374151;">AI Autofill</span>' +
-        '<span id="autofill-status" style="font-size:11px;color:#6b7280;"></span>' +
-      '</div>' +
-      '<p style="font-size:11px;color:#6b7280;margin-bottom:10px;line-height:1.4;">' +
-        'Generate template name, descriptions, categories, styles, and features from the published URL.' +
-      '</p>' +
-      '<button id="autofill-btn" type="button" style="' +
-        'display:inline-flex;align-items:center;gap:6px;' +
-        'padding:8px 16px;background:linear-gradient(135deg,#146EF5,#6B2EFF);color:#fff;' +
-        'border:none;border-radius:6px;font:600 12px/1 system-ui,sans-serif;' +
-        'cursor:pointer;transition:opacity .15s;">' +
-        '\u2728 Generate submission details' +
-      '</button>' +
-      '<div id="autofill-error" style="display:none;font-size:11px;color:#dc2626;margin-top:8px;"></div>';
-
-    // Insert after the Agency-details section
-    agencyDetails.insertAdjacentElement("afterend", wrapper);
-
-    getEl("autofill-btn").addEventListener("click", function (event) {
-      event.preventDefault();
-      void runAutofill();
     });
+    updateCounter("style-counter", countCheckedIds(styleIds), MAX_STYLES, "styles");
+
+    clearManagedIds(Object.keys(FEATURE_IDS).map(function (key) {
+      return FEATURE_IDS[key];
+    }));
+    (Array.isArray(result.features) ? result.features : []).forEach(function (name) {
+      var id = FEATURE_IDS[name];
+      if (id) {
+        setCheckedState(getEl(id), true, true);
+      }
+    });
+
+    clearManagedCategories();
+    var remainingCategorySlots = Math.max(0, MAX_CATEGORIES - countManualCheckedCategories());
+    var categoriesToSet = Array.isArray(result.categories) ? result.categories.slice(0, remainingCategorySlots) : [];
+    categoriesToSet.forEach(function (categoryName) {
+      var checkbox = findCategoryCheckbox(categoryName);
+      if (checkbox) {
+        setCheckedState(checkbox, true, true);
+      }
+    });
+    updateCounter("category-counter", countCheckedCategories(), MAX_CATEGORIES, "categories");
   }
 
-  async function runAutofill() {
-    var urlInput = getEl("Published-URL");
-    var btn = getEl("autofill-btn");
-    var statusEl = getEl("autofill-status");
-    var errorEl = getEl("autofill-error");
-
-    if (!urlInput || !btn) return;
-
-    var url = urlInput.value.trim();
-    if (!url || !url.startsWith("http")) {
-      errorEl.textContent = "Enter the published template URL first.";
-      errorEl.style.display = "block";
-      return;
+  async function waitForValidationSuccess(token, expectedUrl) {
+    if (isVerifiedForUrl(expectedUrl)) {
+      return expectedUrl;
     }
 
-    // Reset
-    errorEl.style.display = "none";
-    btn.disabled = true;
-    btn.style.opacity = "0.5";
-    var originalLabel = btn.innerHTML;
-    btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:autofill-spin .7s linear infinite;"></span> Analyzing\u2026';
+    var startedAt = Date.now();
+    while (Date.now() - startedAt < VALIDATION_WAIT_TIMEOUT_MS) {
+      if (token !== watchToken) {
+        return null;
+      }
 
-    // Add spinner keyframes if not already present
-    if (!document.getElementById("autofill-spin-style")) {
-      var style = document.createElement("style");
-      style.id = "autofill-spin-style";
-      style.textContent = "@keyframes autofill-spin{to{transform:rotate(360deg)}}";
-      document.head.appendChild(style);
+      var validator = getValidatorState();
+      if (!validator.input) {
+        return null;
+      }
+
+      if (isVerifiedForUrl(expectedUrl)) {
+        return validator.verified.getAttribute("data-last-verified-url") || expectedUrl;
+      }
+
+      if (!isVisible(validator.progress) && isVisible(validator.error)) {
+        clearStatus();
+        return null;
+      }
+
+      var validated = validateFormat(validator.input.value);
+      if (validated.value && !urlsMatch(validated.value, expectedUrl)) {
+        clearStatus();
+        return null;
+      }
+
+      await sleep(VALIDATION_POLL_INTERVAL_MS);
     }
 
-    // Progress messages
-    var stepIdx = 0;
-    var start = Date.now();
-    statusEl.textContent = STEPS[0][1];
-    var timer = setInterval(function () {
-      var t = Date.now() - start;
-      while (stepIdx + 1 < STEPS.length && t >= STEPS[stepIdx + 1][0]) stepIdx++;
-      statusEl.textContent = STEPS[stepIdx][1];
+    showError("Template validation took too long. Validate the URL again to retry autofill.");
+    dispatchAutofillEvent("error", {
+      url: expectedUrl,
+      error: "validation-timeout"
+    });
+    return null;
+  }
+
+  async function runAutofill(url, token) {
+    dispatchAutofillEvent("start", {
+      url: url,
+      apiBase: API_BASE
+    });
+
+    var stepIndex = 0;
+    var startedAt = Date.now();
+    showProgress(ANALYZE_STEPS[0][1]);
+
+    var progressTimer = setInterval(function () {
+      var elapsed = Date.now() - startedAt;
+      while (stepIndex + 1 < ANALYZE_STEPS.length && elapsed >= ANALYZE_STEPS[stepIndex + 1][0]) {
+        stepIndex += 1;
+      }
+      showProgress(ANALYZE_STEPS[stepIndex][1]);
     }, 500);
 
     try {
-      var res = await fetch(API_BASE + "/analyze", {
+      var response = await fetch(API_BASE + "/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({ url: url })
       });
 
-      clearInterval(timer);
+      var payload = await response.json().catch(function () {
+        return {};
+      });
 
-      if (!res.ok) {
-        var errBody = await res.json().catch(function () { return {}; });
-        throw new Error(errBody.detail || "Server error " + res.status);
+      if (token !== watchToken) {
+        return;
       }
 
-      var result = await res.json();
-      fillForm(result);
+      if (!response.ok) {
+        throw new Error(payload.detail || payload.error || ("Server error " + response.status));
+      }
 
-      statusEl.textContent = "Done \u2014 fields filled.";
-      btn.innerHTML = '\u2705 Done \u2014 re-generate';
-      btn.disabled = false;
-      btn.style.opacity = "1";
+      fillForm(payload);
+      showSuccess("Template details added to the form. Review them before submitting.");
+      dispatchAutofillEvent("success", {
+        url: url,
+        apiBase: API_BASE,
+        result: payload
+      });
+    } catch (error) {
+      if (token !== watchToken) {
+        return;
+      }
 
-    } catch (e) {
-      clearInterval(timer);
-      statusEl.textContent = "";
-      errorEl.textContent = e.message || "Analysis failed.";
-      errorEl.style.display = "block";
-      btn.innerHTML = originalLabel;
-      btn.disabled = false;
-      btn.style.opacity = "1";
+      showError(error && error.message ? error.message : "Template analysis failed.");
+      dispatchAutofillEvent("error", {
+        url: url,
+        apiBase: API_BASE,
+        error: error && error.message ? error.message : "Template analysis failed."
+      });
+    } finally {
+      clearInterval(progressTimer);
     }
   }
 
-  // ─── Init ──────────────────────────────────────────────────────────────────
+  async function handleValidateClick(event) {
+    if (event) {
+      event.preventDefault();
+    }
 
-  document.addEventListener("DOMContentLoaded", createUI);
-  window.addEventListener("load", createUI);
+    var validator = getValidatorState();
+    if (!validator.input) {
+      return;
+    }
+
+    var validated = validateFormat(validator.input.value);
+    if (validated.error) {
+      clearStatus();
+      return;
+    }
+
+    var token = watchToken + 1;
+    watchToken = token;
+
+    showProgress("Waiting for template validation to finish…");
+    dispatchAutofillEvent("pending", {
+      url: validated.value,
+      apiBase: API_BASE
+    });
+
+    var verifiedUrl = await waitForValidationSuccess(token, validated.value);
+    if (!verifiedUrl || token !== watchToken) {
+      return;
+    }
+
+    await runAutofill(verifiedUrl, token);
+  }
+
+  function bindManualOverrideTracking() {
+    if (document.documentElement.getAttribute("data-template-autofill-tracking") === "true") {
+      return;
+    }
+
+    document.documentElement.setAttribute("data-template-autofill-tracking", "true");
+
+    document.addEventListener("change", function (event) {
+      if (mutationDepth > 0) {
+        return;
+      }
+
+      var target = event.target;
+      if (!target || typeof target.getAttribute !== "function") {
+        return;
+      }
+
+      if (target.matches && target.matches('input[type="checkbox"], input[type="radio"]')) {
+        setManagedFlag(target, false);
+      }
+    });
+  }
+
+  function bindEvents() {
+    var validator = getValidatorState();
+    if (!validator.input || !validator.button) {
+      return;
+    }
+
+    if (validator.button.getAttribute("data-template-autofill-bound") === "true") {
+      return;
+    }
+
+    ensureStatusNodes();
+    bindManualOverrideTracking();
+
+    validator.button.setAttribute("data-template-autofill-bound", "true");
+
+    validator.input.addEventListener("input", function () {
+      watchToken += 1;
+      clearStatus();
+    });
+
+    validator.button.addEventListener("click", function (event) {
+      void handleValidateClick(event);
+    });
+  }
+
+  window.TemplateAnalyzerAutofill = {
+    apiBase: API_BASE,
+    run: function () {
+      return handleValidateClick();
+    }
+  };
+
+  document.addEventListener("DOMContentLoaded", bindEvents);
+  window.addEventListener("load", bindEvents);
 })();

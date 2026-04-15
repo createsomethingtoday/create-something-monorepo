@@ -77,22 +77,42 @@ PAGE_TYPE_IDS: dict[str, str] = {
 }
 
 CATEGORIES = [
-    "Agency", "AI", "App Design", "Application", "Architecture",
-    "Art & Design", "Artist", "Audio", "Author", "Automotive",
-    "B2B", "Baby Store", "Beauty", "Blog", "Bookstore", "Boutique",
-    "Brewery", "Bridal", "Building & Construction", "Business Consulting",
-    "Business Portfolio", "Business Services", "Cafe", "Career Services",
-    "Catering", "Charity", "Clinic", "Club", "Coach", "Coffee",
-    "Community", "Consulting", "Coworking", "Creative Services",
-    "Crypto", "Custom Software", "Day Care", "Design", "Design Agency",
-    "Design Services", "Design System", "Developer", "Digital Agency",
-    "Digital Art", "Digital Marketing", "Dining & Restaurant",
-    "Education", "Event", "Fashion", "Finance", "Fintech", "Fitness",
-    "Food & Beverage", "Gaming", "Health", "Hotel", "Interior Design",
-    "Law", "Lifestyle", "Magazine", "Marketing", "Media", "Music",
-    "News", "Non-Profit", "Personal", "Photography", "Podcast",
-    "Portfolio", "Real Estate", "Religion", "Restaurant", "SaaS",
-    "Sports", "Startup", "Technology", "Travel", "Wedding",
+    "Advocacy & Campaigns", "Agriculture", "Architecture", "AI",
+    "Art & Design Blog", "Arts & Crafts Store", "Bakery",
+    "Banking & Investment", "Bar & Nightclub", "Beauty & Wellness Store",
+    "Blockchain", "Book", "Books & Publishers Store",
+    "Business & Finance Blog", "Cafe & Coffee Shop", "Cars",
+    "Catering & Delivery", "Charity & Fundraising",
+    "Chiropractor & Physiotherapist", "Classes & Courses", "Cleaning",
+    "Clinic & Pharmacy", "College / University", "Coming Soon",
+    "Consulting & Coaching", "Creative Agency", "Creators & Influencers",
+    "Cryptocurrency & NFTs", "Dance", "Dentist", "Design Portfolio",
+    "Digital Products Store", "Doctor", "Documentation",
+    "Early Education", "Electronics Store", "Event Production", "Events",
+    "Fashion & Clothing Store", "Film & TV", "Finance & Accounting",
+    "Fitness & Gym", "Florist & Plants Store", "Food & Drinks Store",
+    "Food & Recipe Blog", "Foundations & NGO",
+    "Freelancers & Consultants", "Gallery & Museum", "Gaming",
+    "Health & Nutrition", "Home Construction", "Home Decor Store",
+    "Home Services & Maintenance", "Hospital", "Hotels & Lodging",
+    "Insurance", "Interior Design", "IT company",
+    "Jewelry & Accessories Store", "Job Portal", "Kids & Babies Store",
+    "Landscaping & Gardening", "Law Firm & Attorney", "Lifestyle Blog",
+    "Magazine", "Makeup & Cosmetics", "Marketing & Advertising",
+    "Mobile App", "Music Events & Festivals",
+    "Music Industry & Promotion", "Musicians & Bands",
+    "Nature & Conservation", "News", "Newsletter", "Online Education",
+    "Outdoor & Adventure", "Personal Blog", "Pets & Animals Store",
+    "Photography & Video Portfolio", "Podcast & Radio", "Political",
+    "Property Management & HOA", "Public services", "Real Estate",
+    "Recruiting", "Religious & Spiritual", "Renewable energy",
+    "Restaurant", "Resume & CV", "Residential Design",
+    "Salon & Barbershop", "Schools", "Software & SaaS", "Spa", "Sports",
+    "Sports & Outdoors Store", "Startup", "Support/Help center",
+    "Sustainability", "Tattoo", "Therapy & Psychology",
+    "Transportation & Logistics", "Travel & Tourism", "Travel Blog",
+    "UI Kit", "Veterinary", "Volunteer & Community", "Waitlist",
+    "Weddings", "Winery",
 ]
 
 RETRYABLE_ANTHROPIC_STATUS_CODES = {429, 500, 503, 504, 529}
@@ -104,6 +124,7 @@ DEFAULT_USER_AGENT = (
     "Chrome/124.0.0.0 Safari/537.36"
 )
 DEFAULT_STEEL_SESSION_TIMEOUT_MS = 20 * 60 * 1000
+BROWSER_PROVIDER_ENV = "BROWSER_PROVIDER"
 
 
 @dataclass
@@ -130,8 +151,13 @@ def steel_enabled() -> bool:
     return bool(os.environ.get("STEEL_API_KEY"))
 
 
+def configured_browser_provider() -> str:
+    provider = os.environ.get(BROWSER_PROVIDER_ENV, "playwright").strip().lower()
+    return "steel" if provider == "steel" else "playwright"
+
+
 def browser_provider_name() -> str:
-    return "steel" if steel_enabled() else "playwright"
+    return configured_browser_provider()
 
 
 def steel_session_timeout_ms() -> int:
@@ -150,9 +176,11 @@ def open_browser_page(*, headless: bool, slow_mo: int = 0) -> Iterator[BrowserPa
     with sync_playwright() as p:
         session: BrowserPageSession | None = None
         try:
-            if headless and steel_enabled():
+            if headless and configured_browser_provider() == "steel":
                 if Steel is None:
                     raise RuntimeError("STEEL_API_KEY is set but steel-sdk is not installed.")
+                if not steel_enabled():
+                    raise RuntimeError("BROWSER_PROVIDER=steel requires STEEL_API_KEY to be set.")
 
                 steel_client = Steel(steel_api_key=os.environ["STEEL_API_KEY"])
                 steel_session = steel_client.sessions.create(timeout=steel_session_timeout_ms())
