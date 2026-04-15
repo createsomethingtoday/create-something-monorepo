@@ -1,0 +1,535 @@
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font: 13px/1.5 system-ui, -apple-system, sans-serif;
+      background: #0e0e10;
+      color: #e5e7eb;
+      padding: 16px;
+      min-height: 100vh;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 18px;
+    }
+    .logo {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, #146EF5, #6B2EFF);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo svg { color: #fff; }
+    .header h1 { font-size: 13px; font-weight: 600; color: #fff; }
+    .header p  { font-size: 11px; color: #6b7280; }
+
+    label { font-size: 11px; color: #9ca3af; display: block; margin-bottom: 5px; }
+
+    input[type="text"] {
+      width: 100%;
+      background: #1c1c1f;
+      border: 1px solid #2d2d32;
+      border-radius: 6px;
+      color: #e5e7eb;
+      font: 12px/1 system-ui, sans-serif;
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input[type="text"]:focus { border-color: #146EF5; }
+    input[type="text"]::placeholder { color: #4b5563; }
+
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%;
+      padding: 9px 14px;
+      border: none; border-radius: 7px;
+      font: 600 12px/1 system-ui, sans-serif;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .btn-primary { background: linear-gradient(135deg, #146EF5, #6B2EFF); color: #fff; margin-top: 10px; }
+    .btn-secondary { background: #1c1c1f; color: #9ca3af; border: 1px solid #2d2d32; margin-top: 8px; font-weight: 500; }
+    .btn-green { background: #166534; color: #bbf7d0; margin-top: 10px; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    #status {
+      font-size: 11px; color: #6b7280;
+      text-align: center; margin-top: 8px;
+      min-height: 16px;
+    }
+    #status.error { color: #f87171; }
+
+    .config-panel {
+      margin-bottom: 10px;
+      border: 1px solid #1c1c1f;
+      border-radius: 6px;
+      background: #131316;
+      padding: 10px;
+    }
+    .config-panel > summary {
+      cursor: pointer;
+      list-style: none;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .config-panel > summary::-webkit-details-marker { display: none; }
+    .config-panel[open] > summary { margin-bottom: 10px; }
+    .config-note {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    /* ── Results ── */
+    #results { display: none; margin-top: 18px; }
+
+    .section-title {
+      font-size: 10px; font-weight: 600; letter-spacing: .06em;
+      text-transform: uppercase; color: #6b7280;
+      margin-bottom: 8px; margin-top: 16px;
+    }
+    .section-title:first-child { margin-top: 0; }
+
+    .field-row { margin-bottom: 10px; }
+    .field-row label { margin-bottom: 4px; }
+
+    textarea {
+      width: 100%;
+      background: #1c1c1f;
+      border: 1px solid #2d2d32;
+      border-radius: 6px;
+      color: #e5e7eb;
+      font: 12px/1.5 system-ui, sans-serif;
+      padding: 8px 10px;
+      resize: vertical;
+      outline: none;
+      transition: border-color .15s;
+    }
+    textarea:focus { border-color: #146EF5; }
+
+    .copy-wrap {
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute; top: 6px; right: 6px;
+      background: #2d2d32; border: none; border-radius: 4px;
+      color: #9ca3af; font: 10px system-ui, sans-serif;
+      padding: 3px 7px; cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+    .copy-btn:hover { background: #374151; color: #e5e7eb; }
+    .copy-btn.copied { background: #166534; color: #bbf7d0; }
+
+    .meta-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 10px;
+    }
+    .meta-item {
+      background: #1c1c1f; border: 1px solid #2d2d32;
+      border-radius: 6px; padding: 8px 10px;
+    }
+    .meta-item .meta-label { font-size: 10px; color: #6b7280; margin-bottom: 3px; }
+    .meta-item .meta-val   { font-size: 12px; font-weight: 600; color: #e5e7eb; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .tag {
+      background: #1c1c1f; border: 1px solid #2d2d32;
+      border-radius: 999px; padding: 3px 9px;
+      font-size: 11px; color: #9ca3af;
+    }
+
+    .screenshots {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 5px; margin-bottom: 10px;
+    }
+    .thumb {
+      aspect-ratio: 4/3; border-radius: 5px; overflow: hidden;
+      background: #1c1c1f; border: 1px solid #2d2d32; cursor: pointer;
+    }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .divider { border: none; border-top: 1px solid #1c1c1f; margin: 14px 0; }
+
+    /* ── Lightbox ── */
+    #lightbox {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.85);
+      align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img { max-width: 95%; max-height: 95%; border-radius: 6px; }
+    #lightbox-close {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; color: #fff;
+      font-size: 22px; cursor: pointer; line-height: 1;
+    }
+  </style>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Template Analyzer</h1>
+    <p>AI-powered submission details</p>
+  </div>
+</div>
+
+<!-- URL input -->
+<div class="field-row">
+  <label for="url-input">Template URL</label>
+  <input type="text" id="url-input" placeholder="https://your-template-url.com">
+</div>
+
+<details class="config-panel">
+  <summary>Backend settings</summary>
+  <div class="field-row">
+    <label for="api-input">API base URL</label>
+    <input type="text" id="api-input" placeholder="https://your-analyzer-api.onrender.com">
+  </div>
+  <div class="config-note" id="api-note"></div>
+</details>
+
+<button class="btn btn-primary" id="analyze-btn" onclick="runAnalysis()">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+  Generate submission details
+</button>
+
+<div id="status"></div>
+
+<!-- Results -->
+<div id="results">
+  <hr class="divider">
+
+  <div class="section-title">Description</div>
+
+  <div class="field-row">
+    <label>Template name</label>
+    <div class="copy-wrap">
+      <input type="text" id="r-name">
+      <button class="copy-btn" onclick="copyField('r-name', this)">copy</button>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <label>Short description <span style="color:#4b5563">(max 250 chars)</span></label>
+    <div class="copy-wrap">
+      <textarea id="r-short" rows="3" style="padding-right:50px"></textarea>
+      <button class="copy-btn" onclick="copyField('r-short', this)">copy</button>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <label>Long description</label>
+    <div class="copy-wrap">
+      <textarea id="r-long" rows="5" style="padding-right:50px"></textarea>
+      <button class="copy-btn" onclick="copyField('r-long', this)">copy</button>
+    </div>
+  </div>
+
+  <div class="section-title">Metadata</div>
+  <div class="meta-grid">
+    <div class="meta-item"><div class="meta-label">Pricing</div><div class="meta-val" id="r-pricing">—</div></div>
+    <div class="meta-item"><div class="meta-label">Page type</div><div class="meta-val" id="r-pagetype">—</div></div>
+    <div class="meta-item"><div class="meta-label">CMS</div><div class="meta-val" id="r-cms">—</div></div>
+    <div class="meta-item"><div class="meta-label">Ecommerce</div><div class="meta-val" id="r-ecom">—</div></div>
+  </div>
+
+  <div class="section-title">Categories</div>
+  <div class="tags" id="r-categories"></div>
+
+  <div class="section-title">Styles</div>
+  <div class="tags" id="r-styles"></div>
+
+  <div class="section-title">Features</div>
+  <div class="tags" id="r-features"></div>
+
+  <div class="section-title">Screenshots</div>
+  <div class="screenshots" id="r-screenshots"></div>
+  <button class="btn btn-secondary" id="dl-btn" onclick="downloadZip()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    Download all screenshots (ZIP)
+  </button>
+
+  <hr class="divider" id="open-form-divider">
+  <button class="btn btn-green" id="open-form-btn" onclick="openSubmissionForm()">
+    Open submission form →
+  </button>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+  // ── Config ────────────────────────────────────────────────────────────────
+  const LOCAL_API = 'http://localhost:7860';
+  const RENDER_API = 'https://create-something-template-analyzer-api.onrender.com';
+  const API_STORAGE_KEY = 'templateAnalyzerApiBase';
+  let API = resolveInitialApi();
+
+  const STEPS = [
+    [0,     'Connecting to your template…'],
+    [5000,  'Scrolling through sections…'],
+    [13000, 'Taking screenshots…'],
+    [23000, 'Generating details with Claude…'],
+    [52000, 'Almost there…'],
+  ];
+
+  let _currentResult = null;
+  let _templateUrl   = '';
+
+  function normalizeApiBase(value) {
+    return (value || '').trim().replace(/\/+$/, '');
+  }
+
+  function resolveInitialApi() {
+    const persisted = normalizeApiBase(window.localStorage.getItem(API_STORAGE_KEY));
+    if (persisted) return persisted;
+    return window.location.hostname === 'localhost' ? LOCAL_API : RENDER_API;
+  }
+
+  function isLocalApiBase(value) {
+    try {
+      const host = new URL(normalizeApiBase(value)).hostname;
+      return host === 'localhost' || host === '127.0.0.1';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function saveApiBase(value) {
+    const normalized = normalizeApiBase(value);
+    if (!normalized) {
+      window.localStorage.removeItem(API_STORAGE_KEY);
+      API = window.location.hostname === 'localhost' ? LOCAL_API : RENDER_API;
+    } else {
+      API = normalized;
+      window.localStorage.setItem(API_STORAGE_KEY, API);
+    }
+    syncApiUi();
+  }
+
+  function syncApiUi() {
+    const apiInput = document.getElementById('api-input');
+    const apiNote = document.getElementById('api-note');
+    const openFormDivider = document.getElementById('open-form-divider');
+    const openFormBtn = document.getElementById('open-form-btn');
+    const localMode = isLocalApiBase(API);
+
+    if (apiInput) apiInput.value = API;
+    if (apiNote) {
+      apiNote.textContent = localMode
+        ? 'Local mode. The extension talks to your machine, and “Open submission form” stays available.'
+        : 'Remote mode. The extension talks to the hosted API. “Open submission form” is hidden because it only works from a local backend.';
+    }
+    if (openFormDivider) openFormDivider.style.display = localMode ? '' : 'none';
+    if (openFormBtn) openFormBtn.style.display = localMode ? 'flex' : 'none';
+  }
+
+  const apiInput = document.getElementById('api-input');
+  if (apiInput) {
+    apiInput.value = API;
+    apiInput.addEventListener('change', (event) => saveApiBase(event.target.value));
+    apiInput.addEventListener('blur', (event) => saveApiBase(event.target.value));
+  }
+  syncApiUi();
+
+  // ── Auto-fill URL from Webflow Designer ──────────────────────────────────
+  (async () => {
+    try {
+      if (typeof webflow !== 'undefined') {
+        await webflow.setExtensionSize({ height: 700 });
+        const info = await webflow.getSiteInfo();
+        const pub  = info.publishedUrl || info.customDomains?.[0] || '';
+        if (pub) document.getElementById('url-input').value = pub;
+      }
+    } catch (e) {
+      // Outside Designer context — manual input works fine
+    }
+  })();
+
+  // ── Analysis ──────────────────────────────────────────────────────────────
+  async function runAnalysis() {
+    const url = document.getElementById('url-input').value.trim();
+    if (!url) {
+      setStatus('Enter a template URL first.', true);
+      return;
+    }
+    _templateUrl = url;
+
+    const btn = document.getElementById('analyze-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Analyzing…';
+    document.getElementById('results').style.display = 'none';
+
+    let stepIdx = 0;
+    const start = Date.now();
+    setStatus(STEPS[0][1]);
+    const timer = setInterval(() => {
+      const t = Date.now() - start;
+      while (stepIdx + 1 < STEPS.length && t >= STEPS[stepIdx + 1][0]) stepIdx++;
+      setStatus(STEPS[stepIdx][1]);
+    }, 500);
+
+    try {
+      const res = await fetch(`${API}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      clearInterval(timer);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
+
+      const result = await res.json();
+      _currentResult = result;
+      renderResults(result);
+
+      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Done — re-analyze';
+      btn.disabled = false;
+      setStatus('');
+
+    } catch (e) {
+      clearInterval(timer);
+      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Generate submission details';
+      btn.disabled = false;
+      setStatus(e.message || 'Analysis failed.', true);
+    }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  function renderResults(r) {
+    setEl('r-name',  r.template_name || '');
+    setEl('r-short', (r.short_description || '').substring(0, 250));
+    setEl('r-long',  r.long_description || '');
+    setEl('r-pricing',  r.pricing || '—');
+    setEl('r-pagetype', (r.page_type || '').replace('_', ' ') || '—');
+    setEl('r-cms',  r.webflow_features_cms  ? 'Yes' : 'No');
+    setEl('r-ecom', r.webflow_features_ecommerce ? 'Yes' : 'No');
+
+    renderTags('r-categories', r.categories || []);
+    renderTags('r-styles',     r.styles     || []);
+    renderTags('r-features',   r.features   || []);
+    renderScreenshots(r.screenshots || {});
+
+    document.getElementById('results').style.display = 'block';
+  }
+
+  function setEl(id, val) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = val;
+    else el.textContent = val;
+  }
+
+  function renderTags(containerId, items) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = items.map(t =>
+      `<span class="tag">${t}</span>`
+    ).join('');
+  }
+
+  function renderScreenshots(ss) {
+    const container = document.getElementById('r-screenshots');
+    const images = [];
+    if (ss.primary)   images.push(ss.primary);
+    if (ss.secondary) images.push(ss.secondary);
+    (ss.gallery || []).forEach(g => images.push(g));
+
+    container.innerHTML = images.slice(0, 6).map(src => {
+      // src is a local file path from the backend — convert to API URL
+      const filename = src.split('/').pop();
+      const url = `${API}/screenshots/${filename}`;
+      return `<div class="thumb" onclick="openLightbox('${url}')">
+        <img src="${url}" alt="Screenshot" loading="lazy">
+      </div>`;
+    }).join('');
+  }
+
+  // ── Copy helpers ───────────────────────────────────────────────────────────
+  function copyField(id, btn) {
+    const el = document.getElementById(id);
+    const text = el.value !== undefined ? el.value : el.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  // ── Download ZIP ───────────────────────────────────────────────────────────
+  function downloadZip() {
+    const a = document.createElement('a');
+    a.href = `${API}/screenshots/download`;
+    a.download = 'template-screenshots.zip';
+    a.click();
+  }
+
+  // ── Open submission form ───────────────────────────────────────────────────
+  async function openSubmissionForm() {
+    if (!_currentResult) return;
+    if (!isLocalApiBase(API)) {
+      setStatus('Open submission form only works with a local analyzer backend.', true);
+      return;
+    }
+    try {
+      await fetch(`${API}/open-form`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: _templateUrl, result: _currentResult }),
+      });
+    } catch (e) {}
+  }
+
+  // ── Lightbox ───────────────────────────────────────────────────────────────
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+  }
+
+  // ── Status ─────────────────────────────────────────────────────────────────
+  function setStatus(msg, isError = false) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = isError ? 'error' : '';
+  }
+</script>

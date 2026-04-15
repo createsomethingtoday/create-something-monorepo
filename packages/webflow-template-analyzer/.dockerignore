@@ -1,0 +1,10 @@
+.DS_Store
+bundle.zip
+
+backend/.env
+backend/.venv
+backend/__pycache__
+backend/output
+
+cloudflare/runtime
+cloudflare/.dev.vars

@@ -1,0 +1,15 @@
+{
+  "name": "webflow-template-analyzer-cloudflare",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare-runtime": "./scripts/prepare-runtime.sh",
+    "dev": "pnpm prepare-runtime && wrangler dev",
+    "deploy": "pnpm prepare-runtime && wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/containers": "^0.0.20",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.40.0"
+  }
+}
