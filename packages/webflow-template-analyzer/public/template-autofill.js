@@ -82,7 +82,7 @@
     var scripts = document.getElementsByTagName("script");
     for (var i = scripts.length - 1; i >= 0; i -= 1) {
       var src = scripts[i].getAttribute("src") || "";
-      if (src.indexOf("template-autofill.js") !== -1) {
+      if (src.indexOf("template-autofill") !== -1) {
         return scripts[i];
       }
     }
@@ -347,6 +347,19 @@
     syncVisual(inputEl);
   }
 
+  function findChoiceLabel(inputEl) {
+    if (!inputEl) return null;
+    return inputEl.closest("label");
+  }
+
+  function clickChoice(inputEl) {
+    var label = findChoiceLabel(inputEl);
+    if (!label) return false;
+
+    label.click();
+    return true;
+  }
+
   function dispatchInputEvents(el) {
     if (!el) return;
     el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -387,7 +400,7 @@
           radio.checked = false;
           setManagedFlag(radio, false);
           syncVisual(radio);
-          radio.dispatchEvent(new Event("change", { bubbles: true }));
+          dispatchInputEvents(radio);
         });
       }
     });
@@ -397,7 +410,15 @@
     if (!inputEl) return;
 
     withMutation(function () {
-      inputEl.checked = checked;
+      var changedViaClick = false;
+      if (inputEl.checked !== checked && !inputEl.disabled) {
+        changedViaClick = clickChoice(inputEl);
+      }
+
+      if (inputEl.checked !== checked) {
+        inputEl.checked = checked;
+      }
+
       setManagedFlag(inputEl, managed && checked);
 
       if (inputEl.type === "radio") {
@@ -410,7 +431,9 @@
         syncVisual(inputEl);
       }
 
-      inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+      if (!changedViaClick) {
+        dispatchInputEvents(inputEl);
+      }
     });
   }
 
@@ -485,6 +508,18 @@
     counter.textContent = count + " of " + max + " " + label + " selected";
   }
 
+  function syncManagedVisuals() {
+    var managedInputs = document.querySelectorAll('input[' + MANAGED_ATTR + '="true"]');
+    managedInputs.forEach(function (inputEl) {
+      if (inputEl.type === "radio" && inputEl.checked) {
+        syncRadioGroupVisual(inputEl);
+        return;
+      }
+
+      syncVisual(inputEl);
+    });
+  }
+
   function fillLongDescription(value) {
     var didFill = fillText("Long-Description", value, { onlyIfSafe: true });
     if (!didFill) return false;
@@ -502,64 +537,77 @@
     return true;
   }
 
-  // ─── Screenshot autofill ─────────────────────────────────────────────────
+  // ─── Screenshot download links ──────────────────────────────────────────
 
   var SCREENSHOT_MAP = [
-    { key: "primary",   inputId: "Thumbnail-Image" },
-    { key: "secondary", inputId: "Thumbnail-Image-Secondary" },
-    { key: "gallery-0", inputId: "Gallery-Image-1" },
-    { key: "gallery-1", inputId: "Gallery-Image-2" },
-    { key: "gallery-2", inputId: "Gallery-Image-3" },
-    { key: "gallery-3", inputId: "Gallery-Image-4" },
-    { key: "gallery-4", inputId: "Gallery-Image-5" }
+    { key: "primary",   inputId: "Thumbnail-Image",           label: "Primary thumbnail" },
+    { key: "secondary", inputId: "Thumbnail-Image-Secondary", label: "Secondary thumbnail" },
+    { key: "gallery-0", inputId: "Gallery-Image-1",           label: "Gallery 1" },
+    { key: "gallery-1", inputId: "Gallery-Image-2",           label: "Gallery 2" },
+    { key: "gallery-2", inputId: "Gallery-Image-3",           label: "Gallery 3" },
+    { key: "gallery-3", inputId: "Gallery-Image-4",           label: "Gallery 4" },
+    { key: "gallery-4", inputId: "Gallery-Image-5",           label: "Gallery 5" }
   ];
 
   function extractFilename(path) {
     return String(path).split("/").pop();
   }
 
-  function setWebflowFileUploadState(fileInput, filename) {
+  function addDownloadLink(inputId, url, filename, label) {
+    var fileInput = getEl(inputId);
+    if (!fileInput) return;
+
     var uploadWidget = fileInput.closest(".w-file-upload");
     if (!uploadWidget) return;
 
-    var defaultState = uploadWidget.querySelector(".w-file-upload-default");
-    var successState = uploadWidget.querySelector(".w-file-upload-success");
-    var fileNameEl = uploadWidget.querySelector(".w-file-upload-file-name");
+    // Remove any existing autofill download link
+    var existing = uploadWidget.parentNode.querySelector('.autofill-download[data-for="' + inputId + '"]');
+    if (existing) existing.remove();
 
-    if (defaultState) defaultState.classList.add("w-hidden");
-    if (successState) {
-      successState.classList.remove("w-hidden");
-      successState.removeAttribute("tabindex");
-    }
-    if (fileNameEl) fileNameEl.textContent = filename;
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.className = "autofill-download";
+    link.setAttribute("data-for", inputId);
+    link.style.cssText =
+      "display:inline-flex;align-items:center;gap:4px;" +
+      "font-size:12px;color:#146ef5;text-decoration:none;" +
+      "margin-top:4px;cursor:pointer;";
+    link.innerHTML =
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' +
+      '</svg>' + label + ' (' + filename + ')';
+
+    uploadWidget.parentNode.insertBefore(link, uploadWidget.nextSibling);
   }
 
-  async function fillFileInput(inputId, blobUrl, filename) {
-    var fileInput = getEl(inputId);
-    if (!fileInput) return false;
+  function addDownloadAllLink(screenshots) {
+    var container = getEl("uploadContainer");
+    if (!container) return;
 
-    try {
-      var response = await fetch(blobUrl);
-      if (!response.ok) return false;
+    // Remove existing
+    var existing = getEl("autofill-download-all");
+    if (existing) existing.remove();
 
-      var blob = await response.blob();
-      var file = new File([blob], filename, { type: "image/webp" });
-      var dt = new DataTransfer();
-      dt.items.add(file);
-      fileInput.files = dt.files;
-      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    var wrapper = document.createElement("div");
+    wrapper.id = "autofill-download-all";
+    wrapper.style.cssText = "margin-bottom:12px;padding:10px 12px;background:#f0f7ff;border:1px solid #c8ddf5;border-radius:6px;";
+    wrapper.innerHTML =
+      '<div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Generated screenshots ready</div>' +
+      '<div style="font-size:11px;color:#6b7280;margin-bottom:8px;">Download each file below, then drag it into the matching upload field.</div>' +
+      '<a id="autofill-zip-link" href="' + API_BASE + '/screenshots/download" download="template-screenshots.zip" ' +
+      'style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#146ef5;text-decoration:none;">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' +
+      '</svg>Download all screenshots (ZIP)</a>';
 
-      setWebflowFileUploadState(fileInput, filename);
-      return true;
-    } catch (e) {
-      return false;
-    }
+    container.insertBefore(wrapper, container.firstChild);
   }
 
-  async function fillScreenshots(screenshots) {
+  function fillScreenshots(screenshots) {
     if (!screenshots || typeof screenshots !== "object") return;
 
-    var tasks = [];
+    addDownloadAllLink(screenshots);
 
     SCREENSHOT_MAP.forEach(function (entry) {
       var path;
@@ -576,10 +624,8 @@
 
       var filename = extractFilename(path);
       var url = API_BASE + "/screenshots/" + filename;
-      tasks.push(fillFileInput(entry.inputId, url, filename));
+      addDownloadLink(entry.inputId, url, filename, entry.label);
     });
-
-    await Promise.allSettled(tasks);
   }
 
   // ─── Fill all form fields from API result ──────────────────────────────────
@@ -643,6 +689,10 @@
       }
     });
     updateCounter("category-counter", countCheckedCategories(), MAX_CATEGORIES, "categories");
+
+    syncManagedVisuals();
+    setTimeout(syncManagedVisuals, 0);
+    setTimeout(syncManagedVisuals, 80);
 
     // Screenshots (async, runs after form fields are set)
     if (result.screenshots) {
