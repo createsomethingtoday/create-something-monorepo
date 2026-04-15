@@ -2,6 +2,8 @@
   "use strict";
 
   var API_BASE = "https://create-something-template-analyzer-api.onrender.com";
+  var MAX_CATEGORIES = 2;
+  var MAX_STYLES = 2;
 
   // ─── Form field ID mappings (match the Webflow submission form) ────────────
 
@@ -41,7 +43,7 @@
     "multi_layout": "Multi-layout"
   };
 
-  // ─── DOM helpers ───────────────────────────────────────────────────────────
+  // ─── DOM helpers (Webflow custom controls) ─────────────────────────────────
 
   function getEl(id) {
     return document.getElementById(id);
@@ -52,24 +54,59 @@
     if (!el || !value) return;
     el.value = value;
     el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
-  function tryCheck(id) {
+  // Webflow renders custom checkboxes/radios as a hidden <input> + visible
+  // sibling <div class="w-checkbox-input"> or <div class="w-form-formradioinput">.
+  // We must toggle w--redirected-checked on that div for visual feedback.
+  function syncVisual(inputEl) {
+    var label = inputEl.closest("label");
+    if (!label) return;
+    var vizDiv = label.querySelector(".w-checkbox-input, .w-form-formradioinput");
+    if (!vizDiv) return;
+    if (inputEl.checked) {
+      vizDiv.classList.add("w--redirected-checked");
+    } else {
+      vizDiv.classList.remove("w--redirected-checked");
+    }
+  }
+
+  // For radio buttons: clear visual state on all siblings first
+  function syncRadioGroupVisual(inputEl) {
+    if (inputEl.type !== "radio" || !inputEl.name) return;
+    var allInGroup = document.querySelectorAll('input[name="' + inputEl.name + '"]');
+    allInGroup.forEach(function (radio) {
+      var label = radio.closest("label");
+      if (!label) return;
+      var vizDiv = label.querySelector(".w-form-formradioinput");
+      if (vizDiv) vizDiv.classList.remove("w--redirected-checked");
+    });
+    syncVisual(inputEl);
+  }
+
+  function wfCheck(id) {
     var el = getEl(id);
     if (!el) return;
     if (!el.checked) {
       el.checked = true;
       el.dispatchEvent(new Event("change", { bubbles: true }));
     }
+    if (el.type === "radio") {
+      syncRadioGroupVisual(el);
+    } else {
+      syncVisual(el);
+    }
   }
 
-  function tryUncheck(id) {
+  function wfUncheck(id) {
     var el = getEl(id);
     if (!el) return;
     if (el.checked) {
       el.checked = false;
       el.dispatchEvent(new Event("change", { bubbles: true }));
     }
+    syncVisual(el);
   }
 
   // ─── Progress messages ─────────────────────────────────────────────────────
@@ -91,50 +128,78 @@
       tryFill("Template-Name", result.template_name);
     }
 
-    // Descriptions
+    // Short description
     tryFill("Short-Description", (result.short_description || "").substring(0, 250));
-    tryFill("Long-Description", result.long_description);
 
-    // Pricing
-    if (result.pricing === "Free") {
-      tryCheck("Free");
-    } else {
-      tryCheck("Paid");
+    // Long description — Quill editor + hidden textarea
+    var longDesc = result.long_description || "";
+    tryFill("Long-Description", longDesc);
+    var quillEditor = document.querySelector("#quillArea .ql-editor");
+    if (quillEditor) {
+      quillEditor.innerHTML = "<p>" + longDesc.replace(/\n/g, "</p><p>") + "</p>";
+      quillEditor.classList.remove("ql-blank");
     }
 
-    // Page type
+    // Pricing (radio buttons)
+    if (result.pricing === "Free") {
+      wfCheck("Free");
+    } else {
+      wfCheck("Paid");
+    }
+
+    // Page type (radio buttons)
     var ptId = PAGE_TYPE_IDS[result.page_type] || "Multi";
-    tryCheck(ptId);
+    wfCheck(ptId);
 
-    // CMS / Ecommerce
-    if (result.webflow_features_cms) tryCheck("Type-CMS");
-    else tryUncheck("Type-CMS");
-    if (result.webflow_features_ecommerce) tryCheck("Type-Ecommerce");
-    else tryUncheck("Type-Ecommerce");
+    // CMS / Ecommerce (checkboxes)
+    if (result.webflow_features_cms) wfCheck("Type-CMS");
+    else wfUncheck("Type-CMS");
+    if (result.webflow_features_ecommerce) wfCheck("Type-Ecommerce");
+    else wfUncheck("Type-Ecommerce");
 
-    // Styles
+    // Trigger pricing recalculation if the form has that function
+    if (typeof window.updatePricingOptions === "function") {
+      setTimeout(window.updatePricingOptions, 100);
+    }
+
+    // Styles (max 2, with visual sync)
     Object.keys(STYLE_IDS).forEach(function (name) {
-      tryUncheck(STYLE_IDS[name]);
+      wfUncheck(STYLE_IDS[name]);
     });
-    (result.styles || []).forEach(function (name) {
-      if (STYLE_IDS[name]) tryCheck(STYLE_IDS[name]);
+    var stylesToSet = (result.styles || []).slice(0, MAX_STYLES);
+    stylesToSet.forEach(function (name) {
+      if (STYLE_IDS[name]) wfCheck(STYLE_IDS[name]);
     });
+    // Update style counter if present
+    var styleCounter = getEl("style-counter");
+    if (styleCounter) {
+      styleCounter.textContent = stylesToSet.length + " of " + MAX_STYLES + " styles selected";
+    }
 
-    // Features
+    // Features (checkboxes with visual sync)
     (result.features || []).forEach(function (name) {
-      if (FEATURE_IDS[name]) tryCheck(FEATURE_IDS[name]);
+      if (FEATURE_IDS[name]) wfCheck(FEATURE_IDS[name]);
     });
 
-    // Categories — click visible labels matching text
-    (result.categories || []).forEach(function (cat) {
-      var labels = document.querySelectorAll("label, span, div");
-      for (var i = 0; i < labels.length; i++) {
-        if (labels[i].textContent.trim() === cat) {
-          labels[i].click();
-          break;
+    // Categories — check by name attribute "Category-{name}" in #Categories-Wrapper
+    var catWrapper = getEl("Categories-Wrapper");
+    if (catWrapper) {
+      var catsToSet = (result.categories || []).slice(0, MAX_CATEGORIES);
+      catsToSet.forEach(function (cat) {
+        var checkbox = catWrapper.querySelector('input[name="Category-' + cat + '"]');
+        if (checkbox && !checkbox.checked) {
+          checkbox.checked = true;
+          syncVisual(checkbox);
+          checkbox.dispatchEvent(new Event("change", { bubbles: true }));
         }
+      });
+      // Update category counter if present
+      var catCounter = getEl("category-counter");
+      if (catCounter) {
+        var checkedCount = catWrapper.querySelectorAll('input[type="checkbox"]:checked').length;
+        catCounter.textContent = checkedCount + " of " + MAX_CATEGORIES + " categories selected";
       }
-    });
+    }
   }
 
   // ─── Main flow ─────────────────────────────────────────────────────────────
