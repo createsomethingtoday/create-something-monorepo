@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "webflow-template-analyzer",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-15",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "containers": [
+    {
+      "class_name": "AnalyzerContainer",
+      "image": "./Dockerfile",
+      "instance_type": "standard-4",
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AnalyzerContainer",
+        "class_name": "AnalyzerContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "AnalyzerContainer"
+      ]
+    }
+  ],
+  "vars": {
+    "UPSTREAM_PORT": "7860",
+    "SANDBOX_SLEEP_AFTER": "20m",
+    "ALLOW_VISIBLE_BROWSER": "false",
+    "STEEL_SESSION_TIMEOUT_MS": "1200000"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@create-something/webflow-template-analyzer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Webflow Designer Extension — auto-generate marketplace submission details using AI",
+  "scripts": {
+    "dev": "cd backend && python3 server.py",
+    "serve": "webflow extension serve",
+    "bundle": "webflow extension bundle"
+  }
+}

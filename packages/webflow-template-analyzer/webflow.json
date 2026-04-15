@@ -1,0 +1,19 @@
+{
+  "name": "Webflow Template Analyzer",
+  "apiVersion": "2",
+  "slug": "webflow-template-analyzer",
+  "version": "1.0.0",
+  "manifestVersion": 1,
+  "size": "large",
+  "publicDir": "public",
+  "designer": {
+    "publicDir": "public",
+    "panels": [
+      {
+        "name": "Template Analyzer",
+        "location": "right",
+        "entry": "index.html"
+      }
+    ]
+  }
+}

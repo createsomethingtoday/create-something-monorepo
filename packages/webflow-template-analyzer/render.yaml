@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: create-something-template-analyzer-api
+    runtime: docker
+    plan: free
+    region: virginia
+    rootDir: packages/webflow-template-analyzer
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: ALLOW_VISIBLE_BROWSER
+        value: "false"
+      - key: ANTHROPIC_API_KEY
+        sync: false
