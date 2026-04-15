@@ -111,7 +111,7 @@ async def serve_autofill_script():
     return Response(
         content=script_path.read_text(),
         media_type="application/javascript",
-        headers={"Cache-Control": "public, max-age=3600"},
+        headers={"Cache-Control": "public, max-age=0, must-revalidate"},
     )
 
 
