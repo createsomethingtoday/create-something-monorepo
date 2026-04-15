@@ -140,28 +140,25 @@
   // ─── Main flow ─────────────────────────────────────────────────────────────
 
   function createUI() {
-    var anchor = getEl("Agency-details");
-    if (!anchor) return;
-
     // Don't double-init
     if (getEl("autofill-btn")) return;
 
-    // Find the Published URL section to insert after
-    var publishedSection = getEl("Published-URL");
-    if (!publishedSection) return;
-    var container = publishedSection.closest(".w-node-af623992-b800-91e3-0c96-60996cad3afe-cb371d48") || anchor;
+    // Insert right after the Agency-details div
+    var agencyDetails = getEl("Agency-details");
+    if (!agencyDetails) return;
 
     // Create the autofill UI block
     var wrapper = document.createElement("div");
-    wrapper.style.cssText = "margin-top:16px;padding:12px;background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;";
+    wrapper.id = "autofill-panel";
+    wrapper.style.cssText = "margin-top:16px;padding:14px 16px;background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;";
 
     wrapper.innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
         '<span style="font-size:13px;font-weight:600;color:#374151;">AI Autofill</span>' +
         '<span id="autofill-status" style="font-size:11px;color:#6b7280;"></span>' +
       '</div>' +
       '<p style="font-size:11px;color:#6b7280;margin-bottom:10px;line-height:1.4;">' +
-        'Generate template name, descriptions, categories, styles, and features from the published URL above.' +
+        'Generate template name, descriptions, categories, styles, and features from the published URL.' +
       '</p>' +
       '<button id="autofill-btn" type="button" style="' +
         'display:inline-flex;align-items:center;gap:6px;' +
@@ -172,7 +169,8 @@
       '</button>' +
       '<div id="autofill-error" style="display:none;font-size:11px;color:#dc2626;margin-top:8px;"></div>';
 
-    container.appendChild(wrapper);
+    // Insert after the Agency-details section
+    agencyDetails.insertAdjacentElement("afterend", wrapper);
 
     getEl("autofill-btn").addEventListener("click", function (event) {
       event.preventDefault();
