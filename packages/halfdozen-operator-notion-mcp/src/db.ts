@@ -118,6 +118,18 @@ export interface NotionSyncRunRow {
   updated_at: string;
 }
 
+export interface NotionSyncRunLeaseRow {
+  id: string;
+  partner_client_id: string;
+  contract_id: string;
+  run_id: string;
+  lease_token: string;
+  lease_expires_at: string;
+  metadata_json: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface NotionSyncContractSummaryRow extends NotionSyncContractRow {
   last_run_status: NotionSyncRunStatus | null;
   last_run_time: string | null;
@@ -201,6 +213,29 @@ export interface CompleteNotionSyncRunInput {
   errors?: unknown[];
   conflicts?: unknown[];
   metadata?: Record<string, unknown>;
+}
+
+export interface TryAcquireNotionSyncRunLeaseInput {
+  partnerClientId: string;
+  contractId: string;
+  runId: string;
+  leaseToken?: string;
+  ttlSeconds: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface RenewNotionSyncRunLeaseInput {
+  contractId: string;
+  runId: string;
+  leaseToken: string;
+  ttlSeconds: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ReleaseNotionSyncRunLeaseInput {
+  contractId: string;
+  runId: string;
+  leaseToken: string;
 }
 
 interface ConnectedAccountShape {
@@ -750,6 +785,97 @@ export async function getNotionSyncRunByIdempotencyKey(
     )
     .bind(contractId, idempotencyKey)
     .first<NotionSyncRunRow>();
+}
+
+export async function getNotionSyncRunLeaseByContract(
+  db: D1Database,
+  contractId: string,
+): Promise<NotionSyncRunLeaseRow | null> {
+  return db
+    .prepare(
+      `SELECT *
+       FROM partner_auth_notion_sync_run_leases
+       WHERE contract_id = ?
+       LIMIT 1`
+    )
+    .bind(contractId)
+    .first<NotionSyncRunLeaseRow>();
+}
+
+export async function tryAcquireNotionSyncRunLease(
+  db: D1Database,
+  input: TryAcquireNotionSyncRunLeaseInput,
+): Promise<{ acquired: boolean; lease: NotionSyncRunLeaseRow | null; leaseToken: string }> {
+  const leaseToken = input.leaseToken ?? randomId('pansynlease');
+  const ttlSeconds = Math.max(60, Math.trunc(input.ttlSeconds));
+  const leaseTtlModifier = `+${ttlSeconds} seconds`;
+
+  await db
+    .prepare(
+      `INSERT INTO partner_auth_notion_sync_run_leases (
+         id, partner_client_id, contract_id, run_id, lease_token, lease_expires_at, metadata_json
+       ) VALUES (?, ?, ?, ?, ?, datetime('now', ?), ?)
+       ON CONFLICT(contract_id) DO UPDATE SET
+         partner_client_id = excluded.partner_client_id,
+         run_id = excluded.run_id,
+         lease_token = excluded.lease_token,
+         lease_expires_at = excluded.lease_expires_at,
+         metadata_json = excluded.metadata_json,
+         updated_at = datetime('now')
+       WHERE partner_auth_notion_sync_run_leases.lease_expires_at <= datetime('now')`
+    )
+    .bind(
+      randomId('pansynlease'),
+      input.partnerClientId,
+      input.contractId,
+      input.runId,
+      leaseToken,
+      leaseTtlModifier,
+      JSON.stringify(input.metadata ?? {}),
+    )
+    .run();
+
+  const lease = await getNotionSyncRunLeaseByContract(db, input.contractId);
+  return {
+    acquired: Boolean(lease && lease.run_id === input.runId && lease.lease_token === leaseToken),
+    lease,
+    leaseToken,
+  };
+}
+
+export async function renewNotionSyncRunLease(
+  db: D1Database,
+  input: RenewNotionSyncRunLeaseInput,
+): Promise<NotionSyncRunLeaseRow | null> {
+  const ttlSeconds = Math.max(60, Math.trunc(input.ttlSeconds));
+  const leaseTtlModifier = `+${ttlSeconds} seconds`;
+  const metadataJson = input.metadata === undefined ? null : JSON.stringify(input.metadata);
+
+  await db
+    .prepare(
+      `UPDATE partner_auth_notion_sync_run_leases
+       SET lease_expires_at = datetime('now', ?),
+           metadata_json = COALESCE(?, metadata_json),
+           updated_at = datetime('now')
+       WHERE contract_id = ? AND run_id = ? AND lease_token = ?`
+    )
+    .bind(leaseTtlModifier, metadataJson, input.contractId, input.runId, input.leaseToken)
+    .run();
+
+  return getNotionSyncRunLeaseByContract(db, input.contractId);
+}
+
+export async function releaseNotionSyncRunLease(
+  db: D1Database,
+  input: ReleaseNotionSyncRunLeaseInput,
+): Promise<void> {
+  await db
+    .prepare(
+      `DELETE FROM partner_auth_notion_sync_run_leases
+       WHERE contract_id = ? AND run_id = ? AND lease_token = ?`
+    )
+    .bind(input.contractId, input.runId, input.leaseToken)
+    .run();
 }
 
 export async function completeNotionSyncRun(

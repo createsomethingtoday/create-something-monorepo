@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  adaptArgsForRoute,
   buildComparablePropertyValue,
   buildWritablePropertiesPayload,
   buildWritablePropertyValue,
@@ -13,6 +14,7 @@ import {
   type ComposioNotionClientLike,
   type PinnedNotionAction,
 } from './composio-notion.js';
+import { formatSyncRunLeaseConflictMessage, isMissingNotionPageError, scopeSyncRunIdempotencyKey } from './tools.js';
 import type { ComposioToolDef } from '@create-something/composio-bridge';
 
 function makeTool(
@@ -101,6 +103,83 @@ test('dispatcher strips control args and adapts ids', async () => {
   assert.equal(executions[0]?.args.entity_id, undefined);
   assert.equal(executions[0]?.args.account_id, undefined);
   assert.equal(executions[0]?.args.database_id, 'ds_123');
+});
+
+test('adaptArgsForRoute builds parent for create routes that only accept parent', () => {
+  const route = {
+    action: 'create_page' as const,
+    slug: 'NOTION_CREATE_PAGE_V2',
+    name: 'Create page',
+    parameters: {
+      type: 'object' as const,
+      properties: {
+        parent: { type: 'object' },
+        properties: { type: 'object' },
+      },
+    },
+  };
+
+  const adapted = adaptArgsForRoute('create_page', route, {
+    data_source_id: 'ds_parent_only',
+    properties: { Name: 'Test' },
+  });
+
+  assert.deepEqual(adapted.parent, { data_source_id: 'ds_parent_only' });
+  assert.equal(adapted.data_source_id, undefined);
+  assert.equal(adapted.database_id, undefined);
+});
+
+test('resolveRouteForAction prefers database row insertion for create_page when available', () => {
+  const tools: ComposioToolDef[] = [
+    makeTool('NOTION_CREATE_NOTION_PAGE', 'Create Notion page', 'Creates a new page in a Notion workspace', {
+      parent_id: { type: 'string' },
+      title: { type: 'string' },
+    }),
+    makeTool('NOTION_INSERT_ROW_DATABASE', 'Insert row database', 'Creates a new page (row) in a specified Notion database', {
+      database_id: { type: 'string' },
+      properties: { type: 'array' },
+    }),
+  ];
+
+  const route = resolveRouteForAction('create_page', tools);
+  assert.equal(route?.slug, 'NOTION_INSERT_ROW_DATABASE');
+});
+
+test('adaptArgsForRoute serializes create payloads for database row routes', () => {
+  const route = {
+    action: 'create_page' as const,
+    slug: 'NOTION_INSERT_ROW_DATABASE',
+    name: 'Insert row database',
+    parameters: {
+      type: 'object' as const,
+      properties: {
+        database_id: { type: 'string' },
+        properties: { type: 'array' },
+      },
+    },
+  };
+
+  const adapted = adaptArgsForRoute('create_page', route, {
+    data_source_id: 'ds_insert',
+    properties: {
+      'External Project': { title: [{ text: { content: 'Codex Debug' } }] },
+      Status: { status: { name: 'In Progress' } },
+      Tags: { multi_select: [{ name: 'Ops' }, { name: 'Sync' }] },
+      Due: { date: { start: '2026-04-15', end: '2026-04-16' } },
+      Done: { checkbox: false },
+      Notes: { rich_text: [] },
+    },
+  });
+
+  assert.equal(adapted.data_source_id, undefined);
+  assert.equal(adapted.database_id, 'ds_insert');
+  assert.deepEqual(adapted.properties, [
+    { name: 'External Project', type: 'title', value: 'Codex Debug' },
+    { name: 'Status', type: 'status', value: 'In Progress' },
+    { name: 'Tags', type: 'multi_select', value: 'Ops,Sync' },
+    { name: 'Due', type: 'date', value: '2026-04-15/2026-04-16' },
+    { name: 'Done', type: 'checkbox', value: 'False' },
+  ]);
 });
 
 test('bulk actions fan out per page id', async () => {
@@ -328,4 +407,114 @@ test('dispatcher helper methods call notion actions and normalize output', async
     Name: { title: [{ type: 'text', text: { content: 'Example' } }] },
     Status: { status: { name: 'Done' } },
   });
+});
+
+test('dispatcher createPage reads wrapped response_data ids from brokered responses', async () => {
+  const executions: Array<{ slug: string; args: Record<string, unknown>; userId?: string }> = [];
+  const parentOnlyTools: ComposioToolDef[] = [
+    makeTool('NOTION_CREATE_PAGE_PARENT', 'Create page', 'Create page in a data source', {
+      parent: { type: 'object' },
+      properties: { type: 'object' },
+    }),
+  ];
+
+  const fakeClient: ComposioNotionClientLike = {
+    async getTools() {
+      return parentOnlyTools;
+    },
+    async executeTool(slug, args, userId) {
+      executions.push({ slug, args, userId });
+      return {
+        data: {
+          response_data: {
+            id: 'page_wrapped',
+          },
+        },
+      };
+    },
+  };
+
+  const dispatcher = new ComposioNotionDispatcher('ignored', fakeClient);
+  const created = await dispatcher.createPage('sync_user', 'ds_wrapped', {
+    Name: { title: [{ text: { content: 'Wrapped' } }] },
+  });
+
+  assert.equal(created.id, 'page_wrapped');
+  assert.deepEqual(executions[0]?.args.parent, { data_source_id: 'ds_wrapped' });
+  assert.equal(executions[0]?.args.data_source_id, undefined);
+});
+
+test('dispatcher createPage surfaces downstream validation errors for brokered routes', async () => {
+  const executions: Array<{ slug: string; args: Record<string, unknown>; userId?: string }> = [];
+  const insertRowTools: ComposioToolDef[] = [
+    makeTool('NOTION_INSERT_ROW_DATABASE', 'Insert row database', 'Creates a new page (row) in a specified Notion database', {
+      database_id: { type: 'string' },
+      properties: { type: 'array' },
+    }),
+  ];
+
+  const fakeClient: ComposioNotionClientLike = {
+    async getTools() {
+      return insertRowTools;
+    },
+    async executeTool(slug, args, userId) {
+      executions.push({ slug, args, userId });
+      return {
+        data: {
+          data: {
+            message: 'Invalid request data provided - property shape mismatch',
+            status_code: null,
+          },
+          error: 'Invalid request data provided - property shape mismatch',
+          successful: false,
+        },
+      };
+    },
+  };
+
+  const dispatcher = new ComposioNotionDispatcher('ignored', fakeClient);
+  await assert.rejects(
+    () => dispatcher.createPage('sync_user', 'ds_insert', {
+      Name: { title: [{ text: { content: 'Broken' } }] },
+    }),
+    /Notion create_page failed: Invalid request data provided - property shape mismatch/,
+  );
+
+  assert.equal(executions[0]?.slug, 'NOTION_INSERT_ROW_DATABASE');
+  assert.equal(executions[0]?.args.data_source_id, undefined);
+  assert.equal(executions[0]?.args.database_id, 'ds_insert');
+  assert.deepEqual(executions[0]?.args.properties, [
+    { name: 'Name', type: 'title', value: 'Broken' },
+  ]);
+});
+
+test('sync helpers scope idempotency keys by run mode and only classify explicit not-found errors as missing', () => {
+  assert.equal(scopeSyncRunIdempotencyKey('sync-123', true), 'dry_run:sync-123');
+  assert.equal(scopeSyncRunIdempotencyKey('sync-123', false), 'live:sync-123');
+
+  const missing = { message: 'Failed to execute tool NOTION_GET_PAGE: object_not_found', statusCode: 404 };
+  const transient = { message: 'Failed to execute tool NOTION_GET_PAGE: rate limit exceeded', statusCode: 429 };
+
+  assert.equal(isMissingNotionPageError(missing), true);
+  assert.equal(isMissingNotionPageError(transient), false);
+});
+
+test('sync run lease conflict formatter includes active run metadata when available', () => {
+  assert.equal(
+    formatSyncRunLeaseConflictMessage(
+      'blondish-exec-tasks-external-tasks',
+      { id: 'pansyncrun_123', status: 'started', started_at: '2026-04-15 22:59:36' },
+      null,
+    ),
+    'Another live sync run is already in progress for contract "blondish-exec-tasks-external-tasks". active_run_id=pansyncrun_123 status=started started_at=2026-04-15 22:59:36.',
+  );
+
+  assert.equal(
+    formatSyncRunLeaseConflictMessage(
+      'blondish-exec-tasks-external-tasks',
+      null,
+      { run_id: 'pansyncrun_456', lease_expires_at: '2026-04-15 23:29:36' },
+    ),
+    'Another live sync run is already in progress for contract "blondish-exec-tasks-external-tasks". active_run_id=pansyncrun_456 lease_expires_at=2026-04-15 23:29:36.',
+  );
 });

@@ -25,6 +25,7 @@ import {
   getPinForTool,
   getNotionSyncContractBySlug,
   getNotionSyncContractSummary,
+  getNotionSyncRunById,
   getNotionSyncRunByIdempotencyKey,
   listNotionAccounts,
   listNotionPins,
@@ -35,12 +36,15 @@ import {
   normalizeSlug,
   parseJsonObject,
   recordNotionEvent,
+  releaseNotionSyncRunLease,
   refreshNotionAccountState,
+  renewNotionSyncRunLease,
   replaceNotionSyncContractFields,
   setNotionPin,
   setNotionSyncContractEnabled,
   setSyncEnabled,
   startNotionSyncRun,
+  tryAcquireNotionSyncRunLease,
   upsertNotionSyncRecordMapping,
   updateNotionSyncContract,
   upsertNotionAccount,
@@ -52,6 +56,7 @@ import {
   type NotionSyncContractSummaryRow,
   type NotionSyncFieldDirection,
   type NotionSyncRecordMappingRow,
+  type NotionSyncRunLeaseRow,
   type NotionSyncRunRow,
   type NotionPinRow,
   type PartnerClientRow,
@@ -82,6 +87,8 @@ const ROUTER_CACHE_MAX_ENTRIES = 256;
 const PARTNER_CLIENT_CACHE_TTL_MS = 300_000;
 const PARTNER_PIN_CACHE_TTL_MS = 60_000;
 const PARTNER_CACHE_MAX_ENTRIES = 256;
+const LIVE_SYNC_RUN_LEASE_TTL_SECONDS = 1_800;
+const LIVE_SYNC_RUN_LEASE_HEARTBEAT_EVERY = 25;
 
 type RouterIntent =
   | 'wizard'
@@ -1139,12 +1146,13 @@ async function executeSyncContractRun(
   const { client } = await requirePartnerClient(deps);
   const actor = deps.getActor();
   const contract = await getNotionSyncContractBySlug(deps.db, client.id, contractSlug);
+  const scopedIdempotencyKey = scopeSyncRunIdempotencyKey(options.idempotencyKey, options.dryRun);
   if (!contract) {
     throw new Error(`Contract "${contractSlug}" was not found.`);
   }
 
-  if (options.idempotencyKey) {
-    const existingRun = await getNotionSyncRunByIdempotencyKey(deps.db, contract.id, options.idempotencyKey);
+  if (scopedIdempotencyKey) {
+    const existingRun = await getNotionSyncRunByIdempotencyKey(deps.db, contract.id, scopedIdempotencyKey);
     if (existingRun) {
       return toJsonResult({
         ok: existingRun.status !== 'failed',
@@ -1160,11 +1168,35 @@ async function executeSyncContractRun(
     contractId: contract.id,
     contractSlug: contract.contract_slug,
     dryRun: options.dryRun,
-    idempotencyKey: options.idempotencyKey,
-    metadata: { actor },
+    idempotencyKey: scopedIdempotencyKey,
+    metadata: {
+      actor,
+      ...(options.idempotencyKey ? { requested_idempotency_key: options.idempotencyKey } : {}),
+    },
   });
 
+  let liveRunLeaseToken: string | null = null;
+  const keepLiveRunLeaseAlive = async () => {
+    if (!liveRunLeaseToken) {
+      return;
+    }
+
+    const lease = await renewNotionSyncRunLease(deps.db, {
+      contractId: contract.id,
+      runId: run.id,
+      leaseToken: liveRunLeaseToken,
+      ttlSeconds: LIVE_SYNC_RUN_LEASE_TTL_SECONDS,
+    });
+    if (!lease || lease.run_id !== run.id || lease.lease_token !== liveRunLeaseToken) {
+      throw new Error(`Live sync lease for contract "${contract.contract_slug}" was lost during execution.`);
+    }
+  };
+
   try {
+    if (!options.dryRun) {
+      liveRunLeaseToken = await acquireLiveSyncRunLeaseOrThrow(deps, client.id, contract, run.id, actor);
+    }
+
     if (!Boolean(contract.enabled)) {
       throw new Error(`Contract "${contract.contract_slug}" is disabled.`);
     }
@@ -1182,8 +1214,10 @@ async function executeSyncContractRun(
       validation.target_account,
       validation.field_bindings,
       options.dryRun,
+      keepLiveRunLeaseAlive,
     );
 
+    await keepLiveRunLeaseAlive();
     const completed = await completeNotionSyncRun(deps.db, {
       runId: run.id,
       status: options.dryRun ? 'dry_run' : 'completed',
@@ -1253,6 +1287,18 @@ async function executeSyncContractRun(
       error: message,
       run: failed ? serializeSyncRun(failed) : serializeSyncRun(run),
     });
+  } finally {
+    if (liveRunLeaseToken) {
+      try {
+        await releaseNotionSyncRunLease(deps.db, {
+          contractId: contract.id,
+          runId: run.id,
+          leaseToken: liveRunLeaseToken,
+        });
+      } catch {
+        // Let the lease expire rather than masking the original run result.
+      }
+    }
   }
 }
 
@@ -1264,6 +1310,7 @@ async function performSyncContractRun(
   targetAccount: NotionAccountRow,
   fieldBindings: ValidatedSyncFieldBinding[],
   dryRun: boolean,
+  onProgress?: () => Promise<void>,
 ): Promise<SyncRunState> {
   const state: SyncRunState = {
     created: 0,
@@ -1274,12 +1321,25 @@ async function performSyncContractRun(
     errors: [],
     conflicts: [],
   };
+  let operationsSinceHeartbeat = 0;
+  const progressTick = async () => {
+    if (!onProgress) {
+      return;
+    }
+    operationsSinceHeartbeat += 1;
+    if (operationsSinceHeartbeat < LIVE_SYNC_RUN_LEASE_HEARTBEAT_EVERY) {
+      return;
+    }
+    operationsSinceHeartbeat = 0;
+    await onProgress();
+  };
 
   const [sourcePages, targetPages, existingMappings] = await Promise.all([
     queryAllPagesForDataSource(deps, sourceAccount, contract.source_data_source_id),
     queryAllPagesForDataSource(deps, targetAccount, contract.target_data_source_id),
     listNotionSyncRecordMappings(deps.db, contract.id),
   ]);
+  await onProgress?.();
 
   const sourcePagesById = new Map(sourcePages.map((page) => [page.id, page]));
   const targetPagesById = new Map(targetPages.map((page) => [page.id, page]));
@@ -1307,6 +1367,7 @@ async function performSyncContractRun(
         target_page_id: mapping.target_page_id,
       });
     }
+    await progressTick();
   }
 
   const mappedSourceIds = new Set(existingMappings.map((mapping) => mapping.source_page_id));
@@ -1333,6 +1394,7 @@ async function performSyncContractRun(
         source_page_id: sourcePage.id,
       });
     }
+    await progressTick();
   }
 
   for (const targetPage of targetPages) {
@@ -1356,6 +1418,7 @@ async function performSyncContractRun(
         target_page_id: targetPage.id,
       });
     }
+    await progressTick();
   }
 
   return state;
@@ -1501,28 +1564,32 @@ async function reconcileMappedPages(input: {
   let nextTargetLastEdited = activeTargetPage.lastEditedTime;
 
   if (resolvedTargetUpdates.length > 0) {
-    input.state.updated += 1;
     nextPairState = applyTargetUpdatesToPairState(nextPairState, resolvedTargetUpdates);
-    if (!input.dryRun) {
+    if (input.dryRun) {
+      input.state.updated += 1;
+    } else {
       const updated = await input.deps.dispatcher.updatePage(
         input.targetAccount.composio_user_id,
         input.mapping.target_page_id,
         buildWritablePropertiesPayload(resolvedTargetUpdates),
       );
       nextTargetLastEdited = updated.page?.lastEditedTime ?? nowIso();
+      input.state.updated += 1;
     }
   }
 
   if (resolvedSourceUpdates.length > 0) {
-    input.state.updated += 1;
     nextPairState = applySourceUpdatesToPairState(nextPairState, resolvedSourceUpdates);
-    if (!input.dryRun) {
+    if (input.dryRun) {
+      input.state.updated += 1;
+    } else {
       const updated = await input.deps.dispatcher.updatePage(
         input.sourceAccount.composio_user_id,
         input.mapping.source_page_id,
         buildWritablePropertiesPayload(resolvedSourceUpdates),
       );
       nextSourceLastEdited = updated.page?.lastEditedTime ?? nowIso();
+      input.state.updated += 1;
     }
   }
 
@@ -1587,44 +1654,47 @@ async function handleNonActiveMapping(input: {
   }
 
   const archiveTarget = input.sourcePresence.status !== 'active';
-  input.state.archived += 1;
+  if (input.dryRun) {
+    input.state.archived += 1;
+    return;
+  }
 
-  if (!input.dryRun) {
-    if (archiveTarget) {
-      const result = await input.deps.dispatcher.archivePage(input.targetAccount.composio_user_id, input.mapping.target_page_id);
-      await upsertNotionSyncRecordMapping(input.deps.db, {
-        partnerClientId: input.partnerClientId,
-        contractId: input.contract.id,
-        sourcePageId: input.mapping.source_page_id,
-        targetPageId: input.mapping.target_page_id,
-        sourceLastEditedTime: input.sourcePresence.page?.lastEditedTime ?? input.mapping.source_last_edited_time,
-        targetLastEditedTime: result.page?.lastEditedTime ?? nowIso(),
-        sourceLastHash: input.mapping.source_last_hash,
-        targetLastHash: input.mapping.target_last_hash,
-        mappingStatus: missingMeansDelete ? 'tombstoned' : 'archived',
-        lastSyncedAt: nowIso(),
-        archivedAt: nowIso(),
-        tombstonedAt: missingMeansDelete ? nowIso() : input.mapping.tombstoned_at,
-        metadata: parseJsonObject(input.mapping.metadata_json),
-      });
-    } else {
-      const result = await input.deps.dispatcher.archivePage(input.sourceAccount.composio_user_id, input.mapping.source_page_id);
-      await upsertNotionSyncRecordMapping(input.deps.db, {
-        partnerClientId: input.partnerClientId,
-        contractId: input.contract.id,
-        sourcePageId: input.mapping.source_page_id,
-        targetPageId: input.mapping.target_page_id,
-        sourceLastEditedTime: result.page?.lastEditedTime ?? nowIso(),
-        targetLastEditedTime: input.targetPresence.page?.lastEditedTime ?? input.mapping.target_last_edited_time,
-        sourceLastHash: input.mapping.source_last_hash,
-        targetLastHash: input.mapping.target_last_hash,
-        mappingStatus: missingMeansDelete ? 'tombstoned' : 'archived',
-        lastSyncedAt: nowIso(),
-        archivedAt: nowIso(),
-        tombstonedAt: missingMeansDelete ? nowIso() : input.mapping.tombstoned_at,
-        metadata: parseJsonObject(input.mapping.metadata_json),
-      });
-    }
+  if (archiveTarget) {
+    const result = await input.deps.dispatcher.archivePage(input.targetAccount.composio_user_id, input.mapping.target_page_id);
+    input.state.archived += 1;
+    await upsertNotionSyncRecordMapping(input.deps.db, {
+      partnerClientId: input.partnerClientId,
+      contractId: input.contract.id,
+      sourcePageId: input.mapping.source_page_id,
+      targetPageId: input.mapping.target_page_id,
+      sourceLastEditedTime: input.sourcePresence.page?.lastEditedTime ?? input.mapping.source_last_edited_time,
+      targetLastEditedTime: result.page?.lastEditedTime ?? nowIso(),
+      sourceLastHash: input.mapping.source_last_hash,
+      targetLastHash: input.mapping.target_last_hash,
+      mappingStatus: missingMeansDelete ? 'tombstoned' : 'archived',
+      lastSyncedAt: nowIso(),
+      archivedAt: nowIso(),
+      tombstonedAt: missingMeansDelete ? nowIso() : input.mapping.tombstoned_at,
+      metadata: parseJsonObject(input.mapping.metadata_json),
+    });
+  } else {
+    const result = await input.deps.dispatcher.archivePage(input.sourceAccount.composio_user_id, input.mapping.source_page_id);
+    input.state.archived += 1;
+    await upsertNotionSyncRecordMapping(input.deps.db, {
+      partnerClientId: input.partnerClientId,
+      contractId: input.contract.id,
+      sourcePageId: input.mapping.source_page_id,
+      targetPageId: input.mapping.target_page_id,
+      sourceLastEditedTime: result.page?.lastEditedTime ?? nowIso(),
+      targetLastEditedTime: input.targetPresence.page?.lastEditedTime ?? input.mapping.target_last_edited_time,
+      sourceLastHash: input.mapping.source_last_hash,
+      targetLastHash: input.mapping.target_last_hash,
+      mappingStatus: missingMeansDelete ? 'tombstoned' : 'archived',
+      lastSyncedAt: nowIso(),
+      archivedAt: nowIso(),
+      tombstonedAt: missingMeansDelete ? nowIso() : input.mapping.tombstoned_at,
+      metadata: parseJsonObject(input.mapping.metadata_json),
+    });
   }
 }
 
@@ -1658,14 +1728,17 @@ async function createMappedPeerFromSource(input: {
     return;
   }
 
-  input.state.created += 1;
-  if (input.dryRun) return;
+  if (input.dryRun) {
+    input.state.created += 1;
+    return;
+  }
 
   const created = await input.deps.dispatcher.createPage(
     input.targetAccount.composio_user_id,
     input.contract.target_data_source_id,
     payload,
   );
+  input.state.created += 1;
   const targetPage = created.page ?? await safeGetPage(input.deps, input.targetAccount, created.id);
   const pairState = buildPairState(
     input.fieldBindings,
@@ -1717,14 +1790,17 @@ async function createMappedPeerFromTarget(input: {
     return;
   }
 
-  input.state.created += 1;
-  if (input.dryRun) return;
+  if (input.dryRun) {
+    input.state.created += 1;
+    return;
+  }
 
   const created = await input.deps.dispatcher.createPage(
     input.sourceAccount.composio_user_id,
     input.contract.source_data_source_id,
     payload,
   );
+  input.state.created += 1;
   const sourcePage = created.page ?? await safeGetPage(input.deps, input.sourceAccount, created.id);
   const pairState = buildPairState(
     input.fieldBindings,
@@ -2037,9 +2113,15 @@ async function resolveMappedPagePresence(
   if (page) {
     return { status: page.archived ? 'archived' : 'active', page };
   }
-  const fetched = await safeGetPage(deps, account, pageId);
-  if (!fetched) return { status: 'missing', page: null };
-  return { status: fetched.archived ? 'archived' : 'active', page: fetched };
+  try {
+    const fetched = await deps.dispatcher.getPage(account.composio_user_id, pageId);
+    return { status: fetched.archived ? 'archived' : 'active', page: fetched };
+  } catch (error) {
+    if (isMissingNotionPageError(error)) {
+      return { status: 'missing', page: null };
+    }
+    throw error;
+  }
 }
 
 async function safeGetPage(
@@ -2519,6 +2601,80 @@ function stableStringify(value: unknown): string {
   return `{${entries.map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`).join(',')}}`;
 }
 
+async function acquireLiveSyncRunLeaseOrThrow(
+  deps: OperatorNotionToolsDeps,
+  partnerClientId: string,
+  contract: NotionSyncContractRow,
+  runId: string,
+  actor: string,
+): Promise<string> {
+  const initialAttempt = await tryAcquireNotionSyncRunLease(deps.db, {
+    partnerClientId,
+    contractId: contract.id,
+    runId,
+    ttlSeconds: LIVE_SYNC_RUN_LEASE_TTL_SECONDS,
+    metadata: {
+      actor,
+      contract_slug: contract.contract_slug,
+      run_id: runId,
+    },
+  });
+  if (initialAttempt.acquired) {
+    return initialAttempt.leaseToken;
+  }
+
+  let blockingLease = initialAttempt.lease;
+  let blockingRun = blockingLease ? await getNotionSyncRunById(deps.db, blockingLease.run_id) : null;
+
+  if (blockingLease && !isActiveLiveSyncRun(blockingRun)) {
+    await releaseNotionSyncRunLease(deps.db, {
+      contractId: contract.id,
+      runId: blockingLease.run_id,
+      leaseToken: blockingLease.lease_token,
+    });
+
+    const retryAttempt = await tryAcquireNotionSyncRunLease(deps.db, {
+      partnerClientId,
+      contractId: contract.id,
+      runId,
+      leaseToken: initialAttempt.leaseToken,
+      ttlSeconds: LIVE_SYNC_RUN_LEASE_TTL_SECONDS,
+      metadata: {
+        actor,
+        contract_slug: contract.contract_slug,
+        run_id: runId,
+      },
+    });
+    if (retryAttempt.acquired) {
+      return retryAttempt.leaseToken;
+    }
+
+    blockingLease = retryAttempt.lease;
+    blockingRun = blockingLease ? await getNotionSyncRunById(deps.db, blockingLease.run_id) : null;
+  }
+
+  throw new Error(formatSyncRunLeaseConflictMessage(contract.contract_slug, blockingRun, blockingLease));
+}
+
+function isActiveLiveSyncRun(run: Pick<NotionSyncRunRow, 'status'> | null | undefined): boolean {
+  return Boolean(run && run.status === 'started');
+}
+
+export function formatSyncRunLeaseConflictMessage(
+  contractSlug: string,
+  blockingRun: Pick<NotionSyncRunRow, 'id' | 'status' | 'started_at'> | null,
+  blockingLease?: Pick<NotionSyncRunLeaseRow, 'run_id' | 'lease_expires_at'> | null,
+): string {
+  const prefix = `Another live sync run is already in progress for contract "${contractSlug}".`;
+  if (blockingRun) {
+    return `${prefix} active_run_id=${blockingRun.id} status=${blockingRun.status} started_at=${blockingRun.started_at}.`;
+  }
+  if (blockingLease) {
+    return `${prefix} active_run_id=${blockingLease.run_id} lease_expires_at=${blockingLease.lease_expires_at}.`;
+  }
+  return prefix;
+}
+
 function safeJsonArray(raw: string): unknown[] {
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -2530,6 +2686,72 @@ function safeJsonArray(raw: string): unknown[] {
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+export function scopeSyncRunIdempotencyKey(idempotencyKey: string | null, dryRun: boolean): string | null {
+  const normalized = typeof idempotencyKey === 'string' ? idempotencyKey.trim() : '';
+  if (!normalized) return null;
+  return `${dryRun ? 'dry_run' : 'live'}:${normalized}`;
+}
+
+export function isMissingNotionPageError(error: unknown): boolean {
+  const statusCode = extractErrorStatusCode(error);
+  if (statusCode === 404) {
+    return true;
+  }
+
+  const message = extractErrorMessage(error).toLowerCase();
+  if (!message) {
+    return false;
+  }
+
+  const mentionsNotionObject = message.includes('page') || message.includes('object') || message.includes('resource');
+  const mentionsMissingObject =
+    message.includes('object_not_found') ||
+    (message.includes('could not find') && mentionsNotionObject) ||
+    (message.includes('not found') && mentionsNotionObject);
+
+  return mentionsMissingObject;
+}
+
+function extractErrorStatusCode(error: unknown): number | null {
+  if (!error || typeof error !== 'object') {
+    return null;
+  }
+
+  const record = error as Record<string, unknown>;
+  const direct = typeof record.statusCode === 'number'
+    ? record.statusCode
+    : typeof record.status === 'number'
+      ? record.status
+      : null;
+  if (direct !== null && Number.isFinite(direct)) {
+    return Math.trunc(direct);
+  }
+
+  const response = record.response;
+  if (response && typeof response === 'object') {
+    const responseRecord = response as Record<string, unknown>;
+    const nested = typeof responseRecord.status === 'number' ? responseRecord.status : null;
+    if (nested !== null && Number.isFinite(nested)) {
+      return Math.trunc(nested);
+    }
+  }
+
+  return null;
+}
+
+function extractErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error && typeof error === 'object' && typeof (error as { message?: unknown }).message === 'string') {
+    return (error as { message: string }).message;
+  }
+  return '';
 }
 
 function buildAccountWizardQuestions(missing: string[], deps: OperatorNotionToolsDeps): string[] {

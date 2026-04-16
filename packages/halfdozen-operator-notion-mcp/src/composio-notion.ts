@@ -36,11 +36,11 @@ const ACTION_SLUG_PREFERENCES: Record<PinnedNotionAction, string[]> = {
   query_database: ['NOTION_QUERY_DATABASE', 'NOTION_QUERY_DATABASE_WITH_FILTER', 'NOTION_QUERY_DATA_SOURCE'],
   get_page: ['NOTION_RETRIEVE_PAGE', 'NOTION_GET_PAGE'],
   list_block_children: ['NOTION_FETCH_BLOCK_CONTENTS', 'NOTION_LIST_BLOCK_CHILDREN'],
-  create_page: ['NOTION_CREATE_NOTION_PAGE', 'NOTION_CREATE_PAGE'],
-  update_page: ['NOTION_UPDATE_PAGE'],
+  create_page: ['NOTION_INSERT_ROW_DATABASE', 'NOTION_CREATE_NOTION_PAGE', 'NOTION_CREATE_PAGE'],
+  update_page: ['NOTION_UPDATE_PAGE', 'NOTION_UPDATE_ROW_DATABASE'],
   append_blocks: ['NOTION_APPEND_BLOCK_CHILDREN', 'NOTION_APPEND_BLOCKS'],
   archive_page: ['NOTION_ARCHIVE_NOTION_PAGE', 'NOTION_ARCHIVE_PAGE'],
-  bulk_update: ['NOTION_UPDATE_PAGE'],
+  bulk_update: ['NOTION_UPDATE_PAGE', 'NOTION_UPDATE_ROW_DATABASE'],
   bulk_archive: ['NOTION_ARCHIVE_NOTION_PAGE', 'NOTION_ARCHIVE_PAGE'],
 };
 
@@ -152,11 +152,13 @@ export class ComposioNotionDispatcher {
     options?: { page_size?: number; start_cursor?: string },
   ): Promise<{ data_sources: NotionDataSourceSummary[]; has_more: boolean; next_cursor: string | null }> {
     const payload = await this.execute('list_databases', options ?? {}, userId);
+    throwIfToolExecutionFailed('list_databases', payload);
     return normalizeListDataSourcesPayload(payload);
   }
 
   async getDataSourceSchema(userId: string, dataSourceId: string): Promise<NotionDataSourceSchema> {
     const payload = await this.execute('get_database', { data_source_id: dataSourceId }, userId);
+    throwIfToolExecutionFailed('get_database', payload);
     return normalizeDataSourceSchemaPayload(payload, dataSourceId);
   }
 
@@ -176,6 +178,7 @@ export class ComposioNotionDispatcher {
       },
       userId,
     );
+    throwIfToolExecutionFailed('query_database', payload);
     const normalized = unwrapPayload(payload);
     const results = asObjectArray(normalized.results).map(normalizePageSnapshot);
     return {
@@ -187,6 +190,7 @@ export class ComposioNotionDispatcher {
 
   async getPage(userId: string, pageId: string): Promise<NotionPageSnapshot> {
     const payload = await this.execute('get_page', { page_id: pageId }, userId);
+    throwIfToolExecutionFailed('get_page', payload);
     return normalizePageSnapshot(payload);
   }
 
@@ -196,9 +200,25 @@ export class ComposioNotionDispatcher {
     properties: Record<string, unknown>,
   ): Promise<{ id: string; archived: boolean; page?: NotionPageSnapshot }> {
     const payload = await this.execute('create_page', { data_source_id: dataSourceId, properties }, userId);
+    throwIfToolExecutionFailed('create_page', payload);
     const normalized = unwrapPayload(payload);
     const page = isNotionPageObject(normalized) ? normalizePageSnapshot(normalized) : undefined;
-    const id = page?.id ?? readString(normalized, ['id', 'page_id']);
+    const id = page?.id ?? readStringAtPaths(normalized, [
+      ['id'],
+      ['page_id'],
+      ['page', 'id'],
+      ['page', 'page_id'],
+      ['item', 'id'],
+      ['item', 'page_id'],
+      ['response_data', 'id'],
+      ['response_data', 'page_id'],
+      ['responseData', 'id'],
+      ['responseData', 'page_id'],
+      ['payload', 'id'],
+      ['payload', 'page_id'],
+      ['body', 'id'],
+      ['body', 'page_id'],
+    ]);
     if (!id) throw new Error('Notion create_page response did not include a page id.');
     return { id, archived: page?.archived ?? false, ...(page ? { page } : {}) };
   }
@@ -209,6 +229,7 @@ export class ComposioNotionDispatcher {
     properties: Record<string, unknown>,
   ): Promise<{ id: string; archived: boolean; page?: NotionPageSnapshot }> {
     const payload = await this.execute('update_page', { page_id: pageId, properties }, userId);
+    throwIfToolExecutionFailed('update_page', payload);
     const normalized = unwrapPayload(payload);
     const page = isNotionPageObject(normalized) ? normalizePageSnapshot(normalized) : undefined;
     const id = page?.id ?? readString(normalized, ['id', 'page_id']) ?? pageId;
@@ -217,6 +238,7 @@ export class ComposioNotionDispatcher {
 
   async archivePage(userId: string, pageId: string): Promise<{ id: string; archived: true; page?: NotionPageSnapshot }> {
     const payload = await this.execute('archive_page', { page_id: pageId }, userId);
+    throwIfToolExecutionFailed('archive_page', payload);
     const normalized = unwrapPayload(payload);
     const page = isNotionPageObject(normalized) ? normalizePageSnapshot(normalized) : undefined;
     const id = page?.id ?? readString(normalized, ['id', 'page_id']) ?? pageId;
@@ -290,8 +312,8 @@ export function resolveRouteForAction(action: PinnedNotionAction, tools: Composi
     }
 
     if (action === 'append_blocks' && !hasParameter(tool.parameters, 'children')) continue;
-    if ((action === 'update_page' || action === 'bulk_update') && !hasAnyParameter(tool.parameters, ['page_id', 'id'])) continue;
-    if ((action === 'create_page') && !hasAnyParameter(tool.parameters, ['data_source_id', 'database_id', 'parent'])) continue;
+    if ((action === 'update_page' || action === 'bulk_update') && !hasAnyParameter(tool.parameters, ['page_id', 'id', 'row_id'])) continue;
+    if ((action === 'create_page') && !hasAnyParameter(tool.parameters, ['data_source_id', 'database_id', 'parent', 'parent_id'])) continue;
     if (
       action === 'list_databases' &&
       hasAnyRequiredParameter(tool.parameters, ['parent_id', 'title', 'database_id', 'data_source_id'])
@@ -328,7 +350,7 @@ function hasAnyParameter(parameters: ComposioToolDef['parameters'], keys: string
 
 function hasAnyRequiredParameter(parameters: ComposioToolDef['parameters'], keys: string[]): boolean {
   if (!Array.isArray(parameters.required)) return false;
-  return parameters.required.some((key) => keys.includes(key));
+  return parameters.required.some((key: unknown) => typeof key === 'string' && keys.includes(key));
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -372,6 +394,24 @@ function readString(object: Record<string, unknown>, keys: string[]): string | n
   return null;
 }
 
+function readStringAtPaths(object: Record<string, unknown>, paths: string[][]): string | null {
+  for (const path of paths) {
+    let current: unknown = object;
+    let validPath = true;
+    for (const key of path) {
+      if (!isPlainObject(current)) {
+        validPath = false;
+        break;
+      }
+      current = current[key];
+    }
+    if (validPath && typeof current === 'string' && current.length > 0) {
+      return current;
+    }
+  }
+  return null;
+}
+
 function unwrapPayload(value: Record<string, unknown>): Record<string, unknown> {
   let current: Record<string, unknown> = value;
   for (let i = 0; i < 4; i += 1) {
@@ -380,6 +420,10 @@ function unwrapPayload(value: Record<string, unknown>): Record<string, unknown> 
       (isPlainObject(current.result) && current.result) ||
       (isPlainObject(current.response) && current.response) ||
       (isPlainObject(current.output) && current.output) ||
+      (isPlainObject(current.response_data) && current.response_data) ||
+      (isPlainObject(current.responseData) && current.responseData) ||
+      (isPlainObject(current.payload) && current.payload) ||
+      (isPlainObject(current.body) && current.body) ||
       null;
     if (!nested) break;
     current = nested;
@@ -623,6 +667,97 @@ export function buildWritablePropertiesPayload(
   return output;
 }
 
+function inferWritablePropertyTypeFromValue(value: Record<string, unknown>): SupportedSyncFieldType | null {
+  for (const type of SUPPORTED_SYNC_FIELD_TYPES) {
+    if (type in value) return type;
+  }
+  return null;
+}
+
+function stringifyComparableValue(type: SupportedSyncFieldType, comparableValue: ComparablePropertyValue): string | null {
+  switch (type) {
+    case 'title':
+    case 'rich_text':
+      return typeof comparableValue === 'string' && comparableValue.length > 0 ? comparableValue : null;
+    case 'number':
+      return typeof comparableValue === 'number' ? String(comparableValue) : null;
+    case 'select':
+    case 'status':
+      return typeof comparableValue === 'string' && comparableValue.length > 0 ? comparableValue : null;
+    case 'multi_select':
+      return Array.isArray(comparableValue) && comparableValue.length > 0 ? comparableValue.join(',') : null;
+    case 'date': {
+      const dateValue = normalizeComparableDate(comparableValue);
+      if (!dateValue?.start) return null;
+      return dateValue.end ? `${dateValue.start}/${dateValue.end}` : dateValue.start;
+    }
+    case 'checkbox':
+      return comparableValue === true ? 'True' : 'False';
+    case 'url':
+    case 'email':
+    case 'phone_number':
+      return typeof comparableValue === 'string' && comparableValue.length > 0 ? comparableValue : null;
+    default:
+      return null;
+  }
+}
+
+function convertPropertiesObjectToList(
+  properties: Record<string, unknown>,
+): Array<{ name: string; type: SupportedSyncFieldType; value: string }> {
+  const output: Array<{ name: string; type: SupportedSyncFieldType; value: string }> = [];
+  for (const [name, rawValue] of Object.entries(properties)) {
+    if (!name || !isPlainObject(rawValue)) continue;
+    const type = inferWritablePropertyTypeFromValue(rawValue);
+    if (!type) continue;
+    const comparableValue = buildComparablePropertyValue(type, rawValue);
+    const value = stringifyComparableValue(type, comparableValue);
+    if (value === null) continue;
+    output.push({ name, type, value });
+  }
+  return output;
+}
+
+function extractTitleFromPropertiesObject(properties: Record<string, unknown>): string | null {
+  for (const rawValue of Object.values(properties)) {
+    if (!isPlainObject(rawValue)) continue;
+    const type = inferWritablePropertyTypeFromValue(rawValue);
+    if (type !== 'title') continue;
+    const comparableValue = buildComparablePropertyValue(type, rawValue);
+    return typeof comparableValue === 'string' && comparableValue.length > 0 ? comparableValue : null;
+  }
+  return null;
+}
+
+function extractToolExecutionError(payload: Record<string, unknown>): string | null {
+  const queue: Record<string, unknown>[] = [payload];
+  const seen = new Set<Record<string, unknown>>();
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || seen.has(current)) continue;
+    seen.add(current);
+
+    const error = typeof current.error === 'string' && current.error.trim().length > 0 ? current.error.trim() : null;
+    const message = typeof current.message === 'string' && current.message.trim().length > 0 ? current.message.trim() : null;
+    if (current.successful === false && (error || message)) {
+      return error ?? message;
+    }
+
+    for (const key of ['data', 'result', 'response', 'output', 'response_data', 'responseData', 'payload', 'body']) {
+      const nested = current[key];
+      if (isPlainObject(nested)) queue.push(nested);
+    }
+  }
+  return null;
+}
+
+function throwIfToolExecutionFailed(action: PinnedNotionAction, payload: Record<string, unknown>): void {
+  const error = extractToolExecutionError(payload);
+  if (error) {
+    throw new Error(`Notion ${action} failed: ${error}`);
+  }
+}
+
 export function adaptArgsForRoute(
   action: PinnedNotionAction,
   route: ResolvedNotionRoute,
@@ -641,6 +776,31 @@ export function adaptArgsForRoute(
   }
   if ('data_source_id' in properties && 'database_id' in args && !('data_source_id' in args)) {
     args.data_source_id = args.database_id;
+  }
+  if ('parent' in properties && !isPlainObject(args.parent)) {
+    const dataSourceId =
+      typeof args.data_source_id === 'string'
+        ? args.data_source_id
+        : typeof args.database_id === 'string'
+          ? args.database_id
+          : null;
+    if (dataSourceId) {
+      args.parent = { data_source_id: dataSourceId };
+    }
+  }
+  if ('parent_id' in properties && typeof args.parent_id !== 'string') {
+    const parentId =
+      typeof args.data_source_id === 'string'
+        ? args.data_source_id
+        : typeof args.database_id === 'string'
+          ? args.database_id
+          : null;
+    if (parentId) {
+      args.parent_id = parentId;
+    }
+  }
+  if ('row_id' in properties && 'page_id' in args && !('row_id' in args)) {
+    args.row_id = args.page_id;
   }
   if ('block_id' in properties && 'page_id' in args && !('block_id' in args)) {
     args.block_id = args.page_id;
@@ -663,7 +823,23 @@ export function adaptArgsForRoute(
     }
   }
   if ('properties' in properties && isPlainObject(args.properties)) {
-    args.properties = args.properties;
+    const propertySchema = properties.properties;
+    if (isPlainObject(propertySchema) && propertySchema.type === 'array') {
+      args.properties = convertPropertiesObjectToList(args.properties);
+    }
+  }
+  if ('title' in properties && typeof args.title !== 'string' && isPlainObject(args.properties)) {
+    const title = extractTitleFromPropertiesObject(args.properties);
+    if (title) args.title = title;
+  }
+  if (!('data_source_id' in properties)) {
+    delete args.data_source_id;
+  }
+  if (!('database_id' in properties)) {
+    delete args.database_id;
+  }
+  if (!('page_id' in properties) && !('block_id' in properties)) {
+    delete args.page_id;
   }
 
   return args;
