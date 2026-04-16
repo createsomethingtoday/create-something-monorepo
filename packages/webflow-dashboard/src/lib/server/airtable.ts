@@ -969,10 +969,6 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		id: record.id,
 		name: (record.fields['Name'] as string) || '',
 		email: fallbackEmail,
-		emails: (record.fields['📧Emails'] as string | undefined)
-			?.split(',')
-			.map((value) => value.trim())
-			.filter(Boolean),
 		avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
 		biography: record.fields['ℹ️Biography'] as string,
 		legalName: record.fields['ℹ️Legal Name'] as string,
@@ -1607,16 +1603,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const records = await base(TABLES.CREATORS).update([{ id, fields }]) as Airtable.Records<Airtable.FieldSet>;
 				const record = records[0];
 				debugLog('[Airtable] updateCreator success:', { creatorId: record.id });
-				return {
-					id: record.id,
-					name: (record.fields['Name'] as string) || '', // Match original field name
-					email: (record.fields['📧Emails'] as string)?.split(',')[0]?.trim() || '',
-					emails: (record.fields['📧Emails'] as string)?.split(',').map(e => e.trim()),
-					avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
-					biography: (record.fields['ℹ️Biography'] as string), // Match original field name
-					legalName: (record.fields['ℹ️Legal Name'] as string), // Match original field name
-					websiteUrl: (record.fields['🔗Personal Site'] as string)
-				};
+				return mapCreatorRecord(record, (record.fields['📧WF Account Email'] as string) || '');
 			} catch (err) {
 				console.error('[Airtable] Error updating creator:', err);
 				console.error('[Airtable] updateCreator error details:', {

@@ -65,6 +65,7 @@ async function updateProfile(request: Request) {
   if (!updated) {
     return jsonNoStore({ error: 'Failed to update profile' }, { status: 500 });
   }
+  updated.email = user.email;
 
   return jsonNoStore(updated);
 }

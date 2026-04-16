@@ -124,6 +124,7 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		if (!updated) {
 			throw error(500, 'Failed to update profile');
 		}
+		updated.email = email;
 
 		return json(updated, { headers: noCacheHeaders });
 	} catch (err) {
