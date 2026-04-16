@@ -31,6 +31,7 @@
 		name: '',
 		legalName: '',
 		biography: '',
+		websiteUrl: '',
 		avatarUrl: null as string | null
 	});
 
@@ -51,6 +52,7 @@
 		name?: string;
 		legalName?: string;
 		biography?: string;
+		websiteUrl?: string;
 		avatarUrl?: string | null;
 		email?: string;
 	}
@@ -71,6 +73,7 @@
 				name: profile.name || '',
 				legalName: profile.legalName || '',
 				biography: profile.biography || '',
+				websiteUrl: profile.websiteUrl || '',
 				avatarUrl: loadedAvatarUrl
 			};
 		} catch (err) {
@@ -103,7 +106,8 @@
 			const updateData: Record<string, unknown> = {
 				name: formData.name,
 				legalName: formData.legalName,
-				biography: formData.biography
+				biography: formData.biography,
+				websiteUrl: formData.websiteUrl
 			};
 			if (formData.avatarUrl !== initialAvatarUrl) {
 				updateData.avatarUrl = formData.avatarUrl;
@@ -131,6 +135,7 @@
 				name: updated.name || '',
 				legalName: updated.legalName || '',
 				biography: updated.biography || '',
+				websiteUrl: updated.websiteUrl || '',
 				avatarUrl: savedAvatarUrl
 			};
 
@@ -236,6 +241,16 @@
 										bind:value={formData.biography}
 										placeholder="Tell us about yourself..."
 										rows={4}
+									/>
+								</div>
+
+								<div class="form-field">
+									<Label for="websiteUrl">Personal website URL</Label>
+									<Input
+										id="websiteUrl"
+										type="url"
+										bind:value={formData.websiteUrl}
+										placeholder="https://"
 									/>
 								</div>
 
