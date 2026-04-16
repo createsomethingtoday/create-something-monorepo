@@ -1,4 +1,11 @@
 <script lang="ts">
+	import {
+		APP_CAPABILITY_OPTIONS,
+		APP_CATEGORY_OPTIONS,
+		APP_SCOPE_OPTIONS,
+		APP_VISIBILITY_OPTIONS,
+		PAYMENT_TYPE_OPTIONS
+	} from '@create-something/webflow-dashboard-core/app-options';
 	import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Textarea } from './ui';
 	import CarouselUploader from './CarouselUploader.svelte';
 	import ImageUploader from './ImageUploader.svelte';
@@ -8,47 +15,6 @@
 	import { onMount } from 'svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 
-	const APP_CAPABILITY_OPTIONS = ['Data Client v2', 'Designer Extension', 'Hybrid'] as const;
-	const APP_SCOPE_OPTIONS = [
-		'app-subscriptions',
-		'assets',
-		'authorized-user',
-		'cms',
-		'comments',
-		'components',
-		'custom-code',
-		'ecommerce',
-		'forms',
-		'pages',
-		'sites',
-		'site-activity',
-		'site-config',
-		'user-accounts',
-		'workspace'
-	] as const;
-	const APP_CATEGORY_OPTIONS = [
-		'AI',
-		'Analytics',
-		'Asset Management',
-		'Automation',
-		'Compliance',
-		'Content Management',
-		'Customer Support',
-		'Data Sync',
-		'Design',
-		'Development and Coding',
-		'Ecommerce',
-		'Forms and Surveys',
-		'Icons',
-		'Localization',
-		'Marketing',
-		'Scheduling',
-		'SEO',
-		'User Management',
-		'Utilities'
-	] as const;
-	const PAYMENT_TYPE_OPTIONS = ['Free', 'Paid'] as const;
-	const VISIBILITY_OPTIONS = ['Public', 'Private'] as const;
 	const APP_SCREENSHOT_RATIO = { width: 1280, height: 846 };
 
 	const scriptInitTime = performance.now();
@@ -339,7 +305,7 @@
 			: [...formData.paymentType, option];
 	}
 
-	function setVisibility(option: (typeof VISIBILITY_OPTIONS)[number]) {
+	function setVisibility(option: (typeof APP_VISIBILITY_OPTIONS)[number]) {
 		formData.visibility = formData.visibility === option ? '' : option;
 	}
 
@@ -965,7 +931,7 @@
 							<div class="form-field">
 								<Label>Marketplace Visibility</Label>
 								<div class="option-grid">
-									{#each VISIBILITY_OPTIONS as option}
+									{#each APP_VISIBILITY_OPTIONS as option}
 										<label class="option-card">
 											<input
 												type="checkbox"

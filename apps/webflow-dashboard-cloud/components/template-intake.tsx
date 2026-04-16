@@ -1,16 +1,15 @@
 'use client';
 
+import {
+  TEMPLATE_CATEGORY_OPTIONS,
+  TEMPLATE_FEATURE_OPTIONS,
+  TEMPLATE_PRIMARY_TAGS,
+  TEMPLATE_SITE_TYPE_OPTIONS
+} from '@create-something/webflow-dashboard-core/template-intake';
 import Script from 'next/script';
 import { useEffect, useRef, useState } from 'react';
 import { appPath } from '../lib/runtime-paths';
-import {
-  ALL_COUNTRIES,
-  CATEGORY_OPTIONS,
-  FEATURE_OPTIONS,
-  PRIMARY_TAGS,
-  SITE_TYPE_OPTIONS,
-  isSupportedCountry
-} from '../lib/intake/constants';
+import { ALL_COUNTRIES, isSupportedCountry } from '../lib/intake/constants';
 
 type Tone = 'success' | 'error' | 'info';
 
@@ -777,8 +776,7 @@ export function TemplateIntake() {
           <div>
             <h1 className="page-title">Marketplace creator intake</h1>
             <p className="page-subtitle">
-              Rebuilt as a Webflow Cloud flow: create the creator profile first, then run the
-              template submission gates against the new app-owned API surface.
+              Start with the creator profile, then move into the full template submission checks.
             </p>
           </div>
         </section>
@@ -788,15 +786,15 @@ export function TemplateIntake() {
             <div>
               <h2 className="card-title">Live logic, explicit state</h2>
               <p className="card-subtitle">
-                The old Webflow form hid business rules behind checkbox gates. This version keeps
-                the same checks visible: creator email uniqueness, creator eligibility, template
-                name policy, published-site crawl, and exact WebP upload rules.
+                Every required check is visible in the flow: creator email uniqueness, creator
+                eligibility, template name policy, published-site crawl, and exact WebP upload
+                rules.
               </p>
             </div>
             <div className="pill-row">
               <span className="pill">Profile first</span>
               <span className="pill">Template crawl validation</span>
-              <span className="pill">R2-backed uploads</span>
+              <span className="pill">Validated uploads</span>
             </div>
           </div>
         </section>
@@ -1179,7 +1177,7 @@ export function TemplateIntake() {
                     onChange={(event) => updateTemplate('category', event.target.value)}
                   >
                     <option value="">Select a category</option>
-                    {CATEGORY_OPTIONS.map((category) => (
+                    {TEMPLATE_CATEGORY_OPTIONS.map((category) => (
                       <option key={category} value={category}>
                         {category}
                       </option>
@@ -1203,7 +1201,7 @@ export function TemplateIntake() {
               </div>
 
               <datalist id="primary-tag-suggestions">
-                {PRIMARY_TAGS.map((tag) => (
+                {TEMPLATE_PRIMARY_TAGS.map((tag) => (
                   <option key={tag} value={tag} />
                 ))}
               </datalist>
@@ -1224,7 +1222,7 @@ export function TemplateIntake() {
                 <div className="field">
                   <span className="field-label">Site types</span>
                   <div className="checkbox-grid">
-                    {SITE_TYPE_OPTIONS.map((option) => (
+                    {TEMPLATE_SITE_TYPE_OPTIONS.map((option) => (
                       <label className="checkbox-row" key={option.id}>
                         <input
                           type="checkbox"
@@ -1246,7 +1244,7 @@ export function TemplateIntake() {
               <div className="field">
                 <span className="field-label">Feature flags</span>
                 <div className="checkbox-grid">
-                  {FEATURE_OPTIONS.map((option) => (
+                  {TEMPLATE_FEATURE_OPTIONS.map((option) => (
                     <label className="checkbox-row" key={option.id}>
                       <input
                         type="checkbox"

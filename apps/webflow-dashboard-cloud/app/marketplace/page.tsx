@@ -52,8 +52,7 @@ export default async function MarketplacePage() {
           <div>
             <h1 className="page-title">Marketplace insights</h1>
             <p className="page-subtitle">
-              Weekly leaderboard and category data, redacted for competitor privacy but still aligned with the
-              original dashboard contracts.
+              Weekly leaderboard and category data, with competitor-sensitive details kept private.
             </p>
           </div>
         </section>

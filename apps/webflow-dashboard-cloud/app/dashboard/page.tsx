@@ -69,8 +69,7 @@ export default async function DashboardPage() {
           <div>
             <h1 className="page-title">Your Webflow template portfolio</h1>
             <p className="page-subtitle">
-              Track asset status, creator metadata, marketplace access, and submission capacity from the new Webflow
-              Cloud dashboard shell.
+              Track asset status, creator metadata, marketplace access, and submission capacity in one place.
             </p>
           </div>
         </section>

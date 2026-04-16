@@ -8,6 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./airtable": "./src/airtable.ts",
+    "./app-options": "./src/app-options.ts",
+    "./forms": "./src/forms.ts",
     "./hash": "./src/hash.ts",
     "./kv": "./src/kv.ts",
     "./r2": "./src/r2.ts",
@@ -15,6 +17,7 @@
     "./security": "./src/security.ts",
     "./submission": "./src/submission.ts",
     "./sync-schedule": "./src/sync-schedule.ts",
+    "./template-intake": "./src/template-intake.ts",
     "./upload-validation": "./src/upload-validation.ts"
   },
   "scripts": {

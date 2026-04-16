@@ -9,6 +9,24 @@ const API_SCOPES = [
   { id: 'read:profile', label: 'Read profile' }
 ] as const;
 
+async function uploadImage(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('type', 'image');
+
+  const response = await fetch(appPath('/api/upload'), {
+    method: 'POST',
+    body: formData
+  });
+
+  const data = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
+  if (!response.ok || !data.url) {
+    throw new Error(data.error || 'Failed to upload image');
+  }
+
+  return data.url;
+}
+
 export function AccountPanel({
   initialProfile,
   initialKeys,
@@ -26,6 +44,7 @@ export function AccountPanel({
   const [keyName, setKeyName] = useState('');
   const [selectedScopes, setSelectedScopes] = useState<string[]>(['read:assets']);
   const [latestGeneratedKey, setLatestGeneratedKey] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   async function refreshKeys() {
     const response = await fetch(appPath('/api/keys'), { cache: 'no-store' });
@@ -43,12 +62,28 @@ export function AccountPanel({
     setError(null);
 
     const formData = new FormData(event.currentTarget);
-    const payload = {
+    const payload: {
+      name: string;
+      biography: string;
+      legalName: string;
+      websiteUrl: string;
+      avatarUrl?: string;
+    } = {
       name: String(formData.get('name') || ''),
       biography: String(formData.get('biography') || ''),
       legalName: String(formData.get('legalName') || ''),
       websiteUrl: String(formData.get('websiteUrl') || '')
     };
+
+    try {
+      if (avatarFile) {
+        payload.avatarUrl = await uploadImage(avatarFile);
+      }
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Failed to upload profile image');
+      setSaving(false);
+      return;
+    }
 
     const response = await fetch(appPath('/api/profile'), {
       method: 'PUT',
@@ -66,6 +101,7 @@ export function AccountPanel({
 
     setProfile(data);
     setMessage('Profile updated.');
+    setAvatarFile(null);
     setSaving(false);
   }
 
@@ -139,6 +175,26 @@ export function AccountPanel({
         </div>
 
         <form className="form-stack" onSubmit={saveProfile} style={{ marginTop: '1rem' }}>
+          <div className="field">
+            <label className="field-label" htmlFor="avatar">
+              Profile image
+            </label>
+            <input
+              className="field-input"
+              id="avatar"
+              type="file"
+              accept="image/webp"
+              onChange={(event) => setAvatarFile(event.target.files?.[0] || null)}
+            />
+            {profile?.avatarUrl ? (
+              <div className="image-grid">
+                <div className="image-card">
+                  <img src={profile.avatarUrl} alt={`${profile.name || 'Creator'} avatar`} />
+                  <div className="image-card-body">Current profile image</div>
+                </div>
+              </div>
+            ) : null}
+          </div>
           <div className="field">
             <label className="field-label" htmlFor="name">
               Creator name

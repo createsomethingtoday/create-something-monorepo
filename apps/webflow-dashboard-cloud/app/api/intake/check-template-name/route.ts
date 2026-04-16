@@ -1,7 +1,7 @@
+import { validateTemplateNameSyntax } from '@create-something/webflow-dashboard-core/template-intake';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { checkRemoteTemplateNameAvailability } from '../../../../lib/intake/external';
-import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { name?: string };

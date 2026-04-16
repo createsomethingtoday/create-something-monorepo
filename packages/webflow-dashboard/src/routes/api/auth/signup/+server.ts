@@ -1,7 +1,12 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getAirtableClient, validateEmail } from '$lib/server/airtable';
+import { getAirtableClient, validateEmail } from '@create-something/webflow-dashboard-core/airtable';
 import { checkRateLimit } from '$lib/server/kv';
+import {
+	normalizeOptionalHttpUrl,
+	normalizeOptionalTrimmedString,
+	normalizeRequiredHttpUrl
+} from '@create-something/webflow-dashboard-core/forms';
 import { v4 as uuidv4 } from 'uuid';
 import { isSupportedCountry } from '$lib/intake/countries';
 
@@ -16,26 +21,6 @@ type SignupBody = {
 	avatarUrl?: string;
 	agreedToTerms?: boolean;
 };
-
-function isValidOptionalUrl(value: string | undefined): boolean {
-	if (!value) return true;
-
-	try {
-		const url = new URL(value);
-		return url.protocol === 'http:' || url.protocol === 'https:';
-	} catch {
-		return false;
-	}
-}
-
-function isValidRequiredUrl(value: string): boolean {
-	try {
-		const url = new URL(value);
-		return url.protocol === 'http:' || url.protocol === 'https:';
-	} catch {
-		return false;
-	}
-}
 
 export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	const sessions = platform?.env?.SESSIONS;
@@ -65,11 +50,31 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 	try {
 		const body = (await request.json().catch(() => ({}))) as SignupBody;
 		const country = String(body.country || '').trim();
-		const legalName = String(body.legalName || '').trim();
-		const preferredName = String(body.preferredName || '').trim();
-		const biography = String(body.biography || '').trim();
-		const websiteUrl = String(body.websiteUrl || '').trim() || undefined;
-		const avatarUrl = String(body.avatarUrl || '').trim();
+		let legalName = '';
+		let preferredName = '';
+		let biography = '';
+		let websiteUrl: string | undefined;
+		let avatarUrl = '';
+
+		try {
+			legalName = normalizeOptionalTrimmedString(body.legalName, 'Legal name') || '';
+			preferredName =
+				normalizeOptionalTrimmedString(body.preferredName, 'Preferred name') || '';
+			biography = normalizeOptionalTrimmedString(body.biography, 'Biography') || '';
+			websiteUrl =
+				normalizeOptionalHttpUrl(body.websiteUrl, 'Personal website URL') || undefined;
+			avatarUrl = normalizeRequiredHttpUrl(body.avatarUrl, 'Profile image URL');
+		} catch (validationError) {
+			return json(
+				{
+					error:
+						validationError instanceof Error
+							? validationError.message
+							: 'Signup payload is invalid.'
+				},
+				{ status: 400 }
+			);
+		}
 
 		if (!country) {
 			return json({ error: 'Country is required.' }, { status: 400 });
@@ -96,16 +101,8 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			return json({ error: 'Biography must be 200 characters or fewer.' }, { status: 400 });
 		}
 
-		if (!avatarUrl || !isValidRequiredUrl(avatarUrl)) {
-			return json({ error: 'A valid profile image upload is required.' }, { status: 400 });
-		}
-
 		if (!body.agreedToTerms) {
 			return json({ error: 'You must agree to the creator terms.' }, { status: 400 });
-		}
-
-		if (!isValidOptionalUrl(websiteUrl)) {
-			return json({ error: 'Personal website URL is invalid.' }, { status: 400 });
 		}
 
 		const airtable = getAirtableClient(platform?.env);

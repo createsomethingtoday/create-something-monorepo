@@ -126,6 +126,59 @@ export interface Asset {
   rejectionFeedbackHtml?: string;
   qualityScore?: string;
   priceString?: string;
+  appCapabilities?: string;
+  appInstallUrl?: string;
+  appScopes?: string[];
+  appAvatarAltText?: string;
+  paymentType?: string[];
+  visibility?: string;
+  appCategory?: string[];
+  creatorName?: string;
+  creatorWebsite?: string;
+  creatorContactEmail?: string;
+  appFeaturesOverview?: string[];
+  appDeveloperNotes?: string;
+  appAccessCredentials?: string;
+  appVideoUrl?: string;
+  appDemoVideoUrl?: string;
+  appPrivacyPolicyUrl?: string;
+  appSupportEmail?: string;
+  appSupportUrl?: string;
+  appTermsUrl?: string;
+  appScreenshotAltTexts?: string[];
+}
+
+export interface AssetUpdateData {
+  name?: string;
+  description?: string;
+  descriptionShort?: string;
+  descriptionLongHtml?: string;
+  websiteUrl?: string;
+  previewUrl?: string;
+  thumbnailUrl?: string | null;
+  secondaryThumbnailUrl?: string | null;
+  secondaryThumbnails?: string[];
+  carouselImages?: string[];
+  appCapabilities?: string;
+  appInstallUrl?: string;
+  appScopes?: string[];
+  appAvatarAltText?: string;
+  paymentType?: string[];
+  visibility?: string;
+  appCategory?: string[];
+  creatorName?: string;
+  creatorWebsite?: string;
+  creatorContactEmail?: string;
+  appFeaturesOverview?: string[];
+  appDeveloperNotes?: string;
+  appAccessCredentials?: string;
+  appVideoUrl?: string;
+  appDemoVideoUrl?: string;
+  appPrivacyPolicyUrl?: string;
+  appSupportEmail?: string;
+  appSupportUrl?: string;
+  appTermsUrl?: string;
+  appScreenshotAltTexts?: string[];
 }
 
 export interface Creator {
@@ -170,6 +223,20 @@ export interface TemplateSubmissionRecord {
   asset: Asset;
   versionId?: string;
   warning?: string;
+}
+
+export interface AssetVersion {
+  id: string;
+  assetId: string;
+  versionNumber: number;
+  createdAt: string;
+  createdBy: string;
+  changes: string;
+  snapshot: AssetVersionSnapshot;
+}
+
+export interface AssetVersionSnapshot extends AssetUpdateData {
+  description?: string;
 }
 
 export interface ApiKey {
@@ -385,6 +452,150 @@ function toStringArray(value: unknown): string[] {
   return [];
 }
 
+function firstString(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const candidate = firstString(entry);
+      if (candidate) return candidate;
+    }
+    return undefined;
+  }
+
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    for (const candidate of [record.name, record.label, record.value, record.title, record.text]) {
+      if (typeof candidate !== 'string') continue;
+      const trimmed = candidate.trim();
+      if (trimmed) return trimmed;
+    }
+  }
+
+  return undefined;
+}
+
+function parseJsonArray(value: string): string[] | null {
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return null;
+    return parsed
+      .flatMap((entry) => toStringArray(entry))
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  } catch {
+    return null;
+  }
+}
+
+function parseDelimitedStringArray(
+  value: unknown,
+  delimiter: RegExp = /\n|,|;/,
+  cleaner?: (entry: string) => string
+): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((entry) => parseDelimitedStringArray(entry, delimiter, cleaner))
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    const parsedJson = parseJsonArray(trimmed);
+    if (parsedJson) {
+      return parsedJson
+        .map((entry) => (cleaner ? cleaner(entry) : entry))
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    }
+
+    return trimmed
+      .split(delimiter)
+      .map((entry) => (cleaner ? cleaner(entry) : entry))
+      .map((entry) => entry.trim().replace(/^"|"$/g, ''))
+      .filter(Boolean);
+  }
+
+  return toStringArray(value)
+    .map((entry) => (cleaner ? cleaner(entry) : entry))
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function parseScopesField(value: unknown): string[] {
+  return parseDelimitedStringArray(value, /\n|,/, (entry) => entry.trim());
+}
+
+function parseFeaturesField(value: unknown): string[] {
+  return parseDelimitedStringArray(value, /\n/, (entry) =>
+    entry.replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '')
+  ).slice(0, 5);
+}
+
+function parseSupportField(value: unknown): { supportEmail: string; supportUrl: string } {
+  const rawValue = firstString(value) || '';
+  const parts = rawValue
+    .split(/\n|,/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const supportEmail = parts.find((part) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(part)) || '';
+  const supportUrl = parts.find((part) => /^https?:\/\//i.test(part)) || '';
+
+  if (!supportEmail && !supportUrl && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawValue.trim())) {
+    return { supportEmail: rawValue.trim(), supportUrl: '' };
+  }
+
+  if (!supportEmail && !supportUrl && /^https?:\/\//i.test(rawValue.trim())) {
+    return { supportEmail: '', supportUrl: rawValue.trim() };
+  }
+
+  return { supportEmail, supportUrl };
+}
+
+function buildSupportField(supportEmail?: string, supportUrl?: string): string {
+  return [supportEmail?.trim(), supportUrl?.trim()].filter(Boolean).join('\n');
+}
+
+function buildFeaturesField(features: string[]): string {
+  return features
+    .map((feature) => feature.trim())
+    .filter(Boolean)
+    .slice(0, 5)
+    .join('\n');
+}
+
+function detectMarketplaceType(rawType: unknown): Asset['type'] | null {
+  const directCandidates = typeof rawType === 'string' ? [rawType] : [];
+  const candidates = [...toStringArray(rawType), ...directCandidates]
+    .map((candidate) => candidate.trim())
+    .filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (isAirtableRecordId(candidate)) {
+      continue;
+    }
+
+    const value = candidate.toLowerCase();
+
+    if (value.includes('library')) return 'Library';
+    if (value.includes('app')) return 'App';
+    if (value.includes('template')) return 'Template';
+  }
+
+  return null;
+}
+
+function cleanMarketplaceType(rawType: unknown): Asset['type'] {
+  return detectMarketplaceType(rawType) || 'Template';
+}
+
 function isAirtableRecordId(value: string): boolean {
   return /^(rec|tbl|viw|fld)[A-Za-z0-9]{10,}$/.test(value);
 }
@@ -501,6 +712,24 @@ function dedupeEmails(...values: Array<string | null | undefined>): string[] {
   return [...unique];
 }
 
+function extractAttachmentUrls(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry) => {
+      if (typeof entry === 'string') return entry.trim();
+      if (entry && typeof entry === 'object' && 'url' in entry && typeof entry.url === 'string') {
+        return entry.url.trim();
+      }
+      return '';
+    })
+    .filter(Boolean);
+}
+
+function getScreenshotAltTexts(fields: Airtable.FieldSet): string[] {
+  return Array.from({ length: 5 }, (_, index) => firstString(fields[`Alt Text Screenshot ${index + 1}`]) || '');
+}
+
 function buildSubmissionSummary(metadata: Record<string, unknown> | undefined): string {
   if (!metadata) return '';
 
@@ -530,55 +759,162 @@ function buildSubmissionSummary(metadata: Record<string, unknown> | undefined): 
 }
 
 function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
-  const carouselImages =
-    (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map((image) => image.url) ||
-    [];
-  const rawStatus = (record.fields['🚀Marketplace Status'] as string) || 'Draft';
-  const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
+  const cleanedStatus = cleanMarketplaceStatus(record.fields['🚀Marketplace Status'] as string) as Asset['status'];
   const category = extractPrimaryCategory(record.fields);
   const subcategory = extractPrimarySubcategory(record.fields);
-  const secondaryThumbnailImages = record.fields['🖼️Thumbnail Image (Secondary)'] as
-    | { url: string }[]
-    | undefined;
-  const secondaryThumbnails = secondaryThumbnailImages?.map((image) => image.url) || [];
+  const thumbnailImages = extractAttachmentUrls(record.fields['🖼️Thumbnail Image']);
+  const secondaryThumbnails = extractAttachmentUrls(record.fields['🖼️Thumbnail Image (Secondary)']);
+  const carouselImages = extractAttachmentUrls(record.fields['🖼️Carousel Images']);
+  const support = parseSupportField(record.fields['🔗Support Email/URL']);
+  const type = cleanMarketplaceType(
+    record.fields['⚙️🆎Type (Text)'] ?? record.fields['🆎Type'] ?? record.fields['Type'] ?? record.fields['type']
+  );
 
   return {
     id: record.id,
-    name: (record.fields['Name'] as string) || '',
-    description: (record.fields['📝Description'] as string) || '',
-    descriptionShort: (record.fields['ℹ️Description (Short)'] as string) || '',
-    descriptionLongHtml: (record.fields['ℹ️Description (Long).html'] as string) || '',
-    type: ((record.fields['🆎Type'] as Asset['type']) || 'Template'),
+    name: firstString(record.fields['Name']) || '',
+    description: firstString(record.fields['📝Description']) || '',
+    descriptionShort: firstString(record.fields['ℹ️Description (Short)']) || '',
+    descriptionLongHtml: firstString(record.fields['ℹ️Description (Long).html']) || '',
+    type,
     category,
     subcategory,
     status: cleanedStatus || 'Draft',
-    thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined)?.[0]?.url,
+    thumbnailUrl: thumbnailImages[0],
     secondaryThumbnailUrl: secondaryThumbnails[0],
     secondaryThumbnails,
     carouselImages,
-    websiteUrl: record.fields['🔗Website URL'] as string,
+    websiteUrl: firstString(record.fields['🔗Website URL']),
     previewUrl:
-      (record.fields['🔗Preview Site URL'] as string) ||
-      (record.fields['fldROrXCnuZyKNCxW'] as string),
-    marketplaceUrl: record.fields['🔗Marketplace URL'] as string,
-    submittedDate: record.fields['📅Submitted Date'] as string,
-    publishedDate: record.fields['📅Published Date'] as string,
-    decisionDate: record.fields['🚀📅Decision Date'] as string,
-    uniqueViewers: record.fields['📋 Unique Viewers'] as number,
-    cumulativePurchases: record.fields['📋 Cumulative Purchases'] as number,
-    cumulativeRevenue: record.fields['📋 Cumulative Revenue'] as number,
-    latestReviewStatus: record.fields['📝Latest Review Status'] as string,
-    latestReviewDate: record.fields['📝Latest Review Date'] as string,
-    latestReviewFeedback: (record.fields['🖌️📝Latest Review Feedback'] as string[] | undefined)?.[0],
+      firstString(record.fields['🔗Preview Site URL']) ||
+      firstString(record.fields['fldROrXCnuZyKNCxW']),
+    marketplaceUrl: firstString(record.fields['🔗Marketplace URL']),
+    submittedDate: firstString(record.fields['📅Submitted Date']),
+    publishedDate: firstString(record.fields['📅Published Date']),
+    decisionDate: firstString(record.fields['🚀📅Decision Date']),
+    uniqueViewers: Number(record.fields['📋 Unique Viewers']) || 0,
+    cumulativePurchases: Number(record.fields['📋 Cumulative Purchases']) || 0,
+    cumulativeRevenue: Number(record.fields['📋 Cumulative Revenue']) || 0,
+    latestReviewStatus: firstString(record.fields['📝Latest Review Status']),
+    latestReviewDate: firstString(record.fields['📝Latest Review Date']),
+    latestReviewFeedback: firstString(record.fields['🖌️📝Latest Review Feedback']),
     rejectionFeedback:
-      (record.fields['🚩Rejection Feedback'] as string) ||
-      (record.fields['🖌Rejection Feedback'] as string),
+      firstString(record.fields['🚩Rejection Feedback']) ||
+      firstString(record.fields['🖌Rejection Feedback']),
     rejectionFeedbackHtml:
-      (record.fields['🚩Rejection Feedback.html'] as string) ||
-      (record.fields['🖌Rejection Feedback.html'] as string),
-    qualityScore: record.fields['🖌️Initial Quality Score'] as string,
-    priceString: record.fields['🥞💲Template Price String (🏗️ only)'] as string
+      firstString(record.fields['🚩Rejection Feedback.html']) ||
+      firstString(record.fields['🖌Rejection Feedback.html']),
+    qualityScore: firstString(record.fields['🖌️Initial Quality Score']),
+    priceString: firstString(record.fields['🥞💲Template Price String (🏗️ only)']),
+    appCapabilities: firstString(record.fields['ℹ️Capabilities (🖥️ only)']),
+    appInstallUrl: firstString(record.fields['🔗Install URL (🖥️ only)']),
+    appScopes: parseScopesField(
+      record.fields['ℹ️Scopes'] ?? record.fields['Scopes'] ?? record.fields['all-selected-scopes']
+    ),
+    appAvatarAltText: firstString(record.fields['App Avatar Alt Text']),
+    paymentType: parseDelimitedStringArray(record.fields['ℹ️💲Payment Types']),
+    visibility: firstString(record.fields['ℹ️Visibility (🖥️ only)']),
+    appCategory: parseDelimitedStringArray(record.fields['ℹ️🪣Categories (Text)']),
+    creatorName: firstString(record.fields['🎨Creator Name']),
+    creatorWebsite: firstString(record.fields['👀🎨📧 Creator WF Account Email (Override)']),
+    creatorContactEmail: firstString(record.fields['🎨📧 Creator Email']),
+    appFeaturesOverview: parseFeaturesField(
+      record.fields['❓ℹ️✨Features Text (MIGRATE TO LINKED FIELD)']
+    ),
+    appDeveloperNotes: firstString(record.fields['Developer Notes']),
+    appAccessCredentials: firstString(record.fields['ℹ️Credentials']),
+    appVideoUrl: firstString(record.fields['🔗Promo Video URL (🖥️ only)']),
+    appDemoVideoUrl: firstString(record.fields['🔗Demo Video URL']),
+    appPrivacyPolicyUrl: firstString(record.fields['🔗Privacy Policy URL']),
+    appSupportEmail: support.supportEmail,
+    appSupportUrl: support.supportUrl,
+    appTermsUrl: firstString(record.fields['🔗Terms & Conditions URL']),
+    appScreenshotAltTexts: getScreenshotAltTexts(record.fields)
   };
+}
+
+type AirtableWritableValue =
+  | string
+  | number
+  | boolean
+  | readonly string[]
+  | readonly { url: string }[]
+  | null
+  | undefined;
+
+function requiresCurrentSupportRecord(data: AssetUpdateData): boolean {
+  const isSupportUpdate = data.appSupportEmail !== undefined || data.appSupportUrl !== undefined;
+  return isSupportUpdate && (data.appSupportEmail === undefined || data.appSupportUrl === undefined);
+}
+
+function buildAssetUpdateFields(
+  data: AssetUpdateData,
+  currentAsset?: Asset | null
+): Record<string, AirtableWritableValue> {
+  const fields: Record<string, AirtableWritableValue> = {};
+
+  if (data.name !== undefined) fields['Name'] = data.name;
+  if (data.description !== undefined) fields['📝Description'] = data.description;
+  if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
+  if (data.descriptionLongHtml !== undefined) fields['ℹ️Description (Long).html'] = data.descriptionLongHtml;
+  if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
+  if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
+  if (data.appCapabilities !== undefined) {
+    fields['ℹ️Capabilities (🖥️ only)'] = data.appCapabilities || null;
+  }
+  if (data.appInstallUrl !== undefined) fields['🔗Install URL (🖥️ only)'] = data.appInstallUrl;
+  if (data.appScopes !== undefined) fields['all-selected-scopes'] = JSON.stringify(data.appScopes || []);
+  if (data.appAvatarAltText !== undefined) fields['App Avatar Alt Text'] = data.appAvatarAltText;
+  if (data.paymentType !== undefined) fields['ℹ️💲Payment Types'] = data.paymentType;
+  if (data.visibility !== undefined) fields['ℹ️Visibility (🖥️ only)'] = data.visibility || null;
+  if (data.appCategory !== undefined) fields['ℹ️🪣Categories (Text)'] = data.appCategory;
+  if (data.creatorName !== undefined) fields['🎨Creator Name'] = data.creatorName;
+  if (data.creatorWebsite !== undefined) {
+    fields['👀🎨📧 Creator WF Account Email (Override)'] = data.creatorWebsite;
+  }
+  if (data.creatorContactEmail !== undefined) fields['🎨📧 Creator Email'] = data.creatorContactEmail;
+  if (data.appFeaturesOverview !== undefined) {
+    fields['❓ℹ️✨Features Text (MIGRATE TO LINKED FIELD)'] = buildFeaturesField(
+      data.appFeaturesOverview
+    );
+  }
+  if (data.appDeveloperNotes !== undefined) fields['Developer Notes'] = data.appDeveloperNotes;
+  if (data.appAccessCredentials !== undefined) fields['ℹ️Credentials'] = data.appAccessCredentials;
+  if (data.appVideoUrl !== undefined) fields['🔗Promo Video URL (🖥️ only)'] = data.appVideoUrl;
+  if (data.appDemoVideoUrl !== undefined) fields['🔗Demo Video URL'] = data.appDemoVideoUrl;
+  if (data.appPrivacyPolicyUrl !== undefined) {
+    fields['🔗Privacy Policy URL'] = data.appPrivacyPolicyUrl;
+  }
+  if (data.appSupportEmail !== undefined || data.appSupportUrl !== undefined) {
+    fields['🔗Support Email/URL'] = buildSupportField(
+      data.appSupportEmail ?? currentAsset?.appSupportEmail,
+      data.appSupportUrl ?? currentAsset?.appSupportUrl
+    );
+  }
+  if (data.appTermsUrl !== undefined) fields['🔗Terms & Conditions URL'] = data.appTermsUrl;
+  if (data.appScreenshotAltTexts !== undefined) {
+    const altTexts = data.appScreenshotAltTexts.slice(0, 5);
+    for (let index = 0; index < 5; index += 1) {
+      fields[`Alt Text Screenshot ${index + 1}`] = altTexts[index] || '';
+    }
+  }
+  if (data.thumbnailUrl !== undefined) {
+    fields['fld43LxLHMZb2yF7F'] = data.thumbnailUrl ? [{ url: data.thumbnailUrl }] : [];
+  }
+  if (data.secondaryThumbnails !== undefined) {
+    fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnails
+      .filter(Boolean)
+      .map((url) => ({ url }));
+  } else if (data.secondaryThumbnailUrl !== undefined) {
+    fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
+      ? [{ url: data.secondaryThumbnailUrl }]
+      : [];
+  }
+  if (data.carouselImages !== undefined) {
+    fields['fldneaPyoRXBAVtS1'] = data.carouselImages.filter(Boolean).map((url) => ({ url }));
+  }
+
+  return fields;
 }
 
 export function getAirtableClient(env: AirtableEnvLike | undefined) {
@@ -618,6 +954,25 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       return {
         id: records[0].id,
         email: records[0].fields['Email'] as string
+      };
+    },
+
+    async createUserByEmail(email: string, creatorId?: string): Promise<{ id: string; email: string }> {
+      const normalizedEmail = validateEmail(email);
+      const fields: Record<string, unknown> = {
+        Email: normalizedEmail
+      };
+
+      if (creatorId) {
+        fields['🎨Creators'] = [creatorId];
+      }
+
+      const records = await createRecords(TABLES.USERS, [{ fields }]);
+      const record = records[0];
+
+      return {
+        id: record.id,
+        email: (record.fields['Email'] as string) || normalizedEmail
       };
     },
 
@@ -715,25 +1070,9 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       }
     },
 
-    async updateAsset(
-      id: string,
-      data: Partial<
-        Pick<
-          Asset,
-          'name' | 'description' | 'descriptionShort' | 'descriptionLongHtml' | 'websiteUrl' | 'previewUrl'
-        >
-      >
-    ): Promise<Asset | null> {
-      const fields: Record<string, string> = {};
-
-      if (data.name !== undefined) fields['Name'] = data.name;
-      if (data.description !== undefined) fields['📝Description'] = data.description;
-      if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
-      if (data.descriptionLongHtml !== undefined) {
-        fields['ℹ️Description (Long).html'] = data.descriptionLongHtml;
-      }
-      if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
-      if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
+    async updateAsset(id: string, data: AssetUpdateData): Promise<Asset | null> {
+      const currentAsset = requiresCurrentSupportRecord(data) ? await this.getAsset(id) : null;
+      const fields = buildAssetUpdateFields(data, currentAsset);
 
       if (Object.keys(fields).length === 0) {
         return null;
@@ -747,51 +1086,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       }
     },
 
-    async updateAssetWithImages(
-      id: string,
-      data: {
-        name?: string;
-        description?: string;
-        descriptionShort?: string;
-        descriptionLongHtml?: string;
-        websiteUrl?: string;
-        previewUrl?: string;
-        thumbnailUrl?: string | null;
-        secondaryThumbnailUrl?: string | null;
-        secondaryThumbnails?: string[];
-        carouselImages?: string[];
-      }
-    ): Promise<Asset | null> {
+    async updateAssetWithImages(id: string, data: AssetUpdateData): Promise<Asset | null> {
       debugLog('[Airtable] updateAssetWithImages', { id, keys: Object.keys(data) });
-
-      const fields: Record<string, unknown> = {};
-
-      if (data.name !== undefined) fields['Name'] = data.name;
-      if (data.description !== undefined) fields['📝Description'] = data.description;
-      if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
-      if (data.descriptionLongHtml !== undefined) {
-        fields['ℹ️Description (Long).html'] = data.descriptionLongHtml;
-      }
-      if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
-      if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
-
-      if (data.thumbnailUrl !== undefined) {
-        fields['fld43LxLHMZb2yF7F'] = data.thumbnailUrl ? [{ url: data.thumbnailUrl }] : [];
-      }
-
-      if (data.secondaryThumbnails !== undefined) {
-        fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnails
-          .filter(Boolean)
-          .map((url) => ({ url }));
-      } else if (data.secondaryThumbnailUrl !== undefined) {
-        fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
-          ? [{ url: data.secondaryThumbnailUrl }]
-          : [];
-      }
-
-      if (data.carouselImages !== undefined) {
-        fields['fldneaPyoRXBAVtS1'] = data.carouselImages.map((url) => ({ url }));
-      }
+      const currentAsset = requiresCurrentSupportRecord(data) ? await this.getAsset(id) : null;
+      const fields = buildAssetUpdateFields(data, currentAsset);
 
       if (Object.keys(fields).length === 0) {
         return null;
@@ -1401,6 +1699,166 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         })),
         freshness: extractMarketplaceFreshness(records)
       };
+    },
+
+    async createAssetVersion(
+      assetId: string,
+      createdBy: string,
+      changes: Record<string, unknown> | string
+    ): Promise<AssetVersion | null> {
+      debugLog('[Airtable] createAssetVersion', {
+        assetId,
+        createdBy,
+        changesType: typeof changes
+      });
+
+      try {
+        const asset = await this.getAsset(assetId);
+        if (!asset) {
+          return null;
+        }
+
+        const cleanStatus = asset.status.replace(/^\d️⃣/u, '').replace(/🆕|🚀/gu, '').trim();
+        if (cleanStatus === 'Upcoming') {
+          return null;
+        }
+
+        const existingVersions = await base(TABLES.ASSET_VERSIONS)
+          .select({
+            filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(assetId)}'`
+          })
+          .all();
+
+        const nextVersion = existingVersions.length + 1;
+
+        const snapshot: AssetVersionSnapshot = {
+          name: asset.name,
+          description: asset.description,
+          descriptionShort: asset.descriptionShort,
+          descriptionLongHtml: asset.descriptionLongHtml,
+          websiteUrl: asset.websiteUrl,
+          previewUrl: asset.previewUrl,
+          thumbnailUrl: asset.thumbnailUrl,
+          secondaryThumbnailUrl: asset.secondaryThumbnailUrl,
+          secondaryThumbnails: asset.secondaryThumbnails,
+          carouselImages: asset.carouselImages,
+          appCapabilities: asset.appCapabilities,
+          appInstallUrl: asset.appInstallUrl,
+          appScopes: asset.appScopes,
+          appAvatarAltText: asset.appAvatarAltText,
+          paymentType: asset.paymentType,
+          visibility: asset.visibility,
+          appCategory: asset.appCategory,
+          creatorName: asset.creatorName,
+          creatorWebsite: asset.creatorWebsite,
+          creatorContactEmail: asset.creatorContactEmail,
+          appFeaturesOverview: asset.appFeaturesOverview,
+          appDeveloperNotes: asset.appDeveloperNotes,
+          appAccessCredentials: asset.appAccessCredentials,
+          appVideoUrl: asset.appVideoUrl,
+          appDemoVideoUrl: asset.appDemoVideoUrl,
+          appPrivacyPolicyUrl: asset.appPrivacyPolicyUrl,
+          appSupportEmail: asset.appSupportEmail,
+          appSupportUrl: asset.appSupportUrl,
+          appTermsUrl: asset.appTermsUrl,
+          appScreenshotAltTexts: asset.appScreenshotAltTexts
+        };
+
+        if (typeof changes === 'object' && Object.keys(changes).length === 0) {
+          return null;
+        }
+
+        const changesJson =
+          typeof changes === 'string'
+            ? JSON.stringify({ changes, snapshot, createdBy })
+            : JSON.stringify(changes);
+
+        const record = await base(TABLES.ASSET_VERSIONS).create({
+          fldemWilqCQcOCh5s: [assetId],
+          fldn2ImbgwKfCdWWA: nextVersion,
+          fldjYFJMGTerFYlol: 'Meta Update',
+          fldc999gbJ8LWWoTC: changesJson,
+          fldLEIZMEjZvH5n23: ['zendesk']
+        });
+
+        return {
+          id: record.id,
+          assetId,
+          versionNumber: nextVersion,
+          createdAt: new Date().toISOString(),
+          createdBy,
+          changes: typeof changes === 'string' ? changes : JSON.stringify(changes),
+          snapshot
+        };
+      } catch (error) {
+        console.error('[Airtable] Error creating asset version:', error);
+        return null;
+      }
+    },
+
+    async getAssetVersions(assetId: string): Promise<AssetVersion[]> {
+      try {
+        const records = await base(TABLES.ASSET_VERSIONS)
+          .select({
+            filterByFormula: `{Asset ID} = '${escapeAirtableString(assetId)}'`,
+            sort: [{ field: 'Version Number', direction: 'desc' }]
+          })
+          .all();
+
+        return records.map((record) => ({
+          id: record.id,
+          assetId: firstString(record.fields['Asset ID']) || assetId,
+          versionNumber: Number(record.fields['Version Number']) || 0,
+          createdAt: firstString(record.fields['Created At']) || '',
+          createdBy: firstString(record.fields['Created By']) || '',
+          changes: firstString(record.fields['Changes']) || '',
+          snapshot: JSON.parse((record.fields['Snapshot'] as string) || '{}') as AssetVersionSnapshot
+        }));
+      } catch (error) {
+        console.error('[Airtable] Error getting asset versions:', error);
+        return [];
+      }
+    },
+
+    async getAssetVersion(versionId: string): Promise<AssetVersion | null> {
+      try {
+        const record = await base(TABLES.ASSET_VERSIONS).find(versionId);
+        return {
+          id: record.id,
+          assetId: firstString(record.fields['Asset ID']) || '',
+          versionNumber: Number(record.fields['Version Number']) || 0,
+          createdAt: firstString(record.fields['Created At']) || '',
+          createdBy: firstString(record.fields['Created By']) || '',
+          changes: firstString(record.fields['Changes']) || '',
+          snapshot: JSON.parse((record.fields['Snapshot'] as string) || '{}') as AssetVersionSnapshot
+        };
+      } catch {
+        return null;
+      }
+    },
+
+    async rollbackAssetToVersion(
+      assetId: string,
+      versionId: string,
+      rolledBackBy: string
+    ): Promise<Asset | null> {
+      try {
+        const version = await this.getAssetVersion(versionId);
+        if (!version || version.assetId !== assetId) {
+          return null;
+        }
+
+        await this.createAssetVersion(
+          assetId,
+          rolledBackBy,
+          `Rollback to version ${version.versionNumber}`
+        );
+
+        return this.updateAssetWithImages(assetId, version.snapshot);
+      } catch (error) {
+        console.error('[Airtable] Error rolling back asset:', error);
+        return null;
+      }
     },
 
     async getCreatorCategorySplit(): Promise<{

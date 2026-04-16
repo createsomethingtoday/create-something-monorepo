@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getAirtableClient } from '$lib/server/airtable';
+import { getAirtableClient } from '@create-something/webflow-dashboard-core/airtable';
 
 // POST - Rollback to a specific version
 export const POST: RequestHandler = async ({ params, locals, platform }) => {

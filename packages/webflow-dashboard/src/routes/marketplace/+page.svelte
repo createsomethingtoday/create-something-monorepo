@@ -234,7 +234,7 @@
                   Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window.
                   Last update timestamp is estimated from the schedule.
                 {:else if summary.freshnessSource === 'airtable-record-created-time'}
-                  Data refreshes weekly on Mondays at 4 PM UTC. Timestamp is inferred from Airtable
+                  Data refreshes weekly on Mondays at 4 PM UTC. Timestamp is inferred from source
                   record creation metadata.
                 {:else}
                   Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window.

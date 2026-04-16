@@ -1,4 +1,9 @@
 import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
+import {
+  normalizeOptionalHttpUrl,
+  normalizeOptionalTrimmedString,
+  normalizeRequiredHttpUrl
+} from '@create-something/webflow-dashboard-core/forms';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { isSupportedCountry } from '../../../../lib/intake/constants';
@@ -18,16 +23,6 @@ type CreatorSubmissionBody = {
   turnstileToken?: string;
 };
 
-function isValidOptionalUrl(value: string | undefined): boolean {
-  if (!value) return true;
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as CreatorSubmissionBody;
@@ -44,12 +39,30 @@ export async function POST(request: Request) {
 
     const primaryEmail = validateEmail(body.primaryEmail || '');
     const webflowEmail = validateEmail(body.webflowEmail || '');
-    const legalName = String(body.legalName || '').trim();
-    const preferredName = String(body.preferredName || '').trim();
-    const biography = String(body.biography || '').trim();
     const country = String(body.country || '').trim();
-    const avatarUrl = String(body.avatarUrl || '').trim();
-    const websiteUrl = String(body.websiteUrl || '').trim() || undefined;
+    let legalName = '';
+    let preferredName = '';
+    let biography = '';
+    let avatarUrl = '';
+    let websiteUrl: string | undefined;
+
+    try {
+      legalName = normalizeOptionalTrimmedString(body.legalName, 'Legal name') || '';
+      preferredName = normalizeOptionalTrimmedString(body.preferredName, 'Preferred name') || '';
+      biography = normalizeOptionalTrimmedString(body.biography, 'Biography') || '';
+      avatarUrl = normalizeRequiredHttpUrl(body.avatarUrl, 'Profile image URL');
+      websiteUrl = normalizeOptionalHttpUrl(body.websiteUrl, 'Personal website URL') || undefined;
+    } catch (validationError) {
+      return jsonNoStore(
+        {
+          error:
+            validationError instanceof Error
+              ? validationError.message
+              : 'Creator profile payload is invalid.'
+        },
+        { status: 400 }
+      );
+    }
 
     if (!country) {
       return jsonNoStore({ error: 'Country is required.' }, { status: 400 });
@@ -67,25 +80,19 @@ export async function POST(request: Request) {
       return jsonNoStore({ error: 'Biography must be 200 characters or fewer.' }, { status: 400 });
     }
 
-    if (!avatarUrl) {
-      return jsonNoStore({ error: 'Profile image is required.' }, { status: 400 });
-    }
-
     if (!body.agreedToTerms) {
       return jsonNoStore({ error: 'You must agree to the creator terms.' }, { status: 400 });
     }
 
-    if (!isValidOptionalUrl(websiteUrl)) {
-      return jsonNoStore({ error: 'Personal website URL is invalid.' }, { status: 400 });
-    }
-
     const airtable = await getServerAirtable();
-    const [existingPrimary, existingWebflow] = await Promise.all([
+    const [existingPrimary, existingWebflow, existingPrimaryUser, existingWebflowUser] = await Promise.all([
       airtable.getCreatorByEmail(primaryEmail),
-      airtable.getCreatorByEmail(webflowEmail)
+      airtable.getCreatorByEmail(webflowEmail),
+      airtable.findUserByEmail(primaryEmail),
+      primaryEmail === webflowEmail ? Promise.resolve(null) : airtable.findUserByEmail(webflowEmail)
     ]);
 
-    if (existingPrimary || existingWebflow) {
+    if (existingPrimary || existingWebflow || existingPrimaryUser || existingWebflowUser) {
       return jsonNoStore(
         {
           error: 'A creator profile already exists for one of these emails.',

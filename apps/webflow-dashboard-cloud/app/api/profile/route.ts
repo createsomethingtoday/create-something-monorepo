@@ -1,3 +1,7 @@
+import {
+  normalizeOptionalHttpUrl,
+  normalizeOptionalTrimmedString
+} from '@create-something/webflow-dashboard-core/forms';
 import { jsonNoStore } from '../../../lib/server/responses';
 import { getUserFromRequest } from '../../../lib/server/session';
 import { getServerAirtable } from '../../../lib/server/airtable';
@@ -10,15 +14,13 @@ type ProfileUpdateBody = {
   avatarUrl?: string | null;
 };
 
-function isValidOptionalUrl(value: string | undefined): boolean {
-  if (!value) return true;
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
-}
+type ProfileUpdatePayload = {
+  name?: string;
+  biography?: string;
+  legalName?: string;
+  websiteUrl?: string;
+  avatarUrl?: string;
+};
 
 async function updateProfile(request: Request) {
   const user = await getUserFromRequest(request);
@@ -27,16 +29,31 @@ async function updateProfile(request: Request) {
   }
 
   const body = (await request.json().catch(() => ({}))) as ProfileUpdateBody;
-  const websiteUrl = typeof body.websiteUrl === 'string' ? body.websiteUrl.trim() : undefined;
-  if (!isValidOptionalUrl(websiteUrl)) {
-    return jsonNoStore({ error: 'Personal website URL is invalid.' }, { status: 400 });
+  let payload: ProfileUpdatePayload;
+  try {
+    payload = {
+      name: normalizeOptionalTrimmedString(body.name, 'Name'),
+      biography: normalizeOptionalTrimmedString(body.biography, 'Biography'),
+      legalName: normalizeOptionalTrimmedString(body.legalName, 'Legal name'),
+      websiteUrl: normalizeOptionalHttpUrl(body.websiteUrl, 'Personal website URL'),
+      avatarUrl:
+        body.avatarUrl === undefined
+          ? undefined
+          : body.avatarUrl === null
+            ? ''
+            : normalizeOptionalHttpUrl(body.avatarUrl, 'Avatar URL') || ''
+    };
+  } catch (validationError) {
+    return jsonNoStore(
+      {
+        error:
+          validationError instanceof Error
+            ? validationError.message
+            : 'Profile payload is invalid.'
+      },
+      { status: 400 }
+    );
   }
-
-  const payload = {
-    ...body,
-    websiteUrl,
-    avatarUrl: body.avatarUrl ?? undefined
-  };
   const airtable = await getServerAirtable();
   const creator = await airtable.getCreatorByEmail(user.email);
 

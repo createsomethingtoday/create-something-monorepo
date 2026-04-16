@@ -8,7 +8,7 @@ export default function LoginPage() {
       <section className="auth-card">
         <h1 className="auth-title">Asset Dashboard</h1>
         <p className="auth-subtitle">
-          Sign in to manage your Webflow templates with the Webflow Cloud port of the dashboard.
+          Sign in to manage your creator profile, assets, and marketplace submissions.
         </p>
         <LoginForm />
       </section>

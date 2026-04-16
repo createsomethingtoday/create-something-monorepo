@@ -1,6 +1,9 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getAirtableClient, type AssetVersionSnapshot } from '$lib/server/airtable';
+import {
+	getAirtableClient,
+	type AssetVersionSnapshot
+} from '@create-something/webflow-dashboard-core/airtable';
 
 interface VersionDiff {
 	field: string;

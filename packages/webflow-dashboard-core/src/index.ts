@@ -1,4 +1,6 @@
 export * from './airtable';
+export * from './app-options';
+export * from './forms';
 export * from './hash';
 export * from './kv';
 export * from './r2';
@@ -6,4 +8,5 @@ export * from './runtime';
 export * from './security';
 export * from './submission';
 export * from './sync-schedule';
+export * from './template-intake';
 export * from './upload-validation';

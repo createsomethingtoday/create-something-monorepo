@@ -1,10 +1,23 @@
 import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
+import { normalizeStringArray } from '@create-something/webflow-dashboard-core/forms';
+import {
+  TEMPLATE_CATEGORY_OPTIONS,
+  TEMPLATE_FEATURE_OPTIONS,
+  TEMPLATE_PRIMARY_TAGS,
+  TEMPLATE_PRICE_OPTIONS,
+  TEMPLATE_SITE_TYPE_OPTIONS,
+  buildTemplateDetailsHtml,
+  buildTemplateMetadataDescription,
+  findInvalidValues,
+  isTemplatePriceOption,
+  normalizeTemplatePreviewUrl,
+  validateTemplateNameSyntax
+} from '@create-something/webflow-dashboard-core/template-intake';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
 import { checkRemoteTemplateNameAvailability } from '../../../../lib/intake/external';
 import { runPublishedUrlValidation } from '../../../../lib/intake/published-url';
-import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
 
 type TemplateSubmissionBody = {
@@ -31,43 +44,6 @@ type TemplateSubmissionBody = {
   utm?: Record<string, string>;
 };
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function toParagraphs(value: string): string {
-  return value
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
-    .join('');
-}
-
-function normalizePreviewUrl(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed.includes('https://preview.webflow.com/preview/')) {
-    throw new Error('Preview URL must contain https://preview.webflow.com/preview/.');
-  }
-
-  try {
-    return new URL(trimmed).toString();
-  } catch {
-    throw new Error('Preview URL is invalid.');
-  }
-}
-
-function ensureArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.map((item) => String(item).trim()).filter(Boolean)
-    : [];
-}
-
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as TemplateSubmissionBody;
@@ -90,11 +66,11 @@ export async function POST(request: Request) {
     const notes = String(body.notes || '').trim();
     const thumbnailUrl = String(body.thumbnailUrl || '').trim();
     const secondaryThumbnailUrl = String(body.secondaryThumbnailUrl || '').trim();
-    const galleryUrls = ensureArray(body.galleryUrls).slice(0, 5);
-    const featureFlags = ensureArray(body.featureFlags);
-    const tags = ensureArray(body.tags);
-    const styleTags = ensureArray(body.styleTags);
-    const siteTypes = ensureArray(body.siteTypes);
+    const galleryUrls = normalizeStringArray(body.galleryUrls).slice(0, 5);
+    const featureFlags = normalizeStringArray(body.featureFlags);
+    const tags = normalizeStringArray(body.tags);
+    const styleTags = normalizeStringArray(body.styleTags);
+    const siteTypes = normalizeStringArray(body.siteTypes);
     const category = String(body.category || '').trim();
     const priceModel = String(body.priceModel || '').trim() || 'Free';
 
@@ -127,6 +103,51 @@ export async function POST(request: Request) {
 
     if (galleryUrls.length === 0) {
       return jsonNoStore({ error: 'At least one gallery image is required.' }, { status: 400 });
+    }
+
+    if (!isTemplatePriceOption(priceModel)) {
+      return jsonNoStore(
+        { error: `Price model must be one of: ${TEMPLATE_PRICE_OPTIONS.join(', ')}.` },
+        { status: 400 }
+      );
+    }
+
+    if (category && !(TEMPLATE_CATEGORY_OPTIONS as readonly string[]).includes(category)) {
+      return jsonNoStore(
+        { error: 'Category must match the supported template categories.' },
+        { status: 400 }
+      );
+    }
+
+    if (findInvalidValues(tags, TEMPLATE_PRIMARY_TAGS).length > 0) {
+      return jsonNoStore(
+        { error: 'Primary tags must match the supported template tags.' },
+        { status: 400 }
+      );
+    }
+
+    if (
+      findInvalidValues(
+        siteTypes,
+        TEMPLATE_SITE_TYPE_OPTIONS.map((option) => option.id)
+      ).length > 0
+    ) {
+      return jsonNoStore(
+        { error: 'Site types must match the supported template options.' },
+        { status: 400 }
+      );
+    }
+
+    if (
+      findInvalidValues(
+        featureFlags,
+        TEMPLATE_FEATURE_OPTIONS.map((option) => option.id)
+      ).length > 0
+    ) {
+      return jsonNoStore(
+        { error: 'Feature flags must match the supported template options.' },
+        { status: 400 }
+      );
     }
 
     if (!body.checklistConfirmed || !body.agreementConfirmed) {
@@ -185,47 +206,35 @@ export async function POST(request: Request) {
       );
     }
 
-    const previewUrl = normalizePreviewUrl(body.previewUrl || '');
+    const previewUrl = normalizeTemplatePreviewUrl(body.previewUrl || '');
     const combinedFeatures = new Set(featureFlags);
     if (publishedValidation.summary.gsapDetected) {
       combinedFeatures.add('gsap');
     }
-
-    const detailsHtml = [
-      `<h2>Submission notes</h2>${toParagraphs(longDescription)}`,
-      notes ? `<h3>Internal notes</h3>${toParagraphs(notes)}` : '',
-      '<h3>Metadata</h3>',
-      '<ul>',
-      category ? `<li>Category: ${escapeHtml(category)}</li>` : '',
-      tags.length > 0 ? `<li>Tags: ${escapeHtml(tags.join(', '))}</li>` : '',
-      styleTags.length > 0 ? `<li>Style tags: ${escapeHtml(styleTags.join(', '))}</li>` : '',
-      siteTypes.length > 0 ? `<li>Site types: ${escapeHtml(siteTypes.join(', '))}</li>` : '',
-      combinedFeatures.size > 0
-        ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
-        : '',
-      `<li>Published URL verified: ${escapeHtml(publishedValidation.normalizedUrl)}</li>`,
-      publishedValidation.summary.gsapDetected
-        ? '<li>GSAP detected during published-site crawl.</li>'
-        : '',
-      '</ul>'
-    ]
-      .filter(Boolean)
-      .join('');
+    const normalizedFeatures = [...combinedFeatures];
+    const detailsHtml = buildTemplateDetailsHtml({
+      category,
+      tags,
+      styleTags,
+      siteTypes,
+      featureFlags: normalizedFeatures,
+      longDescription,
+      notes,
+      publishedUrl: publishedValidation.normalizedUrl
+    });
 
     const submission = await airtable.createTemplateSubmission({
       creatorEmail,
       creatorWebflowEmail:
         creator.emails?.find((value) => value !== creatorEmail) || creatorEmail,
       name: templateName,
-      description: [
-        category ? `Category: ${category}` : '',
-        tags.length > 0 ? `Tags: ${tags.join(', ')}` : '',
-        siteTypes.length > 0 ? `Site types: ${siteTypes.join(', ')}` : '',
-        combinedFeatures.size > 0 ? `Features: ${[...combinedFeatures].join(', ')}` : '',
-        notes ? `Notes: ${notes}` : ''
-      ]
-        .filter(Boolean)
-        .join('\n'),
+      description: buildTemplateMetadataDescription({
+        category,
+        tags,
+        siteTypes,
+        featureFlags: normalizedFeatures,
+        notes
+      }),
       descriptionShort: shortDescription,
       descriptionLongHtml: detailsHtml,
       websiteUrl: publishedValidation.normalizedUrl,
@@ -240,7 +249,7 @@ export async function POST(request: Request) {
         tags,
         siteTypes,
         styleTags,
-        featureFlags: [...combinedFeatures],
+        featureFlags: normalizedFeatures,
         publishedUrl: publishedValidation.normalizedUrl,
         previewUrl,
         notes,

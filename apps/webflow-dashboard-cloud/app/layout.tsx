@@ -2,8 +2,8 @@ import './globals.css';
 import { withBasePath } from '../lib/runtime-paths';
 
 export const metadata = {
-  title: 'Webflow Dashboard Cloud',
-  description: 'Creator dashboard and intake flow rebuilt for Webflow Cloud'
+  title: 'Webflow Dashboard',
+  description: 'Creator dashboard and intake flow for marketplace submissions'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <nav className="nav-bar">
             <div className="nav-content">
               <a className="brand" href={withBasePath('/dashboard')}>
-                Webflow Dashboard Cloud
+                Webflow Dashboard
               </a>
               <div className="nav-links">
                 <a className="nav-link" href={withBasePath('/submit')}>

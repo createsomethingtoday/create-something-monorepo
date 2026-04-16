@@ -1,19 +1,11 @@
+import type { AssetUpdateData } from '@create-something/webflow-dashboard-core/airtable';
+import {
+  normalizeAssetUpdateData,
+  validateAssetUpdateData
+} from '@create-something/webflow-dashboard-core/forms';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getUserFromRequest } from '../../../../lib/server/session';
 import { getServerAirtable } from '../../../../lib/server/airtable';
-
-type AssetUpdateBody = {
-  name?: string;
-  description?: string;
-  descriptionShort?: string;
-  descriptionLongHtml?: string;
-  websiteUrl?: string;
-  previewUrl?: string;
-  thumbnailUrl?: string | null;
-  secondaryThumbnailUrl?: string | null;
-  secondaryThumbnails?: string[];
-  carouselImages?: string[];
-};
 
 async function getRouteParams(context: { params: Promise<{ id: string }> }) {
   return context.params;
@@ -73,7 +65,26 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     );
   }
 
-  const body = (await request.json().catch(() => ({}))) as AssetUpdateBody;
+  const currentAsset = await airtable.getAsset(id);
+  if (!currentAsset) {
+    return jsonNoStore({ error: 'Asset not found' }, { status: 404 });
+  }
+
+  let body: AssetUpdateData;
+  try {
+    body = normalizeAssetUpdateData((await request.json().catch(() => ({}))) as AssetUpdateData);
+    validateAssetUpdateData(body, currentAsset);
+  } catch (validationError) {
+    return jsonNoStore(
+      {
+        error:
+          validationError instanceof Error
+            ? validationError.message
+            : 'Asset payload is invalid.'
+      },
+      { status: 400 }
+    );
+  }
   if (body.name) {
     const nameCheck = await airtable.checkAssetNameUniqueness(body.name, id);
     if (!nameCheck.unique) {
@@ -105,17 +116,30 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     );
   }
 
-  const body = (await request.json().catch(() => ({}))) as AssetUpdateBody;
+  const currentAsset = await airtable.getAsset(id);
+  if (!currentAsset) {
+    return jsonNoStore({ error: 'Asset not found' }, { status: 404 });
+  }
+
+  let body: AssetUpdateData;
+  try {
+    body = normalizeAssetUpdateData((await request.json().catch(() => ({}))) as AssetUpdateData);
+    validateAssetUpdateData(body, currentAsset);
+  } catch (validationError) {
+    return jsonNoStore(
+      {
+        error:
+          validationError instanceof Error
+            ? validationError.message
+            : 'Asset payload is invalid.'
+      },
+      { status: 400 }
+    );
+  }
   if (body.name) {
     const nameCheck = await airtable.checkAssetNameUniqueness(body.name, id);
     if (!nameCheck.unique) {
       return jsonNoStore({ error: 'An asset with this name already exists' }, { status: 400 });
-    }
-  }
-
-  if (body.carouselImages !== undefined) {
-    if (!Array.isArray(body.carouselImages) || body.carouselImages.some((url) => typeof url !== 'string')) {
-      return jsonNoStore({ error: 'Carousel images must be an array of strings' }, { status: 400 });
     }
   }
 
