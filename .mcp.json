@@ -24,18 +24,11 @@
       "type": "http",
       "url": "https://createsomething-notion.mcp.workway.co/mcp"
     },
-    "wf-template-review-eric": {
+    "morgan-c3-management": {
       "type": "http",
-      "url": "https://wf-template-review-eric.mcp.createsomething.agency/mcp",
+      "url": "https://morgan-young-c3-management.mcp.createsomething.agency/mcp",
       "headers": {
-        "Authorization": "Bearer mcpu_f8a8c32918955b46e4493b0b2f9f03bcf5205e8af00fedf5e497f7f3f1e99546f46a3dcd6403eb2cb13e37f56fcb68d2"
-      }
-    },
-    "wf-template-review-mariana": {
-      "type": "http",
-      "url": "https://wf-template-review-mariana.mcp.createsomething.agency/mcp",
-      "headers": {
-        "Authorization": "Bearer mcpu_8d7977c14c63c925341ca1048fcffcdb197813ec2581d8f5b6bc544f452bd849aa24f67f34ff5318544d522c09d21a5a"
+        "Authorization": "Bearer ${CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN}"
       }
     }
   }
