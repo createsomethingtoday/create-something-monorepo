@@ -36,6 +36,7 @@ interface Env {
   WORKSPACE_CLIENT_DESCRIPTION?: string;
   MCP_DISPLAY_NAME?: string;
   MCP_DESCRIPTION?: string;
+  MCP_BEARER_TOKEN?: string;
 }
 
 const SERVER_NAME = 'notion-halfdozen-create-something';
@@ -89,15 +90,51 @@ export class NotionHalfDozenMcp extends McpAgent<Env> {
 // Worker entry
 // =============================================================================
 
+const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, content-type, mcp-protocol-version, mcp-session-id',
+  'Access-Control-Expose-Headers': 'mcp-session-id',
+  'Access-Control-Max-Age': '86400',
+};
+
+function unauthorized(): Response {
+  return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    status: 401,
+    headers: {
+      'Content-Type': 'application/json',
+      'WWW-Authenticate': 'Bearer realm="mcp"',
+      ...CORS_HEADERS,
+    },
+  });
+}
+
+function preflight(): Response {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
+function checkBearer(request: Request, env: Env): boolean {
+  // Enforce only when MCP_BEARER_TOKEN is set; open otherwise (backward-compat).
+  if (!env.MCP_BEARER_TOKEN) return true;
+  const header = request.headers.get('Authorization') ?? '';
+  const match = /^Bearer\s+(.+)$/i.exec(header);
+  return !!match && match[1] === env.MCP_BEARER_TOKEN;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
+    // CORS preflight — always pass without bearer check
+    if (request.method === 'OPTIONS') return preflight();
+
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+      if (!checkBearer(request, env)) return unauthorized();
       return NotionHalfDozenMcp.serve('/mcp').fetch(request, env, ctx);
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
+      if (!checkBearer(request, env)) return unauthorized();
       return NotionHalfDozenMcp.serve('/sse').fetch(request, env, ctx);
     }
 

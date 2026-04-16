@@ -24,7 +24,7 @@ new_sqlite_classes = ["NotionHalfDozenMcp"]
 [[d1_databases]]
 binding = "FEEDBACK_DB"
 database_name = "halfdozen-feedback"
-database_id = "TODO_CS_D1_UUID"  # TODO: create `halfdozen-feedback` D1 on CREATE SOMETHING account, paste ID here
+database_id = "52da87a4-a926-4f59-b011-1e2b09575a0c"  # halfdozen-feedback on CREATE SOMETHING account
 
 # Workspace labels: halfdozen = HD internal, client = Phase 3
 [vars]
