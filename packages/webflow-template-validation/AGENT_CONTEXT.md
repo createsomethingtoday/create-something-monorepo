@@ -98,6 +98,16 @@ Purpose: Validate Webflow projects/templates against the "Webflow Way" guideline
 - When bundling from scripts, prefer `npm run bundle:ext` or `cd ".../extension" && npx webflow extension bundle` to avoid PATH issues.
 - For Designer API calls, not all functions may be present in all contexts—guard checks and fail gracefully.
 
+### Bridge install fallbacks
+- The worker install path intentionally keeps two fallback layers in `worker/src/index.ts`.
+- Access token resolution order:
+  - 1. Exchange the extension-provided ID token with `WEBFLOW_APP_CLIENT_ID` + `WEBFLOW_APP_CLIENT_SECRET`.
+  - 2. Fall back to static `WEBFLOW_DATA_API_TOKEN` when the exchange fails or app credentials are missing.
+- Installation order:
+  - 1. Preferred path is the single-call Registered Scripts API endpoint at `beta/sites/{siteId}/registered_scripts/inline`.
+  - 2. Fall back to legacy `v2/sites/{siteId}/custom-code` only when inline registration fails.
+- Do not collapse those fallback layers unless Webflow API behavior changes and the replacement path has been verified end-to-end for existing extension users.
+
 ### References
 - Webflow Developer docs index (llms.txt entrypoint)
 - Designer Extensions: Publishing, App Settings, window size

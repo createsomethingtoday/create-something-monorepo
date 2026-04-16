@@ -19,6 +19,20 @@ const FIELDS = {
 	TOKEN_EXPIRATION: 'fldbK6n1sooEQaoWg'
 } as const;
 
+const ASSET_VERSION_FIELD_NAMES = {
+	ASSET_LINK: '👛Asset',
+	ASSET_RECORD_ID: '⚙️👛Asset Record ID',
+	VERSION_NUMBER: 'ℹ️Version #',
+	CREATED_AT: '📅CRT',
+	CREATED_BY: 'Created by',
+	REVIEWER: '📝Reviewer',
+	REVIEW_TYPE: '📝Review Type',
+	REVIEW_STATUS: '📝Review Status',
+	VERSION_NOTES: 'ℹ️Version Notes',
+	META_UPDATE_LOG: '⚙️Meta Update Log',
+	PAYLOAD_BODY: '⚙️Asset Update Payload Body'
+} as const;
+
 // Airtable view IDs
 const VIEWS = {
 	ASSETS: 'viwETCKXDaVHbEnZQ',
@@ -626,11 +640,169 @@ export interface AssetVersion {
 	createdAt: string;
 	createdBy: string;
 	changes: string;
-	snapshot: AssetVersionSnapshot;
+	snapshot: AssetVersionSnapshot | null;
+	reviewType?: string;
+	reviewStatus?: string;
+	versionNotes?: string | null;
+	metaUpdateLog?: string | null;
+	canRollback: boolean;
+	rollbackReason?: string;
 }
 
 export interface AssetVersionSnapshot extends AssetUpdateData {
 	description?: string;
+}
+
+function parseVersionTextSummary(rawValue: string): string {
+	const lines = rawValue
+		.split('\n')
+		.map((line) =>
+			line
+				.replace(/^#{1,6}\s*/u, '')
+				.replace(/^\*\*(.+)\*\*$/u, '$1')
+				.replace(/^[-*]\s+/u, '')
+				.trim()
+		)
+		.filter(Boolean);
+
+	if (lines.length === 0) {
+		return rawValue.trim();
+	}
+
+	const [firstLine, ...rest] = lines;
+	const summary = firstLine.length > 160 ? `${firstLine.slice(0, 157)}...` : firstLine;
+	return rest.length > 0 ? `${summary} (+${rest.length} more)` : summary;
+}
+
+function parseAssetVersionPayload(
+	rawValue: unknown
+): { payload: Record<string, unknown> | null; snapshot: AssetVersionSnapshot | null } {
+	const payloadText = firstString(rawValue);
+	if (!payloadText) {
+		return {
+			payload: null,
+			snapshot: null
+		};
+	}
+
+	try {
+		const parsed = JSON.parse(payloadText) as unknown;
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+			return {
+				payload: null,
+				snapshot: null
+			};
+		}
+
+		const payload = parsed as Record<string, unknown>;
+		const rawSnapshot = payload.snapshot;
+		const snapshot =
+			rawSnapshot && typeof rawSnapshot === 'object' && !Array.isArray(rawSnapshot)
+				? (rawSnapshot as AssetVersionSnapshot)
+				: null;
+
+		return {
+			payload,
+			snapshot
+		};
+	} catch {
+		return {
+			payload: null,
+			snapshot: null
+		};
+	}
+}
+
+function summarizeAssetVersionPayload(payload: Record<string, unknown> | null): string | null {
+	if (!payload) {
+		return null;
+	}
+
+	if (typeof payload.changes === 'string' && payload.changes.trim()) {
+		return parseVersionTextSummary(payload.changes);
+	}
+
+	const changedFieldIds = Object.keys(payload).filter(
+		(key) => !['snapshot', 'changes', 'createdBy'].includes(key)
+	);
+
+	if (changedFieldIds.length === 0) {
+		return null;
+	}
+
+	return `Updated ${changedFieldIds.length} field${changedFieldIds.length === 1 ? '' : 's'}`;
+}
+
+function buildAssetVersionSummary(
+	fields: Airtable.FieldSet,
+	payload: Record<string, unknown> | null
+): string {
+	const versionNotes = firstString(fields[ASSET_VERSION_FIELD_NAMES.VERSION_NOTES]);
+	if (versionNotes) {
+		return parseVersionTextSummary(versionNotes);
+	}
+
+	const payloadSummary = summarizeAssetVersionPayload(payload);
+	if (payloadSummary) {
+		return payloadSummary;
+	}
+
+	const metaUpdateLog = firstString(fields[ASSET_VERSION_FIELD_NAMES.META_UPDATE_LOG]);
+	if (metaUpdateLog) {
+		return parseVersionTextSummary(metaUpdateLog);
+	}
+
+	const reviewType = firstString(fields[ASSET_VERSION_FIELD_NAMES.REVIEW_TYPE]);
+	if (reviewType === 'New Asset') {
+		return 'Initial submission';
+	}
+
+	return reviewType || 'Version update';
+}
+
+function mapAssetVersionRecord(record: Airtable.Record<Airtable.FieldSet>): AssetVersion {
+	const fields = record.fields;
+	const { payload, snapshot } = parseAssetVersionPayload(
+		fields[ASSET_VERSION_FIELD_NAMES.PAYLOAD_BODY]
+	);
+
+	const assetId =
+		firstString(fields[ASSET_VERSION_FIELD_NAMES.ASSET_RECORD_ID]) ||
+		firstString(fields[ASSET_VERSION_FIELD_NAMES.ASSET_LINK]) ||
+		'';
+	const versionNumber = firstNumber(fields[ASSET_VERSION_FIELD_NAMES.VERSION_NUMBER]) || 0;
+	const createdAt =
+		firstString(fields[ASSET_VERSION_FIELD_NAMES.CREATED_AT]) ||
+		(record as Airtable.Record<Airtable.FieldSet> & { _rawJson?: { createdTime?: string } })._rawJson
+			?.createdTime ||
+		new Date().toISOString();
+	const createdBy =
+		firstString(fields[ASSET_VERSION_FIELD_NAMES.CREATED_BY]) ||
+		firstString(fields[ASSET_VERSION_FIELD_NAMES.REVIEWER]) ||
+		'Unknown';
+	const reviewType = firstString(fields[ASSET_VERSION_FIELD_NAMES.REVIEW_TYPE]);
+	const reviewStatus = firstString(fields[ASSET_VERSION_FIELD_NAMES.REVIEW_STATUS]);
+	const versionNotes = firstString(fields[ASSET_VERSION_FIELD_NAMES.VERSION_NOTES]) || null;
+	const metaUpdateLog = firstString(fields[ASSET_VERSION_FIELD_NAMES.META_UPDATE_LOG]) || null;
+	const canRollback = snapshot !== null;
+
+	return {
+		id: record.id,
+		assetId,
+		versionNumber,
+		createdAt,
+		createdBy,
+		changes: buildAssetVersionSummary(fields, payload),
+		snapshot,
+		reviewType,
+		reviewStatus,
+		versionNotes,
+		metaUpdateLog,
+		canRollback,
+		rollbackReason: canRollback
+			? undefined
+			: 'Rollback is unavailable for legacy Airtable versions without stored snapshots.'
+	};
 }
 
 type AirtableWritableValue =
@@ -662,6 +834,26 @@ function firstString(value: unknown): string | undefined {
 			if (typeof candidate !== 'string') continue;
 			const trimmed = candidate.trim();
 			if (trimmed) return trimmed;
+		}
+	}
+
+	return undefined;
+}
+
+function firstNumber(value: unknown): number | undefined {
+	if (typeof value === 'number' && Number.isFinite(value)) {
+		return value;
+	}
+
+	if (typeof value === 'string') {
+		const parsed = Number(value);
+		return Number.isFinite(parsed) ? parsed : undefined;
+	}
+
+	if (Array.isArray(value)) {
+		for (const entry of value) {
+			const candidate = firstNumber(entry);
+			if (candidate !== undefined) return candidate;
 		}
 	}
 
@@ -1040,7 +1232,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		/**
 		 * Verify token and get user email.
 		 */
-		async verifyToken(token: string): Promise<{ email: string; expired: boolean } | null> {
+		async verifyToken(token: string): Promise<{ userId: string; email: string; expired: boolean } | null> {
 			const escapedToken = escapeAirtableString(token);
 			const records = await base(TABLES.USERS)
 				.select({
@@ -1060,7 +1252,11 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				expired = expirationDate < new Date();
 			}
 
-			return { email, expired };
+			return {
+				userId: record.id,
+				email,
+				expired
+			};
 		},
 
 		/**
@@ -2060,7 +2256,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					createdAt: new Date().toISOString(),
 					createdBy: createdBy,
 					changes: changesStr,
-					snapshot: snapshot
+					snapshot: snapshot,
+					reviewType: 'Meta Update',
+					reviewStatus: undefined,
+					versionNotes: null,
+					metaUpdateLog: null,
+					canRollback: true
 				};
 			} catch (err) {
 				console.error('[Airtable] Error creating asset version:', err);
@@ -2076,20 +2277,13 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			try {
 				const records = await base(TABLES.ASSET_VERSIONS)
 					.select({
-						filterByFormula: `{Asset ID} = '${escapeAirtableString(assetId)}'`,
-						sort: [{ field: 'Version Number', direction: 'desc' }]
+						filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(assetId)}'`
 					})
 					.all();
 
-				return records.map(record => ({
-					id: record.id,
-					assetId: record.fields['Asset ID'] as string,
-					versionNumber: record.fields['Version Number'] as number,
-					createdAt: record.fields['Created At'] as string,
-					createdBy: record.fields['Created By'] as string,
-					changes: record.fields['Changes'] as string,
-					snapshot: JSON.parse(record.fields['Snapshot'] as string)
-				}));
+				return records
+					.map((record) => mapAssetVersionRecord(record))
+					.sort((left, right) => right.versionNumber - left.versionNumber);
 			} catch (err) {
 				console.error('Error getting asset versions:', err);
 				return [];
@@ -2102,15 +2296,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		async getAssetVersion(versionId: string): Promise<AssetVersion | null> {
 			try {
 				const record = await base(TABLES.ASSET_VERSIONS).find(versionId);
-				return {
-					id: record.id,
-					assetId: record.fields['Asset ID'] as string,
-					versionNumber: record.fields['Version Number'] as number,
-					createdAt: record.fields['Created At'] as string,
-					createdBy: record.fields['Created By'] as string,
-					changes: record.fields['Changes'] as string,
-					snapshot: JSON.parse(record.fields['Snapshot'] as string)
-				};
+				return mapAssetVersionRecord(record);
 			} catch {
 				return null;
 			}
@@ -2129,6 +2315,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				// Get the version to rollback to
 				const version = await this.getAssetVersion(versionId);
 				if (!version) return null;
+				if (!version.snapshot) return null;
 
 				// Verify it's for the correct asset
 				if (version.assetId !== assetId) return null;

@@ -6,6 +6,29 @@
 
 ---
 
+## Current Branch Status
+
+This document is now a historical planning snapshot, not a current gap report.
+
+As of April 16, 2026, the branch has already shipped several items that this file still lists as pending:
+
+- `csm-n73re` Submission tracking is live via `SubmissionTracker` on the dashboard surface.
+- `csm-ky3b2` GSAP validation UI is live via the validation route, modal, and playground.
+- `csm-xdfzt` Multi-image upload is live via `CarouselUploader` and `SecondaryThumbnailUploader` in the asset edit flow.
+- `csm-4iqn5` Marketplace insights is live via the marketplace route and `MarketplaceInsights`.
+- `csm-ist47` Kinetic metric animation work is partially live via `KineticNumber` in overview and marketplace surfaces.
+
+Current interpretation:
+
+- Phase 1 / Tier 1 should be treated as shipped, not blocked.
+- The marketplace insights build ticket should be treated as shipped.
+- The design enhancements ticket should be treated as partially shipped and needs a narrower follow-up audit instead of a fresh greenfield implementation.
+- The versioning ticket is mostly implemented: Airtable methods, API routes, and versioning components are mounted on the asset detail route, but the flow still needs live Airtable/browser validation before it should be treated as fully closed.
+
+If this file remains in the repo, keep it as historical context and maintain a separate current-status tracker for unresolved parity work.
+
+---
+
 ## Issue List
 
 ### Phase 1: Review & Planning (2 issues)
@@ -187,4 +210,3 @@ Based on complexity labels:
 **Created by**: Gas Town Smart Sling Analysis  
 **Model**: Claude Sonnet 4.5  
 **Date**: January 7, 2026
-

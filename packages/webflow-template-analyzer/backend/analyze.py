@@ -270,7 +270,7 @@ def create_anthropic_message_with_retries(client: anthropic.Anthropic, **kwargs)
 
 # ─── Phase 1: Headless template analysis ─────────────────────────────────────
 
-def analyze_template(url: str) -> dict:
+def analyze_template(url: str, *, output_dir: Path | None = None) -> tuple[dict, str]:
     """
     Visit the template with a headless browser, count sections, extract
     content, take screenshots, then call Claude to generate all form fields.
@@ -355,8 +355,8 @@ def analyze_template(url: str) -> dict:
 
         # ── Screenshots ───────────────────────────────────────────────────────
         print("Taking screenshots...")
-        output_dir = Path.cwd() / "output"
-        output_dir.mkdir(exist_ok=True)
+        output_dir = output_dir or (Path.cwd() / "output")
+        output_dir.mkdir(parents=True, exist_ok=True)
         screenshots: dict = {"gallery": []}
 
         # Primary thumbnail — 750×995 WEBP ≤ 300 KB
@@ -392,7 +392,7 @@ def analyze_template(url: str) -> dict:
             )
             screenshots["gallery"].append(str(dest))
 
-        print("✓ Screenshots saved to ./output/")
+        print(f"✓ Screenshots saved to {output_dir}")
 
         # ── Claude analysis ───────────────────────────────────────────────────
         print("Generating form details...")

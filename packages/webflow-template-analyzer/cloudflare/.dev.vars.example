@@ -1,1 +1,2 @@
 ANTHROPIC_API_KEY=your_anthropic_key_here
+ANALYZER_API_TOKEN=your_shared_token_here

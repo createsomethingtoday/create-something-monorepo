@@ -18,7 +18,7 @@ export interface UploadOptions {
 export interface UploadResult {
 	/** The storage key for the uploaded file */
 	key: string;
-	/** The URL to access the file */
+	/** The public URL to access the file once the key is known */
 	url: string;
 	/** Size in bytes */
 	size: number;
@@ -111,7 +111,7 @@ export async function deleteFromR2(bucket: R2Bucket, key: string): Promise<void>
  *
  * @param key - The storage key
  * @param origin - Optional request origin for absolute URLs
- * @returns The URL to access the file
+ * @returns The public URL to access the file once the key is known
  */
 export function getR2Url(key: string, origin?: string): string {
 	const baseUrl = origin || '';

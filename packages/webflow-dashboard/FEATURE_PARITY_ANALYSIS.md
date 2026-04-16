@@ -5,8 +5,8 @@
 **Analyst**: Gas Town (Claude Sonnet 4.5)  
 **Source Repository**: `/Users/micahjohnson/Documents/Github/Webflow/wf-asset-dashboard`  
 **Target Repository**: `/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-dashboard`  
-**Status**: 🟡 PARTIAL PORT - Critical Features Missing
-**Note**: Initially authored January 7, 2026. Targeted corrections applied February 23, 2026.
+**Status**: 🟡 PARTIAL PORT - Critical Features Still Missing
+**Note**: Initially authored January 7, 2026. Targeted corrections applied February 23, 2026. Versioning status refreshed April 16, 2026. This remains a historical gap-analysis document; only versioning-specific findings have been refreshed in this pass.
 
 ---
 
@@ -33,7 +33,7 @@ The SvelteKit port (`@create-something/webflow-dashboard`) has successfully migr
 - **Advanced hooks** (10+ custom hooks)
 - **Editor/Edit Links System** (admin features)
 - **Status History Tracking**
-- **Asset Versioning System**
+- **Asset Versioning UI Wiring**
 - **Related Assets API**
 
 ---
@@ -65,11 +65,11 @@ The SvelteKit port (`@create-something/webflow-dashboard`) has successfully migr
 | Update asset | ✅ `/api/asset/update` | ✅ `/api/assets/[id]` | ✅ COMPLETE |
 | Archive asset | ✅ `/api/asset/archive/[id]` | ✅ `/api/assets/[id]/archive` | ✅ COMPLETE |
 | Check name uniqueness | ✅ `/api/asset/checkName` | ✅ `/api/assets/check-name` | ✅ COMPLETE |
-| **Asset versioning** | ✅ `/api/asset/createVersion/[id]` | ❌ | ❌ MISSING |
+| **Asset versioning** | ✅ `/api/asset/createVersion/[id]` | ⚠️ `/api/assets/[id]/versions*` + asset detail route UI | ⚠️ PARTIAL |
 | **Related assets** | ✅ `/api/related-assets/[id]` | ❌ | ❌ MISSING |
 | **Tags management** | ✅ `/api/tags` | ❌ | ❌ MISSING |
 
-**Critical Gap**: Asset versioning system not ported - original tracks version history when assets are updated.
+**Current Gap**: Asset versioning is now exposed on the asset detail route, including history, comparison, and rollback entry points. The remaining gap is live Airtable/browser validation of the mounted flow, and snapshot creation still runs as a save companion rather than a separately enforced transactional workflow.
 
 ---
 
@@ -226,8 +226,8 @@ The SvelteKit port (`@create-something/webflow-dashboard`) has successfully migr
 
 #### Original Endpoints (30+ endpoints):
 
-**Missing Endpoints** (12 endpoints):
-1. ❌ `/api/asset/createVersion/[id]` - Asset versioning
+**Missing or Partial Endpoints** (12 endpoints):
+1. ⚠️ `/api/assets/[id]/versions*` - Endpoints exist and are consumed by the asset detail route, but the mounted flow still needs live validation
 2. ❌ `/api/deleteOldImages` - Cleanup cron
 3. ❌ `/api/generate-edit-link` - Admin edit links
 4. ❌ `/api/getUserEmail` - Email lookup utility
@@ -497,7 +497,7 @@ The original dashboard had extensive design enhancements (documented in DESIGN_E
 **Blocking Issues**:
 1. ❌ No submission tracking - users cannot manage template limits
 2. ❌ Missing image upload parity (carousel/secondary thumbnails) - template presentation incomplete
-3. ❌ No asset versioning - update auditability and rollback safety gaps
+3. ⚠️ Asset versioning is partially closed - routed history/compare/rollback now exist, but live validation and stronger save/rollback guarantees are still pending
 
 **Recommended Path**:
 1. Complete Phase 1 (Critical Features) before production deployment
@@ -524,7 +524,7 @@ The original dashboard had extensive design enhancements (documented in DESIGN_E
 ### Core Functionality: 70/100
 
 - Authentication: ✅ 10/10
-- Asset CRUD: ⚠️ 7/10 (missing versioning, related assets)
+- Asset CRUD: ⚠️ 9/10 (routed versioning UX now exists; related assets and live validation remain)
 - Image Upload: ⚠️ 5/10 (missing carousel, secondary thumbnails)
 - Analytics API: ✅ 10/10
 - Profile/Keys: ✅ 10/10
@@ -554,7 +554,7 @@ The original dashboard had extensive design enhancements (documented in DESIGN_E
 - Core Workflow: ⚠️ 6/10 (blocked by submission tracking)
 - Competitive Features: ⚠️ 6/10 (marketplace insights ported; historical trend feed pending)
 - Compliance Tools: ⚠️ 5/10 (GSAP validation ported; multi-tool validation system missing)
-- Data Integrity: ⚠️ 6/10 (versioning missing)
+- Data Integrity: ⚠️ 8/10 (routed versioning UX exists; live flow validation still pending)
 
 ---
 
@@ -570,7 +570,7 @@ The SvelteKit port has successfully migrated the **technical infrastructure** (C
 1. Submission tracking system (critical for template limits)
 2. Multi-tool validation architecture (registry, feature flags, install UX)
 3. Multi-image upload (template showcase quality)
-4. Asset versioning (auditability and rollback safety)
+4. Live validation of routed asset versioning (history, comparison, rollback)
 
 ### Recommended Action Plan
 

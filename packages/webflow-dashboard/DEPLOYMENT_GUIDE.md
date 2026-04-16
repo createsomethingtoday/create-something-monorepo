@@ -405,15 +405,16 @@ curl -H "Cookie: session=YOUR_SESSION_TOKEN" \
 
 1. Edit an existing asset
 2. Make changes and save
-3. Navigate to asset detail > Version History
-4. Verify new version appears
-5. Compare two versions side-by-side
-6. Rollback to previous version
+3. Navigate to asset detail > `Versions`
+4. Verify the new version appears in the history list
+5. Compare two versions in the mounted comparison modal
+6. Roll back to a previous version and confirm the asset detail page refreshes in place
+7. Optionally call the version endpoints directly to confirm the server payloads
 
 **Verification Points**:
 - [ ] Version created on asset update
-- [ ] Version history displays all versions
-- [ ] Comparison view shows differences
+- [ ] Version history UI displays all versions
+- [ ] Comparison modal shows differences
 - [ ] Rollback works and creates new version
 - [ ] Timestamps and user attribution correct
 

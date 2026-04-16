@@ -17,6 +17,7 @@ import type {
 	Recommendation,
 	FlaggedCode
 } from '$lib/types/validation';
+import { isSecureHostedUrl } from '$lib/server/security';
 
 interface ValidationRequest {
 	url: string;
@@ -45,7 +46,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	}
 
 	// Validate URL format
-	if (!url.startsWith('https://') || !url.includes('.webflow.io')) {
+	if (!isSecureHostedUrl(url, 'webflow.io', { requireSubdomain: true })) {
 		throw error(400, 'URL must be a Webflow site (https://...webflow.io)');
 	}
 

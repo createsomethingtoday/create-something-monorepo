@@ -20,6 +20,19 @@ export const POST: RequestHandler = async ({ params, locals, platform }) => {
 		throw error(403, 'You do not have permission to modify this asset');
 	}
 
+	const version = await airtable.getAssetVersion(params.versionId);
+	if (!version) {
+		throw error(404, 'Version not found');
+	}
+
+	if (version.assetId !== params.id) {
+		throw error(400, 'Version does not belong to this asset');
+	}
+
+	if (!version.canRollback) {
+		throw error(409, version.rollbackReason || 'Rollback is unavailable for this version');
+	}
+
 	const asset = await airtable.rollbackAssetToVersion(
 		params.id,
 		params.versionId,

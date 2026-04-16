@@ -622,11 +622,25 @@
 
   // ─── Screenshot download links ──────────────────────────────────────────
 
-  function fillScreenshots(screenshots) {
-    if (!screenshots || typeof screenshots !== "object") return;
+  function buildArtifactDownloadUrl(result) {
+    if (!result || !result.job_id || !result.artifact_token) return "";
+    return (
+      API_BASE +
+      "/screenshots/" +
+      encodeURIComponent(result.job_id) +
+      "/download?token=" +
+      encodeURIComponent(result.artifact_token)
+    );
+  }
+
+  function fillScreenshots(result) {
+    if (!result || !result.screenshots || typeof result.screenshots !== "object") return;
 
     var container = getEl("uploadContainer");
     if (!container) return;
+
+    var downloadUrl = buildArtifactDownloadUrl(result);
+    if (!downloadUrl) return;
 
     // Remove existing banner if re-running
     var existing = getEl("autofill-download-all");
@@ -638,7 +652,7 @@
     wrapper.innerHTML =
       '<div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;">Generated screenshots ready</div>' +
       '<div style="font-size:11px;color:#6b7280;margin-bottom:8px;">Download the ZIP, then drag each file into the matching upload field.</div>' +
-      '<a href="' + API_BASE + '/screenshots/download" download="template-screenshots.zip" ' +
+      '<a href="' + downloadUrl + '" download="template-screenshots.zip" ' +
       'style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#146ef5;text-decoration:none;">' +
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' +
@@ -714,7 +728,7 @@
 
     // Screenshots (async, runs after form fields are set)
     if (result.screenshots) {
-      fillScreenshots(result.screenshots);
+      fillScreenshots(result);
     }
   }
 

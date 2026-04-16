@@ -1,6 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
 import { getSession } from '$lib/server/kv';
-import { isTrustedRequestOrigin } from '$lib/server/security';
+import { isTrustedRequestOrigin, shouldEnforceTrustedApiOrigin } from '$lib/server/security';
 
 // No-cache headers for API responses to prevent browser caching issues
 const noCacheHeaders = {
@@ -30,15 +30,11 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   }
 
-  // CSRF/origin protection for cookie-authenticated API mutations.
-  // SameSite=None is required for Webflow iframe embedding, so we enforce
-  // trusted request origins server-side before state-changing API calls.
-  const isMutatingMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(event.request.method);
-  const isApiRoute = event.url.pathname.startsWith('/api/');
-  const isCronRoute = event.url.pathname.startsWith('/api/cron/');
-  const hasSessionCookie = Boolean(sessionToken);
-
-  if (isMutatingMethod && isApiRoute && !isCronRoute && hasSessionCookie) {
+  // CSRF/origin protection for mutating API routes.
+  // SameSite=None is required for Webflow iframe embedding, so all
+  // state-changing API calls stay behind a trusted-origin check unless the
+  // route is explicitly exempted (for example cron handlers).
+  if (shouldEnforceTrustedApiOrigin(event.url.pathname, event.request.method)) {
     const isTrusted = isTrustedRequestOrigin(
       event.request,
       event.url.origin,
@@ -66,7 +62,8 @@ export const handle: Handle = async ({ event, resolve }) => {
     '/api/keys',
     '/api/assets',
     '/api/analytics',
-    '/api/feedback'
+    '/api/feedback',
+    '/api/submission-status'
   ];
   const isProtectedRoute = protectedPaths.some((path) => event.url.pathname.startsWith(path));
 

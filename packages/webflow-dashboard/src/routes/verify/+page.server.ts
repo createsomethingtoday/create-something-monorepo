@@ -107,10 +107,7 @@ export const load: PageServerLoad = async ({ url, platform, cookies, getClientAd
 		});
 
 		// Clear the verification token in Airtable (one-time use)
-		const user = await airtable.findUserByEmail(result.email);
-		if (user) {
-			await airtable.clearVerificationToken(user.id);
-		}
+		await airtable.clearVerificationToken(result.userId);
 
 		return {
 			status: 'session-created' as const,
