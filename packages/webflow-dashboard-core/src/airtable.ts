@@ -55,6 +55,8 @@ const CREATOR_EMAIL_FIELDS_PRIORITY = [
   'CREATOR_EMAIL'
 ] as const;
 
+const CREATOR_RECORD_EMAIL_FIELDS = ['📧Email', '📧WF Account Email', '📧Emails'] as const;
+
 const CATEGORY_FIELDS_PRIORITY = [
   '🏷️Category',
   '🏷️Categories',
@@ -373,6 +375,17 @@ export function buildCreatorEmailMatchFormula(email: string): string {
 
 export function buildAssetListFormula(email: string): string {
   return `AND(${buildCreatorEmailMatchFormula(email)}, {🆎Type} = 'Template🏗️')`;
+}
+
+function buildCreatorRecordEmailMatchFormula(email: string): string {
+  const normalizedEmail = email.trim().toLowerCase();
+  const escapedEmail = escapeAirtableString(normalizedEmail);
+  const clauses = CREATOR_RECORD_EMAIL_FIELDS.map(
+    (field) =>
+      `FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({${field}}, ",")), IFERROR(LOWER({${field}}), ""))) > 0`
+  );
+
+  return `OR(${clauses.join(', ')})`;
 }
 
 export function validateEmail(email: string): string {
@@ -1353,7 +1366,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
         const records = await base(TABLES.CREATORS)
           .select({
-            filterByFormula: buildCreatorEmailMatchFormula(normalizedEmail)
+            filterByFormula: buildCreatorRecordEmailMatchFormula(normalizedEmail)
           })
           .firstPage();
 

@@ -83,6 +83,8 @@ const CREATOR_EMAIL_FORMULA_FIELDS = [
 	'📧Emails (from 🎨Creator)'
 ] as const;
 
+const CREATOR_RECORD_EMAIL_FIELDS = ['📧Email', '📧WF Account Email', '📧Emails'] as const;
+
 const CATEGORY_FIELDS_PRIORITY = [
 	'🏷️Category',
 	'🏷️Categories',
@@ -233,6 +235,17 @@ export function buildCreatorEmailMatchFormula(email: string): string {
 
 export function buildAssetListFormula(email: string): string {
 	return buildCreatorEmailMatchFormula(email);
+}
+
+function buildCreatorRecordEmailMatchFormula(email: string): string {
+	const normalizedEmail = email.trim().toLowerCase();
+	const escapedEmail = escapeAirtableString(normalizedEmail);
+	const clauses = CREATOR_RECORD_EMAIL_FIELDS.map(
+		(field) =>
+			`FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({${field}}, ",")), IFERROR(LOWER({${field}}), ""))) > 0`
+	);
+
+	return `OR(${clauses.join(', ')})`;
 }
 
 /**
@@ -1519,7 +1532,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					}
 				}
 
-				const formula = buildCreatorEmailMatchFormula(normalizedEmail);
+				const formula = buildCreatorRecordEmailMatchFormula(normalizedEmail);
 
 				debugLog('[Airtable] Formula:', formula);
 				
