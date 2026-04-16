@@ -221,43 +221,34 @@
       "type": "notion_mcp",
       "product": "System Studio \u00d7 HD \u2014 Notion MCP",
       "client": "system-studio",
-      "url": "https://system-studio-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://system-studio-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.system-studio.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.system-studio.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
-        "infisical_path": "/halfdozen-notion-mcp/system-studio"
-      },
-      "migration": {
-        "from": "https://system-studio-notion.mcp.workway.co/mcp",
-        "to": "https://system-studio-notion.mcp.createsomething.agency/mcp",
-        "blockers": [
-          "Zone createsomething.agency lives in CREATE SOMETHING account; worker currently deployed on WORKWAY account. Redeploy on CS account or transfer zone."
-        ]
+        "infisical_path": "/halfdozen-notion-mcp/system-studio",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN"
       }
     },
     "blondish-notion": {
       "type": "notion_mcp",
       "product": "BLOND:ISH \u00d7 HD \u2014 Notion MCP",
       "client": "blondish",
-      "url": "https://blondish-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://blondish-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.blondish.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.blondish.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
-        "infisical_path": "/halfdozen-notion-mcp/blondish"
-      },
-      "migration": {
-        "from": "https://blondish-notion.mcp.workway.co/mcp",
-        "to": "https://blondish-notion.mcp.createsomething.agency/mcp"
+        "infisical_path": "/halfdozen-notion-mcp/blondish",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN"
       },
       "related_deployments": [
         "blondish-hub",
@@ -282,7 +273,10 @@
       },
       "migration": {
         "from": "https://c3-management-notion.mcp.workway.co/mcp",
-        "to": "https://c3-management-notion.mcp.createsomething.agency/mcp"
+        "to": "https://c3-management-notion.mcp.createsomething.agency/mcp",
+        "blockers": [
+          "Cloudflare edge cert issuance pending \u2014 worker deployed on CS account but SAN cert not yet minted for this hostname. Monitor task bla3ezezq watching."
+        ]
       },
       "related_deployments": [
         "c3denver-hub",
@@ -293,20 +287,17 @@
       "type": "notion_mcp",
       "product": "Cracked Live \u00d7 HD \u2014 Notion MCP",
       "client": "cracked-live",
-      "url": "https://cracked-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://cracked-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.cracked.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.cracked.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
-        "infisical_path": "/halfdozen-notion-mcp/cracked"
-      },
-      "migration": {
-        "from": "https://cracked-notion.mcp.workway.co/mcp",
-        "to": "https://cracked-notion.mcp.createsomething.agency/mcp"
+        "infisical_path": "/halfdozen-notion-mcp/cracked",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN"
       },
       "related_deployments": [
         "cracked-hub"
@@ -316,21 +307,18 @@
       "type": "notion_mcp",
       "product": "Fanpad \u2014 Client Hub (Notion MCP)",
       "client": "fanpad",
-      "url": "https://fanpad-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://fanpad-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "notion_page_id": "AT-198",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.fanpad.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.fanpad.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
-        "infisical_path": "/halfdozen-notion-mcp/fanpad"
-      },
-      "migration": {
-        "from": "https://fanpad-notion.mcp.workway.co/mcp",
-        "to": "https://fanpad-notion.mcp.createsomething.agency/mcp"
+        "infisical_path": "/halfdozen-notion-mcp/fanpad",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN"
       },
       "notes": "Notion product record created 2026-04-16 (AT-198). Client relation in HD Clients DB still needs to be wired."
     },
@@ -352,7 +340,10 @@
       },
       "migration": {
         "from": "https://juice-labs-notion.mcp.workway.co/mcp",
-        "to": "https://juice-labs-notion.mcp.createsomething.agency/mcp"
+        "to": "https://juice-labs-notion.mcp.createsomething.agency/mcp",
+        "blockers": [
+          "Cloudflare edge cert issuance pending \u2014 worker deployed on CS account but SAN cert not yet minted for this hostname. Monitor task bla3ezezq watching."
+        ]
       },
       "notes": "Notion product record created 2026-04-16 (AT-199). Client relation in HD Clients DB still needs to be wired."
     },
@@ -360,104 +351,89 @@
       "type": "notion_mcp",
       "product": "KK Management \u2014 Client Hub (Notion MCP)",
       "client": "kk-management",
-      "url": "https://kk-management-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://kk-management-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "notion_page_id": "AT-149",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.kk-management.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.kk-management.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
-        "infisical_path": "/halfdozen-notion-mcp/kk-management"
-      },
-      "migration": {
-        "from": "https://kk-management-notion.mcp.workway.co/mcp",
-        "to": "https://kk-management-notion.mcp.createsomething.agency/mcp"
+        "infisical_path": "/halfdozen-notion-mcp/kk-management",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN"
       }
     },
     "lightswitch-notion": {
       "type": "notion_mcp",
       "product": "Lightswitch Studio \u2014 Client Hub (Notion MCP)",
       "client": "lightswitch",
-      "url": "https://lightswitch-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://lightswitch-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "notion_page_id": "AT-150",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.lightswitch.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.lightswitch.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
-        "infisical_path": "/halfdozen-notion-mcp/lightswitch"
-      },
-      "migration": {
-        "from": "https://lightswitch-notion.mcp.workway.co/mcp",
-        "to": "https://lightswitch-notion.mcp.createsomething.agency/mcp"
+        "infisical_path": "/halfdozen-notion-mcp/lightswitch",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN"
       }
     },
     "phase-3-notion": {
       "type": "notion_mcp",
       "product": "Phase 3 \u2014 Client Hub (Notion MCP)",
       "client": "phase-3",
-      "url": "https://phase-3-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://phase-3-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "notion_page_id": "AT-195",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.phase-3.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.phase-3.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
-        "infisical_path": "/halfdozen-notion-mcp/phase-3"
-      },
-      "migration": {
-        "from": "https://phase-3-notion.mcp.workway.co/mcp",
-        "to": "https://phase-3-notion.mcp.createsomething.agency/mcp"
+        "infisical_path": "/halfdozen-notion-mcp/phase-3",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN"
       }
     },
     "three-six-zero-notion": {
       "type": "notion_mcp",
       "product": "TSZ \u2014 Client Hub (Notion MCP)",
       "client": "three-six-zero",
-      "url": "https://three-six-zero-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://three-six-zero-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "notion_page_id": "AT-194",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.three-six-zero.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.three-six-zero.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
-        "infisical_path": "/halfdozen-notion-mcp/three-six-zero"
-      },
-      "migration": {
-        "from": "https://three-six-zero-notion.mcp.workway.co/mcp",
-        "to": "https://three-six-zero-notion.mcp.createsomething.agency/mcp"
+        "infisical_path": "/halfdozen-notion-mcp/three-six-zero",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN"
       }
     },
     "createsomething-notion": {
       "type": "notion_mcp",
       "product": "Half Dozen \u00d7 CREATE SOMETHING \u2014 Notion MCP",
       "client": "halfdozen",
-      "url": "https://createsomething-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://createsomething-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "infisical_path": "/halfdozen-notion-mcp",
-        "infisical_note": "HD-only deployment; no client folder yet. Create under /halfdozen-notion-mcp/halfdozen if a separate value is needed."
-      },
-      "migration": {
-        "from": "https://createsomething-notion.mcp.workway.co/mcp",
-        "to": "https://createsomething-notion.mcp.createsomething.agency/mcp"
+        "infisical_note": "HD-only deployment; no client folder yet. Create under /halfdozen-notion-mcp/halfdozen if a separate value is needed.",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN"
       },
       "notes": "Default halfdozen-notion-mcp deployment. HD internal workspace only (no WORKSPACE_CLIENT_LABEL in wrangler.toml), so uses NOTION_API_KEY (HD master) exclusively."
     }

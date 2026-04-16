@@ -77,7 +77,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["bearer", "notion_integration", "oauth", "none"]
+              "enum": ["bearer", "notion_integration", "notion_integration_with_bearer", "oauth", "none"]
             },
             "bearer_token_env_var": {
               "type": "string"
