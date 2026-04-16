@@ -242,11 +242,12 @@
     },
     "fanpad-notion": {
       "type": "notion_mcp",
-      "product": "Fanpad × HD — Notion MCP",
+      "product": "Fanpad — Client Hub (Notion MCP)",
       "client": "fanpad",
       "url": "https://fanpad-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
       "account": "workway",
+      "notion_page_id": "AT-198",
       "package_path": "packages/halfdozen-notion-mcp",
       "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.fanpad.toml",
       "auth": {
@@ -258,15 +259,16 @@
         "from": "https://fanpad-notion.mcp.workway.co/mcp",
         "to": "https://fanpad-notion.mcp.createsomething.agency/mcp"
       },
-      "notes": "Not present in HD Notion Products DB at time of import (2026-04-16). Add product record."
+      "notes": "Notion product record created 2026-04-16 (AT-198). Client relation in HD Clients DB still needs to be wired."
     },
     "juice-labs-notion": {
       "type": "notion_mcp",
-      "product": "Juice Labs × HD — Notion MCP",
+      "product": "Juice Labs — Client Hub (Notion MCP)",
       "client": "juice-labs",
       "url": "https://juice-labs-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
       "account": "workway",
+      "notion_page_id": "AT-199",
       "package_path": "packages/halfdozen-notion-mcp",
       "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.juice-labs.toml",
       "auth": {
@@ -278,7 +280,7 @@
         "from": "https://juice-labs-notion.mcp.workway.co/mcp",
         "to": "https://juice-labs-notion.mcp.createsomething.agency/mcp"
       },
-      "notes": "Not present in HD Notion Products DB at time of import (2026-04-16). Add product record."
+      "notes": "Notion product record created 2026-04-16 (AT-199). Client relation in HD Clients DB still needs to be wired."
     },
     "kk-management-notion": {
       "type": "notion_mcp",
