@@ -30,6 +30,8 @@ INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 LOAD_FROM_INFISICAL="${LOAD_FROM_INFISICAL:-auto}"
 VERIFY_CURL_CONNECT_TIMEOUT_SECONDS="${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS:-5}"
 VERIFY_CURL_MAX_TIME_SECONDS="${VERIFY_CURL_MAX_TIME_SECONDS:-30}"
+COMPOSIO_TOOLKIT_HEALTH_URL="${COMPOSIO_TOOLKIT_HEALTH_URL:-https://composio-toolkit-mcp.createsomething.workers.dev/health}"
+EXPECTED_QUICKBOOKS_AUTH_CONFIG_ID="${EXPECTED_QUICKBOOKS_AUTH_CONFIG_ID:-ac_r4r7Zuy8NCFL}"
 
 SHARED_AUTH_SERVERS=(
   "composio-toolkit-dropbox"
@@ -916,6 +918,78 @@ search_visible_connection_status_tool() {
   return 1
 }
 
+search_visible_proxy_tool_for_server_query() {
+  local mcp_url="$1"
+  local token="$2"
+  local server_name="$3"
+  local query="$4"
+  local suffix="$5"
+  local session_token="${6:-}"
+
+  local body_file status payload
+  body_file="$(mktemp)"
+  payload="$(
+    jq -cn --arg serverName "$server_name" --arg query "$query" '{
+      jsonrpc:"2.0",
+      id:"fleet-verify-search-specific",
+      method:"tools/call",
+      params:{
+        name:"hub_search_proxy_tools",
+        arguments:{
+          serverName:$serverName,
+          query:$query,
+          limit:20
+        }
+      }
+    }'
+  )"
+
+  if [[ -n "$session_token" ]]; then
+    status="$(
+      curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+        -H "Authorization: Bearer ${token}" \
+        -H "X-MCP-Session-Token: ${session_token}" \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
+        --data "$payload"
+    )"
+  else
+    status="$(
+      curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+        -H "Authorization: Bearer ${token}" \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
+        --data "$payload"
+    )"
+  fi
+
+  if [[ "$status" != "200" ]]; then
+    cat "$body_file" >&2
+    rm -f "$body_file"
+    return 1
+  fi
+
+  local proxy_tool_name
+  proxy_tool_name="$(
+    jq -r --arg suffix "$suffix" '
+      (
+        .result.structuredContent.tools //
+        (.result.content[0].text | fromjson? | .tools) //
+        []
+      )
+      | map(select((.proxyToolName // "") | endswith($suffix)))
+      | .[0].proxyToolName // empty
+    ' "$body_file"
+  )"
+  rm -f "$body_file"
+
+  if [[ -z "$proxy_tool_name" ]]; then
+    return 1
+  fi
+
+  echo "$proxy_tool_name"
+}
+
 check_compat_account_routing() {
   local worker="$1"
   local expected_account_id mcp_url token_var_name token token_help
@@ -1015,6 +1089,67 @@ check_clickup_discovery_for_worker() {
   fi
 
   echo "clickup_discovery=ok via=enabled_servers"
+}
+
+check_composio_toolkit_quickbooks_health() {
+  local health_json
+  health_json="$(
+    curl -fsS \
+      --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+      --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
+      "$COMPOSIO_TOOLKIT_HEALTH_URL"
+  )" || {
+    echo "quickbooks auth health probe failed for composio-toolkit-mcp"
+    failures=1
+    return
+  }
+
+  if ! echo "$health_json" | jq -e '.configured.authConfigMapToolkits // [] | index("quickbooks") != null' >/dev/null; then
+    echo "quickbooks auth visibility failed for composio-toolkit-mcp"
+    echo "$health_json"
+    failures=1
+    return
+  fi
+
+  if ! echo "$health_json" | jq -e --arg expected "$EXPECTED_QUICKBOOKS_AUTH_CONFIG_ID" '.configured.quickbooksAuthConfigId == $expected' >/dev/null; then
+    echo "quickbooks auth config mismatch for composio-toolkit-mcp"
+    echo "$health_json"
+    failures=1
+    return
+  fi
+
+  echo "quickbooks_auth=ok auth_config_id=${EXPECTED_QUICKBOOKS_AUTH_CONFIG_ID}"
+}
+
+check_quickbooks_discovery_for_worker() {
+  local worker="$1"
+  local mcp_url token_var_name token token_help probe_proxy_tool
+  mcp_url="$(mcp_url_for_worker "$worker")"
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  token="$(resolve_worker_token "$worker")"
+  token_help="${token_var_name} (or HUB_API_TOKEN)"
+
+  if [[ -z "$token" ]]; then
+    echo "missing API token for ${worker} (${token_help})"
+    failures=1
+    return
+  fi
+
+  probe_proxy_tool="$(
+    search_visible_proxy_tool_for_server_query \
+      "$mcp_url" \
+      "$token" \
+      "composio-toolkit-quickbooks" \
+      "get_connect_link" \
+      "__get_connect_link" || true
+  )"
+  if [[ -z "$probe_proxy_tool" ]]; then
+    echo "quickbooks discovery visibility failed for ${worker}"
+    failures=1
+    return
+  fi
+
+  echo "quickbooks_discovery=ok proxy_tool=${probe_proxy_tool}"
 }
 
 check_session_account_routing() {
@@ -1245,6 +1380,17 @@ echo "Checking ClickUp discovery visibility for Outerfields hubs..."
 for worker in "cs-hub-aaron-outerfields" "cs-hub-andre-outerfields"; do
   echo "===== CLICKUP ${worker} ====="
   check_clickup_discovery_for_worker "$worker"
+  echo
+done
+
+echo "Checking generic Composio QuickBooks auth baseline..."
+check_composio_toolkit_quickbooks_health
+echo
+
+echo "Checking QuickBooks discovery visibility for Danny and Lainy hubs..."
+for worker in "cs-hub-danny" "cs-hub-lainy"; do
+  echo "===== QUICKBOOKS ${worker} ====="
+  check_quickbooks_discovery_for_worker "$worker"
   echo
 done
 

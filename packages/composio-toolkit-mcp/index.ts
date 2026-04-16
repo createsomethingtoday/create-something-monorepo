@@ -12,6 +12,7 @@ interface Env {
   COMPOSIO_API_KEY?: string;
   COMPOSIO_AUTH_CONFIG_MAP?: string;
   COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?: string;
+  COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID?: string;
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_ENTITY_RESOLUTION_MODE?: string;
   COMPOSIO_TOOL_CACHE_SECONDS?: string;
@@ -40,6 +41,7 @@ const SERVER_NAME = 'composio-toolkit-mcp';
 const SERVER_VERSION = '0.1.0';
 const DEFAULT_CACHE_SECONDS = 300;
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_QUICKBOOKS_HD_AUTH_CONFIG_ID = 'ac_r4r7Zuy8NCFL';
 const ZOOM_TRANSCRIPT_STATUS_TOOL = 'zoom_latest_transcript_status';
 const ZOOM_LIST_TRANSCRIPTS_TOOL = 'zoom_list_available_transcripts';
 const DEFAULT_ZOOM_LOOKBACK_DAYS = 7;
@@ -69,6 +71,7 @@ export default {
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {
+      const authConfigMap = buildAuthConfigMap(env);
       return withCors(
         jsonResponse({
           name: SERVER_NAME,
@@ -79,7 +82,9 @@ export default {
           },
           configured: {
             composioApiKey: Boolean(env.COMPOSIO_API_KEY),
-            authConfigMapEntries: Object.keys(buildAuthConfigMap(env)).length,
+            authConfigMapEntries: Object.keys(authConfigMap).length,
+            authConfigMapToolkits: Object.keys(authConfigMap).sort(),
+            quickbooksAuthConfigId: authConfigMap.quickbooks ?? null,
             defaultEntity: env.COMPOSIO_DEFAULT_ENTITY_ID ?? 'default',
             entityResolutionMode: resolveEntityResolutionMode(env),
             braintrustApiKey: Boolean(env.BRAINTRUST_API_KEY),
@@ -1988,6 +1993,11 @@ function buildAuthConfigMap(env: Env): Record<string, string> {
   const airtableAuthConfigId = env.COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?.trim();
   if (airtableAuthConfigId) {
     authConfigMap.airtable = airtableAuthConfigId;
+  }
+  const quickbooksAuthConfigId =
+    env.COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID?.trim() ?? DEFAULT_QUICKBOOKS_HD_AUTH_CONFIG_ID;
+  if (quickbooksAuthConfigId) {
+    authConfigMap.quickbooks = quickbooksAuthConfigId;
   }
   return authConfigMap;
 }
