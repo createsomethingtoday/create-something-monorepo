@@ -46,7 +46,8 @@ export function AccountPanel({
     const payload = {
       name: String(formData.get('name') || ''),
       biography: String(formData.get('biography') || ''),
-      legalName: String(formData.get('legalName') || '')
+      legalName: String(formData.get('legalName') || ''),
+      websiteUrl: String(formData.get('websiteUrl') || '')
     };
 
     const response = await fetch(appPath('/api/profile'), {
@@ -164,6 +165,19 @@ export function AccountPanel({
               id="biography"
               name="biography"
               defaultValue={profile?.biography || ''}
+            />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="websiteUrl">
+              Personal website URL
+            </label>
+            <input
+              className="field-input"
+              id="websiteUrl"
+              name="websiteUrl"
+              type="url"
+              defaultValue={profile?.websiteUrl || ''}
+              placeholder="https://"
             />
           </div>
 

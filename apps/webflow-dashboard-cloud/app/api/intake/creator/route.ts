@@ -49,6 +49,7 @@ export async function POST(request: Request) {
     const biography = String(body.biography || '').trim();
     const country = String(body.country || '').trim();
     const avatarUrl = String(body.avatarUrl || '').trim();
+    const websiteUrl = String(body.websiteUrl || '').trim() || undefined;
 
     if (!country) {
       return jsonNoStore({ error: 'Country is required.' }, { status: 400 });
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
       return jsonNoStore({ error: 'You must agree to the creator terms.' }, { status: 400 });
     }
 
-    if (!isValidOptionalUrl(body.websiteUrl)) {
+    if (!isValidOptionalUrl(websiteUrl)) {
       return jsonNoStore({ error: 'Personal website URL is invalid.' }, { status: 400 });
     }
 
@@ -121,13 +122,14 @@ export async function POST(request: Request) {
       name: preferredName || legalName,
       legalName,
       biography,
-      avatarUrl
+      avatarUrl,
+      websiteUrl
     });
 
     return jsonNoStore({
       creator,
       countrySupported: isSupportedCountry(country),
-      websiteUrlCaptured: Boolean(body.websiteUrl)
+      websiteUrlCaptured: Boolean(websiteUrl)
     });
   } catch (error) {
     return jsonNoStore(

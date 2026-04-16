@@ -136,6 +136,7 @@ export interface Creator {
   avatarUrl?: string;
   biography?: string;
   legalName?: string;
+  websiteUrl?: string;
 }
 
 export interface CreateCreatorInput {
@@ -145,6 +146,7 @@ export interface CreateCreatorInput {
   legalName: string;
   biography: string;
   avatarUrl?: string | null;
+  websiteUrl?: string;
 }
 
 export interface CreateTemplateSubmissionInput {
@@ -1036,7 +1038,8 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
             .filter(Boolean),
           avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
           biography: record.fields['ℹ️Biography'] as string,
-          legalName: record.fields['ℹ️Legal Name'] as string
+          legalName: record.fields['ℹ️Legal Name'] as string,
+          websiteUrl: record.fields['🔗Personal Site'] as string
         };
       } catch {
         return null;
@@ -1045,13 +1048,14 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
     async updateCreator(
       id: string,
-      data: Partial<Pick<Creator, 'name' | 'biography' | 'legalName' | 'avatarUrl'>>
+      data: Partial<Pick<Creator, 'name' | 'biography' | 'legalName' | 'avatarUrl' | 'websiteUrl'>>
     ): Promise<Creator | null> {
       const fields: Record<string, unknown> = {};
 
       if (data.name !== undefined) fields['Name'] = data.name;
       if (data.biography !== undefined) fields['ℹ️Biography'] = data.biography;
       if (data.legalName !== undefined) fields['ℹ️Legal Name'] = data.legalName;
+      if (data.websiteUrl !== undefined) fields['🔗Personal Site'] = data.websiteUrl;
       if (data.avatarUrl !== undefined) {
         fields['fldyddTon9Lu8BR8G'] = data.avatarUrl ? [{ url: data.avatarUrl }] : [];
       }
@@ -1073,7 +1077,8 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
             .filter(Boolean),
           avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
           biography: record.fields['ℹ️Biography'] as string,
-          legalName: record.fields['ℹ️Legal Name'] as string
+          legalName: record.fields['ℹ️Legal Name'] as string,
+          websiteUrl: record.fields['🔗Personal Site'] as string
         };
       } catch {
         return null;
@@ -1091,6 +1096,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         'ℹ️Legal Name': data.legalName.trim()
       };
 
+      if (data.websiteUrl) {
+        fields['🔗Personal Site'] = data.websiteUrl.trim();
+      }
+
       if (data.avatarUrl) {
         fields['fldyddTon9Lu8BR8G'] = [{ url: data.avatarUrl }];
       }
@@ -1105,7 +1114,8 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         emails,
         avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
         biography: record.fields['ℹ️Biography'] as string,
-        legalName: record.fields['ℹ️Legal Name'] as string
+        legalName: record.fields['ℹ️Legal Name'] as string,
+        websiteUrl: record.fields['🔗Personal Site'] as string
       };
     },
 

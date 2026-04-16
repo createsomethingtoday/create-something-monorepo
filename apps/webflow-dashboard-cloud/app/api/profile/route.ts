@@ -6,8 +6,19 @@ type ProfileUpdateBody = {
   name?: string;
   biography?: string;
   legalName?: string;
+  websiteUrl?: string;
   avatarUrl?: string | null;
 };
+
+function isValidOptionalUrl(value: string | undefined): boolean {
+  if (!value) return true;
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 async function updateProfile(request: Request) {
   const user = await getUserFromRequest(request);
@@ -16,8 +27,14 @@ async function updateProfile(request: Request) {
   }
 
   const body = (await request.json().catch(() => ({}))) as ProfileUpdateBody;
+  const websiteUrl = typeof body.websiteUrl === 'string' ? body.websiteUrl.trim() : undefined;
+  if (!isValidOptionalUrl(websiteUrl)) {
+    return jsonNoStore({ error: 'Personal website URL is invalid.' }, { status: 400 });
+  }
+
   const payload = {
     ...body,
+    websiteUrl,
     avatarUrl: body.avatarUrl ?? undefined
   };
   const airtable = await getServerAirtable();
