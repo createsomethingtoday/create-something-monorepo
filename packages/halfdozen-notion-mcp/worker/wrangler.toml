@@ -33,3 +33,4 @@ BRAINTRUST_PROJECT_NAME = "HALF DOZEN"
 # Secrets (set via wrangler secret put)
 # NOTION_API_KEY       — Half Dozen internal workspace (Meeting Capture, transcripts)
 # NOTION_CLIENT_API_KEY — Client workspace
+# MCP_API_KEY          — Optional bearer auth for /mcp and /sse

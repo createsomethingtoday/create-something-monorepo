@@ -38,3 +38,4 @@ MCP_DESCRIPTION = "Half Dozen internal and Fanpad Notion. Full Notion tools; no 
 # Secrets (set via wrangler secret put --config wrangler.fanpad.toml)
 # NOTION_API_KEY        — Half Dozen (used for workspace "halfdozen")
 # NOTION_CLIENT_API_KEY — Fanpad (used for workspace "client")
+# MCP_API_KEY           — Optional bearer auth for /mcp and /sse

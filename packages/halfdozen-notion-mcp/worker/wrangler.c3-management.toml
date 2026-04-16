@@ -38,3 +38,4 @@ MCP_DESCRIPTION = "Half Dozen internal and C3 Management Notion. Full Notion too
 # Secrets (set via wrangler secret put --config wrangler.c3-management.toml)
 # NOTION_API_KEY        — Half Dozen (used for workspace "halfdozen")
 # NOTION_CLIENT_API_KEY — C3 Management (used for workspace "client")
+# MCP_API_KEY           — Optional bearer auth for /mcp and /sse

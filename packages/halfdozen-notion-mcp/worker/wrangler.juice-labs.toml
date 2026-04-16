@@ -38,3 +38,4 @@ MCP_DESCRIPTION = "Half Dozen internal and Juice Labs Notion. Full Notion tools;
 # Secrets (set via wrangler secret put --config wrangler.juice-labs.toml)
 # NOTION_API_KEY        — Half Dozen (used for workspace "halfdozen")
 # NOTION_CLIENT_API_KEY — Juice Labs (used for workspace "client")
+# MCP_API_KEY           — Optional bearer auth for /mcp and /sse

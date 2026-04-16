@@ -38,3 +38,4 @@ MCP_DESCRIPTION = "Half Dozen internal and Cracked Notion. Full Notion tools; no
 # Secrets (set via wrangler secret put --config wrangler.cracked.toml)
 # NOTION_API_KEY        — Half Dozen (used for workspace "halfdozen")
 # NOTION_CLIENT_API_KEY — Cracked (used for workspace "client")
+# MCP_API_KEY           — Optional bearer auth for /mcp and /sse

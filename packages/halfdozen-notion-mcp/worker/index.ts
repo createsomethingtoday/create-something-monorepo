@@ -18,6 +18,7 @@ import { getNotionClients } from '../src/lib/notion.js';
 import { registerNotionTools } from '../src/tools/index.js';
 import { NOTION_TOOLS, registerWorkspacesResource, registerToolsResource } from '../src/resources.js';
 import { registerTaskWorkflowPrompt } from '../src/prompts.js';
+import { preflightResponse, validateApiKey } from './lib/auth.js';
 
 // =============================================================================
 // Types
@@ -26,6 +27,7 @@ import { registerTaskWorkflowPrompt } from '../src/prompts.js';
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   FEEDBACK_DB: D1Database;
+  MCP_API_KEY?: string;
   BRAINTRUST_API_KEY?: string;
   BRAINTRUST_PROJECT_NAME?: string;
   NOTION_API_KEY?: string;
@@ -92,6 +94,18 @@ export class NotionHalfDozenMcp extends McpAgent<Env> {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+    const isMcpTransport = url.pathname === '/mcp' || url.pathname.startsWith('/mcp/') || url.pathname === '/sse' || url.pathname.startsWith('/sse/');
+
+    if (isMcpTransport && request.method === 'OPTIONS') {
+      return preflightResponse(request);
+    }
+
+    if (isMcpTransport) {
+      const authError = validateApiKey(request, env);
+      if (authError) {
+        return authError;
+      }
+    }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
       return NotionHalfDozenMcp.serve('/mcp').fetch(request, env, ctx);
@@ -114,6 +128,11 @@ export default {
             auth: {
               halfdozen: `NOTION_API_KEY — ${config.halfdozen.label}`,
               client: `NOTION_CLIENT_API_KEY — ${config.client.label}`,
+            },
+            request_auth: {
+              required: Boolean(env.MCP_API_KEY),
+              secret_name: env.MCP_API_KEY ? 'MCP_API_KEY' : null,
+              accepted_headers: env.MCP_API_KEY ? ['Authorization: Bearer <token>', 'X-API-Key'] : [],
             },
             endpoints: { mcp: '/mcp', sse: '/sse' },
           },

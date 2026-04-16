@@ -25,9 +25,19 @@ Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so th
    ```bash
    wrangler secret put NOTION_API_KEY
    wrangler secret put NOTION_CLIENT_API_KEY
+   # Optional: protect /mcp and /sse with a bearer token
+   wrangler secret put MCP_API_KEY
    ```
 
-3. **Run locally**
+3. **Optional MCP transport auth**
+
+   If `MCP_API_KEY` is configured, the MCP transport endpoints require either:
+   - `Authorization: Bearer <token>`
+   - `X-API-Key: <token>`
+
+   `GET /` remains public so clients can inspect server metadata and auth requirements without the secret.
+
+4. **Run locally**
 
    ```bash
    pnpm install
@@ -65,6 +75,7 @@ This package includes two scripts:
 ## Production
 
 - **URL:** `https://createsomething-notion.mcp.createsomething.agency/mcp` (after deploy and custom domain).
+- **Transport auth:** optional bearer token via `MCP_API_KEY` if configured for the deployment.
 - **Deploy** (requires `wrangler login` or `CLOUDFLARE_API_TOKEN`):
 
   ```bash
@@ -84,6 +95,7 @@ Same codebase, different Worker and URL. Workspaces: **halfdozen** = Half Dozen 
 cd packages/halfdozen-notion-mcp/worker
 wrangler secret put NOTION_API_KEY --config wrangler.system-studio.toml       # HD (Half Dozen) key → halfdozen
 wrangler secret put NOTION_CLIENT_API_KEY --config wrangler.system-studio.toml # System Studio key → client
+wrangler secret put MCP_API_KEY --config wrangler.system-studio.toml           # Optional bearer auth for /mcp and /sse
 pnpm run deploy:system-studio-notion-mcp   # from repo root
 ```
 
@@ -99,6 +111,7 @@ cd packages/halfdozen-notion-mcp/worker
 # Set secrets for that client deployment (never commit these values)
 wrangler secret put NOTION_API_KEY --config wrangler.<client>.toml
 wrangler secret put NOTION_CLIENT_API_KEY --config wrangler.<client>.toml
+wrangler secret put MCP_API_KEY --config wrangler.<client>.toml   # Optional bearer auth
 
 # Deploy (from this directory)
 pnpm exec wrangler deploy --config wrangler.<client>.toml
@@ -114,6 +127,17 @@ Verify the deployment labels:
 
 ```bash
 curl -s https://<client>-notion.mcp.createsomething.agency/ | jq
+```
+
+If `MCP_API_KEY` is configured, connect clients with a bearer token:
+
+```bash
+curl -s \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"curl","version":"1.0.0"}}}' \
+  https://<client>-notion.mcp.createsomething.agency/mcp
 ```
 
 ## Client config
