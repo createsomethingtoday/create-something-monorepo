@@ -260,23 +260,17 @@
       "product": "C3 Management \u00d7 HD \u2014 Notion MCP",
       "client": "c3-denver",
       "tenant": "c3-management",
-      "url": "https://c3-management-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://c3-management-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.c3-management.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.c3-management.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN",
         "infisical_path": "/halfdozen-notion-mcp/c3-management"
-      },
-      "migration": {
-        "from": "https://c3-management-notion.mcp.workway.co/mcp",
-        "to": "https://c3-management-notion.mcp.createsomething.agency/mcp",
-        "blockers": [
-          "Cloudflare edge cert issuance pending \u2014 worker deployed on CS account but SAN cert not yet minted for this hostname. Monitor task bla3ezezq watching."
-        ]
       },
       "related_deployments": [
         "c3denver-hub",
@@ -326,24 +320,18 @@
       "type": "notion_mcp",
       "product": "Juice Labs \u2014 Client Hub (Notion MCP)",
       "client": "juice-labs",
-      "url": "https://juice-labs-notion.mcp.workway.co/mcp",
-      "status": "pending_migration",
-      "account": "workway",
+      "url": "https://juice-labs-notion.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
       "notion_page_id": "AT-199",
       "package_path": "packages/halfdozen-notion-mcp",
-      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.juice-labs.toml",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.juice-labs.cs.toml",
       "auth": {
-        "type": "notion_integration",
+        "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
         "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "bearer_token_env_var": "MCP_BEARER_TOKEN",
         "infisical_path": "/halfdozen-notion-mcp/juice-labs"
-      },
-      "migration": {
-        "from": "https://juice-labs-notion.mcp.workway.co/mcp",
-        "to": "https://juice-labs-notion.mcp.createsomething.agency/mcp",
-        "blockers": [
-          "CS-account worker deployed but Cloudflare edge cert issuance still pending (no peer certificate available). Monitor task bla3ezezq watching."
-        ]
       },
       "notes": "Notion product record created 2026-04-16 (AT-199). Client relation in HD Clients DB still needs to be wired."
     },
