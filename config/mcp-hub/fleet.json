@@ -342,7 +342,7 @@
         "from": "https://juice-labs-notion.mcp.workway.co/mcp",
         "to": "https://juice-labs-notion.mcp.createsomething.agency/mcp",
         "blockers": [
-          "Cloudflare edge cert issuance pending \u2014 worker deployed on CS account but SAN cert not yet minted for this hostname. Monitor task bla3ezezq watching."
+          "CS-account worker deployed but Cloudflare edge cert issuance still pending (no peer certificate available). Monitor task bla3ezezq watching."
         ]
       },
       "notes": "Notion product record created 2026-04-16 (AT-199). Client relation in HD Clients DB still needs to be wired."
