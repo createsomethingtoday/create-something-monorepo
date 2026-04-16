@@ -88,6 +88,13 @@
             "notion_hd_token_env_var": {
               "type": "string",
               "description": "Shared HD master Notion token (same across all client notion MCPs)."
+            },
+            "infisical_path": {
+              "type": "string",
+              "description": "Infisical folder path where the secret lives (e.g. /halfdozen-notion-mcp/blondish). Used with `infisical run --path=<path>` to inject secrets at deploy/test time."
+            },
+            "infisical_note": {
+              "type": "string"
             }
           }
         },

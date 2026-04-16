@@ -5,7 +5,7 @@
   "deployments": {
     "viv-blondish": {
       "type": "policy_os_hub",
-      "product": "Viv Bakos — Personal Hub",
+      "product": "Viv Bakos \u2014 Personal Hub",
       "client": "blondish",
       "tenant": "blondish",
       "url": "https://viv-blondish.mcp.createsomething.agency/mcp",
@@ -14,14 +14,36 @@
       "notion_page_id": "AT-79",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_VIV_BLONDISH_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_VIV_BLONDISH_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": ["blondish-hub", "blondish-notion"],
-      "toolkits": ["google-meet", "google-sheets", "notion", "perplexityai", "exa", "zoom", "googledrive", "dropbox", "gmail", "whatsapp", "firecrawl", "telegram", "box", "instagram", "tiktok", "youtube", "spotify"]
+      "related_deployments": [
+        "blondish-hub",
+        "blondish-notion"
+      ],
+      "toolkits": [
+        "google-meet",
+        "google-sheets",
+        "notion",
+        "perplexityai",
+        "exa",
+        "zoom",
+        "googledrive",
+        "dropbox",
+        "gmail",
+        "whatsapp",
+        "firecrawl",
+        "telegram",
+        "box",
+        "instagram",
+        "tiktok",
+        "youtube",
+        "spotify"
+      ]
     },
     "morgan-young-c3-management": {
       "type": "policy_os_hub",
-      "product": "Morgan Young — Personal Hub",
+      "product": "Morgan Young \u2014 Personal Hub",
       "client": "c3-denver",
       "tenant": "c3-management",
       "url": "https://morgan-young-c3-management.mcp.createsomething.agency/mcp",
@@ -30,14 +52,35 @@
       "notion_page_id": "AT-88",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": ["c3denver-hub", "c3-management-notion"],
-      "toolkits": ["google-meet", "google-sheets", "notion", "perplexityai", "exa", "zoom", "googledrive", "dropbox", "gmail", "box", "firecrawl", "linkedin", "slack", "youtube", "instagram", "spotify"]
+      "related_deployments": [
+        "c3denver-hub",
+        "c3-management-notion"
+      ],
+      "toolkits": [
+        "google-meet",
+        "google-sheets",
+        "notion",
+        "perplexityai",
+        "exa",
+        "zoom",
+        "googledrive",
+        "dropbox",
+        "gmail",
+        "box",
+        "firecrawl",
+        "linkedin",
+        "slack",
+        "youtube",
+        "instagram",
+        "spotify"
+      ]
     },
     "blondish-hub": {
       "type": "policy_os_hub",
-      "product": "BLOND:ISH — Client Hub",
+      "product": "BLOND:ISH \u2014 Client Hub",
       "client": "blondish",
       "tenant": "blondish",
       "url": "https://blondish.mcp.createsomething.agency/mcp",
@@ -46,13 +89,17 @@
       "notion_page_id": "AT-90",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_BLONDISH_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_BLONDISH_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": ["viv-blondish", "blondish-notion"]
+      "related_deployments": [
+        "viv-blondish",
+        "blondish-notion"
+      ]
     },
     "august": {
       "type": "policy_os_hub",
-      "product": "August Kinloch — Personal Hub",
+      "product": "August Kinloch \u2014 Personal Hub",
       "client": "internal",
       "url": "https://august.mcp.createsomething.agency/mcp",
       "status": "deployed",
@@ -60,12 +107,13 @@
       "notion_page_id": "AT-117",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_AUGUST_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_AUGUST_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       }
     },
     "danny": {
       "type": "policy_os_hub",
-      "product": "Danny Morgan — Personal Hub",
+      "product": "Danny Morgan \u2014 Personal Hub",
       "client": "internal",
       "url": "https://danny.mcp.createsomething.agency/mcp",
       "status": "deployed",
@@ -73,12 +121,13 @@
       "notion_page_id": "AT-118",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_DANNY_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_DANNY_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       }
     },
     "fillip": {
       "type": "policy_os_hub",
-      "product": "Fillip Gutman — Personal Hub",
+      "product": "Fillip Gutman \u2014 Personal Hub",
       "client": "internal",
       "url": "https://fillip.mcp.createsomething.agency/mcp",
       "status": "deployed",
@@ -86,12 +135,13 @@
       "notion_page_id": "AT-119",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_FILLIP_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_FILLIP_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       }
     },
     "lainy": {
       "type": "policy_os_hub",
-      "product": "Lainy Jahnke — Personal Hub",
+      "product": "Lainy Jahnke \u2014 Personal Hub",
       "client": "internal",
       "url": "https://lainy.mcp.createsomething.agency/mcp",
       "status": "deployed",
@@ -99,12 +149,13 @@
       "notion_page_id": "AT-120",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_LAINY_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_LAINY_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       }
     },
     "mj": {
       "type": "policy_os_hub",
-      "product": "Micah Johnson — Personal Hub",
+      "product": "Micah Johnson \u2014 Personal Hub",
       "client": "internal",
       "url": "https://mj.mcp.createsomething.agency/mcp",
       "status": "deployed",
@@ -112,12 +163,13 @@
       "notion_page_id": "AT-121",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_MJ_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_MJ_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       }
     },
     "leah": {
       "type": "policy_os_hub",
-      "product": "Leah Duggins — Personal Hub",
+      "product": "Leah Duggins \u2014 Personal Hub",
       "client": "internal",
       "url": "https://leah.mcp.createsomething.agency/mcp",
       "status": "deployed",
@@ -125,12 +177,13 @@
       "notion_page_id": "AT-123",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_LEAH_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_LEAH_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       }
     },
     "cracked-hub": {
       "type": "policy_os_hub",
-      "product": "Cracked Live — Client Hub",
+      "product": "Cracked Live \u2014 Client Hub",
       "client": "cracked-live",
       "url": "https://cracked.mcp.createsomething.agency/mcp",
       "status": "deployed",
@@ -138,13 +191,16 @@
       "notion_page_id": "AT-126",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_CRACKED_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_CRACKED_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": ["cracked-notion"]
+      "related_deployments": [
+        "cracked-notion"
+      ]
     },
     "c3denver-hub": {
       "type": "policy_os_hub",
-      "product": "C3 Denver — Client Hub",
+      "product": "C3 Denver \u2014 Client Hub",
       "client": "c3-denver",
       "tenant": "c3-management",
       "url": "https://c3denver.mcp.createsomething.agency/mcp",
@@ -153,13 +209,17 @@
       "notion_page_id": "AT-148",
       "auth": {
         "type": "bearer",
-        "bearer_token_env_var": "CS_HUB_C3DENVER_API_TOKEN"
+        "bearer_token_env_var": "CS_HUB_C3DENVER_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": ["morgan-young-c3-management", "c3-management-notion"]
+      "related_deployments": [
+        "morgan-young-c3-management",
+        "c3-management-notion"
+      ]
     },
     "system-studio-notion": {
       "type": "notion_mcp",
-      "product": "System Studio × HD — Notion MCP",
+      "product": "System Studio \u00d7 HD \u2014 Notion MCP",
       "client": "system-studio",
       "url": "https://system-studio-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -169,7 +229,8 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__SYSTEM_STUDIO"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/system-studio"
       },
       "migration": {
         "from": "https://system-studio-notion.mcp.workway.co/mcp",
@@ -181,7 +242,7 @@
     },
     "blondish-notion": {
       "type": "notion_mcp",
-      "product": "BLOND:ISH × HD — Notion MCP",
+      "product": "BLOND:ISH \u00d7 HD \u2014 Notion MCP",
       "client": "blondish",
       "url": "https://blondish-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -191,17 +252,21 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__BLONDISH"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/blondish"
       },
       "migration": {
         "from": "https://blondish-notion.mcp.workway.co/mcp",
         "to": "https://blondish-notion.mcp.createsomething.agency/mcp"
       },
-      "related_deployments": ["blondish-hub", "viv-blondish"]
+      "related_deployments": [
+        "blondish-hub",
+        "viv-blondish"
+      ]
     },
     "c3-management-notion": {
       "type": "notion_mcp",
-      "product": "C3 Management × HD — Notion MCP",
+      "product": "C3 Management \u00d7 HD \u2014 Notion MCP",
       "client": "c3-denver",
       "tenant": "c3-management",
       "url": "https://c3-management-notion.mcp.workway.co/mcp",
@@ -212,17 +277,21 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__C3_MANAGEMENT"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/c3-management"
       },
       "migration": {
         "from": "https://c3-management-notion.mcp.workway.co/mcp",
         "to": "https://c3-management-notion.mcp.createsomething.agency/mcp"
       },
-      "related_deployments": ["c3denver-hub", "morgan-young-c3-management"]
+      "related_deployments": [
+        "c3denver-hub",
+        "morgan-young-c3-management"
+      ]
     },
     "cracked-notion": {
       "type": "notion_mcp",
-      "product": "Cracked Live × HD — Notion MCP",
+      "product": "Cracked Live \u00d7 HD \u2014 Notion MCP",
       "client": "cracked-live",
       "url": "https://cracked-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -232,17 +301,20 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__CRACKED"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/cracked"
       },
       "migration": {
         "from": "https://cracked-notion.mcp.workway.co/mcp",
         "to": "https://cracked-notion.mcp.createsomething.agency/mcp"
       },
-      "related_deployments": ["cracked-hub"]
+      "related_deployments": [
+        "cracked-hub"
+      ]
     },
     "fanpad-notion": {
       "type": "notion_mcp",
-      "product": "Fanpad — Client Hub (Notion MCP)",
+      "product": "Fanpad \u2014 Client Hub (Notion MCP)",
       "client": "fanpad",
       "url": "https://fanpad-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -253,7 +325,8 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__FANPAD"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/fanpad"
       },
       "migration": {
         "from": "https://fanpad-notion.mcp.workway.co/mcp",
@@ -263,7 +336,7 @@
     },
     "juice-labs-notion": {
       "type": "notion_mcp",
-      "product": "Juice Labs — Client Hub (Notion MCP)",
+      "product": "Juice Labs \u2014 Client Hub (Notion MCP)",
       "client": "juice-labs",
       "url": "https://juice-labs-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -274,7 +347,8 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__JUICE_LABS"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/juice-labs"
       },
       "migration": {
         "from": "https://juice-labs-notion.mcp.workway.co/mcp",
@@ -284,7 +358,7 @@
     },
     "kk-management-notion": {
       "type": "notion_mcp",
-      "product": "KK Management — Client Hub (Notion MCP)",
+      "product": "KK Management \u2014 Client Hub (Notion MCP)",
       "client": "kk-management",
       "url": "https://kk-management-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -295,7 +369,8 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__KK_MANAGEMENT"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/kk-management"
       },
       "migration": {
         "from": "https://kk-management-notion.mcp.workway.co/mcp",
@@ -304,7 +379,7 @@
     },
     "lightswitch-notion": {
       "type": "notion_mcp",
-      "product": "Lightswitch Studio — Client Hub (Notion MCP)",
+      "product": "Lightswitch Studio \u2014 Client Hub (Notion MCP)",
       "client": "lightswitch",
       "url": "https://lightswitch-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -315,7 +390,8 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__LIGHTSWITCH"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/lightswitch"
       },
       "migration": {
         "from": "https://lightswitch-notion.mcp.workway.co/mcp",
@@ -324,7 +400,7 @@
     },
     "phase-3-notion": {
       "type": "notion_mcp",
-      "product": "Phase 3 — Client Hub (Notion MCP)",
+      "product": "Phase 3 \u2014 Client Hub (Notion MCP)",
       "client": "phase-3",
       "url": "https://phase-3-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -335,7 +411,8 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__PHASE_3"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/phase-3"
       },
       "migration": {
         "from": "https://phase-3-notion.mcp.workway.co/mcp",
@@ -344,7 +421,7 @@
     },
     "three-six-zero-notion": {
       "type": "notion_mcp",
-      "product": "TSZ — Client Hub (Notion MCP)",
+      "product": "TSZ \u2014 Client Hub (Notion MCP)",
       "client": "three-six-zero",
       "url": "https://three-six-zero-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -355,7 +432,8 @@
       "auth": {
         "type": "notion_integration",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__THREE_SIX_ZERO"
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp/three-six-zero"
       },
       "migration": {
         "from": "https://three-six-zero-notion.mcp.workway.co/mcp",
@@ -364,7 +442,7 @@
     },
     "createsomething-notion": {
       "type": "notion_mcp",
-      "product": "Half Dozen × CREATE SOMETHING — Notion MCP",
+      "product": "Half Dozen \u00d7 CREATE SOMETHING \u2014 Notion MCP",
       "client": "halfdozen",
       "url": "https://createsomething-notion.mcp.workway.co/mcp",
       "status": "pending_migration",
@@ -373,7 +451,9 @@
       "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.toml",
       "auth": {
         "type": "notion_integration",
-        "notion_hd_token_env_var": "NOTION_API_KEY"
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "infisical_path": "/halfdozen-notion-mcp",
+        "infisical_note": "HD-only deployment; no client folder yet. Create under /halfdozen-notion-mcp/halfdozen if a separate value is needed."
       },
       "migration": {
         "from": "https://createsomething-notion.mcp.workway.co/mcp",
