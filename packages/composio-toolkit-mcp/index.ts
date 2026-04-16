@@ -11,7 +11,11 @@ import {
 interface Env {
   COMPOSIO_API_KEY?: string;
   COMPOSIO_AUTH_CONFIG_MAP?: string;
+  COMPOSIO_AUTH_CONFIG_MAP_PATCH?: string;
+  COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON?: string;
   COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?: string;
+  COMPOSIO_METAADS_AUTH_CONFIG_ID?: string;
+  COMPOSIO_TIKTOK_AUTH_CONFIG_ID?: string;
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_ENTITY_RESOLUTION_MODE?: string;
   COMPOSIO_TOOL_CACHE_SECONDS?: string;
@@ -35,6 +39,12 @@ type ToolRoute = {
 };
 
 type EntityResolutionMode = 'header_required' | 'compat';
+
+type ConnectLinkResolution = {
+  link: string | null;
+  requestId: string | null;
+  status: string | null;
+};
 
 const SERVER_NAME = 'composio-toolkit-mcp';
 const SERVER_VERSION = '0.1.0';
@@ -166,6 +176,11 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
             type: 'boolean',
             description:
               'Start a fresh auth flow even if a pending connection already exists. Ignored when an active connection already exists.',
+          },
+          callbackUrl: {
+            type: 'string',
+            description:
+              'Optional callback URL to send the user back to after finishing the OAuth flow.',
           },
         },
         additionalProperties: false,
@@ -480,14 +495,11 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           }));
         }
 
-        const connectionRequest = await client.getSDK().connectedAccounts.link(entityId, authConfigId);
-        const connectionState = asRecord(connectionRequest);
-        const redirectUrl = stringOrNull(connectionState?.redirectUrl);
-        const requestId = stringOrNull(connectionState?.id);
-        const rawStatus =
-          stringOrNull(connectionState?.status) ??
-          stringOrNull(connectionState?.connectionStatus);
-        const status = rawStatus ? rawStatus.toUpperCase() : null;
+        const callbackUrl = stringOrNull(args.callbackUrl);
+        const {
+          fallbackUsed,
+          resolution: { link, requestId, status },
+        } = await requestConnectLink(client, runtime.toolkitSlug, entityId, authConfigId, callbackUrl);
 
         if (status === 'ACTIVE' || status === 'CONNECTED') {
           return emitAndReturn(toJsonResult({
@@ -507,8 +519,9 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           authConfigId,
           requestId,
           status,
-          link: redirectUrl,
-          message: redirectUrl
+          link,
+          fallbackUsed,
+          message: link
             ? 'Present this URL to the user, then retry connection_status.'
             : 'No redirect URL returned by Composio. Retry connection_status.',
         }));
@@ -1951,6 +1964,109 @@ function stringOrNull(value: unknown): string | null {
   return trimmed || null;
 }
 
+function firstStringOrNull(...values: unknown[]): string | null {
+  for (const value of values) {
+    const normalized = stringOrNull(value);
+    if (normalized) {
+      return normalized;
+    }
+  }
+  return null;
+}
+
+export function extractConnectLinkResolution(value: unknown): ConnectLinkResolution {
+  const root = asRecord(value);
+  const data = asRecord(root?.data);
+  const result = asRecord(root?.result);
+  const redirect = asRecord(root?.redirect) ?? asRecord(data?.redirect) ?? asRecord(result?.redirect);
+
+  const rawStatus = firstStringOrNull(
+    root?.status,
+    root?.connectionStatus,
+    root?.connection_status,
+    data?.status,
+    data?.connectionStatus,
+    data?.connection_status,
+    result?.status,
+    result?.connectionStatus,
+    result?.connection_status,
+  );
+
+  return {
+    link: firstStringOrNull(
+      root?.redirectUrl,
+      root?.redirect_url,
+      root?.link,
+      root?.url,
+      data?.redirectUrl,
+      data?.redirect_url,
+      data?.link,
+      data?.url,
+      result?.redirectUrl,
+      result?.redirect_url,
+      result?.link,
+      result?.url,
+      redirect?.url,
+      redirect?.href,
+    ),
+    requestId: firstStringOrNull(
+      root?.id,
+      root?.requestId,
+      root?.request_id,
+      root?.connectionRequestId,
+      root?.connection_request_id,
+      root?.connectedAccountId,
+      data?.id,
+      data?.requestId,
+      data?.request_id,
+      data?.connectionRequestId,
+      data?.connection_request_id,
+      data?.connectedAccountId,
+      result?.id,
+      result?.requestId,
+      result?.request_id,
+      result?.connectionRequestId,
+      result?.connection_request_id,
+      result?.connectedAccountId,
+    ),
+    status: rawStatus ? rawStatus.toUpperCase() : null,
+  };
+}
+
+async function requestConnectLink(
+  client: ComposioClient,
+  toolkitSlug: string,
+  entityId: string,
+  authConfigId: string,
+  callbackUrl: string | null,
+): Promise<{ fallbackUsed: boolean; resolution: ConnectLinkResolution }> {
+  const linkOptions = callbackUrl ? { callbackUrl } : {};
+
+  try {
+    const response = await client.getSDK().connectedAccounts.link(entityId, authConfigId, linkOptions);
+    return {
+      fallbackUsed: false,
+      resolution: extractConnectLinkResolution(response),
+    };
+  } catch (linkError) {
+    try {
+      const response = await client.getSDK().toolkits.authorize(entityId, toolkitSlug, authConfigId);
+      return {
+        fallbackUsed: true,
+        resolution: extractConnectLinkResolution(response),
+      };
+    } catch (authorizeError) {
+      const linkMessage = toErrorMessage(linkError);
+      const authorizeMessage = toErrorMessage(authorizeError);
+      throw new Error(
+        linkMessage === authorizeMessage
+          ? linkMessage
+          : `${linkMessage}. Fallback authorize failed: ${authorizeMessage}`,
+      );
+    }
+  }
+}
+
 function stripConnectedAccountArg(args: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(args)) {
@@ -1983,12 +2099,26 @@ function parseAuthConfigMap(raw: string | undefined): Record<string, string> {
   }
 }
 
-function buildAuthConfigMap(env: Env): Record<string, string> {
-  const authConfigMap = parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP);
-  const airtableAuthConfigId = env.COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?.trim();
-  if (airtableAuthConfigId) {
-    authConfigMap.airtable = airtableAuthConfigId;
+export function buildAuthConfigMap(env: Env): Record<string, string> {
+  const authConfigMap = {
+    ...parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP),
+    ...parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP_PATCH),
+    ...parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON),
+  };
+
+  const explicitAuthConfigEntries = [
+    ['airtable', env.COMPOSIO_AIRTABLE_AUTH_CONFIG_ID],
+    ['metaads', env.COMPOSIO_METAADS_AUTH_CONFIG_ID],
+    ['tiktok', env.COMPOSIO_TIKTOK_AUTH_CONFIG_ID],
+  ] as const;
+
+  for (const [toolkitSlug, authConfigId] of explicitAuthConfigEntries) {
+    const normalized = authConfigId?.trim();
+    if (normalized) {
+      authConfigMap[toolkitSlug] = normalized;
+    }
   }
+
   return authConfigMap;
 }
 

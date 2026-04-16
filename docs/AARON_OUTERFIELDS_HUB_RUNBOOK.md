@@ -6,7 +6,7 @@ Production runbook for provisioning and operating the client-isolated Hub worker
 - MCP URL: `https://aaron-outerfields.mcp.createsomething.agency/mcp`
 - Health URL: `https://aaron-outerfields.mcp.createsomething.agency/health`
 - Account fallback ID: `acct_aaron_outerfields`
-- Rollout mode: discovery-first (`Outerfields + shared-auth-core + clickup + core`)
+- Rollout mode: discovery-first (`shared-auth-core + clickup`)
 
 References:
 
@@ -33,11 +33,13 @@ pnpm exec wrangler deploy \
   --var HUB_INSTANCE_ID:cs-hub-aaron-outerfields \
   --domain aaron-outerfields.mcp.createsomething.agency \
   --var HUB_ACCOUNT_ID:acct_aaron_outerfields \
-  --var HUB_ENABLED_BUNDLES:agency,core \
-  --var HUB_ENABLED_SERVERS:outerfields-pcn,composio-toolkit-clickup,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
+  --var HUB_ENABLED_BUNDLES:[] \
+  --var HUB_ENABLED_SERVERS:composio-toolkit-clickup,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-notion,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
   --var HUB_DISCOVERY_MODE:compact \
   --var HUB_DISCOVERY_SHARED_PACK:outerfields-shared-auth-clickup \
-  --var HUB_DISCOVERY_DEFAULT_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-clickup,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
+  --var HUB_CONNECT_TIMEOUT_MS:4000 \
+  --var HUB_LIST_TOOLS_TIMEOUT_MS:10000 \
+  --var HUB_CONNECT_CONCURRENCY:8 \
   --var BRAINTRUST_ENABLED:true \
   --keep-vars
 ```
@@ -45,8 +47,8 @@ pnpm exec wrangler deploy \
 Notes:
 
 - This runbook is client-isolated. Do not add this worker to `cs-hub-fleet-*` team scripts.
-- `core` enables `create-something`, `three-tier-framework`, and `playbook`.
-- `agency` enables `outerfields-pcn`.
+- This lane intentionally exposes the shared auth core plus ClickUp. It does not enable the older `core` or `agency` bundle set.
+- The explicit timeout/concurrency vars keep cold bootstrap latency aligned with the current fleet baseline.
 
 ## 3) Set Required Secrets
 
@@ -89,10 +91,8 @@ curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
     "params":{
       "name":"hub_update_state",
       "arguments":{
-        "enableBundles":["agency","core"],
-        "disableBundles":["ops"],
-        "enableServers":[
-          "outerfields-pcn",
+        "setBundles":[],
+        "setServers":[
           "composio-toolkit-clickup",
           "composio-toolkit-dropbox",
           "composio-toolkit-gmail",
@@ -104,14 +104,6 @@ curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
           "composio-toolkit-youtube",
           "composio-toolkit-zoom",
           "composio-toolkit-notion"
-        ],
-        "disableServers":[
-          "composio-toolkit-airtable",
-          "composio-toolkit-webflow",
-          "halfdozen-dm-mcp",
-          "loom-mcp",
-          "schedule-mcp",
-          "substrate-mcp"
         ]
       }
     }
@@ -129,11 +121,7 @@ Expected from `/health`:
 
 - `auth_required: true`
 - `enabled_servers` includes:
-  - `outerfields-pcn`
-  - `create-something`
-  - `three-tier-framework`
-  - `playbook`
-  - `composio-toolkit-notion` (required global server)
+  - `composio-toolkit-notion`
   - shared-auth-core + ClickUp (`clickup`, `dropbox`, `gmail`, `googledrive`, `googlesheets`, `linkedin`, `quickbooks`, `slack`, `youtube`, `zoom`)
 
 Validate MCP control plane and discovery:
@@ -192,7 +180,7 @@ Expected: trace records show account attribution under `acct_aaron_outerfields`.
 
 - MCP URL: `https://aaron-outerfields.mcp.createsomething.agency/mcp`
 - Auth: `Authorization: Bearer <identity-issued personal token>`
-- Profile: discovery-first (`Outerfields + shared-auth-core + clickup + core`)
+- Profile: discovery-first (`shared-auth-core + clickup`)
 - Usage: broker-only flow
   1. `hub_search_proxy_tools`
   2. `hub_describe_proxy_tool`

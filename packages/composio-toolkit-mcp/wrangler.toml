@@ -20,8 +20,16 @@ enabled = true
 # Example: {"gmail":"ac_xxx","notion":"ac_yyy"}
 # COMPOSIO_AUTH_CONFIG_MAP = "{}"
 
+# Optional JSON patch maps merged over COMPOSIO_AUTH_CONFIG_MAP at runtime.
+# COMPOSIO_AUTH_CONFIG_MAP_PATCH = "{}"
+# COMPOSIO_AUTH_CONFIG_MAP_PATCH_JSON = "{}"
+
 # Optional explicit Airtable auth config id fallback. Merged into COMPOSIO_AUTH_CONFIG_MAP at runtime.
 # COMPOSIO_AIRTABLE_AUTH_CONFIG_ID = "ac_xxx"
+
+# Optional explicit auth config overrides merged after the base/patch maps.
+# COMPOSIO_METAADS_AUTH_CONFIG_ID = "ac_xxx"
+# COMPOSIO_TIKTOK_AUTH_CONFIG_ID = "ac_xxx"
 
 # Optional cache TTL (seconds) for toolkit inventory + tool definitions.
 # COMPOSIO_TOOL_CACHE_SECONDS = "300"

@@ -55,6 +55,9 @@ SESSION_TOKEN_FOR_NORMALIZE="${MCP_SESSION_TOKEN:-}"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="${HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:-false}"
 TEAM_HUB_DEPLOY_IDENTITY_MODE="${TEAM_HUB_DEPLOY_IDENTITY_MODE:-${HUB_DEPLOY_IDENTITY_MODE:-compat}}"
 CORE_HUB_DEPLOY_IDENTITY_MODE="${CORE_HUB_DEPLOY_IDENTITY_MODE:-session_required}"
+TEAM_HUB_CONNECT_TIMEOUT_MS="${TEAM_HUB_CONNECT_TIMEOUT_MS:-4000}"
+TEAM_HUB_LIST_TOOLS_TIMEOUT_MS="${TEAM_HUB_LIST_TOOLS_TIMEOUT_MS:-10000}"
+TEAM_HUB_CONNECT_CONCURRENCY="${TEAM_HUB_CONNECT_CONCURRENCY:-8}"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="$(
   printf '%s' "$COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS" | tr '[:upper:]' '[:lower:]'
 )"
@@ -331,6 +334,9 @@ echo "Deploying team hub workers with hardened routing config..."
 echo "team_identity_mode=${TEAM_HUB_DEPLOY_IDENTITY_MODE}"
 echo "core_identity_mode=${CORE_HUB_DEPLOY_IDENTITY_MODE}"
 echo "compat_trust_client_account_headers=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}"
+echo "team_connect_timeout_ms=${TEAM_HUB_CONNECT_TIMEOUT_MS}"
+echo "team_list_tools_timeout_ms=${TEAM_HUB_LIST_TOOLS_TIMEOUT_MS}"
+echo "team_connect_concurrency=${TEAM_HUB_CONNECT_CONCURRENCY}"
 for worker in "${TEAM_WORKERS[@]}"; do
   deploy_worker="$(resolve_deploy_worker_name "$worker")"
   target_servers_csv="$(target_server_csv_for_worker "$worker")"
@@ -355,9 +361,9 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:full" \
-      --var "HUB_CONNECT_TIMEOUT_MS:10000" \
-      --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
-      --var "HUB_CONNECT_CONCURRENCY:4" \
+      --var "HUB_CONNECT_TIMEOUT_MS:${TEAM_HUB_CONNECT_TIMEOUT_MS}" \
+      --var "HUB_LIST_TOOLS_TIMEOUT_MS:${TEAM_HUB_LIST_TOOLS_TIMEOUT_MS}" \
+      --var "HUB_CONNECT_CONCURRENCY:${TEAM_HUB_CONNECT_CONCURRENCY}" \
       --var "HUB_ALLOW_DIRECT_PROXY_TOOLS:${direct_proxy_enabled}" \
       --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
       --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
@@ -374,9 +380,9 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:compact" \
-      --var "HUB_CONNECT_TIMEOUT_MS:10000" \
-      --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
-      --var "HUB_CONNECT_CONCURRENCY:4" \
+      --var "HUB_CONNECT_TIMEOUT_MS:${TEAM_HUB_CONNECT_TIMEOUT_MS}" \
+      --var "HUB_LIST_TOOLS_TIMEOUT_MS:${TEAM_HUB_LIST_TOOLS_TIMEOUT_MS}" \
+      --var "HUB_CONNECT_CONCURRENCY:${TEAM_HUB_CONNECT_CONCURRENCY}" \
       --var "HUB_ALLOW_DIRECT_PROXY_TOOLS:${direct_proxy_enabled}" \
       --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
       --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
