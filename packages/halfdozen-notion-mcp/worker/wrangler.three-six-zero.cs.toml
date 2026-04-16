@@ -1,0 +1,41 @@
+# Three Six Zero × HD Client — Notion MCP instance (same code, different secrets/URL)
+name = "three-six-zero-notion-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"  # CREATE SOMETHING
+
+# Production URL: https://three-six-zero-notion.mcp.createsomething.agency
+[[routes]]
+pattern = "three-six-zero-notion.mcp.createsomething.agency"
+custom_domain = true
+
+[observability]
+enabled = true
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "NotionHalfDozenMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NotionHalfDozenMcp"]
+
+[[d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "halfdozen-feedback"
+database_id = "TODO_CS_D1_UUID"  # TODO: create `halfdozen-feedback` D1 on CREATE SOMETHING account, paste ID here
+
+# Workspace labels: halfdozen = HD internal, client = Three Six Zero
+[vars]
+WORKSPACE_HALFDOZEN_LABEL = "Half Dozen"
+WORKSPACE_HALFDOZEN_DESCRIPTION = "Half Dozen internal — Meeting Capture, transcripts, training, etc."
+WORKSPACE_CLIENT_LABEL = "Three Six Zero"
+WORKSPACE_CLIENT_DESCRIPTION = "Three Six Zero Notion workspace"
+MCP_DISPLAY_NAME = "Notion Half Dozen × Three Six Zero"
+MCP_DESCRIPTION = "Half Dozen internal and Three Six Zero Notion. Full Notion tools; no Composio."
+
+# Secrets (set via wrangler secret put --config wrangler.three-six-zero.toml)
+# NOTION_API_KEY        — Half Dozen (used for workspace "halfdozen")
+# NOTION_CLIENT_API_KEY — Three Six Zero (used for workspace "client")
+

@@ -1,0 +1,40 @@
+# System Studio × HD Client — second Notion MCP instance (same code, different secrets/URL)
+name = "system-studio-notion-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"  # CREATE SOMETHING
+
+# Production URL: https://system-studio-notion.mcp.createsomething.agency
+[[routes]]
+pattern = "system-studio-notion.mcp.createsomething.agency"
+custom_domain = true
+
+[observability]
+enabled = true
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "NotionHalfDozenMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NotionHalfDozenMcp"]
+
+[[d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "halfdozen-feedback"
+database_id = "TODO_CS_D1_UUID"  # TODO: create `halfdozen-feedback` D1 on CREATE SOMETHING account, paste ID here
+
+# Workspace labels: halfdozen = HD internal, client = System Studio
+[vars]
+WORKSPACE_HALFDOZEN_LABEL = "Half Dozen"
+WORKSPACE_HALFDOZEN_DESCRIPTION = "Half Dozen internal — Meeting Capture, transcripts, training, etc."
+WORKSPACE_CLIENT_LABEL = "System Studio"
+WORKSPACE_CLIENT_DESCRIPTION = "System Studio Notion workspace"
+MCP_DISPLAY_NAME = "Notion Half Dozen × System Studio"
+MCP_DESCRIPTION = "Half Dozen internal and System Studio Notion. Full Notion tools; no Composio."
+
+# Secrets (set via wrangler secret put --config wrangler.system-studio.toml)
+# NOTION_API_KEY       — Half Dozen (used for workspace "halfdozen")
+# NOTION_CLIENT_API_KEY — System Studio (used for workspace "client")
