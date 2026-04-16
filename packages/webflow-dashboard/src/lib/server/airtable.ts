@@ -949,14 +949,34 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		}
 	};
 
+	const mapCreatorRecord = (
+		record: Airtable.Record<Airtable.FieldSet>,
+		fallbackEmail: string
+	): Creator => ({
+		id: record.id,
+		name: (record.fields['Name'] as string) || '',
+		email: fallbackEmail,
+		emails: (record.fields['📧Emails'] as string | undefined)
+			?.split(',')
+			.map((value) => value.trim())
+			.filter(Boolean),
+		avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
+		biography: record.fields['ℹ️Biography'] as string,
+		legalName: record.fields['ℹ️Legal Name'] as string,
+		websiteUrl: record.fields['🔗Personal Site'] as string
+	});
+
 	return {
 		// ==================== AUTH ====================
 
 		/**
 		 * Find user by email for login.
 		 */
-		async findUserByEmail(email: string): Promise<{ id: string; email: string } | null> {
-			const escapedEmail = escapeAirtableString(email);
+		async findUserByEmail(
+			email: string
+		): Promise<{ id: string; email: string; creatorIds?: string[] } | null> {
+			const normalizedEmail = validateEmail(email);
+			const escapedEmail = escapeAirtableString(normalizedEmail);
 			const records = await base(TABLES.USERS)
 				.select({
 					filterByFormula: `{Email} = '${escapedEmail}'`
@@ -967,7 +987,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 			return {
 				id: records[0].id,
-				email: records[0].fields['Email'] as string
+				email: records[0].fields['Email'] as string,
+				creatorIds: (records[0].fields['🎨Creators'] as string[] | undefined)
+					?.map((value) => value.trim())
+					.filter(Boolean)
 			};
 		},
 
@@ -1480,12 +1503,24 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 */
 		async getCreatorByEmail(email: string): Promise<Creator | null> {
 			try {
-				debugLog('[Airtable] Searching for creator with email:', email);
+				const normalizedEmail = validateEmail(email);
+				debugLog('[Airtable] Searching for creator with email:', normalizedEmail);
 				debugLog('[Airtable] Using table ID:', TABLES.CREATORS);
-				
-				// Single-line formula to avoid any whitespace issues
-				const formula = `OR(FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0)`;
-				
+
+				const user = await this.findUserByEmail(normalizedEmail);
+				const linkedCreatorId = user?.creatorIds?.[0];
+
+				if (linkedCreatorId) {
+					try {
+						const record = await base(TABLES.CREATORS).find(linkedCreatorId);
+						return mapCreatorRecord(record, normalizedEmail);
+					} catch {
+						debugLog('[Airtable] Linked creator missing, falling back to email lookup');
+					}
+				}
+
+				const formula = buildCreatorEmailMatchFormula(normalizedEmail);
+
 				debugLog('[Airtable] Formula:', formula);
 				
 				const records = await base(TABLES.CREATORS)
@@ -1497,24 +1532,13 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				debugLog('[Airtable] Query completed. Found records:', records.length);
 				
 				if (records.length === 0) {
-					debugLog('[Airtable] No creator found for email:', email);
+					debugLog('[Airtable] No creator found for email:', normalizedEmail);
 					return null;
 				}
 
 				const record = records[0];
 				debugLog('[Airtable] Record field keys:', Object.keys(record.fields));
-				
-				// Use the exact field names from the original Next.js implementation
-				const creator = {
-					id: record.id,
-					name: (record.fields['Name'] as string) || '', // Match original: 'Name' not '🎨Name'
-					email: email,
-					emails: (record.fields['📧Emails'] as string)?.split(',').map(e => e.trim()),
-					avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
-					biography: (record.fields['ℹ️Biography'] as string), // Match original: 'ℹ️Biography' not '📝Biography'
-					legalName: (record.fields['ℹ️Legal Name'] as string), // Match original: 'ℹ️Legal Name' not '📜Legal Name'
-					websiteUrl: (record.fields['🔗Personal Site'] as string)
-				};
+				const creator = mapCreatorRecord(record, normalizedEmail);
 				
 				debugLog('[Airtable] Returning creator:', {
 					id: creator.id,

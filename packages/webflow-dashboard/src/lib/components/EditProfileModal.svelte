@@ -61,10 +61,17 @@
 		try {
 			const response = await fetch('/api/profile');
 			if (!response.ok) {
+				const errorData = (await response.json().catch(() => ({}))) as {
+					error?: string;
+					message?: string;
+					details?: string;
+				};
 				if (response.status === 401) {
 					throw new Error('Please log in to view your profile');
 				}
-				throw new Error('Failed to load profile');
+				throw new Error(
+					errorData.message || errorData.error || errorData.details || 'Failed to load profile'
+				);
 			}
 			const profile = (await response.json()) as ProfileData;
 			const loadedAvatarUrl = profile.avatarUrl || null;

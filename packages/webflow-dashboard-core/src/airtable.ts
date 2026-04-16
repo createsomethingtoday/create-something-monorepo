@@ -940,9 +940,29 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     }
   };
 
+  const mapCreatorRecord = (
+    record: Airtable.Record<Airtable.FieldSet>,
+    fallbackEmail: string
+  ): Creator => ({
+    id: record.id,
+    name: (record.fields['Name'] as string) || '',
+    email: fallbackEmail,
+    emails: (record.fields['📧Emails'] as string | undefined)
+      ?.split(',')
+      .map((value) => value.trim())
+      .filter(Boolean),
+    avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
+    biography: record.fields['ℹ️Biography'] as string,
+    legalName: record.fields['ℹ️Legal Name'] as string,
+    websiteUrl: record.fields['🔗Personal Site'] as string
+  });
+
   return {
-    async findUserByEmail(email: string): Promise<{ id: string; email: string } | null> {
-      const escapedEmail = escapeAirtableString(email);
+    async findUserByEmail(
+      email: string
+    ): Promise<{ id: string; email: string; creatorIds?: string[] } | null> {
+      const normalizedEmail = validateEmail(email);
+      const escapedEmail = escapeAirtableString(normalizedEmail);
       const records = await base(TABLES.USERS)
         .select({
           filterByFormula: `{Email} = '${escapedEmail}'`
@@ -953,7 +973,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
       return {
         id: records[0].id,
-        email: records[0].fields['Email'] as string
+        email: records[0].fields['Email'] as string,
+        creatorIds: (records[0].fields['🎨Creators'] as string[] | undefined)
+          ?.map((value) => value.trim())
+          .filter(Boolean)
       };
     },
 
@@ -1315,30 +1338,28 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
     async getCreatorByEmail(email: string): Promise<Creator | null> {
       try {
-        const formula = `OR(FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0)`;
+        const normalizedEmail = validateEmail(email);
+        const user = await this.findUserByEmail(normalizedEmail);
+        const linkedCreatorId = user?.creatorIds?.[0];
+
+        if (linkedCreatorId) {
+          try {
+            const record = await base(TABLES.CREATORS).find(linkedCreatorId);
+            return mapCreatorRecord(record, normalizedEmail);
+          } catch {
+            // Fall back to formula-based lookup if the link is stale.
+          }
+        }
 
         const records = await base(TABLES.CREATORS)
           .select({
-            filterByFormula: formula
+            filterByFormula: buildCreatorEmailMatchFormula(normalizedEmail)
           })
           .firstPage();
 
         if (records.length === 0) return null;
 
-        const record = records[0];
-        return {
-          id: record.id,
-          name: (record.fields['Name'] as string) || '',
-          email,
-          emails: (record.fields['📧Emails'] as string | undefined)
-            ?.split(',')
-            .map((value) => value.trim())
-            .filter(Boolean),
-          avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
-          biography: record.fields['ℹ️Biography'] as string,
-          legalName: record.fields['ℹ️Legal Name'] as string,
-          websiteUrl: record.fields['🔗Personal Site'] as string
-        };
+        return mapCreatorRecord(records[0], normalizedEmail);
       } catch {
         return null;
       }
