@@ -1,0 +1,383 @@
+{
+  "$schema": "./fleet.schema.json",
+  "version": 1,
+  "description": "Operational fleet of CREATE SOMETHING MCP deployments per tenant. Populated from HD Notion Products database (27b019187ac5800f9efcc74fffa00405) and halfdozen-notion-mcp wrangler configs on 2026-04-16.",
+  "deployments": {
+    "viv-blondish": {
+      "type": "policy_os_hub",
+      "product": "Viv Bakos — Personal Hub",
+      "client": "blondish",
+      "tenant": "blondish",
+      "url": "https://viv-blondish.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-79",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_VIV_BLONDISH_API_TOKEN"
+      },
+      "related_deployments": ["blondish-hub", "blondish-notion"],
+      "toolkits": ["google-meet", "google-sheets", "notion", "perplexityai", "exa", "zoom", "googledrive", "dropbox", "gmail", "whatsapp", "firecrawl", "telegram", "box", "instagram", "tiktok", "youtube", "spotify"]
+    },
+    "morgan-young-c3-management": {
+      "type": "policy_os_hub",
+      "product": "Morgan Young — Personal Hub",
+      "client": "c3-denver",
+      "tenant": "c3-management",
+      "url": "https://morgan-young-c3-management.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-88",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN"
+      },
+      "related_deployments": ["c3denver-hub", "c3-management-notion"],
+      "toolkits": ["google-meet", "google-sheets", "notion", "perplexityai", "exa", "zoom", "googledrive", "dropbox", "gmail", "box", "firecrawl", "linkedin", "slack", "youtube", "instagram", "spotify"]
+    },
+    "blondish-hub": {
+      "type": "policy_os_hub",
+      "product": "BLOND:ISH — Client Hub",
+      "client": "blondish",
+      "tenant": "blondish",
+      "url": "https://blondish.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-90",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_BLONDISH_API_TOKEN"
+      },
+      "related_deployments": ["viv-blondish", "blondish-notion"]
+    },
+    "august": {
+      "type": "policy_os_hub",
+      "product": "August Kinloch — Personal Hub",
+      "client": "internal",
+      "url": "https://august.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-117",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_AUGUST_API_TOKEN"
+      }
+    },
+    "danny": {
+      "type": "policy_os_hub",
+      "product": "Danny Morgan — Personal Hub",
+      "client": "internal",
+      "url": "https://danny.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-118",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_DANNY_API_TOKEN"
+      }
+    },
+    "fillip": {
+      "type": "policy_os_hub",
+      "product": "Fillip Gutman — Personal Hub",
+      "client": "internal",
+      "url": "https://fillip.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-119",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_FILLIP_API_TOKEN"
+      }
+    },
+    "lainy": {
+      "type": "policy_os_hub",
+      "product": "Lainy Jahnke — Personal Hub",
+      "client": "internal",
+      "url": "https://lainy.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-120",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_LAINY_API_TOKEN"
+      }
+    },
+    "mj": {
+      "type": "policy_os_hub",
+      "product": "Micah Johnson — Personal Hub",
+      "client": "internal",
+      "url": "https://mj.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-121",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_MJ_API_TOKEN"
+      }
+    },
+    "leah": {
+      "type": "policy_os_hub",
+      "product": "Leah Duggins — Personal Hub",
+      "client": "internal",
+      "url": "https://leah.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-123",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_LEAH_API_TOKEN"
+      }
+    },
+    "cracked-hub": {
+      "type": "policy_os_hub",
+      "product": "Cracked Live — Client Hub",
+      "client": "cracked-live",
+      "url": "https://cracked.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-126",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_CRACKED_API_TOKEN"
+      },
+      "related_deployments": ["cracked-notion"]
+    },
+    "c3denver-hub": {
+      "type": "policy_os_hub",
+      "product": "C3 Denver — Client Hub",
+      "client": "c3-denver",
+      "tenant": "c3-management",
+      "url": "https://c3denver.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "notion_page_id": "AT-148",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_C3DENVER_API_TOKEN"
+      },
+      "related_deployments": ["morgan-young-c3-management", "c3-management-notion"]
+    },
+    "system-studio-notion": {
+      "type": "notion_mcp",
+      "product": "System Studio × HD — Notion MCP",
+      "client": "system-studio",
+      "url": "https://system-studio-notion.mcp.workway.co/mcp",
+      "status": "pending_migration",
+      "account": "workway",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.system-studio.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__SYSTEM_STUDIO"
+      },
+      "migration": {
+        "from": "https://system-studio-notion.mcp.workway.co/mcp",
+        "to": "https://system-studio-notion.mcp.createsomething.agency/mcp",
+        "blockers": [
+          "Zone createsomething.agency lives in CREATE SOMETHING account; worker currently deployed on WORKWAY account. Redeploy on CS account or transfer zone."
+        ]
+      }
+    },
+    "blondish-notion": {
+      "type": "notion_mcp",
+      "product": "BLOND:ISH × HD — Notion MCP",
+      "client": "blondish",
+      "url": "https://blondish-notion.mcp.workway.co/mcp",
+      "status": "pending_migration",
+      "account": "workway",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.blondish.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__BLONDISH"
+      },
+      "migration": {
+        "from": "https://blondish-notion.mcp.workway.co/mcp",
+        "to": "https://blondish-notion.mcp.createsomething.agency/mcp"
+      },
+      "related_deployments": ["blondish-hub", "viv-blondish"]
+    },
+    "c3-management-notion": {
+      "type": "notion_mcp",
+      "product": "C3 Management × HD — Notion MCP",
+      "client": "c3-denver",
+      "tenant": "c3-management",
+      "url": "https://c3-management-notion.mcp.workway.co/mcp",
+      "status": "pending_migration",
+      "account": "workway",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.c3-management.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__C3_MANAGEMENT"
+      },
+      "migration": {
+        "from": "https://c3-management-notion.mcp.workway.co/mcp",
+        "to": "https://c3-management-notion.mcp.createsomething.agency/mcp"
+      },
+      "related_deployments": ["c3denver-hub", "morgan-young-c3-management"]
+    },
+    "cracked-notion": {
+      "type": "notion_mcp",
+      "product": "Cracked Live × HD — Notion MCP",
+      "client": "cracked-live",
+      "url": "https://cracked-notion.mcp.workway.co/mcp",
+      "status": "pending_migration",
+      "account": "workway",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.cracked.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__CRACKED"
+      },
+      "migration": {
+        "from": "https://cracked-notion.mcp.workway.co/mcp",
+        "to": "https://cracked-notion.mcp.createsomething.agency/mcp"
+      },
+      "related_deployments": ["cracked-hub"]
+    },
+    "fanpad-notion": {
+      "type": "notion_mcp",
+      "product": "Fanpad × HD — Notion MCP",
+      "client": "fanpad",
+      "url": "https://fanpad-notion.mcp.workway.co/mcp",
+      "status": "pending_migration",
+      "account": "workway",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.fanpad.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__FANPAD"
+      },
+      "migration": {
+        "from": "https://fanpad-notion.mcp.workway.co/mcp",
+        "to": "https://fanpad-notion.mcp.createsomething.agency/mcp"
+      },
+      "notes": "Not present in HD Notion Products DB at time of import (2026-04-16). Add product record."
+    },
+    "juice-labs-notion": {
+      "type": "notion_mcp",
+      "product": "Juice Labs × HD — Notion MCP",
+      "client": "juice-labs",
+      "url": "https://juice-labs-notion.mcp.workway.co/mcp",
+      "status": "pending_migration",
+      "account": "workway",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.juice-labs.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__JUICE_LABS"
+      },
+      "migration": {
+        "from": "https://juice-labs-notion.mcp.workway.co/mcp",
+        "to": "https://juice-labs-notion.mcp.createsomething.agency/mcp"
+      },
+      "notes": "Not present in HD Notion Products DB at time of import (2026-04-16). Add product record."
+    },
+    "kk-management-notion": {
+      "type": "notion_mcp",
+      "product": "KK Management — Client Hub (Notion MCP)",
+      "client": "kk-management",
+      "url": "https://kk-management-notion.mcp.workway.co/mcp",
+      "status": "requested",
+      "account": "workway",
+      "notion_page_id": "AT-149",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.kk-management.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__KK_MANAGEMENT"
+      },
+      "migration": {
+        "from": "https://kk-management-notion.mcp.workway.co/mcp",
+        "to": "https://kk-management-notion.mcp.createsomething.agency/mcp"
+      }
+    },
+    "lightswitch-notion": {
+      "type": "notion_mcp",
+      "product": "Lightswitch Studio — Client Hub (Notion MCP)",
+      "client": "lightswitch",
+      "url": "https://lightswitch-notion.mcp.workway.co/mcp",
+      "status": "requested",
+      "account": "workway",
+      "notion_page_id": "AT-150",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.lightswitch.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__LIGHTSWITCH"
+      },
+      "migration": {
+        "from": "https://lightswitch-notion.mcp.workway.co/mcp",
+        "to": "https://lightswitch-notion.mcp.createsomething.agency/mcp"
+      }
+    },
+    "phase-3-notion": {
+      "type": "notion_mcp",
+      "product": "Phase 3 — Client Hub (Notion MCP)",
+      "client": "phase-3",
+      "url": "https://phase-3-notion.mcp.workway.co/mcp",
+      "status": "not_started",
+      "account": "workway",
+      "notion_page_id": "AT-195",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.phase-3.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__PHASE_3"
+      },
+      "migration": {
+        "from": "https://phase-3-notion.mcp.workway.co/mcp",
+        "to": "https://phase-3-notion.mcp.createsomething.agency/mcp"
+      }
+    },
+    "three-six-zero-notion": {
+      "type": "notion_mcp",
+      "product": "TSZ — Client Hub (Notion MCP)",
+      "client": "three-six-zero",
+      "url": "https://three-six-zero-notion.mcp.workway.co/mcp",
+      "status": "not_started",
+      "account": "workway",
+      "notion_page_id": "AT-194",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.three-six-zero.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY",
+        "notion_client_token_env_var": "NOTION_CLIENT_API_KEY__THREE_SIX_ZERO"
+      },
+      "migration": {
+        "from": "https://three-six-zero-notion.mcp.workway.co/mcp",
+        "to": "https://three-six-zero-notion.mcp.createsomething.agency/mcp"
+      }
+    },
+    "createsomething-notion": {
+      "type": "notion_mcp",
+      "product": "Half Dozen × CREATE SOMETHING — Notion MCP",
+      "client": "halfdozen",
+      "url": "https://createsomething-notion.mcp.workway.co/mcp",
+      "status": "pending_migration",
+      "account": "workway",
+      "package_path": "packages/halfdozen-notion-mcp",
+      "wrangler_config": "packages/halfdozen-notion-mcp/worker/wrangler.toml",
+      "auth": {
+        "type": "notion_integration",
+        "notion_hd_token_env_var": "NOTION_API_KEY"
+      },
+      "migration": {
+        "from": "https://createsomething-notion.mcp.workway.co/mcp",
+        "to": "https://createsomething-notion.mcp.createsomething.agency/mcp"
+      },
+      "notes": "Default halfdozen-notion-mcp deployment. HD internal workspace only (no WORKSPACE_CLIENT_LABEL in wrangler.toml), so uses NOTION_API_KEY (HD master) exclusively."
+    }
+  }
+}

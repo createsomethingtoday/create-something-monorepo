@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://create-something.dev/schemas/mcp-hub-fleet.schema.json",
+  "title": "MCP Hub Fleet",
+  "description": "Operational deployments of CREATE SOMETHING MCP servers per tenant. Source of truth for customer-facing URLs and ownership. Distinct from registry.json (which catalogs capabilities).",
+  "type": "object",
+  "required": ["version", "deployments"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "deployments": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/deployment"
+      }
+    }
+  },
+  "$defs": {
+    "deployment": {
+      "type": "object",
+      "required": ["type", "product", "client", "url", "status", "account"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["policy_os_hub", "notion_mcp", "internal_infra"]
+        },
+        "product": {
+          "type": "string",
+          "description": "Human-readable product name."
+        },
+        "client": {
+          "type": "string",
+          "description": "Client or tenant slug. Use 'internal' for staff hubs."
+        },
+        "tenant": {
+          "type": "string",
+          "description": "Routing tenant (matches routing.json tenants). Optional."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Current production URL."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["deployed", "requested", "not_started", "pending_migration", "maintenance", "archive"]
+        },
+        "account": {
+          "type": "string",
+          "enum": ["create-something", "workway"],
+          "description": "Cloudflare account that hosts the worker."
+        },
+        "notion_page_id": {
+          "type": "string",
+          "description": "Reference to HD Notion product page (AT-xxx)."
+        },
+        "package_path": {
+          "type": "string",
+          "description": "Monorepo source path."
+        },
+        "wrangler_config": {
+          "type": "string",
+          "description": "Relative path to client-specific wrangler.toml."
+        },
+        "auth": {
+          "type": "object",
+          "required": ["type"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["bearer", "notion_integration", "oauth", "none"]
+            },
+            "bearer_token_env_var": {
+              "type": "string"
+            },
+            "notion_client_token_env_var": {
+              "type": "string"
+            },
+            "notion_hd_token_env_var": {
+              "type": "string",
+              "description": "Shared HD master Notion token (same across all client notion MCPs)."
+            }
+          }
+        },
+        "migration": {
+          "type": "object",
+          "required": ["from", "to"],
+          "additionalProperties": false,
+          "properties": {
+            "from": {
+              "type": "string",
+              "format": "uri"
+            },
+            "to": {
+              "type": "string",
+              "format": "uri"
+            },
+            "blockers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "related_deployments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Slugs of companion deployments (e.g. a hub's notion MCP)."
+        },
+        "toolkits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Composio/first-party toolkits wired into this deployment."
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
