@@ -3,11 +3,11 @@ name = "blondish-notion-mcp"
 main = "index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-account_id = "5c3e9cf4d55ce171b844fad0931607f9"  # WORKWAY
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"  # CREATE SOMETHING
 
-# Production URL: https://blondish-notion.mcp.workway.co
+# Production URL: https://blondish-notion.mcp.createsomething.agency
 [[routes]]
-pattern = "blondish-notion.mcp.workway.co"
+pattern = "blondish-notion.mcp.createsomething.agency"
 custom_domain = true
 
 [observability]
@@ -23,8 +23,8 @@ new_sqlite_classes = ["NotionHalfDozenMcp"]
 
 [[d1_databases]]
 binding = "FEEDBACK_DB"
-database_name = "halfdozen-feedback"
-database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 
 # Workspace labels: halfdozen = HD internal, client = BLOND:ISH
 [vars]
@@ -38,4 +38,3 @@ MCP_DESCRIPTION = "Half Dozen internal and BLOND:ISH Notion. Full Notion tools; 
 # Secrets (set via wrangler secret put --config wrangler.blondish.toml)
 # NOTION_API_KEY        — Half Dozen (used for workspace "halfdozen")
 # NOTION_CLIENT_API_KEY — BLOND:ISH (used for workspace "client")
-

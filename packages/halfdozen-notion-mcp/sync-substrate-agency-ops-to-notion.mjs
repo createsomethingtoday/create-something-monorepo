@@ -17,7 +17,7 @@ import fs from 'node:fs';
 
 const WORKSPACE_NAME = 'CREATE SOMETHING Agency Ops';
 
-const NOTION_URL = process.env.NOTION_URL || 'https://createsomething-notion.mcp.workway.co/mcp';
+const NOTION_URL = process.env.NOTION_URL || 'https://createsomething-notion.mcp.createsomething.agency/mcp';
 const SUBSTRATE_URL = process.env.SUBSTRATE_URL || 'https://substrate.mcp.createsomething.agency/mcp';
 
 const NOTION_TOKEN = process.env.NOTION_SYNC_BEARER_TOKEN;

@@ -64,7 +64,7 @@ This package includes two scripts:
 
 ## Production
 
-- **URL:** `https://createsomething-notion.mcp.workway.co/mcp` (after deploy and custom domain).
+- **URL:** `https://createsomething-notion.mcp.createsomething.agency/mcp` (after deploy and custom domain).
 - **Deploy** (requires `wrangler login` or `CLOUDFLARE_API_TOKEN`):
 
   ```bash
@@ -87,7 +87,7 @@ wrangler secret put NOTION_CLIENT_API_KEY --config wrangler.system-studio.toml #
 pnpm run deploy:system-studio-notion-mcp   # from repo root
 ```
 
-**URL:** `https://system-studio-notion.mcp.workway.co/mcp`
+**URL:** `https://system-studio-notion.mcp.createsomething.agency/mcp`
 
 ### New client instance: Half Dozen × <Client>
 
@@ -113,7 +113,7 @@ pnpm run deploy:<client>-notion-mcp
 Verify the deployment labels:
 
 ```bash
-curl -s https://<client>-notion.mcp.workway.co/ | jq
+curl -s https://<client>-notion.mcp.createsomething.agency/ | jq
 ```
 
 ## Client config
@@ -124,7 +124,7 @@ curl -s https://<client>-notion.mcp.workway.co/ | jq
 {
   "mcpServers": {
     "notion-halfdozen-create-something": {
-      "url": "https://createsomething-notion.mcp.workway.co/mcp"
+      "url": "https://createsomething-notion.mcp.createsomething.agency/mcp"
     }
   }
 }
@@ -134,7 +134,7 @@ curl -s https://<client>-notion.mcp.workway.co/ | jq
 
 ```toml
 [mcp_servers."notion-halfdozen-create-something"]
-url = "https://createsomething-notion.mcp.workway.co/mcp"
+url = "https://createsomething-notion.mcp.createsomething.agency/mcp"
 ```
 
 Use the Streamable HTTP URL (`/mcp`). In Codex you can then use all Notion tools; pass `workspace: "halfdozen"` or `workspace: "client"` on each call.

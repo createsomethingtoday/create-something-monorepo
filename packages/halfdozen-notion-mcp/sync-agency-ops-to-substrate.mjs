@@ -15,7 +15,7 @@ import fs from 'node:fs';
  * - Writes notion_page_id / notion_url for traceability
  */
 
-const NOTION_URL = 'https://createsomething-notion.mcp.workway.co/mcp';
+const NOTION_URL = 'https://createsomething-notion.mcp.createsomething.agency/mcp';
 const SUBSTRATE_URL = 'https://substrate.mcp.createsomething.agency/mcp';
 
 const NOTION_TOKEN = process.env.NOTION_SYNC_BEARER_TOKEN;
@@ -717,4 +717,3 @@ async function build() {
 }
 
 await build();
-
