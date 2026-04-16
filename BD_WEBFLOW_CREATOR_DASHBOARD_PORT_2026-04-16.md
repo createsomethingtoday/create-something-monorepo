@@ -1,0 +1,146 @@
+## Status: bd-webflow Creator Dashboard Port (Phase 1)
+
+Date: `2026-04-16`
+Status: `Phase 1 shipped (uncommitted); Phase 2 blocked on product decisions`
+Target repo: `bd-webflow` (Webflow's internal monorepo, not this repo)
+Branch context (this repo): `emdash/webflow-dashboard-in-prod-5um`
+
+## Context
+
+`packages/webflow-dashboard` in this monorepo is the external SvelteKit creator dashboard running on Cloudflare Pages. It backs creator portfolios, template submissions, GSAP validation, and multi-image uploads for the Webflow Marketplace.
+
+A prior session ported the *read-side* of that dashboard into bd-webflow as a new `CreatorDashboard` route family (portfolio list, asset detail, submissions view, validation, profile settings, portfolio analytics). The parity audit identified seven additional dashboard features that did not exist natively in bd-webflow.
+
+Phase 1 of that parity closure has now been implemented directly in bd-webflow. Phase 2 requires product decisions before any more code ships.
+
+## Phase 1: Shipped
+
+All Phase 1 work lives in the bd-webflow working tree, uncommitted. Files below are paths inside `/Users/micahjohnson/Desktop/bd-webflow`.
+
+### 1.1 SubmissionTracker — rolling-window quota
+
+Surfaces the creator's 30-day submission quota with a configurable 6-submission cap and an env-var whitelist. Replaces the dashboard's dependency on `check-asset-name.vercel.app/api/checkTemplateuser`.
+
+- Server:
+  - `entrypoints/server/dataAccess/marketplace/templates/countCreatorSubmissionsInWindow.ts`
+  - `entrypoints/server/lib/logic/creator/getSubmissionQuota.ts`
+  - `entrypoints/server/controllers/creator/getSubmissionQuotaHandler.ts`
+  - `entrypoints/server/routes/api/creatorSubmissionQuota.ts`
+  - `entrypoints/server/routes/vhost/routers/defaultApp.ts` (modified: registered new route)
+- Client:
+  - `entrypoints/dashboard/client/src/api/types/creatorSubmissionQuota.ts`
+  - `entrypoints/dashboard/client/src/api/CreatorSubmissionQuota.ts`
+  - `entrypoints/dashboard/client/src/api/hooks/useGetCreatorSubmissionQuota.ts`
+  - `entrypoints/dashboard/client/src/api/utils/queryKeys.ts` (modified: added key)
+  - `entrypoints/dashboard/client/src/pages/Workspaces/CreatorDashboard/submissionQuotaUtils.ts`
+  - `entrypoints/dashboard/client/src/pages/Workspaces/CreatorDashboard/components/SubmissionQuotaCard.tsx`
+  - `entrypoints/dashboard/client/src/pages/Workspaces/CreatorDashboard/index.tsx` (modified: mounted card)
+- Tests:
+  - `entrypoints/server/test/logic/creator/getSubmissionQuota_test.ts` — 7 integration scenarios (scaffold)
+  - `entrypoints/dashboard/client/src/pages/Workspaces/CreatorDashboard/__tests__/submissionQuotaUtils.test.ts` — 13 unit tests, all passing
+
+Route contract:
+
+- `GET /api/v1/creator-dashboard/workspace/:workspaceId/submission-quota`
+- Middleware stack: `restrictSso → loadWorkspace → restrictActions(WORKSPACE.READ) → rateLimit(30/60s per user)`
+- Response: `{used, limit, remaining, windowDays, isWhitelisted, nextAvailableSlotAt}`
+
+Whitelist model: env var `CREATOR_QUOTA_WHITELIST_PERSON_IDS` (comma-separated ObjectIds). See "Follow-ups" for why this is not on the `Person` schema yet.
+
+### 1.2 App version history UI
+
+Surfaces the existing `getAppVersionHistory` data in the creator asset detail view. Zero new backend.
+
+- Client:
+  - `entrypoints/dashboard/client/src/pages/Workspaces/CreatorDashboard/versionHistoryUtils.ts`
+  - `entrypoints/dashboard/client/src/pages/Workspaces/CreatorDashboard/components/AppVersionHistoryTimeline.tsx`
+  - `entrypoints/dashboard/client/src/pages/Workspaces/CreatorDashboard/DetailPage.tsx` (modified: renders timeline card when `asset.raw.kind === 'app'`)
+- Tests:
+  - `entrypoints/dashboard/client/src/pages/Workspaces/CreatorDashboard/__tests__/versionHistoryUtils.test.ts` — 10 unit tests, all passing
+
+Reuses existing `useGetAppVersionHistory` hook and `DesignerExtensionVersion` type. Status tones align with Submission lane tones already in place.
+
+### 1.3 Analytics presentation primitives
+
+Three chart/motion components built against `@visx/*` packages already in the bd-webflow dependency tree. No new dependencies added.
+
+- Client components:
+  - `components/Sparkline.tsx` — `@visx/group` + `@visx/scale` + `@visx/shape` `LinePath`; 4 tones; empty placeholder below 2 points
+  - `components/DonutChart.tsx` — `@visx/shape` `Pie` with optional center label/hint; 5 tones; renders null when total is 0
+  - `components/KineticNumber.tsx` — `requestAnimationFrame` tween; honors `prefers-reduced-motion`; 800ms default
+- Supporting:
+  - `kineticNumberUtils.ts` — `easeOutCubic`, `interpolateKineticValue`, `defaultKineticFormatter`
+- Integrated into:
+  - `AnalyticsPage.tsx` (modified) — 4 summary-card numbers now use `<KineticNumber />`
+  - `SubmissionsPage.tsx` (modified) — added `<DonutChart />` for lane distribution; 4 summary counters also use `<KineticNumber />`
+- Tests:
+  - `__tests__/kineticNumberUtils.test.ts` — 8 unit tests, all passing
+
+### 1.4 Feedback button — deferred
+
+Not implemented. bd-webflow has no shared feedback widget (verified by searching for Intercom, Productboard, Appcues, Pendo, Delighted, Hotjar — none present). The only existing "feedback" pattern is an external survey-URL link inside `Sites/GeneralSettings/.../RealtimeSection`.
+
+Shipping a `POST /api/v1/creator-dashboard/feedback` + modal + outbound webhook without a decided channel would commit a new collection and an outbound integration the team hasn't approved. A "feedback button" that routes nowhere is worse than no button.
+
+Minimal implementation once the channel exists:
+
+- If the decision is a survey URL: a single `<Button href={CREATOR_FEEDBACK_SURVEY_URL} target="_blank">Share feedback</Button>` in the dashboard header, URL from config. ~30 min.
+- If the decision is Slack or a ticketing system: backend endpoint + modal per the plan. ~1 day.
+
+## Validation
+
+- 31 client-side unit tests added across Phase 1 (13 + 10 + 8). All passing under `pnpm nx anytest` on bd-webflow's Jest harness.
+- 1 server-side integration test file added (`getSubmissionQuota_test.ts`). Not run locally — requires bd-webflow's Mongo-backed integration-test setup. Should run on CI.
+- Focused ESLint (`--quiet --no-cache`) clean across every touched file. One `curly` rule violation found and fixed during iteration.
+- One SSRF-adjacent substring check already merged via commit `d1ab8624` in this repo; bd-webflow had the same `.webflow.io` substring bug in `entrypoints/server/routes/api/creatorValidation.ts:94` and has been patched to `new URL(...).hostname.endsWith('.webflow.io')` in the same session.
+
+Not yet verified:
+
+- No browser render. I did not run bd-webflow locally.
+- Server integration test (`getSubmissionQuota_test.ts`) depends on `Template.collection.insertOne({...})` bypassing schema validation. If a required index interferes, it will need `new Template({...}).save({validateBeforeSave: false})`.
+
+## Follow-ups
+
+### Whitelist persistence
+
+v1 reads the quota whitelist from `CREATOR_QUOTA_WHITELIST_PERSON_IDS`. The Person schema lives in a shared package (`@packages/domains/identity-and-access/authentication/mongodb`); adding a field there is a cross-team change. When the whitelist needs admin management, graduate to either:
+
+1. A field on `Person`, updated through the existing admin user routes.
+2. A dedicated `creatorQuotaWhitelist` collection keyed by `personId`.
+
+The `getSubmissionQuota` logic already accepts an injectable `isWhitelisted` function, so the substitution is mechanical.
+
+### Server integration test
+
+Schedule a run on bd-webflow's CI harness. If the raw-insert pattern fails on a schema-required index, switch to Mongoose `new Template(...).save({validateBeforeSave: false})`. The test assertions themselves depend only on `{designer, createdOn, archived}`.
+
+### Feedback channel decision
+
+Phase 1.4 will collapse to a one-liner or a small endpoint once a channel is decided. See `BD_WEBFLOW_CREATOR_DASHBOARD_PHASE_2_BRIEFS.md` (this same set) if that conversation happens alongside the Phase 2 product calls.
+
+## Phase 2: Blocked on product
+
+Three remaining parity items each require a product decision before engineering. Briefs for each are in `BD_WEBFLOW_CREATOR_DASHBOARD_PHASE_2_BRIEFS.md`.
+
+| Item | Blocker | Eng scope once unblocked |
+|---|---|---|
+| 2.1 Multi-image upload (creator-side) | Does the Marketplace team accept creator self-service editing of template thumbnails/carousel images post-approval? | 3 days creator-side + ~1 week review-flow coordination |
+| 2.2 MarketplaceInsights | Does Marketplace Product approve showing leaderboard + trending + competition data to creators? | ~2 weeks (includes nightly materialized view) |
+| 2.3 Template versioning | Does Marketplace commit to creator self-serve template drafts with review history? | 3–4 weeks (schema + review-flow rewrite) |
+
+## Commit handoff
+
+Phase 1 is preserved in the bd-webflow working tree. These changes should land through bd-webflow's normal PR process — not force-pushed. Suggested breakdown:
+
+1. One PR: SubmissionTracker (server + client + tests + route wiring).
+2. One PR: App version history UI (client-only, uses existing backend).
+3. One PR: Analytics primitives (the three components + their test + the AnalyticsPage/SubmissionsPage integration).
+
+Each is independent and ships value on its own.
+
+## References
+
+- Upstream dashboard: `packages/webflow-dashboard/` in this repo
+- Prior CreatorDashboard slice: `entrypoints/dashboard/client/src/pages/Workspaces/CreatorDashboard/` in bd-webflow
+- Port-issues manifest: `WEBFLOW_DASHBOARD_PORT_ISSUES.md` in this repo
+- Hostname-check fix: `entrypoints/server/routes/api/creatorValidation.ts` in bd-webflow
