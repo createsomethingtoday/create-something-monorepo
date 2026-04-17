@@ -135,6 +135,15 @@ Two more self-contained improvements shipped on top of Tier 1. Neither requires 
 - `DonutChart` each segment `<path>` now includes a SVG `<title>` child, so screen readers announce `"Needs attention: 4 (28%)"` on focus even without mouse hover. Tooltip behavior unchanged for sighted users.
 - `KineticNumber` gets `aria-live="off"` (prevents mid-animation RAF updates from spamming assistive tech) plus `aria-label` pinned to the *final* value so SR users hear the real number regardless of animation state.
 
+**Recent-activity timeline on home**
+
+- New module `activityFeedUtils.ts` with pure helpers: `buildCreatorActivityFeed(assets)`, `takeRecentActivity(events, limit)`, `formatActivityRelativeTime(at)`. 4 event kinds covered: `template_created`, `template_archived`, `library_shared`, `library_source_archived`.
+- **No new fetches** — events are derived from the asset snapshots `useCreatorDashboardAssets` already returns. App version events are intentionally out of scope here since apps already get a rich timeline on the asset detail page (Phase 1.2).
+- Template archive events use `createdOn` as a floor timestamp with a clear "Archived" label, since bd-webflow doesn't expose a true archive-at timestamp.
+- New component `components/RecentActivityCard.tsx` renders the 5 most recent events newest-first; each row links through to the asset detail; hidden when the feed is empty.
+- Mounted on the CreatorDashboard home between the submission-quota card and the summary row.
+- 10 unit tests covering event derivation rules, ordering, limit behavior, relative-time formatting.
+
 **Keyboard navigation on asset tables**
 
 - New shared hook `useTableKeyboardRowProps({onActivate})` in the CreatorDashboard directory. Returns a `getRowProps(index)` function that each row spreads onto `<TableRow>`. Rows pick each other up via `data-creator-table-row="true"` — no shared ref registry or context needed.
@@ -211,6 +220,7 @@ Phase 1 is preserved in the bd-webflow working tree. These changes should land t
 9. One PR: CSV export on Analytics page (pure helpers + button + tests).
 10. One PR: A11y pass (progress-bar semantics + donut `<title>` + kinetic `aria-live`).
 11. One PR: Keyboard navigation on asset tables (`useTableKeyboardRowProps` + wiring in 3 pages + tests).
+12. One PR: Recent-activity timeline on home (`activityFeedUtils` + `RecentActivityCard` + tests).
 
 Each is independent and ships value on its own. PRs 2 and 4 can reasonably combine since they both touch `DetailPage.tsx` and neither has new backend. PRs 7 and 8 can reasonably combine since both touch `Sparkline` / `SubmissionQuotaCard`. PR 5 touches the shared analytics registry — flag that in the PR description so the Analytics/Data team reviews the event names before merge.
 
