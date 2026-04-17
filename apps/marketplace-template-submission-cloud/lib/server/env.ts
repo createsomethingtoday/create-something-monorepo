@@ -1,7 +1,7 @@
 import {
   getCloudflareEnv,
   type DashboardCloudflareEnv
-} from '@create-something/webflow-dashboard-core/runtime';
+} from '../../vendor/core/runtime';
 
 export async function getOptionalEnv(): Promise<DashboardCloudflareEnv | null> {
   return getCloudflareEnv();

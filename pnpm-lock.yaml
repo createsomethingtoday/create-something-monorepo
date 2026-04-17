@@ -70,9 +70,6 @@ importers:
 
   apps/marketplace-template-submission-cloud:
     dependencies:
-      '@create-something/webflow-dashboard-core':
-        specifier: file:../../packages/webflow-dashboard-core
-        version: link:../../packages/webflow-dashboard-core
       airtable:
         specifier: ^0.12.2
         version: 0.12.2

@@ -1,10 +1,10 @@
-import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
+import { validateEmail } from '../../../../vendor/core/airtable';
 import {
   buildTemplateEnvelope,
   postMarketplaceWebhook,
   type PageCount,
   type PaymentType,
-} from '@create-something/webflow-dashboard-core/marketplace-webhook';
+} from '../../../../vendor/core/marketplace-webhook';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
