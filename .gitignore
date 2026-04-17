@@ -55,6 +55,13 @@ apps/webflow-dashboard-cloud/node_modules*/
 apps/webflow-dashboard-cloud/.next/
 apps/webflow-dashboard-cloud/.open-next/
 apps/webflow-dashboard-cloud/tsconfig.tsbuildinfo
+!apps/marketplace-template-submission-cloud/
+!apps/marketplace-template-submission-cloud/**
+apps/marketplace-template-submission-cloud/node_modules/
+apps/marketplace-template-submission-cloud/node_modules*/
+apps/marketplace-template-submission-cloud/.next/
+apps/marketplace-template-submission-cloud/.open-next/
+apps/marketplace-template-submission-cloud/tsconfig.tsbuildinfo
 apps/meeting-capture/MeetingCapture/.build/
 apps/meeting-capture/MeetingCapture/.swiftpm/
 apps/meeting-capture/MeetingCapture/.codex-build-verify/
