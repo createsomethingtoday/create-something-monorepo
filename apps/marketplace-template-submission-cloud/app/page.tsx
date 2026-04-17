@@ -1,8 +1,7 @@
-import { redirect } from 'next/navigation';
-import { withBasePath } from '../lib/runtime-paths';
+import { TemplateIntake } from '../components/template-intake';
 
 export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
-  redirect(withBasePath('/submit'));
+  return <TemplateIntake />;
 }
