@@ -14,6 +14,42 @@ import {
   isSupportedCountry,
   type PageCountOption
 } from '../lib/intake/constants';
+import {
+  getWebPDimensions,
+  validateMimeType,
+  validateWebP
+} from '../vendor/core/upload-validation';
+
+const IMAGE_CONSTRAINTS = {
+  avatar: { width: 256, height: 256, maxSize: 100 * 1024, label: 'Profile image' },
+  thumbnail: { width: 750, height: 995, maxSize: 300 * 1024, label: 'Thumbnail' },
+  'secondary-thumbnail': { width: 750, height: 995, maxSize: 300 * 1024, label: 'Secondary thumbnail' },
+  gallery: { width: 1440, height: 900, maxSize: 250 * 1024, label: 'Gallery image' }
+} as const;
+
+type ImageKind = keyof typeof IMAGE_CONSTRAINTS;
+
+async function validateImageClient(file: File, kind: ImageKind): Promise<string | null> {
+  const c = IMAGE_CONSTRAINTS[kind];
+  if (!validateMimeType(file.type)) return `${c.label} must be a WebP file (image/webp).`;
+  if (file.size > c.maxSize) {
+    return `${c.label} exceeds ${Math.round(c.maxSize / 1024)}KB (${Math.round(file.size / 1024)}KB).`;
+  }
+  const buf = await file.arrayBuffer();
+  if (!validateWebP(buf)) return `${c.label} is not a valid WebP file.`;
+  const dims = getWebPDimensions(buf);
+  if (!dims) return `Could not read ${c.label.toLowerCase()} dimensions.`;
+  if (dims.width !== c.width || dims.height !== c.height) {
+    return `${c.label} must be exactly ${c.width}×${c.height} (got ${dims.width}×${dims.height}).`;
+  }
+  return null;
+}
+
+function inlineFeedbackColor(tone: Tone) {
+  if (tone === 'success') return '#0a7f3f';
+  if (tone === 'error') return '#b42318';
+  return '#344054';
+}
 
 type Tone = 'success' | 'error' | 'info';
 
@@ -181,6 +217,11 @@ export function TemplateIntake() {
   const [templateStatus, setTemplateStatus] = useState<StatusMessage | null>(null);
   const [creatorSubmitting, setCreatorSubmitting] = useState(false);
   const [templateSubmitting, setTemplateSubmitting] = useState(false);
+  const [fieldFeedback, setFieldFeedback] = useState<Record<string, StatusMessage | null>>({});
+  const [imageErrors, setImageErrors] = useState<Record<string, string | null>>({});
+
+  const setFeedback = (field: string, feedback: StatusMessage | null) =>
+    setFieldFeedback((current) => ({ ...current, [field]: feedback }));
   const [utm, setUtm] = useState<Record<string, string>>({});
   const [turnstileReady, setTurnstileReady] = useState(!turnstileEnabled);
   const [turnstileTokens, setTurnstileTokens] = useState<Record<TurnstileStep, string>>({
@@ -410,11 +451,14 @@ export function TemplateIntake() {
   }
 
   async function verifyCreatorEmail(kind: 'primary' | 'webflow') {
+    const field = kind === 'primary' ? 'primaryEmail' : 'webflowEmail';
     const email = (kind === 'primary' ? creator.primaryEmail : creator.webflowEmail).trim();
     if (!email) {
-      setCreatorStatus({ tone: 'error', message: 'Enter an email address first.' });
+      setFeedback(field, { tone: 'error', message: 'Enter an email address first.' });
       return;
     }
+
+    setFeedback(field, { tone: 'info', message: 'Verifying…' });
 
     const response = await fetch(appPath('/api/intake/check-email'), {
       method: 'POST',
@@ -428,7 +472,7 @@ export function TemplateIntake() {
     };
 
     if (!response.ok || data.available === false) {
-      setCreatorStatus({
+      setFeedback(field, {
         tone: 'error',
         message: data.message || 'Email verification failed.'
       });
@@ -439,13 +483,7 @@ export function TemplateIntake() {
       ...current,
       [kind === 'primary' ? 'primaryEmailVerified' : 'webflowEmailVerified']: email.toLowerCase()
     }));
-    setCreatorStatus({
-      tone: 'success',
-      message:
-        kind === 'primary'
-          ? 'Primary email verified and available.'
-          : 'Webflow account email verified and available.'
-    });
+    setFeedback(field, { tone: 'success', message: 'Email verified and available.' });
   }
 
   async function verifyCreatorEligibility() {
@@ -487,9 +525,11 @@ export function TemplateIntake() {
   async function verifyTemplateName() {
     const name = template.templateName.trim();
     if (!name) {
-      setTemplateStatus({ tone: 'error', message: 'Enter a template name first.' });
+      setFeedback('templateName', { tone: 'error', message: 'Enter a template name first.' });
       return;
     }
+
+    setFeedback('templateName', { tone: 'info', message: 'Checking name…' });
 
     const response = await fetch(appPath('/api/intake/check-template-name'), {
       method: 'POST',
@@ -503,7 +543,7 @@ export function TemplateIntake() {
     };
 
     if (!response.ok || !data.valid) {
-      setTemplateStatus({
+      setFeedback('templateName', {
         tone: 'error',
         message: data.errors?.[0] || 'Template name failed validation.'
       });
@@ -514,20 +554,20 @@ export function TemplateIntake() {
       ...current,
       templateNameVerified: name
     }));
-    setTemplateStatus({
+    setFeedback('templateName', {
       tone: 'success',
-      message: 'Template name passed the current availability and naming checks.'
+      message: 'Template name passed availability and naming checks.'
     });
   }
 
   async function verifyPublishedUrl() {
     const url = template.publishedUrl.trim();
     if (!url) {
-      setTemplateStatus({ tone: 'error', message: 'Enter the published Webflow URL first.' });
+      setFeedback('publishedUrl', { tone: 'error', message: 'Enter the published Webflow URL first.' });
       return;
     }
 
-    setTemplateStatus({
+    setFeedback('publishedUrl', {
       tone: 'info',
       message: 'Running the full published-site crawl. This can take a few minutes.'
     });
@@ -549,13 +589,19 @@ export function TemplateIntake() {
     };
 
     if (!response.ok || !data.passed || !data.normalizedUrl) {
-      setTemplateStatus({
+      setFeedback('publishedUrl', {
         tone: 'error',
         message: data.message || 'Published URL validation failed.'
       });
       return;
     }
 
+    setFeedback('publishedUrl', {
+      tone: 'success',
+      message: data.gsapDetected
+        ? 'Published site validated. GSAP was detected automatically.'
+        : 'Published site validated.'
+    });
     setVerification((current) => ({
       ...current,
       publishedUrlVerified: data.normalizedUrl || '',
@@ -935,6 +981,11 @@ export function TemplateIntake() {
                       Verify email
                     </button>
                   </div>
+                  {fieldFeedback.primaryEmail ? (
+                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.primaryEmail.tone), marginTop: 4 }}>
+                      {fieldFeedback.primaryEmail.message}
+                    </div>
+                  ) : null}
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
@@ -964,6 +1015,11 @@ export function TemplateIntake() {
                       Verify email
                     </button>
                   </div>
+                  {fieldFeedback.webflowEmail ? (
+                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.webflowEmail.tone), marginTop: 4 }}>
+                      {fieldFeedback.webflowEmail.message}
+                    </div>
+                  ) : null}
 
                   <div className="submission-grid-2">
                     <div className="submission-field">
@@ -1040,11 +1096,24 @@ export function TemplateIntake() {
                       id="avatar"
                       type="file"
                       accept="image/webp"
-                      onChange={(event) =>
-                        updateCreator('avatarFile', event.target.files?.[0] || null)
-                      }
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0] || null;
+                        if (!file) {
+                          setImageErrors((c) => ({ ...c, avatarFile: null }));
+                          updateCreator('avatarFile', null);
+                          return;
+                        }
+                        const err = await validateImageClient(file, 'avatar');
+                        setImageErrors((c) => ({ ...c, avatarFile: err }));
+                        updateCreator('avatarFile', err ? null : file);
+                      }}
                       required
                     />
+                    {imageErrors.avatarFile ? (
+                      <div style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                        {imageErrors.avatarFile}
+                      </div>
+                    ) : null}
                   </div>
 
                   <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
@@ -1209,6 +1278,11 @@ export function TemplateIntake() {
                       Check name
                     </button>
                   </div>
+                  {fieldFeedback.templateName ? (
+                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.templateName.tone), marginTop: 4 }}>
+                      {fieldFeedback.templateName.message}
+                    </div>
+                  ) : null}
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
@@ -1236,10 +1310,9 @@ export function TemplateIntake() {
                       Validate template
                     </button>
                   </div>
-
-                  {verification.publishedUrlMessage ? (
-                    <div className="submission-status submission-status-success">
-                      {verification.publishedUrlMessage}
+                  {fieldFeedback.publishedUrl ? (
+                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.publishedUrl.tone), marginTop: 4 }}>
+                      {fieldFeedback.publishedUrl.message}
                     </div>
                   ) : null}
 
@@ -1580,8 +1653,10 @@ export function TemplateIntake() {
                       className="field-textarea input w-input submission-textarea submission-textarea-notes"
                       id="notes"
                       value={template.notes}
+                      maxLength={400}
                       onChange={(event) => updateTemplate('notes', event.target.value)}
                     />
+                    <div className="field-help">{template.notes.length}/400 characters</div>
                   </div>
 
                   <div className="submission-grid-2">
@@ -1601,11 +1676,24 @@ export function TemplateIntake() {
                         id="thumbnailFile"
                         type="file"
                         accept="image/webp"
-                        onChange={(event) =>
-                          updateTemplate('thumbnailFile', event.target.files?.[0] || null)
-                        }
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] || null;
+                          if (!file) {
+                            setImageErrors((c) => ({ ...c, thumbnailFile: null }));
+                            updateTemplate('thumbnailFile', null);
+                            return;
+                          }
+                          const err = await validateImageClient(file, 'thumbnail');
+                          setImageErrors((c) => ({ ...c, thumbnailFile: err }));
+                          updateTemplate('thumbnailFile', err ? null : file);
+                        }}
                         required
                       />
+                      {imageErrors.thumbnailFile ? (
+                        <div style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                          {imageErrors.thumbnailFile}
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="submission-field">
@@ -1623,13 +1711,23 @@ export function TemplateIntake() {
                         id="secondaryThumbnailFile"
                         type="file"
                         accept="image/webp"
-                        onChange={(event) =>
-                          updateTemplate(
-                            'secondaryThumbnailFile',
-                            event.target.files?.[0] || null,
-                          )
-                        }
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] || null;
+                          if (!file) {
+                            setImageErrors((c) => ({ ...c, secondaryThumbnailFile: null }));
+                            updateTemplate('secondaryThumbnailFile', null);
+                            return;
+                          }
+                          const err = await validateImageClient(file, 'secondary-thumbnail');
+                          setImageErrors((c) => ({ ...c, secondaryThumbnailFile: err }));
+                          updateTemplate('secondaryThumbnailFile', err ? null : file);
+                        }}
                       />
+                      {imageErrors.secondaryThumbnailFile ? (
+                        <div style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                          {imageErrors.secondaryThumbnailFile}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
@@ -1650,14 +1748,35 @@ export function TemplateIntake() {
                       type="file"
                       accept="image/webp"
                       multiple
-                      onChange={(event) =>
-                        updateTemplate(
-                          'galleryFiles',
-                          Array.from(event.target.files || []).slice(0, 5),
-                        )
-                      }
+                      onChange={async (event) => {
+                        const files = Array.from(event.target.files || []).slice(0, 5);
+                        const validated: File[] = [];
+                        const newErrors: Record<string, string | null> = {};
+                        // Clear any prior gallery errors first.
+                        setImageErrors((c) => {
+                          const next = { ...c };
+                          for (const key of Object.keys(next)) {
+                            if (key.startsWith('gallery-')) next[key] = null;
+                          }
+                          return next;
+                        });
+                        for (let i = 0; i < files.length; i++) {
+                          const err = await validateImageClient(files[i], 'gallery');
+                          newErrors[`gallery-${i}`] = err;
+                          if (!err) validated.push(files[i]);
+                        }
+                        setImageErrors((c) => ({ ...c, ...newErrors }));
+                        updateTemplate('galleryFiles', validated);
+                      }}
                       required
                     />
+                    {Object.entries(imageErrors)
+                      .filter(([k, v]) => k.startsWith('gallery-') && v)
+                      .map(([k, v]) => (
+                        <div key={k} style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                          {v}
+                        </div>
+                      ))}
                   </div>
 
                   <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
