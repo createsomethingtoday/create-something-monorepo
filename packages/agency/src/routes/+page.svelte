@@ -189,7 +189,7 @@
   <div class="shell-inner-pad">
     <div class="metric-grid">
       {#each proofMetrics as metric, index}
-        <BlurFade delay={0.25 + index * 0.05}>
+        <BlurFade delay={0.25 + index * 0.05} class="metric-fade">
           <article class="product-surface product-surface--soft metric-card">
             <span class="metric-value">{metric.value}</span>
             <span class="metric-label">{metric.label}</span>
@@ -522,9 +522,16 @@
     margin-top: 1.1rem;
   }
 
+  .metric-grid :global(.metric-fade) {
+    height: 100%;
+  }
+
   .metric-card {
     display: grid;
+    grid-template-rows: auto 1fr;
     gap: 0.35rem;
+    height: 100%;
+    align-content: start;
     padding: 1rem 1.05rem;
   }
 
