@@ -135,6 +135,15 @@ Two more self-contained improvements shipped on top of Tier 1. Neither requires 
 - `DonutChart` each segment `<path>` now includes a SVG `<title>` child, so screen readers announce `"Needs attention: 4 (28%)"` on focus even without mouse hover. Tooltip behavior unchanged for sighted users.
 - `KineticNumber` gets `aria-live="off"` (prevents mid-animation RAF updates from spamming assistive tech) plus `aria-label` pinned to the *final* value so SR users hear the real number regardless of animation state.
 
+**Keyboard navigation on asset tables**
+
+- New shared hook `useTableKeyboardRowProps({onActivate})` in the CreatorDashboard directory. Returns a `getRowProps(index)` function that each row spreads onto `<TableRow>`. Rows pick each other up via `data-creator-table-row="true"` — no shared ref registry or context needed.
+- `ArrowDown`/`ArrowUp` move focus between siblings; `Home`/`End` jump to first/last; `Enter`/`Space` call `onActivate(index)`; unrelated keys pass through.
+- Wired into all three asset tables (CreatorDashboard home, SubmissionsPage, AnalyticsPage). Each page's `onActivate` routes to the asset detail via `useRouterForApp().navigate(getCreatorAssetDetailPath(...))` and also emits `CREATOR_DASHBOARD_ASSET_OPENED` telemetry so keyboard and mouse paths are tracked identically.
+- Each row gets an `aria-label` describing the asset and "Press Enter to open detail" so screen-reader users know what activation does.
+- Uses `ArrowUp`/`ArrowDown` rather than `j`/`k`; bd-webflow's existing QuickFind surface uses the same convention (`components/QuickFind/utils.tsx:178`), so this matches the in-product pattern rather than introducing vim bindings.
+- 6 unit tests against the hook using `@testing-library/react` with `fireEvent.keyDown` + the repo's `data-automation-id` convention.
+
 ### 1.4 Feedback button — deferred
 
 Not implemented. bd-webflow has no shared feedback widget (verified by searching for Intercom, Productboard, Appcues, Pendo, Delighted, Hotjar — none present). The only existing "feedback" pattern is an external survey-URL link inside `Sites/GeneralSettings/.../RealtimeSection`.
@@ -201,6 +210,7 @@ Phase 1 is preserved in the bd-webflow working tree. These changes should land t
 8. One PR: Submission quota 90-day trend (server + client + extended tests).
 9. One PR: CSV export on Analytics page (pure helpers + button + tests).
 10. One PR: A11y pass (progress-bar semantics + donut `<title>` + kinetic `aria-live`).
+11. One PR: Keyboard navigation on asset tables (`useTableKeyboardRowProps` + wiring in 3 pages + tests).
 
 Each is independent and ships value on its own. PRs 2 and 4 can reasonably combine since they both touch `DetailPage.tsx` and neither has new backend. PRs 7 and 8 can reasonably combine since both touch `Sparkline` / `SubmissionQuotaCard`. PR 5 touches the shared analytics registry — flag that in the PR description so the Analytics/Data team reviews the event names before merge.
 
