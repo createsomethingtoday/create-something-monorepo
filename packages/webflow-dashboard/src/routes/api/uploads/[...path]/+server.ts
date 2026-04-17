@@ -7,7 +7,8 @@ import type { RequestHandler } from './$types';
  * 
  * Public endpoint - no authentication required.
  * Airtable needs to fetch images to store them as attachments.
- * Images are stored with unique, unguessable keys for security.
+ * Keys are high-entropy and difficult to guess, but any caller who learns a
+ * valid key can fetch the file from this endpoint.
  */
 export const GET: RequestHandler = async ({ params, platform }) => {
 	const uploads = platform?.env.UPLOADS;

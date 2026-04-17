@@ -11,5 +11,11 @@ services:
         value: "8080"
       - key: ALLOW_VISIBLE_BROWSER
         value: "false"
+      - key: ANALYZE_RATE_LIMIT
+        value: "5"
+      - key: ANALYZE_RATE_WINDOW_SECONDS
+        value: "900"
       - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANALYZER_API_TOKEN
         sync: false

@@ -557,15 +557,34 @@
 				};
 			}
 
-			if (changedFields.length > 0) {
-				fetch(`/api/assets/${asset.id}/versions`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ changes: structuredChanges })
-				}).catch(() => {
-					// Ignore version creation failures during save.
-				});
-			}
+				if (changedFields.length > 0) {
+					// Await snapshot creation so the saved update cannot overtake the pre-change capture.
+					try {
+						const versionResponse = await fetch(`/api/assets/${asset.id}/versions`, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ changes: structuredChanges })
+						});
+
+						if (!versionResponse.ok) {
+							const versionError = (await versionResponse.json().catch(() => null)) as
+								| { message?: string }
+								| null;
+
+							console.warn('[AssetVersioning] Failed to create pre-save snapshot', {
+								assetId: asset.id,
+								status: versionResponse.status,
+								message: versionError?.message
+							});
+						}
+					} catch (versionError) {
+						console.warn('[AssetVersioning] Failed to create pre-save snapshot', {
+							assetId: asset.id,
+							error:
+								versionError instanceof Error ? versionError.message : String(versionError)
+						});
+					}
+				}
 
 			trackEvent('asset_update_started', {
 				asset_id: asset.id,

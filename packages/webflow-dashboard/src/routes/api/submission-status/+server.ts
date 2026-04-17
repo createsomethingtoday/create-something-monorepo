@@ -1,4 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
+import { checkRateLimit } from '$lib/server/kv';
 
 /**
  * Server-side proxy for submission status check
@@ -9,7 +10,8 @@ import { json, type RequestHandler } from '@sveltejs/kit';
  * The external API is also used by Webflow forms, so we keep it centralized there.
  * 
  * POST /api/submission-status
- * Body: { email: string }
+ * Body: { email?: string }
+ * The request is always resolved against the authenticated session email.
  * 
  * Returns:
  * {
@@ -33,12 +35,71 @@ interface ExternalApiResponse {
 
 const EXTERNAL_API_URL = 'https://check-asset-name.vercel.app/api/checkTemplateuser';
 const REQUEST_TIMEOUT_MS = 10000; // 10 seconds
+const RATE_LIMIT_MAX_REQUESTS = 10;
+const RATE_LIMIT_WINDOW_SECONDS = 900;
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals, platform, getClientAddress }) => {
 	try {
+		if (!locals.user?.email) {
+			return json(
+				{
+					hasError: true,
+					message: 'Unauthorized',
+					assetsSubmitted30: 0
+				},
+				{ status: 401 }
+			);
+		}
+
+		const sessions = platform?.env?.SESSIONS;
+		if (!sessions) {
+			return json(
+				{
+					hasError: true,
+					message: 'Submission status service unavailable',
+					assetsSubmitted30: 0
+				},
+				{ status: 503 }
+			);
+		}
+
+		const rateLimitResult = await checkRateLimit(
+			sessions,
+			`submission-status:${getClientAddress()}`,
+			RATE_LIMIT_MAX_REQUESTS,
+			RATE_LIMIT_WINDOW_SECONDS,
+			{ failOpen: false }
+		);
+
+		if (!rateLimitResult.allowed) {
+			return json(
+				{
+					hasError: true,
+					message: 'Too many submission status requests. Please try again later.',
+					assetsSubmitted30: 0,
+					retryAfter: rateLimitResult.retryAfter
+				},
+				{ status: 429 }
+			);
+		}
+
 		// Parse request body
-		const body = await request.json() as { email?: string };
-		const { email } = body;
+		const body = (await request.json().catch(() => ({}))) as { email?: string };
+		const requestedEmail = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+		const authenticatedEmail = locals.user.email.trim().toLowerCase();
+
+		if (requestedEmail && requestedEmail !== authenticatedEmail) {
+			return json(
+				{
+					hasError: true,
+					message: 'Requested email does not match the authenticated user',
+					assetsSubmitted30: 0
+				},
+				{ status: 403 }
+			);
+		}
+
+		const email = locals.user.email;
 
 		// Validate email
 		if (!email || typeof email !== 'string') {
@@ -154,4 +215,3 @@ export const POST: RequestHandler = async ({ request }) => {
 		);
 	}
 };
-

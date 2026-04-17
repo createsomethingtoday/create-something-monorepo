@@ -10,22 +10,25 @@
 		createdAt: string;
 		createdBy: string;
 		changes: string;
-		snapshot: {
+		snapshot?: {
 			name?: string;
 			description?: string;
 			descriptionShort?: string;
 			websiteUrl?: string;
 			previewUrl?: string;
-			thumbnailUrl?: string;
-			secondaryThumbnailUrl?: string;
+			thumbnailUrl?: string | null;
+			secondaryThumbnailUrl?: string | null;
+			secondaryThumbnails?: string[];
 			carouselImages?: string[];
-		};
+		} | null;
+		canRollback?: boolean;
+		rollbackReason?: string;
 	}
 
 	interface Props {
 		assetId: string;
 		versions: AssetVersion[];
-		onRollback?: (versionId: string) => void;
+		onRollback?: (versionId: string) => void | Promise<void>;
 		onCompare?: (fromId: string, toId: string) => void;
 	}
 
@@ -71,20 +74,20 @@
 				method: 'POST'
 			});
 
-			if (!response.ok) {
-				throw new Error('Failed to rollback');
-			}
+				if (!response.ok) {
+					throw new Error('Failed to rollback');
+				}
 
-			if (onRollback) {
-				onRollback(versionId);
-			}
-
-			// Reload the page to show the updated asset
-			window.location.reload();
-		} catch (err) {
-			alert('Failed to rollback to version');
-			console.error(err);
-		} finally {
+				if (onRollback) {
+					await onRollback(versionId);
+				} else {
+					// Reload the page when the component is used without a parent refresh callback.
+					window.location.reload();
+				}
+			} catch (err) {
+				alert('Failed to rollback to version');
+				console.error(err);
+			} finally {
 			isLoading = false;
 		}
 	}
@@ -129,9 +132,12 @@
 								</div>
 								<p class="version-changes mb-1">{version.changes}</p>
 								<p class="version-author">By {version.createdBy}</p>
+								{#if version.canRollback === false}
+									<p class="version-capability">Rollback unavailable for this legacy version.</p>
+								{/if}
 							</div>
 							<div class="flex gap-2">
-								{#if version.versionNumber !== versions[0].versionNumber}
+								{#if version.versionNumber !== versions[0].versionNumber && version.canRollback}
 									<Button
 										size="sm"
 										variant="outline"
@@ -189,6 +195,12 @@
 	.version-author {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+	}
+
+	.version-capability {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		margin: 0;
 	}
 
 	.text-muted {

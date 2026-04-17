@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getAirtableClient } from '@create-something/webflow-dashboard-core/airtable';
+import { getAirtableClient } from '$lib/server/airtable';
 
 // GET - Get a specific version
 export const GET: RequestHandler = async ({ params, locals, platform }) => {

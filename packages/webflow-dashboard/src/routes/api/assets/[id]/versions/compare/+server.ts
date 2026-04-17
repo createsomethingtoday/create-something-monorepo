@@ -1,48 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import {
-	getAirtableClient,
-	type AssetVersionSnapshot
-} from '@create-something/webflow-dashboard-core/airtable';
-
-interface VersionDiff {
-	field: string;
-	oldValue: unknown;
-	newValue: unknown;
-	changed: boolean;
-}
-
-function compareVersions(
-	oldSnapshot: AssetVersionSnapshot,
-	newSnapshot: AssetVersionSnapshot
-): VersionDiff[] {
-	const oldRecord = oldSnapshot as Record<string, unknown>;
-	const newRecord = newSnapshot as Record<string, unknown>;
-	const fields = new Set([...Object.keys(oldRecord), ...Object.keys(newRecord)]);
-	const diffs: VersionDiff[] = [];
-
-	for (const field of fields) {
-		const oldValue = oldRecord[field];
-		const newValue = newRecord[field];
-
-		// Deep comparison for arrays
-		let changed = false;
-		if (Array.isArray(oldValue) && Array.isArray(newValue)) {
-			changed = JSON.stringify(oldValue) !== JSON.stringify(newValue);
-		} else {
-			changed = oldValue !== newValue;
-		}
-
-		diffs.push({
-			field,
-			oldValue,
-			newValue,
-			changed
-		});
-	}
-
-	return diffs.filter((diff) => diff.changed);
-}
+import { getAirtableClient } from '$lib/server/airtable';
+import { compareAssetVersions } from '$lib/server/versioning';
 
 // GET - Compare two versions
 export const GET: RequestHandler = async ({ params, url, locals, platform }) => {
@@ -82,7 +41,7 @@ export const GET: RequestHandler = async ({ params, url, locals, platform }) => 
 		throw error(400, 'Versions do not belong to this asset');
 	}
 
-	const differences = compareVersions(fromVersion.snapshot, toVersion.snapshot);
+	const differences = compareAssetVersions(fromVersion, toVersion);
 
 	return json({
 		fromVersion,

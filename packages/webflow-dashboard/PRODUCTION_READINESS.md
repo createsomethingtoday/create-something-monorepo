@@ -19,7 +19,7 @@ The Webflow Dashboard SvelteKit port is **production-ready**. All critical syste
 - ✅ UI components Canon-compliant
 - ✅ No TypeScript errors
 - ✅ Submission tracking with rate limiting
-- ✅ Asset versioning system with rollback
+- ⚠️ Asset versioning mounted on the asset detail route (still awaiting live validation)
 - ✅ GSAP validation UI architecture designed
 - ✅ Enhanced animations and interactions
 
@@ -184,12 +184,13 @@ All routes compiled successfully.
 
 ---
 
-### 8. Asset Versioning System ✅ NEW
+### 8. Asset Versioning System ⚠️ PARTIAL
 
-**Components Implemented**:
-- ✅ **AssetVersionHistory.svelte** - Version timeline display
-- ✅ **VersionComparisonModal.svelte** - Side-by-side comparison
-- ✅ **EditAssetModal.svelte** - Enhanced with version support
+**Implementation Status**:
+- ✅ **AssetVersionHistory.svelte** exists
+- ✅ **VersionComparisonModal.svelte** exists
+- ✅ **EditAssetModal.svelte** attempts pre-save version creation
+- ✅ Asset detail route mounts version history and comparison
 
 **API Endpoints**:
 - `GET /api/assets/[id]/versions` - List asset version history
@@ -197,19 +198,17 @@ All routes compiled successfully.
 - `POST /api/assets/[id]/versions/[versionId]/rollback` - Rollback to version
 - `GET /api/assets/[id]/versions/compare` - Compare two versions
 
-**Features**:
-- ✅ Automatic version creation on asset update
-- ✅ Version snapshot storage (full asset state)
-- ✅ Rollback functionality with confirmation
-- ✅ Side-by-side comparison view
-- ✅ Change tracking and descriptions
-- ✅ Version selection for comparison
-- ✅ Timestamp and user attribution
+**Current State**:
+- ✅ Versioning Airtable helpers and API routes exist
+- ✅ Asset edits attempt a pre-save snapshot before updating
+- ✅ Rollback and compare endpoints are implemented server-side
+- ✅ The asset detail route consumes the history/compare/rollback flow
+- ⚠️ End-to-end version retrieval and rollback have not been production-validated against live Airtable data
 
 **Airtable Integration**: `src/lib/server/airtable.ts`
 - `getAssetVersions()` - Fetch version history
 - `createAssetVersion()` - Create new version snapshot
-- `rollbackAssetVersion()` - Apply version rollback
+- `rollbackAssetToVersion()` - Apply version rollback
 
 **Related Commits**: b240d6c3
 
@@ -334,7 +333,7 @@ All 6 are CORRECT Canon token usage:
 - [x] R2 bucket created (`webflow-dashboard-uploads`)
 - [x] KV namespace created (`SESSIONS`)
 - [x] Multi-image upload working
-- [x] Asset versioning system functional
+- [ ] Asset versioning system validated end-to-end against live Airtable data
 - [x] Submission tracking validated
 - [x] Animated UI components tested
 
@@ -380,7 +379,7 @@ curl https://webflow-dashboard.pages.dev
 | Leaderboard | ✅ Complete | 30-day rolling window, revenue redaction |
 | Profile Management | ✅ Complete | Edit profile, API key management |
 | Submission Tracking | ✅ Complete | Rate limiting, countdown, warnings |
-| Asset Versioning | ✅ Complete | History, comparison, rollback |
+| Asset Versioning | ⚠️ Partial | Asset detail route mounts history UI; live validation still pending |
 | GSAP Validation | ✅ Designed | Architecture ready, implementation pending |
 | Canon Compliance | ✅ Complete | All components use design tokens |
 | Dark Mode | ✅ Complete | Persistent preference storage |
@@ -469,11 +468,11 @@ curl https://webflow-dashboard.pages.dev
    - Warning and critical states
    - Prevents marketplace abuse
 
-2. **Asset Versioning System** (commit b240d6c3)
-   - Complete version history
-   - Side-by-side comparison
-   - One-click rollback
-   - Automatic snapshot on update
+2. **Asset Versioning Groundwork** (commit b240d6c3)
+   - API endpoints and Airtable helpers landed
+   - Version history and comparison components were added
+   - Save flow attempts automatic snapshot creation
+   - Asset detail route now mounts history/compare/rollback, but live validation is still pending
 
 3. **Multi-Image Upload** (commit d0256cba)
    - Carousel image uploader
@@ -512,7 +511,7 @@ The Webflow Dashboard is **ready for production deployment**. All verification r
 5. ✅ Canon-compliant UI with enhanced animations
 6. ✅ No build or type errors
 7. ✅ Submission tracking prevents abuse
-8. ✅ Asset versioning enables rollback
+8. ⚠️ Asset versioning is routed and interactive, but still needs live validation
 9. ✅ GSAP validation architecture ready
 
 **Recommendation**: APPROVE for production deployment.

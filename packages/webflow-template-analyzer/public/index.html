@@ -371,7 +371,7 @@
     renderTags('r-categories', r.categories || []);
     renderTags('r-styles',     r.styles     || []);
     renderTags('r-features',   r.features   || []);
-    renderScreenshots(r.screenshots || {});
+    renderScreenshots(r.screenshots || {}, r.job_id, r.artifact_token);
 
     document.getElementById('results').style.display = 'block';
   }
@@ -390,7 +390,12 @@
     ).join('');
   }
 
-  function renderScreenshots(ss) {
+  function buildArtifactUrl(jobId, filename, artifactToken) {
+    if (!jobId || !filename || !artifactToken) return '';
+    return `${API}/screenshots/${encodeURIComponent(jobId)}/${encodeURIComponent(filename)}?token=${encodeURIComponent(artifactToken)}`;
+  }
+
+  function renderScreenshots(ss, jobId, artifactToken) {
     const container = document.getElementById('r-screenshots');
     const images = [];
     if (ss.primary)   images.push(ss.primary);
@@ -398,9 +403,7 @@
     (ss.gallery || []).forEach(g => images.push(g));
 
     container.innerHTML = images.slice(0, 6).map(src => {
-      // src is a local file path from the backend — convert to API URL
-      const filename = src.split('/').pop();
-      const url = `${API}/screenshots/${filename}`;
+      const url = buildArtifactUrl(jobId, src, artifactToken);
       return `<div class="thumb" onclick="openLightbox('${url}')">
         <img src="${url}" alt="Screenshot" loading="lazy">
       </div>`;
@@ -420,8 +423,12 @@
 
   // ── Download ZIP ───────────────────────────────────────────────────────────
   function downloadZip() {
+    if (!_currentResult?.job_id || !_currentResult?.artifact_token) {
+      setStatus('Run analysis again to generate a fresh screenshot bundle.', true);
+      return;
+    }
     const a = document.createElement('a');
-    a.href = `${API}/screenshots/download`;
+    a.href = `${API}/screenshots/${encodeURIComponent(_currentResult.job_id)}/download?token=${encodeURIComponent(_currentResult.artifact_token)}`;
     a.download = 'template-screenshots.zip';
     a.click();
   }

@@ -1,4 +1,6 @@
 const TRUSTED_DOMAIN_SUFFIXES = ['webflow.com', 'webflow.io', 'createsomething.io'] as const;
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const API_ORIGIN_PROTECTION_EXEMPT_PREFIXES = ['/api/cron/'] as const;
 
 function parseCsv(raw: string | undefined): string[] {
   if (!raw) return [];
@@ -16,8 +18,24 @@ function isDomainOrSubdomain(hostname: string, domain: string): boolean {
   return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 
+export function isSecureHostedUrl(
+  rawUrl: string,
+  domain: string,
+  options: { requireSubdomain?: boolean } = {}
+): boolean {
+  try {
+    const parsed = new URL(rawUrl);
+    const hostMatches = options.requireSubdomain
+      ? parsed.hostname.endsWith(`.${domain}`)
+      : isDomainOrSubdomain(parsed.hostname, domain);
+    return parsed.protocol === 'https:' && hostMatches;
+  } catch {
+    return false;
+  }
+}
+
 function isLocalDevHost(hostname: string): boolean {
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]';
 }
 
 function parseOrigin(value: string | null): string | null {
@@ -115,6 +133,18 @@ export function isTrustedRequestOrigin(
   } catch {
     return false;
   }
+}
+
+export function shouldEnforceTrustedApiOrigin(pathname: string, method: string): boolean {
+  if (!pathname.startsWith('/api/')) {
+    return false;
+  }
+
+  if (!MUTATING_METHODS.has(method.toUpperCase())) {
+    return false;
+  }
+
+  return !API_ORIGIN_PROTECTION_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 /**

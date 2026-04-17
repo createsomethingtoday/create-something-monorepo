@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import type { Asset, AssetUpdateData } from '$lib/server/airtable';
+  import type { Asset, AssetUpdateData, AssetVersion } from '$lib/server/airtable';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import DOMPurify from 'isomorphic-dompurify';
@@ -26,6 +26,8 @@
     Sparkline,
     TimelineCard,
     AnalyticsCard,
+    AssetVersionHistory,
+    VersionComparisonModal,
     DataFreshnessIndicator,
     Dialog,
     BackNavigation
@@ -80,16 +82,19 @@
     DollarSign,
     TrendingUp,
     Clock,
-    LineChart
+    LineChart,
+    History
   } from 'lucide-svelte';
 
   let { data }: { data: PageData } = $props();
   const getInitialAsset = () => data.asset;
-  const tabOrder = ['overview', 'timeline', 'analytics'] as const;
+  const getInitialVersions = () => data.versions || [];
+  const tabOrder = ['overview', 'timeline', 'analytics', 'versions'] as const;
   type TabValue = (typeof tabOrder)[number];
 
   // Use reactive state so updates refresh the view
   let asset = $state<Asset>(getInitialAsset());
+  let versions = $state<AssetVersion[]>(getInitialVersions());
 
   // Smart default tab based on asset status
   // - Pending/Review assets: Show Timeline (most actionable)
@@ -107,6 +112,17 @@
   let showEditModal = $state(false);
   let isArchiving = $state(false);
   let showArchiveConfirm = $state(false);
+  let isVersionComparisonOpen = $state(false);
+  let comparisonFromVersionId = $state('');
+  let comparisonToVersionId = $state('');
+
+  interface AssetResponse {
+    asset: Asset;
+  }
+
+  interface VersionsResponse {
+    versions: AssetVersion[];
+  }
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -170,6 +186,71 @@
     showEditModal = false;
   }
 
+  async function refreshVersions(): Promise<void> {
+    const response = await fetch(`/api/assets/${asset.id}/versions`);
+    if (!response.ok) {
+      throw new Error('Failed to refresh version history');
+    }
+
+    const result = (await response.json()) as VersionsResponse;
+    versions = result.versions;
+  }
+
+  async function refreshAssetAndVersions(): Promise<void> {
+    const [assetResponse, versionsResponse] = await Promise.all([
+      fetch(`/api/assets/${asset.id}`),
+      fetch(`/api/assets/${asset.id}/versions`)
+    ]);
+
+    if (!assetResponse.ok || !versionsResponse.ok) {
+      throw new Error('Failed to refresh asset versioning state');
+    }
+
+    const [assetResult, versionsResult] = (await Promise.all([
+      assetResponse.json(),
+      versionsResponse.json()
+    ])) as [AssetResponse, VersionsResponse];
+
+    asset = assetResult.asset;
+    versions = versionsResult.versions;
+    imageError = false;
+  }
+
+  function handleOpenVersionComparison(fromVersionId: string, toVersionId: string) {
+    comparisonFromVersionId = fromVersionId;
+    comparisonToVersionId = toVersionId;
+    isVersionComparisonOpen = true;
+
+    trackEvent('asset_version_compare_opened', {
+      asset_id: asset.id,
+      from_version_id: fromVersionId,
+      to_version_id: toVersionId
+    });
+  }
+
+  function handleCloseVersionComparison() {
+    isVersionComparisonOpen = false;
+    comparisonFromVersionId = '';
+    comparisonToVersionId = '';
+  }
+
+  async function handleVersionRollback(versionId: string): Promise<void> {
+    try {
+      await refreshAssetAndVersions();
+      handleCloseVersionComparison();
+
+      trackEvent('asset_version_rollback_completed', {
+        asset_id: asset.id,
+        restored_version_id: versionId,
+        version_count: versions.length
+      });
+      toast.success('Asset rolled back successfully');
+    } catch (err) {
+      console.warn('[AssetVersioning] Failed to refresh state after rollback', err);
+      window.location.reload();
+    }
+  }
+
   async function handleEditSave(updateData: AssetUpdateData): Promise<void> {
     const response = await fetch(`/api/assets/${asset.id}`, {
       method: 'PUT',
@@ -189,6 +270,18 @@
 
     // Reset image error state in case thumbnail changed
     imageError = false;
+
+    try {
+      await refreshVersions();
+    } catch (versionRefreshError) {
+      console.warn('[AssetVersioning] Failed to refresh version history after save', {
+        assetId: asset.id,
+        error:
+          versionRefreshError instanceof Error
+            ? versionRefreshError.message
+            : String(versionRefreshError)
+      });
+    }
   }
 
   async function handleArchive(): Promise<void> {
@@ -296,7 +389,8 @@
       asset_category: asset.category,
       asset_subcategory: asset.subcategory,
       initial_tab: activeTab,
-      has_metrics: canShowMetrics
+      has_metrics: canShowMetrics,
+      version_count: versions.length
     });
   });
 </script>
@@ -432,6 +526,16 @@
           >
             <LineChart size={14} />
             Analytics
+          </TabsTrigger>
+          <TabsTrigger
+            value="versions"
+            active={activeTab === 'versions'}
+            id="asset-tab-versions"
+            aria-controls="asset-panel-versions"
+            onclick={() => setActiveTab('versions')}
+          >
+            <History size={14} />
+            Versions
           </TabsTrigger>
         </TabsList>
 
@@ -657,6 +761,21 @@
           <TimelineCard {asset} />
         </TabsContent>
         <TabsContent
+          value="versions"
+          active={activeTab === 'versions'}
+          id="asset-panel-versions"
+          aria-labelledby="asset-tab-versions"
+          tabindex={0}
+          class="tab-content"
+        >
+          <AssetVersionHistory
+            assetId={asset.id}
+            {versions}
+            onCompare={handleOpenVersionComparison}
+            onRollback={handleVersionRollback}
+          />
+        </TabsContent>
+        <TabsContent
           value="analytics"
           active={activeTab === 'analytics'}
           id="asset-panel-analytics"
@@ -680,6 +799,14 @@
     onArchive={canArchive ? handleArchive : undefined}
   />
 {/if}
+
+<VersionComparisonModal
+  assetId={asset.id}
+  fromVersionId={comparisonFromVersionId}
+  toVersionId={comparisonToVersionId}
+  open={isVersionComparisonOpen}
+  onClose={handleCloseVersionComparison}
+/>
 
 <Dialog
   isOpen={showArchiveConfirm}

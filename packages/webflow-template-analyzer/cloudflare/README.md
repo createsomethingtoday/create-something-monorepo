@@ -20,11 +20,14 @@ This directory provides a Cloudflare deployment path for the existing analyzer b
 Set as Worker secrets/vars in this Cloudflare project:
 
 - `ANTHROPIC_API_KEY` (secret, required)
+- `ANALYZER_API_TOKEN` (secret, recommended for authenticated non-browser access)
 - `STEEL_API_KEY` (secret, optional, enables Steel-backed remote browser sessions)
 - `UPSTREAM_PORT` (var, optional, default `7860`)
 - `SANDBOX_SLEEP_AFTER` (var, optional, default `20m`)
 - `ALLOW_VISIBLE_BROWSER` (var, optional, default `false`)
 - `STEEL_SESSION_TIMEOUT_MS` (var, optional, default `1200000`)
+- `ANALYZE_RATE_LIMIT` (var, optional, default `5`)
+- `ANALYZE_RATE_WINDOW_SECONDS` (var, optional, default `900`)
 
 ## Deploy
 

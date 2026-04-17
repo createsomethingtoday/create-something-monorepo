@@ -91,10 +91,7 @@ export const POST: RequestHandler = async ({ request, platform, cookies, getClie
 		});
 
 		// Clear the verification token in Airtable
-		const user = await airtable.findUserByEmail(result.email);
-		if (user) {
-			await airtable.clearVerificationToken(user.id);
-		}
+		await airtable.clearVerificationToken(result.userId);
 
 		return json({
 			message: 'Authentication successful',

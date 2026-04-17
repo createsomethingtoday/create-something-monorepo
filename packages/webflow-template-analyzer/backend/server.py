@@ -12,22 +12,31 @@ Routes
   GET  /extension          Extension-facing analyzer UI
   POST /analyze            Run analysis on a template URL
   POST /open-form          Open Webflow submission form pre-filled in a visible browser
-  GET  /screenshots/...    Serve / download screenshots
+  GET  /screenshots/{job_id}/...    Serve / download screenshots for one analysis job
   GET  /install            Tampermonkey install page (legacy, still included)
   GET  /analyzer.user.js   Tampermonkey userscript (legacy, still included)
 """
 
 import asyncio
+import hmac
 import io
+import ipaddress
+import json
 import os
+import re
+import secrets
+import socket
 import threading
+import time
+import uuid
 import zipfile
 from pathlib import Path
+from typing import Any
+from urllib.parse import urlparse
 
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -40,19 +49,22 @@ from analyze import analyze_template, browser_provider_name, open_form_in_browse
 
 app = FastAPI(title="Webflow Template Analyzer", version="2.0.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 BASE_DIR = Path(__file__).parent
 OUTPUT_DIR = BASE_DIR / "output"
 STATIC_DIR = BASE_DIR / "static"
 EXTENSION_HTML = BASE_DIR.parent / "public" / "index.html"
 USERSCRIPT_TEMPLATE = BASE_DIR.parent / "userscript" / "template-analyzer.user.js"
+ARTIFACT_METADATA_FILENAME = ".artifacts.json"
+DEFAULT_ALLOWED_ORIGIN_PATTERNS = [
+    re.compile(r"^https://([a-z0-9-]+\.)*webflow\.com$", re.IGNORECASE),
+    re.compile(r"^https://([a-z0-9-]+\.)*webflow\.io$", re.IGNORECASE),
+    re.compile(r"^https?://localhost(?::\d+)?$", re.IGNORECASE),
+    re.compile(r"^https?://127\.0\.0\.1(?::\d+)?$", re.IGNORECASE),
+]
+DEFAULT_ANALYZE_RATE_LIMIT = 5
+DEFAULT_ANALYZE_RATE_WINDOW_SECONDS = 900
+_RATE_LIMIT_LOCK = threading.Lock()
+_RATE_LIMIT_STATE: dict[str, list[float]] = {}
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 
@@ -64,6 +76,283 @@ def read_ui_html() -> str:
     if not EXTENSION_HTML.exists():
         raise HTTPException(status_code=404, detail="Analyzer UI not found")
     return EXTENSION_HTML.read_text()
+
+
+def parse_csv(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    return [value.strip() for value in raw.split(",") if value.strip()]
+
+
+def parse_int_env(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        parsed = int(raw)
+    except ValueError:
+        return default
+    return parsed if parsed > 0 else default
+
+
+def get_request_origin(request: Request) -> str:
+    parsed = urlparse(str(request.base_url))
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def normalize_origin(value: str | None) -> str | None:
+    if not value:
+        return None
+    parsed = urlparse(value)
+    if not parsed.scheme or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def get_source_origin(request: Request) -> str | None:
+    origin = normalize_origin(request.headers.get("origin"))
+    if origin:
+        return origin
+    return normalize_origin(request.headers.get("referer"))
+
+
+def is_local_dev_host(hostname: str | None) -> bool:
+    return hostname in {"localhost", "127.0.0.1", "::1", "[::1]"}
+
+
+def is_allowed_origin(origin: str, request: Request) -> bool:
+    parsed = urlparse(origin)
+    if not parsed.scheme or not parsed.hostname:
+        return False
+
+    if origin == get_request_origin(request):
+        return True
+
+    extra_allowed_origins = {
+        value
+        for value in (
+            normalize_origin(entry)
+            for entry in parse_csv(os.environ.get("ANALYZER_EXTRA_ALLOWED_ORIGINS"))
+        )
+        if value
+    }
+    if origin in extra_allowed_origins:
+        return True
+
+    if is_local_dev_host(parsed.hostname):
+        return True
+
+    if parsed.scheme != "https":
+        return False
+
+    return any(pattern.match(origin) for pattern in DEFAULT_ALLOWED_ORIGIN_PATTERNS)
+
+
+def get_cors_headers(request: Request, allowed_origin: str | None) -> dict[str, str]:
+    requested_headers = request.headers.get("access-control-request-headers")
+    headers = {
+        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+        "Access-Control-Allow-Headers": (
+            requested_headers
+            if requested_headers and requested_headers.strip()
+            else "Content-Type, Authorization, X-Analyzer-Token"
+        ),
+        "Access-Control-Max-Age": "86400",
+        "Vary": "Origin",
+    }
+    if allowed_origin:
+        headers["Access-Control-Allow-Origin"] = allowed_origin
+    return headers
+
+
+def get_request_token(request: Request) -> str | None:
+    auth_header = request.headers.get("authorization")
+    if auth_header and auth_header.lower().startswith("bearer "):
+        token = auth_header[7:].strip()
+        if token:
+            return token
+
+    header_token = request.headers.get("x-analyzer-token")
+    if header_token and header_token.strip():
+        return header_token.strip()
+
+    query_token = request.query_params.get("token")
+    if query_token and query_token.strip():
+        return query_token.strip()
+
+    return None
+
+
+def has_valid_api_token(request: Request) -> bool:
+    expected = os.environ.get("ANALYZER_API_TOKEN", "").strip()
+    provided = get_request_token(request)
+    if not expected or not provided:
+        return False
+    return hmac.compare_digest(provided, expected)
+
+
+def require_origin_or_api_token(request: Request) -> None:
+    source_origin = get_source_origin(request)
+    if source_origin and is_allowed_origin(source_origin, request):
+        return
+    if has_valid_api_token(request):
+        return
+    raise HTTPException(
+        status_code=403,
+        detail="Analyzer requests must come from an allowed origin or include a valid token",
+    )
+
+
+def get_client_ip(request: Request) -> str:
+    forwarded_ip = request.headers.get("cf-connecting-ip") or request.headers.get("x-forwarded-for")
+    if forwarded_ip:
+        return forwarded_ip.split(",")[0].strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
+
+
+def enforce_analyze_rate_limit(request: Request) -> None:
+    client_ip = get_client_ip(request)
+    limit = parse_int_env("ANALYZE_RATE_LIMIT", DEFAULT_ANALYZE_RATE_LIMIT)
+    window_seconds = parse_int_env(
+        "ANALYZE_RATE_WINDOW_SECONDS",
+        DEFAULT_ANALYZE_RATE_WINDOW_SECONDS,
+    )
+    now = time.time()
+
+    with _RATE_LIMIT_LOCK:
+        attempts = [
+            timestamp
+            for timestamp in _RATE_LIMIT_STATE.get(client_ip, [])
+            if now - timestamp < window_seconds
+        ]
+        if len(attempts) >= limit:
+            retry_after = max(1, int(window_seconds - (now - attempts[0])))
+            raise HTTPException(
+                status_code=429,
+                detail=f"Too many analysis requests. Try again in {retry_after} seconds.",
+            )
+
+        attempts.append(now)
+        _RATE_LIMIT_STATE[client_ip] = attempts
+
+
+def is_public_ip_address(address: str) -> bool:
+    try:
+        parsed = ipaddress.ip_address(address)
+    except ValueError:
+        return False
+    return parsed.is_global
+
+
+def validate_target_url(raw_url: str) -> str:
+    candidate = raw_url.strip()
+    if not candidate:
+        raise ValueError("A published Webflow URL is required")
+
+    parsed = urlparse(candidate)
+    hostname = parsed.hostname
+
+    if parsed.scheme != "https" or not hostname:
+        raise ValueError("URL must be an https:// published Webflow URL")
+
+    if parsed.username or parsed.password:
+        raise ValueError("URL credentials are not allowed")
+
+    if parsed.port not in {None, 443}:
+        raise ValueError("Custom ports are not allowed")
+
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("IP address URLs are not allowed")
+
+    if hostname == "webflow.io" or not hostname.endswith(".webflow.io"):
+        raise ValueError("URL must be hosted on a .webflow.io domain")
+
+    try:
+        resolved = socket.getaddrinfo(hostname, 443, type=socket.SOCK_STREAM)
+    except socket.gaierror as exc:
+        raise ValueError(f"Could not resolve {hostname}: {exc}") from exc
+
+    resolved_addresses = {entry[4][0] for entry in resolved}
+    if not resolved_addresses:
+        raise ValueError("Unable to resolve the published hostname")
+
+    if not all(is_public_ip_address(address) for address in resolved_addresses):
+        raise ValueError("URL hostname must resolve only to public IP addresses")
+
+    return parsed._replace(fragment="").geturl()
+
+
+def get_job_dir(job_id: str) -> Path:
+    try:
+        uuid.UUID(job_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Job not found") from exc
+    return OUTPUT_DIR / job_id
+
+
+def get_job_metadata_path(job_dir: Path) -> Path:
+    return job_dir / ARTIFACT_METADATA_FILENAME
+
+
+def write_job_metadata(job_dir: Path, artifact_token: str, normalized_url: str) -> None:
+    metadata = {
+        "artifact_token": artifact_token,
+        "created_at": int(time.time()),
+        "url": normalized_url,
+    }
+    get_job_metadata_path(job_dir).write_text(json.dumps(metadata, indent=2))
+
+
+def read_job_metadata(job_dir: Path) -> dict[str, Any]:
+    metadata_path = get_job_metadata_path(job_dir)
+    if not metadata_path.exists():
+        raise HTTPException(status_code=404, detail="Artifact metadata not found")
+    return json.loads(metadata_path.read_text())
+
+
+def require_artifact_access(job_id: str, request: Request) -> Path:
+    job_dir = get_job_dir(job_id)
+    if not job_dir.exists():
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    metadata = read_job_metadata(job_dir)
+    provided_token = get_request_token(request)
+    expected_token = str(metadata.get("artifact_token", ""))
+    if not provided_token or not expected_token or not hmac.compare_digest(provided_token, expected_token):
+        raise HTTPException(status_code=403, detail="Invalid artifact token")
+
+    return job_dir
+
+
+def sanitize_screenshot_manifest(screenshots: dict[str, Any]) -> dict[str, Any]:
+    gallery = screenshots.get("gallery", [])
+    return {
+        "primary": Path(str(screenshots.get("primary", ""))).name if screenshots.get("primary") else "",
+        "secondary": Path(str(screenshots.get("secondary", ""))).name if screenshots.get("secondary") else "",
+        "gallery": [Path(str(path)).name for path in gallery if path],
+    }
+
+
+@app.middleware("http")
+async def apply_cors(request: Request, call_next):
+    source_origin = get_source_origin(request)
+    allowed_origin = source_origin if source_origin and is_allowed_origin(source_origin, request) else None
+
+    if request.method == "OPTIONS":
+        if source_origin and not allowed_origin:
+            return Response(status_code=403, content="Origin not allowed")
+        return Response(status_code=204, headers=get_cors_headers(request, allowed_origin))
+
+    response = await call_next(request)
+    for header_name, header_value in get_cors_headers(request, allowed_origin).items():
+        response.headers[header_name] = header_value
+    return response
 
 
 # ─── Models ───────────────────────────────────────────────────────────────────
@@ -116,12 +405,32 @@ async def serve_autofill_script():
 
 
 @app.post("/analyze")
-async def analyze_endpoint(req: AnalyzeRequest):
+async def analyze_endpoint(req: AnalyzeRequest, request: Request):
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY is not set in .env")
+
+    require_origin_or_api_token(request)
+    normalized_url = validate_target_url(req.url)
+    enforce_analyze_rate_limit(request)
+
+    job_id = str(uuid.uuid4())
+    job_dir = get_job_dir(job_id)
+    job_dir.mkdir(parents=True, exist_ok=False)
+    artifact_token = secrets.token_urlsafe(24)
+    write_job_metadata(job_dir, artifact_token, normalized_url)
+
     try:
-        result, _ = await asyncio.to_thread(analyze_template, req.url)
-        return result
+        result, _ = await asyncio.to_thread(
+            analyze_template,
+            normalized_url,
+            output_dir=job_dir,
+        )
+        return {
+            **result,
+            "job_id": job_id,
+            "artifact_token": artifact_token,
+            "screenshots": sanitize_screenshot_manifest(result.get("screenshots", {})),
+        }
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
@@ -129,8 +438,10 @@ async def analyze_endpoint(req: AnalyzeRequest):
 
 
 @app.post("/open-form")
-async def open_form_endpoint(req: OpenFormRequest):
+async def open_form_endpoint(req: OpenFormRequest, request: Request):
     """Launch a visible browser pre-filled with the generated submission details."""
+    require_origin_or_api_token(request)
+
     if not visible_browser_enabled():
         raise HTTPException(
             status_code=501,
@@ -144,10 +455,11 @@ async def open_form_endpoint(req: OpenFormRequest):
     return {"status": "opening"}
 
 
-@app.get("/screenshots/download")
-async def download_screenshots():
-    """Return all current screenshots as a ZIP file."""
-    files = list(OUTPUT_DIR.glob("*.webp"))
+@app.get("/screenshots/{job_id}/download")
+async def download_screenshots(job_id: str, request: Request):
+    """Return screenshots for a single analysis job as a ZIP file."""
+    job_dir = require_artifact_access(job_id, request)
+    files = sorted(job_dir.glob("*.webp"))
     if not files:
         raise HTTPException(status_code=404, detail="No screenshots found")
     buf = io.BytesIO()
@@ -162,9 +474,12 @@ async def download_screenshots():
     )
 
 
-@app.get("/screenshots/{filename}")
-async def get_screenshot(filename: str):
-    filepath = OUTPUT_DIR / filename
+@app.get("/screenshots/{job_id}/{filename}")
+async def get_screenshot(job_id: str, filename: str, request: Request):
+    job_dir = require_artifact_access(job_id, request)
+    filepath = (job_dir / Path(filename).name).resolve()
+    if job_dir.resolve() not in filepath.parents:
+        raise HTTPException(status_code=404, detail="Screenshot not found")
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Screenshot not found")
     return FileResponse(filepath, media_type="image/webp")

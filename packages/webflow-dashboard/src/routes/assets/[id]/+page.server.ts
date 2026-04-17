@@ -24,8 +24,11 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 		throw error(404, 'Asset not found');
 	}
 
+	const versions = await airtable.getAssetVersions(params.id);
+
 	return {
 		asset,
+		versions,
 		user: locals.user
 	};
 };
