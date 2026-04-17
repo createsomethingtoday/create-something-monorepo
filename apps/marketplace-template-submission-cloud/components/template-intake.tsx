@@ -3,13 +3,17 @@
 import Script from 'next/script';
 import { useEffect, useRef, useState } from 'react';
 import { appPath } from '../lib/runtime-paths';
+import { QuillEditor } from './quill-editor';
 import {
   ALL_COUNTRIES,
   CATEGORY_OPTIONS,
-  FEATURE_OPTIONS,
   PRIMARY_TAGS,
-  SITE_TYPE_OPTIONS,
-  isSupportedCountry
+  SECONDARY_TAGS,
+  TEMPLATE_STYLES,
+  WEBFLOW_FEATURES,
+  getPricingTiers,
+  isSupportedCountry,
+  type PageCountOption
 } from '../lib/intake/constants';
 
 type Tone = 'success' | 'error' | 'info';
@@ -55,14 +59,17 @@ type TemplateFormState = {
   publishedUrl: string;
   previewUrl: string;
   priceModel: 'Free' | 'Paid';
-  category: string;
-  tags: string;
-  styleTags: string;
+  categories: string[];
+  secondaryTags: string[];
+  styles: string[];
+  pageCount: PageCountOption | '';
+  typeCms: boolean;
+  typeEcommerce: boolean;
+  selectedPrice: number | null;
   shortDescription: string;
   longDescription: string;
   notes: string;
-  siteTypes: string[];
-  featureFlags: string[];
+  featureIds: string[];
   thumbnailFile: File | null;
   secondaryThumbnailFile: File | null;
   galleryFiles: File[];
@@ -98,6 +105,8 @@ const initialCreatorState: CreatorFormState = {
   agreedToTerms: false
 };
 
+const DEFAULT_FEATURE_IDS = WEBFLOW_FEATURES.filter((f) => f.defaultOn).map((f) => f.id);
+
 const initialTemplateState: TemplateFormState = {
   creatorName: '',
   creatorEmail: '',
@@ -105,14 +114,17 @@ const initialTemplateState: TemplateFormState = {
   publishedUrl: '',
   previewUrl: '',
   priceModel: 'Free',
-  category: '',
-  tags: '',
-  styleTags: '',
+  categories: [],
+  secondaryTags: [],
+  styles: [],
+  pageCount: '',
+  typeCms: false,
+  typeEcommerce: false,
+  selectedPrice: null,
   shortDescription: '',
   longDescription: '',
   notes: '',
-  siteTypes: [],
-  featureFlags: [],
+  featureIds: [...DEFAULT_FEATURE_IDS],
   thumbnailFile: null,
   secondaryThumbnailFile: null,
   galleryFiles: [],
@@ -417,7 +429,7 @@ export function TemplateIntake() {
       }));
       setTemplate((current) => ({
         ...current,
-        featureFlags: current.featureFlags.filter((item) => item !== 'gsap')
+        featureIds: current.featureIds.filter((item: string) => item !== 'gsap')
       }));
     }
   }
@@ -579,9 +591,9 @@ export function TemplateIntake() {
     setTemplate((current) => ({
       ...current,
       publishedUrl: data.normalizedUrl || current.publishedUrl,
-      featureFlags: data.gsapDetected
-        ? [...new Set([...current.featureFlags, 'gsap'])]
-        : current.featureFlags
+      featureIds: data.gsapDetected
+        ? [...new Set([...current.featureIds, 'gsap'])]
+        : current.featureIds
     }));
     setVerification((current) => ({
       ...current,
@@ -728,6 +740,10 @@ export function TemplateIntake() {
       ]);
       shouldResetTurnstile = turnstileEnabled;
 
+      const mappedFeatureLabels = WEBFLOW_FEATURES.filter((f) =>
+        template.featureIds.includes(f.id),
+      ).map((f) => f.label === 'Components' ? 'Symbols' : f.label);
+
       const response = await fetch(appPath('/api/intake/template'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -738,11 +754,20 @@ export function TemplateIntake() {
           publishedUrl: template.publishedUrl,
           previewUrl: template.previewUrl,
           priceModel: template.priceModel,
-          category: template.category,
-          tags: splitCommaList(template.tags),
-          styleTags: splitCommaList(template.styleTags),
-          siteTypes: template.siteTypes,
-          featureFlags: template.featureFlags,
+          category: template.categories[0] || '',
+          categories: template.categories,
+          tags: template.secondaryTags,
+          styleTags: template.styles,
+          siteTypes: [
+            ...(template.pageCount === 'Multi-layout' ? ['multi-layout'] : template.pageCount === 'Multi' ? ['static'] : ['static']),
+            ...(template.typeCms ? ['cms'] : []),
+            ...(template.typeEcommerce ? ['ecommerce'] : [])
+          ],
+          pageCount: template.pageCount,
+          typeCms: template.typeCms,
+          typeEcommerce: template.typeEcommerce,
+          price: template.selectedPrice,
+          featureFlags: mappedFeatureLabels,
           shortDescription: template.shortDescription,
           longDescription: template.longDescription,
           notes: template.notes,
@@ -1208,38 +1233,55 @@ export function TemplateIntake() {
                 </div>
               </div>
 
-              <div className="grid grid-2">
-                <div className="field">
-                  <label className="field-label" htmlFor="category">
-                    Category
-                  </label>
-                  <select
-                    className="field-select"
-                    id="category"
-                    value={template.category}
-                    onChange={(event) => updateTemplate('category', event.target.value)}
-                  >
-                    <option value="">Select a category</option>
-                    {CATEGORY_OPTIONS.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
+              <div className="field">
+                <span className="field-label">Category <span style={{ color: 'var(--color-error)' }}>*</span></span>
+                <div className="field-help">Select up to 2 options that best describe your template.</div>
+                <div className="checkbox-grid" style={{ maxHeight: 240, overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 4, padding: 8 }}>
+                  {CATEGORY_OPTIONS.map((category) => {
+                    const checked = template.categories.includes(category);
+                    const atMax = template.categories.length >= 2;
+                    return (
+                      <label className="checkbox-row" key={category}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={!checked && atMax}
+                          onChange={() =>
+                            updateTemplate(
+                              'categories',
+                              toggleCheckbox(template.categories, category)
+                            )
+                          }
+                        />
+                        <span>{category}</span>
+                      </label>
+                    );
+                  })}
                 </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="tags">
-                    Tags
-                  </label>
-                  <input
-                    className="field-input"
-                    id="tags"
-                    list="primary-tag-suggestions"
-                    value={template.tags}
-                    onChange={(event) => updateTemplate('tags', event.target.value)}
-                    placeholder="Portfolio, Creative, Agency"
-                  />
-                  <div className="field-help">Comma-separated. Tag names are blocked inside the template title.</div>
+                <div className="field-help">
+                  {template.categories.length} of 2 categories selected
+                </div>
+              </div>
+
+              <div className="field">
+                <span className="field-label">Secondary tags</span>
+                <div className="field-help">Optional. Tag names are blocked inside the template title.</div>
+                <div className="checkbox-grid" style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 4, padding: 8 }}>
+                  {SECONDARY_TAGS.map((tag) => (
+                    <label className="checkbox-row" key={tag}>
+                      <input
+                        type="checkbox"
+                        checked={template.secondaryTags.includes(tag)}
+                        onChange={() =>
+                          updateTemplate(
+                            'secondaryTags',
+                            toggleCheckbox(template.secondaryTags, tag)
+                          )
+                        }
+                      />
+                      <span>{tag}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -1251,51 +1293,111 @@ export function TemplateIntake() {
 
               <div className="grid grid-2">
                 <div className="field">
-                  <label className="field-label" htmlFor="styleTags">
-                    Style tags
-                  </label>
-                  <input
-                    className="field-input"
-                    id="styleTags"
-                    value={template.styleTags}
-                    onChange={(event) => updateTemplate('styleTags', event.target.value)}
-                    placeholder="Minimal, Editorial, Bold"
-                  />
-                </div>
-                <div className="field">
-                  <span className="field-label">Site types</span>
+                  <span className="field-label">Page count <span style={{ color: 'var(--color-error)' }}>*</span></span>
+                  <div className="field-help">One page or multi page static site?</div>
                   <div className="checkbox-grid">
-                    {SITE_TYPE_OPTIONS.map((option) => (
-                      <label className="checkbox-row" key={option.id}>
+                    {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
+                      <label className="checkbox-row" key={option}>
                         <input
-                          type="checkbox"
-                          checked={template.siteTypes.includes(option.id)}
-                          onChange={() =>
-                            updateTemplate(
-                              'siteTypes',
-                              toggleCheckbox(template.siteTypes, option.id)
-                            )
-                          }
+                          type="radio"
+                          name="pageCount"
+                          checked={template.pageCount === option}
+                          onChange={() => updateTemplate('pageCount', option)}
                         />
-                        <span>{option.label}</span>
+                        <span>
+                          {option === 'One'
+                            ? 'One page'
+                            : option === 'Multi'
+                              ? 'Multi page'
+                              : 'Multi-layout (3+ layouts with 3+ pages)'}
+                        </span>
                       </label>
                     ))}
                   </div>
                 </div>
+                <div className="field">
+                  <span className="field-label">Webflow features</span>
+                  <div className="field-help">Which Webflow features does your template use?</div>
+                  <div className="checkbox-grid">
+                    <label className="checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={template.typeCms}
+                        onChange={(event) => updateTemplate('typeCms', event.target.checked)}
+                      />
+                      <span>CMS</span>
+                    </label>
+                    <label className="checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={template.typeEcommerce}
+                        onChange={(event) => updateTemplate('typeEcommerce', event.target.checked)}
+                      />
+                      <span>Ecommerce</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {template.priceModel === 'Paid' && template.pageCount ? (
+                <div className="field">
+                  <span className="field-label">Template price <span style={{ color: 'var(--color-error)' }}>*</span></span>
+                  <div className="field-help">
+                    Available price points are determined by your template type and features.
+                  </div>
+                  <div className="checkbox-grid">
+                    {getPricingTiers(template.pageCount as PageCountOption, template.typeCms).prices.map((price) => (
+                      <label className="checkbox-row" key={price}>
+                        <input
+                          type="radio"
+                          name="selectedPrice"
+                          checked={template.selectedPrice === price}
+                          onChange={() => updateTemplate('selectedPrice', price)}
+                        />
+                        <span>${price}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="field">
+                <span className="field-label">Styles <span style={{ color: 'var(--color-error)' }}>*</span></span>
+                <div className="field-help">Select up to 2 styles.</div>
+                <div className="checkbox-grid">
+                  {TEMPLATE_STYLES.map((style) => {
+                    const checked = template.styles.includes(style);
+                    const atMax = template.styles.length >= 2;
+                    return (
+                      <label className="checkbox-row" key={style}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={!checked && atMax}
+                          onChange={() =>
+                            updateTemplate('styles', toggleCheckbox(template.styles, style))
+                          }
+                        />
+                        <span>{style}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="field-help">{template.styles.length} of 2 styles selected</div>
               </div>
 
               <div className="field">
-                <span className="field-label">Feature flags</span>
+                <span className="field-label">Features <span style={{ color: 'var(--color-error)' }}>*</span></span>
                 <div className="checkbox-grid">
-                  {FEATURE_OPTIONS.map((option) => (
+                  {WEBFLOW_FEATURES.filter((f) => !f.hidden).map((option) => (
                     <label className="checkbox-row" key={option.id}>
                       <input
                         type="checkbox"
-                        checked={template.featureFlags.includes(option.id)}
+                        checked={template.featureIds.includes(option.id)}
                         onChange={() =>
                           updateTemplate(
-                            'featureFlags',
-                            toggleCheckbox(template.featureFlags, option.id)
+                            'featureIds',
+                            toggleCheckbox(template.featureIds, option.id)
                           )
                         }
                       />
@@ -1327,14 +1429,16 @@ export function TemplateIntake() {
 
               <div className="field">
                 <label className="field-label" htmlFor="longDescription">
-                  Long description
+                  Long description <span style={{ color: 'var(--color-error)' }}>*</span>
                 </label>
-                <textarea
-                  className="field-textarea"
+                <div className="field-help">
+                  Rich text is allowed (bold, italic, lists). Images are stripped.
+                </div>
+                <QuillEditor
                   id="longDescription"
                   value={template.longDescription}
-                  onChange={(event) => updateTemplate('longDescription', event.target.value)}
-                  required
+                  onChange={(html) => updateTemplate('longDescription', html)}
+                  placeholder="Write the Template Overview content..."
                 />
               </div>
 
