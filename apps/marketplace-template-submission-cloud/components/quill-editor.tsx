@@ -128,5 +128,5 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div id={id} ref={containerRef} style={{ minHeight: 200, background: 'white' }} />;
+  return <div id={id} ref={containerRef} className="submission-quill" />;
 }

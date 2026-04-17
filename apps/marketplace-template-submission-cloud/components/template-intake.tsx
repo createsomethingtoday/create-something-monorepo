@@ -7,7 +7,6 @@ import { QuillEditor } from './quill-editor';
 import {
   ALL_COUNTRIES,
   CATEGORY_OPTIONS,
-  PRIMARY_TAGS,
   SECONDARY_TAGS,
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
@@ -132,13 +131,6 @@ const initialTemplateState: TemplateFormState = {
   agreementConfirmed: false
 };
 
-function splitCommaList(value: string) {
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 async function uploadIntakeFile(
   file: File,
   kind: 'avatar' | 'thumbnail' | 'secondary-thumbnail' | 'gallery',
@@ -165,16 +157,15 @@ async function uploadIntakeFile(
 }
 
 function statusClassName(tone: Tone) {
-  if (tone === 'success') return 'notice notice-success';
-  if (tone === 'error') return 'notice notice-error';
-  return 'notice';
+  if (tone === 'success') return 'submission-status submission-status-success';
+  if (tone === 'error') return 'submission-status submission-status-error';
+  return 'submission-status submission-status-info';
 }
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 export function TemplateIntake() {
   const turnstileEnabled = Boolean(TURNSTILE_SITE_KEY);
-  const [step, setStep] = useState<'creator' | 'template'>('creator');
   const [creator, setCreator] = useState<CreatorFormState>(initialCreatorState);
   const [template, setTemplate] = useState<TemplateFormState>(initialTemplateState);
   const [verification, setVerification] = useState<VerificationState>({
@@ -200,6 +191,7 @@ export function TemplateIntake() {
   const templateTurnstileRef = useRef<HTMLDivElement | null>(null);
   const creatorTurnstileWidgetId = useRef<string | null>(null);
   const templateTurnstileWidgetId = useRef<string | null>(null);
+  const templateSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const captureParams = (searchLike: string | Record<string, string>) => {
@@ -304,20 +296,6 @@ export function TemplateIntake() {
     clearTurnstileToken(stepName);
   }
 
-  function removeTurnstile(stepName: TurnstileStep) {
-    if (!turnstileEnabled || typeof window === 'undefined' || !window.turnstile) {
-      return;
-    }
-
-    const widgetId = getTurnstileWidgetId(stepName);
-    if (widgetId) {
-      window.turnstile.remove(widgetId);
-      setTurnstileWidgetId(stepName, null);
-    }
-
-    clearTurnstileToken(stepName);
-  }
-
   function ensureTurnstile(stepName: TurnstileStep) {
     if (!turnstileEnabled || !turnstileReady || typeof window === 'undefined' || !window.turnstile) {
       return;
@@ -346,12 +324,9 @@ export function TemplateIntake() {
       return;
     }
 
-    const activeStep: TurnstileStep = step;
-    const inactiveStep: TurnstileStep = step === 'creator' ? 'template' : 'creator';
-
-    removeTurnstile(inactiveStep);
-    ensureTurnstile(activeStep);
-  }, [step, turnstileEnabled, turnstileReady]);
+    ensureTurnstile('creator');
+    ensureTurnstile('template');
+  }, [turnstileEnabled, turnstileReady]);
 
   useEffect(() => {
     return () => {
@@ -673,10 +648,12 @@ export function TemplateIntake() {
         creatorEmail: data.creator?.email || creator.primaryEmail,
         creatorName: data.creator?.name || creator.preferredName || creator.legalName
       }));
-      setStep('template');
       setCreatorStatus({
         tone: 'success',
         message: 'Creator profile created. Continue to the template submission step.'
+      });
+      requestAnimationFrame(() => {
+        templateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     } catch (error) {
       setCreatorStatus({
@@ -830,7 +807,7 @@ export function TemplateIntake() {
   }
 
   return (
-    <main className="container">
+    <main className="submission-app">
       {turnstileEnabled ? (
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
@@ -838,726 +815,902 @@ export function TemplateIntake() {
           onLoad={() => setTurnstileReady(true)}
         />
       ) : null}
-      <div className="page-stack">
-        <section className="page-header">
-          <div>
-            <h1 className="page-title">Marketplace creator intake</h1>
-            <p className="page-subtitle">
-              Rebuilt as a Webflow Cloud flow: create the creator profile first, then run the
-              template submission gates against the new app-owned API surface.
-            </p>
-          </div>
-        </section>
-
-        <section className="card submit-hero">
-          <div className="submit-hero-grid">
-            <div>
-              <h2 className="card-title">Live logic, explicit state</h2>
-              <p className="card-subtitle">
-                The old Webflow form hid business rules behind checkbox gates. This version keeps
-                the same checks visible: creator email uniqueness, creator eligibility, template
-                name policy, published-site crawl, and exact WebP upload rules.
+      <section className="section cc-submission-wrapper cc-creator-wrap" id="join-today">
+        <div className="container">
+          <div className="w-layout-grid submission_content-grid">
+            <div className="cc-sticky submission-sidecar">
+              <p className="submission-step-label">Step 1</p>
+              <h2 className="submission-panel-title">Become a Creator</h2>
+              <p className="application-subheading-2-2 submission-panel-copy">
+                Start with your creator profile so the review team has the right identity,
+                correspondence, and profile context before the first template enters review.
               </p>
-            </div>
-            <div className="pill-row">
-              <span className="pill">Profile first</span>
-              <span className="pill">Template crawl validation</span>
-              <span className="pill">R2-backed uploads</span>
-            </div>
-          </div>
-        </section>
-
-        <div className="submit-switch">
-          <button
-            className="step-tab"
-            data-active={step === 'creator'}
-            type="button"
-            onClick={() => setStep('creator')}
-          >
-            1. Creator profile
-          </button>
-          <button
-            className="step-tab"
-            data-active={step === 'template'}
-            type="button"
-            onClick={() => setStep('template')}
-          >
-            2. Template submission
-          </button>
-        </div>
-
-        {step === 'creator' ? (
-          <section className="card">
-            <div className="page-header">
-              <div>
-                <h2 className="card-title">Creator profile creation</h2>
-                <p className="card-subtitle">
-                  New creators start here. Existing creators can move to step 2 and run the
-                  eligibility check with their existing creator email.
-                </p>
+              <div className="submission-sidecar-steps">
+                <div className="submission-sidecar-step">
+                  <p className="submission-step-label submission-step-label-secondary">Profile</p>
+                  <p className="submission-panel-copy">
+                    Complete the creator details once. The template step below reuses the same
+                    name and email automatically.
+                  </p>
+                </div>
+                <div className="submission-sidecar-step">
+                  <p className="submission-step-label submission-step-label-secondary">Then submit</p>
+                  <p className="submission-panel-copy">
+                    After the creator profile is in place, continue into the template form and
+                    pass the same marketplace validation gates used on the live page.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <form className="form-stack" onSubmit={submitCreator} style={{ marginTop: '1rem' }}>
-              <div className="grid grid-2">
-                <div className="field">
-                  <label className="field-label" htmlFor="country">
-                    Country
-                  </label>
-                  <select
-                    className="field-select"
-                    id="country"
-                    value={creator.country}
-                    onChange={(event) => updateCreator('country', event.target.value)}
-                    required
-                  >
-                    <option value="">Select a country</option>
-                    {ALL_COUNTRIES.map((country) => (
-                      <option key={country} value={country}>
-                        {country}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="field-help">
-                    Payout-country support is still warning-only here, matching the live form.
+            <div className="submission-form-column">
+              <div className="w-form">
+                <form
+                  className="form-2 cc-library-application-form submission-form"
+                  id="wf-form-Marketplace-Creator-Submission"
+                  name="wf-form-Marketplace-Creator-Submission"
+                  onSubmit={submitCreator}
+                >
+                  <div className="submission-grid-2">
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="country"
+                      >
+                        Country
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Choose the country tied to your creator account. Unsupported payout
+                        countries still behave as warnings, matching the live page.
+                      </p>
+                      <select
+                        className="field-select input w-select"
+                        id="country"
+                        value={creator.country}
+                        onChange={(event) => updateCreator('country', event.target.value)}
+                        required
+                      >
+                        <option value="">Select a country</option>
+                        {ALL_COUNTRIES.map((country) => (
+                          <option key={country} value={country}>
+                            {country}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="websiteUrl"
+                      >
+                        Personal website URL
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Optional, but useful context for the review team.
+                      </p>
+                      <input
+                        className="field-input input w-input"
+                        id="websiteUrl"
+                        type="url"
+                        value={creator.websiteUrl}
+                        onChange={(event) => updateCreator('websiteUrl', event.target.value)}
+                        placeholder="https://"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="websiteUrl">
-                    Personal website URL
-                  </label>
-                  <input
-                    className="field-input"
-                    id="websiteUrl"
-                    type="url"
-                    value={creator.websiteUrl}
-                    onChange={(event) => updateCreator('websiteUrl', event.target.value)}
-                    placeholder="https://"
-                  />
-                </div>
-              </div>
 
-              {!creatorCountrySupported && creator.country ? (
-                <div className="notice notice-warning">
-                  This country is not in the current supported payout list. The live form treats
-                  this as a warning rather than a hard block.
-                </div>
-              ) : null}
-
-              <div className="field-row">
-                <div className="field">
-                  <label className="field-label" htmlFor="primaryEmail">
-                    Primary email
-                  </label>
-                  <input
-                    className="field-input"
-                    id="primaryEmail"
-                    type="email"
-                    value={creator.primaryEmail}
-                    onChange={(event) => updateCreator('primaryEmail', event.target.value)}
-                    required
-                  />
-                </div>
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={() => verifyCreatorEmail('primary')}
-                >
-                  Verify email
-                </button>
-              </div>
-
-              <div className="field-row">
-                <div className="field">
-                  <label className="field-label" htmlFor="webflowEmail">
-                    Webflow account email
-                  </label>
-                  <input
-                    className="field-input"
-                    id="webflowEmail"
-                    type="email"
-                    value={creator.webflowEmail}
-                    onChange={(event) => updateCreator('webflowEmail', event.target.value)}
-                    required
-                  />
-                </div>
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={() => verifyCreatorEmail('webflow')}
-                >
-                  Verify email
-                </button>
-              </div>
-
-              <div className="grid grid-2">
-                <div className="field">
-                  <label className="field-label" htmlFor="preferredName">
-                    Preferred name
-                  </label>
-                  <input
-                    className="field-input"
-                    id="preferredName"
-                    value={creator.preferredName}
-                    onChange={(event) => updateCreator('preferredName', event.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="legalName">
-                    Legal name
-                  </label>
-                  <input
-                    className="field-input"
-                    id="legalName"
-                    value={creator.legalName}
-                    onChange={(event) => updateCreator('legalName', event.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="field">
-                <label className="field-label" htmlFor="biography">
-                  Creator bio
-                </label>
-                <textarea
-                  className="field-textarea"
-                  id="biography"
-                  value={creator.biography}
-                  onChange={(event) => updateCreator('biography', event.target.value)}
-                  maxLength={200}
-                  required
-                />
-                <div className="field-help">{creator.biography.length}/200 characters</div>
-              </div>
-
-              <div className="field">
-                <label className="field-label" htmlFor="avatar">
-                  Profile image
-                </label>
-                <input
-                  className="field-input"
-                  id="avatar"
-                  type="file"
-                  accept="image/webp"
-                  onChange={(event) => updateCreator('avatarFile', event.target.files?.[0] || null)}
-                  required
-                />
-                <div className="field-help">WebP only, exactly 256x256, max 100KB.</div>
-              </div>
-
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={creator.agreedToTerms}
-                  onChange={(event) => updateCreator('agreedToTerms', event.target.checked)}
-                />
-                <span>I agree to the creator terms and marketplace policies.</span>
-              </label>
-
-              {turnstileEnabled ? (
-                <div className="field">
-                  <span className="field-label">Bot check</span>
-                  <div className="turnstile-wrap" ref={creatorTurnstileRef} />
-                  <div className="field-help">
-                    Required before creating the creator profile.
-                  </div>
-                </div>
-              ) : null}
-
-              {creatorStatus ? (
-                <div className={statusClassName(creatorStatus.tone)}>{creatorStatus.message}</div>
-              ) : null}
-
-              <div className="form-actions">
-                <button className="button button-primary" type="submit" disabled={creatorSubmitting}>
-                  {creatorSubmitting ? 'Creating profile…' : 'Create creator profile'}
-                </button>
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={() => setStep('template')}
-                >
-                  I already have a creator profile
-                </button>
-              </div>
-            </form>
-          </section>
-        ) : null}
-
-        {step === 'template' ? (
-          <section className="card">
-            <div className="page-header">
-              <div>
-                <h2 className="card-title">Template submission</h2>
-                <p className="card-subtitle">
-                  This step enforces creator eligibility, template naming policy, published-site
-                  validation, preview URL format, and exact WebP upload constraints.
-                </p>
-              </div>
-            </div>
-
-            <form className="form-stack" onSubmit={submitTemplate} style={{ marginTop: '1rem' }}>
-              <div className="field-row">
-                <div className="field">
-                  <label className="field-label" htmlFor="templateCreatorName">
-                    Creator name
-                  </label>
-                  <input
-                    className="field-input"
-                    id="templateCreatorName"
-                    value={template.creatorName}
-                    onChange={(event) => updateTemplate('creatorName', event.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="field-row">
-                <div className="field">
-                  <label className="field-label" htmlFor="templateCreatorEmail">
-                    Creator email
-                  </label>
-                  <input
-                    className="field-input"
-                    id="templateCreatorEmail"
-                    type="email"
-                    value={template.creatorEmail}
-                    onChange={(event) => updateTemplate('creatorEmail', event.target.value)}
-                    required
-                  />
-                  <div className="field-help">
-                    Existing creators can enter their creator email directly here.
-                  </div>
-                </div>
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={verifyCreatorEligibility}
-                >
-                  Check creator
-                </button>
-              </div>
-
-              <div className="field-row">
-                <div className="field">
-                  <label className="field-label" htmlFor="templateName">
-                    Template name
-                  </label>
-                  <input
-                    className="field-input"
-                    id="templateName"
-                    value={template.templateName}
-                    onChange={(event) => updateTemplate('templateName', event.target.value)}
-                    required
-                  />
-                  <div className="field-help">
-                    First word must be capitalized. Avoid emoji, tag names, category names, and the
-                    standalone term "AI".
-                  </div>
-                </div>
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={verifyTemplateName}
-                >
-                  Check name
-                </button>
-              </div>
-
-              <div className="field-row">
-                <div className="field">
-                  <label className="field-label" htmlFor="publishedUrl">
-                    Published URL
-                  </label>
-                  <input
-                    className="field-input"
-                    id="publishedUrl"
-                    type="url"
-                    value={template.publishedUrl}
-                    onChange={(event) => updateTemplate('publishedUrl', event.target.value)}
-                    required
-                  />
-                  <div className="field-help">
-                    Must be an HTTPS <span className="inline-code">*.webflow.io</span> URL. The full
-                    crawl can take a few minutes.
-                  </div>
-                </div>
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={verifyPublishedUrl}
-                >
-                  Validate template
-                </button>
-              </div>
-
-              {verification.publishedUrlMessage ? (
-                <div className="notice notice-success">{verification.publishedUrlMessage}</div>
-              ) : null}
-
-              <div className="grid grid-2">
-                <div className="field">
-                  <label className="field-label" htmlFor="previewUrl">
-                    Preview URL
-                  </label>
-                  <input
-                    className="field-input"
-                    id="previewUrl"
-                    type="url"
-                    value={template.previewUrl}
-                    onChange={(event) => updateTemplate('previewUrl', event.target.value)}
-                    required
-                  />
-                  {!previewUrlValid ? (
-                    <div className="field-help" style={{ color: 'var(--color-error)' }}>
-                      Preview URLs must contain https://preview.webflow.com/preview/.
+                  {!creatorCountrySupported && creator.country ? (
+                    <div className="submission-status submission-status-warning">
+                      This country is not currently in the supported payout list. The submission
+                      can continue, but this will need a follow-up review.
                     </div>
                   ) : null}
-                </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="priceModel">
-                    Free or paid
+
+                  <div className="submission-field-inline">
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="primaryEmail"
+                      >
+                        Primary email
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        This email is used for creator correspondence and submission follow-up.
+                      </p>
+                      <input
+                        className="field-input input w-input"
+                        id="primaryEmail"
+                        type="email"
+                        value={creator.primaryEmail}
+                        onChange={(event) => updateCreator('primaryEmail', event.target.value)}
+                        required
+                      />
+                    </div>
+                    <button
+                      className="button-sp cc-white"
+                      type="button"
+                      onClick={() => verifyCreatorEmail('primary')}
+                    >
+                      Verify email
+                    </button>
+                  </div>
+
+                  <div className="submission-field-inline">
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="webflowEmail"
+                      >
+                        Webflow account email
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        This must match the Webflow account used for the submitted template.
+                      </p>
+                      <input
+                        className="field-input input w-input"
+                        id="webflowEmail"
+                        type="email"
+                        value={creator.webflowEmail}
+                        onChange={(event) => updateCreator('webflowEmail', event.target.value)}
+                        required
+                      />
+                    </div>
+                    <button
+                      className="button-sp cc-white"
+                      type="button"
+                      onClick={() => verifyCreatorEmail('webflow')}
+                    >
+                      Verify email
+                    </button>
+                  </div>
+
+                  <div className="submission-grid-2">
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label"
+                        htmlFor="preferredName"
+                      >
+                        Preferred name
+                      </label>
+                      <input
+                        className="field-input input w-input"
+                        id="preferredName"
+                        value={creator.preferredName}
+                        onChange={(event) => updateCreator('preferredName', event.target.value)}
+                      />
+                    </div>
+
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label"
+                        htmlFor="legalName"
+                      >
+                        Legal name
+                        <span className="submission-required"> *</span>
+                      </label>
+                      <input
+                        className="field-input input w-input"
+                        id="legalName"
+                        value={creator.legalName}
+                        onChange={(event) => updateCreator('legalName', event.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="biography"
+                    >
+                      Creator bio
+                      <span className="submission-required"> *</span>
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Keep it short and specific. This is used as the first pass of creator
+                      context.
+                    </p>
+                    <textarea
+                      className="field-textarea input w-input submission-textarea"
+                      id="biography"
+                      value={creator.biography}
+                      onChange={(event) => updateCreator('biography', event.target.value)}
+                      maxLength={200}
+                      required
+                    />
+                    <div className="field-help submission-counter">
+                      {creator.biography.length}/200 characters
+                    </div>
+                  </div>
+
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="avatar"
+                    >
+                      Profile image
+                      <span className="submission-required"> *</span>
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Upload a WebP image that is exactly 256x256 and under 100KB.
+                    </p>
+                    <input
+                      className="submission-file-input"
+                      id="avatar"
+                      type="file"
+                      accept="image/webp"
+                      onChange={(event) =>
+                        updateCreator('avatarFile', event.target.files?.[0] || null)
+                      }
+                      required
+                    />
+                  </div>
+
+                  <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
+                    <input
+                      type="checkbox"
+                      checked={creator.agreedToTerms}
+                      onChange={(event) => updateCreator('agreedToTerms', event.target.checked)}
+                    />
+                    <span className="submission-choice-copy">
+                      I agree to the creator terms and marketplace policies.
+                    </span>
                   </label>
-                  <select
-                    className="field-select"
-                    id="priceModel"
-                    value={template.priceModel}
-                    onChange={(event) =>
-                      updateTemplate('priceModel', event.target.value as 'Free' | 'Paid')
-                    }
-                  >
-                    <option value="Free">Free</option>
-                    <option value="Paid">Paid</option>
-                  </select>
-                </div>
-              </div>
 
-              <div className="field">
-                <span className="field-label">Category <span style={{ color: 'var(--color-error)' }}>*</span></span>
-                <div className="field-help">Select up to 2 options that best describe your template.</div>
-                <div className="checkbox-grid" style={{ maxHeight: 240, overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 4, padding: 8 }}>
-                  {CATEGORY_OPTIONS.map((category) => {
-                    const checked = template.categories.includes(category);
-                    const atMax = template.categories.length >= 2;
-                    return (
-                      <label className="checkbox-row" key={category}>
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={!checked && atMax}
-                          onChange={() =>
-                            updateTemplate(
-                              'categories',
-                              toggleCheckbox(template.categories, category)
-                            )
-                          }
-                        />
-                        <span>{category}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="field-help">
-                  {template.categories.length} of 2 categories selected
-                </div>
-              </div>
+                  {turnstileEnabled ? (
+                    <div className="submission-field">
+                      <span className="field-label template-application-form_field-label">
+                        Bot check
+                      </span>
+                      <div className="turnstile-wrap" ref={creatorTurnstileRef} />
+                      <div className="field-help">
+                        Required before creating the creator profile.
+                      </div>
+                    </div>
+                  ) : null}
 
-              <div className="field">
-                <span className="field-label">Secondary tags</span>
-                <div className="field-help">Optional. Tag names are blocked inside the template title.</div>
-                <div className="checkbox-grid" style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 4, padding: 8 }}>
-                  {SECONDARY_TAGS.map((tag) => (
-                    <label className="checkbox-row" key={tag}>
-                      <input
-                        type="checkbox"
-                        checked={template.secondaryTags.includes(tag)}
-                        onChange={() =>
-                          updateTemplate(
-                            'secondaryTags',
-                            toggleCheckbox(template.secondaryTags, tag)
-                          )
-                        }
-                      />
-                      <span>{tag}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+                  {creatorStatus ? (
+                    <div className={statusClassName(creatorStatus.tone)}>{creatorStatus.message}</div>
+                  ) : null}
 
-              <datalist id="primary-tag-suggestions">
-                {PRIMARY_TAGS.map((tag) => (
-                  <option key={tag} value={tag} />
-                ))}
-              </datalist>
-
-              <div className="grid grid-2">
-                <div className="field">
-                  <span className="field-label">Page count <span style={{ color: 'var(--color-error)' }}>*</span></span>
-                  <div className="field-help">One page or multi page static site?</div>
-                  <div className="checkbox-grid">
-                    {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
-                      <label className="checkbox-row" key={option}>
-                        <input
-                          type="radio"
-                          name="pageCount"
-                          checked={template.pageCount === option}
-                          onChange={() => updateTemplate('pageCount', option)}
-                        />
-                        <span>
-                          {option === 'One'
-                            ? 'One page'
-                            : option === 'Multi'
-                              ? 'Multi page'
-                              : 'Multi-layout (3+ layouts with 3+ pages)'}
-                        </span>
-                      </label>
-                    ))}
+                  <div className="submission-actions">
+                    <button className="button-sp" type="submit" disabled={creatorSubmitting}>
+                      {creatorSubmitting ? 'Creating profile...' : 'Create creator profile'}
+                    </button>
+                    <button
+                      className="button-sp cc-white"
+                      type="button"
+                      onClick={() =>
+                        requestAnimationFrame(() => {
+                          templateSectionRef.current?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                          });
+                        })
+                      }
+                    >
+                      I already have a creator profile
+                    </button>
                   </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="section cc-submission-wrapper cc-submit-wrap"
+        id="submit-today"
+        ref={templateSectionRef}
+      >
+        <div className="container">
+          <div className="w-layout-grid submission_content-grid">
+            <div className="cc-sticky submission-sidecar">
+              <p className="submission-step-label">Step 2</p>
+              <h2 className="submission-panel-title">Submit a template</h2>
+              <p className="application-subheading-2-2 submission-panel-copy">
+                Once the creator profile exists, this form runs the marketplace checks for creator
+                eligibility, naming policy, published-site validation, preview URL format, and
+                image requirements.
+              </p>
+              <div className="submission-sidecar-steps">
+                <div className="submission-sidecar-step">
+                  <p className="submission-step-label submission-step-label-secondary">Validation</p>
+                  <p className="submission-panel-copy">
+                    Use the inline checks before submit so the final handoff matches the live
+                    review workflow.
+                  </p>
                 </div>
-                <div className="field">
-                  <span className="field-label">Webflow features</span>
-                  <div className="field-help">Which Webflow features does your template use?</div>
-                  <div className="checkbox-grid">
-                    <label className="checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={template.typeCms}
-                        onChange={(event) => updateTemplate('typeCms', event.target.checked)}
-                      />
-                      <span>CMS</span>
-                    </label>
-                    <label className="checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={template.typeEcommerce}
-                        onChange={(event) => updateTemplate('typeEcommerce', event.target.checked)}
-                      />
-                      <span>Ecommerce</span>
-                    </label>
-                  </div>
+                <div className="submission-sidecar-step">
+                  <p className="submission-step-label submission-step-label-secondary">Review</p>
+                  <p className="submission-panel-copy">
+                    Reviewers still receive the submission through the existing Airtable automation
+                    path, so downstream routing stays unchanged.
+                  </p>
                 </div>
               </div>
+            </div>
 
-              {template.priceModel === 'Paid' && template.pageCount ? (
-                <div className="field">
-                  <span className="field-label">Template price <span style={{ color: 'var(--color-error)' }}>*</span></span>
-                  <div className="field-help">
-                    Available price points are determined by your template type and features.
-                  </div>
-                  <div className="checkbox-grid">
-                    {getPricingTiers(template.pageCount as PageCountOption, template.typeCms).prices.map((price) => (
-                      <label className="checkbox-row" key={price}>
-                        <input
-                          type="radio"
-                          name="selectedPrice"
-                          checked={template.selectedPrice === price}
-                          onChange={() => updateTemplate('selectedPrice', price)}
-                        />
-                        <span>${price}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="field">
-                <span className="field-label">Styles <span style={{ color: 'var(--color-error)' }}>*</span></span>
-                <div className="field-help">Select up to 2 styles.</div>
-                <div className="checkbox-grid">
-                  {TEMPLATE_STYLES.map((style) => {
-                    const checked = template.styles.includes(style);
-                    const atMax = template.styles.length >= 2;
-                    return (
-                      <label className="checkbox-row" key={style}>
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={!checked && atMax}
-                          onChange={() =>
-                            updateTemplate('styles', toggleCheckbox(template.styles, style))
-                          }
-                        />
-                        <span>{style}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="field-help">{template.styles.length} of 2 styles selected</div>
-              </div>
-
-              <div className="field">
-                <span className="field-label">Features <span style={{ color: 'var(--color-error)' }}>*</span></span>
-                <div className="checkbox-grid">
-                  {WEBFLOW_FEATURES.filter((f) => !f.hidden).map((option) => (
-                    <label className="checkbox-row" key={option.id}>
-                      <input
-                        type="checkbox"
-                        checked={template.featureIds.includes(option.id)}
-                        onChange={() =>
-                          updateTemplate(
-                            'featureIds',
-                            toggleCheckbox(template.featureIds, option.id)
-                          )
-                        }
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  ))}
-                </div>
-                {verification.gsapDetected ? (
-                  <div className="field-help">
-                    GSAP was detected automatically during published-site validation.
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="field">
-                <label className="field-label" htmlFor="shortDescription">
-                  Short description
-                </label>
-                <textarea
-                  className="field-textarea"
-                  id="shortDescription"
-                  value={template.shortDescription}
-                  onChange={(event) => updateTemplate('shortDescription', event.target.value)}
-                  maxLength={250}
-                  required
-                />
-                <div className="field-help">{template.shortDescription.length}/250 characters</div>
-              </div>
-
-              <div className="field">
-                <label className="field-label" htmlFor="longDescription">
-                  Long description <span style={{ color: 'var(--color-error)' }}>*</span>
-                </label>
-                <div className="field-help">
-                  Rich text is allowed (bold, italic, lists). Images are stripped.
-                </div>
-                <QuillEditor
-                  id="longDescription"
-                  value={template.longDescription}
-                  onChange={(html) => updateTemplate('longDescription', html)}
-                  placeholder="Write the Template Overview content..."
-                />
-              </div>
-
-              <div className="field">
-                <label className="field-label" htmlFor="notes">
-                  Notes
-                </label>
-                <textarea
-                  className="field-textarea"
-                  id="notes"
-                  value={template.notes}
-                  onChange={(event) => updateTemplate('notes', event.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-2">
-                <div className="field">
-                  <label className="field-label" htmlFor="thumbnailFile">
-                    Primary thumbnail
-                  </label>
-                  <input
-                    className="field-input"
-                    id="thumbnailFile"
-                    type="file"
-                    accept="image/webp"
-                    onChange={(event) => updateTemplate('thumbnailFile', event.target.files?.[0] || null)}
-                    required
-                  />
-                  <div className="field-help">WebP only, exactly 750x995, max 300KB.</div>
-                </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="secondaryThumbnailFile">
-                    Secondary thumbnail
-                  </label>
-                  <input
-                    className="field-input"
-                    id="secondaryThumbnailFile"
-                    type="file"
-                    accept="image/webp"
-                    onChange={(event) =>
-                      updateTemplate('secondaryThumbnailFile', event.target.files?.[0] || null)
-                    }
-                  />
-                  <div className="field-help">Optional. Same 750x995 WebP constraint.</div>
-                </div>
-              </div>
-
-              <div className="field">
-                <label className="field-label" htmlFor="galleryFiles">
-                  Gallery images
-                </label>
-                <input
-                  className="field-input"
-                  id="galleryFiles"
-                  type="file"
-                  accept="image/webp"
-                  multiple
-                  onChange={(event) =>
-                    updateTemplate(
-                      'galleryFiles',
-                      Array.from(event.target.files || []).slice(0, 5)
-                    )
-                  }
-                  required
-                />
-                <div className="field-help">
-                  Upload 1 to 5 WebP images, each exactly 1440x900 and max 250KB.
-                </div>
-              </div>
-
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={template.checklistConfirmed}
-                  onChange={(event) =>
-                    updateTemplate('checklistConfirmed', event.target.checked)
-                  }
-                />
-                <span>I completed the submission checklist.</span>
-              </label>
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={template.agreementConfirmed}
-                  onChange={(event) =>
-                    updateTemplate('agreementConfirmed', event.target.checked)
-                  }
-                />
-                <span>I agree to the marketplace submission agreement.</span>
-              </label>
-
-              {turnstileEnabled ? (
-                <div className="field">
-                  <span className="field-label">Bot check</span>
-                  <div className="turnstile-wrap" ref={templateTurnstileRef} />
-                  <div className="field-help">Required before submitting the template.</div>
-                </div>
-              ) : null}
-
-              {templateStatus ? (
-                <div className={statusClassName(templateStatus.tone)}>{templateStatus.message}</div>
-              ) : null}
-
-              <div className="form-actions">
-                <button className="button button-primary" type="submit" disabled={templateSubmitting}>
-                  {templateSubmitting ? 'Submitting…' : 'Submit template'}
-                </button>
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={() => setStep('creator')}
+            <div className="submission-form-column">
+              <div className="w-form">
+                <form
+                  className="form-2 cc-library-application-form submission-form"
+                  id="wf-form-Marketplace-Template-Submission"
+                  name="wf-form-Marketplace-Template-Submission"
+                  onSubmit={submitTemplate}
                 >
-                  Back to creator profile
-                </button>
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label"
+                      htmlFor="templateCreatorName"
+                    >
+                      Creator name
+                      <span className="submission-required"> *</span>
+                    </label>
+                    <input
+                      className="field-input input w-input"
+                      id="templateCreatorName"
+                      value={template.creatorName}
+                      onChange={(event) => updateTemplate('creatorName', event.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="submission-field-inline">
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="templateCreatorEmail"
+                      >
+                        Creator email
+                        <span className="submission-required"> *</span>
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Existing creators can enter their creator email here directly.
+                      </p>
+                      <input
+                        className="field-input input w-input"
+                        id="templateCreatorEmail"
+                        type="email"
+                        value={template.creatorEmail}
+                        onChange={(event) => updateTemplate('creatorEmail', event.target.value)}
+                        required
+                      />
+                    </div>
+                    <button className="button-sp cc-white" type="button" onClick={verifyCreatorEligibility}>
+                      Check creator
+                    </button>
+                  </div>
+
+                  <div className="submission-field-inline">
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="templateName"
+                      >
+                        Template name
+                        <span className="submission-required"> *</span>
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        First word must be capitalized. Avoid emoji, category names, tag names, and
+                        the standalone term &quot;AI&quot;.
+                      </p>
+                      <input
+                        className="field-input input w-input"
+                        id="templateName"
+                        value={template.templateName}
+                        onChange={(event) => updateTemplate('templateName', event.target.value)}
+                        required
+                      />
+                    </div>
+                    <button className="button-sp cc-white" type="button" onClick={verifyTemplateName}>
+                      Check name
+                    </button>
+                  </div>
+
+                  <div className="submission-field-inline">
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="publishedUrl"
+                      >
+                        Published URL
+                        <span className="submission-required"> *</span>
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Must be an HTTPS <code className="submission-inline-code">*.webflow.io</code>{' '}
+                        URL. The full site crawl can take a few minutes.
+                      </p>
+                      <input
+                        className="field-input input w-input"
+                        id="publishedUrl"
+                        type="url"
+                        value={template.publishedUrl}
+                        onChange={(event) => updateTemplate('publishedUrl', event.target.value)}
+                        required
+                      />
+                    </div>
+                    <button className="button-sp cc-white" type="button" onClick={verifyPublishedUrl}>
+                      Validate template
+                    </button>
+                  </div>
+
+                  {verification.publishedUrlMessage ? (
+                    <div className="submission-status submission-status-success">
+                      {verification.publishedUrlMessage}
+                    </div>
+                  ) : null}
+
+                  <div className="submission-grid-2">
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="previewUrl"
+                      >
+                        Preview URL
+                        <span className="submission-required"> *</span>
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Must contain{' '}
+                        <code className="submission-inline-code">
+                          https://preview.webflow.com/preview/
+                        </code>
+                        .
+                      </p>
+                      <input
+                        className="field-input input w-input"
+                        id="previewUrl"
+                        type="url"
+                        value={template.previewUrl}
+                        onChange={(event) => updateTemplate('previewUrl', event.target.value)}
+                        required
+                      />
+                      {!previewUrlValid ? (
+                        <div className="submission-error-text">
+                          Preview URLs must contain https://preview.webflow.com/preview/.
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label"
+                        htmlFor="priceModel"
+                      >
+                        Free or paid
+                      </label>
+                      <select
+                        className="field-select input w-select"
+                        id="priceModel"
+                        value={template.priceModel}
+                        onChange={(event) =>
+                          updateTemplate('priceModel', event.target.value as 'Free' | 'Paid')
+                        }
+                      >
+                        <option value="Free">Free</option>
+                        <option value="Paid">Paid</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="submission-field">
+                    <span className="field-label template-application-form_field-label cc-with-desc">
+                      Category
+                      <span className="submission-required"> *</span>
+                    </span>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Select up to 2 options that best describe your template.
+                    </p>
+                    <div className="submission-choice-grid is-scroll">
+                      {CATEGORY_OPTIONS.map((category) => {
+                        const checked = template.categories.includes(category);
+                        const atMax = template.categories.length >= 2;
+                        return (
+                          <label
+                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            key={category}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={!checked && atMax}
+                              onChange={() =>
+                                updateTemplate(
+                                  'categories',
+                                  toggleCheckbox(template.categories, category),
+                                )
+                              }
+                            />
+                            <span className="submission-choice-copy">{category}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <div className="field-help submission-counter">
+                      {template.categories.length} of 2 categories selected
+                    </div>
+                  </div>
+
+                  <div className="submission-field">
+                    <span className="field-label template-application-form_field-label cc-with-desc">
+                      Secondary tags
+                    </span>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Optional. Tag names are blocked inside the template title.
+                    </p>
+                    <div className="submission-choice-grid is-scroll submission-choice-grid-compact">
+                      {SECONDARY_TAGS.map((tag) => (
+                        <label
+                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          key={tag}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={template.secondaryTags.includes(tag)}
+                            onChange={() =>
+                              updateTemplate(
+                                'secondaryTags',
+                                toggleCheckbox(template.secondaryTags, tag),
+                              )
+                            }
+                          />
+                          <span className="submission-choice-copy">{tag}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="submission-grid-2">
+                    <div className="submission-field">
+                      <span className="field-label template-application-form_field-label cc-with-desc">
+                        Page count
+                        <span className="submission-required"> *</span>
+                      </span>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        One page, multi page, or multi-layout.
+                      </p>
+                      <div className="submission-choice-grid">
+                        {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
+                          <label
+                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            key={option}
+                          >
+                            <input
+                              type="radio"
+                              name="pageCount"
+                              checked={template.pageCount === option}
+                              onChange={() => updateTemplate('pageCount', option)}
+                            />
+                            <span className="submission-choice-copy">
+                              {option === 'One'
+                                ? 'One page'
+                                : option === 'Multi'
+                                  ? 'Multi page'
+                                  : 'Multi-layout (3+ layouts with 3+ pages)'}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="submission-field">
+                      <span className="field-label template-application-form_field-label cc-with-desc">
+                        Template type
+                      </span>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Check the Webflow product surfaces used by the template.
+                      </p>
+                      <div className="submission-choice-grid">
+                        <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                          <input
+                            type="checkbox"
+                            checked={template.typeCms}
+                            onChange={(event) => updateTemplate('typeCms', event.target.checked)}
+                          />
+                          <span className="submission-choice-copy">CMS</span>
+                        </label>
+                        <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                          <input
+                            type="checkbox"
+                            checked={template.typeEcommerce}
+                            onChange={(event) =>
+                              updateTemplate('typeEcommerce', event.target.checked)
+                            }
+                          />
+                          <span className="submission-choice-copy">Ecommerce</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {template.priceModel === 'Paid' && template.pageCount ? (
+                    <div className="submission-field">
+                      <span className="field-label template-application-form_field-label cc-with-desc">
+                        Template price
+                        <span className="submission-required"> *</span>
+                      </span>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Available price points are determined by page count and CMS usage.
+                      </p>
+                      <div className="submission-choice-grid">
+                        {getPricingTiers(template.pageCount as PageCountOption, template.typeCms).prices.map((price) => (
+                          <label
+                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            key={price}
+                          >
+                            <input
+                              type="radio"
+                              name="selectedPrice"
+                              checked={template.selectedPrice === price}
+                              onChange={() => updateTemplate('selectedPrice', price)}
+                            />
+                            <span className="submission-choice-copy">${price}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="submission-field">
+                    <span className="field-label template-application-form_field-label cc-with-desc">
+                      Styles
+                      <span className="submission-required"> *</span>
+                    </span>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Select up to 2 styles.
+                    </p>
+                    <div className="submission-choice-grid">
+                      {TEMPLATE_STYLES.map((style) => {
+                        const checked = template.styles.includes(style);
+                        const atMax = template.styles.length >= 2;
+                        return (
+                          <label
+                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            key={style}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={!checked && atMax}
+                              onChange={() =>
+                                updateTemplate('styles', toggleCheckbox(template.styles, style))
+                              }
+                            />
+                            <span className="submission-choice-copy">{style}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <div className="field-help submission-counter">
+                      {template.styles.length} of 2 styles selected
+                    </div>
+                  </div>
+
+                  <div className="submission-field">
+                    <span className="field-label template-application-form_field-label cc-with-desc">
+                      Features
+                      <span className="submission-required"> *</span>
+                    </span>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Choose the Webflow features used by the template.
+                    </p>
+                    <div className="submission-choice-grid">
+                      {WEBFLOW_FEATURES.filter((f) => !f.hidden).map((option) => (
+                        <label
+                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          key={option.id}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={template.featureIds.includes(option.id)}
+                            onChange={() =>
+                              updateTemplate(
+                                'featureIds',
+                                toggleCheckbox(template.featureIds, option.id),
+                              )
+                            }
+                          />
+                          <span className="submission-choice-copy">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {verification.gsapDetected ? (
+                      <div className="field-help">
+                        GSAP was detected automatically during validation.
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="shortDescription"
+                    >
+                      Short description
+                      <span className="submission-required"> *</span>
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Keep the short summary concise and reviewer-friendly.
+                    </p>
+                    <textarea
+                      className="field-textarea input w-input submission-textarea submission-textarea-short"
+                      id="shortDescription"
+                      value={template.shortDescription}
+                      onChange={(event) => updateTemplate('shortDescription', event.target.value)}
+                      maxLength={250}
+                      required
+                    />
+                    <div className="field-help submission-counter">
+                      {template.shortDescription.length}/250 characters
+                    </div>
+                  </div>
+
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="longDescription"
+                    >
+                      Long description
+                      <span className="submission-required"> *</span>
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Rich text is allowed for emphasis and lists. Image embeds are stripped.
+                    </p>
+                    <QuillEditor
+                      id="longDescription"
+                      value={template.longDescription}
+                      onChange={(html) => updateTemplate('longDescription', html)}
+                      placeholder="Write the Template Overview content..."
+                    />
+                  </div>
+
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="notes"
+                    >
+                      Notes
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Optional internal notes for the review queue.
+                    </p>
+                    <textarea
+                      className="field-textarea input w-input submission-textarea submission-textarea-notes"
+                      id="notes"
+                      value={template.notes}
+                      onChange={(event) => updateTemplate('notes', event.target.value)}
+                    />
+                  </div>
+
+                  <div className="submission-grid-2">
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="thumbnailFile"
+                      >
+                        Primary thumbnail
+                        <span className="submission-required"> *</span>
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        WebP only, exactly 750x995, under 300KB.
+                      </p>
+                      <input
+                        className="submission-file-input"
+                        id="thumbnailFile"
+                        type="file"
+                        accept="image/webp"
+                        onChange={(event) =>
+                          updateTemplate('thumbnailFile', event.target.files?.[0] || null)
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="secondaryThumbnailFile"
+                      >
+                        Secondary thumbnail
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Optional. Same 750x995 WebP constraint as the primary thumbnail.
+                      </p>
+                      <input
+                        className="submission-file-input"
+                        id="secondaryThumbnailFile"
+                        type="file"
+                        accept="image/webp"
+                        onChange={(event) =>
+                          updateTemplate(
+                            'secondaryThumbnailFile',
+                            event.target.files?.[0] || null,
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="galleryFiles"
+                    >
+                      Gallery images
+                      <span className="submission-required"> *</span>
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Upload 1 to 5 WebP images, each exactly 1440x900 and under 250KB.
+                    </p>
+                    <input
+                      className="submission-file-input"
+                      id="galleryFiles"
+                      type="file"
+                      accept="image/webp"
+                      multiple
+                      onChange={(event) =>
+                        updateTemplate(
+                          'galleryFiles',
+                          Array.from(event.target.files || []).slice(0, 5),
+                        )
+                      }
+                      required
+                    />
+                  </div>
+
+                  <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
+                    <input
+                      type="checkbox"
+                      checked={template.checklistConfirmed}
+                      onChange={(event) =>
+                        updateTemplate('checklistConfirmed', event.target.checked)
+                      }
+                    />
+                    <span className="submission-choice-copy">
+                      I completed the submission checklist.
+                    </span>
+                  </label>
+
+                  <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
+                    <input
+                      type="checkbox"
+                      checked={template.agreementConfirmed}
+                      onChange={(event) =>
+                        updateTemplate('agreementConfirmed', event.target.checked)
+                      }
+                    />
+                    <span className="submission-choice-copy">
+                      I agree to the marketplace submission agreement.
+                    </span>
+                  </label>
+
+                  {turnstileEnabled ? (
+                    <div className="submission-field">
+                      <span className="field-label template-application-form_field-label">
+                        Bot check
+                      </span>
+                      <div className="turnstile-wrap" ref={templateTurnstileRef} />
+                      <div className="field-help">Required before submitting the template.</div>
+                    </div>
+                  ) : null}
+
+                  {templateStatus ? (
+                    <div className={statusClassName(templateStatus.tone)}>{templateStatus.message}</div>
+                  ) : null}
+
+                  <div className="submission-actions">
+                    <button className="button-sp" type="submit" disabled={templateSubmitting}>
+                      {templateSubmitting ? 'Submitting...' : 'Submit template'}
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
-          </section>
-        ) : null}
-      </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
