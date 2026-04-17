@@ -86,6 +86,39 @@ Three chart/motion components built against `@visx/*` packages already in the bd
 
 No new backend. No new component. Three lines of wiring that route creators into the rich App Analytics and App Development screens that already exist. This enforces a reuse-first pattern for Phase 2 — extend existing surface before building parallel screens.
 
+### 1.6 Polish pass (Tier 1)
+
+Four low-risk improvements built on the Phase 1 foundation. Each is self-contained and shippable.
+
+**Telemetry**
+
+- 6 new `CREATOR_DASHBOARD_*` events registered alphabetically in `packages/systems/core/constants/analytics/analyticsEvents.ts`: `VIEWED`, `FILTER_APPLIED`, `SEARCH_ISSUED`, `ASSET_OPENED`, `ACTION_CLICKED`, `SUBMISSION_QUOTA_VIEWED`.
+- New helper module `telemetry.ts` in the CreatorDashboard directory with a typed `surface` enum and function-per-event API.
+- Wired into all 6 surfaces (home, detail, submissions, analytics, settings, validation) as page-view events, plus per-surface filter/search/action hooks.
+- Search event tracks `query_length` only, never the raw query — PII safety.
+- 5 unit tests mocking `trackEvent`.
+
+**Error boundaries**
+
+- All 6 page wrappers (`PageWrapper`, `DetailPageWrapper`, `SubmissionsPageWrapper`, `AnalyticsPageWrapper`, `SettingsPageWrapper`, `ValidationPageWrapper`) refactored into outer `ErrorBoundary` + inner body component. Each wrapper passes a unique `surface` metadata tag so telemetry can distinguish crashes by page.
+- Reuses the existing `@components/ErrorBoundary`, which already sends errors through `telemetry.sendError(REPORT_EXCEPTION, …)`.
+- `allowReset` is enabled so creators can retry without a page reload.
+
+**Chart tooltips**
+
+- `Sparkline` (Phase 1.3) + `DonutChart` (Phase 1.3) now use `@visx/tooltip` `useTooltip` + `TooltipWithBounds`.
+- Sparkline: overlay rect tracks mouse x, hovered point gets a dot + tooltip with the formatted value. `formatValue` prop is optional.
+- DonutChart: each segment gets `onMouseMove` + `onMouseLeave`, non-hovered segments dim to 0.85 opacity, tooltip shows `label: value (percent%)`.
+- No new dependencies — `@visx/tooltip` was already in `package.json`.
+
+**Submission quota 90-day trend**
+
+- Server: new `listCreatorSubmissionTimestampsInWindow` DAL + `bucketTimestampsByDay` pure helper; `getSubmissionQuota` now returns `trend: number[]` (90 daily buckets) and `trendWindowDays`.
+- Integration test gains 4 new scenarios — empty trend, bucket alignment (index by day offset), out-of-window ignored, end-to-end trend on the quota response.
+- Client type `CreatorSubmissionQuota` extended; `SubmissionQuotaCard` renders a `<Sparkline>` below the progress bar, tone-matched to the quota state, hidden when the creator has zero submissions in the 90-day window.
+
+**Validation**: 13 + 10 + 8 + 5 + 5 = 41 client unit tests pass (Phase 1 + Tier 1). Focused ESLint clean across every touched file. One `no-implicit-coercion` lint hit on `1 * DAY_MS` in the new test scenarios, fixed.
+
 ### 1.4 Feedback button — deferred
 
 Not implemented. bd-webflow has no shared feedback widget (verified by searching for Intercom, Productboard, Appcues, Pendo, Delighted, Hotjar — none present). The only existing "feedback" pattern is an external survey-URL link inside `Sites/GeneralSettings/.../RealtimeSection`.
@@ -146,8 +179,12 @@ Phase 1 is preserved in the bd-webflow working tree. These changes should land t
 2. One PR: App version history UI (client-only, uses existing backend).
 3. One PR: Analytics primitives (the three components + their test + the AnalyticsPage/SubmissionsPage integration).
 4. One PR: Deep-links on app DetailPage to App Analytics + App Development (client-only, tiny).
+5. One PR: Telemetry wiring (analytics registry additions + `telemetry.ts` helper + event emissions across surfaces + tests).
+6. One PR: Error boundaries on 6 page wrappers.
+7. One PR: Chart tooltips on `Sparkline` + `DonutChart`.
+8. One PR: Submission quota 90-day trend (server + client + extended tests).
 
-Each is independent and ships value on its own. PRs 2 and 4 can reasonably combine since they both touch `DetailPage.tsx` and neither has new backend.
+Each is independent and ships value on its own. PRs 2 and 4 can reasonably combine since they both touch `DetailPage.tsx` and neither has new backend. PRs 7 and 8 can reasonably combine since both touch `Sparkline` / `SubmissionQuotaCard`. PR 5 touches the shared analytics registry — flag that in the PR description so the Analytics/Data team reviews the event names before merge.
 
 ## References
 
