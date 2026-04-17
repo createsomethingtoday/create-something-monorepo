@@ -3,8 +3,8 @@ import {
   fetchExternalSubmissionStatus,
   formatTimeUntil,
   type ExternalSubmissionStatus
-} from '@create-something/webflow-dashboard-core/submission';
-import type { Asset } from '@create-something/webflow-dashboard-core/airtable';
+} from '../../vendor/core/submission';
+import type { Asset } from '../../vendor/core/airtable';
 import { getServerAirtable } from '../server/airtable';
 import { checkRemoteCreatorEligibility, type RemoteCreatorEligibility } from './external';
 

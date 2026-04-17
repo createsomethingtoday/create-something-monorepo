@@ -6,8 +6,7 @@ const nextConfig: NextConfig = {
   assetPrefix,
   images: {
     unoptimized: true
-  },
-  transpilePackages: ['@create-something/webflow-dashboard-core']
+  }
 };
 
 export default nextConfig;

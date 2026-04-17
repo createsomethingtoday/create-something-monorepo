@@ -1,8 +1,8 @@
-import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
+import { validateEmail } from '../../../../vendor/core/airtable';
 import {
   buildCreatorEnvelope,
   postMarketplaceWebhook,
-} from '@create-something/webflow-dashboard-core/marketplace-webhook';
+} from '../../../../vendor/core/marketplace-webhook';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { isSupportedCountry } from '../../../../lib/intake/constants';

@@ -1,4 +1,4 @@
-import { isTrustedRequestOrigin } from '@create-something/webflow-dashboard-core/security';
+import { isTrustedRequestOrigin } from './vendor/core/security';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const NO_STORE_HEADERS = {
