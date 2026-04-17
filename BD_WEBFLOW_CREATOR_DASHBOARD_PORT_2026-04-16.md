@@ -119,6 +119,22 @@ Four low-risk improvements built on the Phase 1 foundation. Each is self-contain
 
 **Validation**: 13 + 10 + 8 + 5 + 5 = 41 client unit tests pass (Phase 1 + Tier 1). Focused ESLint clean across every touched file. One `no-implicit-coercion` lint hit on `1 * DAY_MS` in the new test scenarios, fixed.
 
+### 1.7 Tier 2 extras
+
+Two more self-contained improvements shipped on top of Tier 1. Neither requires product input.
+
+**CSV export on Analytics page**
+
+- New module `analyticsExport.ts` with pure helpers: `escapeCsvCell` (RFC 4180-ish quoting, doubles embedded quotes), `renderCsv` (CRLF row separator), `formatCreatorAnalyticsCsv` (12-column output: name, type, id, coverage, installs, likes, views, uninstalls, demand, resource count, activity score, updated on), `buildCreatorAnalyticsCsvFilename` (slug + date stamp), `downloadCsv` (Blob + transient `<a>`, SSR-safe).
+- `AnalyticsPage` gains a `Download CSV` button in the page header, disabled when the portfolio is empty, emits `download_csv` via the Phase 1.6 action-click telemetry.
+- 13 unit tests covering quoting, row shape, header alignment, filename format.
+
+**A11y pass on Phase 1 components**
+
+- `SubmissionQuotaCard` progress bar now has `role="progressbar"` + `aria-valuemin/max/now` + `aria-valuetext` (reads "3 of 6 submissions used" or "Whitelisted, no limit"). Inner fill is `aria-hidden` since the track carries the semantic value.
+- `DonutChart` each segment `<path>` now includes a SVG `<title>` child, so screen readers announce `"Needs attention: 4 (28%)"` on focus even without mouse hover. Tooltip behavior unchanged for sighted users.
+- `KineticNumber` gets `aria-live="off"` (prevents mid-animation RAF updates from spamming assistive tech) plus `aria-label` pinned to the *final* value so SR users hear the real number regardless of animation state.
+
 ### 1.4 Feedback button — deferred
 
 Not implemented. bd-webflow has no shared feedback widget (verified by searching for Intercom, Productboard, Appcues, Pendo, Delighted, Hotjar — none present). The only existing "feedback" pattern is an external survey-URL link inside `Sites/GeneralSettings/.../RealtimeSection`.
@@ -183,6 +199,8 @@ Phase 1 is preserved in the bd-webflow working tree. These changes should land t
 6. One PR: Error boundaries on 6 page wrappers.
 7. One PR: Chart tooltips on `Sparkline` + `DonutChart`.
 8. One PR: Submission quota 90-day trend (server + client + extended tests).
+9. One PR: CSV export on Analytics page (pure helpers + button + tests).
+10. One PR: A11y pass (progress-bar semantics + donut `<title>` + kinetic `aria-live`).
 
 Each is independent and ships value on its own. PRs 2 and 4 can reasonably combine since they both touch `DetailPage.tsx` and neither has new backend. PRs 7 and 8 can reasonably combine since both touch `Sparkline` / `SubmissionQuotaCard`. PR 5 touches the shared analytics registry — flag that in the PR description so the Analytics/Data team reviews the event names before merge.
 
