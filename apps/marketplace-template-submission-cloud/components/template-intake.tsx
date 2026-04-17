@@ -981,6 +981,11 @@ export function TemplateIntake() {
                       Verify email
                     </button>
                   </div>
+                  {fieldFeedback.primaryEmail ? (
+                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.primaryEmail.tone), marginTop: 4 }}>
+                      {fieldFeedback.primaryEmail.message}
+                    </div>
+                  ) : null}
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
@@ -1010,6 +1015,11 @@ export function TemplateIntake() {
                       Verify email
                     </button>
                   </div>
+                  {fieldFeedback.webflowEmail ? (
+                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.webflowEmail.tone), marginTop: 4 }}>
+                      {fieldFeedback.webflowEmail.message}
+                    </div>
+                  ) : null}
 
                   <div className="submission-grid-2">
                     <div className="submission-field">
@@ -1255,6 +1265,11 @@ export function TemplateIntake() {
                       Check name
                     </button>
                   </div>
+                  {fieldFeedback.templateName ? (
+                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.templateName.tone), marginTop: 4 }}>
+                      {fieldFeedback.templateName.message}
+                    </div>
+                  ) : null}
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
@@ -1282,10 +1297,9 @@ export function TemplateIntake() {
                       Validate template
                     </button>
                   </div>
-
-                  {verification.publishedUrlMessage ? (
-                    <div className="submission-status submission-status-success">
-                      {verification.publishedUrlMessage}
+                  {fieldFeedback.publishedUrl ? (
+                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.publishedUrl.tone), marginTop: 4 }}>
+                      {fieldFeedback.publishedUrl.message}
                     </div>
                   ) : null}
 
