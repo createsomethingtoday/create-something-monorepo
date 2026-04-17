@@ -11,7 +11,7 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
+        'One review, intake, or approval-heavy workflow rebuilt into a reliable operating path with clear rules, evidence, and ownership.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build with optional ongoing support'
@@ -19,7 +19,7 @@
     {
       name: 'Policy OS',
       description:
-        'The oversight layer: policy artifacts, approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
+        'The governed execution layer: policy artifacts, approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly governed execution layer'
@@ -27,7 +27,7 @@
     {
       name: 'Enterprise Extension',
       description:
-        'Cross-system control for regulated, high-volume, or multi-team workflows where auditability and recovery matter.',
+        'Cross-system control for high-volume review and approval operations where auditability, recovery, and multi-team coordination matter.',
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation with optional ongoing support'
@@ -35,10 +35,10 @@
   ];
 
   const proofMetrics = [
-    { value: '1', label: 'workflow fixed first' },
-    { value: '3', label: 'decision states' },
-    { value: '100%', label: 'artifact-backed delivery' },
-    { value: '0', label: 'interest in open-ended staff aug' }
+    { value: '1', label: 'workflow scoped first' },
+    { value: '3', label: 'states: allow, review, block' },
+    { value: '4', label: 'proof patterns shipped' },
+    { value: '100%', label: 'artifact-backed delivery' }
   ];
 
   const operatingSignals = [
@@ -55,8 +55,28 @@
   const capabilityCards = [
     {
       id: '01',
-      title: 'Governed actions',
-      body: 'Decide which actions can run automatically, which need a person in the loop, and which must stop.',
+      title: 'Review systems with evidence',
+      body: 'Automate repetitive checks, route work to the right reviewer, and keep the decision trail inspectable.',
+      points: [
+        'Automated analysis before the decision point',
+        'Reviewer queues and self-assignment flows',
+        'Feedback tied to explicit failures instead of vague notes'
+      ]
+    },
+    {
+      id: '02',
+      title: 'Submission and intake control',
+      body: 'Turn brittle forms and manual triage into governed intake paths that validate, route, and record work cleanly.',
+      points: [
+        'Field and asset validation before handoff',
+        'Webhook and system routing without spreadsheet glue',
+        'Operator-facing statuses that match the real workflow'
+      ]
+    },
+    {
+      id: '03',
+      title: 'Approval boundaries that scale',
+      body: 'As actions get riskier, the workflow needs explicit allow, review, and block states instead of implied trust.',
       points: [
         'Reason-coded approvals instead of hidden heuristics',
         'Policy packs attached to the workflow, not buried in chat history',
@@ -64,32 +84,12 @@
       ]
     },
     {
-      id: '02',
-      title: 'Portable delivery',
-      body: 'The client keeps the code, workflow documentation, and operating artifacts after launch.',
+      id: '04',
+      title: 'Portable control layer',
+      body: 'Commodity connectivity should stay commodity. The durable value is the policy, trust boundary, and operating artifacts around the workflow.',
       points: [
         'Runbooks, contracts, and release evidence ship with the build',
         'No proprietary black box required to keep the workflow alive',
-        'The implementation stays legible after the kickoff call'
-      ]
-    },
-    {
-      id: '03',
-      title: 'Recovery by design',
-      body: 'A workflow is not production-ready until it can fail cleanly, escalate cleanly, and recover cleanly.',
-      points: [
-        'Rollback notes and operator handoffs are part of the package',
-        'Failures become incidents with owners, not mystery states',
-        'Edge cases get routed before they become cleanup'
-      ]
-    },
-    {
-      id: '04',
-      title: 'Commodity plumbing, custom judgment',
-      body: 'Commodity connectivity should stay commodity. The value is in workflow design, policy, and delivery.',
-      points: [
-        'Use the best available connector layer where it saves time',
-        'Wrap it in CREATE SOMETHING trust boundaries and artifacts',
         'Customize only where the workflow actually becomes strategic'
       ]
     }
@@ -100,7 +100,7 @@
       name: 'Workflow Infrastructure',
       featured: true,
       summary:
-        'The first reliable operating path. Fix one workflow your team still protects by hand.',
+        'The first reliable operating path. Fix one review, intake, or approval-heavy workflow your team still protects by hand.',
       points: [
         'Business-rule mapping',
         'Workflow implementation',
@@ -112,7 +112,7 @@
       name: 'Policy OS',
       featured: false,
       summary:
-        'The governed execution layer once speed touches revenue, trust, or compliance.',
+        'The governed execution layer once speed touches revenue, trust, compliance, or multi-step approval.',
       points: [
         'Approval and block boundaries',
         'Release checks and eval gates',
@@ -124,7 +124,7 @@
       name: 'Enterprise Extension',
       featured: false,
       summary:
-        'Cross-system orchestration for teams that need deterministic recovery and auditability.',
+        'Cross-system orchestration for teams that need deterministic recovery, auditability, and multi-team coordination.',
       points: [
         'Cross-system control surfaces',
         'Custom trust boundaries',
@@ -143,8 +143,8 @@
 
 <SEO
   title={`${agencyCoreMessaging.categoryLabel} | CREATE SOMETHING .agency`}
-  description="CREATE SOMETHING .agency helps ops-minded teams make critical workflows safe enough to trust in production."
-  keywords="governed workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
+  description="CREATE SOMETHING .agency builds governed workflow systems for review, validation, intake, and approval-heavy operations."
+  keywords="governed workflow infrastructure, review workflow automation, submission intake systems, approval operations, enterprise workflow architecture, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -161,14 +161,14 @@
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Make the workflow safe enough to trust.</h1>
+          <h1 class="hero-title">Make review, intake, and approval workflows safe enough to trust.</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            For the operator who has to answer for what happens next. CREATE SOMETHING fixes the
-            workflow creating the most drag, then adds approvals, visibility, and recovery paths as
-            the stakes rise.
+            CREATE SOMETHING builds governed workflow systems for teams running validation,
+            submission intake, review, and approval-heavy operations. Start with one workflow, then
+            add approvals, visibility, and recovery paths as the stakes rise.
           </p>
         </BlurFade>
 
@@ -180,7 +180,7 @@
         </BlurFade>
 
         <BlurFade delay={0.2}>
-          <p class="hero-note">Scoped delivery. Clear controls. Portable artifacts.</p>
+          <p class="hero-note">Validation. Review. Approval. Artifact-backed control.</p>
         </BlurFade>
       </div>
     </div>
@@ -206,8 +206,8 @@
       <div class="signal-header">
         <span class="product-kicker">Portable stack</span>
         <p>
-          CREATE SOMETHING can use commodity connectivity where it makes sense, while keeping the
-          delivery, policy, and trust boundary owned by CREATE SOMETHING.
+          MCP is the substrate for trust boundaries and portability. The delivery is the governed
+          workflow layer on top: validation, review, approval, and recovery.
         </p>
       </div>
 
@@ -227,15 +227,15 @@
   <div class="shell-inner-pad showcase-stack">
     <div class="section-lead">
       <BlurFade>
-        <span class="product-kicker">Inspect the full control room</span>
+        <span class="product-kicker">Recent proof</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>The detailed decision surface belongs below the fold.</h2>
+        <h2>The shipped work already points to the category.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Once the hero establishes the workflow boundaries, the full surface can show tabs,
-          checks, artifacts, and release logic without crushing the copy.
+          Recent work is not a generic agent sandbox. It includes template validation, marketplace
+          submission intake, reviewer workflows, and governed MCP fleet control.
         </p>
       </BlurFade>
     </div>
@@ -253,12 +253,12 @@
         <span class="product-kicker">Why teams buy this</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>Connecting tools is easy. Trust is the product.</h2>
+        <h2>The connection is not the moat. The governed workflow is.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The hard part is deciding what should run, what should wait, and what should stop. That
-          decision layer is what keeps automation from becoming cleanup debt.
+          Most teams can connect tools now. The hard part is deciding what should run, what should
+          wait, and what should stop when a workflow carries real operational cost.
         </p>
       </BlurFade>
     </div>
@@ -328,13 +328,13 @@
         <span class="product-kicker">Policy before speed</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>The control layer is the difference between a demo and an operating path.</h2>
+        <h2>The control layer is what turns validation and review into production operations.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
           CREATE SOMETHING can use best-of-breed plumbing under the hood, but the thing clients are
           actually buying is the judgment layer around the workflow: approvals, blocked states,
-          auditability, and recovery.
+          auditability, and recovery once volume and edge cases show up.
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>

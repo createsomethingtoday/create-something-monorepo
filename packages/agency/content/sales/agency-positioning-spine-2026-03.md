@@ -10,7 +10,7 @@ The category should stay fixed. Only proof, examples, and stack references shoul
 
 ## Durable Category
 
-CREATE SOMETHING .agency is governed workflow infrastructure for ops-minded teams.
+CREATE SOMETHING .agency is governed workflow infrastructure for review, intake, validation, and approval-heavy operations.
 
 The promise is not "latest AI tooling."
 
@@ -62,9 +62,10 @@ It should shape tone, not turn the whole site into a racing theme.
 
 Homepage:
 
-- Fix the workflow your team still protects by hand.
+- Govern the workflows your team still protects by hand.
 - Start with one workflow.
 - Add governed execution when risk rises.
+- Use review, validation, intake, and approval workflows as the clearest proof language.
 
 About:
 
@@ -82,6 +83,17 @@ Proof page:
 
 - Show that the work is real and inspectable.
 - Prioritize artifacts, systems, and concrete operating outcomes over abstract claims.
+
+## Current Proof Wedge
+
+The shipped work currently gives the strongest proof in four workflow classes:
+
+- validation before submission
+- marketplace and creator intake routing
+- reviewer workflows with automated analysis
+- governed MCP fleet and approval control
+
+Use those proof patterns in sales conversations before broadening into more abstract category language.
 
 Booking:
 
@@ -109,6 +121,7 @@ So the site and follow-up materials should keep showing:
 - case notes
 - productized artifacts
 - selected builds in production
+- validation, intake, review, and approval surfaces that can be inspected
 
 If a new model ships, update the proof and examples. Do not rewrite the category.
 
@@ -116,6 +129,9 @@ If a new model ships, update the proof and examples. Do not rewrite the category
 
 - governed
 - workflow
+- validation
+- intake
+- review
 - operating path
 - control layer
 - handoff

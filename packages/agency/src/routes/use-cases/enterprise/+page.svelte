@@ -146,9 +146,9 @@
 </script>
 
 <SEO
-	title="Policy OS For Enterprise Judgment Operations | CREATE SOMETHING .agency"
-	description="Policy OS for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the first workflow wedge is live."
-	keywords="enterprise automation reliability, workflow controls, policy operations, ai governance, mcp wedge"
+	title="Policy OS For Enterprise Workflow Judgment | CREATE SOMETHING .agency"
+	description="Policy OS for teams already running AI-native systems and cross-system workflows. Add policy operations, approval control, and ongoing safeguards once the first workflow wedge is live."
+	keywords="enterprise automation reliability, workflow controls, policy operations, ai-native systems, ai governance, mcp wedge"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -159,17 +159,17 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<p class="hero-eyebrow">The Judgment Layer</p>
+				<p class="hero-eyebrow">AI-Native Judgment Layer</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Reliability is what turns automation into operations.</h1>
+				<h1 class="hero-title">AI-native systems still need a judgment layer.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
 					For teams already running MCPs or cross-system workflows, this is Policy OS: the
-					governed execution layer that keeps outcomes reliable after launch. We add prompt
-					optimization, policy controls, approval and escalation logic, and ongoing operational
-					oversight.
+					governed execution layer that keeps review queues, approval paths, escalations, and
+					cross-system outcomes reliable after launch. We add prompt optimization, policy
+					controls, approval logic, and ongoing operational oversight.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -198,7 +198,7 @@
 <section class="problem-section">
 	<div class="section-container">
 		<BlurFade>
-			<p class="problem-stat">Most AI automation fails after deployment, not&nbsp;during&nbsp;it.</p>
+			<p class="problem-stat">Most AI-native automation fails after deployment, not&nbsp;during&nbsp;it.</p>
 		</BlurFade>
 
 		<div class="failure-grid">
@@ -221,15 +221,15 @@
 	</div>
 </section>
 
-<!-- What the Judgment Layer Includes -->
+<!-- What Policy OS Includes -->
 <section class="services-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">What the Judgment Layer Includes</h2>
+			<h2 class="section-heading">What Policy OS Operates</h2>
 		</BlurFade>
 			<BlurFade delay={0.1}>
 				<p class="section-intro">
-					Operational controls for every stage of the workflow lifecycle.
+					Operational controls for every stage of the workflow lifecycle once automation is already in motion.
 				</p>
 		</BlurFade>
 
@@ -295,7 +295,7 @@
 			</BlurFade>
 			<BlurFade delay={0.1}>
 				<p class="section-intro">
-					Operating envelopes for teams with automation already in motion. MCP remains the entry wedge for constrained starts and compliance-sensitive rollouts.
+					Operating envelopes for teams with AI-native systems already in motion. MCP remains the entry wedge for constrained starts and compliance-sensitive rollouts.
 				</p>
 			</BlurFade>
 
@@ -356,7 +356,7 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Your workflows need Policy OS.</h2>
+			<h2 class="cta-heading">Your AI-native workflows need Policy OS.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
@@ -368,7 +368,7 @@
 				<ShimmerButton href="https://createsomething.agency/book">
 					Book Mapping Session
 				</ShimmerButton>
-				<a href="/services" class="cta-secondary">Need a constrained start? Use an MCP-only wedge →</a>
+				<a href="/services" class="cta-secondary">Need a constrained start? Use MCP-only as the entry wedge →</a>
 			</div>
 		</BlurFade>
 	</div>

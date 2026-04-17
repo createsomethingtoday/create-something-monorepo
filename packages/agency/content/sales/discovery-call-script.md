@@ -3,7 +3,7 @@
 **Audience:** Ops/RevOps leaders  
 **Duration:** 20–30 minutes  
 **Primary objective:** confirm fit and secure next step for a Workflow Mapping Session  
-**Message taxonomy:** core phrase "Production-safe workflow infrastructure"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
+**Message taxonomy:** core phrase "Governed review, intake, and approval systems"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
 
 **Operator standard:** discovery is workflow diagnosis and policy-boundary mapping, not app-intake alone
 
@@ -207,7 +207,7 @@ Commit:
 
 ### 30-second positioning statement
 
-> "CREATE SOMETHING builds production-safe workflow infrastructure. We usually start with a scoped MCP wedge, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
+> "CREATE SOMETHING builds governed review, intake, and approval systems. We usually start with a scoped AI-native workflow wedge, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
 
 ### 2-minute "how it works in practice"
 

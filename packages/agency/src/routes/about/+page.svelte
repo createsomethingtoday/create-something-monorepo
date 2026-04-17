@@ -8,7 +8,7 @@
 <SEO
   title={`About | Micah Johnson — ${agencyCoreMessaging.categoryLabel}`}
   description="I design workflows people can trust under pressure, with the controls, visibility, and recovery paths real teams need."
-  keywords="Micah Johnson, governed workflow infrastructure, production automation, systems architecture, automation reliability, workflow governance"
+  keywords="Micah Johnson, governed workflow infrastructure, ai-native workflow systems, production automation, systems architecture, workflow governance"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -198,7 +198,7 @@
             > — Tools and experiments
           </li>
           <li>
-            <strong>.agency</strong> — Governed workflow infrastructure, reliability controls, and
+            <strong>.agency</strong> — AI-native workflow systems, governed execution, and
             enterprise extension
             <span class="muted">(you are here)</span>
           </li>

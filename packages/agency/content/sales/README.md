@@ -2,7 +2,7 @@
 
 **Primary buyer:** Ops/RevOps  
 **Primary channel:** Live discovery and mapping calls  
-**Core phrase:** Production-safe workflow infrastructure
+**Core phrase:** Governed review, intake, and approval systems
 
 ---
 
@@ -63,7 +63,7 @@
 
 ## Message taxonomy
 
-- Core phrase: "Production-safe workflow infrastructure."
+- Core phrase: "Governed review, intake, and approval systems."
 - Client-facing delivery vector: `Skills + MCP`
 - Technical proof vector: `MCP + Skills`
 

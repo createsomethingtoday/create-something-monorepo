@@ -36,29 +36,31 @@
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
 		{
 			value: 'workflow_infrastructure',
-			label: 'Critical Workflow',
-			description: 'One workflow that needs a safer, production-ready starting point.'
+			label: 'Review / Intake Workflow',
+			description:
+				'One validation, submission intake, reviewer handoff, or approval path that needs a safer starting point.'
 		},
 		{
 			value: 'reliability_and_control',
-			label: 'Policy OS',
+			label: 'Policy OS / Approval Layer',
 			description:
-				'Policy artifacts, approval rules, release gates, and incident controls around live automation.'
+				'Policy artifacts, approval rules, release gates, and incident controls around a live workflow.'
 		},
 		{
 			value: 'enterprise_extension',
-			label: 'Enterprise Constraints',
-			description: 'Cross-system orchestration with stricter governance, auditability, and recovery.'
+			label: 'Enterprise / Cross-System',
+			description:
+				'Cross-system orchestration with stricter governance, auditability, approval control, and recovery.'
 		},
 		{
 			value: 'system_development_referral',
-			label: 'System Development Referral',
-			description: 'Full system build and onboarding needs (routed to partner team).'
+			label: 'Full System Build Referral',
+			description: 'Full system build and onboarding needs that should route to the partner team.'
 		},
 		{
 			value: 'not_sure',
-			label: 'Not sure yet',
-			description: 'Need help choosing the right lane.'
+			label: 'Need help triaging',
+			description: 'Need help deciding whether this is a workflow wedge, Policy OS fit, or referral.'
 		}
 	];
 
@@ -246,7 +248,7 @@
 
 <SEO
 	title="Book a Workflow Mapping Session"
-	description="Schedule a scoped workflow diagnostic to identify the workflow with the most drag, the safest starting wedge, and the right level of reliability control."
+	description="Schedule a scoped diagnostic for a review, intake, validation, or approval-heavy workflow and identify the safest starting wedge."
 	propertyName="agency"
 />
 
@@ -254,8 +256,9 @@
 	<header class="booking-header">
 		<h1 class="booking-title">Book a Workflow Mapping Session</h1>
 		<p class="booking-subtitle">
-			Bring the workflow with the most drag, risk, or manual handoff. This is a scoped diagnostic
-			for one safer operating path, not an open-ended consulting check-in.
+			Bring the review, intake, validation, or approval workflow with the most drag, risk, or
+			manual handoff. This is a scoped diagnostic for one safer operating path, not an open-ended
+			consulting check-in.
 		</p>
 	</header>
 
@@ -309,10 +312,15 @@
 			</section>
 		{:else if step === 'details'}
 			<section class="step-content">
-				<h2 class="step-title">Your details and lane</h2>
+				<h2 class="step-title">Your details and workflow lane</h2>
 				<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
-					<p id="lane-intake-title" class="lane-intake-title">Which workflow should we map first?</p>
-					<p class="lane-intake-helper">This helps me prep the session. Most engagements begin with one narrow workflow and clear operating constraints.</p>
+					<p id="lane-intake-title" class="lane-intake-title">
+						Which review, intake, or approval workflow should we map first?
+					</p>
+					<p class="lane-intake-helper">
+						This helps me prep the session. Most engagements begin with one narrow workflow,
+						explicit decision states, and clear operating constraints.
+					</p>
 					<div class="lane-options">
 						{#each laneOptions as lane}
 							<label class="lane-option" class:selected={selectedLane === lane.value}>

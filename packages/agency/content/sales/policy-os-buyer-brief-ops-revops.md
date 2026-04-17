@@ -2,19 +2,26 @@
 
 **Audience:** Ops and RevOps leaders  
 **Read time:** ~3 minutes  
-**Core phrase:** Production-safe workflow infrastructure  
+**Core phrase:** Governed review, intake, and approval systems
 **Delivery vector language:** client-facing `Skills + MCP`; technical proof `MCP + Skills`
 
 ---
 
 ## What this solves
 
-Most teams can now connect tools to AI. Very few can run autonomous workflows safely in production.
+Most teams can now connect tools to AI. Very few can run review, intake, and approval-heavy workflows safely in production.
 
 The bottleneck is no longer "Can we connect systems?"  
 The bottleneck is "Can we govern actions, approvals, and risk while keeping execution fast?"
 
 This operating model closes that gap.
+
+The strongest current proof looks like:
+
+- validation before submission
+- reviewer workflows with automated analysis
+- marketplace or creator intake routing
+- approval logic with explicit allow, review, and block states
 
 ---
 
@@ -34,10 +41,10 @@ This is how automation scales without creating hidden operational risk.
 ## Offer ladder (how engagements scale)
 
 ### 1) Workflow Infrastructure
-Build the workflow substrate: trusted integrations, tool contracts, and deterministic execution paths.
+Build the workflow substrate: trusted integrations, tool contracts, and deterministic execution paths for the first critical review or intake workflow.
 
 ### 2) Policy OS
-Add governed execution controls: policy envelopes, release gates, approval rules, blocked-state UX, and incident loops.
+Add governed execution controls: policy envelopes, release gates, approval rules, blocked-state UX, and incident loops once the workflow carries real operational risk.
 
 ### 3) Enterprise Extension
 Extend into high-stakes operations: cross-system orchestration, strict governance controls, and custom trust boundaries.

@@ -13,9 +13,9 @@
 			number: '01',
 			title: 'Start with one critical workflow',
 			paragraphs: [
-				'Pick the workflow that steals the most time. The Monday report. The handoff that breaks between tools. The updates your team keeps rebuilding by hand.',
-				`We start with a scoped workflow wedge using ${deliveryVector.clientFacingLabel}: connectivity, setup, policy, and runbook for one high-value workflow. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.`,
-				'Now your agent can work against your actual systems instead of forcing your team to stay in the middle.'
+				'Pick the workflow that steals the most time: the lead handoff, the client intake path, the approval step, the status updates your team keeps rebuilding by hand.',
+				`We start with a scoped AI-native workflow wedge using ${deliveryVector.clientFacingLabel}: connectivity, setup, policy, and runbook for one high-value workflow. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.`,
+				'Now your systems can work against real operating constraints instead of forcing your team to stay in the middle.'
 			]
 		},
 		{
@@ -32,9 +32,8 @@
 			title: 'Make it reliable',
 			paragraphs: [
 				'Connections are the start. Reliability is what makes them usable in real operations.',
-				'Connections are the start. Reliability is what makes them usable in real operations.',
 				'Policy OS keeps the workflow healthy over time with prompt tuning, policy updates, performance monitoring, and edge-case handling before problems become incidents.',
-				'Your automation becomes more dependable as the business changes. $1,500\u2013$3,500/mo.'
+				'Your AI-native workflow becomes more dependable as the business changes. $1,500\u2013$3,500/mo.'
 			]
 		}
 	];
@@ -42,7 +41,7 @@
 	const timeline = [
 		{
 			label: 'Month 1',
-			detail: 'Built a workflow wedge for a HubSpot pipeline ($3,000): MCP endpoint, Codex setup, approval policy, and runbook.',
+			detail: 'Built an AI-native workflow wedge for a HubSpot pipeline ($3,000): MCP endpoint, Codex setup, approval policy, and runbook.',
 			result: 'Saves 5 hrs/week.'
 		},
 		{
@@ -58,10 +57,10 @@
 	];
 
 	const whoThisIsFor = [
-		'Teams tired of being the integration layer between their tools',
-		'Organizations already using AI but can\u2019t connect it to their actual data',
+		'Teams tired of being the manual bridge between their tools',
+		'Organizations already using AI-native tools but still rebuilding workflow context by hand',
 		'Founders who\u2019d rather sell than administrate',
-		'Teams that tried Zapier/Make and hit the complexity wall'
+		'Teams with intake, handoff, or approval workflows that keep slipping between systems'
 	];
 </script>
 
@@ -126,9 +125,9 @@
 {/snippet}
 
 <SEO
-	title="Your tools don't talk to each other. We fix that. | CREATE SOMETHING"
-	description="We help small teams turn one painful workflow into a reliable system, starting with a scoped wedge and expanding only when the workflow proves out."
-	keywords="small business automation, workflow integration, custom mcp, HubSpot automation, Notion integration, ops automation, SMB AI"
+	title="Your workflow still needs a bridge. We fix that. | CREATE SOMETHING"
+	description="We help small teams turn one painful review, intake, or approval workflow into a reliable AI-native system, starting with a scoped wedge and expanding only when it proves out."
+	keywords="small business automation, review workflow automation, intake workflow, approval workflow, custom mcp, SMB AI"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -152,13 +151,14 @@
 				<p class="hero-eyebrow">For teams of 5–50</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Your tools don't talk to each&nbsp;other. You fill the&nbsp;gap.</h1>
+				<h1 class="hero-title">Your stack is AI-ready. Your workflow still needs a&nbsp;bridge.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					We turn one painful workflow into a reliable system instead of asking your team to keep
-					bridging the gap by hand. If your team is stitching together HubSpot, Notion, Slack,
-					and spreadsheets, we start with the smallest wedge that removes the manual bridge.
+					We turn one painful review, intake, handoff, or approval workflow into a reliable
+					system instead of asking your team to keep bridging the gap by hand. If your team is
+					stitching together HubSpot, Notion, Slack, and spreadsheets, we start with the
+					smallest AI-native wedge that removes the manual bridge.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -353,8 +353,11 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Pick the workflow that wastes the most time. We&apos;ll deliver your first scoped workflow
-				wedge in 2–4&nbsp;weeks. You own the code and runbook. Delivery vector is {deliveryVector.canonicalPhrase}, and technical proof surfaces use {deliveryVector.technicalLabel}. If you need discovery or compliance-only, we can scope MCP-only as the entry wedge.
+				Pick the workflow that wastes the most time. We&apos;ll deliver your first scoped review,
+				intake, or approval wedge in 2–4&nbsp;weeks. You own the code and runbook. Delivery
+				vector is {deliveryVector.canonicalPhrase}, and technical proof surfaces use
+				{deliveryVector.technicalLabel}. If you need discovery or compliance-only, we can scope
+				MCP-only as the entry wedge.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>

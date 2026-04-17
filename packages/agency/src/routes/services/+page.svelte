@@ -16,7 +16,7 @@
     {
       name: 'MCP-only',
       description:
-        'A narrow discovery or compliance wedge when the client needs trusted connectivity before the operating layer.',
+        'A narrow discovery or compliance wedge when the client needs trusted connectivity before the governed operating layer.',
       type: 'Entry wedge',
       price: 'Custom',
       priceDescription: 'Scoped host setup'
@@ -24,7 +24,7 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
+        'A single review, intake, or approval-heavy workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build'
@@ -40,7 +40,7 @@
     {
       name: 'Enterprise Extension',
       description:
-        'Audit-ready orchestration for regulated, high-volume, or multi-system workflows that need deterministic recovery.',
+        'Audit-ready orchestration for regulated, high-volume, or multi-system workflows that need deterministic recovery across teams.',
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation'
@@ -51,7 +51,7 @@
     {
       tag: 'Entry wedge',
       title: 'MCP-only',
-      summary: 'Use this when the connection is the job and your team will operate the workflow directly.',
+      summary: 'Use this when the connection is the job and your team will operate the workflow directly inside existing review or approval processes.',
       points: [
         'Connectivity validation',
         'Scoped host setup',
@@ -61,7 +61,7 @@
     {
       tag: 'Start here',
       title: 'Workflow Infrastructure',
-      summary: 'Fix the first workflow your team still protects by hand and make the handoffs reliable.',
+      summary: 'Fix the first review, intake, or approval workflow your team still protects by hand and make the handoffs reliable.',
       points: [
         'Business-rule mapping',
         'Workflow implementation',
@@ -84,7 +84,7 @@
     {
       tag: 'High-stakes scale',
       title: 'Enterprise Extension',
-      summary: 'Add this when several systems, teams, or compliance requirements must stay aligned.',
+      summary: 'Add this when several systems, teams, or compliance requirements must stay aligned around one operating path.',
       points: [
         'Cross-system orchestration',
         'Custom trust boundaries',
@@ -104,7 +104,12 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow Infrastructure fixes the first painful workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
+        'Workflow Infrastructure fixes the first review, intake, or approval-heavy workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
+    },
+    {
+      question: 'What kinds of workflows fit best?',
+      answer:
+        'The best fits are workflows with validation steps, reviewer handoffs, submission intake, approval logic, or cross-system follow-through that currently create drag or cleanup.'
     },
     {
       question: 'Are you joining our team or running internal ops?',
@@ -124,7 +129,7 @@
     {
       question: 'When should we add Policy OS?',
       answer:
-        'Add it when failures become expensive or the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
+        'Add it when failures become expensive or the workflow touches revenue, customer trust, compliance, or several systems and approval steps that must stay in sync.'
     },
     {
       question: 'Do you still offer MCP-only?',
@@ -144,9 +149,9 @@
 </script>
 
 <SEO
-  title="How I Work | Governed Workflow Infrastructure"
-  description="CREATE SOMETHING .agency offers scoped specialist engagements that fix one workflow first, then add governed execution as operational risk rises."
-  keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
+  title="How I Work | Governed Review, Intake, and Approval Systems"
+  description="CREATE SOMETHING .agency offers scoped specialist engagements for review, intake, validation, and approval-heavy workflows that need governed execution."
+  keywords="review workflow automation, submission intake systems, approval operations, governed workflow infrastructure, enterprise automation architecture, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -161,14 +166,14 @@
       </BlurFade>
 
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">Start with the workflow creating the most drag.</h1>
+        <h1 class="hero-title">Start with the review, intake, or approval workflow creating the most drag.</h1>
       </BlurFade>
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          This is a specialist engagement: scoped, artifact-backed, and designed to give your team
-          a safer operating path, not another person to manage. Fix the first workflow, add
-          oversight when the risk rises, and extend only when several systems must stay in sync.
+          This is a specialist engagement for teams dealing with submission queues, validation
+          steps, reviewer handoffs, or risky approvals. Fix the first workflow, add oversight when
+          the risk rises, and extend only when several systems must stay in sync.
         </p>
       </BlurFade>
 
@@ -180,7 +185,7 @@
       </BlurFade>
 
       <BlurFade delay={0.2}>
-        <p class="hero-note">External specialist. Scoped delivery. Production boundaries.</p>
+        <p class="hero-note">External specialist. Scoped delivery. Review and approval boundaries.</p>
       </BlurFade>
     </div>
 
@@ -207,7 +212,8 @@
         <BlurFade delay={0.1}>
           <p>
             You are bringing in a specialist to diagnose, rebuild, and govern one critical
-            operating path. The work is scoped, visible, and designed for your team to inherit.
+            operating path. The work is scoped, visible, and designed for your team to inherit once
+            the review, intake, or approval flow is stable.
           </p>
         </BlurFade>
       </div>
@@ -230,12 +236,12 @@
         <span class="product-kicker">Offer ladder</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>From connection wedge to governed execution.</h2>
+        <h2>From trusted connection to governed review and approval operations.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
           Start with the narrowest offer that proves value. Add Policy OS when the workflow starts
-          touching revenue, compliance, or customer trust.
+          touching revenue, compliance, customer trust, or multi-step approval logic.
         </p>
       </BlurFade>
     </div>
@@ -266,13 +272,13 @@
         <span class="product-kicker">Governed execution</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>Where Policy OS fits.</h2>
+        <h2>Where Policy OS starts paying for itself.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
           Workflow Infrastructure gets the first handoff working. Policy OS decides what runs
-          automatically, what needs review, and what stops. That is the point where speed stops
-          being a demo and becomes an operating path.
+          automatically, what needs review, and what stops once a submission, review queue, or
+          approval path starts carrying real risk.
         </p>
       </BlurFade>
     </div>
@@ -332,8 +338,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          We will define the handoffs, approvals, failure modes, and escalation path before any
-          implementation work starts.
+          We will define the validation checks, handoffs, approvals, failure modes, and escalation
+          path before any implementation work starts.
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>

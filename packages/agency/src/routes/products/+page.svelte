@@ -2,6 +2,30 @@
   import { SEO } from '@create-something/canon';
   import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
   import { products } from '$lib/data/services';
+
+  const proofPatterns = [
+    {
+      title: 'Validation before submission',
+      detail:
+        'AI-native checks, evidence capture, and policy-aware scoring catch issues before they hit a reviewer queue.'
+    },
+    {
+      title: 'Submission and intake routing',
+      detail:
+        'Forms, uploads, webhooks, and operator statuses stay aligned so work enters the system cleanly.'
+    },
+    {
+      title: 'Reviewer workflows with evidence',
+      detail:
+        'Automated analysis, queue context, and explicit decision support reduce vague feedback and rework.'
+    },
+    {
+      title: 'Approval control in production',
+      detail:
+        'Allow, review, and block states make risky actions governable once the workflow carries real cost.'
+    }
+  ];
+
   // Group products by category
   const featured = products.filter((p) => p.category === 'featured');
   const devTools = products.filter((p) => p.category === 'developer-tools');
@@ -15,9 +39,9 @@
 </script>
 
 <SEO
-  title="Proof in Production | Workflow Systems and MCPs"
-  description="Tools, connectors, and client builds that show the operating model behind CREATE SOMETHING .agency is real, inspectable, and already in use."
-  keywords="AI integrations, business tool automation, Notion AI, Gmail AI, Zoom AI, Salesforce AI, custom AI development, MCP servers"
+  title="Proof in Production | AI-Native Workflow Systems"
+  description="Inspectable AI-native tools, MCP surfaces, and shipped client systems that prove CREATE SOMETHING's work in validation, intake routing, reviewer workflows, and approval control."
+  keywords="ai-native workflow systems, review workflow automation, submission intake systems, approval operations, workflow validation, mcp servers"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -37,17 +61,43 @@
   </div>
   <div class="hero-content">
     <BlurFade delay={0}>
-      <p class="hero-eyebrow">Proof of Work</p>
+      <p class="hero-eyebrow">AI-Native Proof</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Proof in Production</h1>
+      <h1 class="hero-title">Governed systems in production.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Tools, connectors, and client builds that show the work is real and inspectable, not just
-        pitch language.
+        AI-native tools, MCP surfaces, and shipped client systems behind validation, submission
+        intake, reviewer workflows, and approval control. The point is inspectable proof, not
+        catalog sprawl.
       </p>
     </BlurFade>
+  </div>
+</section>
+
+<!-- Proof Patterns -->
+<section class="products-section products-section--tight">
+  <div class="section-inner">
+    <BlurFade delay={0.1}>
+      <div class="section-header">
+        <h2 class="section-eyebrow">Current proof wedge</h2>
+        <p class="section-desc">
+          The strongest shipped proof currently clusters in a few repeatable workflow classes. That
+          is the category the buyer should see first.
+        </p>
+      </div>
+    </BlurFade>
+    <div class="pattern-grid">
+      {#each proofPatterns as pattern, index}
+        <BlurFade delay={0.15 + index * 0.06}>
+          <article class="pattern-card">
+            <h3 class="pattern-title">{pattern.title}</h3>
+            <p class="pattern-detail">{pattern.detail}</p>
+          </article>
+        </BlurFade>
+      {/each}
+    </div>
   </div>
 </section>
 
@@ -56,9 +106,10 @@
   <div class="section-inner">
     <BlurFade delay={0.1}>
       <div class="section-header">
-        <h2 class="section-eyebrow">Flagship Tools</h2>
+        <h2 class="section-eyebrow">Core proof artifacts</h2>
         <p class="section-desc">
-          Reusable patterns from real client work. Proof buyers can inspect before they commit.
+          These tools make evidence, coordination, and recovery visible before a workflow is sold
+          as reliable.
         </p>
       </div>
     </BlurFade>
@@ -88,10 +139,10 @@
   <div class="section-inner">
     <BlurFade delay={0.1}>
       <div class="section-header">
-        <h2 class="section-eyebrow">Integration MCPs</h2>
+        <h2 class="section-eyebrow">Workflow MCP surfaces</h2>
         <p class="section-desc">
-          Infrastructure for connecting live systems without asking the team to keep rebuilding
-          context by hand.
+          Trusted AI-native system surfaces used to power validation, intake routing, reviewer
+          context, and operator follow-through.
         </p>
       </div>
     </BlurFade>
@@ -121,10 +172,10 @@
   <div class="section-inner">
     <BlurFade delay={0.1}>
       <div class="section-header">
-        <h2 class="section-eyebrow">Client Portfolio</h2>
+        <h2 class="section-eyebrow">Selected client systems</h2>
         <p class="section-desc">
-          Selected builds showing the constraints, handoffs, and operating realities behind the
-          work.
+          Shipped operating paths that had to survive real constraints, approvals, and cross-system
+          drift.
         </p>
       </div>
     </BlurFade>
@@ -159,11 +210,12 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
-      <p class="cta-heading">Need this applied to your workflow?</p>
+      <p class="cta-heading">Need this applied to a review, intake, or approval workflow?</p>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="cta-subtext">
-        I’ll map the first workflow, the risk points, and the cleanest path into production.
+        I’ll map the first workflow, the decision points, and the cleanest path into governed
+        production.
       </p>
     </BlurFade>
     <BlurFade delay={0.3}>
@@ -262,6 +314,38 @@
   /* Products Section */
   .products-section {
     padding: 3rem var(--container-padding, 1.5rem);
+  }
+
+  .products-section--tight {
+    padding-top: 0;
+  }
+
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4, 1rem);
+  }
+
+  .pattern-card {
+    padding: 1.25rem;
+    border-radius: var(--radius-lg, 12px);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
+    box-shadow: var(--glass-shine-soft);
+  }
+
+  .pattern-title {
+    font-size: var(--text-body);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin-bottom: var(--space-2, 0.5rem);
+  }
+
+  .pattern-detail {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    text-wrap: balance;
   }
 
   /* Shared Grid for all product sections */
@@ -467,6 +551,7 @@
       font-size: var(--text-h2);
     }
 
+    .pattern-grid,
     .featured-grid,
     .category-grid,
     .client-grid {

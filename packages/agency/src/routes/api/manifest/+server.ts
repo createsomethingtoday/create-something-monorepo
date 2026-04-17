@@ -40,7 +40,7 @@ const SERVICES: ContentItem[] = [
 	{
 		slug: 'workflow-infrastructure',
 		title: 'Workflow Infrastructure',
-		description: 'CREATE SOMETHING builds production-safe workflow infrastructure for business-critical operations with clear trust boundaries.',
+		description: 'CREATE SOMETHING builds governed review, intake, and approval systems for business-critical operations with clear trust boundaries and AI-native tooling.',
 		category: 'service'
 	},
 	{
