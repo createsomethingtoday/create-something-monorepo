@@ -1096,11 +1096,24 @@ export function TemplateIntake() {
                       id="avatar"
                       type="file"
                       accept="image/webp"
-                      onChange={(event) =>
-                        updateCreator('avatarFile', event.target.files?.[0] || null)
-                      }
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0] || null;
+                        if (!file) {
+                          setImageErrors((c) => ({ ...c, avatarFile: null }));
+                          updateCreator('avatarFile', null);
+                          return;
+                        }
+                        const err = await validateImageClient(file, 'avatar');
+                        setImageErrors((c) => ({ ...c, avatarFile: err }));
+                        updateCreator('avatarFile', err ? null : file);
+                      }}
                       required
                     />
+                    {imageErrors.avatarFile ? (
+                      <div style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                        {imageErrors.avatarFile}
+                      </div>
+                    ) : null}
                   </div>
 
                   <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
@@ -1640,8 +1653,10 @@ export function TemplateIntake() {
                       className="field-textarea input w-input submission-textarea submission-textarea-notes"
                       id="notes"
                       value={template.notes}
+                      maxLength={400}
                       onChange={(event) => updateTemplate('notes', event.target.value)}
                     />
+                    <div className="field-help">{template.notes.length}/400 characters</div>
                   </div>
 
                   <div className="submission-grid-2">
@@ -1661,11 +1676,24 @@ export function TemplateIntake() {
                         id="thumbnailFile"
                         type="file"
                         accept="image/webp"
-                        onChange={(event) =>
-                          updateTemplate('thumbnailFile', event.target.files?.[0] || null)
-                        }
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] || null;
+                          if (!file) {
+                            setImageErrors((c) => ({ ...c, thumbnailFile: null }));
+                            updateTemplate('thumbnailFile', null);
+                            return;
+                          }
+                          const err = await validateImageClient(file, 'thumbnail');
+                          setImageErrors((c) => ({ ...c, thumbnailFile: err }));
+                          updateTemplate('thumbnailFile', err ? null : file);
+                        }}
                         required
                       />
+                      {imageErrors.thumbnailFile ? (
+                        <div style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                          {imageErrors.thumbnailFile}
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="submission-field">
@@ -1683,13 +1711,23 @@ export function TemplateIntake() {
                         id="secondaryThumbnailFile"
                         type="file"
                         accept="image/webp"
-                        onChange={(event) =>
-                          updateTemplate(
-                            'secondaryThumbnailFile',
-                            event.target.files?.[0] || null,
-                          )
-                        }
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] || null;
+                          if (!file) {
+                            setImageErrors((c) => ({ ...c, secondaryThumbnailFile: null }));
+                            updateTemplate('secondaryThumbnailFile', null);
+                            return;
+                          }
+                          const err = await validateImageClient(file, 'secondary-thumbnail');
+                          setImageErrors((c) => ({ ...c, secondaryThumbnailFile: err }));
+                          updateTemplate('secondaryThumbnailFile', err ? null : file);
+                        }}
                       />
+                      {imageErrors.secondaryThumbnailFile ? (
+                        <div style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                          {imageErrors.secondaryThumbnailFile}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
@@ -1710,14 +1748,35 @@ export function TemplateIntake() {
                       type="file"
                       accept="image/webp"
                       multiple
-                      onChange={(event) =>
-                        updateTemplate(
-                          'galleryFiles',
-                          Array.from(event.target.files || []).slice(0, 5),
-                        )
-                      }
+                      onChange={async (event) => {
+                        const files = Array.from(event.target.files || []).slice(0, 5);
+                        const validated: File[] = [];
+                        const newErrors: Record<string, string | null> = {};
+                        // Clear any prior gallery errors first.
+                        setImageErrors((c) => {
+                          const next = { ...c };
+                          for (const key of Object.keys(next)) {
+                            if (key.startsWith('gallery-')) next[key] = null;
+                          }
+                          return next;
+                        });
+                        for (let i = 0; i < files.length; i++) {
+                          const err = await validateImageClient(files[i], 'gallery');
+                          newErrors[`gallery-${i}`] = err;
+                          if (!err) validated.push(files[i]);
+                        }
+                        setImageErrors((c) => ({ ...c, ...newErrors }));
+                        updateTemplate('galleryFiles', validated);
+                      }}
                       required
                     />
+                    {Object.entries(imageErrors)
+                      .filter(([k, v]) => k.startsWith('gallery-') && v)
+                      .map(([k, v]) => (
+                        <div key={k} style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                          {v}
+                        </div>
+                      ))}
                   </div>
 
                   <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
