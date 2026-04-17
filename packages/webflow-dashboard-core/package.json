@@ -10,6 +10,7 @@
     "./airtable": "./src/airtable.ts",
     "./hash": "./src/hash.ts",
     "./kv": "./src/kv.ts",
+    "./marketplace-webhook": "./src/marketplace-webhook.ts",
     "./r2": "./src/r2.ts",
     "./runtime": "./src/runtime.ts",
     "./security": "./src/security.ts",
