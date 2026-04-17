@@ -11,7 +11,7 @@
   "r2_buckets": [
     {
       "binding": "UPLOADS",
-      "bucket_name": "marketplace-template-submission-uploads"
+      "bucket_name": "wf-template-form-uploads"
     }
   ],
   "vars": {
