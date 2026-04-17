@@ -76,6 +76,16 @@ Three chart/motion components built against `@visx/*` packages already in the bd
 - Tests:
   - `__tests__/kineticNumberUtils.test.ts` — 8 unit tests, all passing
 
+### 1.5 Deep-links into existing bd-webflow surfaces
+
+`DetailPage.tsx` (modified) — app assets now surface:
+
+- "View full analytics" button → `/workspace/:slug/app-development/:appId` (existing `AppMetricOverTimeGraph` time-series view)
+- "App development" button → `/workspace/:slug/app-development` (app list + edit modal)
+- "Manage versions" button inside the Version history card → same per-app analytics route (where version submission/release lives)
+
+No new backend. No new component. Three lines of wiring that route creators into the rich App Analytics and App Development screens that already exist. This enforces a reuse-first pattern for Phase 2 — extend existing surface before building parallel screens.
+
 ### 1.4 Feedback button — deferred
 
 Not implemented. bd-webflow has no shared feedback widget (verified by searching for Intercom, Productboard, Appcues, Pendo, Delighted, Hotjar — none present). The only existing "feedback" pattern is an external survey-URL link inside `Sites/GeneralSettings/.../RealtimeSection`.
@@ -135,8 +145,9 @@ Phase 1 is preserved in the bd-webflow working tree. These changes should land t
 1. One PR: SubmissionTracker (server + client + tests + route wiring).
 2. One PR: App version history UI (client-only, uses existing backend).
 3. One PR: Analytics primitives (the three components + their test + the AnalyticsPage/SubmissionsPage integration).
+4. One PR: Deep-links on app DetailPage to App Analytics + App Development (client-only, tiny).
 
-Each is independent and ships value on its own.
+Each is independent and ships value on its own. PRs 2 and 4 can reasonably combine since they both touch `DetailPage.tsx` and neither has new backend.
 
 ## References
 

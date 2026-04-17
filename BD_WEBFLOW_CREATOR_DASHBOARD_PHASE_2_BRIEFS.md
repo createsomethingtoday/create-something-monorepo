@@ -8,13 +8,27 @@ Three remaining gaps between the external `packages/webflow-dashboard` creator e
 
 Each brief states the decision needed, the proposed scope if the decision is yes, the scope if the decision is no, and the open questions to resolve in the meeting.
 
+## Reuse-first framing
+
+Apps are already covered by native bd-webflow surfaces: `AppDevelopment` hosts create/edit/submission-version workflow with an existing `CreateEditAppModal`, and `AppAnalytics` (`/workspace/:slug/app-development/:appId`) hosts the full time-series `LineChart` + tooltip + summary. Image uploads for apps are part of `AppInfoForm`. Version history for apps was already in the backend and is now surfaced in the Creator Dashboard detail page (Phase 1.2).
+
+This matters for scoping the three briefs below:
+
+- **Multi-image upload** is a **template-only** gap. Apps already handle image uploads natively. This brief should not imply creator-side app image work; that already exists.
+- **MarketplaceInsights** splits into two subproblems: (a) *per-asset* time-series — apps already have it in App Analytics, templates/libraries would need it; (b) *cross-asset + competitive* leaderboards — net-new everywhere. The strategic "expose competitive data" question is only part (b).
+- **Template versioning** is unchanged; apps have the pattern, templates do not.
+
+The Creator Dashboard detail page (Phase 1.2 + 1.5 deep-links) routes users into those existing surfaces via "View full analytics" and "Manage versions" buttons rather than reimplementing them. Any new work below should prefer the same approach: extend existing surface area before building a parallel one.
+
 ---
 
-## 2.1 Multi-image upload (creator-side)
+## 2.1 Multi-image upload (creator-side) — **template-only**
 
 ### The gap
 
 The external dashboard lets creators upload carousel images and a secondary thumbnail for their own templates, validated for WebP, aspect ratio (150:199), and a 10MB cap. bd-webflow today exposes equivalent uploads only through admin routes (`/admin/api/templates/:templateid/tall-thumbnail` and `/admin/templates/:templateid/thumbnail`), gated by `middleware.restrictAdminUser`. There is no non-admin path for a creator to replace their own template's imagery.
+
+**Apps are already handled natively.** `AppInfoForm` + `CreateEditAppModal` in `AppDevelopment` let creators manage app icons and marketplace screenshots today. This brief is scoped to templates only.
 
 ### Decision needed
 
@@ -54,7 +68,7 @@ Ships a feature that either breaks review flow (if `needsReReview` isn't added) 
 
 ---
 
-## 2.2 MarketplaceInsights — leaderboard and trending categories
+## 2.2 MarketplaceInsights — two subproblems
 
 ### The gap
 
@@ -65,17 +79,33 @@ The external dashboard renders a `MarketplaceInsights` view (~770 lines in the S
 - Auto-generated insights ("Coffee-shop templates are up 40% week-over-week").
 - Competition-level indicators per category.
 
-bd-webflow has no equivalent surface. App analytics (`AppAnalytics/`) shows the creator only their own app's metrics, not the competitive field.
+### What bd-webflow already has
+
+- **Per-asset time-series for apps**: `AppAnalytics/components/AppMetricOverTimeGraphContent.tsx` uses recharts `LineChart` + tooltip + summary. Creators land there from CreatorDashboard's "View full analytics" deep-link (Phase 1.5).
+- **Cross-asset portfolio numbers**: Creator Dashboard `AnalyticsPage.tsx` aggregates apps + templates + libraries into summary counters (Phase 1.3, with `KineticNumber` animations).
+
+### The two subproblems
+
+**(a) Per-asset time-series for templates and libraries.** Apps have it; templates/libraries don't. This is a data-availability question, not a strategic one. If bd-webflow already tracks install events per template, the same `AppMetricOverTimeGraph` pattern can be reused; it's engineering work, not policy.
+
+**(b) Cross-asset competitive leaderboard.** Net-new everywhere. This is the strategic call: showing creators aggregate data about other creators' work.
 
 ### Decision needed
 
-Should bd-webflow show creators aggregate competitive data about the marketplace they're selling into?
+Two decisions, not one:
 
-This is not an engineering question. Exposing "your competitors' install counts" is a strategic call with implications for creator behavior (gaming categories), the Marketplace flywheel (everyone piling into trending niches), and the Marketplace team's ability to hand-curate featured placements.
+1. **(a)** Is there event-level install data for templates/libraries that would support a per-asset trend graph, or does that data need to be captured first?
+2. **(b)** Should bd-webflow show creators aggregate competitive data about the marketplace they're selling into?
 
-### If yes — proposed scope
+(2b) is the harder call — exposing "your competitors' install counts" has implications for creator behavior (gaming categories), the Marketplace flywheel (everyone piling into trending niches), and the Marketplace team's ability to hand-curate featured placements.
 
-**Engineering (~2 weeks):**
+### If (a) is yes — proposed scope (~1 week)
+
+- Reuse `useGetResourceAnalyticsOverTime` if it already exists for apps; otherwise add a sibling data-access layer for templates and libraries.
+- Render the existing `AppMetricOverTimeGraphContent` component (or a thin generalization) inside CreatorDashboard `DetailPage` for templates and libraries.
+- No new strategic/competitive data exposed.
+
+### If (b) is yes — proposed scope (~2 weeks)
 
 - Nightly materialized view job: `workers/marketplaceLeaderboardDaily.ts`, writing one document per day to a new `marketplaceLeaderboardDaily` collection with:
   - Top-25 templates by last-30-day installs, overall and per category.
@@ -88,19 +118,22 @@ This is not an engineering question. Exposing "your competitors' install counts"
 
 ### If no — alternative
 
-Ship the individual-asset analytics that already exist (Phase 1.3 primitives already handle this) and stop. Creators see their own install/demand trend, not the competitive field.
+Do (a) only if the data exists; skip (b). Creators see their own install/demand trend (native AppAnalytics for apps, extended to templates/libraries), not the competitive field. This is the minimum viable portfolio analytics story and doesn't expose anything new about other creators.
 
 ### Open questions
 
-1. Who sees the insights? All creators? Only creators with at least one published template? Creators behind a specific feature flag?
-2. What aggregation grain is safe? Per-category leaderboards seem fine; per-creator leaderboards might be problematic.
-3. Time window: 30 days is the dashboard default. bd-webflow might prefer 7 days or a configurable range.
-4. Attribution model: do installs include internal use, tutorial completions, or only paid/publish installs?
-5. Do featured templates get a separate shelf, or mix into the leaderboard?
+1. **(a)** Does bd-webflow already capture per-template and per-library install events with timestamps sufficient for a trend graph? If not, what's the cost of adding that capture?
+2. **(b)** Who sees the leaderboard? All creators? Only creators with at least one published template? Behind a feature flag?
+3. **(b)** What aggregation grain is safe? Per-category leaderboards seem fine; per-creator leaderboards might be problematic.
+4. **(b)** Time window: 30 days is the dashboard default. bd-webflow might prefer 7 days or a configurable range.
+5. **(b)** Attribution model: do installs include internal use, tutorial completions, or only paid/publish installs?
+6. **(b)** Do featured templates get a separate shelf, or mix into the leaderboard?
 
 ### Risk of building without the decision
 
-Highest-stakes item in the phase. A wrong policy decision here is visible to every paying creator and can distort marketplace behavior. Do not build speculative.
+(2a) is mostly engineering risk — if install event data is missing, the graph shows empty for templates/libraries, which is better than no graph but worse than the apps experience. Recoverable.
+
+(2b) is the highest-stakes item in the phase. A wrong policy decision here is visible to every paying creator and can distort marketplace behavior. Do not build speculative.
 
 ---
 
@@ -108,9 +141,11 @@ Highest-stakes item in the phase. A wrong policy decision here is visible to eve
 
 ### The gap
 
-Apps in bd-webflow already support versioned drafts via `getAppVersionHistory` (surfaced in Phase 1.2). Templates do not — template mutations in `routes/dashboard/admin/templates.ts:176` are admin-only PUTs that mutate the single `Template` document in place. There is no version history, no compare, no rollback.
+Apps in bd-webflow already support versioned drafts via `getAppVersionHistory` (surfaced in Phase 1.2 as `AppVersionHistoryTimeline` inside the CreatorDashboard detail page). Templates do not — template mutations in `routes/dashboard/admin/templates.ts:176` are admin-only PUTs that mutate the single `Template` document in place. There is no version history, no compare, no rollback.
 
 The external dashboard exposes all three for templates.
+
+**The shipped App version history pattern is the reference implementation.** `versionHistoryUtils.ts` + `AppVersionHistoryTimeline.tsx` (from Phase 1.2) already define the status tones, timeline formatting, and relative-time rendering. If templates adopt versioning, the client-side timeline component reuses verbatim; only the data source changes.
 
 ### Decision needed
 
