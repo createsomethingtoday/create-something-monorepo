@@ -1,4 +1,10 @@
 import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
+import {
+  buildTemplateEnvelope,
+  postMarketplaceWebhook,
+  type PageCount,
+  type PaymentType,
+} from '@create-something/webflow-dashboard-core/marketplace-webhook';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
@@ -29,6 +35,24 @@ type TemplateSubmissionBody = {
   agreementConfirmed?: boolean;
   turnstileToken?: string;
   utm?: Record<string, string>;
+};
+
+const FEATURE_FLAG_TO_WEBFLOW_FEATURE: Record<string, string> = {
+  gsap: 'GSAP',
+  interactions: 'Interactions',
+  components: 'Symbols',
+};
+
+const STYLE_TAG_TO_WEBFLOW_STYLE: Record<string, string> = {
+  bold: 'Bold',
+  corporate: 'Corporate',
+  dark: 'Dark',
+  illustration: 'Illustration',
+  light: 'Light',
+  minimal: 'Minimal',
+  modern: 'Modern',
+  playful: 'Playful',
+  retro: 'Retro',
 };
 
 function escapeHtml(value: string): string {
@@ -68,6 +92,24 @@ function ensureArray(value: unknown): string[] {
     : [];
 }
 
+function derivePageCount(siteTypes: string[]): PageCount {
+  if (siteTypes.includes('multi-layout')) return 'Multi-layout';
+  const nonStatic = siteTypes.filter((type) => type !== 'static');
+  return nonStatic.length > 1 ? 'Multi' : 'One';
+}
+
+function mapStyleTags(styleTags: string[]): string[] {
+  return styleTags
+    .map((tag) => STYLE_TAG_TO_WEBFLOW_STYLE[tag.toLowerCase()])
+    .filter((value): value is string => Boolean(value));
+}
+
+function mapFeatureFlags(featureFlags: string[]): string[] {
+  return featureFlags
+    .map((flag) => FEATURE_FLAG_TO_WEBFLOW_FEATURE[flag.toLowerCase()])
+    .filter((value): value is string => Boolean(value));
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as TemplateSubmissionBody;
@@ -96,7 +138,8 @@ export async function POST(request: Request) {
     const styleTags = ensureArray(body.styleTags);
     const siteTypes = ensureArray(body.siteTypes);
     const category = String(body.category || '').trim();
-    const priceModel = String(body.priceModel || '').trim() || 'Free';
+    const priceModelRaw = String(body.priceModel || '').trim();
+    const paymentType: PaymentType = priceModelRaw === 'Paid' ? 'Paid' : 'Free';
 
     if (!creatorName) {
       return jsonNoStore({ error: 'Creator name is required.' }, { status: 400 });
@@ -191,6 +234,15 @@ export async function POST(request: Request) {
       combinedFeatures.add('gsap');
     }
 
+    const pageCount = derivePageCount(siteTypes);
+    const templateTypeCms =
+      siteTypes.includes('cms') || combinedFeatures.has('cms');
+    const templateTypeEcommerce =
+      siteTypes.includes('ecommerce') || combinedFeatures.has('ecommerce');
+    const mappedStyles = mapStyleTags(styleTags);
+    const mappedFeatures = mapFeatureFlags([...combinedFeatures]);
+    const categories = category ? [category] : [];
+
     const detailsHtml = [
       `<h2>Submission notes</h2>${toParagraphs(longDescription)}`,
       notes ? `<h3>Internal notes</h3>${toParagraphs(notes)}` : '',
@@ -212,46 +264,58 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .join('');
 
-    const submission = await airtable.createTemplateSubmission({
-      creatorEmail,
-      creatorWebflowEmail:
-        creator.emails?.find((value) => value !== creatorEmail) || creatorEmail,
-      name: templateName,
-      description: [
-        category ? `Category: ${category}` : '',
-        tags.length > 0 ? `Tags: ${tags.join(', ')}` : '',
-        siteTypes.length > 0 ? `Site types: ${siteTypes.join(', ')}` : '',
-        combinedFeatures.size > 0 ? `Features: ${[...combinedFeatures].join(', ')}` : '',
-        notes ? `Notes: ${notes}` : ''
-      ]
-        .filter(Boolean)
-        .join('\n'),
-      descriptionShort: shortDescription,
-      descriptionLongHtml: detailsHtml,
-      websiteUrl: publishedValidation.normalizedUrl,
-      previewUrl,
-      priceString: priceModel,
-      thumbnailUrl,
-      secondaryThumbnailUrl: secondaryThumbnailUrl || undefined,
-      carouselImages: galleryUrls,
-      metadata: {
+    const submissionId = crypto.randomUUID();
+    const envelope = buildTemplateEnvelope(
+      {
         creatorName,
-        category,
-        tags,
-        siteTypes,
-        styleTags,
-        featureFlags: [...combinedFeatures],
+        creatorEmail,
+        isTemplateUserEmailValidated: true,
+        templateName,
+        isTemplateNameValidated: true,
         publishedUrl: publishedValidation.normalizedUrl,
+        isPublishedUrlValidated: true,
         previewUrl,
+        paymentType,
+        pageCount,
+        templateTypeCms,
+        templateTypeEcommerce,
+        categories,
+        secondaryTags: tags,
+        styles: mappedStyles,
+        features: mappedFeatures,
+        shortDescription,
+        longDescription: detailsHtml,
         notes,
-        utm: body.utm || {}
-      }
-    });
+        thumbnailImageUrl: thumbnailUrl,
+        thumbnailImageSecondaryUrl: secondaryThumbnailUrl,
+        galleryImageUrls: galleryUrls,
+        agreeToTerms: body.agreementConfirmed === true,
+        acknowledgedChecklist: body.checklistConfirmed === true,
+        utm: {
+          source: body.utm?.utm_source,
+          medium: body.utm?.utm_medium,
+          campaign: body.utm?.utm_campaign,
+          content: body.utm?.utm_content,
+          term: body.utm?.utm_term,
+        },
+      },
+      { submissionId },
+    );
+
+    const webhookResponse = await postMarketplaceWebhook(envelope);
+    if (!webhookResponse.ok) {
+      return jsonNoStore(
+        { error: `Template submission webhook failed: ${webhookResponse.status}` },
+        { status: 502 },
+      );
+    }
 
     return jsonNoStore({
-      asset: submission.asset,
-      versionId: submission.versionId,
-      warning: submission.warning,
+      asset: {
+        id: submissionId,
+        name: templateName,
+      },
+      submissionId,
       publishedValidation: {
         normalizedUrl: publishedValidation.normalizedUrl,
         gsapDetected: publishedValidation.summary.gsapDetected,

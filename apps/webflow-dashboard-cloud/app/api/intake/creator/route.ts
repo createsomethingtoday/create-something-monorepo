@@ -1,4 +1,8 @@
 import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
+import {
+  buildCreatorEnvelope,
+  postMarketplaceWebhook,
+} from '@create-something/webflow-dashboard-core/marketplace-webhook';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { isSupportedCountry } from '../../../../lib/intake/constants';
@@ -16,6 +20,7 @@ type CreatorSubmissionBody = {
   avatarUrl?: string;
   agreedToTerms?: boolean;
   turnstileToken?: string;
+  utm?: Record<string, string>;
 };
 
 function isValidOptionalUrl(value: string | undefined): boolean {
@@ -49,6 +54,7 @@ export async function POST(request: Request) {
     const biography = String(body.biography || '').trim();
     const country = String(body.country || '').trim();
     const avatarUrl = String(body.avatarUrl || '').trim();
+    const websiteUrl = String(body.websiteUrl || '').trim();
 
     if (!country) {
       return jsonNoStore({ error: 'Country is required.' }, { status: 400 });
@@ -74,7 +80,7 @@ export async function POST(request: Request) {
       return jsonNoStore({ error: 'You must agree to the creator terms.' }, { status: 400 });
     }
 
-    if (!isValidOptionalUrl(body.websiteUrl)) {
+    if (!isValidOptionalUrl(websiteUrl)) {
       return jsonNoStore({ error: 'Personal website URL is invalid.' }, { status: 400 });
     }
 
@@ -115,19 +121,47 @@ export async function POST(request: Request) {
       );
     }
 
-    const creator = await airtable.createCreator({
-      email: primaryEmail,
-      webflowEmail,
-      name: preferredName || legalName,
-      legalName,
-      biography,
-      avatarUrl
-    });
+    const submissionId = crypto.randomUUID();
+    const envelope = buildCreatorEnvelope(
+      {
+        selectedCountry: country,
+        primaryEmail,
+        webflowEmail,
+        preferredName,
+        legalName,
+        personalWebsiteUrl: websiteUrl,
+        creatorBio: biography,
+        profileImageUrl: avatarUrl,
+        agreeToWebflowTerms: true,
+        isCreatorEmailValidated: true,
+        isWebflowEmailValidated: true,
+        utm: {
+          source: body.utm?.utm_source,
+          medium: body.utm?.utm_medium,
+          campaign: body.utm?.utm_campaign,
+          content: body.utm?.utm_content,
+          term: body.utm?.utm_term,
+        },
+      },
+      { submissionId },
+    );
+
+    const response = await postMarketplaceWebhook(envelope);
+    if (!response.ok) {
+      return jsonNoStore(
+        { error: `Creator submission webhook failed: ${response.status}` },
+        { status: 502 },
+      );
+    }
 
     return jsonNoStore({
-      creator,
+      creator: {
+        name: preferredName || legalName,
+        email: primaryEmail,
+      },
+      submissionId,
       countrySupported: isSupportedCountry(country),
-      websiteUrlCaptured: Boolean(body.websiteUrl)
+      websiteUrlCaptured: Boolean(websiteUrl),
     });
   } catch (error) {
     return jsonNoStore(
