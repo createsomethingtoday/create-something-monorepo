@@ -289,6 +289,24 @@ select {
   line-height: 1.45;
 }
 
+.submission-field-feedback {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.submission-field-feedback-success {
+  color: #007a41;
+}
+
+.submission-field-feedback-error {
+  color: var(--error-text, #cf313b);
+}
+
+.submission-field-feedback-info {
+  color: var(--webflow-blue-600, #0055d4);
+}
+
 .submission-status {
   width: 100%;
   padding: 0.875rem 1rem;
