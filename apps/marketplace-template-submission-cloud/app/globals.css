@@ -251,21 +251,42 @@ select {
 .submission-file-input {
   width: 100%;
   padding: 0.875rem 1rem;
-  border: 1px dashed #cfcfcf;
+  border: 1px dashed var(--border, #d9d9d9);
   border-radius: 0.75rem;
-  background: #fafafa;
-  color: #363636;
+  background: var(--_apps---colors--muted, #f8f8f8);
+  color: var(--_apps---colors--foreground, #333);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.submission-file-input:hover {
+  border-color: var(--_apps---colors--primary, #146ef5);
+  background: var(--_apps---colors--background, #fff);
+}
+
+.submission-file-input:focus-visible {
+  outline: none;
+  border-style: solid;
+  border-color: var(--_apps---colors--primary, #146ef5);
+  box-shadow: 0 0 0 3px rgba(20, 110, 245, 0.15);
 }
 
 .submission-file-input::file-selector-button {
   margin-right: 0.75rem;
   border: 0;
   border-radius: 0.5rem;
-  padding: 0.55rem 0.85rem;
-  background: #146ef5;
-  color: #fff;
+  padding: 0.5rem 0.9rem;
+  background: var(--_apps---colors--primary, #146ef5);
+  color: var(--_apps---colors--primary-foreground, #fff);
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.submission-file-input::file-selector-button:hover {
+  background: var(--webflow-blue-600, #0055d4);
 }
 
 .submission-counter {
@@ -309,6 +330,26 @@ select {
 
 .submission-country-picker {
   position: relative;
+}
+
+.submission-country-picker::after {
+  content: '';
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  margin-top: -3px;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--_apps---colors--muted-foreground, #7d797a);
+  border-bottom: 2px solid var(--_apps---colors--muted-foreground, #7d797a);
+  transform: rotate(45deg);
+  pointer-events: none;
+  transition: transform 0.15s ease;
+}
+
+.submission-country-picker input {
+  padding-right: 2.25rem;
+  cursor: pointer;
 }
 
 .submission-country-picker-menu {
@@ -399,6 +440,19 @@ select {
 
 .turnstile-wrap {
   min-height: 4.25rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.turnstile-wrap:empty::before {
+  content: 'Loading bot check…';
+  color: var(--_apps---colors--muted-foreground, #7d797a);
+  font-size: 0.875rem;
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--border, #d9d9d9);
+  border-radius: 0.5rem;
+  background: var(--_apps---colors--muted, #f8f8f8);
 }
 
 .submission-quill {

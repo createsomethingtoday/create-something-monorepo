@@ -915,6 +915,7 @@ export function TemplateIntake() {
                         countries={ALL_COUNTRIES}
                         value={creator.country}
                         onChange={(v) => updateCreator('country', v)}
+                        placeholder="Select or search for a country…"
                         required
                       />
                     </div>
