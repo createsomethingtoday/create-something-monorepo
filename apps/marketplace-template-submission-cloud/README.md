@@ -53,6 +53,31 @@ pnpm --filter @create-something/marketplace-template-submission-cloud build
 pnpm --filter @create-something/marketplace-template-submission-cloud preview
 ```
 
+## Styling
+
+The form inherits the canonical marketplace look by importing the live Webflow-published CSS at the top of `app/globals.css`:
+
+```css
+@import url("https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/css/template-marketplace.webflow.shared.654a57c9583f8111cb371d48.64cfa4961.min.css");
+```
+
+That stylesheet carries the `:root` token system (`--webflow-blue`, `--spring-branded-*`, WF Visual Sans font faces) and the custom classes used on our markup (`.field-input`, `.button-sp`, `.button-sp.cc-white`, `.ts_link`, `.mp-breadcrumbs`, `.cc-check`, `.form-checkbox`, etc.).
+
+### Rotating the CSS URL
+
+The URL is hash-versioned — when Webflow rebuilds the template-marketplace site, the hash changes and the old URL returns 404. To refresh:
+
+```bash
+curl -sL "https://webflow.com/templates/submit-a-template" \
+  -H "User-Agent: Mozilla/5.0" \
+  | grep -oE 'href="https://cdn\.prod\.website-files\.com/5e593fb060cf87bbaf75dd20/[^"]+\.css"' \
+  | head -1
+```
+
+Replace the URL at the top of `app/globals.css` with whatever that returns, commit, and redeploy.
+
+App-specific overrides (layout, spacing, per-field feedback colors, country picker dropdown) live below the `@import` in the same file under `.submission-*` classes.
+
 ## Parent page embed
 
 Inside the `/templates/submit-a-template` Webflow Designer page, replace both `<form>` blocks (and their inline `<script>` tags) with:

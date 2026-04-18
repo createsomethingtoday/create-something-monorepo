@@ -307,6 +307,53 @@ select {
   color: var(--webflow-blue-600, #0055d4);
 }
 
+.submission-country-picker {
+  position: relative;
+}
+
+.submission-country-picker-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  max-height: 16rem;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px rgba(8, 8, 8, 0.08), 0 2px 6px rgba(8, 8, 8, 0.04);
+}
+
+.submission-country-picker-item {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.submission-country-picker-item.is-focused,
+.submission-country-picker-item:hover {
+  background: var(--_apps---colors--accent, #e4e4e4);
+}
+
+.submission-country-picker-item.is-selected {
+  font-weight: 600;
+}
+
+.submission-country-picker-empty {
+  padding: 0.5rem 0.75rem;
+  color: var(--_apps---colors--muted-foreground, #7d797a);
+  font-size: 0.875rem;
+}
+
 .submission-status {
   width: 100%;
   padding: 0.875rem 1rem;
