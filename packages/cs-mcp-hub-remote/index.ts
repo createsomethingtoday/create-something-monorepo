@@ -29,6 +29,7 @@ import {
 } from '@create-something/mcp-authz';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
+import discoveryRankingsJson from '../../config/mcp-hub/discovery-rankings.json';
 import intentRoutesJson from '../../config/mcp-hub/intent-routes.json';
 import registryJson from '../../config/mcp-hub/registry.json';
 
@@ -128,6 +129,7 @@ type ProxyRoute = {
   serverName: string;
   downstreamToolName: string;
   serverTags: string[];
+  discovery?: ProxyToolDiscoveryMetadata;
   call: (args: Record<string, unknown>, trace: InvocationTrace, accountId: string) => Promise<any>;
 };
 
@@ -146,6 +148,7 @@ type VisibleProxyCatalog = {
 type ProxyRouteDiscoveryFilters = {
   query?: string | null;
   serverName?: string | null;
+  workflow?: string | null;
 };
 
 type HubRuntime = {
@@ -219,6 +222,70 @@ type DiscoveryPackDefinition = {
   maxProxyTools?: number | null;
 };
 
+type DiscoveryRankingDefaults = {
+  priority?: number;
+  workflow?: string | null;
+  group?: string | null;
+  primary?: boolean;
+  tags?: string[];
+};
+
+type DiscoveryWorkflowDefinition = {
+  label?: string;
+  description?: string;
+};
+
+type DiscoveryRankingRule = {
+  serverName?: string;
+  serverNamePrefix?: string;
+  proxyToolName?: string;
+  proxyToolNamePrefix?: string;
+  downstreamToolName?: string;
+  downstreamToolNamePrefix?: string;
+  downstreamToolNameSuffix?: string;
+  descriptionIncludes?: string[];
+  priority?: number;
+  workflow?: string | null;
+  group?: string | null;
+  primary?: boolean;
+  tags?: string[];
+};
+
+type DiscoveryRankingRegistry = {
+  version: 1;
+  defaults?: DiscoveryRankingDefaults;
+  workflows?: Record<string, DiscoveryWorkflowDefinition>;
+  rules?: DiscoveryRankingRule[];
+};
+
+type ProxyToolDiscoveryMetadata = {
+  priority: number;
+  workflowId: string | null;
+  workflowLabel: string | null;
+  workflowDescription: string | null;
+  group: string | null;
+  primary: boolean;
+  tags: string[];
+};
+
+type ProxyToolSearchItem = {
+  proxyToolName: string;
+  serverName: string;
+  downstreamToolName: string;
+  description: string;
+  discovery: {
+    priority: number;
+    primary: boolean;
+    workflow: {
+      id: string;
+      label: string;
+      description: string | null;
+    } | null;
+    group: string | null;
+    tags: string[];
+  };
+};
+
 type DiscoveryPackRegistry = {
   version: 1;
   packs: Record<string, DiscoveryPackDefinition>;
@@ -252,12 +319,7 @@ type IntentRouteCandidate = {
   downstreamToolName: string | null;
   description: string;
   reason: string;
-  alternatives: Array<{
-    proxyToolName: string;
-    serverName: string;
-    downstreamToolName: string;
-    description: string;
-  }>;
+  alternatives: ProxyToolSearchItem[];
 };
 
 type HubResourceDefinition = {
@@ -391,6 +453,7 @@ const SERVICE_TIER_AUTHZ_POLICY_ID = 'policy.service-tier-entitlement.v1';
 
 const registry = registryJson as unknown as McpBundleRegistry;
 const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
+const discoveryRankingRegistry = discoveryRankingsJson as unknown as DiscoveryRankingRegistry;
 const intentRouteRegistry = intentRoutesJson as unknown as IntentRouteRegistry;
 
 export const MANAGEMENT_TOOLS: Tool[] = [
@@ -435,6 +498,7 @@ export const MANAGEMENT_TOOLS: Tool[] = [
       properties: {
         query: { type: 'string' },
         serverName: { type: 'string' },
+        workflow: { type: 'string' },
         cursor: { type: 'string' },
         limit: { type: 'number' },
       },
@@ -1117,9 +1181,6 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
     }
   }
 
-  connected.sort((a, b) => a.name.localeCompare(b.name));
-  failed.sort((a, b) => a.name.localeCompare(b.name));
-
   const proxies = buildProxyCatalog(connected);
   proxies.warnings.unshift(...warnings);
 
@@ -1383,12 +1444,19 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
     for (const tool of server.tools) {
       const baseProxyName = buildProxyToolName(server.name, tool.name);
       const proxyName = reserveProxyName(baseProxyName, routes, warnings);
+      const discovery = resolveProxyToolDiscoveryMetadata({
+        proxyToolName: proxyName,
+        serverName: server.name,
+        downstreamToolName: tool.name,
+        description: tool.description ?? '',
+      });
 
       toolDefinitions.push({
         ...tool,
         name: proxyName,
         description: `[${server.name}] ${tool.description ?? ''}`.trim(),
         inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
+        _meta: mergeToolMetaWithDiscovery(tool, discovery),
       });
 
       routes.set(proxyName, {
@@ -1396,6 +1464,7 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
         serverName: server.name,
         downstreamToolName: tool.name,
         serverTags: [...(server.config.tags ?? [])],
+        discovery,
         call: (args, trace, accountId) =>
           callDownstreamToolWithTrace(server, tool.name, args, trace, accountId),
       });
@@ -1603,7 +1672,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       if (toolName === 'hub_search_proxy_tools') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
         const filters = extractProxyRouteDiscoveryFilters(args);
-        const visible = await buildAuthorizedVisibleProxyRoutes({
+        const visible = await buildAuthorizedDiscoveryScopedProxyRoutes({
           runtime,
           prefs,
           accountContext,
@@ -1615,6 +1684,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         const result = toJsonResult(searchProxyTools(visible, args));
         const query = stringArg(args.query);
         const serverName = stringArg(args.serverName);
+        const workflow = stringArg(args.workflow);
         const cursor = stringArg(args.cursor);
         const limit = numberArg(args.limit, 25, 1, 100);
         await recordHubInvocationWithCtx({
@@ -1627,6 +1697,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             type: 'management',
             query,
             serverName,
+            workflow,
             limit,
             cursor,
             visibleProxyToolCount: visible.toolDefinitions.length,
@@ -1704,7 +1775,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         }
 
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const match = await getAuthorizedExactVisibleProxyRoute({
+        const match = await getAuthorizedExactDiscoveryScopedProxyRoute({
           runtime,
           prefs,
           accountContext,
@@ -1738,8 +1809,9 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           serverName: route.serverName,
           downstreamToolName: route.downstreamToolName,
           description: definition.description ?? '',
+          discovery: toProxyToolDiscoveryPayload(getProxyToolDiscoveryMetadata(route, definition)),
           inputSchema: definition.inputSchema ?? { type: 'object', properties: {} },
-          visible: true,
+          visible: match.visible,
         });
         await recordHubInvocationWithCtx({
           accountId,
@@ -1797,7 +1869,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         }
 
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = await buildAuthorizedVisibleProxyRoutes({
+        const visible = await buildAuthorizedDiscoveryScopedProxyRoutes({
           runtime,
           prefs,
           accountContext,
@@ -1889,7 +1961,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         }
 
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const match = await getAuthorizedExactVisibleProxyRoute({
+        const match = await getAuthorizedExactDiscoveryScopedProxyRoute({
           runtime,
           prefs,
           accountContext,
@@ -2644,6 +2716,30 @@ export function buildVisibleProxyRoutes(
   prefs: DiscoveryPreferences,
   accountContext: ResolvedAccountContext,
 ): VisibleProxyCatalog {
+  const discoveryScoped = buildDiscoveryScopedProxyRoutes(runtime, prefs, accountContext);
+  const cappedToolDefinitions = prefs.maxProxyTools && prefs.maxProxyTools > 0
+    ? discoveryScoped.toolDefinitions.slice(0, prefs.maxProxyTools)
+    : discoveryScoped.toolDefinitions;
+
+  return {
+    toolDefinitions: cappedToolDefinitions,
+    routes: new Map(
+      cappedToolDefinitions
+        .map((tool) => {
+          const route = discoveryScoped.routes.get(tool.name);
+          return route ? [tool.name, route] as const : null;
+        })
+        .filter((entry): entry is readonly [string, ProxyRoute] => Boolean(entry)),
+    ),
+    definitionByName: new Map(cappedToolDefinitions.map((tool) => [tool.name, tool])),
+  };
+}
+
+export function buildDiscoveryScopedProxyRoutes(
+  runtime: HubRuntime,
+  prefs: DiscoveryPreferences,
+  accountContext: ResolvedAccountContext,
+): VisibleProxyCatalog {
   const sessionScoped = runtime.proxies.toolDefinitions
     .map((tool) => {
       const route = runtime.proxies.routes.get(tool.name);
@@ -2657,12 +2753,9 @@ export function buildVisibleProxyRoutes(
     ? sessionScoped
     : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
 
-  const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
-    ? discoveryScoped.slice(0, prefs.maxProxyTools)
-    : discoveryScoped;
-
-  const toolDefinitions = capped.map((entry) => entry.tool);
-  const routes = new Map(capped.map((entry) => [entry.route.proxyToolName, entry.route]));
+  const ranked = rankVisibleProxyEntries(discoveryScoped, prefs.activeServers);
+  const toolDefinitions = ranked.map((entry) => entry.tool);
+  const routes = new Map(ranked.map((entry) => [entry.route.proxyToolName, entry.route]));
   const definitionByName = new Map(toolDefinitions.map((tool) => [tool.name, tool]));
 
   return {
@@ -2670,6 +2763,42 @@ export function buildVisibleProxyRoutes(
     routes,
     definitionByName,
   };
+}
+
+function rankVisibleProxyEntries<T extends { tool: Tool; route: ProxyRoute }>(
+  entries: T[],
+  activeServers: string[],
+): T[] {
+  const serverPriority = new Map(activeServers.map((serverName, index) => [serverName, index]));
+  return entries
+    .map((entry, index) => ({
+      entry,
+      index,
+      discovery: getProxyToolDiscoveryMetadata(entry.route, entry.tool),
+    }))
+    .sort((left, right) => {
+      const leftServerPriority = serverPriority.get(left.entry.route.serverName) ?? Number.MAX_SAFE_INTEGER;
+      const rightServerPriority = serverPriority.get(right.entry.route.serverName) ?? Number.MAX_SAFE_INTEGER;
+      if (leftServerPriority !== rightServerPriority) {
+        return leftServerPriority - rightServerPriority;
+      }
+
+      if (left.discovery.primary !== right.discovery.primary) {
+        return left.discovery.primary ? -1 : 1;
+      }
+
+      if (left.discovery.priority !== right.discovery.priority) {
+        return left.discovery.priority - right.discovery.priority;
+      }
+
+      const proxyNameCompare = left.entry.route.proxyToolName.localeCompare(right.entry.route.proxyToolName);
+      if (proxyNameCompare !== 0) {
+        return proxyNameCompare;
+      }
+
+      return left.index - right.index;
+    })
+    .map((entry) => entry.entry);
 }
 
 function hubAuthzHybridConfig(env: Env) {
@@ -2972,7 +3101,67 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
   };
 }
 
-async function getAuthorizedExactVisibleProxyRoute(params: {
+export async function buildAuthorizedDiscoveryScopedProxyRoutes(params: {
+  runtime: HubRuntime;
+  prefs: DiscoveryPreferences;
+  accountContext: ResolvedAccountContext;
+  env: Env;
+  trace: InvocationTrace;
+  entrypoint: string;
+  filters?: ProxyRouteDiscoveryFilters;
+}): Promise<VisibleProxyCatalog> {
+  const base = filterVisibleProxyCatalog(
+    buildDiscoveryScopedProxyRoutes(params.runtime, params.prefs, params.accountContext),
+    params.filters,
+  );
+  if (base.toolDefinitions.length === 0) {
+    return base;
+  }
+
+  const rollout = await getHubRouteAuthzRollout(params.env);
+  const allowed: Array<{ tool: Tool; route: ProxyRoute }> = [];
+
+  for (const tool of base.toolDefinitions) {
+    const route = base.routes.get(tool.name);
+    if (!route) continue;
+    const evaluation = await evaluateHubRouteAuthorization({
+      env: params.env,
+      accountContext: params.accountContext,
+      route,
+      definition: tool,
+      trace: params.trace,
+      rollout,
+      actionName: 'discover',
+      entrypoint: params.entrypoint,
+      recordDecision: false,
+    });
+    if (evaluation.final.decision === 'allow') {
+      allowed.push({ tool, route });
+    } else {
+      await recordAuthzDecisionEvent(
+        params.env.TELEMETRY_DB,
+        toHubAuthzEvent({
+          policyId: evaluation.final.policyId,
+          accountContext: params.accountContext,
+          route,
+          definition: tool,
+          trace: params.trace,
+          evaluation,
+          actionName: 'discover',
+          entrypoint: params.entrypoint,
+        }),
+      );
+    }
+  }
+
+  return {
+    toolDefinitions: allowed.map((entry) => entry.tool),
+    routes: new Map(allowed.map((entry) => [entry.route.proxyToolName, entry.route])),
+    definitionByName: new Map(allowed.map((entry) => [entry.tool.name, entry.tool])),
+  };
+}
+
+async function getAuthorizedExactDiscoveryScopedProxyRoute(params: {
   runtime: HubRuntime;
   prefs: DiscoveryPreferences;
   accountContext: ResolvedAccountContext;
@@ -2980,10 +3169,10 @@ async function getAuthorizedExactVisibleProxyRoute(params: {
   trace: InvocationTrace;
   entrypoint: string;
   proxyToolName: string;
-}): Promise<{ route: ProxyRoute; definition: Tool } | null> {
-  const base = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext);
-  const route = base.routes.get(params.proxyToolName);
-  const definition = base.definitionByName.get(params.proxyToolName);
+}): Promise<{ route: ProxyRoute; definition: Tool; visible: boolean } | null> {
+  const discoveryScoped = buildDiscoveryScopedProxyRoutes(params.runtime, params.prefs, params.accountContext);
+  const route = discoveryScoped.routes.get(params.proxyToolName);
+  const definition = discoveryScoped.definitionByName.get(params.proxyToolName);
   if (!route || !definition) {
     return null;
   }
@@ -3000,7 +3189,10 @@ async function getAuthorizedExactVisibleProxyRoute(params: {
     recordDecision: false,
   });
   if (evaluation.final.decision === 'allow') {
-    return { route, definition };
+    const visible = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext).routes.has(
+      params.proxyToolName,
+    );
+    return { route, definition, visible };
   }
 
   await recordAuthzDecisionEvent(
@@ -3440,36 +3632,31 @@ export function searchProxyTools(
   const filters = extractProxyRouteDiscoveryFilters(args);
   const query = filters.query ?? null;
   const serverNameFilter = filters.serverName ?? null;
+  const workflowFilter = filters.workflow ?? null;
   const cursor = stringArg(args.cursor);
   const limit = numberArg(args.limit, 25, 1, 100);
   const startIndex = cursor ? numberArg(Number(cursor), 0, 0, Number.MAX_SAFE_INTEGER) : 0;
 
-  const all = Array.from(visible.routes.values())
-    .map((route) => {
-      const definition = visible.definitionByName.get(route.proxyToolName);
-      return {
-        proxyToolName: route.proxyToolName,
-        serverName: route.serverName,
-        downstreamToolName: route.downstreamToolName,
-        description: definition?.description ?? '',
-      };
-    })
-    .sort((a, b) => a.proxyToolName.localeCompare(b.proxyToolName));
-
+  const all = listVisibleProxyEntries(visible)
+    .map(({ route, tool }) => buildProxyToolSearchItem(route, tool));
   const filtered = all.filter((item) => matchesProxySearchItem(item, filters));
+  const ranked = query ? rankSearchProxyItems(filtered, query) : filtered;
 
-  const page = filtered.slice(startIndex, startIndex + limit);
-  const nextCursor = startIndex + page.length < filtered.length
+  const page = ranked.slice(startIndex, startIndex + limit);
+  const nextCursor = startIndex + page.length < ranked.length
     ? String(startIndex + page.length)
     : null;
 
   return {
     query,
     serverName: serverNameFilter,
-    total: filtered.length,
+    workflow: workflowFilter,
+    sort: query ? 'query_then_importance' : 'importance',
+    total: ranked.length,
     limit,
     cursor: cursor ?? '0',
     nextCursor,
+    workflowGroups: summarizeSearchWorkflowGroups(ranked),
     tools: page,
   };
 }
@@ -3486,19 +3673,19 @@ function extractProxyRouteDiscoveryFilters(
   return {
     query: stringArg(args.query),
     serverName: stringArg(args.serverName),
+    workflow: stringArg(args.workflow),
   };
 }
 
 function matchesProxySearchItem(
-  item: {
-    proxyToolName: string;
-    serverName: string;
-    downstreamToolName: string;
-    description: string;
-  },
+  item: ProxyToolSearchItem,
   filters: ProxyRouteDiscoveryFilters,
 ): boolean {
   if (filters.serverName && item.serverName !== filters.serverName) {
+    return false;
+  }
+
+  if (filters.workflow && item.discovery.workflow?.id !== filters.workflow) {
     return false;
   }
 
@@ -3507,11 +3694,19 @@ function matchesProxySearchItem(
   }
 
   const query = filters.query.toLowerCase();
+  const workflowId = item.discovery.workflow?.id?.toLowerCase() ?? '';
+  const workflowLabel = item.discovery.workflow?.label?.toLowerCase() ?? '';
+  const group = item.discovery.group?.toLowerCase() ?? '';
+  const tags = item.discovery.tags.join(' ').toLowerCase();
   return (
     item.proxyToolName.toLowerCase().includes(query) ||
     item.serverName.toLowerCase().includes(query) ||
     item.downstreamToolName.toLowerCase().includes(query) ||
-    item.description.toLowerCase().includes(query)
+    item.description.toLowerCase().includes(query) ||
+    workflowId.includes(query) ||
+    workflowLabel.includes(query) ||
+    group.includes(query) ||
+    tags.includes(query)
   );
 }
 
@@ -3519,25 +3714,14 @@ function filterVisibleProxyCatalog(
   visible: VisibleProxyCatalog,
   filters: ProxyRouteDiscoveryFilters | undefined,
 ): VisibleProxyCatalog {
-  if (!filters?.query && !filters?.serverName) {
+  if (!filters?.query && !filters?.serverName && !filters?.workflow) {
     return visible;
   }
 
-  const filteredEntries = visible.toolDefinitions
-    .map((tool) => {
-      const route = visible.routes.get(tool.name);
-      if (!route) return null;
-      return { tool, route };
-    })
-    .filter((entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry))
+  const filteredEntries = listVisibleProxyEntries(visible)
     .filter((entry) =>
       matchesProxySearchItem(
-        {
-          proxyToolName: entry.route.proxyToolName,
-          serverName: entry.route.serverName,
-          downstreamToolName: entry.route.downstreamToolName,
-          description: entry.tool.description ?? '',
-        },
+        buildProxyToolSearchItem(entry.route, entry.tool),
         filters,
       ));
 
@@ -3547,6 +3731,108 @@ function filterVisibleProxyCatalog(
     routes: new Map(filteredEntries.map((entry) => [entry.route.proxyToolName, entry.route])),
     definitionByName: new Map(toolDefinitions.map((tool) => [tool.name, tool])),
   };
+}
+
+function listVisibleProxyEntries(
+  visible: VisibleProxyCatalog,
+): Array<{ tool: Tool; route: ProxyRoute }> {
+  return visible.toolDefinitions
+    .map((tool) => {
+      const route = visible.routes.get(tool.name);
+      if (!route) return null;
+      return { tool, route };
+    })
+    .filter((entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry));
+}
+
+function buildProxyToolSearchItem(route: ProxyRoute, definition?: Tool): ProxyToolSearchItem {
+  return {
+    proxyToolName: route.proxyToolName,
+    serverName: route.serverName,
+    downstreamToolName: route.downstreamToolName,
+    description: definition?.description ?? '',
+    discovery: toProxyToolDiscoveryPayload(getProxyToolDiscoveryMetadata(route, definition)),
+  };
+}
+
+function rankSearchProxyItems(
+  items: ProxyToolSearchItem[],
+  query: string,
+): ProxyToolSearchItem[] {
+  const queryTokens = new Set(tokenizeRouterText(query));
+  if (!queryTokens.size) return items;
+
+  const scored = items.map((item) => {
+    const deprecated = isDeprecatedDescription(item.description);
+    let score = 0;
+    for (const token of queryTokens) {
+      if (item.proxyToolName.toLowerCase().includes(token)) score += 8;
+      if (item.downstreamToolName.toLowerCase().includes(token)) score += 7;
+      if (item.serverName.toLowerCase().includes(token)) score += 4;
+      if (item.description.toLowerCase().includes(token)) score += 3;
+      if ((item.discovery.workflow?.id ?? '').toLowerCase().includes(token)) score += 3;
+      if ((item.discovery.workflow?.label ?? '').toLowerCase().includes(token)) score += 2;
+      if ((item.discovery.group ?? '').toLowerCase().includes(token)) score += 2;
+      if (item.discovery.tags.some((tag) => tag.toLowerCase().includes(token))) score += 2;
+    }
+
+    if (item.discovery.primary) {
+      score += 6;
+    }
+
+    score += Math.max(0, 25 - Math.floor(item.discovery.priority / 20));
+
+    if (deprecated) {
+      score -= 60;
+    }
+
+    return {
+      item,
+      score,
+      deprecated,
+    };
+  });
+
+  scored.sort((left, right) => {
+    if (right.score !== left.score) return right.score - left.score;
+    if (left.item.discovery.primary !== right.item.discovery.primary) {
+      return left.item.discovery.primary ? -1 : 1;
+    }
+    if (left.item.discovery.priority !== right.item.discovery.priority) {
+      return left.item.discovery.priority - right.item.discovery.priority;
+    }
+    if (left.deprecated !== right.deprecated) return left.deprecated ? 1 : -1;
+    return left.item.proxyToolName.localeCompare(right.item.proxyToolName);
+  });
+
+  return scored.map((entry) => entry.item);
+}
+
+function summarizeSearchWorkflowGroups(items: ProxyToolSearchItem[]): Array<Record<string, unknown>> {
+  const grouped = new Map<string, { id: string; label: string; description: string | null; count: number; primaryCount: number; minPriority: number }>();
+  for (const item of items) {
+    const workflow = item.discovery.workflow;
+    if (!workflow?.id) continue;
+    const current = grouped.get(workflow.id) ?? {
+      id: workflow.id,
+      label: workflow.label,
+      description: workflow.description ?? null,
+      count: 0,
+      primaryCount: 0,
+      minPriority: item.discovery.priority,
+    };
+    current.count += 1;
+    if (item.discovery.primary) current.primaryCount += 1;
+    current.minPriority = Math.min(current.minPriority, item.discovery.priority);
+    grouped.set(workflow.id, current);
+  }
+
+  return [...grouped.values()]
+    .sort((left, right) => {
+      if (left.minPriority !== right.minPriority) return left.minPriority - right.minPriority;
+      return left.label.localeCompare(right.label);
+    })
+    .map(({ minPriority, ...group }) => group);
 }
 
 export function resolveIntentRouteCandidate(
@@ -3613,9 +3899,9 @@ export function resolveIntentRouteCandidate(
   const discoveryFetchLimit = Math.min(Math.max(limit * 5, 20), 100);
   const discovered = searchProxyTools(visible, { query, serverName, limit: discoveryFetchLimit });
   const tools = Array.isArray((discovered as Record<string, unknown>).tools)
-    ? (discovered as Record<string, unknown>).tools as Array<Record<string, unknown>>
+    ? (discovered as Record<string, unknown>).tools as ProxyToolSearchItem[]
     : [];
-  const rankedTools = rankDiscoveryFallbackTools(tools, query).slice(0, limit);
+  const rankedTools = tools.slice(0, limit);
 
   const first = rankedTools[0] ?? null;
   if (first) {
@@ -3630,12 +3916,7 @@ export function resolveIntentRouteCandidate(
       reason: allowlistMatch
         ? `Allowlisted route unavailable; selected discovery fallback for intent "${intent}".`
         : `Selected discovery fallback for intent "${intent}".`,
-      alternatives: rankedTools.map((tool) => ({
-        proxyToolName: stringArg(tool.proxyToolName) ?? '',
-        serverName: stringArg(tool.serverName) ?? '',
-        downstreamToolName: stringArg(tool.downstreamToolName) ?? '',
-        description: stringArg(tool.description) ?? '',
-      })),
+      alternatives: rankedTools,
     };
   }
 
@@ -3659,6 +3940,9 @@ function candidateToRoutePayload(
   const definition = candidate.proxyToolName
     ? visible.definitionByName.get(candidate.proxyToolName)
     : undefined;
+  const route = candidate.proxyToolName
+    ? visible.routes.get(candidate.proxyToolName)
+    : undefined;
 
   return {
     intent: candidate.intent,
@@ -3669,6 +3953,7 @@ function candidateToRoutePayload(
     serverName: candidate.serverName,
     downstreamToolName: candidate.downstreamToolName,
     description: candidate.description || definition?.description || '',
+    discovery: route ? toProxyToolDiscoveryPayload(getProxyToolDiscoveryMetadata(route, definition)) : null,
     inputSchema: definition?.inputSchema ?? null,
     reason: candidate.reason,
     alternatives: candidate.alternatives,
@@ -3765,46 +4050,241 @@ function isDeprecatedDescription(description: string): boolean {
   return /\bdeprecated\b/i.test(description);
 }
 
-function rankDiscoveryFallbackTools(
-  tools: Array<Record<string, unknown>>,
-  query: string,
-): Array<Record<string, unknown>> {
-  if (!tools.length) return tools;
-  const queryTokens = new Set(tokenizeRouterText(query));
-  const scored = tools.map((tool) => {
-    const proxyToolName = stringArg(tool.proxyToolName) ?? '';
-    const serverName = stringArg(tool.serverName) ?? '';
-    const downstreamToolName = stringArg(tool.downstreamToolName) ?? '';
-    const description = stringArg(tool.description) ?? '';
-    const deprecated = isDeprecatedDescription(description);
+function mergeToolMetaWithDiscovery(
+  tool: Tool,
+  discovery: ProxyToolDiscoveryMetadata,
+): Record<string, unknown> {
+  const baseMeta = asRecord(tool._meta) ?? {};
+  return {
+    ...baseMeta,
+    createSomethingHubDiscovery: toProxyToolDiscoveryPayload(discovery),
+  };
+}
 
-    let score = 0;
-    for (const token of queryTokens) {
-      if (proxyToolName.toLowerCase().includes(token)) score += 8;
-      if (downstreamToolName.toLowerCase().includes(token)) score += 7;
-      if (serverName.toLowerCase().includes(token)) score += 4;
-      if (description.toLowerCase().includes(token)) score += 3;
+function getProxyToolDiscoveryMetadata(
+  route: ProxyRoute,
+  definition?: Tool,
+): ProxyToolDiscoveryMetadata {
+  if (route.discovery) {
+    return route.discovery;
+  }
+
+  return resolveProxyToolDiscoveryMetadata({
+    proxyToolName: route.proxyToolName,
+    serverName: route.serverName,
+    downstreamToolName: route.downstreamToolName,
+    description: definition?.description ?? '',
+  });
+}
+
+function resolveProxyToolDiscoveryMetadata(params: {
+  proxyToolName: string;
+  serverName: string;
+  downstreamToolName: string;
+  description: string;
+}): ProxyToolDiscoveryMetadata {
+  const defaults = discoveryRankingRegistry.defaults ?? {};
+  const generic = resolveGenericProxyToolDiscoveryMetadata(params);
+  let priority = normalizeDiscoveryPriority(defaults.priority) ?? 500;
+  let workflowId = typeof defaults.workflow === 'string' ? defaults.workflow : null;
+  let group = typeof defaults.group === 'string' ? defaults.group : null;
+  let primary = defaults.primary === true;
+  const tags: string[] = Array.isArray(defaults.tags) ? [...defaults.tags] : [];
+
+  if (generic.priority !== undefined) priority = generic.priority;
+  if (generic.workflowId !== undefined) workflowId = generic.workflowId;
+  if (generic.group !== undefined) group = generic.group;
+  if (generic.primary !== undefined) primary = generic.primary;
+  if (generic.tags?.length) {
+    for (const tag of generic.tags) {
+      if (!tags.includes(tag)) tags.push(tag);
     }
+  }
 
-    if (deprecated) {
-      score -= 60;
+  for (const rule of discoveryRankingRegistry.rules ?? []) {
+    if (!matchesDiscoveryRankingRule(rule, params)) continue;
+    const rulePriority = normalizeDiscoveryPriority(rule.priority);
+    if (rulePriority !== null) priority = rulePriority;
+    if (typeof rule.workflow === 'string') workflowId = rule.workflow;
+    if (typeof rule.group === 'string') group = rule.group;
+    if (typeof rule.primary === 'boolean') primary = rule.primary;
+    if (Array.isArray(rule.tags)) {
+      for (const tag of rule.tags) {
+        if (typeof tag === 'string' && tag.trim() && !tags.includes(tag.trim())) {
+          tags.push(tag.trim());
+        }
+      }
     }
+  }
 
+  const workflow = workflowId ? discoveryRankingRegistry.workflows?.[workflowId] : undefined;
+  return {
+    priority,
+    workflowId,
+    workflowLabel: workflow?.label ?? (workflowId ? workflowId.replaceAll('_', ' ') : null),
+    workflowDescription: workflow?.description ?? null,
+    group,
+    primary,
+    tags,
+  };
+}
+
+function resolveGenericProxyToolDiscoveryMetadata(params: {
+  proxyToolName: string;
+  downstreamToolName: string;
+  description: string;
+}): Partial<ProxyToolDiscoveryMetadata> {
+  const tokens = new Set([
+    ...tokenizeRouterText(params.proxyToolName),
+    ...tokenizeRouterText(params.downstreamToolName),
+  ]);
+  const has = (token: string) => tokens.has(token);
+
+  if ((has('connection') && has('status')) || (has('connect') && has('status'))) {
     return {
-      tool,
-      score,
-      deprecated,
-      proxyToolName,
+      priority: 40,
+      workflowId: 'auth_reconnect',
+      group: 'connect',
+      primary: true,
+      tags: ['auth', 'status'],
     };
-  });
+  }
 
-  scored.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    if (a.deprecated !== b.deprecated) return a.deprecated ? 1 : -1;
-    return a.proxyToolName.localeCompare(b.proxyToolName);
-  });
+  if (has('connect') && has('link')) {
+    return {
+      priority: 45,
+      workflowId: 'auth_reconnect',
+      group: 'connect',
+      primary: true,
+      tags: ['auth', 'connect'],
+    };
+  }
 
-  return scored.map((entry) => entry.tool);
+  if (has('workflow')) {
+    return {
+      priority: 50,
+      workflowId: 'overview',
+      group: 'workflow',
+      primary: true,
+      tags: ['workflow'],
+    };
+  }
+
+  if (has('assign')) {
+    return {
+      priority: has('unassign') ? 255 : 250,
+      workflowId: 'writes',
+      group: 'ownership',
+      primary: !has('unassign'),
+      tags: ['ownership', 'write'],
+    };
+  }
+
+  if (has('enqueue') || has('run') || has('analyze') || has('capture') || has('extract') || has('score') || has('compare')) {
+    return {
+      priority: 320,
+      workflowId: 'operations',
+      group: 'analysis',
+      primary: true,
+      tags: ['analysis'],
+    };
+  }
+
+  if (has('list') || has('search') || has('get') || has('fetch') || has('read') || has('my')) {
+    return {
+      priority: 220,
+      workflowId: 'navigation',
+      group: has('queue') ? 'queue' : 'browse',
+      primary: has('queue') || has('context'),
+      tags: ['read'],
+    };
+  }
+
+  if (has('health')) {
+    return {
+      priority: 60,
+      workflowId: 'diagnostics',
+      group: 'health',
+      primary: true,
+      tags: ['health'],
+    };
+  }
+
+  if (has('status')) {
+    return {
+      priority: 80,
+      workflowId: 'diagnostics',
+      group: 'status',
+      primary: false,
+      tags: ['status'],
+    };
+  }
+
+  if (has('request') || has('save') || has('approve') || has('reject') || has('complete') || has('create') || has('update') || has('delete') || has('remove') || has('set')) {
+    return {
+      priority: 520,
+      workflowId: 'writes',
+      group: 'write',
+      primary: false,
+      tags: ['write'],
+    };
+  }
+
+  if (has('record') || has('promote') || has('refresh') || has('version')) {
+    return {
+      priority: 650,
+      workflowId: 'admin',
+      group: 'tuning',
+      primary: false,
+      tags: ['admin'],
+    };
+  }
+
+  return {};
+}
+
+function matchesDiscoveryRankingRule(
+  rule: DiscoveryRankingRule,
+  params: {
+    proxyToolName: string;
+    serverName: string;
+    downstreamToolName: string;
+    description: string;
+  },
+): boolean {
+  const description = params.description.toLowerCase();
+
+  if (rule.serverName && params.serverName !== rule.serverName) return false;
+  if (rule.serverNamePrefix && !params.serverName.startsWith(rule.serverNamePrefix)) return false;
+  if (rule.proxyToolName && params.proxyToolName !== rule.proxyToolName) return false;
+  if (rule.proxyToolNamePrefix && !params.proxyToolName.startsWith(rule.proxyToolNamePrefix)) return false;
+  if (rule.downstreamToolName && params.downstreamToolName !== rule.downstreamToolName) return false;
+  if (rule.downstreamToolNamePrefix && !params.downstreamToolName.startsWith(rule.downstreamToolNamePrefix)) return false;
+  if (rule.downstreamToolNameSuffix && !params.downstreamToolName.endsWith(rule.downstreamToolNameSuffix)) return false;
+  if (rule.descriptionIncludes?.some((term) => !description.includes(term.toLowerCase()))) return false;
+
+  return true;
+}
+
+function normalizeDiscoveryPriority(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.max(0, Math.floor(value));
+}
+
+function toProxyToolDiscoveryPayload(discovery: ProxyToolDiscoveryMetadata): ProxyToolSearchItem['discovery'] {
+  return {
+    priority: discovery.priority,
+    primary: discovery.primary,
+    workflow: discovery.workflowId
+      ? {
+          id: discovery.workflowId,
+          label: discovery.workflowLabel ?? discovery.workflowId,
+          description: discovery.workflowDescription,
+        }
+      : null,
+    group: discovery.group,
+    tags: [...discovery.tags],
+  };
 }
 
 function findAllowlistIntentMatch(
@@ -4044,7 +4524,14 @@ function parseDiscoveryMode(value: string | null | undefined): DiscoveryMode | n
 
 function resolveDiscoveryActiveServers(servers: string[], runtime: HubRuntime): string[] {
   const allowed = new Set(runtime.connected.map((server) => server.name));
-  return uniqueSortedStrings(servers.filter((server) => allowed.has(server)));
+  const result: string[] = [];
+  const seen = new Set<string>();
+  for (const server of servers) {
+    if (!allowed.has(server) || seen.has(server)) continue;
+    seen.add(server);
+    result.push(server);
+  }
+  return result;
 }
 
 function resolveDiscoveryMaxProxyTools(value: number | null): number | null {
@@ -4149,7 +4636,7 @@ function stringArrayArg(raw: unknown, fieldName: string): string[] {
   if (!Array.isArray(raw) || raw.some((entry) => typeof entry !== 'string')) {
     throw new Error(`"${fieldName}" must be an array of strings`);
   }
-  return uniqueSortedStrings(raw as string[]);
+  return uniqueStringsInOrder(raw as string[]);
 }
 
 function optionalStringArrayArg(raw: unknown, fieldName: string): string[] | undefined {
@@ -5676,15 +6163,15 @@ function readStateFromEnv(env: Env, currentRegistry: McpBundleRegistry): HubStat
 
   const enabledBundles =
     parseList(readEnvString(env, 'HUB_ENABLED_BUNDLES')) ??
-    uniqueSortedStrings(defaults.enabledBundles ?? []);
+    uniqueStringsInOrder(defaults.enabledBundles ?? []);
 
   const enabledServers =
     parseList(readEnvString(env, 'HUB_ENABLED_SERVERS')) ??
-    uniqueSortedStrings(defaults.enabledServers ?? []);
+    uniqueStringsInOrder(defaults.enabledServers ?? []);
 
   const disabledServers =
     parseList(readEnvString(env, 'HUB_DISABLED_SERVERS')) ??
-    uniqueSortedStrings(defaults.disabledServers ?? []);
+    uniqueStringsInOrder(defaults.disabledServers ?? []);
 
   return {
     enabledBundles,
@@ -5697,17 +6184,17 @@ function enforceRequiredHubStateServers(state: HubState, currentRegistry: McpBun
   const requiredServers = getRequiredGlobalServers(currentRegistry, env);
   if (requiredServers.length === 0) {
     return {
-      enabledBundles: uniqueSortedStrings(state.enabledBundles),
-      enabledServers: uniqueSortedStrings(state.enabledServers),
-      disabledServers: uniqueSortedStrings(state.disabledServers),
+      enabledBundles: uniqueStringsInOrder(state.enabledBundles),
+      enabledServers: uniqueStringsInOrder(state.enabledServers),
+      disabledServers: uniqueStringsInOrder(state.disabledServers),
     };
   }
 
   const requiredSet = new Set(requiredServers);
   return {
-    enabledBundles: uniqueSortedStrings(state.enabledBundles),
-    enabledServers: uniqueSortedStrings([...(state.enabledServers ?? []), ...requiredServers]),
-    disabledServers: uniqueSortedStrings((state.disabledServers ?? []).filter((name) => !requiredSet.has(name))),
+    enabledBundles: uniqueStringsInOrder(state.enabledBundles),
+    enabledServers: uniqueStringsInOrder([...(state.enabledServers ?? []), ...requiredServers]),
+    disabledServers: uniqueStringsInOrder((state.disabledServers ?? []).filter((name) => !requiredSet.has(name))),
   };
 }
 
@@ -5778,9 +6265,9 @@ function updateState(
 
   return enforceRequiredHubStateServers(
     {
-      enabledBundles: [...enabledBundles].sort(),
-      enabledServers: [...enabledServers].sort(),
-      disabledServers: [...disabledServers].sort(),
+      enabledBundles: [...enabledBundles],
+      enabledServers: [...enabledServers],
+      disabledServers: [...disabledServers],
     },
     currentRegistry,
     env,
@@ -5791,9 +6278,9 @@ function resolveState(currentRegistry: McpBundleRegistry, state: HubState): Stat
   const warnings: string[] = [];
 
   const resolved: HubState = {
-    enabledBundles: uniqueSortedStrings(state.enabledBundles),
-    enabledServers: uniqueSortedStrings(state.enabledServers),
-    disabledServers: uniqueSortedStrings(state.disabledServers),
+    enabledBundles: uniqueStringsInOrder(state.enabledBundles),
+    enabledServers: uniqueStringsInOrder(state.enabledServers),
+    disabledServers: uniqueStringsInOrder(state.disabledServers),
   };
 
   const enabledServerNames = new Set<string>();
@@ -5832,7 +6319,7 @@ function resolveState(currentRegistry: McpBundleRegistry, state: HubState): Stat
 
   return {
     state: resolved,
-    enabledServerNames: [...enabledServerNames].sort(),
+    enabledServerNames: [...enabledServerNames],
     warnings,
   };
 }
@@ -5861,7 +6348,7 @@ function parseList(raw: string | undefined): string[] | null {
     try {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed) && parsed.every((value) => typeof value === 'string')) {
-        return uniqueSortedStrings(parsed);
+        return uniqueStringsInOrder(parsed);
       }
       return [];
     } catch {
@@ -5869,12 +6356,12 @@ function parseList(raw: string | undefined): string[] | null {
     }
   }
 
-  return uniqueSortedStrings(trimmed.split(',').map((part) => part.trim()).filter(Boolean));
+  return uniqueStringsInOrder(trimmed.split(',').map((part) => part.trim()).filter(Boolean));
 }
 
 function parseStateStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return uniqueSortedStrings(
+  return uniqueStringsInOrder(
     value
       .filter((entry) => typeof entry === 'string')
       .map((entry) => String(entry).trim())
@@ -5919,6 +6406,17 @@ async function closeHubRuntime(runtime: HubRuntime): Promise<void> {
 
 function uniqueSortedStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort();
+}
+
+function uniqueStringsInOrder(values: string[]): string[] {
+  const ordered: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values.map((entry) => entry.trim()).filter(Boolean)) {
+    if (seen.has(value)) continue;
+    seen.add(value);
+    ordered.push(value);
+  }
+  return ordered;
 }
 
 function resolveHubInstanceId(env: Env): string {

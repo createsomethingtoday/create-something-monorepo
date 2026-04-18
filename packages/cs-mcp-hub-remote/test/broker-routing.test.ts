@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   buildAuthorizedVisibleProxyRoutes,
+  buildDiscoveryScopedProxyRoutes,
   buildVisibleProxyRoutes,
   resolveDiscoveryPack,
   resolveIntentRouteCandidate,
@@ -70,7 +71,7 @@ function createRuntime() {
 }
 
 function assertActiveServers(pack: { preferences: { activeServers: string[] } }, expected: string[]) {
-  assert.deepEqual(pack.preferences.activeServers, [...expected].sort());
+  assert.deepEqual(pack.preferences.activeServers, expected);
 }
 
 function createIntentRuntime() {
@@ -172,6 +173,111 @@ function createIntentRuntime() {
   };
 }
 
+function createReviewerPriorityRuntime() {
+  const queueRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_list_queue',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_list_queue',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const contextRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_get_review_context',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_get_review_context',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const assignRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_assign_self',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_assign_self',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+
+  return {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['webflow-template-review-mcp'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        { name: assignRoute.proxyToolName, description: '[review] assign self', inputSchema: { type: 'object', properties: {} } },
+        { name: contextRoute.proxyToolName, description: '[review] get review context', inputSchema: { type: 'object', properties: {} } },
+        { name: queueRoute.proxyToolName, description: '[review] list queue', inputSchema: { type: 'object', properties: {} } },
+      ],
+      routes: new Map([
+        [assignRoute.proxyToolName, assignRoute],
+        [contextRoute.proxyToolName, contextRoute],
+        [queueRoute.proxyToolName, queueRoute],
+      ]),
+      warnings: [],
+    },
+  };
+}
+
+function createReviewerDrillInRuntime() {
+  const queueRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_list_queue',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_list_queue',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const contextRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_get_review_context',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_get_review_context',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const assignRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_assign_self',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_assign_self',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const unassignRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_unassign_self',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_unassign_self',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+
+  return {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['webflow-template-review-mcp'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        { name: assignRoute.proxyToolName, description: '[review] assign self', inputSchema: { type: 'object', properties: {} } },
+        { name: unassignRoute.proxyToolName, description: '[review] unassign self', inputSchema: { type: 'object', properties: {} } },
+        { name: contextRoute.proxyToolName, description: '[review] get review context', inputSchema: { type: 'object', properties: {} } },
+        { name: queueRoute.proxyToolName, description: '[review] list queue', inputSchema: { type: 'object', properties: {} } },
+      ],
+      routes: new Map([
+        [assignRoute.proxyToolName, assignRoute],
+        [unassignRoute.proxyToolName, unassignRoute],
+        [contextRoute.proxyToolName, contextRoute],
+        [queueRoute.proxyToolName, queueRoute],
+      ]),
+      warnings: [],
+    },
+  };
+}
+
 const trace = {
   requestId: 'req_1',
   correlationId: 'corr_1',
@@ -199,6 +305,99 @@ test('buildVisibleProxyRoutes applies session -> discovery -> max cap', () => {
   assert.equal(visible.toolDefinitions.length, 1);
   assert.equal(visible.toolDefinitions[0]?.name, 'server_a__alpha');
   assert.equal(visible.routes.has('server_b__gamma'), false);
+});
+
+test('buildVisibleProxyRoutes prioritizes active server order before applying the max cap', () => {
+  const serverA = {
+    proxyToolName: 'server_a__alpha',
+    serverName: 'server_a',
+    downstreamToolName: 'alpha',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const serverB1 = {
+    proxyToolName: 'server_b__beta',
+    serverName: 'server_b',
+    downstreamToolName: 'beta',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const serverB2 = {
+    proxyToolName: 'server_b__gamma',
+    serverName: 'server_b',
+    downstreamToolName: 'gamma',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['server_b', 'server_a'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        { name: serverB1.proxyToolName, description: '[server_b] beta', inputSchema: { type: 'object', properties: {} } },
+        { name: serverB2.proxyToolName, description: '[server_b] gamma', inputSchema: { type: 'object', properties: {} } },
+        { name: serverA.proxyToolName, description: '[server_a] alpha', inputSchema: { type: 'object', properties: {} } },
+      ],
+      routes: new Map([
+        [serverB1.proxyToolName, serverB1],
+        [serverB2.proxyToolName, serverB2],
+        [serverA.proxyToolName, serverA],
+      ]),
+      warnings: [],
+    },
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'compact',
+    activeServers: ['server_a', 'server_b'],
+    maxProxyTools: 2,
+  }, {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  });
+
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    ['server_a__alpha', 'server_b__beta'],
+  );
+});
+
+test('buildVisibleProxyRoutes prioritizes configured tool importance within the same server', () => {
+  const runtime = createReviewerPriorityRuntime();
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'compact',
+    activeServers: ['webflow-template-review-mcp'],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  });
+
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    [
+      'webflow-template-review-mcp__template_review_list_queue',
+      'webflow-template-review-mcp__template_review_get_review_context',
+      'webflow-template-review-mcp__template_review_assign_self',
+    ],
+  );
 });
 
 test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', () => {
@@ -470,6 +669,77 @@ test('searchProxyTools only searches visible routes', () => {
   });
   assert.equal(serverFiltered.total, 1);
   assert.equal(serverFiltered.tools[0]?.proxyToolName, 'server_a__beta');
+});
+
+test('searchProxyTools returns discovery metadata and supports workflow drill-in', () => {
+  const runtime = createReviewerPriorityRuntime();
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'compact',
+    activeServers: ['webflow-template-review-mcp'],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  });
+
+  const result = searchProxyTools(visible, { limit: 10 }) as Record<string, any>;
+  assert.equal(result.sort, 'importance');
+  assert.equal(result.tools[0]?.proxyToolName, 'webflow-template-review-mcp__template_review_list_queue');
+  assert.equal(result.tools[0]?.discovery?.workflow?.id, 'reviewer_core');
+  assert.equal(result.tools[0]?.discovery?.primary, true);
+  assert.equal(result.workflowGroups[0]?.id, 'reviewer_core');
+
+  const workflowFiltered = searchProxyTools(visible, {
+    workflow: 'reviewer_core',
+    query: 'ownership',
+    limit: 10,
+  }) as Record<string, any>;
+  assert.equal(workflowFiltered.total, 1);
+  assert.equal(
+    workflowFiltered.tools[0]?.proxyToolName,
+    'webflow-template-review-mcp__template_review_assign_self',
+  );
+});
+
+test('buildDiscoveryScopedProxyRoutes keeps hidden tools discoverable beyond the visible cap', () => {
+  const runtime = createReviewerDrillInRuntime();
+  const prefs = {
+    mode: 'compact' as const,
+    activeServers: ['webflow-template-review-mcp'],
+    maxProxyTools: 3,
+  };
+  const accountContext = {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
+  assert.equal(visible.routes.has('webflow-template-review-mcp__template_review_unassign_self'), false);
+
+  const discoveryScoped = buildDiscoveryScopedProxyRoutes(runtime as any, prefs, accountContext);
+  assert.equal(discoveryScoped.routes.has('webflow-template-review-mcp__template_review_unassign_self'), true);
+
+  const result = searchProxyTools(discoveryScoped, {
+    serverName: 'webflow-template-review-mcp',
+    workflow: 'reviewer_core',
+    query: 'unassign',
+    limit: 10,
+  }) as Record<string, any>;
+  assert.equal(result.total, 1);
+  assert.equal(
+    result.tools[0]?.proxyToolName,
+    'webflow-template-review-mcp__template_review_unassign_self',
+  );
 });
 
 test('buildAuthorizedVisibleProxyRoutes returns filtered routes that pass authorization', async () => {

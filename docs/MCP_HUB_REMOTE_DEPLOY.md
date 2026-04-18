@@ -183,6 +183,12 @@ Low-context intent pattern (recommended for small allowlisted workflows):
 1. Resolve route via `hub_route_intent`
 2. Execute directly via `hub_run_intent` (or pass returned `proxyToolName` into `hub_execute_proxy_tool`)
 
+Discovery notes:
+
+- `hub_search_proxy_tools` preserves existing proxy tool keys and now returns results ordered by importance rather than flat alphabetical order.
+- Search results include additive `discovery` metadata such as `priority`, `workflow`, `group`, `primary`, and `tags`.
+- Hosts can drill into a narrower workflow lane by passing `workflow` to `hub_search_proxy_tools` instead of flattening every tool into one list.
+
 ## Telemetry
 
 `cs-mcp-hub-remote` writes hub-level records into `cs-telemetry` (`mcp_tool_invocations` and `mcp_run_counts`) via `TELEMETRY_DB`.

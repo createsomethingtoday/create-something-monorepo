@@ -6,6 +6,7 @@ INFISICAL_PATH="${INFISICAL_PATH:-/}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
 INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 REVIEWER="${REVIEWER:-all}"
+MY_QUEUE_LIMIT="${MY_QUEUE_LIMIT:-500}"
 
 reviewer_url() {
   case "$1" in
@@ -194,7 +195,7 @@ smoke_reviewer() {
   context_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_get_review_context",args:{version_id:$version_id}}')")"
   assert_no_rpc_error "$context_resp" "get_review_context ${reviewer}"
 
-  my_queue_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_my_queue",args:{limit:10}}')")"
+  my_queue_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --argjson limit "$MY_QUEUE_LIMIT" '{proxyToolName:"webflow-template-review-mcp__template_review_my_queue",args:{limit:$limit}}')")"
   assert_no_rpc_error "$my_queue_resp" "my_queue ${reviewer}"
 
   unassign_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_unassign_self",args:{version_id:$version_id}}')")"
@@ -235,7 +236,7 @@ smoke_reviewer() {
 
   echo "assign_self=ok owner=${assign_owner}"
   echo "get_review_context=ok current=${context_current} assigned=${context_assigned}"
-  echo "my_queue=ok has_version=${my_queue_has_version}"
+  echo "my_queue=ok has_version=${my_queue_has_version} limit=${MY_QUEUE_LIMIT}"
   echo "unassign_self=ok owner=${unassign_owner}"
 }
 
