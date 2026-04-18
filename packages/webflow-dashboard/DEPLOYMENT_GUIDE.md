@@ -8,18 +8,43 @@
 
 ## Quick Deploy
 
-For experienced operators who know the system:
+**Always use the deploy script.** It builds, enforces the correct working
+directory so `wrangler.jsonc` bindings attach (R2 `UPLOADS`, KV `SESSIONS`,
+D1 `DB`), and runs a live probe to confirm the R2 binding landed.
 
 ```bash
-# 1. Build
+# Production (main alias)
+packages/webflow-dashboard/scripts/deploy.sh
+
+# Preview branch
+packages/webflow-dashboard/scripts/deploy.sh preview
+```
+
+### Do not deploy with bare `wrangler pages deploy`
+
+A bare deploy will silently drop the R2 binding unless your shell is already
+inside `packages/webflow-dashboard/`. When that happens, production returns
+`500 Storage not configured` for every thumbnail upload. The deploy script
+pins `--cwd` to the package directory to eliminate this class of failure.
+
+If you must deploy manually, mirror what the script does:
+
+```bash
 pnpm --filter=@create-something/webflow-dashboard build
-
-# 2. Deploy
 cd packages/webflow-dashboard
-wrangler pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard
+wrangler pages deploy .svelte-kit/cloudflare \
+  --project-name=webflow-dashboard \
+  --branch=main \
+  --commit-dirty=true
+```
 
-# 3. Verify
-curl https://webflow-dashboard.pages.dev/api/health
+Verify afterwards:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  https://webflow-dashboard.pages.dev/api/uploads/probe-$(date +%s)
+# 404 = bindings attached (file not found, code path reached R2)
+# 500 = bindings missing, rollback or redeploy
 ```
 
 ---
