@@ -5,6 +5,18 @@ This repo includes a runnable OpenAI Agents SDK smoke test for Half Dozen MCP se
 - Script: `scripts/openai-agent-sdk-halfdozen-smoke.ts`
 - npm script: `pnpm agent:halfdozen:smoke`
 
+## Current Repo Posture
+
+This document covers the repo's current TypeScript `@openai/agents` smoke lane for MCP connectivity, scenario policy enforcement, and evidence collection.
+
+It does **not** exercise the Python-first harness and native sandbox capabilities announced on April 15, 2026, such as:
+
+- manifest-mounted workspaces
+- native sandbox provider execution
+- sandbox snapshot and rehydration flows
+
+Treat this runner as a validation surface for MCP reachability, blocked or required tool policy, and tracing. Do not treat it as proof of sandbox parity.
+
 ## Prerequisites
 
 - `OPENAI_API_KEY` is set in your shell

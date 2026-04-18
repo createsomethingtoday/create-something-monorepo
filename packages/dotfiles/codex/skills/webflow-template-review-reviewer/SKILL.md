@@ -1,6 +1,6 @@
 ---
 name: webflow-template-review-reviewer
-description: Guide reviewers through the safe Phase A Webflow Template Review Hub flow using queue, self-assignment, review context, resume, and release actions without relying on raw Airtable semantics or unavailable analysis tools.
+description: Guide reviewers through the current production Webflow Template Review Hub flow using queue, analyzer-backed evidence, self-assignment, review context, and release actions without relying on raw Airtable semantics.
 ---
 
 # Webflow Template Review Reviewer
@@ -9,26 +9,35 @@ Use this skill for Marketplace reviewers working inside the reviewer Hub lane.
 
 ## Core Rule
 
-Default to the live-safe Phase A flow unless runtime evidence proves Phase B analysis tools are connected and approved for reviewer use.
+Default to the live production reviewer flow.
 
-Phase A guarantees:
+Current production guarantees:
 
 - queue reads
+- analyzer bridge tools on `webflow-template-review-mcp`
+- direct `webflow-site-analyzer-mcp` visibility
 - self-assignment
 - self-unassignment
 - normalized review context
 
-Do not invent analysis, feedback drafting, or approval-state writes when the live Hub only exposes `webflow-template-review-mcp`.
+Prefer the bridge tools exposed on `webflow-template-review-mcp`:
 
-## Phase A Default Sequence
+- `template_review_enqueue_analyzer_review`
+- `template_review_get_analyzer_review`
+- `template_review_list_analyzer_reviews`
+
+Prefer the bridge tools first for guided reviewer workflows, but direct `webflow-site-analyzer-mcp` tools are now part of the live reviewer surface.
+
+## Default Sequence
 
 1. Call `template_review_list_queue` with no filters.
 2. Pick a row and use `assignableVersionId` as the assignment target.
-3. Call `template_review_assign_self` with that `version_id`.
-4. Call `template_review_get_review_context` with the same `version_id`.
-5. Read reviewer fields from `data.context`, not top-level `data`.
-6. Use `template_review_my_queue` when the reviewer asks for their assigned work.
-7. Use `template_review_unassign_self` only when the reviewer intentionally wants to release the version.
+3. Call `template_review_get_review_context` with that `version_id`.
+4. If automated analysis is needed, call `template_review_enqueue_analyzer_review` and then poll with `template_review_get_analyzer_review`.
+5. Call `template_review_assign_self` only when the reviewer is ready to take ownership.
+6. Read reviewer fields from `data.context`, not top-level `data`.
+7. Use `template_review_my_queue` when the reviewer asks for their assigned work.
+8. Use `template_review_unassign_self` only when the reviewer intentionally wants to release the version.
 
 ## Response Rules
 
@@ -74,11 +83,8 @@ Escalate when:
 
 Use [reviewer-playbook.md](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/webflow-marketplace/delivery/template-review-hub/reviewer-playbook.md) and [runbook.md](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/webflow-marketplace/delivery/template-review-hub/runbook.md) as the operating source of truth.
 
-## Phase Awareness
+## Runtime Awareness
 
-Before using any richer review flow, confirm the reviewer Hub actually exposes:
+Before using any richer review flow, confirm the reviewer Hub exposes the template-review analyzer bridge tools and direct `webflow-site-analyzer-mcp` visibility.
 
-- `webflow-site-analyzer-mcp`
-- `webflow-local`
-
-If those servers are not connected, stay in Phase A context mode and manual review for broader checklist work.
+If the bridge tools are absent, stay in context mode and manual review for broader checklist work. If the direct analyzer server is absent, treat that as rollback posture rather than the normal production state.

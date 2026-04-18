@@ -12,6 +12,7 @@ INFISICAL_PATH="${INFISICAL_PATH:-/}"
 INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 DRY_RUN="${DRY_RUN:-false}"
 REVIEWER="${REVIEWER:-all}"
+SKIP_MISSING_REVIEWER_SECRETS="${SKIP_MISSING_REVIEWER_SECRETS:-false}"
 
 REVIEWERS=(
   "WF_TEMPLATE_REVIEW_NATALIA|cs-hub-wf-template-review-natalia"
@@ -127,6 +128,7 @@ reviewer_key_matches() {
 
 INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
 DRY_RUN="$(normalize_bool_or_fail "$DRY_RUN")"
+SKIP_MISSING_REVIEWER_SECRETS="$(normalize_bool_or_fail "$SKIP_MISSING_REVIEWER_SECRETS")"
 
 require_cmd pnpm
 require_cmd jq
@@ -145,7 +147,13 @@ for entry in "${REVIEWERS[@]}"; do
   if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
     continue
   fi
-  require_secret "CS_HUB_${reviewer_key}_API_TOKEN" || missing=1
+  if ! require_secret "CS_HUB_${reviewer_key}_API_TOKEN"; then
+    if [[ "$SKIP_MISSING_REVIEWER_SECRETS" == "true" ]]; then
+      echo "skip ${reviewer_key}: missing reviewer token secret"
+      continue
+    fi
+    missing=1
+  fi
 done
 
 if [[ "$missing" == "1" ]]; then
@@ -159,6 +167,14 @@ for entry in "${REVIEWERS[@]}"; do
     continue
   fi
   reviewer_token_var="CS_HUB_${reviewer_key}_API_TOKEN"
+  if [[ -z "${!reviewer_token_var:-}" ]]; then
+    if [[ "$SKIP_MISSING_REVIEWER_SECRETS" == "true" ]]; then
+      echo "skip ${worker}: missing reviewer token secret"
+      continue
+    fi
+    echo "missing required secret: ${reviewer_token_var}" >&2
+    exit 1
+  fi
   echo "syncing ${worker}"
   put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_token_var}"
   put_versioned_secret "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"

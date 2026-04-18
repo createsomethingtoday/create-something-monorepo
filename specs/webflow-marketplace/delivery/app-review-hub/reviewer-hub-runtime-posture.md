@@ -3,7 +3,7 @@
 **Status:** Live production posture  
 **Audience:** Hub operators  
 **Workflow:** `app_review_hub_lane`  
-**Date:** `2026-03-13`
+**Date:** `2026-04-17`
 
 ## 1. Purpose
 
@@ -18,12 +18,14 @@ It answers:
 
 ## 2. Important current-state note
 
-As of `2026-03-13`, the live posture is:
+As of `2026-04-17`, the live posture is:
 
 - `webflow-app-review-mcp` is deployed and connected in both reviewer hubs
 - reviewer identity is resolved through the outer Hub account context plus `REVIEWER_DIRECTORY_JSON`
 - both reviewer hubs currently expose the full downstream app-review tool surface
-- the Hub runtime still reports `webflow-marketplace-app-review-phase-a` as the enabled bundle, so live discovery state is currently the source of truth for the production surface
+- reviewer hubs are bearer-based and use reviewer-specific Infisical-managed bearer tokens
+- OAuth discovery is disabled on reviewer custom domains
+- the Hub runtime is aligned to `webflow-marketplace-app-review-phase-b`
 
 That means the production-safe exact runtime posture today is:
 

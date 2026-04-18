@@ -83,9 +83,12 @@ export class TemplateReviewJobManager {
     return this.jobs.get(jobId) ?? null;
   }
 
-  list(options: { status?: TemplateReviewJobStatus; limit?: number } = {}): TemplateReviewJobRecord[] {
+  list(options: { templateVersionId?: string; status?: TemplateReviewJobStatus; limit?: number } = {}): TemplateReviewJobRecord[] {
     const limit = Math.max(1, options.limit ?? 20);
     return Array.from(this.jobs.values())
+      .filter((job) =>
+        options.templateVersionId ? job.input.templateVersionId === options.templateVersionId : true,
+      )
       .filter((job) => (options.status ? job.status === options.status : true))
       .sort((a, b) => b.queuedAt.localeCompare(a.queuedAt))
       .slice(0, limit);

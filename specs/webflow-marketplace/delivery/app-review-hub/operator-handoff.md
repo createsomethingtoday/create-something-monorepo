@@ -3,7 +3,7 @@
 **Status:** Live in production  
 **Audience:** Hub operators, Marketplace review lead, Senior Systems Architect  
 **Workflow:** `app_review_hub_lane`  
-**Date:** `2026-03-13`
+**Date:** `2026-04-17`
 
 ## 1. Outcome
 
@@ -18,11 +18,12 @@ Current live posture:
 - reviewer-owned write actions enabled
 - rate limits and quotas enabled
 
-Compatibility note:
+Auth and runtime note:
 
-- the currently deployed Hub runtime still reports `webflow-marketplace-app-review-phase-a` as the enabled bundle
-- discovery is what currently governs the live production surface
-- this handoff therefore treats Phase A as the rollback bundle and full discovery as the active production setting
+- reviewer hubs remain bearer-based and use reviewer-specific Infisical-managed bearer tokens
+- OAuth discovery is disabled on reviewer custom domains
+- the deployed Hub runtime now uses `webflow-marketplace-app-review-phase-b`
+- the old compact 6-tool Phase A bundle remains the rollback mode only
 
 ## 2. Reviewer set
 
@@ -158,8 +159,9 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 export CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN="replace-with-pablo-hub-token"
 export CS_HUB_WF_APP_REVIEW_SHEA_API_TOKEN="replace-with-shea-hub-token"
 export SESSION_RESOLVE_URL="https://id.createsomething.space/v1/mcp/sessions/resolve"
-export HUB_ENABLED_BUNDLE="webflow-marketplace-app-review-phase-a"
+export HUB_ENABLED_BUNDLE="webflow-marketplace-app-review-phase-b"
 export DISCOVERY_MODE="full"
+export DISCOVERY_PACK="webflow-marketplace-app-review-phase-b"
 export DISCOVERY_MAX_PROXY_TOOLS="18"
 export RATE_LIMIT_MAX_CALLS="120"
 export RATE_LIMIT_WINDOW_SECONDS="60"
@@ -180,7 +182,7 @@ Or:
 ./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh all
 ```
 
-The compatibility bundle remains `webflow-marketplace-app-review-phase-a` until the Hub runtime is redeployed with explicit bundle awareness for the full app-review production pack. The live reviewer surface is driven by the full discovery setting above.
+The production bundle is now `webflow-marketplace-app-review-phase-b`. Use the old Phase A values only when you intentionally need the rollback posture.
 
 ## 7. Expected current production surface
 
@@ -223,10 +225,6 @@ Supported actions:
 - `approve`
 - `reject`
 
-## 9. Remaining live work
-
-The only remaining operational cleanup is to redeploy the Hub runtime with explicit awareness of the `webflow-marketplace-app-review-phase-b` bundle name so bundle state and discovery state match. Until then, do not rerun legacy Phase A normalization values.
-
-## 10. Final status
+## 9. Final status
 
 The two-user app-review reviewer lane is live in production write posture. Pablo and Shea both have the full downstream app-review tool surface through their reviewer-specific Hub URLs.

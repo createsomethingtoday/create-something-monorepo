@@ -622,6 +622,7 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
     { name: 'loom-mcp' },
     { name: 'meetings' },
     { name: 'webflow-template-review-mcp' },
+    { name: 'webflow-site-analyzer-mcp' },
   ] as any;
 
   const pack = resolveDiscoveryPack('mj-shared-auth-plus-ops-search-meetings-and-review', runtime as any);
@@ -645,6 +646,7 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
     'loom-mcp',
     'meetings',
     'webflow-template-review-mcp',
+    'webflow-site-analyzer-mcp',
   ]);
 });
 
@@ -681,6 +683,42 @@ test('resolveDiscoveryPack returns MJ legacy pack with the expected active servi
     'composio-toolkit-linkedin',
     'composio-toolkit-notion',
     'meetings',
+  ]);
+});
+
+test('resolveDiscoveryPack returns reviewer phase A pack with template-review bridge posture', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'webflow-template-review-mcp' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('webflow-marketplace-review-phase-a', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'webflow-marketplace-review-phase-a');
+  assert.equal(pack.preferences.mode, 'compact');
+  assert.equal(pack.preferences.maxProxyTools, 22);
+  assertActiveServers(pack, [
+    'webflow-template-review-mcp',
+  ]);
+});
+
+test('resolveDiscoveryPack returns reviewer production pack with direct analyzer visibility', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'webflow-template-review-mcp' },
+    { name: 'webflow-site-analyzer-mcp' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('webflow-marketplace-review-phase-b', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'webflow-marketplace-review-phase-b');
+  assert.equal(pack.preferences.mode, 'compact');
+  assert.equal(pack.preferences.maxProxyTools, 30);
+  assertActiveServers(pack, [
+    'webflow-template-review-mcp',
+    'webflow-site-analyzer-mcp',
   ]);
 });
 

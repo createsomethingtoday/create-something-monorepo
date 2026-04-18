@@ -1,5 +1,9 @@
-# Webflow Site Analyzer MCP — Cloudflare Worker
+# Webflow Site Analyzer MCP — legacy direct Cloudflare Worker
 # Uses nodejs_compat for Steel SDK + puppeteer-core WebSocket connections.
+#
+# Production async template-review traffic should use the container-backed
+# deploy in `workers/remote/`. This config intentionally carries no
+# custom-domain route so it does not reclaim the async analyzer hostname.
 
 name = "webflow-site-analyzer-mcp"
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
@@ -13,11 +17,6 @@ workers_dev = true
 
 [observability]
 enabled = true
-
-# Custom domain: analyzer.mcp.createsomething.agency
-[[routes]]
-pattern = "analyzer.mcp.createsomething.agency"
-custom_domain = true
 
 [vars]
 ENVIRONMENT = "production"

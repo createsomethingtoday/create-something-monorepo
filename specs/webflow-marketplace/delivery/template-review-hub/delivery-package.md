@@ -1,7 +1,7 @@
 # Delivery Package
 
-**Status:** Working draft  
-**Prepared:** 2026-03-09  
+**Status:** Live production context
+**Prepared:** 2026-04-17
 **Delivery target:** Webflow Marketplace team  
 **Workflow:** Template review
 
@@ -16,23 +16,23 @@ For the first reviewer rollout, that workflow should be delivered through **revi
 The delivered lane combines:
 
 - queue and Airtable review context from `webflow-template-review-mcp`
-- reviewer-specific Hub policy records for the first six reviewers
+- direct analyzer visibility from `webflow-site-analyzer-mcp`
+- reviewer-specific Hub policy records for the six reviewers
 - skill-led onboarding for reviewer and operator use of the Hub lane
-- manual Airtable fallback for official review-state changes during Phase A
+- rollback posture for restoring the older compact bridge-only reviewer surface if needed
 
-Planned but not authoritative for Phase A:
+Not part of the current reviewer lane:
 
-- preview and published-site analysis from `webflow-site-analyzer-mcp`
-- plagiarism and framework checks from `webflow-local`
-- policy-gated write actions through the Hub
-- reviewer-controlled feedback drafting and decision validation
+- `webflow-local`
+- autonomous creator-facing decisions
+- broad operator or control-plane mutation by reviewers
 
 ## What the team gets
 
 - one reviewer workflow in the MCP Hub
 - six reviewer-specific Hub surfaces for the initial pilot cohort
 - a defined operator and reviewer workflow
-- a skill-led onboarding path that matches the current live-safe runtime
+- a skill-led onboarding path that matches the current live runtime
 - policy boundaries for read, write, and blocked actions
 - pilot validation scenarios and fallback procedures
 - rollout metrics for deciding whether the lane should become default
@@ -51,7 +51,7 @@ The delivery should be presented as:
 - an initial implementation
 - a reviewer alpha for template review
 - a governed pilot that proves adoption, trust, and operational usefulness
-- a reviewer-specific rollout that preserves attribution and narrows write risk
+- a reviewer-specific rollout that preserves attribution while allowing direct analyzer access
 
 It should not be presented as:
 

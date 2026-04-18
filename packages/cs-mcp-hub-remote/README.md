@@ -82,6 +82,7 @@ Environment variables:
 
 - `HUB_INSTANCE_ID` (recommended): unique id for this deployed hub worker; used to namespace hub state/discovery KV keys so team hubs do not overwrite each other.
 - `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`. For compatibility with clients that can only provide a signed endpoint URL, the gateway also accepts `?mcp_access_token=<token>`, but header bearer remains the standard path.
+- `HUB_OAUTH_DISCOVERY_ENABLED` (optional): `true` (default). Set `false` for bearer-only Hub surfaces that should not advertise OAuth discovery metadata on `401` or `/.well-known/*`.
 - `HUB_IDENTITY_MODE` (optional): `session_required` (default) or `compat`
 - `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS` (optional): `false` (default). Set `true` only for a tightly controlled compat exception that is explicitly approved.
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
@@ -118,7 +119,7 @@ Shared discovery packs:
 - `c3denver-airtable-gmail-notion`: Airtable, Gmail, Notion
 - `danny-shared-auth-plus-dm-and-operator-notion`: shared auth core plus `halfdozen-dm-mcp` and `halfdozen-operator-notion-mcp`
 - `mj-legacy-shared-auth-plus-meetings`: compact legacy shared auth core plus Meetings
-- `mj-shared-auth-plus-ops-search-meetings-and-review`: full MJ ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review
+- `mj-shared-auth-plus-ops-search-meetings-and-review`: full MJ ops lane with shared auth core, Airtable, Exa, Loom, Meetings, Webflow template review, and the Webflow site analyzer
 - `outerfields-shared-auth-clickup`: shared auth core plus ClickUp
 - List available packs with `hub_list_discovery_packs`
 - Apply one with `hub_set_discovery` by setting `pack`

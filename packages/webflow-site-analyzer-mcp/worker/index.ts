@@ -5,6 +5,7 @@ import { createAnalyzerServer, getAnalyzerHealth } from '../src/index.js';
 interface Env {
   WEBFLOW_SITE_ANALYZER_MCP_API_KEY?: string;
   MCP_API_KEY?: string;
+  WEBFLOW_SITE_ANALYZER_UPSTREAM_URL?: string;
   STEEL_API_KEY?: string;
   BROWSERLESS_API_KEY?: string;
   BROWSERLESS_TOKEN?: string;
@@ -73,10 +74,54 @@ function withCors(response: Response): Response {
   });
 }
 
+function getUpstreamBaseUrl(env: Env): URL | null {
+  const value = env.WEBFLOW_SITE_ANALYZER_UPSTREAM_URL?.trim();
+  if (!value) return null;
+  return new URL(value);
+}
+
+async function proxyToUpstream(request: Request, env: Env): Promise<Response> {
+  const upstreamBase = getUpstreamBaseUrl(env);
+  if (!upstreamBase) {
+    return json({ error: 'Upstream analyzer URL is not configured.' }, { status: 503 });
+  }
+
+  const incomingUrl = new URL(request.url);
+  const upstreamUrl = new URL(upstreamBase.toString());
+  const basePath = upstreamUrl.pathname.replace(/\/$/, '');
+  const incomingPath = incomingUrl.pathname === '/' ? '' : incomingUrl.pathname;
+  upstreamUrl.pathname = `${basePath}${incomingPath}`;
+  upstreamUrl.search = incomingUrl.search;
+
+  const headers = new Headers(request.headers);
+  headers.set('x-forwarded-host', incomingUrl.host);
+  headers.set('x-forwarded-proto', incomingUrl.protocol.replace(/:$/, ''));
+
+  try {
+    const upstreamRequest = new Request(upstreamUrl.toString(), {
+      method: request.method,
+      headers,
+      body: request.body,
+      redirect: 'manual',
+    });
+    const response = await fetch(upstreamRequest);
+    return withCors(response);
+  } catch (error) {
+    return json(
+      {
+        error: 'Analyzer upstream unavailable',
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 502 },
+    );
+  }
+}
+
 function syncEnvToProcess(env: Env): void {
   const entries: Array<[keyof Env, string | undefined]> = [
     ['WEBFLOW_SITE_ANALYZER_MCP_API_KEY', env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY],
     ['MCP_API_KEY', env.MCP_API_KEY],
+    ['WEBFLOW_SITE_ANALYZER_UPSTREAM_URL', env.WEBFLOW_SITE_ANALYZER_UPSTREAM_URL],
     ['STEEL_API_KEY', env.STEEL_API_KEY],
     ['BROWSERLESS_API_KEY', env.BROWSERLESS_API_KEY],
     ['BROWSERLESS_TOKEN', env.BROWSERLESS_TOKEN],
@@ -102,11 +147,16 @@ function syncEnvToProcess(env: Env): void {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    syncEnvToProcess(env);
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
+
+    if (getUpstreamBaseUrl(env)) {
+      return proxyToUpstream(request, env);
+    }
+
+    syncEnvToProcess(env);
 
     if (url.pathname === '/' || url.pathname === '/health') {
       return json({

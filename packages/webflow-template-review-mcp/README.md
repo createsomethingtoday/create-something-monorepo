@@ -22,6 +22,7 @@ Phase 1 is intentionally conservative:
 - queue and version inspection are supported
 - field-map and hotspot resources are supported
 - reviewer assignment helpers are active
+- analyzer review queue bridge is active when a hosted `webflow-site-analyzer-mcp` endpoint is configured
 - reviewer-safe workflow helpers (`request changes`, `set review status`, `save draft feedback`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
 - supplemental agent-feedback writes are supported for `📝Agent Review Feedback`
 - some broader write surfaces still depend on remaining field verification and policy rollout
@@ -45,6 +46,10 @@ Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
 - `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by `template_review_assign_self` and reviewer resources)
+- `WEBFLOW_SITE_ANALYZER_MCP_URL` (hosted analyzer MCP endpoint, canonical public host: `https://analyzer.mcp.createsomething.agency/mcp`)
+- `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` (optional analyzer bearer token; falls back to `MCP_API_KEY`)
+
+The custom-domain analyzer endpoint now proxies to the container-backed runtime. The underlying `workers.dev` host remains the direct backend.
 
 ## Tools
 
@@ -58,6 +63,9 @@ Optional:
 - `template_review_list_versions`
 - `template_review_get_version`
 - `template_review_get_review_context`
+- `template_review_enqueue_analyzer_review`
+- `template_review_get_analyzer_review`
+- `template_review_list_analyzer_reviews`
 - `template_review_list_releases`
 - `template_review_complete_publishing`
 - `template_review_assign_reviewer`

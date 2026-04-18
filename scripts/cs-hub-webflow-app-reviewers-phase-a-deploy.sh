@@ -11,12 +11,13 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HUB_DIR="$ROOT_DIR/packages/cs-mcp-hub-remote"
 TEAM_CONFIG="$HUB_DIR/wrangler.team-hubs.toml"
+WRANGLER_RUNNER="$ROOT_DIR/scripts/run-wrangler.mjs"
 
 ACTION="${1:-all}"
 SESSION_RESOLVE_URL="${SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
-HUB_ENABLED_BUNDLE="${HUB_ENABLED_BUNDLE:-webflow-marketplace-app-review-phase-a}"
+HUB_ENABLED_BUNDLE="${HUB_ENABLED_BUNDLE:-webflow-marketplace-app-review-phase-b}"
 DISCOVERY_MODE="${DISCOVERY_MODE:-full}"
-DISCOVERY_PACK="${DISCOVERY_PACK:-}"
+DISCOVERY_PACK="${DISCOVERY_PACK:-webflow-marketplace-app-review-phase-b}"
 DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-18}"
 RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
@@ -128,38 +129,51 @@ deploy_one() {
   local slug="$1"
   local account_id="$2"
   local worker
+  local upload_output
+  local version_id
   worker="$(worker_name_for_slug "$slug")"
 
   echo "===== DEPLOY ${worker} ====="
-  cd "$HUB_DIR"
-  local -a deploy_cmd=(
-    pnpm exec wrangler deploy
-    --config "$TEAM_CONFIG" \
-    --name "$worker" \
-    --domain "$(domain_for_slug "$slug")" \
-    --var "HUB_INSTANCE_ID:${worker}" \
-    --var "HUB_ACCOUNT_ID:${account_id}" \
-    --var "HUB_ENABLED_BUNDLES:${HUB_ENABLED_BUNDLE}" \
-    --var "HUB_ENABLED_SERVERS:webflow-app-review-mcp" \
-    --var "HUB_IDENTITY_MODE:${REVIEWER_IDENTITY_MODE}" \
-    --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:false" \
-    --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
-    --var "HUB_CONNECT_TIMEOUT_MS:${HUB_CONNECT_TIMEOUT_MS}" \
-    --var "HUB_LIST_TOOLS_TIMEOUT_MS:${HUB_LIST_TOOLS_TIMEOUT_MS}" \
-    --var "HUB_DISCOVERY_MODE:${DISCOVERY_MODE}" \
-    --var "HUB_DISCOVERY_DEFAULT_SERVERS:webflow-app-review-mcp" \
-    --var "HUB_DISCOVERY_MAX_PROXY_TOOLS:${DISCOVERY_MAX_PROXY_TOOLS}" \
-    --var "HUB_REQUIRED_GLOBAL_SERVERS:${REQUIRED_GLOBAL_SERVERS_SENTINEL}" \
-    --var "HUB_REQUIRED_DISCOVERY_SERVERS:${REQUIRED_DISCOVERY_SERVERS_SENTINEL}" \
-    --var "HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW:${RATE_LIMIT_MAX_CALLS}" \
-    --var "HUB_RATE_LIMIT_WINDOW_SECONDS:${RATE_LIMIT_WINDOW_SECONDS}" \
-    --var "HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD:${QUOTA_MAX_PROXY_CALLS_PER_PERIOD}" \
-    --keep-vars
-  )
-  if [[ -n "$DISCOVERY_PACK" ]]; then
-    deploy_cmd+=(--var "HUB_DISCOVERY_SHARED_PACK:${DISCOVERY_PACK}")
+  upload_output="$(
+    node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions upload \
+      --config "$TEAM_CONFIG" \
+      --name "$worker" \
+      --message "deploy app-review reviewer hub code" \
+      --var "HUB_INSTANCE_ID:${worker}" \
+      --var "HUB_ACCOUNT_ID:${account_id}" \
+      --var "HUB_ENABLED_BUNDLES:${HUB_ENABLED_BUNDLE}" \
+      --var "HUB_ENABLED_SERVERS:webflow-app-review-mcp" \
+      --var "HUB_OAUTH_DISCOVERY_ENABLED:false" \
+      --var "HUB_IDENTITY_MODE:${REVIEWER_IDENTITY_MODE}" \
+      --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:false" \
+      --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
+      --var "HUB_CONNECT_TIMEOUT_MS:${HUB_CONNECT_TIMEOUT_MS}" \
+      --var "HUB_LIST_TOOLS_TIMEOUT_MS:${HUB_LIST_TOOLS_TIMEOUT_MS}" \
+      --var "HUB_DISCOVERY_MODE:${DISCOVERY_MODE}" \
+      --var "HUB_DISCOVERY_SHARED_PACK:${DISCOVERY_PACK}" \
+      --var "HUB_DISCOVERY_DEFAULT_SERVERS:webflow-app-review-mcp" \
+      --var "HUB_DISCOVERY_MAX_PROXY_TOOLS:${DISCOVERY_MAX_PROXY_TOOLS}" \
+      --var "HUB_REQUIRED_GLOBAL_SERVERS:${REQUIRED_GLOBAL_SERVERS_SENTINEL}" \
+      --var "HUB_REQUIRED_DISCOVERY_SERVERS:${REQUIRED_DISCOVERY_SERVERS_SENTINEL}" \
+      --var "HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW:${RATE_LIMIT_MAX_CALLS}" \
+      --var "HUB_RATE_LIMIT_WINDOW_SECONDS:${RATE_LIMIT_WINDOW_SECONDS}" \
+      --var "HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD:${QUOTA_MAX_PROXY_CALLS_PER_PERIOD}"
+  )"
+  printf '%s\n' "$upload_output"
+
+  version_id="$(printf '%s\n' "$upload_output" | grep -Eo '[0-9a-f]{8}-[0-9a-f-]{27}' | tail -n1)"
+  if [[ -z "$version_id" ]]; then
+    echo "failed to parse uploaded version id for ${worker}" >&2
+    exit 1
   fi
-  "${deploy_cmd[@]}"
+
+  node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions deploy \
+    --name "$worker" \
+    --config "$TEAM_CONFIG" \
+    --version-id "$version_id" \
+    --percentage 100 \
+    --message "deploy app-review reviewer hub code" \
+    --yes
 }
 
 normalize_one() {
@@ -250,7 +264,7 @@ verify_one() {
       echo "missing SESSION_TOKEN_FOR_VERIFY or SESSION_TOKEN_FOR_NORMALIZE; cannot verify ${worker}" >&2
       exit 1
     fi
-    local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
+    local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}"
     auth_headers+=(-H "X-MCP-Session-Token: ${session_token}")
   fi
 
@@ -263,7 +277,7 @@ verify_one() {
     -H "Accept: application/json, text/event-stream" \
     -d '{
       "jsonrpc":"2.0",
-      "id":"phase-a-services",
+      "id":"reviewer-services",
       "method":"tools/call",
       "params":{
         "name":"hub_list_services",
@@ -277,7 +291,7 @@ verify_one() {
     -H "Accept: application/json, text/event-stream" \
     -d '{
       "jsonrpc":"2.0",
-      "id":"phase-a-search",
+      "id":"reviewer-search",
       "method":"tools/call",
       "params":{
         "name":"hub_search_proxy_tools",
@@ -293,6 +307,10 @@ require_cmd pnpm
 require_cmd jq
 require_cmd curl
 INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
+
+if [[ -n "${CLOUDFLARE_WORKERS_API_TOKEN:-}" ]]; then
+  export CLOUDFLARE_API_TOKEN="$CLOUDFLARE_WORKERS_API_TOKEN"
+fi
 
 case "$ACTION" in
   deploy|normalize|verify|all)

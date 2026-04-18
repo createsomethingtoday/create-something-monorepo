@@ -9,6 +9,10 @@ REVIEWER="${REVIEWER:-micah}"
 SERVER_NAME="${SERVER_NAME:-webflow-template-review-mcp}"
 SEARCH_LIMIT="${SEARCH_LIMIT:-200}"
 SESSION_TOKEN="${SESSION_TOKEN:-${SESSION_TOKEN_FOR_VERIFY:-}}"
+EXPECT_BRIDGE_TOOLS="${EXPECT_BRIDGE_TOOLS:-true}"
+EXPECT_DIRECT_ANALYZER_SERVER="${EXPECT_DIRECT_ANALYZER_SERVER:-true}"
+SKIP_MISSING_REVIEWER_SECRETS="${SKIP_MISSING_REVIEWER_SECRETS:-false}"
+INFISICAL_EXPORT_JSON=""
 
 reviewer_url() {
   case "$1" in
@@ -44,6 +48,19 @@ require_cmd() {
     echo "missing required command: $1" >&2
     exit 1
   fi
+}
+
+normalize_bool_or_fail() {
+  local raw="${1:-}"
+  local lowered
+  lowered="$(echo "$raw" | tr '[:upper:]' '[:lower:]')"
+  case "$lowered" in
+    true | false) echo "$lowered" ;;
+    *)
+      echo "invalid boolean: ${raw} (expected true|false)" >&2
+      exit 1
+      ;;
+  esac
 }
 
 resolve_ip_for_url() {
@@ -102,6 +119,33 @@ resolve_token() {
     return 0
   fi
   if command -v infisical >/dev/null 2>&1; then
+    if [[ -z "$INFISICAL_EXPORT_JSON" ]]; then
+      local -a export_cmd=(
+        infisical export
+        --format=json
+        --env="$INFISICAL_ENV"
+        --path="$INFISICAL_PATH"
+        --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+      )
+      if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+        export_cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+      fi
+      INFISICAL_EXPORT_JSON="$("${export_cmd[@]}" 2>/dev/null || true)"
+    fi
+    if [[ -n "$INFISICAL_EXPORT_JSON" ]]; then
+      local from_export
+      from_export="$(jq -r --arg key "$secret_name" '
+        if type == "array" then
+          (.[] | select(.key == $key) | .value // empty)
+        else
+          (.[$key] // empty)
+        end
+      ' <<<"$INFISICAL_EXPORT_JSON")"
+      if [[ -n "$from_export" ]]; then
+        echo "$from_export"
+        return 0
+      fi
+    fi
     local token
     local -a cmd=(
       infisical secrets get "$secret_name"
@@ -177,6 +221,10 @@ verify_reviewer() {
   secret_name="$(reviewer_secret_name "$reviewer")"
 
   if ! token="$(resolve_token "$secret_name")"; then
+    if [[ "$SKIP_MISSING_REVIEWER_SECRETS" == "true" ]]; then
+      echo "skip reviewer=${reviewer} reason=missing_secret secret=${secret_name}"
+      return 0
+    fi
     echo "missing ${secret_name} and unable to fetch from Infisical" >&2
     exit 1
   fi
@@ -211,6 +259,39 @@ verify_reviewer() {
   local visible_tools_json filtered_tools_json
   visible_tools_json="$(echo "$list_resp" | payload_json | jq -c '.proxyTools // []')"
   filtered_tools_json="$(echo "$search_resp" | payload_json | jq -c '[.tools[]?.proxyToolName]')"
+  local services_json
+  services_json="$(echo "$services_resp" | payload_json | jq -c '.services // []')"
+
+  if [[ "$EXPECT_BRIDGE_TOOLS" == "true" ]]; then
+    local bridge_tool
+    for bridge_tool in \
+      "webflow-template-review-mcp__template_review_enqueue_analyzer_review" \
+      "webflow-template-review-mcp__template_review_get_analyzer_review" \
+      "webflow-template-review-mcp__template_review_list_analyzer_reviews"
+    do
+      if ! printf '%s' "$visible_tools_json" | jq -e --arg tool "$bridge_tool" 'index($tool) != null' >/dev/null; then
+        echo "missing expected bridge tool ${bridge_tool} for reviewer ${reviewer}" >&2
+        exit 1
+      fi
+    done
+  fi
+
+  if [[ "$EXPECT_DIRECT_ANALYZER_SERVER" == "true" ]]; then
+    if ! printf '%s' "$services_json" | jq -e '.[]? | select(.name == "webflow-site-analyzer-mcp" and ((.activeInDiscovery == true) or ((.visibleProxyTools // 0) > 0)))' >/dev/null; then
+      echo "missing expected direct analyzer server visibility for reviewer ${reviewer}" >&2
+      exit 1
+    fi
+  else
+    if printf '%s' "$services_json" | jq -e '.[]? | select(.name == "webflow-site-analyzer-mcp" and ((.activeInDiscovery == true) or ((.visibleProxyTools // 0) > 0)))' >/dev/null; then
+      echo "unexpected direct analyzer server visibility for reviewer ${reviewer}" >&2
+      exit 1
+    fi
+  fi
+
+  if printf '%s' "$services_json" | jq -e '.[]? | select(.name == "webflow-local" and ((.activeInDiscovery == true) or ((.visibleProxyTools // 0) > 0)))' >/dev/null; then
+    echo "unexpected webflow-local visibility for reviewer ${reviewer}" >&2
+    exit 1
+  fi
 
   echo "== reviewer demo verify: ${reviewer} =="
   echo "hub_url=${hub_url}"
@@ -234,6 +315,11 @@ verify_reviewer() {
 main() {
   require_cmd curl
   require_cmd jq
+
+  EXPECT_BRIDGE_TOOLS="$(normalize_bool_or_fail "$EXPECT_BRIDGE_TOOLS")"
+  EXPECT_DIRECT_ANALYZER_SERVER="$(normalize_bool_or_fail "$EXPECT_DIRECT_ANALYZER_SERVER")"
+  SKIP_MISSING_REVIEWER_SECRETS="$(normalize_bool_or_fail "$SKIP_MISSING_REVIEWER_SECRETS")"
+  INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
 
   local reviewers=()
   if [[ "$REVIEWER" == "all" ]]; then

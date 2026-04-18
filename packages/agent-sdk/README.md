@@ -1,5 +1,14 @@
 # CREATE SOMETHING Agent SDK
 
+## Status
+
+As of April 2026, this package is a CREATE SOMETHING-specific, Anthropic-first Python runtime.
+
+It is **not** the repo's OpenAI Agents SDK integration. For the OpenAI lane in this monorepo, see:
+
+- [docs/OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md](../../docs/OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md)
+- [packages/observability/src/openai-agents.ts](../observability/src/openai-agents.ts)
+
 Reliable Claude agents built on Anthropic's official Python SDK. The tool recedes; the work remains.
 
 ## Philosophy

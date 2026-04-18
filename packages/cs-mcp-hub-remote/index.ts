@@ -337,6 +337,7 @@ interface Env {
   HUB_INSTANCE_ID?: string;
   HUB_API_TOKEN?: string;
   OAUTH_ISSUER_URL?: string;
+  HUB_OAUTH_DISCOVERY_ENABLED?: string;
   HUB_IDENTITY_MODE?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
@@ -752,6 +753,9 @@ export default {
     }
 
     if (isOAuthAuthorizationServerPath(url.pathname)) {
+      if (!isHubOAuthDiscoveryEnabled(env)) {
+        return withCors(new Response('Not found', { status: 404 }));
+      }
       return withCors(
         new Response(JSON.stringify(buildHubOAuthAuthorizationServerMetadata(url, env)), {
           status: 200,
@@ -764,6 +768,9 @@ export default {
     }
 
     if (isOAuthProtectedResourcePath(url.pathname)) {
+      if (!isHubOAuthDiscoveryEnabled(env)) {
+        return withCors(new Response('Not found', { status: 404 }));
+      }
       return withCors(
         new Response(JSON.stringify(buildHubOAuthProtectedResourceMetadata(url, env)), {
           status: 200,
@@ -823,6 +830,7 @@ export default {
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
             identity_mode: resolveHubIdentityMode(env),
+            oauth_discovery_enabled: isHubOAuthDiscoveryEnabled(env),
             legacy_bridge: {
               enabled: readEnvString(env, 'HUB_LEGACY_BRIDGE_ENABLED') === 'true',
               sunset_at: readEnvString(env, 'HUB_LEGACY_SUNSET_AT') ?? null,
@@ -914,9 +922,13 @@ function ensureStreamableHttpAcceptHeader(request: Request): Request {
 
 export async function authorizeRequest(request: Request, env: Env): Promise<Response | null> {
   const protectedResourceMetadataUrl = `${new URL(request.url).origin}/mcp/.well-known/oauth-protected-resource`;
-  const unauthorizedHeaders = {
-    'WWW-Authenticate': `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`,
-  };
+  const unauthorizedHeaders = isHubOAuthDiscoveryEnabled(env)
+    ? {
+        'WWW-Authenticate': `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`,
+      }
+    : {
+        'WWW-Authenticate': 'Bearer realm="create-something-hub"',
+      };
   const requiredToken = readEnvString(env, 'HUB_API_TOKEN');
   if (!requiredToken) {
     return null;
@@ -4771,6 +4783,10 @@ function isSessionResolverConfigured(env: Env): boolean {
     readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN') &&
       (env.IDENTITY_WORKER || readEnvString(env, 'HUB_SESSION_RESOLVE_URL')),
   );
+}
+
+function isHubOAuthDiscoveryEnabled(env: Env): boolean {
+  return parseBooleanWithDefault(readEnvString(env, 'HUB_OAUTH_DISCOVERY_ENABLED'), true);
 }
 
 export function resolveHubIdentityMode(env: Env): HubIdentityMode {

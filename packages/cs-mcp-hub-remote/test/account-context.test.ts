@@ -767,3 +767,17 @@ test('authorizeRequest rejects an invalid personal bearer token when static auth
     globalThis.fetch = originalFetch;
   }
 });
+
+test('authorizeRequest suppresses oauth resource metadata when oauth discovery is disabled', async () => {
+  const failure = await authorizeRequest(
+    new Request('https://hub.example/mcp'),
+    {
+      HUB_API_TOKEN: 'hub_static_token',
+      HUB_OAUTH_DISCOVERY_ENABLED: 'false',
+    } as any,
+  );
+
+  assert.ok(failure instanceof Response);
+  assert.equal(failure.status, 401);
+  assert.equal(failure.headers.get('WWW-Authenticate'), 'Bearer realm="create-something-hub"');
+});

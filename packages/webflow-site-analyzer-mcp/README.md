@@ -221,7 +221,8 @@ Hosted client config:
 Notes:
 - `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` is preferred for remote auth. `MCP_API_KEY` is still accepted as a fallback.
 - `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
-- This package is now remote-capable, but the reviewer hub cannot use it until an actual hosted URL is deployed and the Hub registry entry is switched from `stdio` to `http`.
+- Verified container-backed remote host: `https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev/mcp`
+- Canonical public host: `https://analyzer.mcp.createsomething.agency/mcp` (standard Worker proxy forwarding to the container-backed remote host)
 
 #### Container-backed Remote Host
 
@@ -242,6 +243,8 @@ Runtime notes:
 - `prepare:runtime` builds `@create-something/observability`, builds this package, and materializes a standalone runtime tree into `workers/remote/runtime/` using `pnpm deploy`.
 - The Worker is a thin proxy. The actual MCP server runs inside the container via `node dist/http.js`.
 - The deployment requires a local Docker-compatible engine because Wrangler builds the container image locally before upload.
+- The direct backend host is `https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev/mcp`.
+- The public custom-domain host is `https://analyzer.mcp.createsomething.agency/mcp`.
 
 ## Tools
 
@@ -627,6 +630,7 @@ Queue an async template-review job. This is the preferred production entrypoint.
 {
   previewUrl: string,
   publishedUrl: string,
+  templateVersionId?: string,
   timeout?: number,
   includeManual?: boolean,
   crawlMaxPages?: number,
@@ -690,6 +694,7 @@ List recent queued review jobs.
 ```typescript
 // Input
 {
+  templateVersionId?: string,
   status?: "queued" | "running" | "succeeded" | "failed" | "canceled",
   limit?: number
 }

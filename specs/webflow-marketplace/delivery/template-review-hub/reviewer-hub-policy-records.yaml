@@ -1,25 +1,32 @@
-version: "0.1"
+version: "0.2"
 artifact: "reviewer_hub_policy_records"
-status: "working_draft"
-date: "2026-03-10"
+status: "live_production"
+date: "2026-04-17"
 
 policy_intent:
-  summary: "Reviewer-specific Hub policy records for the six-reviewer Phase A rollout."
-  authoritative_scope: "Phase A only"
-  rollout_mode: "narrow_reviewer_workflow_write_lane"
+  summary: "Reviewer-specific production Hub policy records for the six live template-review reviewer hubs."
+  authoritative_scope: "current production reviewer posture"
+  rollout_mode: "bearer_based_reviewer_lane_with_direct_analyzer_visibility"
   notes:
     - "These records are reviewer-specific, not one shared reviewer template."
-    - "Phase A allows template-review-context tools plus narrow reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates from webflow-template-review-mcp."
-    - "Broad official review-state writes beyond the explicit reviewer-safe verbs remain manual until reviewer-attributed traces and write gates are proven."
-    - "Any reviewer write route must enforce reviewer ownership of the assigned Asset Version server-side."
+    - "Reviewer auth remains bearer-based and reviewer-scoped, backed by Infisical-managed CS_HUB_WF_TEMPLATE_REVIEW_<REVIEWER>_API_TOKEN secrets."
+    - "OAuth discovery is disabled on reviewer custom domains."
+    - "Direct webflow-site-analyzer-mcp visibility is part of the production reviewer lane."
+    - "webflow-local is excluded from the production reviewer pack."
 
-shared_phase_a_policy:
+shared_production_policy:
+  auth:
+    reviewer_auth: "reviewer_specific_bearer_token"
+    bearer_source: "Infisical"
+    identity_mode: "compat"
+    oauth_discovery_enabled: false
   discovery:
     mode: "compact"
     active_servers:
       - "webflow-template-review-mcp"
-    max_proxy_tools: 18
-  allowed_proxy_tools:
+      - "webflow-site-analyzer-mcp"
+    max_proxy_tools: 30
+  core_reviewer_tools:
     - "webflow-template-review-mcp__template_review_health"
     - "webflow-template-review-mcp__template_review_get_metrics"
     - "webflow-template-review-mcp__template_review_list_queue"
@@ -30,14 +37,21 @@ shared_phase_a_policy:
     - "webflow-template-review-mcp__template_review_list_versions"
     - "webflow-template-review-mcp__template_review_get_version"
     - "webflow-template-review-mcp__template_review_get_review_context"
+    - "webflow-template-review-mcp__template_review_enqueue_analyzer_review"
+    - "webflow-template-review-mcp__template_review_get_analyzer_review"
+    - "webflow-template-review-mcp__template_review_list_analyzer_reviews"
     - "webflow-template-review-mcp__template_review_list_releases"
     - "webflow-template-review-mcp__template_review_get_field_map"
+    - "webflow-template-review-mcp__template_review_assign_reviewer"
     - "webflow-template-review-mcp__template_review_assign_self"
     - "webflow-template-review-mcp__template_review_unassign_self"
-    - "webflow-template-review-mcp__template_review_assign_reviewer"
     - "webflow-template-review-mcp__template_review_request_changes"
     - "webflow-template-review-mcp__template_review_set_review_status"
     - "webflow-template-review-mcp__template_review_save_draft_feedback"
+  direct_visibility_servers:
+    - "webflow-site-analyzer-mcp"
+  excluded_servers:
+    - "webflow-local"
   blocked_proxy_tools:
     - "webflow-template-review-mcp__template_review_approve_version"
     - "webflow-template-review-mcp__template_review_reject_version"
@@ -50,23 +64,20 @@ shared_phase_a_policy:
     - "tool_name"
     - "asset_id"
     - "version_id"
-    - "decision"
     - "review_owner_before"
     - "review_owner_after"
     - "review_status_before"
     - "review_status_after"
     - "matched_policy_class"
-    - "reviewer_id"
     - "reviewer_account_id"
     - "reviewer_airtable_collaborator_id"
     - "correlation_id"
     - "request_id"
-  fallback_mode: "manual_airtable_except_narrow_reviewer_writes"
-  future_write_prerequisites:
+  fallback_mode: "rollback_to_phase_a_compact_pack"
+  write_prerequisites:
     - "current reviewer must own the Asset Version assignment"
-    - "write route must be narrow and explicit, never broad update_version_review exposure"
     - "missing reviewer identity or assignment mismatch must fail closed"
-    - "one-lane smoke and revert validation must pass before reviewer-wide rollout"
+    - "one-lane smoke and revert validation must pass before broader reviewer-visible write expansion"
 
 reviewers:
   - reviewer_name: "Natalia Ledford"
@@ -74,52 +85,55 @@ reviewers:
     hub_slug: "wf-template-review-natalia"
     account_model: "per_user"
     approval_owner: "Natalia Ledford"
-    access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_natalia_phase_a"
+    access_mode: "production_reviewer_lane"
+    policy_record_id: "wf_template_review_natalia_production"
 
   - reviewer_name: "Sudiksha Khanduja"
     reviewer_email: "sudiksha.khanduja@webflow.com"
     hub_slug: "wf-template-review-sudiksha"
     account_model: "per_user"
     approval_owner: "Sudiksha Khanduja"
-    access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_sudiksha_phase_a"
+    access_mode: "production_reviewer_lane"
+    policy_record_id: "wf_template_review_sudiksha_production"
 
   - reviewer_name: "Eric Unger"
     reviewer_email: "eric.unger@webflow.com"
     hub_slug: "wf-template-review-eric"
     account_model: "per_user"
     approval_owner: "Eric Unger"
-    access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_eric_phase_a"
+    access_mode: "production_reviewer_lane"
+    policy_record_id: "wf_template_review_eric_production"
 
   - reviewer_name: "Vicki Chen"
     reviewer_email: "vicki.chen@webflow.com"
     hub_slug: "wf-template-review-vicki"
     account_model: "per_user"
     approval_owner: "Vicki Chen"
-    access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_vicki_phase_a"
+    access_mode: "production_reviewer_lane"
+    policy_record_id: "wf_template_review_vicki_production"
 
   - reviewer_name: "Mariana Segura"
     reviewer_email: "mariana.segura@webflow.com"
     hub_slug: "wf-template-review-mariana"
     account_model: "per_user"
     approval_owner: "Mariana Segura"
-    access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_mariana_phase_a"
+    access_mode: "production_reviewer_lane"
+    policy_record_id: "wf_template_review_mariana_production"
 
   - reviewer_name: "Micah Johnson"
     reviewer_email: "micah@webflow.com"
     hub_slug: "wf-template-review-micah"
     account_model: "per_user"
     approval_owner: "Micah Johnson"
-    access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_micah_phase_a"
+    access_mode: "production_reviewer_lane"
+    policy_record_id: "wf_template_review_micah_production"
 
-phase_b_prerequisites:
-  - "webflow-site-analyzer-mcp enabled and verified in the live Hub"
-  - "webflow-local enabled and verified in the live Hub"
-  - "reviewer-attributed trace verification for approval-required actions"
-  - "manual fallback drill completed"
-  - "Marketplace review lead signoff"
+rollback_policy:
+  discovery:
+    mode: "compact"
+    active_servers:
+      - "webflow-template-review-mcp"
+    max_proxy_tools: 22
+  notes:
+    - "Rollback removes direct webflow-site-analyzer-mcp visibility."
+    - "Rollback keeps analyzer access only through the template-review bridge tools."

@@ -88,3 +88,31 @@ test('unauthorized MCP responses advertise oauth protected resource metadata', a
     /resource_metadata="https:\/\/mj\.mcp\.createsomething\.agency\/mcp\/\.well-known\/oauth-protected-resource"/,
   );
 });
+
+test('hub worker suppresses oauth discovery metadata when disabled', async () => {
+  const authServer = await hubWorker.fetch(
+    new Request('https://mj.mcp.createsomething.agency/.well-known/oauth-authorization-server'),
+    {
+      OAUTH_ISSUER_URL: 'https://id.createsomething.space',
+      HUB_OAUTH_DISCOVERY_ENABLED: 'false',
+    } as any,
+    {
+      waitUntil() {},
+    } as any,
+  );
+
+  assert.equal(authServer.status, 404);
+
+  const protectedResource = await hubWorker.fetch(
+    new Request('https://mj.mcp.createsomething.agency/mcp/.well-known/oauth-protected-resource'),
+    {
+      OAUTH_ISSUER_URL: 'https://id.createsomething.space',
+      HUB_OAUTH_DISCOVERY_ENABLED: 'false',
+    } as any,
+    {
+      waitUntil() {},
+    } as any,
+  );
+
+  assert.equal(protectedResource.status, 404);
+});

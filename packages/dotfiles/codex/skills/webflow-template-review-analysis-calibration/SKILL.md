@@ -5,12 +5,9 @@ description: Calibrate reviewer-facing findings for the Webflow Template Review 
 
 # Webflow Template Review Analysis Calibration
 
-Use this skill only after the live reviewer Hub exposes both analysis servers:
+Use this skill only after the live reviewer Hub exposes direct analyzer visibility through `webflow-site-analyzer-mcp`.
 
-- `webflow-site-analyzer-mcp`
-- `webflow-local`
-
-If either server is missing, do not run an analysis-led review flow. Fall back to [$webflow-template-review-reviewer](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md).
+If that server is missing, do not run an analysis-led review flow. Fall back to [$webflow-template-review-reviewer](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md).
 
 ## Objective
 
@@ -39,12 +36,7 @@ Use `webflow-site-analyzer-mcp` for:
 - designer metadata
 - media and performance evidence
 
-Use `webflow-local` for:
-
-- plagiarism/originality signals
-- framework detection
-
-Treat plagiarism/originality output as escalation evidence, not automatic final judgment.
+Do not assume a reviewer-facing `webflow-local` surface. If originality or provenance questions arise, treat them as escalation work, not as a standard reviewer-lane tool path.
 
 ## Reviewer-Facing Output Rules
 

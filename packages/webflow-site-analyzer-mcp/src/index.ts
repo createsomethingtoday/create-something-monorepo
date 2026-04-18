@@ -3062,6 +3062,7 @@ function getTemplateReviewJob(input: GetTemplateReviewJobInput): TemplateReviewJ
 
 function listTemplateReviewJobs(input: ListTemplateReviewJobsInput = {}): TemplateReviewJobRecord[] {
   return getTemplateReviewJobManager().list({
+    templateVersionId: input.templateVersionId,
     status: input.status as TemplateReviewJobStatus | undefined,
     limit: input.limit
   });
@@ -3402,6 +3403,10 @@ export function createAnalyzerServer(): Server {
               type: 'string',
               description: 'Published site URL with WebMCP snippet installed.'
             },
+            templateVersionId: {
+              type: 'string',
+              description: 'Optional template Asset Version record id for cross-system job correlation.'
+            },
             timeout: {
               type: 'number',
               description: 'Optional per-page timeout in milliseconds (default: 90000).'
@@ -3435,6 +3440,10 @@ export function createAnalyzerServer(): Server {
             publishedUrl: {
               type: 'string',
               description: 'Published site URL with WebMCP snippet installed.'
+            },
+            templateVersionId: {
+              type: 'string',
+              description: 'Optional template Asset Version record id for cross-system job correlation.'
             },
             timeout: {
               type: 'number',
@@ -3476,6 +3485,10 @@ export function createAnalyzerServer(): Server {
         inputSchema: {
           type: 'object',
           properties: {
+            templateVersionId: {
+              type: 'string',
+              description: 'Optional template Asset Version record id used when the job was queued.'
+            },
             status: {
               type: 'string',
               enum: ['queued', 'running', 'succeeded', 'failed', 'canceled']

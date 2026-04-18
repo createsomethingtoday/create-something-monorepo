@@ -66,7 +66,7 @@
       "maxProxyTools": null
     },
     "mj-shared-auth-plus-ops-search-meetings-and-review": {
-      "description": "MJ discovery pack: full ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review.",
+      "description": "MJ discovery pack: full ops lane with shared auth core, Airtable, Exa, Loom, Meetings, Webflow template review, and the Webflow site analyzer.",
       "mode": "full",
       "activeServers": [
         "composio-toolkit-airtable",
@@ -83,7 +83,8 @@
         "composio-toolkit-exa",
         "loom-mcp",
         "meetings",
-        "webflow-template-review-mcp"
+        "webflow-template-review-mcp",
+        "webflow-site-analyzer-mcp"
       ],
       "maxProxyTools": null
     },
@@ -106,20 +107,19 @@
       "maxProxyTools": null
     },
     "webflow-marketplace-review-phase-a": {
-      "description": "Phase A reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus bounded reviewer-safe actions and metrics.",
+      "description": "Rollback reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads, bounded reviewer-safe actions, metrics, and analyzer bridge tools only through webflow-template-review-mcp.",
       "mode": "compact",
       "activeServers": [
         "webflow-template-review-mcp"
       ],
-      "maxProxyTools": 18
+      "maxProxyTools": 22
     },
     "webflow-marketplace-review-phase-b": {
-      "description": "Phase B reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus selected analysis/originality tools.",
+      "description": "Current production reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus direct analyzer visibility.",
       "mode": "compact",
       "activeServers": [
         "webflow-template-review-mcp",
-        "webflow-site-analyzer-mcp",
-        "webflow-local"
+        "webflow-site-analyzer-mcp"
       ],
       "maxProxyTools": 30
     },

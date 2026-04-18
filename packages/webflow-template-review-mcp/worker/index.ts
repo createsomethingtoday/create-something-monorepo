@@ -4,6 +4,7 @@ import { enableTelemetry } from '@create-something/mcp-core';
 
 import { misconfiguredResponse, validateBearerToken } from '../src/auth.js';
 import { AirtableClient } from '../src/airtable.js';
+import { createRemoteAnalyzerClient } from '../src/analyzer.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
 import { registerPrompts } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
@@ -18,6 +19,8 @@ interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
+  WEBFLOW_SITE_ANALYZER_MCP_URL?: string;
+  WEBFLOW_SITE_ANALYZER_MCP_API_KEY?: string;
 }
 
 type RequestProps = {
@@ -59,9 +62,18 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
 
     const reviewerDirectory = parseReviewerDirectory(this.env.REVIEWER_DIRECTORY_JSON);
     const getReviewer = () => getReviewerProfileForAccount(reviewerDirectory, this.props?.accountId ?? null);
+    const analyzerUrl = this.env.WEBFLOW_SITE_ANALYZER_MCP_URL?.trim();
+    const analyzerApiKey =
+      this.env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY?.trim() ?? this.env.MCP_API_KEY?.trim();
+    const analyzer = analyzerUrl
+      ? createRemoteAnalyzerClient({
+          url: analyzerUrl,
+          ...(analyzerApiKey ? { apiKey: analyzerApiKey } : {}),
+        })
+      : null;
 
     registerResources(this.server, getClient, getReviewer);
-    registerTools(this.server, getClient, getReviewer);
+    registerTools(this.server, getClient, getReviewer, () => analyzer);
     registerPrompts(this.server);
   }
 }

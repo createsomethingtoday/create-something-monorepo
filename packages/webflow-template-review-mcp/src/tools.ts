@@ -3,12 +3,15 @@ import { z } from 'zod';
 
 import type { AirtableClient } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import type { TemplateReviewAnalyzerClient } from './analyzer.js';
+import { ANALYZER_JOB_STATUS_OPTIONS, AnalyzerClientError } from './analyzer.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
 
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
+type AnalyzerFactory = () => TemplateReviewAnalyzerClient | null;
 
 const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '🏃🏾In Review',
@@ -36,6 +39,20 @@ function asError(error: unknown) {
           code: error.code,
           message: error.message,
           status: error.status ?? 500,
+          details: error.details,
+        },
+      },
+      true,
+    );
+  }
+  if (error instanceof AnalyzerClientError) {
+    return jsonContent(
+      {
+        ok: false,
+        error: {
+          code: error.code,
+          message: error.message,
+          status: error.status ?? 502,
           details: error.details,
         },
       },
@@ -100,7 +117,24 @@ function reviewerPayload(reviewer: ReviewerProfile) {
   };
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
+function requireConfiguredAnalyzer(getAnalyzer: AnalyzerFactory): TemplateReviewAnalyzerClient {
+  const analyzer = getAnalyzer();
+  if (!analyzer) {
+    throw new AnalyzerClientError(
+      'ANALYZER_NOT_CONFIGURED',
+      'Analyzer client is not configured for this MCP runtime.',
+      503,
+    );
+  }
+  return analyzer;
+}
+
+export function registerTools(
+  server: McpServer,
+  getClient: ClientFactory,
+  getReviewer: ReviewerFactory = () => null,
+  getAnalyzer: AnalyzerFactory = () => null,
+): void {
   server.tool(
     'template_review_workflow',
     'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.',
@@ -202,6 +236,103 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         return asSuccess({
           context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_enqueue_analyzer_review',
+    'Queue browser-backed analyzer review for a template version, resolving preview and published URLs from Airtable when overrides are not supplied.',
+    {
+      version_id: z.string().min(1),
+      preview_url: z.string().url().optional(),
+      published_url: z.string().url().optional(),
+      timeout: z.number().int().min(1).max(600_000).optional(),
+      include_manual: z.boolean().optional(),
+      crawl_max_pages: z.number().int().min(1).max(50).optional(),
+      crawl_max_depth: z.number().int().min(1).max(4).optional(),
+    },
+    async ({ version_id, preview_url, published_url, timeout, include_manual, crawl_max_pages, crawl_max_depth }) => {
+      try {
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const resolvedPreviewUrl = preview_url ?? context.asset?.previewSiteUrl;
+        const resolvedPublishedUrl = published_url ?? context.asset?.websiteUrl;
+
+        if (!resolvedPreviewUrl || !resolvedPublishedUrl) {
+          throw new AnalyzerClientError(
+            'ANALYZER_URLS_UNAVAILABLE',
+            'Analyzer review requires both preview and published URLs. Update Airtable or pass preview_url and published_url explicitly.',
+            400,
+            {
+              version_id,
+              preview_url: resolvedPreviewUrl ?? null,
+              published_url: resolvedPublishedUrl ?? null,
+            },
+          );
+        }
+
+        const job = await requireConfiguredAnalyzer(getAnalyzer).enqueueReview({
+          templateVersionId: version_id,
+          previewUrl: resolvedPreviewUrl,
+          publishedUrl: resolvedPublishedUrl,
+          timeout,
+          includeManual: include_manual,
+          crawlMaxPages: crawl_max_pages,
+          crawlMaxDepth: crawl_max_depth,
+        });
+
+        return asSuccess({
+          version_id,
+          template_name: context.templateName ?? context.asset?.templateName ?? null,
+          preview_url: resolvedPreviewUrl,
+          published_url: resolvedPublishedUrl,
+          job,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_get_analyzer_review',
+    'Fetch one queued analyzer review job by job_id, including progress and final report when available.',
+    {
+      job_id: z.string().min(1),
+    },
+    async ({ job_id }) => {
+      try {
+        return asSuccess({
+          job: await requireConfiguredAnalyzer(getAnalyzer).getReview(job_id),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_list_analyzer_reviews',
+    'List analyzer review jobs for a template version using the Airtable Asset Version id as the queue correlation key.',
+    {
+      version_id: z.string().min(1),
+      status: z.enum(ANALYZER_JOB_STATUS_OPTIONS).optional(),
+      limit: z.number().int().min(1).max(100).optional(),
+    },
+    async ({ version_id, status, limit }) => {
+      try {
+        const jobs = await requireConfiguredAnalyzer(getAnalyzer).listReviews({
+          templateVersionId: version_id,
+          status,
+          limit: limit ?? 20,
+        });
+        return asSuccess({
+          version_id,
+          count: jobs.length,
+          jobs,
         });
       } catch (error) {
         return asError(error);

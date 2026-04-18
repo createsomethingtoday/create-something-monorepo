@@ -765,6 +765,7 @@ export interface UnifiedTemplateReviewReport {
 export interface RunTemplateReviewInput {
   previewUrl: string;
   publishedUrl: string;
+  templateVersionId?: string;
   timeout?: number;
   includeManual?: boolean;
   crawlMaxPages?: number;
@@ -805,6 +806,7 @@ export interface GetTemplateReviewJobInput {
 }
 
 export interface ListTemplateReviewJobsInput {
+  templateVersionId?: string;
   status?: TemplateReviewJobStatus;
   limit?: number;
 }

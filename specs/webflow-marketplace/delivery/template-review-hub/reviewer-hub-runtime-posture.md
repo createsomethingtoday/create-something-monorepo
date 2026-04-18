@@ -1,30 +1,33 @@
 # Reviewer Hub Runtime Posture
 
-**Status:** Working draft  
+**Status:** Live production posture
 **Audience:** Hub operators  
 **Workflow:** `template_review_hub_lane`  
-**Date:** `2026-03-10`
+**Date:** `2026-04-17`
 
 ## 1. Purpose
 
-This document gives the exact Hub posture to use for the first six reviewer-specific Hub surfaces.
+This document defines the exact live posture for the six reviewer-specific template-review Hub surfaces and the rollback posture to use if production needs to contract.
 
-It is intended to answer:
+It answers:
 
-- which downstream servers must be enabled
-- which discovery settings to apply
-- what the initial reviewer-visible surface should be
-- when write posture can be expanded
+- which downstream servers are part of the live reviewer lane
+- which discovery settings are authoritative
+- how bearer-based reviewer auth works
+- what the rollback posture is
 
 ## 2. Important current-state note
 
-As of `2026-03-10`, the live remote Hub currently shows:
+As of `2026-04-17`, the live template-review reviewer posture is:
 
-- `webflow-template-review-mcp` connected
-- `webflow-site-analyzer-mcp` not connected
-- `webflow-local` not connected
+- one reviewer-specific custom-domain Hub per reviewer
+- bearer-based auth using reviewer-specific Infisical-managed tokens
+- `compat` identity mode so the same bearer token can gate Hub access and resolve reviewer identity
+- OAuth discovery disabled on reviewer custom domains
+- direct `webflow-site-analyzer-mcp` visibility enabled in reviewer discovery
+- `webflow-local` excluded from the reviewer surface
 
-That means the only safe exact runtime posture today is a **template-review-context plus narrow reviewer workflow write** lane unless the other Webflow servers are enabled and verified first.
+That means the production reviewer lane is no longer the old bridge-only Phase A posture. The rollback posture still exists, but it is not the live default.
 
 ## 3. Reviewer Hub identities
 
@@ -41,23 +44,22 @@ Use one reviewer-specific Hub surface or account-scoped Hub posture per reviewer
 
 If these are implemented as separate custom-domain Hubs, keep the same posture across all six. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
 
-## 4. Phase A: current-live-safe posture
-
-Use this immediately, because it only depends on the server that is already connected.
+## 4. Current production reviewer posture
 
 ### Active servers
 
 - `webflow-template-review-mcp`
+- `webflow-site-analyzer-mcp`
 
 ### Discovery mode
 
 - `mode`: `compact`
-- `activeServers`: `["webflow-template-review-mcp"]`
-- `maxProxyTools`: `18`
+- `activeServers`: `["webflow-template-review-mcp", "webflow-site-analyzer-mcp"]`
+- `maxProxyTools`: `30`
 
-### Reviewer-visible tool target
+### Reviewer-visible surface
 
-Visible tools should be limited to:
+The guaranteed reviewer workflow surface remains the template-review MCP:
 
 - `webflow-template-review-mcp__template_review_health`
 - `webflow-template-review-mcp__template_review_get_metrics`
@@ -69,6 +71,9 @@ Visible tools should be limited to:
 - `webflow-template-review-mcp__template_review_list_versions`
 - `webflow-template-review-mcp__template_review_get_version`
 - `webflow-template-review-mcp__template_review_get_review_context`
+- `webflow-template-review-mcp__template_review_enqueue_analyzer_review`
+- `webflow-template-review-mcp__template_review_get_analyzer_review`
+- `webflow-template-review-mcp__template_review_list_analyzer_reviews`
 - `webflow-template-review-mcp__template_review_list_releases`
 - `webflow-template-review-mcp__template_review_get_field_map`
 - `webflow-template-review-mcp__template_review_assign_reviewer`
@@ -78,294 +83,121 @@ Visible tools should be limited to:
 - `webflow-template-review-mcp__template_review_set_review_status`
 - `webflow-template-review-mcp__template_review_save_draft_feedback`
 
-Do not expose broad write tools in Phase A. The permitted mutations are narrow reviewer workflow verbs only: reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates on the assigned Asset Version.
+In addition, direct `webflow-site-analyzer-mcp` visibility is intentionally enabled for reviewer lanes. The analyzer bridge tools remain part of the preferred guided workflow, but they are no longer the only analyzer entry point.
+
+`webflow-local` is not part of reviewer discovery and should not appear in the production reviewer pack.
 
 ### Reviewer action
 
-Reads plus narrow self-assignment, self-unassignment, bounded feedback writes, and controlled 📝Review Status updates. Broader review-state changes remain manual in Airtable.
+The live reviewer lane supports:
 
-## 5. Phase B: full reviewer lane posture
+- reviewer queue/context reads
+- self-assignment and reviewer assignment
+- bounded draft feedback and review-status writes
+- analyzer jobs through both the template-review bridge tools and direct analyzer visibility
 
-Use this only after the missing Webflow analysis servers are enabled and verified in the live Hub.
+Broader template-review mutation routes remain hidden from reviewer discovery.
 
-### Required servers
+## 5. Rollback posture
+
+Use this only when production needs to contract back to the original compact reviewer surface.
+
+### Active servers
 
 - `webflow-template-review-mcp`
-- `webflow-site-analyzer-mcp`
-- `webflow-local`
 
 ### Discovery mode
 
 - `mode`: `compact`
-- `activeServers`: `["webflow-template-review-mcp", "webflow-site-analyzer-mcp", "webflow-local"]`
-- `maxProxyTools`: `30`
+- `activeServers`: `["webflow-template-review-mcp"]`
+- `maxProxyTools`: `22`
 
-### Reviewer-visible tool target
+### Rollback reviewer-visible surface
 
-Phase B should still default to a narrow review surface:
+Rollback keeps the template-review reviewer workflow surface, including the analyzer bridge tools, but removes direct `webflow-site-analyzer-mcp` visibility.
 
-- all Phase A read tools
-- selected analysis tools from `webflow-site-analyzer-mcp`
-- selected originality/plagiarism tools from `webflow-local`
+## 6. Discovery posture
 
-Do not expose entire raw tool catalogs if the reviewer workflow only needs a few actions.
-
-### Reviewer write posture
-
-Even in Phase B, reviewer Hubs should begin read-only and move to write enablement later by action.
-
-## 6. Server enablement sequence
-
-If the live remote Hub is missing the analysis servers, use this operator sequence first.
-
-### Enable required servers
-
-Use `hub_update_state` with:
-
-```json
-{
-  "enableServers": [
-    "webflow-template-review-mcp",
-    "webflow-site-analyzer-mcp",
-    "webflow-local"
-  ]
-}
-```
-
-### Verify connections
-
-Then verify:
-
-- `hub_status`
-- `hub_list_services`
-- `hub_search_proxy_tools` with `serverName` set to each of:
-  - `webflow-template-review-mcp`
-  - `webflow-site-analyzer-mcp`
-  - `webflow-local`
-
-Do not move to Phase B until all three resolve and return usable proxy tools.
-
-## 7. Reviewer discovery posture
-
-For each reviewer-specific Hub/account, apply this Phase A discovery posture first:
-
-```json
-{
-  "mode": "compact",
-  "activeServers": ["webflow-template-review-mcp"],
-  "maxProxyTools": 18
-}
-```
-
-Apply it through `hub_set_discovery`.
-
-After the other Webflow servers are connected and tested, move the reviewer to Phase B:
+Current production discovery posture:
 
 ```json
 {
   "mode": "compact",
   "activeServers": [
     "webflow-template-review-mcp",
-    "webflow-site-analyzer-mcp",
-    "webflow-local"
+    "webflow-site-analyzer-mcp"
   ],
   "maxProxyTools": 30
 }
 ```
 
-## 8. Reviewer write enablement posture
+Rollback discovery posture:
 
-Do not widen discovery to expose general mutation tools.
+```json
+{
+  "mode": "compact",
+  "activeServers": ["webflow-template-review-mcp"],
+  "maxProxyTools": 22
+}
+```
 
-The narrow reviewer-safe write actions that may be enabled in Phase A are:
+## 7. Auth posture
 
-- `webflow-template-review-mcp__template_review_request_changes`
-- `webflow-template-review-mcp__template_review_set_review_status`
-- `webflow-template-review-mcp__template_review_save_draft_feedback`
+Use this reviewer auth posture:
 
-The broader official decision actions that may be enabled later are:
+- reviewer-specific bearer tokens stored in Infisical as `CS_HUB_WF_TEMPLATE_REVIEW_<REVIEWER>_API_TOKEN`
+- `compat` identity mode on the Hub runtime
+- no reviewer OAuth discovery endpoints on the reviewer domains
+- plain bearer challenge on unauthorized MCP requests
 
-- `webflow-template-review-mcp__template_review_approve_version`
-- `webflow-template-review-mcp__template_review_reject_version`
-- `webflow-template-review-mcp__template_review_complete_publishing`
+If a reviewer domain starts returning OAuth discovery metadata again, treat that as a regression and redeploy the Hub runtime before continuing.
 
-Reviewer self-assignment is already allowed as a narrow write:
+## 8. Policy posture
 
-- `webflow-template-review-mcp__template_review_assign_self`
-- `webflow-template-review-mcp__template_review_unassign_self`
+Enforce all of the following:
 
-For host integrations and smoke checks, note the read envelope for reviewer context:
-
-- `template_review_get_review_context` returns the normalized payload under `data.context`
-- `currentReviewer`, `reviewOwner`, and `isAssignedToCurrentReviewer` are fields on `data.context`, not top-level `data`
-- repeatable bearer-token validation is scripted in `scripts/webflow-reviewer-assign-self-smoke.sh`
-
-Keep narrow reviewer workflow writes gated until:
-
-- reviewer identity is visible in traces
-- `correlation_id` links recommendation and write
-- Airtable writes are validated
-- fallback is rehearsed
-
-### Future write guardrails
-
-If reviewer write actions are enabled, each route must satisfy all of the following:
-
-- the version is assigned to the current reviewer
-- the current reviewer matches the authenticated hub account identity
-- the write is a narrow verb, not `template_review_update_version_review`
-- the write returns the updated version payload and reviewer attribution
-- the write fails closed on assignment mismatch or missing reviewer identity
-
-Recommended preconditions by action:
-
-- `template_review_request_changes`
-  - current reviewer owns the assignment
-  - non-empty `review_feedback`
-  - optional `improvement_areas`
-- `template_review_set_review_status`
-  - current reviewer owns the assignment
-  - `review_status` is drawn from an allowlisted reviewer workflow state set
-  - transition rules fail closed when the requested status is out of order or unsupported
-- `template_review_save_draft_feedback`
-  - current reviewer owns the assignment
-  - only draft feedback fields are mutable
-  - official decision state remains unchanged
-- `template_review_approve_version`
-  - current reviewer owns the assignment
-  - approval-only fields are limited to release/publishing metadata
-- `template_review_reject_version`
-  - current reviewer owns the assignment
-  - non-empty `reject_reason`
-  - non-empty `rejection_feedback`
-- `template_review_complete_publishing`
-  - current reviewer owns the assignment
-  - release selector resolves cleanly
-  - publishing checklist mutations are explicit and bounded
-
-Do not expose any future write tool that can silently overwrite:
-
-- `📝Reviewer`
-- arbitrary review status outside the allowlisted transition set
-- arbitrary feedback fields outside the explicit reviewer-safe inputs
-- arbitrary publishing metadata
-
-unless the tool is wrapped in reviewer ownership checks server-side.
-
-### Trace requirements for reviewer writes
-
-Every reviewer write route should emit and preserve:
-
-- `correlation_id`
-- `workflow_id`
-- `tool_name`
-- `asset_id`
-- `version_id`
-- `reviewer_account_id`
-- `reviewer_airtable_collaborator_id`
-- `review_owner_before`
-- `review_owner_after`
-- `review_status_before`
-- `review_status_after`
-- `matched_policy_class`
-- `request_id`
-
-Treat missing reviewer attribution or missing before/after state as a rollout blocker for expanded writes.
-
-### Rollout gates for expanded writes
-
-Enable reviewer write actions in this order:
-
-1. `template_review_request_changes`
-2. `template_review_set_review_status`
-3. `template_review_save_draft_feedback`
-4. hidden in discovery, operator-only smoke for broader decision routes
-5. reviewer-visible for one lane only for broader decision routes
-6. reviewer-visible for all lanes after traces, smoke, and rollback checks pass
-
-Minimum validation before widening beyond assignment tools:
-
-- reviewer smoke covers success and assignment-conflict failure
-- one real write and one revert are validated on a noncritical record
-- Hub trace lookup shows reviewer attribution and correlation continuity
-- fallback runbook documents manual Airtable recovery for each write tool
-
-## 9. Tools that should stay hidden from reviewers
-
-Hide these from reviewer-facing discovery in both Phase A and Phase B:
-
-- `webflow-template-review-mcp__template_review_update_asset_metadata`
-- `webflow-template-review-mcp__template_review_update_asset_publishing`
-- `webflow-template-review-mcp__template_review_update_version_review`
-
-These are too broad for the current reviewer playbook and should remain operator-only unless the policy pack is explicitly expanded.
-
-## 10. Policy posture
-
-Use this reviewer policy posture:
-
-- reviewer sessions may discover only the explicit reviewer-safe write routes plus read routes
-- reviewer sessions cannot discover broad mutation routes
-- reviewer-safe write routes remain approval-gated
+- reviewer sessions may discover only the current reviewer lane servers
+- broad template-review mutation routes stay hidden from reviewer discovery
+- reviewer-safe write routes fail closed on reviewer ownership mismatch
 - control-plane and destructive routes remain blocked or review-only
-- policy-denied routes must fail closed
+- `webflow-local` remains excluded from reviewer discovery
 
-This should be enforced by the Hub authz layer, not by UI convention alone.
+## 9. Rate-limit and quota posture
 
-## 11. Rate-limit and quota posture
-
-The live Hub currently reports rate limits and quotas as disabled. Before enabling reviewer writes, set:
+Keep these enabled in production:
 
 - rate limits: enabled
 - quotas: enabled
 - scope: `account`
 
-Recommended starting point:
+Recommended operating posture:
 
-- modest per-account rate limit for reviewer Hubs
-- modest monthly per-account quota for reviewer Hubs
-- no exemptions for `webflow-template-review-mcp` write paths
+- modest per-account rate limits for reviewer lanes
+- modest monthly per-account quota for reviewer lanes
+- no exemptions for reviewer write paths
 
-If you need tighter control later, move to `account_server` or `account_server_tool`.
+## 10. Verification checklist
 
-## 12. Reviewer-by-reviewer rollout order
+For each reviewer Hub, confirm:
 
-Recommended order:
+- `/health` returns successfully
+- `/health` reports `oauth_discovery_enabled: false`
+- `/.well-known/oauth-authorization-server` returns `404`
+- unauthorized `POST /mcp` returns `WWW-Authenticate: Bearer realm="create-something-hub"` without OAuth resource metadata
+- `hub_list_services` shows `webflow-template-review-mcp`
+- `hub_list_services` shows `webflow-site-analyzer-mcp`
+- `hub_search_proxy_tools` succeeds for both active servers
+- bearer tokens loaded from Infisical still authenticate successfully
 
-1. Natalia Ledford
-2. Sudiksha Khanduja
-3. Eric Unger
-4. Vicki Chen
-5. Mariana Segura
-6. Micah Johnson
+## 11. Stop conditions
 
-Reason:
+Revert a reviewer Hub to rollback posture immediately if:
 
-- start with one reviewer
-- validate traces and fallback
-- expand gradually instead of enabling all six write-capable at once
-
-## 13. Recommended operator sequence
-
-1. Enable missing Webflow analysis servers in the Hub.
-2. Verify they are connected and searchable.
-3. Apply Phase A compact discovery posture to all six reviewer Hubs.
-4. Confirm write tools are not visible in reviewer discovery.
-5. Confirm reviewer sessions are read-only and actor-resolved.
-6. Turn on Hub rate limits and quotas.
-7. Move one reviewer to Phase B discovery once the analysis servers are healthy.
-8. Enable `request_changes` for one reviewer only after trace validation.
-9. Expand action-by-action.
-10. Expand reviewer-by-reviewer.
-
-## 14. Stop conditions
-
-Revert a reviewer Hub to Phase A immediately if:
-
-- actor context is missing
-- mutable tools appear unexpectedly
+- actor context is missing or inconsistent
+- OAuth discovery reappears on a reviewer domain
+- `webflow-local` appears in reviewer discovery
+- analyzer visibility disappears unexpectedly from the production pack
 - traces do not identify the reviewer cleanly
 - write behavior is ambiguous
-- fallback is too slow or unclear
 
-If more than one reviewer Hub hits the same issue, revert all six to Phase A and pause write rollout.
+If more than one reviewer Hub hits the same issue, revert all six to the rollback pack and triage centrally.

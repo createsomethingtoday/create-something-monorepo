@@ -8,5 +8,10 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 enabled = true
 
 [vars]
+WEBFLOW_SITE_ANALYZER_UPSTREAM_URL = "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev"
 WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS = "2"
 WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE = "100"
+
+[[routes]]
+pattern = "analyzer.mcp.createsomething.agency"
+custom_domain = true
