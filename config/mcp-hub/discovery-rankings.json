@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "defaults": {
+    "priority": 500,
+    "workflow": "general",
+    "group": "more-tools",
+    "primary": false,
+    "tags": []
+  },
+  "workflows": {
+    "overview": {
+      "label": "Overview",
+      "description": "Primary entry points and guided workflows."
+    },
+    "auth_reconnect": {
+      "label": "Auth & Reconnect",
+      "description": "Connection status and reconnect helpers."
+    },
+    "navigation": {
+      "label": "Browse & Read",
+      "description": "List, search, and get operations that help a host understand the surface."
+    },
+    "reviewer_core": {
+      "label": "Reviewer Core",
+      "description": "Primary reviewer workflow tools for queue, context, ownership, and decisions."
+    },
+    "reviewer_analysis": {
+      "label": "Reviewer Analysis",
+      "description": "Analyzer-backed tools for reviewer evidence gathering."
+    },
+    "operations": {
+      "label": "Execution",
+      "description": "Run, enqueue, capture, and analyze operations."
+    },
+    "writes": {
+      "label": "Writes",
+      "description": "Mutation-oriented tools and actions."
+    },
+    "diagnostics": {
+      "label": "Diagnostics",
+      "description": "Health and status checks."
+    },
+    "admin": {
+      "label": "Admin & Tuning",
+      "description": "Versioning, promotion, and feedback/tuning tools."
+    },
+    "general": {
+      "label": "General",
+      "description": "Everything else."
+    }
+  },
+  "rules": [
+    {
+      "downstreamToolName": "template_review_workflow",
+      "priority": 5,
+      "workflow": "overview",
+      "group": "workflow",
+      "primary": true,
+      "tags": ["review", "workflow"]
+    },
+    {
+      "downstreamToolName": "template_review_health",
+      "priority": 6,
+      "workflow": "diagnostics",
+      "group": "health",
+      "primary": true,
+      "tags": ["review", "health"]
+    },
+    {
+      "downstreamToolName": "template_review_list_queue",
+      "priority": 10,
+      "workflow": "reviewer_core",
+      "group": "queue",
+      "primary": true,
+      "tags": ["review", "queue"]
+    },
+    {
+      "downstreamToolName": "template_review_my_queue",
+      "priority": 11,
+      "workflow": "reviewer_core",
+      "group": "queue",
+      "primary": true,
+      "tags": ["review", "queue"]
+    },
+    {
+      "downstreamToolName": "template_review_get_review_context",
+      "priority": 12,
+      "workflow": "reviewer_core",
+      "group": "context",
+      "primary": true,
+      "tags": ["review", "context"]
+    },
+    {
+      "downstreamToolName": "enqueue_template_review",
+      "priority": 14,
+      "workflow": "reviewer_analysis",
+      "group": "analysis",
+      "primary": true,
+      "tags": ["review", "analysis"]
+    },
+    {
+      "downstreamToolName": "get_template_review_job",
+      "priority": 15,
+      "workflow": "reviewer_analysis",
+      "group": "analysis",
+      "primary": true,
+      "tags": ["review", "analysis"]
+    },
+    {
+      "downstreamToolName": "run_template_review",
+      "priority": 16,
+      "workflow": "reviewer_analysis",
+      "group": "analysis",
+      "primary": true,
+      "tags": ["review", "analysis"]
+    },
+    {
+      "downstreamToolName": "list_template_review_jobs",
+      "priority": 17,
+      "workflow": "reviewer_analysis",
+      "group": "analysis",
+      "primary": false,
+      "tags": ["review", "analysis"]
+    },
+    {
+      "downstreamToolName": "template_review_assign_self",
+      "priority": 18,
+      "workflow": "reviewer_core",
+      "group": "ownership",
+      "primary": true,
+      "tags": ["review", "ownership", "write"]
+    },
+    {
+      "downstreamToolName": "template_review_unassign_self",
+      "priority": 19,
+      "workflow": "reviewer_core",
+      "group": "ownership",
+      "primary": false,
+      "tags": ["review", "ownership", "write"]
+    },
+    {
+      "downstreamToolName": "template_review_request_changes",
+      "priority": 22,
+      "workflow": "reviewer_core",
+      "group": "decision",
+      "primary": true,
+      "tags": ["review", "decision", "write"]
+    },
+    {
+      "downstreamToolName": "template_review_set_review_status",
+      "priority": 23,
+      "workflow": "reviewer_core",
+      "group": "decision",
+      "primary": true,
+      "tags": ["review", "decision", "write"]
+    },
+    {
+      "downstreamToolName": "template_review_save_draft_feedback",
+      "priority": 24,
+      "workflow": "reviewer_core",
+      "group": "decision",
+      "primary": true,
+      "tags": ["review", "decision", "write"]
+    }
+  ]
+}

@@ -1,16 +1,17 @@
 ---
 name: webflow-template-review-analysis-calibration
-description: Calibrate reviewer-facing findings for the Webflow Template Review Hub once analysis servers are enabled, using Auto versus Partial versus Manual evidence correctly and drafting feedback without overstating confidence.
+description: Calibrate reviewer-facing findings for the live analyzer-backed Webflow Template Review Hub, using Auto versus Partial versus Manual evidence correctly and drafting feedback without overstating confidence.
 ---
 
 # Webflow Template Review Analysis Calibration
 
-Use this skill only after the live reviewer Hub exposes both analysis servers:
+Use this skill when the live reviewer Hub exposes analyzer-backed review tools.
 
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
 
-If either server is missing, do not run an analysis-led review flow. Fall back to [$webflow-template-review-reviewer](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md).
+`webflow-local` is optional. If originality or plagiarism tools are not visible, continue with analyzer-backed review evidence and mark originality as unavailable or manual.
+
+If the reviewer Hub is missing both the analyzer wrappers and `webflow-site-analyzer-mcp`, do not run an analysis-led review flow. Fall back to [$webflow-template-review-reviewer](/Users/micahjohnson/Code/worktrees/natalia-webflow-template-review-hub-3vb/packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md).
 
 ## Objective
 
@@ -26,8 +27,8 @@ Use the checklist map as the authority for confidence framing:
 
 Source of truth:
 
-- [checklist-map.md](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/webflow-marketplace/delivery/template-review-hub/checklist-map.md)
-- [webflow-template-checklist-mcp-coverage.md](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/webflow-template-checklist-mcp-coverage.md)
+- [checklist-map.md](/Users/micahjohnson/Code/worktrees/natalia-webflow-template-review-hub-3vb/specs/webflow-marketplace/delivery/template-review-hub/checklist-map.md)
+- [webflow-template-checklist-mcp-coverage.md](/Users/micahjohnson/Code/worktrees/natalia-webflow-template-review-hub-3vb/docs/webflow-template-checklist-mcp-coverage.md)
 
 ## Tool Framing
 
@@ -38,8 +39,9 @@ Use `webflow-site-analyzer-mcp` for:
 - screenshots
 - designer metadata
 - media and performance evidence
+- queued template-review job results
 
-Use `webflow-local` for:
+Use `webflow-local` when it is visible for:
 
 - plagiarism/originality signals
 - framework detection
