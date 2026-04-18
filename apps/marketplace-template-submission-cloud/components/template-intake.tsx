@@ -45,10 +45,10 @@ async function validateImageClient(file: File, kind: ImageKind): Promise<string 
   return null;
 }
 
-function inlineFeedbackColor(tone: Tone) {
-  if (tone === 'success') return '#0a7f3f';
-  if (tone === 'error') return '#b42318';
-  return '#344054';
+function feedbackClass(tone: Tone) {
+  if (tone === 'success') return 'submission-field-feedback submission-field-feedback-success';
+  if (tone === 'error') return 'submission-field-feedback submission-field-feedback-error';
+  return 'submission-field-feedback submission-field-feedback-info';
 }
 
 type Tone = 'success' | 'error' | 'info';
@@ -982,7 +982,7 @@ export function TemplateIntake() {
                     </button>
                   </div>
                   {fieldFeedback.primaryEmail ? (
-                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.primaryEmail.tone), marginTop: 4 }}>
+                    <div className={feedbackClass(fieldFeedback.primaryEmail!.tone)}>
                       {fieldFeedback.primaryEmail.message}
                     </div>
                   ) : null}
@@ -1016,7 +1016,7 @@ export function TemplateIntake() {
                     </button>
                   </div>
                   {fieldFeedback.webflowEmail ? (
-                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.webflowEmail.tone), marginTop: 4 }}>
+                    <div className={feedbackClass(fieldFeedback.webflowEmail!.tone)}>
                       {fieldFeedback.webflowEmail.message}
                     </div>
                   ) : null}
@@ -1110,7 +1110,7 @@ export function TemplateIntake() {
                       required
                     />
                     {imageErrors.avatarFile ? (
-                      <div style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                      <div className="submission-field-feedback submission-field-feedback-error">
                         {imageErrors.avatarFile}
                       </div>
                     ) : null}
@@ -1279,7 +1279,7 @@ export function TemplateIntake() {
                     </button>
                   </div>
                   {fieldFeedback.templateName ? (
-                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.templateName.tone), marginTop: 4 }}>
+                    <div className={feedbackClass(fieldFeedback.templateName!.tone)}>
                       {fieldFeedback.templateName.message}
                     </div>
                   ) : null}
@@ -1311,7 +1311,7 @@ export function TemplateIntake() {
                     </button>
                   </div>
                   {fieldFeedback.publishedUrl ? (
-                    <div style={{ fontSize: 13, color: inlineFeedbackColor(fieldFeedback.publishedUrl.tone), marginTop: 4 }}>
+                    <div className={feedbackClass(fieldFeedback.publishedUrl!.tone)}>
                       {fieldFeedback.publishedUrl.message}
                     </div>
                   ) : null}
@@ -1690,7 +1690,7 @@ export function TemplateIntake() {
                         required
                       />
                       {imageErrors.thumbnailFile ? (
-                        <div style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                        <div className="submission-field-feedback submission-field-feedback-error">
                           {imageErrors.thumbnailFile}
                         </div>
                       ) : null}
@@ -1724,7 +1724,7 @@ export function TemplateIntake() {
                         }}
                       />
                       {imageErrors.secondaryThumbnailFile ? (
-                        <div style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                        <div className="submission-field-feedback submission-field-feedback-error">
                           {imageErrors.secondaryThumbnailFile}
                         </div>
                       ) : null}
@@ -1773,7 +1773,7 @@ export function TemplateIntake() {
                     {Object.entries(imageErrors)
                       .filter(([k, v]) => k.startsWith('gallery-') && v)
                       .map(([k, v]) => (
-                        <div key={k} style={{ fontSize: 13, color: inlineFeedbackColor('error'), marginTop: 4 }}>
+                        <div key={k} className="submission-field-feedback submission-field-feedback-error">
                           {v}
                         </div>
                       ))}
