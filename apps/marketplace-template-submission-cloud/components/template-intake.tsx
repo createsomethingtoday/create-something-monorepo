@@ -3,6 +3,7 @@
 import Script from 'next/script';
 import { useEffect, useRef, useState } from 'react';
 import { appPath } from '../lib/runtime-paths';
+import { CountryPicker } from './country-picker';
 import { QuillEditor } from './quill-editor';
 import {
   ALL_COUNTRIES,
@@ -909,20 +910,13 @@ export function TemplateIntake() {
                         Choose the country tied to your creator account. Unsupported payout
                         countries still behave as warnings, matching the live page.
                       </p>
-                      <select
-                        className="field-select input w-select"
+                      <CountryPicker
                         id="country"
+                        countries={ALL_COUNTRIES}
                         value={creator.country}
-                        onChange={(event) => updateCreator('country', event.target.value)}
+                        onChange={(v) => updateCreator('country', v)}
                         required
-                      >
-                        <option value="">Select a country</option>
-                        {ALL_COUNTRIES.map((country) => (
-                          <option key={country} value={country}>
-                            {country}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </div>
 
                     <div className="submission-field">
