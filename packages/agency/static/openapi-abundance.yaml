@@ -331,6 +331,131 @@ paths:
         '404':
           description: User not found
 
+  /inbound-jobs:
+    get:
+      operationId: listInboundJobs
+      summary: List inbound jobs for operator review
+      description: |
+        Operator-facing intake queue for jobs farmed by agents.
+        Supports JSON responses for dashboards and CSV export for recruiter handoff.
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, reviewing, qualified, rejected, archived, all]
+        - name: source_agent
+          in: query
+          description: Filter to jobs surfaced by a specific agent
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Search title, employer, location, dedupe key, or notes
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: Inbound jobs returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundJobsResponse'
+            text/csv:
+              schema:
+                type: string
+        '400':
+          description: Validation error
+    post:
+      operationId: ingestInboundJob
+      summary: Ingest or dedupe an inbound job
+      description: |
+        Agent-facing intake endpoint for storing inbound jobs in the operator queue.
+        If the dedupe key already exists, the record is updated with a new sighting instead of creating a duplicate row.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InboundJobInput'
+      responses:
+        '200':
+          description: Existing inbound job updated as a duplicate sighting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundJobResponse'
+        '201':
+          description: Inbound job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundJobResponse'
+        '400':
+          description: Validation error
+
+  /inbound-jobs/{id}:
+    get:
+      operationId: getInboundJob
+      summary: Get inbound job details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Inbound job found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundJobResponse'
+        '404':
+          description: Inbound job not found
+    patch:
+      operationId: updateInboundJob
+      summary: Update inbound job status or notes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InboundJobUpdate'
+      responses:
+        '200':
+          description: Inbound job updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InboundJobResponse'
+        '400':
+          description: Validation error
+        '404':
+          description: Inbound job not found
+
   /match/{id}:
     get:
       operationId: getMatch
@@ -380,21 +505,21 @@ components:
         phone:
           type: string
           description: WhatsApp phone number (unique identifier)
-          example: "+1234567890"
+          example: '+1234567890'
         name:
           type: string
-          example: "Louis Chen"
+          example: 'Louis Chen'
         email:
           type: string
           format: email
         brand_name:
           type: string
           description: Brand or project name
-          example: "Abracadabra"
+          example: 'Abracadabra'
         brand_vibe:
           type: string
           description: Freeform style tags
-          example: "colorful, spiritual, rave, no black & white"
+          example: 'colorful, spiritual, rave, no black & white'
         website:
           type: string
           format: uri
@@ -411,7 +536,7 @@ components:
           items:
             type: string
           description: Preferred deliverable types
-          example: ["cover_art", "merch", "video"]
+          example: ['cover_art', 'merch', 'video']
         readiness_score:
           type: integer
           minimum: 0
@@ -454,10 +579,10 @@ components:
       properties:
         phone:
           type: string
-          example: "+1987654321"
+          example: '+1987654321'
         name:
           type: string
-          example: "Maya Rodriguez"
+          example: 'Maya Rodriguez'
         email:
           type: string
           format: email
@@ -466,19 +591,19 @@ components:
           format: uri
         instagram:
           type: string
-          example: "@mayacreates"
+          example: '@mayacreates'
         skills:
           type: array
           items:
             type: string
           description: Creative skills offered
-          example: ["illustration", "cover_art", "merch_design"]
+          example: ['illustration', 'cover_art', 'merch_design']
         styles:
           type: array
           items:
             type: string
           description: Aesthetic styles
-          example: ["psychedelic", "colorful", "spiritual"]
+          example: ['psychedelic', 'colorful', 'spiritual']
         hourly_rate_min:
           type: integer
           example: 50
@@ -491,7 +616,7 @@ components:
           default: available
         timezone:
           type: string
-          example: "America/Los_Angeles"
+          example: 'America/Los_Angeles'
         abundance_index:
           type: integer
           minimum: 0
@@ -544,7 +669,7 @@ components:
         job_title:
           type: string
           description: Brief title for the job
-          example: "Album cover for new EP"
+          example: 'Album cover for new EP'
         job_description:
           type: string
           description: Detailed description of what's needed
@@ -553,7 +678,7 @@ components:
           items:
             type: string
           description: Specific deliverables needed
-          example: ["album_cover", "spotify_canvas"]
+          example: ['album_cover', 'spotify_canvas']
         budget:
           type: integer
           description: Budget for this job in USD
@@ -567,13 +692,13 @@ components:
           items:
             type: string
           description: Skills needed for this job
-          example: ["illustration", "cover_art"]
+          example: ['illustration', 'cover_art']
         preferred_styles:
           type: array
           items:
             type: string
           description: Preferred aesthetic styles
-          example: ["psychedelic", "colorful"]
+          example: ['psychedelic', 'colorful']
 
     MatchUpdate:
       type: object
@@ -640,6 +765,106 @@ components:
           type: array
           items:
             type: string
+
+    InboundJobInput:
+      type: object
+      required:
+        - source_agent
+        - title
+      properties:
+        source_agent:
+          type: string
+          description: Identifier for the agent that found the job
+        source_run_id:
+          type: string
+          description: Optional batch or run identifier
+        source_system:
+          type: string
+          description: Upstream system or board name
+        external_job_id:
+          type: string
+        job_url:
+          type: string
+          format: uri
+        employer:
+          type: string
+        location:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+          enum: [new, reviewing, qualified, rejected, archived]
+        dedupe_key:
+          type: string
+          description: Optional explicit dedupe key. If omitted, the API derives one.
+        raw_payload:
+          description: Original agent payload to preserve source detail
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: string
+        notes:
+          type: string
+
+    InboundJobUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [new, reviewing, qualified, rejected, archived]
+        notes:
+          type: string
+
+    InboundJobResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/InboundJob'
+        created:
+          type: boolean
+        duplicate:
+          type: boolean
+
+    InboundJobsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/InboundJob'
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+        stats:
+          $ref: '#/components/schemas/InboundJobStats'
+        available_source_agents:
+          type: array
+          items:
+            type: string
+
+    InboundJobStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        new_count:
+          type: integer
+        reviewing_count:
+          type: integer
+        qualified_count:
+          type: integer
+        rejected_count:
+          type: integer
+        archived_count:
+          type: integer
 
     SeekerResponse:
       type: object
@@ -821,6 +1046,68 @@ components:
           type: string
           format: date-time
         resolved_at:
+          type: string
+          format: date-time
+
+    InboundJob:
+      type: object
+      properties:
+        id:
+          type: string
+        source_agent:
+          type: string
+        source_agents:
+          type: array
+          items:
+            type: string
+        source_run_id:
+          type: string
+          nullable: true
+        source_system:
+          type: string
+          nullable: true
+        external_job_id:
+          type: string
+          nullable: true
+        job_url:
+          type: string
+          format: uri
+          nullable: true
+        employer:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        title:
+          type: string
+        status:
+          type: string
+          enum: [new, reviewing, qualified, rejected, archived]
+        dedupe_key:
+          type: string
+        raw_payload:
+          nullable: true
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: string
+        notes:
+          type: string
+          nullable: true
+        seen_count:
+          type: integer
+        ingested_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
           type: string
           format: date-time
 

@@ -60,7 +60,9 @@
 			</Card>
 			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Engagement Rate</span>
-				<span class="metric-value">{formatPercent(summary.conversion_rates.impression_to_engagement)}</span>
+				<span class="metric-value"
+					>{formatPercent(summary.conversion_rates.impression_to_engagement)}</span
+				>
 			</Card>
 		</div>
 	</section>
@@ -113,7 +115,8 @@
 			</Card>
 			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Proposal → Close</span>
-				<span class="metric-value">{formatPercent(summary.conversion_rates.proposal_to_close)}</span>
+				<span class="metric-value">{formatPercent(summary.conversion_rates.proposal_to_close)}</span
+				>
 			</Card>
 		</div>
 	</section>
@@ -180,6 +183,7 @@
 		<Card variant="glass" radius="md" padding="md" class="glass-emphasis flex flex-wrap gap-4">
 			<a href="/admin/funnel/record" class="action-button">Record Daily Metrics</a>
 			<a href="/admin/funnel/leads/new" class="action-button">Add Lead</a>
+			<a href="/admin/abundance" class="action-button">Abundance Intake</a>
 			<a href="/admin/social" class="action-button">Social Calendar</a>
 			<a href="/admin/community" class="action-button">Community</a>
 		</Card>

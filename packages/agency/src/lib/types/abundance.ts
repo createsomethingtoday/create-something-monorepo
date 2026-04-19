@@ -155,6 +155,57 @@ export interface IntakeInput {
 }
 
 // ============================================
+// Inbound Job Intake Types
+// ============================================
+
+export const INBOUND_JOB_STATUSES = [
+	'new',
+	'reviewing',
+	'qualified',
+	'rejected',
+	'archived'
+] as const;
+
+export type InboundJobStatus = (typeof INBOUND_JOB_STATUSES)[number];
+
+export interface InboundJob {
+	id: string;
+	source_agent: string;
+	source_agents: string[];
+	source_run_id?: string | null;
+	source_system?: string | null;
+	external_job_id?: string | null;
+	job_url?: string | null;
+	employer?: string | null;
+	location?: string | null;
+	title: string;
+	status: InboundJobStatus;
+	dedupe_key: string;
+	raw_payload: Record<string, unknown> | string | null;
+	notes?: string | null;
+	seen_count: number;
+	ingested_at: string;
+	last_seen_at: string;
+	reviewed_at?: string | null;
+	updated_at: string;
+}
+
+export interface InboundJobInput {
+	source_agent: string;
+	title: string;
+	source_run_id?: string;
+	source_system?: string;
+	external_job_id?: string;
+	job_url?: string;
+	employer?: string;
+	location?: string;
+	status?: InboundJobStatus;
+	dedupe_key?: string;
+	raw_payload?: Record<string, unknown> | string;
+	notes?: string;
+}
+
+// ============================================
 // API Response Types
 // ============================================
 

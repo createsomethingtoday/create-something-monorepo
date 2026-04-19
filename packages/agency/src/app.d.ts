@@ -48,6 +48,7 @@ declare global {
 				WHATSAPP_VERIFY_TOKEN?: string;
 				WHATSAPP_ACCESS_TOKEN?: string;
 				WHATSAPP_PHONE_NUMBER_ID?: string;
+				ABUNDANCE_INGEST_API_KEY?: string;
 				// SavvyCal
 				SAVVYCAL_API_KEY?: string;
 				// Identity Worker (LMS provisioning)
