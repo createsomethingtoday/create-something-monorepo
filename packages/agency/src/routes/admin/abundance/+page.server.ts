@@ -33,6 +33,12 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
       operator_email: operator.email,
       jobs: [],
       total: 0,
+      page: {
+        start: 0,
+        end: 0,
+        previousPageHref: null,
+        nextPageHref: null
+      },
       stats: {
         total: 0,
         new_count: 0,
@@ -67,10 +73,25 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
   if (filters.source_agent) exportParams.set('source_agent', filters.source_agent);
   if (filters.q) exportParams.set('q', filters.q);
 
+  const pageStart = result.total === 0 ? 0 : filters.offset + 1;
+  const pageEnd = Math.min(filters.offset + result.jobs.length, result.total);
+  const hasPreviousPage = filters.offset > 0;
+  const hasNextPage = filters.offset + result.jobs.length < result.total;
+
   return {
     operator_email: operator.email,
     jobs: result.jobs,
     total: result.total,
+    page: {
+      start: pageStart,
+      end: pageEnd,
+      previousPageHref: hasPreviousPage
+        ? buildAbundancePageHref(filters, Math.max(filters.offset - filters.limit, 0))
+        : null,
+      nextPageHref: hasNextPage
+        ? buildAbundancePageHref(filters, filters.offset + filters.limit)
+        : null
+    },
     stats,
     sourceAgents,
     filters,
@@ -122,4 +143,22 @@ export const actions: Actions = {
 function coercePositiveInt(value: string | null, fallback: number): number {
   const parsed = Number.parseInt(value ?? '', 10);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function buildAbundancePageHref(
+  filters: {
+    status: InboundJobStatus | 'all';
+    source_agent: string;
+    q: string;
+    limit: number;
+  },
+  offset: number
+): string {
+  const params = new URLSearchParams();
+  if (filters.status !== 'all') params.set('status', filters.status);
+  if (filters.source_agent) params.set('source_agent', filters.source_agent);
+  if (filters.q) params.set('q', filters.q);
+  params.set('limit', String(filters.limit));
+  params.set('offset', String(offset));
+  return `/admin/abundance?${params.toString()}`;
 }

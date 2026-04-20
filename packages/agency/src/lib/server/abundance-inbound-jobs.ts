@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 
-import { safeJsonParse } from '$lib/abundance/matching';
+import { safeJsonParse } from '../abundance/matching';
 import {
   INBOUND_JOB_STATUSES,
   type InboundJob,
   type InboundJobInput,
   type InboundJobStatus
-} from '$lib/types/abundance';
+} from '../types/abundance';
 
 const TRACKING_QUERY_PARAMS = new Set([
   'utm_source',

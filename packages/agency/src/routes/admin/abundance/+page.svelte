@@ -145,6 +145,27 @@
       <button type="submit" class="btn-filter">Apply</button>
     </form>
 
+    {#if data.total > 0}
+      <div class="pagination-bar">
+        <p class="pagination-summary">
+          Showing {data.page.start}-{data.page.end} of {data.total}.
+        </p>
+        <div class="pagination-actions">
+          {#if data.page.previousPageHref}
+            <a href={data.page.previousPageHref} class="pager-link">Previous</a>
+          {:else}
+            <span class="pager-link disabled">Previous</span>
+          {/if}
+
+          {#if data.page.nextPageHref}
+            <a href={data.page.nextPageHref} class="pager-link">Next</a>
+          {:else}
+            <span class="pager-link disabled">Next</span>
+          {/if}
+        </div>
+      </div>
+    {/if}
+
     {#if data.jobs.length === 0}
       <div class="empty-state">
         <h3>No inbound jobs yet</h3>
@@ -185,8 +206,16 @@
 
             <div class="facts-grid">
               <div>
+                <span class="fact-label">Source</span>
+                <strong>{job.source_system ?? 'Not set'}</strong>
+              </div>
+              <div>
                 <span class="fact-label">Agents</span>
                 <strong>{job.source_agents.join(', ')}</strong>
+              </div>
+              <div>
+                <span class="fact-label">Run</span>
+                <strong>{job.source_run_id ?? 'Not set'}</strong>
               </div>
               <div>
                 <span class="fact-label">Seen</span>
@@ -383,6 +412,44 @@
     margin-bottom: var(--space-lg);
   }
 
+  .pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+
+  .pagination-summary {
+    margin: 0;
+    color: var(--color-fg-muted);
+  }
+
+  .pagination-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .pager-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 5.5rem;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+    color: var(--color-fg);
+    background: color-mix(in srgb, var(--color-bg-elevated) 70%, transparent);
+  }
+
+  .pager-link.disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
   .filters label,
   .editor label {
     display: grid;
@@ -565,7 +632,8 @@
   @media (max-width: 900px) {
     .dashboard-header,
     .panel-header,
-    .job-topline {
+    .job-topline,
+    .pagination-bar {
       flex-direction: column;
       align-items: flex-start;
     }
