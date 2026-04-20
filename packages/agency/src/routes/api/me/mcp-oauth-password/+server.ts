@@ -84,14 +84,14 @@ async function resolveEntitledContext(platform: App.Platform | undefined, authSu
 	);
 }
 
-export const GET: RequestHandler = async ({ cookies, platform }) => {
+export const GET: RequestHandler = async ({ request, locals, platform }) => {
 	try {
 		const env = platform?.env;
 		if (!env) {
 			return json({ error: 'unavailable', message: 'Platform env is unavailable' }, { status: 503 });
 		}
 
-		const user = await requireAgencySessionUser({ cookies, platform });
+		const user = await requireAgencySessionUser({ locals, request, platform });
 		const row = await resolveEntitledContext(platform, user.id, user.email);
 		const payload = await postIdentityAdmin<PasswordUserResponse>(env, '/v1/auth/password/admin-get', {
 			email: user.email,
@@ -109,14 +109,14 @@ export const GET: RequestHandler = async ({ cookies, platform }) => {
 	}
 };
 
-export const POST: RequestHandler = async ({ request, cookies, platform }) => {
+export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	try {
 		const env = platform?.env;
 		if (!env) {
 			return json({ error: 'unavailable', message: 'Platform env is unavailable' }, { status: 503 });
 		}
 
-		const user = await requireAgencySessionUser({ cookies, platform });
+		const user = await requireAgencySessionUser({ locals, request, platform });
 		const row = await resolveEntitledContext(platform, user.id, user.email);
 		const decision = evaluateAgencyMcpEntitlement(row);
 		if (!decision.allowed) {

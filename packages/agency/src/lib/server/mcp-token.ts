@@ -1,6 +1,10 @@
 import { error } from '@sveltejs/kit';
-import { createSessionManager, getAuth0Config, getDomainConfig } from '@create-something/canon/auth';
-import type { SessionManagerOptions } from '@create-something/canon/auth';
+import {
+	authenticateClerkRequest,
+	getClerkClient,
+	getPrimaryEmail,
+	resolveClerkEnv,
+} from '$lib/server/clerk';
 import {
 	buildAgencyEntitlementSnapshot,
 	evaluateAgencyMcpEntitlement,
@@ -23,24 +27,52 @@ export interface AgencySessionUser {
 	source?: string;
 }
 
+/**
+ * Require an authenticated Clerk user from the request context.
+ *
+ * Accepts either:
+ * - `locals` from a SvelteKit event (preferred — avoids redundant Clerk call)
+ * - `request` + `platform` for API routes that need standalone auth
+ */
 export async function requireAgencySessionUser(input: {
-	cookies: Parameters<typeof createSessionManager>[0];
-	platform: AgencyPlatform;
+	locals?: App.Locals;
+	request?: Request;
+	cookies?: unknown;
+	platform?: AgencyPlatform;
 }): Promise<AgencySessionUser> {
-	const domainConfig = getDomainConfig(input.platform?.env?.ENVIRONMENT);
-	const auth0Config = getAuth0Config(input.platform?.env as Record<string, string | undefined> | undefined);
-	const authProvider: SessionManagerOptions['authProvider'] = auth0Config ?? undefined;
-	const sessionManager = createSessionManager(input.cookies, {
-		isProduction: input.platform?.env?.ENVIRONMENT === 'production',
-		domain: domainConfig.domain,
-		authProvider,
-	});
-	const user = await sessionManager.getUser();
-	if (!user?.id || !user.email) {
-		throw error(401, 'Authentication required');
+	// Fast path: user already hydrated by hooks.server.ts
+	if (input.locals?.user?.id && input.locals.user.email) {
+		return input.locals.user as AgencySessionUser;
 	}
 
-	return user as AgencySessionUser;
+	// Fallback: authenticate the raw request via Clerk
+	if (input.request && input.platform) {
+		const clerkEnv = resolveClerkEnv(
+			input.platform.env as Record<string, unknown>,
+		);
+		const auth = await authenticateClerkRequest(input.request, clerkEnv);
+
+		if (!auth.userId) {
+			throw error(401, 'Authentication required');
+		}
+
+		const clerkClient = getClerkClient(clerkEnv);
+		const clerkUser = await clerkClient.users.getUser(auth.userId);
+		const email = getPrimaryEmail(clerkUser);
+
+		if (!email) {
+			throw error(401, 'Authentication required');
+		}
+
+		return {
+			id: auth.userId,
+			email,
+			tier: 'free',
+			source: 'clerk',
+		};
+	}
+
+	throw error(401, 'Authentication required');
 }
 
 export async function ensureAgencyMcpEntitlement(input: {
@@ -74,8 +106,8 @@ export async function ensureAgencyMcpEntitlement(input: {
 			workspaceAccountId: input.accountId ?? canonicalIdentity.workspaceAccountId,
 			serviceTier: normalizeAgencyServiceTier(input.user.tier),
 			metadata: {
-				session_source: 'auth0',
-				user_source: input.user.source ?? 'auth0',
+				session_source: 'clerk',
+				user_source: input.user.source ?? 'clerk',
 				...(input.metadata ?? {}),
 			},
 		}));

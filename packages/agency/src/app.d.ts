@@ -11,11 +11,16 @@ declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
+			auth: {
+				userId: string | null;
+				sessionId: string | null;
+				isAuthenticated: boolean;
+			};
 			user?: {
 				id: string;
 				email: string;
 				tier: 'free' | 'pro' | 'agency';
-				source: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0';
+				source: 'clerk';
 				analytics_opt_out?: boolean;
 			};
 		}
@@ -73,16 +78,12 @@ declare global {
 				// Optional: Override API URL (defaults to workway-api-gateway.half-dozen.workers.dev)
 				// Set to api.workway.co once DNS route is configured
 				WORKWAY_API_URL?: string;
-				// Auth0 identity
-				AUTH0_DOMAIN?: string;
-				AUTH0_CLIENT_ID?: string;
-				AUTH0_CLIENT_SECRET?: string;
-				AUTH0_AUDIENCE?: string;
-				AUTH0_SCOPE?: string;
-				AUTH0_ISSUER_BASE_URL?: string;
-				AUTH0_JWKS_URL?: string;
-				AUTH0_CLAIMS_NAMESPACE?: string;
-				AUTH0_REDIRECT_URI?: string;
+				// Clerk identity
+				CLERK_PUBLISHABLE_KEY?: string;
+				CLERK_SECRET_KEY?: string;
+				CLERK_JWT_KEY?: string;
+				CLERK_AUTHORIZED_PARTIES?: string;
+				CLERK_ISSUER_URL?: string;
 				AGENCY_INTERNAL_API_KEY?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
 			};

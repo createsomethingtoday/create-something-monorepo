@@ -166,7 +166,7 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 		<header class="hero">
 			<p class="eyebrow">Operator Surface</p>
 			<h1>Seeded Users</h1>
-			<p>Invite users by email first, then let first Auth0 login bind the seed to a durable subject. This view shows which identities are still unbound.</p>
+			<p>Invite users by email first, then let first Clerk login bind the seed to a durable subject. This view shows which identities are still unbound.</p>
 			<nav class="subnav">
 				<a href="/admin/security">Overview</a>
 				<a href="/admin/security/bearer-tokens">Bearer Governance</a>

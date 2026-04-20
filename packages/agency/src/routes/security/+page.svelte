@@ -6,7 +6,7 @@
   const layers = [
     {
       title: 'Identity boundary',
-      text: 'Auth0 establishes the person or tenant boundary. `.agency` does not treat a bearer token as a replacement for identity.'
+      text: 'Clerk establishes the person or tenant boundary. `.agency` does not treat a bearer token as a replacement for identity.'
     },
     {
       title: 'Live entitlement',

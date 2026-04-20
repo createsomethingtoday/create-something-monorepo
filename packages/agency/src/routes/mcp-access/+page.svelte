@@ -151,7 +151,7 @@ OAuth login email
 ${oauthHostEmail}
 
 OAuth login password
-Optional compatibility flow. Use the OAuth host password shown above in MCP Access only if the host requires OAuth onboarding. It is separate from Auth0 and separate from the bearer token.
+Optional compatibility flow. Use the OAuth host password shown above in MCP Access only if the host requires OAuth onboarding. It is separate from Clerk and separate from the bearer token.
 
 `);
 	const activeSnippet = $derived(
@@ -202,7 +202,7 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 	const credentialRows = $derived([
 		{
 			lane: 'Portal sign-in',
-			credential: 'Auth0',
+			credential: 'Clerk',
 			use: 'Authenticates the web session for `.agency`.',
 			status: 'Session active',
 			note: 'Never reused as the bearer token or OAuth host authorize password.',
@@ -362,7 +362,7 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 		<SummaryItem label="Bearer Token" value={tokenStatus} note={token?.token_prefix ? `Prefix ${token.token_prefix}` : 'Managed bearer token'} />
 		<SummaryItem label="OAuth Password" value={passwordStatus} note={oauthPassword?.email ?? data.user.email} />
 		<SummaryItem label="Linked Account" value={data.entitlement.accountId ?? 'Not linked'} note={data.entitlement.tenantId ?? 'No tenant linked'} />
-		<SummaryItem label="Portal Identity" value="Auth0" note="Web session boundary only" />
+		<SummaryItem label="Portal Identity" value="Clerk" note="Web session boundary only" />
 		{#if assignment}
 			<SummaryItem label="Assigned Lane" value={assignment.displayName} note={assignment.bridgeUsername} />
 		{/if}
@@ -551,7 +551,7 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 				</div>
 
 				<p class="annotation-copy">
-					Auth0 remains the portal identity boundary. The snippet below configures only the MCP host connection. For Notion AI, use bearer auth by default; the OAuth host password above is only for hosts that require an authorize flow.
+					Clerk remains the portal identity boundary. The snippet below configures only the MCP host connection. For Notion AI, use bearer auth by default; the OAuth host password above is only for hosts that require an authorize flow.
 				</p>
 			</div>
 

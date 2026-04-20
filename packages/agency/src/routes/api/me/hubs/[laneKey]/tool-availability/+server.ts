@@ -4,14 +4,14 @@ import { ensureAgencyMcpEntitlement, requireAgencySessionUser } from '$lib/serve
 import { listMcpAccessAssignments } from '$lib/server/mcp-access-assignments';
 import { buildHubToolAvailabilityPayload } from '$lib/server/mcp-tools';
 
-export const GET: RequestHandler = async ({ cookies, params, platform, url }) => {
+export const GET: RequestHandler = async ({ request, locals, params, platform, url }) => {
 	try {
 		const db = platform?.env?.DB;
 		if (!db) {
 			return json({ error: 'unavailable', message: 'Database is unavailable' }, { status: 503 });
 		}
 
-		const user = await requireAgencySessionUser({ cookies, platform });
+		const user = await requireAgencySessionUser({ locals, request, platform });
 		const { row } = await ensureAgencyMcpEntitlement({
 			platform,
 			user,

@@ -69,7 +69,7 @@ export interface JWTPayload {
 	sub: string;
 	email?: string;
 	tier?: 'free' | 'pro' | 'agency';
-	source?: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0';
+	source?: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0' | 'clerk';
 	iss: string;
 	aud: string[] | string;
 	iat: number;
@@ -82,7 +82,7 @@ export interface User {
 	id: string;
 	email: string;
 	tier: 'free' | 'pro' | 'agency';
-	source: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0';
+	source: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0' | 'clerk';
 	analytics_opt_out?: boolean;
 }
 

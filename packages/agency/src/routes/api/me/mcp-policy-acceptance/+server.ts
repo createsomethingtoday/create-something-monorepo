@@ -4,14 +4,14 @@ import { ensureAgencyMcpEntitlement, requireAgencySessionUser } from '$lib/serve
 import { normalizeAgencyServiceTier, updateAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
 import { resolveCanonicalAgencyIdentity } from '$lib/server/agency-identity';
 
-export const POST: RequestHandler = async ({ cookies, platform }) => {
+export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	try {
 		const db = platform?.env?.DB;
 		if (!db) {
 			return json({ error: 'unavailable', message: 'Database is unavailable' }, { status: 503 });
 		}
 
-		const user = await requireAgencySessionUser({ cookies, platform });
+		const user = await requireAgencySessionUser({ locals, request, platform });
 		const { row } = await ensureAgencyMcpEntitlement({ platform, user });
 		const canonicalIdentity = resolveCanonicalAgencyIdentity(user, row);
 

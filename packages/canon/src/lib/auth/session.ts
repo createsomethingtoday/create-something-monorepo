@@ -140,7 +140,8 @@ function extractSource(payload: JWTPayload): User['source'] {
 		payload.source === 'templates' ||
 		payload.source === 'io' ||
 		payload.source === 'space' ||
-		payload.source === 'lms'
+		payload.source === 'lms' ||
+		payload.source === 'clerk'
 	) {
 		return payload.source;
 	}

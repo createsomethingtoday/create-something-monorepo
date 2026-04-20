@@ -88,7 +88,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			return json(
 				{
 					error: 'missing_identity_user',
-					message: 'Lane is missing identity_user_id. Managed bearer tokens require a mapped Auth0 subject.',
+					message: 'Lane is missing identity_user_id. Managed bearer tokens require a mapped auth subject.',
 				},
 				{ status: 409 },
 			);

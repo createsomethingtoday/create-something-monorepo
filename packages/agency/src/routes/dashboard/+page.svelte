@@ -243,7 +243,7 @@
 
 	<ReportSection
 		title="Identity Mapping"
-		description="How the Auth0 portal identity maps to the underlying `.agency` account."
+		description="How the Clerk portal identity maps to the underlying `.agency` account."
 	>
 		<FactList items={identityFacts} />
 	</ReportSection>

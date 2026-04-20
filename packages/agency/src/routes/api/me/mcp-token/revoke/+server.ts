@@ -16,14 +16,14 @@ interface RevokeResponse {
 	revoked: boolean;
 }
 
-export const POST: RequestHandler = async ({ cookies, platform }) => {
+export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	try {
 		const env = platform?.env;
 		if (!env) {
 			return json({ error: 'unavailable', message: 'Platform env is unavailable' }, { status: 503 });
 		}
 
-		const user = await requireAgencySessionUser({ cookies, platform });
+		const user = await requireAgencySessionUser({ locals, request, platform });
 		const existing = await postIdentityAdmin<TokenMetadataResponse>(env, '/v1/mcp/long-lived-tokens/admin-get', {
 			auth_subject: user.id,
 		});

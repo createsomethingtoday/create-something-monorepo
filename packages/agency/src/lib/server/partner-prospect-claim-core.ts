@@ -259,7 +259,7 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 				return jsonResponse(
 					{
 						error: 'claim_not_authorized',
-						message: 'This Auth0 account is not authorized to claim the prospect workspace.',
+						message: 'This Clerk account is not authorized to claim the prospect workspace.',
 					},
 					403,
 				);
@@ -269,7 +269,7 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 				return jsonResponse(
 					{
 						error: 'already_claimed',
-						message: 'This prospect is already claimed by another Auth0 subject.',
+						message: 'This prospect is already claimed by another Clerk subject.',
 					},
 					409,
 				);
@@ -278,7 +278,7 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 				return jsonResponse(
 					{
 						error: 'lane_already_claimed',
-						message: 'This prospect lane is already claimed by another Auth0 subject.',
+						message: 'This prospect lane is already claimed by another Clerk subject.',
 					},
 					409,
 				);

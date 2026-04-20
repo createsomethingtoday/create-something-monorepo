@@ -22,14 +22,14 @@ interface IssueManagedTokenResponse {
 	allowed_tool_prefixes: string[];
 }
 
-export const POST: RequestHandler = async ({ request, cookies, platform }) => {
+export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	try {
 		const env = platform?.env;
 		if (!env) {
 			return json({ error: 'unavailable', message: 'Platform env is unavailable' }, { status: 503 });
 		}
 
-		const user = await requireAgencySessionUser({ cookies, platform });
+		const user = await requireAgencySessionUser({ locals, request, platform });
 		const body = (await request.json().catch(() => null)) as RegenerateBody | null;
 		const entitlement = await ensureAgencyMcpEntitlement({
 			platform,
