@@ -48,6 +48,8 @@ pnpm --filter @create-something/agency db:migrate:local
 pnpm --filter @create-something/agency db:migrate
 ```
 
+`db:migrate` applies against the remote `.agency` D1 database. Keep `db:migrate:local` for local-only verification.
+
 Verify canonical tiers in both tables:
 
 ```bash

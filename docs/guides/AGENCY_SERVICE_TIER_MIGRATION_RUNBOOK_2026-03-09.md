@@ -46,6 +46,8 @@ Inspect pending migration status:
 pnpm --filter @create-something/agency db:migrate --dry-run
 ```
 
+`db:migrate` targets the remote `.agency` D1 database. Use `db:migrate:local` only when you intentionally want the local development database.
+
 If `--dry-run` is not available in your local Wrangler version, inspect the SQL file directly and continue with the controlled apply window.
 
 ## Apply Order

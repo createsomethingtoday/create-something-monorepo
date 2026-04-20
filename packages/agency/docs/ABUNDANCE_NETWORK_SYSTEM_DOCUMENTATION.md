@@ -564,6 +564,8 @@ Content-Type: application/json
    pnpm --filter @create-something/agency db:migrate
    ```
 
+   `db:migrate` applies against the remote Cloudflare D1 database.
+
    For local development:
 
    ```bash
@@ -576,6 +578,18 @@ Content-Type: application/json
    | -------------------------- | ------------------ | -------------------------------------------------------------------------------------------------- |
    | `AGENCY_OPERATOR_EMAILS`   | You configure this | Comma-separated operator email allowlist for `/admin/abundance` and protected intake reads/writes. |
    | `ABUNDANCE_INGEST_API_KEY` | You configure this | Optional shared secret for agent `POST /inbound-jobs` calls when no operator session exists.       |
+
+   Recommended production sync path:
+
+   ```bash
+   AGENCY_OPERATOR_EMAILS=operator1@example.com,operator2@example.com \
+   ABUNDANCE_INGEST_API_KEY=replace-with-random-shared-secret \
+   pnpm agency:abundance:seed
+
+   pnpm agency:abundance:sync
+   ```
+
+   These commands seed the runtime values into Infisical at `/agency` and then mirror them into the `create-something-agency` Cloudflare Pages project.
 
 3. **Run the operator loop**
    - Agents `POST /api/abundance/inbound-jobs`
