@@ -826,7 +826,7 @@ async function runLocalAnalyzerReview(
         '--published-url',
         asset.websiteUrl ?? '',
         '--mode',
-        'sync',
+        'async',
         '--crawl-max-pages',
         String(args.crawlMaxPages),
         '--crawl-max-depth',
@@ -1165,23 +1165,6 @@ async function runAnalyzerReview(
         includeManual: true,
       };
 
-      if (context.toolNames.has('run_template_review')) {
-        const reviewData = normalizeUnifiedTemplateReviewReport(await context.callTool(
-          'run_template_review',
-          toolArgs,
-        ));
-        if (!reviewData) {
-          throw new Error('Analyzer returned an unrecognized synchronous review payload.');
-        }
-
-        return {
-          ok: true,
-          source: context.source,
-          tool: 'run_template_review',
-          report: reviewData,
-        };
-      }
-
       if (context.toolNames.has('enqueue_template_review') && context.toolNames.has('get_template_review_job')) {
         const enqueueData = asRecord(await context.callTool('enqueue_template_review', toolArgs));
         const jobId = typeof enqueueData.jobId === 'string' ? enqueueData.jobId : '';
@@ -1238,6 +1221,23 @@ async function runAnalyzerReview(
         }
 
         throw new Error(`Analyzer job timed out after ${args.analyzerMaxWaitMs}ms.`);
+      }
+
+      if (context.toolNames.has('run_template_review')) {
+        const reviewData = normalizeUnifiedTemplateReviewReport(await context.callTool(
+          'run_template_review',
+          toolArgs,
+        ));
+        if (!reviewData) {
+          throw new Error('Analyzer returned an unrecognized synchronous review payload.');
+        }
+
+        return {
+          ok: true,
+          source: context.source,
+          tool: 'run_template_review',
+          report: reviewData,
+        };
       }
 
       throw new Error('Analyzer review tools are not available on the remote MCP deployment.');

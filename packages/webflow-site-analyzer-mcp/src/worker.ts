@@ -16,6 +16,7 @@ interface Env {
   BRAINTRUST_API_KEY?: string;
   BRAINTRUST_PROJECT_ID?: string;
   ENVIRONMENT?: string;
+  WEBFLOW_SITE_ANALYZER_RUNTIME?: string;
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -59,6 +60,7 @@ function injectEnvSecrets(env: Env): void {
     'BRAINTRUST_API_KEY',
     'BRAINTRUST_PROJECT_ID',
     'ENVIRONMENT',
+    'WEBFLOW_SITE_ANALYZER_RUNTIME',
   ];
   for (const key of keys) {
     if (env[key]) {

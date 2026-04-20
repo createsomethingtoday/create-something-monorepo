@@ -153,6 +153,24 @@ export function resolveDesignerSlug(
 }
 
 // =============================================================================
+// Template review timeout normalization
+// =============================================================================
+
+export const DEFAULT_TEMPLATE_REVIEW_TIMEOUT_MS = 120_000;
+export const MIN_TEMPLATE_REVIEW_TIMEOUT_MS = 120_000;
+
+/**
+ * Template reviews are long-running browser workflows. Clamp timeout values so
+ * low caller budgets do not tear down browser sessions mid-review.
+ */
+export function normalizeTemplateReviewTimeout(timeoutMs?: number): number {
+  const requested = typeof timeoutMs === 'number' && Number.isFinite(timeoutMs)
+    ? timeoutMs
+    : DEFAULT_TEMPLATE_REVIEW_TIMEOUT_MS;
+  return Math.max(requested, MIN_TEMPLATE_REVIEW_TIMEOUT_MS);
+}
+
+// =============================================================================
 // WCAG Contrast Utilities (testable outside of browser context)
 // =============================================================================
 

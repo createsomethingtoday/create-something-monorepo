@@ -47,7 +47,12 @@ import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy
 import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
-import { is404PageTitle } from './review-utils.js';
+import {
+  DEFAULT_TEMPLATE_REVIEW_TIMEOUT_MS,
+  MIN_TEMPLATE_REVIEW_TIMEOUT_MS,
+  is404PageTitle,
+  normalizeTemplateReviewTimeout,
+} from './review-utils.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -115,14 +120,16 @@ function isWorkerRuntime(): boolean {
 }
 
 function isBrowserAutomationSupported(): boolean {
-  return !isWorkerRuntime();
+  // Browser automation works in both the Node runtime and the Cloudflare
+  // Worker runtime (via puppeteer-core-browser.js + NativeWebSocketTransport
+  // in providers/puppeteer-runtime.ts). The WEBFLOW_SITE_ANALYZER_RUNTIME
+  // flag still controls which Puppeteer build is loaded; it no longer gates
+  // whether browser-backed tools are exposed.
+  return true;
 }
 
-function assertBrowserAutomationSupported(toolName: string): void {
-  if (isBrowserAutomationSupported()) return;
-  throw new Error(
-    `${toolName} is not supported on the Cloudflare Worker deployment. Use the local analyzer or a non-Worker host for browser-backed review execution.`,
-  );
+function assertBrowserAutomationSupported(_toolName: string): void {
+  // Kept for call-site symmetry. Browser automation is always supported now.
 }
 
 function getProvider(): ProviderManager {
@@ -2902,7 +2909,7 @@ async function executeTemplateReview(
   const metricsBefore = snapshotProviderMetrics(provider);
   const includeManual = input.includeManual !== false;
   const reportProgress = options.reportProgress;
-  const timeout = input.timeout ?? 90000;
+  const timeout = normalizeTemplateReviewTimeout(input.timeout);
 
   if (reportProgress) await reportProgress(0, 100, 'Starting unified template review');
   const precheck = await runPublishedPrecheck(input.publishedUrl, Math.min(timeout, 30000));
@@ -2915,7 +2922,7 @@ async function executeTemplateReview(
 
   const designer = await scoreDesignerChecklistTool({
     url: input.previewUrl,
-    timeout: input.timeout,
+    timeout,
     includeManual: true
   });
 
@@ -2958,7 +2965,7 @@ async function executeTemplateReview(
   const allSeedUrls = Array.from(new Set([...classifiedSeedUrls, ...designerPageSlugs]));
 
   const published = await crawlPublishedWebMcp(input.publishedUrl, {
-    timeout: input.timeout,
+    timeout,
     crawlMaxPages: input.crawlMaxPages,
     crawlMaxDepth: input.crawlMaxDepth,
     seedUrls: allSeedUrls,
@@ -3390,7 +3397,7 @@ export function createAnalyzerServer(): Server {
       },
       {
         name: 'run_template_review',
-        description: 'Synchronous template review execution for debugging or manual use. Production automation should prefer enqueue_template_review.',
+        description: 'Synchronous template review execution for local debugging only. Production hosts should prefer enqueue_template_review plus get_template_review_job to avoid request timeouts.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -3404,7 +3411,7 @@ export function createAnalyzerServer(): Server {
             },
             timeout: {
               type: 'number',
-              description: 'Optional per-page timeout in milliseconds (default: 90000).'
+              description: `Optional per-page timeout in milliseconds. Template review enforces a minimum of ${MIN_TEMPLATE_REVIEW_TIMEOUT_MS}ms (default: ${DEFAULT_TEMPLATE_REVIEW_TIMEOUT_MS}ms).`
             },
             includeManual: {
               type: 'boolean',
@@ -3438,7 +3445,7 @@ export function createAnalyzerServer(): Server {
             },
             timeout: {
               type: 'number',
-              description: 'Optional per-page timeout in milliseconds (default: 90000).'
+              description: `Optional per-page timeout in milliseconds. Template review enforces a minimum of ${MIN_TEMPLATE_REVIEW_TIMEOUT_MS}ms (default: ${DEFAULT_TEMPLATE_REVIEW_TIMEOUT_MS}ms).`
             },
             includeManual: {
               type: 'boolean',

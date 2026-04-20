@@ -32,6 +32,32 @@ const DEFAULT_CONFIG: Partial<BrowserProviderConfig> = {
   retries: 2
 };
 
+// Webflow Designer cold-start is slow and uses persistent websockets, so
+// `networkidle2` never fires. Use a longer floor and a DOM-based readiness
+// probe instead.
+const DESIGNER_NAV_TIMEOUT_FLOOR_MS = 90_000;
+const DESIGNER_NAV_RETRY_MULTIPLIER = 1.5;
+const DESIGNER_READY_SELECTORS = 'body';
+
+function isNavigationTimeoutError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  return /Navigation timeout/i.test(message) || /timeout.*exceeded/i.test(message);
+}
+
+async function safeSection<T>(
+  label: string,
+  fallback: T,
+  fn: () => Promise<T>
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error ?? '');
+    console.warn(`[browserless.extractDesignerMetadata] section "${label}" failed: ${message}`);
+    return fallback;
+  }
+}
+
 // =============================================================================
 // Provider Implementation
 // =============================================================================
@@ -381,24 +407,56 @@ export class BrowserlessProvider implements BrowserProvider {
   }> {
     const startTime = Date.now();
     let browser: Browser | null = null;
+    let pageRef: Page | null = null;
+    const effectiveTimeout = Math.max(
+      timeout ?? 0,
+      this.config.timeout ?? 0,
+      DESIGNER_NAV_TIMEOUT_FLOOR_MS
+    );
 
     try {
       this.metrics.sessionsCreated++;
-      
+
       browser = await connectPuppeteer({
         browserWSEndpoint: this.getEndpoint()
       }) as Browser;
 
-      const page = await browser.newPage();
+      const page: Page = await browser.newPage();
+      pageRef = page;
+      // Apply explicit defaults so downstream page.$$ / handle.click / evaluate
+      // calls do not silently fall back to Puppeteer's 30s default.
+      page.setDefaultNavigationTimeout(effectiveTimeout);
+      page.setDefaultTimeout(effectiveTimeout);
       await page.setViewport({ width: 1920, height: 1080 });
 
-      // Navigate to Designer preview
-      await page.goto(url, {
-        waitUntil: 'networkidle2',
-        timeout: timeout || this.config.timeout
-      });
+      // Navigate to Designer preview. `networkidle2` never fires inside
+      // Webflow Designer (persistent websockets), so use `domcontentloaded`
+      // and then probe for the Designer shell with a known selector.
+      const navigate = async (attemptTimeout: number) =>
+        page.goto(url, {
+          waitUntil: 'domcontentloaded',
+          timeout: attemptTimeout
+        });
 
-      // Wait for Designer UI to load (reduced from 4s to 3s)
+      try {
+        await navigate(effectiveTimeout);
+      } catch (navError) {
+        if (!isNavigationTimeoutError(navError)) throw navError;
+        const retryTimeout = Math.ceil(effectiveTimeout * DESIGNER_NAV_RETRY_MULTIPLIER);
+        console.warn(
+          `[browserless.extractDesignerMetadata] navigation timed out after ${effectiveTimeout}ms; retrying with ${retryTimeout}ms`
+        );
+        await navigate(retryTimeout);
+      }
+
+      await page
+        .waitForSelector(DESIGNER_READY_SELECTORS, { timeout: Math.min(effectiveTimeout, 15_000) })
+        .catch(() => {
+          // Fall through — subsequent getUIText calls will surface the
+          // failure as empty text and partial results.
+        });
+
+      // Let the Designer UI settle before we start driving it.
       await page.evaluate(`new Promise(r => setTimeout(r, 3000))`);
 
       this.metrics.pageLoadsCompleted++;
@@ -458,174 +516,188 @@ export class BrowserlessProvider implements BrowserProvider {
       };
 
       // Get site info
-      const pageTitle = await page.title();
-      const initialUiTexts = await getUIText(500);
-      const siteName = deriveSiteName({
-        url,
-        title: pageTitle,
-        uiTexts: initialUiTexts
+      const siteInfo = await safeSection('site-info', { siteName: url, breakpoints: [] as string[] }, async () => {
+        const pageTitle = await page.title();
+        const initialUiTexts = await getUIText(500);
+        const derivedName = deriveSiteName({
+          url,
+          title: pageTitle,
+          uiTexts: initialUiTexts
+        });
+        const breakpointsResult = await page.evaluate(`
+          (function() {
+            const labels = [];
+            document.querySelectorAll('[aria-label]').forEach(el => {
+              const label = el.getAttribute('aria-label') || '';
+              if (label.includes('breakpoint') || label.includes('px and down')) {
+                labels.push(label);
+              }
+            });
+            return labels;
+          })()
+        `) as string[];
+        return { siteName: derivedName, breakpoints: breakpointsResult };
       });
-
-      // Get breakpoints
-      const breakpoints = await page.evaluate(`
-        (function() {
-          const labels = [];
-          document.querySelectorAll('[aria-label]').forEach(el => {
-            const label = el.getAttribute('aria-label') || '';
-            if (label.includes('breakpoint') || label.includes('px and down')) {
-              labels.push(label);
-            }
-          });
-          return labels;
-        })()
-      `) as string[];
+      const siteName = siteInfo.siteName;
+      const breakpoints = siteInfo.breakpoints;
 
       // ===== PAGES (P key) =====
-      await pressKeyAndWait('p', 2000);
-      const pagesText = await getUIText();
-      
       const pages: Array<{ name: string; type: string; category?: string }> = [];
-      let currentCategory = 'Innerpages';
-      const categoryTypes: Record<string, string> = {
-        'Innerpages': 'static',
-        'Template Pages': 'static',
-        'CMS collection pages': 'cms-template',
-        'Ecommerce pages': 'ecommerce',
-        'Utility pages': 'utility',
-        'User pages': 'user'
-      };
+      await safeSection('pages', undefined, async () => {
+        await pressKeyAndWait('p', 2000);
+        const pagesText = await getUIText();
 
-      for (const text of pagesText) {
-        // Check for category headers
-        for (const cat of Object.keys(categoryTypes)) {
-          if (text === cat) {
-            currentCategory = cat;
+        let currentCategory = 'Innerpages';
+        const categoryTypes: Record<string, string> = {
+          'Innerpages': 'static',
+          'Template Pages': 'static',
+          'CMS collection pages': 'cms-template',
+          'Ecommerce pages': 'ecommerce',
+          'Utility pages': 'utility',
+          'User pages': 'user'
+        };
+
+        for (const text of pagesText) {
+          // Check for category headers
+          for (const cat of Object.keys(categoryTypes)) {
+            if (text === cat) {
+              currentCategory = cat;
+            }
+          }
+          // Check for page names (with emoji prefix)
+          if ((text.startsWith('📋') || text.startsWith('🖍') || text.startsWith('⭐') ||
+               text.startsWith('🔐') || text.startsWith('👀')) && text.length < 50) {
+            const pageName = text.replace(/^[📋🖍⭐🔐👀]/, '').trim();
+            if (pageName && !pages.some(p => p.name === pageName)) {
+              pages.push({
+                name: pageName,
+                type: categoryTypes[currentCategory] || 'static',
+                category: currentCategory
+              });
+            }
+          }
+          // Ecommerce pages without emoji
+          if (['Products Template', 'Categories Template', 'Checkout', 'Checkout (PayPal)', 'Order Confirmation'].includes(text)) {
+            if (!pages.some(p => p.name === text)) {
+              pages.push({ name: text, type: 'ecommerce', category: 'Ecommerce pages' });
+            }
           }
         }
-        // Check for page names (with emoji prefix)
-        if ((text.startsWith('📋') || text.startsWith('🖍') || text.startsWith('⭐') ||
-             text.startsWith('🔐') || text.startsWith('👀')) && text.length < 50) {
-          const pageName = text.replace(/^[📋🖍⭐🔐👀]/, '').trim();
-          if (pageName && !pages.some(p => p.name === pageName)) {
-            pages.push({
-              name: pageName,
-              type: categoryTypes[currentCategory] || 'static',
-              category: currentCategory
-            });
-          }
-        }
-        // Ecommerce pages without emoji
-        if (['Products Template', 'Categories Template', 'Checkout', 'Checkout (PayPal)', 'Order Confirmation'].includes(text)) {
-          if (!pages.some(p => p.name === text)) {
-            pages.push({ name: text, type: 'ecommerce', category: 'Ecommerce pages' });
-          }
-        }
-      }
+      });
 
       // ===== STYLE CLASSES (G key - Style Selectors) =====
-      // First click on Design tab to ensure we're in the right context
-      await clickControl(['Design']);
-      
-      // Press G for Style Selectors panel
-      await page.keyboard.press('g');
-      await page.evaluate(`new Promise(r => setTimeout(r, 1500))`);
-      
-      const stylesText = await getUIText();
-      
       const styleClasses: Array<{ name: string; isGlobal: boolean }> = [];
-      const globalPatterns = ['All H1', 'All H2', 'All H3', 'All H4', 'All H5', 'All H6',
-                              'All Paragraphs', 'All Unordered', 'All List Items', 'Body (All'];
-      const uiExclusions = ['Design', 'CMS', 'Insights', 'Share', 'Publish', 'Style', 'Settings',
-                           'Interactions', 'Style selector', 'None', 'Desktop', 'This site was',
-                           'Webflow', 'Sign up', 'Try it', 'Make a selection', 'Select an element',
-                           'preload', 'Enable', 'New!', 'Run your', 'Affects', 'No element'];
+      await safeSection('style-classes', undefined, async () => {
+        // First click on Design tab to ensure we're in the right context
+        await clickControl(['Design']);
 
-      for (const text of stylesText) {
-        if (text.length > 2 && text.length < 60 &&
-            !uiExclusions.some(ui => text.includes(ui))) {
-          // Check if it matches class naming patterns
-          if (text.includes(' / ') || text.includes('-') || /^[A-Z]/.test(text) ||
-              globalPatterns.some(p => text.includes(p))) {
-            const isGlobal = globalPatterns.some(p => text.includes(p));
-            if (!styleClasses.some(c => c.name === text)) {
-              styleClasses.push({ name: text, isGlobal });
+        // Press G for Style Selectors panel
+        await page.keyboard.press('g');
+        await page.evaluate(`new Promise(r => setTimeout(r, 1500))`);
+
+        const stylesText = await getUIText();
+
+        const globalPatterns = ['All H1', 'All H2', 'All H3', 'All H4', 'All H5', 'All H6',
+                                'All Paragraphs', 'All Unordered', 'All List Items', 'Body (All'];
+        const uiExclusions = ['Design', 'CMS', 'Insights', 'Share', 'Publish', 'Style', 'Settings',
+                             'Interactions', 'Style selector', 'None', 'Desktop', 'This site was',
+                             'Webflow', 'Sign up', 'Try it', 'Make a selection', 'Select an element',
+                             'preload', 'Enable', 'New!', 'Run your', 'Affects', 'No element'];
+
+        for (const text of stylesText) {
+          if (text.length > 2 && text.length < 60 &&
+              !uiExclusions.some(ui => text.includes(ui))) {
+            // Check if it matches class naming patterns
+            if (text.includes(' / ') || text.includes('-') || /^[A-Z]/.test(text) ||
+                globalPatterns.some(p => text.includes(p))) {
+              const isGlobal = globalPatterns.some(p => text.includes(p));
+              if (!styleClasses.some(c => c.name === text)) {
+                styleClasses.push({ name: text, isGlobal });
+              }
             }
           }
         }
-      }
+      });
 
       // ===== COMPONENTS (Shift+A) =====
-      await page.keyboard.press('Escape');
-      await page.evaluate(`new Promise(r => setTimeout(r, 300))`);
-      await page.keyboard.down('Shift');
-      await page.keyboard.press('a');
-      await page.keyboard.up('Shift');
-      await page.evaluate(`new Promise(r => setTimeout(r, 2000))`);
-      
-      const componentsText = await getUIText(1200);
-      const components = parseComponents(componentsText);
+      const components = await safeSection('components', [] as ReturnType<typeof parseComponents>, async () => {
+        await page.keyboard.press('Escape');
+        await page.evaluate(`new Promise(r => setTimeout(r, 300))`);
+        await page.keyboard.down('Shift');
+        await page.keyboard.press('a');
+        await page.keyboard.up('Shift');
+        await page.evaluate(`new Promise(r => setTimeout(r, 2000))`);
+
+        const componentsText = await getUIText(1200);
+        return parseComponents(componentsText);
+      });
 
       // ===== INTERACTIONS (H key) =====
-      await pressKeyAndWait('h', 2000);
-      const interactionsText = await getUIText(1200);
-      const interactions = parseInteractions(interactionsText);
+      const interactions = await safeSection('interactions', [] as ReturnType<typeof parseInteractions>, async () => {
+        await pressKeyAndWait('h', 2000);
+        const interactionsText = await getUIText(1200);
+        return parseInteractions(interactionsText);
+      });
 
       // ===== CMS COLLECTIONS (Click CMS tab) =====
-      // Find and click CMS button
-      await clickControl(['CMS']);
-      await page.evaluate(`new Promise(r => setTimeout(r, 1400))`);
-      await clickControl(['Collections']);
-      await page.evaluate(`new Promise(r => setTimeout(r, 1000))`);
-      
-      const cmsText = await getUIText(1200);
-      const cmsCollections = parseCmsCollections(cmsText);
+      const cmsCollections = await safeSection('cms-collections', [] as ReturnType<typeof parseCmsCollections>, async () => {
+        await clickControl(['CMS']);
+        await page.evaluate(`new Promise(r => setTimeout(r, 1400))`);
+        await clickControl(['Collections']);
+        await page.evaluate(`new Promise(r => setTimeout(r, 1000))`);
+
+        const cmsText = await getUIText(1200);
+        return parseCmsCollections(cmsText);
+      });
 
       // ===== ASSETS (J key) =====
-      await pressKeyAndWait('j', 2000);
-      const assetsText = await getUIText(1200);
-      
       const assets: Array<{ filename: string; type: string }> = [];
-      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
-      
-      for (const text of assetsText) {
-        if (text.match(/\.(jpg|jpeg|png|gif|webp|avif|svg|mp4|webm)$/i)) {
-          const ext = text.split('.').pop()?.toLowerCase() || '';
-          let type = 'other';
-          if (imageExts.includes(ext)) type = 'image';
-          else if (ext === 'svg') type = 'svg';
-          else if (['mp4', 'webm'].includes(ext)) type = 'video';
-          
-          if (!assets.some(a => a.filename === text)) {
-            assets.push({ filename: text, type });
-          }
-        }
-      }
+      await safeSection('assets', undefined, async () => {
+        await pressKeyAndWait('j', 2000);
+        const assetsText = await getUIText(1200);
 
-      // ===== SITE PLAN (from Settings) =====
-      // Find and click Settings button
-      const allButtons = await page.$$('button, [role="button"], [role="tab"]');
-      const allButtonAriaLabels = await page.evaluate(`(() =>
-        Array.from(document.querySelectorAll('button, [role="button"], [role="tab"]')).map((el) =>
-          el.getAttribute('aria-label')
-        )
-      )()`) as Array<string | null>;
-      let sitePlan = 'Unknown';
-      for (const [index, btn] of allButtons.entries()) {
-        const ariaLabel = allButtonAriaLabels[index] ?? null;
-        if (ariaLabel?.includes('Settings')) {
-          await btn.click();
-          await page.evaluate(`new Promise(r => setTimeout(r, 1500))`);
-          
-          const settingsText = await getUIText();
-          for (const text of settingsText) {
-            if (['Starter', 'Basic', 'CMS', 'Business', 'Enterprise'].some(p => text === p)) {
-              sitePlan = text;
-              break;
+        const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
+
+        for (const text of assetsText) {
+          if (text.match(/\.(jpg|jpeg|png|gif|webp|avif|svg|mp4|webm)$/i)) {
+            const ext = text.split('.').pop()?.toLowerCase() || '';
+            let type = 'other';
+            if (imageExts.includes(ext)) type = 'image';
+            else if (ext === 'svg') type = 'svg';
+            else if (['mp4', 'webm'].includes(ext)) type = 'video';
+
+            if (!assets.some(a => a.filename === text)) {
+              assets.push({ filename: text, type });
             }
           }
-          break;
         }
-      }
+      });
+
+      // ===== SITE PLAN (from Settings) =====
+      const sitePlan = await safeSection('site-plan', 'Unknown', async () => {
+        const allButtons = await page.$$('button, [role="button"], [role="tab"]');
+        const allButtonAriaLabels = await page.evaluate(`(() =>
+          Array.from(document.querySelectorAll('button, [role="button"], [role="tab"]')).map((el) =>
+            el.getAttribute('aria-label')
+          )
+        )()`) as Array<string | null>;
+        for (const [index, btn] of allButtons.entries()) {
+          const ariaLabel = allButtonAriaLabels[index] ?? null;
+          if (ariaLabel?.includes('Settings')) {
+            await btn.click();
+            await page.evaluate(`new Promise(r => setTimeout(r, 1500))`);
+
+            const settingsText = await getUIText();
+            for (const text of settingsText) {
+              if (['Starter', 'Basic', 'CMS', 'Business', 'Enterprise'].some(p => text === p)) {
+                return text;
+              }
+            }
+            break;
+          }
+        }
+        return 'Unknown';
+      });
 
       return {
         siteName,
@@ -645,8 +717,13 @@ export class BrowserlessProvider implements BrowserProvider {
       throw error;
 
     } finally {
+      // Close the page before the browser to avoid racing in-flight
+      // operations into "Target closed" errors on teardown.
+      if (pageRef) {
+        try { await pageRef.close({ runBeforeUnload: false }); } catch { /* ignore */ }
+      }
       if (browser) {
-        await browser.close();
+        try { await browser.close(); } catch { /* ignore */ }
         this.metrics.sessionsClosed++;
       }
 

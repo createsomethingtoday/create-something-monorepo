@@ -15,7 +15,10 @@ const {
   is404PageTitle,
   isCriticalUtilityUrl,
   isWebflowComponentAnchor,
-  computeScore
+  computeScore,
+  normalizeTemplateReviewTimeout,
+  DEFAULT_TEMPLATE_REVIEW_TIMEOUT_MS,
+  MIN_TEMPLATE_REVIEW_TIMEOUT_MS,
 } = require('../dist/review-utils.js');
 
 let passed = 0;
@@ -226,6 +229,21 @@ test('suffix match: "style-guide" resolves to /templates/style-guide', () => {
     resolveDesignerSlug('style-guide', origin, discovered),
     'https://example.webflow.io/templates/style-guide'
   );
+});
+
+// =============================================================================
+console.log('\n== normalizeTemplateReviewTimeout ==');
+
+test('defaults to the review timeout baseline', () => {
+  assert.equal(normalizeTemplateReviewTimeout(undefined), DEFAULT_TEMPLATE_REVIEW_TIMEOUT_MS);
+});
+
+test('clamps low timeouts to the minimum floor', () => {
+  assert.equal(normalizeTemplateReviewTimeout(30_000), MIN_TEMPLATE_REVIEW_TIMEOUT_MS);
+});
+
+test('preserves higher caller budgets', () => {
+  assert.equal(normalizeTemplateReviewTimeout(180_000), 180_000);
 });
 
 // =============================================================================

@@ -44,6 +44,34 @@ const DEFAULT_CONFIG: Partial<BrowserProviderConfig> = {
   retries: 2
 };
 
+const STEEL_SESSION_TIMEOUT_MS = 900000;
+
+// Webflow Designer cold-start is slow and uses persistent websockets, so
+// `networkidle2` never fires. Use a longer floor and a DOM-based readiness
+// probe instead.
+const DESIGNER_NAV_TIMEOUT_FLOOR_MS = 90_000;
+const DESIGNER_NAV_RETRY_MULTIPLIER = 1.5;
+const DESIGNER_READY_SELECTORS = 'body';
+
+function isNavigationTimeoutError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  return /Navigation timeout/i.test(message) || /timeout.*exceeded/i.test(message);
+}
+
+async function safeSection<T>(
+  label: string,
+  fallback: T,
+  fn: () => Promise<T>
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error ?? '');
+    console.warn(`[steel.extractDesignerMetadata] section "${label}" failed: ${message}`);
+    return fallback;
+  }
+}
+
 // =============================================================================
 // Provider Implementation
 // =============================================================================
@@ -96,7 +124,7 @@ export class SteelBrowserProvider implements BrowserProvider {
   /**
    * Create a Steel session and connect Puppeteer
    */
-  private async createSession(timeoutMs = 900000): Promise<{ session: { id: string }, browser: Browser }> {
+  private async createSession(timeoutMs = STEEL_SESSION_TIMEOUT_MS): Promise<{ session: { id: string }, browser: Browser }> {
     // Create Steel session with optimal settings for Webflow
     const session = await this.client.sessions.create({
       timeout: timeoutMs,
@@ -184,8 +212,10 @@ export class SteelBrowserProvider implements BrowserProvider {
     this.metrics.sessionsCreated++;
 
     try {
+      // Keep the Steel session lifetime independent from per-page navigation
+      // budgets so low caller timeouts do not close the browser mid-review.
       const { session, browser: connectedBrowser } = await this.createSession(
-        input?.options?.timeout ?? 900000
+        STEEL_SESSION_TIMEOUT_MS
       );
       browser = connectedBrowser;
       sessionId = session.id;
@@ -383,7 +413,13 @@ export class SteelBrowserProvider implements BrowserProvider {
   }> {
     const startTime = Date.now();
     let browser: Browser | null = null;
+    let pageRef: Page | null = null;
     let sessionId: string | null = null;
+    const effectiveTimeout = Math.max(
+      timeout ?? 0,
+      this.config.timeout ?? 0,
+      DESIGNER_NAV_TIMEOUT_FLOOR_MS
+    );
 
     try {
       this.metrics.sessionsCreated++;
@@ -398,16 +434,42 @@ export class SteelBrowserProvider implements BrowserProvider {
         browserWSEndpoint: this.getWebSocketUrl(session.id)
       }) as Browser;
 
-      const page = await browser.newPage();
+      const page: Page = await browser.newPage();
+      pageRef = page;
+      // Apply explicit defaults so downstream page.$$ / handle.click / evaluate
+      // calls do not silently fall back to Puppeteer's 30s default.
+      page.setDefaultNavigationTimeout(effectiveTimeout);
+      page.setDefaultTimeout(effectiveTimeout);
       await page.setViewport({ width: 1920, height: 1080 });
 
-      // Navigate to Designer preview
-      await page.goto(url, {
-        waitUntil: 'networkidle2',
-        timeout: timeout || this.config.timeout
-      });
+      // Navigate to Designer preview. `networkidle2` never fires inside
+      // Webflow Designer (persistent websockets), so use `domcontentloaded`
+      // and then probe for the Designer shell with a known selector.
+      const navigate = async (attemptTimeout: number) =>
+        page.goto(url, {
+          waitUntil: 'domcontentloaded',
+          timeout: attemptTimeout
+        });
 
-      // Wait for Designer UI to load
+      try {
+        await navigate(effectiveTimeout);
+      } catch (navError) {
+        if (!isNavigationTimeoutError(navError)) throw navError;
+        const retryTimeout = Math.ceil(effectiveTimeout * DESIGNER_NAV_RETRY_MULTIPLIER);
+        console.warn(
+          `[steel.extractDesignerMetadata] navigation timed out after ${effectiveTimeout}ms; retrying with ${retryTimeout}ms`
+        );
+        await navigate(retryTimeout);
+      }
+
+      await page
+        .waitForSelector(DESIGNER_READY_SELECTORS, { timeout: Math.min(effectiveTimeout, 15_000) })
+        .catch(() => {
+          // Fall through — subsequent getUIText calls will surface the
+          // failure as empty text and partial results.
+        });
+
+      // Let the Designer UI settle before we start driving it.
       await this.wait(page, 3000);
 
       this.metrics.pageLoadsCompleted++;
@@ -465,33 +527,36 @@ export class SteelBrowserProvider implements BrowserProvider {
       };
 
       // Get site info
-      const pageTitle = await page.title();
-      const initialUiTexts = await getUIText(500);
-      const siteName = deriveSiteName({
-        url,
-        title: pageTitle,
-        uiTexts: initialUiTexts
+      const siteInfo = await safeSection('site-info', { siteName: url, breakpoints: [] as string[] }, async () => {
+        const pageTitle = await page.title();
+        const initialUiTexts = await getUIText(500);
+        const derivedName = deriveSiteName({
+          url,
+          title: pageTitle,
+          uiTexts: initialUiTexts
+        });
+        const breakpointsResult = await page.evaluate(`
+          (function() {
+            const labels = [];
+            document.querySelectorAll('[aria-label]').forEach(el => {
+              const label = el.getAttribute('aria-label') || '';
+              if (label.includes('breakpoint') || label.includes('px and down')) {
+                labels.push(label);
+              }
+            });
+            return labels;
+          })()
+        `) as string[];
+        return { siteName: derivedName, breakpoints: breakpointsResult };
       });
-
-      // Get breakpoints
-      const breakpoints = await page.evaluate(`
-        (function() {
-          const labels = [];
-          document.querySelectorAll('[aria-label]').forEach(el => {
-            const label = el.getAttribute('aria-label') || '';
-            if (label.includes('breakpoint') || label.includes('px and down')) {
-              labels.push(label);
-            }
-          });
-          return labels;
-        })()
-      `) as string[];
+      const siteName = siteInfo.siteName;
+      const breakpoints = siteInfo.breakpoints;
 
       // ===== PAGES (P key) =====
-      await pressKeyAndWait('p', 3000);
-      
       const pages: Array<{ name: string; type: string; category?: string }> = [];
-      
+      await safeSection('pages', undefined, async () => {
+      await pressKeyAndWait('p', 3000);
+
       // Extract all text nodes and parse the page structure
       // Based on observed Webflow Designer panel structure
       const pageData = await page.evaluate(`
@@ -640,8 +705,11 @@ export class SteelBrowserProvider implements BrowserProvider {
           pages.push({ ...known, category: known.type });
         }
       }
+      }); // end safeSection('pages')
 
       // ===== STYLE CLASSES (G key) =====
+      const styleClasses: Array<{ name: string; isGlobal: boolean }> = [];
+      await safeSection('style-classes', undefined, async () => {
       // First click Design tab
       await clickControl(['Design']);
 
@@ -650,7 +718,6 @@ export class SteelBrowserProvider implements BrowserProvider {
 
       const stylesText = await getUIText();
 
-      const styleClasses: Array<{ name: string; isGlobal: boolean }> = [];
       const globalPatterns = ['All H1', 'All H2', 'All H3', 'All H4', 'All H5', 'All H6',
                               'All Paragraphs', 'All Unordered', 'All List Items', 'Body (All'];
       const uiExclusions = ['Design', 'CMS', 'Insights', 'Share', 'Publish', 'Style', 'Settings',
@@ -670,77 +737,87 @@ export class SteelBrowserProvider implements BrowserProvider {
           }
         }
       }
+      }); // end safeSection('style-classes')
 
       // ===== COMPONENTS (Shift+A) =====
-      await page.keyboard.press('Escape');
-      await this.wait(page, 300);
-      await page.keyboard.down('Shift');
-      await page.keyboard.press('a');
-      await page.keyboard.up('Shift');
-      await this.wait(page, 2000);
+      const components = await safeSection('components', [] as ReturnType<typeof parseComponents>, async () => {
+        await page.keyboard.press('Escape');
+        await this.wait(page, 300);
+        await page.keyboard.down('Shift');
+        await page.keyboard.press('a');
+        await page.keyboard.up('Shift');
+        await this.wait(page, 2000);
 
-      const componentsText = await getUIText(1200);
-      const components = parseComponents(componentsText);
+        const componentsText = await getUIText(1200);
+        return parseComponents(componentsText);
+      });
 
       // ===== INTERACTIONS (H key) =====
-      await pressKeyAndWait('h', 2000);
-      const interactionsText = await getUIText(1200);
-      const interactions = parseInteractions(interactionsText);
+      const interactions = await safeSection('interactions', [] as ReturnType<typeof parseInteractions>, async () => {
+        await pressKeyAndWait('h', 2000);
+        const interactionsText = await getUIText(1200);
+        return parseInteractions(interactionsText);
+      });
 
       // ===== CMS COLLECTIONS (Click CMS tab) =====
-      await clickControl(['CMS']);
-      await this.wait(page, 1400);
-      await clickControl(['Collections']);
-      await this.wait(page, 1000);
+      const cmsCollections = await safeSection('cms-collections', [] as ReturnType<typeof parseCmsCollections>, async () => {
+        await clickControl(['CMS']);
+        await this.wait(page, 1400);
+        await clickControl(['Collections']);
+        await this.wait(page, 1000);
 
-      const cmsText = await getUIText(1200);
-      const cmsCollections = parseCmsCollections(cmsText);
+        const cmsText = await getUIText(1200);
+        return parseCmsCollections(cmsText);
+      });
 
       // ===== ASSETS (J key) =====
-      await pressKeyAndWait('j', 2000);
-      const assetsText = await getUIText(1200);
-
       const assets: Array<{ filename: string; type: string }> = [];
-      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
+      await safeSection('assets', undefined, async () => {
+        await pressKeyAndWait('j', 2000);
+        const assetsText = await getUIText(1200);
 
-      for (const text of assetsText) {
-        if (text.match(/\.(jpg|jpeg|png|gif|webp|avif|svg|mp4|webm)$/i)) {
-          const ext = text.split('.').pop()?.toLowerCase() || '';
-          let type = 'other';
-          if (imageExts.includes(ext)) type = 'image';
-          else if (ext === 'svg') type = 'svg';
-          else if (['mp4', 'webm'].includes(ext)) type = 'video';
+        const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
 
-          if (!assets.some(a => a.filename === text)) {
-            assets.push({ filename: text, type });
-          }
-        }
-      }
+        for (const text of assetsText) {
+          if (text.match(/\.(jpg|jpeg|png|gif|webp|avif|svg|mp4|webm)$/i)) {
+            const ext = text.split('.').pop()?.toLowerCase() || '';
+            let type = 'other';
+            if (imageExts.includes(ext)) type = 'image';
+            else if (ext === 'svg') type = 'svg';
+            else if (['mp4', 'webm'].includes(ext)) type = 'video';
 
-      // ===== SITE PLAN (from Settings) =====
-      const allButtons = await page.$$('button, [role="button"], [role="tab"]');
-      const allButtonAriaLabels = await page.evaluate(`(() =>
-        Array.from(document.querySelectorAll('button, [role="button"], [role="tab"]')).map((el) =>
-          el.getAttribute('aria-label')
-        )
-      )()`) as Array<string | null>;
-      let sitePlan = 'Unknown';
-      for (const [index, btn] of allButtons.entries()) {
-        const ariaLabel = allButtonAriaLabels[index] ?? null;
-        if (ariaLabel?.includes('Settings')) {
-          await btn.click();
-          await this.wait(page, 1500);
-
-          const settingsText = await getUIText();
-          for (const text of settingsText) {
-            if (['Starter', 'Basic', 'CMS', 'Business', 'Enterprise'].some(p => text === p)) {
-              sitePlan = text;
-              break;
+            if (!assets.some(a => a.filename === text)) {
+              assets.push({ filename: text, type });
             }
           }
-          break;
         }
-      }
+      });
+
+      // ===== SITE PLAN (from Settings) =====
+      const sitePlan = await safeSection('site-plan', 'Unknown', async () => {
+        const allButtons = await page.$$('button, [role="button"], [role="tab"]');
+        const allButtonAriaLabels = await page.evaluate(`(() =>
+          Array.from(document.querySelectorAll('button, [role="button"], [role="tab"]')).map((el) =>
+            el.getAttribute('aria-label')
+          )
+        )()`) as Array<string | null>;
+        for (const [index, btn] of allButtons.entries()) {
+          const ariaLabel = allButtonAriaLabels[index] ?? null;
+          if (ariaLabel?.includes('Settings')) {
+            await btn.click();
+            await this.wait(page, 1500);
+
+            const settingsText = await getUIText();
+            for (const text of settingsText) {
+              if (['Starter', 'Basic', 'CMS', 'Business', 'Enterprise'].some(p => text === p)) {
+                return text;
+              }
+            }
+            break;
+          }
+        }
+        return 'Unknown';
+      });
 
       return {
         siteName,
@@ -760,8 +837,13 @@ export class SteelBrowserProvider implements BrowserProvider {
       throw error;
 
     } finally {
+      // Close the page before the browser to avoid racing in-flight
+      // operations into "Target closed" errors on teardown.
+      if (pageRef) {
+        try { await pageRef.close({ runBeforeUnload: false }); } catch { /* ignore */ }
+      }
       if (browser) {
-        await browser.close();
+        try { await browser.close(); } catch { /* ignore */ }
         this.metrics.sessionsClosed++;
       }
 

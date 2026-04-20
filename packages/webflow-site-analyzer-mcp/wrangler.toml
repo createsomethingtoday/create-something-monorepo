@@ -21,6 +21,11 @@ custom_domain = true
 
 [vars]
 ENVIRONMENT = "production"
+# Force puppeteer-core to load its browser build and connect via
+# NativeWebSocketTransport (see providers/puppeteer-runtime.ts). Without this,
+# puppeteer-core imports the Node `ws` module which fails under the Workers
+# runtime.
+WEBFLOW_SITE_ANALYZER_RUNTIME = "worker"
 
 # Secrets (set via `wrangler secret put`):
 # - STEEL_API_KEY
