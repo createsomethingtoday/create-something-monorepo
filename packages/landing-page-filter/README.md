@@ -99,17 +99,9 @@ Then copy the values to Cloudflare.
 
 ### 2. Update Webflow Integration Scripts
 
-Replace the Vercel URLs with your Cloudflare Pages URL:
+Use the Cloudflare Pages URLs in Webflow. If you still have any legacy Vercel
+references in custom code, replace them with the Pages-hosted assets below.
 
-**Before (Vercel):**
-```html
-<script src="https://landing-page-category-filter.vercel.app/category-filter-analytics.min.js"></script>
-<script src="https://landing-page-category-filter.vercel.app/custom-nest.min.js"></script>
-<script src="https://landing-page-category-filter.vercel.app/category-filter-free.min.js"></script>
-<script src="https://landing-page-category-filter.vercel.app/seo-enhancements.min.js"></script>
-```
-
-**After (Cloudflare):**
 ```html
 <script src="https://landing-page-filter.pages.dev/category-filter-analytics.min.js"></script>
 <script src="https://landing-page-filter.pages.dev/custom-nest.min.js"></script>

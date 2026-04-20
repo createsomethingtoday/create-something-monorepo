@@ -19,8 +19,8 @@
  * 3. Template items should have class .tm-templates_grid_item
  * 4. Category fields should have class .tm-category
  * 
- * Production URL: https://landing-page-category.vercel.app/category-filter.min.js
- * Development URL: https://landing-page-category.vercel.app/category-filter.js
+ * Production URL: https://landing-page-filter.pages.dev/category-filter.min.js
+ * Development URL: https://landing-page-filter.pages.dev/category-filter.js
  */
 
 (function() {
@@ -28,8 +28,8 @@
   
   // Configuration
   var CONFIG = {
-    API_ENDPOINT: 'https://landing-page-category-filter.vercel.app/api/categories',
-    HIERARCHICAL_API_ENDPOINT: 'https://landing-page-category-filter.vercel.app/api/categories?hierarchical=true',
+    API_ENDPOINT: 'https://landing-page-filter.pages.dev/api/categories',
+    HIERARCHICAL_API_ENDPOINT: 'https://landing-page-filter.pages.dev/api/categories?hierarchical=true',
     SWIPER_CONTAINER_SELECTOR: '#subcategory-list',
     SWIPER_WRAPPER_SELECTOR: '.swiper-wrapper',
     ITEMS_SELECTOR: '.tm-templates_grid .w-dyn-item',
@@ -43,7 +43,7 @@
     INITIAL_SHOW_COUNT: 10,
     DEBUG: true,
     ENABLE_ANALYTICS: true,
-    ANALYTICS_ENDPOINT: 'https://landing-page-category-filter.vercel.app/api/analytics',
+    ANALYTICS_ENDPOINT: 'https://landing-page-filter.pages.dev/api/analytics',
     // Script compatibility flags
     HAS_INFINITE_SCROLL: true,
     RECOMMENDED_SCRIPT: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-list@1/list.js',

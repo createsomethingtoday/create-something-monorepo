@@ -319,7 +319,7 @@
     }
 
     async fetchAndFilterItems(templateUrl, collection, collectionName) {
-      const proxyUrl = `https://landing-page-category-filter.vercel.app/api/template-proxy?path=${encodeURIComponent(templateUrl)}`;
+      const proxyUrl = `https://landing-page-filter.pages.dev/api/template-proxy?path=${encodeURIComponent(templateUrl)}`;
       
       try {
         log(`🔍 Fetching template page for nesting: ${templateUrl}`);
@@ -526,7 +526,7 @@
     async fetchSubcategoriesFromAPI() {
       try {
         log('Fetching subcategories from API...');
-        const response = await fetch('https://landing-page-category-filter.vercel.app/api/subcategories');
+        const response = await fetch('https://landing-page-filter.pages.dev/api/subcategories');
         
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);

@@ -13,7 +13,7 @@
   
   // === CONFIGURATION ===
   var CONFIG = {
-    API_URL: 'https://landing-page-category-filter.vercel.app/api/categories?hierarchical=true',
+    API_URL: 'https://landing-page-filter.pages.dev/api/categories?hierarchical=true',
     SWIPER_CONTAINER: '#subcategory-list',
     ITEMS_SELECTOR: '.tm-templates_grid_item',
     URL_PARAM_NAME: 'category',
