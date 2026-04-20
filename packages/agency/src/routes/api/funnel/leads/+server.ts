@@ -9,6 +9,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { LeadInput } from '$lib/funnel';
 import { createLead, isFunnelStage, isLeadSource, listLeads } from '$lib/server/funnel-leads';
+import { runFunnelLeadAutomation } from '$lib/server/funnel-automation';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 export const GET: RequestHandler = async ({ url, platform, cookies }) => {
@@ -67,6 +68,22 @@ export const POST: RequestHandler = async ({ request, platform, cookies }) => {
 
 	try {
 		const lead = await createLead(db, input);
+		const automationPromise = runFunnelLeadAutomation({
+			db,
+			env: platform.env,
+			lead,
+			trigger: 'lead_created'
+		}).catch((automationError) => {
+			console.error('Funnel lead create automation failed:', automationError);
+			return null;
+		});
+
+		if (platform.context) {
+			platform.context.waitUntil(automationPromise);
+		} else {
+			await automationPromise;
+		}
+
 		return json({ success: true, id: lead.id, stage: lead.stage });
 	} catch (err) {
 		if (err instanceof TypeError) {

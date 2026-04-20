@@ -13,6 +13,9 @@ export type LeadSource =
 	| 'event'
 	| 'other'
 	| 'abundance';
+export type FunnelAutomationTrigger = 'lead_created' | 'stage_changed' | 'manual';
+export type FunnelAutomationDestination = 'slack' | 'notion' | 'gmail';
+export type FunnelAutomationStatus = 'pending' | 'succeeded' | 'failed' | 'skipped';
 
 export interface FunnelMetrics {
 	id: string;
@@ -121,6 +124,25 @@ export interface LeadInput {
 	estimated_value?: number;
 	service_interest?: string;
 	notes?: string;
+}
+
+export interface FunnelAutomationEvent {
+	id: string;
+	lead_id: string;
+	trigger: FunnelAutomationTrigger;
+	destination: FunnelAutomationDestination;
+	status: FunnelAutomationStatus;
+	stage?: FunnelStage | null;
+	attempt_count: number;
+	external_ref?: string | null;
+	summary?: string | null;
+	request_payload?: Record<string, unknown> | null;
+	response_payload?: Record<string, unknown> | null;
+	error_message?: string | null;
+	started_at: string;
+	completed_at?: string | null;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface FunnelSummary {

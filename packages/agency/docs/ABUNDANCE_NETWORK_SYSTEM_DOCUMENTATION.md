@@ -568,7 +568,9 @@ Content-Type: application/json
    ```
 
    `db:migrate` applies against the remote Cloudflare D1 database.
-   As of the funnel-handoff rollout, this includes `0022_abundance_funnel_handoff.sql`, which extends the funnel `source` enum to include `abundance` and adds durable handoff linkage fields on `inbound_jobs`.
+   As of the funnel-automation rollout, this includes:
+   - `0022_abundance_funnel_handoff.sql` to extend the funnel `source` enum with `abundance` and add durable handoff linkage on `inbound_jobs`
+   - `0023_funnel_lead_automation.sql` to add the `funnel_automation_events` ledger for Slack, Notion, and Gmail draft execution history
 
    For local development:
 
@@ -601,6 +603,60 @@ Content-Type: application/json
    - Operators mark viable rows as `qualified`, then use `Send to Funnel` to create a linked funnel lead
    - The resulting lead is visible in `/admin/funnel` and `/admin/funnel/leads/{id}`
    - CSV export is available directly from the operator queue
+
+### Funnel Automation Setup
+
+The funnel lead detail page can now run optional Composio-backed automations:
+
+- Slack notification for new or updated leads
+- Notion create/update against a configured CRM database
+- Gmail draft creation for leads with an email address
+
+Gmail drafts are created automatically only when a lead is in the `decision` stage. Operators can rerun automation manually from `/admin/funnel/leads/{id}`.
+
+1. **Seed the funnel automation runtime values**
+
+   | Variable                                      | Source             | Description                                                                                  |
+   | --------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------- |
+   | `FUNNEL_AUTOMATION_ENABLED`                   | You configure this | Master enable flag. Set to `true` to allow the automation ledger and background dispatch.    |
+   | `FUNNEL_AUTOMATION_COMPOSIO_USER_ID`          | You configure this | Composio `userId` / entity scope used to execute the connected toolkit accounts.             |
+   | `FUNNEL_AUTOMATION_SLACK_CHANNEL`             | You configure this | Slack channel or conversation identifier for operator notifications.                          |
+   | `FUNNEL_AUTOMATION_SLACK_CONNECTED_ACCOUNT_ID`| Composio           | Optional explicit Slack connected account to pin automation against.                          |
+   | `FUNNEL_AUTOMATION_SLACK_TOOL_SLUG`           | Composio           | Optional override when your Slack send-message route uses a non-default slug.                |
+   | `FUNNEL_AUTOMATION_NOTION_DATABASE_ID`        | Notion             | Database / data-source target for lead sync.                                                 |
+   | `FUNNEL_AUTOMATION_NOTION_CONNECTED_ACCOUNT_ID`| Composio          | Optional explicit Notion connected account to pin automation against.                         |
+   | `FUNNEL_AUTOMATION_NOTION_GET_DATABASE_TOOL_SLUG` | Composio       | Optional override for schema discovery.                                                      |
+   | `FUNNEL_AUTOMATION_NOTION_CREATE_PAGE_TOOL_SLUG`  | Composio       | Optional override for page creation.                                                         |
+   | `FUNNEL_AUTOMATION_NOTION_UPDATE_PAGE_TOOL_SLUG`  | Composio       | Optional override for page updates.                                                          |
+   | `FUNNEL_AUTOMATION_GMAIL_ENABLED`             | You configure this | Optional. Set to `true` to allow Gmail draft creation when a lead has an email address.      |
+   | `FUNNEL_AUTOMATION_GMAIL_CONNECTED_ACCOUNT_ID`| Composio           | Optional explicit Gmail connected account to pin draft creation against.                      |
+   | `FUNNEL_AUTOMATION_GMAIL_DRAFT_TOOL_SLUG`     | Composio           | Optional override when your Gmail draft tool uses a non-default slug.                        |
+
+   Recommended production sync path:
+
+   ```bash
+   FUNNEL_AUTOMATION_ENABLED=true \
+   FUNNEL_AUTOMATION_COMPOSIO_USER_ID=agency_ops \
+   FUNNEL_AUTOMATION_SLACK_CHANNEL=C0123456789 \
+   FUNNEL_AUTOMATION_NOTION_DATABASE_ID=notion-database-id \
+   FUNNEL_AUTOMATION_GMAIL_ENABLED=true \
+   pnpm agency:funnel:seed
+
+   pnpm agency:funnel:sync
+   ```
+
+   These commands seed the runtime values into Infisical at `/agency/funnel` and then mirror them into the `create-something-agency` Cloudflare Pages project.
+
+2. **Connect the relevant Composio accounts**
+   - Slack for queue notifications
+   - Notion for CRM/state persistence
+   - Gmail if you want draft outreach artifacts once leads are enriched with email
+
+3. **Run the operator loop**
+   - Review or create leads in `/admin/funnel`
+   - Open `/admin/funnel/leads/{id}` for a specific lead
+   - Use `Run Automation` to rerun all configured destinations
+   - Check the automation history ledger on the same page for payloads, errors, and external refs
 
 ### WhatsApp Business Setup
 
@@ -721,6 +777,13 @@ All endpoints return consistent error responses:
 ---
 
 ## Changelog
+
+### v1.4.0 (April 2026)
+
+- Added `funnel_automation_events` to track Slack, Notion, and Gmail automation attempts per lead
+- Added lead-detail automation history and manual rerun controls at `/admin/funnel/leads/{id}`
+- Added Infisical + Pages sync scripts for funnel automation runtime configuration
+- Added optional Gmail draft creation for leads with an email address
 
 ### v1.3.0 (April 2026)
 

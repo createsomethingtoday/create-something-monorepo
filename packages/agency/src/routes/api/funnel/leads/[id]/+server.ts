@@ -9,6 +9,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { deleteLead, getLead, updateLead, type LeadUpdateInput } from '$lib/server/funnel-leads';
+import { runFunnelLeadAutomation } from '$lib/server/funnel-automation';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 export const GET: RequestHandler = async ({ params, platform, cookies }) => {
@@ -49,10 +50,35 @@ export const PATCH: RequestHandler = async ({ params, request, platform, cookies
 	const input: LeadUpdateInput = await request.json();
 
 	try {
+		const existing = await getLead(db, id);
+		if (!existing) {
+			throw error(404, 'Lead not found');
+		}
+
 		const lead = await updateLead(db, id, input);
 		if (!lead) {
 			throw error(404, 'Lead not found');
 		}
+
+		if (existing.stage !== lead.stage) {
+			const automationPromise = runFunnelLeadAutomation({
+				db,
+				env: platform.env,
+				lead,
+				previousLead: existing,
+				trigger: 'stage_changed'
+			}).catch((automationError) => {
+				console.error('Funnel lead stage automation failed:', automationError);
+				return null;
+			});
+
+			if (platform.context) {
+				platform.context.waitUntil(automationPromise);
+			} else {
+				await automationPromise;
+			}
+		}
+
 		return json(lead);
 	} catch (err) {
 		if (err instanceof TypeError) {

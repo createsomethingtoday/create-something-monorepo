@@ -10,6 +10,7 @@ import {
   summarizeInboundJobs,
   updateInboundJob
 } from '$lib/server/abundance-inbound-jobs';
+import { runFunnelLeadAutomation } from '$lib/server/funnel-automation';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 const DEFAULT_LIMIT = 50;
@@ -162,6 +163,24 @@ export const actions: Actions = {
 
       if (!result) {
         return fail(404, { error: 'Inbound job not found' });
+      }
+
+      if (result.created) {
+        const automationPromise = runFunnelLeadAutomation({
+          db,
+          env: platform.env,
+          lead: result.lead,
+          trigger: 'lead_created'
+        }).catch((automationError) => {
+          console.error('Abundance handoff automation failed:', automationError);
+          return null;
+        });
+
+        if (platform.context) {
+          platform.context.waitUntil(automationPromise);
+        } else {
+          await automationPromise;
+        }
       }
 
       return {
