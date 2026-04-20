@@ -758,7 +758,9 @@ The repo now includes a dedicated read-oriented MCP worker at `packages/abundanc
    - SSE fallback: `/sse`
    - Tools:
      - `list_demo_jobs`
+       Returns a representative national shortlist and accepts optional `state` and `specialty` filters.
      - `search_public_jobs`
+       Accepts `query` plus optional `state`, `location`, and `specialty` filters.
      - `get_job`
      - `send_job_to_funnel`
    - `search_public_jobs` uses the `inbound_jobs_public_fts` index when `0025_abundance_public_job_search_fts.sql` has been applied, and falls back to tokenized `LIKE` matching if the index is not present yet.

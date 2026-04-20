@@ -6,6 +6,7 @@ import {
   buildPublicJobSearchGroups,
   normalizePublicJobFtsQuery,
 } from './lib/search.js';
+import { extractJobState, normalizeUsStateFilter } from './lib/state.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
@@ -146,18 +147,22 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
 
     this.server.tool(
       'list_demo_jobs',
-      'List recent public job listings from the Abundance intake database. Read-only.',
+      'List a representative national shortlist of public job listings from the Abundance intake database. Read-only.',
       {
         limit: z.number().int().optional().describe('Default 10, max 25.'),
         offset: z.number().int().optional().describe('Default 0.'),
         status: z.enum(INBOUND_JOB_STATUSES).optional(),
         source_system: z.enum(PUBLIC_SOURCES).optional(),
+        specialty: z.string().optional(),
+        state: z.string().optional().describe('US state name or abbreviation.'),
       },
-      async ({ limit, offset, status, source_system }: {
+      async ({ limit, offset, status, source_system, specialty, state }: {
         limit?: number;
         offset?: number;
         status?: InboundJobStatus;
         source_system?: PublicSource;
+        specialty?: string;
+        state?: string;
       }) => {
         try {
           const result = await queryPublicJobs(db, {
@@ -165,11 +170,19 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
             offset: clampInt(offset, 0, 0, 1000),
             status,
             sourceSystem: source_system,
+            specialty,
+            state,
+            demoMode: true,
           });
 
           return textResult({
             jobs: result.rows,
-            meta: { count: result.rows.length },
+            meta: {
+              count: result.rows.length,
+              state: normalizeUsStateFilter(state) ?? null,
+              specialty: specialty?.trim() || null,
+              demo_mode: true,
+            },
           });
         } catch (error) {
           return textResult({ error: String(error) }, true);
@@ -186,14 +199,16 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
         status: z.enum(INBOUND_JOB_STATUSES).optional(),
         location: z.string().optional(),
         specialty: z.string().optional(),
+        state: z.string().optional().describe('US state name or abbreviation.'),
         source_system: z.enum(PUBLIC_SOURCES).optional(),
       },
-      async ({ query, limit, status, location, specialty, source_system }: {
+      async ({ query, limit, status, location, specialty, state, source_system }: {
         query: string;
         limit?: number;
         status?: InboundJobStatus;
         location?: string;
         specialty?: string;
+        state?: string;
         source_system?: PublicSource;
       }) => {
         try {
@@ -205,6 +220,7 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
             query,
             location,
             specialty,
+            state,
           });
 
           return textResult({
@@ -214,6 +230,7 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
               count: result.rows.length,
               normalized_query: result.normalizedQuery,
               search_backend: result.searchBackend,
+              state: normalizeUsStateFilter(state) ?? null,
             },
           });
         } catch (error) {
@@ -447,6 +464,8 @@ async function queryPublicJobs(
     query?: string;
     location?: string;
     specialty?: string;
+    state?: string;
+    demoMode?: boolean;
   },
 ): Promise<{
   rows: ReturnType<typeof shapeInboundJob>[];
@@ -454,27 +473,54 @@ async function queryPublicJobs(
   normalizedQuery: string | null;
 }> {
   const { clauses, params } = buildPublicJobFilterClauses(filters, 'j');
+  const expressions = buildPublicJobSqlExpressions('j');
+  const statusOrderSql = buildStatusOrderSql('status');
 
   if (!filters.query) {
     const rows = await db
       .prepare(
         `
-          SELECT j.*
-          FROM inbound_jobs j
-          WHERE ${clauses.join(' AND ')}
+          WITH base AS (
+            SELECT
+              j.*,
+              ${expressions.derivedState} AS derived_state,
+              ${expressions.sortTimestamp} AS sort_timestamp,
+              ${expressions.dedupeFingerprint} AS dedupe_fingerprint,
+              ${expressions.demoScore} AS demo_score
+            FROM inbound_jobs j
+            WHERE ${clauses.join(' AND ')}
+          ),
+          deduped AS (
+            SELECT
+              *,
+              ROW_NUMBER() OVER (
+                PARTITION BY dedupe_fingerprint
+                ORDER BY sort_timestamp DESC, id DESC
+              ) AS dedupe_rank
+            FROM base
+          ),
+          ranked AS (
+            SELECT
+              *,
+              ROW_NUMBER() OVER (
+                PARTITION BY LOWER(COALESCE(derived_state, 'unknown'))
+                ORDER BY demo_score DESC, sort_timestamp DESC, id DESC
+              ) AS state_rank
+            FROM deduped
+            WHERE dedupe_rank = 1
+          )
+          SELECT *
+          FROM ranked
           ORDER BY
-            CASE j.status
-              WHEN 'qualified' THEN 1
-              WHEN 'reviewing' THEN 2
-              WHEN 'new' THEN 3
-              ELSE 4
-            END,
-            COALESCE(j.source_posted_at, j.last_seen_at, j.ingested_at) DESC
+            ${filters.demoMode ? 'state_rank ASC,' : ''}
+            ${filters.demoMode ? 'demo_score DESC,' : ''}
+            ${statusOrderSql},
+            sort_timestamp DESC
           LIMIT ? OFFSET ?
         `,
       )
       .bind(...params, filters.limit, filters.offset)
-      .all<InboundJobRow>();
+      .all<PublicJobSearchRow>();
 
     return {
       rows: (rows.results ?? []).map((row) => shapeInboundJob(row)),
@@ -488,32 +534,41 @@ async function queryPublicJobs(
   let rows: D1Result<PublicJobSearchRow>;
 
   try {
-    let sql = `
-      SELECT j.*, bm25(inbound_jobs_public_fts, 8.0, 4.0, 3.0, 2.0, 3.0, 1.5, 1.0, 0.5, 0.25, 0.25) AS rank
-      FROM inbound_jobs_public_fts
-      JOIN inbound_jobs j ON j.id = inbound_jobs_public_fts.job_id
-      WHERE inbound_jobs_public_fts MATCH ?
-    `;
-
-    if (clauses.length > 0) {
-      sql += ` AND ${clauses.join(' AND ')}`;
-    }
-
-    sql += `
-      ORDER BY
-        rank ASC,
-        CASE j.status
-          WHEN 'qualified' THEN 1
-          WHEN 'reviewing' THEN 2
-          WHEN 'new' THEN 3
-          ELSE 4
-        END,
-        COALESCE(j.source_posted_at, j.last_seen_at, j.ingested_at) DESC
-      LIMIT ? OFFSET ?
-    `;
-
     rows = await db
-      .prepare(sql)
+      .prepare(
+        `
+          WITH matched AS (
+            SELECT
+              j.*,
+              ${expressions.derivedState} AS derived_state,
+              ${expressions.sortTimestamp} AS sort_timestamp,
+              ${expressions.dedupeFingerprint} AS dedupe_fingerprint,
+              ${expressions.demoScore} AS demo_score,
+              bm25(inbound_jobs_public_fts, 8.0, 4.0, 3.0, 2.0, 3.0, 1.5, 1.0, 0.5, 0.25, 0.25) AS rank
+            FROM inbound_jobs_public_fts
+            JOIN inbound_jobs j ON j.id = inbound_jobs_public_fts.job_id
+            WHERE inbound_jobs_public_fts MATCH ?
+              AND ${clauses.join(' AND ')}
+          ),
+          deduped AS (
+            SELECT
+              *,
+              ROW_NUMBER() OVER (
+                PARTITION BY dedupe_fingerprint
+                ORDER BY rank ASC, sort_timestamp DESC, id DESC
+              ) AS dedupe_rank
+            FROM matched
+          )
+          SELECT *
+          FROM deduped
+          WHERE dedupe_rank = 1
+          ORDER BY
+            rank ASC,
+            ${statusOrderSql},
+            sort_timestamp DESC
+          LIMIT ? OFFSET ?
+        `,
+      )
       .bind(normalizedQuery, ...params, filters.limit, filters.offset)
       .all<PublicJobSearchRow>();
   } catch (error) {
@@ -538,17 +593,33 @@ async function queryPublicJobs(
     rows = await db
       .prepare(
         `
-          SELECT j.*, NULL AS rank
-          FROM inbound_jobs j
-          WHERE ${fallbackClauses.join(' AND ')}
+          WITH matched AS (
+            SELECT
+              j.*,
+              ${expressions.derivedState} AS derived_state,
+              ${expressions.sortTimestamp} AS sort_timestamp,
+              ${expressions.dedupeFingerprint} AS dedupe_fingerprint,
+              ${expressions.demoScore} AS demo_score,
+              NULL AS rank
+            FROM inbound_jobs j
+            WHERE ${fallbackClauses.join(' AND ')}
+          ),
+          deduped AS (
+            SELECT
+              *,
+              ROW_NUMBER() OVER (
+                PARTITION BY dedupe_fingerprint
+                ORDER BY demo_score DESC, sort_timestamp DESC, id DESC
+              ) AS dedupe_rank
+            FROM matched
+          )
+          SELECT *
+          FROM deduped
+          WHERE dedupe_rank = 1
           ORDER BY
-            CASE j.status
-              WHEN 'qualified' THEN 1
-              WHEN 'reviewing' THEN 2
-              WHEN 'new' THEN 3
-              ELSE 4
-            END,
-            COALESCE(j.source_posted_at, j.last_seen_at, j.ingested_at) DESC
+            demo_score DESC,
+            ${statusOrderSql},
+            sort_timestamp DESC
           LIMIT ? OFFSET ?
         `,
       )
@@ -569,6 +640,7 @@ function buildPublicJobFilterClauses(
     sourceSystem?: PublicSource;
     location?: string;
     specialty?: string;
+    state?: string;
   },
   tableAlias: string,
 ): { clauses: string[]; params: Array<string | number> } {
@@ -599,6 +671,14 @@ function buildPublicJobFilterClauses(
     params.push(`%${filters.specialty.toLowerCase()}%`);
   }
 
+  const normalizedState = normalizeUsStateFilter(filters.state);
+  if (normalizedState) {
+    clauses.push(
+      `(LOWER(COALESCE(${buildDerivedStateSql(tableAlias)}, '')) = ? OR LOWER(IFNULL(${prefix}location, '')) LIKE ?)`
+    );
+    params.push(normalizedState.toLowerCase(), `%${normalizedState.toLowerCase()}%`);
+  }
+
   return { clauses, params };
 }
 
@@ -621,6 +701,75 @@ function buildFallbackSearchDocumentSql(tableAlias: string): string {
   )`;
 }
 
+function buildPublicJobSqlExpressions(tableAlias: string) {
+  const prefix = tableAlias ? `${tableAlias}.` : '';
+
+  return {
+    derivedState: buildDerivedStateSql(tableAlias),
+    sortTimestamp: `COALESCE(${prefix}source_posted_at, ${prefix}last_seen_at, ${prefix}ingested_at)`,
+    dedupeFingerprint: `LOWER(
+      COALESCE(${prefix}title, '') || '|' ||
+      COALESCE(${prefix}employer, '') || '|' ||
+      COALESCE(${prefix}location, '') || '|' ||
+      COALESCE(${prefix}specialty, '') || '|' ||
+      COALESCE(CAST(${prefix}pay_min AS TEXT), '') || '|' ||
+      COALESCE(CAST(${prefix}pay_max AS TEXT), '') || '|' ||
+      COALESCE(${prefix}employment_type, '')
+    )`,
+    demoScore: `(
+      CASE
+        WHEN LOWER(COALESCE(${prefix}pay_period, '')) = 'week' THEN 40
+        WHEN LOWER(COALESCE(${prefix}pay_period, '')) = 'hour' THEN 8
+        ELSE 0
+      END +
+      CASE
+        WHEN NULLIF(TRIM(COALESCE(${prefix}specialty, '')), '') IS NOT NULL THEN 20
+        ELSE 0
+      END +
+      CASE
+        WHEN LOWER(COALESCE(${prefix}title, '')) LIKE '%travel%' THEN 18
+        ELSE 0
+      END +
+      CASE
+        WHEN LOWER(COALESCE(${prefix}title, '')) LIKE '%rn%'
+          OR LOWER(COALESCE(${prefix}title, '')) LIKE '%registered nurse%'
+        THEN 14
+        ELSE 0
+      END +
+      CASE
+        WHEN LOWER(COALESCE(${prefix}source_system, '')) = 'adzuna' THEN 6
+        ELSE 0
+      END +
+      CASE
+        WHEN ${prefix}pay_min IS NOT NULL OR ${prefix}pay_max IS NOT NULL THEN 6
+        ELSE 0
+      END +
+      CASE
+        WHEN ${prefix}job_url IS NOT NULL THEN 4
+        ELSE 0
+      END
+    )`,
+  };
+}
+
+function buildDerivedStateSql(tableAlias: string): string {
+  const prefix = tableAlias ? `${tableAlias}.` : '';
+
+  return `TRIM(COALESCE(
+    json_extract(${prefix}raw_payload, '$.location.area[1]'),
+    json_extract(${prefix}raw_payload, '$.state')
+  ))`;
+}
+
+function buildStatusOrderSql(columnName: string): string {
+  return `CASE ${columnName}
+    WHEN 'qualified' THEN 1
+    WHEN 'reviewing' THEN 2
+    WHEN 'new' THEN 3
+    ELSE 4
+  END`;
+}
+
 function shapeInboundJob(row: InboundJobRow, options: { includeRawPayload?: boolean } = {}) {
   const base = {
     id: row.id,
@@ -628,6 +777,7 @@ function shapeInboundJob(row: InboundJobRow, options: { includeRawPayload?: bool
     employer: row.employer ?? null,
     facility_name: row.facility_name ?? null,
     location: row.location ?? null,
+    state: extractJobState({ rawPayload: row.raw_payload, location: row.location }),
     category: row.category ?? null,
     specialty: row.specialty ?? null,
     employment_type: row.employment_type ?? null,
