@@ -23,6 +23,11 @@ export interface AirtableAttachment {
   filename?: string;
 }
 
+export interface AirtableUrlValue {
+  url?: string;
+  label?: string;
+}
+
 export interface AirtableRecord<TFields extends Record<string, unknown> = Record<string, unknown>> {
   id: string;
   createdTime?: string;
@@ -61,6 +66,8 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '🖼️Carousel Images'?: AirtableAttachment[];
   '🔗Preview Site URL'?: string;
   '🔗Listing URL'?: string;
+  '🕸️View Asset Listing'?: string | AirtableUrlValue;
+  '🏸Admin Detail Page Path (🏗️ only)'?: string;
   '🔗Website URL'?: string;
   '📅LMT'?: string;
 }
@@ -83,6 +90,11 @@ export interface LookupMaps {
   styles: Map<string, LookupValue>;
   childCategories: Map<string, ChildCategoryLookupValue>;
   tags: Map<string, LookupValue>;
+}
+
+export interface AirtablePageResult<TFields extends Record<string, unknown> = Record<string, unknown>> {
+  records: Array<AirtableRecord<TFields>>;
+  offset: string | null;
 }
 
 export interface TemplateDocumentInput {
@@ -193,6 +205,20 @@ export interface SyncSummary {
   indexed_records: number;
   removed_records: number;
   cursor: string;
+  status?: 'in_progress' | 'completed';
+}
+
+export interface FullSyncProgress {
+  started_at: string;
+  offset: string | null;
+  fetched_records: number;
+  indexed_records: number;
+  pages_processed: number;
+}
+
+export interface SyncOptions {
+  maxFullSyncPages?: number;
+  restartFullSync?: boolean;
 }
 
 export interface DocumentRow {

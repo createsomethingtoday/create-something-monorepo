@@ -38,11 +38,19 @@ export function jsonResponse(request: Request, env: Env, data: unknown, status =
   });
 }
 
-export function textResponse(request: Request, env: Env, body: string, contentType: string, status = 200): Response {
+export function textResponse(
+  request: Request,
+  env: Env,
+  body: string,
+  contentType: string,
+  status = 200,
+  extraHeaders: HeadersInit = {},
+): Response {
   return new Response(body, {
     status,
     headers: withCorsHeaders(request, env, {
       'Content-Type': contentType,
+      ...extraHeaders,
     }),
   });
 }

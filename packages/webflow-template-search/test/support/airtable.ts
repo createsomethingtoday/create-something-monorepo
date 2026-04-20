@@ -13,27 +13,36 @@ export function installAirtableFetchMock(dataset: MockDataset) {
     const url = new URL(typeof input === 'string' ? input : input.url);
     const tableId = decodeURIComponent(url.pathname.split('/').pop() ?? '');
     const formula = url.searchParams.get('filterByFormula') ?? '';
+    const pageSize = Number(url.searchParams.get('pageSize') ?? '100') || 100;
+    const start = Number(url.searchParams.get('offset') ?? '0') || 0;
+
+    function paginated(records: Array<{ id: string; fields: Record<string, unknown> }>) {
+      const pageRecords = records.slice(start, start + pageSize);
+      const nextOffset = start + pageSize < records.length ? String(start + pageSize) : undefined;
+      return Response.json({
+        records: pageRecords,
+        ...(nextOffset ? { offset: nextOffset } : {}),
+      });
+    }
 
     if (!url.hostname.includes('airtable.com')) {
       return new Response('Not Found', { status: 404 });
     }
 
     if (tableId === 'tblRwzpWoLgE9MrUm') {
-      return Response.json({
-        records: formula.includes('IS_AFTER(') ? dataset.incrementalAssets ?? [] : dataset.publishedAssets,
-      });
+      return paginated(formula.includes('IS_AFTER(') ? dataset.incrementalAssets ?? [] : dataset.publishedAssets);
     }
 
     if (tableId === 'tblG7E9LbQj0sBX0o') {
-      return Response.json({ records: dataset.styles ?? [] });
+      return paginated(dataset.styles ?? []);
     }
 
     if (tableId === 'tblWJXy3M6R8SeoFi') {
-      return Response.json({ records: dataset.childCategories ?? [] });
+      return paginated(dataset.childCategories ?? []);
     }
 
     if (tableId === 'tblb4969G7O75gVWV') {
-      return Response.json({ records: dataset.tags ?? [] });
+      return paginated(dataset.tags ?? []);
     }
 
     return Response.json({ records: [] });

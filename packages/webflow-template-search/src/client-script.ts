@@ -1,11 +1,18 @@
+import { WEBFLOW_TEMPLATE_IMAGE_HOSTS } from './webflow.js';
+
 export function getClientScript(defaultMode = 'shadow'): string {
+  const safeImageHosts = JSON.stringify(WEBFLOW_TEMPLATE_IMAGE_HOSTS);
   return String.raw`(() => {
   const config = window.__WEBFLOW_TEMPLATE_SEARCH__ || {};
   const mode = config.mode || ${JSON.stringify(defaultMode)};
   const apiBaseUrl = (config.apiBaseUrl || '').replace(/\/$/, '') || new URL(document.currentScript.src).origin;
+  const SAFE_IMAGE_HOSTS = new Set(${safeImageHosts});
+  const EMPTY_IMAGE_SRC = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+  const listingImageCache = new Map();
   const selectors = Object.assign(
     {
-      results: '[data-template-search-results], .tm-templates_grid',
+      results:
+        '[data-template-search-results], [fs-cmsfilter-element="list"][fs-cmsload-element="list"], .mp-collection-list [role="list"].w-dyn-items, .tm-templates_grid',
       resultItems: '[data-template-search-result-item], .tm-templates_grid_item',
       cardTemplate: '[data-template-search-card-template]',
       pagination: '[data-template-search-pagination]',
@@ -19,6 +26,101 @@ export function getClientScript(defaultMode = 'shadow'): string {
     },
     config.selectors || {}
   );
+
+  function toAbsoluteUrl(value, baseUrl) {
+    if (!value) return null;
+    try {
+      return new URL(value, baseUrl || window.location.href).toString();
+    } catch {
+      return null;
+    }
+  }
+
+  function isSafeImageHost(hostname) {
+    const host = String(hostname || '').toLowerCase();
+    if (!host) return false;
+    return (
+      host === window.location.hostname.toLowerCase() ||
+      host === 'webflow.com' ||
+      host.endsWith('.webflow.com') ||
+      SAFE_IMAGE_HOSTS.has(host)
+    );
+  }
+
+  function getSafeImageUrl(value, baseUrl) {
+    const absoluteUrl = toAbsoluteUrl(value, baseUrl);
+    if (!absoluteUrl) return null;
+    try {
+      const url = new URL(absoluteUrl);
+      return url.protocol === 'data:' || isSafeImageHost(url.hostname) ? absoluteUrl : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function setImageSource(image, src, alt) {
+    if (!image) return;
+    image.removeAttribute('srcset');
+    image.alt = alt || '';
+    image.src = src || EMPTY_IMAGE_SRC;
+  }
+
+  function setOptionalImageSource(image, src, alt) {
+    if (!image) return;
+    image.removeAttribute('srcset');
+    image.alt = alt || '';
+    if (src) {
+      image.src = src;
+      return;
+    }
+    image.removeAttribute('src');
+  }
+
+  function canFetchListingImage(url) {
+    const absoluteUrl = toAbsoluteUrl(url);
+    if (!absoluteUrl) return false;
+    try {
+      return new URL(absoluteUrl).origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  }
+
+  function extractListingImageUrl(html, baseUrl) {
+    const documentFragment = new DOMParser().parseFromString(html, 'text/html');
+    const footerImage = documentFragment.querySelector('img.footer-image[src], img[class*="footer-image"][src]');
+    if (footerImage) {
+      const footerImageUrl = getSafeImageUrl(footerImage.getAttribute('src'), baseUrl);
+      if (footerImageUrl) return footerImageUrl;
+    }
+
+    const metaSelectors = [
+      'meta[property="og:image:secure_url"]',
+      'meta[property="og:image"]',
+      'meta[name="twitter:image"]'
+    ];
+    for (const selector of metaSelectors) {
+      const node = documentFragment.querySelector(selector);
+      const safeImageUrl = getSafeImageUrl(node && node.getAttribute('content'), baseUrl);
+      if (safeImageUrl) return safeImageUrl;
+    }
+
+    return null;
+  }
+
+  function getListingImageUrl(listingUrl) {
+    const absoluteUrl = toAbsoluteUrl(listingUrl);
+    if (!absoluteUrl || !canFetchListingImage(absoluteUrl)) return Promise.resolve(null);
+    if (listingImageCache.has(absoluteUrl)) return listingImageCache.get(absoluteUrl);
+
+    const pending = fetch(absoluteUrl, { credentials: 'same-origin' })
+      .then((response) => (response.ok ? response.text() : null))
+      .then((html) => (html ? extractListingImageUrl(html, absoluteUrl) : null))
+      .catch(() => null);
+
+    listingImageCache.set(absoluteUrl, pending);
+    return pending;
+  }
 
   function normalizeSort(value) {
     if (value === 'approval-date-desc') return 'newest';
@@ -104,33 +206,56 @@ export function getClientScript(defaultMode = 'shadow'): string {
     return '$' + item.price + ' USD';
   }
 
+  function findResultsContainer() {
+    const explicit = document.querySelector(selectors.results);
+    if (explicit) return explicit;
+    const firstItem = document.querySelector(selectors.resultItems);
+    return firstItem ? firstItem.parentElement : null;
+  }
+
   function cloneCardTemplate() {
     const template = document.querySelector(selectors.cardTemplate);
     if (template && template.content) return template.content.firstElementChild.cloneNode(true);
-    const existing = document.querySelector(selectors.resultItems);
+    const container = findResultsContainer();
+    const existing = container ? container.querySelector(selectors.resultItems) : document.querySelector(selectors.resultItems);
     return existing ? existing.cloneNode(true) : null;
   }
 
   function bindCard(card, item) {
     card.setAttribute('data-template-slug', item.template_slug);
-    const link = card.querySelector('[data-template-card-link]') || card.querySelector('a');
+    const link = card.querySelector('[data-template-card-link], .tm-link, .template-name-link, a[href*="/templates/html/"]') || card.querySelector('a');
     if (link) link.href = item.url || '#';
-    const image = card.querySelector('[data-template-card-image]') || card.querySelector('img');
-    if (image && item.thumbnail_image_url) {
-      image.src = item.thumbnail_image_url;
-      image.alt = item.name;
+    const image = card.querySelector('[data-template-card-image], .tm-card_image, img');
+    const secondaryImage = card.querySelector('[data-template-card-image-secondary], .tm-card_image_secondary');
+    if (image) {
+      const initialImageUrl = getSafeImageUrl(item.thumbnail_image_url) || getSafeImageUrl(item.thumbnail_image_secondary_url);
+      setImageSource(image, initialImageUrl, item.name);
+      setOptionalImageSource(secondaryImage, getSafeImageUrl(item.thumbnail_image_secondary_url), item.name);
+
+      if (!initialImageUrl && item.url) {
+        getListingImageUrl(item.url).then((resolvedImageUrl) => {
+          if (!resolvedImageUrl || !card.isConnected || card.getAttribute('data-template-slug') !== item.template_slug) return;
+          setImageSource(image, resolvedImageUrl, item.name);
+        });
+      }
     }
-    const title = card.querySelector('[data-template-card-title], .tm-template-title, h3, h4');
+    const title = card.querySelector('[data-template-card-title], .template-name, .tm-template-title, h3, h4');
     if (title) title.textContent = item.name;
-    const creator = card.querySelector('[data-template-card-creator], .tm-template-creator');
+    const creator = card.querySelector('[data-template-card-creator], .template-creator, .tm-template-creator');
     if (creator) creator.textContent = item.creator_name || '';
-    const price = card.querySelector('[data-template-card-price], .tm-template-price');
+    const price = card.querySelector('[data-template-card-price], .template-price-wrap .category-text, .tm-template-price');
     if (price) price.textContent = formatPrice(item);
+    const creatorIcon = card.querySelector('.tm-templates-creator-icon, [data-template-card-creator-image]');
+    if (creatorIcon) {
+      creatorIcon.removeAttribute('src');
+      creatorIcon.alt = '';
+      creatorIcon.style.display = 'none';
+    }
     return card;
   }
 
   function renderResults(payload) {
-    const container = document.querySelector(selectors.results);
+    const container = findResultsContainer();
     if (!container) return;
     if (mode === 'shadow') {
       compareShadowResults(payload);

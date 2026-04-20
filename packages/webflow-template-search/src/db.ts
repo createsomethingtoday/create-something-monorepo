@@ -102,6 +102,21 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
   const statements: D1PreparedStatement[] = [];
 
   for (const document of documents) {
+    statements.push(
+      db
+        .prepare('DELETE FROM template_styles WHERE template_document_id IN (SELECT id FROM template_documents WHERE template_slug = ? AND id <> ?)')
+        .bind(document.templateSlug, document.id),
+    );
+    statements.push(
+      db
+        .prepare(
+          'DELETE FROM template_child_categories WHERE template_document_id IN (SELECT id FROM template_documents WHERE template_slug = ? AND id <> ?)',
+        )
+        .bind(document.templateSlug, document.id),
+    );
+    statements.push(
+      db.prepare('DELETE FROM template_documents WHERE template_slug = ? AND id <> ?').bind(document.templateSlug, document.id),
+    );
     statements.push(db.prepare('DELETE FROM template_styles WHERE template_document_id = ?').bind(document.id));
     statements.push(db.prepare('DELETE FROM template_child_categories WHERE template_document_id = ?').bind(document.id));
     statements.push(
@@ -186,33 +201,49 @@ export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Pr
   }
 }
 
-export async function getSyncCursor(db: D1Database, key = 'airtable_last_modified_cursor'): Promise<string | null> {
+export async function deleteTemplateDocumentsNotSyncedAt(db: D1Database, syncedAt: string): Promise<number> {
+  const result = await db.prepare('SELECT id FROM template_documents WHERE synced_at <> ?').bind(syncedAt).all<{ id: string }>();
+  const ids = (result.results ?? []).map((row) => row.id).filter(Boolean);
+  if (ids.length > 0) {
+    await deleteTemplateDocuments(db, ids);
+  }
+  return ids.length;
+}
+
+export async function getSyncState<T>(db: D1Database, key: string): Promise<T | null> {
   const row = await db.prepare('SELECT value_json FROM sync_state WHERE key = ?').bind(key).first<{ value_json: string }>();
   if (!row?.value_json) return null;
   try {
-    const parsed = JSON.parse(row.value_json) as { cursor?: string };
-    return parsed.cursor ?? null;
+    return JSON.parse(row.value_json) as T;
   } catch {
     return null;
   }
 }
 
-export async function setSyncCursor(db: D1Database, cursor: string, key = 'airtable_last_modified_cursor'): Promise<void> {
+export async function getSyncCursor(db: D1Database, key = 'airtable_last_modified_cursor'): Promise<string | null> {
+  const parsed = await getSyncState<{ cursor?: string }>(db, key);
+  return parsed?.cursor ?? null;
+}
+
+export async function setSyncState(db: D1Database, key: string, value: unknown): Promise<void> {
   await db
     .prepare(
       'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
     )
-    .bind(key, JSON.stringify({ cursor }), nowIso())
+    .bind(key, JSON.stringify(value), nowIso())
     .run();
 }
 
+export async function setSyncCursor(db: D1Database, cursor: string, key = 'airtable_last_modified_cursor'): Promise<void> {
+  await setSyncState(db, key, { cursor });
+}
+
 export async function recordSyncSummary(db: D1Database, summary: unknown, key: string): Promise<void> {
-  await db
-    .prepare(
-      'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
-    )
-    .bind(key, JSON.stringify(summary), nowIso())
-    .run();
+  await setSyncState(db, key, summary);
+}
+
+export async function deleteSyncState(db: D1Database, key: string): Promise<void> {
+  await db.prepare('DELETE FROM sync_state WHERE key = ?').bind(key).run();
 }
 
 export async function resolveAlias(db: D1Database, slugType: AliasType, input: string | null): Promise<string | null> {

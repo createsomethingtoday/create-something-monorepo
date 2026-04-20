@@ -12,6 +12,7 @@ import type {
   TemplateSort,
 } from './types.js';
 import { parseJsonArray } from './utils.js';
+import { isSafeTemplateImageUrl } from './webflow.js';
 
 function placeholderList(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
@@ -298,8 +299,10 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       preview_url: row.preview_url,
       website_url: row.website_url,
       creator_name: row.creator_name,
-      thumbnail_image_url: row.thumbnail_image_url,
-      thumbnail_image_secondary_url: row.thumbnail_image_secondary_url,
+      thumbnail_image_url: isSafeTemplateImageUrl(row.thumbnail_image_url) ? row.thumbnail_image_url : null,
+      thumbnail_image_secondary_url: isSafeTemplateImageUrl(row.thumbnail_image_secondary_url)
+        ? row.thumbnail_image_secondary_url
+        : null,
       price: row.price,
       is_free: row.is_free === 1,
       is_featured: row.is_featured === 1,

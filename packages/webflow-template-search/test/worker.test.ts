@@ -56,10 +56,11 @@ const PUBLISHED_ASSETS = [
       '📋 Cumulative Purchases': 21,
       '🥞💲Template Price Filter (🏗️ only)': 169,
       '🚀📅Published Date': '2026-03-01',
-      '🥞CMS Slug (formula)': 'agentflow-website-template',
+      '🥞CMS Slug (formula)': 'agentflow-formula-slug',
       '🎨Creator Name': 'BRIX Templates',
       '🖼️Thumbnail Image': [{ url: 'https://example.com/agentflow.png' }],
-      '🔗Listing URL': 'https://webflow.com/templates/html/agentflow-website-template',
+      '🔗Listing URL': 'https://webflow.com/templates/html/stale-agentflow-template',
+      '🕸️View Asset Listing': { url: 'https://webflow.com/templates/html/agentflow-live-template' },
       '🔗Preview Site URL': 'https://agentflow.example.com',
       '🔗Website URL': 'https://webflow.com/templates/html/agentflow-website-template',
       '📅LMT': '2026-03-16T05:13:07.000Z',
@@ -89,7 +90,7 @@ const PUBLISHED_ASSETS = [
       '🚀📅Published Date': '2026-02-15',
       '🥞CMS Slug (formula)': 'setrex-website-template',
       '🎨Creator Name': 'Arini Studio',
-      '🖼️Thumbnail Image': [{ url: 'https://example.com/setrex.png' }],
+      '🖼️Thumbnail Image': [{ url: 'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/setrex.png' }],
       '🔗Listing URL': 'https://webflow.com/templates/html/setrex-website-template',
       '🔗Preview Site URL': 'https://setrex.example.com',
       '🔗Website URL': 'https://webflow.com/templates/html/setrex-website-template',
@@ -128,6 +129,10 @@ const PUBLISHED_ASSETS = [
     },
   },
 ];
+
+function chunkTimestamp(index: number): string {
+  return new Date(Date.UTC(2026, 2, 16, 5, Math.floor(index / 60), index % 60)).toISOString();
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -168,23 +173,125 @@ describe('webflow-template-search worker', () => {
         env,
       );
       const categoryPayload = (await categorySearch.json()) as {
-        items: Array<{ name: string }>;
+        items: Array<{ name: string; thumbnail_image_url: string | null }>;
         available_facets: { styles: Array<{ slug: string }>; types: Array<{ value: string }> };
         subcategory_pills: Array<{ slug: string; active: boolean }>;
       };
 
       expect(categoryPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow']);
+      expect(categoryPayload.items[0]?.thumbnail_image_url).toBe(
+        'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/setrex.png',
+      );
+      expect(categoryPayload.items[1]?.thumbnail_image_url).toBeNull();
       expect(categoryPayload.available_facets.styles.map((item) => item.slug)).toEqual(['dark-websites', 'modern']);
       expect(categoryPayload.available_facets.types.map((item) => item.value)).toEqual(['Multi Layout', 'Multi Page']);
       expect(categoryPayload.subcategory_pills.map((pill) => pill.slug)).toEqual(['ai-websites', 'software-and-saas-websites']);
       expect(categoryPayload.subcategory_pills.find((pill) => pill.slug === 'ai-websites')?.active).toBe(true);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
-      const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
+      const searchPayload = (await search.json()) as {
+        items: Array<{ name: string; template_slug: string; url: string | null; thumbnail_image_url: string | null }>;
+      };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(searchPayload.items[0]).toMatchObject({
+        template_slug: 'agentflow-live-template',
+        url: 'https://webflow.com/templates/html/agentflow-live-template',
+        thumbnail_image_url: null,
+      });
+
+      const clientScript = await callWorker(new Request('https://templates.test/api/templates/client.js'), env);
+      expect(clientScript.status).toBe(200);
+      expect(clientScript.headers.get('cache-control')).toBe('no-store, max-age=0');
     } finally {
       fetchMock.mockRestore();
       close();
     }
   });
+
+  it('chunks large rebuilds across multiple authenticated calls', async () => {
+    const staleAsset = {
+      id: 'recChunkLegacy100',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Legacy Duplicate Entry',
+        '🥞CMS Slug (formula)': 'chunk-template-100',
+        '🔗Listing URL': 'https://webflow.com/templates/html/chunk-template-100',
+        '🕸️View Asset Listing': { url: 'https://webflow.com/templates/html/chunk-template-100' },
+        '📅LMT': '2026-03-01T05:00:00.000Z',
+      },
+    };
+    const manyAssets = Array.from({ length: 101 }, (_, index) => ({
+      id: `recChunk${index}`,
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: `Chunk Template ${index}`,
+        '🥞CMS Slug (formula)': `chunk-template-${index}`,
+        '🔗Listing URL': `https://webflow.com/templates/html/chunk-template-${index}`,
+        '🕸️View Asset Listing': { url: `https://webflow.com/templates/html/chunk-template-${index}` },
+        '📅LMT': chunkTimestamp(index),
+      },
+    }));
+
+    let fetchMock = installAirtableFetchMock({
+      publishedAssets: [staleAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const seedRebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(seedRebuild.status).toBe(200);
+
+      fetchMock.mockRestore();
+      fetchMock = installAirtableFetchMock({
+        publishedAssets: manyAssets,
+        styles: LOOKUPS.styles,
+        childCategories: LOOKUPS.childCategories,
+        tags: LOOKUPS.tags,
+      });
+
+      const firstRebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(firstRebuild.status).toBe(202);
+      const firstPayload = (await firstRebuild.json()) as { status?: string; indexed_records: number };
+      expect(firstPayload.status).toBe('in_progress');
+      expect(firstPayload.indexed_records).toBe(100);
+
+      const incompleteSearch = await callWorker(new Request('https://templates.test/api/templates/search?q=100'), env);
+      const incompletePayload = (await incompleteSearch.json()) as { items: Array<{ name: string }> };
+      expect(incompletePayload.items).toEqual([]);
+
+      const secondRebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(secondRebuild.status).toBe(200);
+      const secondPayload = (await secondRebuild.json()) as { status?: string; indexed_records: number };
+      expect(secondPayload.status).toBe('completed');
+      expect(secondPayload.indexed_records).toBe(101);
+
+      const completedSearch = await callWorker(new Request('https://templates.test/api/templates/search?q=100'), env);
+      const completedPayload = (await completedSearch.json()) as { items: Array<{ name: string }> };
+      expect(completedPayload.items.map((item) => item.name)).toEqual(['Chunk Template 100']);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  }, 15000);
 });

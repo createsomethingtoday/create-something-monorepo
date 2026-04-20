@@ -1,6 +1,7 @@
 import type {
   AirtableAssetFields,
   AirtableListResponse,
+  AirtablePageResult,
   AirtableRecord,
   ChildCategoryLookupValue,
   Env,
@@ -47,6 +48,8 @@ export const ASSET_FIELDS = [
   '🖼️Carousel Images',
   '🔗Preview Site URL',
   '🔗Listing URL',
+  '🕸️View Asset Listing',
+  '🏸Admin Detail Page Path (🏗️ only)',
   '🔗Website URL',
   '📅LMT',
 ];
@@ -78,43 +81,56 @@ interface FetchOptions {
   fields: string[];
   formula?: string;
   sortField?: string;
+  offset?: string;
+  pageSize?: number;
+}
+
+async function fetchAirtableRecordPage<TFields extends Record<string, unknown>>(
+  env: Env,
+  options: FetchOptions,
+): Promise<AirtablePageResult<TFields>> {
+  assertAirtableConfigured(env);
+
+  const params = new URLSearchParams();
+  params.set('pageSize', String(options.pageSize ?? 100));
+  options.fields.forEach((field) => params.append('fields[]', field));
+  if (options.formula) params.set('filterByFormula', options.formula);
+  if (options.sortField) {
+    params.set('sort[0][field]', options.sortField);
+    params.set('sort[0][direction]', 'asc');
+  }
+  if (options.offset) params.set('offset', options.offset);
+
+  const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(options.tableId)}?${params.toString()}`;
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Airtable request failed (${response.status}): ${await response.text()}`);
+  }
+
+  const payload = (await response.json()) as AirtableListResponse<TFields>;
+  return {
+    records: payload.records,
+    offset: payload.offset ?? null,
+  };
 }
 
 async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
   env: Env,
   options: FetchOptions,
 ): Promise<Array<AirtableRecord<TFields>>> {
-  assertAirtableConfigured(env);
-
   const records: Array<AirtableRecord<TFields>> = [];
-  let offset: string | undefined;
+  let offset = options.offset;
 
   do {
-    const params = new URLSearchParams();
-    params.set('pageSize', '100');
-    options.fields.forEach((field) => params.append('fields[]', field));
-    if (options.formula) params.set('filterByFormula', options.formula);
-    if (options.sortField) {
-      params.set('sort[0][field]', options.sortField);
-      params.set('sort[0][direction]', 'asc');
-    }
-    if (offset) params.set('offset', offset);
-
-    const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(options.tableId)}?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Airtable request failed (${response.status}): ${await response.text()}`);
-    }
-
-    const payload = (await response.json()) as AirtableListResponse<TFields>;
-    records.push(...payload.records);
-    offset = payload.offset;
+    const page = await fetchAirtableRecordPage<TFields>(env, { ...options, offset });
+    records.push(...page.records);
+    offset = page.offset ?? undefined;
   } while (offset);
 
   return records;
@@ -126,6 +142,19 @@ export async function fetchPublishedTemplateAssets(env: Env): Promise<Array<Airt
     fields: ASSET_FIELDS,
     formula: buildPublishedTemplateFormula(),
     sortField: '📅LMT',
+  });
+}
+
+export async function fetchPublishedTemplateAssetPage(
+  env: Env,
+  offset?: string,
+): Promise<AirtablePageResult<AirtableAssetFields>> {
+  return fetchAirtableRecordPage<AirtableAssetFields>(env, {
+    tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
+    fields: ASSET_FIELDS,
+    formula: buildPublishedTemplateFormula(),
+    sortField: '📅LMT',
+    offset,
   });
 }
 
