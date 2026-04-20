@@ -146,7 +146,7 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
     );
 
     this.server.tool(
-      'list_demo_jobs',
+      'list_public_jobs',
       'List a representative national shortlist of public job listings from the Abundance intake database. Read-only.',
       {
         limit: z.number().int().optional().describe('Default 10, max 25.'),
@@ -172,7 +172,7 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
             sourceSystem: source_system,
             specialty,
             state,
-            demoMode: true,
+            shortlistMode: true,
           });
 
           return textResult({
@@ -181,7 +181,7 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
               count: result.rows.length,
               state: normalizeUsStateFilter(state) ?? null,
               specialty: specialty?.trim() || null,
-              demo_mode: true,
+              shortlist_mode: true,
             },
           });
         } catch (error) {
@@ -465,7 +465,7 @@ async function queryPublicJobs(
     location?: string;
     specialty?: string;
     state?: string;
-    demoMode?: boolean;
+    shortlistMode?: boolean;
   },
 ): Promise<{
   rows: ReturnType<typeof shapeInboundJob>[];
@@ -486,7 +486,7 @@ async function queryPublicJobs(
               ${expressions.derivedState} AS derived_state,
               ${expressions.sortTimestamp} AS sort_timestamp,
               ${expressions.dedupeFingerprint} AS dedupe_fingerprint,
-              ${expressions.demoScore} AS demo_score
+              ${expressions.shortlistScore} AS shortlist_score
             FROM inbound_jobs j
             WHERE ${clauses.join(' AND ')}
           ),
@@ -504,7 +504,7 @@ async function queryPublicJobs(
               *,
               ROW_NUMBER() OVER (
                 PARTITION BY LOWER(COALESCE(derived_state, 'unknown'))
-                ORDER BY demo_score DESC, sort_timestamp DESC, id DESC
+                ORDER BY shortlist_score DESC, sort_timestamp DESC, id DESC
               ) AS state_rank
             FROM deduped
             WHERE dedupe_rank = 1
@@ -512,8 +512,8 @@ async function queryPublicJobs(
           SELECT *
           FROM ranked
           ORDER BY
-            ${filters.demoMode ? 'state_rank ASC,' : ''}
-            ${filters.demoMode ? 'demo_score DESC,' : ''}
+            ${filters.shortlistMode ? 'state_rank ASC,' : ''}
+            ${filters.shortlistMode ? 'shortlist_score DESC,' : ''}
             ${statusOrderSql},
             sort_timestamp DESC
           LIMIT ? OFFSET ?
@@ -543,7 +543,7 @@ async function queryPublicJobs(
               ${expressions.derivedState} AS derived_state,
               ${expressions.sortTimestamp} AS sort_timestamp,
               ${expressions.dedupeFingerprint} AS dedupe_fingerprint,
-              ${expressions.demoScore} AS demo_score,
+              ${expressions.shortlistScore} AS shortlist_score,
               bm25(inbound_jobs_public_fts, 8.0, 4.0, 3.0, 2.0, 3.0, 1.5, 1.0, 0.5, 0.25, 0.25) AS rank
             FROM inbound_jobs_public_fts
             JOIN inbound_jobs j ON j.id = inbound_jobs_public_fts.job_id
@@ -599,7 +599,7 @@ async function queryPublicJobs(
               ${expressions.derivedState} AS derived_state,
               ${expressions.sortTimestamp} AS sort_timestamp,
               ${expressions.dedupeFingerprint} AS dedupe_fingerprint,
-              ${expressions.demoScore} AS demo_score,
+              ${expressions.shortlistScore} AS shortlist_score,
               NULL AS rank
             FROM inbound_jobs j
             WHERE ${fallbackClauses.join(' AND ')}
@@ -609,7 +609,7 @@ async function queryPublicJobs(
               *,
               ROW_NUMBER() OVER (
                 PARTITION BY dedupe_fingerprint
-                ORDER BY demo_score DESC, sort_timestamp DESC, id DESC
+                ORDER BY shortlist_score DESC, sort_timestamp DESC, id DESC
               ) AS dedupe_rank
             FROM matched
           )
@@ -617,7 +617,7 @@ async function queryPublicJobs(
           FROM deduped
           WHERE dedupe_rank = 1
           ORDER BY
-            demo_score DESC,
+            shortlist_score DESC,
             ${statusOrderSql},
             sort_timestamp DESC
           LIMIT ? OFFSET ?
@@ -716,7 +716,7 @@ function buildPublicJobSqlExpressions(tableAlias: string) {
       COALESCE(CAST(${prefix}pay_max AS TEXT), '') || '|' ||
       COALESCE(${prefix}employment_type, '')
     )`,
-    demoScore: `(
+    shortlistScore: `(
       CASE
         WHEN LOWER(COALESCE(${prefix}pay_period, '')) = 'week' THEN 40
         WHEN LOWER(COALESCE(${prefix}pay_period, '')) = 'hour' THEN 8

@@ -757,7 +757,7 @@ The repo now includes a dedicated read-oriented MCP worker at `packages/abundanc
    - Streamable HTTP: `/mcp`
    - SSE fallback: `/sse`
    - Tools:
-     - `list_demo_jobs`
+     - `list_public_jobs`
        Returns a representative national shortlist and accepts optional `state` and `specialty` filters.
      - `search_public_jobs`
        Accepts `query` plus optional `state`, `location`, and `specialty` filters.
