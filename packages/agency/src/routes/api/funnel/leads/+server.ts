@@ -7,48 +7,49 @@
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { generateId, type Lead, type LeadInput, type FunnelStage } from '$lib/funnel';
+import type { LeadInput } from '$lib/funnel';
+import { createLead, isFunnelStage, isLeadSource, listLeads } from '$lib/server/funnel-leads';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
-export const GET: RequestHandler = async ({ url, platform }) => {
+export const GET: RequestHandler = async ({ url, platform, cookies }) => {
+	await requireAgencyOperator({ cookies, platform });
+
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');
 	}
 
-	const stage = url.searchParams.get('stage') as FunnelStage | null;
-	const source = url.searchParams.get('source');
+	const stageParam = url.searchParams.get('stage');
+	const sourceParam = url.searchParams.get('source');
 	const campaign = url.searchParams.get('campaign');
 
-	let query = 'SELECT * FROM leads WHERE 1=1';
-	const params: string[] = [];
-
-	if (stage) {
-		query += ' AND stage = ?';
-		params.push(stage);
+	if (stageParam && !isFunnelStage(stageParam)) {
+		throw error(400, 'Invalid stage');
 	}
 
-	if (source) {
-		query += ' AND source = ?';
-		params.push(source);
+	if (sourceParam && !isLeadSource(sourceParam)) {
+		throw error(400, 'Invalid source');
 	}
 
-	if (campaign) {
-		query += ' AND campaign = ?';
-		params.push(campaign);
-	}
-
-	query += ' ORDER BY updated_at DESC';
+	const stage = stageParam && isFunnelStage(stageParam) ? stageParam : undefined;
+	const source = sourceParam && isLeadSource(sourceParam) ? sourceParam : undefined;
 
 	try {
-		const result = await db.prepare(query).bind(...params).all();
-		return json({ leads: result.results as unknown as Lead[] });
+		const leads = await listLeads(db, {
+			stage,
+			source,
+			campaign: campaign ?? undefined
+		});
+		return json({ leads });
 	} catch (err) {
 		console.error('Leads query error:', err);
 		return json({ leads: [] });
 	}
 };
 
-export const POST: RequestHandler = async ({ request, platform }) => {
+export const POST: RequestHandler = async ({ request, platform, cookies }) => {
+	await requireAgencyOperator({ cookies, platform });
+
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');
@@ -64,46 +65,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		throw error(400, 'Source is required');
 	}
 
-	const id = generateId('lead');
-	const now = new Date().toISOString();
-	const stage = input.stage || 'awareness';
-
 	try {
-		await db
-			.prepare(
-				`
-			INSERT INTO leads (
-				id, name, email, company, role, linkedin_url,
-				source, source_detail, campaign, stage,
-				estimated_value, service_interest,
-				first_touch_at, last_touch_at, notes,
-				created_at, updated_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		`
-			)
-			.bind(
-				id,
-				input.name,
-				input.email || null,
-				input.company || null,
-				input.role || null,
-				input.linkedin_url || null,
-				input.source,
-				input.source_detail || null,
-				input.campaign || null,
-				stage,
-				input.estimated_value || null,
-				input.service_interest || null,
-				now,
-				now,
-				input.notes || null,
-				now,
-				now
-			)
-			.run();
-
-		return json({ success: true, id, stage });
+		const lead = await createLead(db, input);
+		return json({ success: true, id: lead.id, stage: lead.stage });
 	} catch (err) {
+		if (err instanceof TypeError) {
+			throw error(400, err.message);
+		}
 		console.error('Lead insert error:', err);
 		throw error(500, 'Failed to create lead');
 	}

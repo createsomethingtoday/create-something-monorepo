@@ -6,6 +6,7 @@
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
   let savingJobs = $state<Set<string>>(new Set());
+  let handingOffJobs = $state<Set<string>>(new Set());
 
   function formatDateTime(value: string | null | undefined): string {
     if (!value) return 'Not yet';
@@ -60,6 +61,17 @@
   {#if form?.success}
     <div class="toast success">
       Updated {form.updated_job_id} to <strong>{form.updated_status}</strong>.
+    </div>
+  {/if}
+
+  {#if form?.handoff_success}
+    <div class="toast success">
+      {#if form.handoff_created}
+        Sent {form.handoff_job_id} to funnel as
+      {:else}
+        {form.handoff_job_id} was already linked to
+      {/if}
+      <a href={`/admin/funnel/leads/${form.handoff_lead_id}`}>{form.handoff_lead_id}</a>.
     </div>
   {/if}
 
@@ -277,6 +289,48 @@
                 </button>
               </div>
             </form>
+
+            <section class="handoff-panel">
+              <div>
+                <h4>Pipeline Handoff</h4>
+                {#if job.funnel_lead_id}
+                  <p>
+                    Sent to funnel {formatDateTime(job.funnel_handoff_at)} as
+                    <a href={`/admin/funnel/leads/${job.funnel_lead_id}`}>{job.funnel_lead_id}</a>.
+                  </p>
+                {:else if job.status === 'qualified'}
+                  <p>Create the downstream funnel lead for recruiter follow-through.</p>
+                {:else}
+                  <p>Mark this job as <strong>qualified</strong> before sending it to the funnel.</p>
+                {/if}
+              </div>
+
+              {#if !job.funnel_lead_id && job.status === 'qualified'}
+                <form
+                  method="POST"
+                  action="?/handoff"
+                  class="handoff-form"
+                  use:enhance={() => {
+                    handingOffJobs.add(job.id);
+                    handingOffJobs = handingOffJobs;
+
+                    return async ({ update }) => {
+                      try {
+                        await update();
+                      } finally {
+                        handingOffJobs.delete(job.id);
+                        handingOffJobs = handingOffJobs;
+                      }
+                    };
+                  }}
+                >
+                  <input type="hidden" name="id" value={job.id} />
+                  <button type="submit" class="btn-handoff" disabled={handingOffJobs.has(job.id)}>
+                    {handingOffJobs.has(job.id) ? 'Sending…' : 'Send to Funnel'}
+                  </button>
+                </form>
+              {/if}
+            </section>
 
             <details class="payload">
               <summary>Raw payload</summary>
@@ -605,6 +659,47 @@
     font-size: 0.82rem;
   }
 
+  .handoff-panel {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-md);
+    align-items: center;
+    padding: var(--space-md);
+    border-radius: 0.9rem;
+    background: color-mix(in srgb, var(--color-bg-subtle) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+  }
+
+  .handoff-panel h4 {
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+  }
+
+  .handoff-panel p {
+    margin: 0;
+    color: var(--color-fg-muted);
+  }
+
+  .handoff-form {
+    margin: 0;
+  }
+
+  .btn-handoff {
+    border: none;
+    border-radius: 999px;
+    padding: 0.8rem 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--color-success);
+    color: white;
+    white-space: nowrap;
+  }
+
+  .btn-handoff:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
   .payload {
     border-top: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
     padding-top: 0.85rem;
@@ -633,7 +728,8 @@
     .dashboard-header,
     .panel-header,
     .job-topline,
-    .pagination-bar {
+    .pagination-bar,
+    .handoff-panel {
       flex-direction: column;
       align-items: flex-start;
     }

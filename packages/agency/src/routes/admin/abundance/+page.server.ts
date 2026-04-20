@@ -3,6 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 import { INBOUND_JOB_STATUSES, type InboundJobStatus } from '$lib/types/abundance';
 import {
+  handoffInboundJobToFunnelLead,
   isInboundJobStatus,
   listInboundJobs,
   listInboundJobSourceAgents,
@@ -137,6 +138,45 @@ export const actions: Actions = {
       updated_job_id: updated.id,
       updated_status: updated.status
     };
+  },
+
+  handoff: async ({ request, cookies, platform }) => {
+    const operator = await requireAgencyOperator({ cookies, platform });
+
+    const db = platform?.env?.DB;
+    if (!db) {
+      return fail(503, { error: 'Database is unavailable' });
+    }
+
+    const formData = await request.formData();
+    const id = String(formData.get('id') ?? '').trim();
+
+    if (!id) {
+      return fail(400, { error: 'Job id is required' });
+    }
+
+    try {
+      const result = await handoffInboundJobToFunnelLead(db, id, {
+        operator_email: operator.email
+      });
+
+      if (!result) {
+        return fail(404, { error: 'Inbound job not found' });
+      }
+
+      return {
+        handoff_success: true,
+        handoff_job_id: result.job.id,
+        handoff_lead_id: result.lead.id,
+        handoff_created: result.created
+      };
+    } catch (error) {
+      if (error instanceof TypeError) {
+        return fail(400, { error: error.message });
+      }
+
+      throw error;
+    }
   }
 };
 

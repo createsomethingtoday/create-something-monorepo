@@ -183,6 +183,8 @@ export interface InboundJob {
 	dedupe_key: string;
 	raw_payload: Record<string, unknown> | string | null;
 	notes?: string | null;
+	funnel_lead_id?: string | null;
+	funnel_handoff_at?: string | null;
 	seen_count: number;
 	ingested_at: string;
 	last_seen_at: string;

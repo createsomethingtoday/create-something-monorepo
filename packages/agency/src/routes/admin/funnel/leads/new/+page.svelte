@@ -28,6 +28,7 @@
 	let notes = $state('');
 
 	const sources: { value: LeadSource; label: string }[] = [
+		{ value: 'abundance', label: 'Abundance' },
 		{ value: 'linkedin', label: 'LinkedIn' },
 		{ value: 'website', label: 'Website' },
 		{ value: 'referral', label: 'Referral' },

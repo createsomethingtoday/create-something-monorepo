@@ -27,10 +27,15 @@
 
 <main class="dashboard">
 	<header class="header">
-		<h1>GTM Funnel</h1>
-		<p class="period">
-			{summary.period.start} — {summary.period.end}
-		</p>
+		<div>
+			<h1>GTM Funnel</h1>
+			<p class="period">
+				{summary.period.start} — {summary.period.end}
+			</p>
+		</div>
+		<div class="header-meta">
+			<span>Operator: {data.operator_email}</span>
+		</div>
 	</header>
 
 	<!-- Awareness Metrics -->
@@ -160,7 +165,7 @@
 					<tbody>
 						{#each leads.slice(0, 10) as lead}
 							<tr>
-								<td>{lead.name}</td>
+								<td><a href={`/admin/funnel/leads/${lead.id}`}>{lead.name}</a></td>
 								<td>{lead.company || '—'}</td>
 								<td>{lead.source}</td>
 								<td>
@@ -198,7 +203,16 @@
 	}
 
 	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: var(--space-md);
 		margin-bottom: var(--space-xl);
+	}
+
+	.header-meta {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 	}
 
 	.header h1 {
@@ -320,6 +334,16 @@
 		font-size: var(--text-body-sm);
 	}
 
+	td a {
+		color: var(--color-fg-primary);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	td a:hover {
+		text-decoration: underline;
+	}
+
 	.stage-badge {
 		display: inline-block;
 		padding: 2px 8px;
@@ -352,5 +376,11 @@
 	.action-button:hover {
 		background: var(--color-hover);
 		border-color: var(--color-border-emphasis);
+	}
+
+	@media (max-width: 768px) {
+		.header {
+			flex-direction: column;
+		}
 	}
 </style>

@@ -489,6 +489,7 @@ X-Abundance-Ingest-Key: YOUR_OPTIONAL_INGEST_KEY
 - If `dedupe_key` is omitted, the API derives one from a canonicalized `job_url` or fallback metadata.
 - If the job already exists, the row is updated in place, `seen_count` increments, and `source_agents` is merged.
 - `POST /inbound-jobs` accepts either an authenticated operator session or `X-Abundance-Ingest-Key` when `ABUNDANCE_INGEST_API_KEY` is configured.
+- Rows remain unlinked until an operator hands off a qualified job; after handoff the record includes `funnel_lead_id` and `funnel_handoff_at`.
 
 **Response:**
 
@@ -536,6 +537,8 @@ Content-Type: application/json
 
 - Review queue: `https://createsomething.agency/admin/abundance`
 - Operator-only access is controlled by `AGENCY_OPERATOR_EMAILS`
+- Qualified jobs can be sent directly into the GTM funnel from `/admin/abundance`
+- Created funnel leads are tagged with `source=abundance` and can be reviewed at `https://createsomething.agency/admin/funnel/leads/{id}`
 
 ---
 
@@ -565,6 +568,7 @@ Content-Type: application/json
    ```
 
    `db:migrate` applies against the remote Cloudflare D1 database.
+   As of the funnel-handoff rollout, this includes `0022_abundance_funnel_handoff.sql`, which extends the funnel `source` enum to include `abundance` and adds durable handoff linkage fields on `inbound_jobs`.
 
    For local development:
 
@@ -594,7 +598,8 @@ Content-Type: application/json
 3. **Run the operator loop**
    - Agents `POST /api/abundance/inbound-jobs`
    - Operators review at `/admin/abundance`
-   - Qualified jobs move to recruiter handoff or downstream workflow
+   - Operators mark viable rows as `qualified`, then use `Send to Funnel` to create a linked funnel lead
+   - The resulting lead is visible in `/admin/funnel` and `/admin/funnel/leads/{id}`
    - CSV export is available directly from the operator queue
 
 ### WhatsApp Business Setup
@@ -716,6 +721,13 @@ All endpoints return consistent error responses:
 ---
 
 ## Changelog
+
+### v1.3.0 (April 2026)
+
+- Added qualified-job handoff from `/admin/abundance` into the GTM funnel
+- Added durable `funnel_lead_id` and `funnel_handoff_at` linkage on inbound jobs
+- Added operator-gated funnel lead detail pages at `/admin/funnel/leads/{id}`
+- Added `abundance` as a first-class funnel lead source
 
 ### v1.2.0 (April 2026)
 

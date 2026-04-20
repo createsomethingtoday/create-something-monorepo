@@ -2,6 +2,13 @@ import { createHash } from 'node:crypto';
 
 import { safeJsonParse } from '../abundance/matching';
 import {
+  buildAbundanceLeadInputFromInboundJob,
+  createLead,
+  getLead,
+  type AbundanceLeadInputOptions
+} from './funnel-leads';
+import type { Lead } from '../funnel';
+import {
   INBOUND_JOB_STATUSES,
   type InboundJob,
   type InboundJobInput,
@@ -77,6 +84,14 @@ export interface InboundJobSummary {
 
 export function isInboundJobStatus(value: string | null | undefined): value is InboundJobStatus {
   return INBOUND_JOB_STATUSES.includes(value as InboundJobStatus);
+}
+
+interface InboundJobHandoffDependencies {
+  getInboundJob: typeof getInboundJob;
+  getLead: typeof getLead;
+  createLead: typeof createLead;
+  updateInboundJobHandoff: typeof updateInboundJobHandoff;
+  now: () => string;
 }
 
 export function normalizeInboundJobInput(
@@ -286,6 +301,55 @@ export async function updateInboundJob(
   return getInboundJob(db, id);
 }
 
+export async function handoffInboundJobToFunnelLead(
+  db: D1Database,
+  id: string,
+  options: AbundanceLeadInputOptions = {},
+  dependencies: InboundJobHandoffDependencies = {
+    getInboundJob,
+    getLead,
+    createLead,
+    updateInboundJobHandoff,
+    now: () => new Date().toISOString()
+  }
+): Promise<{ job: InboundJob; lead: Lead; created: boolean } | null> {
+  const job = await dependencies.getInboundJob(db, id);
+  if (!job) {
+    return null;
+  }
+
+  if (job.status !== 'qualified') {
+    throw new TypeError('Only qualified inbound jobs can be handed off to the funnel');
+  }
+
+  if (job.funnel_lead_id) {
+    const existingLead = await dependencies.getLead(db, job.funnel_lead_id);
+    if (existingLead) {
+      return { job, lead: existingLead, created: false };
+    }
+  }
+
+  const handedOffAt = dependencies.now();
+  const lead = await dependencies.createLead(
+    db,
+    buildAbundanceLeadInputFromInboundJob(job, {
+      ...options,
+      handed_off_at: handedOffAt
+    })
+  );
+
+  const updatedJob = await dependencies.updateInboundJobHandoff(db, id, {
+    funnel_lead_id: lead.id,
+    funnel_handoff_at: handedOffAt
+  });
+
+  if (!updatedJob) {
+    throw new Error('Failed to update inbound job handoff state');
+  }
+
+  return { job: updatedJob, lead, created: true };
+}
+
 export async function listInboundJobs(
   db: D1Database,
   options: InboundJobListOptions = {}
@@ -418,6 +482,8 @@ export function toInboundJobsCsv(jobs: InboundJob[]): string {
     'job_url',
     'status',
     'dedupe_key',
+    'funnel_lead_id',
+    'funnel_handoff_at',
     'seen_count',
     'ingested_at',
     'last_seen_at',
@@ -442,6 +508,8 @@ export function toInboundJobsCsv(jobs: InboundJob[]): string {
         job.job_url ?? '',
         job.status,
         job.dedupe_key,
+        job.funnel_lead_id ?? '',
+        job.funnel_handoff_at ?? '',
         job.seen_count,
         job.ingested_at,
         job.last_seen_at,
@@ -466,6 +534,25 @@ async function getInboundJobByDedupeKey(
     .bind(dedupeKey)
     .first<InboundJobRow>();
   return mapInboundJob(row);
+}
+
+async function updateInboundJobHandoff(
+  db: D1Database,
+  id: string,
+  input: { funnel_lead_id: string; funnel_handoff_at: string }
+): Promise<InboundJob | null> {
+  await db
+    .prepare(
+      `
+			UPDATE inbound_jobs
+			SET funnel_lead_id = ?, funnel_handoff_at = ?, updated_at = ?
+			WHERE id = ?
+		`
+    )
+    .bind(input.funnel_lead_id, input.funnel_handoff_at, input.funnel_handoff_at, id)
+    .run();
+
+  return getInboundJob(db, id);
 }
 
 function mapInboundJob(row: InboundJobRow | null): InboundJob | null {

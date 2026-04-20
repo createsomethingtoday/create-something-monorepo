@@ -1,7 +1,10 @@
 import type { PageServerLoad } from './$types';
 import type { FunnelSummary, Lead } from '$lib/funnel';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
-export const load: PageServerLoad = async ({ fetch }) => {
+export const load: PageServerLoad = async ({ fetch, cookies, platform }) => {
+	const operator = await requireAgencyOperator({ cookies, platform });
+
 	try {
 		// Fetch funnel summary
 		const summaryRes = await fetch('/api/funnel');
@@ -36,12 +39,14 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		const leadsData: { leads: Lead[] } = leadsRes.ok ? await leadsRes.json() : { leads: [] };
 
 		return {
+			operator_email: operator.email,
 			summary,
 			leads: leadsData.leads
 		};
 	} catch (err) {
 		console.error('Funnel load error:', err);
 		return {
+			operator_email: operator.email,
 			summary: {
 				period: { start: '', end: '' },
 				totals: {

@@ -5,7 +5,14 @@
  */
 
 export type FunnelStage = 'awareness' | 'consideration' | 'decision' | 'won' | 'lost';
-export type LeadSource = 'linkedin' | 'website' | 'referral' | 'cold' | 'event' | 'other';
+export type LeadSource =
+	| 'linkedin'
+	| 'website'
+	| 'referral'
+	| 'cold'
+	| 'event'
+	| 'other'
+	| 'abundance';
 
 export interface FunnelMetrics {
 	id: string;

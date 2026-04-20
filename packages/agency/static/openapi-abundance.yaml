@@ -1095,6 +1095,13 @@ components:
         notes:
           type: string
           nullable: true
+        funnel_lead_id:
+          type: string
+          nullable: true
+        funnel_handoff_at:
+          type: string
+          format: date-time
+          nullable: true
         seen_count:
           type: integer
         ingested_at:
