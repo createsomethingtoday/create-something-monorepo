@@ -388,6 +388,107 @@ test('listAssetQueueDetailed selects the reviewer-assigned version for my_queue'
   assert.equal(queue.items[0]?.isAssignedToCurrentReviewer, true);
 });
 
+test('listAssetQueueDetailed batches version hydration across queue assets', async () => {
+  const versionUrls: URL[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_asset_alpha',
+              createdTime: '2026-03-12T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Alpha',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-12T12:00:00.000Z',
+              },
+            },
+            {
+              id: 'rec_asset_bravo',
+              createdTime: '2026-03-11T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Bravo',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-11T12:00:00.000Z',
+              },
+            },
+            {
+              id: 'rec_asset_charlie',
+              createdTime: '2026-03-10T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Charlie',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-10T12:00:00.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        versionUrls.push(url);
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_alpha_v1',
+              createdTime: '2026-03-12T01:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_alpha',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 1,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: null,
+              },
+            },
+            {
+              id: 'rec_bravo_v1',
+              createdTime: '2026-03-11T01:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_bravo',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 1,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: null,
+              },
+            },
+            {
+              id: 'rec_charlie_v1',
+              createdTime: '2026-03-10T01:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_charlie',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 1,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: null,
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const queue = await client.listAssetQueueDetailed({
+    currentReviewer: ericReviewer,
+  });
+
+  assert.equal(versionUrls.length, 1);
+  const versionFormula = versionUrls[0]?.searchParams.get('filterByFormula') ?? '';
+  assert.match(versionFormula, /rec_asset_alpha/);
+  assert.match(versionFormula, /rec_asset_bravo/);
+  assert.match(versionFormula, /rec_asset_charlie/);
+  assert.deepEqual(
+    queue.items.map((item) => item.assignableVersionId),
+    ['rec_alpha_v1', 'rec_bravo_v1', 'rec_charlie_v1'],
+  );
+});
+
 test('listMyQueueDetailed reads reviewer-owned versions directly and hydrates only matching assets', async () => {
   const client = new AirtableClient({
     apiKey: 'test',

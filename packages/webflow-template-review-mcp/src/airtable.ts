@@ -272,6 +272,8 @@ const QUEUE_VERSION_FIELD_NAMES = [
   CONFIRMED_VERSION_FIELDS.decisionDate,
 ] as const;
 
+const QUEUE_VERSION_ASSET_BATCH_SIZE = 10;
+
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
 }
@@ -501,6 +503,12 @@ function recordIdsFormula(ids: string[]): string {
   return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
 }
 
+function fieldValueAnyFormula(fieldName: string, values: string[]): string {
+  if (values.length === 0) return 'FALSE()';
+  const clauses = values.map((value) => `{${fieldName}} = '${escapeFormulaValue(value)}'`);
+  return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
+}
+
 function reviewerLookupFormula(fieldName: string, reviewer: CollaboratorRef): string {
   const identifiers = [...new Set([reviewer.id, reviewer.email, reviewer.name].filter((value): value is string => Boolean(value?.trim())))];
   if (identifiers.length === 0) {
@@ -556,6 +564,19 @@ function sortQueueItems(items: TemplateReviewQueueItem[], sort: TemplateReviewQu
     }
   });
   return cloned;
+}
+
+function sortVersionsForQueue(versions: TemplateReviewVersion[]): TemplateReviewVersion[] {
+  return [...versions].sort((left, right) => {
+    const leftVersion = left.versionNumber ?? Number.NEGATIVE_INFINITY;
+    const rightVersion = right.versionNumber ?? Number.NEGATIVE_INFINITY;
+    if (leftVersion !== rightVersion) return rightVersion - leftVersion;
+
+    const createdDiff = compareIsoDates(right.createdAt, left.createdAt);
+    if (createdDiff !== 0) return createdDiff;
+
+    return compareIsoDates(right.decisionDate, left.decisionDate);
+  });
 }
 
 function mapVersion(record: AirtableRecord): TemplateReviewVersion {
@@ -759,6 +780,7 @@ export class AirtableClient {
   ): Promise<TemplateReviewAsset[]> {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
+      fieldNames: [...QUEUE_ASSET_FIELD_NAMES],
       limit,
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
       sortField: options?.sortField,
@@ -778,13 +800,15 @@ export class AirtableClient {
       sortField: airtableSort.field,
       sortDirection: airtableSort.direction,
     });
-    const items = await Promise.all(
-      assets.map(async (asset) => {
-        const versions = await this.listVersionsForAsset(asset.assetId, 25);
-        const selectedVersion = selectQueueVersion(asset, versions, query);
-        return toQueueItem(asset, selectedVersion, query);
-      }),
+    const versionsByAsset = await this.listVersionsForAssets(
+      assets.map((asset) => asset.assetId),
+      25,
     );
+    const items = assets.map((asset) => {
+      const versions = versionsByAsset.get(asset.assetId) ?? [];
+      const selectedVersion = selectQueueVersion(asset, versions, query);
+      return toQueueItem(asset, selectedVersion, query);
+    });
 
     const filtered = items.filter((item) => queueItemMatchesQuery(item, query));
 
@@ -792,6 +816,41 @@ export class AirtableClient {
       sortApplied: sort,
       items: sortQueueItems(filtered, sort),
     };
+  }
+
+  private async listVersionsForAssets(
+    assetIds: string[],
+    perAssetLimit = 25,
+  ): Promise<Map<string, TemplateReviewVersion[]>> {
+    const uniqueAssetIds = [...new Set(assetIds.filter(Boolean))];
+    if (uniqueAssetIds.length === 0) return new Map();
+
+    const requestedAssetIds = new Set(uniqueAssetIds);
+    const recordGroups = await Promise.all(
+      chunkArray(uniqueAssetIds, QUEUE_VERSION_ASSET_BATCH_SIZE).map((chunk) =>
+        this.listRecords({
+          tableId: TABLE_IDS.assetVersions,
+          fieldNames: [...QUEUE_VERSION_FIELD_NAMES],
+          filterByFormula: fieldValueAnyFormula(CONFIRMED_VERSION_FIELDS.assetRecordId, chunk),
+        }),
+      ),
+    );
+
+    const versionsByAsset = new Map<string, TemplateReviewVersion[]>();
+    for (const record of recordGroups.flat()) {
+      const version = mapVersion(record);
+      if (!version.assetId || !requestedAssetIds.has(version.assetId)) continue;
+
+      const assetVersions = versionsByAsset.get(version.assetId) ?? [];
+      assetVersions.push(version);
+      versionsByAsset.set(version.assetId, assetVersions);
+    }
+
+    for (const [assetId, versions] of versionsByAsset) {
+      versionsByAsset.set(assetId, sortVersionsForQueue(versions).slice(0, perAssetLimit));
+    }
+
+    return versionsByAsset;
   }
 
   private async listAssetsByIds(assetIds: string[]): Promise<Map<string, TemplateReviewAsset>> {
@@ -1050,12 +1109,11 @@ export class AirtableClient {
     const formula = `{${CONFIRMED_VERSION_FIELDS.assetRecordId}} = '${escapeFormulaValue(assetId)}'`;
     const records = await this.listRecords({
       tableId: TABLE_IDS.assetVersions,
+      fieldNames: [...QUEUE_VERSION_FIELD_NAMES],
       limit,
       filterByFormula: formula,
     });
-    return records
-      .map((record) => mapVersion(record))
-      .sort((a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0));
+    return sortVersionsForQueue(records.map((record) => mapVersion(record)));
   }
 
   async listVersionsForAgentFeedback(query: AgentFeedbackQueueQuery = {}): Promise<TemplateReviewVersion[]> {

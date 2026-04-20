@@ -183,6 +183,43 @@ Low-context intent pattern (recommended for small allowlisted workflows):
 1. Resolve route via `hub_route_intent`
 2. Execute directly via `hub_run_intent` (or pass returned `proxyToolName` into `hub_execute_proxy_tool`)
 
+### Execution Contract
+
+`hub_describe_proxy_tool` now returns an `executionContract` alongside the input schema. The contract includes:
+
+- `executionEnvelope`: always `"args"` — downstream tool inputs belong inside the nested `args` object
+- `minimalExample`: a ready-to-use `hub_execute_proxy_tool` call with only required fields
+- `fullExample`: a complete call with all fields
+
+Canonical call shape:
+
+```json
+{
+  "proxyToolName": "<server>__<tool>",
+  "args": {
+    "<downstream_field_1>": "<value>",
+    "<downstream_field_2>": "<value>"
+  }
+}
+```
+
+**Do not** flatten downstream tool fields beside `proxyToolName`. The Hub rejects this with a shape-aware error:
+
+```
+Downstream inputs for "<tool>" must be nested under "args".
+Unexpected top-level fields: <field1>, <field2>.
+```
+
+The error response includes the `executionContract` with corrected examples so hosts can retry without re-describing the tool.
+
+### Common Mistakes
+
+| Mistake | Symptom | Fix |
+|---------|---------|-----|
+| Downstream fields beside `proxyToolName` | "must be nested under args" error | Move fields into `args: { ... }` |
+| `args` is a string instead of object | "args must be an object" error | Parse or construct a proper object |
+| Display labels instead of enum values | Downstream validation error | Use normalized values like `ready_to_review` |
+
 ## Telemetry
 
 `cs-mcp-hub-remote` writes hub-level records into `cs-telemetry` (`mcp_tool_invocations` and `mcp_run_counts`) via `TELEMETRY_DB`.
@@ -266,14 +303,15 @@ After deploy, validate:
 1. `hub_status` reports expected connected servers and proxy tool count.
 2. `tools/list` contains only management tools.
 3. `hub_search_proxy_tools` returns discovery-scoped results.
-4. `hub_describe_proxy_tool` returns input schema for a searchable tool.
-5. `hub_execute_proxy_tool` succeeds for at least one known route.
-6. Direct call to `<server>__<tool>` returns broker-only guidance error.
-7. `hub_trace_lookup` shows both hub and routed downstream telemetry rows for broker calls.
-8. Hub OAuth discovery endpoints resolve successfully from the custom domain.
-9. OAuth token exchange yields a managed bearer token that the resolver accepts at `/mcp`.
-10. Notion, ChatGPT, or another OAuth-capable host can complete MCP connection setup end-to-end.
-11. Revoking or regenerating the managed bearer token immediately breaks and then restores host access as expected.
+4. `hub_describe_proxy_tool` returns input schema and `executionContract` for a searchable tool.
+5. `hub_execute_proxy_tool` succeeds for at least one known route with downstream inputs inside `args`.
+6. `hub_execute_proxy_tool` returns a shape-aware error when downstream fields are placed beside `proxyToolName`.
+7. Direct call to `<server>__<tool>` returns broker-only guidance error.
+8. `hub_trace_lookup` shows both hub and routed downstream telemetry rows for broker calls.
+9. Hub OAuth discovery endpoints resolve successfully from the custom domain.
+10. OAuth token exchange yields a managed bearer token that the resolver accepts at `/mcp`.
+11. Notion, ChatGPT, or another OAuth-capable host can complete MCP connection setup end-to-end.
+12. Revoking or regenerating the managed bearer token immediately breaks and then restores host access as expected.
 
 ## Fleet E2E Verification
 

@@ -94,7 +94,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
     'template-review-reviewer-workflow',
     'template-review://reviewer-workflow',
     {
-      description: 'Recommended reviewer workflow for locating and self-assigning a reviewable template version.',
+      description: 'Recommended reviewer workflow for locating, analyzing, and self-assigning a reviewable template version.',
       mimeType: 'application/json',
     },
     async (uri: URL) =>
@@ -102,8 +102,11 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
         steps: [
           'Call template_review_list_queue with no filters for the default ready_to_review + unassigned + submittedDate_desc queue.',
           'Pick a queue row and use assignableVersionId as the assignment target.',
-          'Call template_review_assign_self with that version_id.',
           'Call template_review_get_review_context with the same version_id.',
+          'If automated analysis is needed through a Hub, call hub_execute_proxy_tool with proxyToolName="webflow-site-analyzer-mcp__enqueue_template_review" and put previewUrl + publishedUrl inside the nested args object.',
+          'Map previewSiteUrl -> previewUrl and websiteUrl -> publishedUrl when enqueueing analyzer jobs from a queue row.',
+          'Poll hub_execute_proxy_tool with proxyToolName="webflow-site-analyzer-mcp__get_template_review_job" until the analyzer job reaches a terminal status.',
+          'Call template_review_assign_self with that version_id.',
           'Use template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes for narrow reviewer-safe writes while the version remains assigned to the current reviewer.',
           'Call template_review_my_queue to resume work already assigned to the current reviewer.',
           'Call template_review_unassign_self if the reviewer intentionally wants to release the version back to the shared queue.',
@@ -111,6 +114,11 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
         notes: {
           assignmentTarget: 'Asset Version',
           queuePrimaryAction: 'assign_self',
+          analyzerBrokerEnvelope: 'hub_execute_proxy_tool.arguments.args',
+          analyzerFieldMapping: {
+            previewSiteUrl: 'previewUrl',
+            websiteUrl: 'publishedUrl',
+          },
           reviewerSafeWrites: [
             'template_review_set_review_status',
             'template_review_save_draft_feedback',
@@ -129,6 +137,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           failureModes: [
             'If reviewer identity is unavailable, self-assignment and my_queue should fail closed.',
             'If a version is assigned to another reviewer, hosts should not offer unassign_self.',
+            'If a host flattens analyzer inputs beside proxyToolName, the Hub should reject the call and the host should retry with nested args.',
           ],
         },
       }),
@@ -138,12 +147,12 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
     'template-review-host-playbook',
     'template-review://host-playbook',
     {
-      description: 'Host-neutral playbook for driving the reviewer workflow without Airtable-specific prompt logic.',
+      description: 'Host-neutral playbook for driving the reviewer and analyzer workflow without Airtable-specific prompt logic.',
       mimeType: 'application/json',
     },
     async (uri: URL) =>
       asJsonResource(uri, {
-        intent: 'Enable any MCP host to drive the reviewer workflow with minimal prompt logic.',
+        intent: 'Enable any MCP host to drive the reviewer workflow with minimal prompt logic, including the handoff to the analyzer service.',
         recommendedSequence: [
           {
             step: 'queue',
@@ -162,6 +171,28 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             tool: 'template_review_get_review_context',
             args: { version_id: '<assignableVersionId>' },
             expectation: 'Read reviewer-facing fields from data.context.',
+          },
+          {
+            step: 'analyze',
+            tool: 'hub_execute_proxy_tool',
+            args: {
+              proxyToolName: 'webflow-site-analyzer-mcp__enqueue_template_review',
+              args: {
+                previewUrl: '<previewSiteUrl>',
+                publishedUrl: '<websiteUrl>',
+              },
+            },
+            expectation:
+              'When the host is using a Hub, analyzer inputs must be nested under the inner args object. Use previewSiteUrl + websiteUrl from the queue row or review context.',
+          },
+          {
+            step: 'poll_analysis',
+            tool: 'hub_execute_proxy_tool',
+            args: {
+              proxyToolName: 'webflow-site-analyzer-mcp__get_template_review_job',
+              args: { jobId: '<jobId>' },
+            },
+            expectation: 'Poll the analyzer job until status is succeeded, failed, or canceled before drafting a final decision.',
           },
           {
             step: 'resume',
@@ -198,11 +229,17 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           listQueue: 'Queue rows include assignableVersionId and normalized booleans such as canAssign, canReview, canPublish, isAssignedToCurrentReviewer, and isBlockedByOtherReviewer.',
           reviewContext: 'Reviewer context is nested under data.context, not top-level data.',
           myQueue: 'Returns only versions assigned to the current reviewer.',
+          analyzerInputs:
+            'Use previewSiteUrl as previewUrl and websiteUrl as publishedUrl when enqueueing analyzer runs from a queue row.',
+          analyzerBrokerShape:
+            'For hub_execute_proxy_tool, downstream analyzer inputs belong inside arguments.args, not beside proxyToolName.',
         },
         promptTemplate: [
           'When helping a reviewer, start with template_review_list_queue unless they explicitly ask for their assigned work.',
           'If they want their current workload, use template_review_my_queue.',
           'When a queue row is chosen, use assignableVersionId rather than assetId for write actions.',
+          'For analyzer work on a Hub, search or describe the visible webflow-site-analyzer-mcp proxy tool first, then call hub_execute_proxy_tool with proxyToolName plus nested args.',
+          'Use previewSiteUrl and websiteUrl from queue rows as previewUrl and publishedUrl for analyzer jobs.',
           'Treat template_review_assign_self, template_review_unassign_self, template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes as the primary reviewer-safe write lane.',
           'Never ask the reviewer for an Airtable collaborator id.',
           'Do not offer broad mutation tools that are not visible in reviewer discovery.',
@@ -211,6 +248,8 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Do not treat assetId as the write target for assignment tools.',
           'Do not read currentReviewer from top-level data when using template_review_get_review_context.',
           'Do not infer assignment ownership from raw Airtable fields when normalized booleans are available.',
+          'Do not pass display labels like "Ready for Review" when a tool schema expects the normalized enum "ready_to_review".',
+          'Do not flatten previewUrl or publishedUrl beside proxyToolName when calling hub_execute_proxy_tool.',
         ],
       }),
   );

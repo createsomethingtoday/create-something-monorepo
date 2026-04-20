@@ -71,6 +71,30 @@ Example:
 Routing aliases can also be defined in `routing.json` to map one logical tool
 to multiple provider candidates (ordered failover).
 
+## Execution Contract
+
+The remote hub enforces a strict execution envelope for brokered tool calls.
+Downstream tool inputs must be nested inside the `args` object when calling
+`hub_execute_proxy_tool`:
+
+```json
+{
+  "proxyToolName": "<server>__<tool>",
+  "args": {
+    "<field>": "<value>"
+  }
+}
+```
+
+`hub_describe_proxy_tool` returns an `executionContract` with minimal and
+full call examples generated from the downstream tool's input schema. Hosts
+should use this contract to construct calls rather than inferring the
+envelope shape.
+
+If downstream fields are placed beside `proxyToolName` instead of inside
+`args`, the hub rejects the call with a shape-aware error that includes the
+correct contract for retry.
+
 ## Tenant + Provider Routing
 
 The hub now supports tenant-scoped exposure and provider failover without

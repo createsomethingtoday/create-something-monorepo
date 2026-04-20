@@ -466,7 +466,7 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   {
     name: 'hub_describe_proxy_tool',
     description:
-      'Describe a visible proxy tool (schema + downstream route metadata). Use after hub_search_proxy_tools when you need argument shape before hub_execute_proxy_tool.',
+      'Describe a visible proxy tool (schema + downstream route metadata + canonical execution contract). Use after hub_search_proxy_tools when you need argument shape before hub_execute_proxy_tool.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -517,18 +517,30 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   {
     name: 'hub_execute_proxy_tool',
     description:
-      'Execute a visible proxy tool by name with provided args. This is the canonical way to run downstream tools when direct proxy tools are disabled, including auth and reconnect tools like __connection_status and __get_connect_link.',
+      'Execute a visible proxy tool by name. Put downstream tool inputs inside the nested args object, not beside proxyToolName. This is the canonical way to run downstream tools when direct proxy tools are disabled, including auth and reconnect tools like __connection_status and __get_connect_link.',
     inputSchema: {
       type: 'object',
       properties: {
-        proxyToolName: { type: 'string' },
+        proxyToolName: {
+          type: 'string',
+          description: 'Visible proxy tool name returned by hub_search_proxy_tools or hub_describe_proxy_tool.',
+        },
         args: {
           type: 'object',
           additionalProperties: true,
+          description: 'Downstream tool inputs. Put the proxied tool fields here, not at top level.',
         },
       },
       required: ['proxyToolName'],
       additionalProperties: false,
+      examples: [
+        {
+          proxyToolName: 'example-server__example_tool',
+          args: {
+            requiredField: '<value>',
+          },
+        },
+      ],
     },
     _meta: {
       ui: {
@@ -1739,6 +1751,11 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           downstreamToolName: route.downstreamToolName,
           description: definition.description ?? '',
           inputSchema: definition.inputSchema ?? { type: 'object', properties: {} },
+          executionEnvelope: 'args',
+          executionContract: buildProxyToolExecutionContract(
+            proxyToolName,
+            definition.inputSchema ?? { type: 'object', properties: {} },
+          ),
           visible: true,
         });
         await recordHubInvocationWithCtx({
@@ -1917,9 +1934,47 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           return errorResult;
         }
 
+        const unexpectedTopLevelExecutionFields = Object.keys(args).filter(
+          (key) => key !== 'proxyToolName' && key !== 'args',
+        );
+        if (unexpectedTopLevelExecutionFields.length > 0) {
+          const message =
+            `Downstream inputs for "${proxyToolName}" must be nested under "args". ` +
+            `Unexpected top-level fields: ${unexpectedTopLevelExecutionFields.join(', ')}.`;
+          const errorResult = toErrorResult(message, {
+            expected_execution_envelope: 'args',
+            unexpected_top_level_fields: unexpectedTopLevelExecutionFields,
+            executionContract: buildProxyToolExecutionContract(
+              proxyToolName,
+              match.definition?.inputSchema ?? { type: 'object', properties: {} },
+            ),
+          });
+          await recordHubInvocationWithCtx({
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'management',
+              operation: 'execute_proxy_tool',
+              proxyToolName,
+              unexpectedTopLevelExecutionFields,
+            },
+          });
+          return errorResult;
+        }
+
         if (args.args !== undefined && !isRecord(args.args)) {
           const message = '"args" must be an object';
-          const errorResult = toErrorResult(message);
+          const errorResult = toErrorResult(message, {
+            expected_execution_envelope: 'args',
+            executionContract: buildProxyToolExecutionContract(
+              proxyToolName,
+              match.definition?.inputSchema ?? { type: 'object', properties: {} },
+            ),
+          });
           await recordHubInvocationWithCtx({
             accountId,
             toolName,
@@ -4378,6 +4433,102 @@ function toErrorResult(message: string, structuredContent?: Record<string, unkno
   return result;
 }
 
+function buildProxyToolExecutionContract(proxyToolName: string, inputSchema: unknown): Record<string, unknown> {
+  return {
+    entrypoint: 'hub_execute_proxy_tool',
+    executionEnvelope: 'args',
+    downstreamInputField: 'args',
+    note: 'Call hub_execute_proxy_tool with proxyToolName plus downstream tool inputs nested under args.',
+    minimalExample: {
+      name: 'hub_execute_proxy_tool',
+      arguments: {
+        proxyToolName,
+        args: buildSchemaExample(inputSchema, 'minimal'),
+      },
+    },
+    fullExample: {
+      name: 'hub_execute_proxy_tool',
+      arguments: {
+        proxyToolName,
+        args: buildSchemaExample(inputSchema, 'full'),
+      },
+    },
+  };
+}
+
+function buildSchemaExample(inputSchema: unknown, mode: 'minimal' | 'full'): Record<string, unknown> {
+  const schema = asRecord(inputSchema);
+  const properties = asRecord(schema?.properties);
+  if (!properties) {
+    return {};
+  }
+
+  const required = new Set(
+    Array.isArray(schema?.required) ? schema.required.filter((value): value is string => typeof value === 'string') : [],
+  );
+  const example: Record<string, unknown> = {};
+  for (const [key, rawPropertySchema] of Object.entries(properties)) {
+    if (mode === 'minimal' && !required.has(key)) {
+      continue;
+    }
+    const propertySchema = asRecord(rawPropertySchema);
+    example[key] = buildExampleValue(key, propertySchema);
+  }
+  return example;
+}
+
+function buildExampleValue(key: string, propertySchema: Record<string, unknown> | null): unknown {
+  if (!propertySchema) {
+    return `<${key}>`;
+  }
+
+  const enumValues = Array.isArray(propertySchema.enum) ? propertySchema.enum : null;
+  if (enumValues && enumValues.length > 0) {
+    return enumValues[0];
+  }
+
+  if (propertySchema.example !== undefined) {
+    return propertySchema.example;
+  }
+
+  const examples = Array.isArray(propertySchema.examples) ? propertySchema.examples : null;
+  if (examples && examples.length > 0) {
+    return examples[0];
+  }
+
+  if (propertySchema.default !== undefined) {
+    return propertySchema.default;
+  }
+
+  const type = typeof propertySchema.type === 'string' ? propertySchema.type : null;
+  if (type === 'string') {
+    if (key.toLowerCase().includes('url')) {
+      return 'https://example.com/';
+    }
+    return `<${key}>`;
+  }
+
+  if (type === 'number' || type === 'integer') {
+    const minimum = typeof propertySchema.minimum === 'number' ? propertySchema.minimum : null;
+    return minimum ?? 1;
+  }
+
+  if (type === 'boolean') {
+    return false;
+  }
+
+  if (type === 'array') {
+    const itemSchema = asRecord(propertySchema.items);
+    return [buildExampleValue(`${key}Item`, itemSchema)];
+  }
+
+  if (type === 'object') {
+    return buildSchemaExample(propertySchema, 'full');
+  }
+
+  return `<${key}>`;
+}
+
 function buildHubOverviewHtml(params: {
   runtime: HubRuntime;
   rateLimitPolicy: RateLimitPolicy;
@@ -4442,7 +4593,7 @@ function buildHubAuthWorkflowHtml(): string {
     'List services with hub_list_services and choose the target service first.',
     'Search for the right proxy tool with hub_search_proxy_tools and pass serverName whenever known.',
     'Describe it with hub_describe_proxy_tool if you need the exact schema.',
-    'Execute it with hub_execute_proxy_tool using proxyToolName + args.',
+    'Execute it with hub_execute_proxy_tool using { proxyToolName, args: { ...downstream tool inputs } }.',
   ];
   const discoveryAdminSequence = [
     'For shared hubs, treat named discovery packs as the default managed baseline.',
@@ -4462,6 +4613,7 @@ function buildHubAuthWorkflowHtml(): string {
   ];
   const reminders = [
     'Direct proxy tools may be disabled even when they exist in the catalog.',
+    'Do not flatten downstream tool fields beside proxyToolName when calling hub_execute_proxy_tool.',
     'When the hub returns a connect link, present it to the user instead of continuing silently.',
     'Treat auth config missing errors as deployment/configuration issues, not user errors.',
   ];

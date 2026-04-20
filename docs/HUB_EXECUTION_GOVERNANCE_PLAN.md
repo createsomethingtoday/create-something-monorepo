@@ -51,6 +51,22 @@ Required context:
 
 The Hub should fail closed when required context is missing for protected remote execution.
 
+### 1b. Validate execution envelope
+
+For `hub_execute_proxy_tool`, verify that downstream tool inputs are nested
+inside the `args` object before any routing or authorization.
+
+Current preflight checks (implemented):
+
+- Reject calls where downstream fields appear beside `proxyToolName` instead
+  of inside `args`. Return a shape-aware error with the `executionContract`
+  so the host can retry.
+- Reject calls where `args` is not an object.
+
+Both error responses include the canonical `executionContract` generated from
+the downstream tool's input schema so hosts can self-correct without
+re-describing the tool.
+
 ### 2. Classify route
 
 Use route classification to determine:
