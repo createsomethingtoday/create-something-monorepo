@@ -1,9 +1,20 @@
 /**
  * Layout Server Loader - Agency
  *
- * Uses shared loader from @create-something/canon/auth
+ * Passes authenticated user and Clerk public config to the client.
+ * Authentication is handled in hooks.server.ts via Clerk.
  */
 
-import { createLayoutServerLoader } from '@create-something/canon/auth';
+import type { LayoutServerLoad } from './$types';
 
-export const load = createLayoutServerLoader({ property: 'agency' });
+export const load: LayoutServerLoad = async ({ url, locals, platform }) => {
+	return {
+		pathname: url.pathname,
+		user: locals.user ?? null,
+		publicConfig: {
+			clerkPublishableKey:
+				(platform?.env as Record<string, string | undefined> | undefined)
+					?.CLERK_PUBLISHABLE_KEY || null,
+		},
+	};
+};

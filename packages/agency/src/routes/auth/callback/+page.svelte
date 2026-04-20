@@ -1,17 +1,16 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	// This page handles the redirect from magic link verification.
 </script>
 
 <SEO
-	title="Signing In"
-	description="Completing your Auth0 sign-in"
+	title="Redirecting"
+	description="Redirecting to sign-in"
 	propertyName="agency"
 	noindex={true}
 />
 
 <div class="callback-container">
-	<p>Completing your sign-in...</p>
+	<p>Redirecting to sign-in…</p>
 </div>
 
 <style>

@@ -42,6 +42,8 @@
 		"wrangler": "4.64.0"
 	},
 	"dependencies": {
+		"@clerk/backend": "^2.18.0",
+		"@clerk/clerk-js": "^5.57.1",
 		"@composio/core": "^0.6.4",
 		"@create-something/canon": "workspace:*",
 		"@create-something/mcp-authz": "workspace:*",

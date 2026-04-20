@@ -157,7 +157,7 @@
 					</label>
 					<label>
 						<span>Auth Subject</span>
-						<input bind:value={form.auth_subject} placeholder="auth0|..." />
+						<input bind:value={form.auth_subject} placeholder="user_..." />
 					</label>
 					<label>
 						<span>Email</span>
