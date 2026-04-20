@@ -244,6 +244,7 @@ export function buildAbundanceLeadInputFromInboundJob(
 		source_detail: [
 			'Abundance inbound job',
 			job.source_system ?? null,
+			job.specialty ?? null,
 			job.source_agents.length > 0 ? job.source_agents.join(', ') : null
 		]
 			.filter(Boolean)
@@ -266,7 +267,17 @@ export function buildAbundanceLeadNotes(
 		`Inbound job ID: ${job.id}`,
 		`Title: ${job.title}`,
 		job.employer ? `Employer: ${job.employer}` : null,
+		job.facility_name ? `Facility: ${job.facility_name}` : null,
 		job.location ? `Location: ${job.location}` : null,
+		job.category ? `Category: ${job.category}` : null,
+		job.specialty ? `Specialty: ${job.specialty}` : null,
+		job.pay_min != null || job.pay_max != null
+			? `Compensation: ${formatInboundJobPay(job)}`
+			: null,
+		job.shift ? `Shift: ${job.shift}` : null,
+		job.duration_weeks ? `Duration: ${job.duration_weeks} weeks` : null,
+		job.start_date ? `Start date: ${job.start_date}` : null,
+		job.openings != null ? `Openings: ${job.openings}` : null,
 		job.job_url ? `Posting URL: ${job.job_url}` : null,
 		job.external_job_id ? `External job ID: ${job.external_job_id}` : null,
 		job.source_system ? `Source system: ${job.source_system}` : null,
@@ -279,6 +290,18 @@ export function buildAbundanceLeadNotes(
 	];
 
 	return lines.filter(Boolean).join('\n');
+}
+
+function formatInboundJobPay(job: InboundJob): string {
+	const amount = [job.pay_min, job.pay_max]
+		.filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+		.map((value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value));
+
+	if (amount.length === 2 && amount[0] !== amount[1]) {
+		return `${amount[0]}-${amount[1]}${job.pay_period ? ` / ${job.pay_period}` : ''}`;
+	}
+
+	return `${amount[0] ?? amount[1] ?? 'Not set'}${job.pay_period ? ` / ${job.pay_period}` : ''}`;
 }
 
 function normalizeRequiredString(value: string | null | undefined, fieldName: string): string {

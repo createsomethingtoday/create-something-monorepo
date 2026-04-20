@@ -44,6 +44,18 @@ interface NormalizedInboundJobInput {
   employer: string | null;
   location: string | null;
   title: string;
+  category: string | null;
+  specialty: string | null;
+  facility_name: string | null;
+  employment_type: string | null;
+  pay_min: number | null;
+  pay_max: number | null;
+  pay_period: string | null;
+  shift: string | null;
+  duration_weeks: number | null;
+  start_date: string | null;
+  openings: number | null;
+  source_posted_at: string | null;
   status: InboundJobStatus;
   dedupe_key: string;
   raw_payload: string;
@@ -113,6 +125,18 @@ export function normalizeInboundJobInput(
     employer: normalizeNullableString(input.employer),
     location: normalizeNullableString(input.location),
     title,
+    category: normalizeNullableString(input.category),
+    specialty: normalizeNullableString(input.specialty),
+    facility_name: normalizeNullableString(input.facility_name),
+    employment_type: normalizeNullableString(input.employment_type),
+    pay_min: normalizeNullableNumber(input.pay_min),
+    pay_max: normalizeNullableNumber(input.pay_max),
+    pay_period: normalizeNullableString(input.pay_period)?.toLowerCase() ?? null,
+    shift: normalizeNullableString(input.shift),
+    duration_weeks: normalizeNullableInteger(input.duration_weeks),
+    start_date: normalizeNullableDateString(input.start_date),
+    openings: normalizeNullableInteger(input.openings),
+    source_posted_at: normalizeNullableDateString(input.source_posted_at),
     status,
     dedupe_key: '',
     raw_payload,
@@ -177,6 +201,18 @@ export async function ingestInboundJob(
 				    job_url = COALESCE(job_url, ?),
 				    employer = COALESCE(employer, ?),
 				    location = COALESCE(location, ?),
+				    category = COALESCE(category, ?),
+				    specialty = COALESCE(specialty, ?),
+				    facility_name = COALESCE(facility_name, ?),
+				    employment_type = COALESCE(employment_type, ?),
+				    pay_min = COALESCE(pay_min, ?),
+				    pay_max = COALESCE(pay_max, ?),
+				    pay_period = COALESCE(pay_period, ?),
+				    shift = COALESCE(shift, ?),
+				    duration_weeks = COALESCE(duration_weeks, ?),
+				    start_date = COALESCE(start_date, ?),
+				    openings = COALESCE(openings, ?),
+				    source_posted_at = COALESCE(source_posted_at, ?),
 				    last_seen_at = ?,
 				    seen_count = seen_count + 1,
 				    raw_payload = ?,
@@ -192,6 +228,18 @@ export async function ingestInboundJob(
         normalized.job_url,
         normalized.employer,
         normalized.location,
+        normalized.category,
+        normalized.specialty,
+        normalized.facility_name,
+        normalized.employment_type,
+        normalized.pay_min,
+        normalized.pay_max,
+        normalized.pay_period,
+        normalized.shift,
+        normalized.duration_weeks,
+        normalized.start_date,
+        normalized.openings,
+        normalized.source_posted_at,
         now,
         normalized.raw_payload,
         now,
@@ -223,6 +271,18 @@ export async function ingestInboundJob(
 				employer,
 				location,
 				title,
+				category,
+				specialty,
+				facility_name,
+				employment_type,
+				pay_min,
+				pay_max,
+				pay_period,
+				shift,
+				duration_weeks,
+				start_date,
+				openings,
+				source_posted_at,
 				status,
 				dedupe_key,
 				raw_payload,
@@ -231,7 +291,7 @@ export async function ingestInboundJob(
 				ingested_at,
 				last_seen_at,
 				updated_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
 		`
     )
     .bind(
@@ -245,6 +305,18 @@ export async function ingestInboundJob(
       normalized.employer,
       normalized.location,
       normalized.title,
+      normalized.category,
+      normalized.specialty,
+      normalized.facility_name,
+      normalized.employment_type,
+      normalized.pay_min,
+      normalized.pay_max,
+      normalized.pay_period,
+      normalized.shift,
+      normalized.duration_weeks,
+      normalized.start_date,
+      normalized.openings,
+      normalized.source_posted_at,
       normalized.status,
       normalized.dedupe_key,
       normalized.raw_payload,
@@ -380,12 +452,15 @@ export async function listInboundJobs(
 				title LIKE ? ESCAPE '\\'
 				OR IFNULL(employer, '') LIKE ? ESCAPE '\\'
 				OR IFNULL(location, '') LIKE ? ESCAPE '\\'
+				OR IFNULL(category, '') LIKE ? ESCAPE '\\'
+				OR IFNULL(specialty, '') LIKE ? ESCAPE '\\'
+				OR IFNULL(facility_name, '') LIKE ? ESCAPE '\\'
 				OR dedupe_key LIKE ? ESCAPE '\\'
 				OR IFNULL(job_url, '') LIKE ? ESCAPE '\\'
 				OR IFNULL(notes, '') LIKE ? ESCAPE '\\'
 			)
 		`;
-    params.push(like, like, like, like, like, like);
+    params.push(like, like, like, like, like, like, like, like, like);
   }
 
   const rows = await db
@@ -478,8 +553,20 @@ export function toInboundJobsCsv(jobs: InboundJob[]): string {
     'external_job_id',
     'title',
     'employer',
+    'facility_name',
     'location',
     'job_url',
+    'category',
+    'specialty',
+    'employment_type',
+    'pay_min',
+    'pay_max',
+    'pay_period',
+    'shift',
+    'duration_weeks',
+    'start_date',
+    'openings',
+    'source_posted_at',
     'status',
     'dedupe_key',
     'funnel_lead_id',
@@ -504,8 +591,20 @@ export function toInboundJobsCsv(jobs: InboundJob[]): string {
         job.external_job_id ?? '',
         job.title,
         job.employer ?? '',
+        job.facility_name ?? '',
         job.location ?? '',
         job.job_url ?? '',
+        job.category ?? '',
+        job.specialty ?? '',
+        job.employment_type ?? '',
+        job.pay_min ?? '',
+        job.pay_max ?? '',
+        job.pay_period ?? '',
+        job.shift ?? '',
+        job.duration_weeks ?? '',
+        job.start_date ?? '',
+        job.openings ?? '',
+        job.source_posted_at ?? '',
         job.status,
         job.dedupe_key,
         job.funnel_lead_id ?? '',
@@ -568,7 +667,11 @@ function mapInboundJob(row: InboundJobRow | null): InboundJob | null {
       'source_agents'
     ).filter(Boolean),
     raw_payload: parseRawPayload(row.raw_payload),
-    seen_count: coerceNumber(row.seen_count) || 1
+    pay_min: coerceNullableNumber(row.pay_min),
+    pay_max: coerceNullableNumber(row.pay_max),
+    duration_weeks: coerceNullableInteger(row.duration_weeks),
+    openings: coerceNullableInteger(row.openings),
+    seen_count: coerceInteger(row.seen_count) || 1
   };
 }
 
@@ -604,6 +707,50 @@ function normalizeNullableString(value: unknown): string | null {
 
   const normalized = value.trim();
   return normalized ? normalized : null;
+}
+
+function normalizeNullableNumber(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim().replace(/[$,]/g, '');
+  if (!normalized) {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeNullableInteger(value: unknown): number | null {
+  const parsed = normalizeNullableNumber(value);
+  return parsed === null ? null : Math.trunc(parsed);
+}
+
+function normalizeNullableDateString(value: unknown): string | null {
+  const normalized = normalizeNullableString(value);
+  if (!normalized) {
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    return normalized;
+  }
+
+  if (!/[tT:]/.test(normalized)) {
+    const parsedDateOnly = new Date(normalized);
+    if (!Number.isNaN(parsedDateOnly.getTime())) {
+      return parsedDateOnly.toISOString().slice(0, 10);
+    }
+  }
+
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? normalized : parsed.toISOString();
 }
 
 function stringifyRawPayload(value: unknown): string {
@@ -661,9 +808,9 @@ function clampLimit(limit: number | undefined): number {
   return Math.max(1, Math.min(Math.floor(limit), MAX_LIMIT));
 }
 
-function coerceNumber(value: unknown): number {
+function coerceInteger(value: unknown): number {
   if (typeof value === 'number') {
-    return value;
+    return Number.isFinite(value) ? Math.trunc(value) : 0;
   }
 
   if (typeof value === 'string') {
@@ -672,6 +819,45 @@ function coerceNumber(value: unknown): number {
   }
 
   return 0;
+}
+
+function coerceNumber(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+}
+
+function coerceNullableInteger(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsed = coerceInteger(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function coerceNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
 }
 
 function escapeLike(value: string): string {

@@ -456,6 +456,30 @@ paths:
         '404':
           description: Inbound job not found
 
+  /public-jobs/import:
+    post:
+      operationId: importPublicJobs
+      summary: Import public job listings into the inbound queue
+      description: |
+        Operator-facing import endpoint for pulling public listings into the Abundance
+        intake queue. `adzuna` imports structured listings directly. `exa` performs
+        public-board discovery through the configured Composio/Exa connection.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicJobImportRequest'
+      responses:
+        '200':
+          description: Public listings imported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicJobImportResponse'
+        '400':
+          description: Validation error
+
   /match/{id}:
     get:
       operationId: getMatch
@@ -792,6 +816,31 @@ components:
           type: string
         title:
           type: string
+        category:
+          type: string
+        specialty:
+          type: string
+        facility_name:
+          type: string
+        employment_type:
+          type: string
+        pay_min:
+          type: number
+        pay_max:
+          type: number
+        pay_period:
+          type: string
+        shift:
+          type: string
+        duration_weeks:
+          type: integer
+        start_date:
+          type: string
+        openings:
+          type: integer
+        source_posted_at:
+          type: string
+          format: date-time
         status:
           type: string
           enum: [new, reviewing, qualified, rejected, archived]
@@ -865,6 +914,54 @@ components:
           type: integer
         archived_count:
           type: integer
+
+    PublicJobImportRequest:
+      type: object
+      required:
+        - source
+      properties:
+        source:
+          type: string
+          enum: [adzuna, exa]
+        query:
+          type: string
+        location:
+          type: string
+        country:
+          type: string
+        limit:
+          type: integer
+        page:
+          type: integer
+        domains:
+          type: array
+          items:
+            type: string
+
+    PublicJobImportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        source:
+          type: string
+          enum: [adzuna, exa]
+        query:
+          type: string
+        fetched:
+          type: integer
+        created:
+          type: integer
+        duplicate:
+          type: integer
+        warnings:
+          type: array
+          items:
+            type: string
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/InboundJob'
 
     SeekerResponse:
       type: object
@@ -1081,6 +1178,43 @@ components:
           nullable: true
         title:
           type: string
+        category:
+          type: string
+          nullable: true
+        specialty:
+          type: string
+          nullable: true
+        facility_name:
+          type: string
+          nullable: true
+        employment_type:
+          type: string
+          nullable: true
+        pay_min:
+          type: number
+          nullable: true
+        pay_max:
+          type: number
+          nullable: true
+        pay_period:
+          type: string
+          nullable: true
+        shift:
+          type: string
+          nullable: true
+        duration_weeks:
+          type: integer
+          nullable: true
+        start_date:
+          type: string
+          nullable: true
+        openings:
+          type: integer
+          nullable: true
+        source_posted_at:
+          type: string
+          format: date-time
+          nullable: true
         status:
           type: string
           enum: [new, reviewing, qualified, rejected, archived]

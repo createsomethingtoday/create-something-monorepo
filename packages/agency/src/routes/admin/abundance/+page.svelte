@@ -29,6 +29,24 @@
       return 'Open posting';
     }
   }
+
+  function formatCompensation(job: PageData['jobs'][number]): string {
+    if (job.pay_min == null && job.pay_max == null) return 'Not set';
+
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    });
+    const min = job.pay_min == null ? null : formatter.format(job.pay_min);
+    const max = job.pay_max == null ? null : formatter.format(job.pay_max);
+
+    if (min && max && min !== max) {
+      return `${min}-${max}${job.pay_period ? ` / ${job.pay_period}` : ''}`;
+    }
+
+    return `${min ?? max ?? 'Not set'}${job.pay_period ? ` / ${job.pay_period}` : ''}`;
+  }
 </script>
 
 <SEO
@@ -75,6 +93,16 @@
     </div>
   {/if}
 
+  {#if form?.import_success}
+    <div class="toast success">
+      Imported {form.import_fetched} {form.import_source} listing(s) for “{form.import_query}”.
+      Created {form.import_created}; duplicates {form.import_duplicate}.
+      {#if form.import_warnings?.length}
+        <span> {form.import_warnings.join(' ')}</span>
+      {/if}
+    </div>
+  {/if}
+
   {#if data.error}
     <div class="toast error">{data.error}</div>
   {/if}
@@ -101,6 +129,63 @@
       <strong class="stat-value">{data.stats.rejected_count}</strong>
     </Card>
   </section>
+
+  <Card variant="glass" radius="md" padding="lg" class="glass-emphasis">
+    <div class="panel-header">
+      <div>
+        <h2>Public Import</h2>
+        <p class="panel-subtitle">
+          Pull licensed/public listings into the same intake queue. Use Adzuna for structured jobs and
+          Exa for public-board discovery.
+        </p>
+      </div>
+    </div>
+
+    <form method="POST" action="?/import" class="filters import-grid">
+      <label>
+        <span>Source</span>
+        <select name="source">
+          <option value="adzuna">Adzuna</option>
+          <option value="exa">Exa via Composio</option>
+        </select>
+      </label>
+
+      <label class="search-field">
+        <span>Query</span>
+        <input type="text" name="query" value="travel nurse" />
+      </label>
+
+      <label>
+        <span>Location</span>
+        <input type="text" name="location" value="United States" />
+      </label>
+
+      <label>
+        <span>Country</span>
+        <input type="text" name="country" value="us" />
+      </label>
+
+      <label>
+        <span>Limit</span>
+        <select name="limit">
+          {#each [10, 20, 25] as limit}
+            <option value={limit} selected={limit === 10}>{limit}</option>
+          {/each}
+        </select>
+      </label>
+
+      <label class="search-field">
+        <span>Exa domains</span>
+        <input
+          type="text"
+          name="domains"
+          value="ayahealthcare.com, nomadhealth.com, trustedhealth.com, amnhealthcare.com"
+        />
+      </label>
+
+      <button type="submit" class="btn-filter">Import Listings</button>
+    </form>
+  </Card>
 
   <Card variant="glass" radius="md" padding="lg" class="glass-emphasis">
     <div class="panel-header">
@@ -216,6 +301,20 @@
               {/if}
             </p>
 
+            {#if job.specialty || job.facility_name || job.pay_min != null || job.pay_max != null}
+              <p class="job-meta-line">
+                {#if job.specialty}
+                  <span>{job.specialty}</span>
+                {/if}
+                {#if job.facility_name}
+                  <span>Facility: {job.facility_name}</span>
+                {/if}
+                {#if job.pay_min != null || job.pay_max != null}
+                  <span>{formatCompensation(job)}</span>
+                {/if}
+              </p>
+            {/if}
+
             <div class="facts-grid">
               <div>
                 <span class="fact-label">Source</span>
@@ -230,8 +329,36 @@
                 <strong>{job.source_run_id ?? 'Not set'}</strong>
               </div>
               <div>
+                <span class="fact-label">Category</span>
+                <strong>{job.category ?? 'Not set'}</strong>
+              </div>
+              <div>
+                <span class="fact-label">Compensation</span>
+                <strong>{formatCompensation(job)}</strong>
+              </div>
+              <div>
+                <span class="fact-label">Shift</span>
+                <strong>{job.shift ?? 'Not set'}</strong>
+              </div>
+              <div>
+                <span class="fact-label">Duration</span>
+                <strong>{job.duration_weeks ? `${job.duration_weeks} weeks` : 'Not set'}</strong>
+              </div>
+              <div>
+                <span class="fact-label">Start date</span>
+                <strong>{job.start_date ?? 'Not set'}</strong>
+              </div>
+              <div>
+                <span class="fact-label">Openings</span>
+                <strong>{job.openings ?? 'Not set'}</strong>
+              </div>
+              <div>
                 <span class="fact-label">Seen</span>
                 <strong>{job.seen_count}</strong>
+              </div>
+              <div>
+                <span class="fact-label">Source posted</span>
+                <strong>{formatDateTime(job.source_posted_at)}</strong>
               </div>
               <div>
                 <span class="fact-label">Ingested</span>
@@ -466,6 +593,10 @@
     margin-bottom: var(--space-lg);
   }
 
+  .import-grid {
+    margin-bottom: 0;
+  }
+
   .pagination-bar {
     display: flex;
     align-items: center;
@@ -585,6 +716,15 @@
   .job-heading h3,
   .job-summary {
     margin: 0;
+  }
+
+  .job-meta-line {
+    margin: -0.25rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    color: var(--color-fg-muted);
+    font-size: 0.95rem;
   }
 
   .job-links {

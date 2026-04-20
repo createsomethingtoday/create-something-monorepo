@@ -3,6 +3,10 @@ import type { Actions, PageServerLoad } from './$types';
 
 import { INBOUND_JOB_STATUSES, type InboundJobStatus } from '$lib/types/abundance';
 import {
+  importPublicJobs,
+  type PublicJobImportSource
+} from '$lib/server/abundance-public-jobs';
+import {
   handoffInboundJobToFunnelLead,
   isInboundJobStatus,
   listInboundJobs,
@@ -104,6 +108,57 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 };
 
 export const actions: Actions = {
+  import: async ({ request, cookies, platform }) => {
+    await requireAgencyOperator({ cookies, platform });
+
+    const db = platform?.env?.DB;
+    if (!db) {
+      return fail(503, { error: 'Database is unavailable' });
+    }
+
+    const formData = await request.formData();
+    const source = normalizeImportSource(String(formData.get('source') ?? '').trim());
+    const query = String(formData.get('query') ?? '').trim();
+    const location = String(formData.get('location') ?? '').trim();
+    const country = String(formData.get('country') ?? '').trim();
+    const domains = String(formData.get('domains') ?? '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const limit = coercePositiveInt(String(formData.get('limit') ?? '').trim(), 10);
+
+    if (!source) {
+      return fail(400, { error: 'Import source must be adzuna or exa' });
+    }
+
+    try {
+      const result = await importPublicJobs({
+        db,
+        env: platform.env,
+        source,
+        query,
+        location,
+        country,
+        limit,
+        ...(domains.length > 0 ? { domains } : {})
+      });
+
+      return {
+        import_success: true,
+        import_source: result.source,
+        import_query: result.query,
+        import_fetched: result.fetched,
+        import_created: result.created,
+        import_duplicate: result.duplicate,
+        import_warnings: result.warnings
+      };
+    } catch (error) {
+      return fail(500, {
+        error: error instanceof Error ? error.message : 'Failed to import public jobs'
+      });
+    }
+  },
+
   save: async ({ request, cookies, platform }) => {
     await requireAgencyOperator({ cookies, platform });
 
@@ -220,4 +275,12 @@ function buildAbundancePageHref(
   params.set('limit', String(filters.limit));
   params.set('offset', String(offset));
   return `/admin/abundance?${params.toString()}`;
+}
+
+function normalizeImportSource(value: string): PublicJobImportSource | null {
+  if (value === 'adzuna' || value === 'exa') {
+    return value;
+  }
+
+  return null;
 }

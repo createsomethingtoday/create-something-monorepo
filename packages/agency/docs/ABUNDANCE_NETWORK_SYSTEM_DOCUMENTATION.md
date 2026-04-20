@@ -489,6 +489,7 @@ X-Abundance-Ingest-Key: YOUR_OPTIONAL_INGEST_KEY
 - If `dedupe_key` is omitted, the API derives one from a canonicalized `job_url` or fallback metadata.
 - If the job already exists, the row is updated in place, `seen_count` increments, and `source_agents` is merged.
 - `POST /inbound-jobs` accepts either an authenticated operator session or `X-Abundance-Ingest-Key` when `ABUNDANCE_INGEST_API_KEY` is configured.
+- Public-listing rows can now carry structured `category`, `specialty`, `facility_name`, `employment_type`, compensation, shift, duration, start date, openings, and `source_posted_at` fields.
 - Rows remain unlinked until an operator hands off a qualified job; after handoff the record includes `funnel_lead_id` and `funnel_handoff_at`.
 
 **Response:**
@@ -538,7 +539,39 @@ Content-Type: application/json
 - Review queue: `https://createsomething.agency/admin/abundance`
 - Operator-only access is controlled by `AGENCY_OPERATOR_EMAILS`
 - Qualified jobs can be sent directly into the GTM funnel from `/admin/abundance`
+- Operators can also import public listings from the same screen using Adzuna or Exa/Composio
 - Created funnel leads are tagged with `source=abundance` and can be reviewed at `https://createsomething.agency/admin/funnel/leads/{id}`
+
+#### Import Public Listings
+
+```http
+POST /public-jobs/import
+Content-Type: application/json
+
+{
+  "source": "adzuna",
+  "query": "travel nurse",
+  "location": "United States",
+  "country": "us",
+  "limit": 20
+}
+```
+
+Exa/Composio discovery can be used as a supplemental public-board lane:
+
+```json
+{
+  "source": "exa",
+  "query": "travel nurse",
+  "domains": [
+    "ayahealthcare.com",
+    "nomadhealth.com",
+    "trustedhealth.com",
+    "amnhealthcare.com"
+  ],
+  "limit": 10
+}
+```
 
 ---
 
@@ -571,6 +604,8 @@ Content-Type: application/json
    As of the funnel-automation rollout, this includes:
    - `0022_abundance_funnel_handoff.sql` to extend the funnel `source` enum with `abundance` and add durable handoff linkage on `inbound_jobs`
    - `0023_funnel_lead_automation.sql` to add the `funnel_automation_events` ledger for Slack, Notion, and Gmail draft execution history
+   - `0024_abundance_public_job_fields.sql` to add structured public-listing fields for category, specialty, compensation, shift, duration, and source posted date
+   - `0025_abundance_public_job_search_fts.sql` to add the ranked FTS search index that powers production-grade `search_public_jobs` queries in the MCP worker
 
    For local development:
 
@@ -597,8 +632,32 @@ Content-Type: application/json
 
    These commands seed the runtime values into Infisical at `/agency` and then mirror them into the `create-something-agency` Cloudflare Pages project.
 
-3. **Run the operator loop**
+3. **Optional: seed public-listing import secrets**
+
+   | Variable                           | Source             | Description                                                                                  |
+   | ---------------------------------- | ------------------ | -------------------------------------------------------------------------------------------- |
+   | `ABUNDANCE_ADZUNA_APP_ID`          | Adzuna             | Required for structured public job imports through `source=adzuna`.                          |
+   | `ABUNDANCE_ADZUNA_APP_KEY`         | Adzuna             | Required for structured public job imports through `source=adzuna`.                          |
+   | `ABUNDANCE_COMPOSIO_USER_ID`       | You configure this | Optional explicit Composio entity used for `source=exa`; falls back to the funnel user ID.  |
+   | `ABUNDANCE_EXA_CONNECTED_ACCOUNT_ID` | Composio         | Optional explicit Exa connected account to pin discovery against.                            |
+   | `ABUNDANCE_EXA_TOOL_SLUG`          | Composio           | Optional override if your Exa search tool slug differs from the default discovery route.     |
+
+   Recommended production sync path:
+
+   ```bash
+   ABUNDANCE_ADZUNA_APP_ID=your-adzuna-app-id \
+   ABUNDANCE_ADZUNA_APP_KEY=your-adzuna-app-key \
+   ABUNDANCE_COMPOSIO_USER_ID=agency_ops \
+   pnpm agency:abundance:public:seed
+
+   pnpm agency:abundance:public:sync
+   ```
+
+   These commands seed the public-import values into Infisical at `/agency` and then mirror them into the `create-something-agency` Cloudflare Pages project.
+
+4. **Run the operator loop**
    - Agents `POST /api/abundance/inbound-jobs`
+   - Operators can `POST /api/abundance/public-jobs/import` or use the import form at `/admin/abundance`
    - Operators review at `/admin/abundance`
    - Operators mark viable rows as `qualified`, then use `Send to Funnel` to create a linked funnel lead
    - The resulting lead is visible in `/admin/funnel` and `/admin/funnel/leads/{id}`
@@ -657,6 +716,44 @@ Gmail drafts are created automatically only when a lead is in the `decision` sta
    - Open `/admin/funnel/leads/{id}` for a specific lead
    - Use `Run Automation` to rerun all configured destinations
    - Check the automation history ledger on the same page for payloads, errors, and external refs
+
+### Abundance Jobs MCP Setup
+
+The repo now includes a dedicated read-oriented MCP worker at `packages/abundance-jobs-mcp/worker` for Dify/agent demos against the same `inbound_jobs` database.
+
+1. **Seed MCP bearer auth**
+
+   | Variable                      | Source             | Description                                                                    |
+   | ----------------------------- | ------------------ | ------------------------------------------------------------------------------ |
+   | `ABUNDANCE_MCP_BEARER_TOKEN`  | You configure this | Shared bearer token used to protect `/mcp` and `/sse` in the MCP worker.      |
+   | `ABUNDANCE_MCP_OPERATOR_EMAIL`| You configure this | Optional operator identifier recorded when `send_job_to_funnel` is invoked.   |
+
+   Recommended sync path:
+
+   ```bash
+   ABUNDANCE_MCP_BEARER_TOKEN=replace-with-random-shared-secret \
+   ABUNDANCE_MCP_OPERATOR_EMAIL=ops@example.com \
+   pnpm abundance:mcp:seed
+
+   pnpm abundance:mcp:sync
+   ```
+
+2. **Deploy the worker**
+
+   ```bash
+   pnpm deploy:abundance-jobs-mcp
+   ```
+
+3. **Use the MCP server**
+   - Health: `/`
+   - Streamable HTTP: `/mcp`
+   - SSE fallback: `/sse`
+   - Tools:
+     - `list_demo_jobs`
+     - `search_public_jobs`
+     - `get_job`
+     - `send_job_to_funnel`
+   - `search_public_jobs` uses the `inbound_jobs_public_fts` index when `0025_abundance_public_job_search_fts.sql` has been applied, and falls back to tokenized `LIKE` matching if the index is not present yet.
 
 ### WhatsApp Business Setup
 
