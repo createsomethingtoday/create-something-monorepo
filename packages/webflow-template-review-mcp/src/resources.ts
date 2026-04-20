@@ -176,6 +176,19 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             step: 'analyze',
             tool: 'hub_execute_proxy_tool',
             args: {
+              proxyToolName: 'webflow-site-analyzer-mcp__run_template_review',
+              args: {
+                previewUrl: '<previewSiteUrl>',
+                publishedUrl: '<websiteUrl>',
+              },
+            },
+            expectation:
+              'On Cloudflare Worker analyzer deployments, prefer the synchronous run_template_review. Analyzer inputs must be nested under the inner args object. Use previewSiteUrl + websiteUrl from the queue row or review context. Expect ~90–180s for the call to return a full report.',
+          },
+          {
+            step: 'analyze_async_fallback',
+            tool: 'hub_execute_proxy_tool',
+            args: {
               proxyToolName: 'webflow-site-analyzer-mcp__enqueue_template_review',
               args: {
                 previewUrl: '<previewSiteUrl>',
@@ -183,7 +196,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
               },
             },
             expectation:
-              'When the host is using a Hub, analyzer inputs must be nested under the inner args object. Use previewSiteUrl + websiteUrl from the queue row or review context.',
+              'Only use async enqueue when run_template_review is not available or the host cannot hold the request open. On Cloudflare Worker deployments, async job state is not persisted across isolates yet — poll may return "job not found" even after a successful enqueue.',
           },
           {
             step: 'poll_analysis',
@@ -192,7 +205,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
               proxyToolName: 'webflow-site-analyzer-mcp__get_template_review_job',
               args: { jobId: '<jobId>' },
             },
-            expectation: 'Poll the analyzer job until status is succeeded, failed, or canceled before drafting a final decision.',
+            expectation: 'Only meaningful when the analyzer deployment persists job state across requests. On the current Cloudflare Worker deployment, expect "job not found" — fall back to run_template_review.',
           },
           {
             step: 'resume',
@@ -233,6 +246,8 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             'Use previewSiteUrl as previewUrl and websiteUrl as publishedUrl when enqueueing analyzer runs from a queue row.',
           analyzerBrokerShape:
             'For hub_execute_proxy_tool, downstream analyzer inputs belong inside arguments.args, not beside proxyToolName.',
+          analyzerPreferSync:
+            'On Cloudflare Worker analyzer deployments, prefer run_template_review over enqueue_template_review. The async job state is held in-memory and does not survive Worker isolate boundaries, so poll requests often return "job not found". Sync runs return the full report in ~90–180s.',
         },
         promptTemplate: [
           'When helping a reviewer, start with template_review_list_queue unless they explicitly ask for their assigned work.',
@@ -250,6 +265,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Do not infer assignment ownership from raw Airtable fields when normalized booleans are available.',
           'Do not pass display labels like "Ready for Review" when a tool schema expects the normalized enum "ready_to_review".',
           'Do not flatten previewUrl or publishedUrl beside proxyToolName when calling hub_execute_proxy_tool.',
+          'Do not default to enqueue_template_review on Cloudflare Worker analyzer deployments — the async job map does not persist across isolates, so get_template_review_job will return "job not found". Use run_template_review instead.',
         ],
       }),
   );

@@ -51,17 +51,17 @@ Every review follows these phases:
 
 | Tool | What it does | When |
 |------|-------------|------|
-| \`enqueue_template_review\` | Queue browser-backed analysis on the analyzer service | Start analysis for standard review flows |
-| \`get_template_review_job\` | Get results for a queued analyzer job by \`jobId\` | Poll after ~90s |
-| \`run_template_review\` | Run a synchronous browser-backed analysis on the analyzer service | Manual/debug fallback when exposed |
+| \`run_template_review\` | Run a synchronous browser-backed analysis on the analyzer service | **Preferred on Cloudflare Worker analyzer deployments.** Returns the full report in ~90–180s. |
+| \`enqueue_template_review\` | Queue browser-backed analysis on the analyzer service | Only when the host cannot hold a long-running request open. On Cloudflare Worker deployments the async job map does not persist across isolates, so \`get_template_review_job\` will often return "job not found". |
+| \`get_template_review_job\` | Get results for a queued analyzer job by \`jobId\` | Only meaningful on deployments that persist job state across requests. |
 
 These analyzer tools live on the analyzer service, not the Airtable review service. If you are working through a Hub, search \`webflow-site-analyzer-mcp\`, inspect the schema if needed, then call \`hub_execute_proxy_tool\` with the \`proxyToolName\` plus nested downstream inputs under \`args\`.
 
-Minimal Hub payload:
+Minimal Hub payload (preferred — synchronous):
 
 \`\`\`json
 {
-  "proxyToolName": "webflow-site-analyzer-mcp__enqueue_template_review",
+  "proxyToolName": "webflow-site-analyzer-mcp__run_template_review",
   "args": {
     "previewUrl": "<previewSiteUrl>",
     "publishedUrl": "<websiteUrl>"
@@ -158,10 +158,11 @@ The analyzer crawls **every page** and runs 39 automated checks:
 1. \`template_review_health\` — confirm connected
 2. \`template_review_list_queue\` — find work
 3. \`template_review_get_review_context\` — check capabilities
-4. \`enqueue_template_review\` — start analysis
-5. \`get_template_review_job\` — read results (~90s)
-6. \`template_review_assign_self\` — claim the version
-7. \`template_review_request_changes\` / \`approve_version\` / \`reject_version\` — decide
+4. \`run_template_review\` — run analysis synchronously (preferred; ~90–180s end-to-end)
+5. \`template_review_assign_self\` — claim the version
+6. \`template_review_request_changes\` / \`approve_version\` / \`reject_version\` — decide
+
+_On analyzer deployments that persist async job state, \`enqueue_template_review\` + \`get_template_review_job\` is the long-poll path. The Cloudflare Worker deployment does not yet persist that state across isolates, so prefer sync._
 
 ## Rules
 
