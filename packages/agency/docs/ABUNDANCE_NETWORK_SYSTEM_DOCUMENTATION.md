@@ -655,6 +655,14 @@ Exa/Composio discovery can be used as a supplemental public-board lane:
 
    These commands seed the public-import values into Infisical at `/agency` and then mirror them into the `create-something-agency` Cloudflare Pages project.
 
+   To backfill a broader national public-jobs dataset into the live queue after secrets are configured:
+
+   ```bash
+   pnpm agency:abundance:national:seed
+   ```
+
+   The national seed command reads Adzuna credentials and the ingest key from Infisical `/agency`, fetches a travel-nurse-heavy query mix across multiple national pages and regional location filters, and posts the normalized jobs into `POST /api/abundance/inbound-jobs`.
+
 4. **Run the operator loop**
    - Agents `POST /api/abundance/inbound-jobs`
    - Operators can `POST /api/abundance/public-jobs/import` or use the import form at `/admin/abundance`

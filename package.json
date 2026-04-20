@@ -170,6 +170,7 @@
     "agency:abundance:sync": "bash scripts/agency-pages-sync-abundance-from-infisical.sh",
     "agency:abundance:public:seed": "bash scripts/agency-abundance-public-seed-infisical.sh",
     "agency:abundance:public:sync": "bash scripts/agency-pages-sync-abundance-public-from-infisical.sh",
+    "agency:abundance:national:seed": "node scripts/agency-abundance-national-seed.mjs",
     "agency:funnel:seed": "bash scripts/agency-funnel-automation-seed-infisical.sh",
     "agency:funnel:sync": "bash scripts/agency-pages-sync-funnel-automation-from-infisical.sh",
     "abundance:mcp:seed": "bash scripts/abundance-jobs-mcp-seed-infisical.sh",
