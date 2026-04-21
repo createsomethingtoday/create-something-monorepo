@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   buildAuthorizedVisibleProxyRoutes,
+  buildDiscoveryServicesPayload,
   buildVisibleProxyRoutes,
   resolveDiscoveryPack,
   resolveIntentRouteCandidate,
@@ -223,6 +224,37 @@ test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', ()
     visible.toolDefinitions.map((tool) => tool.name),
     ['server_a__alpha', 'server_a__beta'],
   );
+});
+
+test('buildDiscoveryServicesPayload omits services without visible tools', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'server_a' },
+    { name: 'server_b' },
+  ] as any;
+  const prefs = {
+    mode: 'compact' as const,
+    activeServers: ['server_a', 'server_b'],
+    maxProxyTools: null,
+  };
+  const accountContext = {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: ['server_a__'],
+    identitySource: 'session' as const,
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
+  const payload = buildDiscoveryServicesPayload(runtime as any, prefs, visible) as {
+    services: Array<{ name: string }>;
+    visibleProxyToolCount: number;
+  };
+
+  assert.deepEqual(payload.services.map((service) => service.name), ['server_a']);
+  assert.equal(payload.visibleProxyToolCount, 2);
 });
 
 test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only sessions', async () => {

@@ -8,6 +8,7 @@ import {
 	parseJsonStringArray,
 	type PartnerAuthAccessLaneAssignmentRow,
 } from '$lib/server/partner-auth';
+import { shouldSurfacePartnerLaneInMcpAccess as shouldSurfacePartnerLaneInMcpAccessFromMetadata } from '$lib/server/mcp-access-surface';
 
 type AccessAssignmentInput = {
 	email: string;
@@ -158,6 +159,15 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 	},
 };
 
+export function shouldSurfacePartnerLaneInMcpAccess(
+	lane: Pick<PartnerAuthAccessLaneAssignmentRow, 'status' | 'metadata_json'>,
+): boolean {
+	return shouldSurfacePartnerLaneInMcpAccessFromMetadata({
+		status: lane.status,
+		metadata: parseJsonObject(lane.metadata_json),
+	});
+}
+
 function normalizeKey(value: string | null | undefined): string {
 	return (value ?? '')
 		.trim()
@@ -289,7 +299,9 @@ export async function listMcpAccessAssignments(
 		);
 
 		if (lanes.length > 0) {
-			return lanes.map((lane) => buildLaneAssignment(lane, input));
+			return lanes
+				.filter((lane) => shouldSurfacePartnerLaneInMcpAccess(lane))
+				.map((lane) => buildLaneAssignment(lane, input));
 		}
 	}
 
@@ -308,7 +320,7 @@ export async function resolveMcpAccessAssignment(
 			accountId: input.accountId,
 		});
 		if (lane) {
-			return buildLaneAssignment(lane, input);
+			return shouldSurfacePartnerLaneInMcpAccess(lane) ? buildLaneAssignment(lane, input) : null;
 		}
 	}
 

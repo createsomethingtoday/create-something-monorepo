@@ -1957,7 +1957,14 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
 
       if (toolName === 'hub_list_services') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const visible = await buildAuthorizedVisibleProxyRoutes({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_list_services',
+        });
         const result = toJsonResult(buildDiscoveryServicesPayload(runtime, prefs, visible));
         await recordHubInvocationWithCtx({
           accountId,
@@ -1971,7 +1978,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             activeServerCount: prefs.activeServers.length,
             maxProxyTools: prefs.maxProxyTools,
             visibleProxyToolCount: visible.toolDefinitions.length,
-            routeAuthorizationApplied: false,
+            routeAuthorizationApplied: true,
           },
         });
         return result;
@@ -3848,7 +3855,7 @@ function findAllowlistIntentMatch(
     : null;
 }
 
-function buildDiscoveryServicesPayload(
+export function buildDiscoveryServicesPayload(
   runtime: HubRuntime,
   prefs: DiscoveryPreferences,
   visible: VisibleProxyCatalog,
@@ -3867,6 +3874,17 @@ function buildDiscoveryServicesPayload(
     visibleByServer.set(route.serverName, (visibleByServer.get(route.serverName) ?? 0) + 1);
   }
 
+  const visibleServiceNames = new Set(visibleByServer.keys());
+  const services = runtime.connected
+    .filter((server) => visibleServiceNames.has(server.name))
+    .map((server) => ({
+      name: server.name,
+      totalProxyTools: byServer.get(server.name) ?? 0,
+      visibleProxyTools: visibleByServer.get(server.name) ?? 0,
+      activeInDiscovery: prefs.activeServers.includes(server.name),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   return {
     discovery: prefs,
     recommendedFlow: [
@@ -3875,16 +3893,11 @@ function buildDiscoveryServicesPayload(
       'hub_describe_proxy_tool',
       'hub_execute_proxy_tool',
     ],
-    services: runtime.connected.map((server) => ({
-      name: server.name,
-      totalProxyTools: byServer.get(server.name) ?? 0,
-      visibleProxyTools: visibleByServer.get(server.name) ?? 0,
-      activeInDiscovery: prefs.activeServers.includes(server.name),
-    })),
+    services,
     totalProxyToolCount: runtime.proxies.toolDefinitions.length,
     visibleProxyToolCount: visible.toolDefinitions.length,
     note:
-      'Service visibility reflects session + discovery scope. Discovery packs are the standard managed baseline for shared hubs. Choose a service here, then call hub_search_proxy_tools with serverName for per-tool authorized discovery.',
+      'Service visibility reflects session + discovery scope. Services without visible authorized tools are intentionally omitted. Discovery packs are the standard managed baseline for shared hubs. Choose a service here, then call hub_search_proxy_tools with serverName for per-tool authorized discovery.',
   };
 }
 

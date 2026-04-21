@@ -62,7 +62,7 @@
 		if (hub.toolkitProfile.length > 0) {
 			return 'This legacy lane uses the shared-auth bridge default for Composio toolkit scope. Authorization is explicit here, but live Hub discovery remains unverified.';
 		}
-		return 'This legacy lane is active for non-Composio review services only. The catalog stays available, but Hub-scoped Composio readiness is expected to remain empty.';
+		return 'This legacy lane is active for non-Composio review services only. Hub-scoped Composio inventory is intentionally empty for this lane.';
 	}
 
 	const selectedHubLegacyNotice = $derived(legacyScopeNotice(selectedHub));
@@ -160,7 +160,7 @@
 <ReportShell
 	eyebrow="MCP Access"
 	title="Tools"
-	lede="Browse the Composio toolkit catalog, select a Hub lane, and inspect whether a selected toolkit is authorized, registered, and connected. Live Hub discovery visibility remains unverified in this v1 view."
+	lede="Select a Hub lane and inspect only the Composio toolkits that lane actually scopes. Live Hub discovery visibility remains unverified in this v1 view."
 	sideLabel="Signed in as"
 	sideValue={data.user.email}
 	sideMeta={`Updated ${formatDateTime(data.entitlement.updatedAt)}`}
@@ -186,7 +186,7 @@
 
 	<ReportSection
 		title="Scope"
-		description="Select the Hub lane and toolkit you want to inspect. Search applies to the catalog and the live tool list for the selected toolkit."
+		description="Select the Hub lane and toolkit you want to inspect. Search applies only to the selected lane’s scoped toolkit inventory and the live tool list for the selected toolkit."
 		fullWidth={true}
 	>
 		<div class="scope-grid">
@@ -241,7 +241,7 @@
 
 	<ReportSection
 		title="Composio Catalog"
-		description="Toolkit inventory comes from the repo’s generated MCP fleet registry. Live tool names are fetched only for the selected toolkit."
+		description="Toolkit inventory comes from the repo’s generated MCP fleet registry, but this view is filtered to the selected Hub lane before anything is shown. Live tool names are fetched only for the selected toolkit."
 		fullWidth={true}
 	>
 		{#if catalog.warnings.length > 0}

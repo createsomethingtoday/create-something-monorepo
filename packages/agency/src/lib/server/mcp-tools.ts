@@ -160,14 +160,21 @@ export async function buildComposioCatalogPayload(input: {
 	query?: string | null;
 	cursor?: string | null;
 	limit?: number;
+	scopedToolkits?: string[] | null;
 }): Promise<ComposioCatalogPayload> {
 	const query = cleanQuery(input.query);
 	const toolkit = normalizeToolkitSlug(input.toolkit ?? '');
 	const limit = clampPageLimit(input.limit);
 	const cursor = input.cursor?.trim() || null;
 	const warnings: string[] = [];
+	const scopedToolkitSet = normalizeScopedToolkitSet(input.scopedToolkits);
 
-	const allToolkits = listComposioToolkitsFromRegistry();
+	const allToolkits = listComposioToolkitsFromRegistry().filter(
+		(entry) => scopedToolkitSet === null || scopedToolkitSet.has(entry.slug),
+	);
+	if (toolkit && scopedToolkitSet !== null && !scopedToolkitSet.has(toolkit)) {
+		warnings.push(`Toolkit "${toolkit}" is not in scope for the selected Hub lane.`);
+	}
 	const filteredToolkits = allToolkits.filter((entry) => matchesToolkitSearch(entry, query));
 	const { page, nextCursor } = paginate(filteredToolkits, cursor, limit);
 	const selectedToolkit = toolkit ? allToolkits.find((entry) => entry.slug === toolkit) ?? null : null;
@@ -175,7 +182,9 @@ export async function buildComposioCatalogPayload(input: {
 	let tools: ComposioCatalogTool[] = [];
 	if (toolkit) {
 		if (!selectedToolkit) {
-			warnings.push(`Toolkit "${toolkit}" is not present in the current MCP registry snapshot.`);
+			if (scopedToolkitSet === null || scopedToolkitSet.has(toolkit)) {
+				warnings.push(`Toolkit "${toolkit}" is not present in the current MCP registry snapshot.`);
+			}
 		} else {
 			const liveTools = await fetchComposioToolkitTools(input.env, toolkit, query, warnings);
 			tools = liveTools.map((tool) => ({
@@ -232,7 +241,7 @@ export async function buildHubToolAvailabilityPayload(input: {
 	cursor?: string | null;
 	limit?: number;
 }): Promise<HubToolAvailabilityPayload> {
-	const selectedToolkitSlug = normalizeToolkitSlug(input.toolkit ?? '');
+	const requestedToolkitSlug = normalizeToolkitSlug(input.toolkit ?? '');
 	const query = cleanQuery(input.query);
 	const limit = clampPageLimit(input.limit);
 	const cursor = input.cursor?.trim() || null;
@@ -242,6 +251,12 @@ export async function buildHubToolAvailabilityPayload(input: {
 
 	const registryToolkits = new Map(listComposioToolkitsFromRegistry().map((entry) => [entry.slug, entry]));
 	const scopedToolkits = listScopedToolkits(input.assignment);
+	const scopedToolkitSet = new Set(scopedToolkits);
+	const selectedToolkitSlug =
+		requestedToolkitSlug && scopedToolkitSet.has(requestedToolkitSlug) ? requestedToolkitSlug : '';
+	if (requestedToolkitSlug && !selectedToolkitSlug) {
+		warnings.push(`Toolkit "${requestedToolkitSlug}" is not in scope for this Hub lane.`);
+	}
 	const connectionStatusByToolkit = await loadConnectionStatusByToolkit(input.db, input.assignment);
 
 	const services = scopedToolkits
@@ -284,6 +299,7 @@ export async function buildHubToolAvailabilityPayload(input: {
 			toolkit: selectedToolkitSlug,
 			query,
 			limit: LIVE_TOOL_FETCH_LIMIT,
+			scopedToolkits,
 		});
 		warnings.push(...liveCatalog.warnings);
 		const allRows = liveCatalog.tools.map((tool) =>
@@ -537,7 +553,7 @@ function resolveToolkitConnectionStatus(
 	return connectionStatusByToolkit.get(toolkit) ?? 'not_connected';
 }
 
-function listScopedToolkits(assignment: McpAccessAssignment): string[] {
+export function listScopedToolkits(assignment: McpAccessAssignment): string[] {
 	const toolkits = new Set<string>();
 	for (const toolkit of assignment.toolkitProfile) {
 		const normalized = normalizeToolkitSlug(toolkit);
@@ -601,6 +617,13 @@ function clampPageLimit(limit: number | undefined): number {
 function cleanQuery(value: string | null | undefined): string | null {
 	const trimmed = value?.trim();
 	return trimmed ? trimmed : null;
+}
+
+function normalizeScopedToolkitSet(toolkits: string[] | null | undefined): Set<string> | null {
+	if (toolkits == null) {
+		return null;
+	}
+	return new Set(toolkits.map((toolkit) => normalizeToolkitSlug(toolkit)).filter(Boolean));
 }
 
 function titleizeSlug(value: string): string {
