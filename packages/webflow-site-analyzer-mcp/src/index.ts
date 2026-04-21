@@ -606,9 +606,17 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   const poweredByBadge = document.querySelector('.w-webflow-badge') ||
     document.querySelector('a[href*="webflow.com"][class*="badge"]') ||
     document.querySelector('a[href*="webflow.com"]');
+  // The standard Webflow badge is image-based (no text nodes), so textContent
+  // alone misses it. Also check child img alt/src attrs and the badge class.
   const hasPoweredByWebflow = Boolean(
-    poweredByBadge &&
-    (poweredByBadge.textContent || '').toLowerCase().includes('webflow')
+    poweredByBadge && (
+      (poweredByBadge.textContent || '').toLowerCase().includes('webflow') ||
+      poweredByBadge.classList.contains('w-webflow-badge') ||
+      Array.from(poweredByBadge.querySelectorAll('img')).some(img =>
+        (img.getAttribute('alt') || '').toLowerCase().includes('webflow') ||
+        (img.getAttribute('src') || '').toLowerCase().includes('webflow-badge')
+      )
+    )
   );
 
   const allHrefs = Array.from(document.querySelectorAll('a[href]'))
