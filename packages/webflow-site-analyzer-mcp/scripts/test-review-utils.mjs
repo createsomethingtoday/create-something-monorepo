@@ -1,5 +1,5 @@
 /**
- * Unit tests for review-utils.ts
+ * Unit tests for review-utils.ts and runtime-tools.ts
  * Run: node scripts/test-review-utils.mjs
  */
 
@@ -18,6 +18,9 @@ const {
   matchesWebflowBadgeMarkup,
   computeScore
 } = require('../dist/review-utils.js');
+const {
+  filterToolDefinitionsForRuntime,
+} = require('../dist/runtime-tools.js');
 
 let passed = 0;
 let failed = 0;
@@ -214,6 +217,34 @@ test('does not match a generic Webflow marketing link', () => {
       text: 'Browse templates on Webflow',
     }),
     false
+  );
+});
+
+// =============================================================================
+console.log('\n== filterToolDefinitionsForRuntime ==');
+
+test('worker runtime does not advertise browser-backed review tools', () => {
+  const tools = [
+    { name: 'health_check', description: 'Health', inputSchema: {} },
+    { name: 'run_template_review', description: 'Review', inputSchema: {} },
+    { name: 'capture_screenshot', description: 'Screenshot', inputSchema: {} },
+  ];
+
+  assert.deepEqual(
+    filterToolDefinitionsForRuntime(tools, 'worker').map((tool) => tool.name),
+    ['health_check']
+  );
+});
+
+test('non-worker runtimes keep the full tool surface', () => {
+  const tools = [
+    { name: 'health_check', description: 'Health', inputSchema: {} },
+    { name: 'run_template_review', description: 'Review', inputSchema: {} },
+  ];
+
+  assert.deepEqual(
+    filterToolDefinitionsForRuntime(tools, 'stdio').map((tool) => tool.name),
+    ['health_check', 'run_template_review']
   );
 });
 

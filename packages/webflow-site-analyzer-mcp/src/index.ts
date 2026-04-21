@@ -48,6 +48,10 @@ import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
 import { is404PageTitle, matchesWebflowBadgeMarkup } from './review-utils.js';
+import {
+  filterToolDefinitionsForRuntime,
+  type AnalyzerToolDefinition,
+} from './runtime-tools.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -3280,8 +3284,8 @@ export function createAnalyzerServer(): Server {
   );
 
   // List available tools
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: [
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    const tools: AnalyzerToolDefinition[] = [
       // =========================================================================
       // Automation Layer Tools (Analysis)
       // =========================================================================
@@ -3643,8 +3647,12 @@ export function createAnalyzerServer(): Server {
           required: ['scriptName', 'code', 'changelog']
         },
       }
-    ]
-  }));
+    ];
+
+    return {
+      tools: filterToolDefinitionsForRuntime(tools),
+    };
+  });
 
   // Handle tool calls
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {

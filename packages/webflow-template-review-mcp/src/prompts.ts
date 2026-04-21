@@ -47,15 +47,24 @@ Every review follows these phases:
 
 **Always check \`get_review_context\` before writing.** It tells you exactly what you can do: \`canAssign\`, \`canReview\`, \`canPublish\`.
 
-## Phase 4 — Automated Analysis
+## Phase 4 — Automated Analysis (Conditional)
 
-| Tool | What it does | When |
-|------|-------------|------|
-| \`template_review_enqueue_analyzer_review\` | Queue browser-backed analysis | Start analysis |
-| \`template_review_get_analyzer_review\` | Get results for a specific job | Poll after ~90s |
-| \`template_review_list_analyzer_reviews\` | List all jobs for a version | Check prior runs |
+Automated analysis is **not owned by this MCP server**. In some reviewer environments the host may also expose separate analysis services such as:
 
-The analyzer crawls **every page** and runs 39 automated checks:
+- \`webflow-site-analyzer-mcp\`
+- \`webflow-local\`
+
+Before using any analysis-led flow:
+
+1. Confirm those services are actually visible and enabled in the current host.
+2. Confirm the analyzer deployment reports that browser-backed review is supported.
+3. Use the **visible downstream analyzer tool names as the source of truth**.
+
+If either analysis server is missing, disabled, or the analyzer health check reports browser-backed review is unsupported, **skip automated analysis and continue with a manual preliminary review**.
+
+Do **not** invent analyzer tool names that are not present in the live tool list.
+
+When analysis is available, the analyzer can crawl **every page** and run checks such as:
 - **Structure**: H1 hierarchy, heading levels, required pages (license, instructions, changelog, style guide)
 - **Images**: alt text, dimensions, loading strategy, modern formats
 - **Links**: broken internal links, empty hrefs, external target="_blank"
@@ -142,9 +151,9 @@ The analyzer crawls **every page** and runs 39 automated checks:
 1. \`template_review_health\` — confirm connected
 2. \`template_review_list_queue\` — find work
 3. \`template_review_get_review_context\` — check capabilities
-4. \`template_review_enqueue_analyzer_review\` — start analysis
-5. \`template_review_get_analyzer_review\` — read results (~90s)
-6. \`template_review_assign_self\` — claim the version
+4. Check whether separate analyzer services are actually visible and supported in the current host
+5. If analysis is unavailable, continue with manual review instead of inventing analyzer calls
+6. \`template_review_assign_self\` — claim the version before writes
 7. \`template_review_request_changes\` / \`approve_version\` / \`reject_version\` — decide
 
 ## Rules
@@ -152,10 +161,11 @@ The analyzer crawls **every page** and runs 39 automated checks:
 1. You must call \`assign_self\` before any write action
 2. You cannot assign yourself if another reviewer is already assigned
 3. \`canPublish\` is only true after approval
-4. The analyzer is a tool, not a judge — use human judgment for design quality
-5. Lead with data: cite specific check IDs, page paths, and metrics
-6. Feedback must be actionable: tell creators exactly what to fix
-7. When in doubt, request changes rather than rejecting`;
+4. Do not invent analyzer tool names that are absent from the live tool surface
+5. The analyzer is a tool, not a judge — use human judgment for design quality
+6. Lead with data: cite specific check IDs, page paths, and metrics
+7. Feedback must be actionable: tell creators exactly what to fix
+8. When in doubt, request changes rather than rejecting`;
 
 export function registerPrompts(server: McpServer): void {
   // Workflow orchestration prompt — teaches agents the full review process.
