@@ -19,6 +19,7 @@ In a Hub session, analyzer tools may also be visible from a separate server, typ
 - Airtable review writes stay in this MCP.
 - Analyzer job orchestration stays in the analyzer MCP.
 - Do not invent fictional \`template_review_*analyzer*\` tool names.
+- Shared reviewer hubs are remote-only. Do not assume local-only servers such as \`webflow-local\` are part of the baseline lane.
 
 ## 1. Start
 
@@ -76,6 +77,7 @@ Broader decision tools exist for operator/admin use:
 - \`template_review_update_asset_metadata\`
 - \`template_review_update_asset_publishing\`
 - \`template_review_set_price\`
+- \`template_review_bulk_set_price\`
 
 ## 6. Cross-Server Analyzer Workflow
 
@@ -96,14 +98,16 @@ Rules:
 
 When a user asks to change a template price:
 
-1. Read the asset with \`template_review_get_asset\`.
-2. Write the requested value to the Airtable \`Set Price\` field with \`template_review_set_price\` or \`template_review_update_asset_publishing\`.
-3. Return the \`publishing_context.mrp_id\` value so the Admin-side Marketplace price update can be completed against the corresponding MRP record.
+1. If the user provided multiple template names that should all receive the same target price, prefer \`template_review_bulk_set_price\`.
+2. Otherwise, read the asset with \`template_review_get_asset\`.
+3. Write the requested value to the Airtable \`Set Price\` field with \`template_review_set_price\` or \`template_review_update_asset_publishing\`.
+4. Return the \`publishing_context.mrp_id\` value so the Admin-side Marketplace price update can be completed against the corresponding MRP record.
 
 Notes:
 
 - \`set_price\` is a whole-number USD amount.
 - \`publishing_context\` also includes \`current_price\`, \`set_price\`, \`price_string\`, and \`mrp_id_override\` when available.
+- \`template_review_bulk_set_price\` returns one batch summary, per-template results, and an \`admin_handoff\` list with the MRP ids and \`needs_admin_update\` flags.
 - \`template_review_complete_publishing\` can carry \`set_price\` and/or \`mrp_id_overwrite\` during the broader publishing flow.
 
 ## 8. Quality Rating
@@ -126,7 +130,8 @@ Recommended host sequence:
 3. \`template_review_get_review_context\` before any reviewer-safe mutation.
 4. If the user asks for analyzer evidence and the Hub exposes \`webflow-site-analyzer-mcp\`, queue the job with \`enqueue_template_review\` and poll it with \`get_template_review_job\`.
 5. \`template_review_save_draft_feedback\`, \`template_review_set_review_status\`, or \`template_review_request_changes\` as needed.
-6. For price/admin requests, use \`template_review_set_price\` or \`template_review_update_asset_publishing\` and surface \`publishing_context.mrp_id\` in the response.
+6. For price/admin requests, use \`template_review_bulk_set_price\` when the user supplies a list of templates with one target price, otherwise use \`template_review_set_price\` or \`template_review_update_asset_publishing\`.
+7. Surface \`publishing_context.mrp_id\` or the bulk \`admin_handoff\` records in the response.
 
 When in doubt, use the smallest bounded tool that completes the user’s requested action.`;
 

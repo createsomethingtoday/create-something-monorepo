@@ -9,6 +9,12 @@ REVIEWER="${REVIEWER:-micah}"
 SERVER_NAME="${SERVER_NAME:-webflow-template-review-mcp}"
 SEARCH_LIMIT="${SEARCH_LIMIT:-200}"
 SESSION_TOKEN="${SESSION_TOKEN:-${SESSION_TOKEN_FOR_VERIFY:-}}"
+REQUIRED_SERVICES="${REQUIRED_SERVICES:-webflow-template-review-mcp,webflow-site-analyzer-mcp}"
+REQUIRED_PROXY_TOOLS="${REQUIRED_PROXY_TOOLS:-webflow-template-review-mcp__template_review_workflow,webflow-template-review-mcp__template_review_set_price,webflow-template-review-mcp__template_review_bulk_set_price}"
+ANALYZER_SMOKE_ENABLED="${ANALYZER_SMOKE_ENABLED:-true}"
+ANALYZER_SMOKE_PROXY_TOOL="${ANALYZER_SMOKE_PROXY_TOOL:-webflow-site-analyzer-mcp__list_template_review_jobs}"
+ANALYZER_SMOKE_ATTEMPTS="${ANALYZER_SMOKE_ATTEMPTS:-3}"
+ANALYZER_SMOKE_ARGS="${ANALYZER_SMOKE_ARGS:-{\"limit\":1}}"
 
 reviewer_url() {
   case "$1" in
@@ -169,6 +175,75 @@ print_tool_list() {
   done < <(printf '%s' "$payload" | jq -r '.[]?')
 }
 
+assert_required_proxy_tools() {
+  local visible_tools_json="$1"
+  if [[ -z "${REQUIRED_PROXY_TOOLS// }" ]]; then
+    return 0
+  fi
+
+  local -a required_tools=()
+  local required_tool missing=0
+  IFS=',' read -r -a required_tools <<<"$REQUIRED_PROXY_TOOLS"
+  for required_tool in "${required_tools[@]}"; do
+    required_tool="$(printf '%s' "$required_tool" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+    [[ -n "$required_tool" ]] || continue
+    if ! printf '%s' "$visible_tools_json" | jq -e --arg tool "$required_tool" 'index($tool) != null' >/dev/null 2>&1; then
+      echo "required proxy tool missing: ${required_tool}" >&2
+      missing=1
+    fi
+  done
+
+  if [[ "$missing" == "1" ]]; then
+    return 1
+  fi
+}
+
+assert_required_services() {
+  local services_json="$1"
+  if [[ -z "${REQUIRED_SERVICES// }" ]]; then
+    return 0
+  fi
+
+  local -a required_services=()
+  local required_service missing=0
+  IFS=',' read -r -a required_services <<<"$REQUIRED_SERVICES"
+  for required_service in "${required_services[@]}"; do
+    required_service="$(printf '%s' "$required_service" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+    [[ -n "$required_service" ]] || continue
+    if ! printf '%s' "$services_json" | jq -e --arg service "$required_service" 'map(select(.name == $service)) | length > 0' >/dev/null 2>&1; then
+      echo "required service missing: ${required_service}" >&2
+      missing=1
+    fi
+  done
+
+  if [[ "$missing" == "1" ]]; then
+    return 1
+  fi
+}
+
+run_analyzer_smoke() {
+  local reviewer="$1"
+  local hub_url="$2"
+  local token="$3"
+
+  if [[ "$ANALYZER_SMOKE_ENABLED" != "true" ]]; then
+    return 0
+  fi
+
+  local args_json payload attempt job_count
+  args_json="$(jq -cn \
+    --arg proxyToolName "$ANALYZER_SMOKE_PROXY_TOOL" \
+    --argjson args "$ANALYZER_SMOKE_ARGS" \
+    '{proxyToolName:$proxyToolName,args:$args}')"
+
+  for ((attempt = 1; attempt <= ANALYZER_SMOKE_ATTEMPTS; attempt += 1)); do
+    payload="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$args_json")"
+    assert_no_rpc_error "$payload" "hub_execute_proxy_tool ${ANALYZER_SMOKE_PROXY_TOOL} ${reviewer} attempt ${attempt}"
+    job_count="$(echo "$payload" | jq -r '(.result.structuredContent.jobs // ((.result.content[0].text | fromjson?) // [])) | length')"
+    echo "analyzer_smoke=ok reviewer=${reviewer} attempt=${attempt} proxy_tool=${ANALYZER_SMOKE_PROXY_TOOL} jobs=${job_count}"
+  done
+}
+
 verify_reviewer() {
   local reviewer="$1"
   local hub_url health_url secret_name token
@@ -198,6 +273,7 @@ verify_reviewer() {
 
   local health_name health_scope hub_state enabled_servers proxy_count warning_count
   local discovery_mode visible_proxy_tool_count total_proxy_tool_count
+  local services_json
   health_name="$(echo "$health_resp" | jq -r '.name // "unknown"')"
   health_scope="$(echo "$health_resp" | jq -r '.scope // "unknown"')"
   hub_state="$(echo "$status_resp" | payload_json | jq -r '.state // "unknown"')"
@@ -207,10 +283,13 @@ verify_reviewer() {
   discovery_mode="$(echo "$services_resp" | payload_json | jq -r '.discovery.mode // "unknown"')"
   visible_proxy_tool_count="$(echo "$services_resp" | payload_json | jq -r '.visibleProxyToolCount // 0')"
   total_proxy_tool_count="$(echo "$services_resp" | payload_json | jq -r '.totalProxyToolCount // 0')"
+  services_json="$(echo "$services_resp" | payload_json | jq -c '.services // []')"
 
   local visible_tools_json filtered_tools_json
   visible_tools_json="$(echo "$list_resp" | payload_json | jq -c '.proxyTools // []')"
   filtered_tools_json="$(echo "$search_resp" | payload_json | jq -c '[.tools[]?.proxyToolName]')"
+  assert_required_services "$services_json"
+  assert_required_proxy_tools "$visible_tools_json"
 
   echo "== reviewer demo verify: ${reviewer} =="
   echo "hub_url=${hub_url}"
@@ -223,12 +302,18 @@ verify_reviewer() {
   fi
   echo "hub_status=ok state=${hub_state} enabled_servers=${enabled_servers:-none} proxy_tool_count=${proxy_count} warnings=${warning_count}"
   echo "discovery=ok mode=${discovery_mode} visible_proxy_tools=${visible_proxy_tool_count}/${total_proxy_tool_count}"
+  echo "required_services=${REQUIRED_SERVICES}"
+  echo "required_proxy_tools=${REQUIRED_PROXY_TOOLS}"
   echo "services:"
   echo "$services_resp" | payload_json | jq -r '.services[]? | "- \(.name) active=\(.activeInDiscovery) visible=\(.visibleProxyTools)/\(.totalProxyTools)"'
   echo "visible_proxy_tools:"
   print_tool_list "$visible_tools_json" "- "
   echo "visible_proxy_tools_filtered server=${SERVER_NAME}:"
   print_tool_list "$filtered_tools_json" "- "
+
+  if printf '%s' "$services_json" | jq -e 'map(select(.name == "webflow-site-analyzer-mcp" and .activeInDiscovery == true)) | length > 0' >/dev/null 2>&1; then
+    run_analyzer_smoke "$reviewer" "$hub_url" "$token"
+  fi
 }
 
 main() {

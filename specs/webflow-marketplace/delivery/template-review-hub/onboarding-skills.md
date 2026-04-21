@@ -16,8 +16,8 @@ That is not enough for reliable MCP usage.
 
 Onboarding should use reusable skills so hosts and operators apply the same defaults every time:
 
-- safe Phase A queue and self-assignment flow
-- consistent evidence framing
+- safe Phase B queue, context, and price-handoff flow
+- consistent evidence framing for the remote analyzer lane
 - exact fallback behavior
 - explicit separation between reviewer and operator responsibilities
 
@@ -28,9 +28,15 @@ Onboarding should use reusable skills so hosts and operators apply the same defa
 Use:
 
 1. `$webflow-template-review-reviewer`
-2. `$webflow-template-review-pilot-triage`
+2. `$webflow-template-review-analysis-calibration`
+3. `$webflow-template-review-pilot-triage`
 
-Reviewer onboarding should stop here for Phase A.
+Reviewer onboarding should cover the current Phase B baseline:
+
+- queue -> assign -> context
+- analyzer evidence through `webflow-site-analyzer-mcp`
+- Set Price updates through `template_review_set_price` and `template_review_bulk_set_price`
+- returning `mrp_id` for the Admin handoff
 
 Do not expose Hub control-plane skills to Marketplace reviewers.
 
@@ -40,6 +46,7 @@ Use:
 
 1. `$webflow-template-review-pilot-triage`
 2. `$hub-mcp`
+3. `$webflow-template-review-write-guardrails`
 
 Use `$hub-mcp` only for internal operators and Hub owners. It is the operator skill for:
 
@@ -50,53 +57,40 @@ Use `$hub-mcp` only for internal operators and Hub owners. It is the operator sk
 - tracing brokered runs
 - containment and rollout actions
 
-## Later-gated skills
+## Additional gating
 
-Create now, include later:
+`$webflow-template-review-analysis-calibration` is in-scope now because Phase B reviewer hubs include the remote analyzer lane via `webflow-site-analyzer-mcp`.
 
-1. `$webflow-template-review-analysis-calibration`
-2. `$webflow-template-review-write-guardrails`
-
-### Analysis calibration gate
-
-Include `$webflow-template-review-analysis-calibration` only after the live reviewer Hub exposes:
-
-- `webflow-site-analyzer-mcp`
-- `webflow-local`
-
-Until then, reviewers should not be onboarded into an analysis-led workflow.
-
-### Write guardrails gate
-
-Include `$webflow-template-review-write-guardrails` only after each write action is individually enabled and validated:
+`$webflow-template-review-write-guardrails` should remain operator-led until each broader review action is individually enabled and validated:
 
 - `request_changes`
 - `approve_version`
 - `reject_version`
 - `complete_publishing`
 
-Do not onboard reviewers into write behavior that still depends on manual Airtable fallback.
+Price changes are already part of the current reviewer lane because `template_review_set_price` and `template_review_bulk_set_price` are narrow asset-publishing handoff tools.
 
 ## Onboarding sequence
 
-### Phase A reviewer sequence
+### Current reviewer sequence
 
 1. teach queue -> assign -> context -> my_queue -> unassign
-2. teach `Auto` vs `Partial` vs `Manual`
-3. teach override and escalation rules
-4. teach exact manual fallback behavior
+2. teach the remote analyzer lane via `webflow-site-analyzer-mcp`
+3. teach `Auto` vs `Partial` vs `Manual`
+4. teach the Set Price -> Admin `mrp_id` handoff workflow
+5. teach override and escalation rules
+6. teach exact manual fallback behavior
 
 ### Pilot operator sequence
 
 1. teach pilot triage and containment rules
 2. teach `hub-mcp` for posture, discovery, and trace verification
-3. keep reviewer-facing tool exposure narrow
+3. teach `webflow-template-review-write-guardrails` for price and broader write verification
+4. keep reviewer-facing tool exposure aligned to the remote-only Phase B baseline
 
-### Phase B add-ons
+### Future add-ons
 
-Add analysis calibration first.
-
-Add write guardrails only after reviewer-attributed traces and fallback drills are already passing.
+If a future remote originality service is added, extend analysis calibration only after the service is connected, verified, and documented in the reviewer Hub baseline.
 
 ## Source material
 

@@ -300,3 +300,201 @@ test('set_price returns publishing context with the MRP handoff data', async () 
     admin_follow_up: 'Use the returned mrp_id to complete the corresponding price change in Admin.',
   });
 });
+
+test('bulk_set_price resolves names, updates what changed, and returns one admin handoff summary', async () => {
+  const { server, handlers } = createServerHarness();
+  const searchCalls: Array<{ query: string; mode?: string }> = [];
+  const updateCalls: Array<{ assetId: string; input: Record<string, unknown> }> = [];
+  const client = {
+    searchAssetsByName: async (query: string, options?: { mode?: string }) => {
+      searchCalls.push({ query, mode: options?.mode });
+
+      if (query === 'Krafted' && options?.mode === 'exact') {
+        return [
+          {
+            assetId: 'rec_krafted',
+            templateName: 'Krafted',
+            price: 79,
+            setPrice: 29,
+            mrpId: 'mrp_krafted',
+            priceString: '$79 USD',
+          },
+        ];
+      }
+
+      if (query === 'LogicForge' && options?.mode === 'exact') {
+        return [];
+      }
+      if (query === 'LogicForge' && options?.mode === 'contains') {
+        return [
+          {
+            assetId: 'rec_logicforge',
+            templateName: 'Logicforge',
+            price: 49,
+            setPrice: 49,
+            mrpId: 'mrp_logicforge',
+            priceString: '$49 USD',
+          },
+        ];
+      }
+
+      if (query === 'Fluera' && options?.mode === 'exact') {
+        return [];
+      }
+      if (query === 'Fluera' && options?.mode === 'contains') {
+        return [];
+      }
+
+      throw new Error(`Unexpected search: ${query} (${options?.mode ?? 'contains'})`);
+    },
+    updateAssetPublishing: async (assetId: string, input: Record<string, unknown>) => {
+      updateCalls.push({ assetId, input });
+
+      if (assetId === 'rec_krafted') {
+        return {
+          assetId: 'rec_krafted',
+          templateName: 'Krafted',
+          price: 79,
+          setPrice: 49,
+          mrpId: 'mrp_krafted',
+          priceString: '$79 USD',
+        };
+      }
+
+      throw new Error(`Unexpected asset update: ${assetId}`);
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_bulk_set_price')?.({
+    template_names: ['Krafted', 'LogicForge', 'Fluera'],
+    set_price: 49,
+  });
+
+  assert.ok(result);
+  assert.deepEqual(searchCalls, [
+    { query: 'Krafted', mode: 'exact' },
+    { query: 'LogicForge', mode: 'exact' },
+    { query: 'Fluera', mode: 'exact' },
+    { query: 'LogicForge', mode: 'contains' },
+    { query: 'Fluera', mode: 'contains' },
+  ]);
+  assert.deepEqual(updateCalls, [
+    {
+      assetId: 'rec_krafted',
+      input: { set_price: 49 },
+    },
+  ]);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.deepEqual(payload.data?.summary, {
+    requested: 3,
+    matched: 2,
+    updated: 1,
+    already_set: 1,
+    not_found: 1,
+    ambiguous: 0,
+    errors: 0,
+    needs_admin_update: 1,
+  });
+  assert.deepEqual(payload.data?.admin_handoff, [
+    {
+      requested_name: 'Krafted',
+      template_name: 'Krafted',
+      asset_id: 'rec_krafted',
+      mrp_id: 'mrp_krafted',
+      current_price: 79,
+      target_set_price: 49,
+      needs_admin_update: true,
+    },
+    {
+      requested_name: 'LogicForge',
+      template_name: 'Logicforge',
+      asset_id: 'rec_logicforge',
+      mrp_id: 'mrp_logicforge',
+      current_price: 49,
+      target_set_price: 49,
+      needs_admin_update: false,
+    },
+  ]);
+});
+
+test('bulk_set_price reports ambiguous matches without aborting the batch', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {
+    searchAssetsByName: async (query: string, options?: { mode?: string }) => {
+      if (query === 'Flux' && options?.mode === 'exact') {
+        return [];
+      }
+      if (query === 'Flux' && options?.mode === 'contains') {
+        return [
+          {
+            assetId: 'rec_flux_one',
+            templateName: 'Flux Alpha',
+            price: 49,
+            setPrice: 49,
+            mrpId: 'mrp_flux_one',
+          },
+          {
+            assetId: 'rec_flux_two',
+            templateName: 'Flux Beta',
+            price: 79,
+            setPrice: 79,
+            mrpId: 'mrp_flux_two',
+          },
+        ];
+      }
+
+      throw new Error(`Unexpected search: ${query} (${options?.mode ?? 'contains'})`);
+    },
+    updateAssetPublishing: async () => {
+      throw new Error('should not run');
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_bulk_set_price')?.({
+    template_names: ['Flux'],
+    set_price: 49,
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.deepEqual(payload.data?.summary, {
+    requested: 1,
+    matched: 0,
+    updated: 0,
+    already_set: 0,
+    not_found: 0,
+    ambiguous: 1,
+    errors: 0,
+    needs_admin_update: 0,
+  });
+  assert.deepEqual(payload.data?.results, [
+    {
+      requested_name: 'Flux',
+      status: 'ambiguous',
+      resolution: 'contains',
+      candidates: [
+        {
+          asset_id: 'rec_flux_one',
+          template_name: 'Flux Alpha',
+          current_price: 49,
+          set_price: 49,
+          mrp_id: 'mrp_flux_one',
+        },
+        {
+          asset_id: 'rec_flux_two',
+          template_name: 'Flux Beta',
+          current_price: 79,
+          set_price: 79,
+          mrp_id: 'mrp_flux_two',
+        },
+      ],
+    },
+  ]);
+});

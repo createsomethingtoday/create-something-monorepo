@@ -1,27 +1,26 @@
 ---
 name: webflow-template-review-analysis-calibration
-description: Calibrate reviewer-facing findings for the Webflow Template Review Hub once analysis servers are enabled, using Auto versus Partial versus Manual evidence correctly and drafting feedback without overstating confidence.
+description: Calibrate reviewer-facing findings for the Webflow Template Review Hub once the remote analyzer lane is enabled, using Auto versus Partial versus Manual evidence correctly and drafting feedback without overstating confidence.
 ---
 
 # Webflow Template Review Analysis Calibration
 
-Use this skill only after the live reviewer Hub exposes both analysis servers:
+Use this skill only after the live reviewer Hub exposes the remote analyzer server:
 
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
 
-If either server is missing, do not run an analysis-led review flow. Fall back to [$webflow-template-review-reviewer](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md).
+Do not assume `webflow-local` is part of the reviewer baseline. If the analyzer server is missing, do not run an analysis-led review flow. Fall back to [$webflow-template-review-reviewer](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md).
 
 ## Objective
 
-Turn analyzer and plagiarism outputs into reviewer-safe findings without overstating certainty.
+Turn remote analyzer outputs into reviewer-safe findings without overstating certainty.
 
 ## Coverage Contract
 
 Use the checklist map as the authority for confidence framing:
 
 - `Auto`: deterministic checks such as headings, some media/link/image checks, and exact-match content checks
-- `Partial`: strong signals that still need reviewer validation, especially CMS structure, interactions, SEO composition, responsive behavior, and plagiarism/originality
+- `Partial`: strong signals that still need reviewer validation, especially CMS structure, interactions, SEO composition, responsive behavior, and any explicitly exposed originality signals
 - `Manual`: taste, legal, licensing, provenance, variables architecture, and deeper UX/design judgment
 
 Source of truth:
@@ -39,12 +38,7 @@ Use `webflow-site-analyzer-mcp` for:
 - designer metadata
 - media and performance evidence
 
-Use `webflow-local` for:
-
-- plagiarism/originality signals
-- framework detection
-
-Treat plagiarism/originality output as escalation evidence, not automatic final judgment.
+If the reviewer Hub later exposes another remote originality-signal service, treat that output as escalation evidence, not automatic final judgment.
 
 ## Reviewer-Facing Output Rules
 

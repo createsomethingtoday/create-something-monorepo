@@ -5,6 +5,8 @@
 **Workflow:** `template_review_hub_lane`  
 **Date:** `2026-03-10`
 
+> Historical note: this Phase A runbook is retained for rollback/reference only. The current baseline reviewer lane has passed Phase A. Use `reviewer-hub-phase-b-operator-runbook.md` for the active deploy, normalize, verify, playbook, and price-update workflow posture.
+
 ## 1. Purpose
 
 This runbook is the operational implementation path for the six reviewer-specific Hub surfaces in Phase A.

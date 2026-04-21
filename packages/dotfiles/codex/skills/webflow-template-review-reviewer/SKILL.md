@@ -1,6 +1,6 @@
 ---
 name: webflow-template-review-reviewer
-description: Guide reviewers through the safe Phase A Webflow Template Review Hub flow using queue, self-assignment, review context, resume, and release actions without relying on raw Airtable semantics or unavailable analysis tools.
+description: Guide reviewers through the current Phase B Webflow Template Review Hub flow using queue, self-assignment, review context, remote analyzer evidence, and Set Price handoffs without relying on raw Airtable semantics or unavailable local-only tools.
 ---
 
 # Webflow Template Review Reviewer
@@ -9,32 +9,37 @@ Use this skill for Marketplace reviewers working inside the reviewer Hub lane.
 
 ## Core Rule
 
-Default to the live-safe Phase A flow unless runtime evidence proves Phase B analysis tools are connected and approved for reviewer use.
+Default to the current Phase B reviewer flow.
 
-Phase A guarantees:
+The current baseline expects:
 
 - queue reads
 - self-assignment
 - self-unassignment
 - normalized review context
+- remote analyzer evidence when `webflow-site-analyzer-mcp` is visible
+- price-change handoff through `template_review_set_price` or `template_review_bulk_set_price`
 
-Do not invent analysis, feedback drafting, or approval-state writes when the live Hub only exposes `webflow-template-review-mcp`.
+If the analyzer server is absent, fall back to context-first review. Do not invent local-only tools or fictional `template_review_*analyzer*` verbs.
 
-## Phase A Default Sequence
+## Current Default Sequence
 
 1. Call `template_review_list_queue` with no filters.
 2. Pick a row and use `assignableVersionId` as the assignment target.
 3. Call `template_review_assign_self` with that `version_id`.
 4. Call `template_review_get_review_context` with the same `version_id`.
 5. Read reviewer fields from `data.context`, not top-level `data`.
-6. Use `template_review_my_queue` when the reviewer asks for their assigned work.
-7. Use `template_review_unassign_self` only when the reviewer intentionally wants to release the version.
+6. If the reviewer wants automated evidence and `webflow-site-analyzer-mcp` is visible, use that remote analyzer lane rather than inventing local review tools.
+7. Use `template_review_my_queue` when the reviewer asks for their assigned work.
+8. Use `template_review_unassign_self` only when the reviewer intentionally wants to release the version.
+9. For price-change requests, use `template_review_set_price` for one asset or `template_review_bulk_set_price` for many templates with one target price, and return `publishing_context.mrp_id` or `admin_handoff`.
 
 ## Response Rules
 
 - Treat `assignableVersionId` as the assignment target, not the asset id.
 - Read reviewer ownership from `data.context.currentReviewer`, `data.context.reviewOwner`, and `data.context.isAssignedToCurrentReviewer`.
 - Explain the workflow in reviewer language, not Airtable field language.
+- Treat the reviewer lane as remote-only unless the Hub explicitly exposes another remote service.
 - Stop and route to manual fallback when identity, mapping, or evidence is missing.
 
 ## Evidence Classes
@@ -79,6 +84,7 @@ Use [reviewer-playbook.md](/Users/micahjohnson/Documents/Github/Create Something
 Before using any richer review flow, confirm the reviewer Hub actually exposes:
 
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
 
-If those servers are not connected, stay in Phase A context mode and manual review for broader checklist work.
+Do not assume `webflow-local` is part of the reviewer baseline.
+
+If the analyzer server is not connected, stay in context mode and manual review for broader checklist work.

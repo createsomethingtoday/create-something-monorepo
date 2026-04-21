@@ -5,6 +5,8 @@
 **Workflow:** `template_review_hub_lane`  
 **Date:** `2026-03-10`
 
+> Historical note: this document captures the original alpha rollout shape. The reviewer hubs have now passed Phase A. For the active baseline, use `reviewer-hub-runtime-posture.md`, `reviewer-hub-phase-b-operator-runbook.md`, and the updated reviewer playbook/price workflows.
+
 ## 1. Purpose
 
 This document defines the rollout shape for the first six Webflow Marketplace reviewers using the template review Hub lane.

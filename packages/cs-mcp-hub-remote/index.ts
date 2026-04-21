@@ -210,6 +210,7 @@ type DiscoveryPreferences = {
   mode: DiscoveryMode;
   activeServers: string[];
   maxProxyTools: number | null;
+  preferredProxyTools?: string[];
 };
 
 type DiscoveryPackDefinition = {
@@ -217,6 +218,7 @@ type DiscoveryPackDefinition = {
   mode?: DiscoveryMode;
   activeServers?: string[];
   maxProxyTools?: number | null;
+  preferredProxyTools?: string[];
 };
 
 type DiscoveryPackRegistry = {
@@ -1510,6 +1512,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             mode: pack.preferences.mode,
             activeServers: pack.preferences.activeServers,
             maxProxyTools: pack.preferences.maxProxyTools,
+            preferredProxyTools: pack.preferences.preferredProxyTools,
           })),
         });
       }
@@ -2043,6 +2046,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             maxProxyTools: resolveDiscoveryMaxProxyTools(
               optionalNumberArg(args.maxProxyTools, 'maxProxyTools') ?? basePrefs.maxProxyTools,
             ),
+            preferredProxyTools: basePrefs.preferredProxyTools,
           };
           await persistDiscoveryPreferences(accountId, nextPrefs, env);
         }
@@ -2657,9 +2661,10 @@ export function buildVisibleProxyRoutes(
     ? sessionScoped
     : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
 
+  const prioritized = prioritizeDiscoveryEntries(discoveryScoped, prefs.preferredProxyTools ?? []);
   const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
-    ? discoveryScoped.slice(0, prefs.maxProxyTools)
-    : discoveryScoped;
+    ? prioritized.slice(0, prefs.maxProxyTools)
+    : prioritized;
 
   const toolDefinitions = capped.map((entry) => entry.tool);
   const routes = new Map(capped.map((entry) => [entry.route.proxyToolName, entry.route]));
@@ -3923,6 +3928,7 @@ async function getDiscoveryPreferences(
               maxProxyTools: resolveDiscoveryMaxProxyTools(
                 typeof parsed.maxProxyTools === 'number' ? parsed.maxProxyTools : null,
               ),
+              preferredProxyTools: parseOrderedStringArray(parsed.preferredProxyTools),
             },
             runtime,
             env,
@@ -3960,6 +3966,7 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
       runtime,
     ),
     maxProxyTools: maxProxyToolsFromEnv ?? sharedPack?.preferences.maxProxyTools ?? null,
+    preferredProxyTools: sharedPack?.preferences.preferredProxyTools ?? [],
   }, runtime, env);
 }
 
@@ -4024,6 +4031,7 @@ function normalizeDiscoveryPreferences(
       runtime,
     ),
     maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
+    preferredProxyTools: parseOrderedStringArray(prefs.preferredProxyTools),
   };
 }
 
@@ -4053,6 +4061,46 @@ function resolveDiscoveryMaxProxyTools(value: number | null): number | null {
   }
   const floored = Math.floor(value);
   return floored > 0 ? floored : null;
+}
+
+function parseOrderedStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return uniqueStringsPreserveOrder(
+    value
+      .filter((entry) => typeof entry === 'string')
+      .map((entry) => String(entry).trim())
+      .filter(Boolean),
+  );
+}
+
+function prioritizeDiscoveryEntries(
+  entries: Array<{ tool: Tool; route: ProxyRoute }>,
+  preferredProxyTools: string[],
+): Array<{ tool: Tool; route: ProxyRoute }> {
+  if (preferredProxyTools.length === 0 || entries.length <= 1) {
+    return entries;
+  }
+
+  const preferredSet = new Set(preferredProxyTools);
+  const entryByName = new Map(entries.map((entry) => [entry.route.proxyToolName, entry]));
+  const prioritized: Array<{ tool: Tool; route: ProxyRoute }> = [];
+  const seen = new Set<string>();
+
+  for (const proxyToolName of preferredProxyTools) {
+    const match = entryByName.get(proxyToolName);
+    if (!match || seen.has(proxyToolName)) continue;
+    prioritized.push(match);
+    seen.add(proxyToolName);
+  }
+
+  for (const entry of entries) {
+    if (preferredSet.has(entry.route.proxyToolName) && seen.has(entry.route.proxyToolName)) {
+      continue;
+    }
+    prioritized.push(entry);
+  }
+
+  return prioritized;
 }
 
 function resolveDiscoveryPageSize(env: Env): number {
@@ -4087,6 +4135,7 @@ function resolveDiscoveryPackDefinition(
   const maxProxyTools = resolveDiscoveryMaxProxyTools(
     typeof definition.maxProxyTools === 'number' ? definition.maxProxyTools : null,
   );
+  const preferredProxyTools = parseOrderedStringArray(definition.preferredProxyTools);
 
   return {
     id: packId,
@@ -4095,6 +4144,7 @@ function resolveDiscoveryPackDefinition(
       mode,
       activeServers,
       maxProxyTools,
+      preferredProxyTools,
     }, runtime, env),
   };
 }
@@ -5919,6 +5969,10 @@ async function closeHubRuntime(runtime: HubRuntime): Promise<void> {
 
 function uniqueSortedStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort();
+}
+
+function uniqueStringsPreserveOrder(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 function resolveHubInstanceId(env: Env): string {

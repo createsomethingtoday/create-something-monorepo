@@ -1,6 +1,6 @@
 ---
 name: webflow-template-review-write-guardrails
-description: Guard approval-required write actions in the Webflow Template Review Hub by enforcing reviewer ownership, trace requirements, blocked ambiguity, and manual Airtable fallback.
+description: Guard reviewer-owned write actions in the Webflow Template Review Hub by enforcing reviewer ownership, trace requirements, blocked ambiguity, and manual Airtable/Admin fallback.
 ---
 
 # Webflow Template Review Write Guardrails
@@ -17,6 +17,8 @@ Only these narrow verbs belong in the reviewer lane:
 - `template_review_approve_version`
 - `template_review_reject_version`
 - `template_review_complete_publishing`
+- `template_review_set_price`
+- `template_review_bulk_set_price`
 
 Do not substitute broad mutation tools such as `template_review_update_version_review`.
 
@@ -25,7 +27,8 @@ Do not substitute broad mutation tools such as `template_review_update_version_r
 Before any write:
 
 - reviewer identity must be resolved by session, not prompt text
-- the version must be assigned to the current reviewer
+- review-state writes must target a version assigned to the current reviewer
+- price-handoff writes must resolve the asset or template names unambiguously
 - the action must be explicitly reviewer-owned
 - field mapping and release resolution must be unambiguous
 
@@ -56,6 +59,18 @@ If any precondition fails, fail closed.
 - require reviewer ownership
 - require clean release resolution
 - treat ambiguous release selection as a stop condition
+
+`set_price`
+
+- require explicit asset selection or clean asset resolution
+- require a whole-number USD target
+- return `publishing_context.mrp_id` for the Admin handoff
+
+`bulk_set_price`
+
+- require a list of template names and one target price
+- stop for ambiguous or not-found template rows instead of guessing
+- return the `admin_handoff` list so Admin can finish the Marketplace update
 
 ## Trace Requirements
 

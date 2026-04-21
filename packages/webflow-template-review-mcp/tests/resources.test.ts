@@ -54,6 +54,7 @@ test('host playbook resource documents price updates and the cross-server analyz
   const payload = JSON.parse(result.contents[0]?.text ?? '{}') as {
     operatorSequences?: {
       priceUpdate?: Array<{ tool?: string; returnFields?: string[] }>;
+      priceBatchUpdate?: Array<{ tool?: string; returnFields?: string[] }>;
     };
     crossServerHubWorkflows?: {
       analyzerReview?: {
@@ -75,10 +76,23 @@ test('host playbook resource documents price updates and the cross-server analyz
     'publishing_context.price_string',
     'publishing_context.mrp_id_override',
   ]);
+  assert.deepEqual(
+    payload.operatorSequences?.priceBatchUpdate?.map((step) => step.tool),
+    ['template_review_bulk_set_price', undefined],
+  );
+  assert.deepEqual(payload.operatorSequences?.priceBatchUpdate?.[1]?.returnFields, [
+    'summary.updated',
+    'summary.already_set',
+    'summary.not_found',
+    'summary.ambiguous',
+    'summary.needs_admin_update',
+    'admin_handoff',
+  ]);
   assert.equal(payload.crossServerHubWorkflows?.analyzerReview?.server, 'webflow-site-analyzer-mcp');
   assert.deepEqual(
     payload.crossServerHubWorkflows?.analyzerReview?.preferredSequence?.map((step) => step.tool),
     ['enqueue_template_review', 'get_template_review_job', 'list_template_review_jobs'],
   );
   assert.equal(payload.crossServerHubWorkflows?.analyzerReview?.debugFallback?.tool, 'run_template_review');
+  assert.match(result.contents[0]?.text ?? '', /remote-only/);
 });

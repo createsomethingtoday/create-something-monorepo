@@ -3,7 +3,7 @@
 **Status:** Working draft  
 **Audience:** Senior Systems Architect, Hub operators  
 **Workflow:** `template_review_hub_lane`  
-**Date:** `2026-03-10`
+**Date:** `2026-04-21`
 
 ## 1. Purpose
 
@@ -13,14 +13,14 @@ Use it after the rollout spec and before enabling reviewer writes.
 
 ## 2. Current Hub-side facts to account for
 
-As of `2026-03-10`, the live Hub surface shows:
+As of `2026-04-21`, the reviewer rollout target is Phase B:
 
-- `webflow-template-review-mcp` is enabled
-- the service exposes `16` proxy tools
-- Hub rate limits are disabled
-- Hub quotas are disabled
+- `webflow-template-review-mcp` should be enabled
+- `webflow-site-analyzer-mcp` should be enabled
+- reviewer hubs should use remote-only downstream services
+- reviewer hubs should default to the complete reviewer toolkit rather than the legacy Phase A narrow lane
 
-That means the Hub already has the needed downstream server connected, but its default posture is still broader and looser than the reviewer rollout requires.
+That means the current checklist is about locking the reviewer hubs to the correct Phase B defaults and preserving reviewer-attributed guardrails.
 
 ## 3. Build the six reviewer-specific Hubs
 
@@ -54,28 +54,27 @@ Required behavior:
 
 Do not enable reviewer writes if the Hub is still operating as a generic shared runtime with no resolved actor context.
 
-## 5. Narrow discovery per reviewer Hub
+## 5. Set the correct discovery posture per reviewer Hub
 
 For each reviewer Hub:
 
 1. restrict active discovery to the minimum required review servers
-2. keep discovery compact by default
-3. cap visible proxy tools aggressively
+2. use the Phase B complete-toolkit posture by default
+3. keep the old Phase A compact posture only as rollback
 4. persist account-scoped discovery preferences
 
 Recommended review-lane active servers:
 
 - `webflow-template-review-mcp`
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
 
-If the review lane does not yet need all three, start with the smallest usable set.
+If the review lane later adds another remote analyzer service, treat that as an explicit expansion. Do not assume `webflow-local` is part of the baseline reviewer lane.
 
 Recommended reviewer discovery policy:
 
-- `mode`: `compact`
+- `mode`: `full`
 - `activeServers`: review-only servers
-- `maxProxyTools`: low enough that reviewers do not receive a broad catalog by accident
+- `maxProxyTools`: `null`
 
 ## 6. Hide broad mutation tools from reviewer discovery
 
@@ -85,16 +84,24 @@ Remove these tools from reviewer-facing discovery during alpha:
 - `webflow-template-review-mcp__template_review_update_asset_publishing`
 - `webflow-template-review-mcp__template_review_update_version_review`
 
-Only these write tools should be candidates for later enablement:
+Only these write tools belong in the reviewer write allowlist. The Set Price handoff tools are part of the current baseline; broader decision tools remain later enablement:
 
 - `webflow-template-review-mcp__template_review_request_changes`
 - `webflow-template-review-mcp__template_review_set_review_status`
 - `webflow-template-review-mcp__template_review_save_draft_feedback`
+- `webflow-template-review-mcp__template_review_set_price`
+- `webflow-template-review-mcp__template_review_bulk_set_price`
 - `webflow-template-review-mcp__template_review_approve_version`
 - `webflow-template-review-mcp__template_review_reject_version`
 - `webflow-template-review-mcp__template_review_complete_publishing`
 
-Everything else should remain read-only for reviewers.
+The supported reviewer price-change lane is narrow and explicit:
+
+- use `template_review_set_price` for one asset
+- use `template_review_bulk_set_price` for a list of template names with one target price
+- always return `mrp_id` so Admin can complete the Marketplace update without another lookup
+
+Everything else should remain read-only or operator-only for reviewers.
 
 ## 7. Confirm Airtable field mappings before reviewer writes
 
@@ -125,9 +132,9 @@ Recommended write mapping posture:
   - write only draft-safe feedback fields
   - do not mutate official decision state
 
-## 8. Set reviewer Hubs to read-only first
+## 8. Keep reviewer writes bounded even in Phase B
 
-Before any write enablement:
+Before expanding beyond the documented reviewer workflows:
 
 - configure reviewer sessions for read-only discovery and execution posture
 - verify that mutable routes do not appear in reviewer discovery

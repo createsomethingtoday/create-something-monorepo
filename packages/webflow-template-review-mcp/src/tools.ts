@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import type { AirtableClient } from './airtable.js';
+import type { AirtableClient, TemplateReviewAsset } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
@@ -118,6 +118,97 @@ function assetPublishingContext(asset: {
     admin_follow_up: asset.mrpId
       ? 'Use the returned mrp_id to complete the corresponding price change in Admin.'
       : 'No mrp_id is currently present on the asset, so the Admin price follow-up will require manual lookup.',
+  };
+}
+
+function normalizeTemplateName(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+type TemplateAssetResolution =
+  | {
+      status: 'matched';
+      asset: TemplateReviewAsset;
+      resolution: 'exact' | 'normalized' | 'contains';
+    }
+  | {
+      status: 'not_found';
+    }
+  | {
+      status: 'ambiguous';
+      resolution: 'exact' | 'normalized' | 'contains';
+      candidates: TemplateReviewAsset[];
+    };
+
+function candidateSummary(asset: TemplateReviewAsset) {
+  return {
+    asset_id: asset.assetId,
+    template_name: asset.templateName,
+    current_price: asset.price ?? null,
+    set_price: asset.setPrice ?? null,
+    mrp_id: asset.mrpId ?? null,
+  };
+}
+
+async function resolveTemplateAssetByName(client: AirtableClient, requestedName: string): Promise<TemplateAssetResolution> {
+  const exactMatches = await client.searchAssetsByName(requestedName, {
+    mode: 'exact',
+    limit: 10,
+  });
+  if (exactMatches.length === 1) {
+    return {
+      status: 'matched',
+      asset: exactMatches[0]!,
+      resolution: 'exact',
+    };
+  }
+  if (exactMatches.length > 1) {
+    return {
+      status: 'ambiguous',
+      resolution: 'exact',
+      candidates: exactMatches,
+    };
+  }
+
+  const containsMatches = await client.searchAssetsByName(requestedName, {
+    mode: 'contains',
+    limit: 10,
+  });
+  if (containsMatches.length === 0) {
+    return { status: 'not_found' };
+  }
+
+  const normalizedRequestedName = normalizeTemplateName(requestedName);
+  const normalizedMatches = containsMatches.filter(
+    (asset) => normalizeTemplateName(asset.templateName) === normalizedRequestedName,
+  );
+  if (normalizedMatches.length === 1) {
+    return {
+      status: 'matched',
+      asset: normalizedMatches[0]!,
+      resolution: 'normalized',
+    };
+  }
+  if (normalizedMatches.length > 1) {
+    return {
+      status: 'ambiguous',
+      resolution: 'normalized',
+      candidates: normalizedMatches,
+    };
+  }
+
+  if (containsMatches.length === 1) {
+    return {
+      status: 'matched',
+      asset: containsMatches[0]!,
+      resolution: 'contains',
+    };
+  }
+
+  return {
+    status: 'ambiguous',
+    resolution: 'contains',
+    candidates: containsMatches,
   };
 }
 
@@ -664,6 +755,137 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         return asSuccess({
           updated_asset: updated,
           publishing_context: assetPublishingContext(updated),
+          support: ['set_price'],
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_bulk_set_price',
+    'Resolve a list of template names, set the same asset-side Set Price across the matched templates, and return a batch MRP/admin handoff summary in one call.',
+    {
+      template_names: z.array(z.string().min(1)).min(1).max(100),
+      set_price: z.number().int().min(0),
+    },
+    async ({ template_names, set_price }) => {
+      try {
+        const client = getClient();
+        const requestedNames = template_names.map((name) => name.trim());
+
+        const results = await Promise.all(
+          requestedNames.map(async (requested_name) => {
+            try {
+              const resolution = await resolveTemplateAssetByName(client, requested_name);
+
+              if (resolution.status === 'not_found') {
+                return {
+                  requested_name,
+                  status: 'not_found' as const,
+                };
+              }
+
+              if (resolution.status === 'ambiguous') {
+                return {
+                  requested_name,
+                  status: 'ambiguous' as const,
+                  resolution: resolution.resolution,
+                  candidates: resolution.candidates.map(candidateSummary),
+                };
+              }
+
+              const previousSetPrice = resolution.asset.setPrice ?? null;
+              const updated =
+                previousSetPrice === set_price
+                  ? resolution.asset
+                  : await client.updateAssetPublishing(resolution.asset.assetId, {
+                      set_price,
+                    });
+              const publishing_context = assetPublishingContext(updated);
+              const needsAdminUpdate =
+                updated.price === undefined || updated.price === null ? null : updated.price !== set_price;
+
+              return {
+                requested_name,
+                status: previousSetPrice === set_price ? ('already_set' as const) : ('updated' as const),
+                resolution: resolution.resolution,
+                template_name: updated.templateName,
+                asset_id: updated.assetId,
+                current_price: updated.price ?? null,
+                previous_set_price: previousSetPrice,
+                final_set_price: updated.setPrice ?? null,
+                needs_admin_update: needsAdminUpdate,
+                publishing_context,
+              };
+            } catch (error) {
+              if (error instanceof AirtableClientError) {
+                return {
+                  requested_name,
+                  status: 'error' as const,
+                  error: {
+                    code: error.code,
+                    message: error.message,
+                    status: error.status ?? 500,
+                    details: error.details,
+                  },
+                };
+              }
+
+              return {
+                requested_name,
+                status: 'error' as const,
+                error: {
+                  code: 'UNEXPECTED_ERROR',
+                  message: error instanceof Error ? error.message : String(error),
+                  status: 500,
+                },
+              };
+            }
+          }),
+        );
+
+        const matchedResults = results.filter(
+          (
+            result,
+          ): result is Extract<
+            (typeof results)[number],
+            {
+              status: 'updated' | 'already_set';
+              template_name: string;
+              asset_id: string;
+              current_price: number | null;
+              previous_set_price: number | null;
+              final_set_price: number | null;
+              needs_admin_update: boolean | null;
+              publishing_context: ReturnType<typeof assetPublishingContext>;
+            }
+          > => result.status === 'updated' || result.status === 'already_set',
+        );
+
+        return asSuccess({
+          set_price,
+          summary: {
+            requested: requestedNames.length,
+            matched: matchedResults.length,
+            updated: results.filter((result) => result.status === 'updated').length,
+            already_set: results.filter((result) => result.status === 'already_set').length,
+            not_found: results.filter((result) => result.status === 'not_found').length,
+            ambiguous: results.filter((result) => result.status === 'ambiguous').length,
+            errors: results.filter((result) => result.status === 'error').length,
+            needs_admin_update: matchedResults.filter((result) => result.needs_admin_update === true).length,
+          },
+          results,
+          admin_handoff: matchedResults.map((result) => ({
+            requested_name: result.requested_name,
+            template_name: result.template_name,
+            asset_id: result.asset_id,
+            mrp_id: result.publishing_context.mrp_id,
+            current_price: result.current_price,
+            target_set_price: set_price,
+            needs_admin_update: result.needs_admin_update,
+          })),
           support: ['set_price'],
         });
       } catch (error) {

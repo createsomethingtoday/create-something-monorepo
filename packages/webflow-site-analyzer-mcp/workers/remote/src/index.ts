@@ -1,7 +1,10 @@
 import { Container, getContainer } from '@cloudflare/containers';
 
+import { isTransientContainerError } from './transient-errors.js';
+
 const DEFAULT_PORT = 8788;
 const ANALYZER_ENTRYPOINT = ['/bin/sh', '-lc', 'cd /app && node dist/http.js'];
+const CONTAINER_PROXY_MAX_ATTEMPTS = 2;
 
 interface Env {
   AnalyzerContainer: DurableObjectNamespace<AnalyzerContainer>;
@@ -105,29 +108,55 @@ async function ensureAnalyzerServer(container: AnalyzerContainerStub, env: Env):
   }
 }
 
+async function proxyContainerOnce(request: Request, container: AnalyzerContainerStub, env: Env): Promise<Response> {
+  await ensureAnalyzerServer(container, env);
+  const upstream = await container.fetch(request);
+  const headers = new Headers(upstream.headers);
+  headers.set('X-Webflow-Site-Analyzer-Host', 'cloudflare-container');
+
+  return new Response(upstream.body, {
+    status: upstream.status,
+    statusText: upstream.statusText,
+    headers,
+  });
+}
+
 async function proxyToContainer(request: Request, env: Env): Promise<Response> {
   const container = getContainer(env.AnalyzerContainer, 'primary');
+  let lastError: unknown = null;
 
-  try {
-    await ensureAnalyzerServer(container, env);
-    const upstream = await container.fetch(request);
-    const headers = new Headers(upstream.headers);
-    headers.set('X-Webflow-Site-Analyzer-Host', 'cloudflare-container');
+  for (let attempt = 1; attempt <= CONTAINER_PROXY_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await proxyContainerOnce(request.clone(), container, env);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= CONTAINER_PROXY_MAX_ATTEMPTS || !isTransientContainerError(error)) {
+        break;
+      }
 
-    return new Response(upstream.body, {
-      status: upstream.status,
-      statusText: upstream.statusText,
-      headers,
-    });
-  } catch (error) {
-    return Response.json(
-      {
-        error: 'Analyzer container unavailable',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 503 },
-    );
+      console.warn('[webflow-site-analyzer-mcp-remote] transient container failure, recreating container', {
+        attempt,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      try {
+        await container.destroy();
+      } catch (destroyError) {
+        console.warn('[webflow-site-analyzer-mcp-remote] failed to destroy container during recovery', {
+          attempt,
+          error: destroyError instanceof Error ? destroyError.message : String(destroyError),
+        });
+      }
+    }
   }
+
+  return Response.json(
+    {
+      error: 'Analyzer container unavailable',
+      details: lastError instanceof Error ? lastError.message : String(lastError),
+    },
+    { status: 503 },
+  );
 }
 
 export default {

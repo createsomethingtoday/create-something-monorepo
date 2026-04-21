@@ -105,6 +105,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Call template_review_assign_self with that version_id.',
           'Call template_review_get_review_context with the same version_id.',
           'Use template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes for narrow reviewer-safe writes while the version remains assigned to the current reviewer.',
+          'For price-change requests, use template_review_set_price for one asset or template_review_bulk_set_price for many template names with one target price, then return the Admin handoff ids.',
           'Call template_review_my_queue to resume work already assigned to the current reviewer.',
           'Call template_review_unassign_self if the reviewer intentionally wants to release the version back to the shared queue.',
         ],
@@ -115,6 +116,10 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             'template_review_set_review_status',
             'template_review_save_draft_feedback',
             'template_review_request_changes',
+          ],
+          priceHandoffTools: [
+            'template_review_set_price',
+            'template_review_bulk_set_price',
           ],
           queueDefaults: {
             status: 'ready_to_review',
@@ -132,12 +137,14 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             poll: 'get_template_review_job',
             optionalList: 'list_template_review_jobs',
             debugOnly: 'run_template_review',
+            transport: 'remote-only reviewer hub baseline',
             workflowBoundary:
-              'Treat analyzer jobs as optional evidence from a separate Hub server. Keep assignment and Airtable review writes in template_review_* tools.',
+              'Treat analyzer jobs as optional evidence from a separate remote Hub server. Keep assignment and Airtable review writes in template_review_* tools.',
           },
           failureModes: [
             'If reviewer identity is unavailable, self-assignment and my_queue should fail closed.',
             'If a version is assigned to another reviewer, hosts should not offer unassign_self.',
+            'If price batch resolution returns ambiguous or not_found rows, stop and resolve those names before the Admin update proceeds.',
           ],
         },
       }),
@@ -235,6 +242,28 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
               expectation: 'Surface publishing_context.mrp_id so the Admin Marketplace price change can be completed against the matching MRP record.',
             },
           ],
+          priceBatchUpdate: [
+            {
+              step: 'bulk_set_price',
+              tool: 'template_review_bulk_set_price',
+              args: { template_names: ['<templateName>'], set_price: '<whole-number USD>' },
+              expectation:
+                'Use this when the user provides a list of template names and one target price. It resolves names, updates Set Price where needed, and returns one admin_handoff list.',
+            },
+            {
+              step: 'review_batch_response',
+              returnFields: [
+                'summary.updated',
+                'summary.already_set',
+                'summary.not_found',
+                'summary.ambiguous',
+                'summary.needs_admin_update',
+                'admin_handoff',
+              ],
+              expectation:
+                'Read the summary counts and surface the admin_handoff list so the Admin Marketplace updates can be completed without separate per-template searches.',
+            },
+          ],
         },
         crossServerHubWorkflows: {
           analyzerReview: {
@@ -265,6 +294,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
               'Analyzer jobs are a separate Hub server boundary. Do not relabel them as template_review_* tools.',
               'Use analyzer findings as evidence for draft feedback or a final decision, then persist reviewer-safe writes with template_review_save_draft_feedback, template_review_set_review_status, or template_review_request_changes.',
               'If the analyzer server is absent from discovery, skip this lane instead of assuming the tools exist.',
+              'Shared reviewer hubs are remote-only; do not assume webflow-local is part of the baseline analyzer lane.',
             ],
           },
         },
@@ -273,13 +303,17 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           reviewContext: 'Reviewer context is nested under data.context, not top-level data.',
           myQueue: 'Returns only versions assigned to the current reviewer.',
           assetPublishing: 'template_review_set_price and template_review_update_asset_publishing return publishing_context with mrp_id, current_price, set_price, price_string, and mrp_id_override for the Admin handoff.',
+          assetPublishingBatch:
+            'template_review_bulk_set_price returns one batch summary plus per-template results and admin_handoff rows with mrp_id and needs_admin_update.',
         },
         promptTemplate: [
           'When helping a reviewer, start with template_review_list_queue unless they explicitly ask for their assigned work.',
           'If they want their current workload, use template_review_my_queue.',
           'When a queue row is chosen, use assignableVersionId rather than assetId for write actions.',
           'When the user wants automated review evidence and the Hub exposes webflow-site-analyzer-mcp, use enqueue_template_review and get_template_review_job rather than inventing template_review_* analyzer tool names.',
+          'Treat the reviewer lane as remote-only unless the Hub explicitly exposes another remote service; do not assume webflow-local is available.',
           'Treat template_review_assign_self, template_review_unassign_self, template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes as the primary reviewer-safe write lane.',
+          'When the user gives a list of template names that all need the same Set Price, use template_review_bulk_set_price instead of separate search and set_price calls.',
           'For price changes, use template_review_set_price or template_review_update_asset_publishing and always return publishing_context.mrp_id when available.',
           'Never ask the reviewer for an Airtable collaborator id.',
           'Do not offer broad mutation tools that are not visible in reviewer discovery.',
@@ -289,6 +323,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Do not read currentReviewer from top-level data when using template_review_get_review_context.',
           'Do not infer assignment ownership from raw Airtable fields when normalized booleans are available.',
           'Do not relabel cross-server analyzer tools as template_review_* tool names.',
+          'Do not promise webflow-local analysis tools in the shared reviewer Hub baseline.',
         ],
       }),
   );

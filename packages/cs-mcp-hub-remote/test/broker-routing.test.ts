@@ -225,6 +225,31 @@ test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', ()
   );
 });
 
+test('buildVisibleProxyRoutes prioritizes discovery-preferred tools before applying the max cap', () => {
+  const runtime = createRuntime();
+  const prefs = {
+    mode: 'compact' as const,
+    activeServers: ['server_a', 'server_b'],
+    maxProxyTools: 2,
+    preferredProxyTools: ['server_b__gamma', 'server_a__beta'],
+  };
+  const accountContext = {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    ['server_b__gamma', 'server_a__beta'],
+  );
+});
+
 test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only sessions', async () => {
   const readRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_get_spreadsheet',
@@ -561,6 +586,7 @@ test('resolveDiscoveryPack returns normalized shared pack preferences', () => {
   assert.equal(shared.id, 'shared-auth-core');
   assert.equal(shared.preferences.mode, 'compact');
   assert.equal(shared.preferences.maxProxyTools, null);
+  assert.deepEqual(shared.preferences.preferredProxyTools, []);
   assert.deepEqual(shared.preferences.activeServers, []);
 });
 
@@ -629,6 +655,7 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
   assert.ok(pack);
   assert.equal(pack.id, 'mj-shared-auth-plus-ops-search-meetings-and-review');
   assert.equal(pack.preferences.mode, 'full');
+  assert.deepEqual(pack.preferences.preferredProxyTools, []);
   assertActiveServers(pack, [
     'composio-toolkit-airtable',
     'composio-toolkit-dropbox',
@@ -645,6 +672,46 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
     'loom-mcp',
     'meetings',
     'webflow-template-review-mcp',
+  ]);
+});
+
+test('resolveDiscoveryPack returns reviewer phase A pack with prioritized price handoff tools', () => {
+  const runtime = createRuntime();
+  runtime.connected = [{ name: 'webflow-template-review-mcp' }] as any;
+
+  const pack = resolveDiscoveryPack('webflow-marketplace-review-phase-a', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'webflow-marketplace-review-phase-a');
+  assert.equal(pack.preferences.mode, 'compact');
+  assert.equal(pack.preferences.maxProxyTools, 21);
+  assert.deepEqual(
+    pack.preferences.preferredProxyTools?.slice(-2),
+    [
+      'webflow-template-review-mcp__template_review_set_price',
+      'webflow-template-review-mcp__template_review_bulk_set_price',
+    ],
+  );
+  assertActiveServers(pack, ['webflow-template-review-mcp']);
+});
+
+test('resolveDiscoveryPack returns reviewer phase B pack as the complete toolkit lane', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'webflow-template-review-mcp' },
+    { name: 'webflow-site-analyzer-mcp' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('webflow-marketplace-review-phase-b', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'webflow-marketplace-review-phase-b');
+  assert.equal(pack.preferences.mode, 'full');
+  assert.equal(pack.preferences.maxProxyTools, null);
+  assert.deepEqual(pack.preferences.preferredProxyTools, []);
+  assertActiveServers(pack, [
+    'webflow-template-review-mcp',
+    'webflow-site-analyzer-mcp',
   ]);
 });
 

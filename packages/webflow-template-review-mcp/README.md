@@ -3,6 +3,7 @@
 Remote MCP server for Webflow Template Review workflows, scoped to Airtable `Assets` + `Asset Versions`.
 
 Analyzer execution is a separate Hub server concern. In shared Hub discovery, automated review jobs may also be exposed by `webflow-site-analyzer-mcp`; this package documents that as a cross-server workflow instead of re-registering analyzer tools locally.
+The current reviewer-hub baseline is remote-only: `webflow-template-review-mcp` plus `webflow-site-analyzer-mcp`, without assuming `webflow-local`.
 
 ## Scope
 
@@ -27,6 +28,7 @@ Phase 1 is intentionally conservative:
 - reviewer-safe workflow helpers (`request changes`, `set review status`, `save draft feedback`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
 - supplemental agent-feedback writes are supported for `📝Agent Review Feedback`
 - asset-side publishing writes are supported for `👀ℹ️MRP ID (Override)` and `ℹ️💲Set Price`, and tool responses surface MRP context for the Admin handoff
+- batch price updates are supported through one MCP call when the user supplies multiple template names and one target price
 - workflow guidance treats analyzer jobs as a cross-server Hub lane via `webflow-site-analyzer-mcp`, not as local `template_review_*` tools
 
 ## Auth
@@ -74,6 +76,7 @@ Optional:
 - `template_review_update_asset_metadata`
 - `template_review_update_asset_publishing`
 - `template_review_set_price`
+- `template_review_bulk_set_price`
 - `template_review_update_version_review`
 - `template_review_approve_version`
 - `template_review_reject_version`
@@ -111,11 +114,18 @@ Do not invent `template_review_*analyzer*` tool names. Treat analyzer output as 
 
 To update Marketplace pricing from the Hub:
 
-1. Read the template asset with `template_review_get_asset`.
-2. Write the requested whole-number USD value to Airtable `ℹ️💲Set Price` with `template_review_set_price` or `template_review_update_asset_publishing`.
-3. Return `publishing_context.mrp_id` so the Admin-side Marketplace update can be completed against the corresponding MRP record.
+1. If the user supplies multiple template names with the same target price, use `template_review_bulk_set_price`.
+2. Otherwise, read the template asset with `template_review_get_asset`.
+3. Write the requested whole-number USD value to Airtable `ℹ️💲Set Price` with `template_review_set_price` or `template_review_update_asset_publishing`.
+4. Return `publishing_context.mrp_id` so the Admin-side Marketplace update can be completed against the corresponding MRP record.
 
 The publishing context also includes `current_price`, `set_price`, `price_string`, and `mrp_id_override` when available.
+
+For multi-template batches, `template_review_bulk_set_price` returns:
+
+- one summary object
+- per-template results with `updated`, `already_set`, `not_found`, `ambiguous`, or `error`
+- `admin_handoff` rows containing the resolved MRP ids and `needs_admin_update` flags
 
 ## Worker
 

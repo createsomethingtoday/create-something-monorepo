@@ -17,8 +17,11 @@ Use the Hub to:
 - load queue, asset, and version context quickly
 - run objective checks across preview and published URLs
 - inspect evidence for pass/fail/manual checklist items
-- review plagiarism or originality signals
+- review analyzer evidence, and any explicitly exposed originality signals, without overstating confidence
 - draft clearer creator feedback
+- handle Marketplace price-change requests through the Set Price workflow and Admin handoff
+
+The current reviewer Hub baseline is remote-only. Do not expect `webflow-local` to appear in reviewer discovery.
 
 Do not use the Hub to:
 
@@ -105,8 +108,25 @@ These actions remain reviewer-owned:
 - approve version
 - reject version
 - complete publishing updates
+- set or batch-update the asset-side `Set Price` field before the Admin Marketplace follow-up
 
 Treat every write action as a deliberate reviewer action, not an automatic follow-through from the recommendation.
+
+## Price change workflow
+
+When a reviewer or operator needs to change template pricing:
+
+1. Start with the Hub workflow/playbook guidance so the lane uses the price-update flow rather than ad hoc search/edit steps.
+2. If one template needs a new price, use `template_review_set_price`.
+3. If multiple template names all need the same price, use `template_review_bulk_set_price`.
+4. Capture the returned `publishing_context.mrp_id` or `admin_handoff` rows and use those IDs to complete the matching Admin Marketplace update.
+5. Treat unresolved names, ambiguous matches, or missing `mrp_id` values as a stop condition that requires manual lookup before Admin changes proceed.
+
+Expected reviewer behavior:
+
+- confirm the target template names and the whole-number USD value
+- prefer the batch path when the request is “many templates, one target price”
+- return the MRP handoff details with the result instead of making the reviewer re-search the catalog
 
 ## Escalate instead of improvising when
 

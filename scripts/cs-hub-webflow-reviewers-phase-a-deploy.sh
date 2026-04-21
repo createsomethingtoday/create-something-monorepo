@@ -12,8 +12,9 @@ BUNDLE_NAME="${BUNDLE_NAME:-webflow-marketplace-review-phase-a}"
 DISCOVERY_PACK="${DISCOVERY_PACK:-webflow-marketplace-review-phase-a}"
 ENABLED_SERVERS="${ENABLED_SERVERS:-webflow-template-review-mcp}"
 DISABLED_SERVERS="${DISABLED_SERVERS:-webflow-local,webflow-site-analyzer-mcp}"
+DISCOVERY_MODE="${DISCOVERY_MODE:-compact}"
 DISCOVERY_ACTIVE_SERVERS="${DISCOVERY_ACTIVE_SERVERS:-$ENABLED_SERVERS}"
-DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-18}"
+DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-21}"
 RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
 QUOTA_MAX_PROXY_CALLS_PER_PERIOD="${QUOTA_MAX_PROXY_CALLS_PER_PERIOD:-10000}"
@@ -22,6 +23,10 @@ REQUIRED_GLOBAL_SERVERS_SENTINEL="${REQUIRED_GLOBAL_SERVERS_SENTINEL:-__none__}"
 REQUIRED_DISCOVERY_SERVERS_SENTINEL="${REQUIRED_DISCOVERY_SERVERS_SENTINEL:-__none__}"
 SKIP_NORMALIZE="${SKIP_NORMALIZE:-0}"
 SKIP_VERIFY="${SKIP_VERIFY:-0}"
+INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/}"
+INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 
 REVIEWERS=(
   "wf-template-review-natalia|acct_wf_natalia"
@@ -117,6 +122,55 @@ health_url_for_slug() {
   echo "https://$(domain_for_slug "$slug")/health"
 }
 
+reviewer_secret_name_for_slug() {
+  case "$1" in
+    "wf-template-review-natalia") echo "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN" ;;
+    "wf-template-review-sudiksha") echo "CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_API_TOKEN" ;;
+    "wf-template-review-eric") echo "CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN" ;;
+    "wf-template-review-vicki") echo "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN" ;;
+    "wf-template-review-mariana") echo "CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN" ;;
+    "wf-template-review-micah") echo "CS_HUB_WF_TEMPLATE_REVIEW_MICAH_API_TOKEN" ;;
+    *)
+      echo "unknown reviewer slug: $1" >&2
+      exit 1
+      ;;
+  esac
+}
+
+resolve_reviewer_token() {
+  local slug="$1"
+  local secret_name
+  secret_name="$(reviewer_secret_name_for_slug "$slug")"
+
+  if [[ -n "${!secret_name:-}" ]]; then
+    echo "${!secret_name}"
+    return 0
+  fi
+
+  if command -v infisical >/dev/null 2>&1; then
+    local token
+    local -a cmd=(
+      infisical secrets get "$secret_name"
+      --plain
+      --silent
+      --env="$INFISICAL_ENV"
+      --path="$INFISICAL_PATH"
+      --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+    )
+    if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+      cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+    fi
+    token="$("${cmd[@]}" 2>/dev/null || true)"
+    if [[ -n "$token" ]]; then
+      echo "$token"
+      return 0
+    fi
+  fi
+
+  echo "missing reviewer token secret ${secret_name} for ${slug}" >&2
+  exit 1
+}
+
 slug_matches_reviewer() {
   local slug="$1"
   local reviewer="${2:-all}"
@@ -146,7 +200,7 @@ deploy_one() {
     --var "HUB_IDENTITY_MODE:${REVIEWER_IDENTITY_MODE}" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:false" \
     --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
-    --var "HUB_DISCOVERY_MODE:compact" \
+    --var "HUB_DISCOVERY_MODE:${DISCOVERY_MODE}" \
     --var "HUB_DISCOVERY_SHARED_PACK:${DISCOVERY_PACK}" \
     --var "HUB_DISCOVERY_DEFAULT_SERVERS:${DISCOVERY_ACTIVE_SERVERS}" \
     --var "HUB_DISCOVERY_MAX_PROXY_TOOLS:${DISCOVERY_MAX_PROXY_TOOLS}" \
@@ -162,27 +216,29 @@ normalize_one() {
   local slug="$1"
   local worker
   local mcp_url
+  local hub_token
+  local -a auth_headers
   local enabled_servers_json
   local discovery_active_servers_json
   worker="$(worker_name_for_slug "$slug")"
   mcp_url="$(mcp_url_for_slug "$slug")"
+  hub_token="$(resolve_reviewer_token "$slug")"
+  auth_headers=(-H "Authorization: Bearer ${hub_token}")
   enabled_servers_json="$(json_array_from_csv "$ENABLED_SERVERS")"
   discovery_active_servers_json="$(json_array_from_csv "$DISCOVERY_ACTIVE_SERVERS")"
 
-  if [[ -z "${HUB_API_TOKEN:-}" ]]; then
-    echo "missing HUB_API_TOKEN; cannot normalize ${worker}" >&2
-    exit 1
-  fi
-  if [[ -z "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
-    echo "missing SESSION_TOKEN_FOR_NORMALIZE; cannot normalize ${worker} in session_required mode" >&2
-    exit 1
+  if [[ "$REVIEWER_IDENTITY_MODE" == "session_required" ]]; then
+    if [[ -z "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
+      echo "missing SESSION_TOKEN_FOR_NORMALIZE; cannot normalize ${worker} in session_required mode" >&2
+      exit 1
+    fi
+    auth_headers+=(-H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}")
   fi
 
   echo "===== NORMALIZE ${worker} ====="
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -199,8 +255,7 @@ normalize_one() {
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d "{
@@ -211,7 +266,7 @@ normalize_one() {
         \"name\":\"hub_set_discovery\",
         \"arguments\":{
           \"pack\":\"${DISCOVERY_PACK}\",
-          \"mode\":\"compact\",
+          \"mode\":\"${DISCOVERY_MODE}\",
           \"activeServers\":${discovery_active_servers_json},
           \"maxProxyTools\":${DISCOVERY_MAX_PROXY_TOOLS}
         }
@@ -224,26 +279,28 @@ verify_one() {
   local worker
   local health_url
   local mcp_url
+  local hub_token
+  local -a auth_headers
   worker="$(worker_name_for_slug "$slug")"
   health_url="$(health_url_for_slug "$slug")"
   mcp_url="$(mcp_url_for_slug "$slug")"
+  hub_token="$(resolve_reviewer_token "$slug")"
+  auth_headers=(-H "Authorization: Bearer ${hub_token}")
 
-  if [[ -z "${HUB_API_TOKEN:-}" ]]; then
-    echo "missing HUB_API_TOKEN; cannot verify ${worker}" >&2
-    exit 1
+  if [[ "$REVIEWER_IDENTITY_MODE" == "session_required" ]]; then
+    if [[ -z "${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}" ]]; then
+      echo "missing SESSION_TOKEN_FOR_VERIFY or SESSION_TOKEN_FOR_NORMALIZE; cannot verify ${worker}" >&2
+      exit 1
+    fi
+    local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
+    auth_headers+=(-H "X-MCP-Session-Token: ${session_token}")
   fi
-  if [[ -z "${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}" ]]; then
-    echo "missing SESSION_TOKEN_FOR_VERIFY or SESSION_TOKEN_FOR_NORMALIZE; cannot verify ${worker}" >&2
-    exit 1
-  fi
-  local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
 
   echo "===== VERIFY ${worker} ====="
   curl_with_url "$health_url" -sS | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -257,8 +314,7 @@ verify_one() {
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{

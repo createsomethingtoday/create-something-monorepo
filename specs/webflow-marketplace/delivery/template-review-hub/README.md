@@ -6,6 +6,8 @@
 
 This folder packages the current Webflow review MCP work into a delivery-ready handoff for the Marketplace template review workflow.
 
+Current baseline: Phase B reviewer hubs use remote-only downstream services with `webflow-template-review-mcp` plus `webflow-site-analyzer-mcp`, and they include the Set Price -> Admin `mrp_id` handoff workflow.
+
 The goal is not to explain every underlying system. The goal is to give the Marketplace team one operational pack that defines:
 
 - what the Hub lane is
@@ -59,13 +61,16 @@ Operator checklist for Hub identity, discovery, trace validation, rate limits, q
 Exact Hub server, discovery, and rollout posture for the six reviewer-specific Hub surfaces.
 
 15. `reviewer-hub-policy-records.yaml`
-Six separate reviewer-specific policy records for the authoritative Phase A rollout.
+Reviewer-specific policy records retained from the Phase A rollout baseline.
 
-16. `reviewer-hub-phase-a-operator-runbook.md`
-Exact deploy, normalize, and verify path for the six Phase A reviewer Hub surfaces.
+16. `reviewer-hub-phase-b-operator-runbook.md`
+Exact deploy, normalize, verify, and price-workflow path for the six remote-only Phase B reviewer Hub surfaces.
 
-17. `onboarding-skills.md`
-Skill-led onboarding sequence for reviewers and operators, including what is included now versus gated for later rollout phases.
+17. `reviewer-hub-phase-a-operator-runbook.md`
+Historical Phase A operator runbook retained for rollback/reference.
+
+18. `onboarding-skills.md`
+Skill-led onboarding sequence for reviewers and operators, aligned to the current remote-only Phase B reviewer lane.
 
 ## Reading order
 
@@ -84,8 +89,9 @@ Skill-led onboarding sequence for reviewers and operators, including what is inc
 13. `reviewer-hub-implementation-checklist.md`
 14. `reviewer-hub-runtime-posture.md`
 15. `reviewer-hub-policy-records.yaml`
-16. `reviewer-hub-phase-a-operator-runbook.md`
-17. `onboarding-skills.md`
+16. `reviewer-hub-phase-b-operator-runbook.md`
+17. `reviewer-hub-phase-a-operator-runbook.md`
+18. `onboarding-skills.md`
 
 ## Related source material
 
@@ -95,4 +101,3 @@ Skill-led onboarding sequence for reviewers and operators, including what is inc
 - `docs/HUB_EXECUTION_GOVERNANCE_PLAN.md`
 - `packages/webflow-template-review-mcp/README.md`
 - `packages/webflow-site-analyzer-mcp/README.md`
-- `packages/webflow-mcp/README.md`

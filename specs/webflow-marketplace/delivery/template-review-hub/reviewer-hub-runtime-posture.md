@@ -3,28 +3,30 @@
 **Status:** Working draft  
 **Audience:** Hub operators  
 **Workflow:** `template_review_hub_lane`  
-**Date:** `2026-03-10`
+**Date:** `2026-04-21`
 
 ## 1. Purpose
 
-This document gives the exact Hub posture to use for the first six reviewer-specific Hub surfaces.
+This document gives the exact Hub posture to use for the six reviewer-specific Hub surfaces now that the rollout has passed Phase A.
 
 It is intended to answer:
 
 - which downstream servers must be enabled
 - which discovery settings to apply
-- what the initial reviewer-visible surface should be
+- what the current reviewer-visible surface should be
 - when write posture can be expanded
 
 ## 2. Important current-state note
 
-As of `2026-03-10`, the live remote Hub currently shows:
+As of `2026-04-21`, the reviewer rollout target is Phase B:
 
-- `webflow-template-review-mcp` connected
-- `webflow-site-analyzer-mcp` not connected
-- `webflow-local` not connected
+- `webflow-template-review-mcp` enabled
+- `webflow-site-analyzer-mcp` enabled
+- reviewer hubs use remote-only downstream services
+- reviewer hubs should default to the complete toolkit rather than the legacy narrow Phase A lane
 
-That means the only safe exact runtime posture today is a **template-review-context plus narrow reviewer workflow write** lane unless the other Webflow servers are enabled and verified first.
+Phase A is now a rollback/reference posture only. Phase B is the baseline reviewer lane.
+`webflow-local` is not part of the active reviewer baseline because the shared remote Hub only brokers remote downstream services.
 
 ## 3. Reviewer Hub identities
 
@@ -41,9 +43,9 @@ Use one reviewer-specific Hub surface or account-scoped Hub posture per reviewer
 
 If these are implemented as separate custom-domain Hubs, keep the same posture across all six. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
 
-## 4. Phase A: current-live-safe posture
+## 4. Phase A: historical posture
 
-Use this immediately, because it only depends on the server that is already connected.
+Retain this only for rollback/reference. It is no longer the default reviewer posture.
 
 ### Active servers
 
@@ -53,12 +55,13 @@ Use this immediately, because it only depends on the server that is already conn
 
 - `mode`: `compact`
 - `activeServers`: `["webflow-template-review-mcp"]`
-- `maxProxyTools`: `18`
+- `maxProxyTools`: `21`
 
 ### Reviewer-visible tool target
 
 Visible tools should be limited to:
 
+- `webflow-template-review-mcp__template_review_workflow`
 - `webflow-template-review-mcp__template_review_health`
 - `webflow-template-review-mcp__template_review_get_metrics`
 - `webflow-template-review-mcp__template_review_list_queue`
@@ -77,46 +80,48 @@ Visible tools should be limited to:
 - `webflow-template-review-mcp__template_review_request_changes`
 - `webflow-template-review-mcp__template_review_set_review_status`
 - `webflow-template-review-mcp__template_review_save_draft_feedback`
+- `webflow-template-review-mcp__template_review_set_price`
+- `webflow-template-review-mcp__template_review_bulk_set_price`
 
-Do not expose broad write tools in Phase A. The permitted mutations are narrow reviewer workflow verbs only: reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates on the assigned Asset Version.
+Do not expose broad write tools in Phase A. The permitted mutations are reviewer assignment, bounded feedback writes, controlled 📝Review Status updates on the assigned Asset Version, and the narrow Set Price handoff tools that return `mrp_id` for the manual Admin follow-up.
 
 ### Reviewer action
 
-Reads plus narrow self-assignment, self-unassignment, bounded feedback writes, and controlled 📝Review Status updates. Broader review-state changes remain manual in Airtable.
+Reads plus narrow self-assignment, self-unassignment, bounded feedback writes, controlled 📝Review Status updates, and Set Price admin handoff writes. Broader review-state and publishing changes remain manual in Airtable/Admin.
 
-## 5. Phase B: full reviewer lane posture
-
-Use this only after the missing Webflow analysis servers are enabled and verified in the live Hub.
+## 5. Phase B: current baseline posture
 
 ### Required servers
 
 - `webflow-template-review-mcp`
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
 
 ### Discovery mode
 
-- `mode`: `compact`
-- `activeServers`: `["webflow-template-review-mcp", "webflow-site-analyzer-mcp", "webflow-local"]`
-- `maxProxyTools`: `30`
+- `mode`: `full`
+- `activeServers`: `["webflow-template-review-mcp", "webflow-site-analyzer-mcp"]`
+- `maxProxyTools`: `null`
 
 ### Reviewer-visible tool target
 
-Phase B should still default to a narrow review surface:
+Phase B should expose the complete reviewer toolkit across the remote reviewer services. At minimum, the reviewer lane must include:
 
-- all Phase A read tools
-- selected analysis tools from `webflow-site-analyzer-mcp`
-- selected originality/plagiarism tools from `webflow-local`
+- `webflow-template-review-mcp__template_review_workflow`
+- full template review context and reviewer write flows from `webflow-template-review-mcp`
+- analysis tools from `webflow-site-analyzer-mcp`
+- `webflow-template-review-mcp__template_review_set_price`
+- `webflow-template-review-mcp__template_review_bulk_set_price`
 
-Do not expose entire raw tool catalogs if the reviewer workflow only needs a few actions.
+The reviewer workflow/playbook should explicitly cover price changes: write the Airtable `Set Price` field, then return `publishing_context.mrp_id` or batch `admin_handoff` rows so the Admin Marketplace update can be completed without a second lookup.
+If a future remote originality service is added, treat that as an explicit expansion rather than assuming `webflow-local`.
 
 ### Reviewer write posture
 
-Even in Phase B, reviewer Hubs should begin read-only and move to write enablement later by action.
+Phase B keeps reviewer attribution, approval posture, and operator-only guardrails in place, but the reviewer lane should include the update workflows needed for template review and price-change handoff.
 
 ## 6. Server enablement sequence
 
-If the live remote Hub is missing the analysis servers, use this operator sequence first.
+If a reviewer hub is missing one of the Phase B services, use this operator sequence to restore the full toolkit.
 
 ### Enable required servers
 
@@ -126,8 +131,7 @@ Use `hub_update_state` with:
 {
   "enableServers": [
     "webflow-template-review-mcp",
-    "webflow-site-analyzer-mcp",
-    "webflow-local"
+    "webflow-site-analyzer-mcp"
   ]
 }
 ```
@@ -141,47 +145,47 @@ Then verify:
 - `hub_search_proxy_tools` with `serverName` set to each of:
   - `webflow-template-review-mcp`
   - `webflow-site-analyzer-mcp`
-  - `webflow-local`
 
-Do not move to Phase B until all three resolve and return usable proxy tools.
+Do not treat the reviewer lane as Phase B healthy until both remote services resolve and return usable proxy tools.
 
 ## 7. Reviewer discovery posture
 
-For each reviewer-specific Hub/account, apply this Phase A discovery posture first:
+Use this Phase B discovery posture as the default for each reviewer-specific Hub/account:
+
+```json
+{
+  "mode": "full",
+  "activeServers": [
+    "webflow-template-review-mcp",
+    "webflow-site-analyzer-mcp"
+  ],
+  "maxProxyTools": null
+}
+```
+
+Keep the older Phase A discovery posture only as a rollback option:
 
 ```json
 {
   "mode": "compact",
   "activeServers": ["webflow-template-review-mcp"],
-  "maxProxyTools": 18
+  "maxProxyTools": 21
 }
 ```
 
 Apply it through `hub_set_discovery`.
 
-After the other Webflow servers are connected and tested, move the reviewer to Phase B:
-
-```json
-{
-  "mode": "compact",
-  "activeServers": [
-    "webflow-template-review-mcp",
-    "webflow-site-analyzer-mcp",
-    "webflow-local"
-  ],
-  "maxProxyTools": 30
-}
-```
-
 ## 8. Reviewer write enablement posture
 
 Do not widen discovery to expose general mutation tools.
 
-The narrow reviewer-safe write actions that may be enabled in Phase A are:
+The narrow reviewer-safe write actions in the reviewer lane are:
 
 - `webflow-template-review-mcp__template_review_request_changes`
 - `webflow-template-review-mcp__template_review_set_review_status`
 - `webflow-template-review-mcp__template_review_save_draft_feedback`
+- `webflow-template-review-mcp__template_review_set_price`
+- `webflow-template-review-mcp__template_review_bulk_set_price`
 
 The broader official decision actions that may be enabled later are:
 
@@ -200,7 +204,7 @@ For host integrations and smoke checks, note the read envelope for reviewer cont
 - `currentReviewer`, `reviewOwner`, and `isAssignedToCurrentReviewer` are fields on `data.context`, not top-level `data`
 - repeatable bearer-token validation is scripted in `scripts/webflow-reviewer-assign-self-smoke.sh`
 
-Keep narrow reviewer workflow writes gated until:
+Keep the version-scoped reviewer workflow writes gated until:
 
 - reviewer identity is visible in traces
 - `correlation_id` links recommendation and write
@@ -209,7 +213,9 @@ Keep narrow reviewer workflow writes gated until:
 
 ### Future write guardrails
 
-If reviewer write actions are enabled, each route must satisfy all of the following:
+The price-handoff tools should resolve asset or template names unambiguously and return `mrp_id` for Admin follow-up.
+
+For version-scoped review-state writes, each route must satisfy all of the following:
 
 - the version is assigned to the current reviewer
 - the current reviewer matches the authenticated hub account identity
@@ -290,22 +296,26 @@ Minimum validation before widening beyond assignment tools:
 - Hub trace lookup shows reviewer attribution and correlation continuity
 - fallback runbook documents manual Airtable recovery for each write tool
 
-## 9. Tools that should stay hidden from reviewers
+## 9. Broad mutation routes to review explicitly
 
-Hide these from reviewer-facing discovery in both Phase A and Phase B:
+Phase B is the complete reviewer toolkit, but these broad mutation routes still require explicit policy review because they are wider than the documented price-change handoff and reviewer workflow verbs:
 
 - `webflow-template-review-mcp__template_review_update_asset_metadata`
 - `webflow-template-review-mcp__template_review_update_asset_publishing`
 - `webflow-template-review-mcp__template_review_update_version_review`
 
-These are too broad for the current reviewer playbook and should remain operator-only unless the policy pack is explicitly expanded.
+If policy chooses to keep any routes out of reviewer-facing discovery, start with these. The supported reviewer price-change lane remains:
+
+- `webflow-template-review-mcp__template_review_set_price`
+- `webflow-template-review-mcp__template_review_bulk_set_price`
 
 ## 10. Policy posture
 
 Use this reviewer policy posture:
 
-- reviewer sessions may discover only the explicit reviewer-safe write routes plus read routes
-- reviewer sessions cannot discover broad mutation routes
+- reviewer sessions may discover the full Phase B reviewer toolkit across the remote reviewer services
+- reviewer price-change workflows are allowed and should return `mrp_id` for the Admin handoff
+- broader mutation routes remain subject to explicit policy review and reviewer attribution checks
 - reviewer-safe write routes remain approval-gated
 - control-plane and destructive routes remain blocked or review-only
 - policy-denied routes must fail closed
@@ -347,13 +357,13 @@ Reason:
 
 ## 13. Recommended operator sequence
 
-1. Enable missing Webflow analysis servers in the Hub.
+1. Enable missing remote reviewer servers in the Hub.
 2. Verify they are connected and searchable.
 3. Apply Phase A compact discovery posture to all six reviewer Hubs.
 4. Confirm write tools are not visible in reviewer discovery.
 5. Confirm reviewer sessions are read-only and actor-resolved.
 6. Turn on Hub rate limits and quotas.
-7. Move one reviewer to Phase B discovery once the analysis servers are healthy.
+7. Move one reviewer to Phase B discovery once the remote analyzer server is healthy.
 8. Enable `request_changes` for one reviewer only after trace validation.
 9. Expand action-by-action.
 10. Expand reviewer-by-reviewer.

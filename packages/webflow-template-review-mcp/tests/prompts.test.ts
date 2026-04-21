@@ -45,7 +45,10 @@ test('template_review_workflow prompt documents the cross-server analyzer lane a
   assert.match(text, /list_template_review_jobs/);
   assert.match(text, /run_template_review/);
   assert.match(text, /template_review_set_price/);
+  assert.match(text, /template_review_bulk_set_price/);
   assert.match(text, /publishing_context\.mrp_id/);
+  assert.match(text, /admin_handoff/);
+  assert.match(text, /remote-only/);
   assert.match(text, /⚠️Satisfactory/);
   assert.equal(text.includes('template_review_enqueue_analyzer_review'), false);
   assert.equal(text.includes('template_review_get_analyzer_review'), false);
