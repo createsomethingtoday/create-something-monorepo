@@ -603,13 +603,34 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     : null;
 
   // Policy checks: deterministic, run regardless of __wfReview availability
-  const poweredByBadge = document.querySelector('.w-webflow-badge') ||
-    document.querySelector('a[href*="webflow.com"][class*="badge"]') ||
-    document.querySelector('a[href*="webflow.com"]');
-  const hasPoweredByWebflow = Boolean(
-    poweredByBadge &&
-    (poweredByBadge.textContent || '').toLowerCase().includes('webflow')
+  //
+  // The Webflow-emitted badge is an <a class="w-webflow-badge"> containing two
+  // <img> tags and no anchor text, so textContent is empty. Validate on the
+  // class + host + image alt text instead, and require the element to be
+  // visibly rendered (not display:none / visibility:hidden / zero-box).
+  const isVisible = (el) => {
+    if (!(el instanceof Element)) return false;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) === 0) {
+      return false;
+    }
+    const rects = el.getClientRects();
+    return rects.length > 0 && Array.from(rects).some((r) => r.width > 0 && r.height > 0);
+  };
+  const badgeCandidates = Array.from(
+    document.querySelectorAll('a.w-webflow-badge, a[href*="webflow.com"]')
   );
+  const hasPoweredByWebflow = badgeCandidates.some((a) => {
+    const href = (a.getAttribute('href') || '').toLowerCase();
+    if (!href.includes('webflow.com')) return false;
+    const classOk = a.classList.contains('w-webflow-badge');
+    const text = (a.textContent || '').toLowerCase();
+    const altText = Array.from(a.querySelectorAll('img'))
+      .map((img) => (img.getAttribute('alt') || '').toLowerCase())
+      .join(' ');
+    const labelOk = classOk || text.includes('webflow') || altText.includes('webflow');
+    return labelOk && isVisible(a);
+  });
 
   const allHrefs = Array.from(document.querySelectorAll('a[href]'))
     .map(a => (a.getAttribute('href') || '').toLowerCase());
