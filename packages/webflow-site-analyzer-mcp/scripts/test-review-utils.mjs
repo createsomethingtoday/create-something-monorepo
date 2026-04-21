@@ -15,6 +15,7 @@ const {
   is404PageTitle,
   isCriticalUtilityUrl,
   isWebflowComponentAnchor,
+  matchesWebflowBadgeMarkup,
   computeScore
 } = require('../dist/review-utils.js');
 
@@ -176,6 +177,44 @@ test('#contact is NOT a component anchor', () => {
 
 test('/about is NOT an anchor at all', () => {
   assert.equal(isWebflowComponentAnchor('/about'), false);
+});
+
+// =============================================================================
+console.log('\n== matchesWebflowBadgeMarkup ==');
+
+test('matches the canonical image-only Webflow badge markup', () => {
+  assert.equal(
+    matchesWebflowBadgeMarkup({
+      className: 'w-webflow-badge',
+      href: 'https://webflow.com?utm_campaign=brandjs',
+      imageSrcs: [
+        'https://d3e54v103j8qbb.cloudfront.net/img/webflow-badge-icon-d2.89e12c322e.svg',
+        'https://d3e54v103j8qbb.cloudfront.net/img/webflow-badge-text-d2.c82cec3b78.svg',
+      ],
+      imageAlts: ['', 'Made in Webflow'],
+    }),
+    true
+  );
+});
+
+test('matches a text-based Powered by Webflow badge', () => {
+  assert.equal(
+    matchesWebflowBadgeMarkup({
+      href: 'https://webflow.com',
+      text: 'Powered by Webflow',
+    }),
+    true
+  );
+});
+
+test('does not match a generic Webflow marketing link', () => {
+  assert.equal(
+    matchesWebflowBadgeMarkup({
+      href: 'https://webflow.com/templates',
+      text: 'Browse templates on Webflow',
+    }),
+    false
+  );
 });
 
 // =============================================================================

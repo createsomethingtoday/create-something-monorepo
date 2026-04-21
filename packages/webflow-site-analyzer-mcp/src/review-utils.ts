@@ -121,6 +121,58 @@ export function isWebflowComponentAnchor(href: string): boolean {
 }
 
 // =============================================================================
+// Webflow badge detection
+// =============================================================================
+
+export interface WebflowBadgeSignal {
+  className?: string | null;
+  href?: string | null;
+  text?: string | null;
+  ariaLabel?: string | null;
+  title?: string | null;
+  imageSrcs?: Array<string | null | undefined>;
+  imageAlts?: Array<string | null | undefined>;
+}
+
+/**
+ * Match the canonical Webflow attribution badge without relying on rendered
+ * anchor text. The published badge is frequently image-only.
+ */
+export function matchesWebflowBadgeMarkup(signal: WebflowBadgeSignal): boolean {
+  const normalize = (value: string | null | undefined): string =>
+    typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+  const href = normalize(signal.href);
+  if (!href.includes('webflow.com')) return false;
+
+  const className = normalize(signal.className);
+  if (className.includes('w-webflow-badge') || className.includes('webflow-badge')) {
+    return true;
+  }
+
+  const textSignals = [signal.text, signal.ariaLabel, signal.title]
+    .map(normalize)
+    .filter(Boolean);
+  if (
+    textSignals.some(
+      (value) => value.includes('powered by webflow') || value.includes('made in webflow')
+    )
+  ) {
+    return true;
+  }
+
+  const imageSignals = [...(signal.imageSrcs ?? []), ...(signal.imageAlts ?? [])]
+    .map((value) => normalize(value ?? null))
+    .filter(Boolean);
+  return imageSignals.some(
+    (value) =>
+      value.includes('webflow-badge-icon') ||
+      value.includes('webflow-badge-text') ||
+      value.includes('made in webflow')
+  );
+}
+
+// =============================================================================
 // Slug resolution
 // =============================================================================
 

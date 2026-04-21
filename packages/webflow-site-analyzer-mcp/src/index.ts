@@ -47,7 +47,7 @@ import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy
 import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
-import { is404PageTitle } from './review-utils.js';
+import { is404PageTitle, matchesWebflowBadgeMarkup } from './review-utils.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -573,6 +573,7 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
 (async () => {
   const REQUIRED_LICENSE_TEXT =
     "All graphical assets in this template are licensed for personal and commercial use. If you'd like to use a specific asset, please check the license below.";
+  const matchesWebflowBadgeMarkup = ${matchesWebflowBadgeMarkup.toString()};
 
   const toInternalAbsolute = (href) => {
     try {
@@ -602,13 +603,36 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     ? bodyText.includes(REQUIRED_LICENSE_TEXT)
     : null;
 
+  const isElementVisible = (element) => {
+    if (!element) return false;
+    const style = window.getComputedStyle(element);
+    if (!style) return false;
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    if (Number.parseFloat(style.opacity || '1') <= 0) return false;
+    if (element.getAttribute('aria-hidden') === 'true') return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  };
+
   // Policy checks: deterministic, run regardless of __wfReview availability
-  const poweredByBadge = document.querySelector('.w-webflow-badge') ||
-    document.querySelector('a[href*="webflow.com"][class*="badge"]') ||
-    document.querySelector('a[href*="webflow.com"]');
+  const poweredByBadge = Array.from(document.querySelectorAll('a[href*="webflow.com"]')).find((anchor) =>
+    matchesWebflowBadgeMarkup({
+      className: anchor.getAttribute('class'),
+      href: anchor.getAttribute('href') || anchor.href || '',
+      text: anchor.textContent,
+      ariaLabel: anchor.getAttribute('aria-label'),
+      title: anchor.getAttribute('title'),
+      imageSrcs: Array.from(anchor.querySelectorAll('img')).map(
+        (img) => img.getAttribute('src') || img.src || ''
+      ),
+      imageAlts: Array.from(anchor.querySelectorAll('img')).map(
+        (img) => img.getAttribute('alt')
+      )
+    })
+  );
   const hasPoweredByWebflow = Boolean(
     poweredByBadge &&
-    (poweredByBadge.textContent || '').toLowerCase().includes('webflow')
+    isElementVisible(poweredByBadge)
   );
 
   const allHrefs = Array.from(document.querySelectorAll('a[href]'))
