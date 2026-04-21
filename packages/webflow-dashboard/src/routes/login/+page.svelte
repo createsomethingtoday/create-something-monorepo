@@ -44,7 +44,7 @@
 		</div>
 
 		<h1>Asset Dashboard</h1>
-		<p class="subtitle">Sign in to manage your Webflow templates</p>
+		<p class="subtitle">Sign in to manage your Webflow assets</p>
 
 		<form onsubmit={handleSubmit}>
 			<div class="form-group">
@@ -75,7 +75,7 @@
 		</form>
 
 		<p class="footer-text">
-			Only authorized Webflow template creators can access this dashboard.
+			Only authorized Webflow asset creators can access this dashboard.
 		</p>
 
 		<p class="signup-text">
