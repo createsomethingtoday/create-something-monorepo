@@ -5,6 +5,13 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-11-15",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "analyzer.mcp.createsomething.agency",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true
   },
@@ -32,6 +39,10 @@
   ],
   "vars": {
     "SANDBOX_SLEEP_AFTER": "never",
-    "UPSTREAM_PORT": "8788"
+    "UPSTREAM_PORT": "8788",
+    "WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS": "2",
+    "WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE": "100",
+    "BRAINTRUST_ENABLED": "true",
+    "BRAINTRUST_PROJECT_NAME": "webflow-site-analyzer-mcp"
   }
 }

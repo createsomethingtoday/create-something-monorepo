@@ -425,7 +425,7 @@
       "transport": "http",
       "url": "https://analyzer.mcp.createsomething.agency/mcp",
       "bearer_token_env_var": "WEBFLOW_SITE_ANALYZER_MCP_API_KEY",
-      "description": "Webflow Site Analyzer MCP — browser-backed template validation with Steel + Groq",
+      "description": "Webflow Site Analyzer MCP — container-backed shared browser validation with Steel + Groq",
       "tags": [
         "webflow",
         "review",
@@ -13156,8 +13156,7 @@
     ],
     "webflow-marketplace-review-phase-b": [
       "webflow-template-review-mcp",
-      "webflow-site-analyzer-mcp",
-      "webflow-local"
+      "webflow-site-analyzer-mcp"
     ],
     "webflow-marketplace-app-review-phase-a": [
       "webflow-app-review-mcp"

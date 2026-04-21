@@ -221,7 +221,8 @@ Hosted client config:
 Notes:
 - `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` is preferred for remote auth. `MCP_API_KEY` is still accepted as a fallback.
 - `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
-- This package is now remote-capable, but the reviewer hub cannot use it until an actual hosted URL is deployed and the Hub registry entry is switched from `stdio` to `http`.
+- Reviewer hubs should use the shared remote host at `https://analyzer.mcp.createsomething.agency/mcp` for browser-backed review execution.
+- The plain Worker deployment should remain on `workers.dev` only; it is not the shared browser-backed reviewer surface.
 
 #### Container-backed Remote Host
 
