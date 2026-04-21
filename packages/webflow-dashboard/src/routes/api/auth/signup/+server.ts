@@ -101,7 +101,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		}
 
 		if (!body.agreedToTerms) {
-			return json({ error: 'You must agree to the creator terms.' }, { status: 400 });
+			return json({ error: 'You must agree to the Webflow Marketplace Agreement.' }, { status: 400 });
 		}
 
 		if (!isValidOptionalUrl(websiteUrl)) {
