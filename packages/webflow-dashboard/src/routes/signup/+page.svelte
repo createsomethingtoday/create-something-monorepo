@@ -102,7 +102,7 @@
 			<div class="logo">
 				<WebflowLogo />
 			</div>
-			<div>
+			<div class="hero-copy">
 				<h1>Create your creator account</h1>
 				<p class="subtitle">
 					Set up your Webflow Marketplace creator profile and we’ll email a verification link to
@@ -242,8 +242,12 @@
 				<input type="checkbox" bind:checked={agreedToTerms} required disabled={loading} />
 				<span>
 					I have read and agree to the
-					<a href="https://webflow.com/legal/creator-agreement" target="_blank" rel="noreferrer">
-						Template Marketplace agreement
+					<a
+						href="https://webflow.com/legal/marketplace-agreement"
+						target="_blank"
+						rel="noreferrer"
+					>
+						Webflow Marketplace Agreement
 					</a>
 				</span>
 			</label>
@@ -298,21 +302,22 @@
 	}
 
 	.hero {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: var(--space-md);
-		align-items: start;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--space-sm);
 		margin-bottom: var(--space-lg);
 	}
 
 	.logo {
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		width: 3rem;
-		height: 3rem;
-		border-radius: var(--radius-lg);
-		background: var(--color-info-muted);
+		justify-content: flex-start;
+		line-height: 0;
+	}
+
+	.hero-copy {
+		max-width: 42rem;
 	}
 
 	h1 {
@@ -513,10 +518,6 @@
 
 		.signup-card {
 			padding: var(--space-md);
-		}
-
-		.hero {
-			grid-template-columns: 1fr;
 		}
 
 		.form-grid {
