@@ -255,3 +255,48 @@ test('get_field_map exposes stable table ids and metrics field ids', async () =>
     assets: METRICS_ASSET_FIELD_IDS,
   });
 });
+
+test('set_price returns publishing context with the MRP handoff data', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ assetId: string; input: Record<string, unknown> }> = [];
+  const client = {
+    updateAssetPublishing: async (assetId: string, input: Record<string, unknown>) => {
+      calls.push({ assetId, input });
+      return {
+        assetId,
+        mrpId: 'mrp_123',
+        mrpIdOverride: 'mrp_override_456',
+        price: 129,
+        setPrice: 49,
+        priceString: '$129 USD',
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_set_price')?.({
+    asset_id: 'rec_asset_1',
+    set_price: 49,
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls, [
+    {
+      assetId: 'rec_asset_1',
+      input: { set_price: 49 },
+    },
+  ]);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.deepEqual(payload.data?.publishing_context, {
+    asset_id: 'rec_asset_1',
+    mrp_id: 'mrp_123',
+    mrp_id_override: 'mrp_override_456',
+    current_price: 129,
+    set_price: 49,
+    price_string: '$129 USD',
+    admin_follow_up: 'Use the returned mrp_id to complete the corresponding price change in Admin.',
+  });
+});

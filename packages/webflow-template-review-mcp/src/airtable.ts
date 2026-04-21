@@ -68,6 +68,8 @@ export interface TemplateReviewAsset extends TemplateReviewQueueItem {
   description?: string;
   descriptionShort?: string;
   descriptionLongHtml?: string;
+  price?: number;
+  setPrice?: number;
   mrpId?: string;
   mrpIdOverride?: string;
   thumbnailImageUrl?: string;
@@ -102,7 +104,6 @@ export interface TemplateReviewVersion {
   versionNumber?: number;
   createdAt?: string;
   createdBy?: string;
-  rawFields: Record<string, unknown>;
 }
 
 export interface TemplateReviewQueueQuery {
@@ -171,7 +172,6 @@ export interface TemplateReviewRelease {
   releaseName: string;
   status?: string;
   releaseOwner?: CollaboratorRef | null;
-  rawFields: Record<string, unknown>;
 }
 
 export interface TemplateReviewVersionSearchResult {
@@ -185,6 +185,7 @@ export interface CompletePublishingInput {
   time_zone?: string;
   approve_version?: boolean;
   mrp_id_overwrite?: string;
+  set_price?: number;
 }
 
 export interface VersionReviewUpdateInput {
@@ -221,6 +222,7 @@ export interface TemplateAssetMetadataUpdateInput {
 
 export interface TemplateAssetPublishingUpdateInput {
   mrp_id_overwrite?: string;
+  set_price?: number;
 }
 
 export interface AirtableClientOptions {
@@ -240,6 +242,20 @@ interface AirtableRecord {
   id: string;
   createdTime?: string;
   fields: Record<string, unknown>;
+}
+
+interface ListRecordsArgs {
+  tableId: string;
+  fieldNames?: string[];
+  fieldIds?: string[];
+  limit?: number;
+  viewId?: string;
+  filterByFormula?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  returnFieldsByFieldId?: boolean;
+  offset?: string;
+  pageSize?: number;
 }
 
 type MetricsAssetSnapshot = Pick<
@@ -364,6 +380,8 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     description: firstString(fields[ASSET_COMPATIBILITY_ALIASES.description]),
     descriptionShort: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionShort]),
     descriptionLongHtml: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionLongHtml]),
+    price: numberValue(fields[CONFIRMED_ASSET_FIELDS.price]),
+    setPrice: numberValue(fields[CONFIRMED_ASSET_FIELDS.setPrice]),
     mrpId: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpId]),
     mrpIdOverride: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpIdOverride]),
     websiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.websiteUrl]),
@@ -495,6 +513,11 @@ function myQueueScanLimit(limit?: number): number {
   return Math.min(Math.max(requested * 5, 100), 500);
 }
 
+function queueScanPageSize(limit?: number): number {
+  const requested = Math.max(limit ?? 100, 1);
+  return Math.min(Math.max(requested, 25), 100);
+}
+
 function recordIdsFormula(ids: string[]): string {
   if (ids.length === 0) return 'FALSE()';
   const clauses = ids.map((id) => `RECORD_ID() = '${escapeFormulaValue(id)}'`);
@@ -581,7 +604,6 @@ function mapVersion(record: AirtableRecord): TemplateReviewVersion {
     versionNumber: numberValue(record.fields[CONFIRMED_VERSION_FIELDS.versionNumber]),
     createdAt: firstString(record.fields[CONFIRMED_VERSION_FIELDS.submissionDatetime]) ?? record.createdTime,
     createdBy: collaboratorLabel(record.fields[CONFIRMED_VERSION_FIELDS.createdBy]),
-    rawFields: record.fields,
   };
 }
 
@@ -591,7 +613,6 @@ function mapRelease(record: AirtableRecord): TemplateReviewRelease {
     releaseName: firstString(record.fields[CONFIRMED_RELEASE_FIELDS.releaseName]) ?? record.id,
     status: firstString(record.fields[CONFIRMED_RELEASE_FIELDS.status]),
     releaseOwner: collaboratorValue(record.fields[CONFIRMED_RELEASE_FIELDS.releaseOwner]),
-    rawFields: record.fields,
   };
 }
 
@@ -644,58 +665,60 @@ export class AirtableClient {
     }
   }
 
-  private async listRecords(args: {
-    tableId: string;
-    fieldNames?: string[];
-    fieldIds?: string[];
-    limit?: number;
-    viewId?: string;
-    filterByFormula?: string;
-    sortField?: string;
-    sortDirection?: 'asc' | 'desc';
-    returnFieldsByFieldId?: boolean;
-  }): Promise<AirtableRecord[]> {
+  private async listRecordsPage(args: ListRecordsArgs): Promise<{ records: AirtableRecord[]; offset?: string }> {
+    const params = new URLSearchParams();
+    const pageSize = Math.min(Math.max(args.pageSize ?? args.limit ?? 100, 1), 100);
+
+    if (args.limit) params.set('maxRecords', String(args.limit));
+    params.set('pageSize', String(pageSize));
+    if (args.viewId) params.set('view', args.viewId);
+    if (args.filterByFormula) params.set('filterByFormula', args.filterByFormula);
+    for (const field of args.fieldNames ?? []) params.append('fields[]', field);
+    for (const fieldId of args.fieldIds ?? []) params.append('fields[]', fieldId);
+    if (args.returnFieldsByFieldId) params.set('returnFieldsByFieldId', 'true');
+    if (args.sortField) {
+      params.set('sort[0][field]', args.sortField);
+      params.set('sort[0][direction]', args.sortDirection ?? 'asc');
+    }
+    if (args.offset) params.set('offset', args.offset);
+
+    const response = await this.request(`/${args.tableId}?${params.toString()}`);
+    if (!response.ok) {
+      const airtable = await this.readErrorDetails(response);
+      throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status, {
+        tableId: args.tableId,
+        ...(args.limit ? { limit: args.limit } : {}),
+        ...(args.viewId ? { viewId: args.viewId } : {}),
+        ...(args.filterByFormula ? { filterByFormula: args.filterByFormula } : {}),
+        ...(args.fieldNames?.length ? { fieldNames: args.fieldNames } : {}),
+        ...(args.fieldIds?.length ? { fieldIds: args.fieldIds } : {}),
+        ...(args.returnFieldsByFieldId ? { returnFieldsByFieldId: true } : {}),
+        ...(args.sortField ? { sortField: args.sortField, sortDirection: args.sortDirection ?? 'asc' } : {}),
+        ...(args.offset ? { offset: args.offset } : {}),
+        ...(airtable === undefined ? {} : { airtable }),
+      });
+    }
+
+    const json = (await response.json()) as { records?: AirtableRecord[]; offset?: string };
+    return {
+      records: json.records ?? [],
+      offset: json.offset,
+    };
+  }
+
+  private async listRecords(args: ListRecordsArgs): Promise<AirtableRecord[]> {
     const records: AirtableRecord[] = [];
-    let offset: string | undefined;
+    let offset = args.offset;
 
     do {
-      const params = new URLSearchParams();
       const remaining = args.limit ? Math.max(args.limit - records.length, 0) : undefined;
-      const pageSize = remaining ? Math.min(remaining, 100) : 100;
-
-      if (args.limit) params.set('maxRecords', String(args.limit));
-      params.set('pageSize', String(pageSize));
-      if (args.viewId) params.set('view', args.viewId);
-      if (args.filterByFormula) params.set('filterByFormula', args.filterByFormula);
-      for (const field of args.fieldNames ?? []) params.append('fields[]', field);
-      for (const fieldId of args.fieldIds ?? []) params.append('fields[]', fieldId);
-      if (args.returnFieldsByFieldId) params.set('returnFieldsByFieldId', 'true');
-      if (args.sortField) {
-        params.set('sort[0][field]', args.sortField);
-        params.set('sort[0][direction]', args.sortDirection ?? 'asc');
-      }
-      if (offset) params.set('offset', offset);
-
-      const response = await this.request(`/${args.tableId}?${params.toString()}`);
-      if (!response.ok) {
-        const airtable = await this.readErrorDetails(response);
-        throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status, {
-          tableId: args.tableId,
-          ...(args.limit ? { limit: args.limit } : {}),
-          ...(args.viewId ? { viewId: args.viewId } : {}),
-          ...(args.filterByFormula ? { filterByFormula: args.filterByFormula } : {}),
-          ...(args.fieldNames?.length ? { fieldNames: args.fieldNames } : {}),
-          ...(args.fieldIds?.length ? { fieldIds: args.fieldIds } : {}),
-          ...(args.returnFieldsByFieldId ? { returnFieldsByFieldId: true } : {}),
-          ...(args.sortField ? { sortField: args.sortField, sortDirection: args.sortDirection ?? 'asc' } : {}),
-          ...(offset ? { offset } : {}),
-          ...(airtable === undefined ? {} : { airtable }),
-        });
-      }
-
-      const json = (await response.json()) as { records?: AirtableRecord[]; offset?: string };
-      records.push(...(json.records ?? []));
-      offset = json.offset;
+      const page = await this.listRecordsPage({
+        ...args,
+        offset,
+        pageSize: remaining ? Math.min(remaining, 100) : args.pageSize,
+      });
+      records.push(...page.records);
+      offset = page.offset;
     } while (offset && (!args.limit || records.length < args.limit));
 
     return args.limit ? records.slice(0, args.limit) : records;
@@ -767,6 +790,29 @@ export class AirtableClient {
     return records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
   }
 
+  private async listAssetQueuePage(
+    pageSize: number,
+    options?: {
+      sortField?: string;
+      sortDirection?: 'asc' | 'desc';
+      offset?: string;
+    },
+  ): Promise<{ assets: TemplateReviewAsset[]; nextOffset?: string }> {
+    const page = await this.listRecordsPage({
+      tableId: TABLE_IDS.assets,
+      pageSize,
+      offset: options?.offset,
+      filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
+      sortField: options?.sortField,
+      sortDirection: options?.sortDirection,
+    });
+
+    return {
+      assets: page.records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record)),
+      nextOffset: page.offset,
+    };
+  }
+
   async listAssetQueueDetailed(query: TemplateReviewQueueQuery = {}): Promise<{
     sortApplied: TemplateReviewQueueSort;
     items: TemplateReviewQueueItem[];
@@ -774,23 +820,36 @@ export class AirtableClient {
     const limit = query.limit ?? 100;
     const sort = query.sort ?? 'submittedDate_desc';
     const airtableSort = queueSortToAirtableSort(sort);
-    const assets = await this.listAssetQueue(limit, {
-      sortField: airtableSort.field,
-      sortDirection: airtableSort.direction,
-    });
-    const items = await Promise.all(
-      assets.map(async (asset) => {
-        const versions = await this.listVersionsForAsset(asset.assetId, 25);
-        const selectedVersion = selectQueueVersion(asset, versions, query);
-        return toQueueItem(asset, selectedVersion, query);
-      }),
-    );
+    const filtered: TemplateReviewQueueItem[] = [];
+    let offset: string | undefined;
 
-    const filtered = items.filter((item) => queueItemMatchesQuery(item, query));
+    do {
+      const page = await this.listAssetQueuePage(queueScanPageSize(limit), {
+        sortField: airtableSort.field,
+        sortDirection: airtableSort.direction,
+        offset,
+      });
+
+      const items = await Promise.all(
+        page.assets.map(async (asset) => {
+          const versions = await this.listVersionsForAsset(asset.assetId, 25);
+          const selectedVersion = selectQueueVersion(asset, versions, query);
+          return toQueueItem(asset, selectedVersion, query);
+        }),
+      );
+
+      for (const item of items) {
+        if (queueItemMatchesQuery(item, query)) {
+          filtered.push(item);
+        }
+      }
+
+      offset = page.nextOffset;
+    } while (offset && filtered.length < limit);
 
     return {
       sortApplied: sort,
-      items: sortQueueItems(filtered, sort),
+      items: sortQueueItems(filtered, sort).slice(0, limit),
     };
   }
 
@@ -1082,16 +1141,33 @@ export class AirtableClient {
       sortDirection: 'asc',
     });
 
-    return records.map((record) => mapVersion(record));
+    const versions = records.map((record) => mapVersion(record));
+    const assetsById = await this.listAssetsByIds(
+      versions
+        .map((version) => version.assetId)
+        .filter((assetId): assetId is string => Boolean(assetId)),
+    );
+
+    return versions.filter((version) => Boolean(version.assetId && assetsById.has(version.assetId)));
   }
 
-  async getVersionById(versionId: string): Promise<TemplateReviewVersion | null> {
+  private async getVersionRecordById(versionId: string): Promise<TemplateReviewVersion | null> {
     const record = await this.getRecord(TABLE_IDS.assetVersions, versionId);
     return record ? mapVersion(record) : null;
   }
 
+  async getVersionById(versionId: string): Promise<TemplateReviewVersion | null> {
+    const version = await this.getVersionRecordById(versionId);
+    if (!version?.assetId) return null;
+
+    const asset = await this.getAssetById(version.assetId);
+    if (!asset) return null;
+
+    return version;
+  }
+
   private async getScopedVersion(versionId: string): Promise<{ version: TemplateReviewVersion; asset: TemplateReviewAsset }> {
-    const version = await this.getVersionById(versionId);
+    const version = await this.getVersionRecordById(versionId);
     if (!version) {
       throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
     }
@@ -1350,12 +1426,7 @@ export class AirtableClient {
   }
 
   async getReviewContext(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<TemplateReviewContext> {
-    const version = await this.getVersionById(versionId);
-    if (!version) {
-      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
-    }
-
-    const asset = version.assetId ? await this.getAssetById(version.assetId) : null;
+    const { version, asset } = await this.getScopedVersion(versionId);
     const isAssignedToCurrentReviewer = Boolean(
       currentReviewer?.id &&
         version.reviewOwner?.id &&
@@ -1418,6 +1489,14 @@ export class AirtableClient {
     if (input.mrp_id_overwrite !== undefined) {
       fields[CONFIRMED_WRITE_FIELD_IDS.assets.mrpIdOverride] = input.mrp_id_overwrite;
     }
+    if (input.set_price !== undefined) {
+      if (!Number.isInteger(input.set_price) || input.set_price < 0) {
+        throw new AirtableClientError('INVALID_SET_PRICE', 'set_price must be a non-negative whole-number USD amount.', 400, {
+          value: input.set_price,
+        });
+      }
+      fields[CONFIRMED_ASSET_FIELDS.setPrice] = input.set_price;
+    }
 
     if (Object.keys(fields).length === 0) {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No confirmed asset publishing fields were provided.', 400);
@@ -1436,23 +1515,7 @@ export class AirtableClient {
     resolvedRelease: TemplateReviewRelease;
     resolvedLocalDate: string;
   }> {
-    const currentVersion = await this.getVersionById(versionId);
-    if (!currentVersion) {
-      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
-    }
-    if (!currentVersion.assetId) {
-      throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, {
-        version_id: versionId,
-      });
-    }
-
-    const currentAsset = await this.getAssetById(currentVersion.assetId);
-    if (!currentAsset) {
-      throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
-        asset_id: currentVersion.assetId,
-        version_id: versionId,
-      });
-    }
+    const { version: currentVersion, asset: currentAsset } = await this.getScopedVersion(versionId);
 
     const releaseLocalDate = input.release_date_local ?? currentLocalDate(input.time_zone ?? 'UTC');
     const releaseRecord =
@@ -1485,8 +1548,11 @@ export class AirtableClient {
     });
 
     const updatedAsset =
-      input.mrp_id_overwrite !== undefined
-        ? await this.updateAssetPublishing(currentAsset.assetId, { mrp_id_overwrite: input.mrp_id_overwrite })
+      input.mrp_id_overwrite !== undefined || input.set_price !== undefined
+        ? await this.updateAssetPublishing(currentAsset.assetId, {
+            mrp_id_overwrite: input.mrp_id_overwrite,
+            set_price: input.set_price,
+          })
         : currentAsset;
 
     return {

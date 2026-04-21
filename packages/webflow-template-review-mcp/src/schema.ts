@@ -31,6 +31,8 @@ export const CONFIRMED_ASSET_FIELDS = {
   submittedDate: '📅Submitted Date',
   publishedDate: '🚀📅Published Date',
   decisionDate: '🚀📅Decision Date',
+  price: 'ℹ️💲Price',
+  setPrice: 'ℹ️💲Set Price',
   priceString: '🥞💲Template Price String (🏗️ only)',
   mrpId: 'ℹ️MRP ID',
   mrpIdOverride: '👀ℹ️MRP ID (Override)',
@@ -224,6 +226,7 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
     ],
     assetPublishing: [
       'mrp_id_overwrite',
+      'set_price',
     ],
     publishingCompletion: [
       'release_record_id',
@@ -231,6 +234,7 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
       'time_zone',
       'approve_version',
       'mrp_id_overwrite',
+      'set_price',
     ],
     reviewerAssignment: [
       'review_owner',

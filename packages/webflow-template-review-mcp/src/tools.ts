@@ -100,10 +100,31 @@ function reviewerPayload(reviewer: ReviewerProfile) {
   };
 }
 
+function assetPublishingContext(asset: {
+  assetId: string;
+  mrpId?: string;
+  mrpIdOverride?: string;
+  price?: number;
+  setPrice?: number;
+  priceString?: string;
+}) {
+  return {
+    asset_id: asset.assetId,
+    mrp_id: asset.mrpId ?? null,
+    mrp_id_override: asset.mrpIdOverride ?? null,
+    current_price: asset.price ?? null,
+    set_price: asset.setPrice ?? null,
+    price_string: asset.priceString ?? null,
+    admin_follow_up: asset.mrpId
+      ? 'Use the returned mrp_id to complete the corresponding price change in Admin.'
+      : 'No mrp_id is currently present on the asset, so the Admin price follow-up will require manual lookup.',
+  };
+}
+
 export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
   server.tool(
     'template_review_workflow',
-    'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.',
+    'Reviewer onboarding guide — call this FIRST to learn the current review workflow, cross-server Hub analyzer lane, bounded write lanes, and publishing/admin handoff rules. No parameters needed.',
     {},
     async () => ({
       content: [{ type: 'text' as const, text: REVIEW_WORKFLOW }],
@@ -543,8 +564,9 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       time_zone: z.string().optional(),
       approve_version: z.boolean().optional(),
       mrp_id_overwrite: z.string().optional(),
+      set_price: z.number().int().min(0).optional(),
     },
-    async ({ version_id, release_record_id, release_date_local, time_zone, approve_version, mrp_id_overwrite }) => {
+    async ({ version_id, release_record_id, release_date_local, time_zone, approve_version, mrp_id_overwrite, set_price }) => {
       try {
         if (!release_record_id && !release_date_local && !time_zone) {
           throw new AirtableClientError(
@@ -560,11 +582,13 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           time_zone,
           approve_version,
           mrp_id_overwrite,
+          set_price,
         });
 
         return asSuccess({
           updated_version: result.updatedVersion,
           updated_asset: result.updatedAsset,
+          publishing_context: result.updatedAsset ? assetPublishingContext(result.updatedAsset) : null,
           resolved_release: result.resolvedRelease,
           resolved_local_date: result.resolvedLocalDate,
           support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.publishingCompletion,
@@ -602,17 +626,46 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_update_asset_publishing',
-    'Update confirmed asset-side publishing override fields for a template.',
+    'Update confirmed asset-side publishing fields for a template, including MRP override and Set Price.',
     {
       asset_id: z.string().min(1),
       mrp_id_overwrite: z.string().optional(),
+      set_price: z.number().int().min(0).optional(),
     },
-    async ({ asset_id, mrp_id_overwrite }) => {
+    async ({ asset_id, mrp_id_overwrite, set_price }) => {
       try {
         const updated = await getClient().updateAssetPublishing(asset_id, {
           mrp_id_overwrite,
+          set_price,
         });
-        return asSuccess({ updated_asset: updated, support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetPublishing });
+        return asSuccess({
+          updated_asset: updated,
+          publishing_context: assetPublishingContext(updated),
+          support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetPublishing,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_set_price',
+    'Set the asset-side Set Price field for a template and return the MRP context needed to complete the Admin price update.',
+    {
+      asset_id: z.string().min(1),
+      set_price: z.number().int().min(0),
+    },
+    async ({ asset_id, set_price }) => {
+      try {
+        const updated = await getClient().updateAssetPublishing(asset_id, {
+          set_price,
+        });
+        return asSuccess({
+          updated_asset: updated,
+          publishing_context: assetPublishingContext(updated),
+          support: ['set_price'],
+        });
       } catch (error) {
         return asError(error);
       }

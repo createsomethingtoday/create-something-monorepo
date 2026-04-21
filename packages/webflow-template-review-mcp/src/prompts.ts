@@ -10,152 +10,125 @@ Prioritize:
 
 Do not invent field names, statuses, or Airtable buttons that are not present in provided data.`;
 
-export const REVIEW_WORKFLOW = `# Webflow Template Review — Complete Workflow Guide
+export const REVIEW_WORKFLOW = `# Webflow Template Review — Workflow Guide
 
-You are a Webflow Marketplace template reviewer using the Template Review MCP toolset. This guide covers the end-to-end review process.
+This MCP owns Airtable-backed template review state, reviewer assignment, and publishing/admin handoff data.
 
-## The Review Lifecycle
+In a Hub session, analyzer tools may also be visible from a separate server, typically \`webflow-site-analyzer-mcp\`. Treat that as a cross-server workflow:
 
-Every review follows these phases:
-1. Setup & Health → 2. Find Work → 3. Inspect → 4. Analyze → 5. Decide → 6. Publish
+- Airtable review writes stay in this MCP.
+- Analyzer job orchestration stays in the analyzer MCP.
+- Do not invent fictional \`template_review_*analyzer*\` tool names.
 
----
+## 1. Start
 
-## Phase 1 — Setup & Health
+Use these first:
 
-| Tool | What it does | When |
-|------|-------------|------|
-| \`template_review_health\` | Confirms MCP + Airtable connection | First call of every session |
-| \`template_review_get_field_map\` | Shows all Airtable fields (writable vs pending) | First time setup |
-| \`template_review_get_metrics\` | 7-day snapshot: submissions, decisions, avg turnaround | Daily standup |
+- \`template_review_health\` to confirm MCP + Airtable connectivity.
+- \`template_review_get_field_map\` to inspect confirmed vs pending fields.
+- \`template-review://reviewer-workflow\` and \`template-review://host-playbook\` for host-safe workflow guidance.
 
-## Phase 2 — Find Work
+## 2. Find Work
 
-| Tool | What it does | When |
-|------|-------------|------|
-| \`template_review_list_queue\` | Templates ready for review, sorted by date | Find new work |
-| \`template_review_my_queue\` | Your assigned reviews, all statuses | Resume work |
-| \`template_review_search_versions\` | Find specific version cycles by name | Track re-submissions |
+- \`template_review_list_queue\` for the default ready-to-review queue.
+- \`template_review_my_queue\` for work already assigned to the current reviewer.
+- \`template_review_search_assets\` and \`template_review_search_versions\` when the user names a specific template.
 
-## Phase 3 — Inspect the Submission
+## 3. Inspect Before Writing
 
-| Tool | What it does | When |
-|------|-------------|------|
-| \`template_review_get_asset\` | Full asset details (name, price, creator, counts) | First look |
-| \`template_review_list_versions\` | All versions for an asset | Check re-submission history |
-| \`template_review_get_review_context\` | Reviewer-facing summary with capability flags | Before any decisions |
+- \`template_review_get_asset\` returns the template asset, including price fields, MRP fields, and version history.
+- \`template_review_get_version\` returns one template-scoped version.
+- \`template_review_get_review_context\` returns the normalized reviewer-facing payload under \`data.context\`.
 
-**Always check \`get_review_context\` before writing.** It tells you exactly what you can do: \`canAssign\`, \`canReview\`, \`canPublish\`.
+Always read \`data.context\` before reviewer-safe writes. Important flags:
 
-## Phase 4 — Automated Analysis
+- \`canAssign\`
+- \`canReview\`
+- \`canPublish\`
+- \`isAssignedToCurrentReviewer\`
 
-| Tool | What it does | When |
-|------|-------------|------|
-| \`template_review_enqueue_analyzer_review\` | Queue browser-backed analysis | Start analysis |
-| \`template_review_get_analyzer_review\` | Get results for a specific job | Poll after ~90s |
-| \`template_review_list_analyzer_reviews\` | List all jobs for a version | Check prior runs |
+## 4. Reviewer-Safe Workflow
 
-The analyzer crawls **every page** and runs 39 automated checks:
-- **Structure**: H1 hierarchy, heading levels, required pages (license, instructions, changelog, style guide)
-- **Images**: alt text, dimensions, loading strategy, modern formats
-- **Links**: broken internal links, empty hrefs, external target="_blank"
-- **SEO**: title formula, meta tags (description, og:image), canonical URL
-- **Accessibility**: WCAG contrast, form labels, accessible link names
-- **Content**: Lorem ipsum detection, placeholder text
-- **Site Settings**: custom favicon, custom fonts with licensing, connected apps
-- **Policy**: Powered by Webflow badge, affiliate links, GSAP documentation, custom code
+Use \`assignableVersionId\` from queue responses as the write target.
 
-### Interpreting Results
+Primary reviewer-safe tools:
 
-**Severity levels:**
-| Severity | Meaning | Action |
-|----------|---------|--------|
-| \`critical\` | Blocks publishing | Must fix before approval |
-| \`major\` | Significant quality issue | Should fix, request changes |
-| \`minor\` | Nice to have | Note in feedback, don't block |
-| \`info\` | Informational | No action needed |
+- \`template_review_assign_self\`
+- \`template_review_set_review_status\`
+- \`template_review_save_draft_feedback\`
+- \`template_review_request_changes\`
+- \`template_review_unassign_self\`
 
-**Check statuses:**
-| Status | Meaning |
-|--------|---------|
-| \`pass\` | Check passed |
-| \`fail\` | Failed — see \`evidence\` and \`fixHint\` |
-| \`partial\` | Partially met — see evidence |
-| \`manual\` | Requires human verification |
+Rules:
 
-**Overall score & grade:**
-- **A (90+)**: Strong candidate for approval
-- **B (75-89)**: Likely approvable with minor feedback
-- **C (60-74)**: Needs changes
-- **D/F (<60)**: Significant issues
+1. Call \`template_review_assign_self\` before reviewer-safe writes.
+2. Do not use \`asset_id\` for reviewer assignment tools.
+3. If another reviewer already owns the version, writes must fail closed.
+4. Never ask the reviewer for an Airtable collaborator id.
 
-**Common failure patterns that mean Changes Requested:**
-- Pervasive missing alt text across all pages
-- Skipped heading levels on most pages
-- Missing Instructions page when interactions exist
-- Missing image dimensions on all pages
-- Lorem ipsum or placeholder text detected
-- Connected third-party apps (GA, FB Pixel, etc.)
+## 5. Broader Decisions
 
-## Phase 5 — Take Ownership & Decide
+Broader decision tools exist for operator/admin use:
 
-**You must call \`assign_self\` before any write action.**
+- \`template_review_approve_version\`
+- \`template_review_reject_version\`
+- \`template_review_complete_publishing\`
+- \`template_review_update_asset_metadata\`
+- \`template_review_update_asset_publishing\`
+- \`template_review_set_price\`
 
-| Tool | What it does |
-|------|-------------|
-| \`template_review_assign_self\` | Claim the version (required first) |
-| \`template_review_set_review_status\` | Update status (e.g. In Review) |
-| \`template_review_save_draft_feedback\` | Save notes without changing status |
-| \`template_review_request_changes\` | Send back with feedback |
-| \`template_review_approve_version\` | Approve |
-| \`template_review_reject_version\` | Reject with reasons |
+## 6. Cross-Server Analyzer Workflow
 
-### Decision Guide
+When the user wants automated preview/published-site review evidence and the Hub exposes analyzer tools:
 
-**APPROVE** if: No critical failures, few major failures, grade B+, design quality is "Good", responsive works.
+- \`enqueue_template_review\` from \`webflow-site-analyzer-mcp\` is the preferred production entrypoint.
+- \`get_template_review_job\` polls one queued analyzer job by \`jobId\`.
+- \`list_template_review_jobs\` is the recent-job/operator view.
+- \`run_template_review\` is synchronous and should be reserved for debugging or manual use.
 
-**REQUEST CHANGES** if: Any critical failures, 3+ major failures, missing required pages, placeholder content, connected apps, design below "Good".
+Rules:
 
-**REJECT** if: Fundamentally below bar, non-functional, guidelines violated.
+1. Do not describe those analyzer tools as part of this MCP.
+2. If the Hub does not expose the analyzer server, do not assume those tools exist.
+3. Use analyzer findings as evidence for review feedback or decisions, then persist the resulting Airtable state with the reviewer-safe tools in this MCP.
 
-### Quality Rating
+## 7. Price Update Flow
 
-| Rating | Meaning |
-|--------|---------|
-| ✅ Good | Meets all requirements, solid quality |
-| ⚠️ Needs work | Close but fixable issues |
-| ❌ Low quality | Below bar, reject or major revision |
+When a user asks to change a template price:
 
-**Edge case:** Visually strong but pervasive automated failures → default to Changes Requested. Creators can usually fix technical issues quickly.
+1. Read the asset with \`template_review_get_asset\`.
+2. Write the requested value to the Airtable \`Set Price\` field with \`template_review_set_price\` or \`template_review_update_asset_publishing\`.
+3. Return the \`publishing_context.mrp_id\` value so the Admin-side Marketplace price update can be completed against the corresponding MRP record.
 
-## Phase 6 — Publishing (after approval)
+Notes:
 
-| Tool | What it does |
-|------|-------------|
-| \`template_review_list_releases\` | Available releases to attach |
-| \`template_review_update_asset_metadata\` | Update name, description, thumbnails |
-| \`template_review_update_asset_publishing\` | Update MRP ID override |
-| \`template_review_complete_publishing\` | Mark checklist complete + attach release |
+- \`set_price\` is a whole-number USD amount.
+- \`publishing_context\` also includes \`current_price\`, \`set_price\`, \`price_string\`, and \`mrp_id_override\` when available.
+- \`template_review_complete_publishing\` can carry \`set_price\` and/or \`mrp_id_overwrite\` during the broader publishing flow.
 
-## Quick Reference Checklist
+## 8. Quality Rating
 
-1. \`template_review_health\` — confirm connected
-2. \`template_review_list_queue\` — find work
-3. \`template_review_get_review_context\` — check capabilities
-4. \`template_review_enqueue_analyzer_review\` — start analysis
-5. \`template_review_get_analyzer_review\` — read results (~90s)
-6. \`template_review_assign_self\` — claim the version
-7. \`template_review_request_changes\` / \`approve_version\` / \`reject_version\` — decide
+Allowed quality ratings:
 
-## Rules
+- \`❌Low quality\`
+- \`⚠️Satisfactory\`
+- \`✅Good\`
+- \`🥇Exceptional\`
 
-1. You must call \`assign_self\` before any write action
-2. You cannot assign yourself if another reviewer is already assigned
-3. \`canPublish\` is only true after approval
-4. The analyzer is a tool, not a judge — use human judgment for design quality
-5. Lead with data: cite specific check IDs, page paths, and metrics
-6. Feedback must be actionable: tell creators exactly what to fix
-7. When in doubt, request changes rather than rejecting`;
+\`⚠️Satisfactory\` is below the publish bar until the remaining issues are addressed.
+
+## 9. Host Play
+
+Recommended host sequence:
+
+1. \`template_review_list_queue\` unless the reviewer explicitly asks for their assigned work.
+2. \`template_review_assign_self\` using \`assignableVersionId\` when the reviewer claims work.
+3. \`template_review_get_review_context\` before any reviewer-safe mutation.
+4. If the user asks for analyzer evidence and the Hub exposes \`webflow-site-analyzer-mcp\`, queue the job with \`enqueue_template_review\` and poll it with \`get_template_review_job\`.
+5. \`template_review_save_draft_feedback\`, \`template_review_set_review_status\`, or \`template_review_request_changes\` as needed.
+6. For price/admin requests, use \`template_review_set_price\` or \`template_review_update_asset_publishing\` and surface \`publishing_context.mrp_id\` in the response.
+
+When in doubt, use the smallest bounded tool that completes the user’s requested action.`;
 
 export function registerPrompts(server: McpServer): void {
   // Workflow orchestration prompt — teaches agents the full review process.

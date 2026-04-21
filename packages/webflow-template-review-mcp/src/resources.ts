@@ -94,7 +94,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
     'template-review-reviewer-workflow',
     'template-review://reviewer-workflow',
     {
-      description: 'Recommended reviewer workflow for locating and self-assigning a reviewable template version.',
+      description: 'Recommended reviewer workflow for locating and self-assigning a reviewable template version, with clear boundaries for optional analyzer evidence.',
       mimeType: 'application/json',
     },
     async (uri: URL) =>
@@ -126,6 +126,15 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             'data.context.reviewOwner',
             'data.context.isAssignedToCurrentReviewer',
           ],
+          crossServerAnalyzerTools: {
+            server: 'webflow-site-analyzer-mcp',
+            preferredEntry: 'enqueue_template_review',
+            poll: 'get_template_review_job',
+            optionalList: 'list_template_review_jobs',
+            debugOnly: 'run_template_review',
+            workflowBoundary:
+              'Treat analyzer jobs as optional evidence from a separate Hub server. Keep assignment and Airtable review writes in template_review_* tools.',
+          },
           failureModes: [
             'If reviewer identity is unavailable, self-assignment and my_queue should fail closed.',
             'If a version is assigned to another reviewer, hosts should not offer unassign_self.',
@@ -138,7 +147,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
     'template-review-host-playbook',
     'template-review://host-playbook',
     {
-      description: 'Host-neutral playbook for driving the reviewer workflow without Airtable-specific prompt logic.',
+      description: 'Host-neutral playbook for driving reviewer, publishing, and cross-server analyzer workflows without inventing tool names.',
       mimeType: 'application/json',
     },
     async (uri: URL) =>
@@ -194,16 +203,84 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             expectation: 'Only offer this when isAssignedToCurrentReviewer is true.',
           },
         ],
+        operatorSequences: {
+          priceUpdate: [
+            {
+              step: 'read_asset',
+              tool: 'template_review_get_asset',
+              args: { asset_id: '<assetId>' },
+              expectation: 'Read current price, price string, MRP id, and MRP override before changing the Set Price field.',
+            },
+            {
+              step: 'set_price',
+              tool: 'template_review_set_price',
+              args: { asset_id: '<assetId>', set_price: '<whole-number USD>' },
+              expectation: 'Write the asset-side Set Price field and return publishing_context for the Admin handoff.',
+            },
+            {
+              step: 'alternate_write',
+              tool: 'template_review_update_asset_publishing',
+              args: { asset_id: '<assetId>', set_price: '<whole-number USD>' },
+              expectation: 'Use this broader asset-publishing mutation when the flow also needs to carry MRP override data alongside Set Price.',
+            },
+            {
+              step: 'admin_handoff',
+              returnFields: [
+                'publishing_context.mrp_id',
+                'publishing_context.current_price',
+                'publishing_context.set_price',
+                'publishing_context.price_string',
+                'publishing_context.mrp_id_override',
+              ],
+              expectation: 'Surface publishing_context.mrp_id so the Admin Marketplace price change can be completed against the matching MRP record.',
+            },
+          ],
+        },
+        crossServerHubWorkflows: {
+          analyzerReview: {
+            server: 'webflow-site-analyzer-mcp',
+            preferredSequence: [
+              {
+                tool: 'enqueue_template_review',
+                args: { previewUrl: '<previewUrl>', publishedUrl: '<publishedUrl>' },
+                expectation: 'Preferred production entrypoint when the Hub exposes the analyzer server.',
+              },
+              {
+                tool: 'get_template_review_job',
+                args: { jobId: '<jobId>' },
+                expectation: 'Poll until status becomes succeeded, failed, or canceled.',
+              },
+              {
+                tool: 'list_template_review_jobs',
+                args: { status: 'running', limit: 20 },
+                expectation: 'Optional operator view for recent analyzer jobs.',
+              },
+            ],
+            debugFallback: {
+              tool: 'run_template_review',
+              args: { previewUrl: '<previewUrl>', publishedUrl: '<publishedUrl>' },
+              expectation: 'Use only for debugging or manual use when the synchronous path is explicitly desired.',
+            },
+            integrationNotes: [
+              'Analyzer jobs are a separate Hub server boundary. Do not relabel them as template_review_* tools.',
+              'Use analyzer findings as evidence for draft feedback or a final decision, then persist reviewer-safe writes with template_review_save_draft_feedback, template_review_set_review_status, or template_review_request_changes.',
+              'If the analyzer server is absent from discovery, skip this lane instead of assuming the tools exist.',
+            ],
+          },
+        },
         toolResponseNotes: {
           listQueue: 'Queue rows include assignableVersionId and normalized booleans such as canAssign, canReview, canPublish, isAssignedToCurrentReviewer, and isBlockedByOtherReviewer.',
           reviewContext: 'Reviewer context is nested under data.context, not top-level data.',
           myQueue: 'Returns only versions assigned to the current reviewer.',
+          assetPublishing: 'template_review_set_price and template_review_update_asset_publishing return publishing_context with mrp_id, current_price, set_price, price_string, and mrp_id_override for the Admin handoff.',
         },
         promptTemplate: [
           'When helping a reviewer, start with template_review_list_queue unless they explicitly ask for their assigned work.',
           'If they want their current workload, use template_review_my_queue.',
           'When a queue row is chosen, use assignableVersionId rather than assetId for write actions.',
+          'When the user wants automated review evidence and the Hub exposes webflow-site-analyzer-mcp, use enqueue_template_review and get_template_review_job rather than inventing template_review_* analyzer tool names.',
           'Treat template_review_assign_self, template_review_unassign_self, template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes as the primary reviewer-safe write lane.',
+          'For price changes, use template_review_set_price or template_review_update_asset_publishing and always return publishing_context.mrp_id when available.',
           'Never ask the reviewer for an Airtable collaborator id.',
           'Do not offer broad mutation tools that are not visible in reviewer discovery.',
         ],
@@ -211,6 +288,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Do not treat assetId as the write target for assignment tools.',
           'Do not read currentReviewer from top-level data when using template_review_get_review_context.',
           'Do not infer assignment ownership from raw Airtable fields when normalized booleans are available.',
+          'Do not relabel cross-server analyzer tools as template_review_* tool names.',
         ],
       }),
   );

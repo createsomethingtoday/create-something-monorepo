@@ -211,19 +211,30 @@ test('getVersionById maps the current version-side MRP and agent feedback fields
     fetchFn: async (input) => {
       const url = new URL(String(input));
 
-      if (!url.pathname.includes(`/${TABLE_IDS.assetVersions}/rec_version_current`)) {
-        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}/rec_version_current`)) {
+        return jsonResponse({
+          id: 'rec_version_current',
+          createdTime: '2026-03-17T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+            [CONFIRMED_VERSION_FIELDS.mrpIdOverwrite]: 'mrp_current_123',
+            [CONFIRMED_VERSION_FIELDS.agentReviewFeedback]: 'AI draft feedback',
+          },
+        });
       }
 
-      return jsonResponse({
-        id: 'rec_version_current',
-        createdTime: '2026-03-17T00:00:00.000Z',
-        fields: {
-          [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
-          [CONFIRMED_VERSION_FIELDS.mrpIdOverwrite]: 'mrp_current_123',
-          [CONFIRMED_VERSION_FIELDS.agentReviewFeedback]: 'AI draft feedback',
-        },
-      });
+      if (url.pathname.includes(`/${TABLE_IDS.assets}/rec_asset_current`)) {
+        return jsonResponse({
+          id: 'rec_asset_current',
+          createdTime: '2026-03-17T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Conicorn',
+          },
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
     },
   });
 
@@ -234,36 +245,93 @@ test('getVersionById maps the current version-side MRP and agent feedback fields
   assert.equal(version.agentReviewFeedback, 'AI draft feedback');
 });
 
-test('listVersionsForAgentFeedback filters for ready rows without existing agent feedback by default', async () => {
-  let capturedUrl: URL | null = null;
+test('getVersionById fails closed when the linked asset is outside template scope', async () => {
   const client = new AirtableClient({
     apiKey: 'test',
     fetchFn: async (input) => {
-      capturedUrl = new URL(String(input));
-      return jsonResponse({
-        records: [
-          {
-            id: 'rec_version_ready',
-            createdTime: '2026-03-17T00:00:00.000Z',
-            fields: {
-              [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
-              [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
-            },
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}/rec_version_non_template`)) {
+        return jsonResponse({
+          id: 'rec_version_non_template',
+          createdTime: '2026-03-17T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_non_template',
           },
-        ],
-      });
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}/rec_asset_non_template`)) {
+        return jsonResponse({
+          id: 'rec_asset_non_template',
+          createdTime: '2026-03-17T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'App',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Non-template Asset',
+          },
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const version = await client.getVersionById('rec_version_non_template');
+
+  assert.equal(version, null);
+});
+
+test('listVersionsForAgentFeedback filters for ready rows without existing agent feedback by default', async () => {
+  let versionListUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        versionListUrl = url;
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_version_ready',
+              createdTime: '2026-03-17T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+              },
+            },
+          ],
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_asset_current',
+              createdTime: '2026-03-17T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Current Template',
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
     },
   });
 
   const versions = await client.listVersionsForAgentFeedback({ limit: 5, viewId: 'viw_ready_queue' });
 
-  assert.ok(capturedUrl);
-  assert.equal(capturedUrl.searchParams.get('view'), 'viw_ready_queue');
+  assert.ok(versionListUrl);
+  assert.equal(versionListUrl.searchParams.get('view'), 'viw_ready_queue');
   assert.match(
-    capturedUrl.searchParams.get('filterByFormula') ?? '',
+    versionListUrl.searchParams.get('filterByFormula') ?? '',
     /LEN\(TRIM\(\{📝Agent Review Feedback\} & ""\)\) = 0/,
   );
-  assert.equal(capturedUrl.searchParams.get('sort[0][field]'), CONFIRMED_VERSION_FIELDS.submissionDatetime);
+  assert.equal(versionListUrl.searchParams.get('sort[0][field]'), CONFIRMED_VERSION_FIELDS.submissionDatetime);
   assert.equal(versions.length, 1);
   assert.equal(versions[0]?.reviewStatus, '🆕Ready for Review');
 });
@@ -386,6 +454,96 @@ test('listAssetQueueDetailed selects the reviewer-assigned version for my_queue'
   assert.equal(queue.items[0]?.assignableVersionId, 'rec_finoraa_v0');
   assert.equal(queue.items[0]?.reviewOwner?.id, ericReviewer.id);
   assert.equal(queue.items[0]?.isAssignedToCurrentReviewer, true);
+});
+
+test('listAssetQueueDetailed keeps scanning asset pages until the filtered limit is satisfied', async () => {
+  let assetPageReads = 0;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        const offset = url.searchParams.get('offset');
+        assetPageReads += 1;
+
+        if (!offset) {
+          return jsonResponse({
+            records: [
+              {
+                id: 'rec_asset_first_page',
+                createdTime: '2026-03-12T00:00:00.000Z',
+                fields: {
+                  [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                  [CONFIRMED_ASSET_FIELDS.name]: 'First Page Template',
+                  [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-10T12:00:00.000Z',
+                },
+              },
+            ],
+            offset: 'next-page',
+          });
+        }
+
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_asset_second_page',
+              createdTime: '2026-03-13T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Second Page Template',
+                [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-11T12:00:00.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        if ((url.searchParams.get('filterByFormula') ?? '').includes('rec_asset_first_page')) {
+          return jsonResponse({
+            records: [
+              {
+                id: 'rec_version_first_page',
+                createdTime: '2026-03-12T00:00:00.000Z',
+                fields: {
+                  [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_first_page',
+                  [CONFIRMED_VERSION_FIELDS.reviewStatus]: '✅Approved',
+                },
+              },
+            ],
+          });
+        }
+
+        if ((url.searchParams.get('filterByFormula') ?? '').includes('rec_asset_second_page')) {
+          return jsonResponse({
+            records: [
+              {
+                id: 'rec_version_second_page',
+                createdTime: '2026-03-13T00:00:00.000Z',
+                fields: {
+                  [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_second_page',
+                  [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+                },
+              },
+            ],
+          });
+        }
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const queue = await client.listAssetQueueDetailed({
+    status: 'ready_to_review',
+    limit: 1,
+  });
+
+  assert.equal(assetPageReads, 2);
+  assert.equal(queue.items.length, 1);
+  assert.equal(queue.items[0]?.assetId, 'rec_asset_second_page');
+  assert.equal(queue.items[0]?.assignableVersionId, 'rec_version_second_page');
 });
 
 test('listMyQueueDetailed reads reviewer-owned versions directly and hydrates only matching assets', async () => {
@@ -676,4 +834,42 @@ test('updateVersionReview writes agent review feedback to the confirmed field id
   });
 
   assert.equal(version.agentReviewFeedback, 'AI supplemental draft');
+});
+
+test('updateAssetPublishing writes Set Price by confirmed asset field name', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+
+      assert.match(url.pathname, new RegExp(`/${TABLE_IDS.assets}/rec_asset_price$`));
+      assert.equal(init?.method, 'PATCH');
+      assert.deepEqual(JSON.parse(String(init?.body)), {
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.setPrice]: 49,
+        },
+      });
+
+      return jsonResponse({
+        id: 'rec_asset_price',
+        createdTime: '2026-03-18T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+          [CONFIRMED_ASSET_FIELDS.name]: 'Priced Template',
+          [CONFIRMED_ASSET_FIELDS.setPrice]: 49,
+          [CONFIRMED_ASSET_FIELDS.price]: 129,
+          [CONFIRMED_ASSET_FIELDS.priceString]: '$129 USD',
+          [CONFIRMED_ASSET_FIELDS.mrpId]: 'mrp_123',
+        },
+      });
+    },
+  });
+
+  const asset = await client.updateAssetPublishing('rec_asset_price', {
+    set_price: 49,
+  });
+
+  assert.equal(asset.setPrice, 49);
+  assert.equal(asset.price, 129);
+  assert.equal(asset.mrpId, 'mrp_123');
 });

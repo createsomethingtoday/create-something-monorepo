@@ -2,6 +2,8 @@
 
 Remote MCP server for Webflow Template Review workflows, scoped to Airtable `Assets` + `Asset Versions`.
 
+Analyzer execution is a separate Hub server concern. In shared Hub discovery, automated review jobs may also be exposed by `webflow-site-analyzer-mcp`; this package documents that as a cross-server workflow instead of re-registering analyzer tools locally.
+
 ## Scope
 
 - Base: `appMoIgXMTTTNIc3p`
@@ -24,7 +26,8 @@ Phase 1 is intentionally conservative:
 - reviewer assignment helpers are active
 - reviewer-safe workflow helpers (`request changes`, `set review status`, `save draft feedback`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
 - supplemental agent-feedback writes are supported for `📝Agent Review Feedback`
-- some broader write surfaces still depend on remaining field verification and policy rollout
+- asset-side publishing writes are supported for `👀ℹ️MRP ID (Override)` and `ℹ️💲Set Price`, and tool responses surface MRP context for the Admin handoff
+- workflow guidance treats analyzer jobs as a cross-server Hub lane via `webflow-site-analyzer-mcp`, not as local `template_review_*` tools
 
 ## Auth
 
@@ -48,6 +51,7 @@ Optional:
 
 ## Tools
 
+- `template_review_workflow`
 - `template_review_health`
 - `template_review_get_metrics`
 - `template_review_list_queue` (compact queue summaries)
@@ -68,9 +72,17 @@ Optional:
 - `template_review_save_draft_feedback`
 - `template_review_get_field_map`
 - `template_review_update_asset_metadata`
+- `template_review_update_asset_publishing`
+- `template_review_set_price`
 - `template_review_update_version_review`
 - `template_review_approve_version`
 - `template_review_reject_version`
+
+## Prompts
+
+- `template_review_workflow`
+- `template_review_decision_support`
+- `template_review_feedback_refiner`
 
 ## Resources
 
@@ -80,6 +92,30 @@ Optional:
 - `template-review://hotspot-groups`
 - `template-review://reviewer-me`
 - `template-review://reviewer-workflow`
+- `template-review://host-playbook`
+
+## Cross-Server Hub Workflow
+
+Use the `template_review_*` tools in this package for Airtable-backed review state, reviewer-safe writes, publishing metadata, and Admin handoff context.
+
+If the same Hub session exposes `webflow-site-analyzer-mcp`, use that separate server for automated site-review evidence:
+
+- `enqueue_template_review` is the preferred production entrypoint
+- `get_template_review_job` polls one queued analyzer job
+- `list_template_review_jobs` lists recent jobs
+- `run_template_review` is the synchronous debug/manual path
+
+Do not invent `template_review_*analyzer*` tool names. Treat analyzer output as evidence, then persist reviewer decisions or draft notes through this MCP.
+
+## Price Update Flow
+
+To update Marketplace pricing from the Hub:
+
+1. Read the template asset with `template_review_get_asset`.
+2. Write the requested whole-number USD value to Airtable `ℹ️💲Set Price` with `template_review_set_price` or `template_review_update_asset_publishing`.
+3. Return `publishing_context.mrp_id` so the Admin-side Marketplace update can be completed against the corresponding MRP record.
+
+The publishing context also includes `current_price`, `set_price`, `price_string`, and `mrp_id_override` when available.
 
 ## Worker
 
@@ -114,6 +150,8 @@ This checks:
 - compatibility aliases used for legacy API shape
 - metrics field IDs
 - write field IDs
+
+Note: `Set Price` writes are currently validated through the confirmed asset field-name mapping. `MRP ID (Override)` continues to use a confirmed write field ID.
 
 ## Agent Feedback Script
 
