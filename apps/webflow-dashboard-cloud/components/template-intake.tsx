@@ -53,11 +53,44 @@ function feedbackClass(tone: Tone) {
 }
 
 type Tone = 'success' | 'error' | 'info';
+type StepState = 'complete' | 'active' | 'pending';
 
 type StatusMessage = {
   tone: Tone;
   message: string;
 };
+
+function stepState(done: boolean, active: boolean): StepState {
+  if (done) return 'complete';
+  if (active) return 'active';
+  return 'pending';
+}
+
+function sidecarStepClass(state: StepState) {
+  return `submission-sidecar-step is-${state}`;
+}
+
+function sidecarBadgeClass(state: StepState) {
+  return `submission-step-badge submission-step-badge-${state}`;
+}
+
+function sidecarBadgeLabel(state: StepState, activeLabel = 'In progress') {
+  if (state === 'complete') return 'Complete';
+  if (state === 'active') return activeLabel;
+  return 'Pending';
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) {
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  }
+
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function fileSummary(file: File) {
+  return `${file.name} · ${formatFileSize(file.size)}`;
+}
 
 type TurnstileStep = 'creator' | 'template';
 
@@ -390,12 +423,114 @@ export function TemplateIntake() {
   const previewUrlValid =
     template.previewUrl.trim() === '' ||
     template.previewUrl.trim().includes('https://preview.webflow.com/preview/');
+  const creatorPrimaryVerified =
+    verification.primaryEmailVerified === creator.primaryEmail.trim().toLowerCase() &&
+    creator.primaryEmail.trim() !== '';
+  const creatorWebflowVerified =
+    verification.webflowEmailVerified === creator.webflowEmail.trim().toLowerCase() &&
+    creator.webflowEmail.trim() !== '';
+  const creatorIdentityStarted = Boolean(
+    creator.country ||
+      creator.legalName ||
+      creator.biography ||
+      creator.avatarFile ||
+      creator.agreedToTerms
+  );
+  const creatorIdentityComplete = Boolean(
+    creator.country.trim() &&
+      creator.legalName.trim() &&
+      creator.biography.trim() &&
+      creator.avatarFile &&
+      creator.agreedToTerms
+  );
+  const creatorVerificationStarted = Boolean(
+    creator.primaryEmail.trim() || creator.webflowEmail.trim()
+  );
+  const creatorVerificationComplete = creatorPrimaryVerified && creatorWebflowVerified;
+  const creatorSubmitted = creatorStatus?.tone === 'success';
+  const creatorReadyToSubmit =
+    creatorIdentityComplete &&
+    creatorVerificationComplete &&
+    (!turnstileEnabled || Boolean(turnstileTokens.creator));
+  const creatorIdentityState = stepState(
+    creatorSubmitted || creatorIdentityComplete,
+    creatorIdentityStarted
+  );
+  const creatorVerificationState = stepState(
+    creatorSubmitted || creatorVerificationComplete,
+    creatorVerificationStarted
+  );
+  const creatorReadyState = stepState(creatorSubmitted, creatorReadyToSubmit || creatorSubmitting);
+  const templateCreatorEligible =
+    verification.creatorEligibilityEmail === template.creatorEmail.trim().toLowerCase() &&
+    template.creatorEmail.trim() !== '';
+  const templateNameVerified =
+    verification.templateNameVerified === template.templateName.trim() &&
+    template.templateName.trim() !== '';
+  const templatePublishedValidated =
+    verification.publishedUrlVerified === template.publishedUrl.trim() &&
+    template.publishedUrl.trim() !== '';
+  const templateValidationStarted = Boolean(
+    template.creatorEmail.trim() ||
+      template.templateName.trim() ||
+      template.publishedUrl.trim() ||
+      template.previewUrl.trim()
+  );
+  const templateValidationComplete =
+    templateCreatorEligible && templateNameVerified && templatePublishedValidated && previewUrlValid;
+  const templatePriceReady = template.priceModel === 'Free' || template.selectedPrice !== null;
+  const templateDetailsStarted = Boolean(
+    template.creatorName.trim() ||
+      template.categories.length ||
+      template.styles.length ||
+      template.shortDescription.trim() ||
+      template.longDescription.trim() ||
+      template.thumbnailFile ||
+      template.galleryFiles.length ||
+      template.checklistConfirmed ||
+      template.agreementConfirmed
+  );
+  const templateDetailsComplete = Boolean(
+    template.creatorName.trim() &&
+      template.creatorEmail.trim() &&
+      template.templateName.trim() &&
+      template.publishedUrl.trim() &&
+      template.previewUrl.trim() &&
+      template.pageCount &&
+      template.categories.length > 0 &&
+      template.styles.length > 0 &&
+      template.shortDescription.trim() &&
+      template.longDescription.trim() &&
+      template.thumbnailFile &&
+      template.galleryFiles.length > 0 &&
+      template.checklistConfirmed &&
+      template.agreementConfirmed &&
+      templatePriceReady
+  );
+  const templateSubmitted = templateStatus?.tone === 'success';
+  const templateReadyToSubmit =
+    templateValidationComplete &&
+    templateDetailsComplete &&
+    (!turnstileEnabled || Boolean(turnstileTokens.template));
+  const templateValidationState = stepState(
+    templateSubmitted || templateValidationComplete,
+    templateValidationStarted
+  );
+  const templateDetailsState = stepState(
+    templateSubmitted || templateDetailsComplete,
+    templateDetailsStarted
+  );
+  const templateReadyState = stepState(
+    templateSubmitted,
+    templateReadyToSubmit || templateSubmitting
+  );
 
   function updateCreator<K extends keyof CreatorFormState>(key: K, value: CreatorFormState[K]) {
     setCreator((current) => ({ ...current, [key]: value }));
     setCreatorStatus(null);
 
     if (key === 'primaryEmail') {
+      setFeedback('primaryEmail', null);
       setVerification((current) => ({
         ...current,
         primaryEmailVerified: ''
@@ -404,6 +539,7 @@ export function TemplateIntake() {
     }
 
     if (key === 'webflowEmail') {
+      setFeedback('webflowEmail', null);
       setVerification((current) => ({
         ...current,
         webflowEmailVerified: ''
@@ -424,6 +560,7 @@ export function TemplateIntake() {
     setTemplateStatus(null);
 
     if (key === 'creatorEmail') {
+      setFeedback('creatorEligibility', null);
       setVerification((current) => ({
         ...current,
         creatorEligibilityEmail: ''
@@ -431,6 +568,7 @@ export function TemplateIntake() {
     }
 
     if (key === 'templateName') {
+      setFeedback('templateName', null);
       setVerification((current) => ({
         ...current,
         templateNameVerified: ''
@@ -438,6 +576,7 @@ export function TemplateIntake() {
     }
 
     if (key === 'publishedUrl') {
+      setFeedback('publishedUrl', null);
       setVerification((current) => ({
         ...current,
         publishedUrlVerified: '',
@@ -490,9 +629,17 @@ export function TemplateIntake() {
   async function verifyCreatorEligibility() {
     const email = template.creatorEmail.trim();
     if (!email) {
-      setTemplateStatus({ tone: 'error', message: 'Enter the creator email first.' });
+      setFeedback('creatorEligibility', {
+        tone: 'error',
+        message: 'Enter the creator email first.'
+      });
       return;
     }
+
+    setFeedback('creatorEligibility', {
+      tone: 'info',
+      message: 'Checking creator eligibility…'
+    });
 
     const response = await fetch(appPath('/api/intake/check-creator'), {
       method: 'POST',
@@ -506,7 +653,7 @@ export function TemplateIntake() {
     };
 
     if (!response.ok || !data.allowed) {
-      setTemplateStatus({
+      setFeedback('creatorEligibility', {
         tone: 'error',
         message: data.message || 'Creator is not eligible to submit.'
       });
@@ -517,7 +664,7 @@ export function TemplateIntake() {
       ...current,
       creatorEligibilityEmail: email.toLowerCase()
     }));
-    setTemplateStatus({
+    setFeedback('creatorEligibility', {
       tone: 'success',
       message: data.message || 'Creator is eligible to submit.'
     });
@@ -621,13 +768,6 @@ export function TemplateIntake() {
       ...current,
       gsapDetected: Boolean(data.gsapDetected)
     }));
-    setTemplateStatus({
-      tone: 'success',
-      message:
-        data.siteResults?.passedCount !== undefined
-          ? `Published site validated across ${data.siteResults.passedCount} pages.`
-          : 'Published site validated.'
-    });
   }
 
   async function submitCreator(event: React.FormEvent<HTMLFormElement>) {
@@ -873,18 +1013,44 @@ export function TemplateIntake() {
                 correspondence, and profile context before the first template enters review.
               </p>
               <div className="submission-sidecar-steps">
-                <div className="submission-sidecar-step">
-                  <p className="submission-step-label submission-step-label-secondary">Profile</p>
+                <div className={sidecarStepClass(creatorIdentityState)}>
+                  <div className="submission-step-meta">
+                    <p className="submission-step-label submission-step-label-secondary">
+                      Profile
+                    </p>
+                    <span className={sidecarBadgeClass(creatorIdentityState)}>
+                      {sidecarBadgeLabel(creatorIdentityState)}
+                    </span>
+                  </div>
                   <p className="submission-panel-copy">
                     Complete the creator details once. The template step below reuses the same
                     name and email automatically.
                   </p>
                 </div>
-                <div className="submission-sidecar-step">
-                  <p className="submission-step-label submission-step-label-secondary">Then submit</p>
+                <div className={sidecarStepClass(creatorVerificationState)}>
+                  <div className="submission-step-meta">
+                    <p className="submission-step-label submission-step-label-secondary">
+                      Verification
+                    </p>
+                    <span className={sidecarBadgeClass(creatorVerificationState)}>
+                      {sidecarBadgeLabel(creatorVerificationState)}
+                    </span>
+                  </div>
                   <p className="submission-panel-copy">
-                    After the creator profile is in place, continue into the template form and
-                    pass the same marketplace validation gates used on the live page.
+                    Verify the creator and Webflow account emails before the first submission so
+                    the review team starts with clean identity and correspondence data.
+                  </p>
+                </div>
+                <div className={sidecarStepClass(creatorReadyState)}>
+                  <div className="submission-step-meta">
+                    <p className="submission-step-label submission-step-label-secondary">Ready</p>
+                    <span className={sidecarBadgeClass(creatorReadyState)}>
+                      {sidecarBadgeLabel(creatorReadyState, 'Ready')}
+                    </span>
+                  </div>
+                  <p className="submission-panel-copy">
+                    Once the profile details and verification checks are complete, create the
+                    creator profile and continue directly into the template handoff below.
                   </p>
                 </div>
               </div>
@@ -1104,9 +1270,16 @@ export function TemplateIntake() {
                       }}
                       required
                     />
-                    {imageErrors.avatarFile ? (
+                  {imageErrors.avatarFile ? (
                       <div className="submission-field-feedback submission-field-feedback-error">
                         {imageErrors.avatarFile}
+                      </div>
+                    ) : null}
+                    {creator.avatarFile && !imageErrors.avatarFile ? (
+                      <div className="submission-file-list">
+                        <span className="submission-file-pill submission-file-pill-success">
+                          Selected: {fileSummary(creator.avatarFile)}
+                        </span>
                       </div>
                     ) : null}
                   </div>
@@ -1180,15 +1353,41 @@ export function TemplateIntake() {
                 image requirements.
               </p>
               <div className="submission-sidecar-steps">
-                <div className="submission-sidecar-step">
-                  <p className="submission-step-label submission-step-label-secondary">Validation</p>
+                <div className={sidecarStepClass(templateValidationState)}>
+                  <div className="submission-step-meta">
+                    <p className="submission-step-label submission-step-label-secondary">
+                      Validation
+                    </p>
+                    <span className={sidecarBadgeClass(templateValidationState)}>
+                      {sidecarBadgeLabel(templateValidationState)}
+                    </span>
+                  </div>
                   <p className="submission-panel-copy">
                     Use the inline checks before submit so the final handoff matches the live
                     review workflow.
                   </p>
                 </div>
-                <div className="submission-sidecar-step">
-                  <p className="submission-step-label submission-step-label-secondary">Review</p>
+                <div className={sidecarStepClass(templateDetailsState)}>
+                  <div className="submission-step-meta">
+                    <p className="submission-step-label submission-step-label-secondary">
+                      Assets &amp; details
+                    </p>
+                    <span className={sidecarBadgeClass(templateDetailsState)}>
+                      {sidecarBadgeLabel(templateDetailsState)}
+                    </span>
+                  </div>
+                  <p className="submission-panel-copy">
+                    Upload the required WebP assets, choose the right categories and styles, and
+                    make sure the supporting details are ready for reviewers.
+                  </p>
+                </div>
+                <div className={sidecarStepClass(templateReadyState)}>
+                  <div className="submission-step-meta">
+                    <p className="submission-step-label submission-step-label-secondary">Review</p>
+                    <span className={sidecarBadgeClass(templateReadyState)}>
+                      {sidecarBadgeLabel(templateReadyState, 'Ready')}
+                    </span>
+                  </div>
                   <p className="submission-panel-copy">
                     Reviewers still receive the submission through the existing Airtable automation
                     path, so downstream routing stays unchanged.
@@ -1247,6 +1446,11 @@ export function TemplateIntake() {
                       Check creator
                     </button>
                   </div>
+                  {fieldFeedback.creatorEligibility ? (
+                    <div className={feedbackClass(fieldFeedback.creatorEligibility.tone)}>
+                      {fieldFeedback.creatorEligibility.message}
+                    </div>
+                  ) : null}
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
@@ -1336,7 +1540,7 @@ export function TemplateIntake() {
                         required
                       />
                       {!previewUrlValid ? (
-                        <div className="submission-error-text">
+                        <div className="submission-field-feedback submission-field-feedback-error">
                           Preview URLs must contain https://preview.webflow.com/preview/.
                         </div>
                       ) : null}
@@ -1689,6 +1893,13 @@ export function TemplateIntake() {
                           {imageErrors.thumbnailFile}
                         </div>
                       ) : null}
+                      {template.thumbnailFile && !imageErrors.thumbnailFile ? (
+                        <div className="submission-file-list">
+                          <span className="submission-file-pill submission-file-pill-success">
+                            Selected: {fileSummary(template.thumbnailFile)}
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="submission-field">
@@ -1721,6 +1932,13 @@ export function TemplateIntake() {
                       {imageErrors.secondaryThumbnailFile ? (
                         <div className="submission-field-feedback submission-field-feedback-error">
                           {imageErrors.secondaryThumbnailFile}
+                        </div>
+                      ) : null}
+                      {template.secondaryThumbnailFile && !imageErrors.secondaryThumbnailFile ? (
+                        <div className="submission-file-list">
+                          <span className="submission-file-pill submission-file-pill-neutral">
+                            Selected: {fileSummary(template.secondaryThumbnailFile)}
+                          </span>
                         </div>
                       ) : null}
                     </div>
@@ -1772,6 +1990,18 @@ export function TemplateIntake() {
                           {v}
                         </div>
                       ))}
+                    {template.galleryFiles.length > 0 ? (
+                      <div className="submission-file-list">
+                        {template.galleryFiles.map((file) => (
+                          <span
+                            key={`${file.name}-${file.size}-${file.lastModified}`}
+                            className="submission-file-pill submission-file-pill-success"
+                          >
+                            {fileSummary(file)}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
 
                   <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
