@@ -94,7 +94,7 @@ type TemplateFormState = {
   templateName: string;
   publishedUrl: string;
   previewUrl: string;
-  priceModel: 'Free' | 'Paid';
+  priceModel: '' | 'Free' | 'Paid';
   categories: string[];
   secondaryTags: string[];
   styles: string[];
@@ -221,7 +221,7 @@ const initialTemplateState: TemplateFormState = {
   templateName: '',
   publishedUrl: '',
   previewUrl: '',
-  priceModel: 'Free',
+  priceModel: '',
   categories: [],
   secondaryTags: [],
   styles: [],
@@ -341,7 +341,25 @@ function shouldAutofillPriceModel(
   current: TemplateFormState['priceModel'],
   previous?: TemplateFormState['priceModel']
 ) {
-  return current === 'Free' || current === previous;
+  return current === '' || current === previous;
+}
+
+function normalizeSelectedPrice(
+  priceModel: TemplateFormState['priceModel'],
+  pageCount: TemplateFormState['pageCount'],
+  typeCms: TemplateFormState['typeCms'],
+  selectedPrice: TemplateFormState['selectedPrice']
+) {
+  if (priceModel !== 'Paid') {
+    return null;
+  }
+
+  if (!pageCount) {
+    return null;
+  }
+
+  const allowedPrices = getPricingTiers(pageCount, typeCms).prices;
+  return selectedPrice !== null && allowedPrices.includes(selectedPrice) ? selectedPrice : null;
 }
 
 function shouldAutofillPageCount(
@@ -817,9 +835,25 @@ export function TemplateIntake() {
   }, [turnstileEnabled]);
 
   const creatorCountrySupported = creator.country ? isSupportedCountry(creator.country) : true;
+  const previewUrlValue = template.previewUrl.trim();
+  const previewUrlPresent = previewUrlValue !== '';
   const previewUrlValid =
-    template.previewUrl.trim() === '' ||
-    template.previewUrl.trim().includes('https://preview.webflow.com/preview/');
+    previewUrlValue === '' ||
+    previewUrlValue.includes('https://preview.webflow.com/preview/');
+  const templateChecksPassed =
+    template.templateName.trim() !== '' &&
+    template.publishedUrl.trim() !== '' &&
+    verification.templateNameVerified === template.templateName.trim() &&
+    verification.publishedUrlVerified === template.publishedUrl.trim();
+  const previewAndMetadataReady =
+    previewUrlPresent &&
+    previewUrlValid &&
+    template.categories.length > 0 &&
+    template.styles.length > 0 &&
+    template.pageCount !== '';
+  const pricingResolved =
+    template.priceModel !== '' &&
+    (template.priceModel === 'Free' || template.selectedPrice !== null);
   const galleryErrorMessages = Object.entries(imageErrors)
     .filter(([key, value]) => key.startsWith('gallery-') && value)
     .map(([, value]) => value as string);
@@ -834,38 +868,26 @@ export function TemplateIntake() {
     {
       label: 'Template checks passed',
       detail:
-        verification.templateNameVerified === template.templateName.trim() &&
-        verification.publishedUrlVerified === template.publishedUrl.trim()
+        templateChecksPassed
           ? 'Template name and published site both passed validation.'
           : 'Run Check name and Validate template before submitting.',
-      complete:
-        verification.templateNameVerified === template.templateName.trim() &&
-        verification.publishedUrlVerified === template.publishedUrl.trim(),
+      complete: templateChecksPassed,
     },
     {
       label: 'Preview and metadata ready',
       detail:
-        previewUrlValid &&
-        template.previewUrl.trim() !== '' &&
-        template.categories.length > 0 &&
-        template.styles.length > 0 &&
-        template.pageCount !== ''
+        previewAndMetadataReady
           ? 'Preview URL, category, styles, and page count are all set.'
           : 'Add a valid preview URL plus the required taxonomy and page info.',
-      complete:
-        previewUrlValid &&
-        template.previewUrl.trim() !== '' &&
-        template.categories.length > 0 &&
-        template.styles.length > 0 &&
-        template.pageCount !== '',
+      complete: previewAndMetadataReady,
     },
     {
       label: 'Pricing is resolved',
       detail:
-        template.priceModel === 'Free' || template.selectedPrice !== null
+        pricingResolved
           ? 'The template pricing setup is complete.'
-          : 'Choose a paid price tier or switch the template to free.',
-      complete: template.priceModel === 'Free' || template.selectedPrice !== null,
+          : 'Choose whether the template is free or paid, then pick a paid tier if needed.',
+      complete: pricingResolved,
     },
     {
       label: 'Assets are attached',
@@ -921,7 +943,25 @@ export function TemplateIntake() {
   }
 
   function updateTemplate<K extends keyof TemplateFormState>(key: K, value: TemplateFormState[K]) {
-    setTemplate((current) => ({ ...current, [key]: value }));
+    setTemplate((current) => {
+      const next = { ...current, [key]: value };
+
+      if (
+        key === 'priceModel' ||
+        key === 'pageCount' ||
+        key === 'typeCms' ||
+        key === 'selectedPrice'
+      ) {
+        next.selectedPrice = normalizeSelectedPrice(
+          next.priceModel,
+          next.pageCount,
+          next.typeCms,
+          next.selectedPrice
+        );
+      }
+
+      return next;
+    });
     setTemplateStatus(null);
 
     if (key === 'creatorEmail') {
@@ -1152,16 +1192,12 @@ export function TemplateIntake() {
         markSuggested('featureIds');
       }
 
-      if (next.priceModel === 'Free') {
-        next.selectedPrice = null;
-      } else if (!next.pageCount) {
-        next.selectedPrice = null;
-      } else {
-        const allowedPrices = getPricingTiers(next.pageCount, next.typeCms).prices;
-        if (next.selectedPrice !== null && !allowedPrices.includes(next.selectedPrice)) {
-          next.selectedPrice = null;
-        }
-      }
+      next.selectedPrice = normalizeSelectedPrice(
+        next.priceModel,
+        next.pageCount,
+        next.typeCms,
+        next.selectedPrice
+      );
 
       return next;
     });
@@ -1511,12 +1547,28 @@ export function TemplateIntake() {
         throw new Error('Validate the published URL before submitting.');
       }
 
+      if (!previewUrlPresent) {
+        throw new Error('Add the preview URL before submitting.');
+      }
+
       if (!template.thumbnailFile) {
         throw new Error('Upload the primary thumbnail before submitting.');
       }
 
       if (template.galleryFiles.length === 0) {
         throw new Error('Upload at least one gallery image before submitting.');
+      }
+
+      if (template.categories.length === 0 || template.styles.length === 0 || !template.pageCount) {
+        throw new Error('Add a category, at least one style, and the page count before submitting.');
+      }
+
+      if (!template.priceModel) {
+        throw new Error('Choose whether the template is free or paid before submitting.');
+      }
+
+      if (template.priceModel === 'Paid' && template.selectedPrice === null) {
+        throw new Error('Choose a price tier before submitting a paid template.');
       }
 
       if (!previewUrlValid) {
@@ -2261,9 +2313,13 @@ export function TemplateIntake() {
                       id="priceModel"
                       value={template.priceModel}
                       onChange={(event) =>
-                        updateTemplate('priceModel', event.target.value as 'Free' | 'Paid')
+                        updateTemplate(
+                          'priceModel',
+                          event.target.value as TemplateFormState['priceModel']
+                        )
                       }
                     >
+                      <option value="">Select pricing</option>
                       <option value="Free">Free</option>
                       <option value="Paid">Paid</option>
                     </select>
