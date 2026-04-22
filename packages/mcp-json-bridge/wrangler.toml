@@ -1,0 +1,24 @@
+name = "mcp-json-bridge"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+# Required:
+UPSTREAM_MCP_URL = "https://example.mcp.createsomething.agency/mcp"
+#
+# Optional secrets:
+# wrangler secret put UPSTREAM_BEARER_TOKEN
+# wrangler secret put BRIDGE_BEARER_TOKEN
+# wrangler secret put BRIDGE_API_KEY
+#
+# Optional vars:
+# BRIDGE_CORS_ORIGIN = "*"
+# BRIDGE_PROTOCOL_VERSION = "2025-03-26"
+# BRIDGE_CLIENT_NAME = "mcp-json-bridge"
+# BRIDGE_CLIENT_VERSION = "0.1.0"
+# UPSTREAM_HEADERS_JSON = "{\"x-mcp-account-id\":\"acct_demo\"}"

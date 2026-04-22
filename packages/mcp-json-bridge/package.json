@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/mcp-json-bridge",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "JSON-normalizing MCP bridge for streamable HTTP clients like Dify",
+  "scripts": {
+    "check": "pnpm run typecheck && pnpm run test",
+    "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy",
+    "lint": "pnpm run typecheck",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "@types/node": "^24.10.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^4.0.0"
+  }
+}
