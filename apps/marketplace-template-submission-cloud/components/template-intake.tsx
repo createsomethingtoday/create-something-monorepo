@@ -268,6 +268,22 @@ function shouldAutofillArray(current: readonly string[], previous?: readonly str
   return current.length === 0 || arraysEqual(current, previous ?? []);
 }
 
+function isAutofilledText(current: string, managed?: string) {
+  return Boolean(managed) && current === managed;
+}
+
+function isAutofilledRichText(current: string, managed?: string) {
+  return Boolean(managed) && normalizeRichText(current) === normalizeRichText(managed);
+}
+
+function isAutofilledArray(current: readonly string[], managed?: readonly string[]) {
+  return Boolean(managed?.length) && arraysEqual(current, managed);
+}
+
+function isAutofilledBoolean(current: boolean, managed?: boolean) {
+  return typeof managed === 'boolean' && current === managed;
+}
+
 function shouldAutofillPriceModel(
   current: TemplateFormState['priceModel'],
   previous?: TemplateFormState['priceModel']
@@ -361,6 +377,40 @@ export function TemplateIntake() {
   const creatorTurnstileWidgetId = useRef<string | null>(null);
   const templateTurnstileWidgetId = useRef<string | null>(null);
   const templateSectionRef = useRef<HTMLElement | null>(null);
+  const analyzerSummaryRef = useRef<HTMLDivElement | null>(null);
+
+  const hasAutofilledTemplateName = isAutofilledText(
+    template.templateName,
+    autofillManaged.templateName
+  );
+  const hasAutofilledShortDescription = isAutofilledText(
+    template.shortDescription,
+    autofillManaged.shortDescription
+  );
+  const hasAutofilledLongDescription = isAutofilledRichText(
+    template.longDescription,
+    autofillManaged.longDescription
+  );
+  const hasAutofilledCategories = isAutofilledArray(
+    template.categories,
+    autofillManaged.categories
+  );
+  const hasAutofilledSecondaryTags = isAutofilledArray(
+    template.secondaryTags,
+    autofillManaged.secondaryTags
+  );
+  const hasAutofilledPageCount =
+    Boolean(autofillManaged.pageCount) && template.pageCount === autofillManaged.pageCount;
+  const hasAutofilledTemplateType =
+    isAutofilledBoolean(template.typeCms, autofillManaged.typeCms) ||
+    isAutofilledBoolean(template.typeEcommerce, autofillManaged.typeEcommerce);
+  const hasAutofilledStyles = isAutofilledArray(template.styles, autofillManaged.styles);
+  const hasAutofilledFeatures = isAutofilledArray(
+    template.featureIds,
+    autofillManaged.featureIds
+  );
+  const hasAutofilledPriceModel =
+    Boolean(autofillManaged.priceModel) && template.priceModel === autofillManaged.priceModel;
 
   useEffect(() => {
     const captureParams = (searchLike: string | Record<string, string>) => {
@@ -955,6 +1005,14 @@ export function TemplateIntake() {
         : null;
 
     setAnalyzerSummary(nextAnalyzerSummary);
+    if (nextAnalyzerSummary) {
+      requestAnimationFrame(() => {
+        analyzerSummaryRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      });
+    }
 
     setFeedback('publishedUrl', {
       tone: 'success',
@@ -1620,13 +1678,16 @@ export function TemplateIntake() {
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="templateName"
-                      >
-                        Template name
-                        <span className="submission-required"> *</span>
-                      </label>
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="templateName"
+                    >
+                      Template name
+                      <span className="submission-required"> *</span>
+                      {hasAutofilledTemplateName ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
+                    </label>
                       <p className="field-help cc-library-application-form_field-desc">
                         First word must be capitalized. Avoid emoji, category names, tag names, and
                         the standalone term &quot;AI&quot;.
@@ -1682,7 +1743,7 @@ export function TemplateIntake() {
                   ) : null}
 
                   {analyzerSummary ? (
-                    <div className="submission-analyzer-summary">
+                    <div className="submission-analyzer-summary" ref={analyzerSummaryRef}>
                       <div className="submission-analyzer-header">
                         <div>
                           <div className="submission-step-label submission-step-label-secondary submission-analyzer-label">
@@ -1795,6 +1856,9 @@ export function TemplateIntake() {
                         htmlFor="priceModel"
                       >
                         Free or paid
+                        {hasAutofilledPriceModel ? (
+                          <span className="submission-autofill-badge">Autofilled</span>
+                        ) : null}
                       </label>
                       <select
                         className="field-select input w-select"
@@ -1814,6 +1878,9 @@ export function TemplateIntake() {
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Category
                       <span className="submission-required"> *</span>
+                      {hasAutofilledCategories ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 options that best describe your template.
@@ -1851,6 +1918,9 @@ export function TemplateIntake() {
                   <div className="submission-field">
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Secondary tags
+                      {hasAutofilledSecondaryTags ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Optional. Tag names are blocked inside the template title.
@@ -1882,6 +1952,9 @@ export function TemplateIntake() {
                       <span className="field-label template-application-form_field-label cc-with-desc">
                         Page count
                         <span className="submission-required"> *</span>
+                        {hasAutofilledPageCount ? (
+                          <span className="submission-autofill-badge">Autofilled</span>
+                        ) : null}
                       </span>
                       <p className="field-help cc-library-application-form_field-desc">
                         One page, multi page, or multi-layout.
@@ -1913,6 +1986,9 @@ export function TemplateIntake() {
                     <div className="submission-field">
                       <span className="field-label template-application-form_field-label cc-with-desc">
                         Template type
+                        {hasAutofilledTemplateType ? (
+                          <span className="submission-autofill-badge">Autofilled</span>
+                        ) : null}
                       </span>
                       <p className="field-help cc-library-application-form_field-desc">
                         Check the Webflow product surfaces used by the template.
@@ -1945,6 +2021,9 @@ export function TemplateIntake() {
                       <span className="field-label template-application-form_field-label cc-with-desc">
                         Template price
                         <span className="submission-required"> *</span>
+                        {hasAutofilledPriceModel && template.priceModel === 'Paid' ? (
+                          <span className="submission-autofill-badge">Autofilled</span>
+                        ) : null}
                       </span>
                       <p className="field-help cc-library-application-form_field-desc">
                         Available price points are determined by page count and CMS usage.
@@ -1972,6 +2051,9 @@ export function TemplateIntake() {
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Styles
                       <span className="submission-required"> *</span>
+                      {hasAutofilledStyles ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 styles.
@@ -2007,6 +2089,9 @@ export function TemplateIntake() {
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Features
                       <span className="submission-required"> *</span>
+                      {hasAutofilledFeatures ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Choose the Webflow features used by the template.
@@ -2045,6 +2130,9 @@ export function TemplateIntake() {
                     >
                       Short description
                       <span className="submission-required"> *</span>
+                      {hasAutofilledShortDescription ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Keep the short summary concise and reviewer-friendly.
@@ -2069,6 +2157,9 @@ export function TemplateIntake() {
                     >
                       Long description
                       <span className="submission-required"> *</span>
+                      {hasAutofilledLongDescription ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Rich text is allowed for emphasis and lists. Image embeds are stripped.
