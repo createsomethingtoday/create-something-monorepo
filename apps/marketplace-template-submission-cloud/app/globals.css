@@ -382,6 +382,43 @@ select {
   background: var(--webflow-blue-600, #0055d4);
 }
 
+.submission-selected-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+.submission-selected-files-empty {
+  margin-top: 0.625rem;
+}
+
+.submission-selected-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid #e6e6e6;
+  border-radius: 999px;
+  background: #fff;
+  color: #191919;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.submission-selected-file-name {
+  max-width: 20rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.submission-selected-file-size {
+  color: #676767;
+  flex: 0 0 auto;
+}
+
 .submission-counter {
   margin-top: 0.5rem;
 }
@@ -602,6 +639,43 @@ select {
   padding: 0.5rem 0.75rem;
   color: var(--_apps---colors--muted-foreground, #7d797a);
   font-size: 0.875rem;
+}
+
+.submission-select-field {
+  position: relative;
+}
+
+.submission-select-field::after {
+  content: '';
+  position: absolute;
+  right: 0.875rem;
+  top: calc(50% + 1.4rem);
+  margin-top: -0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--_apps---colors--muted-foreground, #7d797a);
+  border-bottom: 2px solid var(--_apps---colors--muted-foreground, #7d797a);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.submission-select-field .w-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none;
+  padding-right: 2.5rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.submission-select-field:hover .w-select {
+  border-color: var(--_apps---colors--primary, #146ef5);
+}
+
+.submission-select-field .w-select:focus {
+  border-color: var(--_apps---colors--primary, #146ef5);
+  box-shadow: 0 0 0 3px rgba(20, 110, 245, 0.15);
 }
 
 .submission-status {

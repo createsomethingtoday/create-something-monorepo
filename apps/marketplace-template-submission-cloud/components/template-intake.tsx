@@ -1,7 +1,7 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { appPath } from '../lib/runtime-paths';
 import { CountryPicker } from './country-picker';
 import { QuillEditor } from './quill-editor';
@@ -390,6 +390,81 @@ function statusClassName(tone: Tone) {
   if (tone === 'success') return 'submission-status submission-status-success';
   if (tone === 'error') return 'submission-status submission-status-error';
   return 'submission-status submission-status-info';
+}
+
+function formatFileSize(size: number) {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function FieldFeedback({ feedback }: { feedback?: StatusMessage | null }) {
+  if (!feedback) return null;
+  return <div className={feedbackClass(feedback.tone)}>{feedback.message}</div>;
+}
+
+type ChoiceToolbarProps = {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  ariaLabel: string;
+  shownCount: number;
+  actionLabel?: string;
+  onAction?: () => void;
+};
+
+function ChoiceToolbar({
+  value,
+  onChange,
+  placeholder,
+  ariaLabel,
+  shownCount,
+  actionLabel,
+  onAction,
+}: ChoiceToolbarProps) {
+  return (
+    <div className="submission-choice-toolbar">
+      <input
+        className="field-input input w-input submission-choice-filter"
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+      />
+      <div className="submission-choice-toolbar-meta">
+        <span className="field-help">{shownCount} shown</span>
+        {actionLabel && onAction ? (
+          <button className="submission-inline-action" type="button" onClick={onAction}>
+            {actionLabel}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SelectedFilesSummary({
+  files,
+  emptyLabel,
+}: {
+  files: readonly File[];
+  emptyLabel?: ReactNode;
+}) {
+  if (files.length === 0) {
+    return emptyLabel ? <div className="field-help submission-selected-files-empty">{emptyLabel}</div> : null;
+  }
+
+  return (
+    <div className="submission-selected-files" aria-live="polite">
+      {files.map((file) => (
+        <div className="submission-selected-file" key={`${file.name}-${file.size}-${file.lastModified}`}>
+          <span className="submission-selected-file-name">{file.name}</span>
+          <span className="submission-selected-file-size">{formatFileSize(file.size)}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
@@ -1430,47 +1505,45 @@ export function TemplateIntake() {
                   name="wf-form-Marketplace-Creator-Submission"
                   onSubmit={submitCreator}
                 >
-                  <div className="submission-grid-2">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="country"
-                      >
-                        Country
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Choose the country tied to your creator account. Unsupported payout
-                        countries still behave as warnings, matching the live page.
-                      </p>
-                      <CountryPicker
-                        id="country"
-                        countries={ALL_COUNTRIES}
-                        value={creator.country}
-                        onChange={(v) => updateCreator('country', v)}
-                        placeholder="Select or search for a country…"
-                        required
-                      />
-                    </div>
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="country"
+                    >
+                      Country
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Choose the country tied to your creator account. Unsupported payout
+                      countries still behave as warnings, matching the live page.
+                    </p>
+                    <CountryPicker
+                      id="country"
+                      countries={ALL_COUNTRIES}
+                      value={creator.country}
+                      onChange={(v) => updateCreator('country', v)}
+                      placeholder="Select or search for a country…"
+                      required
+                    />
+                  </div>
 
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="websiteUrl"
-                      >
-                        Personal website URL
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Optional, but useful context for the review team.
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="websiteUrl"
-                        type="url"
-                        value={creator.websiteUrl}
-                        onChange={(event) => updateCreator('websiteUrl', event.target.value)}
-                        placeholder="https://"
-                      />
-                    </div>
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="websiteUrl"
+                    >
+                      Personal website URL
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Optional, but useful context for the review team.
+                    </p>
+                    <input
+                      className="field-input input w-input"
+                      id="websiteUrl"
+                      type="url"
+                      value={creator.websiteUrl}
+                      onChange={(event) => updateCreator('websiteUrl', event.target.value)}
+                      placeholder="https://"
+                    />
                   </div>
 
                   {!creatorCountrySupported && creator.country ? (
@@ -1508,11 +1581,7 @@ export function TemplateIntake() {
                       Verify email
                     </button>
                   </div>
-                  {fieldFeedback.primaryEmail ? (
-                    <div className={feedbackClass(fieldFeedback.primaryEmail!.tone)}>
-                      {fieldFeedback.primaryEmail.message}
-                    </div>
-                  ) : null}
+                  <FieldFeedback feedback={fieldFeedback.primaryEmail} />
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
@@ -1542,11 +1611,7 @@ export function TemplateIntake() {
                       Verify email
                     </button>
                   </div>
-                  {fieldFeedback.webflowEmail ? (
-                    <div className={feedbackClass(fieldFeedback.webflowEmail!.tone)}>
-                      {fieldFeedback.webflowEmail.message}
-                    </div>
-                  ) : null}
+                  <FieldFeedback feedback={fieldFeedback.webflowEmail} />
 
                   <div className="submission-grid-2">
                     <div className="submission-field">
@@ -1635,6 +1700,10 @@ export function TemplateIntake() {
                         updateCreator('avatarFile', err ? null : file);
                       }}
                       required
+                    />
+                    <SelectedFilesSummary
+                      files={creator.avatarFile ? [creator.avatarFile] : []}
+                      emptyLabel="No profile image selected yet."
                     />
                     {imageErrors.avatarFile ? (
                       <div className="submission-field-feedback submission-field-feedback-error">
@@ -1801,11 +1870,7 @@ export function TemplateIntake() {
                           Check creator
                         </button>
                       </div>
-                      {fieldFeedback.creatorEmail ? (
-                        <div className={feedbackClass(fieldFeedback.creatorEmail.tone)}>
-                          {fieldFeedback.creatorEmail.message}
-                        </div>
-                      ) : null}
+                      <FieldFeedback feedback={fieldFeedback.creatorEmail} />
                     </>
                   )}
 
@@ -1837,11 +1902,7 @@ export function TemplateIntake() {
                       Check name
                     </button>
                   </div>
-                  {fieldFeedback.templateName ? (
-                    <div className={feedbackClass(fieldFeedback.templateName!.tone)}>
-                      {fieldFeedback.templateName.message}
-                    </div>
-                  ) : null}
+                  <FieldFeedback feedback={fieldFeedback.templateName} />
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
@@ -1869,11 +1930,7 @@ export function TemplateIntake() {
                       Validate template
                     </button>
                   </div>
-                  {fieldFeedback.publishedUrl ? (
-                    <div className={feedbackClass(fieldFeedback.publishedUrl!.tone)}>
-                      {fieldFeedback.publishedUrl.message}
-                    </div>
-                  ) : null}
+                  <FieldFeedback feedback={fieldFeedback.publishedUrl} />
 
                   {analyzerSummary ? (
                     <div className="submission-analyzer-summary" ref={analyzerSummaryRef}>
@@ -1952,59 +2009,61 @@ export function TemplateIntake() {
                     </div>
                   ) : null}
 
-                  <div className="submission-grid-2">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="previewUrl"
-                      >
-                        Preview URL
-                        <span className="submission-required"> *</span>
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Must contain{' '}
-                        <code className="submission-inline-code">
-                          https://preview.webflow.com/preview/
-                        </code>
-                        .
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="previewUrl"
-                        type="url"
-                        value={template.previewUrl}
-                        onChange={(event) => updateTemplate('previewUrl', event.target.value)}
-                        required
-                      />
-                      {!previewUrlValid ? (
-                        <div className="submission-error-text">
-                          Preview URLs must contain https://preview.webflow.com/preview/.
-                        </div>
-                      ) : null}
-                    </div>
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="previewUrl"
+                    >
+                      Preview URL
+                      <span className="submission-required"> *</span>
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Must contain{' '}
+                      <code className="submission-inline-code">
+                        https://preview.webflow.com/preview/
+                      </code>
+                      .
+                    </p>
+                    <input
+                      className="field-input input w-input"
+                      id="previewUrl"
+                      type="url"
+                      value={template.previewUrl}
+                      onChange={(event) => updateTemplate('previewUrl', event.target.value)}
+                      required
+                    />
+                    {!previewUrlValid ? (
+                      <div className="submission-error-text">
+                        Preview URLs must contain https://preview.webflow.com/preview/.
+                      </div>
+                    ) : null}
+                  </div>
 
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label"
-                        htmlFor="priceModel"
-                      >
-                        Free or paid
-                        {hasAutofilledPriceModel ? (
-                          <span className="submission-autofill-badge">Autofilled</span>
-                        ) : null}
-                      </label>
-                      <select
-                        className="field-select input w-select"
-                        id="priceModel"
-                        value={template.priceModel}
-                        onChange={(event) =>
-                          updateTemplate('priceModel', event.target.value as 'Free' | 'Paid')
-                        }
-                      >
-                        <option value="Free">Free</option>
-                        <option value="Paid">Paid</option>
-                      </select>
-                    </div>
+                  <div className="submission-field submission-select-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="priceModel"
+                    >
+                      Free or paid
+                      {hasAutofilledPriceModel ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Choose whether the template will be published as a free listing or a paid
+                      marketplace template.
+                    </p>
+                    <select
+                      className="field-select input w-select"
+                      id="priceModel"
+                      value={template.priceModel}
+                      onChange={(event) =>
+                        updateTemplate('priceModel', event.target.value as 'Free' | 'Paid')
+                      }
+                    >
+                      <option value="Free">Free</option>
+                      <option value="Paid">Paid</option>
+                    </select>
                   </div>
 
                   <div className="submission-field">
@@ -2018,28 +2077,19 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 options that best describe your template.
                     </p>
-                    <div className="submission-choice-toolbar">
-                      <input
-                        className="field-input input w-input submission-choice-filter"
-                        type="search"
-                        value={optionSearch.categories}
-                        onChange={(event) => updateOptionSearch('categories', event.target.value)}
-                        placeholder="Search categories"
-                        aria-label="Search categories"
-                      />
-                      <div className="submission-choice-toolbar-meta">
-                        <span className="field-help">{visibleCategories.length} shown</span>
-                        {template.categories.length > 0 ? (
-                          <button
-                            className="submission-inline-action"
-                            type="button"
-                            onClick={() => updateTemplate('categories', [])}
-                          >
-                            Clear all
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
+                    <ChoiceToolbar
+                      value={optionSearch.categories}
+                      onChange={(value) => updateOptionSearch('categories', value)}
+                      placeholder="Search categories"
+                      ariaLabel="Search categories"
+                      shownCount={visibleCategories.length}
+                      actionLabel={template.categories.length > 0 ? 'Clear all' : undefined}
+                      onAction={
+                        template.categories.length > 0
+                          ? () => updateTemplate('categories', [])
+                          : undefined
+                      }
+                    />
                     <div className="submission-choice-grid is-scroll">
                       {visibleCategories.length === 0 ? (
                         <div className="submission-choice-empty">No categories match your search.</div>
@@ -2083,30 +2133,19 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Optional. Tag names are blocked inside the template title.
                     </p>
-                    <div className="submission-choice-toolbar">
-                      <input
-                        className="field-input input w-input submission-choice-filter"
-                        type="search"
-                        value={optionSearch.secondaryTags}
-                        onChange={(event) =>
-                          updateOptionSearch('secondaryTags', event.target.value)
-                        }
-                        placeholder="Search secondary tags"
-                        aria-label="Search secondary tags"
-                      />
-                      <div className="submission-choice-toolbar-meta">
-                        <span className="field-help">{visibleSecondaryTags.length} shown</span>
-                        {template.secondaryTags.length > 0 ? (
-                          <button
-                            className="submission-inline-action"
-                            type="button"
-                            onClick={() => updateTemplate('secondaryTags', [])}
-                          >
-                            Clear all
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
+                    <ChoiceToolbar
+                      value={optionSearch.secondaryTags}
+                      onChange={(value) => updateOptionSearch('secondaryTags', value)}
+                      placeholder="Search secondary tags"
+                      ariaLabel="Search secondary tags"
+                      shownCount={visibleSecondaryTags.length}
+                      actionLabel={template.secondaryTags.length > 0 ? 'Clear all' : undefined}
+                      onAction={
+                        template.secondaryTags.length > 0
+                          ? () => updateTemplate('secondaryTags', [])
+                          : undefined
+                      }
+                    />
                     <div className="submission-choice-grid is-scroll submission-choice-grid-compact">
                       {visibleSecondaryTags.length === 0 ? (
                         <div className="submission-choice-empty">No secondary tags match your search.</div>
@@ -2243,28 +2282,17 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 styles.
                     </p>
-                    <div className="submission-choice-toolbar">
-                      <input
-                        className="field-input input w-input submission-choice-filter"
-                        type="search"
-                        value={optionSearch.styles}
-                        onChange={(event) => updateOptionSearch('styles', event.target.value)}
-                        placeholder="Search styles"
-                        aria-label="Search styles"
-                      />
-                      <div className="submission-choice-toolbar-meta">
-                        <span className="field-help">{visibleStyles.length} shown</span>
-                        {template.styles.length > 0 ? (
-                          <button
-                            className="submission-inline-action"
-                            type="button"
-                            onClick={() => updateTemplate('styles', [])}
-                          >
-                            Clear all
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
+                    <ChoiceToolbar
+                      value={optionSearch.styles}
+                      onChange={(value) => updateOptionSearch('styles', value)}
+                      placeholder="Search styles"
+                      ariaLabel="Search styles"
+                      shownCount={visibleStyles.length}
+                      actionLabel={template.styles.length > 0 ? 'Clear all' : undefined}
+                      onAction={
+                        template.styles.length > 0 ? () => updateTemplate('styles', []) : undefined
+                      }
+                    />
                     <div className="submission-choice-grid">
                       {visibleStyles.length === 0 ? (
                         <div className="submission-choice-empty">No styles match your search.</div>
@@ -2306,28 +2334,23 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Choose the Webflow features used by the template.
                     </p>
-                    <div className="submission-choice-toolbar">
-                      <input
-                        className="field-input input w-input submission-choice-filter"
-                        type="search"
-                        value={optionSearch.featureIds}
-                        onChange={(event) => updateOptionSearch('featureIds', event.target.value)}
-                        placeholder="Search features"
-                        aria-label="Search features"
-                      />
-                      <div className="submission-choice-toolbar-meta">
-                        <span className="field-help">{visibleFeatures.length} shown</span>
-                        {!arraysEqual(template.featureIds, DEFAULT_FEATURE_IDS) ? (
-                          <button
-                            className="submission-inline-action"
-                            type="button"
-                            onClick={() => updateTemplate('featureIds', [...DEFAULT_FEATURE_IDS])}
-                          >
-                            Reset defaults
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
+                    <ChoiceToolbar
+                      value={optionSearch.featureIds}
+                      onChange={(value) => updateOptionSearch('featureIds', value)}
+                      placeholder="Search features"
+                      ariaLabel="Search features"
+                      shownCount={visibleFeatures.length}
+                      actionLabel={
+                        !arraysEqual(template.featureIds, DEFAULT_FEATURE_IDS)
+                          ? 'Reset defaults'
+                          : undefined
+                      }
+                      onAction={
+                        !arraysEqual(template.featureIds, DEFAULT_FEATURE_IDS)
+                          ? () => updateTemplate('featureIds', [...DEFAULT_FEATURE_IDS])
+                          : undefined
+                      }
+                    />
                     <div className="submission-choice-grid">
                       {visibleFeatures.length === 0 ? (
                         <div className="submission-choice-empty">No features match your search.</div>
@@ -2457,6 +2480,10 @@ export function TemplateIntake() {
                         }}
                         required
                       />
+                      <SelectedFilesSummary
+                        files={template.thumbnailFile ? [template.thumbnailFile] : []}
+                        emptyLabel="No primary thumbnail selected yet."
+                      />
                       {imageErrors.thumbnailFile ? (
                         <div className="submission-field-feedback submission-field-feedback-error">
                           {imageErrors.thumbnailFile}
@@ -2490,6 +2517,12 @@ export function TemplateIntake() {
                           setImageErrors((c) => ({ ...c, secondaryThumbnailFile: err }));
                           updateTemplate('secondaryThumbnailFile', err ? null : file);
                         }}
+                      />
+                      <SelectedFilesSummary
+                        files={
+                          template.secondaryThumbnailFile ? [template.secondaryThumbnailFile] : []
+                        }
+                        emptyLabel="No secondary thumbnail selected."
                       />
                       {imageErrors.secondaryThumbnailFile ? (
                         <div className="submission-field-feedback submission-field-feedback-error">
@@ -2537,6 +2570,10 @@ export function TemplateIntake() {
                         updateTemplate('galleryFiles', validated);
                       }}
                       required
+                    />
+                    <SelectedFilesSummary
+                      files={template.galleryFiles}
+                      emptyLabel="No gallery images selected yet."
                     />
                     {Object.entries(imageErrors)
                       .filter(([k, v]) => k.startsWith('gallery-') && v)
