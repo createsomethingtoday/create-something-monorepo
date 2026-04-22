@@ -113,6 +113,40 @@ type TemplateFormState = {
   agreementConfirmed: boolean;
 };
 
+type TemplateAutofillState = Partial<
+  Pick<
+    TemplateFormState,
+    | 'templateName'
+    | 'shortDescription'
+    | 'longDescription'
+    | 'priceModel'
+    | 'pageCount'
+    | 'typeCms'
+    | 'typeEcommerce'
+    | 'categories'
+    | 'styles'
+    | 'featureIds'
+  >
+>;
+
+type TemplateAutofillPayload = {
+  templateName?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  categories?: string[];
+  priceModel?: 'Free' | 'Paid';
+  pageCount?: PageCountOption;
+  typeCms?: boolean;
+  typeEcommerce?: boolean;
+  styles?: string[];
+  featureIds?: string[];
+};
+
+type TemplateAutofillAssets = {
+  screenshotCount: number;
+  screenshotsDownloadUrl: string;
+};
+
 type VerificationState = {
   primaryEmailVerified: string;
   webflowEmailVerified: string;
@@ -168,6 +202,43 @@ const initialTemplateState: TemplateFormState = {
   agreementConfirmed: false
 };
 
+function arraysEqual(left: readonly string[], right: readonly string[]) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function shouldAutofillText(current: string, previous?: string) {
+  return current.trim() === '' || current === previous;
+}
+
+function shouldAutofillArray(current: readonly string[], previous?: readonly string[]) {
+  return current.length === 0 || arraysEqual(current, previous ?? []);
+}
+
+function shouldAutofillPriceModel(
+  current: TemplateFormState['priceModel'],
+  previous?: TemplateFormState['priceModel']
+) {
+  return current === 'Free' || current === previous;
+}
+
+function shouldAutofillPageCount(
+  current: TemplateFormState['pageCount'],
+  previous?: TemplateFormState['pageCount']
+) {
+  return current === '' || current === previous;
+}
+
+function shouldAutofillBoolean(current: boolean, previous?: boolean) {
+  return current === false || current === previous;
+}
+
+function shouldAutofillFeatureIds(current: readonly string[], previous?: readonly string[]) {
+  return (
+    arraysEqual(current, DEFAULT_FEATURE_IDS) ||
+    arraysEqual(current, previous ?? DEFAULT_FEATURE_IDS)
+  );
+}
+
 async function uploadIntakeFile(
   file: File,
   kind: 'avatar' | 'thumbnail' | 'secondary-thumbnail' | 'gallery',
@@ -220,6 +291,8 @@ export function TemplateIntake() {
   const [templateSubmitting, setTemplateSubmitting] = useState(false);
   const [fieldFeedback, setFieldFeedback] = useState<Record<string, StatusMessage | null>>({});
   const [imageErrors, setImageErrors] = useState<Record<string, string | null>>({});
+  const [autofillManaged, setAutofillManaged] = useState<TemplateAutofillState>({});
+  const [autofillAssets, setAutofillAssets] = useState<TemplateAutofillAssets | null>(null);
 
   const setFeedback = (field: string, feedback: StatusMessage | null) =>
     setFieldFeedback((current) => ({ ...current, [field]: feedback }));
@@ -438,6 +511,8 @@ export function TemplateIntake() {
     }
 
     if (key === 'publishedUrl') {
+      setFeedback('publishedUrl', null);
+      setAutofillAssets(null);
       setVerification((current) => ({
         ...current,
         publishedUrlVerified: '',
@@ -449,6 +524,156 @@ export function TemplateIntake() {
         featureIds: current.featureIds.filter((item: string) => item !== 'gsap')
       }));
     }
+  }
+
+  function applyTemplateAutofill(
+    autofill: TemplateAutofillPayload | undefined,
+    options: { gsapDetected: boolean }
+  ) {
+    let detailsApplied = false;
+    const managedNext: TemplateAutofillState = {};
+
+    setTemplate((current) => {
+      if (!autofill) {
+        if (!options.gsapDetected || current.featureIds.includes('gsap')) {
+          return current;
+        }
+
+        return {
+          ...current,
+          featureIds: [...new Set([...current.featureIds, 'gsap'])]
+        };
+      }
+
+      const next = { ...current };
+
+      if (
+        autofill.templateName &&
+        autofill.templateName !== current.templateName &&
+        shouldAutofillText(current.templateName, autofillManaged.templateName)
+      ) {
+        next.templateName = autofill.templateName;
+        managedNext.templateName = autofill.templateName;
+        detailsApplied = true;
+      }
+
+      if (
+        autofill.shortDescription &&
+        autofill.shortDescription !== current.shortDescription &&
+        shouldAutofillText(current.shortDescription, autofillManaged.shortDescription)
+      ) {
+        next.shortDescription = autofill.shortDescription;
+        managedNext.shortDescription = autofill.shortDescription;
+        detailsApplied = true;
+      }
+
+      if (
+        autofill.longDescription &&
+        autofill.longDescription !== current.longDescription &&
+        shouldAutofillText(current.longDescription, autofillManaged.longDescription)
+      ) {
+        next.longDescription = autofill.longDescription;
+        managedNext.longDescription = autofill.longDescription;
+        detailsApplied = true;
+      }
+
+      if (
+        autofill.priceModel &&
+        autofill.priceModel !== current.priceModel &&
+        shouldAutofillPriceModel(current.priceModel, autofillManaged.priceModel)
+      ) {
+        next.priceModel = autofill.priceModel;
+        managedNext.priceModel = autofill.priceModel;
+        detailsApplied = true;
+      }
+
+      if (
+        autofill.pageCount &&
+        autofill.pageCount !== current.pageCount &&
+        shouldAutofillPageCount(current.pageCount, autofillManaged.pageCount)
+      ) {
+        next.pageCount = autofill.pageCount;
+        managedNext.pageCount = autofill.pageCount;
+        detailsApplied = true;
+      }
+
+      if (
+        typeof autofill.typeCms === 'boolean' &&
+        autofill.typeCms !== current.typeCms &&
+        shouldAutofillBoolean(current.typeCms, autofillManaged.typeCms)
+      ) {
+        next.typeCms = autofill.typeCms;
+        managedNext.typeCms = autofill.typeCms;
+        detailsApplied = true;
+      }
+
+      if (
+        typeof autofill.typeEcommerce === 'boolean' &&
+        autofill.typeEcommerce !== current.typeEcommerce &&
+        shouldAutofillBoolean(current.typeEcommerce, autofillManaged.typeEcommerce)
+      ) {
+        next.typeEcommerce = autofill.typeEcommerce;
+        managedNext.typeEcommerce = autofill.typeEcommerce;
+        detailsApplied = true;
+      }
+
+      if (
+        autofill.categories?.length &&
+        !arraysEqual(current.categories, autofill.categories) &&
+        shouldAutofillArray(current.categories, autofillManaged.categories)
+      ) {
+        next.categories = autofill.categories;
+        managedNext.categories = autofill.categories;
+        detailsApplied = true;
+      }
+
+      if (
+        autofill.styles?.length &&
+        !arraysEqual(current.styles, autofill.styles) &&
+        shouldAutofillArray(current.styles, autofillManaged.styles)
+      ) {
+        next.styles = autofill.styles;
+        managedNext.styles = autofill.styles;
+        detailsApplied = true;
+      }
+
+      const suggestedFeatureIds = [
+        ...new Set([
+          ...DEFAULT_FEATURE_IDS,
+          ...(autofill.featureIds ?? []),
+          ...(options.gsapDetected ? ['gsap'] : [])
+        ])
+      ];
+
+      if (shouldAutofillFeatureIds(current.featureIds, autofillManaged.featureIds)) {
+        if (!arraysEqual(current.featureIds, suggestedFeatureIds)) {
+          next.featureIds = suggestedFeatureIds;
+          managedNext.featureIds = suggestedFeatureIds;
+          detailsApplied = true;
+        }
+      } else if (options.gsapDetected && !next.featureIds.includes('gsap')) {
+        next.featureIds = [...new Set([...next.featureIds, 'gsap'])];
+      }
+
+      if (next.priceModel === 'Free') {
+        next.selectedPrice = null;
+      } else if (!next.pageCount) {
+        next.selectedPrice = null;
+      } else {
+        const allowedPrices = getPricingTiers(next.pageCount, next.typeCms).prices;
+        if (next.selectedPrice !== null && !allowedPrices.includes(next.selectedPrice)) {
+          next.selectedPrice = null;
+        }
+      }
+
+      return next;
+    });
+
+    if (Object.keys(managedNext).length > 0) {
+      setAutofillManaged((current) => ({ ...current, ...managedNext }));
+    }
+
+    return detailsApplied;
   }
 
   async function verifyCreatorEmail(kind: 'primary' | 'webflow') {
@@ -584,6 +809,10 @@ export function TemplateIntake() {
       message?: string;
       normalizedUrl?: string;
       gsapDetected?: boolean;
+      autofill?: TemplateAutofillPayload;
+      autofillWarning?: string;
+      screenshotCount?: number;
+      screenshotsDownloadUrl?: string;
       siteResults?: {
         passedCount?: number;
       };
@@ -597,11 +826,31 @@ export function TemplateIntake() {
       return;
     }
 
+    const autofillApplied = applyTemplateAutofill(data.autofill, {
+      gsapDetected: Boolean(data.gsapDetected)
+    });
+
+    setAutofillAssets(
+      data.screenshotsDownloadUrl
+        ? {
+            screenshotCount: data.screenshotCount ?? 0,
+            screenshotsDownloadUrl: data.screenshotsDownloadUrl
+          }
+        : null
+    );
+
     setFeedback('publishedUrl', {
       tone: 'success',
-      message: data.gsapDetected
-        ? 'Published site validated. GSAP was detected automatically.'
-        : 'Published site validated.'
+      message: [
+        'Published site validated.',
+        autofillApplied ? 'Suggested template details were added automatically.' : '',
+        data.gsapDetected ? 'GSAP was detected automatically.' : '',
+        data.autofillWarning
+          ? 'Template suggestions were unavailable, so finish the remaining fields manually.'
+          : ''
+      ]
+        .filter(Boolean)
+        .join(' ')
     });
     setVerification((current) => ({
       ...current,
@@ -1653,6 +1902,28 @@ export function TemplateIntake() {
                     />
                     <div className="field-help">{template.notes.length}/400 characters</div>
                   </div>
+
+                  {autofillAssets ? (
+                    <div className="submission-status submission-status-info submission-status-stack">
+                      <div>
+                        Generated screenshots are ready from the analyzer.
+                        {autofillAssets.screenshotCount > 0
+                          ? ` ${autofillAssets.screenshotCount} screenshot${autofillAssets.screenshotCount === 1 ? '' : 's'} were prepared for upload.`
+                          : ''}
+                      </div>
+                      <div>
+                        Download the ZIP, then drag each file into the matching upload field below.
+                      </div>
+                      <a
+                        className="submission-status-link"
+                        href={autofillAssets.screenshotsDownloadUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Download generated screenshots (ZIP)
+                      </a>
+                    </div>
+                  ) : null}
 
                   <div className="submission-grid-2">
                     <div className="submission-field">

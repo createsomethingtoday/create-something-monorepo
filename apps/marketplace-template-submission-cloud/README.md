@@ -44,6 +44,13 @@ Strongly recommended (bot protection):
 - `TURNSTILE_SECRET_KEY`
 - `TURNSTILE_EXPECTED_HOSTNAME`
 
+Optional analyzer autofill:
+
+- `TEMPLATE_ANALYZER_API_BASE`
+  defaults to `https://webflow-template-analyzer.createsomething.workers.dev`
+  and is used by `POST /api/intake/validate-published-url` to suggest template details and
+  expose screenshot-download links after a successful validation pass.
+
 ## Commands
 
 ```bash
