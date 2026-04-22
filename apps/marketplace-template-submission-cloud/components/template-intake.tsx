@@ -163,6 +163,7 @@ type TemplateAutofillResult = {
 };
 
 type TemplateAnalyzerSummary = {
+  validationMessage: string;
   appliedFields: TemplateAutofillFieldKey[];
   suggestedFields: TemplateAutofillFieldKey[];
   screenshotCount: number;
@@ -1316,6 +1317,7 @@ export function TemplateIntake() {
       Boolean(data.autofillWarning) ||
       Boolean(data.screenshotsDownloadUrl)
         ? {
+            validationMessage: data.message || 'Published site validated.',
             appliedFields: autofillResult.appliedFields,
             suggestedFields: autofillResult.suggestedFields,
             screenshotCount: data.screenshotCount ?? 0,
@@ -2101,6 +2103,46 @@ export function TemplateIntake() {
                             : 'The published-site crawl passed. Review the suggestion summary below before submitting.'}
                       </p>
 
+                      <div className="submission-analyzer-stage-grid">
+                        <div className="submission-analyzer-stage">
+                          <div className="submission-analyzer-stage-label">Validation</div>
+                          <div className="submission-analyzer-stage-value">Passed</div>
+                          <div className="submission-analyzer-stage-copy">
+                            {analyzerSummary.validationMessage}
+                          </div>
+                        </div>
+                        <div className="submission-analyzer-stage">
+                          <div className="submission-analyzer-stage-label">Autofill</div>
+                          <div className="submission-analyzer-stage-value">
+                            {analyzerSummary.appliedFields.length > 0
+                              ? `${analyzerSummary.appliedFields.length} field${analyzerSummary.appliedFields.length === 1 ? '' : 's'} applied`
+                              : analyzerSummary.warning
+                                ? 'Partial'
+                                : 'Suggestions ready'}
+                          </div>
+                          <div className="submission-analyzer-stage-copy">
+                            {analyzerSummary.appliedFields.length > 0
+                              ? 'The matching fields below were updated from the published site.'
+                              : analyzerSummary.warning
+                                ? 'Some fields still need manual input because suggestions were incomplete.'
+                                : 'Review the suggested fields below before submitting.'}
+                          </div>
+                        </div>
+                        {analyzerSummary.screenshotsDownloadUrl ? (
+                          <div className="submission-analyzer-stage">
+                            <div className="submission-analyzer-stage-label">Screenshots</div>
+                            <div className="submission-analyzer-stage-value">
+                              {analyzerSummary.screenshotCount > 0
+                                ? `${analyzerSummary.screenshotCount} ready`
+                                : 'Ready'}
+                            </div>
+                            <div className="submission-analyzer-stage-copy">
+                              Generated screenshots can be downloaded and reused for uploads.
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+
                       {analyzerSummary.appliedFields.length > 0 ? (
                         <div className="submission-analyzer-group">
                           <div className="submission-analyzer-group-title">Applied automatically</div>
@@ -2320,72 +2362,70 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-grid-2">
-                    <div className="submission-field">
-                      <span className="field-label template-application-form_field-label cc-with-desc">
-                        Page count
-                        <span className="submission-required"> *</span>
-                        {hasAutofilledPageCount ? (
-                          <span className="submission-autofill-badge">Autofilled</span>
-                        ) : null}
-                      </span>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        One page, multi page, or multi-layout.
-                      </p>
-                      <div className="submission-choice-grid">
-                        {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
-                          <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
-                            key={option}
-                          >
-                            <input
-                              type="radio"
-                              name="pageCount"
-                              checked={template.pageCount === option}
-                              onChange={() => updateTemplate('pageCount', option)}
-                            />
-                            <span className="submission-choice-copy">
-                              {option === 'One'
-                                ? 'One page'
-                                : option === 'Multi'
-                                  ? 'Multi page'
-                                  : 'Multi-layout (3+ layouts with 3+ pages)'}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
+                  <div className="submission-field">
+                    <span className="field-label template-application-form_field-label cc-with-desc">
+                      Page count
+                      <span className="submission-required"> *</span>
+                      {hasAutofilledPageCount ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
+                    </span>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      One page, multi page, or multi-layout.
+                    </p>
+                    <div className="submission-choice-grid">
+                      {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
+                        <label
+                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          key={option}
+                        >
+                          <input
+                            type="radio"
+                            name="pageCount"
+                            checked={template.pageCount === option}
+                            onChange={() => updateTemplate('pageCount', option)}
+                          />
+                          <span className="submission-choice-copy">
+                            {option === 'One'
+                              ? 'One page'
+                              : option === 'Multi'
+                                ? 'Multi page'
+                                : 'Multi-layout (3+ layouts with 3+ pages)'}
+                          </span>
+                        </label>
+                      ))}
                     </div>
+                  </div>
 
-                    <div className="submission-field">
-                      <span className="field-label template-application-form_field-label cc-with-desc">
-                        Template type
-                        {hasAutofilledTemplateType ? (
-                          <span className="submission-autofill-badge">Autofilled</span>
-                        ) : null}
-                      </span>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Check the Webflow product surfaces used by the template.
-                      </p>
-                      <div className="submission-choice-grid">
-                        <label className="submission-choice input-block cc-check cc-template-application-form-choice">
-                          <input
-                            type="checkbox"
-                            checked={template.typeCms}
-                            onChange={(event) => updateTemplate('typeCms', event.target.checked)}
-                          />
-                          <span className="submission-choice-copy">CMS</span>
-                        </label>
-                        <label className="submission-choice input-block cc-check cc-template-application-form-choice">
-                          <input
-                            type="checkbox"
-                            checked={template.typeEcommerce}
-                            onChange={(event) =>
-                              updateTemplate('typeEcommerce', event.target.checked)
-                            }
-                          />
-                          <span className="submission-choice-copy">Ecommerce</span>
-                        </label>
-                      </div>
+                  <div className="submission-field">
+                    <span className="field-label template-application-form_field-label cc-with-desc">
+                      Template type
+                      {hasAutofilledTemplateType ? (
+                        <span className="submission-autofill-badge">Autofilled</span>
+                      ) : null}
+                    </span>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Check the Webflow product surfaces used by the template.
+                    </p>
+                    <div className="submission-choice-grid submission-choice-grid-template-type">
+                      <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                        <input
+                          type="checkbox"
+                          checked={template.typeCms}
+                          onChange={(event) => updateTemplate('typeCms', event.target.checked)}
+                        />
+                        <span className="submission-choice-copy">CMS</span>
+                      </label>
+                      <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                        <input
+                          type="checkbox"
+                          checked={template.typeEcommerce}
+                          onChange={(event) =>
+                            updateTemplate('typeEcommerce', event.target.checked)
+                          }
+                        />
+                        <span className="submission-choice-copy">Ecommerce</span>
+                      </label>
                     </div>
                   </div>
 
