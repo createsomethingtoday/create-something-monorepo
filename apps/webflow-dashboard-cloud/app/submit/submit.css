@@ -13,7 +13,8 @@
   background: #f4f4f4;
   color: #080808;
   font-family:
-    "WF Visual Sans Variable",
+    var(--font-wf-visual-sans),
+    "WF Visual Sans",
     Inter,
     system-ui,
     -apple-system,
@@ -642,7 +643,8 @@
   border-top: 0;
   border-radius: 0 0 0.75rem 0.75rem;
   font-family:
-    "WF Visual Sans Variable",
+    var(--font-wf-visual-sans),
+    "WF Visual Sans",
     Inter,
     system-ui,
     -apple-system,

@@ -1,4 +1,5 @@
 import './globals.css';
+import { wfVisualSans } from './wf-visual-sans';
 
 export const metadata = {
   title: 'Submit a template',
@@ -8,7 +9,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={wfVisualSans.variable}>{children}</body>
     </html>
   );
 }

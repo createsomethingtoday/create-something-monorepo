@@ -16,7 +16,15 @@ body {
   min-height: 100%;
   background: #f4f4f4;
   color: #080808;
-  font-family: "WF Visual Sans Variable", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    var(--font-wf-visual-sans),
+    "WF Visual Sans",
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -1006,7 +1014,15 @@ select {
   border: 1px solid #d9d9d9;
   border-top: 0;
   border-radius: 0 0 0.75rem 0.75rem;
-  font-family: "WF Visual Sans Variable", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    var(--font-wf-visual-sans),
+    "WF Visual Sans",
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   font-size: 0.875rem;
 }
 
