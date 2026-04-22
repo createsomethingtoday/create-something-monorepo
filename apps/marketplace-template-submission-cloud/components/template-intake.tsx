@@ -467,6 +467,70 @@ function SelectedFilesSummary({
   );
 }
 
+function UploadSpecs({ chips }: { chips: readonly string[] }) {
+  return (
+    <div className="submission-upload-specs" aria-hidden="true">
+      {chips.map((chip) => (
+        <span className="submission-spec-chip" key={chip}>
+          {chip}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+type ReviewChecklistItem = {
+  label: string;
+  detail: string;
+  complete: boolean;
+};
+
+function ReviewChecklistCard({
+  title,
+  copy,
+  items,
+}: {
+  title: string;
+  copy: string;
+  items: readonly ReviewChecklistItem[];
+}) {
+  const completeCount = items.filter((item) => item.complete).length;
+  const remainingCount = items.length - completeCount;
+
+  return (
+    <div className="submission-review-card">
+      <div className="submission-review-header">
+        <div>
+          <div className="submission-step-label submission-step-label-secondary">
+            Final review
+          </div>
+          <h3 className="submission-review-title">{title}</h3>
+        </div>
+        <div className="submission-review-progress">
+          {remainingCount === 0 ? 'Ready to submit' : `${remainingCount} item${remainingCount === 1 ? '' : 's'} left`}
+        </div>
+      </div>
+      <p className="field-help submission-review-copy">{copy}</p>
+      <div className="submission-review-grid">
+        {items.map((item) => (
+          <div
+            className={`submission-review-item ${item.complete ? 'is-complete' : 'is-pending'}`}
+            key={item.label}
+          >
+            <div className="submission-review-indicator" aria-hidden="true">
+              {item.complete ? '✓' : '•'}
+            </div>
+            <div className="submission-review-item-copy">
+              <div className="submission-review-item-title">{item.label}</div>
+              <div className="submission-review-item-detail">{item.detail}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 export function TemplateIntake() {
@@ -725,6 +789,77 @@ export function TemplateIntake() {
   const previewUrlValid =
     template.previewUrl.trim() === '' ||
     template.previewUrl.trim().includes('https://preview.webflow.com/preview/');
+  const galleryErrorMessages = Object.entries(imageErrors)
+    .filter(([key, value]) => key.startsWith('gallery-') && value)
+    .map(([, value]) => value as string);
+  const reviewItems: ReviewChecklistItem[] = [
+    {
+      label: 'Creator verified',
+      detail: creatorEligibilityResolved
+        ? 'The creator identity is resolved and eligible to submit.'
+        : 'Use Check creator to confirm the creator account first.',
+      complete: creatorEligibilityResolved,
+    },
+    {
+      label: 'Template checks passed',
+      detail:
+        verification.templateNameVerified === template.templateName.trim() &&
+        verification.publishedUrlVerified === template.publishedUrl.trim()
+          ? 'Template name and published site both passed validation.'
+          : 'Run Check name and Validate template before submitting.',
+      complete:
+        verification.templateNameVerified === template.templateName.trim() &&
+        verification.publishedUrlVerified === template.publishedUrl.trim(),
+    },
+    {
+      label: 'Preview and metadata ready',
+      detail:
+        previewUrlValid &&
+        template.previewUrl.trim() !== '' &&
+        template.categories.length > 0 &&
+        template.styles.length > 0 &&
+        template.pageCount !== ''
+          ? 'Preview URL, category, styles, and page count are all set.'
+          : 'Add a valid preview URL plus the required taxonomy and page info.',
+      complete:
+        previewUrlValid &&
+        template.previewUrl.trim() !== '' &&
+        template.categories.length > 0 &&
+        template.styles.length > 0 &&
+        template.pageCount !== '',
+    },
+    {
+      label: 'Pricing is resolved',
+      detail:
+        template.priceModel === 'Free' || template.selectedPrice !== null
+          ? 'The template pricing setup is complete.'
+          : 'Choose a paid price tier or switch the template to free.',
+      complete: template.priceModel === 'Free' || template.selectedPrice !== null,
+    },
+    {
+      label: 'Assets are attached',
+      detail:
+        Boolean(template.thumbnailFile) &&
+        !imageErrors.thumbnailFile &&
+        template.galleryFiles.length > 0 &&
+        galleryErrorMessages.length === 0
+          ? 'Primary thumbnail and gallery images are ready for upload.'
+          : 'Attach a valid primary thumbnail and at least one valid gallery image.',
+      complete:
+        Boolean(template.thumbnailFile) &&
+        !imageErrors.thumbnailFile &&
+        template.galleryFiles.length > 0 &&
+        galleryErrorMessages.length === 0,
+    },
+    {
+      label: 'Agreements confirmed',
+      detail:
+        template.checklistConfirmed && template.agreementConfirmed
+          ? 'Checklist and submission agreement are both confirmed.'
+          : 'Confirm the checklist and submission agreement below.',
+      complete: template.checklistConfirmed && template.agreementConfirmed,
+    },
+  ];
 
   function updateCreator<K extends keyof CreatorFormState>(key: K, value: CreatorFormState[K]) {
     setCreator((current) => ({ ...current, [key]: value }));
@@ -1683,28 +1818,31 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Upload a WebP image that is exactly 256x256 and under 100KB.
                     </p>
-                    <input
-                      className="submission-file-input"
-                      id="avatar"
-                      type="file"
-                      accept="image/webp"
-                      onChange={async (event) => {
-                        const file = event.target.files?.[0] || null;
-                        if (!file) {
-                          setImageErrors((c) => ({ ...c, avatarFile: null }));
-                          updateCreator('avatarFile', null);
-                          return;
-                        }
-                        const err = await validateImageClient(file, 'avatar');
-                        setImageErrors((c) => ({ ...c, avatarFile: err }));
-                        updateCreator('avatarFile', err ? null : file);
-                      }}
-                      required
-                    />
-                    <SelectedFilesSummary
-                      files={creator.avatarFile ? [creator.avatarFile] : []}
-                      emptyLabel="No profile image selected yet."
-                    />
+                    <div className="submission-upload-card">
+                      <UploadSpecs chips={['WebP', '256×256', '<100KB']} />
+                      <input
+                        className="submission-file-input"
+                        id="avatar"
+                        type="file"
+                        accept="image/webp"
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] || null;
+                          if (!file) {
+                            setImageErrors((c) => ({ ...c, avatarFile: null }));
+                            updateCreator('avatarFile', null);
+                            return;
+                          }
+                          const err = await validateImageClient(file, 'avatar');
+                          setImageErrors((c) => ({ ...c, avatarFile: err }));
+                          updateCreator('avatarFile', err ? null : file);
+                        }}
+                        required
+                      />
+                      <SelectedFilesSummary
+                        files={creator.avatarFile ? [creator.avatarFile] : []}
+                        emptyLabel="No profile image selected yet."
+                      />
+                    </div>
                     {imageErrors.avatarFile ? (
                       <div className="submission-field-feedback submission-field-feedback-error">
                         {imageErrors.avatarFile}
@@ -1712,28 +1850,38 @@ export function TemplateIntake() {
                     ) : null}
                   </div>
 
-                  <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
-                    <input
-                      type="checkbox"
-                      checked={creator.agreedToTerms}
-                      onChange={(event) => updateCreator('agreedToTerms', event.target.checked)}
-                    />
-                    <span className="submission-choice-copy">
-                      I agree to the creator terms and marketplace policies.
-                    </span>
-                  </label>
-
-                  {turnstileEnabled ? (
-                    <div className="submission-field">
-                      <span className="field-label template-application-form_field-label">
-                        Bot check
-                      </span>
-                      <div className="turnstile-wrap" ref={creatorTurnstileRef} />
-                      <div className="field-help">
-                        Required before creating the creator profile.
-                      </div>
+                  <div className="submission-confirmation-card">
+                    <div className="submission-confirmation-header">
+                      <h3 className="submission-confirmation-title">Confirm profile submission</h3>
+                      <p className="field-help submission-confirmation-copy">
+                        One agreement and one bot check before the creator profile is created.
+                      </p>
                     </div>
-                  ) : null}
+                    <div className="submission-confirmation-stack">
+                      <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
+                        <input
+                          type="checkbox"
+                          checked={creator.agreedToTerms}
+                          onChange={(event) => updateCreator('agreedToTerms', event.target.checked)}
+                        />
+                        <span className="submission-choice-copy">
+                          I agree to the creator terms and marketplace policies.
+                        </span>
+                      </label>
+
+                      {turnstileEnabled ? (
+                        <div className="submission-field">
+                          <span className="field-label template-application-form_field-label">
+                            Bot check
+                          </span>
+                          <div className="turnstile-wrap" ref={creatorTurnstileRef} />
+                          <div className="field-help">
+                            Required before creating the creator profile.
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
 
                   {creatorStatus ? (
                     <div className={statusClassName(creatorStatus.tone)}>{creatorStatus.message}</div>
@@ -2450,6 +2598,12 @@ export function TemplateIntake() {
                     <div className="field-help">{template.notes.length}/400 characters</div>
                   </div>
 
+                  <ReviewChecklistCard
+                    title="Review the final handoff"
+                    copy="This mirrors the final readiness checks the marketplace team will expect when your template hits the queue."
+                    items={reviewItems}
+                  />
+
                   <div className="submission-grid-2">
                     <div className="submission-field">
                       <label
@@ -2462,28 +2616,31 @@ export function TemplateIntake() {
                       <p className="field-help cc-library-application-form_field-desc">
                         WebP only, exactly 750x995, under 300KB.
                       </p>
-                      <input
-                        className="submission-file-input"
-                        id="thumbnailFile"
-                        type="file"
-                        accept="image/webp"
-                        onChange={async (event) => {
-                          const file = event.target.files?.[0] || null;
-                          if (!file) {
-                            setImageErrors((c) => ({ ...c, thumbnailFile: null }));
-                            updateTemplate('thumbnailFile', null);
-                            return;
-                          }
-                          const err = await validateImageClient(file, 'thumbnail');
-                          setImageErrors((c) => ({ ...c, thumbnailFile: err }));
-                          updateTemplate('thumbnailFile', err ? null : file);
-                        }}
-                        required
-                      />
-                      <SelectedFilesSummary
-                        files={template.thumbnailFile ? [template.thumbnailFile] : []}
-                        emptyLabel="No primary thumbnail selected yet."
-                      />
+                      <div className="submission-upload-card">
+                        <UploadSpecs chips={['WebP', '750×995', '<300KB']} />
+                        <input
+                          className="submission-file-input"
+                          id="thumbnailFile"
+                          type="file"
+                          accept="image/webp"
+                          onChange={async (event) => {
+                            const file = event.target.files?.[0] || null;
+                            if (!file) {
+                              setImageErrors((c) => ({ ...c, thumbnailFile: null }));
+                              updateTemplate('thumbnailFile', null);
+                              return;
+                            }
+                            const err = await validateImageClient(file, 'thumbnail');
+                            setImageErrors((c) => ({ ...c, thumbnailFile: err }));
+                            updateTemplate('thumbnailFile', err ? null : file);
+                          }}
+                          required
+                        />
+                        <SelectedFilesSummary
+                          files={template.thumbnailFile ? [template.thumbnailFile] : []}
+                          emptyLabel="No primary thumbnail selected yet."
+                        />
+                      </div>
                       {imageErrors.thumbnailFile ? (
                         <div className="submission-field-feedback submission-field-feedback-error">
                           {imageErrors.thumbnailFile}
@@ -2501,29 +2658,32 @@ export function TemplateIntake() {
                       <p className="field-help cc-library-application-form_field-desc">
                         Optional. Same 750x995 WebP constraint as the primary thumbnail.
                       </p>
-                      <input
-                        className="submission-file-input"
-                        id="secondaryThumbnailFile"
-                        type="file"
-                        accept="image/webp"
-                        onChange={async (event) => {
-                          const file = event.target.files?.[0] || null;
-                          if (!file) {
-                            setImageErrors((c) => ({ ...c, secondaryThumbnailFile: null }));
-                            updateTemplate('secondaryThumbnailFile', null);
-                            return;
+                      <div className="submission-upload-card">
+                        <UploadSpecs chips={['WebP', '750×995', '<300KB']} />
+                        <input
+                          className="submission-file-input"
+                          id="secondaryThumbnailFile"
+                          type="file"
+                          accept="image/webp"
+                          onChange={async (event) => {
+                            const file = event.target.files?.[0] || null;
+                            if (!file) {
+                              setImageErrors((c) => ({ ...c, secondaryThumbnailFile: null }));
+                              updateTemplate('secondaryThumbnailFile', null);
+                              return;
+                            }
+                            const err = await validateImageClient(file, 'secondary-thumbnail');
+                            setImageErrors((c) => ({ ...c, secondaryThumbnailFile: err }));
+                            updateTemplate('secondaryThumbnailFile', err ? null : file);
+                          }}
+                        />
+                        <SelectedFilesSummary
+                          files={
+                            template.secondaryThumbnailFile ? [template.secondaryThumbnailFile] : []
                           }
-                          const err = await validateImageClient(file, 'secondary-thumbnail');
-                          setImageErrors((c) => ({ ...c, secondaryThumbnailFile: err }));
-                          updateTemplate('secondaryThumbnailFile', err ? null : file);
-                        }}
-                      />
-                      <SelectedFilesSummary
-                        files={
-                          template.secondaryThumbnailFile ? [template.secondaryThumbnailFile] : []
-                        }
-                        emptyLabel="No secondary thumbnail selected."
-                      />
+                          emptyLabel="No secondary thumbnail selected."
+                        />
+                      </div>
                       {imageErrors.secondaryThumbnailFile ? (
                         <div className="submission-field-feedback submission-field-feedback-error">
                           {imageErrors.secondaryThumbnailFile}
@@ -2543,82 +2703,97 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Upload 1 to 5 WebP images, each exactly 1440x900 and under 250KB.
                     </p>
-                    <input
-                      className="submission-file-input"
-                      id="galleryFiles"
-                      type="file"
-                      accept="image/webp"
-                      multiple
-                      onChange={async (event) => {
-                        const files = Array.from(event.target.files || []).slice(0, 5);
-                        const validated: File[] = [];
-                        const newErrors: Record<string, string | null> = {};
-                        // Clear any prior gallery errors first.
-                        setImageErrors((c) => {
-                          const next = { ...c };
-                          for (const key of Object.keys(next)) {
-                            if (key.startsWith('gallery-')) next[key] = null;
+                    <div className="submission-upload-card">
+                      <UploadSpecs chips={['WebP', '1440×900', '<250KB each', '1–5 images']} />
+                      <input
+                        className="submission-file-input"
+                        id="galleryFiles"
+                        type="file"
+                        accept="image/webp"
+                        multiple
+                        onChange={async (event) => {
+                          const files = Array.from(event.target.files || []).slice(0, 5);
+                          const validated: File[] = [];
+                          const newErrors: Record<string, string | null> = {};
+                          // Clear any prior gallery errors first.
+                          setImageErrors((c) => {
+                            const next = { ...c };
+                            for (const key of Object.keys(next)) {
+                              if (key.startsWith('gallery-')) next[key] = null;
+                            }
+                            return next;
+                          });
+                          for (let i = 0; i < files.length; i++) {
+                            const err = await validateImageClient(files[i], 'gallery');
+                            newErrors[`gallery-${i}`] = err;
+                            if (!err) validated.push(files[i]);
                           }
-                          return next;
-                        });
-                        for (let i = 0; i < files.length; i++) {
-                          const err = await validateImageClient(files[i], 'gallery');
-                          newErrors[`gallery-${i}`] = err;
-                          if (!err) validated.push(files[i]);
-                        }
-                        setImageErrors((c) => ({ ...c, ...newErrors }));
-                        updateTemplate('galleryFiles', validated);
-                      }}
-                      required
-                    />
-                    <SelectedFilesSummary
-                      files={template.galleryFiles}
-                      emptyLabel="No gallery images selected yet."
-                    />
-                    {Object.entries(imageErrors)
-                      .filter(([k, v]) => k.startsWith('gallery-') && v)
-                      .map(([k, v]) => (
-                        <div key={k} className="submission-field-feedback submission-field-feedback-error">
-                          {v}
-                        </div>
-                      ))}
+                          setImageErrors((c) => ({ ...c, ...newErrors }));
+                          updateTemplate('galleryFiles', validated);
+                        }}
+                        required
+                      />
+                      <SelectedFilesSummary
+                        files={template.galleryFiles}
+                        emptyLabel="No gallery images selected yet."
+                      />
+                    </div>
+                    {galleryErrorMessages.map((message, index) => (
+                      <div
+                        key={`${message}-${index}`}
+                        className="submission-field-feedback submission-field-feedback-error"
+                      >
+                        {message}
+                      </div>
+                    ))}
                   </div>
 
-                  <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
-                    <input
-                      type="checkbox"
-                      checked={template.checklistConfirmed}
-                      onChange={(event) =>
-                        updateTemplate('checklistConfirmed', event.target.checked)
-                      }
-                    />
-                    <span className="submission-choice-copy">
-                      I completed the submission checklist.
-                    </span>
-                  </label>
-
-                  <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
-                    <input
-                      type="checkbox"
-                      checked={template.agreementConfirmed}
-                      onChange={(event) =>
-                        updateTemplate('agreementConfirmed', event.target.checked)
-                      }
-                    />
-                    <span className="submission-choice-copy">
-                      I agree to the marketplace submission agreement.
-                    </span>
-                  </label>
-
-                  {turnstileEnabled ? (
-                    <div className="submission-field">
-                      <span className="field-label template-application-form_field-label">
-                        Bot check
-                      </span>
-                      <div className="turnstile-wrap" ref={templateTurnstileRef} />
-                      <div className="field-help">Required before submitting the template.</div>
+                  <div className="submission-confirmation-card">
+                    <div className="submission-confirmation-header">
+                      <h3 className="submission-confirmation-title">Confirm and hand off</h3>
+                      <p className="field-help submission-confirmation-copy">
+                        These last checks mirror the reviewer handoff. Confirm them here before
+                        you submit.
+                      </p>
                     </div>
-                  ) : null}
+                    <div className="submission-confirmation-stack">
+                      <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
+                        <input
+                          type="checkbox"
+                          checked={template.checklistConfirmed}
+                          onChange={(event) =>
+                            updateTemplate('checklistConfirmed', event.target.checked)
+                          }
+                        />
+                        <span className="submission-choice-copy">
+                          I completed the submission checklist.
+                        </span>
+                      </label>
+
+                      <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
+                        <input
+                          type="checkbox"
+                          checked={template.agreementConfirmed}
+                          onChange={(event) =>
+                            updateTemplate('agreementConfirmed', event.target.checked)
+                          }
+                        />
+                        <span className="submission-choice-copy">
+                          I agree to the marketplace submission agreement.
+                        </span>
+                      </label>
+
+                      {turnstileEnabled ? (
+                        <div className="submission-field">
+                          <span className="field-label template-application-form_field-label">
+                            Bot check
+                          </span>
+                          <div className="turnstile-wrap" ref={templateTurnstileRef} />
+                          <div className="field-help">Required before submitting the template.</div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
 
                   {templateStatus ? (
                     <div className={statusClassName(templateStatus.tone)}>{templateStatus.message}</div>
