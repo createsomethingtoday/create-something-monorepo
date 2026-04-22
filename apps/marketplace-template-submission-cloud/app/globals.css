@@ -328,6 +328,23 @@ select {
   color: var(--webflow-blue-600, #0055d4);
 }
 
+.submission-autofill-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  padding: 0.18rem 0.48rem;
+  border-radius: 999px;
+  background: rgba(20, 110, 245, 0.1);
+  border: 1px solid rgba(20, 110, 245, 0.18);
+  color: var(--webflow-blue-600, #0055d4);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
 .submission-analyzer-summary {
   display: flex;
   flex-direction: column;
