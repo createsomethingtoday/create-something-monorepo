@@ -35,7 +35,7 @@ It also exposes one MCP App UI resource:
 - `hub_status`
 - `hub_list_registry`
 - `hub_list_services` (service-first discovery summary for current account/session)
-- `hub_list_proxy_tools` (visible proxy tools for current account/session)
+- `hub_list_proxy_tools` (visible proxy tools for current account/session; prefer for debugging/operator inspection, not the default agent loop)
 - `hub_search_proxy_tools` (visible query/server filter + cursor pagination; pass `serverName` whenever known)
 - `hub_route_intent` (map business intent to a proxy tool via allowlist + fallback discovery)
 - `hub_describe_proxy_tool` (schema + downstream route metadata for one visible proxy tool)
@@ -75,6 +75,35 @@ Optional direct proxy mode:
 
 - Set `HUB_ALLOW_DIRECT_PROXY_TOOLS=true` to allow direct `<server>__<tool>` calls.
 - Optionally set `HUB_DIRECT_PROXY_ALLOWED_PREFIXES` (CSV or JSON array) to restrict direct execution to specific proxy-tool name prefixes.
+
+## Agent Discovery Playbook
+
+Default playbook for agents and hosts:
+
+1. Start from a named discovery pack, not a global catalog.
+2. Call `hub_list_services` first and pick the target service/toolkit.
+3. Call `hub_search_proxy_tools` with `serverName` whenever the target service is known.
+4. Call `hub_describe_proxy_tool` only on the shortlist you may actually use.
+5. Execute with `hub_execute_proxy_tool`.
+
+Prefer these shortcuts:
+
+- Use `hub_route_intent` or `hub_run_intent` for repeated low-context workflows where an allowlisted intent route exists.
+- Use `hub_list_proxy_tools` for debugging, UI inspection, or operator diagnostics, not as the default discovery primitive for agents.
+- For toolkit auth/reconnect, search for `__connection_status` or `__get_connect_link`, execute that proxy tool, present the link to the user, and stop until the user confirms auth completed.
+
+Default prompt contract for brokered hosts:
+
+- If the task already names an app, toolkit, or service, pass `serverName`.
+- Do not search across every visible service unless the user explicitly asked for cross-service discovery.
+- Treat `compact` discovery as the default lane shape.
+- Treat `full` discovery as an operator/debugging surface or a reviewed high-context lane.
+
+External curated endpoint layer:
+
+- Agent Sentinel is a good fit for wedge, reviewer, or bounded customer lanes that need one MCP URL, explicit tool enablement, centralized logs, or per-user credential handoff.
+- When fronting this hub with Agent Sentinel, expose a curated discoverable surface rather than the default broker-only management surface.
+- Keep brokered discovery as the default for large shared hub surfaces.
 
 ## Configuration
 
@@ -122,6 +151,14 @@ Shared discovery packs:
 - `outerfields-shared-auth-clickup`: shared auth core plus ClickUp
 - List available packs with `hub_list_discovery_packs`
 - Apply one with `hub_set_discovery` by setting `pack`
+
+Pack authoring heuristics:
+
+- Prefer one named workflow or operator role per pack.
+- Keep reviewer and wedge packs capped to a small visible set when possible (for example `6-30` proxy tools).
+- Prefer `compact` packs for shared lanes; add a separate `full` pack only when a reviewed workflow actually needs it.
+- Avoid mixing multiple search/research providers into the same default pack unless the workflow explicitly depends on provider choice.
+- Add or expand `hub_route_intent` allowlists for repetitive workflows before broadening the visible tool surface.
 
 Intent routing:
 

@@ -149,7 +149,13 @@ curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"outerfields-pcn","limit":10}}}' | jq
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hub_list_services","arguments":{}}}' | jq
+
+curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
+  -H "Authorization: Bearer $HUB_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"outerfields-pcn","limit":10}}}' | jq
 ```
 
 Auth enforcement checks:
@@ -169,16 +175,24 @@ Use a fixed correlation ID, execute a downstream route, then look it up:
 ```bash
 export CID="aaron-outerfields-smoke-$(date +%s)"
 
-# 1) Discover a callable Outerfields tool name
+# 1) Confirm the intended service is visible
 curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "x-correlation-id: $CID" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"outerfields","limit":5}}}' | jq
+  -d '{"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"hub_list_services","arguments":{}}}' | jq
 
-# 2) Execute one returned proxy tool with hub_execute_proxy_tool (use a real proxyToolName + args from step 1)
-# 3) Query trace
+# 2) Discover a callable Outerfields tool name inside the scoped service
+curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
+  -H "Authorization: Bearer $HUB_API_TOKEN" \
+  -H "x-correlation-id: $CID" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"outerfields-pcn","limit":5}}}' | jq
+
+# 3) Execute one returned proxy tool with hub_execute_proxy_tool (use a real proxyToolName + args from step 2)
+# 4) Query trace
 curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "Content-Type: application/json" \
@@ -193,10 +207,11 @@ Expected: trace records show account attribution under `acct_aaron_outerfields`.
 - MCP URL: `https://aaron-outerfields.mcp.createsomething.agency/mcp`
 - Auth: `Authorization: Bearer <identity-issued personal token>`
 - Profile: discovery-first (`Outerfields + shared-auth-core + clickup + core`)
-- Usage: broker-only flow
-  1. `hub_search_proxy_tools`
-  2. `hub_describe_proxy_tool`
-  3. `hub_execute_proxy_tool`
+- Usage: service-first broker flow
+  1. `hub_list_services`
+  2. `hub_search_proxy_tools` with `serverName` whenever the target service is known
+  3. `hub_describe_proxy_tool`
+  4. `hub_execute_proxy_tool`
 
 Issue the client bearer through the partner auth flow instead of distributing the worker secret:
 

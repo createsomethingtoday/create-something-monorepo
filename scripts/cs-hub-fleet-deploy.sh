@@ -204,6 +204,10 @@ discovery_shared_pack_for_worker() {
 }
 
 direct_proxy_enabled_for_worker() {
+  # Reviewed compatibility carveout:
+  # Danny keeps a narrow direct-proxy allowance for operator Notion tooling.
+  # Do not widen this beyond the approved prefix, and treat removal as a
+  # separate compatibility-tested change rather than routine discovery cleanup.
   case "$1" in
     "cs-hub-danny") echo "true" ;;
     *) echo "false" ;;

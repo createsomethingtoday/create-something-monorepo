@@ -97,6 +97,28 @@ Recommended production posture:
   - treat raw `hub_set_discovery` server/mode overrides as temporary operator exceptions
   - current fleet-specific examples include `c3denver-airtable-gmail-notion`, `danny-shared-auth-plus-dm-and-operator-notion`, `mj-shared-auth-plus-ops-search-meetings-and-review`, and `outerfields-shared-auth-clickup`
 
+Recommended agent and host playbook:
+
+- Treat `hub_list_services` as the default toolkit-discovery primitive.
+- Pass `serverName` to `hub_search_proxy_tools` whenever the user task already implies a target service.
+- Treat `hub_list_proxy_tools` as a debugging/operator surface, not the normal model loop.
+- Prefer `hub_route_intent` / `hub_run_intent` for repetitive allowlisted workflows before widening discovery.
+- For toolkit auth, search for `__connection_status` or `__get_connect_link`, execute the matching proxy tool, present the returned URL, and stop until the user confirms completion.
+- Keep the default lane on `compact` discovery and move to `full` only when the workflow truly needs broad per-service browsing.
+
+Reviewed compatibility carveout:
+
+- `cs-hub-danny` currently keeps a narrow direct-proxy allowlist for `halfdozen-operator-notion-mcp__`.
+- Treat that lane as a named compatibility exception, not the fleet default.
+- If removing it, do so as a separate compatibility-tested change rather than as part of discovery/playbook cleanup.
+
+Curated external endpoint layer (Agent Sentinel fit):
+
+- Use Agent Sentinel for wedge, reviewer, or bounded customer lanes that benefit from one MCP URL, explicit tool enablement, centralized activity logs, or per-user credential handoff.
+- Preferred shape: `AI client -> Agent Sentinel endpoint -> curated CREATE SOMETHING lane -> custom MCPs / selected Composio toolkits`.
+- Do not point Agent Sentinel at the default broker-only management surface and expect that to be the main operator UX; expose a curated discoverable surface instead.
+- Keep the CREATE SOMETHING Hub as the default control plane for large, shared, or tenant-variable brokered surfaces.
+
 Named-lane search provider baseline:
 
 - Approved search providers for partner-managed lanes are:
@@ -170,9 +192,10 @@ Old pattern:
 
 New pattern:
 
-1. Search candidate tools with `hub_search_proxy_tools`
-2. Inspect exact schema via `hub_describe_proxy_tool` (or `hub_get_proxy_tool`)
-3. Execute with:
+1. List candidate services with `hub_list_services`.
+2. Search candidate tools with `hub_search_proxy_tools`, passing `serverName` whenever the target service is already known.
+3. Inspect exact schema via `hub_describe_proxy_tool` (or `hub_get_proxy_tool`).
+4. Execute with:
    - `hub_execute_proxy_tool`
    - `proxyToolName`
    - `args` payload
@@ -182,6 +205,14 @@ Low-context intent pattern (recommended for small allowlisted workflows):
 
 1. Resolve route via `hub_route_intent`
 2. Execute directly via `hub_run_intent` (or pass returned `proxyToolName` into `hub_execute_proxy_tool`)
+
+Discovery ergonomics defaults:
+
+1. Put every shared lane on a named discovery pack.
+2. Keep packs workflow-shaped rather than department-shaped.
+3. Start with a capped visible surface for wedges and reviewer lanes.
+4. Split `phase-a` and `phase-b` packs instead of shipping one large default pack.
+5. Add intent routes for the most common verbs before adding more visible tools.
 
 ## Telemetry
 

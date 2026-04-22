@@ -95,6 +95,9 @@ For wedge and trial work:
 - enable only the servers required for the named workflow
 - use compact discovery where possible
 - keep discovery packs narrow
+- shape discovery packs around one workflow, reviewer role, or operator lane
+- prefer capped visible surfaces for wedges and reviewer lanes instead of uncapped broad packs
+- add intent routes for repetitive tasks before widening the visible tool surface
 
 Do not enable:
 
@@ -199,10 +202,33 @@ For low-cost hub creation, default to:
 - broker-only execution
 - compact discovery
 - narrow `HUB_ENABLED_SERVERS`
+- named discovery packs as the default managed surface
+- `hub_list_services` as the first discovery step in host and agent playbooks
+- `hub_search_proxy_tools(serverName=...)` whenever the target service is already implied
 - no direct proxy tool mode
 - session/account-scoped enforcement where required
 
 Only escalate beyond this when there is a named reason in the proposal or runbook.
+
+## Discovery Ergonomics Defaults
+
+To keep tool and toolkit discovery easy for agents without expanding spend or surface area:
+
+- keep the default pack focused on one named workflow or lane
+- prefer `phase-a` and `phase-b` pack splits over one large default pack
+- keep wedge and reviewer packs capped to a small visible set when possible
+- treat `hub_list_proxy_tools` as debugging/operator inventory, not the default agent discovery primitive
+- use `hub_route_intent` / `hub_run_intent` for repeated low-context workflows
+- isolate auth/reconnect flows as their own explicit playbook using `__connection_status` and `__get_connect_link`
+
+## Curated External Endpoint Layer
+
+For wedge, reviewer, or bounded customer lanes, Agent Sentinel may sit in front of a curated CREATE SOMETHING lane when the goal is one MCP endpoint, explicit tool enablement, centralized activity logs, or per-user credential handoff.
+
+- preferred shape: `AI client -> Agent Sentinel endpoint -> curated CREATE SOMETHING lane -> custom MCPs / selected Composio toolkits`
+- keep the Hub as the default control plane for large, shared, or tenant-variable brokered surfaces
+- do not treat Agent Sentinel as a reason to disable brokered discovery system-wide
+- when fronting a house lane through Agent Sentinel, expose a curated discoverable surface rather than the default broker-only management surface
 
 ## Required Commercial Defaults
 

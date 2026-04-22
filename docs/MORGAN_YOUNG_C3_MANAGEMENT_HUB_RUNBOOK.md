@@ -108,7 +108,13 @@ curl -sS -X POST https://morgan-young-c3-management.mcp.createsomething.agency/m
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"limit":50}}}' | jq
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hub_list_services","arguments":{}}}' | jq
+
+curl -sS -X POST https://morgan-young-c3-management.mcp.createsomething.agency/mcp \
+  -H "Authorization: Bearer $HUB_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"notion-halfdozen-c3-management","limit":25}}}' | jq
 ```
 
 ## 5) Provision the Named Lane
@@ -165,11 +171,12 @@ Rules:
 Minimum success checks:
 
 1. `tools/list` succeeds with the lane bearer.
-2. `hub_search_proxy_tools` shows the client-specific Notion server.
-3. `hub_execute_proxy_tool` succeeds for a low-risk Notion read such as `notion_list_databases`.
-4. `composio-toolkit-gmail__connection_status` returns a governed result.
-5. Each promised auth-bound search provider returns either a governed connect link or an active connection status result.
-6. If Composio Search is promised, at least one representative brokered Composio Search call succeeds.
+2. `hub_list_services` shows the client-specific Notion server.
+3. `hub_search_proxy_tools` scoped to `notion-halfdozen-c3-management` succeeds.
+4. `hub_execute_proxy_tool` succeeds for a low-risk Notion read such as `notion_list_databases`.
+5. The Gmail `__connection_status` proxy tool returns a governed result.
+6. Each promised auth-bound search provider returns either a governed connect link or an active connection status result.
+7. If Composio Search is promised, at least one representative brokered Composio Search call succeeds.
 
 ## 8) Trace Verification
 
