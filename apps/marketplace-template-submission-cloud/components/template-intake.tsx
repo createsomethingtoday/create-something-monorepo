@@ -404,6 +404,36 @@ function FieldFeedback({ feedback }: { feedback?: StatusMessage | null }) {
   return <div className={feedbackClass(feedback.tone)}>{feedback.message}</div>;
 }
 
+function InlineActionField({
+  actionLabel,
+  children,
+  feedback,
+  onAction,
+}: {
+  actionLabel: string;
+  children: ReactNode;
+  feedback?: StatusMessage | null;
+  onAction: () => void;
+}) {
+  return (
+    <>
+      <div className="submission-field-inline">
+        <div className="submission-field">{children}</div>
+        <div className="submission-field-inline-action-rail">
+          <button
+            className="button-sp cc-white submission-inline-verify-button"
+            type="button"
+            onClick={onAction}
+          >
+            {actionLabel}
+          </button>
+        </div>
+      </div>
+      <FieldFeedback feedback={feedback} />
+    </>
+  );
+}
+
 type ChoiceToolbarProps = {
   value: string;
   onChange: (value: string) => void;
@@ -1691,65 +1721,53 @@ export function TemplateIntake() {
                     </div>
                   ) : null}
 
-                  <div className="submission-field-inline">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="primaryEmail"
-                      >
-                        Primary email
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        This email is used for creator correspondence and submission follow-up.
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="primaryEmail"
-                        type="email"
-                        value={creator.primaryEmail}
-                        onChange={(event) => updateCreator('primaryEmail', event.target.value)}
-                        required
-                      />
-                    </div>
-                    <button
-                      className="button-sp cc-white"
-                      type="button"
-                      onClick={() => verifyCreatorEmail('primary')}
+                  <InlineActionField
+                    actionLabel="Verify email"
+                    feedback={fieldFeedback.primaryEmail}
+                    onAction={() => verifyCreatorEmail('primary')}
+                  >
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="primaryEmail"
                     >
-                      Verify email
-                    </button>
-                  </div>
-                  <FieldFeedback feedback={fieldFeedback.primaryEmail} />
+                      Primary email
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      This email is used for creator correspondence and submission follow-up.
+                    </p>
+                    <input
+                      className="field-input input w-input"
+                      id="primaryEmail"
+                      type="email"
+                      value={creator.primaryEmail}
+                      onChange={(event) => updateCreator('primaryEmail', event.target.value)}
+                      required
+                    />
+                  </InlineActionField>
 
-                  <div className="submission-field-inline">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="webflowEmail"
-                      >
-                        Webflow account email
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        This must match the Webflow account used for the submitted template.
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="webflowEmail"
-                        type="email"
-                        value={creator.webflowEmail}
-                        onChange={(event) => updateCreator('webflowEmail', event.target.value)}
-                        required
-                      />
-                    </div>
-                    <button
-                      className="button-sp cc-white"
-                      type="button"
-                      onClick={() => verifyCreatorEmail('webflow')}
+                  <InlineActionField
+                    actionLabel="Verify email"
+                    feedback={fieldFeedback.webflowEmail}
+                    onAction={() => verifyCreatorEmail('webflow')}
+                  >
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="webflowEmail"
                     >
-                      Verify email
-                    </button>
-                  </div>
-                  <FieldFeedback feedback={fieldFeedback.webflowEmail} />
+                      Webflow account email
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      This must match the Webflow account used for the submitted template.
+                    </p>
+                    <input
+                      className="field-input input w-input"
+                      id="webflowEmail"
+                      type="email"
+                      value={creator.webflowEmail}
+                      onChange={(event) => updateCreator('webflowEmail', event.target.value)}
+                      required
+                    />
+                  </InlineActionField>
 
                   <div className="submission-grid-2">
                     <div className="submission-field">
@@ -1996,37 +2014,38 @@ export function TemplateIntake() {
                     </div>
                   ) : (
                     <>
-                      <div className="submission-field-inline">
-                        <div className="submission-field">
-                          <label
-                            className="field-label template-application-form_field-label cc-with-desc"
-                            htmlFor="templateCreatorEmail"
-                          >
-                            Creator email
-                            <span className="submission-required"> *</span>
-                          </label>
-                          <p className="field-help cc-library-application-form_field-desc">
-                            Existing creators can enter their creator email here directly.
-                          </p>
-                          <input
-                            className="field-input input w-input"
-                            id="templateCreatorEmail"
-                            type="email"
-                            value={template.creatorEmail}
-                            onChange={(event) => updateTemplate('creatorEmail', event.target.value)}
-                            required
-                          />
-                        </div>
-                        <button className="button-sp cc-white" type="button" onClick={verifyCreatorEligibility}>
-                          Check creator
-                        </button>
-                      </div>
-                      <FieldFeedback feedback={fieldFeedback.creatorEmail} />
+                      <InlineActionField
+                        actionLabel="Check creator"
+                        feedback={fieldFeedback.creatorEmail}
+                        onAction={verifyCreatorEligibility}
+                      >
+                        <label
+                          className="field-label template-application-form_field-label cc-with-desc"
+                          htmlFor="templateCreatorEmail"
+                        >
+                          Creator email
+                          <span className="submission-required"> *</span>
+                        </label>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          Existing creators can enter their creator email here directly.
+                        </p>
+                        <input
+                          className="field-input input w-input"
+                          id="templateCreatorEmail"
+                          type="email"
+                          value={template.creatorEmail}
+                          onChange={(event) => updateTemplate('creatorEmail', event.target.value)}
+                          required
+                        />
+                      </InlineActionField>
                     </>
                   )}
 
-                  <div className="submission-field-inline">
-                    <div className="submission-field">
+                  <InlineActionField
+                    actionLabel="Check name"
+                    feedback={fieldFeedback.templateName}
+                    onAction={verifyTemplateName}
+                  >
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="templateName"
@@ -2037,51 +2056,44 @@ export function TemplateIntake() {
                         <span className="submission-autofill-badge">Autofilled</span>
                       ) : null}
                     </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        First word must be capitalized. Avoid emoji, category names, tag names, and
-                        the standalone term &quot;AI&quot;.
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="templateName"
-                        value={template.templateName}
-                        onChange={(event) => updateTemplate('templateName', event.target.value)}
-                        required
-                      />
-                    </div>
-                    <button className="button-sp cc-white" type="button" onClick={verifyTemplateName}>
-                      Check name
-                    </button>
-                  </div>
-                  <FieldFeedback feedback={fieldFeedback.templateName} />
+                    <p className="field-help cc-library-application-form_field-desc">
+                      First word must be capitalized. Avoid emoji, category names, tag names, and
+                      the standalone term &quot;AI&quot;.
+                    </p>
+                    <input
+                      className="field-input input w-input"
+                      id="templateName"
+                      value={template.templateName}
+                      onChange={(event) => updateTemplate('templateName', event.target.value)}
+                      required
+                    />
+                  </InlineActionField>
 
-                  <div className="submission-field-inline">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="publishedUrl"
-                      >
-                        Published URL
-                        <span className="submission-required"> *</span>
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Must be an HTTPS <code className="submission-inline-code">*.webflow.io</code>{' '}
-                        URL. The full site crawl can take a few minutes.
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="publishedUrl"
-                        type="url"
-                        value={template.publishedUrl}
-                        onChange={(event) => updateTemplate('publishedUrl', event.target.value)}
-                        required
-                      />
-                    </div>
-                    <button className="button-sp cc-white" type="button" onClick={verifyPublishedUrl}>
-                      Validate template
-                    </button>
-                  </div>
-                  <FieldFeedback feedback={fieldFeedback.publishedUrl} />
+                  <InlineActionField
+                    actionLabel="Validate template"
+                    feedback={fieldFeedback.publishedUrl}
+                    onAction={verifyPublishedUrl}
+                  >
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="publishedUrl"
+                    >
+                      Published URL
+                      <span className="submission-required"> *</span>
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Must be an HTTPS <code className="submission-inline-code">*.webflow.io</code>{' '}
+                      URL. The full site crawl can take a few minutes.
+                    </p>
+                    <input
+                      className="field-input input w-input"
+                      id="publishedUrl"
+                      type="url"
+                      value={template.publishedUrl}
+                      onChange={(event) => updateTemplate('publishedUrl', event.target.value)}
+                      required
+                    />
+                  </InlineActionField>
 
                   {analyzerSummary ? (
                     <div className="submission-analyzer-summary" ref={analyzerSummaryRef}>
