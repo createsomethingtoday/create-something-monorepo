@@ -209,6 +209,37 @@ select {
   max-height: 14rem;
 }
 
+.submission-choice-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.submission-choice-toolbar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.submission-choice-filter {
+  max-width: 18rem;
+}
+
+.submission-choice-empty {
+  grid-column: 1 / -1;
+  padding: 0.75rem;
+  border: 1px dashed #dadada;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #676767;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
 .submission-choice {
   display: flex;
   gap: 0.625rem;
@@ -246,6 +277,68 @@ select {
 .submission-choice-checkbox:hover {
   border-color: transparent;
   background: transparent;
+}
+
+.submission-creator-resolved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.875rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid rgba(0, 122, 65, 0.18);
+  border-radius: 0.875rem;
+  background: rgba(0, 122, 65, 0.06);
+}
+
+.submission-creator-resolved-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.submission-creator-resolved-label {
+  color: #0a7a23;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.submission-creator-resolved-email {
+  color: #191919;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.submission-creator-resolved-help {
+  color: #525252;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.submission-inline-action {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #146ef5;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.submission-inline-action:hover {
+  color: #0055d4;
+}
+
+.submission-inline-action-strong {
+  align-self: center;
 }
 
 .submission-file-input {
@@ -627,6 +720,19 @@ select {
   .submission-grid-2,
   .submission-field-inline {
     grid-template-columns: 1fr;
+  }
+
+  .submission-choice-filter {
+    max-width: none;
+    width: 100%;
+  }
+
+  .submission-choice-toolbar {
+    align-items: stretch;
+  }
+
+  .submission-creator-resolved {
+    padding: 0.875rem 1rem;
   }
 
   .submission-choice-grid {

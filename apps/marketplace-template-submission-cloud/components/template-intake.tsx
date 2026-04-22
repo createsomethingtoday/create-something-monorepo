@@ -277,11 +277,63 @@ function isAutofilledRichText(current: string, managed?: string) {
 }
 
 function isAutofilledArray(current: readonly string[], managed?: readonly string[]) {
-  return Boolean(managed?.length) && arraysEqual(current, managed);
+  return Boolean(managed?.length) && arraysEqual(current, managed ?? []);
 }
 
 function isAutofilledBoolean(current: boolean, managed?: boolean) {
   return typeof managed === 'boolean' && current === managed;
+}
+
+function normalizeSearchValue(value: string) {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function matchesSearch(label: string, query: string) {
+  const normalizedQuery = normalizeSearchValue(query);
+  if (!normalizedQuery) return true;
+
+  const haystack = normalizeSearchValue(label);
+  return normalizedQuery.split(/\s+/).every((term) => haystack.includes(term));
+}
+
+function sortSelectableLabels(
+  options: readonly string[],
+  selected: readonly string[],
+  query: string
+) {
+  return [...options]
+    .filter((option) => matchesSearch(option, query))
+    .sort((left, right) => {
+      const leftSelected = selected.includes(left);
+      const rightSelected = selected.includes(right);
+      if (leftSelected !== rightSelected) {
+        return leftSelected ? -1 : 1;
+      }
+      return left.localeCompare(right);
+    });
+}
+
+function sortSelectableObjects<T>(
+  options: readonly T[],
+  selectedIds: readonly string[],
+  query: string,
+  getLabel: (option: T) => string,
+  getId: (option: T) => string
+) {
+  return [...options]
+    .filter((option) => matchesSearch(getLabel(option), query))
+    .sort((left, right) => {
+      const leftSelected = selectedIds.includes(getId(left));
+      const rightSelected = selectedIds.includes(getId(right));
+      if (leftSelected !== rightSelected) {
+        return leftSelected ? -1 : 1;
+      }
+      return getLabel(left).localeCompare(getLabel(right));
+    });
 }
 
 function shouldAutofillPriceModel(
@@ -363,6 +415,12 @@ export function TemplateIntake() {
   const [imageErrors, setImageErrors] = useState<Record<string, string | null>>({});
   const [autofillManaged, setAutofillManaged] = useState<TemplateAutofillState>({});
   const [analyzerSummary, setAnalyzerSummary] = useState<TemplateAnalyzerSummary | null>(null);
+  const [optionSearch, setOptionSearch] = useState({
+    categories: '',
+    secondaryTags: '',
+    styles: '',
+    featureIds: '',
+  });
 
   const setFeedback = (field: string, feedback: StatusMessage | null) =>
     setFieldFeedback((current) => ({ ...current, [field]: feedback }));
@@ -411,6 +469,31 @@ export function TemplateIntake() {
   );
   const hasAutofilledPriceModel =
     Boolean(autofillManaged.priceModel) && template.priceModel === autofillManaged.priceModel;
+  const creatorEligibilityResolved =
+    Boolean(template.creatorEmail.trim()) &&
+    verification.creatorEligibilityEmail === template.creatorEmail.trim().toLowerCase();
+  const visibleCategories = sortSelectableLabels(
+    CATEGORY_OPTIONS,
+    template.categories,
+    optionSearch.categories
+  );
+  const visibleSecondaryTags = sortSelectableLabels(
+    SECONDARY_TAGS,
+    template.secondaryTags,
+    optionSearch.secondaryTags
+  );
+  const visibleStyles = sortSelectableLabels(
+    TEMPLATE_STYLES,
+    template.styles,
+    optionSearch.styles
+  );
+  const visibleFeatures = sortSelectableObjects(
+    WEBFLOW_FEATURES.filter((feature) => !feature.hidden),
+    template.featureIds,
+    optionSearch.featureIds,
+    (feature) => feature.label,
+    (feature) => feature.id
+  );
 
   useEffect(() => {
     const captureParams = (searchLike: string | Record<string, string>) => {
@@ -601,6 +684,7 @@ export function TemplateIntake() {
     setTemplateStatus(null);
 
     if (key === 'creatorEmail') {
+      setFeedback('creatorEmail', null);
       setVerification((current) => ({
         ...current,
         creatorEligibilityEmail: ''
@@ -628,6 +712,21 @@ export function TemplateIntake() {
         featureIds: current.featureIds.filter((item: string) => item !== 'gsap')
       }));
     }
+  }
+
+  function updateOptionSearch(
+    key: keyof typeof optionSearch,
+    value: string
+  ) {
+    setOptionSearch((current) => ({ ...current, [key]: value }));
+  }
+
+  function clearCreatorEligibility() {
+    setFeedback('creatorEmail', null);
+    setVerification((current) => ({
+      ...current,
+      creatorEligibilityEmail: '',
+    }));
   }
 
   function applyTemplateAutofill(
@@ -875,9 +974,14 @@ export function TemplateIntake() {
   async function verifyCreatorEligibility() {
     const email = template.creatorEmail.trim();
     if (!email) {
-      setTemplateStatus({ tone: 'error', message: 'Enter the creator email first.' });
+      setFeedback('creatorEmail', { tone: 'error', message: 'Enter the creator email first.' });
       return;
     }
+
+    setFeedback('creatorEmail', {
+      tone: 'info',
+      message: 'Checking creator eligibility…',
+    });
 
     const response = await fetch(appPath('/api/intake/check-creator'), {
       method: 'POST',
@@ -891,7 +995,7 @@ export function TemplateIntake() {
     };
 
     if (!response.ok || !data.allowed) {
-      setTemplateStatus({
+      setFeedback('creatorEmail', {
         tone: 'error',
         message: data.message || 'Creator is not eligible to submit.'
       });
@@ -902,7 +1006,7 @@ export function TemplateIntake() {
       ...current,
       creatorEligibilityEmail: email.toLowerCase()
     }));
-    setTemplateStatus({
+    setFeedback('creatorEmail', {
       tone: 'success',
       message: data.message || 'Creator is eligible to submit.'
     });
@@ -1650,31 +1754,60 @@ export function TemplateIntake() {
                     />
                   </div>
 
-                  <div className="submission-field-inline">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="templateCreatorEmail"
+                  {creatorEligibilityResolved ? (
+                    <div className="submission-creator-resolved">
+                      <div className="submission-creator-resolved-copy">
+                        <div className="submission-creator-resolved-label">Creator verified</div>
+                        <div className="submission-creator-resolved-email">
+                          {template.creatorEmail}
+                        </div>
+                        <div className="submission-creator-resolved-help">
+                          {fieldFeedback.creatorEmail?.message ||
+                            'This creator can submit templates. You can keep filling the form below or switch creators.'}
+                        </div>
+                      </div>
+                      <button
+                        className="submission-inline-action submission-inline-action-strong"
+                        type="button"
+                        onClick={clearCreatorEligibility}
                       >
-                        Creator email
-                        <span className="submission-required"> *</span>
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Existing creators can enter their creator email here directly.
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="templateCreatorEmail"
-                        type="email"
-                        value={template.creatorEmail}
-                        onChange={(event) => updateTemplate('creatorEmail', event.target.value)}
-                        required
-                      />
+                        Change creator
+                      </button>
                     </div>
-                    <button className="button-sp cc-white" type="button" onClick={verifyCreatorEligibility}>
-                      Check creator
-                    </button>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="submission-field-inline">
+                        <div className="submission-field">
+                          <label
+                            className="field-label template-application-form_field-label cc-with-desc"
+                            htmlFor="templateCreatorEmail"
+                          >
+                            Creator email
+                            <span className="submission-required"> *</span>
+                          </label>
+                          <p className="field-help cc-library-application-form_field-desc">
+                            Existing creators can enter their creator email here directly.
+                          </p>
+                          <input
+                            className="field-input input w-input"
+                            id="templateCreatorEmail"
+                            type="email"
+                            value={template.creatorEmail}
+                            onChange={(event) => updateTemplate('creatorEmail', event.target.value)}
+                            required
+                          />
+                        </div>
+                        <button className="button-sp cc-white" type="button" onClick={verifyCreatorEligibility}>
+                          Check creator
+                        </button>
+                      </div>
+                      {fieldFeedback.creatorEmail ? (
+                        <div className={feedbackClass(fieldFeedback.creatorEmail.tone)}>
+                          {fieldFeedback.creatorEmail.message}
+                        </div>
+                      ) : null}
+                    </>
+                  )}
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
@@ -1885,8 +2018,33 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 options that best describe your template.
                     </p>
+                    <div className="submission-choice-toolbar">
+                      <input
+                        className="field-input input w-input submission-choice-filter"
+                        type="search"
+                        value={optionSearch.categories}
+                        onChange={(event) => updateOptionSearch('categories', event.target.value)}
+                        placeholder="Search categories"
+                        aria-label="Search categories"
+                      />
+                      <div className="submission-choice-toolbar-meta">
+                        <span className="field-help">{visibleCategories.length} shown</span>
+                        {template.categories.length > 0 ? (
+                          <button
+                            className="submission-inline-action"
+                            type="button"
+                            onClick={() => updateTemplate('categories', [])}
+                          >
+                            Clear all
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
                     <div className="submission-choice-grid is-scroll">
-                      {CATEGORY_OPTIONS.map((category) => {
+                      {visibleCategories.length === 0 ? (
+                        <div className="submission-choice-empty">No categories match your search.</div>
+                      ) : null}
+                      {visibleCategories.map((category) => {
                         const checked = template.categories.includes(category);
                         const atMax = template.categories.length >= 2;
                         return (
@@ -1925,8 +2083,35 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Optional. Tag names are blocked inside the template title.
                     </p>
+                    <div className="submission-choice-toolbar">
+                      <input
+                        className="field-input input w-input submission-choice-filter"
+                        type="search"
+                        value={optionSearch.secondaryTags}
+                        onChange={(event) =>
+                          updateOptionSearch('secondaryTags', event.target.value)
+                        }
+                        placeholder="Search secondary tags"
+                        aria-label="Search secondary tags"
+                      />
+                      <div className="submission-choice-toolbar-meta">
+                        <span className="field-help">{visibleSecondaryTags.length} shown</span>
+                        {template.secondaryTags.length > 0 ? (
+                          <button
+                            className="submission-inline-action"
+                            type="button"
+                            onClick={() => updateTemplate('secondaryTags', [])}
+                          >
+                            Clear all
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
                     <div className="submission-choice-grid is-scroll submission-choice-grid-compact">
-                      {SECONDARY_TAGS.map((tag) => (
+                      {visibleSecondaryTags.length === 0 ? (
+                        <div className="submission-choice-empty">No secondary tags match your search.</div>
+                      ) : null}
+                      {visibleSecondaryTags.map((tag) => (
                         <label
                           className="submission-choice input-block cc-check cc-template-application-form-choice"
                           key={tag}
@@ -2058,8 +2243,33 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 styles.
                     </p>
+                    <div className="submission-choice-toolbar">
+                      <input
+                        className="field-input input w-input submission-choice-filter"
+                        type="search"
+                        value={optionSearch.styles}
+                        onChange={(event) => updateOptionSearch('styles', event.target.value)}
+                        placeholder="Search styles"
+                        aria-label="Search styles"
+                      />
+                      <div className="submission-choice-toolbar-meta">
+                        <span className="field-help">{visibleStyles.length} shown</span>
+                        {template.styles.length > 0 ? (
+                          <button
+                            className="submission-inline-action"
+                            type="button"
+                            onClick={() => updateTemplate('styles', [])}
+                          >
+                            Clear all
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
                     <div className="submission-choice-grid">
-                      {TEMPLATE_STYLES.map((style) => {
+                      {visibleStyles.length === 0 ? (
+                        <div className="submission-choice-empty">No styles match your search.</div>
+                      ) : null}
+                      {visibleStyles.map((style) => {
                         const checked = template.styles.includes(style);
                         const atMax = template.styles.length >= 2;
                         return (
@@ -2096,8 +2306,33 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       Choose the Webflow features used by the template.
                     </p>
+                    <div className="submission-choice-toolbar">
+                      <input
+                        className="field-input input w-input submission-choice-filter"
+                        type="search"
+                        value={optionSearch.featureIds}
+                        onChange={(event) => updateOptionSearch('featureIds', event.target.value)}
+                        placeholder="Search features"
+                        aria-label="Search features"
+                      />
+                      <div className="submission-choice-toolbar-meta">
+                        <span className="field-help">{visibleFeatures.length} shown</span>
+                        {!arraysEqual(template.featureIds, DEFAULT_FEATURE_IDS) ? (
+                          <button
+                            className="submission-inline-action"
+                            type="button"
+                            onClick={() => updateTemplate('featureIds', [...DEFAULT_FEATURE_IDS])}
+                          >
+                            Reset defaults
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
                     <div className="submission-choice-grid">
-                      {WEBFLOW_FEATURES.filter((f) => !f.hidden).map((option) => (
+                      {visibleFeatures.length === 0 ? (
+                        <div className="submission-choice-empty">No features match your search.</div>
+                      ) : null}
+                      {visibleFeatures.map((option) => (
                         <label
                           className="submission-choice input-block cc-check cc-template-application-form-choice"
                           key={option.id}

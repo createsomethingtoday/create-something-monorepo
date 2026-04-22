@@ -5,6 +5,16 @@ import {
 } from '../../../../lib/intake/published-url';
 import { analyzePublishedTemplate } from '../../../../lib/intake/template-analyzer';
 
+function toAutofillWarning(error: unknown): string {
+  const message = error instanceof Error ? error.message : '';
+
+  if (/abort|timed out/i.test(message)) {
+    return 'Template suggestions timed out. Continue filling the remaining fields manually.';
+  }
+
+  return 'Template suggestions are temporarily unavailable. Continue filling the remaining fields manually.';
+}
+
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { url?: string };
 
@@ -13,8 +23,7 @@ export async function POST(request: Request) {
     let autofillWarning: string | undefined;
 
     const autofillPromise = analyzePublishedTemplate(normalizedUrl).catch((error) => {
-      autofillWarning =
-        error instanceof Error ? error.message : 'Template analyzer unavailable.';
+      autofillWarning = toAutofillWarning(error);
       return null;
     });
 
