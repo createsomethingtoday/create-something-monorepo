@@ -427,6 +427,19 @@ select {
   border: 1px solid rgba(20, 110, 245, 0.2);
 }
 
+.submission-status-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.submission-status-link {
+  width: fit-content;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: underline;
+}
+
 .submission-actions {
   display: flex;
   flex-wrap: wrap;
