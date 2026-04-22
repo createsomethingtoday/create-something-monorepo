@@ -110,6 +110,9 @@ importers:
       '@create-something/webflow-dashboard-core':
         specifier: file:../../packages/webflow-dashboard-core
         version: link:../../packages/webflow-dashboard-core
+      airtable:
+        specifier: ^0.12.2
+        version: 0.12.2
       next:
         specifier: ^15.5.13
         version: 15.5.13(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

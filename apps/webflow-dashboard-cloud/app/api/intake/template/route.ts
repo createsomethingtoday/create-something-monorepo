@@ -9,6 +9,7 @@ import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
 import { checkRemoteTemplateNameAvailability } from '../../../../lib/intake/external';
+import { WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
 import { runPublishedUrlValidation } from '../../../../lib/intake/published-url';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
@@ -21,8 +22,13 @@ type TemplateSubmissionBody = {
   previewUrl?: string;
   priceModel?: string;
   category?: string;
+  categories?: string[];
   tags?: string[];
   siteTypes?: string[];
+  pageCount?: string;
+  typeCms?: boolean;
+  typeEcommerce?: boolean;
+  price?: number | string | null;
   styleTags?: string[];
   featureFlags?: string[];
   shortDescription?: string;
@@ -37,11 +43,33 @@ type TemplateSubmissionBody = {
   utm?: Record<string, string>;
 };
 
-const FEATURE_FLAG_TO_WEBFLOW_FEATURE: Record<string, string> = {
+const FEATURE_FLAG_TO_WEBFLOW_FEATURE = Object.freeze({
   gsap: 'GSAP',
+  'responsive-design': 'Responsive Design',
+  'responsive design': 'Responsive Design',
+  'responsive-navigation': 'Responsive Navigation',
+  'responsive navigation': 'Responsive Navigation',
+  'responsive-slider': 'Responsive Slider',
+  'responsive slider': 'Responsive Slider',
+  'media-lightbox': 'Media Lightbox',
+  'media lightbox': 'Media Lightbox',
+  'background-video': 'Background Video',
+  'background video': 'Background Video',
+  '3d-transforms': '3D Transforms',
+  '3d transforms': '3D Transforms',
   interactions: 'Interactions',
+  forms: 'Forms',
   components: 'Symbols',
-};
+  symbols: 'Symbols',
+  'css-grid': 'CSS Grid',
+  'css grid': 'CSS Grid',
+  'custom-404': 'Custom 404 Page',
+  'custom 404 page': 'Custom 404 Page',
+  'web-fonts': 'Web Fonts',
+  'web fonts': 'Web Fonts',
+  'retina-ready': 'Retina Ready',
+  'retina ready': 'Retina Ready',
+} satisfies Record<string, string>);
 
 const STYLE_TAG_TO_WEBFLOW_STYLE: Record<string, string> = {
   bold: 'Bold',
@@ -92,6 +120,23 @@ function ensureArray(value: unknown): string[] {
     : [];
 }
 
+function coercePageCount(value: string | undefined): PageCount | null {
+  if (value === 'One' || value === 'Multi' || value === 'Multi-layout') {
+    return value;
+  }
+
+  return null;
+}
+
+function coerceOptionalPrice(value: number | string | null | undefined): number | undefined {
+  if (value === null || value === undefined || value === '') {
+    return undefined;
+  }
+
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 function derivePageCount(siteTypes: string[]): PageCount {
   if (siteTypes.includes('multi-layout')) return 'Multi-layout';
   const nonStatic = siteTypes.filter((type) => type !== 'static');
@@ -105,9 +150,21 @@ function mapStyleTags(styleTags: string[]): string[] {
 }
 
 function mapFeatureFlags(featureFlags: string[]): string[] {
-  return featureFlags
-    .map((flag) => FEATURE_FLAG_TO_WEBFLOW_FEATURE[flag.toLowerCase()])
-    .filter((value): value is string => Boolean(value));
+  const mapped = new Set<string>();
+
+  for (const flag of featureFlags) {
+    const normalized = flag.trim().toLowerCase();
+    const mappedValue = FEATURE_FLAG_TO_WEBFLOW_FEATURE[
+      normalized as keyof typeof FEATURE_FLAG_TO_WEBFLOW_FEATURE
+    ];
+    if (mappedValue) {
+      mapped.add(mappedValue);
+    }
+  }
+
+  return WEBFLOW_FEATURES
+    .map((feature) => (feature.label === 'Components' ? 'Symbols' : feature.label))
+    .filter((feature) => mapped.has(feature));
 }
 
 export async function POST(request: Request) {
@@ -137,9 +194,14 @@ export async function POST(request: Request) {
     const tags = ensureArray(body.tags);
     const styleTags = ensureArray(body.styleTags);
     const siteTypes = ensureArray(body.siteTypes);
+    const requestedCategories = ensureArray(body.categories).slice(0, 2);
     const category = String(body.category || '').trim();
     const priceModelRaw = String(body.priceModel || '').trim();
     const paymentType: PaymentType = priceModelRaw === 'Paid' ? 'Paid' : 'Free';
+    const requestedPageCount = coercePageCount(
+      typeof body.pageCount === 'string' ? body.pageCount.trim() : undefined,
+    );
+    const price = coerceOptionalPrice(body.price);
 
     if (!creatorName) {
       return jsonNoStore({ error: 'Creator name is required.' }, { status: 400 });
@@ -234,24 +296,35 @@ export async function POST(request: Request) {
       combinedFeatures.add('gsap');
     }
 
-    const pageCount = derivePageCount(siteTypes);
+    const pageCount = requestedPageCount ?? derivePageCount(siteTypes);
     const templateTypeCms =
-      siteTypes.includes('cms') || combinedFeatures.has('cms');
+      body.typeCms === true || siteTypes.includes('cms') || combinedFeatures.has('cms');
     const templateTypeEcommerce =
-      siteTypes.includes('ecommerce') || combinedFeatures.has('ecommerce');
+      body.typeEcommerce === true ||
+      siteTypes.includes('ecommerce') ||
+      combinedFeatures.has('ecommerce');
     const mappedStyles = mapStyleTags(styleTags);
     const mappedFeatures = mapFeatureFlags([...combinedFeatures]);
-    const categories = category ? [category] : [];
+    const categories =
+      requestedCategories.length > 0
+        ? requestedCategories
+        : category
+          ? [category]
+          : [];
+    const primaryCategory = categories[0] || '';
 
     const detailsHtml = [
       `<h2>Submission notes</h2>${toParagraphs(longDescription)}`,
       notes ? `<h3>Internal notes</h3>${toParagraphs(notes)}` : '',
       '<h3>Metadata</h3>',
       '<ul>',
-      category ? `<li>Category: ${escapeHtml(category)}</li>` : '',
+      categories.length > 0 ? `<li>Category: ${escapeHtml(categories.join(', '))}</li>` : '',
       tags.length > 0 ? `<li>Tags: ${escapeHtml(tags.join(', '))}</li>` : '',
       styleTags.length > 0 ? `<li>Style tags: ${escapeHtml(styleTags.join(', '))}</li>` : '',
-      siteTypes.length > 0 ? `<li>Site types: ${escapeHtml(siteTypes.join(', '))}</li>` : '',
+      pageCount ? `<li>Page count: ${escapeHtml(pageCount)}</li>` : '',
+      templateTypeCms ? '<li>Uses CMS.</li>' : '',
+      templateTypeEcommerce ? '<li>Uses Ecommerce.</li>' : '',
+      paymentType === 'Paid' && price !== undefined ? `<li>Price: $${escapeHtml(String(price))}</li>` : '',
       combinedFeatures.size > 0
         ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
         : '',
@@ -279,6 +352,7 @@ export async function POST(request: Request) {
         pageCount,
         templateTypeCms,
         templateTypeEcommerce,
+        price,
         categories,
         secondaryTags: tags,
         styles: mappedStyles,
