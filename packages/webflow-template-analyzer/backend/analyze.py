@@ -115,6 +115,30 @@ CATEGORIES = [
     "Weddings", "Winery",
 ]
 
+SECONDARY_TAGS = [
+    "Accessories", "Accounting", "Admin", "Agency", "Agriculture", "App",
+    "Architecture", "Artist", "Attorney", "Automotive", "Band", "Bank", "Bar",
+    "Barber", "Beauty", "Beauty & Wellness", "Blog", "Book", "Business", "Cafe",
+    "Cars", "Charity", "Church", "Coaching", "Coffee Shop", "College", "Coming Soon",
+    "Conference", "Construction", "Consulting", "Corporate", "Countdown", "Creative",
+    "CV", "Dance", "Dashboard", "Delivery", "Dentist", "Design", "Designer",
+    "Directory", "DJ", "Doctor", "Documentation", "Donation", "Education",
+    "Entertainment", "Error", "Event", "Farm", "Fashion", "Film", "Finance",
+    "Fitness", "Florist", "Food", "Food & Drink", "Furniture", "Game", "Guesthouse",
+    "Gym", "Health", "Help center", "Homeware", "Hospital", "Hostel", "Hotel", "Inn",
+    "Insurance", "Interior design", "Investment", "IT company", "Jewelry",
+    "Job Portal", "Kids", "Landing page", "Law Firm", "Learning", "Lifestyle",
+    "Logistics", "Magazine", "Marketing", "Marketplace", "Massage", "Medical",
+    "Mobile", "Movie", "Multi Layout", "Music", "Musician", "News", "Newsletter",
+    "Newspaper", "Nonprofit", "One Page", "Other", "Personal", "Pets", "Photography",
+    "Photography & Video", "Podcast", "Political", "Portfolio", "Profile", "Radio",
+    "Real Estate", "Recipe", "Recruitment", "Religion", "Restaurant", "Resume",
+    "Retail", "SaaS", "Salon", "School", "Shop", "Small Business", "Soccer", "Social",
+    "Software", "Spa", "Sports", "Startup", "Support", "Technology", "Therapy",
+    "Tourism", "Transport", "Travel", "UI Kit", "Under Construction", "University",
+    "Veterinary", "Video", "Wedding", "Wellness", "Winery",
+]
+
 RETRYABLE_ANTHROPIC_STATUS_CODES = {429, 500, 503, 504, 529}
 MAX_ANTHROPIC_ATTEMPTS = 3
 DEFAULT_VIEWPORT = {"width": 1440, "height": 900}
@@ -409,6 +433,7 @@ def analyze_template(url: str) -> dict:
         styles_list = ", ".join(STYLE_IDS.keys())
         features_list = ", ".join(FEATURE_IDS.keys())
         categories_list = ", ".join(CATEGORIES)
+        secondary_tags_list = ", ".join(SECONDARY_TAGS)
 
         user_prompt = f"""Analyze this Webflow template and return a JSON object for the marketplace submission form.
 
@@ -429,6 +454,9 @@ CSS Grid: {detected['hasGrid']}, Interactions: {detected['hasInteractions']}
 Available categories (pick 1–3 most relevant):
 {categories_list}
 
+Available secondary tags (pick 0–6 specific topics or use cases; avoid repeating categories verbatim unless clearly appropriate):
+{secondary_tags_list}
+
 Available styles (pick 1–3):
 {styles_list}
 
@@ -441,6 +469,7 @@ Return ONLY this JSON (no markdown, no explanation):
   "short_description": "Max 250 chars. What it's for, who it's for, what makes it stand out.",
   "long_description": "3–5 sentences: purpose, target audience, key sections, design style, what's unique.",
   "categories": ["1–3 from the categories list above"],
+  "secondary_tags": ["0–6 from the secondary tags list above"],
   "pricing": "Free or Paid",
   "page_type": "one_page | multi_page | multi_layout",
   "webflow_features_cms": {str(detected['hasCMS']).lower()},
@@ -501,6 +530,7 @@ def print_summary(result: dict) -> None:
     print(f"  Pricing:    {result['pricing']}")
     print(f"  Page type:  {result['page_type']}")
     print(f"  Categories: {', '.join(result['categories'])}")
+    print(f"  Tags:       {', '.join(result.get('secondary_tags', []))}")
     print(f"  Styles:     {', '.join(result['styles'])}")
     print(f"  CMS:        {result['webflow_features_cms']}")
     print(f"  Ecommerce:  {result['webflow_features_ecommerce']}")
