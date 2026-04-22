@@ -155,7 +155,7 @@ curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"outerfields-pcn","limit":10}}}' | jq
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"composio-toolkit-clickup","limit":10}}}' | jq
 ```
 
 Auth enforcement checks:
@@ -183,13 +183,13 @@ curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"hub_list_services","arguments":{}}}' | jq
 
-# 2) Discover a callable Outerfields tool name inside the scoped service
+# 2) Discover a callable ClickUp tool name inside the scoped service
 curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "x-correlation-id: $CID" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"outerfields-pcn","limit":5}}}' | jq
+  -d '{"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"composio-toolkit-clickup","limit":5}}}' | jq
 
 # 3) Execute one returned proxy tool with hub_execute_proxy_tool (use a real proxyToolName + args from step 2)
 # 4) Query trace
