@@ -1267,6 +1267,7 @@ export function TemplateIntake() {
       return;
     }
 
+    setAnalyzerSummary(null);
     setFeedback('publishedUrl', {
       tone: 'info',
       message: 'Running the full published-site crawl. This can take a few minutes.'
@@ -1293,9 +1294,14 @@ export function TemplateIntake() {
     };
 
     if (!response.ok || !data.passed || !data.normalizedUrl) {
+      const message = data.message || 'Published URL validation failed.';
+      setTemplateStatus({
+        tone: 'error',
+        message
+      });
       setFeedback('publishedUrl', {
         tone: 'error',
-        message: data.message || 'Published URL validation failed.'
+        message
       });
       return;
     }
@@ -1331,7 +1337,7 @@ export function TemplateIntake() {
     setFeedback('publishedUrl', {
       tone: 'success',
       message: [
-        'Published site validated.',
+        data.message || 'Published site validated.',
         autofillResult.appliedFields.length > 0
           ? `Analyzer suggestions filled ${autofillResult.appliedFields.length} field${autofillResult.appliedFields.length === 1 ? '' : 's'}.`
           : nextAnalyzerSummary
@@ -1348,9 +1354,7 @@ export function TemplateIntake() {
     setVerification((current) => ({
       ...current,
       publishedUrlVerified: data.normalizedUrl || '',
-      publishedUrlMessage: data.gsapDetected
-        ? 'Published site validated. GSAP was detected automatically.'
-        : 'Published site validated.'
+      publishedUrlMessage: data.message || 'Published site validated.'
     }));
     setTemplate((current) => ({
       ...current,
@@ -1365,10 +1369,7 @@ export function TemplateIntake() {
     }));
     setTemplateStatus({
       tone: 'success',
-      message:
-        data.siteResults?.passedCount !== undefined
-          ? `Published site validated across ${data.siteResults.passedCount} pages.`
-          : 'Published site validated.'
+      message: data.message || 'Published site validated.'
     });
   }
 
@@ -2604,92 +2605,90 @@ export function TemplateIntake() {
                     items={reviewItems}
                   />
 
-                  <div className="submission-grid-2">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="thumbnailFile"
-                      >
-                        Primary thumbnail
-                        <span className="submission-required"> *</span>
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        WebP only, exactly 750x995, under 300KB.
-                      </p>
-                      <div className="submission-upload-card">
-                        <UploadSpecs chips={['WebP', '750×995', '<300KB']} />
-                        <input
-                          className="submission-file-input"
-                          id="thumbnailFile"
-                          type="file"
-                          accept="image/webp"
-                          onChange={async (event) => {
-                            const file = event.target.files?.[0] || null;
-                            if (!file) {
-                              setImageErrors((c) => ({ ...c, thumbnailFile: null }));
-                              updateTemplate('thumbnailFile', null);
-                              return;
-                            }
-                            const err = await validateImageClient(file, 'thumbnail');
-                            setImageErrors((c) => ({ ...c, thumbnailFile: err }));
-                            updateTemplate('thumbnailFile', err ? null : file);
-                          }}
-                          required
-                        />
-                        <SelectedFilesSummary
-                          files={template.thumbnailFile ? [template.thumbnailFile] : []}
-                          emptyLabel="No primary thumbnail selected yet."
-                        />
-                      </div>
-                      {imageErrors.thumbnailFile ? (
-                        <div className="submission-field-feedback submission-field-feedback-error">
-                          {imageErrors.thumbnailFile}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="secondaryThumbnailFile"
-                      >
-                        Secondary thumbnail
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Optional. Same 750x995 WebP constraint as the primary thumbnail.
-                      </p>
-                      <div className="submission-upload-card">
-                        <UploadSpecs chips={['WebP', '750×995', '<300KB']} />
-                        <input
-                          className="submission-file-input"
-                          id="secondaryThumbnailFile"
-                          type="file"
-                          accept="image/webp"
-                          onChange={async (event) => {
-                            const file = event.target.files?.[0] || null;
-                            if (!file) {
-                              setImageErrors((c) => ({ ...c, secondaryThumbnailFile: null }));
-                              updateTemplate('secondaryThumbnailFile', null);
-                              return;
-                            }
-                            const err = await validateImageClient(file, 'secondary-thumbnail');
-                            setImageErrors((c) => ({ ...c, secondaryThumbnailFile: err }));
-                            updateTemplate('secondaryThumbnailFile', err ? null : file);
-                          }}
-                        />
-                        <SelectedFilesSummary
-                          files={
-                            template.secondaryThumbnailFile ? [template.secondaryThumbnailFile] : []
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="thumbnailFile"
+                    >
+                      Primary thumbnail
+                      <span className="submission-required"> *</span>
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      WebP only, exactly 750x995, under 300KB.
+                    </p>
+                    <div className="submission-upload-card">
+                      <UploadSpecs chips={['WebP', '750×995', '<300KB']} />
+                      <input
+                        className="submission-file-input"
+                        id="thumbnailFile"
+                        type="file"
+                        accept="image/webp"
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] || null;
+                          if (!file) {
+                            setImageErrors((c) => ({ ...c, thumbnailFile: null }));
+                            updateTemplate('thumbnailFile', null);
+                            return;
                           }
-                          emptyLabel="No secondary thumbnail selected."
-                        />
-                      </div>
-                      {imageErrors.secondaryThumbnailFile ? (
-                        <div className="submission-field-feedback submission-field-feedback-error">
-                          {imageErrors.secondaryThumbnailFile}
-                        </div>
-                      ) : null}
+                          const err = await validateImageClient(file, 'thumbnail');
+                          setImageErrors((c) => ({ ...c, thumbnailFile: err }));
+                          updateTemplate('thumbnailFile', err ? null : file);
+                        }}
+                        required
+                      />
+                      <SelectedFilesSummary
+                        files={template.thumbnailFile ? [template.thumbnailFile] : []}
+                        emptyLabel="No primary thumbnail selected yet."
+                      />
                     </div>
+                    {imageErrors.thumbnailFile ? (
+                      <div className="submission-field-feedback submission-field-feedback-error">
+                        {imageErrors.thumbnailFile}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="submission-field">
+                    <label
+                      className="field-label template-application-form_field-label cc-with-desc"
+                      htmlFor="secondaryThumbnailFile"
+                    >
+                      Secondary thumbnail
+                    </label>
+                    <p className="field-help cc-library-application-form_field-desc">
+                      Optional. Same 750x995 WebP constraint as the primary thumbnail.
+                    </p>
+                    <div className="submission-upload-card">
+                      <UploadSpecs chips={['WebP', '750×995', '<300KB']} />
+                      <input
+                        className="submission-file-input"
+                        id="secondaryThumbnailFile"
+                        type="file"
+                        accept="image/webp"
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] || null;
+                          if (!file) {
+                            setImageErrors((c) => ({ ...c, secondaryThumbnailFile: null }));
+                            updateTemplate('secondaryThumbnailFile', null);
+                            return;
+                          }
+                          const err = await validateImageClient(file, 'secondary-thumbnail');
+                          setImageErrors((c) => ({ ...c, secondaryThumbnailFile: err }));
+                          updateTemplate('secondaryThumbnailFile', err ? null : file);
+                        }}
+                      />
+                      <SelectedFilesSummary
+                        files={
+                          template.secondaryThumbnailFile ? [template.secondaryThumbnailFile] : []
+                        }
+                        emptyLabel="No secondary thumbnail selected."
+                      />
+                    </div>
+                    {imageErrors.secondaryThumbnailFile ? (
+                      <div className="submission-field-feedback submission-field-feedback-error">
+                        {imageErrors.secondaryThumbnailFile}
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="submission-field">
