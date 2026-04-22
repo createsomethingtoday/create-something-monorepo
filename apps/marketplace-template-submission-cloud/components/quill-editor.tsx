@@ -20,6 +20,17 @@ declare global {
   }
 }
 
+function normalizeEditorHtml(value: string | undefined): string {
+  return (value || '')
+    .replace(/<p><br><\/p>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function ensureQuillAssetsLoaded(): Promise<typeof window.Quill> {
   if (typeof window === 'undefined') return Promise.reject(new Error('no window'));
   if (window.Quill) return Promise.resolve(window.Quill);
@@ -59,6 +70,7 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
   const containerRef = useRef<HTMLDivElement | null>(null);
   const quillRef = useRef<QuillInstance | null>(null);
   const onChangeRef = useRef(onChange);
+  const valueRef = useRef(value);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -85,8 +97,8 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
           }
         });
 
-        if (value) {
-          quill.root.innerHTML = value;
+        if (valueRef.current) {
+          quill.root.innerHTML = valueRef.current;
         }
 
         handler = () => {
@@ -127,6 +139,20 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    valueRef.current = value;
+
+    const quill = quillRef.current;
+    if (!quill) return;
+
+    const nextHtml = value || '';
+    if (normalizeEditorHtml(quill.root.innerHTML) === normalizeEditorHtml(nextHtml)) {
+      return;
+    }
+
+    quill.root.innerHTML = nextHtml;
+  }, [value]);
 
   return <div id={id} ref={containerRef} className="submission-quill" />;
 }

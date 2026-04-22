@@ -119,6 +119,7 @@ type TemplateAutofillState = Partial<
     | 'templateName'
     | 'shortDescription'
     | 'longDescription'
+    | 'secondaryTags'
     | 'priceModel'
     | 'pageCount'
     | 'typeCms'
@@ -129,11 +130,25 @@ type TemplateAutofillState = Partial<
   >
 >;
 
+type TemplateAutofillFieldKey =
+  | 'templateName'
+  | 'shortDescription'
+  | 'longDescription'
+  | 'categories'
+  | 'secondaryTags'
+  | 'priceModel'
+  | 'pageCount'
+  | 'typeCms'
+  | 'typeEcommerce'
+  | 'styles'
+  | 'featureIds';
+
 type TemplateAutofillPayload = {
   templateName?: string;
   shortDescription?: string;
   longDescription?: string;
   categories?: string[];
+  secondaryTags?: string[];
   priceModel?: 'Free' | 'Paid';
   pageCount?: PageCountOption;
   typeCms?: boolean;
@@ -142,9 +157,17 @@ type TemplateAutofillPayload = {
   featureIds?: string[];
 };
 
-type TemplateAutofillAssets = {
+type TemplateAutofillResult = {
+  appliedFields: TemplateAutofillFieldKey[];
+  suggestedFields: TemplateAutofillFieldKey[];
+};
+
+type TemplateAnalyzerSummary = {
+  appliedFields: TemplateAutofillFieldKey[];
+  suggestedFields: TemplateAutofillFieldKey[];
   screenshotCount: number;
-  screenshotsDownloadUrl: string;
+  screenshotsDownloadUrl?: string;
+  warning?: string;
 };
 
 type VerificationState = {
@@ -177,6 +200,20 @@ const initialCreatorState: CreatorFormState = {
 
 const DEFAULT_FEATURE_IDS = WEBFLOW_FEATURES.filter((f) => f.defaultOn).map((f) => f.id);
 
+const AUTOFILL_FIELD_LABELS: Record<TemplateAutofillFieldKey, string> = {
+  templateName: 'Template name',
+  shortDescription: 'Short description',
+  longDescription: 'Long description',
+  categories: 'Categories',
+  secondaryTags: 'Secondary tags',
+  priceModel: 'Price model',
+  pageCount: 'Page count',
+  typeCms: 'CMS',
+  typeEcommerce: 'Ecommerce',
+  styles: 'Styles',
+  featureIds: 'Features',
+};
+
 const initialTemplateState: TemplateFormState = {
   creatorName: '',
   creatorEmail: '',
@@ -208,6 +245,23 @@ function arraysEqual(left: readonly string[], right: readonly string[]) {
 
 function shouldAutofillText(current: string, previous?: string) {
   return current.trim() === '' || current === previous;
+}
+
+function normalizeRichText(value: string | undefined) {
+  return (value || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function shouldAutofillRichText(current: string, previous?: string) {
+  return (
+    normalizeRichText(current) === '' ||
+    normalizeRichText(current) === normalizeRichText(previous)
+  );
 }
 
 function shouldAutofillArray(current: readonly string[], previous?: readonly string[]) {
@@ -292,7 +346,7 @@ export function TemplateIntake() {
   const [fieldFeedback, setFieldFeedback] = useState<Record<string, StatusMessage | null>>({});
   const [imageErrors, setImageErrors] = useState<Record<string, string | null>>({});
   const [autofillManaged, setAutofillManaged] = useState<TemplateAutofillState>({});
-  const [autofillAssets, setAutofillAssets] = useState<TemplateAutofillAssets | null>(null);
+  const [analyzerSummary, setAnalyzerSummary] = useState<TemplateAnalyzerSummary | null>(null);
 
   const setFeedback = (field: string, feedback: StatusMessage | null) =>
     setFieldFeedback((current) => ({ ...current, [field]: feedback }));
@@ -512,7 +566,7 @@ export function TemplateIntake() {
 
     if (key === 'publishedUrl') {
       setFeedback('publishedUrl', null);
-      setAutofillAssets(null);
+      setAnalyzerSummary(null);
       setVerification((current) => ({
         ...current,
         publishedUrlVerified: '',
@@ -529,9 +583,19 @@ export function TemplateIntake() {
   function applyTemplateAutofill(
     autofill: TemplateAutofillPayload | undefined,
     options: { gsapDetected: boolean }
-  ) {
-    let detailsApplied = false;
+  ): TemplateAutofillResult {
     const managedNext: TemplateAutofillState = {};
+    const appliedFields = new Set<TemplateAutofillFieldKey>();
+    const suggestedFields = new Set<TemplateAutofillFieldKey>();
+
+    const markSuggested = (field: TemplateAutofillFieldKey) => {
+      suggestedFields.add(field);
+    };
+
+    const markApplied = (field: TemplateAutofillFieldKey) => {
+      suggestedFields.add(field);
+      appliedFields.add(field);
+    };
 
     setTemplate((current) => {
       if (!autofill) {
@@ -539,6 +603,8 @@ export function TemplateIntake() {
           return current;
         }
 
+        markSuggested('featureIds');
+        markApplied('featureIds');
         return {
           ...current,
           featureIds: [...new Set([...current.featureIds, 'gsap'])]
@@ -554,7 +620,9 @@ export function TemplateIntake() {
       ) {
         next.templateName = autofill.templateName;
         managedNext.templateName = autofill.templateName;
-        detailsApplied = true;
+        markApplied('templateName');
+      } else if (autofill.templateName) {
+        markSuggested('templateName');
       }
 
       if (
@@ -564,17 +632,24 @@ export function TemplateIntake() {
       ) {
         next.shortDescription = autofill.shortDescription;
         managedNext.shortDescription = autofill.shortDescription;
-        detailsApplied = true;
+        markApplied('shortDescription');
+      } else if (autofill.shortDescription) {
+        markSuggested('shortDescription');
       }
 
       if (
         autofill.longDescription &&
         autofill.longDescription !== current.longDescription &&
-        shouldAutofillText(current.longDescription, autofillManaged.longDescription)
+        shouldAutofillRichText(
+          current.longDescription,
+          autofillManaged.longDescription
+        )
       ) {
         next.longDescription = autofill.longDescription;
         managedNext.longDescription = autofill.longDescription;
-        detailsApplied = true;
+        markApplied('longDescription');
+      } else if (autofill.longDescription) {
+        markSuggested('longDescription');
       }
 
       if (
@@ -584,7 +659,9 @@ export function TemplateIntake() {
       ) {
         next.priceModel = autofill.priceModel;
         managedNext.priceModel = autofill.priceModel;
-        detailsApplied = true;
+        markApplied('priceModel');
+      } else if (autofill.priceModel) {
+        markSuggested('priceModel');
       }
 
       if (
@@ -594,7 +671,9 @@ export function TemplateIntake() {
       ) {
         next.pageCount = autofill.pageCount;
         managedNext.pageCount = autofill.pageCount;
-        detailsApplied = true;
+        markApplied('pageCount');
+      } else if (autofill.pageCount) {
+        markSuggested('pageCount');
       }
 
       if (
@@ -604,7 +683,9 @@ export function TemplateIntake() {
       ) {
         next.typeCms = autofill.typeCms;
         managedNext.typeCms = autofill.typeCms;
-        detailsApplied = true;
+        markApplied('typeCms');
+      } else if (typeof autofill.typeCms === 'boolean') {
+        markSuggested('typeCms');
       }
 
       if (
@@ -614,7 +695,9 @@ export function TemplateIntake() {
       ) {
         next.typeEcommerce = autofill.typeEcommerce;
         managedNext.typeEcommerce = autofill.typeEcommerce;
-        detailsApplied = true;
+        markApplied('typeEcommerce');
+      } else if (typeof autofill.typeEcommerce === 'boolean') {
+        markSuggested('typeEcommerce');
       }
 
       if (
@@ -624,7 +707,24 @@ export function TemplateIntake() {
       ) {
         next.categories = autofill.categories;
         managedNext.categories = autofill.categories;
-        detailsApplied = true;
+        markApplied('categories');
+      } else if (autofill.categories?.length) {
+        markSuggested('categories');
+      }
+
+      if (
+        autofill.secondaryTags?.length &&
+        !arraysEqual(current.secondaryTags, autofill.secondaryTags) &&
+        shouldAutofillArray(
+          current.secondaryTags,
+          autofillManaged.secondaryTags
+        )
+      ) {
+        next.secondaryTags = autofill.secondaryTags;
+        managedNext.secondaryTags = autofill.secondaryTags;
+        markApplied('secondaryTags');
+      } else if (autofill.secondaryTags?.length) {
+        markSuggested('secondaryTags');
       }
 
       if (
@@ -634,7 +734,9 @@ export function TemplateIntake() {
       ) {
         next.styles = autofill.styles;
         managedNext.styles = autofill.styles;
-        detailsApplied = true;
+        markApplied('styles');
+      } else if (autofill.styles?.length) {
+        markSuggested('styles');
       }
 
       const suggestedFeatureIds = [
@@ -649,10 +751,15 @@ export function TemplateIntake() {
         if (!arraysEqual(current.featureIds, suggestedFeatureIds)) {
           next.featureIds = suggestedFeatureIds;
           managedNext.featureIds = suggestedFeatureIds;
-          detailsApplied = true;
+          markApplied('featureIds');
+        } else if (suggestedFeatureIds.length > 0) {
+          markSuggested('featureIds');
         }
       } else if (options.gsapDetected && !next.featureIds.includes('gsap')) {
         next.featureIds = [...new Set([...next.featureIds, 'gsap'])];
+        markApplied('featureIds');
+      } else if ((autofill.featureIds?.length ?? 0) > 0 || options.gsapDetected) {
+        markSuggested('featureIds');
       }
 
       if (next.priceModel === 'Free') {
@@ -673,7 +780,10 @@ export function TemplateIntake() {
       setAutofillManaged((current) => ({ ...current, ...managedNext }));
     }
 
-    return detailsApplied;
+    return {
+      appliedFields: [...appliedFields],
+      suggestedFields: [...suggestedFields],
+    };
   }
 
   async function verifyCreatorEmail(kind: 'primary' | 'webflow') {
@@ -826,24 +936,35 @@ export function TemplateIntake() {
       return;
     }
 
-    const autofillApplied = applyTemplateAutofill(data.autofill, {
+    const autofillResult = applyTemplateAutofill(data.autofill, {
       gsapDetected: Boolean(data.gsapDetected)
     });
 
-    setAutofillAssets(
-      data.screenshotsDownloadUrl
+    const nextAnalyzerSummary: TemplateAnalyzerSummary | null =
+      autofillResult.appliedFields.length > 0 ||
+      autofillResult.suggestedFields.length > 0 ||
+      Boolean(data.autofillWarning) ||
+      Boolean(data.screenshotsDownloadUrl)
         ? {
+            appliedFields: autofillResult.appliedFields,
+            suggestedFields: autofillResult.suggestedFields,
             screenshotCount: data.screenshotCount ?? 0,
-            screenshotsDownloadUrl: data.screenshotsDownloadUrl
+            screenshotsDownloadUrl: data.screenshotsDownloadUrl,
+            warning: data.autofillWarning
           }
-        : null
-    );
+        : null;
+
+    setAnalyzerSummary(nextAnalyzerSummary);
 
     setFeedback('publishedUrl', {
       tone: 'success',
       message: [
         'Published site validated.',
-        autofillApplied ? 'Suggested template details were added automatically.' : '',
+        autofillResult.appliedFields.length > 0
+          ? `Analyzer suggestions filled ${autofillResult.appliedFields.length} field${autofillResult.appliedFields.length === 1 ? '' : 's'}.`
+          : nextAnalyzerSummary
+            ? 'Review the analyzer summary below.'
+            : '',
         data.gsapDetected ? 'GSAP was detected automatically.' : '',
         data.autofillWarning
           ? 'Template suggestions were unavailable, so finish the remaining fields manually.'
@@ -1560,6 +1681,83 @@ export function TemplateIntake() {
                     </div>
                   ) : null}
 
+                  {analyzerSummary ? (
+                    <div className="submission-analyzer-summary">
+                      <div className="submission-analyzer-header">
+                        <div>
+                          <div className="submission-step-label submission-step-label-secondary submission-analyzer-label">
+                            Analyzer summary
+                          </div>
+                          <h3 className="submission-analyzer-title">
+                            Suggestions from the published site
+                          </h3>
+                        </div>
+                      </div>
+                      <p className="field-help submission-analyzer-copy">
+                        {analyzerSummary.appliedFields.length > 0
+                          ? 'These fields were populated automatically. You can still edit anything below before submitting.'
+                          : analyzerSummary.warning
+                            ? 'The published-site crawl passed, but template suggestions were only partially available.'
+                            : 'The published-site crawl passed. Review the suggestion summary below before submitting.'}
+                      </p>
+
+                      {analyzerSummary.appliedFields.length > 0 ? (
+                        <div className="submission-analyzer-group">
+                          <div className="submission-analyzer-group-title">Applied automatically</div>
+                          <div className="submission-chip-list">
+                            {analyzerSummary.appliedFields.map((field) => (
+                              <span className="submission-chip submission-chip-success" key={field}>
+                                {AUTOFILL_FIELD_LABELS[field]}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {analyzerSummary.suggestedFields.filter(
+                        (field) => !analyzerSummary.appliedFields.includes(field)
+                      ).length > 0 ? (
+                        <div className="submission-analyzer-group">
+                          <div className="submission-analyzer-group-title">Still worth reviewing</div>
+                          <div className="submission-chip-list">
+                            {analyzerSummary.suggestedFields
+                              .filter((field) => !analyzerSummary.appliedFields.includes(field))
+                              .map((field) => (
+                                <span className="submission-chip submission-chip-muted" key={field}>
+                                  {AUTOFILL_FIELD_LABELS[field]}
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {analyzerSummary.warning ? (
+                        <div className="submission-analyzer-callout submission-analyzer-callout-warning">
+                          {analyzerSummary.warning}
+                        </div>
+                      ) : null}
+
+                      {analyzerSummary.screenshotsDownloadUrl ? (
+                        <div className="submission-analyzer-callout submission-analyzer-callout-info">
+                          <div>
+                            Generated screenshots are ready.
+                            {analyzerSummary.screenshotCount > 0
+                              ? ` ${analyzerSummary.screenshotCount} screenshot${analyzerSummary.screenshotCount === 1 ? '' : 's'} were prepared for upload.`
+                              : ''}
+                          </div>
+                          <a
+                            className="submission-status-link"
+                            href={analyzerSummary.screenshotsDownloadUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Download generated screenshots (ZIP)
+                          </a>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   <div className="submission-grid-2">
                     <div className="submission-field">
                       <label
@@ -1902,28 +2100,6 @@ export function TemplateIntake() {
                     />
                     <div className="field-help">{template.notes.length}/400 characters</div>
                   </div>
-
-                  {autofillAssets ? (
-                    <div className="submission-status submission-status-info submission-status-stack">
-                      <div>
-                        Generated screenshots are ready from the analyzer.
-                        {autofillAssets.screenshotCount > 0
-                          ? ` ${autofillAssets.screenshotCount} screenshot${autofillAssets.screenshotCount === 1 ? '' : 's'} were prepared for upload.`
-                          : ''}
-                      </div>
-                      <div>
-                        Download the ZIP, then drag each file into the matching upload field below.
-                      </div>
-                      <a
-                        className="submission-status-link"
-                        href={autofillAssets.screenshotsDownloadUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Download generated screenshots (ZIP)
-                      </a>
-                    </div>
-                  ) : null}
 
                   <div className="submission-grid-2">
                     <div className="submission-field">
