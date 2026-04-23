@@ -7,6 +7,7 @@ import {
 } from '../../../../vendor/core/marketplace-webhook';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
+import { WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
 import { runPublishedUrlValidation } from '../../../../lib/intake/published-url';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
@@ -21,6 +22,7 @@ type TemplateSubmissionBody = {
   previewUrl?: string;
   priceModel?: string;
   category?: string;
+  categories?: string[];
   tags?: string[];
   siteTypes?: string[];
   styleTags?: string[];
@@ -37,11 +39,33 @@ type TemplateSubmissionBody = {
   utm?: Record<string, string>;
 };
 
-const FEATURE_FLAG_TO_WEBFLOW_FEATURE: Record<string, string> = {
+const FEATURE_FLAG_TO_WEBFLOW_FEATURE = Object.freeze({
   gsap: 'GSAP',
+  'responsive-design': 'Responsive Design',
+  'responsive design': 'Responsive Design',
+  'responsive-navigation': 'Responsive Navigation',
+  'responsive navigation': 'Responsive Navigation',
+  'responsive-slider': 'Responsive Slider',
+  'responsive slider': 'Responsive Slider',
+  'media-lightbox': 'Media Lightbox',
+  'media lightbox': 'Media Lightbox',
+  'background-video': 'Background Video',
+  'background video': 'Background Video',
+  '3d-transforms': '3D Transforms',
+  '3d transforms': '3D Transforms',
   interactions: 'Interactions',
+  forms: 'Forms',
   components: 'Symbols',
-};
+  symbols: 'Symbols',
+  'css-grid': 'CSS Grid',
+  'css grid': 'CSS Grid',
+  'custom-404': 'Custom 404 Page',
+  'custom 404 page': 'Custom 404 Page',
+  'web-fonts': 'Web Fonts',
+  'web fonts': 'Web Fonts',
+  'retina-ready': 'Retina Ready',
+  'retina ready': 'Retina Ready',
+} satisfies Record<string, string>);
 
 const STYLE_TAG_TO_WEBFLOW_STYLE: Record<string, string> = {
   bold: 'Bold',
@@ -105,9 +129,21 @@ function mapStyleTags(styleTags: string[]): string[] {
 }
 
 function mapFeatureFlags(featureFlags: string[]): string[] {
-  return featureFlags
-    .map((flag) => FEATURE_FLAG_TO_WEBFLOW_FEATURE[flag.toLowerCase()])
-    .filter((value): value is string => Boolean(value));
+  const mapped = new Set<string>();
+
+  for (const flag of featureFlags) {
+    const normalized = flag.trim().toLowerCase();
+    const mappedValue = FEATURE_FLAG_TO_WEBFLOW_FEATURE[
+      normalized as keyof typeof FEATURE_FLAG_TO_WEBFLOW_FEATURE
+    ];
+    if (mappedValue) {
+      mapped.add(mappedValue);
+    }
+  }
+
+  return WEBFLOW_FEATURES
+    .map((feature) => (feature.label === 'Components' ? 'Symbols' : feature.label))
+    .filter((feature) => mapped.has(feature));
 }
 
 export async function POST(request: Request) {
@@ -137,6 +173,7 @@ export async function POST(request: Request) {
     const tags = ensureArray(body.tags);
     const styleTags = ensureArray(body.styleTags);
     const siteTypes = ensureArray(body.siteTypes);
+    const requestedCategories = ensureArray(body.categories).slice(0, 2);
     const category = String(body.category || '').trim();
     const priceModelRaw = String(body.priceModel || '').trim();
     const paymentType: PaymentType = priceModelRaw === 'Paid' ? 'Paid' : 'Free';
@@ -233,14 +270,19 @@ export async function POST(request: Request) {
       siteTypes.includes('ecommerce') || combinedFeatures.has('ecommerce');
     const mappedStyles = mapStyleTags(styleTags);
     const mappedFeatures = mapFeatureFlags([...combinedFeatures]);
-    const categories = category ? [category] : [];
+    const categories =
+      requestedCategories.length > 0
+        ? requestedCategories
+        : category
+          ? [category]
+          : [];
 
     const detailsHtml = [
       `<h2>Submission notes</h2>${toParagraphs(longDescription)}`,
       notes ? `<h3>Internal notes</h3>${toParagraphs(notes)}` : '',
       '<h3>Metadata</h3>',
       '<ul>',
-      category ? `<li>Category: ${escapeHtml(category)}</li>` : '',
+      categories.length > 0 ? `<li>Category: ${escapeHtml(categories.join(', '))}</li>` : '',
       tags.length > 0 ? `<li>Tags: ${escapeHtml(tags.join(', '))}</li>` : '',
       styleTags.length > 0 ? `<li>Style tags: ${escapeHtml(styleTags.join(', '))}</li>` : '',
       siteTypes.length > 0 ? `<li>Site types: ${escapeHtml(siteTypes.join(', '))}</li>` : '',

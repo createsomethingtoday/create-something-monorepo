@@ -154,9 +154,22 @@ Then place this block below the hero:
   }
 
   window.addEventListener('message', function (event) {
-    if (!event.data || event.data.type !== 'ts-submission:resize') return;
-    if (typeof event.data.height === 'number') {
+    if (!event.data) return;
+
+    if (event.data.type === 'ts-submission:resize' && typeof event.data.height === 'number') {
       frame.style.height = event.data.height + 'px';
+      return;
+    }
+
+    if (
+      event.data.type === 'ts-submission:scroll-to' &&
+      typeof event.data.offsetTop === 'number'
+    ) {
+      var frameTop = frame.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: Math.max(frameTop + event.data.offsetTop - 24, 0),
+        behavior: 'smooth'
+      });
     }
   });
 

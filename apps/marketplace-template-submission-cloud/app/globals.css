@@ -14,7 +14,7 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: transparent;
+  background: #fff;
   color: #080808;
   font-family:
     var(--font-wf-visual-sans),
@@ -47,13 +47,13 @@ select {
 
 .submission-app {
   width: 100%;
-  background: transparent;
+  background: #fff;
 }
 
 .submission-app .cc-submission-wrapper {
   padding-top: 1.25rem;
   padding-bottom: 1.25rem;
-  background: transparent;
+  background: #fff;
 }
 
 .submission-app .submission_content-grid {
@@ -65,6 +65,11 @@ select {
 .submission-app .cc-sticky {
   position: sticky;
   top: 1.5rem;
+}
+
+.submission-app.is-embedded .cc-sticky {
+  position: static;
+  top: auto;
 }
 
 .submission-sidecar {
@@ -666,6 +671,13 @@ select {
 
 .submission-field-feedback-info {
   color: var(--webflow-blue-600, #0055d4);
+}
+
+.submission-field-feedback-action {
+  display: inline;
+  margin-left: 0.35rem;
+  font-size: inherit;
+  font-weight: 700;
 }
 
 .submission-autofill-badge {
