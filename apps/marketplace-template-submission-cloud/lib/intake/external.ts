@@ -1,8 +1,11 @@
 import { validateEmail } from '../../vendor/core/airtable';
 
-const EMAIL_CHECK_URL = 'https://check-asset-name.vercel.app/api/checkTemplateemail';
-const TEMPLATE_NAME_CHECK_URL = 'https://check-asset-name.vercel.app/api/checkTemplatename';
-const CREATOR_ELIGIBILITY_URL = 'https://webflow-api.createsomething.io/template/user';
+const CLOUDFLARE_VALIDATION_WORKER =
+  'https://check-asset-name.mcp.createsomething.agency';
+const EMAIL_CHECK_URL = `${CLOUDFLARE_VALIDATION_WORKER}/api/checkTemplateemail`;
+const TEMPLATE_NAME_CHECK_URL =
+  `${CLOUDFLARE_VALIDATION_WORKER}/api/checkTemplatename`;
+const CREATOR_ELIGIBILITY_URL = `${CLOUDFLARE_VALIDATION_WORKER}/api/checkTemplateuser`;
 const REQUEST_TIMEOUT_MS = 10_000;
 
 export interface RemoteEmailAvailability {
@@ -67,15 +70,7 @@ export async function checkRemoteCreatorEligibility(
   email: string
 ): Promise<RemoteCreatorEligibility> {
   const validated = validateEmail(email);
-
-  return postJson<RemoteCreatorEligibility>(
-    CREATOR_ELIGIBILITY_URL,
-    { email: validated },
-    {
-      Origin: 'https://webflow.com',
-      Referer: 'https://webflow.com/templates/submit-a-template?section=submit-today'
-    }
-  );
+  return postJson<RemoteCreatorEligibility>(CREATOR_ELIGIBILITY_URL, { email: validated });
 }
 
 export async function checkRemoteTemplateNameAvailability(

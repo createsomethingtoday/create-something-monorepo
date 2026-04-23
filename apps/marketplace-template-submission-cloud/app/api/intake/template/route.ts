@@ -8,9 +8,9 @@ import {
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
-import { checkRemoteTemplateNameAvailability } from '../../../../lib/intake/external';
 import { runPublishedUrlValidation } from '../../../../lib/intake/published-url';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
+import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
 
 type TemplateSubmissionBody = {
@@ -204,12 +204,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const [nameUniqueness, remoteNameAvailability] = await Promise.all([
-      airtable.checkAssetNameUniqueness(templateName),
-      checkRemoteTemplateNameAvailability(templateName).catch(() => null)
-    ]);
+    const templateNameAvailability = await checkTemplateNameAvailability(templateName, {
+      airtable
+    });
 
-    if (!nameUniqueness.unique || remoteNameAvailability?.taken) {
+    if (!templateNameAvailability.available) {
       return jsonNoStore({ error: 'Template name is already in use.' }, { status: 409 });
     }
 

@@ -17,10 +17,26 @@
 interface Env {
   AIRTABLE_API_KEY: string;
   AIRTABLE_BASE_ID: string;
-  AIRTABLE_TABLE_ID: string;
-  AIRTABLE_VIEW_ID: string;
+  AIRTABLE_TABLE_ID?: string;
+  AIRTABLE_VIEW_ID?: string;
+  AIRTABLE_ASSETS_TABLE_ID?: string;
+  AIRTABLE_ASSETS_VIEW_ID?: string;
+  AIRTABLE_CREATORS_TABLE_ID?: string;
+  AIRTABLE_CREATORS_VIEW_ID?: string;
   ALLOWED_ORIGINS: string;
 }
+
+type AirtableRecord = { id: string; fields: Record<string, unknown> };
+
+const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
+const ASSET_CREATOR_EMAIL_FIELDS = [
+  '🎨📧 Creator Email',
+  '🎨📧 Creator WF Account Email',
+  '📧Emails (from 🎨Creator)',
+] as const;
+const CREATOR_RECORD_EMAIL_FIELDS = ['📧Email', '📧WF Account Email', '📧Emails'] as const;
+const SUBMISSION_LIMIT = 6;
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 // =============================================================================
 // CORS
@@ -55,17 +71,27 @@ function json(body: unknown, status: number, corsHeaders: Record<string, string>
 
 async function airtableQuery(
   env: Env,
-  formula: string,
-  fields?: string[]
-): Promise<Array<{ id: string; fields: Record<string, unknown> }>> {
+  options: {
+    tableId: string;
+    formula: string;
+    fields?: string[];
+    viewId?: string;
+    maxRecords?: number;
+  }
+): Promise<AirtableRecord[]> {
   const params = new URLSearchParams();
-  params.set('filterByFormula', formula);
-  params.set('view', env.AIRTABLE_VIEW_ID);
-  if (fields) {
-    for (const field of fields) params.append('fields[]', field);
+  params.set('filterByFormula', options.formula);
+  if (options.viewId) {
+    params.set('view', options.viewId);
+  }
+  if (options.maxRecords) {
+    params.set('maxRecords', String(options.maxRecords));
+  }
+  if (options.fields) {
+    for (const field of options.fields) params.append('fields[]', field);
   }
 
-  const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${env.AIRTABLE_TABLE_ID}?${params.toString()}`;
+  const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${options.tableId}?${params.toString()}`;
 
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` },
@@ -75,8 +101,50 @@ async function airtableQuery(
     throw new Error(`Airtable returned ${response.status}: ${await response.text()}`);
   }
 
-  const data = await response.json() as { records: Array<{ id: string; fields: Record<string, unknown> }> };
+  const data = (await response.json()) as { records: AirtableRecord[] };
   return data.records;
+}
+
+function getAssetsTableId(env: Env): string {
+  return env.AIRTABLE_ASSETS_TABLE_ID || env.AIRTABLE_TABLE_ID || 'tblRwzpWoLgE9MrUm';
+}
+
+function getAssetsViewId(env: Env): string | undefined {
+  return env.AIRTABLE_ASSETS_VIEW_ID || env.AIRTABLE_VIEW_ID;
+}
+
+function getCreatorsTableId(env: Env): string {
+  return env.AIRTABLE_CREATORS_TABLE_ID || DEFAULT_CREATORS_TABLE_ID;
+}
+
+function getCreatorsViewId(env: Env): string | undefined {
+  return env.AIRTABLE_CREATORS_VIEW_ID;
+}
+
+function escapeAirtableString(input: string): string {
+  return input.replace(/'/g, "''");
+}
+
+function escapeRegexLiteral(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildEmailMatchFormula(email: string, fields: readonly string[]): string {
+  const normalizedEmail = email.trim().toLowerCase();
+  const escapedEmail = escapeAirtableString(escapeRegexLiteral(normalizedEmail));
+  const clauses = fields.map(
+    (field) => `REGEX_MATCH(LOWER({${field}} & ''), '${escapedEmail}')`
+  );
+
+  return `OR(${clauses.join(', ')})`;
+}
+
+function buildAssetCreatorEmailFormula(email: string): string {
+  return `AND(${buildEmailMatchFormula(email, ASSET_CREATOR_EMAIL_FIELDS)}, {🆎Type} = 'Template🏗️')`;
+}
+
+function buildCreatorRecordEmailFormula(email: string): string {
+  return buildEmailMatchFormula(email, CREATOR_RECORD_EMAIL_FIELDS);
 }
 
 // =============================================================================
@@ -122,7 +190,12 @@ async function handleCheckTemplatename(
   // Special "relay" logic — allow up to 2
   if (templatename.toLowerCase().includes('relay')) {
     const formula = `AND(FIND(LOWER('relay'), LOWER({Name})) > 0, NOT(FIND(LOWER('archived'), LOWER({Name})) > 0))`;
-    const records = await airtableQuery(env, formula, ['Name']);
+    const records = await airtableQuery(env, {
+      tableId: getAssetsTableId(env),
+      viewId: getAssetsViewId(env),
+      formula,
+      fields: ['Name']
+    });
     if (records.length < 2) {
       return json({ taken: false }, 200, corsHeaders);
     }
@@ -130,7 +203,12 @@ async function handleCheckTemplatename(
 
   // Airtable substring search (case-insensitive, exclude archived)
   const formula = `AND(FIND(LOWER('${templatename.replace(/'/g, "\\'")}'), LOWER({Name})) > 0, NOT(FIND(LOWER('archived'), LOWER({Name})) > 0))`;
-  const records = await airtableQuery(env, formula, ['Name', '🚀Marketplace Status']);
+  const records = await airtableQuery(env, {
+    tableId: getAssetsTableId(env),
+    viewId: getAssetsViewId(env),
+    formula,
+    fields: ['Name', '🚀Marketplace Status']
+  });
 
   return json({ taken: records.length > 0 }, 200, corsHeaders);
 }
@@ -146,37 +224,80 @@ async function handleCheckTemplateuser(
     return json({ hasError: true, message: 'Email is required', assetsSubmitted30: 0 }, 400, corsHeaders);
   }
 
-  // Query Airtable for creator's submissions
-  const formula = `LOWER({🎨📧Creator Email}) = LOWER('${email.replace(/'/g, "\\'")}')`;
-  const records = await airtableQuery(env, formula, [
-    'Name',
-    '🚀Marketplace Status',
-    '📅Submission Datetime',
-  ]);
+  const creatorFormula = buildCreatorRecordEmailFormula(email);
+  const creatorRecords = await airtableQuery(env, {
+    tableId: getCreatorsTableId(env),
+    viewId: getCreatorsViewId(env),
+    formula: creatorFormula,
+    fields: ['Name', ...CREATOR_RECORD_EMAIL_FIELDS],
+    maxRecords: 1
+  });
+
+  if (creatorRecords.length === 0) {
+    return json(
+      {
+        userExists: false,
+        hasError: true,
+        message: 'User not found in our system.',
+        assetsSubmitted30: 0
+      },
+      200,
+      corsHeaders
+    );
+  }
+
+  const assetFormula = buildAssetCreatorEmailFormula(email);
+  const records = await airtableQuery(env, {
+    tableId: getAssetsTableId(env),
+    viewId: getAssetsViewId(env),
+    formula: assetFormula,
+    fields: ['Name', '🚀Marketplace Status', '📅Submitted Date']
+  });
 
   const now = Date.now();
-  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-
   let assetsSubmitted30 = 0;
   let publishedTemplates = 0;
-  let submittedTemplates = records.length;
+  let rejectedTemplates = 0;
+  let delistedTemplates = 0;
+  const submittedTemplates = records.length;
 
   for (const record of records) {
     const status = record.fields['🚀Marketplace Status'] as string || '';
     if (status.includes('Published')) publishedTemplates++;
+    if (status.includes('Rejected')) rejectedTemplates++;
+    if (status.includes('Delisted')) delistedTemplates++;
 
-    const submitted = record.fields['📅Submission Datetime'] as string;
-    if (submitted && (now - new Date(submitted).getTime()) < thirtyDaysMs) {
+    const submitted = record.fields['📅Submitted Date'] as string;
+    if (submitted && (now - new Date(submitted).getTime()) < THIRTY_DAYS_MS) {
       assetsSubmitted30++;
     }
   }
 
+  const isWhitelisted = false;
+  let hasError = false;
+  let message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted this month. Total submitted: ${submittedTemplates}. You can have 1 template submitted for review at a time.`;
+
+  if (assetsSubmitted30 >= SUBMISSION_LIMIT) {
+    hasError = true;
+    message = `You have reached your submission limit of ${SUBMISSION_LIMIT} templates for the past 30 days. Total submitted: ${submittedTemplates}. Please wait to submit new templates.`;
+  } else if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
+    message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted this month. Total submitted: ${submittedTemplates}. You can have unlimited concurrent submissions for review.`;
+  } else {
+    const activeReviews = submittedTemplates - publishedTemplates - rejectedTemplates - delistedTemplates;
+    if (activeReviews >= 1) {
+      hasError = true;
+      message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted this month. Total submitted: ${submittedTemplates}. You already have an active review in progress. Please wait for the review to complete before submitting another template.`;
+    }
+  }
+
   return json({
-    hasError: false,
+    userExists: true,
+    message,
     assetsSubmitted30,
     publishedTemplates,
     submittedTemplates,
-    isWhitelisted: false,
+    isWhitelisted,
+    hasError
   }, 200, corsHeaders);
 }
 
@@ -191,12 +312,19 @@ async function handleCheckTemplateemail(
     return json({ message: 'email is required' }, 400, corsHeaders);
   }
 
-  const formula = `LOWER({🎨📧Creator Email}) = LOWER('${email.replace(/'/g, "\\'")}')`;
-  const records = await airtableQuery(env, formula, ['Name', '🎨📧Creator Email']);
+  const formula = buildCreatorRecordEmailFormula(email);
+  const records = await airtableQuery(env, {
+    tableId: getCreatorsTableId(env),
+    viewId: getCreatorsViewId(env),
+    formula,
+    fields: ['Name', ...CREATOR_RECORD_EMAIL_FIELDS],
+    maxRecords: 1
+  });
+  const emailExists = records.length > 0;
 
   return json({
-    found: records.length > 0,
-    count: records.length,
+    emailExists,
+    message: emailExists ? 'This email is already in use.' : 'This email is available.'
   }, 200, corsHeaders);
 }
 

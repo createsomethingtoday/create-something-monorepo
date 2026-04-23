@@ -26,7 +26,8 @@ export interface ExternalSubmissionStatus {
 export const SUBMISSION_LIMIT = 6;
 export const ROLLING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 export const WARNING_THRESHOLD = 2;
-export const SUBMISSION_STATUS_URL = 'https://check-asset-name.vercel.app/api/checkTemplateuser';
+export const SUBMISSION_STATUS_URL =
+  'https://check-asset-name.mcp.createsomething.agency/api/checkTemplateuser';
 
 export function formatTimeUntil(ms: number | null): string {
   if (ms === null || ms <= 0) return 'now';
