@@ -613,6 +613,7 @@ export function TemplateIntake() {
   const [imageErrors, setImageErrors] = useState<Record<string, string | null>>({});
   const [autofillManaged, setAutofillManaged] = useState<TemplateAutofillState>({});
   const [analyzerSummary, setAnalyzerSummary] = useState<TemplateAnalyzerSummary | null>(null);
+  const [isEmbedded, setIsEmbedded] = useState(false);
   const [optionSearch, setOptionSearch] = useState({
     categories: '',
     secondaryTags: '',
@@ -701,6 +702,8 @@ export function TemplateIntake() {
   }
 
   useEffect(() => {
+    setIsEmbedded(window.parent !== window);
+
     const captureParams = (searchLike: string | Record<string, string>) => {
       const params =
         typeof searchLike === 'string'
@@ -1712,7 +1715,7 @@ export function TemplateIntake() {
   }
 
   return (
-    <main className="submission-app">
+    <main className={`submission-app${isEmbedded ? ' is-embedded' : ''}`}>
       {turnstileEnabled ? (
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
@@ -1748,10 +1751,7 @@ export function TemplateIntake() {
                     onClick={(event) => {
                       event.preventDefault();
                       requestAnimationFrame(() => {
-                        templateSectionRef.current?.scrollIntoView({
-                          behavior: 'smooth',
-                          block: 'start',
-                        });
+                        scrollToSubmissionSection('submit-today');
                       });
                     }}
                   >
