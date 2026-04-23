@@ -87,12 +87,11 @@ App-specific overrides (layout, spacing, per-field feedback colors, country pick
 
 ## Parent page embed
 
-The embedded app now owns the hero section, CTA buttons, and the creator/template flow. Mount the iframe where you want the full experience to appear on `/templates/submit-a-template`, and remove the duplicated Webflow-managed hero and form sections from the parent page.
+The parent Webflow page owns the hero. Mount the iframe directly below that hero on `/templates/submit-a-template`, and let the embedded app own only the creator/template form flow.
 
 - `ts-submission:resize` from the iframe to keep the frame height correct
 - `ts-submission:utm` from the parent to pass through query params
-- `ts-submission:navigate` from the parent to let `?section=` and `#join-today` / `#submit-today` land inside the iframe
-- `ts-submission:scroll-to` from the iframe to make the parent page scroll to the relevant internal section when an in-app hero CTA is clicked
+- `ts-submission:scroll-to` from the iframe to make the parent page scroll to the relevant internal section when an in-app link or CTA jumps between creator and template sections
 
 ```html
 <section id="template-submission-app" class="section cc-template-submission-embed">
@@ -142,33 +141,25 @@ The embedded app now owns the hero section, CTA buttons, and the creator/templat
   });
 
   frame.addEventListener('load', function () {
-    var params = new URLSearchParams(location.search);
-    var section = params.get('section');
-    var hash = window.location.hash;
-
     postToFrame({
       type: 'ts-submission:utm',
-      params: Object.fromEntries(params)
+      params: Object.fromEntries(new URLSearchParams(location.search))
     });
-
-    if (section === 'submit-today' || hash === '#submit-today') {
-      postToFrame({
-        type: 'ts-submission:navigate',
-        section: 'submit-today'
-      });
-      return;
-    }
-
-    if (section === 'join-today' || hash === '#join-today') {
-      postToFrame({
-        type: 'ts-submission:navigate',
-        section: 'join-today'
-      });
-    }
   });
 })();
 </script>
 ```
+
+For the parent hero CTA, use a normal anchor to the iframe mount:
+
+```html
+<a href="#template-submission-app" class="button-sp w-inline-block">
+  <div class="u-d-inline-block">Submit a template</div>
+  <div class="button-icon_right">→</div>
+</a>
+```
+
+The embedded app still manages creator-vs-template navigation internally. The “Apply with your first template submission here” link, and the “I already have a creator profile” action, both call back up to the parent page through `ts-submission:scroll-to` so the outer page performs the scroll.
 
 ## Downstream ingestion
 
