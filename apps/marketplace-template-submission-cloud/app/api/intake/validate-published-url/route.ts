@@ -5,6 +5,8 @@ import {
 } from '../../../../lib/intake/published-url';
 import { analyzePublishedTemplate } from '../../../../lib/intake/template-analyzer';
 
+const ANALYZER_WAIT_TIMEOUT_MS = 8_000;
+
 function buildValidationMessage(result: Awaited<ReturnType<typeof runPublishedUrlValidation>>) {
   const { summary } = result;
 
@@ -58,6 +60,10 @@ function toAutofillWarning(error: unknown): string {
   return 'Template suggestions are temporarily unavailable. Continue filling the remaining fields manually.';
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { url?: string };
 
@@ -71,7 +77,22 @@ export async function POST(request: Request) {
     });
 
     const result = await runPublishedUrlValidation(normalizedUrl);
-    const autofill = result.summary.passed ? await autofillPromise : null;
+    let autofill: Awaited<ReturnType<typeof analyzePublishedTemplate>> | null = null;
+
+    if (result.summary.passed) {
+      const analyzerResult = await Promise.race([
+        autofillPromise,
+        sleep(ANALYZER_WAIT_TIMEOUT_MS).then(() => 'timeout' as const)
+      ]);
+
+      if (analyzerResult === 'timeout') {
+        autofillWarning =
+          autofillWarning ||
+          'Template suggestions are taking longer than expected. Continue filling the remaining fields manually.';
+      } else {
+        autofill = analyzerResult;
+      }
+    }
 
     return jsonNoStore({
       passed: result.summary.passed,
