@@ -21,6 +21,9 @@ import {
   validateWebP
 } from '../vendor/core/upload-validation';
 
+const HERO_IMAGE_URL =
+  'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/6604753caf59bb1ac26f4bc6_Floating_templates7.webp';
+
 const IMAGE_CONSTRAINTS = {
   avatar: { width: 256, height: 256, maxSize: 100 * 1024, label: 'Profile image' },
   thumbnail: { width: 750, height: 995, maxSize: 300 * 1024, label: 'Thumbnail' },
@@ -725,6 +728,20 @@ export function TemplateIntake() {
     };
 
     setUtm(captureParams(window.location.search));
+
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialSection = initialParams.get('section');
+    const initialHash = window.location.hash;
+
+    if (initialSection === 'submit-today' || initialHash === '#submit-today') {
+      requestAnimationFrame(() => {
+        scrollToSubmissionSection('submit-today');
+      });
+    } else if (initialSection === 'join-today' || initialHash === '#join-today') {
+      requestAnimationFrame(() => {
+        scrollToSubmissionSection('join-today');
+      });
+    }
 
     const onParentMessage = (event: MessageEvent) => {
       const data = event.data as SubmissionParentMessage | null;
@@ -1723,6 +1740,79 @@ export function TemplateIntake() {
           onLoad={() => setTurnstileReady(true)}
         />
       ) : null}
+      <section className="section cc-applications_hero cc-template-submit">
+        <div className="container cc-flex_v">
+          <div className="mp-breadcrumbs">
+            <span className="u-text-none">Marketplace</span>
+            <div className="mp-breadcrumb-divider w-embed">
+              <svg
+                aria-hidden="true"
+                fill="none"
+                height="12"
+                viewBox="0 0 12 12"
+                width="12"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  clipRule="evenodd"
+                  d="M6.75849 5.62486L4.82227 3.36593L5.67643 2.63379L8.2402 5.62486L5.67643 8.61593L4.82227 7.88379L6.75849 5.62486Z"
+                  fill="currentColor"
+                  fillRule="evenodd"
+                />
+              </svg>
+            </div>
+            <a
+              className="u-text-blue u-text-none u-text-medium"
+              href="https://webflow.com/templates/"
+              rel="noreferrer"
+              target="_blank"
+            >
+              Templates
+            </a>
+          </div>
+          <div className="cc-hero-content-wrapper">
+            <h1>Get paid for your templates</h1>
+            <div>
+              <p className="application-subheading-2-2">
+                Whether you&apos;re here to showcase your unique template creations or to join our
+                vibrant community of Webflow creators, you&apos;re in the right place.
+              </p>
+            </div>
+            <div className="button-wrapper-2-2">
+              <a
+                className="button-sp w-inline-block"
+                href="#submit-today"
+                onClick={(event) => {
+                  event.preventDefault();
+                  scrollToSubmissionSection('submit-today');
+                }}
+              >
+                <div className="u-d-inline-block">Submit a template</div>
+                <div className="button-icon_right">→</div>
+              </a>
+              <a
+                className="button-sp cc-white w-inline-block"
+                href="#join-today"
+                onClick={(event) => {
+                  event.preventDefault();
+                  scrollToSubmissionSection('join-today');
+                }}
+              >
+                <div>Become a creator</div>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div className="applications-grid_wrapper cc-hero-image-wrapper">
+          <img
+            alt=""
+            className="cc-hero-image"
+            loading="eager"
+            sizes="(max-width: 991px) 100vw, 781px"
+            src={HERO_IMAGE_URL}
+          />
+        </div>
+      </section>
       <section
         className="section cc-submission-wrapper cc-creator-wrap"
         id="join-today"

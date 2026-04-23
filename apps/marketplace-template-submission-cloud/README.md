@@ -87,21 +87,13 @@ App-specific overrides (layout, spacing, per-field feedback colors, country pick
 
 ## Parent page embed
 
-Mount the iframe directly below the hero section on `/templates/submit-a-template`, and stop using the old local `join-today` / `submit-today` section-toggle script. The embedded app now accepts three parent-page behaviors:
+The embedded app now owns the hero section, CTA buttons, and the creator/template flow. Mount the iframe where you want the full experience to appear on `/templates/submit-a-template`, and remove the duplicated Webflow-managed hero and form sections from the parent page.
 
 - `ts-submission:resize` from the iframe to keep the frame height correct
 - `ts-submission:utm` from the parent to pass through query params
-- `ts-submission:navigate` from the parent to scroll the iframe to either `join-today` or `submit-today`
-
-Give the hero CTA buttons stable ids first:
-
-- `id="submit-button"` on the primary "Submit a template" button
-- `id="join-button"` on the secondary "Become a creator" button
-
-Then place this block below the hero:
 
 ```html
-<section id="template-submission-app" class="section cc-submission-wrapper">
+<section id="template-submission-app" class="section cc-template-submission-embed">
   <div class="container">
     <iframe
       id="ts-submission-frame"
@@ -117,40 +109,13 @@ Then place this block below the hero:
 <script>
 (function () {
   var frame = document.getElementById('ts-submission-frame');
-  var mount = document.getElementById('template-submission-app');
-  var joinButton = document.getElementById('join-button');
-  var submitButton = document.getElementById('submit-button');
-  var frameLoaded = false;
-  var pendingSection = null;
 
-  if (!frame || !mount) return;
+  if (!frame) return;
 
   function postToFrame(message) {
     try {
       frame.contentWindow.postMessage(message, '*');
     } catch (_) {}
-  }
-
-  function scrollToApp() {
-    window.scrollTo({
-      top: mount.offsetTop,
-      behavior: 'smooth'
-    });
-  }
-
-  function flushPendingSection() {
-    if (!frameLoaded || !pendingSection) return;
-    postToFrame({
-      type: 'ts-submission:navigate',
-      section: pendingSection
-    });
-    pendingSection = null;
-  }
-
-  function openSection(section) {
-    pendingSection = section;
-    scrollToApp();
-    flushPendingSection();
   }
 
   window.addEventListener('message', function (event) {
@@ -161,39 +126,9 @@ Then place this block below the hero:
   });
 
   frame.addEventListener('load', function () {
-    frameLoaded = true;
-
     postToFrame({
       type: 'ts-submission:utm',
       params: Object.fromEntries(new URLSearchParams(location.search))
-    });
-
-    var params = new URLSearchParams(location.search);
-    var section = params.get('section');
-    var hash = window.location.hash;
-    if (section === 'submit-today' || hash === '#submit-today') {
-      openSection('submit-today');
-      return;
-    }
-    if (section === 'join-today' || hash === '#join-today') {
-      openSection('join-today');
-      return;
-    }
-
-    flushPendingSection();
-  });
-
-  if (joinButton) {
-    joinButton.addEventListener('click', function (event) {
-      event.preventDefault();
-      openSection('join-today');
-    });
-  }
-
-  if (submitButton) {
-    submitButton.addEventListener('click', function (event) {
-      event.preventDefault();
-      openSection('submit-today');
     });
   }
 })();
