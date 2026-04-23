@@ -179,15 +179,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const airtable = await getServerAirtable();
-    const creator = await airtable.getCreatorByEmail(creatorEmail);
-    if (!creator) {
-      return jsonNoStore(
-        { error: 'Creator profile not found. Complete creator registration first.' },
-        { status: 404 }
-      );
-    }
-
     const eligibility = await evaluateCreatorEligibility(creatorEmail);
     if (!eligibility.allowed) {
       return jsonNoStore(
@@ -198,6 +189,8 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
+
+    const airtable = await getServerAirtable();
 
     const nameSyntax = validateTemplateNameSyntax(templateName);
     if (!nameSyntax.valid) {

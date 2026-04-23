@@ -54,19 +54,10 @@ function localEligibilityMessage(remainingSubmissions: number, activeReviewCount
 
 export async function evaluateCreatorEligibility(email: string): Promise<CreatorEligibilityResult> {
   const airtable = await getServerAirtable();
-  const creator = await airtable.getCreatorByEmail(email);
-
-  if (!creator) {
-    return {
-      allowed: false,
-      userExists: false,
-      hasError: true,
-      message: 'Creator profile not found. Complete creator registration first.',
-      source: 'local'
-    };
-  }
-
-  const assets = await airtable.getAssetsByEmail(email).catch(() => []);
+  const [creator, assets] = await Promise.all([
+    airtable.getCreatorByEmail(email),
+    airtable.getAssetsByEmail(email).catch(() => [])
+  ]);
   const publishedCount = assets.filter((asset) => asset.status === 'Published').length;
   const activeReviewCount = assets.filter(isActiveReviewAsset).length;
   const localSubmission = calculateLocalSubmissionData(
@@ -91,6 +82,9 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
     : externalSubmission.isWhitelisted
       ? Number.POSITIVE_INFINITY
       : Math.max(0, 6 - externalSubmission.assetsSubmitted30);
+  const finiteRemainingSubmissions = Number.isFinite(remainingSubmissions)
+    ? remainingSubmissions
+    : undefined;
 
   try {
     const remote = await checkRemoteCreatorEligibility(email);
@@ -105,7 +99,7 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
         remote,
         publishedCount,
         activeReviewCount,
-        remainingSubmissions
+        remainingSubmissions: finiteRemainingSubmissions
       };
     }
 
@@ -119,7 +113,24 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
         remote,
         publishedCount,
         activeReviewCount,
-        remainingSubmissions
+        remainingSubmissions: finiteRemainingSubmissions
+      };
+    }
+
+    if (!creator) {
+      return {
+        allowed: false,
+        userExists: remote.userExists === true,
+        hasError: true,
+        message:
+          remote.message && remote.message !== 'User not found in our system.'
+            ? remote.message
+            : 'Creator profile not found. Complete creator registration first.',
+        source: remote.userExists === true ? 'remote' : 'hybrid',
+        remote,
+        publishedCount,
+        activeReviewCount,
+        remainingSubmissions: finiteRemainingSubmissions
       };
     }
 
@@ -141,10 +152,22 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
       remote,
       publishedCount,
       activeReviewCount,
-      remainingSubmissions:
-        Number.isFinite(remainingSubmissions) ? remainingSubmissions : undefined
+      remainingSubmissions: finiteRemainingSubmissions
     };
   } catch {
+    if (!creator) {
+      return {
+        allowed: false,
+        userExists: false,
+        hasError: true,
+        message: 'We could not confirm creator eligibility right now. Try again in a moment.',
+        source: 'local',
+        publishedCount,
+        activeReviewCount,
+        remainingSubmissions: finiteRemainingSubmissions
+      };
+    }
+
     const fallback = localEligibilityMessage(remainingSubmissions, activeReviewCount, publishedCount);
     const nextWindowMessage =
       !fallback.allowed && localSubmission.timeUntilNextSlot
@@ -159,8 +182,7 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
       source: 'local',
       publishedCount,
       activeReviewCount,
-      remainingSubmissions:
-        Number.isFinite(remainingSubmissions) ? remainingSubmissions : undefined
+      remainingSubmissions: finiteRemainingSubmissions
     };
   }
 }
