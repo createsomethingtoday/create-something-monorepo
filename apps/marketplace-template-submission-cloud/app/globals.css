@@ -56,6 +56,36 @@ select {
   background: #fff;
 }
 
+.submission-app .cc-applications_hero {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding-top: clamp(2.5rem, 5vw, 4rem);
+  padding-bottom: clamp(2.5rem, 5vw, 4rem);
+  background: #f4f4f4;
+  overflow: hidden;
+}
+
+.submission-app .cc-applications_hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #f4f4f4;
+}
+
+.submission-app .cc-applications_hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.submission-app .cc-applications_hero h1 {
+  margin: 0;
+}
+
+.submission-app .cc-applications_hero .applications-grid_wrapper {
+  margin-top: 0;
+}
+
 .submission-app .submission_content-grid {
   align-items: start;
   column-gap: clamp(1.5rem, 3vw, 4rem);
