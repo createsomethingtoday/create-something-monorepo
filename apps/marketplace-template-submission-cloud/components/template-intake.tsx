@@ -59,6 +59,11 @@ type StatusMessage = {
   message: string;
 };
 
+type FeedbackAction = {
+  label: string;
+  onClick: () => void;
+};
+
 type TurnstileStep = 'creator' | 'template';
 
 type TurnstileRenderOptions = {
@@ -438,20 +443,44 @@ function formatFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function FieldFeedback({ feedback }: { feedback?: StatusMessage | null }) {
+function FieldFeedback({
+  feedback,
+  action,
+}: {
+  feedback?: StatusMessage | null;
+  action?: FeedbackAction;
+}) {
   if (!feedback) return null;
-  return <div className={feedbackClass(feedback.tone)}>{feedback.message}</div>;
+  return (
+    <div className={feedbackClass(feedback.tone)}>
+      <span>{feedback.message}</span>
+      {action ? (
+        <>
+          {' '}
+          <button
+            type="button"
+            className="submission-inline-action submission-field-feedback-action"
+            onClick={action.onClick}
+          >
+            {action.label}
+          </button>
+        </>
+      ) : null}
+    </div>
+  );
 }
 
 function InlineActionField({
   actionLabel,
   children,
   feedback,
+  feedbackAction,
   onAction,
 }: {
   actionLabel: string;
   children: ReactNode;
   feedback?: StatusMessage | null;
+  feedbackAction?: FeedbackAction;
   onAction: () => void;
 }) {
   return (
@@ -468,7 +497,7 @@ function InlineActionField({
           </button>
         </div>
       </div>
-      <FieldFeedback feedback={feedback} />
+      <FieldFeedback feedback={feedback} action={feedbackAction} />
     </>
   );
 }
@@ -705,6 +734,23 @@ export function TemplateIntake() {
     (feature) => feature.label,
     (feature) => feature.id
   );
+  const creatorProfileExistsActionLabel = 'Go to Submit a template';
+
+  function getCreatorProfileExistsAction(
+    feedback?: StatusMessage | null
+  ): FeedbackAction | undefined {
+    if (
+      feedback?.tone !== 'error' ||
+      !feedback.message.toLowerCase().includes('attached to a creator profile')
+    ) {
+      return undefined;
+    }
+
+    return {
+      label: creatorProfileExistsActionLabel,
+      onClick: () => scrollToSubmissionSection('submit-today'),
+    };
+  }
 
   function scrollToSubmissionSection(section: 'join-today' | 'submit-today') {
     const target =
@@ -1861,6 +1907,7 @@ export function TemplateIntake() {
                   <InlineActionField
                     actionLabel="Verify email"
                     feedback={fieldFeedback.primaryEmail}
+                    feedbackAction={getCreatorProfileExistsAction(fieldFeedback.primaryEmail)}
                     onAction={() => verifyCreatorEmail('primary')}
                   >
                     <label
@@ -1885,6 +1932,7 @@ export function TemplateIntake() {
                   <InlineActionField
                     actionLabel="Verify email"
                     feedback={fieldFeedback.webflowEmail}
+                    feedbackAction={getCreatorProfileExistsAction(fieldFeedback.webflowEmail)}
                     onAction={() => verifyCreatorEmail('webflow')}
                   >
                     <label
@@ -2054,10 +2102,7 @@ export function TemplateIntake() {
                       type="button"
                       onClick={() =>
                         requestAnimationFrame(() => {
-                          templateSectionRef.current?.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start',
-                          });
+                          scrollToSubmissionSection('submit-today');
                         })
                       }
                     >

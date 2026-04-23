@@ -698,6 +698,13 @@ select {
   color: var(--webflow-blue-600, #0055d4);
 }
 
+.submission-field-feedback-action {
+  display: inline;
+  margin-left: 0.35rem;
+  font-size: inherit;
+  font-weight: 700;
+}
+
 .submission-autofill-badge {
   display: inline-flex;
   align-items: center;
