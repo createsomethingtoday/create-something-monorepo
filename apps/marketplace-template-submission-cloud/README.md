@@ -7,7 +7,7 @@ Dedicated Webflow Cloud app that serves the template marketplace submission form
 - Public creator intake + template submission form (two-step)
 - Intake API routes (validation, upload, remote checks, webhook dispatch)
 - Cloudflare Turnstile
-- R2 upload for avatar/thumbnail/gallery images
+- Cloudflare R2-backed upload worker for avatar/thumbnail/gallery images
 
 Out of scope (those live in `apps/webflow-dashboard-cloud`):
 
@@ -22,7 +22,6 @@ Deploy as an independent Webflow Cloud project pointed at this directory. The ex
 Webflow Cloud should provision:
 
 - `ASSETS`: OpenNext static asset binding
-- `UPLOADS`: R2 bucket for dashboard uploads
 
 ## Environment variables
 
@@ -50,6 +49,17 @@ Optional analyzer autofill:
   defaults to `https://webflow-template-analyzer.createsomething.workers.dev`
   and is used by `POST /api/intake/validate-published-url` to suggest template details and
   expose screenshot-download links after a successful validation pass.
+
+Required upload worker:
+
+- `UPLOADS_WORKER_SECRET`
+  shared secret used by `POST /api/intake/upload` when proxying uploads to the worker
+
+Optional upload worker override:
+
+- `UPLOADS_WORKER_URL`
+  public base URL for the dedicated Cloudflare upload worker. If omitted, the app defaults to
+  `https://template-form-uploads.createsomething.workers.dev`.
 
 ## Commands
 

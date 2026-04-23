@@ -1,0 +1,20 @@
+name = "template-form-uploads"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+main = "src/worker.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[routes]]
+pattern = "template-form-uploads.mcp.createsomething.agency"
+custom_domain = true
+
+[[r2_buckets]]
+binding = "UPLOADS"
+bucket_name = "webflow-app-form-uploads"
+
+# Secrets (set via `wrangler secret put`):
+# - UPLOADS_WORKER_SECRET
