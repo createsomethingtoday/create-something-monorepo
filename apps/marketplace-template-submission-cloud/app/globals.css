@@ -1056,6 +1056,13 @@ select {
   line-height: 1.6;
 }
 
+@media (max-width: 991px) {
+  .submission-app .cc-sticky {
+    position: static;
+    top: auto;
+  }
+}
+
 @media (max-width: 767px) {
   .submission-app .cc-submission-wrapper {
     padding-top: 1rem;
