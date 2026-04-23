@@ -87,33 +87,115 @@ App-specific overrides (layout, spacing, per-field feedback colors, country pick
 
 ## Parent page embed
 
-Inside the `/templates/submit-a-template` Webflow Designer page, replace both `<form>` blocks (and their inline `<script>` tags) with:
+Mount the iframe directly below the hero section on `/templates/submit-a-template`, and stop using the old local `join-today` / `submit-today` section-toggle script. The embedded app now accepts three parent-page behaviors:
+
+- `ts-submission:resize` from the iframe to keep the frame height correct
+- `ts-submission:utm` from the parent to pass through query params
+- `ts-submission:navigate` from the parent to scroll the iframe to either `join-today` or `submit-today`
+
+Give the hero CTA buttons stable ids first:
+
+- `id="submit-button"` on the primary "Submit a template" button
+- `id="join-button"` on the secondary "Become a creator" button
+
+Then place this block below the hero:
 
 ```html
-<iframe
-  id="ts-submission-frame"
-  src="https://<cloud-app-host>/submit"
-  style="width:100%; min-height:1800px; border:0; display:block;"
-  loading="lazy"
-  allow="clipboard-read; clipboard-write"
-  title="Template submission"
-></iframe>
+<section id="template-submission-app" class="section cc-submission-wrapper">
+  <div class="container">
+    <iframe
+      id="ts-submission-frame"
+      src="https://<cloud-app-host>/submit"
+      style="width:100%; min-height:1800px; border:0; display:block;"
+      loading="lazy"
+      allow="clipboard-read; clipboard-write"
+      title="Template submission"
+    ></iframe>
+  </div>
+</section>
 
 <script>
 (function () {
-  var f = document.getElementById('ts-submission-frame');
-  window.addEventListener('message', function (e) {
-    if (!e.data || e.data.type !== 'ts-submission:resize') return;
-    if (typeof e.data.height === 'number') f.style.height = e.data.height + 'px';
-  });
-  f.addEventListener('load', function () {
+  var frame = document.getElementById('ts-submission-frame');
+  var mount = document.getElementById('template-submission-app');
+  var joinButton = document.getElementById('join-button');
+  var submitButton = document.getElementById('submit-button');
+  var frameLoaded = false;
+  var pendingSection = null;
+
+  if (!frame || !mount) return;
+
+  function postToFrame(message) {
     try {
-      f.contentWindow.postMessage({
-        type: 'ts-submission:utm',
-        params: Object.fromEntries(new URLSearchParams(location.search))
-      }, '*');
+      frame.contentWindow.postMessage(message, '*');
     } catch (_) {}
+  }
+
+  function scrollToApp() {
+    window.scrollTo({
+      top: mount.offsetTop,
+      behavior: 'smooth'
+    });
+  }
+
+  function flushPendingSection() {
+    if (!frameLoaded || !pendingSection) return;
+    postToFrame({
+      type: 'ts-submission:navigate',
+      section: pendingSection
+    });
+    pendingSection = null;
+  }
+
+  function openSection(section) {
+    pendingSection = section;
+    scrollToApp();
+    flushPendingSection();
+  }
+
+  window.addEventListener('message', function (event) {
+    if (!event.data || event.data.type !== 'ts-submission:resize') return;
+    if (typeof event.data.height === 'number') {
+      frame.style.height = event.data.height + 'px';
+    }
   });
+
+  frame.addEventListener('load', function () {
+    frameLoaded = true;
+
+    postToFrame({
+      type: 'ts-submission:utm',
+      params: Object.fromEntries(new URLSearchParams(location.search))
+    });
+
+    var params = new URLSearchParams(location.search);
+    var section = params.get('section');
+    var hash = window.location.hash;
+    if (section === 'submit-today' || hash === '#submit-today') {
+      openSection('submit-today');
+      return;
+    }
+    if (section === 'join-today' || hash === '#join-today') {
+      openSection('join-today');
+      return;
+    }
+
+    flushPendingSection();
+  });
+
+  if (joinButton) {
+    joinButton.addEventListener('click', function (event) {
+      event.preventDefault();
+      openSection('join-today');
+    });
+  }
+
+  if (submitButton) {
+    submitButton.addEventListener('click', function (event) {
+      event.preventDefault();
+      openSection('submit-today');
+    });
+  }
 })();
 </script>
 ```

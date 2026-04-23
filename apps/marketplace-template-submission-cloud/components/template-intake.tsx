@@ -181,6 +181,16 @@ type VerificationState = {
   gsapDetected: boolean;
 };
 
+type SubmissionParentMessage =
+  | {
+      type?: 'ts-submission:utm';
+      params?: Record<string, string>;
+    }
+  | {
+      type?: 'ts-submission:navigate';
+      section?: 'join-today' | 'submit-today';
+    };
+
 declare global {
   interface Window {
     turnstile?: TurnstileApi;
@@ -604,6 +614,7 @@ export function TemplateIntake() {
   const templateTurnstileRef = useRef<HTMLDivElement | null>(null);
   const creatorTurnstileWidgetId = useRef<string | null>(null);
   const templateTurnstileWidgetId = useRef<string | null>(null);
+  const creatorSectionRef = useRef<HTMLElement | null>(null);
   const templateSectionRef = useRef<HTMLElement | null>(null);
   const analyzerSummaryRef = useRef<HTMLDivElement | null>(null);
 
@@ -665,6 +676,12 @@ export function TemplateIntake() {
     (feature) => feature.id
   );
 
+  function scrollToSubmissionSection(section: 'join-today' | 'submit-today') {
+    const target =
+      section === 'submit-today' ? templateSectionRef.current : creatorSectionRef.current;
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   useEffect(() => {
     const captureParams = (searchLike: string | Record<string, string>) => {
       const params =
@@ -689,9 +706,23 @@ export function TemplateIntake() {
     setUtm(captureParams(window.location.search));
 
     const onParentMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string; params?: Record<string, string> } | null;
-      if (!data || data.type !== 'ts-submission:utm' || !data.params) return;
-      setUtm((current) => ({ ...current, ...captureParams(data.params ?? {}) }));
+      const data = event.data as SubmissionParentMessage | null;
+      if (!data) return;
+
+      if (data.type === 'ts-submission:utm' && data.params) {
+        setUtm((current) => ({ ...current, ...captureParams(data.params ?? {}) }));
+        return;
+      }
+
+      if (
+        data.type === 'ts-submission:navigate' &&
+        (data.section === 'join-today' || data.section === 'submit-today')
+      ) {
+        const targetSection = data.section;
+        requestAnimationFrame(() => {
+          scrollToSubmissionSection(targetSection);
+        });
+      }
     };
     window.addEventListener('message', onParentMessage);
 
@@ -1475,7 +1506,7 @@ export function TemplateIntake() {
         message: 'Creator profile created. Continue to the template submission step.'
       });
       requestAnimationFrame(() => {
-        templateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollToSubmissionSection('submit-today');
       });
     } catch (error) {
       setCreatorStatus({
@@ -1637,7 +1668,11 @@ export function TemplateIntake() {
           onLoad={() => setTurnstileReady(true)}
         />
       ) : null}
-      <section className="section cc-submission-wrapper cc-creator-wrap" id="join-today">
+      <section
+        className="section cc-submission-wrapper cc-creator-wrap"
+        id="join-today"
+        ref={creatorSectionRef}
+      >
         <div className="container">
           <div className="w-layout-grid submission_content-grid">
             <div className="cc-sticky submission-sidecar">
