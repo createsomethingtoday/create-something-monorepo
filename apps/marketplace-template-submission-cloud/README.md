@@ -91,6 +91,8 @@ The embedded app now owns the hero section, CTA buttons, and the creator/templat
 
 - `ts-submission:resize` from the iframe to keep the frame height correct
 - `ts-submission:utm` from the parent to pass through query params
+- `ts-submission:navigate` from the parent to let `?section=` and `#join-today` / `#submit-today` land inside the iframe
+- `ts-submission:scroll-to` from the iframe to make the parent page scroll to the relevant internal section when an in-app hero CTA is clicked
 
 ```html
 <section id="template-submission-app" class="section cc-template-submission-embed">
@@ -109,6 +111,7 @@ The embedded app now owns the hero section, CTA buttons, and the creator/templat
 <script>
 (function () {
   var frame = document.getElementById('ts-submission-frame');
+  var EMBED_SCROLL_MARGIN = 24;
 
   if (!frame) return;
 
@@ -119,18 +122,50 @@ The embedded app now owns the hero section, CTA buttons, and the creator/templat
   }
 
   window.addEventListener('message', function (event) {
-    if (!event.data || event.data.type !== 'ts-submission:resize') return;
-    if (typeof event.data.height === 'number') {
+    if (!event.data) return;
+
+    if (event.data.type === 'ts-submission:resize' && typeof event.data.height === 'number') {
       frame.style.height = event.data.height + 'px';
+      return;
+    }
+
+    if (
+      event.data.type === 'ts-submission:scroll-to' &&
+      typeof event.data.offsetTop === 'number'
+    ) {
+      var frameTop = frame.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: Math.max(0, Math.round(frameTop + event.data.offsetTop - EMBED_SCROLL_MARGIN)),
+        behavior: 'smooth'
+      });
     }
   });
 
   frame.addEventListener('load', function () {
+    var params = new URLSearchParams(location.search);
+    var section = params.get('section');
+    var hash = window.location.hash;
+
     postToFrame({
       type: 'ts-submission:utm',
-      params: Object.fromEntries(new URLSearchParams(location.search))
+      params: Object.fromEntries(params)
     });
-  }
+
+    if (section === 'submit-today' || hash === '#submit-today') {
+      postToFrame({
+        type: 'ts-submission:navigate',
+        section: 'submit-today'
+      });
+      return;
+    }
+
+    if (section === 'join-today' || hash === '#join-today') {
+      postToFrame({
+        type: 'ts-submission:navigate',
+        section: 'join-today'
+      });
+    }
+  });
 })();
 </script>
 ```

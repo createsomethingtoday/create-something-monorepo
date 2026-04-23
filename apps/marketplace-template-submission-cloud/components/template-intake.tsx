@@ -194,6 +194,17 @@ type SubmissionParentMessage =
       section?: 'join-today' | 'submit-today';
     };
 
+type SubmissionChildMessage =
+  | {
+      type: 'ts-submission:resize';
+      height: number;
+    }
+  | {
+      type: 'ts-submission:scroll-to';
+      section: 'join-today' | 'submit-today';
+      offsetTop: number;
+    };
+
 declare global {
   interface Window {
     turnstile?: TurnstileApi;
@@ -701,7 +712,19 @@ export function TemplateIntake() {
   function scrollToSubmissionSection(section: 'join-today' | 'submit-today') {
     const target =
       section === 'submit-today' ? templateSectionRef.current : creatorSectionRef.current;
-    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!target) return;
+
+    if (window.parent !== window) {
+      const message: SubmissionChildMessage = {
+        type: 'ts-submission:scroll-to',
+        section,
+        offsetTop: target.offsetTop
+      };
+      window.parent.postMessage(message, '*');
+      return;
+    }
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   useEffect(() => {
@@ -780,7 +803,8 @@ export function TemplateIntake() {
       );
       if (height === lastHeight) return;
       lastHeight = height;
-      window.parent.postMessage({ type: 'ts-submission:resize', height }, '*');
+      const message: SubmissionChildMessage = { type: 'ts-submission:resize', height };
+      window.parent.postMessage(message, '*');
     };
 
     postHeight();
