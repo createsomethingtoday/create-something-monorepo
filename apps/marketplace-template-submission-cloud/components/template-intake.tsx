@@ -2349,7 +2349,7 @@ export function TemplateIntake() {
                           : undefined
                       }
                     />
-                    <div className="submission-choice-grid is-scroll">
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy is-scroll">
                       {visibleCategories.length === 0 ? (
                         <div className="submission-choice-empty">No categories match your search.</div>
                       ) : null}
@@ -2358,7 +2358,7 @@ export function TemplateIntake() {
                         const atMax = template.categories.length >= 2;
                         return (
                           <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
                             key={category}
                           >
                             <input
@@ -2405,13 +2405,13 @@ export function TemplateIntake() {
                           : undefined
                       }
                     />
-                    <div className="submission-choice-grid is-scroll submission-choice-grid-compact">
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy is-scroll submission-choice-grid-compact">
                       {visibleSecondaryTags.length === 0 ? (
                         <div className="submission-choice-empty">No secondary tags match your search.</div>
                       ) : null}
                       {visibleSecondaryTags.map((tag) => (
                         <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
                           key={tag}
                         >
                           <input
@@ -2441,7 +2441,7 @@ export function TemplateIntake() {
                     <p className="field-help cc-library-application-form_field-desc">
                       One page, multi page, or multi-layout.
                     </p>
-                    <div className="submission-choice-grid">
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy">
                       {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
                         <label
                           className="submission-choice input-block cc-check cc-template-application-form-choice"
@@ -2512,7 +2512,7 @@ export function TemplateIntake() {
                       <div className="submission-choice-grid">
                         {getPricingTiers(template.pageCount as PageCountOption, template.typeCms).prices.map((price) => (
                           <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
                             key={price}
                           >
                             <input
@@ -2550,7 +2550,7 @@ export function TemplateIntake() {
                         template.styles.length > 0 ? () => updateTemplate('styles', []) : undefined
                       }
                     />
-                    <div className="submission-choice-grid">
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy">
                       {visibleStyles.length === 0 ? (
                         <div className="submission-choice-empty">No styles match your search.</div>
                       ) : null}
@@ -2614,7 +2614,7 @@ export function TemplateIntake() {
                       ) : null}
                       {visibleFeatures.map((option) => (
                         <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
                           key={option.id}
                         >
                           <input
