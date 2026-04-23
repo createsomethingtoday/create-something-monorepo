@@ -1678,25 +1678,37 @@ export function TemplateIntake() {
             <div className="cc-sticky submission-sidecar">
               <p className="submission-step-label">Step 1</p>
               <h2 className="submission-panel-title">Become a Creator</h2>
-              <p className="application-subheading-2-2 submission-panel-copy">
-                Start with your creator profile so the review team has the right identity,
-                correspondence, and profile context before the first template enters review.
-              </p>
-              <div className="submission-sidecar-steps">
-                <div className="submission-sidecar-step">
-                  <p className="submission-step-label submission-step-label-secondary">Profile</p>
-                  <p className="submission-panel-copy">
-                    Complete the creator details once. The template step below reuses the same
-                    name and email automatically.
-                  </p>
-                </div>
-                <div className="submission-sidecar-step">
-                  <p className="submission-step-label submission-step-label-secondary">Then submit</p>
-                  <p className="submission-panel-copy">
-                    After the creator profile is in place, continue into the template form and
-                    pass the same marketplace validation gates used on the live page.
-                  </p>
-                </div>
+              <div className="rte w-richtext submission-panel-copy">
+                <h3 className="h4">Step 1</h3>
+                <p>
+                  Start by filling out our Marketplace Creator form. These details will be used
+                  by our review team to learn about you as a designer, and evaluate your
+                  experience with Webflow. Remember that you only need to fill this out once!
+                </p>
+                <h3 className="h4">
+                  <strong>Step 2</strong>
+                </h3>
+                <p>
+                  Apply with your first template submission{' '}
+                  <a
+                    className="ts_link"
+                    href="#submit-today"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      requestAnimationFrame(() => {
+                        templateSectionRef.current?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'start',
+                        });
+                      });
+                    }}
+                  >
+                    here
+                  </a>
+                  ! We will evaluate the quality of your template, and publish those that meet our
+                  standards. Once you have your first template approved, we will onboard you to
+                  the Template Marketplace as a new designer.
+                </p>
               </div>
             </div>
 
@@ -1979,26 +1991,43 @@ export function TemplateIntake() {
             <div className="cc-sticky submission-sidecar">
               <p className="submission-step-label">Step 2</p>
               <h2 className="submission-panel-title">Submit a template</h2>
-              <p className="application-subheading-2-2 submission-panel-copy">
-                Once the creator profile exists, this form runs the marketplace checks for creator
-                eligibility, naming policy, published-site validation, preview URL format, and
-                image requirements.
-              </p>
-              <div className="submission-sidecar-steps">
-                <div className="submission-sidecar-step">
-                  <p className="submission-step-label submission-step-label-secondary">Validation</p>
-                  <p className="submission-panel-copy">
-                    Use the inline checks before submit so the final handoff matches the live
-                    review workflow.
-                  </p>
-                </div>
-                <div className="submission-sidecar-step">
-                  <p className="submission-step-label submission-step-label-secondary">Review</p>
-                  <p className="submission-panel-copy">
-                    Reviewers still receive the submission through the existing Airtable automation
-                    path, so downstream routing stays unchanged.
-                  </p>
-                </div>
+              <div className="rte w-richtext submission-panel-copy">
+                <p>
+                  Once you've registered as a Marketplace Creator, you can submit templates for
+                  review and publication in Webflow's Template Marketplace.
+                </p>
+                <p>
+                  Remember to always reference our{' '}
+                  <a
+                    className="ts_link"
+                    href="https://webflow.com/templates/grading-rubric"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    quality rubric
+                  </a>{' '}
+                  &amp;{' '}
+                  <a
+                    className="ts_link"
+                    href="https://webflow.com/templates/submission-guidelines"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    submission guidelines
+                  </a>
+                  . Templates will only be published if all submission guidelines are met and a
+                  score of "Good" is achieved on the quality rubric.
+                </p>
+                <p>
+                  Published designers will be allowed concurrent submissions once they have had 5
+                  templates published. Designers who have submitted 6 templates in 30 days will
+                  need to wait before submitting new templates. All other designers will be limited
+                  to 1 active review at a time.
+                </p>
+                <p>
+                  Our design reviewers will check your submission for quality, and get back to you
+                  with any changes required.
+                </p>
               </div>
             </div>
 

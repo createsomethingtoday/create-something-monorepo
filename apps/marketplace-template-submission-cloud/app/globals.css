@@ -14,7 +14,7 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: #f4f4f4;
+  background: transparent;
   color: #080808;
   font-family:
     var(--font-wf-visual-sans),
@@ -1029,6 +1029,13 @@ select {
 .submission-quill .ql-editor {
   min-height: 14rem;
   line-height: 1.6;
+}
+
+@media (max-width: 991px) {
+  .submission-app .cc-sticky {
+    position: static;
+    top: auto;
+  }
 }
 
 @media (max-width: 767px) {

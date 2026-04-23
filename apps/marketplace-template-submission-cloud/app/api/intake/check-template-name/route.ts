@@ -1,6 +1,5 @@
 import { jsonNoStore } from '../../../../lib/server/responses';
-import { getServerAirtable } from '../../../../lib/server/airtable';
-import { checkRemoteTemplateNameAvailability } from '../../../../lib/intake/external';
+import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 
 export async function POST(request: Request) {
@@ -22,19 +21,8 @@ export async function POST(request: Request) {
   const syntax = validateTemplateNameSyntax(name);
 
   try {
-    const airtable = await getServerAirtable();
-    const [uniqueness, remoteAvailability] = await Promise.all([
-      airtable.checkAssetNameUniqueness(name),
-      checkRemoteTemplateNameAvailability(name)
-        .then((result) => ({
-          taken: result.taken,
-          source: 'remote' as const
-        }))
-        .catch(() => null)
-    ]);
-
-    const takenRemotely = remoteAvailability?.taken === true;
-    const available = uniqueness.unique && !takenRemotely;
+    const availability = await checkTemplateNameAvailability(name);
+    const available = availability.available;
     const errors = available
       ? syntax.errors
       : [...syntax.errors, 'Template name is already in use.'];
@@ -44,20 +32,28 @@ export async function POST(request: Request) {
       available,
       errors,
       matchedForbiddenTokens: syntax.matchedForbiddenTokens,
-      source: remoteAvailability ? 'hybrid' : 'local'
+      source: availability.source,
+      warning: availability.warning
     });
   } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'object' &&
+            error &&
+            'message' in error &&
+            typeof (error as { message?: unknown }).message === 'string'
+          ? (error as { message: string }).message
+          : 'Template name availability is temporarily unavailable. Please try again.';
+
     return jsonNoStore(
       {
         valid: syntax.valid,
         available: false,
-        errors: [
-          ...syntax.errors,
-          error instanceof Error ? error.message : 'Failed to verify template name.'
-        ],
+        errors: [...syntax.errors, message],
         matchedForbiddenTokens: syntax.matchedForbiddenTokens
       },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }
