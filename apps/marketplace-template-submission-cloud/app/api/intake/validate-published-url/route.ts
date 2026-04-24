@@ -6,6 +6,67 @@ import {
 import { analyzePublishedTemplate } from '../../../../lib/intake/template-analyzer';
 
 const ANALYZER_WAIT_TIMEOUT_MS = 8_000;
+type PublishedPageResult = Awaited<
+  ReturnType<typeof runPublishedUrlValidation>
+>['summary']['pageResults'][number];
+
+function extractHttpStatus(error?: string) {
+  if (typeof error !== 'string') {
+    return null;
+  }
+
+  const match = error.match(/HTTP error:\s*(\d{3})/i);
+  return match ? Number(match[1]) : null;
+}
+
+function toDisplayPath(url: string) {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.pathname}${parsed.search}` || '/';
+  } catch {
+    return url;
+  }
+}
+
+function formatReferrers(referrers?: string[]) {
+  if (!Array.isArray(referrers) || referrers.length === 0) {
+    return '';
+  }
+
+  const displayReferrers = referrers.map(toDisplayPath);
+  if (displayReferrers.length === 1) {
+    return displayReferrers[0];
+  }
+  if (displayReferrers.length === 2) {
+    return `${displayReferrers[0]} and ${displayReferrers[1]}`;
+  }
+
+  return `${displayReferrers[0]}, ${displayReferrers[1]}, and ${displayReferrers.length - 2} more page${displayReferrers.length - 2 === 1 ? '' : 's'}`;
+}
+
+function buildRequestFailureMessage(failedPage: PublishedPageResult | undefined) {
+  if (!failedPage) {
+    return 'Some published pages could not be fetched during the published-site crawl.';
+  }
+
+  const status = extractHttpStatus(failedPage.error);
+  if (status === 404 && failedPage.url) {
+    const linkedFrom = formatReferrers(failedPage.referrers);
+    return linkedFrom
+      ? `Broken internal link detected: ${failedPage.url} returned 404 during the published-site crawl. Linked from ${linkedFrom}. Remove or fix that link and validate again.`
+      : `Broken internal link detected: ${failedPage.url} returned 404 during the published-site crawl. Remove or fix that link and validate again.`;
+  }
+
+  if (failedPage.url && failedPage.error) {
+    return `Some published pages could not be fetched, starting with ${failedPage.url} (${failedPage.error}).`;
+  }
+
+  if (failedPage.url) {
+    return `Some published pages could not be fetched, starting with ${failedPage.url}.`;
+  }
+
+  return 'Some published pages could not be fetched during the published-site crawl.';
+}
 
 function buildValidationMessage(result: Awaited<ReturnType<typeof runPublishedUrlValidation>>) {
   const { summary } = result;
@@ -25,11 +86,7 @@ function buildValidationMessage(result: Awaited<ReturnType<typeof runPublishedUr
   }
 
   if (summary.siteResults.requestFailureCount > 0) {
-    const failedPage = summary.pageResults.find((page) => page.success === false);
-    if (failedPage?.url) {
-      return `Some published pages could not be crawled, starting with ${failedPage.url}. Try validation again in a minute.`;
-    }
-    return 'Some published pages could not be crawled. Try validation again in a minute.';
+    return buildRequestFailureMessage(summary.pageResults.find((page) => page.success === false));
   }
 
   if (summary.siteResults.validationFailureCount > 0) {

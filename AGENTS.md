@@ -7,6 +7,7 @@ Important: local `lm` talks to the repo-local `.loom` database. Shared coordinat
 For a fresh local clone that has not initialized the repo-local `.loom` database yet:
 
 ```bash
+pnpm bootstrap:worktree
 lm init
 lm ready
 lm claim <id>
@@ -15,6 +16,7 @@ lm claim <id>
 For provisioned Ona or other shared remote environments, skip `lm init` and start with:
 
 ```bash
+pnpm bootstrap:worktree
 lm ready
 pnpm loom:remote ready
 ```
@@ -87,6 +89,8 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 Core commands:
 
 ```bash
+pnpm bootstrap:worktree
+
 lm ready
 lm ready --ranked
 lm show <id>
@@ -101,6 +105,7 @@ pnpm test
 
 For shared orchestration lanes, prefer remote Loom via `pnpm loom:remote ...`.
 Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
+For new worktrees, run `pnpm bootstrap:worktree` before type checks, smoke scripts, or any command that expects `pnpm exec tsc` / `pnpm exec tsx` to exist. Symphony after-create hooks should use the same bootstrap path instead of calling `pnpm install` directly.
 
 ## Git-light delivery
 

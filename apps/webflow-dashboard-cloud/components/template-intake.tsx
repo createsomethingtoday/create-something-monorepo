@@ -1026,7 +1026,7 @@ export function TemplateIntake() {
     setFeedback('publishedUrl', {
       tone: 'success',
       message: [
-        'Published site validated.',
+        data.message || 'Published site validated.',
         autofillApplied ? 'Suggested template details were added automatically.' : '',
         data.gsapDetected ? 'GSAP was detected automatically.' : '',
         data.autofillWarning
@@ -1039,9 +1039,11 @@ export function TemplateIntake() {
     setVerification((current) => ({
       ...current,
       publishedUrlVerified: data.normalizedUrl || '',
-      publishedUrlMessage: data.gsapDetected
-        ? 'Published site validated. GSAP was detected automatically.'
-        : 'Published site validated.'
+      publishedUrlMessage:
+        data.message ||
+        (data.gsapDetected
+          ? 'Published site validated. GSAP was detected automatically.'
+          : 'Published site validated.')
     }));
     setTemplate((current) => ({
       ...current,
