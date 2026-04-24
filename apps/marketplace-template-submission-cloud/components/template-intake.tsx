@@ -2890,12 +2890,6 @@ export function TemplateIntake() {
                     <div className="field-help">{template.notes.length}/400 characters</div>
                   </div>
 
-                  <ReviewChecklistCard
-                    title="Review the final handoff"
-                    copy="This mirrors the final readiness checks the marketplace team will expect when your template hits the queue."
-                    items={reviewItems}
-                  />
-
                   <div className="submission-field">
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
@@ -3049,6 +3043,12 @@ export function TemplateIntake() {
                       </div>
                     ))}
                   </div>
+
+                  <ReviewChecklistCard
+                    title="Review the final handoff"
+                    copy="This mirrors the final readiness checks the marketplace team will expect when your template hits the queue."
+                    items={reviewItems}
+                  />
 
                   <div className="submission-confirmation-card">
                     <div className="submission-confirmation-header">
