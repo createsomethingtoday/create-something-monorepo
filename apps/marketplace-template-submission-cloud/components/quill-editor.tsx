@@ -10,8 +10,12 @@ type QuillInstance = {
   on: (event: string, handler: () => void) => void;
   off: (event: string, handler: () => void) => void;
   getContents: () => { ops: { insert?: unknown }[] };
+  setContents: (delta: unknown, source?: string) => void;
   deleteText: (index: number, length: number, source?: string) => void;
   getLength: () => number;
+  clipboard: {
+    convert: (html?: string) => unknown;
+  };
 };
 
 declare global {
@@ -98,7 +102,7 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
         });
 
         if (valueRef.current) {
-          quill.root.innerHTML = valueRef.current;
+          quill.setContents(quill.clipboard.convert(valueRef.current), 'silent');
         }
 
         handler = () => {
@@ -112,10 +116,8 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
             }
           }
           if (hasImages) {
-            const len = quill.getLength();
             const filteredHtml = quill.root.innerHTML.replace(/<img[^>]*>/g, '');
-            quill.root.innerHTML = filteredHtml;
-            quill.deleteText(len, 0, 'silent');
+            quill.setContents(quill.clipboard.convert(filteredHtml), 'silent');
           }
           onChangeRef.current(quill.root.innerHTML);
         };
@@ -151,7 +153,7 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
       return;
     }
 
-    quill.root.innerHTML = nextHtml;
+    quill.setContents(quill.clipboard.convert(nextHtml), 'silent');
   }, [value]);
 
   return <div id={id} ref={containerRef} className="submission-quill" />;
