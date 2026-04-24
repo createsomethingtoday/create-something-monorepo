@@ -19,6 +19,41 @@ export interface DashboardCloudflareEnv {
   TURNSTILE_EXPECTED_HOSTNAME?: string;
 }
 
+const PROCESS_ENV_KEYS = [
+  'AIRTABLE_API_KEY',
+  'AIRTABLE_BASE_ID',
+  'RESEND_API_KEY',
+  'CRON_SECRET',
+  'ADMIN_EMAILS',
+  'CSRF_TRUSTED_ORIGINS',
+  'ENVIRONMENT',
+  'DEBUG_LOGS',
+  'DEBUG_AIRTABLE',
+  'BASE_URL',
+  'ASSETS_PREFIX',
+  'NEXT_PUBLIC_BASE_PATH',
+  'NEXT_PUBLIC_TURNSTILE_SITE_KEY',
+  'TURNSTILE_SECRET_KEY',
+  'TURNSTILE_EXPECTED_HOSTNAME',
+] as const satisfies readonly (keyof DashboardCloudflareEnv)[];
+
+function getProcessEnvFallback(): DashboardCloudflareEnv | null {
+  if (typeof process === 'undefined' || !process.env) {
+    return null;
+  }
+
+  const env: DashboardCloudflareEnv = {};
+
+  for (const key of PROCESS_ENV_KEYS) {
+    const value = process.env[key];
+    if (typeof value === 'string' && value.length > 0) {
+      env[key] = value;
+    }
+  }
+
+  return Object.keys(env).length > 0 ? env : null;
+}
+
 export async function getCloudflareEnv(
   runtime: { env?: DashboardCloudflareEnv } = {}
 ): Promise<DashboardCloudflareEnv | null> {
@@ -37,9 +72,9 @@ export async function getCloudflareEnv(
     }
 
     const context = await getCloudflareContext({ async: true });
-    return (context?.env as DashboardCloudflareEnv | undefined) || null;
+    return (context?.env as DashboardCloudflareEnv | undefined) || getProcessEnvFallback();
   } catch {
-    return null;
+    return getProcessEnvFallback();
   }
 }
 

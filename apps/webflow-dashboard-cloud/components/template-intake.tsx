@@ -152,6 +152,7 @@ type TemplateAutofillState = Partial<
     | 'templateName'
     | 'shortDescription'
     | 'longDescription'
+    | 'secondaryTags'
     | 'priceModel'
     | 'pageCount'
     | 'typeCms'
@@ -167,6 +168,7 @@ type TemplateAutofillPayload = {
   shortDescription?: string;
   longDescription?: string;
   categories?: string[];
+  secondaryTags?: string[];
   priceModel?: 'Free' | 'Paid';
   pageCount?: PageCountOption;
   typeCms?: boolean;
@@ -241,6 +243,23 @@ function arraysEqual(left: readonly string[], right: readonly string[]) {
 
 function shouldAutofillText(current: string, previous?: string) {
   return current.trim() === '' || current === previous;
+}
+
+function normalizeRichText(value: string | undefined) {
+  return (value || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function shouldAutofillRichText(current: string, previous?: string) {
+  return (
+    normalizeRichText(current) === '' ||
+    normalizeRichText(current) === normalizeRichText(previous)
+  );
 }
 
 function shouldAutofillArray(current: readonly string[], previous?: readonly string[]) {
@@ -740,7 +759,10 @@ export function TemplateIntake() {
       if (
         autofill.longDescription &&
         autofill.longDescription !== current.longDescription &&
-        shouldAutofillText(current.longDescription, autofillManaged.longDescription)
+        shouldAutofillRichText(
+          current.longDescription,
+          autofillManaged.longDescription
+        )
       ) {
         next.longDescription = autofill.longDescription;
         managedNext.longDescription = autofill.longDescription;
@@ -797,6 +819,19 @@ export function TemplateIntake() {
       ) {
         next.categories = autofill.categories;
         managedNext.categories = autofill.categories;
+        detailsApplied = true;
+      }
+
+      if (
+        autofill.secondaryTags?.length &&
+        !arraysEqual(current.secondaryTags, autofill.secondaryTags) &&
+        shouldAutofillArray(
+          current.secondaryTags,
+          autofillManaged.secondaryTags
+        )
+      ) {
+        next.secondaryTags = autofill.secondaryTags;
+        managedNext.secondaryTags = autofill.secondaryTags;
         detailsApplied = true;
       }
 
