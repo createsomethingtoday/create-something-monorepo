@@ -19,6 +19,8 @@ if [[ -d "${REPO_ROOT}/.loom" && ! -e "${WORKSPACE_PATH}/.loom" ]]; then
   ln -s "${REPO_ROOT}/.loom" "${WORKSPACE_PATH}/.loom"
 fi
 
-if [[ ! -d "${WORKSPACE_PATH}/node_modules" ]]; then
-  pnpm install --frozen-lockfile --prefer-offline
+if [[ "${WORKSPACE_PATH}" != "${REPO_ROOT}" ]]; then
+  cd "${WORKSPACE_PATH}"
 fi
+
+bash ./scripts/bootstrap-worktree.sh
