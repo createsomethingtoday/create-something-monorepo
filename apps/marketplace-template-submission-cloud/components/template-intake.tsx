@@ -171,6 +171,17 @@ type TemplateAnalyzerSummary = {
   warning?: string;
 };
 
+type TemplateAnalyzerProgressStepKey = 'validation' | 'autofill' | 'screenshots';
+type TemplateAnalyzerProgressStepStatus = 'pending' | 'active' | 'done';
+
+type TemplateAnalyzerProgressStep = {
+  key: TemplateAnalyzerProgressStepKey;
+  label: string;
+  value: string;
+  copy: string;
+  status: TemplateAnalyzerProgressStepStatus;
+};
+
 type VerificationState = {
   primaryEmailVerified: string;
   webflowEmailVerified: string;
@@ -214,6 +225,59 @@ const AUTOFILL_FIELD_LABELS: Record<TemplateAutofillFieldKey, string> = {
   styles: 'Styles',
   featureIds: 'Features',
 };
+
+function classNames(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(' ');
+}
+
+function buildAnalyzerProgress(
+  activeStep: TemplateAnalyzerProgressStepKey
+): TemplateAnalyzerProgressStep[] {
+  const stepOrder: TemplateAnalyzerProgressStepKey[] = ['validation', 'autofill', 'screenshots'];
+  const activeIndex = stepOrder.indexOf(activeStep);
+  const steps: Array<Omit<TemplateAnalyzerProgressStep, 'status' | 'value'>> = [
+    {
+      key: 'validation',
+      label: 'Validation',
+      copy: 'Checking the published Webflow site and following internal pages.'
+    },
+    {
+      key: 'autofill',
+      label: 'Autofill',
+      copy: 'Mapping the crawl output into template details and content suggestions.'
+    },
+    {
+      key: 'screenshots',
+      label: 'Screenshots',
+      copy: 'Checking whether generated screenshots are available for upload.'
+    }
+  ];
+
+  return steps.map((step, index) => {
+    const status: TemplateAnalyzerProgressStepStatus =
+      index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending';
+    const value =
+      step.key === 'validation'
+        ? status === 'done'
+          ? 'Passed'
+          : status === 'active'
+            ? 'Running'
+            : 'Queued'
+        : step.key === 'autofill'
+          ? status === 'done'
+            ? 'Applied'
+            : status === 'active'
+              ? 'Preparing'
+              : 'Queued'
+          : status === 'done'
+            ? 'Checked'
+            : status === 'active'
+              ? 'Checking'
+              : 'Queued';
+
+    return { ...step, status, value };
+  });
+}
 
 const initialTemplateState: TemplateFormState = {
   creatorName: '',
@@ -424,23 +488,29 @@ function FieldFeedback({ feedback }: { feedback?: StatusMessage | null }) {
 
 function InlineActionField({
   actionLabel,
+  actionDisabled,
   children,
+  fieldClassName,
   feedback,
   onAction,
 }: {
   actionLabel: string;
+  actionDisabled?: boolean;
   children: ReactNode;
+  fieldClassName?: string;
   feedback?: StatusMessage | null;
   onAction: () => void;
 }) {
   return (
     <>
       <div className="submission-field-inline">
-        <div className="submission-field">{children}</div>
+        <div className={classNames('submission-field', fieldClassName)}>{children}</div>
         <div className="submission-field-inline-action-rail">
           <button
             className="button-sp cc-white submission-inline-verify-button"
             type="button"
+            disabled={actionDisabled}
+            aria-busy={actionDisabled || undefined}
             onClick={onAction}
           >
             {actionLabel}
@@ -532,6 +602,9 @@ type ReviewChecklistItem = {
   label: string;
   detail: string;
   complete: boolean;
+  recent?: boolean;
+  actionLabel?: string;
+  onSelect?: () => void;
 };
 
 function ReviewChecklistCard({
@@ -563,21 +636,63 @@ function ReviewChecklistCard({
       <div className="submission-review-grid">
         {items.map((item) => (
           <div
-            className={`submission-review-item ${item.complete ? 'is-complete' : 'is-pending'}`}
+            className={classNames(
+              'submission-review-item',
+              item.complete ? 'is-complete' : 'is-pending',
+              item.recent && 'is-recent',
+              item.onSelect && 'is-clickable',
+            )}
             key={item.label}
           >
-            <div className="submission-review-indicator" aria-hidden="true">
-              {item.complete ? '✓' : '•'}
-            </div>
-            <div className="submission-review-item-copy">
-              <div className="submission-review-item-title">{item.label}</div>
-              <div className="submission-review-item-detail">{item.detail}</div>
-            </div>
+            {item.onSelect ? (
+              <button className="submission-review-item-button" onClick={item.onSelect} type="button">
+                <div className="submission-review-indicator" aria-hidden="true">
+                  {item.complete ? '✓' : '•'}
+                </div>
+                <div className="submission-review-item-copy">
+                  <div className="submission-review-item-header">
+                    <div className="submission-review-item-title">{item.label}</div>
+                    {item.recent || item.actionLabel ? (
+                      <div className="submission-review-item-meta">
+                        {item.recent ? (
+                          <span className="submission-review-recent-badge">Updated</span>
+                        ) : null}
+                        {item.actionLabel ? (
+                          <span className="submission-review-action">{item.actionLabel}</span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="submission-review-item-detail">{item.detail}</div>
+                </div>
+              </button>
+            ) : (
+              <>
+                <div className="submission-review-indicator" aria-hidden="true">
+                  {item.complete ? '✓' : '•'}
+                </div>
+                <div className="submission-review-item-copy">
+                  <div className="submission-review-item-header">
+                    <div className="submission-review-item-title">{item.label}</div>
+                    {item.recent ? (
+                      <div className="submission-review-item-meta">
+                        <span className="submission-review-recent-badge">Updated</span>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="submission-review-item-detail">{item.detail}</div>
+                </div>
+              </>
+            )}
           </div>
         ))}
       </div>
     </div>
   );
+}
+
+function scrollToSection(ref: { current: HTMLElement | null }) {
+  ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
@@ -602,7 +717,9 @@ export function TemplateIntake() {
   const [fieldFeedback, setFieldFeedback] = useState<Record<string, StatusMessage | null>>({});
   const [imageErrors, setImageErrors] = useState<Record<string, string | null>>({});
   const [autofillManaged, setAutofillManaged] = useState<TemplateAutofillState>({});
+  const [recentAutofillFields, setRecentAutofillFields] = useState<TemplateAutofillFieldKey[]>([]);
   const [analyzerSummary, setAnalyzerSummary] = useState<TemplateAnalyzerSummary | null>(null);
+  const [analyzerProgress, setAnalyzerProgress] = useState<TemplateAnalyzerProgressStep[] | null>(null);
   const [optionSearch, setOptionSearch] = useState({
     categories: '',
     secondaryTags: '',
@@ -623,7 +740,14 @@ export function TemplateIntake() {
   const creatorTurnstileWidgetId = useRef<string | null>(null);
   const templateTurnstileWidgetId = useRef<string | null>(null);
   const templateSectionRef = useRef<HTMLElement | null>(null);
+  const creatorIdentityRef = useRef<HTMLDivElement | null>(null);
+  const templateChecksRef = useRef<HTMLDivElement | null>(null);
+  const metadataRef = useRef<HTMLDivElement | null>(null);
+  const pricingRef = useRef<HTMLDivElement | null>(null);
+  const assetsRef = useRef<HTMLDivElement | null>(null);
+  const agreementsRef = useRef<HTMLDivElement | null>(null);
   const analyzerSummaryRef = useRef<HTMLDivElement | null>(null);
+  const analyzerProgressTimersRef = useRef<number[]>([]);
 
   const hasAutofilledTemplateName = isAutofilledText(
     template.templateName,
@@ -683,6 +807,40 @@ export function TemplateIntake() {
     (feature) => feature.id
   );
 
+  const hasRecentAutofill = (...fields: TemplateAutofillFieldKey[]) =>
+    fields.some((field) => recentAutofillFields.includes(field));
+
+  const autofillFieldClass = (...fields: TemplateAutofillFieldKey[]) =>
+    classNames('submission-field', hasRecentAutofill(...fields) && 'submission-field-highlighted');
+
+  const clearAnalyzerProgressTimers = () => {
+    analyzerProgressTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    analyzerProgressTimersRef.current = [];
+  };
+
+  const stopAnalyzerProgress = () => {
+    clearAnalyzerProgressTimers();
+    setAnalyzerProgress(null);
+  };
+
+  const startAnalyzerProgress = () => {
+    clearAnalyzerProgressTimers();
+    setAnalyzerSummary(null);
+    setAnalyzerProgress(buildAnalyzerProgress('validation'));
+    analyzerProgressTimersRef.current = [
+      window.setTimeout(() => {
+        setAnalyzerProgress((current) =>
+          current ? buildAnalyzerProgress('autofill') : current
+        );
+      }, 1100),
+      window.setTimeout(() => {
+        setAnalyzerProgress((current) =>
+          current ? buildAnalyzerProgress('screenshots') : current
+        );
+      }, 2500),
+    ];
+  };
+
   useEffect(() => {
     const captureParams = (searchLike: string | Record<string, string>) => {
       const params =
@@ -740,6 +898,22 @@ export function TemplateIntake() {
     return () => {
       observer.disconnect();
       window.removeEventListener('load', postHeight);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (recentAutofillFields.length === 0) return;
+
+    const timer = window.setTimeout(() => {
+      setRecentAutofillFields([]);
+    }, 4500);
+
+    return () => window.clearTimeout(timer);
+  }, [recentAutofillFields]);
+
+  useEffect(() => {
+    return () => {
+      clearAnalyzerProgressTimers();
     };
   }, []);
 
@@ -864,14 +1038,28 @@ export function TemplateIntake() {
         ? 'The creator identity is resolved and eligible to submit.'
         : 'Use Check creator to confirm the creator account first.',
       complete: creatorEligibilityResolved,
+      actionLabel: creatorEligibilityResolved ? 'Review' : 'Complete now',
+      onSelect: () => scrollToSection(creatorIdentityRef),
     },
     {
       label: 'Template checks passed',
       detail:
         templateChecksPassed
-          ? 'Template name and published site both passed validation.'
+          ? analyzerSummary?.appliedFields.length
+            ? 'Template name and published site passed validation. Autofill suggestions are ready below.'
+            : 'Template name and published site both passed validation.'
           : 'Run Check name and Validate template before submitting.',
       complete: templateChecksPassed,
+      recent:
+        Boolean(analyzerProgress) ||
+        Boolean(analyzerSummary) ||
+        hasRecentAutofill('templateName'),
+      actionLabel: analyzerProgress
+        ? 'Analyzing…'
+        : templateChecksPassed
+          ? 'Review'
+          : 'Run checks',
+      onSelect: () => scrollToSection(templateChecksRef),
     },
     {
       label: 'Preview and metadata ready',
@@ -880,6 +1068,17 @@ export function TemplateIntake() {
           ? 'Preview URL, category, styles, and page count are all set.'
           : 'Add a valid preview URL plus the required taxonomy and page info.',
       complete: previewAndMetadataReady,
+      recent: hasRecentAutofill(
+        'categories',
+        'secondaryTags',
+        'pageCount',
+        'styles',
+        'featureIds',
+        'shortDescription',
+        'longDescription',
+      ),
+      actionLabel: previewAndMetadataReady ? 'Review' : 'Complete fields',
+      onSelect: () => scrollToSection(metadataRef),
     },
     {
       label: 'Pricing is resolved',
@@ -888,6 +1087,9 @@ export function TemplateIntake() {
           ? 'The template pricing setup is complete.'
           : 'Choose whether the template is free or paid, then pick a paid tier if needed.',
       complete: pricingResolved,
+      recent: hasRecentAutofill('priceModel', 'pageCount', 'typeCms', 'typeEcommerce'),
+      actionLabel: pricingResolved ? 'Review' : 'Set pricing',
+      onSelect: () => scrollToSection(pricingRef),
     },
     {
       label: 'Assets are attached',
@@ -903,6 +1105,17 @@ export function TemplateIntake() {
         !imageErrors.thumbnailFile &&
         template.galleryFiles.length > 0 &&
         galleryErrorMessages.length === 0,
+      recent: Boolean(analyzerSummary?.screenshotsDownloadUrl),
+      actionLabel:
+        Boolean(template.thumbnailFile) &&
+        !imageErrors.thumbnailFile &&
+        template.galleryFiles.length > 0 &&
+        galleryErrorMessages.length === 0
+          ? 'Review'
+          : analyzerSummary?.screenshotsDownloadUrl
+            ? 'Upload screenshots'
+            : 'Upload assets',
+      onSelect: () => scrollToSection(assetsRef),
     },
     {
       label: 'Agreements confirmed',
@@ -911,6 +1124,9 @@ export function TemplateIntake() {
           ? 'Checklist and submission agreement are both confirmed.'
           : 'Confirm the checklist and submission agreement below.',
       complete: template.checklistConfirmed && template.agreementConfirmed,
+      actionLabel:
+        template.checklistConfirmed && template.agreementConfirmed ? 'Review' : 'Confirm',
+      onSelect: () => scrollToSection(agreementsRef),
     },
   ];
 
@@ -1334,10 +1550,12 @@ export function TemplateIntake() {
       return;
     }
 
-    setAnalyzerSummary(null);
+    setRecentAutofillFields([]);
+    startAnalyzerProgress();
     setFeedback('publishedUrl', {
       tone: 'info',
-      message: 'Running the full published-site crawl. This can take a few minutes.'
+      message:
+        'Running the published-site crawl and preparing autofill suggestions. This can take a few minutes.'
     });
 
     const response = await fetch(appPath('/api/intake/validate-published-url'), {
@@ -1361,6 +1579,7 @@ export function TemplateIntake() {
     };
 
     if (!response.ok || !data.passed || !data.normalizedUrl) {
+      stopAnalyzerProgress();
       const message = data.message || 'Published URL validation failed.';
       setTemplateStatus({
         tone: 'error',
@@ -1376,6 +1595,8 @@ export function TemplateIntake() {
     const autofillResult = applyTemplateAutofill(data.autofill, {
       gsapDetected: Boolean(data.gsapDetected)
     });
+    stopAnalyzerProgress();
+    setRecentAutofillFields(autofillResult.appliedFields);
 
     const nextAnalyzerSummary: TemplateAnalyzerSummary | null =
       autofillResult.appliedFields.length > 0 ||
@@ -2027,7 +2248,7 @@ export function TemplateIntake() {
                   name="wf-form-Marketplace-Template-Submission"
                   onSubmit={submitTemplate}
                 >
-                  <div className="submission-field">
+                  <div className="submission-field" ref={creatorIdentityRef}>
                     <label
                       className="field-label template-application-form_field-label"
                       htmlFor="templateCreatorName"
@@ -2093,178 +2314,221 @@ export function TemplateIntake() {
                     </>
                   )}
 
-                  <InlineActionField
-                    actionLabel="Check name"
-                    feedback={fieldFeedback.templateName}
-                    onAction={verifyTemplateName}
-                  >
-                    <label
-                      className="field-label template-application-form_field-label cc-with-desc"
-                      htmlFor="templateName"
+                  <div ref={templateChecksRef}>
+                    <InlineActionField
+                      actionLabel="Check name"
+                      feedback={fieldFeedback.templateName}
+                      fieldClassName={
+                        hasRecentAutofill('templateName')
+                          ? 'submission-field-highlighted'
+                          : undefined
+                      }
+                      onAction={verifyTemplateName}
                     >
-                      Template name
-                      <span className="submission-required"> *</span>
-                      {hasAutofilledTemplateName ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
-                    </label>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      First word must be capitalized. Avoid emoji, category names, tag names, and
-                      the standalone term &quot;AI&quot;.
-                    </p>
-                    <input
-                      className="field-input input w-input"
-                      id="templateName"
-                      value={template.templateName}
-                      onChange={(event) => updateTemplate('templateName', event.target.value)}
-                      required
-                    />
-                  </InlineActionField>
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="templateName"
+                      >
+                        Template name
+                        <span className="submission-required"> *</span>
+                        {hasAutofilledTemplateName ? (
+                          <span className="submission-autofill-badge">Autofilled</span>
+                        ) : null}
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        First word must be capitalized. Avoid emoji, category names, tag names, and
+                        the standalone term &quot;AI&quot;.
+                      </p>
+                      <input
+                        className="field-input input w-input"
+                        id="templateName"
+                        value={template.templateName}
+                        onChange={(event) => updateTemplate('templateName', event.target.value)}
+                        required
+                      />
+                    </InlineActionField>
 
-                  <InlineActionField
-                    actionLabel="Validate template"
-                    feedback={fieldFeedback.publishedUrl}
-                    onAction={verifyPublishedUrl}
-                  >
-                    <label
-                      className="field-label template-application-form_field-label cc-with-desc"
-                      htmlFor="publishedUrl"
+                    <InlineActionField
+                      actionLabel={analyzerProgress ? 'Analyzing…' : 'Validate template'}
+                      actionDisabled={Boolean(analyzerProgress)}
+                      feedback={fieldFeedback.publishedUrl}
+                      onAction={verifyPublishedUrl}
                     >
-                      Published URL
-                      <span className="submission-required"> *</span>
-                    </label>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Must be an HTTPS <code className="submission-inline-code">*.webflow.io</code>{' '}
-                      URL. The full site crawl can take a few minutes.
-                    </p>
-                    <input
-                      className="field-input input w-input"
-                      id="publishedUrl"
-                      type="url"
-                      value={template.publishedUrl}
-                      onChange={(event) => updateTemplate('publishedUrl', event.target.value)}
-                      required
-                    />
-                  </InlineActionField>
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="publishedUrl"
+                      >
+                        Published URL
+                        <span className="submission-required"> *</span>
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Must be an HTTPS <code className="submission-inline-code">*.webflow.io</code>{' '}
+                        URL. The full site crawl can take a few minutes.
+                      </p>
+                      <input
+                        className="field-input input w-input"
+                        id="publishedUrl"
+                        type="url"
+                        value={template.publishedUrl}
+                        onChange={(event) => updateTemplate('publishedUrl', event.target.value)}
+                        required
+                      />
+                    </InlineActionField>
 
-                  {analyzerSummary ? (
-                    <div className="submission-analyzer-summary" ref={analyzerSummaryRef}>
-                      <div className="submission-analyzer-header">
-                        <div>
-                          <div className="submission-step-label submission-step-label-secondary submission-analyzer-label">
-                            Analyzer summary
+                    {analyzerProgress ? (
+                      <div className="submission-analyzer-summary" ref={analyzerSummaryRef}>
+                        <div className="submission-analyzer-header">
+                          <div>
+                            <div className="submission-step-label submission-step-label-secondary submission-analyzer-label">
+                              Analyzer in progress
+                            </div>
+                            <h3 className="submission-analyzer-title">
+                              Working through the published site
+                            </h3>
                           </div>
-                          <h3 className="submission-analyzer-title">
-                            Suggestions from the published site
-                          </h3>
+                        </div>
+                        <p className="field-help submission-analyzer-copy">
+                          Validation runs first, then matching content is mapped into template suggestions and screenshot availability is checked. The form will update automatically as each step completes.
+                        </p>
+                        <div className="submission-analyzer-stage-grid">
+                          {analyzerProgress.map((stage) => (
+                            <div
+                              className={classNames(
+                                'submission-analyzer-stage',
+                                stage.status === 'active' && 'submission-analyzer-stage-active',
+                                stage.status === 'done' && 'submission-analyzer-stage-done',
+                                stage.status === 'pending' && 'submission-analyzer-stage-pending'
+                              )}
+                              key={stage.key}
+                            >
+                              <div className="submission-analyzer-stage-label">{stage.label}</div>
+                              <div className="submission-analyzer-stage-value">{stage.value}</div>
+                              <div className="submission-analyzer-stage-copy">{stage.copy}</div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                      <p className="field-help submission-analyzer-copy">
-                        {analyzerSummary.appliedFields.length > 0
-                          ? 'These fields were populated automatically. You can still edit anything below before submitting.'
-                          : analyzerSummary.warning
-                            ? 'The published-site crawl passed, but template suggestions were only partially available.'
-                            : 'The published-site crawl passed. Review the suggestion summary below before submitting.'}
-                      </p>
+                    ) : null}
 
-                      <div className="submission-analyzer-stage-grid">
-                        <div className="submission-analyzer-stage">
-                          <div className="submission-analyzer-stage-label">Validation</div>
-                          <div className="submission-analyzer-stage-value">Passed</div>
-                          <div className="submission-analyzer-stage-copy">
-                            {analyzerSummary.validationMessage}
+                    {!analyzerProgress && analyzerSummary ? (
+                      <div className="submission-analyzer-summary" ref={analyzerSummaryRef}>
+                        <div className="submission-analyzer-header">
+                          <div>
+                            <div className="submission-step-label submission-step-label-secondary submission-analyzer-label">
+                              Analyzer summary
+                            </div>
+                            <h3 className="submission-analyzer-title">
+                              Suggestions from the published site
+                            </h3>
                           </div>
                         </div>
-                        <div className="submission-analyzer-stage">
-                          <div className="submission-analyzer-stage-label">Autofill</div>
-                          <div className="submission-analyzer-stage-value">
-                            {analyzerSummary.appliedFields.length > 0
-                              ? `${analyzerSummary.appliedFields.length} field${analyzerSummary.appliedFields.length === 1 ? '' : 's'} applied`
-                              : analyzerSummary.warning
-                                ? 'Partial'
-                                : 'Suggestions ready'}
-                          </div>
-                          <div className="submission-analyzer-stage-copy">
-                            {analyzerSummary.appliedFields.length > 0
-                              ? 'The matching fields below were updated from the published site.'
-                              : analyzerSummary.warning
-                                ? 'Some fields still need manual input because suggestions were incomplete.'
-                                : 'Review the suggested fields below before submitting.'}
-                          </div>
-                        </div>
-                        {analyzerSummary.screenshotsDownloadUrl ? (
+                        <p className="field-help submission-analyzer-copy">
+                          {analyzerSummary.appliedFields.length > 0
+                            ? 'These fields were populated automatically. The updated sections below are highlighted so you can review them quickly before submitting.'
+                            : analyzerSummary.warning
+                              ? 'The published-site crawl passed, but template suggestions were only partially available.'
+                              : 'The published-site crawl passed. Review the suggestion summary below before submitting.'}
+                        </p>
+
+                        <div className="submission-analyzer-stage-grid">
                           <div className="submission-analyzer-stage">
-                            <div className="submission-analyzer-stage-label">Screenshots</div>
+                            <div className="submission-analyzer-stage-label">Validation</div>
+                            <div className="submission-analyzer-stage-value">Passed</div>
+                            <div className="submission-analyzer-stage-copy">
+                              {analyzerSummary.validationMessage}
+                            </div>
+                          </div>
+                          <div className="submission-analyzer-stage">
+                            <div className="submission-analyzer-stage-label">Autofill</div>
                             <div className="submission-analyzer-stage-value">
-                              {analyzerSummary.screenshotCount > 0
-                                ? `${analyzerSummary.screenshotCount} ready`
-                                : 'Ready'}
+                              {analyzerSummary.appliedFields.length > 0
+                                ? `${analyzerSummary.appliedFields.length} field${analyzerSummary.appliedFields.length === 1 ? '' : 's'} applied`
+                                : analyzerSummary.warning
+                                  ? 'Partial'
+                                  : 'Suggestions ready'}
                             </div>
                             <div className="submission-analyzer-stage-copy">
-                              Generated screenshots can be downloaded and reused for uploads.
+                              {analyzerSummary.appliedFields.length > 0
+                                ? 'The matching sections below were updated from the published site and briefly highlighted.'
+                                : analyzerSummary.warning
+                                  ? 'Some fields still need manual input because suggestions were incomplete.'
+                                  : 'Review the suggested fields below before submitting.'}
                             </div>
                           </div>
-                        ) : null}
-                      </div>
-
-                      {analyzerSummary.appliedFields.length > 0 ? (
-                        <div className="submission-analyzer-group">
-                          <div className="submission-analyzer-group-title">Applied automatically</div>
-                          <div className="submission-chip-list">
-                            {analyzerSummary.appliedFields.map((field) => (
-                              <span className="submission-chip submission-chip-success" key={field}>
-                                {AUTOFILL_FIELD_LABELS[field]}
-                              </span>
-                            ))}
-                          </div>
+                          {analyzerSummary.screenshotsDownloadUrl ? (
+                            <div className="submission-analyzer-stage">
+                              <div className="submission-analyzer-stage-label">Screenshots</div>
+                              <div className="submission-analyzer-stage-value">
+                                {analyzerSummary.screenshotCount > 0
+                                  ? `${analyzerSummary.screenshotCount} ready`
+                                  : 'Ready'}
+                              </div>
+                              <div className="submission-analyzer-stage-copy">
+                                Generated screenshots can be downloaded and reused for uploads.
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
-                      ) : null}
 
-                      {analyzerSummary.suggestedFields.filter(
-                        (field) => !analyzerSummary.appliedFields.includes(field)
-                      ).length > 0 ? (
-                        <div className="submission-analyzer-group">
-                          <div className="submission-analyzer-group-title">Still worth reviewing</div>
-                          <div className="submission-chip-list">
-                            {analyzerSummary.suggestedFields
-                              .filter((field) => !analyzerSummary.appliedFields.includes(field))
-                              .map((field) => (
-                                <span className="submission-chip submission-chip-muted" key={field}>
+                        {analyzerSummary.appliedFields.length > 0 ? (
+                          <div className="submission-analyzer-group">
+                            <div className="submission-analyzer-group-title">Applied automatically</div>
+                            <div className="submission-chip-list">
+                              {analyzerSummary.appliedFields.map((field) => (
+                                <span className="submission-chip submission-chip-success" key={field}>
                                   {AUTOFILL_FIELD_LABELS[field]}
                                 </span>
                               ))}
+                            </div>
                           </div>
-                        </div>
-                      ) : null}
+                        ) : null}
 
-                      {analyzerSummary.warning ? (
-                        <div className="submission-analyzer-callout submission-analyzer-callout-warning">
-                          {analyzerSummary.warning}
-                        </div>
-                      ) : null}
-
-                      {analyzerSummary.screenshotsDownloadUrl ? (
-                        <div className="submission-analyzer-callout submission-analyzer-callout-info">
-                          <div>
-                            Generated screenshots are ready.
-                            {analyzerSummary.screenshotCount > 0
-                              ? ` ${analyzerSummary.screenshotCount} screenshot${analyzerSummary.screenshotCount === 1 ? '' : 's'} were prepared for upload.`
-                              : ''}
+                        {analyzerSummary.suggestedFields.filter(
+                          (field) => !analyzerSummary.appliedFields.includes(field)
+                        ).length > 0 ? (
+                          <div className="submission-analyzer-group">
+                            <div className="submission-analyzer-group-title">Still worth reviewing</div>
+                            <div className="submission-chip-list">
+                              {analyzerSummary.suggestedFields
+                                .filter((field) => !analyzerSummary.appliedFields.includes(field))
+                                .map((field) => (
+                                  <span className="submission-chip submission-chip-muted" key={field}>
+                                    {AUTOFILL_FIELD_LABELS[field]}
+                                  </span>
+                                ))}
+                            </div>
                           </div>
-                          <a
-                            className="submission-status-link"
-                            href={analyzerSummary.screenshotsDownloadUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Download generated screenshots (ZIP)
-                          </a>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
+                        ) : null}
 
-                  <div className="submission-field">
+                        {analyzerSummary.warning ? (
+                          <div className="submission-analyzer-callout submission-analyzer-callout-warning">
+                            {analyzerSummary.warning}
+                          </div>
+                        ) : null}
+
+                        {analyzerSummary.screenshotsDownloadUrl ? (
+                          <div className="submission-analyzer-callout submission-analyzer-callout-info">
+                            <div>
+                              Generated screenshots are ready.
+                              {analyzerSummary.screenshotCount > 0
+                                ? ` ${analyzerSummary.screenshotCount} screenshot${analyzerSummary.screenshotCount === 1 ? '' : 's'} were prepared for upload.`
+                                : ''}
+                            </div>
+                            <a
+                              className="submission-status-link"
+                              href={analyzerSummary.screenshotsDownloadUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Download generated screenshots (ZIP)
+                            </a>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="submission-field" ref={metadataRef}>
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="previewUrl"
@@ -2294,7 +2558,13 @@ export function TemplateIntake() {
                     ) : null}
                   </div>
 
-                  <div className="submission-field submission-select-field">
+                  <div
+                    className={classNames(
+                      autofillFieldClass('priceModel'),
+                      'submission-select-field'
+                    )}
+                    ref={pricingRef}
+                  >
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="priceModel"
@@ -2325,7 +2595,7 @@ export function TemplateIntake() {
                     </select>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={autofillFieldClass('categories')}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Category
                       <span className="submission-required"> *</span>
@@ -2349,7 +2619,7 @@ export function TemplateIntake() {
                           : undefined
                       }
                     />
-                    <div className="submission-choice-grid is-scroll">
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy is-scroll">
                       {visibleCategories.length === 0 ? (
                         <div className="submission-choice-empty">No categories match your search.</div>
                       ) : null}
@@ -2358,7 +2628,7 @@ export function TemplateIntake() {
                         const atMax = template.categories.length >= 2;
                         return (
                           <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
                             key={category}
                           >
                             <input
@@ -2382,7 +2652,7 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={autofillFieldClass('secondaryTags')}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Secondary tags
                       {hasAutofilledSecondaryTags ? (
@@ -2405,13 +2675,13 @@ export function TemplateIntake() {
                           : undefined
                       }
                     />
-                    <div className="submission-choice-grid is-scroll submission-choice-grid-compact">
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy is-scroll submission-choice-grid-compact">
                       {visibleSecondaryTags.length === 0 ? (
                         <div className="submission-choice-empty">No secondary tags match your search.</div>
                       ) : null}
                       {visibleSecondaryTags.map((tag) => (
                         <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
                           key={tag}
                         >
                           <input
@@ -2430,7 +2700,7 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={autofillFieldClass('pageCount')}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Page count
                       <span className="submission-required"> *</span>
@@ -2465,7 +2735,7 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={autofillFieldClass('typeCms', 'typeEcommerce')}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Template type
                       {hasAutofilledTemplateType ? (
@@ -2498,7 +2768,7 @@ export function TemplateIntake() {
                   </div>
 
                   {template.priceModel === 'Paid' && template.pageCount ? (
-                    <div className="submission-field">
+                    <div className={autofillFieldClass('priceModel')}>
                       <span className="field-label template-application-form_field-label cc-with-desc">
                         Template price
                         <span className="submission-required"> *</span>
@@ -2528,7 +2798,7 @@ export function TemplateIntake() {
                     </div>
                   ) : null}
 
-                  <div className="submission-field">
+                  <div className={autofillFieldClass('styles')}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Styles
                       <span className="submission-required"> *</span>
@@ -2550,7 +2820,7 @@ export function TemplateIntake() {
                         template.styles.length > 0 ? () => updateTemplate('styles', []) : undefined
                       }
                     />
-                    <div className="submission-choice-grid">
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy">
                       {visibleStyles.length === 0 ? (
                         <div className="submission-choice-empty">No styles match your search.</div>
                       ) : null}
@@ -2559,7 +2829,7 @@ export function TemplateIntake() {
                         const atMax = template.styles.length >= 2;
                         return (
                           <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
                             key={style}
                           >
                             <input
@@ -2580,7 +2850,7 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={autofillFieldClass('featureIds')}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Features
                       <span className="submission-required"> *</span>
@@ -2608,13 +2878,13 @@ export function TemplateIntake() {
                           : undefined
                       }
                     />
-                    <div className="submission-choice-grid">
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy">
                       {visibleFeatures.length === 0 ? (
                         <div className="submission-choice-empty">No features match your search.</div>
                       ) : null}
                       {visibleFeatures.map((option) => (
                         <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
                           key={option.id}
                         >
                           <input
@@ -2638,7 +2908,7 @@ export function TemplateIntake() {
                     ) : null}
                   </div>
 
-                  <div className="submission-field">
+                  <div className={autofillFieldClass('shortDescription')}>
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="shortDescription"
@@ -2665,7 +2935,7 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={autofillFieldClass('longDescription')}>
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="longDescription"
@@ -2713,7 +2983,7 @@ export function TemplateIntake() {
                     items={reviewItems}
                   />
 
-                  <div className="submission-field">
+                  <div className="submission-field" ref={assetsRef}>
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="thumbnailFile"
@@ -2855,7 +3125,7 @@ export function TemplateIntake() {
                     ))}
                   </div>
 
-                  <div className="submission-confirmation-card">
+                  <div className="submission-confirmation-card" ref={agreementsRef}>
                     <div className="submission-confirmation-header">
                       <h3 className="submission-confirmation-title">Confirm and hand off</h3>
                       <p className="field-help submission-confirmation-copy">
