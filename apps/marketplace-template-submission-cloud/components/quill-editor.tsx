@@ -12,6 +12,10 @@ type QuillInstance = {
   getContents: () => { ops: { insert?: unknown }[] };
   deleteText: (index: number, length: number, source?: string) => void;
   getLength: () => number;
+  setContents: (contents: unknown, source?: string) => void;
+  clipboard: {
+    convert: (html?: string) => unknown;
+  };
 };
 
 declare global {
@@ -71,6 +75,20 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
   const quillRef = useRef<QuillInstance | null>(null);
   const onChangeRef = useRef(onChange);
   const valueRef = useRef(value);
+  const syncingRef = useRef(false);
+  const syncFrameRef = useRef<number | null>(null);
+
+  function syncEditorHtml(quill: QuillInstance, html: string) {
+    syncingRef.current = true;
+    if (syncFrameRef.current !== null) {
+      window.cancelAnimationFrame(syncFrameRef.current);
+    }
+    quill.setContents(quill.clipboard.convert(html || ''), 'silent');
+    syncFrameRef.current = window.requestAnimationFrame(() => {
+      syncingRef.current = false;
+      syncFrameRef.current = null;
+    });
+  }
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -98,10 +116,12 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
         });
 
         if (valueRef.current) {
-          quill.root.innerHTML = valueRef.current;
+          syncEditorHtml(quill, valueRef.current);
         }
 
         handler = () => {
+          if (syncingRef.current) return;
+
           // Strip any image ops
           const delta = quill.getContents();
           let hasImages = false;
@@ -114,8 +134,10 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
           if (hasImages) {
             const len = quill.getLength();
             const filteredHtml = quill.root.innerHTML.replace(/<img[^>]*>/g, '');
-            quill.root.innerHTML = filteredHtml;
+            syncEditorHtml(quill, filteredHtml);
             quill.deleteText(len, 0, 'silent');
+            onChangeRef.current(filteredHtml);
+            return;
           }
           onChangeRef.current(quill.root.innerHTML);
         };
@@ -135,6 +157,11 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
           // ignore
         }
       }
+      if (syncFrameRef.current !== null) {
+        window.cancelAnimationFrame(syncFrameRef.current);
+      }
+      syncingRef.current = false;
+      syncFrameRef.current = null;
       quillRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,7 +178,7 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
       return;
     }
 
-    quill.root.innerHTML = nextHtml;
+    syncEditorHtml(quill, nextHtml);
   }, [value]);
 
   return <div id={id} ref={containerRef} className="submission-quill" />;

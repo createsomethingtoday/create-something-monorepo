@@ -443,6 +443,20 @@ function formatFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function fileSignature(file: File) {
+  return `${file.name}-${file.size}-${file.lastModified}`;
+}
+
+function dedupeFiles(files: readonly File[]) {
+  const seen = new Set<string>();
+  return files.filter((file) => {
+    const signature = fileSignature(file);
+    if (seen.has(signature)) return false;
+    seen.add(signature);
+    return true;
+  });
+}
+
 function FieldFeedback({
   feedback,
   action,
@@ -546,9 +560,11 @@ function ChoiceToolbar({
 function SelectedFilesSummary({
   files,
   emptyLabel,
+  onRemove,
 }: {
   files: readonly File[];
   emptyLabel?: ReactNode;
+  onRemove?: (signature: string) => void;
 }) {
   if (files.length === 0) {
     return emptyLabel ? <div className="field-help submission-selected-files-empty">{emptyLabel}</div> : null;
@@ -556,12 +572,25 @@ function SelectedFilesSummary({
 
   return (
     <div className="submission-selected-files" aria-live="polite">
-      {files.map((file) => (
-        <div className="submission-selected-file" key={`${file.name}-${file.size}-${file.lastModified}`}>
-          <span className="submission-selected-file-name">{file.name}</span>
-          <span className="submission-selected-file-size">{formatFileSize(file.size)}</span>
-        </div>
-      ))}
+      {files.map((file) => {
+        const signature = fileSignature(file);
+        return (
+          <div className="submission-selected-file" key={signature}>
+            <span className="submission-selected-file-name">{file.name}</span>
+            <span className="submission-selected-file-size">{formatFileSize(file.size)}</span>
+            {onRemove ? (
+              <button
+                className="submission-selected-file-remove"
+                type="button"
+                onClick={() => onRemove(signature)}
+                aria-label={`Remove ${file.name}`}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1111,6 +1140,14 @@ export function TemplateIntake() {
         featureIds: current.featureIds.filter((item: string) => item !== 'gsap')
       }));
     }
+  }
+
+  function removeGalleryFile(signature: string) {
+    setTemplate((current) => ({
+      ...current,
+      galleryFiles: current.galleryFiles.filter((file) => fileSignature(file) !== signature),
+    }));
+    setTemplateStatus(null);
   }
 
   function updateOptionSearch(
@@ -2983,13 +3020,19 @@ export function TemplateIntake() {
                             if (!err) validated.push(files[i]);
                           }
                           setImageErrors((c) => ({ ...c, ...newErrors }));
-                          updateTemplate('galleryFiles', validated);
+                          setTemplate((current) => ({
+                            ...current,
+                            galleryFiles: dedupeFiles([...current.galleryFiles, ...validated]).slice(0, 5),
+                          }));
+                          setTemplateStatus(null);
+                          event.target.value = '';
                         }}
                         required
                       />
                       <SelectedFilesSummary
                         files={template.galleryFiles}
                         emptyLabel="No gallery images selected yet."
+                        onRemove={removeGalleryFile}
                       />
                     </div>
                     {galleryErrorMessages.map((message, index) => (
