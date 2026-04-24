@@ -1406,6 +1406,11 @@ fn run() -> Result<(), LoomError> {
         Commands::Daemon { command } => {
             match command {
                 DaemonCommands::Start => {
+                    #[cfg(not(unix))]
+                    return Err(LoomError::Config("lm daemon is only supported on Unix platforms".into()));
+
+                    #[cfg(unix)]
+                    {
                     println!("Starting daemon...");
                     let runtime = tokio::runtime::Runtime::new()
                         .map_err(|e| LoomError::Io(e.into()))?;
@@ -1417,9 +1422,15 @@ fn run() -> Result<(), LoomError> {
                         daemon.run().await
                             .map_err(|e| LoomError::Config(e.to_string()))
                     })?;
+                    }
                 }
                 
                 DaemonCommands::Status => {
+                    #[cfg(not(unix))]
+                    return Err(LoomError::Config("lm daemon is only supported on Unix platforms".into()));
+
+                    #[cfg(unix)]
+                    {
                     let loom = Loom::open(".")?;
                     let socket_path = loom.root().join("run.sock");
                     
@@ -1429,9 +1440,15 @@ fn run() -> Result<(), LoomError> {
                     } else {
                         println!("Daemon: not running");
                     }
+                    }
                 }
                 
                 DaemonCommands::Stop => {
+                    #[cfg(not(unix))]
+                    return Err(LoomError::Config("lm daemon is only supported on Unix platforms".into()));
+
+                    #[cfg(unix)]
+                    {
                     let loom = Loom::open(".")?;
                     let socket_path = loom.root().join("run.sock");
                     
@@ -1440,6 +1457,7 @@ fn run() -> Result<(), LoomError> {
                         println!("Daemon stopped");
                     } else {
                         println!("Daemon not running");
+                    }
                     }
                 }
             }

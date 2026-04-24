@@ -5,8 +5,10 @@
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tokio::net::{UnixListener, UnixStream};
+#[cfg(unix)]
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+#[cfg(unix)]
+use tokio::net::{UnixListener, UnixStream};
 use tokio::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -152,6 +154,7 @@ impl Daemon {
     }
     
     /// Run the daemon
+    #[cfg(unix)]
     pub async fn run(&self) -> Result<(), DaemonError> {
         // Remove stale socket if exists
         if self.socket_path.exists() {
@@ -211,9 +214,18 @@ impl Daemon {
         
         Ok(())
     }
+
+    #[cfg(not(unix))]
+    pub async fn run(&self) -> Result<(), DaemonError> {
+        Err(DaemonError::Io(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "daemon mode is only supported on Unix platforms",
+        )))
+    }
 }
 
 /// Handle a single connection
+#[cfg(unix)]
 async fn handle_connection(stream: UnixStream, state: Arc<Mutex<DaemonState>>) -> Result<(), DaemonError> {
     let (reader, mut writer) = stream.into_split();
     let mut reader = BufReader::new(reader);
@@ -407,6 +419,7 @@ impl DaemonClient {
     }
     
     /// Send a request to the daemon
+    #[cfg(unix)]
     pub async fn request(&self, request: Request) -> Result<Response, DaemonError> {
         let stream = UnixStream::connect(&self.socket_path).await?;
         let (reader, mut writer) = stream.into_split();
@@ -422,6 +435,14 @@ impl DaemonClient {
         
         let response: Response = serde_json::from_str(&line)?;
         Ok(response)
+    }
+
+    #[cfg(not(unix))]
+    pub async fn request(&self, _request: Request) -> Result<Response, DaemonError> {
+        Err(DaemonError::Io(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "daemon mode is only supported on Unix platforms",
+        )))
     }
     
     /// Convenience methods

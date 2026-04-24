@@ -1,6 +1,6 @@
 [package]
 name = "loom"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "AI-native coordination layer. External memory for agents."
 license = "MIT"
