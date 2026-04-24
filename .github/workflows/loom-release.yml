@@ -28,6 +28,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            packages/loom
+          sparse-checkout-cone-mode: false
 
       - name: Verify Cargo, npm, and tag versions match
         id: versions
@@ -88,6 +92,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            packages/loom
+          sparse-checkout-cone-mode: false
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -186,6 +194,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            packages/loom
+          sparse-checkout-cone-mode: false
 
       - name: Setup Node
         uses: actions/setup-node@v5
