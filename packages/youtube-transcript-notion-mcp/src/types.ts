@@ -144,6 +144,31 @@ export interface SyncTranscriptToNotionOptions {
   transcriptBodyText?: string;
 }
 
+export interface ResolveNotionPageVideoSourceOptions {
+  propertyMapping?: Partial<NotionPropertyMapping>;
+  videoUrl?: string;
+}
+
+export interface NotionPageVideoSource {
+  pageId: string;
+  pageUrl?: string;
+  title?: string;
+  videoUrl: string;
+  videoId: string;
+  source: 'override' | 'property' | 'block';
+  sourceProperty?: string;
+  warnings: string[];
+  propertyMapping: ResolvedNotionPropertyMapping;
+}
+
+export interface SyncTranscriptToPageOptions {
+  propertyMapping?: Partial<NotionPropertyMapping>;
+  includeTimestamps?: boolean;
+  replaceExistingTranscript?: boolean;
+  transcriptHeaderLines?: string[];
+  transcriptBodyText?: string;
+}
+
 export interface NotionSyncResult {
   databaseId: string;
   dataSourceId: string;
@@ -152,6 +177,15 @@ export interface NotionSyncResult {
   action: 'created' | 'updated';
   transcriptAction: 'appended' | 'skipped_existing' | 'none';
   matchedOn?: 'url' | 'videoId';
+  warnings: string[];
+  propertyMapping: ResolvedNotionPropertyMapping;
+}
+
+export interface NotionPageSyncResult {
+  pageId: string;
+  pageUrl?: string;
+  action: 'updated';
+  transcriptAction: 'appended' | 'skipped_existing' | 'none';
   warnings: string[];
   propertyMapping: ResolvedNotionPropertyMapping;
 }
@@ -329,10 +363,19 @@ export interface NotionService {
   isConfigured(): boolean;
   getStatus(): Record<string, unknown>;
   getDatabaseSchema(databaseId?: string): Promise<NotionDatabaseSchema>;
+  resolvePageVideoSource(
+    pageId: string,
+    options?: ResolveNotionPageVideoSourceOptions,
+  ): Promise<NotionPageVideoSource>;
   syncTranscript(
     record: TranscriptRecord,
     options: SyncTranscriptToNotionOptions,
   ): Promise<NotionSyncResult>;
+  syncTranscriptToPage(
+    pageId: string,
+    record: TranscriptRecord,
+    options: SyncTranscriptToPageOptions,
+  ): Promise<NotionPageSyncResult>;
   searchDocuments(query: string): Promise<SearchResultItem[]>;
   fetchDocument(id: string): Promise<FetchDocumentResult>;
 }

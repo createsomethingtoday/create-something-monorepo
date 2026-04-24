@@ -1,12 +1,12 @@
 # Understanding: @create-something/youtube-transcript-notion-mcp
 
-> **An operational MCP that turns Supadata or YouTube transcript/playlist surfaces into normalized transcript records, can persist them into Notion, and can poll a playlist on a schedule without relying on agent memory.**
+> **An operational MCP that turns Supadata or YouTube transcript surfaces into normalized transcript records, enriches existing Notion pages in place, and can optionally poll a playlist on a schedule without relying on agent memory.**
 
 ## Ontological Position
 
 **Mode of Being**: Operational MCP package
 
-This package sits between volatile external sources (Supadata, YouTube transcript surfaces, and the YouTube Data API playlist surface) and a structured operator-owned sink (Notion). Its main burden is reliability under extraction and polling failure: transcript provider selection, playlist state, normalization, and write safety all need to line up so the model can read first and write only when the operator has configured the target correctly.
+This package sits between volatile external sources (Supadata, YouTube transcript surfaces, and the YouTube Data API playlist surface) and a structured operator-owned sink (Notion). Its main burden is reliability under extraction and polling failure: transcript provider selection, page-source resolution, playlist state, normalization, and write safety all need to line up so the model can read first and write only when the operator has configured the target correctly.
 
 ## Depends On (Understanding-Critical)
 
@@ -23,7 +23,7 @@ This package sits between volatile external sources (Supadata, YouTube transcrip
 
 | Consumer | What This Package Clarifies |
 |----------|----------------------------|
-| operators | How to ingest one video or a playlist into Notion with deterministic dedup, transcript chunking, and durable polling state |
+| operators | How to enrich an existing Notion item with transcript data, or optionally ingest one video or a playlist with deterministic dedup and durable polling state |
 | MCP clients | How to read transcripts and fetch synced transcript documents through a ChatGPT-compatible MCP surface |
 | future MCP authors | A pattern for combining read-first extraction, playlist polling, optional write-capable sync, and public-auth risk signaling in one remote MCP |
 
@@ -35,10 +35,11 @@ src/
 ├── playlist-state.ts       → playlist sync state primitives and in-memory store
 ├── playlist-service.ts     → YouTube Data API playlist reader + playlist→transcript→Notion pipeline
 ├── transcript.ts           → transcript cleanup, timestamp formatting, Notion-safe chunking
+├── transcript-page.ts      → transcript header/body formatting shared by Notion-first and playlist workflows
 ├── transcript-service.ts   → Supadata provider, direct provider, browser fallback provider, provider chain
 ├── supadata.ts             → hosted transcript provider client, polling, metadata normalization
-├── notion.ts               → Notion schema resolution, dedup, page sync, transcript-body replacement, search/fetch
-├── tools.ts                → MCP tool registration for video + playlist surfaces and Apps SDK result shaping
+├── notion.ts               → Notion schema resolution, page source detection, dedup, page sync, transcript-body replacement, search/fetch
+├── tools.ts                → MCP tool registration for transcript extraction, Notion page enrichment, and optional playlist surfaces
 ├── resources.ts            → status + transcript resources
 ├── prompts.ts              → transcript analysis prompt
 ├── stdio.ts                → local stdio MCP entrypoint for non-Cloudflare runtimes
@@ -54,9 +55,9 @@ worker/
 
 1. **`README.md`** — operational scope, runtime assumptions, and validation path
 2. **`src/transcript-service.ts`** — provider chain, error policy, and browser fallback behavior
-3. **`src/playlist-service.ts`** — playlist listing, durable polling logic, and per-item orchestration
-4. **`src/notion.ts`** — dedup, schema inference, transcript block persistence, and transcript replacement
-5. **`src/tools.ts`** — public MCP/API surface and wrapper behavior
+3. **`src/notion.ts`** — page source detection, dedup, schema inference, transcript block persistence, and transcript replacement
+4. **`src/tools.ts`** — public MCP/API surface and wrapper behavior
+5. **`src/playlist-service.ts`** — optional playlist listing, durable polling logic, and per-item orchestration
 6. **`worker/index.ts`** — remote transport, durable playlist state, scheduled polling, and auth boundary
 
 ## Agent Legibility Contract
@@ -76,6 +77,7 @@ worker/
 |---------|------------|---------------|
 | canonical video / playlist URL | Stable YouTube URL forms used for dedup and polling | `src/youtube.ts` |
 | provider chain | Supadata first when configured, then direct transcript attempt, then Steel browser fallback | `src/transcript-service.ts`, `src/supadata.ts` |
+| Notion-first enrichment | Resolve a YouTube URL from an existing Notion page, extract transcript/metadata, and update that same page in place | `src/notion.ts`, `src/tools.ts` |
 | playlist sync state | Durable store of recent playlist-item signatures, last run, active lease, and last error/summary | `src/playlist-state.ts`, `worker/index.ts` |
 | playlist-added timestamp | The exact YouTube playlist item timestamp used for Notion `Date` mapping and polling order | `src/playlist-service.ts` |
 | public auth posture | Runtime warnings and security status that tell the operator when billable transcript providers or Notion tools are exposed without bearer protection | `src/config.ts`, `worker/index.ts` |
@@ -86,6 +88,7 @@ worker/
 ## This Package Helps You Understand
 
 - how to build a read-first MCP that still supports controlled write actions
+- how to make an existing Notion item the source of truth instead of forcing every workflow through a new-row sync
 - how to move polling state into durable storage instead of prompt-space agent memory
 - how to keep search/fetch compatibility without giving up richer Apps SDK tool results
 - how to normalize multiple transcript sources into one internal transcript shape

@@ -66,7 +66,9 @@ function createNotionService(
       configured: true,
     }),
     getDatabaseSchema: vi.fn(),
+    resolvePageVideoSource: vi.fn(),
     syncTranscript: syncImpl,
+    syncTranscriptToPage: vi.fn(),
     searchDocuments: vi.fn(),
     fetchDocument: vi.fn(),
   };

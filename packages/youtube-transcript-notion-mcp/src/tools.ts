@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
 import { buildSegmentSummary, segmentsToTimestampedTranscript } from './transcript.js';
+import { buildDefaultTranscriptHeaderLines, buildTranscriptBodyText } from './transcript-page.js';
 import { appErrorResult, appToolResult, fetchToolResult, searchToolResult } from './result.js';
 import { NotionSyncServiceError } from './notion.js';
 import { PlaylistSyncServiceError } from './playlist-service.js';
@@ -53,6 +54,31 @@ function buildTranscriptPayload(
       : {}),
     segments: record.segments,
     segmentSummary: buildSegmentSummary(record.segments),
+  };
+}
+
+function buildUnavailableRecord(
+  source: {
+    pageTitle?: string;
+    videoId: string;
+    videoUrl: string;
+  },
+  error: TranscriptExtractionError,
+): TranscriptRecord {
+  return {
+    videoId: source.videoId,
+    url: source.videoUrl,
+    title: source.pageTitle ?? source.videoUrl,
+    transcript: '',
+    segments: [],
+    extractionMethod: 'unavailable',
+    language: undefined,
+    warnings: [error.message],
+    sourceDiagnostics:
+      (error.diagnostics as TranscriptRecord['sourceDiagnostics']) ?? {
+        attempts: [],
+      },
+    captionsSource: 'none',
   };
 }
 
@@ -114,6 +140,98 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
         return appToolResult(
           buildTranscriptPayload(record, includeTimestamps),
           `Extracted ${record.segments.length} transcript segments for "${record.title}" using ${record.extractionMethod}.`,
+        );
+      } catch (error) {
+        return toToolError(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    'enrich_notion_page',
+    {
+      title: 'Enrich a Notion page from its YouTube URL',
+      description:
+        'Read a YouTube URL or video ID from an existing Notion page, extract transcript and metadata, and update that same page in place.',
+      inputSchema: {
+        pageId: z.string().describe('The target Notion page ID to enrich'),
+        videoUrl: z
+          .string()
+          .optional()
+          .describe('Optional YouTube URL or video ID override. If omitted, the tool reads the video reference from the page.'),
+        propertyMapping: propertyMappingSchema
+          .optional()
+          .describe('Optional Notion property mapping override for locating the source URL and writing metadata'),
+        includeTimestamps: z
+          .boolean()
+          .optional()
+          .describe('Write the transcript body with timestamp labels when a transcript is available'),
+      },
+      annotations: {
+        readOnlyHint: false,
+      },
+    },
+    async ({ pageId, videoUrl, propertyMapping, includeTimestamps = false }) => {
+      try {
+        const source = await deps.notionService.resolvePageVideoSource(pageId, {
+          propertyMapping,
+          videoUrl,
+        });
+
+        let record: TranscriptRecord;
+        try {
+          record = await deps.transcriptService.extract({
+            videoUrl: source.videoUrl,
+          });
+        } catch (error) {
+          if (!(error instanceof TranscriptExtractionError)) {
+            throw error;
+          }
+          record = buildUnavailableRecord(
+            {
+              pageTitle: source.title,
+              videoId: source.videoId,
+              videoUrl: source.videoUrl,
+            },
+            error,
+          );
+        }
+
+        const transcriptBodyText = record.transcript.trim()
+          ? undefined
+          : buildTranscriptBodyText(record, record.warnings[0]);
+        const syncResult = await deps.notionService.syncTranscriptToPage(pageId, record, {
+          propertyMapping,
+          includeTimestamps: includeTimestamps && Boolean(record.transcript.trim()),
+          replaceExistingTranscript: true,
+          transcriptHeaderLines: buildDefaultTranscriptHeaderLines(record),
+          transcriptBodyText,
+        });
+
+        return appToolResult(
+          {
+            source: {
+              pageId: source.pageId,
+              pageUrl: source.pageUrl,
+              pageTitle: source.title,
+              videoUrl: source.videoUrl,
+              videoId: source.videoId,
+              source: source.source,
+              sourceProperty: source.sourceProperty,
+              warnings: source.warnings,
+            },
+            video: {
+              videoId: record.videoId,
+              url: record.url,
+              title: record.title,
+              extractionMethod: record.extractionMethod,
+              language: record.language,
+              warnings: record.warnings,
+              sourceDiagnostics: record.sourceDiagnostics,
+            },
+            notion: syncResult,
+          },
+          `Updated Notion page ${syncResult.pageId} from YouTube video "${record.title}".`,
         );
       } catch (error) {
         return toToolError(error);

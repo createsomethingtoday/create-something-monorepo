@@ -65,6 +65,20 @@ function createDeps(): RuntimeDependencies {
           Title: { name: 'Title', type: 'title' },
         },
       }),
+      resolvePageVideoSource: async (pageId) => ({
+        pageId,
+        pageUrl: `https://notion.so/${pageId}`,
+        title: 'Tool Wrapper Test',
+        videoUrl: buildCanonicalVideoUrl(VIDEO_ID),
+        videoId: VIDEO_ID,
+        source: 'property',
+        sourceProperty: 'Source URL',
+        warnings: [],
+        propertyMapping: {
+          title: 'Title',
+          url: 'Source URL',
+        },
+      }),
       syncTranscript: async () => ({
         databaseId: 'db_1',
         dataSourceId: 'ds_1',
@@ -75,6 +89,17 @@ function createDeps(): RuntimeDependencies {
         warnings: [],
         propertyMapping: {
           title: 'Title',
+        },
+      }),
+      syncTranscriptToPage: async (pageId) => ({
+        pageId,
+        pageUrl: `https://notion.so/${pageId}`,
+        action: 'updated',
+        transcriptAction: 'appended',
+        warnings: [],
+        propertyMapping: {
+          title: 'Title',
+          url: 'Source URL',
         },
       }),
       searchDocuments: async () => [
@@ -160,6 +185,7 @@ describe('tool registration', () => {
     registerTools(server as never, createDeps());
 
     const extractDefinition = server.definitions.get('extract_transcript');
+    const enrichDefinition = server.definitions.get('enrich_notion_page');
     const syncDefinition = server.definitions.get('sync_video_to_notion');
     const listPlaylistDefinition = server.definitions.get('list_playlist_items');
     const syncPlaylistDefinition = server.definitions.get('sync_playlist_to_notion');
@@ -169,6 +195,7 @@ describe('tool registration', () => {
     const fetchDefinition = server.definitions.get('fetch');
 
     expect(extractDefinition?.annotations).toMatchObject({ readOnlyHint: true });
+    expect(enrichDefinition?.annotations).toMatchObject({ readOnlyHint: false });
     expect(syncDefinition?.annotations).toMatchObject({ readOnlyHint: false });
     expect(listPlaylistDefinition?.annotations).toMatchObject({ readOnlyHint: true });
     expect(syncPlaylistDefinition?.annotations).toMatchObject({ readOnlyHint: false });
@@ -211,6 +238,39 @@ describe('tool registration', () => {
       {
         type: 'text',
         text: 'Extracted 2 transcript segments for "Tool Wrapper Test" using browser.',
+      },
+    ]);
+  });
+
+  it('updates an existing Notion page from its stored YouTube URL', async () => {
+    const server = new FakeServer();
+    registerTools(server as never, createDeps());
+
+    const result = await getHandler(server, 'enrich_notion_page')({
+      pageId: 'page_42',
+      includeTimestamps: true,
+    });
+    const structuredContent = result.structuredContent as Record<string, any>;
+
+    expect(structuredContent.source).toMatchObject({
+      pageId: 'page_42',
+      videoId: VIDEO_ID,
+      source: 'property',
+      sourceProperty: 'Source URL',
+    });
+    expect(structuredContent.video).toMatchObject({
+      videoId: VIDEO_ID,
+      extractionMethod: 'browser',
+    });
+    expect(structuredContent.notion).toMatchObject({
+      pageId: 'page_42',
+      action: 'updated',
+      transcriptAction: 'appended',
+    });
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: 'Updated Notion page page_42 from YouTube video "Tool Wrapper Test".',
       },
     ]);
   });

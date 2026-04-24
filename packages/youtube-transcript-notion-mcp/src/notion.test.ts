@@ -66,6 +66,13 @@ function richText(content: string): FakePropertyValue {
   };
 }
 
+function titleText(content: string): FakePropertyValue {
+  return {
+    type: 'title',
+    title: [{ plain_text: content, text: { content } }],
+  };
+}
+
 function createFakeNotionClient() {
   const schema = {
     Title: { id: 'title', type: 'title' },
@@ -347,6 +354,110 @@ describe('Notion helpers', () => {
 });
 
 describe('NotionTranscriptSyncService', () => {
+  it('reads a YouTube URL from an existing database item property', async () => {
+    const { client } = createFakeNotionClient();
+    const service = new NotionTranscriptSyncService({
+      client,
+      defaultDatabaseId: DATA_SOURCE_ID,
+    });
+
+    const page = (await client.pages.create({
+      properties: {
+        Title: titleText('Inbox video'),
+        'YouTube URL': {
+          type: 'url',
+          url: `https://youtu.be/${VIDEO_ID}?si=test`,
+        },
+      } as never,
+    })) as unknown as FakePage;
+
+    const result = await service.resolvePageVideoSource(page.id);
+
+    expect(result).toMatchObject({
+      pageId: page.id,
+      title: 'Inbox video',
+      videoId: VIDEO_ID,
+      videoUrl: buildCanonicalVideoUrl(VIDEO_ID),
+      source: 'property',
+      sourceProperty: 'YouTube URL',
+    });
+  });
+
+  it('falls back to a YouTube URL in page content when no mapped property exists', async () => {
+    const { client } = createFakeNotionClient();
+    const service = new NotionTranscriptSyncService({
+      client,
+      defaultDatabaseId: DATA_SOURCE_ID,
+    });
+
+    const page = (await client.pages.create({
+      properties: {
+        Title: titleText('Page body video'),
+      } as never,
+    })) as unknown as FakePage;
+
+    await client.blocks.children.append({
+      block_id: page.id,
+      children: [
+        {
+          type: 'bookmark',
+          bookmark: {
+            url: buildCanonicalVideoUrl(VIDEO_ID),
+          },
+        },
+      ],
+    });
+
+    const result = await service.resolvePageVideoSource(page.id);
+
+    expect(result).toMatchObject({
+      pageId: page.id,
+      videoId: VIDEO_ID,
+      videoUrl: buildCanonicalVideoUrl(VIDEO_ID),
+      source: 'block',
+    });
+  });
+
+  it('updates an existing Notion page in place without creating a second row', async () => {
+    const { client, state } = createFakeNotionClient();
+    const service = new NotionTranscriptSyncService({
+      client,
+      defaultDatabaseId: DATA_SOURCE_ID,
+    });
+
+    const page = (await client.pages.create({
+      properties: {
+        Title: titleText('Manual inbox item'),
+        'YouTube URL': {
+          type: 'url',
+          url: buildCanonicalVideoUrl(VIDEO_ID),
+        },
+      } as never,
+    })) as unknown as FakePage;
+
+    const result = await service.syncTranscriptToPage(
+      page.id,
+      createRecord({
+        title: 'Transcript Sync Test Updated In Place',
+      }),
+      {
+        includeTimestamps: true,
+        replaceExistingTranscript: true,
+      },
+    );
+
+    expect(result).toMatchObject({
+      pageId: page.id,
+      action: 'updated',
+      transcriptAction: 'appended',
+    });
+    expect(state.pages.size).toBe(1);
+    expect(state.pages.get(page.id)?.properties.Title).toMatchObject({
+      title: [{ text: { content: 'Transcript Sync Test Updated In Place' } }],
+    });
+    expect(state.blocksByParent.get(page.id)).toHaveLength(1);
+  });
+
   it('creates a page, appends chunked transcript blocks, then updates without duplication', async () => {
     const { client, state } = createFakeNotionClient();
     const service = new NotionTranscriptSyncService({

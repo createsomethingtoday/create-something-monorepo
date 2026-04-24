@@ -1,17 +1,21 @@
 import { APIResponseError, Client } from '@notionhq/client';
 
 import { NOTION_BLOCK_BATCH_LIMIT } from './config.js';
-import { buildCanonicalVideoUrl, extractVideoId } from './youtube.js';
+import { buildCanonicalVideoUrl, extractVideoId, normalizeVideoReference } from './youtube.js';
 import { chunkTranscript, segmentsToTimestampedTranscript } from './transcript.js';
 import type {
   FetchDocumentResult,
   NotionDatabaseProperty,
   NotionDatabaseSchema,
+  NotionPageSyncResult,
+  NotionPageVideoSource,
   NotionPropertyMapping,
   NotionService,
   NotionSyncResult,
+  ResolveNotionPageVideoSourceOptions,
   ResolvedNotionPropertyMapping,
   SearchResultItem,
+  SyncTranscriptToPageOptions,
   SyncTranscriptToNotionOptions,
   TranscriptRecord,
 } from './types.js';
@@ -19,6 +23,11 @@ import type {
 type NotionPageLike = {
   id: string;
   url?: string;
+  parent?: {
+    type?: string;
+    database_id?: string;
+    data_source_id?: string;
+  };
   properties: Record<string, any>;
 };
 
@@ -155,6 +164,36 @@ function safeText(value: string, maxLength = 1900): string {
 function canonicalUrlFromVideoId(value: string | undefined): string | undefined {
   const videoId = value ? extractVideoId(value) : null;
   return videoId ? buildCanonicalVideoUrl(videoId) : undefined;
+}
+
+function normalizeVideoSourceCandidate(
+  value: string | undefined,
+): { videoId: string; videoUrl: string } | null {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const normalized = normalizeVideoReference(trimmed);
+    return {
+      videoId: normalized.videoId,
+      videoUrl: normalized.url,
+    };
+  } catch {}
+
+  const embeddedUrlMatches = trimmed.match(/https?:\/\/[^\s)]+/gi) ?? [];
+  for (const candidate of embeddedUrlMatches) {
+    try {
+      const normalized = normalizeVideoReference(candidate);
+      return {
+        videoId: normalized.videoId,
+        videoUrl: normalized.url,
+      };
+    } catch {}
+  }
+
+  return null;
 }
 
 function coerceDate(value: string): string | undefined {
@@ -692,8 +731,182 @@ export class NotionTranscriptSyncService implements NotionService {
     }
   }
 
+  private async retrievePage(pageId: string): Promise<NotionPageLike> {
+    const client = this.getClient();
+    return (await withRetry(`pages.retrieve(${pageId})`, () =>
+      client.pages.retrieve({ page_id: pageId }),
+    )) as unknown as NotionPageLike;
+  }
+
+  private async updatePageProperties(
+    pageId: string,
+    properties: Record<string, unknown>,
+  ): Promise<NotionPageLike> {
+    const client = this.getClient();
+    return (await withRetry(`pages.update(${pageId})`, () =>
+      client.pages.update({
+        page_id: pageId,
+        properties: properties as Parameters<Client['pages']['update']>[0]['properties'],
+      }),
+    )) as unknown as NotionPageLike;
+  }
+
+  private async writeTranscriptSection(
+    pageId: string,
+    record: TranscriptRecord,
+    options: {
+      includeTimestamps?: boolean;
+      replaceExistingTranscript?: boolean;
+      transcriptHeaderLines?: string[];
+      transcriptBodyText?: string;
+    },
+  ): Promise<NotionSyncResult['transcriptAction']> {
+    const client = this.getClient();
+    const transcriptText =
+      options.transcriptBodyText ??
+      (options.includeTimestamps
+        ? segmentsToTimestampedTranscript(record.segments)
+        : record.transcript);
+
+    if (!transcriptText.trim()) {
+      return 'none';
+    }
+
+    const topLevelBlocks = await listTopLevelBlocks(client, pageId);
+    const existingTranscriptBlock = findTranscriptSectionBlock(topLevelBlocks);
+    if (existingTranscriptBlock && !options.replaceExistingTranscript) {
+      return 'skipped_existing';
+    }
+
+    if (existingTranscriptBlock) {
+      await deleteBlock(client, existingTranscriptBlock.id);
+    }
+
+    const { toggleBlock, remainderBlocks } = buildTranscriptBlocks({
+      text: transcriptText,
+      headerLines: options.transcriptHeaderLines,
+    });
+    const appendResult = await withRetry(`blocks.children.append(${pageId})`, () =>
+      client.blocks.children.append({
+        block_id: pageId,
+        children: [toggleBlock] as Parameters<Client['blocks']['children']['append']>[0]['children'],
+      }),
+    );
+
+    const toggleId = (appendResult.results[0] as { id: string }).id;
+    for (let index = 0; index < remainderBlocks.length; index += NOTION_BLOCK_BATCH_LIMIT) {
+      await withRetry(`blocks.children.append(${toggleId})`, () =>
+        client.blocks.children.append({
+          block_id: toggleId,
+          children: remainderBlocks.slice(
+            index,
+            index + NOTION_BLOCK_BATCH_LIMIT,
+          ) as Parameters<Client['blocks']['children']['append']>[0]['children'],
+        }),
+      );
+    }
+
+    return 'appended';
+  }
+
   async getDatabaseSchema(databaseId?: string): Promise<NotionDatabaseSchema> {
     return this.resolveSchema(databaseId);
+  }
+
+  async resolvePageVideoSource(
+    pageId: string,
+    options: ResolveNotionPageVideoSourceOptions = {},
+  ): Promise<NotionPageVideoSource> {
+    const page = await this.retrievePage(pageId);
+    const schema = schemaFromProperties(page.properties);
+    const resolved = resolvePropertyMapping(
+      schema,
+      this.options.defaultPropertyMapping,
+      options.propertyMapping,
+    );
+    const warnings = [...resolved.warnings];
+    const title =
+      extractPlainText(page.properties[resolved.mapping.title]) ?? 'Untitled page';
+
+    if (options.videoUrl?.trim()) {
+      const normalized = normalizeVideoSourceCandidate(options.videoUrl);
+      if (!normalized) {
+        throw new NotionSyncServiceError(
+          'INVALID_YOUTUBE_VIDEO_REFERENCE',
+          `Invalid YouTube video reference: ${options.videoUrl}`,
+          {
+            pageId,
+            source: 'override',
+          },
+        );
+      }
+
+      return {
+        pageId: page.id,
+        pageUrl: page.url,
+        title,
+        videoUrl: normalized.videoUrl,
+        videoId: normalized.videoId,
+        source: 'override',
+        warnings,
+        propertyMapping: resolved.mapping,
+      };
+    }
+
+    const prioritizedProperties = [
+      resolved.mapping.url,
+      resolved.mapping.videoId,
+      ...Object.keys(page.properties).filter(
+        (name) => name !== resolved.mapping.url && name !== resolved.mapping.videoId,
+      ),
+    ].filter(Boolean) as string[];
+
+    for (const propertyName of prioritizedProperties) {
+      const normalized = normalizeVideoSourceCandidate(
+        extractPlainText(page.properties[propertyName]),
+      );
+      if (normalized) {
+        return {
+          pageId: page.id,
+          pageUrl: page.url,
+          title,
+          videoUrl: normalized.videoUrl,
+          videoId: normalized.videoId,
+          source: 'property',
+          sourceProperty: propertyName,
+          warnings,
+          propertyMapping: resolved.mapping,
+        };
+      }
+    }
+
+    const blockLines = extractMeaningfulBlockLines(await listAllBlocks(this.getClient(), pageId));
+    for (const line of blockLines) {
+      const normalized = normalizeVideoSourceCandidate(line);
+      if (normalized) {
+        return {
+          pageId: page.id,
+          pageUrl: page.url,
+          title,
+          videoUrl: normalized.videoUrl,
+          videoId: normalized.videoId,
+          source: 'block',
+          warnings,
+          propertyMapping: resolved.mapping,
+        };
+      }
+    }
+
+    throw new NotionSyncServiceError(
+      'NOTION_PAGE_VIDEO_URL_MISSING',
+      'No YouTube URL or video ID was found on the target Notion page. Add a value to a mapped URL property such as "Source URL" or pass videoUrl directly.',
+      {
+        pageId: page.id,
+        pageUrl: page.url,
+        title,
+        inspectedProperties: prioritizedProperties,
+      },
+    );
   }
 
   private async findExistingPage(
@@ -743,7 +956,6 @@ export class NotionTranscriptSyncService implements NotionService {
     record: TranscriptRecord,
     options: SyncTranscriptToNotionOptions,
   ): Promise<NotionSyncResult> {
-    const client = this.getClient();
     const schema = await this.resolveSchema(options.databaseId);
     const resolved = resolvePropertyMapping(
       schema.properties,
@@ -754,16 +966,9 @@ export class NotionTranscriptSyncService implements NotionService {
     const existing = await this.findExistingPage(schema, resolved.mapping, record);
 
     const page = existing
-      ? await withRetry(`pages.update(${existing.page.id})`, () =>
-          client.pages.update({
-            page_id: existing.page.id,
-            properties: propertiesResult.properties as Parameters<
-              Client['pages']['update']
-            >[0]['properties'],
-          }),
-        )
+      ? await this.updatePageProperties(existing.page.id, propertiesResult.properties)
       : await withRetry(`pages.create(${schema.dataSourceId})`, () =>
-          client.pages.create({
+          this.getClient().pages.create({
             parent: { data_source_id: schema.dataSourceId },
             properties: propertiesResult.properties as Parameters<
               Client['pages']['create']
@@ -774,52 +979,7 @@ export class NotionTranscriptSyncService implements NotionService {
     const pageId = page.id;
     const pageUrl = 'url' in page && typeof page.url === 'string' ? page.url : undefined;
     const warnings = [...resolved.warnings, ...propertiesResult.warnings];
-    let transcriptAction: NotionSyncResult['transcriptAction'] = 'none';
-
-    const transcriptText =
-      options.transcriptBodyText ??
-      (options.includeTimestamps
-        ? segmentsToTimestampedTranscript(record.segments)
-        : record.transcript);
-
-    if (transcriptText.trim()) {
-      const topLevelBlocks = await listTopLevelBlocks(client, pageId);
-      const existingTranscriptBlock = findTranscriptSectionBlock(topLevelBlocks);
-      if (existingTranscriptBlock && !options.replaceExistingTranscript) {
-        transcriptAction = 'skipped_existing';
-      } else {
-        if (existingTranscriptBlock) {
-          await deleteBlock(client, existingTranscriptBlock.id);
-        }
-
-        const { toggleBlock, remainderBlocks } = buildTranscriptBlocks({
-          text: transcriptText,
-          headerLines: options.transcriptHeaderLines,
-        });
-        const appendResult = await withRetry(`blocks.children.append(${pageId})`, () =>
-          client.blocks.children.append({
-            block_id: pageId,
-            children: [toggleBlock] as Parameters<
-              Client['blocks']['children']['append']
-            >[0]['children'],
-          }),
-        );
-
-        const toggleId = (appendResult.results[0] as { id: string }).id;
-        for (let index = 0; index < remainderBlocks.length; index += NOTION_BLOCK_BATCH_LIMIT) {
-          await withRetry(`blocks.children.append(${toggleId})`, () =>
-            client.blocks.children.append({
-              block_id: toggleId,
-              children: remainderBlocks.slice(
-                index,
-                index + NOTION_BLOCK_BATCH_LIMIT,
-              ) as Parameters<Client['blocks']['children']['append']>[0]['children'],
-            }),
-          );
-        }
-        transcriptAction = existingTranscriptBlock ? 'appended' : 'appended';
-      }
-    }
+    const transcriptAction = await this.writeTranscriptSection(pageId, record, options);
 
     return {
       databaseId: schema.databaseId,
@@ -830,6 +990,38 @@ export class NotionTranscriptSyncService implements NotionService {
       transcriptAction,
       matchedOn: existing?.matchedOn,
       warnings,
+      propertyMapping: resolved.mapping,
+    };
+  }
+
+  async syncTranscriptToPage(
+    pageId: string,
+    record: TranscriptRecord,
+    options: SyncTranscriptToPageOptions,
+  ): Promise<NotionPageSyncResult> {
+    const page = await this.retrievePage(pageId);
+    const schema = schemaFromProperties(page.properties);
+    const resolved = resolvePropertyMapping(
+      schema,
+      this.options.defaultPropertyMapping,
+      options.propertyMapping,
+    );
+    const propertiesResult = buildPageProperties(schema, resolved.mapping, record);
+    const updatedPage =
+      Object.keys(propertiesResult.properties).length > 0
+        ? await this.updatePageProperties(pageId, propertiesResult.properties)
+        : page;
+    const transcriptAction = await this.writeTranscriptSection(pageId, record, options);
+
+    return {
+      pageId: updatedPage.id,
+      pageUrl:
+        'url' in updatedPage && typeof updatedPage.url === 'string'
+          ? updatedPage.url
+          : page.url,
+      action: 'updated',
+      transcriptAction,
+      warnings: [...resolved.warnings, ...propertiesResult.warnings],
       propertyMapping: resolved.mapping,
     };
   }

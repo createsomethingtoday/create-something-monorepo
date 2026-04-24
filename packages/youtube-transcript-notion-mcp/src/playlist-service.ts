@@ -10,6 +10,11 @@ import {
   buildCanonicalVideoUrl,
   normalizePlaylistReference,
 } from './youtube.js';
+import {
+  buildPlaylistTranscriptHeaderLines,
+  buildTranscriptBodyText,
+  resolveCaptionsSource,
+} from './transcript-page.js';
 import type {
   ListPlaylistItemsInput,
   ListPlaylistItemsResult,
@@ -194,51 +199,6 @@ function buildTranscriptUnavailableRecord(
     dateAddedToPlaylist: item.dateAddedToPlaylist,
     captionsSource: 'none',
   };
-}
-
-function resolveCaptionsSource(record: TranscriptRecord): string {
-  if (record.extractionMethod === 'unavailable') {
-    return 'none';
-  }
-
-  if (record.extractionMethod === 'supadata') {
-    const transcriptMode = String(record.sourceDiagnostics?.transcriptMode ?? '').trim();
-    if (transcriptMode === 'native') {
-      return 'official';
-    }
-    if (transcriptMode === 'generate' || transcriptMode === 'auto') {
-      return 'generated';
-    }
-  }
-
-  return record.extractionMethod;
-}
-
-function buildTranscriptHeaderLines(record: TranscriptRecord): string[] {
-  const playlistLabel = record.playlistTitle
-    ? `${record.playlistTitle} (${record.playlistId ?? 'unknown-playlist'})`
-    : record.playlistId ?? 'Unknown playlist';
-
-  return [
-    `Video title: ${record.title}`,
-    `Video URL: ${record.url}`,
-    `Playlist: ${playlistLabel}`,
-    `Captions source: ${record.captionsSource ?? resolveCaptionsSource(record)}`,
-    `Date added to playlist: ${record.dateAddedToPlaylist ?? 'Unknown'}`,
-  ];
-}
-
-function buildTranscriptBodyText(
-  record: TranscriptRecord,
-  unavailableReason?: string,
-): string {
-  if (record.transcript.trim()) {
-    return record.transcript;
-  }
-
-  return unavailableReason
-    ? `Transcript unavailable: ${unavailableReason}`
-    : 'Transcript unavailable.';
 }
 
 function buildDryRunItemResult(item: PlaylistListItem): PlaylistSyncItemResult {
@@ -583,7 +543,7 @@ export class YouTubePlaylistSyncService implements PlaylistService {
             propertyMapping: input.propertyMapping,
             includeTimestamps: input.includeTimestamps && Boolean(record.transcript.trim()),
             replaceExistingTranscript: true,
-            transcriptHeaderLines: buildTranscriptHeaderLines(record),
+            transcriptHeaderLines: buildPlaylistTranscriptHeaderLines(record),
             transcriptBodyText,
           });
 
