@@ -10,6 +10,11 @@ on:
       tag:
         description: 'Release tag (e.g., loom-v0.1.0)'
         required: true
+      publish_npm:
+        description: 'Publish @createsomething/loom-mcp to npm'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -191,6 +196,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      PUBLISH_NPM_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_npm == 'true') || vars.LOOM_PUBLISH_NPM == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -205,25 +211,42 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Detect npm token
-        id: npm_token
+      - name: Determine npm publish mode
+        id: npm_publish
         run: |
-          if [ -n "${NODE_AUTH_TOKEN}" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
+          if [ "${PUBLISH_NPM_REQUESTED}" = "true" ] && [ -n "${NODE_AUTH_TOKEN}" ]; then
+            echo "run_publish=true" >> "$GITHUB_OUTPUT"
           else
-            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "run_publish=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ "${PUBLISH_NPM_REQUESTED}" = "true" ]; then
+            echo "requested=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "requested=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -n "${NODE_AUTH_TOKEN}" ]; then
+            echo "token_available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "token_available=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Verify package contents
-        if: steps.npm_token.outputs.available == 'true'
+        if: steps.npm_publish.outputs.run_publish == 'true'
         working-directory: packages/loom/npm
         run: npm pack --dry-run
 
       - name: Publish package to npm
-        if: steps.npm_token.outputs.available == 'true'
+        if: steps.npm_publish.outputs.run_publish == 'true'
         working-directory: packages/loom/npm
         run: npm publish --access public --provenance
 
-      - name: Skip npm publish when token is unavailable
-        if: steps.npm_token.outputs.available != 'true'
-        run: echo "NPM_TOKEN is not configured; skipping npm publish."
+      - name: Skip npm publish when disabled or token is unavailable
+        if: steps.npm_publish.outputs.run_publish != 'true'
+        run: |
+          if [ "${{ steps.npm_publish.outputs.requested }}" != "true" ]; then
+            echo "LOOM_PUBLISH_NPM is not enabled and publish_npm was not requested; skipping npm publish."
+          elif [ "${{ steps.npm_publish.outputs.token_available }}" != "true" ]; then
+            echo "NPM_TOKEN is not configured; skipping npm publish."
+          fi

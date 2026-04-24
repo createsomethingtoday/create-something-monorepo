@@ -23,6 +23,8 @@ Each asset bundle must contain both `lm` and `loom-mcp`.
 ## Prerequisites
 
 - `NPM_TOKEN` is configured in GitHub Actions if npm publish should happen automatically
+- npm publish is explicitly enabled either by setting the repo variable `LOOM_PUBLISH_NPM=true` or by using manual workflow dispatch with `publish_npm=true`
+- the npm token has publish access to the existing package `@createsomething/loom-mcp`
 - the current branch contains the Loom bootstrap and release workflow changes
 - local validation passes for the version being released
 
@@ -108,7 +110,8 @@ After the workflow finishes, confirm:
 - all four platform assets are attached
 - the asset filenames match the installer contract exactly
 
-The release workflow also conditionally publishes `@createsomething/loom-mcp` if `NPM_TOKEN` is configured.
+The release workflow conditionally publishes `@createsomething/loom-mcp` only when npm publish is explicitly enabled.
+By default, tag pushes publish GitHub release assets and skip npm.
 
 ## 7. Smoke test the published asset path
 
@@ -128,9 +131,15 @@ Expected result:
 
 ## 8. If npm publish was skipped
 
-If the workflow logs `NPM_TOKEN is not configured; skipping npm publish.`, either:
+If the workflow logs that npm publish is skipped, either:
 
-- add `NPM_TOKEN` and rerun the workflow with the same tag, or
+- enable npm publish by setting `LOOM_PUBLISH_NPM=true`, or dispatch the workflow manually with `publish_npm=true`
+- add an `NPM_TOKEN` that can publish `@createsomething/loom-mcp`
+- leave npm disabled and use the GitHub release assets for repo-local bootstrap
+
+If the workflow attempts npm publish and returns `404 Not Found`, the token likely does not have publish rights for the `@createsomething` scope or the specific package.
+
+- add the correct npm access and rerun the workflow with a new Loom version tag, or
 - publish manually from `packages/loom/npm` after validating package contents
 
 ## 9. Rollback and recovery
