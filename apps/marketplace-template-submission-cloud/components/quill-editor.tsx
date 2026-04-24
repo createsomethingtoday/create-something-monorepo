@@ -12,6 +12,10 @@ type QuillInstance = {
   getContents: () => { ops: { insert?: unknown }[] };
   deleteText: (index: number, length: number, source?: string) => void;
   getLength: () => number;
+  setContents: (contents: unknown, source?: string) => void;
+  clipboard: {
+    convert: (html?: string) => unknown;
+  };
 };
 
 declare global {
@@ -79,7 +83,7 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
     if (syncFrameRef.current !== null) {
       window.cancelAnimationFrame(syncFrameRef.current);
     }
-    quill.root.innerHTML = html;
+    quill.setContents(quill.clipboard.convert(html || ''), 'silent');
     syncFrameRef.current = window.requestAnimationFrame(() => {
       syncingRef.current = false;
       syncFrameRef.current = null;
