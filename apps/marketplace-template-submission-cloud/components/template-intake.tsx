@@ -799,14 +799,6 @@ export function TemplateIntake() {
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function removeGalleryFile(signature: string) {
-    setTemplate((current) => ({
-      ...current,
-      galleryFiles: current.galleryFiles.filter((file) => fileSignature(file) !== signature),
-    }));
-    setTemplateStatus(null);
-  }
-
   useEffect(() => {
     setIsEmbedded(window.parent !== window);
 
