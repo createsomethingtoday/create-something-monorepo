@@ -4,6 +4,9 @@ compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
+[triggers]
+crons = ["*/30 * * * *"]
+
 [vars]
 YOUTUBE_DIRECT_PROVIDER_MODE = "browser-first"
 
@@ -14,9 +17,17 @@ enabled = true
 name = "MCP_OBJECT"
 class_name = "YouTubeTranscriptNotionMCP"
 
+[[durable_objects.bindings]]
+name = "PLAYLIST_SYNC_STATE"
+class_name = "YouTubePlaylistSyncState"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["YouTubeTranscriptNotionMCP"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["YouTubePlaylistSyncState"]
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"
@@ -29,6 +40,11 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 # NOTION_PROPERTY_MAPPING_JSON
 # SUPADATA_API_KEY
 # SUPADATA_TRANSCRIPT_MODE
+# YOUTUBE_DATA_API_KEY
+# YOUTUBE_PLAYLIST_ID
+# YOUTUBE_PLAYLIST_DATABASE_ID
+# YOUTUBE_PLAYLIST_MAX_SCAN_ITEMS
+# YOUTUBE_PLAYLIST_MAX_SYNC_ITEMS
 # STEEL_API_KEY
 # STEEL_PROFILE_ID
 # YOUTUBE_TRANSCRIPT_LANGUAGE

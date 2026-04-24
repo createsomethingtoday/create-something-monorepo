@@ -71,4 +71,37 @@ describe('resolveRuntimeConfig', () => {
       'MCP_BEARER_TOKEN is not configured. Public callers can invoke Notion-backed tools without authentication.',
     );
   });
+
+  it('warns when a default playlist is configured without a YouTube Data API key', () => {
+    const result = resolveRuntimeConfig({
+      YOUTUBE_PLAYLIST_ID: 'PLlu6DY1uonzYTiwLRBUj5OZBXUa6n4mCz',
+    });
+
+    expect(result.playlist).toMatchObject({
+      youtubeDataApiConfigured: false,
+      defaultPlaylistId: 'PLlu6DY1uonzYTiwLRBUj5OZBXUa6n4mCz',
+      maxScanItems: 25,
+      maxSyncItems: 10,
+    });
+    expect(result.configWarnings).toContain(
+      'YOUTUBE_PLAYLIST_ID is configured but YOUTUBE_DATA_API_KEY is not set, so playlist listing and scheduled playlist sync are disabled.',
+    );
+  });
+
+  it('parses playlist sync sizing controls', () => {
+    const result = resolveRuntimeConfig({
+      YOUTUBE_DATA_API_KEY: 'yt_123',
+      YOUTUBE_PLAYLIST_ID: 'PLlu6DY1uonzYTiwLRBUj5OZBXUa6n4mCz',
+      YOUTUBE_PLAYLIST_MAX_SCAN_ITEMS: '40',
+      YOUTUBE_PLAYLIST_MAX_SYNC_ITEMS: '12',
+    });
+
+    expect(result.playlist).toMatchObject({
+      youtubeDataApiConfigured: true,
+      defaultPlaylistId: 'PLlu6DY1uonzYTiwLRBUj5OZBXUa6n4mCz',
+      maxScanItems: 40,
+      maxSyncItems: 12,
+    });
+    expect(result.configWarnings).toEqual([]);
+  });
 });

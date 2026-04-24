@@ -1,4 +1,5 @@
 export type TranscriptProviderName = 'supadata' | 'direct' | 'browser';
+export type TranscriptExtractionMethod = TranscriptProviderName | 'unavailable';
 
 export interface TranscriptSegment {
   text: string;
@@ -28,10 +29,14 @@ export interface TranscriptRecord {
   thumbnailUrl?: string;
   transcript: string;
   segments: TranscriptSegment[];
-  extractionMethod: TranscriptProviderName;
+  extractionMethod: TranscriptExtractionMethod;
   language?: string;
   warnings: string[];
   sourceDiagnostics: TranscriptDiagnostics;
+  playlistId?: string;
+  playlistTitle?: string;
+  dateAddedToPlaylist?: string;
+  captionsSource?: string;
 }
 
 export interface TranscriptExtractionInput {
@@ -76,8 +81,15 @@ export interface NotionPropertyMapping {
   videoId?: string;
   channelName?: string;
   publishedAt?: string;
+  dateAddedToPlaylist?: string;
   thumbnailUrl?: string;
   language?: string;
+  type?: string;
+  source?: string;
+  pageStatus?: string;
+  notes?: string;
+  playlistId?: string;
+  playlistTitle?: string;
   extractionMethod?: string;
   transcriptStatus?: string;
   syncedAt?: string;
@@ -89,8 +101,15 @@ export interface ResolvedNotionPropertyMapping {
   videoId?: string;
   channelName?: string;
   publishedAt?: string;
+  dateAddedToPlaylist?: string;
   thumbnailUrl?: string;
   language?: string;
+  type?: string;
+  source?: string;
+  pageStatus?: string;
+  notes?: string;
+  playlistId?: string;
+  playlistTitle?: string;
   extractionMethod?: string;
   transcriptStatus?: string;
   syncedAt?: string;
@@ -116,6 +135,15 @@ export interface SyncVideoToNotionInput {
   includeTimestamps?: boolean;
 }
 
+export interface SyncTranscriptToNotionOptions {
+  databaseId?: string;
+  propertyMapping?: Partial<NotionPropertyMapping>;
+  includeTimestamps?: boolean;
+  replaceExistingTranscript?: boolean;
+  transcriptHeaderLines?: string[];
+  transcriptBodyText?: string;
+}
+
 export interface NotionSyncResult {
   databaseId: string;
   dataSourceId: string;
@@ -126,6 +154,154 @@ export interface NotionSyncResult {
   matchedOn?: 'url' | 'videoId';
   warnings: string[];
   propertyMapping: ResolvedNotionPropertyMapping;
+}
+
+export interface PlaylistListItem {
+  playlistId: string;
+  playlistUrl: string;
+  playlistTitle?: string;
+  videoId: string;
+  videoUrl: string;
+  title: string;
+  channelName?: string;
+  publishedAt?: string;
+  dateAddedToPlaylist?: string;
+  thumbnailUrl?: string;
+  position?: number;
+}
+
+export interface ListPlaylistItemsInput {
+  playlistId: string;
+  limit?: number;
+  pageToken?: string;
+}
+
+export interface ListPlaylistItemsResult {
+  playlistId: string;
+  playlistUrl: string;
+  playlistTitle?: string;
+  items: PlaylistListItem[];
+  nextPageToken?: string;
+  limit: number;
+}
+
+export interface PlaylistSyncStateSummary {
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  cutoffApplied: boolean;
+}
+
+export interface PlaylistSyncStateSnapshot {
+  playlistId: string;
+  lastRunAt?: string;
+  lastSuccessAt?: string;
+  lastAttemptAt?: string;
+  lastProcessedAt?: string;
+  recentItemKeys: string[];
+  recentVideoIds: string[];
+  lastSummary?: PlaylistSyncStateSummary;
+  lastError?: {
+    code: string;
+    message: string;
+    at: string;
+  };
+  activeRun?: {
+    runId: string;
+    source: string;
+    startedAt: string;
+    leaseExpiresAt: string;
+  };
+}
+
+export interface PlaylistSyncLease {
+  acquired: boolean;
+  state: PlaylistSyncStateSnapshot;
+  activeRun?: PlaylistSyncStateSnapshot['activeRun'];
+}
+
+export interface PlaylistStateStore {
+  getState(playlistId: string): Promise<PlaylistSyncStateSnapshot>;
+  acquireLease(
+    playlistId: string,
+    input: {
+      runId: string;
+      source: string;
+      leaseMs: number;
+      now?: string;
+    },
+  ): Promise<PlaylistSyncLease>;
+  completeRun(
+    playlistId: string,
+    input: {
+      runId: string;
+      recentItemKeys: string[];
+      recentVideoIds: string[];
+      processedAt?: string;
+      summary: PlaylistSyncStateSummary;
+      now?: string;
+    },
+  ): Promise<PlaylistSyncStateSnapshot>;
+  failRun(
+    playlistId: string,
+    input: {
+      runId: string;
+      error: {
+        code: string;
+        message: string;
+      };
+      now?: string;
+    },
+  ): Promise<PlaylistSyncStateSnapshot>;
+}
+
+export interface PlaylistSyncItemResult {
+  videoId: string;
+  url: string;
+  title: string;
+  dateAddedToPlaylist?: string;
+  transcriptStatus: 'available' | 'unavailable';
+  extractionMethod: TranscriptExtractionMethod;
+  action?: NotionSyncResult['action'];
+  transcriptAction?: NotionSyncResult['transcriptAction'];
+  matchedOn?: NotionSyncResult['matchedOn'];
+  pageId?: string;
+  pageUrl?: string;
+  warnings: string[];
+  skippedReason?: 'already_seen' | 'manual_cutoff' | 'dry_run';
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+export interface SyncPlaylistToNotionInput {
+  playlistId?: string;
+  databaseId?: string;
+  propertyMapping?: Partial<NotionPropertyMapping>;
+  includeTimestamps?: boolean;
+  maxItems?: number;
+  maxScanItems?: number;
+  dryRun?: boolean;
+  sinceCursor?: string;
+  automation?: boolean;
+}
+
+export interface PlaylistSyncResult {
+  playlistId: string;
+  playlistUrl: string;
+  playlistTitle?: string;
+  databaseId?: string;
+  dryRun: boolean;
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  cutoffApplied: boolean;
+  processedCount: number;
+  state: PlaylistSyncStateSnapshot;
+  items: PlaylistSyncItemResult[];
 }
 
 export interface SearchResultItem {
@@ -155,15 +331,22 @@ export interface NotionService {
   getDatabaseSchema(databaseId?: string): Promise<NotionDatabaseSchema>;
   syncTranscript(
     record: TranscriptRecord,
-    options: Omit<SyncVideoToNotionInput, 'videoUrl'>,
+    options: SyncTranscriptToNotionOptions,
   ): Promise<NotionSyncResult>;
   searchDocuments(query: string): Promise<SearchResultItem[]>;
   fetchDocument(id: string): Promise<FetchDocumentResult>;
 }
 
+export interface PlaylistService {
+  listItems(input: ListPlaylistItemsInput): Promise<ListPlaylistItemsResult>;
+  syncPlaylist(input: SyncPlaylistToNotionInput): Promise<PlaylistSyncResult>;
+  getStatus(playlistId?: string): Promise<Record<string, unknown>>;
+}
+
 export interface RuntimeDependencies {
   transcriptService: TranscriptService;
   notionService: NotionService;
+  playlistService: PlaylistService;
   serverInfo: {
     name: string;
     version: string;

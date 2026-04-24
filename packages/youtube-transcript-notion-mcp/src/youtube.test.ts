@@ -3,16 +3,20 @@ import { describe, expect, it } from 'vitest';
 import {
   buildBrowserFallbackVideoUrl,
   buildCanonicalVideoUrl,
+  buildCanonicalPlaylistUrl,
   buildMobileWatchVideoUrl,
   extractInitialPlayerResponseFromHtml,
+  extractPlaylistId,
   extractTranscriptParamsFromHtml,
   extractVideoId,
   extractVideoMetadataFromHtml,
   extractVideoMetadataFromPlayerResponse,
+  normalizePlaylistReference,
   normalizeVideoReference,
 } from './youtube.js';
 
 const VIDEO_ID = 'ZDv4iYaLbpI';
+const PLAYLIST_ID = 'PLlu6DY1uonzYTiwLRBUj5OZBXUa6n4mCz';
 
 describe('youtube URL utilities', () => {
   it('extracts a video ID from common YouTube URL formats', () => {
@@ -55,6 +59,31 @@ describe('youtube URL utilities', () => {
   it('throws for invalid references during normalization', () => {
     expect(() => normalizeVideoReference('https://example.com/video')).toThrow(
       /Invalid YouTube video reference/,
+    );
+  });
+
+  it('extracts a playlist ID from a playlist URL or raw ID', () => {
+    expect(extractPlaylistId(PLAYLIST_ID)).toBe(PLAYLIST_ID);
+    expect(
+      extractPlaylistId(
+        `https://www.youtube.com/playlist?list=${PLAYLIST_ID}&si=playlist-token`,
+      ),
+    ).toBe(PLAYLIST_ID);
+  });
+
+  it('canonicalizes a valid playlist reference', () => {
+    expect(
+      normalizePlaylistReference(`https://www.youtube.com/watch?v=${VIDEO_ID}&list=${PLAYLIST_ID}`),
+    ).toEqual({
+      playlistId: PLAYLIST_ID,
+      url: buildCanonicalPlaylistUrl(PLAYLIST_ID),
+    });
+  });
+
+  it('rejects invalid playlist references', () => {
+    expect(extractPlaylistId('https://example.com/playlist?list=abc')).toBeNull();
+    expect(() => normalizePlaylistReference('https://example.com/playlist')).toThrow(
+      /Invalid YouTube playlist reference/,
     );
   });
 

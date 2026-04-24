@@ -1,7 +1,7 @@
 {
   "name": "@create-something/youtube-transcript-notion-mcp",
   "version": "1.0.0",
-  "description": "Remote MCP for YouTube transcript extraction with Steel browser fallback and single-video Notion sync",
+  "description": "Remote MCP for YouTube transcript extraction, playlist-driven Notion sync, and scheduled playlist polling",
   "type": "module",
   "main": "dist/index.js",
   "createSomething": {

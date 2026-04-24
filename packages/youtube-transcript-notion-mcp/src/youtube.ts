@@ -5,6 +5,11 @@ export interface NormalizedVideoReference {
   url: string;
 }
 
+export interface NormalizedPlaylistReference {
+  playlistId: string;
+  url: string;
+}
+
 export interface YouTubeWatchMetadata {
   title?: string;
   channelName?: string;
@@ -42,6 +47,10 @@ export function buildCanonicalVideoUrl(videoId: string): string {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
+export function buildCanonicalPlaylistUrl(playlistId: string): string {
+  return `https://www.youtube.com/playlist?list=${playlistId}`;
+}
+
 export function buildMobileWatchVideoUrl(videoId: string): string {
   return `https://m.youtube.com/watch?v=${videoId}`;
 }
@@ -51,6 +60,15 @@ export function buildBrowserFallbackVideoUrl(videoId: string): string {
   url.searchParams.set('bpctr', '9999999999');
   url.searchParams.set('has_verified', '1');
   return url.toString();
+}
+
+function sanitizePlaylistId(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const candidate = value.trim();
+  return /^[A-Za-z0-9_-]{10,}$/.test(candidate) ? candidate : null;
 }
 
 export function extractVideoId(input: string): string | null {
@@ -93,6 +111,28 @@ export function extractVideoId(input: string): string | null {
   return null;
 }
 
+export function extractPlaylistId(input: string): string | null {
+  const trimmed = input.trim();
+  const directId = sanitizePlaylistId(trimmed);
+  if (directId && !VIDEO_ID_PATTERN.test(directId)) {
+    return directId;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    return null;
+  }
+
+  const host = normalizeHost(url.hostname);
+  if (!host.endsWith('youtube.com') && !host.endsWith('youtube-nocookie.com')) {
+    return null;
+  }
+
+  return sanitizePlaylistId(url.searchParams.get('list'));
+}
+
 export function normalizeVideoReference(input: string): NormalizedVideoReference {
   const videoId = extractVideoId(input);
   if (!videoId) {
@@ -102,6 +142,18 @@ export function normalizeVideoReference(input: string): NormalizedVideoReference
   return {
     videoId,
     url: buildCanonicalVideoUrl(videoId),
+  };
+}
+
+export function normalizePlaylistReference(input: string): NormalizedPlaylistReference {
+  const playlistId = extractPlaylistId(input);
+  if (!playlistId) {
+    throw new Error(`Invalid YouTube playlist reference: ${input}`);
+  }
+
+  return {
+    playlistId,
+    url: buildCanonicalPlaylistUrl(playlistId),
   };
 }
 

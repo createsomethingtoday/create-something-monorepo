@@ -4,7 +4,7 @@ export const SERVER_NAME = 'youtube-transcript-notion-mcp';
 export const SERVER_VERSION = '1.0.0';
 export const DEFAULT_DISPLAY_NAME = 'YouTube Transcript + Notion MCP';
 export const DEFAULT_DESCRIPTION =
-  'Extract YouTube transcripts with a direct path, fall back to Steel when needed, and sync a single video into Notion.';
+  'Extract YouTube transcripts, sync individual videos or playlist additions into Notion, and support scheduled playlist polling.';
 export const DEFAULT_TRANSCRIPT_LANGUAGE = 'en';
 export const DEFAULT_SUPADATA_TRANSCRIPT_MODE = 'native';
 export const TRANSCRIPT_CHUNK_SIZE = 1900;
@@ -16,6 +16,9 @@ export const YOUTUBE_MOBILE_USER_AGENT =
 export const YOUTUBE_WEB_USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 export const YOUTUBE_ORIGIN = 'https://www.youtube.com';
+export const DEFAULT_PLAYLIST_MAX_SCAN_ITEMS = 25;
+export const DEFAULT_PLAYLIST_MAX_SYNC_ITEMS = 10;
+export const PLAYLIST_SYNC_LEASE_MS = 10 * 60 * 1000;
 export const STEEL_BROWSER_TIMEOUT_MS = 180_000;
 export const YOUTUBE_NAVIGATION_TIMEOUT_MS = 25_000;
 export const TRANSCRIPT_PANEL_TIMEOUT_MS = 8_000;
@@ -29,6 +32,11 @@ export interface PackageEnv {
   STEEL_PROFILE_ID?: string;
   SUPADATA_API_KEY?: string;
   SUPADATA_TRANSCRIPT_MODE?: string;
+  YOUTUBE_DATA_API_KEY?: string;
+  YOUTUBE_PLAYLIST_ID?: string;
+  YOUTUBE_PLAYLIST_DATABASE_ID?: string;
+  YOUTUBE_PLAYLIST_MAX_SCAN_ITEMS?: string;
+  YOUTUBE_PLAYLIST_MAX_SYNC_ITEMS?: string;
   YOUTUBE_TRANSCRIPT_LANGUAGE?: string;
   YOUTUBE_DIRECT_PROVIDER_MODE?: string;
   MCP_DISPLAY_NAME?: string;
@@ -47,6 +55,13 @@ export interface RuntimeConfig {
   directProviderMode: 'auto' | 'browser-first';
   defaultDatabaseId?: string;
   defaultPropertyMapping: Partial<NotionPropertyMapping>;
+  playlist: {
+    youtubeDataApiConfigured: boolean;
+    defaultPlaylistId?: string;
+    defaultPlaylistDatabaseId?: string;
+    maxScanItems: number;
+    maxSyncItems: number;
+  };
   security: {
     bearerProtectionEnabled: boolean;
     unauthenticatedBillableTranscriptAccess: boolean;
@@ -125,17 +140,54 @@ function resolveSupadataTranscriptMode(
   return DEFAULT_SUPADATA_TRANSCRIPT_MODE;
 }
 
+function resolvePositiveInteger(
+  raw: string | undefined,
+  fallback: number,
+  warnings: string[],
+  envName: string,
+): number {
+  const trimmed = trimToUndefined(raw);
+  if (!trimmed) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed;
+  }
+
+  warnings.push(
+    `${envName} must be a positive integer. Falling back to ${fallback}.`,
+  );
+  return fallback;
+}
+
 export function resolveRuntimeConfig(env: PackageEnv): RuntimeConfig {
   const configWarnings: string[] = [];
   const steelApiKey = trimToUndefined(env.STEEL_API_KEY);
   const steelProfileId = trimToUndefined(env.STEEL_PROFILE_ID);
   const supadataApiKey = trimToUndefined(env.SUPADATA_API_KEY);
   const notionApiKey = trimToUndefined(env.NOTION_API_KEY);
+  const youtubeDataApiKey = trimToUndefined(env.YOUTUBE_DATA_API_KEY);
+  const defaultPlaylistId = trimToUndefined(env.YOUTUBE_PLAYLIST_ID);
+  const defaultPlaylistDatabaseId = trimToUndefined(env.YOUTUBE_PLAYLIST_DATABASE_ID);
   const bearerToken = trimToUndefined(env.MCP_BEARER_TOKEN);
   const bearerProtectionEnabled = Boolean(bearerToken);
   const unauthenticatedBillableTranscriptAccess = !bearerProtectionEnabled && Boolean(supadataApiKey || steelApiKey);
   const unauthenticatedNotionAccess = !bearerProtectionEnabled && Boolean(notionApiKey);
   const securityRecommendations: string[] = [];
+  const playlistMaxScanItems = resolvePositiveInteger(
+    env.YOUTUBE_PLAYLIST_MAX_SCAN_ITEMS,
+    DEFAULT_PLAYLIST_MAX_SCAN_ITEMS,
+    configWarnings,
+    'YOUTUBE_PLAYLIST_MAX_SCAN_ITEMS',
+  );
+  const playlistMaxSyncItems = resolvePositiveInteger(
+    env.YOUTUBE_PLAYLIST_MAX_SYNC_ITEMS,
+    DEFAULT_PLAYLIST_MAX_SYNC_ITEMS,
+    configWarnings,
+    'YOUTUBE_PLAYLIST_MAX_SYNC_ITEMS',
+  );
 
   if (steelApiKey && !steelProfileId) {
     configWarnings.push(
@@ -146,6 +198,18 @@ export function resolveRuntimeConfig(env: PackageEnv): RuntimeConfig {
   if (!supadataApiKey && trimToUndefined(env.SUPADATA_TRANSCRIPT_MODE)) {
     configWarnings.push(
       'SUPADATA_TRANSCRIPT_MODE is configured but SUPADATA_API_KEY is not set, so Supadata transcript extraction is disabled.',
+    );
+  }
+
+  if (defaultPlaylistId && !youtubeDataApiKey) {
+    configWarnings.push(
+      'YOUTUBE_PLAYLIST_ID is configured but YOUTUBE_DATA_API_KEY is not set, so playlist listing and scheduled playlist sync are disabled.',
+    );
+  }
+
+  if (defaultPlaylistDatabaseId && !defaultPlaylistId) {
+    configWarnings.push(
+      'YOUTUBE_PLAYLIST_DATABASE_ID is configured without YOUTUBE_PLAYLIST_ID. Scheduled playlist sync needs both values.',
     );
   }
 
@@ -185,6 +249,13 @@ export function resolveRuntimeConfig(env: PackageEnv): RuntimeConfig {
       env.NOTION_PROPERTY_MAPPING_JSON,
       configWarnings,
     ),
+    playlist: {
+      youtubeDataApiConfigured: Boolean(youtubeDataApiKey),
+      defaultPlaylistId,
+      defaultPlaylistDatabaseId,
+      maxScanItems: playlistMaxScanItems,
+      maxSyncItems: playlistMaxSyncItems,
+    },
     security: {
       bearerProtectionEnabled,
       unauthenticatedBillableTranscriptAccess,

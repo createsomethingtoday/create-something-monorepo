@@ -12,6 +12,7 @@ import type {
   NotionSyncResult,
   ResolvedNotionPropertyMapping,
   SearchResultItem,
+  SyncTranscriptToNotionOptions,
   TranscriptRecord,
 } from './types.js';
 
@@ -41,11 +42,18 @@ const PROPERTY_NAME_CANDIDATES: Record<keyof NotionPropertyMapping, string[]> = 
   url: ['YouTube URL', 'Source URL', 'URL', 'Video URL'],
   videoId: ['Video ID', 'YouTube Video ID', 'YouTube ID'],
   channelName: ['Channel', 'Channel Name'],
-  publishedAt: ['Published At', 'Published', 'Date'],
+  publishedAt: ['Published At', 'Published'],
+  dateAddedToPlaylist: ['Date Added To Playlist', 'Date Added', 'Date'],
   thumbnailUrl: ['Thumbnail URL', 'Thumbnail'],
   language: ['Language'],
-  extractionMethod: ['Extraction Method', 'Transcript Source', 'Source'],
-  transcriptStatus: ['Transcript Status', 'Status'],
+  type: ['Type'],
+  source: ['Source'],
+  pageStatus: ['Status'],
+  notes: ['Notes'],
+  playlistId: ['Playlist ID', 'YouTube Playlist ID'],
+  playlistTitle: ['Playlist Title', 'Playlist'],
+  extractionMethod: ['Extraction Method', 'Transcript Source'],
+  transcriptStatus: ['Transcript Status'],
   syncedAt: ['Synced At', 'Last Synced', 'Updated At'],
 };
 
@@ -360,8 +368,15 @@ function buildPageProperties(
     videoId: record.videoId,
     channelName: record.channelName,
     publishedAt: record.publishedAt,
+    dateAddedToPlaylist: record.dateAddedToPlaylist,
     thumbnailUrl: record.thumbnailUrl,
     language: record.language,
+    type: 'Video',
+    source: 'External',
+    pageStatus: 'Active',
+    notes: record.channelName,
+    playlistId: record.playlistId,
+    playlistTitle: record.playlistTitle,
     extractionMethod: record.extractionMethod,
     transcriptStatus: record.transcript ? 'Available' : 'Unavailable',
     syncedAt: new Date().toISOString(),
@@ -466,6 +481,15 @@ export function pageHasTranscriptSection(blocks: NotionBlockLike[]): boolean {
   });
 }
 
+function findTranscriptSectionBlock(blocks: NotionBlockLike[]): NotionBlockLike | undefined {
+  return blocks.find((block) => {
+    if (!['toggle', 'heading_1', 'heading_2', 'heading_3', 'callout'].includes(block.type)) {
+      return false;
+    }
+    return normalizePropertyName(extractRichTextContent(block)).includes('transcript');
+  });
+}
+
 async function listTopLevelBlocks(client: Client, blockId: string): Promise<NotionBlockLike[]> {
   const blocks: NotionBlockLike[] = [];
   let nextCursor: string | undefined;
@@ -501,19 +525,38 @@ async function listAllBlocks(client: Client, blockId: string): Promise<NotionBlo
   return [...topLevel, ...nested.flat()];
 }
 
-function buildTranscriptBlocks(text: string): {
+function buildRichTextBlock(
+  type: 'paragraph' | 'heading_2',
+  content: string,
+): Record<string, unknown> {
+  return {
+    type,
+    [type]: {
+      rich_text: [{ type: 'text', text: { content: content.trim() } }],
+    },
+  };
+}
+
+function buildTranscriptBlocks(options: {
+  text: string;
+  headerLines?: string[];
+}): {
   toggleBlock: Record<string, unknown>;
   remainderBlocks: Array<Record<string, unknown>>;
 } {
-  const paragraphBlocks = chunkTranscript(text).map((chunk) => ({
-    type: 'paragraph',
-    paragraph: {
-      rich_text: [{ type: 'text', text: { content: chunk } }],
-    },
-  }));
+  const headerBlocks = (options.headerLines ?? [])
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => buildRichTextBlock('paragraph', line));
+  const transcriptHeading =
+    headerBlocks.length > 0 ? [buildRichTextBlock('heading_2', 'Transcript')] : [];
+  const paragraphBlocks = chunkTranscript(options.text).map((chunk) =>
+    buildRichTextBlock('paragraph', chunk),
+  );
+  const childBlocks = [...headerBlocks, ...transcriptHeading, ...paragraphBlocks];
 
-  const initialChildren = paragraphBlocks.slice(0, NOTION_BLOCK_BATCH_LIMIT - 1);
-  const remainderBlocks = paragraphBlocks.slice(NOTION_BLOCK_BATCH_LIMIT - 1);
+  const initialChildren = childBlocks.slice(0, NOTION_BLOCK_BATCH_LIMIT - 1);
+  const remainderBlocks = childBlocks.slice(NOTION_BLOCK_BATCH_LIMIT - 1);
 
   return {
     toggleBlock: {
@@ -525,6 +568,14 @@ function buildTranscriptBlocks(text: string): {
     },
     remainderBlocks,
   };
+}
+
+async function deleteBlock(client: Client, blockId: string): Promise<void> {
+  await withRetry(`blocks.delete(${blockId})`, () =>
+    client.blocks.delete({
+      block_id: blockId,
+    }),
+  );
 }
 
 function buildDocumentText(
@@ -690,11 +741,7 @@ export class NotionTranscriptSyncService implements NotionService {
 
   async syncTranscript(
     record: TranscriptRecord,
-    options: {
-      databaseId?: string;
-      propertyMapping?: Partial<NotionPropertyMapping>;
-      includeTimestamps?: boolean;
-    },
+    options: SyncTranscriptToNotionOptions,
   ): Promise<NotionSyncResult> {
     const client = this.getClient();
     const schema = await this.resolveSchema(options.databaseId);
@@ -729,16 +776,26 @@ export class NotionTranscriptSyncService implements NotionService {
     const warnings = [...resolved.warnings, ...propertiesResult.warnings];
     let transcriptAction: NotionSyncResult['transcriptAction'] = 'none';
 
-    if (record.transcript.trim()) {
+    const transcriptText =
+      options.transcriptBodyText ??
+      (options.includeTimestamps
+        ? segmentsToTimestampedTranscript(record.segments)
+        : record.transcript);
+
+    if (transcriptText.trim()) {
       const topLevelBlocks = await listTopLevelBlocks(client, pageId);
-      if (pageHasTranscriptSection(topLevelBlocks)) {
+      const existingTranscriptBlock = findTranscriptSectionBlock(topLevelBlocks);
+      if (existingTranscriptBlock && !options.replaceExistingTranscript) {
         transcriptAction = 'skipped_existing';
       } else {
-        const transcriptText = options.includeTimestamps
-          ? segmentsToTimestampedTranscript(record.segments)
-          : record.transcript;
+        if (existingTranscriptBlock) {
+          await deleteBlock(client, existingTranscriptBlock.id);
+        }
 
-        const { toggleBlock, remainderBlocks } = buildTranscriptBlocks(transcriptText);
+        const { toggleBlock, remainderBlocks } = buildTranscriptBlocks({
+          text: transcriptText,
+          headerLines: options.transcriptHeaderLines,
+        });
         const appendResult = await withRetry(`blocks.children.append(${pageId})`, () =>
           client.blocks.children.append({
             block_id: pageId,
@@ -760,7 +817,7 @@ export class NotionTranscriptSyncService implements NotionService {
             }),
           );
         }
-        transcriptAction = 'appended';
+        transcriptAction = existingTranscriptBlock ? 'appended' : 'appended';
       }
     }
 

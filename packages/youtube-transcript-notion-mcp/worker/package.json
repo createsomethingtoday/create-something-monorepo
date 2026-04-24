@@ -9,7 +9,7 @@
     "dev": "node ../../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
     "predev": "pnpm --filter @create-something/mcp-core build",
-    "secrets": "echo 'Run: wrangler secret put <NAME>' && echo 'Required: NOTION_API_KEY, SUPADATA_API_KEY. Optional: NOTION_DATABASE_ID, STEEL_API_KEY, STEEL_PROFILE_ID, MCP_BEARER_TOKEN, SUPADATA_TRANSCRIPT_MODE'",
+    "secrets": "echo 'Run: wrangler secret put <NAME>' && echo 'Required for transcript+playlist automation: SUPADATA_API_KEY, YOUTUBE_DATA_API_KEY. Optional: NOTION_API_KEY, NOTION_DATABASE_ID, YOUTUBE_PLAYLIST_ID, YOUTUBE_PLAYLIST_DATABASE_ID, YOUTUBE_PLAYLIST_MAX_SCAN_ITEMS, YOUTUBE_PLAYLIST_MAX_SYNC_ITEMS, STEEL_API_KEY, STEEL_PROFILE_ID, MCP_BEARER_TOKEN, SUPADATA_TRANSCRIPT_MODE'",
     "tail": "node ../../../scripts/run-wrangler.mjs tail",
     "pretypecheck": "pnpm --filter @create-something/mcp-core build",
     "typecheck": "tsc --noEmit"

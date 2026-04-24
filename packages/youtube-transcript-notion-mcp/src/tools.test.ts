@@ -98,6 +98,37 @@ function createDeps(): RuntimeDependencies {
         },
       }),
     },
+    playlistService: {
+      listItems: async () => ({
+        playlistId: 'PL123',
+        playlistUrl: 'https://www.youtube.com/playlist?list=PL123',
+        playlistTitle: 'Playlist Test',
+        items: [],
+        limit: 10,
+      }),
+      syncPlaylist: async () => ({
+        playlistId: 'PL123',
+        playlistUrl: 'https://www.youtube.com/playlist?list=PL123',
+        playlistTitle: 'Playlist Test',
+        databaseId: 'db_1',
+        dryRun: false,
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 0,
+        cutoffApplied: false,
+        processedCount: 0,
+        state: {
+          playlistId: 'PL123',
+          recentItemKeys: [],
+          recentVideoIds: [],
+        },
+        items: [],
+      }),
+      getStatus: async () => ({
+        configured: true,
+      }),
+    },
     serverInfo: {
       name: 'youtube-transcript-notion-mcp',
       version: '1.0.0',
@@ -130,12 +161,18 @@ describe('tool registration', () => {
 
     const extractDefinition = server.definitions.get('extract_transcript');
     const syncDefinition = server.definitions.get('sync_video_to_notion');
+    const listPlaylistDefinition = server.definitions.get('list_playlist_items');
+    const syncPlaylistDefinition = server.definitions.get('sync_playlist_to_notion');
+    const playlistStatusDefinition = server.definitions.get('get_playlist_sync_status');
     const schemaDefinition = server.definitions.get('get_database_schema');
     const searchDefinition = server.definitions.get('search');
     const fetchDefinition = server.definitions.get('fetch');
 
     expect(extractDefinition?.annotations).toMatchObject({ readOnlyHint: true });
     expect(syncDefinition?.annotations).toMatchObject({ readOnlyHint: false });
+    expect(listPlaylistDefinition?.annotations).toMatchObject({ readOnlyHint: true });
+    expect(syncPlaylistDefinition?.annotations).toMatchObject({ readOnlyHint: false });
+    expect(playlistStatusDefinition?.annotations).toMatchObject({ readOnlyHint: true });
     expect(schemaDefinition?.annotations).toMatchObject({ readOnlyHint: true });
     expect(searchDefinition?.annotations).toMatchObject({ readOnlyHint: true });
     expect(fetchDefinition?.annotations).toMatchObject({ readOnlyHint: true });

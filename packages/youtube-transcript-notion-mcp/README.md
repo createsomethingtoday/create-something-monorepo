@@ -1,19 +1,20 @@
 # @create-something/youtube-transcript-notion-mcp
 
-Remote MCP server for single-video YouTube transcript extraction with a Supadata primary path, a mobile-player caption-track direct path, a legacy Innertube fallback, Steel browser fallback, and operator-managed Notion sync.
+Remote MCP server for YouTube transcript extraction with a Supadata primary path, direct/browser fallbacks, operator-managed Notion sync, and playlist-driven scheduled ingest.
 
 ## What It Exposes
 
 | Tier | Primitive | Surface |
 |------|-----------|---------|
 | Database | Resources | `youtube://status`, `youtube://video/{id}/transcript` |
-| Automation | Tools | `extract_transcript`, `sync_video_to_notion`, `get_database_schema`, `search`, `fetch` |
+| Automation | Tools | `extract_transcript`, `sync_video_to_notion`, `list_playlist_items`, `sync_playlist_to_notion`, `get_playlist_sync_status`, `get_database_schema`, `search`, `fetch` |
 | Judgment | Prompts | `transcript_analysis` |
 
 ## Runtime Model
 
 - **Read-first transcript flow**: when `SUPADATA_API_KEY` is configured, the server tries Supadata first. If Supadata fails, the runtime continues into the existing direct/browser chain. The direct/browser chain itself can run in `auto` mode (direct transcript fetch first, then Steel) or `browser-first` mode when the runtime should skip server-side direct extraction.
-- **Write path**: Notion sync is single-video and operator-managed through `NOTION_API_KEY` plus an optional default database ID.
+- **Write path**: Notion sync supports both single-video upserts and playlist-driven ingest through `NOTION_API_KEY` plus configurable default database IDs.
+- **Playlist automation**: a YouTube Data API-backed playlist reader provides exact playlist-added timestamps, while the Worker keeps durable playlist sync state in a second Durable Object and polls on a cron schedule when `YOUTUBE_PLAYLIST_ID` is configured.
 - **Remote-first transport**: Cloudflare Worker entrypoint exposes `/mcp` and `/sse`.
 
 ## Environment
@@ -25,6 +26,11 @@ Remote MCP server for single-video YouTube transcript extraction with a Supadata
 | `NOTION_PROPERTY_MAPPING_JSON` | optional | Default property mapping override |
 | `SUPADATA_API_KEY` | optional, recommended for production | Hosted transcript provider that avoids most YouTube session-trust failures |
 | `SUPADATA_TRANSCRIPT_MODE` | optional | `native` (default), `auto`, or `generate`; `native` keeps behavior closest to the original MCP and avoids AI-generated transcripts unless you opt in |
+| `YOUTUBE_DATA_API_KEY` | optional, required for playlist tools/automation | Official playlist listing surface used for exact playlist membership and `date added to playlist` |
+| `YOUTUBE_PLAYLIST_ID` | optional | Default playlist URL or playlist ID for `sync_playlist_to_notion`, `get_playlist_sync_status`, and the Worker cron |
+| `YOUTUBE_PLAYLIST_DATABASE_ID` | optional | Dedicated default Notion target for playlist sync; falls back to `NOTION_DATABASE_ID` if omitted |
+| `YOUTUBE_PLAYLIST_MAX_SCAN_ITEMS` | optional | How many recent playlist entries the poller inspects per run, default `25` |
+| `YOUTUBE_PLAYLIST_MAX_SYNC_ITEMS` | optional | How many newly-detected playlist entries the poller processes per run, default `10` |
 | `STEEL_API_KEY` | optional | Enables browser fallback when direct transcript extraction fails |
 | `STEEL_PROFILE_ID` | optional, strongly recommended for YouTube | Reuses a persistent Steel profile so browser fallback is less likely to hit sign-in or anti-bot checks |
 | `YOUTUBE_TRANSCRIPT_LANGUAGE` | optional | Default transcript language, defaults to `en` |
@@ -45,10 +51,18 @@ For the deployed Worker, the recommended operator order is:
 2. Keep `SUPADATA_TRANSCRIPT_MODE=native` unless you explicitly want generated transcripts when native captions are missing.
 3. Set `MCP_BEARER_TOKEN` before exposing the remote MCP anywhere public or shared.
 4. Treat Steel as a fallback path, not the primary production path.
+5. Configure `YOUTUBE_DATA_API_KEY` plus `YOUTUBE_PLAYLIST_ID` if you want scalable playlist polling instead of agent-managed prompt loops.
 
 If `STEEL_API_KEY` is set without `STEEL_PROFILE_ID`, `youtube://status` reports a config warning because anonymous Steel sessions are more likely to trigger YouTube trust gates. The recommended operator path is to attach a persistent Steel profile and, if needed, sign in to YouTube once inside that profile.
 
 If `SUPADATA_API_KEY`, `STEEL_API_KEY`, or `NOTION_API_KEY` are configured without `MCP_BEARER_TOKEN`, `/health` and `youtube://status` now report explicit warnings because unauthenticated callers could consume billable transcript capacity or invoke Notion-backed tools.
+
+## Playlist Workflow
+
+- `list_playlist_items` uses the official playlist surface and returns the exact playlist-added timestamp for each item.
+- `sync_playlist_to_notion` handles playlist polling state, transcript extraction, Notion upsert, and transcript-body replacement in one tool call.
+- The Worker cron is safe to leave enabled because it exits immediately unless `YOUTUBE_DATA_API_KEY` and `YOUTUBE_PLAYLIST_ID` are configured.
+- Durable playlist state keeps recent processed playlist-item signatures so the scalable workflow lives in code and storage, not in agent memory.
 
 ## Agent Legibility Contract
 

@@ -73,7 +73,14 @@ function createFakeNotionClient() {
     'Video ID': { id: 'video-id', type: 'rich_text' },
     Channel: { id: 'channel', type: 'rich_text' },
     'Published At': { id: 'published-at', type: 'date' },
+    Date: { id: 'date-added', type: 'date' },
     Language: { id: 'language', type: 'rich_text' },
+    Type: { id: 'type', type: 'select' },
+    Source: { id: 'source', type: 'select' },
+    Status: { id: 'page-status', type: 'status' },
+    Notes: { id: 'notes', type: 'rich_text' },
+    'Playlist ID': { id: 'playlist-id', type: 'rich_text' },
+    'Playlist Title': { id: 'playlist-title', type: 'rich_text' },
     'Extraction Method': { id: 'method', type: 'select' },
     'Transcript Status': { id: 'status', type: 'status' },
     'Synced At': { id: 'synced-at', type: 'date' },
@@ -132,6 +139,21 @@ function createFakeNotionClient() {
 
       return fakeBlock;
     });
+  }
+
+  function deleteBlockRecursive(blockId: string): void {
+    const children = blocksByParent.get(blockId) ?? [];
+    blocksByParent.delete(blockId);
+    for (const [parentId, blocks] of blocksByParent.entries()) {
+      const nextBlocks = blocks.filter((block) => block.id !== blockId);
+      if (nextBlocks.length !== blocks.length) {
+        blocksByParent.set(parentId, nextBlocks);
+      }
+    }
+
+    for (const child of children) {
+      deleteBlockRecursive(child.id);
+    }
   }
 
   const client = {
@@ -194,6 +216,10 @@ function createFakeNotionClient() {
       },
     },
     blocks: {
+      delete: async ({ block_id }: { block_id: string }) => {
+        deleteBlockRecursive(block_id);
+        return { id: block_id, archived: true };
+      },
       children: {
         list: async ({ block_id }: { block_id: string }) => ({
           results: clone(blocksByParent.get(block_id) ?? []),
@@ -250,6 +276,28 @@ describe('Notion helpers', () => {
       channelName: 'Channel',
     });
     expect(warnings).toEqual([]);
+  });
+
+  it('maps playlist workflow defaults onto the matching schema fields', () => {
+    const { mapping } = resolvePropertyMapping({
+      Item: { id: 'title', name: 'Item', type: 'title' },
+      'Source URL': { id: 'url', name: 'Source URL', type: 'url' },
+      Date: { id: 'date', name: 'Date', type: 'date' },
+      Type: { id: 'type', name: 'Type', type: 'select' },
+      Source: { id: 'source', name: 'Source', type: 'select' },
+      Status: { id: 'status', name: 'Status', type: 'status' },
+      Notes: { id: 'notes', name: 'Notes', type: 'rich_text' },
+    });
+
+    expect(mapping).toEqual({
+      title: 'Item',
+      url: 'Source URL',
+      dateAddedToPlaylist: 'Date',
+      type: 'Type',
+      source: 'Source',
+      pageStatus: 'Status',
+      notes: 'Notes',
+    });
   });
 
   it('matches existing pages by canonical URL before video ID', () => {
@@ -366,6 +414,99 @@ describe('NotionTranscriptSyncService', () => {
       videoId: VIDEO_ID,
       channelName: 'CREATE SOMETHING',
       notionUrl: `https://notion.so/${pageId}`,
+    });
+  });
+
+  it('replaces the transcript section with playlist header metadata and an unavailable note', async () => {
+    const { client, state } = createFakeNotionClient();
+    const service = new NotionTranscriptSyncService({
+      client,
+      defaultDatabaseId: DATA_SOURCE_ID,
+    });
+
+    const created = await service.syncTranscript(
+      createRecord({
+        playlistId: 'PL1234567890',
+        playlistTitle: 'YouTube Transcripting',
+        dateAddedToPlaylist: '2026-04-24T00:00:00Z',
+      }),
+      {
+        includeTimestamps: false,
+        replaceExistingTranscript: true,
+        transcriptHeaderLines: [
+          'Video title: Transcript Sync Test',
+          `Video URL: ${buildCanonicalVideoUrl(VIDEO_ID)}`,
+          'Playlist: YouTube Transcripting (PL1234567890)',
+          'Captions source: official',
+          'Date added to playlist: 2026-04-24T00:00:00Z',
+        ],
+      },
+    );
+
+    await service.syncTranscript(
+      createRecord({
+        playlistId: 'PL1234567890',
+        playlistTitle: 'YouTube Transcripting',
+        dateAddedToPlaylist: '2026-04-24T00:00:00Z',
+        transcript: '',
+        segments: [],
+        extractionMethod: 'unavailable',
+      }),
+      {
+        replaceExistingTranscript: true,
+        transcriptHeaderLines: [
+          'Video title: Transcript Sync Test',
+          `Video URL: ${buildCanonicalVideoUrl(VIDEO_ID)}`,
+          'Playlist: YouTube Transcripting (PL1234567890)',
+          'Captions source: none',
+          'Date added to playlist: 2026-04-24T00:00:00Z',
+        ],
+        transcriptBodyText: 'Transcript unavailable: no captions were available.',
+      },
+    );
+
+    const topLevelBlocks = state.blocksByParent.get(created.pageId) ?? [];
+    expect(topLevelBlocks).toHaveLength(1);
+    const toggleChildren = state.blocksByParent.get(topLevelBlocks[0]!.id) ?? [];
+    const lines = toggleChildren.map((block) => {
+      const richText =
+        (block.paragraph as { rich_text?: Array<{ text?: { content?: string } }> } | undefined)
+          ?.rich_text?.[0]?.text?.content ??
+        (block.heading_2 as { rich_text?: Array<{ text?: { content?: string } }> } | undefined)
+          ?.rich_text?.[0]?.text?.content ??
+        '';
+      return richText;
+    });
+
+    expect(lines).toContain('Video title: Transcript Sync Test');
+    expect(lines).toContain('Playlist: YouTube Transcripting (PL1234567890)');
+    expect(lines).toContain('Captions source: none');
+    expect(lines).toContain('Transcript');
+    expect(lines).toContain('Transcript unavailable: no captions were available.');
+
+    const page = state.pages.get(created.pageId);
+    expect(page?.properties.Date).toMatchObject({
+      date: {
+        start: '2026-04-24',
+      },
+    });
+    expect(page?.properties.Type).toMatchObject({
+      select: {
+        name: 'Video',
+      },
+    });
+    expect(page?.properties.Source).toMatchObject({
+      select: {
+        name: 'External',
+      },
+    });
+    expect(page?.properties.Status).toMatchObject({
+      status: {
+        name: 'Active',
+      },
+    });
+    expect(page?.properties.Notes).toMatchObject({
+      rich_text: [{ text: { content: 'CREATE SOMETHING' } }],
     });
   });
 });
