@@ -1,7 +1,7 @@
 {
   "name": "@create-something/youtube-transcript-notion-mcp",
   "version": "1.0.0",
-  "description": "Remote MCP for Notion-first YouTube transcript enrichment with optional playlist-driven ingest",
+  "description": "Remote MCP for Notion-first YouTube transcript enrichment",
   "type": "module",
   "main": "dist/index.js",
   "createSomething": {

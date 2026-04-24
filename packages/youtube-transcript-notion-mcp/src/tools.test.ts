@@ -187,9 +187,6 @@ describe('tool registration', () => {
     const extractDefinition = server.definitions.get('extract_transcript');
     const enrichDefinition = server.definitions.get('enrich_notion_page');
     const syncDefinition = server.definitions.get('sync_video_to_notion');
-    const listPlaylistDefinition = server.definitions.get('list_playlist_items');
-    const syncPlaylistDefinition = server.definitions.get('sync_playlist_to_notion');
-    const playlistStatusDefinition = server.definitions.get('get_playlist_sync_status');
     const schemaDefinition = server.definitions.get('get_database_schema');
     const searchDefinition = server.definitions.get('search');
     const fetchDefinition = server.definitions.get('fetch');
@@ -197,12 +194,13 @@ describe('tool registration', () => {
     expect(extractDefinition?.annotations).toMatchObject({ readOnlyHint: true });
     expect(enrichDefinition?.annotations).toMatchObject({ readOnlyHint: false });
     expect(syncDefinition?.annotations).toMatchObject({ readOnlyHint: false });
-    expect(listPlaylistDefinition?.annotations).toMatchObject({ readOnlyHint: true });
-    expect(syncPlaylistDefinition?.annotations).toMatchObject({ readOnlyHint: false });
-    expect(playlistStatusDefinition?.annotations).toMatchObject({ readOnlyHint: true });
     expect(schemaDefinition?.annotations).toMatchObject({ readOnlyHint: true });
     expect(searchDefinition?.annotations).toMatchObject({ readOnlyHint: true });
     expect(fetchDefinition?.annotations).toMatchObject({ readOnlyHint: true });
+    expect(extractDefinition?.description).toContain('Supadata first');
+    expect(server.definitions.has('list_playlist_items')).toBe(false);
+    expect(server.definitions.has('sync_playlist_to_notion')).toBe(false);
+    expect(server.definitions.has('get_playlist_sync_status')).toBe(false);
     expect(Object.keys((searchDefinition?.inputSchema as Record<string, unknown>) ?? {})).toEqual([
       'query',
     ]);
