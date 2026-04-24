@@ -515,6 +515,33 @@ select {
   flex: 0 0 auto;
 }
 
+.submission-selected-file-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(8, 8, 8, 0.06);
+  color: #4a4a4a;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.submission-selected-file-remove:hover {
+  background: rgba(180, 35, 24, 0.12);
+  color: #b42318;
+}
+
+.submission-selected-file-remove:focus-visible {
+  outline: 2px solid rgba(20, 110, 245, 0.35);
+  outline-offset: 2px;
+}
+
 .submission-counter {
   margin-top: 0.5rem;
 }
