@@ -65,6 +65,8 @@
       "packages/three-tier-framework-mcp",
       "packages/three-tier-framework-mcp/worker",
       "packages/ui-preview-mcp",
+      "packages/youtube-transcript-notion-mcp",
+      "packages/youtube-transcript-notion-mcp/worker",
       "packages/webflow-app-review-mcp",
       "packages/webflow-app-review-mcp/worker",
       "packages/webflow-apps-admin",

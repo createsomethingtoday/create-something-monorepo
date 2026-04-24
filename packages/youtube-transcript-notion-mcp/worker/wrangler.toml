@@ -1,0 +1,37 @@
+name = "youtube-transcript-notion-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[vars]
+YOUTUBE_DIRECT_PROVIDER_MODE = "browser-first"
+
+[observability]
+enabled = true
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "YouTubeTranscriptNotionMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["YouTubeTranscriptNotionMCP"]
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+# Secrets
+# NOTION_API_KEY
+# NOTION_DATABASE_ID
+# NOTION_PROPERTY_MAPPING_JSON
+# SUPADATA_API_KEY
+# SUPADATA_TRANSCRIPT_MODE
+# STEEL_API_KEY
+# STEEL_PROFILE_ID
+# YOUTUBE_TRANSCRIPT_LANGUAGE
+# MCP_DISPLAY_NAME
+# MCP_DESCRIPTION
+# MCP_BEARER_TOKEN
