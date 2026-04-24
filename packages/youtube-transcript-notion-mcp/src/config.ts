@@ -4,7 +4,7 @@ export const SERVER_NAME = 'youtube-transcript-notion-mcp';
 export const SERVER_VERSION = '1.0.0';
 export const DEFAULT_DISPLAY_NAME = 'YouTube Transcript + Notion MCP';
 export const DEFAULT_DESCRIPTION =
-  'Extract YouTube transcripts, sync individual videos or playlist additions into Notion, and support scheduled playlist polling.';
+  'Extract YouTube transcripts and enrich existing Notion pages.';
 export const DEFAULT_TRANSCRIPT_LANGUAGE = 'en';
 export const DEFAULT_SUPADATA_TRANSCRIPT_MODE = 'native';
 export const TRANSCRIPT_CHUNK_SIZE = 1900;
