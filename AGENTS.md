@@ -1,21 +1,37 @@
 # Agent Principles & Workflow
 
-This repository uses **Loom** (`lm`) for agent-native coordination.
+This repository uses **Loom** for agent-native coordination.
 
-Important: local `lm` talks to the repo-local `.loom` database. Shared coordination for Symphony and other remote agent lanes now uses the remote Loom MCP control plane at `https://loom.mcp.createsomething.agency/mcp`.
-
-For a fresh local clone that has not initialized the repo-local `.loom` database yet:
+Important: shared coordination for Symphony and other remote agent lanes uses the remote Loom MCP control plane at `https://loom.mcp.createsomething.agency/mcp`. Do not assume a global `lm` binary is installed in every worktree or runtime. Start with the repo-local preflight:
 
 ```bash
-lm init
-lm ready
-lm claim <id>
+pnpm loom:preflight
 ```
 
-For provisioned Ona or other shared remote environments, skip `lm init` and start with:
+Local Loom still talks to the repo-local `.loom` database. Use the repo-local wrapper for local-only workflows, migration/export inputs, or rollback scenarios:
 
 ```bash
-lm ready
+pnpm loom:local ready
+pnpm loom:local show <id>
+```
+
+If `pnpm loom:preflight` reports that local Loom is unavailable, bootstrap the repo-local binary once:
+
+```bash
+pnpm loom:local:bootstrap
+```
+
+For a fresh local clone that has not initialized the repo-local `.loom` database yet, and only when you intentionally need repo-local Loom state:
+
+```bash
+pnpm loom:local init
+pnpm loom:local ready
+```
+
+For provisioned Ona or other shared remote environments, skip local Loom initialization and start with:
+
+```bash
+pnpm loom:preflight
 pnpm loom:remote ready
 ```
 
@@ -28,8 +44,9 @@ pnpm loom:remote create --title "..." --description "..." --label code-quality
 pnpm loom:remote done --task-id <id> --evidence "..."
 ```
 
-Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
-If `lm init` reports that remote Loom is already provisioned, continue with `lm ready` and the `pnpm loom:remote ...` commands instead of retrying `lm init`.
+Use `pnpm loom:local ...` only when you intentionally mean the repo-local `.loom` database. If you already have `lm` installed, `lm --local ...` is optional shorthand, not the required path.
+If local Loom is unavailable but you need repo-local state, run `pnpm loom:local:bootstrap` before falling back to source-only grounding.
+If local Loom reports that remote Loom is already provisioned, continue with the `pnpm loom:remote ...` commands instead of retrying local initialization.
 Do not use bare `lm done` for shared tasks in this repo; use `pnpm loom:remote done --task-id <id> --evidence "..."` instead.
 
 ## What this repo is
@@ -87,12 +104,14 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 Core commands:
 
 ```bash
-lm ready
-lm ready --ranked
-lm show <id>
-lm claim <id>
-lm done <id>
-lm sync
+pnpm loom:preflight
+pnpm loom:remote ready
+pnpm loom:remote list --status ready
+pnpm loom:remote get --task-id <id>
+pnpm loom:remote claim --task-id <id> --agent <agent>
+pnpm loom:remote done --task-id <id> --evidence "..."
+pnpm loom:local ready
+pnpm loom:local show <id>
 
 pnpm check
 pnpm lint
@@ -100,7 +119,7 @@ pnpm test
 ```
 
 For shared orchestration lanes, prefer remote Loom via `pnpm loom:remote ...`.
-Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
+Use `pnpm loom:local ...` only when you intentionally mean the repo-local `.loom` database.
 
 ## Git-light delivery
 
@@ -146,7 +165,7 @@ Common library IDs used here:
 ## Tool preference
 
 - **Code verification**: `ground analyze`, `ground find-duplicates`
-- **Task coordination**: `lm`
-- **Priority ranking**: `lm ready --ranked`
+- **Task coordination**: `pnpm loom:remote ...`
+- **Priority ranking**: `pnpm loom:remote list --status ready`
 
-Loom replaces Beads in this repository. Use remote Loom for shared coordination and local `lm` for repo-local task state.
+Loom replaces Beads in this repository. Use remote Loom for shared coordination and repo-local `pnpm loom:local ...` for repo-local task state.

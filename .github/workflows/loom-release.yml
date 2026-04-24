@@ -1,0 +1,217 @@
+# Build and release Loom binaries for npm distribution
+name: Loom Release
+
+on:
+  push:
+    tags:
+      - 'loom-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., loom-v0.1.0)'
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify-version:
+    name: Verify Loom Versions
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.versions.outputs.tag_name }}
+      version: ${{ steps.versions.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Verify Cargo, npm, and tag versions match
+        id: versions
+        env:
+          TAG_NAME_INPUT: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const tagName = process.env.TAG_NAME_INPUT;
+          const npmPackage = JSON.parse(fs.readFileSync('packages/loom/npm/package.json', 'utf8'));
+          const cargoToml = fs.readFileSync('packages/loom/Cargo.toml', 'utf8');
+          const cargoMatch = cargoToml.match(/^version = "([^"]+)"/m);
+
+          if (!tagName || !tagName.startsWith('loom-v')) {
+            throw new Error(`Release tag must use the format loom-v<version>. Received: ${tagName || '(empty)'}`);
+          }
+          if (!cargoMatch) {
+            throw new Error('Unable to read packages/loom/Cargo.toml version.');
+          }
+
+          const cargoVersion = cargoMatch[1];
+          const npmVersion = npmPackage.version;
+          const tagVersion = tagName.replace(/^loom-v/, '');
+
+          if (cargoVersion !== npmVersion) {
+            throw new Error(`Version mismatch: Cargo=${cargoVersion}, npm=${npmVersion}`);
+          }
+          if (tagVersion !== npmVersion) {
+            throw new Error(`Tag ${tagName} does not match Loom version ${npmVersion}`);
+          }
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `tag_name=${tagName}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${npmVersion}\n`);
+          NODE
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: verify-version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            name: darwin-arm64
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: linux-x64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: linux-arm64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            name: win32-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build
+        working-directory: packages/loom
+        run: cargo build --release --target ${{ matrix.target }} --bin lm --bin loom-mcp
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        working-directory: packages/loom
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/lm dist/
+          cp target/${{ matrix.target }}/release/loom-mcp dist/
+          tar -czvf loom-${{ matrix.name }}.tar.gz -C dist .
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        working-directory: packages/loom
+        run: |
+          mkdir dist
+          copy target\${{ matrix.target }}\release\lm.exe dist\
+          copy target\${{ matrix.target }}\release\loom-mcp.exe dist\
+          Compress-Archive -Path dist\* -DestinationPath loom-${{ matrix.name }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: loom-${{ matrix.name }}
+          path: packages/loom/loom-${{ matrix.name }}.*
+
+  release:
+    name: Create Release
+    needs:
+      - verify-version
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.verify-version.outputs.tag_name }}
+          name: Loom ${{ needs.verify-version.outputs.tag_name }}
+          draft: false
+          prerelease: false
+          files: artifacts/**/*
+          body: |
+            ## Installation
+
+            ### npm (recommended)
+            ```bash
+            npm install -g @createsomething/loom-mcp
+            ```
+
+            ### Repo-local bootstrap
+            ```bash
+            pnpm loom:local:bootstrap
+            ```
+
+            ### Manual download
+            Download the appropriate binary bundle for your platform from the assets below.
+
+            | Platform | File |
+            |----------|------|
+            | macOS (Apple Silicon + Intel via Rosetta) | `loom-darwin-arm64.tar.gz` |
+            | Linux x64 | `loom-linux-x64.tar.gz` |
+            | Linux ARM64 | `loom-linux-arm64.tar.gz` |
+            | Windows x64 | `loom-win32-x64.zip` |
+
+            Each archive includes both `lm` and `loom-mcp`.
+
+  publish-npm:
+    name: Publish npm Package
+    needs:
+      - verify-version
+      - release
+    runs-on: ubuntu-latest
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Detect npm token
+        id: npm_token
+        run: |
+          if [ -n "${NODE_AUTH_TOKEN}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify package contents
+        if: steps.npm_token.outputs.available == 'true'
+        working-directory: packages/loom/npm
+        run: npm pack --dry-run
+
+      - name: Publish package to npm
+        if: steps.npm_token.outputs.available == 'true'
+        working-directory: packages/loom/npm
+        run: npm publish --access public --provenance
+
+      - name: Skip npm publish when token is unavailable
+        if: steps.npm_token.outputs.available != 'true'
+        run: echo "NPM_TOKEN is not configured; skipping npm publish."

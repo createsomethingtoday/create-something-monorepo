@@ -2,6 +2,8 @@
 
 **AI-native coordination layer. External memory for agents.**
 
+Source checkout note: inside this monorepo, prefer `pnpm loom:remote ...` for shared coordination and `pnpm loom:local ...` for repo-local Loom state. Do not assume a global `lm` binary is installed in every worktree. If a local runner is missing, use `pnpm loom:local:bootstrap` to install the repo-owned binary.
+
 Loom is Create Something's answer to Steve Yegge's Beads and Gas Town - but optimized for multi-agent workflows with Claude Code, Cursor, Codex, Gemini, and any other AI coding assistant.
 
 ## Why Loom?
