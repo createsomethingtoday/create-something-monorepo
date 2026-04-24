@@ -799,6 +799,14 @@ export function TemplateIntake() {
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  function removeGalleryFile(signature: string) {
+    setTemplate((current) => ({
+      ...current,
+      galleryFiles: current.galleryFiles.filter((file) => fileSignature(file) !== signature),
+    }));
+    setTemplateStatus(null);
+  }
+
   useEffect(() => {
     setIsEmbedded(window.parent !== window);
 
@@ -2079,7 +2087,6 @@ export function TemplateIntake() {
                           setImageErrors((c) => ({ ...c, avatarFile: err }));
                           updateCreator('avatarFile', err ? null : file);
                         }}
-                        required
                       />
                       <SelectedFilesSummary
                         files={creator.avatarFile ? [creator.avatarFile] : []}
@@ -2926,11 +2933,14 @@ export function TemplateIntake() {
                           setImageErrors((c) => ({ ...c, thumbnailFile: err }));
                           updateTemplate('thumbnailFile', err ? null : file);
                         }}
-                        required
                       />
                       <SelectedFilesSummary
                         files={template.thumbnailFile ? [template.thumbnailFile] : []}
                         emptyLabel="No primary thumbnail selected yet."
+                        onRemove={() => {
+                          setImageErrors((current) => ({ ...current, thumbnailFile: null }));
+                          updateTemplate('thumbnailFile', null);
+                        }}
                       />
                     </div>
                     {imageErrors.thumbnailFile ? (
@@ -2974,6 +2984,10 @@ export function TemplateIntake() {
                           template.secondaryThumbnailFile ? [template.secondaryThumbnailFile] : []
                         }
                         emptyLabel="No secondary thumbnail selected."
+                        onRemove={() => {
+                          setImageErrors((current) => ({ ...current, secondaryThumbnailFile: null }));
+                          updateTemplate('secondaryThumbnailFile', null);
+                        }}
                       />
                     </div>
                     {imageErrors.secondaryThumbnailFile ? (
@@ -3027,7 +3041,6 @@ export function TemplateIntake() {
                           setTemplateStatus(null);
                           event.target.value = '';
                         }}
-                        required
                       />
                       <SelectedFilesSummary
                         files={template.galleryFiles}
