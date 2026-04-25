@@ -36,10 +36,32 @@
 	}: Props = $props();
 	
 	let element: HTMLElement;
-	let isVisible = $state(false);
+	let isVisible = $state(true);
+	let shouldAnimate = $state(false);
+
+	function isInViewport(node: HTMLElement) {
+		const rect = node.getBoundingClientRect();
+		return rect.bottom > 0 && rect.top < window.innerHeight;
+	}
 	
 	onMount(() => {
-		if (!inView) {
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		if (!inView || reducedMotion) {
+			isVisible = true;
+			return;
+		}
+
+		shouldAnimate = true;
+
+		if (isInViewport(element)) {
+			isVisible = true;
+			return;
+		}
+
+		isVisible = false;
+
+		if (!('IntersectionObserver' in window)) {
 			isVisible = true;
 			return;
 		}
@@ -68,6 +90,7 @@
 <div
 	bind:this={element}
 	class="blur-fade {className}"
+	class:blur-fade--animate={shouldAnimate}
 	class:visible={isVisible}
 	style="
 		--duration: {duration}s;
@@ -81,6 +104,12 @@
 
 <style>
 	.blur-fade {
+		opacity: 1;
+		filter: none;
+		transform: translateY(0);
+	}
+
+	.blur-fade.blur-fade--animate {
 		opacity: 0;
 		filter: blur(var(--blur));
 		transform: translateY(var(--y-offset));
@@ -90,7 +119,7 @@
 			transform var(--duration) ease-out var(--delay);
 	}
 	
-	.blur-fade.visible {
+	.blur-fade.blur-fade--animate.visible {
 		opacity: 1;
 		filter: blur(0px);
 		transform: translateY(0);

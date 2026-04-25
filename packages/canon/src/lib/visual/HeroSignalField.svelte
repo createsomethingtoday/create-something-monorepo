@@ -256,6 +256,7 @@
     let bootToken = 0;
     let visible = document.visibilityState === 'visible';
     let inViewport = true;
+    let rootRect = rootEl.getBoundingClientRect();
     let resizeObserver: ResizeObserver | null = null;
     let intersectionObserver: IntersectionObserver | null = null;
     let sceneHandle: SceneHandle | null = null;
@@ -269,6 +270,11 @@
     const setPointerVars = (x: number, y: number) => {
       rootEl?.style.setProperty('--hero-field-pointer-x', `${(x * 100).toFixed(2)}%`);
       rootEl?.style.setProperty('--hero-field-pointer-y', `${(y * 100).toFixed(2)}%`);
+    };
+
+    const updateRootRect = () => {
+      if (!rootEl) return;
+      rootRect = rootEl.getBoundingClientRect();
     };
 
     const resetPointer = () => {
@@ -525,7 +531,8 @@
       const resize = () => {
         if (!rootEl) return;
 
-        const rect = rootEl.getBoundingClientRect();
+        updateRootRect();
+        const rect = rootRect;
         renderer.setPixelRatio(
           Math.min(window.devicePixelRatio || 1, compactQuery.matches ? 1.2 : 1.6)
         );
@@ -633,7 +640,12 @@
       const currentToken = ++bootToken;
 
       disposeScene();
+      updateRootRect();
       setPointerVars(pointer.currentX, pointer.currentY);
+
+      if (reducedMotionQuery.matches) {
+        return;
+      }
 
       try {
         const nextScene = await createScene();
@@ -646,12 +658,6 @@
 
         sceneHandle = nextScene;
         ready = true;
-
-        if (reducedMotionQuery.matches) {
-          sceneHandle.renderStatic();
-          return;
-        }
-
         startAnimation();
       } catch {
         ready = false;
@@ -667,10 +673,7 @@
         return;
       }
 
-      if (reducedMotionQuery.matches) {
-        sceneHandle?.renderStatic();
-        return;
-      }
+      if (reducedMotionQuery.matches) return;
 
       startAnimation();
     };
@@ -688,10 +691,7 @@
             return;
           }
 
-          if (reducedMotionQuery.matches) {
-            sceneHandle?.renderStatic();
-            return;
-          }
+          if (reducedMotionQuery.matches) return;
 
           startAnimation();
         },
@@ -706,7 +706,8 @@
 
     const handleReducedMotion = () => {
       if (reducedMotionQuery.matches) {
-        stopAnimation();
+        disposeScene();
+        return;
       }
       void bootScene();
     };
@@ -719,9 +720,7 @@
     cleanupCompact = bindMediaListener(compactQuery, handleCompactChange);
 
     const handlePointerMove = (event: PointerEvent) => {
-      if (!rootEl) return;
-
-      const rect = rootEl.getBoundingClientRect();
+      const rect = rootRect;
       if (!rect.width || !rect.height) return;
 
       const withinX = event.clientX >= rect.left && event.clientX <= rect.right;
@@ -740,11 +739,19 @@
       resetPointer();
     };
 
+    const handleWindowScroll = () => {
+      updateRootRect();
+    };
+
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
     window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    window.addEventListener('resize', handleWindowScroll);
     cleanupPointer = () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('scroll', handleWindowScroll);
+      window.removeEventListener('resize', handleWindowScroll);
     };
 
     const handleContextLost = (event: Event) => {
@@ -771,6 +778,7 @@
       );
     };
 
+    updateRootRect();
     setPointerVars(pointer.currentX, pointer.currentY);
     void bootScene();
 
@@ -1432,8 +1440,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .hero-signal-field__canvas {
+      display: none;
       transition: none;
-      opacity: 0.7;
     }
 
     .hero-signal-field__guides::after {

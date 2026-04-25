@@ -35,11 +35,19 @@
   ];
 
   const proofMetrics = [
-    { value: '1', label: 'workflow fixed first' },
-    { value: '3', label: 'decision states' },
-    { value: '100%', label: 'artifact-backed delivery' },
-    { value: '0', label: 'interest in open-ended staff aug' }
+    { value: '1 workflow', label: 'fixed first' },
+    { value: '3 states', label: 'allow, review, block' },
+    { value: 'Artifacts', label: 'ship with the handoff' },
+    { value: 'Scoped', label: 'no open-ended staff aug' }
   ];
+
+  const trustLayers = [
+    { key: 'DB', label: 'Database' },
+    { key: 'AT', label: 'Automation' },
+    { key: 'JG', label: 'Judgment' }
+  ];
+
+  const trustArtifacts = ['policy-pack.yaml', 'approval-request.md', 'rollback-note.md'];
 
   const operatingSignals = [
     'Model Context Protocol',
@@ -175,11 +183,30 @@
         <BlurFade delay={0.15}>
           <div class="hero-actions">
             <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-            <Button href="/services" variant="secondary">See The Engagement Model</Button>
+            <Button href="/services" variant="ghost">See The Engagement Model</Button>
           </div>
         </BlurFade>
 
-        <BlurFade delay={0.2}>
+        <BlurFade delay={0.18}>
+          <div class="hero-trust-cue" aria-label="Governance trust cues">
+            <div class="hero-trust-cue__layers">
+              {#each trustLayers as layer}
+                <div class="hero-trust-cue__layer">
+                  <span class="hero-trust-cue__key">{layer.key}</span>
+                  <span class="hero-trust-cue__label">{layer.label}</span>
+                </div>
+              {/each}
+            </div>
+
+            <div class="hero-trust-cue__artifacts">
+              {#each trustArtifacts as artifact}
+                <span class="hero-artifact-chip">{artifact}</span>
+              {/each}
+            </div>
+          </div>
+        </BlurFade>
+
+        <BlurFade delay={0.22}>
           <p class="hero-note">Scoped delivery. Clear controls. Portable artifacts.</p>
         </BlurFade>
       </div>
@@ -502,8 +529,83 @@
     align-items: center;
   }
 
+  .hero-stage .hero-actions :global(.btn-ghost) {
+    color: var(--color-fg-secondary);
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .hero-stage .hero-actions :global(.btn-ghost:hover:not(:disabled)) {
+    color: var(--color-fg-primary);
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
   .hero-actions--center {
     justify-content: center;
+  }
+
+  .hero-trust-cue {
+    display: grid;
+    gap: 0.7rem;
+    width: min(100%, 38rem);
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    background:
+      linear-gradient(180deg, rgba(8, 10, 14, 0.82), rgba(8, 10, 14, 0.64)),
+      rgba(8, 10, 14, 0.78);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 18px 38px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(14px);
+  }
+
+  .hero-trust-cue__layers {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .hero-trust-cue__layer {
+    display: grid;
+    gap: 0.18rem;
+    min-width: 0;
+  }
+
+  .hero-trust-cue__key {
+    color: var(--color-brand-ink);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .hero-trust-cue__label {
+    color: var(--color-fg-secondary);
+    font-size: 0.76rem;
+    line-height: 1.35;
+  }
+
+  .hero-trust-cue__artifacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .hero-artifact-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.8rem;
+    padding: 0.34rem 0.58rem;
+    border-radius: 999px;
+    border: 1px solid rgba(97, 134, 255, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
   }
 
   .hero-note {
@@ -531,8 +633,10 @@
   .metric-value {
     color: var(--color-fg-primary);
     font-family: var(--font-mono);
-    font-size: 1.45rem;
+    font-size: clamp(1.1rem, 2vw, 1.45rem);
+    line-height: 1.05;
     letter-spacing: -0.05em;
+    text-wrap: balance;
   }
 
   .metric-label {
@@ -786,6 +890,14 @@
     .hero-copy .product-kicker {
       gap: 0.38rem;
       padding: 0.34rem 0.58rem 0.36rem;
+    }
+
+    .hero-trust-cue {
+      padding: 0.85rem 0.9rem;
+    }
+
+    .hero-trust-cue__layers {
+      gap: 0.45rem;
     }
 
     .signal-shell,
