@@ -142,10 +142,22 @@
     }
   ];
 
-  const governancePoints = [
-    'Safe actions run automatically when the workflow is healthy.',
-    'Risky actions pause for review before they turn into cleanup.',
-    'Disallowed actions stop with a reason, an owner, and an artifact trail.'
+  const governanceStates = [
+    {
+      tone: 'allow',
+      title: 'Allow',
+      body: 'Runs when scope, owner, and release evidence are already bounded.'
+    },
+    {
+      tone: 'review',
+      title: 'Review',
+      body: 'Higher-stakes writes pause for a named reviewer before they ship.'
+    },
+    {
+      tone: 'block',
+      title: 'Block',
+      body: 'Disallowed actions stop with a reason code and a clean operator handoff.'
+    }
   ];
 </script>
 
@@ -365,11 +377,20 @@
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
-        <ul class="product-list governance-points">
-          {#each governancePoints as point}
-            <li>{point}</li>
+        <div
+          class="product-surface product-surface--soft governance-state-list"
+          role="list"
+          aria-label="Governance states"
+        >
+          {#each governanceStates as state}
+            <div class="governance-state" role="listitem">
+              <span class={`governance-state__badge governance-state__badge--${state.tone}`}>
+                {state.title}
+              </span>
+              <p>{state.body}</p>
+            </div>
           {/each}
-        </ul>
+        </div>
       </BlurFade>
     </div>
 
@@ -414,13 +435,13 @@
 
 <style>
   .hero-page {
-    padding-top: clamp(6rem, 10vw, 8rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4rem);
+    padding-top: clamp(4.5rem, 7vw, 6.25rem);
+    padding-bottom: clamp(2.25rem, 5vw, 3.5rem);
   }
 
   .hero-stage {
     position: relative;
-    min-height: clamp(34rem, 58vw, 43rem);
+    min-height: clamp(32rem, 54vw, 41rem);
     overflow: clip;
     isolation: isolate;
   }
@@ -471,14 +492,14 @@
     z-index: 2;
     display: block;
     width: 100%;
-    padding-top: clamp(2rem, 4vw, 3rem);
-    padding-bottom: clamp(3rem, 6vw, 4.5rem);
+    padding-top: clamp(1.35rem, 3vw, 2.25rem);
+    padding-bottom: clamp(2.5rem, 5vw, 4rem);
   }
 
   .hero-copy {
     display: grid;
-    gap: 1.15rem;
-    max-width: 47rem;
+    gap: 1rem;
+    max-width: 45rem;
   }
 
   .hero-copy .product-kicker {
@@ -515,7 +536,7 @@
 
   .hero-detail {
     margin: 0;
-    max-width: 34rem;
+    max-width: 33rem;
     color: var(--color-fg-secondary);
     font-size: clamp(1.05rem, 1vw + 0.9rem, 1.2rem);
     line-height: 1.72;
@@ -621,7 +642,7 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.9rem;
-    margin-top: 1.1rem;
+    margin-top: 0.75rem;
   }
 
   .metric-card {
@@ -648,15 +669,39 @@
     line-height: 1.45;
   }
 
-  .signal-section,
-  .control-section,
-  .capability-section,
-  .offer-section,
-  .governance-section,
-  .artifact-section,
+  .signal-section {
+    padding-top: 0.6rem;
+    padding-bottom: clamp(2.5rem, 5vw, 3.5rem);
+  }
+
+  .control-section {
+    padding-top: clamp(1.5rem, 3vw, 2.25rem);
+    padding-bottom: clamp(3rem, 5vw, 4.25rem);
+  }
+
+  .capability-section {
+    padding-top: clamp(2rem, 4vw, 3rem);
+    padding-bottom: clamp(3rem, 5vw, 4rem);
+  }
+
+  .offer-section {
+    padding-top: clamp(2rem, 4vw, 3rem);
+    padding-bottom: clamp(2.75rem, 4.5vw, 3.75rem);
+  }
+
+  .governance-section {
+    padding-top: clamp(2rem, 4vw, 2.75rem);
+    padding-bottom: clamp(2.5rem, 4.5vw, 3.5rem);
+  }
+
+  .artifact-section {
+    padding-top: clamp(1.5rem, 3vw, 2.25rem);
+    padding-bottom: clamp(2rem, 4vw, 3rem);
+  }
+
   .cta-section {
-    padding-top: 1.25rem;
-    padding-bottom: clamp(3.5rem, 6vw, 5rem);
+    padding-top: clamp(1rem, 2.5vw, 1.75rem);
+    padding-bottom: clamp(3rem, 5vw, 4rem);
   }
 
   .signal-shell {
@@ -709,9 +754,9 @@
 
   .section-lead {
     display: grid;
-    gap: 0.85rem;
+    gap: 0.75rem;
     max-width: 42rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
   }
 
   .section-lead--center {
@@ -776,6 +821,16 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .offer-section .section-lead--center {
+    max-width: 40rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .offer-section .section-lead--center h2 {
+    font-size: clamp(2.5rem, 4.2vw, 4.35rem);
+    line-height: 0.98;
+  }
+
   .offer-card.offerFeatured {
     border-color: var(--color-brand-primary-border);
     box-shadow:
@@ -786,15 +841,15 @@
 
   .governance-grid {
     display: grid;
-    gap: clamp(1.25rem, 3vw, 2rem);
+    gap: clamp(1rem, 2.4vw, 1.6rem);
     align-items: center;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
   }
 
   .governance-copy {
     display: grid;
-    gap: 0.9rem;
-    max-width: 36rem;
+    gap: 1rem;
+    max-width: 32rem;
   }
 
   .governance-copy h2,
@@ -811,8 +866,58 @@
     line-height: 1.72;
   }
 
-  .governance-points {
-    margin-top: 0.25rem;
+  .governance-state-list {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1rem 1.05rem;
+  }
+
+  .governance-state {
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .governance-state + .governance-state {
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .governance-state__badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 1.65rem;
+    padding: 0.22rem 0.56rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+
+  .governance-state__badge--allow {
+    color: rgba(167, 243, 208, 0.98);
+    background: rgba(6, 78, 59, 0.24);
+    border-color: rgba(52, 211, 153, 0.24);
+  }
+
+  .governance-state__badge--review {
+    color: rgba(253, 230, 138, 0.98);
+    background: rgba(120, 53, 15, 0.24);
+    border-color: rgba(251, 191, 36, 0.24);
+  }
+
+  .governance-state__badge--block {
+    color: rgba(254, 202, 202, 0.98);
+    background: rgba(127, 29, 29, 0.26);
+    border-color: rgba(248, 113, 113, 0.2);
+  }
+
+  .governance-state p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    line-height: 1.62;
   }
 
   .cta-panel {
@@ -834,7 +939,7 @@
 
   @media (max-width: 768px) {
     .hero-stage {
-      min-height: clamp(30rem, 112vw, 40rem);
+      min-height: clamp(27.5rem, 106vw, 36rem);
     }
 
     .hero-stage::after {
@@ -873,8 +978,8 @@
     }
 
     .hero-layout {
-      padding-top: 2.25rem;
-      padding-bottom: 3.5rem;
+      padding-top: 1.5rem;
+      padding-bottom: 2.75rem;
     }
 
     .metric-grid,
@@ -885,6 +990,10 @@
 
     .hero-title {
       font-size: clamp(2.6rem, 11vw, 4rem);
+    }
+
+    .hero-copy {
+      gap: 0.9rem;
     }
 
     .hero-copy .product-kicker {
@@ -898,6 +1007,16 @@
 
     .hero-trust-cue__layers {
       gap: 0.45rem;
+    }
+
+    .offer-section .section-lead--center {
+      margin-left: 0;
+      margin-right: 0;
+      text-align: left;
+    }
+
+    .governance-state-list {
+      padding: 0.95rem;
     }
 
     .signal-shell,

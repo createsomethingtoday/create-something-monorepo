@@ -63,6 +63,7 @@
 	];
 
 	const bookingExperimentMetadata = getAgencyMarketingExperimentMetadata('/book') ?? {};
+	const DIRECT_BOOKING_URL = 'https://savvycal.com/createsomething/together';
 
 	// State
 	let step = $state<BookingStep>('date');
@@ -236,6 +237,10 @@
 		}
 	}
 
+	function retryAvailableTimes() {
+		fetchSlotsForMonth(selectedDate ?? new Date());
+	}
+
 	// Initialize: fetch slots for current month
 	$effect(() => {
 		if (browser) {
@@ -283,15 +288,42 @@
 		{#if step === 'date'}
 			<section class="step-content">
 				<h2 class="step-title">Select a date</h2>
+				{#if error}
+					<div class="booking-alert" role="alert">
+						<div class="booking-alert-copy">
+							<p class="booking-alert-eyebrow">Calendar fallback</p>
+							<h3>Book directly if the calendar is unavailable.</h3>
+							<p>
+								Use the direct booking link or retry the embedded calendar. The session is the
+								same either way.
+							</p>
+						</div>
+						<div class="booking-alert-actions">
+							<button
+								type="button"
+								class="booking-alert-secondary"
+								onclick={retryAvailableTimes}
+								disabled={loadingSlots}
+							>
+								{loadingSlots ? 'Retrying…' : 'Retry calendar'}
+							</button>
+							<a
+								href={DIRECT_BOOKING_URL}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="booking-alert-primary"
+							>
+								Book on SavvyCal
+							</a>
+						</div>
+					</div>
+				{/if}
 				<DatePicker
 					{selectedDate}
 					onDateSelect={handleDateSelect}
 					{availableDates}
 					loading={loadingSlots}
 				/>
-				{#if error}
-					<p class="error-message">{error}</p>
-				{/if}
 			</section>
 		{:else if step === 'time'}
 			<section class="step-content">
@@ -352,7 +384,7 @@
 	{#if step !== 'confirm'}
 		<footer class="booking-footer">
 			<p class="fallback-text">
-				Having trouble? <a href="https://savvycal.com/createsomething/together" target="_blank" rel="noopener noreferrer" class="fallback-link">Book directly on SavvyCal →</a>
+				Having trouble? <a href={DIRECT_BOOKING_URL} target="_blank" rel="noopener noreferrer" class="fallback-link">Book directly on SavvyCal →</a>
 			</p>
 		</footer>
 	{/if}
@@ -362,13 +394,14 @@
 	.booking-page {
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
-		padding: var(--space-xl) var(--space-md);
+		padding: clamp(1.5rem, 4vw, 3rem) var(--space-md) clamp(3rem, 6vw, 5rem);
 		min-height: 100vh;
 	}
 
 	.booking-header {
 		text-align: center;
-		margin-bottom: var(--space-xl);
+		max-width: 56rem;
+		margin: 0 auto clamp(1.5rem, 4vw, 2.5rem);
 	}
 
 	.booking-title {
@@ -381,6 +414,9 @@
 	.booking-subtitle {
 		font-size: var(--text-body);
 		color: var(--color-fg-tertiary);
+		max-width: 48rem;
+		margin: 0 auto;
+		line-height: 1.65;
 	}
 
 	/* Progress indicator */
@@ -389,7 +425,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: var(--space-sm);
-		margin-bottom: var(--space-xl);
+		margin-bottom: clamp(1.25rem, 3vw, 2rem);
 	}
 
 	.progress-step {
@@ -427,17 +463,11 @@
 	.step-label {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		display: none;
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
-	@media (min-width: 480px) {
-		.step-label {
-			display: inline;
-		}
-
-		.progress-step.active .step-label {
-			color: var(--color-fg-primary);
-		}
+	.progress-step.active .step-label {
+		color: var(--color-fg-primary);
 	}
 
 	.progress-line {
@@ -452,19 +482,20 @@
 
 	/* Content */
 	.booking-content {
-		margin-bottom: var(--space-xl);
+		margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
 	}
 
 	.step-content {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-lg);
+		gap: clamp(1rem, 3vw, 1.5rem);
 	}
 
 	.step-title {
 		font-size: var(--text-h3);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		margin: 0;
 	}
 
 	.back-link {
@@ -481,13 +512,92 @@
 		color: var(--color-fg-primary);
 	}
 
-	.error-message {
+	.booking-alert {
+		display: grid;
+		gap: var(--space-md);
+		padding: clamp(1rem, 2vw, 1.25rem);
+		border-radius: var(--radius-lg);
+		border: 1px solid rgba(239, 68, 68, 0.22);
+		background:
+			linear-gradient(180deg, rgba(127, 29, 29, 0.3), rgba(69, 10, 10, 0.22)),
+			rgba(24, 7, 7, 0.9);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.03),
+			0 18px 42px rgba(0, 0, 0, 0.24);
+	}
+
+	.booking-alert-copy {
+		display: grid;
+		gap: var(--space-2xs);
+	}
+
+	.booking-alert-eyebrow {
+		margin: 0;
+		font-size: var(--text-caption);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: rgba(252, 165, 165, 0.9);
+	}
+
+	.booking-alert-copy h3 {
+		margin: 0;
+		font-size: clamp(1.05rem, 1vw + 0.9rem, 1.25rem);
+		color: var(--color-fg-primary);
+	}
+
+	.booking-alert-copy p:last-child {
+		margin: 0;
 		font-size: var(--text-body-sm);
-		color: var(--color-error);
-		padding: var(--space-sm);
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		border-radius: var(--radius-md);
+		line-height: 1.65;
+		color: rgba(254, 226, 226, 0.88);
+	}
+
+	.booking-alert-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-sm);
+	}
+
+	.booking-alert-primary,
+	.booking-alert-secondary {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 44px;
+		padding: 0.72rem 1rem;
+		border-radius: 999px;
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		text-decoration: none;
+		transition:
+			transform var(--duration-micro) var(--ease-standard),
+			background var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard),
+			color var(--duration-micro) var(--ease-standard);
+	}
+
+	.booking-alert-primary {
+		background: linear-gradient(180deg, #ffffff, #eceef7);
+		color: #090909;
+		border: 1px solid rgba(255, 255, 255, 0.22);
+	}
+
+	.booking-alert-secondary {
+		background: rgba(255, 255, 255, 0.04);
+		color: var(--color-fg-primary);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		cursor: pointer;
+		font-family: inherit;
+	}
+
+	.booking-alert-secondary:disabled {
+		opacity: 0.6;
+		cursor: wait;
+	}
+
+	.booking-alert-primary:hover,
+	.booking-alert-secondary:hover:not(:disabled) {
+		transform: translateY(-1px);
 	}
 
 	.lane-intake {
@@ -555,7 +665,7 @@
 	/* Footer */
 	.booking-footer {
 		text-align: center;
-		padding-top: var(--space-lg);
+		padding-top: clamp(1rem, 2.5vw, 1.75rem);
 	}
 
 	.fallback-text {
@@ -572,5 +682,48 @@
 
 	.fallback-link:hover {
 		color: var(--color-fg-primary);
+	}
+
+	@media (max-width: 640px) {
+		.booking-page {
+			padding-left: 1rem;
+			padding-right: 1rem;
+		}
+
+		.booking-title {
+			font-size: clamp(2.6rem, 11vw, 4rem);
+			line-height: 0.98;
+			text-wrap: balance;
+		}
+
+		.progress {
+			gap: 0.7rem;
+		}
+
+		.progress-step {
+			flex-direction: column;
+			gap: 0.35rem;
+			min-width: 3.15rem;
+		}
+
+		.step-label {
+			font-size: 0.68rem;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+		}
+
+		.progress-line {
+			width: 18px;
+			margin-bottom: 1rem;
+		}
+
+		.booking-alert-actions {
+			flex-direction: column;
+		}
+
+		.booking-alert-primary,
+		.booking-alert-secondary {
+			width: 100%;
+		}
 	}
 </style>

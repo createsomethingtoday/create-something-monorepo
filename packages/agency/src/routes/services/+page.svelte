@@ -51,17 +51,15 @@
     {
       tag: 'Entry wedge',
       title: 'MCP-only',
-      summary: 'Use this when the connection is the job and your team will operate the workflow directly.',
-      points: [
-        'Connectivity validation',
-        'Scoped host setup',
-        'Read-only or constrained rollout'
-      ]
+      summary:
+        'Use this when the connection is the job and your team will operate the workflow directly.',
+      points: ['Connectivity validation', 'Scoped host setup', 'Read-only or constrained rollout']
     },
     {
       tag: 'Start here',
       title: 'Workflow Infrastructure',
-      summary: 'Fix the first workflow your team still protects by hand and make the handoffs reliable.',
+      summary:
+        'Fix the first workflow your team still protects by hand and make the handoffs reliable.',
       points: [
         'Business-rule mapping',
         'Workflow implementation',
@@ -84,7 +82,8 @@
     {
       tag: 'High-stakes scale',
       title: 'Enterprise Extension',
-      summary: 'Add this when several systems, teams, or compliance requirements must stay aligned.',
+      summary:
+        'Add this when several systems, teams, or compliance requirements must stay aligned.',
       points: [
         'Cross-system orchestration',
         'Custom trust boundaries',
@@ -98,6 +97,21 @@
     'You bring the workflow, constraints, and approval owner.',
     'CREATE SOMETHING maps the rules, builds the control layer, and ships the operating artifacts.',
     'Your team gets visibility through runbooks, approvals, release evidence, and working software.'
+  ];
+
+  const conversionPaths = [
+    {
+      label: 'Live map',
+      detail: 'Use the session when approvals, failure modes, or ownership are still fuzzy.'
+    },
+    {
+      label: 'Async brief',
+      detail: 'Send the workflow when the stack and bottleneck are already documented.'
+    },
+    {
+      label: 'Direct referral',
+      detail: 'If the real need is internal admin coverage, I will say that directly.'
+    }
   ];
 
   const faqItems = [
@@ -166,9 +180,9 @@
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          This is a specialist engagement: scoped, artifact-backed, and designed to give your team
-          a safer operating path, not another person to manage. Fix the first workflow, add
-          oversight when the risk rises, and extend only when several systems must stay in sync.
+          This is a specialist engagement: scoped, artifact-backed, and designed to give your team a
+          safer operating path, not another person to manage. Fix the first workflow, add oversight
+          when the risk rises, and extend only when several systems must stay in sync.
         </p>
       </BlurFade>
 
@@ -206,8 +220,8 @@
         </BlurFade>
         <BlurFade delay={0.1}>
           <p>
-            You are bringing in a specialist to diagnose, rebuild, and govern one critical
-            operating path. The work is scoped, visible, and designed for your team to inherit.
+            You are bringing in a specialist to diagnose, rebuild, and govern one critical operating
+            path. The work is scoped, visible, and designed for your team to inherit.
           </p>
         </BlurFade>
       </div>
@@ -325,21 +339,31 @@
   <div class="shell-inner-pad">
     <div class="product-surface product-surface--accent cta-panel">
       <BlurFade>
-        <span class="product-kicker">Map the workflow</span>
+        <span class="product-kicker">Choose the starting path</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>Map the workflow that's creating the most drag.</h2>
+        <h2>Bring the workflow that's creating the most drag.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          We will define the handoffs, approvals, failure modes, and escalation path before any
-          implementation work starts.
+          Use the live session when the operating shape is still fuzzy. Use the async brief when the
+          stack is already documented and your team just needs the right wedge.
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
+        <div class="cta-path-grid" role="list" aria-label="Starting paths">
+          {#each conversionPaths as path}
+            <div class="cta-path" role="listitem">
+              <span>{path.label}</span>
+              <p>{path.detail}</p>
+            </div>
+          {/each}
+        </div>
+      </BlurFade>
+      <BlurFade delay={0.2}>
         <div class="hero-actions hero-actions--center">
           <Button href="/book">Book Mapping Session</Button>
-          <Button href="/products" variant="secondary">See What I've Built</Button>
+          <Button href="/contact#workflow-brief" variant="secondary">Send Workflow Brief</Button>
         </div>
       </BlurFade>
     </div>
@@ -498,6 +522,37 @@
     text-align: center;
   }
 
+  .cta-path-grid {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    text-align: left;
+  }
+
+  .cta-path {
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--color-shell-border-default) 86%, transparent);
+    background: color-mix(in srgb, var(--color-shell-surface-secondary) 78%, transparent);
+  }
+
+  .cta-path span {
+    color: var(--color-fg-primary);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .cta-path p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+
   @media (max-width: 1080px) {
     .hero-layout,
     .flow-layout {
@@ -512,7 +567,8 @@
 
   @media (max-width: 768px) {
     .offer-grid,
-    .faq-grid {
+    .faq-grid,
+    .cta-path-grid {
       grid-template-columns: 1fr;
     }
 

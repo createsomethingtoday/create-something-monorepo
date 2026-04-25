@@ -1,28 +1,60 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
+  import { Button, SEO } from '@create-something/canon';
   import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
+  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { products } from '$lib/data/services';
-  // Group products by category
-  const featured = products.filter((p) => p.category === 'featured');
-  const devTools = products.filter((p) => p.category === 'developer-tools');
-  const framework = products.filter((p) => p.category === 'framework');
-  const integrations = products.filter((p) => p.category === 'integration');
-  const clientWork = products.filter((p) => p.category === 'client');
+
+  const featured = products.filter((product) => product.category === 'featured');
+  const devTools = products.filter((product) => product.category === 'developer-tools');
+  const framework = products.filter((product) => product.category === 'framework');
+  const integrations = products.filter((product) => product.category === 'integration');
+  const clientWork = products.filter((product) => product.category === 'client');
+  const operatorTooling = [...devTools, ...framework];
+
+  const proofTracks = [
+    {
+      label: 'Flagship tools',
+      count: featured.length,
+      detail: 'Reusable packages buyers can inspect before they buy services.'
+    },
+    {
+      label: 'Operator tooling',
+      count: operatorTooling.length,
+      detail: 'Diagnostics and framework layers that keep the system legible.'
+    },
+    {
+      label: 'Integration MCPs',
+      count: integrations.length,
+      detail: 'Connectors for live systems teams already depend on.'
+    },
+    {
+      label: 'Client systems',
+      count: clientWork.length,
+      detail: 'Production builds delivered with operating artifacts and handoff discipline.'
+    }
+  ];
 
   function isExternal(href: string | undefined): boolean {
     return !!href && href.startsWith('http');
+  }
+
+  function formatCount(value: number) {
+    return value.toString().padStart(2, '0');
+  }
+
+  function getProductCta(productHref: string | undefined, fallback: string) {
+    return isExternal(productHref) ? 'Inspect on GitHub →' : fallback;
   }
 </script>
 
 <SEO
   title="Proof in Production | Workflow Systems and MCPs"
-  description="Tools, connectors, and client builds that show the operating model behind CREATE SOMETHING .agency is real, inspectable, and already in use."
+  description="Flagship tools, integration MCPs, and client systems that show CREATE SOMETHING .agency is real, inspectable, and already operating in production."
   keywords="AI integrations, business tool automation, Notion AI, Gmail AI, Zoom AI, Salesforce AI, custom AI development, MCP servers"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
 
-<!-- Hero -->
 <section class="hero">
   <div class="hero-grid-container">
     <AnimatedGridPattern
@@ -35,46 +67,79 @@
       class="hero-animated-grid"
     />
   </div>
-  <div class="hero-content">
-    <BlurFade delay={0}>
-      <p class="hero-eyebrow">Proof of Work</p>
-    </BlurFade>
-    <BlurFade delay={0.1}>
-      <h1 class="hero-title">Proof in Production</h1>
-    </BlurFade>
-    <BlurFade delay={0.2}>
-      <p class="hero-subtitle">
-        Tools, connectors, and client builds that show the work is real and inspectable, not just
-        pitch language.
-      </p>
-    </BlurFade>
+
+  <div class="section-container hero-content">
+    <div class="hero-copy">
+      <BlurFade delay={0}>
+        <p class="hero-eyebrow">Proof of Work</p>
+      </BlurFade>
+      <BlurFade delay={0.08}>
+        <h1 class="hero-title">Proof in production, not just in pitch language.</h1>
+      </BlurFade>
+      <BlurFade delay={0.16}>
+        <p class="hero-subtitle">
+          Flagship packages, live-system connectors, and client deployments buyers can inspect
+          before they commit.
+        </p>
+      </BlurFade>
+    </div>
+
+    <div class="proof-grid">
+      {#each proofTracks as track, index}
+        <BlurFade delay={0.22 + index * 0.06}>
+          <article class="proof-card">
+            <span class="proof-count">{formatCount(track.count)}</span>
+            <div class="proof-copy">
+              <strong>{track.label}</strong>
+              <p>{track.detail}</p>
+            </div>
+          </article>
+        </BlurFade>
+      {/each}
+    </div>
   </div>
 </section>
 
-<!-- Featured Products -->
-<section class="products-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="section-header">
-        <h2 class="section-eyebrow">Flagship Tools</h2>
-        <p class="section-desc">
-          Reusable patterns from real client work. Proof buyers can inspect before they commit.
+<section class="products-section products-section--featured">
+  <div class="section-container">
+    <div class="section-header">
+      <BlurFade>
+        <span class="section-kicker">Flagship tools</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Reusable products that show how the operating model is packaged.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          These are the clearest proof surfaces for how CREATE SOMETHING turns governance,
+          automation, and handoff discipline into something buyers can inspect directly.
         </p>
-      </div>
-    </BlurFade>
+      </BlurFade>
+    </div>
+
     <div class="featured-grid">
       {#each featured as product, index}
-        <BlurFade delay={0.2 + index * 0.1}>
-          <a href={product.href} class="product-card featured-card">
-            <div class="product-badge badge-oss">{product.badge}</div>
+        <BlurFade delay={0.15 + index * 0.08}>
+          <a
+            href={product.href}
+            class="product-card product-card--featured"
+            target={isExternal(product.href) ? '_blank' : undefined}
+            rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
+          >
+            <div class="product-card__meta">
+              {#if product.badge}
+                <span class="product-badge badge-oss">{product.badge}</span>
+              {/if}
+              {#if product.npmPackage}
+                <code class="product-npm">{product.npmPackage}</code>
+              {/if}
+            </div>
             <h3 class="product-name">{product.title}</h3>
             <p class="product-tagline">{product.tagline}</p>
             <p class="product-description">{product.description}</p>
             <div class="product-footer">
-              {#if product.npmPackage}
-                <code class="product-npm">{product.npmPackage}</code>
-              {/if}
-              <span class="product-cta">Install →</span>
+              <span class="product-support">{product.timeline}</span>
+              <span class="product-cta">{getProductCta(product.href, 'See product detail →')}</span>
             </div>
           </a>
         </BlurFade>
@@ -83,32 +148,136 @@
   </div>
 </section>
 
-<!-- Integration MCPs -->
 <section class="products-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="section-header">
-        <h2 class="section-eyebrow">Integration MCPs</h2>
-        <p class="section-desc">
-          Infrastructure for connecting live systems without asking the team to keep rebuilding
-          context by hand.
-        </p>
+  <div class="section-container">
+    <div class="section-header section-header--split">
+      <div>
+        <BlurFade>
+          <span class="section-kicker">Operator tooling</span>
+        </BlurFade>
+        <BlurFade delay={0.05}>
+          <h2>The layers that keep the work understandable and governable.</h2>
+        </BlurFade>
       </div>
-    </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          Not every proof surface is a customer-facing product. Some of the most important layers
+          are the analysis, framework, and teaching surfaces that keep the delivery work honest.
+        </p>
+      </BlurFade>
+    </div>
+
+    <div class="operator-columns">
+      <article class="operator-panel">
+        <div class="operator-intro">
+          <span class="product-badge badge-neutral">Developer tools</span>
+          <h3>Inspection and learning surfaces for teams building governed systems.</h3>
+          <p>
+            These tools help engineers diagnose duplication, teach the method, and keep
+            implementation grounded instead of drifting into agent theater.
+          </p>
+        </div>
+        <div class="operator-grid">
+          {#each devTools as product, index}
+            <BlurFade delay={0.15 + index * 0.06}>
+              <a
+                href={product.href}
+                class="product-card product-card--compact"
+                target={isExternal(product.href) ? '_blank' : undefined}
+                rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
+              >
+                {#if product.badge}
+                  <span class="product-badge badge-neutral">{product.badge}</span>
+                {/if}
+                <h3 class="product-name">{product.title}</h3>
+                <p class="product-tagline">{product.tagline}</p>
+                <p class="product-description">{product.description}</p>
+                <div class="product-footer">
+                  {#if product.npmPackage}
+                    <code class="product-npm">{product.npmPackage}</code>
+                  {/if}
+                  <span class="product-cta">{getProductCta(product.href, 'See product detail →')}</span>
+                </div>
+              </a>
+            </BlurFade>
+          {/each}
+        </div>
+      </article>
+
+      <article class="operator-panel operator-panel--soft">
+        <div class="operator-intro">
+          <span class="product-badge badge-neutral">Framework layer</span>
+          <h3>Architecture primitives for connecting data, tools, and policy.</h3>
+          <p>
+            This is the structural layer behind the service work: where the system boundaries,
+            storage model, and governance logic become durable artifacts rather than ad hoc prompts.
+          </p>
+        </div>
+        <div class="operator-grid">
+          {#each framework as product, index}
+            <BlurFade delay={0.15 + index * 0.06}>
+              <a
+                href={product.href}
+                class="product-card product-card--compact"
+                target={isExternal(product.href) ? '_blank' : undefined}
+                rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
+              >
+                {#if product.badge}
+                  <span class="product-badge badge-neutral">{product.badge}</span>
+                {/if}
+                <h3 class="product-name">{product.title}</h3>
+                <p class="product-tagline">{product.tagline}</p>
+                <p class="product-description">{product.description}</p>
+                <div class="product-footer">
+                  <span class="product-support">{product.timeline}</span>
+                  <span class="product-cta">{getProductCta(product.href, 'See product detail →')}</span>
+                </div>
+              </a>
+            </BlurFade>
+          {/each}
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="products-section">
+  <div class="section-container">
+    <div class="section-header">
+      <BlurFade>
+        <span class="section-kicker">Integration MCPs</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Connective tissue for the systems teams already use.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          These connectors handle the live edge between tools, data, and AI. The value is not the
+          acronym. It is that the surrounding systems remain queryable, auditable, and easier to
+          operate.
+        </p>
+      </BlurFade>
+    </div>
+
     <div class="category-grid">
       {#each integrations as product, index}
-        <BlurFade delay={0.2 + index * 0.1}>
+        <BlurFade delay={0.15 + index * 0.05}>
           <a
             href={product.href}
-            class="product-card category-card"
+            class="product-card product-card--integration"
             target={isExternal(product.href) ? '_blank' : undefined}
             rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
           >
-            <div class="product-badge badge-neutral">{product.badge}</div>
+            {#if product.badge}
+              <span class="product-badge badge-neutral">{product.badge}</span>
+            {/if}
             <h3 class="product-name">{product.title}</h3>
             <p class="product-tagline">{product.tagline}</p>
             <p class="product-description">{product.description}</p>
-            <span class="product-cta">View on GitHub →</span>
+            <div class="product-footer">
+              <span class="product-support">{product.timeline}</span>
+              <span class="product-cta">{getProductCta(product.href, 'See product detail →')}</span>
+            </div>
           </a>
         </BlurFade>
       {/each}
@@ -116,24 +285,31 @@
   </div>
 </section>
 
-<!-- Client Portfolio -->
-<section class="products-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="section-header">
-        <h2 class="section-eyebrow">Client Portfolio</h2>
-        <p class="section-desc">
-          Selected builds showing the constraints, handoffs, and operating realities behind the
-          work.
+<section class="products-section products-section--client">
+  <div class="section-container">
+    <div class="section-header">
+      <BlurFade>
+        <span class="section-kicker">Client systems</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Production builds with real constraints, not sandbox demos.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          The client work matters because it shows how the product layer holds up when there are
+          owners, edge cases, third-party limits, and a real handoff at the end.
         </p>
-      </div>
-    </BlurFade>
+      </BlurFade>
+    </div>
+
     <div class="client-grid">
       {#each clientWork as product, index}
-        <BlurFade delay={0.2 + index * 0.1}>
-          <div class="client-card">
+        <BlurFade delay={0.15 + index * 0.08}>
+          <article class="client-card">
             <div class="client-card-header">
-              <div class="product-badge badge-accent">{product.badge}</div>
+              {#if product.badge}
+                <span class="product-badge badge-accent">{product.badge}</span>
+              {/if}
               {#if product.client}
                 <span class="client-name">for {product.client}</span>
               {/if}
@@ -148,47 +324,52 @@
                 {/each}
               </div>
             {/if}
-          </div>
+            <div class="product-footer">
+              <span class="product-support">Delivered as a custom engagement</span>
+              <span class="product-cta">Policy + runbook included</span>
+            </div>
+          </article>
         </BlurFade>
       {/each}
     </div>
   </div>
 </section>
 
-<!-- CTA -->
 <section class="cta-section">
   <div class="section-container">
-    <BlurFade delay={0.1}>
-      <p class="cta-heading">Need this applied to your workflow?</p>
-    </BlurFade>
-    <BlurFade delay={0.2}>
-      <p class="cta-subtext">
-        I’ll map the first workflow, the risk points, and the cleanest path into production.
-      </p>
-    </BlurFade>
-    <BlurFade delay={0.3}>
-      <a href="/book" class="cta-link">Book a mapping session →</a>
-    </BlurFade>
+    <div class="cta-panel">
+      <BlurFade>
+        <span class="section-kicker">Start with one workflow</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>{agencyCoreMessaging.workflowCtaHeading}</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          I’ll map the workflow, the failure points, and the first safe path into production so you
+          can see where a governed system actually earns its keep.
+        </p>
+      </BlurFade>
+      <BlurFade delay={0.15}>
+        <div class="cta-actions">
+          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href="/services" variant="secondary">{agencyCoreMessaging.engagementModelLabel}</Button>
+        </div>
+      </BlurFade>
+    </div>
   </div>
 </section>
 
 <style>
-  /* Section containers */
   .section-container {
     max-width: var(--content-width-xl);
     margin: 0 auto;
     padding: 0 var(--container-padding, 1.5rem);
   }
 
-  .section-inner {
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
-  }
-
-  /* Hero with grid background */
   .hero {
     position: relative;
-    padding: 5rem var(--container-padding, 1.5rem) 3rem;
+    padding: clamp(4.75rem, 8vw, 6.5rem) 0 clamp(2.8rem, 5vw, 4rem);
     overflow: hidden;
   }
 
@@ -200,144 +381,229 @@
   }
 
   :global(.hero-animated-grid) {
-    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
-    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+    mask-image: radial-gradient(680px circle at 50% 30%, white, transparent);
+    -webkit-mask-image: radial-gradient(680px circle at 50% 30%, white, transparent);
   }
 
   .hero-content {
     position: relative;
-    text-align: center;
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
+    display: grid;
+    gap: 2rem;
+  }
+
+  .hero-copy {
+    max-width: 46rem;
   }
 
   .hero-eyebrow {
-    font-size: var(--text-caption);
+    margin: 0 0 0.85rem;
+    font-size: 0.74rem;
     text-transform: uppercase;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.14em;
     color: var(--color-fg-muted);
-    margin-bottom: var(--space-3, 0.75rem);
   }
 
   .hero-title {
-    font-size: var(--text-h1);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-3, 0.75rem);
-    line-height: 1.1;
-    letter-spacing: var(--tracking-tighter, -0.025em);
-  }
-
-  .hero-subtitle {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
-    line-height: var(--leading-relaxed);
-  }
-
-  /* Section Headers — compact: eyebrow + one-line description */
-  .section-header {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: var(--space-5, 1.5rem);
-  }
-
-  .section-eyebrow {
-    font-size: var(--text-caption);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--color-fg-muted);
-    font-weight: var(--font-semibold);
-    margin-bottom: var(--space-2, 0.5rem);
-  }
-
-  .section-desc {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
+    margin: 0 0 1rem;
+    max-width: 11ch;
+    font-size: clamp(3.2rem, 6vw, 5.8rem);
+    line-height: 0.94;
+    letter-spacing: -0.05em;
     text-wrap: balance;
   }
 
-  /* Products Section */
-  .products-section {
-    padding: 3rem var(--container-padding, 1.5rem);
+  .hero-subtitle {
+    margin: 0;
+    max-width: 38rem;
+    color: var(--color-fg-secondary);
+    font-size: clamp(1.05rem, 1vw + 0.85rem, 1.2rem);
+    line-height: 1.72;
+    text-wrap: pretty;
   }
 
-  /* Shared Grid for all product sections */
-  .featured-grid,
+  .proof-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .proof-card {
+    display: grid;
+    gap: 0.65rem;
+    padding: 1rem 1.05rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+    box-shadow: var(--glass-shine-soft);
+  }
+
+  .proof-count {
+    color: var(--color-fg-primary);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+  }
+
+  .proof-copy {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .proof-copy strong {
+    color: var(--color-fg-primary);
+    font-size: 0.98rem;
+    line-height: 1.25;
+  }
+
+  .proof-copy p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: 1.55;
+  }
+
+  .products-section,
+  .cta-section {
+    padding: clamp(2.5rem, 5vw, 4.5rem) 0;
+  }
+
+  .products-section--featured {
+    padding-top: clamp(2rem, 4vw, 3rem);
+  }
+
+  .section-header {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 44rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .section-header--split {
+    max-width: none;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 0.8fr);
+    align-items: end;
+    gap: 1rem;
+  }
+
+  .section-kicker {
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .section-header h2,
+  .operator-intro h3,
+  .cta-panel h2 {
+    margin: 0;
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+
+  .section-header p,
+  .operator-intro p,
+  .cta-panel p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    line-height: 1.72;
+  }
+
+  .featured-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .operator-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .operator-panel {
+    display: grid;
+    gap: 1rem;
+    padding: 1.15rem;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+    box-shadow: var(--glass-shine-soft);
+  }
+
+  .operator-panel--soft {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.018));
+  }
+
+  .operator-intro {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .operator-grid,
   .category-grid,
   .client-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: var(--space-4, 1rem);
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.9rem;
   }
 
-  /* Product Card — base */
   .product-card,
   .client-card {
-    padding: 1.5rem;
-    border-radius: var(--radius-lg, 12px);
     display: flex;
     flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.2rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
-    box-shadow: var(--glass-shine-soft);
+    color: inherit;
     text-decoration: none;
     transition:
-      border-color var(--duration-standard) var(--ease-standard),
       transform var(--duration-standard) var(--ease-standard),
+      border-color var(--duration-standard) var(--ease-standard),
       background var(--duration-standard) var(--ease-standard);
   }
 
   .product-card:hover,
   .client-card:hover {
-    border-color: rgba(96, 165, 250, 0.4);
-    background: rgba(255, 255, 255, 0.04);
     transform: translateY(-2px);
+    border-color: rgba(96, 165, 250, 0.25);
+    background: rgba(255, 255, 255, 0.04);
   }
 
-  .featured-card {
-    background: linear-gradient(135deg, transparent 0%, rgba(96, 165, 250, 0.04) 100%);
-    border-color: rgba(96, 165, 250, 0.15);
+  .product-card--featured {
+    gap: 0.95rem;
+    padding: clamp(1.3rem, 2vw, 1.6rem);
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.06), rgba(255, 255, 255, 0.02));
+    border-color: rgba(96, 165, 250, 0.16);
+  }
+
+  .product-card--compact {
+    min-height: 100%;
+  }
+
+  .product-card--integration {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.018));
   }
 
   .client-card {
-    background: linear-gradient(135deg, transparent 0%, rgba(167, 139, 250, 0.04) 100%);
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.06), rgba(255, 255, 255, 0.02));
+    border-color: rgba(167, 139, 250, 0.12);
   }
 
-  /* Typography consistency */
-  .product-name {
-    font-size: var(--text-h3, 1.25rem);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-1, 0.25rem);
-  }
-
-  .client-card-header {
+  .product-card__meta {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-3, 0.75rem);
-    margin-bottom: var(--space-4, 1rem);
+    gap: 0.65rem;
   }
 
-  .client-name {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
-    font-style: italic;
-  }
-
-  /* Badges */
   .product-badge {
-    font-size: var(--text-caption);
-    padding: 0.2rem 0.6rem;
-    border-radius: var(--radius-full, 9999px);
     width: fit-content;
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .client-card-header .product-badge {
-    margin-bottom: 0;
+    padding: 0.22rem 0.65rem;
+    border-radius: 999px;
+    font-size: var(--text-caption);
   }
 
   .badge-oss {
@@ -352,133 +618,161 @@
 
   .badge-accent {
     color: var(--color-accent, #a78bfa);
-    background: rgba(167, 139, 250, 0.1);
+    background: rgba(167, 139, 250, 0.12);
+  }
+
+  .product-name {
+    margin: 0;
+    color: var(--color-fg-primary);
+    font-size: clamp(1.2rem, 1vw + 1rem, 1.55rem);
+    line-height: 1.08;
   }
 
   .product-tagline {
-    font-size: var(--text-body-sm);
+    margin: 0;
     color: var(--color-fg-secondary);
-    margin-bottom: var(--space-2, 0.5rem);
+    font-size: var(--text-body-sm);
+    line-height: 1.55;
   }
 
   .product-description {
-    font-size: var(--text-caption);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
+    margin: 0;
     flex: 1;
-    margin-bottom: var(--space-3, 0.75rem);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    color: var(--color-fg-tertiary);
+    font-size: var(--text-body-sm);
+    line-height: 1.65;
   }
 
   .product-footer {
     display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-3, 0.75rem);
     margin-top: auto;
-    min-width: 0;
+  }
+
+  .product-support {
+    color: var(--color-fg-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
   }
 
   .product-npm {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
-    background: rgba(255, 255, 255, 0.04);
-    padding: 0.2rem 0.5rem;
-    border-radius: var(--radius-sm, 4px);
-    font-family: var(--font-mono, monospace);
-    flex: 1 1 auto;
     min-width: 0;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--color-fg-muted);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 0.24rem 0.55rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
   }
 
   .product-cta {
+    color: var(--color-fg-primary);
     font-size: var(--text-body-sm);
     font-weight: var(--font-semibold);
-    color: var(--color-fg-secondary);
-    transition: color var(--duration-micro, 200ms) var(--ease-standard);
-    margin-left: auto;
-    flex-shrink: 0;
-    white-space: nowrap;
   }
 
-  .product-card:hover .product-cta {
-    color: var(--color-fg-primary);
+  .client-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
 
-  /* Integration tags */
+  .client-name {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+    font-style: italic;
+  }
+
   .integration-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2, 0.5rem);
+    gap: 0.5rem;
     margin-top: auto;
   }
 
   .integration-tag {
-    font-size: var(--text-caption);
     color: var(--color-fg-muted);
     background: rgba(255, 255, 255, 0.04);
-    padding: 0.2rem 0.6rem;
-    border-radius: var(--radius-sm, 4px);
+    border-radius: 999px;
+    padding: 0.25rem 0.6rem;
+    font-size: var(--text-caption);
   }
 
-  /* CTA */
-  .cta-section {
-    padding: 3rem 0;
+  .cta-panel {
+    display: grid;
+    gap: 0.95rem;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+    box-shadow: var(--glass-shine-soft);
     text-align: center;
   }
 
-  .cta-heading {
-    font-size: var(--text-h3, 1.25rem);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-2, 0.5rem);
+  .cta-panel p {
+    max-width: 40rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  .cta-subtext {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    margin-bottom: var(--space-4, 1rem);
+  .cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.85rem;
   }
 
-  .cta-link {
-    font-size: var(--text-body);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-secondary);
-    transition: color var(--duration-micro, 200ms) var(--ease-standard);
+  @media (max-width: 1080px) {
+    .proof-grid,
+    .featured-grid,
+    .operator-columns {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
-  .cta-link:hover {
-    color: var(--color-fg-primary);
+  @media (max-width: 900px) {
+    .section-header--split {
+      grid-template-columns: 1fr;
+    }
   }
 
-  /* Responsive */
   @media (max-width: 768px) {
+    .section-container {
+      padding: 0 1rem;
+    }
+
     .hero {
-      padding: 3rem var(--container-padding, 1.5rem) 2rem;
+      padding-top: 4rem;
+      padding-bottom: 2.5rem;
     }
 
     .hero-title {
-      font-size: var(--text-h2);
+      max-width: 9ch;
+      font-size: clamp(2.6rem, 11vw, 4.4rem);
     }
 
+    .proof-grid,
     .featured-grid,
+    .operator-columns,
+    .operator-grid,
     .category-grid,
     .client-grid {
       grid-template-columns: 1fr;
     }
 
-    .products-section {
-      padding: 2rem var(--container-padding, 1.5rem);
-    }
-
-    .cta-section {
-      padding: 2rem 0;
+    .product-card,
+    .client-card,
+    .operator-panel,
+    .proof-card,
+    .cta-panel {
+      padding: 1rem;
     }
 
     .product-footer {
@@ -486,12 +780,9 @@
       align-items: flex-start;
     }
 
-    .product-npm {
+    .cta-actions {
       width: 100%;
-    }
-
-    .product-cta {
-      margin-left: 0;
+      flex-direction: column;
     }
   }
 </style>

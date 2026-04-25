@@ -1,8 +1,74 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
+  import { Button, SEO } from '@create-something/canon';
   import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
   import WorkHistoryTimeline from '$lib/components/WorkHistoryTimeline.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+
+  const operatingPrinciples = [
+    {
+      tag: 'Power needs control',
+      title: 'Performance only matters when the handoff still makes sense.',
+      body:
+        'I grew up between two reference points: a Porsche 930 Turbo and emergency medicine. One taught me that speed matters. The other taught me that pressure exposes every weak protocol.'
+    },
+    {
+      tag: 'Real-world protocols',
+      title: 'Exceptions are the work, not the edge case.',
+      body:
+        'Equine veterinary work, support, and operations taught me that logs, checklists, and ownership are what keep real systems safe when conditions stop being ideal.'
+    },
+    {
+      tag: 'Build for inheritance',
+      title: 'The output has to survive the kickoff call.',
+      body:
+        'Clients do not need hidden cleverness. They need one operating path their team can understand, approve, and keep running after the initial build ships.'
+    }
+  ];
+
+  const practiceCards = [
+    {
+      eyebrow: 'What I do now',
+      title: 'Systems architecture with actual operating constraints.',
+      body:
+        'I am a Senior Systems Architect on the Marketplace Team at Webflow, where I build internal tooling, onboarding systems, and platform infrastructure serving millions of users. The problems are familiar: brittle handoffs, unclear ownership, and systems that look automated until the exceptions show up.',
+      bodySecondary:
+        'I have shipped integrations across Salesforce, HubSpot, Notion, Slack, Procore, and internal systems. That work informs where native tooling is enough, where MCP is the right wedge, and where approvals, policies, and recovery paths are the difference between a launch and a system people actually trust.'
+    },
+    {
+      eyebrow: 'Client experience',
+      title: 'Clients hire a control layer, not another person to manage.',
+      body:
+        'Most teams do not need a giant AI initiative first. They need one workflow that stops creating manual cleanup. I start there, then add controls only when the cost of failure justifies the extra layer.',
+      points: [
+        'You bring the workflow, the operating constraints, and the approval owner.',
+        'I bring the diagnosis, the control layer, and the artifacts your team needs to run and inherit the system.',
+        'If what the client needs is a fuller internal delivery team, I route that work to a better-fit partner.'
+      ]
+    }
+  ];
+
+  const connectedProperties = [
+    {
+      name: '.ltd',
+      description: 'Philosophy and principles',
+      href: 'https://createsomething.ltd'
+    },
+    {
+      name: '.io',
+      description: 'Research and validated patterns',
+      href: 'https://createsomething.io'
+    },
+    {
+      name: '.space',
+      description: 'Tools and experiments',
+      href: 'https://createsomething.space'
+    },
+    {
+      name: '.agency',
+      description: 'Governed workflow infrastructure and reliability controls',
+      current: true
+    }
+  ];
 </script>
 
 <SEO
@@ -13,7 +79,6 @@
   propertyName="agency"
 />
 
-<!-- Hero -->
 <section class="hero">
   <div class="hero-grid-container">
     <AnimatedGridPattern
@@ -26,14 +91,15 @@
       class="hero-animated-grid"
     />
   </div>
-  <div class="hero-content">
+
+  <div class="section-container hero-content">
     <BlurFade delay={0}>
       <p class="hero-eyebrow">About</p>
     </BlurFade>
-    <BlurFade delay={0.1}>
+    <BlurFade delay={0.05}>
       <h1 class="hero-title">I design workflows people can trust under pressure.</h1>
     </BlurFade>
-    <BlurFade delay={0.2}>
+    <BlurFade delay={0.1}>
       <p class="hero-detail">
         My work sits between high-performance systems and clinical discipline: make things faster,
         but never at the expense of clarity, control, or recovery.
@@ -42,227 +108,170 @@
   </div>
 </section>
 
-<!-- Why This Work -->
-<section class="about-section">
+<section class="frame-section">
   <div class="section-container">
-    <BlurFade delay={0.1}>
-      <div class="about-content">
-        <h2>Why I work this way</h2>
-        <p>
-          I grew up between two reference points: a Porsche 930 Turbo and emergency medicine. One
-          taught me that power needs control. The other taught me that when pressure rises, clear
-          protocols matter more than improvisation.
-        </p>
-        <p>
-          Later, as an equine veterinary technician, I learned what continuity of care, logging,
-          and operating discipline actually feel like in the real world. That stays with me in
-          systems work now.
-        </p>
-        <p>
-          Today that shows up in the kind of workflows I build: fast when they should be, visible
-          when they need review, and recoverable when something goes wrong.
-        </p>
-      </div>
-    </BlurFade>
-  </div>
-</section>
-
-<!-- Background -->
-<section class="about-section">
-  <div class="section-container">
-    <BlurFade delay={0.1}>
-      <div class="about-content">
-        <h2>What I do now</h2>
-        <p>
-          Micah Johnson. I am a Senior Systems Architect on the Marketplace Team at Webflow, where
-          I build internal tooling, onboarding systems, and platform infrastructure serving
-          millions of users. The problems are familiar: brittle handoffs, unclear ownership, and
-          systems that look automated until the exceptions show up.
-        </p>
-        <p>
-          I have shipped integrations across Salesforce, HubSpot, Notion, Slack, Procore, and
-          internal systems. That work informs where native tooling is enough, where MCP is the
-          right wedge, and where approvals, policies, and recovery paths are the difference
-          between a launch and a system people actually trust.
-        </p>
-        <p>Based in Texas. Working with businesses across the US.</p>
-        <p>
-          <a
-            href="https://www.linkedin.com/in/micahryanjohnson/"
-            class="link"
-            target="_blank"
-            rel="noopener noreferrer">LinkedIn</a
-          >
-          · <a href="mailto:micah@createsomething.agency" class="link">Email</a>
-        </p>
-      </div>
-    </BlurFade>
-  </div>
-</section>
-
-<!-- The Approach -->
-<section class="about-section">
-  <div class="section-container">
-    <BlurFade delay={0.1}>
-      <div class="about-content">
-        <h2>How I approach the work</h2>
-        <p>
-          Most teams do not need a giant AI initiative first. They need one workflow that stops
-          creating manual cleanup. I start there, then add controls only when the cost of failure
-          justifies the extra layer.
-        </p>
-        <p>
-          My methodology is the Subtractive Triad: remove duplication, excess, and disconnection
-          before adding automation. Cleaner systems reduce handoff risk. Better constraints make
-          automation more reliable.
-        </p>
-        <p>
-          The goal is not more automation. The goal is one operating path your team can trust.
-        </p>
-      </div>
-    </BlurFade>
-  </div>
-</section>
-
-<!-- Engagement Model -->
-<section class="about-section">
-  <div class="section-container">
-    <BlurFade delay={0.1}>
-      <div class="about-content">
-        <h2>How clients experience the work</h2>
-        <p>
-          Clients do not hire me to become another internal admin. They bring the workflow, the
-          operating constraints, and the approval owner. I bring the diagnosis, the control layer,
-          and the artifacts your team needs to run and inherit the system.
-        </p>
-        <p>
-          Visibility comes through runbooks, approval states, release evidence, and working
-          software, not meeting theater. If what a client needs is a full internal delivery team,
-          I route that work to a better-fit partner.
-        </p>
-      </div>
-    </BlurFade>
-  </div>
-</section>
-
-<!-- Timeline -->
-<section class="about-section" id="timeline">
-  <div class="section-container">
-    <BlurFade delay={0.1}>
-      <div class="about-content">
-        <h2>Timeline</h2>
+    <div class="section-lead section-lead--center">
+      <BlurFade>
+        <span class="product-kicker">Operating frame</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Why the work reads like operations, not hype.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
         <p>
           The through-line is not AI. It is learning how to turn messy systems into operating paths
-          people can trust. That pattern shows up in science, creative work, client services,
-          marketplaces, and now automation.
+          people can trust when the easy assumptions stop holding.
         </p>
-      </div>
+      </BlurFade>
+    </div>
+
+    <div class="principles-grid">
+      {#each operatingPrinciples as principle, index}
+        <BlurFade delay={0.15 + index * 0.06}>
+          <article class="product-surface principle-card">
+            <span class="principle-tag">{principle.tag}</span>
+            <h3>{principle.title}</h3>
+            <p>{principle.body}</p>
+          </article>
+        </BlurFade>
+      {/each}
+    </div>
+  </div>
+</section>
+
+<section class="practice-section">
+  <div class="section-container practice-grid">
+    <BlurFade delay={0.05}>
+      <article class="product-surface practice-card">
+        <span class="product-kicker">{practiceCards[0].eyebrow}</span>
+        <h2>{practiceCards[0].title}</h2>
+        <p>{practiceCards[0].body}</p>
+        <p>{practiceCards[0].bodySecondary}</p>
+        <p class="practice-links">
+          Based in Texas. <a href="https://www.linkedin.com/in/micahryanjohnson/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          · <a href="mailto:micah@createsomething.agency">Email</a>
+        </p>
+      </article>
     </BlurFade>
+
+    <BlurFade delay={0.12}>
+      <article class="product-surface product-surface--soft practice-card">
+        <span class="product-kicker">{practiceCards[1].eyebrow}</span>
+        <h2>{practiceCards[1].title}</h2>
+        <p>{practiceCards[1].body}</p>
+        <ul class="product-list">
+          {#each practiceCards[1].points ?? [] as point}
+            <li>{point}</li>
+          {/each}
+        </ul>
+      </article>
+    </BlurFade>
+  </div>
+</section>
+
+<section class="timeline-section" id="timeline">
+  <div class="section-container">
+    <div class="section-lead">
+      <BlurFade>
+        <span class="product-kicker">Timeline</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>How the discipline was built.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          The pattern shows up in science, creative work, client services, marketplaces, and now
+          automation: reduce ambiguity, make the control layer legible, and leave the next person a
+          path they can actually run.
+        </p>
+      </BlurFade>
+    </div>
+
     <WorkHistoryTimeline />
   </div>
 </section>
 
-<!-- The System -->
-<section class="about-section">
-  <div class="section-container">
-    <BlurFade delay={0.1}>
-      <div class="about-content">
-        <h2>The rest of CREATE SOMETHING</h2>
-        <p>
-          CREATE SOMETHING operates as a connected system. Each property has a distinct job, and
-          each one sharpens the others:
-        </p>
-        <ul class="circle-list">
-          <li>
-            <a
-              href="https://createsomething.ltd"
-              class="link"
-              target="_blank"
-              rel="noopener noreferrer"><strong>.ltd</strong></a
-            > — Philosophy and principles
-          </li>
-          <li>
-            <a
-              href="https://createsomething.io"
-              class="link"
-              target="_blank"
-              rel="noopener noreferrer"><strong>.io</strong></a
-            > — Research and validated patterns
-          </li>
-          <li>
-            <a
-              href="https://createsomething.space"
-              class="link"
-              target="_blank"
-              rel="noopener noreferrer"><strong>.space</strong></a
-            > — Tools and experiments
-          </li>
-          <li>
-            <strong>.agency</strong> — Governed workflow infrastructure, reliability controls, and
-            enterprise extension
-            <span class="muted">(you are here)</span>
-          </li>
-        </ul>
+<section class="system-section">
+  <div class="section-container system-grid">
+    <BlurFade delay={0.05}>
+      <article class="product-surface product-surface--soft system-card">
+        <span class="product-kicker">Connected system</span>
+        <h2>The rest of CREATE SOMETHING sharpens the agency work.</h2>
         <p>
           Client work informs the research. Research sharpens the methodology. The methodology
           raises the bar on client work.
         </p>
-      </div>
-    </BlurFade>
-  </div>
-</section>
 
-<!-- Also Building -->
-<section class="about-section">
-  <div class="section-container">
-    <BlurFade delay={0.1}>
-      <div class="about-content">
-        <h2>Also building</h2>
+        <div class="property-grid">
+          {#each connectedProperties as property}
+            {#if property.href}
+              <a
+                href={property.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="property-card"
+              >
+                <strong>{property.name}</strong>
+                <span>{property.description}</span>
+              </a>
+            {:else}
+              <div class="property-card property-card--current">
+                <strong>{property.name}</strong>
+                <span>{property.description}</span>
+                <em>You are here</em>
+              </div>
+            {/if}
+          {/each}
+        </div>
+      </article>
+    </BlurFade>
+
+    <BlurFade delay={0.12}>
+      <article class="product-surface system-card">
+        <span class="product-kicker">Also building</span>
+        <h2>WORKWAY and the direct referral path.</h2>
         <p>
-          I am also building <a
-            href="https://workway.co"
-            class="link"
-            target="_blank"
-            rel="noopener noreferrer">WORKWAY</a
-          >. When clients need fuller system development and onboarding than .agency is meant to
-          carry, I provide a direct referral path to trusted partners, including Half Dozen.
+          I am also building <a href="https://workway.co" target="_blank" rel="noopener noreferrer">WORKWAY</a>. When
+          clients need fuller system development and onboarding than .agency is meant to carry, I
+          provide a direct referral path to trusted partners, including Half Dozen.
         </p>
-      </div>
+      </article>
     </BlurFade>
   </div>
 </section>
 
-<!-- CTA -->
 <section class="cta-section">
   <div class="section-container">
-    <BlurFade delay={0.1}>
-      <h2 class="cta-heading">{agencyCoreMessaging.workflowCtaHeading}</h2>
-    </BlurFade>
-    <BlurFade delay={0.2}>
-      <p class="cta-detail">{agencyCoreMessaging.workflowCtaDetail}</p>
-    </BlurFade>
-    <BlurFade delay={0.3}>
-      <div class="cta-actions">
-        <a href="/book" class="cta-link-primary">{agencyCoreMessaging.bookMappingSessionLabel} →</a>
-        <a href="/services" class="cta-link-secondary">{agencyCoreMessaging.engagementModelLabel}</a>
-      </div>
-    </BlurFade>
+    <div class="product-surface product-surface--accent cta-panel">
+      <BlurFade>
+        <span class="product-kicker">Start with one workflow</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>{agencyCoreMessaging.workflowCtaHeading}</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>{agencyCoreMessaging.workflowCtaDetail}</p>
+      </BlurFade>
+      <BlurFade delay={0.15}>
+        <div class="cta-actions">
+          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href="/services" variant="ghost">{agencyCoreMessaging.engagementModelLabel}</Button>
+        </div>
+      </BlurFade>
+    </div>
   </div>
 </section>
 
 <style>
-  /* Section containers */
   .section-container {
     max-width: var(--content-width-xl);
     margin: 0 auto;
     padding: 0 var(--container-padding, 1.5rem);
   }
 
-  /* Hero with grid background */
   .hero {
     position: relative;
-    padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem)
-      var(--section-padding, 6rem);
+    padding: clamp(4.5rem, 8vw, 6.5rem) 0 clamp(3rem, 5vw, 4rem);
     overflow: hidden;
   }
 
@@ -281,159 +290,238 @@
   .hero-content {
     position: relative;
     text-align: center;
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
+    max-width: 58rem;
   }
 
   .hero-eyebrow {
-    font-size: var(--text-body-sm);
+    margin: 0 0 0.85rem;
+    font-size: 0.74rem;
     text-transform: uppercase;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.14em;
     color: var(--color-fg-muted);
-    margin-bottom: var(--space-5, 1.5rem);
   }
 
   .hero-title {
-    font-size: var(--text-display);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    max-width: 20ch;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: var(--space-5, 1.5rem);
-    line-height: 1.1;
-    letter-spacing: var(--tracking-tighter, -0.025em);
+    margin: 0 auto 1rem;
+    max-width: 12ch;
+    font-size: clamp(3.25rem, 6vw, 6rem);
+    line-height: 0.94;
+    letter-spacing: -0.05em;
     text-wrap: balance;
   }
 
   .hero-detail {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    max-width: 34ch;
     margin: 0 auto;
+    max-width: 34rem;
+    color: var(--color-fg-secondary);
+    font-size: clamp(1.05rem, 1vw + 0.9rem, 1.18rem);
+    line-height: 1.72;
     text-wrap: pretty;
   }
 
-  /* About Sections */
-  .about-section {
-    padding: var(--section-padding, 6rem) 0;
+  .frame-section,
+  .practice-section,
+  .timeline-section,
+  .system-section,
+  .cta-section {
+    padding: clamp(2.5rem, 5vw, 4.5rem) 0;
   }
 
-  .about-content h2 {
-    font-size: var(--text-h3);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-4, 1rem);
+  .section-lead {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 42rem;
+    margin-bottom: 1.5rem;
   }
 
-  .about-content p {
-    font-size: var(--text-body);
+  .section-lead--center {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  .section-lead h2,
+  .practice-card h2,
+  .system-card h2,
+  .cta-panel h2 {
+    margin: 0;
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+
+  .section-lead p,
+  .principle-card p,
+  .practice-card p,
+  .system-card p,
+  .cta-panel p {
+    margin: 0;
     color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    margin-bottom: var(--space-4, 1rem);
+    line-height: 1.72;
   }
 
-  .about-content p:last-child {
-    margin-bottom: 0;
+  .principles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
   }
 
-  /* Hermeneutic circle list */
-  .circle-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 var(--space-4, 1rem) 0;
+  .principle-card,
+  .practice-card,
+  .system-card {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.25rem;
   }
 
-  .circle-list li {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    padding: var(--space-2, 0.5rem) 0;
+  .principle-tag {
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
-  .circle-list li strong {
-    color: var(--color-fg-primary);
-    font-weight: var(--font-semibold);
+  .principle-card h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    line-height: 1.12;
   }
 
-  .muted {
+  .practice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .practice-card h2,
+  .system-card h2 {
+    font-size: clamp(1.55rem, 2vw, 2.15rem);
+  }
+
+  .practice-links {
     color: var(--color-fg-muted);
     font-size: var(--text-body-sm);
   }
 
-  .link {
+  .practice-links a,
+  .system-card a {
     color: var(--color-fg-primary);
-    transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
   }
 
-  .link:hover {
-    opacity: 0.7;
+  .system-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 1rem;
+    align-items: start;
   }
 
-  /* CTA */
-  .cta-section {
-    padding: var(--section-padding, 6rem) 0;
+  .property-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .property-card {
+    display: grid;
+    gap: 0.22rem;
+    padding: 0.95rem 1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    color: inherit;
+    text-decoration: none;
+    transition:
+      transform var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard),
+      background var(--duration-micro) var(--ease-standard);
+  }
+
+  .property-card strong {
+    color: var(--color-fg-primary);
+    font-size: 1rem;
+  }
+
+  .property-card span {
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: 1.55;
+  }
+
+  .property-card em {
+    color: var(--color-brand-ink);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-style: normal;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .property-card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(96, 165, 250, 0.22);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .property-card--current {
+    border-color: rgba(96, 165, 250, 0.22);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.03),
+      0 0 0 1px rgba(49, 92, 255, 0.08);
+  }
+
+  .cta-panel {
+    display: grid;
+    gap: 0.95rem;
+    padding: clamp(1.5rem, 3vw, 2rem);
     text-align: center;
   }
 
-  .cta-heading {
-    font-size: var(--text-h1);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .cta-detail {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
-    max-width: 32ch;
-    margin: 0 auto;
+  .cta-panel p {
+    max-width: 38rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .cta-actions {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-4, 1rem);
-    margin-top: var(--space-5, 1.5rem);
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.85rem;
   }
 
-  .cta-link-primary {
-    font-size: var(--text-body);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
+  .cta-panel .product-kicker {
+    justify-self: center;
   }
 
-  .cta-link-primary:hover {
-    opacity: 0.7;
+  @media (max-width: 960px) {
+    .principles-grid,
+    .practice-grid,
+    .system-grid,
+    .property-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
-  .cta-link-secondary {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
-    transition: color var(--duration-micro, 200ms) var(--ease-standard);
-  }
-
-  .cta-link-secondary:hover {
-    color: var(--color-fg-primary);
-  }
-
-  /* Responsive */
   @media (max-width: 768px) {
+    .section-container {
+      padding: 0 1rem;
+    }
+
     .hero {
-      padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+      padding-top: 4rem;
+      padding-bottom: 2.75rem;
     }
 
     .hero-title {
-      font-size: var(--text-h1);
+      max-width: 9ch;
+      font-size: clamp(2.6rem, 11vw, 4.4rem);
     }
 
-    .about-section,
-    .cta-section {
-      padding: var(--layout-3, 4rem) 0;
+    .principle-card,
+    .practice-card,
+    .system-card,
+    .cta-panel {
+      padding: 1rem;
     }
   }
 </style>

@@ -54,6 +54,25 @@
 		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Philosophy of automation', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
 	];
 
+	const hideUnifiedSearchFabOn = [
+		/^\/$/,
+		/^\/services$/,
+		/^\/products(?:\/.*)?$/,
+		/^\/about$/,
+		/^\/book$/,
+		/^\/security$/,
+		/^\/contact$/,
+		/^\/methodology$/,
+		/^\/bearer-token-policy$/,
+		/^\/privacy$/,
+		/^\/terms$/
+	];
+
+	function shouldShowMobileSearchButton(pathname?: string | null) {
+		if (!pathname) return false;
+		return !hideUnifiedSearchFabOn.some((pattern) => pattern.test(pathname));
+	}
+
 	// Handle hash scrolling
 	function scrollToHash(hash: string) {
 		if (!hash) return;
@@ -133,7 +152,11 @@
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="agency" localItems={quickAccessItems} />
+<UnifiedSearch
+	currentProperty="agency"
+	localItems={quickAccessItems}
+	showMobileButton={shouldShowMobileSearchButton(data.pathname ?? $page.url.pathname)}
+/>
 
 <div class="layout-root min-h-screen">
 	<Navigation

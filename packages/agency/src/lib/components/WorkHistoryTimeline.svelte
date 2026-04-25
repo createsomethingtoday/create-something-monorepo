@@ -1,7 +1,11 @@
 <script lang="ts">
   import { Timeline } from '@create-something/canon/diagrams';
   import { BlurFade } from '@create-something/canon/magicui';
-  import { workHistory, workHistoryMilestones } from '$lib/data/workHistory';
+  import {
+    workHistory,
+    workHistoryMilestones,
+    type WorkHistoryItem
+  } from '$lib/data/workHistory';
 
   type TimelineConfig = {
     title?: string;
@@ -20,6 +24,13 @@
     width: 980,
     height: 340
   };
+
+  function getMobileTakeaway(item: WorkHistoryItem) {
+    return (
+      item.bullets.find((bullet) => bullet.label.startsWith('Carry-forward'))?.text ??
+      item.bullets[0]?.text
+    );
+  }
 </script>
 
 <div class="work-history">
@@ -46,6 +57,9 @@
             </h3>
             {#if item.subtitle}
               <p class="timeline-subtitle">{item.subtitle}</p>
+            {/if}
+            {#if getMobileTakeaway(item)}
+              <p class="timeline-takeaway">{getMobileTakeaway(item)}</p>
             {/if}
             <ul class="timeline-bullets">
               {#each item.bullets as b}
@@ -230,5 +244,54 @@
   .timeline-bullets strong {
     color: var(--color-fg-primary);
     font-weight: var(--font-semibold);
+  }
+
+  .timeline-takeaway {
+    display: none;
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: 1.65;
+    text-wrap: pretty;
+  }
+
+  @media (max-width: 768px) {
+    .work-history {
+      margin-top: var(--space-4, 1rem);
+    }
+
+    .milestones {
+      display: none;
+    }
+
+    .timeline-list {
+      gap: var(--space-4, 1rem);
+    }
+
+    .timeline-body {
+      padding: 0.95rem;
+    }
+
+    .timeline-title {
+      font-size: 1.02rem;
+      line-height: 1.28;
+    }
+
+    .timeline-org {
+      display: block;
+      margin-top: 0.18rem;
+    }
+
+    .timeline-subtitle {
+      margin-bottom: 0.7rem;
+    }
+
+    .timeline-takeaway {
+      display: block;
+    }
+
+    .timeline-bullets {
+      display: none;
+    }
   }
 </style>
