@@ -19,6 +19,7 @@
 import Steel from 'steel-sdk';
 import { type Browser, type Frame, type Page } from 'puppeteer-core';
 import type {
+  AssetInfo,
   BrowserProvider,
   BrowserProviderConfig,
   AnalyzeOptions,
@@ -378,7 +379,7 @@ export class SteelBrowserProvider implements BrowserProvider {
     components: Array<{ name: string; instanceCount: number; isUnused: boolean }>;
     interactions: Array<{ trigger: string; targetElement: string; type: string }>;
     cmsCollections: Array<{ name: string; itemCount: number }>;
-    assets: Array<{ filename: string; type: string }>;
+    assets: AssetInfo[];
     breakpoints: string[];
   }> {
     const startTime = Date.now();
@@ -600,44 +601,10 @@ export class SteelBrowserProvider implements BrowserProvider {
         })()
       `) as Array<{ name: string; type: string; category: string }>;
       
-      // Add Home explicitly if found in text (it appears before the Pages section header)
-      const allTexts = await getUIText(600);
-      if (allTexts.includes('Home') && !pageData.some(p => p.name === 'Home')) {
-        pages.push({ name: 'Home', type: 'static', category: 'static' });
-      }
-      
       // Add the parsed pages
       for (const p of pageData) {
         if (!pages.some(existing => existing.name === p.name)) {
           pages.push(p);
-        }
-      }
-      
-      // Ensure we capture common page names that appear in the text
-      const knownPageNames = [
-        { name: 'Home', type: 'static' },
-        { name: 'About us', type: 'static' },
-        { name: 'Shop', type: 'static' },
-        { name: 'Blogs', type: 'static' },
-        { name: 'Contact', type: 'static' },
-        { name: 'Utilities', type: 'static' },
-        { name: 'Style guide', type: 'static' },
-        { name: 'Licenses', type: 'static' },
-        { name: 'Changelog', type: 'static' },
-        { name: 'Instruction', type: 'static' },
-        { name: 'Blogs Template', type: 'cms-template' },
-        { name: 'Products Template', type: 'ecommerce' },
-        { name: 'Categories Template', type: 'ecommerce' },
-        { name: 'Checkout', type: 'ecommerce' },
-        { name: 'Checkout (PayPal)', type: 'ecommerce' },
-        { name: 'Order Confirmation', type: 'ecommerce' },
-        { name: 'Password', type: 'utility' },
-        { name: '404', type: 'utility' }
-      ];
-      
-      for (const known of knownPageNames) {
-        if (allTexts.includes(known.name) && !pages.some(p => p.name === known.name)) {
-          pages.push({ ...known, category: known.type });
         }
       }
 
@@ -700,19 +667,24 @@ export class SteelBrowserProvider implements BrowserProvider {
       await pressKeyAndWait('j', 2000);
       const assetsText = await getUIText(1200);
 
-      const assets: Array<{ filename: string; type: string }> = [];
+      const assets: AssetInfo[] = [];
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
 
       for (const text of assetsText) {
         if (text.match(/\.(jpg|jpeg|png|gif|webp|avif|svg|mp4|webm)$/i)) {
           const ext = text.split('.').pop()?.toLowerCase() || '';
-          let type = 'other';
+          let type: AssetInfo['type'] = 'other';
           if (imageExts.includes(ext)) type = 'image';
           else if (ext === 'svg') type = 'svg';
           else if (['mp4', 'webm'].includes(ext)) type = 'video';
 
           if (!assets.some(a => a.filename === text)) {
-            assets.push({ filename: text, type });
+            assets.push({
+              filename: text,
+              type,
+              captureSource: 'designer-assets-panel',
+              isTruncated: text.includes('…') || text.includes('...'),
+            });
           }
         }
       }

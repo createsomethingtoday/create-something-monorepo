@@ -102,6 +102,7 @@ export class TemplateReviewJobManager {
   private async run(jobId: string): Promise<void> {
     const job = this.jobs.get(jobId);
     if (!job) return;
+    const startedAtMs = Date.now();
 
     this.activeCount += 1;
     job.status = 'running';
@@ -118,6 +119,7 @@ export class TemplateReviewJobManager {
 
       job.status = 'succeeded';
       job.completedAt = nowIso();
+      job.durationMs = result.durationMs ?? (Date.now() - startedAtMs);
       job.result = {
         ...result,
         jobId,
@@ -125,11 +127,13 @@ export class TemplateReviewJobManager {
         queuedAt: job.queuedAt,
         startedAt: job.startedAt,
         completedAt: job.completedAt,
+        durationMs: job.durationMs,
       };
       job.progress = createProgress('completed', 100, 100, 'Template review completed');
     } catch (error) {
       job.status = 'failed';
       job.completedAt = nowIso();
+      job.durationMs = Date.now() - startedAtMs;
       job.error = error instanceof Error ? error.message : String(error);
       job.progress = createProgress('failed', 100, 100, job.error);
     } finally {

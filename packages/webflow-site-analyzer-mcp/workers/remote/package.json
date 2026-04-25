@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "prepare:runtime": "node ../../scripts/prepare-remote-runtime.mjs",
+    "ready": "node ../../scripts/ready-remote-runtime.mjs",
+    "smoke": "node ../../scripts/smoke-remote-runtime.mjs",
+    "compare-smoke": "node ../../scripts/compare-remote-smoke-runs.mjs",
     "typecheck": "tsc --project tsconfig.json",
     "dev": "pnpm run prepare:runtime && node ../../../../scripts/run-wrangler.mjs dev",
-    "deploy": "pnpm run prepare:runtime && node ../../../../scripts/run-wrangler.mjs deploy",
+    "deploy": "pnpm run prepare:runtime && node ../../../../scripts/run-wrangler.mjs deploy && pnpm run ready",
     "tail": "node ../../../../scripts/run-wrangler.mjs tail"
   },
   "dependencies": {

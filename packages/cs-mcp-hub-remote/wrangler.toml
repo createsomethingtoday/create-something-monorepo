@@ -23,7 +23,7 @@ service = "identity-worker"
 
 [vars]
 # Discovery defaults (used when per-account discovery prefs are not persisted in KV)
-HUB_DISCOVERY_MODE = "compact"
+HUB_DISCOVERY_MODE = "scoped"
 HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 # Identity resolution mode:
 # - "session_required" (default): requires X-MCP-Session-Token + resolver config
@@ -47,7 +47,7 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 # HUB_ENABLED_SERVERS = ""
 # HUB_DISABLED_SERVERS = ""
 # HUB_DISCOVERY_DEFAULT_SERVERS = "composio-toolkit-gmail,composio-toolkit-googledrive"
-# HUB_DISCOVERY_MAX_PROXY_TOOLS = "200"
+# HUB_DISCOVERY_MAX_PROXY_TOOLS = "200" # compact mode only
 # HUB_ACCOUNT_ID = "operator"
 # HUB_SESSION_RESOLVE_URL = "https://id.createsomething.space/v1/mcp/sessions/resolve"
 # HUB_SESSION_RESOLVE_TOKEN = ""

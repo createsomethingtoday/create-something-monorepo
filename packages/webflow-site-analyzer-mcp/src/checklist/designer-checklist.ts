@@ -7,7 +7,17 @@ import type {
 
 type ScoreOptions = {
   includeManual?: boolean;
-  source?: 'live-extraction' | 'provided-metadata';
+  source?: DesignerChecklistReport['source'];
+};
+
+type PreviewExtractionAssessment = {
+  likelySparse: boolean;
+  pagesReliable: boolean;
+  stylesReliable: boolean;
+  breakpointsReliable: boolean;
+  componentsReliable: boolean;
+  assetsReliable: boolean;
+  evidence: string[];
 };
 
 function normalize(value: string): string {
@@ -36,6 +46,7 @@ function isTitleCaseLike(name: string): boolean {
   return tokens.every((token) => {
     if (/^\d+[A-Za-z]*$/.test(token)) return true;
     if (/^[A-Z]{2,}$/.test(token)) return true;
+    if (/^[A-Z]{2,}(?:s|es)$/.test(token)) return true;
     if (/^[A-Z][a-z0-9]+$/.test(token)) return true;
     return false;
   });
@@ -61,11 +72,126 @@ function check(
   return { id, section, requirement, result, evidence };
 }
 
+function assessPreviewExtraction(metadata: DesignerMetadata): PreviewExtractionAssessment {
+  const pagesReliable = metadata.pages.length > 0;
+  const stylesReliable = metadata.styleClasses.length > 0;
+  const breakpointsReliable = metadata.breakpoints.length > 0;
+  const componentsVisible = metadata.components.length > 0;
+  const assetsVisible = metadata.assets.length > 0;
+  const strongSignals = [
+    pagesReliable,
+    stylesReliable,
+    breakpointsReliable,
+    componentsVisible,
+    metadata.interactions.length > 0,
+    metadata.cmsCollections.length > 0,
+    assetsVisible,
+    Boolean(normalize(metadata.siteName)),
+    normalize(metadata.sitePlan).toLowerCase() !== 'unknown'
+  ].filter(Boolean).length;
+  const likelySparse =
+    !pagesReliable &&
+    (!stylesReliable || !breakpointsReliable) &&
+    strongSignals <= 3;
+
+  return {
+    likelySparse,
+    pagesReliable,
+    stylesReliable,
+    breakpointsReliable,
+    componentsReliable: componentsVisible || (pagesReliable && stylesReliable && !likelySparse),
+    assetsReliable: assetsVisible || (pagesReliable && stylesReliable && breakpointsReliable && !likelySparse),
+    evidence: [
+      `previewExtractionLikelySparse=${likelySparse}`,
+      `pages=${metadata.totalPages}`,
+      `classes=${metadata.totalClasses}`,
+      `components=${metadata.totalComponents}`,
+      `interactions=${metadata.totalInteractions}`,
+      `cmsCollections=${metadata.cmsCollections.length}`,
+      `assets=${metadata.totalAssets}`,
+      `breakpoints=${metadata.breakpoints.length}`
+    ]
+  };
+}
+
+function manualEvidence(
+  surface: string,
+  assessment: PreviewExtractionAssessment,
+  extra: string[] = []
+): string[] {
+  return [
+    `${surface} inventory was not captured reliably from Webflow Designer preview`,
+    ...extra,
+    ...assessment.evidence
+  ];
+}
+
+function createEmptyDesignerMetadata(url?: string): DesignerMetadata {
+  return {
+    url: url || '',
+    timestamp: new Date().toISOString(),
+    siteName: '',
+    sitePlan: 'unavailable',
+    pages: [],
+    totalPages: 0,
+    styleClasses: [],
+    totalClasses: 0,
+    globalClasses: 0,
+    customClasses: 0,
+    components: [],
+    totalComponents: 0,
+    unusedComponents: 0,
+    interactions: [],
+    totalInteractions: 0,
+    cmsCollections: [],
+    totalCMSItems: 0,
+    assets: [],
+    totalAssets: 0,
+    breakpoints: []
+  };
+}
+
+export function createUnavailableDesignerChecklistReport(
+  reason: string,
+  options: {
+    url?: string;
+    includeManual?: boolean;
+  } = {}
+): DesignerChecklistReport {
+  const includeManual = options.includeManual !== false;
+  const baseReport = scoreDesignerChecklist(createEmptyDesignerMetadata(options.url), {
+    includeManual: true,
+    source: 'fallback-manual'
+  });
+  const notes = [reason, ...(options.url ? [`previewUrl=${options.url}`] : [])];
+  const checks = baseReport.checks.map((item) => ({
+    ...item,
+    result: 'manual' as const,
+    evidence: [...notes, ...item.evidence]
+  }));
+  const filteredChecks = includeManual ? checks : [];
+
+  return {
+    ...baseReport,
+    source: 'fallback-manual',
+    notes,
+    summary: {
+      pass: 0,
+      fail: 0,
+      manual: filteredChecks.length,
+      scored: 0,
+      passRate: 0
+    },
+    checks: filteredChecks
+  };
+}
+
 export function scoreDesignerChecklist(
   metadata: DesignerMetadata,
   options: ScoreOptions = {}
 ): DesignerChecklistReport {
   const includeManual = options.includeManual !== false;
+  const extractionAssessment = assessPreviewExtraction(metadata);
   const componentNames = metadata.components.map((component) => component.name);
   const componentNamesLower = toLowerList(componentNames);
   const pageNames = metadata.pages.map((page) => page.name);
@@ -85,18 +211,23 @@ export function scoreDesignerChecklist(
     'cta', 'call to action', 'get started', 'subscribe', 'newsletter',
     'signup', 'sign up', 'register', 'book', 'contact form', 'hero button'
   ]);
+  const navFooterCtaResult: ChecklistResult = !extractionAssessment.componentsReliable
+    ? 'manual'
+    : hasNavOrHeader && hasFooter && hasCta ? 'pass' : 'fail';
   checks.push(
     check(
       'components.nav_footer_cta',
       'Components',
       'Nav, Footer, and CTA are set up as Components',
-      hasNavOrHeader && hasFooter && hasCta ? 'pass' : 'fail',
-      [
-        `components=${metadata.totalComponents}`,
-        `hasNavOrHeader=${hasNavOrHeader}`,
-        `hasFooter=${hasFooter}`,
-        `hasCTA=${hasCta}`
-      ]
+      navFooterCtaResult,
+      navFooterCtaResult === 'manual'
+        ? manualEvidence('Components panel', extractionAssessment)
+        : [
+            `components=${metadata.totalComponents}`,
+            `hasNavOrHeader=${hasNavOrHeader}`,
+            `hasFooter=${hasFooter}`,
+            `hasCTA=${hasCta}`
+          ]
     )
   );
 
@@ -109,28 +240,38 @@ export function scoreDesignerChecklist(
   const invalidComponentNames = componentNames.filter(
     (name) => !isTitleCaseLike(name) && !acceptableLowercaseNames.has(name.toLowerCase().trim())
   );
+  const componentNamingResult: ChecklistResult = !extractionAssessment.componentsReliable
+    ? 'manual'
+    : invalidComponentNames.length === 0 ? 'pass' : 'fail';
   checks.push(
     check(
       'components.title_case_naming',
       'Components',
       'Component names use title-casing and human-readable naming',
-      invalidComponentNames.length === 0 ? 'pass' : 'fail',
-      invalidComponentNames.length === 0
-        ? ['all component names passed title-case heuristic']
-        : [
-            `invalidCount=${invalidComponentNames.length}`,
-            `examples=${invalidComponentNames.slice(0, 8).join(' | ')}`
-          ]
+      componentNamingResult,
+      componentNamingResult === 'manual'
+        ? manualEvidence('Components panel', extractionAssessment)
+        : invalidComponentNames.length === 0
+          ? ['all component names passed title-case heuristic']
+          : [
+              `invalidCount=${invalidComponentNames.length}`,
+              `examples=${invalidComponentNames.slice(0, 8).join(' | ')}`
+            ]
     )
   );
 
+  const unusedComponentsResult: ChecklistResult = !extractionAssessment.componentsReliable
+    ? 'manual'
+    : metadata.unusedComponents === 0 ? 'pass' : 'fail';
   checks.push(
     check(
       'components.unused_cleaned',
       'Components',
       'Unused Components are cleaned up',
-      metadata.unusedComponents === 0 ? 'pass' : 'fail',
-      [`unusedComponents=${metadata.unusedComponents}`]
+      unusedComponentsResult,
+      unusedComponentsResult === 'manual'
+        ? manualEvidence('Components panel', extractionAssessment)
+        : [`unusedComponents=${metadata.unusedComponents}`]
     )
   );
 
@@ -149,18 +290,23 @@ export function scoreDesignerChecklist(
   const hasTablet = breakpointsLower.some((value) => value.includes('991'));
   const hasMobileLandscape = breakpointsLower.some((value) => value.includes('767'));
   const hasMobilePortrait = breakpointsLower.some((value) => value.includes('479'));
+  const breakpointModesResult: ChecklistResult = !extractionAssessment.breakpointsReliable
+    ? 'manual'
+    : hasTablet && hasMobileLandscape && hasMobilePortrait ? 'pass' : 'fail';
   checks.push(
     check(
       'variables.breakpoint_modes',
       'Variables',
       'Variable modes exist for Tablet, Mobile Landscape, and Mobile Portrait',
-      hasTablet && hasMobileLandscape && hasMobilePortrait ? 'pass' : 'fail',
-      [
-        `breakpoints=${metadata.breakpoints.join(' | ')}`,
-        `tablet=${hasTablet}`,
-        `mobileLandscape=${hasMobileLandscape}`,
-        `mobilePortrait=${hasMobilePortrait}`
-      ]
+      breakpointModesResult,
+      breakpointModesResult === 'manual'
+        ? manualEvidence('Breakpoint controls', extractionAssessment)
+        : [
+            `breakpoints=${metadata.breakpoints.join(' | ')}`,
+            `tablet=${hasTablet}`,
+            `mobileLandscape=${hasMobileLandscape}`,
+            `mobilePortrait=${hasMobilePortrait}`
+          ]
     )
   );
 
@@ -207,16 +353,20 @@ export function scoreDesignerChecklist(
     (pattern) => !styleClassNamesLower.some((name) => name.includes(pattern))
   );
   const baseTagResult: ChecklistResult =
-    missingCritical.length > 0 ? 'fail' : missingOptional.length > 0 ? 'pass' : 'pass';
+    !extractionAssessment.stylesReliable
+      ? 'manual'
+      : missingCritical.length > 0 ? 'fail' : missingOptional.length > 0 ? 'pass' : 'pass';
   const baseTagEvidence =
-    missingCritical.length === 0 && missingOptional.length === 0
-      ? ['all required base tag selectors detected']
-      : [
-          ...(missingCritical.length > 0 ? [`missing=${missingCritical.join(', ')}`] : []),
-          ...(missingOptional.length > 0
-            ? [`optional_missing=${missingOptional.join(', ')}`]
-            : [])
-        ];
+    baseTagResult === 'manual'
+      ? manualEvidence('Style Selectors panel', extractionAssessment)
+      : missingCritical.length === 0 && missingOptional.length === 0
+        ? ['all required base tag selectors detected']
+        : [
+            ...(missingCritical.length > 0 ? [`missing=${missingCritical.join(', ')}`] : []),
+            ...(missingOptional.length > 0
+              ? [`optional_missing=${missingOptional.join(', ')}`]
+              : [])
+          ];
   checks.push(
     check(
       'styles.base_tag_selectors',
@@ -259,79 +409,153 @@ export function scoreDesignerChecklist(
   const patternRatio = candidateCustomClasses.length
     ? dominantCount / candidateCustomClasses.length
     : 0;
+  const classNamingResult: ChecklistResult =
+    !extractionAssessment.stylesReliable || candidateCustomClasses.length === 0
+      ? 'manual'
+      : patternRatio >= 0.7 ? 'pass' : 'fail';
   checks.push(
     check(
       'styles.class_naming_consistency',
       'Styles Selector',
       'Class naming follows one consistent format',
-      patternRatio >= 0.7 ? 'pass' : 'fail',
-      [
-        `dominantPattern=${dominantPattern}`,
-        `dominantRatio=${patternRatio.toFixed(2)}`,
-        `sampleSize=${candidateCustomClasses.length}`
-      ]
+      classNamingResult,
+      classNamingResult === 'manual'
+        ? manualEvidence('Style Selectors panel', extractionAssessment, [
+            `sampleSize=${candidateCustomClasses.length}`
+          ])
+        : [
+            `dominantPattern=${dominantPattern}`,
+            `dominantRatio=${patternRatio.toFixed(2)}`,
+            `sampleSize=${candidateCustomClasses.length}`
+          ]
     )
   );
 
   const invalidPageNames = pageNames.filter((name) => !isTitleCaseLike(name));
+  const pageNamingResult: ChecklistResult = !extractionAssessment.pagesReliable
+    ? 'manual'
+    : invalidPageNames.length === 0 ? 'pass' : 'fail';
   checks.push(
     check(
       'pages.title_case_naming',
       'Required Pages',
       'Page names use Title Case',
-      invalidPageNames.length === 0 ? 'pass' : 'fail',
-      invalidPageNames.length === 0
-        ? ['all page names passed title-case heuristic']
-        : [
-            `invalidCount=${invalidPageNames.length}`,
-            `examples=${invalidPageNames.slice(0, 6).join(' | ')}`
-          ]
+      pageNamingResult,
+      pageNamingResult === 'manual'
+        ? manualEvidence('Pages panel', extractionAssessment)
+        : invalidPageNames.length === 0
+          ? ['all page names passed title-case heuristic']
+          : [
+              `invalidCount=${invalidPageNames.length}`,
+              `examples=${invalidPageNames.slice(0, 6).join(' | ')}`
+            ]
     )
   );
 
   const pageNamesLower = toLowerList(pageNames);
-  const hasStyleGuidePage = pageNamesLower.some((name) => name.includes('style guide'));
+  const hasStyleGuidePage = pageNamesLower.some(
+    (name) => name.includes('style guide') || name.includes('styleguide')
+  );
   const hasInstructionsPage = pageNamesLower.some(
-    (name) => name.includes('instruction') || name.includes('instructions')
+    (name) =>
+      name.includes('instruction') ||
+      name.includes('instructions') ||
+      name.includes('start here') ||
+      name.includes('getting started') ||
+      name.includes('documentation') ||
+      (name.includes('guide') && !name.includes('style guide') && !name.includes('styleguide'))
   );
   const hasLicensePage = pageNamesLower.some(
     (name) => name.includes('license') || name.includes('licenses')
   );
+  const styleGuideResult: ChecklistResult = !extractionAssessment.pagesReliable
+    ? 'manual'
+    : hasStyleGuidePage ? 'pass' : 'fail';
   checks.push(
     check(
       'pages.style_guide_exists',
       'Required Pages',
       'Style Guide page exists',
-      hasStyleGuidePage ? 'pass' : 'fail',
-      [`found=${hasStyleGuidePage}`]
+      styleGuideResult,
+      styleGuideResult === 'manual'
+        ? manualEvidence('Pages panel', extractionAssessment)
+        : [`found=${hasStyleGuidePage}`]
     )
   );
   const hasAdvancedInteractions = metadata.totalInteractions > 0;
-  const instructionsStatus: ChecklistResult = hasAdvancedInteractions
-    ? hasInstructionsPage
+  const advancedComponentKeywords = [
+    'accordion',
+    'tabs',
+    'tab accordion',
+    'slider',
+    'carousel',
+    'modal',
+    'popup',
+    'lightbox',
+    'dropdown',
+    'mega menu',
+    'filter',
+    'marquee',
+    'countdown',
+    'timeline',
+    'comparison'
+  ];
+  const advancedComponentMatches = Array.from(
+    new Set(
+      componentNamesLower.flatMap((name) =>
+        advancedComponentKeywords.filter((keyword) => name.includes(keyword))
+      )
+    )
+  );
+  const hasAdvancedComponents = advancedComponentMatches.length > 0;
+  const strongInstructionsRequirement =
+    metadata.totalInteractions >= 3 ||
+    (hasAdvancedInteractions && hasAdvancedComponents) ||
+    advancedComponentMatches.length >= 2;
+  const instructionsStatus: ChecklistResult = !extractionAssessment.pagesReliable
+    ? 'manual'
+    : hasInstructionsPage
       ? 'pass'
-      : 'fail'
-    : 'pass'; // Not required when no advanced interactions/components are used
+      : strongInstructionsRequirement
+        ? 'fail'
+        : hasAdvancedInteractions || hasAdvancedComponents
+          ? 'manual'
+          : 'pass';
   checks.push(
     check(
       'pages.instructions_exists',
       'Required Pages',
       'Instructions page exists when advanced interactions/components are used',
       instructionsStatus,
-      [
-        `found=${hasInstructionsPage}`,
-        `hasAdvancedInteractions=${hasAdvancedInteractions}`,
-        `totalInteractions=${metadata.totalInteractions}`
-      ]
+      instructionsStatus === 'manual' && !extractionAssessment.pagesReliable
+        ? manualEvidence('Pages panel', extractionAssessment, [
+            `hasAdvancedInteractions=${hasAdvancedInteractions}`,
+            `totalInteractions=${metadata.totalInteractions}`,
+            `hasAdvancedComponents=${hasAdvancedComponents}`,
+            `advancedComponentMatches=${advancedComponentMatches.join(', ') || 'none'}`
+          ])
+        : [
+            `found=${hasInstructionsPage}`,
+            `hasAdvancedInteractions=${hasAdvancedInteractions}`,
+            `totalInteractions=${metadata.totalInteractions}`,
+            `hasAdvancedComponents=${hasAdvancedComponents}`,
+            `advancedComponentMatches=${advancedComponentMatches.join(', ') || 'none'}`,
+            `signalStrength=${strongInstructionsRequirement ? 'strong' : hasAdvancedInteractions || hasAdvancedComponents ? 'weak' : 'none'}`
+          ]
     )
   );
+  const licenseResult: ChecklistResult = !extractionAssessment.pagesReliable
+    ? 'manual'
+    : hasLicensePage ? 'pass' : 'fail';
   checks.push(
     check(
       'pages.licenses_exists',
       'Required Pages',
       'Licenses page exists',
-      hasLicensePage ? 'pass' : 'fail',
-      [`found=${hasLicensePage}`]
+      licenseResult,
+      licenseResult === 'manual'
+        ? manualEvidence('Pages panel', extractionAssessment)
+        : [`found=${hasLicensePage}`]
     )
   );
 
@@ -346,10 +570,16 @@ export function scoreDesignerChecklist(
       'CMS Structure',
       'Collection pages are used for repeatable/relational content',
       hasCmsCollections
-        ? cmsTemplatePages > 0 ? 'pass' : 'fail'
+        ? !extractionAssessment.pagesReliable
+          ? 'manual'
+          : cmsTemplatePages > 0 ? 'pass' : 'fail'
         : 'pass',
       hasCmsCollections
-        ? [`cmsTemplatePages=${cmsTemplatePages}`, `cmsCollections=${metadata.cmsCollections.length}`]
+        ? !extractionAssessment.pagesReliable
+          ? manualEvidence('Pages panel', extractionAssessment, [
+              `cmsCollections=${metadata.cmsCollections.length}`
+            ])
+          : [`cmsTemplatePages=${cmsTemplatePages}`, `cmsCollections=${metadata.cmsCollections.length}`]
         : [`cmsCollections=0`, 'Template does not use CMS — check not applicable']
     )
   );
@@ -416,13 +646,18 @@ export function scoreDesignerChecklist(
     )
   );
 
+  const responsiveBreakpointsResult: ChecklistResult = !extractionAssessment.breakpointsReliable
+    ? 'manual'
+    : hasTablet && hasMobileLandscape && hasMobilePortrait ? 'pass' : 'fail';
   checks.push(
     check(
       'responsive.breakpoints_present',
       'Responsive Behaviour',
       'Desktop, tablet, mobile landscape, and mobile portrait breakpoints are configured',
-      hasTablet && hasMobileLandscape && hasMobilePortrait ? 'pass' : 'fail',
-      [`breakpoints=${metadata.breakpoints.join(' | ')}`]
+      responsiveBreakpointsResult,
+      responsiveBreakpointsResult === 'manual'
+        ? manualEvidence('Breakpoint controls', extractionAssessment)
+        : [`breakpoints=${metadata.breakpoints.join(' | ')}`]
     )
   );
 
@@ -430,13 +665,18 @@ export function scoreDesignerChecklist(
   const hasModernFormats = assetNamesLower.some((name) =>
     modernImageFormats.some((format) => name.endsWith(format))
   );
+  const modernFormatsResult: ChecklistResult = !extractionAssessment.assetsReliable || metadata.totalAssets === 0
+    ? 'manual'
+    : hasModernFormats ? 'pass' : 'fail';
   checks.push(
     check(
       'assets.modern_image_formats',
       'Images and Assets',
       'Modern image formats are used (WebP/AVIF/JPEG/PNG)',
-      hasModernFormats ? 'pass' : 'fail',
-      [`assets=${metadata.totalAssets}`, `hasModernFormats=${hasModernFormats}`]
+      modernFormatsResult,
+      modernFormatsResult === 'manual'
+        ? manualEvidence('Assets panel', extractionAssessment)
+        : [`assets=${metadata.totalAssets}`, `hasModernFormats=${hasModernFormats}`]
     )
   );
 

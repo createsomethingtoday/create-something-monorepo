@@ -237,11 +237,47 @@ Files:
 - `packages/webflow-site-analyzer-mcp/workers/remote/wrangler.jsonc`
 - `packages/webflow-site-analyzer-mcp/workers/remote/Dockerfile`
 - `packages/webflow-site-analyzer-mcp/scripts/prepare-remote-runtime.mjs`
+- `packages/webflow-site-analyzer-mcp/scripts/ready-remote-runtime.mjs`
+- `packages/webflow-site-analyzer-mcp/scripts/smoke-remote-runtime.mjs`
+- `packages/webflow-site-analyzer-mcp/scripts/compare-remote-smoke-runs.mjs`
 
 Runtime notes:
 - `prepare:runtime` builds `@create-something/observability`, builds this package, and materializes a standalone runtime tree into `workers/remote/runtime/` using `pnpm deploy`.
 - The Worker is a thin proxy. The actual MCP server runs inside the container via `node dist/http.js`.
 - The deployment requires a local Docker-compatible engine because Wrangler builds the container image locally before upload.
+- The remote `deploy` script now runs a readiness warm-up after Wrangler completes:
+  - polls `/health` until the container is answering
+  - calls `get_provider_status` when an API token is available from env or Infisical
+  - leaves the lane warm so the first real MCP caller is less likely to absorb cold-start latency
+- You can run the readiness step directly with:
+
+```bash
+pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run ready
+```
+
+- For a deeper live lane validation after deploy, run the bounded remote smoke script:
+
+```bash
+pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run smoke
+```
+
+Notes:
+- The smoke script defaults to `https://athelas-template.webflow.io/` as the published URL.
+- It runs a bounded synchronous `run_template_review` after the readiness warm-up.
+- Use `--output <path>` or `--output-dir <path>` when you want a structured JSON artifact on disk.
+- Optional flags can also verify the long-sync guard and async job path:
+
+```bash
+pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run smoke -- --check-sync-guard --check-async-job --json
+```
+
+- To compare the latest two persisted smoke artifacts:
+
+```bash
+pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run compare-smoke
+```
+
+- Use `--base <path> --compare <path>` when you want to compare specific artifact files instead of the latest two.
 
 ## Tools
 

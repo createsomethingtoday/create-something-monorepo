@@ -9,6 +9,7 @@ enabled = true
 
 [vars]
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+WEBFLOW_SITE_ANALYZER_MCP_URL = "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev/mcp"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"

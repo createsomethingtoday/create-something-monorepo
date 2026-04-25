@@ -7,6 +7,7 @@
 
 import { type Browser, type Frame, type Page } from 'puppeteer-core';
 import type {
+  AssetInfo,
   BrowserProvider,
   BrowserProviderConfig,
   AnalyzeOptions,
@@ -376,7 +377,7 @@ export class BrowserlessProvider implements BrowserProvider {
     components: Array<{ name: string; instanceCount: number; isUnused: boolean }>;
     interactions: Array<{ trigger: string; targetElement: string; type: string }>;
     cmsCollections: Array<{ name: string; itemCount: number }>;
-    assets: Array<{ filename: string; type: string }>;
+    assets: AssetInfo[];
     breakpoints: string[];
   }> {
     const startTime = Date.now();
@@ -584,19 +585,24 @@ export class BrowserlessProvider implements BrowserProvider {
       await pressKeyAndWait('j', 2000);
       const assetsText = await getUIText(1200);
       
-      const assets: Array<{ filename: string; type: string }> = [];
+      const assets: AssetInfo[] = [];
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
       
       for (const text of assetsText) {
         if (text.match(/\.(jpg|jpeg|png|gif|webp|avif|svg|mp4|webm)$/i)) {
           const ext = text.split('.').pop()?.toLowerCase() || '';
-          let type = 'other';
+          let type: AssetInfo['type'] = 'other';
           if (imageExts.includes(ext)) type = 'image';
           else if (ext === 'svg') type = 'svg';
           else if (['mp4', 'webm'].includes(ext)) type = 'video';
           
           if (!assets.some(a => a.filename === text)) {
-            assets.push({ filename: text, type });
+            assets.push({
+              filename: text,
+              type,
+              captureSource: 'designer-assets-panel',
+              isTruncated: text.includes('…') || text.includes('...'),
+            });
           }
         }
       }

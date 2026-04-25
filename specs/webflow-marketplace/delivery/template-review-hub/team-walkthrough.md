@@ -6,19 +6,18 @@
 
 ## 1. Meeting objective
 
-Use this session to align the Marketplace team on what is being delivered in the template review Hub lane, how reviewers should use it during alpha, and what feedback will determine broader rollout readiness.
+Use this session to align the Marketplace team on what is being delivered in the template review Hub lane, how reviewers should use the current live reviewer flow, and what feedback will determine further hardening.
 
 ## 2. What is being delivered
 
 The delivery is a reviewer-facing Hub lane that packages the current Webflow review surfaces into one operational workflow for template review.
 
-For alpha, that workflow is delivered through reviewer-specific Hub surfaces for the first six reviewers rather than one shared write-capable reviewer Hub.
+That workflow is delivered through reviewer-specific Hub surfaces for the current five reviewers rather than one shared write-capable reviewer Hub.
 
 Included in this delivery:
 
-- queue and asset context from `webflow-template-review-mcp`
-- objective site analysis from `webflow-site-analyzer-mcp`
-- originality and plagiarism checks from `webflow-mcp`
+- queue, reviewer context, and submission truth from `webflow-template-review-mcp`
+- published-first analyzer evidence from `webflow-site-analyzer-mcp` through reviewer packets and analyzer jobs
 - policy-aware action boundaries through the `CREATE SOMETHING MCP Hub`
 - reviewer guidance, pilot runbook, and launch checks
 - reviewer-specific rollout controls for the pilot cohort
@@ -26,6 +25,7 @@ Included in this delivery:
 Not included in this delivery:
 
 - full automation of subjective review judgment
+- `webflow-local` originality or framework checks
 - autonomous creator-facing communication
 - unconditional write access without reviewer approval
 - a claim that every checklist item is already automated
@@ -45,18 +45,19 @@ The Hub is the operating surface that:
 
 1. Show the review lane entry point and explain which systems are connected.
 2. Open a submission and confirm queue, asset, and version context.
-3. Run the analysis flow against preview and published URLs.
-4. Review results in three buckets:
+3. Open the reviewer packet and show the submission truth + latest automation evidence.
+4. If needed, run a fresh published-first analyzer job.
+5. Review results in three buckets:
    - `auto`
    - `partial`
    - `manual`
-5. Inspect evidence behind a representative fail finding.
-6. Show how draft feedback is produced and where reviewer edits remain required.
-7. Show approval-gated actions:
+6. Inspect evidence behind a representative fail finding.
+7. Show where reviewer edits remain required.
+8. Show reviewer-owned actions:
    - request changes
-   - approve version
-   - reject version
-8. Show one blocked or fallback scenario so the team sees the safety model.
+   - controlled status update
+   - any currently enabled broader decision tool
+9. Show one blocked or fallback scenario so the team sees the safety model.
 
 ## 5. Operating model to explain clearly
 
@@ -88,10 +89,11 @@ Current limitations to call out:
 
 - many checklist items are still `partial` or `manual`
 - recommendation quality still needs calibration against reviewer decisions
-- write-path confidence depends on correct Airtable mappings
-- preview or published evidence gaps can force manual fallback
+- broader decision-write confidence still depends on correct Airtable mappings and trace hardening
+- published evidence gaps can force manual fallback
+- `webflow-local` remains deferred from the official reviewer lane
 - reviewer trust is still a deliverable, not an assumption
-- write enablement will be phased by action, not turned on all at once for every reviewer
+- broader decision-write enablement will be phased by action, not turned on all at once
 
 ## 7. What feedback the team should give
 
@@ -121,4 +123,4 @@ The alpha is working if:
 3. Confirm who owns daily alpha issue triage.
 4. Confirm what conditions would pause or narrow the pilot.
 5. Confirm the date for the first post-alpha calibration review.
-6. Confirm when each reviewer-specific Hub is allowed to move from read-only to write-enabled.
+6. Confirm which broader decision writes remain gated and what evidence is needed before widening them.

@@ -16,7 +16,7 @@ That is not enough for reliable MCP usage.
 
 Onboarding should use reusable skills so hosts and operators apply the same defaults every time:
 
-- safe Phase A queue and self-assignment flow
+- official reviewer queue, packet, and analyzer flow
 - consistent evidence framing
 - exact fallback behavior
 - explicit separation between reviewer and operator responsibilities
@@ -29,8 +29,7 @@ Use:
 
 1. `$webflow-template-review-reviewer`
 2. `$webflow-template-review-pilot-triage`
-
-Reviewer onboarding should stop here for Phase A.
+3. `$webflow-template-review-analysis-calibration`
 
 Do not expose Hub control-plane skills to Marketplace reviewers.
 
@@ -54,17 +53,7 @@ Use `$hub-mcp` only for internal operators and Hub owners. It is the operator sk
 
 Create now, include later:
 
-1. `$webflow-template-review-analysis-calibration`
-2. `$webflow-template-review-write-guardrails`
-
-### Analysis calibration gate
-
-Include `$webflow-template-review-analysis-calibration` only after the live reviewer Hub exposes:
-
-- `webflow-site-analyzer-mcp`
-- `webflow-local`
-
-Until then, reviewers should not be onboarded into an analysis-led workflow.
+1. `$webflow-template-review-write-guardrails`
 
 ### Write guardrails gate
 
@@ -79,12 +68,12 @@ Do not onboard reviewers into write behavior that still depends on manual Airtab
 
 ## Onboarding sequence
 
-### Phase A reviewer sequence
+### Official reviewer sequence
 
-1. teach queue -> assign -> context -> my_queue -> unassign
+1. teach queue -> context -> reviewer packet -> analyzer job -> assign -> decision
 2. teach `Auto` vs `Partial` vs `Manual`
 3. teach override and escalation rules
-4. teach exact manual fallback behavior
+4. teach exact fallback behavior when analyzer evidence is missing or stale
 
 ### Pilot operator sequence
 
@@ -92,9 +81,7 @@ Do not onboard reviewers into write behavior that still depends on manual Airtab
 2. teach `hub-mcp` for posture, discovery, and trace verification
 3. keep reviewer-facing tool exposure narrow
 
-### Phase B add-ons
-
-Add analysis calibration first.
+### Later add-ons
 
 Add write guardrails only after reviewer-attributed traces and fallback drills are already passing.
 

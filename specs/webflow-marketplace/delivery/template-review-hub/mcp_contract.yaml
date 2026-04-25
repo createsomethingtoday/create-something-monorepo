@@ -9,12 +9,11 @@ client:
   workflow_owner: "Marketplace review lead"
 
 scope:
-  objective: "Reduce objective checklist time and improve consistency in template review by delivering a governed Phase A MCP Hub lane for reviewers."
-  workflow_boundary: "Phase A starts when a template submission enters the review queue and ends when the reviewer validates template-review context, may assign the Asset Version to themselves, may record bounded reviewer feedback and controlled 📝Review Status updates, and completes any broader official decision outside the Hub."
+  objective: "Reduce objective checklist time and improve consistency in template review by delivering a governed Phase B MCP Hub lane for reviewers."
+  workflow_boundary: "Phase B starts when a template submission enters the review queue and ends when the reviewer validates template-review context, reads the reviewer packet, runs or reviews published-first analyzer evidence, may assign the Asset Version to themselves, may record reviewer-safe feedback and controlled 📝Review Status updates, and completes any broader official decision outside the Hub."
   out_of_scope:
-    - "Preview and published-site analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
-    - "Originality or plagiarism analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
-    - "Broad Airtable mutation beyond explicit reviewer-safe write verbs during Phase A"
+    - "Originality or plagiarism analysis through `webflow-local` or other future analysis routes until a separate remote-compatible path is enabled"
+    - "Broad Airtable mutation beyond explicit reviewer-safe write verbs during the official reviewer workflow"
     - "Subjective design judgment and final taste decisions"
     - "Autonomous creator-facing communication"
     - "Direct control-plane mutation by reviewers"
@@ -24,22 +23,22 @@ systems:
     - name: "Airtable Marketplace Assets"
       role: "database"
       notes: "System of record for template assets, asset versions, review state, and release metadata."
-    - name: "Webflow preview and published sites"
+    - name: "Webflow published sites and reviewer submission URLs"
       role: "database"
-      notes: "Source of truth for template structure, content, SEO, interactions, and published evidence."
+      notes: "Source of truth for published template structure, content, SEO, interactions, and reviewer-visible evidence."
   connected_systems:
     - name: "CREATE SOMETHING MCP Hub"
       role: "gateway"
       notes: "House entrypoint, broker, and governance surface for reviewer workflows."
     - name: "webflow-template-review-mcp"
       role: "workflow"
-      notes: "Queue, asset, version, and release operations for template review. This is the only confirmed live reviewer-Hub downstream in Phase A."
+      notes: "Queue, asset, version, release, reviewer packet, and analyzer-job orchestration for template review."
     - name: "webflow-site-analyzer-mcp"
       role: "analysis"
-      notes: "Planned Phase B analysis server. Not yet required for authoritative Phase A rollout."
+      notes: "Official published-first analysis server for the live reviewer Phase B baseline."
     - name: "webflow-local"
       role: "analysis"
-      notes: "Planned Phase B analysis server backing webflow-local runtime tools. Not yet required for authoritative Phase A rollout."
+      notes: "Deferred / future analysis route. Not part of the official remote reviewer lane today."
     - name: "Composio"
       role: "integration"
       notes: "Optional connectivity and auth plumbing behind the house Hub. Not a reviewer-facing surface in this pilot."
@@ -281,35 +280,35 @@ tools:
     idempotency_expectation: "Idempotent when the same draft feedback payload is already stored."
     fallback_behavior: "Reviewer stores draft notes outside the Hub if the narrow draft-save path fails."
 
-  - name: "phase_b_review_analysis"
-    description: "Deferred Phase B capability for preview/published-site analysis and originality checks after the analysis servers are enabled in the live reviewer Hub."
-    action_type: "deferred"
+  - name: "published_first_review_analysis"
+    description: "Published-first analyzer capability for reviewer packets and asynchronous review jobs in the official reviewer lane."
+    action_type: "read"
     systems_touched:
       - "webflow-site-analyzer-mcp"
-      - "webflow-local"
-    approval_mode: "not_available_in_phase_a"
+    approval_mode: "reviewer_available_async"
     input_schema_summary:
-      required: []
+      required:
+        - "version_id"
       optional: []
     output_contract:
-      success_shape: "N/A in Phase A."
-      error_shape: "N/A in Phase A."
-    idempotency_expectation: "N/A in Phase A."
-    fallback_behavior: "Reviewer performs analysis manually until Phase B is enabled."
+      success_shape: "Returns reviewer packet automation evidence and analyzer job payloads with published-first findings, page paths, check ids, and Auto/Partial/Manual framing."
+      error_shape: "Returns analyzer unavailable, job failed, timeout, invalid target, auth, or upstream worker error."
+    idempotency_expectation: "Reviewer packet reads are idempotent; analyzer jobs are append-only and safe to poll repeatedly by job id."
+    fallback_behavior: "Reviewer uses the latest reviewer packet if present, otherwise performs manual review with explicit Partial or Manual framing."
 
-  - name: "phase_a_review_state_changes"
-    description: "Broad official review-state changes beyond explicit reviewer-safe verbs remain manual in Airtable during Phase A."
+  - name: "manual_broad_review_state_changes"
+    description: "Broad official review-state changes beyond explicit reviewer-safe verbs remain manual in Airtable for the current reviewer baseline."
     action_type: "manual"
     systems_touched:
       - "Airtable Marketplace Assets"
-    approval_mode: "manual_only_in_phase_a"
+    approval_mode: "manual_only_current_baseline"
     input_schema_summary:
       required: []
       optional: []
     output_contract:
-      success_shape: "N/A in Phase A."
-      error_shape: "N/A in Phase A."
-    idempotency_expectation: "N/A in Phase A."
+      success_shape: "N/A in the current reviewer baseline."
+      error_shape: "N/A in the current reviewer baseline."
+    idempotency_expectation: "N/A in the current reviewer baseline."
     fallback_behavior: "Reviewer handles approval, rejection, publishing completion, and any unsupported review-field mutation directly in Airtable."
 
 prompts:
@@ -327,7 +326,7 @@ auth:
   auth_notes:
     - "Reviewers should authenticate through the house Hub surface rather than direct downstream MCP endpoints."
     - "Composio-backed auth may support selected connector plumbing behind the Hub but should not become the reviewer-facing delivery abstraction."
-    - "Phase A reviewer Hubs support narrow reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates while retaining manual Airtable fallback for broader official state changes."
+    - "Official reviewer Hubs support reviewer packets, published-first analyzer jobs, narrow reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates while retaining manual Airtable fallback for broader official state changes."
 
 policy_integration:
   control_surface: "agent_contract.yaml"
@@ -367,10 +366,10 @@ acceptance:
   required_before_build:
     - "Hub lane composition for template review agreed"
     - "Workflow boundary approved by Marketplace review lead"
-    - "Reviewer alpha owners identified"
+    - "Reviewer owners identified"
   required_before_production:
     - "Golden-task checks pass"
     - "Manual fallback path verified"
     - "Reviewer playbook reviewed with pilot reviewers"
     - "Trace visibility confirmed for reads, writes, and escalations"
-    - "Phase B analysis servers enabled and verified before any contract expansion beyond Phase A"
+    - "Published-first analyzer path enabled and verified for the official reviewer baseline"

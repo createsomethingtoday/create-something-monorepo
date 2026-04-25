@@ -41,7 +41,7 @@ Day-to-day reviewer instructions for using the Hub during template review.
 Brief for the Tuesday team walkthrough covering scope, demo flow, pilot posture, and meeting decisions.
 
 9. `pilot-kickoff-checklist.md`
-Readiness checklist for the Monday reviewer alpha, including safety, connectivity, and feedback capture.
+Readiness checklist for the current reviewer pilot, including safety, connectivity, and feedback capture.
 
 10. `checklist-map.md`
 Condensed operational map of the current objective review coverage as `auto`, `partial`, or `manual`.
@@ -50,19 +50,19 @@ Condensed operational map of the current objective review coverage as `auto`, `p
 Pilot and launch metrics for adoption, quality, governance, and reliability.
 
 12. `reviewer-hub-rollout-spec.md`
-Concrete rollout plan for six reviewer-specific Hubs, including mapping, tool exposure, write gates, and containment rules.
+Concrete rollout plan for five reviewer-specific Hubs, including mapping, tool exposure, write gates, and containment rules.
 
 13. `reviewer-hub-implementation-checklist.md`
 Operator checklist for Hub identity, discovery, trace validation, rate limits, quotas, and phased write enablement.
 
 14. `reviewer-hub-runtime-posture.md`
-Exact Hub server, discovery, and rollout posture for the six reviewer-specific Hub surfaces.
+Exact Hub server, discovery, and rollout posture for the five reviewer-specific Hub surfaces.
 
 15. `reviewer-hub-policy-records.yaml`
-Six separate reviewer-specific policy records for the authoritative Phase A rollout.
+Five separate reviewer-specific policy records for the authoritative reviewer rollout baseline.
 
-16. `reviewer-hub-phase-a-operator-runbook.md`
-Exact deploy, normalize, and verify path for the six Phase A reviewer Hub surfaces.
+16. `reviewer-hub-operator-runbook.md`
+Exact deploy, normalize, and verify path for the five reviewer Hub surfaces under the official Phase B baseline.
 
 17. `onboarding-skills.md`
 Skill-led onboarding sequence for reviewers and operators, including what is included now versus gated for later rollout phases.
@@ -84,7 +84,7 @@ Skill-led onboarding sequence for reviewers and operators, including what is inc
 13. `reviewer-hub-implementation-checklist.md`
 14. `reviewer-hub-runtime-posture.md`
 15. `reviewer-hub-policy-records.yaml`
-16. `reviewer-hub-phase-a-operator-runbook.md`
+16. `reviewer-hub-operator-runbook.md`
 17. `onboarding-skills.md`
 
 ## Related source material
@@ -95,4 +95,3 @@ Skill-led onboarding sequence for reviewers and operators, including what is inc
 - `docs/HUB_EXECUTION_GOVERNANCE_PLAN.md`
 - `packages/webflow-template-review-mcp/README.md`
 - `packages/webflow-site-analyzer-mcp/README.md`
-- `packages/webflow-mcp/README.md`

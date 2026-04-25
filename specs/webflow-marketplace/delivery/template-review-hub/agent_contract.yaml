@@ -14,23 +14,25 @@ purpose:
 runtime_profile:
   delivery_vector: "Skills + MCP"
   execution_mode: "approval_gated"
-  environment: "pilot"
+  environment: "pilot_hardening"
 
 action_policy:
   auto_allow:
-    - action: "Read queue state, asset context, version history, field maps, and release information."
+    - action: "Read queue state, reviewer context, version history, field maps, reviewer packets, and release information."
       rationale: "These are evidence-gathering actions and do not change reviewer or creator state."
-    - action: "Run template analysis, checklist scoring, and plagiarism/originality checks."
+    - action: "Run published-first analyzer jobs and inspect analyzer evidence."
       rationale: "These actions support reviewer judgment and are safe when presented as evidence rather than final decisions."
-    - action: "Draft reviewer-facing feedback suggestions."
-      rationale: "Drafting is reversible and remains subject to reviewer validation."
+    - action: "Summarize reviewer packet and analyzer evidence into Auto, Partial, and Manual findings."
+      rationale: "Evidence framing is reversible and remains subject to reviewer validation."
   approval_required:
-    - action: "Set review status, request changes, approve a version, reject a version, or complete publishing metadata."
-      rationale: "These are state-changing review actions and must remain explicitly reviewer-owned."
+    - action: "Assign or unassign the current reviewer, request changes, set controlled review status, save draft feedback, and execute any broader decision tool that is explicitly enabled on the lane."
+      rationale: "These are reviewer-owned state changes and must remain explicitly attributable to the reviewer."
       approval_inbox: "Assigned reviewer or Marketplace review queue"
   block:
     - action: "Send creator-facing communication autonomously."
       rationale: "Human reviewers issue every creator-facing decision and message."
+    - action: "Treat deferred originality or plagiarism analysis as part of the current reviewer lane."
+      rationale: "Deferred analysis routes such as webflow-local are outside the official reviewer baseline."
     - action: "Mutate Hub control-plane settings from the reviewer lane."
       rationale: "Control-plane mutation is operator-only and outside reviewer scope."
     - action: "Execute destructive or out-of-scope actions not required for template review."
@@ -71,15 +73,16 @@ decision_rules:
 
 inputs_required:
   - "asset_id or version_id"
-  - "preview and published site context when available"
+  - "published site context or reviewer packet target when available"
   - "current review status"
   - "reviewer identity"
 
 outputs_expected:
+  - "REVIEWER_PACKET"
+  - "ANALYZER_EVIDENCE"
   - "RECOMMENDATION"
   - "RATIONALE"
   - "EVIDENCE"
-  - "DRAFT_FEEDBACK"
   - "NEXT_ACTION"
   - "AUDIT_FIELDS"
 
@@ -106,8 +109,8 @@ observability:
 
 release_gates:
   pre_prod:
-    - "Golden tasks pass for clean read-only review flow"
-    - "Golden tasks pass for approval-gated request changes, approval, and rejection flows"
+    - "Golden tasks pass for clean reviewer-packet and analyzer-evidence flow"
+    - "Golden tasks pass for reviewer-safe request changes, controlled status, and any explicitly enabled broader decision flows"
     - "Blocked actions tested successfully"
     - "Manual fallback rehearsed"
   production:

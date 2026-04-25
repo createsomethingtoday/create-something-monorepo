@@ -394,19 +394,24 @@ function toQueueItem(asset: TemplateReviewAsset, version?: TemplateReviewVersion
       query.currentReviewer.id === reviewOwner.id,
   );
   const normalizedStatus = normalizeQueueStatus(asset, version);
+  const latestReviewStatus = version?.reviewStatus ?? asset.latestReviewStatus;
+  const latestReviewFeedback = version?.reviewFeedback ?? asset.latestReviewFeedback;
+  const latestReviewDate = version?.decisionDate ?? version?.createdAt ?? asset.latestReviewDate;
+  const qualityRating = version?.qualityRating ?? asset.qualityRating;
+  const decisionDate = version?.decisionDate ?? asset.decisionDate;
 
   return {
     assetId: asset.assetId,
     templateName: asset.templateName,
-    latestReviewStatus: asset.latestReviewStatus,
-    latestReviewFeedback: asset.latestReviewFeedback,
-    latestReviewDate: asset.latestReviewDate,
-    qualityRating: asset.qualityRating,
+    latestReviewStatus,
+    latestReviewFeedback,
+    latestReviewDate,
+    qualityRating,
     websiteUrl: asset.websiteUrl,
     previewSiteUrl: asset.previewSiteUrl,
     submittedDate: asset.submittedDate,
     marketplaceStatus: asset.marketplaceStatus,
-    decisionDate: asset.decisionDate,
+    decisionDate,
     priceString: asset.priceString,
     assignableVersionId: version?.versionId,
     reviewOwner,

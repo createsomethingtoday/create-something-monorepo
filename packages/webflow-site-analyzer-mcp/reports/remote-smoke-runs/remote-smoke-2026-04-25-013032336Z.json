@@ -1,0 +1,60 @@
+{
+  "testedAt": "2026-04-25T01:30:32.336Z",
+  "elapsedMs": 39000,
+  "urls": {
+    "baseUrl": "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev",
+    "mcpUrl": "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev/mcp"
+  },
+  "publishedUrl": "https://athelas-template.webflow.io/",
+  "tokenSource": "infisical:WEBFLOW_SITE_ANALYZER_MCP_API_KEY@prod",
+  "readiness": {
+    "ready": true,
+    "elapsedMs": 2378,
+    "urls": {
+      "baseUrl": "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev",
+      "healthUrl": "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev/health",
+      "mcpUrl": "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev/mcp"
+    },
+    "health": {
+      "attempt": 1,
+      "elapsedMs": 498,
+      "transport": "streamable-http",
+      "browserAutomationSupported": true,
+      "authConfigured": true
+    },
+    "providerCheck": {
+      "checked": true,
+      "skipped": false,
+      "elapsedMs": 367,
+      "tokenSource": "infisical:WEBFLOW_SITE_ANALYZER_MCP_API_KEY@prod",
+      "provider": "steel",
+      "isHealthy": true,
+      "mode": "passive"
+    }
+  },
+  "boundedSync": {
+    "durationMs": 36088,
+    "overallScore": 67,
+    "grade": "C",
+    "crawledPages": 1,
+    "coveragePercent": 4
+  },
+  "syncGuard": {
+    "isError": true,
+    "matchedGuardMessage": true,
+    "rawText": "{\n  \"error\": \"`run_template_review` on the remote deployment is reserved for bounded smoke checks. This request is likely to outlive the synchronous transport (crawlMaxPages=3, crawlMaxDepth=1, timeout=120000). Use `enqueue_template_review` + `get_template_review_job` for multi-page or preview-enabled reviews, or pass `allowLongSync=true` to force the synchronous path anyway.\",\n  \"tool\": \"run_template_review\",\n  \"arguments\": {\n    \"publishedUrl\": \"https://athelas-template.webflow.io/\",\n    \"designerMode\": \"skip\",\n    \"includeManual\": true,\n    \"crawlMaxPages\": 3,\n    \"crawlMaxDepth\": 1,\n    \"timeout\": 120000\n  }\n}"
+  },
+  "asyncJob": {
+    "jobId": "template-review-1777080633045-gvihyv",
+    "status": "succeeded",
+    "durationMs": 40729,
+    "resultDurationMs": 40729,
+    "progress": {
+      "phase": "completed",
+      "progress": 100,
+      "total": 100,
+      "message": "Template review completed",
+      "updatedAt": "2026-04-25T01:31:13.774Z"
+    }
+  }
+}

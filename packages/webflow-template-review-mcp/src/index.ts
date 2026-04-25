@@ -4,6 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { AirtableClient } from './airtable.js';
+import { RemoteTemplateReviewAnalyzerClient } from './analyzer.js';
 import { DEFAULT_AIRTABLE_BASE_ID } from './schema.js';
 import { registerPrompts } from './prompts.js';
 import { registerResources } from './resources.js';
@@ -25,6 +26,16 @@ async function main() {
     apiKey,
     baseId,
   });
+  const analyzerUrl = process.env.WEBFLOW_SITE_ANALYZER_MCP_URL?.trim() ?? '';
+  const analyzerApiKey =
+    process.env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY?.trim() ?? process.env.MCP_API_KEY?.trim() ?? '';
+  const analyzer =
+    analyzerUrl && analyzerApiKey
+      ? new RemoteTemplateReviewAnalyzerClient({
+          url: analyzerUrl,
+          apiKey: analyzerApiKey,
+        })
+      : null;
 
   const server = new McpServer({
     name: 'webflow-template-review-mcp',
@@ -32,7 +43,7 @@ async function main() {
   });
 
   registerResources(server, () => client);
-  registerTools(server, () => client);
+  registerTools(server, () => client, () => null, () => analyzer);
   registerPrompts(server);
 
   const transport = new StdioServerTransport();

@@ -31,6 +31,8 @@ const PATTERN_RULES: PatternRule[] = [
   { pattern: /\/legal/i, classification: 'utility:license', priority: 'critical' },
   { pattern: /\/terms/i, classification: 'utility:license', priority: 'critical' },
   { pattern: /\/instruction/i, classification: 'utility:instructions', priority: 'critical' },
+  { pattern: /\/start-here/i, classification: 'utility:instructions', priority: 'critical' },
+  { pattern: /\/getting-started/i, classification: 'utility:instructions', priority: 'critical' },
   { pattern: /\/guide/i, classification: 'utility:instructions', priority: 'critical' },
   { pattern: /\/changelog/i, classification: 'utility:changelog', priority: 'critical' },
   { pattern: /\/release-notes/i, classification: 'utility:changelog', priority: 'critical' },
@@ -38,6 +40,10 @@ const PATTERN_RULES: PatternRule[] = [
   { pattern: /\/styleguide/i, classification: 'utility:style-guide', priority: 'critical' },
   { pattern: /\/coming-soon/i, classification: 'utility:other', priority: 'low' },
   { pattern: /\/search\/?$/i, classification: 'utility:other', priority: 'low' },
+
+  // Static alternate-page containers used by many templates should not be
+  // treated as CMS detail pages.
+  { pattern: /\/[^/]+-pages\/[^/]+$/i, classification: 'content', priority: 'normal' },
 
   // CMS patterns (slug-based detail pages)
   { pattern: /\/[^/]+\/[^/]+-[^/]+$/i, classification: 'cms-detail', priority: 'normal' },

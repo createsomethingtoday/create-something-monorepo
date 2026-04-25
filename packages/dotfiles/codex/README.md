@@ -15,10 +15,10 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 - `bootstrap-gitpod-ona` - prepare Gitpod/Ona or other fresh workspaces so repo-owned Codex skills are installed and verified
 - `canon-design-review` - Canon-aligned critique and polish for UI work
 - `canon-public-surface` - public-page and landing-page polish without generic SaaS drift
-- `webflow-template-review-reviewer`
-- `webflow-template-review-analysis-calibration`
-- `webflow-template-review-write-guardrails`
-- `webflow-template-review-pilot-triage`
+- `webflow-template-review-reviewer` - packet-first reviewer workflow for Airtable submission truth plus published analyzer evidence
+- `webflow-template-review-analysis-calibration` - keep automated evidence, manual judgment, and deferred proof surfaces clearly separated
+- `webflow-template-review-write-guardrails` - enforce reviewer-safe write sequencing and capability checks before mutations
+- `webflow-template-review-pilot-triage` - triage ambiguous or incomplete submissions during reviewer pilot operations
 
 ## Usage
 

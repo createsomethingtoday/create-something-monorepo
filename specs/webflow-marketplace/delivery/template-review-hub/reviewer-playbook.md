@@ -14,11 +14,11 @@ The Hub is there to accelerate objective review work and improve consistency. It
 
 Use the Hub to:
 
-- load queue, asset, and version context quickly
-- run objective checks across preview and published URLs
-- inspect evidence for pass/fail/manual checklist items
-- review plagiarism or originality signals
-- draft clearer creator feedback
+- load queue, asset, version, and reviewer context quickly
+- read the reviewer packet for submission truth plus latest automation evidence
+- run or inspect published-first analyzer jobs when fresh evidence is needed
+- inspect `Auto`, `Partial`, and `Manual` findings before deciding
+- support reviewer-safe writes once ownership is established
 
 Do not use the Hub to:
 
@@ -30,15 +30,17 @@ Do not use the Hub to:
 
 1. Open the submission in the Hub review lane.
 2. Confirm queue, asset, and version context.
-3. Run the template review analysis.
-4. Read the findings in three groups:
-   - `pass`: objective items that appear satisfied
-   - `fail`: objective items with evidence of non-compliance
-   - `manual`: items that still require reviewer judgment
-5. Validate the evidence for any important fail or partial finding.
-6. Add subjective review judgment outside the system's objective recommendation.
-7. Edit the draft feedback if needed.
-8. Choose the final reviewer action: request changes, approve, reject, or continue manual review.
+3. Read `template_review_get_review_context` for reviewer ownership and workflow state.
+4. Read `template_review_get_reviewer_packet` for Airtable submission truth, latest automation evidence, and manual-only gaps.
+5. If the packet is stale or missing analyzer evidence, enqueue a published-first analyzer run and poll until it completes.
+6. Read the findings in three groups:
+   - `Auto`: objective items with direct published evidence
+   - `Partial`: useful signals that still need reviewer validation
+   - `Manual`: intentionally human-owned judgment
+7. Validate the evidence for any important fail or partial finding.
+8. Assign the version to yourself before any reviewer-owned write action.
+9. Add subjective review judgment outside the system's objective recommendation.
+10. Choose the reviewer action allowed by the current lane policy, or fall back to manual handling if confidence is too low.
 
 ## How to read findings
 
@@ -95,16 +97,15 @@ Override the recommendation when:
 - a partial signal is being overstated
 - the system missed important context you can see manually
 
-If you override, note why during pilot so the workflow can improve.
+If you override, note why during the current hardening cycle so the workflow can improve.
 
 ## Write actions
 
 These actions remain reviewer-owned:
 
 - request changes
-- approve version
-- reject version
-- complete publishing updates
+- controlled review-status changes
+- any broader decision tools that are explicitly enabled on the current lane
 
 Treat every write action as a deliberate reviewer action, not an automatic follow-through from the recommendation.
 
@@ -112,19 +113,20 @@ Treat every write action as a deliberate reviewer action, not an automatic follo
 
 - field mappings or write behavior seem wrong
 - the recommendation is too uncertain to trust
-- preview or published evidence is missing
+- reviewer packet evidence is stale or missing
+- analyzer jobs fail or return incomplete evidence
 - the Hub blocks an action you expected to take
 - the workflow suggests something outside review scope
 
 ## Pilot feedback loop
 
-During alpha and beta, report:
+During pilot and hardening, report:
 
 - false positives
 - false negatives
 - unclear evidence
 - workflow friction
-- places where feedback drafting saved time
+- places where packet or analyzer evidence saved time
 - places where the recommendation created extra work
 
 The goal of pilot is not only accuracy. It is reviewer trust and operational usefulness.

@@ -51,8 +51,12 @@ export interface CMSCollection {
 }
 
 export interface AssetInfo {
+  // Legacy field name retained for compatibility. This is the visible label
+  // captured from the Designer Assets panel and may be truncated with an ellipsis.
   filename: string;
-  type: string;
+  type: 'image' | 'svg' | 'video' | 'other';
+  captureSource?: 'designer-assets-panel';
+  isTruncated?: boolean;
 }
 
 export interface DesignerMetadata {
@@ -493,13 +497,18 @@ export async function extractAssets(): Promise<AssetInfo[]> {
   for (const text of texts) {
     if (text.match(/\.(jpg|jpeg|png|gif|webp|avif|svg|mp4|webm)$/i)) {
       const ext = text.split('.').pop()?.toLowerCase() || '';
-      let type = 'other';
+      let type: AssetInfo['type'] = 'other';
       if (imageExts.includes(ext)) type = 'image';
       else if (ext === 'svg') type = 'svg';
       else if (['mp4', 'webm'].includes(ext)) type = 'video';
       
       if (!assets.some(a => a.filename === text)) {
-        assets.push({ filename: text, type });
+        assets.push({
+          filename: text,
+          type,
+          captureSource: 'designer-assets-panel',
+          isTruncated: text.includes('…') || text.includes('...'),
+        });
       }
     }
   }

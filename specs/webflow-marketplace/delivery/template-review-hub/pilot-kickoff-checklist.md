@@ -6,11 +6,11 @@
 
 ## 1. Objective
 
-Use this checklist before opening the reviewer alpha to make sure the template review Hub lane is safe, understandable, and observable.
+Use this checklist before running the current reviewer pilot to make sure the template review Hub lane is safe, understandable, and observable.
 
 ## 2. Pilot scope
 
-This pilot is for `alpha-ready reviewer use`, not for broad rollout.
+This pilot is for `reviewer-ready use`, not for broad rollout.
 
 Pilot posture:
 
@@ -32,8 +32,9 @@ Pilot posture:
 
 - queue entries can be loaded
 - asset and version context can be loaded
-- Phase A reviewer-visible template-review-context tools are confirmed
-- any analysis or originality capability not yet connected is treated as out of scope for Phase A
+- reviewer packets can be loaded
+- published-first analyzer jobs can be started and polled successfully
+- any deferred originality or `webflow-local` capability is treated as out of scope for the current reviewer lane
 
 ### Action safety
 
@@ -45,7 +46,7 @@ Pilot posture:
 ### Reviewer readiness
 
 - pilot reviewers are named
-- reviewers have the playbook and know the alpha scope
+- reviewers have the playbook and know the current pilot scope
 - operators know who owns exception handling
 - feedback capture location is agreed before kickoff
 
@@ -71,7 +72,7 @@ Confirm the pilot group has access to:
 5. Route any write action through the approval-gated path only.
 6. Move any uncertain or unstable submission to manual review.
 
-## 6. What to capture during alpha
+## 6. What to capture during pilot and hardening
 
 For every meaningful issue, record:
 
@@ -82,9 +83,9 @@ For every meaningful issue, record:
 - whether the problem affected trust, speed, or safety
 - whether the issue belongs to data, automation, or judgment
 
-## 7. Daily alpha review
+## 7. Daily pilot review
 
-Review this every day of alpha:
+Review this every day of the current pilot:
 
 - recommendation quality
 - reviewer trust
@@ -95,7 +96,7 @@ Review this every day of alpha:
 
 ## 8. Exit criteria for week one
 
-Week-one alpha is successful if:
+Week-one pilot use is successful if:
 
 - reviewers can complete real review work with the lane
 - the workflow reduces effort on at least some objective checks

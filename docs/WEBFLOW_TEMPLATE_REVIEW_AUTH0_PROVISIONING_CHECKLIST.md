@@ -2,12 +2,11 @@
 
 ## Goal
 
-Provision the six Webflow Marketplace template reviewers into `.agency`, create the corresponding Auth0 users, and verify first-login identity binding for the Phase A reviewer rollout.
+Provision the five active Webflow Marketplace template reviewers into `.agency`, create the corresponding Auth0 users, and verify first-login identity binding for the official Phase B reviewer rollout.
 
 ## Reviewers
 
 - `natalia.ledford@webflow.com` -> `acct_wf_natalia` -> `wf-template-review-natalia`
-- `sudiksha.khanduja@webflow.com` -> `acct_wf_sudiksha` -> `wf-template-review-sudiksha`
 - `eric.unger@webflow.com` -> `acct_wf_eric` -> `wf-template-review-eric`
 - `vicki.chen@webflow.com` -> `acct_wf_vicki` -> `wf-template-review-vicki`
 - `mariana.segura@webflow.com` -> `acct_wf_mariana` -> `wf-template-review-mariana`
@@ -25,11 +24,11 @@ Shared tenant:
 ## Workflow
 
 1. Seed identity rows into `.agency`.
-2. Create or invite the six Auth0 users.
+2. Create or invite the five Auth0 users.
 3. Have each reviewer complete first login through `.agency`.
 4. Confirm the login binds the seed row to the Auth0 `sub`.
 5. Confirm each reviewer lands in the expected reviewer-scoped Hub lane.
-6. Apply Phase A read-only Hub posture.
+6. Apply the official Phase B reviewer Hub posture.
 7. Verify traces resolve reviewer identity before any write enablement.
 
 ## Seed `.agency`
@@ -76,15 +75,15 @@ After each reviewer logs in, verify:
 - `/dashboard` resolves the expected `account_id` and `tenant_id`
 - the reviewer is mapped to the expected Hub slug
 - the reviewer session resolves actor identity cleanly
-- Phase A discovery is read-only
-- mutable routes do not appear in reviewer discovery
+- discovery is `scoped`
+- reviewer discovery exposes the official Phase B reviewer surface
 
 ## Hub rollout checks
 
 Before enabling any write path, confirm:
 
 - reviewer-specific Hub posture is applied
-- `webflow-template-review-mcp` is the only required active server for Phase A
+- `webflow-template-review-mcp` and `webflow-site-analyzer-mcp` are active for the official Phase B reviewer lane
 - rate limits and quotas are enabled before write rollout
 - traces include reviewer identity and `correlation_id`
 - manual fallback is rehearsed

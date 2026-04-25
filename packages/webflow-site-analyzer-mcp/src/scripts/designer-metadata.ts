@@ -52,8 +52,12 @@ export interface CMSCollectionInfo {
 }
 
 export interface AssetInfo {
+  // Legacy field name retained for compatibility. This is the visible label
+  // captured from the Designer Assets panel and may be truncated with an ellipsis.
   filename: string;
   type: 'image' | 'svg' | 'video' | 'other';
+  captureSource?: 'designer-assets-panel';
+  isTruncated?: boolean;
 }
 
 export interface SiteInfo {
@@ -263,7 +267,7 @@ export const extractAssetsScript = `
     if (el.closest('#site-iframe-next')) return;
     const text = el.textContent?.trim() || '';
     
-    // Look for truncated filenames like "nurt...e.jpg"
+    // Look for visible asset labels like "nurt...e.jpg"
     if (text.match(/\\.(jpg|jpeg|png|gif|webp|avif|svg|mp4|webm)$/i)) {
       const ext = text.split('.').pop()?.toLowerCase() || '';
       let type = 'other';
@@ -273,7 +277,9 @@ export const extractAssetsScript = `
       
       assets.push({
         filename: text,
-        type
+        type,
+        captureSource: 'designer-assets-panel',
+        isTruncated: text.includes('…') || text.includes('...')
       });
     }
   });

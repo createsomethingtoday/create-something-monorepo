@@ -69,7 +69,6 @@ Named-lane hub worker tokens:
 Webflow reviewer Hub worker tokens:
 
 - `CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN`
-- `CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_API_TOKEN`
 - `CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN`
 - `CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN`
 - `CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN`
@@ -120,6 +119,8 @@ VAULT_PROVIDER=env pnpm mcp:hub:vault:sync
 Reviewer-hub specific sync helpers:
 
 ```bash
+pnpm mcp:hub:webflow-template-reviewers:vault:sync
+DRY_RUN=true pnpm mcp:hub:webflow-template-reviewers:vault:sync
 pnpm mcp:hub:webflow-app-reviewers:vault:sync
 DRY_RUN=true pnpm mcp:hub:webflow-app-reviewers:vault:sync
 ```

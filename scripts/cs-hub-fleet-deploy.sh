@@ -377,7 +377,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
-      --var "HUB_DISCOVERY_MODE:compact" \
+      --var "HUB_DISCOVERY_MODE:scoped" \
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
       --var "HUB_CONNECT_CONCURRENCY:4" \
@@ -405,7 +405,7 @@ for worker in "${CORE_WORKERS[@]}"; do
     --var "HUB_ENABLED_BUNDLES:${target_bundles_csv}" \
     --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
     --var "HUB_DISABLED_SERVERS:[]" \
-    --var "HUB_DISCOVERY_MODE:compact" \
+    --var "HUB_DISCOVERY_MODE:scoped" \
     --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
   echo "----- SYNC KV STATE ${worker} -----"
   write_worker_state_to_kv "$worker" "$target_bundles_csv" "$target_servers_csv" "[]"

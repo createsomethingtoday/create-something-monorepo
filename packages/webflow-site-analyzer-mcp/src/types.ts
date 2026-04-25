@@ -268,7 +268,7 @@ export interface BrowserProvider {
     components: Array<{ name: string; instanceCount: number; isUnused: boolean }>;
     interactions: Array<{ trigger: string; targetElement: string; type: string }>;
     cmsCollections: Array<{ name: string; itemCount: number }>;
-    assets: Array<{ filename: string; type: string }>;
+    assets: AssetInfo[];
     breakpoints: string[];
   }>;
   openSession?(input?: BrowserSessionInit): Promise<BrowserSessionHandle>;
@@ -388,8 +388,12 @@ export interface CMSCollectionInfo {
 }
 
 export interface AssetInfo {
+  // Legacy field name retained for compatibility. This is the visible label
+  // captured from the Designer Assets panel and may be truncated with an ellipsis.
   filename: string;
   type: 'image' | 'svg' | 'video' | 'other';
+  captureSource?: 'designer-assets-panel';
+  isTruncated?: boolean;
 }
 
 export interface DesignerMetadata {
@@ -458,7 +462,8 @@ export interface DesignerChecklistSummary {
 
 export interface DesignerChecklistReport {
   evaluatedAt: string;
-  source: 'live-extraction' | 'provided-metadata';
+  source: 'live-extraction' | 'provided-metadata' | 'fallback-manual';
+  notes?: string[];
   metadataSummary: {
     siteName: string;
     sitePlan: string;
@@ -550,6 +555,13 @@ export interface PublishedSnippetPageSummary {
   forms: {
     fields: number;
     missingLabels: number;
+    wrongFieldTypes: number;
+    sampleWrongFieldTypes: string[];
+  } | null;
+  structure: {
+    hasNav: boolean;
+    hasFooter: boolean;
+    ctaCount: number;
   } | null;
   media: {
     videos: number;
@@ -576,11 +588,23 @@ export interface PublishedSnippetPageSummary {
     maxDepthSelector: string;
     sampled: number;
   } | null;
+  states: {
+    hoverSelectors: number;
+    focusSelectors: number;
+    focusVisibleSelectors: number;
+    activeSelectors: number;
+  } | null;
   transitions: {
     totalInteractive: number;
     withTransition: number;
     withoutTransition: number;
     ratio: number;
+    withSpecificTransition: number;
+    withTransitionAll: number;
+    gpuFriendlyTransitions: number;
+    expensiveTransitions: number;
+    maxDurationMs: number;
+    averageDurationMs: number;
   } | null;
   contrast: {
     checked: number;
@@ -596,6 +620,80 @@ export interface PublishedSnippetPageSummary {
       bg: string;
     }>;
   } | null;
+  accessibility: {
+    hasMainLandmark: boolean;
+    hasNavLandmark: boolean;
+    hasSkipLink: boolean;
+    genericLinkLabels: number;
+    sampleGenericLinkLabels: string[];
+  } | null;
+  assets: {
+    responsiveImages: number;
+    imagesWithSrcset: number;
+    imagesWithSizes: number;
+    navLogoImages: number;
+  } | null;
+  styles: {
+    accessibleStyleSheets: number;
+    blockedStyleSheets: number;
+    mediaRules: number;
+    breakpointHints: string[];
+    definedVariables: number;
+    usedVariables: number;
+    variableCategories: string[];
+    baseTagRules: number;
+    baseTagVariableRules: number;
+    componentVariantSelectors: number;
+    sampleVariables: string[];
+    sampleBaseTagSelectors: string[];
+    sampleComponentVariantSelectors: string[];
+  } | null;
+}
+
+export type PublishedBrowserProbeMode = 'wf-review-snippet' | 'dom-fallback';
+
+export type PublishedProbeSurface =
+  | 'fetch-precheck'
+  | 'browser-dom'
+  | 'browser-wf-review';
+
+export interface PublishedFetchProbeSummary {
+  surface: 'fetch-precheck';
+  homepageFetchOk: boolean;
+  sitemapUsed: boolean;
+  discoveredUrlCount: number;
+  classifiedUrlCount: number;
+}
+
+export interface PublishedBrowserProbeSummary {
+  evaluatedPages: number;
+  snippetPages: number;
+  domFallbackPages: number;
+  surfaces: PublishedProbeSurface[];
+}
+
+export interface PublishedResponsiveViewportProbe {
+  label: 'tablet' | 'mobile-landscape' | 'mobile-portrait';
+  width: number;
+  height: number;
+  horizontalOverflow: boolean;
+  overflowElements: number;
+  clippedTextElements: number;
+  tinyTapTargets: number;
+  sampleOverflowSelectors: string[];
+  sampleClippedText: string[];
+  sampleTinyTapSelectors: string[];
+}
+
+export interface PublishedResponsivePageProbe {
+  url: string;
+  viewports: PublishedResponsiveViewportProbe[];
+}
+
+export interface PublishedResponsiveProbeResult {
+  pagesSampled: number;
+  totalViewportChecks: number;
+  pages: PublishedResponsivePageProbe[];
 }
 
 export interface PublishedSnippetPageResult {
@@ -607,6 +705,10 @@ export interface PublishedSnippetPageResult {
   classification?: PageClassification;
   hasSnippet: boolean;
   snippetVersion: string | null;
+  probeMode?: PublishedBrowserProbeMode;
+  probeSources?: PublishedProbeSurface[];
+  /** Same-origin link targets discovered on this page and normalized for crawl use. */
+  internalLinks?: string[];
   hasRequiredLicenseText?: boolean | null;
   error?: string | null;
   summary?: PublishedSnippetPageSummary | null;
@@ -618,9 +720,61 @@ export interface PublishedSnippetPageResult {
   };
   siteSettings?: {
     hasCustomFavicon?: boolean;
+    hasCustomWebclip?: boolean;
     hasCustomFonts?: boolean;
     customFontSources?: string[];
     detectedApps?: string[];
+  };
+  styleSignals?: {
+    accessibleStyleSheets?: number;
+    blockedStyleSheets?: number;
+    mediaRules?: number;
+    breakpointHints?: string[];
+    definedVariables?: number;
+    usedVariables?: number;
+    variableCategories?: string[];
+    baseTagRules?: number;
+    baseTagVariableRules?: number;
+    componentVariantSelectors?: number;
+    sampleVariables?: string[];
+    sampleBaseTagSelectors?: string[];
+    sampleComponentVariantSelectors?: string[];
+  };
+  structureSignals?: {
+    hasNav?: boolean;
+    hasFooter?: boolean;
+    ctaCount?: number;
+  };
+  stateSignals?: {
+    hoverSelectors?: number;
+    focusSelectors?: number;
+    focusVisibleSelectors?: number;
+    activeSelectors?: number;
+    interactiveElements?: number;
+    interactiveWithTransition?: number;
+    interactiveWithSpecificTransition?: number;
+    interactiveWithTransitionAll?: number;
+    interactiveGpuFriendlyTransitions?: number;
+    interactiveExpensiveTransitions?: number;
+    maxTransitionDurationMs?: number;
+    averageTransitionDurationMs?: number;
+  };
+  accessibilitySignals?: {
+    hasMainLandmark?: boolean;
+    hasNavLandmark?: boolean;
+    hasSkipLink?: boolean;
+    genericLinkLabels?: number;
+    sampleGenericLinkLabels?: string[];
+  };
+  assetSignals?: {
+    responsiveImages?: number;
+    imagesWithSrcset?: number;
+    imagesWithSizes?: number;
+    navLogoImages?: number;
+  };
+  formSignals?: {
+    wrongFieldTypes?: number;
+    sampleWrongFieldTypes?: string[];
   };
   contentQuality?: {
     hasLoremIpsum?: boolean;
@@ -641,6 +795,10 @@ export interface PublishedSnippetCrawlResult {
   skippedUrls: string[];
   snippetVersion: string | null;
   snippetTools: string[];
+  probes: {
+    fetch?: PublishedFetchProbeSummary;
+    browser: PublishedBrowserProbeSummary;
+  };
   sitemapStatus: { ok: boolean; count?: number; error?: string };
   audit404:
     | {
@@ -662,10 +820,12 @@ export interface PublishedSnippetCrawlResult {
   };
   siteSettings: {
     hasCustomFavicon: boolean;
+    hasCustomWebclip: boolean;
     hasCustomFonts: boolean;
     customFontSources: string[];
     detectedApps: string[];
   };
+  responsive?: PublishedResponsiveProbeResult;
   pages: PublishedSnippetPageResult[];
 }
 
@@ -697,6 +857,7 @@ export interface PublishedSitePrecheckResult {
   discoveredUrls: string[];
   /** Agent-classified URLs with page type and crawl priority. */
   classifiedUrls?: ClassifiedUrl[];
+  probe: PublishedFetchProbeSummary;
   requiredPages: {
     licenses: boolean;
     instructions: boolean;
@@ -741,9 +902,10 @@ export interface UnifiedTemplateReviewReport {
   queuedAt?: string;
   startedAt?: string;
   completedAt?: string;
+  durationMs?: number;
   generatedAt: string;
   provider: string;
-  previewUrl: string;
+  previewUrl?: string;
   publishedUrl: string;
   precheck?: PublishedSitePrecheckResult;
   providerMetrics?: {
@@ -763,9 +925,12 @@ export interface UnifiedTemplateReviewReport {
 }
 
 export interface RunTemplateReviewInput {
-  previewUrl: string;
+  previewUrl?: string;
   publishedUrl: string;
   timeout?: number;
+  designerTimeout?: number;
+  designerMode?: 'required' | 'best-effort' | 'skip';
+  allowLongSync?: boolean;
   includeManual?: boolean;
   crawlMaxPages?: number;
   crawlMaxDepth?: number;
@@ -795,6 +960,7 @@ export interface TemplateReviewJobRecord {
   queuedAt: string;
   startedAt?: string;
   completedAt?: string;
+  durationMs?: number;
   progress: TemplateReviewJobProgress;
   error?: string;
   result?: UnifiedTemplateReviewReport;

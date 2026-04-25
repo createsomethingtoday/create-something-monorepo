@@ -24,13 +24,12 @@ Use it for:
 - systems in scope:
   - `CREATE SOMETHING MCP Hub`
   - `Airtable Marketplace Assets`
-  - `Webflow preview and published sites`
+  - `Webflow published sites`
   - `webflow-template-review-mcp`
   - `webflow-site-analyzer-mcp`
-  - `webflow-mcp`
 - policy boundary:
-  - auto-allow: reads, analysis, checklist scoring, plagiarism checks, draft feedback
-  - approval-required: request changes, approval, rejection, publishing completion
+  - auto-allow: queue/context reads, reviewer packets, analyzer jobs, evidence gathering
+  - approval-required: reviewer-owned state changes that are enabled on the lane
   - block: direct creator send, destructive or out-of-scope mutation, reviewer-lane control-plane actions
 
 ## 3. Roles
@@ -45,15 +44,15 @@ Use it for:
 ### Auto-allow path
 
 1. reviewer opens the template review lane
-2. lane loads queue, asset, version, and release context
-3. lane runs objective analysis against preview and published URLs
-4. recommendation, evidence, and draft feedback are returned
-5. reviewer validates before taking any state-changing action
+2. lane loads queue, asset, version, and reviewer context
+3. lane reads the reviewer packet
+4. lane runs or inspects published-first analyzer evidence as needed
+5. reviewer validates the evidence before taking any state-changing action
 
 ### Approval-required path
 
-1. reviewer decides to request changes, approve, reject, or complete publishing
-2. action is treated as explicit reviewer-owned state change
+1. reviewer decides to request changes or take another currently enabled reviewer-owned state change
+2. reviewer assignment is confirmed
 3. Hub executes the write path only after reviewer intent is clear
 4. audit event is written
 
@@ -67,10 +66,10 @@ Use it for:
 
 ### Source-state mismatch or missing evidence
 
-- signal: queue state, asset state, preview extraction, or published evidence do not support a confident recommendation
+- signal: queue state, asset state, reviewer packet evidence, or analyzer output do not support a confident recommendation
 - operator action:
   1. stop workflow execution at the affected step
-  2. verify Airtable, preview, and published URLs manually
+  2. verify Airtable and published URLs manually
   3. continue in manual review mode if needed
 - exit condition: evidence is restored or reviewer completes the decision manually
 
@@ -86,7 +85,7 @@ Use it for:
 
 ### Tool or auth failure
 
-- signal: downstream read or write tool fails, auth expires, or preview extraction becomes unavailable
+- signal: downstream read or write tool fails, auth expires, or published-first analyzer execution becomes unavailable
 - operator action:
   1. determine whether failure is transient
   2. retry only if policy allows and the action is safe to repeat
@@ -154,7 +153,7 @@ Required evidence sources:
 
 Required review cadence:
 
-- daily during alpha and beta
+- daily during pilot and hardening
 - weekly after stabilization unless incident rate increases
 
 ## 9. Escalation matrix

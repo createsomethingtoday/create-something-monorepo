@@ -10,7 +10,6 @@ REVIEWER="${REVIEWER:-all}"
 reviewer_url() {
   case "$1" in
     natalia) echo "https://wf-template-review-natalia.mcp.createsomething.agency/mcp" ;;
-    sudiksha) echo "https://wf-template-review-sudiksha.mcp.createsomething.agency/mcp" ;;
     eric) echo "https://wf-template-review-eric.mcp.createsomething.agency/mcp" ;;
     vicki) echo "https://wf-template-review-vicki.mcp.createsomething.agency/mcp" ;;
     mariana) echo "https://wf-template-review-mariana.mcp.createsomething.agency/mcp" ;;
@@ -22,7 +21,6 @@ reviewer_url() {
 reviewer_secret_name() {
   case "$1" in
     natalia) echo "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN" ;;
-    sudiksha) echo "CS_HUB_WF_TEMPLATE_REVIEW_SUDIKSHA_API_TOKEN" ;;
     eric) echo "CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN" ;;
     vicki) echo "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN" ;;
     mariana) echo "CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN" ;;
@@ -34,7 +32,6 @@ reviewer_secret_name() {
 reviewer_version_id() {
   case "$1" in
     natalia) echo "rec2Z71ZwPRlAqmJ5" ;;
-    sudiksha) echo "reci2kYADC8S6OFw3" ;;
     eric) echo "reckK8373eRd3cZyJ" ;;
     vicki) echo "recMzHVzKn9M7m7fH" ;;
     mariana) echo "recNGiYJ1fjpQ9Q8D" ;;
@@ -46,7 +43,6 @@ reviewer_version_id() {
 reviewer_email() {
   case "$1" in
     natalia) echo "natalia.ledford@webflow.com" ;;
-    sudiksha) echo "sudiksha.khanduja@webflow.com" ;;
     eric) echo "eric.unger@webflow.com" ;;
     vicki) echo "vicki.chen@webflow.com" ;;
     mariana) echo "mariana.segura@webflow.com" ;;
@@ -245,7 +241,7 @@ main() {
 
   local reviewers=()
   if [[ "$REVIEWER" == "all" ]]; then
-    reviewers=(natalia sudiksha eric vicki mariana micah)
+    reviewers=(natalia eric vicki mariana micah)
   else
     reviewers=("$REVIEWER")
   fi

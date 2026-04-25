@@ -4,7 +4,7 @@
 **Workflow:** `template_review_hub_lane`  
 **Pilot start target:** `2026-03-16`
 
-Use this scorecard during alpha, beta, and launch review to decide whether the Hub lane is ready for broader adoption.
+Use this scorecard during pilot, hardening, and launch review to decide whether the Hub lane is ready for broader adoption.
 
 ## 1. Adoption
 
@@ -18,10 +18,10 @@ Use this scorecard during alpha, beta, and launch review to decide whether the H
 
 | Metric | Why it matters | Target for rollout |
 | --- | --- | --- |
-| Recommendation acceptance rate | Measures how often the Hub is directionally right | High enough that reviewers trust it as a first-pass aid |
+| Reviewer packet usefulness | Measures whether the submission truth + automation brief is actually helpful | High enough that reviewers use it as the default first-pass brief |
 | False-positive rate | Measures noisy or misleading findings | Low enough that reviewers are not slowed down by validation work |
 | False-negative rate | Measures missed objective issues | Trending down during pilot hardening |
-| Draft feedback usefulness | Measures whether drafted feedback reduces reviewer writing time | Reviewers regularly keep or lightly edit draft feedback |
+| Published-first evidence quality | Measures whether analyzer jobs return evidence reviewers can act on | Reviewers regularly cite page paths, check IDs, or metrics from the analyzer output |
 
 ## 3. Governance
 
@@ -36,22 +36,22 @@ Use this scorecard during alpha, beta, and launch review to decide whether the H
 
 | Metric | Why it matters | Target for rollout |
 | --- | --- | --- |
-| Successful review-run completion rate | Confirms the lane works consistently | Stable enough for daily reviewer use |
-| Analysis latency | Determines whether the lane fits reviewer workflow | Fast enough to use during normal review without major interruption |
+| Successful packet-plus-analyzer completion rate | Confirms the lane works consistently | Stable enough for daily reviewer use |
+| Analyzer job latency | Determines whether the lane fits reviewer workflow | Fast enough to use during normal review without major interruption |
 | Trace coverage | Confirms evidence exists for debugging and signoff | Recommendation, write, and escalation traces visible |
 | Tool failure trend | Measures operational stability during pilot | Failures understood and reducing over time |
 
 ## 5. Rollout recommendation
 
-Use this summary after beta:
+Use this summary after the current hardening window:
 
 - `Proceed to broader rollout`
 - `Stay in pilot and harden`
-- `Reduce scope to read-only evidence lane`
+- `Reduce scope to rollback evidence mode`
 - `Pause delivery and reassess`
 
 ## 6. Signoff
 
 - workflow owner: `Marketplace review lead`
 - technical owner: `Senior Systems Architect`
-- review date: `TBD after beta`
+- review date: `TBD after hardening`

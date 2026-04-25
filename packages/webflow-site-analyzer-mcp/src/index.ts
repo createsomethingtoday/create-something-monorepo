@@ -44,10 +44,21 @@ import {
   shutdownMcpTracing,
 } from './mcp-tracing.js';
 import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy/index.js';
-import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
+import {
+  createUnavailableDesignerChecklistReport,
+  scoreDesignerChecklist
+} from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
 import { is404PageTitle } from './review-utils.js';
+import {
+  PUBLISHED_BROWSER_PROBE_SCRIPT,
+  getPublishedBrowserProbeMode,
+  getPublishedBrowserProbeSources,
+  type PublishedPageEval
+} from './published/browser-probe.js';
+import { runPublishedFetchProbe } from './published/fetch-probe.js';
+import { runPublishedResponsiveProbe } from './published/responsive-probe.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -110,12 +121,21 @@ function getRegistryPath(): string | undefined {
   return value ? value : undefined;
 }
 
-function isWorkerRuntime(): boolean {
-  return process.env.WEBFLOW_SITE_ANALYZER_RUNTIME === 'worker';
+function getAnalyzerRuntime(): string {
+  return process.env.WEBFLOW_SITE_ANALYZER_RUNTIME?.trim() || 'node';
+}
+
+function isDirectWorkerRuntime(): boolean {
+  return getAnalyzerRuntime() === 'worker';
+}
+
+function isRemoteSyncConstrainedRuntime(): boolean {
+  const runtime = getAnalyzerRuntime();
+  return runtime === 'worker' || runtime === 'container-worker';
 }
 
 function isBrowserAutomationSupported(): boolean {
-  return !isWorkerRuntime();
+  return !isDirectWorkerRuntime();
 }
 
 function assertBrowserAutomationSupported(toolName: string): void {
@@ -123,6 +143,50 @@ function assertBrowserAutomationSupported(toolName: string): void {
   throw new Error(
     `${toolName} is not supported on the Cloudflare Worker deployment. Use the local analyzer or a non-Worker host for browser-backed review execution.`,
   );
+}
+
+const REMOTE_SYNC_REVIEW_MAX_PAGES = 1;
+const REMOTE_SYNC_REVIEW_MAX_DEPTH = 0;
+const REMOTE_SYNC_REVIEW_MAX_TIMEOUT_MS = 45_000;
+
+function getRunTemplateReviewSyncGuardError(input: RunTemplateReviewInput): string | null {
+  if (!isRemoteSyncConstrainedRuntime() || input.allowLongSync) {
+    return null;
+  }
+
+  const reasons: string[] = [];
+  const designerMode = input.designerMode ?? 'best-effort';
+  const timeout = input.timeout ?? 90_000;
+
+  if (designerMode !== 'skip') {
+    reasons.push(`designerMode=${designerMode}`);
+  }
+
+  if (input.crawlMaxPages === undefined) {
+    reasons.push('crawlMaxPages=full-discovered-coverage');
+  } else if (input.crawlMaxPages > REMOTE_SYNC_REVIEW_MAX_PAGES) {
+    reasons.push(`crawlMaxPages=${input.crawlMaxPages}`);
+  }
+
+  if (input.crawlMaxDepth === undefined) {
+    reasons.push('crawlMaxDepth=unbounded');
+  } else if (input.crawlMaxDepth > REMOTE_SYNC_REVIEW_MAX_DEPTH) {
+    reasons.push(`crawlMaxDepth=${input.crawlMaxDepth}`);
+  }
+
+  if (timeout > REMOTE_SYNC_REVIEW_MAX_TIMEOUT_MS) {
+    reasons.push(`timeout=${timeout}`);
+  }
+
+  if (reasons.length === 0) {
+    return null;
+  }
+
+  return [
+    '`run_template_review` on the remote deployment is reserved for bounded smoke checks.',
+    `This request is likely to outlive the synchronous transport (${reasons.join(', ')}).`,
+    'Use `enqueue_template_review` + `get_template_review_job` for multi-page or preview-enabled reviews, or pass `allowLongSync=true` to force the synchronous path anyway.'
+  ].join(' ');
 }
 
 function getProvider(): ProviderManager {
@@ -550,7 +614,7 @@ async function scoreDesignerChecklistTool(input: ScoreDesignerChecklistInput): P
   }
 
   let metadata: DesignerMetadata;
-  let source: 'live-extraction' | 'provided-metadata';
+  let source: DesignerChecklistReport['source'];
 
   if (input.designerMetadata) {
     metadata = input.designerMetadata;
@@ -569,550 +633,6 @@ async function scoreDesignerChecklistTool(input: ScoreDesignerChecklistInput): P
   });
 }
 
-const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
-(async () => {
-  const REQUIRED_LICENSE_TEXT =
-    "All graphical assets in this template are licensed for personal and commercial use. If you'd like to use a specific asset, please check the license below.";
-
-  const toInternalAbsolute = (href) => {
-    try {
-      if (!href) return null;
-      const u = new URL(href, window.location.origin);
-      if (u.origin !== window.location.origin) return null;
-      if (u.protocol === 'mailto:' || u.protocol === 'tel:' || u.protocol === 'javascript:') return null;
-      u.hash = '';
-      return u.toString();
-    } catch {
-      return null;
-    }
-  };
-
-  const title = document.title || null;
-  const links = Array.from(document.querySelectorAll('a[href]'))
-    .map((a) => a.getAttribute('href') || a.href || '')
-    .map((href) => toInternalAbsolute(href))
-    .filter(Boolean);
-
-  const dedupedLinks = Array.from(new Set(links)).slice(0, 250);
-  const pathname = window.location.pathname.toLowerCase();
-  // Use textContent (not innerText) to avoid font-rendering corruption where
-  // web fonts with missing glyphs cause innerText to return garbled text.
-  const bodyText = (document.body?.textContent || '').replace(/\\s+/g, ' ').slice(0, 8000);
-  const hasRequiredLicenseText = pathname.includes('license')
-    ? bodyText.includes(REQUIRED_LICENSE_TEXT)
-    : null;
-
-  // Policy checks: deterministic, run regardless of __wfReview availability
-  const poweredByBadge = document.querySelector('.w-webflow-badge') ||
-    document.querySelector('a[href*="webflow.com"][class*="badge"]') ||
-    document.querySelector('a[href*="webflow.com"]');
-  const hasPoweredByWebflow = Boolean(
-    poweredByBadge &&
-    (poweredByBadge.textContent || '').toLowerCase().includes('webflow')
-  );
-
-  const allHrefs = Array.from(document.querySelectorAll('a[href]'))
-    .map(a => (a.getAttribute('href') || '').toLowerCase());
-  const affiliatePatterns = [
-    'ref=', 'affiliate', 'aff=', 'partner=', 'referral',
-    'utm_source=affiliate', 'tap_a=', 'idev_id=', 'click_id='
-  ];
-  const affiliateLinks = allHrefs.filter(href =>
-    affiliatePatterns.some(p => href.includes(p))
-  );
-
-  const scriptEls = Array.from(document.querySelectorAll('script'));
-  const scriptSrcs = scriptEls.map(s => s.src || '').filter(Boolean);
-  const inlineCode = scriptEls.map(s => (s.textContent || '').slice(0, 2000)).join(' ');
-  const hasGsap = scriptSrcs.some(src => src.toLowerCase().includes('gsap')) ||
-    inlineCode.includes('gsap') || inlineCode.includes('ScrollTrigger') ||
-    inlineCode.includes('ScrollSmoother');
-  const hasCustomCode = scriptEls.some(s =>
-    !s.src && (s.textContent || '').trim().length > 50 &&
-    !s.getAttribute('data-wf-domain')
-  );
-
-  // Site settings checks (run regardless of __wfReview availability)
-  const faviconLink = document.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
-  const hasCustomFavicon = Boolean(faviconLink && !((faviconLink.getAttribute('href') || '').includes('webflow')));
-
-  const fontLinks = Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"], link[href*="use.typekit.net"]'));
-  const customFontStyles = Array.from(document.querySelectorAll('style')).filter(s =>
-    (s.textContent || '').includes('@font-face')
-  );
-  const hasCustomFonts = fontLinks.length > 0 || customFontStyles.length > 0;
-  const customFontSources = fontLinks.map(l => l.getAttribute('href') || '').filter(Boolean);
-
-  // Connected apps detection (third-party integrations that should be removed)
-  const connectedAppPatterns = [
-    { name: 'Google Analytics', pattern: /google-analytics\.com|googletagmanager\.com|gtag/ },
-    { name: 'Facebook Pixel', pattern: /connect\.facebook\.net|fbevents\.js/ },
-    { name: 'Hotjar', pattern: /hotjar\.com|static\.hotjar/ },
-    { name: 'Intercom', pattern: /intercom\.io|widget\.intercom/ },
-    { name: 'Drift', pattern: /drift\.com|js\.driftt/ },
-    { name: 'Crisp', pattern: /crisp\.chat/ },
-    { name: 'HubSpot', pattern: /hubspot\.com|hs-scripts/ },
-    { name: 'Mailchimp', pattern: /mailchimp\.com|chimpstatic/ },
-  ];
-  const allScriptSrcsAndInline = [
-    ...scriptSrcs,
-    ...scriptEls.map(s => (s.textContent || '').slice(0, 500))
-  ].join(' ');
-  const detectedApps = connectedAppPatterns
-    .filter(app => app.pattern.test(allScriptSrcsAndInline))
-    .map(app => app.name);
-
-  // Placeholder content detection
-  const bodyTextForPlaceholder = (document.body?.textContent || '').toLowerCase();
-  const loremIpsumPatterns = ['lorem ipsum', 'dolor sit amet', 'consectetur adipiscing', 'sed do eiusmod'];
-  const hasLoremIpsum = loremIpsumPatterns.some(p => bodyTextForPlaceholder.includes(p));
-  const placeholderPatterns = ['your text here', 'placeholder text', 'insert text', 'add your', 'example text', 'sample text'];
-  const hasPlaceholderText = placeholderPatterns.some(p => bodyTextForPlaceholder.includes(p));
-
-  const api = window.__wfReview;
-  if (!api) {
-    // DOM fallback: extract page-level signals directly when __wfReview is missing
-    const headingEls = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
-    const headingLevels = Array.from(headingEls).map(el => parseInt(el.tagName[1], 10));
-    const h1Count = headingLevels.filter(l => l === 1).length;
-    let skippedLevels = 0;
-    const seenLevels = new Set();
-    for (const level of headingLevels) {
-      if (level > 1 && !seenLevels.has(level - 1) && level - 1 !== 0) {
-        // Check if any heading of the preceding level exists
-        if (!headingLevels.includes(level - 1)) skippedLevels++;
-      }
-      seenLevels.add(level);
-    }
-    const emptyHeadings = Array.from(headingEls).filter(el => !(el.textContent || '').trim()).length;
-
-    const imgEls = Array.from(document.querySelectorAll('img'));
-    const missingAlt = imgEls.filter(img => !img.hasAttribute('alt') || img.alt === '').length;
-    const missingDimensions = imgEls.filter(img =>
-      !img.hasAttribute('width') && !img.hasAttribute('height') &&
-      !img.style.aspectRatio && !(img.getAttribute('style') || '').includes('aspect-ratio')
-    ).length;
-    const aboveFoldLazy = imgEls.filter(img => {
-      const rect = img.getBoundingClientRect();
-      return rect.top < window.innerHeight && img.loading === 'lazy';
-    }).length;
-    const imgFormats = {};
-    for (const img of imgEls) {
-      const src = img.currentSrc || img.src || '';
-      const ext = src.split('?')[0].split('.').pop()?.toLowerCase() || 'unknown';
-      imgFormats[ext] = (imgFormats[ext] || 0) + 1;
-    }
-
-    const linkEls = Array.from(document.querySelectorAll('a'));
-    const emptyHref = linkEls.filter(a => {
-      const href = a.getAttribute('href');
-      return href === '' || href === null;
-    }).length;
-    const placeholderHref = linkEls.filter(a => {
-      const href = a.getAttribute('href') || '';
-      if (!href.startsWith('#')) return false;
-      // Exclude Webflow tab/accordion panel anchors (e.g. #w-tabs-0-data-w-pane-0)
-      if (/^#w-tabs-/.test(href) || /^#w-dropdown-/.test(href) || /^#w--/.test(href)) return false;
-      // Exclude Webflow lightbox links (href="#" on elements with w-lightbox class or data attr)
-      if (href === '#' && (
-        a.classList.contains('w-lightbox') ||
-        a.closest('.w-lightbox') ||
-        a.hasAttribute('data-lightbox')
-      )) return false;
-      return true;
-    }).length;
-    const blankTargetMissingRel = linkEls.filter(a =>
-      a.target === '_blank' && !(a.getAttribute('rel') || '').includes('noopener')
-    ).length;
-    const missingAccessibleName = linkEls.filter(a =>
-      !(a.textContent || '').trim() && !a.getAttribute('aria-label') && !a.querySelector('img[alt]')
-    ).length;
-
-    const metaTitle = document.querySelector('meta[property="og:title"]');
-    const metaDesc = document.querySelector('meta[name="description"]');
-    const ogImage = document.querySelector('meta[property="og:image"]');
-    const metaMissing = [];
-    if (!metaTitle) metaMissing.push('og:title');
-    if (!metaDesc) metaMissing.push('description');
-    if (!ogImage) metaMissing.push('og:image');
-
-    // Canonical URL
-    const canonicalLink = document.querySelector('link[rel="canonical"]');
-    const hasCanonical = Boolean(canonicalLink && canonicalLink.getAttribute('href'));
-
-    // Structured data (JSON-LD)
-    const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
-    const hasStructuredData = jsonLdScripts.length > 0;
-
-    // ARIA landmarks
-    const mainLandmark = document.querySelector('main, [role="main"]');
-    const navLandmark = document.querySelector('nav, [role="navigation"]');
-    const hasAriaLandmarks = Boolean(mainLandmark) && Boolean(navLandmark);
-
-    const formFields = document.querySelectorAll('input, textarea, select');
-    const missingLabels = Array.from(formFields).filter(field => {
-      if (field.type === 'hidden' || field.type === 'submit') return false;
-      const id = field.id;
-      const hasLabel = id && document.querySelector('label[for="' + id + '"]');
-      const parentLabel = field.closest('label');
-      const ariaLabel = field.getAttribute('aria-label') || field.getAttribute('aria-labelledby');
-      return !hasLabel && !parentLabel && !ariaLabel;
-    }).length;
-
-    const videoEls = Array.from(document.querySelectorAll('video'));
-    const autoplayNoControls = videoEls.filter(v => v.autoplay && !v.controls).length;
-    const bgVideoMissing = videoEls.filter(v =>
-      v.muted && v.autoplay && v.loop && !v.controls
-    ).length;
-
-    // Below-fold images that should be lazy but aren't
-    const belowFoldNotLazy = imgEls.filter(img => {
-      const rect = img.getBoundingClientRect();
-      return rect.top >= window.innerHeight && img.loading !== 'lazy';
-    }).length;
-
-    // IX2/IX3 interaction signals from DOM
-    const ix2Scripts = Array.from(document.querySelectorAll('script'))
-      .filter(s => (s.textContent || '').includes('Webflow.require(\\'ix2\\')'));
-    const ix2Data = ix2Scripts.length > 0;
-    let ix2Events = 0;
-    let ix2ActionLists = 0;
-    if (ix2Data) {
-      try {
-        const wfData = window.Webflow?.require?.('ix2')?.store?.getState?.();
-        if (wfData?.ixData) {
-          ix2Events = Object.keys(wfData.ixData.events || {}).length;
-          ix2ActionLists = Object.keys(wfData.ixData.actionLists || {}).length;
-        }
-      } catch {}
-    }
-
-    const domAudit = {
-      meta: { missing: metaMissing, hasCanonical, hasStructuredData, hasAriaLandmarks },
-      headings: {
-        summary: {
-          headings: headingEls.length,
-          h1: h1Count,
-          missingH1: h1Count === 0,
-          multipleH1: h1Count > 1,
-          skippedHeadingLevels: skippedLevels,
-          emptyHeadings
-        }
-      },
-      links: {
-        summary: {
-          links: linkEls.length,
-          emptyHref,
-          placeholderHref,
-          blankTargetMissingRel,
-          missingAccessibleName
-        }
-      },
-      images: {
-        summary: {
-          images: imgEls.length,
-          missingAlt,
-          missingDimensions,
-          aboveFoldLazy,
-          belowFoldNotLazy
-        },
-        formats: imgFormats
-      },
-      forms: {
-        summary: {
-          fields: formFields.length,
-          missingLabels
-        }
-      },
-      media: {
-        summary: {
-          videos: videoEls.length,
-          autoplayWithoutControls: autoplayNoControls,
-          backgroundVideosMissingControl: bgVideoMissing
-        }
-      },
-      interactions: {
-        ix2: { summary: { events: ix2Events, actionLists: ix2ActionLists } },
-        ix3: { summary: {} }
-      },
-      transitions: (() => {
-        // Check interactive elements for CSS transition/hover state declarations
-        const interactiveEls = document.querySelectorAll('a, button, [role="button"], .w-button, input[type="submit"]');
-        let withTransition = 0;
-        let withoutTransition = 0;
-        for (const el of Array.from(interactiveEls)) {
-          const style = window.getComputedStyle(el);
-          const transition = style.transition || style.getPropertyValue('transition');
-          if (transition && transition !== 'all 0s ease 0s' && transition !== 'none') {
-            withTransition++;
-          } else {
-            withoutTransition++;
-          }
-        }
-        return {
-          totalInteractive: interactiveEls.length,
-          withTransition,
-          withoutTransition,
-          ratio: interactiveEls.length > 0 ? withTransition / interactiveEls.length : 0
-        };
-      })(),
-      comboClassDepth: (() => {
-        // Check max class count on any single element (combo class stacking)
-        const allEls = document.querySelectorAll('[class]');
-        let maxDepth = 0;
-        let maxDepthSelector = '';
-        for (const el of Array.from(allEls).slice(0, 500)) {
-          const classCount = el.classList.length;
-          if (classCount > maxDepth) {
-            maxDepth = classCount;
-            maxDepthSelector = el.tagName.toLowerCase() + '.' + Array.from(el.classList).slice(0, 3).join('.');
-          }
-        }
-        return { maxDepth, maxDepthSelector, sampled: Math.min(allEls.length, 500) };
-      })(),
-      contrast: (() => {
-        // WCAG AA contrast check with ancestor background walk-up,
-        // bold text threshold, and visibility filtering.
-        const textEls = document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, a, span, li, td, th, label, button');
-        let checked = 0;
-        let passCount = 0;
-        let failCount = 0;
-        const failures = [];
-
-        function luminance(r, g, b) {
-          const [rs, gs, bs] = [r, g, b].map(c => {
-            c = c / 255;
-            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-          });
-          return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-        }
-
-        function parseColor(color) {
-          const m = (color || '').match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
-          if (!m) return null;
-          return { r: parseInt(m[1]), g: parseInt(m[2]), b: parseInt(m[3]) };
-        }
-
-        function isTransparent(color) {
-          return !color || color === 'rgba(0, 0, 0, 0)' || color === 'transparent';
-        }
-
-        // Walk up the DOM tree to find the first ancestor with a
-        // non-transparent background color (the effective background).
-        function findEffectiveBg(el) {
-          let current = el;
-          let depth = 0;
-          while (current && current !== document.documentElement && depth < 20) {
-            const style = window.getComputedStyle(current);
-            if (!isTransparent(style.backgroundColor)) {
-              return parseColor(style.backgroundColor);
-            }
-            current = current.parentElement;
-            depth++;
-          }
-          // Default to white if no background found (common for light themes)
-          // or black for dark themes — check the body/html
-          const bodyBg = window.getComputedStyle(document.body).backgroundColor;
-          const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor;
-          const resolved = parseColor(bodyBg) || parseColor(htmlBg);
-          return resolved || { r: 255, g: 255, b: 255 };
-        }
-
-        function contrastRatio(fg, bg) {
-          const l1 = luminance(fg.r, fg.g, fg.b);
-          const l2 = luminance(bg.r, bg.g, bg.b);
-          const lighter = Math.max(l1, l2);
-          const darker = Math.min(l1, l2);
-          return (lighter + 0.05) / (darker + 0.05);
-        }
-
-        function isVisible(el) {
-          const style = window.getComputedStyle(el);
-          if (style.display === 'none') return false;
-          if (style.visibility === 'hidden') return false;
-          if (style.opacity === '0') return false;
-          const rect = el.getBoundingClientRect();
-          if (rect.width === 0 && rect.height === 0) return false;
-          return true;
-        }
-
-        // WCAG AA thresholds:
-        // Normal text: 4.5:1
-        // Large text (>=24px normal, or >=18.66px bold): 3:1
-        function getThreshold(style) {
-          const fontSize = parseFloat(style.fontSize) || 16;
-          const fontWeight = parseInt(style.fontWeight) || 400;
-          const isBold = fontWeight >= 700;
-          if (fontSize >= 24) return 3;
-          if (fontSize >= 18.66 && isBold) return 3;
-          return 4.5;
-        }
-
-        // Sample up to 80 visible elements
-        let sampled = 0;
-        for (const el of Array.from(textEls)) {
-          if (sampled >= 80) break;
-          if (!isVisible(el)) continue;
-
-          // Skip elements with no meaningful text
-          const text = (el.textContent || '').trim();
-          if (!text || text.length === 0) continue;
-
-          sampled++;
-          const style = window.getComputedStyle(el);
-          const fg = parseColor(style.color);
-          if (!fg) continue;
-
-          // Walk up to find effective background
-          const bg = findEffectiveBg(el);
-          if (!bg) continue;
-
-          checked++;
-          const ratio = contrastRatio(fg, bg);
-          const threshold = getThreshold(style);
-
-          if (ratio >= threshold) {
-            passCount++;
-          } else {
-            failCount++;
-            if (failures.length < 5) {
-              const tag = el.tagName.toLowerCase();
-              const snippet = text.slice(0, 30);
-              failures.push({
-                text: snippet,
-                tag,
-                ratio: Math.round(ratio * 100) / 100,
-                required: threshold,
-                fg: 'rgb(' + fg.r + ',' + fg.g + ',' + fg.b + ')',
-                bg: 'rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')'
-              });
-            }
-          }
-        }
-
-        return {
-          checked,
-          pass: passCount,
-          fail: failCount,
-          passRate: checked > 0 ? passCount / checked : 1,
-          failures
-        };
-      })()
-    };
-
-    return {
-      url: window.location.href,
-      title,
-      hasSnippet: false,
-      snippetVersion: null,
-      tools: [],
-      links: dedupedLinks,
-      hasRequiredLicenseText,
-      audit: domAudit,
-      auditError: null,
-      sitemap: null,
-      audit404: null,
-      policyChecks: {
-        hasPoweredByWebflow,
-        affiliateLinks,
-        hasGsap,
-        hasCustomCode
-      },
-      siteSettings: {
-        hasCustomFavicon,
-        hasCustomFonts,
-        customFontSources,
-        detectedApps
-      },
-      contentQuality: {
-        hasLoremIpsum,
-        hasPlaceholderText
-      }
-    };
-  }
-
-  const tools = typeof api.listTools === 'function' ? api.listTools().map((t) => t.name) : [];
-
-  let audit = null;
-  let auditError = null;
-  try {
-    audit = await api.callTool('audit_webflow_way', { maxExamples: 20, includeSitemap: false });
-  } catch (err) {
-    auditError = err instanceof Error ? err.message : String(err);
-  }
-
-  let sitemap = null;
-  try {
-    sitemap = await api.callTool('get_sitemap_urls', { sitemapPath: '/sitemap.xml', maxUrls: 200 });
-  } catch (err) {
-    sitemap = { error: err instanceof Error ? err.message : String(err) };
-  }
-
-  let audit404 = null;
-  try {
-    audit404 = await api.callTool('audit_404', {});
-  } catch (err) {
-    audit404 = { error: err instanceof Error ? err.message : String(err) };
-  }
-
-  return {
-    url: window.location.href,
-    title,
-    hasSnippet: true,
-    snippetVersion: api.version ?? null,
-    tools,
-    links: dedupedLinks,
-    hasRequiredLicenseText,
-    audit,
-    auditError,
-    sitemap,
-    audit404,
-    siteSettings: {
-      hasCustomFavicon,
-      hasCustomFonts,
-      customFontSources,
-      detectedApps
-    },
-    policyChecks: {
-      hasPoweredByWebflow,
-      affiliateLinks,
-      hasGsap,
-      hasCustomCode
-    }
-  };
-})()
-`;
-
-type PublishedPageEval = {
-  url?: string;
-  title?: string | null;
-  hasSnippet?: boolean;
-  snippetVersion?: string | null;
-  tools?: string[];
-  links?: string[];
-  hasRequiredLicenseText?: boolean | null;
-  audit?: unknown;
-  auditError?: string | null;
-  sitemap?: unknown;
-  audit404?: unknown;
-  policyChecks?: {
-    hasPoweredByWebflow?: boolean;
-    affiliateLinks?: string[];
-    hasGsap?: boolean;
-    hasCustomCode?: boolean;
-  };
-  siteSettings?: {
-    hasCustomFavicon?: boolean;
-    hasCustomFonts?: boolean;
-    customFontSources?: string[];
-    detectedApps?: string[];
-  };
-  contentQuality?: {
-    hasLoremIpsum?: boolean;
-    hasPlaceholderText?: boolean;
-  };
-};
-
 type PageAuditSummary = NonNullable<PublishedSnippetPageResult['summary']>;
 
 type ProgressReporter = (progress: number, total: number, message: string) => Promise<void>;
@@ -1120,6 +640,25 @@ type ProgressReporter = (progress: number, total: number, message: string) => Pr
 type RunTemplateReviewOptions = {
   reportProgress?: ProgressReporter;
 };
+
+function describeError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return typeof error === 'string' ? error : JSON.stringify(error);
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(label)), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 /**
  * Detect and repair the "every-s-to-space" text corruption that occurs when
@@ -1208,6 +747,11 @@ function normalizeCrawlUrl(rawUrl: string, origin: string): string | null {
   }
 }
 
+function comparableSameOriginUrl(rawUrl: string, origin: string): string | null {
+  const normalized = normalizeCrawlUrl(rawUrl, origin);
+  return normalized ? normalized.toLowerCase().replace(/\/$/, '') : null;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
@@ -1232,8 +776,14 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
   const images = asRecord(imagesRoot.summary);
   const formsRoot = asRecord(root.forms);
   const forms = asRecord(formsRoot.summary);
+  const structureRoot = asRecord(root.structure);
+  const structure = asRecord(structureRoot.summary);
   const mediaRoot = asRecord(root.media);
   const media = asRecord(mediaRoot.summary);
+  const accessibilityRoot = asRecord(root.accessibility);
+  const accessibility = asRecord(accessibilityRoot.summary);
+  const assetsRoot = asRecord(root.assets);
+  const assets = asRecord(assetsRoot.summary);
   const interactions = asRecord(root.interactions);
   const ix2 = asRecord(interactions.ix2);
   const ix3 = asRecord(interactions.ix3);
@@ -1320,7 +870,14 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
     ),
     forms: {
       fields: asFiniteNumber(forms.fields),
-      missingLabels: asFiniteNumber(forms.missingLabels)
+      missingLabels: asFiniteNumber(forms.missingLabels),
+      wrongFieldTypes: asFiniteNumber(forms.wrongFieldTypes),
+      sampleWrongFieldTypes: asStringArray(forms.sampleWrongFieldTypes)
+    },
+    structure: {
+      hasNav: Boolean(structure.hasNav),
+      hasFooter: Boolean(structure.hasFooter),
+      ctaCount: asFiniteNumber(structure.ctaCount)
     },
     media: {
       videos: asFiniteNumber(media.videos),
@@ -1350,13 +907,28 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
         sampled: asFiniteNumber(cc.sampled)
       } : null;
     })(),
+    states: (() => {
+      const states = asRecord(root.states);
+      return states.hoverSelectors != null ? {
+        hoverSelectors: asFiniteNumber(states.hoverSelectors),
+        focusSelectors: asFiniteNumber(states.focusSelectors),
+        focusVisibleSelectors: asFiniteNumber(states.focusVisibleSelectors),
+        activeSelectors: asFiniteNumber(states.activeSelectors)
+      } : null;
+    })(),
     transitions: (() => {
       const t = asRecord(root.transitions);
       return t.totalInteractive != null ? {
         totalInteractive: asFiniteNumber(t.totalInteractive),
         withTransition: asFiniteNumber(t.withTransition),
         withoutTransition: asFiniteNumber(t.withoutTransition),
-        ratio: asFiniteNumber(t.ratio)
+        ratio: asFiniteNumber(t.ratio),
+        withSpecificTransition: asFiniteNumber(t.withSpecificTransition),
+        withTransitionAll: asFiniteNumber(t.withTransitionAll),
+        gpuFriendlyTransitions: asFiniteNumber(t.gpuFriendlyTransitions),
+        expensiveTransitions: asFiniteNumber(t.expensiveTransitions),
+        maxDurationMs: asFiniteNumber(t.maxDurationMs),
+        averageDurationMs: asFiniteNumber(t.averageDurationMs)
       } : null;
     })(),
     contrast: (() => {
@@ -1367,7 +939,192 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
         fail: asFiniteNumber(c.fail),
         passRate: asFiniteNumber(c.passRate)
       } : null;
+    })(),
+    accessibility: accessibility.hasMainLandmark != null ? {
+      hasMainLandmark: Boolean(accessibility.hasMainLandmark),
+      hasNavLandmark: Boolean(accessibility.hasNavLandmark),
+      hasSkipLink: Boolean(accessibility.hasSkipLink),
+      genericLinkLabels: asFiniteNumber(accessibility.genericLinkLabels),
+      sampleGenericLinkLabels: asStringArray(accessibility.sampleGenericLinkLabels)
+    } : null,
+    assets: assets.responsiveImages != null ? {
+      responsiveImages: asFiniteNumber(assets.responsiveImages),
+      imagesWithSrcset: asFiniteNumber(assets.imagesWithSrcset),
+      imagesWithSizes: asFiniteNumber(assets.imagesWithSizes),
+      navLogoImages: asFiniteNumber(assets.navLogoImages)
+    } : null,
+    styles: (() => {
+      const styles = asRecord(root.styles);
+      return styles.accessibleStyleSheets != null ? {
+        accessibleStyleSheets: asFiniteNumber(styles.accessibleStyleSheets),
+        blockedStyleSheets: asFiniteNumber(styles.blockedStyleSheets),
+        mediaRules: asFiniteNumber(styles.mediaRules),
+        breakpointHints: asStringArray(styles.breakpointHints),
+        definedVariables: asFiniteNumber(styles.definedVariables),
+        usedVariables: asFiniteNumber(styles.usedVariables),
+        variableCategories: asStringArray(styles.variableCategories),
+        baseTagRules: asFiniteNumber(styles.baseTagRules),
+        baseTagVariableRules: asFiniteNumber(styles.baseTagVariableRules),
+        componentVariantSelectors: asFiniteNumber(styles.componentVariantSelectors),
+        sampleVariables: asStringArray(styles.sampleVariables),
+        sampleBaseTagSelectors: asStringArray(styles.sampleBaseTagSelectors),
+        sampleComponentVariantSelectors: asStringArray(styles.sampleComponentVariantSelectors)
+      } : null;
     })()
+  };
+}
+
+function mergeMetaDiagnosticsIntoSummary(
+  summary: PageAuditSummary,
+  extraMissing: string[]
+): PageAuditSummary {
+  if (extraMissing.length === 0) return summary;
+  const mergedMissing = Array.from(new Set([...summary.metaMissing, ...extraMissing]));
+  if (
+    mergedMissing.length === summary.metaMissing.length &&
+    mergedMissing.every((value, index) => value === summary.metaMissing[index])
+  ) {
+    return summary;
+  }
+
+  const failReasons = summary.failReasons.filter((reason) => !reason.startsWith('meta_missing:'));
+  if (mergedMissing.length > 0) {
+    failReasons.unshift(`meta_missing:${mergedMissing.join(',')}`);
+  }
+
+  return {
+    ...summary,
+    metaMissing: mergedMissing,
+    failReasons,
+    failCount: failReasons.length
+  };
+}
+
+function mergeStyleSignalsIntoSummary(
+  summary: PageAuditSummary,
+  styleSignals: PublishedPageEval['styleSignals']
+): PageAuditSummary {
+  if (!styleSignals || styleSignals.accessibleStyleSheets == null) return summary;
+  return {
+    ...summary,
+    styles: {
+      accessibleStyleSheets: asFiniteNumber(styleSignals.accessibleStyleSheets),
+      blockedStyleSheets: asFiniteNumber(styleSignals.blockedStyleSheets),
+      mediaRules: asFiniteNumber(styleSignals.mediaRules),
+      breakpointHints: asStringArray(styleSignals.breakpointHints),
+      definedVariables: asFiniteNumber(styleSignals.definedVariables),
+      usedVariables: asFiniteNumber(styleSignals.usedVariables),
+      variableCategories: asStringArray(styleSignals.variableCategories),
+      baseTagRules: asFiniteNumber(styleSignals.baseTagRules),
+      baseTagVariableRules: asFiniteNumber(styleSignals.baseTagVariableRules),
+      componentVariantSelectors: asFiniteNumber(styleSignals.componentVariantSelectors),
+      sampleVariables: asStringArray(styleSignals.sampleVariables),
+      sampleBaseTagSelectors: asStringArray(styleSignals.sampleBaseTagSelectors),
+      sampleComponentVariantSelectors: asStringArray(styleSignals.sampleComponentVariantSelectors)
+    }
+  };
+}
+
+function mergeStructureSignalsIntoSummary(
+  summary: PageAuditSummary,
+  structureSignals: PublishedPageEval['structureSignals']
+): PageAuditSummary {
+  if (!structureSignals) return summary;
+  return {
+    ...summary,
+    structure: {
+      hasNav: Boolean(structureSignals.hasNav),
+      hasFooter: Boolean(structureSignals.hasFooter),
+      ctaCount: asFiniteNumber(structureSignals.ctaCount)
+    }
+  };
+}
+
+function mergeStateSignalsIntoSummary(
+  summary: PageAuditSummary,
+  stateSignals: PublishedPageEval['stateSignals']
+): PageAuditSummary {
+  if (!stateSignals) return summary;
+  return {
+    ...summary,
+    states: {
+      hoverSelectors: asFiniteNumber(stateSignals.hoverSelectors),
+      focusSelectors: asFiniteNumber(stateSignals.focusSelectors),
+      focusVisibleSelectors: asFiniteNumber(stateSignals.focusVisibleSelectors),
+      activeSelectors: asFiniteNumber(stateSignals.activeSelectors)
+    },
+    transitions: {
+      totalInteractive: asFiniteNumber(stateSignals.interactiveElements),
+      withTransition: asFiniteNumber(stateSignals.interactiveWithTransition),
+      withoutTransition: Math.max(
+        0,
+        asFiniteNumber(stateSignals.interactiveElements) -
+          asFiniteNumber(stateSignals.interactiveWithTransition)
+      ),
+      ratio: asFiniteNumber(stateSignals.interactiveElements) > 0
+        ? asFiniteNumber(stateSignals.interactiveWithTransition) /
+          asFiniteNumber(stateSignals.interactiveElements)
+        : 0,
+      withSpecificTransition: asFiniteNumber(stateSignals.interactiveWithSpecificTransition),
+      withTransitionAll: asFiniteNumber(stateSignals.interactiveWithTransitionAll),
+      gpuFriendlyTransitions: asFiniteNumber(stateSignals.interactiveGpuFriendlyTransitions),
+      expensiveTransitions: asFiniteNumber(stateSignals.interactiveExpensiveTransitions),
+      maxDurationMs: asFiniteNumber(stateSignals.maxTransitionDurationMs),
+      averageDurationMs: asFiniteNumber(stateSignals.averageTransitionDurationMs)
+    }
+  };
+}
+
+function mergeAccessibilitySignalsIntoSummary(
+  summary: PageAuditSummary,
+  accessibilitySignals: PublishedPageEval['accessibilitySignals']
+): PageAuditSummary {
+  if (!accessibilitySignals) return summary;
+  return {
+    ...summary,
+    accessibility: {
+      hasMainLandmark: Boolean(accessibilitySignals.hasMainLandmark),
+      hasNavLandmark: Boolean(accessibilitySignals.hasNavLandmark),
+      hasSkipLink: Boolean(accessibilitySignals.hasSkipLink),
+      genericLinkLabels: asFiniteNumber(accessibilitySignals.genericLinkLabels),
+      sampleGenericLinkLabels: asStringArray(accessibilitySignals.sampleGenericLinkLabels)
+    }
+  };
+}
+
+function mergeAssetSignalsIntoSummary(
+  summary: PageAuditSummary,
+  assetSignals: PublishedPageEval['assetSignals']
+): PageAuditSummary {
+  if (!assetSignals) return summary;
+  return {
+    ...summary,
+    assets: {
+      responsiveImages: asFiniteNumber(assetSignals.responsiveImages),
+      imagesWithSrcset: asFiniteNumber(assetSignals.imagesWithSrcset),
+      imagesWithSizes: asFiniteNumber(assetSignals.imagesWithSizes),
+      navLogoImages: asFiniteNumber(assetSignals.navLogoImages)
+    }
+  };
+}
+
+function mergeFormSignalsIntoSummary(
+  summary: PageAuditSummary,
+  formSignals: PublishedPageEval['formSignals']
+): PageAuditSummary {
+  if (!formSignals) return summary;
+  return {
+    ...summary,
+    forms: summary.forms ? {
+      ...summary.forms,
+      wrongFieldTypes: asFiniteNumber(formSignals.wrongFieldTypes),
+      sampleWrongFieldTypes: asStringArray(formSignals.sampleWrongFieldTypes)
+    } : {
+      fields: 0,
+      missingLabels: 0,
+      wrongFieldTypes: asFiniteNumber(formSignals.wrongFieldTypes),
+      sampleWrongFieldTypes: asStringArray(formSignals.sampleWrongFieldTypes)
+    }
   };
 }
 
@@ -1388,156 +1145,6 @@ function emptyIssueCounts(): PublishedSnippetIssueCounts & { imagesBelowFoldNotL
     autoplayWithoutControls: 0,
     backgroundVideosMissingControl: 0,
     imagesBelowFoldNotLazy: 0
-  };
-}
-
-function normalizeSameOriginUrl(candidate: string, origin: string): string | null {
-  try {
-    const url = new URL(candidate, origin);
-    if (url.origin !== origin) return null;
-    if (['mailto:', 'tel:', 'javascript:'].includes(url.protocol)) return null;
-    url.hash = '';
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
-function extractDiscoveredUrlsFromHtml(html: string, origin: string, limit = 50): string[] {
-  const hrefPattern = /href\s*=\s*["']([^"'#]+)["']/gi;
-  const discovered: string[] = [];
-  const seen = new Set<string>();
-  let match: RegExpExecArray | null = null;
-
-  while ((match = hrefPattern.exec(html)) && discovered.length < limit) {
-    const normalized = normalizeSameOriginUrl(match[1] || '', origin);
-    if (!normalized || seen.has(normalized)) continue;
-    seen.add(normalized);
-    discovered.push(normalized);
-  }
-
-  return discovered;
-}
-
-function extractUrlsFromSitemap(xml: string, origin: string, limit = 200): string[] {
-  const locPattern = /<loc>([^<]+)<\/loc>/gi;
-  const urls: string[] = [];
-  const seen = new Set<string>();
-  let match: RegExpExecArray | null = null;
-
-  while ((match = locPattern.exec(xml)) && urls.length < limit) {
-    const normalized = normalizeSameOriginUrl(match[1] || '', origin);
-    if (!normalized || seen.has(normalized)) continue;
-    seen.add(normalized);
-    urls.push(normalized);
-  }
-
-  return urls;
-}
-
-async function fetchTextWithTimeout(url: string, timeoutMs: number): Promise<{ status: number; text: string }> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      redirect: 'follow',
-      headers: {
-        'user-agent': 'create-something-template-review/1.0'
-      }
-    });
-    return {
-      status: response.status,
-      text: await response.text()
-    };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function runPublishedPrecheck(
-  publishedUrl: string,
-  timeoutMs: number
-): Promise<PublishedSitePrecheckResult> {
-  const origin = new URL(publishedUrl).origin;
-  const startUrl = normalizeCrawlUrl(publishedUrl, origin) || `${origin}/`;
-  const errors: string[] = [];
-  const discovered = new Set<string>([startUrl]);
-
-  // Phase 1: Fetch homepage (must complete before we know which URLs to classify)
-  try {
-    const homepage = await fetchTextWithTimeout(startUrl, timeoutMs);
-    if (homepage.status >= 400) {
-      errors.push(`Homepage returned status ${homepage.status}`);
-    }
-    for (const url of extractDiscoveredUrlsFromHtml(homepage.text, origin, 50)) {
-      discovered.add(url);
-    }
-  } catch (error) {
-    errors.push(`Homepage fetch failed: ${error instanceof Error ? error.message : String(error)}`);
-  }
-
-  // Phase 2: Sitemap fetch + URL classification run CONCURRENTLY.
-  // The LLM call (~300ms for Haiku) hides behind the sitemap fetch (~500ms).
-  const sitemapCandidates = [`${origin}/sitemap.xml`, `${origin}/sitemap-index.xml`];
-
-  const sitemapPromise = (async () => {
-    let sitemap: PublishedSitePrecheckResult['sitemap'] = {
-      ok: false,
-      error: 'Sitemap not found'
-    };
-    for (const candidate of sitemapCandidates) {
-      try {
-        const response = await fetchTextWithTimeout(candidate, timeoutMs);
-        if (response.status >= 400) continue;
-        const urls = extractUrlsFromSitemap(response.text, origin);
-        if (urls.length === 0) continue;
-        for (const url of urls) discovered.add(url);
-        sitemap = { ok: true, count: urls.length, source: candidate };
-        break;
-      } catch {
-        // Try next candidate.
-      }
-    }
-    return sitemap;
-  })();
-
-  // Start classification on what we have so far (homepage links).
-  // Sitemap URLs get classified in a second pass if new ones appear.
-  const homepageUrls = Array.from(discovered).slice(0, 200);
-  const classifyPromise = classifyUrls(homepageUrls, startUrl);
-
-  // Wait for both to complete concurrently
-  const [sitemap, initialClassified] = await Promise.all([sitemapPromise, classifyPromise]);
-
-  // Merge any new sitemap-discovered URLs that weren't in the initial batch
-  const discoveredUrls = Array.from(discovered).slice(0, 200);
-  const newFromSitemap = discoveredUrls.filter((u) => !homepageUrls.includes(u));
-  let classifiedUrls = initialClassified;
-
-  if (newFromSitemap.length > 0) {
-    // Classify the new sitemap URLs (deterministic is instant; LLM adds ~200ms)
-    const extraClassified = await classifyUrls(newFromSitemap, startUrl);
-    classifiedUrls = [...initialClassified, ...extraClassified];
-  }
-
-  // Derive requiredPages from classifications (more robust than pattern matching)
-  const hasClassification = (type: string) =>
-    classifiedUrls.some((c) => c.classification === type);
-
-  return {
-    startUrl,
-    origin,
-    discoveredUrls,
-    classifiedUrls,
-    requiredPages: {
-      licenses: hasClassification('utility:license'),
-      instructions: hasClassification('utility:instructions'),
-      changelog: hasClassification('utility:changelog')
-    },
-    sitemap,
-    errors
   };
 }
 
@@ -1575,6 +1182,7 @@ async function crawlPublishedWebMcp(
     crawlMaxPages?: number;
     crawlMaxDepth?: number;
     seedUrls?: string[];
+    fetchProbe?: PublishedSitePrecheckResult['probe'];
     /** URL classifications from precheck (attached to each crawled page result). */
     classifiedUrls?: import('./types.js').ClassifiedUrl[];
     onProgress?: (processedPages: number, maxPages: number, message: string) => Promise<void>;
@@ -1629,6 +1237,7 @@ async function crawlPublishedWebMcp(
     ok: false,
     error: '404 audit was not executed'
   };
+  const browserProbeSurfaces = new Set<string>(['browser-dom']);
   const session = provider.openSession
     ? await provider.openSession({
         url: startUrl,
@@ -1652,6 +1261,9 @@ async function crawlPublishedWebMcp(
         classification: classificationMap.get(current.url),
         hasSnippet: false,
         snippetVersion: null,
+        probeMode: 'dom-fallback',
+        probeSources: ['browser-dom'],
+        internalLinks: [],
         hasRequiredLicenseText: null,
         error: null,
         summary: null
@@ -1666,12 +1278,12 @@ async function crawlPublishedWebMcp(
               waitForNavigation: false
             });
           }
-          raw = await session.evaluate<PublishedPageEval>(PUBLISHED_WEBMCP_PAGE_SCRIPT, {
+          raw = await session.evaluate<PublishedPageEval>(PUBLISHED_BROWSER_PROBE_SCRIPT, {
             target: 'main',
             timeout
           });
         } else {
-          raw = await provider.analyze<PublishedPageEval>(current.url, PUBLISHED_WEBMCP_PAGE_SCRIPT, {
+          raw = await provider.analyze<PublishedPageEval>(current.url, PUBLISHED_BROWSER_PROBE_SCRIPT, {
             timeout,
             waitForNavigation: false
           });
@@ -1680,6 +1292,12 @@ async function crawlPublishedWebMcp(
         pageResult.title = raw?.title ?? null;
         pageResult.hasSnippet = Boolean(raw?.hasSnippet);
         pageResult.snippetVersion = raw?.snippetVersion ?? null;
+        const probeMode = getPublishedBrowserProbeMode(raw || {});
+        pageResult.probeMode = probeMode;
+        pageResult.probeSources = getPublishedBrowserProbeSources(probeMode);
+        for (const surface of pageResult.probeSources) {
+          browserProbeSurfaces.add(surface);
+        }
         pageResult.hasRequiredLicenseText =
           typeof raw?.hasRequiredLicenseText === 'boolean' ? raw.hasRequiredLicenseText : null;
         if (raw?.policyChecks) {
@@ -1699,6 +1317,7 @@ async function crawlPublishedWebMcp(
         if (raw?.siteSettings) {
           pageResult.siteSettings = {
             hasCustomFavicon: Boolean(raw.siteSettings.hasCustomFavicon),
+            hasCustomWebclip: Boolean(raw.siteSettings.hasCustomWebclip),
             hasCustomFonts: Boolean(raw.siteSettings.hasCustomFonts),
             customFontSources: Array.isArray(raw.siteSettings.customFontSources) ? raw.siteSettings.customFontSources : [],
             detectedApps: Array.isArray(raw.siteSettings.detectedApps) ? raw.siteSettings.detectedApps : []
@@ -1749,11 +1368,50 @@ async function crawlPublishedWebMcp(
           pageResult.error = 'window.__wfReview is not available and DOM fallback failed';
         }
 
+        const deterministicMetaMissing = asStringArray(raw?.metaDiagnostics?.missing);
+        if (pageResult.summary && deterministicMetaMissing.length > 0) {
+          pageResult.summary = mergeMetaDiagnosticsIntoSummary(
+            pageResult.summary,
+            deterministicMetaMissing
+          );
+        }
+        if (pageResult.summary && raw?.styleSignals) {
+          pageResult.summary = mergeStyleSignalsIntoSummary(pageResult.summary, raw.styleSignals);
+        }
+        if (pageResult.summary && raw?.structureSignals) {
+          pageResult.summary = mergeStructureSignalsIntoSummary(
+            pageResult.summary,
+            raw.structureSignals
+          );
+        }
+        if (pageResult.summary && raw?.stateSignals) {
+          pageResult.summary = mergeStateSignalsIntoSummary(pageResult.summary, raw.stateSignals);
+        }
+        if (pageResult.summary && raw?.accessibilitySignals) {
+          pageResult.summary = mergeAccessibilitySignalsIntoSummary(
+            pageResult.summary,
+            raw.accessibilitySignals
+          );
+        }
+        if (pageResult.summary && raw?.assetSignals) {
+          pageResult.summary = mergeAssetSignalsIntoSummary(pageResult.summary, raw.assetSignals);
+        }
+        if (pageResult.summary && raw?.formSignals) {
+          pageResult.summary = mergeFormSignalsIntoSummary(pageResult.summary, raw.formSignals);
+        }
+
         const rawLinks = Array.isArray(raw?.links) ? raw.links : [];
+        const normalizedLinks = Array.from(
+          new Set(
+            rawLinks
+              .map((candidate) => normalizeCrawlUrl(String(candidate), origin))
+              .filter((link): link is string => Boolean(link))
+          )
+        );
+        pageResult.internalLinks = normalizedLinks;
         if (current.depth < maxDepth) {
-          for (const candidate of rawLinks) {
-            const normalized = normalizeCrawlUrl(String(candidate), origin);
-            if (!normalized || seen.has(normalized)) continue;
+          for (const normalized of normalizedLinks) {
+            if (seen.has(normalized)) continue;
             seen.add(normalized);
             queue.push({ url: normalized, depth: current.depth + 1 });
           }
@@ -1835,6 +1493,7 @@ async function crawlPublishedWebMcp(
   const auditedPages = pages.filter((page) => Boolean(page.summary)).length;
   const pagesWithSnippet = pages.filter((page) => page.hasSnippet).length;
   const failingPages = pages.filter((page) => (page.summary?.failCount || 0) > 0).length;
+  const domFallbackPages = pages.filter((page) => page.probeMode === 'dom-fallback').length;
 
   // Aggregate policy checks across all pages
   const allAffiliateLinks: string[] = [];
@@ -1855,12 +1514,14 @@ async function crawlPublishedWebMcp(
 
   // Aggregate site settings across all pages
   let anyPageHasCustomFavicon = false;
+  let anyPageHasCustomWebclip = false;
   let anyPageHasCustomFonts = false;
   const allCustomFontSources: string[] = [];
   const allDetectedApps: string[] = [];
   for (const page of pages) {
     if (page.siteSettings) {
       if (page.siteSettings.hasCustomFavicon) anyPageHasCustomFavicon = true;
+      if (page.siteSettings.hasCustomWebclip) anyPageHasCustomWebclip = true;
       if (page.siteSettings.hasCustomFonts) anyPageHasCustomFonts = true;
       if (page.siteSettings.customFontSources) {
         allCustomFontSources.push(...page.siteSettings.customFontSources);
@@ -1880,6 +1541,43 @@ async function crawlPublishedWebMcp(
   // Collect URLs that were discovered but not crawled (maxPages cap)
   const visitedUrls = new Set(pages.map((p) => p.url));
   const skippedUrls = Array.from(seen).filter((url) => !visitedUrls.has(url));
+  const responsiveSecondaryUrl =
+    (options.classifiedUrls || []).find((candidate) =>
+      candidate.url !== startUrl &&
+      (
+        candidate.classification === 'content' ||
+        candidate.classification === 'cms-listing' ||
+        candidate.classification === 'cms-detail' ||
+        candidate.classification === 'ecommerce'
+      )
+    )?.url ||
+    pages.find((page) =>
+      page.url !== startUrl &&
+      !page.error &&
+      page.summary &&
+      page.classification !== 'utility:license' &&
+      page.classification !== 'utility:instructions' &&
+      page.classification !== 'utility:style-guide' &&
+      page.classification !== 'utility:changelog' &&
+      page.classification !== 'error-page'
+    )?.url;
+  const responsiveSampleUrls = Array.from(
+    new Set(
+      [
+        startUrl,
+        responsiveSecondaryUrl
+      ].filter((url): url is string => Boolean(url))
+    )
+  ).slice(0, 2);
+  const responsive = responsiveSampleUrls.length > 0
+    ? await runPublishedResponsiveProbe(provider, responsiveSampleUrls, {
+        timeout: Math.min(timeout, 30000)
+      })
+    : {
+        pagesSampled: 0,
+        totalViewportChecks: 0,
+        pages: []
+      };
 
   return {
     startUrl,
@@ -1893,6 +1591,15 @@ async function crawlPublishedWebMcp(
     skippedUrls,
     snippetVersion,
     snippetTools,
+    probes: {
+      fetch: options.fetchProbe,
+      browser: {
+        evaluatedPages: pages.length,
+        snippetPages: pagesWithSnippet,
+        domFallbackPages,
+        surfaces: Array.from(browserProbeSurfaces).sort() as PublishedSnippetCrawlResult['probes']['browser']['surfaces']
+      }
+    },
     sitemapStatus,
     audit404,
     issueCounts,
@@ -1905,10 +1612,12 @@ async function crawlPublishedWebMcp(
     },
     siteSettings: {
       hasCustomFavicon: anyPageHasCustomFavicon,
+      hasCustomWebclip: anyPageHasCustomWebclip,
       hasCustomFonts: anyPageHasCustomFonts,
       customFontSources: uniqueFontSources,
       detectedApps: uniqueDetectedApps
     },
+    responsive,
     pages
   };
 }
@@ -1922,12 +1631,37 @@ function mapDesignerStatus(
     return {
       status: 'manual',
       evidence: [`Designer check not found: ${id}`],
-      confidence: 0.2
+      confidence: 0.15
     };
   }
-  if (check.result === 'pass') return { status: 'pass', evidence: check.evidence, confidence: 0.93 };
-  if (check.result === 'fail') return { status: 'fail', evidence: check.evidence, confidence: 0.93 };
-  return { status: 'manual', evidence: check.evidence, confidence: 0.2 };
+  const heuristicIds = new Set([
+    'components.title_case_naming',
+    'styles.class_naming_consistency',
+    'pages.title_case_naming',
+    'pages.style_guide_exists',
+    'pages.instructions_exists',
+    'pages.licenses_exists',
+    'cms.collection_name_title_case',
+  ]);
+  const panelInventoryIds = new Set([
+    'components.nav_footer_cta',
+    'variables.breakpoint_modes',
+    'styles.base_tag_selectors',
+    'cms.collection_pages_present',
+    'cms.collections_detected',
+    'cms.item_count_range',
+  ]);
+  const confidence =
+    check.result === 'manual'
+      ? 0.2
+      : heuristicIds.has(id)
+        ? 0.6
+        : panelInventoryIds.has(id)
+          ? 0.78
+          : 0.7;
+  if (check.result === 'pass') return { status: 'pass', evidence: check.evidence, confidence };
+  if (check.result === 'fail') return { status: 'fail', evidence: check.evidence, confidence };
+  return { status: 'manual', evidence: check.evidence, confidence };
 }
 
 function unifyRows(
@@ -1951,6 +1685,185 @@ function unifyRows(
       )
     )
   ).sort();
+  const styleSignalPages = published.pages.filter((page) => page.summary?.styles);
+  const aggregatedBreakpointHints = Array.from(
+    new Set(
+      styleSignalPages.flatMap((page) => page.summary?.styles?.breakpointHints || [])
+    )
+  ).sort();
+  const aggregatedVariableCategories = Array.from(
+    new Set(
+      styleSignalPages.flatMap((page) => page.summary?.styles?.variableCategories || [])
+    )
+  ).sort();
+  const maxDefinedVariables = styleSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.styles?.definedVariables || 0),
+    0
+  );
+  const maxUsedVariables = styleSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.styles?.usedVariables || 0),
+    0
+  );
+  const maxAccessibleStyleSheets = styleSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.styles?.accessibleStyleSheets || 0),
+    0
+  );
+  const maxBlockedStyleSheets = styleSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.styles?.blockedStyleSheets || 0),
+    0
+  );
+  const maxBaseTagRules = styleSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.styles?.baseTagRules || 0),
+    0
+  );
+  const maxBaseTagVariableRules = styleSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.styles?.baseTagVariableRules || 0),
+    0
+  );
+  const maxComponentVariantSelectors = styleSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.styles?.componentVariantSelectors || 0),
+    0
+  );
+  const samplePublishedVariables =
+    styleSignalPages.find((page) => (page.summary?.styles?.sampleVariables.length || 0) > 0)
+      ?.summary?.styles?.sampleVariables || [];
+  const samplePublishedBaseTagSelectors =
+    styleSignalPages.find((page) => (page.summary?.styles?.sampleBaseTagSelectors.length || 0) > 0)
+      ?.summary?.styles?.sampleBaseTagSelectors || [];
+  const samplePublishedComponentVariantSelectors =
+    styleSignalPages.find((page) => (page.summary?.styles?.sampleComponentVariantSelectors.length || 0) > 0)
+      ?.summary?.styles?.sampleComponentVariantSelectors || [];
+  const hasPublishedStyleSignals = styleSignalPages.length > 0 && maxAccessibleStyleSheets > 0;
+  const hasPublishedBreakpointHints = ['479', '767', '991'].every((hint) =>
+    aggregatedBreakpointHints.includes(hint)
+  );
+  const hasPublishedReusableVariableSignals =
+    hasPublishedStyleSignals &&
+    maxDefinedVariables >= 6 &&
+    maxUsedVariables >= 6 &&
+    aggregatedVariableCategories.length >= 2;
+  const stateSignalPages = published.pages.filter((page) => page.summary?.states);
+  const maxHoverSelectors = stateSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.states?.hoverSelectors || 0),
+    0
+  );
+  const maxFocusSelectors = stateSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.states?.focusSelectors || 0),
+    0
+  );
+  const maxFocusVisibleSelectors = stateSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.states?.focusVisibleSelectors || 0),
+    0
+  );
+  const maxActiveSelectors = stateSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.states?.activeSelectors || 0),
+    0
+  );
+  const transitionSignalPages = published.pages.filter((page) => page.summary?.transitions);
+  const totalInteractiveElements = transitionSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.transitions?.totalInteractive || 0),
+    0
+  );
+  const totalInteractiveWithTransition = transitionSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.transitions?.withTransition || 0),
+    0
+  );
+  const totalInteractiveWithSpecificTransition = transitionSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.transitions?.withSpecificTransition || 0),
+    0
+  );
+  const totalInteractiveWithTransitionAll = transitionSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.transitions?.withTransitionAll || 0),
+    0
+  );
+  const totalInteractiveGpuFriendlyTransitions = transitionSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.transitions?.gpuFriendlyTransitions || 0),
+    0
+  );
+  const totalInteractiveExpensiveTransitions = transitionSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.transitions?.expensiveTransitions || 0),
+    0
+  );
+  const maxTransitionDurationMs = transitionSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.transitions?.maxDurationMs || 0),
+    0
+  );
+  const averageTransitionDurationMs = totalInteractiveWithTransition > 0
+    ? transitionSignalPages.reduce(
+        (sum, page) =>
+          sum + (
+            (page.summary?.transitions?.averageDurationMs || 0) *
+            (page.summary?.transitions?.withTransition || 0)
+          ),
+        0
+      ) / totalInteractiveWithTransition
+    : 0;
+  const accessibilitySignalPages = published.pages.filter((page) => page.summary?.accessibility);
+  const allSampledPagesHaveMainLandmark =
+    accessibilitySignalPages.length > 0 &&
+    accessibilitySignalPages.every((page) => Boolean(page.summary?.accessibility?.hasMainLandmark));
+  const allSampledPagesHaveNavLandmark =
+    accessibilitySignalPages.length > 0 &&
+    accessibilitySignalPages.every((page) => Boolean(page.summary?.accessibility?.hasNavLandmark));
+  const anySampledPageHasSkipLink = accessibilitySignalPages.some(
+    (page) => Boolean(page.summary?.accessibility?.hasSkipLink)
+  );
+  const totalGenericLinkLabels = accessibilitySignalPages.reduce(
+    (sum, page) => sum + (page.summary?.accessibility?.genericLinkLabels || 0),
+    0
+  );
+  const sampleGenericLinkLabels =
+    accessibilitySignalPages.find(
+      (page) => (page.summary?.accessibility?.sampleGenericLinkLabels.length || 0) > 0
+    )?.summary?.accessibility?.sampleGenericLinkLabels || [];
+  const assetSignalPages = published.pages.filter(
+    (page) => page.summary?.assets && (page.summary?.images?.images || 0) > 0
+  );
+  const totalPublishedImages = assetSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.images?.images || 0),
+    0
+  );
+  const totalResponsiveImages = assetSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.assets?.responsiveImages || 0),
+    0
+  );
+  const totalImagesWithSrcset = assetSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.assets?.imagesWithSrcset || 0),
+    0
+  );
+  const totalImagesWithSizes = assetSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.assets?.imagesWithSizes || 0),
+    0
+  );
+  const maxNavLogoImages = assetSignalPages.reduce(
+    (max, page) => Math.max(max, page.summary?.assets?.navLogoImages || 0),
+    0
+  );
+  const responsiveImageCoverage = totalPublishedImages > 0
+    ? totalResponsiveImages / totalPublishedImages
+    : 0;
+  const formSignalPages = published.pages.filter((page) => page.summary?.forms && (page.summary?.forms?.fields || 0) > 0);
+  const totalWrongFieldTypes = formSignalPages.reduce(
+    (sum, page) => sum + (page.summary?.forms?.wrongFieldTypes || 0),
+    0
+  );
+  const sampleWrongFieldTypes =
+    formSignalPages.find((page) => (page.summary?.forms?.sampleWrongFieldTypes.length || 0) > 0)
+      ?.summary?.forms?.sampleWrongFieldTypes || [];
+  const responsiveViewportChecks = published.responsive?.pages.flatMap((page) =>
+    page.viewports.map((viewport) => ({
+      pageUrl: page.url,
+      ...viewport
+    }))
+  ) || [];
+  const responsiveOverflowChecks = responsiveViewportChecks.filter((viewport) => viewport.horizontalOverflow);
+  const responsiveClippedTextChecks = responsiveViewportChecks.filter(
+    (viewport) => viewport.clippedTextElements > 0
+  );
+  const responsiveTinyTapChecks = responsiveViewportChecks.filter(
+    (viewport) => viewport.tinyTapTargets > 0
+  );
+  const firstResponsiveTinyTapCheck = responsiveTinyTapChecks[0] || null;
 
   // Match /license, /licenses, /licensing, /templates/licensing, etc.
   const licenseUrlPattern = '/licens';
@@ -1970,6 +1883,26 @@ function unifyRows(
     (page) => typeof page.hasRequiredLicenseText === 'boolean'
   );
   const hasRequiredLicenseText = licensePages.some((page) => page.hasRequiredLicenseText === true);
+  const hasPrecheckClassification = (classification: import('./types.js').PageClassification) =>
+    (precheck?.classifiedUrls ?? []).some((item) => item.classification === classification);
+  const hasCrawledClassification = (classification: import('./types.js').PageClassification) =>
+    published.pages.some((page) => page.classification === classification);
+  const designerPageNamesLower = designer.metadataSummary.pages.map((page) => page.name.toLowerCase());
+  const designerHasStyleGuidePage = designerPageNamesLower.some(
+    (name) => name.includes('style guide') || name.includes('styleguide')
+  );
+  const designerHasInstructionsPage = designerPageNamesLower.some(
+    (name) =>
+      name.includes('instruction') ||
+      name.includes('instructions') ||
+      name.includes('start here') ||
+      name.includes('getting started') ||
+      name.includes('documentation') ||
+      (name.includes('guide') && !name.includes('style guide') && !name.includes('styleguide'))
+  );
+  const designerHasLicensePage = designerPageNamesLower.some(
+    (name) => name.includes('license') || name.includes('licenses')
+  );
 
   const rows: UnifiedReviewRow[] = [];
   // Severity mapping: checks are classified by impact on template quality
@@ -1984,9 +1917,13 @@ function unifyRows(
     'webflow_audit.h1_hierarchy': 'major',
     'webflow_audit.alt_text': 'major',
     'components.nav_footer_cta': 'major',
+    'pages.style_guide_exists': 'major',
+    'pages.instructions_exists': 'major',
+    'pages.licenses_exists': 'major',
     'pages.meta_tags_static': 'major',
     'pages.cms_used_relational': 'major',
     'styles.base_tag_styles': 'major',
+    'forms.field_types': 'major',
     // Minor: nice to have, lower impact
     'components.title_case_names': 'minor',
     'pages.image_loading_strategy': 'minor',
@@ -1994,6 +1931,13 @@ function unifyRows(
     'pages.videos_controls': 'minor',
     'variables.breakpoint_modes': 'minor',
     'assets.modern_formats': 'minor',
+    'assets.responsive_images': 'minor',
+    'responsive.tap_target_sizing': 'minor',
+    'styles.interactive_states': 'minor',
+    'interactions.transition_properties': 'minor',
+    'a11y.landmarks_present': 'minor',
+    'a11y.descriptive_link_labels': 'minor',
+    'settings.custom_webclip': 'minor',
     // Info: informational, doesn't affect quality rating
     'policy.gsap_detected': 'info',
     'policy.custom_code_detected': 'info',
@@ -2049,6 +1993,10 @@ function unifyRows(
   const dStylesBase = mapDesignerStatus(designer, 'styles.base_tag_selectors');
   const dComboDepth = mapDesignerStatus(designer, 'styles.combo_class_depth');
   const dCmsRel = mapDesignerStatus(designer, 'cms.collection_pages_present');
+  const dStyleGuideExists = mapDesignerStatus(designer, 'pages.style_guide_exists');
+  const dInstructionsExists = mapDesignerStatus(designer, 'pages.instructions_exists');
+  const dLicensesExists = mapDesignerStatus(designer, 'pages.licenses_exists');
+  const policy = published.policyChecks;
 
   // Helper: extract short paths for pages matching a predicate (for evidence)
   const failingPaths = (
@@ -2100,14 +2048,42 @@ function unifyRows(
     'Add descriptive alt text for informative images and mark decorative images appropriately.'
   );
 
+  const publishedStructure = home?.summary?.structure;
+  const hasPublishedNavFooterCtaSignal = Boolean(
+    publishedStructure?.hasNav &&
+    publishedStructure?.hasFooter &&
+    (publishedStructure?.ctaCount || 0) > 0 &&
+    maxComponentVariantSelectors > 0
+  );
   pushRow(
     'components.nav_footer_cta',
     'Components Panel',
     'Nav, Footer and CTAs are Components',
-    dNavFooter.status,
-    dNavFooter.evidence,
-    ['designer-mcp'],
-    dNavFooter.confidence
+    dNavFooter.status !== 'manual'
+      ? dNavFooter.status
+      : hasPublishedNavFooterCtaSignal
+        ? 'partial'
+        : 'manual',
+    dNavFooter.status !== 'manual'
+      ? dNavFooter.evidence
+      : hasPublishedNavFooterCtaSignal
+        ? [
+            `publishedHasNav=${Boolean(publishedStructure?.hasNav)}`,
+            `publishedHasFooter=${Boolean(publishedStructure?.hasFooter)}`,
+            `publishedCtaCount=${publishedStructure?.ctaCount || 0}`,
+            `publishedVariantSelectors=${maxComponentVariantSelectors}`,
+            ...(samplePublishedComponentVariantSelectors.length > 0
+              ? [`sampleVariantSelectors=${samplePublishedComponentVariantSelectors.join(', ')}`]
+              : []),
+            'Published DOM and stylesheet signals suggest reusable nav/footer/CTA variants, but Designer component setup is not directly confirmed.'
+          ]
+        : dNavFooter.evidence,
+    hasPublishedNavFooterCtaSignal ? ['designer-mcp', 'published-webmcp-crawl'] : ['designer-mcp'],
+    dNavFooter.status !== 'manual'
+      ? dNavFooter.confidence
+      : hasPublishedNavFooterCtaSignal
+        ? 0.58
+        : dNavFooter.confidence
   );
 
   pushRow(
@@ -2119,6 +2095,99 @@ function unifyRows(
     ['designer-mcp'],
     dComponentNames.confidence,
     'Rename components/variants to Title Case with concise human-readable labels.'
+  );
+
+  const styleGuideDetected =
+    designerHasStyleGuidePage ||
+    hasCrawledClassification('utility:style-guide') ||
+    hasPrecheckClassification('utility:style-guide');
+  const styleGuideConfidence = styleGuideDetected
+    ? hasCrawledClassification('utility:style-guide') || hasPrecheckClassification('utility:style-guide')
+      ? 0.84
+      : dStyleGuideExists.confidence
+    : 0.62;
+  pushRow(
+    'pages.style_guide_exists',
+    'Required Pages',
+    'Style Guide page exists',
+    styleGuideDetected ? 'pass' : 'fail',
+    [
+      `designerFound=${designerHasStyleGuidePage}`,
+      `publishedFound=${hasCrawledClassification('utility:style-guide')}`,
+      `precheckFound=${hasPrecheckClassification('utility:style-guide')}`,
+      ...(!styleGuideDetected ? dStyleGuideExists.evidence : [])
+    ],
+    ['designer-mcp', 'published-webmcp-crawl'],
+    styleGuideConfidence,
+    styleGuideDetected ? undefined : 'Add a Style Guide page or ensure it is published and discoverable from the site.'
+  );
+
+  const instructionsPageDetected =
+    designerHasInstructionsPage ||
+    hasCrawledClassification('utility:instructions') ||
+    Boolean(precheck?.requiredPages.instructions) ||
+    hasPrecheckClassification('utility:instructions');
+  const instructionsRequiredByPublishedPolicy = policy.hasGsap || policy.hasCustomCode;
+  const instructionsExistsStatus: UnifiedReviewStatus = instructionsPageDetected
+    ? 'pass'
+    : instructionsRequiredByPublishedPolicy
+      ? 'fail'
+      : dInstructionsExists.status === 'fail'
+        ? 'partial'
+        : dInstructionsExists.status;
+  const instructionsConfidence =
+    instructionsExistsStatus === 'pass'
+      ? instructionsPageDetected && (hasCrawledClassification('utility:instructions') || Boolean(precheck?.requiredPages.instructions))
+        ? 0.84
+        : dInstructionsExists.confidence
+      : instructionsExistsStatus === 'fail'
+        ? 0.82
+        : instructionsExistsStatus === 'partial'
+          ? 0.5
+          : 0.3;
+  pushRow(
+    'pages.instructions_exists',
+    'Required Pages',
+    'Instructions page exists when advanced interactions/components or custom setup are used',
+    instructionsExistsStatus,
+    [
+      `designerFound=${designerHasInstructionsPage}`,
+      `publishedFound=${hasCrawledClassification('utility:instructions')}`,
+      `precheckFound=${Boolean(precheck?.requiredPages.instructions) || hasPrecheckClassification('utility:instructions')}`,
+      `requiredByPublishedPolicy=${instructionsRequiredByPublishedPolicy}`,
+      ...dInstructionsExists.evidence
+    ],
+    ['designer-mcp', 'published-webmcp-crawl'],
+    instructionsConfidence,
+    instructionsExistsStatus === 'pass'
+      ? undefined
+      : 'Add an Instructions/Start Here page when advanced interactions, GSAP, or custom code require setup guidance.'
+  );
+
+  const licenseDetected =
+    designerHasLicensePage ||
+    hasLicensePage ||
+    hasCrawledClassification('utility:license') ||
+    hasPrecheckClassification('utility:license');
+  const licenseExistsConfidence = licenseDetected
+    ? hasLicensePage || hasCrawledClassification('utility:license') || hasPrecheckClassification('utility:license')
+      ? 0.86
+      : dLicensesExists.confidence
+    : 0.66;
+  pushRow(
+    'pages.licenses_exists',
+    'Required Pages',
+    'Licenses page exists',
+    licenseDetected ? 'pass' : 'fail',
+    [
+      `designerFound=${designerHasLicensePage}`,
+      `publishedFound=${hasLicensePageCrawled || hasCrawledClassification('utility:license')}`,
+      `precheckFound=${hasLicensePageDiscovered || hasPrecheckClassification('utility:license')}`,
+      ...(!licenseDetected ? dLicensesExists.evidence : [])
+    ],
+    ['designer-mcp', 'published-webmcp-crawl'],
+    licenseExistsConfidence,
+    licenseDetected ? undefined : 'Add a Licenses page or ensure it is published and discoverable from the site.'
   );
 
   const ix2MissingTargets = home?.summary?.ix2?.missingTargets ?? 0;
@@ -2150,10 +2219,31 @@ function unifyRows(
     'variables.defined_reusable',
     'Variables Panel',
     'Color, typography, and spacing variables are defined and reusable',
-    dVarReusable.status,
-    dVarReusable.evidence,
-    ['designer-mcp'],
-    dVarReusable.confidence
+    dVarReusable.status !== 'manual'
+      ? dVarReusable.status
+      : hasPublishedReusableVariableSignals
+        ? 'partial'
+        : 'manual',
+    dVarReusable.status !== 'manual'
+      ? dVarReusable.evidence
+      : hasPublishedReusableVariableSignals
+        ? [
+            `publishedDefinedVariables=${maxDefinedVariables}`,
+            `publishedUsedVariables=${maxUsedVariables}`,
+            `publishedVariableCategories=${aggregatedVariableCategories.join(', ')}`,
+            `accessibleStyleSheets=${maxAccessibleStyleSheets}`,
+            ...(samplePublishedVariables.length > 0
+              ? [`sampleVariables=${samplePublishedVariables.join(', ')}`]
+              : []),
+            'Published CSS shows reusable custom-property signals, but Designer variable inventory is not confirmed.'
+          ]
+        : dVarReusable.evidence,
+    hasPublishedReusableVariableSignals ? ['designer-mcp', 'published-webmcp-crawl'] : ['designer-mcp'],
+    dVarReusable.status !== 'manual'
+      ? dVarReusable.confidence
+      : hasPublishedReusableVariableSignals
+        ? 0.56
+        : dVarReusable.confidence
   );
   pushRow(
     'variables.title_case',
@@ -2168,10 +2258,30 @@ function unifyRows(
     'variables.breakpoint_modes',
     'Variables Panel',
     'Variable Modes exist for tablet, mobile landscape, portrait breakpoints',
-    dVarBreakpoints.status,
-    dVarBreakpoints.evidence,
-    ['designer-mcp'],
-    dVarBreakpoints.confidence
+    dVarBreakpoints.status !== 'manual'
+      ? dVarBreakpoints.status
+      : hasPublishedStyleSignals && hasPublishedBreakpointHints
+        ? 'partial'
+        : 'manual',
+    dVarBreakpoints.status !== 'manual'
+      ? dVarBreakpoints.evidence
+      : hasPublishedStyleSignals && hasPublishedBreakpointHints
+        ? [
+            `publishedBreakpointHints=${aggregatedBreakpointHints.join(', ')}`,
+            `accessibleStyleSheets=${maxAccessibleStyleSheets}`,
+            `blockedStyleSheets=${maxBlockedStyleSheets}`,
+            `pagesWithStyleSignals=${styleSignalPages.length}`,
+            'Published CSS includes standard breakpoint media queries, but Designer variable modes are not directly confirmed.'
+          ]
+        : dVarBreakpoints.evidence,
+    hasPublishedStyleSignals && hasPublishedBreakpointHints
+      ? ['designer-mcp', 'published-webmcp-crawl']
+      : ['designer-mcp'],
+    dVarBreakpoints.status !== 'manual'
+      ? dVarBreakpoints.confidence
+      : hasPublishedStyleSignals && hasPublishedBreakpointHints
+        ? 0.5
+        : dVarBreakpoints.confidence
   );
 
   pushRow(
@@ -2196,10 +2306,56 @@ function unifyRows(
     'styles.base_uses_variables',
     'Styles Selector',
     'Variables are used to define base tag styles',
-    'manual',
-    ['Variable linkage is not currently extracted by this MCP pipeline.'],
-    ['designer-mcp'],
-    0.2
+    !hasPublishedStyleSignals
+      ? 'manual'
+      : maxBaseTagVariableRules > 0
+        ? 'pass'
+        : maxBaseTagRules > 0
+          ? 'fail'
+          : 'manual',
+    !hasPublishedStyleSignals
+      ? ['Published stylesheet signals were not available for this page sample.']
+      : [
+          `accessibleStyleSheets=${maxAccessibleStyleSheets}`,
+          `blockedStyleSheets=${maxBlockedStyleSheets}`,
+          `baseTagRules=${maxBaseTagRules}`,
+          `baseTagVariableRules=${maxBaseTagVariableRules}`,
+          ...(samplePublishedBaseTagSelectors.length > 0
+            ? [`sampleSelectors=${samplePublishedBaseTagSelectors.join(' | ')}`]
+            : [])
+        ],
+    ['published-webmcp-crawl'],
+    hasPublishedStyleSignals ? 0.74 : 0.2
+  );
+  const interactiveStateStatus: UnifiedReviewStatus =
+    stateSignalPages.length === 0
+      ? 'manual'
+      : maxHoverSelectors > 0 && (maxFocusSelectors > 0 || maxFocusVisibleSelectors > 0)
+        ? maxActiveSelectors > 0 ? 'pass' : 'partial'
+        : maxHoverSelectors > 0 || maxFocusSelectors > 0 || maxFocusVisibleSelectors > 0
+          ? 'partial'
+          : 'fail';
+  pushRow(
+    'styles.interactive_states',
+    'Styles Selector',
+    'Hover, focus, and active states are styled where applicable',
+    interactiveStateStatus,
+    stateSignalPages.length > 0
+      ? [
+          `hoverSelectors=${maxHoverSelectors}`,
+          `focusSelectors=${maxFocusSelectors}`,
+          `focusVisibleSelectors=${maxFocusVisibleSelectors}`,
+          `activeSelectors=${maxActiveSelectors}`,
+          `pagesChecked=${stateSignalPages.length}`
+        ]
+      : ['Published state-selector signals were not available.'],
+    ['published-webmcp-crawl'],
+    stateSignalPages.length > 0 ? 0.68 : 0.2,
+    interactiveStateStatus === 'fail'
+      ? 'Add explicit hover and focus-visible styles for interactive elements; include active/pressed states where relevant.'
+      : interactiveStateStatus === 'partial'
+        ? 'Interactive state styling is only partially evidenced in published CSS. Expand focus-visible and active coverage.'
+        : undefined
   );
   // Supplement combo depth with DOM-extracted data when Designer check is manual
   const comboPages = published.pages.filter((p) => p.summary?.comboClassDepth);
@@ -2347,9 +2503,20 @@ function unifyRows(
     0.86
   );
 
-  // Aggregate which specific meta tags are most commonly missing
+  const staticMetaPages = published.pages.filter(
+    (page) =>
+      page.summary &&
+      page.classification !== 'cms-detail' &&
+      page.classification !== 'error-page' &&
+      !is404PageTitle(page.title)
+  );
+  const staticPagesWithMissingMeta = staticMetaPages.filter(
+    (page) => (page.summary?.metaMissing.length || 0) > 0
+  ).length;
+
+  // Aggregate which specific meta tags are most commonly missing on static-like pages
   const metaTagCounts: Record<string, number> = {};
-  for (const page of published.pages) {
+  for (const page of staticMetaPages) {
     if (!page.summary) continue;
     for (const tag of page.summary.metaMissing) {
       metaTagCounts[tag] = (metaTagCounts[tag] || 0) + 1;
@@ -2358,20 +2525,21 @@ function unifyRows(
   const topMissingTags = Object.entries(metaTagCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
-    .map(([tag, count]) => `${tag}(${count}/${totalAudited})`);
+    .map(([tag, count]) => `${tag}(${count}/${staticMetaPages.length || 0})`);
 
   pushRow(
     'pages.meta_tags_static',
     'Page Level Checks',
-    'Each static page has meta title, meta description and Open Graph tags',
-    published.issueCounts.metaMissing > 0 ? 'fail' : 'pass',
+    'Each static page has title, meta description, and core Open Graph tags',
+    staticPagesWithMissingMeta > 0 ? 'fail' : 'pass',
     [
-      `pagesWithMissingMeta=${published.issueCounts.metaMissing}/${totalAudited}`,
+      `staticPagesChecked=${staticMetaPages.length}`,
+      `pagesWithMissingMeta=${staticPagesWithMissingMeta}/${staticMetaPages.length || 0}`,
       ...(topMissingTags.length > 0 ? [`mostCommonMissing=${topMissingTags.join(', ')}`] : [])
     ],
     ['published-webmcp-crawl'],
     0.9,
-    'Add missing Open Graph/meta tags per page, including og:image.'
+    'Add missing title, description, og:title, og:description, and og:image tags per page.'
   );
 
   pushRow(
@@ -2381,6 +2549,7 @@ function unifyRows(
     'partial',
     [
       `cmsCollectionsDetected=${designer.metadataSummary.totalCMSCollections}`,
+      `cmsDetailPagesAudited=${published.pages.filter((page) => page.classification === 'cms-detail').length}`,
       'Dynamic field binding cannot be confirmed from current payloads.'
     ],
     ['designer-mcp', 'published-webmcp-crawl'],
@@ -2439,16 +2608,10 @@ function unifyRows(
     'Add width/height attributes or explicit aspect-ratio to image elements.'
   );
 
-  // Aggregate transition data across crawled pages
-  const transitionPages = published.pages.filter((p) => p.summary?.transitions);
-  const totalTransitionEls = transitionPages.reduce(
-    (sum, p) => sum + (p.summary?.transitions?.totalInteractive || 0), 0
-  );
-  const totalWithTransition = transitionPages.reduce(
-    (sum, p) => sum + (p.summary?.transitions?.withTransition || 0), 0
-  );
-  const transitionRatio = totalTransitionEls > 0 ? totalWithTransition / totalTransitionEls : 0;
-  const hasTransitionData = transitionPages.length > 0;
+  const transitionRatio = totalInteractiveElements > 0
+    ? totalInteractiveWithTransition / totalInteractiveElements
+    : 0;
+  const hasTransitionData = transitionSignalPages.length > 0;
   pushRow(
     'pages.transition_simple',
     'Page Level Checks',
@@ -2459,8 +2622,8 @@ function unifyRows(
       : 'fail',
     hasTransitionData
       ? [
-          `interactiveElements=${totalTransitionEls}`,
-          `withTransitions=${totalWithTransition}`,
+          `interactiveElements=${totalInteractiveElements}`,
+          `withTransitions=${totalInteractiveWithTransition}`,
           `ratio=${Math.round(transitionRatio * 100)}%`
         ]
       : ['Transition data not available.'],
@@ -2469,6 +2632,46 @@ function unifyRows(
     transitionRatio < 0.5
       ? 'Add CSS transitions (e.g. transition: opacity 0.2s ease) to buttons, links, and interactive elements for hover/press states.'
       : undefined
+  );
+  const transitionAllRatio = totalInteractiveWithTransition > 0
+    ? totalInteractiveWithTransitionAll / totalInteractiveWithTransition
+    : 0;
+  const expensiveTransitionRatio = totalInteractiveWithTransition > 0
+    ? totalInteractiveExpensiveTransitions / totalInteractiveWithTransition
+    : 0;
+  const specificTransitionRatio = totalInteractiveWithTransition > 0
+    ? totalInteractiveWithSpecificTransition / totalInteractiveWithTransition
+    : 0;
+  const transitionPropertyStatus: UnifiedReviewStatus =
+    !hasTransitionData
+      ? 'manual'
+      : expensiveTransitionRatio > 0.25 || transitionAllRatio > 0.5 || maxTransitionDurationMs > 900
+        ? 'fail'
+        : expensiveTransitionRatio > 0 || transitionAllRatio > 0.2 || averageTransitionDurationMs > 800
+          ? 'partial'
+          : 'pass';
+  pushRow(
+    'interactions.transition_properties',
+    'Interactions Panel',
+    'Transitions avoid "all" and expensive layout/filter properties on sampled interactive elements',
+    transitionPropertyStatus,
+    hasTransitionData
+      ? [
+          `withSpecificTransition=${totalInteractiveWithSpecificTransition}`,
+          `withTransitionAll=${totalInteractiveWithTransitionAll}`,
+          `gpuFriendlyTransitions=${totalInteractiveGpuFriendlyTransitions}`,
+          `expensiveTransitions=${totalInteractiveExpensiveTransitions}`,
+          `averageDurationMs=${Math.round(averageTransitionDurationMs)}`,
+          `maxDurationMs=${Math.round(maxTransitionDurationMs)}`
+        ]
+      : ['Transition property data not available.'],
+    ['published-webmcp-crawl'],
+    hasTransitionData ? 0.72 : 0.2,
+    transitionPropertyStatus === 'fail'
+      ? 'Use specific transition properties instead of "all", prefer transform/opacity where possible, and avoid width/height/filter/box-shadow motion.'
+      : transitionPropertyStatus === 'partial'
+        ? 'Some interactive transitions still rely on broad or expensive properties. Tighten transition-property usage.'
+        : undefined
   );
 
   // Aggregate contrast data across crawled pages
@@ -2537,41 +2740,131 @@ function unifyRows(
     ['published-webmcp-crawl'],
     0.86
   );
+  const responsiveImagesStatus: UnifiedReviewStatus =
+    assetSignalPages.length === 0 || totalPublishedImages === 0
+      ? 'manual'
+      : responsiveImageCoverage >= 0.8
+        ? 'pass'
+        : responsiveImageCoverage >= 0.4
+          ? 'partial'
+          : 'fail';
+  pushRow(
+    'assets.responsive_images',
+    'Page Level Checks',
+    'Published image elements show responsive image hints (srcset/sizes/picture)',
+    responsiveImagesStatus,
+    assetSignalPages.length > 0 && totalPublishedImages > 0
+      ? [
+          `images=${totalPublishedImages}`,
+          `responsiveImages=${totalResponsiveImages}`,
+          `imagesWithSrcset=${totalImagesWithSrcset}`,
+          `imagesWithSizes=${totalImagesWithSizes}`,
+          `navLogoImages=${maxNavLogoImages}`,
+          `coverage=${Math.round(responsiveImageCoverage * 100)}%`
+        ]
+      : ['Responsive image signals were not available on the crawled sample.'],
+    ['published-webmcp-crawl'],
+    assetSignalPages.length > 0 ? 0.74 : 0.2,
+    responsiveImagesStatus === 'fail'
+      ? 'Enable responsive images so published image elements emit srcset/sizes or picture-based variants.'
+      : responsiveImagesStatus === 'partial'
+        ? 'Responsive image coverage is mixed across published pages. Check image settings on repeated components and CMS imagery.'
+        : undefined
+  );
 
-  // Combine Designer breakpoint data with page count for a partial responsive signal.
-  // Full visual validation requires multi-viewport screenshots (not yet automated).
+  // Use published stylesheet breakpoint hints as deterministic responsive evidence.
+  // Full visual validation still requires multi-viewport screenshots.
   const hasAllBreakpoints = dVarBreakpoints.status === 'pass';
-  const multiplePagesCrawled = totalAudited > 1;
-  const responsiveStatus: UnifiedReviewStatus = hasAllBreakpoints
-    ? 'partial'
-    : 'fail';
+  const responsiveStatus: UnifiedReviewStatus =
+    responsiveViewportChecks.length > 0
+      ? responsiveOverflowChecks.length > 0
+        ? 'fail'
+        : responsiveClippedTextChecks.length > 0
+          ? 'partial'
+          : 'pass'
+      : hasPublishedStyleSignals && aggregatedBreakpointHints.length > 0
+        ? 'partial'
+        : hasAllBreakpoints
+          ? 'partial'
+          : 'manual';
+  const responsiveEvidence =
+    responsiveViewportChecks.length > 0
+      ? [
+          `pagesSampled=${published.responsive?.pagesSampled || 0}`,
+          `viewportChecks=${published.responsive?.totalViewportChecks || 0}`,
+          `overflowChecks=${responsiveOverflowChecks.length}`,
+          `clippedTextChecks=${responsiveClippedTextChecks.length}`,
+          ...(responsiveOverflowChecks[0]
+            ? [
+                `overflowExample=${new URL(responsiveOverflowChecks[0].pageUrl).pathname || '/'}@${responsiveOverflowChecks[0].label}:${responsiveOverflowChecks[0].sampleOverflowSelectors.join(' | ')}`
+              ]
+            : []),
+          ...(responsiveClippedTextChecks[0]
+            ? [
+                `clippedTextExample=${new URL(responsiveClippedTextChecks[0].pageUrl).pathname || '/'}@${responsiveClippedTextChecks[0].label}:${responsiveClippedTextChecks[0].sampleClippedText.join(' | ')}`
+              ]
+            : [])
+        ]
+      : [
+          `designerBreakpoints=${hasAllBreakpoints ? 'all present' : 'incomplete'}`,
+          `publishedBreakpointHints=${aggregatedBreakpointHints.join(', ') || 'none'}`,
+          `accessibleStyleSheets=${maxAccessibleStyleSheets}`,
+          `pagesCrawled=${totalAudited}`,
+          'Visual multi-viewport screenshot assertions not yet automated — verify manually.'
+        ];
   pushRow(
     'responsive.multi_breakpoint_check',
     'Page Level Checks',
-    'Responsive checks have been run on homepage and at least one additional page',
+    'Responsive sample passes key published viewports or is surfaced for manual follow-up',
     responsiveStatus,
-    [
-      `designerBreakpoints=${hasAllBreakpoints ? 'all present' : 'incomplete'}`,
-      `pagesCrawled=${totalAudited}`,
-      'Visual multi-viewport screenshot assertions not yet automated — verify manually.'
-    ],
-    ['designer-mcp', 'published-webmcp-crawl'],
-    hasAllBreakpoints ? 0.4 : 0.3
+    responsiveEvidence,
+    hasPublishedStyleSignals ? ['designer-mcp', 'published-webmcp-crawl'] : ['designer-mcp'],
+    responsiveViewportChecks.length > 0
+      ? 0.76
+      : hasPublishedStyleSignals ? 0.52 : hasAllBreakpoints ? 0.4 : 0.25,
+    responsiveStatus === 'fail'
+      ? 'The published sample shows viewport overflow. Fix layout containment and retest tablet/mobile widths.'
+      : responsiveStatus === 'partial'
+        ? 'The published sample shows clipped text on sampled viewports. Review responsive spacing, sizing, and overflow behavior.'
+        : undefined
+  );
+  const tapTargetStatus: UnifiedReviewStatus =
+    responsiveViewportChecks.length === 0
+      ? 'manual'
+      : responsiveTinyTapChecks.length === 0
+        ? 'pass'
+        : 'partial';
+  pushRow(
+    'responsive.tap_target_sizing',
+    'Page Level Checks',
+    'Sampled interactive controls appear large enough for touch, with follow-up selectors when not',
+    tapTargetStatus,
+    responsiveViewportChecks.length > 0
+      ? [
+          `pagesSampled=${published.responsive?.pagesSampled || 0}`,
+          `viewportChecks=${published.responsive?.totalViewportChecks || 0}`,
+          `tapTargetChecksWithIssues=${responsiveTinyTapChecks.length}`,
+          ...(firstResponsiveTinyTapCheck
+            ? [
+                `tapTargetExample=${new URL(firstResponsiveTinyTapCheck.pageUrl).pathname || '/'}@${firstResponsiveTinyTapCheck.label}:${firstResponsiveTinyTapCheck.tinyTapTargets}`,
+                ...(firstResponsiveTinyTapCheck.sampleTinyTapSelectors.length > 0
+                  ? [`sampleSelectors=${firstResponsiveTinyTapCheck.sampleTinyTapSelectors.join(' | ')}`]
+                  : [])
+              ]
+            : [])
+        ]
+      : ['Responsive touch-target signals were not available.'],
+    ['published-webmcp-crawl'],
+    responsiveViewportChecks.length > 0 ? 0.42 : 0.2,
+    tapTargetStatus === 'partial'
+      ? 'Review the sampled selectors for mobile/tablet control size. Treat this as a follow-up signal rather than a hard published-truth failure.'
+      : undefined
   );
 
   // Policy checks (deterministic)
-  const policy = published.policyChecks;
-  // Check if an instructions page was found (from Designer metadata or crawl)
-  const hasInstructionsPage =
-    designer.metadataSummary.pages.some(
-      (p) => p.name.toLowerCase().includes('instruction')
-    ) ||
-    published.pages.some(
-      (p) => p.url.toLowerCase().includes('/instruction')
-    ) ||
-    (precheck?.discoveredUrls ?? []).some(
-      (url) => url.toLowerCase().includes('/instruction')
-    );
+  // Reuse the blended instructions-page signal so policy-dependent rows do not
+  // drift from the unified required-pages row.
+  const hasInstructionsPage = instructionsPageDetected;
   pushRow(
     'policy.powered_by_webflow',
     'Submission Policy',
@@ -2617,7 +2910,7 @@ function unifyRows(
         ? ['GSAP detected and Instructions page exists.']
         : [])
     ],
-    ['published-webmcp-crawl'],
+    ['designer-mcp', 'published-webmcp-crawl'],
     policy.hasGsap ? (hasInstructionsPage ? 0.85 : 0.75) : 0.85
   );
   // Same pattern for custom code: detected + instructions = pass.
@@ -2639,54 +2932,87 @@ function unifyRows(
         ? ['Custom code detected and Instructions page exists.']
         : [])
     ],
-    ['published-webmcp-crawl'],
+    ['designer-mcp', 'published-webmcp-crawl'],
     policy.hasCustomCode ? (hasInstructionsPage ? 0.85 : 0.7) : 0.85
   );
 
-  // Internal broken link detection: cross-reference all discovered internal links
-  // against the set of pages that were actually crawled successfully.
-  const crawledUrls = new Set(
-    published.pages
-      .filter((p) => !is404PageTitle(p.title))
-      .map((p) => p.url.toLowerCase().replace(/\/$/, ''))
+  // Internal broken link detection: verify actual same-origin link targets seen on
+  // crawled pages. If some linked targets were not crawled successfully, report a
+  // partial result instead of a false clean pass.
+  const crawledPagesByUrl = new Map(
+    published.pages.map((page) => [
+      comparableSameOriginUrl(page.url, published.origin) ?? page.url.toLowerCase().replace(/\/$/, ''),
+      page
+    ])
   );
-  // Collect all internal links from all crawled pages (from the per-page link extraction)
   const allInternalLinks = new Set<string>();
   for (const page of published.pages) {
-    if (!page.summary) continue;
-    // The links count is in the summary but individual URLs aren't stored.
-    // Use the page's discovered links from the crawl queue instead.
-  }
-  // Use precheck discovered URLs + seed URLs as the "should exist" set
-  const allKnownUrls = new Set(
-    (precheck?.discoveredUrls || []).map((u) => u.toLowerCase().replace(/\/$/, ''))
-  );
-  const brokenInternalLinks: string[] = [];
-  for (const knownUrl of allKnownUrls) {
-    // Check if any crawled page with this URL returned a 404 title
-    const matchingPage = published.pages.find(
-      (p) => p.url.toLowerCase().replace(/\/$/, '') === knownUrl
-    );
-    if (matchingPage && is404PageTitle(matchingPage.title)) {
-      brokenInternalLinks.push(new URL(knownUrl).pathname);
+    for (const target of page.internalLinks || []) {
+      const comparable = comparableSameOriginUrl(target, published.origin);
+      if (comparable) allInternalLinks.add(comparable);
     }
   }
+
+  const brokenInternalLinks: string[] = [];
+  const uncheckedInternalLinks: string[] = [];
+  let verifiedInternalLinks = 0;
+
+  for (const target of allInternalLinks) {
+    const matchingPage = crawledPagesByUrl.get(target);
+    if (!matchingPage) {
+      uncheckedInternalLinks.push(new URL(target).pathname);
+      continue;
+    }
+    if (matchingPage.error || !matchingPage.summary) {
+      uncheckedInternalLinks.push(new URL(target).pathname);
+      continue;
+    }
+    if (is404PageTitle(matchingPage.title)) {
+      brokenInternalLinks.push(new URL(target).pathname);
+      continue;
+    }
+    verifiedInternalLinks += 1;
+  }
+
+  const hasIncompleteLinkEvidence =
+    allInternalLinks.size === 0 &&
+    (published.skippedUrls.length > 0 || published.pages.some((page) => Boolean(page.error)));
+  const brokenInternalLinkStatus: UnifiedReviewStatus =
+    brokenInternalLinks.length > 0
+      ? 'fail'
+      : uncheckedInternalLinks.length > 0 || hasIncompleteLinkEvidence
+        ? 'partial'
+        : 'pass';
+  const brokenInternalLinkConfidence = brokenInternalLinks.length > 0
+    ? 0.88
+    : uncheckedInternalLinks.length > 0 || hasIncompleteLinkEvidence
+      ? 0.65
+      : 0.9;
   pushRow(
     'links.no_broken_internal',
     'Page Level Checks',
     'No broken internal links (all linked pages resolve correctly)',
-    brokenInternalLinks.length === 0 ? 'pass' : 'fail',
+    brokenInternalLinkStatus,
     [
+      `linkedTargets=${allInternalLinks.size}`,
+      `verifiedTargets=${verifiedInternalLinks}`,
       `brokenLinks=${brokenInternalLinks.length}`,
+      `uncheckedTargets=${uncheckedInternalLinks.length}`,
+      `insufficientEvidence=${hasIncompleteLinkEvidence}`,
       ...(brokenInternalLinks.length > 0
         ? [`paths=${brokenInternalLinks.slice(0, 10).join(', ')}`]
+        : []),
+      ...(brokenInternalLinkStatus === 'partial' && uncheckedInternalLinks.length > 0
+        ? [`uncheckedPaths=${uncheckedInternalLinks.slice(0, 10).join(', ')}`]
         : [])
     ],
     ['published-webmcp-crawl'],
-    0.85,
+    brokenInternalLinkConfidence,
     brokenInternalLinks.length > 0
       ? `${brokenInternalLinks.length} internal link(s) resolve to 404. Fix or remove these links.`
-      : undefined
+      : brokenInternalLinkStatus === 'partial'
+        ? 'Linked internal targets were not fully verified from crawl evidence, so this check is not yet complete. Increase crawl coverage or rerun the review.'
+        : undefined
   );
 
   // Accessible link names: links without text, aria-label, or img alt
@@ -2701,6 +3027,60 @@ function unifyRows(
     0.85,
     missingAccessibleNameCount > 0
       ? 'Add text content, aria-label, or nested img with alt to all links.'
+      : undefined
+  );
+  const landmarksStatus: UnifiedReviewStatus =
+    accessibilitySignalPages.length === 0
+      ? 'manual'
+      : allSampledPagesHaveMainLandmark && allSampledPagesHaveNavLandmark
+        ? anySampledPageHasSkipLink ? 'pass' : 'partial'
+        : 'fail';
+  pushRow(
+    'a11y.landmarks_present',
+    'Accessibility',
+    'Main and navigation landmarks are present; skip link is surfaced when available',
+    landmarksStatus,
+    accessibilitySignalPages.length > 0
+      ? [
+          `pagesChecked=${accessibilitySignalPages.length}`,
+          `allHaveMainLandmark=${allSampledPagesHaveMainLandmark}`,
+          `allHaveNavLandmark=${allSampledPagesHaveNavLandmark}`,
+          `anySkipLink=${anySampledPageHasSkipLink}`
+        ]
+      : ['Accessibility landmark signals were not available.'],
+    ['published-webmcp-crawl'],
+    accessibilitySignalPages.length > 0 ? 0.72 : 0.2,
+    landmarksStatus === 'fail'
+      ? 'Use semantic main/nav landmarks on published pages. Add a skip-to-content link where appropriate.'
+      : landmarksStatus === 'partial'
+        ? 'Landmarks are present, but a skip link was not detected in the published sample.'
+        : undefined
+  );
+  const descriptiveLinkStatus: UnifiedReviewStatus =
+    accessibilitySignalPages.length === 0
+      ? 'manual'
+      : totalGenericLinkLabels === 0
+        ? 'pass'
+        : totalGenericLinkLabels <= accessibilitySignalPages.length
+          ? 'partial'
+          : 'fail';
+  pushRow(
+    'a11y.descriptive_link_labels',
+    'Accessibility',
+    'Published link labels avoid generic phrasing like "learn more" without added context',
+    descriptiveLinkStatus,
+    accessibilitySignalPages.length > 0
+      ? [
+          `genericLinkLabels=${totalGenericLinkLabels}`,
+          ...(sampleGenericLinkLabels.length > 0
+            ? [`samples=${sampleGenericLinkLabels.join(', ')}`]
+            : [])
+        ]
+      : ['Descriptive link label signals were not available.'],
+    ['published-webmcp-crawl'],
+    accessibilitySignalPages.length > 0 ? 0.58 : 0.2,
+    descriptiveLinkStatus === 'fail'
+      ? 'Replace generic repeated link labels with more descriptive text or augment them with contextual aria-labels.'
       : undefined
   );
 
@@ -2724,7 +3104,7 @@ function unifyRows(
   pushRow(
     'links.external_target_blank',
     'Page Level Checks',
-    'External links open in new tab with rel="noopener"',
+    'Links using target="_blank" include rel="noopener"',
     blankTargetMissingRelCount === 0 ? 'pass' : 'fail',
     [`pagesWithMissingRel=${blankTargetMissingRelCount}/${totalAudited}`],
     ['published-webmcp-crawl'],
@@ -2766,6 +3146,32 @@ function unifyRows(
       ? `${totalMissingLabels} form field(s) missing labels. Add <label for="..."> or aria-label attributes.`
       : undefined
   );
+  const formFieldTypeStatus: UnifiedReviewStatus =
+    formSignalPages.length === 0
+      ? 'pass'
+      : totalWrongFieldTypes === 0
+        ? 'pass'
+        : totalWrongFieldTypes <= formSignalPages.length
+          ? 'partial'
+          : 'fail';
+  pushRow(
+    'forms.field_types',
+    'Page Level Checks',
+    'Common form fields use matching HTML input types (email, tel, url)',
+    formFieldTypeStatus,
+    [
+      `pagesWithForms=${formSignalPages.length}`,
+      `wrongFieldTypes=${totalWrongFieldTypes}`,
+      ...(sampleWrongFieldTypes.length > 0
+        ? [`samples=${sampleWrongFieldTypes.join(', ')}`]
+        : [])
+    ],
+    ['published-webmcp-crawl'],
+    formSignalPages.length > 0 ? 0.76 : 0.82,
+    totalWrongFieldTypes > 0
+      ? 'Use semantic field types like email, tel, and url where the field purpose clearly matches.'
+      : undefined
+  );
 
   // Content quality checks
   const loremPages = published.pages.filter((p) => p.contentQuality?.hasLoremIpsum);
@@ -2805,7 +3211,21 @@ function unifyRows(
     [`hasCustomFavicon=${settings.hasCustomFavicon}`],
     ['published-webmcp-crawl'],
     0.85,
-    'Upload a custom favicon in Site Settings to replace the default Webflow icon.'
+    settings.hasCustomFavicon
+      ? undefined
+      : 'Upload a custom favicon in Site Settings to replace the default Webflow icon.'
+  );
+  pushRow(
+    'settings.custom_webclip',
+    'Site Settings',
+    'Custom webclip/apple-touch icon is set',
+    settings.hasCustomWebclip ? 'pass' : 'fail',
+    [`hasCustomWebclip=${settings.hasCustomWebclip}`],
+    ['published-webmcp-crawl'],
+    0.82,
+    settings.hasCustomWebclip
+      ? undefined
+      : 'Upload a custom webclip/apple-touch icon in Site Settings.'
   );
 
   // Custom fonts: if present, they need a license page or to be from a free source
@@ -2886,6 +3306,10 @@ async function runTemplateReviewTool(
   input: RunTemplateReviewInput,
   options: RunTemplateReviewOptions = {}
 ): Promise<UnifiedTemplateReviewReport> {
+  const guardError = getRunTemplateReviewSyncGuardError(input);
+  if (guardError) {
+    throw new Error(guardError);
+  }
   return executeTemplateReview(input, options);
 }
 
@@ -2893,8 +3317,9 @@ async function executeTemplateReview(
   input: RunTemplateReviewInput,
   options: RunTemplateReviewOptions = {}
 ): Promise<UnifiedTemplateReviewReport> {
-  if (!input?.previewUrl || !input?.publishedUrl) {
-    throw new Error('`previewUrl` and `publishedUrl` are required.');
+  const startedAtMs = Date.now();
+  if (!input?.publishedUrl) {
+    throw new Error('`publishedUrl` is required.');
   }
 
   const manager = getProvider();
@@ -2903,23 +3328,68 @@ async function executeTemplateReview(
   const includeManual = input.includeManual !== false;
   const reportProgress = options.reportProgress;
   const timeout = input.timeout ?? 90000;
+  const designerMode = input.designerMode ?? 'best-effort';
+  const designerTimeout = Math.max(
+    5000,
+    Math.min(input.designerTimeout ?? timeout, timeout)
+  );
+  const previewUrl = input.previewUrl;
+
+  if (designerMode !== 'skip' && !previewUrl) {
+    throw new Error('`previewUrl` is required unless `designerMode` is set to `skip`.');
+  }
 
   if (reportProgress) await reportProgress(0, 100, 'Starting unified template review');
-  const precheck = await runPublishedPrecheck(input.publishedUrl, Math.min(timeout, 30000));
+  const precheck = await runPublishedFetchProbe(
+    input.publishedUrl,
+    Math.min(timeout, 30000),
+    classifyUrls
+  );
   if (precheck.errors.length > 0) {
     throw new Error(`Published precheck failed: ${precheck.errors.join('; ')}`);
   }
 
   if (reportProgress) await reportProgress(5, 100, 'Published precheck complete');
-  if (reportProgress) await reportProgress(5, 100, 'Running Designer checklist extraction');
+  let designer: DesignerChecklistReport;
 
-  const designer = await scoreDesignerChecklistTool({
-    url: input.previewUrl,
-    timeout: input.timeout,
-    includeManual: true
-  });
-
-  if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
+  if (designerMode === 'skip') {
+    designer = createUnavailableDesignerChecklistReport(
+      'Designer preview extraction skipped (`designerMode=skip`). Published review only.',
+      { url: previewUrl, includeManual: true }
+    );
+    if (reportProgress) {
+      await reportProgress(35, 100, 'Designer extraction skipped; continuing with published review');
+    }
+  } else {
+    if (reportProgress) await reportProgress(5, 100, 'Running Designer checklist extraction');
+    try {
+      designer = await withTimeout(
+        scoreDesignerChecklistTool({
+          url: previewUrl,
+          timeout: designerTimeout,
+          includeManual: true
+        }),
+        designerTimeout,
+        `Designer checklist extraction timed out after ${designerTimeout}ms`
+      );
+      if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
+    } catch (error) {
+      if (designerMode === 'required') {
+        throw error;
+      }
+      designer = createUnavailableDesignerChecklistReport(
+        `Designer preview extraction unavailable. ${describeError(error)}`,
+        { url: previewUrl, includeManual: true }
+      );
+      if (reportProgress) {
+        await reportProgress(
+          35,
+          100,
+          'Designer extraction unavailable; continuing with published review'
+        );
+      }
+    }
+  }
 
   // Use URL classifications to build the crawl queue.
   // Critical pages (license, instructions, changelog, style-guide, homepage) go first.
@@ -2962,6 +3432,7 @@ async function executeTemplateReview(
     crawlMaxPages: input.crawlMaxPages,
     crawlMaxDepth: input.crawlMaxDepth,
     seedUrls: allSeedUrls,
+    fetchProbe: precheck.probe,
     classifiedUrls: precheck.classifiedUrls,
     onProgress: reportProgress
       ? async (processedPages, maxPages, message) => {
@@ -3035,9 +3506,10 @@ async function executeTemplateReview(
   if (reportProgress) await reportProgress(100, 100, 'Unified template review complete');
 
   return {
+    durationMs: Date.now() - startedAtMs,
     generatedAt: new Date().toISOString(),
     provider: provider.name,
-    previewUrl: input.previewUrl,
+    previewUrl,
     publishedUrl: input.publishedUrl,
     precheck,
     providerMetrics,
@@ -3347,7 +3819,7 @@ export function createAnalyzerServer(): Server {
       },
       {
         name: 'extract_designer_metadata',
-        description: 'Extract template metadata from Webflow Designer Preview URL. Navigates through Designer panels to gather: pages list, CSS classes (style selectors), components with usage counts, interactions/animations, CMS collections, assets, and site settings. Only works with Webflow preview URLs.',
+        description: 'Extract panel-derived template metadata from a Webflow Designer Preview URL. Navigates through Designer panels to gather pages, CSS classes, components, interactions, CMS collections, visible Assets panel labels, and site settings. Asset labels may be truncated by the Webflow UI. Only works with Webflow preview URLs.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -3365,7 +3837,7 @@ export function createAnalyzerServer(): Server {
       },
       {
         name: 'score_designer_checklist',
-        description: 'Score Webflow Designer-focused checklist rows (strict pass/fail/manual) using extracted Designer metadata. Accepts either a live preview URL or a previously extracted designerMetadata payload.',
+        description: 'Score Webflow Designer-focused checklist rows (strict pass/fail/manual) using panel-derived Designer metadata. Accepts either a live preview URL or a previously extracted designerMetadata payload and inherits the same preview-panel limits.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -3390,13 +3862,13 @@ export function createAnalyzerServer(): Server {
       },
       {
         name: 'run_template_review',
-        description: 'Synchronous template review execution for debugging or manual use. Production automation should prefer enqueue_template_review.',
+        description: 'Synchronous template review execution for debugging or bounded manual smoke use. Runs a deterministic published fetch precheck first, then a published browser probe (DOM fallback plus optional __wfReview enrichment). Designer preview extraction is optional and can run in required, best-effort, or skip mode. Longer remote reviews may be rejected with guidance to use enqueue_template_review instead.',
         inputSchema: {
           type: 'object',
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring.'
+              description: 'Optional Webflow preview URL for Designer extraction/scoring. Required unless designerMode is skip.'
             },
             publishedUrl: {
               type: 'string',
@@ -3406,31 +3878,44 @@ export function createAnalyzerServer(): Server {
               type: 'number',
               description: 'Optional per-page timeout in milliseconds (default: 90000).'
             },
+            designerTimeout: {
+              type: 'number',
+              description: 'Optional timeout in milliseconds for Designer extraction. Defaults to timeout and is capped by timeout.'
+            },
+            designerMode: {
+              type: 'string',
+              enum: ['required', 'best-effort', 'skip'],
+              description: 'How preview extraction is handled. best-effort continues with published-only evidence if preview extraction fails or times out. Default: best-effort.'
+            },
+            allowLongSync: {
+              type: 'boolean',
+              description: 'Optional escape hatch for remote deployments. When true, bypasses the bounded-sync guard and attempts the long synchronous review anyway.'
+            },
             includeManual: {
               type: 'boolean',
               description: 'Include manual rows in final output (default: true).'
             },
             crawlMaxPages: {
               type: 'number',
-              description: 'Maximum published pages to crawl (default: 20, max: 50).'
+              description: 'Optional maximum published pages to crawl. By default the review attempts full discovered coverage.'
             },
             crawlMaxDepth: {
               type: 'number',
-              description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
+              description: 'Optional maximum crawl depth from publishedUrl. By default the review does not impose a depth cap.'
             }
           },
-          required: ['previewUrl', 'publishedUrl']
+          required: ['publishedUrl']
         }
       },
       {
         name: 'enqueue_template_review',
-        description: 'Queue an async template review job with bounded concurrency. This is the production entrypoint for automated review orchestration.',
+        description: 'Queue an async template review job with bounded concurrency. Uses the same published fetch precheck plus browser probe pipeline as run_template_review, with optional Designer preview extraction in required, best-effort, or skip mode. This is the production entrypoint for automated review orchestration.',
         inputSchema: {
           type: 'object',
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring.'
+              description: 'Optional Webflow preview URL for Designer extraction/scoring. Required unless designerMode is skip.'
             },
             publishedUrl: {
               type: 'string',
@@ -3440,25 +3925,34 @@ export function createAnalyzerServer(): Server {
               type: 'number',
               description: 'Optional per-page timeout in milliseconds (default: 90000).'
             },
+            designerTimeout: {
+              type: 'number',
+              description: 'Optional timeout in milliseconds for Designer extraction. Defaults to timeout and is capped by timeout.'
+            },
+            designerMode: {
+              type: 'string',
+              enum: ['required', 'best-effort', 'skip'],
+              description: 'How preview extraction is handled. best-effort continues with published-only evidence if preview extraction fails or times out. Default: best-effort.'
+            },
             includeManual: {
               type: 'boolean',
               description: 'Include manual rows in final output (default: true).'
             },
             crawlMaxPages: {
               type: 'number',
-              description: 'Maximum published pages to crawl (default: 20, max: 50).'
+              description: 'Optional maximum published pages to crawl. By default the review attempts full discovered coverage.'
             },
             crawlMaxDepth: {
               type: 'number',
-              description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
+              description: 'Optional maximum crawl depth from publishedUrl. By default the review does not impose a depth cap.'
             }
           },
-          required: ['previewUrl', 'publishedUrl']
+          required: ['publishedUrl']
         }
       },
       {
         name: 'get_template_review_job',
-        description: 'Fetch a queued template review job by ID, including progress and final report when complete.',
+        description: 'Fetch a queued template review job by ID, including progress, duration telemetry, and the final report when complete.',
         inputSchema: {
           type: 'object',
           properties: {

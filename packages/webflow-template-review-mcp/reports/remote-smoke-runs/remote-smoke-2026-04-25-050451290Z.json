@@ -1,0 +1,105 @@
+{
+  "testedAt": "2026-04-25T05:04:51.290Z",
+  "workerUrl": "https://webflow-template-review-mcp.createsomething.workers.dev/mcp",
+  "healthUrl": "https://webflow-template-review-mcp.createsomething.workers.dev/health",
+  "sessionId": "6537328d14f1fac72d5c3dde462ef0cdda05f10fdced7bc794c21d186851aaf6",
+  "workerVersion": "1.0.0",
+  "elapsedMs": {
+    "total": 2070,
+    "health": 172,
+    "initialize": 767,
+    "notifyInitialized": 152,
+    "toolHealth": 923,
+    "promptFetch": 55
+  },
+  "health": {
+    "name": "webflow-template-review-mcp",
+    "version": "1.0.0",
+    "description": "Webflow Template Review MCP — Airtable-scoped review workflows for template Assets + Asset Versions",
+    "auth": {
+      "mode": "Bearer required",
+      "configured": true,
+      "header": "Authorization: Bearer <MCP_API_KEY>"
+    },
+    "endpoints": {
+      "mcp": "/mcp",
+      "sse": "/sse"
+    },
+    "scope": "templates-only",
+    "tables": {
+      "assets": "tblRwzpWoLgE9MrUm",
+      "assetVersions": "tblHxZ2hgSFLZxsZu",
+      "assetReleases": "tblhLAXcJiXrkZxUL"
+    }
+  },
+  "toolHealth": {
+    "ok": true,
+    "data": {
+      "ok": true,
+      "baseId": "appMoIgXMTTTNIc3p",
+      "scope": "templates-only",
+      "sampleAssetsRead": 10,
+      "templateAssetsMatched": 9,
+      "supportedStatusOptions": [
+        "🆕Ready for Review",
+        "🏃🏾In Review",
+        "👀Admin Feedback Review",
+        "📤Changes Requested",
+        "🔁Response to Review",
+        "✅Approved",
+        "❌Rejected",
+        "☠️Archived"
+      ],
+      "auth": "Bearer token required at worker boundary.",
+      "analyzer": {
+        "configured": true,
+        "reachable": true,
+        "browserAutomationSupported": true,
+        "toolNames": [
+          "analyze_touchpoints",
+          "extract_seo",
+          "get_page_structure",
+          "analyze_images",
+          "get_performance",
+          "capture_screenshot",
+          "get_provider_status",
+          "extract_designer_metadata",
+          "score_designer_checklist",
+          "run_template_review",
+          "enqueue_template_review",
+          "get_template_review_job",
+          "list_template_review_jobs",
+          "get_webflow_review_policy",
+          "refresh_webflow_review_policy",
+          "list_script_versions",
+          "get_version_metrics",
+          "record_feedback",
+          "run_analysis_cycle",
+          "compare_versions",
+          "promote_version",
+          "create_script_version"
+        ],
+        "url": "https://webflow-site-analyzer-mcp-remote.createsomething.workers.dev/mcp"
+      }
+    }
+  },
+  "promptChecks": {
+    "titleMatches": true,
+    "mentionsPublishedFirst": true,
+    "mentionsGatedPublishing": true
+  },
+  "promptExcerpt": [
+    "# Webflow Template Review — Reviewer Workflow Guide",
+    "",
+    "You are a Webflow Marketplace template reviewer using the Template Review MCP toolset. This guide covers the end-to-end review process.",
+    "",
+    "## The Review Lifecycle",
+    "",
+    "Every review follows these phases:",
+    "1. Setup & Health → 2. Find Work → 3. Inspect → 4. Analyze → 5. Decide",
+    "",
+    "Publishing and asset-finishing actions exist on some lanes, but they are gated follow-on actions rather than the default reviewer workflow.",
+    "",
+    "---"
+  ]
+}

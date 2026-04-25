@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This checklist turns the reviewer rollout policy into concrete Hub implementation work for the first six reviewer-specific Hubs.
+This checklist turns the reviewer rollout policy into concrete Hub implementation work for the current five reviewer-specific Hubs.
 
 Use it after the rollout spec and before enabling reviewer writes.
 
@@ -22,12 +22,11 @@ As of `2026-03-10`, the live Hub surface shows:
 
 That means the Hub already has the needed downstream server connected, but its default posture is still broader and looser than the reviewer rollout requires.
 
-## 3. Build the six reviewer-specific Hubs
+## 3. Build the five reviewer-specific Hubs
 
 Create one reviewer-scoped Hub surface per reviewer:
 
 - `wf-template-review-natalia`
-- `wf-template-review-sudiksha`
 - `wf-template-review-eric`
 - `wf-template-review-vicki`
 - `wf-template-review-mariana`
@@ -59,23 +58,21 @@ Do not enable reviewer writes if the Hub is still operating as a generic shared 
 For each reviewer Hub:
 
 1. restrict active discovery to the minimum required review servers
-2. keep discovery compact by default
-3. cap visible proxy tools aggressively
+2. use scoped discovery by default
+3. keep any narrower presentation logic outside the discovery mode itself
 4. persist account-scoped discovery preferences
 
 Recommended review-lane active servers:
 
 - `webflow-template-review-mcp`
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
 
-If the review lane does not yet need all three, start with the smallest usable set.
+Start with those two. Do not add `webflow-local` to the reviewer lane unless a separate remote-compatible route is intentionally introduced and validated.
 
 Recommended reviewer discovery policy:
 
-- `mode`: `compact`
+- `mode`: `scoped`
 - `activeServers`: review-only servers
-- `maxProxyTools`: low enough that reviewers do not receive a broad catalog by accident
 
 ## 6. Hide broad mutation tools from reviewer discovery
 
@@ -241,12 +238,12 @@ Revert a reviewer Hub to read-only immediately if:
 - policy-denied actions are executing anyway
 - quota or rate-limit behavior is not functioning as configured
 
-If this affects more than one reviewer Hub, revert all six to read-only and triage centrally.
+If this affects more than one reviewer Hub, revert all five to read-only and triage centrally.
 
 ## 15. Suggested operator workflow
 
-1. Create the six reviewer-specific Hub surfaces.
-2. Put all six in read-only mode.
+1. Create the five reviewer-specific Hub surfaces.
+2. Put all five in read-only mode.
 3. Narrow discovery to review-only servers.
 4. Verify hidden write surfaces.
 5. Turn on rate limits and quotas.

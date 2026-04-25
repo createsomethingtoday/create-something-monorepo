@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This document gives the exact Hub posture to use for the first six reviewer-specific Hub surfaces.
+This document gives the exact Hub posture to use for the current five reviewer-specific Hub surfaces.
 
 It is intended to answer:
 
@@ -18,13 +18,16 @@ It is intended to answer:
 
 ## 2. Important current-state note
 
-As of `2026-03-10`, the live remote Hub currently shows:
+As of `2026-04-25`, the official live reviewer Hub posture is:
 
 - `webflow-template-review-mcp` connected
-- `webflow-site-analyzer-mcp` not connected
-- `webflow-local` not connected
+- `webflow-site-analyzer-mcp` connected
+- `webflow-marketplace-review-phase-b` applied as the reviewer bundle baseline
+- `scoped` discovery with active reviewer discovery on:
+  - `webflow-template-review-mcp`
+  - `webflow-site-analyzer-mcp`
 
-That means the only safe exact runtime posture today is a **template-review-context plus narrow reviewer workflow write** lane unless the other Webflow servers are enabled and verified first.
+`webflow-local` is not part of the official remote reviewer discovery surface today. Treat it as deferred or separate from the current reviewer lane unless a remote-compatible route is added and verified.
 
 ## 3. Reviewer Hub identities
 
@@ -33,17 +36,16 @@ Use one reviewer-specific Hub surface or account-scoped Hub posture per reviewer
 | Reviewer | Email | Hub slug |
 | --- | --- | --- |
 | Natalia Ledford | `natalia.ledford@webflow.com` | `wf-template-review-natalia` |
-| Sudiksha Khanduja | `sudiksha.khanduja@webflow.com` | `wf-template-review-sudiksha` |
 | Eric Unger | `eric.unger@webflow.com` | `wf-template-review-eric` |
 | Vicki Chen | `vicki.chen@webflow.com` | `wf-template-review-vicki` |
 | Mariana Segura | `mariana.segura@webflow.com` | `wf-template-review-mariana` |
 | Micah Johnson | `micah@webflow.com` | `wf-template-review-micah` |
 
-If these are implemented as separate custom-domain Hubs, keep the same posture across all six. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
+If these are implemented as separate custom-domain Hubs, keep the same posture across all five. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
 
-## 4. Phase A: current-live-safe posture
+## 4. Phase A fallback posture
 
-Use this immediately, because it only depends on the server that is already connected.
+Use this as the rollback posture if the analyzer service is unavailable or the reviewer lane must be narrowed temporarily.
 
 ### Active servers
 
@@ -51,9 +53,8 @@ Use this immediately, because it only depends on the server that is already conn
 
 ### Discovery mode
 
-- `mode`: `compact`
+- `mode`: `scoped`
 - `activeServers`: `["webflow-template-review-mcp"]`
-- `maxProxyTools`: `18`
 
 ### Reviewer-visible tool target
 
@@ -84,39 +85,42 @@ Do not expose broad write tools in Phase A. The permitted mutations are narrow r
 
 Reads plus narrow self-assignment, self-unassignment, bounded feedback writes, and controlled 📝Review Status updates. Broader review-state changes remain manual in Airtable.
 
-## 5. Phase B: full reviewer lane posture
+## 5. Phase B: official reviewer lane posture
 
-Use this only after the missing Webflow analysis servers are enabled and verified in the live Hub.
+This is the current official reviewer baseline.
 
 ### Required servers
 
 - `webflow-template-review-mcp`
 - `webflow-site-analyzer-mcp`
-- `webflow-local`
 
 ### Discovery mode
 
-- `mode`: `compact`
-- `activeServers`: `["webflow-template-review-mcp", "webflow-site-analyzer-mcp", "webflow-local"]`
-- `maxProxyTools`: `30`
+- `mode`: `scoped`
+- `activeServers`: `["webflow-template-review-mcp", "webflow-site-analyzer-mcp"]`
 
 ### Reviewer-visible tool target
 
-Phase B should still default to a narrow review surface:
+The live runtime uses server-scoped discovery, not a count-capped or curated tool list. In practice that means the full visible proxy catalog from `webflow-template-review-mcp` and `webflow-site-analyzer-mcp` may appear on the reviewer lane.
 
-- all Phase A read tools
-- selected analysis tools from `webflow-site-analyzer-mcp`
-- selected originality/plagiarism tools from `webflow-local`
+Reviewer guidance and host prompts should still steer the workflow toward:
 
-Do not expose entire raw tool catalogs if the reviewer workflow only needs a few actions.
+- `template_review_get_review_context`
+- `template_review_get_reviewer_packet`
+- `template_review_enqueue_analyzer_review`
+- `template_review_get_analyzer_review`
+- `template_review_list_analyzer_reviews`
+- the current reviewer-safe write actions
+
+Treat that preferred surface as workflow guidance, not as a statement that the live scoped lane hides every other visible tool.
 
 ### Reviewer write posture
 
-Even in Phase B, reviewer Hubs should begin read-only and move to write enablement later by action.
+The official Phase B lane already includes reviewer-safe write actions and may also expose broader mutation tools through scoped discovery. Treat the narrower reviewer workflow as the policy target and hardening direction, not as a claim about today's full visible catalog.
 
 ## 6. Server enablement sequence
 
-If the live remote Hub is missing the analysis servers, use this operator sequence first.
+If the live remote Hub falls out of the official Phase B shape, use this operator sequence first.
 
 ### Enable required servers
 
@@ -126,8 +130,7 @@ Use `hub_update_state` with:
 {
   "enableServers": [
     "webflow-template-review-mcp",
-    "webflow-site-analyzer-mcp",
-    "webflow-local"
+    "webflow-site-analyzer-mcp"
   ]
 }
 ```
@@ -141,35 +144,31 @@ Then verify:
 - `hub_search_proxy_tools` with `serverName` set to each of:
   - `webflow-template-review-mcp`
   - `webflow-site-analyzer-mcp`
-  - `webflow-local`
 
-Do not move to Phase B until all three resolve and return usable proxy tools.
+Do not treat the reviewer lane as healthy Phase B until both required servers resolve and return usable proxy tools.
 
 ## 7. Reviewer discovery posture
 
-For each reviewer-specific Hub/account, apply this Phase A discovery posture first:
+For rollback or containment, apply this Phase A discovery posture:
 
 ```json
 {
-  "mode": "compact",
-  "activeServers": ["webflow-template-review-mcp"],
-  "maxProxyTools": 18
+  "mode": "scoped",
+  "activeServers": ["webflow-template-review-mcp"]
 }
 ```
 
 Apply it through `hub_set_discovery`.
 
-After the other Webflow servers are connected and tested, move the reviewer to Phase B:
+For the current official reviewer lane, Phase B discovery should be:
 
 ```json
 {
-  "mode": "compact",
+  "mode": "scoped",
   "activeServers": [
     "webflow-template-review-mcp",
-    "webflow-site-analyzer-mcp",
-    "webflow-local"
+    "webflow-site-analyzer-mcp"
   ],
-  "maxProxyTools": 30
 }
 ```
 
@@ -177,7 +176,7 @@ After the other Webflow servers are connected and tested, move the reviewer to P
 
 Do not widen discovery to expose general mutation tools.
 
-The narrow reviewer-safe write actions that may be enabled in Phase A are:
+The narrow reviewer-safe write actions that may be enabled in both fallback and official posture are:
 
 - `webflow-template-review-mcp__template_review_request_changes`
 - `webflow-template-review-mcp__template_review_set_review_status`
@@ -330,33 +329,29 @@ If you need tighter control later, move to `account_server` or `account_server_t
 
 ## 12. Reviewer-by-reviewer rollout order
 
-Recommended order:
+The official five-reviewer rollout is complete. If you need to reprovision from scratch, use this order:
 
 1. Natalia Ledford
-2. Sudiksha Khanduja
-3. Eric Unger
-4. Vicki Chen
-5. Mariana Segura
-6. Micah Johnson
+2. Eric Unger
+3. Vicki Chen
+4. Mariana Segura
+5. Micah Johnson
 
 Reason:
 
 - start with one reviewer
 - validate traces and fallback
-- expand gradually instead of enabling all six write-capable at once
+- expand gradually instead of changing every reviewer lane at once
 
 ## 13. Recommended operator sequence
 
-1. Enable missing Webflow analysis servers in the Hub.
-2. Verify they are connected and searchable.
-3. Apply Phase A compact discovery posture to all six reviewer Hubs.
-4. Confirm write tools are not visible in reviewer discovery.
-5. Confirm reviewer sessions are read-only and actor-resolved.
-6. Turn on Hub rate limits and quotas.
-7. Move one reviewer to Phase B discovery once the analysis servers are healthy.
-8. Enable `request_changes` for one reviewer only after trace validation.
-9. Expand action-by-action.
-10. Expand reviewer-by-reviewer.
+1. Verify `webflow-template-review-mcp` and `webflow-site-analyzer-mcp` are connected and searchable on each reviewer lane.
+2. Confirm scoped discovery is active for both servers.
+3. Confirm `template_review_get_reviewer_packet` and analyzer job tools are visible.
+4. Confirm reviewer sessions are actor-resolved and traces include reviewer attribution.
+5. Turn on or confirm Hub rate limits and quotas.
+6. Harden reviewer-safe write behavior action-by-action with smoke tests and fallback drills.
+7. Use the Phase A rollback posture only if analyzer evidence or reviewer attribution becomes unreliable.
 
 ## 14. Stop conditions
 
@@ -368,4 +363,4 @@ Revert a reviewer Hub to Phase A immediately if:
 - write behavior is ambiguous
 - fallback is too slow or unclear
 
-If more than one reviewer Hub hits the same issue, revert all six to Phase A and pause write rollout.
+If more than one reviewer Hub hits the same issue, revert all five to Phase A and pause write rollout.

@@ -46,6 +46,7 @@ function setIfPresent(target: Record<string, string>, key: string, value: string
 function buildAnalyzerEnv(env: Env): Record<string, string> {
   const result: Record<string, string> = {};
 
+  result.WEBFLOW_SITE_ANALYZER_RUNTIME = 'container-worker';
   setIfPresent(result, 'PORT', String(getUpstreamPort(env)));
   setIfPresent(result, 'WEBFLOW_SITE_ANALYZER_MCP_API_KEY', env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY);
   setIfPresent(result, 'MCP_API_KEY', env.MCP_API_KEY);

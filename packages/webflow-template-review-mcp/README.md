@@ -16,15 +16,15 @@ Remote MCP server for Webflow Template Review workflows, scoped to Airtable `Ass
 
 ## Current Status
 
-Phase 1 is intentionally conservative:
+Official reviewer baseline:
 
-- confirmed asset reads and updates are supported
-- queue and version inspection are supported
-- field-map and hotspot resources are supported
+- reviewer packet + analyzer job workflow is active
+- confirmed asset reads, queue inspection, version inspection, and field-map resources are supported
 - reviewer assignment helpers are active
 - reviewer-safe workflow helpers (`request changes`, `set review status`, `save draft feedback`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
+- published-first analyzer orchestration is supported through the remote site analyzer MCP
 - supplemental agent-feedback writes are supported for `📝Agent Review Feedback`
-- some broader write surfaces still depend on remaining field verification and policy rollout
+- broader metadata and publishing surfaces remain policy-gated and should follow current lane capabilities
 
 ## Auth
 
@@ -45,6 +45,8 @@ Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
 - `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by `template_review_assign_self` and reviewer resources)
+- `WEBFLOW_SITE_ANALYZER_MCP_URL` (remote published analyzer MCP endpoint, used for reviewer automation)
+- `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` (bearer token for the remote published analyzer MCP)
 
 ## Tools
 
@@ -58,6 +60,10 @@ Optional:
 - `template_review_list_versions`
 - `template_review_get_version`
 - `template_review_get_review_context`
+- `template_review_get_reviewer_packet`
+- `template_review_enqueue_analyzer_review`
+- `template_review_get_analyzer_review`
+- `template_review_list_analyzer_reviews`
 - `template_review_list_releases`
 - `template_review_complete_publishing`
 - `template_review_assign_reviewer`
@@ -88,6 +94,36 @@ cd packages/webflow-template-review-mcp/worker
 pnpm install
 pnpm dev
 pnpm deploy
+```
+
+## Remote Smoke
+
+Verify the live worker health surface plus the reviewer workflow prompt over a real MCP session:
+
+```bash
+infisical run --env=prod --path=/ -- pnpm --dir packages/webflow-template-review-mcp smoke:remote
+```
+
+This smoke path:
+- fetches `/health`
+- performs MCP `initialize` and `notifications/initialized`
+- calls `template_review_health`
+- fetches `template_review_workflow`
+- confirms the live prompt still matches the packet-plus-analyzer Phase B baseline
+
+Persist a timestamped JSON artifact for later comparison:
+
+```bash
+infisical run --env=prod --path=/ -- \
+  pnpm --dir packages/webflow-template-review-mcp smoke:remote \
+  --output-dir packages/webflow-template-review-mcp/reports/remote-smoke-runs \
+  --json
+```
+
+Compare the latest two saved smoke artifacts:
+
+```bash
+pnpm --dir packages/webflow-template-review-mcp compare:remote-smoke
 ```
 
 ## Token Rotation
@@ -128,4 +164,4 @@ OPENAI_API_KEY=... AIRTABLE_API_KEY=... pnpm template-review:agent-feedback --ve
 Behavior:
 - targets `🆕Ready for Review` rows by default
 - skips rows that already have agent feedback unless `--overwrite` is set
-- does lightweight same-origin page discovery from the asset `Website URL` or preview URL when available, so the draft is not limited to a single page when no sitemap exists
+- does lightweight same-origin page discovery from the asset `Website URL`, with preview URL used only as a fallback when the published URL is unavailable, so the draft is not limited to a single page when no sitemap exists

@@ -201,6 +201,31 @@ test('buildVisibleProxyRoutes applies session -> discovery -> max cap', () => {
   assert.equal(visible.routes.has('server_b__gamma'), false);
 });
 
+test('buildVisibleProxyRoutes in scoped mode keeps all session-allowed routes for active servers', () => {
+  const runtime = createRuntime();
+  const prefs = {
+    mode: 'scoped' as const,
+    activeServers: ['server_a'],
+    maxProxyTools: 1,
+  };
+  const accountContext = {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: ['server_a__'],
+    identitySource: 'session' as const,
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    ['server_a__alpha', 'server_a__beta'],
+  );
+  assert.equal(visible.routes.has('server_b__gamma'), false);
+});
+
 test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', () => {
   const runtime = createRuntime();
   const prefs = {
@@ -445,7 +470,7 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for compat fal
 test('searchProxyTools only searches visible routes', () => {
   const runtime = createRuntime();
   const prefs = {
-    mode: 'compact' as const,
+    mode: 'scoped' as const,
     activeServers: ['server_a'],
     maxProxyTools: null,
   };
@@ -559,7 +584,7 @@ test('resolveDiscoveryPack returns normalized shared pack preferences', () => {
 
   assert.ok(shared);
   assert.equal(shared.id, 'shared-auth-core');
-  assert.equal(shared.preferences.mode, 'compact');
+  assert.equal(shared.preferences.mode, 'scoped');
   assert.equal(shared.preferences.maxProxyTools, null);
   assert.deepEqual(shared.preferences.activeServers, []);
 });
@@ -576,7 +601,7 @@ test('resolveDiscoveryPack returns Danny operator pack with the expected active 
 
   assert.ok(pack);
   assert.equal(pack.id, 'danny-shared-auth-plus-dm-and-operator-notion');
-  assert.equal(pack.preferences.mode, 'compact');
+  assert.equal(pack.preferences.mode, 'scoped');
   assertActiveServers(pack, [
     'halfdozen-operator-notion-mcp',
     'composio-toolkit-notion',
@@ -596,7 +621,7 @@ test('resolveDiscoveryPack returns C3Denver pack with the expected active servic
 
   assert.ok(pack);
   assert.equal(pack.id, 'c3denver-airtable-gmail-notion');
-  assert.equal(pack.preferences.mode, 'compact');
+  assert.equal(pack.preferences.mode, 'scoped');
   assertActiveServers(pack, [
     'composio-toolkit-airtable',
     'composio-toolkit-gmail',
@@ -668,7 +693,7 @@ test('resolveDiscoveryPack returns MJ legacy pack with the expected active servi
 
   assert.ok(pack);
   assert.equal(pack.id, 'mj-legacy-shared-auth-plus-meetings');
-  assert.equal(pack.preferences.mode, 'compact');
+  assert.equal(pack.preferences.mode, 'scoped');
   assertActiveServers(pack, [
     'composio-toolkit-dropbox',
     'composio-toolkit-gmail',
@@ -684,6 +709,42 @@ test('resolveDiscoveryPack returns MJ legacy pack with the expected active servi
   ]);
 });
 
+test('resolveDiscoveryPack returns Webflow reviewer Phase A pack as scoped discovery', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'webflow-template-review-mcp' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('webflow-marketplace-review-phase-a', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'webflow-marketplace-review-phase-a');
+  assert.equal(pack.preferences.mode, 'scoped');
+  assert.equal(pack.preferences.maxProxyTools, null);
+  assertActiveServers(pack, ['webflow-template-review-mcp']);
+});
+
+test('resolveDiscoveryPack returns Webflow reviewer Phase B pack as scoped discovery', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'webflow-template-review-mcp' },
+    { name: 'webflow-site-analyzer-mcp' },
+    { name: 'webflow-local' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('webflow-marketplace-review-phase-b', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'webflow-marketplace-review-phase-b');
+  assert.equal(pack.preferences.mode, 'scoped');
+  assert.equal(pack.preferences.maxProxyTools, null);
+  assertActiveServers(pack, [
+    'webflow-local',
+    'webflow-site-analyzer-mcp',
+    'webflow-template-review-mcp',
+  ]);
+});
+
 test('resolveDiscoveryPack returns null for unknown pack ids', () => {
   const runtime = createRuntime();
   const unknown = resolveDiscoveryPack('does-not-exist', runtime as any);
@@ -693,7 +754,7 @@ test('resolveDiscoveryPack returns null for unknown pack ids', () => {
 test('resolveIntentRouteCandidate prefers allowlisted route when visible', () => {
   const runtime = createIntentRuntime();
   const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
+    mode: 'scoped',
     activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
     maxProxyTools: null,
   }, {
@@ -717,7 +778,7 @@ test('resolveIntentRouteCandidate prefers allowlisted route when visible', () =>
 test('resolveIntentRouteCandidate uses heuristic router for natural language intents', () => {
   const runtime = createIntentRuntime();
   const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
+    mode: 'scoped',
     activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
     maxProxyTools: null,
   }, {
@@ -744,7 +805,7 @@ test('resolveIntentRouteCandidate uses heuristic router for natural language int
 test('resolveIntentRouteCandidate maps legacy sheet-write phrasing to batch update', () => {
   const runtime = createIntentRuntime();
   const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
+    mode: 'scoped',
     activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
     maxProxyTools: null,
   }, {
@@ -771,7 +832,7 @@ test('resolveIntentRouteCandidate maps legacy sheet-write phrasing to batch upda
 test('resolveIntentRouteCandidate maps legacy spreadsheet search phrasing to values get', () => {
   const runtime = createIntentRuntime();
   const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
+    mode: 'scoped',
     activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
     maxProxyTools: null,
   }, {
@@ -798,7 +859,7 @@ test('resolveIntentRouteCandidate maps legacy spreadsheet search phrasing to val
 test('resolveIntentRouteCandidate falls back to discovery for unknown intents', () => {
   const runtime = createIntentRuntime();
   const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
+    mode: 'scoped',
     activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
     maxProxyTools: null,
   }, {
@@ -826,7 +887,7 @@ test('resolveIntentRouteCandidate falls back to discovery for unknown intents', 
 test('resolveIntentRouteCandidate de-prioritizes deprecated discovery tools', () => {
   const runtime = createIntentRuntime();
   const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
+    mode: 'scoped',
     activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
     maxProxyTools: null,
   }, {

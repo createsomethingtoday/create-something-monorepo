@@ -5,27 +5,29 @@
 **Workflow:** `template_review_hub_lane`  
 **Date:** `2026-03-09`
 
-## 1. Pilot scope
+## 1. Current reviewer scope
 
 ### In scope
 
 - reviewer entry through one MCP Hub template review lane
-- queue lookup and asset/version context for template submissions
-- objective evidence gathering across preview and published sites
-- plagiarism/originality checks when needed
-- reviewer-validated draft feedback
-- approval-gated review state updates for request changes, approval, rejection, and publishing completion
+- queue lookup plus asset, version, and reviewer context for template submissions
+- reviewer packet access for Airtable submission truth and latest automation evidence
+- published-first analyzer jobs and evidence gathering from submitted URLs
+- reviewer-safe workflow writes such as self-assignment, request changes, controlled status updates, and draft feedback saves
+- hardening of broader decision actions only when they are explicitly enabled and traced
 
 ### Out of scope
 
 - autonomous creator-facing communication
+- `webflow-local` originality or plagiarism analysis in the current reviewer lane
 - subjective design, originality, or UX decisions made without human review
-- Marketplace-wide rollout beyond the template review pilot
+- broad Airtable mutation beyond the reviewer-safe workflow surface
+- Marketplace-wide rollout beyond the current reviewer baseline
 - Hub control-plane administration from the reviewer lane
 
 ## 2. Business objective
 
-The purpose of this pilot is to:
+The purpose of this reviewer baseline is to:
 
 - reduce time spent on objective checklist work
 - improve consistency of objective review findings
@@ -37,7 +39,7 @@ Target outcome in 30 days:
 
 ## 3. Success criteria
 
-The pilot is successful if:
+The current reviewer baseline is successful if:
 
 - risky actions are not executed without reviewer approval
 - the Marketplace review lead accepts the governed workflow path
@@ -62,15 +64,14 @@ Secondary KPIs:
 
 - CREATE SOMETHING MCP Hub
 - Airtable Marketplace Assets
-- Webflow preview and published sites
+- Webflow published sites and reviewer submission URLs
 - `webflow-template-review-mcp`
 - `webflow-site-analyzer-mcp`
-- `webflow-mcp`
 
 ### Trust boundary
 
-- auto-allow: queue reads, asset/version reads, analysis runs, checklist scoring, plagiarism checks, and draft feedback suggestions
-- approval-required: request changes, approval, rejection, publishing completion, and any other write path affecting official review state
+- auto-allow: queue/context reads, reviewer packet reads, published-first analyzer jobs, and evidence gathering
+- approval-required: reviewer-safe workflow writes and any broader decision tool that is explicitly enabled on the current lane
 - block: creator-facing sends without review, destructive/out-of-scope actions, and reviewer-lane control-plane mutations
 
 ### Ownership boundary
@@ -84,9 +85,9 @@ Secondary KPIs:
 If the governed workflow cannot complete safely:
 
 1. stop at the uncertainty, mapping, or tool-failure boundary
-2. review the submission manually using Airtable and Webflow
+2. review the submission manually using Airtable and the published site
 3. complete the required reviewer action outside the Hub if necessary
-4. record the exception for pilot review
+4. record the exception for pilot or hardening review
 
 Fallback is considered acceptable if:
 
@@ -96,7 +97,7 @@ Fallback is considered acceptable if:
 
 ## 6. Delivery artifacts
 
-This pilot produces:
+This delivery produces:
 
 - `mcp_contract.yaml`
 - `agent_contract.yaml`
@@ -109,13 +110,13 @@ This pilot produces:
 
 ## 7. Release gates
 
-The workflow does not move to broader rollout until:
+The workflow does not expand beyond the current reviewer baseline until:
 
 - pilot workflow scope is approved
 - policy boundary is approved
 - golden-task checks pass
 - manual fallback is rehearsed
-- reviewer playbook is reviewed with pilot reviewers
+- reviewer playbook is reviewed with active reviewers
 - Marketplace review lead and Senior Systems Architect sign off
 
 ## 8. Risks and assumptions
@@ -123,20 +124,20 @@ The workflow does not move to broader rollout until:
 ### Risks
 
 - Airtable field mappings may still contain gaps or behaviors that require manual fallback
-- objective checks may generate false positives that reduce reviewer trust early in pilot
+- objective checks may generate false positives or incomplete evidence that reduce reviewer trust
 - Hub policy or routing behavior may need hardening once live reviewer traffic starts
 
 ### Assumptions
 
 - current MCP surfaces are reused rather than rebuilt
-- pilot reviewers are available to validate the lane on real submissions
-- the Marketplace team is willing to adopt a governed pilot before broader rollout
+- active reviewers are available to validate the lane on real submissions
+- the Marketplace team is willing to adopt a governed reviewer baseline before broader expansion
 
 ## 9. Decision record
 
 ### Approved next step
 
-- package the current Webflow review MCP work as a reviewer-ready Hub lane and begin pilot validation
+- harden the current reviewer-ready Hub lane around reviewer packets, published-first analyzer evidence, and reviewer-safe writes
 
 ### Decision owner
 

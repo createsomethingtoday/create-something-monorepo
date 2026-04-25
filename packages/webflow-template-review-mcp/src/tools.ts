@@ -1,14 +1,16 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import type { AirtableClient } from './airtable.js';
+import type { AirtableClient, TemplateReviewAsset, TemplateReviewContext } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import type { TemplateReviewAnalyzer, TrackedAnalyzerReview } from './analyzer.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
 
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
+type AnalyzerFactory = () => TemplateReviewAnalyzer | null;
 
 const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '🏃🏾In Review',
@@ -100,7 +102,181 @@ function reviewerPayload(reviewer: ReviewerProfile) {
   };
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
+function requireAnalyzer(getAnalyzer: AnalyzerFactory) {
+  const analyzer = getAnalyzer();
+  if (!analyzer?.isConfigured()) {
+    throw new AirtableClientError(
+      'ANALYZER_NOT_CONFIGURED',
+      'Remote published analyzer credentials are not configured for this MCP runtime.',
+      503,
+    );
+  }
+  return analyzer;
+}
+
+function submissionPacket(asset: TemplateReviewAsset | null | undefined) {
+  if (!asset) {
+    return {
+      source: 'submission-truth',
+      available: false,
+      missingFields: ['asset'],
+    };
+  }
+
+  const missingFields = [
+    ...(asset.websiteUrl ? [] : ['website_url']),
+    ...(asset.thumbnailImageUrl ? [] : ['thumbnail_image']),
+    ...((asset.secondaryThumbnailUrls?.length ?? 0) > 0 ? [] : ['thumbnail_image_secondary']),
+    ...((asset.carouselImageUrls?.length ?? 0) > 0 ? [] : ['carousel_images']),
+  ];
+
+  return {
+    source: 'submission-truth',
+    available: true,
+    asset: {
+      assetId: asset.assetId,
+      templateName: asset.templateName,
+      websiteUrl: asset.websiteUrl,
+      previewSiteUrl: asset.previewSiteUrl,
+      marketplaceStatus: asset.marketplaceStatus,
+      latestReviewStatus: asset.latestReviewStatus,
+      submittedDate: asset.submittedDate,
+      decisionDate: asset.decisionDate,
+      priceString: asset.priceString,
+    },
+    images: {
+      primaryThumbnailUrl: asset.thumbnailImageUrl,
+      primaryThumbnailPresent: Boolean(asset.thumbnailImageUrl),
+      secondaryThumbnailCount: asset.secondaryThumbnailUrls?.length ?? 0,
+      secondaryThumbnailUrls: asset.secondaryThumbnailUrls ?? [],
+      carouselImageCount: asset.carouselImageUrls?.length ?? 0,
+      carouselImageUrls: asset.carouselImageUrls ?? [],
+      missingFields,
+    },
+  };
+}
+
+function manualAuthoringChecks() {
+  return [
+    'Designer component grouping, props, and variant labels',
+    'Designer variable naming, modes, and cleanup quality',
+    'Unused styles and unused interactions cleanup',
+    'CMS field schema and help-text authoring inside Designer',
+  ];
+}
+
+function reviewerPacketNextActions(
+  context: TemplateReviewContext,
+  asset: TemplateReviewAsset | null | undefined,
+  latestAnalyzerReview: TrackedAnalyzerReview | null,
+) {
+  const actions: string[] = [];
+
+  if (context.canAssign && !context.isAssignedToCurrentReviewer) {
+    actions.push('Assign yourself before any review mutation.');
+  }
+
+  if (!asset?.websiteUrl) {
+    actions.push('Submission is missing Website URL in Airtable; published automation cannot run until that is set.');
+  }
+
+  if (!latestAnalyzerReview) {
+    actions.push('Queue a published analyzer review to capture current Webflow Way automation evidence.');
+    return actions;
+  }
+
+  if (latestAnalyzerReview.status === 'queued' || latestAnalyzerReview.status === 'running') {
+    actions.push(`Poll analyzer job ${latestAnalyzerReview.jobId} until it reaches succeeded or failed.`);
+    return actions;
+  }
+
+  if (latestAnalyzerReview.status === 'failed') {
+    actions.push(`Analyzer job ${latestAnalyzerReview.jobId} failed; inspect the error and retry if published URLs are still valid.`);
+    return actions;
+  }
+
+  if ((latestAnalyzerReview.summary?.failedChecks ?? 0) > 0) {
+    actions.push('Use the top failed published checks to drive request-changes feedback.');
+  } else {
+    actions.push('Published automation did not find blocking failures; continue with manual design-quality judgment.');
+  }
+
+  if ((asset?.carouselImageUrls?.length ?? 0) === 0 || !asset?.thumbnailImageUrl) {
+    actions.push('Submission packet is incomplete; confirm marketplace thumbnails and carousel images in Airtable before approval.');
+  }
+
+  return actions;
+}
+
+function buildReviewerPacket(
+  context: TemplateReviewContext,
+  latestAnalyzerReview: TrackedAnalyzerReview | null,
+) {
+  const asset = context.asset;
+  return {
+    versionId: context.versionId,
+    assetId: context.assetId,
+    templateName: context.templateName,
+    reviewerContext: {
+      reviewOwner: context.reviewOwner,
+      reviewStatus: context.reviewStatus,
+      qualityRating: context.qualityRating,
+      canAssign: context.canAssign,
+      canReview: context.canReview,
+      canPublish: context.canPublish,
+      isAssignedToCurrentReviewer: context.isAssignedToCurrentReviewer,
+      currentReviewer: context.currentReviewer,
+    },
+    submission: submissionPacket(asset),
+    analyzer: latestAnalyzerReview
+      ? {
+          source: 'published-verified',
+          latestReview: latestAnalyzerReview,
+        }
+      : {
+          source: 'published-verified',
+          latestReview: null,
+          status: 'not_requested',
+        },
+    confidenceGuide: {
+      publishedAutomation: latestAnalyzerReview
+        ? {
+            source: 'published-verified',
+            status: latestAnalyzerReview.status,
+            coveragePercent: latestAnalyzerReview.summary?.coveragePercent,
+            overallScore: latestAnalyzerReview.summary?.overallScore,
+            grade: latestAnalyzerReview.summary?.grade,
+          }
+        : {
+            source: 'published-verified',
+            status: 'not_requested',
+          },
+      submissionTruth: {
+        source: 'submission-truth',
+        fields: [
+          'website_url',
+          'preview_site_url',
+          'thumbnail_image',
+          'thumbnail_image_secondary',
+          'carousel_images',
+          'review_status',
+        ],
+      },
+      manualRequired: {
+        source: 'manual-authoring',
+        checks: manualAuthoringChecks(),
+      },
+    },
+    nextActions: reviewerPacketNextActions(context, asset, latestAnalyzerReview),
+  };
+}
+
+export function registerTools(
+  server: McpServer,
+  getClient: ClientFactory,
+  getReviewer: ReviewerFactory = () => null,
+  getAnalyzer: AnalyzerFactory = () => null,
+): void {
   server.tool(
     'template_review_workflow',
     'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.',
@@ -112,12 +288,18 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_health',
-    'Runtime health check for Webflow Template Review MCP and Airtable connectivity.',
+    'Runtime health check for Webflow Template Review MCP, Airtable connectivity, and optional published analyzer reachability.',
     {},
     async () => {
       try {
         const health = await getClient().healthCheck();
-        return asSuccess({ ...health, auth: 'Bearer token required at worker boundary.' });
+        const analyzer = getAnalyzer();
+        const analyzerHealth = analyzer ? await analyzer.getHealth() : { configured: false, reachable: false };
+        return asSuccess({
+          ...health,
+          auth: 'Bearer token required at worker boundary.',
+          analyzer: analyzerHealth,
+        });
       } catch (error) {
         return asError(error);
       }
@@ -202,6 +384,132 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         return asSuccess({
           context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_enqueue_analyzer_review',
+    'Queue a published-first analyzer review for one template version using the submitted Website URL. Designer preview validation is skipped by default because this review lane is published-only.',
+    {
+      version_id: z.string().min(1),
+      published_url: z.string().url().optional(),
+      timeout: z.number().int().min(1_000).max(600_000).optional(),
+      crawl_max_pages: z.number().int().min(1).max(200).optional(),
+      crawl_max_depth: z.number().int().min(0).max(10).optional(),
+      include_manual: z.boolean().optional(),
+    },
+    async ({ version_id, published_url, timeout, crawl_max_pages, crawl_max_depth, include_manual }) => {
+      try {
+        const analyzer = requireAnalyzer(getAnalyzer);
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const publishedUrl = published_url ?? context.asset?.websiteUrl;
+        if (!publishedUrl) {
+          throw new AirtableClientError(
+            'WEBSITE_URL_MISSING',
+            'Template version cannot be analyzed because the Website URL is missing in Airtable.',
+            400,
+            { version_id },
+          );
+        }
+
+        const review = await analyzer.enqueueReview({
+          versionId: version_id,
+          assetId: context.assetId,
+          templateName: context.templateName,
+          publishedUrl,
+          previewUrl: context.asset?.previewSiteUrl,
+          timeout,
+          crawlMaxPages: crawl_max_pages,
+          crawlMaxDepth: crawl_max_depth,
+          includeManual: include_manual ?? true,
+        });
+
+        return asSuccess({
+          review,
+          guidance: `Poll template_review_get_analyzer_review with job_id=${review.jobId} until status is succeeded or failed.`,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_get_analyzer_review',
+    'Get the latest state for one queued analyzer review job and attach template-version metadata when available.',
+    {
+      job_id: z.string().min(1),
+      version_id: z.string().min(1).optional(),
+    },
+    async ({ job_id, version_id }) => {
+      try {
+        const analyzer = requireAnalyzer(getAnalyzer);
+        return asSuccess({
+          review: await analyzer.getReview(job_id, version_id),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_list_analyzer_reviews',
+    'List analyzer jobs started through this MCP runtime for one template version. This is a best-effort review history, not a permanent system-of-record.',
+    {
+      version_id: z.string().min(1),
+      limit: z.number().int().min(1).max(25).optional(),
+      refresh: z.boolean().optional(),
+    },
+    async ({ version_id, limit, refresh }) => {
+      try {
+        const analyzer = requireAnalyzer(getAnalyzer);
+        const items = await analyzer.listTrackedReviews({
+          versionId: version_id,
+          limit: limit ?? 10,
+          refresh: refresh ?? true,
+        });
+        return asSuccess({
+          versionId: version_id,
+          count: items.length,
+          items,
+          note: 'Only jobs started through template_review_enqueue_analyzer_review are guaranteed to appear here.',
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_get_reviewer_packet',
+    'Build a compact reviewer packet for one version by combining Airtable submission truth, the latest tracked published analyzer review, and explicit manual-only gaps.',
+    {
+      version_id: z.string().min(1),
+      analyzer_job_id: z.string().min(1).optional(),
+      refresh_analyzer: z.boolean().optional(),
+    },
+    async ({ version_id, analyzer_job_id, refresh_analyzer }) => {
+      try {
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const analyzer = getAnalyzer();
+        const latestAnalyzerReview =
+          analyzer?.isConfigured()
+            ? analyzer_job_id
+              ? await analyzer.getReview(analyzer_job_id, version_id)
+              : (await analyzer.listTrackedReviews({
+                  versionId: version_id,
+                  limit: 1,
+                  refresh: refresh_analyzer ?? true,
+                }))[0] ?? null
+            : null;
+
+        return asSuccess({
+          packet: buildReviewerPacket(context, latestAnalyzerReview),
         });
       } catch (error) {
         return asError(error);

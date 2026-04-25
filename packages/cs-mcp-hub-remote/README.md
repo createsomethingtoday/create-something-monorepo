@@ -96,7 +96,8 @@ Default prompt contract for brokered hosts:
 
 - If the task already names an app, toolkit, or service, pass `serverName`.
 - Do not search across every visible service unless the user explicitly asked for cross-service discovery.
-- Treat `compact` discovery as the default lane shape.
+- Treat `scoped` discovery as the default lane shape.
+- Use `compact` only when you intentionally need a capped visible subset.
 - Treat `full` discovery as an operator/debugging surface or a reviewed high-context lane.
 
 External curated endpoint layer:
@@ -122,9 +123,9 @@ Environment variables:
 - `HUB_ENABLED_BUNDLES` (optional): comma-separated or JSON array (defaults from registry)
 - `HUB_ENABLED_SERVERS` (optional): comma-separated or JSON array
 - `HUB_DISABLED_SERVERS` (optional): comma-separated or JSON array
-- `HUB_DISCOVERY_MODE` (optional): `compact` (default) or `full`
+- `HUB_DISCOVERY_MODE` (optional): `scoped` (default), `compact`, or `full`
 - `HUB_DISCOVERY_DEFAULT_SERVERS` (optional): comma-separated or JSON array of server names
-- `HUB_DISCOVERY_MAX_PROXY_TOOLS` (optional): positive integer cap; unset/null means no cap
+- `HUB_DISCOVERY_MAX_PROXY_TOOLS` (optional): positive integer cap for `compact` discovery; unset/null means no cap
 - `HUB_DISCOVERY_SHARED_PACK` (standard for shared hubs): named default from `config/mcp-hub/discovery-packs.json`
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
@@ -146,7 +147,7 @@ Shared discovery packs:
 - `shared-auth-core`: Dropbox, Gmail, Google Drive, Google Sheets, Notion, QuickBooks, Slack, YouTube, Zoom
 - `c3denver-airtable-gmail-notion`: Airtable, Gmail, Notion
 - `danny-shared-auth-plus-dm-and-operator-notion`: shared auth core plus `halfdozen-dm-mcp` and `halfdozen-operator-notion-mcp`
-- `mj-legacy-shared-auth-plus-meetings`: compact legacy shared auth core plus Meetings
+- `mj-legacy-shared-auth-plus-meetings`: scoped legacy shared auth core plus Meetings
 - `mj-shared-auth-plus-ops-search-meetings-and-review`: full MJ ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review
 - `outerfields-shared-auth-clickup`: shared auth core plus ClickUp
 - List available packs with `hub_list_discovery_packs`
@@ -155,8 +156,9 @@ Shared discovery packs:
 Pack authoring heuristics:
 
 - Prefer one named workflow or operator role per pack.
-- Keep reviewer and wedge packs capped to a small visible set when possible (for example `6-30` proxy tools).
-- Prefer `compact` packs for shared lanes; add a separate `full` pack only when a reviewed workflow actually needs it.
+- Prefer `scoped` packs for shared lanes.
+- Use `compact` only for lanes that intentionally cap the visible proxy surface (for example `6-30` tools).
+- Add a separate `full` pack only when a reviewed workflow actually needs the entire session-allowed catalog.
 - Avoid mixing multiple search/research providers into the same default pack unless the workflow explicitly depends on provider choice.
 - Add or expand `hub_route_intent` allowlists for repetitive workflows before broadening the visible tool surface.
 

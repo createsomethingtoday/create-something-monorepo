@@ -143,8 +143,8 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `packages/agency/src/routes/api/admin/mcp-entitlements/+server.ts`
 - `scripts/cs-hub-vault-sync.sh`
 - `scripts/cs-hub-rotate-production.sh`
-- `scripts/cs-hub-webflow-reviewers-phase-a-vault-sync.sh`
-- `scripts/cs-hub-webflow-reviewers-phase-a-deploy.sh`
+- `scripts/cs-hub-webflow-reviewers-vault-sync.sh`
+- `scripts/cs-hub-webflow-reviewers-deploy.sh`
 - `scripts/migrate-doppler-to-infisical.sh`
 - `docs/CS_HUB_VAULT_ROTATION_WORKFLOW.md`
 - `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`

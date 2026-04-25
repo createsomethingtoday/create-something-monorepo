@@ -204,7 +204,7 @@ type ProxyFailureDetails = {
   toolkitSlug: string | null;
 };
 
-type DiscoveryMode = 'compact' | 'full';
+type DiscoveryMode = 'compact' | 'full' | 'scoped';
 
 type DiscoveryPreferences = {
   mode: DiscoveryMode;
@@ -584,7 +584,7 @@ export const MANAGEMENT_TOOLS: Tool[] = [
       type: 'object',
       properties: {
         pack: { type: 'string' },
-        mode: { type: 'string', enum: ['compact', 'full'] },
+        mode: { type: 'string', enum: ['compact', 'full', 'scoped'] },
         activeServers: { type: 'array', items: { type: 'string' } },
         maxProxyTools: { type: 'number' },
         reset: { type: 'boolean' },
@@ -730,7 +730,7 @@ const DEFAULT_CONNECT_CONCURRENCY = 4;
 const MAX_CONNECT_CONCURRENCY = 32;
 const DEFAULT_TOOL_CALL_TIMEOUT_MS = 120_000;
 const SESSION_RESOLVE_CACHE_MS = 30000;
-const DEFAULT_DISCOVERY_MODE: DiscoveryMode = 'compact';
+const DEFAULT_DISCOVERY_MODE: DiscoveryMode = 'scoped';
 const DEFAULT_DISCOVERY_PAGE_SIZE = 100;
 const MAX_DISCOVERY_PAGE_SIZE = 500;
 const discoveryPreferencesByAccount = new Map<string, DiscoveryPreferences>();
@@ -2657,7 +2657,7 @@ export function buildVisibleProxyRoutes(
     ? sessionScoped
     : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
 
-  const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
+  const capped = prefs.mode === 'compact' && prefs.maxProxyTools && prefs.maxProxyTools > 0
     ? discoveryScoped.slice(0, prefs.maxProxyTools)
     : discoveryScoped;
 
@@ -4017,13 +4017,16 @@ function normalizeDiscoveryPreferences(
   env?: Env,
 ): DiscoveryPreferences {
   const requiredActiveServers = getRequiredDiscoveryServers(runtime, env);
+  const normalizedMode = prefs.mode;
   return {
-    mode: prefs.mode,
+    mode: normalizedMode,
     activeServers: resolveDiscoveryActiveServers(
       [...prefs.activeServers, ...requiredActiveServers],
       runtime,
     ),
-    maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
+    maxProxyTools: normalizedMode === 'compact'
+      ? resolveDiscoveryMaxProxyTools(prefs.maxProxyTools)
+      : null,
   };
 }
 
@@ -4038,6 +4041,7 @@ function buildDiscoveryCacheKey(env: Env, accountId: string): string {
 function parseDiscoveryMode(value: string | null | undefined): DiscoveryMode | null {
   const normalized = (value ?? '').trim().toLowerCase();
   if (normalized === 'full') return 'full';
+  if (normalized === 'scoped') return 'scoped';
   if (normalized === 'compact') return 'compact';
   return null;
 }

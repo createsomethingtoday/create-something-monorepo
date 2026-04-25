@@ -1,7 +1,7 @@
 # Webflow Template Checklist MCP Coverage Matrix
 
-Date: 2026-03-02  
-Scope: Coverage of the checklist items shared by the reviewer for current MCP-capable automation.
+Date: 2026-04-25
+Scope: Coverage of the checklist items shared by the reviewer for the current published-first reviewer baseline.
 
 Legend:
 - `Auto`: Can be validated deterministically now via MCP tooling.
@@ -9,17 +9,18 @@ Legend:
 - `Manual`: Not realistically automatable with current MCP data access.
 
 Automation sources used for this matrix:
-- Published-site checks: `window.__wfReview` tools (`audit_webflow_way`, `audit_meta`, `audit_headings`, `audit_links`, `audit_images`, `audit_forms`, `audit_media`, `audit_404`, `audit_ix2`, `audit_ix3`, `get_sitemap_urls`).
-- Designer checks: `extract_designer_metadata` from `@create-something/webflow-site-analyzer-mcp` (Steel/Browerless-backed Playwright extraction).
+- Reviewer-lane packet and analyzer flow: `template_review_get_reviewer_packet`, `template_review_enqueue_analyzer_review`, `template_review_get_analyzer_review`, and `template_review_list_analyzer_reviews`.
+- Published-first analyzer probes from `webflow-site-analyzer-mcp` against submitted published URLs.
+- Supplemental Designer metadata is not part of the official reviewer lane and should be treated as operator-only or deep-dive evidence when available.
 
 ## CMS and Ecommerce
 
 | Section | Checklist Item | Coverage | MCP Signal |
 |---|---|---|---|
-| CMS Structure | Use collection pages for repeatable/relational content | Partial | `extract_designer_metadata.cmsCollections` presence |
+| CMS Structure | Use collection pages for repeatable/relational content | Partial | Published route/output patterns plus reviewer packet context |
 | CMS Structure | Each CMS page includes dynamic SEO metadata | Partial | Crawl CMS URLs + `audit_meta` per page |
 | CMS Structure | Compress CMS media before upload (<4MB) | Partial | Media URL/file-size probes (not guaranteed for all assets) |
-| CMS Naming | Collection names Title Case + proper singular/plural | Partial | `cmsCollections.name` naming heuristics |
+| CMS Naming | Collection names Title Case + proper singular/plural | Manual | Designer collection naming is outside the official reviewer lane |
 | CMS Naming | Natural language singular/plural phrasing checks | Manual | Human language judgment |
 | CMS Naming | Slugs short, singular, descriptive | Partial | URL slug linting from sitemap/pages |
 | CMS Naming | Collection field names sentence case | Manual | Field schema not extracted today |
@@ -170,7 +171,7 @@ Automation sources used for this matrix:
 
 | Section | Checklist Item | Coverage | MCP Signal |
 |---|---|---|---|
-| Components | Nav, Footer, CTA as reusable Components | Partial | `extract_designer_metadata.components` heuristics |
+| Components | Nav, Footer, CTA as reusable Components | Partial | Published CSS/DOM component signals plus reviewer packet evidence |
 | Components | Component/variant names Title Case and readable | Partial | Naming linting |
 | Components | Props/slots/variants used (no duplication) | Manual | Component architecture judgment |
 | Components | Avoid nested sliders/tabs components | Partial | DOM nesting checks |
@@ -187,7 +188,7 @@ Automation sources used for this matrix:
 | Styles | Override styles use separate classes | Manual | Style architecture judgment |
 | Styles | Variables define baseline tag styles | Manual | Variables linkage not extracted |
 | Styles | Combo classes <= 3-4 per element | Partial | DOM class-stack linting |
-| Styles | Clean unused styles/classes | Partial | Designer style class inventory + usage heuristics |
+| Styles | Clean unused styles/classes | Manual | Outside the official reviewer lane without Designer/admin extraction |
 | Styles | Hover/pressed/focus states styled | Partial | CSS state selector detection |
 | Styles | Consistent grids/spacing from style guide | Manual | Design system judgment |
 | Naming Conventions | One consistent class naming format | Partial | Class-name pattern consistency linting |
@@ -195,7 +196,7 @@ Automation sources used for this matrix:
 | Naming Conventions | Combo class max 3 levels | Partial | Combo-depth linting |
 | Naming Conventions | Combo names match base format | Partial | Naming pattern linting |
 | Naming Conventions | Avoid redundant styles | Manual | CSS intent judgment |
-| Required Pages | Page names Title Case | Partial | `pages.name` linting |
+| Required Pages | Page names Title Case | Partial | Published route/title heuristics |
 | Required Pages | Page name matches slug | Partial | Names + sitemap slug matching |
 | Required Pages | Required pages include noindex head code | Partial | Per-page robots meta checks |
 | Required Pages | Style Guide page exists and includes all tags | Partial | Page existence auto; “all tags” partial |
@@ -205,12 +206,8 @@ Automation sources used for this matrix:
 | Required Pages | Footer links to Licenses on every page | Partial | Multi-page footer-link crawl |
 | Required Pages | License info for custom fonts/assets with links | Partial | Content/link presence check; legal sufficiency manual |
 
-## Coverage Totals (This Checklist)
+## Coverage Notes
 
-- `Auto`: 13
-- `Partial`: 105
-- `Manual`: 32
-
-Notes:
-- `Partial` is high because many checks are detectable only as heuristic signals without full Designer/Admin panel state.
-- Biggest current automation gap is the Variables panel + Admin/Settings internals + legal/content quality judgment.
+- `Partial` remains high because many checks are detectable only as published-first heuristics without full Designer/Admin panel state.
+- Biggest current automation gap is the Variables panel, deeper Designer/Admin internals, originality review, and legal/content quality judgment.
+- Treat this matrix as the current reviewer-lane view of the checklist, not as a promise that every historical analyzer capability is part of the official reviewer flow.

@@ -376,18 +376,6 @@ export const DEFAULT_REVIEWERS: ReviewerProfile[] = [
     available: true
   },
   {
-    id: 'sudiksha',
-    name: 'Sudiksha Khanduja',
-    assetTypes: ['template'],
-    categoryExpertise: { blog: 0.9, portfolio: 0.75, other: 0.7 },
-    seniorReviewer: false,
-    currentWorkload: 0,
-    targetWorkload: 10,
-    accuracyRate: 0.88,
-    avgReviewTime: 6,
-    available: true
-  },
-  {
     id: 'pablo',
     name: 'Pablo Miranda',
     assetTypes: ['app', 'template'],

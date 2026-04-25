@@ -1,0 +1,431 @@
+{
+  "generatedAt": "2026-04-24T21:28:12.459Z",
+  "reviewerLaneUrl": "https://wf-template-review-eric.mcp.createsomething.agency/mcp",
+  "databaseSource": {
+    "queueProxyTool": "webflow-template-review-mcp__template_review_list_queue",
+    "airtableBaseId": "appMoIgXMTTTNIc3p",
+    "airtableAssetsTableId": "tblRwzpWoLgE9MrUm"
+  },
+  "selection": {
+    "queueLimit": 8,
+    "approved": [
+      {
+        "assetId": "recv6YXol17CaFPiJ",
+        "templateName": "Grabin",
+        "websiteUrl": "https://grabin.webflow.io/",
+        "previewSiteUrl": "https://preview.webflow.com/preview/grabin?utm_medium=preview_link&utm_source=designer&utm_content=grabin&preview=748fb922a390f99c8a4abb3466383e8b&workflow=preview"
+      },
+      {
+        "assetId": "rechpYnxoSUdu6g3t",
+        "templateName": "Neura Nova",
+        "websiteUrl": "https://neura-nova.webflow.io/",
+        "previewSiteUrl": "https://preview.webflow.com/preview/neura-nova?utm_medium=preview_link&utm_source=designer&utm_content=neura-nova&preview=8b8c3ed5d3487f8c9b35978517cc26c4&locale=en&workflow=preview"
+      }
+    ],
+    "ready": [
+      {
+        "assetId": "recVREafD2AIDU1dX",
+        "templateName": "Athelas",
+        "websiteUrl": "https://athelas-template.webflow.io/",
+        "previewSiteUrl": "https://preview.webflow.com/preview/athelas-template?utm_medium=preview_link&utm_source=designer&utm_content=athelas-template&preview=d4ac345f3cd7a1e26a63a2adf91968cc&workflow=preview"
+      }
+    ],
+    "queueTimingsMs": {
+      "approved": 33219,
+      "readyToReview": 23854
+    }
+  },
+  "assets": [
+    {
+      "assetId": "recv6YXol17CaFPiJ",
+      "templateName": "Grabin",
+      "websiteUrl": "https://grabin.webflow.io/",
+      "previewSiteUrl": "https://preview.webflow.com/preview/grabin?utm_medium=preview_link&utm_source=designer&utm_content=grabin&preview=748fb922a390f99c8a4abb3466383e8b&workflow=preview",
+      "queueStatus": "✅Approved",
+      "marketplaceStatus": "3️⃣Published🚀",
+      "sampleBucket": "approved",
+      "ok": true,
+      "timings": {
+        "queueMs": 33219,
+        "airtableMs": 458,
+        "enqueueMs": 2816,
+        "waitMs": 69535,
+        "totalMs": 72810
+      },
+      "airtableParity": {
+        "recordIdMatches": true,
+        "templateNameMatches": true,
+        "websiteUrlMatches": true,
+        "previewSiteUrlMatches": true,
+        "marketplaceStatusMatches": true,
+        "latestReviewStatusMatches": false,
+        "submittedDateMatches": true,
+        "imageSubmissionCounts": {
+          "thumbnailCount": 1,
+          "secondaryThumbnailCount": 1,
+          "carouselCount": 5
+        }
+      },
+      "jobId": "template-review-1777065875267-e8kfh4",
+      "generatedAt": "2026-04-24T21:25:42.639Z",
+      "coverage": {
+        "totalKnownPages": 27,
+        "crawledPages": 12,
+        "skippedPages": 16,
+        "coveragePercent": 44
+      },
+      "summary": {
+        "pass": 16,
+        "fail": 16,
+        "partial": 2,
+        "manual": 5,
+        "automated": 32,
+        "humanInLoop": 7,
+        "overallScore": 44,
+        "grade": "D",
+        "coverage": {
+          "totalKnownPages": 27,
+          "crawledPages": 12,
+          "skippedPages": 16,
+          "coveragePercent": 44
+        }
+      },
+      "providerMetrics": {
+        "sessionsCreated": 2,
+        "sessionsClosed": 2,
+        "sessionErrors": 0,
+        "totalDurationMs": 67237,
+        "averageDurationMs": 33618.5,
+        "pageLoadsCompleted": 13,
+        "pageLoadErrors": 0,
+        "browserMinutes": 1.1206166666666666
+      },
+      "requiredPages": {
+        "designerPageNames": [],
+        "publishedUtilityPages": [
+          {
+            "url": "https://grabin.webflow.io/utility-pages/style-guide",
+            "classification": "utility:style-guide"
+          },
+          {
+            "url": "https://grabin.webflow.io/utility-pages/changelog",
+            "classification": "utility:changelog"
+          },
+          {
+            "url": "https://grabin.webflow.io/utility-pages/licenses",
+            "classification": "utility:license"
+          },
+          {
+            "url": "https://grabin.webflow.io/utility-pages/instructions",
+            "classification": "utility:instructions"
+          }
+        ],
+        "styleGuide": {
+          "designerFound": false,
+          "precheckFound": true,
+          "publishedFound": true,
+          "designerCheckResult": "fail",
+          "rowStatus": null
+        },
+        "instructions": {
+          "designerFound": false,
+          "precheckFound": true,
+          "publishedFound": true,
+          "designerCheckResult": "pass",
+          "rowStatus": null,
+          "requiredByPolicy": true
+        },
+        "licenses": {
+          "designerFound": false,
+          "precheckFound": true,
+          "publishedFound": true,
+          "designerCheckResult": "fail",
+          "rowStatus": null
+        },
+        "policy": {
+          "hasGsap": true,
+          "hasCustomCode": true,
+          "gsapRowStatus": "pass",
+          "customCodeRowStatus": "pass"
+        }
+      }
+    },
+    {
+      "assetId": "rechpYnxoSUdu6g3t",
+      "templateName": "Neura Nova",
+      "websiteUrl": "https://neura-nova.webflow.io/",
+      "previewSiteUrl": "https://preview.webflow.com/preview/neura-nova?utm_medium=preview_link&utm_source=designer&utm_content=neura-nova&preview=8b8c3ed5d3487f8c9b35978517cc26c4&locale=en&workflow=preview",
+      "queueStatus": "✅Approved",
+      "marketplaceStatus": "3️⃣Published🚀",
+      "sampleBucket": "approved",
+      "ok": true,
+      "timings": {
+        "queueMs": 33219,
+        "airtableMs": 387,
+        "enqueueMs": 2884,
+        "waitMs": 51670,
+        "totalMs": 54941
+      },
+      "airtableParity": {
+        "recordIdMatches": true,
+        "templateNameMatches": true,
+        "websiteUrlMatches": true,
+        "previewSiteUrlMatches": true,
+        "marketplaceStatusMatches": true,
+        "latestReviewStatusMatches": false,
+        "submittedDateMatches": true,
+        "imageSubmissionCounts": {
+          "thumbnailCount": 1,
+          "secondaryThumbnailCount": 1,
+          "carouselCount": 5
+        }
+      },
+      "jobId": "template-review-1777065948053-kosp1s",
+      "generatedAt": "2026-04-24T21:26:39.432Z",
+      "coverage": {
+        "totalKnownPages": 35,
+        "crawledPages": 12,
+        "skippedPages": 24,
+        "coveragePercent": 34
+      },
+      "summary": {
+        "pass": 16,
+        "fail": 17,
+        "partial": 1,
+        "manual": 5,
+        "automated": 33,
+        "humanInLoop": 6,
+        "overallScore": 43,
+        "grade": "D",
+        "coverage": {
+          "totalKnownPages": 35,
+          "crawledPages": 12,
+          "skippedPages": 24,
+          "coveragePercent": 34
+        }
+      },
+      "providerMetrics": {
+        "sessionsCreated": 2,
+        "sessionsClosed": 2,
+        "sessionErrors": 0,
+        "totalDurationMs": 51267,
+        "averageDurationMs": 25633.5,
+        "pageLoadsCompleted": 13,
+        "pageLoadErrors": 0,
+        "browserMinutes": 0.85445
+      },
+      "requiredPages": {
+        "designerPageNames": [],
+        "publishedUtilityPages": [
+          {
+            "url": "https://neura-nova.webflow.io/template-info/style-guide",
+            "classification": "utility:style-guide"
+          },
+          {
+            "url": "https://neura-nova.webflow.io/template-info/licenses",
+            "classification": "utility:license"
+          },
+          {
+            "url": "https://neura-nova.webflow.io/template-info/instruction",
+            "classification": "utility:instructions"
+          },
+          {
+            "url": "https://neura-nova.webflow.io/terms-condition",
+            "classification": "utility:license"
+          }
+        ],
+        "styleGuide": {
+          "designerFound": false,
+          "precheckFound": true,
+          "publishedFound": true,
+          "designerCheckResult": "fail",
+          "rowStatus": null
+        },
+        "instructions": {
+          "designerFound": false,
+          "precheckFound": true,
+          "publishedFound": true,
+          "designerCheckResult": "pass",
+          "rowStatus": null,
+          "requiredByPolicy": true
+        },
+        "licenses": {
+          "designerFound": false,
+          "precheckFound": true,
+          "publishedFound": true,
+          "designerCheckResult": "fail",
+          "rowStatus": null
+        },
+        "policy": {
+          "hasGsap": true,
+          "hasCustomCode": true,
+          "gsapRowStatus": "pass",
+          "customCodeRowStatus": "pass"
+        }
+      }
+    },
+    {
+      "assetId": "recVREafD2AIDU1dX",
+      "templateName": "Athelas",
+      "websiteUrl": "https://athelas-template.webflow.io/",
+      "previewSiteUrl": "https://preview.webflow.com/preview/athelas-template?utm_medium=preview_link&utm_source=designer&utm_content=athelas-template&preview=d4ac345f3cd7a1e26a63a2adf91968cc&workflow=preview",
+      "queueStatus": "🆕Ready for Review",
+      "marketplaceStatus": "1️⃣Upcoming🆕",
+      "sampleBucket": "ready_to_review",
+      "ok": true,
+      "timings": {
+        "queueMs": 23854,
+        "airtableMs": 322,
+        "enqueueMs": 2999,
+        "waitMs": 89193,
+        "totalMs": 92514
+      },
+      "airtableParity": {
+        "recordIdMatches": true,
+        "templateNameMatches": true,
+        "websiteUrlMatches": true,
+        "previewSiteUrlMatches": true,
+        "marketplaceStatusMatches": true,
+        "latestReviewStatusMatches": false,
+        "submittedDateMatches": true,
+        "imageSubmissionCounts": {
+          "thumbnailCount": 1,
+          "secondaryThumbnailCount": 1,
+          "carouselCount": 5
+        }
+      },
+      "jobId": "template-review-1777066003061-jp9frg",
+      "generatedAt": "2026-04-24T21:28:07.606Z",
+      "coverage": {
+        "totalKnownPages": 23,
+        "crawledPages": 12,
+        "skippedPages": 12,
+        "coveragePercent": 52
+      },
+      "summary": {
+        "pass": 15,
+        "fail": 14,
+        "partial": 5,
+        "manual": 5,
+        "automated": 29,
+        "humanInLoop": 10,
+        "overallScore": 56,
+        "grade": "D",
+        "coverage": {
+          "totalKnownPages": 23,
+          "crawledPages": 12,
+          "skippedPages": 12,
+          "coveragePercent": 52
+        }
+      },
+      "providerMetrics": {
+        "sessionsCreated": 2,
+        "sessionsClosed": 2,
+        "sessionErrors": 0,
+        "totalDurationMs": 84409,
+        "averageDurationMs": 42204.5,
+        "pageLoadsCompleted": 10,
+        "pageLoadErrors": 3,
+        "browserMinutes": 1.4068166666666666
+      },
+      "requiredPages": {
+        "designerPageNames": [],
+        "publishedUtilityPages": [
+          {
+            "url": "https://athelas-template.webflow.io/template/style-guide",
+            "classification": "utility:style-guide"
+          },
+          {
+            "url": "https://athelas-template.webflow.io/template/licenses",
+            "classification": "utility:license"
+          },
+          {
+            "url": "https://athelas-template.webflow.io/template/changelog",
+            "classification": "utility:changelog"
+          },
+          {
+            "url": "https://athelas-template.webflow.io/legal",
+            "classification": "utility:license"
+          }
+        ],
+        "styleGuide": {
+          "designerFound": false,
+          "precheckFound": true,
+          "publishedFound": true,
+          "designerCheckResult": "fail",
+          "rowStatus": null
+        },
+        "instructions": {
+          "designerFound": false,
+          "precheckFound": false,
+          "publishedFound": false,
+          "designerCheckResult": "pass",
+          "rowStatus": null,
+          "requiredByPolicy": true
+        },
+        "licenses": {
+          "designerFound": false,
+          "precheckFound": true,
+          "publishedFound": true,
+          "designerCheckResult": "fail",
+          "rowStatus": null
+        },
+        "policy": {
+          "hasGsap": true,
+          "hasCustomCode": true,
+          "gsapRowStatus": "partial",
+          "customCodeRowStatus": "partial"
+        }
+      }
+    }
+  ],
+  "aggregate": {
+    "successfulAssets": 3,
+    "styleGuide": {
+      "both": 0,
+      "designerOnly": 0,
+      "publishedOnly": 3,
+      "neither": 0,
+      "rowPass": 0,
+      "rowFail": 0,
+      "rowPartial": 0,
+      "rowManual": 0,
+      "designerMissedPublishedFound": 3
+    },
+    "instructions": {
+      "both": 0,
+      "designerOnly": 0,
+      "publishedOnly": 2,
+      "neither": 1,
+      "rowPass": 0,
+      "rowFail": 0,
+      "rowPartial": 0,
+      "rowManual": 0,
+      "designerMissedPublishedFound": 2
+    },
+    "licenses": {
+      "both": 0,
+      "designerOnly": 0,
+      "publishedOnly": 3,
+      "neither": 0,
+      "rowPass": 0,
+      "rowFail": 0,
+      "rowPartial": 0,
+      "rowManual": 0,
+      "designerMissedPublishedFound": 3
+    },
+    "instructionsPolicy": {
+      "triggered": 3,
+      "triggeredWithoutAnyDetectedPage": 1,
+      "triggeredWithDesignerOnly": 0,
+      "triggeredWithPublishedOnly": 2,
+      "triggeredWithBoth": 0
+    }
+  },
+  "recommendation": {
+    "styleGuide": "Prefer published precheck/crawl discovery, with Designer page names as fallback only.",
+    "instructions": "Blend published precheck/crawl and Designer page-name variants, then escalate only when policy triggers and no instructions page is found anywhere.",
+    "licenses": "Prefer published precheck/crawl discovery, with Designer page names as fallback only.",
+    "toolTiming": "Keep elapsed time in operator reports and experiment artifacts, not in the reviewer-facing MCP contract."
+  }
+}

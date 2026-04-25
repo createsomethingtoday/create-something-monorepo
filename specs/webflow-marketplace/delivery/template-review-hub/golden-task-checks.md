@@ -31,37 +31,37 @@ The workflow is considered ready for broader use only if:
 
 ## Scenario set
 
-### 1. Happy path evidence gathering
+### 1. Happy path reviewer packet and analyzer evidence
 
 - classification: `must-pass`
-- scenario: reviewer opens a template submission with valid queue context, preview URL, and published URL.
+- scenario: reviewer opens a template submission with valid queue context and a working published URL.
 - inputs:
   - valid `asset_id`
   - valid `version_id`
-  - valid preview and published URLs
+  - valid published URL
 - expected result:
-  - queue and asset context load
-  - unified template review runs
-  - findings return with evidence and recommendation
+  - queue, review context, and reviewer packet load
+  - published-first analyzer evidence is available either from an existing job or a fresh job
+  - findings return with evidence and actionable check IDs
 - expected policy outcome:
   - `auto-allow`
 - evidence required:
-  - trace showing queue read, analysis run, and recommendation payload
+  - trace showing queue read, reviewer packet payload, analyzer job lifecycle, and evidence payload
 
-### 2. Objective failure with draft feedback
+### 2. Objective failure with published evidence
 
 - classification: `must-pass`
 - scenario: submission fails clear objective checks such as heading structure, broken links, or required-page validation.
 - inputs:
   - submission containing known objective issues
 - expected result:
-  - workflow returns fail findings
-  - draft reviewer feedback is generated
+  - workflow returns fail or partial findings with specific evidence
+  - reviewer can cite concrete page paths, check IDs, or metrics
   - reviewer can validate before deciding
 - expected policy outcome:
-  - `auto-allow` for evidence and draft generation
+  - `auto-allow` for evidence gathering
 - evidence required:
-  - recommendation payload with issue list, evidence, and draft feedback
+  - reviewer packet or analyzer payload with issue list, page-level evidence, and confidence framing
 
 ### 3. Approval-gated request-changes update
 
@@ -106,10 +106,10 @@ The workflow is considered ready for broader use only if:
 - evidence required:
   - escalation trace and runbook handoff record
 
-### 6. Manual fallback on analysis or auth failure
+### 6. Manual fallback on analyzer or auth failure
 
 - classification: `must-pass`
-- scenario: preview extraction fails, Airtable auth fails, or a downstream tool is unavailable.
+- scenario: published-first analyzer execution fails, Airtable auth fails, or a downstream tool is unavailable.
 - inputs:
   - simulated tool or auth failure
 - expected result:
