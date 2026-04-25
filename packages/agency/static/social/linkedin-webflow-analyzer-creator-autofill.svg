@@ -1,0 +1,92 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#050505"/>
+  <rect x="48" y="48" width="1504" height="804" rx="28" stroke="#F2F2F2" stroke-opacity="0.18"/>
+
+  <text x="96" y="122" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700">
+    CREATOR AUTOFILL
+  </text>
+  <text x="96" y="164" fill="#A8A8A8" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    Productized workflow help
+  </text>
+
+  <text x="96" y="230" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="60" font-weight="700">
+    Same evidence pipeline.
+  </text>
+  <text x="96" y="296" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="60" font-weight="700">
+    Different trust surface.
+  </text>
+  <text x="96" y="344" fill="#9E9E9E" font-family="Helvetica, Arial, sans-serif" font-size="25">
+    Validation, autofill, and screenshot prep translate reviewer infrastructure into creator help.
+  </text>
+
+  <line x1="96" y1="394" x2="548" y2="394" stroke="#F5F5F5" stroke-opacity="0.12" stroke-width="2"/>
+  <line x1="1100" y1="394" x2="1504" y2="394" stroke="#F5F5F5" stroke-opacity="0.12" stroke-width="2"/>
+  <text x="592" y="400" fill="#8F8F8F" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    reviewer infrastructure -&gt; creator workflow help
+  </text>
+
+  <rect x="138" y="444" width="376" height="210" rx="22" stroke="#F5F5F5" stroke-opacity="0.18"/>
+  <text x="172" y="520" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700">
+    Validate URL
+  </text>
+  <text x="172" y="562" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Check the published page
+  </text>
+  <text x="172" y="596" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Return safe signals
+  </text>
+  <text x="172" y="628" fill="#8F8F8F" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    shared evidence, creator entry point
+  </text>
+
+  <line x1="514" y1="549" x2="586" y2="549" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3"/>
+  <polygon points="586,549 568,539 568,559" fill="#F5F5F5" fill-opacity="0.65"/>
+
+  <rect x="610" y="416" width="380" height="266" rx="22" stroke="#F5F5F5" stroke-opacity="0.26" stroke-width="2.5"/>
+  <text x="644" y="494" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700">
+    Autofill Fields
+  </text>
+  <text x="644" y="536" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Apply what can be inferred
+  </text>
+  <text x="644" y="570" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Leave judgment-sensitive
+  </text>
+  <text x="644" y="602" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    fields alone
+  </text>
+  <line x1="644" y1="632" x2="956" y2="632" stroke="#F5F5F5" stroke-opacity="0.12" stroke-width="2"/>
+  <text x="644" y="666" fill="#8F8F8F" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    same system, narrower permissions
+  </text>
+
+  <line x1="990" y1="549" x2="1062" y2="549" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3"/>
+  <polygon points="1062,549 1044,539 1044,559" fill="#F5F5F5" fill-opacity="0.65"/>
+
+  <rect x="1086" y="444" width="376" height="210" rx="22" stroke="#F5F5F5" stroke-opacity="0.18"/>
+  <text x="1120" y="520" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700">
+    Screenshots Ready
+  </text>
+  <text x="1120" y="562" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Package assets for upload
+  </text>
+  <text x="1120" y="596" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Show a clear summary
+  </text>
+  <text x="1120" y="628" fill="#8F8F8F" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    submission prep, not autonomous review
+  </text>
+
+  <line x1="96" y1="730" x2="1504" y2="730" stroke="#F5F5F5" stroke-opacity="0.12" stroke-width="2"/>
+  <text x="478" y="768" fill="#8A8A8A" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    productization turns internal capability into bounded workflow help
+  </text>
+
+  <line x1="96" y1="804" x2="1504" y2="804" stroke="#F5F5F5" stroke-opacity="0.18" stroke-width="2"/>
+  <text x="96" y="836" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="700">
+    Productization is translation: turn internal capability into the smallest safe external help.
+  </text>
+  <text x="1310" y="836" fill="#8A8A8A" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="700">
+    CREATE SOMETHING
+  </text>
+</svg>
