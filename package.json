@@ -116,6 +116,7 @@
     "mcp:hub:write-config": "node packages/cs-mcp-hub/dist/index.js --write-codex",
     "mcp:hub:fleet:deploy": "bash scripts/cs-hub-fleet-deploy.sh",
     "mcp:hub:fleet:verify": "bash scripts/cs-hub-fleet-verify.sh",
+    "mcp:fleet:health": "node scripts/mcp-fleet-health-agent.mjs",
     "policy:os:verify:live": "bash scripts/policy-os-live-verify.sh",
     "mcp:hub:legacy:deploy": "bash scripts/cs-hub-legacy-bridge-deploy.sh",
     "mcp:hub:vault:sync": "bash scripts/cs-hub-vault-sync.sh",
