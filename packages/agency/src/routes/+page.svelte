@@ -5,6 +5,7 @@
   import BrandLogo from '$lib/components/BrandLogo.svelte';
   import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
+  import InkOperatorSurface from '$lib/components/InkOperatorSurface.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
@@ -220,6 +221,14 @@
         {/each}
       </div>
     </div>
+  </div>
+</section>
+
+<section id="ink" class="ink-section">
+  <div class="shell-inner-pad">
+    <BlurFade>
+      <InkOperatorSurface />
+    </BlurFade>
   </div>
 </section>
 
@@ -546,6 +555,7 @@
 
   .signal-section,
   .control-section,
+  .ink-section,
   .capability-section,
   .offer-section,
   .governance-section,
