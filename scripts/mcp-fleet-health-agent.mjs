@@ -31,6 +31,7 @@ Options:
   --limit <number>        Limit selected targets, useful for smoke checks
   --timeout-ms <number>   Per-request timeout (default: ${DEFAULT_TIMEOUT_MS})
   --concurrency <number>  Parallel probes (default: ${DEFAULT_CONCURRENCY})
+  --strict-health         Require /health to pass before reporting healthy
   --infisical             Load missing env vars from Infisical before probing
   --infisical-env <slug>  Infisical environment (default: INFISICAL_ENV or prod)
   --infisical-path <path> Infisical path (default: INFISICAL_PATH or /)
@@ -61,6 +62,7 @@ function parseArgs(argv) {
     limit: undefined,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     concurrency: DEFAULT_CONCURRENCY,
+    strictHealth: false,
     infisical: false,
     infisicalEnv: process.env.INFISICAL_ENV || 'prod',
     infisicalPath: process.env.INFISICAL_PATH || '/',
@@ -145,6 +147,11 @@ function parseArgs(argv) {
     if (arg === '--concurrency' && next) {
       options.concurrency = parsePositiveInteger(next, '--concurrency');
       index += 1;
+      continue;
+    }
+
+    if (arg === '--strict-health') {
+      options.strictHealth = true;
       continue;
     }
 
@@ -589,7 +596,7 @@ async function probeServer(target, options, secretResolver) {
   }
 
   const tools = Array.isArray(toolsList.result?.tools) ? toolsList.result.tools : [];
-  const status = tools.length > 0 && health.ok ? 'healthy' : 'degraded';
+  const status = tools.length > 0 && (health.ok || !options.strictHealth) ? 'healthy' : 'degraded';
   const reason =
     tools.length === 0
       ? 'tools_list_empty'

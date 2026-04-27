@@ -9,6 +9,7 @@ It performs read-only checks only:
 3. JSON-RPC `tools/list`
 
 It does not call arbitrary MCP tools.
+By default, `/health` is advisory: an MCP is production-healthy when `initialize` and `tools/list` prove the tool surface is accessible. Use `--strict-health` when a deployment gate must also require `/health`.
 
 ## Quick Start
 
@@ -93,8 +94,8 @@ If a registry entry names a token env var and the value is still missing, that M
 
 | Status | Meaning |
 |---|---|
-| `healthy` | MCP initialized successfully and `tools/list` returned one or more tools. |
-| `degraded` | MCP was reachable but the health endpoint was unavailable or `tools/list` was empty. |
+| `healthy` | MCP initialized successfully and `tools/list` returned one or more tools. `/health` may still be reported as unavailable unless `--strict-health` is used. |
+| `degraded` | MCP was reachable but `tools/list` was empty, or `/health` was unavailable while `--strict-health` was enabled. |
 | `unhealthy` | The endpoint failed initialize or `tools/list` for a non-auth reason. |
 | `unknown` | The agent lacked credentials or received an auth gate, so tool accessibility could not be verified. |
 | `skipped` | The target was intentionally not probed, usually during `--dry-run`. |
@@ -111,4 +112,10 @@ Use a narrower gate when onboarding or rotating credentials:
 
 ```bash
 pnpm mcp:fleet:health --server cs-telemetry --infisical --fail-on unhealthy,unknown
+```
+
+Require both MCP tool accessibility and `/health`:
+
+```bash
+pnpm mcp:fleet:health --infisical --strict-health --fail-on degraded,unhealthy,unknown
 ```
