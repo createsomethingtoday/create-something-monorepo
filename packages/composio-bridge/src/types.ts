@@ -168,6 +168,49 @@ export interface ComposioToolkitSummary {
 }
 
 // =============================================================================
+// Composio-hosted MCP configuration
+// =============================================================================
+
+/**
+ * Toolkit binding used when creating a Composio-hosted MCP config.
+ */
+export interface ComposioMcpToolkitConfig {
+  /** Toolkit slug, e.g. "quickbooks". */
+  toolkit: string;
+  /** Composio auth config ID, e.g. "ac_xyz123". */
+  authConfigId: string;
+}
+
+/**
+ * Input for creating a Composio-hosted MCP config.
+ */
+export interface ComposioMcpCreateInput {
+  /** Human-readable server/config name. */
+  name: string;
+  /** One or more toolkit bindings. */
+  toolkits: ComposioMcpToolkitConfig[];
+  /** Optional allowlist of Composio tool slugs. Omit to expose toolkit defaults. */
+  allowedTools?: string[];
+}
+
+/**
+ * Normalized response for a Composio-hosted MCP config.
+ */
+export interface ComposioMcpServerConfig {
+  id: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Normalized response for a generated per-user Composio MCP URL.
+ */
+export interface ComposioMcpGeneratedInstance {
+  url: string;
+  [key: string]: unknown;
+}
+
+// =============================================================================
 // App & Tool Configuration
 // =============================================================================
 

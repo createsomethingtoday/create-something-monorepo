@@ -21,9 +21,13 @@ import type {
   ComposioClientConfig,
   ComposioAccount,
   ComposioExecutionPolicy,
+  ComposioMcpCreateInput,
+  ComposioMcpGeneratedInstance,
+  ComposioMcpServerConfig,
+  ComposioMcpToolkitConfig,
   ComposioToolDiscoveryOptions,
   ComposioToolkitListOptions,
-  ComposioToolkitSummary,
+  ComposioToolkitSummary
 } from './types.js';
 
 // =============================================================================
@@ -86,9 +90,28 @@ interface NormalizedExecutionPolicy {
 }
 
 interface PolicyContext {
-  operation: 'TOOLS_FETCH' | 'TOOLKITS_FETCH' | 'TOOL_EXECUTE' | 'ACCOUNTS_FETCH';
+  operation:
+    | 'TOOLS_FETCH'
+    | 'TOOLKITS_FETCH'
+    | 'TOOL_EXECUTE'
+    | 'ACCOUNTS_FETCH'
+    | 'MCP_CREATE'
+    | 'MCP_GENERATE';
   idempotent: boolean;
 }
+
+type ComposioMcpSdk = {
+  create: (
+    name: string,
+    config: {
+      toolkits: ComposioMcpSdkToolkitConfig[];
+      allowedTools?: string[];
+    }
+  ) => Promise<unknown>;
+  generate: (userId: string, mcpConfigId: string) => Promise<unknown>;
+};
+
+type ComposioMcpSdkToolkitConfig = string | { authConfigId: string };
 
 const DEFAULT_RETRY_STATUS_CODES = [408, 409, 425, 429, 500, 502, 503, 504];
 const DEFAULT_RETRY_ERROR_CODES = [
@@ -99,11 +122,11 @@ const DEFAULT_RETRY_ERROR_CODES = [
   'UND_ERR_CONNECT_TIMEOUT',
   'UND_ERR_HEADERS_TIMEOUT',
   'FETCH_FAILED',
-  'ERR_NETWORK',
+  'ERR_NETWORK'
 ];
 
 function normalizeExecutionPolicy(
-  policy: ComposioExecutionPolicy | undefined,
+  policy: ComposioExecutionPolicy | undefined
 ): NormalizedExecutionPolicy {
   const retry = policy?.retry ?? {};
 
@@ -117,14 +140,16 @@ function normalizeExecutionPolicy(
       retryableStatusCodes: new Set(
         (retry.retryableStatusCodes && retry.retryableStatusCodes.length > 0
           ? retry.retryableStatusCodes
-          : DEFAULT_RETRY_STATUS_CODES).map((status) => Math.trunc(status)),
+          : DEFAULT_RETRY_STATUS_CODES
+        ).map((status) => Math.trunc(status))
       ),
       retryableErrorCodes: new Set(
         (retry.retryableErrorCodes && retry.retryableErrorCodes.length > 0
           ? retry.retryableErrorCodes
-          : DEFAULT_RETRY_ERROR_CODES).map((code) => code.trim().toUpperCase()),
-      ),
-    },
+          : DEFAULT_RETRY_ERROR_CODES
+        ).map((code) => code.trim().toUpperCase())
+      )
+    }
   };
 }
 
@@ -143,7 +168,7 @@ export class ComposioClient {
 
     this.composio = new Composio({
       apiKey: config.apiKey,
-      ...(config.baseURL ? { baseURL: config.baseURL } : {}),
+      ...(config.baseURL ? { baseURL: config.baseURL } : {})
     });
   }
 
@@ -159,26 +184,29 @@ export class ComposioClient {
    */
   async getTools(
     toolkits: string[],
-    options: ComposioToolDiscoveryOptions = {},
+    options: ComposioToolDiscoveryOptions = {}
   ): Promise<ComposioToolDef[]> {
     try {
       const rawTools = await this.runWithPolicy(
-        () => this.composio.tools.getRawComposioTools({
-          toolkits: toolkits.map((t) => t.toLowerCase()),
-          ...(options.limit ? { limit: options.limit } : {}),
-          ...(typeof options.important === 'boolean' ? { important: options.important } : {}),
-          ...(options.search ? { search: options.search } : {}),
-          ...(options.authConfigIds && options.authConfigIds.length > 0
-            ? { authConfigIds: options.authConfigIds }
-            : {}),
-        }),
-        { operation: 'TOOLS_FETCH', idempotent: true },
+        () =>
+          this.composio.tools.getRawComposioTools({
+            toolkits: toolkits.map((t) => t.toLowerCase()),
+            ...(options.limit ? { limit: options.limit } : {}),
+            ...(typeof options.important === 'boolean' ? { important: options.important } : {}),
+            ...(options.search ? { search: options.search } : {}),
+            ...(options.authConfigIds && options.authConfigIds.length > 0
+              ? { authConfigIds: options.authConfigIds }
+              : {})
+          }),
+        { operation: 'TOOLS_FETCH', idempotent: true }
       );
       const rawItems = Array.isArray(rawTools)
         ? rawTools.filter(isRecord)
-        : ((Array.isArray((rawTools as Record<string, unknown>)?.items)
-          ? (rawTools as Record<string, unknown>).items
-          : []) as unknown[]).filter(isRecord);
+        : (
+            (Array.isArray((rawTools as Record<string, unknown>)?.items)
+              ? (rawTools as Record<string, unknown>).items
+              : []) as unknown[]
+          ).filter(isRecord);
 
       // Map to our internal type — insulates us from SDK shape changes
       return (rawItems ?? []).map((tool) => {
@@ -189,19 +217,19 @@ export class ComposioClient {
           description: String(rawTool.description ?? ''),
           app: String(
             (rawTool.toolkit as Record<string, unknown>)?.name ??
-            (rawTool.toolkit as Record<string, unknown>)?.slug ??
-            rawTool.appName ??
-            rawTool.app ??
-            '',
+              (rawTool.toolkit as Record<string, unknown>)?.slug ??
+              rawTool.appName ??
+              rawTool.app ??
+              ''
           ),
-          parameters: normalizeParameters(rawTool.inputParameters ?? rawTool.parameters),
+          parameters: normalizeParameters(rawTool.inputParameters ?? rawTool.parameters)
         };
       });
     } catch (error) {
       throw toBridgeError(
         error,
         `Failed to fetch tools for toolkits [${toolkits.join(', ')}]`,
-        'TOOLS_FETCH_FAILED',
+        'TOOLS_FETCH_FAILED'
       );
     }
   }
@@ -216,25 +244,118 @@ export class ComposioClient {
   async listToolkits(options: ComposioToolkitListOptions = {}): Promise<ComposioToolkitSummary[]> {
     try {
       const response = await this.runWithPolicy(
-        () => this.composio.toolkits.get({
-          ...(options.category ? { category: options.category } : {}),
-          ...(options.managedBy ? { managedBy: options.managedBy } : {}),
-          ...(options.sortBy ? { sortBy: options.sortBy } : {}),
-          ...(options.limit ? { limit: options.limit } : {}),
-          ...(options.cursor ? { cursor: options.cursor } : {}),
-        }),
-        { operation: 'TOOLKITS_FETCH', idempotent: true },
+        () =>
+          this.composio.toolkits.get({
+            ...(options.category ? { category: options.category } : {}),
+            ...(options.managedBy ? { managedBy: options.managedBy } : {}),
+            ...(options.sortBy ? { sortBy: options.sortBy } : {}),
+            ...(options.limit ? { limit: options.limit } : {}),
+            ...(options.cursor ? { cursor: options.cursor } : {})
+          }),
+        { operation: 'TOOLKITS_FETCH', idempotent: true }
       );
 
       const items = Array.isArray(response)
         ? response.filter(isRecord)
-        : ((Array.isArray((response as Record<string, unknown>)?.items)
-          ? (response as Record<string, unknown>).items
-          : []) as unknown[]).filter(isRecord);
+        : (
+            (Array.isArray((response as Record<string, unknown>)?.items)
+              ? (response as Record<string, unknown>).items
+              : []) as unknown[]
+          ).filter(isRecord);
 
       return items.map((item) => normalizeToolkit(item as Record<string, unknown>));
     } catch (error) {
       throw toBridgeError(error, 'Failed to list toolkits', 'TOOLKITS_FETCH_FAILED');
+    }
+  }
+
+  // ===========================================================================
+  // Composio-hosted MCP configs (Automation tier)
+  // ===========================================================================
+
+  /**
+   * Create a Composio-hosted MCP config.
+   *
+   * This is used for single-toolkit MCPs where Composio hosts the MCP endpoint
+   * directly and the Hub consumes the generated per-user URL.
+   */
+  async createMcpConfig(input: ComposioMcpCreateInput): Promise<ComposioMcpServerConfig> {
+    const name = input.name.trim();
+    if (!name) {
+      throw new ComposioBridgeError('MCP config name is required.', 'MCP_CREATE_INVALID_INPUT');
+    }
+
+    const toolkits = input.toolkits
+      .map((toolkit) => ({
+        toolkit: toolkit.toolkit.trim().toLowerCase(),
+        authConfigId: toolkit.authConfigId.trim()
+      }))
+      .filter((toolkit) => toolkit.toolkit && toolkit.authConfigId);
+
+    if (toolkits.length === 0) {
+      throw new ComposioBridgeError(
+        'At least one toolkit/authConfigId pair is required to create a Composio MCP config.',
+        'MCP_CREATE_INVALID_INPUT'
+      );
+    }
+
+    const allowedTools = normalizeAllowedTools(input.allowedTools);
+
+    try {
+      const mcp = this.getMcpSdk();
+      const response = await this.runWithPolicy(
+        () =>
+          mcp.create(name, {
+            toolkits: toMcpSdkToolkits(toolkits),
+            ...(allowedTools.length > 0 ? { allowedTools } : {})
+          }),
+        { operation: 'MCP_CREATE', idempotent: false }
+      );
+
+      return normalizeMcpServerConfig(response);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        `Failed to create Composio MCP config "${name}"`,
+        'MCP_CREATE_FAILED'
+      );
+    }
+  }
+
+  /**
+   * Generate a per-user URL for a Composio-hosted MCP config.
+   */
+  async generateMcpInstance(
+    userId: string,
+    mcpConfigId: string
+  ): Promise<ComposioMcpGeneratedInstance> {
+    const normalizedUserId = userId.trim();
+    const normalizedConfigId = mcpConfigId.trim();
+
+    if (!normalizedUserId) {
+      throw new ComposioBridgeError('Composio user ID is required.', 'MCP_GENERATE_INVALID_INPUT');
+    }
+    if (!normalizedConfigId) {
+      throw new ComposioBridgeError(
+        'Composio MCP config ID is required.',
+        'MCP_GENERATE_INVALID_INPUT'
+      );
+    }
+
+    try {
+      const mcp = this.getMcpSdk();
+      const response = await this.runWithPolicy(
+        () => mcp.generate(normalizedUserId, normalizedConfigId),
+        { operation: 'MCP_GENERATE', idempotent: false }
+      );
+
+      return normalizeMcpGeneratedInstance(response);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        `Failed to generate Composio MCP URL for config "${normalizedConfigId}"`,
+        'MCP_GENERATE_FAILED'
+      );
     }
   }
 
@@ -254,17 +375,18 @@ export class ComposioClient {
     toolSlug: string,
     params: Record<string, unknown>,
     userId?: string,
-    connectedAccountId?: string,
+    connectedAccountId?: string
   ): Promise<Record<string, unknown>> {
     try {
       const result = await this.runWithPolicy(
-        () => this.composio.tools.execute(toolSlug, {
-          userId: userId ?? 'default',
-          ...(connectedAccountId ? { connectedAccountId } : {}),
-          arguments: params,
-          dangerouslySkipVersionCheck: true,
-        }),
-        { operation: 'TOOL_EXECUTE', idempotent: false },
+        () =>
+          this.composio.tools.execute(toolSlug, {
+            userId: userId ?? 'default',
+            ...(connectedAccountId ? { connectedAccountId } : {}),
+            arguments: params,
+            dangerouslySkipVersionCheck: true
+          }),
+        { operation: 'TOOL_EXECUTE', idempotent: false }
       );
 
       // Normalize the response
@@ -290,33 +412,31 @@ export class ComposioClient {
   async getConnectedAccounts(userId: string): Promise<ComposioAccount[]> {
     try {
       const response = await this.runWithPolicy(
-        () => this.composio.connectedAccounts.list({
-          userIds: [userId],
-        }),
-        { operation: 'ACCOUNTS_FETCH', idempotent: true },
+        () =>
+          this.composio.connectedAccounts.list({
+            userIds: [userId]
+          }),
+        { operation: 'ACCOUNTS_FETCH', idempotent: true }
       );
 
-      const items = (response as Record<string, unknown>)?.items ??
-        (Array.isArray(response) ? response : []);
+      const items =
+        (response as Record<string, unknown>)?.items ?? (Array.isArray(response) ? response : []);
 
       return (items as Record<string, unknown>[]).map((account) => ({
         connectionId: String(account.id ?? account.nanoid ?? ''),
         app: String(
-          (account.toolkit as Record<string, unknown>)?.slug ??
-          account.appName ??
-          account.app ??
-          '',
+          (account.toolkit as Record<string, unknown>)?.slug ?? account.appName ?? account.app ?? ''
         ),
         entityId: String(account.userId ?? account.entityId ?? userId),
         status: mapConnectionStatus(account.status),
         createdAt: account.createdAt ? String(account.createdAt) : undefined,
-        rawStatus: account.status ? String(account.status) : undefined,
+        rawStatus: account.status ? String(account.status) : undefined
       }));
     } catch (error) {
       throw toBridgeError(
         error,
         `Failed to fetch connected accounts for user ${userId}`,
-        'ACCOUNTS_FETCH_FAILED',
+        'ACCOUNTS_FETCH_FAILED'
       );
     }
   }
@@ -327,7 +447,7 @@ export class ComposioClient {
   async hasActiveConnection(userId: string, toolkit: string): Promise<boolean> {
     const accounts = await this.getConnectedAccounts(userId);
     return accounts.some(
-      (a) => a.app.toLowerCase() === toolkit.toLowerCase() && a.status === 'active',
+      (a) => a.app.toLowerCase() === toolkit.toLowerCase() && a.status === 'active'
     );
   }
 
@@ -336,7 +456,7 @@ export class ComposioClient {
    */
   async getConnectedAccountsForToolkit(
     userId: string,
-    toolkit: string,
+    toolkit: string
   ): Promise<ComposioAccount[]> {
     const normalizedToolkit = toolkit.trim().toLowerCase();
     const accounts = await this.getConnectedAccounts(userId);
@@ -359,25 +479,21 @@ export class ComposioClient {
       // Use a lightweight call to verify connectivity
       await this.composio.tools.getRawComposioTools({
         toolkits: ['github'],
-        limit: 1,
+        limit: 1
       });
       return { ok: true, latencyMs: Date.now() - start };
     } catch (error) {
       return {
         ok: false,
         latencyMs: Date.now() - start,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   }
 
-  private async runWithPolicy<T>(
-    operation: () => Promise<T>,
-    context: PolicyContext,
-  ): Promise<T> {
+  private async runWithPolicy<T>(operation: () => Promise<T>, context: PolicyContext): Promise<T> {
     const { retryMode, retry } = this.executionPolicy;
-    const retriesAllowed =
-      retryMode === 'all' || (retryMode === 'safe' && context.idempotent);
+    const retriesAllowed = retryMode === 'all' || (retryMode === 'safe' && context.idempotent);
     const maxAttempts = retriesAllowed ? retry.maxAttempts : 1;
 
     let attempt = 1;
@@ -412,15 +528,32 @@ export class ComposioClient {
   getSDK(): Composio {
     return this.composio;
   }
+
+  private getMcpSdk(): ComposioMcpSdk {
+    const mcp = (this.composio as unknown as { mcp?: unknown }).mcp;
+    if (!isRecord(mcp)) {
+      throw new ComposioBridgeError(
+        'Installed @composio/core does not expose composio.mcp. Update @composio/core before using hosted MCP config creation.',
+        'MCP_SDK_UNAVAILABLE'
+      );
+    }
+
+    if (typeof mcp.create !== 'function' || typeof mcp.generate !== 'function') {
+      throw new ComposioBridgeError(
+        'Installed @composio/core composio.mcp surface is missing create/generate methods.',
+        'MCP_SDK_UNAVAILABLE'
+      );
+    }
+
+    return mcp as unknown as ComposioMcpSdk;
+  }
 }
 
 // =============================================================================
 // Helpers
 // =============================================================================
 
-function mapConnectionStatus(
-  status: unknown,
-): ComposioAccount['status'] {
+function mapConnectionStatus(status: unknown): ComposioAccount['status'] {
   const s = String(status).toLowerCase();
   if (s === 'active' || s === 'connected') return 'active';
   if (s === 'expired') return 'expired';
@@ -437,9 +570,7 @@ function compareComposioAccountsNewestFirst(a: ComposioAccount, b: ComposioAccou
 /**
  * Normalize various parameter formats into our standard JSON Schema shape.
  */
-function normalizeParameters(
-  params: unknown,
-): ComposioToolDef['parameters'] {
+function normalizeParameters(params: unknown): ComposioToolDef['parameters'] {
   if (!params || typeof params !== 'object') {
     return { type: 'object', properties: {} };
   }
@@ -462,7 +593,7 @@ function normalizeParameters(
 
       properties[name] = {
         type: param.type ?? 'string',
-        description: param.description ?? undefined,
+        description: param.description ?? undefined
       };
 
       if (param.required) {
@@ -473,15 +604,15 @@ function normalizeParameters(
     return {
       type: 'object',
       properties,
-      ...(required.length > 0 ? { required } : {}),
+      ...(required.length > 0 ? { required } : {})
     };
   }
 
   // Fallback — treat as flat properties
   return {
     type: 'object',
-    properties: p.properties as Record<string, unknown> ?? {},
-    required: p.required as string[] ?? undefined,
+    properties: (p.properties as Record<string, unknown>) ?? {},
+    required: (p.required as string[]) ?? undefined
   };
 }
 
@@ -498,7 +629,9 @@ function normalizeToolkit(raw: Record<string, unknown>): ComposioToolkitSummary 
         if (typeof category === 'string') return category;
         if (!category || typeof category !== 'object') return '';
         const c = category as Record<string, unknown>;
-        return String(c.slug ?? c.id ?? c.name ?? '').trim().toLowerCase();
+        return String(c.slug ?? c.id ?? c.name ?? '')
+          .trim()
+          .toLowerCase();
       })
       .filter(Boolean),
     toolsCount: numberOrUndefined(meta.toolsCount ?? meta.tools_count),
@@ -507,7 +640,58 @@ function normalizeToolkit(raw: Record<string, unknown>): ComposioToolkitSummary 
     authSchemes: arrayOfStrings(raw.authSchemes),
     composioManagedAuthSchemes: arrayOfStrings(raw.composioManagedAuthSchemes),
     noAuth: booleanOrUndefined(raw.noAuth),
-    isLocalToolkit: Boolean(raw.isLocalToolkit),
+    isLocalToolkit: Boolean(raw.isLocalToolkit)
+  };
+}
+
+function normalizeAllowedTools(value: string[] | undefined): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value.map((tool) => tool.trim()).filter((tool) => tool.length > 0)));
+}
+
+function toMcpSdkToolkits(toolkits: ComposioMcpToolkitConfig[]): ComposioMcpSdkToolkitConfig[] {
+  return toolkits.flatMap((toolkit) => [toolkit.toolkit, { authConfigId: toolkit.authConfigId }]);
+}
+
+function normalizeMcpServerConfig(value: unknown): ComposioMcpServerConfig {
+  const record = isRecord(value) ? value : {};
+  const id =
+    stringOrUndefined(record.id) ??
+    stringOrUndefined(record.nanoid) ??
+    stringOrUndefined(record.mcpConfigId) ??
+    stringOrUndefined(record.configId);
+
+  if (!id) {
+    throw new ComposioBridgeError(
+      `Composio MCP create response did not include an id: ${safeJson(value)}`,
+      'MCP_CREATE_INVALID_RESPONSE'
+    );
+  }
+
+  return {
+    ...record,
+    id,
+    name: stringOrUndefined(record.name)
+  };
+}
+
+function normalizeMcpGeneratedInstance(value: unknown): ComposioMcpGeneratedInstance {
+  const record = isRecord(value) ? value : {};
+  const url =
+    stringOrUndefined(record.url) ??
+    stringOrUndefined(record.serverUrl) ??
+    stringOrUndefined(record.mcpServerUrl);
+
+  if (!url) {
+    throw new ComposioBridgeError(
+      `Composio MCP generate response did not include a URL: ${safeJson(value)}`,
+      'MCP_GENERATE_INVALID_RESPONSE'
+    );
+  }
+
+  return {
+    ...record,
+    url
   };
 }
 
@@ -515,6 +699,14 @@ function stringOrUndefined(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed ? trimmed : undefined;
+}
+
+function safeJson(value: unknown): string {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }
 
 function numberOrUndefined(value: unknown): number | undefined {
@@ -540,11 +732,7 @@ function arrayOfStrings(value: unknown): string[] | undefined {
   return normalized.length > 0 ? normalized : undefined;
 }
 
-function toBridgeError(
-  error: unknown,
-  prefix: string,
-  code: string,
-): ComposioBridgeError {
+function toBridgeError(error: unknown, prefix: string, code: string): ComposioBridgeError {
   if (error instanceof ComposioBridgeError) {
     const message = error.message.startsWith(prefix)
       ? error.message
@@ -559,14 +747,11 @@ function toBridgeError(
   return new ComposioBridgeError(
     `${prefix}: ${detail}${statusDetail}${diagnosticSuffix}`,
     code,
-    statusCode,
+    statusCode
   );
 }
 
-function isRetryableError(
-  error: unknown,
-  policy: NormalizedRetryPolicy,
-): boolean {
+function isRetryableError(error: unknown, policy: NormalizedRetryPolicy): boolean {
   const statusCode = extractStatusCode(error);
   if (statusCode !== undefined && policy.retryableStatusCodes.has(statusCode)) {
     return true;
@@ -593,17 +778,14 @@ function isRetryableError(
   );
 }
 
-function backoffDelayMs(
-  policy: NormalizedRetryPolicy,
-  attempt: number,
-): number {
-  const unbounded = policy.baseDelayMs * (2 ** Math.max(0, attempt - 1));
+function backoffDelayMs(policy: NormalizedRetryPolicy, attempt: number): number {
+  const unbounded = policy.baseDelayMs * 2 ** Math.max(0, attempt - 1);
   const bounded = Math.min(policy.maxDelayMs, unbounded);
   const jitterWindow = bounded * policy.jitterRatio;
 
   if (jitterWindow === 0) return Math.round(bounded);
 
-  const jittered = bounded - jitterWindow + (Math.random() * jitterWindow * 2);
+  const jittered = bounded - jitterWindow + Math.random() * jitterWindow * 2;
   return Math.max(0, Math.round(jittered));
 }
 
@@ -643,7 +825,7 @@ function extractErrorDiagnostic(error: unknown): string | undefined {
     response?.data,
     cause?.details,
     cause?.error,
-    cause?.message,
+    cause?.message
   ];
 
   for (const candidate of candidates) {
@@ -674,9 +856,7 @@ function renderDiagnosticValue(value: unknown): string | undefined {
 function extractStatusCode(error: unknown): number | undefined {
   if (!isRecord(error)) return undefined;
 
-  const direct =
-    numberOrUndefined(error.statusCode) ??
-    numberOrUndefined(error.status);
+  const direct = numberOrUndefined(error.statusCode) ?? numberOrUndefined(error.status);
   if (direct !== undefined) return Math.trunc(direct);
 
   const response = error.response;
@@ -687,9 +867,7 @@ function extractStatusCode(error: unknown): number | undefined {
 
   const cause = error.cause;
   if (isRecord(cause)) {
-    const nested =
-      numberOrUndefined(cause.statusCode) ??
-      numberOrUndefined(cause.status);
+    const nested = numberOrUndefined(cause.statusCode) ?? numberOrUndefined(cause.status);
     if (nested !== undefined) return Math.trunc(nested);
   }
 
@@ -700,7 +878,7 @@ function clampInteger(
   value: number | undefined,
   min: number,
   max: number,
-  fallback: number,
+  fallback: number
 ): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
   return Math.min(max, Math.max(min, Math.trunc(value)));
@@ -710,7 +888,7 @@ function clampNumber(
   value: number | undefined,
   min: number,
   max: number,
-  fallback: number,
+  fallback: number
 ): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
   return Math.min(max, Math.max(min, value));
