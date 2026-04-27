@@ -4,11 +4,11 @@ When to use Composio for app connectivity, how we wrap it, and where the SDK sur
 
 ## When to use Composio vs custom
 
-| Use Composio | Use custom |
-|--------------|------------|
-| Commodity app connectivity (Gmail, Notion, Slack, HubSpot, etc.) | Deep or client-specific integrations (e.g. Half Dozen Gmail Sync: custom OAuth, Notion schema, automations) |
-| You want managed auth (OAuth, connect links) and standard CRUD tools | You need full control over tokens, lifecycle, or an app not on Composio |
-| New MCP for "most users" or multi-tenant with generic app actions | Single-client MCP with fixed schema and custom workflows |
+| Use Composio                                                         | Use custom                                                                                                  |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Commodity app connectivity (Gmail, Notion, Slack, HubSpot, etc.)     | Deep or client-specific integrations (e.g. Half Dozen Gmail Sync: custom OAuth, Notion schema, automations) |
+| You want managed auth (OAuth, connect links) and standard CRUD tools | You need full control over tokens, lifecycle, or an app not on Composio                                     |
+| New MCP for "most users" or multi-tenant with generic app actions    | Single-client MCP with fixed schema and custom workflows                                                    |
 
 **Default**: For new MCPs that need "connect to Gmail/Notion/Slack/…", consider Composio first via `@create-something/composio-bridge`. Use custom when the integration is strategic or client-specific.
 
@@ -29,14 +29,44 @@ Clients see a CREATE SOMETHING MCP server; Composio is plumbing. We do not expos
 
 ## SDK surfaces (reference)
 
-| Surface | Purpose | Our usage |
-|---------|---------|-----------|
-| **Tools** | Discovery (`getRawComposioTools`, `getRawComposioToolBySlug`), execution (`execute`), custom tools (`createCustomTool`) | Bridge uses getRawComposioTools + execute. Custom tools can extend value-add; execute() dispatches by slug. |
-| **Toolkits** | `authorize(userId, toolkitSlug, authConfigId?)` for connect links; `get(slug)`, `listCategories()` for metadata | Use for programmatic "Connect Gmail/Notion" flows and optional resources. |
-| **AuthConfigs** | create, list, get, update, disable, delete auth configs per toolkit | When you need an `authConfigId` for authorize() or for Composio-hosted MCP configs. |
-| **MCP** | `create(name, mcpConfig)` (toolkits + allowedTools + authConfigIds), `generate(userId, mcpConfigId)` for per-user MCP URLs | Optional: Composio can host the MCP endpoint (tools-only; no prompts/resources). We usually run our own server for full value-add. |
+| Surface         | Purpose                                                                                                                    | Our usage                                                                                                                          |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Tools**       | Discovery (`getRawComposioTools`, `getRawComposioToolBySlug`), execution (`execute`), custom tools (`createCustomTool`)    | Bridge uses getRawComposioTools + execute. Custom tools can extend value-add; execute() dispatches by slug.                        |
+| **Toolkits**    | `authorize(userId, toolkitSlug, authConfigId?)` for connect links; `get(slug)`, `listCategories()` for metadata            | Use for programmatic "Connect Gmail/Notion" flows and optional resources.                                                          |
+| **AuthConfigs** | create, list, get, update, disable, delete auth configs per toolkit                                                        | When you need an `authConfigId` for authorize() or for Composio-hosted MCP configs.                                                |
+| **MCP**         | `create(name, mcpConfig)` (toolkits + allowedTools + authConfigIds), `generate(userId, mcpConfigId)` for per-user MCP URLs | Optional: Composio can host the MCP endpoint (tools-only; no prompts/resources). We usually run our own server for full value-add. |
 
 Official reference: [Composio TypeScript SDK](https://docs.composio.dev/reference/sdk-reference/typescript).
+
+## Single-toolkit hosted MCPs
+
+Use this when the goal is a narrow Composio-hosted MCP for one commodity toolkit and we do not need CREATE SOMETHING resources, prompts, telemetry, or custom workflow tools.
+
+QuickBooks helper:
+
+```bash
+COMPOSIO_API_KEY=... \
+COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID=ac_xxx \
+pnpm mcp:composio:quickbooks create
+```
+
+Generate a per-user URL after the config exists:
+
+```bash
+COMPOSIO_API_KEY=... \
+COMPOSIO_QUICKBOOKS_MCP_CONFIG_ID=mcp_xxx \
+COMPOSIO_QUICKBOOKS_USER_ID=user_123 \
+pnpm mcp:composio:quickbooks generate
+```
+
+Optional allowlist:
+
+```bash
+COMPOSIO_QUICKBOOKS_ALLOWED_TOOLS=QUICKBOOKS_GET_COMPANY_INFO,QUICKBOOKS_QUERY \
+pnpm mcp:composio:quickbooks create
+```
+
+The helper delegates through `@create-something/composio-bridge` so SDK plumbing stays centralized. It is separate from the deployed `composio-toolkit-mcp` Worker, which exposes `/mcp/quickbooks` through the CREATE SOMETHING Hub registry.
 
 ## Related
 
