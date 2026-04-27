@@ -1958,7 +1958,7 @@ export default {
       return GmailSyncMCPv2.serve('/sse').fetch(request, env, ctx);
     }
 
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       const authorizedEmail = env.AUTHORIZED_EMAIL?.trim() || '(not configured)';
       return new Response(JSON.stringify({
         name: 'halfdozen-gmail-sync-mcp',

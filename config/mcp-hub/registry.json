@@ -334,7 +334,6 @@
       "transport": "http",
       "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
       "description": "Fleet telemetry MCP for WORKWAY account",
-      "bearer_token_env_var": "HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN",
       "tags": [
         "observability",
         "telemetry",
