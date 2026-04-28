@@ -601,7 +601,7 @@
   .offer-grid,
   .faq-grid {
     display: grid;
-    gap: 1rem;
+    gap: clamp(1.1rem, 2.4vw, 1.6rem);
   }
 
   .offer-grid {

@@ -89,6 +89,7 @@
     display: grid;
     grid-template-columns: minmax(0, 0.82fr) minmax(22rem, 1.18fr);
     gap: clamp(1.25rem, 3vw, 2rem);
+    margin-bottom: clamp(1.4rem, 3.2vw, 2.5rem);
     overflow: hidden;
     padding: clamp(1rem, 2.4vw, 1.5rem);
     background:
