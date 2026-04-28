@@ -19,7 +19,7 @@
 					<h6 class="footer-heading">Start Here</h6>
 					<ul class="footer-links">
 						<li><a href="/services">How I Work</a></li>
-						<li><a href="/products">Proof in Production</a></li>
+						<li><a href="/products">Proof Surfaces</a></li>
 						<li><a href="/book">Book Mapping Session</a></li>
 					</ul>
 				</div>
