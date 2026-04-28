@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { executeProxyRoute } from '../index.ts';
+import { executeProxyRoute, resolveHubProxyExecutionArgs } from '../index.ts';
 
 const disabledRateLimitPolicy = {
   enabled: false,
@@ -23,6 +23,38 @@ const trace = {
   correlationId: 'corr_1',
   transportRequestId: 'req_1',
 };
+
+test('resolveHubProxyExecutionArgs accepts nested downstream args', () => {
+  const result = resolveHubProxyExecutionArgs({
+    proxyToolName: 'server_a__alpha',
+    args: { publishedUrl: 'https://example.com' },
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.ok ? result.args : null, { publishedUrl: 'https://example.com' });
+});
+
+test('resolveHubProxyExecutionArgs rejects top-level downstream args', () => {
+  const result = resolveHubProxyExecutionArgs({
+    proxyToolName: 'server_a__alpha',
+    publishedUrl: 'https://example.com',
+    designerMode: 'skip',
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.ok ? '' : result.message, /must be nested under "args"/);
+  assert.match(result.ok ? '' : result.message, /publishedUrl, designerMode/);
+});
+
+test('resolveHubProxyExecutionArgs rejects non-object args', () => {
+  const result = resolveHubProxyExecutionArgs({
+    proxyToolName: 'server_a__alpha',
+    args: 'not-an-object',
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.ok ? '' : result.message, /"args" must be an object/);
+});
 
 test('executeProxyRoute executes visible route and returns downstream payload', async () => {
   let callCount = 0;

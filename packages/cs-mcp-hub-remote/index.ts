@@ -1917,8 +1917,9 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           return errorResult;
         }
 
-        if (args.args !== undefined && !isRecord(args.args)) {
-          const message = '"args" must be an object';
+        const parsedExecutionArgs = resolveHubProxyExecutionArgs(args);
+        if (!parsedExecutionArgs.ok) {
+          const message = parsedExecutionArgs.message;
           const errorResult = toErrorResult(message);
           await recordHubInvocationWithCtx({
             accountId,
@@ -1936,13 +1937,12 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           return errorResult;
         }
 
-        const executionArgs = normalizeArgs(args.args);
         return executeProxyRoute({
           env,
           executionCtx,
           route: match.route,
           definition: match.definition,
-          executionArgs,
+          executionArgs: parsedExecutionArgs.args,
           trace,
           accountContext,
           accountId,
@@ -4120,6 +4120,32 @@ function normalizeArgs(raw: unknown): Record<string, unknown> {
     return {};
   }
   return raw;
+}
+
+export type HubProxyExecutionArgsResult =
+  | { ok: true; args: Record<string, unknown> }
+  | { ok: false; message: string };
+
+export function resolveHubProxyExecutionArgs(args: Record<string, unknown>): HubProxyExecutionArgsResult {
+  if (args.args !== undefined) {
+    if (!isRecord(args.args)) {
+      return { ok: false, message: '"args" must be an object' };
+    }
+    return { ok: true, args: normalizeArgs(args.args) };
+  }
+
+  const topLevelDownstreamKeys = Object.keys(args).filter((key) => key !== 'proxyToolName');
+  if (topLevelDownstreamKeys.length > 0) {
+    return {
+      ok: false,
+      message:
+        'Downstream tool arguments must be nested under "args" when using hub_execute_proxy_tool. ' +
+        `Received top-level downstream argument keys: ${topLevelDownstreamKeys.join(', ')}. ` +
+        'Call with {"proxyToolName":"<proxy tool name>","args":{...downstream arguments...}}.',
+    };
+  }
+
+  return { ok: true, args: {} };
 }
 
 function stringArg(raw: unknown): string | null {
