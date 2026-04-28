@@ -189,9 +189,9 @@
 </script>
 
 <SEO
-  title="How I Work | Governed Workflow Infrastructure"
-  description="CREATE SOMETHING .agency offers scoped specialist engagements that fix one workflow first, then add governed execution as operational risk rises."
-  keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
+  title="How I Work | Calm Operator Systems"
+  description="CREATE SOMETHING .agency installs calm operator systems: one workflow, clear decision states, and governed escalation only when judgment is required."
+  keywords="calm operator systems, Policy OS, workflow infrastructure, MCP wedge, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -428,8 +428,8 @@
       </BlurFade>
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
-          <Button href="/book">Book Mapping Session</Button>
-          <Button href="/products" variant="secondary">See What I've Built</Button>
+          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href="/products" variant="secondary">See Proof Surfaces</Button>
         </div>
       </BlurFade>
     </div>

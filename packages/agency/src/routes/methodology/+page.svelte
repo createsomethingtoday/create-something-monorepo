@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
+	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
 	const disciplines = [
 		{
@@ -37,24 +38,24 @@
 
 	const phases = [
 		{
-			weeks: 'Week 1–2',
-			name: 'DRY Audit',
-			description: 'Map all systems, identify duplication, measure waste.'
+			weeks: 'Step 1',
+			name: 'Map the watched workflow',
+			description: 'Name the handoff, owner, systems, exceptions, and current human monitoring burden.'
 		},
 		{
-			weeks: 'Week 3–4',
-			name: 'Rams Review',
-			description: 'Challenge each component, score value vs. cost.'
+			weeks: 'Step 2',
+			name: 'Subtract the noise',
+			description: 'Remove duplicated work, excess tools, and disconnected records before adding automation.'
 		},
 		{
-			weeks: 'Week 5–6',
-			name: 'Heidegger Design',
-			description: 'Reconnect surviving systems into coherent architecture.'
+			weeks: 'Step 3',
+			name: 'Classify the decisions',
+			description: 'Define what can auto-run, what needs approval, and what should block with a reason.'
 		},
 		{
-			weeks: 'Week 7–8',
-			name: 'Blueprint Delivery',
-			description: 'Complete architecture + implementation roadmap.'
+			weeks: 'Step 4',
+			name: 'Ship the operator path',
+			description: 'Deliver the MCP wedge, runbook, policy artifact, and operator brief surface.'
 		}
 	];
 
@@ -75,18 +76,18 @@
 		},
 		{
 			name: 'Judgment',
-			subtitle: 'What should happen',
-			items: ['Policies', 'Oversight', 'Decisions'],
+			subtitle: 'What needs the operator',
+			items: ['Policy OS', 'Approvals', 'Briefs'],
 			description:
-				'The intelligence — where human insight meets automated execution. Knowing when to act, what to escalate, and which decisions require a person.'
+				'The decision layer — where Policy OS classifies safe work, approval-needed work, and blocked states before the operator is interrupted.'
 		}
 	];
 </script>
 
 <SEO
-	title="Methodology | How I Think About Automation"
-	description="Most automation gets worse because it adds more tools and more handoff risk. My methodology removes duplication, strips excess, reconnects what remains, and only then automates."
-	keywords="AI automation methodology, systems design, automation audit, workflow optimization, tool consolidation, connected systems"
+	title="Methodology | Calm Operator Systems"
+	description="The CREATE SOMETHING methodology removes duplication, excess, and disconnection before turning a workflow into governed execution with Policy OS."
+	keywords="Calm Operator Method, Policy OS, workflow governance, MCP wedge, automation audit, Subtractive Triad"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[
@@ -103,12 +104,13 @@
 			<p class="hero-eyebrow">Methodology</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">Simplify the system before you automate it.</h1>
+			<h1 class="hero-title">Subtract first. Govern what remains.</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				If the workflow is already bloated, automation just scales the mess. I remove
-				duplication, strip excess, reconnect what matters, and only then add automation.
+				Calm operator systems do not start by adding more agents. They start by removing
+				duplication, stripping excess, reconnecting what matters, and then deciding what
+				can run, what needs approval, and what should stop.
 			</p>
 		</BlurFade>
 	</div>
@@ -122,8 +124,8 @@
 					<h2 class="principle-heading">The Core Principle</h2>
 				<p class="principle-body">
 					Most automation strategies fail because they add more tools, more exceptions, and more
-					hidden handoffs than the team can actually manage. The Subtractive Triad inverts that
-					instinct. I remove what does not belong first. What remains is the system worth scaling.
+					hidden handoffs than the operator can actually monitor. The Subtractive Triad inverts
+					that instinct. Remove what does not belong first, then govern the workflow that remains.
 				</p>
 				</div>
 		</BlurFade>
@@ -189,7 +191,7 @@
 		</BlurFade>
 			<BlurFade delay={0.15}>
 				<p class="section-subhead">
-					How the Triad becomes a workflow map, from audit through architecture.
+					How the Triad becomes a calm operator path, from workflow map to Policy OS.
 				</p>
 			</BlurFade>
 
@@ -281,8 +283,9 @@
 				<p>
 					Every component in your automation stack maps to one of these tiers. When tiers are
 					misaligned — when automation makes decisions that should be judgment, or when records
-					aren't available to the systems that need them — the architecture fails. The Three-Tier
-					Framework reveals these misalignments before they become expensive.
+					aren't available to the systems that need them — the operator gets dragged back into
+					the dashboard. The Three-Tier Framework reveals these misalignments before they become
+					expensive.
 				</p>
 			</div>
 		</BlurFade>
@@ -293,17 +296,18 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade delay={0}>
-			<h2 class="cta-heading">Ready to simplify?</h2>
+			<h2 class="cta-heading">Ready to make the workflow quieter?</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Every engagement starts with this methodology. I look at your tools, find what doesn't belong, and build what matters.
+				Every engagement starts with this methodology. We remove what does not belong, then
+				ship the smallest governed path that lets the operator stop watching everything.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">
 				<ShimmerButton href="/book">
-					Book Mapping Session
+					{agencyCoreMessaging.bookMappingSessionLabel}
 				</ShimmerButton>
 				<a href="/services" class="cta-secondary">
 					How I work →

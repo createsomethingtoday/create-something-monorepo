@@ -144,8 +144,8 @@
 
 <SEO
   title={`${agencyCoreMessaging.categoryLabel} | CREATE SOMETHING .agency`}
-  description="CREATE SOMETHING .agency helps ops-minded teams make critical workflows safe enough to trust in production."
-  keywords="governed workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
+  description="CREATE SOMETHING .agency installs calm operator systems for agentic workflows: one workflow, clear decision states, and escalation only when judgment is required."
+  keywords="calm operator systems, Policy OS, MCP wedge, governed workflow infrastructure, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -176,7 +176,7 @@
         <BlurFade delay={0.15}>
           <div class="hero-actions">
             <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-            <Button href="/services" variant="secondary">See The Engagement Model</Button>
+            <Button href="/services" variant="secondary">See The Operating Model</Button>
           </div>
         </BlurFade>
 
@@ -387,7 +387,7 @@
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
           <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="/services" variant="secondary">See The Engagement Model</Button>
+          <Button href="/services" variant="secondary">See The Operating Model</Button>
         </div>
       </BlurFade>
     </div>

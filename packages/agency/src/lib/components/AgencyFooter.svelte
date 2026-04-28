@@ -57,7 +57,7 @@
 		<!-- Bottom Bar -->
 			<div class="footer-bottom">
 			<p class="footer-copyright">
-				© 2026 CREATE SOMETHING. Reliable workflows, clear approvals, safer automation.
+				© 2026 CREATE SOMETHING. Calm operator systems for autonomous work.
 			</p>
 			<div class="footer-social">
 				<a href="https://github.com/create-something" target="_blank" rel="noopener">GitHub</a>
