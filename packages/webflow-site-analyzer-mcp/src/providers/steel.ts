@@ -622,6 +622,7 @@ export class SteelBrowserProvider implements BrowserProvider {
         { name: 'Contact', type: 'static' },
         { name: 'Utilities', type: 'static' },
         { name: 'Style guide', type: 'static' },
+        { name: 'License', type: 'static' },
         { name: 'Licenses', type: 'static' },
         { name: 'Changelog', type: 'static' },
         { name: 'Instruction', type: 'static' },

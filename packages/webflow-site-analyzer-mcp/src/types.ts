@@ -728,6 +728,7 @@ export interface PublishedSitePrecheckResult {
     licenses: boolean;
     instructions: boolean;
     changelog: boolean;
+    styleGuide?: boolean;
   };
   sitemap: {
     ok: boolean;
@@ -759,6 +760,17 @@ export interface UnifiedTemplateReviewSummary {
     skippedPages: number;
     /** Coverage percentage (crawled / known). */
     coveragePercent: number;
+  };
+  /** Rubric automation coverage metrics. */
+  rubricCoverage?: {
+    /** Total rubric rows included in this report. */
+    totalChecks: number;
+    /** Checks scored automatically (pass/fail/partial). */
+    automatedChecks: number;
+    /** Checks requiring human or Designer-native confirmation. */
+    manualChecks: number;
+    /** Coverage percentage (automated / total). */
+    automatedPercent: number;
   };
 }
 

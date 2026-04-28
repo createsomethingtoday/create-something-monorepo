@@ -48,7 +48,7 @@ async function main() {
   const previewUrl = getArg('--preview-url');
   const publishedUrl = getArg('--published-url');
   const mode = getArg('--mode') || 'sync';
-  const designerMode = getArg('--designer-mode') || 'extract';
+  const designerMode = getArg('--designer-mode') || 'skip';
   const timeoutMs = Number(getArg('--timeout-ms') || 300000);
   const maxTotalTimeoutMs = Number(getArg('--max-total-timeout-ms') || 1800000);
   const crawlMaxPages = Number(getArg('--crawl-max-pages') || 20);

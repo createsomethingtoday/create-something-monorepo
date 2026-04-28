@@ -49,8 +49,12 @@ import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
 import {
   classifyImageAltCandidate,
+  hasRequiredLicenseOpening,
+  isDesignerMetadataSparse,
   is404PageTitle,
   isPoweredByWebflowBadgeCandidate,
+  normalizeLicenseTextForComparison,
+  REQUIRED_LICENSE_OPENING,
   validateTemplateReviewUrls,
 } from './review-utils.js';
 import type {
@@ -734,8 +738,9 @@ function createSkippedDesignerChecklistReport(includeManual = true): DesignerChe
 
 const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
 (async () => {
-  const REQUIRED_LICENSE_TEXT =
-    "All graphical assets in this template are licensed for personal and commercial use. If you'd like to use a specific asset, please check the license below.";
+  const REQUIRED_LICENSE_OPENING = ${JSON.stringify(REQUIRED_LICENSE_OPENING)};
+  const normalizeLicenseTextForComparison = ${normalizeLicenseTextForComparison.toString()};
+  const hasRequiredLicenseOpening = ${hasRequiredLicenseOpening.toString()};
 
   const toInternalAbsolute = (href) => {
     try {
@@ -761,8 +766,8 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   // Use textContent (not innerText) to avoid font-rendering corruption where
   // web fonts with missing glyphs cause innerText to return garbled text.
   const bodyText = (document.body?.textContent || '').replace(/\\s+/g, ' ').slice(0, 8000);
-  const hasRequiredLicenseText = pathname.includes('license')
-    ? bodyText.includes(REQUIRED_LICENSE_TEXT)
+  const hasRequiredLicenseText = /licens/i.test(pathname)
+    ? hasRequiredLicenseOpening(bodyText)
     : null;
 
   const isPoweredByWebflowBadgeCandidate = ${isPoweredByWebflowBadgeCandidate.toString()};
@@ -1834,7 +1839,8 @@ async function runPublishedPrecheck(
     requiredPages: {
       licenses: hasClassification('utility:license'),
       instructions: hasClassification('utility:instructions'),
-      changelog: hasClassification('utility:changelog')
+      changelog: hasClassification('utility:changelog'),
+      styleGuide: hasClassification('utility:style-guide')
     },
     sitemap,
     errors
@@ -2217,9 +2223,20 @@ async function crawlPublishedWebMcp(
   };
 }
 
+const DESIGNER_SPARSE_SENSITIVE_CHECKS = new Set([
+  'components.nav_footer_cta',
+  'components.title_case_naming',
+  'variables.breakpoint_modes',
+  'styles.base_tag_selectors',
+  'styles.unused_classes_cleaned',
+  'styles.combo_class_depth',
+  'cms.collection_pages_present',
+]);
+
 function mapDesignerStatus(
   designer: DesignerChecklistReport,
-  id: string
+  id: string,
+  options: { designerSparse?: boolean } = {}
 ): { status: UnifiedReviewStatus; evidence: string[]; confidence: number } {
   const check = designer.checks.find((item) => item.id === id);
   if (!check) {
@@ -2230,6 +2247,20 @@ function mapDesignerStatus(
     };
   }
   if (check.result === 'pass') return { status: 'pass', evidence: check.evidence, confidence: 0.93 };
+  if (
+    check.result === 'fail' &&
+    options.designerSparse &&
+    DESIGNER_SPARSE_SENSITIVE_CHECKS.has(id)
+  ) {
+    return {
+      status: 'manual',
+      evidence: [
+        ...check.evidence,
+        'Designer metadata appears sparse compared with the published crawl; treat this Designer-only failure as needing manual confirmation.'
+      ],
+      confidence: 0.2
+    };
+  }
   if (check.result === 'fail') return { status: 'fail', evidence: check.evidence, confidence: 0.93 };
   return { status: 'manual', evidence: check.evidence, confidence: 0.2 };
 }
@@ -2256,6 +2287,12 @@ function unifyRows(
     )
   ).sort();
   const designerSkipped = designer.source === 'skipped';
+  const publishedKnownPageCount = new Set([
+    published.startUrl,
+    ...published.pages.map((page) => page.url),
+    ...(precheck?.discoveredUrls ?? []),
+  ].filter(Boolean)).size;
+  const designerSparse = isDesignerMetadataSparse(designer, publishedKnownPageCount);
 
   // Match /license, /licenses, /licensing, /templates/licensing, etc.
   const licenseUrlPattern = '/licens';
@@ -2267,7 +2304,11 @@ function unifyRows(
   const hasLicensePageDiscovered = precheck?.discoveredUrls?.some(
     (url) => url.toLowerCase().includes(licenseUrlPattern)
   ) ?? false;
-  const hasLicensePage = hasLicensePageCrawled || hasLicensePageDiscovered;
+  const hasLicensePageDesigner = designer.metadataSummary.pages.some(
+    (page) => page.name.toLowerCase().includes('license')
+  );
+  const hasLicensePagePublished = hasLicensePageCrawled || hasLicensePageDiscovered;
+  const hasLicensePage = hasLicensePagePublished || hasLicensePageDesigner;
   const licensePages = published.pages.filter(
     (page) => page.url.toLowerCase().includes(licenseUrlPattern)
   );
@@ -2275,6 +2316,43 @@ function unifyRows(
     (page) => typeof page.hasRequiredLicenseText === 'boolean'
   );
   const hasRequiredLicenseText = licensePages.some((page) => page.hasRequiredLicenseText === true);
+  const styleGuideUrlMatches = (url: string) => {
+    const lower = url.toLowerCase();
+    return lower.includes('/style-guide') || lower.includes('/styleguide');
+  };
+  const hasStyleGuidePageCrawled = published.pages.some((page) => styleGuideUrlMatches(page.url));
+  const hasStyleGuidePageDiscovered = precheck?.discoveredUrls?.some(styleGuideUrlMatches) ?? false;
+  const hasStyleGuidePageDesigner = designer.metadataSummary.pages.some((page) =>
+    page.name.toLowerCase().replace(/[-_]/g, ' ').includes('style guide')
+  );
+  const hasStyleGuidePagePublished = hasStyleGuidePageCrawled || hasStyleGuidePageDiscovered;
+  const hasStyleGuidePage = hasStyleGuidePagePublished || hasStyleGuidePageDesigner;
+  const instructionsUrlMatches = (url: string) => url.toLowerCase().includes('/instruction');
+  const hasInstructionsPageCrawled = published.pages.some((page) => instructionsUrlMatches(page.url));
+  const hasInstructionsPageDiscovered =
+    precheck?.requiredPages?.instructions === true ||
+    precheck?.discoveredUrls?.some(instructionsUrlMatches) === true;
+  const hasInstructionsPageDesigner = designer.metadataSummary.pages.some((page) =>
+    page.name.toLowerCase().includes('instruction')
+  );
+  const hasInstructionsPagePublished = hasInstructionsPageCrawled || hasInstructionsPageDiscovered;
+  const hasInstructionsPage = hasInstructionsPagePublished || hasInstructionsPageDesigner;
+  const changelogUrlMatches = (url: string) => {
+    const lower = url.toLowerCase();
+    return lower.includes('/changelog') || lower.includes('/release-notes');
+  };
+  const hasChangelogPageCrawled = published.pages.some((page) => changelogUrlMatches(page.url));
+  const hasChangelogPageDiscovered =
+    precheck?.requiredPages?.changelog === true ||
+    precheck?.discoveredUrls?.some(changelogUrlMatches) === true;
+  const hasChangelogPageDesigner = designer.metadataSummary.pages.some((page) => {
+    const name = page.name.toLowerCase();
+    return name.includes('changelog') || name.includes('release notes');
+  });
+  const hasChangelogPagePublished = hasChangelogPageCrawled || hasChangelogPageDiscovered;
+  const hasChangelogPage = hasChangelogPagePublished || hasChangelogPageDesigner;
+  const publishedOrDesignerOnlySource = (publishedFound: boolean, designerFound: boolean): string[] =>
+    publishedFound || !designerFound ? ['published-webmcp-crawl'] : ['designer-mcp'];
 
   const rows: UnifiedReviewRow[] = [];
   // Severity mapping: checks are classified by impact on template quality
@@ -2284,6 +2362,9 @@ function unifyRows(
     'policy.no_affiliate_links': 'critical',
     'pages.home_seo_title_formula': 'critical',
     'pages.license_text_exact': 'critical',
+    'pages.instructions_exists': 'critical',
+    'pages.changelog_exists': 'critical',
+    'pages.style_guide_exists': 'critical',
     'pages.custom_404': 'major',
     // Major: significant quality issues
     'webflow_audit.h1_hierarchy': 'major',
@@ -2345,15 +2426,16 @@ function unifyRows(
     });
   };
 
-  const dNavFooter = mapDesignerStatus(designer, 'components.nav_footer_cta');
-  const dComponentNames = mapDesignerStatus(designer, 'components.title_case_naming');
-  const dVarReusable = mapDesignerStatus(designer, 'variables.defined_reusable');
-  const dVarTitle = mapDesignerStatus(designer, 'variables.title_case_naming');
-  const dVarBreakpoints = mapDesignerStatus(designer, 'variables.breakpoint_modes');
-  const dStylesUnused = mapDesignerStatus(designer, 'styles.unused_classes_cleaned');
-  const dStylesBase = mapDesignerStatus(designer, 'styles.base_tag_selectors');
-  const dComboDepth = mapDesignerStatus(designer, 'styles.combo_class_depth');
-  const dCmsRel = mapDesignerStatus(designer, 'cms.collection_pages_present');
+  const designerStatusOptions = { designerSparse };
+  const dNavFooter = mapDesignerStatus(designer, 'components.nav_footer_cta', designerStatusOptions);
+  const dComponentNames = mapDesignerStatus(designer, 'components.title_case_naming', designerStatusOptions);
+  const dVarReusable = mapDesignerStatus(designer, 'variables.defined_reusable', designerStatusOptions);
+  const dVarTitle = mapDesignerStatus(designer, 'variables.title_case_naming', designerStatusOptions);
+  const dVarBreakpoints = mapDesignerStatus(designer, 'variables.breakpoint_modes', designerStatusOptions);
+  const dStylesUnused = mapDesignerStatus(designer, 'styles.unused_classes_cleaned', designerStatusOptions);
+  const dStylesBase = mapDesignerStatus(designer, 'styles.base_tag_selectors', designerStatusOptions);
+  const dComboDepth = mapDesignerStatus(designer, 'styles.combo_class_depth', designerStatusOptions);
+  const dCmsRel = mapDesignerStatus(designer, 'cms.collection_pages_present', designerStatusOptions);
 
   // Helper: extract short paths for pages matching a predicate (for evidence)
   const failingPaths = (
@@ -2614,19 +2696,94 @@ function unifyRows(
     'Set homepage title to "{Template Name} - Webflow HTML website template" (or Ecommerce variant). The prefix must match the template name.'
   );
 
+  pushRow(
+    'pages.style_guide_exists',
+    'Page Level Checks',
+    'Style Guide page exists',
+    hasStyleGuidePagePublished ? 'pass' : hasStyleGuidePageDesigner ? 'partial' : 'fail',
+    [
+      `styleGuidePageFound=${hasStyleGuidePage}`,
+      `styleGuidePageCrawled=${hasStyleGuidePageCrawled}`,
+      `styleGuidePageDiscovered=${hasStyleGuidePageDiscovered}`,
+      ...(designerSkipped ? [] : [`styleGuidePageInDesigner=${hasStyleGuidePageDesigner}`]),
+      ...(hasStyleGuidePageDesigner && !hasStyleGuidePagePublished
+        ? ['Style Guide page was detected only in Designer metadata; verify it exists on the published site.']
+        : []),
+      ...(designerSparse && !hasStyleGuidePageDesigner && hasStyleGuidePage
+        ? ['Designer metadata appears sparse; published evidence confirms the Style Guide page.']
+        : [])
+    ],
+    publishedOrDesignerOnlySource(hasStyleGuidePagePublished, hasStyleGuidePageDesigner),
+    hasStyleGuidePagePublished ? 0.9 : hasStyleGuidePageDesigner ? 0.5 : 0.85,
+    hasStyleGuidePage
+      ? undefined
+      : 'Add a Style Guide page and link it from the published site.'
+  );
+
+  pushRow(
+    'pages.instructions_exists',
+    'Page Level Checks',
+    'Instructions page exists',
+    hasInstructionsPagePublished ? 'pass' : hasInstructionsPageDesigner ? 'partial' : 'fail',
+    [
+      `instructionsPageFound=${hasInstructionsPage}`,
+      `instructionsPageCrawled=${hasInstructionsPageCrawled}`,
+      `instructionsPageDiscovered=${hasInstructionsPageDiscovered}`,
+      ...(designerSkipped ? [] : [`instructionsPageInDesigner=${hasInstructionsPageDesigner}`]),
+      ...(hasInstructionsPageDesigner && !hasInstructionsPagePublished
+        ? ['Instructions page was detected only in Designer metadata; verify it exists on the published site.']
+        : []),
+      ...(designerSparse && !hasInstructionsPageDesigner && hasInstructionsPage
+        ? ['Designer metadata appears sparse; published evidence confirms the Instructions page.']
+        : [])
+    ],
+    publishedOrDesignerOnlySource(hasInstructionsPagePublished, hasInstructionsPageDesigner),
+    hasInstructionsPagePublished ? 0.9 : hasInstructionsPageDesigner ? 0.5 : 0.85,
+    hasInstructionsPage
+      ? undefined
+      : 'Add an Instructions page and link it from the published site.'
+  );
+
+  pushRow(
+    'pages.changelog_exists',
+    'Page Level Checks',
+    'Changelog page exists',
+    hasChangelogPagePublished ? 'pass' : hasChangelogPageDesigner ? 'partial' : 'fail',
+    [
+      `changelogPageFound=${hasChangelogPage}`,
+      `changelogPageCrawled=${hasChangelogPageCrawled}`,
+      `changelogPageDiscovered=${hasChangelogPageDiscovered}`,
+      ...(designerSkipped ? [] : [`changelogPageInDesigner=${hasChangelogPageDesigner}`]),
+      ...(hasChangelogPageDesigner && !hasChangelogPagePublished
+        ? ['Changelog page was detected only in Designer metadata; verify it exists on the published site.']
+        : []),
+      ...(designerSparse && !hasChangelogPageDesigner && hasChangelogPage
+        ? ['Designer metadata appears sparse; published evidence confirms the Changelog page.']
+        : [])
+    ],
+    publishedOrDesignerOnlySource(hasChangelogPagePublished, hasChangelogPageDesigner),
+    hasChangelogPagePublished ? 0.9 : hasChangelogPageDesigner ? 0.5 : 0.85,
+    hasChangelogPage
+      ? undefined
+      : 'Add a Changelog page and link it from the published site.'
+  );
+
   // When the license page was discovered (precheck) but not crawled (maxPages
   // cap), report 'partial' instead of 'fail' — the page exists but we couldn't
   // verify the text content.
   const licenseNotCrawledButDiscovered = !hasLicensePageCrawled && hasLicensePageDiscovered;
+  const licenseOnlyInDesigner = !hasLicensePagePublished && hasLicensePageDesigner;
   const licenseStatus: UnifiedReviewStatus = !hasLicensePage
     ? 'fail'
-    : licenseNotCrawledButDiscovered
+    : licenseOnlyInDesigner
       ? 'partial'
-      : hasKnownLicenseTextResult
-        ? hasRequiredLicenseText
-          ? 'pass'
-          : 'fail'
-        : 'partial';
+      : licenseNotCrawledButDiscovered
+        ? 'partial'
+        : hasKnownLicenseTextResult
+          ? hasRequiredLicenseText
+            ? 'pass'
+            : 'fail'
+          : 'partial';
   pushRow(
     'pages.license_text_exact',
     'Page Level Checks',
@@ -2635,13 +2792,21 @@ function unifyRows(
     [
       `licensePageFound=${hasLicensePage}`,
       `licensePageCrawled=${hasLicensePageCrawled}`,
+      `licensePageDiscovered=${hasLicensePageDiscovered}`,
+      ...(designerSkipped ? [] : [`licensePageInDesigner=${hasLicensePageDesigner}`]),
       `hasKnownLicenseTextResult=${hasKnownLicenseTextResult}`,
       `hasRequiredLicenseText=${hasRequiredLicenseText}`,
       ...(licenseNotCrawledButDiscovered
         ? ['License page exists but was not crawled (maxPages cap) — verify text manually']
+        : []),
+      ...(licenseOnlyInDesigner
+        ? ['License page was detected only in Designer metadata; crawl published page to verify exact text.']
+        : []),
+      ...(designerSparse && !hasLicensePageDesigner && hasLicensePage
+        ? ['Designer metadata appears sparse; published evidence confirms the License page.']
         : [])
     ],
-    ['published-webmcp-crawl', 'designer-mcp'],
+    publishedOrDesignerOnlySource(hasLicensePagePublished, hasLicensePageDesigner),
     hasKnownLicenseTextResult ? 0.85 : 0.5,
     'Ensure /licenses page exists and starts with the required exact text.'
   );
@@ -2911,17 +3076,6 @@ function unifyRows(
 
   // Policy checks (deterministic)
   const policy = published.policyChecks;
-  // Check if an instructions page was found (from Designer metadata or crawl)
-  const hasInstructionsPage =
-    designer.metadataSummary.pages.some(
-      (p) => p.name.toLowerCase().includes('instruction')
-    ) ||
-    published.pages.some(
-      (p) => p.url.toLowerCase().includes('/instruction')
-    ) ||
-    (precheck?.discoveredUrls ?? []).some(
-      (url) => url.toLowerCase().includes('/instruction')
-    );
   pushRow(
     'policy.powered_by_webflow',
     'Submission Policy',
@@ -3381,6 +3535,12 @@ async function executeTemplateReview(
   const coveragePercent = totalKnownPages > 0
     ? Math.round((crawledPages / totalKnownPages) * 100)
     : 100;
+  const automatedRubricChecks = counts.pass + counts.fail + counts.partial;
+  const manualRubricChecks = counts.manual;
+  const totalRubricChecks = automatedRubricChecks + manualRubricChecks;
+  const rubricAutomatedPercent = totalRubricChecks > 0
+    ? Math.round((automatedRubricChecks / totalRubricChecks) * 100)
+    : 100;
 
   const summary: import('./types.js').UnifiedTemplateReviewSummary = {
     ...counts,
@@ -3393,6 +3553,12 @@ async function executeTemplateReview(
       crawledPages,
       skippedPages,
       coveragePercent
+    },
+    rubricCoverage: {
+      totalChecks: totalRubricChecks,
+      automatedChecks: automatedRubricChecks,
+      manualChecks: manualRubricChecks,
+      automatedPercent: rubricAutomatedPercent
     }
   };
   const providerMetrics = diffProviderMetrics(metricsBefore, provider.getSessionMetrics());
@@ -3762,7 +3928,7 @@ export function createAnalyzerServer(): Server {
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring. Required unless designerMode is "skip".'
+              description: 'Optional Webflow preview URL. Only required when designerMode is explicitly "extract" for debug/manual Designer diagnostics.'
             },
             publishedUrl: {
               type: 'string',
@@ -3771,7 +3937,7 @@ export function createAnalyzerServer(): Server {
             designerMode: {
               type: 'string',
               enum: ['extract', 'skip'],
-              description: 'Designer extraction mode. Use "skip" for published-only reviews that should not require previewUrl.'
+              description: 'Designer extraction mode. Defaults to "skip" for published-first automated reviews. Use "extract" only for debug/manual Designer diagnostics.'
             },
             timeout: {
               type: 'number',
@@ -3801,7 +3967,7 @@ export function createAnalyzerServer(): Server {
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring. Required unless designerMode is "skip".'
+              description: 'Optional Webflow preview URL. Only required when designerMode is explicitly "extract" for debug/manual Designer diagnostics.'
             },
             publishedUrl: {
               type: 'string',
@@ -3810,7 +3976,7 @@ export function createAnalyzerServer(): Server {
             designerMode: {
               type: 'string',
               enum: ['extract', 'skip'],
-              description: 'Designer extraction mode. Use "skip" for published-only reviews that should not require previewUrl.'
+              description: 'Designer extraction mode. Defaults to "skip" for published-first automated reviews. Use "extract" only for debug/manual Designer diagnostics.'
             },
             timeout: {
               type: 'number',

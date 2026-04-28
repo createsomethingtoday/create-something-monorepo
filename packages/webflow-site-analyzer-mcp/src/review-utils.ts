@@ -20,7 +20,7 @@ export interface TemplateReviewUrlValidationResult {
 export function normalizeTemplateReviewDesignerMode(
   mode: string | null | undefined
 ): NormalizedTemplateReviewDesignerMode {
-  if (mode == null || mode === '') return 'extract';
+  if (mode == null || mode === '') return 'skip';
   if (mode === 'extract' || mode === 'skip') return mode;
   throw new Error('`designerMode` must be either "extract" or "skip".');
 }
@@ -40,6 +40,53 @@ export function validateTemplateReviewUrls(
   }
 
   return { previewUrl, publishedUrl, designerMode };
+}
+
+export const REQUIRED_LICENSE_OPENING =
+  "All graphical assets in this template are licensed for personal and commercial use. If you'd like to use a specific asset, please check the license below.";
+
+export function normalizeLicenseTextForComparison(value: string | null | undefined): string {
+  return String(value || '')
+    .normalize('NFKC')
+    .replace(/[\u2018\u2019\u201B\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201F\u2033]/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function hasRequiredLicenseOpening(bodyText: string | null | undefined): boolean {
+  return normalizeLicenseTextForComparison(bodyText)
+    .includes(normalizeLicenseTextForComparison(REQUIRED_LICENSE_OPENING));
+}
+
+export interface DesignerMetadataSparseCandidate {
+  source?: string;
+  metadataSummary?: {
+    totalPages?: number;
+    totalComponents?: number;
+    totalAssets?: number;
+    breakpoints?: unknown[];
+    pages?: unknown[];
+  };
+}
+
+export function isDesignerMetadataSparse(
+  designer: DesignerMetadataSparseCandidate | null | undefined,
+  publishedKnownPageCount = 0
+): boolean {
+  if (!designer || designer.source !== 'live-extraction') return false;
+
+  const summary = designer.metadataSummary || {};
+  const totalPages = summary.totalPages ?? summary.pages?.length ?? 0;
+  const totalComponents = summary.totalComponents ?? 0;
+  const totalAssets = summary.totalAssets ?? 0;
+  const breakpoints = summary.breakpoints?.length ?? 0;
+
+  if (totalPages === 0) return true;
+  if (publishedKnownPageCount >= 5 && totalPages < 3) return true;
+  if (totalComponents === 0 && totalAssets === 0 && breakpoints === 0) return true;
+
+  return false;
 }
 
 // =============================================================================

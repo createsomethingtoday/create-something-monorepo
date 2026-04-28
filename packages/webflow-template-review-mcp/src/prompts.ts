@@ -55,7 +55,7 @@ Every review follows these phases:
 | \`template_review_get_analyzer_review\` | Get results for a specific job | Poll after ~90s |
 | \`template_review_list_analyzer_reviews\` | List all jobs for a version | Check prior runs |
 
-The analyzer crawls **every page** and runs 39 automated checks:
+The analyzer is **published-first**. It crawls the published site, reports page-crawl coverage, and reports rubric automation coverage so reviewers can see which checks were automated vs manual:
 - **Structure**: H1 hierarchy, heading levels, required pages (license, instructions, changelog, style guide)
 - **Images**: alt text, dimensions, loading strategy, modern formats
 - **Links**: broken internal links, empty hrefs, external target="_blank"
@@ -64,6 +64,14 @@ The analyzer crawls **every page** and runs 39 automated checks:
 - **Content**: Lorem ipsum detection, placeholder text
 - **Site Settings**: custom favicon, custom fonts with licensing, connected apps
 - **Policy**: Powered by Webflow badge, affiliate links, GSAP documentation, custom code
+
+### Published vs Designer Evidence
+
+Published-site evidence is authoritative for page existence, policy, content, SEO, links, images, forms, and accessibility. The normal automated reviewer workflow should run without Designer extraction; the analyzer defaults to \`designerMode: "skip"\` and does not require a preview URL.
+
+Designer extraction is an opt-in debug/manual diagnostic path only. It can be sparse because the Designer UI is dynamic, so Designer-only page/component/style findings must not be summarized as confirmed failures unless a human screenshot or a reliable published-site signal confirms the issue.
+
+When calling the analyzer directly, omit \`designerMode\` or set \`designerMode: "skip"\` for automated reviews. Only use \`designerMode: "extract"\` when the reviewer explicitly wants manual Designer diagnostics. If a run has \`designer.source = "skipped"\`, ignore Designer-dependent manual rows when forming the automated verdict.
 
 ### Interpreting Results
 

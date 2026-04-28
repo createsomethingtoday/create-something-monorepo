@@ -18,6 +18,9 @@ const {
   isPoweredByWebflowBadgeCandidate,
   normalizeTemplateReviewDesignerMode,
   validateTemplateReviewUrls,
+  hasRequiredLicenseOpening,
+  isDesignerMetadataSparse,
+  normalizeLicenseTextForComparison,
   classifyImageAltCandidate,
   computeScore
 } = require('../dist/review-utils.js');
@@ -246,25 +249,73 @@ test('published-only designerMode=skip accepts missing previewUrl', () => {
   assert.equal(result.designerMode, 'skip');
 });
 
-test('default designerMode requires previewUrl', () => {
-  assert.throws(
-    () => validateTemplateReviewUrls({ publishedUrl: 'https://example.webflow.io/' }),
-    /previewUrl/
-  );
+test('default designerMode is published-only and accepts missing previewUrl', () => {
+  const result = validateTemplateReviewUrls({ publishedUrl: 'https://example.webflow.io/' });
+  assert.equal(result.designerMode, 'skip');
+  assert.equal(result.previewUrl, undefined);
 });
 
-test('previewUrl with default mode uses extraction', () => {
+test('explicit extract mode with previewUrl uses extraction', () => {
   const result = validateTemplateReviewUrls({
     previewUrl: 'https://preview.webflow.com/preview/example',
-    publishedUrl: 'https://example.webflow.io/'
+    publishedUrl: 'https://example.webflow.io/',
+    designerMode: 'extract'
   });
   assert.equal(result.designerMode, 'extract');
+});
+
+test('explicit extract mode requires previewUrl', () => {
+  assert.throws(
+    () => validateTemplateReviewUrls({
+      publishedUrl: 'https://example.webflow.io/',
+      designerMode: 'extract'
+    }),
+    /previewUrl/
+  );
 });
 
 test('invalid designerMode is rejected', () => {
   assert.throws(
     () => normalizeTemplateReviewDesignerMode('published-only'),
     /designerMode/
+  );
+});
+
+// =============================================================================
+console.log('\n== license text normalization ==');
+
+test('required license text accepts typographic apostrophes and whitespace', () => {
+  const text = 'All graphical assets in this template are licensed for personal and commercial use.  If you\u2019d like to use a specific asset, please check the license below.';
+  assert.equal(hasRequiredLicenseOpening(text), true);
+});
+
+test('license comparison normalizes smart quotes', () => {
+  assert.equal(
+    normalizeLicenseTextForComparison('If you\u2019d like \u201cgreat\u201d assets'),
+    "If you'd like \"great\" assets"
+  );
+});
+
+// =============================================================================
+console.log('\n== isDesignerMetadataSparse ==');
+
+test('live Designer metadata with 1 page vs many published pages is sparse', () => {
+  assert.equal(
+    isDesignerMetadataSparse({
+      source: 'live-extraction',
+      metadataSummary: { totalPages: 1, totalComponents: 0, totalAssets: 0, breakpoints: [] }
+    }, 12),
+    true
+  );
+});
+
+test('provided metadata is not treated as sparse', () => {
+  assert.equal(
+    isDesignerMetadataSparse({
+      source: 'provided-metadata',
+      metadataSummary: { totalPages: 1, totalComponents: 0, totalAssets: 0, breakpoints: [] }
+    }, 12),
+    false
   );
 });
 
