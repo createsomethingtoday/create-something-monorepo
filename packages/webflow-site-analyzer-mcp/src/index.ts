@@ -49,12 +49,16 @@ import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
 import {
   classifyImageAltCandidate,
+  computeComboClassDepth,
+  computeTemplateReviewCoverage,
   hasRequiredLicenseOpening,
   isDesignerMetadataSparse,
   is404PageTitle,
   isPoweredByWebflowBadgeCandidate,
   normalizeLicenseTextForComparison,
   REQUIRED_LICENSE_OPENING,
+  shouldInspectElementForComboDepth,
+  splitClassTokens,
   validateTemplateReviewUrls,
 } from './review-utils.js';
 import type {
@@ -741,6 +745,9 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   const REQUIRED_LICENSE_OPENING = ${JSON.stringify(REQUIRED_LICENSE_OPENING)};
   const normalizeLicenseTextForComparison = ${normalizeLicenseTextForComparison.toString()};
   const hasRequiredLicenseOpening = ${hasRequiredLicenseOpening.toString()};
+  const splitClassTokens = ${splitClassTokens.toString()};
+  const shouldInspectElementForComboDepth = ${shouldInspectElementForComboDepth.toString()};
+  const computeComboClassDepth = ${computeComboClassDepth.toString()};
 
   const toInternalAbsolute = (href) => {
     try {
@@ -1016,10 +1023,101 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
       return !hasLabel && !parentLabel && !ariaLabel;
     }).length;
 
+    const isVisibleElement = (el) => {
+      if (!el || typeof el.getBoundingClientRect !== 'function') return false;
+      const style = window.getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') return false;
+      if (Number(style.opacity || '1') === 0) return false;
+      const rect = el.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    };
+
+    const getAccessibleName = (el) => {
+      const labelledBy = (el.getAttribute('aria-labelledby') || '').trim();
+      const labelledText = labelledBy
+        ? labelledBy.split(/\\s+/)
+            .map((id) => document.getElementById(id)?.textContent || '')
+            .join(' ')
+        : '';
+      return [
+        el.getAttribute('aria-label'),
+        labelledText,
+        el.getAttribute('title'),
+        el.getAttribute('alt'),
+        el.textContent
+      ].filter(Boolean).join(' ').replace(/\\s+/g, ' ').trim();
+    };
+
+    const getAttributeSignalText = (el) => Array.from(el.attributes || [])
+      .map((attr) => attr.name + ' ' + attr.value)
+      .join(' ');
+
+    const hasVideoControlLanguage = (value) =>
+      /\\b(play|pause|paused|stop|mute|unmute|video|media|motion|animation|control|controls)\\b/i
+        .test(String(value || ''));
+
+    const hasPotentialControlSemantics = (el, video) => {
+      if (!el || el === video || el.contains(video)) return false;
+      const tag = el.tagName.toLowerCase();
+      const role = (el.getAttribute('role') || '').toLowerCase();
+      const type = (el.getAttribute('type') || '').toLowerCase();
+      const ariaControls = (el.getAttribute('aria-controls') || '').split(/\\s+/).filter(Boolean);
+      const videoId = video.getAttribute('id') || '';
+
+      if (videoId && ariaControls.includes(videoId)) return true;
+
+      const attributeSignals = getAttributeSignalText(el);
+      const hasControlSignals =
+        hasVideoControlLanguage(getAccessibleName(el)) ||
+        (hasVideoControlLanguage(attributeSignals) && /\\b(control|controls|play|pause|stop|mute|unmute)\\b/i.test(attributeSignals));
+      if (!hasControlSignals) return false;
+
+      if (el.hasAttribute('aria-pressed')) return true;
+      if (tag === 'button') return true;
+      if (tag === 'input' && ['button', 'submit', 'reset'].includes(type)) return true;
+      if (role === 'button' || role === 'switch') return true;
+
+      const isInteractive =
+        el.tabIndex >= 0 ||
+        Boolean(el.getAttribute('onclick')) ||
+        Boolean(el.getAttribute('href')) ||
+        Array.from(el.attributes || []).some((attr) => /^on/i.test(attr.name));
+      return isInteractive || hasVideoControlLanguage(attributeSignals);
+    };
+
+    const hasCustomVideoControl = (video) => {
+      const videoId = video.getAttribute('id') || '';
+      if (videoId) {
+        const explicitControls = Array.from(document.querySelectorAll('[aria-controls]'));
+        if (explicitControls.some((el) =>
+          (el.getAttribute('aria-controls') || '').split(/\\s+/).includes(videoId) &&
+          isVisibleElement(el)
+        )) {
+          return true;
+        }
+      }
+
+      const containers = [];
+      let node = video.parentElement;
+      for (let depth = 0; node && depth < 5; depth++) {
+        containers.push(node);
+        node = node.parentElement;
+      }
+
+      return containers.some((container) => {
+        const candidates = Array.from(container.querySelectorAll('*')).slice(0, 300);
+        return candidates.some((el) =>
+          isVisibleElement(el) &&
+          hasPotentialControlSemantics(el, video)
+        );
+      });
+    };
+
+    const hasUsableVideoControl = (video) => Boolean(video.controls || hasCustomVideoControl(video));
     const videoEls = Array.from(document.querySelectorAll('video'));
-    const autoplayNoControls = videoEls.filter(v => v.autoplay && !v.controls).length;
+    const autoplayNoControls = videoEls.filter(v => v.autoplay && !hasUsableVideoControl(v)).length;
     const bgVideoMissing = videoEls.filter(v =>
-      v.muted && v.autoplay && v.loop && !v.controls
+      v.muted && v.autoplay && v.loop && !hasUsableVideoControl(v)
     ).length;
 
     // Below-fold images that should be lazy but aren't
@@ -1126,18 +1224,35 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
         };
       })(),
       comboClassDepth: (() => {
-        // Check max class count on any single element (combo class stacking)
-        const allEls = document.querySelectorAll('[class]');
-        let maxDepth = 0;
-        let maxDepthSelector = '';
-        for (const el of Array.from(allEls).slice(0, 500)) {
-          const classCount = el.classList.length;
-          if (classCount > maxDepth) {
-            maxDepth = classCount;
-            maxDepthSelector = el.tagName.toLowerCase() + '.' + Array.from(el.classList).slice(0, 3).join('.');
+        const selectorPath = (el) => {
+          const parts = [];
+          let node = el;
+          while (node && node.nodeType === Node.ELEMENT_NODE && parts.length < 4) {
+            let part = node.tagName.toLowerCase();
+            if (node.id) {
+              part += '#' + node.id;
+              parts.unshift(part);
+              break;
+            }
+            const classValue = typeof node.className === 'string'
+              ? node.className
+              : node.getAttribute('class') || '';
+            const classes = splitClassTokens(classValue).slice(0, 2);
+            if (classes.length) part += '.' + classes.join('.');
+            parts.unshift(part);
+            node = node.parentElement;
           }
-        }
-        return { maxDepth, maxDepthSelector, sampled: Math.min(allEls.length, 500) };
+          return parts.join(' > ');
+        };
+        const allEls = document.body ? Array.from(document.body.querySelectorAll('[class]')) : [];
+        const candidates = allEls.map((el) => ({
+          tagName: el.tagName,
+          className: typeof el.className === 'string'
+            ? el.className
+            : el.getAttribute('class') || '',
+          selector: selectorPath(el)
+        }));
+        return computeComboClassDepth(candidates, 500);
       })(),
       contrast: (() => {
         // WCAG AA contrast check with ancestor background walk-up,
@@ -3528,13 +3643,11 @@ async function executeTemplateReview(
     : overallScore >= 40 ? 'D' as const
     : 'F' as const;
 
-  // Page crawl coverage: compare known pages (from all sources) vs actually crawled
-  const totalKnownPages = allSeedUrls.length;
-  const crawledPages = published.visitedPages;
-  const skippedPages = published.skippedUrls.length;
-  const coveragePercent = totalKnownPages > 0
-    ? Math.round((crawledPages / totalKnownPages) * 100)
-    : 100;
+  const crawlCoverage = computeTemplateReviewCoverage({
+    initialKnownPages: allSeedUrls.length,
+    crawledPages: published.visitedPages,
+    skippedPages: published.skippedUrls.length
+  });
   const automatedRubricChecks = counts.pass + counts.fail + counts.partial;
   const manualRubricChecks = counts.manual;
   const totalRubricChecks = automatedRubricChecks + manualRubricChecks;
@@ -3549,10 +3662,7 @@ async function executeTemplateReview(
     overallScore,
     grade,
     coverage: {
-      totalKnownPages,
-      crawledPages,
-      skippedPages,
-      coveragePercent
+      ...crawlCoverage
     },
     rubricCoverage: {
       totalChecks: totalRubricChecks,

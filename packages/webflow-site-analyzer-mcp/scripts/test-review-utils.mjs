@@ -22,6 +22,10 @@ const {
   isDesignerMetadataSparse,
   normalizeLicenseTextForComparison,
   classifyImageAltCandidate,
+  computeComboClassDepth,
+  computeTemplateReviewCoverage,
+  shouldInspectElementForComboDepth,
+  splitClassTokens,
   computeScore
 } = require('../dist/review-utils.js');
 
@@ -317,6 +321,73 @@ test('provided metadata is not treated as sparse', () => {
     }, 12),
     false
   );
+});
+
+// =============================================================================
+console.log('\n== computeTemplateReviewCoverage ==');
+
+test('crawl coverage uses the final discovered universe and does not exceed 100%', () => {
+  const coverage = computeTemplateReviewCoverage({
+    initialKnownPages: 21,
+    crawledPages: 30,
+    skippedPages: 0
+  });
+  assert.equal(coverage.totalKnownPages, 30);
+  assert.equal(coverage.initialKnownPages, 21);
+  assert.equal(coverage.discoveredPages, 9);
+  assert.equal(coverage.coveragePercent, 100);
+});
+
+test('crawl coverage counts skipped discovered pages', () => {
+  const coverage = computeTemplateReviewCoverage({
+    initialKnownPages: 12,
+    crawledPages: 1,
+    skippedPages: 11
+  });
+  assert.equal(coverage.totalKnownPages, 12);
+  assert.equal(coverage.coveragePercent, 8);
+});
+
+test('empty crawl universe reports full coverage instead of divide-by-zero noise', () => {
+  const coverage = computeTemplateReviewCoverage({});
+  assert.equal(coverage.totalKnownPages, 0);
+  assert.equal(coverage.coveragePercent, 100);
+});
+
+// =============================================================================
+console.log('\n== computeComboClassDepth ==');
+
+test('combo depth ignores document/body runtime class carriers', () => {
+  const result = computeComboClassDepth([
+    {
+      tagName: 'html',
+      className: 'w-mod-js wf-font-one-active wf-font-two-active wf-font-three-active',
+      selector: 'html.w-mod-js'
+    },
+    {
+      tagName: 'body',
+      className: 'body page-home',
+      selector: 'body.body'
+    },
+    {
+      tagName: 'div',
+      className: 'card featured dark',
+      selector: 'main > div.card.featured'
+    }
+  ]);
+  assert.equal(result.maxDepth, 3);
+  assert.equal(result.maxDepthSelector, 'main > div.card.featured');
+  assert.equal(result.sampled, 1);
+});
+
+test('class token splitting is whitespace-normalized', () => {
+  assert.deepEqual(splitClassTokens(' alpha   beta\tgamma\n'), ['alpha', 'beta', 'gamma']);
+});
+
+test('combo depth inspection excludes only document shell elements', () => {
+  assert.equal(shouldInspectElementForComboDepth('html'), false);
+  assert.equal(shouldInspectElementForComboDepth('body'), false);
+  assert.equal(shouldInspectElementForComboDepth('section'), true);
 });
 
 // =============================================================================

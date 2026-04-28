@@ -89,6 +89,103 @@ export function isDesignerMetadataSparse(
   return false;
 }
 
+export interface TemplateReviewCoverageInput {
+  initialKnownPages?: number | null;
+  crawledPages?: number | null;
+  skippedPages?: number | null;
+}
+
+export interface TemplateReviewCoverageResult {
+  /** Final crawl universe: crawled pages plus discovered-but-skipped pages, never below initial known pages. */
+  totalKnownPages: number;
+  /** Pages known before crawl expansion, usually from precheck seeds. */
+  initialKnownPages: number;
+  /** Pages actually crawled and audited. */
+  crawledPages: number;
+  /** Pages discovered but not crawled. */
+  skippedPages: number;
+  /** Pages discovered during crawl beyond the initial known set. */
+  discoveredPages: number;
+  /** Coverage percentage capped by the final crawl universe. */
+  coveragePercent: number;
+}
+
+function nonNegativeInteger(value: number | null | undefined): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.trunc(value as number));
+}
+
+export function computeTemplateReviewCoverage(
+  input: TemplateReviewCoverageInput
+): TemplateReviewCoverageResult {
+  const initialKnownPages = nonNegativeInteger(input.initialKnownPages);
+  const crawledPages = nonNegativeInteger(input.crawledPages);
+  const skippedPages = nonNegativeInteger(input.skippedPages);
+  const discoveredUniverse = crawledPages + skippedPages;
+  const totalKnownPages = Math.max(initialKnownPages, discoveredUniverse);
+  const discoveredPages = Math.max(0, discoveredUniverse - initialKnownPages);
+  const coveragePercent = totalKnownPages > 0
+    ? Math.min(100, Math.round((crawledPages / totalKnownPages) * 100))
+    : 100;
+
+  return {
+    totalKnownPages,
+    initialKnownPages,
+    crawledPages,
+    skippedPages,
+    discoveredPages,
+    coveragePercent
+  };
+}
+
+export interface ComboClassDepthCandidate {
+  tagName?: string | null;
+  className?: string | null;
+  selector?: string | null;
+}
+
+export function splitClassTokens(className: string | null | undefined): string[] {
+  return String(className || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+export function shouldInspectElementForComboDepth(tagName: string | null | undefined): boolean {
+  const tag = String(tagName || '').toLowerCase();
+  return tag !== 'html' && tag !== 'body';
+}
+
+export function computeComboClassDepth(
+  candidates: ComboClassDepthCandidate[],
+  sampleLimit = 500
+): { maxDepth: number; maxDepthSelector: string; sampled: number } {
+  const limit = Math.max(0, Math.trunc(sampleLimit));
+  let sampled = 0;
+  let maxDepth = 0;
+  let maxDepthSelector = '';
+
+  for (const candidate of candidates) {
+    if (sampled >= limit) break;
+    if (!shouldInspectElementForComboDepth(candidate.tagName)) continue;
+
+    sampled++;
+    const classes = splitClassTokens(candidate.className);
+    if (classes.length > maxDepth) {
+      maxDepth = classes.length;
+      maxDepthSelector = String(candidate.selector || '').trim();
+      if (!maxDepthSelector) {
+        const tag = String(candidate.tagName || 'element').toLowerCase();
+        maxDepthSelector = classes.length > 0
+          ? `${tag}.${classes.slice(0, 3).join('.')}`
+          : tag;
+      }
+    }
+  }
+
+  return { maxDepth, maxDepthSelector, sampled };
+}
+
 // =============================================================================
 // Text sanitization: repair "s → space" font corruption
 // =============================================================================

@@ -752,13 +752,17 @@ export interface UnifiedTemplateReviewSummary {
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   /** Page crawl coverage metrics. */
   coverage: {
-    /** Total unique pages known (from Designer + sitemap + link discovery). */
+    /** Final crawl universe: crawled pages plus discovered-but-skipped pages, never below initial known pages. */
     totalKnownPages: number;
+    /** Pages known before crawl expansion, usually from precheck seeds. */
+    initialKnownPages?: number;
     /** Pages actually crawled and audited. */
     crawledPages: number;
     /** Pages discovered but not crawled. */
     skippedPages: number;
-    /** Coverage percentage (crawled / known). */
+    /** Pages discovered during crawl beyond the initial known set. */
+    discoveredPages?: number;
+    /** Coverage percentage (crawled / final crawl universe). */
     coveragePercent: number;
   };
   /** Rubric automation coverage metrics. */
