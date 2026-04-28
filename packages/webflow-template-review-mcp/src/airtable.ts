@@ -681,6 +681,32 @@ function sortQueueItems(items: TemplateReviewQueueItem[], sort: TemplateReviewQu
   return cloned;
 }
 
+function referenceMatchStatusPenalty(match: TemplateReviewReferenceUrlMatch): number {
+  const status = [
+    match.asset.marketplaceStatus,
+    match.asset.latestReviewStatus,
+    match.selectedVersion?.reviewStatus,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (/delisted|archiv|rejected/.test(status)) return 1;
+  return 0;
+}
+
+function referenceMatchDate(match: TemplateReviewReferenceUrlMatch): string | undefined {
+  return match.asset.submittedDate ?? match.selectedVersion?.createdAt ?? match.asset.latestReviewDate ?? match.asset.decisionDate;
+}
+
+function sortReferenceMatches(matches: TemplateReviewReferenceUrlMatch[]): TemplateReviewReferenceUrlMatch[] {
+  return [...matches].sort((left, right) => {
+    const penalty = referenceMatchStatusPenalty(left) - referenceMatchStatusPenalty(right);
+    if (penalty !== 0) return penalty;
+    return compareIsoDates(referenceMatchDate(right), referenceMatchDate(left));
+  });
+}
+
 function mapVersion(record: AirtableRecord): TemplateReviewVersion {
   return {
     versionId: record.id,
@@ -1256,7 +1282,7 @@ export class AirtableClient {
       }
     }
 
-    const matches = [...matchesByAsset.values()];
+    const matches = sortReferenceMatches([...matchesByAsset.values()]);
     return {
       input: normalizedInput,
       count: matches.length,
