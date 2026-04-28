@@ -16,6 +16,7 @@ const {
   isCriticalUtilityUrl,
   isWebflowComponentAnchor,
   isPoweredByWebflowBadgeCandidate,
+  classifyImageAltCandidate,
   computeScore
 } = require('../dist/review-utils.js');
 
@@ -228,6 +229,68 @@ test('non-Webflow external link does not pass', () => {
     }),
     false
   );
+});
+
+// =============================================================================
+console.log('\n== classifyImageAltCandidate ==');
+
+test('decorative arrow with accessible link text is acceptable empty alt', () => {
+  const result = classifyImageAltCandidate({
+    alt: '',
+    hasAltAttribute: true,
+    className: 'secondary-button-main-arrow',
+    src: '/assets/arrow.svg',
+    inLink: true,
+    linkText: 'See Project',
+    visible: true
+  });
+  assert.equal(result.classification, 'decorative-empty');
+});
+
+test('content image with absent alt is missing', () => {
+  const result = classifyImageAltCandidate({
+    hasAltAttribute: false,
+    className: 'project-card-image',
+    src: '/assets/project.png',
+    visible: true
+  });
+  assert.equal(result.classification, 'missing');
+});
+
+test('generic project alt is a quality issue, not missing alt', () => {
+  const result = classifyImageAltCandidate({
+    alt: 'Project Image',
+    hasAltAttribute: true,
+    className: 'project-card-image',
+    src: '/assets/project.png',
+    visible: true
+  });
+  assert.equal(result.classification, 'generic');
+});
+
+test('linked empty image without link text needs review', () => {
+  const result = classifyImageAltCandidate({
+    alt: '',
+    hasAltAttribute: true,
+    className: 'nav-brand-logo',
+    src: '/assets/logo.svg',
+    inLink: true,
+    linkText: '',
+    linkHasAccessibleName: false,
+    visible: true
+  });
+  assert.equal(result.classification, 'linked-empty');
+});
+
+test('specific alt is descriptive', () => {
+  const result = classifyImageAltCandidate({
+    alt: 'Classic white car parked outside a building at night',
+    hasAltAttribute: true,
+    className: 'project-card-image',
+    src: '/assets/project.png',
+    visible: true
+  });
+  assert.equal(result.classification, 'descriptive');
 });
 
 // =============================================================================

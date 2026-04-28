@@ -48,6 +48,7 @@ import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
 import {
+  classifyImageAltCandidate,
   is404PageTitle,
   isPoweredByWebflowBadgeCandidate,
 } from './review-utils.js';
@@ -706,8 +707,80 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     }
     const emptyHeadings = Array.from(headingEls).filter(el => !(el.textContent || '').trim()).length;
 
+    const classifyImageAltCandidate = ${classifyImageAltCandidate.toString()};
+    const imageSelectorPath = (el) => {
+      const parts = [];
+      let node = el;
+      while (node && node.nodeType === Node.ELEMENT_NODE && parts.length < 5) {
+        let part = node.tagName.toLowerCase();
+        if (node.id) {
+          part += '#' + node.id;
+          parts.unshift(part);
+          break;
+        }
+        const classes = String(node.className || '').trim().split(/\\s+/).filter(Boolean).slice(0, 2);
+        if (classes.length) part += '.' + classes.join('.');
+        parts.unshift(part);
+        node = node.parentElement;
+      }
+      return parts.join(' > ');
+    };
     const imgEls = Array.from(document.querySelectorAll('img'));
-    const missingAlt = imgEls.filter(img => !img.hasAttribute('alt') || img.alt === '').length;
+    const imageAltFindings = imgEls.map((img) => {
+      const rect = img.getBoundingClientRect();
+      const style = window.getComputedStyle(img);
+      const anchor = img.closest('a, button, [role="button"], [role="link"]');
+      const linkText = (anchor?.textContent || '').replace(/\\s+/g, ' ').trim();
+      const linkHasAccessibleName = Boolean(
+        linkText ||
+        anchor?.getAttribute('aria-label') ||
+        anchor?.getAttribute('aria-labelledby') ||
+        anchor?.querySelector('img[alt]:not([alt=""])')
+      );
+      const context = img.closest('figure, [class*="work"], [class*="project"], [class*="blog"], [class*="card"], [class*="cta"], [class*="image"], [class*="logo"], [class*="icon"]');
+      const nearbyText = (context?.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 120);
+      const src = img.currentSrc || img.src || img.getAttribute('src') || '';
+      const candidate = {
+        alt: img.getAttribute('alt'),
+        hasAltAttribute: img.hasAttribute('alt'),
+        className: String(img.className || ''),
+        src,
+        role: img.getAttribute('role') || '',
+        ariaHidden: img.getAttribute('aria-hidden') || '',
+        visible: rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          Number(style.opacity || '1') > 0,
+        inLink: Boolean(anchor),
+        linkText,
+        linkHasAccessibleName,
+        nearbyText
+      };
+      const classified = classifyImageAltCandidate(candidate);
+      return {
+        classification: classified.classification,
+        reason: classified.reason,
+        alt: candidate.alt,
+        selector: imageSelectorPath(img),
+        src: src.replace(/^https?:\\/\\/[^/]+/, '').slice(0, 160),
+        className: candidate.className,
+        visible: candidate.visible,
+        inLink: candidate.inLink,
+        linkText: linkText.slice(0, 80),
+        nearbyText
+      };
+    });
+    const imageAltCounts = imageAltFindings.reduce((acc, finding) => {
+      acc[finding.classification] = (acc[finding.classification] || 0) + 1;
+      return acc;
+    }, {});
+    const imageAltExamples = imageAltFindings
+      .filter((finding) => finding.classification !== 'descriptive')
+      .slice(0, 12);
+    const missingAlt =
+      (imageAltCounts.missing || 0) +
+      (imageAltCounts['linked-empty'] || 0);
     const missingDimensions = imgEls.filter(img =>
       !img.hasAttribute('width') && !img.hasAttribute('height') &&
       !img.style.aspectRatio && !(img.getAttribute('style') || '').includes('aspect-ratio')
@@ -832,9 +905,21 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
         summary: {
           images: imgEls.length,
           missingAlt,
+          missingInformativeAlt: imageAltCounts.missing || 0,
+          genericAlt: imageAltCounts.generic || 0,
+          decorativeEmptyAlt: imageAltCounts['decorative-empty'] || 0,
+          linkedEmptyAlt: imageAltCounts['linked-empty'] || 0,
           missingDimensions,
           aboveFoldLazy,
-          belowFoldNotLazy
+          belowFoldNotLazy,
+          altText: {
+            descriptive: imageAltCounts.descriptive || 0,
+            generic: imageAltCounts.generic || 0,
+            decorativeEmpty: imageAltCounts['decorative-empty'] || 0,
+            linkedEmpty: imageAltCounts['linked-empty'] || 0,
+            missing: imageAltCounts.missing || 0,
+            examples: imageAltExamples
+          }
         },
         formats: imgFormats
       },
@@ -1260,6 +1345,23 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
   const ix2Summary = asRecord(ix2.summary);
   const ix3Summary = asRecord(ix3.summary);
   const imageFormats = asRecord(imagesRoot.formats);
+  const altTextRoot = asRecord(images.altText);
+  const altTextExamples = Array.isArray(altTextRoot.examples)
+    ? altTextRoot.examples
+        .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+        .map((item) => ({
+          classification: typeof item.classification === 'string' ? item.classification : 'unknown',
+          reason: typeof item.reason === 'string' ? item.reason : '',
+          alt: typeof item.alt === 'string' ? item.alt : item.alt == null ? null : String(item.alt),
+          selector: typeof item.selector === 'string' ? item.selector : undefined,
+          src: typeof item.src === 'string' ? item.src : undefined,
+          className: typeof item.className === 'string' ? item.className : undefined,
+          visible: Boolean(item.visible),
+          inLink: Boolean(item.inLink),
+          linkText: typeof item.linkText === 'string' ? item.linkText : undefined,
+          nearbyText: typeof item.nearbyText === 'string' ? item.nearbyText : undefined,
+        }))
+    : [];
 
   const metaMissing = asStringArray(meta.missing);
   const hasCanonical = Boolean(meta.hasCanonical);
@@ -1278,6 +1380,9 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
   }
   if (asFiniteNumber(images.images) > 0 && asFiniteNumber(images.missingAlt) > 0) {
     failReasons.push(`images_missing_alt:${asFiniteNumber(images.missingAlt)}`);
+  }
+  if (asFiniteNumber(images.genericAlt) > 0) {
+    failReasons.push(`images_generic_alt:${asFiniteNumber(images.genericAlt)}`);
   }
   if (asFiniteNumber(links.blankTargetMissingRel) > 0) {
     failReasons.push(`blank_target_missing_rel:${asFiniteNumber(links.blankTargetMissingRel)}`);
@@ -1331,9 +1436,21 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
     images: {
       images: asFiniteNumber(images.images),
       missingAlt: asFiniteNumber(images.missingAlt),
+      missingInformativeAlt: asFiniteNumber(images.missingInformativeAlt),
+      genericAlt: asFiniteNumber(images.genericAlt),
+      decorativeEmptyAlt: asFiniteNumber(images.decorativeEmptyAlt),
+      linkedEmptyAlt: asFiniteNumber(images.linkedEmptyAlt),
       missingDimensions: asFiniteNumber(images.missingDimensions),
       aboveFoldLazy: asFiniteNumber(images.aboveFoldLazy),
-      belowFoldNotLazy: asFiniteNumber(images.belowFoldNotLazy)
+      belowFoldNotLazy: asFiniteNumber(images.belowFoldNotLazy),
+      altText: {
+        descriptive: asFiniteNumber(altTextRoot.descriptive),
+        generic: asFiniteNumber(altTextRoot.generic),
+        decorativeEmpty: asFiniteNumber(altTextRoot.decorativeEmpty),
+        linkedEmpty: asFiniteNumber(altTextRoot.linkedEmpty),
+        missing: asFiniteNumber(altTextRoot.missing),
+        examples: altTextExamples
+      }
     },
     imageFormats: Object.fromEntries(
       Object.entries(imageFormats).map(([key, value]) => [key, asFiniteNumber(value)])
@@ -1398,6 +1515,9 @@ function emptyIssueCounts(): PublishedSnippetIssueCounts & { imagesBelowFoldNotL
     multipleH1: 0,
     skippedHeadingLevels: 0,
     imagesMissingAlt: 0,
+    imagesGenericAlt: 0,
+    imagesDecorativeEmptyAlt: 0,
+    imagesLinkedEmptyAlt: 0,
     linksMissingRel: 0,
     linksMissingAccessibleName: 0,
     linksEmptyHref: 0,
@@ -1816,6 +1936,9 @@ async function crawlPublishedWebMcp(
     if (summary.headings?.multipleH1) issueCounts.multipleH1 += 1;
     if ((summary.headings?.skippedHeadingLevels || 0) > 0) issueCounts.skippedHeadingLevels += 1;
     if ((summary.images?.missingAlt || 0) > 0) issueCounts.imagesMissingAlt += 1;
+    if ((summary.images?.genericAlt || 0) > 0) issueCounts.imagesGenericAlt += 1;
+    if ((summary.images?.decorativeEmptyAlt || 0) > 0) issueCounts.imagesDecorativeEmptyAlt += 1;
+    if ((summary.images?.linkedEmptyAlt || 0) > 0) issueCounts.imagesLinkedEmptyAlt += 1;
     if ((summary.links?.blankTargetMissingRel || 0) > 0) issueCounts.linksMissingRel += 1;
     if ((summary.links?.missingAccessibleName || 0) > 0) issueCounts.linksMissingAccessibleName += 1;
     if ((summary.links?.emptyHref || 0) > 0) issueCounts.linksEmptyHref += 1;
@@ -2105,19 +2228,52 @@ function unifyRows(
     'Fix heading hierarchy per page and keep a single primary H1.'
   );
 
-  const altFailPages = failingPaths((s) => (s.images?.missingAlt ?? 0) > 0);
+  const altMissingPages = failingPaths((s) => (s.images?.missingAlt ?? 0) > 0);
+  const altGenericPages = failingPaths((s) => (s.images?.genericAlt ?? 0) > 0);
+  const altLinkedEmptyPages = failingPaths((s) => (s.images?.linkedEmptyAlt ?? 0) > 0);
+  const altExamples = published.pages
+    .flatMap((page) => {
+      const path = page.url.replace(published.origin, '');
+      return (page.summary?.images?.altText?.examples || []).map((example) => ({
+        path,
+        ...example
+      }));
+    })
+    .filter((example) =>
+      example.classification === 'missing' ||
+      example.classification === 'linked-empty' ||
+      example.classification === 'generic'
+    )
+    .slice(0, 8)
+    .map((example) => {
+      const alt = example.alt == null ? 'null' : example.alt === '' ? 'empty' : `"${example.alt}"`;
+      const text = example.linkText ? ` linkText="${example.linkText}"` : '';
+      return `${example.path} ${example.classification} alt=${alt}${text} src=${example.src || 'n/a'}`;
+    });
+  const altStatus: UnifiedReviewStatus =
+    published.issueCounts.imagesMissingAlt > 0 || published.issueCounts.imagesLinkedEmptyAlt > 0
+      ? 'fail'
+      : published.issueCounts.imagesGenericAlt > 0
+        ? 'partial'
+        : 'pass';
   pushRow(
     'webflow_audit.alt_text',
     'Webflow Audit Panel',
-    'No missing alt texts',
-    published.issueCounts.imagesMissingAlt > 0 ? 'fail' : 'pass',
+    'Image alt text is appropriate for content vs decorative images',
+    altStatus,
     [
-      `pagesWithMissingAlt=${published.issueCounts.imagesMissingAlt}/${totalAudited}`,
-      ...(altFailPages.length > 0 ? [`affectedPages=${altFailPages.join(', ')}`] : [])
+      `pagesWithMissingInformativeAlt=${published.issueCounts.imagesMissingAlt}/${totalAudited}`,
+      `pagesWithLinkedEmptyAlt=${published.issueCounts.imagesLinkedEmptyAlt}/${totalAudited}`,
+      `pagesWithGenericAlt=${published.issueCounts.imagesGenericAlt}/${totalAudited}`,
+      `pagesWithDecorativeEmptyAlt=${published.issueCounts.imagesDecorativeEmptyAlt}/${totalAudited}`,
+      ...(altMissingPages.length > 0 ? [`missingAltPages=${altMissingPages.join(', ')}`] : []),
+      ...(altLinkedEmptyPages.length > 0 ? [`linkedEmptyAltPages=${altLinkedEmptyPages.join(', ')}`] : []),
+      ...(altGenericPages.length > 0 ? [`genericAltPages=${altGenericPages.join(', ')}`] : []),
+      ...(altExamples.length > 0 ? [`examples=${altExamples.join(' | ')}`] : [])
     ],
     ['published-webmcp-crawl'],
-    0.9,
-    'Add descriptive alt text for informative images and mark decorative images appropriately.'
+    0.82,
+    'Use descriptive alt text for informative/content images. Empty alt is acceptable for decorative icons when the surrounding link or button already has accessible text; generic alt like "Project Image" should be improved.'
   );
 
   pushRow(

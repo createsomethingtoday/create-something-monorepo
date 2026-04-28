@@ -509,6 +509,9 @@ export interface PublishedSnippetIssueCounts {
   multipleH1: number;
   skippedHeadingLevels: number;
   imagesMissingAlt: number;
+  imagesGenericAlt: number;
+  imagesDecorativeEmptyAlt: number;
+  imagesLinkedEmptyAlt: number;
   linksMissingRel: number;
   linksMissingAccessibleName: number;
   linksEmptyHref: number;
@@ -542,9 +545,32 @@ export interface PublishedSnippetPageSummary {
   images: {
     images: number;
     missingAlt: number;
+    missingInformativeAlt?: number;
+    genericAlt?: number;
+    decorativeEmptyAlt?: number;
+    linkedEmptyAlt?: number;
     missingDimensions: number;
     aboveFoldLazy: number;
     belowFoldNotLazy: number;
+    altText?: {
+      descriptive: number;
+      generic: number;
+      decorativeEmpty: number;
+      linkedEmpty: number;
+      missing: number;
+      examples?: Array<{
+        classification: string;
+        reason: string;
+        alt?: string | null;
+        selector?: string;
+        src?: string;
+        className?: string;
+        visible?: boolean;
+        inLink?: boolean;
+        linkText?: string;
+        nearbyText?: string;
+      }>;
+    };
   } | null;
   imageFormats: Record<string, number>;
   forms: {

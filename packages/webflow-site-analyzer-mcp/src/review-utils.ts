@@ -153,6 +153,113 @@ export function isPoweredByWebflowBadgeCandidate(candidate: WebflowBadgeCandidat
   return textSignals.some((value) => value.includes('webflow'));
 }
 
+export type ImageAltClassification =
+  | 'descriptive'
+  | 'generic'
+  | 'decorative-empty'
+  | 'linked-empty'
+  | 'missing';
+
+export type ImageAltCandidate = {
+  alt?: string | null;
+  hasAltAttribute?: boolean | null;
+  className?: string | null;
+  src?: string | null;
+  role?: string | null;
+  ariaHidden?: boolean | string | null;
+  visible?: boolean | null;
+  inLink?: boolean | null;
+  linkText?: string | null;
+  linkHasAccessibleName?: boolean | null;
+  nearbyText?: string | null;
+};
+
+export type ImageAltClassificationResult = {
+  classification: ImageAltClassification;
+  reason: string;
+};
+
+/**
+ * Classify image alt text for reviewer evidence.
+ * Empty alt is acceptable for decorative/icon images when another accessible
+ * name exists; generic non-empty alt is a quality issue, not missing alt.
+ */
+export function classifyImageAltCandidate(
+  candidate: ImageAltCandidate
+): ImageAltClassificationResult {
+  const alt = String(candidate.alt ?? '').trim();
+  const hasAltAttribute = candidate.hasAltAttribute !== false;
+  const className = String(candidate.className ?? '').toLowerCase();
+  const src = String(candidate.src ?? '').toLowerCase();
+  const role = String(candidate.role ?? '').toLowerCase();
+  const linkText = String(candidate.linkText ?? '').trim();
+  const nearbyText = String(candidate.nearbyText ?? '').trim();
+  const ariaHidden = candidate.ariaHidden === true || String(candidate.ariaHidden ?? '').toLowerCase() === 'true';
+  const inLink = candidate.inLink === true;
+  const linkHasAccessibleName = candidate.linkHasAccessibleName === true || linkText.length > 0;
+  const genericAltValues = new Set([
+    'image',
+    'photo',
+    'picture',
+    'graphic',
+    'project image',
+    'blog image',
+    'cta image',
+    'hero image',
+    'thumbnail',
+    'logo',
+    'icon',
+  ]);
+
+  const looksDecorative =
+    ariaHidden ||
+    role === 'presentation' ||
+    role === 'none' ||
+    /\b(icon|arrow|chevron|caret|divider|badge|decorative)\b/.test(className) ||
+    /(^|[-_/])(icon|arrow|chevron|caret|divider|badge)([-_.?/]|$)/.test(src) ||
+    src.endsWith('.svg');
+
+  if (!hasAltAttribute) {
+    return { classification: 'missing', reason: 'alt attribute is absent' };
+  }
+
+  if (!alt) {
+    if (looksDecorative && (!inLink || linkHasAccessibleName)) {
+      return {
+        classification: 'decorative-empty',
+        reason: inLink
+          ? 'empty alt on decorative image inside a link/button with accessible text'
+          : 'empty alt on decorative image'
+      };
+    }
+    if (inLink) {
+      return {
+        classification: 'linked-empty',
+        reason: 'linked image has empty alt and no clear accessible link text'
+      };
+    }
+    return {
+      classification: looksDecorative ? 'decorative-empty' : 'missing',
+      reason: looksDecorative ? 'empty alt on likely decorative image' : 'empty alt on likely informative image'
+    };
+  }
+
+  const normalizedAlt = alt.toLowerCase().replace(/\s+/g, ' ');
+  if (
+    genericAltValues.has(normalizedAlt) ||
+    /^image \d+$/.test(normalizedAlt) ||
+    /^photo \d+$/.test(normalizedAlt) ||
+    (normalizedAlt.endsWith(' image') && nearbyText && !normalizedAlt.includes(nearbyText.toLowerCase()))
+  ) {
+    return {
+      classification: 'generic',
+      reason: `non-empty but generic alt text: "${alt}"`
+    };
+  }
+
+  return { classification: 'descriptive', reason: 'non-empty descriptive alt text' };
+}
+
 // =============================================================================
 // Slug resolution
 // =============================================================================
