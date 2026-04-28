@@ -164,6 +164,12 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             expectation: 'Read reviewer-facing fields from data.context.',
           },
           {
+            step: 'reference_urls',
+            tool: 'template_review_resolve_reference_urls',
+            args: { reference_url: '<publishedUrl from analyzer or queue row>' },
+            expectation: 'Use this read-only lookup when a published-only analyzer report lacks previewUrl, then share data.previewUrl for human confirmation.',
+          },
+          {
             step: 'resume',
             tool: 'template_review_my_queue',
             args: {},
@@ -197,12 +203,14 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
         toolResponseNotes: {
           listQueue: 'Queue rows include assignableVersionId and normalized booleans such as canAssign, canReview, canPublish, isAssignedToCurrentReviewer, and isBlockedByOtherReviewer.',
           reviewContext: 'Reviewer context is nested under data.context, not top-level data.',
+          referenceUrls: 'Returns data.previewUrl, data.publishedUrl, and compact matched asset/version context. This is safe for published-only review and does not trigger Designer extraction.',
           myQueue: 'Returns only versions assigned to the current reviewer.',
         },
         promptTemplate: [
           'When helping a reviewer, start with template_review_list_queue unless they explicitly ask for their assigned work.',
           'If they want their current workload, use template_review_my_queue.',
           'When a queue row is chosen, use assignableVersionId rather than assetId for write actions.',
+          'When an analyzer result lacks previewUrl, call template_review_resolve_reference_urls with reference_url or published_url before telling the reviewer the Preview URL is unavailable.',
           'Treat template_review_assign_self, template_review_unassign_self, template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes as the primary reviewer-safe write lane.',
           'Never ask the reviewer for an Airtable collaborator id.',
           'Do not offer broad mutation tools that are not visible in reviewer discovery.',

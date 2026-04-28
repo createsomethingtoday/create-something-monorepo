@@ -83,6 +83,76 @@ test('assign_self routes through reviewer-safe self-assignment', async () => {
   assert.equal(parsePayload(result).ok, true);
 });
 
+test('resolve_reference_urls exposes preview URL from read-only client lookup', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: unknown[] = [];
+  const client = {
+    resolveReferenceUrls: async (...args: unknown[]) => {
+      calls.push(args);
+      return {
+        input: { referenceUrl: 'https://ewalily-property-portfolios.webflow.io/' },
+        count: 1,
+        selected: {
+          matchedSources: ['reference_url'],
+          matchedFields: ['websiteUrl'],
+          matchedValues: ['https://ewalily-property-portfolios.webflow.io/'],
+          asset: {
+            assetId: 'rec_asset_urls',
+            templateName: 'EwaLily',
+            websiteUrl: 'https://ewalily-property-portfolios.webflow.io/',
+            previewSiteUrl: 'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123',
+          },
+          selectedVersion: {
+            versionId: 'rec_version_latest',
+            assetId: 'rec_asset_urls',
+            versionNumber: 3,
+            reviewStatus: '🆕Ready for Review',
+            rawFields: {},
+          },
+          versions: [],
+        },
+        matches: [
+          {
+            matchedSources: ['reference_url'],
+            matchedFields: ['websiteUrl'],
+            matchedValues: ['https://ewalily-property-portfolios.webflow.io/'],
+            asset: {
+              assetId: 'rec_asset_urls',
+              templateName: 'EwaLily',
+              websiteUrl: 'https://ewalily-property-portfolios.webflow.io/',
+              previewSiteUrl: 'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123',
+            },
+            selectedVersion: null,
+            versions: [],
+          },
+        ],
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_resolve_reference_urls')?.({
+    reference_url: 'https://ewalily-property-portfolios.webflow.io/',
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls[0], [
+    {
+      versionId: undefined,
+      assetId: undefined,
+      referenceUrl: 'https://ewalily-property-portfolios.webflow.io/',
+      publishedUrl: undefined,
+      previewUrl: undefined,
+    },
+    { versionsLimit: 10 },
+  ]);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.data?.previewUrl, 'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123');
+  assert.equal(payload.data?.hasPreviewUrl, true);
+});
+
 test('request_changes requires reviewer ownership before mutation', async () => {
   const { server, handlers } = createServerHarness();
   const calls: Array<{ method: string; args: unknown[] }> = [];

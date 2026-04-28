@@ -205,6 +205,68 @@ test('getAssetById maps current asset fields and compatibility aliases', async (
   assert.equal(asset.publishedDate, '2026-03-17');
 });
 
+test('resolveReferenceUrls finds preview URL from a published reference URL', async () => {
+  const capturedUrls: URL[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      capturedUrls.push(url);
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_version_latest',
+              createdTime: '2026-03-18T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_urls',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 3,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+              },
+            },
+          ],
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_asset_urls',
+              createdTime: '2026-03-18T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'EwaLily',
+                [CONFIRMED_ASSET_FIELDS.websiteUrl]: 'https://ewalily-property-portfolios.webflow.io/',
+                [CONFIRMED_ASSET_FIELDS.previewSiteUrl]:
+                  'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123',
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const resolution = await client.resolveReferenceUrls({
+    referenceUrl: 'https://ewalily-property-portfolios.webflow.io',
+  });
+
+  assert.equal(resolution.count, 1);
+  assert.equal(resolution.selected?.asset.templateName, 'EwaLily');
+  assert.equal(
+    resolution.selected?.asset.previewSiteUrl,
+    'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123',
+  );
+  assert.deepEqual(resolution.selected?.matchedSources, ['reference_url']);
+  assert.deepEqual(resolution.selected?.matchedFields, ['websiteUrl']);
+  assert.equal(resolution.selected?.versions[0]?.versionId, 'rec_version_latest');
+  assert.ok(capturedUrls[0]?.searchParams.get('filterByFormula')?.includes(CONFIRMED_ASSET_FIELDS.websiteUrl));
+});
+
 test('getVersionById maps the current version-side MRP and agent feedback fields', async () => {
   const client = new AirtableClient({
     apiKey: 'test',

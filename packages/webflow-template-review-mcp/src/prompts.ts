@@ -36,6 +36,7 @@ Every review follows these phases:
 | \`template_review_list_queue\` | Templates ready for review, sorted by date | Find new work |
 | \`template_review_my_queue\` | Your assigned reviews, all statuses | Resume work |
 | \`template_review_search_versions\` | Find specific version cycles by name | Track re-submissions |
+| \`template_review_resolve_reference_urls\` | Resolve published + Preview URLs from version, asset, or URL | Share reviewer confirmation links |
 
 ## Phase 3 — Inspect the Submission
 
@@ -46,6 +47,8 @@ Every review follows these phases:
 | \`template_review_get_review_context\` | Reviewer-facing summary with capability flags | Before any decisions |
 
 **Always check \`get_review_context\` before writing.** It tells you exactly what you can do: \`canAssign\`, \`canReview\`, \`canPublish\`.
+
+If an analyzer result only contains a published URL, call \`template_review_resolve_reference_urls\` with \`reference_url\` or \`published_url\` before replying so the human reviewer can open the Preview URL. This is a read-only lookup and does not require Designer extraction.
 
 ## Phase 4 — Automated Analysis
 
@@ -68,6 +71,8 @@ The analyzer is **published-first**. It crawls the published site, reports page-
 ### Published vs Designer Evidence
 
 Published-site evidence is authoritative for page existence, policy, content, SEO, links, images, forms, and accessibility. The normal automated reviewer workflow should run without Designer extraction; the analyzer defaults to \`designerMode: "skip"\` and does not require a preview URL.
+
+The Preview URL is still useful for human confirmation. Retrieve it from template review context using \`template_review_resolve_reference_urls\`; do not pass it into the analyzer unless the reviewer explicitly asks for manual Designer diagnostics.
 
 Designer extraction is an opt-in debug/manual diagnostic path only. It can be sparse because the Designer UI is dynamic, so Designer-only page/component/style findings must not be summarized as confirmed failures unless a human screenshot or a reliable published-site signal confirms the issue.
 

@@ -134,6 +134,43 @@ export interface TemplateReviewContext {
   version: TemplateReviewVersion;
 }
 
+export type TemplateReviewReferenceUrlSource =
+  | 'version_id'
+  | 'asset_id'
+  | 'reference_url'
+  | 'published_url'
+  | 'preview_url';
+
+export type TemplateReviewReferenceUrlField =
+  | 'version_id'
+  | 'asset_id'
+  | 'websiteUrl'
+  | 'previewSiteUrl';
+
+export interface TemplateReviewReferenceUrlInput {
+  versionId?: string;
+  assetId?: string;
+  referenceUrl?: string;
+  publishedUrl?: string;
+  previewUrl?: string;
+}
+
+export interface TemplateReviewReferenceUrlMatch {
+  asset: TemplateReviewAsset;
+  selectedVersion: TemplateReviewVersion | null;
+  versions: TemplateReviewVersion[];
+  matchedSources: TemplateReviewReferenceUrlSource[];
+  matchedFields: TemplateReviewReferenceUrlField[];
+  matchedValues: string[];
+}
+
+export interface TemplateReviewReferenceUrlResolution {
+  input: TemplateReviewReferenceUrlInput;
+  count: number;
+  selected: TemplateReviewReferenceUrlMatch | null;
+  matches: TemplateReviewReferenceUrlMatch[];
+}
+
 export interface TemplateReviewMetricsWindow {
   startDate: string;
   endDate: string;
@@ -516,6 +553,92 @@ function reviewerLookupFormula(fieldName: string, reviewer: CollaboratorRef): st
     (value) => `FIND(LOWER("${escapeFormulaStringValue(value)}"), LOWER(ARRAYJOIN({${fieldName}}))) > 0`,
   );
   return `OR(${[...exactClauses, ...searchClauses].join(', ')})`;
+}
+
+function canonicalUrl(value?: string): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  try {
+    const url = new URL(trimmed);
+    const pathname = url.pathname.replace(/\/+$/, '');
+    const path = pathname && pathname !== '/' ? pathname : '';
+    const params = [...url.searchParams.entries()].sort(([leftKey, leftValue], [rightKey, rightValue]) =>
+      leftKey === rightKey ? leftValue.localeCompare(rightValue) : leftKey.localeCompare(rightKey),
+    );
+    const query = params.length > 0 ? `?${new URLSearchParams(params).toString()}` : '';
+    return `${url.protocol.toLowerCase()}//${url.hostname.toLowerCase()}${url.port ? `:${url.port}` : ''}${path}${query}`;
+  } catch {
+    return trimmed.replace(/\/+$/, '');
+  }
+}
+
+function urlLookupVariants(value?: string): string[] {
+  const trimmed = value?.trim();
+  if (!trimmed) return [];
+
+  const canonical = canonicalUrl(trimmed);
+  const candidates = [trimmed, trimmed.replace(/\/+$/, ''), canonical ?? undefined].filter(
+    (candidate): candidate is string => Boolean(candidate),
+  );
+
+  const withSlash = candidates.flatMap((candidate) => {
+    if (candidate.includes('?')) return [candidate];
+    return [candidate, candidate.endsWith('/') ? candidate : `${candidate}/`];
+  });
+
+  return [...new Set(withSlash)];
+}
+
+function sameUrl(left?: string, right?: string): boolean {
+  const normalizedLeft = canonicalUrl(left);
+  const normalizedRight = canonicalUrl(right);
+  return Boolean(normalizedLeft && normalizedRight && normalizedLeft === normalizedRight);
+}
+
+function urlLookupFormula(input: TemplateReviewReferenceUrlInput): string | null {
+  const clauses: string[] = [];
+  const append = (field: string, values: string[]) => {
+    for (const value of values) {
+      clauses.push(`LOWER({${field}} & '') = LOWER('${escapeFormulaValue(value)}')`);
+    }
+  };
+
+  append(CONFIRMED_ASSET_FIELDS.websiteUrl, urlLookupVariants(input.referenceUrl));
+  append(CONFIRMED_ASSET_FIELDS.previewSiteUrl, urlLookupVariants(input.referenceUrl));
+  append(CONFIRMED_ASSET_FIELDS.websiteUrl, urlLookupVariants(input.publishedUrl));
+  append(CONFIRMED_ASSET_FIELDS.previewSiteUrl, urlLookupVariants(input.previewUrl));
+
+  const uniqueClauses = [...new Set(clauses)];
+  if (uniqueClauses.length === 0) return null;
+  return `AND({${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️', OR(${uniqueClauses.join(', ')}))`;
+}
+
+function assetUrlMatches(asset: TemplateReviewAsset, input: TemplateReviewReferenceUrlInput): Array<{
+  source: TemplateReviewReferenceUrlSource;
+  field: TemplateReviewReferenceUrlField;
+  value: string;
+}> {
+  const matches: Array<{
+    source: TemplateReviewReferenceUrlSource;
+    field: TemplateReviewReferenceUrlField;
+    value: string;
+  }> = [];
+
+  if (input.referenceUrl && sameUrl(asset.websiteUrl, input.referenceUrl)) {
+    matches.push({ source: 'reference_url', field: 'websiteUrl', value: input.referenceUrl });
+  }
+  if (input.referenceUrl && sameUrl(asset.previewSiteUrl, input.referenceUrl)) {
+    matches.push({ source: 'reference_url', field: 'previewSiteUrl', value: input.referenceUrl });
+  }
+  if (input.publishedUrl && sameUrl(asset.websiteUrl, input.publishedUrl)) {
+    matches.push({ source: 'published_url', field: 'websiteUrl', value: input.publishedUrl });
+  }
+  if (input.previewUrl && sameUrl(asset.previewSiteUrl, input.previewUrl)) {
+    matches.push({ source: 'preview_url', field: 'previewSiteUrl', value: input.previewUrl });
+  }
+
+  return matches;
 }
 
 function compareIsoDates(a?: string, b?: string): number {
@@ -1038,6 +1161,108 @@ export class AirtableClient {
     );
 
     return groupedResults.filter((result) => result.versions.length > 0);
+  }
+
+  async resolveReferenceUrls(
+    input: TemplateReviewReferenceUrlInput,
+    options?: { versionsLimit?: number },
+  ): Promise<TemplateReviewReferenceUrlResolution> {
+    const normalizedInput: TemplateReviewReferenceUrlInput = {
+      versionId: input.versionId?.trim(),
+      assetId: input.assetId?.trim(),
+      referenceUrl: input.referenceUrl?.trim(),
+      publishedUrl: input.publishedUrl?.trim(),
+      previewUrl: input.previewUrl?.trim(),
+    };
+    const hasLookupValue = Object.values(normalizedInput).some((value) => Boolean(value));
+    if (!hasLookupValue) {
+      throw new AirtableClientError(
+        'INVALID_REFERENCE_URL_LOOKUP',
+        'Provide versionId, assetId, referenceUrl, publishedUrl, or previewUrl.',
+        400,
+      );
+    }
+
+    const versionsLimit = options?.versionsLimit ?? 10;
+    const matchesByAsset = new Map<string, TemplateReviewReferenceUrlMatch>();
+
+    const upsertMatch = async (
+      asset: TemplateReviewAsset,
+      match: {
+        source: TemplateReviewReferenceUrlSource;
+        field: TemplateReviewReferenceUrlField;
+        value: string;
+        selectedVersion?: TemplateReviewVersion | null;
+      },
+    ) => {
+      const existing = matchesByAsset.get(asset.assetId);
+      const versions = existing?.versions ?? (await this.listVersionsForAsset(asset.assetId, versionsLimit));
+      const selectedVersion = match.selectedVersion ?? existing?.selectedVersion ?? versions[0] ?? null;
+      matchesByAsset.set(asset.assetId, {
+        asset,
+        selectedVersion,
+        versions,
+        matchedSources: [...new Set([...(existing?.matchedSources ?? []), match.source])],
+        matchedFields: [...new Set([...(existing?.matchedFields ?? []), match.field])],
+        matchedValues: [...new Set([...(existing?.matchedValues ?? []), match.value])],
+      });
+    };
+
+    if (normalizedInput.versionId) {
+      const scoped = await this.getScopedVersion(normalizedInput.versionId);
+      await upsertMatch(scoped.asset, {
+        source: 'version_id',
+        field: 'version_id',
+        value: normalizedInput.versionId,
+        selectedVersion: scoped.version,
+      });
+    }
+
+    if (normalizedInput.assetId) {
+      const asset = await this.getAssetById(normalizedInput.assetId);
+      if (!asset) {
+        throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
+          asset_id: normalizedInput.assetId,
+        });
+      }
+      await upsertMatch(asset, {
+        source: 'asset_id',
+        field: 'asset_id',
+        value: normalizedInput.assetId,
+      });
+    }
+
+    const formula = urlLookupFormula(normalizedInput);
+    if (formula) {
+      const records = await this.listRecords({
+        tableId: TABLE_IDS.assets,
+        limit: 25,
+        filterByFormula: formula,
+      });
+      const assets = records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
+      for (const asset of assets) {
+        for (const match of assetUrlMatches(asset, normalizedInput)) {
+          await upsertMatch(asset, match);
+        }
+      }
+
+      if (assets.length === 0) {
+        const fallbackAssets = await this.listAssetQueue(1000);
+        for (const asset of fallbackAssets) {
+          for (const match of assetUrlMatches(asset, normalizedInput)) {
+            await upsertMatch(asset, match);
+          }
+        }
+      }
+    }
+
+    const matches = [...matchesByAsset.values()];
+    return {
+      input: normalizedInput,
+      count: matches.length,
+      selected: matches[0] ?? null,
+      matches,
+    };
   }
 
   async getAssetById(assetId: string): Promise<TemplateReviewAsset | null> {

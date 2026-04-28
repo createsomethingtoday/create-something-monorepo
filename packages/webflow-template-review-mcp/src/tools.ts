@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import type { AirtableClient } from './airtable.js';
+import type { AirtableClient, TemplateReviewReferenceUrlMatch } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
@@ -97,6 +97,52 @@ function reviewerPayload(reviewer: ReviewerProfile) {
     email: reviewer.email,
     name: reviewer.name,
     lane: reviewer.lane,
+  };
+}
+
+function compactReferenceMatch(match: TemplateReviewReferenceUrlMatch) {
+  const selectedVersion = match.selectedVersion;
+  return {
+    referenceUrls: {
+      publishedUrl: match.asset.websiteUrl ?? null,
+      previewUrl: match.asset.previewSiteUrl ?? null,
+      hasPublishedUrl: Boolean(match.asset.websiteUrl),
+      hasPreviewUrl: Boolean(match.asset.previewSiteUrl),
+    },
+    matchedSources: match.matchedSources,
+    matchedFields: match.matchedFields,
+    matchedValues: match.matchedValues,
+    asset: {
+      assetId: match.asset.assetId,
+      templateName: match.asset.templateName,
+      websiteUrl: match.asset.websiteUrl ?? null,
+      previewSiteUrl: match.asset.previewSiteUrl ?? null,
+      latestReviewStatus: match.asset.latestReviewStatus ?? null,
+      marketplaceStatus: match.asset.marketplaceStatus ?? null,
+      submittedDate: match.asset.submittedDate ?? null,
+      decisionDate: match.asset.decisionDate ?? null,
+    },
+    selectedVersion: selectedVersion
+      ? {
+          versionId: selectedVersion.versionId,
+          assetId: selectedVersion.assetId ?? null,
+          versionNumber: selectedVersion.versionNumber ?? null,
+          reviewStatus: selectedVersion.reviewStatus ?? null,
+          qualityRating: selectedVersion.qualityRating ?? null,
+          createdAt: selectedVersion.createdAt ?? null,
+          decisionDate: selectedVersion.decisionDate ?? null,
+          reviewOwner: selectedVersion.reviewOwner ?? null,
+        }
+      : null,
+    versions: match.versions.map((version) => ({
+      versionId: version.versionId,
+      assetId: version.assetId ?? null,
+      versionNumber: version.versionNumber ?? null,
+      reviewStatus: version.reviewStatus ?? null,
+      createdAt: version.createdAt ?? null,
+      decisionDate: version.decisionDate ?? null,
+      reviewOwner: version.reviewOwner ?? null,
+    })),
   };
 }
 
@@ -202,6 +248,52 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         return asSuccess({
           context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_resolve_reference_urls',
+    'Read-only lookup: resolve published and Preview URLs for a template from version_id, asset_id, reference_url, published_url, or preview_url. Use this after published-only analyzer jobs so reviewers can open the Preview URL without enabling Designer extraction.',
+    {
+      version_id: z.string().min(1).optional(),
+      asset_id: z.string().min(1).optional(),
+      reference_url: z.string().min(1).optional(),
+      published_url: z.string().min(1).optional(),
+      preview_url: z.string().min(1).optional(),
+      versions_limit: z.number().int().min(1).max(50).optional(),
+    },
+    async ({ version_id, asset_id, reference_url, published_url, preview_url, versions_limit }) => {
+      try {
+        const resolution = await getClient().resolveReferenceUrls(
+          {
+            versionId: version_id,
+            assetId: asset_id,
+            referenceUrl: reference_url,
+            publishedUrl: published_url,
+            previewUrl: preview_url,
+          },
+          { versionsLimit: versions_limit ?? 10 },
+        );
+        const selected = resolution.selected ? compactReferenceMatch(resolution.selected) : null;
+        return asSuccess({
+          query: {
+            version_id: version_id ?? null,
+            asset_id: asset_id ?? null,
+            reference_url: reference_url ?? null,
+            published_url: published_url ?? null,
+            preview_url: preview_url ?? null,
+          },
+          count: resolution.count,
+          publishedUrl: selected?.referenceUrls.publishedUrl ?? null,
+          previewUrl: selected?.referenceUrls.previewUrl ?? null,
+          hasPublishedUrl: Boolean(selected?.referenceUrls.hasPublishedUrl),
+          hasPreviewUrl: Boolean(selected?.referenceUrls.hasPreviewUrl),
+          selected,
+          matches: resolution.matches.map((match) => compactReferenceMatch(match)),
         });
       } catch (error) {
         return asError(error);
