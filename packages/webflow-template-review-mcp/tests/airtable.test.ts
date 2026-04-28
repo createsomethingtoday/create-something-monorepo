@@ -215,16 +215,16 @@ test('resolveReferenceUrls finds preview URL from a published reference URL', as
 
       if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
         const formula = url.searchParams.get('filterByFormula') ?? '';
-        const isArchived = formula.includes('rec_asset_archived');
+        const isOlderDuplicate = formula.includes('rec_asset_older_duplicate');
         return jsonResponse({
           records: [
             {
-              id: isArchived ? 'rec_version_archived' : 'rec_version_latest',
-              createdTime: isArchived ? '2026-03-01T00:00:00.000Z' : '2026-03-18T00:00:00.000Z',
+              id: isOlderDuplicate ? 'rec_version_older_duplicate' : 'rec_version_latest',
+              createdTime: isOlderDuplicate ? '2026-03-01T00:00:00.000Z' : '2026-03-18T00:00:00.000Z',
               fields: {
-                [CONFIRMED_VERSION_FIELDS.assetRecordId]: isArchived ? 'rec_asset_archived' : 'rec_asset_urls',
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: isOlderDuplicate ? 'rec_asset_older_duplicate' : 'rec_asset_urls',
                 [CONFIRMED_VERSION_FIELDS.versionNumber]: 3,
-                [CONFIRMED_VERSION_FIELDS.reviewStatus]: isArchived ? '❌Rejected' : '🆕Ready for Review',
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: isOlderDuplicate ? 'Previous Review' : 'Current Review',
               },
             },
           ],
@@ -235,16 +235,16 @@ test('resolveReferenceUrls finds preview URL from a published reference URL', as
         return jsonResponse({
           records: [
             {
-              id: 'rec_asset_archived',
+              id: 'rec_asset_older_duplicate',
               createdTime: '2026-03-01T00:00:00.000Z',
               fields: {
                 [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
-                [CONFIRMED_ASSET_FIELDS.name]: 'EwaLily Archived',
-                [CONFIRMED_ASSET_FIELDS.websiteUrl]: 'https://ewalily-property-portfolios.webflow.io/',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Reference URL Older Duplicate',
+                [CONFIRMED_ASSET_FIELDS.websiteUrl]: 'https://example-template.webflow.io/',
                 [CONFIRMED_ASSET_FIELDS.previewSiteUrl]:
-                  'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123',
-                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '❌Rejected',
-                [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '4️⃣Delisted☠️',
+                  'https://preview.webflow.com/preview/example-template?preview=abc123',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: 'Previous Review',
+                [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: 'Previous',
                 [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-01T00:00:00.000Z',
               },
             },
@@ -253,12 +253,12 @@ test('resolveReferenceUrls finds preview URL from a published reference URL', as
               createdTime: '2026-03-18T00:00:00.000Z',
               fields: {
                 [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
-                [CONFIRMED_ASSET_FIELDS.name]: 'EwaLily',
-                [CONFIRMED_ASSET_FIELDS.websiteUrl]: 'https://ewalily-property-portfolios.webflow.io/',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Reference URL Current',
+                [CONFIRMED_ASSET_FIELDS.websiteUrl]: 'https://example-template.webflow.io/',
                 [CONFIRMED_ASSET_FIELDS.previewSiteUrl]:
-                  'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123',
-                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🆕Ready for Review',
-                [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '1️⃣Upcoming🆕',
+                  'https://preview.webflow.com/preview/example-template?preview=abc123',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: 'Current Review',
+                [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: 'Current',
                 [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-18T00:00:00.000Z',
               },
             },
@@ -271,14 +271,14 @@ test('resolveReferenceUrls finds preview URL from a published reference URL', as
   });
 
   const resolution = await client.resolveReferenceUrls({
-    referenceUrl: 'https://ewalily-property-portfolios.webflow.io',
+    referenceUrl: 'https://example-template.webflow.io',
   });
 
   assert.equal(resolution.count, 2);
-  assert.equal(resolution.selected?.asset.templateName, 'EwaLily');
+  assert.equal(resolution.selected?.asset.templateName, 'Reference URL Current');
   assert.equal(
     resolution.selected?.asset.previewSiteUrl,
-    'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123',
+    'https://preview.webflow.com/preview/example-template?preview=abc123',
   );
   assert.deepEqual(resolution.selected?.matchedSources, ['reference_url']);
   assert.deepEqual(resolution.selected?.matchedFields, ['websiteUrl']);

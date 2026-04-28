@@ -90,17 +90,17 @@ test('resolve_reference_urls exposes preview URL from read-only client lookup', 
     resolveReferenceUrls: async (...args: unknown[]) => {
       calls.push(args);
       return {
-        input: { referenceUrl: 'https://ewalily-property-portfolios.webflow.io/' },
+        input: { referenceUrl: 'https://example-template.webflow.io/' },
         count: 1,
         selected: {
           matchedSources: ['reference_url'],
           matchedFields: ['websiteUrl'],
-          matchedValues: ['https://ewalily-property-portfolios.webflow.io/'],
+          matchedValues: ['https://example-template.webflow.io/'],
           asset: {
             assetId: 'rec_asset_urls',
-            templateName: 'EwaLily',
-            websiteUrl: 'https://ewalily-property-portfolios.webflow.io/',
-            previewSiteUrl: 'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123',
+            templateName: 'Example Template',
+            websiteUrl: 'https://example-template.webflow.io/',
+            previewSiteUrl: 'https://preview.webflow.com/preview/example-template?preview=abc123',
           },
           selectedVersion: {
             versionId: 'rec_version_latest',
@@ -115,12 +115,12 @@ test('resolve_reference_urls exposes preview URL from read-only client lookup', 
           {
             matchedSources: ['reference_url'],
             matchedFields: ['websiteUrl'],
-            matchedValues: ['https://ewalily-property-portfolios.webflow.io/'],
+            matchedValues: ['https://example-template.webflow.io/'],
             asset: {
               assetId: 'rec_asset_urls',
-              templateName: 'EwaLily',
-              websiteUrl: 'https://ewalily-property-portfolios.webflow.io/',
-              previewSiteUrl: 'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123',
+              templateName: 'Example Template',
+              websiteUrl: 'https://example-template.webflow.io/',
+              previewSiteUrl: 'https://preview.webflow.com/preview/example-template?preview=abc123',
             },
             selectedVersion: null,
             versions: [],
@@ -133,7 +133,7 @@ test('resolve_reference_urls exposes preview URL from read-only client lookup', 
   registerTools(server, () => client, () => reviewer);
 
   const result = await handlers.get('template_review_resolve_reference_urls')?.({
-    reference_url: 'https://ewalily-property-portfolios.webflow.io/',
+    reference_url: 'https://example-template.webflow.io/',
   });
 
   assert.ok(result);
@@ -141,7 +141,7 @@ test('resolve_reference_urls exposes preview URL from read-only client lookup', 
     {
       versionId: undefined,
       assetId: undefined,
-      referenceUrl: 'https://ewalily-property-portfolios.webflow.io/',
+      referenceUrl: 'https://example-template.webflow.io/',
       publishedUrl: undefined,
       previewUrl: undefined,
     },
@@ -149,7 +149,7 @@ test('resolve_reference_urls exposes preview URL from read-only client lookup', 
   ]);
   const payload = parsePayload(result);
   assert.equal(payload.ok, true);
-  assert.equal(payload.data?.previewUrl, 'https://preview.webflow.com/preview/ewalily-property-portfolios?preview=abc123');
+  assert.equal(payload.data?.previewUrl, 'https://preview.webflow.com/preview/example-template?preview=abc123');
   assert.equal(payload.data?.hasPreviewUrl, true);
 });
 
