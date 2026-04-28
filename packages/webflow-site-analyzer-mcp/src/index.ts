@@ -1515,6 +1515,7 @@ function emptyIssueCounts(): PublishedSnippetIssueCounts & { imagesBelowFoldNotL
     multipleH1: 0,
     skippedHeadingLevels: 0,
     imagesMissingAlt: 0,
+    imagesMissingInformativeAlt: 0,
     imagesGenericAlt: 0,
     imagesDecorativeEmptyAlt: 0,
     imagesLinkedEmptyAlt: 0,
@@ -1936,6 +1937,7 @@ async function crawlPublishedWebMcp(
     if (summary.headings?.multipleH1) issueCounts.multipleH1 += 1;
     if ((summary.headings?.skippedHeadingLevels || 0) > 0) issueCounts.skippedHeadingLevels += 1;
     if ((summary.images?.missingAlt || 0) > 0) issueCounts.imagesMissingAlt += 1;
+    if ((summary.images?.missingInformativeAlt || 0) > 0) issueCounts.imagesMissingInformativeAlt += 1;
     if ((summary.images?.genericAlt || 0) > 0) issueCounts.imagesGenericAlt += 1;
     if ((summary.images?.decorativeEmptyAlt || 0) > 0) issueCounts.imagesDecorativeEmptyAlt += 1;
     if ((summary.images?.linkedEmptyAlt || 0) > 0) issueCounts.imagesLinkedEmptyAlt += 1;
@@ -2228,7 +2230,7 @@ function unifyRows(
     'Fix heading hierarchy per page and keep a single primary H1.'
   );
 
-  const altMissingPages = failingPaths((s) => (s.images?.missingAlt ?? 0) > 0);
+  const altMissingInformativePages = failingPaths((s) => (s.images?.missingInformativeAlt ?? 0) > 0);
   const altGenericPages = failingPaths((s) => (s.images?.genericAlt ?? 0) > 0);
   const altLinkedEmptyPages = failingPaths((s) => (s.images?.linkedEmptyAlt ?? 0) > 0);
   const altExamples = published.pages
@@ -2251,7 +2253,7 @@ function unifyRows(
       return `${example.path} ${example.classification} alt=${alt}${text} src=${example.src || 'n/a'}`;
     });
   const altStatus: UnifiedReviewStatus =
-    published.issueCounts.imagesMissingAlt > 0 || published.issueCounts.imagesLinkedEmptyAlt > 0
+    published.issueCounts.imagesMissingInformativeAlt > 0 || published.issueCounts.imagesLinkedEmptyAlt > 0
       ? 'fail'
       : published.issueCounts.imagesGenericAlt > 0
         ? 'partial'
@@ -2262,11 +2264,11 @@ function unifyRows(
     'Image alt text is appropriate for content vs decorative images',
     altStatus,
     [
-      `pagesWithMissingInformativeAlt=${published.issueCounts.imagesMissingAlt}/${totalAudited}`,
+      `pagesWithMissingInformativeAlt=${published.issueCounts.imagesMissingInformativeAlt}/${totalAudited}`,
       `pagesWithLinkedEmptyAlt=${published.issueCounts.imagesLinkedEmptyAlt}/${totalAudited}`,
       `pagesWithGenericAlt=${published.issueCounts.imagesGenericAlt}/${totalAudited}`,
       `pagesWithDecorativeEmptyAlt=${published.issueCounts.imagesDecorativeEmptyAlt}/${totalAudited}`,
-      ...(altMissingPages.length > 0 ? [`missingAltPages=${altMissingPages.join(', ')}`] : []),
+      ...(altMissingInformativePages.length > 0 ? [`missingInformativeAltPages=${altMissingInformativePages.join(', ')}`] : []),
       ...(altLinkedEmptyPages.length > 0 ? [`linkedEmptyAltPages=${altLinkedEmptyPages.join(', ')}`] : []),
       ...(altGenericPages.length > 0 ? [`genericAltPages=${altGenericPages.join(', ')}`] : []),
       ...(altExamples.length > 0 ? [`examples=${altExamples.join(' | ')}`] : [])

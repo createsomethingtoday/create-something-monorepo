@@ -509,6 +509,7 @@ export interface PublishedSnippetIssueCounts {
   multipleH1: number;
   skippedHeadingLevels: number;
   imagesMissingAlt: number;
+  imagesMissingInformativeAlt: number;
   imagesGenericAlt: number;
   imagesDecorativeEmptyAlt: number;
   imagesLinkedEmptyAlt: number;
