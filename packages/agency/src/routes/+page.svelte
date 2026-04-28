@@ -739,8 +739,13 @@
   }
 
   @media (max-width: 768px) {
+    .hero-page {
+      padding-top: clamp(2.25rem, 9vw, 3.25rem);
+      padding-bottom: clamp(1.75rem, 8vw, 3rem);
+    }
+
     .hero-stage {
-      min-height: clamp(30rem, 112vw, 40rem);
+      min-height: clamp(28rem, 104vw, 37rem);
     }
 
     .hero-stage::after {
@@ -779,8 +784,8 @@
     }
 
     .hero-layout {
-      padding-top: 2.25rem;
-      padding-bottom: 3.5rem;
+      padding-top: 1rem;
+      padding-bottom: 2.75rem;
     }
 
     .metric-grid,

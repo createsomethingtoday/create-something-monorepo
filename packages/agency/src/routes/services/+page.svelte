@@ -3,6 +3,7 @@
   import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
   import GovernedExecutionFlow from '$lib/components/GovernedExecutionFlow.svelte';
+  import ServiceWedgeBlueprint from '$lib/components/ServiceWedgeBlueprint.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const deliveryVector = {
@@ -291,6 +292,10 @@
         </p>
       </BlurFade>
     </div>
+
+    <BlurFade delay={0.14}>
+      <ServiceWedgeBlueprint />
+    </BlurFade>
 
     <div class="offer-grid">
       {#each offerCards as offer, index}
