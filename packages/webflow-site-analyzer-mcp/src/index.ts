@@ -51,6 +51,7 @@ import {
   classifyImageAltCandidate,
   is404PageTitle,
   isPoweredByWebflowBadgeCandidate,
+  validateTemplateReviewUrls,
 } from './review-utils.js';
 import type {
   TouchpointAnalysis,
@@ -59,6 +60,7 @@ import type {
   ImageAnalysis,
   PerformanceMetrics,
   DesignerMetadata,
+  DesignerChecklistCheck,
   DesignerChecklistReport,
   UnifiedReviewStatus,
   UnifiedReviewRow,
@@ -571,6 +573,163 @@ async function scoreDesignerChecklistTool(input: ScoreDesignerChecklistInput): P
     includeManual: input.includeManual,
     source
   });
+}
+
+const SKIPPED_DESIGNER_CHECKS: Array<Pick<DesignerChecklistCheck, 'id' | 'section' | 'requirement'>> = [
+  {
+    id: 'components.nav_footer_cta',
+    section: 'Components',
+    requirement: 'Nav, Footer, and CTA are set up as Components'
+  },
+  {
+    id: 'components.title_case_naming',
+    section: 'Components',
+    requirement: 'Component names use title-casing and human-readable naming'
+  },
+  {
+    id: 'components.unused_cleaned',
+    section: 'Components',
+    requirement: 'Unused Components are cleaned up'
+  },
+  {
+    id: 'interactions.cleaned_unused',
+    section: 'Interactions',
+    requirement: 'Interactions are cleaned of unused animations'
+  },
+  {
+    id: 'variables.breakpoint_modes',
+    section: 'Variables',
+    requirement: 'Variable modes exist for Tablet, Mobile Landscape, and Mobile Portrait'
+  },
+  {
+    id: 'variables.defined_reusable',
+    section: 'Variables',
+    requirement: 'Color, typography, and spacing variables are defined and reusable'
+  },
+  {
+    id: 'variables.title_case_naming',
+    section: 'Variables',
+    requirement: 'Variables use title case, human-readable naming'
+  },
+  {
+    id: 'styles.base_tag_selectors',
+    section: 'Styles Selector',
+    requirement: 'Base styles are applied to required HTML tags'
+  },
+  {
+    id: 'styles.unused_classes_cleaned',
+    section: 'Styles Selector',
+    requirement: 'Unused styles/classes are cleaned up'
+  },
+  {
+    id: 'styles.combo_class_depth',
+    section: 'Styles Selector',
+    requirement: 'No more than 3-4 combo classes are stacked per element'
+  },
+  {
+    id: 'styles.class_naming_consistency',
+    section: 'Styles Selector',
+    requirement: 'Class naming follows one consistent format'
+  },
+  {
+    id: 'pages.title_case_naming',
+    section: 'Required Pages',
+    requirement: 'Page names use Title Case'
+  },
+  {
+    id: 'pages.style_guide_exists',
+    section: 'Required Pages',
+    requirement: 'Style Guide page exists'
+  },
+  {
+    id: 'pages.instructions_exists',
+    section: 'Required Pages',
+    requirement: 'Instructions page exists when advanced interactions/components are used'
+  },
+  {
+    id: 'pages.licenses_exists',
+    section: 'Required Pages',
+    requirement: 'Licenses page exists'
+  },
+  {
+    id: 'cms.collection_pages_present',
+    section: 'CMS Structure',
+    requirement: 'Collection pages are used for repeatable/relational content'
+  },
+  {
+    id: 'cms.collections_detected',
+    section: 'CMS Structure',
+    requirement: 'CMS collections are present and detectable'
+  },
+  {
+    id: 'cms.item_count_range',
+    section: 'CMS Structure',
+    requirement: 'Each collection has between 3 and 7 items'
+  },
+  {
+    id: 'cms.collection_name_title_case',
+    section: 'CMS Naming',
+    requirement: 'Collection names use Title Case and readable naming'
+  },
+  {
+    id: 'cms.collection_slug_singular',
+    section: 'CMS Naming',
+    requirement: 'Collection slugs are singular'
+  },
+  {
+    id: 'responsive.breakpoints_present',
+    section: 'Responsive Behaviour',
+    requirement: 'Desktop, tablet, mobile landscape, and mobile portrait breakpoints are configured'
+  },
+  {
+    id: 'assets.modern_image_formats',
+    section: 'Images and Assets',
+    requirement: 'Modern image formats are used (WebP/AVIF/JPEG/PNG)'
+  },
+  {
+    id: 'ecommerce.settings_default',
+    section: 'Ecommerce Structure',
+    requirement: 'Ecommerce setup settings remain default (business address/shipping/tax/payment/hosting/checkout)'
+  }
+];
+
+function createSkippedDesignerChecklistReport(includeManual = true): DesignerChecklistReport {
+  const evidence = [
+    'Designer extraction skipped because designerMode=skip.',
+    'Run with previewUrl and designerMode=extract to evaluate this check.'
+  ];
+  const checks: DesignerChecklistCheck[] = SKIPPED_DESIGNER_CHECKS.map((definition) => ({
+    ...definition,
+    result: 'manual',
+    evidence: [...evidence]
+  }));
+  const filteredChecks = includeManual ? checks : [];
+
+  return {
+    evaluatedAt: new Date().toISOString(),
+    source: 'skipped',
+    metadataSummary: {
+      siteName: '',
+      sitePlan: '',
+      totalPages: 0,
+      totalComponents: 0,
+      unusedComponents: 0,
+      totalInteractions: 0,
+      totalCMSCollections: 0,
+      totalCMSItems: 0,
+      totalAssets: 0,
+      breakpoints: [],
+      pages: []
+    },
+    summary: {
+      pass: 0,
+      fail: 0,
+      manual: filteredChecks.length,
+      scored: 0,
+      passRate: 0
+    },
+    checks: filteredChecks
+  };
 }
 
 const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
@@ -2096,6 +2255,7 @@ function unifyRows(
       )
     )
   ).sort();
+  const designerSkipped = designer.source === 'skipped';
 
   // Match /license, /licenses, /licensing, /templates/licensing, etc.
   const licenseUrlPattern = '/licens';
@@ -2375,7 +2535,9 @@ function unifyRows(
     'Styles Selector',
     'Variables are used to define base tag styles',
     'manual',
-    ['Variable linkage is not currently extracted by this MCP pipeline.'],
+    designerSkipped
+      ? ['Designer extraction skipped because designerMode=skip. Variable linkage was not evaluated.']
+      : ['Variable linkage is not currently extracted by this MCP pipeline.'],
     ['designer-mcp'],
     0.2
   );
@@ -2556,13 +2718,15 @@ function unifyRows(
     'pages.meta_tags_cms_dynamic',
     'Page Level Checks',
     'CMS pages use dynamic SEO tags',
-    'partial',
-    [
-      `cmsCollectionsDetected=${designer.metadataSummary.totalCMSCollections}`,
-      'Dynamic field binding cannot be confirmed from current payloads.'
-    ],
+    designerSkipped ? 'manual' : 'partial',
+    designerSkipped
+      ? ['Designer extraction skipped because designerMode=skip. CMS dynamic SEO bindings were not evaluated.']
+      : [
+          `cmsCollectionsDetected=${designer.metadataSummary.totalCMSCollections}`,
+          'Dynamic field binding cannot be confirmed from current payloads.'
+        ],
     ['designer-mcp', 'published-webmcp-crawl'],
-    0.55
+    designerSkipped ? 0.2 : 0.55
   );
 
   const a404 = published.audit404;
@@ -2720,21 +2884,29 @@ function unifyRows(
   // Full visual validation requires multi-viewport screenshots (not yet automated).
   const hasAllBreakpoints = dVarBreakpoints.status === 'pass';
   const multiplePagesCrawled = totalAudited > 1;
-  const responsiveStatus: UnifiedReviewStatus = hasAllBreakpoints
-    ? 'partial'
-    : 'fail';
+  const responsiveStatus: UnifiedReviewStatus = designerSkipped
+    ? 'manual'
+    : hasAllBreakpoints
+      ? 'partial'
+      : 'fail';
   pushRow(
     'responsive.multi_breakpoint_check',
     'Page Level Checks',
     'Responsive checks have been run on homepage and at least one additional page',
     responsiveStatus,
-    [
-      `designerBreakpoints=${hasAllBreakpoints ? 'all present' : 'incomplete'}`,
-      `pagesCrawled=${totalAudited}`,
-      'Visual multi-viewport screenshot assertions not yet automated — verify manually.'
-    ],
+    designerSkipped
+      ? [
+          'Designer extraction skipped because designerMode=skip. Breakpoint configuration was not evaluated.',
+          `pagesCrawled=${totalAudited}`,
+          'Visual multi-viewport screenshot assertions not yet automated — verify manually.'
+        ]
+      : [
+          `designerBreakpoints=${hasAllBreakpoints ? 'all present' : 'incomplete'}`,
+          `pagesCrawled=${totalAudited}`,
+          'Visual multi-viewport screenshot assertions not yet automated — verify manually.'
+        ],
     ['designer-mcp', 'published-webmcp-crawl'],
-    hasAllBreakpoints ? 0.4 : 0.3
+    designerSkipped ? 0.2 : hasAllBreakpoints ? 0.4 : 0.3
   );
 
   // Policy checks (deterministic)
@@ -3071,9 +3243,9 @@ async function executeTemplateReview(
   input: RunTemplateReviewInput,
   options: RunTemplateReviewOptions = {}
 ): Promise<UnifiedTemplateReviewReport> {
-  if (!input?.previewUrl || !input?.publishedUrl) {
-    throw new Error('`previewUrl` and `publishedUrl` are required.');
-  }
+  const reviewInput = validateTemplateReviewUrls(input);
+  const designerMode = reviewInput.designerMode;
+  const designerSkipped = designerMode === 'skip';
 
   const manager = getProvider();
   const provider = manager.getProvider();
@@ -3082,22 +3254,37 @@ async function executeTemplateReview(
   const reportProgress = options.reportProgress;
   const timeout = input.timeout ?? 90000;
 
-  if (reportProgress) await reportProgress(0, 100, 'Starting unified template review');
-  const precheck = await runPublishedPrecheck(input.publishedUrl, Math.min(timeout, 30000));
+  if (reportProgress) {
+    await reportProgress(
+      0,
+      100,
+      designerSkipped ? 'Starting published-only template review' : 'Starting unified template review'
+    );
+  }
+  const precheck = await runPublishedPrecheck(reviewInput.publishedUrl, Math.min(timeout, 30000));
   if (precheck.errors.length > 0) {
     throw new Error(`Published precheck failed: ${precheck.errors.join('; ')}`);
   }
 
   if (reportProgress) await reportProgress(5, 100, 'Published precheck complete');
-  if (reportProgress) await reportProgress(5, 100, 'Running Designer checklist extraction');
 
-  const designer = await scoreDesignerChecklistTool({
-    url: input.previewUrl,
-    timeout: input.timeout,
-    includeManual: true
-  });
+  let designer: DesignerChecklistReport;
+  if (designerSkipped) {
+    designer = createSkippedDesignerChecklistReport(true);
+    if (reportProgress) {
+      await reportProgress(35, 100, 'Designer checklist skipped; starting published crawl');
+    }
+  } else {
+    if (reportProgress) await reportProgress(5, 100, 'Running Designer checklist extraction');
 
-  if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
+    designer = await scoreDesignerChecklistTool({
+      url: reviewInput.previewUrl as string,
+      timeout: input.timeout,
+      includeManual: true
+    });
+
+    if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
+  }
 
   // Use URL classifications to build the crawl queue.
   // Critical pages (license, instructions, changelog, style-guide, homepage) go first.
@@ -3113,7 +3300,7 @@ async function executeTemplateReview(
     .map((c) => c.url);
 
   // Also resolve Designer page slugs against discovered URLs to fill gaps
-  const publishedOrigin = new URL(input.publishedUrl).origin;
+  const publishedOrigin = new URL(reviewInput.publishedUrl).origin;
   const discoveredLower = precheck.discoveredUrls.map((u) => u.toLowerCase());
   const designerPageSlugs = designer.metadataSummary.pages
     .map((p) => {
@@ -3135,7 +3322,7 @@ async function executeTemplateReview(
 
   const allSeedUrls = Array.from(new Set([...classifiedSeedUrls, ...designerPageSlugs]));
 
-  const published = await crawlPublishedWebMcp(input.publishedUrl, {
+  const published = await crawlPublishedWebMcp(reviewInput.publishedUrl, {
     timeout: input.timeout,
     crawlMaxPages: input.crawlMaxPages,
     crawlMaxDepth: input.crawlMaxDepth,
@@ -3215,8 +3402,9 @@ async function executeTemplateReview(
   return {
     generatedAt: new Date().toISOString(),
     provider: provider.name,
-    previewUrl: input.previewUrl,
-    publishedUrl: input.publishedUrl,
+    previewUrl: reviewInput.previewUrl,
+    publishedUrl: reviewInput.publishedUrl,
+    designerMode,
     precheck,
     providerMetrics,
     summary,
@@ -3574,11 +3762,16 @@ export function createAnalyzerServer(): Server {
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring.'
+              description: 'Webflow preview URL for Designer extraction/scoring. Required unless designerMode is "skip".'
             },
             publishedUrl: {
               type: 'string',
               description: 'Published site URL with WebMCP snippet installed.'
+            },
+            designerMode: {
+              type: 'string',
+              enum: ['extract', 'skip'],
+              description: 'Designer extraction mode. Use "skip" for published-only reviews that should not require previewUrl.'
             },
             timeout: {
               type: 'number',
@@ -3597,7 +3790,7 @@ export function createAnalyzerServer(): Server {
               description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
             }
           },
-          required: ['previewUrl', 'publishedUrl']
+          required: ['publishedUrl']
         }
       },
       {
@@ -3608,11 +3801,16 @@ export function createAnalyzerServer(): Server {
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring.'
+              description: 'Webflow preview URL for Designer extraction/scoring. Required unless designerMode is "skip".'
             },
             publishedUrl: {
               type: 'string',
               description: 'Published site URL with WebMCP snippet installed.'
+            },
+            designerMode: {
+              type: 'string',
+              enum: ['extract', 'skip'],
+              description: 'Designer extraction mode. Use "skip" for published-only reviews that should not require previewUrl.'
             },
             timeout: {
               type: 'number',
@@ -3631,7 +3829,7 @@ export function createAnalyzerServer(): Server {
               description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
             }
           },
-          required: ['previewUrl', 'publishedUrl']
+          required: ['publishedUrl']
         }
       },
       {

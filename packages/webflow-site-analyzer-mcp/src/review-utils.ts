@@ -3,6 +3,45 @@
  * Extracted for testability — no side effects, no browser dependencies.
  */
 
+export type NormalizedTemplateReviewDesignerMode = 'extract' | 'skip';
+
+export interface TemplateReviewUrlValidationInput {
+  previewUrl?: string | null;
+  publishedUrl?: string | null;
+  designerMode?: string | null;
+}
+
+export interface TemplateReviewUrlValidationResult {
+  previewUrl?: string;
+  publishedUrl: string;
+  designerMode: NormalizedTemplateReviewDesignerMode;
+}
+
+export function normalizeTemplateReviewDesignerMode(
+  mode: string | null | undefined
+): NormalizedTemplateReviewDesignerMode {
+  if (mode == null || mode === '') return 'extract';
+  if (mode === 'extract' || mode === 'skip') return mode;
+  throw new Error('`designerMode` must be either "extract" or "skip".');
+}
+
+export function validateTemplateReviewUrls(
+  input: TemplateReviewUrlValidationInput | null | undefined
+): TemplateReviewUrlValidationResult {
+  const publishedUrl = input?.publishedUrl?.trim();
+  if (!publishedUrl) {
+    throw new Error('`publishedUrl` is required.');
+  }
+
+  const designerMode = normalizeTemplateReviewDesignerMode(input?.designerMode);
+  const previewUrl = input?.previewUrl?.trim() || undefined;
+  if (!previewUrl && designerMode !== 'skip') {
+    throw new Error('`previewUrl` is required unless `designerMode` is "skip".');
+  }
+
+  return { previewUrl, publishedUrl, designerMode };
+}
+
 // =============================================================================
 // Text sanitization: repair "s → space" font corruption
 // =============================================================================

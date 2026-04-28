@@ -7,7 +7,8 @@
  *   node scripts/test-template-review-mcp.mjs \
  *     --preview-url "https://preview.webflow.com/preview/..." \
  *     --published-url "https://example.webflow.io/" \
- *     [--mode sync|async]
+ *     [--mode sync|async] \
+ *     [--designer-mode extract|skip]
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -47,6 +48,7 @@ async function main() {
   const previewUrl = getArg('--preview-url');
   const publishedUrl = getArg('--published-url');
   const mode = getArg('--mode') || 'sync';
+  const designerMode = getArg('--designer-mode') || 'extract';
   const timeoutMs = Number(getArg('--timeout-ms') || 300000);
   const maxTotalTimeoutMs = Number(getArg('--max-total-timeout-ms') || 1800000);
   const crawlMaxPages = Number(getArg('--crawl-max-pages') || 20);
@@ -55,8 +57,11 @@ async function main() {
   const pollIntervalMs = Number(getArg('--poll-interval-ms') || 3000);
   const output = getArg('--output') || 'summary';
 
-  if (!previewUrl || !publishedUrl) {
-    throw new Error('Provide --preview-url and --published-url.');
+  if (!publishedUrl) {
+    throw new Error('Provide --published-url.');
+  }
+  if (!previewUrl && designerMode !== 'skip') {
+    throw new Error('Provide --preview-url unless --designer-mode skip is used.');
   }
 
   const childEnv = Object.fromEntries(
@@ -78,13 +83,14 @@ async function main() {
     await client.connect(transport);
 
     const toolArgs = {
-      previewUrl,
       publishedUrl,
+      designerMode,
       timeout: timeoutMs,
       crawlMaxPages,
       crawlMaxDepth,
       includeManual
     };
+    if (previewUrl) toolArgs.previewUrl = previewUrl;
 
     let parsed;
     let finalData;
@@ -166,6 +172,7 @@ async function main() {
         {
           testedAt: new Date().toISOString(),
           mode,
+          designerMode,
           previewUrl,
           publishedUrl,
           timeoutMs,

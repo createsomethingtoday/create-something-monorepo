@@ -458,7 +458,7 @@ export interface DesignerChecklistSummary {
 
 export interface DesignerChecklistReport {
   evaluatedAt: string;
-  source: 'live-extraction' | 'provided-metadata';
+  source: 'live-extraction' | 'provided-metadata' | 'skipped';
   metadataSummary: {
     siteName: string;
     sitePlan: string;
@@ -770,8 +770,9 @@ export interface UnifiedTemplateReviewReport {
   completedAt?: string;
   generatedAt: string;
   provider: string;
-  previewUrl: string;
+  previewUrl?: string;
   publishedUrl: string;
+  designerMode?: TemplateReviewDesignerMode;
   precheck?: PublishedSitePrecheckResult;
   providerMetrics?: {
     sessionsCreated: number;
@@ -789,9 +790,12 @@ export interface UnifiedTemplateReviewReport {
   rows: UnifiedReviewRow[];
 }
 
+export type TemplateReviewDesignerMode = 'extract' | 'skip';
+
 export interface RunTemplateReviewInput {
-  previewUrl: string;
+  previewUrl?: string;
   publishedUrl: string;
+  designerMode?: TemplateReviewDesignerMode;
   timeout?: number;
   includeManual?: boolean;
   crawlMaxPages?: number;

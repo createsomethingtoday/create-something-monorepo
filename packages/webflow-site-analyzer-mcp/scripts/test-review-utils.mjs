@@ -16,6 +16,8 @@ const {
   isCriticalUtilityUrl,
   isWebflowComponentAnchor,
   isPoweredByWebflowBadgeCandidate,
+  normalizeTemplateReviewDesignerMode,
+  validateTemplateReviewUrls,
   classifyImageAltCandidate,
   computeScore
 } = require('../dist/review-utils.js');
@@ -228,6 +230,41 @@ test('non-Webflow external link does not pass', () => {
       visible: true
     }),
     false
+  );
+});
+
+// =============================================================================
+console.log('\n== validateTemplateReviewUrls ==');
+
+test('published-only designerMode=skip accepts missing previewUrl', () => {
+  const result = validateTemplateReviewUrls({
+    publishedUrl: 'https://example.webflow.io/',
+    designerMode: 'skip'
+  });
+  assert.equal(result.publishedUrl, 'https://example.webflow.io/');
+  assert.equal(result.previewUrl, undefined);
+  assert.equal(result.designerMode, 'skip');
+});
+
+test('default designerMode requires previewUrl', () => {
+  assert.throws(
+    () => validateTemplateReviewUrls({ publishedUrl: 'https://example.webflow.io/' }),
+    /previewUrl/
+  );
+});
+
+test('previewUrl with default mode uses extraction', () => {
+  const result = validateTemplateReviewUrls({
+    previewUrl: 'https://preview.webflow.com/preview/example',
+    publishedUrl: 'https://example.webflow.io/'
+  });
+  assert.equal(result.designerMode, 'extract');
+});
+
+test('invalid designerMode is rejected', () => {
+  assert.throws(
+    () => normalizeTemplateReviewDesignerMode('published-only'),
+    /designerMode/
   );
 });
 

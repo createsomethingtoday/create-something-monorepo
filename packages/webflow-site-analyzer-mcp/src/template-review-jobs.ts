@@ -106,7 +106,14 @@ export class TemplateReviewJobManager {
     this.activeCount += 1;
     job.status = 'running';
     job.startedAt = nowIso();
-    job.progress = createProgress('precheck', 1, 100, 'Starting template review');
+    job.progress = createProgress(
+      'precheck',
+      1,
+      100,
+      job.input.designerMode === 'skip'
+        ? 'Starting published-only template review'
+        : 'Starting template review'
+    );
 
     try {
       const result = await this.execute(job.input, {
