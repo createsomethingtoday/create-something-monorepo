@@ -22,8 +22,9 @@ Phase 1 is intentionally conservative:
 - queue and version inspection are supported
 - field-map and hotspot resources are supported
 - reviewer assignment helpers are active
-- reviewer-safe workflow helpers (`request changes`, `set review status`, `save draft feedback`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
+- reviewer-safe workflow helpers (`request changes`, `set review status`, `save draft feedback`, `save agent feedback`) are implemented against confirmed reviewer/status field mappings
 - supplemental agent-feedback writes are supported for `📝Agent Review Feedback`
+- broad operator mutations are not registered by default; set `TEMPLATE_REVIEW_ALLOW_OPERATOR_MUTATIONS=true` only for a trusted operator runtime
 - some broader write surfaces still depend on remaining field verification and policy rollout
 
 ## Auth
@@ -45,6 +46,9 @@ Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
 - `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by `template_review_assign_self` and reviewer resources)
+- `MCP_ACCOUNT_ID` (trusted account id for a single reviewer/runtime; preferred over proxy headers)
+- `TRUST_PROXY_ACCOUNT_HEADERS=true` (allows `x-mcp-account-id` / `x-hub-account-id` only for hub-private deployments)
+- `TEMPLATE_REVIEW_ALLOW_OPERATOR_MUTATIONS=true` (registers broad operator mutation tools; leave unset for reviewer lanes)
 
 ## Tools
 
@@ -66,8 +70,15 @@ Optional:
 - `template_review_request_changes`
 - `template_review_set_review_status`
 - `template_review_save_draft_feedback`
+- `template_review_save_agent_feedback`
 - `template_review_get_field_map`
+
+Operator-only tools registered only with `TEMPLATE_REVIEW_ALLOW_OPERATOR_MUTATIONS=true`:
+
+- `template_review_assign_reviewer`
+- `template_review_complete_publishing`
 - `template_review_update_asset_metadata`
+- `template_review_update_asset_publishing`
 - `template_review_update_version_review`
 - `template_review_approve_version`
 - `template_review_reject_version`
@@ -128,4 +139,5 @@ OPENAI_API_KEY=... AIRTABLE_API_KEY=... pnpm template-review:agent-feedback --ve
 Behavior:
 - targets `🆕Ready for Review` rows by default
 - skips rows that already have agent feedback unless `--overwrite` is set
+- re-checks the current Airtable version immediately before writing, and fails closed if feedback appeared meanwhile without `--overwrite`
 - does lightweight same-origin page discovery from the asset `Website URL` or preview URL when available, so the draft is not limited to a single page when no sitemap exists

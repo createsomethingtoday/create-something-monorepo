@@ -37,7 +37,7 @@ const reviewer: ReviewerProfile = {
   lane: 'wf-template-review-eric',
 };
 
-test('registerTools places reviewer-safe write tools before admin and broad mutation routes', () => {
+test('registerTools exposes reviewer-safe writes and hides broad operator mutations by default', () => {
   const { server, names } = createServerHarness();
   const client = {} as AirtableClient;
 
@@ -47,10 +47,29 @@ test('registerTools places reviewer-safe write tools before admin and broad muta
   assert.notEqual(names.indexOf('template_review_request_changes'), -1);
   assert.notEqual(names.indexOf('template_review_set_review_status'), -1);
   assert.notEqual(names.indexOf('template_review_save_draft_feedback'), -1);
-  assert.ok(names.indexOf('template_review_assign_self') < names.indexOf('template_review_assign_reviewer'));
-  assert.ok(names.indexOf('template_review_request_changes') < names.indexOf('template_review_complete_publishing'));
-  assert.ok(names.indexOf('template_review_set_review_status') < names.indexOf('template_review_update_version_review'));
-  assert.ok(names.indexOf('template_review_save_draft_feedback') < names.indexOf('template_review_approve_version'));
+  assert.notEqual(names.indexOf('template_review_save_agent_feedback'), -1);
+  assert.equal(names.includes('template_review_assign_reviewer'), false);
+  assert.equal(names.includes('template_review_complete_publishing'), false);
+  assert.equal(names.includes('template_review_update_asset_metadata'), false);
+  assert.equal(names.includes('template_review_update_asset_publishing'), false);
+  assert.equal(names.includes('template_review_update_version_review'), false);
+  assert.equal(names.includes('template_review_approve_version'), false);
+  assert.equal(names.includes('template_review_reject_version'), false);
+});
+
+test('registerTools registers broad mutation routes only for explicit operator runtimes', () => {
+  const { server, names } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer, { allowOperatorMutations: true });
+
+  assert.notEqual(names.indexOf('template_review_assign_reviewer'), -1);
+  assert.notEqual(names.indexOf('template_review_complete_publishing'), -1);
+  assert.notEqual(names.indexOf('template_review_update_asset_metadata'), -1);
+  assert.notEqual(names.indexOf('template_review_update_asset_publishing'), -1);
+  assert.notEqual(names.indexOf('template_review_update_version_review'), -1);
+  assert.notEqual(names.indexOf('template_review_approve_version'), -1);
+  assert.notEqual(names.indexOf('template_review_reject_version'), -1);
 });
 
 test('assign_self routes through reviewer-safe self-assignment', async () => {
@@ -233,6 +252,52 @@ test('save_draft_feedback writes review feedback without mutating improvement ar
         review_owner: { id: 'usr_eric' },
         review_feedback: 'Draft feedback',
         improvement_areas: undefined,
+      },
+    ],
+  });
+  assert.equal(parsePayload(result).ok, true);
+});
+
+test('save_agent_feedback requires reviewer ownership before writing supplemental feedback', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ method: string; args: unknown[] }> = [];
+  const client = {
+    requireAssignedVersion: async (...args: unknown[]) => {
+      calls.push({ method: 'requireAssignedVersion', args });
+      return { versionId: 'rec_version_1' };
+    },
+    updateAgentReviewFeedback: async (...args: unknown[]) => {
+      calls.push({ method: 'updateAgentReviewFeedback', args });
+      return { versionId: 'rec_version_1', agentReviewFeedback: 'AI notes' };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_save_agent_feedback')?.({
+    version_id: 'rec_version_1',
+    agent_review_feedback: 'AI notes',
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls[0], {
+    method: 'requireAssignedVersion',
+    args: [
+      'rec_version_1',
+      {
+        id: 'usr_eric',
+        email: 'eric.unger@webflow.com',
+        name: 'Eric Unger',
+      },
+    ],
+  });
+  assert.deepEqual(calls[1], {
+    method: 'updateAgentReviewFeedback',
+    args: [
+      'rec_version_1',
+      {
+        agent_review_feedback: 'AI notes',
+        overwrite: undefined,
       },
     ],
   });

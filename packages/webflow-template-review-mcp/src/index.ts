@@ -17,6 +17,10 @@ function requireEnv(name: string): string {
   return value;
 }
 
+function isEnabled(value?: string): boolean {
+  return value?.trim().toLowerCase() === 'true';
+}
+
 async function main() {
   const apiKey = requireEnv('AIRTABLE_API_KEY');
   const baseId = process.env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID;
@@ -32,7 +36,9 @@ async function main() {
   });
 
   registerResources(server, () => client);
-  registerTools(server, () => client);
+  registerTools(server, () => client, () => null, {
+    allowOperatorMutations: isEnabled(process.env.TEMPLATE_REVIEW_ALLOW_OPERATOR_MUTATIONS),
+  });
   registerPrompts(server);
 
   const transport = new StdioServerTransport();

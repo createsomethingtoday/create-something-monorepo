@@ -10,6 +10,10 @@ import type { ReviewerProfile } from './reviewer-directory.js';
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
 
+export interface RegisterToolsOptions {
+  allowOperatorMutations?: boolean;
+}
+
 const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '🏃🏾In Review',
   '👀Admin Feedback Review',
@@ -100,7 +104,12 @@ function reviewerPayload(reviewer: ReviewerProfile) {
   };
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
+export function registerTools(
+  server: McpServer,
+  getClient: ClientFactory,
+  getReviewer: ReviewerFactory = () => null,
+  options: RegisterToolsOptions = {},
+): void {
   server.tool(
     'template_review_workflow',
     'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.',
@@ -344,6 +353,34 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   );
 
   server.tool(
+    'template_review_save_agent_feedback',
+    'Reviewer-safe write: save supplemental internal agent feedback for an assigned template version without changing official review fields.',
+    {
+      version_id: z.string().min(1),
+      agent_review_feedback: z.string().min(1),
+      overwrite: z.boolean().optional(),
+    },
+    async ({ version_id, agent_review_feedback, overwrite }) => {
+      try {
+        const client = getClient();
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await client.requireAssignedVersion(version_id, actingReviewer);
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
+          updated_version: await client.updateAgentReviewFeedback(version_id, {
+            agent_review_feedback,
+            overwrite,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_search_assets',
     'Search template assets by name so reviewers can find a specific submission without reading a broad queue slice.',
     {
@@ -509,209 +546,220 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
   );
 
-  server.tool(
-    'template_review_assign_reviewer',
-    'Admin/operator write: assign or clear the 📝Reviewer collaborator on a template Asset Version without changing any other review fields.',
-    {
-      version_id: z.string().min(1),
-      review_owner: z.union([
-        z.string().min(1).describe('Airtable collaborator id for the reviewer.'),
-        z.object({ id: z.string().min(1) }),
-        z.null(),
-      ]),
-    },
-    async ({ version_id, review_owner }) => {
-      try {
-        return asSuccess({
-          updated_version: await getClient().assignVersionReviewer(version_id, {
-            review_owner,
-          }),
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'template_review_complete_publishing',
-    'Complete the publishing checklist for a template version and attach a release using either a record id or a local-date lookup.',
-    {
-      version_id: z.string().min(1),
-      release_record_id: z.string().optional(),
-      release_date_local: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      time_zone: z.string().optional(),
-      approve_version: z.boolean().optional(),
-      mrp_id_overwrite: z.string().optional(),
-    },
-    async ({ version_id, release_record_id, release_date_local, time_zone, approve_version, mrp_id_overwrite }) => {
-      try {
-        if (!release_record_id && !release_date_local && !time_zone) {
-          throw new AirtableClientError(
-            'MISSING_RELEASE_SELECTOR',
-            'Provide release_record_id, release_date_local, or time_zone so the publishing workflow can resolve a release.',
-            400,
-          );
+  if (options.allowOperatorMutations) {
+    server.tool(
+      'template_review_assign_reviewer',
+      'Admin/operator write: assign or clear the 📝Reviewer collaborator on a template Asset Version without changing any other review fields.',
+      {
+        version_id: z.string().min(1),
+        review_owner: z.union([
+          z.string().min(1).describe('Airtable collaborator id for the reviewer.'),
+          z.object({ id: z.string().min(1) }),
+          z.null(),
+        ]),
+      },
+      async ({ version_id, review_owner }) => {
+        try {
+          return asSuccess({
+            updated_version: await getClient().assignVersionReviewer(version_id, {
+              review_owner,
+            }),
+          });
+        } catch (error) {
+          return asError(error);
         }
+      },
+    );
 
-        const result = await getClient().completePublishing(version_id, {
-          release_record_id,
-          release_date_local,
-          time_zone,
-          approve_version,
-          mrp_id_overwrite,
-        });
+    server.tool(
+      'template_review_complete_publishing',
+      'Complete the publishing checklist for a template version and attach a release using either a record id or a local-date lookup.',
+      {
+        version_id: z.string().min(1),
+        release_record_id: z.string().optional(),
+        release_date_local: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+        time_zone: z.string().optional(),
+        approve_version: z.boolean().optional(),
+        mrp_id_overwrite: z.string().optional(),
+      },
+      async ({ version_id, release_record_id, release_date_local, time_zone, approve_version, mrp_id_overwrite }) => {
+        try {
+          if (!release_record_id && !release_date_local && !time_zone) {
+            throw new AirtableClientError(
+              'MISSING_RELEASE_SELECTOR',
+              'Provide release_record_id, release_date_local, or time_zone so the publishing workflow can resolve a release.',
+              400,
+            );
+          }
 
-        return asSuccess({
-          updated_version: result.updatedVersion,
-          updated_asset: result.updatedAsset,
-          resolved_release: result.resolvedRelease,
-          resolved_local_date: result.resolvedLocalDate,
-          support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.publishingCompletion,
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'template_review_update_asset_metadata',
-    'Update confirmed writable template asset fields.',
-    {
-      asset_id: z.string().min(1),
-      template_name: z.string().optional(),
-      description: z.string().optional(),
-      description_short: z.string().optional(),
-      description_long_html: z.string().optional(),
-      website_url: z.string().optional(),
-      preview_site_url: z.string().optional(),
-      thumbnail_image_url: z.union([z.string().url(), z.null()]).optional(),
-      thumbnail_image_secondary_urls: z.array(z.string().url()).optional(),
-      carousel_image_urls: z.array(z.string().url()).optional(),
-    },
-    async ({ asset_id, ...input }) => {
-      try {
-        const updated = await getClient().updateAssetMetadata(asset_id, input);
-        return asSuccess({ updated_asset: updated, support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetMetadata });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'template_review_update_asset_publishing',
-    'Update confirmed asset-side publishing override fields for a template.',
-    {
-      asset_id: z.string().min(1),
-      mrp_id_overwrite: z.string().optional(),
-    },
-    async ({ asset_id, mrp_id_overwrite }) => {
-      try {
-        const updated = await getClient().updateAssetPublishing(asset_id, {
-          mrp_id_overwrite,
-        });
-        return asSuccess({ updated_asset: updated, support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetPublishing });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'template_review_update_version_review',
-    'Update template version review fields that are confirmed writable in Airtable.',
-    {
-      version_id: z.string().min(1),
-      review_owner: z.unknown().optional(),
-      review_status: z.string().optional(),
-      quality_rating: z.string().optional(),
-      improvement_areas: z.array(z.string()).optional(),
-      review_feedback: z.string().optional(),
-      review_checklist: z.unknown().optional(),
-      publishing_checklist: z.unknown().optional(),
-      release_record_id: z.string().optional(),
-      reject_reason: z.string().optional(),
-      rejection_feedback: z.string().optional(),
-    },
-    async ({
-      version_id,
-      review_owner,
-      review_status,
-      quality_rating,
-      improvement_areas,
-      review_feedback,
-      review_checklist,
-      publishing_checklist,
-      release_record_id,
-      reject_reason,
-      rejection_feedback,
-    }) => {
-      try {
-        return asSuccess({
-          updated_version: await getClient().updateVersionReview(version_id, {
-            review_owner,
-            review_status,
-            quality_rating,
-            improvement_areas,
-            review_feedback,
-            review_checklist,
-            publishing_checklist,
+          const result = await getClient().completePublishing(version_id, {
             release_record_id,
-            reject_reason,
-            rejection_feedback,
-          }),
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
+            release_date_local,
+            time_zone,
+            approve_version,
+            mrp_id_overwrite,
+          });
 
-  server.tool(
-    'template_review_approve_version',
-    'Approve a template version and optionally update confirmed publishing checklist metadata.',
-    {
-      version_id: z.string().min(1),
-      release_record_id: z.string().optional(),
-      publishing_checklist: z.unknown().optional(),
-    },
-    async ({ version_id, release_record_id, publishing_checklist }) => {
-      try {
-        return asSuccess({
-          updated_version: await getClient().updateVersionReview(version_id, {
-            review_status: '✅Approved',
-            release_record_id,
-            publishing_checklist,
-          }),
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
+          return asSuccess({
+            updated_version: result.updatedVersion,
+            updated_asset: result.updatedAsset,
+            resolved_release: result.resolvedRelease,
+            resolved_local_date: result.resolvedLocalDate,
+            support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.publishingCompletion,
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
 
-  server.tool(
-    'template_review_reject_version',
-    'Reject a template version with reason and reviewer feedback.',
-    {
-      version_id: z.string().min(1),
-      reject_reason: z.string().min(1),
-      rejection_feedback: z.string().min(1),
-    },
-    async ({ version_id, reject_reason, rejection_feedback }) => {
-      try {
-        return asSuccess({
-          updated_version: await getClient().updateVersionReview(version_id, {
-            review_status: '❌Rejected',
-            reject_reason,
-            rejection_feedback,
-          }),
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
+    server.tool(
+      'template_review_update_asset_metadata',
+      'Update confirmed writable template asset fields.',
+      {
+        asset_id: z.string().min(1),
+        template_name: z.string().optional(),
+        description: z.string().optional(),
+        description_short: z.string().optional(),
+        description_long_html: z.string().optional(),
+        website_url: z.string().optional(),
+        preview_site_url: z.string().optional(),
+        thumbnail_image_url: z.union([z.string().url(), z.null()]).optional(),
+        thumbnail_image_secondary_urls: z.array(z.string().url()).optional(),
+        carousel_image_urls: z.array(z.string().url()).optional(),
+      },
+      async ({ asset_id, ...input }) => {
+        try {
+          const updated = await getClient().updateAssetMetadata(asset_id, input);
+          return asSuccess({
+            updated_asset: updated,
+            support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetMetadata,
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_update_asset_publishing',
+      'Update confirmed asset-side publishing override fields for a template.',
+      {
+        asset_id: z.string().min(1),
+        mrp_id_overwrite: z.string().optional(),
+      },
+      async ({ asset_id, mrp_id_overwrite }) => {
+        try {
+          const updated = await getClient().updateAssetPublishing(asset_id, {
+            mrp_id_overwrite,
+          });
+          return asSuccess({
+            updated_asset: updated,
+            support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetPublishing,
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_update_version_review',
+      'Update template version review fields that are confirmed writable in Airtable.',
+      {
+        version_id: z.string().min(1),
+        review_owner: z.unknown().optional(),
+        review_status: z.string().optional(),
+        quality_rating: z.string().optional(),
+        improvement_areas: z.array(z.string()).optional(),
+        review_feedback: z.string().optional(),
+        review_checklist: z.unknown().optional(),
+        publishing_checklist: z.unknown().optional(),
+        release_record_id: z.string().optional(),
+        reject_reason: z.string().optional(),
+        rejection_feedback: z.string().optional(),
+      },
+      async ({
+        version_id,
+        review_owner,
+        review_status,
+        quality_rating,
+        improvement_areas,
+        review_feedback,
+        review_checklist,
+        publishing_checklist,
+        release_record_id,
+        reject_reason,
+        rejection_feedback,
+      }) => {
+        try {
+          return asSuccess({
+            updated_version: await getClient().updateVersionReview(version_id, {
+              review_owner,
+              review_status,
+              quality_rating,
+              improvement_areas,
+              review_feedback,
+              review_checklist,
+              publishing_checklist,
+              release_record_id,
+              reject_reason,
+              rejection_feedback,
+            }),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_approve_version',
+      'Approve a template version and optionally update confirmed publishing checklist metadata.',
+      {
+        version_id: z.string().min(1),
+        release_record_id: z.string().optional(),
+        publishing_checklist: z.unknown().optional(),
+      },
+      async ({ version_id, release_record_id, publishing_checklist }) => {
+        try {
+          return asSuccess({
+            updated_version: await getClient().updateVersionReview(version_id, {
+              review_status: '✅Approved',
+              release_record_id,
+              publishing_checklist,
+            }),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_reject_version',
+      'Reject a template version with reason and reviewer feedback.',
+      {
+        version_id: z.string().min(1),
+        reject_reason: z.string().min(1),
+        rejection_feedback: z.string().min(1),
+      },
+      async ({ version_id, reject_reason, rejection_feedback }) => {
+        try {
+          return asSuccess({
+            updated_version: await getClient().updateVersionReview(version_id, {
+              review_status: '❌Rejected',
+              reject_reason,
+              rejection_feedback,
+            }),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+  }
 }

@@ -23,6 +23,29 @@ function jsonResponse(body: unknown): Response {
   });
 }
 
+function templateAssetRecord(assetId = 'rec_asset_current', fields: Record<string, unknown> = {}) {
+  return {
+    id: assetId,
+    createdTime: '2026-03-17T00:00:00.000Z',
+    fields: {
+      [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+      [CONFIRMED_ASSET_FIELDS.name]: 'Scoped Template',
+      ...fields,
+    },
+  };
+}
+
+function versionRecord(versionId = 'rec_version_current', assetId = 'rec_asset_current', fields: Record<string, unknown> = {}) {
+  return {
+    id: versionId,
+    createdTime: '2026-03-17T00:00:00.000Z',
+    fields: {
+      [CONFIRMED_VERSION_FIELDS.assetRecordId]: assetId,
+      ...fields,
+    },
+  };
+}
+
 test('listAssetQueue paginates Airtable records beyond the first page', async () => {
   const client = new AirtableClient({
     apiKey: 'test',
@@ -292,6 +315,10 @@ test('updateAssetMetadata maps legacy description input onto the current long-ht
 
       if (!url.pathname.includes(`/${TABLE_IDS.assets}/rec_asset_update`)) {
         throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+
+      if (!init?.method || init.method === 'GET') {
+        return jsonResponse(templateAssetRecord('rec_asset_update'));
       }
 
       assert.equal(init?.method, 'PATCH');
@@ -602,6 +629,15 @@ test('updateVersionReview includes Airtable error details on failed updates', as
     fetchFn: async (input, init) => {
       const url = new URL(String(input));
 
+      if (!init?.method || init.method === 'GET') {
+        if (url.pathname.match(new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_error$`))) {
+          return jsonResponse(versionRecord('rec_version_error'));
+        }
+        if (url.pathname.match(new RegExp(`/${TABLE_IDS.assets}/rec_asset_current$`))) {
+          return jsonResponse(templateAssetRecord());
+        }
+      }
+
       assert.match(url.pathname, new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_error$`));
       assert.equal(init?.method, 'PATCH');
       assert.deepEqual(JSON.parse(String(init?.body)), {
@@ -652,6 +688,15 @@ test('updateVersionReview writes agent review feedback to the confirmed field id
     fetchFn: async (input, init) => {
       const url = new URL(String(input));
 
+      if (!init?.method || init.method === 'GET') {
+        if (url.pathname.match(new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_agent_feedback$`))) {
+          return jsonResponse(versionRecord('rec_version_agent_feedback'));
+        }
+        if (url.pathname.match(new RegExp(`/${TABLE_IDS.assets}/rec_asset_current$`))) {
+          return jsonResponse(templateAssetRecord());
+        }
+      }
+
       assert.match(url.pathname, new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_agent_feedback$`));
       assert.equal(init?.method, 'PATCH');
       assert.deepEqual(JSON.parse(String(init?.body)), {
@@ -672,6 +717,81 @@ test('updateVersionReview writes agent review feedback to the confirmed field id
   });
 
   const version = await client.updateVersionReview('rec_version_agent_feedback', {
+    agent_review_feedback: 'AI supplemental draft',
+  });
+
+  assert.equal(version.agentReviewFeedback, 'AI supplemental draft');
+});
+
+test('updateAgentReviewFeedback re-checks existing feedback before writing', async () => {
+  let patchCalled = false;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+
+      if (!init?.method || init.method === 'GET') {
+        if (url.pathname.match(new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_existing_agent_feedback$`))) {
+          return jsonResponse(
+            versionRecord('rec_version_existing_agent_feedback', 'rec_asset_current', {
+              [CONFIRMED_VERSION_FIELDS.agentReviewFeedback]: 'Existing AI notes',
+            }),
+          );
+        }
+        if (url.pathname.match(new RegExp(`/${TABLE_IDS.assets}/rec_asset_current$`))) {
+          return jsonResponse(templateAssetRecord());
+        }
+      }
+
+      patchCalled = true;
+      throw new Error(`Unexpected patch: ${url.toString()}`);
+    },
+  });
+
+  await assert.rejects(
+    client.updateAgentReviewFeedback('rec_version_existing_agent_feedback', {
+      agent_review_feedback: 'Replacement notes',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'AGENT_REVIEW_FEEDBACK_EXISTS');
+      return true;
+    },
+  );
+  assert.equal(patchCalled, false);
+});
+
+test('updateAgentReviewFeedback writes through the narrow supplemental feedback path', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+
+      if (!init?.method || init.method === 'GET') {
+        if (url.pathname.match(new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_agent_feedback_narrow$`))) {
+          return jsonResponse(versionRecord('rec_version_agent_feedback_narrow'));
+        }
+        if (url.pathname.match(new RegExp(`/${TABLE_IDS.assets}/rec_asset_current$`))) {
+          return jsonResponse(templateAssetRecord());
+        }
+      }
+
+      assert.match(url.pathname, new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_agent_feedback_narrow$`));
+      assert.equal(init?.method, 'PATCH');
+      assert.deepEqual(JSON.parse(String(init?.body)), {
+        fields: {
+          [CONFIRMED_WRITE_FIELD_IDS.versions.agentReviewFeedback]: 'AI supplemental draft',
+        },
+      });
+
+      return jsonResponse(
+        versionRecord('rec_version_agent_feedback_narrow', 'rec_asset_current', {
+          [CONFIRMED_VERSION_FIELDS.agentReviewFeedback]: 'AI supplemental draft',
+        }),
+      );
+    },
+  });
+
+  const version = await client.updateAgentReviewFeedback('rec_version_agent_feedback_narrow', {
     agent_review_feedback: 'AI supplemental draft',
   });
 

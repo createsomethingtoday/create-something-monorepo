@@ -1420,8 +1420,9 @@ async function main() {
         console.log(feedback);
         console.log('');
       } else {
-        await airtableClient.updateVersionReview(version.versionId, {
+        await airtableClient.updateAgentReviewFeedback(version.versionId, {
           agent_review_feedback: feedback,
+          overwrite: args.overwrite,
         });
       }
 

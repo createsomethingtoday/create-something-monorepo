@@ -17,6 +17,8 @@ interface Env {
   MCP_API_KEY?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
+  TEMPLATE_REVIEW_ALLOW_OPERATOR_MUTATIONS?: string;
+  TRUST_PROXY_ACCOUNT_HEADERS?: string;
   REVIEWER_DIRECTORY_JSON?: string;
 }
 
@@ -29,6 +31,18 @@ export function validateApiKey(request: Request, env: Env): Response | null {
     return misconfiguredResponse('MCP_API_KEY is not configured for this deployment.');
   }
   return validateBearerToken(request, env.MCP_API_KEY);
+}
+
+function isEnabled(value?: string): boolean {
+  return value?.trim().toLowerCase() === 'true';
+}
+
+function resolveTrustedAccountId(request: Request, env: Env): string | undefined {
+  const configuredAccountId = env.MCP_ACCOUNT_ID?.trim();
+  if (configuredAccountId) return configuredAccountId;
+
+  if (!isEnabled(env.TRUST_PROXY_ACCOUNT_HEADERS)) return undefined;
+  return request.headers.get('x-mcp-account-id')?.trim() || request.headers.get('x-hub-account-id')?.trim() || undefined;
 }
 
 export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProps> {
@@ -61,7 +75,9 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
     const getReviewer = () => getReviewerProfileForAccount(reviewerDirectory, this.props?.accountId ?? null);
 
     registerResources(this.server, getClient, getReviewer);
-    registerTools(this.server, getClient, getReviewer);
+    registerTools(this.server, getClient, getReviewer, {
+      allowOperatorMutations: isEnabled(this.env.TEMPLATE_REVIEW_ALLOW_OPERATOR_MUTATIONS),
+    });
     registerPrompts(this.server);
   }
 }
@@ -86,7 +102,7 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      const accountId = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-hub-account-id');
+      const accountId = resolveTrustedAccountId(request, env);
       return WebflowTemplateReviewMCP.serve('/mcp').fetch(request, env, {
         ...ctx,
         props: {
@@ -96,7 +112,7 @@ export default {
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
-      const accountId = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-hub-account-id');
+      const accountId = resolveTrustedAccountId(request, env);
       return WebflowTemplateReviewMCP.serve('/sse').fetch(request, env, {
         ...ctx,
         props: {

@@ -247,6 +247,9 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
       'reject_reason',
       'rejection_feedback',
     ],
+    agentFeedback: [
+      'agent_review_feedback',
+    ],
   },
 } as const;
 

@@ -203,6 +203,11 @@ export interface VersionReviewUpdateInput {
   rejection_feedback?: string;
 }
 
+export interface AgentReviewFeedbackUpdateInput {
+  agent_review_feedback: string;
+  overwrite?: boolean;
+}
+
 export interface AssignReviewerInput {
   review_owner: unknown;
 }
@@ -1090,6 +1095,16 @@ export class AirtableClient {
     return record ? mapVersion(record) : null;
   }
 
+  private async requireTemplateAsset(assetId: string): Promise<TemplateReviewAsset> {
+    const asset = await this.getAssetById(assetId);
+    if (!asset) {
+      throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
+        asset_id: assetId,
+      });
+    }
+    return asset;
+  }
+
   private async getScopedVersion(versionId: string): Promise<{ version: TemplateReviewVersion; asset: TemplateReviewAsset }> {
     const version = await this.getVersionById(versionId);
     if (!version) {
@@ -1101,13 +1116,7 @@ export class AirtableClient {
       });
     }
 
-    const asset = await this.getAssetById(version.assetId);
-    if (!asset) {
-      throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
-        asset_id: version.assetId,
-        version_id: versionId,
-      });
-    }
+    const asset = await this.requireTemplateAsset(version.assetId);
 
     return { version, asset };
   }
@@ -1250,7 +1259,30 @@ export class AirtableClient {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No version review fields were provided.', 400);
     }
 
+    await this.getScopedVersion(versionId);
     const updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, fields);
+    return mapVersion(updated);
+  }
+
+  async updateAgentReviewFeedback(versionId: string, input: AgentReviewFeedbackUpdateInput): Promise<TemplateReviewVersion> {
+    const feedback = input.agent_review_feedback.trim();
+    if (!feedback) {
+      throw new AirtableClientError('INVALID_AGENT_REVIEW_FEEDBACK', 'agent_review_feedback must be a non-empty string.', 400);
+    }
+
+    const { version } = await this.getScopedVersion(versionId);
+    if (version.agentReviewFeedback && !input.overwrite) {
+      throw new AirtableClientError(
+        'AGENT_REVIEW_FEEDBACK_EXISTS',
+        'Agent review feedback already exists for this version. Pass overwrite=true to replace it deliberately.',
+        409,
+        { version_id: versionId },
+      );
+    }
+
+    const updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, {
+      [CONFIRMED_WRITE_FIELD_IDS.versions.agentReviewFeedback]: input.agent_review_feedback,
+    });
     return mapVersion(updated);
   }
 
@@ -1406,6 +1438,7 @@ export class AirtableClient {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No confirmed asset metadata fields were provided.', 400);
     }
 
+    await this.requireTemplateAsset(assetId);
     const updated = await this.updateRecord(TABLE_IDS.assets, assetId, fields);
     if (!isTemplateLikeAsset(updated.fields)) {
       throw new AirtableClientError('OUT_OF_SCOPE_ASSET', 'Updated asset is outside template-review scope.', 403);
@@ -1423,6 +1456,7 @@ export class AirtableClient {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No confirmed asset publishing fields were provided.', 400);
     }
 
+    await this.requireTemplateAsset(assetId);
     const updated = await this.updateRecord(TABLE_IDS.assets, assetId, fields);
     if (!isTemplateLikeAsset(updated.fields)) {
       throw new AirtableClientError('OUT_OF_SCOPE_ASSET', 'Updated asset is outside template-review scope.', 403);
