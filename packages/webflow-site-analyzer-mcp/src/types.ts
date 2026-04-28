@@ -491,6 +491,34 @@ export type UnifiedReviewStatus = 'pass' | 'fail' | 'partial' | 'manual';
 
 export type UnifiedReviewSeverity = 'critical' | 'major' | 'minor' | 'info';
 
+export type UnifiedReviewEvidenceQuality =
+  | 'direct'
+  | 'dom-fallback'
+  | 'derived'
+  | 'manual'
+  | 'mixed';
+
+export interface UnifiedReviewEvidenceItem {
+  /** Published path, when the evidence is page-specific. */
+  path?: string;
+  /** CSS-ish selector or element path, when available. */
+  selector?: string;
+  /** Evidence category, e.g. "missing-meta", "generic-alt", "form-label". */
+  category?: string;
+  /** Human-readable reason for this individual item. */
+  reason?: string;
+  /** Numeric count for the page/item, when applicable. */
+  count?: number;
+  /** Expected value or threshold, when applicable. */
+  expected?: string | number | boolean;
+  /** Actual observed value, when applicable. */
+  actual?: string | number | boolean | null;
+  /** Source URL or asset URL, when applicable. */
+  src?: string;
+  /** Additional machine-readable fields for agents/review UIs. */
+  details?: Record<string, string | number | boolean | null>;
+}
+
 export interface UnifiedReviewRow {
   id: string;
   section: string;
@@ -500,6 +528,8 @@ export interface UnifiedReviewRow {
   confidence: number; // 0..1 heuristic confidence
   source: string[];
   evidence: string[];
+  evidenceQuality?: UnifiedReviewEvidenceQuality;
+  evidenceItems?: UnifiedReviewEvidenceItem[];
   fixHint?: string;
 }
 

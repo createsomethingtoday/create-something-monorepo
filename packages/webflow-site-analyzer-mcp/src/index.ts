@@ -71,6 +71,8 @@ import type {
   DesignerChecklistCheck,
   DesignerChecklistReport,
   UnifiedReviewStatus,
+  UnifiedReviewEvidenceItem,
+  UnifiedReviewEvidenceQuality,
   UnifiedReviewRow,
   UnifiedTemplateReviewReport,
   TemplateReviewJobRecord,
@@ -2516,6 +2518,22 @@ function unifyRows(
     'coverage.all_pages_crawled': 'critical',
   };
 
+  type PushRowOptions = {
+    evidenceQuality?: UnifiedReviewEvidenceQuality;
+    evidenceItems?: UnifiedReviewEvidenceItem[];
+  };
+
+  const inferEvidenceQuality = (
+    status: UnifiedReviewStatus,
+    source: string[]
+  ): UnifiedReviewEvidenceQuality => {
+    if (status === 'manual') return 'manual';
+    if (source.includes('published-webmcp-crawl') && !snippetAvailable) return 'dom-fallback';
+    if (source.includes('published-webmcp-crawl') && source.includes('designer-mcp')) return 'mixed';
+    if (source.includes('published-webmcp-crawl') || source.includes('designer-mcp')) return 'direct';
+    return 'derived';
+  };
+
   const pushRow = (
     id: string,
     section: string,
@@ -2524,7 +2542,8 @@ function unifyRows(
     evidence: string[],
     source: string[],
     confidence: number,
-    fixHint?: string
+    fixHint?: string,
+    options: PushRowOptions = {}
   ) => {
     // Apply confidence discount for published-crawl checks when snippet is absent
     const adjustedConfidence = source.includes('published-webmcp-crawl')
@@ -2534,10 +2553,14 @@ function unifyRows(
       ? [...evidence, 'Note: Webflow Review snippet not available — using DOM fallback (lower accuracy)']
       : evidence;
     const severity = severityMap[id] || 'minor';
+    const evidenceItems = options.evidenceItems?.filter(Boolean);
     rows.push({
       id, section, requirement, status, severity,
       evidence: adjustedEvidence, source,
-      confidence: adjustedConfidence, fixHint
+      confidence: adjustedConfidence,
+      evidenceQuality: options.evidenceQuality ?? inferEvidenceQuality(status, source),
+      ...(evidenceItems && evidenceItems.length > 0 ? { evidenceItems } : {}),
+      fixHint
     });
   };
 
@@ -2564,8 +2587,41 @@ function unifyRows(
       .slice(0, limit);
   };
 
+  const pageEvidenceItems = (
+    predicate: (summary: PageAuditSummary, page: PublishedSnippetPageResult) => boolean,
+    build: (summary: PageAuditSummary, page: PublishedSnippetPageResult, path: string) => UnifiedReviewEvidenceItem,
+    limit = 8
+  ): UnifiedReviewEvidenceItem[] => {
+    const origin = published.origin;
+    return published.pages
+      .filter((p) => p.summary && predicate(p.summary, p))
+      .map((p) => {
+        const path = p.url.replace(origin, '') || '/';
+        return build(p.summary as PageAuditSummary, p, path);
+      })
+      .slice(0, limit);
+  };
+
   const h1FailPages = failingPaths(
     (s) => Boolean(s.headings?.missingH1) || Boolean(s.headings?.multipleH1) || (s.headings?.skippedHeadingLevels ?? 0) > 0
+  );
+  const h1EvidenceItems = pageEvidenceItems(
+    (s) => Boolean(s.headings?.missingH1) || Boolean(s.headings?.multipleH1) || (s.headings?.skippedHeadingLevels ?? 0) > 0,
+    (s, _page, path) => ({
+      path,
+      category: 'heading-hierarchy',
+      reason: s.headings?.missingH1
+        ? 'missing H1'
+        : s.headings?.multipleH1
+          ? 'multiple H1 elements'
+          : 'skipped heading levels',
+      details: {
+        missingH1: Boolean(s.headings?.missingH1),
+        multipleH1: Boolean(s.headings?.multipleH1),
+        skippedHeadingLevels: s.headings?.skippedHeadingLevels ?? 0,
+        h1Count: s.headings?.h1 ?? 0
+      }
+    })
   );
   pushRow(
     'webflow_audit.h1_hierarchy',
@@ -2584,13 +2640,14 @@ function unifyRows(
     ],
     ['published-webmcp-crawl'],
     0.9,
-    'Fix heading hierarchy per page and keep a single primary H1.'
+    'Fix heading hierarchy per page and keep a single primary H1.',
+    { evidenceItems: h1EvidenceItems }
   );
 
   const altMissingInformativePages = failingPaths((s) => (s.images?.missingInformativeAlt ?? 0) > 0);
   const altGenericPages = failingPaths((s) => (s.images?.genericAlt ?? 0) > 0);
   const altLinkedEmptyPages = failingPaths((s) => (s.images?.linkedEmptyAlt ?? 0) > 0);
-  const altExamples = published.pages
+  const altEvidenceItems = published.pages
     .flatMap((page) => {
       const path = page.url.replace(published.origin, '');
       return (page.summary?.images?.altText?.examples || []).map((example) => ({
@@ -2603,8 +2660,8 @@ function unifyRows(
       example.classification === 'linked-empty' ||
       example.classification === 'generic'
     )
-    .slice(0, 8)
-    .map((example) => {
+    .slice(0, 8);
+  const altExamples = altEvidenceItems.map((example) => {
       const alt = example.alt == null ? 'null' : example.alt === '' ? 'empty' : `"${example.alt}"`;
       const text = example.linkText ? ` linkText="${example.linkText}"` : '';
       return `${example.path} ${example.classification} alt=${alt}${text} src=${example.src || 'n/a'}`;
@@ -2632,7 +2689,22 @@ function unifyRows(
     ],
     ['published-webmcp-crawl'],
     0.82,
-    'Use descriptive alt text for informative/content images. Empty alt is acceptable for decorative icons when the surrounding link or button already has accessible text; generic alt like "Project Image" should be improved.'
+    'Use descriptive alt text for informative/content images. Empty alt is acceptable for decorative icons when the surrounding link or button already has accessible text; generic alt like "Project Image" should be improved.',
+    {
+      evidenceItems: altEvidenceItems.map((example) => ({
+        path: example.path,
+        selector: example.selector,
+        category: String(example.classification || 'alt-text'),
+        reason: String(example.reason || ''),
+        actual: example.alt ?? null,
+        src: example.src,
+        details: {
+          visible: Boolean(example.visible),
+          inLink: Boolean(example.inLink),
+          linkText: example.linkText || null
+        }
+      }))
+    }
   );
 
   pushRow(
@@ -2760,6 +2832,20 @@ function unifyRows(
         `pagesChecked=${comboPages.length}`
       ]
     : dComboDepth.evidence;
+  const comboEvidenceItems = comboPages
+    .map((page) => ({
+      path: page.url.replace(published.origin, '') || '/',
+      selector: page.summary?.comboClassDepth?.maxDepthSelector || '',
+      category: 'combo-class-depth',
+      count: page.summary?.comboClassDepth?.maxDepth || 0,
+      expected: '<=4',
+      actual: page.summary?.comboClassDepth?.maxDepth || 0,
+      details: {
+        sampled: page.summary?.comboClassDepth?.sampled || 0
+      }
+    }))
+    .sort((a, b) => (b.count || 0) - (a.count || 0))
+    .slice(0, 8);
   pushRow(
     'styles.combo_depth',
     'Styles Selector',
@@ -2767,7 +2853,9 @@ function unifyRows(
     comboStatus,
     comboEvidence,
     hasComboData ? ['designer-mcp', 'published-webmcp-crawl'] : ['designer-mcp'],
-    hasComboData ? 0.6 : dComboDepth.confidence
+    hasComboData ? 0.6 : dComboDepth.confidence,
+    undefined,
+    { evidenceItems: comboEvidenceItems }
   );
 
   const htmlSuffix = ' - Webflow HTML website template';
@@ -2899,6 +2987,30 @@ function unifyRows(
             ? 'pass'
             : 'fail'
           : 'partial';
+  const crawledLicensePage = licensePages[0];
+  const discoveredLicenseUrl = precheck?.discoveredUrls?.find(
+    (url) => url.toLowerCase().includes(licenseUrlPattern)
+  );
+  const licenseEvidenceItems: UnifiedReviewEvidenceItem[] = [
+    ...(crawledLicensePage ? [{
+      path: crawledLicensePage.url.replace(published.origin, '') || '/',
+      category: 'license-opening-text',
+      reason: hasKnownLicenseTextResult
+        ? hasRequiredLicenseText
+          ? 'required opening text present'
+          : 'required opening text missing or not exact'
+        : 'license page found but text result unavailable',
+      expected: true,
+      actual: hasKnownLicenseTextResult ? hasRequiredLicenseText : null
+    }] : []),
+    ...(!crawledLicensePage && discoveredLicenseUrl ? [{
+      path: new URL(discoveredLicenseUrl).pathname,
+      category: 'license-page-discovered',
+      reason: 'license page was discovered but not crawled',
+      expected: 'crawled license page',
+      actual: 'discovered only'
+    }] : [])
+  ];
   pushRow(
     'pages.license_text_exact',
     'Page Level Checks',
@@ -2923,7 +3035,8 @@ function unifyRows(
     ],
     publishedOrDesignerOnlySource(hasLicensePagePublished, hasLicensePageDesigner),
     hasKnownLicenseTextResult ? 0.85 : 0.5,
-    'Ensure /licenses page exists and starts with the required exact text.'
+    'Ensure /licenses page exists and starts with the required exact text.',
+    { evidenceItems: licenseEvidenceItems }
   );
 
   // Webflow manages the loading attribute for images.  Shared component images
@@ -2934,6 +3047,21 @@ function unifyRows(
   const notLazyBelowFold = (published.issueCounts as { imagesBelowFoldNotLazy?: number }).imagesBelowFoldNotLazy || 0;
   const allPagesAffected = lazyAboveFoldCount === totalAudited && totalAudited > 1;
   const hasLoadingIssues = lazyAboveFoldCount > 0 || notLazyBelowFold > 0;
+  const imageLoadingEvidenceItems = pageEvidenceItems(
+    (s) => (s.images?.aboveFoldLazy ?? 0) > 0 || (s.images?.belowFoldNotLazy ?? 0) > 0,
+    (s, _page, path) => ({
+      path,
+      category: 'image-loading-strategy',
+      reason: [
+        (s.images?.aboveFoldLazy ?? 0) > 0 ? 'above-fold image lazy-loaded' : '',
+        (s.images?.belowFoldNotLazy ?? 0) > 0 ? 'below-fold image not lazy-loaded' : ''
+      ].filter(Boolean).join('; '),
+      details: {
+        aboveFoldLazy: s.images?.aboveFoldLazy ?? 0,
+        belowFoldNotLazy: s.images?.belowFoldNotLazy ?? 0
+      }
+    })
+  );
   pushRow(
     'pages.image_loading_strategy',
     'Page Level Checks',
@@ -2948,12 +3076,29 @@ function unifyRows(
     ],
     ['published-webmcp-crawl'],
     allPagesAffected ? 0.6 : 0.87,
-    'Set hero/critical images to eager and keep below-fold images lazy. Note: Webflow may manage loading attributes for shared components.'
+    'Set hero/critical images to eager and keep below-fold images lazy. Note: Webflow may manage loading attributes for shared components.',
+    { evidenceItems: imageLoadingEvidenceItems }
   );
 
   const videoControlsFail =
     published.issueCounts.autoplayWithoutControls > 0 ||
     published.issueCounts.backgroundVideosMissingControl > 0;
+  const videoEvidenceItems = pageEvidenceItems(
+    (s) => (s.media?.autoplayWithoutControls ?? 0) > 0 || (s.media?.backgroundVideosMissingControl ?? 0) > 0,
+    (s, _page, path) => ({
+      path,
+      category: 'video-controls',
+      reason: [
+        (s.media?.autoplayWithoutControls ?? 0) > 0 ? 'autoplay video without controls' : '',
+        (s.media?.backgroundVideosMissingControl ?? 0) > 0 ? 'background video missing pause/skip control' : ''
+      ].filter(Boolean).join('; '),
+      details: {
+        videos: s.media?.videos ?? 0,
+        autoplayWithoutControls: s.media?.autoplayWithoutControls ?? 0,
+        backgroundVideosMissingControl: s.media?.backgroundVideosMissingControl ?? 0
+      }
+    })
+  );
   pushRow(
     'pages.videos_controls',
     'Page Level Checks',
@@ -2964,7 +3109,9 @@ function unifyRows(
       `pagesWithBackgroundVideoMissingControl=${published.issueCounts.backgroundVideosMissingControl}`
     ],
     ['published-webmcp-crawl'],
-    0.86
+    0.86,
+    undefined,
+    { evidenceItems: videoEvidenceItems }
   );
 
   // Aggregate which specific meta tags are most commonly missing
@@ -2979,6 +3126,18 @@ function unifyRows(
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([tag, count]) => `${tag}(${count}/${totalAudited})`);
+  const metaEvidenceItems = pageEvidenceItems(
+    (s) => s.metaMissing.length > 0,
+    (s, _page, path) => ({
+      path,
+      category: 'missing-meta-tags',
+      reason: 'required meta tags missing',
+      count: s.metaMissing.length,
+      details: {
+        missingTags: s.metaMissing.join(', ')
+      }
+    })
+  );
 
   pushRow(
     'pages.meta_tags_static',
@@ -2991,7 +3150,8 @@ function unifyRows(
     ],
     ['published-webmcp-crawl'],
     0.9,
-    'Add missing Open Graph/meta tags per page, including og:image.'
+    'Add missing Open Graph/meta tags per page, including og:image.',
+    { evidenceItems: metaEvidenceItems }
   );
 
   pushRow(
@@ -3040,11 +3200,36 @@ function unifyRows(
     a404WasExecuted ? 0.92 : 0.2,
     a404Result === 'fail'
       ? 'Ensure a custom 404 page exists with navigation and links back to the site.'
-      : undefined
+      : undefined,
+    {
+      evidenceItems: a404WasExecuted
+        ? [{
+            path: '/404',
+            category: 'custom-404',
+            reason: hasHealthy404 ? '404 page returned expected status and navigation' : '404 page check failed',
+            expected: true,
+            actual: hasHealthy404,
+            details: {
+              status: a404Status || null,
+              navCount: a404NavCount || 0,
+              linkCount: a404LinkCount || 0
+            }
+          }]
+        : []
+    }
   );
 
   const dimsMissingCount = published.issueCounts.imagesMissingDimensions;
   const allPagesDimsMissing = dimsMissingCount === totalAudited && totalAudited > 1;
+  const imageDimensionsEvidenceItems = pageEvidenceItems(
+    (s) => (s.images?.missingDimensions ?? 0) > 0,
+    (s, _page, path) => ({
+      path,
+      category: 'missing-image-dimensions',
+      reason: 'images missing explicit width/height or stable aspect-ratio hint',
+      count: s.images?.missingDimensions ?? 0
+    })
+  );
   pushRow(
     'pages.image_dimensions',
     'Page Level Checks',
@@ -3058,7 +3243,8 @@ function unifyRows(
     ],
     ['published-webmcp-crawl'],
     allPagesDimsMissing ? 0.7 : 0.9,
-    'Add width/height attributes or explicit aspect-ratio to image elements.'
+    'Add width/height attributes or explicit aspect-ratio to image elements.',
+    { evidenceItems: imageDimensionsEvidenceItems }
   );
 
   // Aggregate transition data across crawled pages
@@ -3108,12 +3294,28 @@ function unifyRows(
   const hasContrastData = totalContrastChecked > 0;
   // Collect worst failures across all pages for evidence
   const allContrastFailures = contrastPages
-    .flatMap((p) => p.summary?.contrast?.failures || [])
+    .flatMap((p) => {
+      const path = p.url.replace(published.origin, '') || '/';
+      return (p.summary?.contrast?.failures || []).map((failure) => ({ path, ...failure }));
+    })
     .sort((a, b) => a.ratio - b.ratio)
     .slice(0, 5);
   const failureEvidence = allContrastFailures.map(
     (f) => `"${f.text}" (${f.tag}): ${f.ratio}:1 on ${f.bg}, needs ${f.required}:1`
   );
+  const contrastEvidenceItems = allContrastFailures.map((failure) => ({
+    path: failure.path,
+    category: 'wcag-contrast',
+    reason: 'text contrast below WCAG AA threshold',
+    expected: failure.required,
+    actual: failure.ratio,
+    details: {
+      text: failure.text,
+      tag: failure.tag,
+      foreground: failure.fg,
+      background: failure.bg
+    }
+  }));
   pushRow(
     'pages.wcag_contrast',
     'Page Level Checks',
@@ -3136,7 +3338,8 @@ function unifyRows(
     hasContrastData ? 0.7 : 0.2,
     totalContrastFail > 0
       ? `${totalContrastFail} element(s) may not meet WCAG AA contrast ratio. Check text-on-background combinations.`
-      : undefined
+      : undefined,
+    { evidenceItems: contrastEvidenceItems }
   );
 
   pushRow(
@@ -3305,11 +3508,27 @@ function unifyRows(
     0.85,
     brokenInternalLinks.length > 0
       ? `${brokenInternalLinks.length} internal link(s) resolve to 404. Fix or remove these links.`
-      : undefined
+      : undefined,
+    {
+      evidenceItems: brokenInternalLinks.slice(0, 10).map((path) => ({
+        path,
+        category: 'broken-internal-link',
+        reason: 'internal link resolves to 404'
+      }))
+    }
   );
 
   // Accessible link names: links without text, aria-label, or img alt
   const missingAccessibleNameCount = published.issueCounts.linksMissingAccessibleName;
+  const accessibleLinkEvidenceItems = pageEvidenceItems(
+    (s) => (s.links?.missingAccessibleName ?? 0) > 0,
+    (s, _page, path) => ({
+      path,
+      category: 'link-accessible-name',
+      reason: 'links missing accessible names',
+      count: s.links?.missingAccessibleName ?? 0
+    })
+  );
   pushRow(
     'a11y.link_accessible_names',
     'Accessibility',
@@ -3320,11 +3539,21 @@ function unifyRows(
     0.85,
     missingAccessibleNameCount > 0
       ? 'Add text content, aria-label, or nested img with alt to all links.'
-      : undefined
+      : undefined,
+    { evidenceItems: accessibleLinkEvidenceItems }
   );
 
   // Empty href links: these are broken navigation elements
   const emptyHrefCount = published.issueCounts.linksEmptyHref;
+  const emptyHrefEvidenceItems = pageEvidenceItems(
+    (s) => (s.links?.emptyHref ?? 0) > 0,
+    (s, _page, path) => ({
+      path,
+      category: 'empty-href',
+      reason: 'links with empty href attributes',
+      count: s.links?.emptyHref ?? 0
+    })
+  );
   pushRow(
     'links.no_empty_href',
     'Page Level Checks',
@@ -3335,11 +3564,21 @@ function unifyRows(
     0.85,
     emptyHrefCount > 0
       ? 'Fix or remove links with empty href="" attributes — they cause navigation issues.'
-      : undefined
+      : undefined,
+    { evidenceItems: emptyHrefEvidenceItems }
   );
 
   // External links: should have target="_blank" and rel="noopener"
   const blankTargetMissingRelCount = published.issueCounts.linksMissingRel;
+  const missingRelEvidenceItems = pageEvidenceItems(
+    (s) => (s.links?.blankTargetMissingRel ?? 0) > 0,
+    (s, _page, path) => ({
+      path,
+      category: 'target-blank-missing-rel',
+      reason: 'target="_blank" links missing rel="noopener"',
+      count: s.links?.blankTargetMissingRel ?? 0
+    })
+  );
   pushRow(
     'links.external_target_blank',
     'Page Level Checks',
@@ -3350,7 +3589,8 @@ function unifyRows(
     0.8,
     blankTargetMissingRelCount > 0
       ? 'Add rel="noopener" to all external links with target="_blank".'
-      : undefined
+      : undefined,
+    { evidenceItems: missingRelEvidenceItems }
   );
 
   // Form validation: check forms have labels, required fields, and submission handling
@@ -3366,6 +3606,19 @@ function unifyRows(
   const formLabelRatio = totalFormFields > 0
     ? (totalFormFields - totalMissingLabels) / totalFormFields
     : 1;
+  const formEvidenceItems = pageEvidenceItems(
+    (s) => (s.forms?.missingLabels ?? 0) > 0,
+    (s, _page, path) => ({
+      path,
+      category: 'form-labels',
+      reason: 'form fields missing associated label or aria-label',
+      count: s.forms?.missingLabels ?? 0,
+      details: {
+        totalFields: s.forms?.fields ?? 0,
+        missingLabels: s.forms?.missingLabels ?? 0
+      }
+    })
+  );
   pushRow(
     'forms.labels_present',
     'Page Level Checks',
@@ -3383,7 +3636,8 @@ function unifyRows(
     0.8,
     totalMissingLabels > 0
       ? `${totalMissingLabels} form field(s) missing labels. Add <label for="..."> or aria-label attributes.`
-      : undefined
+      : undefined,
+    { evidenceItems: formEvidenceItems }
   );
 
   // Content quality checks
@@ -3396,6 +3650,18 @@ function unifyRows(
     .map((p) => p.url.replace(published.origin, ''))
     .slice(0, 5);
   const hasContentIssues = loremPages.length > 0 || placeholderPages.length > 0;
+  const contentEvidenceItems = [
+    ...loremPages.slice(0, 5).map((page) => ({
+      path: page.url.replace(published.origin, '') || '/',
+      category: 'lorem-ipsum',
+      reason: 'Lorem Ipsum placeholder content found'
+    })),
+    ...placeholderPages.slice(0, 5).map((page) => ({
+      path: page.url.replace(published.origin, '') || '/',
+      category: 'placeholder-text',
+      reason: 'placeholder text found'
+    }))
+  ];
   pushRow(
     'content.no_placeholder_text',
     'Content Quality',
@@ -3411,7 +3677,8 @@ function unifyRows(
     0.9,
     hasContentIssues
       ? 'Remove all Lorem Ipsum and placeholder text before submission. Replace with real sample content.'
-      : undefined
+      : undefined,
+    { evidenceItems: contentEvidenceItems }
   );
 
   // Site settings checks (from review checklist: favicons, fonts, connected apps)
@@ -3495,7 +3762,16 @@ function unifyRows(
     0.95,
     skipped.length > 0
       ? `${skipped.length} page(s) were not crawled. Increase crawlMaxPages or review manually.`
-      : undefined
+      : undefined,
+    {
+      evidenceItems: skipped.slice(0, 10).map((url) => ({
+        path: new URL(url).pathname,
+        category: 'skipped-page',
+        reason: 'discovered but not crawled',
+        expected: 'crawled',
+        actual: 'skipped'
+      }))
+    }
   );
 
   return includeManual ? rows : rows.filter((row) => row.status !== 'manual');
