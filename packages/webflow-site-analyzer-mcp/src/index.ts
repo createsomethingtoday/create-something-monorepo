@@ -47,7 +47,10 @@ import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy
 import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
-import { is404PageTitle } from './review-utils.js';
+import {
+  is404PageTitle,
+  isPoweredByWebflowBadgeCandidate,
+} from './review-utils.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -602,14 +605,31 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     ? bodyText.includes(REQUIRED_LICENSE_TEXT)
     : null;
 
+  const isPoweredByWebflowBadgeCandidate = ${isPoweredByWebflowBadgeCandidate.toString()};
   // Policy checks: deterministic, run regardless of __wfReview availability
-  const poweredByBadge = document.querySelector('.w-webflow-badge') ||
-    document.querySelector('a[href*="webflow.com"][class*="badge"]') ||
-    document.querySelector('a[href*="webflow.com"]');
-  const hasPoweredByWebflow = Boolean(
-    poweredByBadge &&
-    (poweredByBadge.textContent || '').toLowerCase().includes('webflow')
-  );
+  const poweredByBadges = Array.from(
+    document.querySelectorAll('.w-webflow-badge, a[href*="webflow.com"]')
+  ).map((el) => {
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+    const imageAlt = Array.from(el.querySelectorAll('img'))
+      .map((img) => img.getAttribute('alt') || '')
+      .find(Boolean) || null;
+    return {
+      className: String(el.className || ''),
+      href: el.getAttribute('href') || '',
+      text: el.textContent || '',
+      title: el.getAttribute('title') || '',
+      ariaLabel: el.getAttribute('aria-label') || '',
+      imageAlt,
+      visible: rect.width > 0 &&
+        rect.height > 0 &&
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        Number(style.opacity || '1') > 0
+    };
+  });
+  const hasPoweredByWebflow = poweredByBadges.some(isPoweredByWebflowBadgeCandidate);
 
   const allHrefs = Array.from(document.querySelectorAll('a[href]'))
     .map(a => (a.getAttribute('href') || '').toLowerCase());

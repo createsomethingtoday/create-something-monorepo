@@ -120,6 +120,39 @@ export function isWebflowComponentAnchor(href: string): boolean {
   return false;
 }
 
+export type WebflowBadgeCandidate = {
+  className?: string | null;
+  href?: string | null;
+  text?: string | null;
+  title?: string | null;
+  ariaLabel?: string | null;
+  imageAlt?: string | null;
+  visible?: boolean | null;
+};
+
+/**
+ * Detect Webflow's published-site badge from DOM candidate fields.
+ * The official `.w-webflow-badge` is image-based and often has no textContent,
+ * so class/href/visibility are stronger signals than text alone.
+ */
+export function isPoweredByWebflowBadgeCandidate(candidate: WebflowBadgeCandidate): boolean {
+  if (!candidate || candidate.visible === false) return false;
+
+  const className = String(candidate.className ?? '').toLowerCase();
+  const href = String(candidate.href ?? '').toLowerCase();
+  const textSignals = [
+    candidate.text,
+    candidate.title,
+    candidate.ariaLabel,
+    candidate.imageAlt,
+  ].map((value) => String(value ?? '').toLowerCase());
+
+  if (className.includes('w-webflow-badge')) return true;
+  if (!href.includes('webflow.com')) return false;
+  if (className.includes('badge')) return true;
+  return textSignals.some((value) => value.includes('webflow'));
+}
+
 // =============================================================================
 // Slug resolution
 // =============================================================================

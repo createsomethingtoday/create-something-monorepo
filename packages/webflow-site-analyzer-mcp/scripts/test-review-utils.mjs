@@ -15,6 +15,7 @@ const {
   is404PageTitle,
   isCriticalUtilityUrl,
   isWebflowComponentAnchor,
+  isPoweredByWebflowBadgeCandidate,
   computeScore
 } = require('../dist/review-utils.js');
 
@@ -176,6 +177,57 @@ test('#contact is NOT a component anchor', () => {
 
 test('/about is NOT an anchor at all', () => {
   assert.equal(isWebflowComponentAnchor('/about'), false);
+});
+
+// =============================================================================
+console.log('\n== isPoweredByWebflowBadgeCandidate ==');
+
+test('visible .w-webflow-badge passes even when text is empty', () => {
+  assert.equal(
+    isPoweredByWebflowBadgeCandidate({
+      className: 'w-webflow-badge',
+      href: 'https://webflow.com?utm_campaign=brandjs',
+      text: '',
+      visible: true
+    }),
+    true
+  );
+});
+
+test('hidden .w-webflow-badge does not pass', () => {
+  assert.equal(
+    isPoweredByWebflowBadgeCandidate({
+      className: 'w-webflow-badge',
+      href: 'https://webflow.com?utm_campaign=brandjs',
+      text: '',
+      visible: false
+    }),
+    false
+  );
+});
+
+test('visible Webflow text link passes as fallback signal', () => {
+  assert.equal(
+    isPoweredByWebflowBadgeCandidate({
+      className: 'footer-link',
+      href: 'https://webflow.com/',
+      text: 'Webflow',
+      visible: true
+    }),
+    true
+  );
+});
+
+test('non-Webflow external link does not pass', () => {
+  assert.equal(
+    isPoweredByWebflowBadgeCandidate({
+      className: 'footer-link',
+      href: 'https://example.com/',
+      text: 'Webflow',
+      visible: true
+    }),
+    false
+  );
 });
 
 // =============================================================================
