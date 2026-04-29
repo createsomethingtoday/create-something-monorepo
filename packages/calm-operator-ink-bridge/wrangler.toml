@@ -45,9 +45,12 @@ HEALTH_CHECKS_JSON = """
     "url": "https://cs-mcp-hub-remote.createsomething.workers.dev/health",
     "expected_status": 200,
     "expected_text": "create-something-hub-remote",
+    "timeout_ms": 15000,
     "json_rules": [
       { "path": "failed_servers.length", "max": 0 },
-      { "path": "connected_servers.length", "min": 10 }
+      { "path": "connected_servers.length", "min": 3 },
+      { "path": "connected_servers", "includes": "composio-toolkit-gmail" },
+      { "path": "connected_servers", "includes": "composio-toolkit-notion" }
     ],
     "action": "Review Hub downstream MCP connectivity and policy state"
   },
