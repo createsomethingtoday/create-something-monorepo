@@ -50,27 +50,34 @@ Requirements for each reviewer Hub:
 
 ## 4. Tool exposure policy
 
-### Phase 1: read-only alpha default
+### Phase A: current reviewer-visible surface
 
 Expose these tools to all six reviewer Hubs by default:
 
 - `template_review_health`
+- `template_review_get_metrics`
 - `template_review_list_queue`
+- `template_review_my_queue`
 - `template_review_search_assets`
 - `template_review_search_versions`
 - `template_review_get_asset`
 - `template_review_list_versions`
 - `template_review_get_version`
+- `template_review_get_review_context`
 - `template_review_list_releases`
 - `template_review_get_field_map`
+- `template_review_assign_self`
+- `template_review_unassign_self`
+- `template_review_request_changes`
+- `template_review_set_review_status`
+- `template_review_save_draft_feedback`
 
-These tools support queue access, context loading, and operator debugging without changing official review state.
+These tools support queue access, context loading, self-assignment, bounded feedback writes, request-changes, and controlled reviewer status updates without exposing broad Airtable mutation routes. Read-only mode is the Phase A rollback/preflight posture, not the expected reviewer-visible surface once the reviewer lanes are normalized.
 
-### Phase 2: approval-gated reviewer writes
+### Later expansion: approval-gated official decision writes
 
 Expose these tools only after the write-enable gates in section 6 pass:
 
-- `template_review_request_changes`
 - `template_review_approve_version`
 - `template_review_reject_version`
 - `template_review_complete_publishing`
@@ -84,6 +91,7 @@ Keep these tools out of the reviewer-facing lane unless the workflow scope is ex
 - `template_review_update_asset_metadata`
 - `template_review_update_asset_publishing`
 - `template_review_update_version_review`
+- `template_review_assign_reviewer`
 
 Reason:
 
@@ -110,33 +118,43 @@ Minimum required write trace fields:
 - `reviewer_id`
 - `correlation_id`
 
-If the Hub layer cannot provide those fields yet, reviewer Hubs must stay read-only.
+If the Hub layer cannot provide those fields yet, reviewer Hubs must fall back to the read-only preflight posture.
 
 ## 6. Write-enable gates
 
-Write tools remain disabled until all of the following are demonstrated in the pilot environment for each write action:
+The Phase A narrow write tools remain enabled only while all of the following are demonstrated in the pilot environment. Official decision writes remain disabled until their dedicated gates pass.
 
 1. `template_review_request_changes`
    - reviewer identity is visible in trace output
    - updated Airtable record matches the requested state change
    - correlation id links the recommendation and the write
 
-2. `template_review_approve_version`
+2. `template_review_set_review_status`
+   - reviewer identity is visible in trace output
+   - the requested status is from the allowlisted reviewer workflow states
+   - before/after status is preserved in trace or audit evidence
+
+3. `template_review_save_draft_feedback`
+   - reviewer identity is visible in trace output
+   - only draft-safe feedback fields are changed
+   - official decision state remains unchanged
+
+4. `template_review_approve_version`
    - approval action is attributable to the reviewer Hub identity
    - release linkage behavior is validated against live Airtable mappings
    - no unsupported field is silently dropped
 
-3. `template_review_reject_version`
+5. `template_review_reject_version`
    - rejection reason and feedback are preserved correctly
    - reviewer identity is present in the write trace
    - retry behavior is understood and documented
 
-4. `template_review_complete_publishing`
+6. `template_review_complete_publishing`
    - release resolution by record id and by local date is validated
    - ambiguous release resolution is blocked correctly
    - approving as part of publishing is traceable as an explicit reviewer action
 
-If any one of these checks fails, revert all reviewer Hubs to read-only evidence mode until corrected.
+If any one of these checks fails, revert affected reviewer Hubs to read-only evidence mode until corrected.
 
 ## 7. Approval model
 
@@ -159,14 +177,15 @@ The reviewer should be the approval owner for the write, and the workflow owner 
 ### Alpha week one
 
 - create the six reviewer-specific Hubs
-- keep all six Hubs read-only by default
+- normalize all six Hubs to the Phase A read/context plus narrow reviewer-owned write surface
 - validate queue, asset, version, analysis, and release context
+- smoke self-assignment, self-unassignment, draft feedback, controlled status, and request-changes on a noncritical record before regular reviewer use
 - collect reviewer trust, false-positive, false-negative, and friction data
 - run at least one manual fallback drill per reviewer
 
 ### Alpha week two
 
-- enable `template_review_request_changes` first if trace and audit checks pass
+- keep reviewing Phase A narrow-write traces and Airtable updates daily
 - keep approve, reject, and publishing writes gated until proven individually
 - review daily write traces and Airtable updates with the workflow owner
 
@@ -212,4 +231,4 @@ These must be answered before enabling writes broadly:
 - how are reviewer-specific tool exposure and discovery controlled operationally?
 - what is the exact rollback mechanism for reverting all six reviewer Hubs to read-only mode?
 
-Until those answers are demonstrated in runtime behavior, the reviewer-specific Hubs should be treated as read-only evidence lanes with manual Airtable fallback for official state changes.
+Until those answers are demonstrated in runtime behavior, the reviewer-specific Hubs may use only the Phase A narrow reviewer-owned write lane; everything outside that lane must stay read-only/manual with Airtable fallback for official state changes.
