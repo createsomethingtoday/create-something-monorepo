@@ -1,0 +1,103 @@
+name = "calm-operator-ink-bridge"
+main = "src/index.ts"
+compatibility_date = "2026-04-28"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Production URL target. Keep this custom domain if the zone is in the account;
+# otherwise remove the route and use the workers.dev URL for the first deploy.
+[[routes]]
+pattern = "ink.createsomething.agency"
+custom_domain = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[triggers]
+crons = ["0 4,11,12,13,14,15,18,23 * * *"]
+
+[[durable_objects.bindings]]
+name = "INK_STATE"
+class_name = "InkState"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["InkState"]
+
+[vars]
+WORKSPACE_ID = "create-something"
+DEFAULT_DEVICE_ID = "core-ink"
+DEFAULT_SURFACE = "core-ink"
+HEALTH_STALE_AFTER_MS = "43200000"
+HEALTH_REVIEW_UTC_HOURS = "4,13,18,23"
+DAILY_ALARMS_CT = "06:00,09:00"
+ALARM_TTL_MS = "2700000"
+HEALTH_SELF_ORIGIN = "https://ink.createsomething.agency"
+HEALTH_SELF_CHECK_ENABLED = "false"
+HEALTH_CHECKS_JSON = """
+[
+  {
+    "id": "mcp.composio-toolkit",
+    "component": "Composio Toolkit MCP",
+    "type": "mcp",
+    "registry_id": "mcp.composio-toolkit",
+    "url": "https://composio-toolkit-mcp.createsomething.workers.dev/health",
+    "expected_status": 200,
+    "expected_text": "composio-toolkit-mcp",
+    "json_rules": [
+      { "path": "configured.composioApiKey", "equals": true },
+      { "path": "configured.authConfigMapEntries", "min": 1 }
+    ],
+    "action": "Review Composio auth config map and toolkit bridge"
+  },
+  {
+    "id": "mcp.loom-remote",
+    "component": "Loom Remote MCP",
+    "type": "mcp",
+    "registry_id": "mcp.loom-remote",
+    "url": "https://loom.mcp.createsomething.agency/health",
+    "expected_status": 200,
+    "expected_text": "loom-mcp",
+    "json_rules": [
+      { "path": "status", "equals": "ok" },
+      { "path": "counts.tasks", "min": 1 }
+    ],
+    "action": "Review remote Loom control plane"
+  },
+  {
+    "id": "mcp.create-something-content",
+    "component": "CREATE SOMETHING Content MCP",
+    "type": "mcp",
+    "registry_id": "mcp.create-something-content",
+    "url": "https://mcp.createsomething.ltd/health",
+    "expected_status": 200,
+    "expected_text": "create-something",
+    "json_rules": [
+      { "path": "content.papers", "min": 1 },
+      { "path": "content.graph_nodes", "min": 1 }
+    ],
+    "action": "Review CREATE SOMETHING content MCP deployment"
+  },
+  {
+    "id": "mcp.playbook",
+    "component": "Playbook MCP",
+    "type": "mcp",
+    "registry_id": "mcp.playbook",
+    "url": "https://playbook.mcp.createsomething.ltd/health",
+    "expected_status": 200,
+    "expected_text": "playbook",
+    "json_rules": [
+      { "path": "catalogEntries", "min": 1 },
+      { "path": "tools.length", "min": 1 }
+    ],
+    "action": "Review Playbook MCP deployment and Hub connection"
+  }
+]
+"""
+
+# Secrets required before production deploy:
+# - INK_DEVICE_TOKEN: Core Ink read/heartbeat/clear token
+# - INK_SOURCE_TOKEN: agent/MCP/source write token
+# Optional compatibility token:
+# - INK_BRIDGE_TOKEN: accepted for both device and source roles

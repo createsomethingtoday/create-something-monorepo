@@ -52,6 +52,8 @@
     "playbook": {
       "transport": "http",
       "url": "https://playbook.mcp.createsomething.ltd/mcp",
+      "connect_timeout_ms": 10000,
+      "list_tools_timeout_ms": 15000,
       "description": "Workflow playbooks MCP",
       "tags": [
         "core",
