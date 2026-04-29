@@ -8,6 +8,7 @@ The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is o
 
 - Store active operator alerts in a Durable Object.
 - Accept MCP/agent health snapshots and attention events.
+- Run a scheduled health review four times daily.
 - Accept Core Ink device heartbeat.
 - Return a compact `/ink/brief` response compatible with the firmware bridge contract.
 - Keep production content live-only. No mock carousel or fake workflow counts.
@@ -28,6 +29,8 @@ Token-gated:
 - `POST /ink/source-event`
 - `POST /ink/operator-event`
 - `POST /ink/health-snapshot`
+- `GET /ink/health-review`
+- `POST /ink/health-review/run`
 - `POST /ink/device-heartbeat`
 - `POST /ink/clear`
 
@@ -86,3 +89,61 @@ pnpm post:health -- --component "Claude Code Slack watcher" --status degraded --
 ```
 
 Both commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the environment.
+
+## Scheduled health review
+
+The Worker has a Cron Trigger:
+
+```toml
+[triggers]
+crons = ["0 4,13,18,23 * * *"]
+```
+
+Each run reviews stored health snapshots. If any agent/MCP check is poor or stale,
+the Worker writes a `health_attention` alert that Ink will display. If the report is
+clear, the Worker clears the synthetic health-review alert.
+
+You can run the review manually:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/health-review/run \
+  -X POST \
+  -H "authorization: Bearer $INK_SOURCE_TOKEN"
+```
+
+## Health-checked command wrapper
+
+Use the command wrapper when an agent, MCP review, Dify job, or local monitor should
+report its result to Ink. It runs the command, posts a health snapshot, and returns
+the command's original exit code so orchestration can still detect failures.
+
+```bash
+pnpm --dir packages/calm-operator-ink-bridge run:health-command \
+  --name "MCP review agent" \
+  --type agent \
+  --registry-id agent.mcp-review \
+  --artifact "reports/mcp-review.md" \
+  --action "Inspect the MCP review report" \
+  -- npm run mcp:review
+```
+
+Examples:
+
+```bash
+pnpm run:health-command \
+  --name "Dify client-agent sync" \
+  --type job \
+  --registry-id dify.client-agent-sync \
+  --action "Review failed Dify workflow run" \
+  -- pnpm dify:sync
+
+pnpm run:health-command \
+  --name "Hub MCP registry check" \
+  --type mcp \
+  --registry-id mcp.hub \
+  --action "Review MCP contract and tool scope" \
+  -- pnpm mcp:registry:review
+```
+
+The wrapper only records the command executable name, duration, exit code, registry
+id, artifact, and action. It intentionally does not store full command arguments.

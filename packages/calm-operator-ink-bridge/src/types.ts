@@ -27,10 +27,11 @@ export interface InkAlertInput {
   external_id?: string;
   urgent?: boolean;
   expires_at?: number | string;
+  ttl_ms?: number;
   payload?: Record<string, unknown>;
 }
 
-export interface StoredAlert extends Required<Omit<InkAlertInput, 'expires_at' | 'payload'>> {
+export interface StoredAlert extends Required<Omit<InkAlertInput, 'expires_at' | 'payload' | 'ttl_ms'>> {
   status: 'active' | 'cleared';
   created_at: number;
   updated_at: number;
@@ -100,4 +101,36 @@ export interface OperatorBrief {
   selected_alert?: StoredAlert;
   selected_health?: StoredHealthSnapshot;
   device?: StoredDeviceHeartbeat | null;
+}
+
+export interface HealthReviewItem {
+  id: string;
+  source: string;
+  component: string;
+  status: string;
+  summary: string;
+  detail: string;
+  severity: number;
+  observed_at: number;
+  updated_at: number;
+  age_ms: number;
+  stale: boolean;
+  poor: boolean;
+}
+
+export interface HealthReviewReport {
+  ok: true;
+  state: 'clear' | 'health_attention';
+  generated_at: string;
+  checked: number;
+  healthy_count: number;
+  poor_count: number;
+  stale_count: number;
+  stale_after_ms: number;
+  headline: string;
+  summary: string;
+  detail: string;
+  action: string;
+  urgent: boolean;
+  items: HealthReviewItem[];
 }

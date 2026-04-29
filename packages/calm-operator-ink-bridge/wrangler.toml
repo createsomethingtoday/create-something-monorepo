@@ -14,6 +14,9 @@ custom_domain = true
 enabled = true
 head_sampling_rate = 1
 
+[triggers]
+crons = ["0 4,13,18,23 * * *"]
+
 [[durable_objects.bindings]]
 name = "INK_STATE"
 class_name = "InkState"
@@ -26,6 +29,7 @@ new_sqlite_classes = ["InkState"]
 WORKSPACE_ID = "create-something"
 DEFAULT_DEVICE_ID = "core-ink"
 DEFAULT_SURFACE = "core-ink"
+HEALTH_STALE_AFTER_MS = "43200000"
 
 # Secrets required before production deploy:
 # - INK_DEVICE_TOKEN: Core Ink read/heartbeat/clear token

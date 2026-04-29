@@ -1,8 +1,10 @@
 import { DurableObject } from 'cloudflare:workers';
 import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { isAuthorized } from './auth.js';
+import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
 import type {
   DeviceHeartbeatInput,
+  HealthReviewReport,
   HealthSnapshotInput,
   InkAlertInput,
   OperatorEventInput,
@@ -16,6 +18,7 @@ interface Env {
   WORKSPACE_ID?: string;
   DEFAULT_DEVICE_ID?: string;
   DEFAULT_SURFACE?: string;
+  HEALTH_STALE_AFTER_MS?: string;
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
@@ -51,6 +54,12 @@ function defaultDeviceId(env: Env): string {
 
 function defaultSurface(env: Env): string {
   return env.DEFAULT_SURFACE?.trim() || 'core-ink';
+}
+
+function healthStaleAfterMs(env: Env): number {
+  const parsed = Number(env.HEALTH_STALE_AFTER_MS);
+  if (Number.isFinite(parsed) && parsed > 0) return Math.round(parsed);
+  return DEFAULT_HEALTH_STALE_AFTER_MS;
 }
 
 async function parseJsonBody<T>(request: Request): Promise<T> {
@@ -398,6 +407,63 @@ export class InkState extends DurableObject<Env> {
     return { ok: true, cleared: result.toArray().length, brief: this.brief('core-ink') };
   }
 
+  healthReview(staleAfterMs = DEFAULT_HEALTH_STALE_AFTER_MS): HealthReviewReport {
+    const health = this.ctx.storage.sql
+      .exec<Record<string, SqlStorageValue>>(
+        `SELECT * FROM health_snapshots
+         ORDER BY severity DESC, updated_at DESC
+         LIMIT 100`
+      )
+      .toArray()
+      .map(rowHealth);
+
+    return buildHealthReviewReport({ health, staleAfterMs });
+  }
+
+  runHealthReview(staleAfterMs = DEFAULT_HEALTH_STALE_AFTER_MS): {
+    ok: true;
+    report: HealthReviewReport;
+    alert?: StoredAlert;
+    cleared?: number;
+    brief: ReturnType<typeof buildOperatorBrief>;
+  } {
+    const report = this.healthReview(staleAfterMs);
+    const alertId = 'health-review:create-something';
+
+    if (report.state === 'health_attention') {
+      const result = this.addAlert({
+        id: alertId,
+        state: 'health_attention',
+        category: 'health',
+        severity: report.urgent ? 85 : 75,
+        subject: 'CREATE SOMETHING health',
+        reason: report.summary,
+        detail: report.detail,
+        action: report.action,
+        source: 'calm-operator-health-review',
+        external_id: 'scheduled-health-review',
+        urgent: report.urgent,
+        ttl_ms: staleAfterMs,
+        payload: { report }
+      });
+
+      return { ok: true, report, alert: result.alert, brief: result.brief };
+    }
+
+    const cleared = this.ctx.storage.sql
+      .exec<Record<string, SqlStorageValue>>(
+        `UPDATE alerts
+         SET status = 'cleared', updated_at = ?
+         WHERE id = ? AND status = 'active'
+         RETURNING 1 AS count`,
+        Date.now(),
+        alertId
+      )
+      .toArray().length;
+
+    return { ok: true, report, cleared, brief: this.brief('core-ink') };
+  }
+
   device(deviceId: string): StoredDeviceHeartbeat | null {
     const row = this.ctx.storage.sql
       .exec<Record<string, SqlStorageValue>>(
@@ -469,6 +535,8 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /ink/surface-brief',
         'POST /ink/alert',
         'POST /ink/health-snapshot',
+        'GET /ink/health-review',
+        'POST /ink/health-review/run',
         'POST /ink/device-heartbeat',
         'POST /ink/clear'
       ]
@@ -510,6 +578,14 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json(await stub.setHealthSnapshot(body));
   }
 
+  if (method === 'GET' && path === '/ink/health-review') {
+    return json(await stub.healthReview(healthStaleAfterMs(env)));
+  }
+
+  if (method === 'POST' && path === '/ink/health-review/run') {
+    return json(await stub.runHealthReview(healthStaleAfterMs(env)));
+  }
+
   if (method === 'POST' && (path === '/ink/source-event' || path === '/ink/operator-event')) {
     const body = await parseJsonBody<OperatorEventInput>(request);
     return json(await stub.recordEvent(body));
@@ -537,5 +613,18 @@ export default {
       console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));
       return json({ ok: false, error: message }, { status: 500 });
     }
+  },
+
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      (async () => {
+        try {
+          await stateStub(env).runHealthReview(healthStaleAfterMs(env));
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));
+        }
+      })()
+    );
   }
 };
