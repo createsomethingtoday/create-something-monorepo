@@ -32,7 +32,80 @@ DEFAULT_SURFACE = "core-ink"
 HEALTH_STALE_AFTER_MS = "43200000"
 HEALTH_SELF_ORIGIN = "https://ink.createsomething.agency"
 HEALTH_SELF_CHECK_ENABLED = "false"
-HEALTH_CHECKS_JSON = "[]"
+HEALTH_CHECKS_JSON = """
+[
+  {
+    "id": "mcp.create-something-hub",
+    "component": "CREATE SOMETHING Hub MCP",
+    "type": "mcp",
+    "registry_id": "mcp.create-something-hub",
+    "url": "https://cs-mcp-hub-remote.createsomething.workers.dev/health",
+    "expected_status": 200,
+    "expected_text": "create-something-hub-remote",
+    "json_rules": [
+      { "path": "failed_servers.length", "max": 0 },
+      { "path": "connected_servers.length", "min": 10 }
+    ],
+    "action": "Review Hub downstream MCP connectivity and policy state"
+  },
+  {
+    "id": "mcp.composio-toolkit",
+    "component": "Composio Toolkit MCP",
+    "type": "mcp",
+    "registry_id": "mcp.composio-toolkit",
+    "url": "https://composio-toolkit-mcp.createsomething.workers.dev/health",
+    "expected_status": 200,
+    "expected_text": "composio-toolkit-mcp",
+    "json_rules": [
+      { "path": "configured.composioApiKey", "equals": true },
+      { "path": "configured.authConfigMapEntries", "min": 1 }
+    ],
+    "action": "Review Composio auth config map and toolkit bridge"
+  },
+  {
+    "id": "mcp.loom-remote",
+    "component": "Loom Remote MCP",
+    "type": "mcp",
+    "registry_id": "mcp.loom-remote",
+    "url": "https://loom.mcp.createsomething.agency/health",
+    "expected_status": 200,
+    "expected_text": "loom-mcp",
+    "json_rules": [
+      { "path": "status", "equals": "ok" },
+      { "path": "counts.tasks", "min": 1 }
+    ],
+    "action": "Review remote Loom control plane"
+  },
+  {
+    "id": "mcp.create-something-content",
+    "component": "CREATE SOMETHING Content MCP",
+    "type": "mcp",
+    "registry_id": "mcp.create-something-content",
+    "url": "https://mcp.createsomething.ltd/health",
+    "expected_status": 200,
+    "expected_text": "create-something",
+    "json_rules": [
+      { "path": "content.papers", "min": 1 },
+      { "path": "content.graph_nodes", "min": 1 }
+    ],
+    "action": "Review CREATE SOMETHING content MCP deployment"
+  },
+  {
+    "id": "mcp.playbook",
+    "component": "Playbook MCP",
+    "type": "mcp",
+    "registry_id": "mcp.playbook",
+    "url": "https://playbook.mcp.createsomething.ltd/health",
+    "expected_status": 200,
+    "expected_text": "playbook",
+    "json_rules": [
+      { "path": "catalogEntries", "min": 1 },
+      { "path": "tools.length", "min": 1 }
+    ],
+    "action": "Review Playbook MCP deployment and Hub connection"
+  }
+]
+"""
 
 # Secrets required before production deploy:
 # - INK_DEVICE_TOKEN: Core Ink read/heartbeat/clear token

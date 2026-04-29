@@ -1,4 +1,9 @@
-import type { HealthSnapshotInput, RemoteHealthCheckConfig, RemoteHealthCheckResult } from './types.js';
+import type {
+  HealthSnapshotInput,
+  RemoteHealthCheckConfig,
+  RemoteHealthCheckResult,
+  RemoteHealthJsonRule
+} from './types.js';
 
 interface RemoteHealthEnv {
   HEALTH_CHECKS_JSON?: string;
@@ -87,6 +92,76 @@ function tokenFor(check: RemoteHealthCheckConfig, env: RemoteHealthEnv): string 
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+function pathValue(input: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((value, segment) => {
+    if (segment === 'length') {
+      if (Array.isArray(value) || typeof value === 'string') return value.length;
+      return undefined;
+    }
+    if (value && typeof value === 'object') {
+      return (value as Record<string, unknown>)[segment];
+    }
+    return undefined;
+  }, input);
+}
+
+function numericValue(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value);
+  return null;
+}
+
+function valueLabel(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value);
+  if (value === undefined) return 'missing';
+  if (Array.isArray(value)) return `array(${value.length})`;
+  return 'object';
+}
+
+function ruleFailure(rule: RemoteHealthJsonRule, document: unknown): string | null {
+  const value = pathValue(document, rule.path);
+  if ('equals' in rule && value !== rule.equals) {
+    return `${rule.path} expected ${valueLabel(rule.equals)} got ${valueLabel(value)}`;
+  }
+  if (rule.truthy && !value) {
+    return `${rule.path} expected truthy got ${valueLabel(value)}`;
+  }
+  if (typeof rule.includes === 'string') {
+    const text = typeof value === 'string' ? value : JSON.stringify(value);
+    if (!text?.includes(rule.includes)) {
+      return `${rule.path} expected to include ${rule.includes}`;
+    }
+  }
+
+  const numeric = numericValue(value);
+  if (typeof rule.min === 'number' && (numeric === null || numeric < rule.min)) {
+    return `${rule.path} expected >= ${rule.min} got ${valueLabel(value)}`;
+  }
+  if (typeof rule.max === 'number' && (numeric === null || numeric > rule.max)) {
+    return `${rule.path} expected <= ${rule.max} got ${valueLabel(value)}`;
+  }
+
+  return null;
+}
+
+function jsonRuleFailures(check: RemoteHealthCheckConfig, body: string): string[] {
+  if (!check.json_rules?.length) return [];
+  const document = parseJson(body);
+  if (document === undefined) return ['response body is not valid JSON'];
+  return check.json_rules
+    .map((rule) => ruleFailure(rule, document))
+    .filter((failure): failure is string => Boolean(failure));
+}
+
 function snapshotFor(input: {
   check: RemoteHealthCheckConfig;
   status: string;
@@ -116,6 +191,7 @@ function snapshotFor(input: {
       url: redactedUrl(check.url),
       expected_status: check.expected_status ?? 200,
       expected_text: check.expected_text ?? '',
+      json_rules: check.json_rules ?? [],
       http_status: input.httpStatus ?? null,
       duration_ms: input.durationMs ?? null
     }
@@ -146,13 +222,17 @@ export async function runRemoteHealthCheck(
     const expectedStatus = check.expected_status ?? 200;
     const statusOk = response.status === expectedStatus;
     const textOk = check.expected_text ? body.includes(check.expected_text) : true;
-    const ok = statusOk && textOk;
+    const failures = jsonRuleFailures(check, body);
+    const ok = statusOk && textOk && failures.length === 0;
     const summary = ok
       ? `${check.component} healthy`
       : `${check.component} failed remote health check`;
     const detail = ok
       ? `HTTP ${response.status} matched expected health response.`
-      : `HTTP ${response.status}; expected ${expectedStatus}${check.expected_text ? ' and expected text.' : '.'}`;
+      : [
+          `HTTP ${response.status}; expected ${expectedStatus}${check.expected_text ? ' and expected text' : ''}.`,
+          ...failures
+        ].join(' ');
 
     return {
       ok,

@@ -131,6 +131,10 @@ Configure remote checks with `HEALTH_CHECKS_JSON`:
     "url": "https://hub.example.com/healthz",
     "expected_status": 200,
     "expected_text": "ok",
+    "json_rules": [
+      { "path": "failed_servers.length", "max": 0 },
+      { "path": "connected_servers.length", "min": 1 }
+    ],
     "token_env": "HUB_HEALTH_TOKEN",
     "action": "Review Hub MCP deployment and token scope"
   }
@@ -140,6 +144,10 @@ Configure remote checks with `HEALTH_CHECKS_JSON`:
 If `token_env` is set, the Worker reads that environment variable or secret and
 sends it as a Bearer token. Health payloads redact query strings and never store
 token values.
+
+`json_rules` are optional semantic checks against the JSON response. Paths use
+dot notation and support `.length` for arrays or strings. Supported assertions
+are `equals`, `min`, `max`, `includes`, and `truthy`.
 
 Self-checking the Worker through its own custom domain is disabled by default
 because same-zone edge fetches can produce false positives. Keep route health

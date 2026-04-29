@@ -61,10 +61,20 @@ export interface RemoteHealthCheckConfig {
   registry_id?: string;
   expected_status?: number;
   expected_text?: string;
+  json_rules?: RemoteHealthJsonRule[];
   timeout_ms?: number;
   severity?: number;
   token_env?: string;
   action?: string;
+}
+
+export interface RemoteHealthJsonRule {
+  path: string;
+  equals?: string | number | boolean | null;
+  min?: number;
+  max?: number;
+  includes?: string;
+  truthy?: boolean;
 }
 
 export interface RemoteHealthCheckResult {

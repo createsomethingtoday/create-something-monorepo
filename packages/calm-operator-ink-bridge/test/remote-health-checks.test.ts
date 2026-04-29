@@ -89,6 +89,54 @@ test('builds a failed snapshot from an unexpected HTTP check', async () => {
   assert.equal(result.snapshot.payload?.url, 'https://hub.example.test/healthz');
 });
 
+test('fails semantic JSON rules for unhealthy MCP health payloads', async () => {
+  const result = await runRemoteHealthCheck(
+    {
+      component: 'CREATE SOMETHING Hub MCP',
+      url: 'https://hub.example.test/health',
+      expected_status: 200,
+      json_rules: [
+        { path: 'failed_servers.length', max: 0 },
+        { path: 'connected_servers.length', min: 2 }
+      ]
+    },
+    {},
+    async () => new Response(JSON.stringify({
+      connected_servers: [{ name: 'gmail' }],
+      failed_servers: [{ name: 'playbook' }]
+    }), { status: 200 }),
+    1000
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(result.snapshot.status, 'failed');
+  assert.match(result.snapshot.detail ?? '', /failed_servers\.length/);
+  assert.match(result.snapshot.detail ?? '', /connected_servers\.length/);
+});
+
+test('passes semantic JSON rules for healthy MCP health payloads', async () => {
+  const result = await runRemoteHealthCheck(
+    {
+      component: 'CREATE SOMETHING Hub MCP',
+      url: 'https://hub.example.test/health',
+      expected_status: 200,
+      json_rules: [
+        { path: 'failed_servers.length', max: 0 },
+        { path: 'connected_servers.length', min: 2 }
+      ]
+    },
+    {},
+    async () => new Response(JSON.stringify({
+      connected_servers: [{ name: 'gmail' }, { name: 'notion' }],
+      failed_servers: []
+    }), { status: 200 }),
+    1000
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.snapshot.status, 'healthy');
+});
+
 test('collects configured checks with authorization from token env', async () => {
   const seenHeaders = [];
   const results = await collectRemoteHealthChecks(
