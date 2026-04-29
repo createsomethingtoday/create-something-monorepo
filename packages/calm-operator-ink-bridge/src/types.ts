@@ -149,6 +149,7 @@ export interface HealthReviewItem {
   age_ms: number;
   stale: boolean;
   poor: boolean;
+  payload: Record<string, unknown>;
 }
 
 export interface HealthReviewReport {

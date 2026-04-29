@@ -186,6 +186,10 @@ because same-zone edge fetches can produce false positives. Keep route health
 smokes external, or explicitly set `HEALTH_SELF_CHECK_ENABLED=true` only if the
 chosen `HEALTH_SELF_ORIGIN` is known to work from Workers.
 
+Keep remote checks lightweight. Deep MCP Hub connection reviews should be posted
+as health snapshots by the MCP review agent instead of making the bridge fetch a
+full downstream Hub health endpoint on every Ink review.
+
 List configured checks:
 
 ```bash

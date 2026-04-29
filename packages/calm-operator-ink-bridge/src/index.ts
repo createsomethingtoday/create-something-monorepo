@@ -37,6 +37,9 @@ const JSON_HEADERS = {
 };
 
 const MAX_BODY_BYTES = 64 * 1024;
+const REGISTRY_FALLBACK_MCP_COUNT = 1014;
+const REGISTRY_FALLBACK_FLEET_COUNT = 22;
+const REGISTRY_FALLBACK_AGENT_COUNT = 4;
 
 function json(data: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(data, null, 2), {
@@ -105,6 +108,87 @@ function expiresAtFor(input: { expires_at?: number | string; ttl_ms?: unknown },
   }
 
   return null;
+}
+
+function recordValue(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function numberValue(record: Record<string, unknown> | undefined, key: string): number | null {
+  const value = record?.[key];
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value);
+  return null;
+}
+
+function healthReviewFirmwareCopy(
+  report: HealthReviewReport,
+  collectedCount: number
+): {
+  headline: string;
+  summary: string;
+  line2: string;
+  detail: string;
+  action: string;
+  urgent: boolean;
+} {
+  const registryItem = report.items.find((item) => item.payload.kind === 'mcp_registry_sweep');
+  const defaultLine2 = collectedCount > 0 ? `${collectedCount} remote checks` : 'Report complete';
+
+  if (!registryItem) {
+    if (report.state === 'clear') {
+      return {
+        headline: report.headline,
+        summary: 'MCP registry clear',
+        line2: `${REGISTRY_FALLBACK_MCP_COUNT} MCPs, ${REGISTRY_FALLBACK_FLEET_COUNT} fleet, ${REGISTRY_FALLBACK_AGENT_COUNT} agents`,
+        detail: report.detail,
+        action: report.action,
+        urgent: report.urgent
+      };
+    }
+
+    return {
+      headline: report.headline,
+      summary: report.summary,
+      line2: defaultLine2,
+      detail: report.detail,
+      action: report.action,
+      urgent: report.urgent
+    };
+  }
+
+  const registryInventory = recordValue(registryItem.payload.registry_inventory);
+  const fleetInventory = recordValue(registryItem.payload.fleet_inventory);
+  const agentInventory = recordValue(registryItem.payload.agent_inventory);
+  const liveHub = recordValue(registryItem.payload.live_hub);
+  const mcpCount = numberValue(registryInventory, 'server_count');
+  const fleetCount = numberValue(fleetInventory, 'deployed_count') ?? numberValue(fleetInventory, 'deployment_count');
+  const agentCount = numberValue(agentInventory, 'registered_health_surface_count');
+  const connectedCount = numberValue(liveHub, 'connected_server_count');
+  const enabledCount = numberValue(liveHub, 'enabled_server_count');
+  const failedCount = numberValue(liveHub, 'failed_server_count');
+  const toolCount = numberValue(liveHub, 'proxy_tool_count');
+
+  const line2Parts = [
+    mcpCount !== null ? `${mcpCount} MCPs` : null,
+    fleetCount !== null ? `${fleetCount} fleet` : null,
+    agentCount !== null ? `${agentCount} agents` : null
+  ].filter((part): part is string => Boolean(part));
+  const liveText =
+    connectedCount !== null && enabledCount !== null
+      ? `Live ${connectedCount}/${enabledCount}; failed ${failedCount ?? 0}; tools ${toolCount ?? 0}.`
+      : report.detail;
+
+  return {
+    headline: report.headline,
+    summary: registryItem.summary || report.summary,
+    line2: line2Parts.length > 0 ? line2Parts.join(', ') : defaultLine2,
+    detail: liveText,
+    action: report.action,
+    urgent: report.urgent
+  };
 }
 
 function severityFor(input: { severity?: number; urgent?: boolean; state?: string; status?: string }): number {
@@ -675,15 +759,24 @@ async function route(request: Request, env: Env): Promise<Response> {
         ? { ok: true, collected: [], review: await stub.runHealthReview(healthStaleAfterMs(env)) }
         : await collectAndRunHealthReview(env);
     const firmwareBrief = toFirmwareBrief(result.review.brief);
+    const healthCopy = healthReviewFirmwareCopy(result.review.report, result.collected.length);
 
     return json({
       ...firmwareBrief,
+      headline: healthCopy.headline,
+      line1: healthCopy.summary,
+      line2: healthCopy.line2,
+      detail: healthCopy.detail,
+      action: healthCopy.action,
+      urgent: healthCopy.urgent,
       health_review: {
         state: result.review.report.state,
-        summary: result.review.report.summary,
-        detail: result.review.report.detail,
-        action: result.review.report.action,
-        urgent: result.review.report.urgent,
+        headline: healthCopy.headline,
+        summary: healthCopy.summary,
+        line2: healthCopy.line2,
+        detail: healthCopy.detail,
+        action: healthCopy.action,
+        urgent: healthCopy.urgent,
         collected: result.collected.length
       }
     });

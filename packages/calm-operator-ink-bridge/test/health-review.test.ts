@@ -34,6 +34,40 @@ test('builds a clear health review report when checks are healthy', () => {
   assert.equal(report.stale_count, 0);
 });
 
+test('uses registry sweep inventory for clear health review copy', () => {
+  const report = buildHealthReviewReport({
+    health: [
+      health({
+        id: 'agent.create-something.mcp-registry-sweep',
+        component: 'CREATE SOMETHING MCP Registry Sweep',
+        summary: 'MCP registry clear',
+        detail: 'Registry sweep clear',
+        updated_at: 950,
+        payload: {
+          kind: 'mcp_registry_sweep',
+          registry_inventory: { server_count: 1014 },
+          fleet_inventory: { deployed_count: 22 },
+          agent_inventory: { registered_health_surface_count: 4 },
+          live_hub: {
+            enabled_server_count: 13,
+            connected_server_count: 13,
+            failed_server_count: 0,
+            proxy_tool_count: 914
+          }
+        }
+      })
+    ],
+    now: 1000,
+    staleAfterMs: 1000
+  });
+
+  assert.equal(report.state, 'clear');
+  assert.match(report.summary, /1014 MCPs/);
+  assert.match(report.summary, /22 fleet/);
+  assert.match(report.detail, /13\/13 connected/);
+  assert.match(report.detail, /914 tools/);
+});
+
 test('marks poor health checks as attention-worthy', () => {
   const report = buildHealthReviewReport({
     health: [
