@@ -41,6 +41,14 @@ pnpm mcp:registry:check
 pnpm mcp:registry:generate
 ```
 
+## Registry Snapshots
+
+Update snapshots from source artifacts, not by editing generated files directly:
+
+1. Edit `config/mcp-hub/registry.json` for MCP servers and bundles.
+2. Run `pnpm mcp:registry:generate` to refresh `packages/playbook-mcp/src/catalog.registry.generated.ts` and `docs/MCP_FLEET_REGISTRY.generated.md`.
+3. Run `infisical run --env=prod --path=/ --include-imports=true -- pnpm linear:registry:sync -- --team CRE` when the dated Linear MCP and agent registry snapshot issues should be created or refreshed.
+
 ## Codex Configuration
 
 Recommended: keep only the hub enabled in project config.

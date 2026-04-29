@@ -3,7 +3,7 @@
 > Auto-generated from `config/mcp-hub/registry.json`.
 > Regenerate with `pnpm mcp:registry:generate`.
 
-## Active (1008)
+## Active (1009)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -991,8 +991,8 @@
 | `composio-toolkit-zulip` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zulip` | `brokered` | `100` | `composio`, `composio-team-chat`, `composio-team-collaboration`, `toolkit` |
 | `composio-toolkit-zylvie` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zylvie` | `brokered` | `100` | `composio`, `composio-ecommerce`, `composio-payment-processing`, `toolkit` |
 | `composio-toolkit-zyte_api` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zyte_api` | `brokered` | `100` | `composio`, `composio-ai-web-scraping`, `composio-developer-tools`, `toolkit` |
-| `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `0` | `core`, `content`, `cs`, `policy_os_only` |
-| `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `observability`, `telemetry`, `cs`, `policy_os_only` |
+| `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `10` | `core`, `content`, `cs`, `policy_os_only` |
+| `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `observability`, `telemetry`, `cs`, `policy_os_only` |
 | `half-dozen-youtube-sync` | `http` | `https://youtube.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `youtube`, `workway` |
 | `halfdozen-dm-mcp` | `http` | `https://dm.mcp.workway.co/mcp` | `brokered` | `100` | `halfdozen`, `dm`, `notion`, `drive`, `composio`, `workway` |
 | `halfdozen-gmail-sync-danny` | `http` | `https://gmail.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `gmail`, `workway` |
@@ -1013,7 +1013,8 @@
 | `substrate-mcp` | `http` | `https://substrate.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `automation`, `cs`, `policy_os_only` |
 | `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `direct` | `0` | `core`, `framework`, `cs`, `policy_os_only` |
 | `webflow-app-review-mcp` | `http` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `apps`, `cs` |
-| `webflow-site-analyzer-mcp` | `http` | `https://analyzer.mcp.createsomething.agency/mcp` | `direct` | `0` | `webflow`, `review`, `analyzer`, `browser`, `cs` |
+| `webflow-local` | `http` | `https://webflow-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `webflow`, `review`, `plagiarism`, `frameworks`, `cs` |
+| `webflow-site-analyzer-mcp` | `http` | `https://analyzer.mcp.createsomething.agency/mcp` | `direct` | `22` | `webflow`, `review`, `analyzer`, `browser`, `cs` |
 | `webflow-template-review-mcp` | `http` | `https://webflow-template-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `templates`, `cs` |
 
 ## Dormant (3)
@@ -1024,12 +1025,11 @@
 | `notion-sync-mcp` | `http` | `https://notion-sync-mcp-worker.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
 | `slack_webflow` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `webflow` |
 
-## Local (2)
+## Local (1)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
 | `lsmcp` | `stdio` | `npx -y @mizchi/lsmcp mcp` | `direct` | `0` | `local`, `dev`, `filesystem` |
-| `webflow-local` | `stdio` | `node ./packages/webflow-mcp/dist/index.js` | `direct` | `0` | `local`, `dev`, `webflow` |
 
 ## Bundles
 
