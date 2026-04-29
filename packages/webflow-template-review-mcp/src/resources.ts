@@ -105,6 +105,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Call template_review_assign_self with that version_id.',
           'Call template_review_get_review_context with the same version_id.',
           'Use template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes for narrow reviewer-safe writes while the version remains assigned to the current reviewer.',
+          'Use template_review_approve_version, template_review_reject_version, or template_review_complete_publishing only after the version is assigned to the current reviewer.',
           'Call template_review_my_queue to resume work already assigned to the current reviewer.',
           'Call template_review_unassign_self if the reviewer intentionally wants to release the version back to the shared queue.',
         ],
@@ -115,6 +116,9 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             'template_review_set_review_status',
             'template_review_save_draft_feedback',
             'template_review_request_changes',
+            'template_review_approve_version',
+            'template_review_reject_version',
+            'template_review_complete_publishing',
           ],
           queueDefaults: {
             status: 'ready_to_review',

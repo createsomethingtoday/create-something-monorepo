@@ -272,6 +272,21 @@ const QUEUE_VERSION_FIELD_NAMES = [
   CONFIRMED_VERSION_FIELDS.decisionDate,
 ] as const;
 
+const VERSION_QUEUE_STATUS_OPTIONS: Record<Exclude<TemplateReviewQueueStatus, 'published'>, readonly string[]> = {
+  ready_to_review: ['🆕Ready for Review'],
+  in_review: ['🏃🏾In Review', '👀Admin Feedback Review'],
+  changes_requested: ['📤Changes Requested', '🔁Response to Review'],
+  approved: ['✅Approved'],
+};
+
+const ASSET_QUEUE_STATUS_PATTERNS: Record<TemplateReviewQueueStatus, readonly string[]> = {
+  ready_to_review: ['ready'],
+  in_review: ['in review'],
+  changes_requested: ['changes requested', 'response to review'],
+  approved: ['approved'],
+  published: ['published', 'live'],
+};
+
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
 }
@@ -449,6 +464,9 @@ function normalizeQueueStatus(
   asset: Pick<TemplateReviewAsset, 'latestReviewStatus' | 'marketplaceStatus'>,
   version?: TemplateReviewVersion | null,
 ): TemplateReviewQueueStatus | null {
+  const marketplaceStatus = normalizeQueueStatusLabel(asset.marketplaceStatus);
+  if (marketplaceStatus === 'published') return 'published';
+
   const candidates = [
     version?.reviewStatus,
     asset.latestReviewStatus,
@@ -456,13 +474,20 @@ function normalizeQueueStatus(
   ].filter((value): value is string => Boolean(value));
 
   for (const candidate of candidates) {
-    if (/ready/i.test(candidate)) return 'ready_to_review';
-    if (/in review/i.test(candidate)) return 'in_review';
-    if (/changes requested|response to review/i.test(candidate)) return 'changes_requested';
-    if (/approved/i.test(candidate)) return 'approved';
-    if (/published|live/i.test(candidate)) return 'published';
+    const normalized = normalizeQueueStatusLabel(candidate);
+    if (normalized) return normalized;
   }
 
+  return null;
+}
+
+function normalizeQueueStatusLabel(value?: string): TemplateReviewQueueStatus | null {
+  if (!value) return null;
+  if (/published|live/i.test(value)) return 'published';
+  if (/approved/i.test(value)) return 'approved';
+  if (/changes requested|response to review/i.test(value)) return 'changes_requested';
+  if (/in review/i.test(value)) return 'in_review';
+  if (/ready/i.test(value)) return 'ready_to_review';
   return null;
 }
 
@@ -495,10 +520,65 @@ function myQueueScanLimit(limit?: number): number {
   return Math.min(Math.max(requested * 5, 100), 500);
 }
 
+function queueVersionScanLimit(limit?: number): number | undefined {
+  if (!limit) return undefined;
+  const requested = Math.max(limit, 1);
+  return Math.min(Math.max(requested * 5, 100), 1000);
+}
+
 function recordIdsFormula(ids: string[]): string {
   if (ids.length === 0) return 'FALSE()';
   const clauses = ids.map((id) => `RECORD_ID() = '${escapeFormulaValue(id)}'`);
   return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
+}
+
+function andFormula(parts: Array<string | null | undefined>): string | undefined {
+  const filtered = parts.filter((part): part is string => Boolean(part));
+  if (filtered.length === 0) return undefined;
+  return filtered.length === 1 ? filtered[0] : `AND(${filtered.join(', ')})`;
+}
+
+function containsLowerFormula(fieldName: string, value: string): string {
+  return `FIND(LOWER("${escapeFormulaStringValue(value)}"), LOWER({${fieldName}} & "")) > 0`;
+}
+
+function assetStatusFormula(status: TemplateReviewQueueStatus): string {
+  const clauses = ASSET_QUEUE_STATUS_PATTERNS[status].flatMap((pattern) => [
+    containsLowerFormula(CONFIRMED_ASSET_FIELDS.latestReviewStatus, pattern),
+    containsLowerFormula(CONFIRMED_ASSET_FIELDS.marketplaceStatus, pattern),
+  ]);
+  return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
+}
+
+function versionStatusFormula(status?: TemplateReviewQueueStatus): string | null {
+  if (!status || status === 'published') return null;
+  const statuses = VERSION_QUEUE_STATUS_OPTIONS[status];
+  const clauses = statuses.map((value) => `{${CONFIRMED_VERSION_FIELDS.reviewStatus}} = '${escapeFormulaValue(value)}'`);
+  return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
+}
+
+function versionAssignmentFormula(query: TemplateReviewQueueQuery): string | null {
+  if (query.onlyAssignedToCurrentReviewer && query.currentReviewer) {
+    return reviewerLookupFormula(CONFIRMED_VERSION_FIELDS.reviewOwner, query.currentReviewer);
+  }
+
+  if (query.assigned === 'assigned') {
+    return `LEN(TRIM(ARRAYJOIN({${CONFIRMED_VERSION_FIELDS.reviewOwner}}) & "")) > 0`;
+  }
+
+  if (query.assigned === 'unassigned') {
+    return `LEN(TRIM(ARRAYJOIN({${CONFIRMED_VERSION_FIELDS.reviewOwner}}) & "")) = 0`;
+  }
+
+  return null;
+}
+
+function shouldUseVersionFirstQueue(query: TemplateReviewQueueQuery): boolean {
+  return Boolean(
+    query.onlyAssignedToCurrentReviewer ||
+      (query.assigned && query.assigned !== 'any') ||
+      (query.status && query.status !== 'published'),
+  );
 }
 
 function reviewerLookupFormula(fieldName: string, reviewer: CollaboratorRef): string {
@@ -753,6 +833,7 @@ export class AirtableClient {
   async listAssetQueue(
     limit = 100,
     options?: {
+      filterByFormula?: string;
       sortField?: string;
       sortDirection?: 'asc' | 'desc';
     },
@@ -760,7 +841,7 @@ export class AirtableClient {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
       limit,
-      filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
+      filterByFormula: options?.filterByFormula ?? `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
       sortField: options?.sortField,
       sortDirection: options?.sortDirection,
     });
@@ -774,7 +855,44 @@ export class AirtableClient {
     const limit = query.limit ?? 100;
     const sort = query.sort ?? 'submittedDate_desc';
     const airtableSort = queueSortToAirtableSort(sort);
+
+    if (shouldUseVersionFirstQueue(query)) {
+      const versions = await this.listQueueVersions(query, queueVersionScanLimit(query.limit));
+      const versionsByAsset = new Map<string, TemplateReviewVersion[]>();
+      for (const version of versions) {
+        if (!version.assetId) continue;
+        const assetVersions = versionsByAsset.get(version.assetId) ?? [];
+        assetVersions.push(version);
+        versionsByAsset.set(version.assetId, assetVersions);
+      }
+
+      const assetsById = await this.listAssetsByIds([...versionsByAsset.keys()]);
+      const items: TemplateReviewQueueItem[] = [];
+
+      for (const [assetId, versionsForAsset] of versionsByAsset) {
+        const asset = assetsById.get(assetId);
+        if (!asset) continue;
+
+        const selectedVersion = selectQueueVersion(asset, versionsForAsset, query);
+        const item = toQueueItem(asset, selectedVersion, query);
+        if (queueItemMatchesQuery(item, query)) {
+          items.push(item);
+        }
+      }
+
+      const sorted = sortQueueItems(items, sort);
+      return {
+        sortApplied: sort,
+        items: query.limit ? sorted.slice(0, query.limit) : sorted,
+      };
+    }
+
+    const filterByFormula = andFormula([
+      `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
+      query.status ? assetStatusFormula(query.status) : null,
+    ]);
     const assets = await this.listAssetQueue(limit, {
+      filterByFormula,
       sortField: airtableSort.field,
       sortDirection: airtableSort.direction,
     });
@@ -792,6 +910,22 @@ export class AirtableClient {
       sortApplied: sort,
       items: sortQueueItems(filtered, sort),
     };
+  }
+
+  private async listQueueVersions(query: TemplateReviewQueueQuery, limit?: number): Promise<TemplateReviewVersion[]> {
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assetVersions,
+      fieldNames: [...QUEUE_VERSION_FIELD_NAMES],
+      limit,
+      filterByFormula: andFormula([
+        versionStatusFormula(query.status),
+        versionAssignmentFormula(query),
+      ]),
+      sortField: CONFIRMED_VERSION_FIELDS.submissionDatetime,
+      sortDirection: 'desc',
+    });
+
+    return records.map((record) => mapVersion(record));
   }
 
   private async listAssetsByIds(assetIds: string[]): Promise<Map<string, TemplateReviewAsset>> {
@@ -908,7 +1042,6 @@ export class AirtableClient {
         METRICS_ASSET_FIELD_IDS.decisionDate,
       ],
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
-      limit: 1000,
       // Metrics reads use field ids so display-name drift does not break the analytics path.
       returnFieldsByFieldId: true,
     });

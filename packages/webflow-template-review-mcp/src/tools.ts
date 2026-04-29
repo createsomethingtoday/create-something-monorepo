@@ -100,6 +100,31 @@ function reviewerPayload(reviewer: ReviewerProfile) {
   };
 }
 
+function reviewOwnerInputId(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string') {
+    return (value as { id: string }).id;
+  }
+  return undefined;
+}
+
+function assertReviewerScopedReviewOwner(value: unknown, reviewer: ReviewerProfile): void {
+  const ownerId = reviewOwnerInputId(value);
+  if (ownerId === undefined) return;
+  if (ownerId === reviewer.airtableCollaboratorId) return;
+  throw new AirtableClientError(
+    'REVIEWER_WRITE_SCOPE_VIOLATION',
+    'Reviewer-scoped writes may not assign or clear another reviewer. Use assign_self or unassign_self.',
+    403,
+    {
+      requested_review_owner: ownerId,
+      current_reviewer_id: reviewer.airtableCollaboratorId,
+    },
+  );
+}
+
 export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
   server.tool(
     'template_review_workflow',
@@ -522,6 +547,21 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ version_id, review_owner }) => {
       try {
+        const reviewer = getReviewer();
+        if (reviewer) {
+          assertReviewerScopedReviewOwner(review_owner, reviewer);
+          const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+          const updated =
+            review_owner === null
+              ? await getClient().unassignVersionReviewer(version_id, actingReviewer)
+              : await getClient().assignSelfToVersion(version_id, actingReviewer);
+          return asSuccess({
+            reviewer: reviewerPayload(reviewer),
+            acting_reviewer: actingReviewer,
+            updated_version: updated,
+          });
+        }
+
         return asSuccess({
           updated_version: await getClient().assignVersionReviewer(version_id, {
             review_owner,
@@ -554,7 +594,12 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           );
         }
 
-        const result = await getClient().completePublishing(version_id, {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        const client = getClient();
+        await client.requireAssignedVersion(version_id, actingReviewer);
+
+        const result = await client.completePublishing(version_id, {
           release_record_id,
           release_date_local,
           time_zone,
@@ -563,6 +608,8 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         });
 
         return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
           updated_version: result.updatedVersion,
           updated_asset: result.updatedAsset,
           resolved_release: result.resolvedRelease,
@@ -649,7 +696,20 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       rejection_feedback,
     }) => {
       try {
+        const reviewer = getReviewer();
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        if (reviewer) {
+          assertReviewerScopedReviewOwner(review_owner, reviewer);
+          await getClient().requireAssignedVersion(version_id, actingReviewer);
+        }
+
         return asSuccess({
+          ...(reviewer
+            ? {
+                reviewer: reviewerPayload(reviewer),
+                acting_reviewer: actingReviewer,
+              }
+            : {}),
           updated_version: await getClient().updateVersionReview(version_id, {
             review_owner,
             review_status,
@@ -679,8 +739,14 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ version_id, release_record_id, publishing_checklist }) => {
       try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
         return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
           updated_version: await getClient().updateVersionReview(version_id, {
+            review_owner: { id: reviewer.airtableCollaboratorId },
             review_status: '✅Approved',
             release_record_id,
             publishing_checklist,
@@ -702,8 +768,14 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ version_id, reject_reason, rejection_feedback }) => {
       try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
         return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
           updated_version: await getClient().updateVersionReview(version_id, {
+            review_owner: { id: reviewer.airtableCollaboratorId },
             review_status: '❌Rejected',
             reject_reason,
             rejection_feedback,
