@@ -2,11 +2,13 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { PartnerAuthHttpError, postIdentityAdmin } from '$lib/server/partner-auth';
 import { ensureAgencyMcpEntitlement, requireAgencySessionUser } from '$lib/server/mcp-token';
+import { resolveAgencyManagedBearerTokenScope } from '$lib/server/mcp-token-issuance';
 
 interface RegenerateBody {
 	tenant_id?: string;
 	account_id?: string;
 	toolkit_profile?: string[];
+	allowed_tool_prefixes?: string[];
 	tool_mode?: 'read_only' | 'read_write';
 	metadata?: Record<string, unknown>;
 }
@@ -51,17 +53,31 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			);
 		}
 
+		const scope = await resolveAgencyManagedBearerTokenScope({
+			platform,
+			user,
+			entitlement: entitlement.row,
+			body,
+		});
+
 		const issued = await postIdentityAdmin<IssueManagedTokenResponse>(env, '/v1/mcp/long-lived-tokens/admin-issue', {
 			auth_subject: user.id,
 			auth_email: user.email,
 			tenant_id: entitlement.row.tenant_id ?? body?.tenant_id,
 			account_id: entitlement.row.account_id ?? body?.account_id,
-			toolkit_profile: body?.toolkit_profile,
+			toolkit_profile: scope.toolkitProfile,
+			allowed_tool_prefixes: scope.allowedToolPrefixes,
 			tool_mode: body?.tool_mode,
 			actor: `agency:${user.id}`,
 			metadata: {
 				issued_via: 'agency_api_regenerate',
 				entitlement_reason: entitlement.decision.reason,
+				...(scope.assignment
+					? {
+							access_assignment_source: scope.assignment.source,
+							access_assignment_lane_key: scope.assignment.laneKey,
+						}
+					: {}),
 				...(body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {}),
 			},
 		});
