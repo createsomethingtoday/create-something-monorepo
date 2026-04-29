@@ -2,7 +2,7 @@
  * @create-something/harness
  *
  * Types for the autonomous agent harness.
- * Loom-tracked oversight with checkpoints, progress reports, and reactive redirection.
+ * Linear-tracked oversight with checkpoints, progress reports, and reactive redirection.
  */
 
 // ─────────────────────────────────────────────────────────────────────────────

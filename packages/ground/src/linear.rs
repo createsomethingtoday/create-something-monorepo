@@ -1,15 +1,15 @@
-//! Loom Integration
+//! Linear Integration
 //!
-//! Helper functions for filing Ground findings as Loom tasks.
+//! Helper functions for filing Ground findings as Linear tasks.
 //! This module provides utilities to convert Ground analysis results
-//! into Loom task definitions.
+//! into Linear task definitions.
 
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 
-/// A task to be filed in Loom
+/// A task to be filed in Linear
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LoomTask {
+pub struct LinearTask {
     pub title: String,
     pub description: Option<String>,
     pub labels: Vec<String>,
@@ -17,13 +17,13 @@ pub struct LoomTask {
     pub evidence: Option<String>,
 }
 
-/// Generate a Loom task for a DRY violation (duplicate files)
+/// Generate a Linear task for a DRY violation (duplicate files)
 pub fn task_for_duplicate(
     file_a: impl AsRef<Path>,
     file_b: impl AsRef<Path>,
     similarity: f64,
     evidence_id: Option<&str>,
-) -> LoomTask {
+) -> LinearTask {
     let file_a = file_a.as_ref();
     let file_b = file_b.as_ref();
     
@@ -43,7 +43,7 @@ pub fn task_for_duplicate(
         file_b.display()
     );
     
-    LoomTask {
+    LinearTask {
         title,
         description: Some(description),
         labels: vec!["dry".to_string(), "refactor".to_string(), "ground".to_string()],
@@ -51,12 +51,12 @@ pub fn task_for_duplicate(
     }
 }
 
-/// Generate a Loom task for a dead code finding
+/// Generate a Linear task for a dead code finding
 pub fn task_for_dead_code(
     symbol: &str,
     search_path: impl AsRef<Path>,
     evidence_id: Option<&str>,
-) -> LoomTask {
+) -> LinearTask {
     let path = search_path.as_ref();
     
     let title = format!("Remove dead code: {}", symbol);
@@ -68,7 +68,7 @@ pub fn task_for_dead_code(
         path.display()
     );
     
-    LoomTask {
+    LinearTask {
         title,
         description: Some(description),
         labels: vec!["dead-code".to_string(), "cleanup".to_string(), "ground".to_string()],
@@ -76,11 +76,11 @@ pub fn task_for_dead_code(
     }
 }
 
-/// Generate a Loom task for an orphaned module
+/// Generate a Linear task for an orphaned module
 pub fn task_for_orphan(
     module_path: impl AsRef<Path>,
     evidence_id: Option<&str>,
-) -> LoomTask {
+) -> LinearTask {
     let path = module_path.as_ref();
     
     let title = format!(
@@ -97,7 +97,7 @@ pub fn task_for_orphan(
         path.display()
     );
     
-    LoomTask {
+    LinearTask {
         title,
         description: Some(description),
         labels: vec!["orphan".to_string(), "cleanup".to_string(), "ground".to_string()],
@@ -105,12 +105,12 @@ pub fn task_for_orphan(
     }
 }
 
-/// Generate a Loom task for a dead export
+/// Generate a Linear task for a dead export
 pub fn task_for_dead_export(
     export_name: &str,
     module_path: impl AsRef<Path>,
     evidence_id: Option<&str>,
-) -> LoomTask {
+) -> LinearTask {
     let path = module_path.as_ref();
     
     let title = format!("Remove unused export: {}", export_name);
@@ -122,7 +122,7 @@ pub fn task_for_dead_export(
         path.display()
     );
     
-    LoomTask {
+    LinearTask {
         title,
         description: Some(description),
         labels: vec!["dead-export".to_string(), "cleanup".to_string(), "ground".to_string()],
@@ -130,13 +130,13 @@ pub fn task_for_dead_export(
     }
 }
 
-/// Generate a Loom task for an environment safety issue
+/// Generate a Linear task for an environment safety issue
 pub fn task_for_environment_issue(
     entry_point: impl AsRef<Path>,
     issue_description: &str,
     severity: &str,
     evidence_id: Option<&str>,
-) -> LoomTask {
+) -> LinearTask {
     let path = entry_point.as_ref();
     
     let title = format!(
@@ -150,7 +150,7 @@ pub fn task_for_environment_issue(
         severity
     );
     
-    LoomTask {
+    LinearTask {
         title,
         description: Some(description),
         labels: vec!["environment".to_string(), "bug".to_string(), "ground".to_string()],
@@ -158,14 +158,14 @@ pub fn task_for_environment_issue(
     }
 }
 
-/// Generate a Loom task for duplicate functions
+/// Generate a Linear task for duplicate functions
 pub fn task_for_duplicate_function(
     function_name: &str,
     file_a: impl AsRef<Path>,
     file_b: impl AsRef<Path>,
     similarity: f64,
     evidence_id: Option<&str>,
-) -> LoomTask {
+) -> LinearTask {
     let file_a = file_a.as_ref();
     let file_b = file_b.as_ref();
     
@@ -185,7 +185,7 @@ pub fn task_for_duplicate_function(
         file_b.display()
     );
     
-    LoomTask {
+    LinearTask {
         title,
         description: Some(description),
         labels: vec!["dry".to_string(), "refactor".to_string(), "function".to_string(), "ground".to_string()],
@@ -195,23 +195,23 @@ pub fn task_for_duplicate_function(
 
 /// Output format for filing tasks
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LoomBatch {
-    pub tasks: Vec<LoomTask>,
+pub struct LinearBatch {
+    pub tasks: Vec<LinearTask>,
 }
 
-impl LoomBatch {
+impl LinearBatch {
     pub fn new() -> Self {
         Self { tasks: vec![] }
     }
     
-    pub fn add(&mut self, task: LoomTask) {
+    pub fn add(&mut self, task: LinearTask) {
         self.tasks.push(task);
     }
     
-    /// Generate CLI commands to file these tasks in Loom
+    /// Generate CLI commands to file these tasks in Linear
     pub fn to_cli_commands(&self) -> Vec<String> {
         self.tasks.iter().map(|task| {
-            let mut cmd = format!("lm create \"{}\"", task.title);
+            let mut cmd = format!("pnpm linear:create -- --title \"{}\"", task.title.replace('"', "\\\""));
             
             if let Some(ref desc) = task.description {
                 // Escape for shell
@@ -220,7 +220,9 @@ impl LoomBatch {
             }
             
             if !task.labels.is_empty() {
-                cmd.push_str(&format!(" --labels \"{}\"", task.labels.join(",")));
+                for label in &task.labels {
+                    cmd.push_str(&format!(" --label \"{}\"", label.replace('"', "\\\"")));
+                }
             }
             
             cmd
@@ -233,7 +235,7 @@ impl LoomBatch {
     }
 }
 
-impl Default for LoomBatch {
+impl Default for LinearBatch {
     fn default() -> Self {
         Self::new()
     }
@@ -260,12 +262,12 @@ mod tests {
     
     #[test]
     fn test_batch_cli_commands() {
-        let mut batch = LoomBatch::new();
+        let mut batch = LinearBatch::new();
         batch.add(task_for_dead_code("unusedFn", "src/", None));
         batch.add(task_for_orphan("src/orphan.ts", None));
         
         let commands = batch.to_cli_commands();
         assert_eq!(commands.len(), 2);
-        assert!(commands[0].starts_with("lm create"));
+        assert!(commands[0].starts_with("pnpm linear:create"));
     }
 }

@@ -15,10 +15,6 @@ if [[ ! -e "${WORKSPACE_PATH}/.git" ]]; then
   fi
 fi
 
-if [[ -d "${REPO_ROOT}/.loom" && ! -e "${WORKSPACE_PATH}/.loom" ]]; then
-  ln -s "${REPO_ROOT}/.loom" "${WORKSPACE_PATH}/.loom"
-fi
-
 if [[ ! -d "${WORKSPACE_PATH}/node_modules" ]]; then
   pnpm install --frozen-lockfile --prefer-offline
 fi

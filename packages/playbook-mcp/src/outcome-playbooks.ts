@@ -2,7 +2,7 @@ import type { WorkflowStep } from './playbooks.js';
 
 export type OutcomeVertical = 'construction' | 'agency' | 'ops';
 
-// Aligns with docs/guides/ATLAS_LOOM_INTEGRATION.md label conventions.
+// Aligns with docs/guides/ATLAS_LINEAR_INTEGRATION.md label conventions.
 export type OversightLevel = 'required' | 'recommended' | 'optional' | 'none';
 
 export type IntegrationKind = 'mcp' | 'composio' | 'custom';
@@ -56,8 +56,8 @@ export interface OutcomePlaybook {
   /** Internal engineering patterns from PATTERNS_INDEX.json (e.g., outbox-v1). */
   resiliencePatterns: string[];
 
-  /** Loom labels per docs/guides/ATLAS_LOOM_INTEGRATION.md */
-  loomLabels: string[];
+  /** Linear labels per docs/guides/ATLAS_LINEAR_INTEGRATION.md */
+  linearLabels: string[];
   judgment: PlaybookJudgment;
 
   /** Atlas-mapped steps (Codex-first variant). */
@@ -101,7 +101,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_authorization', 'const_human_loop'],
     resiliencePatterns: ['chain-of-verification-v1', 'outbox-v1', 'circuit-breaker-v1'],
-    loomLabels: ['mcp:procore-mcp', 'ai:generate', 'human:review', 'artifact:rfi', 'constraint:cost'],
+    linearLabels: ['mcp:procore-mcp', 'ai:generate', 'human:review', 'artifact:rfi', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Require human review before creating/sending RFIs. Log every created/updated record (audit trail).',
@@ -147,7 +147,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_quality_threshold', 'const_human_loop'],
     resiliencePatterns: ['chain-of-verification-v1', 'circuit-breaker-v1'],
-    loomLabels: ['mcp:procore-mcp', 'ai:verify', 'human:review', 'artifact:submittal', 'constraint:cost'],
+    linearLabels: ['mcp:procore-mcp', 'ai:verify', 'human:review', 'artifact:submittal', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human must approve any submittal decision. Keep a checklist artifact for consistent review.',
@@ -194,7 +194,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_audit_log', 'const_authorization', 'const_human_loop', 'const_quality_threshold'],
     resiliencePatterns: ['saga-v1', 'outbox-v1', 'chain-of-verification-v1'],
-    loomLabels: ['mcp:procore-mcp', 'ai:estimate', 'human:approve', 'artifact:change-order', 'constraint:cost'],
+    linearLabels: ['mcp:procore-mcp', 'ai:estimate', 'human:approve', 'artifact:change-order', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required for any cost/schedule numbers and for submitting change orders externally.',
@@ -240,7 +240,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_format'],
     resiliencePatterns: ['outbox-v1', 'circuit-breaker-v1'],
-    loomLabels: ['mcp:procore-mcp', 'ai:summarize', 'human:review', 'artifact:daily-log', 'constraint:cost'],
+    linearLabels: ['mcp:procore-mcp', 'ai:summarize', 'human:review', 'artifact:daily-log', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended for client-facing distribution; internal summaries can be auto-sent with an audit trail.',
@@ -285,7 +285,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_audit_log', 'const_quality_threshold', 'const_human_loop', 'const_authorization'],
     resiliencePatterns: ['chain-of-verification-v1', 'saga-v1', 'outbox-v1'],
-    loomLabels: ['mcp:procore-mcp', 'ai:generate', 'human:approve', 'artifact:pay-app', 'constraint:cost'],
+    linearLabels: ['mcp:procore-mcp', 'ai:generate', 'human:approve', 'artifact:pay-app', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required before submission. Include explicit reconciliation notes and attach evidence.',
@@ -330,7 +330,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_audit_log', 'const_privacy', 'const_quality_threshold'],
     resiliencePatterns: ['circuit-breaker-v1', 'chain-of-verification-v1'],
-    loomLabels: ['ai:analyze', 'human:review', 'artifact:variance-report', 'constraint:cost'],
+    linearLabels: ['ai:analyze', 'human:review', 'artifact:variance-report', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended for decision-making; report generation can be fully automated with audit logs.',
@@ -375,7 +375,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_quality_threshold', 'const_audit_log', 'const_human_loop'],
     resiliencePatterns: ['chain-of-verification-v1', 'circuit-breaker-v1'],
-    loomLabels: ['ai:predict', 'human:approve', 'artifact:risk-register', 'constraint:cost'],
+    linearLabels: ['ai:predict', 'human:approve', 'artifact:risk-register', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Require human approval before modifying schedules or sending escalations to external parties.',
@@ -420,7 +420,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_audit_log', 'const_authorization', 'const_human_loop'],
     resiliencePatterns: ['outbox-v1', 'circuit-breaker-v1'],
-    loomLabels: ['ai:predict', 'human:approve', 'artifact:procurement-report', 'constraint:cost'],
+    linearLabels: ['ai:predict', 'human:approve', 'artifact:procurement-report', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required before sending vendor escalation emails or changing committed dates.',
@@ -464,7 +464,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_audit_log', 'const_quality_threshold', 'const_human_loop'],
     resiliencePatterns: ['chain-of-verification-v1', 'outbox-v1'],
-    loomLabels: ['ai:classify', 'human:approve', 'artifact:ncr', 'constraint:cost'],
+    linearLabels: ['ai:classify', 'human:approve', 'artifact:ncr', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required for corrective action wording and closure status.',
@@ -511,7 +511,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_human_loop', 'const_quality_threshold'],
     resiliencePatterns: ['chain-of-verification-v1', 'outbox-v1'],
-    loomLabels: ['ai:classify', 'human:approve', 'artifact:safety-alert', 'constraint:cost'],
+    linearLabels: ['ai:classify', 'human:approve', 'artifact:safety-alert', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required for incident summaries and any external reporting actions.',
@@ -560,7 +560,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_quality_threshold'],
     resiliencePatterns: ['chain-of-verification-v1', 'outbox-v1'],
-    loomLabels: ['ai:classify', 'human:review', 'artifact:lead', 'constraint:cost'],
+    linearLabels: ['ai:classify', 'human:review', 'artifact:lead', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended before sending outbound replies; auto-route inside CRM is safe with audit logging.',
@@ -605,7 +605,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_human_loop', 'const_quality_threshold'],
     resiliencePatterns: ['chain-of-verification-v1'],
-    loomLabels: ['ai:generate', 'human:approve', 'artifact:proposal', 'constraint:cost'],
+    linearLabels: ['ai:generate', 'human:approve', 'artifact:proposal', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required for pricing, scope, and claims. Include a requirements checklist to avoid misses.',
@@ -652,7 +652,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_format'],
     resiliencePatterns: ['circuit-breaker-v1', 'outbox-v1'],
-    loomLabels: ['ai:summarize', 'human:review', 'artifact:report', 'constraint:cost'],
+    linearLabels: ['ai:summarize', 'human:review', 'artifact:report', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended for client-facing narratives; metric pulls can be automated with audit logs.',
@@ -697,7 +697,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_tone', 'const_quality_threshold', 'const_human_loop'],
     resiliencePatterns: ['chain-of-verification-v1'],
-    loomLabels: ['ai:generate', 'human:approve', 'artifact:content', 'constraint:cost'],
+    linearLabels: ['ai:generate', 'human:approve', 'artifact:content', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required before publishing. Maintain voice guide and a pre-publish checklist artifact.',
@@ -742,7 +742,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_tone', 'const_quality_threshold', 'const_human_loop'],
     resiliencePatterns: ['chain-of-verification-v1'],
-    loomLabels: ['ai:generate', 'human:approve', 'artifact:creative', 'constraint:cost'],
+    linearLabels: ['ai:generate', 'human:approve', 'artifact:creative', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required before launching ads. Keep an experiment log artifact with win/loss reasons.',
@@ -785,7 +785,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_tone', 'const_human_loop', 'const_format'],
     resiliencePatterns: ['outbox-v1'],
-    loomLabels: ['ai:plan', 'human:approve', 'artifact:social-calendar', 'constraint:cost'],
+    linearLabels: ['ai:plan', 'human:approve', 'artifact:social-calendar', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required before scheduling. Keep a content calendar artifact per client.',
@@ -828,7 +828,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_quality_threshold', 'const_human_loop', 'const_audit_log'],
     resiliencePatterns: ['chain-of-verification-v1'],
-    loomLabels: ['ai:analyze', 'human:approve', 'artifact:cro-roadmap', 'constraint:cost'],
+    linearLabels: ['ai:analyze', 'human:approve', 'artifact:cro-roadmap', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required before implementing tests. Ensure statistical and brand considerations are reviewed.',
@@ -871,7 +871,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_audit_log', 'const_human_loop'],
     resiliencePatterns: ['outbox-v1', 'saga-v1'],
-    loomLabels: ['ai:plan', 'human:review', 'artifact:project-plan', 'constraint:cost'],
+    linearLabels: ['ai:plan', 'human:review', 'artifact:project-plan', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended for task assignments and deadlines; automated updates should be logged.',
@@ -913,7 +913,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_audit_log', 'const_quality_threshold'],
     resiliencePatterns: ['chain-of-verification-v1'],
-    loomLabels: ['ai:summarize', 'human:review', 'artifact:competitive-brief', 'constraint:cost'],
+    linearLabels: ['ai:summarize', 'human:review', 'artifact:competitive-brief', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended to validate interpretation and avoid overclaiming.',
@@ -958,7 +958,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log'],
     resiliencePatterns: ['outbox-v1'],
-    loomLabels: ['ai:summarize', 'human:review', 'artifact:agenda', 'constraint:cost'],
+    linearLabels: ['ai:summarize', 'human:review', 'artifact:agenda', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended; follow-up task creation can be automated with audit logging.',
@@ -1006,7 +1006,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_human_loop'],
     resiliencePatterns: ['chain-of-verification-v1', 'outbox-v1'],
-    loomLabels: ['mcp:gmail-mcp', 'ai:classify', 'human:approve', 'artifact:email', 'constraint:cost'],
+    linearLabels: ['mcp:gmail-mcp', 'ai:classify', 'human:approve', 'artifact:email', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Require human approval for any external send. Auto-labeling and internal routing can be automatic with audit logs.',
@@ -1051,7 +1051,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log'],
     resiliencePatterns: ['outbox-v1'],
-    loomLabels: ['ai:summarize', 'human:review', 'artifact:meeting-notes', 'constraint:cost'],
+    linearLabels: ['ai:summarize', 'human:review', 'artifact:meeting-notes', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended for sensitive meetings. Task creation can be automated but should be logged.',
@@ -1095,7 +1095,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_quality_threshold'],
     resiliencePatterns: ['outbox-v1', 'chain-of-verification-v1'],
-    loomLabels: ['ai:extract', 'human:review', 'artifact:crm-update', 'constraint:cost'],
+    linearLabels: ['ai:extract', 'human:review', 'artifact:crm-update', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended when changing deal stage or amounts; routine note updates can be automatic with audit logs.',
@@ -1139,7 +1139,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_authorization', 'const_human_loop'],
     resiliencePatterns: ['outbox-v1', 'chain-of-verification-v1', 'circuit-breaker-v1'],
-    loomLabels: ['ai:extract', 'human:approve', 'artifact:invoice', 'constraint:cost'],
+    linearLabels: ['ai:extract', 'human:approve', 'artifact:invoice', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required for any payment/bill creation above threshold or unmatched invoices. Always keep audit logs.',
@@ -1183,7 +1183,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_quality_threshold'],
     resiliencePatterns: ['outbox-v1', 'circuit-breaker-v1'],
-    loomLabels: ['ai:rank', 'human:review', 'artifact:collections', 'constraint:cost'],
+    linearLabels: ['ai:rank', 'human:review', 'artifact:collections', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human review recommended for high-value customers; routine reminders can be automated with audit logs.',
@@ -1227,7 +1227,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_quality_threshold'],
     resiliencePatterns: ['chain-of-verification-v1', 'outbox-v1'],
-    loomLabels: ['ai:classify', 'human:review', 'artifact:support-ticket', 'constraint:cost'],
+    linearLabels: ['ai:classify', 'human:review', 'artifact:support-ticket', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Auto-resolve only for low-risk categories; keep an escalation gate and audit log for all responses.',
@@ -1270,7 +1270,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_human_loop'],
     resiliencePatterns: ['chain-of-verification-v1'],
-    loomLabels: ['ai:cluster', 'human:approve', 'artifact:kb', 'constraint:cost'],
+    linearLabels: ['ai:cluster', 'human:approve', 'artifact:kb', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required before publishing documentation changes that affect customers or policy.',
@@ -1315,7 +1315,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_authorization', 'const_audit_log', 'const_human_loop'],
     resiliencePatterns: ['saga-v1', 'outbox-v1'],
-    loomLabels: ['system:orchestrate', 'human:approve', 'artifact:onboarding', 'constraint:cost'],
+    linearLabels: ['system:orchestrate', 'human:approve', 'artifact:onboarding', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Human approval required for permission grants. Use least privilege defaults and log all access provisioning.',
@@ -1358,7 +1358,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_privacy', 'const_audit_log', 'const_quality_threshold'],
     resiliencePatterns: ['chain-of-verification-v1', 'outbox-v1'],
-    loomLabels: ['ai:extract', 'human:review', 'artifact:expense', 'constraint:cost'],
+    linearLabels: ['ai:extract', 'human:review', 'artifact:expense', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'standard',
       notes: 'Auto-approve only low-risk, policy-compliant expenses; route exceptions to human approval.',
@@ -1400,7 +1400,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     ],
     constraints: ['const_audit_log', 'const_human_loop', 'const_quality_threshold'],
     resiliencePatterns: ['chain-of-verification-v1', 'circuit-breaker-v1'],
-    loomLabels: ['ai:verify', 'human:approve', 'artifact:compliance-report', 'constraint:cost'],
+    linearLabels: ['ai:verify', 'human:approve', 'artifact:compliance-report', 'constraint:cost'],
     judgment: {
       recommendedPolicy: 'safe',
       notes: 'Run in read-only posture when possible. Escalations require human approval and should include evidence.',

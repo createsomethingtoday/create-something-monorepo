@@ -66,7 +66,7 @@
       "maxProxyTools": null
     },
     "mj-shared-auth-plus-ops-search-meetings-and-review": {
-      "description": "MJ discovery pack: full ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review.",
+      "description": "MJ discovery pack: full ops lane with shared auth core, Airtable, Exa, Meetings, and Webflow template review.",
       "mode": "full",
       "activeServers": [
         "composio-toolkit-airtable",
@@ -81,7 +81,6 @@
         "composio-toolkit-linkedin",
         "composio-toolkit-notion",
         "composio-toolkit-exa",
-        "loom-mcp",
         "meetings",
         "webflow-template-review-mcp"
       ],

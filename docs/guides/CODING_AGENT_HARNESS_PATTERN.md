@@ -18,17 +18,17 @@ Turn a coding agent from a one-shot assistant into a repeatable worker by giving
 
 ### 1. Track the work
 
-Use Loom as the control plane.
+Use Linear as the control plane.
 
 ```bash
-pnpm loom:remote ready
-pnpm loom:remote list --status ready
-pnpm loom:remote get --task-id <id>
+pnpm linear:ready
+pnpm linear:list -- --status open
+pnpm linear:get -- --issue CRE-123
 ```
 
 The agent should start from a tracked task, not from an untracked conversation fragment.
 
-Note: local `lm` still talks to the repo-local `.loom` database. Use it only for local-only workflows, migration/export inputs, or rollback scenarios. Shared agent lanes and Symphony should use remote Loom.
+The previous local and remote Loom queues were migrated into Linear. Keep original `lm-*` IDs in Linear descriptions/comments only for historical traceability.
 
 ## 2. Build context from repo artifacts
 
@@ -101,7 +101,7 @@ A useful checkpoint captures:
 
 This makes pause/resume and handoff real instead of conversational.
 
-For DEV or preview work, a direct deploy with linked Loom evidence is a valid checkpoint. When the remote Loom CLI cannot append non-terminal evidence yet, use a `.loom/checkpoints/` artifact as the bridge. Do not force a commit just to manufacture state.
+For DEV or preview work, a direct deploy with linked Linear evidence is a valid checkpoint. Use Linear comments for non-terminal checkpoints that affect handoff, review, rollback, or promotion. Do not force a commit just to manufacture state.
 
 ## Design rules
 
@@ -143,7 +143,7 @@ If the same correction appears repeatedly, turn it into:
 
 In this repo, harness engineering is the combination of:
 
-- Loom for coordination
+- Linear for coordination
 - worktrees for isolation
 - quality gates for evidence
 - observability and UI preview for legibility
