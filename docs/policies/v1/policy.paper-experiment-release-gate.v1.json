@@ -8,7 +8,7 @@
     "policy"
   ],
   "source_of_truth": {
-    "task_system": "loom",
+    "task_system": "linear",
     "task_to_branch_to_pr": "1:1:1",
     "review_state_storage": "labels"
   },
@@ -23,7 +23,7 @@
   ],
   "preview_eligibility": {
     "requires": [
-      "loom_cycle_label",
+      "cycle_label",
       "draft_pr",
       "quality_checks_passed"
     ],
@@ -53,7 +53,7 @@
     ]
   },
   "required_evidence": [
-    "loom_task_id",
+    "linear_issue_id",
     "pr_url",
     "review_1_report",
     "review_2_release_summary",

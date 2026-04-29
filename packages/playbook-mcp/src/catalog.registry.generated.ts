@@ -18,18 +18,6 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
-    "name": "Loom",
-    "slug": "loom",
-    "url": "https://loom.mcp.createsomething.agency",
-    "description": "Remote Loom MCP for task coordination and session recovery",
-    "category": "create-something",
-    "transports": [
-      "http"
-    ],
-    "requiresAuth": true,
-    "authType": "bearer"
-  },
-  {
     "name": "Outerfields PCN",
     "slug": "outerfields",
     "url": "https://outerfields.mcp.createsomething.agency",

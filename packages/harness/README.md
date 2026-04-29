@@ -2,9 +2,9 @@
 
 Autonomous agent orchestration for CREATE SOMETHING.
 
-The current target runtime is **Codex-first** with **Loom** as the control plane. Legacy Beads-backed code still exists in the package, but the intended operating model is:
+The current target runtime is **Codex-first** with **Linear** as the control plane. Legacy Beads-backed code still exists in the package, but the intended operating model is:
 
-1. claim tracked work in Loom
+1. claim tracked work in Linear
 2. run the task in an isolated worktree
 3. validate with quality gates and app-specific checks
 4. run self-review and agent-review loops
@@ -26,7 +26,7 @@ When it is working, humans spend less time coding by hand and more time shaping 
 
 ## Current direction
 
-This package is in transition from older Beads and Claude-oriented terminology toward a Loom and Codex-native workflow.
+This package is in transition from older Beads, Loom, and Claude-oriented terminology toward a Linear and Codex-native workflow.
 
 Read this package as:
 
@@ -48,10 +48,10 @@ harness start specs/my-project.md
 Recommended operator loop:
 
 ```bash
-lm ready
-lm claim <id>
+pnpm linear:ready
+pnpm linear:claim -- --issue <id>
 harness start specs/my-project.md
-lm summary
+pnpm linear:get -- --issue <id>
 ```
 
 ## Agent Legibility Contract
@@ -71,7 +71,7 @@ The intended loop is closer to the harness-engineering pattern described by Open
 
 ### 1. Intake and routing
 
-- claim or create tracked work in Loom
+- claim or create tracked work in Linear
 - gather repo context and prior checkpoints
 - choose execution mode and model/runtime defaults
 

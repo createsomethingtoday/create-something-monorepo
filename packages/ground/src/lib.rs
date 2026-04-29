@@ -48,7 +48,7 @@ pub mod exceptions;
 pub mod monorepo;
 pub mod config;
 pub mod report;
-pub mod loom;
+pub mod linear;
 pub mod ui_resources;
 pub mod desire_paths;
 

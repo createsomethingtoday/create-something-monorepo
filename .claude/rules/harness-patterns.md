@@ -1,30 +1,19 @@
 # Harness Patterns
 
-> **NOTE**: Harness capabilities have been unified into **Loom**, the single coordination layer.
-> The patterns below remain valid, but use Loom tools instead:
-> - `loom_work` for quick single-agent work
-> - `loom_session_start` / `loom_checkpoint` for sessions
-> - `loom_update_context` for rich session context
-> - `loom_discuss` for pre-planning preferences
-> - `loom_verify_plan` for plan validation
-> 
-> See `packages/loom/README.md` for the unified API.
+> **NOTE**: Harness work is tracked in **Linear**. The old Loom control-plane commands are retired for this repository.
+> Use `pnpm linear:*` for issue discovery, claiming, comments, and completion evidence.
 >
-> Backward-compatibility examples that mention `bd` are adapter-era syntax. Prefer `lm` equivalents for new workflows.
+> Backward-compatibility examples that mention `bd` are adapter-era syntax and should remain legacy-only.
 
-Loom runs autonomous work sessions. Here's how to use it.
+Linear tracks autonomous work sessions. Here's how to use it.
 
 ```bash
-lm claim lm-xyz                  # Work on an existing issue
-lm create "Fix button"           # Create issue
-lm ready --ranked                # Pull next ready work
-
-# Or use Loom directly via MCP tools:
-loom_work "Fix button" agent="cursor"  # Quick start
-loom_discuss task_id="lm-xxx" category="visual" ...  # Pre-planning
+pnpm linear:ready
+pnpm linear:create -- --title "Fix button"
+pnpm linear:claim -- --issue CRE-123
 ```
 
-Loom handles the rest: picking the right model, running tests, creating checkpoints, resuming after crashes.
+Record checkpoints and completion evidence as Linear comments.
 
 ---
 
@@ -32,8 +21,8 @@ Loom handles the rest: picking the right model, running tests, creating checkpoi
 
 | Situation | Do This |
 |-----------|---------|
-| Single issue to fix | `lm claim <id>` |
-| New feature idea | `lm create "Add dark mode toggle"` |
+| Single issue to fix | `pnpm linear:claim -- --issue CRE-123` |
+| New feature idea | `pnpm linear:create -- --title "Add dark mode toggle"` |
 | Spec file ready | `bd work --spec specs/auth.yaml` |
 | Complex work (architecture, refactors) | `run harness in the background: ultrathink` |
 | Multi-file parallel work | Use [Gastown](./gastown-patterns.md) instead |

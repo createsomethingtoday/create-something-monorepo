@@ -13007,31 +13007,6 @@
       "catalog_exposure_mode": "brokered",
       "estimated_tool_count": 100
     },
-    "loom-mcp": {
-      "transport": "http",
-      "url": "https://loom.mcp.createsomething.agency/mcp",
-      "description": "Remote Loom MCP for task coordination and session recovery",
-      "bearer_token_env_var": "LOOM_MCP_API_TOKEN",
-      "tags": [
-        "ops",
-        "coordination",
-        "loom",
-        "cs"
-      ],
-      "catalog": {
-        "include": true,
-        "name": "Loom",
-        "slug": "loom",
-        "category": "create-something",
-        "requiresAuth": true,
-        "authType": "bearer",
-        "transports": [
-          "http"
-        ]
-      },
-      "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
-    },
     "halfdozen-operator-notion-mcp": {
       "transport": "http",
       "url": "https://halfdozen-operator-notion-mcp.createsomething.workers.dev/mcp",
@@ -16049,9 +16024,6 @@
       "composio-toolkit-storyblok",
       "composio-toolkit-webflow",
       "composio-toolkit-wix"
-    ],
-    "loom": [
-      "loom-mcp"
     ]
   },
   "defaults": {

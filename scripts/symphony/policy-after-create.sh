@@ -15,10 +15,6 @@ if [[ ! -e "${WORKSPACE_PATH}/.git" ]]; then
   fi
 fi
 
-if [[ -d "${REPO_ROOT}/.loom" && ! -e "${WORKSPACE_PATH}/.loom" ]]; then
-  ln -s "${REPO_ROOT}/.loom" "${WORKSPACE_PATH}/.loom"
-fi
-
 if [[ "${WORKSPACE_PATH}" != "${REPO_ROOT}" ]]; then
   cd "${WORKSPACE_PATH}"
 fi

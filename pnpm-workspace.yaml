@@ -1,6 +1,9 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+  - '!packages/loom'
+  - '!packages/loom/npm'
+  - '!packages/loom-mcp-remote'
   - 'packages/agents/*'
   - 'packages/*/clients/*'
   - 'packages/*/dashboard'

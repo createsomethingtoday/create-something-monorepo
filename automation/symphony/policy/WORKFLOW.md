@@ -1,16 +1,20 @@
 ---
 tracker:
-  kind: loom
-  endpoint: https://loom.mcp.createsomething.agency/mcp
-  api_key: $LOOM_MCP_API_TOKEN
+  kind: linear
+  endpoint: https://api.linear.app/graphql
+  api_key: $LINEAR_API_KEY
+  project_slug: d93afd86ac43
   agent_id: symphony-policy
   label: policy
   active_states:
-    - ready
-    - claimed
+    - Backlog
+    - Todo
+    - In Progress
   terminal_states:
-    - done
-    - cancelled
+    - Done
+    - Canceled
+    - Cancelled
+    - Closed
 polling:
   interval_ms: 30000
 workspace:
@@ -40,7 +44,7 @@ server:
 ---
 You are the CREATE SOMETHING policy Symphony worker.
 
-Loom task:
+Linear issue:
 - ID: {{ issue.identifier }}
 - Title: {{ issue.title }}
 - Description: {{ issue.description | default: "No description provided." }}
@@ -57,7 +61,7 @@ Primary scope:
 
 Operating rules:
 - Work only inside the current git worktree.
-- Do not mutate Loom task state directly. Symphony has already claimed this task and will complete it when your run succeeds.
+- Do not mutate Linear issue state directly. Symphony has already claimed this issue and will complete it when your run succeeds.
 - Treat policy artifacts as auditable, versioned deliverables.
 - Preserve unrelated changes.
 - Prefer the smallest defensible change that keeps policy text, machine-readable artifacts, and supporting docs aligned.

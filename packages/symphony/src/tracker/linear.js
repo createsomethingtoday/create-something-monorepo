@@ -10,7 +10,9 @@ const LINEAR_ISSUE_FIELDS = `
   createdAt
   updatedAt
   state {
+    id
     name
+    type
   }
   labels {
     nodes {
@@ -38,6 +40,18 @@ function normalize_timestamp(value) {
         return null;
     const parsed = Date.parse(value);
     return Number.isNaN(parsed) ? null : new Date(parsed).toISOString();
+}
+function normalize_state_name(value) {
+    return String(value ?? '').trim().toLowerCase();
+}
+function select_state_id(states, preferred_names, fallback_type) {
+    for (const name of preferred_names) {
+        const matched = states.find((state) => normalize_state_name(state.name) === normalize_state_name(name));
+        if (matched?.id)
+            return matched.id;
+    }
+    const fallback = states.find((state) => state.type === fallback_type);
+    return fallback?.id ?? null;
 }
 function normalize_issue(node) {
     const labels = (node.labels?.nodes ?? [])
@@ -144,6 +158,102 @@ export class LinearTrackerClient {
             throw new SymphonyError('linear_unknown_payload', 'Linear issue-state payload missing nodes.');
         }
         return nodes.map(normalize_issue);
+    }
+    async claim_issue(issue) {
+        const bootstrap = await this.bootstrap();
+        const issue_state = normalize_state_name(issue.state);
+        const target_state_names = issue_state === 'in progress'
+            ? []
+            : [
+                ...this.config.tracker.active_states.filter((state) => normalize_state_name(state) === 'in progress'),
+                ...this.config.tracker.active_states.filter((state) => normalize_state_name(state) !== issue_state && normalize_state_name(state) !== 'in progress'),
+            ];
+        const state_id = select_state_id(bootstrap.workflow_states, target_state_names, 'started');
+        const input = {
+            assigneeId: bootstrap.viewer.id,
+            ...(state_id ? { stateId: state_id } : {}),
+        };
+        return this.update_issue(issue.id, input);
+    }
+    async complete_issue(issue, result) {
+        const bootstrap = await this.bootstrap();
+        const state_id = select_state_id(bootstrap.workflow_states, this.config.tracker.terminal_states, 'completed');
+        if (!state_id) {
+            throw new SymphonyError('linear_missing_completed_state', 'No Linear completed workflow state matched terminal_states.');
+        }
+        const completed = await this.update_issue(issue.id, { stateId: state_id });
+        const message = result?.message ? String(result.message).trim() : '';
+        if (message) {
+            await this.comment_issue(issue.id, `Evidence:\n\n${message}`);
+        }
+        return completed;
+    }
+    async release_issue(issue, reason) {
+        const bootstrap = await this.bootstrap();
+        const state_id = select_state_id(bootstrap.workflow_states, this.config.tracker.active_states, 'unstarted');
+        const input = {
+            assigneeId: null,
+            ...(state_id ? { stateId: state_id } : {}),
+        };
+        const released = await this.update_issue(issue.id, input);
+        if (reason) {
+            await this.comment_issue(issue.id, `Released by Symphony: ${reason}`);
+        }
+        return released;
+    }
+    async bootstrap() {
+        const payload = await this.graphql(`
+        query SymphonyBootstrap {
+          viewer {
+            id
+          }
+          workflowStates(first: 250) {
+            nodes {
+              id
+              name
+              type
+            }
+          }
+        }
+      `, {});
+        const viewer = payload.data?.viewer;
+        const workflow_states = payload.data?.workflowStates?.nodes;
+        if (!viewer?.id || !Array.isArray(workflow_states)) {
+            throw new SymphonyError('linear_unknown_payload', 'Linear bootstrap payload missing viewer or workflow states.');
+        }
+        return { viewer, workflow_states };
+    }
+    async update_issue(issue_id, input) {
+        const payload = await this.graphql(`
+        mutation SymphonyUpdateIssue($id: String!, $input: IssueUpdateInput!) {
+          issueUpdate(id: $id, input: $input) {
+            success
+            issue {
+              ${LINEAR_ISSUE_FIELDS}
+            }
+          }
+        }
+      `, { id: issue_id, input });
+        const issue = payload.data?.issueUpdate?.issue;
+        if (!issue) {
+            throw new SymphonyError('linear_unknown_payload', 'Linear issueUpdate payload missing issue.');
+        }
+        return normalize_issue(issue);
+    }
+    async comment_issue(issue_id, body) {
+        const payload = await this.graphql(`
+        mutation SymphonyComment($input: CommentCreateInput!) {
+          commentCreate(input: $input) {
+            success
+            comment {
+              id
+            }
+          }
+        }
+      `, { input: { issueId: issue_id, body } });
+        if (!payload.data?.commentCreate?.success) {
+            throw new SymphonyError('linear_unknown_payload', 'Linear commentCreate payload missing success.');
+        }
     }
     async graphql(query, variables) {
         let response;

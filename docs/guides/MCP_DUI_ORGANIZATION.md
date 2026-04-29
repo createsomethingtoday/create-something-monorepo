@@ -59,7 +59,6 @@ This is the UI rendered directly inside an MCP-capable host through MCP Apps res
 
 In this repo, that belongs in the MCP package that owns the tool and resource contract:
 
-- `packages/loom/ui/task-board`
 - `packages/ground/ui/duplicate-explorer`
 - `packages/cs-mcp-hub-remote` for hub-specific overview and auth workflow resources
 
@@ -117,7 +116,6 @@ packages/<mcp-package>/
 
 Rust examples already follow this shape:
 
-- `packages/loom/ui/task-board/index.html`
 - `packages/ground/ui/duplicate-explorer/index.html`
 
 For TypeScript MCP servers, use the same shape when the UI grows beyond a tiny inline resource:
@@ -134,7 +132,7 @@ Current note:
 
 - `packages/cs-mcp-hub-remote/index.ts` still embeds hub UI resources inline.
 - That is acceptable for a small number of resources.
-- If the hub DUI grows, move those resources into a `ui/` directory to match Loom and Ground.
+- If the hub DUI grows, move those resources into a `ui/` directory to match Ground.
 
 ### C. Shared DUI helpers
 
@@ -249,8 +247,6 @@ That keeps persistent product UX and MCP-native DUI aligned without forcing one 
 ## Source anchors
 
 - `docs/guides/MCP_APPS_INTEGRATION.md`
-- `packages/loom/ui/task-board/index.html`
-- `packages/loom/src/ui_resources.rs`
 - `packages/ground/ui/duplicate-explorer/index.html`
 - `packages/ground/src/ui_resources.rs`
 - `packages/cs-mcp-hub-remote/index.ts`

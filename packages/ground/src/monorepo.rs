@@ -2,7 +2,7 @@
 //!
 //! Opinionated configuration for the CREATE SOMETHING monorepo.
 //! Understands package structure, suggests specific refactoring targets,
-//! and integrates with Loom for task tracking.
+//! and emits Linear commands for task tracking.
 //!
 //! ## Package Structure
 //!
@@ -112,8 +112,8 @@ pub struct RefactoringSuggestion {
     /// Import statement to use after refactoring
     pub import_statement: String,
     
-    /// Loom command to create task
-    pub loom_command: String,
+    /// Linear command to create task.
+    pub linear_command: String,
     
     /// Priority (P0 = critical, P1 = high, P2 = medium)
     pub priority: String,
@@ -279,9 +279,10 @@ pub fn suggest_refactoring(
                     "import {{ create{}Handler }} from '@create-something/components/{}'",
                     to_pascal_case(&handler_type), target_module
                 ),
-                loom_command: format!(
-                    "lm create \"Extract shared {} handler ({:.0}% duplicate)\" --labels refactor,dry --priority high",
-                    handler_type, similarity * 100.0
+                linear_command: linear_create_command(
+                    &format!("Extract shared {} handler ({:.0}% duplicate)", handler_type, similarity * 100.0),
+                    &["refactor", "dry"],
+                    "high",
                 ),
                 priority: if similarity > 0.95 { "P0" } else { "P1" }.to_string(),
             })
@@ -298,9 +299,10 @@ pub fn suggest_refactoring(
                     "import {{ create{}PageLoader }} from '@create-something/components/auth'",
                     to_pascal_case(&loader_type)
                 ),
-                loom_command: format!(
-                    "lm create \"Extract shared {} loader ({:.0}% duplicate)\" --labels refactor,dry --priority high",
-                    loader_type, similarity * 100.0
+                linear_command: linear_create_command(
+                    &format!("Extract shared {} loader ({:.0}% duplicate)", loader_type, similarity * 100.0),
+                    &["refactor", "dry"],
+                    "high",
                 ),
                 priority: "P1".to_string(),
             })
@@ -317,9 +319,10 @@ pub fn suggest_refactoring(
                     "import {{ {} }} from '@create-something/components/components'",
                     component_name
                 ),
-                loom_command: format!(
-                    "lm create \"Move {} to shared components ({:.0}% duplicate)\" --labels refactor,dry --priority normal",
-                    component_name, similarity * 100.0
+                linear_command: linear_create_command(
+                    &format!("Move {} to shared components ({:.0}% duplicate)", component_name, similarity * 100.0),
+                    &["refactor", "dry"],
+                    "normal",
                 ),
                 priority: "P2".to_string(),
             })
@@ -336,9 +339,10 @@ pub fn suggest_refactoring(
                     "import {{ {} }} from '@create-something/components/utils'",
                     func_name
                 ),
-                loom_command: format!(
-                    "lm create \"Extract {} to shared utils ({:.0}% duplicate)\" --labels refactor,dry --priority normal",
-                    func_name, similarity * 100.0
+                linear_command: linear_create_command(
+                    &format!("Extract {} to shared utils ({:.0}% duplicate)", func_name, similarity * 100.0),
+                    &["refactor", "dry"],
+                    "normal",
                 ),
                 priority: "P2".to_string(),
             })
@@ -372,10 +376,10 @@ pub fn suggest_refactoring(
                     ),
                     target_path,
                     import_statement: import_suggestion,
-                    loom_command: format!(
-                        "lm create \"DRY violation: {:.0}% similar files\" --labels refactor,dry --priority {}",
-                        similarity * 100.0,
-                        if similarity > 0.95 { "critical" } else { "high" }
+                    linear_command: linear_create_command(
+                        &format!("DRY violation: {:.0}% similar files", similarity * 100.0),
+                        &["refactor", "dry"],
+                        if similarity > 0.95 { "urgent" } else { "high" },
                     ),
                     priority: if similarity > 0.95 { "P0" } else { "P1" }.to_string(),
                 })
@@ -405,15 +409,22 @@ fn find_package_name(file: &Path, monorepo: &MonorepoInfo) -> Option<String> {
     None
 }
 
-/// Generate Loom command for a DRY violation
-pub fn generate_loom_command(
+impl RefactoringSuggestion {
+    /// Preferred task command for new callers.
+    pub fn linear_command(&self) -> &str {
+        &self.linear_command
+    }
+}
+
+/// Generate Linear command for a DRY violation.
+pub fn generate_linear_command(
     file_a: &Path,
     file_b: &Path,
     similarity: f64,
     suggestion: Option<&RefactoringSuggestion>,
 ) -> String {
     if let Some(s) = suggestion {
-        return s.loom_command.clone();
+        return s.linear_command.clone();
     }
     
     // Generic command
@@ -424,12 +435,33 @@ pub fn generate_loom_command(
         .and_then(|n| n.to_str())
         .unwrap_or("unknown");
     
-    let priority = if similarity > 0.95 { "critical" } else if similarity > 0.85 { "high" } else { "normal" };
-    
-    format!(
-        "lm create \"DRY violation: {} vs {} ({:.0}% similar)\" --labels refactor,dry,ground-detected --priority {}",
-        file_a_name, file_b_name, similarity * 100.0, priority
+    let priority = if similarity > 0.95 { "urgent" } else if similarity > 0.85 { "high" } else { "normal" };
+
+    linear_create_command(
+        &format!(
+            "DRY violation: {} vs {} ({:.0}% similar)",
+            file_a_name, file_b_name, similarity * 100.0
+        ),
+        &["refactor", "dry", "ground-detected"],
+        priority,
     )
+}
+
+fn linear_create_command(title: &str, labels: &[&str], priority: &str) -> String {
+    let label_args = labels
+        .iter()
+        .map(|label| format!(" --label {}", shell_quote(label)))
+        .collect::<String>();
+    format!(
+        "pnpm linear:create -- --title {}{} --priority {}",
+        shell_quote(title),
+        label_args,
+        shell_quote(priority)
+    )
+}
+
+fn shell_quote(value: &str) -> String {
+    format!("\"{}\"", value.replace('"', "\\\""))
 }
 
 #[derive(Debug)]

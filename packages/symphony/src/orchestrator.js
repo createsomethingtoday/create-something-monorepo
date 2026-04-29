@@ -1,7 +1,6 @@
 import { createServer } from 'node:http';
 import { ConsoleLogger } from './logger.js';
 import { LinearTrackerClient } from './tracker/linear.js';
-import { LoomTrackerClient } from './tracker/loom.js';
 import { validate_dispatch_config } from './config.js';
 import { WorkflowManager } from './workflow.js';
 import { WorkspaceManager } from './workspace.js';
@@ -38,9 +37,6 @@ function retry_delay_ms(config, attempt, continuation) {
     return Math.min(10_000 * 2 ** Math.max(0, attempt - 1), config.agent.max_retry_backoff_ms);
 }
 function default_tracker_factory(config, logger) {
-    if (config.tracker.kind === 'loom') {
-        return new LoomTrackerClient(config, logger);
-    }
     return new LinearTrackerClient(config, logger);
 }
 function to_running_entry(issue, attempt) {

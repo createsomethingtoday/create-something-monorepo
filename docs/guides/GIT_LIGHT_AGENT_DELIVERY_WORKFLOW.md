@@ -22,29 +22,19 @@ Do not use the Git-light path as a substitute for production provenance.
 
 ## Inner Loop
 
-1. Start from a Loom task.
+1. Start from a Linear issue.
 2. Build context from repo artifacts and package docs.
 3. Run the narrow relevant checks for the touched surface.
 4. Deploy directly to DEV or preview from the current workspace if runtime evidence is needed.
-5. Record the deploy evidence in Loom.
+5. Record the deploy evidence in Linear.
 
-Until remote Loom supports append-only checkpoint evidence from the repo CLI, use `pnpm loom:deploy:checkpoint` to write a structured checkpoint artifact under `.loom/checkpoints/` and carry its summary forward when the task is completed or promoted.
+Use `pnpm linear:comment` or `pnpm linear:done -- --evidence "..."` to attach checkpoint evidence to the Linear issue.
 
-For the common surfaces, prefer the thin task-aware wrappers:
-
-- `pnpm deploy:agency:checkpoint`
-- `pnpm deploy:io:checkpoint`
-- `pnpm deploy:space:checkpoint`
-- `pnpm deploy:ltd:checkpoint`
-- `pnpm deploy:identity-worker:checkpoint`
-- `pnpm deploy:cs-hub-remote:checkpoint`
-- `pnpm deploy:hub-fleet:checkpoint`
-
-## Required Loom Evidence
+## Required Linear Evidence
 
 Each DEV or preview deploy checkpoint should capture:
 
-- Loom task ID
+- Linear issue ID
 - package or surface name
 - target environment
 - commands run
@@ -55,24 +45,9 @@ Each DEV or preview deploy checkpoint should capture:
 Example:
 
 ```bash
-pnpm deploy:agency:checkpoint \
-  -- \
-  --task-id lm-12345678 \
-  --environment dev \
-  --rollback-reference main \
-  --deploy-url https://dev.create-something-agency.pages.dev \
-```
-
-To pass extra deploy flags through to the underlying deploy command, add a second `--`:
-
-```bash
-pnpm deploy:io:checkpoint \
-  -- \
-  --task-id lm-23456789 \
-  --environment preview \
-  --rollback-reference main \
-  --print-command \
-  -- --branch=preview
+pnpm linear:comment -- --issue CRE-123 --body "Deploy: agency dev https://dev.create-something-agency.pages.dev
+Validation: pnpm --filter @create-something/agency check
+Rollback: redeploy main"
 ```
 
 ## When Git Is Still Required
@@ -89,7 +64,7 @@ Use branch, commit, and PR flow when:
 
 Default production promotion remains:
 
-1. tracked Loom task
+1. tracked Linear issue
 2. branch and PR review
 3. required approvals and evidence
 4. merge to `main`
@@ -103,8 +78,7 @@ An alternative production path is acceptable only when it uses an explicitly def
 - Do not commit or push only to create a checkpoint.
 - Prefer direct DEV deploys when they are the fastest trustworthy validation surface.
 - Keep Git as the production and shared-review boundary.
-- Use `.loom/checkpoints/` as the temporary bridge for non-terminal deploy evidence until remote Loom adds append-only checkpoint support in the repo CLI.
-- Prefer the surface-specific checkpoint wrappers over hand-building the command for common deploy targets.
+- Use Linear comments for non-terminal deploy evidence and final Linear evidence on completion.
 
 ## Source Anchors
 
