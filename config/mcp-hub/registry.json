@@ -23,7 +23,7 @@
         ]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 10
     },
     "three-tier-framework": {
       "transport": "http",
@@ -87,7 +87,7 @@
         "policy_os_only"
       ],
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 10
     },
     "schedule-mcp": {
       "transport": "http",
@@ -410,19 +410,19 @@
       "estimated_tool_count": 0
     },
     "webflow-local": {
-      "transport": "stdio",
-      "command": "node",
-      "args": [
-        "./packages/webflow-mcp/dist/index.js"
-      ],
-      "description": "Local Webflow MCP from this monorepo",
+      "transport": "http",
+      "url": "https://webflow-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "WEBFLOW_SITE_ANALYZER_MCP_API_KEY",
+      "description": "Remote Webflow Marketplace MCP for plagiarism and framework analysis; kept as webflow-local for existing Hub bundle compatibility",
       "tags": [
-        "local",
-        "dev",
-        "webflow"
+        "webflow",
+        "review",
+        "plagiarism",
+        "frameworks",
+        "cs"
       ],
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 10
     },
     "webflow-site-analyzer-mcp": {
       "transport": "http",
@@ -436,6 +436,7 @@
         "browser",
         "cs"
       ],
+      "estimated_tool_count": 22,
       "catalog": {
         "include": true,
         "name": "Webflow Site Analyzer",
