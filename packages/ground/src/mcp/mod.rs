@@ -39,7 +39,7 @@ use crate::computations::environment::{analyze_environment_safety, WarningSeveri
 use crate::computations::{BloomFilter, HyperLogLog};
 use crate::computations::confidence::orphan_confidence;
 use crate::computations::framework::{detect_framework, is_implicit_entry};
-use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_loom_command};
+use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_linear_command};
 use crate::config::GroundConfig;
 
 /// Log progress to stderr (visible in MCP server logs)
@@ -1346,15 +1346,15 @@ fn handle_suggest_fix(args: &Value) -> ToolResult {
                     "target_path": suggestion.target_path,
                     "import_statement": suggestion.import_statement,
                     "priority": suggestion.priority,
-                    "loom_command": suggestion.loom_command,
+                    "linear_command": suggestion.linear_command(),
                     "monorepo": true
                 }))
             } else {
-                let loom_cmd = generate_loom_command(&file_a, &file_b, similarity, None);
+                let linear_cmd = generate_linear_command(&file_a, &file_b, similarity, None);
                 ToolResult::success(json!({
                     "has_suggestion": false,
-                    "loom_command": loom_cmd,
-                    "message": "No specific pattern matched, but here's a Loom command.",
+                    "linear_command": linear_cmd,
+                    "message": "No specific pattern matched, but here's a Linear command.",
                     "monorepo": true
                 }))
             }

@@ -1,7 +1,7 @@
 /**
  * @create-something/harness
  *
- * Autonomous agent harness for Loom-tracked work.
+ * Autonomous agent harness for Linear-tracked work.
  * Runs agent sessions in a loop with checkpoints, review passes, and reactive redirection.
  *
  * Philosophy: The harness recedes into transparent operation.

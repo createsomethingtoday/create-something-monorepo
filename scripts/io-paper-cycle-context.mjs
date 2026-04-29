@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-const LOOM_LABELS = [
+const CYCLE_LABELS = [
   'paper-cycle',
   'experiment-cycle',
   'policy-cycle',
@@ -222,7 +222,7 @@ export function collectIoPaperCycleContext(files) {
       'pnpm --filter @create-something/io build',
       ...(hasPolicyChanges ? ['pnpm policy:artifacts:check'] : []),
     ],
-    loom_labels: LOOM_LABELS,
+    cycle_labels: CYCLE_LABELS,
   };
 }
 

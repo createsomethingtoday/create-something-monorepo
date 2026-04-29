@@ -3,11 +3,44 @@
   import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
   import WorkHistoryTimeline from '$lib/components/WorkHistoryTimeline.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+
+  const operatorStates = [
+    { label: 'Clear', value: 'No decisions pending', detail: 'The operator can step away.' },
+    { label: 'Review', value: 'Approval needed', detail: 'Judgment is required before action.' },
+    { label: 'Stop', value: 'Blocked with reason', detail: 'The system explains why it paused.' }
+  ];
+
+  const methodSteps = [
+    {
+      label: '01',
+      title: 'Map the operating path',
+      detail:
+        'Find the workflow your team still watches by hand and name the handoffs, owners, and failure modes.'
+    },
+    {
+      label: '02',
+      title: 'Classify the judgment states',
+      detail:
+        'Separate safe work from approval-needed work and actions that should be blocked with an inspectable reason.'
+    },
+    {
+      label: '03',
+      title: 'Ship the control layer',
+      detail:
+        'Use MCP, Skills, runbooks, release checks, and policy artifacts to make the workflow portable and governable.'
+    },
+    {
+      label: '04',
+      title: 'Brief the operator',
+      detail:
+        'Surface only the state that needs attention so the human returns for judgment, not constant monitoring.'
+    }
+  ];
 </script>
 
 <SEO
   title={`About | Micah Johnson — ${agencyCoreMessaging.categoryLabel}`}
-  description="I design workflows people can trust under pressure, with the controls, visibility, and recovery paths real teams need."
+  description="I build calm operator systems for autonomous work: governed workflows, policy artifacts, and escalation surfaces that protect human judgment."
   keywords="Micah Johnson, governed workflow infrastructure, production automation, systems architecture, automation reliability, workflow governance"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -31,13 +64,24 @@
       <p class="hero-eyebrow">About</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">I design workflows people can trust under pressure.</h1>
+      <h1 class="hero-title">I build calm operator systems for autonomous work.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        My work sits between high-performance systems and clinical discipline: make things faster,
-        but never at the expense of clarity, control, or recovery.
+        The operator should not carry the chaos of automation. My work turns agentic workflows
+        into clear states: what can run, what needs judgment, and what must stop with a reason.
       </p>
+    </BlurFade>
+    <BlurFade delay={0.3}>
+      <div class="operator-brief" aria-label="Calm operator states">
+        {#each operatorStates as state}
+          <div class="operator-state">
+            <span>{state.label}</span>
+            <strong>{state.value}</strong>
+            <p>{state.detail}</p>
+          </div>
+        {/each}
+      </div>
     </BlurFade>
   </div>
 </section>
@@ -59,11 +103,39 @@
           systems work now.
         </p>
         <p>
-          Today that shows up in the kind of workflows I build: fast when they should be, visible
-          when they need review, and recoverable when something goes wrong.
+          Today that shows up as Calm Operator systems: fast where the rules are clear, visible
+          where judgment is required, and recoverable when something goes wrong.
         </p>
       </div>
     </BlurFade>
+  </div>
+</section>
+
+<!-- Calm Operator Method -->
+<section class="about-section method-section">
+  <div class="section-container">
+    <BlurFade delay={0.1}>
+      <div class="about-content method-intro">
+        <p class="section-kicker">Calm Operator Method</p>
+        <h2>Protect the operator before you scale the agents.</h2>
+        <p>
+          The method is simple enough to fit on an e-ink surface: map the workflow, classify the
+          judgment states, ship the control layer, and brief the human only when attention changes
+          the outcome.
+        </p>
+      </div>
+    </BlurFade>
+    <div class="method-grid">
+      {#each methodSteps as step, index}
+        <BlurFade delay={0.14 + index * 0.05}>
+          <article class="method-card">
+            <span>{step.label}</span>
+            <h3>{step.title}</h3>
+            <p>{step.detail}</p>
+          </article>
+        </BlurFade>
+      {/each}
+    </div>
   </div>
 </section>
 
@@ -82,8 +154,8 @@
         <p>
           I have shipped integrations across Salesforce, HubSpot, Notion, Slack, Procore, and
           internal systems. That work informs where native tooling is enough, where MCP is the
-          right wedge, and where approvals, policies, and recovery paths are the difference
-          between a launch and a system people actually trust.
+          right wedge, and where approvals, policies, operator briefs, and recovery paths are the
+          difference between a launch and a system people actually trust.
         </p>
         <p>Based in Texas. Working with businesses across the US.</p>
         <p>
@@ -117,7 +189,8 @@
           automation more reliable.
         </p>
         <p>
-          The goal is not more automation. The goal is one operating path your team can trust.
+          The goal is not more automation. The goal is one operating path that lets the operator
+          stop watching the dashboard until judgment is actually required.
         </p>
       </div>
     </BlurFade>
@@ -136,9 +209,9 @@
           and the artifacts your team needs to run and inherit the system.
         </p>
         <p>
-          Visibility comes through runbooks, approval states, release evidence, and working
-          software, not meeting theater. If what a client needs is a full internal delivery team,
-          I route that work to a better-fit partner.
+          Visibility comes through runbooks, approval states, release evidence, operator briefs,
+          and working software, not meeting theater. If what a client needs is a full internal
+          delivery team, I route that work to a better-fit partner.
         </p>
       </div>
     </BlurFade>
@@ -310,9 +383,57 @@
     font-size: var(--text-body-lg);
     color: var(--color-fg-secondary);
     line-height: var(--leading-relaxed);
-    max-width: 34ch;
+    max-width: 42ch;
     margin: 0 auto;
     text-wrap: pretty;
+  }
+
+  .operator-brief {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    max-width: 58rem;
+    margin: clamp(1.5rem, 4vw, 2.5rem) auto 0;
+    padding: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.25rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+      rgba(0, 0, 0, 0.42);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  }
+
+  .operator-state {
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 1rem;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .operator-state span,
+  .section-kicker,
+  .method-card span {
+    display: block;
+    font-family: var(--font-mono, monospace);
+    font-size: var(--text-caption);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(167, 184, 255, 0.78);
+  }
+
+  .operator-state strong {
+    display: block;
+    margin-top: 0.65rem;
+    color: var(--color-fg-primary);
+    font-size: var(--text-body);
+  }
+
+  .operator-state p {
+    margin: 0.35rem 0 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+    line-height: var(--leading-relaxed);
   }
 
   /* About Sections */
@@ -336,6 +457,49 @@
 
   .about-content p:last-child {
     margin-bottom: 0;
+  }
+
+  .method-section {
+    padding-top: clamp(3.5rem, 8vw, 6rem);
+    padding-bottom: clamp(3.5rem, 8vw, 6rem);
+  }
+
+  .method-intro {
+    margin-bottom: var(--space-5, 1.5rem);
+  }
+
+  .section-kicker {
+    margin-bottom: var(--space-3, 0.75rem);
+  }
+
+  .method-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.85rem, 2vw, 1.25rem);
+  }
+
+  .method-card {
+    min-height: 100%;
+    padding: clamp(1rem, 2vw, 1.25rem);
+    border: 1px solid rgba(255, 255, 255, 0.075);
+    border-radius: 1rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+      rgba(0, 0, 0, 0.25);
+  }
+
+  .method-card h3 {
+    margin: 0.85rem 0 0.65rem;
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-lg);
+    line-height: 1.15;
+  }
+
+  .method-card p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: var(--leading-relaxed);
   }
 
   /* Hermeneutic circle list */
@@ -429,6 +593,14 @@
 
     .hero-title {
       font-size: var(--text-h1);
+    }
+
+    .operator-brief {
+      grid-template-columns: 1fr;
+    }
+
+    .method-grid {
+      grid-template-columns: 1fr;
     }
 
     .about-section,

@@ -94,8 +94,8 @@ ground find orphans ./packages/sdk/src
 # Find unused exports in a module
 ground find dead-exports ./utils.ts --scope ./src
 
-# With CREATE SOMETHING monorepo suggestions (generates Loom tasks)
-ground find duplicates ./packages --monorepo --loom
+# With CREATE SOMETHING monorepo suggestions (generates Linear issues)
+ground find duplicates ./packages --monorepo --linear
 ```
 
 ### Pattern Analysis Commands (design system enforcement)
@@ -132,10 +132,10 @@ Ground knows our codebase. When you use `--monorepo`, it:
 
 - Suggests where to put shared code (`@create-something/components`)
 - Gives you the import statement to use
-- Generates a Loom command to create a task
+- Generates a Linear command to create an issue
 
 ```bash
-ground find duplicates ./packages --monorepo --loom
+ground find duplicates ./packages --monorepo --linear
 ```
 
 Output:
@@ -151,8 +151,8 @@ Found 1 duplicate:
    │ 🎯 P1
    └──────────────────────────────────────────
 
-Loom commands:
-lm create "Extract shared design loader (96% duplicate)" --labels refactor,dry --priority high
+Linear commands:
+pnpm linear:create -- --title "Extract shared design loader (96% duplicate)" --label "refactor" --label "dry" --priority "high"
 ```
 
 ---

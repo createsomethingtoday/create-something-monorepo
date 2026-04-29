@@ -1,0 +1,86 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#050505"/>
+  <rect x="48" y="48" width="1504" height="804" rx="28" stroke="#F2F2F2" stroke-opacity="0.18"/>
+
+  <text x="96" y="122" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700">
+    POLICY PROVENANCE
+  </text>
+  <text x="96" y="164" fill="#A8A8A8" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    Evidence chain
+  </text>
+
+  <text x="96" y="236" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="62" font-weight="700">
+    If the rule can change upstream, version it.
+  </text>
+  <text x="96" y="284" fill="#9E9E9E" font-family="Helvetica, Arial, sans-serif" font-size="25">
+    Prompt text is not enough when external policy is part of the workflow.
+  </text>
+
+  <rect x="92" y="400" width="230" height="170" rx="20" stroke="#F5F5F5" stroke-opacity="0.18"/>
+  <text x="124" y="470" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700">
+    Guideline URL
+  </text>
+  <text x="124" y="510" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="20">
+    Where it came from
+  </text>
+
+  <line x1="322" y1="485" x2="392" y2="485" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3"/>
+  <polygon points="392,485 374,475 374,495" fill="#F5F5F5" fill-opacity="0.65"/>
+
+  <rect x="392" y="400" width="230" height="170" rx="20" stroke="#F5F5F5" stroke-opacity="0.18"/>
+  <text x="424" y="470" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700">
+    Fetched at
+  </text>
+  <text x="424" y="510" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="20">
+    When it was pulled
+  </text>
+
+  <line x1="622" y1="485" x2="692" y2="485" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3"/>
+  <polygon points="692,485 674,475 674,495" fill="#F5F5F5" fill-opacity="0.65"/>
+
+  <rect x="692" y="400" width="230" height="170" rx="20" stroke="#F5F5F5" stroke-opacity="0.18"/>
+  <text x="724" y="470" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700">
+    Content hash
+  </text>
+  <text x="724" y="510" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="20">
+    What text was seen
+  </text>
+
+  <line x1="922" y1="485" x2="992" y2="485" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3"/>
+  <polygon points="992,485 974,475 974,495" fill="#F5F5F5" fill-opacity="0.65"/>
+
+  <rect x="992" y="400" width="230" height="170" rx="20" stroke="#F5F5F5" stroke-opacity="0.22" stroke-width="2.5"/>
+  <text x="1024" y="470" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700">
+    Policy version
+  </text>
+  <text x="1024" y="510" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="20">
+    What review used
+  </text>
+
+  <line x1="1222" y1="485" x2="1292" y2="485" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3"/>
+  <polygon points="1292,485 1274,475 1274,495" fill="#F5F5F5" fill-opacity="0.65"/>
+
+  <rect x="1292" y="400" width="216" height="170" rx="20" stroke="#F5F5F5" stroke-opacity="0.18"/>
+  <text x="1324" y="470" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700">
+    Review result
+  </text>
+  <text x="1324" y="510" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="20">
+    Now the decision
+  </text>
+  <text x="1324" y="538" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="20">
+    can name its rules.
+  </text>
+
+  <line x1="96" y1="646" x2="1504" y2="646" stroke="#F5F5F5" stroke-opacity="0.12" stroke-width="2"/>
+  <text x="96" y="694" fill="#8F8F8F" font-family="Helvetica, Arial, sans-serif" font-size="20">
+    provenance turns external policy into a traceable system input
+  </text>
+
+  <line x1="96" y1="804" x2="1504" y2="804" stroke="#F5F5F5" stroke-opacity="0.18" stroke-width="2"/>
+  <text x="96" y="836" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="700">
+    If you cannot name the policy version, you do not yet have governance.
+  </text>
+  <text x="1310" y="836" fill="#8A8A8A" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="700">
+    CREATE SOMETHING
+  </text>
+</svg>

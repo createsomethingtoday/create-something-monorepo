@@ -3,10 +3,11 @@
  * Post-deploy smoke test for marketplace-template-submission-cloud.
  *
  * Usage:
- *   pnpm exec tsx scripts/smoke-test.ts <base-url>
+ *   pnpm exec tsx scripts/smoke-test.ts <base-url> [--published-url <url>] [--expect-published-message <substring>]
  *
  * Example:
  *   pnpm exec tsx scripts/smoke-test.ts https://submission.webflow.app
+ *   pnpm exec tsx scripts/smoke-test.ts https://submission.webflow.app --published-url https://athelas-template.webflow.io --expect-published-message "Broken internal link detected"
  *
  * Exercises every intake endpoint with a safe probe payload. Does NOT fire
  * the Airtable webhook end-to-end — the /api/intake/creator and template
@@ -18,9 +19,41 @@
  * test-webhook-dryrun.ts pattern from webflow-dashboard-cloud.
  */
 
-const baseUrl = (process.argv[2] || '').replace(/\/$/, '');
+type CliArgs = {
+  baseUrl: string;
+  publishedUrl?: string;
+  expectPublishedMessage?: string;
+};
+
+function parseArgs(argv: string[]): CliArgs {
+  const [baseUrlArg = '', ...rest] = argv;
+  const args: CliArgs = {
+    baseUrl: baseUrlArg.replace(/\/$/, ''),
+  };
+
+  for (let index = 0; index < rest.length; index += 1) {
+    const value = rest[index];
+    if (value === '--published-url') {
+      args.publishedUrl = rest[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (value === '--expect-published-message') {
+      args.expectPublishedMessage = rest[index + 1];
+      index += 1;
+    }
+  }
+
+  return args;
+}
+
+const cliArgs = parseArgs(process.argv.slice(2));
+const { baseUrl, publishedUrl, expectPublishedMessage } = cliArgs;
 if (!baseUrl) {
-  console.error('usage: tsx scripts/smoke-test.ts <base-url>');
+  console.error(
+    'usage: tsx scripts/smoke-test.ts <base-url> [--published-url <url>] [--expect-published-message <substring>]',
+  );
   process.exit(2);
 }
 
@@ -94,10 +127,41 @@ const probes: Probe[] = [
   },
 ];
 
+if (publishedUrl) {
+  probes.push({
+    name: 'POST /api/intake/validate-published-url (live)',
+    path: '/api/intake/validate-published-url',
+    body: { url: publishedUrl },
+    expectStatuses: [200],
+    expectJson: (data) => {
+      const obj = data as {
+        message?: string;
+        normalizedUrl?: string;
+        passed?: boolean;
+      };
+
+      if (typeof obj.message !== 'string' || obj.message.length === 0) {
+        return 'expected message field';
+      }
+      if (typeof obj.normalizedUrl !== 'string' || obj.normalizedUrl.length === 0) {
+        return 'expected normalizedUrl field';
+      }
+      if (typeof obj.passed !== 'boolean') {
+        return 'expected passed field';
+      }
+      if (expectPublishedMessage && !obj.message.includes(expectPublishedMessage)) {
+        return `expected message to include "${expectPublishedMessage}"`;
+      }
+
+      return null;
+    },
+  });
+}
+
 const results: { probe: Probe; pass: boolean; status: number; note?: string }[] = [];
 
 async function main() {
-    for (const probe of probes) {
+  for (const probe of probes) {
     const url = `${baseUrl}${probe.path}`;
     const method = probe.method ?? 'POST';
 
@@ -124,9 +188,14 @@ async function main() {
 
     const statusOk = probe.expectStatuses.includes(response.status);
     let jsonNote: string | null = null;
-    if (probe.expectJson && response.headers.get('content-type')?.includes('application/json')) {
-      const data = await response.json().catch(() => null);
-      jsonNote = data ? probe.expectJson(data) : 'response was not JSON';
+    const contentType = response.headers.get('content-type') || '';
+    if (probe.expectJson) {
+      if (!contentType.includes('application/json')) {
+        jsonNote = `expected JSON response, received ${contentType || 'unknown content type'}`;
+      } else {
+        const data = await response.json().catch(() => null);
+        jsonNote = data ? probe.expectJson(data) : 'response was not JSON';
+      }
     }
 
     results.push({

@@ -2,8 +2,8 @@
   import { Button, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
-  import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
   import GovernedExecutionFlow from '$lib/components/GovernedExecutionFlow.svelte';
+  import ServiceWedgeBlueprint from '$lib/components/ServiceWedgeBlueprint.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const deliveryVector = {
@@ -77,6 +77,7 @@
       points: [
         'Approval and block boundaries',
         'Reason-coded access decisions',
+        'Operator brief and escalation surface',
         'Release checks and incident loops',
         'Evals tied to real workflow behavior'
       ]
@@ -97,7 +98,46 @@
   const boundaryPoints = [
     'You bring the workflow, constraints, and approval owner.',
     'CREATE SOMETHING maps the rules, builds the control layer, and ships the operating artifacts.',
-    'Your team gets visibility through runbooks, approvals, release evidence, and working software.'
+    'Your team gets visibility through runbooks, approvals, release evidence, operator briefs, and working software.'
+  ];
+
+  const heroSignals = [
+    {
+      label: 'Map',
+      value: '1 workflow',
+      detail: 'The handoff your team still watches too closely.'
+    },
+    {
+      label: 'Govern',
+      value: '3 states',
+      detail: 'Auto-allow, approval-needed, or blocked with reason.'
+    },
+    {
+      label: 'Surface',
+      value: 'Quiet brief',
+      detail: 'The operator sees only what needs judgment.'
+    }
+  ];
+
+  const surfacePoints = [
+    {
+      label: 'Policy OS',
+      title: 'Decides what needs judgment',
+      detail:
+        'The operating layer classifies safe work, approval-needed work, and blocked actions before the operator is interrupted.'
+    },
+    {
+      label: 'Ink',
+      title: 'Makes the decision visible',
+      detail:
+        'The physical surface is optional, but useful when the buyer needs to see and feel the calm operator promise.'
+    },
+    {
+      label: 'Operator',
+      title: 'Acts only when needed',
+      detail:
+        'The service is designed so the human returns to the dashboard for evidence and action, not for constant monitoring.'
+    }
   ];
 
   const faqItems = [
@@ -137,6 +177,11 @@
         'Yes. Clients retain ownership of code, workflows, and operating documentation. The delivery is meant to stay portable after launch.'
     },
     {
+      question: 'Is Ink the product?',
+      answer:
+        'Ink is the visible operator surface. The paid service is the workflow mapping, policy layer, artifacts, and escalation behavior that make the surface trustworthy.'
+    },
+    {
       question: 'Why the phrase Skills + MCP?',
       answer: `Client-facing delivery is ${deliveryVector.clientFacingLabel}. MCP handles trust and connectivity. Skills carry behavior and workflow intent.`
     }
@@ -144,9 +189,9 @@
 </script>
 
 <SEO
-  title="How I Work | Governed Workflow Infrastructure"
-  description="CREATE SOMETHING .agency offers scoped specialist engagements that fix one workflow first, then add governed execution as operational risk rises."
-  keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
+  title="How I Work | Calm Operator Systems"
+  description="CREATE SOMETHING .agency installs calm operator systems: one workflow, clear decision states, and governed escalation only when judgment is required."
+  keywords="calm operator systems, Policy OS, workflow infrastructure, MCP wedge, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -154,48 +199,56 @@
 />
 
 <section class="hero-page">
-  <div class="shell-inner-pad hero-layout">
+  <div class="shell-inner-pad services-shell hero-layout">
     <div class="hero-copy">
       <BlurFade delay={0}>
         <span class="product-kicker">How I Work</span>
       </BlurFade>
 
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">Start with the workflow creating the most drag.</h1>
+        <h1 class="hero-title">Start with one workflow.</h1>
       </BlurFade>
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          This is a specialist engagement: scoped, artifact-backed, and designed to give your team
-          a safer operating path, not another person to manage. Fix the first workflow, add
-          oversight when the risk rises, and extend only when several systems must stay in sync.
+          Bring the operating path your team still watches too closely. I map the boundaries,
+          rebuild the handoff, and add governance until the operator only hears from the system
+          when judgment is required.
         </p>
       </BlurFade>
 
       <BlurFade delay={0.15}>
         <div class="hero-actions">
           <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="/products" variant="secondary">See What I've Built</Button>
+          <Button href="#offer-ladder" variant="secondary">See Offer Ladder</Button>
         </div>
       </BlurFade>
 
       <BlurFade delay={0.2}>
-        <p class="hero-note">External specialist. Scoped delivery. Production boundaries.</p>
+        <p class="hero-note">One workflow. Clear boundaries. Quiet escalation.</p>
       </BlurFade>
     </div>
 
     <BlurFade delay={0.2}>
-      <ExecutionWorkbench
-        eyebrow="Offer logic"
-        title="What the engagement actually controls"
-        description="The same workflow can move through different commercial shapes. The question is whether you need connectivity, implementation, or governed execution."
-      />
+      <aside class="product-surface product-surface--soft hero-brief" aria-label="Calm operator service brief">
+        <span class="product-kicker">Calm operator service</span>
+        <h2>If judgment is not required, the system stays quiet.</h2>
+        <div class="hero-brief__grid" role="list">
+          {#each heroSignals as signal}
+            <div class="hero-brief__item" role="listitem">
+              <span>{signal.label}</span>
+              <strong>{signal.value}</strong>
+              <p>{signal.detail}</p>
+            </div>
+          {/each}
+        </div>
+      </aside>
     </BlurFade>
   </div>
 </section>
 
 <section class="boundary-section">
-  <div class="shell-inner-pad">
+  <div class="shell-inner-pad services-shell">
     <div class="product-surface product-surface--soft boundary-panel">
       <div class="section-lead">
         <BlurFade>
@@ -223,8 +276,8 @@
   </div>
 </section>
 
-<section class="offer-section">
-  <div class="shell-inner-pad">
+<section class="offer-section" id="offer-ladder">
+  <div class="shell-inner-pad services-shell">
     <div class="section-lead section-lead--center">
       <BlurFade>
         <span class="product-kicker">Offer ladder</span>
@@ -239,6 +292,10 @@
         </p>
       </BlurFade>
     </div>
+
+    <BlurFade delay={0.14}>
+      <ServiceWedgeBlueprint />
+    </BlurFade>
 
     <div class="offer-grid">
       {#each offerCards as offer, index}
@@ -260,7 +317,7 @@
 </section>
 
 <section class="flow-section">
-  <div class="shell-inner-pad flow-layout">
+  <div class="shell-inner-pad services-shell flow-layout">
     <div class="section-lead">
       <BlurFade>
         <span class="product-kicker">Governed execution</span>
@@ -286,8 +343,41 @@
   </div>
 </section>
 
+<section class="surface-section">
+  <div class="shell-inner-pad services-shell">
+    <div class="product-surface product-surface--soft surface-panel">
+      <div class="section-lead">
+        <BlurFade>
+          <span class="product-kicker">Where Ink fits</span>
+        </BlurFade>
+        <BlurFade delay={0.05}>
+          <h2>Ink is the visible surface. The engagement is the operating layer behind it.</h2>
+        </BlurFade>
+        <BlurFade delay={0.1}>
+          <p>
+            The device makes the promise tangible, but it only works if the workflow has mapped
+            owners, approval rules, blocked states, and evidence. That is what the service installs.
+          </p>
+        </BlurFade>
+      </div>
+
+      <div class="surface-grid" role="list">
+        {#each surfacePoints as point, index}
+          <BlurFade delay={0.15 + index * 0.05}>
+            <article class="surface-card" role="listitem">
+              <span>{point.label}</span>
+              <h3>{point.title}</h3>
+              <p>{point.detail}</p>
+            </article>
+          </BlurFade>
+        {/each}
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="artifact-section">
-  <div class="shell-inner-pad">
+  <div class="shell-inner-pad services-shell">
     <BlurFade>
       <ArtifactSystemStrip
         title="What ships with every governed engagement"
@@ -298,7 +388,7 @@
 </section>
 
 <section class="faq-section">
-  <div class="shell-inner-pad">
+  <div class="shell-inner-pad services-shell">
     <div class="section-lead section-lead--center">
       <BlurFade>
         <span class="product-kicker">Questions</span>
@@ -322,7 +412,7 @@
 </section>
 
 <section class="cta-section">
-  <div class="shell-inner-pad">
+  <div class="shell-inner-pad services-shell">
     <div class="product-surface product-surface--accent cta-panel">
       <BlurFade>
         <span class="product-kicker">Map the workflow</span>
@@ -338,8 +428,8 @@
       </BlurFade>
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
-          <Button href="/book">Book Mapping Session</Button>
-          <Button href="/products" variant="secondary">See What I've Built</Button>
+          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href="/products" variant="secondary">See Proof Surfaces</Button>
         </div>
       </BlurFade>
     </div>
@@ -347,10 +437,20 @@
 </section>
 
 <style>
+  :global(.shell-inner-pad),
+  .services-shell {
+    box-sizing: border-box;
+  }
+
+  .services-shell {
+    max-width: min(var(--content-width-xl, 80rem), 100vw);
+  }
+
   .hero-page,
   .boundary-section,
   .offer-section,
   .flow-section,
+  .surface-section,
   .artifact-section,
   .faq-section,
   .cta-section {
@@ -359,7 +459,7 @@
   }
 
   .hero-page {
-    padding-top: clamp(6rem, 10vw, 8rem);
+    padding-top: clamp(4.5rem, 7vw, 6rem);
   }
 
   .hero-layout,
@@ -367,7 +467,7 @@
     display: grid;
     gap: clamp(1.5rem, 3vw, 2.5rem);
     align-items: center;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.72fr);
   }
 
   .hero-copy {
@@ -378,9 +478,9 @@
 
   .hero-title {
     margin: 0;
-    font-size: clamp(3rem, 4vw + 1.2rem, 5.2rem);
-    line-height: 0.98;
-    letter-spacing: -0.045em;
+    font-size: clamp(3rem, 3.2vw + 1rem, 4.35rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
     text-wrap: balance;
   }
 
@@ -405,6 +505,59 @@
     justify-content: center;
   }
 
+  .hero-brief {
+    display: grid;
+    gap: 1.15rem;
+    justify-self: end;
+    width: min(100%, 25rem);
+    padding: clamp(1rem, 2.4vw, 1.35rem);
+  }
+
+  .hero-brief h2 {
+    margin: 0;
+    max-width: 18rem;
+    color: var(--color-fg-primary);
+    font-size: clamp(1.35rem, 1.6vw, 1.8rem);
+    line-height: 1.08;
+    text-wrap: balance;
+  }
+
+  .hero-brief__grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .hero-brief__item {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.85rem 0.9rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--color-shell-border-default) 82%, transparent);
+    background: color-mix(in srgb, var(--color-shell-surface-secondary) 72%, transparent);
+  }
+
+  .hero-brief__item span,
+  .surface-card span {
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hero-brief__item strong {
+    color: var(--color-fg-primary);
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .hero-brief__item p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
   .hero-note {
     margin: 0;
     color: var(--color-fg-muted);
@@ -415,6 +568,7 @@
   }
 
   .boundary-panel,
+  .surface-panel,
   .cta-panel {
     display: grid;
     gap: 1rem;
@@ -447,7 +601,7 @@
   .offer-grid,
   .faq-grid {
     display: grid;
-    gap: 1rem;
+    gap: clamp(1.1rem, 2.4vw, 1.6rem);
   }
 
   .offer-grid {
@@ -494,6 +648,39 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .surface-panel {
+    gap: clamp(1.15rem, 3vw, 1.8rem);
+  }
+
+  .surface-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .surface-card {
+    display: grid;
+    gap: 0.65rem;
+    padding: 1rem;
+    border-radius: 1.1rem;
+    border: 1px solid color-mix(in srgb, var(--color-shell-border-default) 84%, transparent);
+    background: color-mix(in srgb, var(--color-shell-surface-secondary) 74%, transparent);
+  }
+
+  .surface-card h3 {
+    margin: 0;
+    color: var(--color-fg-primary);
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .surface-card p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: 0.94rem;
+    line-height: 1.65;
+  }
+
   .cta-panel {
     text-align: center;
   }
@@ -508,23 +695,42 @@
     .section-lead {
       max-width: none;
     }
+
+    .hero-brief {
+      justify-self: stretch;
+      width: 100%;
+    }
   }
 
   @media (max-width: 768px) {
     .offer-grid,
-    .faq-grid {
+    .faq-grid,
+    .surface-grid {
       grid-template-columns: 1fr;
     }
 
     .hero-title {
-      font-size: clamp(2.6rem, 10vw, 4rem);
+      font-size: clamp(2.65rem, 10vw, 3.75rem);
     }
 
     .offer-card,
     .faq-card,
     .boundary-panel,
+    .surface-panel,
     .cta-panel {
       padding: 1rem;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .hero-actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .hero-actions :global(.btn) {
+      box-sizing: border-box;
+      width: 100%;
     }
   }
 </style>

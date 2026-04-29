@@ -80,7 +80,7 @@ function validateReleaseGatePolicy(parsed, details) {
     details.push('Missing preview_eligibility block in release gate policy JSON.');
   } else {
     const requires = new Set(asArray(previewEligibility.requires));
-    for (const requirement of ['loom_cycle_label', 'draft_pr', 'quality_checks_passed']) {
+    for (const requirement of ['cycle_label', 'draft_pr', 'quality_checks_passed']) {
       if (!requires.has(requirement)) {
         details.push(`preview_eligibility.requires is missing "${requirement}".`);
       }

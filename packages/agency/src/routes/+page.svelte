@@ -5,6 +5,7 @@
   import BrandLogo from '$lib/components/BrandLogo.svelte';
   import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
+  import InkOperatorSurface from '$lib/components/InkOperatorSurface.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
@@ -143,8 +144,8 @@
 
 <SEO
   title={`${agencyCoreMessaging.categoryLabel} | CREATE SOMETHING .agency`}
-  description="CREATE SOMETHING .agency helps ops-minded teams make critical workflows safe enough to trust in production."
-  keywords="governed workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
+  description="CREATE SOMETHING .agency installs calm operator systems for agentic workflows: one workflow, clear decision states, and escalation only when judgment is required."
+  keywords="calm operator systems, Policy OS, MCP wedge, governed workflow infrastructure, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -175,7 +176,7 @@
         <BlurFade delay={0.15}>
           <div class="hero-actions">
             <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-            <Button href="/services" variant="secondary">See The Engagement Model</Button>
+            <Button href="/services" variant="secondary">See The Operating Model</Button>
           </div>
         </BlurFade>
 
@@ -220,6 +221,14 @@
         {/each}
       </div>
     </div>
+  </div>
+</section>
+
+<section id="ink" class="ink-section">
+  <div class="shell-inner-pad">
+    <BlurFade>
+      <InkOperatorSurface />
+    </BlurFade>
   </div>
 </section>
 
@@ -378,7 +387,7 @@
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
           <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="/services" variant="secondary">See The Engagement Model</Button>
+          <Button href="/services" variant="secondary">See The Operating Model</Button>
         </div>
       </BlurFade>
     </div>
@@ -546,6 +555,7 @@
 
   .signal-section,
   .control-section,
+  .ink-section,
   .capability-section,
   .offer-section,
   .governance-section,
@@ -729,8 +739,13 @@
   }
 
   @media (max-width: 768px) {
+    .hero-page {
+      padding-top: clamp(2.25rem, 9vw, 3.25rem);
+      padding-bottom: clamp(1.75rem, 8vw, 3rem);
+    }
+
     .hero-stage {
-      min-height: clamp(30rem, 112vw, 40rem);
+      min-height: clamp(28rem, 104vw, 37rem);
     }
 
     .hero-stage::after {
@@ -769,8 +784,8 @@
     }
 
     .hero-layout {
-      padding-top: 2.25rem;
-      padding-bottom: 3.5rem;
+      padding-top: 1rem;
+      padding-bottom: 2.75rem;
     }
 
     .metric-grid,

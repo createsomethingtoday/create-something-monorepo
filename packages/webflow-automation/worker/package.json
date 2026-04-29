@@ -8,7 +8,7 @@
     "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
     "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/**/*.test.ts"
+    "test": "node --import tsx --test tests/*.test.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.0.0",

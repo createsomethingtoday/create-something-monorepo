@@ -14,6 +14,7 @@ function parseArgs(argv) {
   const args = [...argv];
   const requestedPackages = [];
   let fix = false;
+  let allowMissing = false;
 
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
@@ -23,8 +24,13 @@ function parseArgs(argv) {
     }
 
     if (arg === '--help' || arg === '-h') {
-      console.log('Usage: node scripts/workspace-lint.mjs [--package <name-path-or-alias>] [--fix]');
+      console.log('Usage: node scripts/workspace-lint.mjs [--package <name-path-or-alias>] [--fix] [--allow-missing]');
       process.exit(0);
+    }
+
+    if (arg === '--allow-missing') {
+      allowMissing = true;
+      continue;
     }
 
     if (arg === '--fix') {
@@ -52,7 +58,7 @@ function parseArgs(argv) {
     process.exit(2);
   }
 
-  return { requestedPackages, fix };
+  return { requestedPackages, fix, allowMissing };
 }
 
 function run(command, args, cwd, label) {
@@ -228,7 +234,7 @@ function selectPackages(packages, requestedPackages) {
   return selected;
 }
 
-function runPackageLint(pkg, fix) {
+function runPackageLint(pkg, { allowMissing, fix }) {
   if (typeof pkg.scripts.lint === 'string') {
     const args = ['run', 'lint'];
     if (fix) {
@@ -241,9 +247,16 @@ function runPackageLint(pkg, fix) {
   }
 
   if (hasSourceFiles(pkg.dir)) {
-    console.error(
-      `\n[${pkg.relDir} | lint] missing lint script; add one to ${pkg.relDir}/package.json`
-    );
+    const message = `\n[${pkg.relDir} | lint] missing lint script; add one to ${pkg.relDir}/package.json`;
+    if (allowMissing) {
+      console.log(`${message} (allowed)`);
+      return {
+        mode: 'missing-lint',
+        status: 0,
+      };
+    }
+
+    console.error(message);
     return {
       mode: 'missing-lint',
       status: 1,
@@ -257,7 +270,7 @@ function runPackageLint(pkg, fix) {
   };
 }
 
-const { requestedPackages, fix } = parseArgs(process.argv.slice(2));
+const { requestedPackages, fix, allowMissing } = parseArgs(process.argv.slice(2));
 const allPackages = getPackages();
 const packages = selectPackages(allPackages, requestedPackages);
 
@@ -267,6 +280,9 @@ if (packages.length === 0) {
 }
 
 console.log(`Workspace lint target count: ${packages.length}`);
+if (allowMissing) {
+  console.log('Workspace lint will allow packages that have source files but no lint script.');
+}
 
 let failures = 0;
 let scriptCount = 0;
@@ -274,7 +290,7 @@ let skippedCount = 0;
 let missingLintCount = 0;
 
 for (const pkg of packages) {
-  const result = runPackageLint(pkg, fix);
+  const result = runPackageLint(pkg, { allowMissing, fix });
   if (result.mode === 'script') {
     scriptCount += 1;
   } else if (result.mode === 'missing-lint') {
@@ -295,4 +311,6 @@ if (failures > 0) {
   process.exit(1);
 }
 
-console.log(`\nWorkspace lint passed (${scriptCount} explicit lint, ${skippedCount} skipped without source files).`);
+const allowedMissingSummary =
+  allowMissing && missingLintCount > 0 ? `, ${missingLintCount} missing lint script(s) allowed` : '';
+console.log(`\nWorkspace lint passed (${scriptCount} explicit lint, ${skippedCount} skipped without source files${allowedMissingSummary}).`);

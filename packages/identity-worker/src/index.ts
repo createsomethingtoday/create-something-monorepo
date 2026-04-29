@@ -770,6 +770,33 @@ const POLICY_MCP_CREDENTIAL_DELIVERY_ID = 'policy.mcp-credential-delivery.v1';
 const POLICY_LEGACY_COMPAT_SUNSET_ID = 'policy.legacy-compat-sunset.v1';
 const POLICY_MCP_SESSION_SELF_SERVICE_ID = 'policy.mcp-session-self-service.v1';
 const POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID = 'policy.user-bearer-token-governance.v1';
+const WEBFLOW_TEMPLATE_REVIEW_REVIEWER_ACCOUNT_IDS = new Set([
+	'acct_wf_natalia',
+	'acct_wf_sudiksha',
+	'acct_wf_eric',
+	'acct_wf_vicki',
+	'acct_wf_mariana',
+	'acct_wf_micah',
+]);
+const WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES = [
+	'webflow-template-review-mcp__template_review_health',
+	'webflow-template-review-mcp__template_review_get_metrics',
+	'webflow-template-review-mcp__template_review_list_queue',
+	'webflow-template-review-mcp__template_review_my_queue',
+	'webflow-template-review-mcp__template_review_search_assets',
+	'webflow-template-review-mcp__template_review_search_versions',
+	'webflow-template-review-mcp__template_review_get_asset',
+	'webflow-template-review-mcp__template_review_list_versions',
+	'webflow-template-review-mcp__template_review_get_version',
+	'webflow-template-review-mcp__template_review_get_review_context',
+	'webflow-template-review-mcp__template_review_list_releases',
+	'webflow-template-review-mcp__template_review_get_field_map',
+	'webflow-template-review-mcp__template_review_assign_self',
+	'webflow-template-review-mcp__template_review_unassign_self',
+	'webflow-template-review-mcp__template_review_request_changes',
+	'webflow-template-review-mcp__template_review_set_review_status',
+	'webflow-template-review-mcp__template_review_save_draft_feedback',
+];
 const DEFAULT_OAUTH_RESOURCE = DEFAULT_MCP_HUB_URL;
 const OAUTH_AUTHORIZATION_CODE_TTL_SECONDS = 300;
 const OAUTH_MANAGED_BEARER_EXPIRES_IN = 31536000;
@@ -1434,6 +1461,16 @@ async function handleAdminGetMcpLongLivedToken(request: Request, env: Env): Prom
 	if (!token) {
 		return json({ token: null });
 	}
+	const toolkitProfile = parseStringArray(token.toolkit_profile_json);
+	const allowedToolPrefixes =
+		resolveEffectiveAllowedToolPrefixes({
+			accountId: token.account_id,
+			tenantId: token.tenant_id,
+			host: token.bound_host,
+			boundHost: token.bound_host,
+			toolkitProfile,
+			allowedToolPrefixes: parseAllowedToolPrefixesOrNull(token.allowed_tool_prefixes_json),
+		}) ?? [];
 
 	return json({
 		token: {
@@ -1445,8 +1482,8 @@ async function handleAdminGetMcpLongLivedToken(request: Request, env: Env): Prom
 			bound_host: token.bound_host,
 			token_prefix: token.token_prefix,
 			tool_mode: token.tool_mode,
-			toolkit_profile: parseStringArray(token.toolkit_profile_json),
-			allowed_tool_prefixes: parseStringArray(token.allowed_tool_prefixes_json),
+			toolkit_profile: toolkitProfile,
+			allowed_tool_prefixes: allowedToolPrefixes,
 			last_used_at: token.last_used_at,
 			revoked_at: token.revoked_at,
 			created_at: token.created_at,
@@ -2060,7 +2097,15 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 		}
 
 		const toolkitProfile = parseStringArray(session.toolkit_profile_json);
-		const allowedToolPrefixes = parseStringArray(session.allowed_tool_prefixes_json);
+		const allowedToolPrefixes =
+			resolveEffectiveAllowedToolPrefixes({
+				accountId: session.account_id,
+				tenantId: session.tenant_id,
+				host: session.host,
+				boundHost: session.bound_host,
+				toolkitProfile,
+				allowedToolPrefixes: parseStringArray(session.allowed_tool_prefixes_json),
+			}) ?? [];
 
 		const entitlement = await checkAgencyManagedBearerEntitlement(env, {
 			authSubject: session.user_id,
@@ -2201,6 +2246,15 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 		}
 
 		await markMcpLongLivedTokenUsed(db, longLivedToken.id);
+		const toolkitProfile = parseStringArray(longLivedToken.toolkit_profile_json);
+		const allowedToolPrefixes = resolveEffectiveAllowedToolPrefixes({
+			accountId: longLivedToken.account_id,
+			tenantId: longLivedToken.tenant_id,
+			host: longLivedToken.bound_host,
+			boundHost: longLivedToken.bound_host,
+			toolkitProfile,
+			allowedToolPrefixes: parseAllowedToolPrefixesOrNull(longLivedToken.allowed_tool_prefixes_json),
+		});
 		await createMcpAuthEvent(db, {
 			id: generateUUID(),
 			session_id: null,
@@ -2226,8 +2280,8 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			bound_host: longLivedToken.bound_host,
 			tool_mode: longLivedToken.tool_mode,
 			expires_at: null,
-			allowed_tool_prefixes: parseAllowedToolPrefixesOrNull(longLivedToken.allowed_tool_prefixes_json),
-			toolkit_profile: parseStringArray(longLivedToken.toolkit_profile_json),
+			allowed_tool_prefixes: allowedToolPrefixes,
+			toolkit_profile: toolkitProfile,
 			allow_pending_oauth_approvals: false,
 			long_lived_token_id: longLivedToken.id,
 			auth_mode: 'managed_bearer',
@@ -3575,6 +3629,41 @@ function normalizeAllowedToolPrefixes(raw: string[] | undefined): string[] {
 function resolveAllowedToolPrefixes(rawPrefixes: string[] | undefined, toolkitProfile: string[]): string[] {
 	const explicit = normalizeAllowedToolPrefixes(rawPrefixes);
 	return explicit.length > 0 ? explicit : buildAllowedToolPrefixes(toolkitProfile);
+}
+
+export function resolveEffectiveAllowedToolPrefixes(input: {
+	accountId?: string | null;
+	tenantId?: string | null;
+	host?: string | null;
+	boundHost?: string | null;
+	toolkitProfile?: string[];
+	allowedToolPrefixes?: string[] | null;
+}): string[] | null {
+	if (isWebflowTemplateReviewReviewerLane(input)) {
+		return [...WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES];
+	}
+	return input.allowedToolPrefixes ?? null;
+}
+
+function isWebflowTemplateReviewReviewerLane(input: {
+	accountId?: string | null;
+	tenantId?: string | null;
+	host?: string | null;
+	boundHost?: string | null;
+	toolkitProfile?: string[];
+}): boolean {
+	const accountId = normalizeOptionalId(input.accountId ?? undefined)?.toLowerCase() ?? null;
+	if (accountId && WEBFLOW_TEMPLATE_REVIEW_REVIEWER_ACCOUNT_IDS.has(accountId)) {
+		return true;
+	}
+
+	const host = normalizeOptionalHostName(input.host);
+	if (host?.startsWith('wf-template-review-')) {
+		return true;
+	}
+
+	const boundHost = normalizeOptionalHostName(input.boundHost);
+	return Boolean(boundHost?.startsWith('wf-template-review-'));
 }
 
 function clampTtlSeconds(raw: number | undefined): number {

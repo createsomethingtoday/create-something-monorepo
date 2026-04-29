@@ -3172,8 +3172,8 @@ export const GRAPH_NODES: GraphNode[] = [
     "wordCount": 953
   },
   {
-    "id": "docs/guides/ATLAS_LOOM_INTEGRATION.md",
-    "title": "AI Interaction Atlas + Loom Integration",
+    "id": "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
+    "title": "AI Interaction Atlas + Linear Integration",
     "package": null,
     "type": "general",
     "concepts": [],
@@ -7163,14 +7163,14 @@ export const GRAPH_EDGES: GraphEdge[] = [
     "reason": "MIGRATION_GUIDE.md"
   },
   {
-    "source": "docs/guides/ATLAS_LOOM_INTEGRATION.md",
+    "source": "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
     "target": "docs/guides/OBSERVABILITY_SETUP.md",
     "type": "cross-reference",
     "weight": 0.8,
     "reason": "Observability Setup"
   },
   {
-    "source": "docs/guides/ATLAS_LOOM_INTEGRATION.md",
+    "source": "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
     "target": ".claude/rules/harness-patterns.md",
     "type": "cross-reference",
     "weight": 0.8,

@@ -271,7 +271,7 @@ export default {
       return HalfDozenDmMcp.serve('/sse').fetch(request, env, ctx);
     }
 
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       const config = getDmConfig(env);
       const enabledToolsets = new Set(config.enabledToolsets);
       const rootComposio = await resolveRootComposioSnapshot(env, config, enabledToolsets);

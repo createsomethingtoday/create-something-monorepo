@@ -1,8 +1,7 @@
 {
   "enabledBundles": [],
   "enabledServers": [
-    "halfdozen-dm-mcp",
-    "loom-mcp"
+    "halfdozen-dm-mcp"
   ],
   "disabledServers": [
     "composio-toolkit-airtable",

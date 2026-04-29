@@ -1,4 +1,4 @@
-import type { ProfileFieldEvent } from '$server/profile/types';
+import type { ProfileFieldEvent } from '$lib/profile/types';
 
 export interface WidgetBase<TType extends string, TData> {
 	id: string;

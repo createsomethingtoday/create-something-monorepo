@@ -7,7 +7,7 @@
  * Endpoints:
  *   /mcp  — Streamable HTTP transport
  *   /sse  — SSE fallback transport
- *   /     — Health/info JSON
+ *   /, /health — Health/info JSON
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -138,7 +138,7 @@ export default {
       return NotionHalfDozenMcp.serve('/sse').fetch(request, env, ctx);
     }
 
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       const config = getWorkspaceConfig(env);
       return new Response(
         JSON.stringify(

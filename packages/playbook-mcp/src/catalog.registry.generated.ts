@@ -18,18 +18,6 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
-    "name": "Loom",
-    "slug": "loom",
-    "url": "https://loom.mcp.createsomething.agency",
-    "description": "Remote Loom MCP for task coordination and session recovery",
-    "category": "create-something",
-    "transports": [
-      "http"
-    ],
-    "requiresAuth": true,
-    "authType": "bearer"
-  },
-  {
     "name": "Outerfields PCN",
     "slug": "outerfields",
     "url": "https://outerfields.mcp.createsomething.agency",
@@ -89,6 +77,31 @@ export const REGISTRY_CATALOG_ENTRIES = [
       "sse"
     ],
     "requiresAuth": false
+  },
+  {
+    "name": "Webflow App Review",
+    "slug": "webflow-app-review",
+    "url": "https://webflow-app-review-mcp.createsomething.workers.dev",
+    "description": "Webflow App Review MCP for app asset and version workflows",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
+    "name": "Webflow Site Analyzer",
+    "slug": "webflow-site-analyzer",
+    "url": "https://analyzer.mcp.createsomething.agency",
+    "description": "Webflow Site Analyzer MCP — browser-backed template validation with Steel + Groq",
+    "category": "create-something",
+    "transports": [
+      "http"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
   },
   {
     "name": "Webflow Template Review",

@@ -8,9 +8,10 @@ test('resolve_service_config defaults turn sandbox policy for omitted workflows'
     path: '/tmp/workflow.md',
     config: {
       tracker: {
-        kind: 'loom',
-        endpoint: 'https://loom.example/mcp',
+        kind: 'linear',
+        endpoint: 'https://api.linear.app/graphql',
         api_key: 'test-token',
+        project_slug: 'test-project',
       },
     },
     prompt_template: 'test prompt',

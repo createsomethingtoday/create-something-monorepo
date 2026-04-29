@@ -838,6 +838,39 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
               Classic algorithms. Agent-native delivery.
 `
 	},
+	{
+		id: 'file-webflow-analyzer-lineage',
+		slug: 'webflow-analyzer-lineage',
+		title: 'Webflow Analyzer Lineage: From Detection to Governed Review',
+		description: 'A git-history-backed experiment tracing how Webflow analysis expanded from plagiarism detection into browser-backed MCP review, policy-grounded operations, and creator-facing submission assistance.',
+		excerpt_short: 'The analyzer story only makes sense when the whole lineage is visible',
+		excerpt_long: 'This experiment reconstructs the Webflow analyzer lineage across January to April 2026. What begins as plagiarism detection expands into browser-backed MCP review, policy snapshots, remote reviewer operations, and finally creator-facing validation and autofill flows. The result is a system story, not a feature list.',
+		category: 'research',
+		tags: ['Webflow', 'Analyzer', 'Git History', 'MCP', 'Review Systems', 'Policy as Artifact', 'Product Lineage'],
+		created_at: '2026-04-25T00:00:00Z',
+		updated_at: '2026-04-25T00:00:00Z',
+		reading_time_minutes: 12,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'tool-complementarity'
+		],
+		ascii_art: `
+    ╭──────────────────────────────────────────────────────────╮
+    │ WEBFLOW ANALYZER LINEAGE                                │
+    │                                                          │
+    │ Jan        Feb         Mar                Apr            │
+    │ detect  →  extract  →  govern         →  productize     │
+    │ experiment   MCP         policy +         reviewer +     │
+    │ origin        server      review ops       creator help  │
+    │                                                          │
+    │ The system got stronger as its boundaries got clearer.   │
+    ╰──────────────────────────────────────────────────────────╯
+`
+	},
 ];
 
 /**
