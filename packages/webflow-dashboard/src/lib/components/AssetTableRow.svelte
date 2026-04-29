@@ -42,7 +42,7 @@
 </script>
 
 <TableRow class="asset-table-row">
-	<TableCell>
+	<TableCell class="thumbnail-cell">
 		<button
 			type="button"
 			class="asset-thumbnail-link"
@@ -63,7 +63,7 @@
 			{/if}
 		</button>
 	</TableCell>
-	<TableCell>
+	<TableCell class="asset-title-cell">
 		<button type="button" class="asset-name-link" onclick={() => onView?.(asset.id)}>
 			<span class="asset-name">{asset.name}</span>
 			{#if asset.category}
@@ -71,7 +71,7 @@
 			{/if}
 		</button>
 	</TableCell>
-	<TableCell>
+	<TableCell class="date-cell">
 		<div class="date-stack">
 			<span class="date">{formatShortDate(asset.submittedDate)}</span>
 			{#if asset.submittedDate}
@@ -79,26 +79,26 @@
 			{/if}
 		</div>
 	</TableCell>
-	<TableCell>
+	<TableCell class="type-cell">
 		<span class="type">{asset.type}</span>
 	</TableCell>
 	{#if showPerformance}
 		{@const cr = conversionRate()}
 		{@const aov = avgOrderValue()}
-		<TableCell class="text-center">
-			<span class="metric tabular">{showMetrics ? formatCompactNumber(asset.uniqueViewers) : '—'}</span>
+		<TableCell class="metric-cell">
+			<span class="metric metric-primary">{showMetrics ? formatCompactNumber(asset.uniqueViewers) : '—'}</span>
 		</TableCell>
-		<TableCell class="text-center">
+		<TableCell class="metric-cell">
 			<div class="metric-stack">
-				<span class="metric tabular">{showMetrics ? formatCompactNumber(asset.cumulativePurchases) : '—'}</span>
+				<span class="metric metric-primary">{showMetrics ? formatCompactNumber(asset.cumulativePurchases) : '—'}</span>
 				{#if cr !== null}
 					<span class="metric-sub">{cr.toFixed(1)}%</span>
 				{/if}
 			</div>
 		</TableCell>
-		<TableCell class="text-center">
+		<TableCell class="metric-cell">
 			<div class="metric-stack">
-				<span class="metric tabular">{showMetrics ? formatCompactCurrency(asset.cumulativeRevenue) : '—'}</span>
+				<span class="metric metric-primary">{showMetrics ? formatCompactCurrency(asset.cumulativeRevenue) : '—'}</span>
 				{#if aov !== null}
 					<span class="metric-sub">${aov.toFixed(0)}/ea</span>
 				{/if}
@@ -123,7 +123,7 @@
 		display: inline-flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 0.04rem;
+		gap: 0.02rem;
 		max-width: 20rem;
 	}
 
@@ -137,6 +137,10 @@
 
 	.asset-thumbnail-link {
 		border-radius: var(--radius-sm);
+		background: transparent;
+		border: none;
+		padding: 0;
+		cursor: pointer;
 	}
 
 	.asset-thumbnail-link:focus-visible,
@@ -146,49 +150,52 @@
 	}
 
 	.thumbnail {
-		width: 36px;
-		height: 46px;
+		width: 30px;
+		height: 38px;
 		object-fit: cover;
 		border-radius: var(--radius-sm);
 		aspect-ratio: 7/9;
 	}
 
 	.thumbnail-placeholder {
-		width: 36px;
-		height: 46px;
+		width: 30px;
+		height: 38px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		background: var(--color-bg-subtle);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		font-size: var(--text-caption);
 		font-weight: var(--font-medium);
 	}
 
 	.asset-name {
-		font-size: 0.98rem;
+		font-size: 0.93rem;
 		font-weight: var(--font-semibold);
-		letter-spacing: 0.005em;
+		letter-spacing: 0;
 		color: var(--color-fg-primary);
-		line-height: 1.18;
+		line-height: 1.16;
 	}
 
 	.asset-meta {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		line-height: 1.15;
-		letter-spacing: 0.005em;
+		letter-spacing: 0;
 	}
 
 	.asset-name-link:hover .asset-name {
-		color: var(--color-info);
+		color: var(--color-fg-primary);
+		text-decoration: underline;
+		text-underline-offset: 0.16rem;
+		text-decoration-thickness: 1px;
 	}
 
 	.date,
 	.type {
 		color: var(--color-fg-tertiary);
-		font-size: 0.96rem;
+		font-size: 0.82rem;
 	}
 
 	.date-stack {
@@ -208,21 +215,25 @@
 	.date-sub {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		letter-spacing: 0.01em;
+		letter-spacing: 0;
 	}
 
 	.type {
 		font-size: var(--text-caption);
 		text-transform: uppercase;
-		letter-spacing: 0.035em;
+		letter-spacing: 0;
 	}
 
 	.metric {
+		display: block;
 		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
+		font-size: 0.86rem;
+		line-height: 1.1;
 	}
 
-	.metric.tabular {
+	.metric-primary {
+		color: var(--color-fg-primary);
+		font-weight: var(--font-medium);
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -230,12 +241,13 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-		gap: 0.1rem;
+		gap: 0.06rem;
 	}
 
 	.metric-sub {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+		line-height: 1;
 	}
 
 	:global(.more-cell) {
