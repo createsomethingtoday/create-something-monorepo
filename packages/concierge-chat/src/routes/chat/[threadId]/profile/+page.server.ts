@@ -1,9 +1,9 @@
 import { error } from '@sveltejs/kit';
-import { createHandoffPacket } from '$server/handoff/create-packet';
+import { buildProfileAudit } from '$server/profile/extractor';
 import { getDemoThread } from '$server/threads/demo';
-import type { PageLoad } from './$types';
+import type { PageServerLoad } from './$types';
 
-export const load: PageLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const thread = getDemoThread(params.threadId);
 
 	if (!thread) {
@@ -12,6 +12,6 @@ export const load: PageLoad = async ({ params }) => {
 
 	return {
 		thread,
-		packet: createHandoffPacket(thread)
+		audit: buildProfileAudit(thread.profile)
 	};
 };

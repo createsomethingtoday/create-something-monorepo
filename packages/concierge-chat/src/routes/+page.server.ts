@@ -1,7 +1,7 @@
 import { getLatestDemoThread, listDemoThreads } from '$server/threads/demo';
-import type { PageLoad } from './$types';
+import type { PageServerLoad } from './$types';
 
-export const load: PageLoad = async () => {
+export const load: PageServerLoad = async () => {
 	return {
 		threads: listDemoThreads(),
 		latestThreadId: getLatestDemoThread()?.id ?? null
