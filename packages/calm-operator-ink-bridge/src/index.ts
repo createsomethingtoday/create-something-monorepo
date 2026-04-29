@@ -32,6 +32,15 @@ interface Env {
   INK_SOURCE_TOKEN?: string;
 }
 
+interface OperatorCheckInInput {
+  key?: string;
+  label?: string;
+  detail?: string;
+  surface?: string;
+  device_id?: string;
+  battery_percent?: number;
+}
+
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8'
 };
@@ -682,6 +691,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'POST /ink/health-review/request',
         'POST /ink/health-review/run',
         'POST /ink/alarms/run',
+        'POST /ink/operator-check-in',
         'POST /ink/device-heartbeat',
         'POST /ink/clear'
       ]
@@ -690,7 +700,10 @@ async function route(request: Request, env: Env): Promise<Response> {
 
   if ((method === 'GET' && (path === '/ink/brief' || path === '/ink/surface-brief' || path === '/ink/device')) ||
       (method === 'POST' &&
-        (path === '/ink/device-heartbeat' || path === '/ink/clear' || path === '/ink/health-review/request'))) {
+        (path === '/ink/device-heartbeat' ||
+          path === '/ink/clear' ||
+          path === '/ink/health-review/request' ||
+          path === '/ink/operator-check-in'))) {
     if (!(await isAuthorized(request, env, 'device'))) {
       return json({ ok: false, error: 'Unauthorized device request.' }, { status: 401 });
     }
@@ -791,6 +804,32 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === 'POST' && (path === '/ink/source-event' || path === '/ink/operator-event')) {
     const body = await parseJsonBody<OperatorEventInput>(request);
     return json(await stub.recordEvent(body));
+  }
+
+  if (method === 'POST' && path === '/ink/operator-check-in') {
+    const body = await parseJsonBody<OperatorCheckInInput>(request);
+    const label = body.label?.trim() || body.key?.trim() || 'Operator check-in';
+    const result = (await stub.recordEvent({
+      type: 'operator_checkin',
+      source: body.device_id?.trim() || defaultDeviceId(env),
+      summary: label,
+      payload: {
+        ...body,
+        surface: body.surface?.trim() || defaultSurface(env),
+        recorded_at: new Date().toISOString()
+      }
+    })) as { ok: true; event_id: string };
+    return json({
+      ok: true,
+      event_id: result.event_id,
+      state: 'clear',
+      headline: 'CHECK-IN SAVED',
+      line1: label,
+      line2: 'Operator state logged',
+      detail: 'No operator action.',
+      action: 'Return to Calm',
+      urgent: false
+    });
   }
 
   if (method === 'POST' && path === '/ink/device-heartbeat') {
