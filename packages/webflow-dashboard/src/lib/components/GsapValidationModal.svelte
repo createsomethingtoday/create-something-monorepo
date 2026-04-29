@@ -211,11 +211,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-sm);
-		padding: var(--space-md);
+		padding: 0.82rem;
 		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		border: 1px solid var(--color-shell-border-default);
-		box-shadow: var(--shadow-sm);
+		border-radius: var(--radius-sm);
+		border: 1px solid color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
+		box-shadow: none;
 	}
 
 	.form-field {
@@ -242,10 +242,10 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
-		padding: var(--space-md);
+		padding: 0.82rem;
 		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
 		border: 1px solid var(--color-info-border);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-sm);
 	}
 
 	.progress-title {
@@ -292,10 +292,12 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		padding: var(--space-md);
-		border-radius: var(--radius-lg);
+		padding: 0.82rem 0;
+		border-radius: 0;
 		border: 1px solid;
-		box-shadow: var(--shadow-sm);
+		border-right: 0;
+		border-left: 0;
+		box-shadow: none;
 	}
 
 	.results-header.passed {
@@ -310,9 +312,9 @@
 
 	.results-title h3 {
 		font-family: var(--font-heading);
-		font-size: var(--text-h2);
+		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
-		letter-spacing: 0.01em;
+		letter-spacing: 0;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
@@ -326,7 +328,7 @@
 
 	.status-badge {
 		padding: var(--space-xs) var(--space-sm);
-		border-radius: 999px;
+		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
 		font-weight: var(--font-semibold);
 		background: var(--color-error);
@@ -340,16 +342,23 @@
 	.stats-grid {
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-sm);
+		gap: 0;
+		border-top: 1px solid color-mix(in srgb, var(--color-shell-border-default) 72%, transparent);
+		border-bottom: 1px solid color-mix(in srgb, var(--color-shell-border-default) 72%, transparent);
 	}
 
 	.stat {
 		text-align: center;
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		border: 1px solid var(--color-shell-border-default);
-		box-shadow: var(--shadow-sm);
+		padding: 0.66rem 0.5rem;
+		background: transparent;
+		border-radius: 0;
+		border: 0;
+		border-right: 1px solid color-mix(in srgb, var(--color-shell-border-default) 68%, transparent);
+		box-shadow: none;
+	}
+
+	.stat:last-child {
+		border-right: 0;
 	}
 
 	.stat.passed {
@@ -370,9 +379,9 @@
 
 	.stat-value {
 		font-family: var(--font-heading);
-		font-size: var(--text-h2);
+		font-size: clamp(1.24rem, 1vw + 0.95rem, 1.68rem);
 		font-weight: var(--font-semibold);
-		letter-spacing: 0.01em;
+		letter-spacing: 0;
 		color: var(--color-fg-primary);
 	}
 
@@ -383,11 +392,12 @@
 
 	.issues-summary,
 	.recommendations-section {
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		border: 1px solid var(--color-shell-border-default);
-		box-shadow: var(--shadow-sm);
+		padding: 0.82rem 0;
+		background: transparent;
+		border-radius: 0;
+		border-top: 1px solid color-mix(in srgb, var(--color-shell-border-default) 72%, transparent);
+		border-bottom: 1px solid color-mix(in srgb, var(--color-shell-border-default) 72%, transparent);
+		box-shadow: none;
 	}
 
 	.issues-summary h4,
@@ -395,7 +405,7 @@
 		font-family: var(--font-heading);
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
-		letter-spacing: 0.01em;
+		letter-spacing: 0;
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-sm) 0;
 	}
@@ -413,9 +423,9 @@
 
 	.issue-value {
 		font-family: var(--font-heading);
-		font-size: var(--text-h2);
+		font-size: clamp(1.24rem, 1vw + 0.95rem, 1.68rem);
 		font-weight: var(--font-semibold);
-		letter-spacing: 0.01em;
+		letter-spacing: 0;
 		color: var(--color-error);
 	}
 
@@ -439,7 +449,7 @@
 		align-items: center;
 		gap: var(--space-sm);
 		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-sm);
 		border-left: 3px solid;
 	}
 
@@ -500,6 +510,10 @@
 	@media (max-width: 640px) {
 		.stats-grid {
 			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.stat:nth-child(even) {
+			border-right: 0;
 		}
 
 		.input-row {
