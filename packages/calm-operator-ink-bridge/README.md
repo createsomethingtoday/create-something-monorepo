@@ -34,6 +34,7 @@ Token-gated:
 - `GET /ink/health-checks`
 - `POST /ink/health-checks/run`
 - `GET /ink/health-review`
+- `POST /ink/health-review/request`
 - `POST /ink/health-review/run`
 - `POST /ink/alarms/run`
 - `POST /ink/device-heartbeat`
@@ -121,6 +122,16 @@ curl -sS https://ink.createsomething.agency/ink/health-review/run \
 ```
 
 Pass `?collect=false` to review stored snapshots without collecting remote checks.
+
+Ink can request the same review with the lower-privilege device token. This
+returns the compact firmware brief shape, so the device can show one calm summary
+instead of a full report:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/health-review/request \
+  -X POST \
+  -H "x-ink-token: $INK_DEVICE_TOKEN"
+```
 
 ## Daily alarms
 

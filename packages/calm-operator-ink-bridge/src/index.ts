@@ -595,6 +595,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /ink/health-checks',
         'POST /ink/health-checks/run',
         'GET /ink/health-review',
+        'POST /ink/health-review/request',
         'POST /ink/health-review/run',
         'POST /ink/alarms/run',
         'POST /ink/device-heartbeat',
@@ -604,7 +605,8 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
 
   if ((method === 'GET' && (path === '/ink/brief' || path === '/ink/surface-brief' || path === '/ink/device')) ||
-      (method === 'POST' && (path === '/ink/device-heartbeat' || path === '/ink/clear'))) {
+      (method === 'POST' &&
+        (path === '/ink/device-heartbeat' || path === '/ink/clear' || path === '/ink/health-review/request'))) {
     if (!(await isAuthorized(request, env, 'device'))) {
       return json({ ok: false, error: 'Unauthorized device request.' }, { status: 401 });
     }
@@ -664,6 +666,27 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === 'POST' && path === '/ink/health-review/run') {
     const collect = url.searchParams.get('collect');
     return json(collect === 'false' ? await stub.runHealthReview(healthStaleAfterMs(env)) : await collectAndRunHealthReview(env));
+  }
+
+  if (method === 'POST' && path === '/ink/health-review/request') {
+    const collect = url.searchParams.get('collect');
+    const result =
+      collect === 'false'
+        ? { ok: true, collected: [], review: await stub.runHealthReview(healthStaleAfterMs(env)) }
+        : await collectAndRunHealthReview(env);
+    const firmwareBrief = toFirmwareBrief(result.review.brief);
+
+    return json({
+      ...firmwareBrief,
+      health_review: {
+        state: result.review.report.state,
+        summary: result.review.report.summary,
+        detail: result.review.report.detail,
+        action: result.review.report.action,
+        urgent: result.review.report.urgent,
+        collected: result.collected.length
+      }
+    });
   }
 
   if (method === 'POST' && path === '/ink/alarms/run') {
