@@ -30,6 +30,9 @@ WORKSPACE_ID = "create-something"
 DEFAULT_DEVICE_ID = "core-ink"
 DEFAULT_SURFACE = "core-ink"
 HEALTH_STALE_AFTER_MS = "43200000"
+HEALTH_SELF_ORIGIN = "https://ink.createsomething.agency"
+HEALTH_SELF_CHECK_ENABLED = "false"
+HEALTH_CHECKS_JSON = "[]"
 
 # Secrets required before production deploy:
 # - INK_DEVICE_TOKEN: Core Ink read/heartbeat/clear token

@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
+import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
 import type {
   DeviceHeartbeatInput,
   HealthReviewReport,
@@ -19,6 +20,9 @@ interface Env {
   DEFAULT_DEVICE_ID?: string;
   DEFAULT_SURFACE?: string;
   HEALTH_STALE_AFTER_MS?: string;
+  HEALTH_CHECKS_JSON?: string;
+  HEALTH_SELF_ORIGIN?: string;
+  HEALTH_SELF_CHECK_ENABLED?: string;
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
@@ -509,6 +513,29 @@ function stateStub(env: Env): DurableObjectStub<InkState> {
   return env.INK_STATE.getByName(workspaceId(env));
 }
 
+async function collectAndRunHealthReview(env: Env): Promise<{
+  ok: true;
+  collected: Array<{ ok: boolean; component: string; status?: string }>;
+  review: Awaited<ReturnType<InkState['runHealthReview']>>;
+}> {
+  const stub = stateStub(env);
+  const collected = await collectRemoteHealthChecks(env);
+
+  for (const result of collected) {
+    await stub.setHealthSnapshot(result.snapshot);
+  }
+
+  return {
+    ok: true,
+    collected: collected.map((result) => ({
+      ok: result.ok,
+      component: result.check.component,
+      status: result.snapshot.status
+    })),
+    review: await stub.runHealthReview(healthStaleAfterMs(env))
+  };
+}
+
 async function route(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -535,6 +562,8 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /ink/surface-brief',
         'POST /ink/alert',
         'POST /ink/health-snapshot',
+        'GET /ink/health-checks',
+        'POST /ink/health-checks/run',
         'GET /ink/health-review',
         'POST /ink/health-review/run',
         'POST /ink/device-heartbeat',
@@ -578,12 +607,32 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json(await stub.setHealthSnapshot(body));
   }
 
+  if (method === 'GET' && path === '/ink/health-checks') {
+    return json({
+      ok: true,
+      checks: configuredRemoteHealthChecks(env).map((check) => ({
+        id: check.id ?? '',
+        source: check.source ?? 'remote-health-check',
+        component: check.component,
+        type: check.type ?? 'service',
+        registry_id: check.registry_id ?? '',
+        method: check.method ?? 'GET',
+        has_token: Boolean(check.token_env)
+      }))
+    });
+  }
+
+  if (method === 'POST' && path === '/ink/health-checks/run') {
+    return json(await collectAndRunHealthReview(env));
+  }
+
   if (method === 'GET' && path === '/ink/health-review') {
     return json(await stub.healthReview(healthStaleAfterMs(env)));
   }
 
   if (method === 'POST' && path === '/ink/health-review/run') {
-    return json(await stub.runHealthReview(healthStaleAfterMs(env)));
+    const collect = url.searchParams.get('collect');
+    return json(collect === 'false' ? await stub.runHealthReview(healthStaleAfterMs(env)) : await collectAndRunHealthReview(env));
   }
 
   if (method === 'POST' && (path === '/ink/source-event' || path === '/ink/operator-event')) {
@@ -619,7 +668,7 @@ export default {
     ctx.waitUntil(
       (async () => {
         try {
-          await stateStub(env).runHealthReview(healthStaleAfterMs(env));
+          await collectAndRunHealthReview(env);
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));

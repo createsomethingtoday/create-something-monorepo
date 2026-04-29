@@ -8,6 +8,7 @@ The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is o
 
 - Store active operator alerts in a Durable Object.
 - Accept MCP/agent health snapshots and attention events.
+- Collect configured remote health checks on the same schedule.
 - Run a scheduled health review four times daily.
 - Accept Core Ink device heartbeat.
 - Return a compact `/ink/brief` response compatible with the firmware bridge contract.
@@ -29,6 +30,8 @@ Token-gated:
 - `POST /ink/source-event`
 - `POST /ink/operator-event`
 - `POST /ink/health-snapshot`
+- `GET /ink/health-checks`
+- `POST /ink/health-checks/run`
 - `GET /ink/health-review`
 - `POST /ink/health-review/run`
 - `POST /ink/device-heartbeat`
@@ -99,14 +102,61 @@ The Worker has a Cron Trigger:
 crons = ["0 4,13,18,23 * * *"]
 ```
 
-Each run reviews stored health snapshots. If any agent/MCP check is poor or stale,
-the Worker writes a `health_attention` alert that Ink will display. If the report is
+Each run collects configured remote health checks, stores health snapshots, and
+then reviews all stored snapshots. If any agent/MCP check is poor or stale, the
+Worker writes a `health_attention` alert that Ink will display. If the report is
 clear, the Worker clears the synthetic health-review alert.
 
 You can run the review manually:
 
 ```bash
 curl -sS https://ink.createsomething.agency/ink/health-review/run \
+  -X POST \
+  -H "authorization: Bearer $INK_SOURCE_TOKEN"
+```
+
+Pass `?collect=false` to review stored snapshots without collecting remote checks.
+
+## Remote health checks
+
+Configure remote checks with `HEALTH_CHECKS_JSON`:
+
+```json
+[
+  {
+    "id": "mcp.hub",
+    "component": "CREATE SOMETHING Hub MCP",
+    "type": "mcp",
+    "registry_id": "mcp.hub",
+    "url": "https://hub.example.com/healthz",
+    "expected_status": 200,
+    "expected_text": "ok",
+    "token_env": "HUB_HEALTH_TOKEN",
+    "action": "Review Hub MCP deployment and token scope"
+  }
+]
+```
+
+If `token_env` is set, the Worker reads that environment variable or secret and
+sends it as a Bearer token. Health payloads redact query strings and never store
+token values.
+
+Self-checking the Worker through its own custom domain is disabled by default
+because same-zone edge fetches can produce false positives. Keep route health
+smokes external, or explicitly set `HEALTH_SELF_CHECK_ENABLED=true` only if the
+chosen `HEALTH_SELF_ORIGIN` is known to work from Workers.
+
+List configured checks:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/health-checks \
+  -H "authorization: Bearer $INK_SOURCE_TOKEN"
+```
+
+Run checks and review immediately:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/health-checks/run \
   -X POST \
   -H "authorization: Bearer $INK_SOURCE_TOKEN"
 ```

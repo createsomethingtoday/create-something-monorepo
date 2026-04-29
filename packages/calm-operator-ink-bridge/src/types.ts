@@ -51,6 +51,28 @@ export interface HealthSnapshotInput {
   payload?: Record<string, unknown>;
 }
 
+export interface RemoteHealthCheckConfig {
+  id?: string;
+  source?: string;
+  component: string;
+  url: string;
+  method?: string;
+  type?: 'agent' | 'mcp' | 'job' | 'service' | string;
+  registry_id?: string;
+  expected_status?: number;
+  expected_text?: string;
+  timeout_ms?: number;
+  severity?: number;
+  token_env?: string;
+  action?: string;
+}
+
+export interface RemoteHealthCheckResult {
+  ok: boolean;
+  check: RemoteHealthCheckConfig;
+  snapshot: HealthSnapshotInput;
+}
+
 export interface StoredHealthSnapshot
   extends Required<Omit<HealthSnapshotInput, 'observed_at' | 'payload'>> {
   observed_at: number;
