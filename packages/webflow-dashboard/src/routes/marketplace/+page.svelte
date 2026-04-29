@@ -445,9 +445,9 @@
   }
 
   .data-scope-notice {
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
+    padding: 0.7rem 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
     background: transparent;
     margin-bottom: var(--space-md);
   }
@@ -462,7 +462,7 @@
   .notice-title {
     font-size: var(--text-body-sm);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--color-fg-primary);
     margin: 0;
   }

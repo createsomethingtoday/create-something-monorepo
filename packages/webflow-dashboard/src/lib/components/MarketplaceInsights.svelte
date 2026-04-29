@@ -289,6 +289,10 @@
     return { level: 'Very High', color: 'error' };
   }
 
+  function getCompetitionClass(level: string): string {
+    return level.toLowerCase().replace(/\s+/g, '-');
+  }
+
   const hasMarketplaceSalesSummaryData = $derived(
     () => summary.totalMarketplaceSales !== 0 || Boolean(summary.lastUpdated)
   );
@@ -534,7 +538,7 @@
             <thead>
               <tr>
                 <th>Category • Subcategory</th>
-                <th class="sortable center-head" onclick={() => handleSort('revenueRank')}>
+                <th class="sortable right-head" onclick={() => handleSort('revenueRank')}>
                   Rank
                   {#if sortKey === 'revenueRank'}
                     <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
@@ -575,13 +579,16 @@
                 {@const hasUserTemplate = userCategories().has(category.category)}
                 <tr class:user-row={hasUserTemplate}>
                   <td>
-                    <span class="category-name">{category.category} • {category.subcategory}</span>
+                    <span class="category-stack">
+                      <span class="category-parent">{category.category}</span>
+                      <span class="category-name">{category.subcategory}</span>
+                    </span>
                     {#if hasUserTemplate}
                       <span class="user-indicator">Your portfolio</span>
                     {/if}
                   </td>
-                  <td class="center">
-                    <span class="rank-pill">#{category.revenueRank}</span>
+                  <td class="right rank-cell">
+                    <span class="rank-value">#{category.revenueRank}</span>
                   </td>
                   <td class="right">{category.templatesInSubcategory}</td>
                   <td class="right">{category.totalSales30d.toLocaleString()}</td>
@@ -590,18 +597,15 @@
                       >${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span
                     >
                   </td>
-                  <td>
-                    <Badge
-                      variant={competition.color === 'success'
-                        ? 'success'
-                        : competition.color === 'warning'
-                          ? 'warning'
-                          : competition.color === 'error'
-                            ? 'error'
-                            : 'info'}
+                  <td class="competition-cell">
+                    <span
+                      class="competition-value competition-{getCompetitionClass(
+                        competition.level
+                      )}"
                     >
+                      <span class="competition-dot"></span>
                       {competition.level}
-                    </Badge>
+                    </span>
                   </td>
                 </tr>
               {/each}
@@ -784,9 +788,9 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 0;
-    margin-bottom: var(--space-lg);
-    border-top: 1px solid var(--color-border-default);
-    border-bottom: 1px solid var(--color-border-default);
+    margin-bottom: var(--space-md);
+    border-top: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
   }
 
   .summary-grid.summary-grid-1 {
@@ -804,10 +808,10 @@
   .summary-item {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.9rem 1rem;
-    min-height: 7rem;
-    border-right: 1px solid var(--color-border-default);
+    gap: 0.18rem;
+    padding: 0.72rem 0.9rem;
+    min-height: 5.8rem;
+    border-right: 1px solid color-mix(in srgb, var(--color-border-default) 68%, transparent);
     background: transparent;
   }
 
@@ -826,15 +830,15 @@
     font-size: var(--text-caption);
     font-weight: var(--font-medium);
     color: var(--color-fg-muted);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     text-transform: uppercase;
   }
 
   .summary-value {
     font-family: var(--font-heading);
-    font-size: clamp(1.65rem, 1.3vw + 1rem, 2.1rem);
+    font-size: clamp(1.38rem, 1vw + 1rem, 1.82rem);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     line-height: 1.15;
     color: var(--color-fg-primary);
     font-variant-numeric: tabular-nums;
@@ -843,7 +847,7 @@
   .summary-support {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
-    line-height: 1.35;
+    line-height: 1.28;
     margin-top: auto;
   }
 
@@ -859,12 +863,12 @@
     }
 
     .summary-item {
-      border-right: 1px solid var(--color-border-default);
-      border-bottom: 1px solid var(--color-border-default);
+      border-right: 1px solid color-mix(in srgb, var(--color-border-default) 68%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 68%, transparent);
     }
 
     .summary-item:nth-child(odd) {
-      border-right: 1px solid var(--color-border-default);
+      border-right: 1px solid color-mix(in srgb, var(--color-border-default) 68%, transparent);
     }
 
     .summary-item:nth-last-child(-n + 2) {
@@ -883,11 +887,11 @@
     }
 
     .summary-item:not(:last-child) {
-      border-bottom: 1px solid var(--color-border-default);
+      border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 68%, transparent);
     }
 
     .summary-item:nth-last-child(-n + 2) {
-      border-bottom: 1px solid var(--color-border-default);
+      border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 68%, transparent);
     }
 
     .summary-item:last-child {
@@ -939,7 +943,7 @@
     font-family: var(--font-heading);
     font-size: var(--text-body-lg);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--color-fg-primary);
     margin: 0 0 var(--space-md);
   }
@@ -971,7 +975,7 @@
     min-height: 2.5rem;
     padding: 0.5rem 0.95rem;
     border: 1px solid var(--color-info-border);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--color-info-soft-text);
     font-size: var(--text-body-sm);
@@ -1126,10 +1130,10 @@
   .leaderboard-card {
     display: flex;
     flex-direction: column;
-    padding: 0.9rem;
+    padding: 0.74rem;
     background: transparent;
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
+    border: 1px solid color-mix(in srgb, var(--color-border-default) 70%, transparent);
+    border-radius: var(--radius-sm);
     transition:
       border-color var(--duration-micro) var(--ease-standard),
       background-color var(--duration-micro) var(--ease-standard);
@@ -1137,7 +1141,7 @@
 
   .leaderboard-card:hover {
     border-color: var(--color-info-soft-border);
-    background: color-mix(in srgb, var(--color-bg-subtle) 55%, transparent);
+    background: color-mix(in srgb, var(--color-bg-subtle) 34%, transparent);
   }
 
   .leaderboard-card.user-template {
@@ -1158,7 +1162,7 @@
     justify-content: center;
     min-width: 2.25rem;
     padding: 0.25rem 0.5rem;
-    border-radius: 0.625rem;
+    border-radius: var(--radius-sm);
     background: var(--color-info-soft-bg);
     border: 1px solid var(--color-info-soft-border);
     font-weight: var(--font-semibold);
@@ -1176,7 +1180,7 @@
     font-family: var(--font-heading);
     font-size: var(--text-body-lg);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--color-fg-primary);
     margin: 0 0 var(--space-xs);
     display: -webkit-box;
@@ -1268,7 +1272,7 @@
     gap: 0.25rem;
     padding: 0.25rem;
     border: 1px solid var(--color-shell-border-default);
-    border-radius: 0.8rem;
+    border-radius: var(--radius-sm);
     background: var(--color-bg-surface);
   }
 
@@ -1293,7 +1297,7 @@
     height: 2.5rem;
     padding: 0 0.9rem;
     border: 1px solid var(--color-shell-border-default);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-sm);
     background: var(--color-bg-surface);
     color: var(--color-fg-primary);
     font-size: var(--text-body-sm);
@@ -1312,7 +1316,7 @@
     height: 2.5rem;
     padding: 0 0.95rem;
     border: 1px solid var(--color-shell-border-default);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--color-fg-secondary);
     font-size: var(--text-body-sm);
@@ -1348,16 +1352,16 @@
   .categories-empty {
     padding: var(--space-md);
     border: 1px dashed var(--color-border-default);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     color: var(--color-fg-muted);
     font-size: var(--text-body-sm);
     text-align: center;
   }
 
   .toggle-btn {
-    padding: 0.55rem 1rem;
+    padding: 0.46rem 0.84rem;
     border: 1px solid transparent;
-    border-radius: 0.6rem;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--color-fg-muted);
     font-size: var(--text-body-sm);
@@ -1390,8 +1394,8 @@
 
   .table-container {
     overflow-x: auto;
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
+    border: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
+    border-radius: var(--radius-sm);
     background: var(--color-bg-surface);
   }
 
@@ -1402,11 +1406,11 @@
   }
 
   .data-table col.category-col {
-    width: 39%;
+    width: 42%;
   }
 
   .data-table col.rank-col {
-    width: 10%;
+    width: 8%;
   }
 
   .data-table col.active-col,
@@ -1421,9 +1425,9 @@
 
   .data-table th,
   .data-table td {
-    padding: 0.58rem 0.95rem;
+    padding: 0.42rem 0.78rem;
     text-align: left;
-    border-bottom: 1px solid var(--color-shell-border-default);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-shell-border-default) 64%, transparent);
     vertical-align: middle;
   }
 
@@ -1433,16 +1437,12 @@
     color: var(--color-fg-muted);
     background: transparent;
     text-transform: uppercase;
-    letter-spacing: 0.035em;
+    letter-spacing: 0;
     white-space: nowrap;
   }
 
   .data-table th.sortable {
     cursor: pointer;
-  }
-
-  .data-table th.center-head {
-    text-align: center;
   }
 
   .data-table th.right-head {
@@ -1465,11 +1465,11 @@
   .data-table td {
     font-size: var(--text-body-sm);
     color: var(--color-fg-primary);
-    line-height: 1.3;
+    line-height: 1.22;
   }
 
   .data-table tbody tr:hover {
-    background: color-mix(in srgb, var(--color-bg-subtle) 55%, transparent);
+    background: color-mix(in srgb, var(--color-bg-subtle) 32%, transparent);
   }
 
   .data-table tr:last-child td {
@@ -1477,7 +1477,7 @@
   }
 
   .data-table tr.user-row {
-    background: color-mix(in srgb, var(--color-info-soft-wash) 80%, transparent);
+    background: color-mix(in srgb, var(--color-info-soft-wash) 48%, transparent);
   }
 
   .data-table .center {
@@ -1496,6 +1496,23 @@
     line-height: 1.25;
   }
 
+  .category-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.04rem;
+  }
+
+  .data-table .category-parent {
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+    line-height: 1.1;
+  }
+
+  .data-table .category-name {
+    color: var(--color-fg-primary);
+    font-size: 0.86rem;
+  }
+
   .user-indicator {
     display: block;
     font-size: var(--text-caption);
@@ -1508,11 +1525,54 @@
     padding: 0.22rem 0.5rem;
     background: transparent;
     border: 1px solid var(--color-info-soft-border);
-    border-radius: 0.6rem;
+    border-radius: var(--radius-sm);
     font-size: var(--text-caption);
     font-weight: var(--font-medium);
     color: var(--color-info-soft-text);
     font-variant-numeric: tabular-nums;
+  }
+
+  .rank-value {
+    color: var(--color-fg-primary);
+    font-weight: var(--font-medium);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .competition-cell {
+    color: var(--color-fg-secondary);
+  }
+
+  .competition-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-caption);
+    font-weight: var(--font-medium);
+    line-height: 1;
+  }
+
+  .competition-dot {
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 999px;
+    background: var(--color-info);
+  }
+
+  .competition-value.competition-low .competition-dot {
+    background: var(--color-success);
+  }
+
+  .competition-value.competition-medium .competition-dot {
+    background: var(--color-info);
+  }
+
+  .competition-value.competition-high .competition-dot {
+    background: var(--color-warning);
+  }
+
+  .competition-value.competition-very-high .competition-dot {
+    background: var(--color-error);
   }
 
   .revenue {
@@ -1523,7 +1583,7 @@
   .categories-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-md);
+    gap: var(--space-sm);
   }
 
   @media (max-width: 1200px) {
@@ -1547,11 +1607,11 @@
   .category-card {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
-    padding: 0.9rem;
+    gap: 0.68rem;
+    padding: 0.78rem;
     background: transparent;
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
+    border: 1px solid color-mix(in srgb, var(--color-border-default) 70%, transparent);
+    border-radius: var(--radius-sm);
     transition:
       border-color var(--duration-micro) var(--ease-standard),
       background-color var(--duration-micro) var(--ease-standard);
@@ -1564,7 +1624,7 @@
 
   .category-card:hover {
     border-color: var(--color-info-soft-border);
-    background: color-mix(in srgb, var(--color-bg-subtle) 55%, transparent);
+    background: color-mix(in srgb, var(--color-bg-subtle) 34%, transparent);
   }
 
   .category-card-header {
@@ -1587,7 +1647,7 @@
     font-family: var(--font-heading);
     font-size: var(--text-body);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--color-fg-primary);
   }
 
@@ -1598,9 +1658,9 @@
 
   .category-metric .metric-value {
     font-family: var(--font-heading);
-    font-size: var(--text-h2);
+    font-size: clamp(1.28rem, 1vw + 0.95rem, 1.7rem);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--color-fg-primary);
   }
 
@@ -1660,10 +1720,10 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    padding: 0.9rem;
+    padding: 0.8rem;
     background: transparent;
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
+    border: 1px solid color-mix(in srgb, var(--color-border-default) 70%, transparent);
+    border-radius: var(--radius-sm);
   }
 
   .table-mobile-card.user-category {
@@ -1693,7 +1753,7 @@
     font-family: var(--font-heading);
     font-size: var(--text-body);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--color-fg-primary);
   }
 
@@ -1704,9 +1764,9 @@
 
   .mobile-card-metric .metric-value {
     font-family: var(--font-heading);
-    font-size: var(--text-h2);
+    font-size: clamp(1.28rem, 1vw + 0.95rem, 1.7rem);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--color-fg-primary);
   }
 
@@ -1791,7 +1851,7 @@
   }
 
   .category-metric .metric-main .metric-value {
-    font-size: var(--text-h2);
+    font-size: clamp(1.28rem, 1vw + 0.95rem, 1.7rem);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
