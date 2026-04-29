@@ -1318,6 +1318,8 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
             }
             const html = await response.text();
             const validation = validateGsapUsage(html, page.url);
+            const summary = validation.summary || {};
+            const details = validation.details || {};
             results.push({
               url: page.url,
               title: page.title || "",
@@ -1325,24 +1327,24 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
               passed: validation.passed,
               summary: {
                 url: page.url,
-                scriptCount: validation.scriptCount,
-                styleCount: validation.styleCount,
-                externalScriptCount: validation.externalScripts?.length || 0,
-                validGsapCount: validation.validGsapUsage?.length || 0,
-                allowedCustomCodeCount: validation.allowedCustomCode?.length || 0,
-                flaggedCodeCount: validation.flaggedCode?.length || 0,
-                securityRiskCount: validation.securityRisks?.length || 0,
+                scriptCount: summary.scriptCount || 0,
+                styleCount: summary.styleCount || 0,
+                externalScriptCount: summary.externalScriptCount || 0,
+                validGsapCount: summary.validGsapCount || 0,
+                allowedCustomCodeCount: summary.allowedCustomCodeCount || 0,
+                flaggedCodeCount: summary.flaggedCodeCount || 0,
+                securityRiskCount: summary.securityRiskCount || 0,
                 passed: validation.passed
               },
               details: {
                 url: page.url,
-                validGsapUsage: validation.validGsapUsage || [],
-                allowedCustomCode: validation.allowedCustomCode || [],
-                flaggedCode: validation.flaggedCode || [],
-                securityRisks: validation.securityRisks || [],
-                externalScripts: validation.externalScripts || []
+                validGsapUsage: details.validGsapUsage || [],
+                allowedCustomCode: details.allowedCustomCode || [],
+                flaggedCode: details.flaggedCode || [],
+                securityRisks: details.securityRisks || [],
+                externalScripts: details.externalScripts || []
               },
-              flaggedCodeCount: validation.flaggedCode?.length || 0
+              flaggedCodeCount: summary.flaggedCodeCount || 0
             });
           } catch (error) {
             results.push({
