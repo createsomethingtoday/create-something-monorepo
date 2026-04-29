@@ -8,6 +8,7 @@ ISSUE_ID="$(basename "${WORKSPACE_PATH}")"
 BRANCH_NAME="codex/${ISSUE_ID}-policy"
 
 if [[ ! -e "${WORKSPACE_PATH}/.git" ]]; then
+  git -C "${REPO_ROOT}" worktree prune
   if git -C "${REPO_ROOT}" show-ref --verify --quiet "refs/heads/${BRANCH_NAME}"; then
     git -C "${REPO_ROOT}" worktree add --force "${WORKSPACE_PATH}" "${BRANCH_NAME}"
   else

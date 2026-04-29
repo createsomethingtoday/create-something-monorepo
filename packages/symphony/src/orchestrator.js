@@ -178,10 +178,14 @@ export class SymphonyService {
     }
     get_snapshot() {
         const generated_at = now_iso();
-        const running = [...this.running.values()].map(({ entry }) => ({
+        const running = [...this.running.values()].map(({ entry, workspace_path, workspace_metadata_path }) => ({
             issue_id: entry.issue.id,
             issue_identifier: entry.issue.identifier,
             state: entry.issue.state,
+            workspace: {
+                path: workspace_path ?? null,
+                metadata_path: workspace_metadata_path ?? null,
+            },
             session_id: entry.session_id,
             turn_count: entry.turn_count,
             last_event: entry.last_codex_event,
@@ -234,7 +238,8 @@ export class SymphonyService {
             issue_id: running?.entry.issue.id ?? retry?.entry.issue_id ?? '',
             status: running ? 'running' : retry ? 'retrying' : 'released',
             workspace: {
-                path: running?.workspace_path ?? `${this.current_config.workspace.root}/${issue_identifier}`,
+                path: running?.workspace_path ?? this.workspace_manager.get_workspace_paths(issue_identifier).workspace_path,
+                metadata_path: running?.workspace_metadata_path ?? this.workspace_manager.get_workspace_paths(issue_identifier).metadata_path,
             },
             attempts: {
                 restart_count: running?.entry.restart_count ?? retry?.entry.attempt ?? 0,
@@ -446,6 +451,7 @@ export class SymphonyService {
             entry: to_running_entry(claimed_issue, attempt),
             run,
             workspace_path: workspace.path,
+            workspace_metadata_path: workspace.metadata_path,
             stop_behavior: { mode: 'default' },
         });
         this.claimed.add(claimed_issue.id);
