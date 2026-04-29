@@ -94,6 +94,29 @@ test('surfaces poor health when no active alerts exist', () => {
   assert.equal(brief.urgent, false);
 });
 
+test('surfaces daily alarm alerts as alarms', () => {
+  const brief = buildOperatorBrief({
+    alerts: [
+      alert({
+        id: 'alarm-1',
+        state: 'daily_alarm',
+        category: 'alarm',
+        subject: '6:00 AM CT alarm',
+        reason: 'Daily calm operator alarm',
+        severity: 95,
+        urgent: true
+      })
+    ],
+    health: [],
+    now: 1000
+  });
+
+  assert.equal(brief.state, 'daily_alarm');
+  assert.equal(brief.headline, 'ALARM');
+  assert.equal(brief.line1, '6:00 AM CT alarm');
+  assert.equal(brief.urgent, true);
+});
+
 test('ignores expired or cleared alerts', () => {
   const brief = buildOperatorBrief({
     alerts: [

@@ -10,6 +10,7 @@ export type OperatorState =
   | 'sms_love'
   | 'slack_attention'
   | 'calendar_attention'
+  | 'daily_alarm'
   | 'operator_attention'
   | 'disconnected'
   | string;

@@ -3,6 +3,7 @@ import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
 import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
+import { dueDailyAlarms, shouldRunHealthReviewAtUtcHour } from './scheduled-alarms.js';
 import type {
   DeviceHeartbeatInput,
   HealthReviewReport,
@@ -23,6 +24,9 @@ interface Env {
   HEALTH_CHECKS_JSON?: string;
   HEALTH_SELF_ORIGIN?: string;
   HEALTH_SELF_CHECK_ENABLED?: string;
+  HEALTH_REVIEW_UTC_HOURS?: string;
+  DAILY_ALARMS_CT?: string;
+  ALARM_TTL_MS?: string;
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
@@ -536,6 +540,32 @@ async function collectAndRunHealthReview(env: Env): Promise<{
   };
 }
 
+async function runScheduledDailyAlarms(env: Env, nowMs = Date.now()): Promise<{
+  ok: true;
+  checked_at: string;
+  fired: Array<{ id: string; local_date: string; local_time: string; display_time: string }>;
+}> {
+  const alarms = dueDailyAlarms(env, nowMs);
+  if (!alarms.length) {
+    return { ok: true, checked_at: new Date(nowMs).toISOString(), fired: [] };
+  }
+
+  const stub = stateStub(env);
+  const fired = [];
+
+  for (const alarm of alarms) {
+    await stub.addAlert(alarm.alert);
+    fired.push({
+      id: alarm.id,
+      local_date: alarm.local_date,
+      local_time: alarm.local_time,
+      display_time: alarm.display_time
+    });
+  }
+
+  return { ok: true, checked_at: new Date(nowMs).toISOString(), fired };
+}
+
 async function route(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -566,6 +596,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'POST /ink/health-checks/run',
         'GET /ink/health-review',
         'POST /ink/health-review/run',
+        'POST /ink/alarms/run',
         'POST /ink/device-heartbeat',
         'POST /ink/clear'
       ]
@@ -635,6 +666,12 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json(collect === 'false' ? await stub.runHealthReview(healthStaleAfterMs(env)) : await collectAndRunHealthReview(env));
   }
 
+  if (method === 'POST' && path === '/ink/alarms/run') {
+    const body: { now?: number | string } = await parseJsonBody<{ now?: number | string }>(request).catch(() => ({}));
+    const nowMs = parseEpoch(body.now, Date.now()) ?? Date.now();
+    return json(await runScheduledDailyAlarms(env, nowMs));
+  }
+
   if (method === 'POST' && (path === '/ink/source-event' || path === '/ink/operator-event')) {
     const body = await parseJsonBody<OperatorEventInput>(request);
     return json(await stub.recordEvent(body));
@@ -664,11 +701,15 @@ export default {
     }
   },
 
-  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(
       (async () => {
         try {
-          await collectAndRunHealthReview(env);
+          const nowMs = controller.scheduledTime ?? Date.now();
+          await runScheduledDailyAlarms(env, nowMs);
+          if (shouldRunHealthReviewAtUtcHour(env.HEALTH_REVIEW_UTC_HOURS, nowMs)) {
+            await collectAndRunHealthReview(env);
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));

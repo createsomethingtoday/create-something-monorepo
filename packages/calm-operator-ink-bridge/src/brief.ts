@@ -35,11 +35,13 @@ function alertScore(alert: StoredAlert): number {
         ? 35
         : alert.state === 'agent_attention'
           ? 30
-          : alert.state === 'sms_love'
-            ? 28
-            : alert.state === 'approval_needed'
-              ? 25
-              : 0;
+          : alert.state === 'daily_alarm'
+            ? 30
+            : alert.state === 'sms_love'
+              ? 28
+              : alert.state === 'approval_needed'
+                ? 25
+                : 0;
 
   return alert.severity + stateWeight + (alert.urgent ? 50 : 0);
 }
@@ -80,6 +82,8 @@ function headlineForAlert(alert: StoredAlert): string {
       return 'SLACK';
     case 'calendar_attention':
       return 'CALENDAR';
+    case 'daily_alarm':
+      return 'ALARM';
     default:
       return alert.urgent ? 'JUDGMENT NEEDED' : 'OPERATOR NOTE';
   }

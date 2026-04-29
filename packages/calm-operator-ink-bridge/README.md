@@ -10,6 +10,7 @@ The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is o
 - Accept MCP/agent health snapshots and attention events.
 - Collect configured remote health checks on the same schedule.
 - Run a scheduled health review four times daily.
+- Fire daily local alarms for the operator at configured Central Time moments.
 - Accept Core Ink device heartbeat.
 - Return a compact `/ink/brief` response compatible with the firmware bridge contract.
 - Keep production content live-only. No mock carousel or fake workflow counts.
@@ -34,6 +35,7 @@ Token-gated:
 - `POST /ink/health-checks/run`
 - `GET /ink/health-review`
 - `POST /ink/health-review/run`
+- `POST /ink/alarms/run`
 - `POST /ink/device-heartbeat`
 - `POST /ink/clear`
 
@@ -95,17 +97,20 @@ Both commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the e
 
 ## Scheduled health review
 
-The Worker has a Cron Trigger:
+The Worker has a Cron Trigger that covers health-review runs and Central Time
+alarm moments:
 
 ```toml
 [triggers]
-crons = ["0 4,13,18,23 * * *"]
+crons = ["0 4,11,12,13,14,15,18,23 * * *"]
 ```
 
-Each run collects configured remote health checks, stores health snapshots, and
-then reviews all stored snapshots. If any agent/MCP check is poor or stale, the
-Worker writes a `health_attention` alert that Ink will display. If the report is
-clear, the Worker clears the synthetic health-review alert.
+Health reviews only run during `HEALTH_REVIEW_UTC_HOURS`, which defaults to
+`4,13,18,23`, so adding alarm Cron slots does not increase the health-review
+cadence. Each health run collects configured remote checks, stores health
+snapshots, and then reviews all stored snapshots. If any agent/MCP check is poor
+or stale, the Worker writes a `health_attention` alert that Ink will display. If
+the report is clear, the Worker clears the synthetic health-review alert.
 
 You can run the review manually:
 
@@ -116,6 +121,22 @@ curl -sS https://ink.createsomething.agency/ink/health-review/run \
 ```
 
 Pass `?collect=false` to review stored snapshots without collecting remote checks.
+
+## Daily alarms
+
+Daily alarms are configured with `DAILY_ALARMS_CT`, defaulting to `06:00,09:00`.
+The Worker evaluates those times in `America/Chicago` and writes an urgent
+`daily_alarm` alert when one is due. Each alarm uses a per-day id, so retries are
+idempotent, and expires after `ALARM_TTL_MS`, defaulting to 45 minutes.
+
+Run the alarm scheduler manually:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/alarms/run \
+  -X POST \
+  -H "authorization: Bearer $INK_SOURCE_TOKEN" \
+  -d '{"now":"2026-04-29T11:00:00Z"}'
+```
 
 ## Remote health checks
 
