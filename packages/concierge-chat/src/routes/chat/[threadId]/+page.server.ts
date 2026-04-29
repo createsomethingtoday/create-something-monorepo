@@ -3,9 +3,9 @@ import { buildProfileAudit } from '$server/profile/extractor';
 import { determineNextStep } from '$server/orchestration/next-step';
 import { getDemoThread } from '$server/threads/demo';
 import { splitWidgetsByPlacement } from '$server/widgets/select';
-import type { PageLoad } from './$types';
+import type { PageServerLoad } from './$types';
 
-export const load: PageLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const thread = getDemoThread(params.threadId);
 
 	if (!thread) {
