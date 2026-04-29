@@ -25,7 +25,13 @@ pnpm linear:comment -- --issue CRE-123 --body "..."
 pnpm linear:done -- --issue CRE-123 --evidence "Validation: ..."
 ```
 
-The wrapper uses `LINEAR_API_KEY`. Store that key in Infisical or another secret manager; never commit it.
+The wrapper uses `LINEAR_API_KEY`. Store that key in Infisical or another secret manager; never commit it. For CREATE SOMETHING automation, the production key lives in Infisical at `prod` `/`.
+
+To verify the wrapper through Infisical:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- pnpm linear:ready
+```
 
 ## Linear MCP
 
@@ -36,6 +42,8 @@ codex mcp add linear --url https://mcp.linear.app/mcp
 codex mcp login linear
 ```
 
+This repository also includes the hosted Linear MCP endpoint in `.mcp.json` for project-scoped clients that read MCP server definitions from the workspace.
+
 Codex clients must have remote MCP enabled in `~/.codex/config.toml`:
 
 ```toml
@@ -44,6 +52,8 @@ experimental_use_rmcp_client = true
 ```
 
 For non-interactive automation, keep using the repo wrapper with `LINEAR_API_KEY`. The same Linear credential model can authenticate MCP calls through an `Authorization: Bearer <token>` header, but credentials still belong in Infisical or process environment only.
+
+Prefer direct hosted Linear MCP for interactive OAuth clients. Do not broker Linear through the Hub unless a separate approval, audit, or policy-control requirement is documented in Linear first.
 
 ## Registry Snapshots
 
