@@ -111,6 +111,7 @@ Environment variables:
 
 - `HUB_INSTANCE_ID` (recommended): unique id for this deployed hub worker; used to namespace hub state/discovery KV keys so team hubs do not overwrite each other.
 - `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`. For compatibility with clients that can only provide a signed endpoint URL, the gateway also accepts `?mcp_access_token=<token>`, but header bearer remains the standard path.
+- `HUB_BEARER_ONLY_AUTH` (optional): `true` by default. Keep `true` for plain bearer lanes that must not advertise OAuth metadata or accept identity-resolved managed bearer fallback tokens. Set `false` only for an explicitly approved OAuth/Identity delivery lane.
 - `HUB_IDENTITY_MODE` (optional): `session_required` (default) or `compat`
 - `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS` (optional): `false` (default). Set `true` only for a tightly controlled compat exception that is explicitly approved.
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)

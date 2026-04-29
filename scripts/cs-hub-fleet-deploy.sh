@@ -356,6 +356,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
       --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-webflow,halfdozen-dm-mcp,schedule-mcp,substrate-mcp" \
       --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
+      --var "HUB_BEARER_ONLY_AUTH:true" \
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:full" \
@@ -375,6 +376,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ENABLED_SERVERS:${target_servers_csv}" \
       --var "HUB_DISABLED_SERVERS:[]" \
       --var "HUB_IDENTITY_MODE:${TEAM_HUB_DEPLOY_IDENTITY_MODE}" \
+      --var "HUB_BEARER_ONLY_AUTH:true" \
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:compact" \
@@ -400,6 +402,7 @@ for worker in "${CORE_WORKERS[@]}"; do
     --name "$worker" \
     --var "HUB_INSTANCE_ID:${worker}" \
     --var "HUB_IDENTITY_MODE:${CORE_HUB_DEPLOY_IDENTITY_MODE}" \
+    --var "HUB_BEARER_ONLY_AUTH:true" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
     --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
     --var "HUB_ENABLED_BUNDLES:${target_bundles_csv}" \

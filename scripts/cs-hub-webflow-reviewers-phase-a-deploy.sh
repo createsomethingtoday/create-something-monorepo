@@ -18,6 +18,7 @@ RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
 QUOTA_MAX_PROXY_CALLS_PER_PERIOD="${QUOTA_MAX_PROXY_CALLS_PER_PERIOD:-10000}"
 REVIEWER_IDENTITY_MODE="${REVIEWER_IDENTITY_MODE:-compat}"
+REVIEWER_BEARER_ONLY_AUTH="${REVIEWER_BEARER_ONLY_AUTH:-true}"
 REQUIRED_GLOBAL_SERVERS_SENTINEL="${REQUIRED_GLOBAL_SERVERS_SENTINEL:-__none__}"
 REQUIRED_DISCOVERY_SERVERS_SENTINEL="${REQUIRED_DISCOVERY_SERVERS_SENTINEL:-__none__}"
 SKIP_NORMALIZE="${SKIP_NORMALIZE:-0}"
@@ -144,6 +145,7 @@ deploy_one() {
     --var "HUB_ENABLED_SERVERS:${ENABLED_SERVERS}" \
     --var "HUB_DISABLED_SERVERS:${DISABLED_SERVERS}" \
     --var "HUB_IDENTITY_MODE:${REVIEWER_IDENTITY_MODE}" \
+    --var "HUB_BEARER_ONLY_AUTH:${REVIEWER_BEARER_ONLY_AUTH}" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:false" \
     --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
     --var "HUB_DISCOVERY_MODE:compact" \
@@ -173,16 +175,22 @@ normalize_one() {
     echo "missing HUB_API_TOKEN; cannot normalize ${worker}" >&2
     exit 1
   fi
-  if [[ -z "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
+  if [[ "$REVIEWER_IDENTITY_MODE" == "session_required" && -z "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
     echo "missing SESSION_TOKEN_FOR_NORMALIZE; cannot normalize ${worker} in session_required mode" >&2
     exit 1
   fi
 
   echo "===== NORMALIZE ${worker} ====="
 
+  local -a auth_headers=(
+    -H "Authorization: Bearer ${HUB_API_TOKEN}"
+  )
+  if [[ -n "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
+    auth_headers+=(-H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}")
+  fi
+
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -199,8 +207,7 @@ normalize_one() {
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d "{
@@ -232,18 +239,23 @@ verify_one() {
     echo "missing HUB_API_TOKEN; cannot verify ${worker}" >&2
     exit 1
   fi
-  if [[ -z "${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}" ]]; then
+  if [[ "$REVIEWER_IDENTITY_MODE" == "session_required" && -z "${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}" ]]; then
     echo "missing SESSION_TOKEN_FOR_VERIFY or SESSION_TOKEN_FOR_NORMALIZE; cannot verify ${worker}" >&2
     exit 1
   fi
-  local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
+  local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}"
+  local -a auth_headers=(
+    -H "Authorization: Bearer ${HUB_API_TOKEN}"
+  )
+  if [[ -n "$session_token" ]]; then
+    auth_headers+=(-H "X-MCP-Session-Token: ${session_token}")
+  fi
 
   echo "===== VERIFY ${worker} ====="
   curl_with_url "$health_url" -sS | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -257,8 +269,7 @@ verify_one() {
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{

@@ -337,6 +337,7 @@ interface Env {
   HUB_INSTANCE_ID?: string;
   HUB_API_TOKEN?: string;
   OAUTH_ISSUER_URL?: string;
+  HUB_BEARER_ONLY_AUTH?: string;
   HUB_IDENTITY_MODE?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
@@ -751,7 +752,7 @@ export default {
       return withCors(new Response(null, { status: 204 }));
     }
 
-    if (isOAuthAuthorizationServerPath(url.pathname)) {
+    if (!isBearerOnlyAuthEnabled(env) && isOAuthAuthorizationServerPath(url.pathname)) {
       return withCors(
         new Response(JSON.stringify(buildHubOAuthAuthorizationServerMetadata(url, env)), {
           status: 200,
@@ -763,7 +764,7 @@ export default {
       );
     }
 
-    if (isOAuthProtectedResourcePath(url.pathname)) {
+    if (!isBearerOnlyAuthEnabled(env) && isOAuthProtectedResourcePath(url.pathname)) {
       return withCors(
         new Response(JSON.stringify(buildHubOAuthProtectedResourceMetadata(url, env)), {
           status: 200,
@@ -822,6 +823,7 @@ export default {
               health: '/health',
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
+            bearer_only_auth: isBearerOnlyAuthEnabled(env),
             identity_mode: resolveHubIdentityMode(env),
             legacy_bridge: {
               enabled: readEnvString(env, 'HUB_LEGACY_BRIDGE_ENABLED') === 'true',
@@ -913,10 +915,7 @@ function ensureStreamableHttpAcceptHeader(request: Request): Request {
 }
 
 export async function authorizeRequest(request: Request, env: Env): Promise<Response | null> {
-  const protectedResourceMetadataUrl = `${new URL(request.url).origin}/mcp/.well-known/oauth-protected-resource`;
-  const unauthorizedHeaders = {
-    'WWW-Authenticate': `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`,
-  };
+  const unauthorizedHeaders = buildUnauthorizedAuthHeaders(request, env);
   const requiredToken = readEnvString(env, 'HUB_API_TOKEN');
   if (!requiredToken) {
     return null;
@@ -925,6 +924,10 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   const providedToken = getRequestToken(request);
   if (providedToken && timingSafeEqual(providedToken, requiredToken)) {
     return null;
+  }
+
+  if (isBearerOnlyAuthEnabled(env)) {
+    return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
   }
 
   if (!isSessionResolverConfigured(env)) {
@@ -946,6 +949,20 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   }
 
   return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
+}
+
+function buildUnauthorizedAuthHeaders(request: Request, env: Env): Record<string, string> {
+  const bearerChallenge = 'Bearer realm="create-something-hub"';
+  if (isBearerOnlyAuthEnabled(env)) {
+    return {
+      'WWW-Authenticate': bearerChallenge,
+    };
+  }
+
+  const protectedResourceMetadataUrl = `${new URL(request.url).origin}/mcp/.well-known/oauth-protected-resource`;
+  return {
+    'WWW-Authenticate': `${bearerChallenge}, resource_metadata="${protectedResourceMetadataUrl}"`,
+  };
 }
 
 export function normalizeInboundMcpRequest(request: Request): Request {
@@ -4654,6 +4671,10 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   const identityMode = resolveHubIdentityMode(env);
   const resourceHost = extractResourceHostFromExtra(extra);
 
+  if (isBearerOnlyAuthEnabled(env)) {
+    return resolveFallbackAccountContext(extra, env, resourceHost);
+  }
+
   if (identityMode === 'session_required') {
     if (!isSessionResolverConfigured(env)) {
       throw new Error(
@@ -4677,7 +4698,7 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
     bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
   const compatIdentityToken = sessionHeaderToken ?? bearerToken;
 
-  if (compatIdentityToken && isSessionResolverConfigured(env)) {
+  if (compatIdentityToken && !isBearerOnlyAuthEnabled(env) && isSessionResolverConfigured(env)) {
     try {
       return await resolveSessionAccountContext(env, compatIdentityToken, resourceHost);
     } catch (error) {
@@ -4798,6 +4819,10 @@ function resolveCompatFallbackToolMode(env: Env): string {
     return 'read_only';
   }
   return 'read_write';
+}
+
+function isBearerOnlyAuthEnabled(env: Env): boolean {
+  return parseBooleanWithDefault(readEnvString(env, 'HUB_BEARER_ONLY_AUTH'), true);
 }
 
 async function resolveSessionForBearerToken(

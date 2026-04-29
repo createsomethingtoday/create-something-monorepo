@@ -21,6 +21,7 @@ test('hub worker serves oauth authorization server metadata from custom-domain d
   const response = await hubWorker.fetch(
     new Request('https://mj.mcp.createsomething.agency/.well-known/oauth-authorization-server'),
     {
+      HUB_BEARER_ONLY_AUTH: 'false',
       OAUTH_ISSUER_URL: 'https://id.createsomething.space',
     } as any,
     {
@@ -32,6 +33,20 @@ test('hub worker serves oauth authorization server metadata from custom-domain d
   const body = await response.json() as Record<string, unknown>;
   assert.equal(body.authorization_endpoint, 'https://id.createsomething.space/oauth/authorize');
   assert.equal(body.resource, 'https://mj.mcp.createsomething.agency/mcp');
+});
+
+test('bearer-only hubs do not serve oauth discovery metadata by default', async () => {
+  const response = await hubWorker.fetch(
+    new Request('https://mj.mcp.createsomething.agency/.well-known/oauth-authorization-server'),
+    {
+      OAUTH_ISSUER_URL: 'https://id.createsomething.space',
+    } as any,
+    {
+      waitUntil() {},
+    } as any,
+  );
+
+  assert.equal(response.status, 404);
 });
 
 test('buildHubOAuthProtectedResourceMetadata points to the hub MCP resource', () => {
@@ -50,6 +65,7 @@ test('hub worker serves oauth protected resource metadata from MCP discovery pat
   const response = await hubWorker.fetch(
     new Request('https://mj.mcp.createsomething.agency/mcp/.well-known/oauth-protected-resource'),
     {
+      HUB_BEARER_ONLY_AUTH: 'false',
       OAUTH_ISSUER_URL: 'https://id.createsomething.space',
     } as any,
     {
@@ -72,6 +88,7 @@ test('unauthorized MCP responses advertise oauth protected resource metadata', a
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
     }),
     {
+      HUB_BEARER_ONLY_AUTH: 'false',
       OAUTH_ISSUER_URL: 'https://id.createsomething.space',
       HUB_API_TOKEN: 'secret',
       HUB_SESSION_RESOLVE_URL: 'https://id.createsomething.space/v1/mcp/sessions/resolve',
@@ -87,4 +104,28 @@ test('unauthorized MCP responses advertise oauth protected resource metadata', a
     response.headers.get('WWW-Authenticate') ?? '',
     /resource_metadata="https:\/\/mj\.mcp\.createsomething\.agency\/mcp\/\.well-known\/oauth-protected-resource"/,
   );
+});
+
+test('bearer-only unauthorized MCP responses use a plain bearer challenge', async () => {
+  const response = await hubWorker.fetch(
+    new Request('https://mj.mcp.createsomething.agency/mcp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+    }),
+    {
+      OAUTH_ISSUER_URL: 'https://id.createsomething.space',
+      HUB_API_TOKEN: 'secret',
+      HUB_SESSION_RESOLVE_URL: 'https://id.createsomething.space/v1/mcp/sessions/resolve',
+      HUB_SESSION_RESOLVE_TOKEN: 'resolve-token',
+    } as any,
+    {
+      waitUntil() {},
+    } as any,
+  );
+
+  assert.equal(response.status, 401);
+  assert.equal(response.headers.get('WWW-Authenticate'), 'Bearer realm="create-something-hub"');
 });
