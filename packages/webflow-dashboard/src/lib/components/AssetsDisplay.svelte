@@ -321,7 +321,7 @@
             {@const normalizedStatus = normalizeAssetStatus(statusGroup.status)}
             {@const config = statusConfig[normalizedStatus]}
             {@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(normalizedStatus)}
-            {@const totals = showTotals ? calculateTotals(visibleAssets) : null}
+            {@const totals = showTotals ? calculateTotals(statusAssets) : null}
 
             <section class="status-section">
               <div class="status-header">
@@ -343,9 +343,9 @@
                 </div>
               </div>
 
-              <Card>
+              <Card class="asset-table-card">
                 <div class="table-container desktop-table">
-                  <Table>
+                  <Table class="asset-table">
                     <colgroup>
                       <col class="thumb-col" />
                       <col class="name-col" />
@@ -360,8 +360,8 @@
                     </colgroup>
                     <TableHeader>
                       <TableRow>
-                        <TableHead class="w-12"></TableHead>
-                        <TableHead>
+                        <TableHead class="thumbnail-head"></TableHead>
+                        <TableHead class="asset-title-head">
                           <button
                             type="button"
                             class="sort-btn"
@@ -372,7 +372,7 @@
                             Name{getSortIndicator('name')}
                           </button>
                         </TableHead>
-                        <TableHead>
+                        <TableHead class="submitted-head">
                           <button
                             type="button"
                             class="sort-btn"
@@ -383,9 +383,9 @@
                             Submitted{getSortIndicator('submittedDate')}
                           </button>
                         </TableHead>
-                        <TableHead>Type</TableHead>
+                        <TableHead class="type-head">Type</TableHead>
                         {#if showPerformance}
-                        <TableHead align="right">
+                          <TableHead align="right" class="metric-head">
                             <button
                               type="button"
                               class="sort-btn"
@@ -396,7 +396,7 @@
                               Viewers{getSortIndicator('uniqueViewers')}
                             </button>
                           </TableHead>
-                          <TableHead align="right">
+                          <TableHead align="right" class="metric-head">
                             <button
                               type="button"
                               class="sort-btn"
@@ -407,7 +407,7 @@
                               Purchases{getSortIndicator('cumulativePurchases')}
                             </button>
                           </TableHead>
-                          <TableHead align="right">
+                          <TableHead align="right" class="metric-head">
                             <div class="revenue-header">
                               <button
                                 type="button"
@@ -422,7 +422,7 @@
                             </div>
                           </TableHead>
                         {/if}
-                        <TableHead align="center" class="w-12 more-head">More</TableHead>
+                        <TableHead align="center" class="more-head">More</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -437,21 +437,24 @@
                       {/each}
                       {#if totals}
                         <TableRow class="totals-row">
-                          <TableCell>
+                          <TableCell class="totals-icon-cell">
                             <div class="totals-icon">
                               <TrendingUp size={16} />
                             </div>
                           </TableCell>
-                          <TableCell><strong>Total</strong></TableCell>
+                          <TableCell class="totals-label-cell">
+                            <strong>Group total</strong>
+                            <span>{statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}</span>
+                          </TableCell>
                           <TableCell></TableCell>
                           <TableCell></TableCell>
-                          <TableCell class="text-center"
+                          <TableCell class="metric-cell totals-metric"
                             ><strong>{totals.viewers.toLocaleString()}</strong></TableCell
                           >
-                          <TableCell class="text-center"
+                          <TableCell class="metric-cell totals-metric"
                             ><strong>{totals.purchases.toLocaleString()}</strong></TableCell
                           >
-                          <TableCell class="text-center"
+                          <TableCell class="metric-cell totals-metric"
                             ><strong>${totals.revenue.toLocaleString()}</strong></TableCell
                           >
                           <TableCell class="more-cell"></TableCell>
@@ -770,28 +773,97 @@
     overflow-x: auto;
   }
 
+  :global(.asset-table-card) {
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    border-color: color-mix(in srgb, var(--color-shell-border-default) 72%, transparent);
+  }
+
+  :global(.desktop-table .asset-table) {
+    table-layout: fixed;
+  }
+
+  :global(.desktop-table .table-cell) {
+    padding: 0.28rem 0.62rem;
+    border-bottom-color: color-mix(in srgb, var(--color-border-default) 64%, transparent);
+    letter-spacing: 0;
+  }
+
+  :global(.desktop-table .table-head) {
+    height: 1.72rem;
+    padding: 0;
+    border-bottom-color: color-mix(in srgb, var(--color-border-emphasis) 68%, transparent);
+    letter-spacing: 0;
+  }
+
+  :global(.desktop-table .table-head-inner) {
+    padding: 0.14rem 0.62rem;
+  }
+
+  :global(.desktop-table .table-row) {
+    border-bottom-color: color-mix(in srgb, var(--color-border-default) 58%, transparent);
+  }
+
+  :global(.desktop-table .table-row:hover) {
+    background: color-mix(in srgb, var(--color-hover) 18%, var(--color-bg-surface));
+  }
+
+  :global(.desktop-table .table-row:focus-within) {
+    background: color-mix(in srgb, var(--color-info-muted) 14%, var(--color-bg-surface));
+  }
+
   :global(.desktop-table col.thumb-col) {
-    width: 4.4rem;
+    width: 3.45rem;
   }
 
   :global(.desktop-table col.name-col) {
-    width: 43%;
+    width: 44%;
   }
 
   :global(.desktop-table col.submitted-col) {
-    width: 15%;
+    width: 12.5%;
   }
 
   :global(.desktop-table col.type-col) {
-    width: 11%;
+    width: 10%;
   }
 
   :global(.desktop-table col.metric-col) {
-    width: 9.5%;
+    width: 9%;
   }
 
   :global(.desktop-table col.more-col) {
-    width: 3.5rem;
+    width: 3.1rem;
+  }
+
+  :global(.desktop-table td.thumbnail-cell),
+  :global(.desktop-table th.thumbnail-head) {
+    padding-right: 0.28rem;
+  }
+
+  :global(.desktop-table td.asset-title-cell),
+  :global(.desktop-table th.asset-title-head) {
+    padding-left: 0.34rem;
+  }
+
+  :global(.desktop-table td.metric-cell),
+  :global(.desktop-table .metric-head) {
+    text-align: right;
+  }
+
+  :global(.desktop-table td.metric-cell) {
+    padding-left: 0.4rem;
+    padding-right: 0.72rem;
+  }
+
+  :global(.desktop-table .metric-head .table-head-inner),
+  :global(.desktop-table .metric-head .revenue-header) {
+    justify-content: flex-end;
+  }
+
+  :global(.desktop-table td.more-cell) {
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
   }
 
   .sort-btn {
@@ -804,7 +876,7 @@
     color: var(--color-fg-muted);
     font: inherit;
     font-size: var(--text-caption);
-    letter-spacing: 0.035em;
+    letter-spacing: 0;
     text-transform: uppercase;
     cursor: pointer;
     transition: color var(--duration-micro) var(--ease-standard);
@@ -834,14 +906,46 @@
     border-top: 1px solid var(--color-shell-border-default);
   }
 
-  .totals-row {
+  :global(.desktop-table .totals-row) {
     border-top: 1px solid var(--color-border-emphasis);
-    background: color-mix(in srgb, var(--color-bg-subtle) 60%, var(--color-bg-surface));
+    background: color-mix(in srgb, var(--color-bg-subtle) 42%, var(--color-bg-surface));
+  }
+
+  :global(.desktop-table .totals-row .table-cell) {
+    padding-top: 0.38rem;
+    padding-bottom: 0.38rem;
+    border-bottom: none;
+  }
+
+  :global(.desktop-table .totals-label-cell) {
+    color: var(--color-fg-primary);
+    line-height: 1.12;
+  }
+
+  :global(.desktop-table .totals-label-cell strong) {
+    display: block;
+    font-size: 0.86rem;
+    font-weight: var(--font-semibold);
+  }
+
+  :global(.desktop-table .totals-label-cell span) {
+    display: block;
+    margin-top: 0.05rem;
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  :global(.desktop-table .totals-metric strong) {
+    color: var(--color-fg-primary);
+    font-size: 0.86rem;
+    font-weight: var(--font-semibold);
+    font-variant-numeric: tabular-nums;
   }
 
   .totals-icon {
-    width: 35px;
-    height: 45px;
+    width: 30px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -962,13 +1066,9 @@
     }
   }
 
-  :global(.desktop-table td.text-center) {
-    text-align: right;
-  }
-
   :global(.desktop-table th.more-head),
   :global(.desktop-table td.more-cell) {
-    width: 3.5rem;
+    width: 3.1rem;
     text-align: center;
   }
 </style>
