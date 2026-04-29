@@ -36,18 +36,18 @@
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
 		{
 			value: 'workflow_infrastructure',
-			label: 'Critical Workflow',
-			description: 'One workflow that needs a safer, production-ready starting point.'
+			label: 'Workflow Infrastructure',
+			description: 'One workflow your team still watches by hand.'
 		},
 		{
 			value: 'reliability_and_control',
 			label: 'Policy OS',
 			description:
-				'Policy artifacts, approval rules, release gates, and incident controls around live automation.'
+				'Approval rules, blocked states, release evidence, and operator briefs around live automation.'
 		},
 		{
 			value: 'enterprise_extension',
-			label: 'Enterprise Constraints',
+			label: 'Enterprise Extension',
 			description: 'Cross-system orchestration with stricter governance, auditability, and recovery.'
 		},
 		{
@@ -245,17 +245,18 @@
 </script>
 
 <SEO
-	title="Book a Workflow Mapping Session"
-	description="Schedule a scoped workflow diagnostic to identify the workflow with the most drag, the safest starting wedge, and the right level of reliability control."
+	title="Book a Calm Operator Mapping Session"
+	description="Schedule a scoped workflow diagnostic to identify the safest MCP wedge, the decision states, and the right level of Policy OS control."
 	propertyName="agency"
 />
 
 <main class="booking-page">
 	<header class="booking-header">
-		<h1 class="booking-title">Book a Workflow Mapping Session</h1>
+		<h1 class="booking-title">Book a Calm Operator Mapping Session</h1>
 		<p class="booking-subtitle">
-			Bring the workflow with the most drag, risk, or manual handoff. This is a scoped diagnostic
-			for one safer operating path, not an open-ended consulting check-in.
+			Bring the workflow with the most drag, risk, or manual handoff. We will identify the
+			safest MCP wedge, the decision states, and whether the operator needs Workflow
+			Infrastructure, Policy OS, or Enterprise Extension.
 		</p>
 	</header>
 
@@ -309,10 +310,10 @@
 			</section>
 		{:else if step === 'details'}
 			<section class="step-content">
-				<h2 class="step-title">Your details and lane</h2>
+				<h2 class="step-title">Your details and operator lane</h2>
 				<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
-					<p id="lane-intake-title" class="lane-intake-title">Which workflow should we map first?</p>
-					<p class="lane-intake-helper">This helps me prep the session. Most engagements begin with one narrow workflow and clear operating constraints.</p>
+					<p id="lane-intake-title" class="lane-intake-title">Which operating lane should we map first?</p>
+					<p class="lane-intake-helper">This helps me prep the session around the real decision boundary: what can run, what needs approval, and what should stop with a reason.</p>
 					<div class="lane-options">
 						{#each laneOptions as lane}
 							<label class="lane-option" class:selected={selectedLane === lane.value}>

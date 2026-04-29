@@ -7,6 +7,7 @@ Important: Linear is now the source of truth for tracked work, ownership, status
 Core Linear commands:
 
 ```bash
+pnpm bootstrap:worktree
 pnpm linear:ready
 pnpm linear:list -- --status open --label code-quality
 pnpm linear:create -- --title "..." --description "..." --label code-quality
@@ -73,6 +74,8 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 Core commands:
 
 ```bash
+pnpm bootstrap:worktree
+
 pnpm linear:ready
 pnpm linear:list -- --status open
 pnpm linear:get -- --issue CRE-123
@@ -83,6 +86,8 @@ pnpm check
 pnpm lint
 pnpm test
 ```
+
+For new worktrees, run `pnpm bootstrap:worktree` before type checks, smoke scripts, or any command that expects `pnpm exec tsc` / `pnpm exec tsx` to exist. Symphony after-create hooks should use the same bootstrap path instead of calling `pnpm install` directly.
 
 ## Git-light delivery
 

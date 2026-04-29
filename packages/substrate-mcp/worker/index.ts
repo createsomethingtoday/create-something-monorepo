@@ -15,7 +15,7 @@
  *   /reader/mcp — Read-only MCP (reader role forced) [auth required]
  *   /reader/sse — Read-only SSE (reader role forced) [auth required]
  *   /dashboard  — Human-readable dashboard [public]
- *   /     — Health/info JSON [public]
+ *   /, /health — Health/info JSON [public]
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -745,7 +745,7 @@ export default {
     // ─── Public endpoints (no auth) ────────────────────────────────
 
     // Health / info endpoint
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       return new Response(JSON.stringify({
         name: 'substrate-mcp',
         version: '0.1.0',

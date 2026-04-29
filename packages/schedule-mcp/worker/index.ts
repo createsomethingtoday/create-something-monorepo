@@ -8,7 +8,7 @@
  * Endpoints:
  *   /mcp  — Streamable HTTP transport (Claude Code, Codex)
  *   /sse  — SSE fallback transport (Cursor, ChatGPT, Claude Desktop)
- *   /     — Health/info JSON
+ *   /, /health — Health/info JSON
  *
  * Architecture (Three-Tier Framework):
  *   Database tier (Resources)   — Calendars, events, members, units, plans
@@ -243,7 +243,7 @@ export default {
     }
 
     // Health / info endpoint
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       return new Response(JSON.stringify({
         name: 'schedule-mcp',
         version: '1.1.0',

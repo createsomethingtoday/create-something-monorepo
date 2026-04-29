@@ -15,6 +15,8 @@ if [[ ! -e "${WORKSPACE_PATH}/.git" ]]; then
   fi
 fi
 
-if [[ ! -d "${WORKSPACE_PATH}/node_modules" ]]; then
-  pnpm install --frozen-lockfile --prefer-offline
+if [[ "${WORKSPACE_PATH}" != "${REPO_ROOT}" ]]; then
+  cd "${WORKSPACE_PATH}"
 fi
+
+bash ./scripts/bootstrap-worktree.sh

@@ -240,6 +240,15 @@ select {
   max-height: 14rem;
 }
 
+.submission-choice-grid-taxonomy {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.625rem;
+}
+
+.submission-choice-grid-taxonomy.is-scroll {
+  padding: 0.625rem;
+}
+
 .submission-choice-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -296,6 +305,22 @@ select {
   color: #1e1e1e;
   font-size: 0.8125rem;
   line-height: 1.45;
+}
+
+.submission-choice-taxonomy {
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.6875rem;
+}
+
+.submission-choice-taxonomy input {
+  margin-top: 0;
+}
+
+.submission-choice-taxonomy .submission-choice-copy {
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 
 .submission-choice-grid-template-type {
@@ -488,6 +513,33 @@ select {
 .submission-selected-file-size {
   color: #676767;
   flex: 0 0 auto;
+}
+
+.submission-selected-file-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(8, 8, 8, 0.06);
+  color: #4a4a4a;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.submission-selected-file-remove:hover {
+  background: rgba(180, 35, 24, 0.12);
+  color: #b42318;
+}
+
+.submission-selected-file-remove:focus-visible {
+  outline: 2px solid rgba(20, 110, 245, 0.35);
+  outline-offset: 2px;
 }
 
 .submission-counter {

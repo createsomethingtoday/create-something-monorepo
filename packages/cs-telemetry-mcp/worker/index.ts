@@ -2135,7 +2135,7 @@ export default {
       return CSTelemetryMCP.serve('/client/sse').fetch(scoped, env, ctx);
     }
 
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       const workwayConfigured = Boolean(env.WORKWAY_D1_API_TOKEN?.trim());
       return new Response(
         JSON.stringify(

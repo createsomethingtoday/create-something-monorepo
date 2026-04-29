@@ -3,7 +3,7 @@
 > Auto-generated from `config/mcp-hub/registry.json`.
 > Regenerate with `pnpm mcp:registry:generate`.
 
-## Active (1009)
+## Active (1008)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -1010,19 +1010,19 @@
 | `quickbooks-notion-mcp-server` | `http` | `https://quickbooks.mcp.workway.co/mcp` | `direct` | `0` | `finance`, `quickbooks`, `notion`, `workway` |
 | `schedule-mcp` | `http` | `https://schedule.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `scheduling`, `cs`, `policy_os_only` |
 | `slack_create_something` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `cs` |
-| `slack_webflow` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `webflow` |
 | `substrate-mcp` | `http` | `https://substrate.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `automation`, `cs`, `policy_os_only` |
 | `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `direct` | `0` | `core`, `framework`, `cs`, `policy_os_only` |
 | `webflow-app-review-mcp` | `http` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `apps`, `cs` |
 | `webflow-site-analyzer-mcp` | `http` | `https://analyzer.mcp.createsomething.agency/mcp` | `direct` | `0` | `webflow`, `review`, `analyzer`, `browser`, `cs` |
 | `webflow-template-review-mcp` | `http` | `https://webflow-template-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `templates`, `cs` |
 
-## Dormant (2)
+## Dormant (3)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
 | `gmail-notion-mcp` | `http` | `https://gmail-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
 | `notion-sync-mcp` | `http` | `https://notion-sync-mcp-worker.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
+| `slack_webflow` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `webflow` |
 
 ## Local (2)
 

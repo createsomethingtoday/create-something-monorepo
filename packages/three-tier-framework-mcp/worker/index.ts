@@ -7,7 +7,7 @@
  * Endpoints:
  *   /mcp  — Streamable HTTP transport (Claude Code, Codex)
  *   /sse  — SSE fallback transport (Cursor, legacy clients)
- *   /     — Health/info JSON
+ *   /, /health — Health/info JSON
  *
  * Architecture (demonstrates its own thesis):
  *   Database tier (Resources)  — Framework definitions, mappings, reference data
@@ -557,7 +557,7 @@ export default {
     }
 
     // Health / info endpoint
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       return new Response(JSON.stringify({
         name: 'three-tier-framework',
         version: '1.0.0',

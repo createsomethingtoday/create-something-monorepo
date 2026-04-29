@@ -419,8 +419,8 @@
       "auth": {
         "type": "notion_integration_with_bearer",
         "notion_hd_token_env_var": "NOTION_API_KEY",
-        "infisical_path": "/halfdozen-notion-mcp",
-        "infisical_note": "HD-only deployment; no client folder yet. Create under /halfdozen-notion-mcp/halfdozen if a separate value is needed.",
+        "infisical_path": "/halfdozen-notion-mcp/halfdozen",
+        "infisical_note": "HD-only deployment using the Half Dozen child folder for the bearer token.",
         "bearer_token_env_var": "MCP_BEARER_TOKEN"
       },
       "notes": "Default halfdozen-notion-mcp deployment. HD internal workspace only (no WORKSPACE_CLIENT_LABEL in wrangler.toml), so uses NOTION_API_KEY (HD master) exclusively."
