@@ -106,7 +106,7 @@ put_secret() {
     return 0
   fi
 
-  printf '%s' "$value" | pnpm exec wrangler pages secret put "$key" --project-name="$PROJECT_NAME"
+  printf '%s' "$value" | pnpm --dir "$ROOT_DIR/packages/agency" exec wrangler pages secret put "$key" --project-name="$PROJECT_NAME"
 }
 
 main() {
