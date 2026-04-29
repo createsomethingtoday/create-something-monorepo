@@ -1,8 +1,26 @@
 # Agent Principles & Workflow
 
-This repository uses **Loom** (`lm`) for agent-native coordination.
+This repository is migrating agent-native coordination to **Linear**.
 
-Important: local `lm` talks to the repo-local `.loom` database. Shared coordination for Symphony and other remote agent lanes now uses the remote Loom MCP control plane at `https://loom.mcp.createsomething.agency/mcp`.
+Use Linear for new CREATE SOMETHING work whenever the Linear MCP is available.
+The active team is `CREATE SOMETHING` (`CRE`). Loom remains a legacy/fallback
+path while existing agents and remote lanes finish migration.
+
+Preferred Linear path:
+
+```bash
+codex mcp add linear --url https://mcp.linear.app/mcp
+codex mcp login linear
+```
+
+After adding or logging into the Linear MCP, restart Codex if the Linear tools
+are not visible in the current session.
+
+When Linear MCP tools are available, read or create issues before changing
+shared work. Use Linear issue IDs in status updates, deploy evidence, and
+handoffs.
+
+Legacy Loom note: local `lm` talks to the repo-local `.loom` database. Shared coordination for Symphony and other remote agent lanes may still use the remote Loom MCP control plane at `https://loom.mcp.createsomething.agency/mcp`.
 
 For a fresh local clone that has not initialized the repo-local `.loom` database yet:
 
@@ -78,13 +96,22 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 
 ## Default repo workflow
 
-1. Find or create tracked work in Loom.
+1. Find or create tracked work in Linear. Use Loom only for legacy tasks that
+   have not migrated.
 2. Verify symbols and import paths before using them.
 3. Run the relevant quality gates.
-4. Record evidence in Loom and use the narrowest trustworthy validation surface.
+4. Record evidence on the Linear issue and use the narrowest trustworthy
+   validation surface.
 5. Push or open/update a PR only when production promotion, shared review, or explicit user intent requires it.
 
-Core commands:
+Preferred coordination:
+
+```bash
+# Use the Linear MCP tools when visible in Codex:
+# list_issues, get_issue, create_issue, update_issue, list_projects, list_teams
+```
+
+Legacy Loom commands:
 
 ```bash
 lm ready
@@ -99,13 +126,16 @@ pnpm lint
 pnpm test
 ```
 
-For shared orchestration lanes, prefer remote Loom via `pnpm loom:remote ...`.
-Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
+For shared orchestration lanes still on Loom, prefer remote Loom via
+`pnpm loom:remote ...`. Use `lm --local ...` only when you intentionally mean
+the repo-local `.loom` database.
 
 ## Git-light delivery
 
 - For DEV and preview work, prefer direct deploy from the current workspace after the relevant checks pass.
-- Record the Loom task ID, package or surface, target environment, commands run, deploy URL or ID, and rollback note in Loom.
+- Record the Linear issue ID, package or surface, target environment, commands
+  run, deploy URL or ID, and rollback note on the Linear issue.
+- If a task is still tracked in legacy Loom, record the same evidence there.
 - For non-terminal deploy checkpoints, prefer the surface-specific `pnpm deploy:*:checkpoint` wrappers; use `pnpm loom:deploy:checkpoint` only for custom deploy paths.
 - Do not commit or push only to manufacture an agent checkpoint.
 - Use Git branches and PRs as the default production promotion boundary unless an approved immutable release path exists.
@@ -146,7 +176,10 @@ Common library IDs used here:
 ## Tool preference
 
 - **Code verification**: `ground analyze`, `ground find-duplicates`
-- **Task coordination**: `lm`
-- **Priority ranking**: `lm ready --ranked`
+- **Task coordination**: Linear MCP first; `lm` only for legacy tasks
+- **Priority ranking**: Linear priority/project labels first; `lm ready --ranked`
+  only for legacy tasks
 
-Loom replaces Beads in this repository. Use remote Loom for shared coordination and local `lm` for repo-local task state.
+Linear replaces Loom as the long-term shared operating ledger. Use remote Loom
+only for shared lanes that have not yet migrated, and local `lm` only for
+repo-local legacy task state.
