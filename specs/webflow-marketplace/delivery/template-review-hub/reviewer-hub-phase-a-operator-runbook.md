@@ -176,7 +176,7 @@ Phase A reviewer Hubs should expose template-review-context tools plus narrow re
 - `template_review_set_review_status`
 - `template_review_save_draft_feedback`
 
-Do not enable broad reviewer mutation tools in Phase A. Keep approval/rejection/publishing completion and general update routes out of reviewer discovery.
+Do not enable broad reviewer mutation tools in Phase A. Keep `template_review_assign_reviewer`, approval/rejection/publishing completion, and general update routes out of reviewer discovery. Read-only mode is the rollback/preflight posture, not the expected Phase A reviewer-visible surface.
 
 ## 10. Known boundary
 
