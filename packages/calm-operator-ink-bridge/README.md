@@ -69,7 +69,7 @@ Use `INK_DEVICE_TOKEN` in Core Ink firmware. Use `INK_SOURCE_TOKEN` for agent/MC
 ```bash
 pnpm --dir packages/calm-operator-ink-bridge check
 pnpm --dir packages/calm-operator-ink-bridge test
-pnpm --dir packages/calm-operator-ink-bridge deploy
+pnpm --dir packages/calm-operator-ink-bridge run deploy
 ```
 
 If the custom domain is not ready, remove the route from `wrangler.toml` and deploy to the default `workers.dev` URL first.
@@ -77,7 +77,7 @@ If the custom domain is not ready, remove the route from `wrangler.toml` and dep
 ## Example alert
 
 ```bash
-INK_SOURCE_TOKEN=... pnpm post:mcp -- \
+INK_SOURCE_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge post:mcp -- \
   --mcp "HubSpot MCP" \
   --reason "MCP review failed and requires operator attention." \
   --action "Review mcp_contract.yaml"
@@ -157,9 +157,9 @@ Surface roles:
 MCP review agents and health monitors can post directly to production:
 
 ```bash
-pnpm post:mcp -- --mcp "HubSpot MCP" --reason "Review failed"
-pnpm post:health -- --component "Claude Code Slack watcher" --status degraded --summary "No heartbeat in 20 minutes"
-pnpm post:decision -- --source mcp-review-agent --subject "MCP review requires attention" --summary "Composio Toolkit MCP failed health review" --urgency attention --decision-required --action "Review Composio auth configuration"
+pnpm --dir packages/calm-operator-ink-bridge post:mcp -- --mcp "HubSpot MCP" --reason "Review failed"
+pnpm --dir packages/calm-operator-ink-bridge post:health -- --component "Claude Code Slack watcher" --status degraded --summary "No heartbeat in 20 minutes"
+pnpm --dir packages/calm-operator-ink-bridge post:decision -- --source mcp-review-agent --subject "MCP review requires attention" --summary "Composio Toolkit MCP failed health review" --urgency attention --decision-required --action "Review Composio auth configuration"
 ```
 
 These commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the environment.
@@ -323,9 +323,9 @@ because same-zone edge fetches can produce false positives. Keep route health
 smokes external, or explicitly set `HEALTH_SELF_CHECK_ENABLED=true` only if the
 chosen `HEALTH_SELF_ORIGIN` is known to work from Workers.
 
-Keep remote checks lightweight. Deep MCP Hub connection reviews should be posted
-as health snapshots by the MCP review agent instead of making the bridge fetch a
-full downstream Hub health endpoint on every Ink review.
+Keep bridge checks lightweight. The bridge calls the Playbook MCP registry sweep
+route for deep registry review instead of fetching Hub directly. Custom deep
+reviews should post health snapshots from the responsible agent or monitor.
 
 List configured checks:
 
@@ -361,14 +361,14 @@ pnpm --dir packages/calm-operator-ink-bridge run:health-command \
 Examples:
 
 ```bash
-pnpm run:health-command \
+pnpm --dir packages/calm-operator-ink-bridge run:health-command \
   --name "Dify client-agent sync" \
   --type job \
   --registry-id dify.client-agent-sync \
   --action "Review failed Dify workflow run" \
   -- pnpm dify:sync
 
-pnpm run:health-command \
+pnpm --dir packages/calm-operator-ink-bridge run:health-command \
   --name "Hub MCP registry check" \
   --type mcp \
   --registry-id mcp.hub \

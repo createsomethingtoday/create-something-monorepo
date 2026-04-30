@@ -1,0 +1,82 @@
+# Calm Operator Ink Firmware
+
+Production-oriented firmware for M5Stack Core Ink as the pocket surface for
+CREATE SOMETHING operations.
+
+The firmware is intentionally simple:
+
+- Wi-Fi only. BLE/iPhone notification capture is not part of this build.
+- Polls `https://ink.createsomething.agency` for the current operator brief.
+- Requests a live MCP/agent health review from Ink.
+- Provides local rhythm, clock, settings, and calm tools.
+- Uses slow, explicit e-ink refreshes instead of animated UI.
+
+## Configure
+
+Secrets stay out of git. Generate `include/operator_config.local.h` from
+Infisical:
+
+```bash
+infisical run --env=prod --path=/ --command "pnpm --dir packages/calm-operator-ink-firmware config:write"
+```
+
+Required values:
+
+- `INK_DEVICE_TOKEN` or `INK_SOURCE_TOKEN`
+
+Recommended values:
+
+- `CALM_OPERATOR_WIFI_SSID`
+- `CALM_OPERATOR_WIFI_PASSWORD`
+
+If Wi-Fi values are not present, the firmware tries saved ESP32 Wi-Fi
+credentials from a previous firmware before showing a setup screen.
+
+`INK_SOURCE_TOKEN` currently works as a compatibility token for device reads, but
+a dedicated `INK_DEVICE_TOKEN` should be used for a shipped device.
+
+## Build
+
+```bash
+pnpm --dir packages/calm-operator-ink-firmware build
+```
+
+## Upload
+
+The current Core Ink USB port is expected to be:
+
+```text
+/dev/cu.usbserial-5A6D0107571
+```
+
+Upload:
+
+```bash
+pnpm --dir packages/calm-operator-ink-firmware upload
+```
+
+Monitor:
+
+```bash
+pnpm --dir packages/calm-operator-ink-firmware monitor
+```
+
+## Controls
+
+- `A`: previous menu item
+- `C`: next menu item
+- `B` or `EXT/main`: select
+- From the brief screen, select opens the menu.
+- `PWR`: manual sync.
+
+Menu buckets:
+
+- `Operator`: Sync, MCP Review, Check In
+- `Rhythm`: Clock, Rhythm
+- `Calm`: Calm Reset, Stone Garden
+- `Settings`: Alerts, Status
+
+## Notes
+
+Core Ink is an e-ink surface. Keep refreshes deliberate. Operator alerts and
+health summaries should feel like a physical briefing, not a small phone.
