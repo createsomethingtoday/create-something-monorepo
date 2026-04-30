@@ -1,0 +1,49 @@
+{
+  "_template": "Webflow MCP Server",
+  "_description": "Official Webflow hosted MCP server for OAuth-authorized site, Workspace, CMS, and Designer workflows",
+  "_workway": "Webflow project access without switching out of the agent workflow",
+
+  "webflow": {
+    "type": "http",
+    "url": "https://mcp.webflow.com/mcp"
+  },
+
+  "_setup": [
+    "1. Add the `webflow` server config to your Claude Code, Cursor, Windsurf, VS Code, or Codex MCP settings.",
+    "2. First use opens Webflow OAuth. Select only the sites or Workspaces this agent should access.",
+    "3. To let the agent work in the Designer, open the site in Webflow Designer, press `E`, launch `Webflow MCP Bridge App`, and wait for the app to connect."
+  ],
+
+  "_claude_code": [
+    "claude mcp add --transport http webflow https://mcp.webflow.com/mcp",
+    "Then run `/mcp` in Claude Code, select Webflow, and complete OAuth."
+  ],
+
+  "_claude_desktop_manual": {
+    "requires": ["Node.js 22.3.0 or later when using mcp-remote"],
+    "config": {
+      "webflow": {
+        "command": "npx",
+        "args": ["mcp-remote", "https://mcp.webflow.com/mcp"]
+      }
+    }
+  },
+
+  "_windsurf": {
+    "webflow": {
+      "serverUrl": "https://mcp.webflow.com/mcp"
+    }
+  },
+
+  "_usage": [
+    "List all my collections and show me their field structures",
+    "Audit my site for broken links, missing alt text, and incomplete meta descriptions",
+    "Create a responsive hero section with a headline, description, and CTA button"
+  ],
+
+  "_security": [
+    "Limit OAuth authorization to the smallest useful set of sites and Workspaces.",
+    "Reauthorize when a project should use a different Webflow site scope.",
+    "The Webflow MCP Bridge App installs during OAuth authorization and is not listed in the public Webflow App Marketplace."
+  ]
+}

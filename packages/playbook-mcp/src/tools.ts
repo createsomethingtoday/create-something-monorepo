@@ -473,8 +473,14 @@ export function registerTools(server: McpServer) {
         // JSON format (Cursor, Claude Desktop, Claude Code, Windsurf, VS Code)
         // Windsurf uses "serverUrl" for remote HTTP servers; others use "url"
         const urlKey = host === 'windsurf' ? 'serverUrl' : 'url';
-        const serverConfig: Record<string, unknown> = { [urlKey]: fullUrl };
-        if (auth_token) {
+        const usesClaudeDesktopMcpRemote = host === 'claude-desktop' && server_name === 'webflow';
+        const serverConfig: Record<string, unknown> = usesClaudeDesktopMcpRemote
+          ? {
+              command: 'npx',
+              args: ['mcp-remote', fullUrl],
+            }
+          : { [urlKey]: fullUrl };
+        if (auth_token && !usesClaudeDesktopMcpRemote) {
           serverConfig.headers = { Authorization: `Bearer ${auth_token}` };
         }
         const jsonEntry = {
@@ -488,7 +494,9 @@ export function registerTools(server: McpServer) {
         };
         fullExample = JSON.stringify(fullConfig, null, 2);
 
-        const openInstruction = host === 'windsurf'
+        const openInstruction = usesClaudeDesktopMcpRemote
+          ? `1. In Claude Desktop, enable Developer Mode from Help -> Troubleshooting, then open ${config.configPath}`
+          : host === 'windsurf'
           ? `1. In Windsurf chat, click the MCP servers button (hammer icon) → Configure → Manage Plugins → View Raw Config`
           : host === 'claude-code'
             ? `1. Alternatively, run: claude mcp add --transport http ${server_name} ${fullUrl}`

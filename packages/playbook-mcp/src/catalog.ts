@@ -132,10 +132,21 @@ const THIRD_PARTY_MCPS: McpCatalogEntry[] = [
     name: 'Webflow',
     slug: 'webflow',
     url: 'https://mcp.webflow.com',
-    description: 'Webflow site management. Read and modify site content, collections, and design elements.',
+    description:
+      'Official Webflow hosted MCP server. OAuth-authorized access to sites, Workspaces, CMS collections, and Designer workflows through the Webflow MCP Bridge App.',
     category: 'third-party',
     transports: ['http'],
     requiresAuth: true,
+    authType: 'oauth',
+    setupNotes: `**Authorization**: First connection opens Webflow OAuth. Select only the sites or Workspaces this agent should access.
+
+**Designer access**: To let the agent work in the Designer, open the site in Webflow Designer, press \`E\` for Apps, launch "Webflow MCP Bridge App", and wait for it to connect.
+
+**Claude Code**: \`claude mcp add --transport http webflow https://mcp.webflow.com/mcp\`
+
+**Claude Desktop manual setup**: If direct remote HTTP is unavailable, use \`npx mcp-remote https://mcp.webflow.com/mcp\`. The \`mcp-remote\` path requires Node.js 22.3.0 or later.
+
+**Starter prompts**: "List all my collections and show me their field structures", "Audit my site for broken links, missing alt text, and incomplete meta descriptions", or "Create a responsive hero section with a headline, description, and CTA button".`,
   },
   {
     name: 'Stripe',

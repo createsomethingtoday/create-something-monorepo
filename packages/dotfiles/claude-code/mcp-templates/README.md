@@ -18,6 +18,7 @@ Copy the relevant server configuration to your `~/.claude/settings.json` under `
 | Resend | Email sending | `resend.json` |
 | Stripe | Payment operations | `stripe.json` |
 | Supabase | Database and auth | `supabase.json` |
+| Webflow | Webflow site, CMS, and Designer workflows | `webflow.json` |
 
 ## Template Structure
 

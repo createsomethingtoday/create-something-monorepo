@@ -406,6 +406,20 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "webflow": {
+      "transport": "http",
+      "url": "https://mcp.webflow.com/mcp",
+      "description": "Official Webflow hosted MCP server for OAuth-authorized site, Workspace, CMS, and Designer workflows",
+      "tags": [
+        "webflow",
+        "official",
+        "oauth",
+        "third-party"
+      ],
+      "lifecycle": "active",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 0
+    },
     "webflow-local": {
       "transport": "stdio",
       "command": "node",
@@ -13142,6 +13156,9 @@
     "slack": [
       "slack_create_something",
       "slack_webflow"
+    ],
+    "webflow": [
+      "webflow"
     ],
     "finance": [
       "quickbooks-notion-mcp-server"

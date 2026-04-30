@@ -8,11 +8,15 @@
       "type": "http",
       "url": "https://mcp.context7.com/mcp"
     },
+    "webflow": {
+      "type": "http",
+      "url": "https://mcp.webflow.com/mcp"
+    },
     "lsmcp": {
       "command": "npx",
       "args": ["-y", "@mizchi/lsmcp", "mcp"]
     },
-    "webflow": {
+    "webflow-local": {
       "command": "node",
       "args": ["./packages/webflow-mcp/dist/index.js"]
     },
