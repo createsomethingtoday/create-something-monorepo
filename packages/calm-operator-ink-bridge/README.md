@@ -34,6 +34,7 @@ Token-gated:
 - `GET /ink/health-checks`
 - `POST /ink/health-checks/run`
 - `GET /ink/health-review`
+- `GET /ink/health-review/runs`
 - `POST /ink/health-review/request`
 - `POST /ink/health-review/run`
 - `POST /ink/alarms/run`
@@ -122,6 +123,17 @@ curl -sS https://ink.createsomething.agency/ink/health-review/run \
 ```
 
 Pass `?collect=false` to review stored snapshots without collecting remote checks.
+
+Health-review attempts are stored in the bridge Durable Object. Inspect recent
+manual, scheduled, device-requested, and health-check-triggered runs with:
+
+```bash
+curl -sS "https://ink.createsomething.agency/ink/health-review/runs?limit=20" \
+  -H "authorization: Bearer $INK_SOURCE_TOKEN"
+```
+
+Run records include trigger, status, timing, collected count, report counts,
+error text for failed attempts, and the stored report payload when available.
 
 Ink can request the same review with the lower-privilege device token. This
 returns the compact firmware brief shape, so the device can show one calm summary

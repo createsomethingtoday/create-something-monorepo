@@ -2,16 +2,23 @@ import { DurableObject } from 'cloudflare:workers';
 import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
+import {
+  buildHealthReviewRunRecord,
+  normalizeHealthReviewRunLimit,
+  rowHealthReviewRun
+} from './health-review-runs.js';
 import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
 import { dueDailyAlarms, shouldRunHealthReviewAtUtcHour } from './scheduled-alarms.js';
 import type {
   DeviceHeartbeatInput,
   HealthReviewReport,
+  HealthReviewRunTrigger,
   HealthSnapshotInput,
   InkAlertInput,
   OperatorEventInput,
   StoredAlert,
   StoredDeviceHeartbeat,
+  StoredHealthReviewRun,
   StoredHealthSnapshot
 } from './types.js';
 
@@ -40,6 +47,23 @@ const MAX_BODY_BYTES = 64 * 1024;
 const REGISTRY_FALLBACK_MCP_COUNT = 1014;
 const REGISTRY_FALLBACK_FLEET_COUNT = 22;
 const REGISTRY_FALLBACK_AGENT_COUNT = 4;
+
+interface HealthReviewRunOptions {
+  staleAfterMs?: number;
+  trigger?: HealthReviewRunTrigger;
+  collectedCount?: number;
+  startedAt?: number;
+  payload?: Record<string, unknown>;
+}
+
+interface HealthReviewRunResult {
+  ok: true;
+  report: HealthReviewReport;
+  run: StoredHealthReviewRun | null;
+  alert?: StoredAlert;
+  cleared?: number;
+  brief: ReturnType<typeof buildOperatorBrief>;
+}
 
 function json(data: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(data, null, 2), {
@@ -71,6 +95,26 @@ function healthStaleAfterMs(env: Env): number {
   const parsed = Number(env.HEALTH_STALE_AFTER_MS);
   if (Number.isFinite(parsed) && parsed > 0) return Math.round(parsed);
   return DEFAULT_HEALTH_STALE_AFTER_MS;
+}
+
+function healthReviewRunOptions(input: number | HealthReviewRunOptions | undefined): Required<HealthReviewRunOptions> {
+  if (typeof input === 'number') {
+    return {
+      staleAfterMs: input,
+      trigger: 'manual',
+      collectedCount: 0,
+      startedAt: Date.now(),
+      payload: {}
+    };
+  }
+
+  return {
+    staleAfterMs: input?.staleAfterMs ?? DEFAULT_HEALTH_STALE_AFTER_MS,
+    trigger: input?.trigger ?? 'manual',
+    collectedCount: input?.collectedCount ?? 0,
+    startedAt: input?.startedAt ?? Date.now(),
+    payload: input?.payload ?? {}
+  };
 }
 
 async function parseJsonBody<T>(request: Request): Promise<T> {
@@ -299,6 +343,31 @@ export class InkState extends DurableObject<Env> {
         );
       `);
       this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS health_review_runs (
+          id TEXT PRIMARY KEY,
+          trigger TEXT NOT NULL,
+          status TEXT NOT NULL,
+          ok INTEGER NOT NULL,
+          state TEXT NOT NULL,
+          collected_count INTEGER NOT NULL,
+          checked INTEGER NOT NULL,
+          healthy_count INTEGER NOT NULL,
+          poor_count INTEGER NOT NULL,
+          stale_count INTEGER NOT NULL,
+          urgent INTEGER NOT NULL,
+          started_at INTEGER NOT NULL,
+          finished_at INTEGER NOT NULL,
+          duration_ms INTEGER NOT NULL,
+          error TEXT NOT NULL,
+          report_json TEXT NOT NULL,
+          payload_json TEXT NOT NULL
+        );
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE INDEX IF NOT EXISTS idx_health_review_runs_started
+        ON health_review_runs(started_at DESC);
+      `);
+      this.ctx.storage.sql.exec(`
         CREATE TABLE IF NOT EXISTS device_heartbeats (
           device_id TEXT PRIMARY KEY,
           surface TEXT NOT NULL,
@@ -512,48 +581,137 @@ export class InkState extends DurableObject<Env> {
     return buildHealthReviewReport({ health, staleAfterMs });
   }
 
-  runHealthReview(staleAfterMs = DEFAULT_HEALTH_STALE_AFTER_MS): {
-    ok: true;
-    report: HealthReviewReport;
-    alert?: StoredAlert;
-    cleared?: number;
-    brief: ReturnType<typeof buildOperatorBrief>;
-  } {
-    const report = this.healthReview(staleAfterMs);
-    const alertId = 'health-review:create-something';
-
-    if (report.state === 'health_attention') {
-      const result = this.addAlert({
-        id: alertId,
-        state: 'health_attention',
-        category: 'health',
-        severity: report.urgent ? 85 : 75,
-        subject: 'CREATE SOMETHING health',
-        reason: report.summary,
-        detail: report.detail,
-        action: report.action,
-        source: 'calm-operator-health-review',
-        external_id: 'scheduled-health-review',
-        urgent: report.urgent,
-        ttl_ms: staleAfterMs,
-        payload: { report }
-      });
-
-      return { ok: true, report, alert: result.alert, brief: result.brief };
+  private recordHealthReviewRun(run: StoredHealthReviewRun): StoredHealthReviewRun | null {
+    try {
+      this.ctx.storage.sql.exec(
+        `INSERT INTO health_review_runs
+          (id, trigger, status, ok, state, collected_count, checked, healthy_count, poor_count, stale_count, urgent,
+           started_at, finished_at, duration_ms, error, report_json, payload_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        run.id,
+        run.trigger,
+        run.status,
+        run.ok ? 1 : 0,
+        run.state,
+        run.collected_count,
+        run.checked,
+        run.healthy_count,
+        run.poor_count,
+        run.stale_count,
+        run.urgent ? 1 : 0,
+        run.started_at,
+        run.finished_at,
+        run.duration_ms,
+        run.error,
+        JSON.stringify(run.report),
+        JSON.stringify(run.payload)
+      );
+      return run;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));
+      return null;
     }
+  }
 
-    const cleared = this.ctx.storage.sql
+  recordHealthReviewFailure(input: {
+    trigger?: HealthReviewRunTrigger;
+    startedAt?: number;
+    collectedCount?: number;
+    error?: string;
+    payload?: Record<string, unknown>;
+  }): StoredHealthReviewRun | null {
+    const finishedAt = Date.now();
+    return this.recordHealthReviewRun(buildHealthReviewRunRecord({
+      trigger: input.trigger,
+      status: 'failed',
+      startedAt: input.startedAt ?? finishedAt,
+      finishedAt,
+      collectedCount: input.collectedCount ?? 0,
+      error: input.error || 'Health review attempt failed.',
+      payload: input.payload
+    }));
+  }
+
+  healthReviewRuns(limit = 20): StoredHealthReviewRun[] {
+    return this.ctx.storage.sql
       .exec<Record<string, SqlStorageValue>>(
-        `UPDATE alerts
-         SET status = 'cleared', updated_at = ?
-         WHERE id = ? AND status = 'active'
-         RETURNING 1 AS count`,
-        Date.now(),
-        alertId
+        `SELECT * FROM health_review_runs
+         ORDER BY started_at DESC
+         LIMIT ?`,
+        normalizeHealthReviewRunLimit(limit)
       )
-      .toArray().length;
+      .toArray()
+      .map(rowHealthReviewRun);
+  }
 
-    return { ok: true, report, cleared, brief: this.brief('core-ink') };
+  runHealthReview(optionsInput: number | HealthReviewRunOptions = DEFAULT_HEALTH_STALE_AFTER_MS): HealthReviewRunResult {
+    const options = healthReviewRunOptions(optionsInput);
+    const startedAt = options.startedAt;
+
+    try {
+      const report = this.healthReview(options.staleAfterMs);
+      const alertId = 'health-review:create-something';
+      let output: Omit<HealthReviewRunResult, 'run'>;
+
+      if (report.state === 'health_attention') {
+        const result = this.addAlert({
+          id: alertId,
+          state: 'health_attention',
+          category: 'health',
+          severity: report.urgent ? 85 : 75,
+          subject: 'CREATE SOMETHING health',
+          reason: report.summary,
+          detail: report.detail,
+          action: report.action,
+          source: 'calm-operator-health-review',
+          external_id: 'scheduled-health-review',
+          urgent: report.urgent,
+          ttl_ms: options.staleAfterMs,
+          payload: { report }
+        });
+
+        output = { ok: true, report, alert: result.alert, brief: result.brief };
+      } else {
+        const cleared = this.ctx.storage.sql
+          .exec<Record<string, SqlStorageValue>>(
+            `UPDATE alerts
+             SET status = 'cleared', updated_at = ?
+             WHERE id = ? AND status = 'active'
+             RETURNING 1 AS count`,
+            Date.now(),
+            alertId
+          )
+          .toArray().length;
+
+        output = { ok: true, report, cleared, brief: this.brief('core-ink') };
+      }
+
+      const finishedAt = Date.now();
+      const run = this.recordHealthReviewRun(buildHealthReviewRunRecord({
+        trigger: options.trigger,
+        status: 'completed',
+        startedAt,
+        finishedAt,
+        collectedCount: options.collectedCount,
+        report,
+        payload: options.payload
+      }));
+
+      return { ...output, run };
+    } catch (error) {
+      const finishedAt = Date.now();
+      this.recordHealthReviewRun(buildHealthReviewRunRecord({
+        trigger: options.trigger,
+        status: 'failed',
+        startedAt,
+        finishedAt,
+        collectedCount: options.collectedCount,
+        error: error instanceof Error ? error.message : String(error),
+        payload: options.payload
+      }));
+      throw error;
+    }
   }
 
   device(deviceId: string): StoredDeviceHeartbeat | null {
@@ -601,26 +759,54 @@ function stateStub(env: Env): DurableObjectStub<InkState> {
   return env.INK_STATE.getByName(workspaceId(env));
 }
 
-async function collectAndRunHealthReview(env: Env): Promise<{
+async function collectAndRunHealthReview(env: Env, trigger: HealthReviewRunTrigger = 'manual'): Promise<{
   ok: true;
   collected: Array<{ ok: boolean; component: string; status?: string }>;
   review: Awaited<ReturnType<InkState['runHealthReview']>>;
 }> {
   const stub = stateStub(env);
-  const collected = await collectRemoteHealthChecks(env);
+  const startedAt = Date.now();
+  let collected: Awaited<ReturnType<typeof collectRemoteHealthChecks>> = [];
+  let collectedSummary: Array<{ ok: boolean; component: string; status?: string }> = [];
 
-  for (const result of collected) {
-    await stub.setHealthSnapshot(result.snapshot);
+  try {
+    collected = await collectRemoteHealthChecks(env);
+
+    for (const result of collected) {
+      await stub.setHealthSnapshot(result.snapshot);
+    }
+
+    collectedSummary = collected.map((result) => ({
+      ok: result.ok,
+      component: result.check.component,
+      status: result.snapshot.status
+    }));
+  } catch (error) {
+    try {
+      await stub.recordHealthReviewFailure({
+        trigger,
+        startedAt,
+        collectedCount: collected.length,
+        error: error instanceof Error ? error.message : String(error),
+        payload: { collected: collectedSummary }
+      });
+    } catch (recordError) {
+      const message = recordError instanceof Error ? recordError.message : String(recordError);
+      console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));
+    }
+    throw error;
   }
 
   return {
     ok: true,
-    collected: collected.map((result) => ({
-      ok: result.ok,
-      component: result.check.component,
-      status: result.snapshot.status
-    })),
-    review: await stub.runHealthReview(healthStaleAfterMs(env))
+    collected: collectedSummary,
+    review: await stub.runHealthReview({
+      staleAfterMs: healthStaleAfterMs(env),
+      trigger,
+      collectedCount: collected.length,
+      startedAt,
+      payload: { collected: collectedSummary }
+    })
   };
 }
 
@@ -679,6 +865,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /ink/health-checks',
         'POST /ink/health-checks/run',
         'GET /ink/health-review',
+        'GET /ink/health-review/runs',
         'POST /ink/health-review/request',
         'POST /ink/health-review/run',
         'POST /ink/alarms/run',
@@ -740,7 +927,14 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
 
   if (method === 'POST' && path === '/ink/health-checks/run') {
-    return json(await collectAndRunHealthReview(env));
+    return json(await collectAndRunHealthReview(env, 'health_checks_run'));
+  }
+
+  if (method === 'GET' && path === '/ink/health-review/runs') {
+    return json({
+      ok: true,
+      runs: await stub.healthReviewRuns(normalizeHealthReviewRunLimit(url.searchParams.get('limit')))
+    });
   }
 
   if (method === 'GET' && path === '/ink/health-review') {
@@ -749,15 +943,26 @@ async function route(request: Request, env: Env): Promise<Response> {
 
   if (method === 'POST' && path === '/ink/health-review/run') {
     const collect = url.searchParams.get('collect');
-    return json(collect === 'false' ? await stub.runHealthReview(healthStaleAfterMs(env)) : await collectAndRunHealthReview(env));
+    return json(
+      collect === 'false'
+        ? await stub.runHealthReview({ staleAfterMs: healthStaleAfterMs(env), trigger: 'manual' })
+        : await collectAndRunHealthReview(env, 'manual')
+    );
   }
 
   if (method === 'POST' && path === '/ink/health-review/request') {
     const collect = url.searchParams.get('collect');
     const result =
       collect === 'false'
-        ? { ok: true, collected: [], review: await stub.runHealthReview(healthStaleAfterMs(env)) }
-        : await collectAndRunHealthReview(env);
+        ? {
+            ok: true,
+            collected: [],
+            review: await stub.runHealthReview({
+              staleAfterMs: healthStaleAfterMs(env),
+              trigger: 'device_request'
+            })
+          }
+        : await collectAndRunHealthReview(env, 'device_request');
     const firmwareBrief = toFirmwareBrief(result.review.brief);
     const healthCopy = healthReviewFirmwareCopy(result.review.report, result.collected.length);
 
@@ -770,6 +975,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       action: healthCopy.action,
       urgent: healthCopy.urgent,
       health_review: {
+        run_id: result.review.run?.id ?? null,
         state: result.review.report.state,
         headline: healthCopy.headline,
         summary: healthCopy.summary,
@@ -824,7 +1030,7 @@ export default {
           const nowMs = controller.scheduledTime ?? Date.now();
           await runScheduledDailyAlarms(env, nowMs);
           if (shouldRunHealthReviewAtUtcHour(env.HEALTH_REVIEW_UTC_HOURS, nowMs)) {
-            await collectAndRunHealthReview(env);
+            await collectAndRunHealthReview(env, 'scheduled');
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
