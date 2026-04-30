@@ -15,7 +15,7 @@ enabled = true
 head_sampling_rate = 1
 
 [triggers]
-crons = ["0 4,11,12,13,14,15,18,23 * * *"]
+crons = ["0 4,5,11,12,13,14,15,18,20,21,23 * * *", "30 17,18 * * *"]
 
 [[durable_objects.bindings]]
 name = "INK_STATE"
@@ -31,7 +31,7 @@ DEFAULT_DEVICE_ID = "core-ink"
 DEFAULT_SURFACE = "core-ink"
 HEALTH_STALE_AFTER_MS = "43200000"
 HEALTH_REVIEW_UTC_HOURS = "4,13,18,23"
-DAILY_ALARMS_CT = "06:00,09:00"
+DAILY_ALARMS_CT = "06:00=WORKOUT,09:00=WORK,12:30=WALK,15:00=EAT,23:00=SLEEP"
 ALARM_TTL_MS = "2700000"
 HEALTH_SELF_ORIGIN = "https://ink.createsomething.agency"
 HEALTH_SELF_CHECK_ENABLED = "false"

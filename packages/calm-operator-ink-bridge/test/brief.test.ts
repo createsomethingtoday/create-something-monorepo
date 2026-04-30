@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildOperatorBrief } from '../src/brief.js';
+import { buildOperatorBrief, toFirmwareBrief } from '../src/brief.js';
 import type { StoredAlert, StoredHealthSnapshot } from '../src/types.js';
 
 function alert(overrides: Partial<StoredAlert>): StoredAlert {
@@ -128,4 +128,69 @@ test('ignores expired or cleared alerts', () => {
   });
 
   assert.equal(brief.state, 'clear');
+});
+
+test('keeps T-Embed as an Ink console surface with longer copy', () => {
+  const detail =
+    'The MCP review agent found a failing production toolkit. Review the remote health report, inspect the registry entry, and decide whether to block writes or rotate credentials.';
+  const brief = buildOperatorBrief({
+    surface: 'lilygo-t-embed',
+    alerts: [
+      alert({
+        state: 'mcp_attention',
+        subject: 'Composio Toolkit MCP',
+        reason: 'Remote health failed for toolkit bridge',
+        detail,
+        action: 'Open the MCP registry report and review Composio auth configuration.',
+        severity: 90,
+        urgent: true
+      })
+    ],
+    health: [],
+    now: 1000
+  });
+  const firmware = toFirmwareBrief(brief);
+
+  assert.equal(brief.surface, 't-embed');
+  assert.equal(brief.detail, detail);
+  assert.deepEqual(firmware.surface_profile, {
+    id: 't-embed',
+    role: 'operator_console',
+    display: 'lcd',
+    refresh: 'fast',
+    supports_lists: true,
+    supports_detail_drilldown: true
+  });
+});
+
+test('keeps reTerminal E1001 as an Ink operator sheet with report-length copy', () => {
+  const detail =
+    'Registry review clear. 1014 MCPs, 22 deployed fleet entries, and 4 agent health surfaces were checked. Live Hub reports 13 of 13 connected services, 0 failed services, and 914 proxy tools available. No operator action is required.';
+  const brief = buildOperatorBrief({
+    surface: 'seeed-reterminal-e1001',
+    alerts: [
+      alert({
+        state: 'operator_attention',
+        subject: 'CREATE SOMETHING daily operator brief',
+        reason: 'No blocked workflows',
+        detail,
+        action: 'Keep the sheet visible; return only if Ink escalates.',
+        severity: 50
+      })
+    ],
+    health: [],
+    now: 1000
+  });
+  const firmware = toFirmwareBrief(brief);
+
+  assert.equal(brief.surface, 'reterminal-e1001');
+  assert.equal(brief.detail, detail);
+  assert.deepEqual(firmware.surface_profile, {
+    id: 'reterminal-e1001',
+    role: 'operator_sheet',
+    display: 'eink',
+    refresh: 'slow',
+    supports_lists: true,
+    supports_detail_drilldown: true
+  });
 });

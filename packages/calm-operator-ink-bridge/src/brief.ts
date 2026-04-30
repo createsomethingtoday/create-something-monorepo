@@ -1,20 +1,7 @@
-import type {
-  InkSurface,
-  OperatorBrief,
-  StoredAlert,
-  StoredDeviceHeartbeat,
-  StoredHealthSnapshot
-} from './types.js';
+import type { OperatorBrief, StoredAlert, StoredDeviceHeartbeat, StoredHealthSnapshot } from './types.js';
+import { normalizeSurface, surfaceProfile } from './surfaces.js';
 
 const POOR_HEALTH_STATUSES = new Set(['fail', 'failed', 'error', 'down', 'poor', 'degraded']);
-
-export function normalizeSurface(surface: string | null | undefined): InkSurface {
-  const value = surface?.trim().toLowerCase();
-  if (!value) return 'core-ink';
-  if (value === 'm5paper' || value === 'm5-paper') return 'm5paper';
-  if (value === 'papers3' || value === 'paper-s3' || value === 'm5papers3') return 'papers3';
-  return value;
-}
 
 export function isPoorHealth(snapshot: StoredHealthSnapshot): boolean {
   return POOR_HEALTH_STATUSES.has(snapshot.status.trim().toLowerCase()) || snapshot.severity >= 70;
@@ -34,14 +21,12 @@ function alertScore(alert: StoredAlert): number {
       : alert.state === 'mcp_attention'
         ? 35
         : alert.state === 'agent_attention'
+        ? 30
+        : alert.state === 'daily_alarm'
           ? 30
-          : alert.state === 'daily_alarm'
-            ? 30
-            : alert.state === 'sms_love'
-              ? 28
-              : alert.state === 'approval_needed'
-                ? 25
-                : 0;
+          : alert.state === 'approval_needed'
+            ? 25
+            : 0;
 
   return alert.severity + stateWeight + (alert.urgent ? 50 : 0);
 }
@@ -76,8 +61,6 @@ function headlineForAlert(alert: StoredAlert): string {
       return 'APPROVAL NEEDED';
     case 'blocked':
       return 'BLOCKED';
-    case 'sms_love':
-      return 'LOVE';
     case 'slack_attention':
       return 'SLACK';
     case 'calendar_attention':
@@ -105,6 +88,7 @@ export function buildOperatorBrief(input: {
 }): OperatorBrief {
   const now = input.now ?? Date.now();
   const surface = normalizeSurface(input.surface);
+  const profile = surfaceProfile(surface);
   const activeAlerts = input.alerts.filter((alert) => {
     if (alert.status !== 'active') return false;
     if (alert.expires_at !== null && alert.expires_at <= now) return false;
@@ -118,11 +102,11 @@ export function buildOperatorBrief(input: {
   if (selectedAlert) {
     return {
       state: selectedAlert.state,
-      headline: compact(headlineForAlert(selectedAlert), 22),
-      line1: compact(selectedAlert.subject || selectedAlert.source || 'Attention needed', 28),
-      line2: line2ForAlert(selectedAlert),
-      detail: compact(selectedAlert.detail || selectedAlert.reason || selectedAlert.subject, 120),
-      action: compact(selectedAlert.action || 'Review source', 42),
+      headline: compact(headlineForAlert(selectedAlert), profile.headlineChars),
+      line1: compact(selectedAlert.subject || selectedAlert.source || 'Attention needed', profile.line1Chars),
+      line2: compact(line2ForAlert(selectedAlert), profile.line2Chars),
+      detail: compact(selectedAlert.detail || selectedAlert.reason || selectedAlert.subject, profile.detailChars),
+      action: compact(selectedAlert.action || 'Review source', profile.actionChars),
       urgent: selectedAlert.urgent || selectedAlert.severity >= 80,
       generated_at: generatedAt,
       surface,
@@ -139,10 +123,10 @@ export function buildOperatorBrief(input: {
     return {
       state: 'health_attention',
       headline: 'HEALTH ATTENTION',
-      line1: compact(selectedHealth.component || selectedHealth.source || 'System health', 28),
-      line2: compact(selectedHealth.summary || selectedHealth.status, 46),
-      detail: compact(selectedHealth.detail || selectedHealth.summary || selectedHealth.status, 120),
-      action: 'Review health source',
+      line1: compact(selectedHealth.component || selectedHealth.source || 'System health', profile.line1Chars),
+      line2: compact(selectedHealth.summary || selectedHealth.status, profile.line2Chars),
+      detail: compact(selectedHealth.detail || selectedHealth.summary || selectedHealth.status, profile.detailChars),
+      action: compact('Review health source', profile.actionChars),
       urgent: selectedHealth.severity >= 80,
       generated_at: generatedAt,
       surface,
@@ -174,6 +158,7 @@ export function buildOperatorBrief(input: {
 }
 
 export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
+  const profile = surfaceProfile(brief.surface);
   return {
     state: brief.state,
     headline: brief.headline,
@@ -184,6 +169,14 @@ export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
     urgent: brief.urgent,
     generated_at: brief.generated_at,
     surface: brief.surface,
-    counts: brief.counts
+    counts: brief.counts,
+    surface_profile: {
+      id: profile.id,
+      role: profile.role,
+      display: profile.display,
+      refresh: profile.refresh,
+      supports_lists: profile.supportsLists,
+      supports_detail_drilldown: profile.supportsDetailDrilldown
+    }
   };
 }

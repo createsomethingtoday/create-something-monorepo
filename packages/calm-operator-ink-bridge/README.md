@@ -26,6 +26,7 @@ Token-gated:
 
 - `GET /ink/brief`
 - `GET /ink/surface-brief`
+- `GET /ink/surfaces`
 - `GET /ink/device`
 - `POST /ink/alert`
 - `POST /ink/source-event`
@@ -85,6 +86,31 @@ curl -sS https://ink.createsomething.agency/ink/brief \
   -H "x-ink-token: $INK_DEVICE_TOKEN"
 ```
 
+Request a different Ink surface profile without changing the backend:
+
+```bash
+curl -sS "https://ink.createsomething.agency/ink/brief?surface=t-embed" \
+  -H "x-ink-token: $INK_DEVICE_TOKEN"
+
+curl -sS "https://ink.createsomething.agency/ink/brief?surface=reterminal-e1001" \
+  -H "x-ink-token: $INK_DEVICE_TOKEN"
+```
+
+`core-ink` remains the calm e-ink reference surface. `t-embed` is treated as an
+Ink operator console: same alerts and health states, longer copy limits, and
+metadata for faster LCD/list/detail interaction.
+
+`reterminal-e1001` is treated as the desk/wall Ink operator sheet: same source of
+truth, large e-ink copy limits, and list/detail metadata for richer daily briefs.
+
+Surface roles:
+
+| Surface | Role | Use |
+| --- | --- | --- |
+| `core-ink` | calm surface | Pocket pager: attention, alarms, all-clear |
+| `t-embed` | operator console | Handheld inspection, faster UI, richer controls |
+| `reterminal-e1001` | operator sheet | Desk/wall brief, registry summaries, daily status |
+
 ## Producer helpers
 
 MCP review agents and health monitors can post directly to production:
@@ -103,7 +129,7 @@ alarm moments:
 
 ```toml
 [triggers]
-crons = ["0 4,11,12,13,14,15,18,23 * * *"]
+crons = ["0 4,5,11,12,13,14,15,18,20,21,23 * * *", "30 17,18 * * *"]
 ```
 
 Health reviews only run during `HEALTH_REVIEW_UTC_HOURS`, which defaults to
@@ -135,10 +161,17 @@ curl -sS https://ink.createsomething.agency/ink/health-review/request \
 
 ## Daily alarms
 
-Daily alarms are configured with `DAILY_ALARMS_CT`, defaulting to `06:00,09:00`.
+Daily alarms are configured with `DAILY_ALARMS_CT`, defaulting to:
+
+```text
+06:00=WORKOUT,09:00=WORK,12:30=WALK,15:00=EAT,23:00=SLEEP
+```
+
 The Worker evaluates those times in `America/Chicago` and writes an urgent
 `daily_alarm` alert when one is due. Each alarm uses a per-day id, so retries are
 idempotent, and expires after `ALARM_TTL_MS`, defaulting to 45 minutes.
+Labels are optional; an unlabeled entry like `08:15` becomes a generic daily
+alarm.
 
 Run the alarm scheduler manually:
 

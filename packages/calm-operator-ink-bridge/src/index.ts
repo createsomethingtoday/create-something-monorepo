@@ -4,6 +4,7 @@ import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
 import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
 import { dueDailyAlarms, shouldRunHealthReviewAtUtcHour } from './scheduled-alarms.js';
+import { listSurfaceProfiles } from './surfaces.js';
 import type {
   DeviceHeartbeatInput,
   HealthReviewReport,
@@ -683,6 +684,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /healthz',
         'GET /ink/brief',
         'GET /ink/surface-brief',
+        'GET /ink/surfaces',
         'POST /ink/alert',
         'POST /ink/health-snapshot',
         'GET /ink/health-checks',
@@ -698,7 +700,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  if ((method === 'GET' && (path === '/ink/brief' || path === '/ink/surface-brief' || path === '/ink/device')) ||
+  if ((method === 'GET' &&
+      (path === '/ink/brief' || path === '/ink/surface-brief' || path === '/ink/surfaces' || path === '/ink/device')) ||
       (method === 'POST' &&
         (path === '/ink/device-heartbeat' ||
           path === '/ink/clear' ||
@@ -720,6 +723,10 @@ async function route(request: Request, env: Env): Promise<Response> {
     const deviceId = url.searchParams.get('device_id') || defaultDeviceId(env);
     const brief = await stub.brief(surface, deviceId);
     return json(path === '/ink/brief' ? toFirmwareBrief(brief) : brief);
+  }
+
+  if (method === 'GET' && path === '/ink/surfaces') {
+    return json({ ok: true, surfaces: listSurfaceProfiles() });
   }
 
   if (method === 'GET' && path === '/ink/device') {
@@ -767,11 +774,14 @@ async function route(request: Request, env: Env): Promise<Response> {
 
   if (method === 'POST' && path === '/ink/health-review/request') {
     const collect = url.searchParams.get('collect');
+    const surface = url.searchParams.get('surface') || defaultSurface(env);
+    const deviceId = url.searchParams.get('device_id') || defaultDeviceId(env);
     const result =
       collect === 'false'
         ? { ok: true, collected: [], review: await stub.runHealthReview(healthStaleAfterMs(env)) }
         : await collectAndRunHealthReview(env);
-    const firmwareBrief = toFirmwareBrief(result.review.brief);
+    const surfaceBrief = await stub.brief(surface, deviceId);
+    const firmwareBrief = toFirmwareBrief(surfaceBrief);
     const healthCopy = healthReviewFirmwareCopy(result.review.report, result.collected.length);
 
     return json({

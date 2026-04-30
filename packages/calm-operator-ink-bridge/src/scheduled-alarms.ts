@@ -1,7 +1,7 @@
 import type { InkAlertInput } from './types.js';
 
 export const CENTRAL_TIME_ZONE = 'America/Chicago';
-export const DEFAULT_DAILY_ALARMS_CT = '06:00,09:00';
+export const DEFAULT_DAILY_ALARMS_CT = '06:00=WORKOUT,09:00=WORK,12:30=WALK,15:00=EAT,23:00=SLEEP';
 export const DEFAULT_ALARM_TTL_MS = 45 * 60 * 1000;
 
 interface AlarmEnv {
@@ -21,6 +21,11 @@ interface CentralParts {
   date: string;
   hour: number;
   minute: number;
+}
+
+interface ConfiguredDailyAlarm {
+  time: string;
+  label: string;
 }
 
 function centralParts(nowMs: number): CentralParts {
@@ -61,9 +66,36 @@ function normalizeAlarmTime(value: string): string | null {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
-export function configuredDailyAlarmTimes(env: AlarmEnv): string[] {
+function normalizeAlarmLabel(value: string | undefined, fallback: string): string {
+  const label = value?.replace(/\s+/g, ' ').trim();
+  if (!label) return fallback;
+  return label.slice(0, 32);
+}
+
+export function configuredDailyAlarms(env: AlarmEnv): ConfiguredDailyAlarm[] {
   const source = env.DAILY_ALARMS_CT?.trim() || DEFAULT_DAILY_ALARMS_CT;
-  return [...new Set(source.split(',').map(normalizeAlarmTime).filter((time): time is string => Boolean(time)))];
+  const alarms = source
+    .split(',')
+    .map((entry) => {
+      const [timePart, labelPart] = entry.split(/=(.*)/s);
+      const time = normalizeAlarmTime(timePart ?? '');
+      if (!time) return null;
+      return {
+        time,
+        label: normalizeAlarmLabel(labelPart, 'Daily alarm')
+      };
+    })
+    .filter((alarm): alarm is ConfiguredDailyAlarm => Boolean(alarm));
+
+  const byTime = new Map<string, ConfiguredDailyAlarm>();
+  for (const alarm of alarms) {
+    if (!byTime.has(alarm.time)) byTime.set(alarm.time, alarm);
+  }
+  return [...byTime.values()];
+}
+
+export function configuredDailyAlarmTimes(env: AlarmEnv): string[] {
+  return configuredDailyAlarms(env).map((alarm) => alarm.time);
 }
 
 function displayTime(localTime: string): string {
@@ -77,8 +109,8 @@ function displayTime(localTime: string): string {
 export function dueDailyAlarms(env: AlarmEnv, nowMs = Date.now()): DueDailyAlarm[] {
   const local = centralParts(nowMs);
   const localTime = `${String(local.hour).padStart(2, '0')}:${String(local.minute).padStart(2, '0')}`;
-  const configuredTimes = configuredDailyAlarmTimes(env);
-  if (!configuredTimes.includes(localTime)) return [];
+  const configuredAlarm = configuredDailyAlarms(env).find((alarm) => alarm.time === localTime);
+  if (!configuredAlarm) return [];
 
   const ttlMs = alarmTtlMs(env);
   const display = displayTime(localTime);
@@ -94,10 +126,10 @@ export function dueDailyAlarms(env: AlarmEnv, nowMs = Date.now()): DueDailyAlarm
         state: 'daily_alarm',
         category: 'alarm',
         severity: 95,
-        subject: `${display} CT alarm`,
-        reason: 'Daily calm operator alarm',
-        detail: `Daily alarm for ${display} CT.`,
-        action: 'Clear alarm when awake.',
+        subject: configuredAlarm.label,
+        reason: `${display} CT`,
+        detail: `${configuredAlarm.label} rhythm alarm for ${display} CT.`,
+        action: 'Clear when complete.',
         source: 'calm-operator-alarm',
         external_id: `${local.date}:${localTime}`,
         urgent: true,
@@ -105,6 +137,7 @@ export function dueDailyAlarms(env: AlarmEnv, nowMs = Date.now()): DueDailyAlarm
         payload: {
           local_date: local.date,
           local_time: localTime,
+          label: configuredAlarm.label,
           timezone: CENTRAL_TIME_ZONE
         }
       }

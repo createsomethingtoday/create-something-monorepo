@@ -1,4 +1,4 @@
-export type InkSurface = 'core-ink' | 'm5paper' | 'papers3' | string;
+export type InkSurface = 'core-ink' | 't-embed' | 'reterminal-e1001' | 'm5paper' | 'papers3' | string;
 
 export type OperatorState =
   | 'clear'
@@ -7,7 +7,6 @@ export type OperatorState =
   | 'health_attention'
   | 'approval_needed'
   | 'blocked'
-  | 'sms_love'
   | 'slack_attention'
   | 'calendar_attention'
   | 'daily_alarm'
