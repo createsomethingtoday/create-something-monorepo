@@ -71,6 +71,10 @@ pnpm --dir packages/calm-operator-ink-firmware monitor
 - From the brief screen, select opens the menu.
 - `PWR`: manual sync.
 
+The menu shows the current bucket and position, for example `Operator 1/10`.
+Each selected item includes a one-line purpose. The footer keeps action hints on
+the left and battery/sound state on the right.
+
 Menu buckets:
 
 - `Operator`: Sync, MCP Review, Check In

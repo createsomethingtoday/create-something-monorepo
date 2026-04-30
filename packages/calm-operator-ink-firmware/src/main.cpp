@@ -14,7 +14,7 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.2";
+constexpr const char* FIRMWARE_VERSION = "0.1.3";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
 constexpr const char* SETTINGS_NAMESPACE = "calm-ink";
@@ -47,6 +47,7 @@ const MenuAction MENU[] = {
   {"Settings", "Quiet Mode"},
   {"Settings", "Status"}
 };
+constexpr int MENU_COUNT = sizeof(MENU) / sizeof(MENU[0]);
 
 enum class Screen {
   Brief,
@@ -192,6 +193,26 @@ void drawWrapped(const String& text, int x, int y, int width, int lineHeight, in
   }
 }
 
+String fitText(String text, int width) {
+  text.trim();
+  if (canvas.textWidth(text.c_str()) <= width) return text;
+
+  while (text.length() > 2) {
+    text.remove(text.length() - 1);
+    const String candidate = text + "..";
+    if (canvas.textWidth(candidate.c_str()) <= width) return candidate;
+  }
+
+  return "..";
+}
+
+String footerMeta() {
+  String meta = batteryLabel();
+  if (meta.length() > 0) meta += " ";
+  meta += soundLabel();
+  return meta;
+}
+
 void startFrame(const String& title, bool inverted = true) {
   canvas.fillScreen(TFT_WHITE);
   canvas.setTextSize(1);
@@ -214,10 +235,12 @@ void drawFooter(const String& left = "") {
   String status = left;
   if (pendingNotice.length() > 0 && left.length() == 0) status = pendingNotice;
   if (status.length() == 0) status = WiFi.status() == WL_CONNECTED ? "Wi-Fi" : "Offline";
-  const String battery = batteryLabel();
-  if (battery.length() > 0) status += " " + battery;
-  status += " " + soundLabel();
-  canvas.drawString(status, 10, 186);
+  const String meta = footerMeta();
+  const int metaWidth = canvas.textWidth(meta.c_str());
+  const int metaX = max(96, 192 - metaWidth);
+  const int statusWidth = max(70, metaX - 16);
+  canvas.drawString(fitText(status, statusWidth), 10, 186);
+  canvas.drawString(meta, metaX, 186);
 }
 
 void renderBrief() {
@@ -225,9 +248,9 @@ void renderBrief() {
   startFrame(activeBrief.headline, true);
   canvas.setTextSize(1);
   drawWrapped(activeBrief.line1, 12, 42, 176, 16, 2);
-  canvas.drawLine(26, 86, 174, 86, TFT_BLACK);
-  drawWrapped(activeBrief.line2, 12, 100, 176, 15, 2);
-  drawWrapped(activeBrief.action, 12, 136, 176, 14, 2);
+  drawWrapped(activeBrief.line2, 12, 78, 176, 15, 2);
+  canvas.drawLine(26, 118, 174, 118, TFT_BLACK);
+  drawWrapped(activeBrief.action, 12, 132, 176, 14, 2);
   drawFooter(activeBrief.urgent ? "ATTENTION" : "CS");
   flushFrame(
     screenKey("brief", activeBrief.headline, activeBrief.line1, activeBrief.line2, activeBrief.action));
@@ -248,26 +271,48 @@ void renderStatus(const String& title, const String& a, const String& b = "", co
   flushFrame(screenKey("status", title, a, b, c));
 }
 
+String menuDisplayLabel(const MenuAction& action) {
+  const String label = action.label;
+  if (label == "Alerts") return String("Alerts ") + (alertsEnabled ? "On" : "Off");
+  if (label == "Quiet Mode") return String("Quiet ") + (quietMode ? "On" : "Off");
+  return label;
+}
+
+String menuHint(const String& label) {
+  if (label == "Sync") return "Fetch latest brief";
+  if (label == "MCP Review") return "Run health review";
+  if (label == "Check In") return "Save operator state";
+  if (label == "Clock") return "Show Central Time";
+  if (label == "Rhythm") return "Daily anchors";
+  if (label == "Calm Reset") return "Breathing reset";
+  if (label == "Stone Garden") return "Slow tactile play";
+  if (label == "Alerts") return "Toggle beeps";
+  if (label == "Quiet Mode") return "Mute all beeps";
+  return "Device status";
+}
+
 void renderMenu() {
   screen = Screen::Menu;
   const MenuAction& action = MENU[menuIndex];
-  startFrame(action.bucket, true);
+  startFrame(String(action.bucket) + " " + String(menuIndex + 1) + "/" + String(MENU_COUNT), true);
   canvas.setTextSize(1);
 
-  const int previous = (menuIndex + (int)(sizeof(MENU) / sizeof(MENU[0])) - 1) %
-                       (int)(sizeof(MENU) / sizeof(MENU[0]));
-  const int next = (menuIndex + 1) % (int)(sizeof(MENU) / sizeof(MENU[0]));
+  const int previous = (menuIndex + MENU_COUNT - 1) % MENU_COUNT;
+  const int next = (menuIndex + 1) % MENU_COUNT;
 
-  canvas.drawString(MENU[previous].label, 18, 50);
-  canvas.fillRect(10, 82, 180, 44, TFT_BLACK);
+  canvas.drawString(fitText(menuDisplayLabel(MENU[previous]), 160), 18, 44);
+  canvas.fillRect(10, 68, 180, 42, TFT_BLACK);
   canvas.setTextColor(TFT_WHITE, TFT_BLACK);
   canvas.setTextSize(2);
-  drawWrapped(action.label, 18, 94, 164, 18, 1);
+  const String selectedLabel = menuDisplayLabel(action);
+  if (canvas.textWidth(selectedLabel.c_str()) > 164) canvas.setTextSize(1);
+  drawWrapped(selectedLabel, 18, 80, 164, 18, 1);
   canvas.setTextColor(TFT_BLACK, TFT_WHITE);
   canvas.setTextSize(1);
-  canvas.drawString(MENU[next].label, 18, 142);
-  drawFooter("A/C move  B select");
-  flushFrame(screenKey("menu", action.bucket, action.label, MENU[previous].label, MENU[next].label));
+  canvas.drawString(fitText(menuHint(action.label), 160), 20, 122);
+  canvas.drawString(fitText(menuDisplayLabel(MENU[next]), 160), 18, 148);
+  drawFooter("A/C move B select");
+  flushFrame(screenKey("menu", action.bucket, selectedLabel, menuDisplayLabel(MENU[previous]), menuDisplayLabel(MENU[next])));
 }
 
 bool connectWifi() {
@@ -533,11 +578,13 @@ void renderStoneGarden() {
 }
 
 void renderSettingsStatus() {
+  String last = "Last " + lastSyncStatus;
+  if (lastHttpError.length() > 0) last += " / " + lastHttpError;
   renderStatus(
     "STATUS",
     WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "Wi-Fi offline",
-    String("Alerts ") + (alertsEnabled ? "on" : "off") + " / Quiet " + (quietMode ? "on" : "off"),
-    String("FW ") + FIRMWARE_VERSION + "  token " + (strlen(CALM_OPERATOR_DEVICE_TOKEN) ? "yes" : "no"));
+    String("FW ") + FIRMWARE_VERSION + " / " + soundLabel(),
+    last);
 }
 
 void selectMenuAction() {
@@ -562,7 +609,7 @@ void selectMenuAction() {
     alertsEnabled = !alertsEnabled;
     saveSettings();
     if (alertsEnabled && !quietMode) beepSoft();
-    renderStatus("ALERTS", alertsEnabled ? "Sound alerts ON" : "Sound alerts OFF", "Saved on device", quietMode ? "Quiet mode also ON" : "B menu");
+    renderStatus("ALERTS", alertsEnabled ? "Sound alerts ON" : "Sound alerts OFF", "Saved on device", quietMode ? "Quiet also ON" : "B menu");
   } else if (label == "Quiet Mode") {
     quietMode = !quietMode;
     saveSettings();
@@ -591,8 +638,7 @@ void handleSelect() {
 
 void handlePrevious() {
   if (screen == Screen::Menu) {
-    const int count = (int)(sizeof(MENU) / sizeof(MENU[0]));
-    menuIndex = (menuIndex + count - 1) % count;
+    menuIndex = (menuIndex + MENU_COUNT - 1) % MENU_COUNT;
     renderMenu();
   } else if (screen == Screen::StoneGarden) {
     stoneCursor = (stoneCursor + STONE_SLOTS - 1) % STONE_SLOTS;
@@ -602,8 +648,7 @@ void handlePrevious() {
 
 void handleNext() {
   if (screen == Screen::Menu) {
-    const int count = (int)(sizeof(MENU) / sizeof(MENU[0]));
-    menuIndex = (menuIndex + 1) % count;
+    menuIndex = (menuIndex + 1) % MENU_COUNT;
     renderMenu();
   } else if (screen == Screen::StoneGarden) {
     stoneCursor = (stoneCursor + 1) % STONE_SLOTS;
