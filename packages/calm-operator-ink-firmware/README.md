@@ -76,7 +76,13 @@ Menu buckets:
 - `Operator`: Sync, MCP Review, Check In
 - `Rhythm`: Clock, Rhythm
 - `Calm`: Calm Reset, Stone Garden
-- `Settings`: Alerts, Status
+- `Settings`: Alerts, Quiet Mode, Status
+
+Local settings are stored on the device:
+
+- `Alerts` toggles sound alerts on or off.
+- `Quiet Mode` suppresses all beeps without changing the alert preference.
+- The footer shows `BEEP`, `MUTE`, or `QUIET` so the current sound behavior is visible.
 
 ## Notes
 

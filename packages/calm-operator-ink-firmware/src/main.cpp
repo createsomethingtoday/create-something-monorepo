@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include <M5Unified.h>
+#include <Preferences.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
@@ -13,9 +14,10 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.1";
+constexpr const char* FIRMWARE_VERSION = "0.1.2";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
+constexpr const char* SETTINGS_NAMESPACE = "calm-ink";
 
 struct Brief {
   String state = "setup";
@@ -42,6 +44,7 @@ const MenuAction MENU[] = {
   {"Calm", "Calm Reset"},
   {"Calm", "Stone Garden"},
   {"Settings", "Alerts"},
+  {"Settings", "Quiet Mode"},
   {"Settings", "Status"}
 };
 
@@ -59,6 +62,7 @@ Brief activeBrief;
 Screen screen = Screen::Brief;
 int menuIndex = 0;
 bool alertsEnabled = true;
+bool quietMode = false;
 bool lastUrgentRendered = false;
 uint32_t lastSyncAt = 0;
 String lastSyncStatus = "boot";
@@ -73,6 +77,7 @@ const int STONE_SLOTS = 9;
 const int STONE_X[STONE_SLOTS] = {50, 100, 150, 62, 100, 138, 45, 100, 155};
 const int STONE_Y[STONE_SLOTS] = {75, 68, 75, 112, 105, 112, 150, 146, 150};
 M5Canvas canvas(&M5.Display);
+Preferences prefs;
 
 String origin() {
   String value = CALM_OPERATOR_BRIDGE_ORIGIN;
@@ -97,13 +102,38 @@ int batteryPercent() {
   return constrain(pct, 0, 100);
 }
 
+String batteryLabel() {
+  const int pct = batteryPercent();
+  if (pct <= 0) return "";
+  if (pct >= 98 && batteryMillivolts() >= 4150) return "FULL";
+  return String(pct) + "%";
+}
+
+String soundLabel() {
+  if (quietMode) return "QUIET";
+  if (!alertsEnabled) return "MUTE";
+  return "BEEP";
+}
+
+void loadSettings() {
+  prefs.begin(SETTINGS_NAMESPACE, false);
+  alertsEnabled = prefs.getBool("alerts", true);
+  quietMode = prefs.getBool("quiet", false);
+  Serial.printf("[ink] settings alerts=%s quiet=%s\n", alertsEnabled ? "on" : "off", quietMode ? "on" : "off");
+}
+
+void saveSettings() {
+  prefs.putBool("alerts", alertsEnabled);
+  prefs.putBool("quiet", quietMode);
+}
+
 void beepSoft() {
-  if (!alertsEnabled) return;
+  if (!alertsEnabled || quietMode) return;
   M5.Speaker.tone(4000, 35);
 }
 
 void beepUrgent() {
-  if (!alertsEnabled) return;
+  if (!alertsEnabled || quietMode) return;
   M5.Speaker.tone(5200, 90);
   delay(120);
   M5.Speaker.tone(3800, 90);
@@ -184,8 +214,9 @@ void drawFooter(const String& left = "") {
   String status = left;
   if (pendingNotice.length() > 0 && left.length() == 0) status = pendingNotice;
   if (status.length() == 0) status = WiFi.status() == WL_CONNECTED ? "Wi-Fi" : "Offline";
-  const int pct = batteryPercent();
-  if (pct > 0) status += "  " + String(pct) + "%";
+  const String battery = batteryLabel();
+  if (battery.length() > 0) status += " " + battery;
+  status += " " + soundLabel();
   canvas.drawString(status, 10, 186);
 }
 
@@ -436,16 +467,22 @@ void operatorCheckIn() {
 
 void fetchClock() {
   Serial.println("[ink] fetching clock");
-  renderStatus("CLOCK", "Fetching Central Time");
+  pendingNotice = "Clock...";
   String payload;
   const int status = requestBridge("GET", "/ink/clock", "", payload);
   if (status >= 200 && status < 300) {
     JsonDocument doc;
     if (!deserializeJson(doc, payload)) {
-      clockLine1 = String((const char*)(doc["display_time"] | ""));
-      clockLine2 = String((const char*)(doc["display_date"] | ""));
+      JsonVariantConst clock = doc["clock"];
+      if (clock.isNull()) clock = doc.as<JsonVariantConst>();
+      clockLine1 = String((const char*)(clock["display_time"] | ""));
+      clockLine2 = String((const char*)(clock["display_date"] | ""));
     }
+  } else if (clockLine1.length() == 0) {
+    clockLine1 = "Clock failed";
+    clockLine2 = lastHttpError.length() ? lastHttpError : "Bridge unavailable";
   }
+  pendingNotice = "";
 
   screen = Screen::Clock;
   startFrame("CLOCK", false);
@@ -499,7 +536,7 @@ void renderSettingsStatus() {
   renderStatus(
     "STATUS",
     WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "Wi-Fi offline",
-    "Last: " + lastSyncStatus + (lastHttpError.length() ? " / " + lastHttpError : ""),
+    String("Alerts ") + (alertsEnabled ? "on" : "off") + " / Quiet " + (quietMode ? "on" : "off"),
     String("FW ") + FIRMWARE_VERSION + "  token " + (strlen(CALM_OPERATOR_DEVICE_TOKEN) ? "yes" : "no"));
 }
 
@@ -523,8 +560,14 @@ void selectMenuAction() {
     renderStoneGarden();
   } else if (label == "Alerts") {
     alertsEnabled = !alertsEnabled;
-    renderStatus("ALERTS", alertsEnabled ? "Beep is ON" : "Beep is OFF", "Use menu to toggle");
-    beepSoft();
+    saveSettings();
+    if (alertsEnabled && !quietMode) beepSoft();
+    renderStatus("ALERTS", alertsEnabled ? "Sound alerts ON" : "Sound alerts OFF", "Saved on device", quietMode ? "Quiet mode also ON" : "B menu");
+  } else if (label == "Quiet Mode") {
+    quietMode = !quietMode;
+    saveSettings();
+    if (!quietMode && alertsEnabled) beepSoft();
+    renderStatus("QUIET MODE", quietMode ? "Quiet mode ON" : "Quiet mode OFF", "Saved on device", quietMode ? "No beeps until off" : "Alerts follow setting");
   } else {
     renderSettingsStatus();
   }
@@ -587,6 +630,7 @@ void setup() {
   auto cfg = M5.config();
   M5.begin(cfg);
   M5.Display.setRotation(0);
+  loadSettings();
   canvas.setColorDepth(1);
   canvas.createSprite(200, 200);
   canvas.setTextSize(1);
