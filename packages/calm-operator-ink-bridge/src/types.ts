@@ -168,3 +168,33 @@ export interface HealthReviewReport {
   urgent: boolean;
   items: HealthReviewItem[];
 }
+
+export type HealthReviewRunTrigger =
+  | 'manual'
+  | 'scheduled'
+  | 'device_request'
+  | 'health_checks_run'
+  | 'unknown'
+  | string;
+
+export type HealthReviewRunStatus = 'completed' | 'failed';
+
+export interface StoredHealthReviewRun {
+  id: string;
+  trigger: HealthReviewRunTrigger;
+  status: HealthReviewRunStatus;
+  ok: boolean;
+  state: HealthReviewReport['state'] | 'failed' | string;
+  collected_count: number;
+  checked: number;
+  healthy_count: number;
+  poor_count: number;
+  stale_count: number;
+  urgent: boolean;
+  started_at: number;
+  finished_at: number;
+  duration_ms: number;
+  error: string;
+  report: HealthReviewReport | null;
+  payload: Record<string, unknown>;
+}
