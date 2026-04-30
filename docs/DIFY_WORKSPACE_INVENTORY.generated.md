@@ -23,6 +23,7 @@ Status: partial
 | `c3_hub` | - | `https://c3denver.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `aaron_hub` | - | `https://aaron-outerfields.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `abundance-jobs` | - | `https://abundance-jobs-mcp.createsomething.workers.dev/mcp` | `bearer` | 4 | `send_job_to_funnel` |
+| `shea_hub` | - | `https://wf-app-review-shea.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 
 ## Agents
 
@@ -35,6 +36,7 @@ Status: partial
 | `c3-hub` | `imported` | `client` | - | `c3_hub` | 17 | `braintrust:eval:dify:c3-hub` |
 | `aaron-hub` | `imported` | `client` | - | `aaron_hub` | 17 | `braintrust:eval:dify:aaron-hub` |
 | `abundance-hub` | `imported` | `client` | - | `abundance-jobs` | 4 | `braintrust:eval:dify:abundance-hub` |
+| `shea-hub` | `imported` | `client` | - | `shea_hub` | 17 | `braintrust:eval:dify:shea-hub` |
 
 ## Eval Coverage
 
@@ -47,6 +49,7 @@ Status: partial
 | `c3-hub` | `braintrust` | `create-something-dify-agents` | `c3_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `aaron-hub` | `braintrust` | `create-something-dify-agents` | `aaron_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `abundance-hub` | `braintrust` | `create-something-dify-agents` | `abundance_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `shea-hub` | `braintrust` | `create-something-dify-agents` | `shea_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 
 ## Smoke Cases
 
@@ -62,6 +65,7 @@ Status: partial
 | `c3-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `aaron-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `abundance-hub` | `list-public-jobs-bearer` | `list_public_jobs` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete auth`, `can't list jobs`, `can’t list jobs` | no |
+| `shea-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 
 ## Agent Tool Mapping
 
@@ -215,4 +219,29 @@ Status: partial
   - `abundance-jobs.list_public_jobs` (read)
   - `abundance-jobs.search_public_jobs` (read)
   - `abundance-jobs.send_job_to_funnel` (external_side_effect, confirmation required)
+
+### SHEA HUB
+
+- Inventory ID: `shea-hub`
+- Policy pack: `client-shea-hub.v1`
+- Instructions source: `config/dify-agents/shea-hub.json#agent_prompt`
+- Smoke: `pnpm dify:agent:smoke -- --agent-id shea-hub`
+- Tools:
+  - `shea_hub.hub_describe_proxy_tool` (read)
+  - `shea_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
+  - `shea_hub.hub_get_proxy_tool` (read)
+  - `shea_hub.hub_list_discovery_packs` (read)
+  - `shea_hub.hub_list_proxy_tools` (read)
+  - `shea_hub.hub_list_registry` (read)
+  - `shea_hub.hub_list_services` (read)
+  - `shea_hub.hub_policy_status` (read)
+  - `shea_hub.hub_refresh_connections` (external_side_effect, confirmation required)
+  - `shea_hub.hub_route_intent` (read)
+  - `shea_hub.hub_run_intent` (external_side_effect, confirmation required)
+  - `shea_hub.hub_run_proxy_tool` (external_side_effect, confirmation required)
+  - `shea_hub.hub_search_proxy_tools` (read)
+  - `shea_hub.hub_set_discovery` (external_side_effect, confirmation required)
+  - `shea_hub.hub_status` (read)
+  - `shea_hub.hub_trace_lookup` (read)
+  - `shea_hub.hub_update_state` (external_side_effect, confirmation required)
 
