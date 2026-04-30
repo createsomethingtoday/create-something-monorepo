@@ -51,6 +51,21 @@ function feedbackClass(tone: Tone) {
   return 'submission-field-feedback submission-field-feedback-info';
 }
 
+function classNames(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(' ');
+}
+
+function fieldClassName(isAiUpdated: boolean, extraClassName?: string) {
+  return classNames('submission-field', extraClassName, isAiUpdated && 'is-ai-updated');
+}
+
+function choiceClassName(
+  isSelected: boolean,
+  ...extraClassNames: Array<string | false | null | undefined>
+) {
+  return classNames('submission-choice', ...extraClassNames, isSelected && 'is-selected');
+}
+
 type Tone = 'success' | 'error' | 'info';
 
 type StatusMessage = {
@@ -480,12 +495,14 @@ function FieldFeedback({
 function InlineActionField({
   actionLabel,
   children,
+  fieldClassName: fieldClassNameProp,
   feedback,
   feedbackAction,
   onAction,
 }: {
   actionLabel: string;
   children: ReactNode;
+  fieldClassName?: string;
   feedback?: StatusMessage | null;
   feedbackAction?: FeedbackAction;
   onAction: () => void;
@@ -493,7 +510,7 @@ function InlineActionField({
   return (
     <>
       <div className="submission-field-inline">
-        <div className="submission-field">{children}</div>
+        <div className={classNames('submission-field', fieldClassNameProp)}>{children}</div>
         <div className="submission-field-inline-action-rail">
           <button
             className="button-sp cc-white submission-inline-verify-button"
@@ -507,6 +524,10 @@ function InlineActionField({
       <FieldFeedback feedback={feedback} action={feedbackAction} />
     </>
   );
+}
+
+function AiUpdatedBadge() {
+  return <span className="submission-autofill-badge">AI updated</span>;
 }
 
 type ChoiceToolbarProps = {
@@ -584,6 +605,35 @@ function SelectedFilesSummary({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function SelectedChoiceSummary({
+  choices,
+  onRemove,
+}: {
+  choices: readonly { id: string; label: string }[];
+  onRemove: (id: string) => void;
+}) {
+  if (choices.length === 0) return null;
+
+  return (
+    <div className="submission-selected-choices" aria-live="polite">
+      {choices.map((choice) => (
+        <button
+          className="submission-selected-choice"
+          type="button"
+          key={choice.id}
+          onClick={() => onRemove(choice.id)}
+          aria-label={`Remove ${choice.label}`}
+        >
+          <span>{choice.label}</span>
+          <span className="submission-selected-choice-remove" aria-hidden="true">
+            ×
+          </span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -746,6 +796,20 @@ export function TemplateIntake() {
     (feature) => feature.label,
     (feature) => feature.id
   );
+  const selectedCategoryChoices = template.categories.map((category) => ({
+    id: category,
+    label: category,
+  }));
+  const selectedStyleChoices = template.styles.map((style) => ({
+    id: style,
+    label: style,
+  }));
+  const selectedFeatureChoices = template.featureIds
+    .map((featureId) => {
+      const feature = WEBFLOW_FEATURES.find((option) => option.id === featureId);
+      return feature ? { id: feature.id, label: feature.label } : null;
+    })
+    .filter((choice): choice is { id: string; label: string } => choice !== null);
   const creatorProfileExistsActionLabel = 'Go to Submit a template';
 
   function getCreatorProfileExistsAction(
@@ -2245,6 +2309,7 @@ export function TemplateIntake() {
 
                   <InlineActionField
                     actionLabel="Check name"
+                    fieldClassName={hasAutofilledTemplateName ? 'is-ai-updated' : undefined}
                     feedback={fieldFeedback.templateName}
                     onAction={verifyTemplateName}
                   >
@@ -2254,9 +2319,7 @@ export function TemplateIntake() {
                     >
                       Template name
                       <span className="submission-required"> *</span>
-                      {hasAutofilledTemplateName ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledTemplateName ? <AiUpdatedBadge /> : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       First word must be capitalized. Avoid emoji, category names, tag names, and
@@ -2302,16 +2365,16 @@ export function TemplateIntake() {
                       <div className="submission-analyzer-header">
                         <div>
                           <div className="submission-step-label submission-step-label-secondary submission-analyzer-label">
-                            Analyzer summary
+                            AI validation
                           </div>
                           <h3 className="submission-analyzer-title">
-                            Suggestions from the published site
+                            Updates from the published site
                           </h3>
                         </div>
                       </div>
                       <p className="field-help submission-analyzer-copy">
                         {analyzerSummary.appliedFields.length > 0
-                          ? 'These fields were populated automatically. You can still edit anything below before submitting.'
+                          ? 'AI updated the highlighted fields below from the published site. You can still edit anything before submitting.'
                           : analyzerSummary.warning
                             ? 'The published-site crawl passed, but template suggestions were only partially available.'
                             : 'The published-site crawl passed. Review the suggestion summary below before submitting.'}
@@ -2326,7 +2389,7 @@ export function TemplateIntake() {
                           </div>
                         </div>
                         <div className="submission-analyzer-stage">
-                          <div className="submission-analyzer-stage-label">Autofill</div>
+                          <div className="submission-analyzer-stage-label">AI updates</div>
                           <div className="submission-analyzer-stage-value">
                             {analyzerSummary.appliedFields.length > 0
                               ? `${analyzerSummary.appliedFields.length} field${analyzerSummary.appliedFields.length === 1 ? '' : 's'} applied`
@@ -2359,7 +2422,7 @@ export function TemplateIntake() {
 
                       {analyzerSummary.appliedFields.length > 0 ? (
                         <div className="submission-analyzer-group">
-                          <div className="submission-analyzer-group-title">Applied automatically</div>
+                          <div className="submission-analyzer-group-title">AI updated fields</div>
                           <div className="submission-chip-list">
                             {analyzerSummary.appliedFields.map((field) => (
                               <span className="submission-chip submission-chip-success" key={field}>
@@ -2444,15 +2507,15 @@ export function TemplateIntake() {
                     ) : null}
                   </div>
 
-                  <div className="submission-field submission-select-field">
+                  <div
+                    className={fieldClassName(hasAutofilledPriceModel, 'submission-select-field')}
+                  >
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="priceModel"
                     >
                       Free or paid
-                      {hasAutofilledPriceModel ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledPriceModel ? <AiUpdatedBadge /> : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Choose whether the template will be published as a free listing or a paid
@@ -2475,13 +2538,11 @@ export function TemplateIntake() {
                     </select>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledCategories)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Category
                       <span className="submission-required"> *</span>
-                      {hasAutofilledCategories ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledCategories ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 options that best describe your template.
@@ -2499,6 +2560,15 @@ export function TemplateIntake() {
                           : undefined
                       }
                     />
+                    <SelectedChoiceSummary
+                      choices={selectedCategoryChoices}
+                      onRemove={(category) =>
+                        updateTemplate(
+                          'categories',
+                          template.categories.filter((value) => value !== category),
+                        )
+                      }
+                    />
                     <div className="submission-choice-grid submission-choice-grid-taxonomy is-scroll">
                       {visibleCategories.length === 0 ? (
                         <div className="submission-choice-empty">No categories match your search.</div>
@@ -2508,7 +2578,11 @@ export function TemplateIntake() {
                         const atMax = template.categories.length >= 2;
                         return (
                           <label
-                            className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
+                            className={choiceClassName(
+                              checked,
+                              'submission-choice-taxonomy input-block cc-check cc-template-application-form-choice',
+                              !checked && atMax && 'is-disabled',
+                            )}
                             key={category}
                           >
                             <input
@@ -2532,13 +2606,11 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledPageCount)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Page count
                       <span className="submission-required"> *</span>
-                      {hasAutofilledPageCount ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledPageCount ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       One page, multi page, or multi-layout.
@@ -2546,7 +2618,10 @@ export function TemplateIntake() {
                     <div className="submission-choice-grid submission-choice-grid-taxonomy">
                       {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
                         <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          className={choiceClassName(
+                            template.pageCount === option,
+                            'input-block cc-check cc-template-application-form-choice',
+                          )}
                           key={option}
                         >
                           <input
@@ -2567,18 +2642,21 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledTemplateType)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Template type
-                      {hasAutofilledTemplateType ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledTemplateType ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Check the Webflow product surfaces used by the template.
                     </p>
                     <div className="submission-choice-grid submission-choice-grid-template-type">
-                      <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                      <label
+                        className={choiceClassName(
+                          template.typeCms,
+                          'input-block cc-check cc-template-application-form-choice',
+                        )}
+                      >
                         <input
                           type="checkbox"
                           checked={template.typeCms}
@@ -2586,7 +2664,12 @@ export function TemplateIntake() {
                         />
                         <span className="submission-choice-copy">CMS</span>
                       </label>
-                      <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                      <label
+                        className={choiceClassName(
+                          template.typeEcommerce,
+                          'input-block cc-check cc-template-application-form-choice',
+                        )}
+                      >
                         <input
                           type="checkbox"
                           checked={template.typeEcommerce}
@@ -2604,9 +2687,6 @@ export function TemplateIntake() {
                       <span className="field-label template-application-form_field-label cc-with-desc">
                         Template price
                         <span className="submission-required"> *</span>
-                        {hasAutofilledPriceModel && template.priceModel === 'Paid' ? (
-                          <span className="submission-autofill-badge">Autofilled</span>
-                        ) : null}
                       </span>
                       <p className="field-help cc-library-application-form_field-desc">
                         Available price points are determined by page count and CMS usage.
@@ -2614,7 +2694,10 @@ export function TemplateIntake() {
                       <div className="submission-choice-grid">
                         {getPricingTiers(template.pageCount as PageCountOption, template.typeCms).prices.map((price) => (
                           <label
-                            className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
+                            className={choiceClassName(
+                              template.selectedPrice === price,
+                              'submission-choice-taxonomy input-block cc-check cc-template-application-form-choice',
+                            )}
                             key={price}
                           >
                             <input
@@ -2630,13 +2713,11 @@ export function TemplateIntake() {
                     </div>
                   ) : null}
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledStyles)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Styles
                       <span className="submission-required"> *</span>
-                      {hasAutofilledStyles ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledStyles ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 styles.
@@ -2652,6 +2733,15 @@ export function TemplateIntake() {
                         template.styles.length > 0 ? () => updateTemplate('styles', []) : undefined
                       }
                     />
+                    <SelectedChoiceSummary
+                      choices={selectedStyleChoices}
+                      onRemove={(style) =>
+                        updateTemplate(
+                          'styles',
+                          template.styles.filter((value) => value !== style),
+                        )
+                      }
+                    />
                     <div className="submission-choice-grid submission-choice-grid-taxonomy">
                       {visibleStyles.length === 0 ? (
                         <div className="submission-choice-empty">No styles match your search.</div>
@@ -2661,7 +2751,11 @@ export function TemplateIntake() {
                         const atMax = template.styles.length >= 2;
                         return (
                           <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            className={choiceClassName(
+                              checked,
+                              'input-block cc-check cc-template-application-form-choice',
+                              !checked && atMax && 'is-disabled',
+                            )}
                             key={style}
                           >
                             <input
@@ -2682,13 +2776,11 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledFeatures)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Features
                       <span className="submission-required"> *</span>
-                      {hasAutofilledFeatures ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledFeatures ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Choose the Webflow features used by the template.
@@ -2710,13 +2802,25 @@ export function TemplateIntake() {
                           : undefined
                       }
                     />
+                    <SelectedChoiceSummary
+                      choices={selectedFeatureChoices}
+                      onRemove={(featureId) =>
+                        updateTemplate(
+                          'featureIds',
+                          template.featureIds.filter((value) => value !== featureId),
+                        )
+                      }
+                    />
                     <div className="submission-choice-grid">
                       {visibleFeatures.length === 0 ? (
                         <div className="submission-choice-empty">No features match your search.</div>
                       ) : null}
                       {visibleFeatures.map((option) => (
                         <label
-                          className="submission-choice submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
+                          className={choiceClassName(
+                            template.featureIds.includes(option.id),
+                            'submission-choice-taxonomy input-block cc-check cc-template-application-form-choice',
+                          )}
                           key={option.id}
                         >
                           <input
@@ -2740,16 +2844,14 @@ export function TemplateIntake() {
                     ) : null}
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledShortDescription)}>
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="shortDescription"
                     >
                       Short description
                       <span className="submission-required"> *</span>
-                      {hasAutofilledShortDescription ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledShortDescription ? <AiUpdatedBadge /> : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Keep the short summary concise and reviewer-friendly.
@@ -2767,16 +2869,14 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledLongDescription)}>
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="longDescription"
                     >
                       Long description
                       <span className="submission-required"> *</span>
-                      {hasAutofilledLongDescription ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledLongDescription ? <AiUpdatedBadge /> : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Rich text is allowed for emphasis and lists. Image embeds are stripped.
