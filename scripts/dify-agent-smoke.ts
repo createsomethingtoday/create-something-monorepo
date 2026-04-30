@@ -39,6 +39,7 @@ type DifySmokeCase = {
   required_tools?: string[];
   forbidden_tools?: string[];
   expected_answer_substrings?: string[];
+  forbidden_answer_substrings?: string[];
   allow_write_tools?: boolean;
   timeout_ms?: number;
   max_attempts?: number;
@@ -69,6 +70,7 @@ type SmokeOptions = {
   expectedTools: string[];
   forbiddenTools: string[];
   expectedAnswers: string[];
+  forbiddenAnswers: string[];
   expectedObservations: string[];
   allowWriteTools: boolean;
   user?: string;
@@ -90,6 +92,7 @@ type SmokeRunCase = {
   requiredTools: string[];
   forbiddenTools: string[];
   expectedAnswers: string[];
+  forbiddenAnswers: string[];
   expectedObservations: string[];
   allowWriteTools: boolean;
   timeoutMs?: number;
@@ -114,6 +117,8 @@ type SmokeAttemptResult = {
   forbiddenToolsUsed: string[];
   expectedAnswers: Array<{ text: string; present: boolean }>;
   missingExpectedAnswers: string[];
+  forbiddenAnswers: Array<{ text: string; present: boolean }>;
+  presentForbiddenAnswers: string[];
   expectedObservations: Array<{ text: string; present: boolean }>;
   missingExpectedObservations: string[];
   usage?: unknown;
@@ -139,6 +144,7 @@ function parseArgs(argv: string[]): SmokeOptions {
     expectedTools: splitEnvList(process.env.DIFY_AGENT_SMOKE_EXPECT_TOOL),
     forbiddenTools: splitEnvList(process.env.DIFY_AGENT_SMOKE_FORBID_TOOL),
     expectedAnswers: splitEnvList(process.env.DIFY_AGENT_SMOKE_EXPECT_ANSWER),
+    forbiddenAnswers: splitEnvList(process.env.DIFY_AGENT_SMOKE_FORBID_ANSWER),
     expectedObservations: splitEnvList(process.env.DIFY_AGENT_SMOKE_EXPECT_OBSERVATION),
     allowWriteTools: process.env.DIFY_AGENT_SMOKE_ALLOW_WRITE_TOOLS === 'true',
     user: process.env.DIFY_AGENT_SMOKE_USER?.trim(),
@@ -190,6 +196,10 @@ function parseArgs(argv: string[]): SmokeOptions {
       case '--expect-answer':
       case '--expect':
         options.expectedAnswers.push(readFlagValue(arg, next));
+        index += 1;
+        break;
+      case '--forbid-answer':
+        options.forbiddenAnswers.push(readFlagValue(arg, next));
         index += 1;
         break;
       case '--expect-observation':
@@ -385,6 +395,7 @@ function buildSmokeCases(
         requiredTools: options.expectedTools,
         forbiddenTools: uniqueTools([...inferredForbiddenTools, ...options.forbiddenTools]),
         expectedAnswers: options.expectedAnswers,
+        forbiddenAnswers: options.forbiddenAnswers,
         expectedObservations: options.expectedObservations,
         allowWriteTools: options.allowWriteTools,
         timeoutMs: options.timeoutMs,
@@ -396,10 +407,11 @@ function buildSmokeCases(
   if (
     options.expectedTools.length > 0 ||
     options.expectedAnswers.length > 0 ||
+    options.forbiddenAnswers.length > 0 ||
     options.expectedObservations.length > 0
   ) {
     throw new Error(
-      '--require-tool, --expect, and --expect-observation require --query for one-off smoke runs.'
+      '--require-tool, --expect, --forbid-answer, and --expect-observation require --query for one-off smoke runs.'
     );
   }
 
@@ -434,6 +446,7 @@ function buildSmokeCases(
         ? uniqueTools(smokeCase.forbidden_tools ?? [])
         : uniqueTools([...inferredForbiddenTools, ...(smokeCase.forbidden_tools ?? [])]),
       expectedAnswers: smokeCase.expected_answer_substrings ?? [],
+      forbiddenAnswers: smokeCase.forbidden_answer_substrings ?? [],
       expectedObservations: [],
       allowWriteTools,
       timeoutMs: options.timeoutMs ?? smokeCase.timeout_ms,
@@ -485,6 +498,10 @@ function buildAttemptResult(
     text,
     present: answerContains(output, text)
   }));
+  const forbiddenAnswers = smokeCase.forbiddenAnswers.map((text) => ({
+    text,
+    present: answerContains(output, text)
+  }));
   const expectedObservations = smokeCase.expectedObservations.map((text) => ({
     text,
     present: observationsContain(output, text)
@@ -495,6 +512,9 @@ function buildAttemptResult(
   const missingExpectedAnswers = expectedAnswers
     .filter((result) => !result.present)
     .map((result) => result.text);
+  const presentForbiddenAnswers = forbiddenAnswers
+    .filter((result) => result.present)
+    .map((result) => result.text);
   const missingExpectedObservations = expectedObservations
     .filter((result) => !result.present)
     .map((result) => result.text);
@@ -504,6 +524,7 @@ function buildAttemptResult(
     missingRequiredTools.length === 0 &&
     forbiddenToolsUsed.length === 0 &&
     missingExpectedAnswers.length === 0 &&
+    presentForbiddenAnswers.length === 0 &&
     missingExpectedObservations.length === 0;
 
   return {
@@ -524,6 +545,8 @@ function buildAttemptResult(
     forbiddenToolsUsed,
     expectedAnswers,
     missingExpectedAnswers,
+    forbiddenAnswers,
+    presentForbiddenAnswers,
     expectedObservations,
     missingExpectedObservations,
     usage: output.usage,
@@ -570,6 +593,8 @@ async function runSmokeCase(
     forbiddenToolsUsed: [],
     expectedAnswers: smokeCase.expectedAnswers.map((text) => ({ text, present: false })),
     missingExpectedAnswers: smokeCase.expectedAnswers,
+    forbiddenAnswers: smokeCase.forbiddenAnswers.map((text) => ({ text, present: false })),
+    presentForbiddenAnswers: [],
     expectedObservations: smokeCase.expectedObservations.map((text) => ({ text, present: false })),
     missingExpectedObservations: smokeCase.expectedObservations,
     reason: 'No attempts were run.'
@@ -598,6 +623,7 @@ Options:
   --expect-tool, --require-tool <name> Require a tool call for a one-off prompt. Repeatable.
   --forbid-tool <name>                Fail if a tool is used. Repeatable.
   --expect-answer, --expect <text>    Require answer text. Repeatable.
+  --forbid-answer <text>              Fail if answer text is present. Repeatable.
   --expect-observation <text>         Require tool observation text. Repeatable.
   --max-attempts <1-5>                Retry transient failures for each case.
   --allow-write-tools                 Do not infer write-capable tools as forbidden.

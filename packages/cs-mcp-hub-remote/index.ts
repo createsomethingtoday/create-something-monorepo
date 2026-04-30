@@ -4676,20 +4676,14 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
   const bearerIsHubToken =
     bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
+  if (bearerIsHubToken && !sessionHeaderToken) {
+    return resolveFallbackAccountContext(extra, env, resourceHost);
+  }
+
   const compatIdentityToken = sessionHeaderToken ?? bearerToken;
 
   if (compatIdentityToken && isSessionResolverConfigured(env)) {
-    try {
-      return await resolveSessionAccountContext(env, compatIdentityToken, resourceHost);
-    } catch (error) {
-      const allowFallback =
-        bearerIsHubToken &&
-        !sessionHeaderToken &&
-        compatIdentityToken === bearerToken;
-      if (!allowFallback) {
-        throw error;
-      }
-    }
+    return resolveSessionAccountContext(env, compatIdentityToken, resourceHost);
   }
 
   return resolveFallbackAccountContext(extra, env, resourceHost);

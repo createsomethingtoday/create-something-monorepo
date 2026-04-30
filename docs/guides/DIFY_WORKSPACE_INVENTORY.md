@@ -28,6 +28,7 @@ pnpm dify:mcp:intake -- --registry-server-id <mcp-registry-server-id>
 pnpm dify:mcp:intake -- --all-missing
 pnpm dify:mcp:intake:check
 pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server-id>
+pnpm dify:agent:import-dsl -- --dsl <exported-dify-yml> --agent-id <agent-slug> --fleet-id <mcp-fleet-id>
 pnpm dify:agent:smoke -- --agent-id <agent-slug>
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --case <case-id>
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --dry-run
@@ -42,6 +43,17 @@ pnpm dify:inventory:check
 Use `dify:agent:scaffold` to draft a manifest and inventory entry from an
 existing Dify MCP server card. It is a dry run unless `--write-manifest` or
 `--write-inventory` are provided.
+
+Use `dify:agent:import-dsl` when an agent already exists in Dify and has been
+exported as a DSL file. The command reads the app name, instructions, MCP
+provider ID, and enabled MCP tools from the export, then drafts the repo-side
+DSL snapshot, manifest, and inventory entries. It is a dry run unless
+`--write-dsl`, `--write-manifest`, or `--write-inventory` are provided. Prefer
+`--fleet-id` when the underlying MCP URL/auth already exists in
+`config/mcp-hub/fleet.json`; otherwise pass `--mcp-url` plus Infisical secret
+reference flags. For Policy OS Hub deployments, Dify MCP cards should use the
+same static lane bearer reference declared in the fleet registry, usually
+`prod:/mcp-hub/hubs:CS_HUB_*_API_TOKEN`.
 
 Use `dify:mcp:intake` when coverage shows an active direct HTTP MCP that does
 not yet have a codified Dify server card. The command creates a Dify Studio
@@ -71,8 +83,18 @@ pnpm dify:agent:smoke -- \
 
 Use `--expect-tool`/`--require-tool` for required tool calls,
 `--forbid-tool` for tools that must not run, `--expect-answer`/`--expect` for
-answer text, `--expect-observation` for tool observation text, and
+answer text, `--forbid-answer` for answer text that must not appear,
+`--expect-observation` for tool observation text, and
 `--max-attempts` when a live provider path has known transient failures.
+
+For Hub MCP server cards, do not treat Dify Studio's `Authorized` badge as a
+complete readiness signal. That badge can be satisfied by MCP initialization and
+tool discovery. A real readiness smoke must call at least one harmless read tool,
+usually `hub_status` or `hub_list_services`, and fail if the tool observation or
+answer reports `Unauthorized MCP session token`, `token_not_found`, or asks the
+user to complete Hub auth. Hub compat runtimes must treat the configured static
+`HUB_API_TOKEN` as the MCP auth boundary and must not send that token through
+identity/session resolution during `tools/call`.
 
 Use `generate` after changing `config/dify/inventory.json`. Use `check` in CI or before landing a PR.
 Run `dify:mcp:intake:check` after changing `config/dify-mcp-intake/`.
@@ -98,13 +120,16 @@ For each Dify MCP server card:
 
 For each Dify agent:
 
-1. Export the app DSL and store it under `config/dify-agents/{agent}.dify.yml`.
-2. Add or update a compact manifest under `config/dify-agents/{agent}.json`.
-3. Add the agent to `config/dify/inventory.json`.
-4. List all enabled tools as `server_id.tool_name`.
-5. Set `policy_pack`, `eval_suite`, `evals`, and `smoke_command`.
-6. Add at least one `smoke_cases` entry before setting `status: "published"`.
-7. Run the Dify inventory check and the agent's smoke/eval command.
+1. Export the app DSL.
+2. Run `pnpm dify:agent:import-dsl -- --dsl <export.yml> --agent-id <agent> --fleet-id <fleet-id>` to draft the mapping.
+3. Re-run with `--write-dsl --write-manifest --write-inventory` after reviewing the output.
+4. Confirm the DSL snapshot exists under `config/dify-agents/{agent}.dify.yml`.
+5. Confirm the compact manifest exists under `config/dify-agents/{agent}.json`.
+6. Confirm the agent entry exists in `config/dify/inventory.json`.
+7. List all enabled tools as `server_id.tool_name`.
+8. Set `policy_pack`, `eval_suite`, `evals`, and `smoke_command`.
+9. Add at least one `smoke_cases` entry before setting `status: "published"`.
+10. Run the Dify inventory check and the agent's smoke/eval command.
 
 ## Rules
 
