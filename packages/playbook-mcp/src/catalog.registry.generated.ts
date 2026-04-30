@@ -117,6 +117,18 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "authType": "bearer"
   },
   {
+    "name": "YouTube Transcript Notion",
+    "slug": "youtube-transcript-notion",
+    "url": "https://youtube-transcript-notion-mcp.createsomething.workers.dev",
+    "description": "YouTube transcript extraction and Notion transcript enrichment MCP used by Dify client agents",
+    "category": "create-something",
+    "transports": [
+      "http"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Gmail Sync",
     "slug": "gmail-sync",
     "url": "https://gmail.mcp.workway.co",

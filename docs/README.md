@@ -131,6 +131,11 @@ docs/
   [guides/UI_PREVIEW_SYSTEM.md](./guides/UI_PREVIEW_SYSTEM.md),
   [OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md](./OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md)
 
+- **Managing Dify agents over MCPs**:
+  [guides/DIFY_WORKSPACE_INVENTORY.md](./guides/DIFY_WORKSPACE_INVENTORY.md),
+  [DIFY_WORKSPACE_INVENTORY.generated.md](./DIFY_WORKSPACE_INVENTORY.generated.md),
+  [guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md](./guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md)
+
 - **Understanding why a decision exists**:
   first the canonical doc in `docs/`,
   then the related memo in `docs/internal/`
