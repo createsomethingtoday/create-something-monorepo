@@ -110,6 +110,16 @@ function getRegistryPath(): string | undefined {
   return value ? value : undefined;
 }
 
+const DEFAULT_WEBFLOW_REVIEW_SNIPPET_URL =
+  'https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js';
+
+function getWebflowReviewSnippetUrl(): string | null {
+  const override = process.env.WEBFLOW_REVIEW_SNIPPET_URL?.trim();
+  const value = override || DEFAULT_WEBFLOW_REVIEW_SNIPPET_URL;
+  if (!value || /^(0|false|off|disabled)$/i.test(value)) return null;
+  return value;
+}
+
 function isWorkerRuntime(): boolean {
   return process.env.WEBFLOW_SITE_ANALYZER_RUNTIME === 'worker';
 }
@@ -569,8 +579,10 @@ async function scoreDesignerChecklistTool(input: ScoreDesignerChecklistInput): P
   });
 }
 
-const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
+function buildPublishedWebMcpPageScript(reviewSnippetUrl: string | null): string {
+  return `
 (async () => {
+  const REVIEW_SNIPPET_URL = ${JSON.stringify(reviewSnippetUrl)};
   const REQUIRED_LICENSE_TEXT =
     "All graphical assets in this template are licensed for personal and commercial use. If you'd like to use a specific asset, please check the license below.";
 
@@ -669,7 +681,37 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   const placeholderPatterns = ['your text here', 'placeholder text', 'insert text', 'add your', 'example text', 'sample text'];
   const hasPlaceholderText = placeholderPatterns.some(p => bodyTextForPlaceholder.includes(p));
 
-  const api = window.__wfReview;
+  const loadReviewSnippet = async (url) => {
+    if (!url) return null;
+    return await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = url;
+      script.async = false;
+      script.onload = () => resolve(window.__wfReview || null);
+      script.onerror = () => reject(new Error('Failed to load Webflow Review snippet: ' + url));
+      (document.head || document.documentElement || document.body).appendChild(script);
+    });
+  };
+
+  let api = window.__wfReview;
+  let snippetSource = api ? 'installed' : 'dom-fallback';
+  let snippetInjectionUrl = null;
+  let snippetInjectionError = null;
+
+  if (!api && REVIEW_SNIPPET_URL) {
+    try {
+      api = await loadReviewSnippet(REVIEW_SNIPPET_URL);
+      if (api) {
+        snippetSource = 'injected';
+        snippetInjectionUrl = REVIEW_SNIPPET_URL;
+      } else {
+        snippetInjectionError = 'Injected Webflow Review snippet did not expose window.__wfReview';
+      }
+    } catch (err) {
+      snippetInjectionError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
   if (!api) {
     // DOM fallback: extract page-level signals directly when __wfReview is missing
     const headingEls = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
@@ -1004,7 +1046,10 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
       url: window.location.href,
       title,
       hasSnippet: false,
+      snippetSource,
       snippetVersion: null,
+      snippetInjectionUrl,
+      snippetInjectionError,
       tools: [],
       links: dedupedLinks,
       hasRequiredLicenseText,
@@ -1059,7 +1104,10 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     url: window.location.href,
     title,
     hasSnippet: true,
+    snippetSource,
     snippetVersion: api.version ?? null,
+    snippetInjectionUrl,
+    snippetInjectionError,
     tools,
     links: dedupedLinks,
     hasRequiredLicenseText,
@@ -1082,12 +1130,16 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   };
 })()
 `;
+}
 
 type PublishedPageEval = {
   url?: string;
   title?: string | null;
   hasSnippet?: boolean;
+  snippetSource?: 'installed' | 'injected' | 'dom-fallback';
   snippetVersion?: string | null;
+  snippetInjectionUrl?: string | null;
+  snippetInjectionError?: string | null;
   tools?: string[];
   links?: string[];
   hasRequiredLicenseText?: boolean | null;
@@ -1215,6 +1267,13 @@ function asRecord(value: unknown): Record<string, unknown> {
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.map((item) => String(item)).filter(Boolean);
+}
+
+function asRecordArray(value: unknown, limit = 5): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object')
+    .slice(0, limit);
 }
 
 function asFiniteNumber(value: unknown): number {
@@ -1367,7 +1426,29 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
         fail: asFiniteNumber(c.fail),
         passRate: asFiniteNumber(c.passRate)
       } : null;
-    })()
+    })(),
+    examples: {
+      headings: {
+        headings: asRecordArray(headingsRoot.headings),
+        skippedHeadingLevels: asRecordArray(headingsRoot.skippedHeadingLevels),
+        emptyHeadings: asRecordArray(headingsRoot.emptyHeadings)
+      },
+      images: {
+        missingAlt: asRecordArray(imagesRoot.missingAlt),
+        missingDimensions: asRecordArray(imagesRoot.missingDimensions),
+        aboveFoldLazy: asRecordArray(imagesRoot.aboveFoldLazy),
+        belowFoldNotLazy: asRecordArray(imagesRoot.belowFoldNotLazy)
+      },
+      links: {
+        emptyHref: asRecordArray(linksRoot.emptyHref),
+        placeholderHref: asRecordArray(linksRoot.placeholderHref),
+        blankTargetMissingRel: asRecordArray(linksRoot.blankTargetMissingRel),
+        missingAccessibleName: asRecordArray(linksRoot.missingAccessibleName)
+      },
+      forms: {
+        missingLabels: asRecordArray(formsRoot.missingLabels)
+      }
+    }
   };
 }
 
@@ -1583,12 +1664,10 @@ async function crawlPublishedWebMcp(
   const manager = getProvider();
   const provider = manager.getProvider();
   const timeout = options.timeout ?? 90000;
-  // Every page must be crawled to validate against the review rubric.
-  // Default: no cap.  Most templates have 15-40 pages; even 50 pages
-  // completes within the 5-minute timeout at ~5s/page.
-  const maxPages = options.crawlMaxPages ?? Infinity;
-  // No depth limit by default — crawl every reachable page for full coverage.
-  const maxDepth = options.crawlMaxDepth ?? Infinity;
+  // Match the public tool schema defaults so progress and coverage reporting
+  // do not emit Infinity and the crawl remains bounded in hosted runs.
+  const maxPages = options.crawlMaxPages ?? 50;
+  const maxDepth = options.crawlMaxDepth ?? 4;
   const origin = new URL(publishedUrl).origin;
   const startUrl = normalizeCrawlUrl(publishedUrl, origin) || `${origin}/`;
   const seedUrls = (options.seedUrls || [])
@@ -1597,7 +1676,7 @@ async function crawlPublishedWebMcp(
   // Prioritize critical utility pages so they're crawled before the maxPages
   // cap is hit.  These pages are required for review checks (license text,
   // instructions, changelog) and must not be dropped.
-  const criticalPatterns = ['/license', '/instruction', '/changelog', '/style-guide'];
+  const criticalPatterns = ['/license', '/instruction', '/changelog', '/change-log', '/style-guide'];
   const prioritySeedUrls = seedUrls.filter((url) => {
     const path = new URL(url).pathname.toLowerCase();
     return criticalPatterns.some((p) => path.includes(p));
@@ -1629,6 +1708,8 @@ async function crawlPublishedWebMcp(
     ok: false,
     error: '404 audit was not executed'
   };
+  const reviewSnippetUrl = getWebflowReviewSnippetUrl();
+  const pageScript = buildPublishedWebMcpPageScript(reviewSnippetUrl);
   const session = provider.openSession
     ? await provider.openSession({
         url: startUrl,
@@ -1651,7 +1732,10 @@ async function crawlPublishedWebMcp(
         statusCode: null,
         classification: classificationMap.get(current.url),
         hasSnippet: false,
+        snippetSource: 'dom-fallback',
         snippetVersion: null,
+        snippetInjectionUrl: null,
+        snippetInjectionError: null,
         hasRequiredLicenseText: null,
         error: null,
         summary: null
@@ -1666,12 +1750,12 @@ async function crawlPublishedWebMcp(
               waitForNavigation: false
             });
           }
-          raw = await session.evaluate<PublishedPageEval>(PUBLISHED_WEBMCP_PAGE_SCRIPT, {
+          raw = await session.evaluate<PublishedPageEval>(pageScript, {
             target: 'main',
             timeout
           });
         } else {
-          raw = await provider.analyze<PublishedPageEval>(current.url, PUBLISHED_WEBMCP_PAGE_SCRIPT, {
+          raw = await provider.analyze<PublishedPageEval>(current.url, pageScript, {
             timeout,
             waitForNavigation: false
           });
@@ -1679,7 +1763,12 @@ async function crawlPublishedWebMcp(
 
         pageResult.title = raw?.title ?? null;
         pageResult.hasSnippet = Boolean(raw?.hasSnippet);
+        pageResult.snippetSource = raw?.snippetSource ?? (pageResult.hasSnippet ? 'installed' : 'dom-fallback');
         pageResult.snippetVersion = raw?.snippetVersion ?? null;
+        pageResult.snippetInjectionUrl =
+          typeof raw?.snippetInjectionUrl === 'string' ? raw.snippetInjectionUrl : null;
+        pageResult.snippetInjectionError =
+          typeof raw?.snippetInjectionError === 'string' ? raw.snippetInjectionError : null;
         pageResult.hasRequiredLicenseText =
           typeof raw?.hasRequiredLicenseText === 'boolean' ? raw.hasRequiredLicenseText : null;
         if (raw?.policyChecks) {
@@ -1834,6 +1923,16 @@ async function crawlPublishedWebMcp(
 
   const auditedPages = pages.filter((page) => Boolean(page.summary)).length;
   const pagesWithSnippet = pages.filter((page) => page.hasSnippet).length;
+  const pagesWithInstalledSnippet = pages.filter((page) => page.snippetSource === 'installed').length;
+  const pagesWithInjectedSnippet = pages.filter((page) => page.snippetSource === 'injected').length;
+  const pagesWithDomFallback = pages.filter((page) => page.snippetSource === 'dom-fallback').length;
+  const snippetInjectionErrors = Array.from(
+    new Set(
+      pages
+        .map((page) => page.snippetInjectionError)
+        .filter((error): error is string => Boolean(error))
+    )
+  );
   const failingPages = pages.filter((page) => (page.summary?.failCount || 0) > 0).length;
 
   // Aggregate policy checks across all pages
@@ -1889,10 +1988,15 @@ async function crawlPublishedWebMcp(
     visitedPages: pages.length,
     auditedPages,
     pagesWithSnippet,
+    pagesWithInstalledSnippet,
+    pagesWithInjectedSnippet,
+    pagesWithDomFallback,
     failingPages,
     skippedUrls,
     snippetVersion,
     snippetTools,
+    snippetInjectionUrl: pagesWithInjectedSnippet > 0 ? reviewSnippetUrl : null,
+    snippetInjectionErrors,
     sitemapStatus,
     audit404,
     issueCounts,
@@ -1939,11 +2043,19 @@ function unifyRows(
   const home = published.pages.find((page) => page.url === published.startUrl) || published.pages[0] || null;
   const homeTitle = home?.title || '';
   const totalAudited = published.auditedPages;
-  // When the Webflow Review snippet isn't available (pagesWithSnippet=0),
-  // the DOM fallback is used which is less accurate.  Apply a confidence
-  // discount to published-crawl checks so reviewers know the data quality.
-  const snippetAvailable = published.pagesWithSnippet > 0;
-  const confDiscount = snippetAvailable ? 1.0 : 0.85;
+  // Evidence source matters for reviewer confidence. Installed snippets are
+  // strongest, injected snippets preserve structured examples but are still a
+  // crawl-time overlay, and DOM fallback is only a heuristic lead.
+  const installedSnippetPages = published.pagesWithInstalledSnippet ?? 0;
+  const injectedSnippetPages = published.pagesWithInjectedSnippet ?? 0;
+  const domFallbackPages = published.pagesWithDomFallback ?? Math.max(0, published.auditedPages - published.pagesWithSnippet);
+  const hasStructuredSnippetEvidence = installedSnippetPages + injectedSnippetPages > 0;
+  const confDiscount = installedSnippetPages > 0 ? 1.0 : injectedSnippetPages > 0 ? 0.95 : 0.65;
+  const snippetEvidenceNote = installedSnippetPages > 0
+    ? `Evidence source: installed Webflow Review snippet (${installedSnippetPages}/${published.auditedPages} pages)`
+    : injectedSnippetPages > 0
+      ? `Evidence source: Webflow Review snippet injected at crawl time (${injectedSnippetPages}/${published.auditedPages} pages); not a native site install`
+      : `Evidence source: DOM fallback (${domFallbackPages}/${published.auditedPages} pages); treat as a lead requiring manual confirmation`;
   const formatKeys = Array.from(
     new Set(
       published.pages.flatMap((page) =>
@@ -2029,8 +2141,8 @@ function unifyRows(
     const adjustedConfidence = source.includes('published-webmcp-crawl')
       ? Math.round(confidence * confDiscount * 100) / 100
       : confidence;
-    const adjustedEvidence = !snippetAvailable && source.includes('published-webmcp-crawl')
-      ? [...evidence, 'Note: Webflow Review snippet not available — using DOM fallback (lower accuracy)']
+    const adjustedEvidence = source.includes('published-webmcp-crawl')
+      ? [...evidence, snippetEvidenceNote]
       : evidence;
     const severity = severityMap[id] || 'minor';
     rows.push({
@@ -2062,23 +2174,68 @@ function unifyRows(
       .slice(0, limit);
   };
 
+  const shortPath = (url: string): string => url.replace(published.origin, '') || '/';
+  const truncateEvidence = (value: string, limit = 120): string =>
+    value.length > limit ? `${value.slice(0, limit - 3)}...` : value;
+  const asEvidenceText = (value: unknown): string | null =>
+    typeof value === 'string' && value.trim() ? value.trim() : null;
+  const describeEvidenceExample = (example: Record<string, unknown>): string => {
+    const selector = asEvidenceText(example.selector) || asEvidenceText(example.className) || asEvidenceText(example.tag);
+    const text = asEvidenceText(example.text);
+    const src = asEvidenceText(example.src);
+    const href = asEvidenceText(example.href);
+    const bits = [
+      selector ? `selector=${truncateEvidence(selector, 90)}` : null,
+      text ? `text="${truncateEvidence(text)}"` : null,
+      src ? `src=${truncateEvidence(src, 100)}` : null,
+      href ? `href=${truncateEvidence(href, 100)}` : null
+    ].filter((part): part is string => Boolean(part));
+    return bits.join(' ');
+  };
+  const isLikelySharedUiImageExample = (example: Record<string, unknown>): boolean => {
+    const selector = `${asEvidenceText(example.selector) || ''} ${asEvidenceText(example.className) || ''} ${asEvidenceText(example.src) || ''}`.toLowerCase();
+    return /\b(brand|logo|button-icon|icon|arrow)\b/.test(selector);
+  };
+
   const h1FailPages = failingPaths(
     (s) => Boolean(s.headings?.missingH1) || Boolean(s.headings?.multipleH1) || (s.headings?.skippedHeadingLevels ?? 0) > 0
   );
+  const h1EvidenceExamples = published.pages
+    .filter((page) =>
+      page.summary &&
+      (
+        Boolean(page.summary.headings?.missingH1) ||
+        Boolean(page.summary.headings?.multipleH1) ||
+        (page.summary.headings?.skippedHeadingLevels ?? 0) > 0
+      )
+    )
+    .slice(0, 5)
+    .map((page) => {
+      const summary = page.summary!;
+      const skipped = summary.examples?.headings?.skippedHeadingLevels?.[0];
+      const firstHeading = summary.examples?.headings?.headings?.[0];
+      const example = skipped
+        ? `; skipped=${describeEvidenceExample(skipped)}`
+        : firstHeading
+          ? `; firstHeading=${describeEvidenceExample(firstHeading)}`
+          : '';
+      return `example=${shortPath(page.url)} h1=${summary.headings?.h1 ?? 0} headings=${summary.headings?.headings ?? 0}${example}`;
+    });
+  const h1HasFailure =
+    published.issueCounts.missingH1 > 0 ||
+    published.issueCounts.multipleH1 > 0 ||
+    published.issueCounts.skippedHeadingLevels > 0;
   pushRow(
     'webflow_audit.h1_hierarchy',
     'Webflow Audit Panel',
     'One H1 per page; no skipped heading levels',
-    published.issueCounts.missingH1 > 0 ||
-      published.issueCounts.multipleH1 > 0 ||
-      published.issueCounts.skippedHeadingLevels > 0
-      ? 'fail'
-      : 'pass',
+    h1HasFailure ? (hasStructuredSnippetEvidence ? 'fail' : 'partial') : 'pass',
     [
       `missingH1Pages=${published.issueCounts.missingH1}/${totalAudited}`,
       `multipleH1Pages=${published.issueCounts.multipleH1}/${totalAudited}`,
       `skippedHeadingLevelsPages=${published.issueCounts.skippedHeadingLevels}/${totalAudited}`,
-      ...(h1FailPages.length > 0 ? [`affectedPages=${h1FailPages.join(', ')}`] : [])
+      ...(h1FailPages.length > 0 ? [`affectedPages=${h1FailPages.join(', ')}`] : []),
+      ...h1EvidenceExamples
     ],
     ['published-webmcp-crawl'],
     0.9,
@@ -2086,17 +2243,36 @@ function unifyRows(
   );
 
   const altFailPages = failingPaths((s) => (s.images?.missingAlt ?? 0) > 0);
+  const altRawExamples = published.pages
+    .filter((page) => (page.summary?.images?.missingAlt ?? 0) > 0)
+    .flatMap((page) =>
+      (page.summary?.examples?.images?.missingAlt || []).slice(0, 2).map((example) => ({
+        page,
+        example
+      }))
+    )
+    .slice(0, 6);
+  const altEvidenceExamples = altRawExamples.map(
+    ({ page, example }) => `example=${shortPath(page.url)} ${describeEvidenceExample(example)}`
+  );
+  const likelySharedUiAltExamples =
+    altRawExamples.length > 0 && altRawExamples.some(({ example }) => isLikelySharedUiImageExample(example));
+  const altHasFailure = published.issueCounts.imagesMissingAlt > 0;
   pushRow(
     'webflow_audit.alt_text',
     'Webflow Audit Panel',
     'No missing alt texts',
-    published.issueCounts.imagesMissingAlt > 0 ? 'fail' : 'pass',
+    altHasFailure ? (hasStructuredSnippetEvidence ? 'fail' : 'partial') : 'pass',
     [
       `pagesWithMissingAlt=${published.issueCounts.imagesMissingAlt}/${totalAudited}`,
-      ...(altFailPages.length > 0 ? [`affectedPages=${altFailPages.join(', ')}`] : [])
+      ...(altFailPages.length > 0 ? [`affectedPages=${altFailPages.join(', ')}`] : []),
+      ...altEvidenceExamples,
+      ...(likelySharedUiAltExamples
+        ? ['Note: some missing-alt examples appear to be shared logo/icon/button chrome; verify decorative intent before reviewer feedback']
+        : [])
     ],
     ['published-webmcp-crawl'],
-    0.9,
+    likelySharedUiAltExamples ? 0.72 : 0.9,
     'Add descriptive alt text for informative images and mark decorative images appropriately.'
   );
 
@@ -3014,7 +3190,7 @@ async function executeTemplateReview(
   const crawledPages = published.visitedPages;
   const skippedPages = published.skippedUrls.length;
   const coveragePercent = totalKnownPages > 0
-    ? Math.round((crawledPages / totalKnownPages) * 100)
+    ? Math.min(100, Math.round((crawledPages / totalKnownPages) * 100))
     : 100;
 
   const summary: import('./types.js').UnifiedTemplateReviewSummary = {

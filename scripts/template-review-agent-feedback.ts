@@ -679,14 +679,24 @@ function serializeAnalyzerReport(result: AnalyzerReviewOutcome | null): Record<s
             visitedPages: typeof published.visitedPages === 'number' ? published.visitedPages : publishedPages.length,
             auditedPages: typeof published.auditedPages === 'number' ? published.auditedPages : null,
             pagesWithSnippet: typeof published.pagesWithSnippet === 'number' ? published.pagesWithSnippet : null,
+            pagesWithInstalledSnippet:
+              typeof published.pagesWithInstalledSnippet === 'number' ? published.pagesWithInstalledSnippet : null,
+            pagesWithInjectedSnippet:
+              typeof published.pagesWithInjectedSnippet === 'number' ? published.pagesWithInjectedSnippet : null,
+            pagesWithDomFallback:
+              typeof published.pagesWithDomFallback === 'number' ? published.pagesWithDomFallback : null,
             failingPages: typeof published.failingPages === 'number' ? published.failingPages : null,
             snippetVersion: typeof published.snippetVersion === 'string' ? published.snippetVersion : null,
+            snippetInjectionUrl:
+              typeof published.snippetInjectionUrl === 'string' ? published.snippetInjectionUrl : null,
+            snippetInjectionErrors: asStringArray(published.snippetInjectionErrors, 5),
             sitemapStatus: published.sitemapStatus ?? null,
             issueCounts: published.issueCounts ?? null,
             samplePages: publishedPages.slice(0, 6).map((page) => ({
               url: typeof page.url === 'string' ? page.url : null,
               statusCode: typeof page.statusCode === 'number' ? page.statusCode : null,
               hasSnippet: page.hasSnippet === true,
+              snippetSource: typeof page.snippetSource === 'string' ? page.snippetSource : null,
               failCount: asRecord(page.summary).failCount ?? 0,
               failReasons: asStringArray(asRecord(page.summary).failReasons, 5),
               error: typeof page.error === 'string' ? page.error : null,

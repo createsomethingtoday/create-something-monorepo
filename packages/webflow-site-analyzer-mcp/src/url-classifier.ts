@@ -32,7 +32,7 @@ const PATTERN_RULES: PatternRule[] = [
   { pattern: /\/terms/i, classification: 'utility:license', priority: 'critical' },
   { pattern: /\/instruction/i, classification: 'utility:instructions', priority: 'critical' },
   { pattern: /\/guide/i, classification: 'utility:instructions', priority: 'critical' },
-  { pattern: /\/changelog/i, classification: 'utility:changelog', priority: 'critical' },
+  { pattern: /\/change-?log/i, classification: 'utility:changelog', priority: 'critical' },
   { pattern: /\/release-notes/i, classification: 'utility:changelog', priority: 'critical' },
   { pattern: /\/style-?guide/i, classification: 'utility:style-guide', priority: 'critical' },
   { pattern: /\/styleguide/i, classification: 'utility:style-guide', priority: 'critical' },

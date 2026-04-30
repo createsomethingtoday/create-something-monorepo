@@ -104,7 +104,7 @@ export function is404PageTitle(title: string | null | undefined): boolean {
  */
 export function isCriticalUtilityUrl(url: string): boolean {
   const path = url.toLowerCase();
-  const patterns = ['/licens', '/instruction', '/changelog', '/style-guide', '/styleguide'];
+  const patterns = ['/licens', '/instruction', '/changelog', '/change-log', '/style-guide', '/styleguide'];
   return patterns.some((p) => path.includes(p));
 }
 

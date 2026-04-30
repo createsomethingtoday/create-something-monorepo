@@ -520,6 +520,9 @@ export interface PublishedSnippetIssueCounts {
   backgroundVideosMissingControl: number;
 }
 
+export type PublishedSnippetEvidenceSource = 'installed' | 'injected' | 'dom-fallback';
+export type PublishedSnippetEvidenceExample = Record<string, unknown>;
+
 export interface PublishedSnippetPageSummary {
   failCount: number;
   failReasons: string[];
@@ -596,6 +599,28 @@ export interface PublishedSnippetPageSummary {
       bg: string;
     }>;
   } | null;
+  examples?: {
+    headings?: {
+      headings?: PublishedSnippetEvidenceExample[];
+      skippedHeadingLevels?: PublishedSnippetEvidenceExample[];
+      emptyHeadings?: PublishedSnippetEvidenceExample[];
+    };
+    images?: {
+      missingAlt?: PublishedSnippetEvidenceExample[];
+      missingDimensions?: PublishedSnippetEvidenceExample[];
+      aboveFoldLazy?: PublishedSnippetEvidenceExample[];
+      belowFoldNotLazy?: PublishedSnippetEvidenceExample[];
+    };
+    links?: {
+      emptyHref?: PublishedSnippetEvidenceExample[];
+      placeholderHref?: PublishedSnippetEvidenceExample[];
+      blankTargetMissingRel?: PublishedSnippetEvidenceExample[];
+      missingAccessibleName?: PublishedSnippetEvidenceExample[];
+    };
+    forms?: {
+      missingLabels?: PublishedSnippetEvidenceExample[];
+    };
+  };
 }
 
 export interface PublishedSnippetPageResult {
@@ -606,7 +631,10 @@ export interface PublishedSnippetPageResult {
   /** Page classification from the URL classifier. */
   classification?: PageClassification;
   hasSnippet: boolean;
+  snippetSource?: PublishedSnippetEvidenceSource;
   snippetVersion: string | null;
+  snippetInjectionUrl?: string | null;
+  snippetInjectionError?: string | null;
   hasRequiredLicenseText?: boolean | null;
   error?: string | null;
   summary?: PublishedSnippetPageSummary | null;
@@ -636,11 +664,16 @@ export interface PublishedSnippetCrawlResult {
   visitedPages: number;
   auditedPages: number;
   pagesWithSnippet: number;
+  pagesWithInstalledSnippet?: number;
+  pagesWithInjectedSnippet?: number;
+  pagesWithDomFallback?: number;
   failingPages: number;
   /** URLs that were discovered but not crawled (e.g. maxPages cap). */
   skippedUrls: string[];
   snippetVersion: string | null;
   snippetTools: string[];
+  snippetInjectionUrl?: string | null;
+  snippetInjectionErrors?: string[];
   sitemapStatus: { ok: boolean; count?: number; error?: string };
   audit404:
     | {

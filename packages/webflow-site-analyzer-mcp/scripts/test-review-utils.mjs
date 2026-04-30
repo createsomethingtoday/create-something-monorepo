@@ -155,6 +155,10 @@ test('/templates/changelog matches', () => {
   assert.equal(isCriticalUtilityUrl('https://example.com/templates/changelog'), true);
 });
 
+test('/template/change-log matches', () => {
+  assert.equal(isCriticalUtilityUrl('https://example.com/template/change-log'), true);
+});
+
 test('/about-us does not match', () => {
   assert.equal(isCriticalUtilityUrl('https://example.com/about-us'), false);
 });
@@ -260,6 +264,12 @@ test('/utility/instruction is utility:instructions', () => {
 
 test('/changelog is utility:changelog', () => {
   const result = classifyUrlDeterministic('https://ex.webflow.io/changelog', false);
+  assert.equal(result.classification, 'utility:changelog');
+  assert.equal(result.priority, 'critical');
+});
+
+test('/template/change-log is utility:changelog', () => {
+  const result = classifyUrlDeterministic('https://ex.webflow.io/template/change-log', false);
   assert.equal(result.classification, 'utility:changelog');
   assert.equal(result.priority, 'critical');
 });
