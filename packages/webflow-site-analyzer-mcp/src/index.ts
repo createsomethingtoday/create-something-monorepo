@@ -2023,9 +2023,16 @@ function mapDesignerStatus(
 ): { status: UnifiedReviewStatus; evidence: string[]; confidence: number } {
   const check = designer.checks.find((item) => item.id === id);
   if (!check) {
+    const designerSkipped =
+      designer.checks.length === 0 &&
+      designer.metadataSummary.siteName === 'published-only review';
     return {
       status: 'manual',
-      evidence: [`Designer check not found: ${id}`],
+      evidence: [
+        designerSkipped
+          ? 'Designer extraction skipped because previewUrl was not provided.'
+          : `Designer check not found: ${id}`
+      ],
       confidence: 0.2
     };
   }
@@ -3058,6 +3065,34 @@ function unifyRows(
   return includeManual ? rows : rows.filter((row) => row.status !== 'manual');
 }
 
+function createSkippedDesignerChecklistReport(): DesignerChecklistReport {
+  return {
+    evaluatedAt: new Date().toISOString(),
+    source: 'provided-metadata',
+    metadataSummary: {
+      siteName: 'published-only review',
+      sitePlan: 'unknown',
+      totalPages: 0,
+      totalComponents: 0,
+      unusedComponents: 0,
+      totalInteractions: 0,
+      totalCMSCollections: 0,
+      totalCMSItems: 0,
+      totalAssets: 0,
+      breakpoints: [],
+      pages: []
+    },
+    summary: {
+      pass: 0,
+      fail: 0,
+      manual: 0,
+      scored: 0,
+      passRate: 0
+    },
+    checks: []
+  };
+}
+
 async function runTemplateReviewTool(
   input: RunTemplateReviewInput,
   options: RunTemplateReviewOptions = {}
@@ -3069,8 +3104,13 @@ async function executeTemplateReview(
   input: RunTemplateReviewInput,
   options: RunTemplateReviewOptions = {}
 ): Promise<UnifiedTemplateReviewReport> {
-  if (!input?.previewUrl || !input?.publishedUrl) {
-    throw new Error('`previewUrl` and `publishedUrl` are required.');
+  const publishedUrl = typeof input?.publishedUrl === 'string' ? input.publishedUrl.trim() : '';
+  const previewUrl = typeof input?.previewUrl === 'string' && input.previewUrl.trim()
+    ? input.previewUrl.trim()
+    : undefined;
+
+  if (!publishedUrl) {
+    throw new Error('`publishedUrl` is required.');
   }
 
   const manager = getProvider();
@@ -3081,21 +3121,28 @@ async function executeTemplateReview(
   const timeout = input.timeout ?? 90000;
 
   if (reportProgress) await reportProgress(0, 100, 'Starting unified template review');
-  const precheck = await runPublishedPrecheck(input.publishedUrl, Math.min(timeout, 30000));
+  const precheck = await runPublishedPrecheck(publishedUrl, Math.min(timeout, 30000));
   if (precheck.errors.length > 0) {
     throw new Error(`Published precheck failed: ${precheck.errors.join('; ')}`);
   }
 
   if (reportProgress) await reportProgress(5, 100, 'Published precheck complete');
-  if (reportProgress) await reportProgress(5, 100, 'Running Designer checklist extraction');
 
-  const designer = await scoreDesignerChecklistTool({
-    url: input.previewUrl,
-    timeout: input.timeout,
-    includeManual: true
-  });
+  let designer: DesignerChecklistReport;
+  if (previewUrl) {
+    if (reportProgress) await reportProgress(5, 100, 'Running Designer checklist extraction');
 
-  if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
+    designer = await scoreDesignerChecklistTool({
+      url: previewUrl,
+      timeout: input.timeout,
+      includeManual: true
+    });
+
+    if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
+  } else {
+    designer = createSkippedDesignerChecklistReport();
+    if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction skipped (published-only mode)');
+  }
 
   // Use URL classifications to build the crawl queue.
   // Critical pages (license, instructions, changelog, style-guide, homepage) go first.
@@ -3111,7 +3158,7 @@ async function executeTemplateReview(
     .map((c) => c.url);
 
   // Also resolve Designer page slugs against discovered URLs to fill gaps
-  const publishedOrigin = new URL(input.publishedUrl).origin;
+  const publishedOrigin = new URL(publishedUrl).origin;
   const discoveredLower = precheck.discoveredUrls.map((u) => u.toLowerCase());
   const designerPageSlugs = designer.metadataSummary.pages
     .map((p) => {
@@ -3133,7 +3180,7 @@ async function executeTemplateReview(
 
   const allSeedUrls = Array.from(new Set([...classifiedSeedUrls, ...designerPageSlugs]));
 
-  const published = await crawlPublishedWebMcp(input.publishedUrl, {
+  const published = await crawlPublishedWebMcp(publishedUrl, {
     timeout: input.timeout,
     crawlMaxPages: input.crawlMaxPages,
     crawlMaxDepth: input.crawlMaxDepth,
@@ -3213,8 +3260,9 @@ async function executeTemplateReview(
   return {
     generatedAt: new Date().toISOString(),
     provider: provider.name,
-    previewUrl: input.previewUrl,
-    publishedUrl: input.publishedUrl,
+    previewUrl: previewUrl ?? null,
+    publishedUrl,
+    designerMode: previewUrl ? 'live' : 'skip',
     precheck,
     providerMetrics,
     summary,
@@ -3572,11 +3620,11 @@ export function createAnalyzerServer(): Server {
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring.'
+              description: 'Optional Webflow preview URL. When omitted, Designer extraction is skipped and Designer-only rows remain manual.'
             },
             publishedUrl: {
               type: 'string',
-              description: 'Published site URL with WebMCP snippet installed.'
+              description: 'Published site URL. The analyzer uses the installed Webflow Review snippet when present and injects it at crawl time when available.'
             },
             timeout: {
               type: 'number',
@@ -3595,7 +3643,7 @@ export function createAnalyzerServer(): Server {
               description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
             }
           },
-          required: ['previewUrl', 'publishedUrl']
+          required: ['publishedUrl']
         }
       },
       {
@@ -3606,11 +3654,11 @@ export function createAnalyzerServer(): Server {
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring.'
+              description: 'Optional Webflow preview URL. When omitted, Designer extraction is skipped and Designer-only rows remain manual.'
             },
             publishedUrl: {
               type: 'string',
-              description: 'Published site URL with WebMCP snippet installed.'
+              description: 'Published site URL. The analyzer uses the installed Webflow Review snippet when present and injects it at crawl time when available.'
             },
             timeout: {
               type: 'number',
@@ -3629,7 +3677,7 @@ export function createAnalyzerServer(): Server {
               description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
             }
           },
-          required: ['previewUrl', 'publishedUrl']
+          required: ['publishedUrl']
         }
       },
       {

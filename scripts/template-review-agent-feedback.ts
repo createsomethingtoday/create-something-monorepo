@@ -350,7 +350,6 @@ function normalizeUnifiedTemplateReviewReport(
   const hasCoreFields =
     typeof record.generatedAt === 'string' &&
     typeof record.provider === 'string' &&
-    typeof record.previewUrl === 'string' &&
     typeof record.publishedUrl === 'string';
 
   if (hasCoreFields) {
@@ -827,29 +826,32 @@ async function runLocalAnalyzerReview(
   asset: TemplateReviewAsset,
 ): Promise<AnalyzerReviewOutcome> {
   return new Promise<AnalyzerReviewOutcome>((resolve) => {
+    const analyzerArgs = [
+      './scripts/test-template-review-mcp.mjs',
+      '--published-url',
+      asset.websiteUrl ?? '',
+      '--mode',
+      'sync',
+      '--crawl-max-pages',
+      String(args.crawlMaxPages),
+      '--crawl-max-depth',
+      String(args.crawlMaxDepth),
+      '--timeout-ms',
+      String(args.analyzerTimeoutMs),
+      '--max-total-timeout-ms',
+      String(args.analyzerMaxWaitMs),
+      '--poll-interval-ms',
+      String(args.analyzerPollIntervalMs),
+      '--output',
+      'report',
+    ];
+    if (asset.previewSiteUrl) {
+      analyzerArgs.splice(1, 0, '--preview-url', asset.previewSiteUrl);
+    }
+
     const child = spawn(
       'node',
-      [
-        './scripts/test-template-review-mcp.mjs',
-        '--preview-url',
-        asset.previewSiteUrl ?? '',
-        '--published-url',
-        asset.websiteUrl ?? '',
-        '--mode',
-        'sync',
-        '--crawl-max-pages',
-        String(args.crawlMaxPages),
-        '--crawl-max-depth',
-        String(args.crawlMaxDepth),
-        '--timeout-ms',
-        String(args.analyzerTimeoutMs),
-        '--max-total-timeout-ms',
-        String(args.analyzerMaxWaitMs),
-        '--poll-interval-ms',
-        String(args.analyzerPollIntervalMs),
-        '--output',
-        'report',
-      ],
+      analyzerArgs,
       {
         cwd: fileURLToPath(new URL('../packages/webflow-site-analyzer-mcp/', import.meta.url)),
         env: Object.fromEntries(Object.entries(process.env).filter(([, value]) => typeof value === 'string')),
@@ -1124,10 +1126,10 @@ async function runAnalyzerReview(
   asset: TemplateReviewAsset,
 ): Promise<AnalyzerReviewOutcome | null> {
   if (args.analyzer === 'off') return null;
-  if (!asset.previewSiteUrl || !asset.websiteUrl) {
+  if (!asset.websiteUrl) {
     return {
       ok: false,
-      error: 'Analyzer skipped because preview or published URL is missing.',
+      error: 'Analyzer skipped because published URL is missing.',
     };
   }
 
@@ -1166,14 +1168,16 @@ async function runAnalyzerReview(
     try {
       context = await connectRemoteAnalyzerClient();
 
-      const toolArgs = {
-        previewUrl: asset.previewSiteUrl,
+      const toolArgs: Record<string, unknown> = {
         publishedUrl: asset.websiteUrl,
         timeout: args.analyzerTimeoutMs,
         crawlMaxPages: args.crawlMaxPages,
         crawlMaxDepth: args.crawlMaxDepth,
         includeManual: true,
       };
+      if (asset.previewSiteUrl) {
+        toolArgs.previewUrl = asset.previewSiteUrl;
+      }
 
       if (context.toolNames.has('run_template_review')) {
         const reviewData = normalizeUnifiedTemplateReviewReport(await context.callTool(

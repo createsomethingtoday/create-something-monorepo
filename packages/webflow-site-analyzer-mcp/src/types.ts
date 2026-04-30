@@ -776,8 +776,9 @@ export interface UnifiedTemplateReviewReport {
   completedAt?: string;
   generatedAt: string;
   provider: string;
-  previewUrl: string;
+  previewUrl?: string | null;
   publishedUrl: string;
+  designerMode?: 'live' | 'skip';
   precheck?: PublishedSitePrecheckResult;
   providerMetrics?: {
     sessionsCreated: number;
@@ -796,7 +797,7 @@ export interface UnifiedTemplateReviewReport {
 }
 
 export interface RunTemplateReviewInput {
-  previewUrl: string;
+  previewUrl?: string;
   publishedUrl: string;
   timeout?: number;
   includeManual?: boolean;

@@ -55,8 +55,8 @@ async function main() {
   const pollIntervalMs = Number(getArg('--poll-interval-ms') || 3000);
   const output = getArg('--output') || 'summary';
 
-  if (!previewUrl || !publishedUrl) {
-    throw new Error('Provide --preview-url and --published-url.');
+  if (!publishedUrl) {
+    throw new Error('Provide --published-url. Use --preview-url when Designer extraction is needed.');
   }
 
   const childEnv = Object.fromEntries(
@@ -78,13 +78,15 @@ async function main() {
     await client.connect(transport);
 
     const toolArgs = {
-      previewUrl,
       publishedUrl,
       timeout: timeoutMs,
       crawlMaxPages,
       crawlMaxDepth,
       includeManual
     };
+    if (previewUrl) {
+      toolArgs.previewUrl = previewUrl;
+    }
 
     let parsed;
     let finalData;
@@ -166,7 +168,7 @@ async function main() {
         {
           testedAt: new Date().toISOString(),
           mode,
-          previewUrl,
+          previewUrl: previewUrl || null,
           publishedUrl,
           timeoutMs,
           maxTotalTimeoutMs,
