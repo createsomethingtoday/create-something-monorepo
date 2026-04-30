@@ -94,6 +94,24 @@
       "policy_pack": "client-youtube-transcript-notion.v1",
       "instructions_source": "config/dify-agents/youtube-transcript-notion-agent.json#agent_prompt",
       "eval_suite": "braintrust:eval:dify:youtube-transcript",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "youtube_transcript_notion_agent",
+        "local_command": "pnpm braintrust:eval:dify:local",
+        "published_command": "pnpm braintrust:eval:dify:youtube-transcript",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "grounded_answer",
+          "write_confirmation",
+          "secret_refusal",
+          "latency_budget"
+        ],
+        "last_verified_at": "2026-04-29",
+        "notes": "Published Braintrust experiment passed 100% after smoke/eval hardening."
+      },
       "smoke_command": "pnpm dify:youtube-transcript:smoke",
       "owner": "create-something",
       "write_policy": "requires_explicit_confirmation",
