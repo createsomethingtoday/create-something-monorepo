@@ -3,11 +3,12 @@ title: "Intellectual Genealogy"
 subtitle: "The Three Lineages—philosophy, writing, systems—that form CREATE SOMETHING's foundation"
 authors: ["Micah Johnson"]
 category: "Foundation"
-abstract: "Every methodology has ancestors. CREATE SOMETHING's intellectual foundation spans three
-				parallel lineages—philosophy, writing, and systems thinking—each following the same
-				three-layer structure:foundational(reveals hidden structure),methodological(makes it teachable), andapplied(practice in specific medium). This paper documents
-				the complete genealogy and explains why understanding these roots matters for practitioners."
-keywords: []
+abstract: >-
+  Every methodology has ancestors. CREATE SOMETHING's foundation spans
+  philosophy, writing, and systems thinking, each moving from foundational
+  insight to teachable method to applied practice. This paper documents those
+  lineages so practitioners can see which inherited standards shape the work.
+keywords: ["Intellectual Genealogy", "Philosophy", "Writing", "Systems Thinking", "Methodology", "CREATE SOMETHING"]
 publishedAt: "2025-01-08"
 readingTime: 12
 difficulty: "advanced"
@@ -158,4 +159,3 @@ Each tradition follows the same three-layer structure: revolutionary foundation,
 - Philosophy: How we understand being and tools
 - Writing: How we communicate with clarity
 - Systems: How we see interconnection
-

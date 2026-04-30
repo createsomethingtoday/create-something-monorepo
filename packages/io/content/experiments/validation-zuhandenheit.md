@@ -5,7 +5,10 @@ title: "Validation as Zuhandenheit"
 subtitle: "Preventing Tool Breakdown Through Proximity"
 description: "When validation occurs at the point of input, tools remain ready-to-hand. When errors surface downstream, tools break down into present-at-hand obstruction."
 meta: "December 2025 · Next.js Forms · Heidegger, Rams"
+keywords: ["Validation", "Zuhandenheit", "Forms", "Error Prevention", "UX", "Tool Breakdown"]
 publishedAt: "2025-12-15"
+readingTime: 6
+difficulty: "beginner"
 published: true
 ---
 
@@ -113,4 +116,3 @@ The philosophical insight: validation isn't just about preventing bad data. It's
 
 > "The tool recedes; the work continues."
 > — — CREATE SOMETHING Canon
-

@@ -3,14 +3,16 @@ title: "The Subtractive Studio"
 subtitle: "Philosophy as Infrastructure—most agencies add, CREATE SOMETHING removes what obscures"
 authors: ["Micah Johnson"]
 category: "Research"
-abstract: "The digital services industry operates on an additive assumption: more features, more
-				services, more complexity equals more value. This paper proposes an alternative grounded inphenomenology(the philosophical study of structures of experience and consciousness—how things show themselves to us through lived experience) and design philosophy. CREATE SOMETHING is asubtractive studio—an
-				organization whose primary discipline is the removal of what obscures. We articulate the
-				Subtractive T"
-keywords: []
+abstract: >-
+  The digital services industry often treats more features, services, and
+  complexity as more value. This paper proposes the opposite posture: CREATE
+  SOMETHING as a subtractive studio whose work is to remove what obscures. It
+  turns design philosophy into an operating constraint for client systems,
+  research artifacts, and delivery work.
+keywords: ["Subtractive Studio", "Design Philosophy", "Agency Model", "CREATE SOMETHING", "Dieter Rams", "Service Design"]
 publishedAt: "2025-01-08"
 readingTime: 10
-difficulty: "15 min read"
+difficulty: "intermediate"
 published: true
 ---
 
@@ -182,4 +184,3 @@ But the statement is not the position. The position is the practice that makes t
 - In the CLAUDE.md that shapes AI collaboration around philosophical principles
 - In the Beads workflow that routes issues through the hermeneutic circle
 - In the assessment protocol that filters engagements before proposals begin
-

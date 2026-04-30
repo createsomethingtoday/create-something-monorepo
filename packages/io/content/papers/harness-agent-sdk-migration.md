@@ -3,15 +3,16 @@ title: "Harness Agent SDK Migration: Empirical Analysis"
 subtitle: "Security, Reliability, and Cost Improvements Through Explicit Tool Permissions"
 authors: ["Micah Johnson"]
 category: "Case Study"
-abstract: "This paper documents the migration of the CREATE Something Harness from legacy headless mode
-				patterns to Agent SDK best practices. We analyze the trade-offs between security, reliability,
-				and operational efficiency, drawing from empirical observation of a live Canon Redesign project
-				(21 features across 19 files). The migration replaces--dangerously-skip-permissionswith explicit--allowedTools, adds runaway prevention via--max-turns,
-				and enables cost tracking through structured JSO"
-keywords: []
+abstract: >-
+  This paper documents the migration of the CREATE SOMETHING harness from legacy
+  headless patterns to Agent SDK practices. The case study uses a live Canon
+  redesign project to evaluate explicit tool permissions, runaway prevention,
+  and structured cost tracking as operational controls rather than incidental
+  implementation details.
+keywords: ["Agent SDK", "Harness", "Tool Permissions", "Cost Tracking", "Runaway Prevention", "Canon Redesign"]
 publishedAt: "2025-01-08"
 readingTime: 10
-difficulty: "12 min read"
+difficulty: "intermediate"
 published: true
 ---
 
@@ -120,4 +121,3 @@ This aligns with theSubtractive Triad:
 - Claude Code Agent SDK Documentation
 - CREATE Something Harness Package
 - Beads Patterns Documentation
-

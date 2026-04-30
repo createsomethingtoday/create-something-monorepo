@@ -1,16 +1,15 @@
 ---
 title: "The Hermeneutic Triad"
-subtitle: "How Reviewers, Harness, and Agent Collaborate—a case study in parallel peer review
-				revealing and resolving DRY violations."
+subtitle: "A case study in parallel peer review across reviewers, harness, and agent"
 authors: ["Micah Johnson"]
 category: "Case Study"
-abstract: "This paper documents a live case study from December 2025 where the CREATE SOMETHING harness
-				orchestrated parallel peer reviews that identified critical DRY violations in newsletter
-				subscription code. Three specialized reviewers—architecture, security, and quality—each
-				analyzed the same codebase simultaneously, producing complementary findings. The architecture
-				reviewer detected 4 pairs of nearly-identical files across packages; the security reviewer
-				identified IDOR vulnerabi"
-keywords: []
+abstract: >-
+  This paper documents a live case study where the CREATE SOMETHING harness
+  orchestrated parallel peer reviews across architecture, security, and quality
+  reviewers. The review triad produced complementary findings on newsletter
+  subscription code, showing how distributed agent review can reveal different
+  classes of risk without collapsing judgment into one prompt.
+keywords: ["Peer Review", "Harness", "DRY", "Security Review", "Architecture Review", "Agent Review"]
 publishedAt: "2025-01-08"
 readingTime: 12
 difficulty: "intermediate"
@@ -202,4 +201,3 @@ This is the promise of the hermeneutic triad: not AI that never errs, but AI tha
 
 
 ## References
-

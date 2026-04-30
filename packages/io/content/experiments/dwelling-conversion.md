@@ -5,7 +5,10 @@ title: "Dwelling as Conversion"
 subtitle: "From Assessment to Progressive Erasure"
 description: "Documenting the evolution from interactive assessment to scroll-driven TextRevelation—two modes of dwelling that transform conversion into experience."
 meta: "December 2025 · SvelteKit + Cloudflare · Heidegger, Rams"
+keywords: ["Dwelling", "Conversion", "TextRevelation", "Scroll Animation", "Subtractive Design"]
 publishedAt: "2025-12-15"
+readingTime: 12
+difficulty: "intermediate"
 published: true
 ---
 
@@ -183,4 +186,3 @@ Both approaches achieve Zuhandenheit. The assessment invites active reflection�
 The lesson: "Less, but better" applies not just to artifacts, but to how we communicate.
 				Sometimes asking is the right mode. Sometimes showing is. The hermeneutic circle completes when
 				we let research inform implementation, implementation inform refinement, and refinement deepen research.
-

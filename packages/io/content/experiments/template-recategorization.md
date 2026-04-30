@@ -5,7 +5,10 @@ title: "Template Recategorization"
 subtitle: "MCP as Hermeneutic Bridge"
 description: "Using Claude Code with Airtable MCP to recategorize miscategorized Webflow templates—demonstrating how AI agents can participate in the hermeneutic circle of data curation."
 meta: "December 2025 · Claude Code + Airtable MCP · Tool Complementarity"
+keywords: ["Template Recategorization", "Airtable", "MCP", "Claude Code", "Data Curation", "Webflow"]
 publishedAt: "2025-12-15"
+readingTime: 10
+difficulty: "intermediate"
 published: true
 ---
 
@@ -161,4 +164,3 @@ The hypothesis isvalidated. Claude Code with MCP tools
 
 MCP serves as a bridge—gathering human intent, agent capability, and system
 					state into a unified workflow. The protocol recedes; the curation emerges.
-

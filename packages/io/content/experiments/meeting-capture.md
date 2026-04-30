@@ -5,7 +5,10 @@ title: "Meeting Capture"
 subtitle: "Tools Recede, Understanding Remains"
 description: "Building a personal meeting transcription tool that embodies Heideggerian Zuhandenheit—the tool disappears into use while understanding emerges."
 meta: "December 2025 · Swift + Cloudflare Workers · Heidegger, Rams"
+keywords: ["Meeting Capture", "Transcription", "Swift", "Cloudflare Workers", "Whisper", "Zuhandenheit"]
 publishedAt: "2025-12-15"
+readingTime: 12
+difficulty: "intermediate"
 published: true
 ---
 

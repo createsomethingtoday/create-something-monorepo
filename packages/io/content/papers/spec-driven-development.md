@@ -3,12 +3,13 @@ title: "Spec-Driven Development"
 subtitle: "A Meta-Experiment in Agent Orchestration: Building NBA Live Analytics as Methodology Validation"
 authors: ["Micah Johnson"]
 category: "Methodology"
-abstract: "This paper documents a meta-experiment testing whetherstructured specificationscan effectively guide agent-based development. The vehicle is an NBA Live Analytics Dashboard
-				with three analytical views—Duo Synergy, Defensive Impact, and Shot Network. The hypothesis:
-				spec-driven development produces both working software and methodology documentation as
-				equally important artifacts. Through three phases of implementation (Infrastructure, Pages, Polish),
-				we observe that explicit depe"
-keywords: []
+abstract: >-
+  This paper documents a meta-experiment testing whether structured
+  specifications can guide agent-based development. The vehicle is an NBA Live
+  Analytics Dashboard with multiple analytical views. The finding is that a good
+  spec produces two artifacts at once: working software and an inspectable method
+  for coordinating future agent work.
+keywords: ["Spec-Driven Development", "Agent Orchestration", "NBA Analytics", "Methodology", "Harness", "Experiment Design"]
 publishedAt: "2025-01-08"
 readingTime: 15
 difficulty: "advanced"
@@ -172,4 +173,3 @@ The Spec-Driven Principle
 - Complete infrastructure (Worker, D1, KV caching)
 - Zero TypeScript errors at completion
 - Methodology documentation as a first-class artifact
-

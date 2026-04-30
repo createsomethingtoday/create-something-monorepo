@@ -1,13 +1,15 @@
 ---
 title: "Hermeneutic Debugging"
-subtitle: "Applying Heidegger's hermeneutic circle to software debugging—demonstrating
-				that understanding emerges through iterative interpretation, not linear analysis."
+subtitle: "Debugging as iterative interpretation rather than linear diagnosis"
 authors: ["Micah Johnson"]
 category: "Methodology"
-abstract: "Traditional debugging assumes a linear path: identify symptom, trace cause, apply fix.
-				This paper argues that complex bugs resist linear analysis because they emerge fromhidden assumptions—what Heidegger calls our "fore-structure" of understanding.
-				By applying thehermeneutic circle(a philosophical concept describing how understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts) to debugging, we demonstrate that the path"
-keywords: []
+abstract: >-
+  Traditional debugging assumes a linear path from symptom to cause to fix. This
+  paper argues that complex bugs often come from hidden assumptions in the
+  developer's frame of interpretation. It uses the hermeneutic circle as a
+  practical debugging pattern: move between the failing part and the system
+  whole until the real assumption becomes visible.
+keywords: ["Debugging", "Hermeneutic Circle", "Software Methodology", "Heidegger", "Assumptions", "System Understanding"]
 publishedAt: "2025-01-08"
 readingTime: 12
 difficulty: "intermediate"
@@ -157,4 +159,3 @@ Eight iterations. Five hidden assumptions. One working animation. The hermeneuti
 
 
 ## References
-

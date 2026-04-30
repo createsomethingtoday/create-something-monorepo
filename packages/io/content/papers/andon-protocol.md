@@ -11,6 +11,49 @@ difficulty: "intermediate"
 published: true
 ---
 
+## Release Thesis
+
+The Andon Protocol defines when agent systems must ask, stop, proceed, or escalate.
+
+The practical change in v3.1 is that escalation is no longer treated as a soft prompt instruction. It becomes an operating protocol with detector-triggered pulls, multi-agent routing, cost-based thresholds, semantic precedent, and explicit human approval for harness changes.
+
+The decision this paper should make easier: when an agent encounters uncertainty, should it continue, alert, block, route to a peer, or send the decision to a human?
+
+## Evidence Snapshot
+
+| Claim | Evidence | Status | Reusable Artifact |
+|-------|----------|--------|-------------------|
+| Agents cannot reliably self-detect every defect | Hallucination and overconfidence make self-assessment insufficient | Design premise | Automated Jidoka detectors |
+| Multi-agent systems need routed escalation | Agent outputs become other agents' inputs, creating upstream and downstream responsibility | Protocol design | Resolution authority hierarchy |
+| Fixed takt time does not map to agent work | Agent tasks range from milliseconds to multi-hour research loops | Protocol design | `resolve_urgency` equation |
+| Silent uncertainty is itself a defect | An agent can proceed while uncertain and leave no trace | Protocol extension | Silent Running Audit |
+| Harness improvement requires governance | Thresholds and tool access can improve, but broad changes need human policy approval | Governance rule | Harness Kaizen approval path |
+
+## What This Improves
+
+The protocol makes uncertainty visible without forcing every uncertain step to become a human interruption.
+
+It separates alerting, blocking, deviation requests, concessions, retroactive audits, and harness changes. That gives operators a vocabulary for handling agent uncertainty at different stakes and different costs.
+
+## Evaluation Surface
+
+This is a protocol paper, not a completed production rollout report. Its evidence is structural:
+
+- manufacturing escalation patterns: Andon, deviation, concession, and error-correction loops
+- agent-specific failure modes: overconfidence, multi-agent handoff, variable work duration, harness drift, and semantic precedent
+- implementation mapping to D1, Vectorize, Workers, MCP tools, Slack/email touchpoints, and Loom continuity
+- concrete object schema for Andon records and resolution history
+
+The next validation should be a dogfood pilot: instrument one agent lane with alert, stop, concession, and silent-running audit records, then measure unnecessary pull rate, reversal rate, and time-to-resolution.
+
+## Governance Boundary
+
+The protocol intentionally keeps Harness Kaizen under L4 human policy approval. Agents may propose constraint changes based on accumulated evidence, but tool access, authority hierarchy, and major threshold movement remain human-controlled policy decisions.
+
+## Next Decision
+
+The next operating decision is to select one CREATE SOMETHING agent lane and implement a minimal Andon object, resolver surface, and Silent Running audit before broadening the protocol to multi-agent topologies.
+
 ## Part I: Manufacturing Foundation
 
 The manufacturing patterns from v2.0 remain the cultural and structural foundation. This section summarizes them; the full treatment is in the prior version.

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from "./$types";
 	import { ArticleHeader, ArticleContent } from "@create-something/canon/domains/io";
-	import { ShareButtons, SEO, RelatedArticles, PageActions, MarkdownPreviewModal, Footer } from "@create-something/canon";
+	import { ShareButtons, SEO, RelatedArticles, PageActions, MarkdownPreviewModal } from "@create-something/canon";
 	import type { Paper } from '@create-something/canon/types';
 	import { getNextPaper } from '@create-something/canon/utils';
 
@@ -94,7 +94,7 @@ ${paper.content || ''}
 
 	<!-- Related Articles -->
 	{#if relatedPapers.length > 0}
-		<RelatedArticles papers={relatedPapers} currentPaperId={paper.id} />
+		<RelatedArticles papers={relatedPapers} currentPaperId={paper.id} hrefPrefix="/papers" />
 	{/if}
 
 	<!-- Back to Papers -->

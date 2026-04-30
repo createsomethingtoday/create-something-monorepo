@@ -1,12 +1,16 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/canon/types';
-import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
+import {
+	buildCategories,
+	getLocalResearchArtifacts,
+	mergeBySlug
+} from '$lib/config/researchArtifacts';
 
 export const load: PageServerLoad = async ({ platform }) => {
-	const fileBasedExperiments = getFileBasedExperiments();
+	const localArtifacts = getLocalResearchArtifacts();
 
 	if (!platform?.env?.DB) {
-		return { papers: fileBasedExperiments, categories: [] };
+		return { papers: localArtifacts, categories: buildCategories(localArtifacts) };
 	}
 
 	try {
@@ -25,28 +29,12 @@ export const load: PageServerLoad = async ({ platform }) => {
 		).all<Paper>();
 
 		const dbPapers = result.results || [];
-		const papers = [...fileBasedExperiments, ...dbPapers];
-
-		// Get category counts
-		const categoryResult = await platform.env.DB.prepare(
-			`
-      SELECT category, COUNT(*) as count
-      FROM papers
-      WHERE published = 1 AND is_hidden = 0 AND archived = 0
-      GROUP BY category
-      ORDER BY count DESC
-    `
-		).all();
-
-		const categories = (categoryResult.results || []).map((row: any) => ({
-			name: row.category.charAt(0).toUpperCase() + row.category.slice(1),
-			slug: row.category,
-			count: row.count
-		}));
+		const papers = mergeBySlug(dbPapers, localArtifacts);
+		const categories = buildCategories(papers);
 
 		return { papers, categories };
 	} catch (error) {
 		console.error('Error fetching papers from D1:', error);
-		return { papers: fileBasedExperiments, categories: [] };
+		return { papers: localArtifacts, categories: buildCategories(localArtifacts) };
 	}
 };

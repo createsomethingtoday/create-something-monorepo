@@ -1,12 +1,17 @@
 <script lang="ts">
 	import type { Paper } from '@create-something/canon/types';
 
+	type RelatedPaper = Paper & {
+		route?: string;
+	};
+
 	interface Props {
-		papers: Paper[];
+		papers: RelatedPaper[];
 		currentPaperId: string;
+		hrefPrefix?: '/experiments' | '/papers';
 	}
 
-	let { papers, currentPaperId }: Props = $props();
+	let { papers, currentPaperId, hrefPrefix = '/experiments' }: Props = $props();
 
 	// Filter out current paper and limit to 4
 	const relatedPapers = $derived(
@@ -41,6 +46,8 @@
 			day: 'numeric'
 		});
 	};
+
+	const getArticleHref = (paper: RelatedPaper) => paper.route || `${hrefPrefix}/${paper.slug}`;
 </script>
 
 {#if relatedPapers.length > 0}
@@ -51,7 +58,7 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				{#each relatedPapers as paper, index (paper.id)}
 					<a
-						href={`/experiments/${paper.slug}`}
+						href={getArticleHref(paper)}
 						class="group block h-full animate-reveal"
 						style="--index: {index + 1}"
 						aria-label="Read article: {paper.title}"

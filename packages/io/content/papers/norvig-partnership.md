@@ -1,15 +1,15 @@
 ---
 title: "The Norvig Partnership"
-subtitle: "When Empiricism Validates Phenomenology—How Peter Norvig's Advent of Code 2025 experiments
-				confirm Heideggerian predictions about AI-human collaboration."
+subtitle: "How empirical coding results clarify AI-human collaboration"
 authors: ["Micah Johnson"]
 category: "Research"
-abstract: "In December 2025, Peter Norvig—author ofArtificial Intelligence: A Modern Approachand Director of Research at Google—published an empirical analysis of LLM performance on
-				Advent of Code 2025. His findings: LLMs were "maybe 20 times faster" than manual coding,
-				produced correct answers to every puzzle, and demonstrated mastery of professional concepts.
-				This paper demonstrates that Norvig's empirical observations validate phenomenological
-				predictions made by CREATE SOMETHING about t"
-keywords: []
+abstract: >-
+  This paper reads Peter Norvig's Advent of Code findings as evidence about
+  AI-human collaboration rather than only model performance. It connects
+  empirical coding speed and correctness to the practical question of when an
+  LLM stops feeling like an object to manage and starts functioning as working
+  equipment inside a developer's practice.
+keywords: ["Peter Norvig", "Advent of Code", "LLM Coding", "AI Collaboration", "Phenomenology", "Zuhandenheit"]
 publishedAt: "2025-01-08"
 readingTime: 18
 difficulty: "advanced"
@@ -254,4 +254,3 @@ Neither approach is complete alone. Empiricism without phenomenology measures ef
 
 
 ## References
-

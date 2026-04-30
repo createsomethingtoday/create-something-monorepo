@@ -1,8 +1,18 @@
 // Type exports
 export type { Paper, AnalyticsEventRequest } from './paper.js';
 export type { Quote } from './common.js';
-export type { FileBasedExperiment, FileBasedExperimentPaper, FileBasedPaper } from './experiment.js';
-export { transformExperimentToPaper, transformResearchPaperToPaper } from './experiment.js';
+export type {
+	FileBasedExperiment,
+	FileBasedExperimentPaper,
+	FileBasedPaper,
+	FileBasedPublicationState,
+	PublicationFlag
+} from './experiment.js';
+export {
+	isPublicFileBasedContent,
+	transformExperimentToPaper,
+	transformResearchPaperToPaper
+} from './experiment.js';
 export type {
 	ThresholdType,
 	CirculationMode,

@@ -1,14 +1,14 @@
 ---
 title: "The Hermeneutic Spiral in UX Design"
-subtitle: "Applying Heidegger's hermeneutic circle to user experience design—demonstrating
-				that understanding accumulates, it doesn't reset."
+subtitle: "UX systems should accumulate understanding instead of resetting context"
 authors: ["Micah Johnson"]
 category: "Methodology"
-abstract: "Modern digital systems suffer from a peculiar form of amnesia. Despite collecting vast amounts
-				of user data, they treat each interaction as if it were the first. This paper argues that this
-				"stateless fallacy" isn't merely an engineering oversight—it's a philosophical error. By applying
-				Heidegger'shermeneutic circle(a philosophical method where understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts) to user exper"
-keywords: []
+abstract: >-
+  Modern digital systems often collect user data while treating each interaction
+  as if it were the first. This paper names that reset as a UX failure and uses
+  the hermeneutic circle to argue for interfaces that accumulate context,
+  preserve user intent, and make each new action easier to interpret.
+keywords: ["UX Design", "Hermeneutic Circle", "Context", "Personalization", "State", "Product Design"]
 publishedAt: "2025-01-08"
 readingTime: 15
 difficulty: "intermediate"
@@ -181,4 +181,3 @@ This isn't just efficient—it's philosophically correct. Understanding is circu
 
 
 ## References
-

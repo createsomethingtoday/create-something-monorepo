@@ -2,8 +2,12 @@
 	import type { Paper } from '@create-something/canon/types';
 	import AnimatedAsciiThumbnail from './AnimatedAsciiThumbnail.svelte';
 
+	type RoutablePaper = Paper & {
+		route?: string;
+	};
+
 	interface Props {
-		paper: Paper;
+		paper: RoutablePaper;
 		rotation?: number;
 		index?: number;
 		/** Enable animated ASCII on hover */
@@ -11,6 +15,8 @@
 	}
 
 	let { paper, rotation = 0, index = 0, animate = true }: Props = $props();
+
+	const href = $derived(paper.route || `/experiments/${paper.slug}`);
 
 	// Map experiment slugs/tags to animation scenes
 	function getAnimationScene(p: Paper): 'donut' | 'sphere' | 'cube' | 'wave' | 'spiral' {
@@ -55,7 +61,7 @@
 	);
 </script>
 
-<a href={`/experiments/${paper.slug}`} class="block h-full">
+<a {href} class="block h-full">
 	<article
 		class="group animate-reveal h-full"
 		style="transform: rotate({rotation}deg); --delay: {index};"

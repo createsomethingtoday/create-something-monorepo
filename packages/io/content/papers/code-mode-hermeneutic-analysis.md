@@ -1,14 +1,15 @@
 ---
 title: "Code-Mediated Tool Use"
-subtitle: "A Hermeneutic Analysis of LLM-Tool Interaction—why Code Mode achieves
-				Zuhandenheit while direct tool calling forces Vorhandenheit."
+subtitle: "Why code-mediated tool access can make LLM tools feel ready-to-hand"
 authors: ["Micah Johnson"]
 category: "Theoretical"
-abstract: "This paper applies Heidegger's phenomenological analysis of ready-to-hand (Zuhandenheit—when a tool disappears into transparent use, like a hammer during hammering)
-				versus present-at-hand (Vorhandenheit—when a tool becomes an object of conscious attention, like a broken hammer you must examine) to contemporary Large Language Model (LLM) agent
-				architecture, specifically examining the distinction between direct tool calling and code-mediated
-				tool access (Code Mode). We argue that Code "
-keywords: []
+abstract: >-
+  This paper applies Heidegger's distinction between ready-to-hand tool use and
+  present-at-hand breakdown to LLM tool architecture. It compares direct tool
+  calling with code-mediated access and argues that Code Mode can make tools
+  recede into the workflow when execution, inspection, and repair remain in one
+  working environment.
+keywords: ["Code Mode", "LLM Tools", "Heidegger", "Zuhandenheit", "Vorhandenheit", "Agent Architecture"]
 publishedAt: "2025-01-08"
 readingTime: 12
 difficulty: "advanced"
@@ -206,4 +207,3 @@ The hermeneutic circle isn't yet closed. Claude Code operates in a transitional 
 
 
 ## References
-

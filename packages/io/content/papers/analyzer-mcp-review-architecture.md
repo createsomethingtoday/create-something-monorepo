@@ -11,6 +11,46 @@ difficulty: "intermediate"
 published: true
 ---
 
+## Release Thesis
+
+The Analyzer MCP turns Webflow template review from a loose inspection task into a governed review architecture.
+
+The practical change is that published-site evidence, Designer-only metadata, and external review policy now move through one MCP surface with explicit provenance, queued execution, manual-review boundaries, and versioned improvement loops.
+
+This matters because the reusable pattern is not "build a crawler." The pattern is: identify each authority surface, model evidence separately, attach policy as an artifact, and make the final review explain what it checked, what it could not check, and which judgment boundary still belongs to a human.
+
+## Evidence Snapshot
+
+| Claim | Evidence | Status | Reusable Artifact |
+|-------|----------|--------|-------------------|
+| Template review needs more than a page crawl | Review depends on published pages, Designer state, and current Webflow policy | Validated by implementation | Multi-surface evidence model |
+| Policy must be traceable | Guidelines and rubric are fetched, normalized, timestamped, hashed, and converted into `policyVersion` | Implemented | Policy snapshot contract |
+| Browser-backed review must be operated like production work | Review jobs have phases, queue limits, bounded concurrency, status, and result payloads | Implemented | Queued review job model |
+| Automation should admit its limits | Review rows can remain `manual` when payloads do not justify a defensible automated claim | Implemented | Manual-boundary checklist state |
+| Extraction should improve without hiding drift | Script versions collect feedback, compare changes, and promote tested improvements | Implemented pattern | Versioned extraction loop |
+
+## What This Improves
+
+The analyzer gives operators a review artifact they can defend.
+
+Instead of asking an agent to "look at the site" and trusting the summary, the system can point to specific evidence surfaces, a policy version, execution phases, and unresolved manual checks. That changes the review from an opinion into an auditable artifact.
+
+## Evaluation Surface
+
+The current validation surface is architectural and operational:
+
+- published-site extraction for runtime metadata, structure, accessibility signals, image behavior, and crawlability
+- Designer metadata extraction for pages, components, style selectors, interactions, CMS collections, assets, and breakpoints
+- policy ingestion from public guideline and rubric pages
+- queued review execution with phase-level status
+- observability around duration, cost, browser sessions, provider health, and item counts
+
+This paper does not claim that every review row is fully automated. The point is narrower and stronger: the system can distinguish automated pass/fail evidence from manual judgment boundaries.
+
+## Next Decision
+
+The next operating decision is whether the Analyzer MCP should become the canonical review architecture for Webflow template and app review lanes, with each new reviewer tool required to declare its Database, Automation, and Judgment surfaces before promotion.
+
 ## Executive Thesis
 
 The analyzer MCP exists because template review is not a single inspection problem.

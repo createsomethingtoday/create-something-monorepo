@@ -9,8 +9,12 @@
 
   const categoryDescriptions: Record<string, string> = {
     automation: 'Learn about automation systems, workflow integrations, and productivity tools. Discover how to build efficient automated solutions.',
+    'case-study': 'Decision-grade case studies from real CREATE SOMETHING implementation, review, and delivery work.',
     development: 'Modern web development tutorials covering React, Next.js, TanStack, and full-stack development practices.',
     infrastructure: 'Cloud infrastructure, serverless architecture, and edge computing guides. Learn Cloudflare Workers, D1, and modern deployment strategies.',
+    methodology: 'Operating frameworks, publication methods, and reusable review patterns for AI-native work.',
+    research: 'Papers, experiments, and field notes that turn implementation evidence into reusable operating patterns.',
+    tutorial: 'Practical walkthroughs and demonstrations for applying CREATE SOMETHING research patterns.',
     webflow: 'Webflow development guides, custom implementations, and no-code solutions for building powerful websites.',
   };
 

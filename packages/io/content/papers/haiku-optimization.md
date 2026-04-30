@@ -1,19 +1,16 @@
 ---
 title: "Haiku Optimization: Intelligent Model Routing for AI-Native Development"
-subtitle: "Validating that Haiku achieves 90% of Sonnet's performance on well-defined tasks
-				at 10x lower cost through intelligent model routing—Plan (Sonnet) → Execute (Haiku)
-				→ Review (Opus)."
+subtitle: "Planning with stronger models, executing defined work with cheaper ones"
 authors: ["Micah Johnson"]
 category: "Research"
-abstract: "This paper presents empirical validation of intelligent model routing in AI-native
-				development workflows. We implemented a 4-tier routing system that automatically
-				selects Claude model families (Haiku, Sonnet, Opus) based on task complexity,
-				achieving100% success rate across 8 taskswith67.5%
-				cost reductioncompared to uniform Sonnet usage. The core hypothesis—that
-				effective planning enables Haiku to execute well-defined tasks at 10x lower cost
-				while maintaining 90% of Sonn"
-keywords: []
-publishedAt: "2025-01-08"
+abstract: >-
+  This paper evaluates model routing for AI-native development workflows. A
+  four-tier routing system selected Claude model families by task complexity and
+  tested whether stronger planning enables cheaper execution on well-defined
+  tasks while preserving quality. The result reframes model choice as a workflow
+  architecture problem rather than a single-model preference.
+keywords: ["Model Routing", "Claude Haiku", "Claude Sonnet", "Cost Optimization", "AI-Native Development", "Agent Workflow"]
+publishedAt: "2026-01-01"
 readingTime: 12
 difficulty: "intermediate"
 published: true
@@ -206,4 +203,3 @@ If you're researching model selection:
 The Norvig Partnership— Human-AI collaboration achieving 20x productivity gains
 Ethos Transfer in Agentic Engineering— How agents learn project values through documentation
 The Hermeneutic Spiral in UX Research— Iterative refinement through understanding-action loops
-

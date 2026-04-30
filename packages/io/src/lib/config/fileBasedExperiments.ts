@@ -8,7 +8,7 @@
 
 import type { FileBasedExperiment } from '@create-something/canon';
 import type { Paper } from '@create-something/canon/types';
-import { transformExperimentToPaper } from '@create-something/canon';
+import { isPublicFileBasedContent, transformExperimentToPaper } from '@create-something/canon';
 
 // Re-export for consumers
 export type { FileBasedExperiment };
@@ -595,6 +595,7 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		reading_time_minutes: 15,
 		difficulty: 'intermediate',
 		is_file_based: true,
+		featured: 60,
 		tests_principles: [
 			'tool-complementarity', // Agent analyzes, translates; human approves, tests
 			'rams-principle-2', // Useful—MVPs become production components
@@ -760,6 +761,7 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		reading_time_minutes: 10,
 		difficulty: 'intermediate',
 		is_file_based: true,
+		featured: 70,
 		is_executable: 1,
 		tests_principles: [
 			'heidegger-zuhandenheit', // Interface recedes—user describes intent, not mechanics
@@ -805,6 +807,7 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		reading_time_minutes: 15,
 		difficulty: 'advanced',
 		is_file_based: true,
+		featured: 95,
 		tests_principles: [
 			'heidegger-zuhandenheit', // Infrastructure recedes—administrators see decisions, not algorithms
 			'rams-principle-2', // Useful—99.6% cost reduction, same quality
@@ -840,11 +843,15 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 	},
 ];
 
+function getPublicFileBasedExperiments(): FileBasedExperiment[] {
+	return fileBasedExperiments.filter(isPublicFileBasedContent);
+}
+
 /**
  * Get all file-based experiments, transformed to match Paper interface
  */
 export function getFileBasedExperiments(): FileBasedExperimentPaper[] {
-	return fileBasedExperiments.map((experiment) =>
+	return getPublicFileBasedExperiments().map((experiment) =>
 		transformExperimentToPaper(experiment) as unknown as FileBasedExperimentPaper
 	);
 }
@@ -853,12 +860,12 @@ export function getFileBasedExperiments(): FileBasedExperimentPaper[] {
  * Get a file-based experiment by slug
  */
 export function getFileBasedExperiment(slug: string): FileBasedExperiment | undefined {
-	return fileBasedExperiments.find(exp => exp.slug === slug);
+	return getPublicFileBasedExperiments().find((exp) => exp.slug === slug);
 }
 
 /**
  * Check if a slug corresponds to a file-based experiment
  */
 export function isFileBasedExperiment(slug: string): boolean {
-	return fileBasedExperiments.some(exp => exp.slug === slug);
+	return getPublicFileBasedExperiments().some((exp) => exp.slug === slug);
 }

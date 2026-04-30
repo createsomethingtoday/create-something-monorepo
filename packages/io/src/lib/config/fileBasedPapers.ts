@@ -8,7 +8,7 @@
  */
 
 import type { FileBasedExperiment } from '@create-something/canon';
-import { transformExperimentToPaper } from '@create-something/canon';
+import { isPublicFileBasedContent, transformExperimentToPaper } from '@create-something/canon';
 
 // Re-use the FileBasedExperiment type since it has the same shape
 export type FileBasedPaper = FileBasedExperiment;
@@ -42,6 +42,7 @@ export const fileBasedPapers: FileBasedPaper[] = [
 		reading_time_minutes: 16,
 		difficulty: 'intermediate',
 		is_file_based: true,
+		featured: 100,
 		tests_principles: [
 			'mcp-first-thesis',
 			'three-tier-framework',
@@ -73,7 +74,9 @@ export const fileBasedPapers: FileBasedPaper[] = [
 		reading_time_minutes: 18,
 		difficulty: 'intermediate',
 		is_file_based: true,
+		featured: 90,
 		tests_principles: ['rams-principle-2', 'subtractive-triad'],
+		route: '/papers/andon-protocol',
 		ascii_art: `
         ╭───────────────────────────────────────╮
        ╱   First pull     Line stop              ╲
@@ -97,11 +100,13 @@ export const fileBasedPapers: FileBasedPaper[] = [
 		reading_time_minutes: 15,
 		difficulty: 'intermediate',
 		is_file_based: true,
+		featured: 80,
 		tests_principles: [
 			'verification-first',
 			'rams-principle-2',
 			'subtractive-triad'
 		],
+		route: '/papers/ground-case-study',
 		ascii_art: `
         ╭───────────────────────────────────────╮
        ╱   BEFORE          AFTER                 ╲
@@ -132,6 +137,7 @@ export const fileBasedPapers: FileBasedPaper[] = [
 		reading_time_minutes: 22,
 		difficulty: 'intermediate',
 		is_file_based: true,
+		featured: 75,
 		tests_principles: [
 			'mcp-first-thesis',
 			'three-tier-framework',
@@ -147,26 +153,69 @@ export const fileBasedPapers: FileBasedPaper[] = [
       ╰───────────────────────────────────────────╯
            Creation over consumption.
 `
+	},
+	{
+		id: 'paper-braintrust-trace-unsurfacing',
+		slug: 'braintrust-trace-unsurfacing',
+		title: 'Braintrust Trace Unsurfacing: Finding What Normal Aggregates Hide',
+		description:
+			'How a 1,000-row Braintrust trace snapshot exposed clustered permission failures, routing misses, and latent control-plane stalls that aggregate reliability metrics hid.',
+		excerpt_short: 'A trace audit that turns hidden reliability structure into ranked experiments',
+		excerpt_long:
+			'This paper documents a CREATE SOMETHING Braintrust trace audit and explains why aggregate uptime metrics were insufficient to diagnose practical reliability risk. It converts concentrated failure clusters into ranked experiments with explicit acceptance criteria and dashboard contracts.',
+		category: 'Research',
+		tags: [
+			'Braintrust',
+			'Observability',
+			'MCP',
+			'Reliability',
+			'Experiment Design',
+			'Dashboarding'
+		],
+		created_at: '2026-03-04T00:00:00Z',
+		updated_at: '2026-03-04T00:00:00Z',
+		reading_time_minutes: 15,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'verification-first',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'observability'
+		],
+		route: '/papers/braintrust-trace-unsurfacing',
+		ascii_art: `
+        ╭───────────────────────────────────────╮
+       ╱   1,000 traces     71 error rows        ╲
+      │   Aggregates hide  →  clusters surface   │
+      │   Incidents become ranked experiments    │
+      ╰───────────────────────────────────────────╯
+           Reliability is structure, not vibes.
+`
 	}
 ];
+
+function getPublicFileBasedPapers(): FileBasedPaper[] {
+	return fileBasedPapers.filter(isPublicFileBasedContent);
+}
 
 /**
  * Get all file-based papers, transformed to match Paper interface
  */
 export function getFileBasedPapers() {
-	return fileBasedPapers.map(transformExperimentToPaper);
+	return getPublicFileBasedPapers().map(transformExperimentToPaper);
 }
 
 /**
  * Get a file-based paper by slug
  */
 export function getFileBasedPaper(slug: string): FileBasedPaper | undefined {
-	return fileBasedPapers.find(p => p.slug === slug);
+	return getPublicFileBasedPapers().find((p) => p.slug === slug);
 }
 
 /**
  * Check if a slug corresponds to a file-based paper
  */
 export function isFileBasedPaper(slug: string): boolean {
-	return fileBasedPapers.some(p => p.slug === slug);
+	return getPublicFileBasedPapers().some((p) => p.slug === slug);
 }

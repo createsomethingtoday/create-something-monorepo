@@ -5,9 +5,52 @@ title: "Webflow Plagiarism Detection"
 subtitle: "Agent-Native Algorithms for Template Analysis"
 description: "A multi-layer plagiarism detection system combining classic CS algorithms (MinHash, LSH, PageRank, Bayesian) with AI tiers, exposed as MCP tools for team AI agents."
 meta: "January 2026 · Algorithms + MCP · Agent-Native Design"
+keywords: ["Webflow", "Plagiarism Detection", "MCP", "MinHash", "LSH", "PageRank", "Bayesian Confidence"]
 publishedAt: "2026-01-20"
+readingTime: 15
+difficulty: "intermediate"
 published: true
 ---
+
+## Experiment Release Summary
+
+This experiment tested whether classic detection algorithms can become agent-native review tools when exposed through MCP.
+
+The important result is not that AI replaces plagiarism review. The important result is that deterministic algorithms handle scale, MCP makes those algorithms callable by team agents, and human judgment remains reserved for edge cases where policy and visual similarity still matter.
+
+## Evidence Snapshot
+
+| Surface | Measurement | Result | Status |
+|---------|-------------|--------|--------|
+| Corpus scale | Indexed Webflow templates | 9,593 templates | Validated |
+| Function extraction | JavaScript functions analyzed | 517,850 functions | Validated |
+| Unit coverage | Algorithm tests | 41/41 passing | Validated |
+| Runtime cost | Monthly automated system estimate | $2.20/month | Validated estimate |
+| Manual baseline | 50 manual cases | $625/month | Baseline |
+| Cost improvement | Automated vs manual estimate | 99.6% lower cost | Validated estimate |
+| MCP surface | Agent-callable tools | 10 tools | Implemented |
+
+## What This Improves
+
+The experiment gives marketplace review a scalable first pass.
+
+MinHash, LSH, PageRank, Bloom filters, HyperLogLog, and Bayesian scoring do the deterministic work. AI is reserved for judgment-heavy review, false-positive handling, and edge-case interpretation. That is the CREATE SOMETHING pattern: automation performs the repeatable checks; judgment stays explicit.
+
+## Evaluation Surface
+
+The validation surface covers algorithm behavior, integration shape, and cost model:
+
+- algorithm unit tests for MinHash/SuperMinHash, LSH banding, Bayesian confidence, and PageRank
+- pairwise comparisons across known templates
+- vector similarity and MinHash similarity as complementary signals
+- MCP tool exposure through the `webflow-mcp` surface
+- cost comparison against manual review
+
+This experiment does not yet prove screenshot-level visual similarity, optimal Bayesian weights, or real-time ingestion. Those remain separate validation steps rather than hidden assumptions.
+
+## Next Decision
+
+The next operating decision is whether this should graduate into the Webflow review architecture as a deterministic precheck feeding the Analyzer MCP review artifact, with visual similarity and Bayesian tuning tracked as follow-up experiments.
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗

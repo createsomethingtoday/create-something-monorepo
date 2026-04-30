@@ -5,47 +5,40 @@
  * theoretical analysis that DESCRIBES the hermeneutic circle.
  *
  * Distinguished from experiments which DEMONSTRATE the circle.
- *
- * Auto-discovers papers from ./[slug]/meta.ts files.
  */
 
 import type { PageServerLoad } from './$types';
 import type { PaperMeta } from './types';
-import { fileBasedPapers } from '$lib/config/fileBasedPapers';
+import type { ResearchArtifact } from '$lib/config/researchArtifacts';
+import { getLocalPaperArtifacts, normalizeCategory } from '$lib/config/researchArtifacts';
 
-// Auto-discover all papers with meta.ts files
-const paperModules = import.meta.glob<{ meta: PaperMeta }>('./*/meta.ts', { eager: true });
-
-function normalizeCategory(category: string): PaperMeta['category'] {
-	const normalized = category.toLowerCase().replace(/\s+/g, '-');
+function normalizePaperCategory(category: string): PaperMeta['category'] {
+	const normalized = normalizeCategory(category);
 	if (normalized === 'case-study' || normalized === 'methodology' || normalized === 'research') {
 		return normalized;
 	}
 	return 'research';
 }
 
-// Static route metadata remains canonical when both exist.
-const staticPapers: PaperMeta[] = Object.values(paperModules).map((mod) => mod.meta);
-const staticSlugs = new Set(staticPapers.map((paper) => paper.slug));
+function artifactToPaperMeta(artifact: ResearchArtifact): PaperMeta {
+	const tags = artifact.tags?.map((tag) => tag.name) ?? [];
 
-const markdownPapers: PaperMeta[] = fileBasedPapers
-	.filter((paper) => !staticSlugs.has(paper.slug))
-	.map((paper) => ({
-		slug: paper.slug,
-		title: paper.title,
-		subtitle: '',
-		description: paper.description,
-		category: normalizeCategory(paper.category),
-		readingTime: paper.reading_time_minutes,
-		difficulty: paper.difficulty,
-		date: paper.created_at.split('T')[0],
-		keywords: paper.tags
-	}));
+	return {
+		slug: artifact.slug,
+		title: artifact.title,
+		subtitle: artifact.excerpt_short || '',
+		description: artifact.description || artifact.excerpt_long || artifact.excerpt_short || '',
+		category: normalizePaperCategory(artifact.category),
+		readingTime: artifact.reading_time,
+		difficulty: (artifact.difficulty_level || 'intermediate') as PaperMeta['difficulty'],
+		date: (artifact.published_at || artifact.created_at || artifact.date || '').split('T')[0],
+		keywords: tags
+	};
+}
 
-// Merge and sort by date (newest first)
-const papers: PaperMeta[] = [...staticPapers, ...markdownPapers].sort(
-	(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-);
+const papers: PaperMeta[] = getLocalPaperArtifacts()
+	.map(artifactToPaperMeta)
+	.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 export const load: PageServerLoad = async () => {
 	return {

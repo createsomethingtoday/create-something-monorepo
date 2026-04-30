@@ -1,14 +1,15 @@
 ---
 title: "From Learning About to Dwelling Within"
-subtitle: "Agentic Engineering as Methodology Transfer—how Claude Code in the terminal enables
-				ethos adoption through use, not instruction."
+subtitle: "How agentic engineering transfers methodology through use"
 authors: ["Micah Johnson"]
 category: "Research"
-abstract: "Traditional learning systems teach usersaboutmethodologies—they consume content, pass quizzes,
-				receive certificates. But methodology adoption requires something deeper: users must come todwell withinthe methodology, applying its principles transparently in daily practice. This paper applies Heidegger's concept
-				of dwelling to the problem of methodology transfer, arguing that Claude Code in the terminal provides an optimal
-				vehicle for ethos adoption. The terminal is where developers al"
-keywords: []
+abstract: >-
+  Traditional learning systems teach users about methodologies, but methodology
+  adoption requires users to practice inside the method until its constraints
+  become transparent. This paper applies the concept of dwelling to agentic
+  engineering and argues that terminal-based AI work can transfer an ethos
+  through repeated, situated use rather than instruction alone.
+keywords: ["Agentic Engineering", "Methodology Transfer", "Claude Code", "Dwelling", "Terminal Workflow", "Ethos"]
 publishedAt: "2025-01-08"
 readingTime: 20
 difficulty: "advanced"
@@ -188,4 +189,3 @@ This is the goal: not users who can recite the Subtractive Triad, but users who 
 
 
 ## References
-

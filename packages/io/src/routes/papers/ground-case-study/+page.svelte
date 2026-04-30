@@ -6,6 +6,34 @@
 		{ label: 'Time saved', value: '~8 hours', context: 'vs manual code review' }
 	];
 
+	const evidenceSnapshot = [
+		{
+			claim: 'Code-analysis claims should be computed before they are summarized',
+			evidence: 'Ground required duplicate, dead-code, and connection checks before claims',
+			status: 'Validated',
+			artifact: 'Verification-first tool contract'
+		},
+		{
+			claim: 'Ground materially reduces review time on large monorepos',
+			evidence: '10 minutes of tool-backed analysis vs 9+ hours manual estimate',
+			status: 'Validated',
+			artifact: 'Time-savings comparison'
+		},
+		{
+			claim: 'Framework conventions need explicit handling',
+			evidence: 'SvelteKit, Cloudflare Workers, and test entry points were treated as live surfaces',
+			status: 'Validated',
+			artifact: 'Framework-awareness rules'
+		}
+	];
+
+	const evaluationSurface = [
+		{ surface: 'Monorepo scope', measurement: '80+ packages, 50k+ TypeScript lines', result: 'Analyzed' },
+		{ surface: 'Duplicate detection', measurement: 'AST, line diff, token Jaccard, LSH', result: '47 candidates found' },
+		{ surface: 'Dead exports', measurement: 'Import and type-reference counts', result: '23 exports identified' },
+		{ surface: 'Verification', measurement: '20% spot-check of findings', result: '<5% false positives' }
+	];
+
 	const beforeAfter = [
 		{
 			scenario: 'Duplicate Detection',
@@ -49,6 +77,70 @@
 			CREATE SOMETHING monorepo (~80+ packages, 50k+ lines of TypeScript). 
 			The verification-first approach prevented AI hallucination and saved an estimated 
 			<strong>8+ hours</strong> compared to manual code review or pattern-matching tools.
+		</p>
+	</section>
+
+	<section class="section release-section">
+		<h2>Release Thesis</h2>
+		<p>
+			Ground turns AI code review from confident pattern matching into computed evidence. The
+			operating decision this case study enables is simple: agents should not make architectural
+			or cleanup claims until a tool has measured the relevant code surface.
+		</p>
+	</section>
+
+	<section class="section release-section">
+		<h2>Evidence Snapshot</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Claim</th>
+					<th>Evidence</th>
+					<th>Status</th>
+					<th>Artifact</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each evidenceSnapshot as row}
+					<tr>
+						<td>{row.claim}</td>
+						<td>{row.evidence}</td>
+						<td>{row.status}</td>
+						<td>{row.artifact}</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</section>
+
+	<section class="section release-section">
+		<h2>Evaluation Surface</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Surface</th>
+					<th>Measurement</th>
+					<th>Result</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each evaluationSurface as row}
+					<tr>
+						<td>{row.surface}</td>
+						<td>{row.measurement}</td>
+						<td>{row.result}</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</section>
+
+	<section class="section release-section">
+		<h2>Next Decision</h2>
+		<p>
+			Promote Ground-style verification contracts into any agent workflow that writes refactor,
+			duplicate-code, dead-code, or design-system claims. Devalue review paths that rely on prose
+			confidence without a computed claim artifact.
 		</p>
 	</section>
 
@@ -295,6 +387,12 @@
 		padding: var(--space-lg);
 		border-radius: var(--radius-lg);
 		margin-bottom: var(--space-xl);
+	}
+
+	.release-section {
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
 	}
 
 	.abstract h2 {

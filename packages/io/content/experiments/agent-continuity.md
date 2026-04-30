@@ -5,7 +5,10 @@ title: "Agent Continuity"
 subtitle: "Harnesses for Long-Running Sessions"
 description: "Analysis of Anthropic's agent harness patterns through a Heideggerian lens—how persistent artifacts enable re-entry into the hermeneutic circle across context boundaries."
 meta: "December 2025 · Agent Architecture · Heidegger, Anthropic"
+keywords: ["Agent Continuity", "Harness", "Context Management", "Anthropic", "Long-Running Agents"]
 publishedAt: "2025-12-15"
+readingTime: 8
+difficulty: "advanced"
 published: true
 ---
 
@@ -75,4 +78,3 @@ The harness doesn'tsolvecontinuity—itenables re-entry into the
 
 
 ## Key Insight
-

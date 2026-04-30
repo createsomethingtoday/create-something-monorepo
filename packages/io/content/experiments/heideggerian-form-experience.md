@@ -5,7 +5,10 @@ title: "Heideggerian Form Experience"
 subtitle: "When Forms Serve Rather Than Extract"
 description: "An interactive experiment demonstrating how forms can serve user intent rather than extract value. Experience Zuhandenheit, Vorhandenheit, and Gelassenheit through interaction."
 meta: "December 2025 · Interactive · Heidegger, Rams, Subtractive Triad"
+keywords: ["Forms", "Heidegger", "Zuhandenheit", "Gelassenheit", "UX", "Subtractive Triad"]
 publishedAt: "2025-12-15"
+readingTime: 8
+difficulty: "intermediate"
 published: true
 ---
 
@@ -107,4 +110,3 @@ This experiment demonstrates all three. The form is a redesigned workflow (discl
 
 Philosophy isn't impractical—it's the foundation of durable design. When you understandwhycertain patterns work (Zuhandenheit), you can apply them across contexts.
 					When you recognize extraction patterns (Gestell), you can avoid them.
-

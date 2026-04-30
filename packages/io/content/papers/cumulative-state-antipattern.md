@@ -1,16 +1,16 @@
 ---
 title: "The Cumulative State Anti-Pattern"
-subtitle: "When "Current" Masquerades as "Ever"—how ambiguous field semantics create
-				invisible bugs that punish users for legitimate actions."
+subtitle: "When current-state fields masquerade as lifetime achievement"
 authors: ["Micah Johnson"]
 category: "Methodology"
-abstract: "A template creator delisted several of their published templates to maintain quality standards.
-				The system responded by revoking their "established creator" privileges—blocking new submissions.
-				The bug wasn't in the logic; it was in thesemantics. A field named "Templates Published"
-				tracked current state, not cumulative achievement. This paper examines how ambiguous field
-				naming creates invisible bugs, proposes a naming convention that prevents them, and reflects
-				on the Heideg"
-keywords: []
+abstract: >-
+  A template creator delisted published templates to maintain quality standards,
+  and the system revoked established-creator privileges because a current-state
+  field was treated as lifetime achievement. This paper names the cumulative
+  state anti-pattern, shows how ambiguous field semantics create invisible user
+  punishment, and proposes naming rules that separate current, historical, and
+  eligibility state.
+keywords: ["State Semantics", "Data Modeling", "Webflow", "Eligibility", "Anti-Pattern", "Field Naming"]
 publishedAt: "2025-01-08"
 readingTime: 8
 difficulty: "intermediate"
@@ -129,4 +129,3 @@ In database design, the difference between "published" and "currently published"
 
 
 ## References
-

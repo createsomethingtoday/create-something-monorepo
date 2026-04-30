@@ -11,6 +11,36 @@ difficulty: "intermediate"
 published: true
 ---
 
+## Release Thesis
+
+Composio should be used as an internal commodity-connectivity substrate, not as the CREATE SOMETHING product surface. The operator decision this paper enables is where to draw the line between reusable integration plumbing and differentiated MCP creation: use Composio when the value is access to ordinary SaaS actions, and move to custom MCP when the value is domain judgment, policy enforcement, or reliability responsibility.
+
+## Evidence Snapshot
+
+| Claim | Evidence | Status | Reusable Artifact |
+|-------|----------|--------|-------------------|
+| Commodity connectivity should not consume delivery attention | OAuth, token state, and CRUD scaffolding repeat across long-tail SaaS requests | Validated by delivery pattern | Wrap-pattern inclusion rule |
+| Brand and policy control must remain CREATE SOMETHING-owned | Client-facing surface remains CREATE SOMETHING MCP while Composio stays behind the adapter boundary | Proposed operating invariant | Client visibility boundary |
+| Adoption is not complete until pilot evidence closes | Technical evaluation passed 29/29 checks on 2026-02-10, but 2026-02-21 decision remains conditional adopt | Partial | Phase 2 pilot gate |
+| The Three-Tier Framework still governs integration choice | Database, Automation, and Judgment ownership can be mapped before implementation | Validated by architecture review | Composio/custom/hybrid rubric |
+
+## What This Improves
+
+This moves the Composio decision out of taste, enthusiasm, or blanket rejection. It gives delivery teams a rubric: accelerate what is commoditized, protect what carries policy, margin, or accountability, and keep vendor substitution possible through a strict wrapper.
+
+## Evaluation Surface
+
+| Surface | Measurement | Result | Status |
+|---------|-------------|--------|--------|
+| Technical readiness | Internal evaluation checks | 29/29 passing checks on 2026-02-10 | pass |
+| Adoption governance | Canonical decision status | Conditional adopt on 2026-02-21 | partial |
+| Brand boundary | Client-facing MCP surface | CREATE SOMETHING remains visible surface | proposed |
+| Pilot evidence | Client pilot closure | Still required before full adoption | open |
+
+## Next Decision
+
+Run the Phase 2 pilot through this rubric and decide whether Composio remains a narrow commodity bridge, graduates to a broader default for low-risk connectivity, or is constrained further because reliability or policy integrity fails under real delivery pressure.
+
 ## Executive Thesis
 
 Composio belongs in our stack as **infrastructure for commodity connectivity**, not as product identity.

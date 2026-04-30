@@ -1,0 +1,22 @@
+[
+	{
+		"surface": "paper",
+		"slug": "beads-integration-patterns",
+		"reason": "Historical Beads coordination pattern. Loom is now the current coordination system, so keep the route reachable for backlinks but omit it from current research discovery."
+	},
+	{
+		"surface": "paper",
+		"slug": "dual-agent-routing-experiment",
+		"reason": "Superseded by later Codex orchestration and direct Claude Code scale findings. Keep the route reachable as historical context but avoid promoting it as a current recommendation."
+	},
+	{
+		"surface": "paper",
+		"slug": "haiku-ultrathink-validation",
+		"reason": "Proposed experiment without completed results in the page. Keep the route reachable, but do not surface it in discovery until evidence is added."
+	},
+	{
+		"surface": "experiment",
+		"slug": "agent-operations",
+		"reason": "Internal operations dashboard for historical Modal agent monitoring. Keep the route reachable for operators, but do not promote it as a public research experiment."
+	}
+]

@@ -1,16 +1,14 @@
 ---
-title: "Understanding Graphs: "Less, But Better" Codebase Navigation"
-subtitle: "Applying Heidegger's hermeneutic circle to develop minimal dependency documentation
-				that captures only understanding-critical relationships—replacing exhaustive tooling
-				with human-readable insight."
+title: "Understanding Graphs: Less, But Better Codebase Navigation"
+subtitle: "Minimal dependency documentation for understanding-critical relationships"
 authors: ["Micah Johnson"]
 category: "Research"
-abstract: "This paper presentsUnderstanding Graphs: a minimal, human-readable approach to
-				documenting codebase relationships that embodies Dieter Rams' principle "Weniger, aber besser"
-				(less, but better). Through hermeneutic analysis, we identified that traditional dependency
-				graphs fail the minimalism test—they captureallrelationships when onlyunderstanding-criticalones matter. We developed a canonical format (UNDERSTANDING.md)
-				that captures bidirectional semantic relationships, entry poin"
-keywords: []
+abstract: >-
+  This paper presents Understanding Graphs: a minimal, human-readable approach
+  to documenting codebase relationships. Instead of drawing every dependency, the
+  format captures the relationships that matter for understanding, maintenance,
+  and onboarding.
+keywords: ["Understanding Graphs", "Codebase Navigation", "Documentation", "Dieter Rams", "Knowledge Graph", "Developer Experience"]
 publishedAt: "2025-01-08"
 readingTime: 15
 difficulty: "advanced"
@@ -171,4 +169,3 @@ The hermeneutic insight: To understand a codebase, you don't need all
 
 
 ## References
-

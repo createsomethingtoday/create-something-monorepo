@@ -3,10 +3,12 @@ title: "Subtractive Form Design"
 subtitle: "When Absence Is Clearer Than Instruction—a case study in hermeneutic form architecture"
 authors: ["Micah Johnson"]
 category: "Case Study"
-abstract: "This paper documents the application of Heidegger's system-levelhermeneutic question(a method of interpretation that asks whether each part serves the understanding of the whole, not just whether it's technically correct)—"Does this serve the whole?"—to
-				form field design. Through a case study of Webflow's app submission form, we demonstrate that form fields which don't apply
-				to certain contexts create systemic disconnection: developers enter incorrect values, reviewers manually clear the"
-keywords: []
+abstract: >-
+  This paper applies the question "Does this serve the whole?" to form field
+  design. Through a Webflow app submission case study, it shows how fields that
+  do not apply to a user's context create downstream review work, incorrect
+  values, and avoidable system disconnection.
+keywords: ["Form Design", "Subtractive Design", "Webflow", "Hermeneutics", "UX", "Review Workflow"]
 publishedAt: "2025-01-08"
 readingTime: 8
 difficulty: "intermediate"
@@ -103,4 +105,3 @@ The fix was minimal: conditional rendering based on app type. But the principle 
 					more clearly than instruction ever could.
 "Does this serve the whole?"If not, remove it.
 — The Subtractive Triad, Level 3
-

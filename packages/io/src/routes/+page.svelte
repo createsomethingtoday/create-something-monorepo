@@ -24,30 +24,40 @@
   const papers = $derived(data.papers);
   const categories = $derived(data.categories ?? []);
 
-  function isFileBasedPaper(paper: unknown): boolean {
-    return (
-      typeof paper === 'object' &&
-      paper !== null &&
-      (paper as { is_file_based?: boolean }).is_file_based === true
-    );
-  }
-
   function getPaperTimestamp(paper: Partial<Paper>): number {
     return new Date(paper.published_at || paper.created_at || paper.date || 0).getTime();
   }
 
-  const featuredExperiments = $derived.by(
+  function getFeaturedScore(paper: Partial<Paper>): number {
+    return Number(paper.featured || 0);
+  }
+
+  function getArtifactRoute(paper: Partial<Paper> & { route?: string }): string {
+    if (paper.route) return paper.route;
+    if (!paper.slug) return '';
+    return `/experiments/${paper.slug}`;
+  }
+
+  function isPaperArtifact(paper: Partial<Paper> & { route?: string }): boolean {
+    return getArtifactRoute(paper).startsWith('/papers/');
+  }
+
+  const featuredArtifacts = $derived.by(
     () =>
       papers
-        .filter((paper) => paper.featured || isFileBasedPaper(paper))
-        .sort((left, right) => getPaperTimestamp(right) - getPaperTimestamp(left))
+        .filter((paper) => getFeaturedScore(paper) > 0)
+        .sort(
+          (left, right) =>
+            getFeaturedScore(right) - getFeaturedScore(left) ||
+            getPaperTimestamp(right) - getPaperTimestamp(left)
+        )
         .slice(0, 6) as Paper[]
   );
 
   const latestPapers = $derived.by(
     () =>
       papers
-        .filter((paper) => !isFileBasedPaper(paper))
+        .filter(isPaperArtifact)
         .sort((left, right) => getPaperTimestamp(right) - getPaperTimestamp(left))
         .slice(0, 3) as Paper[]
   );
@@ -55,7 +65,7 @@
   const proofMetrics = $derived.by(() => [
     { value: `${papers.length}`, label: 'published experiments + papers' },
     { value: `${categories.length || 1}`, label: 'research categories' },
-    { value: `${featuredExperiments.length}`, label: 'featured artifacts to inspect first' },
+    { value: `${featuredArtifacts.length}`, label: 'featured artifacts to inspect first' },
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
 
@@ -203,7 +213,7 @@
                 {#if latestPapers.length > 0}
                   {#each latestPapers as paper}
                     <li>
-                      <a class="latest-link" href={`/papers/${paper.slug}`}>
+                      <a class="latest-link" href={getArtifactRoute(paper)}>
                         <span>{paper.title}</span>
                       </a>
                     </li>
@@ -270,9 +280,9 @@
   </div>
 </section>
 
-{#if featuredExperiments.length > 0}
+{#if featuredArtifacts.length > 0}
   <PapersGrid
-    papers={featuredExperiments}
+    papers={featuredArtifacts}
     title="Featured Work"
     subtitle="Experiments, field notes, and patterns worth inspecting first."
   />

@@ -1,5 +1,36 @@
 import type { Paper } from './paper.js';
 
+export type PublicationFlag = boolean | number;
+
+export type FileBasedPublicationState = {
+	published?: PublicationFlag;
+	is_hidden?: PublicationFlag;
+	hidden?: boolean;
+	archived?: PublicationFlag;
+};
+
+function publicationFlagToNumber(flag: PublicationFlag | undefined, defaultValue: 0 | 1): 0 | 1 {
+	if (flag === undefined) return defaultValue;
+	if (typeof flag === 'boolean') return flag ? 1 : 0;
+	return Number(flag) === 1 ? 1 : 0;
+}
+
+function hiddenFlagToNumber(
+	isHidden: PublicationFlag | undefined,
+	hidden: boolean | undefined
+): 0 | 1 {
+	if (isHidden !== undefined) return publicationFlagToNumber(isHidden, 0);
+	return hidden ? 1 : 0;
+}
+
+export function isPublicFileBasedContent(content: FileBasedPublicationState): boolean {
+	return (
+		publicationFlagToNumber(content.published, 1) === 1 &&
+		hiddenFlagToNumber(content.is_hidden, content.hidden) === 0 &&
+		publicationFlagToNumber(content.archived, 0) === 0
+	);
+}
+
 /**
  * File-Based Experiment Type
  *
@@ -20,7 +51,7 @@ import type { Paper } from './paper.js';
  * in a visual register appropriate to its purpose.
  */
 
-export interface FileBasedExperiment {
+export interface FileBasedExperiment extends FileBasedPublicationState {
 	id: string;
 	slug: string;
 	title: string;
@@ -55,16 +86,17 @@ export type FileBasedExperimentPaper = Paper & {
  * Transform a FileBasedExperiment to match Paper interface fields
  */
 export function transformExperimentToPaper(exp: FileBasedExperiment): FileBasedExperimentPaper {
-	const { reading_time_minutes, difficulty, tags, ...rest } = exp;
+	const { reading_time_minutes, difficulty, tags, published, is_hidden, hidden, archived, ...rest } =
+		exp;
 
 	return {
 		...rest,
 		reading_time: reading_time_minutes,
 		published_at: exp.created_at,
 		difficulty_level: difficulty,
-		published: 1,
-		is_hidden: 0,
-		archived: 0,
+		published: publicationFlagToNumber(published, 1),
+		is_hidden: hiddenFlagToNumber(is_hidden, hidden),
+		archived: publicationFlagToNumber(archived, 0),
 		featured: exp.featured || 0,
 		tags: tags.map((tag) => ({
 			id: tag.toLowerCase().replace(/\s+/g, '-'),
@@ -88,7 +120,7 @@ export function transformExperimentToPaper(exp: FileBasedExperiment): FileBasedE
  * - Papers DESCRIBE the circle (detached observation)
  * - Experiments DEMONSTRATE the circle (absorbed engagement)
  */
-export interface FileBasedPaper {
+export interface FileBasedPaper extends FileBasedPublicationState {
 	id: string;
 	slug: string;
 	title: string;
@@ -119,15 +151,17 @@ export interface FileBasedPaper {
  * Transform a FileBasedPaper to match Paper interface fields
  */
 export function transformResearchPaperToPaper(paper: FileBasedPaper) {
+	const { published, is_hidden, hidden, archived, ...rest } = paper;
+
 	return {
-		...paper,
+		...rest,
 		tags: paper.keywords.map(k => ({ id: k, name: k, slug: k.toLowerCase().replace(/\s+/g, '-') })),
 		reading_time: paper.reading_time_minutes,
 		published_at: paper.created_at,
 		difficulty_level: paper.difficulty,
-		published: 1,
-		is_hidden: 0,
-		archived: 0,
+		published: publicationFlagToNumber(published, 1),
+		is_hidden: hiddenFlagToNumber(is_hidden, hidden),
+		archived: publicationFlagToNumber(archived, 0),
 		route: `/papers/${paper.slug}`
 	};
 }

@@ -1,23 +1,14 @@
 import type { PageServerLoad } from './$types';
-import type { Paper } from '@create-something/canon/types';
 import { getPlatform } from '@create-something/canon/platform';
-import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
-
-function sortByFeaturedThenDate<T extends { featured?: number; published_at?: string | null; created_at?: string }>(
-	items: T[]
-): T[] {
-	return [...items].sort((a, b) => {
-		const aFeatured = a.featured ?? 0;
-		const bFeatured = b.featured ?? 0;
-		if (bFeatured !== aFeatured) return bFeatured - aFeatured;
-		const aDate = new Date(a.published_at || a.created_at || 0).getTime();
-		const bDate = new Date(b.published_at || b.created_at || 0).getTime();
-		return bDate - aDate;
-	});
-}
+import {
+	getLocalExperimentArtifacts,
+	mergeBySlug,
+	sortByFeaturedThenDate,
+	type ResearchArtifact
+} from '$lib/config/researchArtifacts';
 
 export const load: PageServerLoad = async ({ platform }) => {
-	const fileBasedExperiments = getFileBasedExperiments();
+	const localExperiments = getLocalExperimentArtifacts();
 
 	try {
 		// getPlatform() abstracts D1/SQLite - same code works on Cloudflare or Mac Mini
@@ -33,13 +24,13 @@ export const load: PageServerLoad = async ({ platform }) => {
       FROM papers
       WHERE published = 1 AND is_hidden = 0 AND archived = 0
     `
-		).all<Paper>();
+		).all<ResearchArtifact>();
 
 		const databaseExperiments = result.results || [];
-		const merged = [...fileBasedExperiments, ...databaseExperiments];
+		const merged = mergeBySlug(databaseExperiments, localExperiments);
 		return { papers: sortByFeaturedThenDate(merged) };
 	} catch (error) {
 		console.error('Error fetching experiments:', error);
-		return { papers: sortByFeaturedThenDate(fileBasedExperiments) };
+		return { papers: sortByFeaturedThenDate(localExperiments) };
 	}
 };

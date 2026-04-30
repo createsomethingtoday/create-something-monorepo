@@ -1,8 +1,11 @@
 ---
 title: "Subtractive Typography: When Removal Is the Animation"
 category: "research"
-abstract: "Exploring scroll-driven text subtraction where the medium embodies the message—corporate fluff strikes through and fades, leaving only the essence: "We remove what obscures.""
-keywords: ['Typography', 'Animation', 'Scroll-Driven', 'Subtraction', 'Canon', 'CSS']
+abstract: >-
+  Exploring scroll-driven text subtraction where the medium embodies the
+  message: corporate copy strikes through and fades, leaving only the phrase
+  "We remove what obscures."
+keywords: ["Typography", "Animation", "Scroll-Driven", "Subtraction", "Canon", "CSS"]
 publishedAt: "2025-12-11T00:00:00Z"
 readingTime: 8
 difficulty: "intermediate"
@@ -140,4 +143,3 @@ The strikethrough is honest: it shows what was there and what remains.
 			The final state is earned: you watched the subtraction happen.
 
 This is subtractive design applied to motion. The techniqueisthe message.
-

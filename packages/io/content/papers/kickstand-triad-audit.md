@@ -1,16 +1,15 @@
 ---
 title: "Subtractive Triad Audit: Kickstand"
-subtitle: "Applying the Subtractive Triad framework (DRY → Rams → Heidegger) to audit a production
-				venue intelligence system—demonstrating that creation is the discipline of removing what obscures."
+subtitle: "Applying DRY, Rams, and Heidegger to a production venue intelligence system"
 authors: ["Micah Johnson"]
 category: "Case Study"
-abstract: "This paper documents the application of theSubtractive Triadframework to Kickstand,
-				a venue intelligence automation system serving Half Dozen (a CREATE SOMETHING client). The system
-				had evolved through multiple architectural phases (Node.js → Railway → Cloudflare Workers),
-				accumulating significant technical debt. Through systematic application of three subtractive
-				disciplines—DRY (Unify), Rams (Remove), and Heidegger (Reconnect)—we achieved: 92% reduction
-				in active scripts (1"
-keywords: []
+abstract: >-
+  This paper applies the Subtractive Triad to Kickstand, a venue intelligence
+  automation system that accumulated technical debt through multiple
+  architectural phases. The audit uses DRY to unify, Rams to remove, and
+  Heidegger to reconnect the system to its purpose, producing measurable
+  reductions in scripts, errors, and operational ambiguity.
+keywords: ["Subtractive Triad", "Kickstand", "DRY", "Dieter Rams", "Heidegger", "Technical Debt", "Cloudflare Workers"]
 publishedAt: "2025-01-08"
 readingTime: 12
 difficulty: "intermediate"
@@ -119,4 +118,3 @@ The Subtractive Path Forward
 - DRYcatches mechanical duplication (parallel implementations)
 - Ramscatches functional obsolescence (155 → 13 scripts)
 - Heideggercatches systemic disconnection (documentation drift)
-
