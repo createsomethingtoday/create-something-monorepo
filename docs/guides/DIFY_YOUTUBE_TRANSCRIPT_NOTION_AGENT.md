@@ -133,6 +133,7 @@ Commands:
 
 ```bash
 pnpm dify:youtube-transcript:smoke
+pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent --case extract-known-video
 pnpm braintrust:eval:dify:local
 pnpm braintrust:eval:dify:youtube-transcript
 ```
