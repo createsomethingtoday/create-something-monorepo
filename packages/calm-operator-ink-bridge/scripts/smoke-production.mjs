@@ -6,6 +6,7 @@ const DEFAULT_ORIGIN = 'https://ink.createsomething.agency';
 const DEFAULT_SURFACE = 'core-ink';
 const DEFAULT_DEVICE_ID = 'core-ink';
 const REQUEST_TIMEOUT_MS = 15000;
+const REVIEW_TIMEOUT_MS = 65000;
 
 function usage() {
   return [
@@ -76,17 +77,19 @@ function assertArray(value, label) {
   }
 }
 
-async function requestJson({ name, url, token }) {
+async function requestJson({ name, url, token, method = 'GET', body, timeoutMs = REQUEST_TIMEOUT_MS }) {
   const headers = token ? { 'x-ink-token': token } : undefined;
   const response = await fetch(url, {
+    method,
     headers,
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+    body,
+    signal: AbortSignal.timeout(timeoutMs)
   });
   const text = await response.text();
-  let body = null;
+  let parsed = null;
 
   try {
-    body = text.length ? JSON.parse(text) : null;
+    parsed = text.length ? JSON.parse(text) : null;
   } catch {
     throw new Error(`${name} returned non-JSON response (${response.status})`);
   }
@@ -95,7 +98,7 @@ async function requestJson({ name, url, token }) {
     throw new Error(`${name} returned HTTP ${response.status}`);
   }
 
-  return body;
+  return parsed;
 }
 
 async function runCheck(name, fn) {
@@ -194,6 +197,29 @@ async function smoke(args) {
       });
       if (body?.ok !== true) throw new Error('device ok must be true');
       return body.device ? 'heartbeat present' : 'no heartbeat yet';
+    })
+  );
+
+  checks.push(
+    await runCheck('mcp-review', async () => {
+      const body = await requestJson({
+        name: 'mcp-review',
+        url: bridgeUrl(args.origin, '/ink/health-review/request', {
+          surface: args.surface,
+          device_id: args.deviceId
+        }),
+        token: args.token,
+        method: 'POST',
+        body: '{}',
+        timeoutMs: REVIEW_TIMEOUT_MS
+      });
+      assertString(body?.headline, 'mcp-review.headline');
+      assertString(body?.line1, 'mcp-review.line1');
+      assertString(body?.line2, 'mcp-review.line2');
+      assertString(body?.action, 'mcp-review.action');
+      if (typeof body.urgent !== 'boolean') throw new Error('mcp-review.urgent must be boolean');
+      if (!body.health_review) throw new Error('mcp-review.health_review is required');
+      return `${body.headline}: ${body.line1} / ${body.line2}`;
     })
   );
 

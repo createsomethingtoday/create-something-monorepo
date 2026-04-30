@@ -88,6 +88,9 @@ Local settings are stored on the device:
 - `Quiet Mode` suppresses all beeps without changing the alert preference.
 - The footer shows `BEEP`, `MUTE`, or `QUIET` so the current sound behavior is visible.
 
+`MCP Review` runs the live remote health-review path and may take 20-45 seconds
+because it collects remote MCP and agent health before rendering the summary.
+
 ## Notes
 
 Core Ink is an e-ink surface. Keep refreshes deliberate. Operator alerts and

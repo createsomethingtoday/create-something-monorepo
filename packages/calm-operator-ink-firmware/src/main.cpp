@@ -14,9 +14,11 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.3";
+constexpr const char* FIRMWARE_VERSION = "0.1.4";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
+constexpr uint32_t HTTP_TIMEOUT_MS = 15000;
+constexpr uint32_t MCP_REVIEW_TIMEOUT_MS = 65000;
 constexpr const char* SETTINGS_NAMESPACE = "calm-ink";
 
 struct Brief {
@@ -359,7 +361,12 @@ String jsonEscape(const String& value) {
   return output;
 }
 
-int requestBridge(const String& method, const String& path, const String& body, String& response) {
+int requestBridge(
+  const String& method,
+  const String& path,
+  const String& body,
+  String& response,
+  uint32_t timeoutMs = HTTP_TIMEOUT_MS) {
   if (!connectWifi()) return -100;
 
   Serial.printf("[ink] %s %s\n", method.c_str(), path.c_str());
@@ -368,7 +375,7 @@ int requestBridge(const String& method, const String& path, const String& body, 
 
   HTTPClient http;
   const String url = origin() + path;
-  http.setTimeout(15000);
+  http.setTimeout(timeoutMs);
   if (!http.begin(client, url)) {
     lastHttpError = "begin failed";
     return -101;
@@ -469,10 +476,10 @@ bool fetchBrief(bool announce = true) {
 
 void requestMcpReview() {
   Serial.println("[ink] requesting MCP review");
-  pendingNotice = "MCP review...";
+  renderStatus("REVIEWING", "Checking MCPs/agents", "This can take 20-45 sec", "Please wait");
   beepSoft();
   String payload;
-  const int status = requestBridge("POST", "/ink/health-review/request", "{}", payload);
+  const int status = requestBridge("POST", "/ink/health-review/request", "{}", payload, MCP_REVIEW_TIMEOUT_MS);
   if (status >= 200 && status < 300) {
     applyBriefPayload(payload);
     lastSyncAt = millis();
