@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
+import { buildClockSnapshot } from './clock.js';
 import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
 import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
@@ -33,6 +34,7 @@ interface Env {
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
+  HALFDOZEN_AGENT_ROUTE_TOKEN?: string;
 }
 
 interface OperatorCheckInInput {
@@ -943,6 +945,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /healthz',
         'GET /ink/brief',
         'GET /ink/surface-brief',
+        'GET /ink/clock',
         'GET /ink/surfaces',
         'POST /ink/alert',
         'POST /ink/operator-decision',
@@ -962,7 +965,11 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
 
   if ((method === 'GET' &&
-      (path === '/ink/brief' || path === '/ink/surface-brief' || path === '/ink/surfaces' || path === '/ink/device')) ||
+      (path === '/ink/brief' ||
+        path === '/ink/surface-brief' ||
+        path === '/ink/clock' ||
+        path === '/ink/surfaces' ||
+        path === '/ink/device')) ||
       (method === 'POST' &&
         (path === '/ink/device-heartbeat' ||
           path === '/ink/clear' ||
@@ -984,6 +991,10 @@ async function route(request: Request, env: Env): Promise<Response> {
     const deviceId = url.searchParams.get('device_id') || defaultDeviceId(env);
     const brief = await stub.brief(surface, deviceId);
     return json(path === '/ink/brief' ? toFirmwareBrief(brief) : brief);
+  }
+
+  if (method === 'GET' && path === '/ink/clock') {
+    return json({ ok: true, clock: buildClockSnapshot() });
   }
 
   if (method === 'GET' && path === '/ink/surfaces') {

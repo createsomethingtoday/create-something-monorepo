@@ -1,5 +1,15 @@
 export type InkSurface = 'core-ink' | 't-embed' | 'reterminal-e1001' | 'm5paper' | 'papers3' | string;
 
+export interface ClockSnapshot {
+  timezone: string;
+  iso: string;
+  local_date: string;
+  local_time_24: string;
+  display_time: string;
+  display_date: string;
+  day_period: 'morning' | 'afternoon' | 'evening' | 'night';
+}
+
 export type OperatorState =
   | 'clear'
   | 'mcp_attention'

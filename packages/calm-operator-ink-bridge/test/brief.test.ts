@@ -56,6 +56,15 @@ test('returns clear live-only state when no attention is needed', () => {
     action: 'You can step away.',
     urgent: false
   });
+  assert.deepEqual(firmware.clock, {
+    timezone: 'America/Chicago',
+    iso: '1970-01-01T00:00:01.000Z',
+    local_date: '1969-12-31',
+    local_time_24: '18:00',
+    display_time: '6:00 PM',
+    display_date: 'Wed Dec 31',
+    day_period: 'evening'
+  });
 });
 
 test('prioritizes MCP attention alerts for the Core Ink brief', () => {

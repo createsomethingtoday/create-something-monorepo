@@ -26,6 +26,7 @@ Token-gated:
 
 - `GET /ink/brief`
 - `GET /ink/surface-brief`
+- `GET /ink/clock`
 - `GET /ink/surfaces`
 - `GET /ink/device`
 - `POST /ink/alert`
@@ -87,6 +88,20 @@ INK_SOURCE_TOKEN=... pnpm post:mcp -- \
 curl -sS https://ink.createsomething.agency/ink/brief \
   -H "x-ink-token: $INK_DEVICE_TOKEN"
 ```
+
+## Accessible clock
+
+Ink exposes a Central Time clock snapshot for firmware screens that need time
+without reinterpreting time zones on-device:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/clock \
+  -H "x-ink-token: $INK_DEVICE_TOKEN"
+```
+
+`/ink/brief` also includes the same `clock` object. On Core Ink, use this for an
+on-demand Clock screen or footer. Avoid refreshing e-ink every minute unless the
+operator explicitly opens the clock.
 
 Request a different Ink surface profile without changing the backend:
 
@@ -187,6 +202,12 @@ cadence. Each health run collects configured remote checks, stores health
 snapshots, and then reviews all stored snapshots. If any agent/MCP check is poor
 or stale, the Worker writes a `health_attention` alert that Ink will display. If
 the report is clear, the Worker clears the synthetic health-review alert.
+
+The remote check set includes the Playbook MCP registry sweep route. When Ink
+requests "MCP Review," the bridge calls that route, the route posts the detailed
+registry snapshot back to Ink, and the final device summary can include static
+registry counts plus live Hub counts. The required route token is
+`HALFDOZEN_AGENT_ROUTE_TOKEN` in Worker secrets.
 
 Each run is also stored as compact Durable Object history. This is the operator
 log for questions like "what happened when I pressed MCP Review last night?"

@@ -1,4 +1,5 @@
 import type { OperatorBrief, StoredAlert, StoredDeviceHeartbeat, StoredHealthSnapshot } from './types.js';
+import { buildClockSnapshot } from './clock.js';
 import { normalizeSurface, surfaceProfile } from './surfaces.js';
 
 const POOR_HEALTH_STATUSES = new Set(['fail', 'failed', 'error', 'down', 'poor', 'degraded']);
@@ -169,6 +170,7 @@ export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
     action: brief.action,
     urgent: brief.urgent,
     generated_at: brief.generated_at,
+    clock: buildClockSnapshot(Date.parse(brief.generated_at)),
     surface: brief.surface,
     counts: brief.counts,
     operator_contract: {

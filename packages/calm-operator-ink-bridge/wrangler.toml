@@ -92,6 +92,25 @@ HEALTH_CHECKS_JSON = """
       { "path": "tools.length", "min": 1 }
     ],
     "action": "Review Playbook MCP deployment and Hub connection"
+  },
+  {
+    "id": "agent.create-something.mcp-registry-sweep.remote-run",
+    "component": "CREATE SOMETHING MCP Registry Sweep Runner",
+    "type": "agent",
+    "registry_id": "agent.create-something.mcp-registry-sweep",
+    "url": "https://playbook.mcp.createsomething.ltd/create-something/agents/mcp-registry-sweep/run",
+    "method": "POST",
+    "expected_status": 200,
+    "expected_text": "mcp-registry-sweep",
+    "token_env": "HALFDOZEN_AGENT_ROUTE_TOKEN",
+    "timeout_ms": 30000,
+    "json_rules": [
+      { "path": "success", "equals": true },
+      { "path": "ink_posted", "equals": true },
+      { "path": "registry_inventory.server_count", "min": 1 },
+      { "path": "live_hub.connected_server_count", "min": 1 }
+    ],
+    "action": "Review Playbook MCP registry sweep route and Ink snapshot posting"
   }
 ]
 """
@@ -101,3 +120,4 @@ HEALTH_CHECKS_JSON = """
 # - INK_SOURCE_TOKEN: agent/MCP/source write token
 # Optional compatibility token:
 # - INK_BRIDGE_TOKEN: accepted for both device and source roles
+# - HALFDOZEN_AGENT_ROUTE_TOKEN: lets MCP Review invoke the Playbook registry sweep route
