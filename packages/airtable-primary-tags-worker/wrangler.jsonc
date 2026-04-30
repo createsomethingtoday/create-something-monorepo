@@ -1,0 +1,29 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "airtable-primary-tags",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-30",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "compatibility_flags": ["nodejs_compat"],
+  "triggers": {
+    "crons": [
+      // 9:00 AM America/Chicago during daylight saving time.
+      "0 14 * * *",
+      // 9:00 AM America/Chicago during standard time.
+      "0 15 * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "AIRTABLE_BASE_ID": "appMoIgXMTTTNIc3p",
+    "AIRTABLE_ASSETS_TABLE_ID": "tblRwzpWoLgE9MrUm",
+    "AIRTABLE_TAGS_TABLE_ID": "tblb4969G7O75gVWV",
+    "AIRTABLE_MIN_CONFIDENCE": "medium",
+    "AIRTABLE_REQUEST_DELAY_MS": "250",
+    "TARGET_TIME_ZONE": "America/Chicago",
+    "TARGET_HOUR": "9"
+  }
+}
