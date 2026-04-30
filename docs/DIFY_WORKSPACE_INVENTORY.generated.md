@@ -22,6 +22,7 @@ Status: partial
 | `viv_hub` | - | `https://viv-blondish.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `c3_hub` | - | `https://c3denver.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `aaron_hub` | - | `https://aaron-outerfields.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `abundance-jobs` | - | `https://abundance-jobs-mcp.createsomething.workers.dev/mcp` | `bearer` | 4 | `send_job_to_funnel` |
 
 ## Agents
 
@@ -33,6 +34,7 @@ Status: partial
 | `viv-hub` | `imported` | `client` | - | `viv_hub` | 17 | `braintrust:eval:dify:viv-hub` |
 | `c3-hub` | `imported` | `client` | - | `c3_hub` | 17 | `braintrust:eval:dify:c3-hub` |
 | `aaron-hub` | `imported` | `client` | - | `aaron_hub` | 17 | `braintrust:eval:dify:aaron-hub` |
+| `abundance-hub` | `imported` | `client` | - | `abundance-jobs` | 4 | `braintrust:eval:dify:abundance-hub` |
 
 ## Eval Coverage
 
@@ -44,6 +46,7 @@ Status: partial
 | `viv-hub` | `braintrust` | `create-something-dify-agents` | `viv_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `c3-hub` | `braintrust` | `create-something-dify-agents` | `c3_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `aaron-hub` | `braintrust` | `create-something-dify-agents` | `aaron_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `abundance-hub` | `braintrust` | `create-something-dify-agents` | `abundance_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 
 ## Smoke Cases
 
@@ -58,6 +61,7 @@ Status: partial
 | `viv-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `c3-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `aaron-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
+| `abundance-hub` | `list-public-jobs-bearer` | `list_public_jobs` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete auth`, `can't list jobs`, `can’t list jobs` | no |
 
 ## Agent Tool Mapping
 
@@ -199,4 +203,16 @@ Status: partial
   - `aaron_hub.hub_status` (read)
   - `aaron_hub.hub_trace_lookup` (read)
   - `aaron_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### ABUNDANCE HUB
+
+- Inventory ID: `abundance-hub`
+- Policy pack: `client-abundance-hub.v1`
+- Instructions source: `config/dify-agents/abundance-hub.json#agent_prompt`
+- Smoke: `pnpm dify:agent:smoke -- --agent-id abundance-hub`
+- Tools:
+  - `abundance-jobs.get_job` (read)
+  - `abundance-jobs.list_public_jobs` (read)
+  - `abundance-jobs.search_public_jobs` (read)
+  - `abundance-jobs.send_job_to_funnel` (external_side_effect, confirmation required)
 
