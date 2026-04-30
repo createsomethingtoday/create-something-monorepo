@@ -63,7 +63,7 @@
     "braintrust:eval:dify": "pnpm exec braintrust eval ./evals/braintrust/dify",
     "braintrust:eval:dify:local": "pnpm exec braintrust eval ./evals/braintrust/dify --no-send-logs",
     "braintrust:eval:dify:youtube-transcript": "pnpm exec braintrust eval ./evals/braintrust/dify/youtube-transcript-notion-agent.eval.ts",
-    "dify:youtube-transcript:smoke": "pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent --case extract-known-video",
+    "dify:youtube-transcript:smoke": "pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent",
     "dify:agent:scaffold": "tsx scripts/dify-agent-scaffold.ts",
     "dify:agent:smoke": "tsx scripts/dify-agent-smoke.ts",
     "dify:mcp:intake": "tsx scripts/dify-mcp-intake.ts",

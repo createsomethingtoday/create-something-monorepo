@@ -27,6 +27,7 @@ Generated operator view:
 pnpm dify:mcp:intake -- --registry-server-id <mcp-registry-server-id>
 pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server-id>
 pnpm dify:agent:smoke -- --agent-id <agent-slug>
+pnpm dify:agent:smoke -- --agent-id <agent-slug> --case <case-id>
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --dry-run
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --query <prompt> --require-tool <tool>
 pnpm dify:coverage:generate
@@ -50,7 +51,8 @@ Use `dify:agent:smoke` for a generic Dify Service API smoke against any agent
 declared in `config/dify/inventory.json`. It resolves the agent Service API key
 from the inventory's Infisical reference unless overridden by environment flags.
 If the agent has `smoke_cases`, passing only `--agent-id` runs those cases. Use
-`--query` for one-off probes before promoting the case into inventory.
+`--case` for a targeted inventory case, or `--query` for one-off probes before
+promoting the case into inventory.
 
 ```bash
 pnpm dify:agent:smoke -- --list-agents
