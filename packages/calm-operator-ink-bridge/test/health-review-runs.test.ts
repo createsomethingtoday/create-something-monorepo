@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import {
   buildHealthReviewRunRecord,
+  missingHealthReviewRunColumnMigrations,
   normalizeHealthReviewRunLimit,
   rowHealthReviewRun
 } from '../src/health-review-runs.js';
@@ -75,6 +76,14 @@ test('normalizes health review run history limits', () => {
   assert.equal(normalizeHealthReviewRunLimit('0'), 20);
   assert.equal(normalizeHealthReviewRunLimit('7'), 7);
   assert.equal(normalizeHealthReviewRunLimit(200), 100);
+});
+
+test('detects missing health review run columns for existing durable objects', () => {
+  const migrations = missingHealthReviewRunColumnMigrations(['id', 'trigger', 'status', 'ok']);
+
+  assert.ok(migrations.some((column) => column.name === 'started_at'));
+  assert.ok(migrations.some((column) => column.name === 'payload_json'));
+  assert.equal(migrations.some((column) => column.name === 'trigger'), false);
 });
 
 test('maps persisted health review run rows', () => {

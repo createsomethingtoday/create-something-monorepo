@@ -9,11 +9,34 @@ type RowValue = ArrayBuffer | string | number | null;
 
 export const DEFAULT_HEALTH_REVIEW_RUN_LIMIT = 20;
 export const MAX_HEALTH_REVIEW_RUN_LIMIT = 100;
+export const HEALTH_REVIEW_RUN_COLUMN_MIGRATIONS = [
+  { name: 'trigger', definition: "TEXT NOT NULL DEFAULT 'unknown'" },
+  { name: 'status', definition: "TEXT NOT NULL DEFAULT 'completed'" },
+  { name: 'ok', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'state', definition: "TEXT NOT NULL DEFAULT 'failed'" },
+  { name: 'collected_count', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'checked', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'healthy_count', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'poor_count', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'stale_count', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'urgent', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'started_at', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'finished_at', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'duration_ms', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  { name: 'error', definition: "TEXT NOT NULL DEFAULT ''" },
+  { name: 'report_json', definition: "TEXT NOT NULL DEFAULT 'null'" },
+  { name: 'payload_json', definition: "TEXT NOT NULL DEFAULT '{}'" }
+] as const;
 
 export function normalizeHealthReviewRunLimit(value: string | number | null | undefined): number {
   const parsed = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_HEALTH_REVIEW_RUN_LIMIT;
   return Math.max(1, Math.min(MAX_HEALTH_REVIEW_RUN_LIMIT, Math.round(parsed)));
+}
+
+export function missingHealthReviewRunColumnMigrations(existingColumns: Iterable<string>) {
+  const existing = new Set([...existingColumns].map((column) => column.trim()).filter(Boolean));
+  return HEALTH_REVIEW_RUN_COLUMN_MIGRATIONS.filter((column) => !existing.has(column.name));
 }
 
 function compactError(value: string | undefined): string {

@@ -4,6 +4,7 @@ import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
 import {
   buildHealthReviewRunRecord,
+  missingHealthReviewRunColumnMigrations,
   normalizeHealthReviewRunLimit,
   rowHealthReviewRun
 } from './health-review-runs.js';
@@ -363,6 +364,13 @@ export class InkState extends DurableObject<Env> {
           payload_json TEXT NOT NULL
         );
       `);
+      const healthReviewRunColumns = this.ctx.storage.sql
+        .exec<Record<string, SqlStorageValue>>(`PRAGMA table_info(health_review_runs);`)
+        .toArray()
+        .map((row) => String(row.name ?? ''));
+      for (const column of missingHealthReviewRunColumnMigrations(healthReviewRunColumns)) {
+        this.ctx.storage.sql.exec(`ALTER TABLE health_review_runs ADD COLUMN ${column.name} ${column.definition};`);
+      }
       this.ctx.storage.sql.exec(`
         CREATE INDEX IF NOT EXISTS idx_health_review_runs_started
         ON health_review_runs(started_at DESC);
