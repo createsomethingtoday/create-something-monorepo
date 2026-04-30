@@ -5,6 +5,7 @@ import type {
   StoredDeviceHeartbeat,
   StoredHealthSnapshot
 } from './types.js';
+import { buildInkClock } from './clock.js';
 
 const POOR_HEALTH_STATUSES = new Set(['fail', 'failed', 'error', 'down', 'poor', 'degraded']);
 
@@ -114,6 +115,7 @@ export function buildOperatorBrief(input: {
   const selectedAlert = selectAlert(activeAlerts);
   const selectedHealth = selectHealth(input.health);
   const generatedAt = new Date(now).toISOString();
+  const clock = buildInkClock(now);
 
   if (selectedAlert) {
     return {
@@ -125,6 +127,7 @@ export function buildOperatorBrief(input: {
       action: compact(selectedAlert.action || 'Review source', 42),
       urgent: selectedAlert.urgent || selectedAlert.severity >= 80,
       generated_at: generatedAt,
+      clock,
       surface,
       counts: {
         active_alerts: activeAlerts.length,
@@ -145,6 +148,7 @@ export function buildOperatorBrief(input: {
       action: 'Review health source',
       urgent: selectedHealth.severity >= 80,
       generated_at: generatedAt,
+      clock,
       surface,
       counts: {
         active_alerts: activeAlerts.length,
@@ -164,6 +168,7 @@ export function buildOperatorBrief(input: {
     action: 'You can step away.',
     urgent: false,
     generated_at: generatedAt,
+    clock,
     surface,
     counts: {
       active_alerts: 0,
@@ -183,6 +188,7 @@ export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
     action: brief.action,
     urgent: brief.urgent,
     generated_at: brief.generated_at,
+    clock: brief.clock,
     surface: brief.surface,
     counts: brief.counts
   };

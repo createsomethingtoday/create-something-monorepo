@@ -30,6 +30,7 @@ import {
   runHalfDozenInboxTriage,
 } from './halfdozenFleetWatchdog.js';
 import type { HalfDozenScenarioRunResult } from './halfdozenFleetWatchdog.js';
+import { inferredProxyToolCount, liveHubTotalServerCount } from './registrySweepTelemetry.js';
 
 // =============================================================================
 // Types
@@ -1033,7 +1034,8 @@ async function runMcpRegistrySweep(env: Env): Promise<McpRegistrySweepResult> {
     const connectedServers = normalizeConnectedServers(body.connected_servers ?? body.connectedServers);
     const failedServers = normalizeFailedServers(body.failed_servers ?? body.failedServers);
     const warnings = stringArray(body.warnings);
-    const proxyToolCount = numberOrNull(body.proxy_tool_count ?? body.proxyToolCount);
+    const proxyToolCount =
+      numberOrNull(body.proxy_tool_count ?? body.proxyToolCount) ?? inferredProxyToolCount(connectedServers);
     const liveHub = buildLiveHubInventory(enabledServers, connectedServers, failedServers, proxyToolCount);
     const registryWarnings = buildMcpRegistryWarnings(registryInventory, liveHub, warnings);
     const registryHasStructuralIssue =
@@ -1043,7 +1045,7 @@ async function runMcpRegistrySweep(env: Env): Promise<McpRegistrySweepResult> {
       liveHub.connected_unregistered_servers.length > 0;
     const degraded = response.status !== 200 || failedServers.length > 0 || registryHasStructuralIssue;
     const failedList = failedServers.map((item) => item.server).slice(0, 4).join(', ');
-    const totalServers = enabledServers.length || connectedServers.length;
+    const totalServers = liveHubTotalServerCount(enabledServers, connectedServers, failedServers);
     const baseDetail = `Registry: ${registryInventory.server_count} MCPs (${registryInventory.composio_toolkit_count} Composio), ${fleetInventory.deployed_count} fleet, ${agentInventory.registered_health_surface_count} agents. Live: ${connectedServers.length}/${totalServers} connected; ${failedServers.length} failed; ${proxyToolCount ?? 0} tools.`;
     const detail = degraded && failedList ? `${baseDetail} Failed: ${failedList}.` : baseDetail;
     const status = response.status !== 200 ? 'failed' : degraded ? 'degraded' : 'healthy';
