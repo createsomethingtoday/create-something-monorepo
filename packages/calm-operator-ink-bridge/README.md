@@ -69,8 +69,23 @@ Use `INK_DEVICE_TOKEN` in Core Ink firmware. Use `INK_SOURCE_TOKEN` for agent/MC
 ```bash
 pnpm --dir packages/calm-operator-ink-bridge check
 pnpm --dir packages/calm-operator-ink-bridge test
-pnpm --dir packages/calm-operator-ink-bridge run deploy
+pnpm --dir packages/calm-operator-ink-bridge run deploy:script
 ```
+
+`deploy:script` is the normal production path. It derives a temporary
+route-free Wrangler config from `wrangler.toml`, then deploys only the Worker
+script, bindings, vars, triggers, and Durable Object configuration. It does not
+try to create or update `ink.createsomething.agency`, so it works with a narrower
+Cloudflare API token.
+
+Dry-run the script-only path:
+
+```bash
+pnpm --dir packages/calm-operator-ink-bridge run deploy:script -- --dry-run
+```
+
+Use `deploy` only when intentionally creating or changing the custom domain
+route and the token has route-edit permission.
 
 If the custom domain is not ready, remove the route from `wrangler.toml` and deploy to the default `workers.dev` URL first.
 

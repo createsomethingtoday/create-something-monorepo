@@ -6,6 +6,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
+    "deploy:script": "node scripts/deploy-script-only.mjs",
     "dev": "node ../../scripts/run-wrangler.mjs dev",
     "post:decision": "tsx scripts/post-operator-decision.mjs",
     "post:health": "tsx scripts/post-health-snapshot.mjs",
