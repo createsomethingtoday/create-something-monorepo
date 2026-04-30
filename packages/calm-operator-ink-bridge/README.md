@@ -70,6 +70,7 @@ Use `INK_DEVICE_TOKEN` in Core Ink firmware. Use `INK_SOURCE_TOKEN` for agent/MC
 pnpm --dir packages/calm-operator-ink-bridge check
 pnpm --dir packages/calm-operator-ink-bridge test
 pnpm --dir packages/calm-operator-ink-bridge run deploy:script
+infisical run --env=prod --path=/ --command "pnpm --dir packages/calm-operator-ink-bridge run smoke:prod"
 ```
 
 `deploy:script` is the normal production path. It derives a temporary
@@ -88,6 +89,14 @@ Use `deploy` only when intentionally creating or changing the custom domain
 route and the token has route-edit permission.
 
 If the custom domain is not ready, remove the route from `wrangler.toml` and deploy to the default `workers.dev` URL first.
+
+The production smoke check validates:
+
+- public `GET /healthz`
+- authenticated `GET /ink/clock`
+- authenticated firmware brief contract from `GET /ink/brief`
+- authenticated navigation contract from `GET /ink/navigation`
+- authenticated device heartbeat lookup from `GET /ink/device`
 
 ## Example alert
 
