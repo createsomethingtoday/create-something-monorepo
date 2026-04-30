@@ -97,6 +97,7 @@ type ExistingIntakeArtifact = {
   registryServerId: string;
   difyServerId: string | undefined;
   path: string;
+  manifest: Partial<IntakeManifest>;
 };
 
 const ROOT = process.cwd();
@@ -118,6 +119,11 @@ for (const path of [REGISTRY_PATH, DIFY_INVENTORY_PATH]) {
 const registry = readJson<Registry>(REGISTRY_PATH);
 const inventory = readJson<DifyInventory>(DIFY_INVENTORY_PATH);
 const existingIntakeArtifacts = readExistingIntakeArtifacts(INTAKE_DIR);
+
+if (args.check) {
+  validateIntakeArtifacts(existingIntakeArtifacts, registry, inventory);
+  process.exit(0);
+}
 
 if (args['all-missing']) {
   runBatchIntake(args, registry, inventory, existingIntakeArtifacts);
@@ -559,6 +565,246 @@ function validateNoDuplicateDifyServerIds(serverIds: string[]): void {
   }
 }
 
+function validateIntakeArtifacts(
+  artifacts: ExistingIntakeArtifact[],
+  registry: Registry,
+  inventory: DifyInventory
+): void {
+  const errors: string[] = [];
+
+  if (artifacts.length === 0) {
+    errors.push('config/dify-mcp-intake must contain at least one intake artifact');
+  }
+
+  const registryIds = new Map<string, string[]>();
+  const difyServerIds = new Map<string, string[]>();
+
+  for (const artifact of artifacts) {
+    addIndexValue(registryIds, artifact.registryServerId, artifact.path);
+    if (artifact.difyServerId) addIndexValue(difyServerIds, artifact.difyServerId, artifact.path);
+    validateIntakeArtifact(artifact, registry, inventory, errors);
+  }
+
+  for (const [registryServerId, paths] of registryIds.entries()) {
+    if (paths.length > 1) {
+      errors.push(
+        `registry server ${registryServerId}: duplicate intake artifacts: ${paths.join(', ')}`
+      );
+    }
+  }
+
+  for (const [difyServerId, paths] of difyServerIds.entries()) {
+    if (paths.length > 1) {
+      errors.push(`dify server ${difyServerId}: duplicate intake artifacts: ${paths.join(', ')}`);
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error('Dify MCP intake validation failed:');
+    for (const error of errors) console.error(`- ${error}`);
+    process.exit(1);
+  }
+
+  console.log(`Dify MCP intake validation passed for ${artifacts.length} artifact(s).`);
+}
+
+function validateIntakeArtifact(
+  artifact: ExistingIntakeArtifact,
+  registry: Registry,
+  inventory: DifyInventory,
+  errors: string[]
+): void {
+  const manifest = artifact.manifest;
+  const prefix = artifact.path;
+  const registryServerId = manifest.registry_server?.id;
+  const difyServerId = manifest.dify_mcp_server?.server_id;
+  const registryServer = registryServerId ? registry.servers[registryServerId] : undefined;
+
+  if (manifest.version !== 1) {
+    errors.push(`${prefix}: version must be 1`);
+  }
+  if (manifest.status !== 'pending-dify-studio-registration') {
+    errors.push(`${prefix}: status must be pending-dify-studio-registration`);
+  }
+  if (!manifest.owner) {
+    errors.push(`${prefix}: owner is required`);
+  }
+  if (!manifest.created_at || !/^\d{4}-\d{2}-\d{2}$/.test(manifest.created_at)) {
+    errors.push(`${prefix}: created_at must use YYYY-MM-DD`);
+  }
+  if (!registryServerId) {
+    errors.push(`${prefix}: registry_server.id is required`);
+    return;
+  }
+  if (!registryServer) {
+    errors.push(`${prefix}: registry_server.id ${registryServerId} is not in MCP registry`);
+    return;
+  }
+  if (!isBatchCandidate(registryServer)) {
+    errors.push(`${prefix}: registry server ${registryServerId} is not a Dify-direct candidate`);
+  }
+  if (manifest.registry_server?.transport !== 'http') {
+    errors.push(`${prefix}: registry_server.transport must be http`);
+  }
+  if (manifest.registry_server?.url !== registryServer.url) {
+    errors.push(`${prefix}: registry_server.url must match MCP registry URL`);
+  }
+  if (!difyServerId) {
+    errors.push(`${prefix}: dify_mcp_server.server_id is required`);
+  } else {
+    validateSlugValue(`${prefix}: dify_mcp_server.server_id`, difyServerId, errors);
+    if (artifact.path !== `config/dify-mcp-intake/${difyServerId}.json`) {
+      errors.push(`${prefix}: file name must match dify_mcp_server.server_id`);
+    }
+  }
+  if (!manifest.dify_mcp_server?.display_name) {
+    errors.push(`${prefix}: dify_mcp_server.display_name is required`);
+  }
+  if (manifest.dify_mcp_server?.transport !== 'http') {
+    errors.push(`${prefix}: dify_mcp_server.transport must be http`);
+  }
+  if (manifest.dify_mcp_server?.url !== registryServer.url) {
+    errors.push(`${prefix}: dify_mcp_server.url must match MCP registry URL`);
+  }
+
+  validateIntakeAuth(prefix, manifest.dify_mcp_server?.auth, errors);
+  validateInventoryFragment(prefix, manifest, registryServerId, difyServerId, errors);
+
+  if (hasDifyInventoryMapping(registryServerId, registryServer, inventory)) {
+    errors.push(
+      `${prefix}: registry server ${registryServerId} is already represented in config/dify/inventory.json; remove this intake artifact after inventory promotion`
+    );
+  }
+
+  validateNoSecretLikeValues(prefix, manifest, errors);
+}
+
+function validateIntakeAuth(
+  prefix: string,
+  auth: IntakeManifest['dify_mcp_server']['auth'] | undefined,
+  errors: string[]
+): void {
+  if (!auth) {
+    errors.push(`${prefix}: dify_mcp_server.auth is required`);
+    return;
+  }
+  if (!['none', 'bearer', 'oauth', 'custom'].includes(auth.type)) {
+    errors.push(`${prefix}: auth.type must be one of none, bearer, oauth, custom`);
+    return;
+  }
+  if (auth.type === 'none') {
+    if (auth.infisical) {
+      errors.push(`${prefix}: auth.type none must not declare an Infisical secret reference`);
+    }
+    return;
+  }
+  if (!auth.infisical) {
+    errors.push(`${prefix}: non-none auth requires an Infisical secret reference`);
+    return;
+  }
+  validateSecretRef(`${prefix}: auth.infisical`, auth.infisical, errors);
+}
+
+function validateInventoryFragment(
+  prefix: string,
+  manifest: Partial<IntakeManifest>,
+  registryServerId: string,
+  difyServerId: string | undefined,
+  errors: string[]
+): void {
+  const fragment = manifest.inventory_fragment_after_tool_discovery;
+  if (!isPlainObject(fragment)) {
+    errors.push(`${prefix}: inventory_fragment_after_tool_discovery must be an object`);
+    return;
+  }
+
+  const fragmentKeys = Object.keys(fragment);
+  if (!difyServerId) return;
+
+  if (fragmentKeys.length !== 1 || fragmentKeys[0] !== difyServerId) {
+    errors.push(
+      `${prefix}: inventory fragment must contain exactly one key matching dify_mcp_server.server_id`
+    );
+    return;
+  }
+
+  const serverFragment = fragment[difyServerId];
+  if (!isPlainObject(serverFragment)) {
+    errors.push(`${prefix}: inventory fragment ${difyServerId} must be an object`);
+    return;
+  }
+
+  if (serverFragment.source_mcp_registry_server !== registryServerId) {
+    errors.push(
+      `${prefix}: inventory fragment source_mcp_registry_server must match registry_server.id`
+    );
+  }
+  if (serverFragment.url !== manifest.dify_mcp_server?.url) {
+    errors.push(`${prefix}: inventory fragment url must match dify_mcp_server.url`);
+  }
+  if (!Array.isArray(serverFragment.tools) || serverFragment.tools.length !== 0) {
+    errors.push(`${prefix}: inventory fragment tools must remain empty until Dify discovery`);
+  }
+}
+
+function validateSecretRef(prefix: string, secret: SecretRef, errors: string[]): void {
+  if (!secret.environment) errors.push(`${prefix}: environment is required`);
+  if (!secret.path?.startsWith('/')) errors.push(`${prefix}: path must start with /`);
+  if (!secret.secret_key) errors.push(`${prefix}: secret_key is required`);
+}
+
+function validateNoSecretLikeValues(
+  prefix: string,
+  value: unknown,
+  errors: string[],
+  path = '$'
+): void {
+  if (typeof value === 'string') {
+    if (looksLikeSecretValue(value)) {
+      errors.push(`${prefix}: ${path} looks like a secret value; store only secret references`);
+    }
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) =>
+      validateNoSecretLikeValues(prefix, item, errors, `${path}[${index}]`)
+    );
+    return;
+  }
+
+  if (isPlainObject(value)) {
+    for (const [key, nested] of Object.entries(value)) {
+      validateNoSecretLikeValues(prefix, nested, errors, `${path}.${key}`);
+    }
+  }
+}
+
+function looksLikeSecretValue(value: string): boolean {
+  const trimmed = value.trim();
+
+  return [
+    /sk-[A-Za-z0-9_-]{20,}/,
+    /xox[baprs]-[A-Za-z0-9-]{20,}/,
+    /pat_[A-Za-z0-9_]{20,}/,
+    /Bearer\s+[A-Za-z0-9._~+/=-]{20,}/,
+    /^[A-Za-z0-9_-]{32,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}$/
+  ].some((pattern) => pattern.test(trimmed));
+}
+
+function addIndexValue(index: Map<string, string[]>, key: string, value: string): void {
+  const values = index.get(key) ?? [];
+  values.push(value);
+  values.sort();
+  index.set(key, values);
+}
+
+function validateSlugValue(prefix: string, value: string, errors: string[]): void {
+  if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(value)) {
+    errors.push(`${prefix} must be a lowercase slug with letters, numbers, and hyphens`);
+  }
+}
+
 function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf8')) as T;
 }
@@ -580,9 +826,14 @@ function readExistingIntakeArtifacts(dir: string): ExistingIntakeArtifact[] {
       return {
         registryServerId,
         difyServerId: artifact.dify_mcp_server?.server_id,
-        path: relativeToRoot(path)
+        path: relativeToRoot(path),
+        manifest: artifact
       };
     });
+}
+
+function isPlainObject(value: unknown): value is Record<string, any> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 function relativeToRoot(path: string): string {
@@ -594,6 +845,7 @@ function printUsage(): void {
   pnpm dify:mcp:intake -- --registry-server-id <mcp-registry-server-id> [options]
 
 Options:
+  --check                    Validate config/dify-mcp-intake/*.json artifacts.
   --all-missing              Generate intake artifacts for all missing Dify-direct candidates.
   --server-id <id>            Alias for --registry-server-id.
   --dify-server-id <id>       Dify MCP server card ID. Defaults to catalog slug or registry id.
@@ -611,6 +863,7 @@ Examples:
   pnpm dify:mcp:intake -- --registry-server-id webflow-template-review-mcp --write
   pnpm dify:mcp:intake -- --all-missing
   pnpm dify:mcp:intake -- --all-missing --write
+  pnpm dify:mcp:intake -- --check
 `);
 }
 

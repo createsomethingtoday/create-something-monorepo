@@ -26,6 +26,7 @@ Generated operator view:
 ```bash
 pnpm dify:mcp:intake -- --registry-server-id <mcp-registry-server-id>
 pnpm dify:mcp:intake -- --all-missing
+pnpm dify:mcp:intake:check
 pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server-id>
 pnpm dify:agent:smoke -- --agent-id <agent-slug>
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --case <case-id>
@@ -48,7 +49,9 @@ setup artifact under `config/dify-mcp-intake/` when run with `--write`; it does
 not update `config/dify/inventory.json` until tools have been discovered and
 classified. Use `--all-missing --write` to create intake artifacts for every
 missing Dify-direct candidate that is not already represented by inventory or an
-intake artifact.
+intake artifact. Use `dify:mcp:intake:check` to validate that intake artifacts
+still map to the MCP registry, do not overlap strict inventory, and contain only
+secret references.
 
 Use `dify:agent:smoke` for a generic Dify Service API smoke against any agent
 declared in `config/dify/inventory.json`. It resolves the agent Service API key
@@ -72,6 +75,7 @@ answer text, `--expect-observation` for tool observation text, and
 `--max-attempts` when a live provider path has known transient failures.
 
 Use `generate` after changing `config/dify/inventory.json`. Use `check` in CI or before landing a PR.
+Run `dify:mcp:intake:check` after changing `config/dify-mcp-intake/`.
 
 Use `dify:coverage:generate` to compare active direct HTTP MCPs from
 `config/mcp-hub/registry.json` against the Dify inventory. The generated

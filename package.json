@@ -67,6 +67,7 @@
     "dify:agent:scaffold": "tsx scripts/dify-agent-scaffold.ts",
     "dify:agent:smoke": "tsx scripts/dify-agent-smoke.ts",
     "dify:mcp:intake": "tsx scripts/dify-mcp-intake.ts",
+    "dify:mcp:intake:check": "tsx scripts/dify-mcp-intake.ts --check",
     "dify:coverage:validate": "tsx scripts/dify-coverage.ts validate",
     "dify:coverage:generate": "tsx scripts/dify-coverage.ts generate",
     "dify:coverage:check": "tsx scripts/dify-coverage.ts check",

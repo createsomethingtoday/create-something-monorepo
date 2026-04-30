@@ -56,6 +56,12 @@ eval acceptance.
    pnpm dify:mcp:intake -- --all-missing --write
    ```
 
+   Validate intake artifacts before using them for Studio setup:
+
+   ```bash
+   pnpm dify:mcp:intake:check
+   ```
+
 4. Add or update the Dify MCP server card in `config/dify/inventory.json`.
 5. Classify every Dify-discovered tool as read, write, external side effect,
    secret sensitive, or unknown.
