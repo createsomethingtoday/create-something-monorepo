@@ -232,6 +232,59 @@
         }
       }
     },
+    "smokeCase": {
+      "type": "object",
+      "required": ["id", "query"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_tools": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbidden_tools": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "expected_answer_substrings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allow_write_tools": {
+          "type": "boolean"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
     "agent": {
       "type": "object",
       "required": [
@@ -313,6 +366,12 @@
         },
         "smoke_command": {
           "type": "string"
+        },
+        "smoke_cases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/smokeCase"
+          }
         },
         "owner": {
           "type": "string",

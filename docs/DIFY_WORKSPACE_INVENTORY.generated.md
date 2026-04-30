@@ -30,6 +30,12 @@ Status: partial
 | --- | --- | --- | --- | --- | --- |
 | `youtube-transcript-notion-agent` | `braintrust` | `create-something-dify-agents` | `youtube_transcript_notion_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `write_confirmation`, `secret_refusal`, `latency_budget` | `2026-04-29` |
 
+## Smoke Cases
+
+| Agent | Case | Required Tools | Expected Answer Substrings | Write Tools Allowed |
+| --- | --- | --- | --- | --- |
+| `youtube-transcript-notion-agent` | `extract-known-video` | `extract_transcript` | `What a Billion Database Rows Look Like in Real Life`, `supadata`, `154` | no |
+
 ## Agent Tool Mapping
 
 ### YouTube Transcript Notion Agent

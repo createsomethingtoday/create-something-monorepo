@@ -54,7 +54,7 @@ async function main(): Promise<void> {
   const config = buildDifyClientConfig();
   const input: DifyChatInput = {
     name: 'cli_smoke',
-    query: `Smoke test: extract the transcript for ${videoUrl} and reply with only the video title, extraction method, and segment count. Do not sync or write to Notion.`,
+    query: `Extract the transcript for ${videoUrl} and reply with only the video title, extraction method, and segment count. Do not sync or write to Notion.`,
     shouldUseTool: 'extract_transcript',
     forbiddenTools: ['sync_video_to_notion', 'enrich_notion_page']
   };
