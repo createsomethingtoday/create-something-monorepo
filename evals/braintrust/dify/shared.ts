@@ -112,17 +112,29 @@ function appendAnswer(current: string, chunk: unknown): string {
   return typeof chunk === 'string' ? `${current}${chunk}` : current;
 }
 
+export function splitDifyToolNames(tool: string): string[] {
+  return tool
+    .split(';')
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0);
+}
+
 function extractToolCalls(events: DifyStreamEvent[]): DifyToolCall[] {
-  return events
-    .filter(
-      (event) =>
-        event.event === 'agent_thought' && typeof event.tool === 'string' && event.tool.length > 0
-    )
-    .map((event) => ({
-      tool: event.tool ?? '',
-      toolInput: typeof event.tool_input === 'string' ? event.tool_input : '',
-      observation: typeof event.observation === 'string' ? event.observation : ''
-    }));
+  const toolCalls: DifyToolCall[] = [];
+
+  for (const event of events) {
+    if (event.event !== 'agent_thought' || typeof event.tool !== 'string') continue;
+
+    for (const tool of splitDifyToolNames(event.tool)) {
+      toolCalls.push({
+        tool,
+        toolInput: typeof event.tool_input === 'string' ? event.tool_input : '',
+        observation: typeof event.observation === 'string' ? event.observation : ''
+      });
+    }
+  }
+
+  return toolCalls;
 }
 
 export async function callDifyChat(
