@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { Button, PapersGrid, SEO } from '@create-something/canon';
+  import { Button, HeroSignalField, PapersGrid, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import type { Paper } from '@create-something/canon/types';
 
@@ -148,37 +148,58 @@
 />
 
 <section class="hero-page">
-  <div class="shell-inner-pad hero-layout">
-    <div class="hero-copy">
-      <BlurFade delay={0}>
-        <span class="product-kicker">CREATE SOMETHING .io</span>
-      </BlurFade>
+  <div class="hero-stage">
+    <HeroSignalField variant="io" focus="right" />
 
-      <BlurFade delay={0.05}>
-        <h1 class="hero-title">Research for teams building automation they can defend.</h1>
-      </BlurFade>
+    <div class="shell-inner-pad hero-layout">
+      <div class="hero-copy">
+        <BlurFade delay={0}>
+          <span class="product-kicker">CREATE SOMETHING .io</span>
+        </BlurFade>
 
-      <BlurFade delay={0.1}>
-        <p class="hero-detail">
-          CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research
-          layer for operators. The goal is not content volume. It is evidence you can carry into
-          the next build, review, or production decision.
-        </p>
-      </BlurFade>
+        <BlurFade delay={0.05}>
+          <h1 class="hero-title">Research for teams building automation they can defend.</h1>
+        </BlurFade>
 
-      <BlurFade delay={0.15}>
-        <div class="hero-actions">
-          <Button href="/papers">Read The Papers</Button>
-          <Button href="/experiments" variant="secondary">Browse Experiments</Button>
-        </div>
-      </BlurFade>
+        <BlurFade delay={0.1}>
+          <p class="hero-detail">
+            CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research
+            layer for operators. The goal is not content volume. It is evidence you can carry into
+            the next build, review, or production decision.
+          </p>
+        </BlurFade>
 
-      <BlurFade delay={0.2}>
-        <p class="hero-note">Patterns, benchmarks, and operator notes tied back to real builds.</p>
-      </BlurFade>
+        <BlurFade delay={0.15}>
+          <div class="hero-actions">
+            <Button href="/papers">Read The Papers</Button>
+            <Button href="/experiments" variant="secondary">Browse Experiments</Button>
+          </div>
+        </BlurFade>
+
+        <BlurFade delay={0.2}>
+          <p class="hero-note">Patterns, benchmarks, and operator notes tied back to real builds.</p>
+        </BlurFade>
+      </div>
     </div>
+  </div>
 
-    <BlurFade delay={0.2}>
+  <div class="shell-inner-pad">
+    <div class="metric-grid">
+      {#each proofMetrics as metric, index}
+        <BlurFade delay={0.25 + index * 0.05}>
+          <article class="product-surface product-surface--soft metric-card">
+            <span class="metric-value">{metric.value}</span>
+            <span class="metric-label">{metric.label}</span>
+          </article>
+        </BlurFade>
+      {/each}
+    </div>
+  </div>
+</section>
+
+<section class="research-loop-section">
+  <div class="shell-inner-pad">
+    <BlurFade>
       <aside class="product-surface product-surface--soft research-panel">
         <div class="panel-stack">
           <section class="panel-block">
@@ -227,19 +248,6 @@
         </div>
       </aside>
     </BlurFade>
-  </div>
-
-  <div class="shell-inner-pad">
-    <div class="metric-grid">
-      {#each proofMetrics as metric, index}
-        <BlurFade delay={0.25 + index * 0.05}>
-          <article class="product-surface product-surface--soft metric-card">
-            <span class="metric-value">{metric.value}</span>
-            <span class="metric-label">{metric.label}</span>
-          </article>
-        </BlurFade>
-      {/each}
-    </div>
   </div>
 </section>
 
@@ -352,6 +360,7 @@
 
 <style>
   .hero-page,
+  .research-loop-section,
   .track-section,
   .bridge-section,
   .cta-section {
@@ -359,14 +368,58 @@
   }
 
   .hero-page {
-    padding-top: clamp(5.5rem, 10vw, 7rem);
+    padding-top: 0;
+    padding-bottom: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  .research-loop-section {
+    padding-top: 0;
+  }
+
+  .hero-stage {
+    position: relative;
+    min-height: clamp(31rem, 54vw, 40rem);
+    overflow: clip;
+    isolation: isolate;
+  }
+
+  .hero-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3, 3, 4, 0.96) 0%,
+        rgba(3, 3, 4, 0.62) 12%,
+        rgba(3, 3, 4, 0.08) 36%,
+        rgba(3, 3, 4, 0.18) 72%,
+        rgba(3, 3, 4, 0.94) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(3, 3, 4, 1) 0%,
+        rgba(3, 3, 4, 0.94) 36%,
+        rgba(3, 3, 4, 0.62) 58%,
+        rgba(3, 3, 4, 0.2) 78%,
+        rgba(3, 3, 4, 0.44) 100%
+      ),
+      radial-gradient(circle at 74% 52%, rgba(3, 3, 4, 0) 0%, rgba(3, 3, 4, 0.48) 100%);
+  }
+
+  .hero-stage :global(.hero-signal-field) {
+    inset: -2rem -4rem -3rem -2rem;
   }
 
   .hero-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-    gap: clamp(2rem, 4vw, 3.5rem);
-    align-items: center;
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    padding-top: clamp(1.8rem, 4vw, 2.75rem);
+    padding-bottom: clamp(2.8rem, 6vw, 4rem);
   }
 
   .hero-copy,
@@ -375,6 +428,23 @@
   .cta-panel {
     display: grid;
     gap: 1rem;
+  }
+
+  .hero-copy {
+    max-width: 49rem;
+    gap: 1.15rem;
+  }
+
+  .hero-copy .product-kicker {
+    width: fit-content;
+    padding: 0.38rem 0.7rem 0.4rem;
+    border: 1px solid rgba(91, 125, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(8, 10, 14, 0.62);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 10px 30px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(12px);
   }
 
   .hero-title,
@@ -405,6 +475,11 @@
     line-height: 1.75;
   }
 
+  .hero-detail {
+    max-width: 36rem;
+    text-wrap: pretty;
+  }
+
   .hero-actions {
     display: flex;
     flex-wrap: wrap;
@@ -419,15 +494,14 @@
   .hero-note {
     margin: 0;
     color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    letter-spacing: 0.03em;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
   .research-panel {
-    height: 100%;
-    min-height: clamp(30rem, 58vw, 42rem);
-    padding: clamp(1.35rem, 3vw, 2rem);
+    padding: clamp(1.25rem, 3vw, 2rem);
   }
 
   .research-panel > *,
@@ -521,19 +595,18 @@
 
   .metric-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: clamp(1.8rem, 4vw, 2.5rem);
+    margin-top: 1rem;
   }
 
   .metric-card {
     display: grid;
-    gap: 0.5rem;
-    min-height: 10rem;
-    padding: 1.2rem;
-    align-content: end;
+    gap: 0.35rem;
+    padding: 1rem 1.05rem;
   }
 
   .metric-value {
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-family: var(--font-mono);
+    font-size: 1.45rem;
     line-height: 1;
     letter-spacing: -0.05em;
     color: var(--color-fg-primary);
@@ -541,8 +614,11 @@
 
   .metric-label {
     color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    line-height: 1.6;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.09em;
+    line-height: 1.45;
+    text-transform: uppercase;
   }
 
   .section-lead {
@@ -616,7 +692,6 @@
   }
 
   @media (max-width: 1100px) {
-    .hero-layout,
     .metric-grid,
     .track-grid,
     .bridge-grid {
@@ -625,6 +700,19 @@
   }
 
   @media (max-width: 720px) {
+    .hero-stage {
+      min-height: clamp(30rem, 112vw, 38rem);
+    }
+
+    .hero-stage :global(.hero-signal-field) {
+      inset: 0 -2.5rem -2rem -1rem;
+    }
+
+    .hero-layout {
+      padding-top: 2.25rem;
+      padding-bottom: 3.25rem;
+    }
+
     .panel-grid {
       grid-template-columns: 1fr;
     }
