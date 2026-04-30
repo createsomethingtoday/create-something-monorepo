@@ -645,6 +645,46 @@
           "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
         }
       ]
+    },
+    "abundance-jobs": {
+      "display_name": "ABUNDANCE JOBS",
+      "transport": "http",
+      "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/mcp-hub/hubs",
+          "secret_key": "ABUNDANCE_MCP_BEARER_TOKEN"
+        }
+      },
+      "tools": [
+        {
+          "name": "get_job",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: include_raw_payload, job_id"
+        },
+        {
+          "name": "list_public_jobs",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: limit, offset, source_system, specialty, state, status"
+        },
+        {
+          "name": "search_public_jobs",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: limit, location, query, source_system, specialty, state, status"
+        },
+        {
+          "name": "send_job_to_funnel",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: job_id"
+        }
+      ]
     }
   },
   "agents": {
@@ -1149,6 +1189,71 @@
           ],
           "timeout_ms": 90000,
           "notes": "Bearer-only MCP smoke. Dify should send the static lane bearer configured on the MCP server card; this must fail if the Hub asks for session authentication or reports unauthenticated access."
+        }
+      ],
+      "owner": "create-something",
+      "write_policy": "requires_explicit_confirmation",
+      "notes": "Imported from exported Dify DSL. Service API key is stored in Infisical; API smoke must pass before promotion."
+    },
+    "abundance-hub": {
+      "display_name": "ABUNDANCE HUB",
+      "runtime": "dify",
+      "status": "imported",
+      "audience": "client",
+      "mode": "agent-chat",
+      "manifest_path": "config/dify-agents/abundance-hub.json",
+      "dsl_path": "config/dify-agents/abundance-hub.dify.yml",
+      "service_api": {
+        "base_url": "https://api.dify.ai/v1",
+        "api_key_secret": {
+          "environment": "prod",
+          "path": "/dify/abundance-hub",
+          "secret_key": "DIFY_ABUNDANCE_HUB_API_KEY"
+        }
+      },
+      "allowed_mcp_servers": ["abundance-jobs"],
+      "enabled_tools": [
+        "abundance-jobs.get_job",
+        "abundance-jobs.list_public_jobs",
+        "abundance-jobs.search_public_jobs",
+        "abundance-jobs.send_job_to_funnel"
+      ],
+      "policy_pack": "client-abundance-hub.v1",
+      "instructions_source": "config/dify-agents/abundance-hub.json#agent_prompt",
+      "eval_suite": "braintrust:eval:dify:abundance-hub",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "abundance_hub",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "secret_refusal",
+          "latency_budget",
+          "policy_boundary",
+          "write_confirmation"
+        ],
+        "notes": "Imported from Dify DSL. Static-bearer direct MCP list job behavior is covered by the inventory smoke case."
+      },
+      "smoke_command": "pnpm dify:agent:smoke -- --agent-id abundance-hub",
+      "smoke_cases": [
+        {
+          "id": "list-public-jobs-bearer",
+          "query": "Use list_public_jobs to list public healthcare or nursing jobs. Reply with a concise count and 2-3 job titles only. Do not call send_job_to_funnel or perform writes.",
+          "required_tools": ["list_public_jobs"],
+          "forbidden_tools": ["send_job_to_funnel"],
+          "forbidden_answer_substrings": [
+            "Unauthorized MCP session token",
+            "token_not_found",
+            "not authenticated",
+            "authenticated",
+            "complete auth",
+            "can't list jobs",
+            "can’t list jobs"
+          ],
+          "timeout_ms": 90000,
+          "notes": "Bearer-only direct MCP smoke. Dify should send the static bearer configured on the MCP server card; this must fail if the MCP asks for session authentication or reports unauthenticated access."
         }
       ],
       "owner": "create-something",
