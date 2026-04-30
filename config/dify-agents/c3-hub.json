@@ -25,9 +25,9 @@
   "service_api_smoke": {
     "last_checked_at": "2026-04-30",
     "result": "passed",
-    "message_id": "4727c074-c5fb-419f-9ff6-240f0714edc0",
-    "conversation_id": "eb84a8e6-daff-4b6d-b479-0299d14cc9e5",
-    "latency_ms": 5578,
+    "message_id": "b5cc666a-51c2-4fd4-8338-a728286b0eff",
+    "conversation_id": "37ea5bb9-8b6e-4d1c-91dd-05f1e0d03325",
+    "latency_ms": 8732,
     "required_tool_used": "hub_list_services",
     "forbidden_tools_used": [],
     "answer_summary": "3 services: composio-toolkit-airtable, composio-toolkit-gmail, composio-toolkit-notion",
@@ -40,6 +40,7 @@
     "initialize": "ok",
     "tools_list": "ok: 17 tools",
     "tools_call": "ok: hub_status and hub_list_services",
+    "answer_summary": "3 services: composio-toolkit-airtable, composio-toolkit-gmail, composio-toolkit-notion",
     "notes": "The static fleet token is enough for MCP initialize/tools.list and safe Hub tools/call. Dify should use the static lane bearer from prod:/mcp-hub/hubs:CS_HUB_C3DENVER_API_TOKEN; the Hub compat runtime bypasses identity for the configured HUB_API_TOKEN."
   },
   "mcp_server": {
