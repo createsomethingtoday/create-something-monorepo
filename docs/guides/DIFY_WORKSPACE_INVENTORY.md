@@ -16,6 +16,7 @@ The inventory records:
 Generated operator view:
 
 - `docs/DIFY_WORKSPACE_INVENTORY.generated.md`
+- `docs/DIFY_MCP_COVERAGE.generated.md`
 
 ## Commands
 
@@ -24,6 +25,8 @@ pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server
 pnpm dify:agent:smoke -- --agent-id <agent-slug>
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --dry-run
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --query <prompt> --require-tool <tool>
+pnpm dify:coverage:generate
+pnpm dify:coverage:check
 pnpm dify:inventory:validate
 pnpm dify:inventory:generate
 pnpm dify:inventory:check
@@ -54,6 +57,11 @@ answer text, `--expect-observation` for tool observation text, and
 `--max-attempts` when a live provider path has known transient failures.
 
 Use `generate` after changing `config/dify/inventory.json`. Use `check` in CI or before landing a PR.
+
+Use `dify:coverage:generate` to compare active direct HTTP MCPs from
+`config/mcp-hub/registry.json` against the Dify inventory. The generated
+coverage report makes the manual Dify Studio backlog explicit: missing server
+cards, server-only mappings, draft agents, and agents missing smoke/eval gates.
 
 ## Manual Snapshot Flow
 
