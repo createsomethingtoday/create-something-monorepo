@@ -7,6 +7,17 @@ type ToolRisk = 'read' | 'write' | 'external_side_effect' | 'secret_sensitive' |
 type AgentStatus = 'planned' | 'draft' | 'imported' | 'published' | 'retired';
 type AgentAudience = 'internal' | 'client' | 'public';
 type WritePolicy = 'none' | 'requires_explicit_confirmation' | 'disabled';
+type EvalCheck =
+  | 'api_health'
+  | 'expected_tool_use'
+  | 'forbidden_tool_use'
+  | 'grounded_answer'
+  | 'write_confirmation'
+  | 'secret_refusal'
+  | 'latency_budget'
+  | 'policy_boundary'
+  | 'tenant_isolation'
+  | 'error_recovery';
 
 type SecretRef = {
   environment: string;
@@ -53,6 +64,16 @@ type DifyAgent = {
   policy_pack: string;
   instructions_source?: string;
   eval_suite: string;
+  evals: {
+    owner_system: 'braintrust';
+    project?: string;
+    experiment?: string;
+    local_command?: string;
+    published_command?: string;
+    required_checks: EvalCheck[];
+    last_verified_at?: string;
+    notes?: string;
+  };
   smoke_command?: string;
   owner: string;
   write_policy?: WritePolicy;
@@ -86,6 +107,18 @@ const INVENTORY_PATH = resolve(ROOT, 'config/dify/inventory.json');
 const SCHEMA_PATH = resolve(ROOT, 'config/dify/inventory.schema.json');
 const MCP_REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
 const GENERATED_DOC_PATH = resolve(ROOT, 'docs/DIFY_WORKSPACE_INVENTORY.generated.md');
+const VALID_EVAL_CHECKS = new Set<EvalCheck>([
+  'api_health',
+  'expected_tool_use',
+  'forbidden_tool_use',
+  'grounded_answer',
+  'write_confirmation',
+  'secret_refusal',
+  'latency_budget',
+  'policy_boundary',
+  'tenant_isolation',
+  'error_recovery'
+]);
 
 const command = (process.argv[2] ?? 'check').trim().toLowerCase();
 
@@ -293,6 +326,8 @@ function validateAgent(
       `agent ${agentId}: write-capable tools require write_policy requires_explicit_confirmation`
     );
   }
+
+  validateAgentEvals(agentId, agent, enablesWriteTool, errors);
 }
 
 function validateManifestCoverage(manifestPaths: Set<string>, errors: string[]): void {
@@ -306,6 +341,72 @@ function validateManifestCoverage(manifestPaths: Set<string>, errors: string[]):
   for (const path of manifestList) {
     if (!manifestPaths.has(path)) {
       errors.push(`manifest ${path} is not referenced by config/dify/inventory.json`);
+    }
+  }
+}
+
+function validateAgentEvals(
+  agentId: string,
+  agent: DifyAgent,
+  enablesWriteTool: boolean,
+  errors: string[]
+): void {
+  if (!isPlainObject(agent.evals)) {
+    errors.push(`agent ${agentId}: evals is required`);
+    return;
+  }
+
+  if (agent.evals.owner_system !== 'braintrust') {
+    errors.push(`agent ${agentId}: evals.owner_system must be braintrust`);
+  }
+  if (!agent.eval_suite.startsWith('braintrust:')) {
+    errors.push(`agent ${agentId}: eval_suite must point at a Braintrust command`);
+  }
+  if (!Array.isArray(agent.evals.required_checks) || agent.evals.required_checks.length === 0) {
+    errors.push(`agent ${agentId}: evals.required_checks must be a non-empty array`);
+    return;
+  }
+
+  const checks = new Set<string>();
+  for (const check of agent.evals.required_checks) {
+    if (!VALID_EVAL_CHECKS.has(check)) {
+      errors.push(`agent ${agentId}: unknown eval check ${String(check)}`);
+    }
+    if (checks.has(check)) {
+      errors.push(`agent ${agentId}: duplicate eval check ${check}`);
+    }
+    checks.add(check);
+  }
+
+  if (agent.status === 'published') {
+    if (!agent.evals.local_command) {
+      errors.push(`agent ${agentId}: published agents require evals.local_command`);
+    }
+    if (!agent.evals.published_command) {
+      errors.push(`agent ${agentId}: published agents require evals.published_command`);
+    }
+  }
+
+  requireEvalChecks(agentId, checks, ['api_health', 'secret_refusal', 'latency_budget'], errors);
+
+  if (agent.enabled_tools.length > 0) {
+    requireEvalChecks(agentId, checks, ['expected_tool_use', 'forbidden_tool_use'], errors);
+  }
+
+  if (enablesWriteTool) {
+    requireEvalChecks(agentId, checks, ['write_confirmation'], errors);
+  }
+}
+
+function requireEvalChecks(
+  agentId: string,
+  checks: Set<string>,
+  required: EvalCheck[],
+  errors: string[]
+): void {
+  for (const check of required) {
+    if (!checks.has(check)) {
+      errors.push(`agent ${agentId}: missing required eval check ${check}`);
     }
   }
 }
@@ -359,6 +460,16 @@ function renderInventoryDoc(inventory: DifyInventory): string {
   }
   lines.push('');
 
+  lines.push('## Eval Coverage', '');
+  lines.push('| Agent | Owner | Project | Experiment | Required Checks | Last Verified |');
+  lines.push('| --- | --- | --- | --- | --- | --- |');
+  for (const [agentId, agent] of Object.entries(inventory.agents)) {
+    lines.push(
+      `| ${code(agentId)} | ${code(agent.evals.owner_system)} | ${codeOrDash(agent.evals.project)} | ${codeOrDash(agent.evals.experiment)} | ${agent.evals.required_checks.map(code).join(', ')} | ${codeOrDash(agent.evals.last_verified_at)} |`
+    );
+  }
+  lines.push('');
+
   lines.push('## Agent Tool Mapping', '');
   for (const [agentId, agent] of Object.entries(inventory.agents)) {
     lines.push(`### ${agent.display_name}`, '');
@@ -367,6 +478,9 @@ function renderInventoryDoc(inventory: DifyInventory): string {
     if (agent.instructions_source)
       lines.push(`- Instructions source: ${code(agent.instructions_source)}`);
     if (agent.smoke_command) lines.push(`- Smoke: ${code(agent.smoke_command)}`);
+    if (agent.evals.local_command) lines.push(`- Local eval: ${code(agent.evals.local_command)}`);
+    if (agent.evals.published_command)
+      lines.push(`- Published eval: ${code(agent.evals.published_command)}`);
     lines.push('- Tools:');
     for (const toolRef of agent.enabled_tools) {
       const parsed = parseToolRef(toolRef);

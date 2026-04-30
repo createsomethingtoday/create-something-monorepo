@@ -24,6 +24,12 @@ Status: partial
 | --- | --- | --- | --- | --- | ---: | --- |
 | `youtube-transcript-notion-agent` | `published` | `client` | - | `yt-transcript-notion` | 4 | `braintrust:eval:dify:youtube-transcript` |
 
+## Eval Coverage
+
+| Agent | Owner | Project | Experiment | Required Checks | Last Verified |
+| --- | --- | --- | --- | --- | --- |
+| `youtube-transcript-notion-agent` | `braintrust` | `create-something-dify-agents` | `youtube_transcript_notion_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `write_confirmation`, `secret_refusal`, `latency_budget` | `2026-04-29` |
+
 ## Agent Tool Mapping
 
 ### YouTube Transcript Notion Agent
@@ -32,6 +38,8 @@ Status: partial
 - Policy pack: `client-youtube-transcript-notion.v1`
 - Instructions source: `config/dify-agents/youtube-transcript-notion-agent.json#agent_prompt`
 - Smoke: `pnpm dify:youtube-transcript:smoke`
+- Local eval: `pnpm braintrust:eval:dify:local`
+- Published eval: `pnpm braintrust:eval:dify:youtube-transcript`
 - Tools:
   - `yt-transcript-notion.extract_transcript` (read)
   - `yt-transcript-notion.get_database_schema` (read)

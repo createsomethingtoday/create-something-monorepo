@@ -176,6 +176,62 @@
         }
       }
     },
+    "evalCheck": {
+      "type": "string",
+      "enum": [
+        "api_health",
+        "expected_tool_use",
+        "forbidden_tool_use",
+        "grounded_answer",
+        "write_confirmation",
+        "secret_refusal",
+        "latency_budget",
+        "policy_boundary",
+        "tenant_isolation",
+        "error_recovery"
+      ]
+    },
+    "agentEvals": {
+      "type": "object",
+      "required": ["owner_system", "required_checks"],
+      "additionalProperties": false,
+      "properties": {
+        "owner_system": {
+          "type": "string",
+          "enum": ["braintrust"]
+        },
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "experiment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "local_command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "published_command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_checks": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evalCheck"
+          }
+        },
+        "last_verified_at": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
     "agent": {
       "type": "object",
       "required": [
@@ -188,6 +244,7 @@
         "enabled_tools",
         "policy_pack",
         "eval_suite",
+        "evals",
         "owner"
       ],
       "additionalProperties": false,
@@ -250,6 +307,9 @@
         "eval_suite": {
           "type": "string",
           "minLength": 1
+        },
+        "evals": {
+          "$ref": "#/$defs/agentEvals"
         },
         "smoke_command": {
           "type": "string"
