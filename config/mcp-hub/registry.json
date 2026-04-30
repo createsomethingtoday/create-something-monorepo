@@ -263,6 +263,32 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "youtube-transcript-notion-mcp": {
+      "transport": "http",
+      "url": "https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "YOUTUBE_TRANSCRIPT_NOTION_MCP_API_KEY",
+      "description": "YouTube transcript extraction and Notion transcript enrichment MCP used by Dify client agents",
+      "tags": [
+        "youtube",
+        "transcript",
+        "notion",
+        "dify",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "YouTube Transcript Notion",
+        "slug": "youtube-transcript-notion",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http"
+        ]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 6
+    },
     "halfdozen-gmail-sync-danny": {
       "transport": "http",
       "url": "https://gmail.mcp.workway.co/mcp",
