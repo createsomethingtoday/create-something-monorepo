@@ -113,6 +113,21 @@
         "notes": "Published Braintrust experiment passed 100% after smoke/eval hardening."
       },
       "smoke_command": "pnpm dify:youtube-transcript:smoke",
+      "smoke_cases": [
+        {
+          "id": "extract-known-video",
+          "query": "Extract the transcript for https://www.youtube.com/watch?v=sEQ1ecQq0HI and reply with only the video title, extraction method, and segment count. Do not sync or write to Notion.",
+          "required_tools": ["extract_transcript"],
+          "expected_answer_substrings": [
+            "What a Billion Database Rows Look Like in Real Life",
+            "supadata",
+            "154"
+          ],
+          "timeout_ms": 90000,
+          "max_attempts": 3,
+          "notes": "Canonical read-only Service API smoke. Write tools are forbidden by default from inventory risk classification."
+        }
+      ],
       "owner": "create-something",
       "write_policy": "requires_explicit_confirmation",
       "notes": "Imported from DSL, published in Dify Studio, API smoke-tested, and covered by Braintrust evals."

@@ -57,8 +57,15 @@ eval acceptance.
      --expect-tool expected_tool_name
    ```
 
-10. Add and run the dedicated Braintrust eval.
-11. Publish or keep published only after the eval gates pass.
+10. Promote the successful smoke into `smoke_cases` on the agent inventory
+    entry, then run it by ID alone:
+
+    ```bash
+    pnpm dify:agent:smoke -- --agent-id client-example-agent
+    ```
+
+11. Add and run the dedicated Braintrust eval.
+12. Publish or keep published only after the eval gates pass.
 
 The scaffold command defaults to a dry run. Use `--write-manifest` and
 `--write-inventory` only when you are ready to add the draft agent contract to
@@ -78,6 +85,10 @@ pnpm dify:agent:smoke -- \
 The generic smoke command reads `config/dify/inventory.json`, resolves the
 agent's Dify Service API key from the declared Infisical reference, and can
 assert required tools, forbidden tools, answer text, and tool observations.
+
+Published agents must keep at least one inventory-declared smoke case so the
+basic runtime path can be validated without reconstructing prompts or assertions
+from memory.
 
 ## Required Eval Gates
 

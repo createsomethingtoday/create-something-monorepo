@@ -21,8 +21,9 @@ Generated operator view:
 
 ```bash
 pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server-id>
-pnpm dify:agent:smoke -- --agent <agent-slug> --dry-run
-pnpm dify:agent:smoke -- --agent <agent-slug> --query <prompt> --expect-tool <tool>
+pnpm dify:agent:smoke -- --agent-id <agent-slug>
+pnpm dify:agent:smoke -- --agent-id <agent-slug> --dry-run
+pnpm dify:agent:smoke -- --agent-id <agent-slug> --query <prompt> --require-tool <tool>
 pnpm dify:inventory:validate
 pnpm dify:inventory:generate
 pnpm dify:inventory:check
@@ -34,20 +35,23 @@ existing Dify MCP server card. It is a dry run unless `--write-manifest` or
 
 Use `dify:agent:smoke` for a generic Dify Service API smoke against any agent
 declared in `config/dify/inventory.json`. It resolves the agent Service API key
-from the inventory's Infisical reference unless overridden by environment flags:
+from the inventory's Infisical reference unless overridden by environment flags.
+If the agent has `smoke_cases`, passing only `--agent-id` runs those cases. Use
+`--query` for one-off probes before promoting the case into inventory.
 
 ```bash
 pnpm dify:agent:smoke -- --list-agents
 pnpm dify:agent:smoke -- \
-  --agent youtube-transcript-notion-agent \
-  --query "Smoke test: describe your configured purpose. Do not write to Notion." \
-  --forbid-tool sync_video_to_notion \
-  --forbid-tool enrich_notion_page
+  --agent-id youtube-transcript-notion-agent \
+  --query "Extract the transcript for https://www.youtube.com/watch?v=sEQ1ecQq0HI. Do not write to Notion." \
+  --require-tool extract_transcript \
+  --forbid-tool sync_video_to_notion
 ```
 
 Use `--expect-tool`/`--require-tool` for required tool calls,
 `--forbid-tool` for tools that must not run, `--expect-answer`/`--expect` for
-answer text, and `--expect-observation` for tool observation text.
+answer text, `--expect-observation` for tool observation text, and
+`--max-attempts` when a live provider path has known transient failures.
 
 Use `generate` after changing `config/dify/inventory.json`. Use `check` in CI or before landing a PR.
 
@@ -71,7 +75,8 @@ For each Dify agent:
 3. Add the agent to `config/dify/inventory.json`.
 4. List all enabled tools as `server_id.tool_name`.
 5. Set `policy_pack`, `eval_suite`, `evals`, and `smoke_command`.
-6. Run the Dify inventory check and the agent's smoke/eval command.
+6. Add at least one `smoke_cases` entry before setting `status: "published"`.
+7. Run the Dify inventory check and the agent's smoke/eval command.
 
 ## Rules
 
@@ -84,6 +89,7 @@ For each Dify agent:
 - Every published Dify agent must declare both a local eval command and a published eval command.
 - Every Dify agent with enabled tools must cover expected tool use and forbidden tool avoidance.
 - Every Dify agent with write-capable tools must cover explicit write confirmation.
+- Every published Dify agent must have at least one inventory-declared `smoke_cases` entry.
 - Every `config/dify-agents/*.json` manifest must be referenced by the inventory.
 
 ## Eval Gate Model

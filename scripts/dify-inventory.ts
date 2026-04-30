@@ -75,8 +75,21 @@ type DifyAgent = {
     notes?: string;
   };
   smoke_command?: string;
+  smoke_cases?: DifySmokeCase[];
   owner: string;
   write_policy?: WritePolicy;
+  notes?: string;
+};
+
+type DifySmokeCase = {
+  id: string;
+  query: string;
+  required_tools?: string[];
+  forbidden_tools?: string[];
+  expected_answer_substrings?: string[];
+  allow_write_tools?: boolean;
+  timeout_ms?: number;
+  max_attempts?: number;
   notes?: string;
 };
 
@@ -328,6 +341,7 @@ function validateAgent(
   }
 
   validateAgentEvals(agentId, agent, enablesWriteTool, errors);
+  validateAgentSmokeCases(agentId, agent, inventory, errors);
 }
 
 function validateManifestCoverage(manifestPaths: Set<string>, errors: string[]): void {
@@ -411,6 +425,87 @@ function requireEvalChecks(
   }
 }
 
+function validateAgentSmokeCases(
+  agentId: string,
+  agent: DifyAgent,
+  inventory: DifyInventory,
+  errors: string[]
+): void {
+  if (
+    agent.status === 'published' &&
+    (!Array.isArray(agent.smoke_cases) || agent.smoke_cases.length === 0)
+  ) {
+    errors.push(`agent ${agentId}: published agents require at least one smoke_cases entry`);
+    return;
+  }
+
+  if (!agent.smoke_cases) return;
+
+  const enabledToolNames = new Set(
+    agent.enabled_tools
+      .map((ref) => parseToolRef(ref)?.toolName)
+      .filter((toolName): toolName is string => Boolean(toolName))
+  );
+  const allToolNames = new Set<string>();
+
+  for (const ref of agent.enabled_tools) {
+    const parsed = parseToolRef(ref);
+    if (!parsed) continue;
+    const server = inventory.mcp_servers[parsed.serverId];
+    for (const tool of server?.tools ?? []) {
+      allToolNames.add(tool.name);
+    }
+  }
+
+  const ids = new Set<string>();
+  for (const smokeCase of agent.smoke_cases) {
+    const context = `agent ${agentId} smoke case ${smokeCase?.id ?? '<missing id>'}`;
+    if (!isPlainObject(smokeCase)) {
+      errors.push(`agent ${agentId}: every smoke case must be an object`);
+      continue;
+    }
+    if (!smokeCase.id || !/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(smokeCase.id)) {
+      errors.push(`${context}: id must be a lowercase slug`);
+    }
+    if (ids.has(smokeCase.id)) {
+      errors.push(`${context}: duplicate smoke case id`);
+    }
+    ids.add(smokeCase.id);
+    if (!smokeCase.query) {
+      errors.push(`${context}: query is required`);
+    }
+
+    for (const tool of smokeCase.required_tools ?? []) {
+      const name = normalizeToolName(tool);
+      if (!enabledToolNames.has(name)) {
+        errors.push(`${context}: required tool ${tool} is not enabled by the agent`);
+      }
+    }
+
+    for (const tool of smokeCase.forbidden_tools ?? []) {
+      const name = normalizeToolName(tool);
+      if (!allToolNames.has(name)) {
+        errors.push(`${context}: forbidden tool ${tool} is not known to the agent's MCP servers`);
+      }
+    }
+
+    for (const expected of smokeCase.expected_answer_substrings ?? []) {
+      if (!expected || expected.trim().length === 0) {
+        errors.push(`${context}: expected_answer_substrings cannot contain empty values`);
+      }
+    }
+
+    if (
+      smokeCase.max_attempts !== undefined &&
+      (!Number.isInteger(smokeCase.max_attempts) ||
+        smokeCase.max_attempts < 1 ||
+        smokeCase.max_attempts > 5)
+    ) {
+      errors.push(`${context}: max_attempts must be an integer from 1 to 5`);
+    }
+  }
+}
+
 function renderInventoryDoc(inventory: DifyInventory): string {
   const lines: string[] = [
     '# Dify Workspace Inventory (Generated)',
@@ -470,6 +565,20 @@ function renderInventoryDoc(inventory: DifyInventory): string {
   }
   lines.push('');
 
+  lines.push('## Smoke Cases', '');
+  lines.push(
+    '| Agent | Case | Required Tools | Expected Answer Substrings | Write Tools Allowed |'
+  );
+  lines.push('| --- | --- | --- | --- | --- |');
+  for (const [agentId, agent] of Object.entries(inventory.agents)) {
+    for (const smokeCase of agent.smoke_cases ?? []) {
+      lines.push(
+        `| ${code(agentId)} | ${code(smokeCase.id)} | ${formatList(smokeCase.required_tools)} | ${formatList(smokeCase.expected_answer_substrings)} | ${smokeCase.allow_write_tools === true ? 'yes' : 'no'} |`
+      );
+    }
+  }
+  lines.push('');
+
   lines.push('## Agent Tool Mapping', '');
   for (const [agentId, agent] of Object.entries(inventory.agents)) {
     lines.push(`### ${agent.display_name}`, '');
@@ -518,6 +627,11 @@ function parseToolRef(ref: string): { serverId: string; toolName: string } | und
   };
 }
 
+function normalizeToolName(tool: string): string {
+  const index = tool.lastIndexOf('.');
+  return index >= 0 ? tool.slice(index + 1) : tool;
+}
+
 function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf8')) as T;
 }
@@ -536,6 +650,10 @@ function code(value: string): string {
 
 function codeOrDash(value: string | undefined): string {
   return value ? code(value) : '-';
+}
+
+function formatList(values: string[] | undefined): string {
+  return values && values.length > 0 ? values.map(code).join(', ') : '-';
 }
 
 function normalizePath(path: string): string {
