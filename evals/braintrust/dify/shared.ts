@@ -40,6 +40,19 @@ export type DifyClientConfig = {
   apiKey?: string;
   user: string;
   timeoutMs: number;
+  missingApiKeyHint?: string;
+};
+
+export type DifyClientConfigOptions = {
+  baseUrl?: string;
+  apiKeyEnv?: string;
+  secretName?: string;
+  infisicalEnvironment?: string;
+  infisicalPath?: string;
+  infisicalProjectId?: string;
+  user?: string;
+  timeoutMs?: number;
+  skipSecretLookup?: boolean;
 };
 
 type DifyStreamEvent = JsonRecord & {
@@ -60,22 +73,37 @@ export const DEFAULT_DIFY_API_BASE_URL = 'https://api.dify.ai/v1';
 export const DEFAULT_DIFY_INFISICAL_PATH = '/dify/youtube-transcript-notion-agent';
 export const DEFAULT_DIFY_API_KEY_ENV = 'DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT_API_KEY';
 
-export function buildDifyClientConfig(): DifyClientConfig {
-  const secretName = readOptionalEnv('DIFY_AGENT_API_KEY_SECRET_NAME') ?? DEFAULT_DIFY_API_KEY_ENV;
+export function buildDifyClientConfig(options: DifyClientConfigOptions = {}): DifyClientConfig {
+  const apiKeyEnv = options.apiKeyEnv ?? DEFAULT_DIFY_API_KEY_ENV;
+  const secretName =
+    options.secretName ?? readOptionalEnv('DIFY_AGENT_API_KEY_SECRET_NAME') ?? apiKeyEnv;
+  const infisicalPath =
+    options.infisicalPath ?? readOptionalEnv('DIFY_AGENT_INFISICAL_PATH') ?? DEFAULT_DIFY_INFISICAL_PATH;
+  const infisicalEnvironment =
+    options.infisicalEnvironment ??
+    readOptionalEnv('DIFY_AGENT_INFISICAL_ENV') ??
+    readOptionalEnv('INFISICAL_ENV') ??
+    'prod';
+  const infisicalProjectId =
+    options.infisicalProjectId ??
+    readOptionalEnv('DIFY_AGENT_INFISICAL_PROJECT_ID') ??
+    readOptionalEnv('INFISICAL_PROJECT_ID');
+  const timeoutMs =
+    options.timeoutMs ?? Number.parseInt(readEnv('DIFY_AGENT_EVAL_TIMEOUT_MS', '45000'), 10);
 
   return {
-    baseUrl: readEnv('DIFY_AGENT_BASE_URL', DEFAULT_DIFY_API_BASE_URL).replace(/\/+$/, ''),
-    apiKey: readOptionalEnvOrInfisicalSecret(DEFAULT_DIFY_API_KEY_ENV, {
-      secretName,
-      environment:
-        readOptionalEnv('DIFY_AGENT_INFISICAL_ENV') ?? readOptionalEnv('INFISICAL_ENV') ?? 'prod',
-      path: readOptionalEnv('DIFY_AGENT_INFISICAL_PATH') ?? DEFAULT_DIFY_INFISICAL_PATH,
-      projectId:
-        readOptionalEnv('DIFY_AGENT_INFISICAL_PROJECT_ID') ??
-        readOptionalEnv('INFISICAL_PROJECT_ID')
-    }),
-    user: readEnv('DIFY_AGENT_EVAL_USER', 'braintrust-dify-youtube-transcript-agent'),
-    timeoutMs: Number.parseInt(readEnv('DIFY_AGENT_EVAL_TIMEOUT_MS', '45000'), 10)
+    baseUrl: (options.baseUrl ?? readEnv('DIFY_AGENT_BASE_URL', DEFAULT_DIFY_API_BASE_URL)).replace(/\/+$/, ''),
+    apiKey: options.skipSecretLookup
+      ? readOptionalEnv(apiKeyEnv)
+      : readOptionalEnvOrInfisicalSecret(apiKeyEnv, {
+          secretName,
+          environment: infisicalEnvironment,
+          path: infisicalPath,
+          projectId: infisicalProjectId
+        }),
+    user: options.user ?? readEnv('DIFY_AGENT_EVAL_USER', 'braintrust-dify-youtube-transcript-agent'),
+    timeoutMs,
+    missingApiKeyHint: `Missing ${apiKeyEnv}; export it or allow Infisical lookup at ${infisicalPath}.`
   };
 }
 
@@ -144,7 +172,9 @@ export async function callDifyChat(
   if (!config.apiKey) {
     return {
       skipped: true,
-      reason: `Missing ${DEFAULT_DIFY_API_KEY_ENV}; export it or allow Infisical lookup at ${DEFAULT_DIFY_INFISICAL_PATH}.`,
+      reason:
+        config.missingApiKeyHint ??
+        `Missing ${DEFAULT_DIFY_API_KEY_ENV}; export it or allow Infisical lookup at ${DEFAULT_DIFY_INFISICAL_PATH}.`,
       ok: false,
       status: null,
       durationMs: 0,

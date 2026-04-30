@@ -55,6 +55,17 @@ The scaffold command defaults to a dry run. Use `--write-manifest` and
 `--write-inventory` only when you are ready to add the draft agent contract to
 the repo.
 
+Generic Service API smoke:
+
+```bash
+pnpm dify:agent:smoke -- --list-agents
+pnpm dify:agent:smoke -- --agent client-example-agent --dry-run
+pnpm dify:agent:smoke -- \
+  --agent client-example-agent \
+  --query "Smoke test: describe your configured purpose and do not perform writes." \
+  --forbid-tool destructive_tool_name
+```
+
 ## Required Eval Gates
 
 Every Dify agent must have Braintrust-owned eval gates. The inventory validator
