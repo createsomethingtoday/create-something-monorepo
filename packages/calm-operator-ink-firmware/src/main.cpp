@@ -14,7 +14,7 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.4";
+constexpr const char* FIRMWARE_VERSION = "0.1.5";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
 constexpr uint32_t HTTP_TIMEOUT_MS = 15000;
@@ -30,6 +30,7 @@ struct Brief {
   String action = "Then upload firmware";
   String generatedAt;
   bool urgent = false;
+  bool healthReview = false;
 };
 
 struct MenuAction {
@@ -69,6 +70,7 @@ bool quietMode = false;
 bool lastUrgentRendered = false;
 uint32_t lastSyncAt = 0;
 String lastSyncStatus = "boot";
+String lastReviewStatus = "";
 String lastHttpError = "";
 String lastFrameKey = "";
 String pendingNotice = "";
@@ -253,9 +255,15 @@ void renderBrief() {
   drawWrapped(activeBrief.line2, 12, 78, 176, 15, 2);
   canvas.drawLine(26, 118, 174, 118, TFT_BLACK);
   drawWrapped(activeBrief.action, 12, 132, 176, 14, 2);
-  drawFooter(activeBrief.urgent ? "ATTENTION" : "CS");
+  String footerLeft = "CS";
+  if (activeBrief.urgent) {
+    footerLeft = "ATTENTION";
+  } else if (activeBrief.healthReview) {
+    footerLeft = "LIVE OK";
+  }
+  drawFooter(footerLeft);
   flushFrame(
-    screenKey("brief", activeBrief.headline, activeBrief.line1, activeBrief.line2, activeBrief.action));
+    screenKey("brief", activeBrief.headline, activeBrief.line1, activeBrief.line2, activeBrief.action + "|" + footerLeft));
 
   if (activeBrief.urgent && !lastUrgentRendered) {
     beepUrgent();
@@ -436,6 +444,12 @@ void applyBriefPayload(const String& payload) {
   activeBrief.action = String((const char*)(doc["action"] | "You can step away."));
   activeBrief.generatedAt = String((const char*)(doc["generated_at"] | ""));
   activeBrief.urgent = doc["urgent"] | false;
+  JsonVariantConst healthReview = doc["health_review"];
+  activeBrief.healthReview = !healthReview.isNull();
+  if (activeBrief.healthReview) {
+    const int checked = healthReview["checked"] | 0;
+    lastReviewStatus = checked > 0 ? String("reviewed ") + String(checked) + " checks" : "reviewed live";
+  }
 
   JsonVariantConst clock = doc["clock"];
   if (!clock.isNull()) {
@@ -587,6 +601,7 @@ void renderStoneGarden() {
 void renderSettingsStatus() {
   String last = "Last " + lastSyncStatus;
   if (lastHttpError.length() > 0) last += " / " + lastHttpError;
+  if (lastReviewStatus.length() > 0) last += " / " + lastReviewStatus;
   renderStatus(
     "STATUS",
     WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "Wi-Fi offline",

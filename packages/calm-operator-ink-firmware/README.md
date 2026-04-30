@@ -90,6 +90,8 @@ Local settings are stored on the device:
 
 `MCP Review` runs the live remote health-review path and may take 20-45 seconds
 because it collects remote MCP and agent health before rendering the summary.
+Fresh live review results show `LIVE OK` in the footer when no operator action
+is needed.
 
 ## Notes
 

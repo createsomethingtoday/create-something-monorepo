@@ -98,6 +98,7 @@ The production smoke check validates:
 - authenticated navigation contract from `GET /ink/navigation`
 - authenticated device heartbeat lookup from `GET /ink/device`
 - authenticated live MCP/agent review via `POST /ink/health-review/request`
+  including explicit review metadata such as `checked` and `generated_at`
 
 ## Example alert
 

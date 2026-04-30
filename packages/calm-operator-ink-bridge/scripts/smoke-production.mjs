@@ -219,6 +219,8 @@ async function smoke(args) {
       assertString(body?.action, 'mcp-review.action');
       if (typeof body.urgent !== 'boolean') throw new Error('mcp-review.urgent must be boolean');
       if (!body.health_review) throw new Error('mcp-review.health_review is required');
+      if (!Number.isFinite(body.health_review.checked)) throw new Error('mcp-review.health_review.checked must be numeric');
+      assertString(body.health_review.generated_at, 'mcp-review.health_review.generated_at');
       return `${body.headline}: ${body.line1} / ${body.line2}`;
     })
   );
