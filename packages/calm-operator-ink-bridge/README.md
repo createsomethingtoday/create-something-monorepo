@@ -36,6 +36,7 @@ Token-gated:
 - `GET /ink/health-checks`
 - `POST /ink/health-checks/run`
 - `GET /ink/health-review`
+- `GET /ink/health-review/runs`
 - `POST /ink/health-review/request`
 - `POST /ink/health-review/run`
 - `POST /ink/alarms/run`
@@ -122,7 +123,7 @@ pnpm post:health -- --component "Claude Code Slack watcher" --status degraded --
 pnpm post:decision -- --source mcp-review-agent --subject "MCP review requires attention" --summary "Composio Toolkit MCP failed health review" --urgency attention --decision-required --action "Review Composio auth configuration"
 ```
 
-Both commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the environment.
+These commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the environment.
 
 ## AI-native operator decisions
 
@@ -187,6 +188,9 @@ snapshots, and then reviews all stored snapshots. If any agent/MCP check is poor
 or stale, the Worker writes a `health_attention` alert that Ink will display. If
 the report is clear, the Worker clears the synthetic health-review alert.
 
+Each run is also stored as compact Durable Object history. This is the operator
+log for questions like "what happened when I pressed MCP Review last night?"
+
 You can run the review manually:
 
 ```bash
@@ -196,6 +200,13 @@ curl -sS https://ink.createsomething.agency/ink/health-review/run \
 ```
 
 Pass `?collect=false` to review stored snapshots without collecting remote checks.
+
+Review recent run logs:
+
+```bash
+curl -sS "https://ink.createsomething.agency/ink/health-review/runs?limit=10" \
+  -H "authorization: Bearer $INK_SOURCE_TOKEN"
+```
 
 Ink can request the same review with the lower-privilege device token. This
 returns the compact firmware brief shape, so the device can show one calm summary

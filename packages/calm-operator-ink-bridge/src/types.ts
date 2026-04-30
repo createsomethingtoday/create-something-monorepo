@@ -188,3 +188,21 @@ export interface HealthReviewReport {
   urgent: boolean;
   items: HealthReviewItem[];
 }
+
+export interface HealthReviewRun {
+  id: string;
+  trigger: string;
+  state: HealthReviewReport['state'];
+  checked: number;
+  healthy_count: number;
+  poor_count: number;
+  stale_count: number;
+  urgent: boolean;
+  summary: string;
+  detail: string;
+  action: string;
+  collected_count: number;
+  created_at: number;
+  report: HealthReviewReport;
+  collected: Array<{ ok: boolean; component: string; status?: string }>;
+}
