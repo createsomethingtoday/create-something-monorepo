@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 type CatalogExposureMode = 'direct' | 'brokered' | 'exception_direct';
@@ -93,6 +93,12 @@ type IntakeManifest = {
   notes: string[];
 };
 
+type ExistingIntakeArtifact = {
+  registryServerId: string;
+  difyServerId: string | undefined;
+  path: string;
+};
+
 const ROOT = process.cwd();
 const REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
 const DIFY_INVENTORY_PATH = resolve(ROOT, 'config/dify/inventory.json');
@@ -111,6 +117,13 @@ for (const path of [REGISTRY_PATH, DIFY_INVENTORY_PATH]) {
 
 const registry = readJson<Registry>(REGISTRY_PATH);
 const inventory = readJson<DifyInventory>(DIFY_INVENTORY_PATH);
+const existingIntakeArtifacts = readExistingIntakeArtifacts(INTAKE_DIR);
+
+if (args['all-missing']) {
+  runBatchIntake(args, registry, inventory, existingIntakeArtifacts);
+  process.exit(0);
+}
+
 const options = buildOptions(args, registry);
 const server = registry.servers[options.registryServerId];
 
@@ -135,6 +148,68 @@ if (options.write) {
 
 printResult(options, manifest, outputPath);
 
+function runBatchIntake(
+  args: Record<string, string | boolean>,
+  registry: Registry,
+  inventory: DifyInventory,
+  existingIntakeArtifacts: ExistingIntakeArtifact[]
+): void {
+  for (const unsupported of [
+    'registry-server-id',
+    'server-id',
+    'dify-server-id',
+    'display-name',
+    'auth-type',
+    'infisical-path'
+  ]) {
+    if (args[unsupported]) {
+      fail(`--${unsupported} cannot be used with --all-missing.`);
+    }
+  }
+
+  const existingRegistryIds = new Set(
+    existingIntakeArtifacts.map((artifact) => artifact.registryServerId)
+  );
+  const candidates = Object.entries(registry.servers ?? {})
+    .filter(([serverId, server]) => {
+      return (
+        isBatchCandidate(server) &&
+        !existingRegistryIds.has(serverId) &&
+        !hasDifyInventoryMapping(serverId, server, inventory)
+      );
+    })
+    .sort(([a], [b]) => a.localeCompare(b));
+  const manifests = candidates.map(([registryServerId, server]) => {
+    const options = buildOptionsForServer(registryServerId, server, args);
+    validateCandidate(options, server, inventory);
+    return {
+      options,
+      manifest: buildManifest(options, server),
+      outputPath: resolve(INTAKE_DIR, `${options.difyServerId}.json`)
+    };
+  });
+
+  validateNoDuplicateDifyServerIds(manifests.map(({ options }) => options.difyServerId));
+
+  const existingOutputPaths = manifests.filter(({ outputPath }) => existsSync(outputPath));
+  if (existingOutputPaths.length > 0) {
+    fail(
+      `Refusing to overwrite existing intake artifact(s): ${existingOutputPaths
+        .map(({ outputPath }) => relativeToRoot(outputPath))
+        .join(', ')}`
+    );
+  }
+
+  if (args.write && manifests.length > 0) {
+    mkdirSync(INTAKE_DIR, { recursive: true });
+    for (const { manifest, outputPath } of manifests) {
+      writeFileSync(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+    }
+  }
+
+  printBatchResult(Boolean(args.write), manifests, existingIntakeArtifacts.length);
+}
+
 function buildOptions(args: Record<string, string | boolean>, registry: Registry): IntakeOptions {
   const registryServerId =
     readStringArg(args, 'registry-server-id') ?? readStringArg(args, 'server-id');
@@ -149,6 +224,14 @@ function buildOptions(args: Record<string, string | boolean>, registry: Registry
     fail(`Unknown MCP registry server ${registryServerId}.`);
   }
 
+  return buildOptionsForServer(registryServerId, server, args);
+}
+
+function buildOptionsForServer(
+  registryServerId: string,
+  server: RegistryServer,
+  args: Record<string, string | boolean>
+): IntakeOptions {
   const difyServerId =
     readStringArg(args, 'dify-server-id') ?? server.catalog?.slug ?? slugify(registryServerId);
   const displayName =
@@ -164,11 +247,18 @@ function buildOptions(args: Record<string, string | boolean>, registry: Registry
     authType,
     infisicalEnvironment: readStringArg(args, 'infisical-env') ?? 'prod',
     infisicalPath: readStringArg(args, 'infisical-path') ?? `/${registryServerId}`,
-    secretKey: readStringArg(args, 'secret-key') ?? 'MCP_BEARER_TOKEN',
+    secretKey: readStringArg(args, 'secret-key') ?? defaultSecretKeyForAuthType(authType),
     owner: readStringArg(args, 'owner') ?? 'create-something',
     force: Boolean(args.force),
     write: Boolean(args.write)
   };
+}
+
+function isBatchCandidate(server: RegistryServer): boolean {
+  if (server.transport !== 'http') return false;
+  if (server.lifecycle === 'dormant' || server.lifecycle === 'local') return false;
+  if (server.catalog_exposure_mode === 'brokered') return false;
+  return Boolean(server.url);
 }
 
 function validateCandidate(
@@ -210,6 +300,19 @@ function validateCandidate(
   }
 }
 
+function hasDifyInventoryMapping(
+  registryServerId: string,
+  server: RegistryServer,
+  inventory: DifyInventory
+): boolean {
+  return Object.values(inventory.mcp_servers ?? {}).some((difyServer) => {
+    return (
+      difyServer.source_mcp_registry_server === registryServerId ||
+      (Boolean(server.url) && difyServer.url === server.url)
+    );
+  });
+}
+
 function buildManifest(options: IntakeOptions, server: RegistryServer): IntakeManifest {
   if (server.transport !== 'http' || !server.url) {
     fail(`MCP registry server ${options.registryServerId} must be an HTTP server with a URL.`);
@@ -242,9 +345,7 @@ function buildManifest(options: IntakeOptions, server: RegistryServer): IntakeMa
       'Open Dify Studio -> Tools -> MCP.',
       `Create an HTTP MCP server card with server ID ${options.difyServerId}.`,
       `Set the MCP URL to ${server.url}.`,
-      auth.type === 'none'
-        ? 'Use no authentication for the server card.'
-        : `Configure ${auth.type} auth from Infisical ${auth.infisical?.environment}:${auth.infisical?.path}:${auth.infisical?.secret_key}.`,
+      difyAuthInstruction(auth),
       'Refresh/discover tools in Dify Studio.',
       'Transcribe every discovered tool into config/dify/inventory.json with risk classification.',
       'Run pnpm dify:inventory:generate and pnpm dify:coverage:generate.'
@@ -279,6 +380,37 @@ function buildDifyAuth(options: IntakeOptions): IntakeManifest['dify_mcp_server'
       secret_key: options.secretKey
     }
   };
+}
+
+function defaultSecretKeyForAuthType(authType: DifyAuthType): string {
+  switch (authType) {
+    case 'none':
+      return 'MCP_AUTH_NOT_REQUIRED';
+    case 'bearer':
+      return 'MCP_BEARER_TOKEN';
+    case 'oauth':
+      return 'MCP_OAUTH_CONFIG';
+    case 'custom':
+      return 'MCP_AUTH_CONFIG';
+  }
+}
+
+function difyAuthInstruction(auth: IntakeManifest['dify_mcp_server']['auth']): string {
+  if (auth.type === 'none') return 'Use no authentication for the server card.';
+
+  const ref = auth.infisical
+    ? `${auth.infisical.environment}:${auth.infisical.path}:${auth.infisical.secret_key}`
+    : 'the declared secret manager reference';
+
+  if (auth.type === 'oauth') {
+    return `Configure OAuth using the credential/config reference in Infisical ${ref}; complete any provider authorization flow required by Dify Studio.`;
+  }
+
+  if (auth.type === 'custom') {
+    return `Configure custom MCP auth from Infisical ${ref}.`;
+  }
+
+  return `Configure bearer auth from Infisical ${ref}.`;
 }
 
 function readAuthType(
@@ -328,6 +460,32 @@ function printResult(options: IntakeOptions, manifest: IntakeManifest, outputPat
   console.log('```json');
   console.log(JSON.stringify(manifest, null, 2));
   console.log('```');
+}
+
+function printBatchResult(
+  wroteFiles: boolean,
+  manifests: Array<{ options: IntakeOptions; outputPath: string }>,
+  existingIntakeCount: number
+): void {
+  console.log('# Dify MCP intake: all missing candidates');
+  console.log('');
+  console.log(
+    wroteFiles ? `Wrote ${manifests.length} intake artifact(s).` : 'Dry run: no files written.'
+  );
+  console.log(`Existing intake artifacts already present: ${existingIntakeCount}`);
+  console.log('');
+  console.log('| MCP Registry Server | Dify Server ID | Auth | Output |');
+  console.log('| --- | --- | --- | --- |');
+
+  for (const { options, outputPath } of manifests) {
+    console.log(
+      `| ${options.registryServerId} | ${options.difyServerId} | ${options.authType} | ${relativeToRoot(outputPath)} |`
+    );
+  }
+
+  if (manifests.length === 0) {
+    console.log('| - | - | - | - |');
+  }
 }
 
 function parseArgs(argv: string[]): Record<string, string | boolean> {
@@ -387,8 +545,44 @@ function slugify(value: string): string {
   return slug || 'dify-mcp-server';
 }
 
+function validateNoDuplicateDifyServerIds(serverIds: string[]): void {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+
+  for (const serverId of serverIds) {
+    if (seen.has(serverId)) duplicates.add(serverId);
+    seen.add(serverId);
+  }
+
+  if (duplicates.size > 0) {
+    fail(`Batch intake would create duplicate Dify server IDs: ${[...duplicates].join(', ')}`);
+  }
+}
+
 function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf8')) as T;
+}
+
+function readExistingIntakeArtifacts(dir: string): ExistingIntakeArtifact[] {
+  if (!existsSync(dir)) return [];
+
+  return readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+    .map((entry) => {
+      const path = resolve(dir, entry.name);
+      const artifact = readJson<Partial<IntakeManifest>>(path);
+      const registryServerId = artifact.registry_server?.id;
+
+      if (!registryServerId) {
+        fail(`Dify MCP intake artifact ${relativeToRoot(path)} is missing registry_server.id.`);
+      }
+
+      return {
+        registryServerId,
+        difyServerId: artifact.dify_mcp_server?.server_id,
+        path: relativeToRoot(path)
+      };
+    });
 }
 
 function relativeToRoot(path: string): string {
@@ -400,13 +594,14 @@ function printUsage(): void {
   pnpm dify:mcp:intake -- --registry-server-id <mcp-registry-server-id> [options]
 
 Options:
+  --all-missing              Generate intake artifacts for all missing Dify-direct candidates.
   --server-id <id>            Alias for --registry-server-id.
   --dify-server-id <id>       Dify MCP server card ID. Defaults to catalog slug or registry id.
   --display-name <name>       Dify display name. Defaults to catalog name or titleized server id.
   --auth-type <type>          none, bearer, oauth, custom. Defaults from registry auth metadata.
   --infisical-env <env>       Secret environment. Default: prod.
   --infisical-path <path>     Secret path. Default: /<registry-server-id>.
-  --secret-key <key>          Secret key. Default: MCP_BEARER_TOKEN.
+  --secret-key <key>          Secret key. Default depends on auth type.
   --owner <name>              Owner label. Default: create-something.
   --write                     Write config/dify-mcp-intake/<dify-server-id>.json.
   --force                     Allow brokered/dormant/already-mapped servers.
@@ -414,6 +609,8 @@ Options:
 Examples:
   pnpm dify:mcp:intake -- --registry-server-id webflow-template-review-mcp
   pnpm dify:mcp:intake -- --registry-server-id webflow-template-review-mcp --write
+  pnpm dify:mcp:intake -- --all-missing
+  pnpm dify:mcp:intake -- --all-missing --write
 `);
 }
 

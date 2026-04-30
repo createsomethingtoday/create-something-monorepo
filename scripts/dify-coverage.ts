@@ -366,24 +366,36 @@ function renderCoverageDoc(report: ReturnType<typeof buildCoverageReport>): stri
   lines.push('| MCP Registry Server | Intake Artifact | URL | Description |');
   lines.push('| --- | --- | --- | --- |');
 
-  for (const candidate of report.candidates.filter(
+  const intakeReadyCandidates = report.candidates.filter(
     (candidate) => candidate.status === 'intake-ready'
-  )) {
+  );
+
+  for (const candidate of intakeReadyCandidates) {
     lines.push(
       `| ${code(candidate.registryServerId)} | ${formatList(candidate.intakeArtifactPaths)} | ${code(candidate.registryUrl)} | ${escapeTable(candidate.description) || '-'} |`
     );
+  }
+
+  if (intakeReadyCandidates.length === 0) {
+    lines.push('| - | - | - | - |');
   }
 
   lines.push('', '## Unmapped Candidate URLs', '');
   lines.push('| MCP Registry Server | URL | Description |');
   lines.push('| --- | --- | --- |');
 
-  for (const candidate of report.candidates.filter(
+  const unmappedCandidates = report.candidates.filter(
     (candidate) => candidate.status === 'missing-dify-server'
-  )) {
+  );
+
+  for (const candidate of unmappedCandidates) {
     lines.push(
       `| ${code(candidate.registryServerId)} | ${code(candidate.registryUrl)} | ${escapeTable(candidate.description) || '-'} |`
     );
+  }
+
+  if (unmappedCandidates.length === 0) {
+    lines.push('| - | - | - |');
   }
 
   return `${lines.join('\n')}\n`;
