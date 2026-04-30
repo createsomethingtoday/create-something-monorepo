@@ -1123,10 +1123,10 @@ function generateMarkdownReport(results) {
     markdown += "| Page URL | Status | GSAP Scripts | Flagged Scripts | Issues |\n";
     markdown += "|----------|--------|-------------|-----------------|--------|\n";
     results.pageResults.forEach((page) => {
-      const status = page.passed ? "\u2705 Pass" : "\u274C Fail";
-      const gsapCount = page.summary ? page.summary.gsapScripts : "N/A";
-      const flaggedCount = page.summary ? page.summary.flaggedScripts + page.summary.securityRiskScripts : "N/A";
-      const issuesCount = page.summary && page.summary.issues ? page.summary.issues.length : 0;
+      const status = page.success === false ? "\u274C Request failed" : page.passed ? "\u2705 Pass" : "\u274C Fail";
+      const gsapCount = page.success === false ? "N/A" : page.summary?.validGsapCount ?? 0;
+      const flaggedCount = page.success === false ? "N/A" : (page.summary?.flaggedCodeCount || 0) + (page.summary?.securityRiskCount || 0);
+      const issuesCount = page.success === false ? 1 : (page.summary?.flaggedCodeCount || 0) + (page.summary?.securityRiskCount || 0);
       markdown += `| ${page.url} | ${status} | ${gsapCount} | ${flaggedCount} | ${issuesCount} |
 `;
     });
@@ -1134,21 +1134,38 @@ function generateMarkdownReport(results) {
     markdown += "## Detailed Issues\n\n";
     let hasDetailedIssues = false;
     results.pageResults.forEach((page) => {
+      if (page.success === false) {
+        hasDetailedIssues = true;
+        markdown += `### ${page.url}
+
+`;
+        markdown += `- **Request Failure**: ${page.error || "Unknown crawl error"}
+`;
+        if (Array.isArray(page.referrers) && page.referrers.length > 0) {
+          markdown += `- **Linked From**: ${page.referrers.join(", ")}
+`;
+        }
+        markdown += `
+`;
+        return;
+      }
       if (page.success && !page.passed) {
         hasDetailedIssues = true;
         markdown += `### ${page.url}
 
 `;
-        if (page.summary && page.summary.issues) {
+        if (page.summary) {
           markdown += `- **Issues Found**: ${page.flaggedCodeCount}
 `;
-          if (Array.isArray(page.summary.issues)) {
+          if (Array.isArray(page.details?.flaggedCode) && page.details.flaggedCode.length > 0) {
             markdown += `
 **Problematic Code Snippets**:
 
 `;
-            page.summary.issues.forEach((issue, index) => {
-              markdown += `${index + 1}. \`${issue.code.slice(0, 50)}${issue.code.length > 50 ? "..." : ""}\`
+            page.details.flaggedCode.forEach((issue, index) => {
+              const flaggedText = Array.isArray(issue.flaggedCode) ? issue.flaggedCode.join(" ") : issue.message || "Flagged code";
+              const flaggedPreview = flaggedText.slice(0, 50);
+              markdown += `${index + 1}. \`${flaggedPreview}${flaggedText.length > 50 ? "..." : ""}\`
 `;
               if (issue.reason) {
                 markdown += `   - Reason: ${issue.reason}
@@ -1634,9 +1651,43 @@ function summarizeCrawlPageResults(pageResults, pageCount) {
   };
 }
 __name(summarizeCrawlPageResults, "summarizeCrawlPageResults");
+function buildReferrerMap(siteMap) {
+  const referrerMap = {};
+  if (!siteMap || typeof siteMap !== "object") {
+    return referrerMap;
+  }
+  Object.entries(siteMap).forEach(([sourceKey, entry]) => {
+    if (!entry || typeof entry !== "object" || !Array.isArray(entry.links)) {
+      return;
+    }
+    const sourceUrl = typeof entry.url === "string" ? entry.url : sourceKey;
+    entry.links.forEach((linkUrl) => {
+      if (typeof linkUrl !== "string") {
+        return;
+      }
+      if (!referrerMap[linkUrl]) {
+        referrerMap[linkUrl] = [];
+      }
+      if (!referrerMap[linkUrl].includes(sourceUrl)) {
+        referrerMap[linkUrl].push(sourceUrl);
+      }
+    });
+  });
+  return referrerMap;
+}
+__name(buildReferrerMap, "buildReferrerMap");
 function finalizeCrawlResponse(url, pageResults, crawlResults, siteMap) {
+  const resolvedSiteMap = siteMap || crawlResults?.siteMap;
+  const referrerMap = buildReferrerMap(resolvedSiteMap);
+  const enrichedPageResults = pageResults.map((page) => {
+    const referrers = typeof page?.url === "string" ? referrerMap[page.url] || [] : [];
+    return referrers.length > 0 ? {
+      ...page,
+      referrers
+    } : page;
+  });
   const pageCount = Array.isArray(crawlResults?.pages) ? crawlResults.pages.length : 0;
-  const siteResults = summarizeCrawlPageResults(pageResults, pageCount);
+  const siteResults = summarizeCrawlPageResults(enrichedPageResults, pageCount);
   const crawlStats = {
     ...(crawlResults?.crawlStats || {}),
     partial: Boolean(crawlResults?.partial),
@@ -1652,8 +1703,8 @@ function finalizeCrawlResponse(url, pageResults, crawlResults, siteMap) {
       ...siteResults,
       incomplete
     },
-    pageResults,
-    siteMap: siteMap || crawlResults?.siteMap,
+    pageResults: enrichedPageResults,
+    siteMap: resolvedSiteMap,
     crawlStats,
     ...(error ? { error } : {})
   };

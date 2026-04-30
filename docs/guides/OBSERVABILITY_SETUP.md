@@ -20,7 +20,7 @@ This guide covers the observability stack for CREATE SOMETHING agents, combining
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                   Unified Dashboard                            │
-│    SvelteKit + Loom + Agentic Executor + Langfuse             │
+│    SvelteKit + Linear + Agentic Executor + Langfuse           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

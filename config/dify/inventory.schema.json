@@ -1,0 +1,390 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://create-something.dev/schemas/dify-inventory.schema.json",
+  "title": "Dify Workspace Inventory",
+  "description": "Repo-side inventory for Dify MCP server cards and Dify agents.",
+  "type": "object",
+  "required": ["version", "workspace", "status", "mcp_servers", "agents"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "workspace": {
+      "type": "object",
+      "required": ["name", "provider", "base_url"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["dify_cloud", "self_hosted"]
+        },
+        "base_url": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["partial", "complete"]
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "last_manual_inventory_at": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "mcp_servers": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/mcpServer"
+      }
+    },
+    "agents": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/agent"
+      }
+    }
+  },
+  "$defs": {
+    "secretRef": {
+      "type": "object",
+      "required": ["environment", "path", "secret_key"],
+      "additionalProperties": false,
+      "properties": {
+        "environment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "secret_key": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["none", "bearer", "oauth", "custom"]
+        },
+        "infisical": {
+          "$ref": "#/$defs/secretRef"
+        }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "required": ["name", "enabled", "risk"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["read", "write", "external_side_effect", "secret_sensitive", "unknown"]
+        },
+        "required_parameters": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requires_user_confirmation": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "mcpServer": {
+      "type": "object",
+      "required": ["display_name", "transport", "url", "auth", "tools"],
+      "additionalProperties": false,
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_mcp_registry_server": {
+          "type": "string",
+          "minLength": 1
+        },
+        "transport": {
+          "type": "string",
+          "enum": ["http"]
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "auth": {
+          "$ref": "#/$defs/auth"
+        },
+        "tools": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/tool"
+          }
+        }
+      }
+    },
+    "serviceApi": {
+      "type": "object",
+      "required": ["base_url", "api_key_secret"],
+      "additionalProperties": false,
+      "properties": {
+        "base_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "api_key_secret": {
+          "$ref": "#/$defs/secretRef"
+        }
+      }
+    },
+    "evalCheck": {
+      "type": "string",
+      "enum": [
+        "api_health",
+        "expected_tool_use",
+        "forbidden_tool_use",
+        "grounded_answer",
+        "write_confirmation",
+        "secret_refusal",
+        "latency_budget",
+        "policy_boundary",
+        "tenant_isolation",
+        "error_recovery"
+      ]
+    },
+    "agentEvals": {
+      "type": "object",
+      "required": ["owner_system", "required_checks"],
+      "additionalProperties": false,
+      "properties": {
+        "owner_system": {
+          "type": "string",
+          "enum": ["braintrust"]
+        },
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "experiment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "local_command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "published_command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_checks": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evalCheck"
+          }
+        },
+        "last_verified_at": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "smokeCase": {
+      "type": "object",
+      "required": ["id", "query"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_tools": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbidden_tools": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "expected_answer_substrings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allow_write_tools": {
+          "type": "boolean"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "required": [
+        "display_name",
+        "runtime",
+        "status",
+        "audience",
+        "mode",
+        "allowed_mcp_servers",
+        "enabled_tools",
+        "policy_pack",
+        "eval_suite",
+        "evals",
+        "owner"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime": {
+          "type": "string",
+          "enum": ["dify"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["planned", "draft", "imported", "published", "retired"]
+        },
+        "audience": {
+          "type": "string",
+          "enum": ["internal", "client", "public"]
+        },
+        "dify_app_id": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "manifest_path": {
+          "type": "string"
+        },
+        "dsl_path": {
+          "type": "string"
+        },
+        "service_api": {
+          "$ref": "#/$defs/serviceApi"
+        },
+        "allowed_mcp_servers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "enabled_tools": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[^.]+[.][^.]+$"
+          }
+        },
+        "policy_pack": {
+          "type": "string",
+          "minLength": 1
+        },
+        "instructions_source": {
+          "type": "string"
+        },
+        "eval_suite": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evals": {
+          "$ref": "#/$defs/agentEvals"
+        },
+        "smoke_command": {
+          "type": "string"
+        },
+        "smoke_cases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/smokeCase"
+          }
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "write_policy": {
+          "type": "string",
+          "enum": ["none", "requires_explicit_confirmation", "disabled"]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

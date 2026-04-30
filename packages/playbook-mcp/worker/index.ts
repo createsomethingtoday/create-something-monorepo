@@ -22,12 +22,15 @@ import { registerTools } from '../src/tools.js';
 import { registerPrompts } from '../src/prompts.js';
 import { HOST_PLAYBOOKS } from '../src/playbooks.js';
 import { MCP_CATALOG } from '../src/catalog.js';
+import registryJson from '../../../config/mcp-hub/registry.json';
+import fleetJson from '../../../config/mcp-hub/fleet.json';
 import {
   runHalfDozenDedup,
   runHalfDozenFleetWatchdog,
   runHalfDozenInboxTriage,
 } from './halfdozenFleetWatchdog.js';
 import type { HalfDozenScenarioRunResult } from './halfdozenFleetWatchdog.js';
+import { inferredProxyToolCount, liveHubTotalServerCount } from './registrySweepTelemetry.js';
 
 // =============================================================================
 // Types
@@ -52,6 +55,15 @@ interface Env {
   HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL?: string;
   HALFDOZEN_SLACK_SIGNING_SECRET?: string;
   HALFDOZEN_SLACK_TEAM_ID?: string;
+  INK_BRIDGE_ORIGIN?: string;
+  INK_SOURCE_TOKEN?: string;
+  INK_BRIDGE_TOKEN?: string;
+  HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED?: string;
+  HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS?: string;
+  MCP_REGISTRY_SWEEP_HUB_HEALTH_URL?: string;
+  MCP_REGISTRY_SWEEP_TIMEOUT_MS?: string;
+  MCP_REGISTRY_SWEEP_CRON_ENABLED?: string;
+  MCP_REGISTRY_SWEEP_CRON_UTC_HOURS?: string;
 }
 
 const JSON_HEADERS = {
@@ -63,14 +75,178 @@ const HALFDOZEN_FLEET_WATCHDOG_ROUTE = '/clients/halfdozen/agents/fleet-watchdog
 const HALFDOZEN_INBOX_TRIAGE_ROUTE = '/clients/halfdozen/agents/inbox-triage/run';
 const HALFDOZEN_DEDUP_ROUTE = '/clients/halfdozen/agents/dedup/run';
 const HALFDOZEN_SLACK_COMMAND_ROUTE = '/clients/halfdozen/slack/commands';
+const MCP_REGISTRY_SWEEP_ROUTE = '/create-something/agents/mcp-registry-sweep/run';
 const SLACK_TIMESTAMP_TOLERANCE_SECONDS = 300;
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_MCP_REGISTRY_SWEEP_HUB_HEALTH_URL =
+  'https://cs-mcp-hub-remote.createsomething.workers.dev/health';
+const DEFAULT_MCP_REGISTRY_SWEEP_TIMEOUT_MS = 60_000;
 
 const HALFDOZEN_PROTECTED_ROUTES = [
   HALFDOZEN_FLEET_WATCHDOG_ROUTE,
   HALFDOZEN_INBOX_TRIAGE_ROUTE,
   HALFDOZEN_DEDUP_ROUTE,
 ] as const;
+const DEFAULT_INK_BRIDGE_ORIGIN = 'https://ink.createsomething.agency';
+const DEFAULT_FLEET_WATCHDOG_CRON_UTC_HOURS = '4,13,18,23';
+const DEFAULT_MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = '4,13,18,23';
+const MCP_HUB_REGISTRY = registryJson as McpHubRegistry;
+const MCP_FLEET_REGISTRY = fleetJson as McpFleetRegistry;
+
+const AGENT_HEALTH_SURFACES: AgentHealthSurface[] = [
+  {
+    id: 'agent.create-something.mcp-registry-sweep',
+    name: 'CREATE SOMETHING MCP Registry Sweep',
+    route: MCP_REGISTRY_SWEEP_ROUTE,
+    schedule: 'scheduled',
+  },
+  {
+    id: 'agent.halfdozen.fleet-watchdog',
+    name: 'Half Dozen Fleet Watchdog Agent',
+    route: HALFDOZEN_FLEET_WATCHDOG_ROUTE,
+    schedule: 'scheduled',
+  },
+  {
+    id: 'agent.halfdozen.inbox-triage',
+    name: 'Half Dozen Inbox Triage Agent',
+    route: HALFDOZEN_INBOX_TRIAGE_ROUTE,
+    schedule: 'manual',
+  },
+  {
+    id: 'agent.halfdozen.dedup',
+    name: 'Half Dozen Dedup Agent',
+    route: HALFDOZEN_DEDUP_ROUTE,
+    schedule: 'manual',
+  },
+];
+
+type McpHubRegistryServer = {
+  transport?: string;
+  url?: string;
+  description?: string;
+  tags?: string[];
+  bearer_token_env_var?: string;
+  catalog?: {
+    include?: boolean;
+    category?: string;
+    requiresAuth?: boolean;
+    authType?: string;
+    slug?: string;
+    name?: string;
+  };
+};
+
+type McpHubRegistry = {
+  servers?: Record<string, McpHubRegistryServer>;
+  bundles?: Record<string, string[]>;
+  defaults?: {
+    enabledBundles?: string[];
+    enabledServers?: string[];
+    disabledServers?: string[];
+  };
+};
+
+type McpFleetDeployment = {
+  type?: string;
+  status?: string;
+  client?: string;
+  tenant?: string;
+  auth?: {
+    bearer_token_env_var?: string;
+  };
+};
+
+type McpFleetRegistry = {
+  deployments?: Record<string, McpFleetDeployment>;
+};
+
+type McpRegistryConnectedServer = {
+  name: string;
+  tool_count: number | null;
+};
+
+type McpRegistryFailedServer = {
+  server: string;
+  error: string;
+};
+
+type McpRegistryInventory = {
+  server_count: number;
+  catalog_count: number;
+  bundle_count: number;
+  composio_toolkit_count: number;
+  direct_server_count: number;
+  http_server_count: number;
+  stdio_server_count: number;
+  auth_required_count: number;
+  dormant_count: number;
+  policy_os_only_count: number;
+  create_something_count: number;
+  workway_count: number;
+  webflow_count: number;
+  local_dev_count: number;
+  remote_http_missing_url: string[];
+  bundle_missing_servers: Array<{ bundle: string; server: string }>;
+  default_enabled_bundles: string[];
+  default_enabled_servers: string[];
+};
+
+type McpFleetInventory = {
+  deployment_count: number;
+  deployed_count: number;
+  policy_os_hub_count: number;
+  notion_mcp_count: number;
+  auth_configured_count: number;
+};
+
+type AgentHealthSurface = {
+  id: string;
+  name: string;
+  route: string;
+  schedule: 'scheduled' | 'manual';
+};
+
+type AgentInventory = {
+  registered_health_surface_count: number;
+  scheduled_health_surface_count: number;
+  manual_health_surface_count: number;
+  surfaces: AgentHealthSurface[];
+};
+
+type LiveHubInventory = {
+  enabled_server_count: number;
+  connected_server_count: number;
+  failed_server_count: number;
+  proxy_tool_count: number | null;
+  enabled_registered_count: number;
+  enabled_unregistered_servers: string[];
+  connected_unregistered_servers: string[];
+  enabled_not_connected_servers: string[];
+  failed_registered_servers: string[];
+};
+
+type McpRegistrySweepResult = {
+  success: true;
+  scenario: 'mcp-registry-sweep';
+  checked_at: string;
+  hub_health_url: string;
+  status: 'healthy' | 'degraded' | 'failed';
+  degraded: boolean;
+  summary: string;
+  detail: string;
+  action: string;
+  enabled_servers: string[];
+  connected_servers: McpRegistryConnectedServer[];
+  failed_servers: McpRegistryFailedServer[];
+  proxy_tool_count: number | null;
+  review_scope: string;
+  registry_inventory: McpRegistryInventory;
+  fleet_inventory: McpFleetInventory;
+  agent_inventory: AgentInventory;
+  live_hub: LiveHubInventory;
+  warnings: string[];
+  duration_ms: number;
+};
 
 const AgentRouteBodySchema = z.object({
   query: z.string().min(1).optional(),
@@ -213,6 +389,51 @@ function truncateText(value: string, max = 240): string {
   return `${value.slice(0, max - 3)}...`;
 }
 
+function parseCsvHourSet(value: string | undefined, fallback: string): Set<number> {
+  const raw = value?.trim() || fallback;
+  const hours = new Set<number>();
+  for (const part of raw.split(',')) {
+    const hour = Number(part.trim());
+    if (Number.isInteger(hour) && hour >= 0 && hour <= 23) {
+      hours.add(hour);
+    }
+  }
+  return hours;
+}
+
+function isFlagEnabled(value: string | undefined, fallback = true): boolean {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return fallback;
+  return !['0', 'false', 'off', 'no'].includes(normalized);
+}
+
+function shouldRunFleetWatchdogCron(env: Env, scheduledTimeMs: number): boolean {
+  if (!isFlagEnabled(env.HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED, true)) return false;
+  const hours = parseCsvHourSet(
+    env.HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS,
+    DEFAULT_FLEET_WATCHDOG_CRON_UTC_HOURS,
+  );
+  return hours.has(new Date(scheduledTimeMs).getUTCHours());
+}
+
+function shouldRunMcpRegistrySweepCron(env: Env, scheduledTimeMs: number): boolean {
+  if (!isFlagEnabled(env.MCP_REGISTRY_SWEEP_CRON_ENABLED, true)) return false;
+  const hours = parseCsvHourSet(
+    env.MCP_REGISTRY_SWEEP_CRON_UTC_HOURS,
+    DEFAULT_MCP_REGISTRY_SWEEP_CRON_UTC_HOURS,
+  );
+  return hours.has(new Date(scheduledTimeMs).getUTCHours());
+}
+
+function inkBridgeUrl(env: Env, path: string): string {
+  const origin = env.INK_BRIDGE_ORIGIN?.trim() || DEFAULT_INK_BRIDGE_ORIGIN;
+  return `${origin.replace(/\/+$/, '')}${path}`;
+}
+
+function inkBridgeToken(env: Env): string | undefined {
+  return env.INK_SOURCE_TOKEN?.trim() || env.INK_BRIDGE_TOKEN?.trim() || undefined;
+}
+
 async function safeFlushBraintrust(context: string): Promise<void> {
   try {
     await flushBraintrust();
@@ -303,6 +524,79 @@ function buildScenarioErrorSlackPayload(
         },
       },
     ],
+  };
+}
+
+function buildScenarioInkSnapshot(
+  result: HalfDozenScenarioRunResult,
+  route: string,
+  runId: string,
+): Record<string, unknown> {
+  const escalate = shouldEscalate(result);
+  const label = scenarioLabel(result.scenario);
+  const coverage = getCoverageStatus(result);
+  const failedServers = result.failed_servers.map((item) => item.server);
+  const finalOutput = String(result.final_output ?? '').trim();
+  const statusLine = [
+    `Coverage ${coverage}`,
+    `connected ${result.connected_servers.length}/${result.requested_servers.length}`,
+    failedServers.length > 0 ? `failed ${failedServers.join(', ')}` : 'failed none',
+  ].join('; ');
+  const detail = result.degraded_reason
+    ? `${result.degraded_reason} ${finalOutput}`
+    : `${statusLine}. ${finalOutput}`;
+
+  return {
+    id: `agent.halfdozen.${result.scenario}`,
+    source: 'playbook-agent-route',
+    component: `Half Dozen ${label} Agent`,
+    status: escalate ? 'degraded' : 'healthy',
+    summary: escalate ? `${label} needs operator attention` : `${label} clear`,
+    detail: truncateText(detail, 240),
+    severity: escalate ? 85 : 0,
+    observed_at: Date.now(),
+    payload: {
+      kind: 'playbook_agent_report',
+      scenario: result.scenario,
+      route,
+      run_id: runId,
+      degraded: result.degraded,
+      degraded_reason: result.degraded_reason ?? '',
+      coverage,
+      connected_servers: result.connected_servers,
+      failed_servers: result.failed_servers,
+      required_tool_coverage: result.required_tool_coverage,
+      failed_required_tool_calls: result.failed_required_tool_calls,
+      final_output_preview: truncateText(finalOutput, 1200),
+      action: escalate ? 'Review Playbook agent report' : 'No operator action',
+    },
+  };
+}
+
+function buildScenarioErrorInkSnapshot(
+  scenario: ScenarioKey,
+  route: string,
+  runId: string,
+  errorMessage: string,
+): Record<string, unknown> {
+  const label = scenarioLabel(scenario);
+  return {
+    id: `agent.halfdozen.${scenario}`,
+    source: 'playbook-agent-route',
+    component: `Half Dozen ${label} Agent`,
+    status: 'failed',
+    summary: `${label} failed`,
+    detail: truncateText(errorMessage, 240),
+    severity: 90,
+    observed_at: Date.now(),
+    payload: {
+      kind: 'playbook_agent_report_error',
+      scenario,
+      route,
+      run_id: runId,
+      error: truncateText(errorMessage, 1200),
+      action: 'Review Playbook agent route',
+    },
   };
 }
 
@@ -475,6 +769,407 @@ async function postSlackResponse(responseUrl: string, payload: SlackResponsePayl
   }
 }
 
+function numberOrNull(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value);
+  return null;
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter((item) => item.length > 0);
+}
+
+function recordArray(value: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null);
+}
+
+function normalizeConnectedServers(value: unknown): McpRegistryConnectedServer[] {
+  return recordArray(value)
+    .map((item) => {
+      const name = typeof item.name === 'string' ? item.name.trim() : '';
+      if (!name) return null;
+      return {
+        name,
+        tool_count: numberOrNull(item.tool_count ?? item.toolCount),
+      };
+    })
+    .filter((item): item is McpRegistryConnectedServer => item !== null);
+}
+
+function normalizeFailedServers(value: unknown): McpRegistryFailedServer[] {
+  return recordArray(value)
+    .map((item) => {
+      const server =
+        typeof item.server === 'string'
+          ? item.server.trim()
+          : typeof item.name === 'string'
+            ? item.name.trim()
+            : '';
+      if (!server) return null;
+      const error = typeof item.error === 'string' && item.error.trim() ? item.error.trim() : 'Unavailable';
+      return { server, error: truncateText(error, 160) };
+    })
+    .filter((item): item is McpRegistryFailedServer => item !== null);
+}
+
+function mcpRegistrySweepTimeoutMs(env: Env): number {
+  const parsed = Number(env.MCP_REGISTRY_SWEEP_TIMEOUT_MS);
+  if (Number.isFinite(parsed) && parsed >= 5_000 && parsed <= 120_000) {
+    return Math.round(parsed);
+  }
+  return DEFAULT_MCP_REGISTRY_SWEEP_TIMEOUT_MS;
+}
+
+async function fetchJsonWithTimeout(
+  url: string,
+  timeoutMs: number,
+): Promise<{ status: number; body: unknown; durationMs: number }> {
+  const startedAt = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort('timeout'), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        accept: 'application/json',
+      },
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    let body: unknown = {};
+    try {
+      body = text ? JSON.parse(text) : {};
+    } catch {
+      body = { raw: truncateText(text, 1000) };
+    }
+    return { status: response.status, body, durationMs: Date.now() - startedAt };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function healthBodyRecord(body: unknown): Record<string, unknown> {
+  return typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter((value) => value.length > 0))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
+function registryServerEntries(): Array<[string, McpHubRegistryServer]> {
+  return Object.entries(MCP_HUB_REGISTRY.servers ?? {});
+}
+
+function registryTags(server: McpHubRegistryServer): string[] {
+  return Array.isArray(server.tags) ? server.tags.filter((tag): tag is string => typeof tag === 'string') : [];
+}
+
+function registryHasTag(server: McpHubRegistryServer, tag: string): boolean {
+  return registryTags(server).includes(tag);
+}
+
+function registryServerRequiresAuth(server: McpHubRegistryServer): boolean {
+  return Boolean(server.bearer_token_env_var || server.catalog?.requiresAuth);
+}
+
+function buildMcpRegistryInventory(): McpRegistryInventory {
+  const servers = registryServerEntries();
+  const serverMap = new Map(servers);
+  const bundles = Object.entries(MCP_HUB_REGISTRY.bundles ?? {});
+  const bundleMissingServers: Array<{ bundle: string; server: string }> = [];
+
+  for (const [bundle, bundleServers] of bundles) {
+    for (const server of Array.isArray(bundleServers) ? bundleServers : []) {
+      if (!serverMap.has(server)) {
+        bundleMissingServers.push({ bundle, server });
+      }
+    }
+  }
+
+  const composioToolkitCount = servers.filter(([id, server]) => {
+    return id.startsWith('composio-toolkit-') || registryHasTag(server, 'composio');
+  }).length;
+  const httpServers = servers.filter(([, server]) => server.transport === 'http');
+  const stdioServers = servers.filter(([, server]) => server.transport === 'stdio');
+
+  return {
+    server_count: servers.length,
+    catalog_count: servers.filter(([, server]) => server.catalog?.include).length,
+    bundle_count: bundles.length,
+    composio_toolkit_count: composioToolkitCount,
+    direct_server_count: servers.length - composioToolkitCount,
+    http_server_count: httpServers.length,
+    stdio_server_count: stdioServers.length,
+    auth_required_count: servers.filter(([, server]) => registryServerRequiresAuth(server)).length,
+    dormant_count: servers.filter(([, server]) => registryHasTag(server, 'dormant')).length,
+    policy_os_only_count: servers.filter(([, server]) => registryHasTag(server, 'policy_os_only')).length,
+    create_something_count: servers.filter(([, server]) => registryHasTag(server, 'cs')).length,
+    workway_count: servers.filter(([, server]) => registryHasTag(server, 'workway')).length,
+    webflow_count: servers.filter(([, server]) => registryHasTag(server, 'webflow')).length,
+    local_dev_count: servers.filter(
+      ([, server]) => server.transport === 'stdio' || registryHasTag(server, 'local') || registryHasTag(server, 'dev'),
+    ).length,
+    remote_http_missing_url: httpServers
+      .filter(([, server]) => typeof server.url !== 'string' || server.url.trim().length === 0)
+      .map(([id]) => id),
+    bundle_missing_servers: bundleMissingServers.slice(0, 20),
+    default_enabled_bundles: stringArray(MCP_HUB_REGISTRY.defaults?.enabledBundles),
+    default_enabled_servers: stringArray(MCP_HUB_REGISTRY.defaults?.enabledServers),
+  };
+}
+
+function buildMcpFleetInventory(): McpFleetInventory {
+  const deployments = Object.values(MCP_FLEET_REGISTRY.deployments ?? {});
+  return {
+    deployment_count: deployments.length,
+    deployed_count: deployments.filter((deployment) => deployment.status === 'deployed').length,
+    policy_os_hub_count: deployments.filter((deployment) => deployment.type === 'policy_os_hub').length,
+    notion_mcp_count: deployments.filter((deployment) => deployment.type === 'notion_mcp').length,
+    auth_configured_count: deployments.filter((deployment) => Boolean(deployment.auth?.bearer_token_env_var)).length,
+  };
+}
+
+function buildAgentInventory(): AgentInventory {
+  const scheduled = AGENT_HEALTH_SURFACES.filter((surface) => surface.schedule === 'scheduled');
+  const manual = AGENT_HEALTH_SURFACES.filter((surface) => surface.schedule === 'manual');
+  return {
+    registered_health_surface_count: AGENT_HEALTH_SURFACES.length,
+    scheduled_health_surface_count: scheduled.length,
+    manual_health_surface_count: manual.length,
+    surfaces: AGENT_HEALTH_SURFACES,
+  };
+}
+
+function buildLiveHubInventory(
+  enabledServers: string[],
+  connectedServers: McpRegistryConnectedServer[],
+  failedServers: McpRegistryFailedServer[],
+  proxyToolCount: number | null,
+): LiveHubInventory {
+  const registryNames = new Set(registryServerEntries().map(([name]) => name));
+  const connectedNames = new Set(connectedServers.map((server) => server.name));
+  const failedNames = new Set(failedServers.map((server) => server.server));
+  const registeredEnabled = enabledServers.filter((server) => registryNames.has(server));
+
+  return {
+    enabled_server_count: enabledServers.length,
+    connected_server_count: connectedServers.length,
+    failed_server_count: failedServers.length,
+    proxy_tool_count: proxyToolCount,
+    enabled_registered_count: registeredEnabled.length,
+    enabled_unregistered_servers: enabledServers.filter((server) => !registryNames.has(server)).slice(0, 20),
+    connected_unregistered_servers: connectedServers
+      .map((server) => server.name)
+      .filter((server) => !registryNames.has(server))
+      .slice(0, 20),
+    enabled_not_connected_servers: enabledServers
+      .filter((server) => !connectedNames.has(server) && !failedNames.has(server))
+      .slice(0, 20),
+    failed_registered_servers: failedServers
+      .map((server) => server.server)
+      .filter((server) => registryNames.has(server))
+      .slice(0, 20),
+  };
+}
+
+function buildMcpRegistryWarnings(
+  registryInventory: McpRegistryInventory,
+  liveHub: LiveHubInventory,
+  hubWarnings: string[],
+): string[] {
+  const warnings = hubWarnings.filter((warning) => warning !== 'Unknown disabled server "[]" in hub state');
+  if (registryInventory.remote_http_missing_url.length > 0) {
+    warnings.push(`Remote HTTP registry entries missing URL: ${registryInventory.remote_http_missing_url.join(', ')}`);
+  }
+  if (registryInventory.bundle_missing_servers.length > 0) {
+    warnings.push(`${registryInventory.bundle_missing_servers.length} bundle references point to missing servers.`);
+  }
+  if (liveHub.enabled_unregistered_servers.length > 0) {
+    warnings.push(`Live Hub enabled unregistered servers: ${liveHub.enabled_unregistered_servers.join(', ')}`);
+  }
+  if (liveHub.connected_unregistered_servers.length > 0) {
+    warnings.push(`Live Hub connected unregistered servers: ${liveHub.connected_unregistered_servers.join(', ')}`);
+  }
+  if (liveHub.enabled_not_connected_servers.length > 0) {
+    warnings.push(`Live Hub enabled servers not connected: ${liveHub.enabled_not_connected_servers.join(', ')}`);
+  }
+  return uniqueStrings(warnings).map((warning) => truncateText(warning, 220));
+}
+
+function emptyLiveHubInventory(): LiveHubInventory {
+  return {
+    enabled_server_count: 0,
+    connected_server_count: 0,
+    failed_server_count: 0,
+    proxy_tool_count: null,
+    enabled_registered_count: 0,
+    enabled_unregistered_servers: [],
+    connected_unregistered_servers: [],
+    enabled_not_connected_servers: [],
+    failed_registered_servers: [],
+  };
+}
+
+async function runMcpRegistrySweep(env: Env): Promise<McpRegistrySweepResult> {
+  const hubHealthUrl = env.MCP_REGISTRY_SWEEP_HUB_HEALTH_URL?.trim() || DEFAULT_MCP_REGISTRY_SWEEP_HUB_HEALTH_URL;
+  const timeoutMs = mcpRegistrySweepTimeoutMs(env);
+  const checkedAt = new Date().toISOString();
+  const startedAt = Date.now();
+  const registryInventory = buildMcpRegistryInventory();
+  const fleetInventory = buildMcpFleetInventory();
+  const agentInventory = buildAgentInventory();
+  const reviewScope =
+    'Full static MCP registry inventory, fleet registry inventory, registered Playbook agent health surfaces, and live Hub enabled-server health.';
+
+  try {
+    const response = await fetchJsonWithTimeout(hubHealthUrl, timeoutMs);
+    const body = healthBodyRecord(response.body);
+    const enabledServers = stringArray(body.enabled_servers ?? body.enabledServerNames);
+    const connectedServers = normalizeConnectedServers(body.connected_servers ?? body.connectedServers);
+    const failedServers = normalizeFailedServers(body.failed_servers ?? body.failedServers);
+    const warnings = stringArray(body.warnings);
+    const proxyToolCount =
+      numberOrNull(body.proxy_tool_count ?? body.proxyToolCount) ?? inferredProxyToolCount(connectedServers);
+    const liveHub = buildLiveHubInventory(enabledServers, connectedServers, failedServers, proxyToolCount);
+    const registryWarnings = buildMcpRegistryWarnings(registryInventory, liveHub, warnings);
+    const registryHasStructuralIssue =
+      registryInventory.remote_http_missing_url.length > 0 ||
+      registryInventory.bundle_missing_servers.length > 0 ||
+      liveHub.enabled_unregistered_servers.length > 0 ||
+      liveHub.connected_unregistered_servers.length > 0;
+    const degraded = response.status !== 200 || failedServers.length > 0 || registryHasStructuralIssue;
+    const failedList = failedServers.map((item) => item.server).slice(0, 4).join(', ');
+    const totalServers = liveHubTotalServerCount(enabledServers, connectedServers, failedServers);
+    const baseDetail = `Registry: ${registryInventory.server_count} MCPs (${registryInventory.composio_toolkit_count} Composio), ${fleetInventory.deployed_count} fleet, ${agentInventory.registered_health_surface_count} agents. Live: ${connectedServers.length}/${totalServers} connected; ${failedServers.length} failed; ${proxyToolCount ?? 0} tools.`;
+    const detail = degraded && failedList ? `${baseDetail} Failed: ${failedList}.` : baseDetail;
+    const status = response.status !== 200 ? 'failed' : degraded ? 'degraded' : 'healthy';
+
+    return {
+      success: true,
+      scenario: 'mcp-registry-sweep',
+      checked_at: checkedAt,
+      hub_health_url: hubHealthUrl,
+      status,
+      degraded,
+      summary: degraded ? 'MCP registry needs attention' : 'MCP registry clear',
+      detail: truncateText(detail, 240),
+      action:
+        failedServers.length > 0
+          ? 'Review failed Hub MCP servers'
+          : registryHasStructuralIssue
+            ? 'Review MCP registry configuration'
+            : 'No operator action',
+      enabled_servers: enabledServers,
+      connected_servers: connectedServers,
+      failed_servers: failedServers,
+      proxy_tool_count: proxyToolCount,
+      review_scope: reviewScope,
+      registry_inventory: registryInventory,
+      fleet_inventory: fleetInventory,
+      agent_inventory: agentInventory,
+      live_hub: liveHub,
+      warnings: registryWarnings,
+      duration_ms: response.durationMs,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const failedServers = [{ server: 'create-something-hub', error: truncateText(message, 160) }];
+    const liveHub = emptyLiveHubInventory();
+    return {
+      success: true,
+      scenario: 'mcp-registry-sweep',
+      checked_at: checkedAt,
+      hub_health_url: hubHealthUrl,
+      status: 'failed',
+      degraded: true,
+      summary: 'MCP registry sweep failed',
+      detail: truncateText(message || 'Hub health request failed.', 240),
+      action: 'Review Hub MCP health endpoint',
+      enabled_servers: [],
+      connected_servers: [],
+      failed_servers: failedServers,
+      proxy_tool_count: null,
+      review_scope: reviewScope,
+      registry_inventory: registryInventory,
+      fleet_inventory: fleetInventory,
+      agent_inventory: agentInventory,
+      live_hub: liveHub,
+      warnings: buildMcpRegistryWarnings(registryInventory, liveHub, []),
+      duration_ms: Date.now() - startedAt,
+    };
+  }
+}
+
+function buildMcpRegistrySweepInkSnapshot(result: McpRegistrySweepResult): Record<string, unknown> {
+  return {
+    id: 'agent.create-something.mcp-registry-sweep',
+    source: 'playbook-agent-route',
+    component: 'CREATE SOMETHING MCP Registry Sweep',
+    status: result.degraded ? result.status : 'healthy',
+    summary: result.summary,
+    detail: result.detail,
+    severity: result.degraded ? 85 : 0,
+    observed_at: Date.now(),
+    payload: {
+      kind: 'mcp_registry_sweep',
+      hub_health_url: result.hub_health_url,
+      checked_at: result.checked_at,
+      review_scope: result.review_scope,
+      registry_inventory: result.registry_inventory,
+      fleet_inventory: result.fleet_inventory,
+      agent_inventory: result.agent_inventory,
+      live_hub: result.live_hub,
+      enabled_servers: result.enabled_servers,
+      connected_servers: result.connected_servers,
+      failed_servers: result.failed_servers,
+      proxy_tool_count: result.proxy_tool_count,
+      warnings: result.warnings,
+      duration_ms: result.duration_ms,
+      action: result.action,
+    },
+  };
+}
+
+async function postInkHealthSnapshot(env: Env, snapshot: Record<string, unknown>): Promise<void> {
+  const token = inkBridgeToken(env);
+  if (!token) {
+    console.warn('Ink health snapshot skipped: INK_SOURCE_TOKEN or INK_BRIDGE_TOKEN is not configured.');
+    return;
+  }
+
+  const response = await fetch(inkBridgeUrl(env, '/ink/health-snapshot'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(snapshot),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Ink health snapshot failed (${response.status}): ${body}`);
+  }
+
+  const reviewResponse = await fetch(inkBridgeUrl(env, '/ink/health-review/run?collect=false'), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!reviewResponse.ok) {
+    const body = await reviewResponse.text();
+    throw new Error(`Ink health review refresh failed (${reviewResponse.status}): ${body}`);
+  }
+}
+
 async function verifySlackSignature(
   request: Request,
   rawBody: string,
@@ -545,10 +1240,21 @@ function queueSuccessNotifications(
 ): void {
   const primaryWebhook = env.HALFDOZEN_SLACK_WEBHOOK_URL;
   const escalationWebhook = env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL;
-  if (!primaryWebhook && !escalationWebhook) return;
-
   const escalate = shouldEscalate(result);
   const payload = buildScenarioSuccessSlackPayload(result, route, runId);
+  const inkSnapshot = buildScenarioInkSnapshot(result, route, runId);
+
+  ctx.waitUntil(
+    (async () => {
+      try {
+        await postInkHealthSnapshot(env, inkSnapshot);
+      } catch (error) {
+        console.error('Half Dozen Ink snapshot failed', error);
+      }
+    })(),
+  );
+
+  if (!primaryWebhook && !escalationWebhook) return;
 
   ctx.waitUntil(
     (async () => {
@@ -580,6 +1286,17 @@ function queueErrorNotification(
   runId: string,
   errorMessage: string,
 ): void {
+  const inkSnapshot = buildScenarioErrorInkSnapshot(scenario, route, runId, errorMessage);
+  ctx.waitUntil(
+    (async () => {
+      try {
+        await postInkHealthSnapshot(env, inkSnapshot);
+      } catch (error) {
+        console.error('Half Dozen Ink error snapshot failed', error);
+      }
+    })(),
+  );
+
   const escalationWebhook = env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL ?? env.HALFDOZEN_SLACK_WEBHOOK_URL;
   if (!escalationWebhook) return;
 
@@ -763,12 +1480,22 @@ function queueSlackScenarioRun(
           tracingDisabled: !braintrustTracingEnabled,
         });
         const payload = buildSlackCompletedResponse(result, runId, route);
+        try {
+          await postInkHealthSnapshot(env, buildScenarioInkSnapshot(result, route, runId));
+        } catch (error) {
+          console.error('Half Dozen Ink snapshot failed', error);
+        }
         await postSlackResponse(responseUrl, payload);
         if (braintrustTracingEnabled) {
           await safeFlushBraintrust('slack scenario run');
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        try {
+          await postInkHealthSnapshot(env, buildScenarioErrorInkSnapshot(scenario, route, runId, message));
+        } catch (inkError) {
+          console.error('Half Dozen Ink error snapshot failed', inkError);
+        }
         await postSlackResponse(responseUrl, buildSlackRunFailedResponse(scenario, runId, message));
         if (braintrustTracingEnabled) {
           await safeFlushBraintrust('slack scenario error');
@@ -776,6 +1503,59 @@ function queueSlackScenarioRun(
       }
     })(),
   );
+}
+
+async function runScheduledFleetWatchdog(
+  env: Env,
+  ctx: ExecutionContext,
+  scheduledTimeMs: number,
+): Promise<void> {
+  if (!shouldRunFleetWatchdogCron(env, scheduledTimeMs)) return;
+
+  const scenario: ScenarioKey = 'fleet-watchdog';
+  const route = 'cron:halfdozen:fleet-watchdog';
+  const runId = crypto.randomUUID();
+
+  if (!env.OPENAI_API_KEY) {
+    queueErrorNotification(ctx, env, scenario, route, runId, 'OPENAI_API_KEY is not set.');
+    return;
+  }
+
+  const runInput = buildHalfDozenRunInput(env, {});
+  const braintrustTracingEnabled = isBraintrustRouteTracingEnabled(env);
+
+  try {
+    const result = await runHalfDozenFleetWatchdog({
+      ...runInput,
+      tracingDisabled: !braintrustTracingEnabled,
+    });
+    queueSuccessNotifications(ctx, env, result, route, runId);
+    if (braintrustTracingEnabled) {
+      ctx.waitUntil(safeFlushBraintrust('scheduled fleet watchdog'));
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    queueErrorNotification(ctx, env, scenario, route, runId, message);
+    if (braintrustTracingEnabled) {
+      ctx.waitUntil(safeFlushBraintrust('scheduled fleet watchdog error'));
+    }
+  }
+}
+
+async function runScheduledMcpRegistrySweep(
+  env: Env,
+  ctx: ExecutionContext,
+  scheduledTimeMs: number,
+): Promise<void> {
+  if (!shouldRunMcpRegistrySweepCron(env, scheduledTimeMs)) return;
+
+  try {
+    const result = await runMcpRegistrySweep(env);
+    ctx.waitUntil(postInkHealthSnapshot(env, buildMcpRegistrySweepInkSnapshot(result)));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('MCP registry sweep cron failed', message);
+  }
 }
 
 // =============================================================================
@@ -815,6 +1595,13 @@ export class PlaybookMCP extends McpAgent<Env> {
 // =============================================================================
 
 export default {
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    await Promise.all([
+      runScheduledFleetWatchdog(env, ctx, controller.scheduledTime),
+      runScheduledMcpRegistrySweep(env, ctx, controller.scheduledTime),
+    ]);
+  },
+
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
@@ -923,6 +1710,53 @@ export default {
       return slackJsonResponse(buildSlackAcceptedResponse(parsed.scenario, runId, parsed.query));
     }
 
+    if (url.pathname === MCP_REGISTRY_SWEEP_ROUTE) {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          headers: {
+            ...JSON_HEADERS,
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+            'Access-Control-Max-Age': '86400',
+          },
+        });
+      }
+
+      if (request.method !== 'POST') {
+        return jsonResponse(
+          {
+            success: false,
+            error: 'Method not allowed',
+            message: 'Use POST for this endpoint.',
+          },
+          405,
+          { Allow: 'POST, OPTIONS' },
+        );
+      }
+
+      const authError = validateRouteToken(request, env.HALFDOZEN_AGENT_ROUTE_TOKEN);
+      if (authError) {
+        return authError;
+      }
+
+      const result = await runMcpRegistrySweep(env);
+      try {
+        await postInkHealthSnapshot(env, buildMcpRegistrySweepInkSnapshot(result));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return jsonResponse({
+          ...result,
+          ink_posted: false,
+          ink_error: message,
+        });
+      }
+
+      return jsonResponse({
+        ...result,
+        ink_posted: true,
+      });
+    }
+
     if (isHalfDozenScenarioRoute(url.pathname)) {
       const runId = crypto.randomUUID();
       if (request.method === 'OPTIONS') {
@@ -1028,13 +1862,15 @@ export default {
           halfdozen_inbox_triage: HALFDOZEN_INBOX_TRIAGE_ROUTE,
           halfdozen_dedup: HALFDOZEN_DEDUP_ROUTE,
           halfdozen_slack_commands: HALFDOZEN_SLACK_COMMAND_ROUTE,
+          mcp_registry_sweep: MCP_REGISTRY_SWEEP_ROUTE,
         },
-        protectedRoutes: HALFDOZEN_PROTECTED_ROUTES,
+        protectedRoutes: [...HALFDOZEN_PROTECTED_ROUTES, MCP_REGISTRY_SWEEP_ROUTE],
         notifications: {
           halfdozenSlackWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_WEBHOOK_URL),
           halfdozenSlackEscalationWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL),
           halfdozenSlackCommandSigningConfigured: Boolean(env.HALFDOZEN_SLACK_SIGNING_SECRET),
           halfdozenSlackTeamRestricted: Boolean(env.HALFDOZEN_SLACK_TEAM_ID),
+          inkBridgeConfigured: Boolean(inkBridgeToken(env)),
         },
         tools: [
           'get_playbook',

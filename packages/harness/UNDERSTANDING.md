@@ -12,7 +12,7 @@ This package is where CREATE SOMETHING turns coding agents from one-shot assista
 
 | Dependency | Why it matters |
 |------------|----------------|
-| **Loom** | Source of tracked work, priority, and agent coordination |
+| **Linear** | Source of tracked work, priority, and agent coordination |
 | **Git worktrees** | Isolation boundary for parallel or long-running execution |
 | **Codex-compatible runtime** | Executes the task loop and tool calls |
 | **Quality gates** | Converts "done" into something mechanically testable |
@@ -70,7 +70,7 @@ src/
 ### Path 1: Execute tracked work
 
 ```text
-claim work in Loom
+claim work in Linear
   ↓
 collect task context
   ↓
@@ -113,7 +113,7 @@ resume with resolved policy
 
 Older harness language in this package still references Beads and Claude Code. The intended mental model is now:
 
-- **Loom**, not Beads, is the control plane
+- **Linear**, not Beads or Loom, is the control plane
 - **Codex-first**, not Claude-specific, is the runtime direction
 - **review loops**, not one-pass generation, are the default quality model
 - **judgment artifacts**, not ad hoc human interruption, are the escalation boundary

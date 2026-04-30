@@ -3,9 +3,9 @@
 import { execFileSync } from 'node:child_process';
 
 const LABELS = [
-  { name: 'paper-cycle', color: '1f6feb', description: 'Loom task/PR participates in the paper lifecycle.' },
-  { name: 'experiment-cycle', color: '0e8a16', description: 'Loom task/PR participates in the experiment lifecycle.' },
-  { name: 'policy-cycle', color: '5319e7', description: 'Loom task/PR participates in the policy lifecycle.' },
+  { name: 'paper-cycle', color: '1f6feb', description: 'Linear issue/PR participates in the paper lifecycle.' },
+  { name: 'experiment-cycle', color: '0e8a16', description: 'Linear issue/PR participates in the experiment lifecycle.' },
+  { name: 'policy-cycle', color: '5319e7', description: 'Linear issue/PR participates in the policy lifecycle.' },
   { name: 'ready-review-1', color: 'fbca04', description: 'Ready for first automated review pass.' },
   { name: 'ready-review-2', color: 'd93f0b', description: 'Ready for second automated review pass.' },
   { name: 'publish-approved', color: '0e8a16', description: 'Human approved for merge-to-main publication.' },

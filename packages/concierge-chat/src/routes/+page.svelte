@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { getLatestDemoThread, listDemoThreads } from '$server/threads/demo';
+	import type { PageData } from './$types';
 
-	const latestThread = getLatestDemoThread();
-	const threads = listDemoThreads();
+	export let data: PageData;
 </script>
 
 <section class="hero glass panel">
@@ -14,7 +13,7 @@
 	</p>
 
 	<div class="hero-actions">
-		<a class="link-button" href={latestThread ? `/chat/${latestThread.id}` : '/chat'}>Open demo thread</a>
+		<a class="link-button" href={data.latestThreadId ? `/chat/${data.latestThreadId}` : '/chat'}>Open demo thread</a>
 		<a class="link-secondary" href="/chat">View thread list</a>
 	</div>
 </section>
@@ -54,11 +53,11 @@
 			<div class="eyebrow">Demo Threads</div>
 			<h2 class="section-title">Scaffolded flows</h2>
 		</div>
-		<span class="status-pill">{threads.length} seeded threads</span>
+		<span class="status-pill">{data.threads.length} seeded threads</span>
 	</div>
 
 	<div class="thread-list">
-		{#each threads as thread}
+		{#each data.threads as thread}
 			<a class="thread-card" href={`/chat/${thread.id}`}>
 				<div class="thread-top">
 					<strong>{thread.title}</strong>

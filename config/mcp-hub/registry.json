@@ -23,7 +23,7 @@
         ]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 10
     },
     "three-tier-framework": {
       "transport": "http",
@@ -52,6 +52,8 @@
     "playbook": {
       "transport": "http",
       "url": "https://playbook.mcp.createsomething.ltd/mcp",
+      "connect_timeout_ms": 10000,
+      "list_tools_timeout_ms": 15000,
       "description": "Workflow playbooks MCP",
       "tags": [
         "core",
@@ -85,7 +87,7 @@
         "policy_os_only"
       ],
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 10
     },
     "schedule-mcp": {
       "transport": "http",
@@ -115,6 +117,7 @@
       "transport": "http",
       "url": "https://substrate.mcp.createsomething.agency/mcp",
       "description": "Substrate execution/storage MCP",
+      "bearer_token_env_var": "SUBSTRATE_ADMIN_TOKEN",
       "tags": [
         "ops",
         "automation",
@@ -260,6 +263,32 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "youtube-transcript-notion-mcp": {
+      "transport": "http",
+      "url": "https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "YOUTUBE_TRANSCRIPT_NOTION_MCP_API_KEY",
+      "description": "YouTube transcript extraction and Notion transcript enrichment MCP used by Dify client agents",
+      "tags": [
+        "youtube",
+        "transcript",
+        "notion",
+        "dify",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "YouTube Transcript Notion",
+        "slug": "youtube-transcript-notion",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http"
+        ]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 6
+    },
     "halfdozen-gmail-sync-danny": {
       "transport": "http",
       "url": "https://gmail.mcp.workway.co/mcp",
@@ -334,7 +363,6 @@
       "transport": "http",
       "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
       "description": "Fleet telemetry MCP for WORKWAY account",
-      "bearer_token_env_var": "HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN",
       "tags": [
         "observability",
         "telemetry",
@@ -397,6 +425,7 @@
       "transport": "http",
       "url": "https://mcp.slack.com/mcp",
       "description": "Slack MCP for Webflow workspace",
+      "lifecycle": "dormant",
       "bearer_token_env_var": "SLACK_WEBFLOW_MCP_TOKEN",
       "tags": [
         "slack",
@@ -407,19 +436,19 @@
       "estimated_tool_count": 0
     },
     "webflow-local": {
-      "transport": "stdio",
-      "command": "node",
-      "args": [
-        "./packages/webflow-mcp/dist/index.js"
-      ],
-      "description": "Local Webflow MCP from this monorepo",
+      "transport": "http",
+      "url": "https://webflow-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "WEBFLOW_SITE_ANALYZER_MCP_API_KEY",
+      "description": "Remote Webflow Marketplace MCP for plagiarism and framework analysis; kept as webflow-local for existing Hub bundle compatibility",
       "tags": [
-        "local",
-        "dev",
-        "webflow"
+        "webflow",
+        "review",
+        "plagiarism",
+        "frameworks",
+        "cs"
       ],
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 10
     },
     "webflow-site-analyzer-mcp": {
       "transport": "http",
@@ -433,6 +462,7 @@
         "browser",
         "cs"
       ],
+      "estimated_tool_count": 22,
       "catalog": {
         "include": true,
         "name": "Webflow Site Analyzer",
@@ -13006,31 +13036,6 @@
       "catalog_exposure_mode": "brokered",
       "estimated_tool_count": 100
     },
-    "loom-mcp": {
-      "transport": "http",
-      "url": "https://loom.mcp.createsomething.agency/mcp",
-      "description": "Remote Loom MCP for task coordination and session recovery",
-      "bearer_token_env_var": "LOOM_MCP_API_TOKEN",
-      "tags": [
-        "ops",
-        "coordination",
-        "loom",
-        "cs"
-      ],
-      "catalog": {
-        "include": true,
-        "name": "Loom",
-        "slug": "loom",
-        "category": "create-something",
-        "requiresAuth": true,
-        "authType": "bearer",
-        "transports": [
-          "http"
-        ]
-      },
-      "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
-    },
     "halfdozen-operator-notion-mcp": {
       "transport": "http",
       "url": "https://halfdozen-operator-notion-mcp.createsomething.workers.dev/mcp",
@@ -16048,9 +16053,6 @@
       "composio-toolkit-storyblok",
       "composio-toolkit-webflow",
       "composio-toolkit-wix"
-    ],
-    "loom": [
-      "loom-mcp"
     ]
   },
   "defaults": {

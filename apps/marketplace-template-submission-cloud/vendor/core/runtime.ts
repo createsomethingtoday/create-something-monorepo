@@ -1,7 +1,8 @@
 export interface DashboardCloudflareEnv {
   DB?: D1Database;
   SESSIONS?: KVNamespace;
-  UPLOADS?: R2Bucket;
+  UPLOADS_WORKER_URL?: string;
+  UPLOADS_WORKER_SECRET?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   RESEND_API_KEY?: string;
@@ -32,6 +33,8 @@ const PROCESS_ENV_KEYS = [
   'BASE_URL',
   'ASSETS_PREFIX',
   'NEXT_PUBLIC_BASE_PATH',
+  'UPLOADS_WORKER_URL',
+  'UPLOADS_WORKER_SECRET',
   'NEXT_PUBLIC_TURNSTILE_SITE_KEY',
   'TURNSTILE_SECRET_KEY',
   'TURNSTILE_EXPECTED_HOSTNAME',

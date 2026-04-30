@@ -97,7 +97,7 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
     return {
         workflow_path: workflow.path,
         tracker: {
-            kind: asString(tracker.kind) ?? '',
+            kind: asString(tracker.kind) ?? 'linear',
             endpoint: asString(tracker.endpoint) ?? 'https://api.linear.app/graphql',
             api_key,
             project_slug,
@@ -144,7 +144,7 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
     };
 }
 export function validate_dispatch_config(config) {
-    if (config.tracker.kind !== 'linear' && config.tracker.kind !== 'loom') {
+    if (config.tracker.kind !== 'linear') {
         throw new SymphonyError('unsupported_tracker_kind', `Unsupported tracker kind: ${config.tracker.kind}`);
     }
     if (!config.tracker.endpoint) {
@@ -153,7 +153,7 @@ export function validate_dispatch_config(config) {
     if (!config.tracker.api_key) {
         throw new SymphonyError('missing_tracker_api_key', 'Missing tracker API key after environment resolution.');
     }
-    if (config.tracker.kind === 'linear' && !config.tracker.project_slug) {
+    if (!config.tracker.project_slug) {
         throw new SymphonyError('missing_tracker_project_slug', 'Missing tracker project slug.');
     }
     if (!config.codex.command.trim()) {

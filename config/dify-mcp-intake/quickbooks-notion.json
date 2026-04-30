@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "status": "pending-dify-studio-registration",
+  "owner": "create-something",
+  "created_at": "2026-04-30",
+  "registry_server": {
+    "id": "quickbooks-notion-mcp-server",
+    "transport": "http",
+    "url": "https://quickbooks.mcp.workway.co/mcp",
+    "description": "QuickBooks to Notion MCP server",
+    "tags": ["finance", "quickbooks", "notion", "workway"],
+    "catalog_exposure_mode": "direct",
+    "estimated_tool_count": 0
+  },
+  "dify_mcp_server": {
+    "server_id": "quickbooks-notion",
+    "display_name": "QuickBooks Notion Sync",
+    "transport": "http",
+    "url": "https://quickbooks.mcp.workway.co/mcp",
+    "auth": {
+      "type": "oauth",
+      "infisical": {
+        "environment": "prod",
+        "path": "/quickbooks-notion-mcp-server",
+        "secret_key": "MCP_OAUTH_CONFIG"
+      }
+    }
+  },
+  "dify_studio_steps": [
+    "Open Dify Studio -> Tools -> MCP.",
+    "Create an HTTP MCP server card with server ID quickbooks-notion.",
+    "Set the MCP URL to https://quickbooks.mcp.workway.co/mcp.",
+    "Configure OAuth using the credential/config reference in Infisical prod:/quickbooks-notion-mcp-server:MCP_OAUTH_CONFIG; complete any provider authorization flow required by Dify Studio.",
+    "Refresh/discover tools in Dify Studio.",
+    "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
+    "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
+  ],
+  "inventory_fragment_after_tool_discovery": {
+    "quickbooks-notion": {
+      "display_name": "QuickBooks Notion Sync",
+      "source_mcp_registry_server": "quickbooks-notion-mcp-server",
+      "transport": "http",
+      "url": "https://quickbooks.mcp.workway.co/mcp",
+      "auth": {
+        "type": "oauth",
+        "infisical": {
+          "environment": "prod",
+          "path": "/quickbooks-notion-mcp-server",
+          "secret_key": "MCP_OAUTH_CONFIG"
+        }
+      },
+      "tools": []
+    }
+  },
+  "notes": [
+    "This intake artifact is not a Dify inventory entry.",
+    "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
+    "Keep secret values in Infisical only; this artifact stores references, not values.",
+    "After the server card is codified, scaffold one or more Dify agents with pnpm dify:agent:scaffold."
+  ]
+}

@@ -619,7 +619,6 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
     { name: 'composio-toolkit-linkedin' },
     { name: 'composio-toolkit-notion' },
     { name: 'composio-toolkit-exa' },
-    { name: 'loom-mcp' },
     { name: 'meetings' },
     { name: 'webflow-template-review-mcp' },
   ] as any;
@@ -642,7 +641,6 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
     'composio-toolkit-linkedin',
     'composio-toolkit-notion',
     'composio-toolkit-exa',
-    'loom-mcp',
     'meetings',
     'webflow-template-review-mcp',
   ]);

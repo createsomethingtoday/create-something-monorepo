@@ -12,8 +12,6 @@
       "packages/harness-mcp",
       "packages/identity-worker",
       "packages/judgment-layer",
-      "packages/loom-mcp-remote",
-      "packages/loom/npm",
       "packages/mcp-authz",
       "packages/mcp-core",
       "packages/observability",

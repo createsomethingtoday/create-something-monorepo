@@ -1,28 +1,28 @@
 # Ralph Patterns
 
-> **NOTE**: The Ralph pattern has been unified into **Loom Orchestrator**.
+> **NOTE**: The Ralph pattern is legacy. Track any new Ralph-style autonomous work in Linear.
 > The core philosophy remains: fresh context per task, multi-backend support.
 > 
-> Loom Orchestrator adds:
+> The current coordination layer provides:
 > - Multi-backend spawning (Claude Code + Gemini CLI)
 > - Smart routing based on task complexity
 > - System notifications for task completion
-> - Unified coordination via MCP tools
+> - Unified task evidence in Linear
 >
-> Run via: `lm daemon start` or programmatically via `Orchestrator::run_loop()`
+> Start from `pnpm linear:ready` or `pnpm linear:create`.
 
-**Ralph is the primary orchestration method for autonomous work.** The script (or Loom Orchestrator) spawns fresh agent instances that work through tasks until complete.
+**Ralph is a legacy orchestration method for autonomous work.** Use Linear as the work tracker before starting any worker loop.
 
 ## What to Do This Week
 
 | When... | Do this |
 |---------|---------|
-| Building a new feature | `/prd-to-ralph` → `./ralph.sh` (or `lm daemon`) |
-| Want overnight autonomous work | Create tasks in Loom, run daemon, sleep |
+| Building a new feature | Create/claim a Linear issue, then run the appropriate worker loop |
+| Want overnight autonomous work | Create Linear issues, assign ownership, and record completion evidence in Linear |
 | Need parallel work (3+ features) | Use [Gastown](./gastown-patterns.md) (on request) |
 | Quick test-fix loop (same session) | `/ralph-loop` (legacy single-session) |
 
-**Default**: Use Loom Orchestrator for all autonomous work.
+**Default**: Use Linear for autonomous work tracking.
 **Exception**: Gastown only when you explicitly need parallelism (rare).
 
 ---

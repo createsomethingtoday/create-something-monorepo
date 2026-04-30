@@ -29,6 +29,7 @@ This package implements the **wrap pattern**: clients see CREATE SOMETHING MCP; 
 - **Discovery**: `client.getTools(toolkits)` → `getRawComposioTools({ toolkits })` (no user_id; see Fetching tools).
 - **Execution**: `client.executeTool(slug, params, userId)` → `tools.execute(slug, { userId, arguments: params, dangerouslySkipVersionCheck: true })` (see Executing tools).
 - **User scoping**: Every execution is scoped to a Composio entity/user ID; that user must have connected accounts for the app (see Authenticating tools).
+- **Hosted MCP config**: `client.createMcpConfig({ name, toolkits, allowedTools })` → `mcp.create(name, config)`, then `client.generateMcpInstance(userId, mcpConfigId)` → `mcp.generate(userId, mcpConfigId)`.
 
 ## Execution policy runtime
 

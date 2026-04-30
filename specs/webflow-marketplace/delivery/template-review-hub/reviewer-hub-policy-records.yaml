@@ -34,11 +34,11 @@ shared_phase_a_policy:
     - "webflow-template-review-mcp__template_review_get_field_map"
     - "webflow-template-review-mcp__template_review_assign_self"
     - "webflow-template-review-mcp__template_review_unassign_self"
-    - "webflow-template-review-mcp__template_review_assign_reviewer"
     - "webflow-template-review-mcp__template_review_request_changes"
     - "webflow-template-review-mcp__template_review_set_review_status"
     - "webflow-template-review-mcp__template_review_save_draft_feedback"
   blocked_proxy_tools:
+    - "webflow-template-review-mcp__template_review_assign_reviewer"
     - "webflow-template-review-mcp__template_review_approve_version"
     - "webflow-template-review-mcp__template_review_reject_version"
     - "webflow-template-review-mcp__template_review_complete_publishing"

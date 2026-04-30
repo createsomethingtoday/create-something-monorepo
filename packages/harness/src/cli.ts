@@ -62,7 +62,7 @@ async function main(): Promise<void> {
 
 function printHelp(): void {
   console.log(`
-CREATE SOMETHING Harness - Autonomous agent orchestration with Loom-tracked work
+CREATE SOMETHING Harness - Autonomous agent orchestration with Linear-tracked work
 
 USAGE:
   harness <command> [options]
@@ -111,8 +111,8 @@ EXAMPLES:
 WORKFLOW:
   1. Write a markdown PRD spec
   2. Run 'harness start <spec>'
-  3. Check progress with 'lm summary'
-  4. Redirect by updating tracked work or priorities in Loom
+  3. Check progress with 'pnpm linear:get -- --issue <id>'
+  4. Redirect by updating tracked work or priorities in Linear
   5. Pause/resume as needed
 
 PHILOSOPHY:

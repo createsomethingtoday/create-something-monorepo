@@ -1,0 +1,71 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#050505"/>
+  <rect x="48" y="48" width="1504" height="804" rx="28" stroke="#F2F2F2" stroke-opacity="0.18"/>
+
+  <text x="96" y="122" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700">
+    REVIEW STATES
+  </text>
+  <text x="96" y="164" fill="#A8A8A8" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    Trust boundary model
+  </text>
+
+  <text x="96" y="236" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="62" font-weight="700">
+    Trust improves when the system can say manual.
+  </text>
+  <text x="96" y="284" fill="#9E9E9E" font-family="Helvetica, Arial, sans-serif" font-size="25">
+    Pass what it can justify. Fail what it can justify.
+  </text>
+  <text x="96" y="318" fill="#9E9E9E" font-family="Helvetica, Arial, sans-serif" font-size="25">
+    Stop when the evidence boundary is real.
+  </text>
+
+  <rect x="180" y="366" width="280" height="280" rx="22" stroke="#F5F5F5" stroke-opacity="0.18"/>
+  <text x="216" y="468" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="50" font-weight="700">
+    Pass
+  </text>
+  <text x="216" y="510" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Enough evidence to
+  </text>
+  <text x="216" y="542" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    approve this check.
+  </text>
+
+  <rect x="660" y="336" width="280" height="340" rx="22" stroke="#F5F5F5" stroke-opacity="0.28" stroke-width="2.5"/>
+  <text x="696" y="452" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="50" font-weight="700">
+    Manual
+  </text>
+  <text x="696" y="494" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Enough evidence to
+  </text>
+  <text x="696" y="526" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    stop pretending.
+  </text>
+  <line x1="696" y1="568" x2="904" y2="568" stroke="#F5F5F5" stroke-opacity="0.12" stroke-width="2"/>
+  <text x="696" y="614" fill="#8F8F8F" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    uncertainty preserved
+  </text>
+
+  <rect x="1140" y="366" width="280" height="280" rx="22" stroke="#F5F5F5" stroke-opacity="0.18"/>
+  <text x="1176" y="468" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="50" font-weight="700">
+    Fail
+  </text>
+  <text x="1176" y="510" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Enough evidence to
+  </text>
+  <text x="1176" y="542" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    reject this check.
+  </text>
+
+  <line x1="96" y1="748" x2="1504" y2="748" stroke="#F5F5F5" stroke-opacity="0.12" stroke-width="2"/>
+  <text x="700" y="786" fill="#8A8A8A" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    weak claim -&gt; manual
+  </text>
+
+  <line x1="96" y1="804" x2="1504" y2="804" stroke="#F5F5F5" stroke-opacity="0.18" stroke-width="2"/>
+  <text x="96" y="836" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="700">
+    A credible review system preserves uncertainty instead of hiding it.
+  </text>
+  <text x="1310" y="836" fill="#8A8A8A" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="700">
+    CREATE SOMETHING
+  </text>
+</svg>

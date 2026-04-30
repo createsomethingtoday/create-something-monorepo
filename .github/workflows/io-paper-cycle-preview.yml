@@ -82,12 +82,15 @@ jobs:
         run: pnpm check
 
       - name: Workspace lint
+        if: steps.context.outputs.publishable == 'true'
         run: pnpm lint
 
       - name: Workspace test
+        if: steps.context.outputs.publishable == 'true'
         run: pnpm test
 
       - name: Build IO
+        if: steps.context.outputs.publishable == 'true'
         run: pnpm --filter @create-something/io build
 
       - name: Validate policy artifacts

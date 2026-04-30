@@ -112,9 +112,44 @@ test('getMarketplaceMetrics reads id-keyed fields so analytics survive display-n
   assert.equal(metrics.totals.published, 1);
   assert.equal(metrics.reviewStatusActivity['✅Approved'], 1);
   assert.equal(metrics.qualityRatingSnapshot['✅Good'], 1);
-  assert.equal(metrics.backlogSnapshot.approved, 1);
+  assert.equal(metrics.backlogSnapshot.published, 1);
   assert.equal(metrics.turnaround.decidedCount, 1);
   assert.equal(metrics.turnaround.averageHours, 30);
+});
+
+test('getMarketplaceMetrics paginates the full template base instead of capping at 1000 records', async () => {
+  const capturedUrls: URL[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      capturedUrls.push(url);
+
+      if (!url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+
+      const offset = url.searchParams.get('offset');
+      return jsonResponse({
+        records: Array.from({ length: offset ? 50 : 100 }, (_, index) => ({
+          id: `rec_metrics_${offset ? 100 + index : index}`,
+          createdTime: '2026-03-14T00:00:00.000Z',
+          fields: {},
+        })),
+        ...(offset ? {} : { offset: 'next-page' }),
+      });
+    },
+  });
+
+  const metrics = await client.getMarketplaceMetrics({
+    days: 7,
+    end_date: '2026-03-17',
+  });
+
+  assert.equal(metrics.totals.templatesScanned, 150);
+  assert.equal(capturedUrls.length, 2);
+  assert.equal(capturedUrls[0]?.searchParams.get('maxRecords'), null);
+  assert.equal(capturedUrls[1]?.searchParams.get('offset'), 'next-page');
 });
 
 test('getMarketplaceMetrics preserves Airtable list error details for schema drift debugging', async () => {
@@ -144,7 +179,6 @@ test('getMarketplaceMetrics preserves Airtable list error details for schema dri
       assert.equal((error as { code?: string }).code, 'AIRTABLE_LIST_FAILED');
       assert.deepEqual((error as { details?: unknown }).details, {
         tableId: TABLE_IDS.assets,
-        limit: 1000,
         filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
         fieldIds: [
           METRICS_ASSET_FIELD_IDS.marketplaceStatus,
@@ -319,6 +353,71 @@ test('updateAssetMetadata maps legacy description input onto the current long-ht
 
   assert.equal(asset.description, '<p>Updated description</p>');
   assert.equal(asset.descriptionLongHtml, '<p>Updated description</p>');
+});
+
+test('listAssetQueueDetailed applies queue filters on versions before hydrating assets', async () => {
+  const capturedUrls: URL[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      capturedUrls.push(url);
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        const formula = url.searchParams.get('filterByFormula') ?? '';
+        assert.match(formula, new RegExp(`\\{${CONFIRMED_VERSION_FIELDS.reviewStatus}\\} = '🆕Ready for Review'`));
+        assert.match(formula, new RegExp(`ARRAYJOIN\\(\\{${CONFIRMED_VERSION_FIELDS.reviewOwner}\\}\\)`));
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_finoraa_v1',
+              createdTime: '2026-03-11T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_finoraa',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 1,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: null,
+                [CONFIRMED_VERSION_FIELDS.submissionDatetime]: '2026-03-10T12:00:00.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        assert.match(url.searchParams.get('filterByFormula') ?? '', /RECORD_ID\(\)/);
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_asset_finoraa',
+              createdTime: '2026-03-10T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Finoraa',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🆕Ready for Review',
+                [CONFIRMED_ASSET_FIELDS.submittedDate]: '2026-03-10T12:00:00.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const queue = await client.listAssetQueueDetailed({
+    status: 'ready_to_review',
+    assigned: 'unassigned',
+    limit: 10,
+    currentReviewer: ericReviewer,
+  });
+
+  assert.equal(queue.items.length, 1);
+  assert.equal(queue.items[0]?.assignableVersionId, 'rec_finoraa_v1');
+  assert.equal(queue.items[0]?.normalizedStatus, 'ready_to_review');
+  assert.equal(capturedUrls[0]?.pathname.includes(`/${TABLE_IDS.assetVersions}`), true);
+  assert.equal(capturedUrls[1]?.pathname.includes(`/${TABLE_IDS.assets}`), true);
 });
 
 test('listAssetQueueDetailed selects the reviewer-assigned version for my_queue', async () => {

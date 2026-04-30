@@ -8,12 +8,6 @@
     "binding": "ASSETS",
     "directory": ".open-next/assets"
   },
-  "r2_buckets": [
-    {
-      "binding": "UPLOADS",
-      "bucket_name": "wf-template-form-uploads"
-    }
-  ],
   "vars": {
     "ENVIRONMENT": "production"
   }

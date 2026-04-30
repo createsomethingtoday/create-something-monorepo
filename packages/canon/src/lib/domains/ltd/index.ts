@@ -18,6 +18,8 @@ export { default as PatternPage } from './PatternPage.svelte';
 export { default as Presentation } from './Presentation.svelte';
 export { default as Slide } from './Slide.svelte';
 export { default as SubtractiveTriadAnimation } from './SubtractiveTriadAnimation.svelte';
+export { default as SystemPillars } from './SystemPillars.svelte';
+export { default as TermMap } from './TermMap.svelte';
 
 // Components moved to packages/ltd/src/lib/components/:
 // - MasterCard (depends on $lib/types.Master)

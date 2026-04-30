@@ -715,7 +715,7 @@ export default {
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/'))
       return YouTubeSyncMCP.serve('/sse').fetch(request, env, ctx);
 
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       return new Response(JSON.stringify({
         name: SERVER_NAME, version: SERVER_VERSION,
         usage: 'Connect via /mcp or /sse, then say: sync <YouTube URL>',

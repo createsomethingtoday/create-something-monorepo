@@ -138,6 +138,7 @@ Add to `.cursor/mcp.json`:
 - `POST /clients/halfdozen/agents/fleet-watchdog/run`
 - `POST /clients/halfdozen/agents/inbox-triage/run`
 - `POST /clients/halfdozen/agents/dedup/run`
+- `POST /create-something/agents/mcp-registry-sweep/run`
 
 Auth required:
 - `Authorization: Bearer <HALFDOZEN_AGENT_ROUTE_TOKEN>` or
@@ -165,6 +166,30 @@ curl -X POST "https://playbook.mcp.createsomething.ltd/clients/halfdozen/agents/
 
 All responses include contract bundle metadata, blocked/required tools, required tool coverage (when applicable), called tools, and final output.
 If one or more MCP servers are unavailable, the route returns a degraded payload (`degraded: true`) with `failed_servers` and `degraded_reason` instead of a hard failure.
+
+The CREATE SOMETHING MCP registry sweep is deterministic rather than LLM-driven.
+It inventories the full static MCP registry, fleet registry, and registered
+Playbook agent health surfaces, then separately checks the live Hub
+health/status surface for currently enabled server connectivity. This is
+deliberate: the registry can include hundreds of available Composio/toolkit
+entries, but only enabled Hub servers should be live-connected on each sweep.
+The route posts one compact health snapshot to Calm Operator Ink. It is intended
+as the deeper source behind Ink's "Review MCPs" summary; the device displays the
+summary, while the route response keeps the full inventory and live server list.
+
+```bash
+curl -X POST "https://playbook.mcp.createsomething.ltd/create-something/agents/mcp-registry-sweep/run" \
+  -H "Authorization: Bearer $HALFDOZEN_AGENT_ROUTE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+Ink notifications (optional):
+- Set `INK_SOURCE_TOKEN` or `INK_BRIDGE_TOKEN` so completed runs can post a health snapshot to Calm Operator Ink.
+- Set `INK_BRIDGE_ORIGIN` when the Ink bridge is not `https://ink.createsomething.agency`.
+- The fleet watchdog is scheduled by Cloudflare Cron at `04:00`, `13:00`, `18:00`, and `23:00` UTC by default. Override with `HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS` or disable with `HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED=false`.
+- The MCP registry sweep runs on the same default schedule. Override with `MCP_REGISTRY_SWEEP_CRON_UTC_HOURS` or disable with `MCP_REGISTRY_SWEEP_CRON_ENABLED=false`.
+- Healthy runs clear the agent health state; degraded runs surface as Ink health attention.
 
 Slack notifications (optional):
 - Set `HALFDOZEN_SLACK_WEBHOOK_URL` to receive every run summary.

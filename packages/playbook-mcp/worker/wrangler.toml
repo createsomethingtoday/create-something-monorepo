@@ -18,6 +18,9 @@ class_name = "PlaybookMCP"
 tag = "v1"
 new_sqlite_classes = ["PlaybookMCP"]
 
+[triggers]
+crons = ["0 4,13,18,23 * * *"]
+
 # Shared telemetry (fleet observability)
 [[d1_databases]]
 binding = "TELEMETRY_DB"
@@ -35,10 +38,18 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 # provides an explicit on/off switch.
 BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
 BRAINTRUST_ENABLED = "true"
+INK_BRIDGE_ORIGIN = "https://ink.createsomething.agency"
+HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED = "true"
+HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS = "4,13,18,23"
+MCP_REGISTRY_SWEEP_HUB_HEALTH_URL = "https://cs-mcp-hub-remote.createsomething.workers.dev/health"
+MCP_REGISTRY_SWEEP_TIMEOUT_MS = "60000"
+MCP_REGISTRY_SWEEP_CRON_ENABLED = "true"
+MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = "4,13,18,23"
 
 # Required secrets for protected Half Dozen agent routes:
 # wrangler secret put OPENAI_API_KEY
 # wrangler secret put HALFDOZEN_AGENT_ROUTE_TOKEN
+# wrangler secret put INK_BRIDGE_TOKEN
 
 # Optional Braintrust tracing:
 # wrangler secret put BRAINTRUST_API_KEY
@@ -49,6 +60,9 @@ BRAINTRUST_ENABLED = "true"
 # Optional notification webhooks:
 # wrangler secret put HALFDOZEN_SLACK_WEBHOOK_URL
 # wrangler secret put HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL
+
+# Optional Ink bridge target:
+# wrangler secret put INK_SOURCE_TOKEN
 
 # Slack command ingress protection:
 # wrangler secret put HALFDOZEN_SLACK_SIGNING_SECRET

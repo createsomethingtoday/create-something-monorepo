@@ -23,8 +23,8 @@ Define the release gate for `.io` papers, `.io` experiments, and related policy 
 
 ## Policy Statements
 
-1. Loom MUST remain the source of truth for work selection and task state.
-2. One Loom task MUST map to one branch and one PR for publication work.
+1. Linear MUST remain the source of truth for work selection and task state.
+2. One Linear issue MUST map to one branch and one PR for publication work.
 3. Review state MUST be represented with labels, not by inventing extra policy lifecycle states.
 4. `.io` publication work MUST complete two review passes before human approval.
 5. Production publication MUST require a human-applied `publish-approved` label before merge to `main`.
@@ -48,7 +48,7 @@ Define the release gate for `.io` papers, `.io` experiments, and related policy 
 
 Required:
 
-- cycle label present on Loom task / PR
+- cycle label present on Linear issue / PR
 - draft PR exists
 - required quality checks pass
 - artifact class is `paper` or `experiment`
@@ -78,7 +78,7 @@ Blocked when:
 
 ## Required Evidence
 
-- Loom task ID
+- Linear issue ID
 - PR URL
 - Review 1 report
 - Review 2 release summary
@@ -93,7 +93,7 @@ Blocked when:
 ## Evidence
 
 - PR history with label transitions
-- Loom task history and linked branch/PR
+- Linear issue history and linked branch/PR
 - CI logs for preview, approval gate, and post-deploy verification
 - Rollback record with rationale and incident reference
 

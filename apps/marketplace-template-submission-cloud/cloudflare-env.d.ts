@@ -1,6 +1,7 @@
 interface CloudflareEnv {
   ASSETS?: Fetcher;
-  UPLOADS?: R2Bucket;
+  UPLOADS_WORKER_URL?: string;
+  UPLOADS_WORKER_SECRET?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   CSRF_TRUSTED_ORIGINS?: string;

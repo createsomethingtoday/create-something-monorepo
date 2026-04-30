@@ -264,30 +264,30 @@ Claude Code handles the full creation-to-deployment cycle. Tools recede into tra
 
 **Canon**: The infrastructure disappears; only the work remains. Deploy directly via Bash or MCP tools. Reserve WezTerm handoff for truly interactive operations (debugging sessions, real-time log monitoring, production verification).
 
-## Task Management: Loom
+## Task Management: Linear
 
-Agent-native issue tracking that persists across sessions. The tool recedes; the work remains.
+Linear is the CREATE SOMETHING source of truth for task coordination, ownership, status, and delivery evidence.
 
 ```bash
-# Session Start: Surface highest-impact work
-lm ready --ranked             # Robot-priority with PageRank + Critical Path
+# Session Start: Surface ready work
+pnpm linear:ready
 
 # During Work
-lm create "Task"              # Capture discovered work
-lm block X --by Y             # Record dependencies
-lm update X --status claimed
+pnpm linear:list -- --status open --label code-quality
+pnpm linear:create -- --title "Task" --description "..." --label code-quality
+pnpm linear:claim -- --issue CRE-123
 
 # Session End
-lm done X                     # Mark completed
+pnpm linear:done -- --issue CRE-123 --evidence "Validation: ..."
 ```
 
 **Labels**: `agency`, `io`, `space`, `ltd` (scope) + `feature`, `bug`, `research`, `refactor` (type)
 
-**Issue Types**: `bug`, `feature`, `task`, `epic`, `chore` (set via `lm create --type`)
+**Issue Types**: use Linear issue labels and projects to capture `bug`, `feature`, `task`, `epic`, and `chore` semantics.
 
-**Why Loom**: Multi-agent coordination with sessions, routing, cost tracking, and crash recovery. Absorbs Beads functionality with richer analytics.
+**Why Linear**: shared issue state, MCP access, source-of-truth registry review, and durable delivery evidence across local and remote agents.
 
-See `.claude/rules/loom-patterns.md` for full reference.
+Loom is historical in this repository. Do not create new Loom tasks; update legacy references to Linear or file a Linear cleanup issue.
 
 ## Agent Orchestration
 
@@ -301,7 +301,7 @@ Three patterns for different work scopes:
 
 **Ralph**: Iterative refinement through self-referential feedback loops. The prompt never changes—your work does. Use `/ralph-loop` for test-fix loops and refinement until criteria met.
 
-**Harness**: Autonomous work sessions with quality gates and peer review. Uses Anthropic prompt engineering best practices (prefilled responses, quote-based findings, chain-of-thought) for 99% parsing accuracy and <5% false positive rate. Reviewers: Security (Haiku), Architecture (Opus), Quality (Sonnet). Use `lm work` for single issues or Harness spec-driven features with checkpoints.
+**Harness**: Autonomous work sessions with quality gates and peer review. Uses Anthropic prompt engineering best practices (prefilled responses, quote-based findings, chain-of-thought) for 99% parsing accuracy and <5% false positive rate. Reviewers: Security (Haiku), Architecture (Opus), Quality (Sonnet). Use Linear issues for single-issue work or Harness spec-driven features with checkpoints.
 
 **Gastown**: Multi-agent orchestration via tmux. Use `gt convoy create` to batch work, `gt sling` to assign to workers, parallel execution at scale.
 
