@@ -10,6 +10,7 @@
     "post:health": "tsx scripts/post-health-snapshot.mjs",
     "post:mcp": "tsx scripts/post-mcp-attention.mjs",
     "run:health-command": "tsx scripts/run-health-checked-command.mjs",
+    "smoke:production": "tsx scripts/production-smoke.mjs",
     "tail": "node ../../scripts/run-wrangler.mjs tail",
     "test": "tsx --test test/*.test.ts"
   },
