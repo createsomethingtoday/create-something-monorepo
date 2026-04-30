@@ -119,6 +119,7 @@ MCP review agents and health monitors can post directly to production:
 ```bash
 pnpm post:mcp -- --mcp "HubSpot MCP" --reason "Review failed"
 pnpm post:health -- --component "Claude Code Slack watcher" --status degraded --summary "No heartbeat in 20 minutes"
+pnpm post:decision -- --source mcp-review-agent --subject "MCP review requires attention" --summary "Composio Toolkit MCP failed health review" --urgency attention --decision-required --action "Review Composio auth configuration"
 ```
 
 Both commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the environment.
@@ -127,6 +128,22 @@ Both commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the e
 
 Remote agents should not stream raw reasoning to Ink. They should post the
 smallest possible operator decision contract:
+
+```bash
+pnpm --dir packages/calm-operator-ink-bridge post:decision -- \
+  --source mcp-review-agent \
+  --subject "MCP review requires attention" \
+  --summary "Composio Toolkit MCP failed health review" \
+  --reason "Remote health failed for toolkit bridge" \
+  --detail "Auth configuration is missing at least one expected managed account." \
+  --action "Review Composio auth configuration" \
+  --urgency attention \
+  --decision-required \
+  --artifact reports/mcp-review.md \
+  --confidence 0.92
+```
+
+The raw HTTP shape is:
 
 ```bash
 curl -sS https://ink.createsomething.agency/ink/operator-decision \

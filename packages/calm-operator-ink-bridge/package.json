@@ -7,6 +7,7 @@
     "check": "tsc --noEmit",
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
     "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "post:decision": "tsx scripts/post-operator-decision.mjs",
     "post:health": "tsx scripts/post-health-snapshot.mjs",
     "post:mcp": "tsx scripts/post-mcp-attention.mjs",
     "run:health-command": "tsx scripts/run-health-checked-command.mjs",
