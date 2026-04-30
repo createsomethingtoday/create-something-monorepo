@@ -20,10 +20,15 @@ Generated operator view:
 ## Commands
 
 ```bash
+pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server-id>
 pnpm dify:inventory:validate
 pnpm dify:inventory:generate
 pnpm dify:inventory:check
 ```
+
+Use `dify:agent:scaffold` to draft a manifest and inventory entry from an
+existing Dify MCP server card. It is a dry run unless `--write-manifest` or
+`--write-inventory` are provided.
 
 Use `generate` after changing `config/dify/inventory.json`. Use `check` in CI or before landing a PR.
 

@@ -35,12 +35,25 @@ eval acceptance.
 2. Add or update the Dify MCP server card in `config/dify/inventory.json`.
 3. Classify every Dify-discovered tool as read, write, external side effect,
    secret sensitive, or unknown.
-4. Create or export the Dify app DSL.
-5. Add a compact agent manifest with instructions and secret references.
-6. Map the agent to allowed MCP servers and enabled tools in the inventory.
-7. Add Braintrust eval gates in `evals.required_checks`.
-8. Run the Dify Service API smoke and Braintrust eval.
-9. Publish or keep published only after the eval gates pass.
+4. Scaffold the repo-side Dify agent contract:
+
+   ```bash
+   pnpm dify:agent:scaffold -- \
+     --agent-id client-example-agent \
+     --server-id existing-dify-mcp-server-id \
+     --display-name "Client Example Agent"
+   ```
+
+5. Create or export the Dify app DSL.
+6. Add a compact agent manifest with instructions and secret references.
+7. Map the agent to allowed MCP servers and enabled tools in the inventory.
+8. Add Braintrust eval gates in `evals.required_checks`.
+9. Run the Dify Service API smoke and Braintrust eval.
+10. Publish or keep published only after the eval gates pass.
+
+The scaffold command defaults to a dry run. Use `--write-manifest` and
+`--write-inventory` only when you are ready to add the draft agent contract to
+the repo.
 
 ## Required Eval Gates
 
