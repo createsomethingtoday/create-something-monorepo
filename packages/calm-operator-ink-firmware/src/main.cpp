@@ -70,6 +70,7 @@ int stoneCount = 0;
 const int STONE_SLOTS = 9;
 const int STONE_X[STONE_SLOTS] = {50, 100, 150, 62, 100, 138, 45, 100, 155};
 const int STONE_Y[STONE_SLOTS] = {75, 68, 75, 112, 105, 112, 150, 146, 150};
+M5Canvas canvas(&M5.Display);
 
 String origin() {
   String value = CALM_OPERATOR_BRIDGE_ORIGIN;
@@ -106,6 +107,10 @@ void beepUrgent() {
   M5.Speaker.tone(3800, 90);
 }
 
+void flushFrame() {
+  canvas.pushSprite(0, 0);
+}
+
 void drawWrapped(const String& text, int x, int y, int width, int lineHeight, int maxLines) {
   String normalized = text;
   normalized.replace("\n", " ");
@@ -124,10 +129,10 @@ void drawWrapped(const String& text, int x, int y, int width, int lineHeight, in
 
     if (word.length() == 0) continue;
     const String candidate = line.length() == 0 ? word : line + " " + word;
-    if (M5.Display.textWidth(candidate.c_str()) <= width || line.length() == 0) {
+    if (canvas.textWidth(candidate.c_str()) <= width || line.length() == 0) {
       line = candidate;
     } else {
-      M5.Display.drawString(line, x, y + lines * lineHeight);
+      canvas.drawString(line, x, y + lines * lineHeight);
       lines++;
       if (lines >= maxLines) return;
       line = word;
@@ -136,45 +141,46 @@ void drawWrapped(const String& text, int x, int y, int width, int lineHeight, in
   }
 
   if (line.length() > 0 && lines < maxLines) {
-    M5.Display.drawString(line, x, y + lines * lineHeight);
+    canvas.drawString(line, x, y + lines * lineHeight);
   }
 }
 
 void startFrame(const String& title, bool inverted = true) {
-  M5.Display.fillScreen(TFT_WHITE);
-  M5.Display.setTextSize(1);
-  M5.Display.setTextDatum(top_left);
+  canvas.fillScreen(TFT_WHITE);
+  canvas.setTextSize(1);
+  canvas.setTextDatum(top_left);
   if (inverted) {
-    M5.Display.fillRect(0, 0, 200, 24, TFT_BLACK);
-    M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
-    M5.Display.drawString(title, 8, 7);
-    M5.Display.setTextColor(TFT_BLACK, TFT_WHITE);
+    canvas.fillRect(0, 0, 200, 24, TFT_BLACK);
+    canvas.setTextColor(TFT_WHITE, TFT_BLACK);
+    canvas.drawString(title, 8, 7);
+    canvas.setTextColor(TFT_BLACK, TFT_WHITE);
   } else {
-    M5.Display.setTextColor(TFT_BLACK, TFT_WHITE);
-    M5.Display.drawString(title, 8, 7);
-    M5.Display.drawLine(8, 24, 192, 24, TFT_BLACK);
+    canvas.setTextColor(TFT_BLACK, TFT_WHITE);
+    canvas.drawString(title, 8, 7);
+    canvas.drawLine(8, 24, 192, 24, TFT_BLACK);
   }
 }
 
 void drawFooter(const String& left = "") {
-  M5.Display.drawLine(8, 180, 192, 180, TFT_BLACK);
-  M5.Display.setTextSize(1);
+  canvas.drawLine(8, 180, 192, 180, TFT_BLACK);
+  canvas.setTextSize(1);
   String status = left;
   if (status.length() == 0) status = WiFi.status() == WL_CONNECTED ? "Wi-Fi" : "Offline";
   const int pct = batteryPercent();
   if (pct > 0) status += "  " + String(pct) + "%";
-  M5.Display.drawString(status, 10, 186);
+  canvas.drawString(status, 10, 186);
 }
 
 void renderBrief() {
   screen = Screen::Brief;
   startFrame(activeBrief.headline, true);
-  M5.Display.setTextSize(1);
+  canvas.setTextSize(1);
   drawWrapped(activeBrief.line1, 12, 42, 176, 16, 2);
-  M5.Display.drawLine(26, 86, 174, 86, TFT_BLACK);
+  canvas.drawLine(26, 86, 174, 86, TFT_BLACK);
   drawWrapped(activeBrief.line2, 12, 100, 176, 15, 2);
   drawWrapped(activeBrief.action, 12, 136, 176, 14, 2);
   drawFooter(activeBrief.urgent ? "ATTENTION" : "CS");
+  flushFrame();
 
   if (activeBrief.urgent && !lastUrgentRendered) {
     beepUrgent();
@@ -189,27 +195,29 @@ void renderStatus(const String& title, const String& a, const String& b = "", co
   drawWrapped(b, 12, 96, 176, 15, 3);
   drawWrapped(c, 12, 148, 176, 14, 2);
   drawFooter();
+  flushFrame();
 }
 
 void renderMenu() {
   screen = Screen::Menu;
   const MenuAction& action = MENU[menuIndex];
   startFrame(action.bucket, true);
-  M5.Display.setTextSize(1);
+  canvas.setTextSize(1);
 
   const int previous = (menuIndex + (int)(sizeof(MENU) / sizeof(MENU[0])) - 1) %
                        (int)(sizeof(MENU) / sizeof(MENU[0]));
   const int next = (menuIndex + 1) % (int)(sizeof(MENU) / sizeof(MENU[0]));
 
-  M5.Display.drawString(MENU[previous].label, 18, 50);
-  M5.Display.fillRect(10, 82, 180, 44, TFT_BLACK);
-  M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
-  M5.Display.setTextSize(2);
+  canvas.drawString(MENU[previous].label, 18, 50);
+  canvas.fillRect(10, 82, 180, 44, TFT_BLACK);
+  canvas.setTextColor(TFT_WHITE, TFT_BLACK);
+  canvas.setTextSize(2);
   drawWrapped(action.label, 18, 94, 164, 18, 1);
-  M5.Display.setTextColor(TFT_BLACK, TFT_WHITE);
-  M5.Display.setTextSize(1);
-  M5.Display.drawString(MENU[next].label, 18, 142);
+  canvas.setTextColor(TFT_BLACK, TFT_WHITE);
+  canvas.setTextSize(1);
+  canvas.drawString(MENU[next].label, 18, 142);
   drawFooter("A/C move  B select");
+  flushFrame();
 }
 
 bool connectWifi() {
@@ -419,46 +427,50 @@ void fetchClock() {
 
   screen = Screen::Clock;
   startFrame("CLOCK", false);
-  M5.Display.setTextSize(2);
+  canvas.setTextSize(2);
   drawWrapped(clockLine1.length() ? clockLine1 : "Unknown", 18, 60, 170, 22, 2);
-  M5.Display.setTextSize(1);
+  canvas.setTextSize(1);
   drawWrapped(clockLine2.length() ? clockLine2 : "Central Time", 18, 118, 170, 16, 2);
   drawFooter("B menu");
+  flushFrame();
 }
 
 void renderRhythm() {
   screen = Screen::Rhythm;
   startFrame("RHYTHM", true);
-  M5.Display.drawString("06:00  WORKOUT", 18, 44);
-  M5.Display.drawString("09:00  WORK", 18, 68);
-  M5.Display.drawString("12:30  WALK", 18, 92);
-  M5.Display.drawString("15:00  EAT", 18, 116);
-  M5.Display.drawString("23:00  SLEEP", 18, 140);
+  canvas.drawString("06:00  WORKOUT", 18, 44);
+  canvas.drawString("09:00  WORK", 18, 68);
+  canvas.drawString("12:30  WALK", 18, 92);
+  canvas.drawString("15:00  EAT", 18, 116);
+  canvas.drawString("23:00  SLEEP", 18, 140);
   drawFooter("B menu");
+  flushFrame();
 }
 
 void renderCalmReset() {
   screen = Screen::CalmReset;
   startFrame("CALM RESET", false);
-  M5.Display.drawCircle(100, 78, 30, TFT_BLACK);
-  M5.Display.drawCircle(100, 78, 18, TFT_BLACK);
-  M5.Display.setTextSize(1);
+  canvas.drawCircle(100, 78, 30, TFT_BLACK);
+  canvas.drawCircle(100, 78, 18, TFT_BLACK);
+  canvas.setTextSize(1);
   drawWrapped("Breathe in. Hold. Breathe out.", 22, 124, 156, 15, 3);
   drawFooter("B menu");
+  flushFrame();
 }
 
 void renderStoneGarden() {
   screen = Screen::StoneGarden;
   startFrame("STONE GARDEN", false);
   for (int i = 0; i < STONE_SLOTS; i++) {
-    M5.Display.drawCircle(STONE_X[i], STONE_Y[i], 10, TFT_BLACK);
+    canvas.drawCircle(STONE_X[i], STONE_Y[i], 10, TFT_BLACK);
     if (i < stoneCount) {
-      M5.Display.fillCircle(STONE_X[i], STONE_Y[i], 6, TFT_BLACK);
+      canvas.fillCircle(STONE_X[i], STONE_Y[i], 6, TFT_BLACK);
     }
   }
-  M5.Display.drawRect(STONE_X[stoneCursor] - 14, STONE_Y[stoneCursor] - 14, 28, 28, TFT_BLACK);
-  M5.Display.drawString("A/C move  B place", 28, 162);
+  canvas.drawRect(STONE_X[stoneCursor] - 14, STONE_Y[stoneCursor] - 14, 28, 28, TFT_BLACK);
+  canvas.drawString("A/C move  B place", 28, 162);
   drawFooter("PWR sync");
+  flushFrame();
 }
 
 void renderSettingsStatus() {
@@ -540,6 +552,7 @@ void renderBoot() {
   drawWrapped(String("FW ") + FIRMWARE_VERSION, 18, 92, 164, 16, 1);
   drawWrapped("B opens menu. PWR syncs.", 18, 128, 164, 16, 2);
   drawFooter("boot");
+  flushFrame();
 }
 
 } // namespace
@@ -552,8 +565,10 @@ void setup() {
   auto cfg = M5.config();
   M5.begin(cfg);
   M5.Display.setRotation(0);
-  M5.Display.setTextSize(1);
-  M5.Display.setTextColor(TFT_BLACK, TFT_WHITE);
+  canvas.setColorDepth(1);
+  canvas.createSprite(200, 200);
+  canvas.setTextSize(1);
+  canvas.setTextColor(TFT_BLACK, TFT_WHITE);
   renderBoot();
 
   if (!hasRuntimeConfig()) {
