@@ -8,7 +8,6 @@ import { QuillEditor } from './quill-editor';
 import {
   ALL_COUNTRIES,
   CATEGORY_OPTIONS,
-  SECONDARY_TAGS,
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
   getPricingTiers,
@@ -101,7 +100,6 @@ type TemplateFormState = {
   previewUrl: string;
   priceModel: 'Free' | 'Paid';
   categories: string[];
-  secondaryTags: string[];
   styles: string[];
   pageCount: PageCountOption | '';
   typeCms: boolean;
@@ -124,7 +122,6 @@ type TemplateAutofillState = Partial<
     | 'templateName'
     | 'shortDescription'
     | 'longDescription'
-    | 'secondaryTags'
     | 'priceModel'
     | 'pageCount'
     | 'typeCms'
@@ -140,7 +137,6 @@ type TemplateAutofillFieldKey =
   | 'shortDescription'
   | 'longDescription'
   | 'categories'
-  | 'secondaryTags'
   | 'priceModel'
   | 'pageCount'
   | 'typeCms'
@@ -153,7 +149,6 @@ type TemplateAutofillPayload = {
   shortDescription?: string;
   longDescription?: string;
   categories?: string[];
-  secondaryTags?: string[];
   priceModel?: 'Free' | 'Paid';
   pageCount?: PageCountOption;
   typeCms?: boolean;
@@ -232,7 +227,6 @@ const AUTOFILL_FIELD_LABELS: Record<TemplateAutofillFieldKey, string> = {
   shortDescription: 'Short description',
   longDescription: 'Long description',
   categories: 'Categories',
-  secondaryTags: 'Secondary tags',
   priceModel: 'Price model',
   pageCount: 'Page count',
   typeCms: 'CMS',
@@ -249,7 +243,6 @@ const initialTemplateState: TemplateFormState = {
   previewUrl: '',
   priceModel: 'Free',
   categories: [],
-  secondaryTags: [],
   styles: [],
   pageCount: '',
   typeCms: false,
@@ -638,7 +631,6 @@ export function TemplateIntake() {
   const [isEmbedded, setIsEmbedded] = useState(false);
   const [optionSearch, setOptionSearch] = useState({
     categories: '',
-    secondaryTags: '',
     styles: '',
     featureIds: '',
   });
@@ -675,10 +667,6 @@ export function TemplateIntake() {
     template.categories,
     autofillManaged.categories
   );
-  const hasAutofilledSecondaryTags = isAutofilledArray(
-    template.secondaryTags,
-    autofillManaged.secondaryTags
-  );
   const hasAutofilledPageCount =
     Boolean(autofillManaged.pageCount) && template.pageCount === autofillManaged.pageCount;
   const hasAutofilledTemplateType =
@@ -698,11 +686,6 @@ export function TemplateIntake() {
     CATEGORY_OPTIONS,
     template.categories,
     optionSearch.categories
-  );
-  const visibleSecondaryTags = sortSelectableLabels(
-    SECONDARY_TAGS,
-    template.secondaryTags,
-    optionSearch.secondaryTags
   );
   const visibleStyles = sortSelectableLabels(
     TEMPLATE_STYLES,
@@ -1206,21 +1189,6 @@ export function TemplateIntake() {
       }
 
       if (
-        autofill.secondaryTags?.length &&
-        !arraysEqual(current.secondaryTags, autofill.secondaryTags) &&
-        shouldAutofillArray(
-          current.secondaryTags,
-          autofillManaged.secondaryTags
-        )
-      ) {
-        next.secondaryTags = autofill.secondaryTags;
-        managedNext.secondaryTags = autofill.secondaryTags;
-        markApplied('secondaryTags');
-      } else if (autofill.secondaryTags?.length) {
-        markSuggested('secondaryTags');
-      }
-
-      if (
         autofill.styles?.length &&
         !arraysEqual(current.styles, autofill.styles) &&
         shouldAutofillArray(current.styles, autofillManaged.styles)
@@ -1658,7 +1626,6 @@ export function TemplateIntake() {
           priceModel: template.priceModel,
           category: template.categories[0] || '',
           categories: template.categories,
-          tags: template.secondaryTags,
           styleTags: template.styles,
           siteTypes: [
             ...(template.pageCount === 'Multi-layout' ? ['multi-layout'] : template.pageCount === 'Multi' ? ['static'] : ['static']),
@@ -2455,54 +2422,6 @@ export function TemplateIntake() {
                     </div>
                     <div className="field-help submission-counter">
                       {template.categories.length} of 2 categories selected
-                    </div>
-                  </div>
-
-                  <div className="submission-field">
-                    <span className="field-label template-application-form_field-label cc-with-desc">
-                      Secondary tags
-                      {hasAutofilledSecondaryTags ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
-                    </span>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Optional. Tag names are blocked inside the template title.
-                    </p>
-                    <ChoiceToolbar
-                      value={optionSearch.secondaryTags}
-                      onChange={(value) => updateOptionSearch('secondaryTags', value)}
-                      placeholder="Search secondary tags"
-                      ariaLabel="Search secondary tags"
-                      shownCount={visibleSecondaryTags.length}
-                      actionLabel={template.secondaryTags.length > 0 ? 'Clear all' : undefined}
-                      onAction={
-                        template.secondaryTags.length > 0
-                          ? () => updateTemplate('secondaryTags', [])
-                          : undefined
-                      }
-                    />
-                    <div className="submission-choice-grid is-scroll submission-choice-grid-compact">
-                      {visibleSecondaryTags.length === 0 ? (
-                        <div className="submission-choice-empty">No secondary tags match your search.</div>
-                      ) : null}
-                      {visibleSecondaryTags.map((tag) => (
-                        <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
-                          key={tag}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={template.secondaryTags.includes(tag)}
-                            onChange={() =>
-                              updateTemplate(
-                                'secondaryTags',
-                                toggleCheckbox(template.secondaryTags, tag),
-                              )
-                            }
-                          />
-                          <span className="submission-choice-copy">{tag}</span>
-                        </label>
-                      ))}
                     </div>
                   </div>
 

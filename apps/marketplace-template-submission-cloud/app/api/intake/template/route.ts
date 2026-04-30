@@ -23,7 +23,6 @@ type TemplateSubmissionBody = {
   priceModel?: string;
   category?: string;
   categories?: string[];
-  tags?: string[];
   siteTypes?: string[];
   styleTags?: string[];
   featureFlags?: string[];
@@ -170,7 +169,6 @@ export async function POST(request: Request) {
     const secondaryThumbnailUrl = String(body.secondaryThumbnailUrl || '').trim();
     const galleryUrls = ensureArray(body.galleryUrls).slice(0, 5);
     const featureFlags = ensureArray(body.featureFlags);
-    const tags = ensureArray(body.tags);
     const styleTags = ensureArray(body.styleTags);
     const siteTypes = ensureArray(body.siteTypes);
     const requestedCategories = ensureArray(body.categories).slice(0, 2);
@@ -283,7 +281,6 @@ export async function POST(request: Request) {
       '<h3>Metadata</h3>',
       '<ul>',
       categories.length > 0 ? `<li>Category: ${escapeHtml(categories.join(', '))}</li>` : '',
-      tags.length > 0 ? `<li>Tags: ${escapeHtml(tags.join(', '))}</li>` : '',
       styleTags.length > 0 ? `<li>Style tags: ${escapeHtml(styleTags.join(', '))}</li>` : '',
       siteTypes.length > 0 ? `<li>Site types: ${escapeHtml(siteTypes.join(', '))}</li>` : '',
       combinedFeatures.size > 0
@@ -314,7 +311,6 @@ export async function POST(request: Request) {
         templateTypeCms,
         templateTypeEcommerce,
         categories,
-        secondaryTags: tags,
         styles: mappedStyles,
         features: mappedFeatures,
         shortDescription,

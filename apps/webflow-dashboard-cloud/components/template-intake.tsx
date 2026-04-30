@@ -8,7 +8,6 @@ import { QuillEditor } from './quill-editor';
 import {
   ALL_COUNTRIES,
   CATEGORY_OPTIONS,
-  SECONDARY_TAGS,
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
   getPricingTiers,
@@ -129,7 +128,6 @@ type TemplateFormState = {
   previewUrl: string;
   priceModel: 'Free' | 'Paid';
   categories: string[];
-  secondaryTags: string[];
   styles: string[];
   pageCount: PageCountOption | '';
   typeCms: boolean;
@@ -218,7 +216,6 @@ const initialTemplateState: TemplateFormState = {
   previewUrl: '',
   priceModel: 'Free',
   categories: [],
-  secondaryTags: [],
   styles: [],
   pageCount: '',
   typeCms: false,
@@ -1206,7 +1203,6 @@ export function TemplateIntake() {
           priceModel: template.priceModel,
           category: template.categories[0] || '',
           categories: template.categories,
-          tags: template.secondaryTags,
           styleTags: template.styles,
           siteTypes: [
             ...(template.pageCount === 'Multi-layout' ? ['multi-layout'] : template.pageCount === 'Multi' ? ['static'] : ['static']),
@@ -1913,35 +1909,6 @@ export function TemplateIntake() {
                     </div>
                     <div className="field-help submission-counter">
                       {template.categories.length} of 2 categories selected
-                    </div>
-                  </div>
-
-                  <div className="submission-field">
-                    <span className="field-label template-application-form_field-label cc-with-desc">
-                      Secondary tags
-                    </span>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Optional. Tag names are blocked inside the template title.
-                    </p>
-                    <div className="submission-choice-grid is-scroll submission-choice-grid-compact">
-                      {SECONDARY_TAGS.map((tag) => (
-                        <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
-                          key={tag}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={template.secondaryTags.includes(tag)}
-                            onChange={() =>
-                              updateTemplate(
-                                'secondaryTags',
-                                toggleCheckbox(template.secondaryTags, tag),
-                              )
-                            }
-                          />
-                          <span className="submission-choice-copy">{tag}</span>
-                        </label>
-                      ))}
                     </div>
                   </div>
 
