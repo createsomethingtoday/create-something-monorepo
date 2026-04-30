@@ -48,12 +48,26 @@ eval acceptance.
 6. Add a compact agent manifest with instructions and secret references.
 7. Map the agent to allowed MCP servers and enabled tools in the inventory.
 8. Add Braintrust eval gates in `evals.required_checks`.
-9. Run the Dify Service API smoke and Braintrust eval.
-10. Publish or keep published only after the eval gates pass.
+9. Run an inventory-driven Dify Service API smoke:
+
+   ```bash
+   pnpm dify:agent:smoke -- \
+     --agent-id client-example-agent \
+     --query "Use the approved read tool and summarize the result." \
+     --require-tool expected_tool_name
+   ```
+
+10. Add and run the dedicated Braintrust eval.
+11. Publish or keep published only after the eval gates pass.
 
 The scaffold command defaults to a dry run. Use `--write-manifest` and
 `--write-inventory` only when you are ready to add the draft agent contract to
 the repo.
+
+The generic smoke command reads `config/dify/inventory.json`, resolves the
+agent's Dify Service API key from the declared Infisical reference, and forbids
+write-capable tools by default. Use `--allow-write-tools` only for disposable
+write-test environments.
 
 ## Required Eval Gates
 
