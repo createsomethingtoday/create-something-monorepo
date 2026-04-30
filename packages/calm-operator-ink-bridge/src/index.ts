@@ -3,6 +3,7 @@ import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { buildClockSnapshot } from './clock.js';
 import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
+import { buildInkNavigation } from './navigation.js';
 import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
 import { dueDailyAlarms, shouldRunHealthReviewAtUtcHour } from './scheduled-alarms.js';
 import { listSurfaceProfiles } from './surfaces.js';
@@ -946,6 +947,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /ink/brief',
         'GET /ink/surface-brief',
         'GET /ink/clock',
+        'GET /ink/navigation',
         'GET /ink/surfaces',
         'POST /ink/alert',
         'POST /ink/operator-decision',
@@ -968,6 +970,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       (path === '/ink/brief' ||
         path === '/ink/surface-brief' ||
         path === '/ink/clock' ||
+        path === '/ink/navigation' ||
         path === '/ink/surfaces' ||
         path === '/ink/device')) ||
       (method === 'POST' &&
@@ -995,6 +998,11 @@ async function route(request: Request, env: Env): Promise<Response> {
 
   if (method === 'GET' && path === '/ink/clock') {
     return json({ ok: true, clock: buildClockSnapshot() });
+  }
+
+  if (method === 'GET' && path === '/ink/navigation') {
+    const surface = url.searchParams.get('surface') || defaultSurface(env);
+    return json({ ok: true, navigation: buildInkNavigation(surface) });
   }
 
   if (method === 'GET' && path === '/ink/surfaces') {

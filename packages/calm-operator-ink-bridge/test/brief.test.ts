@@ -65,6 +65,12 @@ test('returns clear live-only state when no attention is needed', () => {
     display_date: 'Wed Dec 31',
     day_period: 'evening'
   });
+  const navigation = firmware.navigation as Record<string, unknown>;
+  assert.equal(navigation.primary_bucket, 'operator');
+  assert.equal(
+    ((navigation.buckets as Array<{ id: string; label: string }>).find((bucket) => bucket.id === 'calm'))?.label,
+    'Calm'
+  );
 });
 
 test('prioritizes MCP attention alerts for the Core Ink brief', () => {

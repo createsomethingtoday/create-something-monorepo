@@ -27,6 +27,7 @@ Token-gated:
 - `GET /ink/brief`
 - `GET /ink/surface-brief`
 - `GET /ink/clock`
+- `GET /ink/navigation`
 - `GET /ink/surfaces`
 - `GET /ink/device`
 - `POST /ink/alert`
@@ -102,6 +103,26 @@ curl -sS https://ink.createsomething.agency/ink/clock \
 `/ink/brief` also includes the same `clock` object. On Core Ink, use this for an
 on-demand Clock screen or footer. Avoid refreshing e-ink every minute unless the
 operator explicitly opens the clock.
+
+## Navigation contract
+
+Ink exposes a small navigation contract so constrained firmware can avoid
+hardcoded menu labels:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/navigation \
+  -H "x-ink-token: $INK_DEVICE_TOKEN"
+```
+
+The contract separates operator work from calm tools:
+
+- `Operator`: sync and MCP review
+- `Rhythm`: clock and daily rhythm surfaces
+- `Calm`: Calm Reset and Stone Garden
+- `Settings`: local alert/beep/vibration preferences
+
+Use `Calm` as the firmware bucket label. It replaces the earlier "Games" label
+and keeps the pocket surface aligned with the product thesis.
 
 Request a different Ink surface profile without changing the backend:
 
