@@ -74,8 +74,23 @@ eval acceptance.
      --display-name "Client Example Agent"
    ```
 
-7. Create or export the Dify app DSL.
-8. Add a compact agent manifest with instructions and secret references.
+7. Create or export the Dify app DSL. For an app that already exists in Dify,
+   import the exported DSL into the repo-side control plane:
+
+   ```bash
+   pnpm dify:agent:import-dsl -- \
+     --dsl "/path/to/exported-agent.yml" \
+     --agent-id client-example-agent \
+     --fleet-id existing-mcp-fleet-id
+   ```
+
+   Review the generated manifest and inventory entries, then re-run with
+   `--write-dsl --write-manifest --write-inventory` when the mapping is correct.
+   For Policy OS Hub MCPs, the generated MCP auth reference should be the
+   static lane bearer from the fleet registry, usually
+   `prod:/mcp-hub/hubs:CS_HUB_*_API_TOKEN`.
+
+8. Add or review the compact agent manifest with instructions and secret references.
 9. Map the agent to allowed MCP servers and enabled tools in the inventory.
 10. Add Braintrust eval gates in `evals.required_checks`.
 11. Run an inventory-driven Dify Service API smoke:
@@ -119,6 +134,13 @@ assert required tools, forbidden tools, answer text, and tool observations.
 Published agents must keep at least one inventory-declared smoke case so the
 basic runtime path can be validated without reconstructing prompts or assertions
 from memory.
+
+For Hub-backed Dify agents, include a bearer-readiness smoke that calls a
+non-mutating Hub tool such as `hub_list_services`. The smoke must fail if the
+agent answers that the Hub session is unauthenticated, because client Dify agents
+should not depend on user/session auth for Hub access. A Dify MCP card showing
+`Authorized` only proves the server can initialize and expose schemas; it does
+not prove that `tools/call` has a usable static bearer path.
 
 ## Required Eval Gates
 

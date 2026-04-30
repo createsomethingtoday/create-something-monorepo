@@ -87,6 +87,7 @@ type DifySmokeCase = {
   required_tools?: string[];
   forbidden_tools?: string[];
   expected_answer_substrings?: string[];
+  forbidden_answer_substrings?: string[];
   allow_write_tools?: boolean;
   timeout_ms?: number;
   max_attempts?: number;
@@ -494,6 +495,11 @@ function validateAgentSmokeCases(
         errors.push(`${context}: expected_answer_substrings cannot contain empty values`);
       }
     }
+    for (const forbidden of smokeCase.forbidden_answer_substrings ?? []) {
+      if (!forbidden || forbidden.trim().length === 0) {
+        errors.push(`${context}: forbidden_answer_substrings cannot contain empty values`);
+      }
+    }
 
     if (
       smokeCase.max_attempts !== undefined &&
@@ -567,13 +573,13 @@ function renderInventoryDoc(inventory: DifyInventory): string {
 
   lines.push('## Smoke Cases', '');
   lines.push(
-    '| Agent | Case | Required Tools | Expected Answer Substrings | Write Tools Allowed |'
+    '| Agent | Case | Required Tools | Expected Answer Substrings | Forbidden Answer Substrings | Write Tools Allowed |'
   );
-  lines.push('| --- | --- | --- | --- | --- |');
+  lines.push('| --- | --- | --- | --- | --- | --- |');
   for (const [agentId, agent] of Object.entries(inventory.agents)) {
     for (const smokeCase of agent.smoke_cases ?? []) {
       lines.push(
-        `| ${code(agentId)} | ${code(smokeCase.id)} | ${formatList(smokeCase.required_tools)} | ${formatList(smokeCase.expected_answer_substrings)} | ${smokeCase.allow_write_tools === true ? 'yes' : 'no'} |`
+        `| ${code(agentId)} | ${code(smokeCase.id)} | ${formatList(smokeCase.required_tools)} | ${formatList(smokeCase.expected_answer_substrings)} | ${formatList(smokeCase.forbidden_answer_substrings)} | ${smokeCase.allow_write_tools === true ? 'yes' : 'no'} |`
       );
     }
   }
