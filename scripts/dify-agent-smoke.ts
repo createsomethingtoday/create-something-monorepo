@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import {
@@ -13,15 +13,26 @@ import {
   type DifyChatInput
 } from '../evals/braintrust/dify/shared.js';
 
+type ToolRisk = 'read' | 'write' | 'external_side_effect' | 'secret_sensitive' | 'unknown';
+
 type SecretRef = {
   environment: string;
   path: string;
   secret_key: string;
 };
 
+type DifyTool = {
+  name: string;
+  enabled: boolean;
+  risk: ToolRisk;
+};
+
+type DifyMcpServer = {
+  tools: DifyTool[];
+};
+
 type DifyAgent = {
   display_name: string;
-  runtime: 'dify';
   status: string;
   service_api?: {
     base_url: string;
@@ -32,6 +43,7 @@ type DifyAgent = {
 };
 
 type DifyInventory = {
+  mcp_servers: Record<string, DifyMcpServer>;
   agents: Record<string, DifyAgent>;
 };
 
@@ -43,6 +55,7 @@ type SmokeOptions = {
   forbiddenTools: string[];
   expectedAnswers: string[];
   expectedObservations: string[];
+  allowWriteTools: boolean;
   user?: string;
   baseUrl?: string;
   apiKeyEnv?: string;
@@ -66,6 +79,7 @@ function parseArgs(argv: string[]): SmokeOptions {
     forbiddenTools: splitEnvList(process.env.DIFY_AGENT_SMOKE_FORBID_TOOL),
     expectedAnswers: splitEnvList(process.env.DIFY_AGENT_SMOKE_EXPECT_ANSWER),
     expectedObservations: splitEnvList(process.env.DIFY_AGENT_SMOKE_EXPECT_OBSERVATION),
+    allowWriteTools: process.env.DIFY_AGENT_SMOKE_ALLOW_WRITE_TOOLS === 'true',
     user: process.env.DIFY_AGENT_SMOKE_USER?.trim(),
     baseUrl: process.env.DIFY_AGENT_BASE_URL?.trim(),
     apiKeyEnv: process.env.DIFY_AGENT_API_KEY_ENV?.trim(),
@@ -77,68 +91,74 @@ function parseArgs(argv: string[]): SmokeOptions {
     listAgents: false
   };
 
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    const next = argv[i + 1];
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    const next = argv[index + 1];
 
     switch (arg) {
       case '--':
         break;
       case '--inventory':
         options.inventoryPath = readFlagValue(arg, next);
-        i += 1;
+        index += 1;
         break;
       case '--agent':
+      case '--agent-id':
         options.agentId = readFlagValue(arg, next);
-        i += 1;
+        index += 1;
         break;
       case '--query':
         options.query = readFlagValue(arg, next);
-        i += 1;
+        index += 1;
         break;
       case '--expect-tool':
+      case '--require-tool':
         options.expectedTools.push(readFlagValue(arg, next));
-        i += 1;
+        index += 1;
         break;
       case '--forbid-tool':
         options.forbiddenTools.push(readFlagValue(arg, next));
-        i += 1;
+        index += 1;
         break;
       case '--expect-answer':
+      case '--expect':
         options.expectedAnswers.push(readFlagValue(arg, next));
-        i += 1;
+        index += 1;
         break;
       case '--expect-observation':
         options.expectedObservations.push(readFlagValue(arg, next));
-        i += 1;
+        index += 1;
+        break;
+      case '--allow-write-tools':
+        options.allowWriteTools = true;
         break;
       case '--user':
         options.user = readFlagValue(arg, next);
-        i += 1;
+        index += 1;
         break;
       case '--base-url':
         options.baseUrl = readFlagValue(arg, next);
-        i += 1;
+        index += 1;
         break;
       case '--api-key-env':
         options.apiKeyEnv = readFlagValue(arg, next);
-        i += 1;
+        index += 1;
         break;
       case '--secret-name':
         options.secretName = readFlagValue(arg, next);
-        i += 1;
+        index += 1;
         break;
       case '--infisical-env':
         options.infisicalEnvironment = readFlagValue(arg, next);
-        i += 1;
+        index += 1;
         break;
       case '--infisical-path':
         options.infisicalPath = readFlagValue(arg, next);
-        i += 1;
+        index += 1;
         break;
       case '--timeout-ms':
         options.timeoutMs = parsePositiveInt(readFlagValue(arg, next), arg);
-        i += 1;
+        index += 1;
         break;
       case '--dry-run':
         options.dryRun = true;
@@ -186,7 +206,9 @@ function parsePositiveInt(value: string, flag: string): number {
 }
 
 function loadInventory(path: string): DifyInventory {
-  return JSON.parse(readFileSync(resolve(ROOT, path), 'utf8')) as DifyInventory;
+  const absolutePath = resolve(ROOT, path);
+  if (!existsSync(absolutePath)) throw new Error(`Missing required file: ${path}`);
+  return JSON.parse(readFileSync(absolutePath, 'utf8')) as DifyInventory;
 }
 
 function selectAgent(inventory: DifyInventory, agentId: string | undefined): { id: string; agent: DifyAgent } {
@@ -219,6 +241,28 @@ function localToolName(tool: string): string {
   return tool.includes('.') ? tool.split('.').at(-1) ?? tool : tool;
 }
 
+function uniqueTools(tools: string[]): string[] {
+  return Array.from(new Set(tools.map(localToolName).filter(Boolean)));
+}
+
+function inferWriteTools(inventory: DifyInventory, agent: DifyAgent): string[] {
+  const forbidden = new Set<string>();
+
+  for (const ref of agent.enabled_tools ?? []) {
+    const index = ref.indexOf('.');
+    if (index <= 0 || index >= ref.length - 1) continue;
+
+    const serverId = ref.slice(0, index);
+    const toolName = ref.slice(index + 1);
+    const tool = inventory.mcp_servers?.[serverId]?.tools.find((candidate) => candidate.name === toolName);
+    if (tool?.risk === 'write' || tool?.risk === 'external_side_effect') {
+      forbidden.add(tool.name);
+    }
+  }
+
+  return Array.from(forbidden);
+}
+
 function printAgents(inventory: DifyInventory): void {
   console.log(
     JSON.stringify(
@@ -229,6 +273,7 @@ function printAgents(inventory: DifyInventory): void {
         serviceApiConfigured: Boolean(agent.service_api?.api_key_secret),
         infisicalPath: agent.service_api?.api_key_secret.path,
         secretKey: agent.service_api?.api_key_secret.secret_key,
+        inferredWriteTools: inferWriteTools(inventory, agent),
         smokeCommand: agent.smoke_command
       })),
       null,
@@ -244,12 +289,13 @@ function printHelp(): void {
 Options:
   --list-agents                       Print known Dify inventory agents.
   --inventory <path>                  Inventory path. Default: config/dify/inventory.json.
-  --agent <id>                        Dify agent id from inventory. Optional when only one exists.
+  --agent, --agent-id <id>            Dify agent id from inventory. Optional when only one exists.
   --query <text>                      Prompt sent to the Dify Service API.
-  --expect-tool <name>                Require a tool call. Repeatable.
+  --expect-tool, --require-tool <name> Require a tool call. Repeatable.
   --forbid-tool <name>                Fail if a tool is used. Repeatable.
-  --expect-answer <text>              Require answer text. Repeatable.
+  --expect-answer, --expect <text>    Require answer text. Repeatable.
   --expect-observation <text>         Require tool observation text. Repeatable.
+  --allow-write-tools                 Do not infer write-capable tools as forbidden.
   --user <id>                         Dify API user id.
   --base-url <url>                    Override Service API base URL.
   --api-key-env <name>                Environment variable to read before Infisical lookup.
@@ -280,10 +326,10 @@ async function main(): Promise<void> {
       `Dify agent ${agentId} does not declare service_api.api_key_secret; pass --api-key-env to override.`
     );
   }
-  const apiKeyEnv = options.apiKeyEnv ?? secretRef?.secret_key;
+
   const config = buildDifyClientConfig({
     baseUrl: options.baseUrl ?? agent.service_api?.base_url,
-    apiKeyEnv,
+    apiKeyEnv: options.apiKeyEnv ?? secretRef?.secret_key,
     secretName: options.secretName ?? secretRef?.secret_key,
     infisicalEnvironment: options.infisicalEnvironment ?? secretRef?.environment,
     infisicalPath: options.infisicalPath ?? secretRef?.path,
@@ -291,8 +337,9 @@ async function main(): Promise<void> {
     timeoutMs: options.timeoutMs,
     skipSecretLookup: options.dryRun
   });
-  const expectedTools = options.expectedTools.map(localToolName);
-  const forbiddenTools = options.forbiddenTools.map(localToolName);
+  const expectedTools = uniqueTools(options.expectedTools);
+  const inferredForbiddenTools = options.allowWriteTools ? [] : inferWriteTools(inventory, agent);
+  const forbiddenTools = uniqueTools([...inferredForbiddenTools, ...options.forbiddenTools]);
   const input: DifyChatInput = {
     name: `cli_smoke:${agentId}`,
     query: options.query ?? defaultQuery(agent),
@@ -316,6 +363,7 @@ async function main(): Promise<void> {
           secretKey: secretRef?.secret_key,
           query: input.query,
           expectedTools,
+          inferredForbiddenTools,
           forbiddenTools,
           expectedAnswers: options.expectedAnswers,
           expectedObservations: options.expectedObservations,
@@ -363,6 +411,7 @@ async function main(): Promise<void> {
         conversationId: output.conversationId,
         tools: output.toolCalls.map((call) => call.tool),
         requiredTools: requiredToolResults,
+        inferredForbiddenTools,
         forbiddenToolsUsed,
         expectedAnswers: expectedAnswerResults,
         expectedObservations: expectedObservationResults,

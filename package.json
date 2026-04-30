@@ -66,6 +66,7 @@
     "dify:agent:smoke": "tsx scripts/dify-agent-smoke.ts",
     "dify:youtube-transcript:smoke": "tsx scripts/dify-youtube-transcript-agent-smoke.ts",
     "dify:agent:scaffold": "tsx scripts/dify-agent-scaffold.ts",
+    "dify:agent:smoke": "tsx scripts/dify-agent-smoke.ts",
     "dify:inventory:validate": "tsx scripts/dify-inventory.ts validate",
     "dify:inventory:generate": "tsx scripts/dify-inventory.ts generate",
     "dify:inventory:check": "tsx scripts/dify-inventory.ts check",

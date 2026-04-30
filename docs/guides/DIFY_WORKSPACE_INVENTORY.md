@@ -22,6 +22,7 @@ Generated operator view:
 ```bash
 pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server-id>
 pnpm dify:agent:smoke -- --agent <agent-slug> --dry-run
+pnpm dify:agent:smoke -- --agent <agent-slug> --query <prompt> --expect-tool <tool>
 pnpm dify:inventory:validate
 pnpm dify:inventory:generate
 pnpm dify:inventory:check
@@ -43,6 +44,10 @@ pnpm dify:agent:smoke -- \
   --forbid-tool sync_video_to_notion \
   --forbid-tool enrich_notion_page
 ```
+
+Use `--expect-tool`/`--require-tool` for required tool calls,
+`--forbid-tool` for tools that must not run, `--expect-answer`/`--expect` for
+answer text, and `--expect-observation` for tool observation text.
 
 Use `generate` after changing `config/dify/inventory.json`. Use `check` in CI or before landing a PR.
 

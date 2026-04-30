@@ -38,6 +38,7 @@ export type DifyChatOutput = {
 export type DifyClientConfig = {
   baseUrl: string;
   apiKey?: string;
+  apiKeyDescription?: string;
   user: string;
   timeoutMs: number;
   missingApiKeyHint?: string;
@@ -92,7 +93,10 @@ export function buildDifyClientConfig(options: DifyClientConfigOptions = {}): Di
     options.timeoutMs ?? Number.parseInt(readEnv('DIFY_AGENT_EVAL_TIMEOUT_MS', '45000'), 10);
 
   return {
-    baseUrl: (options.baseUrl ?? readEnv('DIFY_AGENT_BASE_URL', DEFAULT_DIFY_API_BASE_URL)).replace(/\/+$/, ''),
+    baseUrl: (options.baseUrl ?? readEnv('DIFY_AGENT_BASE_URL', DEFAULT_DIFY_API_BASE_URL)).replace(
+      /\/+$/,
+      ''
+    ),
     apiKey: options.skipSecretLookup
       ? readOptionalEnv(apiKeyEnv)
       : readOptionalEnvOrInfisicalSecret(apiKeyEnv, {
@@ -103,6 +107,7 @@ export function buildDifyClientConfig(options: DifyClientConfigOptions = {}): Di
         }),
     user: options.user ?? readEnv('DIFY_AGENT_EVAL_USER', 'braintrust-dify-youtube-transcript-agent'),
     timeoutMs,
+    apiKeyDescription: `${apiKeyEnv} or Infisical ${infisicalEnvironment}:${infisicalPath}`,
     missingApiKeyHint: `Missing ${apiKeyEnv}; export it or allow Infisical lookup at ${infisicalPath}.`
   };
 }
@@ -174,7 +179,7 @@ export async function callDifyChat(
       skipped: true,
       reason:
         config.missingApiKeyHint ??
-        `Missing ${DEFAULT_DIFY_API_KEY_ENV}; export it or allow Infisical lookup at ${DEFAULT_DIFY_INFISICAL_PATH}.`,
+        `Missing ${config.apiKeyDescription ?? DEFAULT_DIFY_API_KEY_ENV}.`,
       ok: false,
       status: null,
       durationMs: 0,
