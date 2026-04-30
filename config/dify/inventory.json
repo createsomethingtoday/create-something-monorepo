@@ -318,7 +318,7 @@
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call now passes after deploying the Hub compat runtime fix that bypasses identity for the configured HUB_API_TOKEN."
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id blondish-hub",
       "smoke_cases": [

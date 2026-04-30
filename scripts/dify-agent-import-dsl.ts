@@ -188,6 +188,8 @@ const dslRepoPath = `config/dify-agents/${options.agentId}.dify.yml`;
 const manifest = buildManifest(options, mcpTools, manifestPath, dslRepoPath);
 const inventoryAgent = buildInventoryAgent(options, mcpTools, manifestPath, dslRepoPath);
 
+preflightWrites(options, inventory, serverEntry, manifestPath, dslRepoPath);
+
 if (options.writeDsl || options.writeManifest || options.writeInventory) {
   mkdirSync(AGENTS_DIR, { recursive: true });
 }
@@ -201,13 +203,8 @@ if (options.writeManifest) {
 }
 
 if (options.writeInventory) {
-  if (inventory.agents[options.agentId]) {
-    fail(`Refusing to overwrite existing inventory agent: ${options.agentId}`);
-  }
   const existingServer = inventory.mcp_servers[options.serverId];
-  if (existingServer) {
-    assertExistingServerMatches(options.serverId, existingServer, serverEntry);
-  } else {
+  if (!existingServer) {
     inventory.mcp_servers[options.serverId] = serverEntry;
   }
   inventory.agents[options.agentId] = inventoryAgent;
@@ -403,6 +400,30 @@ function buildInventoryAgent(
     notes:
       'Imported from exported Dify DSL. Confirm Service API key and add Braintrust eval evidence before marking published.'
   };
+}
+
+function preflightWrites(
+  options: ImportOptions,
+  inventory: DifyInventory,
+  serverEntry: DifyMcpServer,
+  manifestPath: string,
+  dslRepoPath: string
+): void {
+  if (options.writeDsl && existsSync(resolve(ROOT, dslRepoPath))) {
+    fail(`Refusing to overwrite existing file: ${dslRepoPath}`);
+  }
+  if (options.writeManifest && existsSync(resolve(ROOT, manifestPath))) {
+    fail(`Refusing to overwrite existing file: ${manifestPath}`);
+  }
+  if (!options.writeInventory) return;
+
+  if (inventory.agents[options.agentId]) {
+    fail(`Refusing to overwrite existing inventory agent: ${options.agentId}`);
+  }
+  const existingServer = inventory.mcp_servers[options.serverId];
+  if (existingServer) {
+    assertExistingServerMatches(options.serverId, existingServer, serverEntry);
+  }
 }
 
 function buildAuth(options: ImportOptions): DifyMcpServer['auth'] {
