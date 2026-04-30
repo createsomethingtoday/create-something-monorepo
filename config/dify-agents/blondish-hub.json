@@ -25,12 +25,12 @@
   "service_api_smoke": {
     "last_checked_at": "2026-04-30",
     "result": "passed",
-    "message_id": "6ef728f7-dd25-4346-801c-a3d6cea377f3",
-    "conversation_id": "b27c5abf-5094-4ab2-9907-1c8b1cf32659",
-    "latency_ms": 17152,
+    "message_id": "c3262988-c142-4dc5-a437-ca459d622e85",
+    "conversation_id": "9d5a703a-2689-4b72-a62a-21132c6396c5",
+    "latency_ms": 18135,
     "required_tool_used": "hub_list_services",
     "forbidden_tools_used": [],
-    "notes": "Dify Service API key works, the agent called hub_list_services, and the static lane bearer now completes tools/call without session-token auth language."
+    "notes": "Dify Service API key works, the agent called hub_list_services, and the answer avoided session-token auth failure language."
   },
   "mcp_direct_probe": {
     "last_checked_at": "2026-04-30",
@@ -39,7 +39,7 @@
     "initialize": "ok",
     "tools_list": "ok: 17 tools",
     "tools_call": "ok: hub_status and hub_list_services",
-    "notes": "The static fleet token is enough for MCP initialize/tools.list and safe Hub tools/call. Dify should use the static lane bearer from prod:/mcp-hub/hubs:CS_HUB_BLONDISH_API_TOKEN; the Hub compat runtime bypasses identity for the configured HUB_API_TOKEN."
+    "notes": "The static fleet token is enough for MCP initialize/tools.list and safe Hub tools/call. Dify should use the static lane bearer from prod:/mcp-hub/hubs:CS_HUB_BLONDISH_API_TOKEN."
   },
   "mcp_server": {
     "display_name": "BLOND:ISH HUB",
