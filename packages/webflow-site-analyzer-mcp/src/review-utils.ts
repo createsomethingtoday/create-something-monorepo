@@ -121,6 +121,100 @@ export function isWebflowComponentAnchor(href: string): boolean {
 }
 
 // =============================================================================
+// Alt Text Evidence Classification
+// =============================================================================
+
+export type AltTextEvidenceBucket = 'informative' | 'functional' | 'decorative-review' | 'unknown';
+
+export interface AltTextEvidenceClassification {
+  bucket: AltTextEvidenceBucket;
+  reason: string;
+}
+
+function evidenceText(example: Record<string, unknown>, key: string): string {
+  const value = example[key];
+  return typeof value === 'string' ? value : '';
+}
+
+function evidenceNumber(example: Record<string, unknown>, keys: string[]): number {
+  for (const key of keys) {
+    const value = example[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Classify a missing-alt example so reviewer evidence leads with real content
+ * images and demotes shared UI chrome that often needs manual intent review.
+ */
+export function classifyAltTextEvidenceExample(
+  example: Record<string, unknown>,
+  pageUrl = ''
+): AltTextEvidenceClassification {
+  const selector = evidenceText(example, 'selector');
+  const className = evidenceText(example, 'className');
+  const src = evidenceText(example, 'src');
+  const href = evidenceText(example, 'href');
+  const text = evidenceText(example, 'text') || evidenceText(example, 'linkText');
+  const role = evidenceText(example, 'role');
+  const ariaLabel = evidenceText(example, 'ariaLabel') || evidenceText(example, 'aria-label');
+  const haystack = [
+    selector,
+    className,
+    src,
+    href,
+    text,
+    role,
+    ariaLabel,
+    pageUrl
+  ].join(' ').toLowerCase();
+
+  const width = evidenceNumber(example, ['width', 'clientWidth', 'naturalWidth']);
+  const height = evidenceNumber(example, ['height', 'clientHeight', 'naturalHeight']);
+  const visibleArea = width * height;
+
+  const hasInformativeContext =
+    /\/(blog|post|article|news|case-stud|project|portfolio|service|product|team|speaker|event)\b/.test(pageUrl.toLowerCase()) ||
+    /\b(blog|post|article|news|thumbnail|thumb|hero|cover|featured|main-image|details-main-image|card-image|collection|cms|case-study|project|portfolio|service|product|team|speaker|event|avatar|portrait|profile)\b/.test(haystack);
+
+  const hasSharedChromeContext =
+    /\b(brand|logo|logotype|icon|button-icon|btn-icon|arrow|chevron|caret|social|hamburger|menu|close|plus|minus|play|pause|badge|decor|decoration|shape|line|background|bg-image|navbar|nav-|footer|cursor|swiper|slider-control)\b/.test(haystack);
+
+  const looksLinkedOrInteractive =
+    Boolean(href) ||
+    /\b(a\.|link|button|btn|cta|w-button|role=["']?button|tab|accordion|dropdown)\b/.test(haystack) ||
+    role === 'button' ||
+    role === 'link';
+
+  if (hasInformativeContext && !hasSharedChromeContext) {
+    return { bucket: 'informative', reason: 'content/CMS image context' };
+  }
+
+  if (visibleArea >= 40000 && !hasSharedChromeContext) {
+    return { bucket: 'informative', reason: 'large visible image' };
+  }
+
+  if (hasSharedChromeContext && !href) {
+    return { bucket: 'decorative-review', reason: 'shared UI chrome or decorative asset' };
+  }
+
+  if (looksLinkedOrInteractive && !text.trim() && !ariaLabel.trim()) {
+    return { bucket: 'functional', reason: 'image appears to supply an interactive accessible name' };
+  }
+
+  if (hasSharedChromeContext) {
+    return { bucket: 'decorative-review', reason: 'shared UI chrome or decorative asset' };
+  }
+
+  return { bucket: 'unknown', reason: 'insufficient context' };
+}
+
+// =============================================================================
 // Slug resolution
 // =============================================================================
 

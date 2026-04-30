@@ -47,7 +47,7 @@ import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy
 import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import { TemplateReviewJobManager } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
-import { is404PageTitle } from './review-utils.js';
+import { classifyAltTextEvidenceExample, is404PageTitle } from './review-utils.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -729,7 +729,31 @@ function buildPublishedWebMcpPageScript(reviewSnippetUrl: string | null): string
     const emptyHeadings = Array.from(headingEls).filter(el => !(el.textContent || '').trim()).length;
 
     const imgEls = Array.from(document.querySelectorAll('img'));
-    const missingAlt = imgEls.filter(img => !img.hasAttribute('alt') || img.alt === '').length;
+    const selectorFor = (el) => {
+      const tag = el.tagName.toLowerCase();
+      const id = el.id ? '#' + el.id : '';
+      const classes = Array.from(el.classList || []).slice(0, 4).map(cls => '.' + cls).join('');
+      return tag + id + classes;
+    };
+    const describeImageExample = (img) => {
+      const control = img.closest('a, button, [role="button"], [role="link"]');
+      const rect = img.getBoundingClientRect();
+      return {
+        tag: 'img',
+        selector: selectorFor(img),
+        className: img.className || '',
+        src: img.currentSrc || img.src || '',
+        alt: img.getAttribute('alt'),
+        width: Math.round(rect.width || img.naturalWidth || 0),
+        height: Math.round(rect.height || img.naturalHeight || 0),
+        href: control?.getAttribute?.('href') || '',
+        text: (control?.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 120),
+        role: control?.getAttribute?.('role') || img.getAttribute('role') || '',
+        ariaLabel: control?.getAttribute?.('aria-label') || img.getAttribute('aria-label') || ''
+      };
+    };
+    const missingAltEls = imgEls.filter(img => !img.hasAttribute('alt') || img.alt === '');
+    const missingAlt = missingAltEls.length;
     const missingDimensions = imgEls.filter(img =>
       !img.hasAttribute('width') && !img.hasAttribute('height') &&
       !img.style.aspectRatio && !(img.getAttribute('style') || '').includes('aspect-ratio')
@@ -858,6 +882,7 @@ function buildPublishedWebMcpPageScript(reviewSnippetUrl: string | null): string
           aboveFoldLazy,
           belowFoldNotLazy
         },
+        missingAlt: missingAltEls.slice(0, 20).map(describeImageExample),
         formats: imgFormats
       },
       forms: {
@@ -2199,11 +2224,6 @@ function unifyRows(
     ].filter((part): part is string => Boolean(part));
     return bits.join(' ');
   };
-  const isLikelySharedUiImageExample = (example: Record<string, unknown>): boolean => {
-    const selector = `${asEvidenceText(example.selector) || ''} ${asEvidenceText(example.className) || ''} ${asEvidenceText(example.src) || ''}`.toLowerCase();
-    return /\b(brand|logo|button-icon|icon|arrow)\b/.test(selector);
-  };
-
   const h1FailPages = failingPaths(
     (s) => Boolean(s.headings?.missingH1) || Boolean(s.headings?.multipleH1) || (s.headings?.skippedHeadingLevels ?? 0) > 0
   );
@@ -2249,37 +2269,81 @@ function unifyRows(
     'Fix heading hierarchy per page and keep a single primary H1.'
   );
 
-  const altFailPages = failingPaths((s) => (s.images?.missingAlt ?? 0) > 0);
-  const altRawExamples = published.pages
+  const altPagesWithMissing = failingPaths((s) => (s.images?.missingAlt ?? 0) > 0, 10);
+  const altExampleRecords = published.pages
     .filter((page) => (page.summary?.images?.missingAlt ?? 0) > 0)
     .flatMap((page) =>
-      (page.summary?.examples?.images?.missingAlt || []).slice(0, 2).map((example) => ({
+      (page.summary?.examples?.images?.missingAlt || []).map((example) => ({
         page,
-        example
+        example,
+        classification: classifyAltTextEvidenceExample(example, page.url)
       }))
+    );
+  const altInformativeExamples = altExampleRecords.filter(({ classification }) => classification.bucket === 'informative');
+  const altFunctionalExamples = altExampleRecords.filter(({ classification }) => classification.bucket === 'functional');
+  const altDecorativeReviewExamples = altExampleRecords.filter(({ classification }) => classification.bucket === 'decorative-review');
+  const altUnknownExamples = altExampleRecords.filter(({ classification }) => classification.bucket === 'unknown');
+  const altPagesWithoutExamples = published.pages
+    .filter((page) =>
+      (page.summary?.images?.missingAlt ?? 0) > 0 &&
+      (page.summary?.examples?.images?.missingAlt || []).length === 0
     )
-    .slice(0, 6);
-  const altEvidenceExamples = altRawExamples.map(
-    ({ page, example }) => `example=${shortPath(page.url)} ${describeEvidenceExample(example)}`
+    .map((page) => shortPath(page.url));
+  const pathsForAltExamples = (records: typeof altExampleRecords): string[] =>
+    Array.from(new Set(records.map(({ page }) => shortPath(page.url)))).slice(0, 10);
+  const formatAltExamples = (
+    label: string,
+    records: typeof altExampleRecords,
+    limit = 4
+  ): string[] => records.slice(0, limit).map(
+    ({ page, example, classification }) =>
+      `${label}=${shortPath(page.url)} ${describeEvidenceExample(example)} bucket=${classification.bucket} reason=${classification.reason}`
   );
-  const likelySharedUiAltExamples =
-    altRawExamples.length > 0 && altRawExamples.some(({ example }) => isLikelySharedUiImageExample(example));
+  const altConfirmedExamples = [...altInformativeExamples, ...altFunctionalExamples];
+  const altHasClassifiedFailure = altConfirmedExamples.length > 0;
   const altHasFailure = published.issueCounts.imagesMissingAlt > 0;
+  const altStatus: UnifiedReviewStatus = !altHasFailure
+    ? 'pass'
+    : altHasClassifiedFailure
+      ? (hasStructuredSnippetEvidence ? 'fail' : 'partial')
+      : 'partial';
+  const altConfidence = !altHasFailure
+    ? 0.9
+    : altHasClassifiedFailure
+      ? (altDecorativeReviewExamples.length > 0 || altUnknownExamples.length > 0 ? 0.78 : 0.9)
+      : 0.45;
   pushRow(
     'webflow_audit.alt_text',
     'Webflow Audit Panel',
     'No missing alt texts',
-    altHasFailure ? (hasStructuredSnippetEvidence ? 'fail' : 'partial') : 'pass',
+    altStatus,
     [
       `pagesWithMissingAlt=${published.issueCounts.imagesMissingAlt}/${totalAudited}`,
-      ...(altFailPages.length > 0 ? [`affectedPages=${altFailPages.join(', ')}`] : []),
-      ...altEvidenceExamples,
-      ...(likelySharedUiAltExamples
-        ? ['Note: some missing-alt examples appear to be shared logo/icon/button chrome; verify decorative intent before reviewer feedback']
+      `confirmedInformativeMissingAltPages=${pathsForAltExamples(altInformativeExamples).length}/${totalAudited}`,
+      `functionalImageNameRiskPages=${pathsForAltExamples(altFunctionalExamples).length}/${totalAudited}`,
+      `decorativeOrSharedChromeReviewPages=${pathsForAltExamples(altDecorativeReviewExamples).length}/${totalAudited}`,
+      `unclassifiedMissingAltPages=${Array.from(new Set([
+        ...pathsForAltExamples(altUnknownExamples),
+        ...altPagesWithoutExamples
+      ])).length}/${totalAudited}`,
+      ...(altPagesWithMissing.length > 0 ? [`allAffectedPages=${altPagesWithMissing.join(', ')}`] : []),
+      ...(altConfirmedExamples.length > 0 ? [`confirmedAffectedPages=${pathsForAltExamples(altConfirmedExamples).join(', ')}`] : []),
+      ...formatAltExamples('informativeExample', altInformativeExamples),
+      ...formatAltExamples('functionalExample', altFunctionalExamples),
+      ...formatAltExamples('reviewOnlyExample', altDecorativeReviewExamples, 3),
+      ...formatAltExamples('unclassifiedExample', altUnknownExamples, 2),
+      ...(altPagesWithoutExamples.length > 0
+        ? [`pagesWithoutElementExamples=${altPagesWithoutExamples.slice(0, 5).join(', ')}`]
+        : []),
+      ...(altDecorativeReviewExamples.length > 0
+        ? ['Note: shared logo/icon/button/decorative chrome is reported as review-only evidence, not primary reviewer feedback.']
+        : []),
+      ...(altHasFailure && !altHasClassifiedFailure
+        ? ['Note: missing-alt examples did not include a confirmed informative image; verify manually before failing the template on this row.']
         : [])
     ],
     ['published-webmcp-crawl'],
-    likelySharedUiAltExamples ? 0.72 : 0.9,
+    altConfidence,
     'Add descriptive alt text for informative images and mark decorative images appropriately.'
   );
 

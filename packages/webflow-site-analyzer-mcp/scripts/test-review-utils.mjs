@@ -15,6 +15,7 @@ const {
   is404PageTitle,
   isCriticalUtilityUrl,
   isWebflowComponentAnchor,
+  classifyAltTextEvidenceExample,
   computeScore
 } = require('../dist/review-utils.js');
 
@@ -180,6 +181,49 @@ test('#contact is NOT a component anchor', () => {
 
 test('/about is NOT an anchor at all', () => {
   assert.equal(isWebflowComponentAnchor('/about'), false);
+});
+
+// =============================================================================
+console.log('\n== classifyAltTextEvidenceExample ==');
+
+test('blog thumbnails are classified as informative', () => {
+  const result = classifyAltTextEvidenceExample(
+    { selector: 'img.blog-thumbnail.horizontal', src: '/images/post-card.avif' },
+    'https://example.webflow.io/blog'
+  );
+  assert.equal(result.bucket, 'informative');
+});
+
+test('post hero images are classified as informative', () => {
+  const result = classifyAltTextEvidenceExample(
+    { selector: 'img.blog-details-main-image', src: '/images/post-hero.avif' },
+    'https://example.webflow.io/post/how-to-make-an-ai-product-website-feel-premium'
+  );
+  assert.equal(result.bucket, 'informative');
+});
+
+test('brand logos are classified as decorative review evidence', () => {
+  const result = classifyAltTextEvidenceExample(
+    { selector: 'img.brand-image.dark', src: '/images/wings-logo.svg' },
+    'https://example.webflow.io/'
+  );
+  assert.equal(result.bucket, 'decorative-review');
+});
+
+test('decorative button icons are classified as review-only chrome', () => {
+  const result = classifyAltTextEvidenceExample(
+    { selector: 'img.button-icon.arrow', src: '/images/arrow.svg' },
+    'https://example.webflow.io/contact'
+  );
+  assert.equal(result.bucket, 'decorative-review');
+});
+
+test('image-only links without text or labels are classified as functional', () => {
+  const result = classifyAltTextEvidenceExample(
+    { selector: 'a.image-link > img', href: '/contact', text: '' },
+    'https://example.webflow.io/'
+  );
+  assert.equal(result.bucket, 'functional');
 });
 
 // =============================================================================
