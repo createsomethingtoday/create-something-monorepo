@@ -159,6 +159,7 @@ export function buildOperatorBrief(input: {
 
 export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
   const profile = surfaceProfile(brief.surface);
+  const decisionRequired = brief.state !== 'clear';
   return {
     state: brief.state,
     headline: brief.headline,
@@ -170,6 +171,14 @@ export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
     generated_at: brief.generated_at,
     surface: brief.surface,
     counts: brief.counts,
+    operator_contract: {
+      decision_required: decisionRequired,
+      can_step_away: !decisionRequired,
+      state: brief.state,
+      reason: brief.line2,
+      action: brief.action,
+      urgent: brief.urgent
+    },
     surface_profile: {
       id: profile.id,
       role: profile.role,

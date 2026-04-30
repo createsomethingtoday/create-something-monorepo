@@ -43,10 +43,19 @@ function health(overrides: Partial<StoredHealthSnapshot>): StoredHealthSnapshot 
 
 test('returns clear live-only state when no attention is needed', () => {
   const brief = buildOperatorBrief({ alerts: [], health: [], now: 1000 });
+  const firmware = toFirmwareBrief(brief);
 
   assert.equal(brief.state, 'clear');
   assert.equal(brief.headline, 'CALM OPERATOR');
   assert.equal(brief.detail, 'Live alerts only.');
+  assert.deepEqual(firmware.operator_contract, {
+    decision_required: false,
+    can_step_away: true,
+    state: 'clear',
+    reason: 'pending',
+    action: 'You can step away.',
+    urgent: false
+  });
 });
 
 test('prioritizes MCP attention alerts for the Core Ink brief', () => {
@@ -72,6 +81,15 @@ test('prioritizes MCP attention alerts for the Core Ink brief', () => {
   assert.equal(brief.line1, 'HubSpot MCP');
   assert.equal(brief.action, 'Review mcp_contract.yaml');
   assert.equal(brief.urgent, true);
+  const contract = toFirmwareBrief(brief).operator_contract as Record<string, unknown>;
+  assert.deepEqual(contract, {
+    decision_required: true,
+    can_step_away: false,
+    state: 'mcp_attention',
+    reason: 'MCP review failed and requires operator atten…',
+    action: 'Review mcp_contract.yaml',
+    urgent: true
+  });
 });
 
 test('surfaces poor health when no active alerts exist', () => {

@@ -10,6 +10,7 @@ import type {
   HealthReviewReport,
   HealthSnapshotInput,
   InkAlertInput,
+  OperatorDecisionInput,
   OperatorEventInput,
   StoredAlert,
   StoredDeviceHeartbeat,
@@ -211,6 +212,66 @@ function severityFor(input: { severity?: number; urgent?: boolean; state?: strin
   if (input.status && ['fail', 'failed', 'error', 'down'].includes(input.status.toLowerCase())) return 80;
   if (input.status && ['poor', 'degraded'].includes(input.status.toLowerCase())) return 70;
   return 50;
+}
+
+function compactText(value: string | undefined, max: number): string {
+  const trimmed = value?.replace(/\s+/g, ' ').trim() ?? '';
+  if (trimmed.length <= max) return trimmed;
+  if (max <= 1) return trimmed.slice(0, max);
+  return `${trimmed.slice(0, max - 1).trimEnd()}…`;
+}
+
+function normalizedUrgency(input: OperatorDecisionInput): string {
+  return input.urgency?.trim().toLowerCase() || '';
+}
+
+function decisionRequiresAttention(input: OperatorDecisionInput): boolean {
+  const urgency = normalizedUrgency(input);
+  if (input.can_step_away === true && input.decision_required !== true) return false;
+  if (input.decision_required === true) return true;
+  if (['attention', 'urgent', 'blocked'].includes(urgency)) return true;
+  if (input.state && !['clear', 'note'].includes(input.state.trim().toLowerCase())) return true;
+  return false;
+}
+
+function alertStateForDecision(input: OperatorDecisionInput): string {
+  const urgency = normalizedUrgency(input);
+  if (input.state?.trim()) return input.state.trim();
+  if (urgency === 'blocked') return 'blocked';
+  if (urgency === 'urgent') return 'operator_attention';
+  return 'operator_attention';
+}
+
+function severityForDecision(input: OperatorDecisionInput): number {
+  const urgency = normalizedUrgency(input);
+  if (urgency === 'blocked') return 90;
+  if (urgency === 'urgent') return 85;
+  if (urgency === 'attention' || input.decision_required) return 75;
+  return 35;
+}
+
+function decisionPayload(input: OperatorDecisionInput): Record<string, unknown> {
+  return {
+    ...(input.payload ?? {}),
+    kind: 'operator_decision',
+    decision_required: Boolean(input.decision_required),
+    can_step_away: Boolean(input.can_step_away),
+    urgency: input.urgency ?? '',
+    owner: input.owner ?? '',
+    artifact: input.artifact ?? '',
+    confidence: typeof input.confidence === 'number' && Number.isFinite(input.confidence)
+      ? Math.max(0, Math.min(1, input.confidence))
+      : null
+  };
+}
+
+function decisionDetail(input: OperatorDecisionInput): string {
+  const parts = [
+    input.detail?.trim(),
+    input.artifact?.trim() ? `Artifact: ${input.artifact.trim()}` : '',
+    input.owner?.trim() ? `Owner: ${input.owner.trim()}` : ''
+  ].filter((part): part is string => Boolean(part));
+  return compactText(parts.join(' '), 500);
 }
 
 function rowAlert(row: Record<string, SqlStorageValue>): StoredAlert {
@@ -451,6 +512,55 @@ export class InkState extends DurableObject<Env> {
     return { ok: true, event_id: eventId };
   }
 
+  recordOperatorDecision(input: OperatorDecisionInput): {
+    ok: true;
+    event_id: string;
+    escalated: boolean;
+    alert?: StoredAlert;
+    brief: ReturnType<typeof buildOperatorBrief>;
+  } {
+    const summary = input.summary?.trim() || input.reason?.trim() || input.subject?.trim() || 'Operator decision';
+    const event = this.recordEvent({
+      type: 'operator_decision',
+      source: input.source?.trim() || 'remote-agent',
+      summary,
+      payload: decisionPayload(input)
+    });
+
+    if (!decisionRequiresAttention(input)) {
+      return {
+        ok: true,
+        event_id: event.event_id,
+        escalated: false,
+        brief: this.brief('core-ink')
+      };
+    }
+
+    const result = this.addAlert({
+      id: input.id?.trim(),
+      state: alertStateForDecision(input),
+      category: 'operator_decision',
+      severity: severityForDecision(input),
+      subject: input.subject?.trim() || summary,
+      reason: input.reason?.trim() || summary,
+      detail: decisionDetail(input),
+      action: input.action?.trim() || 'Review agent decision',
+      source: input.source?.trim() || 'remote-agent',
+      external_id: input.id?.trim() || input.artifact?.trim() || '',
+      urgent: ['urgent', 'blocked'].includes(normalizedUrgency(input)),
+      ttl_ms: input.ttl_ms,
+      payload: decisionPayload(input)
+    });
+
+    return {
+      ok: true,
+      event_id: event.event_id,
+      escalated: true,
+      alert: result.alert,
+      brief: result.brief
+    };
+  }
+
   heartbeat(input: DeviceHeartbeatInput, fallbackDeviceId: string): {
     ok: true;
     device: StoredDeviceHeartbeat;
@@ -686,6 +796,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /ink/surface-brief',
         'GET /ink/surfaces',
         'POST /ink/alert',
+        'POST /ink/operator-decision',
         'POST /ink/health-snapshot',
         'GET /ink/health-checks',
         'POST /ink/health-checks/run',
@@ -737,6 +848,11 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === 'POST' && path === '/ink/alert') {
     const body = await parseJsonBody<InkAlertInput>(request);
     return json(await stub.addAlert(body));
+  }
+
+  if (method === 'POST' && path === '/ink/operator-decision') {
+    const body = await parseJsonBody<OperatorDecisionInput>(request);
+    return json(await stub.recordOperatorDecision(body));
   }
 
   if (method === 'POST' && path === '/ink/health-snapshot') {

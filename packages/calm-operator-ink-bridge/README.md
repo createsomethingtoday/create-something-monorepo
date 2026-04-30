@@ -29,6 +29,7 @@ Token-gated:
 - `GET /ink/surfaces`
 - `GET /ink/device`
 - `POST /ink/alert`
+- `POST /ink/operator-decision`
 - `POST /ink/source-event`
 - `POST /ink/operator-event`
 - `POST /ink/health-snapshot`
@@ -121,6 +122,36 @@ pnpm post:health -- --component "Claude Code Slack watcher" --status degraded --
 ```
 
 Both commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the environment.
+
+## AI-native operator decisions
+
+Remote agents should not stream raw reasoning to Ink. They should post the
+smallest possible operator decision contract:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/operator-decision \
+  -X POST \
+  -H "authorization: Bearer $INK_SOURCE_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+    "source": "mcp-review-agent",
+    "subject": "MCP review requires attention",
+    "summary": "Composio Toolkit MCP failed health review",
+    "reason": "Remote health failed for toolkit bridge",
+    "detail": "Auth configuration is missing at least one expected managed account.",
+    "action": "Review Composio auth configuration",
+    "urgency": "attention",
+    "decision_required": true,
+    "can_step_away": false,
+    "artifact": "reports/mcp-review.md",
+    "confidence": 0.92
+  }'
+```
+
+If `decision_required` is false and `can_step_away` is true, the Worker records
+the event but does not create an Ink alert. If human judgment is required, it
+creates a constrained `operator_decision` alert. This keeps the pocket surface
+AI-native without making it a chat surface.
 
 ## Scheduled health review
 

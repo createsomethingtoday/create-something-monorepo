@@ -31,6 +31,27 @@ export interface InkAlertInput {
   payload?: Record<string, unknown>;
 }
 
+export type OperatorDecisionUrgency = 'none' | 'note' | 'attention' | 'urgent' | 'blocked' | string;
+
+export interface OperatorDecisionInput {
+  id?: string;
+  source?: string;
+  subject?: string;
+  summary?: string;
+  reason?: string;
+  detail?: string;
+  action?: string;
+  state?: OperatorState;
+  urgency?: OperatorDecisionUrgency;
+  decision_required?: boolean;
+  can_step_away?: boolean;
+  owner?: string;
+  artifact?: string;
+  confidence?: number;
+  ttl_ms?: number;
+  payload?: Record<string, unknown>;
+}
+
 export interface StoredAlert extends Required<Omit<InkAlertInput, 'expires_at' | 'payload' | 'ttl_ms'>> {
   status: 'active' | 'cleared';
   created_at: number;

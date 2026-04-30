@@ -16,6 +16,12 @@ export interface PostOperatorEventOptions {
   event: Record<string, unknown>;
 }
 
+export interface PostOperatorDecisionOptions {
+  url: string;
+  token?: string;
+  decision: Record<string, unknown>;
+}
+
 async function postJson<T>(url: string, token: string | undefined, body: unknown): Promise<T> {
   const headers = new Headers({ 'content-type': 'application/json' });
   if (token?.trim()) {
@@ -79,6 +85,42 @@ export function healthAttentionSnapshot(input: {
   };
 }
 
+export function operatorDecision(input: {
+  source: string;
+  subject: string;
+  summary?: string;
+  reason?: string;
+  detail?: string;
+  action?: string;
+  urgency?: 'none' | 'note' | 'attention' | 'urgent' | 'blocked';
+  decisionRequired?: boolean;
+  canStepAway?: boolean;
+  owner?: string;
+  artifact?: string;
+  confidence?: number;
+  id?: string;
+  ttlMs?: number;
+  payload?: Record<string, unknown>;
+}): Record<string, unknown> {
+  return {
+    id: input.id,
+    source: input.source,
+    subject: input.subject,
+    summary: input.summary,
+    reason: input.reason ?? input.summary,
+    detail: input.detail ?? '',
+    action: input.action ?? (input.decisionRequired ? 'Review agent decision' : 'No operator action'),
+    urgency: input.urgency ?? (input.decisionRequired ? 'attention' : 'note'),
+    decision_required: input.decisionRequired ?? false,
+    can_step_away: input.canStepAway ?? !input.decisionRequired,
+    owner: input.owner ?? '',
+    artifact: input.artifact ?? '',
+    confidence: input.confidence,
+    ttl_ms: input.ttlMs,
+    payload: input.payload ?? {}
+  };
+}
+
 export function postInkAlert<T = unknown>(options: PostInkAlertOptions): Promise<T> {
   return postJson<T>(options.url, options.token, options.alert);
 }
@@ -89,4 +131,8 @@ export function postHealthSnapshot<T = unknown>(options: PostHealthSnapshotOptio
 
 export function postOperatorEvent<T = unknown>(options: PostOperatorEventOptions): Promise<T> {
   return postJson<T>(options.url, options.token, options.event);
+}
+
+export function postOperatorDecision<T = unknown>(options: PostOperatorDecisionOptions): Promise<T> {
+  return postJson<T>(options.url, options.token, options.decision);
 }
