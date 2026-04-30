@@ -13,6 +13,9 @@ The inventory records:
 - discovered Dify MCP tools and risk classification
 - Dify agents, app IDs, DSL/manifest paths, enabled tools, policy packs, and eval ownership
 
+Use `config/dify-mcp-intake/*.json` only for MCPs that are ready to register in
+Dify Studio but do not yet have discovered tools codified in inventory.
+
 Generated operator view:
 
 - `docs/DIFY_WORKSPACE_INVENTORY.generated.md`
@@ -21,6 +24,7 @@ Generated operator view:
 ## Commands
 
 ```bash
+pnpm dify:mcp:intake -- --registry-server-id <mcp-registry-server-id>
 pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server-id>
 pnpm dify:agent:smoke -- --agent-id <agent-slug>
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --dry-run
@@ -35,6 +39,12 @@ pnpm dify:inventory:check
 Use `dify:agent:scaffold` to draft a manifest and inventory entry from an
 existing Dify MCP server card. It is a dry run unless `--write-manifest` or
 `--write-inventory` are provided.
+
+Use `dify:mcp:intake` when coverage shows an active direct HTTP MCP that does
+not yet have a codified Dify server card. The command creates a Dify Studio
+setup artifact under `config/dify-mcp-intake/` when run with `--write`; it does
+not update `config/dify/inventory.json` until tools have been discovered and
+classified.
 
 Use `dify:agent:smoke` for a generic Dify Service API smoke against any agent
 declared in `config/dify/inventory.json`. It resolves the agent Service API key
@@ -61,7 +71,8 @@ Use `generate` after changing `config/dify/inventory.json`. Use `check` in CI or
 Use `dify:coverage:generate` to compare active direct HTTP MCPs from
 `config/mcp-hub/registry.json` against the Dify inventory. The generated
 coverage report makes the manual Dify Studio backlog explicit: missing server
-cards, server-only mappings, draft agents, and agents missing smoke/eval gates.
+cards, intake-ready server cards, server-only mappings, draft agents, and agents
+missing smoke/eval gates.
 
 ## Manual Snapshot Flow
 
