@@ -10,6 +10,8 @@ The firmware is intentionally simple:
 - Requests a live MCP/agent health review from Ink.
 - Provides local rhythm, clock, settings, and calm tools.
 - Uses slow, explicit e-ink refreshes instead of animated UI.
+- Keeps the current screen visible during network work and redraws only when the
+  final screen changes.
 
 ## Configure
 
@@ -80,3 +82,7 @@ Menu buckets:
 
 Core Ink is an e-ink surface. Keep refreshes deliberate. Operator alerts and
 health summaries should feel like a physical briefing, not a small phone.
+
+The firmware renders each screen to an offscreen canvas and pushes one completed
+frame to e-ink. It also skips duplicate frames, so automatic syncs that return
+the same operator state do not visibly refresh the screen.

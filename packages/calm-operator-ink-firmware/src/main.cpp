@@ -13,7 +13,7 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.0";
+constexpr const char* FIRMWARE_VERSION = "0.1.1";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
 
@@ -63,6 +63,8 @@ bool lastUrgentRendered = false;
 uint32_t lastSyncAt = 0;
 String lastSyncStatus = "boot";
 String lastHttpError = "";
+String lastFrameKey = "";
+String pendingNotice = "";
 String clockLine1 = "";
 String clockLine2 = "";
 int stoneCursor = 0;
@@ -107,8 +109,23 @@ void beepUrgent() {
   M5.Speaker.tone(3800, 90);
 }
 
-void flushFrame() {
+void flushFrame(const String& key, bool force = false) {
+  if (!force && key == lastFrameKey) {
+    Serial.print("[ink] skipped duplicate frame=");
+    Serial.println(key);
+    return;
+  }
+  lastFrameKey = key;
   canvas.pushSprite(0, 0);
+}
+
+String screenKey(
+  const String& type,
+  const String& a = "",
+  const String& b = "",
+  const String& c = "",
+  const String& d = "") {
+  return type + "|" + a + "|" + b + "|" + c + "|" + d;
 }
 
 void drawWrapped(const String& text, int x, int y, int width, int lineHeight, int maxLines) {
@@ -165,6 +182,7 @@ void drawFooter(const String& left = "") {
   canvas.drawLine(8, 180, 192, 180, TFT_BLACK);
   canvas.setTextSize(1);
   String status = left;
+  if (pendingNotice.length() > 0 && left.length() == 0) status = pendingNotice;
   if (status.length() == 0) status = WiFi.status() == WL_CONNECTED ? "Wi-Fi" : "Offline";
   const int pct = batteryPercent();
   if (pct > 0) status += "  " + String(pct) + "%";
@@ -180,7 +198,8 @@ void renderBrief() {
   drawWrapped(activeBrief.line2, 12, 100, 176, 15, 2);
   drawWrapped(activeBrief.action, 12, 136, 176, 14, 2);
   drawFooter(activeBrief.urgent ? "ATTENTION" : "CS");
-  flushFrame();
+  flushFrame(
+    screenKey("brief", activeBrief.headline, activeBrief.line1, activeBrief.line2, activeBrief.action));
 
   if (activeBrief.urgent && !lastUrgentRendered) {
     beepUrgent();
@@ -195,7 +214,7 @@ void renderStatus(const String& title, const String& a, const String& b = "", co
   drawWrapped(b, 12, 96, 176, 15, 3);
   drawWrapped(c, 12, 148, 176, 14, 2);
   drawFooter();
-  flushFrame();
+  flushFrame(screenKey("status", title, a, b, c));
 }
 
 void renderMenu() {
@@ -217,7 +236,7 @@ void renderMenu() {
   canvas.setTextSize(1);
   canvas.drawString(MENU[next].label, 18, 142);
   drawFooter("A/C move  B select");
-  flushFrame();
+  flushFrame(screenKey("menu", action.bucket, action.label, MENU[previous].label, MENU[next].label));
 }
 
 bool connectWifi() {
@@ -230,11 +249,6 @@ bool connectWifi() {
 
   const bool hasConfiguredWifi = strlen(CALM_OPERATOR_WIFI_SSID) > 0;
   Serial.printf("[ink] connecting Wi-Fi using %s credentials\n", hasConfiguredWifi ? "configured" : "saved");
-  renderStatus(
-    "CONNECTING",
-    hasConfiguredWifi ? CALM_OPERATOR_WIFI_SSID : "Saved Wi-Fi",
-    hasConfiguredWifi ? "Joining configured network" : "Trying stored ESP32 credentials",
-    "Please wait");
   WiFi.mode(WIFI_STA);
   if (hasConfiguredWifi) {
     WiFi.begin(CALM_OPERATOR_WIFI_SSID, CALM_OPERATOR_WIFI_PASSWORD);
@@ -349,7 +363,10 @@ void applyBriefPayload(const String& payload) {
 
 bool fetchBrief(bool announce = true) {
   Serial.println("[ink] syncing brief");
-  if (announce) renderStatus("SYNC", "Fetching operator brief", "Production Ink bridge");
+  if (announce) {
+    pendingNotice = "Syncing...";
+    beepSoft();
+  }
   String payload;
   const String path = String("/ink/brief?surface=") + CALM_OPERATOR_SURFACE;
   const int status = requestBridge("GET", path, "", payload);
@@ -360,6 +377,7 @@ bool fetchBrief(bool announce = true) {
     activeBrief.detail = payload.substring(0, 70);
     activeBrief.action = "Check Wi-Fi/token";
     activeBrief.urgent = false;
+    pendingNotice = "";
     renderBrief();
     return false;
   }
@@ -368,19 +386,22 @@ bool fetchBrief(bool announce = true) {
   lastSyncAt = millis();
   lastSyncStatus = "synced";
   postHeartbeat();
+  pendingNotice = "";
   renderBrief();
   return true;
 }
 
 void requestMcpReview() {
   Serial.println("[ink] requesting MCP review");
-  renderStatus("MCP REVIEW", "Running remote review", "This can take a moment");
+  pendingNotice = "MCP review...";
+  beepSoft();
   String payload;
   const int status = requestBridge("POST", "/ink/health-review/request", "{}", payload);
   if (status >= 200 && status < 300) {
     applyBriefPayload(payload);
     lastSyncAt = millis();
     lastSyncStatus = "mcp reviewed";
+    pendingNotice = "";
     renderBrief();
     return;
   }
@@ -390,6 +411,7 @@ void requestMcpReview() {
   activeBrief.line2 = "MCP review not updated";
   activeBrief.action = "Check bridge logs";
   activeBrief.urgent = true;
+  pendingNotice = "";
   renderBrief();
 }
 
@@ -432,7 +454,7 @@ void fetchClock() {
   canvas.setTextSize(1);
   drawWrapped(clockLine2.length() ? clockLine2 : "Central Time", 18, 118, 170, 16, 2);
   drawFooter("B menu");
-  flushFrame();
+  flushFrame(screenKey("clock", clockLine1, clockLine2));
 }
 
 void renderRhythm() {
@@ -444,7 +466,7 @@ void renderRhythm() {
   canvas.drawString("15:00  EAT", 18, 116);
   canvas.drawString("23:00  SLEEP", 18, 140);
   drawFooter("B menu");
-  flushFrame();
+  flushFrame(screenKey("rhythm"));
 }
 
 void renderCalmReset() {
@@ -455,7 +477,7 @@ void renderCalmReset() {
   canvas.setTextSize(1);
   drawWrapped("Breathe in. Hold. Breathe out.", 22, 124, 156, 15, 3);
   drawFooter("B menu");
-  flushFrame();
+  flushFrame(screenKey("calm-reset"));
 }
 
 void renderStoneGarden() {
@@ -470,7 +492,7 @@ void renderStoneGarden() {
   canvas.drawRect(STONE_X[stoneCursor] - 14, STONE_Y[stoneCursor] - 14, 28, 28, TFT_BLACK);
   canvas.drawString("A/C move  B place", 28, 162);
   drawFooter("PWR sync");
-  flushFrame();
+  flushFrame(screenKey("stone", String(stoneCursor), String(stoneCount)));
 }
 
 void renderSettingsStatus() {
@@ -552,7 +574,7 @@ void renderBoot() {
   drawWrapped(String("FW ") + FIRMWARE_VERSION, 18, 92, 164, 16, 1);
   drawWrapped("B opens menu. PWR syncs.", 18, 128, 164, 16, 2);
   drawFooter("boot");
-  flushFrame();
+  flushFrame(screenKey("boot", FIRMWARE_VERSION), true);
 }
 
 } // namespace
@@ -569,8 +591,6 @@ void setup() {
   canvas.createSprite(200, 200);
   canvas.setTextSize(1);
   canvas.setTextColor(TFT_BLACK, TFT_WHITE);
-  renderBoot();
-
   if (!hasRuntimeConfig()) {
     activeBrief.headline = "SETUP NEEDED";
     activeBrief.line1 = "Missing Ink token";
