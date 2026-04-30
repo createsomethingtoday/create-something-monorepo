@@ -21,7 +21,8 @@ Generated operator view:
 
 ```bash
 pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server-id>
-pnpm dify:agent:smoke -- --agent-id <agent-slug> --query <prompt> --require-tool <tool>
+pnpm dify:agent:smoke -- --agent <agent-slug> --dry-run
+pnpm dify:agent:smoke -- --agent <agent-slug> --query <prompt> --expect-tool <tool>
 pnpm dify:inventory:validate
 pnpm dify:inventory:generate
 pnpm dify:inventory:check
@@ -31,10 +32,22 @@ Use `dify:agent:scaffold` to draft a manifest and inventory entry from an
 existing Dify MCP server card. It is a dry run unless `--write-manifest` or
 `--write-inventory` are provided.
 
-Use `dify:agent:smoke` after an agent is published and its Service API key is
-stored in Infisical. The smoke command reads the inventory, calls Dify's
-streaming Service API, checks required tool usage, and forbids write-capable
-tools by default.
+Use `dify:agent:smoke` for a generic Dify Service API smoke against any agent
+declared in `config/dify/inventory.json`. It resolves the agent Service API key
+from the inventory's Infisical reference unless overridden by environment flags:
+
+```bash
+pnpm dify:agent:smoke -- --list-agents
+pnpm dify:agent:smoke -- \
+  --agent youtube-transcript-notion-agent \
+  --query "Smoke test: describe your configured purpose. Do not write to Notion." \
+  --forbid-tool sync_video_to_notion \
+  --forbid-tool enrich_notion_page
+```
+
+Use `--expect-tool`/`--require-tool` for required tool calls,
+`--forbid-tool` for tools that must not run, `--expect-answer`/`--expect` for
+answer text, and `--expect-observation` for tool observation text.
 
 Use `generate` after changing `config/dify/inventory.json`. Use `check` in CI or before landing a PR.
 

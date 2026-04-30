@@ -52,9 +52,9 @@ eval acceptance.
 
    ```bash
    pnpm dify:agent:smoke -- \
-     --agent-id client-example-agent \
+     --agent client-example-agent \
      --query "Use the approved read tool and summarize the result." \
-     --require-tool expected_tool_name
+     --expect-tool expected_tool_name
    ```
 
 10. Add and run the dedicated Braintrust eval.
@@ -64,10 +64,20 @@ The scaffold command defaults to a dry run. Use `--write-manifest` and
 `--write-inventory` only when you are ready to add the draft agent contract to
 the repo.
 
+Generic Service API smoke:
+
+```bash
+pnpm dify:agent:smoke -- --list-agents
+pnpm dify:agent:smoke -- --agent client-example-agent --dry-run
+pnpm dify:agent:smoke -- \
+  --agent client-example-agent \
+  --query "Smoke test: describe your configured purpose and do not perform writes." \
+  --forbid-tool destructive_tool_name
+```
+
 The generic smoke command reads `config/dify/inventory.json`, resolves the
-agent's Dify Service API key from the declared Infisical reference, and forbids
-write-capable tools by default. Use `--allow-write-tools` only for disposable
-write-test environments.
+agent's Dify Service API key from the declared Infisical reference, and can
+assert required tools, forbidden tools, answer text, and tool observations.
 
 ## Required Eval Gates
 

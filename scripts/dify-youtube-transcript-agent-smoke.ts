@@ -23,6 +23,8 @@ function parseArgs(argv: string[]): { videoUrl: string } {
     const next = argv[i + 1];
 
     switch (arg) {
+      case '--':
+        break;
       case '--video-url':
         if (!next) throw new Error('Missing value for --video-url.');
         videoUrl = next.trim();
