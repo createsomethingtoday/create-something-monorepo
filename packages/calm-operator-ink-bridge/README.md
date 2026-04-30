@@ -124,6 +124,9 @@ The contract separates operator work from calm tools:
 Use `Calm` as the firmware bucket label. It replaces the earlier "Games" label
 and keeps the pocket surface aligned with the product thesis.
 
+Firmware implementation notes live in
+[`docs/core-ink-firmware-navigation.md`](docs/core-ink-firmware-navigation.md).
+
 Request a different Ink surface profile without changing the backend:
 
 ```bash
