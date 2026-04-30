@@ -25,6 +25,7 @@ Generated operator view:
 
 ```bash
 pnpm dify:mcp:intake -- --registry-server-id <mcp-registry-server-id>
+pnpm dify:mcp:intake -- --all-missing
 pnpm dify:agent:scaffold -- --agent-id <agent-slug> --server-id <dify-mcp-server-id>
 pnpm dify:agent:smoke -- --agent-id <agent-slug>
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --case <case-id>
@@ -45,7 +46,9 @@ Use `dify:mcp:intake` when coverage shows an active direct HTTP MCP that does
 not yet have a codified Dify server card. The command creates a Dify Studio
 setup artifact under `config/dify-mcp-intake/` when run with `--write`; it does
 not update `config/dify/inventory.json` until tools have been discovered and
-classified.
+classified. Use `--all-missing --write` to create intake artifacts for every
+missing Dify-direct candidate that is not already represented by inventory or an
+intake artifact.
 
 Use `dify:agent:smoke` for a generic Dify Service API smoke against any agent
 declared in `config/dify/inventory.json`. It resolves the agent Service API key

@@ -49,6 +49,13 @@ eval acceptance.
    pnpm dify:mcp:intake -- --registry-server-id mcp-registry-server-id --write
    ```
 
+   To move the full missing Dify-direct backlog into Dify Studio-ready intake
+   artifacts, use:
+
+   ```bash
+   pnpm dify:mcp:intake -- --all-missing --write
+   ```
+
 4. Add or update the Dify MCP server card in `config/dify/inventory.json`.
 5. Classify every Dify-discovered tool as read, write, external side effect,
    secret sensitive, or unknown.
