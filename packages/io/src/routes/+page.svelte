@@ -202,33 +202,33 @@
     <BlurFade>
       <aside class="product-surface product-surface--soft research-panel">
         <div class="panel-stack">
-          <section class="panel-block">
+          <div class="panel-block">
             <span class="product-kicker">Research operating loop</span>
             <h2>From signal to published pattern.</h2>
             <p>
               Good research does not stop at observation. It moves through experiment design,
               runtime evidence, and artifacts that can inform the next implementation cycle.
             </p>
-          </section>
+          </div>
 
-          <section class="panel-block">
+          <div class="panel-block">
             <span class="panel-label">Current loop</span>
             <p class="panel-command">
               Observe workflow friction -> run experiment -> capture evidence -> publish pattern
             </p>
-          </section>
+          </div>
 
           <div class="panel-grid">
-            <section class="panel-block">
+            <div class="panel-block">
               <span class="panel-label">Coverage</span>
               <div class="product-pills">
                 {#each categories.slice(0, 6) as category}
                   <span class="product-pill">{category.name}</span>
                 {/each}
               </div>
-            </section>
+            </div>
 
-            <section class="panel-block">
+            <div class="panel-block">
               <span class="panel-label">Recent papers</span>
               <ul class="latest-list">
                 {#if latestPapers.length > 0}
@@ -243,7 +243,7 @@
                   <li class="latest-empty">No published papers yet.</li>
                 {/if}
               </ul>
-            </section>
+            </div>
           </div>
         </div>
       </aside>
@@ -522,6 +522,16 @@
   .panel-block {
     display: grid;
     gap: 0.75rem;
+    padding-block: 0;
+    align-content: start;
+  }
+
+  .research-panel .product-pills {
+    align-items: flex-start;
+  }
+
+  .research-panel .product-pill {
+    flex: 0 0 auto;
   }
 
   .panel-label,
