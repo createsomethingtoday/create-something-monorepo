@@ -426,6 +426,17 @@
 
   .research-panel {
     height: 100%;
+    min-height: clamp(30rem, 58vw, 42rem);
+    padding: clamp(1.35rem, 3vw, 2rem);
+  }
+
+  .research-panel > *,
+  .metric-card > *,
+  .track-card > *,
+  .bridge-card > *,
+  .cta-panel > * {
+    position: relative;
+    z-index: 1;
   }
 
   .panel-grid {
@@ -517,6 +528,7 @@
     display: grid;
     gap: 0.5rem;
     min-height: 10rem;
+    padding: 1.2rem;
     align-content: end;
   }
 
@@ -556,6 +568,7 @@
   .track-card {
     display: grid;
     gap: 1rem;
+    padding: clamp(1.15rem, 2.4vw, 1.55rem);
   }
 
   .track-card h3,
@@ -580,6 +593,7 @@
   .bridge-card {
     display: grid;
     gap: 0.95rem;
+    padding: clamp(1.1rem, 2.2vw, 1.45rem);
     text-decoration: none;
     opacity: 1;
     transition:
