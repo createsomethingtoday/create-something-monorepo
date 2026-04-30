@@ -1,6 +1,7 @@
 import type { InkAlertInput } from './types.js';
+import { buildInkClock, CENTRAL_TIME_ZONE } from './clock.js';
 
-export const CENTRAL_TIME_ZONE = 'America/Chicago';
+export { CENTRAL_TIME_ZONE } from './clock.js';
 export const DEFAULT_DAILY_ALARMS_CT = '06:00,09:00';
 export const DEFAULT_ALARM_TTL_MS = 45 * 60 * 1000;
 
@@ -15,35 +16,6 @@ export interface DueDailyAlarm {
   local_time: string;
   display_time: string;
   alert: InkAlertInput;
-}
-
-interface CentralParts {
-  date: string;
-  hour: number;
-  minute: number;
-}
-
-function centralParts(nowMs: number): CentralParts {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: CENTRAL_TIME_ZONE,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).formatToParts(new Date(nowMs));
-
-  const byType = new Map(parts.map((part) => [part.type, part.value]));
-  const year = byType.get('year') ?? '1970';
-  const month = byType.get('month') ?? '01';
-  const day = byType.get('day') ?? '01';
-
-  return {
-    date: `${year}-${month}-${day}`,
-    hour: Number(byType.get('hour') ?? 0),
-    minute: Number(byType.get('minute') ?? 0)
-  };
 }
 
 function alarmTtlMs(env: AlarmEnv): number {
@@ -66,31 +38,23 @@ export function configuredDailyAlarmTimes(env: AlarmEnv): string[] {
   return [...new Set(source.split(',').map(normalizeAlarmTime).filter((time): time is string => Boolean(time)))];
 }
 
-function displayTime(localTime: string): string {
-  const [hourText, minuteText] = localTime.split(':');
-  const hour = Number(hourText);
-  const suffix = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${minuteText} ${suffix}`;
-}
-
 export function dueDailyAlarms(env: AlarmEnv, nowMs = Date.now()): DueDailyAlarm[] {
-  const local = centralParts(nowMs);
-  const localTime = `${String(local.hour).padStart(2, '0')}:${String(local.minute).padStart(2, '0')}`;
+  const clock = buildInkClock(nowMs);
+  const localTime = clock.local_time;
   const configuredTimes = configuredDailyAlarmTimes(env);
   if (!configuredTimes.includes(localTime)) return [];
 
   const ttlMs = alarmTtlMs(env);
-  const display = displayTime(localTime);
+  const display = clock.display_time;
 
   return [
     {
-      id: `daily-alarm:${local.date}:${localTime}`,
-      local_date: local.date,
+      id: `daily-alarm:${clock.local_date}:${localTime}`,
+      local_date: clock.local_date,
       local_time: localTime,
       display_time: display,
       alert: {
-        id: `daily-alarm:${local.date}:${localTime}`,
+        id: `daily-alarm:${clock.local_date}:${localTime}`,
         state: 'daily_alarm',
         category: 'alarm',
         severity: 95,
@@ -99,11 +63,11 @@ export function dueDailyAlarms(env: AlarmEnv, nowMs = Date.now()): DueDailyAlarm
         detail: `Daily alarm for ${display} CT.`,
         action: 'Clear alarm when awake.',
         source: 'calm-operator-alarm',
-        external_id: `${local.date}:${localTime}`,
+        external_id: `${clock.local_date}:${localTime}`,
         urgent: true,
         ttl_ms: ttlMs,
         payload: {
-          local_date: local.date,
+          local_date: clock.local_date,
           local_time: localTime,
           timezone: CENTRAL_TIME_ZONE
         }

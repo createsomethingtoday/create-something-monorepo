@@ -86,6 +86,24 @@ curl -sS https://ink.createsomething.agency/ink/brief \
   -H "x-ink-token: $INK_DEVICE_TOKEN"
 ```
 
+The compact firmware brief includes the selected operator state plus a stable
+Central Time clock contract:
+
+```json
+{
+  "generated_at": "2026-04-30T14:05:00.000Z",
+  "clock": {
+    "timezone": "America/Chicago",
+    "generated_at": "2026-04-30T14:05:00.000Z",
+    "local_date": "2026-04-30",
+    "local_time": "09:05",
+    "display_time": "9:05 AM",
+    "hour": 9,
+    "minute": 5
+  }
+}
+```
+
 ## Producer helpers
 
 MCP review agents and health monitors can post directly to production:

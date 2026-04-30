@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildOperatorBrief } from '../src/brief.js';
+import { buildOperatorBrief, toFirmwareBrief } from '../src/brief.js';
 import type { StoredAlert, StoredHealthSnapshot } from '../src/types.js';
 
 function alert(overrides: Partial<StoredAlert>): StoredAlert {
@@ -42,11 +42,27 @@ function health(overrides: Partial<StoredHealthSnapshot>): StoredHealthSnapshot 
 }
 
 test('returns clear live-only state when no attention is needed', () => {
-  const brief = buildOperatorBrief({ alerts: [], health: [], now: 1000 });
+  const brief = buildOperatorBrief({
+    alerts: [],
+    health: [],
+    now: Date.parse('2026-04-30T14:05:00Z')
+  });
 
   assert.equal(brief.state, 'clear');
   assert.equal(brief.headline, 'CALM OPERATOR');
   assert.equal(brief.detail, 'Live alerts only.');
+  assert.deepEqual(brief.clock, {
+    timezone: 'America/Chicago',
+    generated_at: '2026-04-30T14:05:00.000Z',
+    local_date: '2026-04-30',
+    local_time: '09:05',
+    display_time: '9:05 AM',
+    hour: 9,
+    minute: 5
+  });
+
+  const firmwareBrief = toFirmwareBrief(brief);
+  assert.deepEqual(firmwareBrief.clock, brief.clock);
 });
 
 test('prioritizes MCP attention alerts for the Core Ink brief', () => {

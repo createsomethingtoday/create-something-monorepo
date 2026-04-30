@@ -108,6 +108,16 @@ export interface StoredDeviceHeartbeat extends Required<Omit<DeviceHeartbeatInpu
   payload: Record<string, unknown>;
 }
 
+export interface InkClock {
+  timezone: string;
+  generated_at: string;
+  local_date: string;
+  local_time: string;
+  display_time: string;
+  hour: number;
+  minute: number;
+}
+
 export interface OperatorEventInput {
   type?: string;
   source?: string;
@@ -126,6 +136,7 @@ export interface OperatorBrief {
   action: string;
   urgent: boolean;
   generated_at: string;
+  clock: InkClock;
   surface: InkSurface;
   counts: {
     active_alerts: number;
