@@ -23,6 +23,7 @@ Use this split:
 - `config/dify-agents/*.json`: compact agent manifest and instruction source
 - `config/dify-agents/*.dify.yml`: importable Dify app DSL snapshot
 - `docs/DIFY_WORKSPACE_INVENTORY.generated.md`: generated operator view
+- `docs/DIFY_MCP_COVERAGE.generated.md`: MCP-to-Dify coverage backlog
 - `evals/braintrust/dify/`: Dify Service API evals and scorers
 - Infisical: all Dify app API keys and MCP bearer tokens
 
@@ -32,10 +33,17 @@ eval acceptance.
 ## Agent Lifecycle
 
 1. Register or verify the MCP server in the MCP registry.
-2. Add or update the Dify MCP server card in `config/dify/inventory.json`.
-3. Classify every Dify-discovered tool as read, write, external side effect,
+2. Check Dify coverage to see whether the MCP already has a server card or
+   agent:
+
+   ```bash
+   pnpm dify:coverage:generate
+   ```
+
+3. Add or update the Dify MCP server card in `config/dify/inventory.json`.
+4. Classify every Dify-discovered tool as read, write, external side effect,
    secret sensitive, or unknown.
-4. Scaffold the repo-side Dify agent contract:
+5. Scaffold the repo-side Dify agent contract:
 
    ```bash
    pnpm dify:agent:scaffold -- \
@@ -44,28 +52,28 @@ eval acceptance.
      --display-name "Client Example Agent"
    ```
 
-5. Create or export the Dify app DSL.
-6. Add a compact agent manifest with instructions and secret references.
-7. Map the agent to allowed MCP servers and enabled tools in the inventory.
-8. Add Braintrust eval gates in `evals.required_checks`.
-9. Run an inventory-driven Dify Service API smoke:
+6. Create or export the Dify app DSL.
+7. Add a compact agent manifest with instructions and secret references.
+8. Map the agent to allowed MCP servers and enabled tools in the inventory.
+9. Add Braintrust eval gates in `evals.required_checks`.
+10. Run an inventory-driven Dify Service API smoke:
 
-   ```bash
-   pnpm dify:agent:smoke -- \
-     --agent client-example-agent \
-     --query "Use the approved read tool and summarize the result." \
-     --expect-tool expected_tool_name
-   ```
+    ```bash
+    pnpm dify:agent:smoke -- \
+      --agent client-example-agent \
+      --query "Use the approved read tool and summarize the result." \
+      --expect-tool expected_tool_name
+    ```
 
-10. Promote the successful smoke into `smoke_cases` on the agent inventory
+11. Promote the successful smoke into `smoke_cases` on the agent inventory
     entry, then run it by ID alone:
 
     ```bash
     pnpm dify:agent:smoke -- --agent-id client-example-agent
     ```
 
-11. Add and run the dedicated Braintrust eval.
-12. Publish or keep published only after the eval gates pass.
+12. Add and run the dedicated Braintrust eval.
+13. Publish or keep published only after the eval gates pass.
 
 The scaffold command defaults to a dry run. Use `--write-manifest` and
 `--write-inventory` only when you are ready to add the draft agent contract to

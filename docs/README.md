@@ -135,6 +135,7 @@ docs/
   [guides/DIFY_FIRST_AGENT_CONTROL_PLANE.md](./guides/DIFY_FIRST_AGENT_CONTROL_PLANE.md),
   [guides/DIFY_WORKSPACE_INVENTORY.md](./guides/DIFY_WORKSPACE_INVENTORY.md),
   [DIFY_WORKSPACE_INVENTORY.generated.md](./DIFY_WORKSPACE_INVENTORY.generated.md),
+  [DIFY_MCP_COVERAGE.generated.md](./DIFY_MCP_COVERAGE.generated.md),
   [guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md](./guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md)
 
 - **Understanding why a decision exists**:
