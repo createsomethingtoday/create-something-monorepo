@@ -70,10 +70,29 @@ the device token for `/ink/brief`, `/ink/clock`, `/ink/health-review/request`,
 ```bash
 pnpm --dir packages/calm-operator-ink-bridge check
 pnpm --dir packages/calm-operator-ink-bridge test
-pnpm --dir packages/calm-operator-ink-bridge deploy
+pnpm --dir packages/calm-operator-ink-bridge run deploy
 ```
 
 If the custom domain is not ready, remove the route from `wrangler.toml` and deploy to the default `workers.dev` URL first.
+
+## Production smoke
+
+Run a production smoke after deploys or route/token changes:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- pnpm ink:bridge:smoke
+```
+
+The smoke checks public `/healthz`, authenticated `/ink/clock`, authenticated
+`/ink/brief`, and a harmless `/ink/device-heartbeat` write using
+`INK_DEVICE_TOKEN`, `INK_SOURCE_TOKEN`, or `CALM_OPERATOR_BRIDGE_TOKEN`.
+
+Use `--public-only` when only route reachability should be checked, or
+`--skip-heartbeat` when a read-only authenticated smoke is required:
+
+```bash
+pnpm --dir packages/calm-operator-ink-bridge smoke:production -- --skip-heartbeat
+```
 
 ## Example alert
 
