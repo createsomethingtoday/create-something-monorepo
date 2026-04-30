@@ -1,0 +1,12 @@
+{
+  "name": "@create-something/calm-operator-ink-firmware",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pio run",
+    "config:write": "node scripts/write-local-config.mjs",
+    "monitor": "pio device monitor -p /dev/cu.usbserial-5A6D0107571 -b 115200",
+    "upload": "pio run -t upload --upload-port /dev/cu.usbserial-5A6D0107571"
+  }
+}

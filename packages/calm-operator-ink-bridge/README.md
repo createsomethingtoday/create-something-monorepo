@@ -26,6 +26,7 @@ Token-gated:
 
 - `GET /ink/brief`
 - `GET /ink/surface-brief`
+- `GET /ink/clock`
 - `GET /ink/device`
 - `POST /ink/alert`
 - `POST /ink/source-event`
@@ -59,6 +60,10 @@ pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_BRIDGE
 ```
 
 Use `INK_DEVICE_TOKEN` in Core Ink firmware. Use `INK_SOURCE_TOKEN` for agent/MCP producers.
+
+The Core Ink firmware lives in `packages/calm-operator-ink-firmware`. It uses
+the device token for `/ink/brief`, `/ink/clock`, `/ink/health-review/request`,
+`/ink/operator-event`, and `/ink/device-heartbeat`.
 
 ## Deploy
 
