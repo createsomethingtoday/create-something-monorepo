@@ -669,6 +669,68 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   const placeholderPatterns = ['your text here', 'placeholder text', 'insert text', 'add your', 'example text', 'sample text'];
   const hasPlaceholderText = placeholderPatterns.some(p => bodyTextForPlaceholder.includes(p));
 
+  const formLabelAudit = (() => {
+    const fields = Array.from(document.querySelectorAll('input, textarea, select'))
+      .filter(field => {
+        const fieldType = String(field.getAttribute('type') || field.type || '').toLowerCase();
+        return !['hidden', 'submit', 'button', 'reset'].includes(fieldType);
+      });
+    const explicitLabels = Array.from(document.querySelectorAll('label[for]'));
+    const textOf = (el) => (el?.textContent || '').replace(/\\s+/g, ' ').trim();
+    const hasAccessibleLabel = (field) => {
+      const ariaLabel = (field.getAttribute('aria-label') || '').trim();
+      if (ariaLabel) return true;
+      const labelledBy = (field.getAttribute('aria-labelledby') || '').trim();
+      if (labelledBy) {
+        const hasReferencedText = labelledBy
+          .split(/\\s+/)
+          .some(id => textOf(document.getElementById(id)));
+        if (hasReferencedText) return true;
+      }
+      const title = (field.getAttribute('title') || '').trim();
+      if (title) return true;
+      const id = field.id || '';
+      if (id && explicitLabels.some(label => label.getAttribute('for') === id && textOf(label))) {
+        return true;
+      }
+      const parentLabel = field.closest('label');
+      if (parentLabel && textOf(parentLabel)) return true;
+      return false;
+    };
+    const missing = fields.filter(field => !hasAccessibleLabel(field));
+    return {
+      fields: fields.length,
+      missingLabels: missing.length,
+      missingLabelExamples: missing.slice(0, 10).map(field => ({
+        tag: field.tagName.toLowerCase(),
+        type: String(field.getAttribute('type') || field.type || '').toLowerCase() || null,
+        name: field.getAttribute('name') || null,
+        id: field.id || null
+      }))
+    };
+  })();
+
+  const withDomFormLabelAudit = (auditPayload) => {
+    if (!auditPayload || typeof auditPayload !== 'object' || Array.isArray(auditPayload)) return auditPayload;
+    const existingForms = auditPayload.forms && typeof auditPayload.forms === 'object'
+      ? auditPayload.forms
+      : {};
+    const existingSummary = existingForms.summary && typeof existingForms.summary === 'object'
+      ? existingForms.summary
+      : {};
+    return {
+      ...auditPayload,
+      forms: {
+        ...existingForms,
+        summary: {
+          ...existingSummary,
+          ...formLabelAudit,
+          labelAuditSource: 'dom-accessible-label-audit'
+        }
+      }
+    };
+  };
+
   const api = window.__wfReview;
   if (!api) {
     // DOM fallback: extract page-level signals directly when __wfReview is missing
@@ -749,16 +811,6 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     const navLandmark = document.querySelector('nav, [role="navigation"]');
     const hasAriaLandmarks = Boolean(mainLandmark) && Boolean(navLandmark);
 
-    const formFields = document.querySelectorAll('input, textarea, select');
-    const missingLabels = Array.from(formFields).filter(field => {
-      if (field.type === 'hidden' || field.type === 'submit') return false;
-      const id = field.id;
-      const hasLabel = id && document.querySelector('label[for="' + id + '"]');
-      const parentLabel = field.closest('label');
-      const ariaLabel = field.getAttribute('aria-label') || field.getAttribute('aria-labelledby');
-      return !hasLabel && !parentLabel && !ariaLabel;
-    }).length;
-
     const videoEls = Array.from(document.querySelectorAll('video'));
     const autoplayNoControls = videoEls.filter(v => v.autoplay && !v.controls).length;
     const bgVideoMissing = videoEls.filter(v =>
@@ -820,8 +872,8 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
       },
       forms: {
         summary: {
-          fields: formFields.length,
-          missingLabels
+          ...formLabelAudit,
+          labelAuditSource: 'dom-accessible-label-audit'
         }
       },
       media: {
@@ -1037,6 +1089,7 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   let auditError = null;
   try {
     audit = await api.callTool('audit_webflow_way', { maxExamples: 20, includeSitemap: false });
+    audit = withDomFormLabelAudit(audit);
   } catch (err) {
     auditError = err instanceof Error ? err.message : String(err);
   }
@@ -2318,7 +2371,7 @@ function unifyRows(
     'pages.image_loading_strategy',
     'Page Level Checks',
     'Below-the-fold images are lazy-loaded and above-the-fold essentials are eager',
-    hasLoadingIssues ? 'fail' : 'pass',
+    hasLoadingIssues ? (allPagesAffected ? 'partial' : 'fail') : 'pass',
     [
       `pagesWithAboveFoldLazy=${lazyAboveFoldCount}/${totalAudited}`,
       `pagesWithBelowFoldNotLazy=${notLazyBelowFold}/${totalAudited}`,
@@ -2327,7 +2380,7 @@ function unifyRows(
         : [])
     ],
     ['published-webmcp-crawl'],
-    allPagesAffected ? 0.6 : 0.87,
+    allPagesAffected ? 0.55 : 0.87,
     'Set hero/critical images to eager and keep below-fold images lazy. Note: Webflow may manage loading attributes for shared components.'
   );
 
@@ -2427,7 +2480,7 @@ function unifyRows(
     'pages.image_dimensions',
     'Page Level Checks',
     'Images have explicit width/height or aspect-ratio hints',
-    dimsMissingCount > 0 ? 'fail' : 'pass',
+    dimsMissingCount > 0 ? (allPagesDimsMissing ? 'partial' : 'fail') : 'pass',
     [
       `pagesWithMissingImageDimensions=${dimsMissingCount}/${totalAudited}`,
       ...(allPagesDimsMissing
@@ -2435,7 +2488,7 @@ function unifyRows(
         : [])
     ],
     ['published-webmcp-crawl'],
-    allPagesDimsMissing ? 0.7 : 0.9,
+    allPagesDimsMissing ? 0.6 : 0.9,
     'Add width/height attributes or explicit aspect-ratio to image elements.'
   );
 
@@ -2541,10 +2594,9 @@ function unifyRows(
   // Combine Designer breakpoint data with page count for a partial responsive signal.
   // Full visual validation requires multi-viewport screenshots (not yet automated).
   const hasAllBreakpoints = dVarBreakpoints.status === 'pass';
-  const multiplePagesCrawled = totalAudited > 1;
   const responsiveStatus: UnifiedReviewStatus = hasAllBreakpoints
     ? 'partial'
-    : 'fail';
+    : 'manual';
   pushRow(
     'responsive.multi_breakpoint_check',
     'Page Level Checks',
@@ -3749,6 +3801,10 @@ export function createAnalyzerServer(): Server {
 
   return server;
 }
+
+export const __test = {
+  unifyRows
+};
 
 // =============================================================================
 // Server Lifecycle
