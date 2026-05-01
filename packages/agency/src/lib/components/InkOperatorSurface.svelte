@@ -1,18 +1,18 @@
 <script lang="ts">
   const callouts = [
     {
-      label: 'E-ink surface',
-      detail: 'Calm status, approval, and blocked-state briefs.',
+      label: 'TRMNL-ready ePaper',
+      detail: 'Managed status, approval, and blocked-state briefs.',
       modifier: 'screen'
     },
     {
       label: 'Physical controls',
-      detail: 'Acknowledge, scroll, silence, or return to the full review surface.',
+      detail: 'Use reTerminal or M5 CoreInk when a client needs deeper controls.',
       modifier: 'controls'
     },
     {
-      label: 'Magnet back',
-      detail: 'The operator surface can live on a cabinet, desk rail, or review station.',
+      label: 'Wall or stand',
+      detail: 'The status board can live near the operator, not inside another browser tab.',
       modifier: 'magnet'
     }
   ];
@@ -26,8 +26,8 @@
       alt: 'Blueprint render of the Ink physical controls showing an approval state.'
     },
     {
-      title: 'Magnetic surface',
-      body: 'The device can leave the laptop and become a quiet status point in the room.',
+      title: 'Managed or custom hardware',
+      body: 'TRMNL is the client-friendly managed path; reTerminal and M5 CoreInk stay available when the surface needs custom firmware or controls.',
       image: '/images/ink/ink-blueprint-magnet.png',
       imageWebp: '/images/ink/ink-blueprint-magnet.webp',
       alt: 'Blueprint render of Ink mounted magnetically to a vertical metal surface.'
@@ -37,12 +37,13 @@
 
 <div class="ink-surface product-surface product-surface--soft">
   <div class="ink-surface__copy">
-    <span class="product-kicker">Ink operator surface</span>
-    <h2>The operator should not have to watch the dashboard.</h2>
+    <span class="product-kicker">ePaper control board</span>
+    <h2>The operator should not have to watch another dashboard.</h2>
     <p>
-      Ink makes Policy OS tangible: a physical e-ink surface for all-clear, approval-needed,
-      blocked, and recovery states. The first release can start on Core Ink-class hardware while
-      CREATE SOMETHING owns the operating layer, labels, and escalation behavior.
+      The board makes Policy OS tangible: a physical ePaper surface for all-clear, approval-needed,
+      blocked, and recovery states. TRMNL is the managed client path; reTerminal and M5 CoreInk
+      remain available for custom-control deployments while CREATE SOMETHING owns the labels,
+      policy, and escalation behavior.
     </p>
 
     <div class="ink-state-grid" aria-label="Ink display states">

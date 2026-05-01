@@ -12,6 +12,9 @@ The category should stay fixed. Only proof, examples, and stack references shoul
 
 CREATE SOMETHING .agency is governed workflow infrastructure for ops-minded teams.
 
+The clearest packaged expression is a **governed workflow system**: one client-facing surface, one
+approved tool boundary, one policy layer, one proof layer, and one visible operator state.
+
 The promise is not "latest AI tooling."
 
 The promise is:
@@ -19,6 +22,14 @@ The promise is:
 - one safer operating path
 - clearer handoffs and approvals
 - faster execution without losing control
+
+In sales language, that means:
+
+- Dify or equivalent app surface for the client experience
+- MCP tools for the capability boundary
+- Policy OS for approvals, blocks, and escalation behavior
+- Braintrust or equivalent eval evidence for proof
+- optional ePaper control board for visible status
 
 ## Primary Buyer
 
@@ -62,8 +73,8 @@ It should shape tone, not turn the whole site into a racing theme.
 
 Homepage:
 
-- Fix the workflow your team still protects by hand.
-- Start with one workflow.
+- Install a governed workflow system for the workflow your team still protects by hand.
+- Start with one workflow and one visible operating surface.
 - Add governed execution when risk rises.
 
 About:
@@ -76,7 +87,8 @@ Services:
 
 - This is a scoped specialist engagement.
 - Clients are not hiring an internal admin.
-- Visibility comes through artifacts, approvals, and release evidence.
+- Visibility comes through the client surface, artifacts, approvals, release evidence, and optional
+  ePaper status.
 
 Proof page:
 
@@ -109,12 +121,15 @@ So the site and follow-up materials should keep showing:
 - case notes
 - productized artifacts
 - selected builds in production
+- real screenshots or photos of the client surface, eval proof, and visible status board where safe
+  to show
 
 If a new model ships, update the proof and examples. Do not rewrite the category.
 
 ## Words To Use
 
 - governed
+- workflow system
 - workflow
 - operating path
 - control layer

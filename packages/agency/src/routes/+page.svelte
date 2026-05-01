@@ -12,7 +12,7 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
+        'One painful workflow turned into a governed system with a client surface, approved tools, handoffs, and ownership.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build with optional ongoing support'
@@ -20,7 +20,7 @@
     {
       name: 'Policy OS',
       description:
-        'The oversight layer: policy artifacts, approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
+        'The oversight layer: policy artifacts, approvals, blocked states, eval proof, and incident loops once the workflow touches revenue, trust, or compliance.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly governed execution layer'
@@ -36,20 +36,20 @@
   ];
 
   const proofMetrics = [
-    { value: '1', label: 'workflow fixed first' },
-    { value: '3', label: 'decision states' },
-    { value: '100%', label: 'artifact-backed delivery' },
-    { value: '0', label: 'interest in open-ended staff aug' }
+    { value: 'Chat', label: 'client-facing Dify surface' },
+    { value: 'MCP', label: 'approved tool boundary' },
+    { value: 'Policy', label: 'auto, review, or block' },
+    { value: 'Proof', label: 'evals and operator evidence' }
   ];
 
   const operatingSignals = [
+    'Dify client app',
     'Model Context Protocol',
+    'Policy OS',
+    'Braintrust evals',
+    'Infisical secrets',
+    'TRMNL-ready ePaper',
     'Cloudflare Workers',
-    'Cloudflare D1',
-    'Durable Objects',
-    'Anthropic Claude',
-    'Notion API',
-    'SvelteKit',
     'TypeScript'
   ];
 
@@ -101,10 +101,10 @@
       name: 'Workflow Infrastructure',
       featured: true,
       summary:
-        'The first reliable operating path. Fix one workflow your team still protects by hand.',
+        'The first governed workflow system. Fix one workflow your team still protects by hand.',
       points: [
-        'Business-rule mapping',
-        'Workflow implementation',
+        'Dify chat/app surface',
+        'MCP tool mapping',
         'Auth and access setup',
         'Runbook and handoff artifacts'
       ]
@@ -112,11 +112,10 @@
     {
       name: 'Policy OS',
       featured: false,
-      summary:
-        'The governed execution layer once speed touches revenue, trust, or compliance.',
+      summary: 'The governed execution layer once speed touches revenue, trust, or compliance.',
       points: [
         'Approval and block boundaries',
-        'Release checks and eval gates',
+        'Braintrust release checks and eval gates',
         'Incident and review loops',
         'Monthly tuning against real usage'
       ]
@@ -144,8 +143,8 @@
 
 <SEO
   title={`${agencyCoreMessaging.categoryLabel} | CREATE SOMETHING .agency`}
-  description="CREATE SOMETHING .agency installs calm operator systems for agentic workflows: one workflow, clear decision states, and escalation only when judgment is required."
-  keywords="calm operator systems, Policy OS, MCP wedge, governed workflow infrastructure, production automation, technical operators"
+  description="CREATE SOMETHING .agency installs governed workflow systems: a client chat surface, approved MCP tools, Policy OS approvals, eval proof, and visible operator states."
+  keywords="governed workflow systems, Policy OS, MCP wedge, Dify agents, Braintrust evals, workflow infrastructure, production automation"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -162,14 +161,14 @@
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Make the workflow safe enough to trust.</h1>
+          <h1 class="hero-title">Make one AI-assisted workflow safe to run.</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            For the operator who has to answer for what happens next. CREATE SOMETHING fixes the
-            workflow creating the most drag, then adds approvals, visibility, and recovery paths as
-            the stakes rise.
+            CREATE SOMETHING turns the workflow your team still watches by hand into a client
+            surface, approved MCP tools, Policy OS approvals, eval proof, and an optional ePaper
+            status board.
           </p>
         </BlurFade>
 
@@ -181,7 +180,9 @@
         </BlurFade>
 
         <BlurFade delay={0.2}>
-          <p class="hero-note">Scoped delivery. Clear controls. Portable artifacts.</p>
+          <p class="hero-note">
+            Dify surface. MCP tools. Policy gates. Eval proof. Visible status.
+          </p>
         </BlurFade>
       </div>
     </div>
@@ -207,8 +208,8 @@
       <div class="signal-header">
         <span class="product-kicker">Portable stack</span>
         <p>
-          CREATE SOMETHING can use commodity connectivity where it makes sense, while keeping the
-          delivery, policy, and trust boundary owned by CREATE SOMETHING.
+          The client sees one operating surface. Underneath, the surface, tools, policy, evals, and
+          status board stay separated enough to inspect, replace, and govern.
         </p>
       </div>
 
@@ -243,8 +244,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Once the hero establishes the workflow boundaries, the full surface can show tabs,
-          checks, artifacts, and release logic without crushing the copy.
+          Once the result is clear, the full surface can show requests, checks, artifacts, approval
+          states, release logic, and recovery paths without making the buyer decode the stack.
         </p>
       </BlurFade>
     </div>
@@ -298,7 +299,7 @@
         <span class="product-kicker">Offer ladder</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>Start with one operating path. Add governance when risk rises.</h2>
+        <h2>Start with one operating surface. Add governance when risk rises.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
@@ -311,10 +312,7 @@
     <div class="offer-grid">
       {#each offerCards as offer, index}
         <BlurFade delay={0.15 + index * 0.08}>
-          <article
-            class="product-surface offer-card"
-            class:offerFeatured={offer.featured}
-          >
+          <article class="product-surface offer-card" class:offerFeatured={offer.featured}>
             <span class="offer-tag">{offer.featured ? 'Primary entry' : 'Expansion path'}</span>
             <h3>{offer.name}</h3>
             <p>{offer.summary}</p>

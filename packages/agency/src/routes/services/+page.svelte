@@ -24,7 +24,7 @@
     {
       name: 'Workflow Infrastructure',
       description:
-        'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
+        'A single workflow rebuilt as a governed system: Dify surface, MCP tools, handoffs, and production-safe behavior.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build'
@@ -32,7 +32,7 @@
     {
       name: 'Policy OS',
       description:
-        'Approvals, policy artifacts, release checks, blocked states, and incident loops for workflows already in motion.',
+        'Approvals, policy artifacts, Braintrust evals, blocked states, and incident loops for workflows already in motion.',
       type: 'Governed Execution Retainer',
       price: 'Custom',
       priceDescription: 'Monthly'
@@ -51,21 +51,24 @@
     {
       tag: 'Entry wedge',
       title: 'MCP-only',
-      summary: 'Use this when the connection is the job and your team will operate the workflow directly.',
+      summary:
+        'Use this when the connection is the job and your team will operate the workflow directly.',
       points: [
         'Connectivity validation',
         'Scoped host setup',
-        'Read-only or constrained rollout'
+        'Read-only or constrained rollout',
+        'Clear trigger for graduating into Policy OS'
       ]
     },
     {
       tag: 'Start here',
       title: 'Workflow Infrastructure',
-      summary: 'Fix the first workflow your team still protects by hand and make the handoffs reliable.',
+      summary:
+        'Install the first governed workflow system for the workflow your team still protects by hand.',
       points: [
-        'Business-rule mapping',
-        'Workflow implementation',
-        'Auth and access setup',
+        'Dify client chat or app surface',
+        'MCP tool mapping and workflow implementation',
+        'Auth, secrets, and access setup',
         'Portable runbooks and handoff artifacts'
       ],
       featured: true
@@ -78,14 +81,15 @@
         'Approval and block boundaries',
         'Reason-coded access decisions',
         'Operator brief and escalation surface',
-        'Release checks and incident loops',
+        'Braintrust release checks and incident loops',
         'Evals tied to real workflow behavior'
       ]
     },
     {
       tag: 'High-stakes scale',
       title: 'Enterprise Extension',
-      summary: 'Add this when several systems, teams, or compliance requirements must stay aligned.',
+      summary:
+        'Add this when several systems, teams, or compliance requirements must stay aligned.',
       points: [
         'Cross-system orchestration',
         'Custom trust boundaries',
@@ -97,25 +101,25 @@
 
   const boundaryPoints = [
     'You bring the workflow, constraints, and approval owner.',
-    'CREATE SOMETHING maps the rules, builds the control layer, and ships the operating artifacts.',
-    'Your team gets visibility through runbooks, approvals, release evidence, operator briefs, and working software.'
+    'CREATE SOMETHING maps the rules, builds the operating surface, and ships the operating artifacts.',
+    'Your team gets visibility through the client surface, approvals, release evidence, operator briefs, and working software.'
   ];
 
   const heroSignals = [
     {
-      label: 'Map',
-      value: '1 workflow',
-      detail: 'The handoff your team still watches too closely.'
+      label: 'Surface',
+      value: 'Dify app',
+      detail: 'A client-facing chat or URL for the workflow.'
     },
     {
-      label: 'Govern',
+      label: 'Policy',
       value: '3 states',
       detail: 'Auto-allow, approval-needed, or blocked with reason.'
     },
     {
-      label: 'Surface',
-      value: 'Quiet brief',
-      detail: 'The operator sees only what needs judgment.'
+      label: 'Proof',
+      value: 'Evals',
+      detail: 'Braintrust evidence tied to real tool behavior.'
     }
   ];
 
@@ -130,7 +134,7 @@
       label: 'Ink',
       title: 'Makes the decision visible',
       detail:
-        'The physical surface is optional, but useful when the buyer needs to see and feel the calm operator promise.'
+        'The physical surface is optional, but useful when the buyer needs to see and feel the governed workflow promise.'
     },
     {
       label: 'Operator',
@@ -140,11 +144,43 @@
     }
   ];
 
+  const deliveryComponents = [
+    {
+      label: 'Client Surface',
+      title: 'Dify agent or app URL',
+      detail:
+        'The buyer gets a usable front door for the workflow instead of a hidden automation script.'
+    },
+    {
+      label: 'Capability Layer',
+      title: 'MCP tools and broker rules',
+      detail:
+        'Tools are mapped, named, scoped, and exposed only where the workflow actually needs them.'
+    },
+    {
+      label: 'Trust Layer',
+      title: 'Policy OS approvals',
+      detail: 'Safe actions run, risky actions pause, and disallowed actions stop with a reason.'
+    },
+    {
+      label: 'Proof Layer',
+      title: 'Braintrust evals and evidence',
+      detail:
+        'Release checks prove expected tool use, refusal behavior, latency, and regression boundaries.'
+    },
+    {
+      label: 'Visible Surface',
+      title: 'TRMNL-ready ePaper board',
+      detail:
+        'TRMNL is the managed client delivery path; reTerminal and M5 CoreInk stay available for custom-control deployments.'
+    }
+  ];
+
   const faqItems = [
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow Infrastructure fixes the first painful workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
+        'Workflow Infrastructure installs the first governed workflow system. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
     },
     {
       question: 'Are you joining our team or running internal ops?',
@@ -159,7 +195,22 @@
     {
       question: 'What does .agency own?',
       answer:
-        '.agency owns the rules, approvals, handoffs, release controls, and operating artifacts around the workflow. Your team keeps business context, approval ownership, and long-term control.'
+        '.agency owns the system shape: client surface, MCP tool boundary, rules, approvals, handoffs, release controls, and operating artifacts around the workflow. Your team keeps business context, approval ownership, and long-term control.'
+    },
+    {
+      question: 'Where does Dify fit?',
+      answer:
+        'Dify is the fastest client-facing surface for chat, app URLs, and lightweight agent orchestration. It should not be the source of truth for policy, evals, or secrets.'
+    },
+    {
+      question: 'Where does Braintrust fit?',
+      answer:
+        'Braintrust is the proof layer. It records evals, traces, score history, and release evidence so the workflow can be regression-tested instead of trusted by vibe.'
+    },
+    {
+      question: 'Where does TRMNL fit?',
+      answer:
+        'TRMNL is the managed ePaper delivery option for clients who need visible status without custom device operations. reTerminal and M5 CoreInk remain better for custom firmware, physical controls, and deeper R&D.'
     },
     {
       question: 'When should we add Policy OS?',
@@ -189,9 +240,9 @@
 </script>
 
 <SEO
-  title="How I Work | Calm Operator Systems"
-  description="CREATE SOMETHING .agency installs calm operator systems: one workflow, clear decision states, and governed escalation only when judgment is required."
-  keywords="calm operator systems, Policy OS, workflow infrastructure, MCP wedge, production automation, agent reliability"
+  title="How I Work | Governed Workflow Systems"
+  description="CREATE SOMETHING .agency installs governed workflow systems: Dify client surfaces, MCP tool boundaries, Policy OS approvals, Braintrust eval proof, and optional ePaper status."
+  keywords="governed workflow systems, Dify agents, Policy OS, workflow infrastructure, MCP wedge, Braintrust evals, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -206,14 +257,14 @@
       </BlurFade>
 
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">Start with one workflow.</h1>
+        <h1 class="hero-title">Make one AI-assisted workflow safe to run.</h1>
       </BlurFade>
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          Bring the operating path your team still watches too closely. I map the boundaries,
-          rebuild the handoff, and add governance until the operator only hears from the system
-          when judgment is required.
+          Bring the workflow your team still watches by hand. I turn it into a client-facing
+          surface, approved MCP tools, Policy OS rules, eval proof, and visible status when judgment
+          is required.
         </p>
       </BlurFade>
 
@@ -225,13 +276,16 @@
       </BlurFade>
 
       <BlurFade delay={0.2}>
-        <p class="hero-note">One workflow. Clear boundaries. Quiet escalation.</p>
+        <p class="hero-note">Dify. MCP. Policy OS. Braintrust. ePaper status.</p>
       </BlurFade>
     </div>
 
     <BlurFade delay={0.2}>
-      <aside class="product-surface product-surface--soft hero-brief" aria-label="Calm operator service brief">
-        <span class="product-kicker">Calm operator service</span>
+      <aside
+        class="product-surface product-surface--soft hero-brief"
+        aria-label="Calm operator service brief"
+      >
+        <span class="product-kicker">Governed workflow service</span>
         <h2>If judgment is not required, the system stays quiet.</h2>
         <div class="hero-brief__grid" role="list">
           {#each heroSignals as signal}
@@ -259,8 +313,8 @@
         </BlurFade>
         <BlurFade delay={0.1}>
           <p>
-            You are bringing in a specialist to diagnose, rebuild, and govern one critical
-            operating path. The work is scoped, visible, and designed for your team to inherit.
+            You are bringing in a specialist to diagnose, rebuild, and govern one critical operating
+            path. The work is scoped, visible, and designed for your team to inherit.
           </p>
         </BlurFade>
       </div>
@@ -272,6 +326,38 @@
           {/each}
         </ul>
       </BlurFade>
+    </div>
+  </div>
+</section>
+
+<section class="system-section">
+  <div class="shell-inner-pad services-shell">
+    <div class="section-lead section-lead--center">
+      <BlurFade>
+        <span class="product-kicker">What ships</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>The governed workflow is the package, not a loose agent.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          The service is easier to buy when the pieces are named. Dify carries the client
+          experience, MCP carries capability, Policy OS carries judgment, Braintrust carries proof,
+          and ePaper carries visible state.
+        </p>
+      </BlurFade>
+    </div>
+
+    <div class="system-grid" role="list">
+      {#each deliveryComponents as component, index}
+        <BlurFade delay={0.15 + index * 0.05}>
+          <article class="product-surface product-surface--soft system-card" role="listitem">
+            <span>{component.label}</span>
+            <h3>{component.title}</h3>
+            <p>{component.detail}</p>
+          </article>
+        </BlurFade>
+      {/each}
     </div>
   </div>
 </section>
@@ -448,6 +534,7 @@
 
   .hero-page,
   .boundary-section,
+  .system-section,
   .offer-section,
   .flow-section,
   .surface-section,
@@ -598,6 +685,43 @@
     max-width: 46rem;
   }
 
+  .system-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: clamp(0.85rem, 1.7vw, 1.1rem);
+    margin-top: clamp(1.3rem, 2.5vw, 1.8rem);
+  }
+
+  .system-card {
+    display: grid;
+    gap: 0.72rem;
+    min-height: 13rem;
+    padding: 1rem;
+  }
+
+  .system-card span {
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .system-card h3 {
+    margin: 0;
+    color: var(--color-fg-primary);
+    font-size: 1.02rem;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  .system-card p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
   .offer-grid,
   .faq-grid {
     display: grid;
@@ -691,6 +815,10 @@
       grid-template-columns: 1fr;
     }
 
+    .system-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .hero-copy,
     .section-lead {
       max-width: none;
@@ -705,6 +833,7 @@
   @media (max-width: 768px) {
     .offer-grid,
     .faq-grid,
+    .system-grid,
     .surface-grid {
       grid-template-columns: 1fr;
     }
@@ -715,6 +844,7 @@
 
     .offer-card,
     .faq-card,
+    .system-card,
     .boundary-panel,
     .surface-panel,
     .cta-panel {

@@ -18,8 +18,9 @@
     {
       index: '02',
       label: 'Workflow Infrastructure',
-      title: 'Operating path',
-      detail: 'The first handoff gets mapped, rebuilt, tested, and documented for inheritance.',
+      title: 'Workflow system',
+      detail:
+        'The client surface, handoff, tool path, tests, and docs become one operating system.',
       width: '64%'
     },
     {
@@ -31,9 +32,9 @@
     },
     {
       index: '04',
-      label: 'Ink / operator surface',
-      title: 'Calm visibility',
-      detail: 'The operator sees the state only when judgment, recovery, or review is required.',
+      label: 'TRMNL / ePaper surface',
+      title: 'Visible status',
+      detail: 'The operator sees state only when judgment, recovery, or review is required.',
       width: '96%'
     }
   ];
@@ -41,13 +42,19 @@
   const outcomes = ['Auto-allow', 'Approval needed', 'Blocked with reason'];
 </script>
 
-<div class="wedge-shell product-surface product-surface--soft" aria-labelledby="service-wedge-title">
+<div
+  class="wedge-shell product-surface product-surface--soft"
+  aria-labelledby="service-wedge-title"
+>
   <div class="wedge-copy">
     <span class="wedge-eyebrow">Service blueprint</span>
-    <h3 id="service-wedge-title">The wedge starts with MCPs and rises into Policy OS.</h3>
+    <h3 id="service-wedge-title">
+      The wedge starts with MCPs and becomes a governed workflow system.
+    </h3>
     <p>
-      The service is easier to understand as a progression: first prove the connection, then
-      harden one workflow, then install the policy layer that protects operator attention.
+      The service is easier to understand as a progression: first prove the connection, then harden
+      one workflow, then install the client surface, policy layer, eval proof, and visible operator
+      state.
     </p>
   </div>
 
@@ -185,7 +192,10 @@
       linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
       linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018)),
       rgba(0, 0, 0, 0.32);
-    background-size: 25% 100%, auto, auto;
+    background-size:
+      25% 100%,
+      auto,
+      auto;
   }
 
   .wedge-stack::after {
