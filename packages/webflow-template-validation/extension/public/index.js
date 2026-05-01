@@ -944,6 +944,16 @@ function mergeEnhancedValidation(designerResults, enhancedResults) {
                 });
             }
         }
+        if (analysis.interactions) {
+            console.log('➕ Adding Interactions and GSAP category');
+            const hasErrors = analysis.interactions.issues.filter((i) => i.severity === 'error').length > 0;
+            designerResults.categories.push({
+                category: 'Interactions and GSAP',
+                passed: !hasErrors,
+                issues: analysis.interactions.issues,
+                stats: analysis.interactions.stats
+            });
+        }
         const allIssues = designerResults.categories.flatMap(cat => cat.issues || []);
         const totalErrors = allIssues.filter(issue => issue.severity === 'error').length;
         const totalWarnings = allIssues.filter(issue => issue.severity === 'warning').length;

@@ -1,0 +1,176 @@
+/**
+ * Interactions Validator - Webflow Interactions / GSAP policy checks
+ *
+ * Validates:
+ * - Legacy IX2 interaction markers are not present on submitted templates
+ */
+
+import { InteractionsAnalysisResult, ValidationIssue } from '../types';
+import { fetchHTML } from '../utils/fetch-utils';
+
+const IX2_REJECTION_MESSAGE =
+	'Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected.';
+
+type Ix2Match = {
+	label: string;
+	count: number;
+	strong: boolean;
+};
+
+type Ix2PageResult = {
+	url: string;
+	legacyIx2Detected: boolean;
+	legacyIx2Count: number;
+	matches: Array<{
+		label: string;
+		count: number;
+	}>;
+};
+
+export async function validateInteractions(
+	siteUrl: string,
+	pageSlugs?: string[],
+	options?: { maxPages?: number }
+): Promise<InteractionsAnalysisResult> {
+	console.log(`Starting interactions validation for ${siteUrl}`);
+
+	try {
+		const urls = buildPageUrls(siteUrl, pageSlugs, options?.maxPages);
+		const pages = await Promise.all(urls.map((url) => analyzeInteractionsPage(url)));
+		const pagesWithLegacyIx2 = pages.filter((page) => page.legacyIx2Detected);
+		const legacyIx2Count = pagesWithLegacyIx2.reduce((total, page) => total + page.legacyIx2Count, 0);
+		const issues = generateInteractionIssues(pagesWithLegacyIx2, legacyIx2Count);
+
+		return {
+			issues,
+			stats: {
+				legacyIx2Detected: pagesWithLegacyIx2.length > 0,
+				legacyIx2Count,
+				pagesAnalyzed: pages.length,
+				pagesWithLegacyIx2: pagesWithLegacyIx2.length
+			},
+			pages
+		};
+	} catch (error) {
+		console.error('Interactions validation error:', error);
+		return {
+			issues: [{
+				id: 'interactions-analysis-failed',
+				category: 'Interactions and GSAP',
+				severity: 'warning',
+				message: 'Interactions analysis could not be completed',
+				description: `Error analyzing interactions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				howToFix: 'Check that the published site URL is accessible and rerun validation.'
+			}],
+			stats: {
+				legacyIx2Detected: false,
+				legacyIx2Count: 0,
+				pagesAnalyzed: 0,
+				pagesWithLegacyIx2: 0
+			},
+			pages: []
+		};
+	}
+}
+
+function buildPageUrls(siteUrl: string, pageSlugs?: string[], maxPages = 25): string[] {
+	const urls = new Set<string>([normalizePageUrl(siteUrl, siteUrl)]);
+
+	if (Array.isArray(pageSlugs)) {
+		pageSlugs.forEach((slug) => {
+			if (typeof slug !== 'string' || slug.trim() === '') return;
+			urls.add(normalizePageUrl(slug, siteUrl));
+		});
+	}
+
+	return Array.from(urls).slice(0, maxPages);
+}
+
+function normalizePageUrl(value: string, baseUrl: string): string {
+	const trimmed = value.trim();
+	const path = trimmed.startsWith('/') || trimmed.startsWith('http') ? trimmed : `/${trimmed}`;
+	const url = new URL(path, baseUrl);
+	url.hash = '';
+	return url.toString();
+}
+
+async function analyzeInteractionsPage(url: string): Promise<Ix2PageResult> {
+	const htmlResult = await fetchHTML(url);
+	const detection = detectIx2Interactions(htmlResult.html);
+
+	return {
+		url,
+		legacyIx2Detected: detection.detected,
+		legacyIx2Count: detection.count,
+		matches: detection.matches.map(({ label, count }) => ({ label, count }))
+	};
+}
+
+function detectIx2Interactions(html: string) {
+	const matches: Ix2Match[] = [
+		{
+			label: 'data-w-id attributes',
+			count: countPatternMatches(html, /\sdata-w-id\s*=/gi),
+			strong: true
+		},
+		{
+			label: 'data-is-ix2-target attributes',
+			count: countPatternMatches(html, /\sdata-is-ix2-target\s*=/gi),
+			strong: true
+		},
+		{
+			label: 'Webflow IX2 runtime calls',
+			count: countPatternMatches(html, /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi),
+			strong: true
+		},
+		{
+			label: 'w-mod-ix CSS/runtime markers',
+			count: countPatternMatches(html, /w-mod-ix/gi),
+			strong: false
+		}
+	].filter((item) => item.count > 0);
+	const strongMatches = matches.filter((item) => item.strong);
+
+	return {
+		detected: strongMatches.length > 0,
+		count: strongMatches.reduce((total, item) => total + item.count, 0),
+		matches
+	};
+}
+
+function countPatternMatches(value: string, pattern: RegExp): number {
+	const matches = value.match(pattern);
+	return matches ? matches.length : 0;
+}
+
+function generateInteractionIssues(pagesWithLegacyIx2: Ix2PageResult[], legacyIx2Count: number): ValidationIssue[] {
+	if (pagesWithLegacyIx2.length === 0) {
+		return [];
+	}
+
+	return [{
+		id: 'legacy-ix2-interactions-detected',
+		category: 'Interactions and GSAP',
+		severity: 'error',
+		message: IX2_REJECTION_MESSAGE,
+		description: 'The May 1, 2026 Marketplace policy requires templates submitted from that date forward to avoid legacy IX2 interactions.',
+		howToFix: 'Rebuild these interactions with Webflow Interactions powered by GSAP (IX3), publish the site again, and rerun validation.',
+		details: {
+			howToFix: 'Rebuild these interactions with Webflow Interactions powered by GSAP (IX3), publish the site again, and rerun validation.',
+			policy: 'ix2-rejected',
+			effectiveDate: 'May 1, 2026',
+			legacyIx2Count,
+			affectedPages: pagesWithLegacyIx2.map((page) => ({
+				url: page.url,
+				legacyIx2Count: page.legacyIx2Count,
+				matches: page.matches
+			})),
+			issues: pagesWithLegacyIx2.flatMap((page) =>
+				page.matches.map((match) => `${page.url}: ${match.label} (${match.count})`)
+			),
+			matchedPatterns: pagesWithLegacyIx2.flatMap((page) =>
+				page.matches.map((match) => `${page.url}: ${match.label} (${match.count})`)
+			)
+		}
+	}];
+}

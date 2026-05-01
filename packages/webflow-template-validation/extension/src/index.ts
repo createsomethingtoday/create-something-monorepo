@@ -1269,6 +1269,17 @@ function mergeEnhancedValidation(designerResults: ValidationResponse, enhancedRe
       }
     }
 
+    if (analysis.interactions) {
+      console.log('➕ Adding Interactions and GSAP category');
+      const hasErrors = analysis.interactions.issues.filter((i: any) => i.severity === 'error').length > 0;
+      designerResults.categories.push({
+        category: 'Interactions and GSAP',
+        passed: !hasErrors,
+        issues: analysis.interactions.issues,
+        stats: analysis.interactions.stats
+      });
+    }
+
     // Performance & Optimization validation removed - it was too estimative and not accurate enough
 
     // Update summary counts
