@@ -6,7 +6,7 @@ import {
   buildVisibleProxyRoutes,
   resolveDiscoveryPack,
   resolveIntentRouteCandidate,
-  searchProxyTools,
+  searchProxyTools
 } from '../index.ts';
 
 function createRuntime() {
@@ -15,21 +15,21 @@ function createRuntime() {
     serverName: 'server_a',
     downstreamToolName: 'alpha',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const routeA2 = {
     proxyToolName: 'server_a__beta',
     serverName: 'server_a',
     downstreamToolName: 'beta',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const routeB1 = {
     proxyToolName: 'server_b__gamma',
     serverName: 'server_b',
     downstreamToolName: 'gamma',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
 
   return {
@@ -37,7 +37,7 @@ function createRuntime() {
     stateResolution: {
       state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
       enabledServerNames: ['server_a', 'server_b'],
-      warnings: [],
+      warnings: []
     },
     connected: [],
     failed: [],
@@ -46,30 +46,33 @@ function createRuntime() {
         {
           name: routeA1.proxyToolName,
           description: '[server_a] alpha',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: routeA2.proxyToolName,
           description: '[server_a] beta',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: routeB1.proxyToolName,
           description: '[server_b] gamma',
-          inputSchema: { type: 'object', properties: {} },
-        },
+          inputSchema: { type: 'object', properties: {} }
+        }
       ],
       routes: new Map([
         [routeA1.proxyToolName, routeA1],
         [routeA2.proxyToolName, routeA2],
-        [routeB1.proxyToolName, routeB1],
+        [routeB1.proxyToolName, routeB1]
       ]),
-      warnings: [],
-    },
+      warnings: []
+    }
   };
 }
 
-function assertActiveServers(pack: { preferences: { activeServers: string[] } }, expected: string[]) {
+function assertActiveServers(
+  pack: { preferences: { activeServers: string[] } },
+  expected: string[]
+) {
   assert.deepEqual(pack.preferences.activeServers, [...expected].sort());
 }
 
@@ -79,42 +82,42 @@ function createIntentRuntime() {
     serverName: 'composio-toolkit-zoom',
     downstreamToolName: 'zoom_create_a_meeting',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const sheetRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_batch_update',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_batch_update',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const createSheetRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_create_google_sheet1',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_create_google_sheet1',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const valuesUpdateRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_values_update',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const valuesGetRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_get',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_values_get',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const deprecatedSqlRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_execute_sql',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_execute_sql',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
 
   return {
@@ -122,7 +125,7 @@ function createIntentRuntime() {
     stateResolution: {
       state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
       enabledServerNames: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
-      warnings: [],
+      warnings: []
     },
     connected: [],
     failed: [],
@@ -131,33 +134,33 @@ function createIntentRuntime() {
         {
           name: zoomRoute.proxyToolName,
           description: '[zoom] create meeting',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: createSheetRoute.proxyToolName,
           description: '[googlesheets] create sheet',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: sheetRoute.proxyToolName,
           description: '[googlesheets] write values to range',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: valuesUpdateRoute.proxyToolName,
           description: '[googlesheets] set values in range',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: valuesGetRoute.proxyToolName,
           description: '[googlesheets] get sheet values',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: deprecatedSqlRoute.proxyToolName,
           description: '[googlesheets] DEPRECATED SQL executor',
-          inputSchema: { type: 'object', properties: {} },
-        },
+          inputSchema: { type: 'object', properties: {} }
+        }
       ],
       routes: new Map([
         [zoomRoute.proxyToolName, zoomRoute],
@@ -165,17 +168,17 @@ function createIntentRuntime() {
         [sheetRoute.proxyToolName, sheetRoute],
         [valuesUpdateRoute.proxyToolName, valuesUpdateRoute],
         [valuesGetRoute.proxyToolName, valuesGetRoute],
-        [deprecatedSqlRoute.proxyToolName, deprecatedSqlRoute],
+        [deprecatedSqlRoute.proxyToolName, deprecatedSqlRoute]
       ]),
-      warnings: [],
-    },
+      warnings: []
+    }
   };
 }
 
 const trace = {
   requestId: 'req_1',
   correlationId: 'corr_1',
-  transportRequestId: 'req_1',
+  transportRequestId: 'req_1'
 };
 
 test('buildVisibleProxyRoutes applies session -> discovery -> max cap', () => {
@@ -183,7 +186,7 @@ test('buildVisibleProxyRoutes applies session -> discovery -> max cap', () => {
   const prefs = {
     mode: 'compact' as const,
     activeServers: ['server_a'],
-    maxProxyTools: 1,
+    maxProxyTools: 1
   };
   const accountContext = {
     accountId: 'acct_1',
@@ -192,7 +195,7 @@ test('buildVisibleProxyRoutes applies session -> discovery -> max cap', () => {
     sessionId: 'session_1',
     authMode: 'session',
     allowedToolPrefixes: ['server_a__'],
-    identitySource: 'session' as const,
+    identitySource: 'session' as const
   };
 
   const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
@@ -209,8 +212,8 @@ test('buildVisibleProxyRoutes applies per-server discovery tool allowlists befor
     maxProxyTools: null,
     allowedProxyToolsByServer: {
       server_a: ['beta'],
-      server_b: ['server_b__gamma'],
-    },
+      server_b: ['server_b__gamma']
+    }
   };
   const accountContext = {
     accountId: 'acct_1',
@@ -219,13 +222,13 @@ test('buildVisibleProxyRoutes applies per-server discovery tool allowlists befor
     sessionId: 'session_1',
     authMode: 'session',
     allowedToolPrefixes: null,
-    identitySource: 'session' as const,
+    identitySource: 'session' as const
   };
 
   const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
   assert.deepEqual(
     visible.toolDefinitions.map((tool) => tool.name),
-    ['server_a__beta', 'server_b__gamma'],
+    ['server_a__beta', 'server_b__gamma']
   );
 });
 
@@ -234,7 +237,7 @@ test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', ()
   const prefs = {
     mode: 'full' as const,
     activeServers: [],
-    maxProxyTools: null,
+    maxProxyTools: null
   };
   const accountContext = {
     accountId: 'acct_1',
@@ -243,13 +246,13 @@ test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', ()
     sessionId: 'session_1',
     authMode: 'session',
     allowedToolPrefixes: ['server_a__'],
-    identitySource: 'session' as const,
+    identitySource: 'session' as const
   };
 
   const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
   assert.deepEqual(
     visible.toolDefinitions.map((tool) => tool.name),
-    ['server_a__alpha', 'server_a__beta'],
+    ['server_a__alpha', 'server_a__beta']
   );
 });
 
@@ -259,14 +262,14 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only 
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_get_spreadsheet',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const writeRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_values_update',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
 
   const runtime = {
@@ -274,7 +277,7 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only 
     stateResolution: {
       state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
       enabledServerNames: ['composio-toolkit-googlesheets'],
-      warnings: [],
+      warnings: []
     },
     connected: [],
     failed: [],
@@ -283,20 +286,20 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only 
         {
           name: readRoute.proxyToolName,
           description: '[googlesheets] get spreadsheet',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: writeRoute.proxyToolName,
           description: '[googlesheets] update values',
-          inputSchema: { type: 'object', properties: {} },
-        },
+          inputSchema: { type: 'object', properties: {} }
+        }
       ],
       routes: new Map([
         [readRoute.proxyToolName, readRoute],
-        [writeRoute.proxyToolName, writeRoute],
+        [writeRoute.proxyToolName, writeRoute]
       ]),
-      warnings: [],
-    },
+      warnings: []
+    }
   };
 
   const visible = await buildAuthorizedVisibleProxyRoutes({
@@ -304,7 +307,7 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only 
     prefs: {
       mode: 'full',
       activeServers: ['composio-toolkit-googlesheets'],
-      maxProxyTools: null,
+      maxProxyTools: null
     },
     accountContext: {
       accountId: 'acct_1',
@@ -316,16 +319,16 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only 
       toolMode: 'read_only',
       serviceTier: null,
       entitlementSnapshot: null,
-      identitySource: 'session',
+      identitySource: 'session'
     },
     env: {} as any,
     trace,
-    entrypoint: 'hub_list_proxy_tools',
+    entrypoint: 'hub_list_proxy_tools'
   });
 
   assert.deepEqual(
     visible.toolDefinitions.map((tool) => tool.name),
-    ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet'],
+    ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet']
   );
 });
 
@@ -335,7 +338,7 @@ test('buildAuthorizedVisibleProxyRoutes blocks policy_os_only discovery for mcp-
     serverName: 'create-something',
     downstreamToolName: 'house_policy_tool',
     serverTags: ['cs', 'policy_os_only'],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
 
   const runtime = {
@@ -343,7 +346,7 @@ test('buildAuthorizedVisibleProxyRoutes blocks policy_os_only discovery for mcp-
     stateResolution: {
       state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
       enabledServerNames: ['create-something'],
-      warnings: [],
+      warnings: []
     },
     connected: [],
     failed: [],
@@ -352,12 +355,12 @@ test('buildAuthorizedVisibleProxyRoutes blocks policy_os_only discovery for mcp-
         {
           name: houseRoute.proxyToolName,
           description: '[create-something] house policy tool',
-          inputSchema: { type: 'object', properties: {} },
-        },
+          inputSchema: { type: 'object', properties: {} }
+        }
       ],
       routes: new Map([[houseRoute.proxyToolName, houseRoute]]),
-      warnings: [],
-    },
+      warnings: []
+    }
   };
 
   const visible = await buildAuthorizedVisibleProxyRoutes({
@@ -365,7 +368,7 @@ test('buildAuthorizedVisibleProxyRoutes blocks policy_os_only discovery for mcp-
     prefs: {
       mode: 'full',
       activeServers: ['create-something'],
-      maxProxyTools: null,
+      maxProxyTools: null
     },
     accountContext: {
       accountId: 'acct_1',
@@ -382,16 +385,19 @@ test('buildAuthorizedVisibleProxyRoutes blocks policy_os_only discovery for mcp-
         policy_accepted: true,
         contract_active: true,
         billing_active: true,
-        approved_exception: { present: false },
+        approved_exception: { present: false }
       },
-      identitySource: 'session',
+      identitySource: 'session'
     },
     env: {} as any,
     trace,
-    entrypoint: 'hub_list_proxy_tools',
+    entrypoint: 'hub_list_proxy_tools'
   });
 
-  assert.deepEqual(visible.toolDefinitions.map((tool) => tool.name), []);
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    []
+  );
 });
 
 test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for compat fallback identities', async () => {
@@ -400,14 +406,14 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for compat fal
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_get_spreadsheet',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const writeRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_values_update',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
 
   const runtime = {
@@ -415,7 +421,7 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for compat fal
     stateResolution: {
       state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
       enabledServerNames: ['composio-toolkit-googlesheets'],
-      warnings: [],
+      warnings: []
     },
     connected: [],
     failed: [],
@@ -424,20 +430,20 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for compat fal
         {
           name: readRoute.proxyToolName,
           description: '[googlesheets] get spreadsheet',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: writeRoute.proxyToolName,
           description: '[googlesheets] update values',
-          inputSchema: { type: 'object', properties: {} },
-        },
+          inputSchema: { type: 'object', properties: {} }
+        }
       ],
       routes: new Map([
         [readRoute.proxyToolName, readRoute],
-        [writeRoute.proxyToolName, writeRoute],
+        [writeRoute.proxyToolName, writeRoute]
       ]),
-      warnings: [],
-    },
+      warnings: []
+    }
   };
 
   const visible = await buildAuthorizedVisibleProxyRoutes({
@@ -445,7 +451,7 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for compat fal
     prefs: {
       mode: 'full',
       activeServers: ['composio-toolkit-googlesheets'],
-      maxProxyTools: null,
+      maxProxyTools: null
     },
     accountContext: {
       accountId: 'acct_fallback',
@@ -457,16 +463,16 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for compat fal
       toolMode: 'read_only',
       serviceTier: null,
       entitlementSnapshot: null,
-      identitySource: 'fallback',
+      identitySource: 'fallback'
     },
     env: { HUB_IDENTITY_MODE: 'compat' } as any,
     trace,
-    entrypoint: 'hub_list_proxy_tools',
+    entrypoint: 'hub_list_proxy_tools'
   });
 
   assert.deepEqual(
     visible.toolDefinitions.map((tool) => tool.name),
-    ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet'],
+    ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet']
   );
 });
 
@@ -475,7 +481,7 @@ test('searchProxyTools only searches visible routes', () => {
   const prefs = {
     mode: 'compact' as const,
     activeServers: ['server_a'],
-    maxProxyTools: null,
+    maxProxyTools: null
   };
   const accountContext = {
     accountId: 'acct_1',
@@ -484,7 +490,7 @@ test('searchProxyTools only searches visible routes', () => {
     sessionId: 'session_1',
     authMode: 'session',
     allowedToolPrefixes: ['server_a__'],
-    identitySource: 'session' as const,
+    identitySource: 'session' as const
   };
 
   const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
@@ -494,7 +500,7 @@ test('searchProxyTools only searches visible routes', () => {
   const serverFiltered = searchProxyTools(visible, {
     serverName: 'server_a',
     query: 'beta',
-    limit: 10,
+    limit: 10
   });
   assert.equal(serverFiltered.total, 1);
   assert.equal(serverFiltered.tools[0]?.proxyToolName, 'server_a__beta');
@@ -506,14 +512,14 @@ test('buildAuthorizedVisibleProxyRoutes returns filtered routes that pass author
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_get_spreadsheet',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
   const writeRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_values_update',
     serverTags: [],
-    call: async () => ({ ok: true }),
+    call: async () => ({ ok: true })
   };
 
   const runtime = {
@@ -521,7 +527,7 @@ test('buildAuthorizedVisibleProxyRoutes returns filtered routes that pass author
     stateResolution: {
       state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
       enabledServerNames: ['composio-toolkit-googlesheets'],
-      warnings: [],
+      warnings: []
     },
     connected: [],
     failed: [],
@@ -530,27 +536,27 @@ test('buildAuthorizedVisibleProxyRoutes returns filtered routes that pass author
         {
           name: readRoute.proxyToolName,
           description: '[googlesheets] get spreadsheet',
-          inputSchema: { type: 'object', properties: {} },
+          inputSchema: { type: 'object', properties: {} }
         },
         {
           name: writeRoute.proxyToolName,
           description: '[googlesheets] update values',
-          inputSchema: { type: 'object', properties: {} },
-        },
+          inputSchema: { type: 'object', properties: {} }
+        }
       ],
       routes: new Map([
         [readRoute.proxyToolName, readRoute],
-        [writeRoute.proxyToolName, writeRoute],
+        [writeRoute.proxyToolName, writeRoute]
       ]),
-      warnings: [],
-    },
+      warnings: []
+    }
   };
   const visible = await buildAuthorizedVisibleProxyRoutes({
     runtime: runtime as any,
     prefs: {
       mode: 'full',
       activeServers: ['composio-toolkit-googlesheets'],
-      maxProxyTools: null,
+      maxProxyTools: null
     },
     accountContext: {
       accountId: 'acct_1',
@@ -564,20 +570,20 @@ test('buildAuthorizedVisibleProxyRoutes returns filtered routes that pass author
       resourceHost: null,
       serviceTier: null,
       entitlementSnapshot: null,
-      identitySource: 'session' as const,
+      identitySource: 'session' as const
     },
     env: {} as any,
     trace,
     entrypoint: 'hub_search_proxy_tools',
     filters: {
       serverName: 'composio-toolkit-googlesheets',
-      query: 'spreadsheet',
-    },
+      query: 'spreadsheet'
+    }
   });
 
   assert.deepEqual(
     visible.toolDefinitions.map((tool) => tool.name),
-    ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet'],
+    ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet']
   );
 });
 
@@ -597,10 +603,13 @@ test('resolveDiscoveryPack returns Danny operator pack with the expected active 
   runtime.connected = [
     { name: 'halfdozen-operator-notion-mcp' },
     { name: 'composio-toolkit-notion' },
-    { name: 'halfdozen-dm-mcp' },
+    { name: 'halfdozen-dm-mcp' }
   ] as any;
 
-  const pack = resolveDiscoveryPack('danny-shared-auth-plus-dm-and-operator-notion', runtime as any);
+  const pack = resolveDiscoveryPack(
+    'danny-shared-auth-plus-dm-and-operator-notion',
+    runtime as any
+  );
 
   assert.ok(pack);
   assert.equal(pack.id, 'danny-shared-auth-plus-dm-and-operator-notion');
@@ -608,7 +617,7 @@ test('resolveDiscoveryPack returns Danny operator pack with the expected active 
   assertActiveServers(pack, [
     'halfdozen-operator-notion-mcp',
     'composio-toolkit-notion',
-    'halfdozen-dm-mcp',
+    'halfdozen-dm-mcp'
   ]);
 });
 
@@ -617,7 +626,7 @@ test('resolveDiscoveryPack returns C3Denver pack with the expected active servic
   runtime.connected = [
     { name: 'composio-toolkit-airtable' },
     { name: 'composio-toolkit-gmail' },
-    { name: 'composio-toolkit-notion' },
+    { name: 'composio-toolkit-notion' }
   ] as any;
 
   const pack = resolveDiscoveryPack('c3denver-airtable-gmail-notion', runtime as any);
@@ -628,7 +637,7 @@ test('resolveDiscoveryPack returns C3Denver pack with the expected active servic
   assertActiveServers(pack, [
     'composio-toolkit-airtable',
     'composio-toolkit-gmail',
-    'composio-toolkit-notion',
+    'composio-toolkit-notion'
   ]);
 });
 
@@ -648,10 +657,13 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
     { name: 'composio-toolkit-notion' },
     { name: 'composio-toolkit-exa' },
     { name: 'meetings' },
-    { name: 'webflow-template-review-mcp' },
+    { name: 'webflow-template-review-mcp' }
   ] as any;
 
-  const pack = resolveDiscoveryPack('mj-shared-auth-plus-ops-search-meetings-and-review', runtime as any);
+  const pack = resolveDiscoveryPack(
+    'mj-shared-auth-plus-ops-search-meetings-and-review',
+    runtime as any
+  );
 
   assert.ok(pack);
   assert.equal(pack.id, 'mj-shared-auth-plus-ops-search-meetings-and-review');
@@ -670,7 +682,7 @@ test('resolveDiscoveryPack returns MJ full ops pack with the expected active ser
     'composio-toolkit-notion',
     'composio-toolkit-exa',
     'meetings',
-    'webflow-template-review-mcp',
+    'webflow-template-review-mcp'
   ]);
 });
 
@@ -687,7 +699,7 @@ test('resolveDiscoveryPack returns MJ legacy pack with the expected active servi
     { name: 'composio-toolkit-quickbooks' },
     { name: 'composio-toolkit-linkedin' },
     { name: 'composio-toolkit-notion' },
-    { name: 'meetings' },
+    { name: 'meetings' }
   ] as any;
 
   const pack = resolveDiscoveryPack('mj-legacy-shared-auth-plus-meetings', runtime as any);
@@ -706,15 +718,15 @@ test('resolveDiscoveryPack returns MJ legacy pack with the expected active servi
     'composio-toolkit-quickbooks',
     'composio-toolkit-linkedin',
     'composio-toolkit-notion',
-    'meetings',
+    'meetings'
   ]);
 });
 
-test('resolveDiscoveryPack returns Webflow reviewer Phase B analyzer tool allowlist', () => {
+test('resolveDiscoveryPack returns Webflow reviewer Phase B full analyzer surface', () => {
   const runtime = createRuntime();
   runtime.connected = [
     { name: 'webflow-template-review-mcp' },
-    { name: 'webflow-site-analyzer-mcp' },
+    { name: 'webflow-site-analyzer-mcp' }
   ] as any;
 
   const pack = resolveDiscoveryPack('webflow-marketplace-review-phase-b', runtime as any);
@@ -722,9 +734,8 @@ test('resolveDiscoveryPack returns Webflow reviewer Phase B analyzer tool allowl
   assert.ok(pack);
   assert.equal(pack.id, 'webflow-marketplace-review-phase-b');
   assertActiveServers(pack, ['webflow-template-review-mcp', 'webflow-site-analyzer-mcp']);
-  assert.deepEqual(pack.preferences.allowedProxyToolsByServer, {
-    'webflow-site-analyzer-mcp': ['score_designer_checklist'],
-  });
+  assert.equal(pack.preferences.maxProxyTools, 60);
+  assert.equal(pack.preferences.allowedProxyToolsByServer, undefined);
 });
 
 test('resolveDiscoveryPack returns null for unknown pack ids', () => {
@@ -735,22 +746,26 @@ test('resolveDiscoveryPack returns null for unknown pack ids', () => {
 
 test('resolveIntentRouteCandidate prefers allowlisted route when visible', () => {
   const runtime = createIntentRuntime();
-  const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
-    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
-    maxProxyTools: null,
-  }, {
-    accountId: 'acct_1',
-    tenantId: null,
-    userId: null,
-    sessionId: null,
-    authMode: 'fallback',
-    toolMode: 'read_only',
-    serviceTier: null,
-    entitlementSnapshot: null,
-    allowedToolPrefixes: null,
-    identitySource: 'fallback',
-  });
+  const visible = buildVisibleProxyRoutes(
+    runtime as any,
+    {
+      mode: 'compact',
+      activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+      maxProxyTools: null
+    },
+    {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: null,
+      sessionId: null,
+      authMode: 'fallback',
+      toolMode: 'read_only',
+      serviceTier: null,
+      entitlementSnapshot: null,
+      allowedToolPrefixes: null,
+      identitySource: 'fallback'
+    }
+  );
 
   const route = resolveIntentRouteCandidate(visible, { intent: 'create_zoom_meeting' });
   assert.equal(route.source, 'allowlist');
@@ -759,25 +774,29 @@ test('resolveIntentRouteCandidate prefers allowlisted route when visible', () =>
 
 test('resolveIntentRouteCandidate uses heuristic router for natural language intents', () => {
   const runtime = createIntentRuntime();
-  const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
-    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
-    maxProxyTools: null,
-  }, {
-    accountId: 'acct_1',
-    tenantId: null,
-    userId: null,
-    sessionId: null,
-    authMode: 'fallback',
-    toolMode: 'read_only',
-    serviceTier: null,
-    entitlementSnapshot: null,
-    allowedToolPrefixes: null,
-    identitySource: 'fallback',
-  });
+  const visible = buildVisibleProxyRoutes(
+    runtime as any,
+    {
+      mode: 'compact',
+      activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+      maxProxyTools: null
+    },
+    {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: null,
+      sessionId: null,
+      authMode: 'fallback',
+      toolMode: 'read_only',
+      serviceTier: null,
+      entitlementSnapshot: null,
+      allowedToolPrefixes: null,
+      identitySource: 'fallback'
+    }
+  );
 
   const route = resolveIntentRouteCandidate(visible, {
-    intent: 'create a google sheet and write a formula',
+    intent: 'create a google sheet and write a formula'
   });
 
   assert.equal(route.source, 'allowlist');
@@ -786,25 +805,29 @@ test('resolveIntentRouteCandidate uses heuristic router for natural language int
 
 test('resolveIntentRouteCandidate maps legacy sheet-write phrasing to batch update', () => {
   const runtime = createIntentRuntime();
-  const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
-    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
-    maxProxyTools: null,
-  }, {
-    accountId: 'acct_1',
-    tenantId: null,
-    userId: null,
-    sessionId: null,
-    authMode: 'fallback',
-    toolMode: 'read_only',
-    serviceTier: null,
-    entitlementSnapshot: null,
-    allowedToolPrefixes: null,
-    identitySource: 'fallback',
-  });
+  const visible = buildVisibleProxyRoutes(
+    runtime as any,
+    {
+      mode: 'compact',
+      activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+      maxProxyTools: null
+    },
+    {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: null,
+      sessionId: null,
+      authMode: 'fallback',
+      toolMode: 'read_only',
+      serviceTier: null,
+      entitlementSnapshot: null,
+      allowedToolPrefixes: null,
+      identitySource: 'fallback'
+    }
+  );
 
   const route = resolveIntentRouteCandidate(visible, {
-    intent: 'write values in sheets',
+    intent: 'write values in sheets'
   });
 
   assert.equal(route.source, 'allowlist');
@@ -813,25 +836,29 @@ test('resolveIntentRouteCandidate maps legacy sheet-write phrasing to batch upda
 
 test('resolveIntentRouteCandidate maps legacy spreadsheet search phrasing to values get', () => {
   const runtime = createIntentRuntime();
-  const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
-    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
-    maxProxyTools: null,
-  }, {
-    accountId: 'acct_1',
-    tenantId: null,
-    userId: null,
-    sessionId: null,
-    authMode: 'fallback',
-    toolMode: 'read_only',
-    serviceTier: null,
-    entitlementSnapshot: null,
-    allowedToolPrefixes: null,
-    identitySource: 'fallback',
-  });
+  const visible = buildVisibleProxyRoutes(
+    runtime as any,
+    {
+      mode: 'compact',
+      activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+      maxProxyTools: null
+    },
+    {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: null,
+      sessionId: null,
+      authMode: 'fallback',
+      toolMode: 'read_only',
+      serviceTier: null,
+      entitlementSnapshot: null,
+      allowedToolPrefixes: null,
+      identitySource: 'fallback'
+    }
+  );
 
   const route = resolveIntentRouteCandidate(visible, {
-    intent: 'search_spreadsheets',
+    intent: 'search_spreadsheets'
   });
 
   assert.equal(route.source, 'allowlist');
@@ -840,27 +867,31 @@ test('resolveIntentRouteCandidate maps legacy spreadsheet search phrasing to val
 
 test('resolveIntentRouteCandidate falls back to discovery for unknown intents', () => {
   const runtime = createIntentRuntime();
-  const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
-    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
-    maxProxyTools: null,
-  }, {
-    accountId: 'acct_1',
-    tenantId: null,
-    userId: null,
-    sessionId: null,
-    authMode: 'fallback',
-    toolMode: 'read_only',
-    serviceTier: null,
-    entitlementSnapshot: null,
-    allowedToolPrefixes: null,
-    identitySource: 'fallback',
-  });
+  const visible = buildVisibleProxyRoutes(
+    runtime as any,
+    {
+      mode: 'compact',
+      activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+      maxProxyTools: null
+    },
+    {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: null,
+      sessionId: null,
+      authMode: 'fallback',
+      toolMode: 'read_only',
+      serviceTier: null,
+      entitlementSnapshot: null,
+      allowedToolPrefixes: null,
+      identitySource: 'fallback'
+    }
+  );
 
   const route = resolveIntentRouteCandidate(visible, {
     intent: 'record workflow rows',
     query: 'batch',
-    serverName: 'composio-toolkit-googlesheets',
+    serverName: 'composio-toolkit-googlesheets'
   });
   assert.equal(route.source, 'discovery');
   assert.equal(route.proxyToolName, 'composio-toolkit-googlesheets__googlesheets_batch_update');
@@ -868,27 +899,31 @@ test('resolveIntentRouteCandidate falls back to discovery for unknown intents', 
 
 test('resolveIntentRouteCandidate de-prioritizes deprecated discovery tools', () => {
   const runtime = createIntentRuntime();
-  const visible = buildVisibleProxyRoutes(runtime as any, {
-    mode: 'compact',
-    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
-    maxProxyTools: null,
-  }, {
-    accountId: 'acct_1',
-    tenantId: null,
-    userId: null,
-    sessionId: null,
-    authMode: 'fallback',
-    toolMode: 'read_only',
-    serviceTier: null,
-    entitlementSnapshot: null,
-    allowedToolPrefixes: null,
-    identitySource: 'fallback',
-  });
+  const visible = buildVisibleProxyRoutes(
+    runtime as any,
+    {
+      mode: 'compact',
+      activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+      maxProxyTools: null
+    },
+    {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: null,
+      sessionId: null,
+      authMode: 'fallback',
+      toolMode: 'read_only',
+      serviceTier: null,
+      entitlementSnapshot: null,
+      allowedToolPrefixes: null,
+      identitySource: 'fallback'
+    }
+  );
 
   const route = resolveIntentRouteCandidate(visible, {
     intent: 'workflow synchronization task',
     query: 'write',
-    serverName: 'composio-toolkit-googlesheets',
+    serverName: 'composio-toolkit-googlesheets'
   });
 
   assert.equal(route.source, 'discovery');

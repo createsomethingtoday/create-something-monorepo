@@ -107,39 +107,25 @@
     "webflow-marketplace-review-phase-a": {
       "description": "Phase A reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus bounded reviewer-safe actions and metrics.",
       "mode": "compact",
-      "activeServers": [
-        "webflow-template-review-mcp"
-      ],
+      "activeServers": ["webflow-template-review-mcp"],
       "maxProxyTools": 18
     },
     "webflow-marketplace-review-phase-b": {
-      "description": "Phase B reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus selected remote analyzer tools.",
+      "description": "Phase B reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus the full remote analyzer tool surface.",
       "mode": "compact",
-      "activeServers": [
-        "webflow-template-review-mcp",
-        "webflow-site-analyzer-mcp"
-      ],
-      "maxProxyTools": 30,
-      "allowedProxyToolsByServer": {
-        "webflow-site-analyzer-mcp": [
-          "score_designer_checklist"
-        ]
-      }
+      "activeServers": ["webflow-template-review-mcp", "webflow-site-analyzer-mcp"],
+      "maxProxyTools": 60
     },
     "webflow-marketplace-app-review-phase-a": {
       "description": "Phase A reviewer pack for Webflow Marketplace app review. Read-only app review context only.",
       "mode": "compact",
-      "activeServers": [
-        "webflow-app-review-mcp"
-      ],
+      "activeServers": ["webflow-app-review-mcp"],
       "maxProxyTools": 6
     },
     "webflow-marketplace-app-review-phase-b": {
       "description": "Production reviewer pack for Webflow Marketplace app review. Full downstream app-review tool surface.",
       "mode": "full",
-      "activeServers": [
-        "webflow-app-review-mcp"
-      ],
+      "activeServers": ["webflow-app-review-mcp"],
       "maxProxyTools": 18
     }
   }
