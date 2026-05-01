@@ -676,6 +676,90 @@ select {
   margin-top: 0.5rem;
 }
 
+.submission-readiness-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid rgba(8, 8, 8, 0.08);
+  border-radius: 0.875rem;
+  background: #fff;
+}
+
+.submission-readiness-banner.is-ready {
+  border-color: rgba(0, 122, 65, 0.22);
+  background: rgba(0, 122, 65, 0.055);
+}
+
+.submission-readiness-banner.is-review {
+  border-color: rgba(20, 110, 245, 0.18);
+  background: rgba(20, 110, 245, 0.045);
+}
+
+.submission-readiness-banner.is-blocked {
+  border-color: rgba(180, 35, 24, 0.24);
+  background: rgba(180, 35, 24, 0.055);
+}
+
+.submission-readiness-copy {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.submission-readiness-kicker {
+  color: #676767;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.submission-readiness-title {
+  color: #191919;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.submission-readiness-banner.is-ready .submission-readiness-title {
+  color: #007a41;
+}
+
+.submission-readiness-banner.is-blocked .submission-readiness-title {
+  color: #b42318;
+}
+
+.submission-readiness-message {
+  max-width: 58rem;
+}
+
+.submission-readiness-list {
+  display: flex;
+  flex: 0 1 18rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.submission-readiness-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: 0.28rem 0.6rem;
+  border: 1px solid rgba(8, 8, 8, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #4a4a4a;
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
 .submission-review-card {
   display: flex;
   flex-direction: column;
@@ -1272,6 +1356,16 @@ select {
 
   .submission-creator-resolved {
     padding: 0.875rem 1rem;
+  }
+
+  .submission-readiness-banner {
+    flex-direction: column;
+  }
+
+  .submission-readiness-list {
+    flex-basis: auto;
+    justify-content: flex-start;
+    width: 100%;
   }
 
   .submission-review-grid {

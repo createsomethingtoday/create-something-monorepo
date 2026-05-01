@@ -2605,6 +2605,8 @@ function showResults(data: ValidationResponse): void {
       </div>
     </div>
 
+    ${createMarketplaceOutcomeHTML(data)}
+
     <!-- Summary Stats -->
     <div class="results-summary">
       <div class="summary-stat">
@@ -2687,12 +2689,13 @@ function showResults(data: ValidationResponse): void {
 }
 
 function createCategoryHTML(cat: CategoryResult, idx: number, collectedData?: any[]): string {
+  const status = getCategoryStatus(cat);
   return `
     <div class="category-section ${idx === 0 ? 'first' : ''}">
       <div class="category-header">
         <h3 class="category-title">${cat.category}</h3>
-        <div class="category-status ${cat.passed ? 'passed' : 'failed'}">
-          ${cat.passed ? 'PASS' : 'NEEDS ATTENTION'}
+        <div class="category-status ${status.className}">
+          ${status.label}
         </div>
         ${cat.stats ? `<span class="category-stats">${formatCategoryStats(cat.stats)}</span>` : ''}
       </div>
@@ -2717,27 +2720,144 @@ function createIssuesHTML(issues: ValidationIssue[]): string {
 function createIssueHTML(issue: ValidationIssue): string {
   const howToFix = getIssueHowToFix(issue);
   const location = getIssueLocation(issue);
+  const policy = getIssuePolicy(issue);
   return `
     <div class="issue-item ${issue.severity}">
       <div class="issue-content">
         <span class="issue-severity ${issue.severity}">
-          ${issue.severity === 'warning' ? 'OPTIONAL' : issue.severity === 'info' ? 'TIP' : issue.severity.toUpperCase()}
+          ${getIssueSeverityLabel(issue)}
         </span>
         <div class="issue-details">
           <div class="issue-message">${issue.message}</div>
+          ${policy ? createIssuePolicyHTML(issue) : ''}
           ${howToFix ? `
             <div class="issue-fix">
-              <strong>${issue.severity === 'warning' ? '💭 Suggestion:' : issue.severity === 'info' ? '💡 Tip:' : '🔧 How to fix:'}</strong> ${howToFix}
+              <strong>${policy ? 'Required fix:' : issue.severity === 'warning' ? 'Suggestion:' : issue.severity === 'info' ? 'Tip:' : 'How to fix:'}</strong> ${howToFix}
             </div>
           ` : ''}
           ${location ? `
             <div class="issue-location">
-              <strong>📍 Location:</strong> ${location}
+              <strong>Location:</strong> ${location}
             </div>
           ` : ''}
           ${createDetailsHTML(issue.details)}
         </div>
       </div>
+    </div>
+  `;
+}
+
+function createMarketplaceOutcomeHTML(data: ValidationResponse): string {
+  const outcome = getMarketplaceOutcome(data);
+
+  return `
+    <div class="marketplace-outcome ${outcome.className}">
+      <div class="marketplace-outcome-main">
+        <span class="marketplace-outcome-kicker">Marketplace outcome</span>
+        <div class="marketplace-outcome-title">${outcome.title}</div>
+        <p class="marketplace-outcome-copy">${outcome.copy}</p>
+      </div>
+      <div class="marketplace-outcome-meta">
+        <span class="marketplace-outcome-badge">${outcome.badge}</span>
+        <span class="marketplace-outcome-time">Validated ${new Date().toLocaleTimeString()}</span>
+      </div>
+    </div>
+  `;
+}
+
+function getMarketplaceOutcome(data: ValidationResponse): {
+  className: string;
+  title: string;
+  copy: string;
+  badge: string;
+} {
+  const errors = data.summary.totalErrors || data.summary.errors || 0;
+  const warnings = data.summary.totalWarnings || data.summary.warnings || 0;
+  const hasRejectedPolicy = data.categories.some((category) =>
+    category.issues?.some((issue) => getIssuePolicy(issue) === 'ix2-rejected')
+  );
+
+  if (hasRejectedPolicy) {
+    return {
+      className: 'is-rejected',
+      title: 'Rejected policy detected',
+      copy: 'Legacy IX2 interactions were found. Templates submitted on or after May 1, 2026 should be rejected until interactions are rebuilt with Webflow Interactions powered by GSAP.',
+      badge: 'Rejected'
+    };
+  }
+
+  if (errors > 0) {
+    return {
+      className: 'is-blocked',
+      title: 'Blocked by validation errors',
+      copy: 'Resolve every error-level issue, publish the site again, and re-run validation before submitting the template.',
+      badge: 'Blocked'
+    };
+  }
+
+  if (warnings > 0) {
+    return {
+      className: 'is-review',
+      title: 'Needs reviewer attention',
+      copy: 'No blocking errors were found, but the warnings below should be reviewed before handoff.',
+      badge: 'Needs review'
+    };
+  }
+
+  return {
+    className: 'is-ready',
+    title: 'Ready for marketplace review',
+    copy: 'No blocking errors or warnings were found. Re-run validation after any Designer changes and after publishing.',
+    badge: 'Ready'
+  };
+}
+
+function getCategoryStatus(cat: CategoryResult): { className: string; label: string } {
+  const issues = Array.isArray(cat.issues) ? cat.issues : [];
+  if (issues.some((issue) => getIssuePolicy(issue))) {
+    return { className: 'rejected', label: 'Rejected policy' };
+  }
+  if (issues.some((issue) => issue.severity === 'error')) {
+    return { className: 'blocked', label: 'Blocked' };
+  }
+  if (issues.some((issue) => issue.severity === 'warning')) {
+    return { className: 'review', label: 'Review' };
+  }
+  return { className: 'passed', label: 'Pass' };
+}
+
+function getIssueSeverityLabel(issue: ValidationIssue): string {
+  if (getIssuePolicy(issue)) return 'Rejected policy';
+  if (issue.severity === 'warning') return 'Review';
+  if (issue.severity === 'info') return 'Tip';
+  return 'Blocked';
+}
+
+function getIssuePolicy(issue: ValidationIssue): string | undefined {
+  const policy = issue.details?.policy;
+  return typeof policy === 'string' ? policy : undefined;
+}
+
+function createIssuePolicyHTML(issue: ValidationIssue): string {
+  const details = issue.details;
+  if (!details) return '';
+
+  const policy = getIssuePolicy(issue);
+  const effectiveDate = typeof details.effectiveDate === 'string' ? details.effectiveDate : undefined;
+  const legacyIx2Count = typeof details.legacyIx2Count === 'number' ? details.legacyIx2Count : undefined;
+
+  return `
+    <div class="issue-policy">
+      <div class="issue-policy-row">
+        <span class="issue-policy-label">Policy</span>
+        <span>${policy || 'Marketplace policy'}${effectiveDate ? `, effective ${effectiveDate}` : ''}</span>
+      </div>
+      ${legacyIx2Count !== undefined ? `
+        <div class="issue-policy-row">
+          <span class="issue-policy-label">Detected</span>
+          <span>${legacyIx2Count} legacy IX2 marker${legacyIx2Count === 1 ? '' : 's'}</span>
+        </div>
+      ` : ''}
     </div>
   `;
 }

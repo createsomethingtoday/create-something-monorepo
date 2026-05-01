@@ -702,6 +702,49 @@ function ReviewChecklistCard({
   );
 }
 
+function TemplateReadinessBanner({
+  items,
+  status,
+}: {
+  items: readonly ReviewChecklistItem[];
+  status?: StatusMessage | null;
+}) {
+  const pendingItems = items.filter((item) => !item.complete);
+  const isBlocked = status?.tone === 'error';
+  const isReady = !isBlocked && pendingItems.length === 0;
+  const tone = isBlocked ? 'blocked' : isReady ? 'ready' : 'review';
+  const title = isBlocked ? 'Blocked' : isReady ? 'Ready for handoff' : 'Needs review';
+  const copy = isBlocked
+    ? status?.message || 'Resolve the blocking validation issue before submitting.'
+    : isReady
+      ? 'Required checks are complete. Re-run validation after any Designer changes and publish before submitting.'
+      : `${pendingItems.length} required item${pendingItems.length === 1 ? '' : 's'} still need attention before this can be submitted.`;
+
+  return (
+    <div className={`submission-readiness-banner is-${tone}`} aria-live="polite">
+      <div className="submission-readiness-copy">
+        <div className="submission-readiness-kicker">Submission outcome</div>
+        <div className="submission-readiness-title">{title}</div>
+        <p className="field-help submission-readiness-message">{copy}</p>
+      </div>
+      {!isReady && pendingItems.length > 0 ? (
+        <div className="submission-readiness-list" aria-label="Remaining submission checks">
+          {pendingItems.slice(0, 3).map((item) => (
+            <span className="submission-readiness-chip" key={item.label}>
+              {item.label}
+            </span>
+          ))}
+          {pendingItems.length > 3 ? (
+            <span className="submission-readiness-chip">
+              +{pendingItems.length - 3} more
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 export function TemplateIntake() {
@@ -3065,6 +3108,8 @@ export function TemplateIntake() {
                       </div>
                     ))}
                   </div>
+
+                  <TemplateReadinessBanner items={reviewItems} status={templateStatus} />
 
                   <ReviewChecklistCard
                     title="Review the final handoff"
