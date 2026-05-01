@@ -1185,7 +1185,20 @@ function createPublishedOnlyDesignerReport(
     // Keep the input URL as a fallback label when URL parsing fails.
   }
 
-  const discoveredUrls = Array.from(new Set([publishedUrl, ...precheck.discoveredUrls]));
+  const normalizeDiscoveredUrl = (url: string): string => {
+    try {
+      const parsed = new URL(url);
+      parsed.hash = '';
+      parsed.search = '';
+      parsed.pathname = parsed.pathname.replace(/\/$/, '') || '/';
+      return parsed.toString();
+    } catch {
+      return url;
+    }
+  };
+  const discoveredUrls = Array.from(
+    new Set([publishedUrl, ...precheck.discoveredUrls].map(normalizeDiscoveredUrl))
+  );
   const pages = discoveredUrls.slice(0, 200).map((url) => {
     try {
       const parsed = new URL(url);
@@ -2874,8 +2887,18 @@ function unifyRows(
   );
 
   // Content quality checks
-  const loremPages = published.pages.filter((p) => p.contentQuality?.hasLoremIpsum);
-  const placeholderPages = published.pages.filter((p) => p.contentQuality?.hasPlaceholderText);
+  const isUtilityContentPage = (page: PublishedSnippetPageResult): boolean => {
+    const classification = page.classification || '';
+    if (classification.startsWith('utility:')) return true;
+    const pathname = new URL(page.url).pathname.toLowerCase();
+    return /\/(template\/)?(style-guide|instructions?|licenses?|change-?log)(\/|$)/.test(pathname);
+  };
+  const loremPages = published.pages.filter(
+    (p) => p.contentQuality?.hasLoremIpsum && !isUtilityContentPage(p)
+  );
+  const placeholderPages = published.pages.filter(
+    (p) => p.contentQuality?.hasPlaceholderText && !isUtilityContentPage(p)
+  );
   const loremPaths = loremPages
     .map((p) => p.url.replace(published.origin, ''))
     .slice(0, 5);
@@ -3130,7 +3153,7 @@ async function executeTemplateReview(
   const crawledPages = published.visitedPages;
   const skippedPages = published.skippedUrls.length;
   const coveragePercent = totalKnownPages > 0
-    ? Math.round((crawledPages / totalKnownPages) * 100)
+    ? Math.min(100, Math.round((crawledPages / totalKnownPages) * 100))
     : 100;
 
   const summary: import('./types.js').UnifiedTemplateReviewSummary = {

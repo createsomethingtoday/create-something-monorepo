@@ -178,3 +178,20 @@ test('published-site output conventions are not promoted to hard blockers', () =
   assert.equal(row(rows, 'pages.image_dimensions').status, 'partial');
   assert.equal(row(rows, 'responsive.multi_breakpoint_check').status, 'manual');
 });
+
+test('utility style guide placeholder text is not approval-blocking content evidence', () => {
+  const crawl = publishedCrawl();
+  crawl.pages[1] = {
+    ...crawl.pages[1],
+    url: 'https://az-bergamo.webflow.io/template/style-guide-cf',
+    classification: 'utility:style-guide',
+    contentQuality: {
+      hasLoremIpsum: false,
+      hasPlaceholderText: true
+    }
+  };
+
+  const rows = __test.unifyRows(designerReport(), crawl, true);
+
+  assert.equal(row(rows, 'content.no_placeholder_text').status, 'pass');
+});
