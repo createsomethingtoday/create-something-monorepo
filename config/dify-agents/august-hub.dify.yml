@@ -1,0 +1,314 @@
+app:
+  description: August of Half Dozen | HUB MCP
+  icon: d38a1ef3-3163-42f9-846a-c0e659048215
+  icon_background: ''
+  icon_type: image
+  mode: agent-chat
+  name: AUGUST HUB
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 10
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_status
+        tool_name: hub_status
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_list_registry
+        tool_name: hub_list_registry
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_list_proxy_tools
+        tool_name: hub_list_proxy_tools
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_search_proxy_tools
+        tool_name: hub_search_proxy_tools
+        tool_parameters:
+          cursor: null
+          limit: null
+          query: null
+          serverName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_route_intent
+        tool_name: hub_route_intent
+        tool_parameters:
+          allowDiscoveryFallback: null
+          intent: null
+          limit: null
+          query: null
+          serverName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_describe_proxy_tool
+        tool_name: hub_describe_proxy_tool
+        tool_parameters:
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_get_proxy_tool
+        tool_name: hub_get_proxy_tool
+        tool_parameters:
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_run_intent
+        tool_name: hub_run_intent
+        tool_parameters:
+          allowDiscoveryFallback: null
+          args: null
+          intent: null
+          limit: null
+          query: null
+          serverName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_execute_proxy_tool
+        tool_name: hub_execute_proxy_tool
+        tool_parameters:
+          args: null
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_run_proxy_tool
+        tool_name: hub_run_proxy_tool
+        tool_parameters:
+          args: null
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_list_services
+        tool_name: hub_list_services
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_list_discovery_packs
+        tool_name: hub_list_discovery_packs
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_set_discovery
+        tool_name: hub_set_discovery
+        tool_parameters:
+          activeServers: null
+          maxProxyTools: null
+          mode: null
+          pack: null
+          reset: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_refresh_connections
+        tool_name: hub_refresh_connections
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_update_state
+        tool_name: hub_update_state
+        tool_parameters:
+          disableBundles: null
+          disableServers: null
+          enableBundles: null
+          enableServers: null
+          setBundles: null
+          setServers: null
+          writeCodexConfig: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_trace_lookup
+        tool_name: hub_trace_lookup
+        tool_parameters:
+          correlationId: null
+          limit: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: august_hub
+        provider_name: AUGUST HUB
+        provider_type: mcp
+        tool_label: hub_policy_status
+        tool_name: hub_policy_status
+        tool_parameters: {}
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      - .MP4
+      - .MOV
+      - .MPEG
+      - .WEBM
+    allowed_file_types:
+      - image
+    allowed_file_upload_methods:
+      - remote_url
+      - local_file
+    enabled: true
+    image:
+      detail: high
+      enabled: true
+      number_limits: 3
+      transfer_methods:
+        - remote_url
+        - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      stop: []
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt:
+    'Use Hub MCP for third-party actions and data retrieval. Prefer hub_list_services first.
+
+    Keep tool calls to the minimum; parallelize independent reads.
+
+    Follow tool schemas exactly; on errors, correct arguments and retry until resolved.
+
+    If auth is needed, use Hub connection tools and instruct the user to complete
+    auth in the UI.
+
+    Do not send/post/delete externally unless the user explicitly requests it; default
+    to drafting for review.
+
+    When drafting replies, read the full thread first and clearly separate summary
+    vs draft.'
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0

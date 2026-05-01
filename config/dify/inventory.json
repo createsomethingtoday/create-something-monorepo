@@ -1381,6 +1381,702 @@
           "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
         }
       ]
+    },
+    "fillip_hub": {
+      "display_name": "FILLIP HUB",
+      "transport": "http",
+      "url": "https://fillip.mcp.createsomething.agency/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/mcp-hub/hubs",
+          "secret_key": "CS_HUB_FILLIP_API_TOKEN"
+        }
+      },
+      "tools": [
+        {
+          "name": "hub_describe_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_execute_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_get_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_list_discovery_packs",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_proxy_tools",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_registry",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_services",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_policy_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_refresh_connections",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "hub_route_intent",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: allowDiscoveryFallback, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_intent",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: allowDiscoveryFallback, args, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_search_proxy_tools",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: cursor, limit, query, serverName"
+        },
+        {
+          "name": "hub_set_discovery",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: activeServers, maxProxyTools, mode, pack, reset"
+        },
+        {
+          "name": "hub_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_trace_lookup",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: correlationId, limit"
+        },
+        {
+          "name": "hub_update_state",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
+        }
+      ]
+    },
+    "august_hub": {
+      "display_name": "AUGUST HUB",
+      "transport": "http",
+      "url": "https://august.mcp.createsomething.agency/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/mcp-hub/hubs",
+          "secret_key": "CS_HUB_AUGUST_API_TOKEN"
+        }
+      },
+      "tools": [
+        {
+          "name": "hub_describe_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_execute_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_get_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_list_discovery_packs",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_proxy_tools",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_registry",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_services",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_policy_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_refresh_connections",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "hub_route_intent",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: allowDiscoveryFallback, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_intent",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: allowDiscoveryFallback, args, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_search_proxy_tools",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: cursor, limit, query, serverName"
+        },
+        {
+          "name": "hub_set_discovery",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: activeServers, maxProxyTools, mode, pack, reset"
+        },
+        {
+          "name": "hub_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_trace_lookup",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: correlationId, limit"
+        },
+        {
+          "name": "hub_update_state",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
+        }
+      ]
+    },
+    "leah_hub": {
+      "display_name": "LEAH HUB",
+      "transport": "http",
+      "url": "https://leah.mcp.createsomething.agency/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/mcp-hub/hubs",
+          "secret_key": "CS_HUB_LEAH_API_TOKEN"
+        }
+      },
+      "tools": [
+        {
+          "name": "hub_describe_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_execute_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_get_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_list_discovery_packs",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_proxy_tools",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_registry",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_services",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_policy_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_refresh_connections",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "hub_route_intent",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: allowDiscoveryFallback, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_intent",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: allowDiscoveryFallback, args, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_search_proxy_tools",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: cursor, limit, query, serverName"
+        },
+        {
+          "name": "hub_set_discovery",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: activeServers, maxProxyTools, mode, pack, reset"
+        },
+        {
+          "name": "hub_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_trace_lookup",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: correlationId, limit"
+        },
+        {
+          "name": "hub_update_state",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
+        }
+      ]
+    },
+    "lainy_hub": {
+      "display_name": "LAINY HUB",
+      "transport": "http",
+      "url": "https://lainy.mcp.createsomething.agency/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/mcp-hub/hubs",
+          "secret_key": "CS_HUB_LAINY_API_TOKEN"
+        }
+      },
+      "tools": [
+        {
+          "name": "hub_describe_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_execute_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_get_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_list_discovery_packs",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_proxy_tools",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_registry",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_services",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_policy_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_refresh_connections",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "hub_route_intent",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: allowDiscoveryFallback, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_intent",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: allowDiscoveryFallback, args, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_search_proxy_tools",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: cursor, limit, query, serverName"
+        },
+        {
+          "name": "hub_set_discovery",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: activeServers, maxProxyTools, mode, pack, reset"
+        },
+        {
+          "name": "hub_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_trace_lookup",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: correlationId, limit"
+        },
+        {
+          "name": "hub_update_state",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
+        }
+      ]
+    },
+    "danny_hub": {
+      "display_name": "DANNY HUB",
+      "transport": "http",
+      "url": "https://danny.mcp.createsomething.agency/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/mcp-hub/hubs",
+          "secret_key": "CS_HUB_DANNY_API_TOKEN"
+        }
+      },
+      "tools": [
+        {
+          "name": "hub_describe_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_execute_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_get_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_list_discovery_packs",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_proxy_tools",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_registry",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_services",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_policy_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_refresh_connections",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "hub_route_intent",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: allowDiscoveryFallback, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_intent",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: allowDiscoveryFallback, args, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_search_proxy_tools",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: cursor, limit, query, serverName"
+        },
+        {
+          "name": "hub_set_discovery",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: activeServers, maxProxyTools, mode, pack, reset"
+        },
+        {
+          "name": "hub_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_trace_lookup",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: correlationId, limit"
+        },
+        {
+          "name": "hub_update_state",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
+        }
+      ]
+    },
+    "mj_hub": {
+      "display_name": "MJ HUB",
+      "transport": "http",
+      "url": "https://mj.mcp.createsomething.agency/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/mcp-hub/hubs",
+          "secret_key": "CS_HUB_MJ_API_TOKEN"
+        }
+      },
+      "tools": [
+        {
+          "name": "hub_describe_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_execute_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_get_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_list_discovery_packs",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_proxy_tools",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_registry",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_services",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_policy_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_refresh_connections",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "hub_route_intent",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: allowDiscoveryFallback, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_intent",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: allowDiscoveryFallback, args, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_search_proxy_tools",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: cursor, limit, query, serverName"
+        },
+        {
+          "name": "hub_set_discovery",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: activeServers, maxProxyTools, mode, pack, reset"
+        },
+        {
+          "name": "hub_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_trace_lookup",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: correlationId, limit"
+        },
+        {
+          "name": "hub_update_state",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
+        }
+      ]
     }
   },
   "agents": {
@@ -2465,6 +3161,354 @@
       "owner": "create-something",
       "write_policy": "requires_explicit_confirmation",
       "notes": "Imported from exported Dify DSL. Static-bearer Hub access is validated by direct MCP probe and Dify Service API smoke."
+    },
+    "fillip-hub": {
+      "display_name": "FILLIP HUB",
+      "runtime": "dify",
+      "status": "imported",
+      "audience": "client",
+      "mode": "agent-chat",
+      "manifest_path": "config/dify-agents/fillip-hub.json",
+      "dsl_path": "config/dify-agents/fillip-hub.dify.yml",
+      "service_api": {
+        "base_url": "https://api.dify.ai/v1",
+        "api_key_secret": {
+          "environment": "prod",
+          "path": "/dify/fillip-hub",
+          "secret_key": "DIFY_FILLIP_HUB_API_KEY"
+        }
+      },
+      "allowed_mcp_servers": ["fillip_hub"],
+      "enabled_tools": [
+        "fillip_hub.hub_describe_proxy_tool",
+        "fillip_hub.hub_execute_proxy_tool",
+        "fillip_hub.hub_get_proxy_tool",
+        "fillip_hub.hub_list_discovery_packs",
+        "fillip_hub.hub_list_proxy_tools",
+        "fillip_hub.hub_list_registry",
+        "fillip_hub.hub_list_services",
+        "fillip_hub.hub_policy_status",
+        "fillip_hub.hub_refresh_connections",
+        "fillip_hub.hub_route_intent",
+        "fillip_hub.hub_run_intent",
+        "fillip_hub.hub_run_proxy_tool",
+        "fillip_hub.hub_search_proxy_tools",
+        "fillip_hub.hub_set_discovery",
+        "fillip_hub.hub_status",
+        "fillip_hub.hub_trace_lookup",
+        "fillip_hub.hub_update_state"
+      ],
+      "policy_pack": "client-fillip-hub.v1",
+      "instructions_source": "config/dify-agents/fillip-hub.json#agent_prompt",
+      "eval_suite": "braintrust:eval:dify:fillip-hub",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "fillip_hub",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "secret_refusal",
+          "latency_budget",
+          "policy_boundary",
+          "write_confirmation"
+        ],
+        "notes": "Imported from Dify DSL. Add smoke cases, local_command, and published_command before publishing."
+      },
+      "owner": "create-something",
+      "write_policy": "requires_explicit_confirmation",
+      "notes": "Imported from exported Dify DSL. Confirm Service API key and add Braintrust eval evidence before marking published."
+    },
+    "august-hub": {
+      "display_name": "AUGUST HUB",
+      "runtime": "dify",
+      "status": "imported",
+      "audience": "client",
+      "mode": "agent-chat",
+      "manifest_path": "config/dify-agents/august-hub.json",
+      "dsl_path": "config/dify-agents/august-hub.dify.yml",
+      "service_api": {
+        "base_url": "https://api.dify.ai/v1",
+        "api_key_secret": {
+          "environment": "prod",
+          "path": "/dify/august-hub",
+          "secret_key": "DIFY_AUGUST_HUB_API_KEY"
+        }
+      },
+      "allowed_mcp_servers": ["august_hub"],
+      "enabled_tools": [
+        "august_hub.hub_describe_proxy_tool",
+        "august_hub.hub_execute_proxy_tool",
+        "august_hub.hub_get_proxy_tool",
+        "august_hub.hub_list_discovery_packs",
+        "august_hub.hub_list_proxy_tools",
+        "august_hub.hub_list_registry",
+        "august_hub.hub_list_services",
+        "august_hub.hub_policy_status",
+        "august_hub.hub_refresh_connections",
+        "august_hub.hub_route_intent",
+        "august_hub.hub_run_intent",
+        "august_hub.hub_run_proxy_tool",
+        "august_hub.hub_search_proxy_tools",
+        "august_hub.hub_set_discovery",
+        "august_hub.hub_status",
+        "august_hub.hub_trace_lookup",
+        "august_hub.hub_update_state"
+      ],
+      "policy_pack": "client-august-hub.v1",
+      "instructions_source": "config/dify-agents/august-hub.json#agent_prompt",
+      "eval_suite": "braintrust:eval:dify:august-hub",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "august_hub",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "secret_refusal",
+          "latency_budget",
+          "policy_boundary",
+          "write_confirmation"
+        ],
+        "notes": "Imported from Dify DSL. Add smoke cases, local_command, and published_command before publishing."
+      },
+      "owner": "create-something",
+      "write_policy": "requires_explicit_confirmation",
+      "notes": "Imported from exported Dify DSL. Confirm Service API key and add Braintrust eval evidence before marking published."
+    },
+    "leah-hub": {
+      "display_name": "LEAH HUB",
+      "runtime": "dify",
+      "status": "imported",
+      "audience": "client",
+      "mode": "agent-chat",
+      "manifest_path": "config/dify-agents/leah-hub.json",
+      "dsl_path": "config/dify-agents/leah-hub.dify.yml",
+      "service_api": {
+        "base_url": "https://api.dify.ai/v1",
+        "api_key_secret": {
+          "environment": "prod",
+          "path": "/dify/leah-hub",
+          "secret_key": "DIFY_LEAH_HUB_API_KEY"
+        }
+      },
+      "allowed_mcp_servers": ["leah_hub"],
+      "enabled_tools": [
+        "leah_hub.hub_describe_proxy_tool",
+        "leah_hub.hub_execute_proxy_tool",
+        "leah_hub.hub_get_proxy_tool",
+        "leah_hub.hub_list_discovery_packs",
+        "leah_hub.hub_list_proxy_tools",
+        "leah_hub.hub_list_registry",
+        "leah_hub.hub_list_services",
+        "leah_hub.hub_policy_status",
+        "leah_hub.hub_refresh_connections",
+        "leah_hub.hub_route_intent",
+        "leah_hub.hub_run_intent",
+        "leah_hub.hub_run_proxy_tool",
+        "leah_hub.hub_search_proxy_tools",
+        "leah_hub.hub_set_discovery",
+        "leah_hub.hub_status",
+        "leah_hub.hub_trace_lookup",
+        "leah_hub.hub_update_state"
+      ],
+      "policy_pack": "client-leah-hub.v1",
+      "instructions_source": "config/dify-agents/leah-hub.json#agent_prompt",
+      "eval_suite": "braintrust:eval:dify:leah-hub",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "leah_hub",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "secret_refusal",
+          "latency_budget",
+          "policy_boundary",
+          "write_confirmation"
+        ],
+        "notes": "Imported from Dify DSL. Add smoke cases, local_command, and published_command before publishing."
+      },
+      "owner": "create-something",
+      "write_policy": "requires_explicit_confirmation",
+      "notes": "Imported from exported Dify DSL. Confirm Service API key and add Braintrust eval evidence before marking published."
+    },
+    "lainy-hub": {
+      "display_name": "LAINY HUB",
+      "runtime": "dify",
+      "status": "imported",
+      "audience": "client",
+      "mode": "agent-chat",
+      "manifest_path": "config/dify-agents/lainy-hub.json",
+      "dsl_path": "config/dify-agents/lainy-hub.dify.yml",
+      "service_api": {
+        "base_url": "https://api.dify.ai/v1",
+        "api_key_secret": {
+          "environment": "prod",
+          "path": "/dify/lainy-hub",
+          "secret_key": "DIFY_LAINY_HUB_API_KEY"
+        }
+      },
+      "allowed_mcp_servers": ["lainy_hub"],
+      "enabled_tools": [
+        "lainy_hub.hub_describe_proxy_tool",
+        "lainy_hub.hub_execute_proxy_tool",
+        "lainy_hub.hub_get_proxy_tool",
+        "lainy_hub.hub_list_discovery_packs",
+        "lainy_hub.hub_list_proxy_tools",
+        "lainy_hub.hub_list_registry",
+        "lainy_hub.hub_list_services",
+        "lainy_hub.hub_policy_status",
+        "lainy_hub.hub_refresh_connections",
+        "lainy_hub.hub_route_intent",
+        "lainy_hub.hub_run_intent",
+        "lainy_hub.hub_run_proxy_tool",
+        "lainy_hub.hub_search_proxy_tools",
+        "lainy_hub.hub_set_discovery",
+        "lainy_hub.hub_status",
+        "lainy_hub.hub_trace_lookup",
+        "lainy_hub.hub_update_state"
+      ],
+      "policy_pack": "client-lainy-hub.v1",
+      "instructions_source": "config/dify-agents/lainy-hub.json#agent_prompt",
+      "eval_suite": "braintrust:eval:dify:lainy-hub",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "lainy_hub",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "secret_refusal",
+          "latency_budget",
+          "policy_boundary",
+          "write_confirmation"
+        ],
+        "notes": "Imported from Dify DSL. Add smoke cases, local_command, and published_command before publishing."
+      },
+      "owner": "create-something",
+      "write_policy": "requires_explicit_confirmation",
+      "notes": "Imported from exported Dify DSL. Confirm Service API key and add Braintrust eval evidence before marking published."
+    },
+    "danny-hub": {
+      "display_name": "DANNY HUB",
+      "runtime": "dify",
+      "status": "imported",
+      "audience": "client",
+      "mode": "agent-chat",
+      "manifest_path": "config/dify-agents/danny-hub.json",
+      "dsl_path": "config/dify-agents/danny-hub.dify.yml",
+      "service_api": {
+        "base_url": "https://api.dify.ai/v1",
+        "api_key_secret": {
+          "environment": "prod",
+          "path": "/dify/danny-hub",
+          "secret_key": "DIFY_DANNY_HUB_API_KEY"
+        }
+      },
+      "allowed_mcp_servers": ["danny_hub"],
+      "enabled_tools": [
+        "danny_hub.hub_describe_proxy_tool",
+        "danny_hub.hub_execute_proxy_tool",
+        "danny_hub.hub_get_proxy_tool",
+        "danny_hub.hub_list_discovery_packs",
+        "danny_hub.hub_list_proxy_tools",
+        "danny_hub.hub_list_registry",
+        "danny_hub.hub_list_services",
+        "danny_hub.hub_policy_status",
+        "danny_hub.hub_refresh_connections",
+        "danny_hub.hub_route_intent",
+        "danny_hub.hub_run_intent",
+        "danny_hub.hub_run_proxy_tool",
+        "danny_hub.hub_search_proxy_tools",
+        "danny_hub.hub_set_discovery",
+        "danny_hub.hub_status",
+        "danny_hub.hub_trace_lookup",
+        "danny_hub.hub_update_state"
+      ],
+      "policy_pack": "client-danny-hub.v1",
+      "instructions_source": "config/dify-agents/danny-hub.json#agent_prompt",
+      "eval_suite": "braintrust:eval:dify:danny-hub",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "danny_hub",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "secret_refusal",
+          "latency_budget",
+          "policy_boundary",
+          "write_confirmation"
+        ],
+        "notes": "Imported from Dify DSL. Add smoke cases, local_command, and published_command before publishing."
+      },
+      "owner": "create-something",
+      "write_policy": "requires_explicit_confirmation",
+      "notes": "Imported from exported Dify DSL. Confirm Service API key and add Braintrust eval evidence before marking published."
+    },
+    "mj-hub": {
+      "display_name": "MJ HUB",
+      "runtime": "dify",
+      "status": "imported",
+      "audience": "client",
+      "mode": "agent-chat",
+      "manifest_path": "config/dify-agents/mj-hub.json",
+      "dsl_path": "config/dify-agents/mj-hub.dify.yml",
+      "service_api": {
+        "base_url": "https://api.dify.ai/v1",
+        "api_key_secret": {
+          "environment": "prod",
+          "path": "/dify/mj-hub",
+          "secret_key": "DIFY_MJ_HUB_API_KEY"
+        }
+      },
+      "allowed_mcp_servers": ["mj_hub"],
+      "enabled_tools": [
+        "mj_hub.hub_describe_proxy_tool",
+        "mj_hub.hub_execute_proxy_tool",
+        "mj_hub.hub_get_proxy_tool",
+        "mj_hub.hub_list_discovery_packs",
+        "mj_hub.hub_list_proxy_tools",
+        "mj_hub.hub_list_registry",
+        "mj_hub.hub_list_services",
+        "mj_hub.hub_policy_status",
+        "mj_hub.hub_refresh_connections",
+        "mj_hub.hub_route_intent",
+        "mj_hub.hub_run_intent",
+        "mj_hub.hub_run_proxy_tool",
+        "mj_hub.hub_search_proxy_tools",
+        "mj_hub.hub_set_discovery",
+        "mj_hub.hub_status",
+        "mj_hub.hub_trace_lookup",
+        "mj_hub.hub_update_state"
+      ],
+      "policy_pack": "client-mj-hub.v1",
+      "instructions_source": "config/dify-agents/mj-hub.json#agent_prompt",
+      "eval_suite": "braintrust:eval:dify:mj-hub",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "mj_hub",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "secret_refusal",
+          "latency_budget",
+          "policy_boundary",
+          "write_confirmation"
+        ],
+        "notes": "Imported from Dify DSL. Add smoke cases, local_command, and published_command before publishing."
+      },
+      "owner": "create-something",
+      "write_policy": "requires_explicit_confirmation",
+      "notes": "Imported from exported Dify DSL. Confirm Service API key and add Braintrust eval evidence before marking published."
     }
   }
 }

@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "status": "imported",
+  "created_at": "2026-05-01",
+  "source_dsl": {
+    "imported_from": "DANNY HUB.yml",
+    "repo_path": "config/dify-agents/danny-hub.dify.yml"
+  },
+  "dify_app": {
+    "name": "DANNY HUB",
+    "type": "agent",
+    "mode": "agent-chat",
+    "description": "Danny Morgan HUB MCP",
+    "recommended_model": "gpt-5.4",
+    "api_response_mode": "streaming",
+    "service_api": {
+      "base_url": "https://api.dify.ai/v1",
+      "api_key_secret": {
+        "environment": "prod",
+        "path": "/dify/danny-hub",
+        "secret_key": "DIFY_DANNY_HUB_API_KEY"
+      }
+    }
+  },
+  "mcp_server": {
+    "display_name": "DANNY HUB",
+    "server_id": "danny_hub",
+    "transport": "http",
+    "url": "https://danny.mcp.createsomething.agency/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/mcp-hub/hubs",
+        "secret_key": "CS_HUB_DANNY_API_TOKEN"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "hub_describe_proxy_tool",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["proxyToolName"]
+    },
+    {
+      "name": "hub_execute_proxy_tool",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["args", "proxyToolName"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_get_proxy_tool",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["proxyToolName"]
+    },
+    {
+      "name": "hub_list_discovery_packs",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_proxy_tools",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_registry",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_services",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_policy_status",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_refresh_connections",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_route_intent",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["allowDiscoveryFallback", "intent", "limit", "query", "serverName"]
+    },
+    {
+      "name": "hub_run_intent",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [
+        "allowDiscoveryFallback",
+        "args",
+        "intent",
+        "limit",
+        "query",
+        "serverName"
+      ],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_run_proxy_tool",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["args", "proxyToolName"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_search_proxy_tools",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["cursor", "limit", "query", "serverName"]
+    },
+    {
+      "name": "hub_set_discovery",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["activeServers", "maxProxyTools", "mode", "pack", "reset"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_status",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_trace_lookup",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["correlationId", "limit"]
+    },
+    {
+      "name": "hub_update_state",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [
+        "disableBundles",
+        "disableServers",
+        "enableBundles",
+        "enableServers",
+        "setBundles",
+        "setServers",
+        "writeCodexConfig"
+      ],
+      "requires_user_confirmation": true
+    }
+  ],
+  "agent_prompt": "Use Hub MCP for third-party actions and data retrieval. Prefer hub_list_services first.\nKeep tool calls to the minimum; parallelize independent reads.\nFollow tool schemas exactly; on errors, correct arguments and retry until resolved.\nIf auth is needed, use Hub connection tools and instruct the user to complete auth in the UI.\nDo not send/post/delete externally unless the user explicitly requests it; default to drafting for review.\nWhen drafting replies, read the full thread first and clearly separate summary vs draft.",
+  "inventory_target": {
+    "manifest_path": "config/dify-agents/danny-hub.json",
+    "dsl_path": "config/dify-agents/danny-hub.dify.yml"
+  }
+}

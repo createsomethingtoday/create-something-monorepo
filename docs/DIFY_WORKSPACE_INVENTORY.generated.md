@@ -29,6 +29,12 @@ Status: partial
 | `natalia_hub` | - | `https://wf-template-review-natalia.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `mariana_hub` | - | `https://wf-template-review-mariana.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `vicki_hub` | - | `https://wf-template-review-vicki.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `fillip_hub` | - | `https://fillip.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `august_hub` | - | `https://august.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `leah_hub` | - | `https://leah.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `lainy_hub` | - | `https://lainy.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `danny_hub` | - | `https://danny.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `mj_hub` | - | `https://mj.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 
 ## Agents
 
@@ -47,6 +53,12 @@ Status: partial
 | `natalia-hub` | `imported` | `client` | - | `natalia_hub` | 17 | `braintrust:eval:dify:natalia-hub` |
 | `mariana-hub` | `imported` | `client` | - | `mariana_hub` | 17 | `braintrust:eval:dify:mariana-hub` |
 | `vicki-hub` | `imported` | `client` | - | `vicki_hub` | 17 | `braintrust:eval:dify:vicki-hub` |
+| `fillip-hub` | `imported` | `client` | - | `fillip_hub` | 17 | `braintrust:eval:dify:fillip-hub` |
+| `august-hub` | `imported` | `client` | - | `august_hub` | 17 | `braintrust:eval:dify:august-hub` |
+| `leah-hub` | `imported` | `client` | - | `leah_hub` | 17 | `braintrust:eval:dify:leah-hub` |
+| `lainy-hub` | `imported` | `client` | - | `lainy_hub` | 17 | `braintrust:eval:dify:lainy-hub` |
+| `danny-hub` | `imported` | `client` | - | `danny_hub` | 17 | `braintrust:eval:dify:danny-hub` |
+| `mj-hub` | `imported` | `client` | - | `mj_hub` | 17 | `braintrust:eval:dify:mj-hub` |
 
 ## Eval Coverage
 
@@ -65,6 +77,12 @@ Status: partial
 | `natalia-hub` | `braintrust` | `create-something-dify-agents` | `natalia_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `mariana-hub` | `braintrust` | `create-something-dify-agents` | `mariana_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `vicki-hub` | `braintrust` | `create-something-dify-agents` | `vicki_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `fillip-hub` | `braintrust` | `create-something-dify-agents` | `fillip_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `august-hub` | `braintrust` | `create-something-dify-agents` | `august_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `leah-hub` | `braintrust` | `create-something-dify-agents` | `leah_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `lainy-hub` | `braintrust` | `create-something-dify-agents` | `lainy_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `danny-hub` | `braintrust` | `create-something-dify-agents` | `danny_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `mj-hub` | `braintrust` | `create-something-dify-agents` | `mj_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 
 ## Smoke Cases
 
@@ -389,4 +407,148 @@ Status: partial
   - `vicki_hub.hub_status` (read)
   - `vicki_hub.hub_trace_lookup` (read)
   - `vicki_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### FILLIP HUB
+
+- Inventory ID: `fillip-hub`
+- Policy pack: `client-fillip-hub.v1`
+- Instructions source: `config/dify-agents/fillip-hub.json#agent_prompt`
+- Tools:
+  - `fillip_hub.hub_describe_proxy_tool` (read)
+  - `fillip_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
+  - `fillip_hub.hub_get_proxy_tool` (read)
+  - `fillip_hub.hub_list_discovery_packs` (read)
+  - `fillip_hub.hub_list_proxy_tools` (read)
+  - `fillip_hub.hub_list_registry` (read)
+  - `fillip_hub.hub_list_services` (read)
+  - `fillip_hub.hub_policy_status` (read)
+  - `fillip_hub.hub_refresh_connections` (external_side_effect, confirmation required)
+  - `fillip_hub.hub_route_intent` (read)
+  - `fillip_hub.hub_run_intent` (external_side_effect, confirmation required)
+  - `fillip_hub.hub_run_proxy_tool` (external_side_effect, confirmation required)
+  - `fillip_hub.hub_search_proxy_tools` (read)
+  - `fillip_hub.hub_set_discovery` (external_side_effect, confirmation required)
+  - `fillip_hub.hub_status` (read)
+  - `fillip_hub.hub_trace_lookup` (read)
+  - `fillip_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### AUGUST HUB
+
+- Inventory ID: `august-hub`
+- Policy pack: `client-august-hub.v1`
+- Instructions source: `config/dify-agents/august-hub.json#agent_prompt`
+- Tools:
+  - `august_hub.hub_describe_proxy_tool` (read)
+  - `august_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
+  - `august_hub.hub_get_proxy_tool` (read)
+  - `august_hub.hub_list_discovery_packs` (read)
+  - `august_hub.hub_list_proxy_tools` (read)
+  - `august_hub.hub_list_registry` (read)
+  - `august_hub.hub_list_services` (read)
+  - `august_hub.hub_policy_status` (read)
+  - `august_hub.hub_refresh_connections` (external_side_effect, confirmation required)
+  - `august_hub.hub_route_intent` (read)
+  - `august_hub.hub_run_intent` (external_side_effect, confirmation required)
+  - `august_hub.hub_run_proxy_tool` (external_side_effect, confirmation required)
+  - `august_hub.hub_search_proxy_tools` (read)
+  - `august_hub.hub_set_discovery` (external_side_effect, confirmation required)
+  - `august_hub.hub_status` (read)
+  - `august_hub.hub_trace_lookup` (read)
+  - `august_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### LEAH HUB
+
+- Inventory ID: `leah-hub`
+- Policy pack: `client-leah-hub.v1`
+- Instructions source: `config/dify-agents/leah-hub.json#agent_prompt`
+- Tools:
+  - `leah_hub.hub_describe_proxy_tool` (read)
+  - `leah_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
+  - `leah_hub.hub_get_proxy_tool` (read)
+  - `leah_hub.hub_list_discovery_packs` (read)
+  - `leah_hub.hub_list_proxy_tools` (read)
+  - `leah_hub.hub_list_registry` (read)
+  - `leah_hub.hub_list_services` (read)
+  - `leah_hub.hub_policy_status` (read)
+  - `leah_hub.hub_refresh_connections` (external_side_effect, confirmation required)
+  - `leah_hub.hub_route_intent` (read)
+  - `leah_hub.hub_run_intent` (external_side_effect, confirmation required)
+  - `leah_hub.hub_run_proxy_tool` (external_side_effect, confirmation required)
+  - `leah_hub.hub_search_proxy_tools` (read)
+  - `leah_hub.hub_set_discovery` (external_side_effect, confirmation required)
+  - `leah_hub.hub_status` (read)
+  - `leah_hub.hub_trace_lookup` (read)
+  - `leah_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### LAINY HUB
+
+- Inventory ID: `lainy-hub`
+- Policy pack: `client-lainy-hub.v1`
+- Instructions source: `config/dify-agents/lainy-hub.json#agent_prompt`
+- Tools:
+  - `lainy_hub.hub_describe_proxy_tool` (read)
+  - `lainy_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
+  - `lainy_hub.hub_get_proxy_tool` (read)
+  - `lainy_hub.hub_list_discovery_packs` (read)
+  - `lainy_hub.hub_list_proxy_tools` (read)
+  - `lainy_hub.hub_list_registry` (read)
+  - `lainy_hub.hub_list_services` (read)
+  - `lainy_hub.hub_policy_status` (read)
+  - `lainy_hub.hub_refresh_connections` (external_side_effect, confirmation required)
+  - `lainy_hub.hub_route_intent` (read)
+  - `lainy_hub.hub_run_intent` (external_side_effect, confirmation required)
+  - `lainy_hub.hub_run_proxy_tool` (external_side_effect, confirmation required)
+  - `lainy_hub.hub_search_proxy_tools` (read)
+  - `lainy_hub.hub_set_discovery` (external_side_effect, confirmation required)
+  - `lainy_hub.hub_status` (read)
+  - `lainy_hub.hub_trace_lookup` (read)
+  - `lainy_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### DANNY HUB
+
+- Inventory ID: `danny-hub`
+- Policy pack: `client-danny-hub.v1`
+- Instructions source: `config/dify-agents/danny-hub.json#agent_prompt`
+- Tools:
+  - `danny_hub.hub_describe_proxy_tool` (read)
+  - `danny_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
+  - `danny_hub.hub_get_proxy_tool` (read)
+  - `danny_hub.hub_list_discovery_packs` (read)
+  - `danny_hub.hub_list_proxy_tools` (read)
+  - `danny_hub.hub_list_registry` (read)
+  - `danny_hub.hub_list_services` (read)
+  - `danny_hub.hub_policy_status` (read)
+  - `danny_hub.hub_refresh_connections` (external_side_effect, confirmation required)
+  - `danny_hub.hub_route_intent` (read)
+  - `danny_hub.hub_run_intent` (external_side_effect, confirmation required)
+  - `danny_hub.hub_run_proxy_tool` (external_side_effect, confirmation required)
+  - `danny_hub.hub_search_proxy_tools` (read)
+  - `danny_hub.hub_set_discovery` (external_side_effect, confirmation required)
+  - `danny_hub.hub_status` (read)
+  - `danny_hub.hub_trace_lookup` (read)
+  - `danny_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### MJ HUB
+
+- Inventory ID: `mj-hub`
+- Policy pack: `client-mj-hub.v1`
+- Instructions source: `config/dify-agents/mj-hub.json#agent_prompt`
+- Tools:
+  - `mj_hub.hub_describe_proxy_tool` (read)
+  - `mj_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
+  - `mj_hub.hub_get_proxy_tool` (read)
+  - `mj_hub.hub_list_discovery_packs` (read)
+  - `mj_hub.hub_list_proxy_tools` (read)
+  - `mj_hub.hub_list_registry` (read)
+  - `mj_hub.hub_list_services` (read)
+  - `mj_hub.hub_policy_status` (read)
+  - `mj_hub.hub_refresh_connections` (external_side_effect, confirmation required)
+  - `mj_hub.hub_route_intent` (read)
+  - `mj_hub.hub_run_intent` (external_side_effect, confirmation required)
+  - `mj_hub.hub_run_proxy_tool` (external_side_effect, confirmation required)
+  - `mj_hub.hub_search_proxy_tools` (read)
+  - `mj_hub.hub_set_discovery` (external_side_effect, confirmation required)
+  - `mj_hub.hub_status` (read)
+  - `mj_hub.hub_trace_lookup` (read)
+  - `mj_hub.hub_update_state` (external_side_effect, confirmation required)
 
