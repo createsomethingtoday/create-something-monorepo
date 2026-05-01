@@ -74,6 +74,11 @@ function auditedPage(path: string, formFields = 0) {
       ix3: {
         missingTargetSelectors: 0
       },
+      comboClassDepth: {
+        maxDepth: 17,
+        maxDepthSelector: 'html.w-mod-js.w-mod-ix.wf-hostgrotesk-n3-active',
+        sampled: 500
+      },
       transitions: {
         totalInteractive: 4,
         withTransition: 4,
@@ -177,6 +182,7 @@ test('published-site output conventions are not promoted to hard blockers', () =
   assert.equal(row(rows, 'pages.image_loading_strategy').status, 'partial');
   assert.equal(row(rows, 'pages.image_dimensions').status, 'partial');
   assert.equal(row(rows, 'responsive.multi_breakpoint_check').status, 'manual');
+  assert.equal(row(rows, 'styles.combo_depth').status, 'manual');
 });
 
 test('utility style guide placeholder text is not approval-blocking content evidence', () => {

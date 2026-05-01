@@ -2332,15 +2332,13 @@ function unifyRows(
   const hasComboData = comboPages.length > 0;
   const comboStatus: UnifiedReviewStatus =
     dComboDepth.status !== 'manual' ? dComboDepth.status
-      : !hasComboData ? 'manual'
-      : maxComboDepth <= 4 ? 'pass'
-      : maxComboDepth <= 6 ? 'partial'
-      : 'fail';
+      : 'manual';
   const comboEvidence = hasComboData && dComboDepth.status === 'manual'
     ? [
-        `maxClassesOnElement=${maxComboDepth}`,
-        `worstElement=${worstComboSelector}`,
-        `pagesChecked=${comboPages.length}`
+        `domMaxClassesOnElement=${maxComboDepth}`,
+        `domWorstElement=${worstComboSelector}`,
+        `pagesChecked=${comboPages.length}`,
+        'DOM class counts are advisory only; verify combo-class depth in Designer.'
       ]
     : dComboDepth.evidence;
   pushRow(
@@ -2350,7 +2348,7 @@ function unifyRows(
     comboStatus,
     comboEvidence,
     hasComboData ? ['designer-mcp', 'published-webmcp-crawl'] : ['designer-mcp'],
-    hasComboData ? 0.6 : dComboDepth.confidence
+    hasComboData && dComboDepth.status === 'manual' ? 0.25 : dComboDepth.confidence
   );
 
   const htmlSuffix = ' - Webflow HTML website template';
