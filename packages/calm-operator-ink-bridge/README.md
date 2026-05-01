@@ -396,6 +396,8 @@ pnpm --dir packages/calm-operator-ink-bridge run:health-command \
   --action "Review failed Dify workflow run" \
   -- pnpm dify:sync
 
+pnpm dify:youtube-transcript:ink-health
+
 pnpm --dir packages/calm-operator-ink-bridge run:health-command \
   --name "Hub MCP registry check" \
   --type mcp \
@@ -406,3 +408,10 @@ pnpm --dir packages/calm-operator-ink-bridge run:health-command \
 
 The wrapper only records the command executable name, duration, exit code, registry
 id, artifact, and action. It intentionally does not store full command arguments.
+
+The Dify YouTube Transcript Notion Agent is included through
+`pnpm dify:youtube-transcript:ink-health`. That command runs the existing Dify
+smoke and posts a health snapshot with registry id
+`dify.youtube-transcript-notion-agent`. Run it from an environment that has
+`INK_SOURCE_TOKEN` injected at `/` and can read the Dify app API key from
+Infisical path `/dify/youtube-transcript-notion-agent`.

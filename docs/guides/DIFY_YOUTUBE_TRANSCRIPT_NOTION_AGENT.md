@@ -133,9 +133,17 @@ Commands:
 
 ```bash
 pnpm dify:youtube-transcript:smoke
+infisical run --env=prod --path=/ --command "pnpm dify:youtube-transcript:ink-health"
 pnpm braintrust:eval:dify:local
 pnpm braintrust:eval:dify:youtube-transcript
 ```
+
+`pnpm dify:youtube-transcript:ink-health` wraps the smoke with Calm Operator
+Ink health reporting. It posts a health snapshot under registry id
+`dify.youtube-transcript-notion-agent`, so failed Dify agent smoke runs become
+operator health attention on Ink. The wrapper needs `INK_SOURCE_TOKEN` from the
+root Infisical path and reads the Dify app key from
+`/dify/youtube-transcript-notion-agent`.
 
 The eval resolves the Dify API key from either the local environment or Infisical:
 
