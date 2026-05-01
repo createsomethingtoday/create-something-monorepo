@@ -13,7 +13,7 @@
     "dev:http": "tsx src/http.ts",
     "start": "node dist/index.js",
     "start:http": "node dist/http.js",
-    "test": "pnpm build && node scripts/test-review-utils.mjs",
+    "test": "pnpm build && node scripts/test-review-utils.mjs && node --import tsx --test tests/*.test.ts",
     "test:classifier": "pnpm build && infisical run -- node scripts/test-url-classifier-live.mjs",
     "deploy": "wrangler deploy",
     "deploy:secrets": "echo 'Set secrets with: wrangler secret put STEEL_API_KEY && wrangler secret put WEBFLOW_SITE_ANALYZER_MCP_API_KEY && wrangler secret put WEBFLOW_OPENAI_API_KEY'",

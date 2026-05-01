@@ -9,6 +9,9 @@ REVIEWER="${REVIEWER:-micah}"
 SERVER_NAME="${SERVER_NAME:-webflow-template-review-mcp}"
 SEARCH_LIMIT="${SEARCH_LIMIT:-200}"
 SESSION_TOKEN="${SESSION_TOKEN:-${SESSION_TOKEN_FOR_VERIFY:-}}"
+ASSERT_NO_BROWSER_ANALYZER_CONTRACT="${ASSERT_NO_BROWSER_ANALYZER_CONTRACT:-0}"
+EXPECTED_PROXY_TOOLS="${EXPECTED_PROXY_TOOLS:-}"
+FORBIDDEN_PROXY_TOOLS="${FORBIDDEN_PROXY_TOOLS:-}"
 
 reviewer_url() {
   case "$1" in
@@ -169,6 +172,72 @@ print_tool_list() {
   done < <(printf '%s' "$payload" | jq -r '.[]?')
 }
 
+json_array_from_csv() {
+  jq -cn --arg raw "$1" '
+    $raw
+    | split(",")
+    | map(gsub("^\\s+|\\s+$"; ""))
+    | map(select(length > 0))
+  '
+}
+
+expected_proxy_tools_for_server() {
+  local server_name="$1"
+  if [[ -n "$EXPECTED_PROXY_TOOLS" ]]; then
+    printf '%s' "$EXPECTED_PROXY_TOOLS"
+    return 0
+  fi
+  if [[ "$ASSERT_NO_BROWSER_ANALYZER_CONTRACT" == "1" && "$server_name" == "webflow-site-analyzer-mcp" ]]; then
+    printf '%s' "webflow-site-analyzer-mcp__score_designer_checklist"
+  fi
+}
+
+forbidden_proxy_tools_for_server() {
+  local server_name="$1"
+  if [[ -n "$FORBIDDEN_PROXY_TOOLS" ]]; then
+    printf '%s' "$FORBIDDEN_PROXY_TOOLS"
+    return 0
+  fi
+  if [[ "$ASSERT_NO_BROWSER_ANALYZER_CONTRACT" == "1" && "$server_name" == "webflow-site-analyzer-mcp" ]]; then
+    printf '%s' "webflow-site-analyzer-mcp__analyze_touchpoints,webflow-site-analyzer-mcp__extract_seo,webflow-site-analyzer-mcp__get_page_structure,webflow-site-analyzer-mcp__analyze_images,webflow-site-analyzer-mcp__get_performance,webflow-site-analyzer-mcp__capture_screenshot,webflow-site-analyzer-mcp__get_provider_status,webflow-site-analyzer-mcp__extract_designer_metadata,webflow-site-analyzer-mcp__run_template_review,webflow-site-analyzer-mcp__enqueue_template_review"
+  fi
+}
+
+assert_proxy_tool_contract() {
+  local filtered_tools_json="$1"
+  local server_name="$2"
+  local expected_csv forbidden_csv expected_json forbidden_json
+
+  expected_csv="$(expected_proxy_tools_for_server "$server_name")"
+  if [[ -n "$expected_csv" ]]; then
+    expected_json="$(json_array_from_csv "$expected_csv")"
+    if ! jq -n -e --argjson actual "$filtered_tools_json" --argjson expected "$expected_json" '
+      ($actual | sort) == ($expected | sort)
+    ' >/dev/null; then
+      echo "proxy tool contract mismatch for ${server_name}: expected exact set" >&2
+      echo "$expected_json" | jq -r '.[] | "expected: \(.)"' >&2
+      echo "$filtered_tools_json" | jq -r '.[] | "actual: \(.)"' >&2
+      exit 1
+    fi
+    echo "proxy_tool_contract=ok server=${server_name} exact_expected=$(echo "$expected_json" | jq -r 'join(",")')"
+  fi
+
+  forbidden_csv="$(forbidden_proxy_tools_for_server "$server_name")"
+  if [[ -n "$forbidden_csv" ]]; then
+    forbidden_json="$(json_array_from_csv "$forbidden_csv")"
+    if ! jq -n -e --argjson actual "$filtered_tools_json" --argjson forbidden "$forbidden_json" '
+      [($actual[] as $tool | select($forbidden | index($tool)))] | length == 0
+    ' >/dev/null; then
+      echo "proxy tool contract mismatch for ${server_name}: forbidden tools are visible" >&2
+      jq -n --argjson actual "$filtered_tools_json" --argjson forbidden "$forbidden_json" '
+        [($actual[] as $tool | select($forbidden | index($tool)))]
+      ' | jq -r '.[] | "forbidden-visible: \(.)"' >&2
+      exit 1
+    fi
+    echo "proxy_tool_contract=ok server=${server_name} forbidden_absent=true"
+  fi
+}
+
 verify_reviewer() {
   local reviewer="$1"
   local hub_url health_url secret_name token
@@ -229,6 +298,7 @@ verify_reviewer() {
   print_tool_list "$visible_tools_json" "- "
   echo "visible_proxy_tools_filtered server=${SERVER_NAME}:"
   print_tool_list "$filtered_tools_json" "- "
+  assert_proxy_tool_contract "$filtered_tools_json" "$SERVER_NAME"
 }
 
 main() {

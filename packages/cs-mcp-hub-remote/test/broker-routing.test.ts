@@ -201,6 +201,34 @@ test('buildVisibleProxyRoutes applies session -> discovery -> max cap', () => {
   assert.equal(visible.routes.has('server_b__gamma'), false);
 });
 
+test('buildVisibleProxyRoutes applies per-server discovery tool allowlists before max cap', () => {
+  const runtime = createRuntime();
+  const prefs = {
+    mode: 'compact' as const,
+    activeServers: ['server_a', 'server_b'],
+    maxProxyTools: null,
+    allowedProxyToolsByServer: {
+      server_a: ['beta'],
+      server_b: ['server_b__gamma'],
+    },
+  };
+  const accountContext = {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: null,
+    identitySource: 'session' as const,
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    ['server_a__beta', 'server_b__gamma'],
+  );
+});
+
 test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', () => {
   const runtime = createRuntime();
   const prefs = {
@@ -680,6 +708,23 @@ test('resolveDiscoveryPack returns MJ legacy pack with the expected active servi
     'composio-toolkit-notion',
     'meetings',
   ]);
+});
+
+test('resolveDiscoveryPack returns Webflow reviewer Phase B analyzer tool allowlist', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'webflow-template-review-mcp' },
+    { name: 'webflow-site-analyzer-mcp' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('webflow-marketplace-review-phase-b', runtime as any);
+
+  assert.ok(pack);
+  assert.equal(pack.id, 'webflow-marketplace-review-phase-b');
+  assertActiveServers(pack, ['webflow-template-review-mcp', 'webflow-site-analyzer-mcp']);
+  assert.deepEqual(pack.preferences.allowedProxyToolsByServer, {
+    'webflow-site-analyzer-mcp': ['score_designer_checklist'],
+  });
 });
 
 test('resolveDiscoveryPack returns null for unknown pack ids', () => {

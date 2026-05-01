@@ -206,10 +206,13 @@ type ProxyFailureDetails = {
 
 type DiscoveryMode = 'compact' | 'full';
 
+type DiscoveryProxyToolAllowlist = Record<string, string[]>;
+
 type DiscoveryPreferences = {
   mode: DiscoveryMode;
   activeServers: string[];
   maxProxyTools: number | null;
+  allowedProxyToolsByServer?: DiscoveryProxyToolAllowlist;
 };
 
 type DiscoveryPackDefinition = {
@@ -217,6 +220,7 @@ type DiscoveryPackDefinition = {
   mode?: DiscoveryMode;
   activeServers?: string[];
   maxProxyTools?: number | null;
+  allowedProxyToolsByServer?: DiscoveryProxyToolAllowlist;
 };
 
 type DiscoveryPackRegistry = {
@@ -587,6 +591,10 @@ export const MANAGEMENT_TOOLS: Tool[] = [
         mode: { type: 'string', enum: ['compact', 'full'] },
         activeServers: { type: 'array', items: { type: 'string' } },
         maxProxyTools: { type: 'number' },
+        allowedProxyToolsByServer: {
+          type: 'object',
+          additionalProperties: { type: 'array', items: { type: 'string' } },
+        },
         reset: { type: 'boolean' },
       },
       additionalProperties: false,
@@ -1986,6 +1994,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             description: pack.description,
             discovery: pack.preferences,
             activeServerCount: pack.preferences.activeServers.length,
+            allowedProxyToolsByServer: pack.preferences.allowedProxyToolsByServer ?? null,
           })),
         });
         await recordHubInvocationWithCtx({
@@ -2044,6 +2053,11 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             maxProxyTools: resolveDiscoveryMaxProxyTools(
               optionalNumberArg(args.maxProxyTools, 'maxProxyTools') ?? basePrefs.maxProxyTools,
             ),
+            allowedProxyToolsByServer:
+              optionalDiscoveryProxyToolAllowlistArg(
+                args.allowedProxyToolsByServer,
+                'allowedProxyToolsByServer',
+              ) ?? basePrefs.allowedProxyToolsByServer,
           };
           await persistDiscoveryPreferences(accountId, nextPrefs, env);
         }
@@ -2079,6 +2093,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             mode: nextPrefs.mode,
             activeServers: nextPrefs.activeServers,
             maxProxyTools: nextPrefs.maxProxyTools,
+            allowedProxyToolsByServer: nextPrefs.allowedProxyToolsByServer ?? null,
             reset,
             pack: appliedPack?.id ?? null,
             visibleProxyToolCount: visibleTools.length,
@@ -2658,9 +2673,13 @@ export function buildVisibleProxyRoutes(
     ? sessionScoped
     : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
 
+  const toolScoped = discoveryScoped.filter((entry) =>
+    isRouteAllowedByDiscoveryToolAllowlist(entry.route, prefs.allowedProxyToolsByServer),
+  );
+
   const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
-    ? discoveryScoped.slice(0, prefs.maxProxyTools)
-    : discoveryScoped;
+    ? toolScoped.slice(0, prefs.maxProxyTools)
+    : toolScoped;
 
   const toolDefinitions = capped.map((entry) => entry.tool);
   const routes = new Map(capped.map((entry) => [entry.route.proxyToolName, entry.route]));
@@ -3924,6 +3943,9 @@ async function getDiscoveryPreferences(
               maxProxyTools: resolveDiscoveryMaxProxyTools(
                 typeof parsed.maxProxyTools === 'number' ? parsed.maxProxyTools : null,
               ),
+              allowedProxyToolsByServer: parseDiscoveryProxyToolAllowlist(
+                parsed.allowedProxyToolsByServer,
+              ),
             },
             runtime,
             env,
@@ -3961,6 +3983,7 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
       runtime,
     ),
     maxProxyTools: maxProxyToolsFromEnv ?? sharedPack?.preferences.maxProxyTools ?? null,
+    allowedProxyToolsByServer: sharedPack?.preferences.allowedProxyToolsByServer,
   }, runtime, env);
 }
 
@@ -4025,6 +4048,9 @@ function normalizeDiscoveryPreferences(
       runtime,
     ),
     maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
+    allowedProxyToolsByServer: normalizeDiscoveryProxyToolAllowlist(
+      prefs.allowedProxyToolsByServer,
+    ),
   };
 }
 
@@ -4088,6 +4114,9 @@ function resolveDiscoveryPackDefinition(
   const maxProxyTools = resolveDiscoveryMaxProxyTools(
     typeof definition.maxProxyTools === 'number' ? definition.maxProxyTools : null,
   );
+  const allowedProxyToolsByServer = parseDiscoveryProxyToolAllowlist(
+    definition.allowedProxyToolsByServer,
+  );
 
   return {
     id: packId,
@@ -4096,6 +4125,7 @@ function resolveDiscoveryPackDefinition(
       mode,
       activeServers,
       maxProxyTools,
+      allowedProxyToolsByServer,
     }, runtime, env),
   };
 }
@@ -4156,6 +4186,17 @@ function stringArrayArg(raw: unknown, fieldName: string): string[] {
 function optionalStringArrayArg(raw: unknown, fieldName: string): string[] | undefined {
   if (raw === undefined) return undefined;
   return stringArrayArg(raw, fieldName);
+}
+
+function optionalDiscoveryProxyToolAllowlistArg(
+  raw: unknown,
+  fieldName: string,
+): DiscoveryProxyToolAllowlist | undefined {
+  if (raw === undefined) return undefined;
+  if (!isRecord(raw)) {
+    throw new Error(`"${fieldName}" must be an object whose values are arrays of strings`);
+  }
+  return parseDiscoveryProxyToolAllowlist(raw) ?? {};
 }
 
 function optionalNumberArg(raw: unknown, fieldName: string): number | null | undefined {
@@ -4897,6 +4938,34 @@ function isRouteAllowedForSession(route: ProxyRoute, allowedToolPrefixes: string
   }
 
   return false;
+}
+
+function isRouteAllowedByDiscoveryToolAllowlist(
+  route: ProxyRoute,
+  allowedProxyToolsByServer: DiscoveryProxyToolAllowlist | undefined,
+): boolean {
+  if (!allowedProxyToolsByServer) {
+    return true;
+  }
+
+  const allowedTools = allowedProxyToolsByServer[route.serverName];
+  if (!allowedTools) {
+    return true;
+  }
+  if (allowedTools.length === 0) {
+    return false;
+  }
+
+  const sanitizedDownstreamToolName = sanitizeName(route.downstreamToolName);
+  const sanitizedProxyToolName = sanitizeName(route.proxyToolName);
+
+  return allowedTools.some(
+    (toolName) =>
+      toolName === route.downstreamToolName ||
+      toolName === route.proxyToolName ||
+      toolName === sanitizedDownstreamToolName ||
+      toolName === sanitizedProxyToolName,
+  );
 }
 
 function normalizeTraceValue(value: unknown): string | null {
@@ -5875,6 +5944,36 @@ function parseStateStringArray(value: unknown): string[] {
       .map((entry) => String(entry).trim())
       .filter(Boolean),
   );
+}
+
+function parseDiscoveryProxyToolAllowlist(
+  value: unknown,
+): DiscoveryProxyToolAllowlist | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const entries = Object.entries(value)
+    .map(([serverName, tools]) => {
+      const normalizedServerName = serverName.trim();
+      if (!normalizedServerName) {
+        return null;
+      }
+      return [normalizedServerName, parseStateStringArray(tools)] as const;
+    })
+    .filter((entry): entry is readonly [string, string[]] => entry !== null);
+
+  if (entries.length === 0) {
+    return undefined;
+  }
+
+  return Object.fromEntries(entries);
+}
+
+function normalizeDiscoveryProxyToolAllowlist(
+  value: DiscoveryProxyToolAllowlist | undefined,
+): DiscoveryProxyToolAllowlist | undefined {
+  return parseDiscoveryProxyToolAllowlist(value);
 }
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {

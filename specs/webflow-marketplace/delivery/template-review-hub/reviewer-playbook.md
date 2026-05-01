@@ -16,7 +16,7 @@ Use the Hub to:
 
 - load queue, asset, and version context quickly
 - run objective checks across preview and published URLs
-- inspect evidence for pass/fail/manual checklist items
+- inspect evidence for `pass`, `fail`, `partial`, and `manual` checklist items
 - review plagiarism or originality signals
 - draft clearer creator feedback
 
@@ -31,10 +31,11 @@ Do not use the Hub to:
 1. Open the submission in the Hub review lane.
 2. Confirm queue, asset, and version context.
 3. Run the template review analysis.
-4. Read the findings in three groups:
-   - `pass`: objective items that appear satisfied
-   - `fail`: objective items with evidence of non-compliance
-   - `manual`: items that still require reviewer judgment
+4. Read the findings in four groups:
+   - `pass`: exact checks with source-backed evidence that the item appears satisfied
+   - `fail`: exact checks with source-backed evidence of non-compliance
+   - `partial`: useful signals where available inputs do not prove the whole checklist item
+   - `manual`: items that still require reviewer judgment or unsupported inputs
 5. Validate the evidence for any important fail or partial finding.
 6. Add subjective review judgment outside the system's objective recommendation.
 7. Edit the draft feedback if needed.
@@ -42,14 +43,14 @@ Do not use the Hub to:
 
 ## How to read findings
 
-### `Auto`
+### `Pass` and `Fail`
 
-These are the strongest objective findings.
+These are the strongest objective findings when they are based on deterministic exact checks and include a concrete source.
 
 Reviewer expectation:
 
-- validate quickly
-- trust the evidence unless it is obviously wrong
+- validate quickly, especially for important failures
+- trust the evidence when the source is direct and confidence is appropriate
 - use it to save time on repeatable checks
 
 ### `Partial`
@@ -71,12 +72,23 @@ Reviewer expectation:
 - use the Hub for context if helpful
 - make the decision yourself
 
+### `Confidence` and `source`
+
+Every analyzer finding should identify `confidence` and `source`.
+
+Reviewer expectation:
+
+- treat high-confidence deterministic checks as evidence, not as final decisions
+- verify low-confidence findings before using them in feedback or decisions
+- treat unavailable sources as a manual review cue
+
 ## When to trust the Hub
 
 Trust the Hub most when:
 
 - the issue is deterministic
 - evidence is direct and specific
+- the finding includes a clear source
 - the same finding is consistent across multiple tools or views
 
 Trust it less when:
@@ -85,6 +97,11 @@ Trust it less when:
 - the recommendation is low confidence
 - the evidence appears incomplete
 - the tool cannot fully see the required part of the system
+- the finding depends on variables panel data, class usage graph, element-level combo stack depth, collection slugs, ecommerce setup, or browser-backed analysis hidden by the no-Steel posture
+
+Reviewer rule:
+
+Deterministic exact checks can be trusted as evidence. Manual, partial, unavailable-source, or low-confidence checks require human verification.
 
 ## When to override the Hub
 
