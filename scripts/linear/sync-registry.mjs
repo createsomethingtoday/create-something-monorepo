@@ -29,7 +29,7 @@ function parseArgs(argv) {
   const options = {
     dryRun: false,
     date: new Date().toISOString().slice(0, 10),
-    team: DEFAULT_TEAM_KEY,
+    team: DEFAULT_TEAM_KEY
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -92,10 +92,19 @@ function compactDescription(description, limit = 160) {
   return oneLine.length > limit ? `${oneLine.slice(0, limit - 3)}...` : oneLine;
 }
 
+function codeList(values) {
+  if (!values?.length) return '';
+  return values.map((value) => `\`${value}\``).join(', ');
+}
+
 function isLegacyLoomEntry(entry) {
   const id = entry.id.toLowerCase();
   const tags = (entry.tags ?? []).map((tag) => String(tag).toLowerCase());
-  return id === 'loom-mcp' || /(^|[-_])loom($|[-_])/.test(id) || tags.some((tag) => tag === 'loom' || tag === 'loom-mcp');
+  return (
+    id === 'loom-mcp' ||
+    /(^|[-_])loom($|[-_])/.test(id) ||
+    tags.some((tag) => tag === 'loom' || tag === 'loom-mcp')
+  );
 }
 
 async function collectMcpSnapshot(date) {
@@ -104,9 +113,14 @@ async function collectMcpSnapshot(date) {
   const transportCounts = countBy(entries.map((entry) => entry.transport));
   const exposureCounts = countBy(entries.map((entry) => entry.catalog_exposure_mode));
   const catalogEntries = entries.filter((entry) => entry.catalog?.include);
-  const authRequired = entries.filter((entry) => entry.catalog?.requiresAuth || entry.bearer_token_env_var);
+  const authRequired = entries.filter(
+    (entry) => entry.catalog?.requiresAuth || entry.bearer_token_env_var
+  );
   const brokeredEntries = entries.filter((entry) => entry.catalog_exposure_mode === 'brokered');
-  const estimatedTools = entries.reduce((sum, entry) => sum + Number(entry.estimated_tool_count || 0), 0);
+  const estimatedTools = entries.reduce(
+    (sum, entry) => sum + Number(entry.estimated_tool_count || 0),
+    0
+  );
   const tagCounts = countBy(entries.flatMap((entry) => entry.tags ?? []));
   const loomEntries = entries.filter(isLegacyLoomEntry);
 
@@ -119,7 +133,7 @@ async function collectMcpSnapshot(date) {
       entry.catalog?.name ?? entry.id,
       entry.catalog?.category ?? 'uncategorized',
       entry.catalog?.requiresAuth ? 'yes' : 'no',
-      entry.catalog_exposure_mode ?? 'unspecified',
+      entry.catalog_exposure_mode ?? 'unspecified'
     ]);
 
   const description = [
@@ -141,7 +155,7 @@ async function collectMcpSnapshot(date) {
     tableRows([
       ['Transport', 'Count'],
       ['---', '---:'],
-      ...sortCounts(transportCounts).map(([name, count]) => [name, String(count)]),
+      ...sortCounts(transportCounts).map(([name, count]) => [name, String(count)])
     ]),
     '',
     '## Exposure Counts',
@@ -149,7 +163,7 @@ async function collectMcpSnapshot(date) {
     tableRows([
       ['Exposure', 'Count'],
       ['---', '---:'],
-      ...sortCounts(exposureCounts).map(([name, count]) => [name, String(count)]),
+      ...sortCounts(exposureCounts).map(([name, count]) => [name, String(count)])
     ]),
     '',
     '## Top Tags',
@@ -164,12 +178,12 @@ async function collectMcpSnapshot(date) {
     tableRows([
       ['Server', 'Name', 'Category', 'Auth', 'Exposure'],
       ['---', '---', '---', '---', '---'],
-      ...catalogRows,
+      ...catalogRows
     ]),
     '',
     '## Operating Note',
     '',
-    'Linear is the coordination and review surface. The executable MCP registry remains the checked-in registry plus the deployed Hub state.',
+    'Linear is the coordination and review surface. The executable MCP registry remains the checked-in registry plus the deployed Hub state.'
   ].join('\n');
 
   return {
@@ -185,8 +199,8 @@ async function collectMcpSnapshot(date) {
       estimatedTools,
       loomEntries: loomEntries.map((entry) => entry.id),
       transports: transportCounts,
-      exposures: exposureCounts,
-    },
+      exposures: exposureCounts
+    }
   };
 }
 
@@ -200,7 +214,7 @@ async function listPythonAgentModules() {
     .sort()
     .map((file) => ({
       file: `packages/agent-sdk/agents/${file}`,
-      name: humanizeModuleName(file),
+      name: humanizeModuleName(file)
     }));
 }
 
@@ -213,7 +227,7 @@ async function collectPackage(relativePath) {
     name: packageJson.name ?? path.basename(relativePath),
     version: packageJson.version ?? null,
     description: packageJson.description ?? '',
-    workerName: wranglerText ? tomlValue(wranglerText, 'name') : null,
+    workerName: wranglerText ? tomlValue(wranglerText, 'name') : null
   };
 }
 
@@ -224,7 +238,7 @@ async function collectAgentSnapshot(date) {
         path: 'packages/agent-sdk',
         name: tomlValue(pyprojectText, 'name') ?? 'create-something-agents',
         version: tomlValue(pyprojectText, 'version'),
-        description: tomlValue(pyprojectText, 'description') ?? '',
+        description: tomlValue(pyprojectText, 'description') ?? ''
       }
     : null;
 
@@ -237,7 +251,7 @@ async function collectAgentSnapshot(date) {
     'packages/agent-kit',
     'packages/agency/workers/dental-agent-router',
     'packages/space/workers/agentic-executor',
-    'packages/webflow-apps-admin/workers/audit-agent',
+    'packages/webflow-apps-admin/workers/audit-agent'
   ];
   const packagePaths = [];
   for (const packagePath of knownPackagePaths) {
@@ -253,21 +267,41 @@ async function collectAgentSnapshot(date) {
 
   const pythonModules = await listPythonAgentModules();
   const wranglerServices = packages.filter((pkg) => pkg.workerName);
-  const coordinationPackages = packages.filter((pkg) => /symphony|coordination/i.test(pkg.name) || /coordination/i.test(pkg.path));
+  const coordinationPackages = packages.filter(
+    (pkg) => /symphony|coordination/i.test(pkg.name) || /coordination/i.test(pkg.path)
+  );
+  const difyInventory = existsSync(repoPath('config/dify/inventory.json'))
+    ? await readJson('config/dify/inventory.json')
+    : null;
+  const difyAgents = Object.entries(difyInventory?.agents ?? {})
+    .map(([id, agent]) => ({ id, ...agent }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const difyStatusCounts = countBy(difyAgents.map((agent) => agent.status));
+  const difyAudienceCounts = countBy(difyAgents.map((agent) => agent.audience));
 
   const packageRows = packages.map((pkg) => [
     `\`${pkg.path}\``,
     `\`${pkg.name}\``,
     pkg.workerName ? `\`${pkg.workerName}\`` : '',
-    compactDescription(pkg.description),
+    compactDescription(pkg.description)
   ]);
 
   const moduleRows = pythonModules.map((module) => [`\`${module.file}\``, module.name]);
+  const difyRows = difyAgents.map((agent) => [
+    `\`${agent.id}\``,
+    agent.display_name ?? agent.id,
+    `\`${agent.status ?? 'unknown'}\``,
+    `\`${agent.audience ?? 'unspecified'}\``,
+    agent.dify_app_id ? `\`${agent.dify_app_id}\`` : '',
+    codeList(agent.allowed_mcp_servers ?? []),
+    String(agent.enabled_tools?.length ?? 0),
+    `\`${agent.eval_suite ?? ''}\``
+  ]);
 
   const description = [
     `# Agent Registry Snapshot - ${date}`,
     '',
-    'Sources: `packages/agent-sdk`, `packages/agents`, agent worker packages, and Linear-backed Symphony coordination.',
+    'Sources: `packages/agent-sdk`, `packages/agents`, agent worker packages, Linear-backed Symphony coordination, and `config/dify/inventory.json`.',
     '',
     '## Summary',
     '',
@@ -276,26 +310,56 @@ async function collectAgentSnapshot(date) {
     `- Node/worker packages tracked: ${packages.length}`,
     `- Worker services with Wrangler config: ${wranglerServices.length}`,
     `- Coordination packages: ${coordinationPackages.length}`,
+    `- Dify agents tracked: ${difyAgents.length}`,
     '',
     '## Python Agent Modules',
     '',
-    tableRows([
-      ['Module', 'Registry Name'],
-      ['---', '---'],
-      ...moduleRows,
-    ]),
+    tableRows([['Module', 'Registry Name'], ['---', '---'], ...moduleRows]),
     '',
     '## Node And Worker Surfaces',
     '',
     tableRows([
       ['Path', 'Package', 'Worker', 'Description'],
       ['---', '---', '---', '---'],
-      ...packageRows,
+      ...packageRows
+    ]),
+    '',
+    '## Dify Agents',
+    '',
+    tableRows([
+      [
+        'Agent',
+        'Display Name',
+        'Status',
+        'Audience',
+        'App ID',
+        'MCP Servers',
+        'Enabled Tools',
+        'Eval Suite'
+      ],
+      ['---', '---', '---', '---', '---', '---', '---:', '---'],
+      ...difyRows
+    ]),
+    '',
+    '### Dify Status Counts',
+    '',
+    tableRows([
+      ['Status', 'Count'],
+      ['---', '---:'],
+      ...sortCounts(difyStatusCounts).map(([name, count]) => [name, String(count)])
+    ]),
+    '',
+    '### Dify Audience Counts',
+    '',
+    tableRows([
+      ['Audience', 'Count'],
+      ['---', '---:'],
+      ...sortCounts(difyAudienceCounts).map(([name, count]) => [name, String(count)])
     ]),
     '',
     '## Operating Note',
     '',
-    'Linear is the coordination and review surface. Runtime behavior remains owned by package code, worker deployments, and secrets in Infisical.',
+    'Linear is the coordination and review surface. Runtime behavior remains owned by package code, Dify workspace state, worker deployments, checked-in Dify manifests/DSL exports, and secrets in Infisical. Dify Service API keys must remain stored as Infisical references, not as App IDs.'
   ].join('\n');
 
   return {
@@ -309,7 +373,10 @@ async function collectAgentSnapshot(date) {
       packages: packages.length,
       wranglerServices: wranglerServices.length,
       coordinationPackages: coordinationPackages.length,
-    },
+      difyAgents: difyAgents.length,
+      difyStatuses: difyStatusCounts,
+      difyAudiences: difyAudienceCounts
+    }
   };
 }
 
@@ -321,13 +388,15 @@ async function gql(query, variables = {}) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token,
+      Authorization: token
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({ query, variables })
   });
   const body = await response.json();
   if (!response.ok || body.errors) {
-    throw new Error(JSON.stringify({ status: response.status, errors: body.errors ?? body }, null, 2));
+    throw new Error(
+      JSON.stringify({ status: response.status, errors: body.errors ?? body }, null, 2)
+    );
   }
   return body.data;
 }
@@ -359,7 +428,7 @@ async function bootstrap(teamKey) {
     team,
     labels: data.issueLabels.nodes,
     projects: data.projects.nodes,
-    issues: data.issues.nodes,
+    issues: data.issues.nodes
   };
 }
 
@@ -385,9 +454,9 @@ async function createIssue(ctx, snapshot, project) {
         title: snapshot.title,
         description: snapshot.description,
         priority: 3,
-        labelIds: matchingLabelIds(ctx, snapshot.labels),
-      },
-    },
+        labelIds: matchingLabelIds(ctx, snapshot.labels)
+      }
+    }
   );
   return { action: 'created', issue: data.issueCreate.issue };
 }
@@ -397,14 +466,16 @@ async function commentIssue(issueId, body) {
     `mutation CommentIssue($input: CommentCreateInput!) {
       commentCreate(input: $input) { success comment { id url } }
     }`,
-    { input: { issueId, body } },
+    { input: { issueId, body } }
   );
   return data.commentCreate.comment;
 }
 
 async function syncSnapshot(ctx, snapshot) {
   const project = requiredProject(ctx, snapshot.project);
-  const existing = ctx.issues.find((issue) => issue.title === snapshot.title && issue.project?.id === project.id);
+  const existing = ctx.issues.find(
+    (issue) => issue.title === snapshot.title && issue.project?.id === project.id
+  );
   if (!existing) return createIssue(ctx, snapshot, project);
 
   const comment = await commentIssue(
@@ -416,8 +487,8 @@ async function syncSnapshot(ctx, snapshot) {
       '',
       '```json',
       JSON.stringify(snapshot.summary, null, 2),
-      '```',
-    ].join('\n'),
+      '```'
+    ].join('\n')
   );
   return { action: 'commented', issue: existing, comment };
 }
@@ -429,7 +500,10 @@ async function main() {
     return;
   }
 
-  const snapshots = [await collectMcpSnapshot(options.date), await collectAgentSnapshot(options.date)];
+  const snapshots = [
+    await collectMcpSnapshot(options.date),
+    await collectAgentSnapshot(options.date)
+  ];
 
   if (options.dryRun) {
     console.log(
@@ -443,12 +517,12 @@ async function main() {
             project: snapshot.project,
             labels: snapshot.labels,
             summary: snapshot.summary,
-            descriptionBytes: Buffer.byteLength(snapshot.description, 'utf8'),
-          })),
+            descriptionBytes: Buffer.byteLength(snapshot.description, 'utf8')
+          }))
         },
         null,
-        2,
-      ),
+        2
+      )
     );
     return;
   }

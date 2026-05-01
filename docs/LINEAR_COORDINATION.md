@@ -67,7 +67,7 @@ pnpm linear:registry:sync
 The sync creates or refreshes dated Linear issues in:
 
 - `MCP Fleet Registry` from `config/mcp-hub/registry.json`
-- `Agent Registry` from `packages/agent-sdk`, agent worker packages, and Linear-backed Symphony coordination
+- `Agent Registry` from `packages/agent-sdk`, agent worker packages, Linear-backed Symphony coordination, and `config/dify/inventory.json`
 
 Treat the Linear issues as review, ownership, approval, and audit artifacts. The executable truth remains in the checked-in registry, package code, Hub state, deployments, and Infisical secrets.
 

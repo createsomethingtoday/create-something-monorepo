@@ -326,7 +326,8 @@
           "enum": ["internal", "client", "public"]
         },
         "dify_app_id": {
-          "type": "string"
+          "type": "string",
+          "description": "Non-secret Dify application identifier only. Do not store Dify Service API keys here; those belong in service_api.api_key_secret as Infisical references."
         },
         "mode": {
           "type": "string",
