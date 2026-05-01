@@ -8,6 +8,39 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 });
 
 // cloudflare-worker/lib/shared-validator.js
+var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
+function countPatternMatches(value, pattern) {
+  const matches = value.match(pattern);
+  return matches ? matches.length : 0;
+}
+__name(countPatternMatches, "countPatternMatches");
+function detectIx2Interactions(html) {
+  const matches = [
+    {
+      label: "data-w-id attributes",
+      count: countPatternMatches(html, /\sdata-w-id\s*=/gi)
+    },
+    {
+      label: "data-is-ix2-target attributes",
+      count: countPatternMatches(html, /\sdata-is-ix2-target\s*=/gi)
+    },
+    {
+      label: "Webflow IX2 runtime calls",
+      count: countPatternMatches(html, /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi)
+    },
+    {
+      label: "w-mod-ix CSS/runtime markers",
+      count: countPatternMatches(html, /w-mod-ix/gi)
+    }
+  ].filter((item) => item.count > 0);
+  const strongMatches = matches.filter((item) => item.label !== "w-mod-ix CSS/runtime markers");
+  return {
+    detected: strongMatches.length > 0,
+    count: strongMatches.reduce((total, item) => total + item.count, 0),
+    matches
+  };
+}
+__name(detectIx2Interactions, "detectIx2Interactions");
 function validateGsapUsage(html, pageUrl, customPatterns = []) {
   const defaultPatterns = [
     // Core GSAP object and method access
@@ -393,6 +426,18 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     securityRisks: []
     // Scripts that pose security risks
   };
+  const ix2Detection = detectIx2Interactions(html);
+  if (ix2Detection.detected) {
+    results.legacyIx2Detected = true;
+    results.legacyIx2Count = ix2Detection.count;
+    results.flaggedCode.push({
+      scriptIndex: "document",
+      message: IX2_REJECTION_MESSAGE,
+      reason: "Legacy IX2 interactions are no longer accepted for Marketplace templates submitted on or after May 1, 2026.",
+      policy: "ix2-rejected",
+      flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
+    });
+  }
   const scriptContents = extractScriptContents(html);
   const styleContents = extractStyleContents(html);
   scriptContents.forEach((script, index) => {
@@ -597,6 +642,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       allowedCustomCodeCount: results.allowedCustomCode.length,
       flaggedCodeCount: results.flaggedCode.length,
       securityRiskCount: results.securityRisks.length,
+      legacyIx2Detected: results.legacyIx2Detected === true,
+      legacyIx2Count: results.legacyIx2Count || 0,
       passed
     },
     details: results
@@ -1335,6 +1382,8 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
             }
             const html = await response.text();
             const validation = validateGsapUsage(html, page.url);
+            const validationSummary = validation.summary || {};
+            const validationDetails = validation.details || {};
             results.push({
               url: page.url,
               title: page.title || "",
@@ -1342,24 +1391,26 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
               passed: validation.passed,
               summary: {
                 url: page.url,
-                scriptCount: validation.scriptCount,
-                styleCount: validation.styleCount,
-                externalScriptCount: validation.externalScripts?.length || 0,
-                validGsapCount: validation.validGsapUsage?.length || 0,
-                allowedCustomCodeCount: validation.allowedCustomCode?.length || 0,
-                flaggedCodeCount: validation.flaggedCode?.length || 0,
-                securityRiskCount: validation.securityRisks?.length || 0,
+                scriptCount: validationSummary.scriptCount || 0,
+                styleCount: validationSummary.styleCount || 0,
+                externalScriptCount: validationSummary.externalScriptCount || 0,
+                validGsapCount: validationSummary.validGsapCount || 0,
+                allowedCustomCodeCount: validationSummary.allowedCustomCodeCount || 0,
+                flaggedCodeCount: validationSummary.flaggedCodeCount || 0,
+                securityRiskCount: validationSummary.securityRiskCount || 0,
+                legacyIx2Detected: validationSummary.legacyIx2Detected === true,
+                legacyIx2Count: validationSummary.legacyIx2Count || 0,
                 passed: validation.passed
               },
               details: {
                 url: page.url,
-                validGsapUsage: validation.validGsapUsage || [],
-                allowedCustomCode: validation.allowedCustomCode || [],
-                flaggedCode: validation.flaggedCode || [],
-                securityRisks: validation.securityRisks || [],
-                externalScripts: validation.externalScripts || []
+                validGsapUsage: validationDetails.validGsapUsage || [],
+                allowedCustomCode: validationDetails.allowedCustomCode || [],
+                flaggedCode: validationDetails.flaggedCode || [],
+                securityRisks: validationDetails.securityRisks || [],
+                externalScripts: validationDetails.externalScripts || []
               },
-              flaggedCodeCount: validation.flaggedCode?.length || 0
+              flaggedCodeCount: validationSummary.flaggedCodeCount || 0
             });
           } catch (error) {
             results.push({

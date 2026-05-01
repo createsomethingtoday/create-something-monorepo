@@ -1538,6 +1538,7 @@ export function TemplateIntake() {
       message?: string;
       normalizedUrl?: string;
       gsapDetected?: boolean;
+      legacyIx2Detected?: boolean;
       autofill?: TemplateAutofillPayload;
       autofillWarning?: string;
       screenshotCount?: number;
@@ -2348,7 +2349,9 @@ export function TemplateIntake() {
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Must be an HTTPS <code className="submission-inline-code">*.webflow.io</code>{' '}
-                      URL. The full site crawl can take a few minutes.
+                      URL. The full site crawl can take a few minutes. As of May 1, 2026, legacy
+                      IX2 interactions are rejected; rebuild interactions with Webflow Interactions
+                      powered by GSAP (IX3).
                     </p>
                     <input
                       className="field-input input w-input"

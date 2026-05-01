@@ -9,7 +9,10 @@ import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
-import { runPublishedUrlValidation } from '../../../../lib/intake/published-url';
+import {
+  LEGACY_IX2_VALIDATION_MESSAGE,
+  runPublishedUrlValidation
+} from '../../../../lib/intake/published-url';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
@@ -275,7 +278,11 @@ export async function POST(request: Request) {
     const publishedValidation = await runPublishedUrlValidation(body.publishedUrl || '');
     if (!publishedValidation.summary.passed) {
       return jsonNoStore(
-        { error: 'Published URL validation failed.' },
+        {
+          error: publishedValidation.summary.legacyIx2Detected
+            ? LEGACY_IX2_VALIDATION_MESSAGE
+            : 'Published URL validation failed.'
+        },
         { status: 400 }
       );
     }

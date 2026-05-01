@@ -1,5 +1,6 @@
 import { jsonNoStore } from '../../../../lib/server/responses';
 import {
+  LEGACY_IX2_VALIDATION_MESSAGE,
   normalizePublishedUrl,
   runPublishedUrlValidation
 } from '../../../../lib/intake/published-url';
@@ -89,6 +90,10 @@ function buildValidationMessage(result: Awaited<ReturnType<typeof runPublishedUr
     return buildRequestFailureMessage(summary.pageResults.find((page) => page.success === false));
   }
 
+  if (summary.legacyIx2Detected) {
+    return LEGACY_IX2_VALIDATION_MESSAGE;
+  }
+
   if (summary.siteResults.validationFailureCount > 0) {
     const failedPage = summary.pageResults.find((page) => page.success !== false && page.passed === false);
     const flaggedMessage = failedPage?.details?.flaggedCode?.find((item) => item.message)?.message;
@@ -156,6 +161,7 @@ export async function POST(request: Request) {
       message: buildValidationMessage(result),
       normalizedUrl: result.normalizedUrl,
       gsapDetected: result.summary.gsapDetected,
+      legacyIx2Detected: result.summary.legacyIx2Detected,
       siteResults: result.summary.siteResults,
       pageResults: result.summary.pageResults,
       autofill: autofill?.autofill,
