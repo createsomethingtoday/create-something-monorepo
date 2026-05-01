@@ -596,6 +596,20 @@ export interface PublishedSnippetPageSummary {
       bg: string;
     }>;
   } | null;
+  examples?: {
+    h1?: string[];
+    missingAltImages?: string[];
+    missingDimensionImages?: string[];
+    aboveFoldLazyImages?: string[];
+    belowFoldNotLazyImages?: string[];
+    linksMissingAccessibleName?: string[];
+    linksMissingRel?: string[];
+    linksEmptyHref?: string[];
+    linksPlaceholderHref?: string[];
+    formsMissingLabels?: string[];
+    autoplayWithoutControls?: string[];
+    backgroundVideosMissingControl?: string[];
+  };
 }
 
 export interface PublishedSnippetPageResult {

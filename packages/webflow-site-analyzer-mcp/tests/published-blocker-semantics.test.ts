@@ -185,6 +185,48 @@ test('published-site output conventions are not promoted to hard blockers', () =
   assert.equal(row(rows, 'styles.combo_depth').status, 'manual');
 });
 
+test('published blocker rows include page-scoped locator examples', () => {
+  const crawl = publishedCrawl();
+  const contact = crawl.pages[2];
+  crawl.issueCounts.imagesMissingAlt = 1;
+  crawl.issueCounts.linksMissingAccessibleName = 1;
+  crawl.issueCounts.linksMissingRel = 1;
+  crawl.issueCounts.autoplayWithoutControls = 1;
+  contact.summary.images.missingAlt = 1;
+  contact.summary.links.missingAccessibleName = 1;
+  contact.summary.links.blankTargetMissingRel = 1;
+  contact.summary.media.autoplayWithoutControls = 1;
+  contact.summary.examples = {
+    missingAltImages: ['img.hero-image src="/assets/hero.avif" alt="" top=120px'],
+    linksMissingAccessibleName: ['a.social-link href="/contact" text=""'],
+    linksMissingRel: ['a.outbound href="example.com" text="Example"'],
+    autoplayWithoutControls: ['video.hero-video src="/hero.mp4" top=0px']
+  };
+
+  const rows = __test.unifyRows(designerReport(), crawl, true);
+
+  assert.ok(
+    row(rows, 'webflow_audit.alt_text').evidence.some((entry) =>
+      entry.includes('/contact: img.hero-image')
+    )
+  );
+  assert.ok(
+    row(rows, 'a11y.link_accessible_names').evidence.some((entry) =>
+      entry.includes('/contact: a.social-link')
+    )
+  );
+  assert.ok(
+    row(rows, 'links.external_target_blank').evidence.some((entry) =>
+      entry.includes('/contact: a.outbound')
+    )
+  );
+  assert.ok(
+    row(rows, 'pages.videos_controls').evidence.some((entry) =>
+      entry.includes('/contact: video.hero-video')
+    )
+  );
+});
+
 test('utility style guide placeholder text is not approval-blocking content evidence', () => {
   const crawl = publishedCrawl();
   crawl.pages[1] = {

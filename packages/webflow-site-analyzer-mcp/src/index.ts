@@ -669,6 +669,49 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
   const placeholderPatterns = ['your text here', 'placeholder text', 'insert text', 'add your', 'example text', 'sample text'];
   const hasPlaceholderText = placeholderPatterns.some(p => bodyTextForPlaceholder.includes(p));
 
+  const shortText = (value, max = 90) => {
+    const normalized = String(value || '').replace(/\\s+/g, ' ').trim();
+    return normalized.length > max ? normalized.slice(0, max - 3) + '...' : normalized;
+  };
+  const shortUrl = (value) => {
+    if (!value) return '';
+    try {
+      const parsed = new URL(value, window.location.origin);
+      if (parsed.origin === window.location.origin) return parsed.pathname + parsed.search;
+      return parsed.hostname + parsed.pathname + parsed.search;
+    } catch {
+      return String(value);
+    }
+  };
+  const elementLocator = (el) => {
+    const tag = el.tagName?.toLowerCase?.() || 'element';
+    if (el.id) return tag + '#' + el.id;
+    const classes = Array.from(el.classList || []).slice(0, 3).map(cls => '.' + cls).join('');
+    const name = el.getAttribute?.('name');
+    const type = el.getAttribute?.('type');
+    const attr = name ? '[name="' + shortText(name, 40) + '"]' : type ? '[type="' + shortText(type, 30) + '"]' : '';
+    return tag + attr + classes;
+  };
+  const describeHeading = (el) =>
+    elementLocator(el) + ' text="' + shortText(el.textContent, 80) + '"';
+  const describeLink = (a) =>
+    elementLocator(a) + ' href="' + shortText(shortUrl(a.getAttribute('href') || a.href), 90) +
+    '" text="' + shortText(a.textContent, 60) + '"';
+  const describeImage = (img) => {
+    const rect = img.getBoundingClientRect();
+    const alt = img.hasAttribute('alt') ? img.getAttribute('alt') : '<missing>';
+    return elementLocator(img) + ' src="' + shortText(shortUrl(img.currentSrc || img.src), 90) +
+      '" alt="' + shortText(alt, 60) + '" top=' + Math.round(rect.top) + 'px';
+  };
+  const describeField = (field) =>
+    elementLocator(field) + ' type="' + shortText(field.getAttribute('type') || field.type || field.tagName.toLowerCase(), 40) +
+    '" name="' + shortText(field.getAttribute('name') || '', 50) + '"';
+  const describeVideo = (video) => {
+    const rect = video.getBoundingClientRect();
+    return elementLocator(video) + ' src="' + shortText(shortUrl(video.currentSrc || video.src), 90) +
+      '" top=' + Math.round(rect.top) + 'px';
+  };
+
   const formLabelAudit = (() => {
     const fields = Array.from(document.querySelectorAll('input, textarea, select'))
       .filter(field => {
@@ -701,12 +744,7 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     return {
       fields: fields.length,
       missingLabels: missing.length,
-      missingLabelExamples: missing.slice(0, 10).map(field => ({
-        tag: field.tagName.toLowerCase(),
-        type: String(field.getAttribute('type') || field.type || '').toLowerCase() || null,
-        name: field.getAttribute('name') || null,
-        id: field.id || null
-      }))
+      missingLabelExamples: missing.slice(0, 10).map(describeField)
     };
   })();
 
@@ -749,15 +787,15 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     const emptyHeadings = Array.from(headingEls).filter(el => !(el.textContent || '').trim()).length;
 
     const imgEls = Array.from(document.querySelectorAll('img'));
-    const missingAlt = imgEls.filter(img => !img.hasAttribute('alt') || img.alt === '').length;
-    const missingDimensions = imgEls.filter(img =>
+    const missingAltImgs = imgEls.filter(img => !img.hasAttribute('alt') || img.alt === '');
+    const missingDimensionImgs = imgEls.filter(img =>
       !img.hasAttribute('width') && !img.hasAttribute('height') &&
       !img.style.aspectRatio && !(img.getAttribute('style') || '').includes('aspect-ratio')
-    ).length;
-    const aboveFoldLazy = imgEls.filter(img => {
+    );
+    const aboveFoldLazyImgs = imgEls.filter(img => {
       const rect = img.getBoundingClientRect();
       return rect.top < window.innerHeight && img.loading === 'lazy';
-    }).length;
+    });
     const imgFormats = {};
     for (const img of imgEls) {
       const src = img.currentSrc || img.src || '';
@@ -766,11 +804,11 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     }
 
     const linkEls = Array.from(document.querySelectorAll('a'));
-    const emptyHref = linkEls.filter(a => {
+    const emptyHrefLinks = linkEls.filter(a => {
       const href = a.getAttribute('href');
       return href === '' || href === null;
-    }).length;
-    const placeholderHref = linkEls.filter(a => {
+    });
+    const placeholderHrefLinks = linkEls.filter(a => {
       const href = a.getAttribute('href') || '';
       if (!href.startsWith('#')) return false;
       // Exclude Webflow tab/accordion panel anchors (e.g. #w-tabs-0-data-w-pane-0)
@@ -782,13 +820,13 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
         a.hasAttribute('data-lightbox')
       )) return false;
       return true;
-    }).length;
-    const blankTargetMissingRel = linkEls.filter(a =>
+    });
+    const blankTargetMissingRelLinks = linkEls.filter(a =>
       a.target === '_blank' && !(a.getAttribute('rel') || '').includes('noopener')
-    ).length;
-    const missingAccessibleName = linkEls.filter(a =>
+    );
+    const missingAccessibleNameLinks = linkEls.filter(a =>
       !(a.textContent || '').trim() && !a.getAttribute('aria-label') && !a.querySelector('img[alt]')
-    ).length;
+    );
 
     const metaTitle = document.querySelector('meta[property="og:title"]');
     const metaDesc = document.querySelector('meta[name="description"]');
@@ -812,16 +850,16 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     const hasAriaLandmarks = Boolean(mainLandmark) && Boolean(navLandmark);
 
     const videoEls = Array.from(document.querySelectorAll('video'));
-    const autoplayNoControls = videoEls.filter(v => v.autoplay && !v.controls).length;
-    const bgVideoMissing = videoEls.filter(v =>
+    const autoplayNoControlVideos = videoEls.filter(v => v.autoplay && !v.controls);
+    const bgVideoMissingVideos = videoEls.filter(v =>
       v.muted && v.autoplay && v.loop && !v.controls
-    ).length;
+    );
 
     // Below-fold images that should be lazy but aren't
-    const belowFoldNotLazy = imgEls.filter(img => {
+    const belowFoldNotLazyImgs = imgEls.filter(img => {
       const rect = img.getBoundingClientRect();
       return rect.top >= window.innerHeight && img.loading !== 'lazy';
-    }).length;
+    });
 
     // IX2/IX3 interaction signals from DOM
     const ix2Scripts = Array.from(document.querySelectorAll('script'))
@@ -848,25 +886,37 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
           missingH1: h1Count === 0,
           multipleH1: h1Count > 1,
           skippedHeadingLevels: skippedLevels,
-          emptyHeadings
+          emptyHeadings,
+          h1Examples: Array.from(headingEls)
+            .filter(el => el.tagName.toLowerCase() === 'h1')
+            .slice(0, 10)
+            .map(describeHeading)
         }
       },
       links: {
         summary: {
           links: linkEls.length,
-          emptyHref,
-          placeholderHref,
-          blankTargetMissingRel,
-          missingAccessibleName
+          emptyHref: emptyHrefLinks.length,
+          placeholderHref: placeholderHrefLinks.length,
+          blankTargetMissingRel: blankTargetMissingRelLinks.length,
+          missingAccessibleName: missingAccessibleNameLinks.length,
+          emptyHrefExamples: emptyHrefLinks.slice(0, 10).map(describeLink),
+          placeholderHrefExamples: placeholderHrefLinks.slice(0, 10).map(describeLink),
+          blankTargetMissingRelExamples: blankTargetMissingRelLinks.slice(0, 10).map(describeLink),
+          missingAccessibleNameExamples: missingAccessibleNameLinks.slice(0, 10).map(describeLink)
         }
       },
       images: {
         summary: {
           images: imgEls.length,
-          missingAlt,
-          missingDimensions,
-          aboveFoldLazy,
-          belowFoldNotLazy
+          missingAlt: missingAltImgs.length,
+          missingDimensions: missingDimensionImgs.length,
+          aboveFoldLazy: aboveFoldLazyImgs.length,
+          belowFoldNotLazy: belowFoldNotLazyImgs.length,
+          missingAltExamples: missingAltImgs.slice(0, 10).map(describeImage),
+          missingDimensionsExamples: missingDimensionImgs.slice(0, 10).map(describeImage),
+          aboveFoldLazyExamples: aboveFoldLazyImgs.slice(0, 10).map(describeImage),
+          belowFoldNotLazyExamples: belowFoldNotLazyImgs.slice(0, 10).map(describeImage)
         },
         formats: imgFormats
       },
@@ -879,8 +929,10 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
       media: {
         summary: {
           videos: videoEls.length,
-          autoplayWithoutControls: autoplayNoControls,
-          backgroundVideosMissingControl: bgVideoMissing
+          autoplayWithoutControls: autoplayNoControlVideos.length,
+          backgroundVideosMissingControl: bgVideoMissingVideos.length,
+          autoplayWithoutControlsExamples: autoplayNoControlVideos.slice(0, 10).map(describeVideo),
+          backgroundVideosMissingControlExamples: bgVideoMissingVideos.slice(0, 10).map(describeVideo)
         }
       },
       interactions: {
@@ -1337,6 +1389,22 @@ function asStringArray(value: unknown): string[] {
   return value.map((item) => String(item)).filter(Boolean);
 }
 
+function asExampleStrings(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === 'string') return item.trim();
+      if (item && typeof item === 'object') {
+        return Object.entries(item as Record<string, unknown>)
+          .filter(([, fieldValue]) => fieldValue != null && String(fieldValue).trim().length > 0)
+          .map(([key, fieldValue]) => `${key}=${String(fieldValue)}`)
+          .join(' ');
+      }
+      return '';
+    })
+    .filter(Boolean);
+}
+
 function asFiniteNumber(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
@@ -1487,7 +1555,21 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
         fail: asFiniteNumber(c.fail),
         passRate: asFiniteNumber(c.passRate)
       } : null;
-    })()
+    })(),
+    examples: {
+      h1: asExampleStrings(headings.h1Examples),
+      missingAltImages: asExampleStrings(images.missingAltExamples),
+      missingDimensionImages: asExampleStrings(images.missingDimensionsExamples),
+      aboveFoldLazyImages: asExampleStrings(images.aboveFoldLazyExamples),
+      belowFoldNotLazyImages: asExampleStrings(images.belowFoldNotLazyExamples),
+      linksMissingAccessibleName: asExampleStrings(links.missingAccessibleNameExamples),
+      linksMissingRel: asExampleStrings(links.blankTargetMissingRelExamples),
+      linksEmptyHref: asExampleStrings(links.emptyHrefExamples),
+      linksPlaceholderHref: asExampleStrings(links.placeholderHrefExamples),
+      formsMissingLabels: asExampleStrings(forms.missingLabelExamples),
+      autoplayWithoutControls: asExampleStrings(media.autoplayWithoutControlsExamples),
+      backgroundVideosMissingControl: asExampleStrings(media.backgroundVideosMissingControlExamples)
+    }
   };
 }
 
@@ -2181,10 +2263,32 @@ function unifyRows(
       .map((p) => p.url.replace(origin, ''))
       .slice(0, limit);
   };
+  const pagePath = (url: string): string => {
+    const path = url.replace(published.origin, '') || '/';
+    return path.startsWith('/') ? path : `/${path}`;
+  };
+  const pageScopedExamples = (
+    selector: (summary: PageAuditSummary) => string[] | undefined,
+    limit = 5
+  ): string[] => {
+    const examples: string[] = [];
+    for (const page of published.pages) {
+      if (!page.summary) continue;
+      const pageExamples = selector(page.summary) || [];
+      for (const example of pageExamples) {
+        examples.push(`${pagePath(page.url)}: ${example}`);
+        if (examples.length >= limit) return examples;
+      }
+    }
+    return examples;
+  };
+  const evidenceExamples = (label: string, examples: string[]): string[] =>
+    examples.length > 0 ? [`${label}=${examples.join(' | ')}`] : [];
 
   const h1FailPages = failingPaths(
     (s) => Boolean(s.headings?.missingH1) || Boolean(s.headings?.multipleH1) || (s.headings?.skippedHeadingLevels ?? 0) > 0
   );
+  const h1Examples = pageScopedExamples((s) => s.examples?.h1);
   pushRow(
     'webflow_audit.h1_hierarchy',
     'Webflow Audit Panel',
@@ -2198,7 +2302,8 @@ function unifyRows(
       `missingH1Pages=${published.issueCounts.missingH1}/${totalAudited}`,
       `multipleH1Pages=${published.issueCounts.multipleH1}/${totalAudited}`,
       `skippedHeadingLevelsPages=${published.issueCounts.skippedHeadingLevels}/${totalAudited}`,
-      ...(h1FailPages.length > 0 ? [`affectedPages=${h1FailPages.join(', ')}`] : [])
+      ...(h1FailPages.length > 0 ? [`affectedPages=${h1FailPages.join(', ')}`] : []),
+      ...evidenceExamples('h1Examples', h1Examples)
     ],
     ['published-webmcp-crawl'],
     0.9,
@@ -2206,6 +2311,7 @@ function unifyRows(
   );
 
   const altFailPages = failingPaths((s) => (s.images?.missingAlt ?? 0) > 0);
+  const altExamples = pageScopedExamples((s) => s.examples?.missingAltImages);
   pushRow(
     'webflow_audit.alt_text',
     'Webflow Audit Panel',
@@ -2213,7 +2319,8 @@ function unifyRows(
     published.issueCounts.imagesMissingAlt > 0 ? 'fail' : 'pass',
     [
       `pagesWithMissingAlt=${published.issueCounts.imagesMissingAlt}/${totalAudited}`,
-      ...(altFailPages.length > 0 ? [`affectedPages=${altFailPages.join(', ')}`] : [])
+      ...(altFailPages.length > 0 ? [`affectedPages=${altFailPages.join(', ')}`] : []),
+      ...evidenceExamples('missingAltExamples', altExamples)
     ],
     ['published-webmcp-crawl'],
     0.9,
@@ -2432,6 +2539,8 @@ function unifyRows(
   const notLazyBelowFold = (published.issueCounts as { imagesBelowFoldNotLazy?: number }).imagesBelowFoldNotLazy || 0;
   const allPagesAffected = lazyAboveFoldCount === totalAudited && totalAudited > 1;
   const hasLoadingIssues = lazyAboveFoldCount > 0 || notLazyBelowFold > 0;
+  const aboveFoldLazyExamples = pageScopedExamples((s) => s.examples?.aboveFoldLazyImages);
+  const belowFoldNotLazyExamples = pageScopedExamples((s) => s.examples?.belowFoldNotLazyImages);
   pushRow(
     'pages.image_loading_strategy',
     'Page Level Checks',
@@ -2442,7 +2551,9 @@ function unifyRows(
       `pagesWithBelowFoldNotLazy=${notLazyBelowFold}/${totalAudited}`,
       ...(allPagesAffected
         ? ['All pages affected — likely shared component images (nav/header) set to lazy by Webflow']
-        : [])
+        : []),
+      ...evidenceExamples('aboveFoldLazyExamples', aboveFoldLazyExamples),
+      ...evidenceExamples('belowFoldNotLazyExamples', belowFoldNotLazyExamples)
     ],
     ['published-webmcp-crawl'],
     allPagesAffected ? 0.55 : 0.87,
@@ -2452,6 +2563,8 @@ function unifyRows(
   const videoControlsFail =
     published.issueCounts.autoplayWithoutControls > 0 ||
     published.issueCounts.backgroundVideosMissingControl > 0;
+  const autoplayVideoExamples = pageScopedExamples((s) => s.examples?.autoplayWithoutControls);
+  const backgroundVideoExamples = pageScopedExamples((s) => s.examples?.backgroundVideosMissingControl);
   pushRow(
     'pages.videos_controls',
     'Page Level Checks',
@@ -2459,7 +2572,9 @@ function unifyRows(
     videoControlsFail ? 'fail' : 'pass',
     [
       `pagesWithAutoplayWithoutControls=${published.issueCounts.autoplayWithoutControls}`,
-      `pagesWithBackgroundVideoMissingControl=${published.issueCounts.backgroundVideosMissingControl}`
+      `pagesWithBackgroundVideoMissingControl=${published.issueCounts.backgroundVideosMissingControl}`,
+      ...evidenceExamples('autoplayVideoExamples', autoplayVideoExamples),
+      ...evidenceExamples('backgroundVideoExamples', backgroundVideoExamples)
     ],
     ['published-webmcp-crawl'],
     0.86
@@ -2541,6 +2656,7 @@ function unifyRows(
 
   const dimsMissingCount = published.issueCounts.imagesMissingDimensions;
   const allPagesDimsMissing = dimsMissingCount === totalAudited && totalAudited > 1;
+  const missingDimensionExamples = pageScopedExamples((s) => s.examples?.missingDimensionImages);
   pushRow(
     'pages.image_dimensions',
     'Page Level Checks',
@@ -2550,7 +2666,8 @@ function unifyRows(
       `pagesWithMissingImageDimensions=${dimsMissingCount}/${totalAudited}`,
       ...(allPagesDimsMissing
         ? ['All pages affected — Webflow does not always emit explicit width/height attributes']
-        : [])
+        : []),
+      ...evidenceExamples('missingDimensionExamples', missingDimensionExamples)
     ],
     ['published-webmcp-crawl'],
     allPagesDimsMissing ? 0.6 : 0.9,
@@ -2689,12 +2806,22 @@ function unifyRows(
     (precheck?.discoveredUrls ?? []).some(
       (url) => url.toLowerCase().includes('/instruction')
     );
+  const affiliateExamples = published.pages
+    .flatMap((page) =>
+      (page.policyChecks?.affiliateLinks || []).map((link) => `${pagePath(page.url)}: ${link}`)
+    )
+    .slice(0, 5);
   pushRow(
     'policy.powered_by_webflow',
     'Submission Policy',
     '"Powered by Webflow" badge is present and visible',
     policy.hasPoweredByWebflow ? 'pass' : 'fail',
-    [`hasPoweredByWebflow=${policy.hasPoweredByWebflow}`],
+    [
+      `hasPoweredByWebflow=${policy.hasPoweredByWebflow}`,
+      ...(policy.hasPoweredByWebflow
+        ? []
+        : ['where=site-wide: expected .w-webflow-badge or visible webflow.com badge link'])
+    ],
     ['published-webmcp-crawl'],
     0.9,
     'Do not remove the "Powered by Webflow" badge. It must remain visible on the published site.'
@@ -2706,9 +2833,10 @@ function unifyRows(
     policy.affiliateLinkCount === 0 ? 'pass' : 'fail',
     [
       `affiliateLinkCount=${policy.affiliateLinkCount}`,
-      ...(policy.affiliateLinks.length > 0
-        ? [`examples=${policy.affiliateLinks.slice(0, 5).join(' | ')}`]
-        : [])
+      ...evidenceExamples(
+        'affiliateExamples',
+        affiliateExamples.length > 0 ? affiliateExamples : policy.affiliateLinks.slice(0, 5)
+      )
     ],
     ['published-webmcp-crawl'],
     0.85,
@@ -2808,12 +2936,16 @@ function unifyRows(
 
   // Accessible link names: links without text, aria-label, or img alt
   const missingAccessibleNameCount = published.issueCounts.linksMissingAccessibleName;
+  const missingAccessibleNameExamples = pageScopedExamples((s) => s.examples?.linksMissingAccessibleName);
   pushRow(
     'a11y.link_accessible_names',
     'Accessibility',
     'All links have accessible names (text, aria-label, or nested img alt)',
     missingAccessibleNameCount === 0 ? 'pass' : 'fail',
-    [`pagesWithIssue=${missingAccessibleNameCount}/${totalAudited}`],
+    [
+      `pagesWithIssue=${missingAccessibleNameCount}/${totalAudited}`,
+      ...evidenceExamples('linkNameExamples', missingAccessibleNameExamples)
+    ],
     ['published-webmcp-crawl'],
     0.85,
     missingAccessibleNameCount > 0
@@ -2823,12 +2955,16 @@ function unifyRows(
 
   // Empty href links: these are broken navigation elements
   const emptyHrefCount = published.issueCounts.linksEmptyHref;
+  const emptyHrefExamples = pageScopedExamples((s) => s.examples?.linksEmptyHref);
   pushRow(
     'links.no_empty_href',
     'Page Level Checks',
     'No links with empty href attributes',
     emptyHrefCount === 0 ? 'pass' : 'fail',
-    [`pagesWithEmptyHref=${emptyHrefCount}/${totalAudited}`],
+    [
+      `pagesWithEmptyHref=${emptyHrefCount}/${totalAudited}`,
+      ...evidenceExamples('emptyHrefExamples', emptyHrefExamples)
+    ],
     ['published-webmcp-crawl'],
     0.85,
     emptyHrefCount > 0
@@ -2838,12 +2974,16 @@ function unifyRows(
 
   // External links: should have target="_blank" and rel="noopener"
   const blankTargetMissingRelCount = published.issueCounts.linksMissingRel;
+  const missingRelExamples = pageScopedExamples((s) => s.examples?.linksMissingRel);
   pushRow(
     'links.external_target_blank',
     'Page Level Checks',
     'External links open in new tab with rel="noopener"',
     blankTargetMissingRelCount === 0 ? 'pass' : 'fail',
-    [`pagesWithMissingRel=${blankTargetMissingRelCount}/${totalAudited}`],
+    [
+      `pagesWithMissingRel=${blankTargetMissingRelCount}/${totalAudited}`,
+      ...evidenceExamples('missingRelExamples', missingRelExamples)
+    ],
     ['published-webmcp-crawl'],
     0.8,
     blankTargetMissingRelCount > 0
@@ -2864,6 +3004,7 @@ function unifyRows(
   const formLabelRatio = totalFormFields > 0
     ? (totalFormFields - totalMissingLabels) / totalFormFields
     : 1;
+  const missingFormLabelExamples = pageScopedExamples((s) => s.examples?.formsMissingLabels);
   pushRow(
     'forms.labels_present',
     'Page Level Checks',
@@ -2875,7 +3016,8 @@ function unifyRows(
       `totalFields=${totalFormFields}`,
       `missingLabels=${totalMissingLabels}`,
       `pagesWithForms=${formPages.length}`,
-      `labelCoverage=${Math.round(formLabelRatio * 100)}%`
+      `labelCoverage=${Math.round(formLabelRatio * 100)}%`,
+      ...evidenceExamples('missingLabelExamples', missingFormLabelExamples)
     ],
     ['published-webmcp-crawl'],
     0.8,
