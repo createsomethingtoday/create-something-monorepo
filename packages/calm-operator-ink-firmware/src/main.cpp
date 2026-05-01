@@ -14,7 +14,7 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.5";
+constexpr const char* FIRMWARE_VERSION = "0.1.6";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
 constexpr uint32_t HTTP_TIMEOUT_MS = 15000;
@@ -524,7 +524,9 @@ void operatorCheckIn() {
   const int status = requestBridge("POST", "/ink/operator-check-in", body, payload);
   if (status >= 200 && status < 300) {
     applyBriefPayload(payload);
+    lastSyncAt = millis();
     lastSyncStatus = "check-in saved";
+    pendingNotice = "";
     renderBrief();
   } else {
     renderStatus("CHECK-IN FAILED", lastHttpError, "Try Sync later");

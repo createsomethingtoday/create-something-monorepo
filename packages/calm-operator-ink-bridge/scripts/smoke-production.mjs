@@ -201,6 +201,31 @@ async function smoke(args) {
   );
 
   checks.push(
+    await runCheck('check-in', async () => {
+      const body = await requestJson({
+        name: 'check-in',
+        url: bridgeUrl(args.origin, '/ink/operator-check-in'),
+        token: args.token,
+        method: 'POST',
+        body: JSON.stringify({
+          key: 'production-smoke',
+          label: 'Ink production smoke',
+          detail: 'Automated bridge smoke check-in',
+          surface: args.surface,
+          device_id: args.deviceId,
+          payload: { smoke: true }
+        })
+      });
+      if (body?.ok !== true) throw new Error('check-in ok must be true');
+      assertString(body.event_id, 'check-in.event_id');
+      assertString(body.headline, 'check-in.headline');
+      if (body.headline !== 'CHECK-IN SAVED') throw new Error('check-in headline must confirm save');
+      if (body.urgent !== false) throw new Error('check-in must not be urgent');
+      return `${body.headline}: ${body.line1}`;
+    })
+  );
+
+  checks.push(
     await runCheck('mcp-review', async () => {
       const body = await requestJson({
         name: 'mcp-review',

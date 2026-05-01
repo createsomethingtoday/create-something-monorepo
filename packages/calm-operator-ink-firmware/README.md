@@ -93,6 +93,9 @@ because it collects remote MCP and agent health before rendering the summary.
 Fresh live review results show `LIVE OK` in the footer when no operator action
 is needed.
 
+`Check In` records a lightweight operator heartbeat with the bridge. It confirms
+that Ink can write back to the operator system without creating an alert.
+
 ## Notes
 
 Core Ink is an e-ink surface. Keep refreshes deliberate. Operator alerts and

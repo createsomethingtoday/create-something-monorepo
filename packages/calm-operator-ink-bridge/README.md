@@ -42,6 +42,7 @@ Token-gated:
 - `POST /ink/health-review/request`
 - `POST /ink/health-review/run`
 - `POST /ink/alarms/run`
+- `POST /ink/operator-check-in`
 - `POST /ink/device-heartbeat`
 - `POST /ink/clear`
 
@@ -97,6 +98,7 @@ The production smoke check validates:
 - authenticated firmware brief contract from `GET /ink/brief`
 - authenticated navigation contract from `GET /ink/navigation`
 - authenticated device heartbeat lookup from `GET /ink/device`
+- authenticated operator check-in write via `POST /ink/operator-check-in`
 - authenticated live MCP/agent review via `POST /ink/health-review/request`
   including explicit review metadata such as `checked` and `generated_at`
 
