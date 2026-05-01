@@ -27,6 +27,11 @@ type Ix2PageResult = {
 	}>;
 };
 
+type FailedPageResult = {
+	url: string;
+	error: string;
+};
+
 export async function validateInteractions(
 	siteUrl: string,
 	pageSlugs?: string[],
@@ -36,37 +41,71 @@ export async function validateInteractions(
 
 	try {
 		const urls = buildPageUrls(siteUrl, pageSlugs, options?.maxPages);
-		const pages = await Promise.all(urls.map((url) => analyzeInteractionsPage(url)));
+		const pageResults = await Promise.all(
+			urls.map(async (url) => {
+				try {
+					return { status: 'fulfilled' as const, value: await analyzeInteractionsPage(url) };
+				} catch (error) {
+					const message = error instanceof Error ? error.message : String(error);
+					return { status: 'rejected' as const, reason: { url, error: message } };
+				}
+			})
+		);
+		const pages = pageResults
+			.filter((result): result is { status: 'fulfilled'; value: Ix2PageResult } => result.status === 'fulfilled')
+			.map((result) => result.value);
+		const failedPages = pageResults
+			.filter((result): result is { status: 'rejected'; reason: FailedPageResult } => result.status === 'rejected')
+			.map((result) => result.reason);
 		const pagesWithLegacyIx2 = pages.filter((page) => page.legacyIx2Detected);
 		const legacyIx2Count = pagesWithLegacyIx2.reduce((total, page) => total + page.legacyIx2Count, 0);
-		const issues = generateInteractionIssues(pagesWithLegacyIx2, legacyIx2Count);
+		const issues = [
+			...generateInteractionIssues(pagesWithLegacyIx2, legacyIx2Count),
+			...generateIncompleteAnalysisIssues(failedPages, pagesWithLegacyIx2.length > 0)
+		];
 
 		return {
 			issues,
 			stats: {
-				legacyIx2Detected: pagesWithLegacyIx2.length > 0,
+				legacyIx2Detected: pages.length === 0 ? null : pagesWithLegacyIx2.length > 0,
 				legacyIx2Count,
+				pagesRequested: urls.length,
 				pagesAnalyzed: pages.length,
-				pagesWithLegacyIx2: pagesWithLegacyIx2.length
+				pagesFailed: failedPages.length,
+				pagesWithLegacyIx2: pagesWithLegacyIx2.length,
+				analysisComplete: failedPages.length === 0,
+				analysisStatus: failedPages.length === 0 ? 'completed' : pages.length > 0 ? 'partial' : 'failed',
+				errorMessage: failedPages.length > 0 ? `${failedPages.length} page(s) could not be analyzed` : undefined
 			},
 			pages
 		};
 	} catch (error) {
 		console.error('Interactions validation error:', error);
+		const message = error instanceof Error ? error.message : 'Unknown error';
 		return {
 			issues: [{
 				id: 'interactions-analysis-failed',
 				category: 'Interactions and GSAP',
-				severity: 'warning',
-				message: 'Interactions analysis could not be completed',
-				description: `Error analyzing interactions: ${error instanceof Error ? error.message : 'Unknown error'}`,
-				howToFix: 'Check that the published site URL is accessible and rerun validation.'
+				severity: 'error',
+				message: 'Interactions and GSAP could not be verified',
+				description: `The published site could not be analyzed for legacy IX2 interactions: ${message}`,
+				howToFix: 'Publish the latest site, confirm the published URL is accessible, and rerun validation. If the template uses legacy IX2 interactions, rebuild them with Webflow Interactions powered by GSAP before submission.',
+				details: {
+					howToFix: 'Publish the latest site, confirm the published URL is accessible, and rerun validation. If the template uses legacy IX2 interactions, rebuild them with Webflow Interactions powered by GSAP before submission.',
+					analysisStatus: 'failed',
+					errorMessage: message
+				}
 			}],
 			stats: {
-				legacyIx2Detected: false,
+				legacyIx2Detected: null,
 				legacyIx2Count: 0,
+				pagesRequested: 0,
 				pagesAnalyzed: 0,
-				pagesWithLegacyIx2: 0
+				pagesFailed: 0,
+				pagesWithLegacyIx2: 0,
+				analysisComplete: false,
+				analysisStatus: 'failed',
+				errorMessage: message
 			},
 			pages: []
 		};
@@ -171,6 +210,32 @@ function generateInteractionIssues(pagesWithLegacyIx2: Ix2PageResult[], legacyIx
 			matchedPatterns: pagesWithLegacyIx2.flatMap((page) =>
 				page.matches.map((match) => `${page.url}: ${match.label} (${match.count})`)
 			)
+		}
+	}];
+}
+
+function generateIncompleteAnalysisIssues(
+	failedPages: FailedPageResult[],
+	hasLegacyIx2Rejection: boolean
+): ValidationIssue[] {
+	if (failedPages.length === 0) {
+		return [];
+	}
+
+	return [{
+		id: 'interactions-analysis-incomplete',
+		category: 'Interactions and GSAP',
+		severity: hasLegacyIx2Rejection ? 'warning' : 'error',
+		message: `${failedPages.length} page${failedPages.length === 1 ? '' : 's'} could not be checked for Interactions and GSAP`,
+		description: 'Interactions validation now continues when individual pages fail, but every submitted page still needs a verified IX2 policy check.',
+		howToFix: 'Publish all template pages, confirm each published URL is accessible, and rerun validation.',
+		details: {
+			howToFix: 'Publish all template pages, confirm each published URL is accessible, and rerun validation.',
+			affectedPages: failedPages.map((page) => ({
+				url: page.url,
+				error: page.error
+			})),
+			issues: failedPages.map((page) => `${page.url}: ${page.error}`)
 		}
 	}];
 }

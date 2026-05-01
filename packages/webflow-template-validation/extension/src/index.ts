@@ -3557,6 +3557,26 @@ function formatDetailedStats(category: string, stats: Record<string, any>): stri
       if (stats.variableUsagePercent !== undefined) details.push(`${stats.variableUsagePercent}% variable usage`);
       break;
 
+    case 'Interactions and GSAP': {
+      const analysisComplete = stats.analysisComplete !== false && stats.analysisStatus !== 'failed';
+      const legacyIx2State =
+        stats.legacyIx2Detected === true
+          ? 'Detected'
+          : stats.legacyIx2Detected === false
+          ? 'Not detected'
+          : 'Not verified';
+
+      details.push(`Analysis: ${analysisComplete ? (stats.analysisStatus === 'partial' ? 'Partially verified' : 'Verified') : 'Not verified'}`);
+      details.push(`Legacy IX2: ${legacyIx2State}`);
+      if (typeof stats.legacyIx2Count === 'number') details.push(`${stats.legacyIx2Count} legacy IX2 marker${stats.legacyIx2Count === 1 ? '' : 's'}`);
+      if (typeof stats.pagesRequested === 'number') details.push(`${stats.pagesRequested} page${stats.pagesRequested === 1 ? '' : 's'} requested`);
+      if (typeof stats.pagesAnalyzed === 'number') details.push(`${stats.pagesAnalyzed} page${stats.pagesAnalyzed === 1 ? '' : 's'} analyzed`);
+      if (typeof stats.pagesFailed === 'number' && stats.pagesFailed > 0) details.push(`${stats.pagesFailed} page${stats.pagesFailed === 1 ? '' : 's'} not checked`);
+      if (typeof stats.pagesWithLegacyIx2 === 'number') details.push(`${stats.pagesWithLegacyIx2} page${stats.pagesWithLegacyIx2 === 1 ? '' : 's'} with IX2`);
+      if (typeof stats.errorMessage === 'string') details.push(stats.errorMessage);
+      break;
+    }
+
     default:
       // Generic formatting
       Object.entries(stats).forEach(([key, value]) => {

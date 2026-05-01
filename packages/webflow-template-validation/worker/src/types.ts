@@ -322,10 +322,15 @@ export interface AccessibilityAnalysisResult {
 export interface InteractionsAnalysisResult {
 	issues: ValidationIssue[];
 	stats: {
-		legacyIx2Detected: boolean;
+		legacyIx2Detected: boolean | null;
 		legacyIx2Count: number;
+		pagesRequested: number;
 		pagesAnalyzed: number;
+		pagesFailed: number;
 		pagesWithLegacyIx2: number;
+		analysisComplete: boolean;
+		analysisStatus: 'completed' | 'partial' | 'failed';
+		errorMessage?: string;
 	};
 	pages: Array<{
 		url: string;
