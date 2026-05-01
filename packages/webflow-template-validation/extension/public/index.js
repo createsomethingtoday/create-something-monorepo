@@ -9,12 +9,16 @@ const STATUS_TIMEOUT_MS = 15000;
 const MAX_NETWORK_RETRIES = 3;
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504, 522, 524]);
 let isValidating = false;
+let extensionInitialized = false;
 let bridgeContext = null;
 let bridgeStatus = null;
-document.addEventListener('DOMContentLoaded', () => {
+function initializeExtension() {
+    if (extensionInitialized)
+        return;
+    extensionInitialized = true;
     const validateBtn = document.getElementById('validate-btn');
     if (validateBtn) {
-        validateBtn.addEventListener('click', validateProject);
+        validateBtn.addEventListener('click', () => void validateProject());
     }
     const optionsBtn = document.getElementById('options-btn');
     const optionsPanel = document.getElementById('options-panel');
@@ -40,7 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
     rotateBtn?.addEventListener('click', () => rotateBridgeToken());
     recheckBtn?.addEventListener('click', () => refreshBridgeStatus());
     void bootstrapBridgePanel();
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeExtension, { once: true });
+}
+else {
+    initializeExtension();
+}
 async function validateProject() {
     if (isValidating)
         return;

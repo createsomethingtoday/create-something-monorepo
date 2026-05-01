@@ -14,6 +14,7 @@ const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504, 522, 524]);
 
 // Global state
 let isValidating = false;
+let extensionInitialized = false;
 let bridgeContext: { siteId: string; siteName?: string; siteUrl?: string } | null = null;
 let bridgeStatus: SnippetStatusResponse | null = null;
 
@@ -228,11 +229,14 @@ interface ProjectData {
   }>;
 }
 
-// Initialize extension when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize once whether the extension is loaded with the document or injected after DOMContentLoaded.
+function initializeExtension(): void {
+  if (extensionInitialized) return;
+  extensionInitialized = true;
+
   const validateBtn = document.getElementById('validate-btn');
   if (validateBtn) {
-    validateBtn.addEventListener('click', validateProject);
+    validateBtn.addEventListener('click', () => void validateProject());
   }
 
   const optionsBtn = document.getElementById('options-btn');
@@ -261,7 +265,13 @@ document.addEventListener('DOMContentLoaded', () => {
   recheckBtn?.addEventListener('click', () => refreshBridgeStatus());
 
   void bootstrapBridgePanel();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeExtension, { once: true });
+} else {
+  initializeExtension();
+}
 
 // Main validation function
 async function validateProject(): Promise<void> {
