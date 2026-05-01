@@ -156,6 +156,20 @@ function row(rows: Array<{ id: string; status: string; evidence: string[] }>, id
   return found;
 }
 
+test('published-only reviews produce a manual Designer placeholder report', () => {
+  const designer = __test.createPublishedOnlyDesignerReport('https://az-bergamo.webflow.io', {
+    discoveredUrls: ['https://az-bergamo.webflow.io/about'],
+    errors: []
+  } as any);
+
+  assert.equal(designer.metadataSummary.siteName, 'az-bergamo.webflow.io');
+  assert.deepEqual(
+    designer.metadataSummary.pages.map((page: { name: string }) => page.name),
+    ['Home', 'About']
+  );
+  assert.deepEqual(designer.checks, []);
+});
+
 test('published-site output conventions are not promoted to hard blockers', () => {
   const rows = __test.unifyRows(designerReport(), publishedCrawl(), true);
 

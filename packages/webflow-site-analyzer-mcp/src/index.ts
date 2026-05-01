@@ -1174,6 +1174,60 @@ type RunTemplateReviewOptions = {
   reportProgress?: ProgressReporter;
 };
 
+function createPublishedOnlyDesignerReport(
+  publishedUrl: string,
+  precheck: PublishedSitePrecheckResult
+): DesignerChecklistReport {
+  let origin = publishedUrl;
+  try {
+    origin = new URL(publishedUrl).origin;
+  } catch {
+    // Keep the input URL as a fallback label when URL parsing fails.
+  }
+
+  const discoveredUrls = Array.from(new Set([publishedUrl, ...precheck.discoveredUrls]));
+  const pages = discoveredUrls.slice(0, 200).map((url) => {
+    try {
+      const parsed = new URL(url);
+      const pathname = parsed.pathname.replace(/\/$/, '');
+      if (!pathname || pathname === '/') return { name: 'Home', type: 'static' };
+      const slug = pathname.split('/').filter(Boolean).at(-1) || pathname;
+      const name = slug
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+      return { name, type: 'static' };
+    } catch {
+      return { name: url, type: 'static' };
+    }
+  });
+
+  return {
+    evaluatedAt: new Date().toISOString(),
+    source: 'provided-metadata',
+    metadataSummary: {
+      siteName: origin.replace(/^https?:\/\//, ''),
+      sitePlan: 'unknown',
+      totalPages: pages.length,
+      totalComponents: 0,
+      unusedComponents: 0,
+      totalInteractions: 0,
+      totalCMSCollections: 0,
+      totalCMSItems: 0,
+      totalAssets: 0,
+      breakpoints: [],
+      pages
+    },
+    summary: {
+      pass: 0,
+      fail: 0,
+      manual: 0,
+      scored: 0,
+      passRate: 0
+    },
+    checks: []
+  };
+}
+
 /**
  * Detect and repair the "every-s-to-space" text corruption that occurs when
  * a page uses a web font whose "s" glyph is missing or zero-width and the
@@ -2945,8 +2999,8 @@ async function executeTemplateReview(
   input: RunTemplateReviewInput,
   options: RunTemplateReviewOptions = {}
 ): Promise<UnifiedTemplateReviewReport> {
-  if (!input?.previewUrl || !input?.publishedUrl) {
-    throw new Error('`previewUrl` and `publishedUrl` are required.');
+  if (!input?.publishedUrl) {
+    throw new Error('`publishedUrl` is required.');
   }
 
   const manager = getProvider();
@@ -2963,13 +3017,23 @@ async function executeTemplateReview(
   }
 
   if (reportProgress) await reportProgress(5, 100, 'Published precheck complete');
-  if (reportProgress) await reportProgress(5, 100, 'Running Designer checklist extraction');
+  if (reportProgress) {
+    await reportProgress(
+      5,
+      100,
+      input.previewUrl
+        ? 'Running Designer checklist extraction'
+        : 'No previewUrl provided; Designer-only rows will remain manual'
+    );
+  }
 
-  const designer = await scoreDesignerChecklistTool({
-    url: input.previewUrl,
-    timeout: input.timeout,
-    includeManual: true
-  });
+  const designer = input.previewUrl
+    ? await scoreDesignerChecklistTool({
+        url: input.previewUrl,
+        timeout: input.timeout,
+        includeManual: true
+      })
+    : createPublishedOnlyDesignerReport(input.publishedUrl, precheck);
 
   if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
 
@@ -3448,11 +3512,11 @@ export function createAnalyzerServer(): Server {
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring.'
+              description: 'Optional Webflow preview URL. When omitted, Designer extraction is skipped and Designer-only rows remain manual.'
             },
             publishedUrl: {
               type: 'string',
-              description: 'Published site URL with WebMCP snippet installed.'
+              description: 'Published site URL. The analyzer uses the installed Webflow Review snippet when present and injects it at crawl time when available.'
             },
             timeout: {
               type: 'number',
@@ -3471,7 +3535,7 @@ export function createAnalyzerServer(): Server {
               description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
             }
           },
-          required: ['previewUrl', 'publishedUrl']
+          required: ['publishedUrl']
         }
       },
       {
@@ -3482,11 +3546,11 @@ export function createAnalyzerServer(): Server {
           properties: {
             previewUrl: {
               type: 'string',
-              description: 'Webflow preview URL for Designer extraction/scoring.'
+              description: 'Optional Webflow preview URL. When omitted, Designer extraction is skipped and Designer-only rows remain manual.'
             },
             publishedUrl: {
               type: 'string',
-              description: 'Published site URL with WebMCP snippet installed.'
+              description: 'Published site URL. The analyzer uses the installed Webflow Review snippet when present and injects it at crawl time when available.'
             },
             timeout: {
               type: 'number',
@@ -3505,7 +3569,7 @@ export function createAnalyzerServer(): Server {
               description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
             }
           },
-          required: ['previewUrl', 'publishedUrl']
+          required: ['publishedUrl']
         }
       },
       {
@@ -3803,6 +3867,7 @@ export function createAnalyzerServer(): Server {
 }
 
 export const __test = {
+  createPublishedOnlyDesignerReport,
   unifyRows
 };
 
