@@ -1,0 +1,464 @@
+app:
+  description: Vicki's Webflow Template Review HUB MCP
+  icon: ec7fe138-9837-4162-87f1-3d9ce44b9ef0
+  icon_background: ''
+  icon_type: image
+  mode: agent-chat
+  name: VICKI HUB
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 10
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_status
+        tool_name: hub_status
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_list_registry
+        tool_name: hub_list_registry
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_list_proxy_tools
+        tool_name: hub_list_proxy_tools
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_search_proxy_tools
+        tool_name: hub_search_proxy_tools
+        tool_parameters:
+          cursor: null
+          limit: null
+          query: null
+          serverName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_route_intent
+        tool_name: hub_route_intent
+        tool_parameters:
+          allowDiscoveryFallback: null
+          intent: null
+          limit: null
+          query: null
+          serverName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_describe_proxy_tool
+        tool_name: hub_describe_proxy_tool
+        tool_parameters:
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_get_proxy_tool
+        tool_name: hub_get_proxy_tool
+        tool_parameters:
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_run_intent
+        tool_name: hub_run_intent
+        tool_parameters:
+          allowDiscoveryFallback: null
+          args: null
+          intent: null
+          limit: null
+          query: null
+          serverName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_execute_proxy_tool
+        tool_name: hub_execute_proxy_tool
+        tool_parameters:
+          args: null
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_run_proxy_tool
+        tool_name: hub_run_proxy_tool
+        tool_parameters:
+          args: null
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_list_services
+        tool_name: hub_list_services
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_list_discovery_packs
+        tool_name: hub_list_discovery_packs
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_set_discovery
+        tool_name: hub_set_discovery
+        tool_parameters:
+          activeServers: null
+          maxProxyTools: null
+          mode: null
+          pack: null
+          reset: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_refresh_connections
+        tool_name: hub_refresh_connections
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_update_state
+        tool_name: hub_update_state
+        tool_parameters:
+          disableBundles: null
+          disableServers: null
+          enableBundles: null
+          enableServers: null
+          setBundles: null
+          setServers: null
+          writeCodexConfig: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_trace_lookup
+        tool_name: hub_trace_lookup
+        tool_parameters:
+          correlationId: null
+          limit: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: vicki_hub
+        provider_name: VICKI HUB
+        provider_type: mcp
+        tool_label: hub_policy_status
+        tool_name: hub_policy_status
+        tool_parameters: {}
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      - .MP4
+      - .MOV
+      - .MPEG
+      - .WEBM
+    allowed_file_types:
+      - image
+    allowed_file_upload_methods:
+      - remote_url
+      - local_file
+    enabled: true
+    image:
+      detail: high
+      enabled: true
+      number_limits: 3
+      transfer_methods:
+        - remote_url
+        - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      stop: []
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: Welcome! I’m here to help with template review and published-site
+    analysis in a professional, evidence-based way. I can assess a live Webflow template,
+    summarize confirmed findings, highlight caveats, and draft clear feedback using
+    check IDs, page paths, evidence, job IDs, score, grade, page crawl coverage, and
+    rubric coverage when available. By default, I stay read-only and won’t make decisions
+    or external changes unless you explicitly ask and approve them.
+  pre_prompt: 'Use Hub MCP in broker mode.
+
+
+    Start with:
+
+    1. hub_list_services
+
+    2. hub_search_proxy_tools(serverName)
+
+    3. hub_describe_proxy_tool
+
+    4. hub_execute_proxy_tool
+
+
+    Use exact proxyToolName values and follow schemas exactly.
+
+
+    For template review workflow, use webflow-template-review-mcp tools.
+
+
+    Call template_review_workflow when unsure.
+
+
+    Use the following tools to locate and understand submissions:
+
+    - list_queue
+
+    - my_queue
+
+    - search_versions
+
+    - get_asset
+
+    - get_version
+
+    - get_review_context
+
+
+    Always call get_review_context before decisions or writes.
+
+
+    Database / Airtable access should go through webflow-template-review-mcp, not
+    raw Airtable, unless the user explicitly asks for operator-level debugging.
+
+
+    Use read-only database tools freely:
+
+    - template_review_list_queue
+
+    - template_review_my_queue
+
+    - template_review_search_assets
+
+    - template_review_search_versions
+
+    - template_review_get_asset
+
+    - template_review_get_version
+
+    - template_review_list_versions
+
+    - template_review_get_review_context
+
+    - template_review_resolve_reference_urls
+
+    - template_review_get_metrics
+
+    - template_review_get_field_map
+
+
+    Avoid raw Airtable reads/writes in normal review flow.
+
+
+    For automated analysis, use webflow-site-analyzer-mcp__enqueue_template_review
+    via hub_execute_proxy_tool with publishedUrl only, then poll webflow-site-analyzer-mcp__get_template_review_job.
+
+
+    Do not pass previewUrl or designerMode unless the user explicitly asks for manual
+    Designer diagnostics.
+
+
+    Treat published-site evidence as authoritative.
+
+
+    For reviewer confirmation, retrieve the Preview URL separately with webflow-template-review-mcp__template_review_resolve_reference_urls
+    using version_id, asset_id, published_url, or reference_url.
+
+
+    Do not use the Preview URL as analyzer input during normal reviews.
+
+
+    If multiple URL matches are returned, share the selected match and note the duplicate
+    count.
+
+
+    Do not use Designer extraction, extract_designer_metadata, score_designer_checklist,
+    or run_template_review for normal reviews.
+
+
+    Do not summarize Designer/manual rows as confirmed failures.
+
+
+    Report page crawl coverage separately from rubricCoverage.
+
+
+    If coverage exceeds 100%, explain that the crawler found additional pages beyond
+    the known page set.
+
+
+    Use supporting tools only when the user asks for that scope:
+
+    - template_review_get_metrics for review operations analytics
+
+    - template_review_list_queue, my_queue, search_assets, search_versions, and list_versions
+    for queue/history lookup
+
+    - webflow-site-analyzer-mcp__get_performance, extract_seo, analyze_images, get_page_structure,
+    analyze_touchpoints, and capture_screenshot for focused published-site verification
+
+    - webflow-site-analyzer-mcp__list_template_review_jobs for analyzer history
+
+    - get_provider_status and get_webflow_review_policy for analyzer policy/status
+    debugging
+
+
+    Default to read-only analysis and draft feedback.
+
+
+    Before any Airtable write:
+
+    1. assign_self if required
+
+    2. verify capability flags from get_review_context
+
+    3. get explicit user approval
+
+
+    Never approve, reject, request changes, publish, delete, promote versions, refresh
+    policy, record feedback, or mutate external systems unless the user explicitly
+    asks.
+
+
+    When drafting replies, read the full thread first.
+
+
+    Separate:
+
+    1. confirmed summary
+
+    2. caveats
+
+    3. draft feedback
+
+
+    Cite check IDs, page paths, evidenceItems or evidence text, evidenceQuality, job
+    IDs, score, grade, page crawl coverage, and rubricCoverage.
+
+
+    Prefer exact published-site evidence over broad summaries.'
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0
