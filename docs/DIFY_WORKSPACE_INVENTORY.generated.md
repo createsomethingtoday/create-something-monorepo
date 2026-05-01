@@ -27,6 +27,7 @@ Status: partial
 | `pablo_hub` | - | `https://wf-app-review-pablo.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `eric_hub` | - | `https://wf-template-review-eric.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `natalia_hub` | - | `https://wf-template-review-natalia.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `mariana_hub` | - | `https://wf-template-review-mariana.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 
 ## Agents
 
@@ -43,6 +44,7 @@ Status: partial
 | `pablo-hub` | `imported` | `client` | - | `pablo_hub` | 17 | `braintrust:eval:dify:pablo-hub` |
 | `eric-hub` | `imported` | `client` | - | `eric_hub` | 17 | `braintrust:eval:dify:eric-hub` |
 | `natalia-hub` | `imported` | `client` | - | `natalia_hub` | 17 | `braintrust:eval:dify:natalia-hub` |
+| `mariana-hub` | `imported` | `client` | - | `mariana_hub` | 17 | `braintrust:eval:dify:mariana-hub` |
 
 ## Eval Coverage
 
@@ -59,6 +61,7 @@ Status: partial
 | `pablo-hub` | `braintrust` | `create-something-dify-agents` | `pablo_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `eric-hub` | `braintrust` | `create-something-dify-agents` | `eric_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `natalia-hub` | `braintrust` | `create-something-dify-agents` | `natalia_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `mariana-hub` | `braintrust` | `create-something-dify-agents` | `mariana_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 
 ## Smoke Cases
 
@@ -78,6 +81,7 @@ Status: partial
 | `pablo-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `eric-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `natalia-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
+| `mariana-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 
 ## Agent Tool Mapping
 
@@ -331,4 +335,29 @@ Status: partial
   - `natalia_hub.hub_status` (read)
   - `natalia_hub.hub_trace_lookup` (read)
   - `natalia_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### MARIANA HUB
+
+- Inventory ID: `mariana-hub`
+- Policy pack: `client-mariana-hub.v1`
+- Instructions source: `config/dify-agents/mariana-hub.json#agent_prompt`
+- Smoke: `pnpm dify:agent:smoke -- --agent-id mariana-hub`
+- Tools:
+  - `mariana_hub.hub_describe_proxy_tool` (read)
+  - `mariana_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
+  - `mariana_hub.hub_get_proxy_tool` (read)
+  - `mariana_hub.hub_list_discovery_packs` (read)
+  - `mariana_hub.hub_list_proxy_tools` (read)
+  - `mariana_hub.hub_list_registry` (read)
+  - `mariana_hub.hub_list_services` (read)
+  - `mariana_hub.hub_policy_status` (read)
+  - `mariana_hub.hub_refresh_connections` (external_side_effect, confirmation required)
+  - `mariana_hub.hub_route_intent` (read)
+  - `mariana_hub.hub_run_intent` (external_side_effect, confirmation required)
+  - `mariana_hub.hub_run_proxy_tool` (external_side_effect, confirmation required)
+  - `mariana_hub.hub_search_proxy_tools` (read)
+  - `mariana_hub.hub_set_discovery` (external_side_effect, confirmation required)
+  - `mariana_hub.hub_status` (read)
+  - `mariana_hub.hub_trace_lookup` (read)
+  - `mariana_hub.hub_update_state` (external_side_effect, confirmation required)
 
