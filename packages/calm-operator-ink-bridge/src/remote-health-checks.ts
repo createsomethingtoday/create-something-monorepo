@@ -12,7 +12,7 @@ interface RemoteHealthEnv {
 }
 
 const DEFAULT_TIMEOUT_MS = 5000;
-const MAX_TIMEOUT_MS = 15000;
+const MAX_TIMEOUT_MS = 30000;
 
 function compact(value: string, max: number): string {
   const trimmed = value.replace(/\s+/g, ' ').trim();

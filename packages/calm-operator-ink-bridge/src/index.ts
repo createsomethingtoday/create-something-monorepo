@@ -1008,6 +1008,11 @@ async function route(request: Request, env: Env): Promise<Response> {
         detail: healthCopy.detail,
         action: healthCopy.action,
         urgent: healthCopy.urgent,
+        checked: result.review.report.checked,
+        healthy_count: result.review.report.healthy_count,
+        poor_count: result.review.report.poor_count,
+        stale_count: result.review.report.stale_count,
+        generated_at: result.review.report.generated_at,
         collected: result.collected.length
       }
     });

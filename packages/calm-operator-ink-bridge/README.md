@@ -156,6 +156,12 @@ snapshots, and then reviews all stored snapshots. If any agent/MCP check is poor
 or stale, the Worker writes a `health_attention` alert that Ink will display. If
 the report is clear, the Worker clears the synthetic health-review alert.
 
+The remote check set includes the Playbook MCP registry sweep route. When Ink
+requests "MCP Review," the bridge calls that route, the route posts the detailed
+registry snapshot back to Ink, and the final device summary can include static
+MCP registry counts, Dify agent coverage, and live Hub counts. The required
+route token is `HALFDOZEN_AGENT_ROUTE_TOKEN` in Worker secrets.
+
 You can run the review manually:
 
 ```bash

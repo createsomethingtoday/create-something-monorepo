@@ -24,6 +24,7 @@ import { HOST_PLAYBOOKS } from '../src/playbooks.js';
 import { MCP_CATALOG } from '../src/catalog.js';
 import registryJson from '../../../config/mcp-hub/registry.json';
 import fleetJson from '../../../config/mcp-hub/fleet.json';
+import difyInventoryJson from '../../../config/dify/inventory.json';
 import {
   runHalfDozenDedup,
   runHalfDozenFleetWatchdog,
@@ -92,6 +93,7 @@ const DEFAULT_FLEET_WATCHDOG_CRON_UTC_HOURS = '4,13,18,23';
 const DEFAULT_MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = '4,13,18,23';
 const MCP_HUB_REGISTRY = registryJson as McpHubRegistry;
 const MCP_FLEET_REGISTRY = fleetJson as McpFleetRegistry;
+const DIFY_INVENTORY = difyInventoryJson as DifyInventory;
 
 const AGENT_HEALTH_SURFACES: AgentHealthSurface[] = [
   {
@@ -160,6 +162,53 @@ type McpFleetRegistry = {
   deployments?: Record<string, McpFleetDeployment>;
 };
 
+type DifyInventoryAgent = {
+  runtime?: string;
+  status?: string;
+  audience?: string;
+  mode?: string;
+  allowed_mcp_servers?: string[];
+  enabled_tools?: string[];
+  policy_pack?: string;
+  eval_suite?: string;
+  evals?: {
+    owner_system?: string;
+    project?: string;
+    experiment?: string;
+    required_checks?: string[];
+    last_verified_at?: string;
+  };
+};
+
+type DifyInventory = {
+  agents?: Record<string, DifyInventoryAgent>;
+};
+
+type DifyAgentInventoryItem = {
+  id: string;
+  status: string;
+  audience: string;
+  mode: string;
+  mcp_servers: string[];
+  enabled_tool_count: number;
+  eval_suite: string;
+  policy_pack: string;
+  eval_owner_system: string;
+  eval_last_verified_at: string;
+};
+
+type DifyAgentInventorySummary = {
+  agent_count: number;
+  client_agent_count: number;
+  published_count: number;
+  imported_count: number;
+  mcp_server_count: number;
+  enabled_tool_count: number;
+  eval_suite_count: number;
+  policy_pack_count: number;
+  agents: DifyAgentInventoryItem[];
+};
+
 type McpRegistryConnectedServer = {
   name: string;
   tool_count: number | null;
@@ -211,6 +260,7 @@ type AgentInventory = {
   scheduled_health_surface_count: number;
   manual_health_surface_count: number;
   surfaces: AgentHealthSurface[];
+  dify: DifyAgentInventorySummary;
 };
 
 type LiveHubInventory = {
@@ -935,6 +985,35 @@ function buildMcpFleetInventory(): McpFleetInventory {
   };
 }
 
+function buildDifyAgentInventory(): DifyAgentInventorySummary {
+  const agents = Object.entries(DIFY_INVENTORY.agents ?? {})
+    .map(([id, agent]): DifyAgentInventoryItem => ({
+      id,
+      status: agent.status?.trim() || 'unknown',
+      audience: agent.audience?.trim() || 'unknown',
+      mode: agent.mode?.trim() || 'unknown',
+      mcp_servers: stringArray(agent.allowed_mcp_servers),
+      enabled_tool_count: stringArray(agent.enabled_tools).length,
+      eval_suite: agent.eval_suite?.trim() || '',
+      policy_pack: agent.policy_pack?.trim() || '',
+      eval_owner_system: agent.evals?.owner_system?.trim() || '',
+      eval_last_verified_at: agent.evals?.last_verified_at?.trim() || '',
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  return {
+    agent_count: agents.length,
+    client_agent_count: agents.filter((agent) => agent.audience === 'client').length,
+    published_count: agents.filter((agent) => agent.status === 'published').length,
+    imported_count: agents.filter((agent) => agent.status === 'imported').length,
+    mcp_server_count: uniqueStrings(agents.flatMap((agent) => agent.mcp_servers)).length,
+    enabled_tool_count: agents.reduce((total, agent) => total + agent.enabled_tool_count, 0),
+    eval_suite_count: uniqueStrings(agents.map((agent) => agent.eval_suite)).length,
+    policy_pack_count: uniqueStrings(agents.map((agent) => agent.policy_pack)).length,
+    agents,
+  };
+}
+
 function buildAgentInventory(): AgentInventory {
   const scheduled = AGENT_HEALTH_SURFACES.filter((surface) => surface.schedule === 'scheduled');
   const manual = AGENT_HEALTH_SURFACES.filter((surface) => surface.schedule === 'manual');
@@ -943,6 +1022,7 @@ function buildAgentInventory(): AgentInventory {
     scheduled_health_surface_count: scheduled.length,
     manual_health_surface_count: manual.length,
     surfaces: AGENT_HEALTH_SURFACES,
+    dify: buildDifyAgentInventory(),
   };
 }
 
@@ -1025,7 +1105,7 @@ async function runMcpRegistrySweep(env: Env): Promise<McpRegistrySweepResult> {
   const fleetInventory = buildMcpFleetInventory();
   const agentInventory = buildAgentInventory();
   const reviewScope =
-    'Full static MCP registry inventory, fleet registry inventory, registered Playbook agent health surfaces, and live Hub enabled-server health.';
+    'Full static MCP registry inventory, fleet registry inventory, registered Playbook agent health surfaces, Dify agent inventory coverage, and live Hub enabled-server health.';
 
   try {
     const response = await fetchJsonWithTimeout(hubHealthUrl, timeoutMs);
@@ -1046,7 +1126,7 @@ async function runMcpRegistrySweep(env: Env): Promise<McpRegistrySweepResult> {
     const degraded = response.status !== 200 || failedServers.length > 0 || registryHasStructuralIssue;
     const failedList = failedServers.map((item) => item.server).slice(0, 4).join(', ');
     const totalServers = liveHubTotalServerCount(enabledServers, connectedServers, failedServers);
-    const baseDetail = `Registry: ${registryInventory.server_count} MCPs (${registryInventory.composio_toolkit_count} Composio), ${fleetInventory.deployed_count} fleet, ${agentInventory.registered_health_surface_count} agents. Live: ${connectedServers.length}/${totalServers} connected; ${failedServers.length} failed; ${proxyToolCount ?? 0} tools.`;
+    const baseDetail = `Registry: ${registryInventory.server_count} MCPs (${registryInventory.composio_toolkit_count} Composio), ${fleetInventory.deployed_count} fleet, ${agentInventory.registered_health_surface_count} agents, ${agentInventory.dify.agent_count} Dify agents/${agentInventory.dify.enabled_tool_count} Dify tools. Live: ${connectedServers.length}/${totalServers} connected; ${failedServers.length} failed; ${proxyToolCount ?? 0} tools.`;
     const detail = degraded && failedList ? `${baseDetail} Failed: ${failedList}.` : baseDetail;
     const status = response.status !== 200 ? 'failed' : degraded ? 'degraded' : 'healthy';
 
