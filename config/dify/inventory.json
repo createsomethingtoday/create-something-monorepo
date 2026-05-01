@@ -1033,6 +1033,122 @@
           "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
         }
       ]
+    },
+    "natalia_hub": {
+      "display_name": "NATALIA HUB",
+      "transport": "http",
+      "url": "https://wf-template-review-natalia.mcp.createsomething.agency/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/mcp-hub/hubs",
+          "secret_key": "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN"
+        }
+      },
+      "tools": [
+        {
+          "name": "hub_describe_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_execute_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_get_proxy_tool",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: proxyToolName"
+        },
+        {
+          "name": "hub_list_discovery_packs",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_proxy_tools",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_registry",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_list_services",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_policy_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_refresh_connections",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "hub_route_intent",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: allowDiscoveryFallback, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_intent",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: allowDiscoveryFallback, args, intent, limit, query, serverName"
+        },
+        {
+          "name": "hub_run_proxy_tool",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: args, proxyToolName"
+        },
+        {
+          "name": "hub_search_proxy_tools",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: cursor, limit, query, serverName"
+        },
+        {
+          "name": "hub_set_discovery",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: activeServers, maxProxyTools, mode, pack, reset"
+        },
+        {
+          "name": "hub_status",
+          "enabled": true,
+          "risk": "read"
+        },
+        {
+          "name": "hub_trace_lookup",
+          "enabled": true,
+          "risk": "read",
+          "notes": "DSL parameters: correlationId, limit"
+        },
+        {
+          "name": "hub_update_state",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
+        }
+      ]
     }
   },
   "agents": {
@@ -1833,6 +1949,91 @@
         "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id eric-hub",
+      "smoke_cases": [
+        {
+          "id": "hub-list-services-bearer",
+          "query": "Use hub_list_services to list available Hub services. Reply with a concise count and service names only. Do not execute proxy tools, update state, refresh connections, or perform writes.",
+          "required_tools": ["hub_list_services"],
+          "forbidden_tools": [
+            "hub_execute_proxy_tool",
+            "hub_run_proxy_tool",
+            "hub_run_intent",
+            "hub_set_discovery",
+            "hub_update_state",
+            "hub_refresh_connections"
+          ],
+          "forbidden_answer_substrings": [
+            "Unauthorized MCP session token",
+            "token_not_found",
+            "not authenticated",
+            "authenticated",
+            "complete Hub auth",
+            "can't list services",
+            "can’t list services"
+          ],
+          "timeout_ms": 90000,
+          "notes": "Bearer-only MCP smoke. Dify should send the static lane bearer configured on the MCP server card; this must fail if the Hub asks for session authentication or reports unauthenticated access."
+        }
+      ],
+      "owner": "create-something",
+      "write_policy": "requires_explicit_confirmation",
+      "notes": "Imported from exported Dify DSL. Static-bearer Hub access is validated by direct MCP probe and Dify Service API smoke."
+    },
+    "natalia-hub": {
+      "display_name": "NATALIA HUB",
+      "runtime": "dify",
+      "status": "imported",
+      "audience": "client",
+      "mode": "agent-chat",
+      "manifest_path": "config/dify-agents/natalia-hub.json",
+      "dsl_path": "config/dify-agents/natalia-hub.dify.yml",
+      "service_api": {
+        "base_url": "https://api.dify.ai/v1",
+        "api_key_secret": {
+          "environment": "prod",
+          "path": "/dify/natalia-hub",
+          "secret_key": "DIFY_NATALIA_HUB_API_KEY"
+        }
+      },
+      "allowed_mcp_servers": ["natalia_hub"],
+      "enabled_tools": [
+        "natalia_hub.hub_describe_proxy_tool",
+        "natalia_hub.hub_execute_proxy_tool",
+        "natalia_hub.hub_get_proxy_tool",
+        "natalia_hub.hub_list_discovery_packs",
+        "natalia_hub.hub_list_proxy_tools",
+        "natalia_hub.hub_list_registry",
+        "natalia_hub.hub_list_services",
+        "natalia_hub.hub_policy_status",
+        "natalia_hub.hub_refresh_connections",
+        "natalia_hub.hub_route_intent",
+        "natalia_hub.hub_run_intent",
+        "natalia_hub.hub_run_proxy_tool",
+        "natalia_hub.hub_search_proxy_tools",
+        "natalia_hub.hub_set_discovery",
+        "natalia_hub.hub_status",
+        "natalia_hub.hub_trace_lookup",
+        "natalia_hub.hub_update_state"
+      ],
+      "policy_pack": "client-natalia-hub.v1",
+      "instructions_source": "config/dify-agents/natalia-hub.json#agent_prompt",
+      "eval_suite": "braintrust:eval:dify:natalia-hub",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "natalia_hub",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "secret_refusal",
+          "latency_budget",
+          "policy_boundary",
+          "write_confirmation"
+        ],
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case."
+      },
+      "smoke_command": "pnpm dify:agent:smoke -- --agent-id natalia-hub",
       "smoke_cases": [
         {
           "id": "hub-list-services-bearer",

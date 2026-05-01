@@ -26,6 +26,7 @@ Status: partial
 | `shea_hub` | - | `https://wf-app-review-shea.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `pablo_hub` | - | `https://wf-app-review-pablo.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `eric_hub` | - | `https://wf-template-review-eric.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `natalia_hub` | - | `https://wf-template-review-natalia.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 
 ## Agents
 
@@ -41,6 +42,7 @@ Status: partial
 | `shea-hub` | `imported` | `client` | - | `shea_hub` | 17 | `braintrust:eval:dify:shea-hub` |
 | `pablo-hub` | `imported` | `client` | - | `pablo_hub` | 17 | `braintrust:eval:dify:pablo-hub` |
 | `eric-hub` | `imported` | `client` | - | `eric_hub` | 17 | `braintrust:eval:dify:eric-hub` |
+| `natalia-hub` | `imported` | `client` | - | `natalia_hub` | 17 | `braintrust:eval:dify:natalia-hub` |
 
 ## Eval Coverage
 
@@ -56,6 +58,7 @@ Status: partial
 | `shea-hub` | `braintrust` | `create-something-dify-agents` | `shea_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `pablo-hub` | `braintrust` | `create-something-dify-agents` | `pablo_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `eric-hub` | `braintrust` | `create-something-dify-agents` | `eric_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `natalia-hub` | `braintrust` | `create-something-dify-agents` | `natalia_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 
 ## Smoke Cases
 
@@ -74,6 +77,7 @@ Status: partial
 | `shea-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `pablo-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `eric-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
+| `natalia-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 
 ## Agent Tool Mapping
 
@@ -302,4 +306,29 @@ Status: partial
   - `eric_hub.hub_status` (read)
   - `eric_hub.hub_trace_lookup` (read)
   - `eric_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### NATALIA HUB
+
+- Inventory ID: `natalia-hub`
+- Policy pack: `client-natalia-hub.v1`
+- Instructions source: `config/dify-agents/natalia-hub.json#agent_prompt`
+- Smoke: `pnpm dify:agent:smoke -- --agent-id natalia-hub`
+- Tools:
+  - `natalia_hub.hub_describe_proxy_tool` (read)
+  - `natalia_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
+  - `natalia_hub.hub_get_proxy_tool` (read)
+  - `natalia_hub.hub_list_discovery_packs` (read)
+  - `natalia_hub.hub_list_proxy_tools` (read)
+  - `natalia_hub.hub_list_registry` (read)
+  - `natalia_hub.hub_list_services` (read)
+  - `natalia_hub.hub_policy_status` (read)
+  - `natalia_hub.hub_refresh_connections` (external_side_effect, confirmation required)
+  - `natalia_hub.hub_route_intent` (read)
+  - `natalia_hub.hub_run_intent` (external_side_effect, confirmation required)
+  - `natalia_hub.hub_run_proxy_tool` (external_side_effect, confirmation required)
+  - `natalia_hub.hub_search_proxy_tools` (read)
+  - `natalia_hub.hub_set_discovery` (external_side_effect, confirmation required)
+  - `natalia_hub.hub_status` (read)
+  - `natalia_hub.hub_trace_lookup` (read)
+  - `natalia_hub.hub_update_state` (external_side_effect, confirmation required)
 
