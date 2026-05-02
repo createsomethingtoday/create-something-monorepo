@@ -1,0 +1,313 @@
+app:
+  description: Searches Active Jobs DB through the governed CREATE SOMETHING Active Jobs MCP.
+  icon: briefcase
+  icon_background: '#FFEAD5'
+  mode: agent-chat
+  name: Active Jobs
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 6
+    prompt: null
+    strategy: function_call
+    tools:
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: active-jobs
+      provider_name: Active Jobs DB
+      provider_type: mcp
+      tool_label: Get_Jobs_7_days_posted
+      tool_name: Get_Jobs_7_days_posted
+      tool_parameters:
+        advanced_description_filter: ''
+        advanced_organization_filter: ''
+        advanced_title_filter: ''
+        agency: ''
+        ai_education_requirements_filter: ''
+        ai_employment_type_filter: ''
+        ai_experience_level_filter: ''
+        ai_has_salary: ''
+        ai_taxonomies_a_exclusion_filter: ''
+        ai_taxonomies_a_filter: ''
+        ai_taxonomies_a_primary_filter: ''
+        ai_visa_sponsorship_filter: ''
+        ai_work_arrangement_filter: ''
+        date_filter: ''
+        description_filter: ''
+        description_type: ''
+        include_ai: ''
+        include_li: ''
+        li_industry_filter: ''
+        li_organization_description_filter: ''
+        li_organization_employees_gte: ''
+        li_organization_employees_lte: ''
+        li_organization_slug_exclusion_filter: ''
+        li_organization_slug_filter: ''
+        li_organization_specialties_filter: ''
+        limit: ''
+        location_filter: ''
+        offset: ''
+        organization_exclusion_filter: ''
+        organization_filter: ''
+        remote: ''
+        source: ''
+        source_exclusion: ''
+        title_filter: ''
+        _endpoint: ''
+        _method: ''
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: active-jobs
+      provider_name: Active Jobs DB
+      provider_type: mcp
+      tool_label: Get_Jobs_24h_indexed
+      tool_name: Get_Jobs_24h_indexed
+      tool_parameters:
+        advanced_description_filter: ''
+        advanced_organization_filter: ''
+        advanced_title_filter: ''
+        agency: ''
+        ai_education_requirements_filter: ''
+        ai_employment_type_filter: ''
+        ai_experience_level_filter: ''
+        ai_has_salary: ''
+        ai_taxonomies_a_exclusion_filter: ''
+        ai_taxonomies_a_filter: ''
+        ai_taxonomies_a_primary_filter: ''
+        ai_visa_sponsorship_filter: ''
+        ai_work_arrangement_filter: ''
+        date_filter: ''
+        description_filter: ''
+        description_type: ''
+        include_ai: ''
+        include_li: ''
+        li_industry_filter: ''
+        li_organization_description_filter: ''
+        li_organization_employees_gte: ''
+        li_organization_employees_lte: ''
+        li_organization_slug_exclusion_filter: ''
+        li_organization_slug_filter: ''
+        li_organization_specialties_filter: ''
+        limit: ''
+        location_filter: ''
+        offset: ''
+        organization_exclusion_filter: ''
+        organization_filter: ''
+        remote: ''
+        source: ''
+        source_exclusion: ''
+        title_filter: ''
+        _endpoint: ''
+        _method: ''
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: active-jobs
+      provider_name: Active Jobs DB
+      provider_type: mcp
+      tool_label: Get_Jobs_Hourly
+      tool_name: Get_Jobs_Hourly
+      tool_parameters:
+        advanced_description_filter: ''
+        advanced_organization_filter: ''
+        advanced_title_filter: ''
+        agency: ''
+        ai_education_requirements_filter: ''
+        ai_employment_type_filter: ''
+        ai_experience_level_filter: ''
+        ai_has_salary: ''
+        ai_taxonomies_a_exclusion_filter: ''
+        ai_taxonomies_a_filter: ''
+        ai_taxonomies_a_primary_filter: ''
+        ai_visa_sponsorship_filter: ''
+        ai_work_arrangement_filter: ''
+        description_filter: ''
+        description_type: ''
+        include_ai: ''
+        include_li: ''
+        li_industry_filter: ''
+        li_organization_description_filter: ''
+        li_organization_employees_gte: ''
+        li_organization_employees_lte: ''
+        li_organization_slug_exclusion_filter: ''
+        li_organization_slug_filter: ''
+        li_organization_specialties_filter: ''
+        location_filter: ''
+        offset: ''
+        organization_exclusion_filter: ''
+        organization_filter: ''
+        remote: ''
+        source: ''
+        source_exclusion: ''
+        title_filter: ''
+        _endpoint: ''
+        _method: ''
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: active-jobs
+      provider_name: Active Jobs DB
+      provider_type: mcp
+      tool_label: Get_Jobs_Backfill_-_6M
+      tool_name: Get_Jobs_Backfill_-_6M
+      tool_parameters:
+        id: ''
+        advanced_description_filter: ''
+        advanced_organization_filter: ''
+        advanced_title_filter: ''
+        agency: ''
+        ai_employment_type_filter: ''
+        ai_experience_level_filter: ''
+        ai_has_salary: ''
+        ai_taxonomies_a_exclusion_filter: ''
+        ai_taxonomies_a_filter: ''
+        ai_taxonomies_a_primary_filter: ''
+        ai_visa_sponsorship_filter: ''
+        ai_work_arrangement_filter: ''
+        description_filter: ''
+        description_type: ''
+        include_ai: ''
+        include_li: ''
+        li_industry_filter: ''
+        li_organization_description_filter: ''
+        li_organization_employees_lte: ''
+        li_organization_slug_exclusion_filter: ''
+        li_organization_slug_filter: ''
+        li_organization_specialties_filter: ''
+        limit: ''
+        location_filter: ''
+        offset: ''
+        organization_exclusion_filter: ''
+        organization_filter: ''
+        remote: ''
+        source: ''
+        source_exclusion: ''
+        title_filter: ''
+        _endpoint: ''
+        _method: ''
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: active-jobs
+      provider_name: Active Jobs DB
+      provider_type: mcp
+      tool_label: Ultra_-_Get_Modified_Jobs_24h
+      tool_name: Ultra_-_Get_Modified_Jobs_24h
+      tool_parameters:
+        advanced_description_filter: ''
+        advanced_organization_filter: ''
+        advanced_title_filter: ''
+        agency: ''
+        ai_education_requirements_filter: ''
+        ai_employment_type_filter: ''
+        ai_experience_level_filter: ''
+        ai_has_salary: ''
+        ai_taxonomies_a_exclusion_filter: ''
+        ai_taxonomies_a_filter: ''
+        ai_taxonomies_a_primary_filter: ''
+        ai_visa_sponsorship_filter: ''
+        ai_work_arrangement_filter: ''
+        description_filter: ''
+        description_type: ''
+        include_ai: ''
+        include_li: ''
+        li_industry_filter: ''
+        li_organization_description_filter: ''
+        li_organization_employees_lte: ''
+        li_organization_slug_exclusion_filter: ''
+        li_organization_slug_filter: ''
+        li_organization_specialties_filter: ''
+        limit: ''
+        location_filter: ''
+        offset: ''
+        organization_exclusion_filter: ''
+        organization_filter: ''
+        remote: ''
+        source: ''
+        source_exclusion: ''
+        title_filter: ''
+        _endpoint: ''
+        _method: ''
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: active-jobs
+      provider_name: Active Jobs DB
+      provider_type: mcp
+      tool_label: Ultra_-_Get_Expired_Jobs
+      tool_name: Ultra_-_Get_Expired_Jobs
+      tool_parameters:
+        _endpoint: ''
+        _method: ''
+  annotation_reply:
+    enabled: false
+  chat_prompt_config: {}
+  completion_prompt_config: {}
+  dataset_configs:
+    datasets:
+      datasets: []
+    retrieval_model: single
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    image:
+      detail: high
+      enabled: false
+      number_limits: 3
+      transfer_methods:
+      - local_file
+      - remote_url
+  model:
+    completion_params:
+      stop: []
+      temperature: 0.2
+    mode: chat
+    name: gpt-4.1-mini
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: Tell me the roles, companies, locations, and timing you want to search.
+  pre_prompt: |-
+    You are Active Jobs, a recruiting research agent for CREATE SOMETHING.
+
+    Use the active-jobs MCP tools to search Active Jobs DB. Prefer `Get_Jobs_7_days_posted` for fresh postings, `Get_Jobs_24h_indexed` for newly indexed jobs, `Get_Jobs_Hourly` only when the user asks for the latest hour, `Get_Jobs_Backfill_-_6M` for historical scans, `Ultra_-_Get_Modified_Jobs_24h` for updates, and `Ultra_-_Get_Expired_Jobs` only to check recently expired IDs.
+
+    Ask one concise follow-up when the user omits both role/title and location. Default location to United States only when the user asks broadly and gives no geography. Use `limit` 10 unless the user requests a different count.
+
+    Prefer precise filters over broad description searches:
+    - Use `title_filter` for roles.
+    - Use `location_filter` for geography.
+    - Use `organization_filter` for exact companies.
+    - Use `source` for ATS sources such as workday or greenhouse.
+    - Use `remote`, `ai_has_salary`, `ai_work_arrangement_filter`, and `ai_employment_type_filter` when the user asks for those constraints.
+
+    Do not use `_endpoint` or `_method` unless the user explicitly asks for an internal migration override and provides a known Active Jobs DB RapidAPI path.
+
+    In the final answer, summarize each useful listing with title, organization, location, source or ATS, posted/indexed/modified timing when present, salary or remote signals when present, and an application URL when present. Mention the filters used and whether the response may be truncated.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    configs: []
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions:
+  - Find remote AI engineering jobs in the United States posted this week.
+  - Show data engineering roles indexed in the last 24 hours.
+  - Which Workday software roles were modified in the last 24 hours?
+  - Find product design jobs in New York with salary data.
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.3.1
