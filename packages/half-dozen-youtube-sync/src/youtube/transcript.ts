@@ -1,25 +1,34 @@
 /**
  * YouTube Transcript Extraction
  * 
- * Uses YouTube's innertube get_transcript API with ANDROID client + visitorData.
- * This bypasses poToken enforcement and works server-side without a browser.
- * 
- * Based on the approach from @kimtaeyoon83/mcp-server-youtube-transcript (464 stars).
- * Key insight: ANDROID client + visitorData from page + proper protobuf params.
+ * Uses YouTube's innertube transcript API first, then falls back to the
+ * player caption tracks exposed by the watch page. Both paths run server-side.
  */
 
 import type { Page } from 'puppeteer-core';
 import type { TranscriptSegment, VideoData } from '../types.js';
-import { extractVideoId, buildVideoUrl } from './playlist.js';
+import { extractVideoId } from './playlist.js';
 
 // =============================================================================
 // Constants
 // =============================================================================
 
 const ANDROID_CLIENT_VERSION = '19.29.37';
+const ANDROID_VR_CLIENT_VERSION = '1.60.19';
 const ANDROID_USER_AGENT = `com.google.android.youtube/${ANDROID_CLIENT_VERSION} (Linux; U; Android 11) gzip`;
 const WEB_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const DEFAULT_CLIENT_VERSION = '2.20251201.01.00';
+
+interface WatchPageContext {
+  visitorData: string;
+  apiKey?: string;
+}
+
+interface CaptionTrack {
+  baseUrl: string;
+  languageCode?: string;
+  kind?: string;
+  name?: { simpleText?: string; runs?: Array<{ text: string }> };
+}
 
 // =============================================================================
 // Protobuf Encoding (for get_transcript params)
@@ -64,7 +73,7 @@ function buildTranscriptParams(videoId: string, lang: string = 'en'): string {
 // Page Data Extraction
 // =============================================================================
 
-async function getVisitorData(videoId: string): Promise<string> {
+async function getWatchPageContext(videoId: string): Promise<WatchPageContext> {
   const resp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
     headers: {
       'User-Agent': WEB_USER_AGENT,
@@ -75,8 +84,14 @@ async function getVisitorData(videoId: string): Promise<string> {
   if (!resp.ok) throw new Error(`Failed to fetch video page: ${resp.status}`);
   const html = await resp.text();
 
-  const match = html.match(/"visitorData":"([^"]+)"/);
-  return match?.[1] || '';
+  return {
+    visitorData: html.match(/"visitorData":"([^"]+)"/)?.[1] || '',
+    apiKey: html.match(/"INNERTUBE_API_KEY":"([^"]+)"/)?.[1],
+  };
+}
+
+async function getVisitorData(videoId: string): Promise<string> {
+  return (await getWatchPageContext(videoId)).visitorData;
 }
 
 // =============================================================================
@@ -123,14 +138,12 @@ export async function extractTranscriptApi(
   });
 
   if (!resp.ok) {
-    console.error(`get_transcript failed: ${resp.status}`);
     return null;
   }
 
   const json = await resp.json() as Record<string, unknown>;
 
   if ((json as { error?: unknown }).error) {
-    console.error(`get_transcript API error:`, (json as { error: { message?: string } }).error?.message);
     return null;
   }
 
@@ -185,18 +198,154 @@ export async function extractTranscriptApi(
 }
 
 // =============================================================================
+// Player Caption Tracks Fallback (ANDROID_VR client)
+// =============================================================================
+
+function captionTrackName(track: CaptionTrack): string {
+  return track.name?.simpleText || track.name?.runs?.map(run => run.text).join('') || '';
+}
+
+function selectCaptionTrack(tracks: CaptionTrack[], lang: string): CaptionTrack | null {
+  const normalizedLang = lang.toLowerCase();
+  const isExact = (track: CaptionTrack) => track.languageCode?.toLowerCase() === normalizedLang;
+  const isPrefix = (track: CaptionTrack) => track.languageCode?.toLowerCase().startsWith(`${normalizedLang}-`);
+  const isManual = (track: CaptionTrack) => track.kind !== 'asr';
+
+  return (
+    tracks.find(track => isExact(track) && isManual(track)) ||
+    tracks.find(track => isExact(track)) ||
+    tracks.find(track => isPrefix(track) && isManual(track)) ||
+    tracks.find(track => isPrefix(track)) ||
+    tracks.find(track => track.languageCode?.toLowerCase().startsWith('en') && isManual(track)) ||
+    tracks.find(track => track.languageCode?.toLowerCase().startsWith('en')) ||
+    tracks.find(isManual) ||
+    tracks[0] ||
+    null
+  );
+}
+
+export function parseJson3Transcript(json: unknown): TranscriptSegment[] {
+  const events = (json as { events?: unknown[] })?.events;
+  if (!Array.isArray(events)) return [];
+
+  const segments: TranscriptSegment[] = [];
+
+  for (const event of events) {
+    const item = event as {
+      tStartMs?: number;
+      dDurationMs?: number;
+      segs?: Array<{ utf8?: string }>;
+    };
+
+    if (typeof item.tStartMs !== 'number' || !Array.isArray(item.segs)) continue;
+
+    const text = item.segs
+      .map(seg => seg.utf8 || '')
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!text) continue;
+
+    segments.push({
+      text,
+      start: item.tStartMs / 1000,
+      duration: typeof item.dDurationMs === 'number' ? item.dDurationMs / 1000 : 0,
+    });
+  }
+
+  return segments;
+}
+
+/**
+ * Fetch transcript through player caption tracks.
+ *
+ * The ANDROID_VR player response currently returns caption track URLs that can
+ * be fetched directly as json3. This is the reliable server-side fallback when
+ * get_transcript returns failedPrecondition.
+ */
+export async function extractTranscriptFromCaptionTracks(
+  videoId: string,
+  lang: string = 'en'
+): Promise<{ transcript: string; segments: TranscriptSegment[]; trackName?: string } | null> {
+  const context = await getWatchPageContext(videoId);
+  if (!context.apiKey) return null;
+
+  const resp = await fetch(
+    `https://www.youtube.com/youtubei/v1/player?key=${encodeURIComponent(context.apiKey)}&prettyPrint=false`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': ANDROID_USER_AGENT,
+        'Origin': 'https://www.youtube.com',
+      },
+      body: JSON.stringify({
+        context: {
+          client: {
+            hl: lang,
+            gl: 'US',
+            clientName: 'ANDROID_VR',
+            clientVersion: ANDROID_VR_CLIENT_VERSION,
+            androidSdkVersion: 32,
+            visitorData: context.visitorData,
+          },
+        },
+        videoId,
+        contentCheckOk: true,
+        racyCheckOk: true,
+      }),
+    },
+  );
+
+  if (!resp.ok) return null;
+
+  const json = await resp.json() as {
+    captions?: {
+      playerCaptionsTracklistRenderer?: {
+        captionTracks?: CaptionTrack[];
+      };
+    };
+  };
+
+  const tracks = json.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+  const track = selectCaptionTrack(tracks, lang);
+  if (!track) return null;
+
+  const captionsUrl = new URL(track.baseUrl);
+  captionsUrl.searchParams.set('fmt', 'json3');
+
+  const captionsResp = await fetch(captionsUrl, {
+    headers: {
+      'User-Agent': WEB_USER_AGENT,
+      'Accept-Language': 'en-US,en;q=0.9',
+    },
+  });
+
+  if (!captionsResp.ok) return null;
+
+  const captionsJson = await captionsResp.json();
+  const segments = parseJson3Transcript(captionsJson);
+  if (segments.length === 0) return null;
+
+  return {
+    transcript: segments.map(s => s.text).join(' '),
+    segments,
+    trackName: captionTrackName(track),
+  };
+}
+
+// =============================================================================
 // Public API
 // =============================================================================
 
 /**
- * Extract transcript — API-first, browser fallback.
- * The API method works server-side using ANDROID client + visitorData.
- * Browser fallback uses Steel's authenticated profile if API fails.
+ * Extract transcript — get_transcript first, caption tracks second.
  */
 export async function extractTranscript(
   videoIdOrUrl: string,
   _page?: Page
-): Promise<{ transcript: string; segments: TranscriptSegment[]; method: 'api' | 'browser' } | null> {
+): Promise<{ transcript: string; segments: TranscriptSegment[]; method: 'api' | 'captions' | 'browser' } | null> {
   const videoId = videoIdOrUrl.includes('youtube.com') || videoIdOrUrl.includes('youtu.be')
     ? extractVideoId(videoIdOrUrl)
     : videoIdOrUrl;
@@ -209,6 +358,13 @@ export async function extractTranscript(
     if (result) return { ...result, method: 'api' };
   } catch (err) {
     console.error(`Transcript API failed for ${videoId}:`, (err as Error).message);
+  }
+
+  try {
+    const result = await extractTranscriptFromCaptionTracks(videoId);
+    if (result) return { ...result, method: 'captions' };
+  } catch (err) {
+    console.error(`Caption track transcript failed for ${videoId}:`, (err as Error).message);
   }
 
   return null;

@@ -56,8 +56,20 @@ const CHUNK_SIZE = 1900;
 const MAX_BLOCKS_PER_REQUEST = 100;
 
 const ANDROID_CLIENT_VERSION = '19.29.37';
+const ANDROID_VR_CLIENT_VERSION = '1.60.19';
 const ANDROID_USER_AGENT = `com.google.android.youtube/${ANDROID_CLIENT_VERSION} (Linux; U; Android 11) gzip`;
 const WEB_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+interface WatchPageContext {
+  visitorData: string;
+  apiKey?: string;
+}
+
+interface CaptionTrack {
+  baseUrl: string;
+  languageCode?: string;
+  kind?: string;
+}
 
 // =============================================================================
 // YouTube: Innertube API (ANDROID client + visitorData)
@@ -99,13 +111,127 @@ function buildTranscriptParams(videoId: string, lang: string = 'en'): string {
   return toBase64(outer);
 }
 
-async function getVisitorData(videoId: string): Promise<string> {
+async function getWatchPageContext(videoId: string): Promise<WatchPageContext> {
   const resp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
     headers: { 'User-Agent': WEB_USER_AGENT, 'Accept-Language': 'en-US,en;q=0.9' },
   });
-  if (!resp.ok) return '';
+  if (!resp.ok) return { visitorData: '' };
   const html = await resp.text();
-  return html.match(/"visitorData":"([^"]+)"/)?.[1] || '';
+  return {
+    visitorData: html.match(/"visitorData":"([^"]+)"/)?.[1] || '',
+    apiKey: html.match(/"INNERTUBE_API_KEY":"([^"]+)"/)?.[1],
+  };
+}
+
+async function getVisitorData(videoId: string): Promise<string> {
+  return (await getWatchPageContext(videoId)).visitorData;
+}
+
+function selectCaptionTrack(tracks: CaptionTrack[], lang: string): CaptionTrack | null {
+  const normalizedLang = lang.toLowerCase();
+  const isExact = (track: CaptionTrack) => track.languageCode?.toLowerCase() === normalizedLang;
+  const isPrefix = (track: CaptionTrack) => track.languageCode?.toLowerCase().startsWith(`${normalizedLang}-`);
+  const isManual = (track: CaptionTrack) => track.kind !== 'asr';
+
+  return (
+    tracks.find(track => isExact(track) && isManual(track)) ||
+    tracks.find(track => isExact(track)) ||
+    tracks.find(track => isPrefix(track) && isManual(track)) ||
+    tracks.find(track => isPrefix(track)) ||
+    tracks.find(track => track.languageCode?.toLowerCase().startsWith('en') && isManual(track)) ||
+    tracks.find(track => track.languageCode?.toLowerCase().startsWith('en')) ||
+    tracks.find(isManual) ||
+    tracks[0] ||
+    null
+  );
+}
+
+function parseJson3Transcript(json: unknown): Array<{ text: string; start: number; duration: number }> {
+  const events = (json as { events?: unknown[] })?.events;
+  if (!Array.isArray(events)) return [];
+
+  const segments: Array<{ text: string; start: number; duration: number }> = [];
+
+  for (const event of events) {
+    const item = event as {
+      tStartMs?: number;
+      dDurationMs?: number;
+      segs?: Array<{ utf8?: string }>;
+    };
+    if (typeof item.tStartMs !== 'number' || !Array.isArray(item.segs)) continue;
+
+    const text = item.segs
+      .map(seg => seg.utf8 || '')
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!text) continue;
+
+    segments.push({
+      text,
+      start: item.tStartMs / 1000,
+      duration: typeof item.dDurationMs === 'number' ? item.dDurationMs / 1000 : 0,
+    });
+  }
+
+  return segments;
+}
+
+async function fetchTranscriptFromCaptionTracks(videoId: string, lang: string): Promise<{
+  transcript: string;
+  segments: Array<{ text: string; start: number; duration: number }>;
+} | null> {
+  const context = await getWatchPageContext(videoId);
+  if (!context.apiKey) return null;
+
+  const resp = await fetch(
+    `https://www.youtube.com/youtubei/v1/player?key=${encodeURIComponent(context.apiKey)}&prettyPrint=false`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': ANDROID_USER_AGENT,
+        'Origin': 'https://www.youtube.com',
+      },
+      body: JSON.stringify({
+        context: {
+          client: {
+            hl: lang,
+            gl: 'US',
+            clientName: 'ANDROID_VR',
+            clientVersion: ANDROID_VR_CLIENT_VERSION,
+            androidSdkVersion: 32,
+            visitorData: context.visitorData,
+          },
+        },
+        videoId,
+        contentCheckOk: true,
+        racyCheckOk: true,
+      }),
+    },
+  );
+
+  if (!resp.ok) return null;
+
+  const json = await resp.json() as {
+    captions?: { playerCaptionsTracklistRenderer?: { captionTracks?: CaptionTrack[] } };
+  };
+  const track = selectCaptionTrack(json.captions?.playerCaptionsTracklistRenderer?.captionTracks || [], lang);
+  if (!track) return null;
+
+  const captionsUrl = new URL(track.baseUrl);
+  captionsUrl.searchParams.set('fmt', 'json3');
+
+  const captionsResp = await fetch(captionsUrl, {
+    headers: { 'User-Agent': WEB_USER_AGENT, 'Accept-Language': 'en-US,en;q=0.9' },
+  });
+  if (!captionsResp.ok) return null;
+
+  const segments = parseJson3Transcript(await captionsResp.json());
+  if (segments.length === 0) return null;
+
+  return { transcript: segments.map(s => s.text).join(' '), segments };
 }
 
 async function fetchTranscript(videoId: string, lang: string = 'en'): Promise<{
@@ -128,9 +254,9 @@ async function fetchTranscript(videoId: string, lang: string = 'en'): Promise<{
     }),
   });
 
-  if (!resp.ok) return null;
+  if (!resp.ok) return fetchTranscriptFromCaptionTracks(videoId, lang);
   const json = await resp.json() as any;
-  if (json.error) return null;
+  if (json.error) return fetchTranscriptFromCaptionTracks(videoId, lang);
 
   const action = json.actions?.[0];
   const webSegs = action?.updateEngagementPanelAction?.content?.transcriptRenderer?.content
@@ -151,7 +277,7 @@ async function fetchTranscript(videoId: string, lang: string = 'en'): Promise<{
     if (text.trim()) segments.push({ text: text.trim(), start: startMs / 1000, duration: (endMs - startMs) / 1000 });
   }
 
-  if (segments.length === 0) return null;
+  if (segments.length === 0) return fetchTranscriptFromCaptionTracks(videoId, lang);
   return { transcript: segments.map(s => s.text).join(' '), segments };
 }
 

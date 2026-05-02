@@ -271,7 +271,7 @@ export class YouTubeSteelProvider {
       // Extract metadata
       const metadata = await extractVideoMetadata(page, videoUrl);
 
-      // Extract transcript (tries API first, then browser fallback)
+      // Extract transcript (tries get_transcript first, then caption tracks)
       const transcriptResult = await extractTranscript(videoUrl, page);
 
       const videoId = videoUrl.match(/v=([a-zA-Z0-9_-]+)/)?.[1] || '';
@@ -330,7 +330,7 @@ export class YouTubeSteelProvider {
       try {
         console.log(`Extracting: ${video.title}`);
         
-        // Use Steel browser directly (only reliable method)
+        // Transcript extraction is server-side; Steel still supplies playlist metadata.
         const transcriptResult = await extractTranscript(video.url, page);
 
         const videoData: VideoData = {

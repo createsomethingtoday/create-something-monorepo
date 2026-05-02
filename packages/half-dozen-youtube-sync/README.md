@@ -17,14 +17,14 @@ This MCP server operates at all three tiers of the [Three-Tier Framework](../../
 ## Features
 
 - **Playlist Extraction**: Scrape video list from YouTube playlists using Steel.dev
-- **Transcript Extraction**: Dual-mode extraction (API first, browser fallback)
+- **Transcript Extraction**: Server-side get_transcript with caption-track fallback
 - **Optimized Notion Sync**: Batch deduplication (1 API call for N videos)
 - **MCP Server**: Full MCP integration with Tools, Resources, and Prompts
 - **Cloudflare Worker**: Remote HTTP/SSE transport for deployment
 - **ChatGPT Connector**: `search`/`fetch` tools for cross-platform compatibility
 - **Langfuse Observability**: Complete tracing and cost tracking
 - **Retry Logic**: Exponential backoff with jitter for resilient API calls
-- **65 Unit Tests**: URL parsing, transcript chunking, retry logic
+- **67 Unit Tests**: URL parsing, transcript parsing/chunking, retry logic
 
 ## Quick Start
 
@@ -190,7 +190,7 @@ The agent will use the `sync_playlist` tool automatically. You'll get:
 ### 5. Running Tests
 
 ```bash
-pnpm test              # Unit tests (65 tests)
+pnpm test              # Unit tests (67 tests)
 pnpm test:watch        # Watch mode
 pnpm test:connection   # Service connectivity check
 ```
@@ -303,23 +303,22 @@ The sync targets the Half Dozen "Internal LLM [HD]" database:
 
 ## Transcript Extraction Methods
 
-### 1. YouTube Transcript API (Primary)
+### 1. YouTube Transcript APIs (Primary)
 
-Uses the `youtube-transcript` npm package to fetch transcripts directly:
+Uses YouTube's internal transcript endpoint first, then falls back to player caption tracks:
 - **Fast**: No browser startup needed
-- **Reliable**: Uses YouTube's internal API
+- **Reliable**: Uses caption tracks when the transcript endpoint rejects a request
 - **Preferred**: Default method for all extractions
 
 Limitations:
 - Only works for videos with captions enabled
 - May fail for age-restricted or private videos
 
-### 2. Steel.dev Browser (Fallback — Stdio only)
+### 2. Steel.dev Browser (Playlist and metadata — Stdio only)
 
-Uses cloud browser automation when API fails:
-- Opens transcript panel in YouTube player
-- Extracts timestamped segments from DOM
-- Handles dynamic content loading
+Uses cloud browser automation for local playlist scraping and video metadata:
+- Opens playlists/videos in a managed browser
+- Handles dynamic playlist content loading
 - CAPTCHA solving enabled
 
 ## Batch Deduplication
@@ -422,10 +421,10 @@ packages/half-dozen-youtube-sync/
 │   ├── youtube/
 │   │   ├── index.ts              # Re-exports
 │   │   ├── playlist.ts           # Playlist extraction (URL parsing, browser)
-│   │   └── transcript.ts         # Transcript extraction (API + browser)
+│   │   └── transcript.ts         # Transcript extraction (API + captions)
 │   ├── utils/
 │   │   └── retry.ts              # Exponential backoff retry utility
-│   └── __tests__/                # Unit tests (65 tests)
+│   └── __tests__/                # Unit tests (67 tests)
 │       ├── playlist.test.ts      # URL parsing tests
 │       ├── transcript.test.ts    # Transcript utility tests
 │       ├── notion-client.test.ts # Chunking tests

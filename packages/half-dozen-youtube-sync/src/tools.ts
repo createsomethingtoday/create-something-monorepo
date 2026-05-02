@@ -248,35 +248,14 @@ export function registerTools(server: McpServer): void {
 
   server.tool(
     'extract_transcript',
-    'Extract transcript from a YouTube video. Requires an active Steel session (creates one if needed). Use scrape_video for full metadata + transcript.',
+    'Extract transcript from a YouTube video using server-side caption APIs. Use scrape_video for full metadata + transcript.',
     {
       videoUrl: z.string().describe('YouTube video URL'),
-      sessionId: z.string().optional().describe('Steel session ID (creates new if not provided)'),
+      sessionId: z.string().optional().describe('Deprecated compatibility field; no Steel session is required'),
     },
-    async ({ videoUrl, sessionId: inputSessionId }) => {
-      const provider = getYouTubeProvider();
-
+    async ({ videoUrl }) => {
       try {
-        // Get or create a session
-        let sessionId = inputSessionId;
-        let createdSession = false;
-        if (!sessionId) {
-          const session = await provider.createSession(videoUrl);
-          sessionId = session.id;
-          createdSession = true;
-        }
-
-        const sessionData = await provider.getSession(sessionId);
-        if (!sessionData) {
-          return errorContent(`Session ${sessionId} not found`, 'extract_transcript');
-        }
-
-        const result = await extractTranscript(videoUrl, sessionData.page);
-
-        // Close session if we created it
-        if (createdSession) {
-          await provider.closeSession(sessionId).catch(() => {});
-        }
+        const result = await extractTranscript(videoUrl);
 
         if (!result) {
           return jsonContent({ success: false, error: 'Transcript not available for this video' });

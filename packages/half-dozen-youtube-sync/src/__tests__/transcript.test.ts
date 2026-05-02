@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { formatTranscriptWithTimestamps, cleanTranscript } from '../youtube/transcript.js';
+import { formatTranscriptWithTimestamps, cleanTranscript, parseJson3Transcript } from '../youtube/transcript.js';
 import type { TranscriptSegment } from '../types.js';
 
 describe('formatTranscriptWithTimestamps', () => {
@@ -82,5 +82,33 @@ describe('cleanTranscript', () => {
 
   it('normalizes newlines to spaces', () => {
     expect(cleanTranscript('line one\nline two\n\nline three')).toBe('line one line two line three');
+  });
+});
+
+describe('parseJson3Transcript', () => {
+  it('parses YouTube json3 caption events', () => {
+    const segments = parseJson3Transcript({
+      events: [
+        { tStartMs: 10349, dDurationMs: 1000, segs: [{ utf8: 'Hello' }, { utf8: ' world' }] },
+        { tStartMs: 11349, dDurationMs: 2681, segs: [{ utf8: 'Next\nline' }] },
+      ],
+    });
+
+    expect(segments).toEqual([
+      { text: 'Hello world', start: 10.349, duration: 1 },
+      { text: 'Next line', start: 11.349, duration: 2.681 },
+    ]);
+  });
+
+  it('skips empty or malformed caption events', () => {
+    const segments = parseJson3Transcript({
+      events: [
+        { tStartMs: 0, dDurationMs: 1000, segs: [{ utf8: '   ' }] },
+        { dDurationMs: 1000, segs: [{ utf8: 'missing start' }] },
+        { tStartMs: 2000, dDurationMs: 500, segs: [{ utf8: 'kept' }] },
+      ],
+    });
+
+    expect(segments).toEqual([{ text: 'kept', start: 2, duration: 0.5 }]);
   });
 });

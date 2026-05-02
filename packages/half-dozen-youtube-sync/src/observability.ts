@@ -229,7 +229,7 @@ export interface TranscriptExtractionMetrics {
   success: boolean;
   hasTranscript: boolean;
   transcriptLength?: number;
-  extractionMethod: 'api' | 'browser';
+  extractionMethod: 'api' | 'captions' | 'browser';
   durationMs: number;
   errorMessage?: string;
 }
