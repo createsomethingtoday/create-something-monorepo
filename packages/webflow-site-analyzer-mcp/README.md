@@ -646,7 +646,7 @@ Queue an async template-review job. This is the preferred production entrypoint.
   status: "queued" | "running" | "succeeded" | "failed" | "canceled",
   queuedAt: string,
   progress: {
-    phase: "queued" | "precheck" | "designer" | "published" | "normalizing" | "completed" | "failed",
+    phase: "queued" | "precheck" | "designer" | "published" | "normalizing" | "completed" | "failed" | "canceled",
     progress: number,
     total: number,
     message: string,
