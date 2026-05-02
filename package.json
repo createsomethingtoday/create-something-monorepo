@@ -185,6 +185,7 @@
     "deploy:airtable-primary-tags": "pnpm --dir packages/airtable-primary-tags-worker deploy",
     "deploy:webflow-local-mcp": "node scripts/run-wrangler.mjs --cwd packages/webflow-mcp/worker deploy",
     "deploy:playbook-mcp": "node scripts/run-wrangler.mjs --cwd packages/playbook-mcp/worker deploy",
+    "deploy:spotify-mcp": "node scripts/run-wrangler.mjs --cwd packages/spotify-mcp/worker deploy",
     "deploy:halfdozen-operator-notion-mcp": "pnpm mcp:halfdozen-operator-notion:preflight && pnpm exec wrangler deploy --cwd packages/halfdozen-operator-notion-mcp/worker",
     "deploy:blondish-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.blondish.toml",
     "deploy:c3-management-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.c3-management.toml",

@@ -164,6 +164,12 @@ const PACKAGE_COVERAGE = {
   'packages/social-mcp': {
     registry: ['social-mcp']
   },
+  'packages/spotify-mcp': {
+    registry: ['spotify-mcp']
+  },
+  'packages/spotify-mcp/worker': {
+    registry: ['spotify-mcp']
+  },
   'packages/substrate-mcp': {
     registry: ['substrate-mcp']
   },

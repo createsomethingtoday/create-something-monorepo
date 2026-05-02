@@ -67,6 +67,19 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
+    "name": "Spotify",
+    "slug": "spotify",
+    "url": "https://spotify-mcp.createsomething.workers.dev",
+    "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Substrate",
     "slug": "substrate",
     "url": "https://substrate.mcp.createsomething.agency",
