@@ -6,9 +6,17 @@
  */
 
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import { createAnalyzerServer, getAnalyzerHealth } from './index.js';
+import {
+  configureTemplateReviewJobDurableObject,
+  createAnalyzerServer,
+  getAnalyzerHealth,
+} from './index.js';
+import type { TemplateReviewJobDurableObjectNamespace } from './template-review-jobs.js';
+
+export { TemplateReviewJobDurableObject } from './template-review-job-durable-object.js';
 
 interface Env {
+  TEMPLATE_REVIEW_JOBS?: TemplateReviewJobDurableObjectNamespace;
   STEEL_API_KEY?: string;
   WEBFLOW_SITE_ANALYZER_MCP_API_KEY?: string;
   WEBFLOW_GROQ_API_KEY?: string;
@@ -51,7 +59,7 @@ function isAuthorized(request: Request, env: Env): boolean {
  * process.env.STEEL_API_KEY etc. continues to work unchanged.
  */
 function injectEnvSecrets(env: Env): void {
-  const keys: (keyof Env)[] = [
+  const keys: Array<Exclude<keyof Env, 'TEMPLATE_REVIEW_JOBS'>> = [
     'STEEL_API_KEY',
     'WEBFLOW_SITE_ANALYZER_MCP_API_KEY',
     'WEBFLOW_GROQ_API_KEY',
@@ -70,6 +78,7 @@ function injectEnvSecrets(env: Env): void {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     injectEnvSecrets(env);
+    configureTemplateReviewJobDurableObject(env.TEMPLATE_REVIEW_JOBS);
 
     const url = new URL(request.url);
 
