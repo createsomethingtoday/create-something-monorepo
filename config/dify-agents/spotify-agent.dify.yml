@@ -1,0 +1,558 @@
+app:
+  description: Spotify artist, track, album, playlist, podcast, lyrics, concert,
+    and recommendation lookup through the RapidAPI Hub Spotify MCP tools.
+  icon: 1b7daab5-c1ec-4955-a7fe-08e6dfc11123
+  icon_background: ''
+  icon_type: image
+  mode: agent-chat
+  name: Spotify Agent
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 10
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Artist_discography_overview
+        tool_name: Artist_discography_overview
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Track_lyrics
+        tool_name: Track_lyrics
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Genre_View
+        tool_name: Genre_View
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          content_limit: null
+          id: null
+          limit: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Get_playlist
+        tool_name: Get_playlist
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Get_radio_playlist
+        tool_name: Get_radio_playlist
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          uri: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Artist_appears_on
+        tool_name: Artist_appears_on
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Get_tracks
+        tool_name: Get_tracks
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          ids: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Get_albums
+        tool_name: Get_albums
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          ids: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Get_artists
+        tool_name: Get_artists
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          ids: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Get_Episode
+        tool_name: Get_Episode
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: User_followers
+        tool_name: User_followers
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Artist_related
+        tool_name: Artist_related
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: User_profile
+        tool_name: User_profile
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          artistLimit: null
+          id: null
+          playlistLimit: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Playlist_tracks
+        tool_name: Playlist_tracks
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+          limit: null
+          offset: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Artist_singles
+        tool_name: Artist_singles
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+          limit: null
+          offset: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Explore
+        tool_name: Explore
+        tool_parameters:
+          _endpoint: null
+          _method: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Album_tracks
+        tool_name: Album_tracks
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+          limit: null
+          offset: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Track_recommendations
+        tool_name: Track_recommendations
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          limit: null
+          seed_artists: null
+          seed_genres: null
+          seed_tracks: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Search
+        tool_name: Search
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          gl: null
+          limit: null
+          numberOfTopResults: null
+          offset: null
+          q: null
+          type: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Get_Concert
+        tool_name: Get_Concert
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Album_metadata
+        tool_name: Album_metadata
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Artist_albums
+        tool_name: Artist_albums
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+          limit: null
+          offset: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Artist_overview
+        tool_name: Artist_overview
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Track_credits
+        tool_name: Track_credits
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Concerts
+        tool_name: Concerts
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          gl: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Podcast_Episodes
+        tool_name: Podcast_Episodes
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+          limit: null
+          offset: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Episode_Sound
+        tool_name: Episode_Sound
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Artist_featuring
+        tool_name: Artist_featuring
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+      - enabled: true
+        notAuthor: false
+        provider_id: rapidapi-spotify
+        provider_name: RapidAPI Hub - Spotify
+        provider_type: mcp
+        tool_label: Artist_discovered_on
+        tool_name: Artist_discovered_on
+        tool_parameters:
+          _endpoint: null
+          _method: null
+          id: null
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: >-
+          You are the Spotify Agent for CREATE SOMETHING.
+
+
+          Use the RapidAPI Hub - Spotify MCP tools to answer music, artist,
+          album, playlist, podcast, lyrics, concert, and recommendation
+          questions from live Spotify data.
+
+
+          Operating rules:
+
+          1. For any current Spotify fact, call Spotify tools instead of relying
+          on memory. If the user gives a name, use Search first to resolve the
+          correct Spotify artist, track, album, playlist, user, podcast, or
+          episode ID. If the user gives a Spotify ID, URI, or URL, use the
+          narrowest matching detail tool directly.
+
+          2. Always distinguish entity types and IDs. If the user asks for only
+          an ID, reply with only that ID.
+
+          3. For artist profile numbers, use Search followed by Artist_overview.
+          Include available monthly listeners, followers, world rank, top
+          tracks, latest release, and Spotify IDs when useful. Do not invent
+          fields that are missing from the tool response.
+
+          4. For release or catalog questions, use Artist_discography_overview,
+          Artist_albums, Artist_singles, Album_metadata, or Album_tracks as
+          appropriate after resolving the artist or album.
+
+          5. For track questions, resolve the track with Search, then use
+          Get_tracks, Track_credits, or Track_lyrics as needed. Do not provide
+          full copyrighted lyrics. You may summarize lyric availability and
+          quote at most one short phrase when necessary.
+
+          6. For comparisons, resolve each entity separately, use the same tool
+          path for each entity, and present a compact table with only comparable
+          fields returned by tools.
+
+          7. For recommendations, state the seed artist, genre, or track IDs
+          used before summarizing Track_recommendations results.
+
+          8. Keep answers concise. Mention when values are live Spotify/RapidAPI
+          data and may change. Include tool failure details when a tool cannot
+          return the requested data.
+
+          9. Never reveal RapidAPI keys, Dify API keys, bearer tokens, Infisical
+          values, request headers, or internal credential material.
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      - .MP4
+      - .MOV
+      - .MPEG
+      - .WEBM
+    allowed_file_types:
+      - image
+    allowed_file_upload_methods:
+      - remote_url
+      - local_file
+    enabled: true
+    image:
+      detail: high
+      enabled: true
+      number_limits: 3
+      transfer_methods:
+        - remote_url
+        - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      stop: []
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: >-
+    You are the Spotify Agent for CREATE SOMETHING.
+
+
+    Use the RapidAPI Hub - Spotify MCP tools to answer music, artist, album,
+    playlist, podcast, lyrics, concert, and recommendation questions from live
+    Spotify data.
+
+
+    Operating rules:
+
+    1. For any current Spotify fact, call Spotify tools instead of relying on
+    memory. If the user gives a name, use Search first to resolve the correct
+    Spotify artist, track, album, playlist, user, podcast, or episode ID. If the
+    user gives a Spotify ID, URI, or URL, use the narrowest matching detail tool
+    directly.
+
+    2. Always distinguish entity types and IDs. If the user asks for only an ID,
+    reply with only that ID.
+
+    3. For artist profile numbers, use Search followed by Artist_overview.
+    Include available monthly listeners, followers, world rank, top tracks,
+    latest release, and Spotify IDs when useful. Do not invent fields that are
+    missing from the tool response.
+
+    4. For release or catalog questions, use Artist_discography_overview,
+    Artist_albums, Artist_singles, Album_metadata, or Album_tracks as
+    appropriate after resolving the artist or album.
+
+    5. For track questions, resolve the track with Search, then use Get_tracks,
+    Track_credits, or Track_lyrics as needed. Do not provide full copyrighted
+    lyrics. You may summarize lyric availability and quote at most one short
+    phrase when necessary.
+
+    6. For comparisons, resolve each entity separately, use the same tool path
+    for each entity, and present a compact table with only comparable fields
+    returned by tools.
+
+    7. For recommendations, state the seed artist, genre, or track IDs used
+    before summarizing Track_recommendations results.
+
+    8. Keep answers concise. Mention when values are live Spotify/RapidAPI data
+    and may change. Include tool failure details when a tool cannot return the
+    requested data.
+
+    9. Never reveal RapidAPI keys, Dify API keys, bearer tokens, Infisical
+    values, request headers, or internal credential material.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0

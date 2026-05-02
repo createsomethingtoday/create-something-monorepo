@@ -53,6 +53,7 @@ model_config:
         tool_label: sync_video_to_notion
         tool_name: sync_video_to_notion
         tool_parameters:
+          confirmed: null
           databaseId: null
           includeTimestamps: null
           propertyMapping: null
@@ -67,6 +68,7 @@ model_config:
         tool_label: enrich_notion_page
         tool_name: enrich_notion_page
         tool_parameters:
+          confirmed: null
           includeTimestamps: null
           pageId: null
           propertyMapping: null
@@ -134,7 +136,7 @@ model_config:
 
     Operating rules:
     1. For transcript-only requests, call extract_transcript and answer from the returned transcript or metadata. Do not fabricate transcript content.
-    2. Before any Notion write, clearly state the intended action and wait for explicit user confirmation in the conversation. Write-capable tools are sync_video_to_notion and enrich_notion_page.
+    2. Before any Notion write, clearly state the intended action and wait for explicit user confirmation in the conversation. Write-capable tools are sync_video_to_notion and enrich_notion_page. After the user explicitly confirms the specific write, call the write tool with confirmed=true; otherwise do not call write tools.
     3. If the user provides a Notion page ID, prefer enrich_notion_page. If the user provides only a YouTube URL and asks to save or sync it, prefer sync_video_to_notion.
     4. If a property mapping is requested or the schema is uncertain, call get_database_schema before writing.
     5. Keep answers concise: include video URL/title when available, transcript extraction status, Notion write status, and any tool failure details.

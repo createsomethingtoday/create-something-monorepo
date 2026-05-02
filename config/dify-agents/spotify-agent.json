@@ -1,0 +1,237 @@
+{
+  "version": 1,
+  "status": "published_and_eval_covered",
+  "created_at": "2026-05-02",
+  "source_dsl": {
+    "imported_from": "Spotify Agent.yml",
+    "repo_path": "config/dify-agents/spotify-agent.dify.yml"
+  },
+  "dify_app": {
+    "name": "Spotify Agent",
+    "type": "agent",
+    "mode": "agent-chat",
+    "description": "Spotify artist, track, album, playlist, podcast, lyrics, concert, and recommendation lookup through the RapidAPI Hub Spotify MCP tools.",
+    "recommended_model": "gpt-5.4",
+    "api_response_mode": "streaming",
+    "service_api": {
+      "base_url": "https://api.dify.ai/v1",
+      "api_key_secret": {
+        "environment": "prod",
+        "path": "/dify/spotify-agent",
+        "secret_key": "DIFY_SPOTIFY_AGENT_API_KEY"
+      }
+    }
+  },
+  "mcp_server": {
+    "display_name": "RapidAPI Hub - Spotify",
+    "server_id": "rapidapi-spotify",
+    "transport": "http",
+    "url": "https://rapidapi.com/hub",
+    "auth": {
+      "type": "none"
+    }
+  },
+  "tools": [
+    {
+      "name": "Album_metadata",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Album_tracks",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id", "limit", "offset"]
+    },
+    {
+      "name": "Artist_albums",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id", "limit", "offset"]
+    },
+    {
+      "name": "Artist_appears_on",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Artist_discography_overview",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Artist_discovered_on",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Artist_featuring",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Artist_overview",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Artist_related",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Artist_singles",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id", "limit", "offset"]
+    },
+    {
+      "name": "Concerts",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "gl"]
+    },
+    {
+      "name": "Episode_Sound",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Explore",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method"]
+    },
+    {
+      "name": "Genre_View",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "content_limit", "id", "limit"]
+    },
+    {
+      "name": "Get_albums",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "ids"]
+    },
+    {
+      "name": "Get_artists",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "ids"]
+    },
+    {
+      "name": "Get_Concert",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Get_Episode",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Get_playlist",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Get_radio_playlist",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "uri"]
+    },
+    {
+      "name": "Get_tracks",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "ids"]
+    },
+    {
+      "name": "Playlist_tracks",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id", "limit", "offset"]
+    },
+    {
+      "name": "Podcast_Episodes",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id", "limit", "offset"]
+    },
+    {
+      "name": "Search",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": [
+        "_endpoint",
+        "_method",
+        "gl",
+        "limit",
+        "numberOfTopResults",
+        "offset",
+        "q",
+        "type"
+      ]
+    },
+    {
+      "name": "Track_credits",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Track_lyrics",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "Track_recommendations",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": [
+        "_endpoint",
+        "_method",
+        "limit",
+        "seed_artists",
+        "seed_genres",
+        "seed_tracks"
+      ]
+    },
+    {
+      "name": "User_followers",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "id"]
+    },
+    {
+      "name": "User_profile",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["_endpoint", "_method", "artistLimit", "id", "playlistLimit"]
+    }
+  ],
+  "agent_prompt": "You are the Spotify Agent for CREATE SOMETHING.\n\nUse the RapidAPI Hub - Spotify MCP tools to answer music, artist, album, playlist, podcast, lyrics, concert, and recommendation questions from live Spotify data.\n\nOperating rules:\n1. For any current Spotify fact, call Spotify tools instead of relying on memory. If the user gives a name, use Search first to resolve the correct Spotify artist, track, album, playlist, user, podcast, or episode ID. If the user gives a Spotify ID, URI, or URL, use the narrowest matching detail tool directly.\n2. Always distinguish entity types and IDs. If the user asks for only an ID, reply with only that ID.\n3. For artist profile numbers, use Search followed by Artist_overview. Include available monthly listeners, followers, world rank, top tracks, latest release, and Spotify IDs when useful. Do not invent fields that are missing from the tool response.\n4. For release or catalog questions, use Artist_discography_overview, Artist_albums, Artist_singles, Album_metadata, or Album_tracks as appropriate after resolving the artist or album.\n5. For track questions, resolve the track with Search, then use Get_tracks, Track_credits, or Track_lyrics as needed. Do not provide full copyrighted lyrics. You may summarize lyric availability and quote at most one short phrase when necessary.\n6. For comparisons, resolve each entity separately, use the same tool path for each entity, and present a compact table with only comparable fields returned by tools.\n7. For recommendations, state the seed artist, genre, or track IDs used before summarizing Track_recommendations results.\n8. Keep answers concise. Mention when values are live Spotify/RapidAPI data and may change. Include tool failure details when a tool cannot return the requested data.\n9. Never reveal RapidAPI keys, Dify API keys, bearer tokens, Infisical values, request headers, or internal credential material.",
+  "inventory_target": {
+    "manifest_path": "config/dify-agents/spotify-agent.json",
+    "dsl_path": "config/dify-agents/spotify-agent.dify.yml"
+  },
+  "service_api_smoke": {
+    "last_checked_at": "2026-05-02",
+    "result": "passed",
+    "cases": ["recent_numbers", "artist_id", "compare_artists", "lyrics", "secret_refusal"],
+    "notes": "Live Service API probes passed after the replacement Dify app import. Representative Spotify lookups used Search, Artist_overview, Artist_discography_overview, and Track_lyrics. Secret request refused without tool use."
+  }
+}

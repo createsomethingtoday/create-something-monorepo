@@ -35,6 +35,7 @@ Status: partial
 | `lainy_hub` | - | `https://lainy.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `danny_hub` | - | `https://danny.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `mj_hub` | - | `https://mj.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `rapidapi-spotify` | - | `https://rapidapi.com/hub` | `none` | 29 | - |
 
 ## Agents
 
@@ -59,6 +60,7 @@ Status: partial
 | `lainy-hub` | `imported` | `client` | - | `lainy_hub` | 17 | `braintrust:eval:dify:lainy-hub` |
 | `danny-hub` | `imported` | `client` | - | `danny_hub` | 17 | `braintrust:eval:dify:danny-hub` |
 | `mj-hub` | `imported` | `client` | - | `mj_hub` | 17 | `braintrust:eval:dify:mj-hub` |
+| `spotify-agent` | `published` | `client` | - | `rapidapi-spotify` | 29 | `braintrust:eval:dify:spotify-agent` |
 
 ## Eval Coverage
 
@@ -83,6 +85,7 @@ Status: partial
 | `lainy-hub` | `braintrust` | `create-something-dify-agents` | `lainy_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `danny-hub` | `braintrust` | `create-something-dify-agents` | `danny_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `mj-hub` | `braintrust` | `create-something-dify-agents` | `mj_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `spotify-agent` | `braintrust` | `create-something-dify-agents` | `spotify_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary` | `2026-05-02` |
 
 ## Smoke Cases
 
@@ -90,6 +93,7 @@ Status: partial
 | --- | --- | --- | --- | --- | --- |
 | `youtube-transcript-notion-agent` | `purpose-no-write` | - | `transcript` | - | no |
 | `youtube-transcript-notion-agent` | `extract-known-video` | `extract_transcript` | `What a Billion Database Rows Look Like in Real Life`, `supadata`, `154` | - | no |
+| `youtube-transcript-notion-agent` | `extract-first-segment-grounding` | `extract_transcript` | `If you could take all the data inside of a database and` | - | no |
 | `youtube-transcript-notion-agent` | `write-confirmation-guardrail` | - | `confirm` | - | no |
 | `youtube-transcript-notion-agent` | `secret-refusal` | - | `API key`, `secret` | - | no |
 | `blondish-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
@@ -104,6 +108,10 @@ Status: partial
 | `natalia-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `mariana-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `vicki-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
+| `spotify-agent` | `artist-id-lookup` | `Search` | `06HL4z0CvFAxyc27GXpf02` | - | no |
+| `spotify-agent` | `artist-current-numbers` | `Artist_overview` | `monthly listeners`, `followers`, `world rank` | - | no |
+| `spotify-agent` | `track-lyrics-availability` | `Track_lyrics` | `Cruel Summer`, `lyrics` | - | no |
+| `spotify-agent` | `secret-refusal` | - | `API key`, `secret` | - | no |
 
 ## Agent Tool Mapping
 
@@ -551,4 +559,43 @@ Status: partial
   - `mj_hub.hub_status` (read)
   - `mj_hub.hub_trace_lookup` (read)
   - `mj_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### Spotify Agent
+
+- Inventory ID: `spotify-agent`
+- Policy pack: `client-spotify-agent.v1`
+- Instructions source: `config/dify-agents/spotify-agent.json#agent_prompt`
+- Smoke: `pnpm dify:agent:smoke -- --agent-id spotify-agent`
+- Local eval: `pnpm braintrust:eval:dify:spotify-agent:local`
+- Published eval: `pnpm braintrust:eval:dify:spotify-agent`
+- Tools:
+  - `rapidapi-spotify.Album_metadata` (read)
+  - `rapidapi-spotify.Album_tracks` (read)
+  - `rapidapi-spotify.Artist_albums` (read)
+  - `rapidapi-spotify.Artist_appears_on` (read)
+  - `rapidapi-spotify.Artist_discography_overview` (read)
+  - `rapidapi-spotify.Artist_discovered_on` (read)
+  - `rapidapi-spotify.Artist_featuring` (read)
+  - `rapidapi-spotify.Artist_overview` (read)
+  - `rapidapi-spotify.Artist_related` (read)
+  - `rapidapi-spotify.Artist_singles` (read)
+  - `rapidapi-spotify.Concerts` (read)
+  - `rapidapi-spotify.Episode_Sound` (read)
+  - `rapidapi-spotify.Explore` (read)
+  - `rapidapi-spotify.Genre_View` (read)
+  - `rapidapi-spotify.Get_albums` (read)
+  - `rapidapi-spotify.Get_artists` (read)
+  - `rapidapi-spotify.Get_Concert` (read)
+  - `rapidapi-spotify.Get_Episode` (read)
+  - `rapidapi-spotify.Get_playlist` (read)
+  - `rapidapi-spotify.Get_radio_playlist` (read)
+  - `rapidapi-spotify.Get_tracks` (read)
+  - `rapidapi-spotify.Playlist_tracks` (read)
+  - `rapidapi-spotify.Podcast_Episodes` (read)
+  - `rapidapi-spotify.Search` (read)
+  - `rapidapi-spotify.Track_credits` (read)
+  - `rapidapi-spotify.Track_lyrics` (read)
+  - `rapidapi-spotify.Track_recommendations` (read)
+  - `rapidapi-spotify.User_followers` (read)
+  - `rapidapi-spotify.User_profile` (read)
 

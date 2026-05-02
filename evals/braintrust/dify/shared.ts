@@ -11,6 +11,7 @@ export type DifyChatInput = {
   expectedTitle?: string;
   expectedMethod?: string;
   expectedSegmentCount?: number;
+  expectedText?: string;
   shouldUseTool?: string;
   forbiddenTools?: string[];
 };
@@ -79,7 +80,9 @@ export function buildDifyClientConfig(options: DifyClientConfigOptions = {}): Di
   const secretName =
     options.secretName ?? readOptionalEnv('DIFY_AGENT_API_KEY_SECRET_NAME') ?? apiKeyEnv;
   const infisicalPath =
-    options.infisicalPath ?? readOptionalEnv('DIFY_AGENT_INFISICAL_PATH') ?? DEFAULT_DIFY_INFISICAL_PATH;
+    options.infisicalPath ??
+    readOptionalEnv('DIFY_AGENT_INFISICAL_PATH') ??
+    DEFAULT_DIFY_INFISICAL_PATH;
   const infisicalEnvironment =
     options.infisicalEnvironment ??
     readOptionalEnv('DIFY_AGENT_INFISICAL_ENV') ??
@@ -105,7 +108,8 @@ export function buildDifyClientConfig(options: DifyClientConfigOptions = {}): Di
           path: infisicalPath,
           projectId: infisicalProjectId
         }),
-    user: options.user ?? readEnv('DIFY_AGENT_EVAL_USER', 'braintrust-dify-youtube-transcript-agent'),
+    user:
+      options.user ?? readEnv('DIFY_AGENT_EVAL_USER', 'braintrust-dify-youtube-transcript-agent'),
     timeoutMs,
     apiKeyDescription: `${apiKeyEnv} or Infisical ${infisicalEnvironment}:${infisicalPath}`,
     missingApiKeyHint: `Missing ${apiKeyEnv}; export it or allow Infisical lookup at ${infisicalPath}.`
