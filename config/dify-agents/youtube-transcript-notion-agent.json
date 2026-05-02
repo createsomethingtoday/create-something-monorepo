@@ -17,6 +17,21 @@
       }
     }
   },
+  "health": {
+    "enabled": true,
+    "registry_id": "dify.youtube-transcript-notion-agent",
+    "component": "Dify YouTube Transcript Notion Agent",
+    "type": "agent",
+    "source": "dify-health-registry",
+    "artifact": "Dify app: youtube-transcript-notion-agent",
+    "action": "Review Dify YouTube Transcript Notion Agent smoke output",
+    "command": ["pnpm", "dify:youtube-transcript:smoke"],
+    "env": {
+      "DIFY_AGENT_EVAL_USER": "ink-health-dify-youtube-transcript-agent"
+    },
+    "success_reason": "Dify YouTube Transcript Notion Agent smoke completed successfully.",
+    "failure_reason": "Dify YouTube Transcript Notion Agent smoke failed."
+  },
   "mcp_server": {
     "display_name": "YouTube Transcript + Notion MCP",
     "server_id": "yt-transcript-notion",

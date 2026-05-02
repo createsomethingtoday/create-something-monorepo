@@ -174,11 +174,11 @@ truth, large e-ink copy limits, and list/detail metadata for richer daily briefs
 
 Surface roles:
 
-| Surface | Role | Use |
-| --- | --- | --- |
-| `core-ink` | calm surface | Pocket pager: attention, alarms, all-clear |
-| `t-embed` | operator console | Handheld inspection, faster UI, richer controls |
-| `reterminal-e1001` | operator sheet | Desk/wall brief, registry summaries, daily status |
+| Surface            | Role             | Use                                               |
+| ------------------ | ---------------- | ------------------------------------------------- |
+| `core-ink`         | calm surface     | Pocket pager: attention, alarms, all-clear        |
+| `t-embed`          | operator console | Handheld inspection, faster UI, richer controls   |
+| `reterminal-e1001` | operator sheet   | Desk/wall brief, registry summaries, daily status |
 
 ## Producer helpers
 
@@ -396,6 +396,7 @@ pnpm --dir packages/calm-operator-ink-bridge run:health-command \
   --action "Review failed Dify workflow run" \
   -- pnpm dify:sync
 
+pnpm dify:ink-health
 pnpm dify:youtube-transcript:ink-health
 
 pnpm --dir packages/calm-operator-ink-bridge run:health-command \
@@ -409,9 +410,14 @@ pnpm --dir packages/calm-operator-ink-bridge run:health-command \
 The wrapper only records the command executable name, duration, exit code, registry
 id, artifact, and action. It intentionally does not store full command arguments.
 
-The Dify YouTube Transcript Notion Agent is included through
-`pnpm dify:youtube-transcript:ink-health`. That command runs the existing Dify
-smoke and posts a health snapshot with registry id
-`dify.youtube-transcript-notion-agent`. Run it from an environment that has
-`INK_SOURCE_TOKEN` injected at `/` and can read the Dify app API key from
-Infisical path `/dify/youtube-transcript-notion-agent`.
+All configured Dify agents are included through `pnpm dify:ink-health`. The
+registry runner scans `config/dify-agents/*.json`, reads each agent's `health`
+block, derives its Dify API secret scope from `dify_app.service_api`, runs the
+configured smoke command through the command health wrapper, and posts one Ink
+snapshot per agent. Use `pnpm dify:ink-health -- --list` to inspect the active
+registry and `pnpm dify:ink-health -- --agent <agent-id>` to run one entry.
+
+The Dify YouTube Transcript Notion Agent remains available through the narrower
+`pnpm dify:youtube-transcript:ink-health` alias. It selects registry id
+`dify.youtube-transcript-notion-agent` and uses Infisical path
+`/dify/youtube-transcript-notion-agent`.

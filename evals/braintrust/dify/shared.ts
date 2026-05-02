@@ -61,11 +61,12 @@ export const DEFAULT_DIFY_INFISICAL_PATH = '/dify/youtube-transcript-notion-agen
 export const DEFAULT_DIFY_API_KEY_ENV = 'DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT_API_KEY';
 
 export function buildDifyClientConfig(): DifyClientConfig {
-  const secretName = readOptionalEnv('DIFY_AGENT_API_KEY_SECRET_NAME') ?? DEFAULT_DIFY_API_KEY_ENV;
+  const apiKeyEnv = readOptionalEnv('DIFY_AGENT_API_KEY_ENV') ?? DEFAULT_DIFY_API_KEY_ENV;
+  const secretName = readOptionalEnv('DIFY_AGENT_API_KEY_SECRET_NAME') ?? apiKeyEnv;
 
   return {
     baseUrl: readEnv('DIFY_AGENT_BASE_URL', DEFAULT_DIFY_API_BASE_URL).replace(/\/+$/, ''),
-    apiKey: readOptionalEnvOrInfisicalSecret(DEFAULT_DIFY_API_KEY_ENV, {
+    apiKey: readOptionalEnvOrInfisicalSecret(apiKeyEnv, {
       secretName,
       environment:
         readOptionalEnv('DIFY_AGENT_INFISICAL_ENV') ?? readOptionalEnv('INFISICAL_ENV') ?? 'prod',

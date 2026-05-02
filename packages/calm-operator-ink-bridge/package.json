@@ -11,6 +11,7 @@
     "post:decision": "tsx scripts/post-operator-decision.mjs",
     "post:health": "tsx scripts/post-health-snapshot.mjs",
     "post:mcp": "tsx scripts/post-mcp-attention.mjs",
+    "run:dify-health-registry": "tsx scripts/run-dify-health-registry.mjs",
     "run:health-command": "tsx scripts/run-health-checked-command.mjs",
     "smoke:prod": "node scripts/smoke-production.mjs",
     "tail": "node ../../scripts/run-wrangler.mjs tail",
