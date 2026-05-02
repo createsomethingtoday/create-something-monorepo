@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "owner": "create-something",
+  "last_reviewed_at": "2026-05-02",
+  "api_base_url": "https://api.dify.ai/v1",
+  "entries": {
+    "aaron-hub": {
+      "display_name": "AARON HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/aaron-hub",
+        "secret_key": "DIFY_AARON_HUB_API_KEY"
+      }
+    },
+    "abundance-hub": {
+      "display_name": "ABUNDANCE HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/abundance-hub",
+        "secret_key": "DIFY_ABUNDANCE_HUB_API_KEY"
+      }
+    },
+    "active-jobs": {
+      "display_name": "Active Jobs",
+      "kind": "agent",
+      "status": "in_service",
+      "dsl_path": "config/dify/agents/active-jobs.yml",
+      "mcp_servers": [
+        "active-jobs"
+      ],
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/active-jobs-agent",
+        "secret_key": "DIFY_ACTIVE_JOBS_AGENT_API_KEY"
+      }
+    },
+    "august-hub": {
+      "display_name": "AUGUST HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/august-hub",
+        "secret_key": "DIFY_AUGUST_HUB_API_KEY"
+      }
+    },
+    "blondish-hub": {
+      "display_name": "BLOND:ISH HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/blondish-hub",
+        "secret_key": "DIFY_BLONDISH_HUB_API_KEY"
+      }
+    },
+    "c3-hub": {
+      "display_name": "C3 HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/c3-hub",
+        "secret_key": "DIFY_C3_HUB_API_KEY"
+      }
+    },
+    "danny-hub": {
+      "display_name": "DANNY HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/danny-hub",
+        "secret_key": "DIFY_DANNY_HUB_API_KEY"
+      }
+    },
+    "eric-hub": {
+      "display_name": "ERIC HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/eric-hub",
+        "secret_key": "DIFY_ERIC_HUB_API_KEY"
+      }
+    },
+    "fillip-hub": {
+      "display_name": "FILLIP HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/fillip-hub",
+        "secret_key": "DIFY_FILLIP_HUB_API_KEY"
+      }
+    },
+    "lainy-hub": {
+      "display_name": "LAINY HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/lainy-hub",
+        "secret_key": "DIFY_LAINY_HUB_API_KEY"
+      }
+    },
+    "leah-hub": {
+      "display_name": "LEAH HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/leah-hub",
+        "secret_key": "DIFY_LEAH_HUB_API_KEY"
+      }
+    },
+    "mariana-hub": {
+      "display_name": "MARIANA HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/mariana-hub",
+        "secret_key": "DIFY_MARIANA_HUB_API_KEY"
+      }
+    },
+    "mj-hub": {
+      "display_name": "MJ HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/mj-hub",
+        "secret_key": "DIFY_MJ_HUB_API_KEY"
+      }
+    },
+    "morgan-hub": {
+      "display_name": "MORGAN HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/morgan-hub",
+        "secret_key": "DIFY_MORGAN_HUB_API_KEY"
+      }
+    },
+    "natalia-hub": {
+      "display_name": "NATALIA HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/natalia-hub",
+        "secret_key": "DIFY_NATALIA_HUB_API_KEY"
+      }
+    },
+    "pablo-hub": {
+      "display_name": "PABLO HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/pablo-hub",
+        "secret_key": "DIFY_PABLO_HUB_API_KEY"
+      }
+    },
+    "shea-hub": {
+      "display_name": "SHEA HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/shea-hub",
+        "secret_key": "DIFY_SHEA_HUB_API_KEY"
+      }
+    },
+    "spotify": {
+      "display_name": "Spotify Agent",
+      "kind": "agent",
+      "mcp_servers": [
+        "spotify"
+      ],
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/spotify-agent",
+        "secret_key": "DIFY_SPOTIFY_AGENT_API_KEY"
+      }
+    },
+    "vicki-hub": {
+      "display_name": "VICKI HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/vicki-hub",
+        "secret_key": "DIFY_VICKI_HUB_API_KEY"
+      }
+    },
+    "viv-hub": {
+      "display_name": "VIV HUB",
+      "kind": "hub",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/viv-hub",
+        "secret_key": "DIFY_VIV_HUB_API_KEY"
+      }
+    },
+    "youtube-transcript-notion": {
+      "display_name": "YouTube Transcript Notion Agent",
+      "kind": "agent",
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/youtube-transcript-notion-agent",
+        "secret_key": "DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT_API_KEY"
+      }
+    }
+  }
+}
