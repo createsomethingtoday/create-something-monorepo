@@ -3,10 +3,11 @@
 > Auto-generated from `config/mcp-hub/registry.json`.
 > Regenerate with `pnpm mcp:registry:generate`.
 
-## Active (1011)
+## Active (1012)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
+| `active-jobs-mcp` | `http` | `https://active-jobs-mcp.createsomething.workers.dev/mcp` | `direct` | `6` | `active-jobs`, `jobs`, `rapidapi`, `recruiting`, `dify`, `observability`, `cs`, `policy_os_only` |
 | `composio-toolkit-_21risk` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/_21risk` | `brokered` | `100` | `composio`, `composio-business-intelligence`, `toolkit` |
 | `composio-toolkit-_2chat` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/_2chat` | `brokered` | `100` | `composio`, `composio-communication`, `composio-developer-tools`, `toolkit` |
 | `composio-toolkit-ably` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/ably` | `brokered` | `100` | `composio`, `composio-developer-tools`, `toolkit` |

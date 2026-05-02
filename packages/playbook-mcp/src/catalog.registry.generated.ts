@@ -6,6 +6,19 @@
 
 export const REGISTRY_CATALOG_ENTRIES = [
   {
+    "name": "Active Jobs DB",
+    "slug": "active-jobs-db",
+    "url": "https://active-jobs-mcp.createsomething.workers.dev",
+    "description": "CREATE SOMETHING governed Active Jobs DB MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "CREATE SOMETHING Content",
     "slug": "create-something",
     "url": "https://mcp.createsomething.ltd",

@@ -119,6 +119,39 @@
       "exposure_review_owner": "CRE-161",
       "package_path": "packages/spotify-mcp"
     },
+    "active-jobs-mcp": {
+      "transport": "http",
+      "url": "https://active-jobs-mcp.createsomething.workers.dev/mcp",
+      "description": "CREATE SOMETHING governed Active Jobs DB MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+      "bearer_token_env_var": "ACTIVE_JOBS_MCP_API_KEY",
+      "tags": [
+        "active-jobs",
+        "jobs",
+        "rapidapi",
+        "recruiting",
+        "dify",
+        "observability",
+        "cs",
+        "policy_os_only"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Active Jobs DB",
+        "slug": "active-jobs-db",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http",
+          "sse"
+        ]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 6,
+      "exposure_exception_reason": "Dify migration preserves the imported RapidAPI Active Jobs DB provider surface; direct exposure avoids remapping tool names during cutover.",
+      "exposure_review_owner": "CRE-164",
+      "package_path": "packages/active-jobs-mcp"
+    },
     "schedule-mcp": {
       "transport": "http",
       "url": "https://schedule.mcp.createsomething.agency/mcp",

@@ -1,0 +1,38 @@
+{
+  "name": "@create-something/active-jobs-mcp",
+  "version": "1.0.0",
+  "description": "Governed Active Jobs DB MCP wrapper over RapidAPI with CREATE SOMETHING telemetry.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "pnpm run typecheck",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260205.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "mcp",
+    "active-jobs",
+    "rapidapi",
+    "braintrust",
+    "observability"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/active-jobs-mcp"
+  }
+}
