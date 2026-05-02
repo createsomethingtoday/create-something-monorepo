@@ -28,7 +28,7 @@ Optional telemetry secrets:
 
 Optional provider config:
 
-- `SPOTIFY_RAPIDAPI_HOST` defaults to `spotify81.p.rapidapi.com`
+- `SPOTIFY_RAPIDAPI_HOST` defaults to `spotify23.p.rapidapi.com`
 - `SPOTIFY_RAPIDAPI_BASE_URL` defaults to `https://${SPOTIFY_RAPIDAPI_HOST}`
 - `SPOTIFY_RAPIDAPI_TIMEOUT_MS` defaults to `30000`
 - `SPOTIFY_RAPIDAPI_MAX_RESPONSE_BYTES` defaults to `262144`

@@ -11,7 +11,7 @@ enabled = true
 [vars]
 BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
 MCP_ACCOUNT_ID = "spotify-agent"
-SPOTIFY_RAPIDAPI_HOST = "spotify81.p.rapidapi.com"
+SPOTIFY_RAPIDAPI_HOST = "spotify23.p.rapidapi.com"
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"

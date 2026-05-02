@@ -6,7 +6,7 @@ import type { ZodRawShape } from 'zod';
 
 export const SERVER_NAME = 'spotify-mcp';
 export const SERVER_VERSION = '1.0.0';
-export const DEFAULT_RAPIDAPI_HOST = 'spotify81.p.rapidapi.com';
+export const DEFAULT_RAPIDAPI_HOST = 'spotify23.p.rapidapi.com';
 export const DEFAULT_TIMEOUT_MS = 30_000;
 export const DEFAULT_MAX_RESPONSE_BYTES = 256 * 1024;
 
