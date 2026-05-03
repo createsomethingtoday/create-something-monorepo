@@ -27,9 +27,35 @@
       "kind": "agent",
       "status": "in_service",
       "dsl_path": "config/dify/agents/active-jobs.yml",
-      "mcp_servers": [
-        "active-jobs"
-      ],
+      "api": {
+        "chat_endpoint": "/chat-messages",
+        "response_mode": "streaming"
+      },
+      "mcp_servers": ["active-jobs"],
+      "response_contract": {
+        "job_listing_fields": [
+          "title",
+          "organization",
+          "location",
+          "source",
+          "posted_or_indexed_or_modified_date",
+          "application_url",
+          "salary_or_remote_when_present"
+        ],
+        "broad_query_behavior": "ask_follow_up_before_tool_call",
+        "provider_error_behavior": "explain_quota_or_subscription_limit_and_offer_fallback"
+      },
+      "evals": {
+        "braintrust": {
+          "project_name": "create-something-dify-agents",
+          "experiment_name": "active_jobs_dify_agent_live",
+          "file": "evals/braintrust/dify/active-jobs-agent.eval.ts",
+          "command": "pnpm braintrust:eval:dify:active-jobs"
+        },
+        "mcp_telemetry": {
+          "command": "infisical run --env=prod --path=/active-jobs-mcp -- pnpm braintrust:eval:mcp:active-jobs-telemetry"
+        }
+      },
       "infisical": {
         "environment": "prod",
         "path": "/dify/active-jobs-agent",
@@ -165,9 +191,7 @@
     "spotify": {
       "display_name": "Spotify Agent",
       "kind": "agent",
-      "mcp_servers": [
-        "spotify"
-      ],
+      "mcp_servers": ["spotify"],
       "infisical": {
         "environment": "prod",
         "path": "/dify/spotify-agent",

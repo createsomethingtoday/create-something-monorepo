@@ -152,6 +152,39 @@
       "exposure_review_owner": "CRE-164",
       "package_path": "packages/active-jobs-mcp"
     },
+    "linkedin-mcp": {
+      "transport": "http",
+      "url": "https://linkedin-mcp.createsomething.workers.dev/mcp",
+      "description": "CREATE SOMETHING governed LinkedIn Data API MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+      "bearer_token_env_var": "LINKEDIN_MCP_API_KEY",
+      "tags": [
+        "linkedin",
+        "rapidapi",
+        "profiles",
+        "jobs",
+        "dify",
+        "observability",
+        "cs",
+        "policy_os_only"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "LinkedIn Data API",
+        "slug": "linkedin-data-api",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http",
+          "sse"
+        ]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 52,
+      "exposure_exception_reason": "Dify migration preserves the imported RapidAPI LinkedIn Data API provider surface; direct exposure avoids remapping tool names during cutover.",
+      "exposure_review_owner": "CRE-165",
+      "package_path": "packages/linkedin-mcp"
+    },
     "schedule-mcp": {
       "transport": "http",
       "url": "https://schedule.mcp.createsomething.agency/mcp",

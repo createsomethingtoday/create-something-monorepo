@@ -1,0 +1,800 @@
+# Import into Dify after the workspace MCP server card with server ID `linkedin` is authorized.
+app:
+  description: Researches LinkedIn profiles, companies, jobs, and posts through
+    the governed CREATE SOMETHING LinkedIn MCP.
+  icon: briefcase
+  icon_background: '#E8F1FF'
+  mode: agent-chat
+  name: LinkedIn Research
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 8
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Connection__Follower_Count
+        tool_name: Get_Profile_Connection__Follower_Count
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Company_Insights_PREMIUM
+        tool_name: Get_Company_Insights_PREMIUM
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Company_Jobs
+        tool_name: Get_Company_Jobs
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          companyIds: ''
+          page: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Recent_Activity_Time
+        tool_name: Get_Profile_Recent_Activity_Time
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Company_By_Domain
+        tool_name: Get_Company_By_Domain
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          domain: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: About_The_Profile
+        tool_name: About_The_Profile
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Post_Comment
+        tool_name: Get_Profile_Post_Comment
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          paginationToken: ''
+          sort: ''
+          urn: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Data_By_URL
+        tool_name: Get_Profile_Data_By_URL
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          url: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Article_Comments
+        tool_name: Get_Article_Comments
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          sort: ''
+          url: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Post_and_Comments
+        tool_name: Get_Profile_Post_and_Comments
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          urn: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profiles_Posts
+        tool_name: Get_Profiles_Posts
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          paginationToken: ''
+          postedAt: ''
+          start: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Company_Employees_Count
+        tool_name: Get_Company_Employees_Count
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          companyId: ''
+          locations: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Company_Details_by_ID
+        tool_name: Get_Company_Details_by_ID
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          id: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Positions_With_Skills
+        tool_name: Get_Profile_Positions_With_Skills
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Top_Voice_Interests
+        tool_name: Get_Profile_Top_Voice_Interests
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Post_Reactions
+        tool_name: Get_Post_Reactions
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          reactionType: ''
+          urn: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Search_Jobs_V2
+        tool_name: Search_Jobs_V2
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          companyIds: ''
+          datePosted: ''
+          distance: ''
+          experienceLevel: ''
+          functionIds: ''
+          industryIds: ''
+          jobType: ''
+          keywords: ''
+          locationId: ''
+          onsiteRemote: ''
+          salary: ''
+          sort: ''
+          start: ''
+          titleIds: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Article_Reactions
+        tool_name: Get_Article_Reactions
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          url: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Post_Reposts
+        tool_name: Get_Post_Reposts
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          paginationToken: ''
+          urn: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_School_Interests
+        tool_name: Get_Profile_School_Interests
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Company_Interest
+        tool_name: Get_Profile_Company_Interest
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Profile_Data__Recommendations
+        tool_name: Profile_Data__Recommendations
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Data_and_Connection__Follower_Count
+        tool_name: Get_Profile_Data_and_Connection__Follower_Count
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Company_Post_Comments
+        tool_name: Get_Company_Post_Comments
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          sort: ''
+          urn: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Job_Details
+        tool_name: Get_Job_Details
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          id: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Article
+        tool_name: Get_Article
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          url: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Health_Check
+        tool_name: Health_Check
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Newsletter_Interests
+        tool_name: Get_Profile_Newsletter_Interests
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Similar_Profiles
+        tool_name: Get_Similar_Profiles
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          url: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Received_Recommendations
+        tool_name: Get_Received_Recommendations
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          start: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profiles_Comments
+        tool_name: Get_Profiles_Comments
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Search_People_by_URL
+        tool_name: Search_People_by_URL
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          url: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Data
+        tool_name: Get_Profile_Data
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Group_Interests
+        tool_name: Get_Profile_Group_Interests
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_User_Articles
+        tool_name: Get_User_Articles
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          url: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Company_Details
+        tool_name: Get_Company_Details
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Given_Recommendations
+        tool_name: Get_Given_Recommendations
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          start: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Search_People
+        tool_name: Search_People
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          company: ''
+          firstName: ''
+          geo: ''
+          keywordSchool: ''
+          keywordTitle: ''
+          keywords: ''
+          lastName: ''
+          schoolId: ''
+          start: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Companys_Post
+        tool_name: Get_Companys_Post
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          paginationToken: ''
+          start: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profiles_Posted_Jobs
+        tool_name: Get_Profiles_Posted_Jobs
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Post
+        tool_name: Get_Post
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          page: ''
+          url: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Search_Jobs
+        tool_name: Search_Jobs
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          companyIds: ''
+          datePosted: ''
+          experienceLevel: ''
+          functionIds: ''
+          industryIds: ''
+          jobType: ''
+          keywords: ''
+          locationId: ''
+          onsiteRemote: ''
+          salary: ''
+          sort: ''
+          start: ''
+          titleIds: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Hiring_Team
+        tool_name: Get_Hiring_Team
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          id: ''
+          url: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Reactions
+        tool_name: Get_Profile_Reactions
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          paginationToken: ''
+          start: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Top_Position
+        tool_name: Get_Profile_Top_Position
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Company_Pages_People_Also_Viewed
+        tool_name: Get_Company_Pages_People_Also_Viewed
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Search_Posts
+        tool_name: Search_Posts
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          authorCompany: ''
+          authorIndustry: ''
+          authorTitle: ''
+          contentType: ''
+          datePosted: ''
+          fromCompany: ''
+          fromMember: ''
+          keyword: ''
+          mentionsMember: ''
+          mentionsOrganization: ''
+          page: ''
+          sortBy: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Search_Companies
+        tool_name: Search_Companies
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Search_Locations
+        tool_name: Search_Locations
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          keyword: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Search_Post_by_Hashtag
+        tool_name: Search_Post_by_Hashtag
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          hashtag: ''
+          paginationToken: ''
+          sortBy: ''
+          start: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Company_Jobs_Count
+        tool_name: Get_Company_Jobs_Count
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          companyId: ''
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: linkedin
+        provider_name: LinkedIn Data API
+        provider_type: mcp
+        tool_label: Get_Profile_Data_Connection__Follower_Count_and_Posts
+        tool_name: Get_Profile_Data_Connection__Follower_Count_and_Posts
+        tool_parameters:
+          _endpoint: ''
+          _method: ''
+          username: ''
+  annotation_reply:
+    enabled: false
+  chat_prompt_config: {}
+  completion_prompt_config: {}
+  dataset_configs:
+    datasets:
+      datasets: []
+    retrieval_model: single
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    image:
+      detail: high
+      enabled: false
+      number_limits: 3
+      transfer_methods:
+        - local_file
+        - remote_url
+  model:
+    completion_params:
+      stop: []
+      temperature: 0.2
+    mode: chat
+    name: gpt-4.1-mini
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: Tell me the person, company, role, or LinkedIn URL you want to research.
+  pre_prompt: >-
+    You are LinkedIn Research, a recruiting and market research agent for CREATE
+    SOMETHING.
+
+
+    Use the linkedin MCP tools to research LinkedIn profiles, companies, jobs,
+    posts, and hiring context. Prefer Search_Jobs for job searches,
+    Search_Jobs_V2 for advanced job search requests, Get_Job_Details for
+    returned job IDs, Get_Profile_Data_By_URL when the user provides a LinkedIn
+    profile URL, Get_Profile_Data for usernames, Search_People for people
+    discovery, Get_Company_Details or Get_Company_By_Domain for company lookups,
+    Search_Companies for company discovery, and Search_Posts or
+    Search_Post_by_Hashtag for content research.
+
+
+    Ask one concise follow-up when the user does not provide enough context to
+    identify a person, company, role, location, URL, or keyword. Do not invent
+    LinkedIn usernames, company IDs, or job IDs. Use conservative limits for
+    broad searches and narrow by location, title, company, or keywords when
+    possible.
+
+
+    Do not use _endpoint or _method unless the user explicitly asks for an
+    internal migration override and provides a known LinkedIn Data API RapidAPI
+    path.
+
+
+    In the final answer, distinguish profile, company, job, and post findings.
+    Include names, titles, companies, locations, profile/company/job URLs or IDs
+    when present, and the filters used. If the provider returns a quota,
+    subscription, permission, timeout, or empty-result response, state that
+    clearly and offer a narrower follow-up query.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    configs: []
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions:
+    - Find senior product leaders at AI companies in Austin.
+    - Research this LinkedIn profile URL and summarize current role context.
+    - Search LinkedIn jobs for remote RevOps roles in the United States.
+    - Find recent posts about MCP adoption from startup founders.
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.3.1

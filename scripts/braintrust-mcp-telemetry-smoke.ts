@@ -6,6 +6,7 @@ type ParsedArgs = {
   projectId: string;
   projectName: string;
   mcpUrl: string;
+  bearerToken?: string;
   toolName: string;
   expectedServer?: string;
   accountId?: string;
@@ -91,6 +92,7 @@ Options:
   --project-id <id>         Braintrust project UUID (default: $BRAINTRUST_PROJECT_ID)
   --project-name <name>     Braintrust project name (default: ${DEFAULT_PROJECT_NAME})
   --mcp-url <url>           Full MCP URL (default: ${DEFAULT_MCP_URL})
+  --bearer-token <token>    Optional Authorization bearer token (default: $MCP_AUTH_TOKEN, $MCP_API_KEY, $ACTIVE_JOBS_MCP_API_KEY)
   --tool-name <name>        MCP tool name to call (default: ${DEFAULT_TOOL_NAME})
   --expected-server <name>  metadata.server match (default: inferred from --mcp-url)
   --account-id <id>         Optional X-MCP-Account-Id header value
@@ -106,6 +108,10 @@ function parseArgs(argv: string[]): ParsedArgs {
   let projectId = process.env.BRAINTRUST_PROJECT_ID?.trim() ?? '';
   let projectName = process.env.BRAINTRUST_PROJECT_NAME?.trim() || DEFAULT_PROJECT_NAME;
   let mcpUrl = process.env.MCP_URL?.trim() || DEFAULT_MCP_URL;
+  let bearerToken =
+    process.env.MCP_AUTH_TOKEN?.trim() ||
+    process.env.MCP_API_KEY?.trim() ||
+    process.env.ACTIVE_JOBS_MCP_API_KEY?.trim();
   let toolName = process.env.MCP_TOOL_NAME?.trim() || DEFAULT_TOOL_NAME;
   let expectedServer = process.env.MCP_EXPECTED_SERVER?.trim();
   let accountId = process.env.MCP_ACCOUNT_ID?.trim();
@@ -140,6 +146,11 @@ function parseArgs(argv: string[]): ParsedArgs {
       case '--mcp-url':
         if (!next) throw new Error('Missing value for --mcp-url.');
         mcpUrl = next.trim();
+        i += 1;
+        break;
+      case '--bearer-token':
+        if (!next) throw new Error('Missing value for --bearer-token.');
+        bearerToken = next.trim();
         i += 1;
         break;
       case '--expected-server':
@@ -196,6 +207,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     projectId,
     projectName,
     mcpUrl: sanitizeUrl(mcpUrl),
+    bearerToken,
     toolName,
     expectedServer,
     accountId,
@@ -219,6 +231,9 @@ async function triggerMcpToolCall(args: ParsedArgs): Promise<unknown> {
 
   if (args.accountId) {
     headers['X-MCP-Account-Id'] = args.accountId;
+  }
+  if (args.bearerToken) {
+    headers.Authorization = `Bearer ${args.bearerToken}`;
   }
 
   const initResponse = await fetch(endpoint, {

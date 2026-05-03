@@ -3,7 +3,7 @@
 > Auto-generated from `config/mcp-hub/registry.json`.
 > Regenerate with `pnpm mcp:registry:generate`.
 
-## Active (1012)
+## Active (1013)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -1002,6 +1002,7 @@
 | `halfdozen-operator-notion-mcp` | `http` | `https://halfdozen-operator-notion-mcp.createsomething.workers.dev/mcp` | `brokered` | `100` | `halfdozen`, `notion`, `composio`, `operator`, `workway` |
 | `halfdozen-telemetry` | `http` | `https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp` | `direct` | `0` | `observability`, `telemetry`, `workway` |
 | `halfdozen-zoom-sync` | `http` | `https://zoom.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `zoom`, `workway` |
+| `linkedin-mcp` | `http` | `https://linkedin-mcp.createsomething.workers.dev/mcp` | `direct` | `52` | `linkedin`, `rapidapi`, `profiles`, `jobs`, `dify`, `observability`, `cs`, `policy_os_only` |
 | `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `coordination`, `loom`, `cs` |
 | `meetings` | `http` | `https://meetings-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `meetings`, `cs` |
 | `notion-halfdozen-blondish` | `http` | `https://blondish-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `blondish`, `workway` |

@@ -31,6 +31,19 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
+    "name": "LinkedIn Data API",
+    "slug": "linkedin-data-api",
+    "url": "https://linkedin-mcp.createsomething.workers.dev",
+    "description": "CREATE SOMETHING governed LinkedIn Data API MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Loom",
     "slug": "loom",
     "url": "https://loom.mcp.createsomething.agency",

@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "status": "ready-for-dify-studio",
+  "owner": "create-something",
+  "created_at": "2026-05-02",
+  "registry_server": {
+    "id": "linkedin-mcp",
+    "transport": "http",
+    "url": "https://linkedin-mcp.createsomething.workers.dev/mcp",
+    "description": "CREATE SOMETHING governed LinkedIn Data API MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+    "tags": [
+      "linkedin",
+      "rapidapi",
+      "profiles",
+      "jobs",
+      "dify",
+      "observability",
+      "cs",
+      "policy_os_only"
+    ],
+    "catalog_exposure_mode": "direct",
+    "estimated_tool_count": 52
+  },
+  "dify_mcp_server": {
+    "server_id": "linkedin",
+    "display_name": "LinkedIn Data API",
+    "transport": "http",
+    "url": "https://linkedin-mcp.createsomething.workers.dev/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/linkedin-mcp",
+        "secret_key": "LINKEDIN_MCP_API_KEY"
+      }
+    }
+  },
+  "dify_studio_steps": [
+    "Open Dify Studio -> Tools -> MCP.",
+    "Create an HTTP MCP server card with server ID linkedin.",
+    "Set the MCP URL to https://linkedin-mcp.createsomething.workers.dev/mcp.",
+    "Configure bearer auth from Infisical prod:/linkedin-mcp:LINKEDIN_MCP_API_KEY.",
+    "Refresh/discover tools in Dify Studio.",
+    "Import config/dify/agents/linkedin.yml after the MCP tools are available.",
+    "After import, store the Dify app API key in Infisical and add the app to config/dify/agents/registry.json.",
+    "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
+    "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
+  ],
+  "inventory_fragment_after_tool_discovery": {
+    "linkedin": {
+      "display_name": "LinkedIn Data API",
+      "source_mcp_registry_server": "linkedin-mcp",
+      "transport": "http",
+      "url": "https://linkedin-mcp.createsomething.workers.dev/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/linkedin-mcp",
+          "secret_key": "LINKEDIN_MCP_API_KEY"
+        }
+      },
+      "tools": []
+    }
+  },
+  "notes": [
+    "This is a separate governed wrapper from Spotify and Active Jobs.",
+    "The importable Dify DSL lives at config/dify/agents/linkedin.yml.",
+    "The tool names match RapidAPI Hub - Real-Time LinkedIn Scraper API.",
+    "Keep secret values in Infisical only; this artifact stores references, not values."
+  ]
+}
