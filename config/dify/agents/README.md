@@ -49,3 +49,5 @@ Import `linkedin.yml` into Dify after the workspace MCP server below is authoriz
 - URL: `https://linkedin-mcp.createsomething.workers.dev/mcp`
 
 The YAML intentionally stores no secrets. Dify resolves the MCP tools from the workspace server card, so keep the server ID stable. Add the LinkedIn Dify app to `registry.json` only after the imported app has a Dify API key stored in Infisical.
+
+The LinkedIn Research app API key is referenced in `registry.json` at `prod:/dify/linkedin-agent:DIFY_LINKEDIN_AGENT_API_KEY`.

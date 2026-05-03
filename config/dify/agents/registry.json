@@ -134,6 +134,34 @@
         "secret_key": "DIFY_LEAH_HUB_API_KEY"
       }
     },
+    "linkedin": {
+      "display_name": "LinkedIn Research",
+      "kind": "agent",
+      "status": "in_service",
+      "dsl_path": "config/dify/agents/linkedin.yml",
+      "api": {
+        "chat_endpoint": "/chat-messages",
+        "response_mode": "streaming"
+      },
+      "mcp_servers": ["linkedin"],
+      "response_contract": {
+        "research_fields": [
+          "names",
+          "titles",
+          "companies",
+          "locations",
+          "profile_or_company_or_job_urls_or_ids",
+          "filters_used"
+        ],
+        "broad_query_behavior": "ask_follow_up_when_missing_person_company_role_location_url_or_keyword",
+        "provider_error_behavior": "explain_quota_subscription_permission_timeout_or_empty_result_and_offer_narrower_query"
+      },
+      "infisical": {
+        "environment": "prod",
+        "path": "/dify/linkedin-agent",
+        "secret_key": "DIFY_LINKEDIN_AGENT_API_KEY"
+      }
+    },
     "mariana-hub": {
       "display_name": "MARIANA HUB",
       "kind": "hub",
