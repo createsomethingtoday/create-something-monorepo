@@ -6,6 +6,7 @@
  */
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
 // Response tone guidelines based on CREATE SOMETHING methodology
 const TONE_GUIDELINES = {
@@ -57,6 +58,8 @@ interface DraftBody {
 }
 
 export const POST: RequestHandler = async ({ platform, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	const body = await request.json() as DraftBody;
 	

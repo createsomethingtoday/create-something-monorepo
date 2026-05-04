@@ -72,7 +72,35 @@ export async function requireAgencySessionUser(input: {
 		};
 	}
 
+	if (input.cookies && input.platform) {
+		const cookieHeader = serializeCookieHeader(input.cookies);
+		if (cookieHeader) {
+			return requireAgencySessionUser({
+				request: new Request('https://createsomething.agency/', {
+					headers: { Cookie: cookieHeader },
+				}),
+				platform: input.platform,
+			});
+		}
+	}
+
 	throw error(401, 'Authentication required');
+}
+
+function serializeCookieHeader(cookies: unknown): string | null {
+	if (!cookies || typeof cookies !== 'object' || !('getAll' in cookies)) {
+		return null;
+	}
+
+	const getAll = (cookies as { getAll?: () => Array<{ name: string; value: string }> }).getAll;
+	if (typeof getAll !== 'function') {
+		return null;
+	}
+
+	return getAll
+		.call(cookies)
+		.map(({ name, value }) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`)
+		.join('; ');
 }
 
 export async function ensureAgencyMcpEntitlement(input: {

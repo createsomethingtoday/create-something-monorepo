@@ -18,13 +18,16 @@ import {
 	getFormatsByEngagement
 } from '$lib/social/formats';
 import type { FormatType, FormatSpec, ContentPillar } from '$lib/social/formats';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
 /**
  * GET /api/social/intelligence
  * 
  * Get content suggestions based on day and methodology
  */
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, request, platform }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const dayParam = url.searchParams.get('day');
 	const topic = url.searchParams.get('topic');
 	
@@ -90,7 +93,9 @@ export const GET: RequestHandler = async ({ url }) => {
  * 
  * Get format recommendation based on content goal
  */
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const body = await request.json() as { 
 		content_goal?: 'engagement' | 'reach' | 'leads' | 'thought_leadership' | 'trust';
 		research_topic?: string;

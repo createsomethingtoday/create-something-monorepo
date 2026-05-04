@@ -8,8 +8,8 @@ import {
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ cookies, platform }) => {
-	const operator = await requireAgencyOperator({ cookies, platform });
+export const load: PageServerLoad = async ({ locals, platform }) => {
+	const operator = await requireAgencyOperator({ locals, platform });
 	const db = platform!.env.DB;
 
 	const [entitlements, contracts, commercial, identitySeeds] = await Promise.all([

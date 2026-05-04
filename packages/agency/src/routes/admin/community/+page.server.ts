@@ -6,6 +6,7 @@
  */
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 interface Signal {
 	id: string;
@@ -45,7 +46,9 @@ interface Relationship {
 	interactions_count: number;
 }
 
-export const load: PageServerLoad = async ({ platform }) => {
+export const load: PageServerLoad = async ({ locals, platform }) => {
+	await requireAgencyOperator({ locals, platform });
+
 	const db = platform!.env.DB;
 	
 	try {
@@ -132,7 +135,8 @@ export const load: PageServerLoad = async ({ platform }) => {
 };
 
 export const actions: Actions = {
-	approve: async ({ request, platform }) => {
+	approve: async ({ request, locals, platform }) => {
+		await requireAgencyOperator({ locals, platform });
 		const db = platform!.env.DB;
 		const data = await request.formData();
 		const id = data.get('id') as string;
@@ -157,7 +161,8 @@ export const actions: Actions = {
 		}
 	},
 	
-	reject: async ({ request, platform }) => {
+	reject: async ({ request, locals, platform }) => {
+		await requireAgencyOperator({ locals, platform });
 		const db = platform!.env.DB;
 		const data = await request.formData();
 		const id = data.get('id') as string;
@@ -183,7 +188,8 @@ export const actions: Actions = {
 		}
 	},
 	
-	dismiss: async ({ request, platform }) => {
+	dismiss: async ({ request, locals, platform }) => {
+		await requireAgencyOperator({ locals, platform });
 		const db = platform!.env.DB;
 		const data = await request.formData();
 		const id = data.get('id') as string;
@@ -205,7 +211,8 @@ export const actions: Actions = {
 		}
 	},
 	
-	flag: async ({ request, platform }) => {
+	flag: async ({ request, locals, platform }) => {
+		await requireAgencyOperator({ locals, platform });
 		const db = platform!.env.DB;
 		const data = await request.formData();
 		const id = data.get('id') as string;

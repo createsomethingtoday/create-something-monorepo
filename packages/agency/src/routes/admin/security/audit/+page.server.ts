@@ -24,8 +24,8 @@ interface IdentityAuditFeed {
 	}>;
 }
 
-export const load: PageServerLoad = async ({ cookies, platform }) => {
-	await requireAgencyOperator({ cookies, platform });
+export const load: PageServerLoad = async ({ locals, platform }) => {
+	await requireAgencyOperator({ locals, platform });
 	const db = platform!.env.DB;
 	const deliveries = await db
 		.prepare(

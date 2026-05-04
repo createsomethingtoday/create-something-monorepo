@@ -15,8 +15,11 @@ import {
 	type FunnelMetricsInput,
 	type Lead
 } from '$lib/funnel';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
-export const GET: RequestHandler = async ({ url, platform }) => {
+export const GET: RequestHandler = async ({ url, request, platform }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');
@@ -203,6 +206,8 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 };
 
 export const POST: RequestHandler = async ({ request, platform }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');

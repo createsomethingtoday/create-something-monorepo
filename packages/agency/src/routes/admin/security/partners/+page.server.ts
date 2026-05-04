@@ -2,8 +2,8 @@ import { HALF_DOZEN_PARTNER_KEY, listPartnerClients, parseJsonArray, parseJsonOb
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ cookies, platform }) => {
-	await requireAgencyOperator({ cookies, platform });
+export const load: PageServerLoad = async ({ locals, platform }) => {
+	await requireAgencyOperator({ locals, platform });
 	const clients = await listPartnerClients(platform!.env.DB, HALF_DOZEN_PARTNER_KEY, { limit: 200 });
 	return {
 		clients: clients.map((client) => ({

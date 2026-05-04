@@ -27,9 +27,9 @@ interface UpsertBody {
 	import_text?: string;
 }
 
-export const GET: RequestHandler = async ({ url, cookies, platform }) => {
+export const GET: RequestHandler = async ({ url, request, platform }) => {
 	try {
-		await requireAgencyOperator({ cookies, platform });
+		await requireAgencyOperator({ request, platform });
 		const db = platform?.env?.DB;
 		if (!db) {
 			return json({ error: 'unavailable', message: 'Database is unavailable' }, { status: 503 });
@@ -46,9 +46,9 @@ export const GET: RequestHandler = async ({ url, cookies, platform }) => {
 	}
 };
 
-export const POST: RequestHandler = async ({ request, cookies, platform }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
-		const operator = await requireAgencyOperator({ cookies, platform });
+		const operator = await requireAgencyOperator({ request, platform });
 		const db = platform?.env?.DB;
 		if (!db) {
 			return json({ error: 'unavailable', message: 'Database is unavailable' }, { status: 503 });

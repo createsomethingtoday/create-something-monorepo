@@ -6,6 +6,7 @@
  */
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
 interface QueueItem {
 	id: string;
@@ -35,7 +36,9 @@ interface QueueItem {
  * 
  * Get pending responses for review
  */
-export const GET: RequestHandler = async ({ platform, url }) => {
+export const GET: RequestHandler = async ({ platform, url, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	
 	const status = url.searchParams.get('status') || 'pending';
@@ -85,6 +88,8 @@ interface QueuePostBody {
  * Add a drafted response to the queue (typically called by an agent)
  */
 export const POST: RequestHandler = async ({ platform, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	const body = await request.json() as QueuePostBody;
 	
@@ -159,6 +164,8 @@ interface QueuePatchBody {
  * Approve, edit, reject, or mark as sent
  */
 export const PATCH: RequestHandler = async ({ platform, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	const body = await request.json() as QueuePatchBody;
 	

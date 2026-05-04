@@ -7,13 +7,16 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { LinkedInMonitor, GitHubMonitor } from '$lib/community/monitors';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
 /**
  * GET /api/community/monitors
  * 
  * Get monitor status and recent run history
  */
-export const GET: RequestHandler = async ({ platform }) => {
+export const GET: RequestHandler = async ({ request, platform }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	
 	try {
@@ -49,6 +52,8 @@ interface MonitorRequest {
  * Trigger a monitor run
  */
 export const POST: RequestHandler = async ({ platform, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	const body = await request.json() as MonitorRequest;
 	

@@ -8,6 +8,7 @@
 import type { PageServerLoad } from './$types';
 import { getTokenStatus, getNextOptimalTime, DEFAULT_PREFERRED_DAYS } from '$lib/social';
 import { getStartOfWeek } from '$lib/utils/date';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 interface PostRow {
 	id: string;
@@ -36,7 +37,9 @@ const WEEKLY_RHYTHM = {
 	friday: { focus: 'Pipeline review', description: 'Review leads, partners, opportunities' }
 };
 
-export const load: PageServerLoad = async ({ platform }) => {
+export const load: PageServerLoad = async ({ locals, platform }) => {
+	await requireAgencyOperator({ locals, platform });
+
 	const db = platform?.env?.DB;
 	const sessions = platform?.env?.SESSIONS;
 

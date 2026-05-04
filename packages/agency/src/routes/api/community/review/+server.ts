@@ -6,6 +6,7 @@
  */
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
 interface Signal {
 	id: string;
@@ -50,7 +51,9 @@ interface Relationship {
  * - Hot relationships to be aware of
  * - Summary stats
  */
-export const GET: RequestHandler = async ({ platform }) => {
+export const GET: RequestHandler = async ({ request, platform }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	
 	try {
@@ -147,6 +150,8 @@ interface ReviewPostBody {
  * Approve/dismiss multiple items at once
  */
 export const POST: RequestHandler = async ({ platform, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	const body = await request.json() as ReviewPostBody;
 	

@@ -6,6 +6,7 @@
  */
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
 interface Signal {
 	id: string;
@@ -32,7 +33,9 @@ interface Signal {
  * 
  * Retrieve signals, optionally filtered by status, platform, urgency
  */
-export const GET: RequestHandler = async ({ platform, url }) => {
+export const GET: RequestHandler = async ({ platform, url, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	
 	const status = url.searchParams.get('status') || 'new';
@@ -110,6 +113,8 @@ interface SignalPostBody {
  * Record a new signal (typically called by monitors)
  */
 export const POST: RequestHandler = async ({ platform, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	const body = await request.json() as SignalPostBody;
 	
@@ -183,6 +188,8 @@ interface SignalPatchBody {
  * Update signal status (review, dismiss, etc.)
  */
 export const PATCH: RequestHandler = async ({ platform, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	const body = await request.json() as SignalPatchBody;
 	

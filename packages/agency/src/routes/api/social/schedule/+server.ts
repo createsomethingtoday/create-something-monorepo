@@ -22,6 +22,7 @@ import {
 	suggestConflictFreeStartDate
 } from '$lib/social';
 import type { PostingMode, ScheduleConflict } from '$lib/social';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
 interface ScheduleRequest {
 	platform: 'linkedin';
@@ -50,6 +51,8 @@ interface ScheduledPostRow {
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform?.env?.DB;
 	const sessions = platform?.env?.SESSIONS;
 

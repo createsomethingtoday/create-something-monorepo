@@ -17,6 +17,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getStartOfWeek, getWeekNumber } from '$lib/utils/date';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
 interface DayRhythm {
 	focus: string;
@@ -50,7 +51,9 @@ const WEEKLY_RHYTHM: Record<string, { focus: string; description: string }> = {
 	}
 };
 
-export const GET: RequestHandler = async ({ platform }) => {
+export const GET: RequestHandler = async ({ request, platform }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform?.env?.DB;
 
 	if (!db) {
@@ -181,4 +184,3 @@ export const GET: RequestHandler = async ({ platform }) => {
 		recommendation
 	});
 };
-

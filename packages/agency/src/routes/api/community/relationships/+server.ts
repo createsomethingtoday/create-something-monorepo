@@ -6,6 +6,7 @@
  */
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { requireAgencyOperatorOrInternal } from '$lib/server/operator-auth';
 
 interface Relationship {
 	id: string;
@@ -35,7 +36,9 @@ interface Relationship {
  * 
  * Get relationships, sorted by warmth or recency
  */
-export const GET: RequestHandler = async ({ platform, url }) => {
+export const GET: RequestHandler = async ({ platform, url, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	
 	const sort = url.searchParams.get('sort') || 'warmth'; // warmth, recent, interactions
@@ -113,6 +116,8 @@ interface RelationshipPostBody {
  * Create or update a relationship (upsert)
  */
 export const POST: RequestHandler = async ({ platform, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	const body = await request.json() as RelationshipPostBody;
 	
@@ -231,6 +236,8 @@ interface RelationshipPatchBody {
  * Update relationship metadata (notes, tags, lead_potential)
  */
 export const PATCH: RequestHandler = async ({ platform, request }) => {
+	await requireAgencyOperatorOrInternal({ request, platform });
+
 	const db = platform!.env.DB;
 	const body = await request.json() as RelationshipPatchBody;
 	

@@ -1,9 +1,7 @@
-import { listAgencyCommercialState } from '$lib/server/mcp-entitlements';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	await requireAgencyOperator({ locals, platform });
-	const commercial = await listAgencyCommercialState(platform!.env.DB, { limit: 200 });
-	return { commercial };
+	return {};
 };

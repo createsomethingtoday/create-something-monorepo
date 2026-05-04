@@ -1,7 +1,10 @@
 import type { PageServerLoad } from './$types';
 import type { FunnelSummary, Lead } from '$lib/funnel';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
-export const load: PageServerLoad = async ({ fetch }) => {
+export const load: PageServerLoad = async ({ fetch, locals, platform }) => {
+	await requireAgencyOperator({ locals, platform });
+
 	try {
 		// Fetch funnel summary
 		const summaryRes = await fetch('/api/funnel');
