@@ -4,6 +4,7 @@ import { contactSchema, parseBody, type ContactInput } from '@create-something/c
 import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('ContactAPI');
+const DEFAULT_EMAIL_FROM = 'CREATE SOMETHING Agency <noreply@workway.co>';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -27,6 +28,26 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		const env = platform.env;
+		const resendApiKey = env.RESEND_API_KEY?.trim();
+		if (!resendApiKey) {
+			logger.error('Contact email service is not configured');
+			return json(
+				{
+					success: false,
+					message: 'Contact email service is temporarily unavailable'
+				},
+				{ status: 503 }
+			);
+		}
+
+		const emailFrom = env.EMAIL_FROM_SITES?.trim() || DEFAULT_EMAIL_FROM;
+		const safeName = escapeHtml(name);
+		const safeEmail = escapeHtml(email);
+		const safeMessage = htmlWithLineBreaks(message);
+		const safeService = service ? escapeHtml(service) : null;
+		const safeCompany = company ? escapeHtml(company) : null;
+		const subjectService = service ? sanitizeSubjectText(service) : null;
+		const subjectName = sanitizeSubjectText(name);
 
 		// Store contact submission in D1 database (optional)
 		try {
@@ -55,13 +76,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const autoResponsePromise = fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${env.RESEND_API_KEY || 're_JbMtKyRz_3n55bLDPciMmZfgaez38WzM7'}`,
+				Authorization: `Bearer ${resendApiKey}`,
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
+				from: emailFrom,
 				to: email,
-				subject: service ? `Re: ${service} Inquiry` : 'Thanks for reaching out',
+				subject: subjectService ? `Re: ${subjectService} Inquiry` : 'Thanks for reaching out',
 				html: `<!DOCTYPE html>
 <html>
 <head>
@@ -77,12 +98,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   <div class="container">
     <div class="content">
       <h1>Thanks for reaching out</h1>
-      <p>Hi ${name},</p>
-      <p>I've received your inquiry${service ? ` about ${service}` : ''} and will get back to you within 24 hours to scope your first outcome stack.</p>
+      <p>Hi ${safeName},</p>
+      <p>I've received your inquiry${safeService ? ` about ${safeService}` : ''} and will get back to you within 24 hours to scope your first outcome stack.</p>
       <div class="message-box">
-        ${service ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Service: ${service}</p>` : ''}
+        ${safeService ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Service: ${safeService}</p>` : ''}
         <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
-        <p style="color: rgba(255, 255, 255, 0.9);">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
+        <p style="color: rgba(255, 255, 255, 0.9);">${safeMessage}</p>
       </div>
       <p>— Micah Johnson<br>CREATE SOMETHING Agency</p>
     </div>
@@ -96,14 +117,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const notificationPromise = fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${env.RESEND_API_KEY || 're_JbMtKyRz_3n55bLDPciMmZfgaez38WzM7'}`,
+				Authorization: `Bearer ${resendApiKey}`,
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
+				from: emailFrom,
 				to: 'micah@createsomething.io',
 				replyTo: email,
-				subject: service ? `Service Inquiry: ${service} from ${name}` : `New Contact Form Submission from ${name}`,
+				subject: subjectService ? `Service Inquiry: ${subjectService} from ${subjectName}` : `New Contact Form Submission from ${subjectName}`,
 				html: `<!DOCTYPE html>
 <html>
 <head>
@@ -116,13 +137,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 </head>
 <body>
   <div class="header">
-    <h2>${service ? `Service Inquiry: ${service}` : 'New Contact Form Submission'}</h2>
+    <h2>${safeService ? `Service Inquiry: ${safeService}` : 'New Contact Form Submission'}</h2>
   </div>
   <div class="content">
-    <p><strong>From:</strong> ${name} (${email})</p>
-    ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
-    ${service ? `<p><strong>Service:</strong> ${service}</p>` : ''}
-    <p><strong>Message:</strong><br>${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
+    <p><strong>From:</strong> ${safeName} (${safeEmail})</p>
+    ${safeCompany ? `<p><strong>Company:</strong> ${safeCompany}</p>` : ''}
+    ${safeService ? `<p><strong>Service:</strong> ${safeService}</p>` : ''}
+    <p><strong>Message:</strong><br>${safeMessage}</p>
     <p><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
   </div>
 </body>
@@ -137,7 +158,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		]);
 
 		if (!autoResponse.ok) {
-			const errorData = await autoResponse.json();
+			const errorData = await readResponseBody(autoResponse);
 			logger.error('Failed to send auto-response email', { email, error: errorData });
 			return json(
 				{
@@ -149,7 +170,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		if (!notification.ok) {
-			const errorData = await notification.json();
+			const errorData = await readResponseBody(notification);
 			logger.error('Failed to send notification email', { email, error: errorData });
 		}
 
@@ -170,3 +191,41 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		);
 	}
 };
+
+function escapeHtml(value: string): string {
+	return value.replace(/[&<>"']/g, (character) => {
+		switch (character) {
+			case '&':
+				return '&amp;';
+			case '<':
+				return '&lt;';
+			case '>':
+				return '&gt;';
+			case '"':
+				return '&quot;';
+			case "'":
+				return '&#39;';
+			default:
+				return character;
+		}
+	});
+}
+
+function htmlWithLineBreaks(value: string): string {
+	return escapeHtml(value).replace(/\n/g, '<br>');
+}
+
+function sanitizeSubjectText(value: string): string {
+	return value.replace(/[\r\n]+/g, ' ').trim();
+}
+
+async function readResponseBody(response: Response): Promise<unknown> {
+	const text = await response.text();
+	if (!text) return null;
+
+	try {
+		return JSON.parse(text);
+	} catch {
+		return text;
+	}
+}
