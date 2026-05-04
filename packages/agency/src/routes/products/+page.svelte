@@ -27,9 +27,9 @@
       detail: 'Read-only or constrained MCPs prove the connection before the workflow earns more authority.'
     },
     {
-      label: 'Policy OS',
-      title: 'The surface needs trust',
-      detail: 'The products are proof primitives. The paid work is turning them into governed operating paths.'
+      label: 'Core Ink + TRMNL',
+      title: 'Physical proof needs trust',
+      detail: 'Pocket alerts and room sheets only work when the service state behind them is governed.'
     }
   ];
 
@@ -87,7 +87,8 @@
           <p>
             The free and open tools show the discipline underneath the service: grounded claims,
             agent continuity, constrained MCP access, and artifact-backed decisions. The paid work
-            turns those primitives into one workflow your operator can trust.
+            turns those primitives into one workflow your operator can trust, with Core Ink as the
+            pocket pager and TRMNL as the room sheet when the service needs to leave the dashboard.
           </p>
         </div>
         <div class="proof-role-grid">
@@ -178,7 +179,7 @@
         <h2 class="section-eyebrow">Connection wedge MCPs</h2>
         <p class="section-desc">
           MCPs prove the connection first. When the workflow becomes strategic, the same wedge can
-          graduate into approvals, blocked states, and operator briefs.
+          graduate into approvals, blocked states, Core Ink alerts, and TRMNL operator sheets.
         </p>
       </div>
     </BlurFade>

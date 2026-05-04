@@ -13,6 +13,7 @@ The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is o
 - Fire daily local alarms for the operator at configured Central Time moments.
 - Accept Core Ink device heartbeat.
 - Return a compact `/ink/brief` response compatible with the firmware bridge contract.
+- Return a safe `/ink/trmnl` merge-variable response for TRMNL Private Plugin polling.
 - Keep production content live-only. No mock carousel or fake workflow counts.
 
 ## Endpoints
@@ -26,6 +27,8 @@ Token-gated:
 
 - `GET /ink/brief`
 - `GET /ink/surface-brief`
+- `GET /ink/trmnl`
+- `GET /ink/trmnl/webhook-payload`
 - `GET /ink/clock`
 - `GET /ink/navigation`
 - `GET /ink/surfaces`
@@ -96,6 +99,9 @@ The production smoke check validates:
 - public `GET /healthz`
 - authenticated `GET /ink/clock`
 - authenticated firmware brief contract from `GET /ink/brief`
+- authenticated TRMNL merge-variable contract from `GET /ink/trmnl`
+- authenticated TRMNL webhook payload wrapper from
+  `GET /ink/trmnl/webhook-payload`
 - authenticated navigation contract from `GET /ink/navigation`
 - authenticated device heartbeat lookup from `GET /ink/device`
 - authenticated operator check-in write via `POST /ink/operator-check-in`
@@ -115,6 +121,32 @@ INK_SOURCE_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge post:mcp -- \
 
 ```bash
 curl -sS https://ink.createsomething.agency/ink/brief \
+  -H "x-ink-token: $INK_DEVICE_TOKEN"
+```
+
+## Example TRMNL private plugin payload
+
+Use `/ink/trmnl` as the polling URL for a TRMNL Private Plugin. The response is
+root-level JSON so Liquid markup can read fields directly, for example
+`{{ headline }}`, `{{ action }}`, `{{ active_alerts }}`, and
+`{{ metrics[0].value }}`:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/trmnl \
+  -H "x-ink-token: $INK_DEVICE_TOKEN"
+```
+
+The payload is intentionally safer than the full `/ink/surface-brief` object. It
+does not include raw `selected_alert`, `selected_health`, device heartbeat data,
+or nested producer payloads. Shared paper surfaces should show operating state,
+counts, cadence, and next action only.
+
+Use `/ink/trmnl/webhook-payload` when pushing to a TRMNL webhook instead of
+polling. It wraps the same safe variables in the `merge_variables` node that the
+webhook strategy expects:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/trmnl/webhook-payload \
   -H "x-ink-token: $INK_DEVICE_TOKEN"
 ```
 
@@ -161,6 +193,9 @@ Request a different Ink surface profile without changing the backend:
 curl -sS "https://ink.createsomething.agency/ink/brief?surface=t-embed" \
   -H "x-ink-token: $INK_DEVICE_TOKEN"
 
+curl -sS "https://ink.createsomething.agency/ink/brief?surface=trmnl" \
+  -H "x-ink-token: $INK_DEVICE_TOKEN"
+
 curl -sS "https://ink.createsomething.agency/ink/brief?surface=reterminal-e1001" \
   -H "x-ink-token: $INK_DEVICE_TOKEN"
 ```
@@ -169,16 +204,45 @@ curl -sS "https://ink.createsomething.agency/ink/brief?surface=reterminal-e1001"
 Ink operator console: same alerts and health states, longer copy limits, and
 metadata for faster LCD/list/detail interaction.
 
+`trmnl` and `trmnl-x` are treated as the named large paper deliverable: the
+same source of truth as Core Ink, but with operator-sheet copy limits and
+list/detail metadata for a desk or wall brief. TRMNL should show operating
+state, counts, review cadence, and the next operator action. It should not show
+raw reasoning, private message content, PHI, or sensitive customer details on a
+shared surface.
+
 `reterminal-e1001` is treated as the desk/wall Ink operator sheet: same source of
 truth, large e-ink copy limits, and list/detail metadata for richer daily briefs.
 
 Surface roles:
 
-| Surface            | Role             | Use                                               |
-| ------------------ | ---------------- | ------------------------------------------------- |
-| `core-ink`         | calm surface     | Pocket pager: attention, alarms, all-clear        |
-| `t-embed`          | operator console | Handheld inspection, faster UI, richer controls   |
-| `reterminal-e1001` | operator sheet   | Desk/wall brief, registry summaries, daily status |
+| Surface            | Role             | Use                                                       |
+| ------------------ | ---------------- | --------------------------------------------------------- |
+| `core-ink`         | calm surface     | Pocket pager: attention, alarms, all-clear                |
+| `t-embed`          | operator console | Handheld inspection, faster UI, richer controls           |
+| `trmnl-x`          | operator sheet   | Large paper brief, service counts, daily/weekly operating status |
+| `reterminal-e1001` | operator sheet   | Desk/wall brief, registry summaries, daily status         |
+
+## Physical deliverable roles
+
+Ink is the physical layer of the Core Service OS:
+
+- **Core Ink** is the pocket operator pager. It answers whether judgment is
+  required now, whether the operator can step away, and what single action is
+  next.
+- **TRMNL** is the large paper operator sheet. It displays the daily or weekly
+  service brief: current state, queue counts, review cadence, highest-risk
+  item category, and the next review checkpoint.
+- **TEND / Core Service OS** is the live source of record for items, sources,
+  automations, agents, approvals, and curation.
+- **Policy OS** is the governance layer that decides which actions auto-run,
+  which pause for approval, and which stop with a reason.
+
+TRMNL integration should prefer a Private Plugin pointed at `/ink/trmnl` for
+polling, or `/ink/trmnl/webhook-payload` as the source shape when pushing merge
+variables through a webhook. The bridge should remain the canonical producer:
+service-specific systems post alerts, health snapshots, and operator decisions
+to Ink; TRMNL renders the safe operator-sheet projection of that state.
 
 ## Producer helpers
 

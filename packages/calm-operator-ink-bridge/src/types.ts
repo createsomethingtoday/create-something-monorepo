@@ -1,4 +1,11 @@
-export type InkSurface = 'core-ink' | 't-embed' | 'reterminal-e1001' | 'm5paper' | 'papers3' | string;
+export type InkSurface =
+  | 'core-ink'
+  | 't-embed'
+  | 'trmnl-x'
+  | 'reterminal-e1001'
+  | 'm5paper'
+  | 'papers3'
+  | string;
 
 export interface ClockSnapshot {
   timezone: string;

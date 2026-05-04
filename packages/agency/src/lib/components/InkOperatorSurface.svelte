@@ -1,8 +1,8 @@
 <script lang="ts">
   const callouts = [
     {
-      label: 'E-ink surface',
-      detail: 'Calm status, approval, and blocked-state briefs.',
+      label: 'Two e-ink surfaces',
+      detail: 'Core Ink for pocket attention. TRMNL for the daily room brief.',
       modifier: 'screen'
     },
     {
@@ -19,18 +19,18 @@
 
   const surfaceCards = [
     {
-      title: 'Approval state',
-      body: 'Risky work waits for the right human with the artifact and reason visible.',
+      title: 'Core Ink pocket pager',
+      body: 'The operator gets one calm answer: step away, approve, or return to the evidence.',
       image: '/images/ink/ink-blueprint-controls.png',
       imageWebp: '/images/ink/ink-blueprint-controls.webp',
       alt: 'Blueprint render of the Ink physical controls showing an approval state.'
     },
     {
-      title: 'Magnetic surface',
-      body: 'The device can leave the laptop and become a quiet status point in the room.',
-      image: '/images/ink/ink-blueprint-magnet.png',
-      imageWebp: '/images/ink/ink-blueprint-magnet.webp',
-      alt: 'Blueprint render of Ink mounted magnetically to a vertical metal surface.'
+      title: 'TRMNL operator sheet',
+      body: 'The larger surface holds the room view: state, counts, cadence, and next action.',
+      image: '/images/ink/trmnl-operator-sheet.png',
+      imageWebp: '/images/ink/trmnl-operator-sheet.webp',
+      alt: 'Monochrome render of a wide TRMNL operator sheet with state, counts, cadence, and next action regions.'
     }
   ];
 </script>
@@ -40,23 +40,24 @@
     <span class="product-kicker">Ink operator surface</span>
     <h2>The operator should not have to watch the dashboard.</h2>
     <p>
-      Ink makes Policy OS tangible: a physical e-ink surface for all-clear, approval-needed,
-      blocked, and recovery states. The first release can start on Core Ink-class hardware while
-      CREATE SOMETHING owns the operating layer, labels, and escalation behavior.
+      Ink makes Policy OS tangible through two physical projections of the same operating layer.
+      Core Ink is the pocket pager for all-clear, approval-needed, blocked, and recovery states.
+      TRMNL is the larger paper sheet for the daily brief. CREATE SOMETHING owns the rules,
+      labels, and escalation behavior behind both.
     </p>
 
     <div class="ink-state-grid" aria-label="Ink display states">
       <div>
-        <span>All clear</span>
-        <strong>You can step away</strong>
+        <span>Clear</span>
+        <strong>Step away</strong>
       </div>
       <div>
-        <span>Approval</span>
+        <span>Review</span>
         <strong>Judgment needed</strong>
       </div>
       <div>
-        <span>Blocked</span>
-        <strong>Reason recorded</strong>
+        <span>Brief</span>
+        <strong>Room state visible</strong>
       </div>
     </div>
   </div>

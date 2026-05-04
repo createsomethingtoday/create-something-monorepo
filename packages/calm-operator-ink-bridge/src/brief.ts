@@ -193,3 +193,68 @@ export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
     }
   };
 }
+
+export function toTrmnlMergeVariables(brief: OperatorBrief): Record<string, unknown> {
+  const profile = surfaceProfile(brief.surface);
+  const decisionRequired = brief.state !== 'clear';
+  const clock = buildClockSnapshot(Date.parse(brief.generated_at));
+  const statusLabel = brief.urgent ? 'Urgent' : decisionRequired ? 'Attention' : 'Clear';
+  const alertTone = brief.counts.active_alerts > 0 ? 'attention' : 'clear';
+  const healthTone = brief.counts.poor_health > 0 ? 'attention' : 'clear';
+
+  return {
+    generated_at: brief.generated_at,
+    generated_time: clock.display_time,
+    generated_date: clock.display_date,
+    surface: profile.id,
+    surface_label: profile.label,
+    state: brief.state,
+    status_label: statusLabel,
+    headline: brief.headline,
+    summary: brief.line1,
+    reason: brief.line2,
+    detail: brief.detail,
+    action: brief.action,
+    urgent: brief.urgent,
+    decision_required: decisionRequired,
+    can_step_away: !decisionRequired,
+    active_alerts: brief.counts.active_alerts,
+    poor_health: brief.counts.poor_health,
+    counts: {
+      active_alerts: brief.counts.active_alerts,
+      poor_health: brief.counts.poor_health
+    },
+    metrics: [
+      { label: 'State', value: statusLabel, tone: decisionRequired ? 'attention' : 'clear' },
+      { label: 'Alerts', value: brief.counts.active_alerts, tone: alertTone },
+      { label: 'Health', value: brief.counts.poor_health, tone: healthTone }
+    ],
+    operator_contract: {
+      decision_required: decisionRequired,
+      can_step_away: !decisionRequired,
+      state: brief.state,
+      reason: brief.line2,
+      action: brief.action,
+      urgent: brief.urgent
+    },
+    cadence: {
+      label: 'Operator sheet',
+      refresh: profile.refresh,
+      next_review: decisionRequired ? 'Review now' : 'Next scheduled review'
+    },
+    clock: {
+      timezone: clock.timezone,
+      local_date: clock.local_date,
+      local_time_24: clock.local_time_24,
+      display_time: clock.display_time,
+      display_date: clock.display_date
+    },
+    footer: decisionRequired ? 'Operator review required.' : 'No operator action required.'
+  };
+}
+
+export function toTrmnlWebhookPayload(brief: OperatorBrief): Record<string, unknown> {
+  return {
+    merge_variables: toTrmnlMergeVariables(brief)
+  };
+}

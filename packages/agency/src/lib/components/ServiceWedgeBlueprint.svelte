@@ -31,9 +31,9 @@
     },
     {
       index: '04',
-      label: 'Ink / operator surface',
+      label: 'Core Ink / TRMNL',
       title: 'Calm visibility',
-      detail: 'The operator sees the state only when judgment, recovery, or review is required.',
+      detail: 'The pocket pager and large paper sheet show only judgment, recovery, or review state.',
       width: '96%'
     }
   ];
@@ -51,7 +51,7 @@
     </p>
   </div>
 
-  <div class="wedge-diagram" aria-label="Blueprint wedge from MCP-only to Policy OS and Ink">
+  <div class="wedge-diagram" aria-label="Blueprint wedge from MCP-only to Policy OS, Core Ink, and TRMNL">
     <div class="wedge-axis" aria-hidden="true">
       <span>Connectivity</span>
       <span>Workflow</span>

@@ -46,6 +46,20 @@ const SURFACE_PROFILES: Record<string, InkSurfaceProfile> = {
     supportsLists: true,
     supportsDetailDrilldown: true
   },
+  'trmnl-x': {
+    id: 'trmnl-x',
+    label: 'TRMNL X Operator Sheet',
+    role: 'operator_sheet',
+    display: 'eink',
+    refresh: 'slow',
+    headlineChars: 32,
+    line1Chars: 96,
+    line2Chars: 140,
+    detailChars: 720,
+    actionChars: 180,
+    supportsLists: true,
+    supportsDetailDrilldown: true
+  },
   'reterminal-e1001': {
     id: 'reterminal-e1001',
     label: 'reTerminal E1001 Operator Sheet',
@@ -94,6 +108,16 @@ export function normalizeSurface(surface: string | null | undefined): InkSurface
   const value = surface?.trim().toLowerCase();
   if (!value) return 'core-ink';
   if (value === 'coreink' || value === 'm5coreink' || value === 'm5-core-ink') return 'core-ink';
+  if (
+    value === 'trmnl' ||
+    value === 'trmnl-x' ||
+    value === 'trmnl_x' ||
+    value === 'trmnlx' ||
+    value === 'terminal-x' ||
+    value === 'terminal_x'
+  ) {
+    return 'trmnl-x';
+  }
   if (value === 'm5paper' || value === 'm5-paper') return 'm5paper';
   if (value === 'papers3' || value === 'paper-s3' || value === 'm5papers3') return 'papers3';
   if (

@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
+import { buildOperatorBrief, toFirmwareBrief, toTrmnlMergeVariables, toTrmnlWebhookPayload } from './brief.js';
 import { buildClockSnapshot } from './clock.js';
 import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
@@ -946,6 +946,8 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /healthz',
         'GET /ink/brief',
         'GET /ink/surface-brief',
+        'GET /ink/trmnl',
+        'GET /ink/trmnl/webhook-payload',
         'GET /ink/clock',
         'GET /ink/navigation',
         'GET /ink/surfaces',
@@ -972,6 +974,8 @@ async function route(request: Request, env: Env): Promise<Response> {
   if ((method === 'GET' &&
       (path === '/ink/brief' ||
         path === '/ink/surface-brief' ||
+        path === '/ink/trmnl' ||
+        path === '/ink/trmnl/webhook-payload' ||
         path === '/ink/clock' ||
         path === '/ink/navigation' ||
         path === '/ink/surfaces' ||
@@ -997,6 +1001,15 @@ async function route(request: Request, env: Env): Promise<Response> {
     const deviceId = url.searchParams.get('device_id') || defaultDeviceId(env);
     const brief = await stub.brief(surface, deviceId);
     return json(path === '/ink/brief' ? toFirmwareBrief(brief) : brief);
+  }
+
+  if (method === 'GET' && (path === '/ink/trmnl' || path === '/ink/trmnl/webhook-payload')) {
+    const surface = url.searchParams.get('surface') || 'trmnl';
+    const deviceId = url.searchParams.get('device_id') || 'trmnl';
+    const brief = await stub.brief(surface, deviceId);
+    const format = url.searchParams.get('format')?.trim().toLowerCase();
+    const wrapped = path === '/ink/trmnl/webhook-payload' || format === 'webhook';
+    return json(wrapped ? toTrmnlWebhookPayload(brief) : toTrmnlMergeVariables(brief));
   }
 
   if (method === 'GET' && path === '/ink/clock') {

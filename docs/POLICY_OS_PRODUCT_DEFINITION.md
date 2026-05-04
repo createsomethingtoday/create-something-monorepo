@@ -13,6 +13,7 @@ It combines:
 - agent and workflow behavior contracts
 - policy artifacts and approval boundaries
 - operator runbooks and golden-task regressions
+- optional physical operator surfaces: Core Ink and TRMNL
 - recurring review, tuning, and escalation operations
 
 `MCP-only` remains the free or constrained discovery wedge. It is not the default paid package.
@@ -64,6 +65,23 @@ The bundle must define:
 - `escalation_policy`
 - `review_cadence`
 - `billing_and_entitlement_assumptions`
+
+## Physical operator deliverables
+
+When the workflow needs a visible operator surface, Policy OS may ship an
+Operator Field Kit:
+
+- **Core Ink**: the pocket operator pager for all-clear, approval-needed,
+  blocked, health, and recovery states.
+- **TRMNL**: the large paper operator sheet for daily or weekly service briefs,
+  queue counts, review cadence, highest-risk category, and next operator action.
+- **Printed or exported runbook packet**: the escalation ladder, golden tasks,
+  decision states, and rollback notes generated from the same contract bundle.
+
+These surfaces are projections of the operating layer, not separate dashboards.
+They must be generated from current workflow state and policy artifacts. Shared
+or wall-mounted displays must avoid raw reasoning, private messages, PHI, and
+sensitive customer details.
 
 ## Runtime and entitlement model
 

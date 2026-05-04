@@ -77,6 +77,18 @@ function assertArray(value, label) {
   }
 }
 
+function assertBoolean(value, label) {
+  if (typeof value !== 'boolean') {
+    throw new Error(`${label} must be boolean`);
+  }
+}
+
+function assertNumber(value, label) {
+  if (!Number.isFinite(value)) {
+    throw new Error(`${label} must be numeric`);
+  }
+}
+
 async function requestJson({ name, url, token, method = 'GET', body, timeoutMs = REQUEST_TIMEOUT_MS }) {
   const headers = token ? { 'x-ink-token': token } : undefined;
   const response = await fetch(url, {
@@ -167,6 +179,51 @@ async function smoke(args) {
       assertString(body?.action, 'brief.action');
       if (typeof body.urgent !== 'boolean') throw new Error('brief.urgent must be boolean');
       return `${body.headline}: ${body.line1}`;
+    })
+  );
+
+  checks.push(
+    await runCheck('trmnl', async () => {
+      const body = await requestJson({
+        name: 'trmnl',
+        url: bridgeUrl(args.origin, '/ink/trmnl'),
+        token: args.token
+      });
+      if (body?.surface !== 'trmnl-x') throw new Error('trmnl.surface must be trmnl-x');
+      assertString(body.headline, 'trmnl.headline');
+      assertString(body.summary, 'trmnl.summary');
+      assertString(body.action, 'trmnl.action');
+      assertString(body.status_label, 'trmnl.status_label');
+      assertBoolean(body.urgent, 'trmnl.urgent');
+      assertBoolean(body.decision_required, 'trmnl.decision_required');
+      assertBoolean(body.can_step_away, 'trmnl.can_step_away');
+      assertNumber(body.active_alerts, 'trmnl.active_alerts');
+      assertNumber(body.poor_health, 'trmnl.poor_health');
+      assertArray(body.metrics, 'trmnl.metrics');
+      if ('selected_alert' in body) throw new Error('trmnl must not expose selected_alert');
+      if ('selected_health' in body) throw new Error('trmnl must not expose selected_health');
+      if ('device' in body) throw new Error('trmnl must not expose device heartbeat');
+      return `${body.status_label}: ${body.headline}`;
+    })
+  );
+
+  checks.push(
+    await runCheck('trmnl-webhook-payload', async () => {
+      const body = await requestJson({
+        name: 'trmnl-webhook-payload',
+        url: bridgeUrl(args.origin, '/ink/trmnl/webhook-payload'),
+        token: args.token
+      });
+      const variables = body?.merge_variables;
+      if (!variables || typeof variables !== 'object') {
+        throw new Error('trmnl webhook payload must include merge_variables');
+      }
+      if (variables.surface !== 'trmnl-x') throw new Error('trmnl webhook surface must be trmnl-x');
+      assertString(variables.headline, 'trmnl webhook headline');
+      assertString(variables.action, 'trmnl webhook action');
+      assertNumber(variables.active_alerts, 'trmnl webhook active_alerts');
+      assertNumber(variables.poor_health, 'trmnl webhook poor_health');
+      return `${variables.status_label}: ${variables.headline}`;
     })
   );
 

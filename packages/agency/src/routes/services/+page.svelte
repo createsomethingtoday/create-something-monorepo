@@ -77,7 +77,7 @@
       points: [
         'Approval and block boundaries',
         'Reason-coded access decisions',
-        'Operator brief and escalation surface',
+        'Core Ink pocket alert and TRMNL room sheet',
         'Release checks and incident loops',
         'Evals tied to real workflow behavior'
       ]
@@ -114,29 +114,29 @@
     },
     {
       label: 'Surface',
-      value: 'Quiet brief',
-      detail: 'The operator sees only what needs judgment.'
+      value: 'Pocket + room',
+      detail: 'Core Ink interrupts. TRMNL keeps the service state visible.'
     }
   ];
 
   const surfacePoints = [
     {
+      label: 'Core Ink',
+      title: 'Interrupts only when judgment is needed',
+      detail:
+        'The pocket pager carries all-clear, approval-needed, blocked, and recovery states without asking the operator to watch a dashboard.'
+    },
+    {
+      label: 'TRMNL',
+      title: 'Keeps the daily room brief visible',
+      detail:
+        'The large paper sheet shows queue state, counts, cadence, and next review for the room or review station.'
+    },
+    {
       label: 'Policy OS',
-      title: 'Decides what needs judgment',
+      title: 'Makes both surfaces trustworthy',
       detail:
-        'The operating layer classifies safe work, approval-needed work, and blocked actions before the operator is interrupted.'
-    },
-    {
-      label: 'Ink',
-      title: 'Makes the decision visible',
-      detail:
-        'The physical surface is optional, but useful when the buyer needs to see and feel the calm operator promise.'
-    },
-    {
-      label: 'Operator',
-      title: 'Acts only when needed',
-      detail:
-        'The service is designed so the human returns to the dashboard for evidence and action, not for constant monitoring.'
+        'The operating layer decides what can run, what waits, and what stops before either surface asks for attention.'
     }
   ];
 
@@ -179,7 +179,7 @@
     {
       question: 'Is Ink the product?',
       answer:
-        'Ink is the visible operator surface. The paid service is the workflow mapping, policy layer, artifacts, and escalation behavior that make the surface trustworthy.'
+        'Ink is the visible operator surface: Core Ink as the pocket pager and TRMNL as the large paper operator sheet. The paid service is the workflow mapping, policy layer, artifacts, and escalation behavior that make those surfaces trustworthy.'
     },
     {
       question: 'Why the phrase Skills + MCP?',
@@ -351,12 +351,13 @@
           <span class="product-kicker">Where Ink fits</span>
         </BlurFade>
         <BlurFade delay={0.05}>
-          <h2>Ink is the visible surface. The engagement is the operating layer behind it.</h2>
+          <h2>Two physical surfaces, one governed operating layer.</h2>
         </BlurFade>
         <BlurFade delay={0.1}>
           <p>
-            The device makes the promise tangible, but it only works if the workflow has mapped
-            owners, approval rules, blocked states, and evidence. That is what the service installs.
+            Core Ink gives the operator a pocket pager. TRMNL gives the room a large paper brief.
+            Both only work if the workflow has mapped owners, approval rules, blocked states, and
+            evidence. That is what the service installs.
           </p>
         </BlurFade>
       </div>

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildOperatorBrief, toFirmwareBrief } from '../src/brief.js';
+import { buildOperatorBrief, toFirmwareBrief, toTrmnlMergeVariables, toTrmnlWebhookPayload } from '../src/brief.js';
 import type { StoredAlert, StoredHealthSnapshot } from '../src/types.js';
 
 function alert(overrides: Partial<StoredAlert>): StoredAlert {
@@ -225,5 +225,91 @@ test('keeps reTerminal E1001 as an Ink operator sheet with report-length copy', 
     refresh: 'slow',
     supports_lists: true,
     supports_detail_drilldown: true
+  });
+});
+
+test('keeps TRMNL as the named large operator sheet surface', () => {
+  const detail =
+    'Core service review clear. Intake is current, no approvals are waiting, the highest-risk handoff is still within SLA, and the operator can stay out of the dashboard until the next scheduled review. This copy is intended for a large paper surface, not the pocket pager.';
+  const brief = buildOperatorBrief({
+    surface: 'trmnl',
+    alerts: [
+      alert({
+        state: 'operator_attention',
+        subject: 'Daily operator sheet',
+        reason: 'Core service operating brief',
+        detail,
+        action: 'Keep TRMNL visible; return only if Ink escalates.',
+        severity: 50
+      })
+    ],
+    health: [],
+    now: 1000
+  });
+  const firmware = toFirmwareBrief(brief);
+
+  assert.equal(brief.surface, 'trmnl-x');
+  assert.equal(brief.detail, detail);
+  assert.deepEqual(firmware.surface_profile, {
+    id: 'trmnl-x',
+    role: 'operator_sheet',
+    display: 'eink',
+    refresh: 'slow',
+    supports_lists: true,
+    supports_detail_drilldown: true
+  });
+});
+
+test('builds safe root-level TRMNL merge variables for private plugin polling', () => {
+  const brief = buildOperatorBrief({
+    surface: 'trmnl',
+    alerts: [
+      alert({
+        id: 'private-alert',
+        state: 'approval_needed',
+        subject: 'Daily operator sheet',
+        reason: 'One approval is waiting',
+        detail: 'Approval category is waiting in the service queue.',
+        action: 'Review the approval queue.',
+        severity: 80,
+        urgent: true,
+        payload: {
+          private_message: 'Do not show this on a shared paper display.',
+          patient_email: 'patient@example.test'
+        }
+      })
+    ],
+    health: [
+      health({
+        id: 'private-health',
+        status: 'degraded',
+        summary: 'Private health detail',
+        severity: 75,
+        payload: {
+          token: 'secret-token'
+        }
+      })
+    ],
+    now: 1000
+  });
+  const mergeVariables = toTrmnlMergeVariables(brief);
+  const webhookPayload = toTrmnlWebhookPayload(brief);
+  const serialized = JSON.stringify(mergeVariables);
+
+  assert.equal(mergeVariables.surface, 'trmnl-x');
+  assert.equal(mergeVariables.surface_label, 'TRMNL X Operator Sheet');
+  assert.equal(mergeVariables.generated_time, '6:00 PM');
+  assert.equal(mergeVariables.status_label, 'Urgent');
+  assert.equal(mergeVariables.decision_required, true);
+  assert.equal(mergeVariables.can_step_away, false);
+  assert.equal(mergeVariables.active_alerts, 1);
+  assert.equal(mergeVariables.poor_health, 1);
+  assert.equal('selected_alert' in mergeVariables, false);
+  assert.equal('selected_health' in mergeVariables, false);
+  assert.equal('device' in mergeVariables, false);
+  assert.equal(serialized.includes('patient@example.test'), false);
+  assert.equal(serialized.includes('secret-token'), false);
+  assert.deepEqual(webhookPayload, {
+    merge_variables: mergeVariables
   });
 });
