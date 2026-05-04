@@ -5,6 +5,8 @@
 
 > Superseded note (March 13, 2026): This memo preserves the March 9 funnel framing. Current canonical packaging uses `Policy OS` as the paid package name. See [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md).
 
+> Margin correction (May 4, 2026): Funnel routing must now check owner-compensation fit before proposals go out. See [OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md](./OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md).
+
 ## Executive Summary
 
 The funnel should stop asking buyers to understand protocol categories before they understand their own workflow risk.
@@ -23,6 +25,13 @@ The commercial ladder should be:
 4. `Policy OS Core`
 
 This keeps `MCP-only` as a narrow wedge, preserves `Agent Outcome Stack` as the default paid family, and gives `Policy OS` a clean recurring subscription path.
+
+The margin-safe revenue path is fewer higher-value accounts:
+
+- `Policy OS Trial`: `$12,500-$15,000/month`
+- `Policy OS Core`: `$18,000-$30,000/month`
+- preferred Core planning default: `$22,000/month`
+- `$1M ARR` should be modeled around `3-5` Core or Enterprise accounts, not many low-priced support lanes
 
 ## Payment Boundary
 
@@ -223,6 +232,18 @@ Signal:
 - setup-only supports wedge offers
 - recurring review and tuning supports `Policy OS Core`
 
+### 6. Margin and operator-load fit
+
+Question:
+
+- can the account support the owner-compensation model after direct delivery cost, tooling, review cadence, and support expectations?
+
+Signal:
+
+- low-margin or high-touch accounts should be scoped down, repriced, or parked
+- weekly live meetings, extra systems, custom UI, or multiple workflows require Core expansion or Enterprise Extension
+- the proposal must name the operator-load budget and expansion triggers
+
 ## Package Decision Rules
 
 ### Route to `MCP Audit` when:
@@ -245,12 +266,14 @@ Signal:
 - the workflow includes write or decision-bearing actions
 - approval or escalation behavior is part of the ask
 - the buyer expects a real operating result inside 30-90 days
+- the pilot can support `$12,500-$15,000/month` without hidden custom-labor subsidy
 
 ### Route to `Policy OS Core` when:
 
 - the workflow is moving into production or already live
 - the client wants monthly governance and tuning
 - the client needs recurring ownership for policy, review, and incident loops
+- the account can support `$18,000-$30,000/month` or a clearly priced expansion path
 
 ## Funnel Stages
 
@@ -314,6 +337,8 @@ Every discovery should produce:
 6. recommended package lane
 7. named owner
 8. dated next step
+9. operator-load budget
+10. owner-compensation fit assessment
 
 ## Conversion Logic
 
@@ -357,6 +382,7 @@ Important guardrail:
 
 - an exception does not mean "free custom work forever"
 - it means "free wedge with a named paid graduation path"
+- an exception must not create standing operator load without a paid conversion date
 
 ### `Policy OS Trial` -> `Policy OS Core`
 
@@ -393,6 +419,7 @@ That taxonomy should be reconciled rather than left as parallel systems.
 2. add discovery note fields for the five qualification axes
 3. standardize proposal routing from discovery outputs
 4. make `Policy OS Trial` and `Policy OS Core` explicit in commercial materials
+5. add owner-compensation fit and operator-load budget to proposal inputs
 
 ## Final Rule
 
@@ -412,4 +439,5 @@ without needing a long protocol lesson.
 - [AGENCY_CODEX_VECTOR_STRATEGY.md](./AGENCY_CODEX_VECTOR_STRATEGY.md)
 - [POLICY_OS_TRIAL_PACKAGING_MEMO_2026-03-09.md](./POLICY_OS_TRIAL_PACKAGING_MEMO_2026-03-09.md)
 - [POLICY_OS_GRADUATION_CHECKLIST_2026-03-09.md](./POLICY_OS_GRADUATION_CHECKLIST_2026-03-09.md)
+- [OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md](./OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md)
 - [packages/agency/content/sales/discovery-policy.md](./../packages/agency/content/sales/discovery-policy.md)

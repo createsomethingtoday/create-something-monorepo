@@ -9,6 +9,15 @@
 
 ## 1. Pilot scope
 
+Commercial guardrails:
+
+- service tier: `policy_os_trial`
+- monthly recurring revenue: `$12,500`
+- gross margin floor percent: `70`
+- owner compensation fit: `fits`
+- operator-load budget: `1` live review meeting per month, weekly async review, `1` workflow, `3` downstream systems, pilot-bounded policy tuning
+- expansion triggers: new workflow, extra downstream system, custom UI, higher meeting cadence
+
 ### In scope
 
 - quote marked ready for confirmation in CRM

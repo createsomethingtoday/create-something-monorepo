@@ -112,7 +112,7 @@ export function getProspectClaimConflict(input: {
 		return {
 			code: 'identity_seed_conflict',
 			message:
-				'This email is already seeded to a different account or Auth0 subject. Operator review is required before prospect claim can continue.',
+				'This email is already seeded to a different account or Clerk subject. Operator review is required before prospect claim can continue.',
 		};
 	}
 
@@ -124,7 +124,7 @@ export function getProspectClaimConflict(input: {
 		return {
 			code: 'manual_override_conflict',
 			message:
-				'This Auth0 subject already has a manual entitlement override for a different account. Operator review is required before prospect claim can continue.',
+				'This Clerk subject already has a manual entitlement override for a different account. Operator review is required before prospect claim can continue.',
 		};
 	}
 

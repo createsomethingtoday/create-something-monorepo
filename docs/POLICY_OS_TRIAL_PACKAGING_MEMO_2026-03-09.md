@@ -5,6 +5,8 @@
 
 > Superseded note (March 13, 2026): This memo preserves the March 9 framing. Current canonical packaging uses `Policy OS` as the paid package name. See [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md).
 
+> Margin correction (May 4, 2026): The March 9 `$9,500/month` pilot recommendation is now treated as a legacy or strategic proof exception. The owner-compensation-safe default is `$12,500-$15,000/month` for `Policy OS Trial` and `$18,000-$30,000/month` for `Policy OS Core`. See [OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md](./OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md).
+
 ## Executive Summary
 
 - The repo already makes the commercial answer clear: the default paid delivery is not `MCP-only`. It is **Agent Outcome Stack**: custom MCP + policy artifacts + runbooks + managed judgment loop + monthly tuning.
@@ -17,7 +19,7 @@
   - **Offer name**: `Policy OS Trial: Concierge Pilot`
   - **Commercial family**: `Agent Outcome Stack`
   - **Client-facing label**: `Skills + MCP`
-  - **Recommended price**: **$9,500/month**
+  - **Recommended price**: **$12,500-$15,000/month**
   - **Term**: **3-month minimum**
 - The goal is not to maximize trial revenue in isolation. The goal is to create the right bridge into an ongoing **Policy OS Core** subscription where CREATE SOMETHING owns policy, governed execution, observability, and monthly tuning.
 
@@ -93,7 +95,7 @@ Research was performed on March 9, 2026 using EXA through the Hub MCP surface.
 Interpretation:
 
 - A governed concierge pilot priced below roughly `$5k/month` risks reading like low-end freelancer automation.
-- A pilot priced materially above roughly `$12k/month` needs either stronger production proof or wider scope than this current trial should promise.
+- The current margin-safe trial lane is `$12.5k-$15k/month`; pricing materially above that needs stronger production proof, wider scope, or Enterprise Extension positioning.
 
 Sources:
 
@@ -159,7 +161,9 @@ Internal commercial family:
 
 ### Recommended Price
 
-**$9,500/month**
+**$12,500-$15,000/month**
+
+The prior `$9,500/month` price is still valid only as a strategic proof exception where scope, meetings, and operator load are explicitly capped.
 
 ### Term
 
@@ -171,6 +175,7 @@ Internal commercial family:
 - It is clearly above commodity SaaS pricing.
 - It is materially below a large custom enterprise build.
 - It gives enough room to include governance, runbooks, policy artifacts, and monthly tuning without pretending the work is just a cheap chatbot.
+- It protects the owner-compensation model by avoiding a path that requires too many concurrent low-priced accounts to reach `$1M ARR`.
 
 ### What is included
 
@@ -238,13 +243,18 @@ The trial should explicitly ladder into an ongoing subscription.
 
 Recommended target band:
 
-**$12,000-$18,000/month**
+**$18,000-$30,000/month**
+
+Preferred planning default:
+
+**$22,000/month**
 
 ### Structure
 
 - base subscription for governance and platform operations
 - workflow pack for the live concierge workflow
 - optional add-ons for extra workflows, extra integrations, or higher support level
+- explicit operator-load budget and margin assumptions
 
 ### What changes at conversion
 
@@ -262,7 +272,7 @@ Use these only if deal pressure forces a narrower or wider opening.
 
 ### Lower-friction wedge
 
-**$7,500/month for 3 months**
+**$9,500/month for 3 months**
 
 Use only if:
 
@@ -270,14 +280,16 @@ Use only if:
 - integrations are few
 - the client is highly price-sensitive
 - conversion upside is strong
+- operator meetings are capped and the account does not become a standing support lane
 
 Risk:
 
 - can read too close to a services retainer without enough premium signal
+- can break the one-operator owner-compensation model if repeated across too many accounts
 
 ### Higher-complexity pilot
 
-**$12,500/month for 3 months**
+**$18,000/month for 3 months**
 
 Use when:
 
@@ -288,6 +300,21 @@ Use when:
 Risk:
 
 - requires stronger proof and clearer sponsor urgency
+
+### Enterprise-extension pilot
+
+**$25,000-$30,000/month for 3 months**
+
+Use when:
+
+- more than one primary workflow is in scope
+- custom customer-facing UI is included
+- compliance or audit burden is high
+- live weekly executive review is required
+
+Risk:
+
+- must be sold as a serious governed operating layer, not a trial experiment
 
 ## Commercial Guidance
 
@@ -320,7 +347,7 @@ Frame the trial as:
 For this client, the cleanest subscription packaging is:
 
 - **Policy OS Trial: Concierge Pilot**
-- **$9,500/month**
+- **$12,500-$15,000/month**
 - **3-month minimum**
 - sold as **Skills + MCP**
 - explicitly designed to convert into **Policy OS Core**
@@ -330,6 +357,7 @@ That is the price and packaging shape most consistent with:
 - the repo’s commercial thesis
 - the repo’s policy and runbook posture
 - the current maturity of the governed house stack
+- the owner-compensation requirement for a one-operator business
 - the EXA-backed market window between commodity SaaS and full custom enterprise build
 
 ## Source Anchors
@@ -338,6 +366,7 @@ That is the price and packaging shape most consistent with:
 
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)
 - [AGENCY_CODEX_VECTOR_STRATEGY.md](./AGENCY_CODEX_VECTOR_STRATEGY.md)
+- [OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md](./OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md)
 - [MIXED_STACK_CLIENT_MCP_OFFER_ASSESSMENT_2026-03-09.md](./MIXED_STACK_CLIENT_MCP_OFFER_ASSESSMENT_2026-03-09.md)
 - [policies/README.md](./policies/README.md)
 

@@ -76,14 +76,15 @@
 3. Run discovery script as a branching guide.
 4. Capture discovery note.
 5. Assign fit (`high|medium|low`) and select close path.
-6. For high-fit work, send `workflow-mapping-session-agenda.md`.
-7. Execute follow-up sequence and lock next action.
-8. Build proposal using:
+6. Confirm target price lane, owner-compensation fit, and operator-load budget before proposal.
+7. For high-fit work, send `workflow-mapping-session-agenda.md`.
+8. Execute follow-up sequence and lock next action.
+9. Build proposal using:
    - `mcp_contract.yaml`
    - `agent_contract.yaml`
    - `outcome_contract.md`
    - `golden_tasks.yaml`
-9. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
+10. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
 
 ---
 
@@ -109,4 +110,5 @@
 - Do not reduce discovery to "what do you want to connect?"
 - Do not skip risk-classification in the note template.
 - Do not produce proposals with missing approval boundaries.
+- Do not produce Policy OS proposals without monthly recurring revenue, gross-margin floor, owner-compensation fit, and operator-load budget.
 - Do not position Braintrust as the policy control plane; it is observability and eval infrastructure.

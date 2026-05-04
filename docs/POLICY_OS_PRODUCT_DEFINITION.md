@@ -64,6 +64,9 @@ The bundle must define:
 - `escalation_policy`
 - `review_cadence`
 - `billing_and_entitlement_assumptions`
+- `operator_load_budget`
+- `gross_margin_floor`
+- `owner_compensation_fit`
 
 ## Runtime and entitlement model
 
@@ -89,6 +92,28 @@ Minimum standing cadence for Policy OS:
 - monthly tuning of policy, prompts, and workflow controls
 - change review whenever tool scope, approval mode, or commercial state changes
 - rollback-ready runbook for auth, entitlement, and policy failures
+
+## Owner compensation and margin model
+
+Policy OS must be priced and scoped so CREATE SOMETHING can remain a one-operator, AI-native, remote business without silently converting the operator into unpaid overflow labor.
+
+Current commercial guardrails:
+
+- `Policy OS Trial`: `$12,500-$15,000/month`, `3-month minimum`
+- `Policy OS Core`: `$18,000-$30,000/month`, `6-month minimum` preferred
+- `Policy OS Core` planning default: `$22,000/month` when CREATE SOMETHING owns recurring governance, review, and tuning
+- `$9,500/month` is now a legacy or strategic proof exception, not the default owner-compensation-safe trial price
+- `$1M ARR` should be modeled around `3-5` Core or Enterprise accounts, not `9` low-priced accounts
+
+At `$1M ARR`, a `$300k` owner-compensation target consumes `30%` of ARR before delivery cost, overhead, reserve, taxes, and reinvestment. A Policy OS proposal is not ready unless `billing_and_entitlement_assumptions` includes:
+
+- monthly recurring revenue
+- direct-cost or gross-margin assumption
+- operator-load budget
+- expansion triggers for new workflows, systems, custom UI, or meeting cadence
+- whether the account supports the owner-compensation model
+
+Use [OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md](./OWNER_COMPENSATION_MARGIN_MODEL_2026-05-04.md) as the commercial guardrail.
 
 ## Proof standard
 

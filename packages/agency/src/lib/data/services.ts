@@ -2,10 +2,10 @@
  * Products and Services Data
  *
  * Full MCP portfolio and delivery positioning for the /products page.
- * Categories: featured, developer-tools, framework, integration, client.
+ * Categories: service, featured, developer-tools, framework, integration, client.
  */
 
-export type ProductCategory = 'featured' | 'developer-tools' | 'framework' | 'integration' | 'client';
+export type ProductCategory = 'service' | 'featured' | 'developer-tools' | 'framework' | 'integration' | 'client';
 
 export interface Product {
 	id: string;
@@ -32,6 +32,44 @@ export interface Product {
 }
 
 export const products: Product[] = [
+	// ─── Service Retainers ───────────────────────────────────────
+	{
+		id: 'policy-os-trial',
+		title: 'Policy OS Trial',
+		tagline: 'One governed workflow under live policy',
+		description:
+			'A 3-month paid pilot for one primary workflow, up to 3 downstream systems, weekly async review, and monthly live operating review.',
+		badge: 'Service Retainer',
+		category: 'service',
+		href: '/book',
+		pricing: '$12,500-$15,000/month',
+		timeline: '3-month minimum'
+	},
+	{
+		id: 'policy-os-core',
+		title: 'Policy OS Core',
+		tagline: 'Recurring governance, review, and tuning',
+		description:
+			'The owner-compensation-safe recurring lane for one live governed workflow with policy operations, incident review, and monthly release evidence.',
+		badge: 'Service Retainer',
+		category: 'service',
+		href: '/book',
+		pricing: '$18,000-$30,000/month',
+		timeline: '6-month minimum preferred'
+	},
+	{
+		id: 'policy-os-enterprise',
+		title: 'Enterprise Extension',
+		tagline: 'Multi-workflow or high-compliance governance',
+		description:
+			'Extension lane for multiple workflows, custom UI, stricter compliance, higher-touch review, or multi-team orchestration.',
+		badge: 'Service Retainer',
+		category: 'service',
+		href: '/book',
+		pricing: '$30,000+/month',
+		timeline: '6-month minimum preferred'
+	},
+
 	// ─── Featured ────────────────────────────────────────────────
 	{
 		id: 'loom',

@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import ClerkMount from '$lib/components/ClerkMount.svelte';
 
 	let { data } = $props();
 	const redirectTo = $derived(data.redirectTo || '/');
-	const loginHref = $derived(`/api/auth/login?redirect=${encodeURIComponent(redirectTo)}`);
-	const signupHref = $derived(`/api/auth/signup?redirect=${encodeURIComponent(redirectTo)}`);
 	const errorParam = $derived(data.error || null);
 
 	const errorMessages: Record<string, string> = {
@@ -16,12 +15,10 @@
 	};
 
 	const error = $derived(
-		errorParam ? errorMessages[errorParam] || 'Authentication failed. Please try again.' : null
+		errorParam ? errorMessages[errorParam] || 'Authentication failed. Please try again.' : null,
 	);
 
-	function continueTo(href: string) {
-		goto(href, { invalidateAll: false });
-	}
+	const publishableKey = $derived($page.data?.publicConfig?.clerkPublishableKey ?? null);
 </script>
 
 <SEO
@@ -34,9 +31,9 @@
 <div class="auth-container">
 	<div class="auth-card">
 		<div class="auth-header">
-			<h1>Sign in to `.agency`</h1>
+			<h1>Sign in to <code>.agency</code></h1>
 			<p class="auth-subtitle">
-				Identity is now managed through Auth0. Use your managed account to access the client portal,
+				Use your managed account to access the client portal,
 				bearer-token controls, and MCP surfaces.
 			</p>
 		</div>
@@ -45,14 +42,11 @@
 			<div class="error-message" role="alert">{error}</div>
 		{/if}
 
-		<div class="auth-actions">
-			<button class="primary-action" type="button" onclick={() => continueTo(loginHref)}>
-				Continue with Auth0
-			</button>
-			<button class="secondary-action" type="button" onclick={() => continueTo(signupHref)}>
-				Create account
-			</button>
-		</div>
+		<ClerkMount
+			mode="signIn"
+			{publishableKey}
+			fallbackRedirectUrl={redirectTo}
+		/>
 
 		<p class="auth-footnote">
 			If you already have an authorized organization account, use the same email you use for client access.
@@ -105,34 +99,6 @@
 		border-radius: var(--radius-md);
 		font-size: var(--text-body-sm);
 		margin-bottom: var(--space-md);
-	}
-
-	.auth-actions {
-		display: grid;
-		gap: var(--space-md);
-	}
-
-	.primary-action,
-	.secondary-action {
-		width: 100%;
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-full);
-		font-size: var(--text-body);
-		font-weight: 600;
-		min-height: 48px;
-		cursor: pointer;
-	}
-
-	.primary-action {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border: none;
-	}
-
-	.secondary-action {
-		background: transparent;
-		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.auth-footnote {

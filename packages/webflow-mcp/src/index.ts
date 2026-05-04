@@ -15,7 +15,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initObservability, createTrace, createSpan } from '@create-something/observability';
-import { mcpToolMetadata } from '@create-something/observability/atlas';
+import { mcpToolMetadata, type AtlasMetadata } from '@create-something/observability/atlas';
 
 import * as plagiarism from './tools/plagiarism.js';
 
@@ -26,7 +26,7 @@ function webflowToolGroup(name: string): string {
   return 'other';
 }
 
-function webflowTraceMetadata(name: string, args: Record<string, unknown>): Record<string, unknown> {
+function webflowTraceMetadata(name: string, args: Record<string, unknown>): AtlasMetadata {
   return {
     ...mcpToolMetadata('webflow-mcp', name, 'classify'),
     'business.tool_group': webflowToolGroup(name),
@@ -34,7 +34,7 @@ function webflowTraceMetadata(name: string, args: Record<string, unknown>): Reco
     'business.template_a': typeof args.templateA === 'string' ? args.templateA : undefined,
     'business.template_b': typeof args.templateB === 'string' ? args.templateB : undefined,
     'business.reason': typeof args.reason === 'string' ? args.reason : undefined,
-    'business.url_present': typeof args.url === 'string' && args.url.length > 0 ? 'true' : undefined,
+    'business.url_present': typeof args.url === 'string' && args.url.length > 0 ? true : undefined,
   };
 }
 

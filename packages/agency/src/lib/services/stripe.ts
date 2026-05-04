@@ -11,6 +11,8 @@
 
 import Stripe from 'stripe';
 
+type AgencyCanonicalServiceTier = 'mcp_only' | 'policy_os_trial' | 'policy_os_core';
+
 /**
  * Stripe Price Configuration
  *
@@ -21,6 +23,12 @@ export interface StripePriceConfig {
 	priceId: string;
 	mode: 'payment' | 'subscription';
 	name: string;
+	serviceTier?: AgencyCanonicalServiceTier;
+	monthlyRecurringRevenueCents?: number;
+	grossMarginFloorPercent?: number;
+	ownerCompensationFit?: 'fits' | 'watch' | 'does_not_fit';
+	operatorLoadBudget?: Record<string, unknown>;
+	expansionTriggers?: string[];
 }
 
 /**
@@ -33,6 +41,60 @@ export interface StripePriceConfig {
  * 4. Add to this configuration
  */
 export const STRIPE_PRICES: Record<string, StripePriceConfig> = {
+	// Policy OS - margin-safe service retainers
+	// Set these in Cloudflare secrets after creating the prices in Stripe.
+	'policy-os-trial': {
+		priceId: process.env.STRIPE_PRICE_POLICY_OS_TRIAL || 'placeholder_policy_os_trial',
+		mode: 'subscription',
+		name: 'Policy OS Trial',
+		serviceTier: 'policy_os_trial',
+		monthlyRecurringRevenueCents: 1250000,
+		grossMarginFloorPercent: 70,
+		ownerCompensationFit: 'fits',
+		operatorLoadBudget: {
+			max_live_review_meetings_per_month: 1,
+			async_review_frequency: 'weekly',
+			covered_workflow_count: 1,
+			covered_downstream_systems: 3,
+			monthly_policy_tuning_limit: 'bounded',
+		},
+		expansionTriggers: ['new workflow', 'extra downstream system', 'custom UI', 'higher meeting cadence'],
+	},
+	'policy-os-core': {
+		priceId: process.env.STRIPE_PRICE_POLICY_OS_CORE || 'placeholder_policy_os_core',
+		mode: 'subscription',
+		name: 'Policy OS Core',
+		serviceTier: 'policy_os_core',
+		monthlyRecurringRevenueCents: 2200000,
+		grossMarginFloorPercent: 70,
+		ownerCompensationFit: 'fits',
+		operatorLoadBudget: {
+			max_live_review_meetings_per_month: 1,
+			async_review_frequency: 'weekly',
+			covered_workflow_count: 1,
+			covered_downstream_systems: 3,
+			monthly_policy_tuning_limit: 'monthly',
+		},
+		expansionTriggers: ['new workflow', 'extra downstream system', 'custom UI', 'higher meeting cadence'],
+	},
+	'policy-os-enterprise': {
+		priceId: process.env.STRIPE_PRICE_POLICY_OS_ENTERPRISE || 'placeholder_policy_os_enterprise',
+		mode: 'subscription',
+		name: 'Policy OS Enterprise Extension',
+		serviceTier: 'policy_os_core',
+		monthlyRecurringRevenueCents: 3000000,
+		grossMarginFloorPercent: 70,
+		ownerCompensationFit: 'fits',
+		operatorLoadBudget: {
+			max_live_review_meetings_per_month: 2,
+			async_review_frequency: 'weekly',
+			covered_workflow_count: 2,
+			covered_downstream_systems: 5,
+			monthly_policy_tuning_limit: 'expanded',
+		},
+		expansionTriggers: ['third workflow', 'custom customer-facing UI', 'compliance audit package', 'weekly executive review'],
+	},
+
 	// Vertical Templates - Subscription tiers ($29/mo Solo, $79/mo Team)
 	// Set STRIPE_PRICE_VERTICAL_SOLO and STRIPE_PRICE_VERTICAL_TEAM in Cloudflare secrets
 	'vertical-templates-solo': {

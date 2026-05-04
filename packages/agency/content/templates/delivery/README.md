@@ -20,6 +20,18 @@ Each artifact must carry the Policy OS metadata required by the canonical bundle
 - `escalation_policy`
 - `review_cadence`
 - `billing_and_entitlement_assumptions`
+- `operator_load_budget`
+- `gross_margin_floor`
+- `owner_compensation_fit`
+
+Commercial metadata must be present before implementation starts:
+
+- monthly recurring revenue
+- gross margin floor percent
+- owner-compensation fit (`fits|watch|does_not_fit`)
+- covered workflow and downstream-system counts
+- live-review cadence and async-review cadence
+- expansion triggers for new workflows, extra systems, custom UI, or higher meeting cadence
 
 ## Recommended sequence
 

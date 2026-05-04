@@ -85,6 +85,24 @@
 ## Commercial terms input
 
 - pricing lane:
+- monthly recurring revenue:
+- term length:
+- setup or mapping fee:
+- gross margin target:
+- direct delivery/tooling budget:
+- operator-load budget:
+  - max live review meetings per month:
+  - expected async review frequency:
+  - covered workflow count:
+  - covered downstream systems:
+  - monthly golden-task/policy-tuning limit:
+  - response expectation:
+- owner-compensation fit (`fits|watch|does_not_fit`):
+- expansion triggers:
+  - new workflow:
+  - extra system or toolkit:
+  - custom UI:
+  - higher meeting cadence:
 - timeline range:
 - support/retainer expectation:
 - assumptions:

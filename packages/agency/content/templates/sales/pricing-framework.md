@@ -62,6 +62,30 @@ We don't play pricing games. Our rates are what they are. We'd rather scope diff
 
 ## Service Tiers
 
+### Policy OS Retainers
+
+**Purpose**: Governed AI execution with recurring policy, review, and tuning while preserving a one-operator margin model.
+
+These are not seat licenses, hourly retainers, or generic support plans. They are the recurring commercial shape for CREATE SOMETHING-owned governance.
+
+| Level | Monthly Retainer | Term | Best For |
+|-------|------------------|------|----------|
+| Policy OS Trial | $12,500 - $15,000 | 3 months | Proving one governed workflow |
+| Policy OS Core | $18,000 - $30,000 | 6+ months | Operating one live governed workflow |
+| Enterprise Extension | $30,000+ | 6+ months | Multiple workflows, high compliance, custom UI, or high-touch operations |
+
+**Owner-compensation rule**: At $1M ARR, a $300K owner-compensation target consumes 30% of ARR. Price and scope every Policy OS account so direct delivery, tooling, admin, and reserve still fit after that compensation target.
+
+**Scope defaults**:
+
+- one primary workflow
+- up to 3 downstream systems or tool bundles
+- weekly async incident and blocked-action review
+- monthly live operating review
+- explicit expansion pricing for new workflows, custom UI, extra systems, or higher meeting cadence
+
+**Do not classify a retainer below $18K/month as Policy OS Core.** Below that line, it is advisory, implementation support, or a strategic trial exception.
+
 ### Workflow Mapping Session
 
 **Purpose**: Map one workflow, define its trust boundary, and de-risk implementation
@@ -141,11 +165,13 @@ We don't play pricing games. Our rates are what they are. We'd rather scope diff
 **Duration**: 6+ months
 **Deliverable**: Retained capacity + defined outcomes
 
-| Level | Monthly Retainer | Hours/Month | Best For |
-|-------|------------------|-------------|----------|
-| Advisory | $5,000 | 10-15 | Strategic guidance, architecture reviews |
-| Active | $15,000 | 40-50 | Ongoing development, optimization |
-| Embedded | $25,000 | 80+ | Dedicated team member, major initiatives |
+This is a capacity-support lane, not the owner-compensation path for governed AI operations. Any account that includes recurring policy governance, incident review, entitlement operations, or monthly tuning should route to `Policy OS Retainers` above.
+
+| Level | Monthly Retainer | Capacity Guardrail | Best For |
+|-------|------------------|--------------------|----------|
+| Advisory | $5,000 | 10-15 advisory hours | Strategic guidance, architecture reviews |
+| Active | $15,000 | 20-30 bounded hours | Scoped optimization without Policy OS governance |
+| Embedded | $25,000+ | staff-backed capacity, not owner-only delivery | Major initiatives with subcontracted or client-side capacity |
 
 **Includes**:
 - Priority response (24-48 hours)
@@ -154,6 +180,8 @@ We don't play pricing games. Our rates are what they are. We'd rather scope diff
 - Rollover unused hours (up to 1 month)
 
 **Value Proposition**: "AI capability without full-time headcount."
+
+**Margin rule**: Do not sell an `Active` or `Embedded` retainer as a one-operator standing support lane. If the work depends on the owner personally delivering most of the hours, scope down, raise price, or move the buyer to a fixed-price SOW.
 
 ---
 
@@ -503,10 +531,13 @@ I'd be happy to recommend some alternatives that might be better suited."
 - Discovery: $5,000
 - Pilot: $25,000
 - Implementation: $75,000
-- Retainer: $5,000/month
+- Retainer: $5,000/month for advisory-only support
+- Policy OS Trial: $12,500/month
+- Policy OS Core: $18,000/month
 
 **Walk-Away Thresholds**:
 - Below minimums with no path to grow
 - >30% discount requested
 - Payment terms beyond Net 30
 - Scope-to-budget ratio impossible
+- Policy OS scope that cannot preserve owner-compensation fit

@@ -17,10 +17,20 @@
 - review cadence: `weekly review + monthly tuning`
 - billing and entitlement assumptions:
   - service tier: `mcp_only|policy_os_trial|policy_os_core`
+  - monthly recurring revenue: `AMOUNT`
+  - gross margin floor percent: `70`
+  - owner compensation fit: `fits|watch|does_not_fit`
   - service entitled: `true|false`
   - policy accepted: `true|false`
   - contract active: `true|false`
   - billing active: `true|false`
+- operator-load budget:
+  - max live review meetings per month: `1`
+  - async review frequency: `weekly`
+  - covered workflow count: `1`
+  - covered downstream systems: `3`
+  - monthly policy tuning limit: `LIMIT`
+  - expansion triggers: `new workflow`, `extra downstream system`, `custom UI`, `higher meeting cadence`
 
 ## 2. Purpose
 

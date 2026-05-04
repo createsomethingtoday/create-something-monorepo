@@ -8,6 +8,23 @@ client:
   workflow_name: "quote_to_confirmation"
   workflow_owner: "RevOps Director"
 
+commercial_guardrails:
+  service_tier: "policy_os_trial"
+  monthly_recurring_revenue: "$12,500"
+  gross_margin_floor_percent: 70
+  owner_compensation_fit: "fits"
+  operator_load_budget:
+    max_live_review_meetings_per_month: 1
+    async_review_frequency: "weekly"
+    covered_workflow_count: 1
+    covered_downstream_systems: 3
+    monthly_policy_tuning_limit: "pilot-bounded"
+    expansion_triggers:
+      - "new workflow"
+      - "extra downstream system"
+      - "custom UI"
+      - "higher meeting cadence"
+
 scope:
   objective: "Prevent incorrect order confirmations and reduce manual reconciliation in the quote-to-confirmation workflow."
   workflow_boundary: "Starts when a quote is marked ready for confirmation and ends when the approved confirmation is sent and recorded."

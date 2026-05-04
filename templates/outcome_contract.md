@@ -11,10 +11,20 @@
 - Review Cadence: `weekly review + monthly tuning`
 - Billing and Entitlement Assumptions:
   - service tier: `policy_os_trial`
+  - monthly recurring revenue: `<amount>`
+  - gross margin floor percent: `70`
+  - owner compensation fit: `fits|watch|does_not_fit`
   - service entitled: `true`
   - policy accepted: `true`
   - contract active: `true`
   - billing active: `true`
+- Operator Load Budget:
+  - max live review meetings per month: `1`
+  - async review frequency: `weekly`
+  - covered workflow count: `1`
+  - covered downstream systems: `3`
+  - monthly policy tuning limit: `<limit>`
+  - expansion triggers: `new workflow`, `extra downstream system`, `custom UI`, `higher meeting cadence`
 - Delivery Vector Canonical Phrase: `Skills on MCP`
 - Delivery Vector (Client-Facing): `Skills + MCP`
 - Delivery Vector (Technical): `MCP + Skills`

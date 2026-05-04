@@ -53,6 +53,7 @@ Exit rule:
 
 - Complete [policy-os-proposal-input-template.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/policy-os-proposal-input-template.md)
 - Use [pricing-framework.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/pricing-framework.md) for pricing posture
+- Confirm monthly recurring revenue, gross margin floor, owner-compensation fit, and operator-load budget before sending a Policy OS proposal
 - Send [policy-os-follow-up-sequence.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/policy-os-follow-up-sequence.md) based on fit level
 
 For high-fit work:
@@ -69,6 +70,7 @@ For high-fit work:
 - Confirm policy boundary with explicit `auto-allow`, `approval-required`, and `block` classes
 - Confirm fallback/manual path
 - Confirm release-gate expectations
+- Confirm the operator-load budget and expansion triggers
 - Confirm 30-day implementation plan
 
 Exit rule:
@@ -103,6 +105,7 @@ Reference example set:
 
 - Confirm all five delivery artifacts are drafted
 - Confirm policy owner, workflow owner, and technical owner are named
+- Confirm monthly recurring revenue, gross margin floor, owner-compensation fit, and operator-load budget are captured in the artifact bundle
 - Confirm blocked actions are explicitly listed
 - Confirm approval-required actions have a real inbox or owner
 - Confirm manual fallback is documented

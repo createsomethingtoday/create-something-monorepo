@@ -12,6 +12,7 @@ The commercial default is now **Policy OS** (**Skills + MCP**), with **MCP-only*
 - Outcomes are the product: execution quality, escalation policy, and continuous tuning.
 - Codex is the primary setup and demo vector, while MCP contracts stay portable.
 - Canonical phrasing for delivery vector is now **Skills on MCP**.
+- Owner compensation requires fewer high-margin retainers, not many underpriced support lanes.
 
 ## Delivery Vector Language System
 
@@ -48,6 +49,7 @@ Competitive moat emphasis:
    - Managed judgment loop (approvals, escalation, monthly tuning).
    - `Workflow Infrastructure` is the implementation layer inside the package.
    - `Enterprise Extension` is the high-stakes expansion layer inside the package.
+   - Owner-compensation-safe Core pricing should default to `$18k-$30k/month`, with `$22k/month` as the planning default for recurring governance ownership.
 3. Supplier wrap pattern remains unchanged:
    - Commodity connectivity via `@create-something/composio-bridge`.
    - Deep-domain logic and intelligence layer are always custom.
@@ -82,6 +84,14 @@ Deliverables:
 - Agent behavior contracts (allowed tools, guardrails, approvals)
 - Golden task suite + regression checks
 - Monthly tuning cadence
+- Operator-load budget and expansion triggers
+
+Pricing guardrails:
+
+- Trial: `$12.5k-$15k/month`, `3-month minimum`
+- Core: `$18k-$30k/month`, `6-month minimum` preferred
+- Enterprise Extension: `$30k+/month`
+- `$9.5k/month` is a strategic proof exception, not the default path to owner compensation
 
 ## Standard client contracts
 
@@ -118,6 +128,9 @@ Policy OS metadata must also include:
 - `escalation_policy`
 - `review_cadence`
 - `billing_and_entitlement_assumptions`
+- `operator_load_budget`
+- `gross_margin_floor`
+- `owner_compensation_fit`
 
 ## Per-client handoff bundle
 

@@ -7,16 +7,30 @@
 		stripe_subscription_id: string | null;
 		product_id: string | null;
 		service_tier: string | null;
+		monthly_recurring_revenue_cents: number | null;
+		gross_margin_floor_percent: number | null;
+		owner_compensation_fit: string | null;
 		subscription_status: string | null;
 		contract_active: number;
 		billing_active: number;
 		current_period_end: string | null;
 		last_invoice_status: string | null;
+		operator_load_budget_json: string;
+		expansion_triggers_json: string;
 		updated_at: string;
 	};
 
 	let { data } = $props();
 	const commercial = $derived(data.commercial as CommercialAccount[]);
+
+	function formatCurrencyFromCents(cents: number | null): string {
+		if (typeof cents !== 'number') return 'no MRR';
+		return new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: 'USD',
+			maximumFractionDigits: 0,
+		}).format(cents / 100);
+	}
 </script>
 
 <SEO title="Commercial State" description="Stripe-backed commercial state for .agency." propertyName="agency" noindex={true} />
@@ -65,6 +79,8 @@
 									<td>
 										<div>{row.product_id ?? 'unknown'}</div>
 										<div class="muted">{row.service_tier ?? 'no tier'}</div>
+										<div class="muted">{formatCurrencyFromCents(row.monthly_recurring_revenue_cents)}</div>
+										<div class="muted">margin={row.gross_margin_floor_percent ?? 'n/a'}% owner={row.owner_compensation_fit ?? 'n/a'}</div>
 									</td>
 									<td>
 										<div>{row.subscription_status ?? 'n/a'}</div>

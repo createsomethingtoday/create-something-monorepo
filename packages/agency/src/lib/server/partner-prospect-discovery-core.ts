@@ -231,7 +231,7 @@ export async function listPartnerProspectClaimsForUser(
 					? 'already_claimed'
 					: claimConflict?.code ?? availabilityConflict?.code ?? null;
 				const blockedMessage = claimedByOther
-					? 'This prospect is already claimed by another Auth0 subject.'
+					? 'This prospect is already claimed by another Clerk subject.'
 					: claimConflict?.message ?? availabilityConflict?.message ?? null;
 				const graduationReadiness = claimedByYou
 					? buildProspectGraduationReadiness(
@@ -392,7 +392,7 @@ function describeGraduationReadiness(reason: string): string {
 		case 'allowed':
 			return 'This workspace is ready for operator graduation once consent is active.';
 		case 'missing_entitlement_record':
-			return 'No governed entitlement record is bound to this Auth0 subject yet.';
+			return 'No governed entitlement record is bound to this Clerk subject yet.';
 		case 'managed_bearer_disabled':
 			return 'Managed bearer issuance is still disabled for this workspace.';
 		case 'org_membership_inactive':

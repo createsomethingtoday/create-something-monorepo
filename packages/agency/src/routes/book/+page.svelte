@@ -33,32 +33,48 @@
 		| 'system_development_referral'
 		| 'not_sure';
 
-	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
+	const laneOptions: Array<{
+		value: ServiceLane;
+		label: string;
+		description: string;
+		priceHint: string;
+		operatorFit: string;
+	}> = [
 		{
 			value: 'workflow_infrastructure',
 			label: 'Critical Workflow',
-			description: 'One workflow that needs a safer, production-ready starting point.'
+			description: 'One workflow that needs a safer, production-ready starting point.',
+			priceHint: '$25K-$75K project after mapping',
+			operatorFit: 'Best when implementation is bounded and handoff-ready.'
 		},
 		{
 			value: 'reliability_and_control',
 			label: 'Policy OS',
 			description:
-				'Policy artifacts, approval rules, release gates, and incident controls around live automation.'
+				'Policy artifacts, approval rules, release gates, and incident controls around live automation.',
+			priceHint: '$12.5K-$30K/month',
+			operatorFit: 'Requires one governed workflow, capped meetings, and explicit expansion triggers.'
 		},
 		{
 			value: 'enterprise_extension',
 			label: 'Enterprise Constraints',
-			description: 'Cross-system orchestration with stricter governance, auditability, and recovery.'
+			description: 'Cross-system orchestration with stricter governance, auditability, and recovery.',
+			priceHint: '$30K+/month',
+			operatorFit: 'Use for multiple workflows, custom UI, compliance burden, or high-touch cadence.'
 		},
 		{
 			value: 'system_development_referral',
 			label: 'System Development Referral',
-			description: 'Full system build and onboarding needs (routed to partner team).'
+			description: 'Full system build and onboarding needs (routed to partner team).',
+			priceHint: 'Referral path',
+			operatorFit: 'Use when ongoing admin coverage would break the owner-only model.'
 		},
 		{
 			value: 'not_sure',
 			label: 'Not sure yet',
-			description: 'Need help choosing the right lane.'
+			description: 'Need help choosing the right lane.',
+			priceHint: 'Map fit first',
+			operatorFit: 'We will decide whether the account fits the margin and operator-load model.'
 		}
 	];
 
@@ -156,8 +172,11 @@
 	function mergeLaneIntoNotes(notes: string): string {
 		const lane = laneOptions.find((option) => option.value === selectedLane);
 		const laneLine = `Intake lane: ${lane?.label ?? 'Not sure yet'}`;
+		const priceLine = lane?.priceHint ? `Commercial guardrail: ${lane.priceHint}` : null;
+		const fitLine = lane?.operatorFit ? `Owner-compensation fit: ${lane.operatorFit}` : null;
 		const trimmedNotes = notes.trim();
-		return trimmedNotes ? `${laneLine}\n${trimmedNotes}` : laneLine;
+		const laneBlock = [laneLine, priceLine, fitLine].filter(Boolean).join('\n');
+		return trimmedNotes ? `${laneBlock}\n${trimmedNotes}` : laneBlock;
 	}
 
 	// Handle form submission
@@ -322,10 +341,12 @@
 									value={lane.value}
 									bind:group={selectedLane}
 								/>
-								<span class="lane-option-text">
-									<span class="lane-option-label">{lane.label}</span>
-									<span class="lane-option-description">{lane.description}</span>
-								</span>
+									<span class="lane-option-text">
+										<span class="lane-option-label">{lane.label}</span>
+										<span class="lane-option-price">{lane.priceHint}</span>
+										<span class="lane-option-description">{lane.description}</span>
+										<span class="lane-option-fit">{lane.operatorFit}</span>
+									</span>
 							</label>
 						{/each}
 					</div>
@@ -550,6 +571,17 @@
 	.lane-option-description {
 		font-size: var(--text-caption);
 		color: var(--color-fg-tertiary);
+	}
+
+	.lane-option-price,
+	.lane-option-fit {
+		font-size: var(--text-caption);
+		color: var(--color-fg-secondary);
+	}
+
+	.lane-option-price {
+		font-family: var(--font-mono);
+		font-weight: var(--font-medium);
 	}
 
 	/* Footer */

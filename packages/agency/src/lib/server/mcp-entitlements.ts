@@ -94,11 +94,16 @@ export interface AgencyCommercialStateRow {
 	stripe_subscription_id: string | null;
 	product_id: string | null;
 	service_tier: string | null;
+	monthly_recurring_revenue_cents: number | null;
+	gross_margin_floor_percent: number | null;
+	owner_compensation_fit: string | null;
 	subscription_status: string | null;
 	contract_active: number;
 	billing_active: number;
 	current_period_end: string | null;
 	last_invoice_status: string | null;
+	operator_load_budget_json: string;
+	expansion_triggers_json: string;
 	metadata_json: string;
 	created_at: string;
 	updated_at: string;
@@ -152,11 +157,17 @@ export interface AgencyContractStateRow {
 	tenant_id: string | null;
 	contract_reference: string;
 	contract_status: 'draft' | 'pending' | 'active' | 'paused' | 'expired' | 'terminated';
+	service_tier: string;
+	monthly_recurring_revenue_cents: number | null;
+	gross_margin_floor_percent: number | null;
+	owner_compensation_fit: string | null;
 	contract_active: number;
 	service_entitled: number;
 	policy_accepted: number;
 	effective_at: string | null;
 	expires_at: string | null;
+	operator_load_budget_json: string;
+	expansion_triggers_json: string;
 	metadata_json: string;
 	created_at: string;
 	updated_at: string;
@@ -197,7 +208,12 @@ export function normalizeAgencyServiceTier(
 	if (
 		normalized === 'policy_os_core' ||
 		normalized === 'policy-os-core' ||
+		normalized === 'policy_os_enterprise' ||
+		normalized === 'policy-os-enterprise' ||
 		normalized === 'core' ||
+		normalized === 'enterprise' ||
+		normalized === 'enterprise_extension' ||
+		normalized === 'enterprise-extension' ||
 		normalized === 'team' ||
 		normalized === 'org'
 	) {
@@ -355,7 +371,7 @@ export async function listAgencyContractState(
 		const pattern = `%${search.toLowerCase()}%`;
 		const result = await db
 			.prepare(
-				`SELECT * FROM agency_contract_state
+			`SELECT * FROM agency_contract_state
          WHERE lower(COALESCE(auth_subject, '')) LIKE ?
             OR lower(COALESCE(normalized_email, '')) LIKE ?
             OR lower(COALESCE(account_id, '')) LIKE ?
@@ -365,14 +381,20 @@ export async function listAgencyContractState(
 			)
 			.bind(pattern, pattern, pattern, pattern, limit)
 			.all<AgencyContractStateRow>();
-		return result.results ?? [];
+		return (result.results ?? []).map((row) => ({
+			...row,
+			service_tier: normalizeAgencyServiceTier(row.service_tier),
+		}));
 	}
 
 	const result = await db
 		.prepare('SELECT * FROM agency_contract_state ORDER BY updated_at DESC LIMIT ?')
 		.bind(limit)
 		.all<AgencyContractStateRow>();
-	return result.results ?? [];
+	return (result.results ?? []).map((row) => ({
+		...row,
+		service_tier: normalizeAgencyServiceTier(row.service_tier),
+	}));
 }
 
 export async function listAgencyCommercialState(
@@ -539,11 +561,17 @@ export async function upsertAgencyContractState(
 		tenantId?: string | null;
 		contractReference: string;
 		contractStatus: AgencyContractStateRow['contract_status'];
+		serviceTier?: string | null;
+		monthlyRecurringRevenueCents?: number | null;
+		grossMarginFloorPercent?: number | null;
+		ownerCompensationFit?: string | null;
 		contractActive: boolean;
 		serviceEntitled: boolean;
 		policyAccepted: boolean;
 		effectiveAt?: string | null;
 		expiresAt?: string | null;
+		operatorLoadBudget?: Record<string, unknown> | null;
+		expansionTriggers?: string[] | null;
 		metadata?: Record<string, unknown>;
 	}
 ): Promise<void> {
@@ -552,19 +580,27 @@ export async function upsertAgencyContractState(
 		.prepare(
 			`INSERT INTO agency_contract_state (
          id, auth_subject, normalized_email, account_id, tenant_id, contract_reference, contract_status,
-         contract_active, service_entitled, policy_accepted, effective_at, expires_at, metadata_json
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         service_tier, monthly_recurring_revenue_cents, gross_margin_floor_percent, owner_compensation_fit,
+         contract_active, service_entitled, policy_accepted, effective_at, expires_at,
+         operator_load_budget_json, expansion_triggers_json, metadata_json
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(contract_reference) DO UPDATE SET
          auth_subject = COALESCE(excluded.auth_subject, agency_contract_state.auth_subject),
          normalized_email = COALESCE(excluded.normalized_email, agency_contract_state.normalized_email),
          account_id = COALESCE(excluded.account_id, agency_contract_state.account_id),
          tenant_id = COALESCE(excluded.tenant_id, agency_contract_state.tenant_id),
          contract_status = excluded.contract_status,
+         service_tier = excluded.service_tier,
+         monthly_recurring_revenue_cents = excluded.monthly_recurring_revenue_cents,
+         gross_margin_floor_percent = excluded.gross_margin_floor_percent,
+         owner_compensation_fit = excluded.owner_compensation_fit,
          contract_active = excluded.contract_active,
          service_entitled = excluded.service_entitled,
          policy_accepted = excluded.policy_accepted,
          effective_at = COALESCE(excluded.effective_at, agency_contract_state.effective_at),
          expires_at = COALESCE(excluded.expires_at, agency_contract_state.expires_at),
+         operator_load_budget_json = excluded.operator_load_budget_json,
+         expansion_triggers_json = excluded.expansion_triggers_json,
          metadata_json = excluded.metadata_json,
          updated_at = datetime('now')`
 		)
@@ -576,11 +612,17 @@ export async function upsertAgencyContractState(
 			input.tenantId ?? null,
 			input.contractReference,
 			input.contractStatus,
+			normalizeAgencyServiceTier(input.serviceTier),
+			input.monthlyRecurringRevenueCents ?? null,
+			input.grossMarginFloorPercent ?? null,
+			input.ownerCompensationFit ?? null,
 			input.contractActive ? 1 : 0,
 			input.serviceEntitled ? 1 : 0,
 			input.policyAccepted ? 1 : 0,
 			input.effectiveAt ?? null,
 			input.expiresAt ?? null,
+			JSON.stringify(input.operatorLoadBudget ?? {}),
+			JSON.stringify(input.expansionTriggers ?? []),
 			JSON.stringify(input.metadata ?? {})
 		)
 		.run();
@@ -721,6 +763,10 @@ export async function reconcileAgencyMcpEntitlement(
 		input.tenantId ?? existing?.tenant_id ?? null
 	);
 	const commercial = await findAgencyCommercialStateByEmail(db, input.authEmail ?? existing?.auth_email ?? null);
+	const resolvedServiceTier = normalizeAgencyServiceTier(
+		input.serviceTier ?? contract?.service_tier ?? commercial?.service_tier ?? existing?.service_tier
+	);
+	const commercialTermsMetadata = buildCommercialTermsMetadata(contract, commercial);
 	if (!source) {
 		const contractActive = contract ? contract.contract_active === 1 : commercial ? commercial.contract_active === 1 : existing?.contract_active === 1;
 		const billingActive = commercial ? commercial.billing_active === 1 : existing?.billing_active === 1;
@@ -741,6 +787,7 @@ export async function reconcileAgencyMcpEntitlement(
 					stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
 					subscription_status: commercial?.subscription_status ?? null,
 					product_id: commercial?.product_id ?? null,
+					...commercialTermsMetadata,
 				},
 			);
 			await db
@@ -765,7 +812,7 @@ export async function reconcileAgencyMcpEntitlement(
 					input.accountId ?? existing.account_id,
 					input.tenantId ?? existing.tenant_id,
 					input.workspaceAccountId ?? existing.workspace_account_id,
-					normalizeAgencyServiceTier(input.serviceTier ?? existing.service_tier),
+					resolvedServiceTier,
 					JSON.stringify(metadata),
 					contractActive ? 1 : 0,
 					billingActive ? 1 : 0,
@@ -790,7 +837,7 @@ export async function reconcileAgencyMcpEntitlement(
 			accountId: input.accountId ?? null,
 			tenantId: input.tenantId ?? null,
 			workspaceAccountId: input.workspaceAccountId ?? input.accountId ?? null,
-			serviceTier: normalizeAgencyServiceTier(input.serviceTier),
+			serviceTier: resolvedServiceTier,
 			metadata: {
 				...input.metadata,
 				source: commercial ? 'stripe_commercial_state' : 'session_bootstrap',
@@ -801,6 +848,7 @@ export async function reconcileAgencyMcpEntitlement(
 				stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
 				subscription_status: commercial?.subscription_status ?? null,
 				product_id: commercial?.product_id ?? null,
+				...commercialTermsMetadata,
 			},
 		}).then(async () => {
 			await db
@@ -869,6 +917,7 @@ export async function reconcileAgencyMcpEntitlement(
 			stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
 			subscription_status: commercial?.subscription_status ?? null,
 			product_id: commercial?.product_id ?? null,
+			...commercialTermsMetadata,
 		},
 		source.lane_id
 			? {
@@ -887,9 +936,9 @@ export async function reconcileAgencyMcpEntitlement(
 		accountId: source.identity_account_id ?? input.accountId ?? existing?.account_id ?? source.workspace_account_id,
 		tenantId: source.identity_tenant_id ?? input.tenantId ?? existing?.tenant_id ?? source.slug,
 		workspaceAccountId: source.workspace_account_id,
-		serviceTier: normalizeAgencyServiceTier(input.serviceTier),
-			metadata,
-		}).then(async (row) => {
+		serviceTier: resolvedServiceTier,
+		metadata,
+	}).then(async (row) => {
 		await db
 			.prepare(
 				`UPDATE agency_mcp_entitlements
@@ -986,7 +1035,8 @@ export function evaluateAgencyMcpEntitlement(
 	};
 }
 
-function safeParseMetadata(raw: string): Record<string, unknown> {
+function safeParseMetadata(raw: string | null | undefined): Record<string, unknown> {
+	if (!raw) return {};
 	try {
 		const parsed = JSON.parse(raw) as unknown;
 		if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
@@ -996,6 +1046,38 @@ function safeParseMetadata(raw: string): Record<string, unknown> {
 		// ignore malformed metadata and replace it on next write
 	}
 	return {};
+}
+
+function safeParseStringArray(raw: string | null | undefined): string[] {
+	if (!raw) return [];
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		if (Array.isArray(parsed)) {
+			return parsed.filter((value): value is string => typeof value === 'string');
+		}
+	} catch {
+		// ignore malformed expansion metadata and replace it on next write
+	}
+	return [];
+}
+
+function buildCommercialTermsMetadata(
+	contract: AgencyContractStateRow | null,
+	commercial: AgencyCommercialStateRow | null
+): Record<string, unknown> {
+	const source = contract ?? commercial;
+	if (!source) {
+		return {};
+	}
+
+	return {
+		service_tier: normalizeAgencyServiceTier(source.service_tier),
+		monthly_recurring_revenue_cents: source.monthly_recurring_revenue_cents ?? null,
+		gross_margin_floor_percent: source.gross_margin_floor_percent ?? null,
+		owner_compensation_fit: source.owner_compensation_fit ?? null,
+		operator_load_budget: safeParseMetadata(source.operator_load_budget_json),
+		expansion_triggers: safeParseStringArray(source.expansion_triggers_json),
+	};
 }
 
 function asObject(value: unknown): Record<string, unknown> | null {

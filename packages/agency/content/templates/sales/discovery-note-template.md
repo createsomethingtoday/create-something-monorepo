@@ -59,6 +59,11 @@
 
 - buyer authority level:
 - budget posture:
+- target price lane (`mcp_only|policy_os_trial|policy_os_core|enterprise_extension`):
+- monthly recurring revenue fit:
+- gross margin / delivery-cost concern:
+- operator-load budget concern:
+- owner-compensation fit (`fits|watch|does_not_fit`):
 - timeline urgency:
 - procurement or security constraints:
 - fit level (`high|medium|low`):

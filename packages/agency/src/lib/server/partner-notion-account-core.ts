@@ -243,7 +243,7 @@ async function listConnectedAccountsSafely(
 			.map(normalizeConnectedAccount)
 			.filter(
 				(account): account is NormalizedConnectedAccount =>
-					Boolean(account) && account.toolkit === 'notion',
+					account !== null && account.toolkit === 'notion',
 			);
 	} catch {
 		return [];

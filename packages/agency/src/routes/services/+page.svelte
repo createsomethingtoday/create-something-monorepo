@@ -18,32 +18,32 @@
       description:
         'A narrow discovery or compliance wedge when the client needs trusted connectivity before the operating layer.',
       type: 'Entry wedge',
-      price: 'Custom',
-      priceDescription: 'Scoped host setup'
+      price: 'Free or scoped',
+      priceDescription: 'Bounded setup; no standing support'
     },
     {
       name: 'Workflow Infrastructure',
       description:
         'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
       type: 'Implementation Sprint',
-      price: 'Custom',
-      priceDescription: 'Scoped build'
+      price: '$25K-$75K',
+      priceDescription: 'Fixed-scope build after mapping'
     },
     {
       name: 'Policy OS',
       description:
         'Approvals, policy artifacts, release checks, blocked states, and incident loops for workflows already in motion.',
       type: 'Governed Execution Retainer',
-      price: 'Custom',
-      priceDescription: 'Monthly'
+      price: '$12.5K-$30K/mo',
+      priceDescription: 'Trial/Core retainer'
     },
     {
       name: 'Enterprise Extension',
       description:
         'Audit-ready orchestration for regulated, high-volume, or multi-system workflows that need deterministic recovery.',
       type: 'Project + Managed',
-      price: 'Custom',
-      priceDescription: 'Scoped implementation'
+      price: '$30K+/mo',
+      priceDescription: 'Expansion retainer'
     }
   ];
 
@@ -51,6 +51,8 @@
     {
       tag: 'Entry wedge',
       title: 'MCP-only',
+      price: 'Free or scoped setup',
+      cadence: 'Bounded access, explicit graduation trigger',
       summary: 'Use this when the connection is the job and your team will operate the workflow directly.',
       points: [
         'Connectivity validation',
@@ -61,6 +63,8 @@
     {
       tag: 'Start here',
       title: 'Workflow Infrastructure',
+      price: '$25K-$75K project',
+      cadence: 'Mapping first; fixed scope before implementation',
       summary: 'Fix the first workflow your team still protects by hand and make the handoffs reliable.',
       points: [
         'Business-rule mapping',
@@ -73,17 +77,22 @@
     {
       tag: 'Default paid offer',
       title: 'Policy OS',
+      price: '$12.5K-$30K/month',
+      cadence: 'Trial starts at $12.5K; Core starts at $18K',
       summary: `The governed execution layer that makes ${deliveryVector.clientFacingLabel} safe to run faster in production.`,
       points: [
         'Approval and block boundaries',
         'Reason-coded access decisions',
         'Release checks and incident loops',
-        'Evals tied to real workflow behavior'
+        'Evals tied to real workflow behavior',
+        'Operator-load budget and priced expansion triggers'
       ]
     },
     {
       tag: 'High-stakes scale',
       title: 'Enterprise Extension',
+      price: '$30K+/month',
+      cadence: 'Multiple workflows, custom UI, or high-touch governance',
       summary: 'Add this when several systems, teams, or compliance requirements must stay aligned.',
       points: [
         'Cross-system orchestration',
@@ -125,6 +134,11 @@
       question: 'When should we add Policy OS?',
       answer:
         'Add it when failures become expensive or the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
+    },
+    {
+      question: 'What should we budget for Policy OS?',
+      answer:
+        'Policy OS Trial is $12.5K-$15K/month for one governed workflow. Policy OS Core is $18K-$30K/month, with $22K/month as the default planning anchor when recurring governance, review, and tuning are owned by CREATE SOMETHING.'
     },
     {
       question: 'Do you still offer MCP-only?',
@@ -246,6 +260,10 @@
           <article class="product-surface offer-card" class:offerFeatured={offer.featured}>
             <span class="offer-tag">{offer.tag}</span>
             <h3>{offer.title}</h3>
+            <div class="offer-commercial">
+              <span>{offer.price}</span>
+              <span>{offer.cadence}</span>
+            </div>
             <p>{offer.summary}</p>
             <ul class="product-list">
               {#each offer.points as point}
@@ -480,6 +498,20 @@
     margin: 0;
     color: var(--color-fg-secondary);
     line-height: 1.68;
+  }
+
+  .offer-commercial {
+    display: grid;
+    gap: 0.2rem;
+    color: var(--color-fg-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .offer-commercial span:first-child {
+    color: var(--color-fg-primary);
+    font-weight: 700;
   }
 
   .offer-card.offerFeatured {

@@ -9,11 +9,17 @@
 		tenant_id: string | null;
 		contract_reference: string;
 		contract_status: 'draft' | 'pending' | 'active' | 'paused' | 'expired' | 'terminated';
+		service_tier: string;
+		monthly_recurring_revenue_cents: number | null;
+		gross_margin_floor_percent: number | null;
+		owner_compensation_fit: string | null;
 		contract_active: number;
 		service_entitled: number;
 		policy_accepted: number;
 		effective_at: string | null;
 		expires_at: string | null;
+		operator_load_budget_json: string;
+		expansion_triggers_json: string;
 		updated_at: string;
 	};
 
@@ -25,11 +31,17 @@
 		tenant_id: string;
 		contract_reference: string;
 		contract_status: Contract['contract_status'];
+		service_tier: string;
+		monthly_recurring_revenue: string;
+		gross_margin_floor_percent: string;
+		owner_compensation_fit: string;
 		contract_active: boolean;
 		service_entitled: boolean;
 		policy_accepted: boolean;
 		effective_at: string;
 		expires_at: string;
+		operator_load_budget_json: string;
+		expansion_triggers_json: string;
 	};
 
 	let { data } = $props();
@@ -45,11 +57,31 @@
 		tenant_id: '',
 		contract_reference: '',
 		contract_status: 'active',
+		service_tier: 'policy_os_trial',
+		monthly_recurring_revenue: '12500',
+		gross_margin_floor_percent: '70',
+		owner_compensation_fit: 'fits',
 		contract_active: true,
 		service_entitled: true,
 		policy_accepted: true,
 		effective_at: '',
 		expires_at: '',
+		operator_load_budget_json: JSON.stringify(
+			{
+				max_live_review_meetings_per_month: 1,
+				async_review_frequency: 'weekly',
+				covered_workflow_count: 1,
+				covered_downstream_systems: 3,
+				monthly_policy_tuning_limit: 'bounded',
+			},
+			null,
+			2
+		),
+		expansion_triggers_json: JSON.stringify(
+			['new workflow', 'extra downstream system', 'custom UI', 'higher meeting cadence'],
+			null,
+			2
+		),
 	});
 
 	$effect(() => {
@@ -75,11 +107,17 @@
 			tenant_id: contract.tenant_id ?? '',
 			contract_reference: contract.contract_reference,
 			contract_status: contract.contract_status,
+			service_tier: contract.service_tier ?? 'policy_os_trial',
+			monthly_recurring_revenue: dollarsFromCents(contract.monthly_recurring_revenue_cents),
+			gross_margin_floor_percent: contract.gross_margin_floor_percent?.toString() ?? '',
+			owner_compensation_fit: contract.owner_compensation_fit ?? 'fits',
 			contract_active: contract.contract_active === 1,
 			service_entitled: contract.service_entitled === 1,
 			policy_accepted: contract.policy_accepted === 1,
 			effective_at: contract.effective_at ?? '',
 			expires_at: contract.expires_at ?? '',
+			operator_load_budget_json: formatJson(contract.operator_load_budget_json, '{}'),
+			expansion_triggers_json: formatJson(contract.expansion_triggers_json, '[]'),
 		};
 		message = `Loaded ${contract.contract_reference} into the editor.`;
 		errorMessage = '';
@@ -100,11 +138,17 @@
 					tenant_id: form.tenant_id.trim() || null,
 					contract_reference: form.contract_reference.trim(),
 					contract_status: form.contract_status,
+					service_tier: form.service_tier,
+					monthly_recurring_revenue_cents: centsFromDollars(form.monthly_recurring_revenue),
+					gross_margin_floor_percent: parseOptionalInteger(form.gross_margin_floor_percent),
+					owner_compensation_fit: form.owner_compensation_fit,
 					contract_active: form.contract_active,
 					service_entitled: form.service_entitled,
 					policy_accepted: form.policy_accepted,
 					effective_at: form.effective_at.trim() || null,
 					expires_at: form.expires_at.trim() || null,
+					operator_load_budget: parseJsonObject(form.operator_load_budget_json),
+					expansion_triggers: parseStringArray(form.expansion_triggers_json),
 				}),
 			});
 			const payload = (await response.json().catch(() => ({}))) as { message?: string };
@@ -118,6 +162,55 @@
 		} finally {
 			busy = false;
 		}
+	}
+
+	function dollarsFromCents(cents: number | null): string {
+		return typeof cents === 'number' ? String(cents / 100) : '';
+	}
+
+	function centsFromDollars(value: string): number | null {
+		const normalized = value.replace(/[$,\s]/g, '');
+		if (!normalized) return null;
+		const parsed = Number.parseFloat(normalized);
+		return Number.isFinite(parsed) ? Math.round(parsed * 100) : null;
+	}
+
+	function parseOptionalInteger(value: string): number | null {
+		const parsed = Number.parseInt(value.trim(), 10);
+		return Number.isFinite(parsed) ? parsed : null;
+	}
+
+	function formatJson(raw: string | null | undefined, fallback: string): string {
+		try {
+			return JSON.stringify(JSON.parse(raw || fallback), null, 2);
+		} catch {
+			return fallback;
+		}
+	}
+
+	function parseJsonObject(raw: string): Record<string, unknown> {
+		const parsed = JSON.parse(raw || '{}') as unknown;
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+			throw new Error('Operator-load budget must be a JSON object');
+		}
+		return parsed as Record<string, unknown>;
+	}
+
+	function parseStringArray(raw: string): string[] {
+		const parsed = JSON.parse(raw || '[]') as unknown;
+		if (!Array.isArray(parsed) || parsed.some((value) => typeof value !== 'string')) {
+			throw new Error('Expansion triggers must be a JSON string array');
+		}
+		return parsed as string[];
+	}
+
+	function formatCurrencyFromCents(cents: number | null): string {
+		if (typeof cents !== 'number') return 'no MRR';
+		return new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: 'USD',
+			maximumFractionDigits: 0,
+		}).format(cents / 100);
 	}
 </script>
 
@@ -156,8 +249,32 @@
 						</select>
 					</label>
 					<label>
+						<span>Service Tier</span>
+						<select bind:value={form.service_tier}>
+							<option value="mcp_only">mcp_only</option>
+							<option value="policy_os_trial">policy_os_trial</option>
+							<option value="policy_os_core">policy_os_core</option>
+						</select>
+					</label>
+					<label>
+						<span>Monthly Recurring Revenue</span>
+						<input bind:value={form.monthly_recurring_revenue} placeholder="12500" />
+					</label>
+					<label>
+						<span>Gross Margin Floor %</span>
+						<input bind:value={form.gross_margin_floor_percent} placeholder="70" />
+					</label>
+					<label>
+						<span>Owner Compensation Fit</span>
+						<select bind:value={form.owner_compensation_fit}>
+							<option value="fits">fits</option>
+							<option value="watch">watch</option>
+							<option value="does_not_fit">does_not_fit</option>
+						</select>
+					</label>
+					<label>
 						<span>Auth Subject</span>
-						<input bind:value={form.auth_subject} placeholder="auth0|..." />
+						<input bind:value={form.auth_subject} placeholder="user_..." />
 					</label>
 					<label>
 						<span>Email</span>
@@ -185,6 +302,14 @@
 					<label><input type="checkbox" bind:checked={form.service_entitled} /> Service entitled</label>
 					<label><input type="checkbox" bind:checked={form.policy_accepted} /> Policy accepted</label>
 				</div>
+				<label>
+					<span>Operator Load Budget JSON</span>
+					<textarea bind:value={form.operator_load_budget_json} rows="8" spellcheck="false"></textarea>
+				</label>
+				<label>
+					<span>Expansion Triggers JSON</span>
+					<textarea bind:value={form.expansion_triggers_json} rows="5" spellcheck="false"></textarea>
+				</label>
 				<div class="actions">
 					<button disabled={busy || !form.contract_reference.trim()} onclick={saveContract}>Save contract</button>
 				</div>
@@ -225,6 +350,8 @@
 										<div class:good={contract.contract_active === 1} class:bad={contract.contract_active !== 1}>
 											{contract.contract_status}
 										</div>
+										<div class="muted">{contract.service_tier} · {formatCurrencyFromCents(contract.monthly_recurring_revenue_cents)}</div>
+										<div class="muted">margin={contract.gross_margin_floor_percent ?? 'n/a'}% owner={contract.owner_compensation_fit ?? 'n/a'}</div>
 										<div class="muted">entitled={contract.service_entitled === 1 ? 'yes' : 'no'} policy={contract.policy_accepted === 1 ? 'yes' : 'no'}</div>
 									</td>
 									<td>
@@ -254,6 +381,7 @@
 	.form-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; }
 	label span { display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.6); margin-bottom: 0.35rem; }
 	input, select { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.03); color: inherit; padding: 0.75rem 0.9rem; font: inherit; }
+	textarea { width: 100%; min-height: 7rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.03); color: inherit; padding: 0.75rem 0.9rem; font: inherit; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; resize: vertical; }
 	.toggles { display: flex; flex-direction: column; gap: 0.75rem; margin: 1rem 0; }
 	.toggles label { display: flex; align-items: center; gap: 0.65rem; }
 	.actions, .toolbar, .records-header { display: flex; gap: 0.75rem; align-items: center; }

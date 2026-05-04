@@ -3,6 +3,7 @@
   import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
   import { products } from '$lib/data/services';
   // Group products by category
+  const serviceRetainers = products.filter((p) => p.category === 'service');
   const featured = products.filter((p) => p.category === 'featured');
   const devTools = products.filter((p) => p.category === 'developer-tools');
   const framework = products.filter((p) => p.category === 'framework');
@@ -48,6 +49,35 @@
         pitch language.
       </p>
     </BlurFade>
+  </div>
+</section>
+
+<!-- Service Retainers -->
+<section class="products-section">
+  <div class="section-inner">
+    <BlurFade delay={0.1}>
+      <div class="section-header">
+        <h2 class="section-eyebrow">Service Retainers</h2>
+        <p class="section-desc">
+          Margin-safe Policy OS lanes for governed workflow operations, priced so delivery can stay
+          remote, scoped, and owner-operated.
+        </p>
+      </div>
+    </BlurFade>
+    <div class="category-grid">
+      {#each serviceRetainers as product, index}
+        <BlurFade delay={0.2 + index * 0.1}>
+          <a href={product.href} class="product-card category-card">
+            <div class="product-badge badge-accent">{product.badge}</div>
+            <h3 class="product-name">{product.title}</h3>
+            <p class="product-tagline">{product.tagline}</p>
+            <p class="product-price">{product.pricing}</p>
+            <p class="product-description">{product.description}</p>
+            <span class="product-cta">{product.timeline} →</span>
+          </a>
+        </BlurFade>
+      {/each}
+    </div>
   </div>
 </section>
 
@@ -372,6 +402,14 @@
     line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .product-price {
+    color: var(--color-fg-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    margin-bottom: var(--space-3, 0.75rem);
   }
 
   .product-footer {

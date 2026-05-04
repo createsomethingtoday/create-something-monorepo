@@ -7,7 +7,7 @@
 
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
-import { createStripeClient, getProductIdByStripePriceId, HANDLED_WEBHOOK_EVENTS } from '$lib/services/stripe';
+import { createStripeClient, getProductIdByStripePriceId, getStripePrice, HANDLED_WEBHOOK_EVENTS } from '$lib/services/stripe';
 import { createPersistentLogger, createLogger, type Logger } from '@create-something/canon/utils';
 import type Stripe from 'stripe';
 import { normalizeAgencyServiceTier } from '$lib/server/mcp-entitlements';
@@ -585,6 +585,7 @@ async function upsertCommercialStateFromCheckout(
 		stripeCustomerId,
 		productId,
 		serviceTier: deriveServiceTier(productId),
+		...deriveCommercialTerms(productId),
 		subscriptionStatus: mode === 'subscription' ? 'checkout_completed' : 'one_time_purchase',
 		contractActive,
 		billingActive,
@@ -631,6 +632,7 @@ async function upsertCommercialStateFromSubscription(
 		stripeSubscriptionId: subscription.id,
 		productId,
 		serviceTier: deriveServiceTier(productId),
+		...deriveCommercialTerms(productId),
 		subscriptionStatus: options.forceCanceled ? 'canceled' : subscription.status,
 		contractActive: active,
 		billingActive: active,
@@ -698,6 +700,11 @@ async function upsertAgencyCommercialAccount(
 		stripeSubscriptionId?: string | null;
 		productId?: string | null;
 		serviceTier?: string | null;
+		monthlyRecurringRevenueCents?: number | null;
+		grossMarginFloorPercent?: number | null;
+		ownerCompensationFit?: string | null;
+		operatorLoadBudget?: Record<string, unknown> | null;
+		expansionTriggers?: string[] | null;
 		subscriptionStatus?: string | null;
 		contractActive: boolean;
 		billingActive: boolean;
@@ -713,18 +720,25 @@ async function upsertAgencyCommercialAccount(
 		.prepare(
 			`INSERT INTO agency_commercial_accounts (
          id, normalized_email, stripe_customer_id, stripe_subscription_id, product_id, service_tier,
-         subscription_status, contract_active, billing_active, current_period_end, last_invoice_status, metadata_json
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         monthly_recurring_revenue_cents, gross_margin_floor_percent, owner_compensation_fit,
+         subscription_status, contract_active, billing_active, current_period_end, last_invoice_status,
+         operator_load_budget_json, expansion_triggers_json, metadata_json
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(stripe_customer_id) DO UPDATE SET
          normalized_email = COALESCE(excluded.normalized_email, agency_commercial_accounts.normalized_email),
          stripe_subscription_id = COALESCE(excluded.stripe_subscription_id, agency_commercial_accounts.stripe_subscription_id),
          product_id = COALESCE(excluded.product_id, agency_commercial_accounts.product_id),
          service_tier = COALESCE(excluded.service_tier, agency_commercial_accounts.service_tier),
+         monthly_recurring_revenue_cents = COALESCE(excluded.monthly_recurring_revenue_cents, agency_commercial_accounts.monthly_recurring_revenue_cents),
+         gross_margin_floor_percent = COALESCE(excluded.gross_margin_floor_percent, agency_commercial_accounts.gross_margin_floor_percent),
+         owner_compensation_fit = COALESCE(excluded.owner_compensation_fit, agency_commercial_accounts.owner_compensation_fit),
          subscription_status = COALESCE(excluded.subscription_status, agency_commercial_accounts.subscription_status),
          contract_active = excluded.contract_active,
          billing_active = excluded.billing_active,
          current_period_end = COALESCE(excluded.current_period_end, agency_commercial_accounts.current_period_end),
          last_invoice_status = COALESCE(excluded.last_invoice_status, agency_commercial_accounts.last_invoice_status),
+         operator_load_budget_json = COALESCE(excluded.operator_load_budget_json, agency_commercial_accounts.operator_load_budget_json),
+         expansion_triggers_json = COALESCE(excluded.expansion_triggers_json, agency_commercial_accounts.expansion_triggers_json),
          metadata_json = excluded.metadata_json,
          updated_at = datetime('now')`
 		)
@@ -735,11 +749,16 @@ async function upsertAgencyCommercialAccount(
 			input.stripeSubscriptionId ?? null,
 			input.productId ?? null,
 			input.serviceTier ?? null,
+			input.monthlyRecurringRevenueCents ?? null,
+			input.grossMarginFloorPercent ?? null,
+			input.ownerCompensationFit ?? null,
 			input.subscriptionStatus ?? null,
 			input.contractActive ? 1 : 0,
 			input.billingActive ? 1 : 0,
 			input.currentPeriodEnd ?? null,
 			input.lastInvoiceStatus ?? null,
+			JSON.stringify(input.operatorLoadBudget ?? {}),
+			JSON.stringify(input.expansionTriggers ?? []),
 			JSON.stringify(input.metadata ?? {})
 		)
 		.run()
@@ -752,8 +771,10 @@ async function upsertAgencyCommercialAccount(
 				.prepare(
 					`INSERT INTO agency_commercial_accounts (
              id, normalized_email, stripe_subscription_id, product_id, service_tier,
-             subscription_status, contract_active, billing_active, current_period_end, last_invoice_status, metadata_json
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             monthly_recurring_revenue_cents, gross_margin_floor_percent, owner_compensation_fit,
+             subscription_status, contract_active, billing_active, current_period_end, last_invoice_status,
+             operator_load_budget_json, expansion_triggers_json, metadata_json
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 				)
 				.bind(
 					`comm_${crypto.randomUUID().replace(/-/g, '')}`,
@@ -761,11 +782,16 @@ async function upsertAgencyCommercialAccount(
 					input.stripeSubscriptionId ?? null,
 					input.productId ?? null,
 					input.serviceTier ?? null,
+					input.monthlyRecurringRevenueCents ?? null,
+					input.grossMarginFloorPercent ?? null,
+					input.ownerCompensationFit ?? null,
 					input.subscriptionStatus ?? null,
 					input.contractActive ? 1 : 0,
 					input.billingActive ? 1 : 0,
 					input.currentPeriodEnd ?? null,
 					input.lastInvoiceStatus ?? null,
+					JSON.stringify(input.operatorLoadBudget ?? {}),
+					JSON.stringify(input.expansionTriggers ?? []),
 					JSON.stringify(input.metadata ?? {})
 				)
 				.run();
@@ -809,7 +835,25 @@ function normalizeProductId(raw: string | undefined): string | null {
 
 function deriveServiceTier(productId: string | null): string | null {
 	if (!productId) return null;
-	return normalizeAgencyServiceTier(productId);
+	return getStripePrice(productId)?.serviceTier ?? normalizeAgencyServiceTier(productId);
+}
+
+function deriveCommercialTerms(productId: string | null) {
+	if (!productId) {
+		return {};
+	}
+	const price = getStripePrice(productId);
+	if (!price) {
+		return {};
+	}
+
+	return {
+		monthlyRecurringRevenueCents: price.monthlyRecurringRevenueCents ?? null,
+		grossMarginFloorPercent: price.grossMarginFloorPercent ?? null,
+		ownerCompensationFit: price.ownerCompensationFit ?? null,
+		operatorLoadBudget: price.operatorLoadBudget ?? null,
+		expansionTriggers: price.expansionTriggers ?? null,
+	};
 }
 
 /**

@@ -10,11 +10,17 @@ interface ContractBody {
 	tenant_id?: string | null;
 	contract_reference?: string;
 	contract_status?: 'draft' | 'pending' | 'active' | 'paused' | 'expired' | 'terminated';
+	service_tier?: string | null;
+	monthly_recurring_revenue_cents?: number | null;
+	gross_margin_floor_percent?: number | null;
+	owner_compensation_fit?: string | null;
 	contract_active?: boolean;
 	service_entitled?: boolean;
 	policy_accepted?: boolean;
 	effective_at?: string | null;
 	expires_at?: string | null;
+	operator_load_budget?: Record<string, unknown> | null;
+	expansion_triggers?: string[] | null;
 	metadata?: Record<string, unknown>;
 }
 
@@ -56,11 +62,17 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			tenantId: body.tenant_id?.trim() || null,
 			contractReference: body.contract_reference.trim(),
 			contractStatus: body.contract_status,
+			serviceTier: body.service_tier?.trim() || null,
+			monthlyRecurringRevenueCents: sanitizeNumber(body.monthly_recurring_revenue_cents),
+			grossMarginFloorPercent: sanitizeNumber(body.gross_margin_floor_percent),
+			ownerCompensationFit: body.owner_compensation_fit?.trim() || null,
 			contractActive: Boolean(body.contract_active),
 			serviceEntitled: Boolean(body.service_entitled),
 			policyAccepted: Boolean(body.policy_accepted),
 			effectiveAt: body.effective_at?.trim() || null,
 			expiresAt: body.expires_at?.trim() || null,
+			operatorLoadBudget: body.operator_load_budget ?? null,
+			expansionTriggers: Array.isArray(body.expansion_triggers) ? body.expansion_triggers : null,
 			metadata: {
 				operator_email: operator.email,
 				updated_via: 'agency_contract_api',
@@ -83,4 +95,8 @@ function handleError(error: unknown) {
 		{ error: 'internal_error', message: error instanceof Error ? error.message : 'Unexpected error' },
 		{ status: 500 }
 	);
+}
+
+function sanitizeNumber(value: number | null | undefined): number | null {
+	return typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : null;
 }

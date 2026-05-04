@@ -14,7 +14,7 @@
 		"check": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"smoke:mobile": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.mobile-smoke.config.ts",
-		"db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-db",
+		"db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-db --remote",
 		"db:migrate:local": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-db --local",
 		"deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-agency --commit-dirty=true",
 		"deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-agency --branch=preview --commit-dirty=true",
@@ -42,6 +42,8 @@
 		"wrangler": "4.64.0"
 	},
 	"dependencies": {
+		"@clerk/backend": "^2.18.0",
+		"@clerk/clerk-js": "^5.57.1",
 		"@composio/core": "^0.6.4",
 		"@create-something/canon": "workspace:*",
 		"@create-something/mcp-authz": "workspace:*",

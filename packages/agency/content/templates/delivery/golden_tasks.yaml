@@ -13,10 +13,24 @@ metadata:
   review_cadence: "weekly-review-monthly-tuning"
   billing_and_entitlement_assumptions:
     service_tier: "policy_os_trial" # mcp_only | policy_os_trial | policy_os_core
+    monthly_recurring_revenue: "<amount>"
+    gross_margin_floor_percent: 70
+    owner_compensation_fit: "fits" # fits | watch | does_not_fit
     service_entitled: true
     policy_accepted: true
     contract_active: true
     billing_active: true
+  operator_load_budget:
+    max_live_review_meetings_per_month: 1
+    async_review_frequency: "weekly"
+    covered_workflow_count: 1
+    covered_downstream_systems: 3
+    monthly_policy_tuning_limit: "<limit>"
+    expansion_triggers:
+      - "new workflow"
+      - "extra downstream system"
+      - "custom UI"
+      - "higher meeting cadence"
 
 scenarios:
   - id: "core-governed-workflow"

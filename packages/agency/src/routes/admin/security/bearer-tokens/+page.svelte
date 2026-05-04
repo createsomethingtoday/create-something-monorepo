@@ -121,7 +121,7 @@
 		<header class="hero">
 			<p class="eyebrow">Operator Surface</p>
 			<h1>Managed Bearer Governance</h1>
-			<p>Live entitlement state for `.agency` bearer tokens. Auth0 proves identity. This table controls whether that identity remains entitled to use MCP access.</p>
+			<p>Live entitlement state for `.agency` bearer tokens. Clerk proves identity. This table controls whether that identity remains entitled to use MCP access.</p>
 			<nav class="subnav">
 				<a href="/admin/security">Overview</a>
 				<a href="/admin/security/bearer-tokens" aria-current="page">Bearer Governance</a>
