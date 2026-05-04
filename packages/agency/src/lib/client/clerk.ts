@@ -8,6 +8,7 @@
 import type { Clerk as ClerkInstance } from '@clerk/clerk-js';
 
 let clerkPromise: Promise<ClerkInstance> | null = null;
+let cachedPublishableKey: string | null = null;
 
 export async function loadBrowserClerk(
 	publishableKey: string | null | undefined,
@@ -16,7 +17,8 @@ export async function loadBrowserClerk(
 		throw new Error('CLERK_PUBLISHABLE_KEY is not configured');
 	}
 
-	if (!clerkPromise) {
+	if (!clerkPromise || cachedPublishableKey !== publishableKey) {
+		cachedPublishableKey = publishableKey;
 		clerkPromise = (async () => {
 			const { Clerk } = await import('@clerk/clerk-js');
 			const clerk = new Clerk(publishableKey);

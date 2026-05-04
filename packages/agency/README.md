@@ -172,6 +172,10 @@ CLERK_PUBLISHABLE_KEY
 CLERK_SECRET_KEY
 ```
 
+`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `PUBLIC_CLERK_PUBLISHABLE_KEY`
+are accepted as aliases for Clerk dashboard copy/paste compatibility, but
+`CLERK_PUBLISHABLE_KEY` remains the canonical app key.
+
 Optional Pages secrets:
 
 ```bash
@@ -191,7 +195,7 @@ Clerk secrets must live only under `/agency/auth`. Do not store duplicate `CLERK
 Seed Clerk tenant values into Infisical:
 
 ```bash
-CLERK_PUBLISHABLE_KEY=...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
 CLERK_SECRET_KEY=...
 CLERK_JWT_KEY=...
 CLERK_AUTHORIZED_PARTIES=https://createsomething.agency

@@ -6,15 +6,16 @@
  */
 
 import type { LayoutServerLoad } from './$types';
+import { resolveClerkPublishableKey } from '$lib/server/clerk';
 
 export const load: LayoutServerLoad = async ({ url, locals, platform }) => {
+	const env = platform?.env as Record<string, unknown> | undefined;
+
 	return {
 		pathname: url.pathname,
 		user: locals.user ?? null,
 		publicConfig: {
-			clerkPublishableKey:
-				(platform?.env as Record<string, string | undefined> | undefined)
-					?.CLERK_PUBLISHABLE_KEY || null,
+			clerkPublishableKey: resolveClerkPublishableKey(env) ?? null,
 		},
 	};
 };

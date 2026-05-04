@@ -19,6 +19,8 @@ import {
 
 export interface ClerkRuntimeEnv extends Record<string, string | undefined> {
 	CLERK_PUBLISHABLE_KEY?: string;
+	NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
+	PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
 	CLERK_SECRET_KEY?: string;
 	CLERK_JWT_KEY?: string;
 	CLERK_AUTHORIZED_PARTIES?: string;
@@ -47,6 +49,22 @@ export function getClerkClient(env: ClerkRuntimeEnv): ClerkClient {
 function normalizeJwtKey(value: string | undefined): string | undefined {
 	if (!value) return undefined;
 	return value.replace(/\\n/g, '\n');
+}
+
+function stringValue(value: unknown): string | undefined {
+	return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+export function resolveClerkPublishableKey(
+	env?: Record<string, unknown> | null,
+): string | undefined {
+	if (!env) return undefined;
+
+	return (
+		stringValue(env.CLERK_PUBLISHABLE_KEY) ||
+		stringValue(env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) ||
+		stringValue(env.PUBLIC_CLERK_PUBLISHABLE_KEY)
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -153,7 +171,6 @@ export function isUserEmailVerified(user: User): boolean {
 // ---------------------------------------------------------------------------
 
 const CLERK_ENV_KEYS = [
-	'CLERK_PUBLISHABLE_KEY',
 	'CLERK_SECRET_KEY',
 	'CLERK_JWT_KEY',
 	'CLERK_AUTHORIZED_PARTIES',
@@ -166,9 +183,14 @@ export function resolveClerkEnv(
 	const resolved: ClerkRuntimeEnv = {};
 	if (!platformEnv) return resolved;
 
+	const publishableKey = resolveClerkPublishableKey(platformEnv);
+	if (publishableKey) {
+		resolved.CLERK_PUBLISHABLE_KEY = publishableKey;
+	}
+
 	for (const key of CLERK_ENV_KEYS) {
-		const value = platformEnv[key];
-		if (typeof value === 'string') {
+		const value = stringValue(platformEnv[key]);
+		if (value) {
 			resolved[key] = value;
 		}
 	}

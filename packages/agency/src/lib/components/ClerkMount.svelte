@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
 	import { loadBrowserClerk } from '$lib/client/clerk';
 
 	interface Props {
@@ -22,7 +21,10 @@
 	const missingConfigMsg =
 		'Authentication is not configured for this environment yet. Contact support if you need access.';
 
-	let mountError = $state<string | null>(publishableKey ? null : missingConfigMsg);
+	let mountError = $state<string | null>(null);
+	const visibleError = $derived(
+		publishableKey ? mountError : missingConfigMsg,
+	);
 
 	// .agency design-system aligned appearance
 	const sharedVariables = {
@@ -92,39 +94,56 @@
 
 	const appearance = $derived(mode === 'userProfile' ? profileAppearance : authAppearance);
 
-	onMount(() => {
-		if (!browser || !host || !publishableKey) return;
+	$effect(() => {
+		const currentHost = host;
+		const currentKey = publishableKey;
+		const currentMode = mode;
+		const currentFallbackRedirectUrl = fallbackRedirectUrl;
+		const currentForceRedirectUrl = forceRedirectUrl;
+		const currentAppearance = appearance;
+
+		if (!browser) return;
+
+		if (!currentKey) {
+			mountError = null;
+			if (currentHost) currentHost.innerHTML = '';
+			return;
+		}
+
+		mountError = null;
+		if (!currentHost) return;
 
 		let active = true;
+		currentHost.innerHTML = '';
 
 		void (async () => {
 			try {
-				const clerk = await loadBrowserClerk(publishableKey);
+				const clerk = await loadBrowserClerk(currentKey);
 				if (!active) return;
 
-				if (mode === 'signIn') {
-					clerk.mountSignIn(host, {
+				if (currentMode === 'signIn') {
+					clerk.mountSignIn(currentHost, {
 						routing: 'path',
 						path: '/login',
 						signUpUrl: '/signup',
-						fallbackRedirectUrl,
-						forceRedirectUrl,
-						appearance,
+						fallbackRedirectUrl: currentFallbackRedirectUrl,
+						forceRedirectUrl: currentForceRedirectUrl,
+						appearance: currentAppearance,
 					});
-				} else if (mode === 'signUp') {
-					clerk.mountSignUp(host, {
+				} else if (currentMode === 'signUp') {
+					clerk.mountSignUp(currentHost, {
 						routing: 'path',
 						path: '/signup',
 						signInUrl: '/login',
-						fallbackRedirectUrl,
-						forceRedirectUrl,
-						appearance,
+						fallbackRedirectUrl: currentFallbackRedirectUrl,
+						forceRedirectUrl: currentForceRedirectUrl,
+						appearance: currentAppearance,
 					});
 				} else {
-					clerk.mountUserProfile(host, {
+					clerk.mountUserProfile(currentHost, {
 						routing: 'path',
 						path: '/settings',
-						appearance,
+						appearance: currentAppearance,
 					});
 				}
 			} catch (error) {
@@ -135,14 +154,14 @@
 
 		return () => {
 			active = false;
-			if (host) host.innerHTML = '';
+			currentHost.innerHTML = '';
 		};
 	});
 </script>
 
-{#if mountError}
+{#if visibleError}
 	<div class="mount-error" role="status" aria-live="polite">
-		<p>{mountError}</p>
+		<p>{visibleError}</p>
 	</div>
 {:else}
 	<div class:profile-mode={mode === 'userProfile'} class="mount-host" bind:this={host}></div>

@@ -80,6 +80,8 @@ declare global {
 				WORKWAY_API_URL?: string;
 				// Clerk identity
 				CLERK_PUBLISHABLE_KEY?: string;
+				NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
+				PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
 				CLERK_SECRET_KEY?: string;
 				CLERK_JWT_KEY?: string;
 				CLERK_AUTHORIZED_PARTIES?: string;
