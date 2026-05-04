@@ -58,6 +58,8 @@
     "braintrust:eval:mcp:exa": "pnpm exec braintrust eval ./evals/braintrust/mcp/exa-workload-latency.eval.ts",
     "braintrust:eval:mcp:hub-coverage": "pnpm exec braintrust eval ./evals/braintrust/mcp/hub-coverage-matrix.eval.ts",
     "braintrust:eval:mcp:intent-routing": "pnpm exec braintrust eval ./evals/braintrust/mcp/hub-intent-routing-quality.eval.ts",
+    "braintrust:eval:dify:abundance-staff": "pnpm exec braintrust eval ./evals/braintrust/dify/abundance-staff-headcount-agent.eval.ts",
+    "braintrust:eval:dify:abundance-staff:local": "pnpm exec braintrust eval ./evals/braintrust/dify/abundance-staff-headcount-agent.eval.ts --no-send-logs",
     "promptfoo:hub:validate": "pnpm dlx promptfoo@latest validate -c evals/promptfoo/hub/promptfooconfig.yaml",
     "promptfoo:hub:eval": "pnpm dlx promptfoo@latest eval -c evals/promptfoo/hub/promptfooconfig.yaml",
     "braintrust:smoke": "tsx scripts/braintrust-openai-smoke.ts",

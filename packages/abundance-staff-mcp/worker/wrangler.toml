@@ -1,0 +1,32 @@
+name = "abundance-staff-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[vars]
+DIFY_AGENT_NAME = "dify-abundance-staff"
+ALLOW_PII_LOOKUP = "false"
+
+# Secrets required in production:
+# - MCP_API_KEY
+#
+# Optional production flags:
+# - ALLOW_PII_LOOKUP=true   # enables include_contact=true tool responses
+# - DIFY_AGENT_NAME=dify
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "AbundanceStaffMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AbundanceStaffMCP"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "abundance-npg-staff"
+database_id = "b622b1c7-2d05-4b18-856e-af22edcc56ee"

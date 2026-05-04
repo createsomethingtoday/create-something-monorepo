@@ -1,0 +1,222 @@
+app:
+  description: Paylocity staff headcount lookup, summary, and enrichment queueing via Abundance Staff MCP
+  icon: d38a1ef3-3163-42f9-846a-c0e659048215
+  icon_background: ''
+  icon_type: image
+  mode: agent-chat
+  name: Abundance Staff Headcount Agent
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 10
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-staff-mcp
+        provider_name: ABUNDANCE STAFF
+        provider_type: mcp
+        tool_label: abundance_staff_summarize_headcount
+        tool_name: abundance_staff_summarize_headcount
+        tool_parameters:
+          active_status: null
+          department: null
+          location: null
+          program: null
+          role_bucket: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-staff-mcp
+        provider_name: ABUNDANCE STAFF
+        provider_type: mcp
+        tool_label: abundance_staff_search_profiles
+        tool_name: abundance_staff_search_profiles
+        tool_parameters:
+          active_status: null
+          department: null
+          limit: null
+          location: null
+          offset: null
+          program: null
+          query: null
+          role_bucket: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-staff-mcp
+        provider_name: ABUNDANCE STAFF
+        provider_type: mcp
+        tool_label: abundance_staff_get_profile
+        tool_name: abundance_staff_get_profile
+        tool_parameters:
+          include_contact: null
+          paylocity_employee_id: null
+          staff_profile_id: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-staff-mcp
+        provider_name: ABUNDANCE STAFF
+        provider_type: mcp
+        tool_label: abundance_staff_queue_enrichment_task
+        tool_name: abundance_staff_queue_enrichment_task
+        tool_parameters:
+          assigned_to: null
+          input: null
+          instructions: null
+          paylocity_employee_id: null
+          priority: null
+          requested_by: null
+          staff_profile_id: null
+          task_type: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-staff-mcp
+        provider_name: ABUNDANCE STAFF
+        provider_type: mcp
+        tool_label: abundance_staff_list_enrichment_tasks
+        tool_name: abundance_staff_list_enrichment_tasks
+        tool_parameters:
+          limit: null
+          offset: null
+          paylocity_employee_id: null
+          staff_profile_id: null
+          status: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-staff-mcp
+        provider_name: ABUNDANCE STAFF
+        provider_type: mcp
+        tool_label: abundance_staff_record_enrichment_result
+        tool_name: abundance_staff_record_enrichment_result
+        tool_parameters:
+          assigned_to: null
+          error_message: null
+          result: null
+          status: null
+          task_id: null
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      - .MP4
+      - .MOV
+      - .MPEG
+      - .WEBM
+    allowed_file_types:
+      - image
+    allowed_file_upload_methods:
+      - remote_url
+      - local_file
+    enabled: true
+    image:
+      detail: high
+      enabled: true
+      number_limits: 3
+      transfer_methods:
+        - remote_url
+        - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      stop: []
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: I can help inspect Abundance Paylocity headcount, find staff profiles, summarize role and location mix, and queue enrichment work when you confirm it.
+  pre_prompt: |
+    You are the Abundance Staff Headcount Agent for CREATE SOMETHING and Abundance / The Nurse Practitioner Group.
+
+    Use the ABUNDANCE STAFF MCP tools as the source of truth for Paylocity active headcount records, staff profile lookup, headcount summaries, and enrichment task tracking. Do not infer staff counts, employment status, contact availability, or role metadata from memory.
+
+    Data boundary:
+    - This agent is for staff/headcount data from Paylocity.
+    - It is not the Abundance Jobs agent and does not manage open jobs, job demand, applicants, or funnel submissions.
+    - It is not the nurse-facing concierge chat database and does not manage chat intake or job-access flows.
+
+    Tool policy:
+    - Use abundance_staff_summarize_headcount for counts, freshness, role mix, department mix, location mix, program mix, and active/inactive breakdowns.
+    - Use abundance_staff_search_profiles before profile lookup when the user provides a name, employee ID fragment, role, department, program, or location.
+    - Use abundance_staff_get_profile for one exact staff profile. Keep include_contact false unless the user explicitly asks for contact details and the workflow has approval.
+    - Use abundance_staff_queue_enrichment_task for verification work such as credential review, role classification, contact validation, location normalization, outreach readiness, or source-data cleanup. Ask for explicit confirmation before queueing a task.
+    - Use abundance_staff_list_enrichment_tasks to review pending, active, or completed enrichment work.
+    - Use abundance_staff_record_enrichment_result only after the user identifies a specific task and confirms the update.
+
+    PII and security:
+    - Contact details and home addresses are restricted PII.
+    - Do not request broad contact/address exports.
+    - If PII access is disabled by the MCP deployment, explain that the deployment is locked down and offer to queue a focused enrichment or validation task.
+    - Never reveal API keys, bearer tokens, query tokens, Infisical values, Dify credentials, or internal credential material.
+
+    Response style:
+    - Be concise, operational, and evidence-based.
+    - Mention tool result counts, active-status filters, and snapshot/import freshness when returned.
+    - If a search returns too many results, summarize the top matches and ask one narrowing question.
+    - Before any write-capable enrichment tool call, confirm the exact staff profile or task and the intended update.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions:
+    - Summarize active headcount by role, department, and location.
+    - How many active Nurse Practitioners are in the staff snapshot?
+    - Find active staff profiles matching Nurse Practitioner in New Jersey.
+    - List pending staff enrichment tasks.
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0

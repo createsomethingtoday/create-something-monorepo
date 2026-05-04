@@ -1,0 +1,111 @@
+version: '1.0'
+artifact_type: 'dify_agent_config'
+
+metadata:
+  client_name: 'abundance'
+  engagement_id: 'abundance-paylocity-staff-v1'
+  owner: 'create-something-platform'
+  status: 'active'
+  created_at: '2026-05-04'
+  source_files:
+    - '/Users/micahjohnson/Downloads/Active Headcount-3.csv'
+  related_repo_artifacts:
+    - 'packages/abundance-staff-mcp/worker'
+    - 'docs/ABUNDANCE_PAYLOCITY_DIFY_MCP_RECOMMENDATION_2026-05-04.md'
+
+dify_app:
+  name: 'Abundance Staff Headcount Agent'
+  mode: 'agent'
+  description: 'Dify agent for Paylocity staff/headcount lookup, summary, and enrichment queueing.'
+  setup_note: 'Create this as a Dify Agent app, then add the MCP server under Tools -> MCP before attaching tools to the agent.'
+  dsl_note: 'Dify app exports are YAML DSL artifacts, but tool credentials are not exported. Keep this file as the source configuration/handoff and re-export the app DSL from Dify after setup.'
+  service_api:
+    base_url: 'https://api.dify.ai/v1'
+    api_key_secret:
+      environment: 'prod'
+      path: '/dify/abundance-staff-mcp'
+      secret_key: 'DIFY_ABUNDANCE_STAFF_AGENT_API_KEY'
+  registry_entry: 'config/dify/inventory.json#agents.abundance-staff-headcount-agent'
+
+mcp_server:
+  server_id: 'abundance-staff-mcp'
+  name: 'Abundance Staff MCP'
+  transport: 'http'
+  url: 'https://abundance-staff-mcp.createsomething.workers.dev/mcp'
+  base_url: 'https://abundance-staff-mcp.createsomething.workers.dev/mcp'
+  health_url: 'https://abundance-staff-mcp.createsomething.workers.dev/health'
+  auth:
+    type: 'bearer'
+    header: 'Authorization: Bearer ${DIFY_ABUNDANCE_STAFF_MCP_API_KEY}'
+    setup_note: 'Configure the Dify MCP card like the working Abundance Jobs card: base /mcp URL plus bearer-token auth. If Dify shows an Authorize button or OAuth metadata error, the card was registered as OAuth or without bearer credentials.'
+    infisical:
+      environment: 'prod'
+      path: '/dify/abundance-staff-mcp'
+      token_secret_key: 'DIFY_ABUNDANCE_STAFF_MCP_API_KEY'
+      base_url_secret_key: 'DIFY_ABUNDANCE_STAFF_MCP_BASE_URL'
+      tokenized_url_secret_key: 'DIFY_ABUNDANCE_STAFF_MCP_URL'
+      server_id_secret_key: 'DIFY_ABUNDANCE_STAFF_MCP_SERVER_ID'
+
+agent_prompt:
+  system: |
+    You are the Abundance Staff Headcount Agent.
+
+    Your job is to help operators understand and enrich Paylocity active headcount data for Abundance / The Nurse Practitioner Group.
+
+    Use the Abundance Staff MCP tools as the source of truth for staff/headcount records. Do not infer staff counts, contact availability, or employment metadata from memory. When asked for counts, freshness, role mix, department mix, or location mix, call abundance_staff_summarize_headcount. When asked to find a person or group of people, call abundance_staff_search_profiles first. When asked about a specific employee, call abundance_staff_get_profile.
+
+    Contact details and home addresses are restricted PII. Do not request include_contact=true unless the user explicitly asks for contact information and the workflow has approval to use it. If the tool reports PII access is disabled, explain that the deployment is correctly locked down and queue a contact validation or outreach readiness enrichment task when appropriate.
+
+    Use enrichment tasks for anything that should be verified or improved instead of rewriting canonical staff records directly. The MCP task tools are allowed to queue or update enrichment task state; they do not approve changes to staff master data.
+
+    Keep responses concise, operational, and evidence-based. Mention the relevant tool result counts and freshness dates when they are available. If the question is ambiguous, ask one clarifying question before calling a write-capable enrichment tool.
+
+tool_policy:
+  allowed_tools:
+    - name: 'abundance_staff_summarize_headcount'
+      side_effect_level: 'read'
+      default_use: 'Use for role, department, location, and freshness summaries.'
+    - name: 'abundance_staff_search_profiles'
+      side_effect_level: 'read'
+      default_use: 'Use before profile lookup when the user provides a name, role, department, location, or employee ID fragment.'
+    - name: 'abundance_staff_get_profile'
+      side_effect_level: 'read'
+      default_use: 'Use for one exact staff profile. Set include_contact=false unless explicitly approved.'
+    - name: 'abundance_staff_queue_enrichment_task'
+      side_effect_level: 'write'
+      approval_required: 'operator_confirmation'
+      default_use: 'Use to queue credential, contact validation, role classification, location normalization, or outreach readiness work.'
+    - name: 'abundance_staff_list_enrichment_tasks'
+      side_effect_level: 'read'
+      default_use: 'Use to review pending or completed enrichment work.'
+    - name: 'abundance_staff_record_enrichment_result'
+      side_effect_level: 'write'
+      approval_required: 'operator_confirmation'
+      default_use: 'Use to record enrichment task output only after a specific task is identified.'
+  blocked_behaviors:
+    - 'Do not expose raw bearer token values.'
+    - 'Do not claim the staff DB contains applicants or job openings.'
+    - 'Do not write to the jobs DB or concierge chat DB from this agent.'
+    - 'Do not treat Dify enrichment output as canonical staff data without a separate approval/import step.'
+    - 'Do not request contact/address PII for broad searches.'
+
+starter_prompts:
+  - 'Summarize current active headcount by role, department, and location.'
+  - 'How many active Nurse Practitioners are in the Paylocity staff snapshot?'
+  - 'Find staff profiles matching a Nurse Practitioner role in New Jersey.'
+  - 'Queue an outreach readiness review for this employee ID: {{employee_id}}.'
+  - 'List pending enrichment tasks for Abundance staff data.'
+
+runtime_expectations:
+  pii_lookup_enabled_by_default: false
+  data_sources:
+    staff_db: 'abundance-npg-staff'
+    jobs_db: 'create-something-db'
+    chat_db: 'abundance-concierge-chat-db'
+  boundary:
+    staff_db_use: 'Paylocity active headcount and enrichment tasks.'
+    jobs_db_use: 'Open roles, job demand, applicant/application events.'
+    chat_db_use: 'Nurse-facing chat intake and access workflow.'
+  validation:
+    health_endpoint: 'GET /health'
+    mcp_initialize: 'POST /mcp with Authorization bearer token'
