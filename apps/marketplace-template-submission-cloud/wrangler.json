@@ -1,7 +1,8 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "marketplace-template-submission-cloud",
-  "main": ".open-next/worker.js",
+  "main": "worker.mjs",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
   "compatibility_date": "2026-03-18",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {

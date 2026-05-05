@@ -1,8 +1,8 @@
 # Notion Agent Prompt
 
-**Status:** Working draft  
-**Audience:** Notion agent operators  
-**Workflow:** `template_review_hub_lane`  
+**Status:** Working draft
+**Audience:** Notion agent operators
+**Workflow:** `template_review_hub_lane`
 **Date:** `2026-04-29`
 
 ## Purpose

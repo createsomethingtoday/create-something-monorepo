@@ -122,6 +122,8 @@
     "ground": "pnpm ground:imports && pnpm ground:components && pnpm ground:experiments && pnpm ground:duplicates",
     "authz:compile": "tsx scripts/compile-authz-manifests.ts",
     "authz:publish": "tsx scripts/publish-authz-policy.ts",
+    "mcp:fleet:self-heal": "node scripts/mcp-fleet-self-heal.mjs",
+    "mcp:fleet:self-heal:fix": "node scripts/mcp-fleet-self-heal.mjs --fix-registry",
     "mcp:oauth:verify": "tsx scripts/verify-mcp-oauth-discovery.ts",
     "mcp:gate": "node scripts/mcp-quality-gate.mjs",
     "mcp:gate:typecheck": "node scripts/mcp-quality-gate.mjs typecheck",
@@ -147,6 +149,7 @@
     "mcp:registry:validate": "tsx scripts/mcp-registry.ts validate",
     "mcp:registry:generate": "tsx scripts/mcp-registry.ts generate",
     "mcp:registry:check": "tsx scripts/mcp-registry.ts check",
+    "mcp:registry:coverage": "node scripts/mcp-registry-coverage.mjs",
     "mcp:registry:annotate-exposure": "tsx scripts/mcp-registry.ts annotate-exposure",
     "storage:relief": "bash scripts/storage-relief.sh",
     "shell:secrets:sync": "bash scripts/shell-secrets-sync.sh",
@@ -164,6 +167,7 @@
     "deploy:webflow-local-mcp": "node scripts/run-wrangler.mjs --cwd packages/webflow-mcp/worker deploy",
     "deploy:webflow-site-analyzer-mcp": "node scripts/run-wrangler.mjs --cwd packages/webflow-site-analyzer-mcp/worker deploy",
     "deploy:webflow-site-analyzer-mcp-remote": "pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run deploy",
+    "deploy:playbook-mcp": "node scripts/run-wrangler.mjs --cwd packages/playbook-mcp/worker deploy",
     "deploy:halfdozen-operator-notion-mcp": "pnpm mcp:halfdozen-operator-notion:preflight && pnpm exec wrangler deploy --cwd packages/halfdozen-operator-notion-mcp/worker",
     "deploy:blondish-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.blondish.toml",
     "deploy:c3-management-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.c3-management.toml",
@@ -197,6 +201,7 @@
     "symphony:policy:once": "node packages/symphony/src/cli.js automation/symphony/policy/WORKFLOW.md --once"
   },
   "devDependencies": {
+    "@create-something/observability": "workspace:*",
     "@iarna/toml": "^2.2.5",
     "@mizchi/lsmcp": "^0.10.0",
     "@openai/agents": "^0.4.10",

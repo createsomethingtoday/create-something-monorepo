@@ -389,4 +389,3 @@ Status: partial
   - `vicki_hub.hub_status` (read)
   - `vicki_hub.hub_trace_lookup` (read)
   - `vicki_hub.hub_update_state` (external_side_effect, confirmation required)
-

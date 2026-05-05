@@ -41,6 +41,9 @@ BRAINTRUST_ENABLED = "true"
 INK_BRIDGE_ORIGIN = "https://ink.createsomething.agency"
 HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED = "true"
 HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS = "4,13,18,23"
+HALFDOZEN_AGENT_NOTIFY_EMAIL_FROM = "CREATE SOMETHING Ops <notifications@createsomething.io>"
+HALFDOZEN_AGENT_NOTIFY_EMAIL_TO = "micah@createsomething.io"
+HALFDOZEN_AGENT_NOTIFY_EMAIL_MODE = "alerts"
 MCP_REGISTRY_SWEEP_HUB_HEALTH_URL = "https://cs-mcp-hub-remote.createsomething.workers.dev/health"
 MCP_REGISTRY_SWEEP_TIMEOUT_MS = "60000"
 MCP_REGISTRY_SWEEP_CRON_ENABLED = "true"
@@ -49,6 +52,7 @@ MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = "4,13,18,23"
 # Required secrets for protected Half Dozen agent routes:
 # wrangler secret put OPENAI_API_KEY
 # wrangler secret put HALFDOZEN_AGENT_ROUTE_TOKEN
+# wrangler secret put RESEND_API_KEY
 # wrangler secret put INK_BRIDGE_TOKEN
 
 # Optional Braintrust tracing:
@@ -56,10 +60,6 @@ MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = "4,13,18,23"
 # (Optional) wrangler secret put BRAINTRUST_ORG_NAME
 # (Optional) wrangler secret put BRAINTRUST_PROJECT_ID
 # (Optional) set [vars] BRAINTRUST_PROJECT_NAME = "Playbook MCP"
-
-# Optional notification webhooks:
-# wrangler secret put HALFDOZEN_SLACK_WEBHOOK_URL
-# wrangler secret put HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL
 
 # Optional Ink bridge target:
 # wrangler secret put INK_SOURCE_TOKEN

@@ -16,14 +16,14 @@ export type MarketplaceFormName =
   | 'Marketplace Template Submission';
 
 export interface MarketplaceWebhookEnvelope<
-  TData extends Record<string, string> = Record<string, string>,
+  TData extends Record<string, string> = Record<string, string>
 > {
   triggerType: 'form_submission';
   payload: MarketplaceWebhookPayload<TData>;
 }
 
 export interface MarketplaceWebhookPayload<
-  TData extends Record<string, string> = Record<string, string>,
+  TData extends Record<string, string> = Record<string, string>
 > {
   name: MarketplaceFormName;
   siteId: string;
@@ -95,50 +95,290 @@ export type PageCount = 'One' | 'Multi' | 'Multi-layout';
 export type PaymentType = 'Free' | 'Paid';
 
 export const TEMPLATE_CATEGORIES = [
-  'Advocacy & Campaigns', 'Agriculture', 'Architecture', 'AI', 'Art & Design Blog',
-  'Arts & Crafts Store', 'Bakery', 'Banking & Investment', 'Bar & Nightclub',
-  'Beauty & Wellness Store', 'Blockchain', 'Book', 'Books & Publishers Store',
-  'Business & Finance Blog', 'Cafe & Coffee Shop', 'Cars', 'Catering & Delivery',
-  'Charity & Fundraising', 'Chiropractor & Physiotherapist', 'Classes & Courses',
-  'Cleaning', 'Clinic & Pharmacy', 'College / University', 'Coming Soon',
-  'Consulting & Coaching', 'Creative Agency', 'Creators & Influencers',
-  'Cryptocurrency & NFTs', 'Dance', 'Dentist', 'Design Portfolio',
-  'Digital Products Store', 'Doctor', 'Documentation', 'Early Education',
-  'Electronics Store', 'Event Production', 'Events', 'Fashion & Clothing Store',
-  'Film & TV', 'Finance & Accounting', 'Fitness & Gym', 'Florist & Plants Store',
-  'Food & Drinks Store', 'Food & Recipe Blog', 'Foundations & NGO',
-  'Freelancers & Consultants', 'Gallery & Museum', 'Gaming', 'Health & Nutrition',
-  'Home Construction', 'Home Decor Store', 'Home Services & Maintenance', 'Hospital',
-  'Hotels & Lodging', 'Insurance', 'Interior Design', 'IT company',
-  'Jewelry & Accessories Store', 'Job Portal', 'Kids & Babies Store',
-  'Landscaping & Gardening', 'Law Firm & Attorney', 'Lifestyle Blog', 'Magazine',
-  'Makeup & Cosmetics', 'Marketing & Advertising', 'Mobile App',
-  'Music Events & Festivals', 'Music Industry & Promotion', 'Musicians & Bands',
-  'Nature & Conservation', 'News', 'Newsletter', 'Online Education',
-  'Outdoor & Adventure', 'Personal Blog', 'Pets & Animals Store',
-  'Photography & Video Portfolio', 'Podcast & Radio', 'Political',
-  'Property Management & HOA', 'Public services', 'Real Estate', 'Recruiting',
-  'Religious & Spiritual', 'Renewable energy', 'Restaurant', 'Resume & CV',
-  'Residential Design', 'Salon & Barbershop', 'Schools', 'Software & SaaS', 'Spa',
-  'Sports', 'Sports & Outdoors Store', 'Startup', 'Support/Help center',
-  'Sustainability', 'Tattoo', 'Therapy & Psychology',
-  'Transportation & Logistics', 'Travel & Tourism', 'Travel Blog', 'UI Kit',
-  'Veterinary', 'Volunteer & Community', 'Waitlist', 'Weddings', 'Winery',
+  'Advocacy & Campaigns',
+  'Agriculture',
+  'Architecture',
+  'AI',
+  'Art & Design Blog',
+  'Arts & Crafts Store',
+  'Bakery',
+  'Banking & Investment',
+  'Bar & Nightclub',
+  'Beauty & Wellness Store',
+  'Blockchain',
+  'Book',
+  'Books & Publishers Store',
+  'Business & Finance Blog',
+  'Cafe & Coffee Shop',
+  'Cars',
+  'Catering & Delivery',
+  'Charity & Fundraising',
+  'Chiropractor & Physiotherapist',
+  'Classes & Courses',
+  'Cleaning',
+  'Clinic & Pharmacy',
+  'College / University',
+  'Coming Soon',
+  'Consulting & Coaching',
+  'Creative Agency',
+  'Creators & Influencers',
+  'Cryptocurrency & NFTs',
+  'Dance',
+  'Dentist',
+  'Design Portfolio',
+  'Digital Products Store',
+  'Doctor',
+  'Documentation',
+  'Early Education',
+  'Electronics Store',
+  'Event Production',
+  'Events',
+  'Fashion & Clothing Store',
+  'Film & TV',
+  'Finance & Accounting',
+  'Fitness & Gym',
+  'Florist & Plants Store',
+  'Food & Drinks Store',
+  'Food & Recipe Blog',
+  'Foundations & NGO',
+  'Freelancers & Consultants',
+  'Gallery & Museum',
+  'Gaming',
+  'Health & Nutrition',
+  'Home Construction',
+  'Home Decor Store',
+  'Home Services & Maintenance',
+  'Hospital',
+  'Hotels & Lodging',
+  'Insurance',
+  'Interior Design',
+  'IT company',
+  'Jewelry & Accessories Store',
+  'Job Portal',
+  'Kids & Babies Store',
+  'Landscaping & Gardening',
+  'Law Firm & Attorney',
+  'Lifestyle Blog',
+  'Magazine',
+  'Makeup & Cosmetics',
+  'Marketing & Advertising',
+  'Mobile App',
+  'Music Events & Festivals',
+  'Music Industry & Promotion',
+  'Musicians & Bands',
+  'Nature & Conservation',
+  'News',
+  'Newsletter',
+  'Online Education',
+  'Outdoor & Adventure',
+  'Personal Blog',
+  'Pets & Animals Store',
+  'Photography & Video Portfolio',
+  'Podcast & Radio',
+  'Political',
+  'Property Management & HOA',
+  'Public services',
+  'Real Estate',
+  'Recruiting',
+  'Religious & Spiritual',
+  'Renewable energy',
+  'Restaurant',
+  'Resume & CV',
+  'Residential Design',
+  'Salon & Barbershop',
+  'Schools',
+  'Software & SaaS',
+  'Spa',
+  'Sports',
+  'Sports & Outdoors Store',
+  'Startup',
+  'Support/Help center',
+  'Sustainability',
+  'Tattoo',
+  'Therapy & Psychology',
+  'Transportation & Logistics',
+  'Travel & Tourism',
+  'Travel Blog',
+  'UI Kit',
+  'Veterinary',
+  'Volunteer & Community',
+  'Waitlist',
+  'Weddings',
+  'Winery'
 ] as const;
 export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
 
 export const TEMPLATE_STYLES = [
-  'Bold', 'Corporate', 'Dark', 'Illustration', 'Light',
-  'Minimal', 'Modern', 'Playful', 'Retro',
+  'Bold',
+  'Corporate',
+  'Dark',
+  'Illustration',
+  'Light',
+  'Minimal',
+  'Modern',
+  'Playful',
+  'Retro'
 ] as const;
 export type TemplateStyle = (typeof TEMPLATE_STYLES)[number];
 
 export const TEMPLATE_FEATURES = [
-  'GSAP', 'Responsive Design', 'Responsive Navigation', 'Responsive Slider',
-  'Media Lightbox', 'Background Video', '3D Transforms', 'Interactions', 'Forms',
-  'Symbols', 'CSS Grid', 'Custom 404 Page', 'Web Fonts', 'Retina Ready',
+  'GSAP',
+  'Responsive Design',
+  'Responsive Navigation',
+  'Responsive Slider',
+  'Media Lightbox',
+  'Background Video',
+  '3D Transforms',
+  'Interactions',
+  'Forms',
+  'Symbols',
+  'CSS Grid',
+  'Custom 404 Page',
+  'Web Fonts',
+  'Retina Ready'
 ] as const;
 export type TemplateFeature = (typeof TEMPLATE_FEATURES)[number];
+
+export const SECONDARY_TAGS = [
+  'Accessories',
+  'Accounting',
+  'Admin',
+  'Agency',
+  'Agriculture',
+  'App',
+  'Architecture',
+  'Artist',
+  'Attorney',
+  'Automotive',
+  'Band',
+  'Bank',
+  'Bar',
+  'Barber',
+  'Beauty',
+  'Beauty & Wellness',
+  'Blog',
+  'Book',
+  'Business',
+  'Cafe',
+  'Cars',
+  'Charity',
+  'Church',
+  'Coaching',
+  'Coffee Shop',
+  'College',
+  'Coming Soon',
+  'Conference',
+  'Construction',
+  'Consulting',
+  'Corporate',
+  'Countdown',
+  'Creative',
+  'CV',
+  'Dance',
+  'Dashboard',
+  'Delivery',
+  'Dentist',
+  'Design',
+  'Designer',
+  'Directory',
+  'DJ',
+  'Doctor',
+  'Documentation',
+  'Donation',
+  'Education',
+  'Entertainment',
+  'Error',
+  'Event',
+  'Farm',
+  'Fashion',
+  'Film',
+  'Finance',
+  'Fitness',
+  'Florist',
+  'Food',
+  'Food & Drink',
+  'Furniture',
+  'Game',
+  'Guesthouse',
+  'Gym',
+  'Health',
+  'Help center',
+  'Homeware',
+  'Hospital',
+  'Hostel',
+  'Hotel',
+  'Inn',
+  'Insurance',
+  'Interior design',
+  'Investment',
+  'IT company',
+  'Jewelry',
+  'Job Portal',
+  'Kids',
+  'Landing page',
+  'Law Firm',
+  'Learning',
+  'Lifestyle',
+  'Logistics',
+  'Magazine',
+  'Marketing',
+  'Marketplace',
+  'Massage',
+  'Medical',
+  'Mobile',
+  'Movie',
+  'Multi Layout',
+  'Music',
+  'Musician',
+  'News',
+  'Newsletter',
+  'Newspaper',
+  'Nonprofit',
+  'One Page',
+  'Other',
+  'Personal',
+  'Pets',
+  'Photography',
+  'Photography & Video',
+  'Podcast',
+  'Political',
+  'Portfolio',
+  'Profile',
+  'Radio',
+  'Real Estate',
+  'Recipe',
+  'Recruitment',
+  'Religion',
+  'Restaurant',
+  'Resume',
+  'Retail',
+  'SaaS',
+  'Salon',
+  'School',
+  'Shop',
+  'Small Business',
+  'Soccer',
+  'Social',
+  'Software',
+  'Spa',
+  'Sports',
+  'Startup',
+  'Support',
+  'Technology',
+  'Therapy',
+  'Tourism',
+  'Transport',
+  'Travel',
+  'UI Kit',
+  'Under Construction',
+  'University',
+  'Veterinary',
+  'Video',
+  'Wedding',
+  'Wellness',
+  'Winery'
+] as const;
+export type SecondaryTag = (typeof SECONDARY_TAGS)[number];
 
 export interface TemplateSubmissionInput {
   creatorName: string;
@@ -160,6 +400,7 @@ export interface TemplateSubmissionInput {
   price?: number;
 
   categories: readonly string[];
+  secondaryTags: readonly string[];
   styles: readonly string[];
   features: readonly string[];
 
@@ -198,7 +439,7 @@ function utmFields(utm: UtmParams | undefined) {
     'UTM Medium': str(utm?.medium),
     'UTM Campaign': str(utm?.campaign),
     'UTM Content': str(utm?.content),
-    'UTM Term': str(utm?.term),
+    'UTM Term': str(utm?.term)
   };
 }
 
@@ -215,7 +456,7 @@ export function buildCreatorData(input: CreatorSubmissionInput): CreatorSubmissi
     'Personal Website URL': str(input.personalWebsiteUrl),
     'Creator Bio': input.creatorBio,
     'Agree To Webflow Terms': bool(input.agreeToWebflowTerms),
-    'Profile Image': input.profileImageUrl,
+    'Profile Image': input.profileImageUrl
   };
 }
 
@@ -223,6 +464,7 @@ export function buildTemplateData(input: TemplateSubmissionInput): Record<string
   const gallery = [0, 1, 2, 3, 4].map((i) => input.galleryImageUrls[i] ?? '');
   const priceString = input.price === undefined ? '' : String(input.price);
   const categorySet = new Set(input.categories);
+  const tagSet = new Set(input.secondaryTags);
   const styleSet = new Set(input.styles);
   const featureSet = new Set(input.features);
 
@@ -238,24 +480,25 @@ export function buildTemplateData(input: TemplateSubmissionInput): Record<string
     'Preview URL': input.previewUrl,
     'Free or Paid?': input.paymentType,
     'Selected Categories': JSON.stringify(input.categories),
-    'Static': input.pageCount,
+    'Selected Secondary Tags': JSON.stringify(input.secondaryTags),
+    Static: input.pageCount,
     'Selected Types': '',
     'Type CMS': bool(input.templateTypeCms),
     'Type Ecommerce': bool(input.templateTypeEcommerce),
     'Selected-Price': priceString,
-    'Price': priceString,
-    'Template': 'false',
+    Price: priceString,
+    Template: 'false',
     'Price Estimate 2': '',
     'Selected Styles': JSON.stringify(input.styles.map((s) => s.toLowerCase())),
     'Content Management System': bool(input.templateTypeCms),
-    'Ecommerce': bool(input.templateTypeEcommerce),
+    Ecommerce: bool(input.templateTypeEcommerce),
     'Selected Features': JSON.stringify(input.features),
     'Short Description': input.shortDescription,
     'Field 305': '',
     'Field 306': '',
     'Long-Description': input.longDescription,
     'Field 308': 'true',
-    'Notes': str(input.notes),
+    Notes: str(input.notes),
     'Agree To Webflow Terms Of Service 2': bool(input.agreeToTerms),
     'Template Submission Checklist': bool(input.acknowledgedChecklist),
     'Thumbnail Image': input.thumbnailImageUrl,
@@ -264,11 +507,14 @@ export function buildTemplateData(input: TemplateSubmissionInput): Record<string
     'Gallery Image 2': gallery[1],
     'Gallery Image 3': gallery[2],
     'Gallery Image 4': gallery[3],
-    'Gallery Image 5': gallery[4],
+    'Gallery Image 5': gallery[4]
   };
 
   for (const category of TEMPLATE_CATEGORIES) {
     data[`Category ${category}`] = bool(categorySet.has(category));
+  }
+  for (const tag of SECONDARY_TAGS) {
+    data[`Secondary Tag: ${tag}`] = bool(tagSet.has(tag));
   }
   for (const style of TEMPLATE_STYLES) {
     data[`Styles ${style}`] = bool(styleSet.has(style));
@@ -287,7 +533,7 @@ export interface BuildEnvelopeOptions {
 
 export function buildCreatorEnvelope(
   input: CreatorSubmissionInput,
-  options: BuildEnvelopeOptions,
+  options: BuildEnvelopeOptions
 ): MarketplaceWebhookEnvelope<CreatorSubmissionData> {
   return {
     triggerType: 'form_submission',
@@ -301,14 +547,14 @@ export function buildCreatorEnvelope(
       formElementId: CREATOR_FORM_ELEMENT_ID,
       pageId: MARKETPLACE_PAGE_ID,
       publishedPath: MARKETPLACE_PUBLISHED_PATH,
-      pageUrl: MARKETPLACE_PAGE_URL,
-    },
+      pageUrl: MARKETPLACE_PAGE_URL
+    }
   };
 }
 
 export function buildTemplateEnvelope(
   input: TemplateSubmissionInput,
-  options: BuildEnvelopeOptions,
+  options: BuildEnvelopeOptions
 ): MarketplaceWebhookEnvelope {
   return {
     triggerType: 'form_submission',
@@ -322,19 +568,19 @@ export function buildTemplateEnvelope(
       formElementId: TEMPLATE_FORM_ELEMENT_ID,
       pageId: MARKETPLACE_PAGE_ID,
       publishedPath: MARKETPLACE_PUBLISHED_PATH,
-      pageUrl: MARKETPLACE_PAGE_URL,
-    },
+      pageUrl: MARKETPLACE_PAGE_URL
+    }
   };
 }
 
 export async function postMarketplaceWebhook(
   envelope: MarketplaceWebhookEnvelope,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: typeof fetch = fetch
 ): Promise<Response> {
   return fetchImpl(MARKETPLACE_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(envelope),
+    body: JSON.stringify(envelope)
   });
 }
 
