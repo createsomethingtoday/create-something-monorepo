@@ -73,6 +73,8 @@ function injectEnvSecrets(env: Env): void {
       process.env[key] = env[key];
     }
   }
+
+  process.env.WEBFLOW_SITE_ANALYZER_RUNTIME = 'worker';
 }
 
 export default {

@@ -620,13 +620,14 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     : null;
 
   // Policy checks: deterministic, run regardless of __wfReview availability
-  const poweredByBadge = document.querySelector('.w-webflow-badge') ||
-    document.querySelector('a[href*="webflow.com"][class*="badge"]') ||
-    document.querySelector('a[href*="webflow.com"]');
-  const hasPoweredByWebflow = Boolean(
-    poweredByBadge &&
-    (poweredByBadge.textContent || '').toLowerCase().includes('webflow')
-  );
+  const poweredByBadge = document.querySelector('.w-webflow-badge');
+  const webflowLinks = Array.from(document.querySelectorAll('a[href*="webflow.com"]'));
+  const hasPoweredByWebflow = Boolean(poweredByBadge) || webflowLinks.some(a => {
+    const linkText = (a.textContent || '').toLowerCase();
+    const surroundingText = (a.closest('p, div, footer, section, body')?.textContent || '').toLowerCase();
+    const classText = typeof a.className === 'string' ? a.className.toLowerCase() : '';
+    return classText.includes('badge') || (linkText.includes('webflow') && surroundingText.includes('powered'));
+  });
 
   const allHrefs = Array.from(document.querySelectorAll('a[href]'))
     .map(a => (a.getAttribute('href') || '').toLowerCase());

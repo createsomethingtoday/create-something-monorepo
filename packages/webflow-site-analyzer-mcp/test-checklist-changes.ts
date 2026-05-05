@@ -292,14 +292,34 @@ console.log('\n─── Test 5: DOM fallback audit shape ───');
 console.log('\n─── Test 6: Policy checks shape ───');
 
 {
+  const webflowLinks = [
+    {
+      text: 'Flomio Studio',
+      className: 'copyright-link',
+      surroundingText: 'Design & Developed By Flomio Studio - License | Powered By Webflow.',
+    },
+    {
+      text: 'Webflow',
+      className: 'copyright-link',
+      surroundingText: 'Design & Developed By Flomio Studio - License | Powered By Webflow.',
+    },
+  ];
+  const hasPoweredByWebflow = webflowLinks.some((link) => {
+    const linkText = link.text.toLowerCase();
+    const surroundingText = link.surroundingText.toLowerCase();
+    const classText = link.className.toLowerCase();
+    return classText.includes('badge') || (linkText.includes('webflow') && surroundingText.includes('powered'));
+  });
+
   const policyChecks = {
-    hasPoweredByWebflow: true,
+    hasPoweredByWebflow,
     affiliateLinks: [] as string[],
     hasGsap: false,
     hasCustomCode: true,
   };
 
   assert(typeof policyChecks.hasPoweredByWebflow === 'boolean', 'hasPoweredByWebflow is boolean');
+  assert(policyChecks.hasPoweredByWebflow === true, 'Powered by Webflow attribution is detected after designer credit link');
   assert(Array.isArray(policyChecks.affiliateLinks), 'affiliateLinks is array');
   assert(typeof policyChecks.hasGsap === 'boolean', 'hasGsap is boolean');
   assert(typeof policyChecks.hasCustomCode === 'boolean', 'hasCustomCode is boolean');
