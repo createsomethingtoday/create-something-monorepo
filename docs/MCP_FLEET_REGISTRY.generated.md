@@ -3,7 +3,7 @@
 > Auto-generated from `config/mcp-hub/registry.json`.
 > Regenerate with `pnpm mcp:registry:generate`.
 
-## Active (1010)
+## Active (1019)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -1001,11 +1001,20 @@
 | `halfdozen-operator-notion-mcp` | `http` | `https://halfdozen-operator-notion-mcp.createsomething.workers.dev/mcp` | `brokered` | `100` | `halfdozen`, `notion`, `composio`, `operator`, `workway` |
 | `halfdozen-telemetry` | `http` | `https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp` | `direct` | `0` | `observability`, `telemetry`, `workway` |
 | `halfdozen-zoom-sync` | `http` | `https://zoom.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `zoom`, `workway` |
+| `interaction-atlas-mcp` | `http` | `https://interaction-atlas-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `policy-os`, `interaction-atlas`, `workflow`, `judgment`, `cs` |
 | `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `coordination`, `loom`, `cs` |
 | `meetings` | `http` | `https://meetings-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `meetings`, `cs` |
 | `notion-halfdozen-blondish` | `http` | `https://blondish-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `blondish`, `workway` |
 | `notion-halfdozen-c3-management` | `http` | `https://c3-management-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `c3-management`, `workway` |
+| `notion-halfdozen-cracked` | `http` | `https://cracked-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `cracked`, `workway` |
 | `notion-halfdozen-create-something` | `http` | `https://createsomething-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `workway` |
+| `notion-halfdozen-fanpad` | `http` | `https://fanpad-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `fanpad`, `workway` |
+| `notion-halfdozen-juice-labs` | `http` | `https://juice-labs-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `juice-labs`, `workway` |
+| `notion-halfdozen-kk-management` | `http` | `https://kk-management-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `kk-management`, `workway` |
+| `notion-halfdozen-lightswitch` | `http` | `https://lightswitch-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `lightswitch`, `workway` |
+| `notion-halfdozen-phase-3` | `http` | `https://phase-3-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `phase-3`, `workway` |
+| `notion-halfdozen-system-studio` | `http` | `https://system-studio-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `system-studio`, `workway` |
+| `notion-halfdozen-three-six-zero` | `http` | `https://three-six-zero-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `three-six-zero`, `workway` |
 | `outerfields-pcn` | `http` | `https://outerfields.mcp.createsomething.agency/mcp` | `direct` | `0` | `agency`, `outerfields`, `cs` |
 | `playbook` | `http` | `https://playbook.mcp.createsomething.ltd/mcp` | `direct` | `0` | `core`, `workflow`, `cs`, `policy_os_only` |
 | `quickbooks-notion-mcp-server` | `http` | `https://quickbooks.mcp.workway.co/mcp` | `direct` | `0` | `finance`, `quickbooks`, `notion`, `workway` |
@@ -1025,11 +1034,16 @@
 | `gmail-notion-mcp` | `http` | `https://gmail-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
 | `notion-sync-mcp` | `http` | `https://notion-sync-mcp-worker.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
 
-## Local (2)
+## Local (7)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
+| `community-mcp` | `stdio` | `node ./packages/community-mcp/dist/index.js` | `direct` | `0` | `local`, `community`, `cs` |
+| `ground-mcp` | `stdio` | `npx -y @createsomething/ground-mcp` | `direct` | `0` | `local`, `verification`, `code-quality`, `cs` |
+| `harness-mcp` | `stdio` | `node ./packages/harness-mcp/dist/index.js` | `direct` | `0` | `local`, `harness`, `ops`, `cs` |
 | `lsmcp` | `stdio` | `npx -y @mizchi/lsmcp mcp` | `direct` | `0` | `local`, `dev`, `filesystem` |
+| `social-mcp` | `stdio` | `node ./packages/social-mcp/dist/index.js` | `direct` | `0` | `local`, `social`, `cs` |
+| `ui-preview-mcp` | `stdio` | `node ./packages/ui-preview-mcp/dist/index.js` | `direct` | `0` | `local`, `ui`, `preview`, `cs` |
 | `webflow-local` | `stdio` | `node ./packages/webflow-mcp/dist/index.js` | `direct` | `0` | `local`, `dev`, `webflow` |
 
 ## Bundles
@@ -1129,14 +1143,15 @@
 | `core` | `create-something`, `three-tier-framework`, `playbook` |
 | `dormant` | `gmail-notion-mcp`, `notion-sync-mcp` |
 | `finance` | `quickbooks-notion-mcp-server` |
-| `halfdozen` | `notion-halfdozen-create-something`, `halfdozen-dm-mcp`, `halfdozen-operator-notion-mcp`, `half-dozen-youtube-sync` |
+| `halfdozen` | `notion-halfdozen-create-something`, `notion-halfdozen-system-studio`, `notion-halfdozen-blondish`, `notion-halfdozen-c3-management`, `notion-halfdozen-cracked`, `notion-halfdozen-fanpad`, `notion-halfdozen-juice-labs`, `notion-halfdozen-kk-management`, `notion-halfdozen-lightswitch`, `notion-halfdozen-phase-3`, `notion-halfdozen-three-six-zero`, `halfdozen-dm-mcp`, `halfdozen-operator-notion-mcp`, `half-dozen-youtube-sync` |
 | `halfdozen-observability` | `halfdozen-telemetry` |
 | `halfdozen-sync` | `halfdozen-gmail-sync-danny`, `halfdozen-gmail-sync-fillip`, `halfdozen-gmail-sync-leah`, `halfdozen-zoom-sync` |
-| `local-dev` | `webflow-local`, `webflow-site-analyzer-mcp`, `lsmcp` |
+| `local-dev` | `community-mcp`, `ground-mcp`, `harness-mcp`, `social-mcp`, `ui-preview-mcp`, `webflow-local`, `webflow-site-analyzer-mcp`, `lsmcp` |
 | `loom` | `loom-mcp` |
 | `meetings` | `meetings` |
 | `observability` | `cs-telemetry` |
 | `ops` | `schedule-mcp`, `substrate-mcp` |
+| `policy-os` | `interaction-atlas-mcp` |
 | `slack` | `slack_create_something`, `slack_webflow` |
 | `webflow-marketplace-app-review-phase-a` | `webflow-app-review-mcp` |
 | `webflow-marketplace-app-review-phase-b` | `webflow-app-review-mcp` |

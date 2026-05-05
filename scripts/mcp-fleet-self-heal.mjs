@@ -21,6 +21,9 @@ function run(label, args) {
 }
 
 const registryValidated = run('validate registry source', ['mcp:registry:validate']);
+const registryCoverageChecked = run('check MCP and agent registry coverage', [
+  'mcp:registry:coverage',
+]);
 let registryChecked = run('check generated registry artifacts', ['mcp:registry:check']);
 
 if (!registryChecked && fixRegistry) {
@@ -29,13 +32,22 @@ if (!registryChecked && fixRegistry) {
     registryGenerated && run('recheck generated registry artifacts', ['mcp:registry:check']);
 }
 
-const watchdogConnected = run('probe fleet watchdog MCP connections', [
+const agentConnectionScripts = [
+  'agent:halfdozen:dedup:connect',
+  'agent:halfdozen:inbox-triage:connect',
   'agent:halfdozen:fleet-watchdog:connect',
-]);
+];
+
+let allAgentsConnected = true;
+for (const script of agentConnectionScripts) {
+  allAgentsConnected = run(`probe ${script.replace('agent:halfdozen:', '')} MCP connections`, [
+    script,
+  ]) && allAgentsConnected;
+}
 
 console.log('\n[mcp-fleet-self-heal] summary');
 console.log(JSON.stringify(summary, null, 2));
 
-if (!registryValidated || !registryChecked || !watchdogConnected) {
+if (!registryValidated || !registryCoverageChecked || !registryChecked || !allAgentsConnected) {
   process.exitCode = 1;
 }

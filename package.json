@@ -130,6 +130,7 @@
     "mcp:registry:validate": "tsx scripts/mcp-registry.ts validate",
     "mcp:registry:generate": "tsx scripts/mcp-registry.ts generate",
     "mcp:registry:check": "tsx scripts/mcp-registry.ts check",
+    "mcp:registry:coverage": "node scripts/mcp-registry-coverage.mjs",
     "mcp:registry:annotate-exposure": "tsx scripts/mcp-registry.ts annotate-exposure",
     "storage:relief": "bash scripts/storage-relief.sh",
     "shell:secrets:sync": "bash scripts/shell-secrets-sync.sh",

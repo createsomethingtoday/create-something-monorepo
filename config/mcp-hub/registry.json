@@ -195,6 +195,19 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "notion-halfdozen-system-studio": {
+      "transport": "http",
+      "url": "https://system-studio-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for System Studio",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "system-studio",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
     "notion-halfdozen-blondish": {
       "transport": "http",
       "url": "https://blondish-notion.mcp.workway.co/mcp",
@@ -216,6 +229,97 @@
         "halfdozen",
         "notion",
         "c3-management",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "notion-halfdozen-cracked": {
+      "transport": "http",
+      "url": "https://cracked-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for Cracked",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "cracked",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "notion-halfdozen-fanpad": {
+      "transport": "http",
+      "url": "https://fanpad-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for Fanpad",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "fanpad",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "notion-halfdozen-juice-labs": {
+      "transport": "http",
+      "url": "https://juice-labs-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for Juice Labs",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "juice-labs",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "notion-halfdozen-kk-management": {
+      "transport": "http",
+      "url": "https://kk-management-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for KK Management",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "kk-management",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "notion-halfdozen-lightswitch": {
+      "transport": "http",
+      "url": "https://lightswitch-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for Lightswitch",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "lightswitch",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "notion-halfdozen-phase-3": {
+      "transport": "http",
+      "url": "https://phase-3-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for Phase 3",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "phase-3",
+        "workway"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "notion-halfdozen-three-six-zero": {
+      "transport": "http",
+      "url": "https://three-six-zero-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for Three Six Zero",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "three-six-zero",
         "workway"
       ],
       "catalog_exposure_mode": "direct",
@@ -13099,6 +13203,110 @@
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
+    },
+    "interaction-atlas-mcp": {
+      "transport": "http",
+      "url": "https://interaction-atlas-mcp.createsomething.workers.dev/mcp",
+      "description": "Interaction Atlas MCP for policy, workflow, and agent/MCP capability mapping",
+      "tags": [
+        "policy-os",
+        "interaction-atlas",
+        "workflow",
+        "judgment",
+        "cs"
+      ],
+      "package_path": "packages/interaction-atlas-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "community-mcp": {
+      "transport": "stdio",
+      "command": "node",
+      "args": [
+        "./packages/community-mcp/dist/index.js"
+      ],
+      "description": "Local community presence MCP",
+      "tags": [
+        "local",
+        "community",
+        "cs"
+      ],
+      "lifecycle": "local",
+      "package_path": "packages/community-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "ground-mcp": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@createsomething/ground-mcp"
+      ],
+      "description": "Local Ground verification MCP",
+      "tags": [
+        "local",
+        "verification",
+        "code-quality",
+        "cs"
+      ],
+      "lifecycle": "local",
+      "package_path": "packages/ground/npm",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "harness-mcp": {
+      "transport": "stdio",
+      "command": "node",
+      "args": [
+        "./packages/harness-mcp/dist/index.js"
+      ],
+      "description": "Local harness operations MCP",
+      "tags": [
+        "local",
+        "harness",
+        "ops",
+        "cs"
+      ],
+      "lifecycle": "local",
+      "package_path": "packages/harness-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "social-mcp": {
+      "transport": "stdio",
+      "command": "node",
+      "args": [
+        "./packages/social-mcp/dist/index.js"
+      ],
+      "description": "Local social calendar MCP",
+      "tags": [
+        "local",
+        "social",
+        "cs"
+      ],
+      "lifecycle": "local",
+      "package_path": "packages/social-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
+    },
+    "ui-preview-mcp": {
+      "transport": "stdio",
+      "command": "node",
+      "args": [
+        "./packages/ui-preview-mcp/dist/index.js"
+      ],
+      "description": "Local UI preview MCP for dev server management",
+      "tags": [
+        "local",
+        "ui",
+        "preview",
+        "cs"
+      ],
+      "lifecycle": "local",
+      "package_path": "packages/ui-preview-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 0
     }
   },
   "bundles": {
@@ -13123,6 +13331,16 @@
     ],
     "halfdozen": [
       "notion-halfdozen-create-something",
+      "notion-halfdozen-system-studio",
+      "notion-halfdozen-blondish",
+      "notion-halfdozen-c3-management",
+      "notion-halfdozen-cracked",
+      "notion-halfdozen-fanpad",
+      "notion-halfdozen-juice-labs",
+      "notion-halfdozen-kk-management",
+      "notion-halfdozen-lightswitch",
+      "notion-halfdozen-phase-3",
+      "notion-halfdozen-three-six-zero",
       "halfdozen-dm-mcp",
       "halfdozen-operator-notion-mcp",
       "half-dozen-youtube-sync"
@@ -13139,6 +13357,9 @@
     "meetings": [
       "meetings"
     ],
+    "policy-os": [
+      "interaction-atlas-mcp"
+    ],
     "slack": [
       "slack_create_something",
       "slack_webflow"
@@ -13147,6 +13368,11 @@
       "quickbooks-notion-mcp-server"
     ],
     "local-dev": [
+      "community-mcp",
+      "ground-mcp",
+      "harness-mcp",
+      "social-mcp",
+      "ui-preview-mcp",
       "webflow-local",
       "webflow-site-analyzer-mcp",
       "lsmcp"
