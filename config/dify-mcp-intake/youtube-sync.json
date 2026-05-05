@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "status": "pending-dify-studio-registration",
+  "owner": "create-something",
+  "created_at": "2026-04-30",
+  "registry_server": {
+    "id": "half-dozen-youtube-sync",
+    "transport": "http",
+    "url": "https://youtube.mcp.workway.co/mcp",
+    "description": "Half Dozen YouTube sync MCP",
+    "tags": ["halfdozen", "youtube", "workway"],
+    "catalog_exposure_mode": "direct",
+    "estimated_tool_count": 0
+  },
+  "dify_mcp_server": {
+    "server_id": "youtube-sync",
+    "display_name": "YouTube Sync",
+    "transport": "http",
+    "url": "https://youtube.mcp.workway.co/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/half-dozen-youtube-sync",
+        "secret_key": "MCP_BEARER_TOKEN"
+      }
+    }
+  },
+  "dify_studio_steps": [
+    "Open Dify Studio -> Tools -> MCP.",
+    "Create an HTTP MCP server card with server ID youtube-sync.",
+    "Set the MCP URL to https://youtube.mcp.workway.co/mcp.",
+    "Configure bearer auth from Infisical prod:/half-dozen-youtube-sync:MCP_BEARER_TOKEN.",
+    "Refresh/discover tools in Dify Studio.",
+    "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
+    "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
+  ],
+  "inventory_fragment_after_tool_discovery": {
+    "youtube-sync": {
+      "display_name": "YouTube Sync",
+      "source_mcp_registry_server": "half-dozen-youtube-sync",
+      "transport": "http",
+      "url": "https://youtube.mcp.workway.co/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/half-dozen-youtube-sync",
+          "secret_key": "MCP_BEARER_TOKEN"
+        }
+      },
+      "tools": []
+    }
+  },
+  "notes": [
+    "This intake artifact is not a Dify inventory entry.",
+    "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
+    "Keep secret values in Infisical only; this artifact stores references, not values.",
+    "After the server card is codified, scaffold one or more Dify agents with pnpm dify:agent:scaffold."
+  ]
+}

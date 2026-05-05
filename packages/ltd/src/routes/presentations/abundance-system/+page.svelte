@@ -1,14 +1,11 @@
 <script lang="ts">
-	import { Presentation } from '@create-something/canon/domains/ltd';
-	import { Slide } from '@create-something/canon/domains/ltd';
+	import { Presentation, Slide, SystemPillars, TermMap } from '@create-something/canon/domains/ltd';
 	import { SEO } from '@create-something/canon';
 	import BudgetAllocationVisual from './BudgetAllocationVisual.svelte';
 	import IntakeExperience from './IntakeExperience.svelte';
 	import MatchingShortlistVisual from './MatchingShortlistVisual.svelte';
 	import PolicyEscalationVisual from './PolicyEscalationVisual.svelte';
 	import RolloutTimelineVisual from './RolloutTimelineVisual.svelte';
-	import SystemPillars from './SystemPillars.svelte';
-	import TermMap from './TermMap.svelte';
 
 	let { data } = $props();
 

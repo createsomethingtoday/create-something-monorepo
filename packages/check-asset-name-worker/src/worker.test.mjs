@@ -13,7 +13,7 @@ const BASE_ENV = {
   AIRTABLE_ASSETS_TABLE_ID: 'assets',
   AIRTABLE_CREATORS_TABLE_ID: 'creators',
   AIRTABLE_BANNED_INSTANCES_TABLE_ID: 'bans',
-  ALLOWED_ORIGINS: 'https://webflow.com',
+  ALLOWED_ORIGINS: 'https://webflow.com'
 };
 
 afterEach(() => {
@@ -23,7 +23,7 @@ afterEach(() => {
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' }
   });
 }
 
@@ -51,16 +51,16 @@ async function checkTemplateUser(email, env = BASE_ENV) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Origin: 'https://webflow.com',
+        Origin: 'https://webflow.com'
       },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email })
     }),
     env
   );
 
   return {
     response,
-    payload: await response.json(),
+    payload: await response.json()
   };
 }
 
@@ -75,8 +75,8 @@ function creatorRecord(fields) {
       '#️⃣👛Templates Submitted': 0,
       '#️⃣👛Templates Delisted': 0,
       '#️⃣Submission cap count': 0,
-      ...fields,
-    },
+      ...fields
+    }
   };
 }
 
@@ -86,9 +86,9 @@ test('blocks creators with an active banned instance before eligibility checks',
       return {
         records: [
           creatorRecord({
-            '❌Banned Instance': ['recBan'],
-          }),
-        ],
+            '❌Banned Instance': ['recBan']
+          })
+        ]
       };
     }
 
@@ -100,8 +100,8 @@ test('blocks creators with an active banned instance before eligibility checks',
           'Ban Status': 'Active',
           'Start Date': '2026-01-01',
           'End Date': '2026-02-01',
-          Creator: 'Template Creator',
-        },
+          Creator: 'Template Creator'
+        }
       };
     }
   });
@@ -118,7 +118,7 @@ test('blocks creators with an active banned instance before eligibility checks',
     startDate: '2026-01-01',
     endDate: '2026-02-01',
     creator: 'Template Creator',
-    status: 'Active',
+    status: 'Active'
   });
   assert.deepEqual(
     calls.map((call) => call.pathname),
@@ -132,11 +132,24 @@ test('lets whitelisted creators have concurrent submitted templates', async () =
       return {
         records: [
           creatorRecord({
-            '📧Email': 'hello@zealousweb.com',
-            '#️⃣👛Templates Submitted': 1,
-            '#️⃣Submission cap count': 1,
-          }),
-        ],
+            '📧Email': 'hello@zealousweb.com'
+          })
+        ]
+      };
+    }
+
+    if (url.pathname === '/v0/appTest/assets') {
+      return {
+        records: [
+          {
+            id: 'recAsset',
+            fields: {
+              Name: 'Submitted Template',
+              '🚀Marketplace Status': 'Submitted for review',
+              '📅Submitted Date': '2026-05-01T00:00:00.000Z'
+            }
+          }
+        ]
       };
     }
   });
@@ -154,12 +167,22 @@ test('blocks non-whitelisted creators with an active review in progress', async 
   installAirtableMock((url) => {
     if (url.pathname === '/v0/appTest/creators') {
       return {
+        records: [creatorRecord({})]
+      };
+    }
+
+    if (url.pathname === '/v0/appTest/assets') {
+      return {
         records: [
-          creatorRecord({
-            '#️⃣👛Templates Submitted': 1,
-            '#️⃣Submission cap count': 1,
-          }),
-        ],
+          {
+            id: 'recActiveReview',
+            fields: {
+              Name: 'Active Review',
+              '🚀Marketplace Status': 'Submitted for review',
+              '📅Submitted Date': '2026-05-01T00:00:00.000Z'
+            }
+          }
+        ]
       };
     }
   });

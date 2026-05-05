@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '20'
+          package-manager-cache: false
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -64,8 +65,14 @@ jobs:
       - name: Get PR diff
         id: diff
         run: |
-          git fetch --no-tags --prune --depth=1 origin "${{ github.event.pull_request.base.ref }}"
-          git diff --no-color "origin/${{ github.event.pull_request.base.ref }}"...HEAD > pr_diff.txt
+          BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+          git fetch --no-tags --prune origin "+refs/heads/${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}"
+          if git merge-base "$BASE_REF" HEAD >/dev/null; then
+            git diff --no-color "$BASE_REF"...HEAD > pr_diff.txt
+          else
+            echo "::warning::No merge base found for $BASE_REF and HEAD; falling back to direct diff"
+            git diff --no-color "$BASE_REF" HEAD > pr_diff.txt
+          fi
           echo "diff_size=$(wc -l < pr_diff.txt | tr -d ' ')" >> $GITHUB_OUTPUT
 
       - name: Run Subtractive Triad Audit

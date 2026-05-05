@@ -991,8 +991,8 @@
 | `composio-toolkit-zulip` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zulip` | `brokered` | `100` | `composio`, `composio-team-chat`, `composio-team-collaboration`, `toolkit` |
 | `composio-toolkit-zylvie` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zylvie` | `brokered` | `100` | `composio`, `composio-ecommerce`, `composio-payment-processing`, `toolkit` |
 | `composio-toolkit-zyte_api` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zyte_api` | `brokered` | `100` | `composio`, `composio-ai-web-scraping`, `composio-developer-tools`, `toolkit` |
-| `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `0` | `core`, `content`, `cs`, `policy_os_only` |
-| `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `observability`, `telemetry`, `cs`, `policy_os_only` |
+| `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `10` | `core`, `content`, `cs`, `policy_os_only` |
+| `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `observability`, `telemetry`, `cs`, `policy_os_only` |
 | `half-dozen-youtube-sync` | `http` | `https://youtube.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `youtube`, `workway` |
 | `halfdozen-dm-mcp` | `http` | `https://dm.mcp.workway.co/mcp` | `brokered` | `100` | `halfdozen`, `dm`, `notion`, `drive`, `composio`, `workway` |
 | `halfdozen-gmail-sync-danny` | `http` | `https://gmail.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `gmail`, `workway` |
@@ -1002,7 +1002,6 @@
 | `halfdozen-telemetry` | `http` | `https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp` | `direct` | `0` | `observability`, `telemetry`, `workway` |
 | `halfdozen-zoom-sync` | `http` | `https://zoom.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `zoom`, `workway` |
 | `interaction-atlas-mcp` | `http` | `https://interaction-atlas-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `policy-os`, `interaction-atlas`, `workflow`, `judgment`, `cs` |
-| `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `coordination`, `loom`, `cs` |
 | `meetings` | `http` | `https://meetings-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `meetings`, `cs` |
 | `notion-halfdozen-blondish` | `http` | `https://blondish-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `blondish`, `workway` |
 | `notion-halfdozen-c3-management` | `http` | `https://c3-management-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `c3-management`, `workway` |
@@ -1020,21 +1019,24 @@
 | `quickbooks-notion-mcp-server` | `http` | `https://quickbooks.mcp.workway.co/mcp` | `direct` | `0` | `finance`, `quickbooks`, `notion`, `workway` |
 | `schedule-mcp` | `http` | `https://schedule.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `scheduling`, `cs`, `policy_os_only` |
 | `slack_create_something` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `cs` |
-| `slack_webflow` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `webflow` |
 | `substrate-mcp` | `http` | `https://substrate.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `automation`, `cs`, `policy_os_only` |
 | `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `direct` | `0` | `core`, `framework`, `cs`, `policy_os_only` |
 | `webflow-app-review-mcp` | `http` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `apps`, `cs` |
-| `webflow-site-analyzer-mcp` | `http` | `https://analyzer.mcp.createsomething.agency/mcp` | `direct` | `0` | `webflow`, `review`, `analyzer`, `browser`, `cs` |
+| `webflow-local` | `http` | `https://webflow-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `webflow`, `review`, `plagiarism`, `frameworks`, `cs` |
+| `webflow-site-analyzer-mcp` | `http` | `https://analyzer.mcp.createsomething.agency/mcp` | `direct` | `22` | `webflow`, `review`, `analyzer`, `browser`, `cs` |
 | `webflow-template-review-mcp` | `http` | `https://webflow-template-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `templates`, `cs` |
+| `youtube-transcript-notion-mcp` | `http` | `https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `6` | `youtube`, `transcript`, `notion`, `dify`, `cs` |
 
-## Dormant (2)
+## Dormant (4)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
 | `gmail-notion-mcp` | `http` | `https://gmail-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
+| `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `dormant` | `0` | `coordination`, `loom`, `legacy`, `dormant`, `cs` |
 | `notion-sync-mcp` | `http` | `https://notion-sync-mcp-worker.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
+| `slack_webflow` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `webflow` |
 
-## Local (7)
+## Local (6)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -1044,7 +1046,6 @@
 | `lsmcp` | `stdio` | `npx -y @mizchi/lsmcp mcp` | `direct` | `0` | `local`, `dev`, `filesystem` |
 | `social-mcp` | `stdio` | `node ./packages/social-mcp/dist/index.js` | `direct` | `0` | `local`, `social`, `cs` |
 | `ui-preview-mcp` | `stdio` | `node ./packages/ui-preview-mcp/dist/index.js` | `direct` | `0` | `local`, `ui`, `preview`, `cs` |
-| `webflow-local` | `stdio` | `node ./packages/webflow-mcp/dist/index.js` | `direct` | `0` | `local`, `dev`, `webflow` |
 
 ## Bundles
 
@@ -1141,13 +1142,12 @@
 | `composio-category-webinars` | `composio-toolkit-clickmeeting`, `composio-toolkit-demio` |
 | `composio-category-website-builders` | `composio-toolkit-agility_cms`, `composio-toolkit-appdrag`, `composio-toolkit-basin`, `composio-toolkit-brilliant_directories`, `composio-toolkit-cloudcart`, `composio-toolkit-contentful`, `composio-toolkit-contentful_graphql`, `composio-toolkit-fingertip`, `composio-toolkit-page_x`, `composio-toolkit-plasmic`, `composio-toolkit-prismic`, `composio-toolkit-storerocket`, `composio-toolkit-storyblok`, `composio-toolkit-webflow`, `composio-toolkit-wix` |
 | `core` | `create-something`, `three-tier-framework`, `playbook` |
-| `dormant` | `gmail-notion-mcp`, `notion-sync-mcp` |
+| `dormant` | `gmail-notion-mcp`, `notion-sync-mcp`, `loom-mcp` |
 | `finance` | `quickbooks-notion-mcp-server` |
 | `halfdozen` | `notion-halfdozen-create-something`, `notion-halfdozen-system-studio`, `notion-halfdozen-blondish`, `notion-halfdozen-c3-management`, `notion-halfdozen-cracked`, `notion-halfdozen-fanpad`, `notion-halfdozen-juice-labs`, `notion-halfdozen-kk-management`, `notion-halfdozen-lightswitch`, `notion-halfdozen-phase-3`, `notion-halfdozen-three-six-zero`, `halfdozen-dm-mcp`, `halfdozen-operator-notion-mcp`, `half-dozen-youtube-sync` |
 | `halfdozen-observability` | `halfdozen-telemetry` |
 | `halfdozen-sync` | `halfdozen-gmail-sync-danny`, `halfdozen-gmail-sync-fillip`, `halfdozen-gmail-sync-leah`, `halfdozen-zoom-sync` |
 | `local-dev` | `community-mcp`, `ground-mcp`, `harness-mcp`, `social-mcp`, `ui-preview-mcp`, `webflow-local`, `webflow-site-analyzer-mcp`, `lsmcp` |
-| `loom` | `loom-mcp` |
 | `meetings` | `meetings` |
 | `observability` | `cs-telemetry` |
 | `ops` | `schedule-mcp`, `substrate-mcp` |

@@ -140,9 +140,11 @@
 
   :global(.primary-tool-card) {
     display: grid;
-    gap: var(--space-md);
-    padding: var(--space-md);
-    margin-bottom: var(--space-lg);
+    gap: 0.8rem;
+    padding: 0.9rem;
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius-sm);
+    border-color: color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
   }
 
   .validation-evidence {
@@ -164,7 +166,7 @@
     font-family: var(--font-heading);
     font-size: var(--text-h2);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--color-fg-primary);
     margin: 0 0 var(--space-md);
   }
@@ -175,7 +177,7 @@
   }
 
   .tools-section {
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-md);
   }
 
   .tools-grid {
@@ -188,9 +190,10 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    padding: var(--space-md);
-    border-color: var(--color-shell-border-default);
-    box-shadow: var(--shadow-sm);
+    padding: 0.9rem;
+    border-radius: var(--radius-sm);
+    border-color: color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
+    box-shadow: none;
   }
 
   .tool-header {
@@ -204,7 +207,7 @@
     font-size: var(--text-caption);
     color: var(--color-info);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0;
   }
 
   .tool-description {
@@ -226,16 +229,17 @@
   }
 
   :global(.info-card) {
-    padding: var(--space-md);
-    border-color: var(--color-shell-border-default);
-    box-shadow: var(--shadow-sm);
+    padding: 0.9rem;
+    border-radius: var(--radius-sm);
+    border-color: color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
+    box-shadow: none;
   }
 
   .info-title {
     font-family: var(--font-heading);
     font-size: var(--text-body-lg);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--color-fg-primary);
     margin: 0 0 var(--space-sm);
   }
@@ -262,9 +266,9 @@
     display: grid;
     gap: var(--space-xs);
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--color-info-border);
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
+    border-top: 1px solid color-mix(in srgb, var(--color-info-border) 72%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-info-border) 72%, transparent);
+    background: transparent;
   }
 
   .tip-title {

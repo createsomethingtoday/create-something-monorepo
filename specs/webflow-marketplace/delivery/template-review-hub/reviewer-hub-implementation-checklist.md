@@ -85,11 +85,16 @@ Remove these tools from reviewer-facing discovery during alpha:
 - `webflow-template-review-mcp__template_review_update_asset_publishing`
 - `webflow-template-review-mcp__template_review_update_version_review`
 
-Only these write tools should be candidates for later enablement:
+Only these reviewer-owned write tools should be visible in the Phase A reviewer lane:
 
+- `webflow-template-review-mcp__template_review_assign_self`
+- `webflow-template-review-mcp__template_review_unassign_self`
 - `webflow-template-review-mcp__template_review_request_changes`
 - `webflow-template-review-mcp__template_review_set_review_status`
 - `webflow-template-review-mcp__template_review_save_draft_feedback`
+
+Only these official decision tools should be candidates for later enablement after the Phase A lane is proven:
+
 - `webflow-template-review-mcp__template_review_approve_version`
 - `webflow-template-review-mcp__template_review_reject_version`
 - `webflow-template-review-mcp__template_review_complete_publishing`
@@ -125,15 +130,15 @@ Recommended write mapping posture:
   - write only draft-safe feedback fields
   - do not mutate official decision state
 
-## 8. Set reviewer Hubs to read-only first
+## 8. Use read-only as preflight and rollback
 
-Before any write enablement:
+Before normalizing to the Phase A narrow reviewer-owned write lane:
 
 - configure reviewer sessions for read-only discovery and execution posture
 - verify that mutable routes do not appear in reviewer discovery
 - verify that mutable routes do not execute from reviewer sessions
 
-The Hub policy and authz layer already support this model. Treat that as a hard requirement, not an optional UX preference.
+Then normalize the reviewer-visible Phase A surface to reads plus `assign_self`, `unassign_self`, `request_changes`, `set_review_status`, and `save_draft_feedback`. Keep read-only mode available as the rollback posture. The Hub policy and authz layer already support this model. Treat actor-resolved access as a hard requirement, not an optional UX preference.
 
 ## 9. Enable rate limits and quotas before writes
 
@@ -162,7 +167,8 @@ For each reviewer Hub, confirm:
 2. read-only sessions cannot execute mutable routes
 3. blocked actions return policy-linked deny reasons
 4. write-capable routes resolve through actor-aware authorization before execution
-5. destructive or control-plane routes require review or remain blocked
+5. only the Phase A narrow reviewer-owned write routes are visible to reviewer sessions
+6. destructive, broad mutation, operator-assignment, or control-plane routes require review or remain blocked
 
 This should be validated in runtime behavior, not just by reading policy docs.
 
@@ -191,14 +197,19 @@ If the Hub trace cannot support reviewer-attributed write review, keep reviewer 
 
 ## 12. Write-enable sequence
 
-Enable writes in this order:
+Normalize Phase A with these narrow reviewer-owned writes:
 
-1. `request_changes`
-2. `set_review_status`
-3. `save_draft_feedback`
-4. `approve_version`
-5. `reject_version`
-6. `complete_publishing`
+1. `assign_self`
+2. `unassign_self`
+3. `request_changes`
+4. `set_review_status`
+5. `save_draft_feedback`
+
+Enable later official decision writes in this order:
+
+1. `approve_version`
+2. `reject_version`
+3. `complete_publishing`
 
 Do not enable the next action until the earlier action passes:
 
@@ -246,17 +257,17 @@ If this affects more than one reviewer Hub, revert all six to read-only and tria
 ## 15. Suggested operator workflow
 
 1. Create the six reviewer-specific Hub surfaces.
-2. Put all six in read-only mode.
+2. Put all six in read-only preflight mode.
 3. Narrow discovery to review-only servers.
-4. Verify hidden write surfaces.
+4. Verify hidden broad mutation and operator-assignment surfaces.
 5. Turn on rate limits and quotas.
 6. Run discovery and execution authz checks with a reviewer session.
 7. Confirm trace visibility in `cs-telemetry`.
 8. Confirm field mappings, including `fldHxIGHMHn4xb9U4` for reviewer feedback and `flde8Huk5NRIdm2wZ` for `📝Review Status`.
-9. Enable `request_changes` for one reviewer Hub first.
-10. Review traces and Airtable result.
-11. Enable `set_review_status`, then `save_draft_feedback`, only after clean results.
-12. Expand action-by-action and reviewer-by-reviewer only after clean results.
+9. Normalize all six to the Phase A narrow reviewer-owned write lane.
+10. Smoke `assign_self` and `unassign_self` for one reviewer Hub first.
+11. Smoke `request_changes`, `set_review_status`, and `save_draft_feedback` on noncritical records.
+12. Expand official decision writes action-by-action and reviewer-by-reviewer only after clean results.
 
 ## 16. Deliverable output for signoff
 

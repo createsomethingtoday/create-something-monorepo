@@ -71,14 +71,13 @@ Visible tools should be limited to:
 - `webflow-template-review-mcp__template_review_get_review_context`
 - `webflow-template-review-mcp__template_review_list_releases`
 - `webflow-template-review-mcp__template_review_get_field_map`
-- `webflow-template-review-mcp__template_review_assign_reviewer`
 - `webflow-template-review-mcp__template_review_assign_self`
 - `webflow-template-review-mcp__template_review_unassign_self`
 - `webflow-template-review-mcp__template_review_request_changes`
 - `webflow-template-review-mcp__template_review_set_review_status`
 - `webflow-template-review-mcp__template_review_save_draft_feedback`
 
-Do not expose broad write tools in Phase A. The permitted mutations are narrow reviewer workflow verbs only: reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates on the assigned Asset Version.
+Do not expose broad write tools in Phase A. The permitted mutations are narrow reviewer-owned workflow verbs only: self-assignment, self-unassignment, bounded feedback writes, request-changes, and controlled 📝Review Status updates on the assigned Asset Version. `template_review_assign_reviewer` is an operator assignment route, not a reviewer-visible Phase A tool.
 
 ### Reviewer action
 
@@ -177,8 +176,10 @@ After the other Webflow servers are connected and tested, move the reviewer to P
 
 Do not widen discovery to expose general mutation tools.
 
-The narrow reviewer-safe write actions that may be enabled in Phase A are:
+The narrow reviewer-safe write actions enabled in Phase A are:
 
+- `webflow-template-review-mcp__template_review_assign_self`
+- `webflow-template-review-mcp__template_review_unassign_self`
 - `webflow-template-review-mcp__template_review_request_changes`
 - `webflow-template-review-mcp__template_review_set_review_status`
 - `webflow-template-review-mcp__template_review_save_draft_feedback`
@@ -188,11 +189,7 @@ The broader official decision actions that may be enabled later are:
 - `webflow-template-review-mcp__template_review_approve_version`
 - `webflow-template-review-mcp__template_review_reject_version`
 - `webflow-template-review-mcp__template_review_complete_publishing`
-
-Reviewer self-assignment is already allowed as a narrow write:
-
-- `webflow-template-review-mcp__template_review_assign_self`
-- `webflow-template-review-mcp__template_review_unassign_self`
+- `webflow-template-review-mcp__template_review_assign_reviewer`
 
 For host integrations and smoke checks, note the read envelope for reviewer context:
 
@@ -347,16 +344,16 @@ Reason:
 
 ## 13. Recommended operator sequence
 
-1. Enable missing Webflow analysis servers in the Hub.
-2. Verify they are connected and searchable.
-3. Apply Phase A compact discovery posture to all six reviewer Hubs.
-4. Confirm write tools are not visible in reviewer discovery.
-5. Confirm reviewer sessions are read-only and actor-resolved.
-6. Turn on Hub rate limits and quotas.
-7. Move one reviewer to Phase B discovery once the analysis servers are healthy.
-8. Enable `request_changes` for one reviewer only after trace validation.
-9. Expand action-by-action.
-10. Expand reviewer-by-reviewer.
+1. Apply Phase A compact discovery posture to all six reviewer Hubs.
+2. Confirm the visible surface is the Phase A read/context tools plus the five narrow reviewer-owned write verbs.
+3. Confirm broad mutation tools and operator assignment routes are not visible in reviewer discovery.
+4. Confirm reviewer sessions are actor-resolved.
+5. Turn on Hub rate limits and quotas.
+6. Smoke `assign_self` and `unassign_self` for one reviewer lane.
+7. Smoke `request_changes`, `set_review_status`, and `save_draft_feedback` only after trace validation.
+8. Expand action-by-action.
+9. Expand reviewer-by-reviewer.
+10. Enable missing Webflow analysis servers and move to Phase B only after those servers are healthy and searchable.
 
 ## 14. Stop conditions
 

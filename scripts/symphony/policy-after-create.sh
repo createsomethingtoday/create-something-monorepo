@@ -8,6 +8,7 @@ ISSUE_ID="$(basename "${WORKSPACE_PATH}")"
 BRANCH_NAME="codex/${ISSUE_ID}-policy"
 
 if [[ ! -e "${WORKSPACE_PATH}/.git" ]]; then
+  git -C "${REPO_ROOT}" worktree prune
   if git -C "${REPO_ROOT}" show-ref --verify --quiet "refs/heads/${BRANCH_NAME}"; then
     git -C "${REPO_ROOT}" worktree add --force "${WORKSPACE_PATH}" "${BRANCH_NAME}"
   else
@@ -15,10 +16,8 @@ if [[ ! -e "${WORKSPACE_PATH}/.git" ]]; then
   fi
 fi
 
-if [[ -d "${REPO_ROOT}/.loom" && ! -e "${WORKSPACE_PATH}/.loom" ]]; then
-  ln -s "${REPO_ROOT}/.loom" "${WORKSPACE_PATH}/.loom"
+if [[ "${WORKSPACE_PATH}" != "${REPO_ROOT}" ]]; then
+  cd "${WORKSPACE_PATH}"
 fi
 
-if [[ ! -d "${WORKSPACE_PATH}/node_modules" ]]; then
-  pnpm install --frozen-lockfile --prefer-offline
-fi
+bash ./scripts/bootstrap-worktree.sh

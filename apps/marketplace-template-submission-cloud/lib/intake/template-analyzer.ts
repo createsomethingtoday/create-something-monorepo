@@ -1,6 +1,5 @@
 import {
   CATEGORY_OPTIONS,
-  SECONDARY_TAGS,
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
   type PageCountOption,
@@ -22,7 +21,6 @@ interface RawTemplateAnalyzerPayload {
   short_description?: string;
   long_description?: string;
   categories?: string[];
-  secondary_tags?: string[];
   pricing?: string;
   page_type?: string;
   webflow_features_cms?: boolean;
@@ -37,7 +35,6 @@ export interface TemplateAnalyzerAutofill {
   shortDescription?: string;
   longDescription?: string;
   categories: string[];
-  secondaryTags: string[];
   priceModel?: 'Free' | 'Paid';
   pageCount?: PageCountOption;
   typeCms: boolean;
@@ -55,9 +52,6 @@ export interface TemplateAnalyzerResult {
 
 const CATEGORY_LOOKUP = new Map(
   CATEGORY_OPTIONS.map((value) => [normalizeToken(value), value]),
-);
-const SECONDARY_TAG_LOOKUP = new Map(
-  SECONDARY_TAGS.map((value) => [normalizeToken(value), value]),
 );
 const STYLE_LOOKUP = new Map(
   TEMPLATE_STYLES.map((value) => [normalizeToken(value), value]),
@@ -168,7 +162,6 @@ function mapPayload(payload: RawTemplateAnalyzerPayload): TemplateAnalyzerAutofi
     shortDescription: payload.short_description?.trim() || undefined,
     longDescription: toParagraphs(payload.long_description),
     categories: mapValues(payload.categories, CATEGORY_LOOKUP, 2),
-    secondaryTags: mapValues(payload.secondary_tags, SECONDARY_TAG_LOOKUP),
     priceModel: mapPriceModel(payload.pricing),
     pageCount: mapPageCount(payload.page_type),
     typeCms: payload.webflow_features_cms === true,

@@ -8,22 +8,22 @@
     "production_promotion"
   ],
   "source_of_truth": {
-    "task_system": "loom",
-    "dev_checkpoint_storage": "loom_evidence",
+    "task_system": "linear",
+    "dev_checkpoint_storage": "linear_issue_comments",
     "production_promotion_boundary": "git_pr_or_approved_release_artifact"
   },
   "dev_inner_loop": {
     "allows_direct_deploy_without_git_push": true,
-    "checkpoint_bridge_artifact_dir": ".loom/checkpoints",
+    "checkpoint_bridge_artifact": "linear_issue_comment",
     "requires": [
-      "tracked_loom_task",
+      "tracked_linear_issue",
       "relevant_quality_checks_passed",
       "non_production_target",
       "deploy_path_defined",
       "deploy_evidence_recorded"
     ],
     "evidence": [
-      "loom_task_id",
+      "linear_issue_id",
       "package_or_surface",
       "target_environment",
       "commands_run",

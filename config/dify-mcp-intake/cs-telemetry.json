@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "status": "pending-dify-studio-registration",
+  "owner": "create-something",
+  "created_at": "2026-04-30",
+  "registry_server": {
+    "id": "cs-telemetry",
+    "transport": "http",
+    "url": "https://cs-telemetry-mcp.createsomething.workers.dev/mcp",
+    "description": "Fleet telemetry MCP for CREATE SOMETHING account",
+    "tags": ["observability", "telemetry", "cs", "policy_os_only"],
+    "catalog_exposure_mode": "direct",
+    "estimated_tool_count": 10
+  },
+  "dify_mcp_server": {
+    "server_id": "cs-telemetry",
+    "display_name": "Cs Telemetry",
+    "transport": "http",
+    "url": "https://cs-telemetry-mcp.createsomething.workers.dev/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/cs-telemetry",
+        "secret_key": "MCP_BEARER_TOKEN"
+      }
+    }
+  },
+  "dify_studio_steps": [
+    "Open Dify Studio -> Tools -> MCP.",
+    "Create an HTTP MCP server card with server ID cs-telemetry.",
+    "Set the MCP URL to https://cs-telemetry-mcp.createsomething.workers.dev/mcp.",
+    "Configure bearer auth from Infisical prod:/cs-telemetry:MCP_BEARER_TOKEN.",
+    "Refresh/discover tools in Dify Studio.",
+    "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
+    "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
+  ],
+  "inventory_fragment_after_tool_discovery": {
+    "cs-telemetry": {
+      "display_name": "Cs Telemetry",
+      "source_mcp_registry_server": "cs-telemetry",
+      "transport": "http",
+      "url": "https://cs-telemetry-mcp.createsomething.workers.dev/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/cs-telemetry",
+          "secret_key": "MCP_BEARER_TOKEN"
+        }
+      },
+      "tools": []
+    }
+  },
+  "notes": [
+    "This intake artifact is not a Dify inventory entry.",
+    "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
+    "Keep secret values in Infisical only; this artifact stores references, not values.",
+    "After the server card is codified, scaffold one or more Dify agents with pnpm dify:agent:scaffold."
+  ]
+}

@@ -41,6 +41,7 @@ type LaneConfig = {
 	bridgeSubdomain: string;
 	bridgeUsername: string;
 	defaultToolkitProfile: string[];
+	defaultAllowedToolPrefixes?: string[];
 };
 
 type BoundClientRow = {
@@ -63,6 +64,25 @@ const LEGACY_SHARED_AUTH_TOOLKITS = [
 	'notion',
 ];
 const LEGACY_WEBFLOW_REVIEWER_TOOLKITS: string[] = [];
+const WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES = [
+	'webflow-template-review-mcp__template_review_health',
+	'webflow-template-review-mcp__template_review_get_metrics',
+	'webflow-template-review-mcp__template_review_list_queue',
+	'webflow-template-review-mcp__template_review_my_queue',
+	'webflow-template-review-mcp__template_review_search_assets',
+	'webflow-template-review-mcp__template_review_search_versions',
+	'webflow-template-review-mcp__template_review_get_asset',
+	'webflow-template-review-mcp__template_review_list_versions',
+	'webflow-template-review-mcp__template_review_get_version',
+	'webflow-template-review-mcp__template_review_get_review_context',
+	'webflow-template-review-mcp__template_review_list_releases',
+	'webflow-template-review-mcp__template_review_get_field_map',
+	'webflow-template-review-mcp__template_review_assign_self',
+	'webflow-template-review-mcp__template_review_unassign_self',
+	'webflow-template-review-mcp__template_review_request_changes',
+	'webflow-template-review-mcp__template_review_set_review_status',
+	'webflow-template-review-mcp__template_review_save_draft_feedback',
+];
 
 const LANE_CONFIGS: Record<string, LaneConfig> = {
 	mj: {
@@ -120,6 +140,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-natalia',
 		bridgeUsername: 'acct_wf_natalia',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		defaultAllowedToolPrefixes: WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_sudiksha: {
 		displayName: 'Sudiksha Khanduja',
@@ -127,6 +148,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-sudiksha',
 		bridgeUsername: 'acct_wf_sudiksha',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		defaultAllowedToolPrefixes: WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_eric: {
 		displayName: 'Eric Unger',
@@ -134,6 +156,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-eric',
 		bridgeUsername: 'acct_wf_eric',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		defaultAllowedToolPrefixes: WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_vicki: {
 		displayName: 'Vicki Chen',
@@ -141,6 +164,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-vicki',
 		bridgeUsername: 'acct_wf_vicki',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		defaultAllowedToolPrefixes: WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_mariana: {
 		displayName: 'Mariana Segura',
@@ -148,6 +172,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-mariana',
 		bridgeUsername: 'acct_wf_mariana',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		defaultAllowedToolPrefixes: WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES,
 	},
 	wf_micah: {
 		displayName: 'Micah Johnson',
@@ -155,6 +180,7 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		bridgeSubdomain: 'wf-template-review-micah',
 		bridgeUsername: 'acct_wf_micah',
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
+		defaultAllowedToolPrefixes: WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES,
 	},
 };
 
@@ -225,7 +251,9 @@ async function buildLegacyAssignment(
 		tenantId: input.tenantId,
 		workspaceAccountId,
 		toolkitProfile,
-		allowedToolPrefixes: buildComposioAllowedToolPrefixes(toolkitProfile),
+		allowedToolPrefixes: lane.defaultAllowedToolPrefixes
+			? [...lane.defaultAllowedToolPrefixes]
+			: buildComposioAllowedToolPrefixes(toolkitProfile),
 	};
 }
 

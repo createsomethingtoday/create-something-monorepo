@@ -331,7 +331,7 @@ MIT
 
 ## Related
 
-Looking for task coordination? See [@createsomething/loom-mcp](https://www.npmjs.com/package/@createsomething/loom-mcp) — multi-agent coordination with crash recovery.
+Looking for task coordination? Use Linear with the CREATE SOMETHING `pnpm linear:*` wrappers for tracked work, ownership, status, and delivery evidence.
 
 ## Keywords
 

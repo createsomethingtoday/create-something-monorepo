@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "status": "published_and_eval_covered",
+  "created_at": "2026-04-29",
+  "dify_app": {
+    "name": "YouTube Transcript Notion Agent",
+    "type": "agent",
+    "description": "Extract YouTube transcripts, inspect the configured Notion transcript database, and create or enrich Notion pages when explicitly asked.",
+    "recommended_model": "gpt-5.4",
+    "api_response_mode": "streaming",
+    "service_api": {
+      "base_url": "https://api.dify.ai/v1",
+      "api_key_secret": {
+        "environment": "prod",
+        "path": "/dify/youtube-transcript-notion-agent",
+        "secret_key": "DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT_API_KEY"
+      }
+    }
+  },
+  "mcp_server": {
+    "display_name": "YouTube Transcript + Notion MCP",
+    "server_id": "yt-transcript-notion",
+    "transport": "http",
+    "url": "https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/youtube-transcript-notion-mcp",
+        "secret_key": "MCP_BEARER_TOKEN"
+      }
+    }
+  },
+  "api_extension_fallback": {
+    "recommended": false,
+    "use_when": [
+      "Dify Studio cannot authorize or discover the HTTP MCP server.",
+      "The app only needs transcript context injection, not agent-selected MCP tools.",
+      "A single tightly controlled endpoint is preferred for a client-facing prototype."
+    ],
+    "extension_type": "external_data_tool",
+    "endpoint_contract": {
+      "method": "POST",
+      "auth": "Authorization: Bearer {api_key}",
+      "validation_request": {
+        "point": "ping"
+      },
+      "validation_response": {
+        "result": "pong"
+      },
+      "query_point": "app.external_data_tool.query",
+      "query_response": {
+        "result": "string"
+      }
+    },
+    "write_policy": "Do not expose Notion writes through the API Extension fallback unless the endpoint requires an explicit confirmed write input. Prefer native MCP tools for write-capable actions."
+  },
+  "verified_mcp": {
+    "verified_at": "2026-04-29",
+    "protocol_version": "2025-06-18",
+    "server_info": {
+      "name": "youtube-transcript-notion-mcp",
+      "version": "1.0.0"
+    },
+    "capabilities": ["prompts", "resources", "tools"],
+    "default_notion_data_source_id": "27a01918-7ac5-80c6-86c2-000b962fda76"
+  },
+  "tools": [
+    {
+      "name": "extract_transcript",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": ["videoUrl"]
+    },
+    {
+      "name": "get_database_schema",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": []
+    },
+    {
+      "name": "sync_video_to_notion",
+      "enabled": true,
+      "write_capability": true,
+      "required_parameters": ["videoUrl"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "enrich_notion_page",
+      "enabled": true,
+      "write_capability": true,
+      "required_parameters": ["pageId"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "search",
+      "enabled": false,
+      "write_capability": false,
+      "reason": "Generic resource-discovery tool; keep disabled unless Dify needs MCP resource search."
+    },
+    {
+      "name": "fetch",
+      "enabled": false,
+      "write_capability": false,
+      "reason": "Generic resource-fetch tool; keep disabled unless Dify needs MCP resource fetch."
+    }
+  ],
+  "agent_prompt": "You are the YouTube Transcript Notion Agent for CREATE SOMETHING.\n\nUse the YouTube Transcript + Notion MCP tools to extract YouTube transcripts, inspect the configured Notion transcript database, and enrich or sync Notion records only when the user asks for that write action.\n\nOperating rules:\n1. For transcript-only requests, call extract_transcript and answer from the returned transcript or metadata. Do not fabricate transcript content.\n2. Before any Notion write, clearly state the intended action and wait for explicit user confirmation in the conversation. Write-capable tools are sync_video_to_notion and enrich_notion_page.\n3. If the user provides a Notion page ID, prefer enrich_notion_page. If the user provides only a YouTube URL and asks to save or sync it, prefer sync_video_to_notion.\n4. If a property mapping is requested or the schema is uncertain, call get_database_schema before writing.\n5. Keep answers concise: include video URL/title when available, transcript extraction status, Notion write status, and any tool failure details.\n6. Never reveal API keys, bearer tokens, Infisical values, Notion integration tokens, or internal credential material.\n7. Treat playlist or bulk requests as batch operations: summarize the plan and ask for confirmation before performing writes."
+}

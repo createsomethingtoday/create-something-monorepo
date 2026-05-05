@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "status": "imported",
+  "created_at": "2026-04-30",
+  "source_dsl": {
+    "imported_from": "BLOND_ISH HUB.yml",
+    "repo_path": "config/dify-agents/blondish-hub.dify.yml"
+  },
+  "dify_app": {
+    "name": "BLOND:ISH HUB",
+    "type": "agent",
+    "mode": "agent-chat",
+    "description": "BLOND:ISH with Half Dozen | HUB MCP",
+    "recommended_model": "gpt-5.4",
+    "api_response_mode": "streaming",
+    "service_api": {
+      "base_url": "https://api.dify.ai/v1",
+      "api_key_secret": {
+        "environment": "prod",
+        "path": "/dify/blondish-hub",
+        "secret_key": "DIFY_BLONDISH_HUB_API_KEY"
+      }
+    }
+  },
+  "service_api_smoke": {
+    "last_checked_at": "2026-04-30",
+    "result": "passed",
+    "message_id": "c3262988-c142-4dc5-a437-ca459d622e85",
+    "conversation_id": "9d5a703a-2689-4b72-a62a-21132c6396c5",
+    "latency_ms": 18135,
+    "required_tool_used": "hub_list_services",
+    "forbidden_tools_used": [],
+    "notes": "Dify Service API key works, the agent called hub_list_services, and the answer avoided session-token auth failure language."
+  },
+  "mcp_direct_probe": {
+    "last_checked_at": "2026-04-30",
+    "result": "passed",
+    "static_bearer_secret": "present: prod:/mcp-hub/hubs:CS_HUB_BLONDISH_API_TOKEN",
+    "initialize": "ok",
+    "tools_list": "ok: 17 tools",
+    "tools_call": "ok: hub_status and hub_list_services",
+    "notes": "The static fleet token is enough for MCP initialize/tools.list and safe Hub tools/call. Dify should use the static lane bearer from prod:/mcp-hub/hubs:CS_HUB_BLONDISH_API_TOKEN."
+  },
+  "mcp_server": {
+    "display_name": "BLOND:ISH HUB",
+    "server_id": "blondish_hub",
+    "transport": "http",
+    "url": "https://blondish.mcp.createsomething.agency/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/mcp-hub/hubs",
+        "secret_key": "CS_HUB_BLONDISH_API_TOKEN"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "hub_describe_proxy_tool",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["proxyToolName"]
+    },
+    {
+      "name": "hub_execute_proxy_tool",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["args", "proxyToolName"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_get_proxy_tool",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["proxyToolName"]
+    },
+    {
+      "name": "hub_list_discovery_packs",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_proxy_tools",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_registry",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_services",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_policy_status",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_refresh_connections",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_route_intent",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["allowDiscoveryFallback", "intent", "limit", "query", "serverName"]
+    },
+    {
+      "name": "hub_run_intent",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [
+        "allowDiscoveryFallback",
+        "args",
+        "intent",
+        "limit",
+        "query",
+        "serverName"
+      ],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_run_proxy_tool",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["args", "proxyToolName"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_search_proxy_tools",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["cursor", "limit", "query", "serverName"]
+    },
+    {
+      "name": "hub_set_discovery",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["activeServers", "maxProxyTools", "mode", "pack", "reset"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_status",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_trace_lookup",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["correlationId", "limit"]
+    },
+    {
+      "name": "hub_update_state",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [
+        "disableBundles",
+        "disableServers",
+        "enableBundles",
+        "enableServers",
+        "setBundles",
+        "setServers",
+        "writeCodexConfig"
+      ],
+      "requires_user_confirmation": true
+    }
+  ],
+  "agent_prompt": "Use Hub MCP for third-party actions and data retrieval. Prefer hub_list_services first.\nKeep tool calls to the minimum; parallelize independent reads.\nFollow tool schemas exactly; on errors, correct arguments and retry until resolved.\nIf auth is needed, use Hub connection tools and instruct the user to complete auth in the UI.\nDo not send/post/delete externally unless the user explicitly requests it; default to drafting for review.\nWhen drafting replies, read the full thread first and clearly separate summary vs draft.",
+  "inventory_target": {
+    "manifest_path": "config/dify-agents/blondish-hub.json",
+    "dsl_path": "config/dify-agents/blondish-hub.dify.yml"
+  }
+}

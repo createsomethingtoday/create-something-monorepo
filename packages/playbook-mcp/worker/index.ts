@@ -22,12 +22,15 @@ import { registerTools } from '../src/tools.js';
 import { registerPrompts } from '../src/prompts.js';
 import { HOST_PLAYBOOKS } from '../src/playbooks.js';
 import { MCP_CATALOG } from '../src/catalog.js';
+import registryJson from '../../../config/mcp-hub/registry.json';
+import fleetJson from '../../../config/mcp-hub/fleet.json';
 import {
   runHalfDozenDedup,
   runHalfDozenFleetWatchdog,
-  runHalfDozenInboxTriage,
+  runHalfDozenInboxTriage
 } from './halfdozenFleetWatchdog.js';
 import type { HalfDozenScenarioRunResult } from './halfdozenFleetWatchdog.js';
+import { inferredProxyToolCount, liveHubTotalServerCount } from './registrySweepTelemetry.js';
 
 // =============================================================================
 // Types
@@ -50,17 +53,25 @@ interface Env {
   HALFDOZEN_NOTION_MCP_URL?: string;
   HALFDOZEN_SLACK_SIGNING_SECRET?: string;
   HALFDOZEN_SLACK_TEAM_ID?: string;
+  INK_BRIDGE_ORIGIN?: string;
+  INK_SOURCE_TOKEN?: string;
+  INK_BRIDGE_TOKEN?: string;
   HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED?: string;
+  HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS?: string;
   RESEND_API_KEY?: string;
   HALFDOZEN_AGENT_NOTIFY_EMAIL_FROM?: string;
   HALFDOZEN_AGENT_NOTIFY_EMAIL_TO?: string;
   HALFDOZEN_AGENT_NOTIFY_EMAIL_REPLY_TO?: string;
   HALFDOZEN_AGENT_NOTIFY_EMAIL_MODE?: string;
+  MCP_REGISTRY_SWEEP_HUB_HEALTH_URL?: string;
+  MCP_REGISTRY_SWEEP_TIMEOUT_MS?: string;
+  MCP_REGISTRY_SWEEP_CRON_ENABLED?: string;
+  MCP_REGISTRY_SWEEP_CRON_UTC_HOURS?: string;
 }
 
 const JSON_HEADERS = {
   'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': '*'
 };
 
 const HALFDOZEN_FLEET_WATCHDOG_ROUTE = '/clients/halfdozen/agents/fleet-watchdog/run';
@@ -69,34 +80,198 @@ const HALFDOZEN_DEDUP_ROUTE = '/clients/halfdozen/agents/dedup/run';
 const HALFDOZEN_NOTIFY_TEST_ROUTE = '/clients/halfdozen/agents/notifications/test';
 const HALFDOZEN_SLACK_COMMAND_ROUTE = '/clients/halfdozen/slack/commands';
 const HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE = 'cron:clients/halfdozen/agents/fleet-watchdog';
+const MCP_REGISTRY_SWEEP_ROUTE = '/create-something/agents/mcp-registry-sweep/run';
 const SLACK_TIMESTAMP_TOLERANCE_SECONDS = 300;
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
 const DEFAULT_NOTIFY_EMAIL_FROM = 'CREATE SOMETHING Ops <notifications@createsomething.io>';
 const DEFAULT_NOTIFY_EMAIL_TO = ['micah@createsomething.io'] as const;
+const DEFAULT_MCP_REGISTRY_SWEEP_HUB_HEALTH_URL =
+  'https://cs-mcp-hub-remote.createsomething.workers.dev/health';
+const DEFAULT_MCP_REGISTRY_SWEEP_TIMEOUT_MS = 60_000;
 
 const HALFDOZEN_PROTECTED_ROUTES = [
   HALFDOZEN_FLEET_WATCHDOG_ROUTE,
   HALFDOZEN_INBOX_TRIAGE_ROUTE,
-  HALFDOZEN_DEDUP_ROUTE,
+  HALFDOZEN_DEDUP_ROUTE
 ] as const;
 
 const HALFDOZEN_TOKEN_PROTECTED_ROUTES = [
   ...HALFDOZEN_PROTECTED_ROUTES,
-  HALFDOZEN_NOTIFY_TEST_ROUTE,
+  HALFDOZEN_NOTIFY_TEST_ROUTE
 ] as const;
+const DEFAULT_INK_BRIDGE_ORIGIN = 'https://ink.createsomething.agency';
+const DEFAULT_FLEET_WATCHDOG_CRON_UTC_HOURS = '4,13,18,23';
+const DEFAULT_MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = '4,13,18,23';
+const MCP_HUB_REGISTRY = registryJson as McpHubRegistry;
+const MCP_FLEET_REGISTRY = fleetJson as McpFleetRegistry;
+
+const AGENT_HEALTH_SURFACES: AgentHealthSurface[] = [
+  {
+    id: 'agent.create-something.mcp-registry-sweep',
+    name: 'CREATE SOMETHING MCP Registry Sweep',
+    route: MCP_REGISTRY_SWEEP_ROUTE,
+    schedule: 'scheduled'
+  },
+  {
+    id: 'agent.halfdozen.fleet-watchdog',
+    name: 'Half Dozen Fleet Watchdog Agent',
+    route: HALFDOZEN_FLEET_WATCHDOG_ROUTE,
+    schedule: 'scheduled'
+  },
+  {
+    id: 'agent.halfdozen.inbox-triage',
+    name: 'Half Dozen Inbox Triage Agent',
+    route: HALFDOZEN_INBOX_TRIAGE_ROUTE,
+    schedule: 'manual'
+  },
+  {
+    id: 'agent.halfdozen.dedup',
+    name: 'Half Dozen Dedup Agent',
+    route: HALFDOZEN_DEDUP_ROUTE,
+    schedule: 'manual'
+  }
+];
+
+type McpHubRegistryServer = {
+  transport?: string;
+  url?: string;
+  description?: string;
+  tags?: string[];
+  bearer_token_env_var?: string;
+  catalog?: {
+    include?: boolean;
+    category?: string;
+    requiresAuth?: boolean;
+    authType?: string;
+    slug?: string;
+    name?: string;
+  };
+};
+
+type McpHubRegistry = {
+  servers?: Record<string, McpHubRegistryServer>;
+  bundles?: Record<string, string[]>;
+  defaults?: {
+    enabledBundles?: string[];
+    enabledServers?: string[];
+    disabledServers?: string[];
+  };
+};
+
+type McpFleetDeployment = {
+  type?: string;
+  status?: string;
+  client?: string;
+  tenant?: string;
+  auth?: {
+    bearer_token_env_var?: string;
+  };
+};
+
+type McpFleetRegistry = {
+  deployments?: Record<string, McpFleetDeployment>;
+};
+
+type McpRegistryConnectedServer = {
+  name: string;
+  tool_count: number | null;
+};
+
+type McpRegistryFailedServer = {
+  server: string;
+  error: string;
+};
+
+type McpRegistryInventory = {
+  server_count: number;
+  catalog_count: number;
+  bundle_count: number;
+  composio_toolkit_count: number;
+  direct_server_count: number;
+  http_server_count: number;
+  stdio_server_count: number;
+  auth_required_count: number;
+  dormant_count: number;
+  policy_os_only_count: number;
+  create_something_count: number;
+  workway_count: number;
+  webflow_count: number;
+  local_dev_count: number;
+  remote_http_missing_url: string[];
+  bundle_missing_servers: Array<{ bundle: string; server: string }>;
+  default_enabled_bundles: string[];
+  default_enabled_servers: string[];
+};
+
+type McpFleetInventory = {
+  deployment_count: number;
+  deployed_count: number;
+  policy_os_hub_count: number;
+  notion_mcp_count: number;
+  auth_configured_count: number;
+};
+
+type AgentHealthSurface = {
+  id: string;
+  name: string;
+  route: string;
+  schedule: 'scheduled' | 'manual';
+};
+
+type AgentInventory = {
+  registered_health_surface_count: number;
+  scheduled_health_surface_count: number;
+  manual_health_surface_count: number;
+  surfaces: AgentHealthSurface[];
+};
+
+type LiveHubInventory = {
+  enabled_server_count: number;
+  connected_server_count: number;
+  failed_server_count: number;
+  proxy_tool_count: number | null;
+  enabled_registered_count: number;
+  enabled_unregistered_servers: string[];
+  connected_unregistered_servers: string[];
+  enabled_not_connected_servers: string[];
+  failed_registered_servers: string[];
+};
+
+type McpRegistrySweepResult = {
+  success: true;
+  scenario: 'mcp-registry-sweep';
+  checked_at: string;
+  hub_health_url: string;
+  status: 'healthy' | 'degraded' | 'failed';
+  degraded: boolean;
+  summary: string;
+  detail: string;
+  action: string;
+  enabled_servers: string[];
+  connected_servers: McpRegistryConnectedServer[];
+  failed_servers: McpRegistryFailedServer[];
+  proxy_tool_count: number | null;
+  review_scope: string;
+  registry_inventory: McpRegistryInventory;
+  fleet_inventory: McpFleetInventory;
+  agent_inventory: AgentInventory;
+  live_hub: LiveHubInventory;
+  warnings: string[];
+  duration_ms: number;
+};
 
 const AgentRouteBodySchema = z.object({
   query: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
   max_turns: z.number().int().min(1).max(30).optional(),
-  timeout_ms: z.number().int().min(1_000).max(120_000).optional(),
+  timeout_ms: z.number().int().min(1_000).max(120_000).optional()
 });
 
 type AgentRouteBody = z.infer<typeof AgentRouteBodySchema>;
 
 const NotificationTestBodySchema = z.object({
-  message: z.string().min(1).max(500).optional(),
+  message: z.string().min(1).max(500).optional()
 });
 
 type NotificationTestBody = z.infer<typeof NotificationTestBodySchema>;
@@ -114,27 +289,6 @@ type HalfDozenRouteRunInput = {
 };
 
 type ScenarioKey = 'fleet-watchdog' | 'inbox-triage' | 'dedup';
-
-type SlackPayload = {
-  text: string;
-  blocks?: Array<Record<string, unknown>>;
-};
-
-type SlackResponsePayload = SlackPayload & {
-  response_type?: 'ephemeral' | 'in_channel';
-  replace_original?: boolean;
-};
-
-type SlackCommandFields = {
-  command?: string;
-  text?: string;
-  response_url?: string;
-  team_id?: string;
-  channel_id?: string;
-  channel_name?: string;
-  user_id?: string;
-  user_name?: string;
-};
 
 type NotificationEvent =
   | {
@@ -159,6 +313,27 @@ type NotificationEmailResult = {
   providerId?: string;
 };
 
+type SlackPayload = {
+  text: string;
+  blocks?: Array<Record<string, unknown>>;
+};
+
+type SlackResponsePayload = SlackPayload & {
+  response_type?: 'ephemeral' | 'in_channel';
+  replace_original?: boolean;
+};
+
+type SlackCommandFields = {
+  command?: string;
+  text?: string;
+  response_url?: string;
+  team_id?: string;
+  channel_id?: string;
+  channel_name?: string;
+  user_id?: string;
+  user_name?: string;
+};
+
 type SlackAction = {
   action_id?: string;
   value?: string;
@@ -173,17 +348,21 @@ type SlackInteractionPayload = {
   actions?: SlackAction[];
 };
 
-function jsonResponse(data: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
+function jsonResponse(
+  data: unknown,
+  status = 200,
+  extraHeaders: Record<string, string> = {}
+): Response {
   return new Response(JSON.stringify(data, null, 2), {
     status,
-    headers: { ...JSON_HEADERS, ...extraHeaders },
+    headers: { ...JSON_HEADERS, ...extraHeaders }
   });
 }
 
 function slackJsonResponse(data: SlackResponsePayload, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' }
   });
 }
 
@@ -207,7 +386,11 @@ function parseScenarioKey(value: string): ScenarioKey | null {
   return null;
 }
 
-function parseSlackCommand(text: string): { scenario?: ScenarioKey; query?: string; showHelp: boolean } {
+function parseSlackCommand(text: string): {
+  scenario?: ScenarioKey;
+  query?: string;
+  showHelp: boolean;
+} {
   const trimmed = text.trim();
   if (trimmed.length === 0) {
     return { showHelp: true };
@@ -229,7 +412,7 @@ function parseSlackCommand(text: string): { scenario?: ScenarioKey; query?: stri
   return {
     scenario,
     query: query.length > 0 ? query : undefined,
-    showHelp: false,
+    showHelp: false
   };
 }
 
@@ -256,6 +439,51 @@ function truncateText(value: string, max = 240): string {
   return `${value.slice(0, max - 3)}...`;
 }
 
+function parseCsvHourSet(value: string | undefined, fallback: string): Set<number> {
+  const raw = value?.trim() || fallback;
+  const hours = new Set<number>();
+  for (const part of raw.split(',')) {
+    const hour = Number(part.trim());
+    if (Number.isInteger(hour) && hour >= 0 && hour <= 23) {
+      hours.add(hour);
+    }
+  }
+  return hours;
+}
+
+function isFlagEnabled(value: string | undefined, fallback = true): boolean {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return fallback;
+  return !['0', 'false', 'off', 'no'].includes(normalized);
+}
+
+function shouldRunFleetWatchdogCron(env: Env, scheduledTimeMs: number): boolean {
+  if (!isFlagEnabled(env.HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED, true)) return false;
+  const hours = parseCsvHourSet(
+    env.HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS,
+    DEFAULT_FLEET_WATCHDOG_CRON_UTC_HOURS
+  );
+  return hours.has(new Date(scheduledTimeMs).getUTCHours());
+}
+
+function shouldRunMcpRegistrySweepCron(env: Env, scheduledTimeMs: number): boolean {
+  if (!isFlagEnabled(env.MCP_REGISTRY_SWEEP_CRON_ENABLED, true)) return false;
+  const hours = parseCsvHourSet(
+    env.MCP_REGISTRY_SWEEP_CRON_UTC_HOURS,
+    DEFAULT_MCP_REGISTRY_SWEEP_CRON_UTC_HOURS
+  );
+  return hours.has(new Date(scheduledTimeMs).getUTCHours());
+}
+
+function inkBridgeUrl(env: Env, path: string): string {
+  const origin = env.INK_BRIDGE_ORIGIN?.trim() || DEFAULT_INK_BRIDGE_ORIGIN;
+  return `${origin.replace(/\/+$/, '')}${path}`;
+}
+
+function inkBridgeToken(env: Env): string | undefined {
+  return env.INK_SOURCE_TOKEN?.trim() || env.INK_BRIDGE_TOKEN?.trim() || undefined;
+}
+
 async function safeFlushBraintrust(context: string): Promise<void> {
   try {
     await flushBraintrust();
@@ -279,7 +507,84 @@ function hasRequiredCoverageFailure(result: HalfDozenScenarioRunResult): boolean
 }
 
 function shouldEscalate(result: HalfDozenScenarioRunResult): boolean {
-  return result.degraded || hasRequiredCoverageFailure(result) || result.failed_required_tool_calls.length > 0;
+  return (
+    result.degraded ||
+    hasRequiredCoverageFailure(result) ||
+    result.failed_required_tool_calls.length > 0
+  );
+}
+
+function buildScenarioInkSnapshot(
+  result: HalfDozenScenarioRunResult,
+  route: string,
+  runId: string
+): Record<string, unknown> {
+  const escalate = shouldEscalate(result);
+  const label = scenarioLabel(result.scenario);
+  const coverage = getCoverageStatus(result);
+  const failedServers = result.failed_servers.map((item) => item.server);
+  const finalOutput = String(result.final_output ?? '').trim();
+  const statusLine = [
+    `Coverage ${coverage}`,
+    `connected ${result.connected_servers.length}/${result.requested_servers.length}`,
+    failedServers.length > 0 ? `failed ${failedServers.join(', ')}` : 'failed none'
+  ].join('; ');
+  const detail = result.degraded_reason
+    ? `${result.degraded_reason} ${finalOutput}`
+    : `${statusLine}. ${finalOutput}`;
+
+  return {
+    id: `agent.halfdozen.${result.scenario}`,
+    source: 'playbook-agent-route',
+    component: `Half Dozen ${label} Agent`,
+    status: escalate ? 'degraded' : 'healthy',
+    summary: escalate ? `${label} needs operator attention` : `${label} clear`,
+    detail: truncateText(detail, 240),
+    severity: escalate ? 85 : 0,
+    observed_at: Date.now(),
+    payload: {
+      kind: 'playbook_agent_report',
+      scenario: result.scenario,
+      route,
+      run_id: runId,
+      degraded: result.degraded,
+      degraded_reason: result.degraded_reason ?? '',
+      coverage,
+      connected_servers: result.connected_servers,
+      failed_servers: result.failed_servers,
+      required_tool_coverage: result.required_tool_coverage,
+      failed_required_tool_calls: result.failed_required_tool_calls,
+      final_output_preview: truncateText(finalOutput, 1200),
+      action: escalate ? 'Review Playbook agent report' : 'No operator action'
+    }
+  };
+}
+
+function buildScenarioErrorInkSnapshot(
+  scenario: ScenarioKey,
+  route: string,
+  runId: string,
+  errorMessage: string
+): Record<string, unknown> {
+  const label = scenarioLabel(scenario);
+  return {
+    id: `agent.halfdozen.${scenario}`,
+    source: 'playbook-agent-route',
+    component: `Half Dozen ${label} Agent`,
+    status: 'failed',
+    summary: `${label} failed`,
+    detail: truncateText(errorMessage, 240),
+    severity: 90,
+    observed_at: Date.now(),
+    payload: {
+      kind: 'playbook_agent_report_error',
+      scenario,
+      route,
+      run_id: runId,
+      error: truncateText(errorMessage, 1200),
+      action: 'Review Playbook agent route'
+    }
+  };
 }
 
 function buildSlackQuickActionElements(): Array<Record<string, unknown>> {
@@ -288,20 +593,20 @@ function buildSlackQuickActionElements(): Array<Record<string, unknown>> {
       type: 'button',
       action_id: 'run_fleet_watchdog',
       text: { type: 'plain_text', text: 'Fleet Watchdog' },
-      value: 'fleet-watchdog',
+      value: 'fleet-watchdog'
     },
     {
       type: 'button',
       action_id: 'run_inbox_triage',
       text: { type: 'plain_text', text: 'Inbox Triage' },
-      value: 'inbox-triage',
+      value: 'inbox-triage'
     },
     {
       type: 'button',
       action_id: 'run_dedup',
       text: { type: 'plain_text', text: 'Dedup' },
-      value: 'dedup',
-    },
+      value: 'dedup'
+    }
   ];
 }
 
@@ -321,21 +626,21 @@ function buildSlackHelpResponse(command: string): SlackResponsePayload {
             `• \`${command} inbox\`\n` +
             `• \`${command} dedup\`\n` +
             `Optional custom query:\n` +
-            `• \`${command} watchdog investigate no-data servers only\``,
-        },
+            `• \`${command} watchdog investigate no-data servers only\``
+        }
       },
       {
         type: 'actions',
-        elements: buildSlackQuickActionElements(),
-      },
-    ],
+        elements: buildSlackQuickActionElements()
+      }
+    ]
   };
 }
 
 function buildSlackAcceptedResponse(
   scenario: ScenarioKey,
   runId: string,
-  query?: string,
+  query?: string
 ): SlackResponsePayload {
   const queryLine = query ? `\nQuery override: ${truncateText(query, 180)}` : '';
   return {
@@ -346,21 +651,24 @@ function buildSlackAcceptedResponse(
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `Starting *${scenarioLabel(scenario)}*.\nRun ID: \`${runId}\`${queryLine}`,
-        },
-      },
-    ],
+          text: `Starting *${scenarioLabel(scenario)}*.\nRun ID: \`${runId}\`${queryLine}`
+        }
+      }
+    ]
   };
 }
 
 function buildSlackCompletedResponse(
   result: HalfDozenScenarioRunResult,
   runId: string,
-  route: string,
+  route: string
 ): SlackResponsePayload {
   const summary = truncateText(String(result.final_output ?? ''), 1400);
   const status = shouldEscalate(result) ? 'ALERT' : 'OK';
-  const failedServers = result.failed_servers.length > 0 ? result.failed_servers.map((item) => item.server).join(', ') : 'none';
+  const failedServers =
+    result.failed_servers.length > 0
+      ? result.failed_servers.map((item) => item.server).join(', ')
+      : 'none';
   return {
     response_type: 'in_channel',
     text: `${status}: ${scenarioLabel(result.scenario)} run ${runId}`,
@@ -369,37 +677,40 @@ function buildSlackCompletedResponse(
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*${status}* ${scenarioLabel(result.scenario)}\nRun ID: \`${runId}\`\nRoute: \`${route}\``,
-        },
+          text: `*${status}* ${scenarioLabel(result.scenario)}\nRun ID: \`${runId}\`\nRoute: \`${route}\``
+        }
       },
       {
         type: 'section',
         fields: [
           { type: 'mrkdwn', text: `*Degraded*\n${result.degraded ? 'yes' : 'no'}` },
           { type: 'mrkdwn', text: `*Coverage*\n${getCoverageStatus(result)}` },
-          { type: 'mrkdwn', text: `*Connected Servers*\n${result.connected_servers.join(', ') || 'none'}` },
-          { type: 'mrkdwn', text: `*Failed Servers*\n${failedServers}` },
-        ],
+          {
+            type: 'mrkdwn',
+            text: `*Connected Servers*\n${result.connected_servers.join(', ') || 'none'}`
+          },
+          { type: 'mrkdwn', text: `*Failed Servers*\n${failedServers}` }
+        ]
       },
       {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*Summary*\n${summary || 'No final output.'}`,
-        },
+          text: `*Summary*\n${summary || 'No final output.'}`
+        }
       },
       {
         type: 'actions',
-        elements: buildSlackQuickActionElements(),
-      },
-    ],
+        elements: buildSlackQuickActionElements()
+      }
+    ]
   };
 }
 
 function buildSlackRunFailedResponse(
   scenario: ScenarioKey,
   runId: string,
-  errorMessage: string,
+  errorMessage: string
 ): SlackResponsePayload {
   return {
     response_type: 'in_channel',
@@ -409,29 +720,32 @@ function buildSlackRunFailedResponse(
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*ALERT* ${scenarioLabel(scenario)}\nRun ID: \`${runId}\``,
-        },
+          text: `*ALERT* ${scenarioLabel(scenario)}\nRun ID: \`${runId}\``
+        }
       },
       {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*Error*\n${truncateText(errorMessage, 1400)}`,
-        },
+          text: `*Error*\n${truncateText(errorMessage, 1400)}`
+        }
       },
       {
         type: 'actions',
-        elements: buildSlackQuickActionElements(),
-      },
-    ],
+        elements: buildSlackQuickActionElements()
+      }
+    ]
   };
 }
 
-async function postSlackResponse(responseUrl: string, payload: SlackResponsePayload): Promise<void> {
+async function postSlackResponse(
+  responseUrl: string,
+  payload: SlackResponsePayload
+): Promise<void> {
   const response = await fetch(responseUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload)
   });
   if (!response.ok) {
     const body = await response.text();
@@ -464,7 +778,11 @@ function htmlEscape(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function buildNotificationEmail(event: NotificationEvent): { subject: string; html: string; text: string } {
+function buildNotificationEmail(event: NotificationEvent): {
+  subject: string;
+  html: string;
+  text: string;
+} {
   const isError = event.kind === 'error';
   const scenario = isError ? event.scenario : event.result.scenario;
   const status = isError || shouldEscalate(event.result) ? 'ALERT' : 'OK';
@@ -475,7 +793,7 @@ function buildNotificationEmail(event: NotificationEvent): { subject: string; ht
         ['Route', event.route],
         ['Run ID', event.runId],
         ['Duration', event.durationMs === undefined ? 'unknown' : `${event.durationMs}ms`],
-        ['Error', event.errorMessage],
+        ['Error', event.errorMessage]
       ]
     : [
         ['Status', status],
@@ -484,8 +802,11 @@ function buildNotificationEmail(event: NotificationEvent): { subject: string; ht
         ['Degraded', event.result.degraded ? 'yes' : 'no'],
         ['Coverage', getCoverageStatus(event.result)],
         ['Connected Servers', event.result.connected_servers.join(', ') || 'none'],
-        ['Failed Servers', event.result.failed_servers.map((item) => item.server).join(', ') || 'none'],
-        ['Duration', event.durationMs === undefined ? 'unknown' : `${event.durationMs}ms`],
+        [
+          'Failed Servers',
+          event.result.failed_servers.map((item) => item.server).join(', ') || 'none'
+        ],
+        ['Duration', event.durationMs === undefined ? 'unknown' : `${event.durationMs}ms`]
       ];
 
   const summary = isError
@@ -524,11 +845,14 @@ function buildNotificationEmail(event: NotificationEvent): { subject: string; ht
     </tr>
   </table>
 </body>
-</html>`,
+</html>`
   };
 }
 
-async function sendNotificationEmail(env: Env, event: NotificationEvent): Promise<NotificationEmailResult> {
+async function sendNotificationEmail(
+  env: Env,
+  event: NotificationEvent
+): Promise<NotificationEmailResult> {
   const mode = getNotifyEmailMode(env);
   if (mode === 'off') return { sent: false, skippedReason: 'email_notifications_off' };
   if (mode === 'alerts' && event.kind === 'result' && !shouldEscalate(event.result)) {
@@ -548,8 +872,8 @@ async function sendNotificationEmail(env: Env, event: NotificationEvent): Promis
     text: email.text,
     tags: [
       { name: 'surface', value: 'playbook-mcp' },
-      { name: 'scenario', value: event.kind === 'error' ? event.scenario : event.result.scenario },
-    ],
+      { name: 'scenario', value: event.kind === 'error' ? event.scenario : event.result.scenario }
+    ]
   };
   const replyTo = env.HALFDOZEN_AGENT_NOTIFY_EMAIL_REPLY_TO?.trim();
   if (replyTo) {
@@ -561,9 +885,9 @@ async function sendNotificationEmail(env: Env, event: NotificationEvent): Promis
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
-      'Idempotency-Key': `playbook-mcp:${event.runId}:${event.kind}`,
+      'Idempotency-Key': `playbook-mcp:${event.runId}:${event.kind}`
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   });
 
   if (!response.ok) {
@@ -587,19 +911,462 @@ function queueEmailNotification(ctx: ExecutionContext, env: Env, event: Notifica
   ctx.waitUntil(
     sendNotificationEmail(env, event).catch((error) => {
       console.error('Half Dozen email notify failed', error);
-    }),
+    })
   );
+}
+
+function numberOrNull(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value)))
+    return Number(value);
+  return null;
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter((item) => item.length > 0);
+}
+
+function recordArray(value: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (item): item is Record<string, unknown> => typeof item === 'object' && item !== null
+  );
+}
+
+function normalizeConnectedServers(value: unknown): McpRegistryConnectedServer[] {
+  return recordArray(value)
+    .map((item) => {
+      const name = typeof item.name === 'string' ? item.name.trim() : '';
+      if (!name) return null;
+      return {
+        name,
+        tool_count: numberOrNull(item.tool_count ?? item.toolCount)
+      };
+    })
+    .filter((item): item is McpRegistryConnectedServer => item !== null);
+}
+
+function normalizeFailedServers(value: unknown): McpRegistryFailedServer[] {
+  return recordArray(value)
+    .map((item) => {
+      const server =
+        typeof item.server === 'string'
+          ? item.server.trim()
+          : typeof item.name === 'string'
+            ? item.name.trim()
+            : '';
+      if (!server) return null;
+      const error =
+        typeof item.error === 'string' && item.error.trim() ? item.error.trim() : 'Unavailable';
+      return { server, error: truncateText(error, 160) };
+    })
+    .filter((item): item is McpRegistryFailedServer => item !== null);
+}
+
+function mcpRegistrySweepTimeoutMs(env: Env): number {
+  const parsed = Number(env.MCP_REGISTRY_SWEEP_TIMEOUT_MS);
+  if (Number.isFinite(parsed) && parsed >= 5_000 && parsed <= 120_000) {
+    return Math.round(parsed);
+  }
+  return DEFAULT_MCP_REGISTRY_SWEEP_TIMEOUT_MS;
+}
+
+async function fetchJsonWithTimeout(
+  url: string,
+  timeoutMs: number
+): Promise<{ status: number; body: unknown; durationMs: number }> {
+  const startedAt = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort('timeout'), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        accept: 'application/json'
+      },
+      signal: controller.signal
+    });
+    const text = await response.text();
+    let body: unknown = {};
+    try {
+      body = text ? JSON.parse(text) : {};
+    } catch {
+      body = { raw: truncateText(text, 1000) };
+    }
+    return { status: response.status, body, durationMs: Date.now() - startedAt };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function healthBodyRecord(body: unknown): Record<string, unknown> {
+  return typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter((value) => value.length > 0))].sort(
+    (a, b) => a.localeCompare(b)
+  );
+}
+
+function registryServerEntries(): Array<[string, McpHubRegistryServer]> {
+  return Object.entries(MCP_HUB_REGISTRY.servers ?? {});
+}
+
+function registryTags(server: McpHubRegistryServer): string[] {
+  return Array.isArray(server.tags)
+    ? server.tags.filter((tag): tag is string => typeof tag === 'string')
+    : [];
+}
+
+function registryHasTag(server: McpHubRegistryServer, tag: string): boolean {
+  return registryTags(server).includes(tag);
+}
+
+function registryServerRequiresAuth(server: McpHubRegistryServer): boolean {
+  return Boolean(server.bearer_token_env_var || server.catalog?.requiresAuth);
+}
+
+function buildMcpRegistryInventory(): McpRegistryInventory {
+  const servers = registryServerEntries();
+  const serverMap = new Map(servers);
+  const bundles = Object.entries(MCP_HUB_REGISTRY.bundles ?? {});
+  const bundleMissingServers: Array<{ bundle: string; server: string }> = [];
+
+  for (const [bundle, bundleServers] of bundles) {
+    for (const server of Array.isArray(bundleServers) ? bundleServers : []) {
+      if (!serverMap.has(server)) {
+        bundleMissingServers.push({ bundle, server });
+      }
+    }
+  }
+
+  const composioToolkitCount = servers.filter(([id, server]) => {
+    return id.startsWith('composio-toolkit-') || registryHasTag(server, 'composio');
+  }).length;
+  const httpServers = servers.filter(([, server]) => server.transport === 'http');
+  const stdioServers = servers.filter(([, server]) => server.transport === 'stdio');
+
+  return {
+    server_count: servers.length,
+    catalog_count: servers.filter(([, server]) => server.catalog?.include).length,
+    bundle_count: bundles.length,
+    composio_toolkit_count: composioToolkitCount,
+    direct_server_count: servers.length - composioToolkitCount,
+    http_server_count: httpServers.length,
+    stdio_server_count: stdioServers.length,
+    auth_required_count: servers.filter(([, server]) => registryServerRequiresAuth(server)).length,
+    dormant_count: servers.filter(([, server]) => registryHasTag(server, 'dormant')).length,
+    policy_os_only_count: servers.filter(([, server]) => registryHasTag(server, 'policy_os_only'))
+      .length,
+    create_something_count: servers.filter(([, server]) => registryHasTag(server, 'cs')).length,
+    workway_count: servers.filter(([, server]) => registryHasTag(server, 'workway')).length,
+    webflow_count: servers.filter(([, server]) => registryHasTag(server, 'webflow')).length,
+    local_dev_count: servers.filter(
+      ([, server]) =>
+        server.transport === 'stdio' ||
+        registryHasTag(server, 'local') ||
+        registryHasTag(server, 'dev')
+    ).length,
+    remote_http_missing_url: httpServers
+      .filter(([, server]) => typeof server.url !== 'string' || server.url.trim().length === 0)
+      .map(([id]) => id),
+    bundle_missing_servers: bundleMissingServers.slice(0, 20),
+    default_enabled_bundles: stringArray(MCP_HUB_REGISTRY.defaults?.enabledBundles),
+    default_enabled_servers: stringArray(MCP_HUB_REGISTRY.defaults?.enabledServers)
+  };
+}
+
+function buildMcpFleetInventory(): McpFleetInventory {
+  const deployments = Object.values(MCP_FLEET_REGISTRY.deployments ?? {});
+  return {
+    deployment_count: deployments.length,
+    deployed_count: deployments.filter((deployment) => deployment.status === 'deployed').length,
+    policy_os_hub_count: deployments.filter((deployment) => deployment.type === 'policy_os_hub')
+      .length,
+    notion_mcp_count: deployments.filter((deployment) => deployment.type === 'notion_mcp').length,
+    auth_configured_count: deployments.filter((deployment) =>
+      Boolean(deployment.auth?.bearer_token_env_var)
+    ).length
+  };
+}
+
+function buildAgentInventory(): AgentInventory {
+  const scheduled = AGENT_HEALTH_SURFACES.filter((surface) => surface.schedule === 'scheduled');
+  const manual = AGENT_HEALTH_SURFACES.filter((surface) => surface.schedule === 'manual');
+  return {
+    registered_health_surface_count: AGENT_HEALTH_SURFACES.length,
+    scheduled_health_surface_count: scheduled.length,
+    manual_health_surface_count: manual.length,
+    surfaces: AGENT_HEALTH_SURFACES
+  };
+}
+
+function buildLiveHubInventory(
+  enabledServers: string[],
+  connectedServers: McpRegistryConnectedServer[],
+  failedServers: McpRegistryFailedServer[],
+  proxyToolCount: number | null
+): LiveHubInventory {
+  const registryNames = new Set(registryServerEntries().map(([name]) => name));
+  const connectedNames = new Set(connectedServers.map((server) => server.name));
+  const failedNames = new Set(failedServers.map((server) => server.server));
+  const registeredEnabled = enabledServers.filter((server) => registryNames.has(server));
+
+  return {
+    enabled_server_count: enabledServers.length,
+    connected_server_count: connectedServers.length,
+    failed_server_count: failedServers.length,
+    proxy_tool_count: proxyToolCount,
+    enabled_registered_count: registeredEnabled.length,
+    enabled_unregistered_servers: enabledServers
+      .filter((server) => !registryNames.has(server))
+      .slice(0, 20),
+    connected_unregistered_servers: connectedServers
+      .map((server) => server.name)
+      .filter((server) => !registryNames.has(server))
+      .slice(0, 20),
+    enabled_not_connected_servers: enabledServers
+      .filter((server) => !connectedNames.has(server) && !failedNames.has(server))
+      .slice(0, 20),
+    failed_registered_servers: failedServers
+      .map((server) => server.server)
+      .filter((server) => registryNames.has(server))
+      .slice(0, 20)
+  };
+}
+
+function buildMcpRegistryWarnings(
+  registryInventory: McpRegistryInventory,
+  liveHub: LiveHubInventory,
+  hubWarnings: string[]
+): string[] {
+  const warnings = hubWarnings.filter(
+    (warning) => warning !== 'Unknown disabled server "[]" in hub state'
+  );
+  if (registryInventory.remote_http_missing_url.length > 0) {
+    warnings.push(
+      `Remote HTTP registry entries missing URL: ${registryInventory.remote_http_missing_url.join(', ')}`
+    );
+  }
+  if (registryInventory.bundle_missing_servers.length > 0) {
+    warnings.push(
+      `${registryInventory.bundle_missing_servers.length} bundle references point to missing servers.`
+    );
+  }
+  if (liveHub.enabled_unregistered_servers.length > 0) {
+    warnings.push(
+      `Live Hub enabled unregistered servers: ${liveHub.enabled_unregistered_servers.join(', ')}`
+    );
+  }
+  if (liveHub.connected_unregistered_servers.length > 0) {
+    warnings.push(
+      `Live Hub connected unregistered servers: ${liveHub.connected_unregistered_servers.join(', ')}`
+    );
+  }
+  if (liveHub.enabled_not_connected_servers.length > 0) {
+    warnings.push(
+      `Live Hub enabled servers not connected: ${liveHub.enabled_not_connected_servers.join(', ')}`
+    );
+  }
+  return uniqueStrings(warnings).map((warning) => truncateText(warning, 220));
+}
+
+function emptyLiveHubInventory(): LiveHubInventory {
+  return {
+    enabled_server_count: 0,
+    connected_server_count: 0,
+    failed_server_count: 0,
+    proxy_tool_count: null,
+    enabled_registered_count: 0,
+    enabled_unregistered_servers: [],
+    connected_unregistered_servers: [],
+    enabled_not_connected_servers: [],
+    failed_registered_servers: []
+  };
+}
+
+async function runMcpRegistrySweep(env: Env): Promise<McpRegistrySweepResult> {
+  const hubHealthUrl =
+    env.MCP_REGISTRY_SWEEP_HUB_HEALTH_URL?.trim() || DEFAULT_MCP_REGISTRY_SWEEP_HUB_HEALTH_URL;
+  const timeoutMs = mcpRegistrySweepTimeoutMs(env);
+  const checkedAt = new Date().toISOString();
+  const startedAt = Date.now();
+  const registryInventory = buildMcpRegistryInventory();
+  const fleetInventory = buildMcpFleetInventory();
+  const agentInventory = buildAgentInventory();
+  const reviewScope =
+    'Full static MCP registry inventory, fleet registry inventory, registered Playbook agent health surfaces, and live Hub enabled-server health.';
+
+  try {
+    const response = await fetchJsonWithTimeout(hubHealthUrl, timeoutMs);
+    const body = healthBodyRecord(response.body);
+    const enabledServers = stringArray(body.enabled_servers ?? body.enabledServerNames);
+    const connectedServers = normalizeConnectedServers(
+      body.connected_servers ?? body.connectedServers
+    );
+    const failedServers = normalizeFailedServers(body.failed_servers ?? body.failedServers);
+    const warnings = stringArray(body.warnings);
+    const proxyToolCount =
+      numberOrNull(body.proxy_tool_count ?? body.proxyToolCount) ??
+      inferredProxyToolCount(connectedServers);
+    const liveHub = buildLiveHubInventory(
+      enabledServers,
+      connectedServers,
+      failedServers,
+      proxyToolCount
+    );
+    const registryWarnings = buildMcpRegistryWarnings(registryInventory, liveHub, warnings);
+    const registryHasStructuralIssue =
+      registryInventory.remote_http_missing_url.length > 0 ||
+      registryInventory.bundle_missing_servers.length > 0 ||
+      liveHub.enabled_unregistered_servers.length > 0 ||
+      liveHub.connected_unregistered_servers.length > 0;
+    const degraded =
+      response.status !== 200 || failedServers.length > 0 || registryHasStructuralIssue;
+    const failedList = failedServers
+      .map((item) => item.server)
+      .slice(0, 4)
+      .join(', ');
+    const totalServers = liveHubTotalServerCount(enabledServers, connectedServers, failedServers);
+    const baseDetail = `Registry: ${registryInventory.server_count} MCPs (${registryInventory.composio_toolkit_count} Composio), ${fleetInventory.deployed_count} fleet, ${agentInventory.registered_health_surface_count} agents. Live: ${connectedServers.length}/${totalServers} connected; ${failedServers.length} failed; ${proxyToolCount ?? 0} tools.`;
+    const detail = degraded && failedList ? `${baseDetail} Failed: ${failedList}.` : baseDetail;
+    const status = response.status !== 200 ? 'failed' : degraded ? 'degraded' : 'healthy';
+
+    return {
+      success: true,
+      scenario: 'mcp-registry-sweep',
+      checked_at: checkedAt,
+      hub_health_url: hubHealthUrl,
+      status,
+      degraded,
+      summary: degraded ? 'MCP registry needs attention' : 'MCP registry clear',
+      detail: truncateText(detail, 240),
+      action:
+        failedServers.length > 0
+          ? 'Review failed Hub MCP servers'
+          : registryHasStructuralIssue
+            ? 'Review MCP registry configuration'
+            : 'No operator action',
+      enabled_servers: enabledServers,
+      connected_servers: connectedServers,
+      failed_servers: failedServers,
+      proxy_tool_count: proxyToolCount,
+      review_scope: reviewScope,
+      registry_inventory: registryInventory,
+      fleet_inventory: fleetInventory,
+      agent_inventory: agentInventory,
+      live_hub: liveHub,
+      warnings: registryWarnings,
+      duration_ms: response.durationMs
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const failedServers = [{ server: 'create-something-hub', error: truncateText(message, 160) }];
+    const liveHub = emptyLiveHubInventory();
+    return {
+      success: true,
+      scenario: 'mcp-registry-sweep',
+      checked_at: checkedAt,
+      hub_health_url: hubHealthUrl,
+      status: 'failed',
+      degraded: true,
+      summary: 'MCP registry sweep failed',
+      detail: truncateText(message || 'Hub health request failed.', 240),
+      action: 'Review Hub MCP health endpoint',
+      enabled_servers: [],
+      connected_servers: [],
+      failed_servers: failedServers,
+      proxy_tool_count: null,
+      review_scope: reviewScope,
+      registry_inventory: registryInventory,
+      fleet_inventory: fleetInventory,
+      agent_inventory: agentInventory,
+      live_hub: liveHub,
+      warnings: buildMcpRegistryWarnings(registryInventory, liveHub, []),
+      duration_ms: Date.now() - startedAt
+    };
+  }
+}
+
+function buildMcpRegistrySweepInkSnapshot(result: McpRegistrySweepResult): Record<string, unknown> {
+  return {
+    id: 'agent.create-something.mcp-registry-sweep',
+    source: 'playbook-agent-route',
+    component: 'CREATE SOMETHING MCP Registry Sweep',
+    status: result.degraded ? result.status : 'healthy',
+    summary: result.summary,
+    detail: result.detail,
+    severity: result.degraded ? 85 : 0,
+    observed_at: Date.now(),
+    payload: {
+      kind: 'mcp_registry_sweep',
+      hub_health_url: result.hub_health_url,
+      checked_at: result.checked_at,
+      review_scope: result.review_scope,
+      registry_inventory: result.registry_inventory,
+      fleet_inventory: result.fleet_inventory,
+      agent_inventory: result.agent_inventory,
+      live_hub: result.live_hub,
+      enabled_servers: result.enabled_servers,
+      connected_servers: result.connected_servers,
+      failed_servers: result.failed_servers,
+      proxy_tool_count: result.proxy_tool_count,
+      warnings: result.warnings,
+      duration_ms: result.duration_ms,
+      action: result.action
+    }
+  };
+}
+
+async function postInkHealthSnapshot(env: Env, snapshot: Record<string, unknown>): Promise<void> {
+  const token = inkBridgeToken(env);
+  if (!token) {
+    console.warn(
+      'Ink health snapshot skipped: INK_SOURCE_TOKEN or INK_BRIDGE_TOKEN is not configured.'
+    );
+    return;
+  }
+
+  const response = await fetch(inkBridgeUrl(env, '/ink/health-snapshot'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(snapshot)
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Ink health snapshot failed (${response.status}): ${body}`);
+  }
+
+  const reviewResponse = await fetch(inkBridgeUrl(env, '/ink/health-review/run?collect=false'), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!reviewResponse.ok) {
+    const body = await reviewResponse.text();
+    throw new Error(`Ink health review refresh failed (${reviewResponse.status}): ${body}`);
+  }
 }
 
 async function verifySlackSignature(
   request: Request,
   rawBody: string,
-  signingSecret?: string,
+  signingSecret?: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!signingSecret) {
     return {
       ok: false,
-      error: 'Server misconfigured: HALFDOZEN_SLACK_SIGNING_SECRET is not set.',
+      error: 'Server misconfigured: HALFDOZEN_SLACK_SIGNING_SECRET is not set.'
     };
   }
 
@@ -608,7 +1375,7 @@ async function verifySlackSignature(
   if (!signature || !timestamp) {
     return {
       ok: false,
-      error: 'Missing Slack signature headers.',
+      error: 'Missing Slack signature headers.'
     };
   }
 
@@ -616,7 +1383,7 @@ async function verifySlackSignature(
   if (!Number.isFinite(timestampSec)) {
     return {
       ok: false,
-      error: 'Invalid Slack timestamp header.',
+      error: 'Invalid Slack timestamp header.'
     };
   }
 
@@ -624,7 +1391,7 @@ async function verifySlackSignature(
   if (Math.abs(nowSec - timestampSec) > SLACK_TIMESTAMP_TOLERANCE_SECONDS) {
     return {
       ok: false,
-      error: 'Slack request timestamp is outside allowed tolerance window.',
+      error: 'Slack request timestamp is outside allowed tolerance window.'
     };
   }
 
@@ -633,11 +1400,11 @@ async function verifySlackSignature(
     new TextEncoder().encode(signingSecret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign'],
+    ['sign']
   );
   const baseString = `v0:${timestamp}:${rawBody}`;
   const digestBytes = new Uint8Array(
-    await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(baseString)),
+    await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(baseString))
   );
   const digestHex = [...digestBytes].map((value) => value.toString(16).padStart(2, '0')).join('');
   const expectedSignature = `v0=${digestHex}`;
@@ -645,7 +1412,7 @@ async function verifySlackSignature(
   if (!timingSafeEqual(signature, expectedSignature)) {
     return {
       ok: false,
-      error: 'Slack signature mismatch.',
+      error: 'Slack signature mismatch.'
     };
   }
 
@@ -658,9 +1425,20 @@ function queueSuccessNotifications(
   result: HalfDozenScenarioRunResult,
   route: string,
   runId: string,
-  durationMs?: number,
+  durationMs?: number
 ): void {
   queueEmailNotification(ctx, env, { kind: 'result', result, route, runId, durationMs });
+  const inkSnapshot = buildScenarioInkSnapshot(result, route, runId);
+
+  ctx.waitUntil(
+    (async () => {
+      try {
+        await postInkHealthSnapshot(env, inkSnapshot);
+      } catch (error) {
+        console.error('Half Dozen Ink snapshot failed', error);
+      }
+    })()
+  );
 }
 
 function queueErrorNotification(
@@ -670,7 +1448,7 @@ function queueErrorNotification(
   route: string,
   runId: string,
   errorMessage: string,
-  durationMs?: number,
+  durationMs?: number
 ): void {
   queueEmailNotification(ctx, env, {
     kind: 'error',
@@ -678,8 +1456,18 @@ function queueErrorNotification(
     route,
     runId,
     errorMessage,
-    durationMs,
+    durationMs
   });
+  const inkSnapshot = buildScenarioErrorInkSnapshot(scenario, route, runId, errorMessage);
+  ctx.waitUntil(
+    (async () => {
+      try {
+        await postInkHealthSnapshot(env, inkSnapshot);
+      } catch (error) {
+        console.error('Half Dozen Ink error snapshot failed', error);
+      }
+    })()
+  );
 }
 
 function getAuthToken(request: Request): string | null {
@@ -698,9 +1486,9 @@ function validateRouteToken(request: Request, expectedToken?: string): Response 
     return jsonResponse(
       {
         success: false,
-        error: 'Server misconfigured: HALFDOZEN_AGENT_ROUTE_TOKEN is not set.',
+        error: 'Server misconfigured: HALFDOZEN_AGENT_ROUTE_TOKEN is not set.'
       },
-      500,
+      500
     );
   }
 
@@ -710,17 +1498,19 @@ function validateRouteToken(request: Request, expectedToken?: string): Response 
       {
         success: false,
         error: 'Unauthorized',
-        message: 'Valid Bearer token or X-API-Key header is required.',
+        message: 'Valid Bearer token or X-API-Key header is required.'
       },
       401,
-      { 'WWW-Authenticate': 'Bearer realm="playbook-halfdozen"' },
+      { 'WWW-Authenticate': 'Bearer realm="playbook-halfdozen"' }
     );
   }
 
   return null;
 }
 
-function isHalfDozenScenarioRoute(pathname: string): pathname is (typeof HALFDOZEN_PROTECTED_ROUTES)[number] {
+function isHalfDozenScenarioRoute(
+  pathname: string
+): pathname is (typeof HALFDOZEN_PROTECTED_ROUTES)[number] {
   return (HALFDOZEN_PROTECTED_ROUTES as readonly string[]).includes(pathname);
 }
 
@@ -762,7 +1552,7 @@ function parseScenarioFromRoute(pathname: string): ScenarioKey {
 
 async function runScenarioByKey(
   scenario: ScenarioKey,
-  input: HalfDozenRouteRunInput,
+  input: HalfDozenRouteRunInput
 ): Promise<HalfDozenScenarioRunResult> {
   if (scenario === 'fleet-watchdog') {
     return runHalfDozenFleetWatchdog(input);
@@ -773,7 +1563,10 @@ async function runScenarioByKey(
   return runHalfDozenDedup(input);
 }
 
-function buildHalfDozenRunInput(env: Env, body: AgentRouteBody | { query?: string }): HalfDozenRouteRunInput {
+function buildHalfDozenRunInput(
+  env: Env,
+  body: AgentRouteBody | { query?: string }
+): HalfDozenRouteRunInput {
   return {
     openaiApiKey: env.OPENAI_API_KEY as string,
     telemetryMcpUrl: env.HALFDOZEN_TELEMETRY_MCP_URL,
@@ -782,7 +1575,7 @@ function buildHalfDozenRunInput(env: Env, body: AgentRouteBody | { query?: strin
     query: body.query,
     model: 'model' in body ? body.model : undefined,
     maxTurns: 'max_turns' in body ? body.max_turns : undefined,
-    timeoutMs: 'timeout_ms' in body ? body.timeout_ms : undefined,
+    timeoutMs: 'timeout_ms' in body ? body.timeout_ms : undefined
   };
 }
 
@@ -807,7 +1600,7 @@ async function recordFleetWatchdogRunEvidence(
     durationMs: number;
     result?: HalfDozenScenarioRunResult;
     errorMessage?: string;
-  },
+  }
 ): Promise<void> {
   if (!env.TELEMETRY_DB) return;
 
@@ -822,14 +1615,14 @@ async function recordFleetWatchdogRunEvidence(
     coverage: args.result ? getCoverageStatus(args.result) : null,
     connected_servers: args.result?.connected_servers ?? [],
     failed_servers: args.result?.failed_servers ?? [],
-    required_tool_coverage: args.result?.required_tool_coverage ?? null,
+    required_tool_coverage: args.result?.required_tool_coverage ?? null
   };
 
   try {
     await env.TELEMETRY_DB.prepare(
       `INSERT INTO mcp_tool_invocations
          (server_name, account_id, tool_name, success, duration_ms, error_message, correlation_id, request_id, metadata_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
       .bind(
         'playbook',
@@ -840,7 +1633,7 @@ async function recordFleetWatchdogRunEvidence(
         args.errorMessage ?? null,
         args.runId,
         args.runId,
-        JSON.stringify(metadata),
+        JSON.stringify(metadata)
       )
       .run();
 
@@ -850,7 +1643,7 @@ async function recordFleetWatchdogRunEvidence(
        ON CONFLICT(server_name, account_id, period_start)
        DO UPDATE SET
          runs_this_period = mcp_run_counts.runs_this_period + 1,
-         updated_at = datetime('now')`,
+         updated_at = datetime('now')`
     )
       .bind('playbook', accountId, getCurrentPeriod())
       .run();
@@ -869,7 +1662,7 @@ async function recordNotificationTestEvidence(
     providerId?: string;
     skippedReason?: string;
     errorMessage?: string;
-  },
+  }
 ): Promise<void> {
   if (!env.TELEMETRY_DB) return;
 
@@ -881,14 +1674,14 @@ async function recordNotificationTestEvidence(
     notification_mode: getNotifyEmailMode(env),
     recipient_count: parseEmailList(env.HALFDOZEN_AGENT_NOTIFY_EMAIL_TO).length,
     provider_id: args.providerId ?? null,
-    skipped_reason: args.skippedReason ?? null,
+    skipped_reason: args.skippedReason ?? null
   };
 
   try {
     await env.TELEMETRY_DB.prepare(
       `INSERT INTO mcp_tool_invocations
          (server_name, account_id, tool_name, success, duration_ms, error_message, correlation_id, request_id, metadata_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
       .bind(
         'playbook',
@@ -899,7 +1692,7 @@ async function recordNotificationTestEvidence(
         args.errorMessage ?? args.skippedReason ?? null,
         args.runId,
         args.runId,
-        JSON.stringify(metadata),
+        JSON.stringify(metadata)
       )
       .run();
   } catch (error) {
@@ -918,11 +1711,6 @@ function isBraintrustRouteTracingEnabled(env: Env): boolean {
   return Boolean(env.BRAINTRUST_API_KEY);
 }
 
-function isFleetWatchdogCronEnabled(env: Env): boolean {
-  const enabled = env.HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED?.trim().toLowerCase();
-  return enabled !== 'false' && enabled !== '0' && enabled !== 'off';
-}
-
 function parseSlackCommandFields(rawBody: string): SlackCommandFields {
   const params = new URLSearchParams(rawBody);
   return {
@@ -933,7 +1721,7 @@ function parseSlackCommandFields(rawBody: string): SlackCommandFields {
     channel_id: params.get('channel_id') ?? undefined,
     channel_name: params.get('channel_name') ?? undefined,
     user_id: params.get('user_id') ?? undefined,
-    user_name: params.get('user_name') ?? undefined,
+    user_name: params.get('user_name') ?? undefined
   };
 }
 
@@ -950,9 +1738,9 @@ function validateSlackTeam(teamId: string | undefined, expectedTeamId?: string):
   return jsonResponse(
     {
       success: false,
-      error: 'Unauthorized Slack workspace.',
+      error: 'Unauthorized Slack workspace.'
     },
-    401,
+    401
   );
 }
 
@@ -976,7 +1764,7 @@ function queueSlackScenarioRun(
   scenario: ScenarioKey,
   query: string | undefined,
   responseUrl: string,
-  runId: string,
+  runId: string
 ): void {
   const route = scenarioRoute(scenario);
   const runInput = buildHalfDozenRunInput(env, { query });
@@ -988,116 +1776,122 @@ function queueSlackScenarioRun(
       try {
         const result = await runScenarioByKey(scenario, {
           ...runInput,
-          tracingDisabled: !braintrustTracingEnabled,
+          tracingDisabled: !braintrustTracingEnabled
         });
         const payload = buildSlackCompletedResponse(result, runId, route);
+        try {
+          await postInkHealthSnapshot(env, buildScenarioInkSnapshot(result, route, runId));
+        } catch (error) {
+          console.error('Half Dozen Ink snapshot failed', error);
+        }
         await postSlackResponse(responseUrl, payload);
         if (braintrustTracingEnabled) {
           await safeFlushBraintrust('slack scenario run');
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        try {
+          await postInkHealthSnapshot(
+            env,
+            buildScenarioErrorInkSnapshot(scenario, route, runId, message)
+          );
+        } catch (inkError) {
+          console.error('Half Dozen Ink error snapshot failed', inkError);
+        }
         await postSlackResponse(responseUrl, buildSlackRunFailedResponse(scenario, runId, message));
         if (braintrustTracingEnabled) {
           await safeFlushBraintrust('slack scenario error');
         }
       }
-    })(),
+    })()
   );
 }
 
 async function runScheduledFleetWatchdog(
-  event: ScheduledEvent,
   env: Env,
   ctx: ExecutionContext,
+  scheduledTimeMs: number
 ): Promise<void> {
-  if (!isFleetWatchdogCronEnabled(env)) {
-    console.log('[halfdozen-fleet-watchdog] Cron skipped: disabled by env.');
-    return;
-  }
+  if (!shouldRunFleetWatchdogCron(env, scheduledTimeMs)) return;
 
+  const scenario: ScenarioKey = 'fleet-watchdog';
+  const route = HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE;
   const runId = crypto.randomUUID();
   const startedAt = Date.now();
+
   if (!env.OPENAI_API_KEY) {
-    const message = 'Server misconfigured: OPENAI_API_KEY is not set.';
+    const message = 'OPENAI_API_KEY is not set.';
     const durationMs = Date.now() - startedAt;
     await recordFleetWatchdogRunEvidence(env, {
       runId,
-      route: HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
-      cron: event.cron,
+      route,
+      cron: new Date(scheduledTimeMs).toISOString(),
       success: false,
       durationMs,
-      errorMessage: message,
+      errorMessage: message
     });
-    queueErrorNotification(
-      ctx,
-      env,
-      'fleet-watchdog',
-      HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
-      runId,
-      message,
-      durationMs,
-    );
-    throw new Error(message);
+    queueErrorNotification(ctx, env, scenario, route, runId, message, durationMs);
+    return;
   }
 
+  const runInput = buildHalfDozenRunInput(env, {
+    query:
+      'Scheduled fleet watchdog review. Use the standard 24-hour fleet watchdog contract and escalate degraded services or required-tool coverage failures.'
+  });
   const braintrustTracingEnabled = isBraintrustRouteTracingEnabled(env);
 
   try {
     const result = await runHalfDozenFleetWatchdog({
-      ...buildHalfDozenRunInput(env, {
-        query: `Scheduled ${event.cron} fleet watchdog review. Use the standard 24-hour fleet watchdog contract and escalate degraded services or required-tool coverage failures.`,
-      }),
-      tracingDisabled: !braintrustTracingEnabled,
+      ...runInput,
+      tracingDisabled: !braintrustTracingEnabled
     });
     const durationMs = Date.now() - startedAt;
-
     await recordFleetWatchdogRunEvidence(env, {
       runId,
-      route: HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
-      cron: event.cron,
+      route,
+      cron: new Date(scheduledTimeMs).toISOString(),
       success: !shouldEscalate(result),
       durationMs,
       result,
-      errorMessage: shouldEscalate(result) ? result.degraded_reason ?? 'Fleet watchdog degraded.' : undefined,
+      errorMessage: shouldEscalate(result)
+        ? (result.degraded_reason ?? 'Fleet watchdog degraded.')
+        : undefined
     });
-    queueSuccessNotifications(ctx, env, result, HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE, runId, durationMs);
+    queueSuccessNotifications(ctx, env, result, route, runId, durationMs);
     if (braintrustTracingEnabled) {
       ctx.waitUntil(safeFlushBraintrust('scheduled fleet watchdog success'));
     }
-
-    console.log('[halfdozen-fleet-watchdog] Cron complete', {
-      runId,
-      degraded: result.degraded,
-      coverage: getCoverageStatus(result),
-      connectedServers: result.connected_servers,
-      failedServers: result.failed_servers,
-      durationMs,
-    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const durationMs = Date.now() - startedAt;
     await recordFleetWatchdogRunEvidence(env, {
       runId,
-      route: HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
-      cron: event.cron,
+      route,
+      cron: new Date(scheduledTimeMs).toISOString(),
       success: false,
       durationMs,
-      errorMessage: message,
+      errorMessage: message
     });
-    queueErrorNotification(
-      ctx,
-      env,
-      'fleet-watchdog',
-      HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
-      runId,
-      message,
-      durationMs,
-    );
+    queueErrorNotification(ctx, env, scenario, route, runId, message, durationMs);
     if (braintrustTracingEnabled) {
       ctx.waitUntil(safeFlushBraintrust('scheduled fleet watchdog error'));
     }
-    throw error;
+  }
+}
+
+async function runScheduledMcpRegistrySweep(
+  env: Env,
+  ctx: ExecutionContext,
+  scheduledTimeMs: number
+): Promise<void> {
+  if (!shouldRunMcpRegistrySweepCron(env, scheduledTimeMs)) return;
+
+  try {
+    const result = await runMcpRegistrySweep(env);
+    ctx.waitUntil(postInkHealthSnapshot(env, buildMcpRegistrySweepInkSnapshot(result)));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('MCP registry sweep cron failed', message);
   }
 }
 
@@ -1108,7 +1902,7 @@ async function runScheduledFleetWatchdog(
 export class PlaybookMCP extends McpAgent<Env> {
   server: any = new McpServer({
     name: 'playbook',
-    version: '1.5.0',
+    version: '1.5.0'
   });
 
   async init() {
@@ -1120,10 +1914,10 @@ export class PlaybookMCP extends McpAgent<Env> {
         'playbook',
         () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
         {
-        apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: resolveBraintrustProjectName(this.env),
-        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
-        },
+          apiKey: (this.env as any).BRAINTRUST_API_KEY,
+          projectName: resolveBraintrustProjectName(this.env),
+          projectId: (this.env as any).BRAINTRUST_PROJECT_ID
+        }
       );
     }
 
@@ -1138,8 +1932,11 @@ export class PlaybookMCP extends McpAgent<Env> {
 // =============================================================================
 
 export default {
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    await runScheduledFleetWatchdog(event, env, ctx);
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    await Promise.all([
+      runScheduledFleetWatchdog(env, ctx, controller.scheduledTime),
+      runScheduledMcpRegistrySweep(env, ctx, controller.scheduledTime)
+    ]);
   },
 
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
@@ -1151,10 +1948,10 @@ export default {
           {
             success: false,
             error: 'Method not allowed',
-            message: 'Use POST for this endpoint.',
+            message: 'Use POST for this endpoint.'
           },
           405,
-          { Allow: 'POST' },
+          { Allow: 'POST' }
         );
       }
 
@@ -1164,29 +1961,33 @@ export default {
           {
             success: false,
             error: 'Unsupported content type',
-            message: 'Slack commands require application/x-www-form-urlencoded.',
+            message: 'Slack commands require application/x-www-form-urlencoded.'
           },
-          415,
+          415
         );
       }
 
       const rawBody = await request.text();
-      const signatureCheck = await verifySlackSignature(request, rawBody, env.HALFDOZEN_SLACK_SIGNING_SECRET);
+      const signatureCheck = await verifySlackSignature(
+        request,
+        rawBody,
+        env.HALFDOZEN_SLACK_SIGNING_SECRET
+      );
       if (!signatureCheck.ok) {
         return jsonResponse(
           {
             success: false,
             error: 'Unauthorized',
-            message: signatureCheck.error,
+            message: signatureCheck.error
           },
-          401,
+          401
         );
       }
 
       if (!env.OPENAI_API_KEY) {
         return slackJsonResponse({
           response_type: 'ephemeral',
-          text: 'Playbook MCP is misconfigured: OPENAI_API_KEY is not set.',
+          text: 'Playbook MCP is misconfigured: OPENAI_API_KEY is not set.'
         });
       }
 
@@ -1203,9 +2004,9 @@ export default {
             {
               success: false,
               error: 'Invalid Slack interaction payload',
-              message,
+              message
             },
-            400,
+            400
           );
         }
 
@@ -1216,7 +2017,7 @@ export default {
         if (!responseUrl) {
           return slackJsonResponse({
             response_type: 'ephemeral',
-            text: 'Unable to run command: missing Slack response URL.',
+            text: 'Unable to run command: missing Slack response URL.'
           });
         }
 
@@ -1242,7 +2043,7 @@ export default {
       if (!fields.response_url) {
         return slackJsonResponse({
           response_type: 'ephemeral',
-          text: 'Unable to run command: missing Slack response URL.',
+          text: 'Unable to run command: missing Slack response URL.'
         });
       }
 
@@ -1260,8 +2061,8 @@ export default {
             ...JSON_HEADERS,
             'Access-Control-Allow-Methods': 'POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
-            'Access-Control-Max-Age': '86400',
-          },
+            'Access-Control-Max-Age': '86400'
+          }
         });
       }
 
@@ -1270,10 +2071,10 @@ export default {
           {
             success: false,
             error: 'Method not allowed',
-            message: 'Use POST for this endpoint.',
+            message: 'Use POST for this endpoint.'
           },
           405,
-          { Allow: 'POST, OPTIONS' },
+          { Allow: 'POST, OPTIONS' }
         );
       }
 
@@ -1289,9 +2090,9 @@ export default {
           {
             success: false,
             error: 'Invalid request body',
-            message,
+            message
           },
-          400,
+          400
         );
       }
 
@@ -1304,7 +2105,7 @@ export default {
           route: HALFDOZEN_NOTIFY_TEST_ROUTE,
           success: false,
           durationMs,
-          skippedReason,
+          skippedReason
         });
         return jsonResponse(
           {
@@ -1312,9 +2113,9 @@ export default {
             runId,
             error: 'Notification test could not run.',
             skippedReason,
-            durableEvidence: Boolean(env.TELEMETRY_DB),
+            durableEvidence: Boolean(env.TELEMETRY_DB)
           },
-          409,
+          409
         );
       }
 
@@ -1325,7 +2126,7 @@ export default {
         runId,
         errorMessage:
           body.message ??
-          'Manual Resend notification verification for the Playbook MCP Half Dozen fleet watchdog.',
+          'Manual Resend notification verification for the Playbook MCP Half Dozen fleet watchdog.'
       };
 
       try {
@@ -1337,7 +2138,7 @@ export default {
           success: result.sent,
           durationMs,
           providerId: result.providerId,
-          skippedReason: result.skippedReason,
+          skippedReason: result.skippedReason
         });
 
         if (!result.sent) {
@@ -1346,9 +2147,9 @@ export default {
               success: false,
               runId,
               skippedReason: result.skippedReason ?? 'notification_not_sent',
-              durableEvidence: Boolean(env.TELEMETRY_DB),
+              durableEvidence: Boolean(env.TELEMETRY_DB)
             },
-            409,
+            409
           );
         }
 
@@ -1359,7 +2160,7 @@ export default {
           providerId: result.providerId ?? null,
           notificationMode: mode,
           recipientCount: parseEmailList(env.HALFDOZEN_AGENT_NOTIFY_EMAIL_TO).length,
-          durableEvidence: Boolean(env.TELEMETRY_DB),
+          durableEvidence: Boolean(env.TELEMETRY_DB)
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -1369,18 +2170,65 @@ export default {
           route: HALFDOZEN_NOTIFY_TEST_ROUTE,
           success: false,
           durationMs,
-          errorMessage: message,
+          errorMessage: message
         });
         return jsonResponse(
           {
             success: false,
             runId,
             error: message,
-            durableEvidence: Boolean(env.TELEMETRY_DB),
+            durableEvidence: Boolean(env.TELEMETRY_DB)
           },
-          502,
+          502
         );
       }
+    }
+
+    if (url.pathname === MCP_REGISTRY_SWEEP_ROUTE) {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          headers: {
+            ...JSON_HEADERS,
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+            'Access-Control-Max-Age': '86400'
+          }
+        });
+      }
+
+      if (request.method !== 'POST') {
+        return jsonResponse(
+          {
+            success: false,
+            error: 'Method not allowed',
+            message: 'Use POST for this endpoint.'
+          },
+          405,
+          { Allow: 'POST, OPTIONS' }
+        );
+      }
+
+      const authError = validateRouteToken(request, env.HALFDOZEN_AGENT_ROUTE_TOKEN);
+      if (authError) {
+        return authError;
+      }
+
+      const result = await runMcpRegistrySweep(env);
+      try {
+        await postInkHealthSnapshot(env, buildMcpRegistrySweepInkSnapshot(result));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return jsonResponse({
+          ...result,
+          ink_posted: false,
+          ink_error: message
+        });
+      }
+
+      return jsonResponse({
+        ...result,
+        ink_posted: true
+      });
     }
 
     if (isHalfDozenScenarioRoute(url.pathname)) {
@@ -1391,8 +2239,8 @@ export default {
             ...JSON_HEADERS,
             'Access-Control-Allow-Methods': 'POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
-            'Access-Control-Max-Age': '86400',
-          },
+            'Access-Control-Max-Age': '86400'
+          }
         });
       }
 
@@ -1401,10 +2249,10 @@ export default {
           {
             success: false,
             error: 'Method not allowed',
-            message: 'Use POST for this endpoint.',
+            message: 'Use POST for this endpoint.'
           },
           405,
-          { Allow: 'POST, OPTIONS' },
+          { Allow: 'POST, OPTIONS' }
         );
       }
 
@@ -1417,9 +2265,9 @@ export default {
         return jsonResponse(
           {
             success: false,
-            error: 'Server misconfigured: OPENAI_API_KEY is not set.',
+            error: 'Server misconfigured: OPENAI_API_KEY is not set.'
           },
-          500,
+          500
         );
       }
 
@@ -1432,9 +2280,9 @@ export default {
           {
             success: false,
             error: 'Invalid request body',
-            message,
+            message
           },
-          400,
+          400
         );
       }
 
@@ -1445,7 +2293,7 @@ export default {
       try {
         const result = await runScenarioByKey(scenario, {
           ...baseInput,
-          tracingDisabled: !braintrustTracingEnabled,
+          tracingDisabled: !braintrustTracingEnabled
         });
         queueSuccessNotifications(ctx, env, result, url.pathname, runId);
         if (braintrustTracingEnabled) {
@@ -1462,9 +2310,9 @@ export default {
           {
             success: false,
             scenario,
-            error: message,
+            error: message
           },
-          500,
+          500
         );
       }
     }
@@ -1489,16 +2337,22 @@ export default {
           halfdozen_dedup: HALFDOZEN_DEDUP_ROUTE,
           halfdozen_notification_test: HALFDOZEN_NOTIFY_TEST_ROUTE,
           halfdozen_slack_commands: HALFDOZEN_SLACK_COMMAND_ROUTE,
+          mcp_registry_sweep: MCP_REGISTRY_SWEEP_ROUTE
         },
-        protectedRoutes: HALFDOZEN_TOKEN_PROTECTED_ROUTES,
+        protectedRoutes: [...HALFDOZEN_TOKEN_PROTECTED_ROUTES, MCP_REGISTRY_SWEEP_ROUTE],
         notifications: {
           halfdozenEmailNotificationsConfigured: Boolean(env.RESEND_API_KEY),
           halfdozenEmailNotificationMode: getNotifyEmailMode(env),
-          halfdozenEmailNotificationRecipients: parseEmailList(env.HALFDOZEN_AGENT_NOTIFY_EMAIL_TO).length,
+          halfdozenEmailNotificationRecipients: parseEmailList(env.HALFDOZEN_AGENT_NOTIFY_EMAIL_TO)
+            .length,
           halfdozenSlackCommandSigningConfigured: Boolean(env.HALFDOZEN_SLACK_SIGNING_SECRET),
           halfdozenSlackTeamRestricted: Boolean(env.HALFDOZEN_SLACK_TEAM_ID),
-          halfdozenFleetWatchdogCronEnabled: isFleetWatchdogCronEnabled(env),
+          halfdozenFleetWatchdogCronEnabled: isFlagEnabled(
+            env.HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED,
+            true
+          ),
           halfdozenFleetWatchdogEvidenceStore: Boolean(env.TELEMETRY_DB),
+          inkBridgeConfigured: Boolean(inkBridgeToken(env))
         },
         tools: [
           'get_playbook',
@@ -1508,13 +2362,13 @@ export default {
           'list_available_mcps',
           'generate_mcp_config',
           'scaffold_project',
-          'verify_mcp_connection',
+          'verify_mcp_connection'
         ],
         resources: HOST_PLAYBOOKS.length + 3,
-        prompts: ['workflow_setup', 'host_comparison', 'project_structure'],
+        prompts: ['workflow_setup', 'host_comparison', 'project_structure']
       });
     }
 
     return new Response('Not found', { status: 404 });
-  },
+  }
 };

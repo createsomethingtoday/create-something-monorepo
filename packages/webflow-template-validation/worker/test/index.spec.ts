@@ -33,6 +33,7 @@ vi.mock('../src/utils/fetch-utils', () => {
 import { validateDesignerData } from '../src/validators/designer-validator';
 import { generateContentIssues, validateContent } from '../src/validators/content-validator';
 import { validateAccessibility } from '../src/validators/accessibility-validator';
+import { validateInteractions } from '../src/validators/interactions-validator';
 import { fetchHTML, parseHTML } from '../src/utils/fetch-utils';
 import worker from '../src/index';
 
@@ -438,6 +439,53 @@ describe('Accessibility Validator', () => {
 
 		expect(result.stats.contrastViolations).toBe(0);
 		expect(result.issues.some((issue) => issue.id === 'color-contrast-violations')).toBe(false);
+	});
+});
+
+describe('Interactions Validator', () => {
+	it('detects IX2 on accessible pages even when another page fails', async () => {
+		vi.mocked(fetchHTML).mockImplementation(async (url: string) => {
+			if (url.endsWith('/missing')) {
+				throw new Error('HTTP 404: Not Found');
+			}
+
+			return {
+				html: '<!doctype html><html><body><div data-w-id="abc"></div><script>Webflow.require("ix2").init({})</script></body></html>',
+				status: 200,
+				headers: { 'content-type': 'text/html' },
+				size: 0,
+				loadTime: 0
+			};
+		});
+
+		const result = await validateInteractions('https://example.com', ['/missing']);
+
+		expect(result.stats.legacyIx2Detected).toBe(true);
+		expect(result.stats.legacyIx2Count).toBe(2);
+		expect(result.stats.pagesAnalyzed).toBe(1);
+		expect(result.stats.pagesFailed).toBe(1);
+		expect(result.stats.analysisStatus).toBe('partial');
+		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected' && issue.severity === 'error')).toBe(true);
+		expect(result.issues.some((issue) => issue.id === 'interactions-analysis-incomplete' && issue.severity === 'warning')).toBe(true);
+	});
+
+	it('blocks validation when no pages can be checked for IX2', async () => {
+		vi.mocked(fetchHTML).mockRejectedValue(new Error('HTTP 404: Not Found'));
+
+		const result = await validateInteractions('https://example.com', ['/missing']);
+
+		expect(result.stats.legacyIx2Detected).toBeNull();
+		expect(result.stats.pagesAnalyzed).toBe(0);
+		expect(result.stats.pagesFailed).toBe(2);
+		expect(result.stats.analysisStatus).toBe('failed');
+		expect(result.issues).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					id: 'interactions-analysis-incomplete',
+					severity: 'error'
+				})
+			])
+		);
 	});
 });
 

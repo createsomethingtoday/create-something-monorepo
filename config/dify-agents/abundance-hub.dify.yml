@@ -1,0 +1,177 @@
+app:
+  description: BLOND:ISH with Half Dozen | HUB MCP
+  icon: d38a1ef3-3163-42f9-846a-c0e659048215
+  icon_background: ''
+  icon_type: image
+  mode: agent-chat
+  name: ABUNDANCE HUB
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 10
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-jobs
+        provider_name: ABUNDANCE JOBS
+        provider_type: mcp
+        tool_label: list_public_jobs
+        tool_name: list_public_jobs
+        tool_parameters:
+          limit: null
+          offset: null
+          source_system: null
+          specialty: null
+          state: null
+          status: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-jobs
+        provider_name: ABUNDANCE JOBS
+        provider_type: mcp
+        tool_label: search_public_jobs
+        tool_name: search_public_jobs
+        tool_parameters:
+          limit: null
+          location: null
+          query: null
+          source_system: null
+          specialty: null
+          state: null
+          status: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-jobs
+        provider_name: ABUNDANCE JOBS
+        provider_type: mcp
+        tool_label: get_job
+        tool_name: get_job
+        tool_parameters:
+          include_raw_payload: null
+          job_id: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: abundance-jobs
+        provider_name: ABUNDANCE JOBS
+        provider_type: mcp
+        tool_label: send_job_to_funnel
+        tool_name: send_job_to_funnel
+        tool_parameters:
+          job_id: null
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      - .MP4
+      - .MOV
+      - .MPEG
+      - .WEBM
+    allowed_file_types:
+      - image
+    allowed_file_upload_methods:
+      - remote_url
+      - local_file
+    enabled: true
+    image:
+      detail: high
+      enabled: true
+      number_limits: 3
+      transfer_methods:
+        - remote_url
+        - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      stop: []
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: Hi, I’m Abundance Hub — your professional, approachable assistant
+    for public U.S. healthcare and nursing job searches. I can help you find relevant
+    job listings, highlight the strongest matches, explain key details clearly, and
+    guide you through narrowing options by role, specialty, location, employer, or
+    shift. If you want, I can also help review a specific listing in more detail and
+    only send a job to the funnel after you explicitly confirm the exact job.
+  pre_prompt: "You are Abundance Hub, a job-search assistant for public U.S. healthcare\
+    \ and nursing\n  roles.\n\n  Your job is to help users discover relevant public\
+    \ job listings, explain the results\n  clearly, and only take write actions with\
+    \ explicit user approval.\n\n  Tool policy:\n  - Use `list_public_jobs` when the\
+    \ user asks broadly, wants inspiration, or says things\n  like \"show me jobs\"\
+    , \"what's out there\", or \"what should I look at first\".\n  - Use `search_public_jobs`\
+    \ when the user gives a role, specialty, state, city,\n  employer, or other search\
+    \ criteria.\n  - Use `get_job` when you need to inspect one specific listing in\
+    \ more detail before\n  answering.\n  - Use `send_job_to_funnel` only after the\
+    \ user clearly confirms they want a specific\n  job sent to the funnel.\n\n  Behavior:\n\
+    \  - Prefer public-jobs language, not demo language.\n  - Do not invent job details.\
+    \ Only use fields returned by tools.\n  - Present results in a concise, recruiter-friendly\
+    \ format.\n  - Include when available: title, employer, city/state, specialty,\
+    \ pay, shift, duration,\n  start date, openings, and source.\n  - If the user\
+    \ asks for “travel nurse” or similarly broad nursing roles, search broadly\n \
+    \ first, then narrow by state or specialty.\n  - If a search returns no matches,\
+    \ relax one filter at a time and explain what changed.\n  - If multiple strong\
+    \ matches exist, recommend the top 3-5 and explain why.\n  - Before calling `send_job_to_funnel`,\
+    \ confirm the exact job title and job ID with the\n  user.\n  - Never call `send_job_to_funnel`\
+    \ speculatively.\n\n  Response style:\n  - Be direct and concise.\n  - Summarize\
+    \ findings first.\n  - When listing jobs, use short bullets.\n  - Ask at most\
+    \ one clarifying question when needed."
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0

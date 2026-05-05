@@ -8,6 +8,39 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 });
 
 // cloudflare-worker/lib/shared-validator.js
+var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
+function countPatternMatches(value, pattern) {
+  const matches = value.match(pattern);
+  return matches ? matches.length : 0;
+}
+__name(countPatternMatches, "countPatternMatches");
+function detectIx2Interactions(html) {
+  const matches = [
+    {
+      label: "data-w-id attributes",
+      count: countPatternMatches(html, /\sdata-w-id\s*=/gi)
+    },
+    {
+      label: "data-is-ix2-target attributes",
+      count: countPatternMatches(html, /\sdata-is-ix2-target\s*=/gi)
+    },
+    {
+      label: "Webflow IX2 runtime calls",
+      count: countPatternMatches(html, /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi)
+    },
+    {
+      label: "w-mod-ix CSS/runtime markers",
+      count: countPatternMatches(html, /w-mod-ix/gi)
+    }
+  ].filter((item) => item.count > 0);
+  const strongMatches = matches.filter((item) => item.label !== "w-mod-ix CSS/runtime markers");
+  return {
+    detected: strongMatches.length > 0,
+    count: strongMatches.reduce((total, item) => total + item.count, 0),
+    matches
+  };
+}
+__name(detectIx2Interactions, "detectIx2Interactions");
 function validateGsapUsage(html, pageUrl, customPatterns = []) {
   const defaultPatterns = [
     // Core GSAP object and method access
@@ -393,6 +426,18 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     securityRisks: []
     // Scripts that pose security risks
   };
+  const ix2Detection = detectIx2Interactions(html);
+  if (ix2Detection.detected) {
+    results.legacyIx2Detected = true;
+    results.legacyIx2Count = ix2Detection.count;
+    results.flaggedCode.push({
+      scriptIndex: "document",
+      message: IX2_REJECTION_MESSAGE,
+      reason: "Legacy IX2 interactions are no longer accepted for Marketplace templates submitted on or after May 1, 2026.",
+      policy: "ix2-rejected",
+      flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
+    });
+  }
   const scriptContents = extractScriptContents(html);
   const styleContents = extractStyleContents(html);
   scriptContents.forEach((script, index) => {
@@ -597,6 +642,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       allowedCustomCodeCount: results.allowedCustomCode.length,
       flaggedCodeCount: results.flaggedCode.length,
       securityRiskCount: results.securityRisks.length,
+      legacyIx2Detected: results.legacyIx2Detected === true,
+      legacyIx2Count: results.legacyIx2Count || 0,
       passed
     },
     details: results
@@ -1123,10 +1170,10 @@ function generateMarkdownReport(results) {
     markdown += "| Page URL | Status | GSAP Scripts | Flagged Scripts | Issues |\n";
     markdown += "|----------|--------|-------------|-----------------|--------|\n";
     results.pageResults.forEach((page) => {
-      const status = page.passed ? "\u2705 Pass" : "\u274C Fail";
-      const gsapCount = page.summary ? page.summary.gsapScripts : "N/A";
-      const flaggedCount = page.summary ? page.summary.flaggedScripts + page.summary.securityRiskScripts : "N/A";
-      const issuesCount = page.summary && page.summary.issues ? page.summary.issues.length : 0;
+      const status = page.success === false ? "\u274C Request failed" : page.passed ? "\u2705 Pass" : "\u274C Fail";
+      const gsapCount = page.success === false ? "N/A" : page.summary?.validGsapCount ?? 0;
+      const flaggedCount = page.success === false ? "N/A" : (page.summary?.flaggedCodeCount || 0) + (page.summary?.securityRiskCount || 0);
+      const issuesCount = page.success === false ? 1 : (page.summary?.flaggedCodeCount || 0) + (page.summary?.securityRiskCount || 0);
       markdown += `| ${page.url} | ${status} | ${gsapCount} | ${flaggedCount} | ${issuesCount} |
 `;
     });
@@ -1134,21 +1181,38 @@ function generateMarkdownReport(results) {
     markdown += "## Detailed Issues\n\n";
     let hasDetailedIssues = false;
     results.pageResults.forEach((page) => {
+      if (page.success === false) {
+        hasDetailedIssues = true;
+        markdown += `### ${page.url}
+
+`;
+        markdown += `- **Request Failure**: ${page.error || "Unknown crawl error"}
+`;
+        if (Array.isArray(page.referrers) && page.referrers.length > 0) {
+          markdown += `- **Linked From**: ${page.referrers.join(", ")}
+`;
+        }
+        markdown += `
+`;
+        return;
+      }
       if (page.success && !page.passed) {
         hasDetailedIssues = true;
         markdown += `### ${page.url}
 
 `;
-        if (page.summary && page.summary.issues) {
+        if (page.summary) {
           markdown += `- **Issues Found**: ${page.flaggedCodeCount}
 `;
-          if (Array.isArray(page.summary.issues)) {
+          if (Array.isArray(page.details?.flaggedCode) && page.details.flaggedCode.length > 0) {
             markdown += `
 **Problematic Code Snippets**:
 
 `;
-            page.summary.issues.forEach((issue, index) => {
-              markdown += `${index + 1}. \`${issue.code.slice(0, 50)}${issue.code.length > 50 ? "..." : ""}\`
+            page.details.flaggedCode.forEach((issue, index) => {
+              const flaggedText = Array.isArray(issue.flaggedCode) ? issue.flaggedCode.join(" ") : issue.message || "Flagged code";
+              const flaggedPreview = flaggedText.slice(0, 50);
+              markdown += `${index + 1}. \`${flaggedPreview}${flaggedText.length > 50 ? "..." : ""}\`
 `;
               if (issue.reason) {
                 markdown += `   - Reason: ${issue.reason}
@@ -1318,6 +1382,8 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
             }
             const html = await response.text();
             const validation = validateGsapUsage(html, page.url);
+            const validationSummary = validation.summary || {};
+            const validationDetails = validation.details || {};
             results.push({
               url: page.url,
               title: page.title || "",
@@ -1325,24 +1391,26 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
               passed: validation.passed,
               summary: {
                 url: page.url,
-                scriptCount: validation.scriptCount,
-                styleCount: validation.styleCount,
-                externalScriptCount: validation.externalScripts?.length || 0,
-                validGsapCount: validation.validGsapUsage?.length || 0,
-                allowedCustomCodeCount: validation.allowedCustomCode?.length || 0,
-                flaggedCodeCount: validation.flaggedCode?.length || 0,
-                securityRiskCount: validation.securityRisks?.length || 0,
+                scriptCount: validationSummary.scriptCount || 0,
+                styleCount: validationSummary.styleCount || 0,
+                externalScriptCount: validationSummary.externalScriptCount || 0,
+                validGsapCount: validationSummary.validGsapCount || 0,
+                allowedCustomCodeCount: validationSummary.allowedCustomCodeCount || 0,
+                flaggedCodeCount: validationSummary.flaggedCodeCount || 0,
+                securityRiskCount: validationSummary.securityRiskCount || 0,
+                legacyIx2Detected: validationSummary.legacyIx2Detected === true,
+                legacyIx2Count: validationSummary.legacyIx2Count || 0,
                 passed: validation.passed
               },
               details: {
                 url: page.url,
-                validGsapUsage: validation.validGsapUsage || [],
-                allowedCustomCode: validation.allowedCustomCode || [],
-                flaggedCode: validation.flaggedCode || [],
-                securityRisks: validation.securityRisks || [],
-                externalScripts: validation.externalScripts || []
+                validGsapUsage: validationDetails.validGsapUsage || [],
+                allowedCustomCode: validationDetails.allowedCustomCode || [],
+                flaggedCode: validationDetails.flaggedCode || [],
+                securityRisks: validationDetails.securityRisks || [],
+                externalScripts: validationDetails.externalScripts || []
               },
-              flaggedCodeCount: validation.flaggedCode?.length || 0
+              flaggedCodeCount: validationSummary.flaggedCodeCount || 0
             });
           } catch (error) {
             results.push({
@@ -1634,9 +1702,43 @@ function summarizeCrawlPageResults(pageResults, pageCount) {
   };
 }
 __name(summarizeCrawlPageResults, "summarizeCrawlPageResults");
+function buildReferrerMap(siteMap) {
+  const referrerMap = {};
+  if (!siteMap || typeof siteMap !== "object") {
+    return referrerMap;
+  }
+  Object.entries(siteMap).forEach(([sourceKey, entry]) => {
+    if (!entry || typeof entry !== "object" || !Array.isArray(entry.links)) {
+      return;
+    }
+    const sourceUrl = typeof entry.url === "string" ? entry.url : sourceKey;
+    entry.links.forEach((linkUrl) => {
+      if (typeof linkUrl !== "string") {
+        return;
+      }
+      if (!referrerMap[linkUrl]) {
+        referrerMap[linkUrl] = [];
+      }
+      if (!referrerMap[linkUrl].includes(sourceUrl)) {
+        referrerMap[linkUrl].push(sourceUrl);
+      }
+    });
+  });
+  return referrerMap;
+}
+__name(buildReferrerMap, "buildReferrerMap");
 function finalizeCrawlResponse(url, pageResults, crawlResults, siteMap) {
+  const resolvedSiteMap = siteMap || crawlResults?.siteMap;
+  const referrerMap = buildReferrerMap(resolvedSiteMap);
+  const enrichedPageResults = pageResults.map((page) => {
+    const referrers = typeof page?.url === "string" ? referrerMap[page.url] || [] : [];
+    return referrers.length > 0 ? {
+      ...page,
+      referrers
+    } : page;
+  });
   const pageCount = Array.isArray(crawlResults?.pages) ? crawlResults.pages.length : 0;
-  const siteResults = summarizeCrawlPageResults(pageResults, pageCount);
+  const siteResults = summarizeCrawlPageResults(enrichedPageResults, pageCount);
   const crawlStats = {
     ...(crawlResults?.crawlStats || {}),
     partial: Boolean(crawlResults?.partial),
@@ -1652,8 +1754,8 @@ function finalizeCrawlResponse(url, pageResults, crawlResults, siteMap) {
       ...siteResults,
       incomplete
     },
-    pageResults,
-    siteMap: siteMap || crawlResults?.siteMap,
+    pageResults: enrichedPageResults,
+    siteMap: resolvedSiteMap,
     crawlStats,
     ...(error ? { error } : {})
   };

@@ -8,7 +8,6 @@ import { QuillEditor } from './quill-editor';
 import {
   ALL_COUNTRIES,
   CATEGORY_OPTIONS,
-  SECONDARY_TAGS,
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
   getPricingTiers,
@@ -50,6 +49,21 @@ function feedbackClass(tone: Tone) {
   if (tone === 'success') return 'submission-field-feedback submission-field-feedback-success';
   if (tone === 'error') return 'submission-field-feedback submission-field-feedback-error';
   return 'submission-field-feedback submission-field-feedback-info';
+}
+
+function classNames(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(' ');
+}
+
+function fieldClassName(isAiUpdated: boolean, extraClassName?: string) {
+  return classNames('submission-field', extraClassName, isAiUpdated && 'is-ai-updated');
+}
+
+function choiceClassName(
+  isSelected: boolean,
+  ...extraClassNames: Array<string | false | null | undefined>
+) {
+  return classNames('submission-choice', ...extraClassNames, isSelected && 'is-selected');
 }
 
 type Tone = 'success' | 'error' | 'info';
@@ -99,9 +113,8 @@ type TemplateFormState = {
   templateName: string;
   publishedUrl: string;
   previewUrl: string;
-  priceModel: 'Free' | 'Paid';
+  priceModel: '' | 'Free' | 'Paid';
   categories: string[];
-  secondaryTags: string[];
   styles: string[];
   pageCount: PageCountOption | '';
   typeCms: boolean;
@@ -124,7 +137,6 @@ type TemplateAutofillState = Partial<
     | 'templateName'
     | 'shortDescription'
     | 'longDescription'
-    | 'secondaryTags'
     | 'priceModel'
     | 'pageCount'
     | 'typeCms'
@@ -140,7 +152,6 @@ type TemplateAutofillFieldKey =
   | 'shortDescription'
   | 'longDescription'
   | 'categories'
-  | 'secondaryTags'
   | 'priceModel'
   | 'pageCount'
   | 'typeCms'
@@ -153,7 +164,6 @@ type TemplateAutofillPayload = {
   shortDescription?: string;
   longDescription?: string;
   categories?: string[];
-  secondaryTags?: string[];
   priceModel?: 'Free' | 'Paid';
   pageCount?: PageCountOption;
   typeCms?: boolean;
@@ -232,7 +242,6 @@ const AUTOFILL_FIELD_LABELS: Record<TemplateAutofillFieldKey, string> = {
   shortDescription: 'Short description',
   longDescription: 'Long description',
   categories: 'Categories',
-  secondaryTags: 'Secondary tags',
   priceModel: 'Price model',
   pageCount: 'Page count',
   typeCms: 'CMS',
@@ -247,9 +256,8 @@ const initialTemplateState: TemplateFormState = {
   templateName: '',
   publishedUrl: '',
   previewUrl: '',
-  priceModel: 'Free',
+  priceModel: '',
   categories: [],
-  secondaryTags: [],
   styles: [],
   pageCount: '',
   typeCms: false,
@@ -367,7 +375,25 @@ function shouldAutofillPriceModel(
   current: TemplateFormState['priceModel'],
   previous?: TemplateFormState['priceModel']
 ) {
-  return current === 'Free' || current === previous;
+  return current === '' || current === previous;
+}
+
+function normalizeSelectedPrice(
+  priceModel: TemplateFormState['priceModel'],
+  pageCount: TemplateFormState['pageCount'],
+  typeCms: TemplateFormState['typeCms'],
+  selectedPrice: TemplateFormState['selectedPrice']
+) {
+  if (priceModel !== 'Paid') {
+    return null;
+  }
+
+  if (!pageCount) {
+    return null;
+  }
+
+  const allowedPrices = getPricingTiers(pageCount, typeCms).prices;
+  return selectedPrice !== null && allowedPrices.includes(selectedPrice) ? selectedPrice : null;
 }
 
 function shouldAutofillPageCount(
@@ -425,6 +451,20 @@ function formatFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function fileSignature(file: File) {
+  return `${file.name}-${file.size}-${file.lastModified}`;
+}
+
+function dedupeFiles(files: readonly File[]) {
+  const seen = new Set<string>();
+  return files.filter((file) => {
+    const signature = fileSignature(file);
+    if (seen.has(signature)) return false;
+    seen.add(signature);
+    return true;
+  });
+}
+
 function FieldFeedback({
   feedback,
   action,
@@ -455,12 +495,14 @@ function FieldFeedback({
 function InlineActionField({
   actionLabel,
   children,
+  fieldClassName: fieldClassNameProp,
   feedback,
   feedbackAction,
   onAction,
 }: {
   actionLabel: string;
   children: ReactNode;
+  fieldClassName?: string;
   feedback?: StatusMessage | null;
   feedbackAction?: FeedbackAction;
   onAction: () => void;
@@ -468,7 +510,7 @@ function InlineActionField({
   return (
     <>
       <div className="submission-field-inline">
-        <div className="submission-field">{children}</div>
+        <div className={classNames('submission-field', fieldClassNameProp)}>{children}</div>
         <div className="submission-field-inline-action-rail">
           <button
             className="button-sp cc-white submission-inline-verify-button"
@@ -482,6 +524,10 @@ function InlineActionField({
       <FieldFeedback feedback={feedback} action={feedbackAction} />
     </>
   );
+}
+
+function AiUpdatedBadge() {
+  return <span className="submission-autofill-badge">AI updated</span>;
 }
 
 type ChoiceToolbarProps = {
@@ -528,9 +574,11 @@ function ChoiceToolbar({
 function SelectedFilesSummary({
   files,
   emptyLabel,
+  onRemove,
 }: {
   files: readonly File[];
   emptyLabel?: ReactNode;
+  onRemove?: (signature: string) => void;
 }) {
   if (files.length === 0) {
     return emptyLabel ? <div className="field-help submission-selected-files-empty">{emptyLabel}</div> : null;
@@ -538,11 +586,53 @@ function SelectedFilesSummary({
 
   return (
     <div className="submission-selected-files" aria-live="polite">
-      {files.map((file) => (
-        <div className="submission-selected-file" key={`${file.name}-${file.size}-${file.lastModified}`}>
-          <span className="submission-selected-file-name">{file.name}</span>
-          <span className="submission-selected-file-size">{formatFileSize(file.size)}</span>
-        </div>
+      {files.map((file) => {
+        const signature = fileSignature(file);
+        return (
+          <div className="submission-selected-file" key={signature}>
+            <span className="submission-selected-file-name">{file.name}</span>
+            <span className="submission-selected-file-size">{formatFileSize(file.size)}</span>
+            {onRemove ? (
+              <button
+                className="submission-selected-file-remove"
+                type="button"
+                onClick={() => onRemove(signature)}
+                aria-label={`Remove ${file.name}`}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SelectedChoiceSummary({
+  choices,
+  onRemove,
+}: {
+  choices: readonly { id: string; label: string }[];
+  onRemove: (id: string) => void;
+}) {
+  if (choices.length === 0) return null;
+
+  return (
+    <div className="submission-selected-choices" aria-live="polite">
+      {choices.map((choice) => (
+        <button
+          className="submission-selected-choice"
+          type="button"
+          key={choice.id}
+          onClick={() => onRemove(choice.id)}
+          aria-label={`Remove ${choice.label}`}
+        >
+          <span>{choice.label}</span>
+          <span className="submission-selected-choice-remove" aria-hidden="true">
+            ×
+          </span>
+        </button>
       ))}
     </div>
   );
@@ -612,6 +702,49 @@ function ReviewChecklistCard({
   );
 }
 
+function TemplateReadinessBanner({
+  items,
+  status,
+}: {
+  items: readonly ReviewChecklistItem[];
+  status?: StatusMessage | null;
+}) {
+  const pendingItems = items.filter((item) => !item.complete);
+  const isBlocked = status?.tone === 'error';
+  const isReady = !isBlocked && pendingItems.length === 0;
+  const tone = isBlocked ? 'blocked' : isReady ? 'ready' : 'review';
+  const title = isBlocked ? 'Blocked' : isReady ? 'Ready for handoff' : 'Needs review';
+  const copy = isBlocked
+    ? status?.message || 'Resolve the blocking validation issue before submitting.'
+    : isReady
+      ? 'Required checks are complete. Re-run validation after any Designer changes and publish before submitting.'
+      : `${pendingItems.length} required item${pendingItems.length === 1 ? '' : 's'} still need attention before this can be submitted.`;
+
+  return (
+    <div className={`submission-readiness-banner is-${tone}`} aria-live="polite">
+      <div className="submission-readiness-copy">
+        <div className="submission-readiness-kicker">Submission outcome</div>
+        <div className="submission-readiness-title">{title}</div>
+        <p className="field-help submission-readiness-message">{copy}</p>
+      </div>
+      {!isReady && pendingItems.length > 0 ? (
+        <div className="submission-readiness-list" aria-label="Remaining submission checks">
+          {pendingItems.slice(0, 3).map((item) => (
+            <span className="submission-readiness-chip" key={item.label}>
+              {item.label}
+            </span>
+          ))}
+          {pendingItems.length > 3 ? (
+            <span className="submission-readiness-chip">
+              +{pendingItems.length - 3} more
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 export function TemplateIntake() {
@@ -638,7 +771,6 @@ export function TemplateIntake() {
   const [isEmbedded, setIsEmbedded] = useState(false);
   const [optionSearch, setOptionSearch] = useState({
     categories: '',
-    secondaryTags: '',
     styles: '',
     featureIds: '',
   });
@@ -675,10 +807,6 @@ export function TemplateIntake() {
     template.categories,
     autofillManaged.categories
   );
-  const hasAutofilledSecondaryTags = isAutofilledArray(
-    template.secondaryTags,
-    autofillManaged.secondaryTags
-  );
   const hasAutofilledPageCount =
     Boolean(autofillManaged.pageCount) && template.pageCount === autofillManaged.pageCount;
   const hasAutofilledTemplateType =
@@ -699,11 +827,6 @@ export function TemplateIntake() {
     template.categories,
     optionSearch.categories
   );
-  const visibleSecondaryTags = sortSelectableLabels(
-    SECONDARY_TAGS,
-    template.secondaryTags,
-    optionSearch.secondaryTags
-  );
   const visibleStyles = sortSelectableLabels(
     TEMPLATE_STYLES,
     template.styles,
@@ -716,6 +839,20 @@ export function TemplateIntake() {
     (feature) => feature.label,
     (feature) => feature.id
   );
+  const selectedCategoryChoices = template.categories.map((category) => ({
+    id: category,
+    label: category,
+  }));
+  const selectedStyleChoices = template.styles.map((style) => ({
+    id: style,
+    label: style,
+  }));
+  const selectedFeatureChoices = template.featureIds
+    .map((featureId) => {
+      const feature = WEBFLOW_FEATURES.find((option) => option.id === featureId);
+      return feature ? { id: feature.id, label: feature.label } : null;
+    })
+    .filter((choice): choice is { id: string; label: string } => choice !== null);
   const creatorProfileExistsActionLabel = 'Go to Submit a template';
 
   function getCreatorProfileExistsAction(
@@ -743,7 +880,7 @@ export function TemplateIntake() {
       const message: SubmissionChildMessage = {
         type: 'ts-submission:scroll-to',
         section,
-        offsetTop: target.offsetTop,
+        offsetTop: target.offsetTop
       };
       window.parent.postMessage(message, '*');
       return;
@@ -776,6 +913,20 @@ export function TemplateIntake() {
     };
 
     setUtm(captureParams(window.location.search));
+
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialSection = initialParams.get('section');
+    const initialHash = window.location.hash;
+
+    if (initialSection === 'submit-today' || initialHash === '#submit-today') {
+      requestAnimationFrame(() => {
+        scrollToSubmissionSection('submit-today');
+      });
+    } else if (initialSection === 'join-today' || initialHash === '#join-today') {
+      requestAnimationFrame(() => {
+        scrollToSubmissionSection('join-today');
+      });
+    }
 
     const onParentMessage = (event: MessageEvent) => {
       const data = event.data as SubmissionParentMessage | null;
@@ -814,7 +965,8 @@ export function TemplateIntake() {
       );
       if (height === lastHeight) return;
       lastHeight = height;
-      window.parent.postMessage({ type: 'ts-submission:resize', height }, '*');
+      const message: SubmissionChildMessage = { type: 'ts-submission:resize', height };
+      window.parent.postMessage(message, '*');
     };
 
     postHeight();
@@ -920,9 +1072,25 @@ export function TemplateIntake() {
   }, [turnstileEnabled]);
 
   const creatorCountrySupported = creator.country ? isSupportedCountry(creator.country) : true;
+  const previewUrlValue = template.previewUrl.trim();
+  const previewUrlPresent = previewUrlValue !== '';
   const previewUrlValid =
-    template.previewUrl.trim() === '' ||
-    template.previewUrl.trim().includes('https://preview.webflow.com/preview/');
+    previewUrlValue === '' ||
+    previewUrlValue.includes('https://preview.webflow.com/preview/');
+  const templateChecksPassed =
+    template.templateName.trim() !== '' &&
+    template.publishedUrl.trim() !== '' &&
+    verification.templateNameVerified === template.templateName.trim() &&
+    verification.publishedUrlVerified === template.publishedUrl.trim();
+  const previewAndMetadataReady =
+    previewUrlPresent &&
+    previewUrlValid &&
+    template.categories.length > 0 &&
+    template.styles.length > 0 &&
+    template.pageCount !== '';
+  const pricingResolved =
+    template.priceModel !== '' &&
+    (template.priceModel === 'Free' || template.selectedPrice !== null);
   const galleryErrorMessages = Object.entries(imageErrors)
     .filter(([key, value]) => key.startsWith('gallery-') && value)
     .map(([, value]) => value as string);
@@ -937,38 +1105,26 @@ export function TemplateIntake() {
     {
       label: 'Template checks passed',
       detail:
-        verification.templateNameVerified === template.templateName.trim() &&
-        verification.publishedUrlVerified === template.publishedUrl.trim()
+        templateChecksPassed
           ? 'Template name and published site both passed validation.'
           : 'Run Check name and Validate template before submitting.',
-      complete:
-        verification.templateNameVerified === template.templateName.trim() &&
-        verification.publishedUrlVerified === template.publishedUrl.trim(),
+      complete: templateChecksPassed,
     },
     {
       label: 'Preview and metadata ready',
       detail:
-        previewUrlValid &&
-        template.previewUrl.trim() !== '' &&
-        template.categories.length > 0 &&
-        template.styles.length > 0 &&
-        template.pageCount !== ''
+        previewAndMetadataReady
           ? 'Preview URL, category, styles, and page count are all set.'
           : 'Add a valid preview URL plus the required taxonomy and page info.',
-      complete:
-        previewUrlValid &&
-        template.previewUrl.trim() !== '' &&
-        template.categories.length > 0 &&
-        template.styles.length > 0 &&
-        template.pageCount !== '',
+      complete: previewAndMetadataReady,
     },
     {
       label: 'Pricing is resolved',
       detail:
-        template.priceModel === 'Free' || template.selectedPrice !== null
+        pricingResolved
           ? 'The template pricing setup is complete.'
-          : 'Choose a paid price tier or switch the template to free.',
-      complete: template.priceModel === 'Free' || template.selectedPrice !== null,
+          : 'Choose whether the template is free or paid, then pick a paid tier if needed.',
+      complete: pricingResolved,
     },
     {
       label: 'Assets are attached',
@@ -1024,7 +1180,25 @@ export function TemplateIntake() {
   }
 
   function updateTemplate<K extends keyof TemplateFormState>(key: K, value: TemplateFormState[K]) {
-    setTemplate((current) => ({ ...current, [key]: value }));
+    setTemplate((current) => {
+      const next = { ...current, [key]: value };
+
+      if (
+        key === 'priceModel' ||
+        key === 'pageCount' ||
+        key === 'typeCms' ||
+        key === 'selectedPrice'
+      ) {
+        next.selectedPrice = normalizeSelectedPrice(
+          next.priceModel,
+          next.pageCount,
+          next.typeCms,
+          next.selectedPrice
+        );
+      }
+
+      return next;
+    });
     setTemplateStatus(null);
 
     if (key === 'creatorEmail') {
@@ -1056,6 +1230,14 @@ export function TemplateIntake() {
         featureIds: current.featureIds.filter((item: string) => item !== 'gsap')
       }));
     }
+  }
+
+  function removeGalleryFile(signature: string) {
+    setTemplate((current) => ({
+      ...current,
+      galleryFiles: current.galleryFiles.filter((file) => fileSignature(file) !== signature),
+    }));
+    setTemplateStatus(null);
   }
 
   function updateOptionSearch(
@@ -1206,21 +1388,6 @@ export function TemplateIntake() {
       }
 
       if (
-        autofill.secondaryTags?.length &&
-        !arraysEqual(current.secondaryTags, autofill.secondaryTags) &&
-        shouldAutofillArray(
-          current.secondaryTags,
-          autofillManaged.secondaryTags
-        )
-      ) {
-        next.secondaryTags = autofill.secondaryTags;
-        managedNext.secondaryTags = autofill.secondaryTags;
-        markApplied('secondaryTags');
-      } else if (autofill.secondaryTags?.length) {
-        markSuggested('secondaryTags');
-      }
-
-      if (
         autofill.styles?.length &&
         !arraysEqual(current.styles, autofill.styles) &&
         shouldAutofillArray(current.styles, autofillManaged.styles)
@@ -1255,16 +1422,12 @@ export function TemplateIntake() {
         markSuggested('featureIds');
       }
 
-      if (next.priceModel === 'Free') {
-        next.selectedPrice = null;
-      } else if (!next.pageCount) {
-        next.selectedPrice = null;
-      } else {
-        const allowedPrices = getPricingTiers(next.pageCount, next.typeCms).prices;
-        if (next.selectedPrice !== null && !allowedPrices.includes(next.selectedPrice)) {
-          next.selectedPrice = null;
-        }
-      }
+      next.selectedPrice = normalizeSelectedPrice(
+        next.priceModel,
+        next.pageCount,
+        next.typeCms,
+        next.selectedPrice
+      );
 
       return next;
     });
@@ -1418,6 +1581,7 @@ export function TemplateIntake() {
       message?: string;
       normalizedUrl?: string;
       gsapDetected?: boolean;
+      legacyIx2Detected?: boolean;
       autofill?: TemplateAutofillPayload;
       autofillWarning?: string;
       screenshotCount?: number;
@@ -1614,12 +1778,28 @@ export function TemplateIntake() {
         throw new Error('Validate the published URL before submitting.');
       }
 
+      if (!previewUrlPresent) {
+        throw new Error('Add the preview URL before submitting.');
+      }
+
       if (!template.thumbnailFile) {
         throw new Error('Upload the primary thumbnail before submitting.');
       }
 
       if (template.galleryFiles.length === 0) {
         throw new Error('Upload at least one gallery image before submitting.');
+      }
+
+      if (template.categories.length === 0 || template.styles.length === 0 || !template.pageCount) {
+        throw new Error('Add a category, at least one style, and the page count before submitting.');
+      }
+
+      if (!template.priceModel) {
+        throw new Error('Choose whether the template is free or paid before submitting.');
+      }
+
+      if (template.priceModel === 'Paid' && template.selectedPrice === null) {
+        throw new Error('Choose a price tier before submitting a paid template.');
       }
 
       if (!previewUrlValid) {
@@ -1658,7 +1838,6 @@ export function TemplateIntake() {
           priceModel: template.priceModel,
           category: template.categories[0] || '',
           categories: template.categories,
-          tags: template.secondaryTags,
           styleTags: template.styles,
           siteTypes: [
             ...(template.pageCount === 'Multi-layout' ? ['multi-layout'] : template.pageCount === 'Multi' ? ['static'] : ['static']),
@@ -1975,7 +2154,6 @@ export function TemplateIntake() {
                           setImageErrors((c) => ({ ...c, avatarFile: err }));
                           updateCreator('avatarFile', err ? null : file);
                         }}
-                        required
                       />
                       <SelectedFilesSummary
                         files={creator.avatarFile ? [creator.avatarFile] : []}
@@ -2175,6 +2353,7 @@ export function TemplateIntake() {
 
                   <InlineActionField
                     actionLabel="Check name"
+                    fieldClassName={hasAutofilledTemplateName ? 'is-ai-updated' : undefined}
                     feedback={fieldFeedback.templateName}
                     onAction={verifyTemplateName}
                   >
@@ -2184,9 +2363,7 @@ export function TemplateIntake() {
                     >
                       Template name
                       <span className="submission-required"> *</span>
-                      {hasAutofilledTemplateName ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledTemplateName ? <AiUpdatedBadge /> : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       First word must be capitalized. Avoid emoji, category names, tag names, and
@@ -2215,7 +2392,9 @@ export function TemplateIntake() {
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Must be an HTTPS <code className="submission-inline-code">*.webflow.io</code>{' '}
-                      URL. The full site crawl can take a few minutes.
+                      URL. The full site crawl can take a few minutes. As of May 1, 2026, legacy
+                      IX2 interactions are rejected; rebuild interactions with Webflow Interactions
+                      powered by GSAP (IX3).
                     </p>
                     <input
                       className="field-input input w-input"
@@ -2232,16 +2411,16 @@ export function TemplateIntake() {
                       <div className="submission-analyzer-header">
                         <div>
                           <div className="submission-step-label submission-step-label-secondary submission-analyzer-label">
-                            Analyzer summary
+                            AI validation
                           </div>
                           <h3 className="submission-analyzer-title">
-                            Suggestions from the published site
+                            Updates from the published site
                           </h3>
                         </div>
                       </div>
                       <p className="field-help submission-analyzer-copy">
                         {analyzerSummary.appliedFields.length > 0
-                          ? 'These fields were populated automatically. You can still edit anything below before submitting.'
+                          ? 'AI updated the highlighted fields below from the published site. You can still edit anything before submitting.'
                           : analyzerSummary.warning
                             ? 'The published-site crawl passed, but template suggestions were only partially available.'
                             : 'The published-site crawl passed. Review the suggestion summary below before submitting.'}
@@ -2256,7 +2435,7 @@ export function TemplateIntake() {
                           </div>
                         </div>
                         <div className="submission-analyzer-stage">
-                          <div className="submission-analyzer-stage-label">Autofill</div>
+                          <div className="submission-analyzer-stage-label">AI updates</div>
                           <div className="submission-analyzer-stage-value">
                             {analyzerSummary.appliedFields.length > 0
                               ? `${analyzerSummary.appliedFields.length} field${analyzerSummary.appliedFields.length === 1 ? '' : 's'} applied`
@@ -2289,7 +2468,7 @@ export function TemplateIntake() {
 
                       {analyzerSummary.appliedFields.length > 0 ? (
                         <div className="submission-analyzer-group">
-                          <div className="submission-analyzer-group-title">Applied automatically</div>
+                          <div className="submission-analyzer-group-title">AI updated fields</div>
                           <div className="submission-chip-list">
                             {analyzerSummary.appliedFields.map((field) => (
                               <span className="submission-chip submission-chip-success" key={field}>
@@ -2374,15 +2553,15 @@ export function TemplateIntake() {
                     ) : null}
                   </div>
 
-                  <div className="submission-field submission-select-field">
+                  <div
+                    className={fieldClassName(hasAutofilledPriceModel, 'submission-select-field')}
+                  >
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="priceModel"
                     >
                       Free or paid
-                      {hasAutofilledPriceModel ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledPriceModel ? <AiUpdatedBadge /> : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Choose whether the template will be published as a free listing or a paid
@@ -2393,21 +2572,23 @@ export function TemplateIntake() {
                       id="priceModel"
                       value={template.priceModel}
                       onChange={(event) =>
-                        updateTemplate('priceModel', event.target.value as 'Free' | 'Paid')
+                        updateTemplate(
+                          'priceModel',
+                          event.target.value as TemplateFormState['priceModel']
+                        )
                       }
                     >
+                      <option value="">Select pricing</option>
                       <option value="Free">Free</option>
                       <option value="Paid">Paid</option>
                     </select>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledCategories)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Category
                       <span className="submission-required"> *</span>
-                      {hasAutofilledCategories ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledCategories ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 options that best describe your template.
@@ -2425,7 +2606,16 @@ export function TemplateIntake() {
                           : undefined
                       }
                     />
-                    <div className="submission-choice-grid is-scroll">
+                    <SelectedChoiceSummary
+                      choices={selectedCategoryChoices}
+                      onRemove={(category) =>
+                        updateTemplate(
+                          'categories',
+                          template.categories.filter((value) => value !== category),
+                        )
+                      }
+                    />
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy is-scroll">
                       {visibleCategories.length === 0 ? (
                         <div className="submission-choice-empty">No categories match your search.</div>
                       ) : null}
@@ -2434,7 +2624,11 @@ export function TemplateIntake() {
                         const atMax = template.categories.length >= 2;
                         return (
                           <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            className={choiceClassName(
+                              checked,
+                              'submission-choice-taxonomy input-block cc-check cc-template-application-form-choice',
+                              !checked && atMax && 'is-disabled',
+                            )}
                             key={category}
                           >
                             <input
@@ -2458,69 +2652,22 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
-                    <span className="field-label template-application-form_field-label cc-with-desc">
-                      Secondary tags
-                      {hasAutofilledSecondaryTags ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
-                    </span>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Optional. Tag names are blocked inside the template title.
-                    </p>
-                    <ChoiceToolbar
-                      value={optionSearch.secondaryTags}
-                      onChange={(value) => updateOptionSearch('secondaryTags', value)}
-                      placeholder="Search secondary tags"
-                      ariaLabel="Search secondary tags"
-                      shownCount={visibleSecondaryTags.length}
-                      actionLabel={template.secondaryTags.length > 0 ? 'Clear all' : undefined}
-                      onAction={
-                        template.secondaryTags.length > 0
-                          ? () => updateTemplate('secondaryTags', [])
-                          : undefined
-                      }
-                    />
-                    <div className="submission-choice-grid is-scroll submission-choice-grid-compact">
-                      {visibleSecondaryTags.length === 0 ? (
-                        <div className="submission-choice-empty">No secondary tags match your search.</div>
-                      ) : null}
-                      {visibleSecondaryTags.map((tag) => (
-                        <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
-                          key={tag}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={template.secondaryTags.includes(tag)}
-                            onChange={() =>
-                              updateTemplate(
-                                'secondaryTags',
-                                toggleCheckbox(template.secondaryTags, tag),
-                              )
-                            }
-                          />
-                          <span className="submission-choice-copy">{tag}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledPageCount)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Page count
                       <span className="submission-required"> *</span>
-                      {hasAutofilledPageCount ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledPageCount ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       One page, multi page, or multi-layout.
                     </p>
-                    <div className="submission-choice-grid">
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy">
                       {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
                         <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          className={choiceClassName(
+                            template.pageCount === option,
+                            'input-block cc-check cc-template-application-form-choice',
+                          )}
                           key={option}
                         >
                           <input
@@ -2541,18 +2688,21 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledTemplateType)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Template type
-                      {hasAutofilledTemplateType ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledTemplateType ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Check the Webflow product surfaces used by the template.
                     </p>
                     <div className="submission-choice-grid submission-choice-grid-template-type">
-                      <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                      <label
+                        className={choiceClassName(
+                          template.typeCms,
+                          'input-block cc-check cc-template-application-form-choice',
+                        )}
+                      >
                         <input
                           type="checkbox"
                           checked={template.typeCms}
@@ -2560,7 +2710,12 @@ export function TemplateIntake() {
                         />
                         <span className="submission-choice-copy">CMS</span>
                       </label>
-                      <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                      <label
+                        className={choiceClassName(
+                          template.typeEcommerce,
+                          'input-block cc-check cc-template-application-form-choice',
+                        )}
+                      >
                         <input
                           type="checkbox"
                           checked={template.typeEcommerce}
@@ -2578,9 +2733,6 @@ export function TemplateIntake() {
                       <span className="field-label template-application-form_field-label cc-with-desc">
                         Template price
                         <span className="submission-required"> *</span>
-                        {hasAutofilledPriceModel && template.priceModel === 'Paid' ? (
-                          <span className="submission-autofill-badge">Autofilled</span>
-                        ) : null}
                       </span>
                       <p className="field-help cc-library-application-form_field-desc">
                         Available price points are determined by page count and CMS usage.
@@ -2588,7 +2740,10 @@ export function TemplateIntake() {
                       <div className="submission-choice-grid">
                         {getPricingTiers(template.pageCount as PageCountOption, template.typeCms).prices.map((price) => (
                           <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            className={choiceClassName(
+                              template.selectedPrice === price,
+                              'submission-choice-taxonomy input-block cc-check cc-template-application-form-choice',
+                            )}
                             key={price}
                           >
                             <input
@@ -2604,13 +2759,11 @@ export function TemplateIntake() {
                     </div>
                   ) : null}
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledStyles)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Styles
                       <span className="submission-required"> *</span>
-                      {hasAutofilledStyles ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledStyles ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Select up to 2 styles.
@@ -2626,7 +2779,16 @@ export function TemplateIntake() {
                         template.styles.length > 0 ? () => updateTemplate('styles', []) : undefined
                       }
                     />
-                    <div className="submission-choice-grid">
+                    <SelectedChoiceSummary
+                      choices={selectedStyleChoices}
+                      onRemove={(style) =>
+                        updateTemplate(
+                          'styles',
+                          template.styles.filter((value) => value !== style),
+                        )
+                      }
+                    />
+                    <div className="submission-choice-grid submission-choice-grid-taxonomy">
                       {visibleStyles.length === 0 ? (
                         <div className="submission-choice-empty">No styles match your search.</div>
                       ) : null}
@@ -2635,7 +2797,11 @@ export function TemplateIntake() {
                         const atMax = template.styles.length >= 2;
                         return (
                           <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
+                            className={choiceClassName(
+                              checked,
+                              'input-block cc-check cc-template-application-form-choice',
+                              !checked && atMax && 'is-disabled',
+                            )}
                             key={style}
                           >
                             <input
@@ -2656,13 +2822,11 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledFeatures)}>
                     <span className="field-label template-application-form_field-label cc-with-desc">
                       Features
                       <span className="submission-required"> *</span>
-                      {hasAutofilledFeatures ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledFeatures ? <AiUpdatedBadge /> : null}
                     </span>
                     <p className="field-help cc-library-application-form_field-desc">
                       Choose the Webflow features used by the template.
@@ -2684,13 +2848,25 @@ export function TemplateIntake() {
                           : undefined
                       }
                     />
+                    <SelectedChoiceSummary
+                      choices={selectedFeatureChoices}
+                      onRemove={(featureId) =>
+                        updateTemplate(
+                          'featureIds',
+                          template.featureIds.filter((value) => value !== featureId),
+                        )
+                      }
+                    />
                     <div className="submission-choice-grid">
                       {visibleFeatures.length === 0 ? (
                         <div className="submission-choice-empty">No features match your search.</div>
                       ) : null}
                       {visibleFeatures.map((option) => (
                         <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
+                          className={choiceClassName(
+                            template.featureIds.includes(option.id),
+                            'submission-choice-taxonomy input-block cc-check cc-template-application-form-choice',
+                          )}
                           key={option.id}
                         >
                           <input
@@ -2714,16 +2890,14 @@ export function TemplateIntake() {
                     ) : null}
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledShortDescription)}>
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="shortDescription"
                     >
                       Short description
                       <span className="submission-required"> *</span>
-                      {hasAutofilledShortDescription ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledShortDescription ? <AiUpdatedBadge /> : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Keep the short summary concise and reviewer-friendly.
@@ -2741,16 +2915,14 @@ export function TemplateIntake() {
                     </div>
                   </div>
 
-                  <div className="submission-field">
+                  <div className={fieldClassName(hasAutofilledLongDescription)}>
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
                       htmlFor="longDescription"
                     >
                       Long description
                       <span className="submission-required"> *</span>
-                      {hasAutofilledLongDescription ? (
-                        <span className="submission-autofill-badge">Autofilled</span>
-                      ) : null}
+                      {hasAutofilledLongDescription ? <AiUpdatedBadge /> : null}
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
                       Rich text is allowed for emphasis and lists. Image embeds are stripped.
@@ -2783,12 +2955,6 @@ export function TemplateIntake() {
                     <div className="field-help">{template.notes.length}/400 characters</div>
                   </div>
 
-                  <ReviewChecklistCard
-                    title="Review the final handoff"
-                    copy="This mirrors the final readiness checks the marketplace team will expect when your template hits the queue."
-                    items={reviewItems}
-                  />
-
                   <div className="submission-field">
                     <label
                       className="field-label template-application-form_field-label cc-with-desc"
@@ -2818,11 +2984,14 @@ export function TemplateIntake() {
                           setImageErrors((c) => ({ ...c, thumbnailFile: err }));
                           updateTemplate('thumbnailFile', err ? null : file);
                         }}
-                        required
                       />
                       <SelectedFilesSummary
                         files={template.thumbnailFile ? [template.thumbnailFile] : []}
                         emptyLabel="No primary thumbnail selected yet."
+                        onRemove={() => {
+                          setImageErrors((current) => ({ ...current, thumbnailFile: null }));
+                          updateTemplate('thumbnailFile', null);
+                        }}
                       />
                     </div>
                     {imageErrors.thumbnailFile ? (
@@ -2866,6 +3035,10 @@ export function TemplateIntake() {
                           template.secondaryThumbnailFile ? [template.secondaryThumbnailFile] : []
                         }
                         emptyLabel="No secondary thumbnail selected."
+                        onRemove={() => {
+                          setImageErrors((current) => ({ ...current, secondaryThumbnailFile: null }));
+                          updateTemplate('secondaryThumbnailFile', null);
+                        }}
                       />
                     </div>
                     {imageErrors.secondaryThumbnailFile ? (
@@ -2912,13 +3085,18 @@ export function TemplateIntake() {
                             if (!err) validated.push(files[i]);
                           }
                           setImageErrors((c) => ({ ...c, ...newErrors }));
-                          updateTemplate('galleryFiles', validated);
+                          setTemplate((current) => ({
+                            ...current,
+                            galleryFiles: dedupeFiles([...current.galleryFiles, ...validated]).slice(0, 5),
+                          }));
+                          setTemplateStatus(null);
+                          event.target.value = '';
                         }}
-                        required
                       />
                       <SelectedFilesSummary
                         files={template.galleryFiles}
                         emptyLabel="No gallery images selected yet."
+                        onRemove={removeGalleryFile}
                       />
                     </div>
                     {galleryErrorMessages.map((message, index) => (
@@ -2930,6 +3108,14 @@ export function TemplateIntake() {
                       </div>
                     ))}
                   </div>
+
+                  <TemplateReadinessBanner items={reviewItems} status={templateStatus} />
+
+                  <ReviewChecklistCard
+                    title="Review the final handoff"
+                    copy="This mirrors the final readiness checks the marketplace team will expect when your template hits the queue."
+                    items={reviewItems}
+                  />
 
                   <div className="submission-confirmation-card">
                     <div className="submission-confirmation-header">

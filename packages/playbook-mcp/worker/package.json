@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
     "dev": "node ../../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
     "tail": "node ../../../scripts/run-wrangler.mjs tail"

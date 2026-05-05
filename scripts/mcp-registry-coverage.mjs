@@ -22,7 +22,7 @@ const HALFDOZEN_NOTION_WORKWAY_SERVERS = [
   'notion-halfdozen-kk-management',
   'notion-halfdozen-lightswitch',
   'notion-halfdozen-phase-3',
-  'notion-halfdozen-three-six-zero',
+  'notion-halfdozen-three-six-zero'
 ];
 
 const REQUIRED_HALFDOZEN_SYNC_SERVERS = [
@@ -30,7 +30,7 @@ const REQUIRED_HALFDOZEN_SYNC_SERVERS = [
   'halfdozen-gmail-sync-fillip',
   'halfdozen-gmail-sync-leah',
   'halfdozen-zoom-sync',
-  'half-dozen-youtube-sync',
+  'half-dozen-youtube-sync'
 ];
 
 const REQUIRED_FLEET_NOTION_DEPLOYMENTS = {
@@ -44,159 +44,162 @@ const REQUIRED_FLEET_NOTION_DEPLOYMENTS = {
   'wrangler.kk-management.cs.toml': 'kk-management-notion',
   'wrangler.lightswitch.cs.toml': 'lightswitch-notion',
   'wrangler.phase-3.cs.toml': 'phase-3-notion',
-  'wrangler.three-six-zero.cs.toml': 'three-six-zero-notion',
+  'wrangler.three-six-zero.cs.toml': 'three-six-zero-notion'
 };
 
 const PACKAGE_COVERAGE = {
   'packages/agency/clients/outerfields/mcp-remote': {
-    registry: ['outerfields-pcn'],
+    registry: ['outerfields-pcn']
   },
   'packages/agency/clients/outerfields/mcp-server': {
     note: 'local companion to outerfields-pcn',
-    registry: ['outerfields-pcn'],
+    registry: ['outerfields-pcn']
   },
   'packages/community-mcp': {
-    registry: ['community-mcp'],
+    registry: ['community-mcp']
   },
   'packages/composio-toolkit-mcp': {
     registryPrefix: 'composio-toolkit-',
-    bundles: ['composio-all'],
+    bundles: ['composio-all']
   },
   'packages/create-something-mcp': {
-    registry: ['create-something'],
+    registry: ['create-something']
   },
   'packages/create-something-mcp/worker': {
-    registry: ['create-something'],
+    registry: ['create-something']
   },
   'packages/cs-mcp-hub': {
-    note: 'hub runtime; consumes registry.json rather than registering itself as a downstream server',
+    note: 'hub runtime; consumes registry.json rather than registering itself as a downstream server'
   },
   'packages/cs-mcp-hub-notion-bridge': {
-    note: 'supporting bridge for hub/fleet operations',
+    note: 'supporting bridge for hub/fleet operations'
   },
   'packages/cs-mcp-hub-remote': {
-    note: 'remote hub runtime; consumes registry.json rather than registering itself as a downstream server',
+    note: 'remote hub runtime; consumes registry.json rather than registering itself as a downstream server'
   },
   'packages/cs-telemetry-mcp/worker': {
-    registry: ['cs-telemetry'],
+    registry: ['cs-telemetry']
   },
   'packages/gmail-notion-mcp': {
-    registry: ['gmail-notion-mcp'],
+    registry: ['gmail-notion-mcp']
   },
   'packages/gmail-notion-mcp/worker': {
-    registry: ['gmail-notion-mcp'],
+    registry: ['gmail-notion-mcp']
   },
   'packages/ground/npm': {
-    registry: ['ground-mcp'],
+    registry: ['ground-mcp']
   },
   'packages/halfdozen-dm-mcp': {
-    registry: ['halfdozen-dm-mcp'],
+    registry: ['halfdozen-dm-mcp']
   },
   'packages/halfdozen-dm-mcp/worker': {
-    registry: ['halfdozen-dm-mcp'],
+    registry: ['halfdozen-dm-mcp']
   },
   'packages/halfdozen-notion-mcp': {
     registry: HALFDOZEN_NOTION_WORKWAY_SERVERS,
-    fleetDeployments: Object.values(REQUIRED_FLEET_NOTION_DEPLOYMENTS),
+    fleetDeployments: Object.values(REQUIRED_FLEET_NOTION_DEPLOYMENTS)
   },
   'packages/halfdozen-notion-mcp/worker': {
     registry: HALFDOZEN_NOTION_WORKWAY_SERVERS,
-    fleetDeployments: Object.values(REQUIRED_FLEET_NOTION_DEPLOYMENTS),
+    fleetDeployments: Object.values(REQUIRED_FLEET_NOTION_DEPLOYMENTS)
   },
   'packages/halfdozen-operator-notion-mcp': {
-    registry: ['halfdozen-operator-notion-mcp'],
+    registry: ['halfdozen-operator-notion-mcp']
   },
   'packages/halfdozen-operator-notion-mcp/worker': {
-    registry: ['halfdozen-operator-notion-mcp'],
+    registry: ['halfdozen-operator-notion-mcp']
   },
   'packages/halfdozen-telemetry-mcp/worker': {
-    registry: ['halfdozen-telemetry'],
+    registry: ['halfdozen-telemetry']
   },
   'packages/harness-mcp': {
-    registry: ['harness-mcp'],
+    registry: ['harness-mcp']
   },
   'packages/interaction-atlas-mcp': {
-    registry: ['interaction-atlas-mcp'],
+    registry: ['interaction-atlas-mcp']
   },
   'packages/loom/npm': {
-    registry: ['loom-mcp'],
+    registry: ['loom-mcp']
   },
   'packages/loom-mcp-remote': {
-    registry: ['loom-mcp'],
+    registry: ['loom-mcp']
   },
   'packages/mcp-authz': {
-    note: 'supporting authorization library, not an MCP server deployment',
+    note: 'supporting authorization library, not an MCP server deployment'
   },
   'packages/mcp-core': {
-    note: 'supporting MCP library, not an MCP server deployment',
+    note: 'supporting MCP library, not an MCP server deployment'
   },
   'packages/meetings-mcp/worker': {
-    registry: ['meetings'],
+    registry: ['meetings']
   },
   'packages/notion-sync-mcp': {
-    registry: ['notion-sync-mcp'],
+    registry: ['notion-sync-mcp']
   },
   'packages/playbook-mcp': {
-    registry: ['playbook'],
+    registry: ['playbook']
   },
   'packages/playbook-mcp/worker': {
     registry: ['playbook'],
-    agentScenarios: REQUIRED_AGENT_SCENARIOS,
+    agentScenarios: REQUIRED_AGENT_SCENARIOS
   },
   'packages/quickbooks-notion-mcp': {
-    registry: ['quickbooks-notion-mcp-server'],
+    registry: ['quickbooks-notion-mcp-server']
   },
   'packages/schedule-mcp': {
-    registry: ['schedule-mcp'],
+    registry: ['schedule-mcp']
   },
   'packages/schedule-mcp/worker': {
-    registry: ['schedule-mcp'],
+    registry: ['schedule-mcp']
   },
   'packages/schedule-mcp/workers/notifier': {
-    note: 'supporting notifier Worker for schedule-mcp',
+    note: 'supporting notifier Worker for schedule-mcp'
   },
   'packages/social-mcp': {
-    registry: ['social-mcp'],
+    registry: ['social-mcp']
   },
   'packages/substrate-mcp': {
-    registry: ['substrate-mcp'],
+    registry: ['substrate-mcp']
   },
   'packages/substrate-mcp/worker': {
-    registry: ['substrate-mcp'],
+    registry: ['substrate-mcp']
   },
   'packages/three-tier-framework-mcp': {
-    registry: ['three-tier-framework'],
+    registry: ['three-tier-framework']
   },
   'packages/three-tier-framework-mcp/worker': {
-    registry: ['three-tier-framework'],
+    registry: ['three-tier-framework']
   },
   'packages/ui-preview-mcp': {
-    registry: ['ui-preview-mcp'],
+    registry: ['ui-preview-mcp']
   },
   'packages/webflow-app-review-mcp': {
-    registry: ['webflow-app-review-mcp'],
+    registry: ['webflow-app-review-mcp']
   },
   'packages/webflow-app-review-mcp/worker': {
-    registry: ['webflow-app-review-mcp'],
+    registry: ['webflow-app-review-mcp']
   },
   'packages/webflow-mcp': {
-    registry: ['webflow-local'],
+    registry: ['webflow-local']
+  },
+  'packages/webflow-mcp/worker': {
+    registry: ['webflow-local']
   },
   'packages/webflow-site-analyzer-mcp': {
-    registry: ['webflow-site-analyzer-mcp'],
+    registry: ['webflow-site-analyzer-mcp']
   },
   'packages/webflow-site-analyzer-mcp/worker': {
-    registry: ['webflow-site-analyzer-mcp'],
+    registry: ['webflow-site-analyzer-mcp']
   },
   'packages/webflow-site-analyzer-mcp/workers/remote': {
-    registry: ['webflow-site-analyzer-mcp'],
+    registry: ['webflow-site-analyzer-mcp']
   },
   'packages/webflow-template-review-mcp': {
-    registry: ['webflow-template-review-mcp'],
+    registry: ['webflow-template-review-mcp']
   },
   'packages/webflow-template-review-mcp/worker': {
-    registry: ['webflow-template-review-mcp'],
-  },
+    registry: ['webflow-template-review-mcp']
+  }
 };
 
 const registry = readJson(REGISTRY_PATH);
@@ -228,11 +231,11 @@ console.log(
       registry_bundles: Object.keys(registryBundles).length,
       covered_mcp_packages: Object.keys(PACKAGE_COVERAGE).length,
       fleet_deployments: Object.keys(fleetDeployments).length,
-      agent_scenarios: REQUIRED_AGENT_SCENARIOS.length,
+      agent_scenarios: REQUIRED_AGENT_SCENARIOS.length
     },
     null,
-    2,
-  ),
+    2
+  )
 );
 
 function checkDiscoveredMcpPackages() {
@@ -260,7 +263,7 @@ function checkRegistryCoverage() {
 
     if (coverage.registryPrefix) {
       const matches = Object.keys(registryServers).filter((serverName) =>
-        serverName.startsWith(coverage.registryPrefix),
+        serverName.startsWith(coverage.registryPrefix)
       );
       if (matches.length === 0) {
         errors.push(`${packageDir}: missing registry server prefix ${coverage.registryPrefix}`);
@@ -274,7 +277,10 @@ function checkRegistryCoverage() {
     }
   }
 
-  for (const serverName of [...HALFDOZEN_NOTION_WORKWAY_SERVERS, ...REQUIRED_HALFDOZEN_SYNC_SERVERS]) {
+  for (const serverName of [
+    ...HALFDOZEN_NOTION_WORKWAY_SERVERS,
+    ...REQUIRED_HALFDOZEN_SYNC_SERVERS
+  ]) {
     if (!registryServers[serverName]) {
       errors.push(`missing required Half Dozen registry server ${serverName}`);
     }
@@ -288,7 +294,13 @@ function checkRegistryCoverage() {
   }
 
   const localBundle = new Set(registryBundles['local-dev'] ?? []);
-  for (const serverName of ['community-mcp', 'ground-mcp', 'harness-mcp', 'social-mcp', 'ui-preview-mcp']) {
+  for (const serverName of [
+    'community-mcp',
+    'ground-mcp',
+    'harness-mcp',
+    'social-mcp',
+    'ui-preview-mcp'
+  ]) {
     if (!localBundle.has(serverName)) {
       errors.push(`bundle local-dev does not include ${serverName}`);
     }
@@ -316,20 +328,27 @@ function checkFleetCoverage() {
       continue;
     }
     if (deployment.status !== 'deployed') {
-      errors.push(`fleet deployment ${deploymentSlug}: expected status deployed, got ${deployment.status}`);
+      errors.push(
+        `fleet deployment ${deploymentSlug}: expected status deployed, got ${deployment.status}`
+      );
     }
     if (deployment.type !== 'notion_mcp') {
-      errors.push(`fleet deployment ${deploymentSlug}: expected type notion_mcp, got ${deployment.type}`);
+      errors.push(
+        `fleet deployment ${deploymentSlug}: expected type notion_mcp, got ${deployment.type}`
+      );
     }
     if (deployment.wrangler_config !== configPath) {
       errors.push(
-        `fleet deployment ${deploymentSlug}: expected wrangler_config ${configPath}, got ${deployment.wrangler_config}`,
+        `fleet deployment ${deploymentSlug}: expected wrangler_config ${configPath}, got ${deployment.wrangler_config}`
       );
     }
     if (!deployment.url?.startsWith('https://') || !deployment.url.endsWith('/mcp')) {
       errors.push(`fleet deployment ${deploymentSlug}: invalid MCP url ${deployment.url}`);
     }
-    if (deployment.auth?.type === 'notion_integration_with_bearer' && !deployment.auth.bearer_token_env_var) {
+    if (
+      deployment.auth?.type === 'notion_integration_with_bearer' &&
+      !deployment.auth.bearer_token_env_var
+    ) {
       errors.push(`fleet deployment ${deploymentSlug}: bearer auth missing bearer_token_env_var`);
     }
   }
@@ -338,13 +357,19 @@ function checkFleetCoverage() {
     if (deployment.status !== 'deployed') continue;
 
     if (!deployment.url?.startsWith('https://') || !deployment.url.endsWith('/mcp')) {
-      errors.push(`fleet deployment ${deploymentSlug}: deployed MCP has invalid url ${deployment.url}`);
+      errors.push(
+        `fleet deployment ${deploymentSlug}: deployed MCP has invalid url ${deployment.url}`
+      );
     }
     if (deployment.package_path && !existsSync(resolve(ROOT, deployment.package_path))) {
-      errors.push(`fleet deployment ${deploymentSlug}: package_path does not exist: ${deployment.package_path}`);
+      errors.push(
+        `fleet deployment ${deploymentSlug}: package_path does not exist: ${deployment.package_path}`
+      );
     }
     if (deployment.wrangler_config && !existsSync(resolve(ROOT, deployment.wrangler_config))) {
-      errors.push(`fleet deployment ${deploymentSlug}: wrangler_config does not exist: ${deployment.wrangler_config}`);
+      errors.push(
+        `fleet deployment ${deploymentSlug}: wrangler_config does not exist: ${deployment.wrangler_config}`
+      );
     }
     if (deployment.auth?.type === 'bearer' && !deployment.auth.bearer_token_env_var) {
       errors.push(`fleet deployment ${deploymentSlug}: bearer auth missing bearer_token_env_var`);
@@ -392,7 +417,8 @@ function discoverMcpPackageDirs() {
 function walkForPackageJson(dir, out) {
   if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (['node_modules', '.git', '.turbo', 'dist', '.next', '.svelte-kit'].includes(entry.name)) continue;
+    if (['node_modules', '.git', '.turbo', 'dist', '.next', '.svelte-kit'].includes(entry.name))
+      continue;
     const entryPath = join(dir, entry.name);
     if (entry.isDirectory()) {
       walkForPackageJson(entryPath, out);

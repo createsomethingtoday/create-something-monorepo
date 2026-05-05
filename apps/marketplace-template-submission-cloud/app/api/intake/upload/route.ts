@@ -3,8 +3,8 @@ import {
   validateMimeType,
   validateWebP
 } from '../../../../vendor/core/upload-validation';
-import { uploadToR2 } from '../../../../vendor/core/r2';
 import { getEnvOrThrow } from '../../../../lib/server/env';
+import { getUploadsWorkerUrl } from '../../../../lib/server/uploads-worker';
 import { jsonNoStore } from '../../../../lib/server/responses';
 
 const CONSTRAINTS = {
@@ -23,7 +23,10 @@ function isUploadKind(value: string): value is UploadKind {
 export async function POST(request: Request) {
   try {
     const env = await getEnvOrThrow();
-    if (!env.UPLOADS) {
+    const uploadsWorkerUrl = getUploadsWorkerUrl(env);
+    const uploadsWorkerSecret = env.UPLOADS_WORKER_SECRET?.trim();
+
+    if (!uploadsWorkerSecret) {
       return jsonNoStore({ error: 'Storage not configured' }, { status: 500 });
     }
 
@@ -74,17 +77,33 @@ export async function POST(request: Request) {
       );
     }
 
-    const origin = new URL(request.url).origin;
-    const upload = await uploadToR2(env.UPLOADS, arrayBuffer, {
-      filename: file.name || `${kind}.webp`,
-      userEmail: email || undefined,
-      contentType: 'image/webp',
-      origin,
-      metadata: { uploadType: kind }
+    const response = await fetch(`${uploadsWorkerUrl}/upload`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'image/webp',
+        'x-upload-filename': file.name || `${kind}.webp`,
+        'x-upload-email': email,
+        'x-upload-kind': kind,
+        'x-uploads-secret': uploadsWorkerSecret
+      },
+      body: arrayBuffer
     });
 
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: string; key?: string; size?: number; url?: string }
+      | null;
+
+    if (!response.ok || !payload?.key || !payload.url) {
+      return jsonNoStore(
+        {
+          error: payload?.error || 'Failed to upload file.'
+        },
+        { status: response.ok ? 502 : response.status }
+      );
+    }
+
     return jsonNoStore({
-      ...upload,
+      ...payload,
       width: dimensions.width,
       height: dimensions.height
     });

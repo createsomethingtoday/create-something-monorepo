@@ -11,6 +11,14 @@ workers_dev = true
 # Standard pricing — long-running requests supported via streaming.
 # If CPU time limits are hit, switch to Workers Unbound via dashboard.
 
+[[durable_objects.bindings]]
+name = "TEMPLATE_REVIEW_JOBS"
+class_name = "TemplateReviewJobDurableObject"
+
+[[migrations]]
+tag = "v1_template_review_jobs"
+new_sqlite_classes = ["TemplateReviewJobDurableObject"]
+
 [observability]
 enabled = true
 

@@ -4,7 +4,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initObservability, createTrace, createSpan } from '@create-something/observability';
-import { mcpToolMetadata } from '@create-something/observability/atlas';
+import { mcpToolMetadata, type AtlasMetadata } from '@create-something/observability/atlas';
 
 import * as beads from './tools/beads.js';
 import * as qualityGates from './tools/quality-gates.js';
@@ -31,7 +31,7 @@ function harnessToolGroup(name: string): string {
   return 'other';
 }
 
-function harnessTraceMetadata(name: string, args: Record<string, unknown>): Record<string, unknown> {
+function harnessTraceMetadata(name: string, args: Record<string, unknown>): AtlasMetadata {
   return {
     ...mcpToolMetadata('harness-mcp', name, 'orchestrate'),
     'business.tool_group': harnessToolGroup(name),

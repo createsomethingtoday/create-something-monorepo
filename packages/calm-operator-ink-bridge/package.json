@@ -1,0 +1,23 @@
+{
+  "name": "@create-something/calm-operator-ink-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy",
+    "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "post:health": "tsx scripts/post-health-snapshot.mjs",
+    "post:mcp": "tsx scripts/post-mcp-attention.mjs",
+    "run:health-command": "tsx scripts/run-health-checked-command.mjs",
+    "smoke:production": "tsx scripts/production-smoke.mjs",
+    "tail": "node ../../scripts/run-wrangler.mjs tail",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260317.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.2",
+    "wrangler": "^4.75.0"
+  }
+}

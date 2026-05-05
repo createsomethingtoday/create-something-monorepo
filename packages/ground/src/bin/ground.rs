@@ -24,7 +24,7 @@ use std::collections::HashMap;
 use clap::{Parser, Subcommand};
 use ground::VerifiedTriad;
 use ground::exceptions::{check_exception, load_config, smart_threshold};
-use ground::monorepo::{detect_monorepo, suggest_refactoring, generate_loom_command};
+use ground::monorepo::{detect_monorepo, suggest_refactoring, generate_linear_command};
 
 #[derive(Parser)]
 #[command(name = "ground")]
@@ -125,9 +125,9 @@ enum FindCommands {
         /// Use CREATE SOMETHING monorepo mode
         #[arg(long, short)]
         monorepo: bool,
-        /// Output Loom commands for creating tasks
+        /// Output Linear commands for creating tasks
         #[arg(long)]
-        loom: bool,
+        linear: bool,
         /// Use smart thresholds based on file type
         #[arg(long, short)]
         smart: bool,
@@ -566,11 +566,11 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     println!("  🎯 Priority: {}", suggestion.priority);
                     println!();
                     println!("  To create a task:");
-                    println!("  {}", suggestion.loom_command);
+                    println!("  {}", suggestion.linear_command());
                 } else {
                     println!();
                     println!("  No specific suggestion for this pattern.");
-                    let cmd = generate_loom_command(&file_a, &file_b, evidence.similarity, None);
+                    let cmd = generate_linear_command(&file_a, &file_b, evidence.similarity, None);
                     println!("  To create a task: {}", cmd);
                 }
             } else {
@@ -586,8 +586,8 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 
 fn run_find(cmd: FindCommands, db: &Path) -> Result<(), Box<dyn std::error::Error>> {
     match cmd {
-        FindCommands::Duplicates { path, threshold, extensions, max_files, monorepo, loom, smart } => {
-            find_duplicates(&path, threshold, &extensions, max_files, monorepo, loom, smart, db)
+        FindCommands::Duplicates { path, threshold, extensions, max_files, monorepo, linear, smart } => {
+            find_duplicates(&path, threshold, &extensions, max_files, monorepo, linear, smart, db)
         }
         FindCommands::DuplicateFunctions { path, threshold, max_files, exclude_tests, min_lines } => {
             find_duplicate_functions(&path, threshold, max_files, exclude_tests, min_lines)
@@ -683,7 +683,7 @@ fn find_duplicates(
     extensions: &str, 
     max_files: usize,
     monorepo_mode: bool,
-    loom: bool,
+    linear: bool,
     smart: bool,
     db: &Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -798,7 +798,7 @@ fn find_duplicates(
         println!("Found {} duplicates:", violations.len());
         println!();
         
-        let mut loom_commands: Vec<String> = Vec::new();
+        let mut linear_commands: Vec<String> = Vec::new();
         
         for (i, (file_a, file_b, similarity, _evidence_id)) in violations.iter().enumerate() {
             println!("{}. {:.1}% similar", i + 1, similarity * 100.0);
@@ -811,18 +811,18 @@ fn find_duplicates(
                     println!("   │ 📁 {}", suggestion.target_path);
                     println!("   │ 🎯 {}", suggestion.priority);
                     println!("   └──────────────────────────────────────────");
-                    loom_commands.push(suggestion.loom_command);
+                    linear_commands.push(suggestion.linear_command().to_string());
                 }
             }
             
             println!();
         }
         
-        if loom && !loom_commands.is_empty() {
+        if linear && !linear_commands.is_empty() {
             println!("─────────────────────────────────────────────");
-            println!("Loom commands (copy to create tasks):");
+            println!("Linear commands (copy to create tasks):");
             println!();
-            for cmd in &loom_commands {
+            for cmd in &linear_commands {
                 println!("{}", cmd);
             }
             println!();

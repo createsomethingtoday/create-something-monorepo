@@ -9,12 +9,16 @@ const STATUS_TIMEOUT_MS = 15000;
 const MAX_NETWORK_RETRIES = 3;
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504, 522, 524]);
 let isValidating = false;
+let extensionInitialized = false;
 let bridgeContext = null;
 let bridgeStatus = null;
-document.addEventListener('DOMContentLoaded', () => {
+function initializeExtension() {
+    if (extensionInitialized)
+        return;
+    extensionInitialized = true;
     const validateBtn = document.getElementById('validate-btn');
     if (validateBtn) {
-        validateBtn.addEventListener('click', validateProject);
+        validateBtn.addEventListener('click', () => void validateProject());
     }
     const optionsBtn = document.getElementById('options-btn');
     const optionsPanel = document.getElementById('options-panel');
@@ -40,7 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
     rotateBtn?.addEventListener('click', () => rotateBridgeToken());
     recheckBtn?.addEventListener('click', () => refreshBridgeStatus());
     void bootstrapBridgePanel();
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeExtension, { once: true });
+}
+else {
+    initializeExtension();
+}
 async function validateProject() {
     if (isValidating)
         return;
@@ -943,6 +953,16 @@ function mergeEnhancedValidation(designerResults, enhancedResults) {
                     stats: analysis.accessibility.stats
                 });
             }
+        }
+        if (analysis.interactions) {
+            console.log('➕ Adding Interactions and GSAP category');
+            const hasErrors = analysis.interactions.issues.filter((i) => i.severity === 'error').length > 0;
+            designerResults.categories.push({
+                category: 'Interactions and GSAP',
+                passed: !hasErrors,
+                issues: analysis.interactions.issues,
+                stats: analysis.interactions.stats
+            });
         }
         const allIssues = designerResults.categories.flatMap(cat => cat.issues || []);
         const totalErrors = allIssues.filter(issue => issue.severity === 'error').length;
@@ -2047,6 +2067,8 @@ function showResults(data) {
       </div>
     </div>
 
+    ${createMarketplaceOutcomeHTML(data)}
+
     <!-- Summary Stats -->
     <div class="results-summary">
       <div class="summary-stat">
@@ -2123,12 +2145,13 @@ function showResults(data) {
     isExplicitRefresh = false;
 }
 function createCategoryHTML(cat, idx, collectedData) {
+    const status = getCategoryStatus(cat);
     return `
     <div class="category-section ${idx === 0 ? 'first' : ''}">
       <div class="category-header">
         <h3 class="category-title">${cat.category}</h3>
-        <div class="category-status ${cat.passed ? 'passed' : 'failed'}">
-          ${cat.passed ? 'PASS' : 'NEEDS ATTENTION'}
+        <div class="category-status ${status.className}">
+          ${status.label}
         </div>
         ${cat.stats ? `<span class="category-stats">${formatCategoryStats(cat.stats)}</span>` : ''}
       </div>
@@ -2150,27 +2173,128 @@ function createIssuesHTML(issues) {
 function createIssueHTML(issue) {
     const howToFix = getIssueHowToFix(issue);
     const location = getIssueLocation(issue);
+    const policy = getIssuePolicy(issue);
     return `
     <div class="issue-item ${issue.severity}">
       <div class="issue-content">
         <span class="issue-severity ${issue.severity}">
-          ${issue.severity === 'warning' ? 'OPTIONAL' : issue.severity === 'info' ? 'TIP' : issue.severity.toUpperCase()}
+          ${getIssueSeverityLabel(issue)}
         </span>
         <div class="issue-details">
           <div class="issue-message">${issue.message}</div>
+          ${policy ? createIssuePolicyHTML(issue) : ''}
           ${howToFix ? `
             <div class="issue-fix">
-              <strong>${issue.severity === 'warning' ? '💭 Suggestion:' : issue.severity === 'info' ? '💡 Tip:' : '🔧 How to fix:'}</strong> ${howToFix}
+              <strong>${policy ? 'Required fix:' : issue.severity === 'warning' ? 'Suggestion:' : issue.severity === 'info' ? 'Tip:' : 'How to fix:'}</strong> ${howToFix}
             </div>
           ` : ''}
           ${location ? `
             <div class="issue-location">
-              <strong>📍 Location:</strong> ${location}
+              <strong>Location:</strong> ${location}
             </div>
           ` : ''}
           ${createDetailsHTML(issue.details)}
         </div>
       </div>
+    </div>
+  `;
+}
+function createMarketplaceOutcomeHTML(data) {
+    const outcome = getMarketplaceOutcome(data);
+    return `
+    <div class="marketplace-outcome ${outcome.className}">
+      <div class="marketplace-outcome-main">
+        <span class="marketplace-outcome-kicker">Marketplace outcome</span>
+        <div class="marketplace-outcome-title">${outcome.title}</div>
+        <p class="marketplace-outcome-copy">${outcome.copy}</p>
+      </div>
+      <div class="marketplace-outcome-meta">
+        <span class="marketplace-outcome-badge">${outcome.badge}</span>
+        <span class="marketplace-outcome-time">Validated ${new Date().toLocaleTimeString()}</span>
+      </div>
+    </div>
+  `;
+}
+function getMarketplaceOutcome(data) {
+    const errors = data.summary.totalErrors || data.summary.errors || 0;
+    const warnings = data.summary.totalWarnings || data.summary.warnings || 0;
+    const hasRejectedPolicy = data.categories.some((category) => category.issues?.some((issue) => getIssuePolicy(issue) === 'ix2-rejected'));
+    if (hasRejectedPolicy) {
+        return {
+            className: 'is-rejected',
+            title: 'Rejected policy detected',
+            copy: 'Legacy IX2 interactions were found. Templates submitted on or after May 1, 2026 should be rejected until interactions are rebuilt with Webflow Interactions powered by GSAP.',
+            badge: 'Rejected'
+        };
+    }
+    if (errors > 0) {
+        return {
+            className: 'is-blocked',
+            title: 'Blocked by validation errors',
+            copy: 'Resolve every error-level issue, publish the site again, and re-run validation before submitting the template.',
+            badge: 'Blocked'
+        };
+    }
+    if (warnings > 0) {
+        return {
+            className: 'is-review',
+            title: 'Needs reviewer attention',
+            copy: 'No blocking errors were found, but the warnings below should be reviewed before handoff.',
+            badge: 'Needs review'
+        };
+    }
+    return {
+        className: 'is-ready',
+        title: 'Ready for marketplace review',
+        copy: 'No blocking errors or warnings were found. Re-run validation after any Designer changes and after publishing.',
+        badge: 'Ready'
+    };
+}
+function getCategoryStatus(cat) {
+    const issues = Array.isArray(cat.issues) ? cat.issues : [];
+    if (issues.some((issue) => getIssuePolicy(issue))) {
+        return { className: 'rejected', label: 'Rejected policy' };
+    }
+    if (issues.some((issue) => issue.severity === 'error')) {
+        return { className: 'blocked', label: 'Blocked' };
+    }
+    if (issues.some((issue) => issue.severity === 'warning')) {
+        return { className: 'review', label: 'Review' };
+    }
+    return { className: 'passed', label: 'Pass' };
+}
+function getIssueSeverityLabel(issue) {
+    if (getIssuePolicy(issue))
+        return 'Rejected policy';
+    if (issue.severity === 'warning')
+        return 'Review';
+    if (issue.severity === 'info')
+        return 'Tip';
+    return 'Blocked';
+}
+function getIssuePolicy(issue) {
+    const policy = issue.details?.policy;
+    return typeof policy === 'string' ? policy : undefined;
+}
+function createIssuePolicyHTML(issue) {
+    const details = issue.details;
+    if (!details)
+        return '';
+    const policy = getIssuePolicy(issue);
+    const effectiveDate = typeof details.effectiveDate === 'string' ? details.effectiveDate : undefined;
+    const legacyIx2Count = typeof details.legacyIx2Count === 'number' ? details.legacyIx2Count : undefined;
+    return `
+    <div class="issue-policy">
+      <div class="issue-policy-row">
+        <span class="issue-policy-label">Policy</span>
+        <span>${policy || 'Marketplace policy'}${effectiveDate ? `, effective ${effectiveDate}` : ''}</span>
+      </div>
+      ${legacyIx2Count !== undefined ? `
+        <div class="issue-policy-row">
+          <span class="issue-policy-label">Detected</span>
+          <span>${legacyIx2Count} legacy IX2 marker${legacyIx2Count === 1 ? '' : 's'}</span>
+        </div>
+      ` : ''}
     </div>
   `;
 }
@@ -2774,6 +2898,29 @@ function formatDetailedStats(category, stats) {
             if (stats.variableUsagePercent !== undefined)
                 details.push(`${stats.variableUsagePercent}% variable usage`);
             break;
+        case 'Interactions and GSAP': {
+            const analysisComplete = stats.analysisComplete !== false && stats.analysisStatus !== 'failed';
+            const legacyIx2State = stats.legacyIx2Detected === true
+                ? 'Detected'
+                : stats.legacyIx2Detected === false
+                    ? 'Not detected'
+                    : 'Not verified';
+            details.push(`Analysis: ${analysisComplete ? (stats.analysisStatus === 'partial' ? 'Partially verified' : 'Verified') : 'Not verified'}`);
+            details.push(`Legacy IX2: ${legacyIx2State}`);
+            if (typeof stats.legacyIx2Count === 'number')
+                details.push(`${stats.legacyIx2Count} legacy IX2 marker${stats.legacyIx2Count === 1 ? '' : 's'}`);
+            if (typeof stats.pagesRequested === 'number')
+                details.push(`${stats.pagesRequested} page${stats.pagesRequested === 1 ? '' : 's'} requested`);
+            if (typeof stats.pagesAnalyzed === 'number')
+                details.push(`${stats.pagesAnalyzed} page${stats.pagesAnalyzed === 1 ? '' : 's'} analyzed`);
+            if (typeof stats.pagesFailed === 'number' && stats.pagesFailed > 0)
+                details.push(`${stats.pagesFailed} page${stats.pagesFailed === 1 ? '' : 's'} not checked`);
+            if (typeof stats.pagesWithLegacyIx2 === 'number')
+                details.push(`${stats.pagesWithLegacyIx2} page${stats.pagesWithLegacyIx2 === 1 ? '' : 's'} with IX2`);
+            if (typeof stats.errorMessage === 'string')
+                details.push(stats.errorMessage);
+            break;
+        }
         default:
             Object.entries(stats).forEach(([key, value]) => {
                 if (typeof value === 'number') {

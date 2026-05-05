@@ -41,6 +41,7 @@ export interface ValidationResponse {
 		assets: AssetAnalysisResult;
 		content: ContentAnalysisResult;
 		accessibility: AccessibilityAnalysisResult;
+		interactions: InteractionsAnalysisResult;
 		// performance removed: too estimative without real browser metrics
 	};
 	summary: {
@@ -316,6 +317,30 @@ export interface AccessibilityAnalysisResult {
 		wcagComplianceScore: number;
 	};
 	audit: AccessibilityAudit;
+}
+
+export interface InteractionsAnalysisResult {
+	issues: ValidationIssue[];
+	stats: {
+		legacyIx2Detected: boolean | null;
+		legacyIx2Count: number;
+		pagesRequested: number;
+		pagesAnalyzed: number;
+		pagesFailed: number;
+		pagesWithLegacyIx2: number;
+		analysisComplete: boolean;
+		analysisStatus: 'completed' | 'partial' | 'failed';
+		errorMessage?: string;
+	};
+	pages: Array<{
+		url: string;
+		legacyIx2Detected: boolean;
+		legacyIx2Count: number;
+		matches: Array<{
+			label: string;
+			count: number;
+		}>;
+	}>;
 }
 
 // Detailed Analysis Types

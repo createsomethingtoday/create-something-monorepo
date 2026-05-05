@@ -1,8 +1,16 @@
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 
-import { createAnalyzerServer, getAnalyzerHealth } from '../src/index.js';
+import {
+  configureTemplateReviewJobDurableObject,
+  createAnalyzerServer,
+  getAnalyzerHealth,
+} from '../src/index.js';
+import type { TemplateReviewJobDurableObjectNamespace } from '../src/template-review-jobs.js';
+
+export { TemplateReviewJobDurableObject } from '../src/template-review-job-durable-object.js';
 
 interface Env {
+  TEMPLATE_REVIEW_JOBS?: TemplateReviewJobDurableObjectNamespace;
   WEBFLOW_SITE_ANALYZER_MCP_API_KEY?: string;
   MCP_API_KEY?: string;
   STEEL_API_KEY?: string;
@@ -103,6 +111,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     syncEnvToProcess(env);
+    configureTemplateReviewJobDurableObject(env.TEMPLATE_REVIEW_JOBS);
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
