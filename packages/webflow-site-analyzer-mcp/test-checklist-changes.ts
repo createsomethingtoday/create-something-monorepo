@@ -214,6 +214,20 @@ console.log('\n─── Test 4: Page slug generation for crawl seeds ───'
 console.log('\n─── Test 5: DOM fallback audit shape ───');
 
 {
+  const samples = [
+    { hasAlt: false, alt: null },
+    { hasAlt: true, alt: '' },
+    { hasAlt: true, alt: 'Career team photo' },
+  ];
+
+  const missingAlt = samples.filter((img) => !img.hasAlt).length;
+  const decorativeAlt = samples.filter((img) => img.hasAlt && img.alt === '').length;
+
+  assert(missingAlt === 1, 'Only absent alt attributes count as missing');
+  assert(decorativeAlt === 1, 'Empty alt attributes are counted as decorative');
+}
+
+{
   // Simulate the shape produced by the DOM fallback in PUBLISHED_WEBMCP_PAGE_SCRIPT
   const domAudit = {
     meta: { missing: ['og:title'] },
@@ -240,6 +254,7 @@ console.log('\n─── Test 5: DOM fallback audit shape ───');
       summary: {
         images: 5,
         missingAlt: 1,
+        decorativeAlt: 2,
         missingDimensions: 0,
         aboveFoldLazy: 0,
         belowFoldNotLazy: 0,
@@ -268,6 +283,7 @@ console.log('\n─── Test 5: DOM fallback audit shape ───');
   assert(Array.isArray(domAudit.meta.missing), 'meta.missing is array');
   assert(typeof domAudit.headings.summary.h1 === 'number', 'headings.summary.h1 is number');
   assert(typeof domAudit.images.summary.missingAlt === 'number', 'images.summary.missingAlt is number');
+  assert(typeof domAudit.images.summary.decorativeAlt === 'number', 'images.summary.decorativeAlt is number');
   assert(typeof domAudit.images.formats.webp === 'number', 'images.formats.webp is number');
 }
 

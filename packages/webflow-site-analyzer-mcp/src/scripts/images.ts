@@ -84,7 +84,9 @@ export const imagesScript = `
     
     return {
       src: img.src || img.currentSrc || '',
-      alt: img.alt || '',
+      alt: img.getAttribute('alt') || '',
+      hasAltAttribute: img.hasAttribute('alt'),
+      isDecorative: img.hasAttribute('alt') && img.getAttribute('alt') === '',
       width: Math.round(rect.width),
       height: Math.round(rect.height),
       naturalWidth: img.naturalWidth || 0,
@@ -134,9 +136,9 @@ export const imagesScript = `
     recommendations.push('Resize ' + oversized.length + ' oversized image(s) to match display dimensions');
   }
   
-  const missingAlt = images.filter(img => !img.alt.trim());
+  const missingAlt = images.filter(img => !img.hasAltAttribute);
   if (missingAlt.length > 0) {
-    recommendations.push('Add alt text to ' + missingAlt.length + ' image(s) for accessibility');
+    recommendations.push('Add alt attributes to ' + missingAlt.length + ' image(s) for accessibility');
   }
   
   // Estimate total size (rough, based on dimensions and format)

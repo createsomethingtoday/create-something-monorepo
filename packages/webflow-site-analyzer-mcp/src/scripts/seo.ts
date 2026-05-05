@@ -99,11 +99,14 @@ export const seoScript = `
   const images = Array.from(document.querySelectorAll('img'));
   let imagesWithAlt = 0;
   let imagesWithoutAlt = 0;
+  let decorativeImages = 0;
   
   images.forEach(img => {
-    const alt = img.getAttribute('alt');
-    if (alt && alt.trim()) {
+    if (img.hasAttribute('alt')) {
       imagesWithAlt++;
+      if (img.getAttribute('alt') === '') {
+        decorativeImages++;
+      }
     } else {
       imagesWithoutAlt++;
     }
@@ -175,7 +178,7 @@ export const seoScript = `
     issues.push({ 
       severity: 'warning', 
       code: 'IMAGES_WITHOUT_ALT', 
-      message: imagesWithoutAlt + ' image(s) missing alt text' 
+      message: imagesWithoutAlt + ' image(s) missing alt attribute'
     });
   }
   
@@ -228,6 +231,7 @@ export const seoScript = `
     brokenLinks,
     imagesWithAlt,
     imagesWithoutAlt,
+    decorativeImages,
     hasRobotsMeta,
     isIndexable,
     hasStructuredData,

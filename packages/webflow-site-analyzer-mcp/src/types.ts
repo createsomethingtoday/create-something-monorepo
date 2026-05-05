@@ -93,6 +93,7 @@ export interface SEOAnalysis {
   // Images
   imagesWithAlt: number;
   imagesWithoutAlt: number;
+  decorativeImages: number;
   
   // Technical
   hasRobotsMeta: boolean;
@@ -149,6 +150,8 @@ export interface PageStructure {
 export interface ImageInfo {
   src: string;
   alt: string;
+  hasAltAttribute: boolean;
+  isDecorative: boolean;
   width: number;
   height: number;
   naturalWidth: number;
@@ -542,6 +545,7 @@ export interface PublishedSnippetPageSummary {
   images: {
     images: number;
     missingAlt: number;
+    decorativeAlt: number;
     missingDimensions: number;
     aboveFoldLazy: number;
     belowFoldNotLazy: number;

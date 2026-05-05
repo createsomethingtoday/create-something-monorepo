@@ -687,7 +687,10 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
     const emptyHeadings = Array.from(headingEls).filter(el => !(el.textContent || '').trim()).length;
 
     const imgEls = Array.from(document.querySelectorAll('img'));
-    const missingAlt = imgEls.filter(img => !img.hasAttribute('alt') || img.alt === '').length;
+    const missingAlt = imgEls.filter(img => !img.hasAttribute('alt')).length;
+    const decorativeAlt = imgEls.filter(img =>
+      img.hasAttribute('alt') && img.getAttribute('alt') === ''
+    ).length;
     const missingDimensions = imgEls.filter(img =>
       !img.hasAttribute('width') && !img.hasAttribute('height') &&
       !img.style.aspectRatio && !(img.getAttribute('style') || '').includes('aspect-ratio')
@@ -812,6 +815,7 @@ const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
         summary: {
           images: imgEls.length,
           missingAlt,
+          decorativeAlt,
           missingDimensions,
           aboveFoldLazy,
           belowFoldNotLazy
@@ -1311,6 +1315,7 @@ function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
     images: {
       images: asFiniteNumber(images.images),
       missingAlt: asFiniteNumber(images.missingAlt),
+      decorativeAlt: asFiniteNumber(images.decorativeAlt),
       missingDimensions: asFiniteNumber(images.missingDimensions),
       aboveFoldLazy: asFiniteNumber(images.aboveFoldLazy),
       belowFoldNotLazy: asFiniteNumber(images.belowFoldNotLazy)
