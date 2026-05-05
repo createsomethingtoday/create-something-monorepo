@@ -32,11 +32,19 @@ const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
 const ASSET_CREATOR_EMAIL_FIELDS = [
   '🎨📧 Creator Email',
   '🎨📧 Creator WF Account Email',
-  '📧Emails (from 🎨Creator)',
+  '📧Emails (from 🎨Creator)'
 ] as const;
 const CREATOR_RECORD_EMAIL_FIELDS = ['📧Email', '📧WF Account Email', '📧Emails'] as const;
 const SUBMISSION_LIMIT = 6;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const EMAIL_TOKEN_BOUNDARY = '[^a-z0-9._%+@-]';
+const ACTIVE_REVIEW_STATUS_PATTERN =
+  /\b(ready|review|submitted|submission|changes requested|response|revision|qa)\b/i;
+const REJECTED_STATUS_PATTERN = /\b(rejected|declined|not approved)\b/i;
+const PUBLISHED_STATUS_PATTERN = /\bpublished\b/i;
+const NOT_PUBLISHED_STATUS_PATTERN = /\b(not published|unpublished)\b/i;
+const DELISTED_STATUS_PATTERN = /\bdelisted\b/i;
+const CLOSED_STATUS_PATTERN = /\b(archived|abandoned|withdrawn|cancelled|canceled)\b/i;
 
 // =============================================================================
 // CORS
@@ -47,21 +55,20 @@ function getCorsHeaders(request: Request, env: Env): Record<string, string> {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim());
 
   // Also allow the worker's own domain and localhost for dev
-  const isAllowed = allowed.includes(origin)
-    || origin.includes('localhost')
-    || origin.includes('127.0.0.1');
+  const isAllowed =
+    allowed.includes(origin) || origin.includes('localhost') || origin.includes('127.0.0.1');
 
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin : allowed[0] || '*',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type'
   };
 }
 
 function json(body: unknown, status: number, corsHeaders: Record<string, string>): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders }
   });
 }
 
@@ -94,7 +101,7 @@ async function airtableQuery(
   const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${options.tableId}?${params.toString()}`;
 
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` },
+    headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` }
   });
 
   if (!response.ok) {
@@ -131,9 +138,11 @@ function escapeRegexLiteral(input: string): string {
 
 function buildEmailMatchFormula(email: string, fields: readonly string[]): string {
   const normalizedEmail = email.trim().toLowerCase();
-  const escapedEmail = escapeAirtableString(escapeRegexLiteral(normalizedEmail));
+  const escapedEmail = escapeRegexLiteral(normalizedEmail);
+  const exactEmailPattern = `(^|${EMAIL_TOKEN_BOUNDARY})${escapedEmail}($|${EMAIL_TOKEN_BOUNDARY})`;
+  const airtablePattern = escapeAirtableString(exactEmailPattern);
   const clauses = fields.map(
-    (field) => `REGEX_MATCH(LOWER({${field}} & ''), '${escapedEmail}')`
+    (field) => `REGEX_MATCH(LOWER({${field}} & ''), '${airtablePattern}')`
   );
 
   return `OR(${clauses.join(', ')})`;
@@ -146,6 +155,97 @@ function buildAssetCreatorEmailFormula(email: string): string {
 function buildCreatorRecordEmailFormula(email: string): string {
   return buildEmailMatchFormula(email, CREATOR_RECORD_EMAIL_FIELDS);
 }
+
+function normalizeMarketplaceStatus(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item)).join(' ');
+  }
+
+  return typeof value === 'string' ? value : String(value || '');
+}
+
+function isPublishedMarketplaceStatus(status: unknown): boolean {
+  const normalized = normalizeMarketplaceStatus(status);
+  return (
+    PUBLISHED_STATUS_PATTERN.test(normalized) && !NOT_PUBLISHED_STATUS_PATTERN.test(normalized)
+  );
+}
+
+function isRejectedMarketplaceStatus(status: unknown): boolean {
+  return REJECTED_STATUS_PATTERN.test(normalizeMarketplaceStatus(status));
+}
+
+function isDelistedMarketplaceStatus(status: unknown): boolean {
+  return DELISTED_STATUS_PATTERN.test(normalizeMarketplaceStatus(status));
+}
+
+function isClosedMarketplaceStatus(status: unknown): boolean {
+  return CLOSED_STATUS_PATTERN.test(normalizeMarketplaceStatus(status));
+}
+
+function isTerminalMarketplaceStatus(status: unknown): boolean {
+  return (
+    isPublishedMarketplaceStatus(status) ||
+    isRejectedMarketplaceStatus(status) ||
+    isDelistedMarketplaceStatus(status) ||
+    isClosedMarketplaceStatus(status)
+  );
+}
+
+function isActiveReviewMarketplaceStatus(status: unknown): boolean {
+  const normalized = normalizeMarketplaceStatus(status);
+  return !isTerminalMarketplaceStatus(normalized) && ACTIVE_REVIEW_STATUS_PATTERN.test(normalized);
+}
+
+export interface TemplateSubmissionStats {
+  submittedTemplates: number;
+  assetsSubmitted30: number;
+  publishedTemplates: number;
+  rejectedTemplates: number;
+  delistedTemplates: number;
+  activeReviews: number;
+}
+
+export function summarizeTemplateSubmissionRecords(
+  records: AirtableRecord[],
+  now = Date.now()
+): TemplateSubmissionStats {
+  let assetsSubmitted30 = 0;
+  let publishedTemplates = 0;
+  let rejectedTemplates = 0;
+  let delistedTemplates = 0;
+  let activeReviews = 0;
+
+  for (const record of records) {
+    const status = record.fields['🚀Marketplace Status'];
+    if (isPublishedMarketplaceStatus(status)) publishedTemplates++;
+    if (isRejectedMarketplaceStatus(status)) rejectedTemplates++;
+    if (isDelistedMarketplaceStatus(status)) delistedTemplates++;
+    if (isActiveReviewMarketplaceStatus(status)) activeReviews++;
+
+    const submitted = record.fields['📅Submitted Date'] as string;
+    const submittedAt = submitted ? new Date(submitted).getTime() : Number.NaN;
+    if (Number.isFinite(submittedAt) && now - submittedAt < THIRTY_DAYS_MS) {
+      assetsSubmitted30++;
+    }
+  }
+
+  return {
+    submittedTemplates: records.length,
+    assetsSubmitted30,
+    publishedTemplates,
+    rejectedTemplates,
+    delistedTemplates,
+    activeReviews
+  };
+}
+
+export const workerTestExports = {
+  buildEmailMatchFormula,
+  isActiveReviewMarketplaceStatus,
+  isRejectedMarketplaceStatus,
+  summarizeTemplateSubmissionRecords
+};
 
 // =============================================================================
 // Name exceptions (ported from Vercel function)
@@ -172,13 +272,18 @@ async function handleCheckTemplatename(
   const aiPattern = /\bAI\b|\bai\b/i;
   const airPattern = /\bAir\b|\bair\b/i;
   if (aiPattern.test(templatename)) {
-    const isAirOnly = airPattern.test(templatename)
-      && !templatename.toLowerCase().includes('ai ')
-      && !templatename.toLowerCase().includes(' ai');
+    const isAirOnly =
+      airPattern.test(templatename) &&
+      !templatename.toLowerCase().includes('ai ') &&
+      !templatename.toLowerCase().includes(' ai');
     if (!isAirOnly) {
-      return json({
-        message: 'Template names containing "AI" are not allowed. Please use alternative naming.',
-      }, 400, corsHeaders);
+      return json(
+        {
+          message: 'Template names containing "AI" are not allowed. Please use alternative naming.'
+        },
+        400,
+        corsHeaders
+      );
     }
   }
 
@@ -221,7 +326,11 @@ async function handleCheckTemplateuser(
   const { email } = body;
 
   if (!email || typeof email !== 'string') {
-    return json({ hasError: true, message: 'Email is required', assetsSubmitted30: 0 }, 400, corsHeaders);
+    return json(
+      { hasError: true, message: 'Email is required', assetsSubmitted30: 0 },
+      400,
+      corsHeaders
+    );
   }
 
   const creatorFormula = buildCreatorRecordEmailFormula(email);
@@ -254,24 +363,13 @@ async function handleCheckTemplateuser(
     fields: ['Name', '🚀Marketplace Status', '📅Submitted Date']
   });
 
-  const now = Date.now();
-  let assetsSubmitted30 = 0;
-  let publishedTemplates = 0;
-  let rejectedTemplates = 0;
-  let delistedTemplates = 0;
-  const submittedTemplates = records.length;
-
-  for (const record of records) {
-    const status = record.fields['🚀Marketplace Status'] as string || '';
-    if (status.includes('Published')) publishedTemplates++;
-    if (status.includes('Rejected')) rejectedTemplates++;
-    if (status.includes('Delisted')) delistedTemplates++;
-
-    const submitted = record.fields['📅Submitted Date'] as string;
-    if (submitted && (now - new Date(submitted).getTime()) < THIRTY_DAYS_MS) {
-      assetsSubmitted30++;
-    }
-  }
+  const {
+    assetsSubmitted30,
+    publishedTemplates,
+    delistedTemplates,
+    activeReviews,
+    submittedTemplates
+  } = summarizeTemplateSubmissionRecords(records);
 
   const isWhitelisted = false;
   let hasError = false;
@@ -283,22 +381,26 @@ async function handleCheckTemplateuser(
   } else if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
     message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted this month. Total submitted: ${submittedTemplates}. You can have unlimited concurrent submissions for review.`;
   } else {
-    const activeReviews = submittedTemplates - publishedTemplates - rejectedTemplates - delistedTemplates;
     if (activeReviews >= 1) {
       hasError = true;
       message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted this month. Total submitted: ${submittedTemplates}. You already have an active review in progress. Please wait for the review to complete before submitting another template.`;
     }
   }
 
-  return json({
-    userExists: true,
-    message,
-    assetsSubmitted30,
-    publishedTemplates,
-    submittedTemplates,
-    isWhitelisted,
-    hasError
-  }, 200, corsHeaders);
+  return json(
+    {
+      userExists: true,
+      message,
+      assetsSubmitted30,
+      publishedTemplates,
+      submittedTemplates,
+      activeReviews,
+      isWhitelisted,
+      hasError
+    },
+    200,
+    corsHeaders
+  );
 }
 
 async function handleCheckTemplateemail(
@@ -322,10 +424,14 @@ async function handleCheckTemplateemail(
   });
   const emailExists = records.length > 0;
 
-  return json({
-    emailExists,
-    message: emailExists ? 'This email is already in use.' : 'This email is available.'
-  }, 200, corsHeaders);
+  return json(
+    {
+      emailExists,
+      message: emailExists ? 'This email is already in use.' : 'This email is available.'
+    },
+    200,
+    corsHeaders
+  );
 }
 
 // =============================================================================
@@ -346,15 +452,19 @@ export default {
 
     // Health
     if (path === '/' || path === '/health') {
-      return json({
-        name: 'check-asset-name',
-        version: '1.0.0',
-        endpoints: [
-          { path: '/api/checkTemplatename', method: 'POST' },
-          { path: '/api/checkTemplateuser', method: 'POST' },
-          { path: '/api/checkTemplateemail', method: 'POST' },
-        ],
-      }, 200, corsHeaders);
+      return json(
+        {
+          name: 'check-asset-name',
+          version: '1.0.0',
+          endpoints: [
+            { path: '/api/checkTemplatename', method: 'POST' },
+            { path: '/api/checkTemplateuser', method: 'POST' },
+            { path: '/api/checkTemplateemail', method: 'POST' }
+          ]
+        },
+        200,
+        corsHeaders
+      );
     }
 
     // Only POST for API routes
@@ -364,7 +474,7 @@ export default {
 
     let body: Record<string, unknown>;
     try {
-      body = await request.json() as Record<string, unknown>;
+      body = (await request.json()) as Record<string, unknown>;
     } catch {
       return json({ error: 'Invalid JSON' }, 400, corsHeaders);
     }
@@ -382,9 +492,13 @@ export default {
       }
     } catch (error) {
       console.error(`[${path}]`, error);
-      return json({
-        error: error instanceof Error ? error.message : 'Internal error',
-      }, 500, corsHeaders);
+      return json(
+        {
+          error: error instanceof Error ? error.message : 'Internal error'
+        },
+        500,
+        corsHeaders
+      );
     }
-  },
+  }
 };
