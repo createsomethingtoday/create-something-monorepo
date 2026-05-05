@@ -7,7 +7,7 @@ import {
 } from '../../../../vendor/core/marketplace-webhook';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
-import { WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
+import { getPricingTiers, WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
 import { runPublishedUrlValidation } from '../../../../lib/intake/published-url';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
@@ -25,6 +25,10 @@ type TemplateSubmissionBody = {
   categories?: string[];
   tags?: string[];
   siteTypes?: string[];
+  pageCount?: string;
+  typeCms?: boolean;
+  typeEcommerce?: boolean;
+  price?: number | string | null;
   styleTags?: string[];
   featureFlags?: string[];
   shortDescription?: string;
@@ -116,6 +120,23 @@ function ensureArray(value: unknown): string[] {
     : [];
 }
 
+function coercePageCount(value: string | undefined): PageCount | null {
+  if (value === 'One' || value === 'Multi' || value === 'Multi-layout') {
+    return value;
+  }
+
+  return null;
+}
+
+function coerceOptionalPrice(value: number | string | null | undefined): number | undefined {
+  if (value === null || value === undefined || value === '') {
+    return undefined;
+  }
+
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 function derivePageCount(siteTypes: string[]): PageCount {
   if (siteTypes.includes('multi-layout')) return 'Multi-layout';
   const nonStatic = siteTypes.filter((type) => type !== 'static');
@@ -177,6 +198,10 @@ export async function POST(request: Request) {
     const category = String(body.category || '').trim();
     const priceModelRaw = String(body.priceModel || '').trim();
     const paymentType: PaymentType = priceModelRaw === 'Paid' ? 'Paid' : 'Free';
+    const requestedPageCount = coercePageCount(
+      typeof body.pageCount === 'string' ? body.pageCount.trim() : undefined
+    );
+    const requestedPrice = coerceOptionalPrice(body.price);
 
     if (!creatorName) {
       return jsonNoStore({ error: 'Creator name is required.' }, { status: 400 });
@@ -263,11 +288,24 @@ export async function POST(request: Request) {
       combinedFeatures.add('gsap');
     }
 
-    const pageCount = derivePageCount(siteTypes);
+    const pageCount = requestedPageCount ?? derivePageCount(siteTypes);
     const templateTypeCms =
-      siteTypes.includes('cms') || combinedFeatures.has('cms');
+      body.typeCms === true || siteTypes.includes('cms') || combinedFeatures.has('cms');
     const templateTypeEcommerce =
-      siteTypes.includes('ecommerce') || combinedFeatures.has('ecommerce');
+      body.typeEcommerce === true ||
+      siteTypes.includes('ecommerce') ||
+      combinedFeatures.has('ecommerce');
+    let price: number | undefined;
+    if (paymentType === 'Paid') {
+      const allowedPrices = getPricingTiers(pageCount, templateTypeCms).prices;
+      if (requestedPrice === undefined || !allowedPrices.includes(requestedPrice)) {
+        return jsonNoStore(
+          { error: 'Paid templates require a selected valid price tier.' },
+          { status: 400 }
+        );
+      }
+      price = requestedPrice;
+    }
     const mappedStyles = mapStyleTags(styleTags);
     const mappedFeatures = mapFeatureFlags([...combinedFeatures]);
     const categories =
@@ -285,6 +323,12 @@ export async function POST(request: Request) {
       categories.length > 0 ? `<li>Category: ${escapeHtml(categories.join(', '))}</li>` : '',
       tags.length > 0 ? `<li>Tags: ${escapeHtml(tags.join(', '))}</li>` : '',
       styleTags.length > 0 ? `<li>Style tags: ${escapeHtml(styleTags.join(', '))}</li>` : '',
+      pageCount ? `<li>Page count: ${escapeHtml(pageCount)}</li>` : '',
+      templateTypeCms ? '<li>Uses CMS.</li>' : '',
+      templateTypeEcommerce ? '<li>Uses Ecommerce.</li>' : '',
+      paymentType === 'Paid' && price !== undefined
+        ? `<li>Price: $${escapeHtml(String(price))}</li>`
+        : '',
       siteTypes.length > 0 ? `<li>Site types: ${escapeHtml(siteTypes.join(', '))}</li>` : '',
       combinedFeatures.size > 0
         ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
@@ -313,6 +357,7 @@ export async function POST(request: Request) {
         pageCount,
         templateTypeCms,
         templateTypeEcommerce,
+        price,
         categories,
         secondaryTags: tags,
         styles: mappedStyles,

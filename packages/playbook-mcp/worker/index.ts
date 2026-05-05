@@ -48,10 +48,14 @@ interface Env {
   HALFDOZEN_TELEMETRY_MCP_URL?: string;
   HALFDOZEN_GMAIL_MCP_URL?: string;
   HALFDOZEN_NOTION_MCP_URL?: string;
-  HALFDOZEN_SLACK_WEBHOOK_URL?: string;
-  HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL?: string;
   HALFDOZEN_SLACK_SIGNING_SECRET?: string;
   HALFDOZEN_SLACK_TEAM_ID?: string;
+  HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED?: string;
+  RESEND_API_KEY?: string;
+  HALFDOZEN_AGENT_NOTIFY_EMAIL_FROM?: string;
+  HALFDOZEN_AGENT_NOTIFY_EMAIL_TO?: string;
+  HALFDOZEN_AGENT_NOTIFY_EMAIL_REPLY_TO?: string;
+  HALFDOZEN_AGENT_NOTIFY_EMAIL_MODE?: string;
 }
 
 const JSON_HEADERS = {
@@ -62,14 +66,24 @@ const JSON_HEADERS = {
 const HALFDOZEN_FLEET_WATCHDOG_ROUTE = '/clients/halfdozen/agents/fleet-watchdog/run';
 const HALFDOZEN_INBOX_TRIAGE_ROUTE = '/clients/halfdozen/agents/inbox-triage/run';
 const HALFDOZEN_DEDUP_ROUTE = '/clients/halfdozen/agents/dedup/run';
+const HALFDOZEN_NOTIFY_TEST_ROUTE = '/clients/halfdozen/agents/notifications/test';
 const HALFDOZEN_SLACK_COMMAND_ROUTE = '/clients/halfdozen/slack/commands';
+const HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE = 'cron:clients/halfdozen/agents/fleet-watchdog';
 const SLACK_TIMESTAMP_TOLERANCE_SECONDS = 300;
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
+const DEFAULT_NOTIFY_EMAIL_FROM = 'CREATE SOMETHING Ops <notifications@createsomething.io>';
+const DEFAULT_NOTIFY_EMAIL_TO = ['micah@createsomething.io'] as const;
 
 const HALFDOZEN_PROTECTED_ROUTES = [
   HALFDOZEN_FLEET_WATCHDOG_ROUTE,
   HALFDOZEN_INBOX_TRIAGE_ROUTE,
   HALFDOZEN_DEDUP_ROUTE,
+] as const;
+
+const HALFDOZEN_TOKEN_PROTECTED_ROUTES = [
+  ...HALFDOZEN_PROTECTED_ROUTES,
+  HALFDOZEN_NOTIFY_TEST_ROUTE,
 ] as const;
 
 const AgentRouteBodySchema = z.object({
@@ -80,6 +94,12 @@ const AgentRouteBodySchema = z.object({
 });
 
 type AgentRouteBody = z.infer<typeof AgentRouteBodySchema>;
+
+const NotificationTestBodySchema = z.object({
+  message: z.string().min(1).max(500).optional(),
+});
+
+type NotificationTestBody = z.infer<typeof NotificationTestBodySchema>;
 
 type HalfDozenRouteRunInput = {
   openaiApiKey: string;
@@ -114,6 +134,29 @@ type SlackCommandFields = {
   channel_name?: string;
   user_id?: string;
   user_name?: string;
+};
+
+type NotificationEvent =
+  | {
+      kind: 'result';
+      result: HalfDozenScenarioRunResult;
+      route: string;
+      runId: string;
+      durationMs?: number;
+    }
+  | {
+      kind: 'error';
+      scenario: ScenarioKey;
+      route: string;
+      runId: string;
+      errorMessage: string;
+      durationMs?: number;
+    };
+
+type NotificationEmailResult = {
+  sent: boolean;
+  skippedReason?: string;
+  providerId?: string;
 };
 
 type SlackAction = {
@@ -237,73 +280,6 @@ function hasRequiredCoverageFailure(result: HalfDozenScenarioRunResult): boolean
 
 function shouldEscalate(result: HalfDozenScenarioRunResult): boolean {
   return result.degraded || hasRequiredCoverageFailure(result) || result.failed_required_tool_calls.length > 0;
-}
-
-function buildScenarioSuccessSlackPayload(
-  result: HalfDozenScenarioRunResult,
-  route: string,
-  runId: string,
-): SlackPayload {
-  const status = shouldEscalate(result) ? 'ALERT' : 'OK';
-  const text = `${status}: ${scenarioLabel(result.scenario)} run ${runId}`;
-  const failedServers = result.failed_servers.length > 0 ? result.failed_servers.map((item) => item.server).join(', ') : 'none';
-  const outputPreview = truncateText(String(result.final_output ?? ''));
-
-  return {
-    text,
-    blocks: [
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*${status}* ${scenarioLabel(result.scenario)}\nRun ID: \`${runId}\`\nRoute: \`${route}\``,
-        },
-      },
-      {
-        type: 'section',
-        fields: [
-          { type: 'mrkdwn', text: `*Degraded*\n${result.degraded ? 'yes' : 'no'}` },
-          { type: 'mrkdwn', text: `*Coverage*\n${getCoverageStatus(result)}` },
-          { type: 'mrkdwn', text: `*Connected Servers*\n${result.connected_servers.join(', ') || 'none'}` },
-          { type: 'mrkdwn', text: `*Failed Servers*\n${failedServers}` },
-        ],
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*Summary*\n${outputPreview || 'No final output.'}`,
-        },
-      },
-    ],
-  };
-}
-
-function buildScenarioErrorSlackPayload(
-  scenario: ScenarioKey,
-  route: string,
-  runId: string,
-  errorMessage: string,
-): SlackPayload {
-  return {
-    text: `ALERT: ${scenarioLabel(scenario)} run failed ${runId}`,
-    blocks: [
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*ALERT* ${scenarioLabel(scenario)}\nRun ID: \`${runId}\`\nRoute: \`${route}\``,
-        },
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*Error*\n${truncateText(errorMessage, 1200)}`,
-        },
-      },
-    ],
-  };
 }
 
 function buildSlackQuickActionElements(): Array<Record<string, unknown>> {
@@ -451,18 +427,6 @@ function buildSlackRunFailedResponse(
   };
 }
 
-async function postSlackWebhook(webhookUrl: string, payload: SlackPayload): Promise<void> {
-  const response = await fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Slack webhook failed (${response.status}): ${body}`);
-  }
-}
-
 async function postSlackResponse(responseUrl: string, payload: SlackResponsePayload): Promise<void> {
   const response = await fetch(responseUrl, {
     method: 'POST',
@@ -473,6 +437,158 @@ async function postSlackResponse(responseUrl: string, payload: SlackResponsePayl
     const body = await response.text();
     throw new Error(`Slack response_url failed (${response.status}): ${body}`);
   }
+}
+
+function getNotifyEmailMode(env: Env): 'off' | 'alerts' | 'all' {
+  const configured = env.HALFDOZEN_AGENT_NOTIFY_EMAIL_MODE?.trim().toLowerCase();
+  if (configured === 'off' || configured === 'false' || configured === '0') return 'off';
+  if (configured === 'all') return 'all';
+  return 'alerts';
+}
+
+function parseEmailList(value: string | undefined): string[] {
+  if (!value) return [...DEFAULT_NOTIFY_EMAIL_TO];
+  const parsed = value
+    .split(',')
+    .map((email) => email.trim())
+    .filter(Boolean);
+  return parsed.length > 0 ? parsed : [...DEFAULT_NOTIFY_EMAIL_TO];
+}
+
+function htmlEscape(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildNotificationEmail(event: NotificationEvent): { subject: string; html: string; text: string } {
+  const isError = event.kind === 'error';
+  const scenario = isError ? event.scenario : event.result.scenario;
+  const status = isError || shouldEscalate(event.result) ? 'ALERT' : 'OK';
+  const title = `${status}: ${scenarioLabel(scenario)} ${event.runId}`;
+  const fields = isError
+    ? [
+        ['Status', status],
+        ['Route', event.route],
+        ['Run ID', event.runId],
+        ['Duration', event.durationMs === undefined ? 'unknown' : `${event.durationMs}ms`],
+        ['Error', event.errorMessage],
+      ]
+    : [
+        ['Status', status],
+        ['Route', event.route],
+        ['Run ID', event.runId],
+        ['Degraded', event.result.degraded ? 'yes' : 'no'],
+        ['Coverage', getCoverageStatus(event.result)],
+        ['Connected Servers', event.result.connected_servers.join(', ') || 'none'],
+        ['Failed Servers', event.result.failed_servers.map((item) => item.server).join(', ') || 'none'],
+        ['Duration', event.durationMs === undefined ? 'unknown' : `${event.durationMs}ms`],
+      ];
+
+  const summary = isError
+    ? event.errorMessage
+    : String(event.result.final_output ?? 'No final output.');
+  const text = `${title}\n\n${fields.map(([key, value]) => `${key}: ${value}`).join('\n')}\n\n${summary}`;
+  const fieldRows = fields
+    .map(([key, value]) => {
+      return `<tr><td style="padding:6px 0;color:#737373">${htmlEscape(key)}</td><td style="padding:6px 0;color:#e5e5e5;text-align:right">${htmlEscape(value)}</td></tr>`;
+    })
+    .join('');
+
+  return {
+    subject: title,
+    text,
+    html: `<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#050505;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#f5f5f5">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#050505">
+    <tr>
+      <td align="center" style="padding:40px 16px">
+        <table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%">
+          <tr><td style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#737373;padding-bottom:20px">CREATE SOMETHING Ops</td></tr>
+          <tr>
+            <td style="border:1px solid #262626;background:#0a0a0a;padding:28px;border-radius:10px">
+              <div style="font-size:13px;color:${status === 'OK' ? '#22c55e' : '#f59e0b'}">${status}</div>
+              <h1 style="font-size:22px;line-height:1.3;margin:10px 0 20px;color:#fff">${htmlEscape(scenarioLabel(scenario))}</h1>
+              <table width="100%" cellpadding="0" cellspacing="0">${fieldRows}</table>
+              <div style="border-top:1px solid #262626;margin:22px 0"></div>
+              <div style="font-size:14px;line-height:1.65;color:#d4d4d4;white-space:pre-wrap">${htmlEscape(truncateText(summary, 1800))}</div>
+            </td>
+          </tr>
+          <tr><td style="font-size:11px;color:#525252;padding-top:18px">Sent by Playbook MCP at ${new Date().toISOString()}</td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+  };
+}
+
+async function sendNotificationEmail(env: Env, event: NotificationEvent): Promise<NotificationEmailResult> {
+  const mode = getNotifyEmailMode(env);
+  if (mode === 'off') return { sent: false, skippedReason: 'email_notifications_off' };
+  if (mode === 'alerts' && event.kind === 'result' && !shouldEscalate(event.result)) {
+    return { sent: false, skippedReason: 'healthy_result_in_alerts_mode' };
+  }
+  if (!env.RESEND_API_KEY) {
+    console.warn('Half Dozen email notify skipped: RESEND_API_KEY is not set.');
+    return { sent: false, skippedReason: 'missing_resend_api_key' };
+  }
+
+  const email = buildNotificationEmail(event);
+  const body: Record<string, unknown> = {
+    from: env.HALFDOZEN_AGENT_NOTIFY_EMAIL_FROM?.trim() || DEFAULT_NOTIFY_EMAIL_FROM,
+    to: parseEmailList(env.HALFDOZEN_AGENT_NOTIFY_EMAIL_TO),
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+    tags: [
+      { name: 'surface', value: 'playbook-mcp' },
+      { name: 'scenario', value: event.kind === 'error' ? event.scenario : event.result.scenario },
+    ],
+  };
+  const replyTo = env.HALFDOZEN_AGENT_NOTIFY_EMAIL_REPLY_TO?.trim();
+  if (replyTo) {
+    body.replyTo = replyTo;
+  }
+
+  const response = await fetch(RESEND_EMAIL_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+      'Idempotency-Key': `playbook-mcp:${event.runId}:${event.kind}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const responseText = await response.text();
+    throw new Error(`Resend email failed (${response.status}): ${responseText.slice(0, 500)}`);
+  }
+
+  const responseText = await response.text();
+  let providerId: string | undefined;
+  try {
+    const parsed = JSON.parse(responseText) as { id?: unknown };
+    providerId = typeof parsed.id === 'string' ? parsed.id : undefined;
+  } catch {
+    providerId = undefined;
+  }
+
+  return { sent: true, providerId };
+}
+
+function queueEmailNotification(ctx: ExecutionContext, env: Env, event: NotificationEvent): void {
+  ctx.waitUntil(
+    sendNotificationEmail(env, event).catch((error) => {
+      console.error('Half Dozen email notify failed', error);
+    }),
+  );
 }
 
 async function verifySlackSignature(
@@ -542,34 +658,9 @@ function queueSuccessNotifications(
   result: HalfDozenScenarioRunResult,
   route: string,
   runId: string,
+  durationMs?: number,
 ): void {
-  const primaryWebhook = env.HALFDOZEN_SLACK_WEBHOOK_URL;
-  const escalationWebhook = env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL;
-  if (!primaryWebhook && !escalationWebhook) return;
-
-  const escalate = shouldEscalate(result);
-  const payload = buildScenarioSuccessSlackPayload(result, route, runId);
-
-  ctx.waitUntil(
-    (async () => {
-      try {
-        let sentPrimary = false;
-        if (primaryWebhook) {
-          await postSlackWebhook(primaryWebhook, payload);
-          sentPrimary = true;
-        }
-
-        if (escalate) {
-          const escalationTarget = escalationWebhook ?? primaryWebhook;
-          if (escalationTarget && (!sentPrimary || escalationTarget !== primaryWebhook)) {
-            await postSlackWebhook(escalationTarget, payload);
-          }
-        }
-      } catch (error) {
-        console.error('Half Dozen Slack notify failed', error);
-      }
-    })(),
-  );
+  queueEmailNotification(ctx, env, { kind: 'result', result, route, runId, durationMs });
 }
 
 function queueErrorNotification(
@@ -579,20 +670,16 @@ function queueErrorNotification(
   route: string,
   runId: string,
   errorMessage: string,
+  durationMs?: number,
 ): void {
-  const escalationWebhook = env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL ?? env.HALFDOZEN_SLACK_WEBHOOK_URL;
-  if (!escalationWebhook) return;
-
-  const payload = buildScenarioErrorSlackPayload(scenario, route, runId, errorMessage);
-  ctx.waitUntil(
-    (async () => {
-      try {
-        await postSlackWebhook(escalationWebhook, payload);
-      } catch (error) {
-        console.error('Half Dozen Slack escalation notify failed', error);
-      }
-    })(),
-  );
+  queueEmailNotification(ctx, env, {
+    kind: 'error',
+    scenario,
+    route,
+    runId,
+    errorMessage,
+    durationMs,
+  });
 }
 
 function getAuthToken(request: Request): string | null {
@@ -652,6 +739,21 @@ async function parseAgentRouteBody(request: Request): Promise<AgentRouteBody> {
   return AgentRouteBodySchema.parse(parsed);
 }
 
+async function parseNotificationTestBody(request: Request): Promise<NotificationTestBody> {
+  const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
+  if (!contentType.includes('application/json')) {
+    return {};
+  }
+
+  const raw = await request.text();
+  if (raw.trim().length === 0) {
+    return {};
+  }
+
+  const parsed = JSON.parse(raw) as unknown;
+  return NotificationTestBodySchema.parse(parsed);
+}
+
 function parseScenarioFromRoute(pathname: string): ScenarioKey {
   if (pathname === HALFDOZEN_FLEET_WATCHDOG_ROUTE) return 'fleet-watchdog';
   if (pathname === HALFDOZEN_INBOX_TRIAGE_ROUTE) return 'inbox-triage';
@@ -684,6 +786,127 @@ function buildHalfDozenRunInput(env: Env, body: AgentRouteBody | { query?: strin
   };
 }
 
+function resolveTelemetryAccountId(env: Env): string {
+  return env.MCP_ACCOUNT_ID?.trim() || 'operator';
+}
+
+function getCurrentPeriod(): string {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+async function recordFleetWatchdogRunEvidence(
+  env: Env,
+  args: {
+    runId: string;
+    route: string;
+    cron?: string;
+    success: boolean;
+    durationMs: number;
+    result?: HalfDozenScenarioRunResult;
+    errorMessage?: string;
+  },
+): Promise<void> {
+  if (!env.TELEMETRY_DB) return;
+
+  const accountId = resolveTelemetryAccountId(env);
+  const metadata = {
+    run_id: args.runId,
+    route: args.route,
+    cron: args.cron,
+    scenario: 'fleet-watchdog',
+    source: 'scheduled_worker',
+    degraded: args.result?.degraded ?? null,
+    coverage: args.result ? getCoverageStatus(args.result) : null,
+    connected_servers: args.result?.connected_servers ?? [],
+    failed_servers: args.result?.failed_servers ?? [],
+    required_tool_coverage: args.result?.required_tool_coverage ?? null,
+  };
+
+  try {
+    await env.TELEMETRY_DB.prepare(
+      `INSERT INTO mcp_tool_invocations
+         (server_name, account_id, tool_name, success, duration_ms, error_message, correlation_id, request_id, metadata_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        'playbook',
+        accountId,
+        'scheduled_fleet_watchdog',
+        args.success ? 1 : 0,
+        args.durationMs,
+        args.errorMessage ?? null,
+        args.runId,
+        args.runId,
+        JSON.stringify(metadata),
+      )
+      .run();
+
+    await env.TELEMETRY_DB.prepare(
+      `INSERT INTO mcp_run_counts (server_name, account_id, period_start, runs_this_period, updated_at)
+       VALUES (?, ?, ?, 1, datetime('now'))
+       ON CONFLICT(server_name, account_id, period_start)
+       DO UPDATE SET
+         runs_this_period = mcp_run_counts.runs_this_period + 1,
+         updated_at = datetime('now')`,
+    )
+      .bind('playbook', accountId, getCurrentPeriod())
+      .run();
+  } catch (error) {
+    console.error('Half Dozen fleet watchdog evidence write failed', error);
+  }
+}
+
+async function recordNotificationTestEvidence(
+  env: Env,
+  args: {
+    runId: string;
+    route: string;
+    success: boolean;
+    durationMs: number;
+    providerId?: string;
+    skippedReason?: string;
+    errorMessage?: string;
+  },
+): Promise<void> {
+  if (!env.TELEMETRY_DB) return;
+
+  const metadata = {
+    run_id: args.runId,
+    route: args.route,
+    source: 'manual_notification_verification',
+    notification_provider: 'resend',
+    notification_mode: getNotifyEmailMode(env),
+    recipient_count: parseEmailList(env.HALFDOZEN_AGENT_NOTIFY_EMAIL_TO).length,
+    provider_id: args.providerId ?? null,
+    skipped_reason: args.skippedReason ?? null,
+  };
+
+  try {
+    await env.TELEMETRY_DB.prepare(
+      `INSERT INTO mcp_tool_invocations
+         (server_name, account_id, tool_name, success, duration_ms, error_message, correlation_id, request_id, metadata_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        'playbook',
+        resolveTelemetryAccountId(env),
+        'resend_notification_test',
+        args.success ? 1 : 0,
+        args.durationMs,
+        args.errorMessage ?? args.skippedReason ?? null,
+        args.runId,
+        args.runId,
+        JSON.stringify(metadata),
+      )
+      .run();
+  } catch (error) {
+    console.error('Half Dozen notification test evidence write failed', error);
+  }
+}
+
 function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
   const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
   return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
@@ -693,6 +916,11 @@ function isBraintrustRouteTracingEnabled(env: Env): boolean {
   const enabled = env.BRAINTRUST_ENABLED?.trim().toLowerCase();
   if (enabled === 'false' || enabled === '0' || enabled === 'off') return false;
   return Boolean(env.BRAINTRUST_API_KEY);
+}
+
+function isFleetWatchdogCronEnabled(env: Env): boolean {
+  const enabled = env.HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED?.trim().toLowerCase();
+  return enabled !== 'false' && enabled !== '0' && enabled !== 'off';
 }
 
 function parseSlackCommandFields(rawBody: string): SlackCommandFields {
@@ -778,6 +1006,101 @@ function queueSlackScenarioRun(
   );
 }
 
+async function runScheduledFleetWatchdog(
+  event: ScheduledEvent,
+  env: Env,
+  ctx: ExecutionContext,
+): Promise<void> {
+  if (!isFleetWatchdogCronEnabled(env)) {
+    console.log('[halfdozen-fleet-watchdog] Cron skipped: disabled by env.');
+    return;
+  }
+
+  const runId = crypto.randomUUID();
+  const startedAt = Date.now();
+  if (!env.OPENAI_API_KEY) {
+    const message = 'Server misconfigured: OPENAI_API_KEY is not set.';
+    const durationMs = Date.now() - startedAt;
+    await recordFleetWatchdogRunEvidence(env, {
+      runId,
+      route: HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
+      cron: event.cron,
+      success: false,
+      durationMs,
+      errorMessage: message,
+    });
+    queueErrorNotification(
+      ctx,
+      env,
+      'fleet-watchdog',
+      HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
+      runId,
+      message,
+      durationMs,
+    );
+    throw new Error(message);
+  }
+
+  const braintrustTracingEnabled = isBraintrustRouteTracingEnabled(env);
+
+  try {
+    const result = await runHalfDozenFleetWatchdog({
+      ...buildHalfDozenRunInput(env, {
+        query: `Scheduled ${event.cron} fleet watchdog review. Use the standard 24-hour fleet watchdog contract and escalate degraded services or required-tool coverage failures.`,
+      }),
+      tracingDisabled: !braintrustTracingEnabled,
+    });
+    const durationMs = Date.now() - startedAt;
+
+    await recordFleetWatchdogRunEvidence(env, {
+      runId,
+      route: HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
+      cron: event.cron,
+      success: !shouldEscalate(result),
+      durationMs,
+      result,
+      errorMessage: shouldEscalate(result) ? result.degraded_reason ?? 'Fleet watchdog degraded.' : undefined,
+    });
+    queueSuccessNotifications(ctx, env, result, HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE, runId, durationMs);
+    if (braintrustTracingEnabled) {
+      ctx.waitUntil(safeFlushBraintrust('scheduled fleet watchdog success'));
+    }
+
+    console.log('[halfdozen-fleet-watchdog] Cron complete', {
+      runId,
+      degraded: result.degraded,
+      coverage: getCoverageStatus(result),
+      connectedServers: result.connected_servers,
+      failedServers: result.failed_servers,
+      durationMs,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const durationMs = Date.now() - startedAt;
+    await recordFleetWatchdogRunEvidence(env, {
+      runId,
+      route: HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
+      cron: event.cron,
+      success: false,
+      durationMs,
+      errorMessage: message,
+    });
+    queueErrorNotification(
+      ctx,
+      env,
+      'fleet-watchdog',
+      HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE,
+      runId,
+      message,
+      durationMs,
+    );
+    if (braintrustTracingEnabled) {
+      ctx.waitUntil(safeFlushBraintrust('scheduled fleet watchdog error'));
+    }
+    throw error;
+  }
+}
+
 // =============================================================================
 // MCP Agent
 // =============================================================================
@@ -815,6 +1138,10 @@ export class PlaybookMCP extends McpAgent<Env> {
 // =============================================================================
 
 export default {
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    await runScheduledFleetWatchdog(event, env, ctx);
+  },
+
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
@@ -923,6 +1250,139 @@ export default {
       return slackJsonResponse(buildSlackAcceptedResponse(parsed.scenario, runId, parsed.query));
     }
 
+    if (url.pathname === HALFDOZEN_NOTIFY_TEST_ROUTE) {
+      const runId = crypto.randomUUID();
+      const startedAt = Date.now();
+
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          headers: {
+            ...JSON_HEADERS,
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+            'Access-Control-Max-Age': '86400',
+          },
+        });
+      }
+
+      if (request.method !== 'POST') {
+        return jsonResponse(
+          {
+            success: false,
+            error: 'Method not allowed',
+            message: 'Use POST for this endpoint.',
+          },
+          405,
+          { Allow: 'POST, OPTIONS' },
+        );
+      }
+
+      const authError = validateRouteToken(request, env.HALFDOZEN_AGENT_ROUTE_TOKEN);
+      if (authError) return authError;
+
+      let body: NotificationTestBody = {};
+      try {
+        body = await parseNotificationTestBody(request);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return jsonResponse(
+          {
+            success: false,
+            error: 'Invalid request body',
+            message,
+          },
+          400,
+        );
+      }
+
+      const mode = getNotifyEmailMode(env);
+      if (mode === 'off' || !env.RESEND_API_KEY) {
+        const skippedReason = mode === 'off' ? 'email_notifications_off' : 'missing_resend_api_key';
+        const durationMs = Date.now() - startedAt;
+        await recordNotificationTestEvidence(env, {
+          runId,
+          route: HALFDOZEN_NOTIFY_TEST_ROUTE,
+          success: false,
+          durationMs,
+          skippedReason,
+        });
+        return jsonResponse(
+          {
+            success: false,
+            runId,
+            error: 'Notification test could not run.',
+            skippedReason,
+            durableEvidence: Boolean(env.TELEMETRY_DB),
+          },
+          409,
+        );
+      }
+
+      const event: NotificationEvent = {
+        kind: 'error',
+        scenario: 'fleet-watchdog',
+        route: HALFDOZEN_NOTIFY_TEST_ROUTE,
+        runId,
+        errorMessage:
+          body.message ??
+          'Manual Resend notification verification for the Playbook MCP Half Dozen fleet watchdog.',
+      };
+
+      try {
+        const result = await sendNotificationEmail(env, event);
+        const durationMs = Date.now() - startedAt;
+        await recordNotificationTestEvidence(env, {
+          runId,
+          route: HALFDOZEN_NOTIFY_TEST_ROUTE,
+          success: result.sent,
+          durationMs,
+          providerId: result.providerId,
+          skippedReason: result.skippedReason,
+        });
+
+        if (!result.sent) {
+          return jsonResponse(
+            {
+              success: false,
+              runId,
+              skippedReason: result.skippedReason ?? 'notification_not_sent',
+              durableEvidence: Boolean(env.TELEMETRY_DB),
+            },
+            409,
+          );
+        }
+
+        return jsonResponse({
+          success: true,
+          runId,
+          provider: 'resend',
+          providerId: result.providerId ?? null,
+          notificationMode: mode,
+          recipientCount: parseEmailList(env.HALFDOZEN_AGENT_NOTIFY_EMAIL_TO).length,
+          durableEvidence: Boolean(env.TELEMETRY_DB),
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const durationMs = Date.now() - startedAt;
+        await recordNotificationTestEvidence(env, {
+          runId,
+          route: HALFDOZEN_NOTIFY_TEST_ROUTE,
+          success: false,
+          durationMs,
+          errorMessage: message,
+        });
+        return jsonResponse(
+          {
+            success: false,
+            runId,
+            error: message,
+            durableEvidence: Boolean(env.TELEMETRY_DB),
+          },
+          502,
+        );
+      }
+    }
+
     if (isHalfDozenScenarioRoute(url.pathname)) {
       const runId = crypto.randomUUID();
       if (request.method === 'OPTIONS') {
@@ -1027,14 +1487,18 @@ export default {
           halfdozen_fleet_watchdog: HALFDOZEN_FLEET_WATCHDOG_ROUTE,
           halfdozen_inbox_triage: HALFDOZEN_INBOX_TRIAGE_ROUTE,
           halfdozen_dedup: HALFDOZEN_DEDUP_ROUTE,
+          halfdozen_notification_test: HALFDOZEN_NOTIFY_TEST_ROUTE,
           halfdozen_slack_commands: HALFDOZEN_SLACK_COMMAND_ROUTE,
         },
-        protectedRoutes: HALFDOZEN_PROTECTED_ROUTES,
+        protectedRoutes: HALFDOZEN_TOKEN_PROTECTED_ROUTES,
         notifications: {
-          halfdozenSlackWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_WEBHOOK_URL),
-          halfdozenSlackEscalationWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL),
+          halfdozenEmailNotificationsConfigured: Boolean(env.RESEND_API_KEY),
+          halfdozenEmailNotificationMode: getNotifyEmailMode(env),
+          halfdozenEmailNotificationRecipients: parseEmailList(env.HALFDOZEN_AGENT_NOTIFY_EMAIL_TO).length,
           halfdozenSlackCommandSigningConfigured: Boolean(env.HALFDOZEN_SLACK_SIGNING_SECRET),
           halfdozenSlackTeamRestricted: Boolean(env.HALFDOZEN_SLACK_TEAM_ID),
+          halfdozenFleetWatchdogCronEnabled: isFleetWatchdogCronEnabled(env),
+          halfdozenFleetWatchdogEvidenceStore: Boolean(env.TELEMETRY_DB),
         },
         tools: [
           'get_playbook',

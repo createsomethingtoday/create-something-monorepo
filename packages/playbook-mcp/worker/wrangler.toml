@@ -9,6 +9,10 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 pattern = "playbook.mcp.createsomething.ltd"
 custom_domain = true
 
+[triggers]
+# Runs the Half Dozen fleet watchdog inside the Playbook MCP Worker.
+crons = ["17 * * * *"]
+
 # Durable Object for MCP session state
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
@@ -35,20 +39,21 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 # provides an explicit on/off switch.
 BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
 BRAINTRUST_ENABLED = "true"
+HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED = "true"
+HALFDOZEN_AGENT_NOTIFY_EMAIL_FROM = "CREATE SOMETHING Ops <notifications@createsomething.io>"
+HALFDOZEN_AGENT_NOTIFY_EMAIL_TO = "micah@createsomething.io"
+HALFDOZEN_AGENT_NOTIFY_EMAIL_MODE = "alerts"
 
 # Required secrets for protected Half Dozen agent routes:
 # wrangler secret put OPENAI_API_KEY
 # wrangler secret put HALFDOZEN_AGENT_ROUTE_TOKEN
+# wrangler secret put RESEND_API_KEY
 
 # Optional Braintrust tracing:
 # wrangler secret put BRAINTRUST_API_KEY
 # (Optional) wrangler secret put BRAINTRUST_ORG_NAME
 # (Optional) wrangler secret put BRAINTRUST_PROJECT_ID
 # (Optional) set [vars] BRAINTRUST_PROJECT_NAME = "Playbook MCP"
-
-# Optional notification webhooks:
-# wrangler secret put HALFDOZEN_SLACK_WEBHOOK_URL
-# wrangler secret put HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL
 
 # Slack command ingress protection:
 # wrangler secret put HALFDOZEN_SLACK_SIGNING_SECRET

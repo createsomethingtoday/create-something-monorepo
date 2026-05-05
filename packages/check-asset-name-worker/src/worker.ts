@@ -23,20 +23,38 @@ interface Env {
   AIRTABLE_ASSETS_VIEW_ID?: string;
   AIRTABLE_CREATORS_TABLE_ID?: string;
   AIRTABLE_CREATORS_VIEW_ID?: string;
+  AIRTABLE_BANNED_INSTANCES_TABLE_ID?: string;
+  WHITELISTED_CREATORS?: string;
   ALLOWED_ORIGINS: string;
 }
 
 type AirtableRecord = { id: string; fields: Record<string, unknown> };
 
 const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
-const ASSET_CREATOR_EMAIL_FIELDS = [
-  '🎨📧 Creator Email',
-  '🎨📧 Creator WF Account Email',
-  '📧Emails (from 🎨Creator)',
-] as const;
+const DEFAULT_BANNED_INSTANCES_TABLE_ID = 'tblEaBjs3Y6f4YmlR';
+const BAN_STATUS_FIELD_ID = 'fldIvMlWqF6LZeLeW';
+const DEFAULT_WHITELISTED_CREATORS = ['hello@zealousweb.com'] as const;
 const CREATOR_RECORD_EMAIL_FIELDS = ['📧Email', '📧WF Account Email', '📧Emails'] as const;
+const CREATOR_ELIGIBILITY_FIELDS = [
+  'Name',
+  ...CREATOR_RECORD_EMAIL_FIELDS,
+  '#️⃣👛Templates Published',
+  '#️⃣👛Templates Rejected',
+  '#️⃣👛Templates Submitted',
+  '#️⃣👛Templates Delisted',
+  '#️⃣Submission cap count',
+  '❌Banned Instance',
+] as const;
+const BANNED_INSTANCE_FIELDS = [
+  'Name',
+  'Reason',
+  'Ban Status',
+  'Start Date',
+  'End Date',
+  'Creator',
+  BAN_STATUS_FIELD_ID,
+] as const;
 const SUBMISSION_LIMIT = 6;
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 // =============================================================================
 // CORS
@@ -105,6 +123,33 @@ async function airtableQuery(
   return data.records;
 }
 
+async function airtableGetRecord(
+  env: Env,
+  options: {
+    tableId: string;
+    recordId: string;
+    fields?: string[];
+  }
+): Promise<AirtableRecord> {
+  const params = new URLSearchParams();
+  if (options.fields) {
+    for (const field of options.fields) params.append('fields[]', field);
+  }
+
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${options.tableId}/${options.recordId}${suffix}`;
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Airtable returned ${response.status}: ${await response.text()}`);
+  }
+
+  return (await response.json()) as AirtableRecord;
+}
+
 function getAssetsTableId(env: Env): string {
   return env.AIRTABLE_ASSETS_TABLE_ID || env.AIRTABLE_TABLE_ID || 'tblRwzpWoLgE9MrUm';
 }
@@ -119,6 +164,10 @@ function getCreatorsTableId(env: Env): string {
 
 function getCreatorsViewId(env: Env): string | undefined {
   return env.AIRTABLE_CREATORS_VIEW_ID;
+}
+
+function getBannedInstancesTableId(env: Env): string {
+  return env.AIRTABLE_BANNED_INSTANCES_TABLE_ID || DEFAULT_BANNED_INSTANCES_TABLE_ID;
 }
 
 function escapeAirtableString(input: string): string {
@@ -139,12 +188,75 @@ function buildEmailMatchFormula(email: string, fields: readonly string[]): strin
   return `OR(${clauses.join(', ')})`;
 }
 
-function buildAssetCreatorEmailFormula(email: string): string {
-  return `AND(${buildEmailMatchFormula(email, ASSET_CREATOR_EMAIL_FIELDS)}, {🆎Type} = 'Template🏗️')`;
-}
-
 function buildCreatorRecordEmailFormula(email: string): string {
   return buildEmailMatchFormula(email, CREATOR_RECORD_EMAIL_FIELDS);
+}
+
+function firstString(value: unknown): string {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const next = firstString(item);
+      if (next) return next;
+    }
+  }
+  return '';
+}
+
+function firstNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const next = firstNumber(item);
+      if (next !== null) return next;
+    }
+  }
+  return null;
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => firstString(item)).filter(Boolean);
+}
+
+function getWhitelistedCreators(env: Env): Set<string> {
+  const fromEnv = (env.WHITELISTED_CREATORS || '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  return new Set([
+    ...DEFAULT_WHITELISTED_CREATORS.map((email) => email.toLowerCase()),
+    ...fromEnv,
+  ]);
+}
+
+async function getActiveBan(env: Env, bannedInstanceIds: string[]): Promise<AirtableRecord | null> {
+  for (const recordId of bannedInstanceIds) {
+    try {
+      const record = await airtableGetRecord(env, {
+        tableId: getBannedInstancesTableId(env),
+        recordId,
+        fields: [...BANNED_INSTANCE_FIELDS],
+      });
+      const status =
+        firstString(record.fields[BAN_STATUS_FIELD_ID]) ||
+        firstString(record.fields['Ban Status']);
+
+      if (status === 'Active') {
+        return record;
+      }
+    } catch (error) {
+      console.error('[checkTemplateuser] failed to fetch banned instance', recordId, error);
+    }
+  }
+
+  return null;
 }
 
 // =============================================================================
@@ -224,12 +336,13 @@ async function handleCheckTemplateuser(
     return json({ hasError: true, message: 'Email is required', assetsSubmitted30: 0 }, 400, corsHeaders);
   }
 
-  const creatorFormula = buildCreatorRecordEmailFormula(email);
+  const normalizedEmail = email.trim().toLowerCase();
+  const creatorFormula = buildCreatorRecordEmailFormula(normalizedEmail);
   const creatorRecords = await airtableQuery(env, {
     tableId: getCreatorsTableId(env),
     viewId: getCreatorsViewId(env),
     formula: creatorFormula,
-    fields: ['Name', ...CREATOR_RECORD_EMAIL_FIELDS],
+    fields: [...CREATOR_ELIGIBILITY_FIELDS],
     maxRecords: 1
   });
 
@@ -246,34 +359,56 @@ async function handleCheckTemplateuser(
     );
   }
 
-  const assetFormula = buildAssetCreatorEmailFormula(email);
-  const records = await airtableQuery(env, {
-    tableId: getAssetsTableId(env),
-    viewId: getAssetsViewId(env),
-    formula: assetFormula,
-    fields: ['Name', '🚀Marketplace Status', '📅Submitted Date']
-  });
+  const creatorFields = creatorRecords[0].fields;
+  const publishedTemplates = firstNumber(creatorFields['#️⃣👛Templates Published']) ?? 0;
+  const rejectedTemplates = firstNumber(creatorFields['#️⃣👛Templates Rejected']) ?? 0;
+  const submittedTemplates = firstNumber(creatorFields['#️⃣👛Templates Submitted']) ?? 0;
+  const delistedTemplates = firstNumber(creatorFields['#️⃣👛Templates Delisted']) ?? 0;
+  const assetsSubmitted30 = firstNumber(creatorFields['#️⃣Submission cap count']) ?? 0;
+  const activeBan = await getActiveBan(env, stringArray(creatorFields['❌Banned Instance']));
 
-  const now = Date.now();
-  let assetsSubmitted30 = 0;
-  let publishedTemplates = 0;
-  let rejectedTemplates = 0;
-  let delistedTemplates = 0;
-  const submittedTemplates = records.length;
+  if (activeBan) {
+    const banReason =
+      firstString(activeBan.fields['Name']) ||
+      firstString(activeBan.fields['Reason']) ||
+      'No reason provided';
+    const startDate = firstString(activeBan.fields['Start Date']) || 'Unknown date';
+    const endDate = firstString(activeBan.fields['End Date']) || 'Not specified';
+    const creator = firstString(activeBan.fields['Creator']) || 'Unknown';
 
-  for (const record of records) {
-    const status = record.fields['🚀Marketplace Status'] as string || '';
-    if (status.includes('Published')) publishedTemplates++;
-    if (status.includes('Rejected')) rejectedTemplates++;
-    if (status.includes('Delisted')) delistedTemplates++;
-
-    const submitted = record.fields['📅Submitted Date'] as string;
-    if (submitted && (now - new Date(submitted).getTime()) < THIRTY_DAYS_MS) {
-      assetsSubmitted30++;
+    let message = `Your account has been banned from submitting templates. Reason: ${banReason}.`;
+    if (startDate !== 'Unknown date') {
+      message += ` Ban started: ${startDate}.`;
     }
+    if (endDate !== 'Not specified') {
+      message += ` Ban ends: ${endDate}.`;
+    }
+    message += ' Please contact support for assistance.';
+
+    return json(
+      {
+        userExists: true,
+        isBanned: true,
+        hasError: true,
+        message,
+        assetsSubmitted30,
+        publishedTemplates,
+        submittedTemplates,
+        isWhitelisted: false,
+        banDetails: {
+          reason: banReason,
+          startDate,
+          endDate,
+          creator,
+          status: 'Active',
+        },
+      },
+      200,
+      corsHeaders
+    );
   }
 
-  const isWhitelisted = false;
+  const isWhitelisted = getWhitelistedCreators(env).has(normalizedEmail);
   let hasError = false;
   let message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted this month. Total submitted: ${submittedTemplates}. You can have 1 template submitted for review at a time.`;
 

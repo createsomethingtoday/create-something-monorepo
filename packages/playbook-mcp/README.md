@@ -166,9 +166,14 @@ curl -X POST "https://playbook.mcp.createsomething.ltd/clients/halfdozen/agents/
 All responses include contract bundle metadata, blocked/required tools, required tool coverage (when applicable), called tools, and final output.
 If one or more MCP servers are unavailable, the route returns a degraded payload (`degraded: true`) with `failed_servers` and `degraded_reason` instead of a hard failure.
 
-Slack notifications (optional):
-- Set `HALFDOZEN_SLACK_WEBHOOK_URL` to receive every run summary.
-- Set `HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL` for alerts when a run is degraded or required-tool coverage fails. If omitted, escalations go to the primary webhook.
+Email notifications (optional):
+- Set `RESEND_API_KEY` to enable Resend delivery.
+- Set `HALFDOZEN_AGENT_NOTIFY_EMAIL_TO` to a comma-separated recipient list.
+- Set `HALFDOZEN_AGENT_NOTIFY_EMAIL_MODE` to `alerts` or `all`; `alerts` sends only degraded or failed runs.
+- Scheduled fleet-watchdog runs also write durable evidence to `TELEMETRY_DB` in `mcp_tool_invocations`.
+- Verify Resend delivery without forcing a failed agent run:
+  `POST /clients/halfdozen/agents/notifications/test` with `Authorization: Bearer $HALFDOZEN_AGENT_ROUTE_TOKEN`.
+  The verification route writes durable evidence as `tool_name = resend_notification_test`.
 
 Slack command controls (optional):
 - Route: `POST /clients/halfdozen/slack/commands`
