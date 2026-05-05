@@ -785,7 +785,7 @@ export type TemplateReviewJobStatus =
   | 'canceled';
 
 export interface TemplateReviewJobProgress {
-  phase: 'queued' | 'precheck' | 'designer' | 'published' | 'normalizing' | 'completed' | 'failed';
+  phase: 'queued' | 'precheck' | 'designer' | 'published' | 'normalizing' | 'completed' | 'failed' | 'canceled';
   progress: number;
   total: number;
   message: string;

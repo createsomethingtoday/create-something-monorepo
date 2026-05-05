@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { getConciergeDemoSettings } from '$server/threads/demo';
+	import type { PageData } from './$types';
 
-	const settings = getConciergeDemoSettings();
+	export let data: PageData;
 </script>
 
 <section class="glass panel">
@@ -17,7 +17,7 @@
 	<div class="glass panel">
 		<h2 class="section-title">Notifications</h2>
 		<ul>
-			{#each settings.notifications as item}
+			{#each data.settings.notifications as item}
 				<li>{item}</li>
 			{/each}
 		</ul>
@@ -26,7 +26,7 @@
 	<div class="glass panel">
 		<h2 class="section-title">Guardrails</h2>
 		<ul>
-			{#each settings.guardrails as item}
+			{#each data.settings.guardrails as item}
 				<li>{item}</li>
 			{/each}
 		</ul>
@@ -35,7 +35,7 @@
 	<div class="glass panel">
 		<h2 class="section-title">Control Plane</h2>
 		<div class="link-list">
-			{#each settings.controlPlaneLinks as link}
+			{#each data.settings.controlPlaneLinks as link}
 				<a href={link.href}>{link.label}</a>
 			{/each}
 		</div>

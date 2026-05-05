@@ -12,6 +12,7 @@ interface Env {
   COMPOSIO_API_KEY?: string;
   COMPOSIO_AUTH_CONFIG_MAP?: string;
   COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?: string;
+  COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID?: string;
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_ENTITY_RESOLUTION_MODE?: string;
   COMPOSIO_TOOL_CACHE_SECONDS?: string;
@@ -158,7 +159,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
     {
       name: 'get_connect_link',
       description:
-        'Get a one-time OAuth link for the current toolkit/entity using COMPOSIO_AUTH_CONFIG_MAP entry.',
+        'Get a one-time OAuth link for the current toolkit/entity using COMPOSIO_AUTH_CONFIG_MAP entry or toolkit-specific auth config env.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -425,7 +426,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
             entityId,
             link: null,
             message:
-              'No auth config ID found for this toolkit. Add it to COMPOSIO_AUTH_CONFIG_MAP and redeploy.',
+              'No auth config ID found for this toolkit. Add it to COMPOSIO_AUTH_CONFIG_MAP or toolkit-specific auth config env and redeploy.',
           }));
         }
 
@@ -1988,6 +1989,10 @@ function buildAuthConfigMap(env: Env): Record<string, string> {
   const airtableAuthConfigId = env.COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?.trim();
   if (airtableAuthConfigId) {
     authConfigMap.airtable = airtableAuthConfigId;
+  }
+  const quickbooksAuthConfigId = env.COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID?.trim();
+  if (quickbooksAuthConfigId) {
+    authConfigMap.quickbooks = quickbooksAuthConfigId;
   }
   return authConfigMap;
 }

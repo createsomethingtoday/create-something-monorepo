@@ -13,6 +13,7 @@ import { validateAssets, validateAssetBatch } from './validators/asset-validator
 import { validateContent } from './validators/content-validator';
 import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
+import { validateInteractions } from './validators/interactions-validator';
 import { fetchHTML } from './utils/fetch-utils';
 import {
 	ValidationRequest,
@@ -1046,10 +1047,15 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 		? Promise.resolve(createEmptyAccessibilityAnalysis())
 		: validateAccessibility(body.siteUrl);
 
-	const [assetAnalysis, contentAnalysis, accessibilityAnalysis] = await Promise.all([
+	const interactionsPromise = validateInteractions(body.siteUrl, body.pageSlugs, {
+		maxPages: options.maxPages
+	});
+
+	const [assetAnalysis, contentAnalysis, accessibilityAnalysis, interactionsAnalysis] = await Promise.all([
 		assetPromise,
 		contentPromise,
-		accessibilityPromise
+		accessibilityPromise,
+		interactionsPromise
 	]);
 
 	return {
@@ -1058,17 +1064,20 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 		analysis: {
 			assets: assetAnalysis,
 			content: contentAnalysis,
-			accessibility: accessibilityAnalysis
+			accessibility: accessibilityAnalysis,
+			interactions: interactionsAnalysis
 		},
 		summary: {
 			totalIssues:
 				assetAnalysis.issues.length +
 				contentAnalysis.issues.length +
-				accessibilityAnalysis.issues.length,
+				accessibilityAnalysis.issues.length +
+				interactionsAnalysis.issues.length,
 			criticalErrors: countCriticalErrors([
 				assetAnalysis,
 				contentAnalysis,
-				accessibilityAnalysis
+				accessibilityAnalysis,
+				interactionsAnalysis
 			]),
 			coverageImprovement: '+27 percentage points'
 		}
@@ -1130,6 +1139,14 @@ function mergeReviewResults(
 				});
 			}
 		}
+		if (enhancedResult.analysis?.interactions) {
+			categories.push({
+				category: 'Interactions and GSAP',
+				passed: enhancedResult.analysis.interactions.issues.filter((i: any) => i.severity === 'error').length === 0,
+				issues: enhancedResult.analysis.interactions.issues,
+				stats: enhancedResult.analysis.interactions.stats
+			});
+		}
 		const summary = summarizeSummaryFromCategories(categories);
 		return {
 			url: siteUrl,
@@ -1177,6 +1194,15 @@ function mergeReviewResults(
 				stats: enhancedResult.analysis.accessibility.stats
 			});
 		}
+	}
+
+	if (enhancedResult?.analysis?.interactions) {
+		merged.categories.push({
+			category: 'Interactions and GSAP',
+			passed: enhancedResult.analysis.interactions.issues.filter((i: any) => i.severity === 'error').length === 0,
+			issues: enhancedResult.analysis.interactions.issues,
+			stats: enhancedResult.analysis.interactions.stats
+		});
 	}
 
 	const summary = summarizeSummaryFromCategories(merged.categories);

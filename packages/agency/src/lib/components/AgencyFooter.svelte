@@ -19,7 +19,7 @@
 					<h6 class="footer-heading">Start Here</h6>
 					<ul class="footer-links">
 						<li><a href="/services">How I Work</a></li>
-						<li><a href="/products">Proof in Production</a></li>
+						<li><a href="/products">Proof Surfaces</a></li>
 						<li><a href="/book">Book Mapping Session</a></li>
 					</ul>
 				</div>
@@ -57,7 +57,7 @@
 		<!-- Bottom Bar -->
 			<div class="footer-bottom">
 			<p class="footer-copyright">
-				© 2026 CREATE SOMETHING. Reliable workflows, clear approvals, safer automation.
+				© 2026 CREATE SOMETHING. Calm operator systems for autonomous work.
 			</p>
 			<div class="footer-social">
 				<a href="https://github.com/create-something" target="_blank" rel="noopener">GitHub</a>

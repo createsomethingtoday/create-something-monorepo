@@ -1,6 +1,6 @@
 # MCP Apps Integration Guide
 
-This guide documents the MCP Apps integration in Ground and Loom, enabling interactive UI components directly in AI conversations.
+This guide documents MCP Apps integration patterns for CREATE SOMETHING tools, enabling interactive UI components directly in AI conversations.
 
 ## Overview
 
@@ -30,7 +30,7 @@ MCP Apps is an official MCP extension (released January 2026) that allows tools 
 │                            │ postMessage                     │
 │                            ▼                                 │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │              MCP Server (Ground/Loom)                  │  │
+│  │              MCP Server (Ground/Hub/etc.)              │  │
 │  │   - tools/list (with _meta.ui)                         │  │
 │  │   - tools/call                                         │  │
 │  │   - resources/list                                     │  │
@@ -66,37 +66,6 @@ The following Ground tools include `_meta.ui` metadata pointing to `ui://ground/
 - UI: `packages/ground/ui/duplicate-explorer/index.html`
 - Registry: `packages/ground/src/ui_resources.rs`
 - Server: `packages/ground/src/bin/ground-mcp.rs`
-
-## Loom: Task Board
-
-### Tools with UI Support
-
-The following Loom tools include `_meta.ui` metadata pointing to `ui://loom/task-board`:
-
-- `loom_list` - List tasks with optional filtering
-- `loom_ready` - Get all ready tasks
-- `loom_summary` - Get work status summary
-- `loom_mine` - Get tasks claimed by agent
-- `loom_blocked` - Get all blocked tasks
-- `loom_list_all` - List tasks from all repositories
-
-### UI Resource
-
-**URI:** `ui://loom/task-board`
-
-**Features:**
-- Kanban-style board with 4 columns: Ready, In Progress, Blocked, Done
-- Drag-and-drop between columns to change task status
-- Task cards with: title, ID, priority badge, labels, assigned agent
-- One-click actions: Claim, Complete, Release
-- Real-time status bar showing task counts
-- Refresh button for manual updates
-
-### Implementation Files
-
-- UI: `packages/loom/ui/task-board/index.html`
-- Registry: `packages/loom/src/ui_resources.rs`
-- MCP Module: `packages/loom/src/mcp/mod.rs`
 
 ## Protocol Details
 

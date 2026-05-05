@@ -45,7 +45,11 @@ import {
 } from './mcp-tracing.js';
 import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy/index.js';
 import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
-import { TemplateReviewJobManager } from './template-review-jobs.js';
+import {
+  DurableObjectTemplateReviewJobStore,
+  TemplateReviewJobManager,
+  type TemplateReviewJobDurableObjectNamespace,
+} from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
 import { is404PageTitle } from './review-utils.js';
 import type {
@@ -91,6 +95,7 @@ initMcpTracing();
 let providerManager: ProviderManager | null = null;
 let registry: RegistryManager | null = null;
 let templateReviewJobs: TemplateReviewJobManager | null = null;
+let templateReviewJobDurableObjectNamespace: TemplateReviewJobDurableObjectNamespace | null = null;
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const parsed = value ? Number.parseInt(value, 10) : Number.NaN;
@@ -141,12 +146,24 @@ async function getScriptRegistry(): Promise<RegistryManager> {
 
 function getTemplateReviewJobManager(): TemplateReviewJobManager {
   if (!templateReviewJobs) {
+    const store = templateReviewJobDurableObjectNamespace
+      ? new DurableObjectTemplateReviewJobStore(templateReviewJobDurableObjectNamespace)
+      : undefined;
     templateReviewJobs = new TemplateReviewJobManager(executeTemplateReview, {
       concurrency: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS, 2),
       maxQueueSize: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE, 100),
-    });
+    }, store);
   }
   return templateReviewJobs;
+}
+
+export function configureTemplateReviewJobDurableObject(
+  namespace: TemplateReviewJobDurableObjectNamespace | null | undefined
+): void {
+  const normalized = namespace ?? null;
+  if (templateReviewJobDurableObjectNamespace === normalized) return;
+  templateReviewJobDurableObjectNamespace = normalized;
+  templateReviewJobs = null;
 }
 
 // =============================================================================
@@ -3053,19 +3070,19 @@ async function executeTemplateReview(
   };
 }
 
-function enqueueTemplateReview(input: EnqueueTemplateReviewInput): TemplateReviewJobRecord {
+async function enqueueTemplateReview(input: EnqueueTemplateReviewInput): Promise<TemplateReviewJobRecord> {
   return getTemplateReviewJobManager().enqueue(input);
 }
 
-function getTemplateReviewJob(input: GetTemplateReviewJobInput): TemplateReviewJobRecord {
-  const job = getTemplateReviewJobManager().get(input.jobId);
+async function getTemplateReviewJob(input: GetTemplateReviewJobInput): Promise<TemplateReviewJobRecord> {
+  const job = await getTemplateReviewJobManager().get(input.jobId);
   if (!job) {
     throw new Error(`Template review job not found: ${input.jobId}`);
   }
   return job;
 }
 
-function listTemplateReviewJobs(input: ListTemplateReviewJobsInput = {}): TemplateReviewJobRecord[] {
+async function listTemplateReviewJobs(input: ListTemplateReviewJobsInput = {}): Promise<TemplateReviewJobRecord[]> {
   return getTemplateReviewJobManager().list({
     status: input.status as TemplateReviewJobStatus | undefined,
     limit: input.limit
@@ -3683,13 +3700,13 @@ export function createAnalyzerServer(): Server {
           break;
         case 'enqueue_template_review':
           assertBrowserAutomationSupported(name);
-          result = enqueueTemplateReview(safeArgs as unknown as EnqueueTemplateReviewInput);
+          result = await enqueueTemplateReview(safeArgs as unknown as EnqueueTemplateReviewInput);
           break;
         case 'get_template_review_job':
-          result = getTemplateReviewJob(safeArgs as unknown as GetTemplateReviewJobInput);
+          result = await getTemplateReviewJob(safeArgs as unknown as GetTemplateReviewJobInput);
           break;
         case 'list_template_review_jobs':
-          result = listTemplateReviewJobs(safeArgs as unknown as ListTemplateReviewJobsInput);
+          result = await listTemplateReviewJobs(safeArgs as unknown as ListTemplateReviewJobsInput);
           break;
         case 'get_webflow_review_policy':
           result = await getWebflowReviewPolicy(Boolean(safeArgs.refresh));
@@ -3780,7 +3797,8 @@ export function getAnalyzerHealth(): Record<string, unknown> {
     templateReview: {
       browserAutomationSupported: isBrowserAutomationSupported(),
       maxConcurrentJobs: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS, 2),
-      maxQueueSize: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE, 100)
+      maxQueueSize: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE, 100),
+      durableStorageConfigured: Boolean(templateReviewJobDurableObjectNamespace)
     }
   };
 }

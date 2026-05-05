@@ -10,8 +10,6 @@ import {
   getAllMcpTools,
 } from '@openai/agents';
 
-import { registerOpenAIAgentsBraintrustTracing } from '@create-something/observability/openai-agents';
-
 type ServerKey = 'telemetry' | 'youtube' | 'gmail' | 'zoom' | 'notion';
 type ScenarioKey = 'dedup' | 'inbox-triage' | 'fleet-watchdog';
 
@@ -707,6 +705,9 @@ async function main(): Promise<void> {
       mcpServers: mcpServers.active,
     });
 
+    const { registerOpenAIAgentsBraintrustTracing } = await import(
+      '@create-something/observability/openai-agents'
+    );
     const braintrustTracingEnabled = registerOpenAIAgentsBraintrustTracing({
       projectName: process.env.BRAINTRUST_PROJECT_NAME ?? 'Create Something',
       tags: ['halfdozen', 'smoke']

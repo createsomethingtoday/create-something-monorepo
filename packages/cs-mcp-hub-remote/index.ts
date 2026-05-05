@@ -735,8 +735,8 @@ const DEFAULT_DISCOVERY_PAGE_SIZE = 100;
 const MAX_DISCOVERY_PAGE_SIZE = 500;
 const discoveryPreferencesByAccount = new Map<string, DiscoveryPreferences>();
 const HUB_DISCOVERY_KV_PREFIX = 'hub_discovery_v1::';
-const DEFAULT_REQUIRED_GLOBAL_SERVERS: string[] = ['composio-toolkit-notion'];
-const DEFAULT_REQUIRED_DISCOVERY_SERVERS: string[] = ['composio-toolkit-notion'];
+const DEFAULT_REQUIRED_GLOBAL_SERVERS: string[] = [];
+const DEFAULT_REQUIRED_DISCOVERY_SERVERS: string[] = [];
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
 let braintrustUnavailableLogged = false;
@@ -1171,8 +1171,8 @@ async function connectSingleDownstream(
     requestInit.headers = headers;
   }
 
-  const maxListToolsAttempts = 2;
-  for (let attempt = 1; attempt <= maxListToolsAttempts; attempt += 1) {
+  const maxBootstrapAttempts = 2;
+  for (let attempt = 1; attempt <= maxBootstrapAttempts; attempt += 1) {
     const client = new Client({
       name: `${HUB_NAME}:${name}`,
       version: HUB_VERSION,
@@ -1196,7 +1196,7 @@ async function connectSingleDownstream(
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const shouldRetry =
-        attempt < maxListToolsAttempts && isListToolsTimeoutError(message, name);
+        attempt < maxBootstrapAttempts && isRetryableBootstrapTimeoutError(message, name);
 
       try {
         await client.close();
@@ -1206,7 +1206,7 @@ async function connectSingleDownstream(
 
       if (shouldRetry) {
         console.warn(
-          `[${HUB_NAME}] listTools timed out for "${name}" (attempt ${attempt}/${maxListToolsAttempts}); retrying once.`,
+          `[${HUB_NAME}] downstream bootstrap timed out for "${name}" (attempt ${attempt}/${maxBootstrapAttempts}); retrying once.`,
         );
         continue;
       }
@@ -1218,9 +1218,10 @@ async function connectSingleDownstream(
   return { name, error: `Unknown downstream bootstrap failure for "${name}"` };
 }
 
-function isListToolsTimeoutError(message: string, serverName: string): boolean {
+function isRetryableBootstrapTimeoutError(message: string, serverName: string): boolean {
   return (
-    message.includes(`List tools from downstream "${serverName}"`) &&
+    (message.includes(`Connect to downstream "${serverName}"`) ||
+      message.includes(`List tools from downstream "${serverName}"`)) &&
     message.includes('timed out after')
   );
 }
@@ -4675,20 +4676,14 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
   const bearerIsHubToken =
     bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
+  if (bearerIsHubToken && !sessionHeaderToken) {
+    return resolveFallbackAccountContext(extra, env, resourceHost);
+  }
+
   const compatIdentityToken = sessionHeaderToken ?? bearerToken;
 
   if (compatIdentityToken && isSessionResolverConfigured(env)) {
-    try {
-      return await resolveSessionAccountContext(env, compatIdentityToken, resourceHost);
-    } catch (error) {
-      const allowFallback =
-        bearerIsHubToken &&
-        !sessionHeaderToken &&
-        compatIdentityToken === bearerToken;
-      if (!allowFallback) {
-        throw error;
-      }
-    }
+    return resolveSessionAccountContext(env, compatIdentityToken, resourceHost);
   }
 
   return resolveFallbackAccountContext(extra, env, resourceHost);

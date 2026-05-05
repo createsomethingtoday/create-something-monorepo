@@ -12,18 +12,28 @@ const VALIDATION_OPTIONS = {
   async: true
 } as const;
 
+export const LEGACY_IX2_VALIDATION_MESSAGE =
+  'Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.';
+
 export interface PublishedUrlValidationSummary {
   pageResults: Array<{
     url?: string;
     success?: boolean;
     passed?: boolean;
     error?: string;
+    referrers?: string[];
     summary?: {
       validGsapCount?: number;
+      flaggedCodeCount?: number;
+      securityRiskCount?: number;
+      legacyIx2Detected?: boolean;
+      legacyIx2Count?: number;
+      passed?: boolean;
     };
     details?: {
       flaggedCode?: Array<{
         message?: string;
+        policy?: string;
       }>;
     };
   }>;
@@ -38,6 +48,7 @@ export interface PublishedUrlValidationSummary {
   };
   passed: boolean;
   gsapDetected: boolean;
+  legacyIx2Detected: boolean;
   raw: Record<string, unknown>;
 }
 
@@ -161,6 +172,13 @@ function summarizeWorkerResponse(data: Record<string, unknown>): PublishedUrlVal
     pageCount > 0 &&
     !incomplete;
   const gsapDetected = pageResults.some((page) => (page.summary?.validGsapCount || 0) > 0);
+  const legacyIx2Detected = pageResults.some(
+    (page) =>
+      page.summary?.legacyIx2Detected === true ||
+      page.details?.flaggedCode?.some(
+        (item) => item.policy === 'ix2-rejected' || /legacy webflow ix2/i.test(item.message || '')
+      )
+  );
 
   return {
     raw: data,
@@ -175,7 +193,8 @@ function summarizeWorkerResponse(data: Record<string, unknown>): PublishedUrlVal
       incomplete
     },
     passed,
-    gsapDetected
+    gsapDetected,
+    legacyIx2Detected
   };
 }
 

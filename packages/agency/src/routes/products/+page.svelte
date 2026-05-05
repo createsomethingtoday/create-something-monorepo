@@ -8,6 +8,30 @@
   const framework = products.filter((p) => p.category === 'framework');
   const integrations = products.filter((p) => p.category === 'integration');
   const clientWork = products.filter((p) => p.category === 'client');
+  const methodAndFramework = [...framework, ...devTools];
+
+  const proofRoles = [
+    {
+      label: 'Ground',
+      title: 'Judgment needs evidence',
+      detail: 'Agents must check before they claim. That principle becomes release evidence and blocked-state logic.'
+    },
+    {
+      label: 'Loom',
+      title: 'Operators need continuity',
+      detail: 'Agent work needs memory, ownership, checkpoints, and evidence so progress survives handoffs.'
+    },
+    {
+      label: 'MCPs',
+      title: 'Connectivity is the wedge',
+      detail: 'Read-only or constrained MCPs prove the connection before the workflow earns more authority.'
+    },
+    {
+      label: 'Policy OS',
+      title: 'The surface needs trust',
+      detail: 'The products are proof primitives. The paid work is turning them into governed operating paths.'
+    }
+  ];
 
   function isExternal(href: string | undefined): boolean {
     return !!href && href.startsWith('http');
@@ -15,9 +39,9 @@
 </script>
 
 <SEO
-  title="Proof in Production | Workflow Systems and MCPs"
-  description="Tools, connectors, and client builds that show the operating model behind CREATE SOMETHING .agency is real, inspectable, and already in use."
-  keywords="AI integrations, business tool automation, Notion AI, Gmail AI, Zoom AI, Salesforce AI, custom AI development, MCP servers"
+  title="Proof Surfaces | MCPs, Agent Tools, and Policy OS"
+  description="Proof surfaces behind CREATE SOMETHING .agency: agent tools, MCP connectors, and client builds that show how the operating layer becomes inspectable."
+  keywords="MCP servers, Policy OS, agent coordination, grounded AI code analysis, workflow governance, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -37,16 +61,45 @@
   </div>
   <div class="hero-content">
     <BlurFade delay={0}>
-      <p class="hero-eyebrow">Proof of Work</p>
+      <p class="hero-eyebrow">Proof Surfaces</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Proof in Production</h1>
+      <h1 class="hero-title">The operating layer is built from inspectable parts.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Tools, connectors, and client builds that show the work is real and inspectable, not just
-        pitch language.
+        Loom, Ground, MCP connectors, and client builds are not a random product shelf. They are
+        proof surfaces for the same path: connect the system, verify the claim, coordinate the
+        agents, then govern the workflow.
       </p>
+    </BlurFade>
+  </div>
+</section>
+
+<!-- Proof Map -->
+<section class="proof-map-section">
+  <div class="section-inner">
+    <BlurFade delay={0.1}>
+      <div class="proof-map">
+        <div class="proof-map-copy">
+          <p class="section-eyebrow">How to read this page</p>
+          <h2>Products are proof primitives. Policy OS is the operating layer.</h2>
+          <p>
+            The free and open tools show the discipline underneath the service: grounded claims,
+            agent continuity, constrained MCP access, and artifact-backed decisions. The paid work
+            turns those primitives into one workflow your operator can trust.
+          </p>
+        </div>
+        <div class="proof-role-grid">
+          {#each proofRoles as role}
+            <article class="proof-role-card">
+              <span>{role.label}</span>
+              <h3>{role.title}</h3>
+              <p>{role.detail}</p>
+            </article>
+          {/each}
+        </div>
+      </div>
     </BlurFade>
   </div>
 </section>
@@ -56,9 +109,10 @@
   <div class="section-inner">
     <BlurFade delay={0.1}>
       <div class="section-header">
-        <h2 class="section-eyebrow">Flagship Tools</h2>
+        <h2 class="section-eyebrow">Flagship proof surfaces</h2>
         <p class="section-desc">
-          Reusable patterns from real client work. Proof buyers can inspect before they commit.
+          The two core open tools behind the Calm Operator thesis: verify before claiming, then
+          coordinate agent work with memory and evidence.
         </p>
       </div>
     </BlurFade>
@@ -83,15 +137,48 @@
   </div>
 </section>
 
+<!-- Method + Framework -->
+<section class="products-section">
+  <div class="section-inner">
+    <BlurFade delay={0.1}>
+      <div class="section-header">
+        <h2 class="section-eyebrow">Method and control primitives</h2>
+        <p class="section-desc">
+          Framework tools that make the delivery philosophy inspectable before it becomes client
+          workflow infrastructure.
+        </p>
+      </div>
+    </BlurFade>
+    <div class="category-grid">
+      {#each methodAndFramework as product, index}
+        <BlurFade delay={0.2 + index * 0.07}>
+          <a
+            href={product.href}
+            class="product-card category-card"
+            target={isExternal(product.href) ? '_blank' : undefined}
+            rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
+          >
+            <div class="product-badge badge-neutral">{product.badge}</div>
+            <h3 class="product-name">{product.title}</h3>
+            <p class="product-tagline">{product.tagline}</p>
+            <p class="product-description">{product.description}</p>
+            <span class="product-cta">View source →</span>
+          </a>
+        </BlurFade>
+      {/each}
+    </div>
+  </div>
+</section>
+
 <!-- Integration MCPs -->
 <section class="products-section">
   <div class="section-inner">
     <BlurFade delay={0.1}>
       <div class="section-header">
-        <h2 class="section-eyebrow">Integration MCPs</h2>
+        <h2 class="section-eyebrow">Connection wedge MCPs</h2>
         <p class="section-desc">
-          Infrastructure for connecting live systems without asking the team to keep rebuilding
-          context by hand.
+          MCPs prove the connection first. When the workflow becomes strategic, the same wedge can
+          graduate into approvals, blocked states, and operator briefs.
         </p>
       </div>
     </BlurFade>
@@ -121,10 +208,10 @@
   <div class="section-inner">
     <BlurFade delay={0.1}>
       <div class="section-header">
-        <h2 class="section-eyebrow">Client Portfolio</h2>
+        <h2 class="section-eyebrow">Client workflow evidence</h2>
         <p class="section-desc">
-          Selected builds showing the constraints, handoffs, and operating realities behind the
-          work.
+          Selected builds showing how real systems move from integration work into runbooks,
+          policy, handoffs, and operating visibility.
         </p>
       </div>
     </BlurFade>
@@ -159,11 +246,12 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
-      <p class="cta-heading">Need this applied to your workflow?</p>
+      <p class="cta-heading">Need the proof applied to your workflow?</p>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="cta-subtext">
-        I’ll map the first workflow, the risk points, and the cleanest path into production.
+        I’ll map the first workflow, identify the safest MCP wedge, and define when Policy OS
+        should take over.
       </p>
     </BlurFade>
     <BlurFade delay={0.3}>
@@ -257,6 +345,72 @@
     color: var(--color-fg-tertiary);
     line-height: var(--leading-relaxed);
     text-wrap: balance;
+  }
+
+  .proof-map-section {
+    padding: 1rem var(--container-padding, 1.5rem) 3rem;
+  }
+
+  .proof-map {
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    gap: clamp(1rem, 3vw, 1.75rem);
+    padding: clamp(1rem, 2.5vw, 1.5rem);
+    border: 1px solid rgba(255, 255, 255, 0.075);
+    border-radius: 1.25rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.016)),
+      rgba(0, 0, 0, 0.35);
+  }
+
+  .proof-map-copy h2 {
+    margin: 0 0 var(--space-3, 0.75rem);
+    max-width: 16ch;
+    color: var(--color-fg-primary);
+    font-size: var(--text-h2);
+    line-height: 1.05;
+    letter-spacing: var(--tracking-tighter, -0.025em);
+  }
+
+  .proof-map-copy p {
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+  }
+
+  .proof-role-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .proof-role-card {
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .proof-role-card span {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-family: var(--font-mono, monospace);
+    font-size: var(--text-caption);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(167, 184, 255, 0.78);
+  }
+
+  .proof-role-card h3 {
+    margin: 0 0 0.45rem;
+    color: var(--color-fg-primary);
+    font-size: var(--text-body);
+  }
+
+  .proof-role-card p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: var(--leading-relaxed);
   }
 
   /* Products Section */
@@ -465,6 +619,14 @@
 
     .hero-title {
       font-size: var(--text-h2);
+    }
+
+    .proof-map {
+      grid-template-columns: 1fr;
+    }
+
+    .proof-role-grid {
+      grid-template-columns: 1fr;
     }
 
     .featured-grid,

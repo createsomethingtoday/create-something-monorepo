@@ -67,6 +67,9 @@ Exact deploy, normalize, and verify path for the six Phase A reviewer Hub surfac
 17. `onboarding-skills.md`
 Skill-led onboarding sequence for reviewers and operators, including what is included now versus gated for later rollout phases.
 
+18. `notion-agent-prompt.md`
+Minimal Notion agent instruction prompt for reviewer-specific Webflow template review Hubs, including discovery refresh, claim/version-id lookup, visibility-vs-capability language, and trace reporting.
+
 ## Reading order
 
 1. `delivery-package.md`
@@ -86,6 +89,7 @@ Skill-led onboarding sequence for reviewers and operators, including what is inc
 15. `reviewer-hub-policy-records.yaml`
 16. `reviewer-hub-phase-a-operator-runbook.md`
 17. `onboarding-skills.md`
+18. `notion-agent-prompt.md`
 
 ## Related source material
 

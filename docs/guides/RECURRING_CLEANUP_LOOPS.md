@@ -139,7 +139,7 @@ Examples:
 
 ### Outcome B: Tracked follow-up work
 
-If the cleanup is larger than a small targeted fix, create tracked work in Loom.
+If the cleanup is larger than a small targeted fix, create tracked work in Linear.
 
 Examples:
 
@@ -178,14 +178,14 @@ Avoid:
 
 ## Escalation rule
 
-Stop and create Loom work when:
+Stop and create Linear work when:
 
 - the cleanup requires changing package semantics
 - the fix crosses multiple domains with unclear ownership
 - the repository lacks enough evidence to tell which version is correct
 - repeated cleanup suggests a missing lint, checker, or shared helper
 
-## Suggested Loom task shapes
+## Suggested Linear issue shapes
 
 Use task titles like:
 

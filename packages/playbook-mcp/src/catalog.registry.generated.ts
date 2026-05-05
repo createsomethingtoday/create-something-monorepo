@@ -18,18 +18,6 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
-    "name": "Loom",
-    "slug": "loom",
-    "url": "https://loom.mcp.createsomething.agency",
-    "description": "Remote Loom MCP for task coordination and session recovery",
-    "category": "create-something",
-    "transports": [
-      "http"
-    ],
-    "requiresAuth": true,
-    "authType": "bearer"
-  },
-  {
     "name": "Outerfields PCN",
     "slug": "outerfields",
     "url": "https://outerfields.mcp.createsomething.agency",
@@ -91,6 +79,31 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
+    "name": "Webflow App Review",
+    "slug": "webflow-app-review",
+    "url": "https://webflow-app-review-mcp.createsomething.workers.dev",
+    "description": "Webflow App Review MCP for app asset and version workflows",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
+    "name": "Webflow Site Analyzer",
+    "slug": "webflow-site-analyzer",
+    "url": "https://analyzer.mcp.createsomething.agency",
+    "description": "Webflow Site Analyzer MCP — browser-backed template validation with Steel + Groq",
+    "category": "create-something",
+    "transports": [
+      "http"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Webflow Template Review",
     "slug": "webflow-template-review",
     "url": "https://webflow-template-review-mcp.createsomething.workers.dev",
@@ -99,6 +112,18 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "transports": [
       "http",
       "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
+    "name": "YouTube Transcript Notion",
+    "slug": "youtube-transcript-notion",
+    "url": "https://youtube-transcript-notion-mcp.createsomething.workers.dev",
+    "description": "YouTube transcript extraction and Notion transcript enrichment MCP used by Dify client agents",
+    "category": "create-something",
+    "transports": [
+      "http"
     ],
     "requiresAuth": true,
     "authType": "bearer"

@@ -3,13 +3,16 @@ import {
   buildTemplateEnvelope,
   postMarketplaceWebhook,
   type PageCount,
-  type PaymentType,
+  type PaymentType
 } from '../../../../vendor/core/marketplace-webhook';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
-import { WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
+import { getPricingTiers, WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
-import { runPublishedUrlValidation } from '../../../../lib/intake/published-url';
+import {
+  LEGACY_IX2_VALIDATION_MESSAGE,
+  runPublishedUrlValidation
+} from '../../../../lib/intake/published-url';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
@@ -25,6 +28,10 @@ type TemplateSubmissionBody = {
   categories?: string[];
   tags?: string[];
   siteTypes?: string[];
+  pageCount?: string;
+  typeCms?: boolean;
+  typeEcommerce?: boolean;
+  price?: number | string | null;
   styleTags?: string[];
   featureFlags?: string[];
   shortDescription?: string;
@@ -64,7 +71,7 @@ const FEATURE_FLAG_TO_WEBFLOW_FEATURE = Object.freeze({
   'web-fonts': 'Web Fonts',
   'web fonts': 'Web Fonts',
   'retina-ready': 'Retina Ready',
-  'retina ready': 'Retina Ready',
+  'retina ready': 'Retina Ready'
 } satisfies Record<string, string>);
 
 const STYLE_TAG_TO_WEBFLOW_STYLE: Record<string, string> = {
@@ -76,7 +83,7 @@ const STYLE_TAG_TO_WEBFLOW_STYLE: Record<string, string> = {
   minimal: 'Minimal',
   modern: 'Modern',
   playful: 'Playful',
-  retro: 'Retro',
+  retro: 'Retro'
 };
 
 function escapeHtml(value: string): string {
@@ -111,9 +118,24 @@ function normalizePreviewUrl(value: string): string {
 }
 
 function ensureArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.map((item) => String(item).trim()).filter(Boolean)
-    : [];
+  return Array.isArray(value) ? value.map((item) => String(item).trim()).filter(Boolean) : [];
+}
+
+function coercePageCount(value: string | undefined): PageCount | null {
+  if (value === 'One' || value === 'Multi' || value === 'Multi-layout') {
+    return value;
+  }
+
+  return null;
+}
+
+function coerceOptionalPrice(value: number | string | null | undefined): number | undefined {
+  if (value === null || value === undefined || value === '') {
+    return undefined;
+  }
+
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function derivePageCount(siteTypes: string[]): PageCount {
@@ -133,17 +155,16 @@ function mapFeatureFlags(featureFlags: string[]): string[] {
 
   for (const flag of featureFlags) {
     const normalized = flag.trim().toLowerCase();
-    const mappedValue = FEATURE_FLAG_TO_WEBFLOW_FEATURE[
-      normalized as keyof typeof FEATURE_FLAG_TO_WEBFLOW_FEATURE
-    ];
+    const mappedValue =
+      FEATURE_FLAG_TO_WEBFLOW_FEATURE[normalized as keyof typeof FEATURE_FLAG_TO_WEBFLOW_FEATURE];
     if (mappedValue) {
       mapped.add(mappedValue);
     }
   }
 
-  return WEBFLOW_FEATURES
-    .map((feature) => (feature.label === 'Components' ? 'Symbols' : feature.label))
-    .filter((feature) => mapped.has(feature));
+  return WEBFLOW_FEATURES.map((feature) =>
+    feature.label === 'Components' ? 'Symbols' : feature.label
+  ).filter((feature) => mapped.has(feature));
 }
 
 export async function POST(request: Request) {
@@ -177,6 +198,10 @@ export async function POST(request: Request) {
     const category = String(body.category || '').trim();
     const priceModelRaw = String(body.priceModel || '').trim();
     const paymentType: PaymentType = priceModelRaw === 'Paid' ? 'Paid' : 'Free';
+    const requestedPageCount = coercePageCount(
+      typeof body.pageCount === 'string' ? body.pageCount.trim() : undefined
+    );
+    const requestedPrice = coerceOptionalPrice(body.price);
 
     if (!creatorName) {
       return jsonNoStore({ error: 'Creator name is required.' }, { status: 400 });
@@ -252,7 +277,11 @@ export async function POST(request: Request) {
     const publishedValidation = await runPublishedUrlValidation(body.publishedUrl || '');
     if (!publishedValidation.summary.passed) {
       return jsonNoStore(
-        { error: 'Published URL validation failed.' },
+        {
+          error: publishedValidation.summary.legacyIx2Detected
+            ? LEGACY_IX2_VALIDATION_MESSAGE
+            : 'Published URL validation failed.'
+        },
         { status: 400 }
       );
     }
@@ -263,19 +292,28 @@ export async function POST(request: Request) {
       combinedFeatures.add('gsap');
     }
 
-    const pageCount = derivePageCount(siteTypes);
+    const pageCount = requestedPageCount ?? derivePageCount(siteTypes);
     const templateTypeCms =
-      siteTypes.includes('cms') || combinedFeatures.has('cms');
+      body.typeCms === true || siteTypes.includes('cms') || combinedFeatures.has('cms');
     const templateTypeEcommerce =
-      siteTypes.includes('ecommerce') || combinedFeatures.has('ecommerce');
+      body.typeEcommerce === true ||
+      siteTypes.includes('ecommerce') ||
+      combinedFeatures.has('ecommerce');
+    let price: number | undefined;
+    if (paymentType === 'Paid') {
+      const allowedPrices = getPricingTiers(pageCount, templateTypeCms).prices;
+      if (requestedPrice === undefined || !allowedPrices.includes(requestedPrice)) {
+        return jsonNoStore(
+          { error: 'Paid templates require a selected valid price tier.' },
+          { status: 400 }
+        );
+      }
+      price = requestedPrice;
+    }
     const mappedStyles = mapStyleTags(styleTags);
     const mappedFeatures = mapFeatureFlags([...combinedFeatures]);
     const categories =
-      requestedCategories.length > 0
-        ? requestedCategories
-        : category
-          ? [category]
-          : [];
+      requestedCategories.length > 0 ? requestedCategories : category ? [category] : [];
 
     const detailsHtml = [
       `<h2>Submission notes</h2>${toParagraphs(longDescription)}`,
@@ -285,6 +323,12 @@ export async function POST(request: Request) {
       categories.length > 0 ? `<li>Category: ${escapeHtml(categories.join(', '))}</li>` : '',
       tags.length > 0 ? `<li>Tags: ${escapeHtml(tags.join(', '))}</li>` : '',
       styleTags.length > 0 ? `<li>Style tags: ${escapeHtml(styleTags.join(', '))}</li>` : '',
+      pageCount ? `<li>Page count: ${escapeHtml(pageCount)}</li>` : '',
+      templateTypeCms ? '<li>Uses CMS.</li>' : '',
+      templateTypeEcommerce ? '<li>Uses Ecommerce.</li>' : '',
+      paymentType === 'Paid' && price !== undefined
+        ? `<li>Price: $${escapeHtml(String(price))}</li>`
+        : '',
       siteTypes.length > 0 ? `<li>Site types: ${escapeHtml(siteTypes.join(', '))}</li>` : '',
       combinedFeatures.size > 0
         ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
@@ -313,6 +357,7 @@ export async function POST(request: Request) {
         pageCount,
         templateTypeCms,
         templateTypeEcommerce,
+        price,
         categories,
         secondaryTags: tags,
         styles: mappedStyles,
@@ -330,24 +375,24 @@ export async function POST(request: Request) {
           medium: body.utm?.utm_medium,
           campaign: body.utm?.utm_campaign,
           content: body.utm?.utm_content,
-          term: body.utm?.utm_term,
-        },
+          term: body.utm?.utm_term
+        }
       },
-      { submissionId },
+      { submissionId }
     );
 
     const webhookResponse = await postMarketplaceWebhook(envelope);
     if (!webhookResponse.ok) {
       return jsonNoStore(
         { error: `Template submission webhook failed: ${webhookResponse.status}` },
-        { status: 502 },
+        { status: 502 }
       );
     }
 
     return jsonNoStore({
       asset: {
         id: submissionId,
-        name: templateName,
+        name: templateName
       },
       submissionId,
       publishedValidation: {

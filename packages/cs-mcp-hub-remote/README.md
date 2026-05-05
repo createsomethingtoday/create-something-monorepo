@@ -122,10 +122,12 @@ Environment variables:
 - `HUB_ENABLED_BUNDLES` (optional): comma-separated or JSON array (defaults from registry)
 - `HUB_ENABLED_SERVERS` (optional): comma-separated or JSON array
 - `HUB_DISABLED_SERVERS` (optional): comma-separated or JSON array
+- `HUB_REQUIRED_GLOBAL_SERVERS` (optional): comma-separated or JSON array of server names that must be present in every resolved Hub state, default none. Keep this empty unless a reviewed policy requires a global tool dependency.
 - `HUB_DISCOVERY_MODE` (optional): `compact` (default) or `full`
 - `HUB_DISCOVERY_DEFAULT_SERVERS` (optional): comma-separated or JSON array of server names
 - `HUB_DISCOVERY_MAX_PROXY_TOOLS` (optional): positive integer cap; unset/null means no cap
 - `HUB_DISCOVERY_SHARED_PACK` (standard for shared hubs): named default from `config/mcp-hub/discovery-packs.json`
+- `HUB_REQUIRED_DISCOVERY_SERVERS` (optional): comma-separated or JSON array of connected server names always included in discovery preferences, default none.
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
 - `HUB_ACCOUNT_ID` (optional): fallback account ID written to hub telemetry rows
@@ -147,7 +149,7 @@ Shared discovery packs:
 - `c3denver-airtable-gmail-notion`: Airtable, Gmail, Notion
 - `danny-shared-auth-plus-dm-and-operator-notion`: shared auth core plus `halfdozen-dm-mcp` and `halfdozen-operator-notion-mcp`
 - `mj-legacy-shared-auth-plus-meetings`: compact legacy shared auth core plus Meetings
-- `mj-shared-auth-plus-ops-search-meetings-and-review`: full MJ ops lane with shared auth core, Airtable, Exa, Loom, Meetings, and Webflow template review
+- `mj-shared-auth-plus-ops-search-meetings-and-review`: full MJ ops lane with shared auth core, Airtable, Exa, Meetings, and Webflow template review
 - `outerfields-shared-auth-clickup`: shared auth core plus ClickUp
 - List available packs with `hub_list_discovery_packs`
 - Apply one with `hub_set_discovery` by setting `pack`

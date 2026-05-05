@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "status": "imported",
+  "created_at": "2026-04-30",
+  "source_dsl": {
+    "imported_from": "ABUNDANCE HUB.yml",
+    "repo_path": "config/dify-agents/abundance-hub.dify.yml"
+  },
+  "dify_app": {
+    "name": "ABUNDANCE HUB",
+    "type": "agent",
+    "mode": "agent-chat",
+    "description": "BLOND:ISH with Half Dozen | HUB MCP",
+    "recommended_model": "gpt-5.4",
+    "api_response_mode": "streaming",
+    "service_api": {
+      "base_url": "https://api.dify.ai/v1",
+      "api_key_secret": {
+        "environment": "prod",
+        "path": "/dify/abundance-hub",
+        "secret_key": "DIFY_ABUNDANCE_HUB_API_KEY"
+      }
+    }
+  },
+  "service_api_smoke": {
+    "last_checked_at": "2026-04-30",
+    "result": "passed",
+    "message_id": "ce7f84c7-ad60-4779-ba91-fdee071436b6",
+    "conversation_id": "d27a6b77-527b-4a70-9a37-957f840ce8d0",
+    "latency_ms": 5722,
+    "required_tool_used": "list_public_jobs",
+    "forbidden_tools_used": [],
+    "answer_summary": "Found 3 public healthcare/nursing jobs: Travel Med Surg Registered Nurse, Travel Operating Room Registered Nurse, Travel Hospice RN.",
+    "notes": "Dify Service API key works, the agent called list_public_jobs, avoided send_job_to_funnel, and the static bearer path completed without session-token auth language."
+  },
+  "mcp_direct_probe": {
+    "last_checked_at": "2026-04-30",
+    "result": "passed",
+    "static_bearer_secret": "present: prod:/mcp-hub/hubs:ABUNDANCE_MCP_BEARER_TOKEN",
+    "initialize": "ok",
+    "tools_list": "ok: 4 tools",
+    "tools_call": "ok: list_public_jobs",
+    "notes": "The static bearer token is enough for MCP initialize/tools.list and safe list_public_jobs tools/call. The MCP uses standard Streamable HTTP session headers after initialize; it does not require a user identity session."
+  },
+  "mcp_server": {
+    "display_name": "ABUNDANCE JOBS",
+    "server_id": "abundance-jobs",
+    "transport": "http",
+    "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/mcp-hub/hubs",
+        "secret_key": "ABUNDANCE_MCP_BEARER_TOKEN"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "get_job",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["include_raw_payload", "job_id"]
+    },
+    {
+      "name": "list_public_jobs",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["limit", "offset", "source_system", "specialty", "state", "status"]
+    },
+    {
+      "name": "search_public_jobs",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": [
+        "limit",
+        "location",
+        "query",
+        "source_system",
+        "specialty",
+        "state",
+        "status"
+      ]
+    },
+    {
+      "name": "send_job_to_funnel",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["job_id"],
+      "requires_user_confirmation": true
+    }
+  ],
+  "agent_prompt": "You are Abundance Hub, a job-search assistant for public U.S. healthcare and nursing\n  roles.\n\n  Your job is to help users discover relevant public job listings, explain the results\n  clearly, and only take write actions with explicit user approval.\n\n  Tool policy:\n  - Use `list_public_jobs` when the user asks broadly, wants inspiration, or says things\n  like \"show me jobs\", \"what's out there\", or \"what should I look at first\".\n  - Use `search_public_jobs` when the user gives a role, specialty, state, city,\n  employer, or other search criteria.\n  - Use `get_job` when you need to inspect one specific listing in more detail before\n  answering.\n  - Use `send_job_to_funnel` only after the user clearly confirms they want a specific\n  job sent to the funnel.\n\n  Behavior:\n  - Prefer public-jobs language, not demo language.\n  - Do not invent job details. Only use fields returned by tools.\n  - Present results in a concise, recruiter-friendly format.\n  - Include when available: title, employer, city/state, specialty, pay, shift, duration,\n  start date, openings, and source.\n  - If the user asks for “travel nurse” or similarly broad nursing roles, search broadly\n  first, then narrow by state or specialty.\n  - If a search returns no matches, relax one filter at a time and explain what changed.\n  - If multiple strong matches exist, recommend the top 3-5 and explain why.\n  - Before calling `send_job_to_funnel`, confirm the exact job title and job ID with the\n  user.\n  - Never call `send_job_to_funnel` speculatively.\n\n  Response style:\n  - Be direct and concise.\n  - Summarize findings first.\n  - When listing jobs, use short bullets.\n  - Ask at most one clarifying question when needed.",
+  "inventory_target": {
+    "manifest_path": "config/dify-agents/abundance-hub.json",
+    "dsl_path": "config/dify-agents/abundance-hub.dify.yml"
+  }
+}

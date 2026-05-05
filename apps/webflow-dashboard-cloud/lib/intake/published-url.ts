@@ -18,8 +18,12 @@ export interface PublishedUrlValidationSummary {
     success?: boolean;
     passed?: boolean;
     error?: string;
+    referrers?: string[];
     summary?: {
       validGsapCount?: number;
+      flaggedCodeCount?: number;
+      securityRiskCount?: number;
+      passed?: boolean;
     };
     details?: {
       flaggedCode?: Array<{

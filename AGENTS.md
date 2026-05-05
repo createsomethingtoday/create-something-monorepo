@@ -1,36 +1,23 @@
 # Agent Principles & Workflow
 
-This repository uses **Loom** (`lm`) for agent-native coordination.
+This repository uses **Linear** for agent-native coordination.
 
-Important: local `lm` talks to the repo-local `.loom` database. Shared coordination for Symphony and other remote agent lanes now uses the remote Loom MCP control plane at `https://loom.mcp.createsomething.agency/mcp`.
+Important: Linear is now the source of truth for tracked work, ownership, status, and evidence. The previous local and remote Loom queues were migrated into Linear under the `Loom to Linear Coordination Migration` project. Preserve original `lm-*` IDs in Linear issue descriptions for traceability only; do not create new Loom work.
 
-For a fresh local clone that has not initialized the repo-local `.loom` database yet:
-
-```bash
-lm init
-lm ready
-lm claim <id>
-```
-
-For provisioned Ona or other shared remote environments, skip `lm init` and start with:
+Core Linear commands:
 
 ```bash
-lm ready
-pnpm loom:remote ready
+pnpm bootstrap:worktree
+pnpm linear:ready
+pnpm linear:list -- --status open --label code-quality
+pnpm linear:create -- --title "..." --description "..." --label code-quality
+pnpm linear:claim -- --issue CRE-123
+pnpm linear:done -- --issue CRE-123 --evidence "..."
 ```
 
-For shared remote Loom operations, use:
+The Linear wrapper expects `LINEAR_API_KEY` in the environment. Keep the key in Infisical or another secret manager, not in repo files.
 
-```bash
-pnpm loom:remote ready
-pnpm loom:remote list --status ready --label code-quality
-pnpm loom:remote create --title "..." --description "..." --label code-quality
-pnpm loom:remote done --task-id <id> --evidence "..."
-```
-
-Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
-If `lm init` reports that remote Loom is already provisioned, continue with `lm ready` and the `pnpm loom:remote ...` commands instead of retrying `lm init`.
-Do not use bare `lm done` for shared tasks in this repo; use `pnpm loom:remote done --task-id <id> --evidence "..."` instead.
+Do not use `lm`, local `.loom`, or `pnpm loom:*` for new coordination. If legacy Loom evidence is needed, read it as historical migration context and mirror the finding into the relevant Linear issue.
 
 ## What this repo is
 
@@ -78,35 +65,34 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 
 ## Default repo workflow
 
-1. Find or create tracked work in Loom.
+1. Find or create tracked work in Linear.
 2. Verify symbols and import paths before using them.
 3. Run the relevant quality gates.
-4. Record evidence in Loom and use the narrowest trustworthy validation surface.
+4. Record evidence in Linear and use the narrowest trustworthy validation surface.
 5. Push or open/update a PR only when production promotion, shared review, or explicit user intent requires it.
 
 Core commands:
 
 ```bash
-lm ready
-lm ready --ranked
-lm show <id>
-lm claim <id>
-lm done <id>
-lm sync
+pnpm bootstrap:worktree
+
+pnpm linear:ready
+pnpm linear:list -- --status open
+pnpm linear:get -- --issue CRE-123
+pnpm linear:claim -- --issue CRE-123
+pnpm linear:done -- --issue CRE-123 --evidence "Validation: ..."
 
 pnpm check
 pnpm lint
 pnpm test
 ```
 
-For shared orchestration lanes, prefer remote Loom via `pnpm loom:remote ...`.
-Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
+For new worktrees, run `pnpm bootstrap:worktree` before type checks, smoke scripts, or any command that expects `pnpm exec tsc` / `pnpm exec tsx` to exist. Symphony after-create hooks should use the same bootstrap path instead of calling `pnpm install` directly.
 
 ## Git-light delivery
 
 - For DEV and preview work, prefer direct deploy from the current workspace after the relevant checks pass.
-- Record the Loom task ID, package or surface, target environment, commands run, deploy URL or ID, and rollback note in Loom.
-- For non-terminal deploy checkpoints, prefer the surface-specific `pnpm deploy:*:checkpoint` wrappers; use `pnpm loom:deploy:checkpoint` only for custom deploy paths.
+- Record the Linear issue ID, package or surface, target environment, commands run, deploy URL or ID, and rollback note in the Linear issue.
 - Do not commit or push only to manufacture an agent checkpoint.
 - Use Git branches and PRs as the default production promotion boundary unless an approved immutable release path exists.
 - See `docs/policies/v1/policy.git-light-agent-delivery.v1.md` and `docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md`.
@@ -146,7 +132,7 @@ Common library IDs used here:
 ## Tool preference
 
 - **Code verification**: `ground analyze`, `ground find-duplicates`
-- **Task coordination**: `lm`
-- **Priority ranking**: `lm ready --ranked`
+- **Task coordination**: `pnpm linear:*`
+- **Priority ranking**: Linear project views and `pnpm linear:ready`
 
-Loom replaces Beads in this repository. Use remote Loom for shared coordination and local `lm` for repo-local task state.
+Linear replaces Loom in this repository. Use Linear for shared and repo-local task state.

@@ -1,17 +1,13 @@
 # Gastown Patterns
 
-> **⚠️ DEPRECATED**: Gastown has been superseded by **Loom Orchestrator**.
+> **DEPRECATED**: Gastown remains a legacy parallel-agent pattern.
 > 
-> Loom Orchestrator provides:
+> Current CREATE SOMETHING coordination uses Linear and repo-local harness tooling:
 > - Multi-backend support (Claude Code + Gemini CLI)
 > - Smart routing based on task complexity
 > - System notifications
 > 
-> Use Loom via:
-> - **CLI**: `lm daemon start`, `lm ready`, `lm work "title"`
-> - **MCP**: `loom_*` tools (for IDEs that prefer MCP)
-> 
-> See `packages/loom/README.md` for details.
+> Use Linear via `pnpm linear:ready`, `pnpm linear:claim`, and `pnpm linear:done`.
 >
 > Gastown remains available for legacy workflows but is no longer actively maintained.
 

@@ -245,7 +245,7 @@ export default {
     }
 
     // Health / info — self-describes auth surfaces so clients know which tools need which setup
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       const composioEnabled = Boolean(env.COMPOSIO_API_KEY);
       const automationClips = [
         'sync_clips',

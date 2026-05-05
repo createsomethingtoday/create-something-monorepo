@@ -7,7 +7,7 @@ Dedicated Webflow Cloud app that serves the template marketplace submission form
 - Public creator intake + template submission form (two-step)
 - Intake API routes (validation, upload, remote checks, webhook dispatch)
 - Cloudflare Turnstile
-- R2 upload for avatar/thumbnail/gallery images
+- Cloudflare R2-backed upload worker for avatar/thumbnail/gallery images
 
 Out of scope (those live in `apps/webflow-dashboard-cloud`):
 
@@ -22,7 +22,6 @@ Deploy as an independent Webflow Cloud project pointed at this directory. The ex
 Webflow Cloud should provision:
 
 - `ASSETS`: OpenNext static asset binding
-- `UPLOADS`: R2 bucket for dashboard uploads
 
 ## Environment variables
 
@@ -50,6 +49,17 @@ Optional analyzer autofill:
   defaults to `https://webflow-template-analyzer.createsomething.workers.dev`
   and is used by `POST /api/intake/validate-published-url` to suggest template details and
   expose screenshot-download links after a successful validation pass.
+
+Required upload worker:
+
+- `UPLOADS_WORKER_SECRET`
+  shared secret used by `POST /api/intake/upload` when proxying uploads to the worker
+
+Optional upload worker override:
+
+- `UPLOADS_WORKER_URL`
+  public base URL for the dedicated Cloudflare upload worker. If omitted, the app defaults to
+  `https://template-form-uploads.createsomething.workers.dev`.
 
 ## Commands
 
@@ -87,21 +97,14 @@ App-specific overrides (layout, spacing, per-field feedback colors, country pick
 
 ## Parent page embed
 
-Mount the iframe directly below the hero section on `/templates/submit-a-template`, and stop using the old local `join-today` / `submit-today` section-toggle script. The embedded app now accepts three parent-page behaviors:
+The parent Webflow page owns the hero. Mount the iframe directly below that hero on `/templates/submit-a-template`, and let the embedded app own only the creator/template form flow.
 
 - `ts-submission:resize` from the iframe to keep the frame height correct
 - `ts-submission:utm` from the parent to pass through query params
-- `ts-submission:navigate` from the parent to scroll the iframe to either `join-today` or `submit-today`
-
-Give the hero CTA buttons stable ids first:
-
-- `id="submit-button"` on the primary "Submit a template" button
-- `id="join-button"` on the secondary "Become a creator" button
-
-Then place this block below the hero:
+- `ts-submission:scroll-to` from the iframe to make the parent page scroll to the relevant internal section when an in-app link or CTA jumps between creator and template sections
 
 ```html
-<section id="template-submission-app" class="section cc-submission-wrapper">
+<section id="template-submission-app" class="section cc-template-submission-embed">
   <div class="container">
     <iframe
       id="ts-submission-frame"
@@ -117,40 +120,14 @@ Then place this block below the hero:
 <script>
 (function () {
   var frame = document.getElementById('ts-submission-frame');
-  var mount = document.getElementById('template-submission-app');
-  var joinButton = document.getElementById('join-button');
-  var submitButton = document.getElementById('submit-button');
-  var frameLoaded = false;
-  var pendingSection = null;
+  var EMBED_SCROLL_MARGIN = 24;
 
-  if (!frame || !mount) return;
+  if (!frame) return;
 
   function postToFrame(message) {
     try {
       frame.contentWindow.postMessage(message, '*');
     } catch (_) {}
-  }
-
-  function scrollToApp() {
-    window.scrollTo({
-      top: mount.offsetTop,
-      behavior: 'smooth'
-    });
-  }
-
-  function flushPendingSection() {
-    if (!frameLoaded || !pendingSection) return;
-    postToFrame({
-      type: 'ts-submission:navigate',
-      section: pendingSection
-    });
-    pendingSection = null;
-  }
-
-  function openSection(section) {
-    pendingSection = section;
-    scrollToApp();
-    flushPendingSection();
   }
 
   window.addEventListener('message', function (event) {
@@ -167,51 +144,32 @@ Then place this block below the hero:
     ) {
       var frameTop = frame.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({
-        top: Math.max(frameTop + event.data.offsetTop - 24, 0),
+        top: Math.max(0, Math.round(frameTop + event.data.offsetTop - EMBED_SCROLL_MARGIN)),
         behavior: 'smooth'
       });
     }
   });
 
   frame.addEventListener('load', function () {
-    frameLoaded = true;
-
     postToFrame({
       type: 'ts-submission:utm',
       params: Object.fromEntries(new URLSearchParams(location.search))
     });
-
-    var params = new URLSearchParams(location.search);
-    var section = params.get('section');
-    var hash = window.location.hash;
-    if (section === 'submit-today' || hash === '#submit-today') {
-      openSection('submit-today');
-      return;
-    }
-    if (section === 'join-today' || hash === '#join-today') {
-      openSection('join-today');
-      return;
-    }
-
-    flushPendingSection();
   });
-
-  if (joinButton) {
-    joinButton.addEventListener('click', function (event) {
-      event.preventDefault();
-      openSection('join-today');
-    });
-  }
-
-  if (submitButton) {
-    submitButton.addEventListener('click', function (event) {
-      event.preventDefault();
-      openSection('submit-today');
-    });
-  }
 })();
 </script>
 ```
+
+For the parent hero CTA, use a normal anchor to the iframe mount:
+
+```html
+<a href="#template-submission-app" class="button-sp w-inline-block">
+  <div class="u-d-inline-block">Submit a template</div>
+  <div class="button-icon_right">→</div>
+</a>
+```
+
+The embedded app still manages creator-vs-template navigation internally. The “Apply with your first template submission here” link, and the “I already have a creator profile” action, both call back up to the parent page through `ts-submission:scroll-to` so the outer page performs the scroll.
 
 ## Downstream ingestion
 

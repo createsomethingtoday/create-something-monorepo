@@ -825,7 +825,7 @@ export default {
       return TelemetryMCP.serve('/sse').fetch(request, env, ctx);
     }
 
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       return new Response(
         JSON.stringify(
           {

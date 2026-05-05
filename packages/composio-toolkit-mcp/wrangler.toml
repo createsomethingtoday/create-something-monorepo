@@ -23,5 +23,8 @@ enabled = true
 # Optional explicit Airtable auth config id fallback. Merged into COMPOSIO_AUTH_CONFIG_MAP at runtime.
 # COMPOSIO_AIRTABLE_AUTH_CONFIG_ID = "ac_xxx"
 
+# Optional explicit QuickBooks auth config id fallback. Merged into COMPOSIO_AUTH_CONFIG_MAP at runtime.
+# COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID = "ac_xxx"
+
 # Optional cache TTL (seconds) for toolkit inventory + tool definitions.
 # COMPOSIO_TOOL_CACHE_SECONDS = "300"

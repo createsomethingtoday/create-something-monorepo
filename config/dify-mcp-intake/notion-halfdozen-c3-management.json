@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "status": "pending-dify-studio-registration",
+  "owner": "create-something",
+  "created_at": "2026-04-30",
+  "registry_server": {
+    "id": "notion-halfdozen-c3-management",
+    "transport": "http",
+    "url": "https://c3-management-notion.mcp.workway.co/mcp",
+    "description": "Half Dozen Notion MCP for C3 Management",
+    "tags": ["halfdozen", "notion", "c3-management", "workway"],
+    "catalog_exposure_mode": "direct",
+    "estimated_tool_count": 0
+  },
+  "dify_mcp_server": {
+    "server_id": "notion-halfdozen-c3-management",
+    "display_name": "Notion Halfdozen C3 Management",
+    "transport": "http",
+    "url": "https://c3-management-notion.mcp.workway.co/mcp",
+    "auth": {
+      "type": "none"
+    }
+  },
+  "dify_studio_steps": [
+    "Open Dify Studio -> Tools -> MCP.",
+    "Create an HTTP MCP server card with server ID notion-halfdozen-c3-management.",
+    "Set the MCP URL to https://c3-management-notion.mcp.workway.co/mcp.",
+    "Use no authentication for the server card.",
+    "Refresh/discover tools in Dify Studio.",
+    "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
+    "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
+  ],
+  "inventory_fragment_after_tool_discovery": {
+    "notion-halfdozen-c3-management": {
+      "display_name": "Notion Halfdozen C3 Management",
+      "source_mcp_registry_server": "notion-halfdozen-c3-management",
+      "transport": "http",
+      "url": "https://c3-management-notion.mcp.workway.co/mcp",
+      "auth": {
+        "type": "none"
+      },
+      "tools": []
+    }
+  },
+  "notes": [
+    "This intake artifact is not a Dify inventory entry.",
+    "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
+    "Keep secret values in Infisical only; this artifact stores references, not values.",
+    "After the server card is codified, scaffold one or more Dify agents with pnpm dify:agent:scaffold."
+  ]
+}
