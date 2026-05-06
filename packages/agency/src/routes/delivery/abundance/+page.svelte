@@ -32,6 +32,33 @@
     error?: string;
   };
 
+  const reviewPath = [
+    {
+      step: '01',
+      href: '#latest-agent',
+      label: 'Review the latest agent',
+      detail: 'Open the Staff Headcount Agent and confirm what the MCP surface can explain.'
+    },
+    {
+      step: '02',
+      href: '#artifacts',
+      label: 'Open the proof set',
+      detail: 'Use the live app, walkthroughs, and generated package as the client-safe review set.'
+    },
+    {
+      step: '03',
+      href: '#ask-delivery',
+      label: 'Close context gaps',
+      detail: 'Ask the bounded delivery agent what changed, what is private, and what needs a decision.'
+    },
+    {
+      step: '04',
+      href: '#next-review',
+      label: 'Decide the next pass',
+      detail: 'Confirm field mapping, MCP credentials, review ownership, and operator access.'
+    }
+  ];
+
   let deliveryMessages: DeliveryAgentMessage[] = [
     {
       role: 'agent',
@@ -108,6 +135,10 @@
       <p>
         {abundanceDeliverySummary.description}
       </p>
+      <div class="delivery-actions" aria-label="Primary delivery actions">
+        <a href="#latest-agent">Review latest agent</a>
+        <a href="#next-review">See decisions</a>
+      </div>
     </div>
 
     <aside class="delivery-status product-surface product-surface--soft">
@@ -116,11 +147,59 @@
       <p><strong>Owner</strong><span>{abundanceDeliverySummary.owner}</span></p>
       <p><strong>Phase</strong><span>{abundanceDeliverySummary.phase}</span></p>
       <p><strong>Private data</strong><span>Paylocity export received</span></p>
+      <p class="status-note"><strong>Next decision</strong><span>{abundanceNextReview[0]}</span></p>
     </aside>
   </div>
 </section>
 
-<section class="delivery-section">
+<nav class="review-path shell-inner-pad" aria-label="Recommended delivery review path">
+  {#each reviewPath as item}
+    <a href={item.href} class="review-path__item">
+      <span>{item.step}</span>
+      <strong>{item.label}</strong>
+      <small>{item.detail}</small>
+    </a>
+  {/each}
+</nav>
+
+<section class="delivery-section" id="latest-agent">
+  <div class="shell-inner-pad">
+    <div class="agent-delivery product-surface" aria-labelledby="latest-agent-heading">
+      <div class="agent-delivery__copy">
+        <span class="product-kicker">{abundanceStaffHeadcountAgent.meta}</span>
+        <h2 id="latest-agent-heading">{abundanceStaffHeadcountAgent.label}</h2>
+        <p>{abundanceStaffHeadcountAgent.summary}</p>
+
+        <div class="agent-delivery__points">
+          {#each abundanceStaffHeadcountAgent.valuePoints as point}
+            <p>{point}</p>
+          {/each}
+        </div>
+
+        <p class="agent-delivery__guardrail">{abundanceStaffHeadcountAgent.guardrail}</p>
+        <p class="agent-delivery__guardrail">{abundanceStaffHeadcountAgent.evaluationNote}</p>
+
+        <a class="agent-delivery__link" href={abundanceStaffHeadcountAgent.chatUrl} target="_blank" rel="noreferrer">
+          Open full chat
+        </a>
+      </div>
+
+      <div class="agent-delivery__embed" aria-label="Embedded Abundance Staff Headcount Agent">
+        <div class="agent-delivery__embed-header">
+          <span>Embedded review surface</span>
+          <a href={abundanceStaffHeadcountAgent.chatUrl} target="_blank" rel="noreferrer">Open direct</a>
+        </div>
+        <iframe
+          src={abundanceStaffHeadcountAgent.embedUrl}
+          title={abundanceStaffHeadcountAgent.label}
+          allow="microphone"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="delivery-section" id="artifacts">
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Artifacts</span>
@@ -142,40 +221,7 @@
   </div>
 </section>
 
-<section class="delivery-section">
-  <div class="shell-inner-pad">
-    <div class="agent-delivery product-surface">
-      <div class="agent-delivery__copy">
-        <span class="product-kicker">{abundanceStaffHeadcountAgent.meta}</span>
-        <h2>{abundanceStaffHeadcountAgent.label}</h2>
-        <p>{abundanceStaffHeadcountAgent.summary}</p>
-
-        <div class="agent-delivery__points">
-          {#each abundanceStaffHeadcountAgent.valuePoints as point}
-            <p>{point}</p>
-          {/each}
-        </div>
-
-        <p class="agent-delivery__guardrail">{abundanceStaffHeadcountAgent.guardrail}</p>
-        <p class="agent-delivery__guardrail">{abundanceStaffHeadcountAgent.evaluationNote}</p>
-
-        <a class="agent-delivery__link" href={abundanceStaffHeadcountAgent.chatUrl} target="_blank" rel="noreferrer">
-          Open full chat
-        </a>
-      </div>
-
-      <div class="agent-delivery__embed" aria-label="Embedded Abundance Staff Headcount Agent">
-        <iframe
-          src={abundanceStaffHeadcountAgent.embedUrl}
-          title={abundanceStaffHeadcountAgent.label}
-          allow="microphone"
-        ></iframe>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="delivery-section">
+<section class="delivery-section" id="ask-delivery">
   <div class="shell-inner-pad">
     <div class="delivery-agent product-surface">
       <div class="delivery-agent__intro">
@@ -262,7 +308,7 @@
   </div>
 </section>
 
-<section class="delivery-section">
+<section class="delivery-section" id="operating-model">
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Database / Automation / Judgment</span>
@@ -282,7 +328,7 @@
   </div>
 </section>
 
-<section class="delivery-section">
+<section class="delivery-section" id="next-review">
   <div class="shell-inner-pad evidence-layout">
     <div class="product-surface product-surface--soft evidence-panel">
       <span class="product-kicker">Private Source Artifacts</span>
@@ -307,11 +353,15 @@
 </section>
 
 <style>
+  :global(html) {
+    scroll-behavior: smooth;
+  }
+
   .delivery-hero {
-    min-height: 82vh;
+    min-height: auto;
     display: flex;
     align-items: center;
-    padding: clamp(56px, 8vw, 112px) 0 clamp(36px, 6vw, 72px);
+    padding: clamp(48px, 7vw, 82px) 0 clamp(28px, 5vw, 56px);
   }
 
   .delivery-hero__inner {
@@ -347,6 +397,37 @@
     line-height: 1.35;
   }
 
+  .delivery-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .delivery-actions a,
+  .review-path__item {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.055);
+    color: rgba(246, 247, 251, 0.9);
+    text-decoration: none;
+  }
+
+  .delivery-actions a {
+    padding: 11px 14px;
+  }
+
+  .delivery-actions a:first-child {
+    border-color: rgba(94, 234, 212, 0.36);
+    background: rgba(94, 234, 212, 0.12);
+    color: #ffffff;
+  }
+
+  .delivery-actions a:hover,
+  .review-path__item:hover {
+    border-color: rgba(94, 234, 212, 0.72);
+    color: #ffffff;
+  }
+
   .delivery-status {
     display: grid;
     gap: 18px;
@@ -378,6 +459,16 @@
     text-align: right;
   }
 
+  .delivery-status .status-note {
+    display: grid;
+    gap: 8px;
+  }
+
+  .delivery-status .status-note span {
+    text-align: left;
+    line-height: 1.45;
+  }
+
   .status-dot {
     width: 11px;
     height: 11px;
@@ -386,8 +477,42 @@
     box-shadow: 0 0 34px rgba(94, 234, 212, 0.75);
   }
 
+  .review-path {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 0;
+    margin-bottom: clamp(20px, 4vw, 42px);
+  }
+
+  .review-path__item {
+    display: grid;
+    gap: 9px;
+    min-height: 154px;
+    align-content: start;
+    padding: 18px;
+  }
+
+  .review-path__item span {
+    color: #5eead4;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+
+  .review-path__item strong {
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .review-path__item small {
+    color: rgba(246, 247, 251, 0.62);
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+
   .delivery-section {
     padding: clamp(36px, 6vw, 76px) 0;
+    scroll-margin-top: 32px;
   }
 
   .section-lead {
@@ -407,7 +532,7 @@
   .artifact-grid,
   .layer-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
   }
 
@@ -417,7 +542,7 @@
 
   .artifact-link {
     display: grid;
-    min-height: 170px;
+    min-height: 150px;
     align-content: space-between;
     padding: 20px;
     text-decoration: none;
@@ -447,7 +572,7 @@
 
   .agent-delivery {
     display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(340px, 1.1fr);
+    grid-template-columns: minmax(0, 0.86fr) minmax(360px, 1.14fr);
     gap: clamp(18px, 4vw, 34px);
     align-items: stretch;
     padding: clamp(20px, 4vw, 34px);
@@ -505,17 +630,42 @@
   }
 
   .agent-delivery__embed {
-    min-height: 700px;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-height: clamp(560px, 58vw, 700px);
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
     background: rgba(0, 0, 0, 0.32);
+  }
+
+  .agent-delivery__embed-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.035);
+    padding: 11px 14px;
+  }
+
+  .agent-delivery__embed-header span,
+  .agent-delivery__embed-header a {
+    color: rgba(246, 247, 251, 0.72);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    text-decoration: none;
+  }
+
+  .agent-delivery__embed-header a {
+    color: #5eead4;
   }
 
   .agent-delivery__embed iframe {
     display: block;
     width: 100%;
     height: 100%;
-    min-height: 700px;
+    min-height: clamp(500px, 52vw, 640px);
     border: 0;
     background: #0b0b10;
   }
@@ -709,6 +859,7 @@
   @media (max-width: 980px) {
     .delivery-hero__inner,
     .agent-delivery,
+    .review-path,
     .artifact-grid,
     .layer-grid,
     .evidence-layout,
@@ -722,6 +873,26 @@
 
     .chat-message {
       max-width: 100%;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .delivery-copy h1 {
+      font-size: clamp(40px, 13vw, 54px);
+    }
+
+    .delivery-status p {
+      display: grid;
+      gap: 6px;
+    }
+
+    .delivery-status span {
+      text-align: left;
+    }
+
+    .agent-delivery__embed,
+    .agent-delivery__embed iframe {
+      min-height: 620px;
     }
   }
 </style>
