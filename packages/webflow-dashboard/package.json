@@ -10,8 +10,8 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --commit-dirty=true",
-    "deploy:preview": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --branch=preview --commit-dirty=true"
+    "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --commit-dirty=true",
+    "deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --branch=preview --commit-dirty=true"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260317.1",
