@@ -2,11 +2,16 @@
   import { SEO } from '@create-something/canon';
   import {
     abundanceArtifactLinks,
+    abundanceAgentBoundaryCards,
+    abundanceApprovalOwner,
+    abundanceChangesSinceLastUpdate,
     abundanceDeliverySummary,
+    abundanceDeliveryEvidence,
     abundanceStaffHeadcountAgent,
     abundanceNextReview,
     abundanceOperatingLayers,
     abundancePrivateArtifacts,
+    abundanceSafeToForward,
     abundanceSuggestedPrompts
   } from '$lib/delivery/abundance';
 
@@ -162,6 +167,34 @@
   {/each}
 </nav>
 
+<section class="control-strip shell-inner-pad" aria-label="Delivery control summary">
+  <article class="control-card product-surface">
+    <span class="product-kicker">What Changed</span>
+    <h2>Since the last update.</h2>
+    <div class="control-list">
+      {#each abundanceChangesSinceLastUpdate as item}
+        <p>{item}</p>
+      {/each}
+    </div>
+  </article>
+
+  <article class="control-card product-surface control-card--forward">
+    <span class="product-kicker">Safe To Forward</span>
+    <h2>Client-safe summary.</h2>
+    <div class="control-list">
+      {#each abundanceSafeToForward as item}
+        <p>{item}</p>
+      {/each}
+    </div>
+  </article>
+
+  <aside class="control-card product-surface control-card--decision">
+    <span class="product-kicker">Decision Owner</span>
+    <h2>{abundanceApprovalOwner.value}</h2>
+    <p>{abundanceApprovalOwner.detail}</p>
+  </aside>
+</section>
+
 <section class="delivery-section" id="latest-agent">
   <div class="shell-inner-pad">
     <div class="agent-delivery product-surface" aria-labelledby="latest-agent-heading">
@@ -213,6 +246,11 @@
     <div class="artifact-grid">
       {#each abundanceArtifactLinks as artifact}
         <a class="artifact-link product-surface" href={artifact.href} target="_blank" rel="noreferrer">
+          <div class="artifact-badges" aria-label={`${artifact.label} status`}>
+            {#each artifact.badges as badge}
+              <span>{badge}</span>
+            {/each}
+          </div>
           <span>{artifact.meta}</span>
           <strong>{artifact.label}</strong>
         </a>
@@ -325,6 +363,19 @@
         </article>
       {/each}
     </div>
+
+    <div class="boundary-grid" aria-label="Agent boundary">
+      {#each abundanceAgentBoundaryCards as card}
+        <article class={`boundary-card boundary-card--${card.tone}`}>
+          <h3>{card.title}</h3>
+          <div>
+            {#each card.items as item}
+              <p>{item}</p>
+            {/each}
+          </div>
+        </article>
+      {/each}
+    </div>
   </div>
 </section>
 
@@ -346,6 +397,22 @@
       <div class="evidence-list">
         {#each abundanceNextReview as item}
           <p>{item}</p>
+        {/each}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="delivery-section delivery-section--footer">
+  <div class="shell-inner-pad">
+    <div class="version-panel product-surface product-surface--soft">
+      <div>
+        <span class="product-kicker">Version / Evidence</span>
+        <h2>Repo-backed delivery surface.</h2>
+      </div>
+      <div class="version-grid">
+        {#each abundanceDeliveryEvidence as item}
+          <p><strong>{item.label}</strong><span>{item.value}</span></p>
         {/each}
       </div>
     </div>
@@ -510,6 +577,53 @@
     line-height: 1.4;
   }
 
+  .control-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(260px, 0.7fr);
+    gap: 14px;
+    margin-bottom: clamp(12px, 3vw, 26px);
+  }
+
+  .control-card {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+    padding: 22px;
+    border-top: 4px solid rgba(94, 234, 212, 0.78);
+  }
+
+  .control-card--forward {
+    border-top-color: rgba(167, 184, 255, 0.78);
+  }
+
+  .control-card--decision {
+    border-top-color: rgba(247, 200, 115, 0.84);
+  }
+
+  .control-card h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(25px, 3vw, 38px);
+    line-height: 1.02;
+    letter-spacing: 0;
+  }
+
+  .control-card p {
+    margin: 0;
+    color: rgba(246, 247, 251, 0.72);
+    line-height: 1.48;
+  }
+
+  .control-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .control-list p {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 10px;
+  }
+
   .delivery-section {
     padding: clamp(36px, 6vw, 76px) 0;
     scroll-margin-top: 32px;
@@ -544,11 +658,29 @@
     display: grid;
     min-height: 150px;
     align-content: space-between;
+    gap: 16px;
     padding: 20px;
     text-decoration: none;
   }
 
-  .artifact-link span,
+  .artifact-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .artifact-badges span {
+    border: 1px solid rgba(94, 234, 212, 0.28);
+    background: rgba(94, 234, 212, 0.09);
+    color: rgba(246, 247, 251, 0.8);
+    padding: 4px 7px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .artifact-link > span,
   .layer-tier,
   .layer-status {
     color: #5eead4;
@@ -823,8 +955,52 @@
     border-top: 4px solid rgba(167, 184, 255, 0.76);
   }
 
+  .boundary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+  }
+
+  .boundary-card {
+    display: grid;
+    gap: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 4px solid rgba(94, 234, 212, 0.78);
+    background: rgba(255, 255, 255, 0.045);
+    padding: 20px;
+  }
+
+  .boundary-card--review {
+    border-top-color: rgba(247, 200, 115, 0.84);
+  }
+
+  .boundary-card--blocked {
+    border-top-color: rgba(248, 113, 113, 0.78);
+  }
+
+  .boundary-card h3 {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 32px);
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .boundary-card div {
+    display: grid;
+    gap: 9px;
+  }
+
+  .boundary-card p {
+    margin: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(246, 247, 251, 0.72);
+    padding-top: 9px;
+  }
+
   .layer-card h3,
-  .evidence-panel h2 {
+  .evidence-panel h2,
+  .version-panel h2 {
     margin: 14px 0 10px;
     font-size: clamp(24px, 3vw, 36px);
     line-height: 1.05;
@@ -856,13 +1032,55 @@
     padding-top: 12px;
   }
 
+  .delivery-section--footer {
+    padding-top: 0;
+  }
+
+  .version-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 20px;
+    padding: 24px;
+    border-top: 4px solid rgba(94, 234, 212, 0.78);
+  }
+
+  .version-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .version-grid p {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 12px;
+  }
+
+  .version-grid strong {
+    color: #5eead4;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .version-grid span {
+    color: rgba(246, 247, 251, 0.74);
+  }
+
   @media (max-width: 980px) {
     .delivery-hero__inner,
     .agent-delivery,
+    .control-strip,
     .review-path,
     .artifact-grid,
     .layer-grid,
+    .boundary-grid,
     .evidence-layout,
+    .version-panel,
+    .version-grid,
     .delivery-agent__form div {
       grid-template-columns: 1fr;
     }

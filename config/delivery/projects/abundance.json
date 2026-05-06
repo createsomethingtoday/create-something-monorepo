@@ -9,6 +9,23 @@
   "targetKind": "project",
   "deliveryDate": "2026-05-06",
   "headline": "Abundance now has a repo-backed database, API/MCP-facing contract surface, Staff Headcount Agent, and matching-agent boundary that can be delivered as a visible client update instead of a loose status note.",
+  "changesSinceLastUpdate": [
+    "Staff Headcount Agent is embedded as the newest review surface.",
+    "Staff MCP boundary is documented without publishing token-bearing URLs.",
+    "Paylocity active-headcount export is acknowledged as private source context.",
+    "Next decisions are narrowed to field mapping, credential verification, and access ownership."
+  ],
+  "safeToForward": [
+    "NPG now has a live concierge app, Staff Headcount Agent, generated delivery package, and walkthrough artifacts ready for review.",
+    "The database, Staff MCP, Jobs MCP, and agent are framed as one governed staffing workflow rather than disconnected tools.",
+    "The agent supports review and recommendations; recruiters/operators still approve staffing decisions.",
+    "Private employee rows, API keys, MCP tokens, and internal Notion details are intentionally excluded."
+  ],
+  "approvalOwner": {
+    "label": "Approval owner",
+    "value": "Not yet confirmed",
+    "detail": "Confirm the NPG person who can approve operator access, Paylocity field mapping, and recruiter-review boundaries before the next build pass."
+  },
   "recentChangePaths": [
     "docs/ABUNDANCE_NURSE_STAFFING_MEDIA_PLAN_2026-03-12.md",
     "packages/agency/migrations/0001_abundance_network.sql",
@@ -25,6 +42,10 @@
       "kind": "cloudflare_pages_app",
       "visibility": "client_summary",
       "url": "https://abundance-concierge-chat.pages.dev/",
+      "badges": [
+        "Live",
+        "Client-safe"
+      ],
       "summary": "Live production pilot for nurse-facing application intake and concierge flow."
     },
     {
@@ -33,6 +54,10 @@
       "kind": "descript_walkthrough",
       "visibility": "client_summary",
       "url": "https://share.descript.com/view/RWYv3CqKbEC",
+      "badges": [
+        "Walkthrough",
+        "Client-safe"
+      ],
       "summary": "Progress walkthrough for job capture, database state, and connected staffing workflow."
     },
     {
@@ -41,6 +66,10 @@
       "kind": "descript_walkthrough",
       "visibility": "client_summary",
       "url": "https://share.descript.com/view/0wxPcYQzl8G",
+      "badges": [
+        "Walkthrough",
+        "Client-safe"
+      ],
       "summary": "Pilot walkthrough for the Abundance nurse intake and concierge experience."
     },
     {
@@ -50,6 +79,11 @@
       "visibility": "client_summary",
       "url": "https://udify.app/chat/N0MmKYaAQAzgmZhy",
       "embedUrl": "https://udify.app/chatbot/N0MmKYaAQAzgmZhy",
+      "badges": [
+        "Agent",
+        "MCP-backed",
+        "Client-safe"
+      ],
       "summary": "Most recent agent/MCP delivery: a Dify chat surface connected to the Abundance Staff MCP for Paylocity active-headcount summaries, staff profile lookup, and enrichment task tracking. The Dify API key and MCP credentials remain private."
     },
     {
@@ -58,6 +92,10 @@
       "kind": "remote_mcp_server",
       "visibility": "private_internal",
       "url": "https://abundance-staff-mcp.createsomething.workers.dev/mcp",
+      "badges": [
+        "Private reference",
+        "Token excluded"
+      ],
       "summary": "Tokenless endpoint reference for staff/operator MCP access. Credentials are not published."
     },
     {
@@ -66,6 +104,10 @@
       "kind": "remote_mcp_server",
       "visibility": "private_internal",
       "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
+      "badges": [
+        "Private reference",
+        "Token excluded"
+      ],
       "summary": "Tokenless endpoint reference for job capture and job-source workflow access."
     },
     {
@@ -73,6 +115,10 @@
       "label": "Paylocity Active Headcount export",
       "kind": "private_csv_export",
       "visibility": "private_internal",
+      "badges": [
+        "Private",
+        "Rows excluded"
+      ],
       "summary": "Received private Paylocity export with 198 employee rows and 20 columns. Raw rows, local file path, and employee-level data are intentionally excluded from the public delivery."
     },
     {
@@ -80,6 +126,10 @@
       "label": "Abundance staff agent config",
       "kind": "external_agent_config",
       "visibility": "private_internal",
+      "badges": [
+        "Private",
+        "Secrets excluded"
+      ],
       "summary": "Dify staff-agent configuration name for operational alignment. Secret values remain in Infisical or equivalent secret storage."
     }
   ],
@@ -173,6 +223,38 @@
     "Confirm how Paylocity active-headcount fields should map into staff/operator records before importing or enriching production data.",
     "Capture real screenshots from the live Abundance app and walkthrough once the client-visible route is promoted.",
     "Attach Braintrust/eval summaries for the Staff Headcount Agent and MCP surfaces once run artifacts are safe to share."
+  ],
+  "agentBoundary": [
+    {
+      "title": "Can do",
+      "tone": "safe",
+      "items": [
+        "Summarize headcount context",
+        "Look up staff profiles",
+        "Flag missing information",
+        "Prepare recruiter review"
+      ]
+    },
+    {
+      "title": "Needs approval",
+      "tone": "review",
+      "items": [
+        "Operator access changes",
+        "Paylocity field mapping",
+        "Candidate or client outreach",
+        "Roster import decisions"
+      ]
+    },
+    {
+      "title": "Cannot do",
+      "tone": "blocked",
+      "items": [
+        "Autonomously hire",
+        "Reject candidates",
+        "Place staff",
+        "Publish private data or credentials"
+      ]
+    }
   ],
   "imageSpecs": [
     {

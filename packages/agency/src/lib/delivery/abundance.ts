@@ -3,6 +3,7 @@ export type DeliveryArtifact = {
 	href?: string;
 	meta: string;
 	visibility: 'client-safe' | 'private-reference';
+	badges: string[];
 };
 
 export type DeliveryLayer = {
@@ -31,6 +32,12 @@ export type DeliveryAgentEmbed = {
 	evaluationNote: string;
 };
 
+export type DeliveryBoundaryCard = {
+	title: string;
+	tone: 'safe' | 'review' | 'blocked';
+	items: string[];
+};
+
 export const abundanceDeliverySummary = {
 	client: 'The NP Group / NPG',
 	owner: 'CREATE SOMETHING',
@@ -38,6 +45,27 @@ export const abundanceDeliverySummary = {
 	headline: 'Abundance nurse staffing system.',
 	description:
 		'The NP Group now has a live concierge app, a repo-backed database, Staff and Jobs MCP endpoint references, a Staff Headcount Agent, walkthrough artifacts, and a clear agent boundary for recruiter-led review.'
+};
+
+export const abundanceChangesSinceLastUpdate = [
+	'Staff Headcount Agent is embedded as the newest review surface.',
+	'Staff MCP boundary is documented without publishing token-bearing URLs.',
+	'Paylocity active-headcount export is acknowledged as private source context.',
+	'Next decisions are narrowed to field mapping, credential verification, and access ownership.'
+];
+
+export const abundanceSafeToForward = [
+	'NPG now has a live concierge app, Staff Headcount Agent, generated delivery package, and walkthrough artifacts ready for review.',
+	'The database, Staff MCP, Jobs MCP, and agent are framed as one governed staffing workflow rather than disconnected tools.',
+	'The agent supports review and recommendations; recruiters/operators still approve staffing decisions.',
+	'Private employee rows, API keys, MCP tokens, and internal Notion details are intentionally excluded.'
+];
+
+export const abundanceApprovalOwner = {
+	label: 'Approval owner',
+	value: 'Not yet confirmed',
+	detail:
+		'Confirm the NPG person who can approve operator access, Paylocity field mapping, and recruiter-review boundaries before the next build pass.'
 };
 
 export const abundanceStaffHeadcountAgent: DeliveryAgentEmbed = {
@@ -63,31 +91,36 @@ export const abundanceArtifactLinks: DeliveryArtifact[] = [
 		label: 'Abundance Concierge live app',
 		href: 'https://abundance-concierge-chat.pages.dev/',
 		meta: 'Live nurse-facing intake surface',
-		visibility: 'client-safe'
+		visibility: 'client-safe',
+		badges: ['Live', 'Client-safe']
 	},
 	{
 		label: 'Progress walkthrough',
 		href: 'https://share.descript.com/view/RWYv3CqKbEC',
 		meta: 'Current job/database workflow walkthrough',
-		visibility: 'client-safe'
+		visibility: 'client-safe',
+		badges: ['Walkthrough', 'Client-safe']
 	},
 	{
 		label: 'Pilot overview',
 		href: 'https://share.descript.com/view/0wxPcYQzl8G',
 		meta: 'Concierge pilot walkthrough',
-		visibility: 'client-safe'
+		visibility: 'client-safe',
+		badges: ['Walkthrough', 'Client-safe']
 	},
 	{
 		label: 'Staff Headcount Agent',
 		href: abundanceStaffHeadcountAgent.chatUrl,
 		meta: 'Dify chat over Staff MCP',
-		visibility: 'client-safe'
+		visibility: 'client-safe',
+		badges: ['Agent', 'MCP-backed', 'Client-safe']
 	},
 	{
 		label: 'Generated delivery package',
 		href: 'https://create-something-deliveries.pages.dev/projects/abundance/',
 		meta: 'Portable monorepo-generated delivery page',
-		visibility: 'client-safe'
+		visibility: 'client-safe',
+		badges: ['Repo-backed', 'Client-safe']
 	}
 ];
 
@@ -127,6 +160,46 @@ export const abundanceNextReview = [
 	'Verify Staff MCP and Jobs MCP credentials from Infisical.',
 	'Walk through the live app, Staff Headcount Agent, generated delivery package, and MCP boundaries with NPG.',
 	'Decide which operator roster receives MCP/database access.'
+];
+
+export const abundanceAgentBoundaryCards: DeliveryBoundaryCard[] = [
+	{
+		title: 'Can do',
+		tone: 'safe',
+		items: [
+			'Summarize headcount context',
+			'Look up staff profiles',
+			'Flag missing information',
+			'Prepare recruiter review'
+		]
+	},
+	{
+		title: 'Needs approval',
+		tone: 'review',
+		items: [
+			'Operator access changes',
+			'Paylocity field mapping',
+			'Candidate or client outreach',
+			'Roster import decisions'
+		]
+	},
+	{
+		title: 'Cannot do',
+		tone: 'blocked',
+		items: [
+			'Autonomously hire',
+			'Reject candidates',
+			'Place staff',
+			'Publish private data or credentials'
+		]
+	}
+];
+
+export const abundanceDeliveryEvidence = [
+	{ label: 'Last updated', value: 'May 6, 2026' },
+	{ label: 'Tracked work', value: 'CRE-197' },
+	{ label: 'Source', value: 'CREATE SOMETHING monorepo' },
+	{ label: 'Delivery targets', value: '.agency page and standalone package' }
 ];
 
 export const abundanceSuggestedPrompts = [

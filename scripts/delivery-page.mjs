@@ -460,6 +460,35 @@ function renderLayout({ title, body, basePath = '' }) {
       font-size: 14px;
       line-height: 1.4;
     }
+    .control-strip {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(240px, 0.7fr);
+      gap: 14px;
+      margin: 0 0 42px;
+    }
+    .control-card {
+      border-top: 5px solid var(--teal);
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+    .control-card.forward { border-top-color: var(--blue); }
+    .control-card.decision { border-top-color: var(--amber); }
+    .control-card h2 {
+      margin-bottom: 2px;
+    }
+    .control-card p {
+      color: var(--muted);
+    }
+    .control-list {
+      display: grid;
+      gap: 10px;
+    }
+    .control-list p {
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+      margin: 0;
+    }
     .meta {
       border-left: 4px solid var(--teal);
       background: rgba(255, 255, 255, 0.04);
@@ -501,6 +530,12 @@ function renderLayout({ title, body, basePath = '' }) {
     .tag.blue { color: var(--blue); border-color: rgba(37, 99, 235, 0.28); }
     .tag.amber { color: var(--amber); border-color: rgba(161, 98, 7, 0.28); }
     .tag.red { color: var(--red); border-color: rgba(180, 35, 24, 0.28); }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
     .stack { display: grid; gap: 12px; }
     .muted { color: var(--muted); }
     .proof-image {
@@ -522,6 +557,36 @@ function renderLayout({ title, body, basePath = '' }) {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: rgba(0, 0, 0, 0.36);
+    }
+    .boundary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .boundary-card.safe { border-top-color: var(--teal); }
+    .boundary-card.review { border-top-color: var(--amber); }
+    .boundary-card.blocked { border-top-color: var(--red); }
+    .version-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 18px;
+    }
+    .version-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .version-grid p {
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+      margin: 0;
+    }
+    .version-grid strong {
+      display: block;
+      color: var(--teal);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
     table {
       width: 100%;
@@ -547,7 +612,7 @@ function renderLayout({ title, body, basePath = '' }) {
     }
     .footer { border-top: 1px solid var(--line); padding-top: 22px; margin-top: 46px; color: var(--muted); font-size: 13px; }
     @media (max-width: 840px) {
-      .hero, .review-path, .grid, .grid.two { grid-template-columns: 1fr; }
+      .hero, .review-path, .control-strip, .boundary-grid, .version-panel, .version-grid, .grid, .grid.two { grid-template-columns: 1fr; }
       .topbar { align-items: flex-start; flex-direction: column; }
       h1 { font-size: 42px; }
       table { display: block; overflow-x: auto; }
@@ -662,6 +727,34 @@ function renderReviewPath() {
   </nav>`;
 }
 
+function renderControlSummary(project) {
+  const changes = project.changesSinceLastUpdate ?? [];
+  const safeToForward = project.safeToForward ?? [];
+  const approvalOwner = project.approvalOwner;
+
+  if (changes.length === 0 && safeToForward.length === 0 && !approvalOwner) {
+    return '';
+  }
+
+  return `<section class="control-strip" aria-label="Delivery control summary">
+    <article class="card control-card">
+      ${tag('what changed', 'teal')}
+      <h2>Since the last update</h2>
+      <div class="control-list">${changes.map((item) => `<p>${escapeHtml(item)}</p>`).join('\n')}</div>
+    </article>
+    <article class="card control-card forward">
+      ${tag('safe to forward', 'blue')}
+      <h2>Client-safe summary</h2>
+      <div class="control-list">${safeToForward.map((item) => `<p>${escapeHtml(item)}</p>`).join('\n')}</div>
+    </article>
+    <aside class="card control-card decision">
+      ${tag('decision owner', 'amber')}
+      <h2>${escapeHtml(approvalOwner?.value ?? 'Not yet confirmed')}</h2>
+      <p>${escapeHtml(approvalOwner?.detail ?? 'Confirm the person who can approve the next build pass before client-facing changes move forward.')}</p>
+    </aside>
+  </section>`;
+}
+
 function renderComponentCards(project) {
   const tones = ['teal', 'blue', 'amber'];
   return project.components.map((component, index) => `
@@ -672,6 +765,57 @@ function renderComponentCards(project) {
       <p class="muted">${escapeHtml(component.summary)}</p>
     </article>
   `).join('\n');
+}
+
+function renderAgentBoundary(project, agent) {
+  const cards = project.agentBoundary?.length
+    ? project.agentBoundary
+    : [
+      {
+        title: 'Allowed',
+        tone: 'safe',
+        items: agent.allowedActions,
+      },
+      {
+        title: 'Approval Required',
+        tone: 'review',
+        items: agent.approvalRequired,
+      },
+      {
+        title: 'Blocked',
+        tone: 'blocked',
+        items: agent.blockedContent ?? [],
+      },
+    ];
+
+  return `<div class="boundary-grid">
+    ${cards.map((card) => `<article class="card boundary-card ${escapeHtml(card.tone ?? 'safe')}">
+      <h3>${escapeHtml(card.title)}</h3>
+      <div class="stack">${(card.items ?? []).map((item) => `<p class="muted">${escapeHtml(item)}</p>`).join('\n')}</div>
+    </article>`).join('\n')}
+  </div>`;
+}
+
+function renderVersionPanel(project, git) {
+  const items = [
+    ['Last updated', project.deliveryDate ?? 'unknown'],
+    ['Commit', git.shortSha],
+    ['Branch', git.branch],
+    ['Source', `config/delivery/projects/${project.slug}.json`],
+    ['Package', 'create-something-deliveries'],
+    ['Agency route', `/delivery/${project.slug}`],
+  ];
+
+  return `<section class="section">
+    <div class="card teal version-panel">
+      <div>
+        ${tag('version / evidence', 'teal')}
+        <h2>Repo-backed delivery surface</h2>
+        <p class="muted">Generated from monorepo manifests and repo evidence rather than a hand-written status note.</p>
+      </div>
+      <div class="version-grid">${items.map(([label, value]) => `<p><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</p>`).join('\n')}</div>
+    </div>
+  </section>`;
 }
 
 function renderEvidenceTable(project) {
@@ -809,6 +953,7 @@ function renderArtifactUrls(project) {
       <h2>Delivery Artifacts</h2>
       <div class="grid auto">${artifacts.map((artifact) => `
         <article class="card ${artifact.visibility === 'private_internal' ? 'amber' : 'teal'} ${artifact.embedUrl ? 'embed-card' : ''}">
+          ${artifact.badges?.length ? `<div class="badge-row">${artifact.badges.map((badge) => tag(badge, artifact.visibility === 'private_internal' ? 'amber' : 'teal')).join('\n')}</div>` : ''}
           ${tag(artifact.visibility ?? artifact.kind ?? 'artifact', artifact.visibility === 'private_internal' ? 'amber' : 'teal')}
           <h3>${escapeHtml(artifact.label ?? artifact.id)}</h3>
           <p class="muted"><strong>Kind:</strong> ${escapeHtml(artifact.kind ?? 'artifact')}</p>
@@ -849,6 +994,7 @@ function renderProjectPage({ project, agent, git, outputDir, clientRegistry }) {
     </section>
 
     ${renderReviewPath()}
+    ${renderControlSummary(project)}
 
     ${project.notionContext ? `<section class="section" id="client-context">
       <h2>Client Context</h2>
@@ -916,17 +1062,10 @@ function renderProjectPage({ project, agent, git, outputDir, clientRegistry }) {
 
     <section class="section" id="agent-boundary">
       <h2>Agent Boundary</h2>
-      <div class="grid two">
-        <div class="card teal">
-          <h3>Allowed</h3>
-          <p class="muted">${agent.allowedActions.map((action) => escapeHtml(action)).join(', ')}</p>
-        </div>
-        <div class="card red">
-          <h3>Approval Required</h3>
-          <p class="muted">${agent.approvalRequired.map((action) => escapeHtml(action)).join(', ')}</p>
-        </div>
-      </div>
+      ${renderAgentBoundary(project, agent)}
     </section>
+
+    ${renderVersionPanel(project, git)}
 
     <footer class="footer">
       ${updatePath ? `Markdown source: <code>${escapeHtml(relativePath(updatePath))}</code>. ` : ''}
