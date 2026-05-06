@@ -3,6 +3,7 @@
   import {
     abundanceArtifactLinks,
     abundanceDeliverySummary,
+    abundanceStaffHeadcountAgent,
     abundanceNextReview,
     abundanceOperatingLayers,
     abundancePrivateArtifacts,
@@ -137,6 +138,39 @@
           <strong>{artifact.label}</strong>
         </a>
       {/each}
+    </div>
+  </div>
+</section>
+
+<section class="delivery-section">
+  <div class="shell-inner-pad">
+    <div class="agent-delivery product-surface">
+      <div class="agent-delivery__copy">
+        <span class="product-kicker">{abundanceStaffHeadcountAgent.meta}</span>
+        <h2>{abundanceStaffHeadcountAgent.label}</h2>
+        <p>{abundanceStaffHeadcountAgent.summary}</p>
+
+        <div class="agent-delivery__points">
+          {#each abundanceStaffHeadcountAgent.valuePoints as point}
+            <p>{point}</p>
+          {/each}
+        </div>
+
+        <p class="agent-delivery__guardrail">{abundanceStaffHeadcountAgent.guardrail}</p>
+        <p class="agent-delivery__guardrail">{abundanceStaffHeadcountAgent.evaluationNote}</p>
+
+        <a class="agent-delivery__link" href={abundanceStaffHeadcountAgent.chatUrl} target="_blank" rel="noreferrer">
+          Open full chat
+        </a>
+      </div>
+
+      <div class="agent-delivery__embed" aria-label="Embedded Abundance Staff Headcount Agent">
+        <iframe
+          src={abundanceStaffHeadcountAgent.embedUrl}
+          title={abundanceStaffHeadcountAgent.label}
+          allow="microphone"
+        ></iframe>
+      </div>
     </div>
   </div>
 </section>
@@ -411,6 +445,81 @@
     border-top: 4px solid rgba(94, 234, 212, 0.78);
   }
 
+  .agent-delivery {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(340px, 1.1fr);
+    gap: clamp(18px, 4vw, 34px);
+    align-items: stretch;
+    padding: clamp(20px, 4vw, 34px);
+    border-top: 4px solid rgba(167, 184, 255, 0.76);
+  }
+
+  .agent-delivery__copy {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+
+  .agent-delivery__copy h2 {
+    margin: 8px 0 2px;
+    font-family: var(--font-display);
+    font-size: clamp(30px, 5vw, 58px);
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .agent-delivery__copy p {
+    margin: 0;
+    color: rgba(246, 247, 251, 0.72);
+    font-size: 1.03rem;
+    line-height: 1.55;
+  }
+
+  .agent-delivery__points {
+    display: grid;
+    gap: 10px;
+    margin: 4px 0;
+  }
+
+  .agent-delivery__points p,
+  .agent-delivery__guardrail {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 10px;
+  }
+
+  .agent-delivery__guardrail {
+    color: rgba(246, 247, 251, 0.6) !important;
+  }
+
+  .agent-delivery__link {
+    width: fit-content;
+    border: 1px solid rgba(94, 234, 212, 0.36);
+    background: rgba(94, 234, 212, 0.12);
+    color: #ffffff;
+    padding: 11px 14px;
+    text-decoration: none;
+  }
+
+  .agent-delivery__link:hover {
+    border-color: rgba(94, 234, 212, 0.72);
+  }
+
+  .agent-delivery__embed {
+    min-height: 700px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.32);
+  }
+
+  .agent-delivery__embed iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 700px;
+    border: 0;
+    background: #0b0b10;
+  }
+
   .delivery-agent__intro {
     max-width: 820px;
   }
@@ -599,6 +708,7 @@
 
   @media (max-width: 980px) {
     .delivery-hero__inner,
+    .agent-delivery,
     .artifact-grid,
     .layer-grid,
     .evidence-layout,

@@ -8,7 +8,7 @@
   "audience": "client_summary",
   "targetKind": "project",
   "deliveryDate": "2026-05-06",
-  "headline": "Abundance now has a repo-backed database, API/MCP-facing contract surface, and matching-agent boundary that can be delivered as a visible client update instead of a loose status note.",
+  "headline": "Abundance now has a repo-backed database, API/MCP-facing contract surface, Staff Headcount Agent, and matching-agent boundary that can be delivered as a visible client update instead of a loose status note.",
   "recentChangePaths": [
     "docs/ABUNDANCE_NURSE_STAFFING_MEDIA_PLAN_2026-03-12.md",
     "packages/agency/migrations/0001_abundance_network.sql",
@@ -42,6 +42,15 @@
       "visibility": "client_summary",
       "url": "https://share.descript.com/view/0wxPcYQzl8G",
       "summary": "Pilot walkthrough for the Abundance nurse intake and concierge experience."
+    },
+    {
+      "id": "abundance-staff-headcount-agent",
+      "label": "Abundance Staff Headcount Agent",
+      "kind": "dify_chat_app",
+      "visibility": "client_summary",
+      "url": "https://udify.app/chat/N0MmKYaAQAzgmZhy",
+      "embedUrl": "https://udify.app/chatbot/N0MmKYaAQAzgmZhy",
+      "summary": "Most recent agent/MCP delivery: a Dify chat surface connected to the Abundance Staff MCP for Paylocity active-headcount summaries, staff profile lookup, and enrichment task tracking. The Dify API key and MCP credentials remain private."
     },
     {
       "id": "abundance-staff-mcp",
@@ -104,8 +113,8 @@
     "reviewedAt": "2026-05-06"
   },
   "summary": [
-    "The project has moved from concept into a concrete operating system shape: a live concierge app, profile data, matching data, intake history, API routes, MCP endpoints, walkthrough artifacts, and a client-facing explanation layer.",
-    "The current delivery shows the relationship between the created database, the staff/jobs MCP surfaces, and the agent behavior: what the system stores, what tools can be called, and where human review still belongs.",
+    "The project has moved from concept into a concrete operating system shape: a live concierge app, profile data, matching data, intake history, API routes, MCP endpoints, a Staff Headcount Agent, walkthrough artifacts, and a client-facing explanation layer.",
+    "The current delivery shows the relationship between the created database, the staff/jobs MCP surfaces, and the agent behavior: what the system stores, what tools can be called, what the Dify chat can safely answer, and where human review still belongs.",
     "A private Paylocity active-headcount export has been received for staff/operator context. Employee-level rows and token-bearing MCP access remain private and are not included in the public delivery.",
     "The client-ready message should avoid internal tool sprawl. It should say: the nurse intake and matching workflow now has durable data, callable actions, explainable recommendations, and received source artifacts for the next integration pass."
   ],
@@ -143,7 +152,7 @@
       "label": "Matching agent",
       "title": "Agent boundary for intake, shortlist, and escalation",
       "status": "ready-for-review",
-      "summary": "The matching logic can produce an explainable shortlist using skills, budget, and availability. The Dify-side staff agent configuration is tracked as an external artifact, and the client-facing rule remains recommendation support, not autonomous staffing decisions.",
+      "summary": "The matching logic can produce an explainable shortlist using skills, budget, and availability. The Dify-side Staff Headcount Agent is now a client-safe chat surface over the Abundance Staff MCP, and the client-facing rule remains recommendation support, not autonomous staffing decisions.",
       "evidence": [
         "packages/agency/src/lib/abundance/matching.ts",
         "packages/agency/src/routes/api/abundance/match/+server.ts",
@@ -153,16 +162,17 @@
     }
   ],
   "clientUpdate": [
-    "We have the first durable Abundance system shape in place: a live nurse-facing concierge app, a database for nurse/candidate-side profile history and matching state, callable workflow routes for intake and match creation, deployed MCP endpoint references, and a matching layer that returns visible reasons rather than black-box decisions.",
-    "The current implementation supports the core operating path: capture profile context, preserve intake history, create or update demand/supply records, generate suggested matches, and keep the recruiter/human review boundary visible.",
+    "We have the first durable Abundance system shape in place: a live nurse-facing concierge app, a database for nurse/candidate-side profile history and matching state, callable workflow routes for intake and match creation, deployed MCP endpoint references, a Staff Headcount Agent, and a matching layer that returns visible reasons rather than black-box decisions.",
+    "The current implementation supports the core operating path: capture profile context, preserve intake history, create or update demand/supply records, inspect staff/headcount context through chat, generate suggested matches, and keep the recruiter/human review boundary visible.",
     "We also received the Paylocity active-headcount export as private source data for the next staff/operator integration pass. That data is acknowledged here as an artifact, but employee-level records are not included in the public delivery.",
-    "The next useful review is a walkthrough of the live app, DB, callable actions, staff/jobs MCP boundaries, and agent recommendation boundary using the generated delivery page and walkthrough artifacts."
+    "The next useful review is a walkthrough of the live app, Staff Headcount Agent, DB, callable actions, staff/jobs MCP boundaries, and agent recommendation boundary using the generated delivery page and walkthrough artifacts."
   ],
   "nextReview": [
     "Confirm whether the client-facing vocabulary should stay nurse staffing-specific or preserve the generic Seeker/Talent/Match API names underneath.",
     "Verify the Staff MCP and Jobs MCP credentials from Infisical before any live agent smoke test, and rotate any token that was shared in chat if it remains active.",
     "Confirm how Paylocity active-headcount fields should map into staff/operator records before importing or enriching production data.",
-    "Capture real screenshots from the live Abundance app and walkthrough once the client-visible route is promoted."
+    "Capture real screenshots from the live Abundance app and walkthrough once the client-visible route is promoted.",
+    "Attach Braintrust/eval summaries for the Staff Headcount Agent and MCP surfaces once run artifacts are safe to share."
   ],
   "imageSpecs": [
     {

@@ -57,6 +57,15 @@
           "kind": "cloudflare_pages_app",
           "url": "https://abundance-concierge-chat.pages.dev/",
           "role": "Production pilot for nurse-facing marketing entry, guided intake, verification, protected uploads, and recruiter review booking."
+        },
+        {
+          "id": "abundance-staff-headcount-agent-chat",
+          "label": "Abundance Staff Headcount Agent",
+          "status": "live",
+          "kind": "dify_chat_app",
+          "url": "https://udify.app/chat/N0MmKYaAQAzgmZhy",
+          "embedUrl": "https://udify.app/chatbot/N0MmKYaAQAzgmZhy",
+          "role": "Client-safe Dify chat surface connected to the Abundance Staff MCP for Paylocity active-headcount summaries, staff profile lookup, and enrichment task tracking. API keys and MCP credentials remain private."
         }
       ],
       "walkthroughs": [
@@ -162,10 +171,11 @@
         },
         {
           "id": "abundance-staff-dify-agent",
-          "label": "Abundance staff agent",
-          "status": "configured_external",
+          "label": "Abundance Staff Headcount Agent",
+          "status": "live",
           "source": "abundance-staff-agent.yml",
-          "role": "Dify-side staff agent configuration connected to the tokenless Abundance Staff MCP endpoint; credential values remain in secret storage."
+          "url": "https://udify.app/chat/N0MmKYaAQAzgmZhy",
+          "role": "Dify-side staff headcount agent connected to the tokenless Abundance Staff MCP endpoint; credential values remain in secret storage."
         }
       ],
       "coordination": {

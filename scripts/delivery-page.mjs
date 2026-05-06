@@ -479,6 +479,18 @@ function renderLayout({ title, body, basePath = '' }) {
       background: rgba(255, 255, 255, 0.04);
       box-shadow: var(--shadow);
     }
+    .embed-card {
+      display: grid;
+      gap: 16px;
+      grid-column: 1 / -1;
+    }
+    .embed-frame {
+      width: 100%;
+      min-height: 700px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.36);
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -727,12 +739,13 @@ function renderArtifactUrls(project) {
   return `<section class="section">
       <h2>Delivery Artifacts</h2>
       <div class="grid auto">${artifacts.map((artifact) => `
-        <article class="card ${artifact.visibility === 'private_internal' ? 'amber' : 'teal'}">
+        <article class="card ${artifact.visibility === 'private_internal' ? 'amber' : 'teal'} ${artifact.embedUrl ? 'embed-card' : ''}">
           ${tag(artifact.visibility ?? artifact.kind ?? 'artifact', artifact.visibility === 'private_internal' ? 'amber' : 'teal')}
           <h3>${escapeHtml(artifact.label ?? artifact.id)}</h3>
           <p class="muted"><strong>Kind:</strong> ${escapeHtml(artifact.kind ?? 'artifact')}</p>
           ${artifact.url ? `<p><a href="${escapeHtml(artifact.url)}">${escapeHtml(artifact.url)}</a></p>` : ''}
           <p class="muted">${escapeHtml(artifact.summary ?? '')}</p>
+          ${artifact.embedUrl ? `<iframe class="embed-frame" src="${escapeHtml(artifact.embedUrl)}" title="${escapeHtml(artifact.label ?? artifact.id)}" allow="microphone" loading="lazy"></iframe>` : ''}
         </article>
       `).join('\n')}</div>
     </section>`;
@@ -914,7 +927,7 @@ function buildSite({ projects, agent, clientRegistry, outputDir }) {
     '/*',
     '  X-Content-Type-Options: nosniff',
     '  Referrer-Policy: no-referrer-when-downgrade',
-    '  Permissions-Policy: camera=(), microphone=(), geolocation=()',
+    '  Permissions-Policy: camera=(), microphone=(self "https://udify.app"), geolocation=()',
     '',
   ].join('\n'));
 

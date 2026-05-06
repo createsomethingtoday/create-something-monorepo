@@ -20,13 +20,42 @@ export type DeliveryKnowledgeCard = {
 	followUpQuestions: string[];
 };
 
+export type DeliveryAgentEmbed = {
+	label: string;
+	chatUrl: string;
+	embedUrl: string;
+	meta: string;
+	summary: string;
+	valuePoints: string[];
+	guardrail: string;
+	evaluationNote: string;
+};
+
 export const abundanceDeliverySummary = {
 	client: 'The NP Group / NPG',
 	owner: 'CREATE SOMETHING',
 	phase: 'Build / delivery review',
 	headline: 'Abundance nurse staffing system.',
 	description:
-		'The NP Group now has a live concierge app, a repo-backed database, Staff and Jobs MCP endpoint references, walkthrough artifacts, and a clear agent boundary for recruiter-led review.'
+		'The NP Group now has a live concierge app, a repo-backed database, Staff and Jobs MCP endpoint references, a Staff Headcount Agent, walkthrough artifacts, and a clear agent boundary for recruiter-led review.'
+};
+
+export const abundanceStaffHeadcountAgent: DeliveryAgentEmbed = {
+	label: 'Abundance Staff Headcount Agent',
+	chatUrl: 'https://udify.app/chat/N0MmKYaAQAzgmZhy',
+	embedUrl: 'https://udify.app/chatbot/N0MmKYaAQAzgmZhy',
+	meta: 'Latest agent + MCP delivery',
+	summary:
+		'The Staff Headcount Agent is the newest reviewable surface for the Abundance staff/operator workstream. It uses the Abundance Staff MCP as its source of truth for Paylocity active-headcount summaries, staff profile lookup, and enrichment task tracking.',
+	valuePoints: [
+		'Lets NPG inspect active-headcount context through chat instead of reading raw CSV rows.',
+		'Connects the visible agent experience to the Staff MCP boundary rather than a loose prompt.',
+		'Keeps recruiter/operator judgment in the loop for enrichment, access, and staffing decisions.'
+	],
+	guardrail:
+		'The embedded chat is client-safe. The Dify API key, MCP credentials, employee-level exports, and token-bearing URLs stay in secret storage and are not published here.',
+	evaluationNote:
+		'Braintrust/eval evidence is useful as a value translator once attached to run artifacts: tool use, refusal behavior, latency, and MCP boundary checks can be summarized without exposing raw traces or secrets.'
 };
 
 export const abundanceArtifactLinks: DeliveryArtifact[] = [
@@ -46,6 +75,12 @@ export const abundanceArtifactLinks: DeliveryArtifact[] = [
 		label: 'Pilot overview',
 		href: 'https://share.descript.com/view/0wxPcYQzl8G',
 		meta: 'Concierge pilot walkthrough',
+		visibility: 'client-safe'
+	},
+	{
+		label: 'Staff Headcount Agent',
+		href: abundanceStaffHeadcountAgent.chatUrl,
+		meta: 'Dify chat over Staff MCP',
 		visibility: 'client-safe'
 	},
 	{
@@ -69,20 +104,20 @@ export const abundanceOperatingLayers: DeliveryLayer[] = [
 		title: 'Staff and Jobs MCP',
 		status: 'Deployed endpoints',
 		body:
-			'Staff and jobs MCP endpoints are tracked as tokenless delivery artifacts. Credentials stay in secret storage and are not published in the delivery surface.'
+			'Staff and jobs MCP endpoints are tracked as tokenless delivery artifacts. The Staff Headcount Agent now gives NPG a chat surface over the Staff MCP while credentials stay in secret storage.'
 	},
 	{
 		tier: 'Judgment',
 		title: 'Agent Boundary',
 		status: 'Ready for review',
 		body:
-			'The agent supports intake, shortlist, missing-information flags, and recruiter review. It does not autonomously make staffing decisions.'
+			'The agent supports headcount inspection, intake, shortlist, missing-information flags, and recruiter review. It does not autonomously make staffing decisions.'
 	}
 ];
 
 export const abundancePrivateArtifacts = [
 	'Paylocity active-headcount CSV received for private staff/operator context.',
-	'Dify Abundance staff-agent configuration is tracked as an external operational artifact.',
+	'Dify Abundance Staff Headcount Agent is published as a client-safe chat surface; API credentials remain private.',
 	'MCP credentials should be verified from Infisical before live agent smoke tests.',
 	'Any token shared outside secret storage should be rotated before production reliance.'
 ];
@@ -90,7 +125,7 @@ export const abundancePrivateArtifacts = [
 export const abundanceNextReview = [
 	'Confirm how Paylocity fields map into staff/operator records.',
 	'Verify Staff MCP and Jobs MCP credentials from Infisical.',
-	'Walk through the live app, generated delivery package, and MCP boundaries with NPG.',
+	'Walk through the live app, Staff Headcount Agent, generated delivery package, and MCP boundaries with NPG.',
 	'Decide which operator roster receives MCP/database access.'
 ];
 
@@ -98,7 +133,8 @@ export const abundanceSuggestedPrompts = [
 	'Explain what changed in plain English.',
 	'What decisions do you need from us?',
 	'What is safe to forward to our team?',
-	'How do the DB, MCP, and agent fit together?'
+	'How do the DB, MCP, and agent fit together?',
+	'What can we ask the Staff Headcount Agent?'
 ];
 
 export const abundanceKnowledgeCards: DeliveryKnowledgeCard[] = [
@@ -118,7 +154,7 @@ export const abundanceKnowledgeCards: DeliveryKnowledgeCard[] = [
 		label: 'Review artifacts',
 		keywords: ['link', 'links', 'artifact', 'artifacts', 'walkthrough', 'demo', 'live', 'url', 'review'],
 		answer:
-			'The client-safe review set is the Abundance Concierge live app, the progress walkthrough, the pilot overview, and the generated delivery package. These are safe to use for review because they exclude token-bearing MCP URLs, raw employee rows, private Notion details, and contact data.',
+			'The client-safe review set is the Abundance Concierge live app, the Staff Headcount Agent chat, the progress walkthrough, the pilot overview, and the generated delivery package. These are safe to use for review because they exclude token-bearing MCP URLs, raw employee rows, private Notion details, and contact data.',
 		followUpQuestions: [
 			'Who should be included in the review loop?',
 			'Should the generated delivery page remain public-link accessible, or should future delivery pages require login?'
@@ -149,12 +185,34 @@ export const abundanceKnowledgeCards: DeliveryKnowledgeCard[] = [
 	{
 		id: 'agent',
 		label: 'Agent boundary',
-		keywords: ['agent', 'dify', 'chat', 'recommend', 'recommendation', 'judgment', 'decision', 'autonomous'],
+		keywords: [
+			'agent',
+			'dify',
+			'chat',
+			'headcount',
+			'staff',
+			'recommend',
+			'recommendation',
+			'judgment',
+			'decision',
+			'autonomous'
+		],
 		answer:
-			'The agent should be treated as recommendation support. It can support intake, shortlist candidates, flag missing information, and prepare recruiter review, but it should not autonomously hire, place, reject, or make final staffing decisions. That human review boundary is part of the delivery value.',
+			'The Staff Headcount Agent should be treated as review and recommendation support over the Abundance Staff MCP. It can summarize active-headcount context, look up staff profiles, queue enrichment tasks, support intake, shortlist candidates, flag missing information, and prepare recruiter review, but it should not autonomously hire, place, reject, or make final staffing decisions. That human review boundary is part of the delivery value.',
 		followUpQuestions: [
 			'What actions can the agent draft but not send?',
 			'Which recruiter or operator approves matches before anything reaches a candidate or client?'
+		]
+	},
+	{
+		id: 'evaluation',
+		label: 'Evaluation evidence',
+		keywords: ['eval', 'evals', 'braintrust', 'test', 'tests', 'quality', 'proof', 'trace', 'latency'],
+		answer:
+			'Braintrust/eval evidence can help translate the value of the agent and MCP work into proof: which tools were used, whether private material was refused, whether MCP boundaries held, and whether latency was acceptable. The current delivery page should only claim completed evals once run artifacts or summaries are attached; otherwise it should describe evals as the next proof lane.',
+		followUpQuestions: [
+			'Which eval results are safe to share with NPG?',
+			'Should eval evidence be summarized as a client-facing scorecard or kept as an internal appendix?'
 		]
 	},
 	{
