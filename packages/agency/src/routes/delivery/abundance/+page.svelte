@@ -244,15 +244,23 @@
     </div>
 
     <div class="artifact-grid">
-      {#each abundanceArtifactLinks as artifact}
+      {#each abundanceArtifactLinks as artifact, index}
         <a class="artifact-link product-surface" href={artifact.href} target="_blank" rel="noreferrer">
-          <div class="artifact-badges" aria-label={`${artifact.label} status`}>
-            {#each artifact.badges as badge}
-              <span>{badge}</span>
-            {/each}
+          <div class="artifact-link__top">
+            <span class="artifact-index">{String(index + 1).padStart(2, '0')}</span>
+            <div class="artifact-badges" aria-label={`${artifact.label} status`}>
+              {#each artifact.badges as badge}
+                <span>{badge}</span>
+              {/each}
+            </div>
           </div>
-          <span>{artifact.meta}</span>
-          <strong>{artifact.label}</strong>
+
+          <div class="artifact-link__body">
+            <span>{artifact.meta}</span>
+            <strong>{artifact.label}</strong>
+          </div>
+
+          <span class="artifact-open">Open artifact</span>
         </a>
       {/each}
     </div>
@@ -643,11 +651,16 @@
     letter-spacing: 0;
   }
 
-  .artifact-grid,
   .layer-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
+  }
+
+  .artifact-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
   }
 
   .layer-grid {
@@ -656,17 +669,49 @@
 
   .artifact-link {
     display: grid;
-    min-height: 150px;
-    align-content: space-between;
-    gap: 16px;
-    padding: 20px;
+    min-height: 230px;
+    grid-template-rows: auto 1fr auto;
+    gap: 18px;
+    overflow: hidden;
+    padding: 18px;
+    position: relative;
     text-decoration: none;
+  }
+
+  .artifact-link::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(94, 234, 212, 0.72), rgba(167, 184, 255, 0.28), transparent);
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+
+  .artifact-link:hover {
+    border-color: rgba(94, 234, 212, 0.38);
+    transform: translateY(-2px);
+  }
+
+  .artifact-link:hover::after {
+    opacity: 1;
+  }
+
+  .artifact-link__top {
+    display: grid;
+    gap: 12px;
+  }
+
+  .artifact-index {
+    color: rgba(246, 247, 251, 0.42);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
   }
 
   .artifact-badges {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
+    gap: 6px;
   }
 
   .artifact-badges span {
@@ -680,7 +725,13 @@
     letter-spacing: 0.06em;
   }
 
-  .artifact-link > span,
+  .artifact-link__body {
+    align-self: end;
+    display: grid;
+    gap: 13px;
+  }
+
+  .artifact-link__body span,
   .layer-tier,
   .layer-status {
     color: #5eead4;
@@ -691,8 +742,17 @@
   }
 
   .artifact-link strong {
-    font-size: 1.2rem;
+    color: rgba(246, 247, 251, 0.94);
+    font-size: clamp(1.08rem, 1.35vw, 1.28rem);
     line-height: 1.15;
+  }
+
+  .artifact-open {
+    color: rgba(246, 247, 251, 0.48);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
   .delivery-agent {
@@ -1091,6 +1151,12 @@
 
     .chat-message {
       max-width: 100%;
+    }
+  }
+
+  @media (min-width: 981px) and (max-width: 1220px) {
+    .artifact-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
