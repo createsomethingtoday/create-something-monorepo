@@ -3,6 +3,18 @@
   "version": "0.1.0",
   "description": "Multi-session orchestration layer with quality gates and cost tracking",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "control-plane",
+    "entrypoints": [
+      "src/bin/orch.ts",
+      "src/session/lifecycle.ts",
+      "src/coordinator/convoy.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm test"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {

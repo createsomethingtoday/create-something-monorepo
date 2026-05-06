@@ -4,7 +4,15 @@
 	"description": "Agentic visualization components embodying Edward Tufte's principles for displaying quantitative information",
 	"type": "module",
 	"createSomething": {
-		"agentLegibilityContract": true
+		"agentLegibilityContract": true,
+		"tier": "judgment",
+		"surface": "library",
+		"entrypoints": [
+			"src/routes/+page.svelte",
+			"src/lib"
+		],
+		"boot": "pnpm dev",
+		"smoke": "pnpm check"
 	},
 	"license": "MIT",
 	"scripts": {

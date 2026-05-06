@@ -41,7 +41,15 @@
     "vitest": "^2.1.9"
   },
   "createSomething": {
-    "agentLegibilityContract": true
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "harness",
+    "entrypoints": [
+      "src/index.ts",
+      "src/runner.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm test"
   },
   "keywords": [
     "harness",

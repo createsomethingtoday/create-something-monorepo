@@ -126,6 +126,17 @@ packages/agency/
 └── workers/                 # Cloudflare Workers
 ```
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `src/routes/+page.svelte`, `src/routes/services/+page.svelte`, `content/sales/README.md` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check` |
+| Validation surfaces | Svelte check output, Cloudflare Pages build output, route preview, sales content review |
+| UI validation path | `/`, `/services` |
+| Escalation rule | stop if Auth0, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
+
 ## Sales Assets
 
 The active sales system is documented in:

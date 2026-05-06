@@ -4,6 +4,18 @@
   "private": true,
   "description": "CREATE SOMETHING Learning Management System. Teaching the ethos through practice.",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "judgment",
+    "surface": "app",
+    "entrypoints": [
+      "src/routes/+page.svelte",
+      "src/routes/paths/+page.svelte",
+      "src/routes/progress/+page.svelte"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm check"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",

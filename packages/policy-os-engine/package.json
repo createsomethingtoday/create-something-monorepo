@@ -3,6 +3,18 @@
   "version": "0.1.0",
   "description": "Shared POLICY OS policy compiler and hybrid evaluator (Oso Cloud + local fallback).",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "judgment",
+    "surface": "library",
+    "entrypoints": [
+      "src/index.ts",
+      "src/compile.ts",
+      "src/hybrid.ts"
+    ],
+    "boot": "pnpm build",
+    "smoke": "pnpm check && pnpm test"
+  },
   "main": "dist/index.js",
   "types": "src/index.ts",
   "exports": {

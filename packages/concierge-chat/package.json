@@ -4,7 +4,15 @@
   "private": true,
   "description": "Hosted AI-native concierge chat product for progressive profiling and governed tool orchestration.",
   "createSomething": {
-    "agentLegibilityContract": true
+    "agentLegibilityContract": true,
+    "tier": "judgment",
+    "surface": "app",
+    "entrypoints": [
+      "src/routes/+page.svelte",
+      "src/lib/demo/concierge.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm check"
   },
   "type": "module",
   "scripts": {

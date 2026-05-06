@@ -76,6 +76,17 @@ MCP is the **chassis**—the structural frame that holds everything together.
 .ltd (Philosophy) → refined by what creation work reveals
 ```
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `src/routes/+page.svelte`, `src/routes/principles/+page.svelte`, `src/routes/standards/+page.svelte` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check` |
+| Validation surfaces | Svelte check output, route preview, Cloudflare Pages build output |
+| UI validation path | `/`, `/principles`, `/standards` |
+| Escalation rule | stop if a change alters canon, voice, or standards semantics without an explicit judgment artifact or operator decision |
+
 ---
 
 ## Development

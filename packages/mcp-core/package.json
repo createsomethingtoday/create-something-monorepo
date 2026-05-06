@@ -3,6 +3,18 @@
   "version": "0.1.0",
   "description": "Multi-account MCP abstractions — AccountContext, AuthProvider, InsightEmitter. The primitive is always relative.",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "library",
+    "entrypoints": [
+      "src/index.ts",
+      "src/server.ts",
+      "src/context.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm typecheck && pnpm build"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

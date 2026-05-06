@@ -3,6 +3,18 @@
   "version": "0.1.0",
   "description": "Shared broker and identity authorization contracts, manifests, and telemetry for CREATE SOMETHING MCP surfaces.",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "judgment",
+    "surface": "library",
+    "entrypoints": [
+      "src/index.ts",
+      "src/evaluate.ts",
+      "src/policies.ts"
+    ],
+    "boot": "pnpm build",
+    "smoke": "pnpm check && pnpm test"
+  },
   "main": "dist/index.js",
   "types": "src/index.ts",
   "exports": {

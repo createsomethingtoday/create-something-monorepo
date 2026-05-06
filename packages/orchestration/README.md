@@ -19,6 +19,17 @@ Extends harness patterns with multi-session durability. Sessions can crash, rest
 - **Postmortem pipeline**: Capture incident learnings into prevention rules
 - **Work metrics**: Track cycle time, iterations, and reviewer efficacy
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `packages/orchestration/src/bin/orch.ts`, `packages/orchestration/src/session/lifecycle.ts`, `packages/orchestration/src/coordinator/convoy.ts` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm test` |
+| Validation surfaces | TypeScript build output, Vitest output, checkpoint files, convoy/session status output |
+| UI validation path | none |
+| Escalation rule | stop if checkpoint, convoy, cost, or worker state is inconsistent and no durable artifact explains which state is authoritative |
+
 ## Installation
 
 ```bash

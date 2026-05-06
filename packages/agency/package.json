@@ -4,6 +4,18 @@
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
+	"createSomething": {
+		"agentLegibilityContract": true,
+		"tier": "automation",
+		"surface": "app",
+		"entrypoints": [
+			"src/routes/+page.svelte",
+			"src/routes/services/+page.svelte",
+			"content/sales/README.md"
+		],
+		"boot": "pnpm dev",
+		"smoke": "pnpm check"
+	},
 	"scripts": {
 		"dev": "node ./scripts/run-pinned-bin.mjs vite vite dev",
 		"prepare:build-dir": "node ./scripts/prepare-build-dir.mjs",

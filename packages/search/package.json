@@ -4,7 +4,15 @@
   "description": "Unified search across CREATE SOMETHING properties - the full story, at your fingertips",
   "private": true,
   "createSomething": {
-    "agentLegibilityContract": true
+    "agentLegibilityContract": true,
+    "tier": "database",
+    "surface": "worker",
+    "entrypoints": [
+      "src/index.ts",
+      "wrangler.toml"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "curl http://localhost:8787/health"
   },
   "type": "module",
   "scripts": {

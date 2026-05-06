@@ -105,7 +105,9 @@ Examples:
 
 ## Recommended shape
 
-Add an **Agent Legibility Contract** section to the package's `README.md` or `UNDERSTANDING.md`.
+Add an **Agent Legibility Contract** section to the package's `README.md`.
+
+Add package-local `AGENTS.md` as the short instruction file an agent should load first. Keep `UNDERSTANDING.md` for deeper explanatory context when the package needs it; do not make it the primary instruction primitive.
 
 Suggested format:
 
@@ -121,6 +123,25 @@ Suggested format:
 | UI validation path | none |
 | Escalation rule | stop if `/health` is green but the primary workflow still fails |
 ```
+
+Add the matching machine-readable routing facts to `package.json`. Keep this directive small: it should help an agent choose where to start and how to validate, while the README or `UNDERSTANDING.md` carries the richer context.
+
+```json
+{
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "mcp",
+    "entrypoints": ["src/index.ts"],
+    "boot": "pnpm dev",
+    "smoke": "pnpm build"
+  }
+}
+```
+
+Allowed `tier` values are `database`, `automation`, and `judgment`.
+
+Allowed `surface` values are `app`, `mcp`, `worker`, `library`, `harness`, and `control-plane`.
 
 ## Tier-aware guidance
 
@@ -178,14 +199,45 @@ The repository now includes an enforcement script for packages that opt into the
 pnpm agent:legibility:check
 ```
 
+It also includes an on-demand map generated from the same package directives:
+
+```bash
+pnpm agent:legibility:map
+pnpm agent:legibility:map -- --tier automation
+pnpm agent:legibility:map -- --surface mcp --format json
+```
+
+The map is traversal output, not a new source of truth. Fix stale results by updating the package directive, README, or `UNDERSTANDING.md`.
+
+When changing the contract scripts, workflow, or package guidance conventions, run the full focused verification:
+
+```bash
+pnpm agent:legibility:verify
+```
+
+That command syntax-checks the scripts, runs fixture regression tests, checks the live package contracts, and confirms the map can be generated.
+
 Current default scope is discovered from package metadata:
 
+- `packages/agency/README.md`
+- `packages/concierge-chat/README.md`
 - `packages/create-something-mcp/README.md`
+- `packages/cs-mcp-hub/README.md`
 - `packages/harness/README.md`
 - `packages/harness-mcp/README.md`
+- `packages/io/README.md`
+- `packages/judgment-layer/README.md`
+- `packages/lms/README.md`
+- `packages/ltd/README.md`
+- `packages/mcp-authz/README.md`
+- `packages/mcp-core/README.md`
+- `packages/observability/README.md`
+- `packages/orchestration/README.md`
+- `packages/policy-os-engine/README.md`
 - `packages/search/README.md`
 - `packages/space/README.md`
 - `packages/substrate-mcp/README.md`
+- `packages/symphony/README.md`
 - `packages/tufte/README.md`
 
 Packages opt in by setting this field in `package.json`:
@@ -193,7 +245,12 @@ Packages opt in by setting this field in `package.json`:
 ```json
 {
   "createSomething": {
-    "agentLegibilityContract": true
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "harness",
+    "entrypoints": ["src/index.ts"],
+    "boot": "pnpm dev",
+    "smoke": "pnpm test"
   }
 }
 ```
@@ -204,9 +261,13 @@ The check also fails if a package `README.md` contains `## Agent Legibility Cont
 
 For opted-in packages, the check also enforces:
 
-- `UNDERSTANDING.md` must exist
-- `UNDERSTANDING.md` must include the core package-reading section
-- `UNDERSTANDING.md` cannot still contain obvious template placeholder text
+- package directive metadata must include `tier`, `surface`, `entrypoints`, `boot`, and `smoke`
+- package directive `entrypoints` must point to existing files or directories
+- package directive `pnpm` / `npm` boot and smoke scripts must exist in the relevant `package.json`
+- package-local `AGENTS.md` must exist
+- package-local `AGENTS.md` must include `## Agent Entry` and `## Validation`
+- when `UNDERSTANDING.md` exists, it must include the core package-reading section
+- when `UNDERSTANDING.md` exists, it cannot still contain obvious template placeholder text
 - documented entry-point paths in the contract must exist
 - documented `pnpm` / `npm` boot and smoke scripts must exist in the relevant `package.json`
 - for packages with `src/routes`, documented backticked UI validation paths must map to real routes
@@ -218,7 +279,12 @@ A matching GitHub Actions workflow exists at:
 The workflow watches:
 
 - `packages/*/README.md`
+- `packages/*/AGENTS.md`
+- `packages/*/UNDERSTANDING.md`
 - `packages/*/package.json`
+- `scripts/agent-legibility-check.mjs`
+- `scripts/agent-legibility-map.mjs`
+- `scripts/test/agent-legibility.test.mjs`
 
 ## Example
 
