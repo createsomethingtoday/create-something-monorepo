@@ -4,7 +4,14 @@
   "description": "Substrate — the agent-native data layer. Replaces Notion with MCP-managed workspaces where teams interact through agents, not UI.",
   "type": "module",
   "createSomething": {
-    "agentLegibilityContract": true
+    "agentLegibilityContract": true,
+    "tier": "database",
+    "surface": "mcp",
+    "entrypoints": [
+      "src/index.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm typecheck && pnpm build"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

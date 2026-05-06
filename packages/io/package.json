@@ -4,6 +4,18 @@
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
+	"createSomething": {
+		"agentLegibilityContract": true,
+		"tier": "judgment",
+		"surface": "app",
+		"entrypoints": [
+			"src/routes/+page.svelte",
+			"src/routes/papers/+page.svelte",
+			"src/lib/config/plugins.ts"
+		],
+		"boot": "pnpm dev",
+		"smoke": "pnpm check"
+	},
 	"scripts": {
 		"prebuild": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",
 		"dev": "vite dev",

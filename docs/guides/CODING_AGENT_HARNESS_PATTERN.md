@@ -35,11 +35,17 @@ The previous local and remote Loom queues were migrated into Linear. Keep origin
 Before execution, gather:
 
 - the task or issue record
+- package `createSomething` directives
+- package-local `AGENTS.md`
 - relevant docs
 - package-level understanding docs
 - any prior checkpoint or decision memo
 
 The agent should load a map, not a giant manual.
+
+Use `pnpm agent:legibility:map` when the package boundary is unclear. Use `--tier` or `--surface` filters to narrow the traversal before reading package docs.
+
+When changing package directives, package-local `AGENTS.md`, or the legibility scripts themselves, run `pnpm agent:legibility:verify` before closing the task.
 
 ## 3. Execute in isolation
 
@@ -118,12 +124,15 @@ Do not default to "try again with a better prompt."
 If a fact matters to execution, it should be encoded in:
 
 - code
+- package metadata
 - markdown
 - schemas
 - policy artifacts
 - runbooks
 
 If it only exists in chat or memory, it is not reliably visible to the agent.
+
+Package routing facts belong in `package.json` under `createSomething`; short package instructions belong in package-local `AGENTS.md`; detailed context belongs in README and `UNDERSTANDING.md`. Any generated repo map should derive from those artifacts instead of becoming another hand-maintained source of truth.
 
 ### Prefer small loops over heroic runs
 

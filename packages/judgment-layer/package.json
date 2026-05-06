@@ -3,6 +3,18 @@
   "version": "0.1.0",
   "description": "Lightweight, tuneable Judgment Layer prototype built on codex app-server (policy packs + approval gating + Andon logs).",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "judgment",
+    "surface": "control-plane",
+    "entrypoints": [
+      "src/cli.ts",
+      "src/policy/load.ts",
+      "src/checks/eval.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm check && pnpm test"
+  },
   "bin": {
     "cs-judge": "./dist/cli.js"
   },

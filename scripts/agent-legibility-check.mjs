@@ -12,6 +12,16 @@ const REQUIRED_FIELDS = [
   'UI validation path',
   'Escalation rule',
 ];
+const DIRECTIVE_TIERS = new Set(['database', 'automation', 'judgment']);
+const DIRECTIVE_SURFACES = new Set(['app', 'mcp', 'worker', 'library', 'harness', 'control-plane']);
+const REQUIRED_DIRECTIVE_FIELDS = [
+  'tier',
+  'surface',
+  'entrypoints',
+  'boot',
+  'smoke',
+];
+const PACKAGE_AGENT_GUIDANCE_FILE = 'AGENTS.md';
 const UNDERSTANDING_PLACEHOLDERS = [
   '# Understanding: [Package Name]',
   '> **[One-sentence purpose statement]**',
@@ -45,6 +55,10 @@ function parseArgs(argv) {
 
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
+
+    if (arg === '--') {
+      continue;
+    }
 
     if (arg === '--target' && argv[i + 1]) {
       args.targets = argv[++i]
@@ -143,46 +157,147 @@ function findMetadataDrift() {
   return drift;
 }
 
-function findUnderstandingDrift() {
+function findPackageDirectiveDrift() {
   const drift = [];
 
   for (const dirName of listOptedInPackageDirs()) {
-    const understandingPath = path.join(PACKAGES_DIR, dirName, 'UNDERSTANDING.md');
+    const packageDir = path.join(PACKAGES_DIR, dirName);
+    const relPackageJsonPath = normalizePath(path.join('packages', dirName, 'package.json'));
+    const packageJson = getPackageJsonAt(packageDir);
+    const createSomething = packageJson?.createSomething;
+    const details = [];
 
-    const relUnderstandingPath = normalizePath(path.join('packages', dirName, 'UNDERSTANDING.md'));
-
-    if (!existsSync(understandingPath)) {
+    if (!createSomething || typeof createSomething !== 'object') {
       drift.push({
-        target: relUnderstandingPath,
+        target: relPackageJsonPath,
         ok: false,
-        details: ['Opted-in package is missing UNDERSTANDING.md.'],
+        details: ['Missing createSomething package directive metadata.'],
       });
       continue;
     }
 
-    const understanding = readFileSync(understandingPath, 'utf8');
-    const details = [];
-
-    if (!understanding.includes('# Understanding:')) {
-      details.push('Missing top-level understanding heading.');
-    }
-
-    if (!understanding.includes('## To Understand This Package, Read')) {
-      details.push('Missing "## To Understand This Package, Read" section.');
-    }
-
-    for (const placeholder of UNDERSTANDING_PLACEHOLDERS) {
-      if (understanding.includes(placeholder)) {
-        details.push(`Contains template placeholder text: "${placeholder}".`);
+    for (const field of REQUIRED_DIRECTIVE_FIELDS) {
+      if (!(field in createSomething)) {
+        details.push(`Missing createSomething.${field}.`);
       }
+    }
+
+    if (typeof createSomething.tier !== 'string' || !DIRECTIVE_TIERS.has(createSomething.tier)) {
+      details.push(`createSomething.tier must be one of: ${Array.from(DIRECTIVE_TIERS).join(', ')}.`);
+    }
+
+    if (typeof createSomething.surface !== 'string' || !DIRECTIVE_SURFACES.has(createSomething.surface)) {
+      details.push(`createSomething.surface must be one of: ${Array.from(DIRECTIVE_SURFACES).join(', ')}.`);
+    }
+
+    if (!Array.isArray(createSomething.entrypoints) || createSomething.entrypoints.length === 0) {
+      details.push('createSomething.entrypoints must be a non-empty array.');
+    } else {
+      for (const entrypoint of createSomething.entrypoints) {
+        if (typeof entrypoint !== 'string' || entrypoint.trim() === '') {
+          details.push('createSomething.entrypoints must contain non-empty strings.');
+          continue;
+        }
+
+        const fullPath = entrypoint.startsWith('packages/')
+          ? path.join(REPO_ROOT, entrypoint)
+          : path.join(packageDir, entrypoint);
+
+        if (!existsSync(fullPath)) {
+          details.push(`createSomething.entrypoints references a missing path: "${entrypoint}".`);
+        }
+      }
+    }
+
+    if (typeof createSomething.boot !== 'string' || createSomething.boot.trim() === '') {
+      details.push('createSomething.boot must be a non-empty command string.');
+    } else {
+      details.push(...validateScriptCommand(createSomething.boot, packageDir, 'createSomething.boot'));
+    }
+
+    if (typeof createSomething.smoke !== 'string' || createSomething.smoke.trim() === '') {
+      details.push('createSomething.smoke must be a non-empty command string.');
+    } else {
+      details.push(...validateScriptCommand(createSomething.smoke, packageDir, 'createSomething.smoke'));
     }
 
     if (details.length > 0) {
       drift.push({
-        target: relUnderstandingPath,
+        target: relPackageJsonPath,
         ok: false,
         details,
       });
+    }
+  }
+
+  return drift;
+}
+
+function findPackageGuidanceDrift() {
+  const drift = [];
+
+  for (const dirName of listOptedInPackageDirs()) {
+    const agentsPath = path.join(PACKAGES_DIR, dirName, PACKAGE_AGENT_GUIDANCE_FILE);
+    const understandingPath = path.join(PACKAGES_DIR, dirName, 'UNDERSTANDING.md');
+    const relAgentsPath = normalizePath(path.join('packages', dirName, PACKAGE_AGENT_GUIDANCE_FILE));
+    const relUnderstandingPath = normalizePath(path.join('packages', dirName, 'UNDERSTANDING.md'));
+
+    if (!existsSync(agentsPath)) {
+      drift.push({
+        target: relAgentsPath,
+        ok: false,
+        details: ['Opted-in package is missing package-local AGENTS.md.'],
+      });
+    } else {
+      const agents = readFileSync(agentsPath, 'utf8');
+      const details = [];
+
+      if (!agents.includes('# Agents:')) {
+        details.push('Missing top-level agents heading.');
+      }
+
+      if (!agents.includes('## Agent Entry')) {
+        details.push('Missing "## Agent Entry" section.');
+      }
+
+      if (!agents.includes('## Validation')) {
+        details.push('Missing "## Validation" section.');
+      }
+
+      if (details.length > 0) {
+        drift.push({
+          target: relAgentsPath,
+          ok: false,
+          details,
+        });
+      }
+    }
+
+    if (existsSync(understandingPath)) {
+      const understanding = readFileSync(understandingPath, 'utf8');
+      const details = [];
+
+      if (!understanding.includes('# Understanding:')) {
+        details.push('Missing top-level understanding heading.');
+      }
+
+      if (!understanding.includes('## To Understand This Package, Read')) {
+        details.push('Missing "## To Understand This Package, Read" section.');
+      }
+
+      for (const placeholder of UNDERSTANDING_PLACEHOLDERS) {
+        if (understanding.includes(placeholder)) {
+          details.push(`Contains template placeholder text: "${placeholder}".`);
+        }
+      }
+
+      if (details.length > 0) {
+        drift.push({
+          target: relUnderstandingPath,
+          ok: false,
+          details,
+        });
+      }
     }
   }
 
@@ -441,7 +556,8 @@ function main() {
   const results = [
     ...args.targets.map(validateTarget),
     ...findMetadataDrift(),
-    ...findUnderstandingDrift(),
+    ...findPackageDirectiveDrift(),
+    ...findPackageGuidanceDrift(),
   ];
   const passed = results.every((result) => result.ok);
 

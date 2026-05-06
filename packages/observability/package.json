@@ -3,6 +3,18 @@
   "version": "1.0.0",
   "description": "Agent observability utilities with Langfuse integration and AI Interaction Atlas vocabulary",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "database",
+    "surface": "library",
+    "entrypoints": [
+      "src/index.ts",
+      "src/mcp.ts",
+      "src/atlas.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm typecheck && pnpm build"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

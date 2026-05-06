@@ -71,6 +71,17 @@ Example: `create-something__search`
 Routed aliases are configured in `config/mcp-hub/routing.json` and can fail over
 across multiple provider candidates (for example: Arcade -> Composio).
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `packages/cs-mcp-hub/src/index.ts`, `packages/cs-mcp-hub/src/config.ts`, `packages/cs-mcp-hub/src/routing.ts` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm test` |
+| Validation surfaces | TypeScript build output, node test output, hub status output, registry/state/routing file diffs |
+| UI validation path | none |
+| Escalation rule | stop if hub routing, Codex config output, or downstream tool exposure differs from registry/state/routing artifacts and the correct source of truth is unclear |
+
 ## Problem Routing Tool
 
 `hub_route_problem` resolves the "which model for which problem" question by classifying a task across bottleneck axes:

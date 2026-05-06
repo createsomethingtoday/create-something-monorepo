@@ -4,7 +4,14 @@
   "type": "module",
   "description": "MCP server for CREATE SOMETHING harness protocol",
   "createSomething": {
-    "agentLegibilityContract": true
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "mcp",
+    "entrypoints": [
+      "src/index.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm build"
   },
   "main": "dist/index.js",
   "bin": {

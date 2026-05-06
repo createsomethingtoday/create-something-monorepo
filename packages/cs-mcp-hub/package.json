@@ -3,6 +3,18 @@
   "version": "0.1.0",
   "description": "CREATE SOMETHING MCP hub control plane: one MCP gateway with bundle-based downstream routing",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "control-plane",
+    "entrypoints": [
+      "src/index.ts",
+      "src/config.ts",
+      "src/routing.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm test"
+  },
   "main": "dist/index.js",
   "bin": {
     "cs-mcp-hub": "dist/index.js"

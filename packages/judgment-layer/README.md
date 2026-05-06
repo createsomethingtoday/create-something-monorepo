@@ -61,6 +61,17 @@ cs-judge andon --tail 20
 Full playbook:
 `../../docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md`
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `packages/judgment-layer/src/cli.ts`, `packages/judgment-layer/src/policy/load.ts`, `packages/judgment-layer/src/checks/eval.ts` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check && pnpm test` |
+| Validation surfaces | TypeScript check output, node test output, generated policy packs, Andon JSONL entries |
+| UI validation path | none |
+| Escalation rule | stop if a policy decision, approval posture, or Andon record cannot be traced to a policy artifact or explicit operator choice |
+
 ## Operator Flags (Lightweight Defaults)
 
 - `--mcp minimal|inherit`: defaults to `minimal` to avoid optional MCP OAuth/auth breaking runs.

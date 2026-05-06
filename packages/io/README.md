@@ -64,6 +64,19 @@ Templates and scaffolding tools have commoditized *starting* an MCP server. The 
 
 ---
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `src/routes/+page.svelte`, `src/routes/papers/+page.svelte`, `src/lib/config/plugins.ts` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check` |
+| Validation surfaces | Svelte check output, ESLint output, route preview, paper/plugin route responses |
+| UI validation path | `/`, `/papers`, `/plugins` |
+| Escalation rule | stop if research content, plugin catalog, or D1-backed experiment data cannot be reconciled with the checked-in source artifacts |
+
+---
+
 ## Development
 
 ```bash

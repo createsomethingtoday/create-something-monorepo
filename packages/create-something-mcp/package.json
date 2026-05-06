@@ -4,7 +4,15 @@
   "description": "The CREATE SOMETHING Content MCP — a single entry point to all philosophy, research, design system, and practices across properties",
   "type": "module",
   "createSomething": {
-    "agentLegibilityContract": true
+    "agentLegibilityContract": true,
+    "tier": "database",
+    "surface": "mcp",
+    "entrypoints": [
+      "src/index.ts",
+      "worker/index.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm typecheck && pnpm build"
   },
   "main": "dist/index.js",
   "bin": {

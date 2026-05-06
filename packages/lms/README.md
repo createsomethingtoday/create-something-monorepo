@@ -33,6 +33,17 @@ Teaching the ethos through practice. The LMS provides structured learning paths 
 pnpm dev --filter=lms
 ```
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `src/routes/+page.svelte`, `src/routes/paths/+page.svelte`, `src/routes/progress/+page.svelte` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check` |
+| Validation surfaces | Svelte check output, route preview, learning path/progress route responses |
+| UI validation path | `/`, `/paths`, `/progress` |
+| Escalation rule | stop if learner identity, D1 progress state, or curriculum semantics cannot be validated from local fixtures or documented source content |
+
 ## Deployment
 
 ```bash

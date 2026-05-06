@@ -4,7 +4,15 @@
 	"private": true,
 	"version": "1.0.0",
 	"createSomething": {
-		"agentLegibilityContract": true
+		"agentLegibilityContract": true,
+		"tier": "automation",
+		"surface": "app",
+		"entrypoints": [
+			"src/routes",
+			"src/lib"
+		],
+		"boot": "pnpm dev",
+		"smoke": "pnpm check && pnpm build"
 	},
 	"type": "module",
 	"scripts": {

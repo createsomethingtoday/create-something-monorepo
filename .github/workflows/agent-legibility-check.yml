@@ -4,9 +4,14 @@ on:
   pull_request:
     paths:
       - 'packages/*/README.md'
+      - 'packages/*/AGENTS.md'
+      - 'packages/*/UNDERSTANDING.md'
       - 'packages/*/package.json'
       - 'docs/guides/AGENT_LEGIBILITY_CONTRACT.md'
+      - 'docs/guides/CODING_AGENT_HARNESS_PATTERN.md'
       - 'scripts/agent-legibility-check.mjs'
+      - 'scripts/agent-legibility-map.mjs'
+      - 'scripts/test/agent-legibility.test.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/agent-legibility-check.yml'
@@ -15,9 +20,14 @@ on:
       - main
     paths:
       - 'packages/*/README.md'
+      - 'packages/*/AGENTS.md'
+      - 'packages/*/UNDERSTANDING.md'
       - 'packages/*/package.json'
       - 'docs/guides/AGENT_LEGIBILITY_CONTRACT.md'
+      - 'docs/guides/CODING_AGENT_HARNESS_PATTERN.md'
       - 'scripts/agent-legibility-check.mjs'
+      - 'scripts/agent-legibility-map.mjs'
+      - 'scripts/test/agent-legibility.test.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/agent-legibility-check.yml'
@@ -48,5 +58,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run agent legibility check
-        run: pnpm agent:legibility:check
+      - name: Verify agent legibility tooling
+        run: pnpm agent:legibility:verify
