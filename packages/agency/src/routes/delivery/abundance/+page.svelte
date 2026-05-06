@@ -12,6 +12,7 @@
   type DeliveryAgentMessage = {
     role: 'agent' | 'client';
     body: string;
+    reasoningNote?: string;
     grounding?: string[];
     followUpQuestions?: string[];
     insightDraft?: {
@@ -23,6 +24,7 @@
 
   type DeliveryAgentResponse = {
     answer: string;
+    reasoningNote?: string;
     grounding?: string[];
     followUpQuestions?: string[];
     insightDraft?: DeliveryAgentMessage['insightDraft'];
@@ -49,6 +51,7 @@
     }
 
     deliveryAgentError = '';
+    const history = deliveryMessages.slice(-8).map(({ role, body }) => ({ role, body }));
     deliveryMessages = [...deliveryMessages, { role: 'client', body: message }];
     deliveryQuestion = '';
     isAskingDeliveryAgent = true;
@@ -59,7 +62,7 @@
         headers: {
           'content-type': 'application/json'
         },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ message, history })
       });
 
       const payload = (await response.json()) as DeliveryAgentResponse;
@@ -73,6 +76,7 @@
         {
           role: 'agent',
           body: payload.answer,
+          reasoningNote: payload.reasoningNote,
           grounding: payload.grounding,
           followUpQuestions: payload.followUpQuestions,
           insightDraft: payload.insightDraft
@@ -165,6 +169,13 @@
             {#each message.body.split('\n\n') as paragraph}
               <p>{paragraph}</p>
             {/each}
+
+            {#if message.reasoningNote}
+              <div class="agent-meta">
+                <strong>How I read this</strong>
+                <span>{message.reasoningNote}</span>
+              </div>
+            {/if}
 
             {#if message.grounding?.length}
               <div class="agent-meta">
