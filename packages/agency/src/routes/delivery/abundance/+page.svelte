@@ -429,7 +429,16 @@
 
 <style>
   :global(html) {
+    --delivery-radius-chip: var(--radius-sm, 6px);
+    --delivery-radius-control: var(--radius-md, 8px);
+    --delivery-radius-card: var(--radius-lg, 12px);
+    --delivery-radius-surface: var(--radius-lg, 12px);
+    --delivery-radius-full: var(--radius-full, 9999px);
     scroll-behavior: smooth;
+  }
+
+  .product-surface {
+    border-radius: var(--delivery-radius-surface);
   }
 
   .delivery-hero {
@@ -482,6 +491,7 @@
   .delivery-actions a,
   .review-path__item {
     border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--delivery-radius-control);
     background: rgba(255, 255, 255, 0.055);
     color: rgba(246, 247, 251, 0.9);
     text-decoration: none;
@@ -547,7 +557,7 @@
   .status-dot {
     width: 11px;
     height: 11px;
-    border-radius: 999px;
+    border-radius: var(--delivery-radius-full);
     background: #5eead4;
     box-shadow: 0 0 34px rgba(94, 234, 212, 0.75);
   }
@@ -565,6 +575,7 @@
     gap: 9px;
     min-height: 154px;
     align-content: start;
+    border-radius: var(--delivery-radius-card);
     padding: 18px;
   }
 
@@ -675,6 +686,7 @@
     overflow: hidden;
     padding: 18px;
     position: relative;
+    border-radius: var(--delivery-radius-card);
     text-decoration: none;
   }
 
@@ -716,6 +728,7 @@
 
   .artifact-badges span {
     border: 1px solid rgba(94, 234, 212, 0.28);
+    border-radius: var(--delivery-radius-chip);
     background: rgba(94, 234, 212, 0.09);
     color: rgba(246, 247, 251, 0.8);
     padding: 4px 7px;
@@ -811,6 +824,7 @@
   .agent-delivery__link {
     width: fit-content;
     border: 1px solid rgba(94, 234, 212, 0.36);
+    border-radius: var(--delivery-radius-control);
     background: rgba(94, 234, 212, 0.12);
     color: #ffffff;
     padding: 11px 14px;
@@ -827,7 +841,7 @@
     min-height: clamp(560px, 58vw, 700px);
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 8px;
+    border-radius: var(--delivery-radius-card);
     background: rgba(0, 0, 0, 0.32);
   }
 
@@ -891,6 +905,7 @@
   .follow-up-list button,
   .delivery-agent__form button {
     border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--delivery-radius-control);
     background: rgba(255, 255, 255, 0.06);
     color: rgba(246, 247, 251, 0.88);
     padding: 10px 13px;
@@ -925,6 +940,7 @@
     gap: 10px;
     max-width: 82%;
     padding: 16px;
+    border-radius: var(--delivery-radius-card);
     background: rgba(255, 255, 255, 0.055);
     border: 1px solid rgba(255, 255, 255, 0.12);
   }
@@ -988,6 +1004,7 @@
     min-height: 92px;
     resize: vertical;
     border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--delivery-radius-control);
     background: rgba(0, 0, 0, 0.28);
     color: #ffffff;
     padding: 13px 14px;
@@ -1027,6 +1044,7 @@
     gap: 14px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-top: 4px solid rgba(94, 234, 212, 0.78);
+    border-radius: var(--delivery-radius-card);
     background: rgba(255, 255, 255, 0.045);
     padding: 20px;
   }
