@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "id": "delivery-update-agent",
+  "name": "Delivery Update Agent",
+  "mode": "draft_and_stage",
+  "sourceOfTruth": "monorepo",
+  "defaultAudience": "operator",
+  "cadence": {
+    "onDemand": true,
+    "afterMeaningfulRepoChange": true,
+    "beforeClientReview": true,
+    "weeklyDigest": false
+  },
+  "allowedActions": [
+    "read_delivery_project_manifests",
+    "validate_evidence_paths",
+    "generate_project_update_markdown",
+    "generate_deterministic_evidence_images",
+    "write_image2_prompts",
+    "attempt_image2_generation_when_requested",
+    "generate_operator_progress_report",
+    "record_loom_evidence"
+  ],
+  "approvalRequired": [
+    "send_client_email_or_message",
+    "publish_public_case_study",
+    "promote_to_client_portal",
+    "include_real_client_data",
+    "include_credentials_or_secrets",
+    "change_project_scope_or_commercial_commitments",
+    "downgrade_image_model_when_gpt_image_2_is_blocked"
+  ],
+  "blockedContent": [
+    "secrets",
+    "raw_bearer_tokens",
+    "raw_api_keys",
+    "PHI",
+    "unredacted_candidate_or_patient_data",
+    "unapproved_client_private_data",
+    "fake_screenshots_presented_as_real_product_state"
+  ],
+  "deliverySurfaces": [
+    {
+      "id": "repo_markdown",
+      "status": "active",
+      "path": "docs/deliveries",
+      "visibility": "operator"
+    },
+    {
+      "id": "cloudflare_delivery_page",
+      "status": "planned",
+      "visibility": "client_summary",
+      "rule": "Render from generated delivery artifacts and manifests."
+    },
+    {
+      "id": "retool_operator_console",
+      "status": "optional",
+      "visibility": "private_internal",
+      "rule": "Use for operator/admin surfaces, not durable delivery truth."
+    }
+  ],
+  "publishRule": "Agents may generate and stage delivery updates automatically. Client-facing send, public publishing, and scope-changing language require human approval.",
+  "fallbackRule": "If Image 2 is unavailable, keep deterministic evidence images and record the Image 2 block. Do not switch to another model without explicit approval."
+}

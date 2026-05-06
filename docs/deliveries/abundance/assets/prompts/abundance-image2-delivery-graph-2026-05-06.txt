@@ -1,0 +1,7 @@
+Model: gpt-image-2
+Snapshot: gpt-image-2-2026-04-21
+Quality: high
+Size: 1536x1024
+Source: https://openai.com/index/introducing-chatgpt-images-2-0/
+
+Create a polished editorial infographic for a client project update titled "Abundance Nurse Staffing System". Show a left-to-right operating path with three large labeled stages: "Created DB", "MCP/API Surface", and "Matching Agent". Under Created DB, visualize structured records for nurse profiles, job demand, intakes, and matches. Under MCP/API Surface, visualize callable tools, API contract, and controlled access. Under Matching Agent, visualize explainable recommendations, missing-info flags, and human recruiter review. Style: premium SaaS operations diagram, restrained color, crisp typography, calm professional delivery, light background, no stock photography, no real people, no PHI, no client secrets, no fake screenshots. The image should feel client-ready and make the relationship between database, MCP/API, and agent obvious.

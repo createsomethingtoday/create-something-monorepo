@@ -1,0 +1,202 @@
+{
+  "version": 1,
+  "slug": "abundance",
+  "title": "Abundance Nurse Staffing System",
+  "client": "The NP Group",
+  "clientShortName": "NPG",
+  "clientRegistryKey": "npg",
+  "audience": "client_summary",
+  "targetKind": "project",
+  "deliveryDate": "2026-05-06",
+  "headline": "Abundance now has a repo-backed database, API/MCP-facing contract surface, and matching-agent boundary that can be delivered as a visible client update instead of a loose status note.",
+  "recentChangePaths": [
+    "docs/ABUNDANCE_NURSE_STAFFING_MEDIA_PLAN_2026-03-12.md",
+    "packages/agency/migrations/0001_abundance_network.sql",
+    "packages/agency/src/lib/abundance",
+    "packages/agency/src/routes/api/abundance",
+    "packages/agency/static/openapi-abundance.yaml",
+    "packages/agency/docs/ABUNDANCE_NETWORK_SYSTEM_DOCUMENTATION.md",
+    "packages/ltd/src/routes/presentations/abundance-system"
+  ],
+  "artifactUrls": [
+    {
+      "id": "abundance-concierge-chat",
+      "label": "Abundance Concierge live app",
+      "kind": "cloudflare_pages_app",
+      "visibility": "client_summary",
+      "url": "https://abundance-concierge-chat.pages.dev/",
+      "summary": "Live production pilot for nurse-facing application intake and concierge flow."
+    },
+    {
+      "id": "nurse-staffing-concierge-progress-walkthrough",
+      "label": "Nurse Staffing Concierge Progress Walkthrough",
+      "kind": "descript_walkthrough",
+      "visibility": "client_summary",
+      "url": "https://share.descript.com/view/RWYv3CqKbEC",
+      "summary": "Progress walkthrough for job capture, database state, and connected staffing workflow."
+    },
+    {
+      "id": "abundance-concierge-pilot-overview",
+      "label": "Abundance Concierge Pilot Overview",
+      "kind": "descript_walkthrough",
+      "visibility": "client_summary",
+      "url": "https://share.descript.com/view/0wxPcYQzl8G",
+      "summary": "Pilot walkthrough for the Abundance nurse intake and concierge experience."
+    },
+    {
+      "id": "abundance-staff-mcp",
+      "label": "Abundance Staff MCP",
+      "kind": "remote_mcp_server",
+      "visibility": "private_internal",
+      "url": "https://abundance-staff-mcp.createsomething.workers.dev/mcp",
+      "summary": "Tokenless endpoint reference for staff/operator MCP access. Credentials are not published."
+    },
+    {
+      "id": "abundance-jobs-mcp",
+      "label": "Abundance Jobs MCP",
+      "kind": "remote_mcp_server",
+      "visibility": "private_internal",
+      "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
+      "summary": "Tokenless endpoint reference for job capture and job-source workflow access."
+    },
+    {
+      "id": "paylocity-active-headcount",
+      "label": "Paylocity Active Headcount export",
+      "kind": "private_csv_export",
+      "visibility": "private_internal",
+      "summary": "Received private Paylocity export with 198 employee rows and 20 columns. Raw rows, local file path, and employee-level data are intentionally excluded from the public delivery."
+    },
+    {
+      "id": "abundance-staff-agent-yml",
+      "label": "Abundance staff agent config",
+      "kind": "external_agent_config",
+      "visibility": "private_internal",
+      "summary": "Dify staff-agent configuration name for operational alignment. Secret values remain in Infisical or equivalent secret storage."
+    }
+  ],
+  "coordination": {
+    "loomTaskIds": [
+      "lm-6fa69c15",
+      "lm-77370b2c",
+      "lm-6c40dce6"
+    ],
+    "linearIssueIds": [
+      "CRE-182",
+      "CRE-183"
+    ],
+    "linearUrls": [
+      "https://linear.app/createsomething/issue/CRE-182/ship-monorepo-generated-client-delivery-pages",
+      "https://linear.app/createsomething/issue/CRE-183/correct-abundance-delivery-client-context-to-npg"
+    ]
+  },
+  "notionContext": {
+    "source": "CREATE SOMETHING Notion / Agency Ops",
+    "workspaceRoot": "CREATE SOMETHING",
+    "sourceDatabases": [
+      "Clients",
+      "Engagements"
+    ],
+    "engagementTitle": "The NP Group — Abundance AI-native staffing pipeline",
+    "clientRecord": "The NP Group",
+    "phase": "Build",
+    "status": "Active",
+    "visibility": "private_internal",
+    "reviewedAt": "2026-05-06"
+  },
+  "summary": [
+    "The project has moved from concept into a concrete operating system shape: a live concierge app, profile data, matching data, intake history, API routes, MCP endpoints, walkthrough artifacts, and a client-facing explanation layer.",
+    "The current delivery shows the relationship between the created database, the staff/jobs MCP surfaces, and the agent behavior: what the system stores, what tools can be called, and where human review still belongs.",
+    "A private Paylocity active-headcount export has been received for staff/operator context. Employee-level rows and token-bearing MCP access remain private and are not included in the public delivery.",
+    "The client-ready message should avoid internal tool sprawl. It should say: the nurse intake and matching workflow now has durable data, callable actions, explainable recommendations, and received source artifacts for the next integration pass."
+  ],
+  "components": [
+    {
+      "id": "database",
+      "tier": "Database",
+      "label": "Created DB",
+      "title": "D1 schema for profiles, intakes, and matches",
+      "status": "created",
+      "summary": "The Abundance database model captures seekers/open demand, talent/nurse-side supply, matches, and intake history. The schema is intentionally small so the workflow can be explained and audited. The received Paylocity export is treated as private source data for the next staff/operator integration pass.",
+      "evidence": [
+        "packages/agency/migrations/0001_abundance_network.sql",
+        "packages/agency/src/app.d.ts",
+        "packages/agency/docs/ABUNDANCE_NETWORK_SYSTEM_DOCUMENTATION.md"
+      ]
+    },
+    {
+      "id": "mcp",
+      "tier": "Automation",
+      "label": "MCP/API surface",
+      "title": "Callable Abundance actions for agents and workflow tools",
+      "status": "deployed-mcp-ready",
+      "summary": "The Abundance API has route handlers and an OpenAPI contract, plus tokenless references for Staff MCP and Jobs MCP endpoints. Credentials and token-bearing URLs remain outside public delivery artifacts.",
+      "evidence": [
+        "packages/agency/static/openapi-abundance.yaml",
+        "packages/agency/src/routes/api/abundance",
+        "config/mcp-hub/registry.json",
+        "config/mcp-hub/fleet.json"
+      ]
+    },
+    {
+      "id": "agent",
+      "tier": "Judgment",
+      "label": "Matching agent",
+      "title": "Agent boundary for intake, shortlist, and escalation",
+      "status": "ready-for-review",
+      "summary": "The matching logic can produce an explainable shortlist using skills, budget, and availability. The Dify-side staff agent configuration is tracked as an external artifact, and the client-facing rule remains recommendation support, not autonomous staffing decisions.",
+      "evidence": [
+        "packages/agency/src/lib/abundance/matching.ts",
+        "packages/agency/src/routes/api/abundance/match/+server.ts",
+        "packages/agency/src/routes/api/abundance/whatsapp/+server.ts",
+        "packages/ltd/src/routes/presentations/abundance-system/+page.svelte"
+      ]
+    }
+  ],
+  "clientUpdate": [
+    "We have the first durable Abundance system shape in place: a live nurse-facing concierge app, a database for nurse/candidate-side profile history and matching state, callable workflow routes for intake and match creation, deployed MCP endpoint references, and a matching layer that returns visible reasons rather than black-box decisions.",
+    "The current implementation supports the core operating path: capture profile context, preserve intake history, create or update demand/supply records, generate suggested matches, and keep the recruiter/human review boundary visible.",
+    "We also received the Paylocity active-headcount export as private source data for the next staff/operator integration pass. That data is acknowledged here as an artifact, but employee-level records are not included in the public delivery.",
+    "The next useful review is a walkthrough of the live app, DB, callable actions, staff/jobs MCP boundaries, and agent recommendation boundary using the generated delivery page and walkthrough artifacts."
+  ],
+  "nextReview": [
+    "Confirm whether the client-facing vocabulary should stay nurse staffing-specific or preserve the generic Seeker/Talent/Match API names underneath.",
+    "Verify the Staff MCP and Jobs MCP credentials from Infisical before any live agent smoke test, and rotate any token that was shared in chat if it remains active.",
+    "Confirm how Paylocity active-headcount fields should map into staff/operator records before importing or enriching production data.",
+    "Capture real screenshots from the live Abundance app and walkthrough once the client-visible route is promoted."
+  ],
+  "imageSpecs": [
+    {
+      "id": "delivery-graph",
+      "title": "Abundance Delivery Graph",
+      "purpose": "Show how the DB, MCP/API surface, and agent boundary relate."
+    },
+    {
+      "id": "evidence-map",
+      "title": "Abundance Evidence Map",
+      "purpose": "Show which repo artifacts prove each part of the update."
+    }
+  ],
+  "imageGeneration": {
+    "provider": "openai",
+    "model": "gpt-image-2",
+    "snapshot": "gpt-image-2-2026-04-21",
+    "quality": "high",
+    "size": "1536x1024",
+    "sourceUrl": "https://openai.com/index/introducing-chatgpt-images-2-0/",
+    "modelDocUrl": "https://developers.openai.com/api/docs/models/gpt-image-2",
+    "outputs": [
+      {
+        "id": "delivery-graph",
+        "title": "Abundance Image 2 Delivery Graph",
+        "outputName": "abundance-image2-delivery-graph",
+        "prompt": "Create a polished editorial infographic for a client project update titled \"Abundance Nurse Staffing System\". Show a left-to-right operating path with three large labeled stages: \"Created DB\", \"MCP/API Surface\", and \"Matching Agent\". Under Created DB, visualize structured records for nurse profiles, job demand, intakes, and matches. Under MCP/API Surface, visualize callable tools, API contract, and controlled access. Under Matching Agent, visualize explainable recommendations, missing-info flags, and human recruiter review. Style: premium SaaS operations diagram, restrained color, crisp typography, calm professional delivery, light background, no stock photography, no real people, no PHI, no client secrets, no fake screenshots. The image should feel client-ready and make the relationship between database, MCP/API, and agent obvious."
+      },
+      {
+        "id": "evidence-map",
+        "title": "Abundance Image 2 Evidence Map",
+        "outputName": "abundance-image2-evidence-map",
+        "prompt": "Create a polished client-facing evidence map titled \"Abundance Project Evidence\". Show three proof lanes labeled \"Database\", \"Automation\", and \"Judgment\". Database lane should represent schema, D1 tables, profile history, intakes, and matches. Automation lane should represent API routes, OpenAPI contract, MCP-ready tool surface, and workflow calls. Judgment lane should represent matching logic, fit-score explanation, escalation, and recruiter approval. Include visual proof cards and connector lines, but avoid tiny unreadable file paths. Style: editorial technical diagram, clean modern layout, practical consulting delivery artifact, muted neutral background with teal, blue, and amber accents, no real people, no sensitive data, no fake UI screenshots, no watermarks."
+      }
+    ]
+  }
+}
