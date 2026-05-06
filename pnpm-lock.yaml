@@ -500,6 +500,10 @@ importers:
         version: 1.6.1(@types/node@24.10.9)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(terser@5.46.0)
 
   packages/calm-operator-ink-bridge:
+    dependencies:
+      '@create-something/composio-bridge':
+        specifier: workspace:*
+        version: link:../composio-bridge
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260317.1

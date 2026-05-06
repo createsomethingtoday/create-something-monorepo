@@ -203,6 +203,41 @@ curl -sS https://ink.createsomething.agency/ink/alarms/run \
   -d '{"now":"2026-04-29T11:00:00Z"}'
 ```
 
+## Operator reminders
+
+One-off human-in-the-loop reminders are configured with `OPERATOR_REMINDERS_JSON`.
+The Worker checks due reminders on the existing Cron Trigger, records delivery
+state in the Durable Object, and sends each configured channel once.
+
+Supported channels:
+
+- `gmail` sends a plain-text email through the existing Composio bridge and Gmail
+  toolkit. This requires `COMPOSIO_API_KEY` and an active Gmail connection for
+  `OPERATOR_REMINDER_GMAIL_ENTITY_ID`, which defaults to `default`.
+- `ink` writes an `operator_attention` alert for Core Ink.
+
+Run the reminder scheduler manually:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/reminders/run \
+  -X POST \
+  -H "authorization: Bearer $INK_SOURCE_TOKEN" \
+  -d '{"now":"2026-05-11T14:00:00Z"}'
+```
+
+Use `dry_run` to validate due reminders without sending Gmail, posting Ink, or
+recording delivery:
+
+```bash
+curl -sS https://ink.createsomething.agency/ink/reminders/run \
+  -X POST \
+  -H "authorization: Bearer $INK_SOURCE_TOKEN" \
+  -d '{"now":"2026-05-11T14:00:00Z","dry_run":true}'
+```
+
+Grant follow-up is configured as a one-off reminder for Monday, May 11, 2026 at
+9:00 AM CT. The email recipient is configured by `OPERATOR_REMINDER_EMAIL_TO`.
+
 ## Remote health checks
 
 Configure remote checks with `HEALTH_CHECKS_JSON`:
