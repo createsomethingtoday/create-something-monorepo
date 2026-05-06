@@ -30,6 +30,7 @@
 	let formData = $state({
 		name: '',
 		legalName: '',
+		websiteUrl: '',
 		biography: '',
 		avatarUrl: null as string | null
 	});
@@ -50,6 +51,7 @@
 		id: string;
 		name?: string;
 		legalName?: string;
+		websiteUrl?: string;
 		biography?: string;
 		avatarUrl?: string | null;
 		email?: string;
@@ -70,6 +72,7 @@
 			formData = {
 				name: profile.name || '',
 				legalName: profile.legalName || '',
+				websiteUrl: profile.websiteUrl || '',
 				biography: profile.biography || '',
 				avatarUrl: loadedAvatarUrl
 			};
@@ -103,6 +106,7 @@
 			const updateData: Record<string, unknown> = {
 				name: formData.name,
 				legalName: formData.legalName,
+				websiteUrl: formData.websiteUrl,
 				biography: formData.biography
 			};
 			if (formData.avatarUrl !== initialAvatarUrl) {
@@ -130,6 +134,7 @@
 			formData = {
 				name: updated.name || '',
 				legalName: updated.legalName || '',
+				websiteUrl: updated.websiteUrl || '',
 				biography: updated.biography || '',
 				avatarUrl: savedAvatarUrl
 			};
@@ -226,6 +231,17 @@
 										type="text"
 										bind:value={formData.legalName}
 										placeholder="Legal name for contracts"
+									/>
+								</div>
+
+								<div class="form-field">
+									<Label for="websiteUrl">Website URL</Label>
+									<Input
+										id="websiteUrl"
+										type="url"
+										bind:value={formData.websiteUrl}
+										placeholder="https://example.com"
+										autocomplete="url"
 									/>
 								</div>
 

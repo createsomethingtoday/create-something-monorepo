@@ -29,6 +29,18 @@ async function getRecordsByEmail(base: ReturnType<typeof getBase>, email: string
 	return records;
 }
 
+function isValidOptionalUrl(value: unknown) {
+	if (value === undefined || value === null || value === '') return true;
+	if (typeof value !== 'string') return false;
+
+	try {
+		const url = new URL(value);
+		return url.protocol === 'https:' || url.protocol === 'http:';
+	} catch {
+		return false;
+	}
+}
+
 export const GET: RequestHandler = async ({ locals, platform }) => {
 	try {
 		if (!locals.user?.email) {
@@ -66,7 +78,8 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				email: email,
 				avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
 				biography: record.fields['ℹ️Biography'] as string,
-				legalName: record.fields['ℹ️Legal Name'] as string
+				legalName: record.fields['ℹ️Legal Name'] as string,
+				websiteUrl: record.fields['🔗Personal Site'] as string
 			},
 			{ headers: noCacheHeaders }
 		);
@@ -84,6 +97,7 @@ interface ProfileUpdateData {
 	name?: string;
 	biography?: string;
 	legalName?: string;
+	websiteUrl?: string | null;
 	avatarUrl?: string | null;
 }
 
@@ -108,15 +122,26 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 
 		const email = locals.user.email;
 		const data = (await request.json()) as ProfileUpdateData;
+		const hasWebsiteUrl = Object.prototype.hasOwnProperty.call(data, 'websiteUrl');
+		const websiteUrl =
+			typeof data.websiteUrl === 'string'
+				? data.websiteUrl.trim()
+				: data.websiteUrl === null
+					? ''
+					: data.websiteUrl;
+
+		if (!isValidOptionalUrl(websiteUrl)) {
+			throw error(400, 'Website URL is invalid');
+		}
 
 		const base = getBase(platform.env as { AIRTABLE_API_KEY: string; AIRTABLE_BASE_ID: string });
 
 		// Step 1: Find creator (same query as GET — errors propagate, not swallowed)
 		const records = await getRecordsByEmail(base, email);
 
-			if (!records || records.length === 0) {
-				throw error(404, 'Profile not found');
-			}
+		if (!records || records.length === 0) {
+			throw error(404, 'Profile not found');
+		}
 
 		const recordId = records[0].id;
 
@@ -127,6 +152,7 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		if (data.name !== undefined) fields['Name'] = data.name;
 		if (data.biography !== undefined) fields['ℹ️Biography'] = data.biography;
 		if (data.legalName !== undefined) fields['ℹ️Legal Name'] = data.legalName;
+		if (hasWebsiteUrl) fields['🔗Personal Site'] = websiteUrl;
 		// Avatar: use field ID (fldyddTon9Lu8BR8G) to match original dashboard exactly
 		if (data.avatarUrl !== undefined) {
 			fields['fldyddTon9Lu8BR8G'] = data.avatarUrl ? [{ url: data.avatarUrl }] : [];
@@ -153,7 +179,8 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 				email: email,
 				avatarUrl: (updated.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
 				biography: updated.fields['ℹ️Biography'] as string,
-				legalName: updated.fields['ℹ️Legal Name'] as string
+				legalName: updated.fields['ℹ️Legal Name'] as string,
+				websiteUrl: updated.fields['🔗Personal Site'] as string
 			},
 			{ headers: noCacheHeaders }
 		);
