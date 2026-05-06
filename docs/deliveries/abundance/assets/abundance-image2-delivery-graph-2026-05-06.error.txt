@@ -1,0 +1,5 @@
+Image 2 generation did not complete for delivery-graph.
+Requested model: gpt-image-2
+OpenAI returned 403: the organization must be verified before it can use gpt-image-2.
+No fallback model was used.
+Prompt source: docs/deliveries/abundance/assets/prompts/abundance-image2-delivery-graph-2026-05-06.txt
