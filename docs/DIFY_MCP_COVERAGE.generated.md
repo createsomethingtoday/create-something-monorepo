@@ -8,12 +8,12 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 
 ## Summary
 
-- MCP registry servers: 1014
-- Dify-direct candidates: 26
+- MCP registry servers: 1015
+- Dify-direct candidates: 27
 - Dify inventory status: `partial`
 - Dify MCP server cards in inventory: 20
 - Dify agents in inventory: 20
-- Dify MCP intake artifacts: 25
+- Dify MCP intake artifacts: 26
 
 ## Candidate Status
 
@@ -22,7 +22,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `ready` | 1 | Mapped to a Dify server and published agent with smoke/eval gates. |
 | `agent-needs-gates` | 0 | Published agent exists but smoke/eval evidence is incomplete. |
 | `agent-draft` | 0 | Agent exists but is not published yet. |
-| `intake-ready` | 25 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
+| `intake-ready` | 26 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
 | `server-only` | 0 | Dify MCP server exists but no Dify agent uses it yet. |
 | `missing-dify-server` | 0 | No Dify MCP server card is codified for this registry server. |
 
@@ -58,6 +58,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `quickbooks-notion-mcp-server` | `intake-ready` | - | `config/dify-mcp-intake/quickbooks-notion.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `schedule-mcp` | `intake-ready` | - | `config/dify-mcp-intake/schedule.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `slack_create_something` | `intake-ready` | - | `config/dify-mcp-intake/slack-create-something.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
+| `spotify-mcp` | `intake-ready` | - | `config/dify-mcp-intake/spotify.json` | - | - | 29 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `substrate-mcp` | `intake-ready` | - | `config/dify-mcp-intake/substrate.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `three-tier-framework` | `intake-ready` | - | `config/dify-mcp-intake/three-tier-framework.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-app-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-app-review.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
@@ -89,6 +90,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `quickbooks-notion-mcp-server` | `config/dify-mcp-intake/quickbooks-notion.json` | `https://quickbooks.mcp.workway.co/mcp` | QuickBooks to Notion MCP server |
 | `schedule-mcp` | `config/dify-mcp-intake/schedule.json` | `https://schedule.mcp.createsomething.agency/mcp` | Scheduling MCP |
 | `slack_create_something` | `config/dify-mcp-intake/slack-create-something.json` | `https://mcp.slack.com/mcp` | Slack MCP for CREATE SOMETHING workspace |
+| `spotify-mcp` | `config/dify-mcp-intake/spotify.json` | `https://spotify-mcp.createsomething.workers.dev/mcp` | CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry |
 | `substrate-mcp` | `config/dify-mcp-intake/substrate.json` | `https://substrate.mcp.createsomething.agency/mcp` | Substrate execution/storage MCP |
 | `three-tier-framework` | `config/dify-mcp-intake/three-tier-framework.json` | `https://framework.mcp.createsomething.agency/mcp` | Three-Tier Framework MCP |
 | `webflow-app-review-mcp` | `config/dify-mcp-intake/webflow-app-review.json` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | Webflow App Review MCP for app asset and version workflows |

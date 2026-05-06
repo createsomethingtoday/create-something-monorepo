@@ -65,6 +65,8 @@
     "braintrust:eval:dify:youtube-transcript": "pnpm exec braintrust eval ./evals/braintrust/dify/youtube-transcript-notion-agent.eval.ts",
     "braintrust:eval:dify:spotify-agent": "pnpm exec braintrust eval ./evals/braintrust/dify/spotify-agent.eval.ts",
     "braintrust:eval:dify:spotify-agent:local": "pnpm exec braintrust eval ./evals/braintrust/dify/spotify-agent.eval.ts --no-send-logs",
+    "braintrust:eval:dify:vicki-hub": "pnpm exec braintrust eval ./evals/braintrust/dify/vicki-hub.eval.ts",
+    "braintrust:eval:dify:vicki-hub:local": "pnpm exec braintrust eval ./evals/braintrust/dify/vicki-hub.eval.ts --no-send-logs",
     "dify:youtube-transcript:smoke": "pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent",
     "dify:agent:scaffold": "tsx scripts/dify-agent-scaffold.ts",
     "dify:agent:import-dsl": "tsx scripts/dify-agent-import-dsl.ts",
