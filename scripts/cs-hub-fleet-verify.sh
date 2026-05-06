@@ -57,7 +57,7 @@ SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
 DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-dm-mcp,halfdozen-operator-notion-mcp"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
-MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,loom-mcp,meetings,webflow-template-review-mcp"
+MJ_SERVERS_CSV="composio-toolkit-airtable,${SHARED_AUTH_SERVERS_CSV},composio-toolkit-exa,meetings,webflow-template-review-mcp"
 VERIFY_IDENTITY_MODE="${HUB_VERIFY_IDENTITY_MODE:-compat}"
 VERIFY_IDENTITY_MODE="$(printf '%s' "$VERIFY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]')"
 
@@ -236,7 +236,7 @@ load_infisical_env() {
   done < <(
     printf '%s' "$payload" | jq -r '
       def wanted:
-        test("^(HUB_API_TOKEN|CS_HUB_[A-Z0-9_]+_API_TOKEN|CS_MCP_HUB_REMOTE_API_TOKEN|IDENTITY_WORKER_ADMIN_API_KEY)$");
+        test("^(HUB_API_TOKEN|CS_HUB_[A-Z0-9_]+_API_TOKEN|CS_MCP_HUB_REMOTE_API_TOKEN|IDENTITY_API_KEY|IDENTITY_WORKER_ADMIN_API_KEY)$");
       if type == "array" then
         .[] | select(.key != null and (.key | wanted)) | [.key, (.value | tostring)]
       else
@@ -300,7 +300,8 @@ create_fleet_verify_session() {
   local identity_access_token="${IDENTITY_ACCESS_TOKEN:-}"
   local identity_admin_token="${IDENTITY_API_KEY:-${IDENTITY_WORKER_ADMIN_API_KEY:-}}"
   local tenant_id="${MCP_SESSION_TENANT_ID:-fleet_verify}"
-  local host="${MCP_SESSION_HOST:-fleet_verify}"
+  local host="${MCP_SESSION_HOST:-cs-mcp-hub-remote}"
+  local default_account_id="${MCP_SESSION_ACCOUNT_ID:-${POLICY_OS_ACCOUNT_ID:-${MCP_ONLY_ACCOUNT_ID:-acct_mj}}}"
   local toolkit_profile_json="${MCP_SESSION_TOOLKIT_PROFILE_JSON:-[\"dropbox\",\"gmail\",\"youtube\",\"googlesheets\",\"googledrive\",\"zoom\",\"slack\",\"quickbooks\",\"linkedin\",\"notion\"]}"
 
   if [[ -n "${MCP_SESSION_TOKEN:-}" ]]; then
@@ -311,7 +312,7 @@ create_fleet_verify_session() {
   fi
 
   create_admin_mint_session() {
-    local account_id="${MCP_SESSION_ACCOUNT_ID:-${POLICY_OS_ACCOUNT_ID:-${MCP_ONLY_ACCOUNT_ID:-}}}"
+    local account_id="$default_account_id"
     if [[ -z "$identity_admin_token" || -z "$account_id" ]]; then
       return 1
     fi
@@ -326,7 +327,7 @@ create_fleet_verify_session() {
         -H "Content-Type: application/json" \
         --data "$(jq -cn \
           --arg account_id "$account_id" \
-          --arg host "${host}-admin-mint" \
+          --arg host "$host" \
           --arg consent_record_id "consent_cs_hub_fleet_verify" \
           --arg consent_granted_at "$consent_granted_at" \
           --arg workspace_account_id "$account_id" \
@@ -368,7 +369,7 @@ create_fleet_verify_session() {
 
   create_admin_managed_bearer() {
     local auth_subject="${MCP_SESSION_AUTH_SUBJECT:-${POLICY_OS_AUTH_SUBJECT:-${MCP_ONLY_AUTH_SUBJECT:-}}}"
-    local account_id="${MCP_SESSION_ACCOUNT_ID:-${POLICY_OS_ACCOUNT_ID:-${MCP_ONLY_ACCOUNT_ID:-}}}"
+    local account_id="$default_account_id"
     local tenant_id_value="${MCP_SESSION_TENANT_ID:-${POLICY_OS_TENANT_ID:-${MCP_ONLY_TENANT_ID:-${tenant_id}}}}"
     if [[ -z "$identity_admin_token" || -z "$auth_subject" || -z "$account_id" || -z "$tenant_id_value" ]]; then
       return 1
@@ -445,7 +446,6 @@ create_fleet_verify_session() {
   fi
 
   create_one_identity_session() {
-    local suffix="$1"
     local create_url="${identity_base_url%/}/v1/mcp/sessions"
     local body_file status
     body_file="$(mktemp)"
@@ -453,7 +453,7 @@ create_fleet_verify_session() {
       curl -sS -o "$body_file" -w "%{http_code}" -X POST "$create_url" \
         -H "Authorization: Bearer ${identity_access_token}" \
         -H "Content-Type: application/json" \
-        --data "$(jq -cn --arg tenant "$tenant_id" --arg host "${host}-${suffix}" --argjson toolkitProfile "$toolkit_profile_json" '{
+        --data "$(jq -cn --arg tenant "$tenant_id" --arg host "$host" --argjson toolkitProfile "$toolkit_profile_json" '{
           tenant_id: $tenant,
           host: $host,
           toolkit_profile: $toolkitProfile,
@@ -484,10 +484,10 @@ create_fleet_verify_session() {
   }
 
   local first second
-  if ! first="$(create_one_identity_session primary)"; then
+  if ! first="$(create_one_identity_session)"; then
     return 1
   fi
-  if ! second="$(create_one_identity_session secondary)"; then
+  if ! second="$(create_one_identity_session)"; then
     return 1
   fi
 

@@ -11,15 +11,20 @@
     "prebuild": "pnpm --filter @create-something/observability build",
     "build": "tsc",
     "dev": "tsc --watch",
+    "dev:http": "tsx src/http.ts",
+    "dev:worker": "node ../../scripts/run-wrangler.mjs --cwd packages/webflow-mcp/worker dev",
+    "deploy:worker": "node ../../scripts/run-wrangler.mjs --cwd packages/webflow-mcp/worker deploy",
     "start": "node dist/index.js",
+    "start:http": "node dist/http.js",
     "test": "pnpm run build && node --test --test-concurrency=1 test/*.test.mjs"
   },
   "dependencies": {
     "@create-something/observability": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.25.3"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.0"
   },
   "keywords": [

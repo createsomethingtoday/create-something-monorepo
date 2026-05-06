@@ -60,6 +60,45 @@ export const fileBasedPapers: FileBasedPaper[] = [
 `
 	},
 	{
+		id: 'paper-webflow-analyzer-productization',
+		slug: 'webflow-analyzer-productization',
+		title: 'Webflow Analyzer Productization',
+		description: 'How CREATE SOMETHING translated reviewer-side analyzer infrastructure into creator-facing validation, autofill, screenshot packaging, and submission UX without collapsing trust boundaries.',
+		excerpt_short: 'The analyzer became a product when it started helping creators before submission',
+		excerpt_long: 'This case study explains how the Webflow analyzer moved from reviewer tooling into creator-facing product surfaces. The key move was not exposing raw review output more widely. It was translating evidence-gathering into bounded validation, autofill, screenshot packaging, and submission guidance while preserving reviewer-only judgment states.',
+		category: 'Case Study',
+		tags: [
+			'Webflow',
+			'Analyzer',
+			'Productization',
+			'Creator Workflow',
+			'Review Systems',
+			'Three-Tier Framework',
+			'Submission UX'
+		],
+		created_at: '2026-04-25T00:00:00Z',
+		updated_at: '2026-04-25T00:00:00Z',
+		reading_time_minutes: 14,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'three-tier-framework',
+			'policy-as-artifact',
+			'verification-first',
+			'rams-principle-2'
+		],
+		route: '/papers/webflow-analyzer-productization',
+		ascii_art: `
+╭──────────────────────────────────────────────────────────────╮
+│ REVIEWER MCP  →  VALIDATION  →  AUTOFILL  →  SUBMISSION UX  │
+│ raw evidence     bounded check    applied work   cleaner     │
+│ manual states    creator help     screenshots    handoff     │
+│                                                              │
+│ Same analyzer family. Different trust surfaces.              │
+╰──────────────────────────────────────────────────────────────╯
+`
+	},
+	{
 		id: 'paper-andon-protocol',
 		slug: 'andon-protocol',
 		title: 'The Andon Protocol',

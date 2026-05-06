@@ -140,31 +140,6 @@ export const TEMPLATE_FEATURES = [
 ] as const;
 export type TemplateFeature = (typeof TEMPLATE_FEATURES)[number];
 
-export const SECONDARY_TAGS = [
-  'Accessories', 'Accounting', 'Admin', 'Agency', 'Agriculture', 'App',
-  'Architecture', 'Artist', 'Attorney', 'Automotive', 'Band', 'Bank', 'Bar',
-  'Barber', 'Beauty', 'Beauty & Wellness', 'Blog', 'Book', 'Business', 'Cafe',
-  'Cars', 'Charity', 'Church', 'Coaching', 'Coffee Shop', 'College', 'Coming Soon',
-  'Conference', 'Construction', 'Consulting', 'Corporate', 'Countdown', 'Creative',
-  'CV', 'Dance', 'Dashboard', 'Delivery', 'Dentist', 'Design', 'Designer',
-  'Directory', 'DJ', 'Doctor', 'Documentation', 'Donation', 'Education',
-  'Entertainment', 'Error', 'Event', 'Farm', 'Fashion', 'Film', 'Finance',
-  'Fitness', 'Florist', 'Food', 'Food & Drink', 'Furniture', 'Game', 'Guesthouse',
-  'Gym', 'Health', 'Help center', 'Homeware', 'Hospital', 'Hostel', 'Hotel', 'Inn',
-  'Insurance', 'Interior design', 'Investment', 'IT company', 'Jewelry',
-  'Job Portal', 'Kids', 'Landing page', 'Law Firm', 'Learning', 'Lifestyle',
-  'Logistics', 'Magazine', 'Marketing', 'Marketplace', 'Massage', 'Medical',
-  'Mobile', 'Movie', 'Multi Layout', 'Music', 'Musician', 'News', 'Newsletter',
-  'Newspaper', 'Nonprofit', 'One Page', 'Other', 'Personal', 'Pets', 'Photography',
-  'Photography & Video', 'Podcast', 'Political', 'Portfolio', 'Profile', 'Radio',
-  'Real Estate', 'Recipe', 'Recruitment', 'Religion', 'Restaurant', 'Resume',
-  'Retail', 'SaaS', 'Salon', 'School', 'Shop', 'Small Business', 'Soccer', 'Social',
-  'Software', 'Spa', 'Sports', 'Startup', 'Support', 'Technology', 'Therapy',
-  'Tourism', 'Transport', 'Travel', 'UI Kit', 'Under Construction', 'University',
-  'Veterinary', 'Video', 'Wedding', 'Wellness', 'Winery',
-] as const;
-export type SecondaryTag = (typeof SECONDARY_TAGS)[number];
-
 export interface TemplateSubmissionInput {
   creatorName: string;
   creatorEmail: string;
@@ -185,7 +160,6 @@ export interface TemplateSubmissionInput {
   price?: number;
 
   categories: readonly string[];
-  secondaryTags: readonly string[];
   styles: readonly string[];
   features: readonly string[];
 
@@ -249,7 +223,6 @@ export function buildTemplateData(input: TemplateSubmissionInput): Record<string
   const gallery = [0, 1, 2, 3, 4].map((i) => input.galleryImageUrls[i] ?? '');
   const priceString = input.price === undefined ? '' : String(input.price);
   const categorySet = new Set(input.categories);
-  const tagSet = new Set(input.secondaryTags);
   const styleSet = new Set(input.styles);
   const featureSet = new Set(input.features);
 
@@ -265,7 +238,6 @@ export function buildTemplateData(input: TemplateSubmissionInput): Record<string
     'Preview URL': input.previewUrl,
     'Free or Paid?': input.paymentType,
     'Selected Categories': JSON.stringify(input.categories),
-    'Selected Secondary Tags': JSON.stringify(input.secondaryTags),
     'Static': input.pageCount,
     'Selected Types': '',
     'Type CMS': bool(input.templateTypeCms),
@@ -297,9 +269,6 @@ export function buildTemplateData(input: TemplateSubmissionInput): Record<string
 
   for (const category of TEMPLATE_CATEGORIES) {
     data[`Category ${category}`] = bool(categorySet.has(category));
-  }
-  for (const tag of SECONDARY_TAGS) {
-    data[`Secondary Tag: ${tag}`] = bool(tagSet.has(tag));
   }
   for (const style of TEMPLATE_STYLES) {
     data[`Styles ${style}`] = bool(styleSet.has(style));

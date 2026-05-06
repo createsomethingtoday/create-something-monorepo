@@ -45,6 +45,24 @@ cd create-something-monorepo
 pnpm install
 ```
 
+### Worktree Bootstrap
+
+For repo worktrees under this folder, use the repo bootstrap instead of relying on
+whatever global Node or pnpm happens to be installed:
+
+```bash
+pnpm bootstrap:worktree
+```
+
+This wrapper ensures the worktree uses the repo-pinned Node from [.nvmrc](./.nvmrc)
+and the pinned pnpm version from [package.json](./package.json). It then runs the
+same lockfile-aware workspace install used by Ona bootstrap, which makes local
+tooling such as `pnpm exec tsc` and `pnpm exec tsx` available in the worktree.
+
+If your host runtime already matches the repo pins, it runs `./.ona/scripts/bootstrap.sh`
+directly. If not, it falls back to [`./scripts/ona-bootstrap-local.sh`](./scripts/ona-bootstrap-local.sh)
+and uses the repo-cached toolchain without changing your global Node install.
+
 ### Development
 
 ```bash

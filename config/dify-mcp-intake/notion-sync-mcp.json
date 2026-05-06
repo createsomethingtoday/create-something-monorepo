@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "status": "pending-dify-studio-registration",
+  "owner": "create-something",
+  "created_at": "2026-04-30",
+  "registry_server": {
+    "id": "notion-sync-mcp",
+    "transport": "http",
+    "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp",
+    "description": "Dormant Notion sync MCP prototype",
+    "tags": ["dormant", "prototype", "cs"],
+    "catalog_exposure_mode": "direct",
+    "estimated_tool_count": 0
+  },
+  "dify_mcp_server": {
+    "server_id": "notion-sync-mcp",
+    "display_name": "Notion Sync Mcp",
+    "transport": "http",
+    "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp",
+    "auth": {
+      "type": "none"
+    }
+  },
+  "dify_studio_steps": [
+    "Open Dify Studio -> Tools -> MCP.",
+    "Create an HTTP MCP server card with server ID notion-sync-mcp.",
+    "Set the MCP URL to https://notion-sync-mcp-worker.createsomething.workers.dev/mcp.",
+    "Use no authentication for the server card.",
+    "Refresh/discover tools in Dify Studio.",
+    "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
+    "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
+  ],
+  "inventory_fragment_after_tool_discovery": {
+    "notion-sync-mcp": {
+      "display_name": "Notion Sync Mcp",
+      "source_mcp_registry_server": "notion-sync-mcp",
+      "transport": "http",
+      "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp",
+      "auth": {
+        "type": "none"
+      },
+      "tools": []
+    }
+  },
+  "notes": [
+    "This intake artifact is not a Dify inventory entry.",
+    "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
+    "Keep secret values in Infisical only; this artifact stores references, not values.",
+    "After the server card is codified, scaffold one or more Dify agents with pnpm dify:agent:scaffold."
+  ]
+}

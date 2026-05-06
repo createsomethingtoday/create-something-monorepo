@@ -15,7 +15,8 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initObservability, createTrace, createSpan } from '@create-something/observability';
-import { mcpToolMetadata } from '@create-something/observability/atlas';
+import { mcpToolMetadata, type AtlasMetadata } from '@create-something/observability/atlas';
+import { pathToFileURL } from 'node:url';
 
 import * as plagiarism from './tools/plagiarism.js';
 
@@ -26,7 +27,7 @@ function webflowToolGroup(name: string): string {
   return 'other';
 }
 
-function webflowTraceMetadata(name: string, args: Record<string, unknown>): Record<string, unknown> {
+function webflowTraceMetadata(name: string, args: Record<string, unknown>): AtlasMetadata {
   return {
     ...mcpToolMetadata('webflow-mcp', name, 'classify'),
     'business.tool_group': webflowToolGroup(name),
@@ -41,190 +42,191 @@ function webflowTraceMetadata(name: string, args: Record<string, unknown>): Reco
 // Initialize Langfuse tracing
 initObservability();
 
-const server = new Server(
-  {
-    name: 'webflow-mcp',
-    version: '1.0.0'
-  },
-  {
-    capabilities: {
-      tools: {}
+export function createWebflowMcpServer(): Server {
+  const server = new Server(
+    {
+      name: 'webflow-mcp',
+      version: '1.0.0'
+    },
+    {
+      capabilities: {
+        tools: {}
+      }
     }
-  }
-);
+  );
 
 // =============================================================================
 // Tool Definitions
 // =============================================================================
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
-    // ─────────────────────────────────────────────────────────────────────────
-    // Plagiarism Detection Tools
-    // ─────────────────────────────────────────────────────────────────────────
-    {
-      name: 'plagiarism_health',
-      description: 'Check health and version of the plagiarism detection system',
-      inputSchema: {
-        type: 'object',
-        properties: {}
-      }
-    },
-    {
-      name: 'plagiarism_stats',
-      description: 'Get statistics about plagiarism algorithms (LSH signatures indexed, PageRank scores, frameworks detected)',
-      inputSchema: {
-        type: 'object',
-        properties: {}
-      }
-    },
-    {
-      name: 'plagiarism_scan',
-      description: 'Scan a template URL for potential plagiarism. Returns similar templates from the index with similarity scores.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: { 
-            type: 'string', 
-            description: 'Template URL to scan (e.g., https://template.webflow.io)' 
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: [
+      // ─────────────────────────────────────────────────────────────────────────
+      // Plagiarism Detection Tools
+      // ─────────────────────────────────────────────────────────────────────────
+      {
+        name: 'plagiarism_health',
+        description: 'Check health and version of the plagiarism detection system',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        }
+      },
+      {
+        name: 'plagiarism_stats',
+        description: 'Get statistics about plagiarism algorithms (LSH signatures indexed, PageRank scores, frameworks detected)',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        }
+      },
+      {
+        name: 'plagiarism_scan',
+        description: 'Scan a template URL for potential plagiarism. Returns similar templates from the index with similarity scores.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: {
+              type: 'string',
+              description: 'Template URL to scan (e.g., https://template.webflow.io)'
+            },
+            threshold: {
+              type: 'number',
+              description: 'Minimum similarity to report (0-1, default: 0.3)'
+            }
           },
-          threshold: { 
-            type: 'number', 
-            description: 'Minimum similarity to report (0-1, default: 0.3)' 
-          }
-        },
-        required: ['url']
-      }
-    },
-    {
-      name: 'plagiarism_lsh_index',
-      description: 'Index JS functions with LSH signatures for O(1) similarity lookup. Uses MinHash (128 permutations) + LSH banding (16 bands).',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          limit: { 
-            type: 'number', 
-            description: 'Number of functions to index in this batch (default: 100)' 
+          required: ['url']
+        }
+      },
+      {
+        name: 'plagiarism_lsh_index',
+        description: 'Index JS functions with LSH signatures for O(1) similarity lookup. Uses MinHash (128 permutations) + LSH banding (16 bands).',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            limit: {
+              type: 'number',
+              description: 'Number of functions to index in this batch (default: 100)'
+            }
           }
         }
-      }
-    },
-    {
-      name: 'plagiarism_similar_functions',
-      description: 'Find JS functions similar to those in a template using LSH lookup. Returns candidates with estimated Jaccard similarity.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          templateId: { 
-            type: 'string', 
-            description: 'Template ID to find similar functions for' 
+      },
+      {
+        name: 'plagiarism_similar_functions',
+        description: 'Find JS functions similar to those in a template using LSH lookup. Returns candidates with estimated Jaccard similarity.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            templateId: {
+              type: 'string',
+              description: 'Template ID to find similar functions for'
+            },
+            minBands: {
+              type: 'number',
+              description: 'Minimum matching LSH bands required (default: 1)'
+            }
           },
-          minBands: { 
-            type: 'number', 
-            description: 'Minimum matching LSH bands required (default: 1)' 
-          }
-        },
-        required: ['templateId']
-      }
-    },
-    {
-      name: 'plagiarism_pagerank',
-      description: 'Compute PageRank scores to identify original vs derivative templates. Higher scores indicate more authoritative (likely original) templates.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          threshold: { 
-            type: 'number', 
-            description: 'Minimum similarity for graph edges (0-1, default: 0.5)' 
-          },
-          rebuildGraph: { 
-            type: 'boolean', 
-            description: 'Force rebuild the similarity graph (default: false)' 
+          required: ['templateId']
+        }
+      },
+      {
+        name: 'plagiarism_pagerank',
+        description: 'Compute PageRank scores to identify original vs derivative templates. Higher scores indicate more authoritative (likely original) templates.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            threshold: {
+              type: 'number',
+              description: 'Minimum similarity for graph edges (0-1, default: 0.5)'
+            },
+            rebuildGraph: {
+              type: 'boolean',
+              description: 'Force rebuild the similarity graph (default: false)'
+            }
           }
         }
-      }
-    },
-    {
-      name: 'plagiarism_pagerank_leaderboard',
-      description: 'Get top templates ranked by PageRank authority score. Shows which templates are most likely originals.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          limit: { 
-            type: 'number', 
-            description: 'Number of results (default: 50)' 
+      },
+      {
+        name: 'plagiarism_pagerank_leaderboard',
+        description: 'Get top templates ranked by PageRank authority score. Shows which templates are most likely originals.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            limit: {
+              type: 'number',
+              description: 'Number of results (default: 50)'
+            }
           }
         }
-      }
-    },
-    {
-      name: 'plagiarism_detect_frameworks',
-      description: 'Detect JavaScript frameworks used in a template. Identifies 15+ libraries including GSAP, Lenis, Barba, Swiper, Three.js, Webflow IX2, etc.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          url: { 
-            type: 'string', 
-            description: 'Template URL to analyze' 
+      },
+      {
+        name: 'plagiarism_detect_frameworks',
+        description: 'Detect JavaScript frameworks used in a template. Identifies 15+ libraries including GSAP, Lenis, Barba, Swiper, Three.js, Webflow IX2, etc.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: {
+              type: 'string',
+              description: 'Template URL to analyze'
+            },
+            templateId: {
+              type: 'string',
+              description: 'Optional template ID to store results'
+            }
           },
-          templateId: { 
-            type: 'string', 
-            description: 'Optional template ID to store results' 
-          }
-        },
-        required: ['url']
-      }
-    },
-    {
-      name: 'plagiarism_confidence',
-      description: 'Calculate Bayesian plagiarism probability for a template pair. Accepts template IDs or URLs. For URL-vs-URL inputs, uses vector compare as the primary evidence path. For ID/slug paths, uses compute/confidence first and falls back to vector compare when confidence signals are weak. For Webflow URL pairs, applies component-pattern normalization to reduce platform-common false positives.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          templateA: { 
-            type: 'string',
-            description: 'First template ID or URL'
+          required: ['url']
+        }
+      },
+      {
+        name: 'plagiarism_confidence',
+        description: 'Calculate Bayesian plagiarism probability for a template pair. Accepts template IDs or URLs. For URL-vs-URL inputs, uses vector compare as the primary evidence path. For ID/slug paths, uses compute/confidence first and falls back to vector compare when confidence signals are weak. For Webflow URL pairs, applies component-pattern normalization to reduce platform-common false positives.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            templateA: {
+              type: 'string',
+              description: 'First template ID or URL'
+            },
+            templateB: {
+              type: 'string',
+              description: 'Second template ID or URL'
+            }
           },
-          templateB: { 
-            type: 'string',
-            description: 'Second template ID or URL'
-          }
-        },
-        required: ['templateA', 'templateB']
-      }
-    },
-    {
-      name: 'plagiarism_exclude',
-      description: 'Add a template pair to the exclusion list (false positive handling). Use when editorial review determines two templates are legitimately similar.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          templateA: { 
-            type: 'string', 
-            description: 'First template ID' 
+          required: ['templateA', 'templateB']
+        }
+      },
+      {
+        name: 'plagiarism_exclude',
+        description: 'Add a template pair to the exclusion list (false positive handling). Use when editorial review determines two templates are legitimately similar.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            templateA: {
+              type: 'string',
+              description: 'First template ID'
+            },
+            templateB: {
+              type: 'string',
+              description: 'Second template ID'
+            },
+            reason: {
+              type: 'string',
+              description: 'Why this pair is excluded (e.g., "same_author", "licensed", "common_framework")'
+            }
           },
-          templateB: { 
-            type: 'string', 
-            description: 'Second template ID' 
-          },
-          reason: { 
-            type: 'string', 
-            description: 'Why this pair is excluded (e.g., "same_author", "licensed", "common_framework")' 
-          }
-        },
-        required: ['templateA', 'templateB']
+          required: ['templateA', 'templateB']
+        }
       }
-    }
-  ]
-}));
+    ]
+  }));
 
 // =============================================================================
 // Tool Handlers
 // =============================================================================
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-  const safeArgs = (args as Record<string, unknown> | undefined) || {};
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+    const safeArgs = (args as Record<string, unknown> | undefined) || {};
 
   // Create trace for tool call
   const trace = createTrace({
@@ -241,14 +243,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
   });
 
-  try {
-    let result: unknown;
+    try {
+      let result: unknown;
 
-    switch (name) {
-      // Plagiarism Detection
-      case 'plagiarism_health':
-        result = await plagiarism.getHealth();
-        break;
+      switch (name) {
+        // Plagiarism Detection
+        case 'plagiarism_health':
+          result = await plagiarism.getHealth();
+          break;
 
       case 'plagiarism_stats':
         result = await plagiarism.getComputeStats();
@@ -309,9 +311,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         );
         break;
 
-      default:
-        throw new Error(`Unknown tool: ${name}`);
-    }
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
 
     span.end({ output: result });
 
@@ -324,36 +326,53 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       ]
     };
 
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    
-    span.end({ 
-      output: { error: message },
-      level: 'ERROR',
-      statusMessage: message
-    });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            error: message,
-            tool: name,
-            arguments: args
-          }, null, 2)
-        }
-      ],
-      isError: true
-    };
-  }
-});
+
+      span.end({
+        output: { error: message },
+        level: 'ERROR',
+        statusMessage: message
+      });
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              error: message,
+              tool: name,
+              arguments: args
+            }, null, 2)
+          }
+        ],
+        isError: true
+      };
+    }
+  });
+
+  return server;
+}
 
 // =============================================================================
 // Start Server
 // =============================================================================
 
-const transport = new StdioServerTransport();
-server.connect(transport);
+function isDirectRun(): boolean {
+  return Boolean(process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href);
+}
 
-console.error('Webflow MCP server running on stdio');
+async function startStdioServer(): Promise<void> {
+  const transport = new StdioServerTransport();
+  await createWebflowMcpServer().connect(transport);
+
+  console.error('Webflow MCP server running on stdio');
+}
+
+if (isDirectRun()) {
+  startStdioServer().catch((error) => {
+    console.error('[webflow-mcp] fatal error:', error);
+    process.exit(1);
+  });
+}

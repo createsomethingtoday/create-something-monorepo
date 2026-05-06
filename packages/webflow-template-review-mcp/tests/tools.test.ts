@@ -132,6 +132,134 @@ test('request_changes requires reviewer ownership before mutation', async () => 
   assert.equal(parsePayload(result).ok, true);
 });
 
+test('approve_version requires reviewer ownership before mutation', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ method: string; args: unknown[] }> = [];
+  const client = {
+    requireAssignedVersion: async (...args: unknown[]) => {
+      calls.push({ method: 'requireAssignedVersion', args });
+      return { versionId: 'rec_version_1' };
+    },
+    updateVersionReview: async (...args: unknown[]) => {
+      calls.push({ method: 'updateVersionReview', args });
+      return { versionId: 'rec_version_1', reviewStatus: '✅Approved' };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_approve_version')?.({
+    version_id: 'rec_version_1',
+    release_record_id: 'rec_release_1',
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls[0], {
+    method: 'requireAssignedVersion',
+    args: [
+      'rec_version_1',
+      {
+        id: 'usr_eric',
+        email: 'eric.unger@webflow.com',
+        name: 'Eric Unger',
+      },
+    ],
+  });
+  assert.deepEqual(calls[1], {
+    method: 'updateVersionReview',
+    args: [
+      'rec_version_1',
+      {
+        review_owner: { id: 'usr_eric' },
+        review_status: '✅Approved',
+        release_record_id: 'rec_release_1',
+        publishing_checklist: undefined,
+      },
+    ],
+  });
+  assert.equal(parsePayload(result).ok, true);
+});
+
+test('complete_publishing requires reviewer ownership before workflow mutation', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ method: string; args: unknown[] }> = [];
+  const client = {
+    requireAssignedVersion: async (...args: unknown[]) => {
+      calls.push({ method: 'requireAssignedVersion', args });
+      return { versionId: 'rec_version_1' };
+    },
+    completePublishing: async (...args: unknown[]) => {
+      calls.push({ method: 'completePublishing', args });
+      return {
+        updatedVersion: { versionId: 'rec_version_1' },
+        updatedAsset: { assetId: 'rec_asset_1' },
+        resolvedRelease: { releaseId: 'rec_release_1' },
+        resolvedLocalDate: '2026-03-18',
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_complete_publishing')?.({
+    version_id: 'rec_version_1',
+    release_record_id: 'rec_release_1',
+    approve_version: true,
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls[0], {
+    method: 'requireAssignedVersion',
+    args: [
+      'rec_version_1',
+      {
+        id: 'usr_eric',
+        email: 'eric.unger@webflow.com',
+        name: 'Eric Unger',
+      },
+    ],
+  });
+  assert.deepEqual(calls[1], {
+    method: 'completePublishing',
+    args: [
+      'rec_version_1',
+      {
+        release_record_id: 'rec_release_1',
+        release_date_local: undefined,
+        time_zone: undefined,
+        approve_version: true,
+        mrp_id_overwrite: undefined,
+      },
+    ],
+  });
+  assert.equal(parsePayload(result).ok, true);
+});
+
+test('update_version_review rejects reviewer-scoped owner changes before mutation', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {
+    requireAssignedVersion: async () => {
+      throw new Error('should not run');
+    },
+    updateVersionReview: async () => {
+      throw new Error('should not run');
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_update_version_review')?.({
+    version_id: 'rec_version_1',
+    review_owner: { id: 'usr_other' },
+    review_feedback: 'Draft feedback',
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.error?.code, 'REVIEWER_WRITE_SCOPE_VIOLATION');
+});
+
 test('save_draft_feedback writes validated improvement areas through to the client', async () => {
   const { server, handlers } = createServerHarness();
   const calls: Array<{ method: string; args: unknown[] }> = [];

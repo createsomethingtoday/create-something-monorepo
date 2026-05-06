@@ -320,16 +320,12 @@ test('resolveAccountContext preserves resolver-backed compat personal bearer ide
   }
 });
 
-test('resolveAccountContext resolves compat bearer even when it matches HUB_API_TOKEN', async () => {
+test('resolveAccountContext does not resolve compat static hub bearer through identity', async () => {
   const originalFetch = globalThis.fetch;
-  let capturedToken = '';
-  let capturedResourceHost = '';
+  let resolverCalled = false;
 
-  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const request = _input instanceof Request ? _input : new Request(String(_input), init);
-    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
-    capturedToken = body.token ?? '';
-    capturedResourceHost = body.resource_host ?? '';
+  globalThis.fetch = async (): Promise<Response> => {
+    resolverCalled = true;
     return new Response(
       JSON.stringify({
         valid: true,
@@ -359,27 +355,31 @@ test('resolveAccountContext resolves compat bearer even when it matches HUB_API_
       {
         HUB_IDENTITY_MODE: 'compat',
         HUB_API_TOKEN: 'mcpu_reviewer_lane_token',
+        HUB_ACCOUNT_ID: 'acct_reviewer_lane',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
         HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
       } as any,
     );
 
-    assert.equal(context.accountId, 'acct_reviewer');
-    assert.equal(context.authMode, 'managed_bearer');
-    assert.equal(context.identitySource, 'session');
-    assert.deepEqual(context.allowedToolPrefixes, ['webflow-template-review-mcp__template_review_assign_self']);
-    assert.equal(capturedToken, 'mcpu_reviewer_lane_token');
-    assert.equal(capturedResourceHost, 'wf-template-review-eric');
+    assert.equal(resolverCalled, false);
+    assert.equal(context.accountId, 'acct_reviewer_lane');
+    assert.equal(context.authMode, 'fallback');
+    assert.equal(context.identitySource, 'fallback');
+    assert.equal(context.boundHost, null);
+    assert.equal(context.resourceHost, 'wf-template-review-eric');
+    assert.deepEqual(context.allowedToolPrefixes, null);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test('resolveAccountContext falls back for compat static hub bearer when resolver rejects it', async () => {
+test('resolveAccountContext skips resolver for compat static hub bearer even if resolver would reject it', async () => {
   const originalFetch = globalThis.fetch;
+  let resolverCalled = false;
 
-  globalThis.fetch = async (): Promise<Response> =>
-    new Response(
+  globalThis.fetch = async (): Promise<Response> => {
+    resolverCalled = true;
+    return new Response(
       JSON.stringify({
         valid: false,
         reason: 'token_not_found',
@@ -391,6 +391,7 @@ test('resolveAccountContext falls back for compat static hub bearer when resolve
         },
       },
     );
+  };
 
   try {
     const context = await resolveAccountContext(
@@ -406,6 +407,7 @@ test('resolveAccountContext falls back for compat static hub bearer when resolve
       } as any,
     );
 
+    assert.equal(resolverCalled, false);
     assert.equal(context.accountId, 'acct_lane');
     assert.equal(context.authMode, 'fallback');
     assert.equal(context.identitySource, 'fallback');

@@ -1,7 +1,7 @@
 {
   "name": "@create-something/symphony",
   "version": "0.1.0",
-  "description": "CREATE SOMETHING orchestration runtime for Loom-backed Codex workers.",
+  "description": "CREATE SOMETHING orchestration runtime for Linear-backed Codex workers.",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -9,7 +9,6 @@
     "./cli": "./src/cli.js",
     "./config": "./src/config.js",
     "./orchestrator": "./src/orchestrator.js",
-    "./tracker/loom": "./src/tracker/loom.js",
     "./tracker/linear": "./src/tracker/linear.js"
   },
   "bin": {

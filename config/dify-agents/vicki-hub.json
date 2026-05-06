@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "status": "imported",
+  "created_at": "2026-05-01",
+  "source_dsl": {
+    "imported_from": "VICKI HUB.yml",
+    "repo_path": "config/dify-agents/vicki-hub.dify.yml"
+  },
+  "dify_app": {
+    "name": "VICKI HUB",
+    "type": "agent",
+    "mode": "agent-chat",
+    "description": "Vicki's Webflow Template Review HUB MCP",
+    "recommended_model": "gpt-5.4",
+    "api_response_mode": "streaming",
+    "service_api": {
+      "base_url": "https://api.dify.ai/v1",
+      "api_key_secret": {
+        "environment": "prod",
+        "path": "/dify/vicki-hub",
+        "secret_key": "DIFY_VICKI_HUB_API_KEY"
+      }
+    }
+  },
+  "service_api_smoke": {
+    "last_checked_at": "2026-05-01",
+    "result": "passed",
+    "message_id": "103feb15-04b1-42ff-a8bd-d5708dffe450",
+    "conversation_id": "06bf06cc-ffc1-4323-ad58-ea41b503a796",
+    "latency_ms": 7009,
+    "required_tool_used": "hub_list_services",
+    "forbidden_tools_used": [],
+    "answer_summary": "2 services: webflow-site-analyzer-mcp, webflow-template-review-mcp",
+    "notes": "Dify Service API key works, the agent called hub_list_services, and the static lane bearer completes tools/call without session-token auth language."
+  },
+  "mcp_direct_probe": {
+    "last_checked_at": "2026-05-01",
+    "result": "passed",
+    "static_bearer_secret": "present: prod:/mcp-hub/hubs:CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN",
+    "initialize": "ok",
+    "tools_list": "ok: 17 tools",
+    "tools_call": "ok: hub_status and hub_list_services",
+    "notes": "The static fleet token is enough for MCP initialize/tools.list and safe Hub tools/call. The Hub compat runtime bypasses identity for the configured reviewer API token."
+  },
+  "mcp_server": {
+    "display_name": "VICKI HUB",
+    "server_id": "vicki_hub",
+    "transport": "http",
+    "url": "https://wf-template-review-vicki.mcp.createsomething.agency/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/mcp-hub/hubs",
+        "secret_key": "CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "hub_describe_proxy_tool",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["proxyToolName"]
+    },
+    {
+      "name": "hub_execute_proxy_tool",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["args", "proxyToolName"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_get_proxy_tool",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["proxyToolName"]
+    },
+    {
+      "name": "hub_list_discovery_packs",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_proxy_tools",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_registry",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_services",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_policy_status",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_refresh_connections",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_route_intent",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["allowDiscoveryFallback", "intent", "limit", "query", "serverName"]
+    },
+    {
+      "name": "hub_run_intent",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [
+        "allowDiscoveryFallback",
+        "args",
+        "intent",
+        "limit",
+        "query",
+        "serverName"
+      ],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_run_proxy_tool",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["args", "proxyToolName"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_search_proxy_tools",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["cursor", "limit", "query", "serverName"]
+    },
+    {
+      "name": "hub_set_discovery",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["activeServers", "maxProxyTools", "mode", "pack", "reset"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_status",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_trace_lookup",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["correlationId", "limit"]
+    },
+    {
+      "name": "hub_update_state",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [
+        "disableBundles",
+        "disableServers",
+        "enableBundles",
+        "enableServers",
+        "setBundles",
+        "setServers",
+        "writeCodexConfig"
+      ],
+      "requires_user_confirmation": true
+    }
+  ],
+  "agent_prompt": "Use Hub MCP in broker mode.\n\nStart with:\n1. hub_list_services\n2. hub_search_proxy_tools(serverName)\n3. hub_describe_proxy_tool\n4. hub_execute_proxy_tool\n\nUse exact proxyToolName values and follow schemas exactly.\n\nFor template review workflow, use webflow-template-review-mcp tools.\n\nCall template_review_workflow when unsure.\n\nUse the following tools to locate and understand submissions:\n- list_queue\n- my_queue\n- search_versions\n- get_asset\n- get_version\n- get_review_context\n\nAlways call get_review_context before decisions or writes.\n\nDatabase / Airtable access should go through webflow-template-review-mcp, not raw Airtable, unless the user explicitly asks for operator-level debugging.\n\nUse read-only database tools freely:\n- template_review_list_queue\n- template_review_my_queue\n- template_review_search_assets\n- template_review_search_versions\n- template_review_get_asset\n- template_review_get_version\n- template_review_list_versions\n- template_review_get_review_context\n- template_review_resolve_reference_urls\n- template_review_get_metrics\n- template_review_get_field_map\n\nAvoid raw Airtable reads/writes in normal review flow.\n\nFor automated analysis, use webflow-site-analyzer-mcp__enqueue_template_review via hub_execute_proxy_tool with publishedUrl only, then poll webflow-site-analyzer-mcp__get_template_review_job.\n\nDo not pass previewUrl or designerMode unless the user explicitly asks for manual Designer diagnostics.\n\nTreat published-site evidence as authoritative.\n\nFor reviewer confirmation, retrieve the Preview URL separately with webflow-template-review-mcp__template_review_resolve_reference_urls using version_id, asset_id, published_url, or reference_url.\n\nDo not use the Preview URL as analyzer input during normal reviews.\n\nIf multiple URL matches are returned, share the selected match and note the duplicate count.\n\nDo not use Designer extraction, extract_designer_metadata, score_designer_checklist, or run_template_review for normal reviews.\n\nDo not summarize Designer/manual rows as confirmed failures.\n\nReport page crawl coverage separately from rubricCoverage.\n\nIf coverage exceeds 100%, explain that the crawler found additional pages beyond the known page set.\n\nUse supporting tools only when the user asks for that scope:\n- template_review_get_metrics for review operations analytics\n- template_review_list_queue, my_queue, search_assets, search_versions, and list_versions for queue/history lookup\n- webflow-site-analyzer-mcp__get_performance, extract_seo, analyze_images, get_page_structure, analyze_touchpoints, and capture_screenshot for focused published-site verification\n- webflow-site-analyzer-mcp__list_template_review_jobs for analyzer history\n- get_provider_status and get_webflow_review_policy for analyzer policy/status debugging\n\nDefault to read-only analysis and draft feedback.\n\nBefore any Airtable write:\n1. assign_self if required\n2. verify capability flags from get_review_context\n3. get explicit user approval\n\nNever approve, reject, request changes, publish, delete, promote versions, refresh policy, record feedback, or mutate external systems unless the user explicitly asks.\n\nWhen drafting replies, read the full thread first.\n\nSeparate:\n1. confirmed summary\n2. caveats\n3. draft feedback\n\nCite check IDs, page paths, evidenceItems or evidence text, evidenceQuality, job IDs, score, grade, page crawl coverage, and rubricCoverage.\n\nPrefer exact published-site evidence over broad summaries.",
+  "inventory_target": {
+    "manifest_path": "config/dify-agents/vicki-hub.json",
+    "dsl_path": "config/dify-agents/vicki-hub.dify.yml"
+  }
+}

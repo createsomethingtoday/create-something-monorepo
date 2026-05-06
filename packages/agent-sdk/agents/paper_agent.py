@@ -1,18 +1,21 @@
 """
 Paper/Experiment Generation Agent
 
-Generates Canon-compliant Svelte pages from Loom tasks or Beads issues.
+Generates Canon-compliant Svelte pages from Linear or Beads issues.
 Uses intelligent routing: Sonnet for content generation, with Gemini fallback.
 """
 
 from __future__ import annotations
 
 import json
-import sqlite3
+import os
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from create_something_agents import AgentConfig, CreateSomethingAgent
 
@@ -184,13 +187,13 @@ class PaperConfig:
     monorepo_path: Path | None = None
 
 
-def detect_tracking_system(issue_id: str) -> Literal["loom", "beads"]:
-    """Infer whether a work item belongs to Loom or Beads."""
-    return "loom" if issue_id.startswith("lm-") else "beads"
+def detect_tracking_system(issue_id: str) -> Literal["linear", "beads"]:
+    """Infer whether a work item belongs to Linear or Beads."""
+    return "linear" if re.match(r"^[A-Z][A-Z0-9]+-\d+$", issue_id) else "beads"
 
 
 def parse_labels(raw_labels: Any) -> list[str]:
-    """Normalize labels from Loom/Beads stores."""
+    """Normalize labels from Linear/Beads stores."""
     if isinstance(raw_labels, list):
         return [str(label) for label in raw_labels]
 
@@ -203,6 +206,65 @@ def parse_labels(raw_labels: Any) -> list[str]:
             return [part.strip() for part in raw_labels.split(",") if part.strip()]
 
     return []
+
+
+def get_linear_issue_details(issue_id: str) -> dict | None:
+    """Fetch issue details from Linear."""
+    token = os.environ.get("LINEAR_API_KEY", "").strip()
+    if not token:
+        return None
+
+    query = """
+    query IssueById($id: String!) {
+      issue(id: $id) {
+        id
+        identifier
+        title
+        description
+        priority
+        url
+        updatedAt
+        state { name type }
+        project { name }
+        labels { nodes { name } }
+      }
+    }
+    """
+    payload = json.dumps({"query": query, "variables": {"id": issue_id}}).encode()
+    request = Request(
+        os.environ.get("LINEAR_API_URL", "https://api.linear.app/graphql"),
+        data=payload,
+        headers={"Content-Type": "application/json", "Authorization": token},
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=15) as response:
+            body = json.loads(response.read().decode("utf8"))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+        return None
+
+    if body.get("errors"):
+        return None
+
+    issue = body.get("data", {}).get("issue")
+    if not issue:
+        return None
+
+    labels = [node.get("name", "") for node in issue.get("labels", {}).get("nodes", [])]
+    return {
+        "id": issue.get("identifier") or issue.get("id"),
+        "linear_id": issue.get("id"),
+        "title": issue.get("title", ""),
+        "description": issue.get("description") or "",
+        "status": issue.get("state", {}).get("name", ""),
+        "state_type": issue.get("state", {}).get("type", ""),
+        "priority": issue.get("priority"),
+        "labels": [label for label in labels if label],
+        "project": issue.get("project", {}).get("name") if issue.get("project") else "",
+        "url": issue.get("url", ""),
+        "updated_at": issue.get("updatedAt", ""),
+    }
 
 
 def get_beads_issue_details(issue_id: str, monorepo: Path) -> dict | None:
@@ -225,61 +287,10 @@ def get_beads_issue_details(issue_id: str, monorepo: Path) -> dict | None:
         return None
 
 
-def get_loom_task_details(issue_id: str, monorepo: Path) -> dict | None:
-    """Fetch task details directly from Loom storage."""
-    work_db = monorepo / ".loom" / "work.db"
-    if work_db.exists():
-        connection = sqlite3.connect(work_db)
-        connection.row_factory = sqlite3.Row
-        try:
-            row = connection.execute(
-                """
-                SELECT id, title, description, status, priority, issue_type, agent, labels,
-                       parent, evidence, repo, close_reason, created_at, updated_at
-                FROM tasks
-                WHERE id = ?
-                LIMIT 1
-                """,
-                (issue_id,),
-            ).fetchone()
-        finally:
-            connection.close()
-
-        if row is not None:
-            return {
-                "id": row["id"],
-                "title": row["title"],
-                "description": row["description"] or "",
-                "status": row["status"],
-                "priority": row["priority"],
-                "issue_type": row["issue_type"],
-                "agent": row["agent"],
-                "labels": parse_labels(row["labels"]),
-                "parent": row["parent"],
-                "evidence": row["evidence"],
-                "repo": row["repo"],
-                "close_reason": row["close_reason"],
-                "created_at": row["created_at"],
-                "updated_at": row["updated_at"],
-            }
-
-    tasks_jsonl = monorepo / ".loom" / "tasks.jsonl"
-    if tasks_jsonl.exists():
-        for line in tasks_jsonl.read_text(encoding="utf8").splitlines():
-            if not line.strip():
-                continue
-            row = json.loads(line)
-            if row.get("id") == issue_id:
-                row["labels"] = parse_labels(row.get("labels"))
-                return row
-
-    return None
-
-
 def get_issue_details(issue_id: str, monorepo: Path) -> dict | None:
-    """Fetch work item details from Loom or Beads."""
-    if detect_tracking_system(issue_id) == "loom":
-        return get_loom_task_details(issue_id, monorepo)
+    """Fetch work item details from Linear or Beads."""
+    if detect_tracking_system(issue_id) == "linear":
+        return get_linear_issue_details(issue_id)
     return get_beads_issue_details(issue_id, monorepo)
 
 
@@ -297,7 +308,7 @@ def generate_slug(title: str, issue_id: str) -> str:
     slug = "".join(c if c.isalnum() or c == "-" else "-" for c in slug)
     slug = "-".join(filter(None, slug.split("-")))
 
-    return slug or issue_id.replace("csm-", "").replace("lm-", "")
+    return slug or issue_id.lower().replace("csm-", "")
 
 
 def detect_content_type(title: str, labels: list[str]) -> Literal["paper", "experiment"]:
@@ -312,7 +323,7 @@ def create_paper_agent(
     config: PaperConfig,
 ) -> CreateSomethingAgent:
     """
-    Create an agent for generating papers/experiments from Loom tasks or Beads issues.
+    Create an agent for generating papers/experiments from Linear or Beads issues.
 
     Args:
         config: Paper generation configuration
@@ -321,12 +332,12 @@ def create_paper_agent(
         Configured CreateSomethingAgent
 
     Example:
-        agent = create_paper_agent(PaperConfig(issue_id="lm-abc123"))
+        agent = create_paper_agent(PaperConfig(issue_id="CRE-123"))
         result = await agent.run()
     """
     monorepo = config.monorepo_path or Path.cwd()
     tracking_system = detect_tracking_system(config.issue_id)
-    work_item_kind = "Loom task" if tracking_system == "loom" else "Beads issue"
+    work_item_kind = "Linear issue" if tracking_system == "linear" else "Beads issue"
 
     # Fetch issue details
     issue = get_issue_details(config.issue_id, monorepo)
@@ -350,8 +361,8 @@ def create_paper_agent(
         route_path = f"/papers/{slug}"
 
     close_instruction = (
-        "4. Do not change Loom status automatically. Leave claiming, review labels, and completion to the publication lifecycle automation."
-        if tracking_system == "loom"
+        "4. Do not change Linear status automatically. Record generation evidence in Linear after files and validation are complete."
+        if tracking_system == "linear"
         else f"4. After creating files successfully, close the Beads issue:\n   bd close {config.issue_id} --no-db"
     )
 
@@ -752,10 +763,10 @@ async def generate_from_issue(
     monorepo_path: Path | None = None,
 ) -> dict:
     """
-    Generate a paper or experiment from a Loom task or Beads issue.
+    Generate a paper or experiment from a Linear or Beads issue.
 
     Args:
-        issue_id: Loom task or Beads issue ID (e.g., "lm-abc123" or "csm-abc123")
+        issue_id: Linear or Beads issue ID (e.g., "CRE-123" or "csm-abc123")
         content_type: Override detected type ("paper" or "experiment")
         model: Model to use (default: auto-route with Sonnet)
         monorepo_path: Path to monorepo root
@@ -764,7 +775,7 @@ async def generate_from_issue(
         Dict with success, output, cost_usd, model, iterations
 
     Example:
-        result = await generate_from_issue("lm-abc123")
+        result = await generate_from_issue("CRE-123")
         print(f"Success: {result['success']}, Cost: ${result['cost_usd']:.4f}")
     """
     config = PaperConfig(

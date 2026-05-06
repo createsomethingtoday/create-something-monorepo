@@ -1,7 +1,7 @@
 import type { ChatArtifact } from './artifact-model';
 import type { ChatMessage, ThreadStatus, ThreadSummary } from './message-types';
 import type { TurnState } from './turn-state';
-import type { ProfileSnapshot } from '$server/profile/types';
+import type { ProfileSnapshot } from '$lib/profile/types';
 import type { ConciergeWidget } from '$widgets/types';
 
 export interface ConnectedToolStatus {

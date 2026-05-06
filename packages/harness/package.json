@@ -1,7 +1,7 @@
 {
   "name": "@create-something/harness",
   "version": "0.1.0",
-  "description": "Autonomous agent harness for Loom-tracked work. Runs agent sessions in loops with checkpoints, review passes, and reactive redirection.",
+  "description": "Autonomous agent harness for Linear-tracked work. Runs agent sessions in loops with checkpoints, review passes, and reactive redirection.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -48,7 +48,7 @@
     "agents",
     "automation",
     "codex",
-    "loom"
+    "linear"
   ],
   "license": "MIT",
   "dependencies": {

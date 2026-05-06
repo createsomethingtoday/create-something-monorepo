@@ -575,7 +575,7 @@ When migrating implementations:
 **Required Lifecycle:**
 
 ```
-Loom task
+Linear issue
 → Draft PR
 → Review 1
 → Improvement pass
@@ -588,9 +588,9 @@ Loom task
 
 **Source of Truth:**
 
-- Loom is the canonical work tracker
-- One Loom task maps to one branch and one PR
-- Review state lives in Loom/PR labels, not in a separate policy state machine
+- Linear is the canonical work tracker
+- One Linear issue maps to one branch and one PR
+- Review state lives in Linear/PR labels, not in a separate policy state machine
 
 **Required Labels:**
 
@@ -613,7 +613,7 @@ Loom task
 
 Each publication candidate must keep these artifacts connected to the task:
 
-1. Loom task ID
+1. Linear issue ID
 2. Draft PR URL
 3. Review 1 report
 4. Review 2 release summary
@@ -630,20 +630,20 @@ Each publication candidate must keep these artifacts connected to the task:
 
 - Rollback authority remains human-controlled
 - Use the last known-good deployed state or revert commit
-- Record rollback rationale and incident reference in Loom and in the relevant policy artifact when policy enforcement is involved
+- Record rollback rationale and incident reference in Linear and in the relevant policy artifact when policy enforcement is involved
 
 ### 6.4 Git-Light Agent Delivery
 
 **Given:** AI agents can validate work directly in provisioned environments with runtime deploy access
 **Context:** Daily development, DEV verification, and preview iteration in the shared monorepo
 **Constraint:** Git is the default production promotion boundary, not a mandatory inner-loop checkpoint
-**Rationale:** Direct validation plus Loom evidence is a better signal than commit volume for non-production iteration
+**Rationale:** Direct validation plus Linear evidence is a better signal than commit volume for non-production iteration
 
 **Rule:**
 
 - DEV and preview deploys MAY run directly from the current workspace after the narrow relevant checks pass
-- Each direct DEV or preview deploy MUST attach Loom evidence: task ID, target environment, commands run, deploy URL or ID, and rollback reference
-- Until remote Loom exposes append-only checkpoint evidence through the repo CLI, non-terminal DEV checkpoints MAY use `.loom/checkpoints/` as a bridge artifact and MUST reference that summary at completion or promotion time
+- Each direct DEV or preview deploy MUST attach Linear evidence: issue ID, target environment, commands run, deploy URL or ID, and rollback reference
+- Non-terminal DEV checkpoints SHOULD be recorded as Linear comments when they affect handoff, review, rollback, or promotion
 - Commit or push MUST NOT be required solely to checkpoint agent progress in DEV
 - Shared release and production promotion SHOULD still flow through branch and PR review unless an approved immutable release-artifact path exists
 - Production deploys from unreviewed local state are prohibited except under explicit human-directed incident response
@@ -787,7 +787,7 @@ All standards derive from Rams' principles:
   - Established hermeneutic validation process
 - **1.1** (March 6, 2026) - Added IO-first paper / experiment / policy lifecycle
   - Added artifact classes for `paper`, `experiment`, and `policy`
-  - Standardized Loom-to-PR mapping and double-review requirement
+  - Standardized issue-to-PR mapping and double-review requirement
   - Defined evidence, publication, and rollback rules
   - Explicitly prohibited commit-count deployment triggers
 

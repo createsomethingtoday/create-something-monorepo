@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { join, resolve } from 'node:path';
-import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
@@ -14,33 +14,32 @@ function quoteShell(value) {
   return `'${String(value).replace(/'/g, `'\"'\"'`)}'`;
 }
 
-function createTask() {
+function createIssue() {
   return {
-    id: 'lm-e2e-1',
+    id: 'issue-e2e-1',
+    identifier: 'CRE-999',
     title: 'Verify Symphony once mode',
-    description: 'Exercise the real CLI against a fake Loom and Codex runtime.',
-    status: 'ready',
-    priority: 'high',
-    labels: ['code-quality'],
-    created_at: '2026-03-14T00:00:00.000Z',
-    updated_at: '2026-03-14T00:00:00.000Z',
-    dependencies: [],
-    agent: null,
+    description: 'Exercise the real CLI against a fake Linear and Codex runtime.',
+    priority: 2,
+    branchName: null,
+    url: 'https://linear.app/createsomething/issue/CRE-999',
+    createdAt: '2026-03-14T00:00:00.000Z',
+    updatedAt: '2026-03-14T00:00:00.000Z',
+    state: { id: 'state-todo', name: 'Todo', type: 'unstarted' },
+    labels: { nodes: [{ name: 'code-quality' }] },
+    inverseRelations: { nodes: [] },
     evidence: null,
   };
 }
 
-function createToolResult(id, structuredContent) {
-  return {
-    jsonrpc: '2.0',
-    id,
-    result: {
-      structuredContent,
-    },
-  };
-}
+async function startFakeLinearServer(issue, operations) {
+  const states = [
+    { id: 'state-todo', name: 'Todo', type: 'unstarted' },
+    { id: 'state-progress', name: 'In Progress', type: 'started' },
+    { id: 'state-done', name: 'Done', type: 'completed' },
+    { id: 'state-canceled', name: 'Canceled', type: 'canceled' },
+  ];
 
-async function startFakeLoomServer(task, toolCalls) {
   const server = createServer(async (request, response) => {
     if (request.method !== 'POST') {
       response.writeHead(404).end();
@@ -53,65 +52,65 @@ async function startFakeLoomServer(task, toolCalls) {
     }
 
     const payload = JSON.parse(body);
-    const name = payload?.params?.name;
-    const args = payload?.params?.arguments ?? {};
-    toolCalls.push({ name, args });
+    const operation = payload.query.match(/\b(?:query|mutation)\s+(\w+)/u)?.[1] ?? 'unknown';
+    operations.push({ operation, variables: payload.variables ?? {} });
 
-    let structuredContent;
-
-    if (name === 'loom_list') {
-      const status = args.status;
-      if (status === 'ready' && task.status === 'ready') {
-        structuredContent = { items: [task] };
-      } else if (status === 'claimed' && task.status === 'claimed') {
-        structuredContent = { items: [task] };
-      } else if (status === 'done' && task.status === 'done') {
-        structuredContent = { items: [task] };
-      } else {
-        structuredContent = { items: [] };
+    let data;
+    if (operation === 'SymphonyIssues') {
+      const statesFilter = payload.variables?.states ?? [];
+      data = {
+        issues: {
+          nodes: statesFilter.includes(issue.state.name) ? [issue] : [],
+          pageInfo: { hasNextPage: false, endCursor: null },
+        },
+      };
+    } else if (operation === 'SymphonyIssueStates') {
+      const ids = payload.variables?.ids ?? [];
+      data = { issues: { nodes: ids.includes(issue.id) ? [issue] : [] } };
+    } else if (operation === 'SymphonyBootstrap') {
+      data = {
+        viewer: { id: 'viewer-1' },
+        workflowStates: { nodes: states },
+      };
+    } else if (operation === 'SymphonyUpdateIssue') {
+      const input = payload.variables?.input ?? {};
+      if (input.stateId) {
+        issue.state = states.find((state) => state.id === input.stateId) ?? issue.state;
       }
-    } else if (name === 'loom_claim') {
-      task.status = 'claimed';
-      task.agent = args.agent;
-      task.updated_at = '2026-03-14T00:01:00.000Z';
-      structuredContent = { claimed: task.id };
-    } else if (name === 'loom_get') {
-      structuredContent = task;
-    } else if (name === 'loom_complete') {
-      task.status = 'done';
-      task.evidence = args.evidence;
-      task.updated_at = '2026-03-14T00:02:00.000Z';
-      structuredContent = { completed: task.id };
-    } else if (name === 'loom_release') {
-      task.status = 'ready';
-      task.agent = null;
-      structuredContent = { released: task.id };
+      if (Object.hasOwn(input, 'assigneeId')) {
+        issue.assigneeId = input.assigneeId;
+      }
+      issue.updatedAt = '2026-03-14T00:01:00.000Z';
+      data = { issueUpdate: { success: true, issue } };
+    } else if (operation === 'SymphonyComment') {
+      issue.evidence = payload.variables?.input?.body ?? null;
+      data = { commentCreate: { success: true, comment: { id: 'comment-1' } } };
     } else {
       response.writeHead(400, { 'Content-Type': 'application/json' });
-      response.end(JSON.stringify({ error: `Unexpected tool: ${name}` }));
+      response.end(JSON.stringify({ errors: [{ message: `Unexpected operation: ${operation}` }] }));
       return;
     }
 
     response.writeHead(200, { 'Content-Type': 'application/json' });
-    response.end(JSON.stringify(createToolResult(payload.id, structuredContent)));
+    response.end(JSON.stringify({ data }));
   });
 
   await new Promise((resolvePromise) => server.listen(0, '127.0.0.1', resolvePromise));
   const address = server.address();
-  const endpoint = `http://127.0.0.1:${address.port}/mcp`;
+  const endpoint = `http://127.0.0.1:${address.port}/graphql`;
   return { server, endpoint };
 }
 
-test('CLI once mode completes a Loom-backed task end-to-end', async (t) => {
+test('CLI once mode completes a Linear-backed issue end-to-end', async (t) => {
   await mkdir(TEST_TMP_ROOT, { recursive: true });
   const tempRoot = await mkdtemp(join(TEST_TMP_ROOT, 'symphony-e2e-'));
   t.after(async () => {
     await rm(tempRoot, { recursive: true, force: true });
   });
 
-  const task = createTask();
-  const toolCalls = [];
-  const { server, endpoint } = await startFakeLoomServer(task, toolCalls);
+  const issue = createIssue();
+  const operations = [];
+  const { server, endpoint } = await startFakeLinearServer(issue, operations);
   t.after(async () => {
     await new Promise((resolvePromise, rejectPromise) => {
       server.close((error) => (error ? rejectPromise(error) : resolvePromise()));
@@ -152,49 +151,11 @@ rl.on('line', (line) => {
 
   if (message.method === 'turn/start') {
     send({ id: message.id, result: { turn: { id: 'turn-1' } } });
-    send({
-      method: 'item/started',
-      params: {
-        item: {
-          id: 'msg-1',
-          type: 'agentMessage',
-          text: '',
-        },
-      },
-    });
-    send({
-      method: 'thread/tokenUsage/updated',
-      params: {
-        input_tokens: 12,
-        output_tokens: 8,
-        total_tokens: 20,
-      },
-    });
-    send({
-      method: 'item/agentMessage/delta',
-      params: {
-        itemId: 'msg-1',
-        delta: ${JSON.stringify(completionMessage)},
-      },
-    });
-    send({
-      method: 'item/completed',
-      params: {
-        item: {
-          id: 'msg-1',
-          type: 'agentMessage',
-          text: ${JSON.stringify(completionMessage)},
-        },
-      },
-    });
-    send({
-      method: 'turn/completed',
-      params: {
-        turn: {
-          id: 'turn-1',
-        },
-      },
-    });
+    send({ method: 'item/started', params: { item: { id: 'msg-1', type: 'agentMessage', text: '' } } });
+    send({ method: 'thread/tokenUsage/updated', params: { input_tokens: 12, output_tokens: 8, total_tokens: 20 } });
+    send({ method: 'item/agentMessage/delta', params: { itemId: 'msg-1', delta: ${JSON.stringify(completionMessage)} } });
+    send({ method: 'item/completed', params: { item: { id: 'msg-1', type: 'agentMessage', text: ${JSON.stringify(completionMessage)} } } });
+    send({ method: 'turn/completed', params: { turn: { id: 'turn-1' } } });
   }
 });
 `,
@@ -208,17 +169,18 @@ rl.on('line', (line) => {
     workflowPath,
     `---
 tracker:
-  kind: loom
+  kind: linear
   endpoint: ${JSON.stringify(endpoint)}
-  api_key: $LOOM_MCP_API_TOKEN
+  api_key: $LINEAR_API_KEY
+  project_slug: test-project
   agent_id: symphony-code-quality
   label: code-quality
   active_states:
-    - ready
-    - claimed
+    - Todo
+    - In Progress
   terminal_states:
-    - done
-    - cancelled
+    - Done
+    - Canceled
 polling:
   interval_ms: 25
 workspace:
@@ -254,7 +216,7 @@ Issue: {{ issue.identifier }} :: {{ issue.title }}
     cwd: REPO_ROOT,
     env: {
       ...process.env,
-      LOOM_MCP_API_TOKEN: 'test-token',
+      LINEAR_API_KEY: 'test-token',
       PATH: process.env.PATH ?? '',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -275,11 +237,11 @@ Issue: {{ issue.identifier }} :: {{ issue.title }}
   });
 
   assert.equal(exitCode, 0, `stdout:\n${stdout}\n\nstderr:\n${stderr}`);
-  assert.equal(task.status, 'done');
-  assert.equal(task.evidence, completionMessage);
-  assert.ok(toolCalls.some((entry) => entry.name === 'loom_claim'));
-  assert.ok(toolCalls.some((entry) => entry.name === 'loom_complete'));
-  assert.ok(!toolCalls.some((entry) => entry.name === 'loom_release'));
+  assert.equal(issue.state.name, 'Done');
+  assert.match(issue.evidence, /Evidence:/);
+  assert.match(issue.evidence, new RegExp(completionMessage));
+  assert.ok(operations.some((entry) => entry.operation === 'SymphonyUpdateIssue'));
+  assert.ok(operations.some((entry) => entry.operation === 'SymphonyComment'));
 
   const hookLog = await readFile(hookLogPath, 'utf8');
   assert.match(hookLog, /created/);

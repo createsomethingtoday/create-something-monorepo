@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node --test src/*.test.mjs"
+    "test": "node --import tsx --test src/*.test.ts src/*.test.mjs"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "wrangler": "^4.0.0"
   }
 }

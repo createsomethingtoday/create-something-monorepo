@@ -731,37 +731,6 @@ export const CATEGORY_OPTIONS = [
 export type CategoryOption = (typeof CATEGORY_OPTIONS)[number];
 
 // -----------------------------------------------------------------------------
-// SECONDARY_TAGS — the 135-item list exposed by the live form as a no-max
-// checkbox group. Emits `Secondary Tag: {Name}: true/false` fields and a
-// `Selected Secondary Tags` JSON array.
-// -----------------------------------------------------------------------------
-
-export const SECONDARY_TAGS = [
-  'Accessories', 'Accounting', 'Admin', 'Agency', 'Agriculture', 'App',
-  'Architecture', 'Artist', 'Attorney', 'Automotive', 'Band', 'Bank', 'Bar',
-  'Barber', 'Beauty', 'Beauty & Wellness', 'Blog', 'Book', 'Business', 'Cafe',
-  'Cars', 'Charity', 'Church', 'Coaching', 'Coffee Shop', 'College', 'Coming Soon',
-  'Conference', 'Construction', 'Consulting', 'Corporate', 'Countdown', 'Creative',
-  'CV', 'Dance', 'Dashboard', 'Delivery', 'Dentist', 'Design', 'Designer',
-  'Directory', 'DJ', 'Doctor', 'Documentation', 'Donation', 'Education',
-  'Entertainment', 'Error', 'Event', 'Farm', 'Fashion', 'Film', 'Finance',
-  'Fitness', 'Florist', 'Food', 'Food & Drink', 'Furniture', 'Game', 'Guesthouse',
-  'Gym', 'Health', 'Help center', 'Homeware', 'Hospital', 'Hostel', 'Hotel', 'Inn',
-  'Insurance', 'Interior design', 'Investment', 'IT company', 'Jewelry',
-  'Job Portal', 'Kids', 'Landing page', 'Law Firm', 'Learning', 'Lifestyle',
-  'Logistics', 'Magazine', 'Marketing', 'Marketplace', 'Massage', 'Medical',
-  'Mobile', 'Movie', 'Multi Layout', 'Music', 'Musician', 'News', 'Newsletter',
-  'Newspaper', 'Nonprofit', 'One Page', 'Other', 'Personal', 'Pets', 'Photography',
-  'Photography & Video', 'Podcast', 'Political', 'Portfolio', 'Profile', 'Radio',
-  'Real Estate', 'Recipe', 'Recruitment', 'Religion', 'Restaurant', 'Resume',
-  'Retail', 'SaaS', 'Salon', 'School', 'Shop', 'Small Business', 'Soccer', 'Social',
-  'Software', 'Spa', 'Sports', 'Startup', 'Support', 'Technology', 'Therapy',
-  'Tourism', 'Transport', 'Travel', 'UI Kit', 'Under Construction', 'University',
-  'Veterinary', 'Video', 'Wedding', 'Wellness', 'Winery',
-] as const;
-export type SecondaryTagOption = (typeof SECONDARY_TAGS)[number];
-
-// -----------------------------------------------------------------------------
 // TEMPLATE_STYLES — 9 style checkboxes, max 2 selectable.
 // -----------------------------------------------------------------------------
 

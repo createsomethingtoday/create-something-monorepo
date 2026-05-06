@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "status": "pending-dify-studio-registration",
+  "owner": "create-something",
+  "created_at": "2026-04-30",
+  "registry_server": {
+    "id": "slack_create_something",
+    "transport": "http",
+    "url": "https://mcp.slack.com/mcp",
+    "description": "Slack MCP for CREATE SOMETHING workspace",
+    "tags": ["slack", "communication", "cs"],
+    "catalog_exposure_mode": "direct",
+    "estimated_tool_count": 0
+  },
+  "dify_mcp_server": {
+    "server_id": "slack-create-something",
+    "display_name": "Slack Create Something",
+    "transport": "http",
+    "url": "https://mcp.slack.com/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/slack_create_something",
+        "secret_key": "MCP_BEARER_TOKEN"
+      }
+    }
+  },
+  "dify_studio_steps": [
+    "Open Dify Studio -> Tools -> MCP.",
+    "Create an HTTP MCP server card with server ID slack-create-something.",
+    "Set the MCP URL to https://mcp.slack.com/mcp.",
+    "Configure bearer auth from Infisical prod:/slack_create_something:MCP_BEARER_TOKEN.",
+    "Refresh/discover tools in Dify Studio.",
+    "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
+    "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
+  ],
+  "inventory_fragment_after_tool_discovery": {
+    "slack-create-something": {
+      "display_name": "Slack Create Something",
+      "source_mcp_registry_server": "slack_create_something",
+      "transport": "http",
+      "url": "https://mcp.slack.com/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/slack_create_something",
+          "secret_key": "MCP_BEARER_TOKEN"
+        }
+      },
+      "tools": []
+    }
+  },
+  "notes": [
+    "This intake artifact is not a Dify inventory entry.",
+    "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
+    "Keep secret values in Infisical only; this artifact stores references, not values.",
+    "After the server card is codified, scaffold one or more Dify agents with pnpm dify:agent:scaffold."
+  ]
+}

@@ -27,6 +27,24 @@ pnpm install
 pnpm build
 ```
 
+## Remote HTTP
+
+`webflow-mcp` can run as a local Node Streamable HTTP server or as a Cloudflare Worker for reviewer hubs that cannot access repo-local stdio.
+
+Local HTTP:
+
+```bash
+WEBFLOW_LOCAL_MCP_API_KEY=... pnpm --filter @create-something/webflow-mcp dev:http
+```
+
+Worker deploy:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- pnpm run deploy:webflow-local-mcp
+```
+
+The remote endpoint is `/mcp`; `/health` reports the transport and whether auth is configured. Auth accepts any configured value from `WEBFLOW_LOCAL_MCP_API_KEY`, `WEBFLOW_MCP_API_KEY`, `WEBFLOW_SITE_ANALYZER_MCP_API_KEY`, or `MCP_API_KEY`. The Hub registry currently uses `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` so Phase B reviewer hubs can use the existing CREATE SOMETHING secret while a dedicated Webflow MCP token is rotated in.
+
 ## Configuration
 
 ### Claude Code / Cursor

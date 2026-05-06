@@ -1,7 +1,7 @@
 # MCP Fleet Registry
 
 > The fleet inventory for all CREATE SOMETHING and WORKWAY MCP servers.
-> Updated: February 2026
+> Updated: April 2026
 
 ## Fleet Overview
 
@@ -67,6 +67,8 @@ Active MCPs use `cs-telemetry` D1 for telemetry. Fleet-wide queries via the **CS
 | 22 | `cs-telemetry-mcp` | `cs-telemetry` | Active | `cs-telemetry-mcp.createsomething.workers.dev` | — (reads telemetry) | `cs-telemetry` |
 | 23 | `webflow-app-review-mcp` | `webflow-app-review-mcp` | Active | `webflow-app-review-mcp.createsomething.workers.dev` | Yes | `cs-telemetry` |
 | 24 | `webflow-template-review-mcp` | `webflow-template-review-mcp` | Active | `webflow-template-review-mcp.createsomething.workers.dev` | Yes | `cs-telemetry` |
+| 25 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp-remote` | Planned | `analyzer.mcp.createsomething.agency` | Observability env | — |
+| 26 | `webflow-mcp` | `webflow-mcp` | Planned | `webflow-mcp.createsomething.workers.dev` | Observability env | — |
 
 ---
 
@@ -74,8 +76,8 @@ Active MCPs use `cs-telemetry` D1 for telemetry. Fleet-wide queries via the **CS
 
 | # | Package | Status | Notes |
 |---|---------|--------|-------|
-| 25 | `gmail-notion-mcp` | Dormant | Placeholder D1 ID (`00000000...`), Composio bridge experiment |
-| 26 | `notion-sync-mcp` | Dormant | Superseded by `halfdozen-notion-mcp`, uses mcp-core |
+| 27 | `gmail-notion-mcp` | Dormant | Placeholder D1 ID (`00000000...`), Composio bridge experiment |
+| 28 | `notion-sync-mcp` | Dormant | Superseded by `halfdozen-notion-mcp`, uses mcp-core |
 
 ---
 
@@ -85,9 +87,8 @@ Not deployed to Cloudflare. Run locally via stdio transport.
 
 | # | Package | Server Name | Notes |
 |---|---------|-------------|-------|
-| 27 | `quickbooks-notion-mcp` | `quickbooks-notion-mcp-server` | Node.js HTTP/stdio, KV for tokens |
-| 28 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp` | Node.js stdio (package also supports Streamable HTTP, but no live remote deployment yet) |
-| 29 | `outerfields-mcp-server` | `outerfields-pcn` | Stdio companion to remote Worker |
+| 29 | `quickbooks-notion-mcp` | `quickbooks-notion-mcp-server` | Node.js HTTP/stdio, KV for tokens |
+| 30 | `outerfields-mcp-server` | `outerfields-pcn` | Stdio companion to remote Worker |
 
 ---
 

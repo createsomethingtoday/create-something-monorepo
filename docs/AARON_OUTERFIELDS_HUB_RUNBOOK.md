@@ -109,7 +109,6 @@ curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
           "composio-toolkit-airtable",
           "composio-toolkit-webflow",
           "halfdozen-dm-mcp",
-          "loom-mcp",
           "schedule-mcp",
           "substrate-mcp"
         ]

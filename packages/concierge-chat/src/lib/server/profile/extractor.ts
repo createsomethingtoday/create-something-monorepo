@@ -1,5 +1,5 @@
 import type { ConciergeThread } from '$chat/thread-store';
-import type { ProfileFieldEvent, ProfileSnapshot } from './types';
+import type { ProfileFieldEvent, ProfileSnapshot } from '$lib/profile/types';
 
 export interface ProfileAudit {
 	snapshot: ProfileSnapshot;

@@ -1,0 +1,77 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#050505"/>
+  <rect x="48" y="48" width="1504" height="804" rx="28" stroke="#F2F2F2" stroke-opacity="0.18"/>
+
+  <text x="96" y="122" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700">
+    WEBFLOW ANALYZER
+  </text>
+  <text x="96" y="164" fill="#A8A8A8" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    Multi-surface review model
+  </text>
+
+  <text x="96" y="236" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="62" font-weight="700">
+    Review spans more than one truth surface.
+  </text>
+  <text x="96" y="284" fill="#9E9E9E" font-family="Helvetica, Arial, sans-serif" font-size="26">
+    Published site, Designer state, and policy snapshot all matter.
+  </text>
+
+  <rect x="120" y="360" width="360" height="156" rx="22" stroke="#F5F5F5" stroke-opacity="0.20"/>
+  <text x="156" y="428" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700">
+    Published site
+  </text>
+  <text x="156" y="466" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Runtime evidence
+  </text>
+  <text x="156" y="500" fill="#8F8F8F" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    SEO · accessibility · metadata
+  </text>
+
+  <rect x="620" y="360" width="360" height="156" rx="22" stroke="#F5F5F5" stroke-opacity="0.20"/>
+  <text x="656" y="428" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700">
+    Designer state
+  </text>
+  <text x="656" y="466" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Authoring evidence
+  </text>
+  <text x="656" y="500" fill="#8F8F8F" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    Pages · components · classes
+  </text>
+
+  <rect x="1120" y="360" width="360" height="156" rx="22" stroke="#F5F5F5" stroke-opacity="0.20"/>
+  <text x="1156" y="428" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700">
+    Policy snapshot
+  </text>
+  <text x="1156" y="466" fill="#D0D0D0" font-family="Helvetica, Arial, sans-serif" font-size="22">
+    Governance evidence
+  </text>
+  <text x="1156" y="500" fill="#8F8F8F" font-family="Helvetica, Arial, sans-serif" font-size="18">
+    Guidelines · rubric · version
+  </text>
+
+  <path d="M300 516 C300 584 520 600 786 618" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M800 516 L800 606" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M1300 516 C1300 584 1080 600 814 618" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="800" cy="622" r="10" fill="#050505" stroke="#F5F5F5" stroke-opacity="0.56" stroke-width="3.5"/>
+  <path d="M800 632 L800 654" stroke="#F5F5F5" stroke-opacity="0.42" stroke-width="3.5" stroke-linecap="round"/>
+
+  <text x="744" y="590" fill="#8A8A8A" font-family="Helvetica, Arial, sans-serif" font-size="17">
+    joined
+  </text>
+
+  <rect x="510" y="662" width="580" height="94" rx="22" stroke="#F5F5F5" stroke-opacity="0.24"/>
+  <text x="548" y="715" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700">
+    Governed review
+  </text>
+  <text x="548" y="746" fill="#C8C8C8" font-family="Helvetica, Arial, sans-serif" font-size="20">
+    The analyzer got useful when it stopped acting like a crawler.
+  </text>
+
+  <line x1="96" y1="804" x2="1504" y2="804" stroke="#F5F5F5" stroke-opacity="0.18" stroke-width="2"/>
+  <text x="96" y="836" fill="#F5F5F5" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="700">
+    Truth is split across surfaces. Review has to join them.
+  </text>
+  <text x="1310" y="836" fill="#8A8A8A" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="700">
+    CREATE SOMETHING
+  </text>
+</svg>
