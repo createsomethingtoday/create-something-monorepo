@@ -16,7 +16,7 @@
 <rect x="70" y="303" width="1060" height="116" rx="9" fill="#ffffff" stroke="#cbd5e1"/>
 <text x="96" y="337" font-size="19" fill="#0f172a">MCP/API surface: Callable Abundance actions for</text>
 <text x="96" y="361" font-size="19" fill="#0f172a">agents and workflow tools</text>
-<text x="96" y="393" font-size="15" fill="#475569">mcp-ready - Automation</text>
+<text x="96" y="393" font-size="15" fill="#475569">deployed-mcp-ready - Automation</text>
 <text x="660" y="337" font-size="14" fill="#334155">- packages/agency/static/openapi-abundance.yaml</text>
 <text x="660" y="359" font-size="14" fill="#334155">- packages/agency/src/routes/api/abundance</text>
 <text x="660" y="381" font-size="14" fill="#334155">- config/mcp-hub/registry.json</text>

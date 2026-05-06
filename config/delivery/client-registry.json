@@ -49,6 +49,46 @@
           "url": "https://create-something-deliveries.pages.dev/projects/abundance/"
         }
       ],
+      "liveSurfaces": [
+        {
+          "id": "abundance-concierge-chat",
+          "label": "Abundance Concierge",
+          "status": "live",
+          "kind": "cloudflare_pages_app",
+          "url": "https://abundance-concierge-chat.pages.dev/",
+          "role": "Production pilot for nurse-facing marketing entry, guided intake, verification, protected uploads, and recruiter review booking."
+        }
+      ],
+      "walkthroughs": [
+        {
+          "id": "abundance-progress-walkthrough",
+          "label": "Nurse Staffing Concierge Progress Walkthrough",
+          "status": "shared",
+          "kind": "descript_walkthrough",
+          "url": "https://share.descript.com/view/RWYv3CqKbEC",
+          "role": "Progress walkthrough for the connected funnel/database and current nursing-job capture flow."
+        },
+        {
+          "id": "abundance-pilot-overview",
+          "label": "Abundance Concierge Pilot Overview",
+          "status": "shared",
+          "kind": "descript_walkthrough",
+          "url": "https://share.descript.com/view/0wxPcYQzl8G",
+          "role": "Pilot walkthrough for the Abundance nurse intake and concierge experience."
+        }
+      ],
+      "privateDataSources": [
+        {
+          "id": "paylocity-active-headcount",
+          "label": "Paylocity Active Headcount export",
+          "status": "received_private",
+          "kind": "paylocity_csv_export",
+          "rowCount": 198,
+          "columnCount": 20,
+          "role": "Private HR source data for staff/operator context. Employee-level records stay outside public delivery artifacts.",
+          "privacyRule": "Do not publish raw employee rows, contact data, local file paths, or token-bearing URLs."
+        }
+      ],
       "packages": [
         {
           "id": "agency-abundance-system",
@@ -86,12 +126,23 @@
         },
         {
           "id": "abundance-dedicated-mcp",
-          "label": "Dedicated Abundance MCP",
-          "status": "recommended_next",
-          "kind": "planned_mcp_server",
+          "label": "Abundance Staff MCP",
+          "status": "deployed",
+          "kind": "remote_mcp_server",
+          "url": "https://abundance-staff-mcp.createsomething.workers.dev/mcp",
           "evidence": "packages/agency/static/openapi-abundance.yaml",
           "registry": "config/mcp-hub/fleet.json",
-          "role": "Clean hardening path if NPG needs MCP-native access as a stable delivery standard."
+          "role": "Remote MCP endpoint for staff/operator-facing Abundance workflows. Token material is stored outside public artifacts."
+        },
+        {
+          "id": "abundance-jobs-mcp",
+          "label": "Abundance Jobs MCP",
+          "status": "deployed",
+          "kind": "remote_mcp_server",
+          "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
+          "evidence": "packages/agency/static/openapi-abundance.yaml",
+          "registry": "config/mcp-hub/fleet.json",
+          "role": "Remote MCP endpoint for nursing-job capture and job-source workflow access."
         }
       ],
       "agents": [
@@ -108,6 +159,13 @@
           "status": "ready-for-review",
           "source": "packages/agency/src/lib/abundance/matching.ts",
           "role": "Recommendation support for intake, shortlist, missing-information flags, and recruiter review. It does not make autonomous staffing decisions."
+        },
+        {
+          "id": "abundance-staff-dify-agent",
+          "label": "Abundance staff agent",
+          "status": "configured_external",
+          "source": "abundance-staff-agent.yml",
+          "role": "Dify-side staff agent configuration connected to the tokenless Abundance Staff MCP endpoint; credential values remain in secret storage."
         }
       ],
       "coordination": {

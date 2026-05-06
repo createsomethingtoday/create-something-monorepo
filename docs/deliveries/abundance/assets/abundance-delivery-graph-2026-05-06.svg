@@ -16,19 +16,19 @@
 <text x="84" y="347" font-size="15" fill="#334155">supply, matches, and intake history.</text>
 <text x="84" y="369" font-size="15" fill="#334155">The schema is intentionally small so</text>
 <text x="84" y="391" font-size="15" fill="#334155">the workflow can be explained and</text>
-<text x="84" y="413" font-size="15" fill="#334155">audited.</text>
+<text x="84" y="413" font-size="15" fill="#334155">audited. The received Paylocity export</text>
+<text x="84" y="435" font-size="15" fill="#334155">is treated as private source data for</text>
 
 <rect x="435" y="155" width="330" height="300" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="3"/>
 <text x="459" y="197" font-size="17" font-weight="700" fill="#2563eb">Automation</text>
 <text x="459" y="231" font-size="26" font-weight="700" fill="#0f172a">MCP/API surface</text>
-<text x="459" y="263" font-size="17" fill="#475569">mcp-ready</text>
+<text x="459" y="263" font-size="17" fill="#475569">deployed-mcp-ready</text>
 <text x="459" y="303" font-size="15" fill="#334155">The Abundance API has route handlers</text>
-<text x="459" y="325" font-size="15" fill="#334155">and an OpenAPI contract that can be</text>
-<text x="459" y="347" font-size="15" fill="#334155">exposed through the CREATE SOMETHING</text>
-<text x="459" y="369" font-size="15" fill="#334155">MCP hub or consumed by agent tools. A</text>
-<text x="459" y="391" font-size="15" fill="#334155">dedicated Abundance MCP wrapper remains</text>
-<text x="459" y="413" font-size="15" fill="#334155">the clean hardening step if MCP-native</text>
-<text x="459" y="435" font-size="15" fill="#334155">access becomes the delivery standard.</text>
+<text x="459" y="325" font-size="15" fill="#334155">and an OpenAPI contract, plus tokenless</text>
+<text x="459" y="347" font-size="15" fill="#334155">references for Staff MCP and Jobs MCP</text>
+<text x="459" y="369" font-size="15" fill="#334155">endpoints. Credentials and</text>
+<text x="459" y="391" font-size="15" fill="#334155">token-bearing URLs remain outside</text>
+<text x="459" y="413" font-size="15" fill="#334155">public delivery artifacts.</text>
 
 <rect x="810" y="155" width="330" height="300" rx="10" fill="#ffffff" stroke="#a16207" stroke-width="3"/>
 <text x="834" y="197" font-size="17" font-weight="700" fill="#a16207">Judgment</text>
@@ -36,10 +36,11 @@
 <text x="834" y="263" font-size="17" fill="#475569">ready-for-review</text>
 <text x="834" y="303" font-size="15" fill="#334155">The matching logic can produce an</text>
 <text x="834" y="325" font-size="15" fill="#334155">explainable shortlist using skills,</text>
-<text x="834" y="347" font-size="15" fill="#334155">budget, and availability. The</text>
-<text x="834" y="369" font-size="15" fill="#334155">client-facing agent rule is</text>
-<text x="834" y="391" font-size="15" fill="#334155">recommendation support, not autonomous</text>
-<text x="834" y="413" font-size="15" fill="#334155">staffing decisions.</text>
+<text x="834" y="347" font-size="15" fill="#334155">budget, and availability. The Dify-side</text>
+<text x="834" y="369" font-size="15" fill="#334155">staff agent configuration is tracked as</text>
+<text x="834" y="391" font-size="15" fill="#334155">an external artifact, and the</text>
+<text x="834" y="413" font-size="15" fill="#334155">client-facing rule remains</text>
+<text x="834" y="435" font-size="15" fill="#334155">recommendation support, not autonomous</text>
 <rect x="60" y="505" width="1080" height="64" rx="8" fill="#e2e8f0"/>
 <text x="84" y="545" font-size="18" fill="#0f172a">Delivery rule: repo artifacts stay authoritative; the client surface renders the current state instead of becoming the source of truth.</text>
 </svg>

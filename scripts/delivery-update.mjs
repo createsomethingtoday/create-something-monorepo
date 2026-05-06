@@ -245,6 +245,17 @@ function renderMarkdown(project, outputPath, imagePaths, date, image2PromptPaths
       return `| ${component.label} | ${component.status} | ${component.summary} | ${evidenceLinks} |`;
     }),
     '',
+    ...(project.artifactUrls?.length ? [
+      '## Delivery Artifacts',
+      '',
+      '| Artifact | Visibility | Kind | Link / Status |',
+      '| --- | --- | --- | --- |',
+      ...project.artifactUrls.map((artifact) => {
+        const link = artifact.url ? `[${artifact.label}](${artifact.url})` : artifact.summary;
+        return `| ${artifact.label} | ${artifact.visibility ?? 'client_summary'} | ${artifact.kind ?? 'artifact'} | ${link} |`;
+      }),
+      '',
+    ] : []),
     '## Delivery Images',
     '',
     `![${project.imageSpecs[0]?.title ?? 'Delivery graph'}](${relative(dirname(outputPath), imagePaths.graph).replaceAll('\\', '/')})`,

@@ -289,6 +289,9 @@ function publicClientRegistryEntry(entry) {
       publicSummary: entry.ownerContext.publicSummary,
     } : null,
     deliveryPages: entry.deliveryPages ?? [],
+    liveSurfaces: entry.liveSurfaces ?? [],
+    walkthroughs: entry.walkthroughs ?? [],
+    privateDataSources: entry.privateDataSources ?? [],
     packages: entry.packages ?? [],
     mcpSurfaces: entry.mcpSurfaces ?? [],
     agents: entry.agents ?? [],
@@ -652,8 +655,11 @@ function renderRegistryList(items, emptyLabel) {
       <h3>${escapeHtml(item.label ?? item.id)}</h3>
       ${item.kind ? `<p class="muted"><strong>Kind:</strong> ${escapeHtml(item.kind)}</p>` : ''}
       ${item.path ? `<p><code>${escapeHtml(item.path)}</code></p>` : ''}
+      ${item.source ? `<p><code>${escapeHtml(item.source)}</code></p>` : ''}
       ${item.evidence ? `<p><code>${escapeHtml(item.evidence)}</code></p>` : ''}
+      ${typeof item.rowCount === 'number' ? `<p class="muted"><strong>Rows:</strong> ${escapeHtml(item.rowCount)}${typeof item.columnCount === 'number' ? ` - <strong>Columns:</strong> ${escapeHtml(item.columnCount)}` : ''}</p>` : ''}
       ${item.role ? `<p class="muted">${escapeHtml(item.role)}</p>` : ''}
+      ${item.privacyRule ? `<p class="muted">${escapeHtml(item.privacyRule)}</p>` : ''}
       ${item.url ? `<p><a href="${escapeHtml(item.url)}">${escapeHtml(item.url)}</a></p>` : ''}
     </article>
   `).join('\n')}</div>`;
@@ -683,6 +689,21 @@ function renderClientRegistry(project, registryEntry) {
       </div>
 
       <div class="section">
+        <h3>Live Surfaces</h3>
+        ${renderRegistryList(entry.liveSurfaces, 'No live surfaces registered for this client yet.')}
+      </div>
+
+      <div class="section">
+        <h3>Walkthroughs</h3>
+        ${renderRegistryList(entry.walkthroughs, 'No walkthrough artifacts registered for this client yet.')}
+      </div>
+
+      <div class="section">
+        <h3>Private Source Artifacts</h3>
+        ${renderRegistryList(entry.privateDataSources, 'No private source artifacts registered for this client yet.')}
+      </div>
+
+      <div class="section">
         <h3>Packages</h3>
         ${renderRegistryList(entry.packages, 'No packages registered for this client yet.')}
       </div>
@@ -696,6 +717,24 @@ function renderClientRegistry(project, registryEntry) {
         <h3>Agents</h3>
         ${renderRegistryList(entry.agents, 'No agent boundaries registered for this client yet.')}
       </div>
+    </section>`;
+}
+
+function renderArtifactUrls(project) {
+  const artifacts = project.artifactUrls ?? [];
+  if (artifacts.length === 0) return '';
+
+  return `<section class="section">
+      <h2>Delivery Artifacts</h2>
+      <div class="grid auto">${artifacts.map((artifact) => `
+        <article class="card ${artifact.visibility === 'private_internal' ? 'amber' : 'teal'}">
+          ${tag(artifact.visibility ?? artifact.kind ?? 'artifact', artifact.visibility === 'private_internal' ? 'amber' : 'teal')}
+          <h3>${escapeHtml(artifact.label ?? artifact.id)}</h3>
+          <p class="muted"><strong>Kind:</strong> ${escapeHtml(artifact.kind ?? 'artifact')}</p>
+          ${artifact.url ? `<p><a href="${escapeHtml(artifact.url)}">${escapeHtml(artifact.url)}</a></p>` : ''}
+          <p class="muted">${escapeHtml(artifact.summary ?? '')}</p>
+        </article>
+      `).join('\n')}</div>
     </section>`;
 }
 
@@ -743,6 +782,8 @@ function renderProjectPage({ project, agent, git, outputDir, clientRegistry }) {
     </section>
 
     ${renderClientRegistry(project, registryEntry)}
+
+    ${renderArtifactUrls(project)}
 
     <section class="section">
       <h2>Client Summary</h2>
@@ -861,6 +902,7 @@ function buildSite({ projects, agent, clientRegistry, outputDir }) {
       coordination: project.coordination ?? {},
       notionContext: publicNotionContext(project.notionContext),
       clientRegistry: publicClientRegistryEntry(clientRegistryEntry(project, clientRegistry)),
+      artifactUrls: project.artifactUrls ?? [],
       imageStatus: publicImageStatus(project.slug),
       latestUpdate: latestProjectUpdate(project.slug)
         ? relativePath(latestProjectUpdate(project.slug))
