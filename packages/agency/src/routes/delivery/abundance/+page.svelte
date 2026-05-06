@@ -1,66 +1,90 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
+  import {
+    abundanceArtifactLinks,
+    abundanceDeliverySummary,
+    abundanceNextReview,
+    abundanceOperatingLayers,
+    abundancePrivateArtifacts,
+    abundanceSuggestedPrompts
+  } from '$lib/delivery/abundance';
 
-  const artifactLinks = [
+  type DeliveryAgentMessage = {
+    role: 'agent' | 'client';
+    body: string;
+    grounding?: string[];
+    followUpQuestions?: string[];
+    insightDraft?: {
+      type: string;
+      label: string;
+      value: string;
+    } | null;
+  };
+
+  type DeliveryAgentResponse = {
+    answer: string;
+    grounding?: string[];
+    followUpQuestions?: string[];
+    insightDraft?: DeliveryAgentMessage['insightDraft'];
+    error?: string;
+  };
+
+  let deliveryMessages: DeliveryAgentMessage[] = [
     {
-      label: 'Abundance Concierge live app',
-      href: 'https://abundance-concierge-chat.pages.dev/',
-      meta: 'Live nurse-facing intake surface'
-    },
-    {
-      label: 'Progress walkthrough',
-      href: 'https://share.descript.com/view/RWYv3CqKbEC',
-      meta: 'Current job/database workflow walkthrough'
-    },
-    {
-      label: 'Pilot overview',
-      href: 'https://share.descript.com/view/0wxPcYQzl8G',
-      meta: 'Concierge pilot walkthrough'
-    },
-    {
-      label: 'Generated delivery package',
-      href: 'https://create-something-deliveries.pages.dev/projects/abundance/',
-      meta: 'Portable monorepo-generated delivery page'
+      role: 'agent',
+      body:
+        'Ask about what changed, what is private, what needs a decision, or how the database, MCP, and agent pieces fit together.'
     }
   ];
 
-  const operatingLayers = [
-    {
-      tier: 'Database',
-      title: 'Created DB',
-      status: 'Created',
-      body:
-        'The Abundance data layer captures profile context, intake history, matching state, and private source artifacts for the next staff/operator integration pass.'
-    },
-    {
-      tier: 'Automation',
-      title: 'Staff and Jobs MCP',
-      status: 'Deployed endpoints',
-      body:
-        'Staff and jobs MCP endpoints are tracked as tokenless delivery artifacts. Credentials stay in secret storage and are not published in the delivery surface.'
-    },
-    {
-      tier: 'Judgment',
-      title: 'Agent Boundary',
-      status: 'Ready for review',
-      body:
-        'The agent supports intake, shortlist, missing-information flags, and recruiter review. It does not autonomously make staffing decisions.'
+  let deliveryQuestion = '';
+  let isAskingDeliveryAgent = false;
+  let deliveryAgentError = '';
+
+  async function askDeliveryAgent(prompt?: string) {
+    const message = (prompt ?? deliveryQuestion).trim();
+
+    if (!message || isAskingDeliveryAgent) {
+      return;
     }
-  ];
 
-  const privateArtifacts = [
-    'Paylocity active-headcount CSV received for private staff/operator context.',
-    'Dify Abundance staff-agent configuration is tracked as an external operational artifact.',
-    'MCP credentials should be verified from Infisical before live agent smoke tests.',
-    'Any token shared outside secret storage should be rotated before production reliance.'
-  ];
+    deliveryAgentError = '';
+    deliveryMessages = [...deliveryMessages, { role: 'client', body: message }];
+    deliveryQuestion = '';
+    isAskingDeliveryAgent = true;
 
-  const nextReview = [
-    'Confirm how Paylocity fields map into staff/operator records.',
-    'Verify Staff MCP and Jobs MCP credentials from Infisical.',
-    'Walk through the live app, generated delivery package, and MCP boundaries with NPG.',
-    'Decide which operator roster receives MCP/database access.'
-  ];
+    try {
+      const response = await fetch('/api/delivery/abundance/ask', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ message })
+      });
+
+      const payload = (await response.json()) as DeliveryAgentResponse;
+
+      if (!response.ok) {
+        throw new Error(payload?.error ?? 'The delivery agent could not answer that question.');
+      }
+
+      deliveryMessages = [
+        ...deliveryMessages,
+        {
+          role: 'agent',
+          body: payload.answer,
+          grounding: payload.grounding,
+          followUpQuestions: payload.followUpQuestions,
+          insightDraft: payload.insightDraft
+        }
+      ];
+    } catch (error) {
+      deliveryAgentError =
+        error instanceof Error ? error.message : 'The delivery agent could not answer that question.';
+    } finally {
+      isAskingDeliveryAgent = false;
+    }
+  }
 </script>
 
 <SEO
@@ -75,19 +99,17 @@
   <div class="shell-inner-pad delivery-hero__inner">
     <div class="delivery-copy">
       <span class="product-kicker">Client Delivery</span>
-      <h1>Abundance nurse staffing system.</h1>
+      <h1>{abundanceDeliverySummary.headline}</h1>
       <p>
-        The NP Group now has a live concierge app, a repo-backed database, Staff and Jobs MCP
-        endpoint references, walkthrough artifacts, and a clear agent boundary for recruiter-led
-        review.
+        {abundanceDeliverySummary.description}
       </p>
     </div>
 
     <aside class="delivery-status product-surface product-surface--soft">
       <span class="status-dot"></span>
-      <p><strong>Client</strong><span>The NP Group / NPG</span></p>
-      <p><strong>Owner</strong><span>CREATE SOMETHING</span></p>
-      <p><strong>Phase</strong><span>Build / delivery review</span></p>
+      <p><strong>Client</strong><span>{abundanceDeliverySummary.client}</span></p>
+      <p><strong>Owner</strong><span>{abundanceDeliverySummary.owner}</span></p>
+      <p><strong>Phase</strong><span>{abundanceDeliverySummary.phase}</span></p>
       <p><strong>Private data</strong><span>Paylocity export received</span></p>
     </aside>
   </div>
@@ -105,12 +127,92 @@
     </div>
 
     <div class="artifact-grid">
-      {#each artifactLinks as artifact}
+      {#each abundanceArtifactLinks as artifact}
         <a class="artifact-link product-surface" href={artifact.href} target="_blank" rel="noreferrer">
           <span>{artifact.meta}</span>
           <strong>{artifact.label}</strong>
         </a>
       {/each}
+    </div>
+  </div>
+</section>
+
+<section class="delivery-section">
+  <div class="shell-inner-pad">
+    <div class="delivery-agent product-surface">
+      <div class="delivery-agent__intro">
+        <span class="product-kicker">Ask This Delivery</span>
+        <h2>Use chat to close understanding gaps.</h2>
+        <p>
+          This bounded agent answers only from the sanitized delivery context. It is useful for
+          explaining the work, identifying decisions, and turning client replies into structured
+          insight notes.
+        </p>
+      </div>
+
+      <div class="suggested-prompts" aria-label="Suggested delivery questions">
+        {#each abundanceSuggestedPrompts as prompt}
+          <button type="button" on:click={() => askDeliveryAgent(prompt)} disabled={isAskingDeliveryAgent}>
+            {prompt}
+          </button>
+        {/each}
+      </div>
+
+      <div class="chat-log" aria-live="polite">
+        {#each deliveryMessages as message}
+          <article class:message-client={message.role === 'client'} class="chat-message">
+            <span>{message.role === 'client' ? 'Client question' : 'Delivery agent'}</span>
+            {#each message.body.split('\n\n') as paragraph}
+              <p>{paragraph}</p>
+            {/each}
+
+            {#if message.grounding?.length}
+              <div class="agent-meta">
+                <strong>Grounded in</strong>
+                <span>{message.grounding.join(', ')}</span>
+              </div>
+            {/if}
+
+            {#if message.followUpQuestions?.length}
+              <div class="follow-up-list">
+                <strong>Useful follow-ups</strong>
+                {#each message.followUpQuestions as question}
+                  <button type="button" on:click={() => askDeliveryAgent(question)} disabled={isAskingDeliveryAgent}>
+                    {question}
+                  </button>
+                {/each}
+              </div>
+            {/if}
+
+            {#if message.insightDraft}
+              <div class="agent-meta">
+                <strong>Insight draft</strong>
+                <span>{message.insightDraft.label}</span>
+              </div>
+            {/if}
+          </article>
+        {/each}
+      </div>
+
+      <form class="delivery-agent__form" on:submit|preventDefault={() => askDeliveryAgent()}>
+        <label for="delivery-question">Ask a delivery question</label>
+        <div>
+          <textarea
+            id="delivery-question"
+            bind:value={deliveryQuestion}
+            rows="3"
+            maxlength="900"
+            placeholder="Example: What is safe to send to our team?"
+          ></textarea>
+          <button type="submit" disabled={isAskingDeliveryAgent || !deliveryQuestion.trim()}>
+            {isAskingDeliveryAgent ? 'Answering' : 'Ask'}
+          </button>
+        </div>
+      </form>
+
+      {#if deliveryAgentError}
+        <p class="delivery-agent__error">{deliveryAgentError}</p>
+      {/if}
     </div>
   </div>
 </section>
@@ -123,7 +225,7 @@
     </div>
 
     <div class="layer-grid">
-      {#each operatingLayers as layer}
+      {#each abundanceOperatingLayers as layer}
         <article class="product-surface layer-card">
           <span class="layer-tier">{layer.tier}</span>
           <h3>{layer.title}</h3>
@@ -141,7 +243,7 @@
       <span class="product-kicker">Private Source Artifacts</span>
       <h2>Received, but not published.</h2>
       <div class="evidence-list">
-        {#each privateArtifacts as item}
+        {#each abundancePrivateArtifacts as item}
           <p>{item}</p>
         {/each}
       </div>
@@ -151,7 +253,7 @@
       <span class="product-kicker">Next Review</span>
       <h2>What needs a human decision.</h2>
       <div class="evidence-list">
-        {#each nextReview as item}
+        {#each abundanceNextReview as item}
           <p>{item}</p>
         {/each}
       </div>
@@ -291,6 +393,161 @@
     line-height: 1.15;
   }
 
+  .delivery-agent {
+    display: grid;
+    gap: 22px;
+    padding: clamp(20px, 4vw, 34px);
+    border-top: 4px solid rgba(94, 234, 212, 0.78);
+  }
+
+  .delivery-agent__intro {
+    max-width: 820px;
+  }
+
+  .delivery-agent__intro h2 {
+    margin: 10px 0 12px;
+    font-family: var(--font-display);
+    font-size: clamp(30px, 5vw, 58px);
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .delivery-agent__intro p {
+    color: rgba(246, 247, 251, 0.72);
+    font-size: 1.05rem;
+    line-height: 1.55;
+  }
+
+  .suggested-prompts,
+  .follow-up-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .suggested-prompts button,
+  .follow-up-list button,
+  .delivery-agent__form button {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(246, 247, 251, 0.88);
+    padding: 10px 13px;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .suggested-prompts button:hover,
+  .follow-up-list button:hover,
+  .delivery-agent__form button:hover {
+    border-color: rgba(94, 234, 212, 0.62);
+    color: #ffffff;
+  }
+
+  .suggested-prompts button:disabled,
+  .follow-up-list button:disabled,
+  .delivery-agent__form button:disabled {
+    cursor: not-allowed;
+    opacity: 0.54;
+  }
+
+  .chat-log {
+    display: grid;
+    gap: 12px;
+    max-height: 620px;
+    overflow: auto;
+    padding-right: 6px;
+  }
+
+  .chat-message {
+    display: grid;
+    gap: 10px;
+    max-width: 82%;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .chat-message.message-client {
+    justify-self: end;
+    background: rgba(94, 234, 212, 0.11);
+    border-color: rgba(94, 234, 212, 0.2);
+  }
+
+  .chat-message > span,
+  .agent-meta strong,
+  .follow-up-list strong,
+  .delivery-agent__form label {
+    color: #5eead4;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .chat-message p {
+    margin: 0;
+    color: rgba(246, 247, 251, 0.78);
+    line-height: 1.55;
+  }
+
+  .agent-meta {
+    display: grid;
+    gap: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 10px;
+  }
+
+  .agent-meta span {
+    color: rgba(246, 247, 251, 0.66);
+  }
+
+  .follow-up-list {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 10px;
+  }
+
+  .follow-up-list strong {
+    flex-basis: 100%;
+  }
+
+  .delivery-agent__form {
+    display: grid;
+    gap: 10px;
+  }
+
+  .delivery-agent__form div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .delivery-agent__form textarea {
+    min-height: 92px;
+    resize: vertical;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(0, 0, 0, 0.28);
+    color: #ffffff;
+    padding: 13px 14px;
+    font: inherit;
+    line-height: 1.45;
+  }
+
+  .delivery-agent__form textarea:focus {
+    outline: 2px solid rgba(94, 234, 212, 0.36);
+    outline-offset: 2px;
+  }
+
+  .delivery-agent__form button {
+    min-width: 116px;
+    background: rgba(94, 234, 212, 0.14);
+  }
+
+  .delivery-agent__error {
+    margin: 0;
+    color: #fca5a5;
+  }
+
   .layer-card {
     padding: 24px;
     border-top: 4px solid rgba(167, 184, 255, 0.76);
@@ -333,12 +590,17 @@
     .delivery-hero__inner,
     .artifact-grid,
     .layer-grid,
-    .evidence-layout {
+    .evidence-layout,
+    .delivery-agent__form div {
       grid-template-columns: 1fr;
     }
 
     .delivery-hero {
       min-height: auto;
+    }
+
+    .chat-message {
+      max-width: 100%;
     }
   }
 </style>
