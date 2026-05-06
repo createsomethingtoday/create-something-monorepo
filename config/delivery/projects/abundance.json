@@ -4,7 +4,7 @@
   "title": "Abundance Nurse Staffing System",
   "client": "The NP Group",
   "clientShortName": "NPG",
-  "deliveryPartner": "Half Dozen",
+  "clientRegistryKey": "npg",
   "audience": "client_summary",
   "targetKind": "project",
   "deliveryDate": "2026-05-06",

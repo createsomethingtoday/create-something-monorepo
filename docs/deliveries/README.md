@@ -22,7 +22,7 @@ Cloudflare Pages-ready surface under `.cloudflare/delivery-site`.
 
 ## Current Deliveries
 
-- `abundance/2026-05-06-project-update.md` - The NP Group / NPG Abundance nurse staffing DB/MCP/agent update delivered through Half Dozen.
+- `abundance/2026-05-06-project-update.md` - The NP Group / NPG Abundance nurse staffing DB/MCP/agent update.
 - `progress/2026-05-06-agent-progress-report.md` - Operator report for the delivery-update agent.
 
 ## Source of Truth

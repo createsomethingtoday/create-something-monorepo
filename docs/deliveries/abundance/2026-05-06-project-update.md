@@ -2,7 +2,6 @@
 
 **Client:** The NP Group
 **Client shorthand:** NPG
-**Delivery partner:** Half Dozen
 **Audience:** client_summary
 **Generated:** 2026-05-06
 
@@ -10,7 +9,7 @@ Abundance now has a repo-backed database, API/MCP-facing contract surface, and m
 
 ## Client Context
 
-This delivery is tied to The NP Group — Abundance AI-native staffing pipeline in CREATE SOMETHING Notion / Agency Ops. The Notion context was reviewed from the CREATE SOMETHING root and its Agency Ops records. The public artifact names the client and partner context, but does not expose private Notion URLs, contacts, or raw workspace data.
+This delivery is tied to The NP Group — Abundance AI-native staffing pipeline in CREATE SOMETHING Notion / Agency Ops. The Notion context was reviewed from the CREATE SOMETHING root and its Agency Ops records. The public artifact names the client context, but does not expose private Notion URLs, contacts, or raw workspace data.
 
 ## Client Summary
 

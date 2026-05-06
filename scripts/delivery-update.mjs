@@ -227,7 +227,7 @@ function renderMarkdown(project, outputPath, imagePaths, date, image2PromptPaths
     ...(project.notionContext ? [
       '## Client Context',
       '',
-      `This delivery is tied to ${project.notionContext.engagementTitle ?? project.client} in ${project.notionContext.source ?? 'the private Notion engagement workspace'}. The Notion context was reviewed from the ${project.notionContext.workspaceRoot ?? 'CREATE SOMETHING'} root and its Agency Ops records. The public artifact names the client and partner context, but does not expose private Notion URLs, contacts, or raw workspace data.`,
+      `This delivery is tied to ${project.notionContext.engagementTitle ?? project.client} in ${project.notionContext.source ?? 'the private Notion engagement workspace'}. The Notion context was reviewed from the ${project.notionContext.workspaceRoot ?? 'CREATE SOMETHING'} root and its Agency Ops records. The public artifact names the client context, but does not expose private Notion URLs, contacts, or raw workspace data.`,
       '',
     ] : []),
     '## Client Summary',

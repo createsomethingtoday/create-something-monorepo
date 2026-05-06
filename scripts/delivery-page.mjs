@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROJECTS_DIR = join(ROOT, 'config/delivery/projects');
 const AGENT_CONFIG_PATH = join(ROOT, 'config/delivery/agent.json');
+const CLIENT_REGISTRY_PATH = join(ROOT, 'config/delivery/client-registry.json');
 const DELIVERIES_DIR = join(ROOT, 'docs/deliveries');
 const DEFAULT_OUT_DIR = join(ROOT, '.cloudflare/delivery-site');
 
@@ -87,6 +88,14 @@ function loadProjects(projectSlug = null) {
   }
 
   return manifests;
+}
+
+function loadClientRegistry() {
+  if (!existsSync(CLIENT_REGISTRY_PATH)) {
+    return { version: 1, clients: {} };
+  }
+
+  return readJson(CLIENT_REGISTRY_PATH);
 }
 
 function relativePath(path) {
@@ -257,7 +266,49 @@ function publicNotionContext(context) {
   };
 }
 
-function validate({ agent, projects }) {
+function clientRegistryEntry(project, registry) {
+  if (!project.clientRegistryKey) return null;
+  return registry.clients?.[project.clientRegistryKey] ?? null;
+}
+
+function publicClientRegistryEntry(entry) {
+  if (!entry) return null;
+
+  return {
+    name: entry.name,
+    shortName: entry.shortName,
+    deliveryOwner: entry.deliveryOwner,
+    status: entry.status,
+    visibility: entry.visibility,
+    ownerContext: entry.ownerContext ? {
+      primaryChannel: entry.ownerContext.primaryChannel,
+      priority: entry.ownerContext.priority,
+      decisionOwnerStatus: entry.ownerContext.decisionOwnerStatus,
+      operatorRosterStatus: entry.ownerContext.operatorRosterStatus,
+      requiredOwnerRoles: entry.ownerContext.requiredOwnerRoles ?? [],
+      publicSummary: entry.ownerContext.publicSummary,
+    } : null,
+    deliveryPages: entry.deliveryPages ?? [],
+    packages: entry.packages ?? [],
+    mcpSurfaces: entry.mcpSurfaces ?? [],
+    agents: entry.agents ?? [],
+    coordination: entry.coordination ?? {},
+  };
+}
+
+function publicImageStatus(slug) {
+  const status = imageStatus(slug);
+
+  return {
+    state: status.state,
+    detail: status.detail,
+    promptFiles: status.promptFiles.map((file) => relativePath(file)),
+    errorFiles: status.errorFiles.map((file) => relativePath(file)),
+    image2Images: status.image2Images.map((file) => relativePath(file)),
+  };
+}
+
+function validate({ agent, projects, clientRegistry }) {
   const errors = [];
 
   if (agent.sourceOfTruth !== 'monorepo') {
@@ -285,6 +336,10 @@ function validate({ agent, projects }) {
 
     for (const evidence of evidenceStatus(project)) {
       if (!evidence.exists) errors.push(`${project.slug}: missing evidence path ${evidence.path}`);
+    }
+
+    if (project.clientRegistryKey && !clientRegistry.clients?.[project.clientRegistryKey]) {
+      errors.push(`${project.slug}: missing client registry entry ${project.clientRegistryKey}`);
     }
   }
 
@@ -586,7 +641,65 @@ function renderCoordination(project) {
     </div>`;
 }
 
-function renderProjectPage({ project, agent, git, outputDir }) {
+function renderRegistryList(items, emptyLabel) {
+  if (!items?.length) {
+    return `<p class="muted">${escapeHtml(emptyLabel)}</p>`;
+  }
+
+  return `<div class="grid auto">${items.map((item) => `
+    <article class="card">
+      ${tag(item.status ?? item.kind ?? 'tracked', item.status === 'recommended_next' ? 'amber' : 'teal')}
+      <h3>${escapeHtml(item.label ?? item.id)}</h3>
+      ${item.kind ? `<p class="muted"><strong>Kind:</strong> ${escapeHtml(item.kind)}</p>` : ''}
+      ${item.path ? `<p><code>${escapeHtml(item.path)}</code></p>` : ''}
+      ${item.evidence ? `<p><code>${escapeHtml(item.evidence)}</code></p>` : ''}
+      ${item.role ? `<p class="muted">${escapeHtml(item.role)}</p>` : ''}
+      ${item.url ? `<p><a href="${escapeHtml(item.url)}">${escapeHtml(item.url)}</a></p>` : ''}
+    </article>
+  `).join('\n')}</div>`;
+}
+
+function renderClientRegistry(project, registryEntry) {
+  const entry = publicClientRegistryEntry(registryEntry);
+  if (!entry) return '';
+
+  const owner = entry.ownerContext;
+
+  return `<section class="section">
+      <h2>Client Registry</h2>
+      <div class="grid two">
+        <div class="card blue">
+          <h3>${escapeHtml(entry.name ?? project.client)}</h3>
+          <p class="muted"><strong>Delivery owner:</strong> ${escapeHtml(entry.deliveryOwner ?? 'CREATE SOMETHING')}</p>
+          ${owner?.publicSummary ? `<p class="muted">${escapeHtml(owner.publicSummary)}</p>` : ''}
+          ${owner ? `<p class="muted">Primary channel: ${escapeHtml(owner.primaryChannel ?? 'unknown')}. Priority: ${escapeHtml(owner.priority ?? 'unknown')}.</p>` : ''}
+        </div>
+        <div class="card amber">
+          <h3>Owner Roles To Confirm</h3>
+          ${owner?.requiredOwnerRoles?.length
+            ? `<div class="stack">${owner.requiredOwnerRoles.map((role) => `<p>${escapeHtml(role)}</p>`).join('\n')}</div>`
+            : '<p class="muted">No owner-role checklist is registered yet.</p>'}
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Packages</h3>
+        ${renderRegistryList(entry.packages, 'No packages registered for this client yet.')}
+      </div>
+
+      <div class="section">
+        <h3>MCP and API Surfaces</h3>
+        ${renderRegistryList(entry.mcpSurfaces, 'No MCP/API surfaces registered for this client yet.')}
+      </div>
+
+      <div class="section">
+        <h3>Agents</h3>
+        ${renderRegistryList(entry.agents, 'No agent boundaries registered for this client yet.')}
+      </div>
+    </section>`;
+}
+
+function renderProjectPage({ project, agent, git, outputDir, clientRegistry }) {
   copyProjectAssets(project, outputDir);
 
   const images = deliveryImages(project.slug);
@@ -595,6 +708,7 @@ function renderProjectPage({ project, agent, git, outputDir }) {
   const image = imageStatus(project.slug);
   const commits = gitLogFor(project);
   const updatePath = latestProjectUpdate(project.slug);
+  const registryEntry = clientRegistryEntry(project, clientRegistry);
 
   const body = `
     <section class="hero">
@@ -627,6 +741,8 @@ function renderProjectPage({ project, agent, git, outputDir }) {
       <h2>DB, MCP, and Agent Map</h2>
       <div class="grid">${renderComponentCards(project)}</div>
     </section>
+
+    ${renderClientRegistry(project, registryEntry)}
 
     <section class="section">
       <h2>Client Summary</h2>
@@ -699,7 +815,7 @@ function writeJson(path, data) {
   writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`);
 }
 
-function buildSite({ projects, agent, outputDir }) {
+function buildSite({ projects, agent, clientRegistry, outputDir }) {
   const git = gitState();
 
   if (existsSync(outputDir)) {
@@ -716,7 +832,7 @@ function buildSite({ projects, agent, outputDir }) {
     mkdirSync(projectDir, { recursive: true });
     writeFileSync(
       join(projectDir, 'index.html'),
-      renderProjectPage({ project, agent, git, outputDir }),
+      renderProjectPage({ project, agent, git, outputDir, clientRegistry }),
     );
   }
 
@@ -744,7 +860,8 @@ function buildSite({ projects, agent, outputDir }) {
       })),
       coordination: project.coordination ?? {},
       notionContext: publicNotionContext(project.notionContext),
-      imageStatus: imageStatus(project.slug),
+      clientRegistry: publicClientRegistryEntry(clientRegistryEntry(project, clientRegistry)),
+      imageStatus: publicImageStatus(project.slug),
       latestUpdate: latestProjectUpdate(project.slug)
         ? relativePath(latestProjectUpdate(project.slug))
         : null,
@@ -765,8 +882,9 @@ function buildSite({ projects, agent, outputDir }) {
 function main() {
   const args = parseArgs(process.argv);
   const agent = readJson(AGENT_CONFIG_PATH);
+  const clientRegistry = loadClientRegistry();
   const projects = loadProjects(args.project).map(({ project }) => project);
-  const errors = validate({ agent, projects });
+  const errors = validate({ agent, projects, clientRegistry });
 
   if (errors.length > 0) {
     for (const error of errors) console.error(`- ${error}`);
@@ -778,7 +896,7 @@ function main() {
     return;
   }
 
-  const result = buildSite({ projects, agent, outputDir: args.outDir });
+  const result = buildSite({ projects, agent, clientRegistry, outputDir: args.outDir });
   console.log(JSON.stringify({
     out: relativePath(result.outputDir),
     projects: projects.map((project) => project.slug),

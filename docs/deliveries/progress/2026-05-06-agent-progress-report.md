@@ -13,7 +13,7 @@ Agents can generate and stage delivery updates automatically from the monorepo. 
 
 | Project | Client | Audience | Components | Missing Evidence | Image 2 | Latest Update |
 | --- | --- | --- | ---: | ---: | --- | --- |
-| Abundance Nurse Staffing System | The NP Group via Half Dozen | client_summary | 3 | 0 | blocked | [2026-05-06-project-update.md](../abundance/2026-05-06-project-update.md) |
+| Abundance Nurse Staffing System | The NP Group | client_summary | 3 | 0 | blocked | [2026-05-06-project-update.md](../abundance/2026-05-06-project-update.md) |
 
 ## Automatic Actions Allowed
 

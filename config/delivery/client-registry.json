@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "clients": {
+    "npg": {
+      "name": "The NP Group",
+      "shortName": "NPG",
+      "deliveryOwner": "CREATE SOMETHING",
+      "status": "active",
+      "visibility": "client_summary",
+      "projects": [
+        "abundance"
+      ],
+      "notionContext": {
+        "source": "CREATE SOMETHING Notion / Agency Ops",
+        "workspaceRoot": "CREATE SOMETHING",
+        "sourceDatabases": [
+          "Clients",
+          "Engagements"
+        ],
+        "engagementTitle": "The NP Group — Abundance AI-native staffing pipeline",
+        "phase": "Build",
+        "status": "Active",
+        "reviewedAt": "2026-05-06",
+        "privacyRule": "Private Notion URLs, contact records, and raw workspace data stay out of public delivery artifacts."
+      },
+      "ownerContext": {
+        "primaryChannel": "Email",
+        "priority": "P1",
+        "privatePrimaryContactsPresent": true,
+        "privatePrimaryContactCount": 2,
+        "decisionOwnerStatus": "not_yet_explicit_in_public_delivery",
+        "operatorRosterStatus": "requested_for_mcp_database_access",
+        "requiredOwnerRoles": [
+          "Primary decision makers for scope, copy, targeting, and operational rollout",
+          "Day-to-day Abundance operators for candidate and employer record management",
+          "Operator roster for MCP/database access",
+          "Service-account approvers for Mailchimp, Paylocity, Jotform, and Facebook Ads"
+        ],
+        "publicSummary": "NPG has private primary contacts in Notion. The public delivery should ask for confirmed decision makers, day-to-day operators, and MCP/database operator roster without exposing contact details."
+      },
+      "deliveryPages": [
+        {
+          "id": "abundance-delivery-page",
+          "label": "Abundance Delivery Page",
+          "status": "deployed",
+          "kind": "cloudflare_pages",
+          "sourcePath": "config/delivery/projects/abundance.json",
+          "outputPath": ".cloudflare/delivery-site/projects/abundance/index.html",
+          "url": "https://create-something-deliveries.pages.dev/projects/abundance/"
+        }
+      ],
+      "packages": [
+        {
+          "id": "agency-abundance-system",
+          "label": "Agency Abundance system",
+          "status": "implemented",
+          "path": "packages/agency",
+          "role": "Production database schema, API routes, OpenAPI contract, and matching workflow logic."
+        },
+        {
+          "id": "ltd-abundance-presentation",
+          "label": "Abundance presentation surface",
+          "status": "implemented",
+          "path": "packages/ltd/src/routes/presentations/abundance-system",
+          "role": "Client-visible explanation/presentation surface for the Abundance operating model."
+        }
+      ],
+      "mcpSurfaces": [
+        {
+          "id": "abundance-openapi-contract",
+          "label": "Abundance OpenAPI contract",
+          "status": "mcp-ready",
+          "kind": "openapi_contract",
+          "evidence": "packages/agency/static/openapi-abundance.yaml",
+          "registry": "config/mcp-hub/registry.json",
+          "role": "Callable API contract that can be wrapped by the CREATE SOMETHING MCP hub or a dedicated Abundance MCP server."
+        },
+        {
+          "id": "create-something-mcp-hub",
+          "label": "CREATE SOMETHING MCP hub",
+          "status": "available",
+          "kind": "mcp_hub",
+          "evidence": "config/mcp-hub/registry.json",
+          "registry": "config/mcp-hub/registry.json",
+          "role": "Brokered MCP registry and routing layer used to expose governed tools without making Retool or a delivery page the source of truth."
+        },
+        {
+          "id": "abundance-dedicated-mcp",
+          "label": "Dedicated Abundance MCP",
+          "status": "recommended_next",
+          "kind": "planned_mcp_server",
+          "evidence": "packages/agency/static/openapi-abundance.yaml",
+          "registry": "config/mcp-hub/fleet.json",
+          "role": "Clean hardening path if NPG needs MCP-native access as a stable delivery standard."
+        }
+      ],
+      "agents": [
+        {
+          "id": "delivery-update-agent",
+          "label": "Delivery Update Agent",
+          "status": "active",
+          "source": "config/delivery/agent.json",
+          "role": "Stages delivery updates, progress reports, screenshots/images, and client-ready summaries from monorepo evidence."
+        },
+        {
+          "id": "abundance-matching-agent-boundary",
+          "label": "Abundance matching agent boundary",
+          "status": "ready-for-review",
+          "source": "packages/agency/src/lib/abundance/matching.ts",
+          "role": "Recommendation support for intake, shortlist, missing-information flags, and recruiter review. It does not make autonomous staffing decisions."
+        }
+      ],
+      "coordination": {
+        "loomTaskIds": [
+          "lm-6fa69c15",
+          "lm-77370b2c",
+          "lm-6c40dce6"
+        ],
+        "linearIssueIds": [
+          "CRE-182",
+          "CRE-183"
+        ]
+      }
+    }
+  }
+}
