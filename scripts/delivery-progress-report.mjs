@@ -201,7 +201,10 @@ function projectRows(projects, outputPath) {
     const updateLink = updatePath
       ? markdownLink(outputPath, relativePath(updatePath), updatePath.split('/').at(-1))
       : 'not generated';
-    return `| ${project.title} | ${project.client} | ${project.audience ?? 'operator'} | ${project.components.length} | ${missingEvidence} | ${image2.state} | ${updateLink} |`;
+    const client = project.deliveryPartner
+      ? `${project.client} via ${project.deliveryPartner}`
+      : project.client;
+    return `| ${project.title} | ${client} | ${project.audience ?? 'operator'} | ${project.components.length} | ${missingEvidence} | ${image2.state} | ${updateLink} |`;
   });
 }
 
@@ -244,7 +247,7 @@ function renderReport({ agent, projects, outputPath, date }) {
     '',
     '## Next Operator Decisions',
     '',
-    '- Decide whether Abundance should stay as Markdown-only delivery or graduate into a standalone delivery page.',
+    '- Decide whether the NPG delivery URL should remain on public Pages or move behind private-link or authenticated access.',
     '- Finish brand/image alignment before replacing deterministic evidence images with Image 2 assets.',
     '- Verify OpenAI organization access for `gpt-image-2`, then rerun the Image 2 delivery command.',
     '- Decide the first client portal auth mode: private link, magic link, or authenticated account.',

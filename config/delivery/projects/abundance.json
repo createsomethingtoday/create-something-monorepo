@@ -2,7 +2,9 @@
   "version": 1,
   "slug": "abundance",
   "title": "Abundance Nurse Staffing System",
-  "client": "Half Dozen",
+  "client": "The NP Group",
+  "clientShortName": "NPG",
+  "deliveryPartner": "Half Dozen",
   "audience": "client_summary",
   "targetKind": "project",
   "deliveryDate": "2026-05-06",
@@ -19,14 +21,31 @@
   "coordination": {
     "loomTaskIds": [
       "lm-6fa69c15",
-      "lm-77370b2c"
+      "lm-77370b2c",
+      "lm-6c40dce6"
     ],
     "linearIssueIds": [
-      "CRE-182"
+      "CRE-182",
+      "CRE-183"
     ],
     "linearUrls": [
-      "https://linear.app/createsomething/issue/CRE-182/ship-monorepo-generated-client-delivery-pages"
+      "https://linear.app/createsomething/issue/CRE-182/ship-monorepo-generated-client-delivery-pages",
+      "https://linear.app/createsomething/issue/CRE-183/correct-abundance-delivery-client-context-to-npg"
     ]
+  },
+  "notionContext": {
+    "source": "CREATE SOMETHING Notion / Agency Ops",
+    "workspaceRoot": "CREATE SOMETHING",
+    "sourceDatabases": [
+      "Clients",
+      "Engagements"
+    ],
+    "engagementTitle": "The NP Group — Abundance AI-native staffing pipeline",
+    "clientRecord": "The NP Group",
+    "phase": "Build",
+    "status": "Active",
+    "visibility": "private_internal",
+    "reviewedAt": "2026-05-06"
   },
   "summary": [
     "The project has moved from concept into a concrete operating system shape: profile data, matching data, intake history, API routes, an OpenAPI contract, and a client-facing explanation layer all live in the monorepo.",

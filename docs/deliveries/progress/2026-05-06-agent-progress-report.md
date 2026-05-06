@@ -13,7 +13,7 @@ Agents can generate and stage delivery updates automatically from the monorepo. 
 
 | Project | Client | Audience | Components | Missing Evidence | Image 2 | Latest Update |
 | --- | --- | --- | ---: | ---: | --- | --- |
-| Abundance Nurse Staffing System | Half Dozen | client_summary | 3 | 0 | blocked | [2026-05-06-project-update.md](../abundance/2026-05-06-project-update.md) |
+| Abundance Nurse Staffing System | The NP Group via Half Dozen | client_summary | 3 | 0 | blocked | [2026-05-06-project-update.md](../abundance/2026-05-06-project-update.md) |
 
 ## Automatic Actions Allowed
 
@@ -56,7 +56,7 @@ Agents can generate and stage delivery updates automatically from the monorepo. 
 
 ## Next Operator Decisions
 
-- Decide whether Abundance should stay as Markdown-only delivery or graduate into a standalone delivery page.
+- Decide whether the NPG delivery URL should remain on public Pages or move behind private-link or authenticated access.
 - Finish brand/image alignment before replacing deterministic evidence images with Image 2 assets.
 - Verify OpenAI organization access for `gpt-image-2`, then rerun the Image 2 delivery command.
 - Decide the first client portal auth mode: private link, magic link, or authenticated account.

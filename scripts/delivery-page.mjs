@@ -242,6 +242,21 @@ function evidenceStatus(project) {
   );
 }
 
+function publicNotionContext(context) {
+  if (!context) return null;
+
+  return {
+    source: context.source,
+    workspaceRoot: context.workspaceRoot,
+    sourceDatabases: context.sourceDatabases,
+    engagementTitle: context.engagementTitle,
+    clientRecord: context.clientRecord,
+    phase: context.phase,
+    status: context.status,
+    reviewedAt: context.reviewedAt,
+  };
+}
+
 function validate({ agent, projects }) {
   const errors = [];
 
@@ -302,26 +317,33 @@ function renderLayout({ title, body, basePath = '' }) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
     :root {
-      color-scheme: light;
-      --ink: #14213d;
-      --muted: #536174;
-      --line: #d7dde7;
-      --paper: #fbfcfe;
-      --panel: #ffffff;
-      --teal: #0f766e;
-      --blue: #2563eb;
-      --amber: #a16207;
-      --red: #b42318;
-      --shadow: 0 18px 45px rgba(20, 33, 61, 0.08);
+      color-scheme: dark;
+      --ink: #f6f7fb;
+      --muted: #aab4c5;
+      --line: rgba(255, 255, 255, 0.14);
+      --paper: #000000;
+      --panel: rgba(255, 255, 255, 0.055);
+      --panel-strong: rgba(255, 255, 255, 0.095);
+      --teal: #5eead4;
+      --blue: #a7b8ff;
+      --amber: #f7c873;
+      --red: #ff8a7a;
+      --shadow: 0 22px 70px rgba(0, 0, 0, 0.36);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: var(--paper);
+      background:
+        radial-gradient(circle at top right, rgba(49, 92, 255, 0.16), transparent 30%),
+        radial-gradient(circle at top left, rgba(94, 234, 212, 0.09), transparent 24%),
+        linear-gradient(180deg, #0c0c10 0%, #060608 48%, #000000 100%);
       color: var(--ink);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.5;
+      letter-spacing: -0.015em;
     }
     a { color: inherit; }
     .shell { max-width: 1180px; margin: 0 auto; padding: 32px 20px 52px; }
@@ -347,9 +369,10 @@ function renderLayout({ title, body, basePath = '' }) {
     h2 { font-size: 24px; margin: 0 0 16px; letter-spacing: 0; }
     h3 { font-size: 17px; margin: 0 0 8px; letter-spacing: 0; }
     p { margin: 0 0 14px; }
-    .lede { font-size: 20px; color: #314158; max-width: 790px; }
+    .lede { font-size: 20px; color: #cbd5e1; max-width: 790px; }
     .meta {
       border-left: 4px solid var(--teal);
+      background: rgba(255, 255, 255, 0.04);
       padding: 16px 0 16px 18px;
       color: var(--muted);
       font-size: 14px;
@@ -382,7 +405,7 @@ function renderLayout({ title, body, basePath = '' }) {
       text-transform: uppercase;
       letter-spacing: 0.04em;
       color: var(--muted);
-      background: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
     }
     .tag.teal { color: var(--teal); border-color: rgba(15, 118, 110, 0.28); }
     .tag.blue { color: var(--blue); border-color: rgba(37, 99, 235, 0.28); }
@@ -395,7 +418,7 @@ function renderLayout({ title, body, basePath = '' }) {
       height: auto;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.04);
       box-shadow: var(--shadow);
     }
     table {
@@ -412,9 +435,10 @@ function renderLayout({ title, body, basePath = '' }) {
     th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
     tr:last-child td { border-bottom: 0; }
     code {
-      font-family: "SFMono-Regular", Consolas, monospace;
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
       font-size: 0.92em;
-      background: #eef2f7;
+      color: #e5edf8;
+      background: rgba(255, 255, 255, 0.09);
       padding: 2px 5px;
       border-radius: 4px;
       word-break: break-word;
@@ -431,7 +455,7 @@ function renderLayout({ title, body, basePath = '' }) {
 <body>
   <main class="shell">
     <header class="topbar">
-      <div class="brand">CREATE SOMETHING Delivery</div>
+      <div class="brand">CREATE SOMETHING .agency Delivery</div>
       <nav class="nav">
         <a href="${basePath}index.html">Projects</a>
         <a href="${basePath}data/delivery.json">Machine data</a>
@@ -453,6 +477,7 @@ function renderIndex({ projects, agent, git }) {
       <div class="stack">
         ${tag(project.targetKind ?? 'project', missing ? 'red' : 'teal')}
         <h3>${escapeHtml(project.title)}</h3>
+        <p><strong>${escapeHtml(project.client)}</strong>${project.deliveryPartner ? ` via ${escapeHtml(project.deliveryPartner)}` : ''}</p>
         <p class="muted">${escapeHtml(project.headline)}</p>
         <p><strong>${project.components.length}</strong> components - <strong>${missing}</strong> missing evidence - <strong>${commits.length}</strong> git commits</p>
         <p class="muted">Image 2: ${escapeHtml(image.state)}</p>
@@ -579,12 +604,24 @@ function renderProjectPage({ project, agent, git, outputDir }) {
       </div>
       <aside class="meta">
         <p><strong>Client:</strong> ${escapeHtml(project.client)}</p>
+        ${project.clientShortName ? `<p><strong>Client shorthand:</strong> ${escapeHtml(project.clientShortName)}</p>` : ''}
+        ${project.deliveryPartner ? `<p><strong>Delivery partner:</strong> ${escapeHtml(project.deliveryPartner)}</p>` : ''}
         <p><strong>Audience:</strong> ${escapeHtml(project.audience)}</p>
         <p><strong>Target:</strong> ${escapeHtml(project.targetKind ?? 'project')}</p>
         <p><strong>Commit:</strong> <code>${escapeHtml(git.shortSha)}</code></p>
         <p><strong>Linear:</strong> ${project.coordination?.linearIssueIds?.map((id) => `<code>${escapeHtml(id)}</code>`).join(' ') ?? 'not linked'}</p>
       </aside>
     </section>
+
+    ${project.notionContext ? `<section class="section">
+      <h2>Client Context</h2>
+      <div class="card blue">
+        <h3>${escapeHtml(project.notionContext.engagementTitle ?? project.client)}</h3>
+        <p class="muted">Reviewed from ${escapeHtml(project.notionContext.source ?? 'private Notion context')} under ${escapeHtml(project.notionContext.workspaceRoot ?? 'CREATE SOMETHING')}. Phase: ${escapeHtml(project.notionContext.phase ?? 'unknown')}. Status: ${escapeHtml(project.notionContext.status ?? 'unknown')}.</p>
+        ${project.notionContext.sourceDatabases?.length ? `<p class="muted">Agency Ops records checked: ${project.notionContext.sourceDatabases.map((item) => `<code>${escapeHtml(item)}</code>`).join(' ')}</p>` : ''}
+        <p class="muted">Private Notion URLs, contacts, and raw workspace data are intentionally excluded from this public delivery surface.</p>
+      </div>
+    </section>` : ''}
 
     <section class="section">
       <h2>DB, MCP, and Agent Map</h2>
@@ -695,6 +732,8 @@ function buildSite({ projects, agent, outputDir }) {
       slug: project.slug,
       title: project.title,
       client: project.client,
+      clientShortName: project.clientShortName ?? null,
+      deliveryPartner: project.deliveryPartner ?? null,
       audience: project.audience,
       targetKind: project.targetKind ?? 'project',
       components: project.components.map((component) => ({
@@ -704,6 +743,7 @@ function buildSite({ projects, agent, outputDir }) {
         status: component.status,
       })),
       coordination: project.coordination ?? {},
+      notionContext: publicNotionContext(project.notionContext),
       imageStatus: imageStatus(project.slug),
       latestUpdate: latestProjectUpdate(project.slug)
         ? relativePath(latestProjectUpdate(project.slug))
