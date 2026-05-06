@@ -670,8 +670,8 @@
 
   .artifact-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
   }
 
   .layer-grid {
@@ -680,14 +680,21 @@
 
   .artifact-link {
     display: grid;
-    min-height: 230px;
+    grid-column: span 4;
+    min-height: 244px;
     grid-template-rows: auto 1fr auto;
-    gap: 18px;
+    gap: 20px;
     overflow: hidden;
-    padding: 18px;
+    padding: 20px;
     position: relative;
     border-radius: var(--delivery-radius-card);
     text-decoration: none;
+  }
+
+  .artifact-link:nth-child(4),
+  .artifact-link:nth-child(5) {
+    grid-column: span 6;
+    min-height: 214px;
   }
 
   .artifact-link::after {
@@ -710,8 +717,11 @@
   }
 
   .artifact-link__top {
-    display: grid;
-    gap: 12px;
+    display: flex;
+    min-height: 56px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
   }
 
   .artifact-index {
@@ -724,6 +734,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    justify-content: flex-end;
   }
 
   .artifact-badges span {
@@ -739,9 +750,10 @@
   }
 
   .artifact-link__body {
-    align-self: end;
+    align-self: center;
     display: grid;
-    gap: 13px;
+    max-width: 31rem;
+    gap: 14px;
   }
 
   .artifact-link__body span,
@@ -756,8 +768,8 @@
 
   .artifact-link strong {
     color: rgba(246, 247, 251, 0.94);
-    font-size: clamp(1.08rem, 1.35vw, 1.28rem);
-    line-height: 1.15;
+    font-size: clamp(1.16rem, 1.5vw, 1.42rem);
+    line-height: 1.12;
   }
 
   .artifact-open {
@@ -1170,11 +1182,25 @@
     .chat-message {
       max-width: 100%;
     }
+
+    .artifact-link,
+    .artifact-link:nth-child(4),
+    .artifact-link:nth-child(5) {
+      grid-column: auto;
+      min-height: 220px;
+    }
   }
 
   @media (min-width: 981px) and (max-width: 1220px) {
     .artifact-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .artifact-link,
+    .artifact-link:nth-child(4),
+    .artifact-link:nth-child(5) {
+      grid-column: auto;
+      min-height: 232px;
     }
   }
 
@@ -1195,6 +1221,16 @@
     .agent-delivery__embed,
     .agent-delivery__embed iframe {
       min-height: 620px;
+    }
+
+    .artifact-link__top {
+      display: grid;
+      min-height: auto;
+      gap: 12px;
+    }
+
+    .artifact-badges {
+      justify-content: flex-start;
     }
   }
 </style>
