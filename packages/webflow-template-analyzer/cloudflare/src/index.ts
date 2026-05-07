@@ -2,12 +2,14 @@ import { Container, getContainer } from '@cloudflare/containers';
 
 const DEFAULT_PORT = 7860;
 const START_ENTRYPOINT = ['/bin/sh', '-lc', 'cd /app/backend && python3 server.py'];
+const CONTAINER_INSTANCE_NAME = 'primary-steel-v1';
 
 interface Env {
   AnalyzerContainer: DurableObjectNamespace<AnalyzerContainer>;
   UPSTREAM_PORT?: string;
   SANDBOX_SLEEP_AFTER?: string;
   ALLOW_VISIBLE_BROWSER?: string;
+  BROWSER_PROVIDER?: string;
   ANTHROPIC_API_KEY?: string;
   STEEL_API_KEY?: string;
   STEEL_SESSION_TIMEOUT_MS?: string;
@@ -15,11 +17,16 @@ interface Env {
 
 type AnalyzerContainerStub = DurableObjectStub<AnalyzerContainer>;
 
-export class AnalyzerContainer extends Container {
+export class AnalyzerContainer extends Container<Env> {
   defaultPort = DEFAULT_PORT;
   sleepAfter = '20m';
   enableInternet = true;
   pingEndpoint = 'container/health';
+
+  constructor(ctx: DurableObjectState<Env>, env: Env) {
+    super(ctx, env);
+    this.sleepAfter = normalizeSleepAfter(env.SANDBOX_SLEEP_AFTER);
+  }
 }
 
 function normalizePort(value: string | undefined): number {
@@ -36,6 +43,7 @@ function buildContainerEnv(env: Env): Record<string, string> {
   const vars: Record<string, string> = {
     PORT: String(normalizePort(env.UPSTREAM_PORT)),
     ALLOW_VISIBLE_BROWSER: env.ALLOW_VISIBLE_BROWSER?.trim() || 'false',
+    BROWSER_PROVIDER: env.BROWSER_PROVIDER?.trim() || 'playwright',
   };
 
   const anthropicApiKey = env.ANTHROPIC_API_KEY?.trim();
@@ -109,8 +117,7 @@ export default {
       return optionsResponse();
     }
 
-    const container = getContainer(env.AnalyzerContainer, 'primary');
-    container.sleepAfter = normalizeSleepAfter(env.SANDBOX_SLEEP_AFTER);
+    const container = getContainer(env.AnalyzerContainer, CONTAINER_INSTANCE_NAME);
 
     try {
       await ensureAnalyzerServer(container, env);

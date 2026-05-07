@@ -307,11 +307,12 @@ def analyze_template(url: str) -> dict:
         page = browser_session.page
         print(f"✓ Browser provider: {browser_session.provider}")
 
+        page.goto(url, wait_until="domcontentloaded", timeout=45_000)
         try:
-            page.goto(url, wait_until="networkidle", timeout=60_000)
+            page.wait_for_load_state("load", timeout=10_000)
         except Exception:
-            page.goto(url, wait_until="domcontentloaded", timeout=60_000)
-            page.wait_for_timeout(3000)
+            pass
+        page.wait_for_timeout(2500)
 
         # Scroll through to trigger lazy loading
         page_height: int = page.evaluate("() => document.body.scrollHeight")

@@ -6,10 +6,15 @@ import {
 } from '../../../../lib/intake/published-url';
 import { analyzePublishedTemplate } from '../../../../lib/intake/template-analyzer';
 
-const ANALYZER_WAIT_TIMEOUT_MS = 2_000;
+const ANALYZER_WAIT_TIMEOUT_MS = 10_000;
+const ROUTE_RESPONSE_BUDGET_MS = 16_000;
 type PublishedPageResult = Awaited<
   ReturnType<typeof runPublishedUrlValidation>
 >['summary']['pageResults'][number];
+type ValidatePublishedUrlBody = {
+  url?: string;
+  includeAutofill?: boolean;
+};
 
 function extractHttpStatus(error?: string) {
   if (typeof error !== 'string') {
@@ -127,25 +132,33 @@ function sleep(ms: number) {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => ({}))) as { url?: string };
+  const startedAt = Date.now();
+  const body = (await request.json().catch(() => ({}))) as ValidatePublishedUrlBody;
 
   try {
     const includePageResults = new URL(request.url).searchParams.get('includePageResults') === '1';
     const normalizedUrl = normalizePublishedUrl(body.url || '');
     let autofillWarning: string | undefined;
 
-    const autofillPromise = analyzePublishedTemplate(normalizedUrl).catch((error) => {
-      autofillWarning = toAutofillWarning(error);
-      return null;
-    });
+    const shouldAnalyze = body.includeAutofill === true;
+    const autofillPromise = shouldAnalyze
+      ? analyzePublishedTemplate(normalizedUrl).catch((error) => {
+          autofillWarning = toAutofillWarning(error);
+          return null;
+        })
+      : Promise.resolve(null);
 
     const result = await runPublishedUrlValidation(normalizedUrl);
     let autofill: Awaited<ReturnType<typeof analyzePublishedTemplate>> | null = null;
 
-    if (result.summary.passed) {
+    if (result.summary.passed && shouldAnalyze) {
+      const analyzerWaitMs = Math.max(
+        0,
+        Math.min(ANALYZER_WAIT_TIMEOUT_MS, ROUTE_RESPONSE_BUDGET_MS - (Date.now() - startedAt))
+      );
       const analyzerResult = await Promise.race([
         autofillPromise,
-        sleep(ANALYZER_WAIT_TIMEOUT_MS).then(() => 'timeout' as const)
+        sleep(analyzerWaitMs).then(() => 'timeout' as const)
       ]);
 
       if (analyzerResult === 'timeout') {
