@@ -368,7 +368,7 @@
 				<ShimmerButton href="https://createsomething.agency/book">
 					Book Mapping Session
 				</ShimmerButton>
-				<a href="/services" class="cta-secondary">Need a constrained start? Use an MCP-only wedge →</a>
+				<a href="/services" class="cta-secondary">Need a constrained start? Use an MCP Wedge →</a>
 			</div>
 		</BlurFade>
 	</div>

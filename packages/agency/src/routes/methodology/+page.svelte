@@ -39,8 +39,8 @@
 	const phases = [
 		{
 			weeks: 'Step 1',
-			name: 'Map the watched workflow',
-			description: 'Name the handoff, owner, systems, exceptions, and current human monitoring burden.'
+			name: 'Map the manual coverage burden',
+			description: 'Name the handoff, owner, systems, exceptions, and current human execution or monitoring burden.'
 		},
 		{
 			weeks: 'Step 2',
@@ -108,9 +108,9 @@
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				Calm operator systems do not start by adding more agents. They start by removing
-				duplication, stripping excess, reconnecting what matters, and then deciding what
-				can run, what needs approval, and what should stop.
+				Calm, transparent workflow systems do not start by adding more agents. They start
+				by removing duplication, stripping excess, reconnecting what matters, and then
+				deciding what agents and tools can do, what needs approval, and what should stop.
 			</p>
 		</BlurFade>
 	</div>
@@ -191,7 +191,7 @@
 		</BlurFade>
 			<BlurFade delay={0.15}>
 				<p class="section-subhead">
-					How the Triad becomes a calm operator path, from workflow map to Policy OS.
+					How the Triad becomes a calm, governed workflow path, from workflow map to Policy OS.
 				</p>
 			</BlurFade>
 

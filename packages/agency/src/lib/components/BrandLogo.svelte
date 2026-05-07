@@ -4,6 +4,20 @@
   export let color: string = 'currentColor';
   export let className: string = '';
 
+  const imageSources: Record<string, string> = {
+    'Model Context Protocol': '/images/stack/mcp.svg',
+    Composio: '/images/stack/composio.ico',
+    Dify: '/images/stack/dify.svg',
+    OpenAI: '/images/stack/openai.svg',
+    Webflow: '/images/stack/webflow.png',
+    Linear: '/images/stack/linear.svg',
+    TRMNL: '/images/stack/trmnl.png',
+    Infisical: '/images/stack/infisical.png',
+    Auth0: '/images/stack/auth0.svg'
+  };
+
+  const invertImageNames = new Set(['OpenAI']);
+
   const paths: Record<string, string> = {
     SvelteKit:
       'M10.354 21.125a4.44 4.44 0 0 1-4.765-1.767 4.109 4.109 0 0 1-.703-3.107 3.898 3.898 0 0 1 .134-.522l.105-.321.287.21a7.21 7.21 0 0 0 2.186 1.092l.208.063-.02.208a1.253 1.253 0 0 0 .226.83 1.337 1.337 0 0 0 1.435.533 1.231 1.231 0 0 0 .343-.15l5.59-3.562a1.164 1.164 0 0 0 .524-.778 1.242 1.242 0 0 0-.211-.937 1.338 1.338 0 0 0-1.435-.533 1.23 1.23 0 0 0-.343.15l-2.133 1.36a4.078 4.078 0 0 1-1.135.499 4.44 4.44 0 0 1-4.765-1.766 4.108 4.108 0 0 1-.702-3.108 3.855 3.855 0 0 1 1.742-2.582l5.589-3.563a4.072 4.072 0 0 1 1.135-.499 4.44 4.44 0 0 1 4.765 1.767 4.109 4.109 0 0 1 .703 3.107 3.943 3.943 0 0 1-.134.522l-.105.321-.286-.21a7.204 7.204 0 0 0-2.187-1.093l-.208-.063.02-.207a1.255 1.255 0 0 0-.226-.831 1.337 1.337 0 0 0-1.435-.532 1.231 1.231 0 0 0-.343.15L8.62 9.368a1.162 1.162 0 0 0-.524.778 1.24 1.24 0 0 0 .211.937 1.338 1.338 0 0 0 1.435.533 1.235 1.235 0 0 0 .344-.151l2.132-1.36a4.067 4.067 0 0 1 1.135-.498 4.44 4.44 0 0 1 4.765 1.766 4.108 4.108 0 0 1 .702 3.108 3.857 3.857 0 0 1-1.742 2.583l-5.589 3.562a4.072 4.072 0 0 1-1.135.499m10.358-17.95C18.484-.015 14.082-.96 10.9 1.068L5.31 4.63a6.412 6.412 0 0 0-2.896 4.295 6.753 6.753 0 0 0 .666 4.336 6.43 6.43 0 0 0-.96 2.396 6.833 6.833 0 0 0 1.168 5.167c2.229 3.19 6.63 4.135 9.812 2.108l5.59-3.562a6.41 6.41 0 0 0 2.896-4.295 6.756 6.756 0 0 0-.665-4.336 6.429 6.429 0 0 0 .958-2.396 6.831 6.831 0 0 0-1.167-5.168Z',
@@ -28,11 +42,43 @@
   // M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z
   paths['Model Context Protocol'] =
     'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96L12 12.01l8.73-5.05 M12 22.08V12';
+  paths['Cloudflare'] = paths['Cloudflare Workers'];
 
-  $: d = paths[name] || '';
+  function getFallbackLabel(value: string) {
+    const normalized = value
+      .replace(/[+.]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (normalized.length === 0) return '?';
+    if (normalized.length === 1) return normalized[0].slice(0, 2).toUpperCase();
+
+    return normalized
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  $: imageSrc = imageSources[name] || '';
+  $: d = imageSrc ? '' : paths[name] || '';
+  $: fallbackLabel = getFallbackLabel(name);
+  $: fallbackStyle = `width: ${size}px; height: ${size}px; font-size: ${Math.max(8, size * 0.42)}px; color: ${color};`;
+  $: imageStyle = `width: ${size}px; height: ${size}px; ${invertImageNames.has(name) ? 'filter: brightness(0) invert(1);' : ''}`;
 </script>
 
-{#if d}
+{#if imageSrc}
+  <img
+    src={imageSrc}
+    width={size}
+    height={size}
+    class={`brand-logo-image ${className}`.trim()}
+    style={imageStyle}
+    alt={name}
+    loading="eager"
+    decoding="async"
+  />
+{:else if d}
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={size}
@@ -56,11 +102,40 @@
       <path {d} />
     {/if}
   </svg>
+{:else}
+  <span
+    class={`brand-logo-fallback ${className}`.trim()}
+    style={fallbackStyle}
+    role="img"
+    aria-label={name}
+  >
+    {fallbackLabel}
+  </span>
 {/if}
 
 <style>
   svg {
     display: inline-block;
     vertical-align: middle;
+  }
+
+  .brand-logo-image {
+    display: inline-block;
+    flex: 0 0 auto;
+    object-fit: contain;
+    vertical-align: middle;
+  }
+
+  .brand-logo-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 0.35rem;
+    border: 1px solid currentColor;
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+    line-height: 1;
+    opacity: 0.92;
   }
 </style>

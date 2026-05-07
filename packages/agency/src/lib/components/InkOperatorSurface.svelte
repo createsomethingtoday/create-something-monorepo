@@ -2,7 +2,7 @@
   const callouts = [
     {
       label: 'E-ink surface',
-      detail: 'Calm status, approval, and blocked-state briefs.',
+      detail: 'TRMNL-ready or custom Ink status, approval, and blocked-state briefs.',
       modifier: 'screen'
     },
     {
@@ -37,12 +37,12 @@
 
 <div class="ink-surface product-surface product-surface--soft">
   <div class="ink-surface__copy">
-    <span class="product-kicker">Ink operator surface</span>
+    <span class="product-kicker">TRMNL + Ink operator surface</span>
     <h2>The operator should not have to watch the dashboard.</h2>
     <p>
-      Ink makes Policy OS tangible: a physical e-ink surface for all-clear, approval-needed,
-      blocked, and recovery states. The first release can start on Core Ink-class hardware while
-      CREATE SOMETHING owns the operating layer, labels, and escalation behavior.
+      TRMNL gives the delivery a ready ePaper companion for all-clear, approval-needed, blocked,
+      and recovery states. Custom Ink hardware stays available when the workflow needs physical
+      controls, while CREATE SOMETHING owns the operating layer, labels, and escalation behavior.
     </p>
 
     <div class="ink-state-grid" aria-label="Ink display states">

@@ -354,7 +354,7 @@
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
 				Pick the workflow that wastes the most time. We&apos;ll deliver your first scoped workflow
-				wedge in 2–4&nbsp;weeks. You own the code and runbook. Delivery vector is {deliveryVector.canonicalPhrase}, and technical proof surfaces use {deliveryVector.technicalLabel}. If you need discovery or compliance-only, we can scope MCP-only as the entry wedge.
+				wedge in 2–4&nbsp;weeks. You own the code and runbook. Delivery vector is {deliveryVector.canonicalPhrase}, and technical proof surfaces use {deliveryVector.technicalLabel}. If you need discovery or compliance-only, we can scope MCP Wedge as the entry point.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>

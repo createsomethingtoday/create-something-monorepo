@@ -39,8 +39,8 @@ interface ContentItem {
 const SERVICES: ContentItem[] = [
 	{
 		slug: 'workflow-infrastructure',
-		title: 'Workflow Infrastructure',
-		description: 'CREATE SOMETHING builds production-safe workflow infrastructure for business-critical operations with clear trust boundaries.',
+		title: 'Workflow System',
+		description: 'CREATE SOMETHING builds production-safe workflow systems for business-critical operations with clear trust boundaries.',
 		category: 'service'
 	},
 	{
@@ -63,7 +63,7 @@ const SERVICES: ContentItem[] = [
 	},
 	{
 		slug: 'mcp-only-discovery',
-		title: 'MCP-only (Discovery/Compliance)',
+		title: 'MCP Wedge (Discovery/Compliance)',
 		description: 'Scoped entry wedge for read-only or limited-scope connectivity when teams need a safe workflow starting point before broader automation.',
 		category: 'service'
 	}

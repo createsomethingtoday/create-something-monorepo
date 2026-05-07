@@ -10,14 +10,14 @@
   const stages: WedgeStage[] = [
     {
       index: '01',
-      label: 'MCP-only',
-      title: 'Connection wedge',
+      label: 'MCP Wedge',
+      title: 'Connection proof',
       detail: 'A constrained host proves the tool boundary before a workflow depends on it.',
       width: '48%'
     },
     {
       index: '02',
-      label: 'Workflow Infrastructure',
+      label: 'Workflow System',
       title: 'Operating path',
       detail: 'The first handoff gets mapped, rebuilt, tested, and documented for inheritance.',
       width: '64%'
@@ -31,7 +31,7 @@
     },
     {
       index: '04',
-      label: 'Ink / operator surface',
+      label: 'Operator Surface',
       title: 'Calm visibility',
       detail: 'The operator sees the state only when judgment, recovery, or review is required.',
       width: '96%'
@@ -44,14 +44,14 @@
 <div class="wedge-shell product-surface product-surface--soft" aria-labelledby="service-wedge-title">
   <div class="wedge-copy">
     <span class="wedge-eyebrow">Service blueprint</span>
-    <h3 id="service-wedge-title">The wedge starts with MCPs and rises into Policy OS.</h3>
+    <h3 id="service-wedge-title">The offer ladder starts with one wedge and rises into Policy OS.</h3>
     <p>
       The service is easier to understand as a progression: first prove the connection, then
       harden one workflow, then install the policy layer that protects operator attention.
     </p>
   </div>
 
-  <div class="wedge-diagram" aria-label="Blueprint wedge from MCP-only to Policy OS and Ink">
+  <div class="wedge-diagram" aria-label="Blueprint wedge from MCP Wedge to Policy OS and Operator Surface">
     <div class="wedge-axis" aria-hidden="true">
       <span>Connectivity</span>
       <span>Workflow</span>

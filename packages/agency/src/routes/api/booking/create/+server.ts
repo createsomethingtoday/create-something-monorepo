@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { env } from '$env/dynamic/private';
 import { createLogger } from '@create-something/canon/utils';
 import { getLinkId, SAVVYCAL_API_BASE } from '$lib/utils/savvycal';
 
@@ -27,7 +28,7 @@ interface SavvyCalEvent {
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
-	const apiKey = platform?.env?.SAVVYCAL_API_KEY;
+	const apiKey = platform?.env?.SAVVYCAL_API_KEY ?? env.SAVVYCAL_API_KEY;
 
 	if (!apiKey) {
 		throw error(500, 'SavvyCal API key not configured');
