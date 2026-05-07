@@ -6,7 +6,7 @@ import {
 } from '../../../../lib/intake/published-url';
 import { analyzePublishedTemplate } from '../../../../lib/intake/template-analyzer';
 
-const ANALYZER_WAIT_TIMEOUT_MS = 8_000;
+const ANALYZER_WAIT_TIMEOUT_MS = 2_000;
 type PublishedPageResult = Awaited<
   ReturnType<typeof runPublishedUrlValidation>
 >['summary']['pageResults'][number];

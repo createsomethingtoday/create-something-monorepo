@@ -1,4 +1,5 @@
 const WORKER_URL = 'https://gsap-validation-worker.createsomething.workers.dev/crawlWebsite';
+const DIRECT_TIMEOUT_MS = 14_000;
 const START_TIMEOUT_MS = 45_000;
 const POLL_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 5_000;
@@ -8,7 +9,11 @@ const RETRYABLE_STATUS = new Set([502, 503, 504]);
 
 const VALIDATION_OPTIONS = {
   maxDepth: 10,
-  maxPages: 1000,
+  maxPages: 1000
+} as const;
+
+const ASYNC_VALIDATION_OPTIONS = {
+  ...VALIDATION_OPTIONS,
   async: true
 } as const;
 
@@ -88,7 +93,19 @@ async function postWorker(payload: Record<string, unknown>, timeoutMs: number) {
     throw error;
   }
 
+  if (!data) {
+    throw new Error('Validation service returned an invalid response.');
+  }
+
   return data;
+}
+
+function isRetryableWorkerError(error: Error) {
+  const status = (error as Error & { status?: number }).status;
+  return (
+    error.name !== 'AbortError' &&
+    (error instanceof TypeError || (typeof status === 'number' && RETRYABLE_STATUS.has(status)))
+  );
 }
 
 export function normalizePublishedUrl(rawValue: string): string {
@@ -203,13 +220,10 @@ async function startWorkflow(url: string) {
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
     try {
-      return await postWorker({ url, ...VALIDATION_OPTIONS }, START_TIMEOUT_MS);
+      return await postWorker({ url, ...ASYNC_VALIDATION_OPTIONS }, START_TIMEOUT_MS);
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Validation could not be started.');
-      const retryable =
-        lastError instanceof TypeError ||
-        (typeof (lastError as Error & { status?: number }).status === 'number' &&
-          RETRYABLE_STATUS.has((lastError as Error & { status?: number }).status as number));
+      const retryable = isRetryableWorkerError(lastError);
 
       if (!retryable || attempt === MAX_RETRIES || lastError.name === 'AbortError') {
         throw lastError;
@@ -218,6 +232,10 @@ async function startWorkflow(url: string) {
   }
 
   throw lastError || new Error('Validation could not be started.');
+}
+
+async function runDirectValidation(url: string) {
+  return await postWorker({ url, ...VALIDATION_OPTIONS }, DIRECT_TIMEOUT_MS);
 }
 
 async function pollWorkflow(url: string, instanceId: string) {
@@ -275,6 +293,22 @@ export async function runPublishedUrlValidation(input: string): Promise<{
   summary: PublishedUrlValidationSummary;
 }> {
   const normalizedUrl = normalizePublishedUrl(input);
+  try {
+    const workerData = await runDirectValidation(normalizedUrl);
+    return {
+      normalizedUrl,
+      summary: summarizeWorkerResponse(workerData)
+    };
+  } catch (error) {
+    const typedError = error instanceof Error ? error : new Error('Validation failed.');
+    if (typedError.name === 'AbortError') {
+      throw new Error('Published URL validation took longer than expected. Try again in a minute.');
+    }
+    if (!isRetryableWorkerError(typedError)) {
+      throw typedError;
+    }
+  }
+
   const startData = await startWorkflow(normalizedUrl);
 
   if (!startData || typeof startData.instanceId !== 'string') {
