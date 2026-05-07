@@ -3,7 +3,7 @@
 	 * The Wrap Pattern Paper
 	 *
 	 * Research paper formalizing the Wrap Pattern for commodity MCP integrations:
-	 * using third-party vendors as invisible plumbing while preserving the
+	 * using third-party vendors behind transparent boundaries while preserving the
 	 * client-facing MCP surface, the Intelligence Layer margin, and Three-Tier alignment.
 	 *
 	 * The paper generalizes from production evaluation of commodity integration vendors,
@@ -14,9 +14,9 @@
 </script>
 
 <SEO
-	title="The Wrap Pattern: Commodity Integration as Invisible Infrastructure"
-	description="A structural pattern for integrating commodity MCP vendors as invisible infrastructure while preserving the client-facing surface, the Intelligence Layer margin, and Three-Tier alignment."
-	keywords="MCP, Wrap Pattern, commodity integration, creation moat, Three-Tier Framework, invisible infrastructure, agent architecture"
+	title="The Wrap Pattern: Commodity Integration with Transparent Boundaries"
+	description="A structural pattern for integrating commodity MCP vendors behind transparent boundaries while preserving the client-facing surface, the Intelligence Layer margin, and Three-Tier alignment."
+	keywords="MCP, Wrap Pattern, commodity integration, creation moat, Three-Tier Framework, transparent infrastructure, vendor boundaries, agent architecture"
 	ogType="article"
 	articleSection="Research"
 	publishedTime="2026-02-19T00:00:00Z"
@@ -33,11 +33,12 @@
 		<!-- Header -->
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-008</div>
-			<h1 class="mb-3 paper-title">The Wrap Pattern: Commodity Integration as Invisible Infrastructure</h1>
+			<h1 class="mb-3 paper-title">The Wrap Pattern: Commodity Integration with Transparent Boundaries</h1>
 			<p class="max-w-3xl paper-subtitle">
 				MCP consumption is commoditized. The strategic response is not to avoid commodity platforms
-				but to wrap them &mdash; preserving the client-facing MCP surface, the Intelligence Layer margin,
-				and the Three-Tier alignment, while delegating CRUD plumbing to swappable vendors.
+				but to wrap them with transparent boundaries &mdash; preserving the client-facing MCP surface,
+				the Intelligence Layer margin, and the Three-Tier alignment, while delegating CRUD plumbing
+				to swappable vendors.
 			</p>
 			<div class="flex gap-4 mt-4 paper-meta">
 				<span>Research</span>
@@ -62,7 +63,7 @@
 				<strong>swappability invariant</strong> that prevents vendor lock-in; and establish red lines
 				for when wrapping erodes the creation moat. The contribution is both strategic (a decision
 				framework for MCP server builders) and architectural (a reference implementation pattern for
-				invisible vendor integration).
+				transparent vendor-boundary integration).
 			</p>
 		</section>
 
@@ -152,15 +153,16 @@
 				<p>
 					The Wrap Pattern is an architectural approach where a first-party MCP server delegates
 					commodity operations to a third-party vendor&rsquo;s SDK internally, while presenting a
-					unified, branded surface to the client. The vendor is <strong>invisible
-					infrastructure</strong> &mdash; plumbing that the client never sees, never interacts with,
-					and never depends on.
+					unified, branded surface to the client. The vendor is <strong>transparent
+					in the stack boundary</strong> but hidden from the runtime interface: the buyer can know
+					which service provides commodity plumbing, what can be replaced, and what CREATE
+					SOMETHING owns, without being forced to operate the vendor directly.
 				</p>
 
 				<p>
 					The pattern follows the same principle as the Automotive Framework&rsquo;s chassis: the
-					structural frame that holds everything together is invisible when driving. MCP is the
-					chassis; the commodity vendor is a replaceable part bolted to it.
+					structural frame that holds everything together is inspectable when serviced but quiet
+					when driving. MCP is the chassis; the commodity vendor is a replaceable part bolted to it.
 				</p>
 
 				<h3 class="subsection-heading">2.2 Architecture</h3>
@@ -188,20 +190,26 @@
 					</li>
 				</ol>
 
-				<h3 class="subsection-heading">2.3 The Key Invariant</h3>
+				<h3 class="subsection-heading">2.3 The Visibility Invariant</h3>
 
 				<p>
-					<strong>The client never knows the vendor exists.</strong> This is not a cosmetic requirement
-					&mdash; it is a structural invariant that preserves the creation moat. If the client
-					interacts with the vendor directly, you have introduced a dependency that bypasses your
-					value layer.
+					<strong>The buyer may know the vendor exists; the workflow must not depend on the
+					buyer operating the vendor.</strong> This is the corrected invariant. Transparency
+					improves trust when it explains ownership, replacement options, and risk boundaries.
+					It erodes the moat only when the vendor becomes the client-facing product.
 				</p>
 
 				<p>
-					Your MCP server is always the server framework. The vendor is always swappable. The
-					Intelligence Layer (Skills, Agents, domain logic) sits on top of both wrapped and custom
-					tools identically.
+					Your MCP server is always the contractual surface. The vendor is always swappable.
+					The Intelligence Layer (Skills, Agents, domain logic) sits on top of both wrapped and
+					custom tools identically.
 				</p>
+
+				<ul class="list-disc pl-6 space-y-2">
+					<li>Disclose vendor roles when it helps the buyer trust the stack boundary.</li>
+					<li>Keep credentials, tool execution, and failure handling behind the first-party MCP surface.</li>
+					<li>Treat vendor names as receipts, not the product or the operating handoff.</li>
+				</ul>
 			</div>
 		</section>
 
@@ -477,7 +485,7 @@
 			<div class="space-y-6 leading-relaxed body-text">
 				<p>
 					The wrap pattern has clear boundaries. Cross them, and the vendor stops being
-					invisible infrastructure and becomes a visible dependency &mdash; eroding the
+					bounded infrastructure and becomes the visible product dependency &mdash; eroding the
 					creation moat.
 				</p>
 
@@ -493,15 +501,15 @@
 						</thead>
 						<tbody>
 							<tr>
-								<td>Use vendor as invisible plumbing</td>
-								<td>List vendor as a partner on your site</td>
+								<td>Use vendor as bounded plumbing</td>
+								<td>Let vendor positioning become your offer</td>
+							</tr>
+							<tr>
+								<td>Name vendor roles in stack-boundary docs</td>
+								<td>Make clients operate vendor dashboards as the product</td>
 							</tr>
 							<tr>
 								<td>Wrap their tools in your MCPs</td>
-								<td>Expose vendor directly to clients</td>
-							</tr>
-							<tr>
-								<td>Fork their MIT code if needed</td>
 								<td>Depend on vendor uptime for client SLAs</td>
 							</tr>
 							<tr>
@@ -540,7 +548,7 @@
 				<p>
 					Never wrap integrations that are <strong>critical path</strong> for your client&rsquo;s
 					SLA. If the vendor has downtime and your client&rsquo;s workflow stops, you have a vendor
-					dependency, not invisible infrastructure.
+					dependency, not wrapped infrastructure.
 				</p>
 
 				<p>
@@ -710,7 +718,8 @@
 					When the wrap pattern works correctly, wrapped tools recede into transparent use &mdash;
 					Heidegger&rsquo;s <em>Zuhandenheit</em> (ready-to-hand). The agent calls
 					<code>hubspot_list_contacts</code> without knowing or caring whether that tool is
-					implemented via custom code or a vendor bridge. The tool disappears in use.
+					implemented via custom code or a vendor bridge. The tool disappears in use even though
+					the stack boundary remains inspectable.
 				</p>
 
 				<p>
@@ -780,14 +789,15 @@
 				<p>
 					The contribution is both strategic and architectural. Strategically, it provides a decision
 					framework for when to build, wrap, or sync. Architecturally, it provides a reference
-					pattern for invisible vendor integration that maintains Three-Tier alignment and
+					pattern for transparent vendor-boundary integration that maintains Three-Tier alignment and
 					edge deployment compatibility.
 				</p>
 
 				<p>
 					<strong>Key Takeaway:</strong> The wrap pattern is a subtractive move. It removes
 					the build burden for commodity integrations &mdash; not to do less, but to focus on
-					the work that matters. The vendor disappears. The creation moat deepens.
+					the work that matters. The vendor is visible as a replaceable stack component, but
+					absent from the client&rsquo;s operating burden. The creation moat deepens.
 				</p>
 			</div>
 		</section>

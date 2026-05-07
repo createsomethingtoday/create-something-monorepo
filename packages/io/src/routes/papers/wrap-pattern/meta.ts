@@ -2,10 +2,10 @@ import type { PaperMeta } from '../types';
 
 export const meta: PaperMeta = {
 	slug: 'wrap-pattern',
-	title: 'The Wrap Pattern: Commodity Integration as Invisible Infrastructure',
-	subtitle: 'When MCP consumption is commoditized, the strategic response is to wrap — not build — the plumbing',
+	title: 'The Wrap Pattern: Commodity Integration with Transparent Boundaries',
+	subtitle: 'When MCP consumption is commoditized, the strategic response is to wrap the plumbing without hiding the stack boundary',
 	description:
-		'A structural pattern for integrating commodity MCP vendors as invisible infrastructure while preserving the client-facing surface, the Intelligence Layer margin, and the Three-Tier alignment.',
+		'A structural pattern for integrating commodity MCP vendors behind transparent boundaries while preserving the client-facing surface, the Intelligence Layer margin, and the Three-Tier alignment.',
 	category: 'research',
 	readingTime: 15,
 	difficulty: 'intermediate',
@@ -16,7 +16,8 @@ export const meta: PaperMeta = {
 		'Commodity Integration',
 		'Creation Moat',
 		'Three-Tier Framework',
-		'Invisible Infrastructure',
+		'Transparent Infrastructure',
+		'Vendor Boundaries',
 		'Agent Architecture',
 		'Cloudflare Workers',
 		'Model Context Protocol'
