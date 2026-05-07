@@ -130,6 +130,7 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { url?: string };
 
   try {
+    const includePageResults = new URL(request.url).searchParams.get('includePageResults') === '1';
     const normalizedUrl = normalizePublishedUrl(body.url || '');
     let autofillWarning: string | undefined;
 
@@ -163,7 +164,7 @@ export async function POST(request: Request) {
       gsapDetected: result.summary.gsapDetected,
       legacyIx2Detected: result.summary.legacyIx2Detected,
       siteResults: result.summary.siteResults,
-      pageResults: result.summary.pageResults,
+      ...(includePageResults ? { pageResults: result.summary.pageResults } : {}),
       autofill: autofill?.autofill,
       screenshotCount: autofill?.screenshotCount ?? 0,
       screenshotsDownloadUrl: autofill?.screenshotsDownloadUrl,

@@ -73,6 +73,46 @@ type StatusMessage = {
   message: string;
 };
 
+type PublishedUrlValidationResponse = {
+  passed?: boolean;
+  message?: string;
+  normalizedUrl?: string;
+  gsapDetected?: boolean;
+  legacyIx2Detected?: boolean;
+  autofill?: TemplateAutofillPayload;
+  autofillWarning?: string;
+  screenshotCount?: number;
+  screenshotsDownloadUrl?: string;
+  siteResults?: {
+    passedCount?: number;
+  };
+  error?: string;
+};
+
+async function readJsonResponse(response: Response): Promise<Record<string, unknown>> {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function validationFailureMessage(response: Response, data: Record<string, unknown>) {
+  if (typeof data.message === 'string' && data.message.trim()) {
+    return data.message;
+  }
+  if (typeof data.error === 'string' && data.error.trim()) {
+    return data.error;
+  }
+
+  return response.ok
+    ? 'Published URL validation failed.'
+    : `Published URL validation request failed with HTTP ${response.status}.`;
+}
+
 type FeedbackAction = {
   label: string;
   onClick: () => void;
@@ -1576,23 +1616,10 @@ export function TemplateIntake() {
       body: JSON.stringify({ url })
     });
 
-    const data = (await response.json().catch(() => ({}))) as {
-      passed?: boolean;
-      message?: string;
-      normalizedUrl?: string;
-      gsapDetected?: boolean;
-      legacyIx2Detected?: boolean;
-      autofill?: TemplateAutofillPayload;
-      autofillWarning?: string;
-      screenshotCount?: number;
-      screenshotsDownloadUrl?: string;
-      siteResults?: {
-        passedCount?: number;
-      };
-    };
+    const validationData = (await readJsonResponse(response)) as PublishedUrlValidationResponse;
 
-    if (!response.ok || !data.passed || !data.normalizedUrl) {
-      const message = data.message || 'Published URL validation failed.';
+    if (!response.ok || !validationData.passed || !validationData.normalizedUrl) {
+      const message = validationFailureMessage(response, validationData);
       setTemplateStatus({
         tone: 'error',
         message
@@ -1604,22 +1631,22 @@ export function TemplateIntake() {
       return;
     }
 
-    const autofillResult = applyTemplateAutofill(data.autofill, {
-      gsapDetected: Boolean(data.gsapDetected)
+    const autofillResult = applyTemplateAutofill(validationData.autofill, {
+      gsapDetected: Boolean(validationData.gsapDetected)
     });
 
     const nextAnalyzerSummary: TemplateAnalyzerSummary | null =
       autofillResult.appliedFields.length > 0 ||
       autofillResult.suggestedFields.length > 0 ||
-      Boolean(data.autofillWarning) ||
-      Boolean(data.screenshotsDownloadUrl)
+      Boolean(validationData.autofillWarning) ||
+      Boolean(validationData.screenshotsDownloadUrl)
         ? {
-            validationMessage: data.message || 'Published site validated.',
+            validationMessage: validationData.message || 'Published site validated.',
             appliedFields: autofillResult.appliedFields,
             suggestedFields: autofillResult.suggestedFields,
-            screenshotCount: data.screenshotCount ?? 0,
-            screenshotsDownloadUrl: data.screenshotsDownloadUrl,
-            warning: data.autofillWarning
+            screenshotCount: validationData.screenshotCount ?? 0,
+            screenshotsDownloadUrl: validationData.screenshotsDownloadUrl,
+            warning: validationData.autofillWarning
           }
         : null;
 
@@ -1636,14 +1663,14 @@ export function TemplateIntake() {
     setFeedback('publishedUrl', {
       tone: 'success',
       message: [
-        data.message || 'Published site validated.',
+        validationData.message || 'Published site validated.',
         autofillResult.appliedFields.length > 0
           ? `Analyzer suggestions filled ${autofillResult.appliedFields.length} field${autofillResult.appliedFields.length === 1 ? '' : 's'}.`
           : nextAnalyzerSummary
             ? 'Review the analyzer summary below.'
             : '',
-        data.gsapDetected ? 'GSAP was detected automatically.' : '',
-        data.autofillWarning
+        validationData.gsapDetected ? 'GSAP was detected automatically.' : '',
+        validationData.autofillWarning
           ? 'Template suggestions were unavailable, so finish the remaining fields manually.'
           : ''
       ]
@@ -1652,23 +1679,23 @@ export function TemplateIntake() {
     });
     setVerification((current) => ({
       ...current,
-      publishedUrlVerified: data.normalizedUrl || '',
-      publishedUrlMessage: data.message || 'Published site validated.'
+      publishedUrlVerified: validationData.normalizedUrl || '',
+      publishedUrlMessage: validationData.message || 'Published site validated.'
     }));
     setTemplate((current) => ({
       ...current,
-      publishedUrl: data.normalizedUrl || current.publishedUrl,
-      featureIds: data.gsapDetected
+      publishedUrl: validationData.normalizedUrl || current.publishedUrl,
+      featureIds: validationData.gsapDetected
         ? [...new Set([...current.featureIds, 'gsap'])]
         : current.featureIds
     }));
     setVerification((current) => ({
       ...current,
-      gsapDetected: Boolean(data.gsapDetected)
+      gsapDetected: Boolean(validationData.gsapDetected)
     }));
     setTemplateStatus({
       tone: 'success',
-      message: data.message || 'Published site validated.'
+      message: validationData.message || 'Published site validated.'
     });
   }
 

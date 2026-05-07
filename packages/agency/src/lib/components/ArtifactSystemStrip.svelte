@@ -73,7 +73,7 @@
     <p>{description}</p>
   </div>
 
-  <div class="artifact-grid" role="list">
+  <div class="artifact-grid" class:artifact-grid--six={items.length === 6} role="list">
     {#each items as item}
       {@const label = item.displayName ?? item.name}
       <article class="artifact-card" role="listitem">
@@ -186,6 +186,16 @@
     .artifact-card:nth-child(n + 3) {
       grid-column: auto;
     }
+  }
+
+  .artifact-grid--six {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .artifact-grid--six .artifact-card:nth-child(1),
+  .artifact-grid--six .artifact-card:nth-child(2),
+  .artifact-grid--six .artifact-card:nth-child(n + 3) {
+    grid-column: auto;
   }
 
   @media (max-width: 740px) {

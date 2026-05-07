@@ -3,6 +3,7 @@
   import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
   import GovernedExecutionFlow from '$lib/components/GovernedExecutionFlow.svelte';
+  import MappingSessionBrief from '$lib/components/MappingSessionBrief.svelte';
   import ServiceWedgeBlueprint from '$lib/components/ServiceWedgeBlueprint.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -14,7 +15,7 @@
 
   const services = [
     {
-      name: 'MCP-only',
+      name: 'MCP Wedge',
       description:
         'A narrow discovery or compliance wedge when the client needs trusted connectivity before the operating layer.',
       type: 'Entry wedge',
@@ -22,7 +23,7 @@
       priceDescription: 'Scoped host setup'
     },
     {
-      name: 'Workflow Infrastructure',
+      name: 'Workflow System',
       description:
         'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
       type: 'Implementation Sprint',
@@ -50,7 +51,7 @@
   const offerCards = [
     {
       tag: 'Entry wedge',
-      title: 'MCP-only',
+      title: 'MCP Wedge',
       summary: 'Use this when the connection is the job and your team will operate the workflow directly.',
       points: [
         'Connectivity validation',
@@ -60,8 +61,8 @@
     },
     {
       tag: 'Start here',
-      title: 'Workflow Infrastructure',
-      summary: 'Fix the first workflow your team still protects by hand and make the handoffs reliable.',
+      title: 'Workflow System',
+      summary: 'Fix the first workflow your team still does by hand and make the handoffs reliable.',
       points: [
         'Business-rule mapping',
         'Workflow implementation',
@@ -101,11 +102,29 @@
     'Your team gets visibility through runbooks, approvals, release evidence, operator briefs, and working software.'
   ];
 
+  const trustBoundaries = [
+    {
+      label: 'No hidden vendor lock-in',
+      detail:
+        'Vendor services are named because they help explain the system. The workflow map, contracts, policy, and runbooks stay portable.'
+    },
+    {
+      label: 'No secret sprawl',
+      detail:
+        'Tokens, API keys, and client credentials belong in the approved vault or runtime environment, not in prompts or handoff docs.'
+    },
+    {
+      label: 'No fake autonomy',
+      detail:
+        'Agents only act inside named permissions. The system shows what can run, what needs approval, and what stops.'
+    }
+  ];
+
   const heroSignals = [
     {
       label: 'Map',
       value: '1 workflow',
-      detail: 'The handoff your team still watches too closely.'
+      detail: 'The handoff your team needs done without constant human coverage.'
     },
     {
       label: 'Govern',
@@ -130,7 +149,7 @@
       label: 'Ink',
       title: 'Makes the decision visible',
       detail:
-        'The physical surface is optional, but useful when the buyer needs to see and feel the calm operator promise.'
+        'The physical surface is optional, but useful when the buyer needs to see and feel the operator promise.'
     },
     {
       label: 'Operator',
@@ -144,17 +163,22 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow Infrastructure fixes the first painful workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
+        'Workflow System fixes the first painful workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
     },
     {
       question: 'Are you joining our team or running internal ops?',
       answer:
-        'No. I operate as an external specialist. You get scoped delivery, artifact-backed visibility, approval points, and a clean handoff instead of open-ended staff augmentation.'
+        'No. I operate as a solo specialist using CREATE SOMETHING as the delivery toolchain. You get scoped delivery, governed agent capacity, artifact-backed visibility, approval points, and a clean handoff instead of open-ended staffing.'
+    },
+    {
+      question: 'Are agents part of the workforce?',
+      answer:
+        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, and evidence. MCPs are the toolkits; Policy OS decides what agents can do, what needs a person, and what must stop.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
       answer:
-        'When full system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen. .agency is optimized for workflow infrastructure and governed execution, not ongoing admin coverage.'
+        'When full system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen. .agency is optimized for workflow systems and governed execution, not ongoing admin coverage.'
     },
     {
       question: 'What does .agency own?',
@@ -167,9 +191,14 @@
         'Add it when failures become expensive or the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
     },
     {
-      question: 'Do you still offer MCP-only?',
+      question: 'Do you still offer MCP Wedge?',
       answer:
-        'Yes. MCP-only still works for discovery, compliance-constrained pilots, or teams that need the connection before the operating layer.'
+        'Yes. MCP Wedge still works for discovery, compliance-constrained pilots, or teams that need the connection before the operating layer.'
+    },
+    {
+      question: 'Do we need to understand MCP or the vendor stack first?',
+      answer:
+        'No. Bring the workflow and the accounts involved. I translate the technical choices into a stack boundary, decision states, and implementation path your team can explain.'
     },
     {
       question: 'Do clients own the implementation?',
@@ -189,9 +218,9 @@
 </script>
 
 <SEO
-  title="How I Work | Calm Operator Systems"
-  description="CREATE SOMETHING .agency installs calm operator systems: one workflow, clear decision states, and governed escalation only when judgment is required."
-  keywords="calm operator systems, Policy OS, workflow infrastructure, MCP wedge, production automation, agent reliability"
+  title="How I Work | Calm, Transparent AI Workflow Systems"
+  description="CREATE SOMETHING .agency installs calm, transparent, reliable AI workflow systems: one workflow, clear stack boundaries, decision states, and governed escalation only when judgment is required."
+  keywords="calm transparent AI workflow systems, Policy OS, workflow system, MCP wedge, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -211,9 +240,9 @@
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          Bring the operating path your team still watches too closely. I map the boundaries,
-          rebuild the handoff, and add governance until the operator only hears from the system
-          when judgment is required.
+          Bring the operating path your team cannot keep covering by hand. I map the boundaries,
+          rebuild the handoff, and add governed agent capacity until the operator only hears from
+          the system when judgment is required.
         </p>
       </BlurFade>
 
@@ -230,9 +259,9 @@
     </div>
 
     <BlurFade delay={0.2}>
-      <aside class="product-surface product-surface--soft hero-brief" aria-label="Calm operator service brief">
-        <span class="product-kicker">Calm operator service</span>
-        <h2>If judgment is not required, the system stays quiet.</h2>
+      <aside class="product-surface product-surface--soft hero-brief" aria-label="Calm transparent workflow service brief">
+        <span class="product-kicker">Calm, transparent delivery</span>
+        <h2>CREATE SOMETHING turns the toolchain into one workflow outcome.</h2>
         <div class="hero-brief__grid" role="list">
           {#each heroSignals as signal}
             <div class="hero-brief__item" role="listitem">
@@ -259,8 +288,9 @@
         </BlurFade>
         <BlurFade delay={0.1}>
           <p>
-            You are bringing in a specialist to diagnose, rebuild, and govern one critical
-            operating path. The work is scoped, visible, and designed for your team to inherit.
+            You are bringing in a solo operator with a purpose-built toolchain to diagnose,
+            rebuild, and govern one critical operating path. The work is scoped, visible, and
+            designed for your team to inherit.
           </p>
         </BlurFade>
       </div>
@@ -272,6 +302,39 @@
           {/each}
         </ul>
       </BlurFade>
+    </div>
+  </div>
+</section>
+
+<section class="trust-section">
+  <div class="shell-inner-pad services-shell">
+    <div class="product-surface product-surface--soft trust-panel">
+      <div class="section-lead">
+        <BlurFade>
+          <span class="product-kicker">Trust boundaries</span>
+        </BlurFade>
+        <BlurFade delay={0.05}>
+          <h2>Transparency creates calm when the workflow has clear boundaries.</h2>
+        </BlurFade>
+        <BlurFade delay={0.1}>
+          <p>
+            The buyer sees enough to trust and inherit the system. Sensitive credentials,
+            private data, and platform-specific complexity stay behind the right operational
+            boundary, so the experience feels calm instead of obscure.
+          </p>
+        </BlurFade>
+      </div>
+
+      <div class="trust-grid" role="list">
+        {#each trustBoundaries as boundary, index}
+          <BlurFade delay={0.14 + index * 0.05}>
+            <article class="trust-item" role="listitem">
+              <span>{boundary.label}</span>
+              <p>{boundary.detail}</p>
+            </article>
+          </BlurFade>
+        {/each}
+      </div>
     </div>
   </div>
 </section>
@@ -327,7 +390,7 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Workflow Infrastructure gets the first handoff working. Policy OS decides what runs
+          Workflow System gets the first handoff working. Policy OS decides what runs
           automatically, what needs review, and what stops. That is the point where speed stops
           being a demo and becomes an operating path.
         </p>
@@ -382,6 +445,18 @@
       <ArtifactSystemStrip
         title="What ships with every governed engagement"
         description="Every governed engagement ships as artifacts your team can inspect, run, inherit, and operate."
+      />
+    </BlurFade>
+  </div>
+</section>
+
+<section class="mapping-section">
+  <div class="shell-inner-pad services-shell">
+    <BlurFade>
+      <MappingSessionBrief
+        eyebrow="First call"
+        title="The mapping session is where the buyer stops guessing."
+        description="We turn the messy workflow into an inspectable plan: what connects, what runs, what pauses, what stops, and what artifact proves the first build."
       />
     </BlurFade>
   </div>
@@ -448,10 +523,12 @@
 
   .hero-page,
   .boundary-section,
+  .trust-section,
   .offer-section,
   .flow-section,
   .surface-section,
   .artifact-section,
+  .mapping-section,
   .faq-section,
   .cta-section {
     padding-top: clamp(1.25rem, 3vw, 2rem);
@@ -568,6 +645,7 @@
   }
 
   .boundary-panel,
+  .trust-panel,
   .surface-panel,
   .cta-panel {
     display: grid;
@@ -596,6 +674,38 @@
 
   .boundary-list {
     max-width: 46rem;
+  }
+
+  .trust-panel {
+    gap: clamp(1.1rem, 3vw, 1.7rem);
+  }
+
+  .trust-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .trust-item {
+    display: grid;
+    gap: 0.5rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid color-mix(in srgb, var(--color-shell-border-default) 84%, transparent);
+  }
+
+  .trust-item span {
+    color: var(--color-fg-primary);
+    font-size: 1rem;
+    font-weight: var(--font-semibold);
+    line-height: 1.25;
+  }
+
+  .trust-item p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: 0.94rem;
+    line-height: 1.64;
+    text-wrap: pretty;
   }
 
   .offer-grid,
@@ -705,6 +815,7 @@
   @media (max-width: 768px) {
     .offer-grid,
     .faq-grid,
+    .trust-grid,
     .surface-grid {
       grid-template-columns: 1fr;
     }
@@ -716,6 +827,7 @@
     .offer-card,
     .faq-card,
     .boundary-panel,
+    .trust-panel,
     .surface-panel,
     .cta-panel {
       padding: 1rem;

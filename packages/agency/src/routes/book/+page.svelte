@@ -36,8 +36,8 @@
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
 		{
 			value: 'workflow_infrastructure',
-			label: 'Workflow Infrastructure',
-			description: 'One workflow your team still watches by hand.'
+			label: 'Workflow System',
+			description: 'One workflow your team still completes or covers by hand.'
 		},
 		{
 			value: 'reliability_and_control',
@@ -63,6 +63,32 @@
 	];
 
 	const bookingExperimentMetadata = getAgencyMarketingExperimentMetadata('/book') ?? {};
+
+	const mappingSessionOutcomes = [
+		{
+			label: 'Workflow map',
+			description: 'The handoff, owner, source systems, and failure modes.'
+		},
+		{
+			label: 'Stack boundary',
+			description: 'What the client owns, what CREATE SOMETHING owns, and what vendors provide.'
+		},
+		{
+			label: 'Decision states',
+			description: 'What can run, what needs approval, and what stops with a reason.'
+		},
+		{
+			label: 'First build path',
+			description: 'The smallest wedge or workflow system that adds safe capacity.'
+		}
+	];
+
+	const mappingSessionPrep = [
+		'One real workflow example',
+		'The accounts or tools involved',
+		'The person who can approve risk',
+		'No API keys in the booking notes'
+	];
 
 	// State
 	let step = $state<BookingStep>('date');
@@ -245,20 +271,41 @@
 </script>
 
 <SEO
-	title="Book a Calm Operator Mapping Session"
-	description="Schedule a scoped workflow diagnostic to identify the safest MCP wedge, the decision states, and the right level of Policy OS control."
+	title="Book a CREATE SOMETHING Mapping Session"
+	description="Schedule a scoped workflow diagnostic to identify the safest MCP wedge, stack boundary, decision states, and first build path."
 	propertyName="agency"
 />
 
 <main class="booking-page">
 	<header class="booking-header">
-		<h1 class="booking-title">Book a Calm Operator Mapping Session</h1>
+		<h1 class="booking-title">Book a CREATE SOMETHING Mapping Session</h1>
 		<p class="booking-subtitle">
-			Bring the workflow with the most drag, risk, or manual handoff. We will identify the
-			safest MCP wedge, the decision states, and whether the operator needs Workflow
-			Infrastructure, Policy OS, or Enterprise Extension.
+			Bring the workflow with the most drag, risk, or manual handoff. You leave with the
+			first workflow map, stack boundary, decision states, and where agent capacity can be
+			safely introduced.
 		</p>
 	</header>
+
+	<section class="session-outcomes" aria-label="Mapping session outcomes">
+		{#each mappingSessionOutcomes as outcome}
+			<article>
+				<span>{outcome.label}</span>
+				<p>{outcome.description}</p>
+			</article>
+		{/each}
+	</section>
+
+	<section class="session-prep" aria-label="What to bring to the mapping session">
+		<div>
+			<span>Good prep</span>
+			<p>Bring enough context to map the boundary. Credentials can move through Infisical or the approved runtime path after scope is clear.</p>
+		</div>
+		<ul>
+			{#each mappingSessionPrep as item}
+				<li>{item}</li>
+			{/each}
+		</ul>
+	</section>
 
 	<!-- Progress indicator -->
 	{#if step !== 'confirm'}
@@ -384,6 +431,77 @@
 		color: var(--color-fg-tertiary);
 	}
 
+	.session-outcomes {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: var(--space-sm);
+		margin-bottom: var(--space-xl);
+	}
+
+	.session-outcomes article {
+		display: grid;
+		gap: var(--space-2xs);
+		padding: var(--space-sm);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		background: var(--color-bg-surface);
+	}
+
+	.session-outcomes span {
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+	}
+
+	.session-outcomes p {
+		margin: 0;
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-caption);
+		line-height: 1.55;
+	}
+
+	.session-prep {
+		display: grid;
+		grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
+		gap: var(--space-md);
+		align-items: start;
+		margin: calc(var(--space-xl) * -0.45) 0 var(--space-xl);
+		padding: var(--space-md);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		background: color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
+	}
+
+	.session-prep span {
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+	}
+
+	.session-prep p {
+		margin: var(--space-2xs) 0 0;
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+		line-height: 1.58;
+	}
+
+	.session-prep ul {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-xs);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.session-prep li {
+		padding-top: var(--space-2xs);
+		border-top: 1px solid var(--color-border-default);
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-caption);
+		line-height: 1.45;
+	}
+
 	/* Progress indicator */
 	.progress {
 		display: flex;
@@ -438,6 +556,27 @@
 
 		.progress-step.active .step-label {
 			color: var(--color-fg-primary);
+		}
+	}
+
+	@media (max-width: 900px) {
+		.session-outcomes {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.session-prep {
+			grid-template-columns: 1fr;
+			margin-top: calc(var(--space-xl) * -0.35);
+		}
+	}
+
+	@media (max-width: 520px) {
+		.session-outcomes {
+			grid-template-columns: 1fr;
+		}
+
+		.session-prep ul {
+			grid-template-columns: 1fr;
 		}
 	}
 

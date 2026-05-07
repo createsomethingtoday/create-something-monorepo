@@ -15,7 +15,7 @@
       label: '01',
       title: 'Map the operating path',
       detail:
-        'Find the workflow your team still watches by hand and name the handoffs, owners, and failure modes.'
+        'Find the workflow your team still completes or covers by hand and name the handoffs, owners, and failure modes.'
     },
     {
       label: '02',
@@ -40,8 +40,8 @@
 
 <SEO
   title={`About | Micah Johnson — ${agencyCoreMessaging.categoryLabel}`}
-  description="I build calm operator systems for autonomous work: governed workflows, policy artifacts, and escalation surfaces that protect human judgment."
-  keywords="Micah Johnson, governed workflow infrastructure, production automation, systems architecture, automation reliability, workflow governance"
+  description="I build calm, transparent, reliable workflow systems for operator-owned outcomes: governed workflows, policy artifacts, and escalation surfaces that protect human judgment."
+  keywords="Micah Johnson, governed workflow systems, production automation, systems architecture, automation reliability, workflow governance"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -64,16 +64,17 @@
       <p class="hero-eyebrow">About</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">I build calm operator systems for autonomous work.</h1>
+      <h1 class="hero-title">I build calm, transparent workflow systems for operator-owned outcomes.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        The operator should not carry the chaos of automation. My work turns agentic workflows
-        into clear states: what can run, what needs judgment, and what must stop with a reason.
+        The operator should not carry the chaos of automation. My work turns toolchains into clear
+        workflow states: what agents and tools can do, what needs judgment, and what must stop
+        with a reason.
       </p>
     </BlurFade>
     <BlurFade delay={0.3}>
-      <div class="operator-brief" aria-label="Calm operator states">
+      <div class="operator-brief" aria-label="Operator decision states">
         {#each operatorStates as state}
           <div class="operator-state">
             <span>{state.label}</span>
@@ -103,8 +104,9 @@
           systems work now.
         </p>
         <p>
-          Today that shows up as Calm Operator systems: fast where the rules are clear, visible
-          where judgment is required, and recoverable when something goes wrong.
+          Today that shows up as calm, transparent, reliable workflow systems: fast where the
+          rules are clear, visible where judgment is required, and recoverable when something goes
+          wrong.
         </p>
       </div>
     </BlurFade>
@@ -271,8 +273,8 @@
             > — Tools and experiments
           </li>
           <li>
-            <strong>.agency</strong> — Governed workflow infrastructure, reliability controls, and
-            enterprise extension
+            <strong>.agency</strong> — Calm, transparent workflow systems, reliability controls,
+            and enterprise extension
             <span class="muted">(you are here)</span>
           </li>
         </ul>

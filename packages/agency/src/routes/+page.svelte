@@ -6,11 +6,12 @@
   import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
   import InkOperatorSurface from '$lib/components/InkOperatorSurface.svelte';
+  import MappingSessionBrief from '$lib/components/MappingSessionBrief.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
     {
-      name: 'Workflow Infrastructure',
+      name: 'Workflow System',
       description:
         'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
       type: 'Implementation Sprint',
@@ -38,19 +39,58 @@
   const proofMetrics = [
     { value: '1', label: 'workflow fixed first' },
     { value: '3', label: 'decision states' },
-    { value: '100%', label: 'artifact-backed delivery' },
-    { value: '0', label: 'interest in open-ended staff aug' }
+    { value: '4', label: 'delivery layers' },
+    { value: '100%', label: 'artifact-backed delivery' }
   ];
 
   const operatingSignals = [
     'Model Context Protocol',
     'Cloudflare Workers',
-    'Cloudflare D1',
-    'Durable Objects',
-    'Anthropic Claude',
-    'Notion API',
-    'SvelteKit',
-    'TypeScript'
+    'Composio',
+    'Dify',
+    'OpenAI',
+    'Webflow',
+    'Linear',
+    'TRMNL'
+  ];
+
+  const deliveryArtifacts = [
+    {
+      displayName: 'Workflow map',
+      name: 'workflow-map',
+      summary: 'The first path, handoffs, source systems, owners, and known failure points.',
+      tag: 'Map'
+    },
+    {
+      displayName: 'Stack boundary',
+      name: 'stack-boundary',
+      summary: 'What the client owns, what CREATE SOMETHING owns, and what vendors provide.',
+      tag: 'Boundary'
+    },
+    {
+      displayName: 'MCP/API contract',
+      name: 'mcp-api-contract',
+      summary: 'Tools, resources, auth scope, allowed actions, and integration limits.',
+      tag: 'Contract'
+    },
+    {
+      displayName: 'Policy rules',
+      name: 'policy-rules',
+      summary: 'Auto-allowed, approval-needed, and blocked states with reasons.',
+      tag: 'Govern'
+    },
+    {
+      displayName: 'Runbook',
+      name: 'runbook',
+      summary: 'Recovery path, release notes, rollback steps, and operator handoff.',
+      tag: 'Operate'
+    },
+    {
+      displayName: 'Operator brief',
+      name: 'operator-brief',
+      summary: 'What the buyer sees in Webflow, Linear, TRMNL, Dify, or a custom surface.',
+      tag: 'Surface'
+    }
   ];
 
   const capabilityCards = [
@@ -98,10 +138,22 @@
 
   const offerCards = [
     {
-      name: 'Workflow Infrastructure',
+      name: 'MCP Wedge',
+      featured: false,
+      summary:
+        'A narrow connection proof when the buyer needs to see the first safe tool boundary.',
+      points: [
+        'Connector and account boundary',
+        'Read/write scope definition',
+        'First MCP/API contract',
+        'Replaceability notes'
+      ]
+    },
+    {
+      name: 'Workflow System',
       featured: true,
       summary:
-        'The first reliable operating path. Fix one workflow your team still protects by hand.',
+        'The first reliable operating path. Fix one workflow your team still does by hand.',
       points: [
         'Business-rule mapping',
         'Workflow implementation',
@@ -120,18 +172,6 @@
         'Incident and review loops',
         'Monthly tuning against real usage'
       ]
-    },
-    {
-      name: 'Enterprise Extension',
-      featured: false,
-      summary:
-        'Cross-system orchestration for teams that need deterministic recovery and auditability.',
-      points: [
-        'Cross-system control surfaces',
-        'Custom trust boundaries',
-        'Deterministic retries',
-        'Architecture support for high-stakes rollout'
-      ]
     }
   ];
 
@@ -144,8 +184,8 @@
 
 <SEO
   title={`${agencyCoreMessaging.categoryLabel} | CREATE SOMETHING .agency`}
-  description="CREATE SOMETHING .agency installs calm operator systems for agentic workflows: one workflow, clear decision states, and escalation only when judgment is required."
-  keywords="calm operator systems, Policy OS, MCP wedge, governed workflow infrastructure, production automation, technical operators"
+  description="CREATE SOMETHING .agency builds calm, transparent, reliable AI workflow systems for business operators: one workflow, clear vendor boundaries, portable artifacts, and escalation only when judgment is required."
+  keywords="calm transparent reliable AI workflow systems, Policy OS, MCP wedge, transparent AI stack, workflow system, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -162,26 +202,26 @@
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Make the workflow safe enough to trust.</h1>
+          <h1 class="hero-title">Calm, transparent AI systems for the operator who has to own the outcome.</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            For the operator who has to answer for what happens next. CREATE SOMETHING fixes the
-            workflow creating the most drag, then adds approvals, visibility, and recovery paths as
-            the stakes rise.
+            CREATE SOMETHING is the operating toolchain I use as a solo operator to complete the
+            outcome. Reputable services make the work transparent; the moat is the calm, reliable
+            workflow built around your business.
           </p>
         </BlurFade>
 
         <BlurFade delay={0.15}>
           <div class="hero-actions">
             <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-            <Button href="/services" variant="secondary">See The Operating Model</Button>
+            <Button href="/stack" variant="secondary">See The Stack</Button>
           </div>
         </BlurFade>
 
         <BlurFade delay={0.2}>
-          <p class="hero-note">Scoped delivery. Clear controls. Portable artifacts.</p>
+          <p class="hero-note">Connect. Automate. Govern. Operate.</p>
         </BlurFade>
       </div>
     </div>
@@ -205,10 +245,12 @@
   <div class="shell-inner-pad">
     <div class="product-surface product-surface--soft signal-shell">
       <div class="signal-header">
-        <span class="product-kicker">Portable stack</span>
+        <span class="product-kicker">Calm, transparent stack</span>
         <p>
-          CREATE SOMETHING can use commodity connectivity where it makes sense, while keeping the
-          delivery, policy, and trust boundary owned by CREATE SOMETHING.
+          Vendor names are not the product. They make the stack easier to explain, while CREATE
+          SOMETHING owns the specialized workflow: the map, policy layer, delivery artifacts, and
+          operator handoff. When agents join the workflow, MCPs define their toolkits and Policy OS
+          keeps the work governable.
         </p>
       </div>
 
@@ -220,6 +262,8 @@
           </div>
         {/each}
       </div>
+
+      <a class="stack-link" href="/stack">Review stack boundaries</a>
     </div>
   </div>
 </section>
@@ -266,8 +310,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The hard part is deciding what should run, what should wait, and what should stop. That
-          decision layer is what keeps automation from becoming cleanup debt.
+          The buyer does not need every implementation detail, but they do need to know how the
+          system works, where data moves, and who owns the handoff when the workflow matters.
         </p>
       </BlurFade>
     </div>
@@ -302,8 +346,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The category does not need to change every quarter. Fix the workflow first. Add Policy OS
-          when the workflow begins to matter financially, operationally, or reputationally.
+          The ladder is buyer-readable: prove the wedge, turn it into one operating workflow, then
+          add Policy OS when the workflow touches money, trust, or compliance.
         </p>
       </BlurFade>
     </div>
@@ -315,7 +359,7 @@
             class="product-surface offer-card"
             class:offerFeatured={offer.featured}
           >
-            <span class="offer-tag">{offer.featured ? 'Primary entry' : 'Expansion path'}</span>
+            <span class="offer-tag">{offer.featured ? 'Primary build' : 'Entry or expansion'}</span>
             <h3>{offer.name}</h3>
             <p>{offer.summary}</p>
             <ul class="product-list">
@@ -365,9 +409,19 @@
   <div class="shell-inner-pad">
     <BlurFade>
       <ArtifactSystemStrip
-        title="How trust stays visible"
-        description="Every engagement ships with runbooks, approval boundaries, release evidence, and artifact contracts your team can inspect after launch."
+        eyebrow="What you get"
+        title="The deliverables make the work explainable."
+        description="The offer is not a pile of vendor accounts. It is a set of artifacts your team can inspect, inherit, and use to explain how the system works."
+        items={deliveryArtifacts}
       />
+    </BlurFade>
+  </div>
+</section>
+
+<section class="mapping-section">
+  <div class="shell-inner-pad">
+    <BlurFade>
+      <MappingSessionBrief />
     </BlurFade>
   </div>
 </section>
@@ -387,7 +441,7 @@
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
           <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="/services" variant="secondary">See The Operating Model</Button>
+          <Button href="/stack" variant="secondary">See The Stack</Button>
         </div>
       </BlurFade>
     </div>
@@ -560,6 +614,7 @@
   .offer-section,
   .governance-section,
   .artifact-section,
+  .mapping-section,
   .cta-section {
     padding-top: 1.25rem;
     padding-bottom: clamp(3.5rem, 6vw, 5rem);
@@ -589,14 +644,25 @@
   }
 
   .signal-strip {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.7rem;
   }
 
+  .stack-link {
+    width: fit-content;
+    color: var(--color-fg-primary);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
   .signal-pill {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.55rem;
     min-height: 2.35rem;
     padding: 0.55rem 0.8rem;
@@ -607,6 +673,8 @@
     font-family: var(--font-mono);
     font-size: 0.74rem;
     letter-spacing: 0.04em;
+    text-align: center;
+    white-space: nowrap;
   }
 
   .signal-pill :global(.signal-pill__icon) {
@@ -794,6 +862,10 @@
       grid-template-columns: 1fr;
     }
 
+    .signal-strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .hero-title {
       font-size: clamp(2.6rem, 11vw, 4rem);
     }
@@ -808,6 +880,16 @@
     .offer-card,
     .cta-panel {
       padding: 1rem;
+    }
+
+    .signal-pill {
+      white-space: normal;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .signal-strip {
+      grid-template-columns: 1fr;
     }
   }
 </style>

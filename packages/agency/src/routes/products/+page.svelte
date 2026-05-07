@@ -145,7 +145,7 @@
         <h2 class="section-eyebrow">Method and control primitives</h2>
         <p class="section-desc">
           Framework tools that make the delivery philosophy inspectable before it becomes client
-          workflow infrastructure.
+          workflow systems.
         </p>
       </div>
     </BlurFade>
