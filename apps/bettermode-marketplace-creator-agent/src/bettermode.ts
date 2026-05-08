@@ -46,6 +46,17 @@ export type BettermodeMember = {
   role?: { id?: string | null; name?: string | null; type?: string | null } | null;
 };
 
+type BettermodeSpaceMember = {
+  member?: BettermodeMember | null;
+};
+
+type RawBettermodePost = Omit<BettermodePost, 'owner' | 'createdBy' | 'parentId' | 'replies'> & {
+  owner?: BettermodeSpaceMember | null;
+  createdBy?: BettermodeSpaceMember | null;
+  repliedToId?: string | null;
+  replies?: { nodes?: RawBettermodePost[] } | null;
+};
+
 export class BettermodeError extends Error {
   constructor(message: string, readonly status: number = 502) {
     super(message);
@@ -110,7 +121,7 @@ export async function fetchPostThread(
   appToken: string,
   auth: BettermodeAuth,
 ): Promise<BettermodePost | null> {
-  const data = await graphQl<{ post: BettermodePost | null }>(
+  const data = await graphQl<{ post: RawBettermodePost | null }>(
     auth.endpoint,
     bearer(appToken),
     `query Post($id: ID!) {
@@ -125,17 +136,23 @@ export async function fetchPostThread(
         createdAt
         spaceId
         space { id name slug }
-        owner: createdBy {
-          ...MemberFields
+        owner {
+          member { ...MemberFields }
         }
-        replies(limit: 50, orderBy: { field: createdAt, direction: ASC }) {
+        createdBy {
+          member { ...MemberFields }
+        }
+        repliedToId
+        replies(limit: 50) {
           nodes {
             id
             shortContent
             description
             url
             publishedAt
-            createdBy { ...MemberFields }
+            createdBy {
+              member { ...MemberFields }
+            }
           }
         }
       }
@@ -150,7 +167,7 @@ export async function fetchPostThread(
     }`,
     { id: postId },
   );
-  return data.post ?? null;
+  return data.post ? normalizePost(data.post) : null;
 }
 
 export async function createReply(
@@ -223,4 +240,16 @@ function basicAuth(auth: BettermodeAuth): string {
 
 function bearer(token: string): string {
   return `Bearer ${token}`;
+}
+
+function normalizePost(post: RawBettermodePost): BettermodePost {
+  return {
+    ...post,
+    parentId: post.repliedToId ?? null,
+    owner: post.owner?.member ?? null,
+    createdBy: post.createdBy?.member ?? null,
+    replies: post.replies
+      ? { nodes: post.replies.nodes?.map(normalizePost) ?? [] }
+      : post.replies,
+  };
 }
