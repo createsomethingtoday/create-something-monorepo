@@ -62,6 +62,11 @@ apps/marketplace-template-submission-cloud/node_modules*/
 apps/marketplace-template-submission-cloud/.next/
 apps/marketplace-template-submission-cloud/.open-next/
 apps/marketplace-template-submission-cloud/tsconfig.tsbuildinfo
+!apps/bettermode-marketplace-creator-agent/
+!apps/bettermode-marketplace-creator-agent/**
+apps/bettermode-marketplace-creator-agent/node_modules/
+apps/bettermode-marketplace-creator-agent/.wrangler/
+apps/bettermode-marketplace-creator-agent/.dev.vars
 apps/meeting-capture/MeetingCapture/.build/
 apps/meeting-capture/MeetingCapture/.swiftpm/
 apps/meeting-capture/MeetingCapture/.codex-build-verify/
@@ -105,3 +110,4 @@ tmp/loom-remote-secrets-*.txt
 
 # Fleet secret setup scripts (contain raw tokens — push to Infisical, then delete)
 config/mcp-hub/fleet-secrets.local.*
+.claude/settings.local.json
