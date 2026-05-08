@@ -22,6 +22,7 @@ import {
   memberAccessToken,
   type BettermodePost,
 } from './bettermode';
+import { difyAgentConfig, generateDraftViaDify } from './dify-agent';
 import { generateDraft, openaiConfig } from './openai';
 import { verifySignature } from './signature';
 import {
@@ -400,34 +401,66 @@ async function generateDraftForPost(
 
   const author = post.owner || post.createdBy;
   const email = author?.email || '';
-  let creator: CreatorContext | null = null;
-  const aConfig = airtableConfig(env);
-  if (aConfig && email) {
+  const isTopLevel = !post.parentId;
+
+  // Prefer the Dify agent when configured: it owns the prompt, the policy
+  // knowledge base, and the connected bettermode-creator MCP, so it can
+  // ground answers in actual marketplace policy. Falls back to direct
+  // OpenAI (no policy KB) only if DIFY_AGENT_API_KEY is unset.
+  const difyConfig = difyAgentConfig(env);
+  let draft: string | null = null;
+  if (difyConfig) {
     try {
-      creator = await fetchCreatorContext(email, aConfig);
+      const result = await generateDraftViaDify(
+        {
+          postId: post.id,
+          isTopLevel,
+          spaceId: post.spaceId || post.space?.id || null,
+          authorMemberId: author?.id || null,
+          authorEmail: email || null,
+          authorName: author?.name || null,
+          regenerate: opts.regenerate === true,
+        },
+        difyConfig,
+      );
+      draft = result.answer;
     } catch (err) {
-      console.error('airtable lookup failed', { email, error: errorMessage(err) });
+      console.error('dify draft failed; falling back to direct OpenAI', {
+        postId,
+        error: errorMessage(err),
+      });
     }
   }
 
-  const oConfig = openaiConfig(env);
-  if (!oConfig) {
-    console.warn('OpenAI not configured; skipping draft', { postId });
-    return;
-  }
+  if (draft === null) {
+    let creator: CreatorContext | null = null;
+    const aConfig = airtableConfig(env);
+    if (aConfig && email) {
+      try {
+        creator = await fetchCreatorContext(email, aConfig);
+      } catch (err) {
+        console.error('airtable lookup failed', { email, error: errorMessage(err) });
+      }
+    }
 
-  const fewShot = await listRecentApprovedDrafts(env.DB, 5);
-  const isTopLevel = !post.parentId;
-  const draft = await generateDraft(
-    {
-      post,
-      isTopLevel,
-      creator,
-      fewShotApprovedDrafts: fewShot,
-      regenerate: opts.regenerate === true,
-    },
-    oConfig,
-  );
+    const oConfig = openaiConfig(env);
+    if (!oConfig) {
+      console.warn('Neither Dify nor OpenAI configured; skipping draft', { postId });
+      return;
+    }
+
+    const fewShot = await listRecentApprovedDrafts(env.DB, 5);
+    draft = await generateDraft(
+      {
+        post,
+        isTopLevel,
+        creator,
+        fewShotApprovedDrafts: fewShot,
+        regenerate: opts.regenerate === true,
+      },
+      oConfig,
+    );
+  }
 
   const signalId = await upsertSignal(env.DB, {
     postId: post.id,

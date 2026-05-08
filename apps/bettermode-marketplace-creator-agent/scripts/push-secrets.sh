@@ -19,8 +19,11 @@ REQUIRED_VARS=(
   "WEBFLOW_OPENAI_API_KEY:OPENAI_API_KEY"
 )
 
+# Optional. The Dify key activates the Dify agent path; without it the
+# worker falls back to direct OpenAI drafting (no policy KB grounding).
 OPTIONAL_VARS=(
   "AIRTABLE_API_KEY:AIRTABLE_API_KEY"
+  "WEBFLOW_DIFY_AGENT_API_KEY:DIFY_AGENT_API_KEY"
 )
 
 cd "$(dirname "$0")/.."

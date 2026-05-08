@@ -15,5 +15,9 @@ declare namespace Cloudflare {
     OPENAI_API_KEY?: string;
     AIRTABLE_API_KEY?: string;
     IGNORE_SIGNATURE?: string;
+    // Dify agent (drafting brain — Option B)
+    DIFY_API_BASE?: string;
+    DIFY_AGENT_API_KEY?: string;
+    DIFY_AGENT_USER?: string;
   }
 }

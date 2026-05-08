@@ -32,6 +32,8 @@
     "OPENAI_API_BASE": "https://api.openai.com/v1",
     "OPENAI_MODEL_DEFAULT": "gpt-4o-mini",
     "OPENAI_MODEL_RICH": "gpt-4o",
+    "DIFY_API_BASE": "https://api.dify.ai/v1",
+    "DIFY_AGENT_USER": "bettermode-marketplace-creator-agent",
     "ALLOWED_ORIGINS": "https://app.bettermode.com,https://community.webflow.com,https://webflow.com,https://www.webflow.com"
   }
 }
