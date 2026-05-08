@@ -1,0 +1,46 @@
+name = "bettermode-creator-mcp"
+main = "index.ts"
+compatibility_date = "2026-05-05"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Production URL: https://bettermode-creator.mcp.createsomething.agency
+[[routes]]
+pattern = "bettermode-creator.mcp.createsomething.agency"
+custom_domain = true
+
+[observability]
+enabled = true
+
+# Durable Object for MCP session state
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "BettermodeCreatorMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["BettermodeCreatorMcp"]
+
+# Drafts queue + signal index live in the agency D1
+[[d1_databases]]
+binding = "DB"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+[vars]
+ENVIRONMENT = "production"
+BETTERMODE_GRAPHQL_ENDPOINT = "https://api.bettermode.com"
+BETTERMODE_DEFAULT_NETWORK_ID = "BuRv7sR1po"
+BETTERMODE_MARKETPLACE_SPACE_ID = "ROtfBgdQyiAB"
+AIRTABLE_API_BASE = "https://api.airtable.com"
+AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+AIRTABLE_CREATORS_TABLE = "tbljt0plqxdMARZXb"
+AIRTABLE_ASSETS_TABLE = "tblRwzpWoLgE9MrUm"
+AIRTABLE_CREATORS_EMAIL_FIELD = "📧Email"
+AIRTABLE_CREATORS_ASSETS_LINK_FIELD = "👛Assets"
+
+# Secrets (set via wrangler secret put):
+#   BETTERMODE_CLIENT_ID
+#   BETTERMODE_CLIENT_SECRET
+#   AIRTABLE_API_KEY
+#   MCP_BEARER_TOKEN  (Dify connects with this)
