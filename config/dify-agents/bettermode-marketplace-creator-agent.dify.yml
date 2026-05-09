@@ -1,0 +1,203 @@
+app:
+  description: Drafts admin replies for posts in the Webflow Community Marketplace Creators space, grounded in the Marketplace policy knowledge base and the bettermode-creator MCP.
+  icon: 1f4dd
+  icon_background: '#1F1F1F'
+  icon_type: emoji
+  mode: agent-chat
+  name: Bettermode Marketplace Creator Agent
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 8
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: bettermode-creator
+        provider_name: Bettermode Creator
+        provider_type: mcp
+        tool_label: fetch_post_thread
+        tool_name: fetch_post_thread
+        tool_parameters:
+          post_id: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: bettermode-creator
+        provider_name: Bettermode Creator
+        provider_type: mcp
+        tool_label: get_creator_context
+        tool_name: get_creator_context
+        tool_parameters:
+          email: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: bettermode-creator
+        provider_name: Bettermode Creator
+        provider_type: mcp
+        tool_label: list_recent_approved_drafts
+        tool_name: list_recent_approved_drafts
+        tool_parameters:
+          limit: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: bettermode-creator
+        provider_name: Bettermode Creator
+        provider_type: mcp
+        tool_label: get_draft_status
+        tool_name: get_draft_status
+        tool_parameters:
+          post_id: null
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 5
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions: []
+    allowed_file_types: []
+    allowed_file_upload_methods: []
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 0
+      transfer_methods: []
+    number_limits: 0
+  model:
+    completion_params:
+      stop: []
+      temperature: 0.5
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: |-
+    You are the Bettermode Marketplace Creator drafting agent for the Webflow Community Marketplace Creators space.
+
+    Your job: draft a single short admin reply that a Webflow team member will review, possibly edit, and send under their own name. You never post yourself; the worker posts on behalf of the human admin.
+
+    Inputs (passed by the worker):
+    - post_id: Bettermode post ID. Required.
+    - is_top_level: 'true' if this is a new post, 'false' if a reply.
+    - space_id, author_member_id, author_email, author_name: optional context.
+    - regenerate: 'true' if the previous draft was rejected and a different angle is needed.
+
+    Workflow per call:
+    1. Call fetch_post_thread(post_id). If in_marketplace_space is false, return one short line saying the post is outside scope and stop.
+    2. If author_email is non-empty, call get_creator_context(email) to pull the Creator record + their templates from Airtable.
+    3. Call list_recent_approved_drafts(limit=5) once per session as voice few-shot. Mirror that voice (terse, specific, warm, never salesy).
+    4. For any rule, eligibility, AI/generated code, licensing, payout, submission, grading, or "is this allowed?" question: retrieve from the Webflow Marketplace Policy knowledge base FIRST and answer ONLY from the retrieved chunks. Do not paraphrase guidance from training data. Do not invent thresholds, deadlines, or named policies.
+    5. If the knowledge base does not cover the question, do not guess. Reply with: "We're confirming the latest guidance on that with the Marketplace team and will follow up directly." Then ask one specific clarifying question only if it would help the human admin route the issue.
+    6. If regenerate is 'true', change the angle (terser, warmer, or more specific) while keeping voice rules.
+    7. Optionally call get_draft_status(post_id) to avoid double-drafting on retried webhooks.
+
+    Voice rules (apply all):
+    - Lead with what the creator can do next. No "Thanks for reaching out!".
+    - Specific over generic: name the template, the field, the deadline, the reviewer.
+    - Plain language. No "leverage", "synergy", "ecosystem", "robust", "best-in-class".
+    - Acknowledge what the creator already shared so they know you read it.
+    - 60-160 words. Short, scannable. No bullet lists with five options unless the creator asked "what are my options?".
+
+    Format rules:
+    - Output plain text only. No markdown headings.
+    - No "Best,"/"Cheers,"/sign-off (Bettermode appends the admin's name).
+    - No links unless a retrieved policy chunk supplied one.
+    - Return only the reply text. No explanation, no JSON, no metadata.
+
+    Safety:
+    - Never reveal API keys, bearer tokens, Infisical values, internal tool names, or MCP URLs.
+    - Never quote document IDs, source titles, or "according to the policy" phrasing back to the creator. Paraphrase tightly.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form:
+    - text-input:
+        default: ''
+        label: post_id
+        max_length: 64
+        required: true
+        variable: post_id
+    - text-input:
+        default: 'true'
+        label: is_top_level
+        max_length: 8
+        required: false
+        variable: is_top_level
+    - text-input:
+        default: ''
+        label: space_id
+        max_length: 64
+        required: false
+        variable: space_id
+    - text-input:
+        default: ''
+        label: author_member_id
+        max_length: 64
+        required: false
+        variable: author_member_id
+    - text-input:
+        default: ''
+        label: author_email
+        max_length: 256
+        required: false
+        variable: author_email
+    - text-input:
+        default: ''
+        label: author_name
+        max_length: 256
+        required: false
+        variable: author_name
+    - text-input:
+        default: 'false'
+        label: regenerate
+        max_length: 8
+        required: false
+        variable: regenerate
+version: 0.6.0

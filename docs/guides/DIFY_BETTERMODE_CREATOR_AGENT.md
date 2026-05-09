@@ -72,10 +72,11 @@ Settings:
    - Auth: Bearer, value from Infisical `WEBFLOW_BETTERMODE_CREATOR_MCP_BEARER`
 2. Refresh tools — confirm `fetch_post_thread`, `get_creator_context`, `list_recent_approved_drafts`, `get_draft_status` appear.
 3. Create new app:
-   - Name: `Marketplace Creator Drafter`
+   - Name: `Bettermode Marketplace Creator Agent`
    - Mode: Agent (function calling)
-   - Model: workspace-approved model (gpt-4o-mini for cost; gpt-4o for higher-stakes drafts)
+   - Model: `gpt-5.4` (workspace-approved; matches the YouTube/Notion agent)
    - API mode: blocking (the worker calls `response_mode=blocking`)
+   - Or simpler: import `config/dify-agents/bettermode-marketplace-creator-agent.dify.yml` from this repo to get the model, prompt, tools, and inputs preconfigured.
 4. Attach the **Webflow Marketplace Policy** knowledge base (dataset).
 5. Enable tools:
    - `bettermode-creator → fetch_post_thread`
