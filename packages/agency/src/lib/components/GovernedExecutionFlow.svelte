@@ -53,7 +53,7 @@
     destinations: [
       { id: 'crm', name: 'CRM', x: 700, y: 100, curvature: -42 },
       { id: 'erp', name: 'ERP', x: 700, y: 222, curvature: -20 },
-      { id: 'workflow', name: 'Workflow System', x: 700, y: 344, curvature: -42 }
+      { id: 'workflow', name: 'Workflow Console', x: 700, y: 344, curvature: -42 }
     ]
   };
 
@@ -70,17 +70,17 @@
     destinations: [
       { id: 'crm', name: 'CRM', x: 92, y: 592, curvature: -56 },
       { id: 'erp', name: 'ERP', x: 170, y: 632, curvature: -20 },
-      { id: 'workflow', name: 'Workflow System', x: 248, y: 592, curvature: -56 }
+      { id: 'workflow', name: 'Workflow Console', x: 248, y: 592, curvature: -56 }
     ]
   };
 
   let {
     eyebrow = 'Governed Execution',
-    title = 'Policy OS',
-    description = 'Hub MCP routes work into Policy OS, the governed execution layer that decides what can run automatically, what needs approval, and what stops with a reason.',
+    title = 'Governed Workflow Console',
+    description = 'The tool layer routes work into a console that shows what can run automatically, what needs approval, and what stops with a reason.',
     caption = 'Safe actions run fast. Risky actions route to approval. Disallowed actions stop with a reason.',
     initiators = ['Client LLM', 'Ops Inbox', 'Background Agent'],
-    destinations = ['CRM', 'ERP', 'Workflow System'],
+    destinations = ['CRM', 'ERP', 'Workflow Console'],
     outcomes = DEFAULT_OUTCOMES
   }: Props = $props();
 
@@ -173,10 +173,10 @@
       <BlurFade delay={0.9}>
         <div class="node control-node" style={`left:${layout.control.x}px; top:${layout.control.y}px;`}>
           <BorderBeam size={160} duration={8} colorFrom={primaryBeam} colorTo={secondaryBeam} />
-            <span class="node-kicker">Decides</span>
+          <span class="node-kicker">Governs</span>
           <div class="lockup">
-            <span class="node-title control-title">Policy OS</span>
-            <span class="node-subtitle">Reason-coded governance</span>
+            <span class="node-title control-title">Workflow Console</span>
+            <span class="node-subtitle">Reason-coded review</span>
           </div>
           <div class="pill-row">
             {#each outcomes as outcome}

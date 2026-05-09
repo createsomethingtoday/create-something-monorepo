@@ -1,21 +1,22 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — production-safe workflow infrastructure for technical operators
+**createsomething.agency** — AI-assisted workflows, human-approved operations
 
-We build the connectivity layer between your tools and AI.
+We build calm workflow systems for teams bringing AI and agents into real operations: visible handoffs, scoped tools, human approval, and recovery paths your team can inherit.
 
 ---
 
-## The Creation Moat
+## The Workflow Console Moat
 
-**MCP consumption is commoditized. MCP creation is not.**
+**AI and agents can help teams move faster. Knowing what should run, pause, or stop is the hard part.**
 
-Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from within the app. Templates and scaffolding tools have lowered the barrier to *starting*, but deep integration still requires:
+Templates and scaffolding tools have lowered the barrier to starting, but governed workflow infrastructure still requires:
 
 - Domain expertise (understanding your business)
 - MCP protocol knowledge (auth, transports, error handling)
 - Integration experience (data mapping, security boundaries)
-- Workflow control design (Skills + MCP with trust boundaries)
+- Workflow governance design (approval states, blocked states, recovery paths)
+- Operator-surface design (what the team sees, decides, and inherits)
 
 This is what `.agency` delivers.
 
@@ -25,10 +26,10 @@ This is what `.agency` delivers.
 
 | Offer | Description | Typical Output |
 |-------|-------------|----------------|
-| **Workflow Infrastructure** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
-| **Policy OS** | Add policy controls, release gates, approval rules, incident loops, and recurring governed-execution operations. | Governed runtime behavior + release evidence |
-| **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
-| **Workflow Mapping Session** | Paid pre-implementation mapping to scope workflow and trust boundary. | Pilot scope, trust boundary, and 30-day plan |
+| **Workflow Readiness Map** | Paid diagnostic for one workflow and its safe first build wedge. | Workflow map, risk register, decision states, build/defer/stop recommendation |
+| **Governed Workflow Console** | Build one Retool-powered operating surface where AI and agents prepare work and people keep approval authority. | Console, workflow implementation, runbook, handoff |
+| **Agent Operator Layer** | Add bounded AI assistance for matching, intake, routing, drafting, or summarizing. | Scoped agent/tool layer routed through approval boundaries |
+| **Governance Review** | Low-touch review loop for live workflow health, incidents, and edge cases. | Monthly health notes, risk review, scoped improvement queue |
 
 ---
 
@@ -36,27 +37,28 @@ This is what `.agency` delivers.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   INTELLIGENCE LAYER                        │
-│        Skills, Agents, Automations (the margin)            │
-│   "Draft this RFI" · "Summarize logs" · "Flag compliance"  │
+│                    WORKFLOW CONSOLE                         │
+│     Status, approvals, blocked states, risks, artifacts     │
+│        "Approve match" · "Request info" · "Pause job"       │
 ├─────────────────────────────────────────────────────────────┤
-│                    AUTOMATION LAYER                         │
-│           Custom MCP Servers (the entry point)             │
-│           Connect your tools to AI with trust              │
+│                    TOOL / AGENT LAYER                       │
+│        MCPs, workers, cron jobs, skills, and APIs           │
+│     Connect business data to agents with trust boundaries   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Entry point**: a scoped MCP wedge that connects one important workflow with trusted action paths  
-**Expansion**: Workflow Infrastructure first, Policy OS for governed execution, then Enterprise Extension based on risk and workflow complexity
+**Entry point**: a paid readiness map for one high-drag workflow
+**Core build**: a governed workflow console with tool boundaries, approval states, and recovery paths
+**Expansion**: agent operator layer and monthly governance review when usage creates edge cases
 
 ---
 
 ## Positioning
 
-**Before**: "We build websites/apps with modern templates"
-**After**: "We build the connectivity layer between your tools and AI"
+**Before**: "We build AI automations"
+**After**: "We build AI-assisted workflows with human approval built in"
 
-Templates are table stakes. The moat is creation expertise applied to specific domains.
+The strongest wedge is matching, intake, and routing work where demand, supply, capacity, or requests must be reconciled by humans today.
 
 ---
 

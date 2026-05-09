@@ -72,7 +72,7 @@
   ];
 
   let {
-    eyebrow = 'Live Control Surface',
+    eyebrow = 'Live Workflow Surface',
     title = 'What governed execution looks like',
     description = 'A CREATE SOMETHING workflow does not just connect tools. It decides what can run, what waits for review, and what stops with a reason your team can inspect.',
     scenarios = DEFAULT_SCENARIOS
@@ -103,7 +103,7 @@
       <span></span>
       <span></span>
     </div>
-    <span class="terminal-surface__title">workflow control room</span>
+    <span class="terminal-surface__title">workflow console</span>
     <span class={`status-chip ${activeScenario.decision}`}>
       {activeScenario.decision === 'allow'
         ? 'Auto-allow'

@@ -5,13 +5,17 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CONTROL_PLANE_PATH = join(ROOT, 'config/retool/control-plane.json');
+const OPERATING_MODEL_PATH = join(ROOT, 'config/retool/operating-model.json');
 const WORKSPACE_LANES_PATH = join(ROOT, 'config/workspace-lanes.json');
 const MCP_REGISTRY_PATH = join(ROOT, 'config/mcp-hub/registry.json');
 const MCP_FLEET_PATH = join(ROOT, 'config/mcp-hub/fleet.json');
 
 const SECRET_PATTERNS = [
-  /retool_[a-z0-9_]{16,}/i,
+  /retool_[a-z0-9]{16,}/i,
   /Bearer\s+[A-Za-z0-9._~+/=-]{16,}/,
+  /[?&]token=[a-f0-9]{32,}/i,
+  /Gateway Token:\*\*\s*`[a-f0-9]{32,}`/i,
+  /Gateway Token:\s*`[a-f0-9]{32,}`/i,
 ];
 
 function readJson(path) {
@@ -134,6 +138,7 @@ function buildMcpRegistry(registry, fleet) {
 
 function buildDeliveryGraph() {
   const controlPlane = readJson(CONTROL_PLANE_PATH);
+  const operatingModel = readJson(OPERATING_MODEL_PATH);
   const workspaceLanes = readJson(WORKSPACE_LANES_PATH);
   const mcpRegistry = readJson(MCP_REGISTRY_PATH);
   const mcpFleet = readJson(MCP_FLEET_PATH);
@@ -145,12 +150,14 @@ function buildDeliveryGraph() {
       repo: 'create-something-monorepo',
       root: ROOT,
       controlPlanePath: relative(ROOT, CONTROL_PLANE_PATH),
+      operatingModelPath: relative(ROOT, OPERATING_MODEL_PATH),
       workspaceLanesPath: relative(ROOT, WORKSPACE_LANES_PATH),
       mcpRegistryPath: relative(ROOT, MCP_REGISTRY_PATH),
       mcpFleetPath: relative(ROOT, MCP_FLEET_PATH),
     },
     visibilityLevels: ['private_internal', 'operator', 'client_summary', 'client_audit', 'public_redacted'],
     controlPlane,
+    operatingModel,
     surfaces: [
       {
         id: 'operator-console',
@@ -161,8 +168,8 @@ function buildDeliveryGraph() {
         modules: ['today', 'workstreams', 'decisions', 'risks', 'approvals', 'mcp_registry', 'agent_registry', 'deploy_evidence'],
       },
       {
-        id: 'workflow-control-room',
-        label: 'Workflow Control Room',
+        id: 'workflow-console',
+        label: 'Workflow Console',
         audience: 'client',
         visibility: 'client_summary',
         purpose: 'Client-visible project surface for status, decisions needed, risks, artifacts, demos, approvals, and handoff.',
@@ -206,7 +213,7 @@ function checkGraph(graph) {
     errors.push('Retool baseUrl must be https://createsomething.retool.com.');
   }
 
-    if (graph.controlPlane.codexMcp?.url !== 'https://createsomething.retool.com/mcp') {
+  if (graph.controlPlane.codexMcp?.url !== 'https://createsomething.retool.com/mcp') {
     errors.push('Codex Retool MCP URL must be https://createsomething.retool.com/mcp.');
   }
 
@@ -226,6 +233,42 @@ function checkGraph(graph) {
     errors.push('Retool must be configured as the UI/control-plane layer, not the durable data layer.');
   }
 
+  if (graph.operatingModel?.sourceOfTruth !== 'monorepo') {
+    errors.push('Retool operating model must keep the monorepo as source of truth.');
+  }
+
+  if (graph.operatingModel?.controlPlane !== 'retool') {
+    errors.push('Retool operating model must name Retool as the control plane.');
+  }
+
+  if (graph.operatingModel?.difyRole?.classification !== 'ai_skill_server') {
+    errors.push('Dify must remain classified as the AI skill server, not the operating center.');
+  }
+
+  if (graph.operatingModel?.operatorCompanionRole?.classification !== 'internal_operator_companion') {
+    errors.push('Operator companion must remain classified as the internal operator companion.');
+  }
+
+  if (graph.operatingModel?.operatorCompanionRole?.preferredRuntime !== 'moltworker_relay') {
+    errors.push('Operator companion preferred runtime must be moltworker_relay.');
+  }
+
+  if (graph.operatingModel?.operatorCompanionRole?.activeCandidate?.packagePath !== 'packages/relay') {
+    errors.push('Moltworker / RELAY active candidate must point at packages/relay.');
+  }
+
+  if (graph.operatingModel?.operatorCompanionRole?.activeCandidate?.preflightCommand !== 'pnpm moltworker:preflight') {
+    errors.push('Moltworker / RELAY active candidate must expose pnpm moltworker:preflight.');
+  }
+
+  if (graph.operatingModel?.operatorCompanionRole?.composioIntegration?.status !== 'allowed') {
+    errors.push('Composio must remain allowed as hidden operator-companion integration plumbing.');
+  }
+
+  if (graph.operatingModel?.trustClawRole?.classification !== 'parked_operator_companion_candidate') {
+    errors.push('TrustClaw must remain parked unless the operating model is deliberately revised.');
+  }
+
   for (const workstream of graph.workstreams) {
     if (workstream.missingPackageCount > 0) {
       warnings.push(`${workstream.id} has ${workstream.missingPackageCount} missing package path(s).`);
@@ -234,8 +277,13 @@ function checkGraph(graph) {
 
   const secretFindings = scanForSecrets([
     CONTROL_PLANE_PATH,
+    OPERATING_MODEL_PATH,
+    join(ROOT, 'docs/RETOOL_OPERATING_MODEL.md'),
+    join(ROOT, 'docs/guides/MOLTWORKER_OPERATOR_COMPANION.md'),
+    join(ROOT, 'docs/guides/TRUSTCLAW_VERCEL_DEPLOYMENT.md'),
     join(ROOT, 'docs/guides/RETOOL_CONTROL_PLANE_SETUP.md'),
     join(ROOT, 'docs/guides/RETOOL_VENDOR_BOUNDARY.md'),
+    join(ROOT, 'docs/internal/EXPERIMENT_05_OPENCLAW_CLOUDFLARE.md'),
   ]);
   for (const finding of secretFindings) {
     errors.push(`Possible secret in ${finding.path}.`);

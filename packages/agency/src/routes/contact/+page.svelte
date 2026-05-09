@@ -48,8 +48,8 @@
 
 <SEO
   title="Start With the Right Workflow | CREATE SOMETHING .agency"
-  description="Book a workflow mapping session or send the workflow details. We’ll identify the safest starting wedge, the right reliability layer, and whether enterprise extension is justified."
-  keywords="workflow mapping, production automation, reliability controls, enterprise workflows, custom mcp, automation risk"
+  description="Book a workflow mapping session or send the workflow details. We’ll identify the safest starting wedge, the right console shape, and whether governance review is justified."
+  keywords="workflow mapping, workflow console, governed automation, enterprise workflows, custom mcp, automation risk"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -136,8 +136,8 @@
               >Which workflow needs attention first?</label
             >
             <p class="form-helper">
-              Tell us your stack, constraints, and bottleneck. We’ll map it to a scoped wedge,
-              reliability controls, enterprise extension, or referral.
+              Tell us your stack, constraints, and bottleneck. We’ll map it to a readiness
+              map, workflow console, governance review, or referral.
             </p>
             <textarea
               id="message"

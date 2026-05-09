@@ -201,6 +201,8 @@
     "retool:mcp:codex": "bash scripts/retool-codex-mcp-connect.sh",
     "retool:manifest": "node scripts/retool-control-plane.mjs manifest",
     "retool:manifest:check": "node scripts/retool-control-plane.mjs check",
+    "moltworker:preflight": "node scripts/moltworker-preflight.mjs",
+    "trustclaw:vercel:preflight": "node scripts/trustclaw-vercel-preflight.mjs",
     "linear": "node scripts/linear/remote.mjs",
     "linear:ready": "node scripts/linear/remote.mjs ready",
     "linear:list": "node scripts/linear/remote.mjs list",

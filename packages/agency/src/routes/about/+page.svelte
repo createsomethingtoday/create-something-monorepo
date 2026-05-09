@@ -25,9 +25,9 @@
     },
     {
       label: '03',
-      title: 'Ship the control layer',
+      title: 'Ship the console layer',
       detail:
-        'Use MCP, Skills, runbooks, release checks, and policy artifacts to make the workflow portable and governable.'
+        'Use MCPs, workers, runbooks, release checks, and decision artifacts to make the workflow portable and governable.'
     },
     {
       label: '04',
@@ -40,8 +40,8 @@
 
 <SEO
   title={`About | Micah Johnson — ${agencyCoreMessaging.categoryLabel}`}
-  description="I build calm, transparent, reliable workflow systems for operator-owned outcomes: governed workflows, policy artifacts, and escalation surfaces that protect human judgment."
-  keywords="Micah Johnson, governed workflow systems, production automation, systems architecture, automation reliability, workflow governance"
+  description="I build calm, transparent AI-assisted workflow systems for operator-owned outcomes: governed workflows, decision artifacts, and escalation surfaces that protect human judgment."
+  keywords="Micah Johnson, AI-assisted workflows, governed workflow consoles, production automation, systems architecture, automation reliability, workflow governance"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -68,9 +68,9 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        The operator should not carry the chaos of automation. My work turns toolchains into clear
-        workflow states: what agents and tools can do, what needs judgment, and what must stop
-        with a reason.
+        The operator should not carry the chaos of AI adoption. My work turns toolchains into
+        clear workflow states: what agents and tools can prepare, what needs judgment, and what
+        must stop with a reason.
       </p>
     </BlurFade>
     <BlurFade delay={0.3}>
@@ -95,7 +95,7 @@
         <h2>Why I work this way</h2>
         <p>
           I grew up between two reference points: a Porsche 930 Turbo and emergency medicine. One
-          taught me that power needs control. The other taught me that when pressure rises, clear
+          taught me that power needs restraint. The other taught me that when pressure rises, clear
           protocols matter more than improvisation.
         </p>
         <p>
@@ -122,7 +122,7 @@
         <h2>Protect the operator before you scale the agents.</h2>
         <p>
           The method is simple enough to fit on an e-ink surface: map the workflow, classify the
-          judgment states, ship the control layer, and brief the human only when attention changes
+          judgment states, ship the console layer, and brief the human only when attention changes
           the outcome.
         </p>
       </div>
@@ -181,9 +181,9 @@
       <div class="about-content">
         <h2>How I approach the work</h2>
         <p>
-          Most teams do not need a giant AI initiative first. They need one workflow that stops
-          creating manual cleanup. I start there, then add controls only when the cost of failure
-          justifies the extra layer.
+          Most teams do not need a giant AI initiative first. They need one workflow where AI can
+          help without creating new supervision work. I start there, then add controls only when
+          the cost of failure justifies the extra layer.
         </p>
         <p>
           My methodology is the Subtractive Triad: remove duplication, excess, and disconnection
@@ -207,7 +207,7 @@
         <h2>How clients experience the work</h2>
         <p>
           Clients do not hire me to become another internal admin. They bring the workflow, the
-          operating constraints, and the approval owner. I bring the diagnosis, the control layer,
+          operating constraints, and the approval owner. I bring the diagnosis, the console layer,
           and the artifacts your team needs to run and inherit the system.
         </p>
         <p>
@@ -273,8 +273,8 @@
             > — Tools and experiments
           </li>
           <li>
-            <strong>.agency</strong> — Calm, transparent workflow systems, reliability controls,
-            and enterprise extension
+            <strong>.agency</strong> — Calm workflow consoles, reliability review,
+            and governed implementation
             <span class="muted">(you are here)</span>
           </li>
         </ul>

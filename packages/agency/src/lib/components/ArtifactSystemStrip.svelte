@@ -43,8 +43,8 @@
 
   let {
     eyebrow = 'Operating Artifacts',
-    title = 'What makes Policy OS durable',
-    description = 'Every engagement ships explicit artifacts so access, behavior, and recovery stay legible after the kickoff call.',
+    title = 'What makes the workflow console durable',
+    description = 'Every engagement ships explicit artifacts so access, behavior, decisions, and recovery stay legible after the kickoff call.',
     items = DEFAULT_ITEMS
   }: Props = $props();
 

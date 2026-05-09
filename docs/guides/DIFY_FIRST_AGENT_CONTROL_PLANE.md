@@ -1,18 +1,25 @@
 # Dify-First Agent Control Plane
 
-This guide records the operating choice: use Dify as the preferred client-facing
-agent/chat runtime, and keep governance, policy, registry, and eval evidence in
-this repo.
+> Superseded for business operations by `docs/RETOOL_OPERATING_MODEL.md`.
+> Keep this guide for Dify-specific agent lifecycle, Dify MCP inventory,
+> Service API smoke tests, and Braintrust eval gates. Dify remains useful as a
+> bounded AI skill/RAG/workflow server, but Retool is now the CREATE SOMETHING
+> operating control plane.
 
-## Decision
+This guide records the Dify-specific control plane that existed before Retool
+became the primary operating surface. Use it when maintaining Dify agents,
+inventory, Service API smoke tests, and Braintrust eval evidence.
 
-Dify remains the right default for client-accessible agents because it gives us a
-usable chat surface, app publishing, MCP tool wiring, run logs, and Service API
-access that Braintrust can evaluate directly.
+## Current Decision
 
-Do not move agent governance into workflow automation tools. Workflow systems can
-still be useful for operational jobs, but they should not become the source of
-truth for which MCP tools a client agent can use or which evals prove it is safe.
+Dify remains useful for client-accessible chat agents and bounded AI skills
+because it gives us a usable chat surface, app publishing, MCP tool wiring, run
+logs, and Service API access that Braintrust can evaluate directly.
+
+Do not move durable agent governance into workflow automation tools. Retool is
+the operating surface for approvals, dashboards, and client workflow consoles, but
+the repo remains the source of truth for which MCP tools a client agent can use
+or which evals prove it is safe.
 
 ## Source Of Truth
 

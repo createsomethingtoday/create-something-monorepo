@@ -27,9 +27,9 @@
       detail: 'Read-only or constrained MCPs prove the connection before the workflow earns more authority.'
     },
     {
-      label: 'Policy OS',
+      label: 'Console',
       title: 'The surface needs trust',
-      detail: 'The products are proof primitives. The paid work is turning them into governed operating paths.'
+      detail: 'The products are proof primitives. The paid work is turning them into AI-assisted workflows with human approval built in.'
     }
   ];
 
@@ -39,9 +39,9 @@
 </script>
 
 <SEO
-  title="Proof Surfaces | MCPs, Agent Tools, and Policy OS"
+  title="Proof Surfaces | MCPs, Agent Tools, and Workflow Consoles"
   description="Proof surfaces behind CREATE SOMETHING .agency: agent tools, MCP connectors, and client builds that show how the operating layer becomes inspectable."
-  keywords="MCP servers, Policy OS, agent coordination, grounded AI code analysis, workflow governance, operator surfaces"
+  keywords="MCP servers, workflow consoles, agent coordination, grounded AI code analysis, workflow governance, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -83,7 +83,7 @@
       <div class="proof-map">
         <div class="proof-map-copy">
           <p class="section-eyebrow">How to read this page</p>
-          <h2>Products are proof primitives. Policy OS is the operating layer.</h2>
+          <h2>Products are proof primitives. The console is the operating layer.</h2>
           <p>
             The free and open tools show the discipline underneath the service: grounded claims,
             agent continuity, constrained MCP access, and artifact-backed decisions. The paid work
@@ -142,7 +142,7 @@
   <div class="section-inner">
     <BlurFade delay={0.1}>
       <div class="section-header">
-        <h2 class="section-eyebrow">Method and control primitives</h2>
+        <h2 class="section-eyebrow">Method and governance primitives</h2>
         <p class="section-desc">
           Framework tools that make the delivery philosophy inspectable before it becomes client
           workflow systems.
@@ -250,8 +250,8 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="cta-subtext">
-        I’ll map the first workflow, identify the safest MCP wedge, and define when Policy OS
-        should take over.
+        I’ll map the first workflow, identify the safest tool boundary, and define what the
+        first workflow console should show.
       </p>
     </BlurFade>
     <BlurFade delay={0.3}>

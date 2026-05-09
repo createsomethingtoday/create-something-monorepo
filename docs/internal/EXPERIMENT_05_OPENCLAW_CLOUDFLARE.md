@@ -10,9 +10,12 @@
 
 ## Live Deployment
 
-**Control UI:** https://relay.createsomething.workers.dev/?token=a6be7629046df1b3708ceb0a149afc7bfdf6afdef5e9b168078d4f6e6f3f74a4
+**Control UI:** `https://relay.createsomething.workers.dev/?token=<redacted>`
 
-**Gateway Token:** `a6be7629046df1b3708ceb0a149afc7bfdf6afdef5e9b168078d4f6e6f3f74a4`
+**Gateway Token:** `<redacted>`
+
+> **Security note:** A historical gateway token was removed from this document.
+> Rotate `MOLTBOT_GATEWAY_TOKEN` before reusing this deployment.
 
 > **Note:** The first request takes 1-2 minutes while the container cold starts.
 

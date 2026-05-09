@@ -10,8 +10,9 @@ Read in this order when you need broad repo context:
 
 1. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
 2. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
-3. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
-4. [policies/README.md](./policies/README.md) — versioned policy artifacts
+3. [RETOOL_OPERATING_MODEL.md](./RETOOL_OPERATING_MODEL.md) — current operating model for Retool, Linear, Dify, Moltworker / RELAY, Composio, MCPs, and agents
+4. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
+5. [policies/README.md](./policies/README.md) — versioned policy artifacts
 
 ## Navigation by task
 
@@ -31,6 +32,7 @@ Read in this order when you need broad repo context:
 ### Architecture and control planes
 
 - [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md)
+- [RETOOL_OPERATING_MODEL.md](./RETOOL_OPERATING_MODEL.md)
 - [MCP_HUB_CONTROL_PLANE.md](./MCP_HUB_CONTROL_PLANE.md)
 - [HUB_CODEX_MCP_VISUALIZATION.md](./HUB_CODEX_MCP_VISUALIZATION.md)
 - [HUB_EXECUTION_GOVERNANCE_PLAN.md](./HUB_EXECUTION_GOVERNANCE_PLAN.md)
@@ -72,6 +74,8 @@ Read in this order when you need broad repo context:
 
 - [AUTH0_SUBJECT_REBIND_RUNBOOK.md](./AUTH0_SUBJECT_REBIND_RUNBOOK.md)
 - [CS_HUB_VAULT_ROTATION_WORKFLOW.md](./CS_HUB_VAULT_ROTATION_WORKFLOW.md)
+- [guides/MOLTWORKER_OPERATOR_COMPANION.md](./guides/MOLTWORKER_OPERATOR_COMPANION.md)
+- [guides/TRUSTCLAW_VERCEL_DEPLOYMENT.md](./guides/TRUSTCLAW_VERCEL_DEPLOYMENT.md)
 - [guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md](./guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md)
 - [LINEAR_COORDINATION.md](./LINEAR_COORDINATION.md)
 - [MCP_HUB_REMOTE_DEPLOY.md](./MCP_HUB_REMOTE_DEPLOY.md)
@@ -134,6 +138,7 @@ docs/
   [OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md](./OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md)
 
 - **Managing Dify agents over MCPs**:
+  [RETOOL_OPERATING_MODEL.md](./RETOOL_OPERATING_MODEL.md),
   [guides/DIFY_FIRST_AGENT_CONTROL_PLANE.md](./guides/DIFY_FIRST_AGENT_CONTROL_PLANE.md),
   [guides/DIFY_WORKSPACE_INVENTORY.md](./guides/DIFY_WORKSPACE_INVENTORY.md),
   [DIFY_WORKSPACE_INVENTORY.generated.md](./DIFY_WORKSPACE_INVENTORY.generated.md),

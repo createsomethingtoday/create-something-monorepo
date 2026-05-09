@@ -3,9 +3,9 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   export let eyebrow = 'Mapping session';
-  export let title = 'The first call turns the pitch into a scoped operating path.';
+  export let title = 'The first session turns the workflow into a safe build decision.';
   export let description =
-    'The buyer does not need a technical scavenger hunt. They need to see what agents and tools can do, what stays human, where MCPs fit, and how the stack stays governable before implementation starts.';
+    'The buyer does not need a technical scavenger hunt. They need to know what is safe to automate, what needs review, what should stop, and what workflow console should be built first.';
   export let ctaHref = '/book';
   export let ctaLabel = agencyCoreMessaging.bookMappingSessionLabel;
 
@@ -22,13 +22,13 @@
     },
     {
       label: 'Decide',
-      title: 'The first wedge',
-      detail: 'Whether the right first move is MCP Wedge, Workflow System, Policy OS, referral, or governed agent capacity.'
+      title: 'The first safe build',
+      detail: 'Whether the right first move is a workflow console, matching workflow, intake/routing layer, agent add-on, referral, or stop.'
     },
     {
       label: 'Keep',
       title: 'The artifact trail',
-      detail: 'Workflow map, stack boundary, agent/MCP contract, policy notes, and implementation path.'
+      detail: 'Workflow map, stack boundary, agent/tool contract, decision states, and implementation path.'
     }
   ];
 </script>

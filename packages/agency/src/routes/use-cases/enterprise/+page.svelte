@@ -3,12 +3,6 @@
 	import { IntegrationFlow } from '@create-something/canon/interactive';
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
 
-	const deliveryVector = {
-		canonicalPhrase: 'Skills on MCP',
-		clientFacingLabel: 'Skills + MCP',
-		technicalLabel: 'MCP + Skills'
-	};
-
 	// Integration flow — judgment layer architecture
 	const integrations = [
 		{ label: 'DB', name: 'Database Layer' },
@@ -94,7 +88,7 @@
 
 	const plans = [
 		{
-			name: 'Workflow Control Core',
+			name: 'Workflow Console Core',
 			price: '$1,500–$2,000',
 			period: '/mo',
 			scope: '1–2 workflows in operation',
@@ -107,7 +101,7 @@
 			featured: false
 		},
 		{
-			name: 'Workflow Control Growth',
+			name: 'Workflow Console Growth',
 			price: '$2,000–$3,000',
 			period: '/mo',
 			scope: '3–5 workflows in operation',
@@ -146,9 +140,9 @@
 </script>
 
 <SEO
-	title="Policy OS For Enterprise Judgment Operations | CREATE SOMETHING .agency"
-	description="Policy OS for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the first workflow wedge is live."
-	keywords="enterprise automation reliability, workflow controls, policy operations, ai governance, mcp wedge"
+	title="Workflow Governance For Enterprise Operations | CREATE SOMETHING .agency"
+	description="Governance review for teams already running automation. Add rule operations, orchestration, and ongoing safeguards once the first workflow console is live."
+	keywords="enterprise automation reliability, workflow console, workflow controls, policy operations, ai governance"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -166,8 +160,8 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					For teams already running MCPs or cross-system workflows, this is Policy OS: the
-					governed execution layer that keeps outcomes reliable after launch. We add prompt
+					For teams already running MCPs or cross-system workflows, this is the governance
+					layer that keeps outcomes reliable after launch. We add prompt
 					optimization, policy controls, approval and escalation logic, and ongoing operational
 					oversight.
 				</p>
@@ -356,11 +350,11 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Your workflows need Policy OS.</h2>
+			<h2 class="cta-heading">Your workflows need calm governance.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Run governed automation with clear policies, direct operational ownership, and reliability controls that hold up in production.
+				Run governed automation with clear policies, direct operational ownership, and governance boundaries that hold up in production.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
@@ -368,7 +362,7 @@
 				<ShimmerButton href="https://createsomething.agency/book">
 					Book Mapping Session
 				</ShimmerButton>
-				<a href="/services" class="cta-secondary">Need a constrained start? Use an MCP Wedge →</a>
+				<a href="/services" class="cta-secondary">Need a constrained start? Use a readiness map →</a>
 			</div>
 		</BlurFade>
 	</div>

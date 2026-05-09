@@ -77,17 +77,17 @@
 		{
 			name: 'Judgment',
 			subtitle: 'What needs the operator',
-			items: ['Policy OS', 'Approvals', 'Briefs'],
+			items: ['Rules', 'Approvals', 'Briefs'],
 			description:
-				'The decision layer — where Policy OS classifies safe work, approval-needed work, and blocked states before the operator is interrupted.'
+				'The decision layer — where rules classify safe work, approval-needed work, and blocked states before the operator is interrupted.'
 		}
 	];
 </script>
 
 <SEO
-	title="Methodology | Calm Operator Systems"
-	description="The CREATE SOMETHING methodology removes duplication, excess, and disconnection before turning a workflow into governed execution with Policy OS."
-	keywords="Calm Operator Method, Policy OS, workflow governance, MCP wedge, automation audit, Subtractive Triad"
+	title="Methodology | Calm Workflow Consoles"
+	description="The CREATE SOMETHING methodology removes duplication, excess, and disconnection before turning a workflow into a governed operating console."
+	keywords="Calm Operator Method, workflow console, workflow governance, automation audit, Subtractive Triad"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[
@@ -191,7 +191,7 @@
 		</BlurFade>
 			<BlurFade delay={0.15}>
 				<p class="section-subhead">
-					How the Triad becomes a calm, governed workflow path, from workflow map to Policy OS.
+					How the Triad becomes a calm, governed workflow path, from workflow map to console.
 				</p>
 			</BlurFade>
 

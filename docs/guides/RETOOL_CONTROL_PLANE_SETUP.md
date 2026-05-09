@@ -2,6 +2,10 @@
 
 Retool is the UI/control plane for the monorepo. The monorepo remains the source of truth for contracts, manifests, code, policies, MCP servers, and delivery artifacts.
 
+For the canonical operating model, including how Retool relates to Linear,
+Codex/Emdash, Dify, Moltworker / RELAY, Composio, MCPs, and client workflow
+consoles, read `docs/RETOOL_OPERATING_MODEL.md`.
+
 ## Canonical Instance
 
 - Retool origin: `https://createsomething.retool.com`
@@ -81,7 +85,8 @@ pnpm retool:manifest:check
 The manifest includes:
 
 - Retool instance and MCP endpoints
-- Retool-facing surfaces: `Operator Console` and `Workflow Control Room`
+- Retool-facing surfaces: `Operator Console` and `Workflow Console`
+- operating model from `config/retool/operating-model.json`
 - workspace lanes from `config/workspace-lanes.json`
 - MCP registry and fleet deployments
 - visibility levels for private, operator, client, audit, and public-redacted surfaces

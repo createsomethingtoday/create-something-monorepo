@@ -36,19 +36,19 @@
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
 		{
 			value: 'workflow_infrastructure',
-			label: 'Workflow System',
+			label: 'Workflow Console',
 			description: 'One workflow your team still completes or covers by hand.'
 		},
 		{
 			value: 'reliability_and_control',
-			label: 'Policy OS',
+			label: 'Governance Review',
 			description:
 				'Approval rules, blocked states, release evidence, and operator briefs around live automation.'
 		},
 		{
 			value: 'enterprise_extension',
-			label: 'Enterprise Extension',
-			description: 'Cross-system orchestration with stricter governance, auditability, and recovery.'
+			label: 'Expansion Sprint',
+			description: 'Another workflow, stricter governance, deeper auditability, or recovery work.'
 		},
 		{
 			value: 'system_development_referral',
@@ -272,7 +272,7 @@
 
 <SEO
 	title="Book a CREATE SOMETHING Mapping Session"
-	description="Schedule a scoped workflow diagnostic to identify the safest MCP wedge, stack boundary, decision states, and first build path."
+	description="Schedule a scoped workflow diagnostic to identify the safest tool boundary, stack boundary, decision states, and first build path."
 	propertyName="agency"
 />
 

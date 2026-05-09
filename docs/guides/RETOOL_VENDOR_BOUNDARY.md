@@ -7,7 +7,7 @@ Retool is the CREATE SOMETHING UI/control plane. It is not the durable source of
 Use Retool for fast operator and client-facing surfaces:
 
 - Operator Console
-- Workflow Control Room
+- Workflow Console
 - approval queues
 - MCP/resource inspection
 - user and environment administration
@@ -66,7 +66,7 @@ If a feature cannot be rebuilt without reading Retool state by hand, it is too l
 
 ## Vendor Review
 
-Retool remains the default while the business needs fast governed control rooms, MCP-backed admin surfaces, external portals, and low custom UI overhead.
+Retool remains the default while the business needs fast governed workflow consoles, MCP-backed admin surfaces, external portals, and low custom UI overhead.
 
 Revisit the vendor choice when one of these becomes true:
 

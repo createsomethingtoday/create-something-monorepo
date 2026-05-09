@@ -1,0 +1,344 @@
+{
+  "version": 1,
+  "status": "canonical",
+  "decisionDate": "2026-05-08",
+  "sourceOfTruth": "monorepo",
+  "controlPlane": "retool",
+  "businessPositioning": {
+    "category": "governed workflow consoles",
+    "promise": "Turn messy operational workflows into governed systems people can operate without watching every step by hand.",
+    "firstRepeatableWedge": "governed matching infrastructure for staffing and operations teams"
+  },
+  "toolRoles": [
+    {
+      "layer": "source_of_truth",
+      "tool": "monorepo",
+      "role": "Contracts, code, manifests, policies, MCPs, agents, runbooks"
+    },
+    {
+      "layer": "execution_ledger",
+      "tool": "linear",
+      "role": "Build work, bugs, implementation tasks, agent-ready queues"
+    },
+    {
+      "layer": "review_gate",
+      "tool": "github",
+      "role": "PR review, CI, release history, deploy evidence"
+    },
+    {
+      "layer": "build_lane",
+      "tool": "codex_emdash",
+      "role": "Agentic implementation, code review, PR preparation"
+    },
+    {
+      "layer": "control_plane",
+      "tool": "retool",
+      "role": "Operator cockpit, approvals, dashboards, client workflow consoles"
+    },
+    {
+      "layer": "tool_data_interface",
+      "tool": "mcp_servers",
+      "role": "Governed access to repo, apps, APIs, databases, and workflows"
+    },
+    {
+      "layer": "ai_skill_server",
+      "tool": "dify",
+      "role": "Bounded AI workflows, RAG, structured drafting, MCP-packaged skills"
+    },
+    {
+      "layer": "operator_companion",
+      "tool": "moltworker_relay",
+      "role": "Preferred internal chief-of-staff assistant runtime on Cloudflare; TrustClaw remains parked as a Vercel exception path"
+    },
+    {
+      "layer": "runtime_workers",
+      "tool": "workers_cron_custom_services",
+      "role": "Durable automation and action execution"
+    }
+  ],
+  "operatorApp": {
+    "id": "operator-today",
+    "label": "Operator Today",
+    "purpose": "Show what deserves operator attention across Webflow, Half Dozen, CREATE SOMETHING, agents, MCPs, Linear, GitHub, and client work.",
+    "pages": [
+      "today",
+      "workstreams",
+      "agent_queue",
+      "mcp_registry",
+      "workflow_console_template"
+    ],
+    "sections": [
+      "needs_micah",
+      "ready_for_agent",
+      "waiting_for_review",
+      "blocked",
+      "client_update_due",
+      "workflow_health",
+      "capture"
+    ],
+    "mobileActions": [
+      "approve_direction",
+      "reject_direction",
+      "defer",
+      "mark_needs_desktop_review",
+      "send_to_codex",
+      "create_linear_issue",
+      "mark_client_visible",
+      "pause_workflow",
+      "retry_safe_job",
+      "capture_note"
+    ],
+    "blockedMobileActions": [
+      "merge_serious_pr",
+      "change_permissions",
+      "inspect_sensitive_client_data",
+      "edit_production_business_data",
+      "approve_employment_decisions",
+      "publish_public_proof"
+    ]
+  },
+  "initialWorkflows": [
+    {
+      "id": "linear-sync",
+      "label": "Linear Sync",
+      "purpose": "Pull Linear issues into an operator-facing table and surface operational meaning by labels, status, project, owner, due date, and source URL."
+    },
+    {
+      "id": "github-review-queue",
+      "label": "GitHub Review Queue",
+      "purpose": "Pull PRs, checks, linked issues, and review status; classify work as needs review, tests failing, needs desktop review, or low-risk action."
+    },
+    {
+      "id": "client-update-draft-queue",
+      "label": "Client Update Draft Queue",
+      "purpose": "Gather client-visible issues, artifacts, decisions, blockers, and risks; call a Dify skill or custom worker; hold the update for human approval."
+    }
+  ],
+  "linearLabels": [
+    "retool-sync",
+    "decision-needed",
+    "client-visible",
+    "blocked",
+    "blocked-by-client",
+    "blocked-by-micah",
+    "codex-ready",
+    "agent-ready",
+    "needs-review",
+    "risk",
+    "scope-change",
+    "artifact-ready",
+    "handoff",
+    "do-not-agent",
+    "security-sensitive",
+    "client-data-sensitive"
+  ],
+  "authorityLevels": [
+    {
+      "level": 1,
+      "name": "read_and_summarize",
+      "examples": ["briefs", "status_summaries", "link_lookup"]
+    },
+    {
+      "level": 2,
+      "name": "create_drafts_and_tasks",
+      "examples": ["linear_issues", "email_drafts", "retool_draft_records"]
+    },
+    {
+      "level": 3,
+      "name": "low_risk_internal_actions",
+      "examples": ["status_updates", "internal_notes", "safe_checks"]
+    },
+    {
+      "level": 4,
+      "name": "approval_required",
+      "examples": ["client_messages", "workflow_retries", "deployments", "permission_changes"]
+    },
+    {
+      "level": 5,
+      "name": "blocked",
+      "examples": ["delete_records", "change_secrets", "make_hiring_decisions", "publish_public_proof"]
+    }
+  ],
+  "difyRole": {
+    "classification": "ai_skill_server",
+    "notRole": "operating_center",
+    "preferredPattern": "Retool button or workflow -> Dify API or Dify MCP tool -> structured AI output -> Retool approval screen -> approved downstream update",
+    "candidateSkills": [
+      "client_update_drafting",
+      "workflow_map_extraction",
+      "decision_state_classification",
+      "create_something_knowledge_rag",
+      "staffing_match_explanation_drafting",
+      "artifact_draft_generation"
+    ]
+  },
+  "operatorCompanionRole": {
+    "classification": "internal_operator_companion",
+    "preferredRuntime": "moltworker_relay",
+    "notRole": "ceo_or_client_workflow_console",
+    "activeCandidate": {
+      "name": "RELAY",
+      "runbook": "docs/guides/MOLTWORKER_OPERATOR_COMPANION.md",
+      "packagePath": "packages/relay",
+      "wranglerConfig": "packages/relay/wrangler.jsonc",
+      "preflightCommand": "pnpm moltworker:preflight",
+      "upstream": {
+        "repo": "cloudflare/moltworker",
+        "url": "https://github.com/cloudflare/moltworker",
+        "blog": "https://blog.cloudflare.com/moltworker-self-hosted-ai-agent/",
+        "description": "Cloudflare proof-of-concept for running OpenClaw on Workers, Sandbox SDK, R2, AI Gateway, Browser Rendering, and Cloudflare Access."
+      },
+      "status": "preferred_evaluation_candidate",
+      "runtimePosture": {
+        "hosting": "cloudflare_workers",
+        "runtime": "openclaw_in_cloudflare_sandbox",
+        "requiredCloudflareProducts": [
+          "workers_paid_plan",
+          "workers",
+          "sandbox_sdk_containers",
+          "r2",
+          "zero_trust_access"
+        ],
+        "recommendedCloudflareProducts": [
+          "ai_gateway",
+          "browser_rendering",
+          "workflows_or_cron_triggers"
+        ],
+        "persistence": "r2_mounted_into_sandbox",
+        "auth": "cloudflare_access_plus_gateway_token_plus_device_pairing",
+        "riskNote": "Moltworker is a proof of concept, not a Cloudflare product. Validate security, cost, cold starts, persistence, and chat channels before client use."
+      }
+    },
+    "composioIntegration": {
+      "status": "allowed",
+      "role": "commodity_oauth_and_tool_broker",
+      "answer": "Composio can still be used with Moltworker, but it should remain hidden plumbing behind CREATE SOMETHING MCP or OpenClaw skills.",
+      "preferredPatterns": [
+        "worker_side_create_something_composio_bridge",
+        "openclaw_skill_wrapper_inside_sandbox",
+        "mcp_tool_wrapper_exposed_to_retool_and_operator_agents"
+      ],
+      "allowedUses": [
+        "oauth_connect_links",
+        "revocable_connected_accounts",
+        "commodity_saas_tool_execution",
+        "scheduled_internal_operator_checks",
+        "draft_and_route_actions_for_retool_approval"
+      ],
+      "blockedUses": [
+        "client_visible_composio_branding_as_product_surface",
+        "raw_client_api_keys_inside_openclaw_or_retool",
+        "autonomous_send_or_modify_actions_without_retool_approval",
+        "direct_composio_hosted_mcp_as_default_client_surface"
+      ],
+      "secrets": [
+        "COMPOSIO_API_KEY",
+        "COMPOSIO_AUTH_CONFIG_ID",
+        "COMPOSIO_CONNECTED_ACCOUNT_ID"
+      ],
+      "visibilityRule": "Retool shows allowed tools, pending approvals, connected-account status, audit summaries, and revocation paths; Composio remains implementation plumbing."
+    },
+    "uses": [
+      "daily_operator_briefs",
+      "cross_app_summaries",
+      "linear_issue_creation",
+      "github_pr_summaries",
+      "client_update_drafts",
+      "calendar_context_prep",
+      "admin_follow_up",
+      "retool_record_updates",
+      "low_risk_scheduled_checks"
+    ],
+    "clientOffer": {
+      "status": "optional_add_on_after_internal_validation",
+      "name": "Operator Companion",
+      "rule": "Offer only when the workflow needs broad cross-app assistance and Retool can expose approvals, audit, pause, and revocation paths."
+    }
+  },
+  "trustClawRole": {
+    "classification": "parked_operator_companion_candidate",
+    "status": "parked_vercel_exception",
+    "notRole": "ceo_or_client_control_room",
+    "upstream": {
+      "repo": "ComposioHQ/trustclaw",
+      "url": "https://github.com/ComposioHQ/trustclaw",
+      "description": "Self-hostable personal AI agent with vector memory, Composio tools, cron, web chat, and Telegram."
+    },
+    "runtimePosture": {
+      "hosting": "self_hosted_vercel_first",
+      "cloudflareStatus": "superseded_by_moltworker_for_cloudflare_native_path",
+      "requiredServices": ["postgres_pgvector", "composio_api_key", "vercel_ai_gateway"],
+      "optionalServices": ["upstash_redis", "telegram_bot"],
+      "vercelDeployment": {
+        "scope": "createsomething",
+        "projectName": "trustclaw",
+        "runbook": "docs/guides/TRUSTCLAW_VERCEL_DEPLOYMENT.md",
+        "preflightCommand": "pnpm trustclaw:vercel:preflight",
+        "billingRule": "Do not deploy TrustClaw unless Moltworker fails evaluation or a Vercel-specific feature is required. Confirm Spend Management and Marketplace storage billing before running the upstream deploy CLI.",
+        "manualBillingGates": [
+          "spend_management_enabled",
+          "pause_production_deployments_at_cap_enabled",
+          "owner_or_billing_notifications_enabled",
+          "marketplace_storage_costs_accepted",
+          "no_unrelated_high_traffic_domain_attached"
+        ]
+      },
+      "securityModel": [
+        "oauth_brokered_tools",
+        "no_raw_api_keys_handed_to_agent",
+        "remote_sandboxed_tool_execution",
+        "scheduled_runs_with_cron_secret",
+        "revocable_connected_accounts"
+      ],
+      "cloudflarePort": {
+        "recommendedTarget": "cloudflare_workers_opennext_when_preserving_upstream_nextjs",
+        "preferredRewriteTarget": "cloudflare_vite_react_worker_api",
+        "notRecommendedTarget": "cloudflare_pages_static_export",
+        "requiredChanges": [
+          "replace_vercel_deploy_cli_with_wranger_opennext_deploy",
+          "replace_vercel_ai_gateway_assumption_with_cloudflare_ai_gateway_or_direct_provider",
+          "connect_postgres_pgvector_via_hyperdrive_or_serverless_driver",
+          "move_vercel_cron_routes_to_workers_cron_or_workflows",
+          "verify_prisma_adapter_pg_and_nodejs_compat_in_workerd",
+          "keep_composio_as_external_oauth_tool_broker",
+          "keep_upstash_redis_external_or_replace_specific_resumable_stream_features"
+        ],
+        "viteRewrite": {
+          "appShell": "react_vite_spa",
+          "apiRuntime": "cloudflare_worker_api",
+          "routingOptions": ["hono_api_routes", "react_router_v7_if_ssr_needed", "tanstack_start_if_full_stack_needed"],
+          "advantages": [
+            "native_cloudflare_vite_plugin_development",
+            "workerd_parity_in_local_dev",
+            "simpler_asset_and_api_deploy",
+            "less_nextjs_runtime_adapter_surface",
+            "cleaner_worker_cron_and_binding_model"
+          ],
+          "tradeoffs": [
+            "rewrite_next_app_router_routes",
+            "replace_or_adapt_next_route_handlers",
+            "verify_better_auth_worker_runtime_support",
+            "adapt_trpc_or_replace_with_worker_native_api",
+            "retest_streaming_and_resumable_stream_behavior"
+          ]
+        },
+        "deploymentRule": "Do not promise one-command Cloudflare deployment until the port is validated with wrangler preview, auth, cron, memory, Composio tool calls, and Telegram webhook smoke tests."
+      }
+    },
+    "revisitWhen": [
+      "moltworker_evaluation_fails",
+      "vercel_specific_feature_required",
+      "client_requires_trustclaw_upstream_behavior",
+      "trustclaw_cloudflare_port_becomes_validated"
+    ]
+  },
+  "clientDelivery": {
+    "offerLadder": [
+      "workflow_readiness_map",
+      "governed_workflow_control_room",
+      "agent_operator_layer",
+      "monthly_governance_review"
+    ],
+    "visibilityRule": "Clients see approved operating surfaces in Retool, not raw Linear, raw GitHub, raw agent traces, or private notes."
+  }
+}

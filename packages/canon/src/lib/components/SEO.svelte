@@ -54,7 +54,7 @@
     agency: {
       domain: 'https://createsomething.agency',
       name: 'CREATE SOMETHING Agency',
-      tagline: 'Custom MCP Development - Connect your tools to AI with fast turnaround and fixed pricing',
+      tagline: 'AI-assisted workflows, human-approved operations',
       color: '#000000',
     },
     ltd: {
@@ -70,6 +70,46 @@
   const fullDescription = description || config.tagline;
   const canonicalUrl = canonical || `${config.domain}${typeof window !== 'undefined' ? window.location.pathname : ''}`;
   const fullOgImage = ogImage.startsWith('http') ? ogImage : `${config.domain}${ogImage}`;
+  const propertyKnowsAbout = propertyName === 'agency'
+    ? [
+        'Governed Workflow Consoles',
+        'AI-Assisted Workflows',
+        'Human-Approved Operations',
+        'Workflow Readiness Mapping',
+        'Model Context Protocol',
+        'Retool Workflow Consoles',
+        'Human-in-the-loop Approval',
+        'MCP Tool Boundaries',
+        'Cloudflare Workers',
+        'TypeScript',
+        'Governed Automation'
+      ]
+    : propertyName === 'io'
+      ? [
+          'AI-Native Development',
+          'Research Papers',
+          'Tracked Experiments',
+          'Claude Code',
+          'Agentic Systems',
+          'TypeScript',
+          'Cloudflare Workers'
+        ]
+      : propertyName === 'space'
+        ? [
+            'Interactive Tutorials',
+            'AI-Native Development',
+            'Runnable Code Examples',
+            'Cloudflare Workers',
+            'SvelteKit',
+            'Modern Web Development'
+          ]
+        : [
+            'Design Philosophy',
+            'Subtractive Design',
+            'Technology Practice',
+            'CREATE SOMETHING',
+            'Less but Better'
+          ];
 
   // Schema.org Organization
   const organizationSchema = {
@@ -84,7 +124,7 @@
       'https://github.com/createsomethingtoday'
     ],
     description: propertyName === 'agency'
-      ? 'Custom MCP server development connecting your existing tools to AI. Fast turnaround, fixed pricing, production-ready deployment.'
+      ? 'CREATE SOMETHING .agency builds calm workflow consoles for teams bringing AI and agents into real operations: one workflow, clear decision states, visible approvals, MCP/tool boundaries, and human approval where it matters.'
       : propertyName === 'io'
       ? 'Research papers on AI-native development with tracked experiments and rigorous methodology'
       : propertyName === 'space'
@@ -93,21 +133,10 @@
     founder: {
       '@type': 'Person',
       name: 'Micah Johnson',
-      jobTitle: 'MCP Developer',
+      jobTitle: propertyName === 'agency' ? 'Systems Architect' : 'MCP Developer',
       sameAs: 'https://www.linkedin.com/in/micahryanjohnson/'
     },
-    knowsAbout: [
-      'Model Context Protocol (MCP)',
-      'MCP Server Development',
-      'AI Integration',
-      'Claude Desktop',
-      'Cursor IDE',
-      'API Integration',
-      'OAuth Authentication',
-      'Cloudflare Workers',
-      'TypeScript',
-      'AI Automation'
-    ],
+    knowsAbout: propertyKnowsAbout,
     areaServed: {
       '@type': 'Place',
       name: 'Worldwide'

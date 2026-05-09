@@ -7,98 +7,92 @@
   import ServiceWedgeBlueprint from '$lib/components/ServiceWedgeBlueprint.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const deliveryVector = {
-    canonicalPhrase: 'Skills on MCP',
-    clientFacingLabel: 'Skills + MCP',
-    technicalLabel: 'MCP + Skills'
-  };
-
   const services = [
     {
-      name: 'MCP Wedge',
+      name: 'Workflow Readiness Map',
       description:
-        'A narrow discovery or compliance wedge when the client needs trusted connectivity before the operating layer.',
-      type: 'Entry wedge',
+        'A paid diagnostic that identifies the safest first build wedge for one workflow.',
+      type: 'Paid diagnostic',
       price: 'Custom',
-      priceDescription: 'Scoped host setup'
+      priceDescription: 'Map, risks, decision states, build recommendation'
     },
     {
-      name: 'Workflow System',
+      name: 'Governed Workflow Console',
       description:
-        'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
+        'A calm operating surface where AI and agents can prepare work while people keep approval authority.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build'
     },
     {
-      name: 'Policy OS',
+      name: 'Agent Operator Layer',
       description:
-        'Approvals, policy artifacts, release checks, blocked states, and incident loops for workflows already in motion.',
-      type: 'Governed Execution Retainer',
+        'Bounded AI assistance for drafting, matching, routing, summarizing, and preparing work for human approval.',
+      type: 'Expansion sprint',
       price: 'Custom',
-      priceDescription: 'Monthly'
+      priceDescription: 'Scoped agent/tool layer'
     },
     {
-      name: 'Enterprise Extension',
+      name: 'Governance Review',
       description:
-        'Audit-ready orchestration for regulated, high-volume, or multi-system workflows that need deterministic recovery.',
-      type: 'Project + Managed',
+        'A low-touch review loop for live workflows: incidents, approval tuning, tool scopes, and edge cases.',
+      type: 'Monthly review',
       price: 'Custom',
-      priceDescription: 'Scoped implementation'
+      priceDescription: 'Defined governance, not unlimited support'
     }
   ];
 
   const offerCards = [
     {
-      tag: 'Entry wedge',
-      title: 'MCP Wedge',
-      summary: 'Use this when the connection is the job and your team will operate the workflow directly.',
+      tag: 'Paid front door',
+      title: 'Workflow Readiness Map',
+      summary: 'Use this when you know a workflow is expensive to watch but do not yet know what is safe to build.',
       points: [
-        'Connectivity validation',
-        'Scoped host setup',
-        'Read-only or constrained rollout'
+        'Current workflow and handoff map',
+        'Data and system boundary',
+        'Decision states and risk register',
+        'Build, defer, or stop recommendation'
       ]
     },
     {
       tag: 'Start here',
-      title: 'Workflow System',
-      summary: 'Fix the first workflow your team still does by hand and make the handoffs reliable.',
+      title: 'Governed Workflow Console',
+      summary: 'Fix the first AI-assisted workflow your team still watches by hand and make the handoffs visible, reviewable, and recoverable.',
       points: [
-        'Business-rule mapping',
-        'Workflow implementation',
-        'Auth and access setup',
+        'Retool workflow console',
+        'MCP/tool and worker layer',
+        'Approval queue and blocked states',
         'Portable runbooks and handoff artifacts'
       ],
       featured: true
     },
     {
-      tag: 'Default paid offer',
-      title: 'Policy OS',
-      summary: `The governed execution layer that makes ${deliveryVector.clientFacingLabel} safe to run faster in production.`,
+      tag: 'Expansion',
+      title: 'Agent Operator Layer',
+      summary: 'Add bounded AI and agent capacity only after the workflow has a clear console surface and approval owner.',
       points: [
-        'Approval and block boundaries',
-        'Reason-coded access decisions',
-        'Operator brief and escalation surface',
-        'Release checks and incident loops',
-        'Evals tied to real workflow behavior'
+        'Drafting, summarizing, matching, or routing',
+        'Scoped tools and action limits',
+        'Approval-required actions routed through the console',
+        'Audit summaries and failure handling'
       ]
     },
     {
-      tag: 'High-stakes scale',
-      title: 'Enterprise Extension',
-      summary: 'Add this when several systems, teams, or compliance requirements must stay aligned.',
+      tag: 'Low-touch support',
+      title: 'Governance Review',
+      summary: 'A defined review loop for workflows that are live and producing operational edge cases.',
       points: [
-        'Cross-system orchestration',
-        'Custom trust boundaries',
-        'Deterministic retries and recovery',
-        'Auditability for multi-team operations'
+        'Workflow health and incident review',
+        'Approval-rule tuning',
+        'Tool scope and connected-account review',
+        'Small improvement queue'
       ]
     }
   ];
 
   const boundaryPoints = [
     'You bring the workflow, constraints, and approval owner.',
-    'CREATE SOMETHING maps the rules, builds the control layer, and ships the operating artifacts.',
+    'CREATE SOMETHING maps the rules, builds the console layer, and ships the operating artifacts.',
     'Your team gets visibility through runbooks, approvals, release evidence, operator briefs, and working software.'
   ];
 
@@ -140,16 +134,16 @@
 
   const surfacePoints = [
     {
-      label: 'Policy OS',
-      title: 'Decides what needs judgment',
+      label: 'Workflow console',
+      title: 'Shows what needs judgment',
       detail:
-        'The operating layer classifies safe work, approval-needed work, and blocked actions before the operator is interrupted.'
+        'The operating surface shows safe work, approval-needed work, blocked actions, artifacts, and recovery paths before the operator is interrupted.'
     },
     {
-      label: 'Ink',
-      title: 'Makes the decision visible',
+      label: 'Agent layer',
+      title: 'Prepares work, not unchecked decisions',
       detail:
-        'The physical surface is optional, but useful when the buyer needs to see and feel the operator promise.'
+        'Agents draft, explain, match, flag missing information, and prepare next steps inside scoped tools and approval boundaries.'
     },
     {
       label: 'Operator',
@@ -163,7 +157,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow System fixes the first painful workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
+        'Governed Workflow Console is the core build. Workflow Readiness Map is the paid front door, Agent Operator Layer is the expansion, and Governance Review is the low-touch support loop.'
     },
     {
       question: 'Are you joining our team or running internal ops?',
@@ -173,7 +167,7 @@
     {
       question: 'Are agents part of the workforce?',
       answer:
-        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, and evidence. MCPs are the toolkits; Policy OS decides what agents can do, what needs a person, and what must stop.'
+        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, and evidence. Agents recommend, draft, summarize, match, and route. Humans approve important actions.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
@@ -183,17 +177,17 @@
     {
       question: 'What does .agency own?',
       answer:
-        '.agency owns the rules, approvals, handoffs, release controls, and operating artifacts around the workflow. Your team keeps business context, approval ownership, and long-term control.'
+        '.agency owns the workflow map, console design, rules, approvals, handoffs, tool boundaries, and operating artifacts around the workflow. Your team keeps business context, approval ownership, and long-term control.'
     },
     {
-      question: 'When should we add Policy OS?',
+      question: 'When should we add Governance Review?',
       answer:
-        'Add it when failures become expensive or the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
+        'Add it after the first workflow console is live and real usage starts creating incidents, edge cases, approval-rule changes, or new workflow candidates.'
     },
     {
-      question: 'Do you still offer MCP Wedge?',
+      question: 'Do you still build MCPs?',
       answer:
-        'Yes. MCP Wedge still works for discovery, compliance-constrained pilots, or teams that need the connection before the operating layer.'
+        'Yes. MCPs are part of the tool/data layer when agents or workflow consoles need governed access to business systems. They are not the main buyer-facing offer.'
     },
     {
       question: 'Do we need to understand MCP or the vendor stack first?',
@@ -206,21 +200,17 @@
         'Yes. Clients retain ownership of code, workflows, and operating documentation. The delivery is meant to stay portable after launch.'
     },
     {
-      question: 'Is Ink the product?',
+      question: 'Is the console the whole product?',
       answer:
-        'Ink is the visible operator surface. The paid service is the workflow mapping, policy layer, artifacts, and escalation behavior that make the surface trustworthy.'
-    },
-    {
-      question: 'Why the phrase Skills + MCP?',
-      answer: `Client-facing delivery is ${deliveryVector.clientFacingLabel}. MCP handles trust and connectivity. Skills carry behavior and workflow intent.`
+        'No. The console is the visible surface. The paid service is the workflow mapping, tool boundaries, artifacts, rules, and escalation behavior that make the surface trustworthy.'
     }
   ];
 </script>
 
 <SEO
-  title="How I Work | Calm, Transparent AI Workflow Systems"
-  description="CREATE SOMETHING .agency installs calm, transparent, reliable AI workflow systems: one workflow, clear stack boundaries, decision states, and governed escalation only when judgment is required."
-  keywords="calm transparent AI workflow systems, Policy OS, workflow system, MCP wedge, production automation, agent reliability"
+  title="How I Work | Governed Workflow Consoles"
+  description="CREATE SOMETHING .agency builds approachable AI-assisted workflow systems: paid readiness maps, Retool workflow consoles, MCP/tool boundaries, agent operator layers, and human approval paths."
+  keywords="AI-assisted workflows, human-approved operations, governed workflow consoles, workflow readiness map, Retool workflow console, AI workflow approvals, MCP tool boundaries, agent operator layer"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -235,14 +225,14 @@
       </BlurFade>
 
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">Start with one workflow.</h1>
+        <h1 class="hero-title">Make one AI-assisted workflow safe to operate.</h1>
       </BlurFade>
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          Bring the operating path your team cannot keep covering by hand. I map the boundaries,
-          rebuild the handoff, and add governed agent capacity until the operator only hears from
-          the system when judgment is required.
+          Bring the workflow your team still watches by hand. I map the boundaries, build the
+          operating surface, connect the tool layer, and route AI recommendations through human
+          approval before anything important moves.
         </p>
       </BlurFade>
 
@@ -254,14 +244,14 @@
       </BlurFade>
 
       <BlurFade delay={0.2}>
-        <p class="hero-note">One workflow. Clear boundaries. Quiet escalation.</p>
+        <p class="hero-note">AI helps. People approve. The workflow stays visible.</p>
       </BlurFade>
     </div>
 
     <BlurFade delay={0.2}>
       <aside class="product-surface product-surface--soft hero-brief" aria-label="Calm transparent workflow service brief">
         <span class="product-kicker">Calm, transparent delivery</span>
-        <h2>CREATE SOMETHING turns the toolchain into one workflow outcome.</h2>
+        <h2>CREATE SOMETHING turns tools, agents, and approvals into one operating surface your team can understand.</h2>
         <div class="hero-brief__grid" role="list">
           {#each heroSignals as signal}
             <div class="hero-brief__item" role="listitem">
@@ -346,12 +336,12 @@
         <span class="product-kicker">Offer ladder</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>From connection wedge to governed execution.</h2>
+        <h2>From workflow map to governed console.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Start with the narrowest offer that proves value. Add Policy OS when the workflow starts
-          touching revenue, compliance, or customer trust.
+          Start with the diagnostic map. Build the first console. Add AI and agent capacity and
+          governance only when the workflow is ready for it.
         </p>
       </BlurFade>
     </div>
@@ -386,21 +376,21 @@
         <span class="product-kicker">Governed execution</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>Where Policy OS fits.</h2>
+        <h2>Where governance fits.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Workflow System gets the first handoff working. Policy OS decides what runs
-          automatically, what needs review, and what stops. That is the point where speed stops
-          being a demo and becomes an operating path.
+          The console gets the first handoff visible and reliable. Governance decides what
+          AI-assisted work can run automatically, what needs review, and what stops. That is where
+          speed stops being a demo and becomes an operating path.
         </p>
       </BlurFade>
     </div>
 
     <BlurFade delay={0.15}>
       <GovernedExecutionFlow
-        title="Policy OS"
-        description="Hub MCP routes the request, and Policy OS decides what can run automatically, what waits for approval, and what stops with a reason."
+        title="Governed Workflow Console"
+        description="The tool layer routes the request, and the console shows what AI-assisted work can run automatically, what waits for approval, and what stops with a reason."
       />
     </BlurFade>
   </div>
@@ -411,15 +401,16 @@
     <div class="product-surface product-surface--soft surface-panel">
       <div class="section-lead">
         <BlurFade>
-          <span class="product-kicker">Where Ink fits</span>
+        <span class="product-kicker">Where proof surfaces fit</span>
         </BlurFade>
         <BlurFade delay={0.05}>
-          <h2>Ink is the visible surface. The engagement is the operating layer behind it.</h2>
+        <h2>Dashboards and displays are surfaces. The engagement is the operating layer behind them.</h2>
         </BlurFade>
         <BlurFade delay={0.1}>
           <p>
-            The device makes the promise tangible, but it only works if the workflow has mapped
-            owners, approval rules, blocked states, and evidence. That is what the service installs.
+            A dashboard, Retool app, Webflow surface, or display only works if the workflow has
+            mapped owners, approval rules, blocked states, and evidence. That is what lets AI help
+            without turning into another thing your team has to supervise.
           </p>
         </BlurFade>
       </div>
@@ -455,8 +446,8 @@
     <BlurFade>
       <MappingSessionBrief
         eyebrow="First call"
-        title="The mapping session is where the buyer stops guessing."
-        description="We turn the messy workflow into an inspectable plan: what connects, what runs, what pauses, what stops, and what artifact proves the first build."
+        title="The readiness map is where the buyer stops guessing."
+        description="We turn the messy workflow into an inspectable plan: what connects, what runs, what pauses, what stops, and what console proves the first build."
       />
     </BlurFade>
   </div>
@@ -493,7 +484,7 @@
         <span class="product-kicker">Map the workflow</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>Map the workflow that's creating the most drag.</h2>
+        <h2>Map the workflow that should stop living in someone's head.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>

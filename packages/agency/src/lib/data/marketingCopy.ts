@@ -1,8 +1,10 @@
 export const agencyCoreMessaging = {
-	categoryLabel: 'Calm, Transparent, Reliable AI Workflow Systems',
-	bookMappingSessionLabel: 'Book Mapping Session',
+	categoryLabel: 'Governed Workflow Consoles',
+	heroKicker: 'AI-assisted workflows, human-approved operations',
+	plainPromise: 'Calm workflow systems for teams bringing AI and agents into real operations.',
+	bookMappingSessionLabel: 'Book Workflow Readiness Map',
 	engagementModelLabel: 'See the operating model →',
-	workflowCtaHeading: 'Bring the workflow that needs doing, not just watching.',
+	workflowCtaHeading: 'Stop watching the workflow by hand.',
 	workflowCtaDetail:
-		'In one session, I map the handoffs, approval points, failure modes, and first agent-ready wedge.'
+		'Bring one high-drag workflow. I map the handoffs, approval points, failure modes, agent/tool boundaries, workflow-console surface, and first safe build wedge.'
 } as const;

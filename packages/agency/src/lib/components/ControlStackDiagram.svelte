@@ -24,7 +24,7 @@
       tone: 'entitlement'
     },
     {
-      label: 'Policy OS',
+      label: 'Workflow rules',
       detail: 'Rules decide whether work runs, pauses for review, or stops.',
       tone: 'control'
     },
@@ -42,7 +42,7 @@
 
   let {
     eyebrow = 'Enforcement Chain',
-    title = 'How Policy OS becomes runtime behavior',
+    title = 'How workflow rules become runtime behavior',
     description = 'This is the sequence that makes governable automation different from a prompt plus a token.',
     items = DEFAULT_ITEMS
   }: Props = $props();

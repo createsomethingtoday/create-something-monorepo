@@ -10,30 +10,30 @@
   const stages: WedgeStage[] = [
     {
       index: '01',
-      label: 'MCP Wedge',
-      title: 'Connection proof',
-      detail: 'A constrained host proves the tool boundary before a workflow depends on it.',
+      label: 'Readiness Map',
+      title: 'Safe first wedge',
+      detail: 'The workflow is mapped before anything is automated, connected, or exposed to agents.',
       width: '48%'
     },
     {
       index: '02',
-      label: 'Workflow System',
-      title: 'Operating path',
-      detail: 'The first handoff gets mapped, rebuilt, tested, and documented for inheritance.',
+      label: 'Workflow Console',
+      title: 'Operating surface',
+      detail: 'One handoff gets rebuilt into a visible path with status, owners, and recovery.',
       width: '64%'
     },
     {
       index: '03',
-      label: 'Policy OS',
-      title: 'Governed execution',
-      detail: 'Rules classify work into auto-allow, approval-needed, or blocked with reason.',
+      label: 'Agent Layer',
+      title: 'Prepared work',
+      detail: 'Agents draft, match, summarize, and route work through scoped tools and review states.',
       width: '80%'
     },
     {
       index: '04',
-      label: 'Operator Surface',
-      title: 'Calm visibility',
-      detail: 'The operator sees the state only when judgment, recovery, or review is required.',
+      label: 'Governance Review',
+      title: 'Low-touch tuning',
+      detail: 'Incidents, edge cases, approval rules, and tool scopes are reviewed on a defined cadence.',
       width: '96%'
     }
   ];
@@ -44,14 +44,14 @@
 <div class="wedge-shell product-surface product-surface--soft" aria-labelledby="service-wedge-title">
   <div class="wedge-copy">
     <span class="wedge-eyebrow">Service blueprint</span>
-    <h3 id="service-wedge-title">The offer ladder starts with one wedge and rises into Policy OS.</h3>
+    <h3 id="service-wedge-title">The offer ladder starts with one workflow and ends with a governed console.</h3>
     <p>
-      The service is easier to understand as a progression: first prove the connection, then
-      harden one workflow, then install the policy layer that protects operator attention.
+      The service is easier to buy as a progression: map the workflow, build the operating
+      surface, add agent capacity where it helps, then review what real usage teaches.
     </p>
   </div>
 
-  <div class="wedge-diagram" aria-label="Blueprint wedge from MCP Wedge to Policy OS and Operator Surface">
+  <div class="wedge-diagram" aria-label="Blueprint wedge from readiness map to governed workflow console">
     <div class="wedge-axis" aria-hidden="true">
       <span>Connectivity</span>
       <span>Workflow</span>
@@ -72,8 +72,8 @@
       {/each}
     </div>
 
-    <div class="policy-card" aria-label="Policy OS decision states">
-      <span>Policy OS output</span>
+    <div class="policy-card" aria-label="Workflow console decision states">
+      <span>Console output</span>
       <div>
         {#each outcomes as outcome}
           <strong>{outcome}</strong>

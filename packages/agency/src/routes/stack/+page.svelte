@@ -43,11 +43,11 @@
       portable: 'App code, component contracts, form schemas, dashboard specs, template review notes, and handoff docs.'
     },
     {
-      name: 'TRMNL',
-      role: 'Quiet operator display',
-      why: 'TRMNL belongs when the buyer needs a glanceable status surface that stays out of the way instead of another busy dashboard tab.',
-      createSomething: 'CREATE SOMETHING decides what is worth surfacing, renders the operator brief, and keeps the display downstream of policy and evidence.',
-      portable: 'Display brief, plugin payload contract, status states, fallback behavior, and installation notes.'
+      name: 'Retool',
+      role: 'Workflow console surface',
+      why: 'Retool belongs when the buyer needs decisions, approvals, workflow state, and recovery paths in a calm operating interface.',
+      createSomething: 'CREATE SOMETHING designs the console, connects the tool layer, and keeps client visibility downstream of policy and evidence.',
+      portable: 'Console spec, resource boundary, app notes, approval states, fallback behavior, and handoff docs.'
     },
     {
       name: 'Linear',
@@ -68,28 +68,28 @@
 
   const journey = [
     {
-      stage: 'Connect',
-      label: 'MCP Wedge',
+      stage: 'Map',
+      label: 'Readiness Map',
       detail:
-        'Expose the narrow tool or resource surface that lets the operator prove value without rebuilding the whole business.'
+        'Name the workflow, data boundary, owner, risks, and safest first build before implementation starts.'
     },
     {
-      stage: 'Automate',
-      label: 'Workflow System',
+      stage: 'Console',
+      label: 'Workflow Console',
       detail:
-        'Turn one repeated handoff into callable actions, durable data, governed agent capacity, and a runbook the buyer can inspect.'
+        'Turn one repeated handoff into a visible operating surface with status, approvals, and runbooks.'
     },
     {
-      stage: 'Govern',
-      label: 'Policy OS',
+      stage: 'Assist',
+      label: 'Agent Layer',
       detail:
-        'Classify actions as auto-allowed, approval-needed, or blocked with reason before the workflow touches risk.'
+        'Let agents draft, match, summarize, route, and flag missing information inside scoped tools.'
     },
     {
-      stage: 'Operate',
-      label: 'Operator Surface',
+      stage: 'Review',
+      label: 'Governance Review',
       detail:
-        'Put the right state in the right place: Webflow, Dify, Linear, TRMNL, or a custom app, with evidence attached.'
+        'Review incidents, edge cases, approval rules, tool scopes, and the next workflow candidate.'
     }
   ];
 
@@ -125,9 +125,9 @@
       tag: 'Operate'
     },
     {
-      displayName: 'Operator brief',
-      name: 'operator-brief',
-      summary: 'The visible state for Webflow, Dify, Linear, TRMNL, or a custom app.',
+      displayName: 'Console brief',
+      name: 'console-brief',
+      summary: 'The visible state for Retool, Webflow, Dify, Linear, or a custom app.',
       tag: 'Surface'
     }
   ];
@@ -178,8 +178,8 @@
       artifact: 'Component contracts, form schemas, dashboard specs, and template review notes.'
     },
     {
-      name: 'Policy OS',
-      label: 'Enterprise extension',
+      name: 'Governance Review',
+      label: 'Governance extension',
       problem: 'Speed starts touching revenue, trust, compliance, or cross-team accountability.',
       system: 'Linear evidence, identity, entitlement, approvals, blocked states, and auditability make the system serious enough to scale.',
       artifact: 'Policy pack, approval matrix, evidence ledger, and escalation runbook.'
@@ -196,8 +196,8 @@
 
 <SEO
   title="Stack & Boundaries | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING uses Cloudflare, Composio, Dify, OpenAI, Webflow, TRMNL, Linear, Infisical, and Auth0 without turning vendor names into the product."
-  keywords="transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, OpenAI, Webflow, TRMNL, Policy OS"
+  description="How CREATE SOMETHING uses Cloudflare, Composio, Dify, OpenAI, Webflow, Retool, Linear, Infisical, and Auth0 to make AI-assisted workflows visible, bounded, and human-approved."
+  keywords="AI-assisted workflows, workflow console stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, OpenAI, Webflow, Retool, workflow governance"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -209,14 +209,14 @@
         <span class="product-kicker">Stack & Boundaries</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">The stack is visible so the operator can trust the handoff.</h1>
+        <h1 class="hero-title">The stack is visible so AI-assisted work can be trusted.</h1>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p class="hero-detail">
           CREATE SOMETHING is the toolchain I use as the sole operator to complete the outcome:
           proven services where they help, then repo-owned contracts, policy, runbooks, and
           evidence where the business needs trust. When agents become part of the workflow, MCPs
-          are their toolkits and Policy OS keeps their work bounded.
+          are their toolkits and the console keeps review, pause, and recovery visible for people.
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
@@ -253,12 +253,12 @@
         <span class="product-kicker">How the offer lands</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>From MCP wedge to governed operating layer.</h2>
+        <h2>From readiness map to governed workflow console.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The story stays simple for a non-technical buyer: connect the narrow surface, automate
-          one workflow, govern the risky actions, then operate through the right visible surface.
+          The story stays simple for a non-technical buyer: map the workflow, build the console,
+          add AI and agent help where it fits, then review the system against real usage.
         </p>
       </BlurFade>
     </div>

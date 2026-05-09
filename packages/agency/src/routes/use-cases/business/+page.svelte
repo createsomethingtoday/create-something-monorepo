@@ -2,19 +2,13 @@
 	import { SEO } from '@create-something/canon';
 	import { AnimatedGridPattern, BlurFade, BorderBeam, OrbitingCircles, ShimmerButton } from '@create-something/canon/magicui';
 
-	const deliveryVector = {
-		canonicalPhrase: 'Skills on MCP',
-		clientFacingLabel: 'Skills + MCP',
-		technicalLabel: 'MCP + Skills'
-	};
-
 	const chapters = [
 		{
 			number: '01',
 			title: 'Start with one critical workflow',
 			paragraphs: [
 				'Pick the workflow that steals the most time. The Monday report. The handoff that breaks between tools. The updates your team keeps rebuilding by hand.',
-				`We start with a scoped workflow wedge using ${deliveryVector.clientFacingLabel}: connectivity, setup, policy, and runbook for one high-value workflow. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.`,
+				'We start with a scoped workflow readiness map: data boundary, decision states, tool access, and runbook shape for one high-value workflow. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.',
 				'Now your agent can work against your actual systems instead of forcing your team to stay in the middle.'
 			]
 		},
@@ -33,7 +27,7 @@
 			paragraphs: [
 				'Connections are the start. Reliability is what makes them usable in real operations.',
 				'Connections are the start. Reliability is what makes them usable in real operations.',
-				'Policy OS keeps the workflow healthy over time with prompt tuning, policy updates, performance monitoring, and edge-case handling before problems become incidents.',
+				'A governance review keeps the workflow healthy over time with prompt tuning, rule updates, performance monitoring, and edge-case handling before problems become incidents.',
 				'Your automation becomes more dependable as the business changes. $1,500\u2013$3,500/mo.'
 			]
 		}
@@ -354,7 +348,7 @@
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
 				Pick the workflow that wastes the most time. We&apos;ll deliver your first scoped workflow
-				wedge in 2–4&nbsp;weeks. You own the code and runbook. Delivery vector is {deliveryVector.canonicalPhrase}, and technical proof surfaces use {deliveryVector.technicalLabel}. If you need discovery or compliance-only, we can scope MCP Wedge as the entry point.
+				wedge in 2–4&nbsp;weeks. You own the code and runbook. If you need discovery or compliance-only, we can scope a readiness map before the build.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>

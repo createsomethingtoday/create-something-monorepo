@@ -35,7 +35,7 @@
     <div class="copy animate-reveal">
       <h1 class="page-title">Security</h1>
       <p class="lede">
-        Policy OS is what turns credentials into governable runtime behavior. A token can
+        Workflow governance is what turns credentials into governable runtime behavior. A token can
         exist and access can still stop. That is intentional. Identity, entitlement, commercial
         state, and policy all participate in the final decision.
       </p>

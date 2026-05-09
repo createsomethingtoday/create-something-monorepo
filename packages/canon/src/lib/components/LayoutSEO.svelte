@@ -34,8 +34,8 @@
     agency: {
       domain: 'https://createsomething.agency',
       name: 'CREATE SOMETHING Agency',
-      tagline: 'Agentic Systems Engineering - AI automation workflows and autonomous systems that run businesses',
-      description: 'Agentic systems engineering consultancy building AI automation workflows and autonomous systems for businesses. Expert integration of Claude, Cloudflare, and modern web technologies.',
+      tagline: 'AI-assisted workflows, human-approved operations',
+      description: 'CREATE SOMETHING .agency builds calm workflow consoles for teams bringing AI and agents into real operations: one workflow, clear decision states, visible approvals, MCP/tool boundaries, and human approval where it matters.',
       color: '#000000',
     },
     ltd: {
@@ -55,6 +55,45 @@
   };
 
   const config = $derived(propertyConfig[property]);
+  const propertyKnowsAbout = $derived(
+    property === 'agency'
+      ? [
+          'Governed Workflow Consoles',
+          'AI-Assisted Workflows',
+          'Human-Approved Operations',
+          'AI-Native Development',
+          'Workflow Readiness Mapping',
+          'Cloudflare Workers',
+          'Retool Workflow Consoles',
+          'MCP Tool Boundaries',
+          'Human-in-the-loop Approval'
+        ]
+      : property === 'io'
+        ? [
+            'AI-Native Development',
+            'Research Papers',
+            'Tracked Experiments',
+            'Claude Code',
+            'Agentic Systems',
+            'Systematic AI Development'
+          ]
+        : property === 'space' || property === 'lms'
+          ? [
+              'Interactive Tutorials',
+              'AI-Native Development',
+              'Runnable Code Examples',
+              'Cloudflare Workers',
+              'SvelteKit',
+              'Modern Web Development'
+            ]
+          : [
+              'Design Philosophy',
+              'Subtractive Design',
+              'Technology Practice',
+              'CREATE SOMETHING',
+              'Less but Better'
+            ]
+  );
 
   // Schema.org Organization
   const organizationSchema = $derived({
@@ -75,15 +114,7 @@
       jobTitle: 'Systems Architect',
       sameAs: 'https://www.linkedin.com/in/micahryanjohnson/'
     },
-    knowsAbout: [
-      'Agentic Systems Engineering',
-      'AI-Native Development',
-      'Claude Code',
-      'Cloudflare Workers',
-      'Automation Systems',
-      'Autonomous AI Agents',
-      'Systems Thinking'
-    ],
+    knowsAbout: propertyKnowsAbout,
     areaServed: {
       '@type': 'Place',
       name: 'Worldwide'

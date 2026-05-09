@@ -38,33 +38,33 @@ interface ContentItem {
  */
 const SERVICES: ContentItem[] = [
 	{
-		slug: 'workflow-infrastructure',
-		title: 'Workflow System',
-		description: 'CREATE SOMETHING builds production-safe workflow systems for business-critical operations with clear trust boundaries.',
+		slug: 'workflow-readiness-map',
+		title: 'Workflow Readiness Map',
+		description: 'Paid diagnostic for one workflow, its risk boundary, decision states, and safe first build path.',
 		category: 'service'
 	},
 	{
-		slug: 'policy-os',
-		title: 'Policy OS',
-		description: 'Canonical paid governed-execution package: policy artifacts, approval boundaries, release evidence, and recurring runtime operations.',
+		slug: 'governed-workflow-console',
+		title: 'Governed Workflow Console',
+		description: 'Retool-powered operating surface where AI and agents prepare work while people keep approval authority.',
 		category: 'service'
 	},
 	{
 		slug: 'reliability-and-control-layer',
-		title: 'Reliability and Control Layer (Deprecated Alias)',
-		description: 'Compatibility alias for the Policy OS package during the current transition window.',
+		title: 'Governance Review',
+		description: 'Low-touch review loop for workflow health, incidents, approval tuning, tool scopes, and edge cases.',
 		category: 'service'
 	},
 	{
-		slug: 'enterprise-extension',
-		title: 'Enterprise Extension',
-		description: 'Custom orchestration for high-stakes, cross-system, and compliance-heavy workflows.',
+		slug: 'agent-operator-layer',
+		title: 'Agent Operator Layer',
+		description: 'Bounded AI assistance for drafting, matching, routing, summarizing, and preparing work for human approval.',
 		category: 'service'
 	},
 	{
-		slug: 'mcp-only-discovery',
-		title: 'MCP Wedge (Discovery/Compliance)',
-		description: 'Scoped entry wedge for read-only or limited-scope connectivity when teams need a safe workflow starting point before broader automation.',
+		slug: 'matching-workflow-console',
+		title: 'Matching Workflow Console',
+		description: 'Specialized workflow console for teams reconciling demand, supply, capacity, requests, or candidates.',
 		category: 'service'
 	}
 ];
