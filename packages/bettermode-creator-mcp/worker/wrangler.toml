@@ -27,8 +27,16 @@ binding = "DB"
 database_name = "create-something-db"
 database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
 
+# Shared telemetry (fleet observability) — tool-call metering goes here
+# alongside Braintrust when BRAINTRUST_API_KEY is set.
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
 [vars]
 ENVIRONMENT = "production"
+BRAINTRUST_PROJECT_NAME = "bettermode-creator-mcp"
 BETTERMODE_GRAPHQL_ENDPOINT = "https://api.bettermode.com"
 BETTERMODE_DEFAULT_NETWORK_ID = "BuRv7sR1po"
 BETTERMODE_MARKETPLACE_SPACE_ID = "ROtfBgdQyiAB"
@@ -43,4 +51,6 @@ AIRTABLE_CREATORS_ASSETS_LINK_FIELD = "👛Assets"
 #   BETTERMODE_CLIENT_ID
 #   BETTERMODE_CLIENT_SECRET
 #   AIRTABLE_API_KEY
-#   MCP_BEARER_TOKEN  (Dify connects with this)
+#   MCP_BEARER_TOKEN     (Dify connects with this)
+#   BRAINTRUST_API_KEY   (optional; meters tool calls to Braintrust)
+#   BRAINTRUST_PROJECT_ID (optional; pin to a specific project rather than name)

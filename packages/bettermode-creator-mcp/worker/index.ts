@@ -14,6 +14,7 @@
  *       If MCP_BEARER_TOKEN is unset the server is open (dev only).
  */
 
+import { enableTelemetry } from '@create-something/mcp-core';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 
@@ -23,6 +24,11 @@ interface Env extends McpEnv {
   MCP_OBJECT: DurableObjectNamespace;
   MCP_BEARER_TOKEN?: string;
   ENVIRONMENT?: string;
+  TELEMETRY_DB?: D1Database;
+  MCP_ACCOUNT_ID?: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_ID?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
 }
 
 const SERVER_NAME = 'bettermode-marketplace-creator';
@@ -42,6 +48,19 @@ export class BettermodeCreatorMcp extends McpAgent<Env> {
   });
 
   async init() {
+    if (this.env.TELEMETRY_DB) {
+      enableTelemetry(
+        this.server,
+        this.env.TELEMETRY_DB as unknown as Parameters<typeof enableTelemetry>[1],
+        SERVER_NAME,
+        () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
+        {
+          apiKey: this.env.BRAINTRUST_API_KEY,
+          projectName: this.env.BRAINTRUST_PROJECT_NAME?.trim() || SERVER_NAME,
+          projectId: this.env.BRAINTRUST_PROJECT_ID,
+        },
+      );
+    }
     registerCreatorTools(this.server, this.env);
   }
 }
@@ -103,6 +122,10 @@ export default {
             endpoints: { mcp: '/mcp', sse: '/sse' },
             environment: env.ENVIRONMENT || 'development',
             bearer_required: !!env.MCP_BEARER_TOKEN,
+            telemetry: {
+              d1: !!env.TELEMETRY_DB,
+              braintrust: !!env.BRAINTRUST_API_KEY,
+            },
           },
           null,
           2,
