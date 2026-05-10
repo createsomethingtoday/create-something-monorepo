@@ -63,6 +63,12 @@ POST /api/canon/operator-approval
 
 That route requires an Auth0-backed `.agency` session whose email is listed in `AGENCY_OPERATOR_EMAILS`. It only accepts same-origin requests, configured `CANON_OPERATOR_ORIGINS`, local development origins, or HTTPS origins under `*.createsomething.agency`. For Webflow Code Components, set `Approval Request Credentials` to `include` only when the console is served from a trusted CREATE SOMETHING domain that can send the `.createsomething.agency` session cookie. Keep public `webflow.io` previews read-only or local-state only.
 
+In Webflow Designer previews, keep `Approval Endpoint URL` empty. For the authenticated `.agency` operator surface, set it to:
+
+```text
+https://createsomething.agency/api/canon/operator-approval
+```
+
 Endpoint defaults should stay empty in reusable components. Promotion to a specific Webflow site should set Cloudflare URLs in the Webflow Designer or a site-specific composition layer.
 
 ## Share

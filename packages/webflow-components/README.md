@@ -267,7 +267,7 @@ The workflow context endpoint returns sanitized runtime checks, business context
 
 Approval persistence uses `POST /api/canon/approval`, but that route requires the server-side `AGENCY_INTERNAL_API_KEY`. Do not place that credential in Webflow props or browser code. Public Webflow compositions should leave `Approval Endpoint URL` empty for local review state, or call approval writes through a trusted authenticated operator proxy.
 
-Use `POST /api/canon/operator-approval` for an operator-only console. That proxy requires an Auth0 `.agency` session with an email in `AGENCY_OPERATOR_EMAILS`; set `Approval Request Credentials` to `include` only when the Webflow page is served from a trusted `*.createsomething.agency` origin. Public `webflow.io` previews should keep approval persistence disabled.
+Use `POST /api/canon/operator-approval` for an operator-only console. That proxy requires an Auth0 `.agency` session with an email in `AGENCY_OPERATOR_EMAILS`; set `Approval Request Credentials` to `include` only when the Webflow page is served from a trusted `*.createsomething.agency` origin. Public `webflow.io` and Webflow Designer previews should keep approval persistence disabled. For the authenticated `.agency` operator surface, use `https://createsomething.agency/api/canon/operator-approval`.
 
 Endpoint props are intentionally deployment-specific. Configure them per Webflow site or environment so component defaults never imply a production target.
 

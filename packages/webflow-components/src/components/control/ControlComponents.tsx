@@ -745,6 +745,17 @@ const controlCss = `
     hyphens: auto;
   }
 
+  .cs-source-status-card {
+    align-items: start;
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .cs-source-status-badge {
+    justify-self: end;
+  }
+
   .cs-agent-form {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -782,6 +793,31 @@ const controlCss = `
     outline-offset: 2px;
   }
 
+  .cs-action-preview-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .cs-action-option-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .cs-action-option-header strong {
+    min-width: 0;
+  }
+
+  .cs-action-preview-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: 1rem;
+    margin-top: ${tokens.spacing.md};
+  }
+
   @media (max-width: ${tokens.breakpoints.lg}) {
     .cs-control-hero-grid {
       grid-template-columns: minmax(0, 1fr);
@@ -792,6 +828,14 @@ const controlCss = `
     .cs-control-hero-grid,
     .cs-agent-form {
       grid-template-columns: 1fr;
+    }
+
+    .cs-source-status-card {
+      grid-template-columns: 1fr;
+    }
+
+    .cs-source-status-badge {
+      justify-self: start;
     }
   }
 `;
@@ -851,6 +895,7 @@ function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone
         borderRadius: tokens.radii.full,
         background: toneStyle.background,
         color: toneStyle.color,
+        alignSelf: 'flex-start',
         flexShrink: 0,
         fontSize: tokens.typography.fontSize.caption,
         fontWeight: tokens.typography.fontWeight.semibold,
@@ -1463,13 +1508,11 @@ export function SourceTruthStatus({
         <div className="cs-control-list">
           {parsedSources.map((source) => (
             <article
+              className="cs-source-status-card"
               key={`${source.system}-${source.tier ?? 'source'}`}
               style={{
                 ...surfaceStyles,
                 background: tokens.colors.bgPure,
-                display: 'grid',
-                gap: '0.85rem',
-                gridTemplateColumns: 'minmax(0, 1fr) auto',
                 padding: tokens.spacing.md,
               }}
             >
@@ -1486,7 +1529,9 @@ export function SourceTruthStatus({
                   {source.owner ? <Badge tone="neutral">Owner: {source.owner}</Badge> : null}
                 </div>
               </div>
-              <Badge tone={statusToTone(source.status)}>{source.status ?? 'ok'}</Badge>
+              <div className="cs-source-status-badge">
+                <Badge tone={statusToTone(source.status)}>{source.status ?? 'ok'}</Badge>
+              </div>
             </article>
           ))}
         </div>
@@ -1873,7 +1918,7 @@ export function ActionPreview({
           </div>
         </div>
 
-        <div className="cs-control-grid cs-control-grid--two">
+        <div className="cs-action-preview-layout">
           <div className="cs-control-list">
             {parsedActions.map((action) => {
               const isActive = selectedAction.id === action.id;
@@ -1889,7 +1934,7 @@ export function ActionPreview({
                     setError('');
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', gap: '0.75rem' }}>
+                  <div className="cs-action-option-header">
                     <strong style={{ lineHeight: tokens.typography.lineHeight.tight }}>{action.label}</strong>
                     <Badge tone={statusToTone(action.status)}>{readableStatus(action.status)}</Badge>
                   </div>
@@ -1916,7 +1961,7 @@ export function ActionPreview({
               {remotePreview?.summary ?? selectedAction.description}
             </p>
 
-            <div className="cs-control-grid cs-control-grid--two" style={{ marginTop: tokens.spacing.md }}>
+            <div className="cs-action-preview-detail-grid">
               <div>
                 <div style={compactLabelStyles}>Policy checks</div>
                 <ul style={{ color: tokens.colors.fgSecondary, margin: '0.75rem 0 0', paddingLeft: '1.1rem' }}>
@@ -2369,8 +2414,11 @@ export function CanonControlPanel({
           <ApprovalQueue approvals={effectiveApprovalQueue} endpointUrl={approvalEndpointUrl} requestCredentials={approvalRequestCredentials} contextId={contextId} actor={operatorName} />
         </div>
 
-        <div className="cs-control-grid cs-control-grid--two" style={{ marginTop: tokens.spacing.lg, alignItems: 'start' }}>
+        <div style={{ marginTop: tokens.spacing.lg }}>
           <ActionPreview endpointUrl={actionEndpointUrl} contextId={contextId} actions={effectiveActions} />
+        </div>
+
+        <div style={{ marginTop: tokens.spacing.lg }}>
           <ApprovalGate
             title={effectiveApproval?.title}
             description={effectiveApproval?.description}

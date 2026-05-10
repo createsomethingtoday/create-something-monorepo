@@ -23,13 +23,13 @@ export default declareComponent(ApprovalQueue, {
     endpointUrl: props.Text({
       name: 'Approval Endpoint URL',
       defaultValue: '',
-      tooltip: 'Optional trusted operator proxy for persisted approval updates. Leave empty on public pages.',
+      tooltip: 'Use /api/canon/operator-approval only on a trusted CREATE SOMETHING operator page. Leave empty in Designer previews.',
     }),
     requestCredentials: props.Variant({
       name: 'Approval Request Credentials',
       options: ['same-origin', 'include', 'omit'],
       defaultValue: 'same-origin',
-      tooltip: 'Use include only when calling a trusted operator-session endpoint on a CREATE SOMETHING domain.',
+      tooltip: 'Use include only when /api/canon/operator-approval is served from a trusted CREATE SOMETHING domain with operator auth.',
     }),
     actor: props.Text({
       name: 'Actor',
