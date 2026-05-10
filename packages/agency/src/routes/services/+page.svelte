@@ -11,7 +11,7 @@
     {
       name: 'Workflow Readiness Map',
       description:
-        'A paid diagnostic that identifies the safest first build wedge for one workflow.',
+        'A paid diagnostic that turns one watched workflow into a clear build, defer, or stop decision.',
       type: 'Paid diagnostic',
       price: 'Custom',
       priceDescription: 'Map, risks, decision states, build recommendation'
@@ -19,7 +19,7 @@
     {
       name: 'Governed Workflow Console',
       description:
-        'A calm operating surface where AI and agents can prepare work while people keep approval authority.',
+        'A calm operating surface where AI, agents, data, tools, and approval paths become visible to the team.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build'
@@ -59,7 +59,7 @@
       title: 'Governed Workflow Console',
       summary: 'Fix the first AI-assisted workflow your team still watches by hand and make the handoffs visible, reviewable, and recoverable.',
       points: [
-        'Retool workflow console',
+        'Retool-based workflow console',
         'MCP/tool and worker layer',
         'Approval queue and blocked states',
         'Portable runbooks and handoff artifacts'
@@ -137,7 +137,7 @@
       label: 'Workflow console',
       title: 'Shows what needs judgment',
       detail:
-        'The operating surface shows safe work, approval-needed work, blocked actions, artifacts, and recovery paths before the operator is interrupted.'
+        'The operating surface shows safe work, approval-needed work, blocked actions, artifacts, and recovery paths before someone has to ask for a status meeting.'
     },
     {
       label: 'Agent layer',
@@ -157,7 +157,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Governed Workflow Console is the core build. Workflow Readiness Map is the paid front door, Agent Operator Layer is the expansion, and Governance Review is the low-touch support loop.'
+        'Governed Workflow Console is the core build. Workflow Readiness Map is the paid front door, Agent Operator Layer is the expansion, and Governance Review is the low-touch support loop after the workflow is live.'
     },
     {
       question: 'Are you joining our team or running internal ops?',
@@ -165,9 +165,9 @@
         'No. I operate as a solo specialist using CREATE SOMETHING as the delivery toolchain. You get scoped delivery, governed agent capacity, artifact-backed visibility, approval points, and a clean handoff instead of open-ended staffing.'
     },
     {
-      question: 'Are agents part of the workforce?',
+      question: 'Where do AI and agents fit?',
       answer:
-        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, and evidence. Agents recommend, draft, summarize, match, and route. Humans approve important actions.'
+        'They fit after the workflow has a clear job for them, scoped tools, approval boundaries, and evidence. AI and agents can recommend, draft, summarize, match, and route. Humans approve important actions.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
@@ -209,8 +209,8 @@
 
 <SEO
   title="How I Work | Governed Workflow Consoles"
-  description="CREATE SOMETHING .agency builds approachable AI-assisted workflow systems: paid readiness maps, Retool workflow consoles, MCP/tool boundaries, agent operator layers, and human approval paths."
-  keywords="AI-assisted workflows, human-approved operations, governed workflow consoles, workflow readiness map, Retool workflow console, AI workflow approvals, MCP tool boundaries, agent operator layer"
+  description="CREATE SOMETHING .agency builds approachable AI-assisted workflow systems: paid readiness maps, Retool-based workflow consoles, agent/tool boundaries, agent operator layers, and human approval paths."
+  keywords="AI-assisted workflows, AI workflows, OpenAI agents, human-approved operations, governed workflow consoles, workflow readiness map, Retool workflow console, AI workflow approvals, MCP tool boundaries, agent operator layer"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -230,9 +230,9 @@
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          Bring the workflow your team still watches by hand. I map the boundaries, build the
-          operating surface, connect the tool layer, and route AI recommendations through human
-          approval before anything important moves.
+          Bring the workflow your team still watches by hand. I map the data, boundaries, owners,
+          and failure modes; build the operating surface; connect the AI and agent tool layer; and
+          route AI recommendations through human approval before anything important moves.
         </p>
       </BlurFade>
 
@@ -251,7 +251,7 @@
     <BlurFade delay={0.2}>
       <aside class="product-surface product-surface--soft hero-brief" aria-label="Calm transparent workflow service brief">
         <span class="product-kicker">Calm, transparent delivery</span>
-        <h2>CREATE SOMETHING turns tools, agents, and approvals into one operating surface your team can understand.</h2>
+        <h2>CREATE SOMETHING turns AI, agents, tools, and approvals into one operating surface your team can understand.</h2>
         <div class="hero-brief__grid" role="list">
           {#each heroSignals as signal}
             <div class="hero-brief__item" role="listitem">
@@ -280,7 +280,7 @@
           <p>
             You are bringing in a solo operator with a purpose-built toolchain to diagnose,
             rebuild, and govern one critical operating path. The work is scoped, visible, and
-            designed for your team to inherit.
+            designed for your team to inherit without depending on open-ended access to me.
           </p>
         </BlurFade>
       </div>
@@ -340,8 +340,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Start with the diagnostic map. Build the first console. Add AI and agent capacity and
-          governance only when the workflow is ready for it.
+          Start with the diagnostic map. Build the first console. Add AI and agent capacity where
+          the workflow has enough structure, ownership, and evidence to support it.
         </p>
       </BlurFade>
     </div>
@@ -382,7 +382,7 @@
         <p>
           The console gets the first handoff visible and reliable. Governance decides what
           AI-assisted work can run automatically, what needs review, and what stops. That is where
-          speed stops being a demo and becomes an operating path.
+          a useful demo becomes an operating path your team can trust.
         </p>
       </BlurFade>
     </div>
@@ -410,7 +410,7 @@
           <p>
             A dashboard, Retool app, Webflow surface, or display only works if the workflow has
             mapped owners, approval rules, blocked states, and evidence. That is what lets AI help
-            without turning into another thing your team has to supervise.
+            without becoming another thing your team has to supervise.
           </p>
         </BlurFade>
       </div>

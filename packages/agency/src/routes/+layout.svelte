@@ -44,10 +44,10 @@
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-services', label: 'How I Work', description: 'AI-assisted workflows, readiness maps, and approval paths', href: '/services', icon: '🔨', keywords: ['workflow console', 'workflow readiness', 'matching', 'routing', 'automation', 'pricing', 'services'] },
+		{ id: 'nav-services', label: 'How I Work', description: 'Readiness maps, workflow consoles, and approval paths', href: '/services', icon: '🔨', keywords: ['workflow console', 'workflow readiness', 'matching', 'routing', 'automation', 'pricing', 'services'] },
 		{ id: 'nav-stack', label: 'Stack', description: 'Vendor roles, portability boundaries, and delivery ownership', href: '/stack', icon: '🧭', keywords: ['stack', 'vendors', 'boundaries', 'composio', 'cloudflare', 'webflow', 'dify', 'openai', 'retool'] },
-		{ id: 'nav-products', label: 'Proof Surfaces', description: 'Proof surfaces for MCPs, agent tools, and human-approved workflow consoles', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations', 'proof surfaces'] },
-		{ id: 'nav-book', label: agencyCoreMessaging.bookMappingSessionLabel, description: 'Map the workflow, console, and decision states', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session', 'workflow console'] },
+		{ id: 'nav-products', label: 'Proof Surfaces', description: 'Proof surfaces for agent tools, MCPs, and human-approved workflows', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations', 'proof surfaces'] },
+		{ id: 'nav-book', label: agencyCoreMessaging.bookMappingSessionLabel, description: 'Map the workflow, first console, and decision states', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session', 'workflow console'] },
 		{ id: 'nav-mcp-access', label: 'MCP Access', description: 'Reveal, copy, rotate, and revoke your personal bearer token', href: '/mcp-access', icon: '🗝️', keywords: ['mcp access', 'bearer token', 'copy token', 'host setup', 'codex', 'claude', 'cursor'] },
 		{ id: 'nav-security', label: 'Security', description: 'Identity boundaries, bearer-token governance, and operational controls', href: '/security', icon: '🛡️', keywords: ['security', 'trust', 'risk', 'controls', 'auth'] },
 		{ id: 'nav-bearer-token-policy', label: 'Bearer Token Policy', description: 'One long-lived token per user with live entitlement checks and revocation', href: '/bearer-token-policy', icon: '🔑', keywords: ['bearer token', 'token policy', 'mcp access', 'agent access', 'auth'] },

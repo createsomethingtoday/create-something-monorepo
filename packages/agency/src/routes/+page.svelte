@@ -12,7 +12,7 @@
     {
       name: 'Workflow Readiness Map',
       description:
-        'One high-drag workflow mapped into source systems, decision states, risk boundaries, and a safe first build wedge.',
+        'One high-drag workflow translated into handoffs, data, decision states, risk boundaries, and a safe first build wedge.',
       type: 'Paid diagnostic',
       price: 'Custom',
       priceDescription: 'Scoped map with build/no-build recommendation'
@@ -20,7 +20,7 @@
     {
       name: 'Governed Workflow Console',
       description:
-        'A calm operating surface where AI and agents can help prepare work while people keep approval authority.',
+        'One place to see workflow state, AI- and agent-prepared work, approvals, blocked states, artifacts, and recovery paths.',
       type: 'Implementation sprint',
       price: 'Custom',
       priceDescription: 'Scoped build with optional support'
@@ -57,19 +57,19 @@
     {
       displayName: 'Workflow map',
       name: 'workflow-map',
-      summary: 'The first path, handoffs, source systems, owners, and known failure points.',
+      summary: 'Where work enters, who owns the handoff, what data matters, and what breaks today.',
       tag: 'Map'
     },
     {
       displayName: 'Stack boundary',
       name: 'stack-boundary',
-      summary: 'What the client owns, what CREATE SOMETHING owns, and what vendors provide.',
+      summary: 'What the client owns, what CREATE SOMETHING builds, and what vendor services provide.',
       tag: 'Boundary'
     },
     {
       displayName: 'MCP/API contract',
       name: 'mcp-api-contract',
-      summary: 'Tools, resources, auth scope, allowed actions, and integration limits.',
+      summary: 'How AI agents and workflow tools are allowed to read, prepare, route, or act.',
       tag: 'Contract'
     },
     {
@@ -95,10 +95,10 @@
   const capabilityCards = [
     {
       id: '01',
-      title: 'Console clarity',
-      body: 'Give the team one place to see workflow state, AI-prepared work, approvals, risks, artifacts, and recovery paths.',
+      title: 'One place to operate',
+      body: 'Give the team a calm surface for workflow state, AI- and agent-prepared work, approvals, risks, artifacts, and recovery paths.',
       points: [
-        'Retool is the operating surface, not the durable source of truth',
+        'The console shows what matters without exposing the whole machine room',
         'Clients see status and decisions, not raw internal work',
         'The team knows what needs action without watching every step'
       ]
@@ -152,9 +152,9 @@
       name: 'Governed Workflow Console',
       featured: true,
       summary:
-        'The core build: one AI-assisted operating path with data, tools, agents, approvals, and recovery in one surface.',
+        'The core build: one visible operating path where data, tools, AI agents, approvals, and recovery work together.',
       points: [
-        'Retool operator surface',
+        'Retool-based workflow console',
         'MCP/tool and worker layer',
         'Approval queue and blocked states',
         'Runbook, handoff, and evidence'
@@ -183,8 +183,8 @@
 
 <SEO
   title="AI-Assisted Workflows Your Team Can Trust | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency builds calm workflow consoles for teams bringing AI and agents into real operations: one workflow, clear decision states, visible approvals, tool boundaries, and human approval where it matters."
-  keywords="AI-assisted workflows, human-approved operations, governed workflow consoles, Retool workflow console, MCP workflow automation, AI approval workflow, staffing matching workflow, workflow readiness map"
+  description="CREATE SOMETHING .agency builds calm workflow consoles for teams bringing AI, agents, and real business data into daily operations: one workflow, visible approvals, clear tool boundaries, and human approval where it matters."
+  keywords="AI-assisted workflows, AI workflows, OpenAI agents, human-approved operations, governed workflow consoles, Retool workflow console, MCP workflow automation, AI approval workflow, staffing matching workflow, workflow readiness map"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -206,10 +206,10 @@
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            CREATE SOMETHING builds calm workflow systems for teams bringing AI and agents into
-            real operations. I map one high-drag workflow, connect the tools and data behind it,
-            and give your team a workflow console where AI can recommend, draft, route, and flag
-            work while people keep approval authority.
+            Your team already understands that AI can draft, summarize, reason, and call tools.
+            CREATE SOMETHING turns that familiar AI behavior into a calm workflow system: one
+            high-drag workflow, structured data and handoffs, and a console where AI agents can
+            prepare work while people keep approval authority.
           </p>
         </BlurFade>
 
@@ -247,10 +247,10 @@
       <div class="signal-header">
         <span class="product-kicker">Workflow-console stack</span>
         <p>
-          AI and agents are becoming part of normal operations, but they are not the product by
-          themselves. Retool makes the workflow visible; MCPs and APIs define tool access; workers
-          and agents prepare work; policy and artifacts define what can run, what needs approval,
-          and what stops. CREATE SOMETHING owns the workflow boundary.
+          AI and agents are becoming normal operational context. The value is deciding where
+          they belong: what data they can use, what work they can prepare, what needs human
+          approval, and what should stop. Retool makes that workflow visible; MCPs, APIs, workers,
+          and artifacts keep the boundary inspectable.
         </p>
       </div>
 
@@ -302,9 +302,9 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The buyer does not need to become an AI infrastructure expert. They need to know how the
-          system works, where data moves, what the agent is allowed to prepare, and who owns the
-          handoff when the workflow matters.
+          The buyer does not need to become an AI infrastructure expert. They already know these
+          models can help. They need to know how the system works, where data moves, what the
+          agent is allowed to prepare, and who owns the handoff when the workflow matters.
         </p>
       </BlurFade>
     </div>
@@ -374,7 +374,7 @@
         <span class="product-kicker">Policy before speed</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>The console layer is the difference between a demo and an operating path.</h2>
+        <h2>The console layer turns a useful demo into an operating path.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
@@ -404,7 +404,7 @@
       <ArtifactSystemStrip
         eyebrow="What you get"
         title="The deliverables make the work explainable."
-        description="The offer is not a pile of vendor accounts. It is a set of artifacts your team can inspect, inherit, and use to explain how the system works."
+        description="The offer is not a pile of vendor accounts. It is a working path plus the artifacts your team can inspect, inherit, and use to explain how the system works."
         items={deliveryArtifacts}
       />
     </BlurFade>

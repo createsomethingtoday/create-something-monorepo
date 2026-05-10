@@ -11,15 +11,15 @@
       name: 'Cloudflare',
       role: 'Runtime and durable data',
       why: 'Workers, D1, Durable Objects, queues, and edge routes keep the system deployable without a heavyweight client-owned platform team.',
-      createSomething: 'CREATE SOMETHING owns the Worker code, MCP routes, data model, policy hooks, and deployment runbook.',
+      createSomething: 'CREATE SOMETHING owns the Worker code, data model, tool routes, policy hooks, and deployment runbook.',
       portable: 'Source code, schemas, migration files, wrangler config, runbooks, and rollback notes.'
     },
     {
       name: 'Composio',
       role: 'Commodity app connectivity',
       why: 'OAuth, connect links, and standard app actions should stay commodity when the integration is not the strategic differentiator.',
-      createSomething: 'CREATE SOMETHING wraps connector access behind a house MCP surface, brokered discovery, allowed tools, and policy.',
-      portable: 'Toolkit choices, auth boundaries, allowed action lists, and MCP contract notes.'
+      createSomething: 'CREATE SOMETHING wraps connector access behind a governed tool surface, brokered discovery, allowed actions, and policy.',
+      portable: 'Toolkit choices, auth boundaries, allowed action lists, and tool contract notes.'
     },
     {
       name: 'Dify',
@@ -30,9 +30,9 @@
     },
     {
       name: 'OpenAI',
-      role: 'Reasoning and agent host',
-      why: 'OpenAI, Codex, and adjacent model hosts provide reasoning surfaces; the business value comes from the scoped tools and approval layer around them.',
-      createSomething: 'CREATE SOMETHING defines tool schemas, prompt boundaries, approval behavior, eval gates, and traceable task context.',
+      role: 'AI and agent reasoning layer',
+      why: 'OpenAI, ChatGPT, Codex, and adjacent model hosts have made AI behavior familiar to buyers; the business value comes from the scoped tools and approval layer around them.',
+      createSomething: 'CREATE SOMETHING defines tool schemas, prompt boundaries, agent behavior, approval behavior, eval gates, and traceable task context.',
       portable: 'Tool definitions, prompts, eval cases, approval policy, and model-routing notes.'
     },
     {
@@ -109,7 +109,7 @@
     {
       displayName: 'MCP/API contract',
       name: 'mcp-api-contract',
-      summary: 'Tools, resources, auth scopes, allowed actions, and transport limits.',
+      summary: 'How agents and workflow tools can read, prepare, route, or act.',
       tag: 'Contract'
     },
     {
@@ -127,7 +127,7 @@
     {
       displayName: 'Console brief',
       name: 'console-brief',
-      summary: 'The visible state for Retool, Webflow, Dify, Linear, or a custom app.',
+      summary: 'The visible operating state for Retool, Webflow, Dify, Linear, or a custom app.',
       tag: 'Surface'
     }
   ];
@@ -196,8 +196,8 @@
 
 <SEO
   title="Stack & Boundaries | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING uses Cloudflare, Composio, Dify, OpenAI, Webflow, Retool, Linear, Infisical, and Auth0 to make AI-assisted workflows visible, bounded, and human-approved."
-  keywords="AI-assisted workflows, workflow console stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, OpenAI, Webflow, Retool, workflow governance"
+  description="How CREATE SOMETHING uses Cloudflare, Composio, Dify, OpenAI, Webflow, Retool, Linear, Infisical, and Auth0 to make AI and agent workflows visible, bounded, data-backed, and human-approved."
+  keywords="AI-assisted workflows, AI workflows, OpenAI agents, workflow console stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, OpenAI, Webflow, Retool, workflow governance"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -209,14 +209,15 @@
         <span class="product-kicker">Stack & Boundaries</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">The stack is visible so AI-assisted work can be trusted.</h1>
+        <h1 class="hero-title">The stack is visible, but the workflow is what you buy.</h1>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          CREATE SOMETHING is the toolchain I use as the sole operator to complete the outcome:
+          CREATE SOMETHING is the toolchain I use as the solo operator to complete the outcome:
           proven services where they help, then repo-owned contracts, policy, runbooks, and
-          evidence where the business needs trust. When agents become part of the workflow, MCPs
-          are their toolkits and the console keeps review, pause, and recovery visible for people.
+          evidence where the business needs trust. When AI and agents become part of the workflow,
+          the stack gives them bounded access and the console keeps review, pause, and recovery
+          visible for people.
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
@@ -438,8 +439,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          CREATE SOMETHING will map the stack boundary, define the first MCP wedge, identify what
-          can become agent capacity, and show what stays visible to the operator before
+          CREATE SOMETHING will map the stack boundary, define the first safe tool wedge, identify
+          what can become agent capacity, and show what stays visible to the operator before
           implementation starts.
         </p>
       </BlurFade>

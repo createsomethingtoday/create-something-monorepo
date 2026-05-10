@@ -5,7 +5,7 @@
   export let eyebrow = 'Mapping session';
   export let title = 'The first session turns the workflow into a safe build decision.';
   export let description =
-    'The buyer does not need a technical scavenger hunt. They need to know what is safe to automate, what needs review, what should stop, and what workflow console should be built first.';
+    'The buyer does not need a technical guessing game. They need to know where AI can help, what needs review, what should stop, and what workflow console should be built first.';
   export let ctaHref = '/book';
   export let ctaLabel = agencyCoreMessaging.bookMappingSessionLabel;
 
@@ -18,7 +18,7 @@
     {
       label: 'Map',
       title: 'The operating boundary',
-      detail: 'Source accounts, owners, vendor roles, approvals, blocked states, and failure modes.'
+      detail: 'Source accounts, owners, data, vendor roles, approvals, blocked states, and failure modes.'
     },
     {
       label: 'Decide',

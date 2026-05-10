@@ -46,7 +46,7 @@
     hub: { x: 410, y: 148 },
     control: { x: 410, y: 300 },
     initiators: [
-      { id: 'llm', name: 'Client LLM', x: 120, y: 108, curvature: 38 },
+      { id: 'ai', name: 'AI Tool', x: 120, y: 108, curvature: 38 },
       { id: 'ops', name: 'Ops Inbox', x: 120, y: 228, curvature: 24 },
       { id: 'agent', name: 'Background Agent', x: 120, y: 348, curvature: 42 }
     ],
@@ -63,7 +63,7 @@
     hub: { x: 170, y: 182 },
     control: { x: 170, y: 364 },
     initiators: [
-      { id: 'llm', name: 'Client LLM', x: 95, y: 78, curvature: 60 },
+      { id: 'ai', name: 'AI Tool', x: 95, y: 78, curvature: 60 },
       { id: 'ops', name: 'Ops Inbox', x: 170, y: 116, curvature: 30 },
       { id: 'agent', name: 'Background Agent', x: 245, y: 78, curvature: 60 }
     ],
@@ -79,7 +79,7 @@
     title = 'Governed Workflow Console',
     description = 'The tool layer routes work into a console that shows what can run automatically, what needs approval, and what stops with a reason.',
     caption = 'Safe actions run fast. Risky actions route to approval. Disallowed actions stop with a reason.',
-    initiators = ['Client LLM', 'Ops Inbox', 'Background Agent'],
+    initiators = ['AI Tool', 'Ops Inbox', 'Background Agent'],
     destinations = ['CRM', 'ERP', 'Workflow Console'],
     outcomes = DEFAULT_OUTCOMES
   }: Props = $props();

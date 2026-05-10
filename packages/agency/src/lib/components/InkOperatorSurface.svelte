@@ -2,7 +2,7 @@
   const callouts = [
     {
       label: 'E-ink surface',
-      detail: 'TRMNL-ready or custom Ink briefs for status, approvals, and slow decisions.',
+      detail: 'TRMNL-ready or custom Ink briefs for status, approvals, and slow decisions away from the laptop.',
       modifier: 'screen'
     },
     {
@@ -20,7 +20,7 @@
   const surfaceCards = [
     {
       title: 'Decision state',
-      body: 'High-level signals can be marked away from the computer, then imported for review.',
+      body: 'High-level signals can be marked offline, then imported for review before anything moves.',
       image: '/images/ink/ink-blueprint-controls.png',
       imageWebp: '/images/ink/ink-blueprint-controls.webp',
       alt: 'Blueprint render of the Ink physical controls showing an approval state.'
@@ -42,7 +42,7 @@
     <p>
       TRMNL gives the delivery a ready ePaper companion for all-clear, approval-needed, blocked,
       and recovery states. Custom Ink hardware adds an untethered Decision Garden for slow business
-      signals, while CREATE SOMETHING owns the operating layer, labels, import path, and escalation behavior.
+      signals, while CREATE SOMETHING owns the operating layer, labels, import path, and review boundary.
     </p>
 
     <div class="ink-state-grid" aria-label="Ink display states">

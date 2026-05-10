@@ -24,7 +24,7 @@
     {
       label: 'MCPs',
       title: 'Connectivity is the wedge',
-      detail: 'Read-only or constrained MCPs prove the connection before the workflow earns more authority.'
+      detail: 'Read-only or constrained AI and agent tool access proves the connection before the workflow earns more authority.'
     },
     {
       label: 'Console',
@@ -40,8 +40,8 @@
 
 <SEO
   title="Proof Surfaces | MCPs, Agent Tools, and Workflow Consoles"
-  description="Proof surfaces behind CREATE SOMETHING .agency: agent tools, MCP connectors, and client builds that show how the operating layer becomes inspectable."
-  keywords="MCP servers, workflow consoles, agent coordination, grounded AI code analysis, workflow governance, operator surfaces"
+  description="Proof surfaces behind CREATE SOMETHING .agency: agent tools, MCP connectors, and client builds that show how AI-assisted workflow systems become inspectable."
+  keywords="MCP servers, AI workflows, OpenAI agents, workflow consoles, agent coordination, grounded AI code analysis, workflow governance, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -70,7 +70,7 @@
       <p class="hero-subtitle">
         Loom, Ground, MCP connectors, and client builds are not a random product shelf. They are
         proof surfaces for the same path: connect the system, verify the claim, coordinate the
-        agents, then govern the workflow.
+        agents, then make the workflow safe for people to operate.
       </p>
     </BlurFade>
   </div>
@@ -86,8 +86,8 @@
           <h2>Products are proof primitives. The console is the operating layer.</h2>
           <p>
             The free and open tools show the discipline underneath the service: grounded claims,
-            agent continuity, constrained MCP access, and artifact-backed decisions. The paid work
-            turns those primitives into one workflow your operator can trust.
+            agent continuity, constrained AI tool access, and artifact-backed decisions. The paid
+            work turns those primitives into one workflow your operator can trust.
           </p>
         </div>
         <div class="proof-role-grid">
@@ -211,7 +211,7 @@
         <h2 class="section-eyebrow">Client workflow evidence</h2>
         <p class="section-desc">
           Selected builds showing how real systems move from integration work into runbooks,
-          policy, handoffs, and operating visibility.
+          policy, handoffs, data, and operating visibility.
         </p>
       </div>
     </BlurFade>
@@ -251,7 +251,7 @@
     <BlurFade delay={0.2}>
       <p class="cta-subtext">
         I’ll map the first workflow, identify the safest tool boundary, and define what the
-        first workflow console should show.
+        first workflow console should show before anything important moves.
       </p>
     </BlurFade>
     <BlurFade delay={0.3}>
