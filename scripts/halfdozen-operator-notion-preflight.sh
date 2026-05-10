@@ -151,7 +151,7 @@ check_remote_db_migration() {
     return 0
   fi
 
-  require_cmd pnpm
+  require_cmd node
   require_cmd jq
 
   local config_db_name
@@ -161,17 +161,28 @@ check_remote_db_migration() {
     return 1
   fi
 
-  local output
+  local output stderr_file
+  stderr_file="$(mktemp)"
   if ! output="$(
     CLOUDFLARE_ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-$EXPECTED_CLOUDFLARE_ACCOUNT_ID}" \
-    pnpm exec wrangler d1 execute "$config_db_name" \
+    node "$ROOT_DIR/scripts/run-wrangler.mjs" \
+      --cwd "$ROOT_DIR/packages/halfdozen-operator-notion-mcp/worker" \
+      d1 execute "$config_db_name" \
       --remote \
       --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('partner_auth_clients','partner_auth_notion_accounts','partner_auth_notion_sync_contracts','partner_auth_notion_sync_contract_fields','partner_auth_notion_sync_record_mappings','partner_auth_notion_sync_runs') ORDER BY name;" \
-      --json 2>/dev/null
+      --json 2>"$stderr_file"
   )"; then
-    echo "failed to query ${config_db_name} D1. Ensure Cloudflare auth is configured (wrangler login/token) and CLOUDFLARE_ACCOUNT_ID is set correctly." >&2
+    echo "failed to query ${config_db_name} D1. Ensure Cloudflare auth is configured and authorized for CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID:-$EXPECTED_CLOUDFLARE_ACCOUNT_ID}." >&2
+    if [[ -n "$output" ]]; then
+      echo "$output" >&2
+    fi
+    if [[ -s "$stderr_file" ]]; then
+      cat "$stderr_file" >&2
+    fi
+    rm -f "$stderr_file"
     return 1
   fi
+  rm -f "$stderr_file"
 
   if ! echo "$output" | jq -e '([.[0].results[].name] | sort) == ["partner_auth_clients","partner_auth_notion_accounts","partner_auth_notion_sync_contract_fields","partner_auth_notion_sync_contracts","partner_auth_notion_sync_record_mappings","partner_auth_notion_sync_runs"]' >/dev/null 2>&1; then
     echo "D1 migrations 0010/0011/0020 not applied on ${config_db_name}: expected partner_auth_clients, partner_auth_notion_accounts, and all partner_auth_notion_sync_* tables." >&2
