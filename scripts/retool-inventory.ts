@@ -81,6 +81,7 @@ type RetoolInventory = {
     rest_api_secret: SecretRef;
     rest_api_smoke_path: string;
     rest_api_smoke_success_scopes: string[];
+    rest_api_smoke_ui_scope: string;
     spaces_token_policy: string;
     evidence_system: 'linear';
   };
@@ -304,6 +305,9 @@ function validateAccess(
   if (!smokeScopes.includes('users:read') || !smokeScopes.includes('mcp:admin')) {
     errors.push('access.rest_api_smoke_success_scopes must include users:read and mcp:admin');
   }
+  if (inventory.access?.rest_api_smoke_ui_scope !== 'Retool RPC > All') {
+    errors.push('access.rest_api_smoke_ui_scope must document the current Retool UI scope label');
+  }
   if (!inventory.access?.spaces_token_policy?.includes('Space')) {
     errors.push('access.spaces_token_policy must document Retool Space token boundaries');
   }
@@ -492,6 +496,7 @@ function renderInventoryDoc(inventory: RetoolInventory): string {
   lines.push('');
   lines.push(`Production REST smoke path: \`${inventory.access.rest_api_smoke_path}\``);
   lines.push(`Production REST smoke success scopes: ${inventory.access.rest_api_smoke_success_scopes.join(', ')}`);
+  lines.push(`Current Retool UI scope for smoke: ${inventory.access.rest_api_smoke_ui_scope}`);
   lines.push(`Spaces token policy: ${inventory.access.spaces_token_policy}`);
   lines.push('');
   lines.push('## MCP Resources');

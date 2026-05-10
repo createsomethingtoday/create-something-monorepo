@@ -159,6 +159,7 @@ async function runRetoolEvalCase(input: RetoolEvalInput): Promise<RetoolEvalOutp
     details.successScopesCodified =
       stringArray(access.rest_api_smoke_success_scopes).includes('users:read') &&
       stringArray(access.rest_api_smoke_success_scopes).includes('mcp:admin');
+    details.uiScopeCodified = access.rest_api_smoke_ui_scope === 'Retool RPC > All';
     details.spacesBoundaryCodified =
       typeof access.spaces_token_policy === 'string' && access.spaces_token_policy.includes('Space');
   }

@@ -30,6 +30,7 @@
     },
     "rest_api_smoke_path": "/users",
     "rest_api_smoke_success_scopes": ["users:read", "mcp:admin"],
+    "rest_api_smoke_ui_scope": "Retool RPC > All",
     "spaces_token_policy": "Each Retool Space has its own API endpoint and access tokens; a primary organization token can operate on a Space only when the token creator is an admin in both places.",
     "evidence_system": "linear"
   },
