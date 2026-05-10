@@ -57,6 +57,45 @@ export type { NavigationLink, NavigationProps } from './components/navigation/Na
 export { Dialog } from './components/feedback/Dialog';
 export type { DialogProps, DialogSize } from './components/feedback/Dialog';
 
+// Canon Control Plane Components
+export {
+  ActionPreview,
+  AgentDock,
+  ApprovalGate,
+  ArtifactGrid,
+  CanonControlPanel,
+  DecisionQueue,
+  EvidenceTrail,
+  OperatingLayerCards,
+  RuntimeStatus,
+  canonControlDefaults,
+} from './components/control/ControlComponents';
+export type {
+  ActionPreviewItem,
+  ActionPreviewProps,
+  ActionStatus,
+  AgentDockProps,
+  AgentMessage,
+  ApprovalGateProps,
+  ApprovalState,
+  ArtifactGridProps,
+  ArtifactItem,
+  CanonControlPanelProps,
+  CheckStatus,
+  DecisionItem,
+  DecisionQueueProps,
+  EvidenceItem,
+  EvidenceTrailProps,
+  OperatingLayer,
+  OperatingLayerCardsProps,
+  RiskLevel,
+  RuntimeCheck,
+  RuntimeStatusProps,
+  StatusTone,
+  SuggestedPrompt,
+  TriadTier,
+} from './components/control/ControlComponents';
+
 // Data Components
 export { StatsDisplay } from './components/data/StatsDisplay';
 export type { StatsDisplayProps, StatItem, StatsVariant } from './components/data/StatsDisplay';

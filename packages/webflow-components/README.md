@@ -4,6 +4,7 @@ React component library for Webflow positioned around Canon parity.
 
 The package currently contains a mix of:
 - Canon-parity exports already present in Webflow
+- Canon control-plane exports for operator surfaces backed by Cloudflare preview routes
 - compatibility components carried forward from earlier Maverick-derived work
 - section-level components that are useful in Webflow but are not Canon parity targets
 
@@ -22,6 +23,14 @@ npx webflow library share
 
 This will prompt for Workspace authentication and upload the component library.
 
+## Verify Locally
+
+```bash
+pnpm run verify
+```
+
+This runs TypeScript and `webflow library bundle --public-path / --no-input` before sharing.
+
 ## Parity Status
 
 Current Canon parity by exported component name:
@@ -38,6 +47,15 @@ Current Canon parity by exported component name:
 | `TextArea` | `ported` | Canon multiline field now exists separately from legacy `Field` |
 | `Tabs` | `ported` | Canon tabs primitive now exists separately from `Solutions` |
 | `Dialog` | `ported` | Canon dialog is now available for Webflow preview composition |
+| `CanonControlPanel` | `ported` | Composite operator surface for Webflow + Cloudflare demos |
+| `OperatingLayerCards` | `ported` | Database / Automation / Judgment layer cards |
+| `EvidenceTrail` | `ported` | Grounded evidence list for proof and review surfaces |
+| `ArtifactGrid` | `ported` | Client-safe artifact packet with visibility labels |
+| `ActionPreview` | `ported` | Preview-only action surface with optional Cloudflare endpoint |
+| `ApprovalGate` | `ported` | Human approval boundary for governed actions |
+| `AgentDock` | `ported` | Bounded agent dock with optional Cloudflare endpoint |
+| `DecisionQueue` | `ported` | Operator decision list with owner and tier metadata |
+| `RuntimeStatus` | `ported` | Cloudflare and governance runtime check panel |
 
 Phase 1 delivered:
 - package metadata and docs reframed around Canon
@@ -66,6 +84,15 @@ Canon exports now available in the Webflow package:
 - `Tabs`
 - `Dialog`
 - `Navigation`
+- `CanonControlPanel`
+- `OperatingLayerCards`
+- `EvidenceTrail`
+- `ArtifactGrid`
+- `ActionPreview`
+- `ApprovalGate`
+- `AgentDock`
+- `DecisionQueue`
+- `RuntimeStatus`
 
 ## Current Components
 
@@ -96,6 +123,20 @@ The current package contains both Canon exports and compatibility exports. The l
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
 | **Stats Display** | Animated counters | `stats` (JSON), `columns`, `animated` |
+
+### Control Plane (Group: Control Plane)
+
+| Component | Description | Key Props |
+|-----------|-------------|-----------|
+| **Canon Control Panel** | Full operator control surface | `heading`, `agentEndpointUrl`, `actionEndpointUrl`, JSON content props |
+| **Operating Layer Cards** | Database / Automation / Judgment layer cards | `layers` (JSON), `layout` |
+| **Evidence Trail** | Evidence and grounding list | `evidence` (JSON), `compact` |
+| **Artifact Grid** | Client-safe review artifact grid | `artifacts` (JSON), `columns` |
+| **Action Preview** | Governed action preview | `actions` (JSON), `endpointUrl`, `contextId` |
+| **Approval Gate** | Human approval state panel | `approvalState`, `requiredApprover` |
+| **Agent Dock** | Bounded Q&A dock | `endpointUrl`, `suggestedPrompts` (JSON), `initialMessages` (JSON) |
+| **Decision Queue** | Operator decisions and owners | `decisions` (JSON) |
+| **Runtime Status** | Runtime checks and status | `status`, `checks` (JSON) |
 
 ### Sections (Group: Sections)
 
@@ -203,6 +244,65 @@ Icon options: `circle`, `square`, `triangle`, `hexagon`
   {"label": "Solutions", "href": "/solutions"}
 ]
 ```
+
+### Control Plane Endpoint Configuration
+
+The control-plane components work without endpoints by rendering static Webflow props. To enable the hybrid Cloudflare demo, configure:
+
+```text
+Agent Endpoint URL: https://<agency-domain>/api/canon/agent
+Action Endpoint URL: https://<agency-domain>/api/canon/action-preview
+```
+
+Both endpoints are preview-only in v1. They return sanitized answers, policy checks, evidence labels, and allowed next actions. They do not expose secrets, raw source records, private workspace URLs, or token-bearing endpoints, and they do not execute external mutations.
+
+### Control Plane JSON Examples
+
+#### Operating Layers
+
+```json
+[
+  {
+    "tier": "Database",
+    "title": "Operational Memory",
+    "status": "Structured",
+    "description": "Authoritative records, review state, and evidence IDs are separated.",
+    "evidence": ["Source records", "Review state", "Evidence IDs"],
+    "tone": "info"
+  }
+]
+```
+
+#### Action Preview
+
+```json
+[
+  {
+    "id": "draft-operator-brief",
+    "label": "Draft operator brief",
+    "description": "Prepare a client-safe workflow brief from approved evidence and decisions.",
+    "status": "allowed",
+    "risk": "low",
+    "policyChecks": ["Uses public evidence only", "No credentials or private source data"],
+    "evidence": ["Workflow map", "Decision queue"]
+  }
+]
+```
+
+#### Agent Prompts
+
+```json
+[
+  {
+    "label": "What is private?",
+    "prompt": "What should stay out of the public surface?"
+  }
+]
+```
+
+## Abundance Pattern Use
+
+The Abundance delivery page is implementation context for these components, not public default content. Reuse the pattern: artifact-backed delivery, Database / Automation / Judgment, bounded agent answers, private/public boundaries, and next-review decisions. Do not ship Abundance-specific client details, staffing language, credentials, source data, or private artifact references in this package.
 
 ### Footer Columns
 
