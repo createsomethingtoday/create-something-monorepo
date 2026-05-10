@@ -37,13 +37,13 @@ export default declareComponent(CanonControlPanel, {
     approvalEndpointUrl: props.Text({
       name: 'Approval Endpoint URL',
       defaultValue: '',
-      tooltip: 'Use /api/canon/operator-approval only on a trusted CREATE SOMETHING operator page. Leave empty in Designer previews.',
+      tooltip: 'Use https://createsomething.agency/api/canon/operator-approval only after operator auth works for this origin. Leave empty for local review state.',
     }),
     approvalRequestCredentials: props.Variant({
       name: 'Approval Request Credentials',
       options: ['same-origin', 'include', 'omit'],
       defaultValue: 'same-origin',
-      tooltip: 'Use include only when /api/canon/operator-approval is served from a trusted CREATE SOMETHING domain with operator auth.',
+      tooltip: 'Set include for the cross-origin .agency approval endpoint. Keep same-origin when Approval Endpoint URL is empty or same-origin.',
     }),
     operatorName: props.Text({
       name: 'Operator Name',

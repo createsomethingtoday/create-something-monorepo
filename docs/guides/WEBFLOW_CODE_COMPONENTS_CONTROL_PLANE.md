@@ -63,10 +63,27 @@ POST /api/canon/operator-approval
 
 That route requires an Auth0-backed `.agency` session whose email is listed in `AGENCY_OPERATOR_EMAILS`. It only accepts same-origin requests, configured `CANON_OPERATOR_ORIGINS`, local development origins, or HTTPS origins under `*.createsomething.agency`. For Webflow Code Components, set `Approval Request Credentials` to `include` only when the console is served from a trusted CREATE SOMETHING domain that can send the `.createsomething.agency` session cookie. Keep public `webflow.io` previews read-only or local-state only.
 
-In Webflow Designer previews, keep `Approval Endpoint URL` empty. For the authenticated `.agency` operator surface, set it to:
+The production Webflow publish origin is:
 
 ```text
-https://createsomething.agency/api/canon/operator-approval
+https://governed-workflow-console.webflow.io
+```
+
+Use these endpoint props for read and preview behavior:
+
+```text
+Workflow Context Endpoint URL: https://createsomething.agency/api/canon/workflow-context
+Agent Endpoint URL: https://createsomething.agency/api/canon/agent
+Action Endpoint URL: https://createsomething.agency/api/canon/action-preview
+```
+
+In Webflow Designer and the published `webflow.io` origin, keep `Approval Endpoint URL` empty unless a Webflow-specific operator auth bridge is active. The backend CORS policy trusts `https://governed-workflow-console.webflow.io`, but the existing `.agency` session cookies are `SameSite=Lax` and do not travel on cross-site fetch POSTs from `webflow.io`.
+
+For the authenticated `.agency` operator surface, or after a compatible Webflow operator auth bridge exists, set:
+
+```text
+Approval Endpoint URL: https://createsomething.agency/api/canon/operator-approval
+Approval Request Credentials: include
 ```
 
 Endpoint defaults should stay empty in reusable components. Promotion to a specific Webflow site should set Cloudflare URLs in the Webflow Designer or a site-specific composition layer.

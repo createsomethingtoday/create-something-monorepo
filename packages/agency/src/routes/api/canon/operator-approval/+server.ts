@@ -4,6 +4,8 @@ import type { CanonApprovalUpdateBody } from '$lib/canon/control';
 import { persistCanonApprovalUpdate } from '$lib/server/canon-approval';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 
+const TRUSTED_WEBFLOW_OPERATOR_ORIGINS = new Set(['https://governed-workflow-console.webflow.io']);
+
 export const OPTIONS: RequestHandler = async ({ request, url, platform }) => {
 	return new Response(null, { status: 204, headers: buildOperatorCorsHeaders(request, url, platform?.env) });
 };
@@ -92,6 +94,7 @@ function isAllowedOperatorOrigin(origin: string, url: URL, env?: App.Platform['e
 		const parsedOrigin = new URL(origin);
 		if (parsedOrigin.origin === url.origin) return true;
 		if (configuredOrigins.has(parsedOrigin.origin)) return true;
+		if (TRUSTED_WEBFLOW_OPERATOR_ORIGINS.has(parsedOrigin.origin)) return true;
 		if (parsedOrigin.protocol === 'https:' && isCreateSomethingAgencyHost(parsedOrigin.hostname)) return true;
 		if (isLocalhost(parsedOrigin.hostname) && isLocalhost(url.hostname)) return true;
 	} catch {

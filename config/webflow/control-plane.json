@@ -8,6 +8,7 @@
     "packagePath": "packages/webflow-components",
     "libraryName": "CREATE SOMETHING Canon Components",
     "libraryId": "create-something-canon-components",
+    "publishedOrigin": "https://governed-workflow-console.webflow.io",
     "webflowJsonPath": "packages/webflow-components/webflow.json",
     "shareCommand": "cd packages/webflow-components && pnpm run share",
     "verifyCommand": "pnpm webflow:components:verify",
@@ -18,7 +19,8 @@
       "operatorApproval": "",
       "workflowContext": "",
       "status": "deployment_specific"
-    }
+    },
+    "operatorApprovalTrustedOrigins": ["https://governed-workflow-console.webflow.io"]
   },
   "governanceDataPlane": {
     "sourceOfTruth": "cloudflare",

@@ -606,6 +606,16 @@ function readableStatus(status: string | undefined) {
   return status ? status.replace(/_/g, ' ') : 'ready';
 }
 
+function isCrossOriginEndpoint(endpointUrl: string) {
+  if (!endpointUrl || typeof window === 'undefined') return false;
+
+  try {
+    return new URL(endpointUrl, window.location.href).origin !== window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 const surfaceStyles: CSSProperties = {
   background: tokens.colors.bgSurface,
   border: `1px solid ${tokens.colors.borderDefault}`,
@@ -1602,6 +1612,10 @@ export function ApprovalQueue({
     setPendingId(approval.id);
 
     try {
+      if (requestCredentials === 'same-origin' && isCrossOriginEndpoint(endpointUrl)) {
+        throw new Error('Cross-origin approval endpoints require Approval Request Credentials = include.');
+      }
+
       const response = await fetch(endpointUrl, {
         method: 'POST',
         credentials: requestCredentials,
