@@ -36,6 +36,7 @@ Retool is the console layer that makes that promise visible and usable.
 | Tool/data interface | MCP servers | Governed access to repo, apps, APIs, databases, and workflows |
 | AI skill server | Dify | Bounded AI workflows, RAG, structured drafting, MCP-packaged skills |
 | Operator companion | Moltworker / RELAY | Preferred internal chief-of-staff assistant runtime on Cloudflare; TrustClaw is parked as a Vercel exception path |
+| Calm decision surface | Core Ink | Untethered e-ink brief, offline Decision Garden, and compact operator signals |
 | Runtime workers | Workers, cron jobs, custom services | Durable automation and action execution |
 
 ## Database / Automation / Judgment Mapping
@@ -85,6 +86,68 @@ Retool should not own:
 
 If a feature cannot be rebuilt from repo contracts, MCP servers, external data,
 and runbooks without manually reading Retool state, it is too locked in.
+
+## Core Ink Responsibilities
+
+Core Ink is the calm, untethered decision surface for CREATE SOMETHING.
+
+It should answer a smaller question than Retool:
+
+> What is worth carrying away from the computer?
+
+Core Ink owns:
+
+- current operator brief
+- MCP/agent health review request
+- daily rhythm and clock
+- local quiet settings
+- offline Decision Garden state
+- compact check-ins from away from the laptop
+- low-risk attention signals that can be imported later
+
+Core Ink should not own:
+
+- source of truth
+- full project management
+- long-form writing
+- raw client data
+- raw secrets
+- production mutations
+- final approvals
+- client-facing publication
+
+Core Ink is reliable when it behaves like a physical briefing and decision
+marker. It is unreliable when treated like a tiny dashboard, phone, laptop, or
+general-purpose planner.
+
+The preferred untethered loop is:
+
+```text
+Retool / bridge prepares a compact brief
+  -> Core Ink syncs when Wi-Fi is available
+  -> operator steps away from the computer
+  -> Decision Garden captures slow signals offline
+  -> Check In posts compact operator state
+  -> Retool turns it into a review packet
+  -> ChatGPT Apps or agents expand it only after approval
+  -> monorepo/config changes land through normal review
+```
+
+Use Core Ink for:
+
+- decision incubation over days or months
+- Database / Automation / Judgment sorting
+- marking `now`, `next`, `later`, `blocked`, or `needs desktop review`
+- acknowledging that the business has a signal without forcing immediate action
+
+Do not use Core Ink for:
+
+- detailed editing
+- dense lists
+- rapid updates
+- final deploy decisions
+- permission changes
+- employment, staffing, legal, or financial decisions
 
 ## First Retool App
 

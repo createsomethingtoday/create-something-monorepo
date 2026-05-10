@@ -2,32 +2,32 @@
   const callouts = [
     {
       label: 'E-ink surface',
-      detail: 'TRMNL-ready or custom Ink status, approval, and blocked-state briefs.',
+      detail: 'TRMNL-ready or custom Ink briefs for status, approvals, and slow decisions.',
       modifier: 'screen'
     },
     {
       label: 'Physical controls',
-      detail: 'Acknowledge, scroll, silence, or return to the full review surface.',
+      detail: 'Acknowledge, mark, silence, or save a signal for the next review.',
       modifier: 'controls'
     },
     {
       label: 'Magnet back',
-      detail: 'The operator surface can live on a cabinet, desk rail, or review station.',
+      detail: 'The operator surface can leave the laptop and live where decisions settle.',
       modifier: 'magnet'
     }
   ];
 
   const surfaceCards = [
     {
-      title: 'Approval state',
-      body: 'Risky work waits for the right human with the artifact and reason visible.',
+      title: 'Decision state',
+      body: 'High-level signals can be marked away from the computer, then imported for review.',
       image: '/images/ink/ink-blueprint-controls.png',
       imageWebp: '/images/ink/ink-blueprint-controls.webp',
       alt: 'Blueprint render of the Ink physical controls showing an approval state.'
     },
     {
       title: 'Magnetic surface',
-      body: 'The device can leave the laptop and become a quiet status point in the room.',
+      body: 'The device stays untethered after setup: brief, reflect, mark, and sync later.',
       image: '/images/ink/ink-blueprint-magnet.png',
       imageWebp: '/images/ink/ink-blueprint-magnet.webp',
       alt: 'Blueprint render of Ink mounted magnetically to a vertical metal surface.'
@@ -37,12 +37,12 @@
 
 <div class="ink-surface product-surface product-surface--soft">
   <div class="ink-surface__copy">
-    <span class="product-kicker">TRMNL + Ink operator surface</span>
-    <h2>The operator should not have to watch the dashboard.</h2>
+    <span class="product-kicker">TRMNL + Ink decision surface</span>
+    <h2>The operator should be able to step away.</h2>
     <p>
       TRMNL gives the delivery a ready ePaper companion for all-clear, approval-needed, blocked,
-      and recovery states. Custom Ink hardware stays available when the workflow needs physical
-      controls, while CREATE SOMETHING owns the operating layer, labels, and escalation behavior.
+      and recovery states. Custom Ink hardware adds an untethered Decision Garden for slow business
+      signals, while CREATE SOMETHING owns the operating layer, labels, import path, and escalation behavior.
     </p>
 
     <div class="ink-state-grid" aria-label="Ink display states">

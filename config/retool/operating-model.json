@@ -51,6 +51,11 @@
       "role": "Preferred internal chief-of-staff assistant runtime on Cloudflare; TrustClaw remains parked as a Vercel exception path"
     },
     {
+      "layer": "calm_decision_surface",
+      "tool": "core_ink",
+      "role": "Untethered e-ink brief, offline Decision Garden, and compact operator signals"
+    },
+    {
       "layer": "runtime_workers",
       "tool": "workers_cron_custom_services",
       "role": "Durable automation and action execution"
@@ -96,6 +101,65 @@
       "approve_employment_decisions",
       "publish_public_proof"
     ]
+  },
+  "coreInkRole": {
+    "classification": "untethered_calm_decision_surface",
+    "packagePaths": [
+      "packages/calm-operator-ink-firmware",
+      "packages/calm-operator-ink-bridge"
+    ],
+    "purpose": "Carry compact operator state away from the computer, support offline decision incubation, and sync low-risk signals back into Retool review.",
+    "mainQuestion": "What is worth carrying away from the computer?",
+    "notRole": [
+      "source_of_truth",
+      "full_project_management",
+      "general_purpose_planner",
+      "production_approval_surface",
+      "client_publication_surface",
+      "secrets_or_sensitive_data_store"
+    ],
+    "modes": [
+      "operator_brief",
+      "health_review_request",
+      "daily_rhythm",
+      "calm_reset",
+      "decision_garden",
+      "manual_check_in"
+    ],
+    "untetheredRules": [
+      "work_after_initial_firmware_upload_without_laptop_nearby",
+      "store_only_compact_low_risk_state_locally",
+      "support_offline_decision_incubation",
+      "sync_later_when_wifi_is_available",
+      "route_imported_signals_to_retool_review_before_action"
+    ],
+    "offlineDecisionGarden": {
+      "capacity": 9,
+      "localState": [
+        "marked_slots",
+        "cursor",
+        "sound_settings"
+      ],
+      "eventType": "offline_decision_garden",
+      "importEndpoint": "/ink/operator-event",
+      "reviewDestination": "retool_review_packet",
+      "expansionLayer": "chatgpt_apps_or_repo_agents_after_approval"
+    },
+    "allowedOfflineWork": [
+      "calm_reset",
+      "daily_rhythm_review",
+      "decision_incubation",
+      "marking_high_level_signals",
+      "needs_desktop_review_acknowledgment"
+    ],
+    "blockedOfflineWork": [
+      "production_deploys",
+      "permission_changes",
+      "client_visible_publication",
+      "secret_or_credential_changes",
+      "employment_staffing_legal_or_financial_decisions"
+    ],
+    "reliabilityPosture": "Reliable as a low-frequency snapshot and offline queue; unreliable as a dense dashboard, rapid editor, or autonomous command surface."
   },
   "initialWorkflows": [
     {

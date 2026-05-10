@@ -8,6 +8,7 @@ The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is o
 
 - Store active operator alerts in a Durable Object.
 - Accept MCP/agent health snapshots and attention events.
+- Accept compact untethered Core Ink operator events.
 - Collect configured remote health checks on the same schedule.
 - Run a scheduled health review four times daily.
 - Fire daily local alarms for the operator at configured Central Time moments.
@@ -138,6 +139,41 @@ pnpm post:health -- --component "Claude Code Slack watcher" --status degraded --
 ```
 
 Both commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the environment.
+
+## Untethered Core Ink Decisions
+
+Core Ink is allowed to work away from the laptop. The device should store only
+compact, low-risk local state while offline and post that state as an operator
+event when Wi-Fi is available.
+
+Preferred event shape:
+
+```json
+{
+  "type": "offline_decision_garden",
+  "source": "core-ink",
+  "summary": "Core Ink offline decision signal",
+  "payload": {
+    "surface": "core-ink",
+    "device_id": "core-ink",
+    "decision_garden": {
+      "marked_slots": 4,
+      "cursor": 4,
+      "capacity": 9,
+      "offline": true
+    }
+  }
+}
+```
+
+The bridge stores the event, but it should not turn an offline signal into a
+production action by itself. Retool, ChatGPT Apps, or repo-side agents can expand
+the signal into a review packet. Human approval is still required before the
+signal becomes config, metadata, client communication, code, or production work.
+
+Do not store sensitive business content, secrets, client records, or private
+scratchpads on the device. Treat Core Ink as a decision marker and briefing
+surface, not as the source of truth.
 
 ## Scheduled health review
 

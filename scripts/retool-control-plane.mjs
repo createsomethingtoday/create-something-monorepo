@@ -265,6 +265,14 @@ function checkGraph(graph) {
     errors.push('Composio must remain allowed as hidden operator-companion integration plumbing.');
   }
 
+  if (graph.operatingModel?.coreInkRole?.classification !== 'untethered_calm_decision_surface') {
+    errors.push('Core Ink must remain classified as the untethered calm decision surface.');
+  }
+
+  if (graph.operatingModel?.coreInkRole?.offlineDecisionGarden?.importEndpoint !== '/ink/operator-event') {
+    errors.push('Core Ink offline Decision Garden must import through /ink/operator-event.');
+  }
+
   if (graph.operatingModel?.trustClawRole?.classification !== 'parked_operator_companion_candidate') {
     errors.push('TrustClaw must remain parked unless the operating model is deliberately revised.');
   }

@@ -3,12 +3,18 @@
 Production-oriented firmware for M5Stack Core Ink as the pocket surface for
 CREATE SOMETHING operations.
 
+Core Ink should work untethered after the initial firmware upload and secret
+configuration. It should not depend on a nearby laptop for normal use. The
+device keeps its local rhythm, sound settings, and Decision Garden state on the
+device, then syncs compact operator signals to the bridge when Wi-Fi is
+available.
+
 The firmware is intentionally simple:
 
 - Wi-Fi only. BLE/iPhone notification capture is not part of this build.
 - Polls `https://ink.createsomething.agency` for the current operator brief.
 - Requests a live MCP/agent health review from Ink.
-- Provides local rhythm, clock, settings, and calm tools.
+- Provides local rhythm, clock, settings, and calm decision tools.
 - Uses slow, explicit e-ink refreshes instead of animated UI.
 - Keeps the current screen visible during network work and redraws only when the
   final screen changes.
@@ -79,7 +85,7 @@ Menu buckets:
 
 - `Operator`: Sync, MCP Review, Check In
 - `Rhythm`: Clock, Rhythm
-- `Calm`: Calm Reset, Stone Garden
+- `Calm`: Calm Reset, Decision Garden
 - `Settings`: Alerts, Quiet Mode, Status
 
 Local settings are stored on the device:
@@ -87,6 +93,43 @@ Local settings are stored on the device:
 - `Alerts` toggles sound alerts on or off.
 - `Quiet Mode` suppresses all beeps without changing the alert preference.
 - The footer shows `BEEP`, `MUTE`, or `QUIET` so the current sound behavior is visible.
+- `Decision Garden` stores its marked slots and cursor locally so the surface can
+  keep working offline. `Check In` includes the Decision Garden count in the next
+  operator event posted to the bridge, then clears the local queue after a
+  successful post.
+
+## Untethered Use
+
+Core Ink is a low-frequency decision instrument, not a small computer.
+
+Expected untethered flow:
+
+1. Sync the current operator brief when Wi-Fi is available.
+2. Step away from the laptop.
+3. Use `Decision Garden` to mark slow, unresolved business signals offline.
+4. Use `Check In` to post the compact state when Wi-Fi returns.
+5. Let Retool, ChatGPT Apps, or repo-side agents expand that signal into a review
+   packet before anything lands in code, config, client communication, or
+   production.
+
+In `Decision Garden`, `B` marks the current slot. When all nine slots are marked,
+pressing `B` resets the garden locally.
+
+Allowed offline work:
+
+- calm reset
+- daily rhythm review
+- decision incubation
+- marking high-level signals
+- acknowledging that something needs desktop review later
+
+Blocked offline work:
+
+- production deploys
+- permission changes
+- client-visible publication
+- secrets or credential changes
+- employment, staffing, legal, or financial decisions
 
 ## Notes
 

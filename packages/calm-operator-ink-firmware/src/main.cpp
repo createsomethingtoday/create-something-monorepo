@@ -14,7 +14,7 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.3";
+constexpr const char* FIRMWARE_VERSION = "0.1.4";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
 constexpr const char* SETTINGS_NAMESPACE = "calm-ink";
@@ -42,7 +42,7 @@ const MenuAction MENU[] = {
   {"Rhythm", "Clock"},
   {"Rhythm", "Rhythm"},
   {"Calm", "Calm Reset"},
-  {"Calm", "Stone Garden"},
+  {"Calm", "Decision Garden"},
   {"Settings", "Alerts"},
   {"Settings", "Quiet Mode"},
   {"Settings", "Status"}
@@ -55,7 +55,7 @@ enum class Screen {
   Clock,
   Rhythm,
   CalmReset,
-  StoneGarden,
+  DecisionGarden,
   Status
 };
 
@@ -120,12 +120,25 @@ void loadSettings() {
   prefs.begin(SETTINGS_NAMESPACE, false);
   alertsEnabled = prefs.getBool("alerts", true);
   quietMode = prefs.getBool("quiet", false);
-  Serial.printf("[ink] settings alerts=%s quiet=%s\n", alertsEnabled ? "on" : "off", quietMode ? "on" : "off");
+  stoneCursor = constrain(prefs.getInt("garden_cursor", 0), 0, STONE_SLOTS - 1);
+  stoneCount = constrain(prefs.getInt("garden_count", 0), 0, STONE_SLOTS);
+  Serial.printf(
+    "[ink] settings alerts=%s quiet=%s garden=%d/%d cursor=%d\n",
+    alertsEnabled ? "on" : "off",
+    quietMode ? "on" : "off",
+    stoneCount,
+    STONE_SLOTS,
+    stoneCursor);
 }
 
 void saveSettings() {
   prefs.putBool("alerts", alertsEnabled);
   prefs.putBool("quiet", quietMode);
+}
+
+void saveDecisionGarden() {
+  prefs.putInt("garden_cursor", stoneCursor);
+  prefs.putInt("garden_count", stoneCount);
 }
 
 void beepSoft() {
@@ -285,7 +298,7 @@ String menuHint(const String& label) {
   if (label == "Clock") return "Show Central Time";
   if (label == "Rhythm") return "Daily anchors";
   if (label == "Calm Reset") return "Breathing reset";
-  if (label == "Stone Garden") return "Slow tactile play";
+  if (label == "Decision Garden") return "Sort offline signals";
   if (label == "Alerts") return "Toggle beeps";
   if (label == "Quiet Mode") return "Mute all beeps";
   return "Device status";
@@ -495,14 +508,28 @@ void operatorCheckIn() {
   Serial.println("[ink] saving operator check-in");
   renderStatus("CHECK IN", "Saving operator state", "Manual Ink check-in");
   String payload;
+  const bool hasDecisionGardenSignal = stoneCount > 0;
+  const String eventType = hasDecisionGardenSignal ? "offline_decision_garden" : "manual_check_in";
+  const String summary = hasDecisionGardenSignal
+    ? "Core Ink offline decision signal"
+    : "Manual Core Ink operator check-in";
   const String body =
-    String("{\"type\":\"manual_check_in\",\"source\":\"core-ink\",") +
-    "\"summary\":\"Manual Core Ink operator check-in\"," +
+    String("{\"type\":\"") + eventType + "\",\"source\":\"core-ink\"," +
+    "\"summary\":\"" + summary + "\"," +
     "\"payload\":{\"surface\":\"" + jsonEscape(CALM_OPERATOR_SURFACE) + "\"," +
     "\"device_id\":\"" + jsonEscape(CALM_OPERATOR_DEVICE_ID) + "\"," +
+    "\"decision_garden\":{\"marked_slots\":" + String(stoneCount) +
+    ",\"cursor\":" + String(stoneCursor) +
+    ",\"capacity\":" + String(STONE_SLOTS) +
+    ",\"offline\":true}," +
     "\"battery_percent\":" + String(batteryPercent()) + "}}";
   const int status = requestBridge("POST", "/ink/operator-event", body, payload);
   if (status >= 200 && status < 300) {
+    if (hasDecisionGardenSignal) {
+      stoneCount = 0;
+      stoneCursor = 0;
+      saveDecisionGarden();
+    }
     lastSyncStatus = "check-in saved";
     fetchBrief(true);
   } else {
@@ -562,9 +589,9 @@ void renderCalmReset() {
   flushFrame(screenKey("calm-reset"));
 }
 
-void renderStoneGarden() {
-  screen = Screen::StoneGarden;
-  startFrame("STONE GARDEN", false);
+void renderDecisionGarden() {
+  screen = Screen::DecisionGarden;
+  startFrame("DECISION GARDEN", false);
   for (int i = 0; i < STONE_SLOTS; i++) {
     canvas.drawCircle(STONE_X[i], STONE_Y[i], 10, TFT_BLACK);
     if (i < stoneCount) {
@@ -572,9 +599,10 @@ void renderStoneGarden() {
     }
   }
   canvas.drawRect(STONE_X[stoneCursor] - 14, STONE_Y[stoneCursor] - 14, 28, 28, TFT_BLACK);
-  canvas.drawString("A/C move  B place", 28, 162);
-  drawFooter("PWR sync");
-  flushFrame(screenKey("stone", String(stoneCursor), String(stoneCount)));
+  canvas.drawString("A/C move  B mark", 28, 158);
+  canvas.drawString((String(stoneCount) + "/9 offline").c_str(), 64, 170);
+  drawFooter("Check In syncs");
+  flushFrame(screenKey("decision-garden", String(stoneCursor), String(stoneCount)));
 }
 
 void renderSettingsStatus() {
@@ -603,8 +631,8 @@ void selectMenuAction() {
     renderRhythm();
   } else if (label == "Calm Reset") {
     renderCalmReset();
-  } else if (label == "Stone Garden") {
-    renderStoneGarden();
+  } else if (label == "Decision Garden") {
+    renderDecisionGarden();
   } else if (label == "Alerts") {
     alertsEnabled = !alertsEnabled;
     saveSettings();
@@ -627,9 +655,15 @@ void handleSelect() {
     return;
   }
 
-  if (screen == Screen::StoneGarden) {
-    if (stoneCount < STONE_SLOTS && stoneCursor == stoneCount) stoneCount++;
-    renderStoneGarden();
+  if (screen == Screen::DecisionGarden) {
+    if (stoneCount >= STONE_SLOTS) {
+      stoneCount = 0;
+      stoneCursor = 0;
+    } else if (stoneCursor >= stoneCount) {
+      stoneCount = stoneCursor + 1;
+    }
+    saveDecisionGarden();
+    renderDecisionGarden();
     return;
   }
 
@@ -640,9 +674,10 @@ void handlePrevious() {
   if (screen == Screen::Menu) {
     menuIndex = (menuIndex + MENU_COUNT - 1) % MENU_COUNT;
     renderMenu();
-  } else if (screen == Screen::StoneGarden) {
+  } else if (screen == Screen::DecisionGarden) {
     stoneCursor = (stoneCursor + STONE_SLOTS - 1) % STONE_SLOTS;
-    renderStoneGarden();
+    saveDecisionGarden();
+    renderDecisionGarden();
   }
 }
 
@@ -650,9 +685,10 @@ void handleNext() {
   if (screen == Screen::Menu) {
     menuIndex = (menuIndex + 1) % MENU_COUNT;
     renderMenu();
-  } else if (screen == Screen::StoneGarden) {
+  } else if (screen == Screen::DecisionGarden) {
     stoneCursor = (stoneCursor + 1) % STONE_SLOTS;
-    renderStoneGarden();
+    saveDecisionGarden();
+    renderDecisionGarden();
   }
 }
 
