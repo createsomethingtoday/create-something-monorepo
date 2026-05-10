@@ -1,17 +1,16 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import {
-	canonControlContext,
 	canonCorsHeaders,
-	selectCanonAction,
 	type CanonActionPreviewBody
 } from '$lib/canon/control';
+import { loadCanonWorkflowContext, selectCanonWorkflowAction } from '$lib/canon/workflow-context';
 
 export const OPTIONS: RequestHandler = async () => {
 	return new Response(null, { status: 204, headers: canonCorsHeaders });
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	let body: CanonActionPreviewBody;
 
 	try {
@@ -20,9 +19,10 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ error: 'Request body must be JSON.' }, { status: 400, headers: canonCorsHeaders });
 	}
 
+	const context = await loadCanonWorkflowContext(platform?.env?.DB, body.contextId);
 	const actionId = typeof body.actionId === 'string' && body.actionId.trim() ? body.actionId.trim() : 'draft-operator-brief';
 	const approvalState = typeof body.approvalState === 'string' ? body.approvalState : 'review';
-	const action = selectCanonAction(actionId);
+	const action = selectCanonWorkflowAction(context, actionId);
 	const approved = approvalState === 'approved';
 	const status = action.status === 'blocked' ? 'blocked' : action.status === 'requires_approval' && !approved ? 'requires_approval' : 'allowed';
 
@@ -40,13 +40,14 @@ export const POST: RequestHandler = async ({ request }) => {
 						: action.summary,
 			policyChecks: [
 				...action.policyChecks,
-				...canonControlContext.guardrails.slice(1, 3)
+				...context.guardrails.slice(1, 3)
 			],
 			evidence: action.evidence,
 			allowedNextActions: action.allowedNextActions,
-			guardrails: canonControlContext.guardrails
+			contextId: context.contextId,
+			contextSource: context.source,
+			guardrails: context.guardrails
 		},
 		{ headers: canonCorsHeaders }
 	);
 };
-

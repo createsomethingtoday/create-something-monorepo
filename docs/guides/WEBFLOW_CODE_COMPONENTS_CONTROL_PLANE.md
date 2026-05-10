@@ -31,10 +31,19 @@ pnpm webflow:governance:verify
 
 Control components render without live endpoints by using static Webflow props. For interactive deployments, configure endpoint props per site or environment:
 
+- `*.contextEndpointUrl` for components that should hydrate from the D1-backed workflow context
 - `AgentDock.endpointUrl`
 - `ActionPreview.endpointUrl`
 - `CanonControlPanel.agentEndpointUrl`
 - `CanonControlPanel.actionEndpointUrl`
+
+The shared workflow context endpoint shape is:
+
+```text
+GET /api/canon/workflow-context?contextId=create-something-governed-workflow-console
+```
+
+That route returns sanitized runtime checks, Database / Automation / Judgment layers, action definitions, approval state, evidence, decisions, artifacts, agent prompts, and guardrails. It must not return secrets, raw source data, credentials, private workspace URLs, or token-bearing endpoints.
 
 Endpoint defaults should stay empty in reusable components. Promotion to a specific Webflow site should set Cloudflare URLs in the Webflow Designer or a site-specific composition layer.
 

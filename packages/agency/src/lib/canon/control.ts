@@ -22,6 +22,7 @@ export type CanonActionStatus = 'allowed' | 'requires_approval' | 'blocked';
 export type CanonActionDefinition = {
 	id: string;
 	label: string;
+	description?: string;
 	summary: string;
 	status: CanonActionStatus;
 	risk: 'low' | 'medium' | 'high';
@@ -35,7 +36,7 @@ export const CANON_MAX_HISTORY_MESSAGES = 8;
 
 export const canonCorsHeaders = {
 	'access-control-allow-origin': '*',
-	'access-control-allow-methods': 'POST, OPTIONS',
+	'access-control-allow-methods': 'GET, POST, OPTIONS',
 	'access-control-allow-headers': 'content-type'
 };
 
@@ -178,4 +179,3 @@ export function classifyCanonQuestion(message: string) {
 export function selectCanonAction(actionId: string) {
 	return canonActionDefinitions.find((action) => action.id === actionId) ?? canonActionDefinitions[0];
 }
-

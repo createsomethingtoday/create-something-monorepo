@@ -1,4 +1,4 @@
-import React, { CSSProperties, FormEvent, useMemo, useState } from 'react';
+import React, { CSSProperties, FormEvent, useEffect, useMemo, useState } from 'react';
 import { tokens } from '../../styles/tokens';
 
 export type TriadTier = 'Database' | 'Automation' | 'Judgment';
@@ -90,6 +90,46 @@ type AgentResponse = {
   followUpQuestions?: string[];
   restricted?: boolean;
   actions?: string[];
+};
+
+type WorkflowApproval = {
+  title?: string;
+  description?: string;
+  approvalState?: ApprovalState;
+  requiredApprover?: string;
+  primaryActionLabel?: string;
+  secondaryActionLabel?: string;
+};
+
+type WorkflowAgent = {
+  title?: string;
+  placeholder?: string;
+  suggestedPrompts?: SuggestedPrompt[];
+  initialMessages?: AgentMessage[];
+};
+
+type WorkflowRuntime = {
+  label?: string;
+  status?: CheckStatus;
+  environment?: string;
+  lastChecked?: string;
+  checks?: RuntimeCheck[];
+};
+
+type WorkflowContextPayload = {
+  contextId?: string;
+  title?: string;
+  summary?: string;
+  source?: string;
+  runtime?: WorkflowRuntime;
+  layers?: OperatingLayer[];
+  actions?: ActionPreviewItem[];
+  approval?: WorkflowApproval;
+  evidence?: EvidenceItem[];
+  decisions?: DecisionItem[];
+  artifacts?: ArtifactItem[];
+  agent?: WorkflowAgent;
+  guardrails?: string[];
 };
 
 const defaultLayers: OperatingLayer[] = [
@@ -248,6 +288,43 @@ function parseJsonList<T>(value: JsonList<T> | undefined, fallback: T[]): T[] {
   } catch {
     return fallback;
   }
+}
+
+function useWorkflowContext(contextEndpointUrl = '', contextId = 'create-something-governed-workflow-console') {
+  const [context, setContext] = useState<WorkflowContextPayload | null>(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!contextEndpointUrl.trim()) {
+      setContext(null);
+      setError('');
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadContext() {
+      try {
+        const url = new URL(contextEndpointUrl, window.location.href);
+        url.searchParams.set('contextId', contextId);
+        const response = await fetch(url.toString(), { signal: controller.signal });
+        const payload = (await response.json()) as WorkflowContextPayload & { error?: string };
+        if (!response.ok) throw new Error(payload.error ?? 'Unable to load workflow context.');
+        setContext(payload);
+        setError('');
+      } catch (contextError) {
+        if (controller.signal.aborted) return;
+        setContext(null);
+        setError(contextError instanceof Error ? contextError.message : 'Unable to load workflow context.');
+      }
+    }
+
+    void loadContext();
+
+    return () => controller.abort();
+  }, [contextEndpointUrl, contextId]);
+
+  return { context, error };
 }
 
 function asTextList(value: unknown): string[] {
@@ -570,6 +647,8 @@ function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone
 
 export interface OperatingLayerCardsProps {
   layers?: JsonList<OperatingLayer>;
+  contextEndpointUrl?: string;
+  contextId?: string;
   title?: string;
   body?: string;
   layout?: 'three' | 'two' | 'compact';
@@ -578,12 +657,15 @@ export interface OperatingLayerCardsProps {
 
 export function OperatingLayerCards({
   layers,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
   title = 'Operating Layers',
   body,
   layout = 'three',
   className = '',
 }: OperatingLayerCardsProps) {
-  const parsedLayers = useMemo(() => parseJsonList(layers, defaultLayers), [layers]);
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedLayers = useMemo(() => context?.layers ?? parseJsonList(layers, defaultLayers), [context?.layers, layers]);
   const gridClassName = layout === 'two' ? 'cs-control-grid cs-control-grid--two' : 'cs-control-grid';
 
   return (
@@ -639,6 +721,8 @@ export function OperatingLayerCards({
 
 export interface EvidenceTrailProps {
   evidence?: JsonList<EvidenceItem>;
+  contextEndpointUrl?: string;
+  contextId?: string;
   title?: string;
   body?: string;
   compact?: boolean;
@@ -647,12 +731,15 @@ export interface EvidenceTrailProps {
 
 export function EvidenceTrail({
   evidence,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
   title = 'Evidence Trail',
   body,
   compact = false,
   className = '',
 }: EvidenceTrailProps) {
-  const parsedEvidence = useMemo(() => parseJsonList(evidence, defaultEvidence), [evidence]);
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedEvidence = useMemo(() => context?.evidence ?? parseJsonList(evidence, defaultEvidence), [context?.evidence, evidence]);
 
   return (
     <ComponentShell className={className}>
@@ -738,6 +825,8 @@ export function EvidenceTrail({
 
 export interface ArtifactGridProps {
   artifacts?: JsonList<ArtifactItem>;
+  contextEndpointUrl?: string;
+  contextId?: string;
   title?: string;
   body?: string;
   columns?: 'two' | 'three' | 'four';
@@ -746,12 +835,15 @@ export interface ArtifactGridProps {
 
 export function ArtifactGrid({
   artifacts,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
   title = 'Review Artifacts',
   body,
   columns = 'three',
   className = '',
 }: ArtifactGridProps) {
-  const parsedArtifacts = useMemo(() => parseJsonList(artifacts, defaultArtifacts), [artifacts]);
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedArtifacts = useMemo(() => context?.artifacts ?? parseJsonList(artifacts, defaultArtifacts), [context?.artifacts, artifacts]);
   const gridClassName =
     columns === 'two'
       ? 'cs-control-grid cs-control-grid--two'
@@ -827,6 +919,8 @@ export function ArtifactGrid({
 
 export interface DecisionQueueProps {
   decisions?: JsonList<DecisionItem>;
+  contextEndpointUrl?: string;
+  contextId?: string;
   title?: string;
   body?: string;
   className?: string;
@@ -834,11 +928,14 @@ export interface DecisionQueueProps {
 
 export function DecisionQueue({
   decisions,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
   title = 'Decisions Needed',
   body,
   className = '',
 }: DecisionQueueProps) {
-  const parsedDecisions = useMemo(() => parseJsonList(decisions, defaultDecisions), [decisions]);
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedDecisions = useMemo(() => context?.decisions ?? parseJsonList(decisions, defaultDecisions), [context?.decisions, decisions]);
 
   return (
     <ComponentShell className={className}>
@@ -910,6 +1007,8 @@ export interface RuntimeStatusProps {
   environment?: string;
   lastChecked?: string;
   checks?: JsonList<RuntimeCheck>;
+  contextEndpointUrl?: string;
+  contextId?: string;
   className?: string;
 }
 
@@ -919,16 +1018,24 @@ export function RuntimeStatus({
   environment = 'Cloudflare Pages',
   lastChecked = 'Preview ready',
   checks,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
   className = '',
 }: RuntimeStatusProps) {
-  const parsedChecks = useMemo(() => parseJsonList(checks, defaultChecks), [checks]);
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const runtime = context?.runtime;
+  const parsedChecks = useMemo(() => runtime?.checks ?? parseJsonList(checks, defaultChecks), [runtime?.checks, checks]);
+  const effectiveLabel = runtime?.label ?? label;
+  const effectiveStatus = runtime?.status ?? status;
+  const effectiveEnvironment = runtime?.environment ?? environment;
+  const effectiveLastChecked = runtime?.lastChecked ?? lastChecked;
 
   return (
     <ComponentShell className={className}>
       <article style={{ ...surfaceStyles, padding: tokens.spacing.md }}>
         <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', gap: '1rem' }}>
           <div>
-            <div style={compactLabelStyles}>{environment}</div>
+            <div style={compactLabelStyles}>{effectiveEnvironment}</div>
             <h2
               style={{
                 fontFamily: tokens.typography.fontFamily.tight,
@@ -937,11 +1044,11 @@ export function RuntimeStatus({
                 margin: '0.4rem 0 0',
               }}
             >
-              {label}
+              {effectiveLabel}
             </h2>
-            <p style={{ color: tokens.colors.fgSecondary, margin: '0.55rem 0 0' }}>{lastChecked}</p>
+            <p style={{ color: tokens.colors.fgSecondary, margin: '0.55rem 0 0' }}>{effectiveLastChecked}</p>
           </div>
-          <Badge tone={statusToTone(status)}>{status}</Badge>
+          <Badge tone={statusToTone(effectiveStatus)}>{effectiveStatus}</Badge>
         </div>
         <div className="cs-control-grid" style={{ marginTop: tokens.spacing.md }}>
           {parsedChecks.map((check) => (
@@ -981,6 +1088,7 @@ export function RuntimeStatus({
 export interface ActionPreviewProps {
   actions?: JsonList<ActionPreviewItem>;
   endpointUrl?: string;
+  contextEndpointUrl?: string;
   contextId?: string;
   defaultActionId?: string;
   title?: string;
@@ -991,13 +1099,15 @@ export interface ActionPreviewProps {
 export function ActionPreview({
   actions,
   endpointUrl = '',
-  contextId = 'canon-control-demo',
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
   defaultActionId,
   title = 'Action Preview',
   body = 'Preview governed actions before anything mutates an external system.',
   className = '',
 }: ActionPreviewProps) {
-  const parsedActions = useMemo(() => parseJsonList(actions, defaultActions), [actions]);
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedActions = useMemo(() => context?.actions ?? parseJsonList(actions, defaultActions), [context?.actions, actions]);
   const initialAction = parsedActions.find((action) => action.id === defaultActionId) ?? parsedActions[0];
   const [selectedActionId, setSelectedActionId] = useState(initialAction?.id ?? '');
   const [remotePreview, setRemotePreview] = useState<ActionPreviewResponse | null>(null);
@@ -1007,6 +1117,13 @@ export function ActionPreview({
   const selectedAction = parsedActions.find((action) => action.id === selectedActionId) ?? parsedActions[0];
   const policyChecks = remotePreview?.policyChecks ?? selectedAction?.policyChecks ?? [];
   const evidence = remotePreview?.evidence ?? selectedAction?.evidence ?? [];
+
+  useEffect(() => {
+    if (!parsedActions.some((action) => action.id === selectedActionId)) {
+      setSelectedActionId(initialAction?.id ?? '');
+      setRemotePreview(null);
+    }
+  }, [initialAction?.id, parsedActions, selectedActionId]);
 
   async function previewAction() {
     if (!endpointUrl || !selectedAction) return;
@@ -1149,6 +1266,8 @@ export interface ApprovalGateProps {
   requiredApprover?: string;
   primaryActionLabel?: string;
   secondaryActionLabel?: string;
+  contextEndpointUrl?: string;
+  contextId?: string;
   className?: string;
 }
 
@@ -1159,9 +1278,23 @@ export function ApprovalGate({
   requiredApprover = 'Named operator',
   primaryActionLabel = 'Mark approved',
   secondaryActionLabel = 'Keep in review',
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
   className = '',
 }: ApprovalGateProps) {
-  const [state, setState] = useState<ApprovalState>(approvalState);
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const approval = context?.approval;
+  const effectiveTitle = approval?.title ?? title;
+  const effectiveDescription = approval?.description ?? description;
+  const effectiveApprover = approval?.requiredApprover ?? requiredApprover;
+  const effectivePrimaryActionLabel = approval?.primaryActionLabel ?? primaryActionLabel;
+  const effectiveSecondaryActionLabel = approval?.secondaryActionLabel ?? secondaryActionLabel;
+  const effectiveApprovalState = approval?.approvalState ?? approvalState;
+  const [state, setState] = useState<ApprovalState>(effectiveApprovalState);
+
+  useEffect(() => {
+    setState(effectiveApprovalState);
+  }, [effectiveApprovalState]);
 
   return (
     <ComponentShell className={className}>
@@ -1177,24 +1310,24 @@ export function ApprovalGate({
                 margin: '0.4rem 0 0',
               }}
             >
-              {title}
+              {effectiveTitle}
             </h2>
           </div>
           <Badge tone={statusToTone(state)}>{state}</Badge>
         </div>
         <p style={{ color: tokens.colors.fgSecondary, lineHeight: tokens.typography.lineHeight.relaxed, margin: '0.8rem 0 0' }}>
-          {description}
+          {effectiveDescription}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' }}>
-          <Badge tone="neutral">Approver: {requiredApprover}</Badge>
+          <Badge tone="neutral">Approver: {effectiveApprover}</Badge>
           <Badge tone="warning">No external mutation in v1</Badge>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '0.75rem', marginTop: tokens.spacing.md }}>
           <button className="cs-control-button cs-control-button--ghost" type="button" onClick={() => setState('review')}>
-            {secondaryActionLabel}
+            {effectiveSecondaryActionLabel}
           </button>
           <button className="cs-control-button" type="button" onClick={() => setState('approved')}>
-            {primaryActionLabel}
+            {effectivePrimaryActionLabel}
           </button>
         </div>
       </article>
@@ -1204,6 +1337,7 @@ export function ApprovalGate({
 
 export interface AgentDockProps {
   endpointUrl?: string;
+  contextEndpointUrl?: string;
   contextId?: string;
   title?: string;
   placeholder?: string;
@@ -1214,19 +1348,33 @@ export interface AgentDockProps {
 
 export function AgentDock({
   endpointUrl = '',
-  contextId = 'canon-control-demo',
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
   title = 'Ask the Control Layer',
   placeholder = 'Ask what is approved, private, or ready to preview...',
   suggestedPrompts,
   initialMessages,
   className = '',
 }: AgentDockProps) {
-  const prompts = useMemo(() => parseJsonList(suggestedPrompts, defaultPrompts), [suggestedPrompts]);
-  const parsedInitialMessages = useMemo(() => parseJsonList(initialMessages, defaultMessages), [initialMessages]);
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const prompts = useMemo(
+    () => context?.agent?.suggestedPrompts ?? parseJsonList(suggestedPrompts, defaultPrompts),
+    [context?.agent?.suggestedPrompts, suggestedPrompts]
+  );
+  const parsedInitialMessages = useMemo(
+    () => context?.agent?.initialMessages ?? parseJsonList(initialMessages, defaultMessages),
+    [context?.agent?.initialMessages, initialMessages]
+  );
+  const effectiveTitle = context?.agent?.title ?? title;
+  const effectivePlaceholder = context?.agent?.placeholder ?? placeholder;
   const [messages, setMessages] = useState<AgentMessage[]>(parsedInitialMessages);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setMessages(parsedInitialMessages);
+  }, [parsedInitialMessages]);
 
   async function sendMessage(message: string) {
     const trimmed = message.trim();
@@ -1306,7 +1454,7 @@ export function AgentDock({
                 margin: '0.4rem 0 0',
               }}
             >
-              {title}
+              {effectiveTitle}
             </h2>
           </div>
           <Badge tone={endpointUrl ? 'success' : 'neutral'}>{endpointUrl ? 'Cloudflare' : 'Static'}</Badge>
@@ -1363,7 +1511,7 @@ export function AgentDock({
           <input
             className="cs-control-input"
             value={input}
-            placeholder={placeholder}
+            placeholder={effectivePlaceholder}
             onChange={(event) => setInput(event.target.value)}
             disabled={isLoading}
           />
@@ -1380,6 +1528,7 @@ export interface CanonControlPanelProps {
   heading?: string;
   subheading?: string;
   contextId?: string;
+  contextEndpointUrl?: string;
   agentEndpointUrl?: string;
   actionEndpointUrl?: string;
   layers?: JsonList<OperatingLayer>;
@@ -1395,7 +1544,8 @@ export interface CanonControlPanelProps {
 export function CanonControlPanel({
   heading = 'Canon Control Panel',
   subheading = 'A Webflow interface backed by Cloudflare previews, evidence, and human approval boundaries.',
-  contextId = 'canon-control-demo',
+  contextId = 'create-something-governed-workflow-console',
+  contextEndpointUrl = '',
   agentEndpointUrl = '',
   actionEndpointUrl = '',
   layers,
@@ -1407,6 +1557,18 @@ export function CanonControlPanel({
   runtimeChecks,
   className = '',
 }: CanonControlPanelProps) {
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const effectiveHeading = context?.title ?? heading;
+  const effectiveSubheading = context?.summary ?? subheading;
+  const effectiveLayers = context?.layers ?? layers;
+  const effectiveEvidence = context?.evidence ?? evidence;
+  const effectiveArtifacts = context?.artifacts ?? artifacts;
+  const effectiveDecisions = context?.decisions ?? decisions;
+  const effectiveActions = context?.actions ?? actions;
+  const effectiveSuggestedPrompts = context?.agent?.suggestedPrompts ?? suggestedPrompts;
+  const effectiveRuntime = context?.runtime;
+  const effectiveApproval = context?.approval;
+
   return (
     <ComponentShell className={className}>
       <section
@@ -1429,7 +1591,7 @@ export function CanonControlPanel({
                 maxWidth: '56rem',
               }}
             >
-              {heading}
+              {effectiveHeading}
             </h1>
             <p
               style={{
@@ -1440,38 +1602,52 @@ export function CanonControlPanel({
                 maxWidth: '58rem',
               }}
             >
-              {subheading}
+              {effectiveSubheading}
             </p>
           </div>
           <RuntimeStatus
-            label="Hybrid runtime"
-            status={agentEndpointUrl || actionEndpointUrl ? 'ok' : 'idle'}
-            environment="Webflow + Cloudflare"
-            lastChecked={agentEndpointUrl || actionEndpointUrl ? 'Endpoint configured' : 'Using static Webflow props'}
-            checks={runtimeChecks}
+            label={effectiveRuntime?.label ?? 'Hybrid runtime'}
+            status={effectiveRuntime?.status ?? (agentEndpointUrl || actionEndpointUrl ? 'ok' : 'idle')}
+            environment={effectiveRuntime?.environment ?? 'Webflow + Cloudflare'}
+            lastChecked={effectiveRuntime?.lastChecked ?? (agentEndpointUrl || actionEndpointUrl ? 'Endpoint configured' : 'Using static Webflow props')}
+            checks={effectiveRuntime?.checks ?? runtimeChecks}
           />
         </div>
 
         <div style={{ marginTop: tokens.spacing.lg }}>
-          <OperatingLayerCards layers={layers} body="Each feature is designed as a public surface, a callable runtime, and a policy-backed approval state." />
+          <OperatingLayerCards layers={effectiveLayers} body="Each feature is designed as a public surface, a callable runtime, and a policy-backed approval state." />
         </div>
 
         <div className="cs-control-grid cs-control-grid--two" style={{ marginTop: tokens.spacing.lg, alignItems: 'start' }}>
-          <ActionPreview endpointUrl={actionEndpointUrl} contextId={contextId} actions={actions} />
-          <ApprovalGate />
+          <ActionPreview endpointUrl={actionEndpointUrl} contextId={contextId} actions={effectiveActions} />
+          <ApprovalGate
+            title={effectiveApproval?.title}
+            description={effectiveApproval?.description}
+            approvalState={effectiveApproval?.approvalState}
+            requiredApprover={effectiveApproval?.requiredApprover}
+            primaryActionLabel={effectiveApproval?.primaryActionLabel}
+            secondaryActionLabel={effectiveApproval?.secondaryActionLabel}
+          />
         </div>
 
         <div className="cs-control-grid cs-control-grid--two" style={{ marginTop: tokens.spacing.lg, alignItems: 'start' }}>
-          <AgentDock endpointUrl={agentEndpointUrl} contextId={contextId} suggestedPrompts={suggestedPrompts} />
-          <DecisionQueue decisions={decisions} />
+          <AgentDock
+            endpointUrl={agentEndpointUrl}
+            contextId={contextId}
+            title={context?.agent?.title}
+            placeholder={context?.agent?.placeholder}
+            suggestedPrompts={effectiveSuggestedPrompts}
+            initialMessages={context?.agent?.initialMessages}
+          />
+          <DecisionQueue decisions={effectiveDecisions} />
         </div>
 
         <div style={{ marginTop: tokens.spacing.lg }}>
-          <EvidenceTrail evidence={evidence} />
+          <EvidenceTrail evidence={effectiveEvidence} />
         </div>
 
         <div style={{ marginTop: tokens.spacing.lg }}>
-          <ArtifactGrid artifacts={artifacts} />
+          <ArtifactGrid artifacts={effectiveArtifacts} />
         </div>
       </section>
     </ComponentShell>

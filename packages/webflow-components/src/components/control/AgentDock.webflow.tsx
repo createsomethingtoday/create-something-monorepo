@@ -16,9 +16,14 @@ export default declareComponent(AgentDock, {
       defaultValue: '',
       tooltip: 'Optional POST endpoint for live bounded agent answers',
     }),
+    contextEndpointUrl: props.Text({
+      name: 'Workflow Context Endpoint URL',
+      defaultValue: '',
+      tooltip: 'Optional GET endpoint for D1-backed workflow state',
+    }),
     contextId: props.Text({
       name: 'Context ID',
-      defaultValue: 'canon-control-demo',
+      defaultValue: 'create-something-governed-workflow-console',
     }),
     placeholder: props.Text({
       name: 'Input Placeholder',

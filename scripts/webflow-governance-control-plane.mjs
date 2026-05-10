@@ -163,6 +163,9 @@ function renderDoc(manifest) {
   lines.push('');
   lines.push(`- Source of truth: ${config.governanceDataPlane.sourceOfTruth}`);
   lines.push(`- Durable systems: ${config.governanceDataPlane.durableSystems.join(', ')}`);
+  if (config.governanceDataPlane.workflowContextEndpoint) {
+    lines.push(`- Workflow context endpoint: \`${config.governanceDataPlane.workflowContextEndpoint}\``);
+  }
   lines.push(`- Automation surface: ${config.governanceDataPlane.automationSurface}`);
   lines.push(`- Policy surface: ${config.governanceDataPlane.policySurface}`);
   lines.push(`- Rule: ${config.governanceDataPlane.rule}`);

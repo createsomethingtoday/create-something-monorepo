@@ -20,6 +20,14 @@ export default declareComponent(DecisionQueue, {
       defaultValue: '[{"title":"Confirm authoritative data","description":"Name the source of truth before automation reads or writes records.","owner":"Operator","state":"open","tier":"Database"},{"title":"Approve action boundary","description":"Decide which actions can be drafted and which require manual approval.","owner":"Delivery lead","state":"review","tier":"Judgment"},{"title":"Enable runtime smoke","description":"Verify the Cloudflare endpoint and fallback behavior before publishing.","owner":"Engineer","state":"ready","tier":"Automation"}]',
       tooltip: 'JSON array of {title,description?,owner?,due?,state?,tier?}',
     }),
+    contextEndpointUrl: props.Text({
+      name: 'Workflow Context Endpoint URL',
+      defaultValue: '',
+      tooltip: 'Optional GET endpoint for D1-backed workflow decisions',
+    }),
+    contextId: props.Text({
+      name: 'Context ID',
+      defaultValue: 'create-something-governed-workflow-console',
+    }),
   },
 });
-

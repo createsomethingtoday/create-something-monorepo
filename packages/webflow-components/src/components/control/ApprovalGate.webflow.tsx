@@ -32,6 +32,14 @@ export default declareComponent(ApprovalGate, {
       name: 'Secondary Action Label',
       defaultValue: 'Keep in review',
     }),
+    contextEndpointUrl: props.Text({
+      name: 'Workflow Context Endpoint URL',
+      defaultValue: '',
+      tooltip: 'Optional GET endpoint for D1-backed workflow approval state',
+    }),
+    contextId: props.Text({
+      name: 'Context ID',
+      defaultValue: 'create-something-governed-workflow-console',
+    }),
   },
 });
-

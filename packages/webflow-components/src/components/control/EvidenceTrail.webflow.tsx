@@ -20,10 +20,18 @@ export default declareComponent(EvidenceTrail, {
       defaultValue: '[{"label":"Workflow map","detail":"Current workflow, owner, and decision states are captured before automation.","source":"Delivery artifact","tone":"info"},{"label":"Action contract","detail":"Every action has a preview, policy checks, and a human approval state.","source":"Cloudflare route","tone":"success"},{"label":"Private boundary","detail":"Source data, credentials, and raw client records stay outside the public surface.","source":"Governance rule","tone":"warning"}]',
       tooltip: 'JSON array of {label,detail?,source?,href?,tone?,timestamp?}',
     }),
+    contextEndpointUrl: props.Text({
+      name: 'Workflow Context Endpoint URL',
+      defaultValue: '',
+      tooltip: 'Optional GET endpoint for D1-backed workflow evidence',
+    }),
+    contextId: props.Text({
+      name: 'Context ID',
+      defaultValue: 'create-something-governed-workflow-console',
+    }),
     compact: props.Boolean({
       name: 'Compact',
       defaultValue: false,
     }),
   },
 });
-

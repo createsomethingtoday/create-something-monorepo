@@ -128,15 +128,15 @@ The current package contains both Canon exports and compatibility exports. The l
 
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
-| **Canon Control Panel** | Full operator control surface | `heading`, `agentEndpointUrl`, `actionEndpointUrl`, JSON content props |
-| **Operating Layer Cards** | Database / Automation / Judgment layer cards | `layers` (JSON), `layout` |
-| **Evidence Trail** | Evidence and grounding list | `evidence` (JSON), `compact` |
-| **Artifact Grid** | Client-safe review artifact grid | `artifacts` (JSON), `columns` |
-| **Action Preview** | Governed action preview | `actions` (JSON), `endpointUrl`, `contextId` |
-| **Approval Gate** | Human approval state panel | `approvalState`, `requiredApprover` |
-| **Agent Dock** | Bounded Q&A dock | `endpointUrl`, `suggestedPrompts` (JSON), `initialMessages` (JSON) |
-| **Decision Queue** | Operator decisions and owners | `decisions` (JSON) |
-| **Runtime Status** | Runtime checks and status | `status`, `checks` (JSON) |
+| **Canon Control Panel** | Full operator control surface | `contextEndpointUrl`, `agentEndpointUrl`, `actionEndpointUrl`, JSON content props |
+| **Operating Layer Cards** | Database / Automation / Judgment layer cards | `contextEndpointUrl`, `layers` (JSON), `layout` |
+| **Evidence Trail** | Evidence and grounding list | `contextEndpointUrl`, `evidence` (JSON), `compact` |
+| **Artifact Grid** | Client-safe review artifact grid | `contextEndpointUrl`, `artifacts` (JSON), `columns` |
+| **Action Preview** | Governed action preview | `contextEndpointUrl`, `endpointUrl`, `contextId` |
+| **Approval Gate** | Human approval state panel | `contextEndpointUrl`, `approvalState`, `requiredApprover` |
+| **Agent Dock** | Bounded Q&A dock | `contextEndpointUrl`, `endpointUrl`, `suggestedPrompts` (JSON) |
+| **Decision Queue** | Operator decisions and owners | `contextEndpointUrl`, `decisions` (JSON) |
+| **Runtime Status** | Runtime checks and status | `contextEndpointUrl`, `status`, `checks` (JSON) |
 
 ### Sections (Group: Sections)
 
@@ -250,11 +250,13 @@ Icon options: `circle`, `square`, `triangle`, `hexagon`
 The control-plane components work without endpoints by rendering static Webflow props. To enable the hybrid Cloudflare demo, configure:
 
 ```text
+Workflow Context Endpoint URL: https://<agency-domain>/api/canon/workflow-context
+Context ID: create-something-governed-workflow-console
 Agent Endpoint URL: https://<agency-domain>/api/canon/agent
 Action Endpoint URL: https://<agency-domain>/api/canon/action-preview
 ```
 
-Both endpoints are preview-only in v1. They return sanitized answers, policy checks, evidence labels, and allowed next actions. They do not expose secrets, raw source records, private workspace URLs, or token-bearing endpoints, and they do not execute external mutations.
+The workflow context endpoint returns sanitized runtime checks, operating layers, actions, approval state, evidence, decisions, artifacts, and agent prompts from Cloudflare-managed workflow state. The action and agent endpoints are preview-only in v1. They return sanitized answers, policy checks, evidence labels, and allowed next actions. They do not expose secrets, raw source records, private workspace URLs, or token-bearing endpoints, and they do not execute external mutations.
 
 Endpoint props are intentionally deployment-specific. Configure them per Webflow site or environment so component defaults never imply a production target.
 

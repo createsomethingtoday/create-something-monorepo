@@ -17,7 +17,12 @@ export default declareComponent(CanonControlPanel, {
     }),
     contextId: props.Text({
       name: 'Context ID',
-      defaultValue: 'canon-control-demo',
+      defaultValue: 'create-something-governed-workflow-console',
+    }),
+    contextEndpointUrl: props.Text({
+      name: 'Workflow Context Endpoint URL',
+      defaultValue: '',
+      tooltip: 'Optional GET endpoint for D1-backed workflow state',
     }),
     agentEndpointUrl: props.Text({
       name: 'Agent Endpoint URL',
