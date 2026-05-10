@@ -18,7 +18,7 @@ Keep durable system state in the monorepo, external databases, MCP servers, and 
 ## Current Integration
 
 - Retool MCP is connected through Codex with a daily `mcp:read` profile and an explicit `mcp:read,mcp:admin` admin profile.
-- Retool REST API token is stored in Infisical and production smoke requires a `200` response on the configured path with `users:read` or `mcp:admin`; the current Retool UI exposes this path as `Retool RPC` > `All`.
+- Retool REST API token is stored in Infisical and production smoke requires a `200` response on the configured path with `users:read` or `mcp:admin`; the current Retool UI exposes `Retool RPC` > `All`, but the stored token still returns `403` until Retool grants a scope that satisfies `/users`.
 - Retool MCP admin reads are reserved for organization, users, folders, apps, resources, and environment inventory.
 - The current Retool org is small enough to remain a controlled UI layer rather than a data platform.
 - Repo-owned Retool inventory lives in `config/retool/inventory.json`, with a generated operator view at `docs/RETOOL_WORKSPACE_INVENTORY.generated.md`.

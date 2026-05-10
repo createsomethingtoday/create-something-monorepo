@@ -57,6 +57,8 @@
         "rest_api_smoke_path",
         "rest_api_smoke_success_scopes",
         "rest_api_smoke_ui_scope",
+        "rest_api_smoke_scope_status",
+        "rest_api_smoke_notes",
         "spaces_token_policy",
         "evidence_system"
       ],
@@ -87,6 +89,12 @@
           "uniqueItems": true
         },
         "rest_api_smoke_ui_scope": {
+          "type": "string"
+        },
+        "rest_api_smoke_scope_status": {
+          "enum": ["candidate_visible", "verified", "blocked_pending_scope"]
+        },
+        "rest_api_smoke_notes": {
           "type": "string"
         },
         "spaces_token_policy": {

@@ -31,6 +31,8 @@
     "rest_api_smoke_path": "/users",
     "rest_api_smoke_success_scopes": ["users:read", "mcp:admin"],
     "rest_api_smoke_ui_scope": "Retool RPC > All",
+    "rest_api_smoke_scope_status": "blocked_pending_scope",
+    "rest_api_smoke_notes": "The current Retool UI exposes Retool RPC > All, but the stored token still returns 403 for /users with a missing users:read or mcp:admin message. Treat a 200 from pnpm retool:api:smoke as the only production REST pass.",
     "spaces_token_policy": "Each Retool Space has its own API endpoint and access tokens; a primary organization token can operate on a Space only when the token creator is an admin in both places.",
     "evidence_system": "linear"
   },

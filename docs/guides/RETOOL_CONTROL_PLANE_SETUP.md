@@ -34,7 +34,7 @@ Stored names:
 - `RETOOL_MCP_URL`
 - `RETOOL_MCP_SERVER_NAME`
 
-Retool access tokens are created from Settings > Retool API, can only be copied once, and must be minted with the scopes required by the target endpoint. The production smoke path is `/users`, which requires `users:read` or `mcp:admin`. In the current workspace UI, the visible scope that maps to this production smoke path is `Retool RPC` > `All`. Write scopes imply read access, but do not rely on broad write scopes for daily automation.
+Retool access tokens are created from Settings > Retool API, can only be copied once, and must be minted with the scopes required by the target endpoint. The production smoke path is `/users`, which requires `users:read` or `mcp:admin`. In the current workspace UI, the closest visible scope is `Retool RPC` > `All`, but live smoke is the source of truth: the current stored token still returns `403` for `/users` with a missing `users:read` or `mcp:admin` message. Write scopes imply read access, but do not rely on broad write scopes for daily automation.
 
 For Spaces, use the Space-specific Retool API endpoint and token. A primary organization token should only be used against a Space when the token creator is an admin in both the primary organization and that Space.
 

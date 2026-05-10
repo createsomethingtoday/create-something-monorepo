@@ -82,6 +82,8 @@ type RetoolInventory = {
     rest_api_smoke_path: string;
     rest_api_smoke_success_scopes: string[];
     rest_api_smoke_ui_scope: string;
+    rest_api_smoke_scope_status: 'candidate_visible' | 'verified' | 'blocked_pending_scope';
+    rest_api_smoke_notes: string;
     spaces_token_policy: string;
     evidence_system: 'linear';
   };
@@ -305,8 +307,15 @@ function validateAccess(
   if (!smokeScopes.includes('users:read') || !smokeScopes.includes('mcp:admin')) {
     errors.push('access.rest_api_smoke_success_scopes must include users:read and mcp:admin');
   }
-  if (inventory.access?.rest_api_smoke_ui_scope !== 'Retool RPC > All') {
+  if (!inventory.access?.rest_api_smoke_ui_scope?.startsWith('Retool RPC')) {
     errors.push('access.rest_api_smoke_ui_scope must document the current Retool UI scope label');
+  }
+  const smokeScopeStatus = inventory.access?.rest_api_smoke_scope_status;
+  if (!['candidate_visible', 'verified', 'blocked_pending_scope'].includes(smokeScopeStatus)) {
+    errors.push('access.rest_api_smoke_scope_status must be candidate_visible, verified, or blocked_pending_scope');
+  }
+  if (smokeScopeStatus !== 'verified' && !inventory.access?.rest_api_smoke_notes?.includes('403')) {
+    errors.push('access.rest_api_smoke_notes must record the live 403 scope blocker until verified');
   }
   if (!inventory.access?.spaces_token_policy?.includes('Space')) {
     errors.push('access.spaces_token_policy must document Retool Space token boundaries');
@@ -497,6 +506,8 @@ function renderInventoryDoc(inventory: RetoolInventory): string {
   lines.push(`Production REST smoke path: \`${inventory.access.rest_api_smoke_path}\``);
   lines.push(`Production REST smoke success scopes: ${inventory.access.rest_api_smoke_success_scopes.join(', ')}`);
   lines.push(`Current Retool UI scope for smoke: ${inventory.access.rest_api_smoke_ui_scope}`);
+  lines.push(`REST smoke scope status: ${inventory.access.rest_api_smoke_scope_status}`);
+  lines.push(`REST smoke notes: ${inventory.access.rest_api_smoke_notes}`);
   lines.push(`Spaces token policy: ${inventory.access.spaces_token_policy}`);
   lines.push('');
   lines.push('## MCP Resources');
