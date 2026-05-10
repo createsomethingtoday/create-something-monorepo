@@ -92,6 +92,21 @@ function compactDescription(description, limit = 160) {
   return oneLine.length > limit ? `${oneLine.slice(0, limit - 3)}...` : oneLine;
 }
 
+function code(value) {
+  return `\`${String(value).replace(/`/g, '')}\``;
+}
+
+function codeOrDash(value) {
+  return value ? code(value) : '-';
+}
+
+function formatCodeList(values, limit = 4) {
+  if (!Array.isArray(values) || values.length === 0) return '-';
+  const shown = values.slice(0, limit).map(code);
+  if (values.length > limit) shown.push(`+${values.length - limit} more`);
+  return shown.join(', ');
+}
+
 function isLegacyLoomEntry(entry) {
   const id = entry.id.toLowerCase();
   const tags = (entry.tags ?? []).map((tag) => String(tag).toLowerCase());
@@ -217,6 +232,33 @@ async function collectPackage(relativePath) {
   };
 }
 
+async function collectDifyInventory() {
+  const relativePath = 'config/dify/inventory.json';
+  if (!existsSync(repoPath(relativePath))) {
+    return {
+      source: relativePath,
+      status: 'missing',
+      agents: [],
+      mcpServers: [],
+    };
+  }
+
+  const inventory = await readJson(relativePath);
+  const agents = Object.entries(inventory.agents ?? {})
+    .map(([id, agent]) => ({ id, ...agent }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const mcpServers = Object.entries(inventory.mcp_servers ?? {})
+    .map(([id, server]) => ({ id, ...server }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  return {
+    source: relativePath,
+    status: inventory.status ?? 'unknown',
+    agents,
+    mcpServers,
+  };
+}
+
 async function collectAgentSnapshot(date) {
   const pyprojectText = await readTextIfExists('packages/agent-sdk/pyproject.toml');
   const pythonPackage = pyprojectText
@@ -252,8 +294,10 @@ async function collectAgentSnapshot(date) {
   }
 
   const pythonModules = await listPythonAgentModules();
+  const difyInventory = await collectDifyInventory();
   const wranglerServices = packages.filter((pkg) => pkg.workerName);
   const coordinationPackages = packages.filter((pkg) => /symphony|coordination/i.test(pkg.name) || /coordination/i.test(pkg.path));
+  const publishedDifyAgents = difyInventory.agents.filter((agent) => agent.status === 'published');
 
   const packageRows = packages.map((pkg) => [
     `\`${pkg.path}\``,
@@ -263,11 +307,20 @@ async function collectAgentSnapshot(date) {
   ]);
 
   const moduleRows = pythonModules.map((module) => [`\`${module.file}\``, module.name]);
+  const difyAgentRows = difyInventory.agents.map((agent) => [
+    code(agent.id),
+    codeOrDash(agent.status),
+    codeOrDash(agent.audience),
+    codeOrDash(agent.dify_app_id),
+    formatCodeList(agent.allowed_mcp_servers),
+    String(agent.enabled_tools?.length ?? 0),
+    codeOrDash(agent.eval_suite),
+  ]);
 
   const description = [
     `# Agent Registry Snapshot - ${date}`,
     '',
-    'Sources: `packages/agent-sdk`, `packages/agents`, agent worker packages, and Linear-backed Symphony coordination.',
+    'Sources: `packages/agent-sdk`, `packages/agents`, agent worker packages, `config/dify/inventory.json`, and Linear-backed Symphony coordination.',
     '',
     '## Summary',
     '',
@@ -276,6 +329,10 @@ async function collectAgentSnapshot(date) {
     `- Node/worker packages tracked: ${packages.length}`,
     `- Worker services with Wrangler config: ${wranglerServices.length}`,
     `- Coordination packages: ${coordinationPackages.length}`,
+    `- Dify inventory status: ${difyInventory.status}`,
+    `- Dify MCP server cards tracked: ${difyInventory.mcpServers.length}`,
+    `- Dify agents tracked: ${difyInventory.agents.length}`,
+    `- Published Dify agents: ${publishedDifyAgents.length}`,
     '',
     '## Python Agent Modules',
     '',
@@ -291,6 +348,14 @@ async function collectAgentSnapshot(date) {
       ['Path', 'Package', 'Worker', 'Description'],
       ['---', '---', '---', '---'],
       ...packageRows,
+    ]),
+    '',
+    '## Dify Agent Surfaces',
+    '',
+    tableRows([
+      ['Agent', 'Status', 'Audience', 'App ID', 'MCP Servers', 'Enabled Tools', 'Eval Suite'],
+      ['---', '---', '---', '---', '---', '---:', '---'],
+      ...difyAgentRows,
     ]),
     '',
     '## Operating Note',
@@ -309,6 +374,10 @@ async function collectAgentSnapshot(date) {
       packages: packages.length,
       wranglerServices: wranglerServices.length,
       coordinationPackages: coordinationPackages.length,
+      difyStatus: difyInventory.status,
+      difyMcpServers: difyInventory.mcpServers.length,
+      difyAgents: difyInventory.agents.length,
+      publishedDifyAgents: publishedDifyAgents.length,
     },
   };
 }

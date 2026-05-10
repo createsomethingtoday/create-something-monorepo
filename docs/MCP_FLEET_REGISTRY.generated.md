@@ -1032,7 +1032,7 @@
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
 | `gmail-notion-mcp` | `http` | `https://gmail-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
-| `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `dormant` | `0` | `coordination`, `loom`, `legacy`, `dormant`, `cs` |
+| `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `direct` | `0` | `coordination`, `loom`, `legacy`, `dormant`, `cs` |
 | `notion-sync-mcp` | `http` | `https://notion-sync-mcp-worker.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
 | `slack_webflow` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `webflow` |
 

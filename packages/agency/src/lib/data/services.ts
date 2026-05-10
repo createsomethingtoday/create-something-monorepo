@@ -126,6 +126,18 @@ export const products: Product[] = [
 		pricing: 'Free',
 		timeline: 'Requires Cloudflare setup'
 	},
+	{
+		id: 'mcp-trust-catalog',
+		title: 'MCP Trust Catalog',
+		tagline: 'Public trust cards and guide-agent boundary',
+		description:
+			'Public no-auth MCP trust cards, launch copy, and the CREATE SOMETHING Guide Agent boundary in one inspectable page.',
+		badge: 'Public',
+		category: 'framework',
+		href: '/mcp-trust-catalog',
+		pricing: 'Free',
+		timeline: 'Instant review'
+	},
 
 	// ─── Integration MCPs ────────────────────────────────────────
 	{

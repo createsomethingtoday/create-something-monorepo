@@ -52,6 +52,7 @@ type DifyAgent = {
   status: AgentStatus;
   audience: AgentAudience;
   dify_app_id?: string;
+  public_url?: string;
   mode: string;
   manifest_path?: string;
   dsl_path?: string;
@@ -552,11 +553,13 @@ function renderInventoryDoc(inventory: DifyInventory): string {
   lines.push('');
 
   lines.push('## Agents', '');
-  lines.push('| Agent | Status | Audience | App ID | MCP Servers | Enabled Tools | Eval Suite |');
-  lines.push('| --- | --- | --- | --- | --- | ---: | --- |');
+  lines.push(
+    '| Agent | Status | Audience | App ID | Public URL | MCP Servers | Enabled Tools | Eval Suite |'
+  );
+  lines.push('| --- | --- | --- | --- | --- | --- | ---: | --- |');
   for (const [agentId, agent] of Object.entries(inventory.agents)) {
     lines.push(
-      `| ${code(agentId)} | ${code(agent.status)} | ${code(agent.audience)} | ${codeOrDash(agent.dify_app_id)} | ${agent.allowed_mcp_servers.map(code).join(', ')} | ${String(agent.enabled_tools.length)} | ${code(agent.eval_suite)} |`
+      `| ${code(agentId)} | ${code(agent.status)} | ${code(agent.audience)} | ${codeOrDash(agent.dify_app_id)} | ${codeOrDash(agent.public_url)} | ${agent.allowed_mcp_servers.map(code).join(', ')} | ${String(agent.enabled_tools.length)} | ${code(agent.eval_suite)} |`
     );
   }
   lines.push('');
@@ -590,6 +593,7 @@ function renderInventoryDoc(inventory: DifyInventory): string {
     lines.push(`### ${agent.display_name}`, '');
     lines.push(`- Inventory ID: ${code(agentId)}`);
     lines.push(`- Policy pack: ${code(agent.policy_pack)}`);
+    if (agent.public_url) lines.push(`- Public URL: ${code(agent.public_url)}`);
     if (agent.instructions_source)
       lines.push(`- Instructions source: ${code(agent.instructions_source)}`);
     if (agent.smoke_command) lines.push(`- Smoke: ${code(agent.smoke_command)}`);
@@ -597,6 +601,9 @@ function renderInventoryDoc(inventory: DifyInventory): string {
     if (agent.evals.published_command)
       lines.push(`- Published eval: ${code(agent.evals.published_command)}`);
     lines.push('- Tools:');
+    if (agent.enabled_tools.length === 0) {
+      lines.push('  - none');
+    }
     for (const toolRef of agent.enabled_tools) {
       const parsed = parseToolRef(toolRef);
       const tool = parsed
@@ -609,6 +616,10 @@ function renderInventoryDoc(inventory: DifyInventory): string {
       lines.push(`  - ${code(toolRef)} (${risk}${writeNote})`);
     }
     lines.push('');
+  }
+
+  while (lines.at(-1) === '') {
+    lines.pop();
   }
 
   return `${lines.join('\n')}\n`;

@@ -10,6 +10,7 @@ Linear is the CREATE SOMETHING source of truth for task coordination, ownership,
 - `MCP Fleet Registry` - operational MCP registry mirror.
 - `Agent Registry` - operational agent registry mirror.
 - `Registry Governance & Source of Truth` - approval, policy, and validation workflow.
+- `Client Delivery` - active accepted client delivery work that is not registry governance, MCP fleet ownership, or operator escalation.
 
 ## Commands
 
@@ -67,7 +68,7 @@ pnpm linear:registry:sync
 The sync creates or refreshes dated Linear issues in:
 
 - `MCP Fleet Registry` from `config/mcp-hub/registry.json`
-- `Agent Registry` from `packages/agent-sdk`, agent worker packages, and Linear-backed Symphony coordination
+- `Agent Registry` from `packages/agent-sdk`, agent worker packages, `config/dify/inventory.json`, and Linear-backed Symphony coordination
 
 Treat the Linear issues as review, ownership, approval, and audit artifacts. The executable truth remains in the checked-in registry, package code, Hub state, deployments, and Infisical secrets.
 

@@ -76,6 +76,12 @@ type GeneratedCatalogEntry = {
   setupNotes?: string;
 };
 
+const VALID_SERVER_LIFECYCLES = new Set(['active', 'dormant', 'local']);
+const VALID_CATALOG_EXPOSURE_MODES = new Set(['direct', 'brokered', 'exception_direct']);
+const VALID_CATALOG_CATEGORIES = new Set(['create-something', 'workway']);
+const VALID_CATALOG_TRANSPORTS = new Set(['http', 'sse']);
+const VALID_CATALOG_AUTH_TYPES = new Set(['bearer', 'oauth']);
+
 const ROOT = process.cwd();
 const REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
 const SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.schema.json');
@@ -184,6 +190,8 @@ function validateRegistry(data: Registry): string[] {
       continue;
     }
 
+    validateRegistryMetadata(serverName, server as unknown as Record<string, unknown>, errors);
+
     if (server.transport === 'http') {
       if (typeof server.url !== 'string' || server.url.length === 0) {
         errors.push(`server ${serverName}: http transport requires non-empty url`);
@@ -196,14 +204,15 @@ function validateRegistry(data: Registry): string[] {
       errors.push(`server ${serverName}: transport must be "http" or "stdio"`);
     }
 
-    if (server.catalog?.include) {
+    const catalog = isPlainObject(server.catalog) ? server.catalog : undefined;
+    if (catalog?.include) {
       if (server.transport !== 'http') {
         errors.push(`server ${serverName}: catalog.include requires http transport`);
       }
-      if (!server.catalog.category) {
+      if (!catalog.category) {
         errors.push(`server ${serverName}: catalog.include requires category`);
       }
-      const slug = server.catalog.slug?.trim() || serverName;
+      const slug = typeof catalog.slug === 'string' && catalog.slug.trim() ? catalog.slug.trim() : serverName;
       if (catalogSlugs.has(slug)) {
         errors.push(`duplicate catalog slug: ${slug}`);
       }
@@ -244,6 +253,60 @@ function validateRegistry(data: Registry): string[] {
   }
 
   return errors;
+}
+
+function validateRegistryMetadata(serverName: string, server: Record<string, unknown>, errors: string[]): void {
+  if (server.lifecycle !== undefined && !VALID_SERVER_LIFECYCLES.has(String(server.lifecycle))) {
+    errors.push(`server ${serverName}: lifecycle must be one of active, dormant, local`);
+  }
+
+  if (
+    server.catalog_exposure_mode !== undefined &&
+    !VALID_CATALOG_EXPOSURE_MODES.has(String(server.catalog_exposure_mode))
+  ) {
+    errors.push(
+      `server ${serverName}: catalog_exposure_mode must be one of direct, brokered, exception_direct`,
+    );
+  }
+
+  if (
+    server.estimated_tool_count !== undefined &&
+    (!Number.isInteger(server.estimated_tool_count) || Number(server.estimated_tool_count) < 0)
+  ) {
+    errors.push(`server ${serverName}: estimated_tool_count must be a non-negative integer`);
+  }
+
+  if (server.tags !== undefined) {
+    if (!Array.isArray(server.tags) || server.tags.some((tag) => typeof tag !== 'string')) {
+      errors.push(`server ${serverName}: tags must be an array of strings`);
+    }
+  }
+
+  if (server.catalog !== undefined) {
+    if (!isPlainObject(server.catalog)) {
+      errors.push(`server ${serverName}: catalog must be an object`);
+      return;
+    }
+    const catalog = server.catalog;
+
+    if (typeof catalog.include !== 'boolean') {
+      errors.push(`server ${serverName}: catalog.include must be a boolean`);
+    }
+    if (!VALID_CATALOG_CATEGORIES.has(String(catalog.category))) {
+      errors.push(`server ${serverName}: catalog.category must be one of create-something, workway`);
+    }
+    if (catalog.transports !== undefined) {
+      if (
+        !Array.isArray(catalog.transports) ||
+        catalog.transports.some((transport) => !VALID_CATALOG_TRANSPORTS.has(String(transport)))
+      ) {
+        errors.push(`server ${serverName}: catalog.transports must contain only http or sse`);
+      }
+    }
+    if (catalog.authType !== undefined && !VALID_CATALOG_AUTH_TYPES.has(String(catalog.authType))) {
+      errors.push(`server ${serverName}: catalog.authType must be bearer or oauth`);
+    }
+  }
 }
 
 function validateCatalogExposurePolicy(

@@ -356,7 +356,7 @@
         "authType": "bearer",
         "transports": ["http"]
       },
-      "catalog_exposure_mode": "dormant",
+      "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
     "slack_create_something": {
@@ -394,6 +394,7 @@
       "description": "Webflow Site Analyzer MCP — browser-backed template validation with Steel + Groq",
       "tags": ["webflow", "review", "analyzer", "browser", "cs"],
       "estimated_tool_count": 22,
+      "catalog_exposure_mode": "direct",
       "catalog": {
         "include": true,
         "name": "Webflow Site Analyzer",

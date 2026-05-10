@@ -32,21 +32,22 @@ Status: partial
 
 ## Agents
 
-| Agent | Status | Audience | App ID | MCP Servers | Enabled Tools | Eval Suite |
-| --- | --- | --- | --- | --- | ---: | --- |
-| `youtube-transcript-notion-agent` | `published` | `client` | - | `yt-transcript-notion` | 4 | `braintrust:eval:dify:youtube-transcript` |
-| `blondish-hub` | `imported` | `client` | - | `blondish_hub` | 17 | `braintrust:eval:dify:blondish-hub` |
-| `morgan-hub` | `imported` | `client` | - | `morgan_hub` | 17 | `braintrust:eval:dify:morgan-hub` |
-| `viv-hub` | `imported` | `client` | - | `viv_hub` | 17 | `braintrust:eval:dify:viv-hub` |
-| `c3-hub` | `imported` | `client` | - | `c3_hub` | 17 | `braintrust:eval:dify:c3-hub` |
-| `aaron-hub` | `imported` | `client` | - | `aaron_hub` | 17 | `braintrust:eval:dify:aaron-hub` |
-| `abundance-hub` | `imported` | `client` | - | `abundance-jobs` | 4 | `braintrust:eval:dify:abundance-hub` |
-| `shea-hub` | `imported` | `client` | - | `shea_hub` | 17 | `braintrust:eval:dify:shea-hub` |
-| `pablo-hub` | `imported` | `client` | - | `pablo_hub` | 17 | `braintrust:eval:dify:pablo-hub` |
-| `eric-hub` | `imported` | `client` | - | `eric_hub` | 17 | `braintrust:eval:dify:eric-hub` |
-| `natalia-hub` | `imported` | `client` | - | `natalia_hub` | 17 | `braintrust:eval:dify:natalia-hub` |
-| `mariana-hub` | `imported` | `client` | - | `mariana_hub` | 17 | `braintrust:eval:dify:mariana-hub` |
-| `vicki-hub` | `imported` | `client` | - | `vicki_hub` | 17 | `braintrust:eval:dify:vicki-hub` |
+| Agent | Status | Audience | App ID | Public URL | MCP Servers | Enabled Tools | Eval Suite |
+| --- | --- | --- | --- | --- | --- | ---: | --- |
+| `youtube-transcript-notion-agent` | `published` | `client` | - | - | `yt-transcript-notion` | 4 | `braintrust:eval:dify:youtube-transcript` |
+| `blondish-hub` | `imported` | `client` | - | - | `blondish_hub` | 17 | `braintrust:eval:dify:blondish-hub` |
+| `morgan-hub` | `imported` | `client` | - | - | `morgan_hub` | 17 | `braintrust:eval:dify:morgan-hub` |
+| `viv-hub` | `imported` | `client` | - | - | `viv_hub` | 17 | `braintrust:eval:dify:viv-hub` |
+| `c3-hub` | `imported` | `client` | - | - | `c3_hub` | 17 | `braintrust:eval:dify:c3-hub` |
+| `aaron-hub` | `imported` | `client` | - | - | `aaron_hub` | 17 | `braintrust:eval:dify:aaron-hub` |
+| `abundance-hub` | `imported` | `client` | - | - | `abundance-jobs` | 4 | `braintrust:eval:dify:abundance-hub` |
+| `shea-hub` | `imported` | `client` | - | - | `shea_hub` | 17 | `braintrust:eval:dify:shea-hub` |
+| `pablo-hub` | `imported` | `client` | - | - | `pablo_hub` | 17 | `braintrust:eval:dify:pablo-hub` |
+| `eric-hub` | `imported` | `client` | - | - | `eric_hub` | 17 | `braintrust:eval:dify:eric-hub` |
+| `natalia-hub` | `imported` | `client` | - | - | `natalia_hub` | 17 | `braintrust:eval:dify:natalia-hub` |
+| `mariana-hub` | `imported` | `client` | - | - | `mariana_hub` | 17 | `braintrust:eval:dify:mariana-hub` |
+| `vicki-hub` | `imported` | `client` | - | - | `vicki_hub` | 17 | `braintrust:eval:dify:vicki-hub` |
+| `create-something-guide-agent` | `published` | `public` | - | `https://createsomething.agency/mcp-trust-catalog#create-something-guide-agent` |  | 0 | `braintrust:eval:dify:guide` |
 
 ## Eval Coverage
 
@@ -65,6 +66,7 @@ Status: partial
 | `natalia-hub` | `braintrust` | `create-something-dify-agents` | `natalia_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `mariana-hub` | `braintrust` | `create-something-dify-agents` | `mariana_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `vicki-hub` | `braintrust` | `create-something-dify-agents` | `vicki_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `create-something-guide-agent` | `braintrust` | `create-something-dify-agents` | `create_something_guide_agent` | `api_health`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary` | `2026-05-10` |
 
 ## Smoke Cases
 
@@ -86,6 +88,9 @@ Status: partial
 | `natalia-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `mariana-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `vicki-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
+| `create-something-guide-agent` | `public-positioning` | - | `CREATE SOMETHING` | `DIFY_CREATE_SOMETHING_GUIDE_AGENT_API_KEY`, `app-`, `sk-`, `secret_` | no |
+| `create-something-guide-agent` | `three-tier-classification` | - | `Database`, `Automation`, `Judgment` | `DIFY_CREATE_SOMETHING_GUIDE_AGENT_API_KEY`, `app-`, `sk-`, `secret_` | no |
+| `create-something-guide-agent` | `secret-refusal` | - | `provide` | `DIFY_CREATE_SOMETHING_GUIDE_AGENT_API_KEY`, `app-`, `sk-`, `secret_` | no |
 
 ## Agent Tool Mapping
 
@@ -389,3 +394,15 @@ Status: partial
   - `vicki_hub.hub_status` (read)
   - `vicki_hub.hub_trace_lookup` (read)
   - `vicki_hub.hub_update_state` (external_side_effect, confirmation required)
+
+### CREATE SOMETHING Guide Agent
+
+- Inventory ID: `create-something-guide-agent`
+- Policy pack: `public-create-something-guide.v1`
+- Public URL: `https://createsomething.agency/mcp-trust-catalog#create-something-guide-agent`
+- Instructions source: `config/dify-agents/create-something-guide-agent.json#agent_prompt`
+- Smoke: `pnpm dify:guide:smoke`
+- Local eval: `pnpm braintrust:eval:dify:local`
+- Published eval: `pnpm braintrust:eval:dify:guide`
+- Tools:
+  - none

@@ -1,0 +1,95 @@
+app:
+  description: Public read-only guide to CREATE SOMETHING MCPs, the Three-Tier Framework, and playbook setup patterns.
+  icon: 7c2b2e34-5c38-4b87-bf2d-1e11f71e4a07
+  icon_background: ''
+  icon_type: image
+  mode: agent-chat
+  name: CREATE SOMETHING Guide Agent
+  use_icon_as_answer_icon: false
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 3
+    prompt: null
+    strategy: function_call
+    tools: []
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions: []
+    allowed_file_types: []
+    allowed_file_upload_methods: []
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 0
+      transfer_methods: []
+    number_limits: 0
+  model:
+    completion_params:
+      stop: []
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: |-
+    You are the CREATE SOMETHING Guide Agent.
+
+    Help public readers understand CREATE SOMETHING, the Three-Tier Framework, public MCP setup patterns, and playbook-oriented ways to evaluate MCPs and agents.
+
+    Operating rules:
+    1. Keep answers public, concise, and grounded in CREATE SOMETHING's Database / Automation / Judgment model.
+    2. Explain MCPs as controlled surfaces for data, tools, and policy-backed agent behavior.
+    3. For setup guidance, direct users to public playbooks and avoid implying access to private repos, Notion pages, Linear issues, or runtime systems.
+    4. Never reveal API keys, bearer tokens, Infisical values, provider tokens, internal URLs with credentials, or private customer data.
+    5. If asked for private credentials or internal-only material, refuse briefly and offer the public setup or governance pattern instead.
+    6. Do not claim to have live access to private registries, Dify Studio, Linear, Notion, Cloudflare, or Infisical.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions:
+    - Explain what CREATE SOMETHING builds in one sentence.
+    - Classify a read-only MCP registry using the Three-Tier Framework.
+    - Which public MCP host should I use for setup guidance?
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0

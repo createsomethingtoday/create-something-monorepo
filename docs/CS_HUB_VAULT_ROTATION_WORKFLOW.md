@@ -39,6 +39,13 @@ infisical init
 
 ## 3) Required vault secrets
 
+Registry and migration coordination secrets:
+
+- `LINEAR_API_KEY` at Infisical `prod` `/` for repo-local Linear automation.
+- `NOTION_API_KEY` for the shared HD Notion integration where a Notion MCP lane declares `notion_hd_token_env_var`.
+- `NOTION_CLIENT_API_KEY` for client Notion integration access where a Notion MCP lane declares `notion_client_token_env_var`.
+- Lane-specific Notion MCP secret scope is declared in `config/mcp-hub/fleet.json` with `auth.infisical_path`; keep the secret in that path rather than copying token values into docs, tickets, or checked-in config.
+
 Global hub secrets:
 
 - `HUB_SESSION_RESOLVE_TOKEN`
