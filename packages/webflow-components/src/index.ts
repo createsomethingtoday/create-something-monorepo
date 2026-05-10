@@ -57,6 +57,66 @@ export type { NavigationLink, NavigationProps } from './components/navigation/Na
 export { Dialog } from './components/feedback/Dialog';
 export type { DialogProps, DialogSize } from './components/feedback/Dialog';
 
+// Canon Control Plane Components
+export {
+  ActionPreview,
+  ActionExecutionQueue,
+  AgentDock,
+  ApprovalGate,
+  ApprovalQueue,
+  ArtifactGrid,
+  BusinessContextSwitcher,
+  CanonControlPanel,
+  DecisionQueue,
+  EvidenceManager,
+  EvidenceTrail,
+  OperatingLayerCards,
+  OperatorActivityLog,
+  RuntimeStatus,
+  SourceTruthStatus,
+  WorkflowMetricsStrip,
+  canonControlDefaults,
+} from './components/control/ControlComponents';
+export type {
+  ActionExecutionItem,
+  ActionExecutionQueueProps,
+  ActionPreviewItem,
+  ActionPreviewProps,
+  ActionStatus,
+  ActivityEventItem,
+  AgentDockProps,
+  AgentMessage,
+  ApprovalRequestCredentials,
+  ApprovalQueueItem,
+  ApprovalQueueProps,
+  ApprovalGateProps,
+  ApprovalState,
+  ArtifactGridProps,
+  ArtifactItem,
+  BusinessContextItem,
+  BusinessContextSwitcherProps,
+  CanonControlPanelProps,
+  CheckStatus,
+  DecisionItem,
+  DecisionQueueProps,
+  EvidenceManagerProps,
+  EvidenceItem,
+  EvidenceTrailProps,
+  OperatingLayer,
+  OperatingLayerCardsProps,
+  OperatorActivityLogProps,
+  RiskLevel,
+  RuntimeCheck,
+  RuntimeStatusProps,
+  SourceStatusItem,
+  SourceTruthStatusProps,
+  StatusTone,
+  SuggestedPrompt,
+  TriadTier,
+  WorkflowMetricItem,
+  WorkflowMetricsStripProps,
+} from './components/control/ControlComponents';
+
 // Data Components
 export { StatsDisplay } from './components/data/StatsDisplay';
 export type { StatsDisplayProps, StatItem, StatsVariant } from './components/data/StatsDisplay';

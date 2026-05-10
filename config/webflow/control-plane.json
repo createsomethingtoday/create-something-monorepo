@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "status": "active",
+  "decisionDate": "2026-05-10",
+  "decision": "Webflow Code Components are the active governance UI path.",
+  "frontend": {
+    "provider": "webflow_code_components",
+    "packagePath": "packages/webflow-components",
+    "libraryName": "CREATE SOMETHING Canon Components",
+    "libraryId": "create-something-canon-components",
+    "publishedOrigin": "https://governed-workflow-console.webflow.io",
+    "webflowJsonPath": "packages/webflow-components/webflow.json",
+    "shareCommand": "cd packages/webflow-components && pnpm run share",
+    "verifyCommand": "pnpm webflow:components:verify",
+    "previewEndpoints": {
+      "agent": "",
+      "actionPreview": "",
+      "approval": "",
+      "operatorApproval": "",
+      "workflowContext": "",
+      "status": "deployment_specific"
+    },
+    "operatorApprovalTrustedOrigins": ["https://governed-workflow-console.webflow.io"]
+  },
+  "governanceDataPlane": {
+    "sourceOfTruth": "cloudflare",
+    "durableSystems": ["Cloudflare Workers", "D1", "KV", "R2"],
+    "workflowContextEndpoint": "/api/canon/workflow-context?contextId=create-something-governed-workflow-console",
+    "automationSurface": "CREATE SOMETHING MCP hub, agents, workflows, Dify and Composio connector governance, and governed Cloudflare endpoints",
+    "policySurface": "repo-owned policy artifacts and Linear evidence",
+    "rule": "Webflow renders and controls the operator UI; Cloudflare owns durable governance state and execution."
+  },
+  "requiredControlComponents": [
+    "CanonControlPanel",
+    "BusinessContextSwitcher",
+    "WorkflowMetricsStrip",
+    "OperatingLayerCards",
+    "SourceTruthStatus",
+    "EvidenceTrail",
+    "EvidenceManager",
+    "ArtifactGrid",
+    "ActionPreview",
+    "ApprovalGate",
+    "ApprovalQueue",
+    "ActionExecutionQueue",
+    "AgentDock",
+    "DecisionQueue",
+    "OperatorActivityLog",
+    "RuntimeStatus"
+  ],
+  "deployment": {
+    "bundleCommand": "cd packages/webflow-components && pnpm run bundle",
+    "shareCommand": "cd packages/webflow-components && pnpm run share",
+    "requiresHumanApproval": true,
+    "notes": "Sharing a Webflow Code Components library updates the Webflow workspace and should be done only after local bundle verification."
+  }
+}

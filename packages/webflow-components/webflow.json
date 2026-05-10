@@ -13,7 +13,7 @@
       "**/*.webflow.@(js|jsx|mjs|ts|tsx)"
     ],
     "name": "CREATE SOMETHING Canon Components",
-    "description": "Canon-first Webflow component library for CREATE SOMETHING. Current library includes foundational UI, layout, and section components while Canon parity work continues.",
+    "description": "Canon-first Webflow component library for CREATE SOMETHING. Includes foundational UI, layout, section components, and Cloudflare-ready operator control-plane components.",
     "id": "create-something-canon-components"
   }
 }
