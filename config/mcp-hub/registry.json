@@ -212,6 +212,25 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "bettermode-creator": {
+      "transport": "http",
+      "url": "https://bettermode-creator.mcp.createsomething.agency/mcp",
+      "description": "Bettermode Marketplace Creator drafting MCP — read-only Bettermode + Airtable + community queue helpers consumed by the Dify drafter agent.",
+      "bearer_token_env_var": "WEBFLOW_BETTERMODE_CREATOR_MCP_BEARER",
+      "tags": ["agency", "webflow", "bettermode", "marketplace", "cs"],
+      "package_path": "packages/bettermode-creator-mcp",
+      "catalog": {
+        "include": true,
+        "name": "Bettermode Creator",
+        "slug": "bettermode-creator",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": ["http", "sse"]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 4
+    },
     "gmail-notion-mcp": {
       "transport": "http",
       "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp",

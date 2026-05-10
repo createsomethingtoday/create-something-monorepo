@@ -1,0 +1,39 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "bettermode-marketplace-creator-agent",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-05",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "create-something-db",
+      "database_id": "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "production",
+    "BETTERMODE_GRAPHQL_ENDPOINT": "https://api.bettermode.com",
+    "BETTERMODE_DEFAULT_NETWORK_ID": "BuRv7sR1po",
+    "BETTERMODE_MARKETPLACE_SPACE_SLUG": "marketplace-creators",
+    "BETTERMODE_MARKETPLACE_SPACE_ID": "ROtfBgdQyiAB",
+    "BETTERMODE_ADMIN_USER_IDS": "lgjO9fjLNn",
+    "AIRTABLE_API_BASE": "https://api.airtable.com",
+    "AIRTABLE_BASE_ID": "appMoIgXMTTTNIc3p",
+    "AIRTABLE_CREATORS_TABLE": "tbljt0plqxdMARZXb",
+    "AIRTABLE_ASSETS_TABLE": "tblRwzpWoLgE9MrUm",
+    "AIRTABLE_CREATORS_EMAIL_FIELD": "📧Email",
+    "AIRTABLE_CREATORS_ASSETS_LINK_FIELD": "👛Assets",
+    "OPENAI_API_BASE": "https://api.openai.com/v1",
+    "OPENAI_MODEL_DEFAULT": "gpt-4o-mini",
+    "OPENAI_MODEL_RICH": "gpt-4o",
+    "DIFY_API_BASE": "https://api.dify.ai/v1",
+    "DIFY_AGENT_USER": "bettermode-marketplace-creator-agent",
+    "ALLOWED_ORIGINS": "https://app.bettermode.com,https://community.webflow.com,https://webflow.com,https://www.webflow.com"
+  }
+}

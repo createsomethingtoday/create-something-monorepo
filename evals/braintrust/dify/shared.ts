@@ -8,6 +8,9 @@ import {
 export type DifyChatInput = {
   name: string;
   query: string;
+  // Dify agent inputs map. Stringified per the chat-messages contract
+  // (booleans/numbers must be encoded as strings). Defaults to {}.
+  inputs?: Record<string, string>;
   expectedTitle?: string;
   expectedMethod?: string;
   expectedSegmentCount?: number;
@@ -202,7 +205,7 @@ export async function callDifyChat(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        inputs: {},
+        inputs: input.inputs ?? {},
         query: input.query,
         response_mode: 'streaming',
         conversation_id: '',
