@@ -16,6 +16,9 @@ export interface EvidenceItem {
   href?: string;
   tone?: StatusTone;
   timestamp?: string;
+  visibility?: 'public' | 'private' | 'internal';
+  status?: 'draft' | 'approved' | 'review' | 'blocked';
+  owner?: string;
 }
 
 export interface OperatingLayer {
@@ -92,6 +95,12 @@ type AgentResponse = {
   actions?: string[];
 };
 
+type ApprovalUpdateResponse = {
+  approval?: ApprovalQueueItem;
+  event?: ActivityEventItem;
+  error?: string;
+};
+
 type WorkflowApproval = {
   title?: string;
   description?: string;
@@ -116,6 +125,71 @@ type WorkflowRuntime = {
   checks?: RuntimeCheck[];
 };
 
+export interface BusinessContextItem {
+  id: string;
+  client: string;
+  project: string;
+  workflow: string;
+  environment: string;
+  status?: CheckStatus | 'active' | 'review' | 'blocked';
+  owner?: string;
+  detail?: string;
+}
+
+export interface WorkflowMetricItem {
+  label: string;
+  value: string;
+  detail?: string;
+  tone?: StatusTone;
+  trend?: string;
+}
+
+export interface SourceStatusItem {
+  system: string;
+  status?: CheckStatus;
+  detail: string;
+  lastSynced?: string;
+  owner?: string;
+  tier?: TriadTier;
+}
+
+export interface ApprovalQueueItem {
+  id: string;
+  actionId?: string;
+  title: string;
+  requester?: string;
+  requiredApprover: string;
+  status?: ApprovalState;
+  risk?: RiskLevel;
+  due?: string;
+  evidence?: string[];
+  policyChecks?: string[];
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export interface ActionExecutionItem {
+  id: string;
+  actionId?: string;
+  title: string;
+  status?: 'preview' | 'queued' | 'approved' | 'blocked' | 'executed';
+  owner?: string;
+  system?: string;
+  risk?: RiskLevel;
+  rollback?: string;
+  lastUpdated?: string;
+}
+
+export interface ActivityEventItem {
+  id: string;
+  eventType?: 'context' | 'approval' | 'preview' | 'agent' | 'deploy' | 'evidence' | 'decision';
+  label: string;
+  detail?: string;
+  actor?: string;
+  timestamp?: string;
+  tone?: StatusTone;
+}
+
 type WorkflowContextPayload = {
   contextId?: string;
   title?: string;
@@ -129,6 +203,13 @@ type WorkflowContextPayload = {
   decisions?: DecisionItem[];
   artifacts?: ArtifactItem[];
   agent?: WorkflowAgent;
+  businessContexts?: BusinessContextItem[];
+  activeBusinessContextId?: string;
+  metrics?: WorkflowMetricItem[];
+  sourceStatuses?: SourceStatusItem[];
+  approvalQueue?: ApprovalQueueItem[];
+  executionQueue?: ActionExecutionItem[];
+  activityEvents?: ActivityEventItem[];
   guardrails?: string[];
 };
 
@@ -278,6 +359,126 @@ const defaultChecks: RuntimeCheck[] = [
   { label: 'Policy boundary', status: 'ok', detail: 'Human approval required for mutations' },
 ];
 
+const defaultBusinessContexts: BusinessContextItem[] = [
+  {
+    id: 'cs-ops-core',
+    client: 'CREATE SOMETHING',
+    project: 'Governed Workflow Console',
+    workflow: 'Webflow + Cloudflare delivery',
+    environment: 'Production preview',
+    status: 'active',
+    owner: 'Operator',
+    detail: 'Console state is scoped to the CREATE SOMETHING operating layer.',
+  },
+];
+
+const defaultMetrics: WorkflowMetricItem[] = [
+  { label: 'Open decisions', value: '3', detail: 'Operator review queue', tone: 'warning' },
+  { label: 'Pending approvals', value: '2', detail: 'Named approver required', tone: 'warning' },
+  { label: 'Runtime posture', value: 'Preview', detail: 'No external mutation in v1', tone: 'success' },
+  { label: 'Private boundary', value: 'Enforced', detail: 'Secrets and raw records stay out of Webflow', tone: 'success' },
+];
+
+const defaultSourceStatuses: SourceStatusItem[] = [
+  {
+    system: 'Cloudflare D1',
+    status: 'ok',
+    detail: 'Sanitized workflow context and approval queue are available.',
+    lastSynced: 'Runtime read',
+    owner: 'Engineering',
+    tier: 'Database',
+  },
+  {
+    system: 'Webflow Components',
+    status: 'ok',
+    detail: 'Reusable components hydrate from the workflow context.',
+    lastSynced: 'Library share',
+    owner: 'Design systems',
+    tier: 'Automation',
+  },
+  {
+    system: 'Approval Policy',
+    status: 'warning',
+    detail: 'External mutations require a named human approval path.',
+    lastSynced: 'Policy artifact',
+    owner: 'Operator',
+    tier: 'Judgment',
+  },
+];
+
+const defaultApprovalQueue: ApprovalQueueItem[] = [
+  {
+    id: 'approval-action-boundary',
+    actionId: 'request-approval',
+    title: 'Approve action boundary',
+    requester: 'Delivery system',
+    requiredApprover: 'Named operator',
+    status: 'review',
+    risk: 'medium',
+    due: 'Before connector execution',
+    evidence: ['Approval boundary', 'Policy rules'],
+    policyChecks: ['Named approver required', 'No external mutation before approval'],
+  },
+  {
+    id: 'approval-external-execution',
+    actionId: 'execute-external-action',
+    title: 'External execution contract',
+    requester: 'Runtime system',
+    requiredApprover: 'Senior operator',
+    status: 'blocked',
+    risk: 'high',
+    due: 'After production connector contract',
+    evidence: ['Runtime contract', 'Governance rule'],
+    policyChecks: ['Production connector contract required', 'Rollback note required'],
+  },
+];
+
+const defaultExecutionQueue: ActionExecutionItem[] = [
+  {
+    id: 'execution-draft-brief',
+    actionId: 'draft-operator-brief',
+    title: 'Draft operator brief',
+    status: 'preview',
+    owner: 'Operator',
+    system: 'Cloudflare route',
+    risk: 'low',
+    rollback: 'Discard generated draft before publication.',
+    lastUpdated: 'Preview ready',
+  },
+  {
+    id: 'execution-external-action',
+    actionId: 'execute-external-action',
+    title: 'Execute external action',
+    status: 'blocked',
+    owner: 'Senior operator',
+    system: 'External connector',
+    risk: 'high',
+    rollback: 'Define rollback before enabling connector execution.',
+    lastUpdated: 'Blocked in v1',
+  },
+];
+
+const defaultActivityEvents: ActivityEventItem[] = [
+  {
+    id: 'event-context-ready',
+    eventType: 'context',
+    label: 'Workflow context ready',
+    detail: 'The console can render from sanitized workflow state.',
+    actor: 'Cloudflare',
+    timestamp: 'Runtime read',
+    tone: 'success',
+  },
+  {
+    id: 'event-policy-boundary',
+    eventType: 'approval',
+    label: 'Approval boundary active',
+    detail: 'External mutations require named approval and an execution contract.',
+    actor: 'Policy',
+    timestamp: 'Policy artifact',
+    tone: 'warning',
+  },
+];
+
 function parseJsonList<T>(value: JsonList<T> | undefined, fallback: T[]): T[] {
   if (Array.isArray(value)) return value;
   if (!value || !value.trim()) return fallback;
@@ -372,17 +573,21 @@ function statusToTone(status: CheckStatus | ApprovalState | ActionStatus | strin
     case 'ok':
     case 'approved':
     case 'allowed':
+    case 'active':
+    case 'executed':
       return 'success';
     case 'warning':
     case 'review':
     case 'requires_approval':
     case 'ready':
+    case 'queued':
       return 'warning';
     case 'blocked':
       return 'danger';
     case 'draft':
     case 'idle':
     case 'open':
+    case 'preview':
       return 'neutral';
     default:
       return 'info';
@@ -1085,6 +1290,487 @@ export function RuntimeStatus({
   );
 }
 
+export interface BusinessContextSwitcherProps {
+  contexts?: JsonList<BusinessContextItem>;
+  activeContextId?: string;
+  contextEndpointUrl?: string;
+  contextId?: string;
+  title?: string;
+  body?: string;
+  className?: string;
+}
+
+export function BusinessContextSwitcher({
+  contexts,
+  activeContextId,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
+  title = 'Business Context',
+  body = 'Scope the console before reviewing actions, approvals, and source status.',
+  className = '',
+}: BusinessContextSwitcherProps) {
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedContexts = useMemo(
+    () => context?.businessContexts ?? parseJsonList(contexts, defaultBusinessContexts),
+    [context?.businessContexts, contexts]
+  );
+  const defaultActiveId = context?.activeBusinessContextId ?? activeContextId ?? parsedContexts[0]?.id ?? '';
+  const [selectedId, setSelectedId] = useState(defaultActiveId);
+
+  useEffect(() => {
+    setSelectedId(defaultActiveId);
+  }, [defaultActiveId]);
+
+  const selectedContext = parsedContexts.find((item) => item.id === selectedId) ?? parsedContexts[0];
+
+  if (!selectedContext) return null;
+
+  return (
+    <ComponentShell className={className}>
+      <section style={sectionSurfaceStyles}>
+        <div className="cs-control-grid cs-control-grid--two" style={{ alignItems: 'start' }}>
+          <SectionHeader eyebrow="Business scope" title={title} body={body} />
+          <select className="cs-control-select" value={selectedContext.id} onChange={(event) => setSelectedId(event.target.value)}>
+            {parsedContexts.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.client} / {item.project}
+              </option>
+            ))}
+          </select>
+        </div>
+        <article style={{ ...surfaceStyles, background: tokens.colors.bgPure, marginTop: tokens.spacing.md, padding: tokens.spacing.md }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '0.75rem' }}>
+            <div>
+              <div style={compactLabelStyles}>{selectedContext.client}</div>
+              <h3 style={{ fontFamily: tokens.typography.fontFamily.tight, fontSize: tokens.typography.fontSize.h4, margin: '0.35rem 0 0' }}>
+                {selectedContext.workflow}
+              </h3>
+            </div>
+            <Badge tone={statusToTone(selectedContext.status)}>{selectedContext.status ?? 'active'}</Badge>
+          </div>
+          <p style={{ color: tokens.colors.fgSecondary, lineHeight: tokens.typography.lineHeight.relaxed, margin: '0.8rem 0 0' }}>
+            {selectedContext.detail ?? selectedContext.project}
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '1rem' }}>
+            <Badge tone="neutral">{selectedContext.environment}</Badge>
+            {selectedContext.owner ? <Badge tone="neutral">Owner: {selectedContext.owner}</Badge> : null}
+          </div>
+        </article>
+      </section>
+    </ComponentShell>
+  );
+}
+
+export interface WorkflowMetricsStripProps {
+  metrics?: JsonList<WorkflowMetricItem>;
+  contextEndpointUrl?: string;
+  contextId?: string;
+  title?: string;
+  body?: string;
+  className?: string;
+}
+
+export function WorkflowMetricsStrip({
+  metrics,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
+  title,
+  body,
+  className = '',
+}: WorkflowMetricsStripProps) {
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedMetrics = useMemo(() => context?.metrics ?? parseJsonList(metrics, defaultMetrics), [context?.metrics, metrics]);
+
+  return (
+    <ComponentShell className={className}>
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Operating metrics" title={title} body={body} />
+        <div className="cs-control-grid cs-control-grid--four">
+          {parsedMetrics.map((metric) => (
+            <article key={`${metric.label}-${metric.value}`} style={{ ...surfaceStyles, background: tokens.colors.bgPure, padding: tokens.spacing.md }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+                <div style={compactLabelStyles}>{metric.label}</div>
+                {metric.trend ? <Badge tone={metric.tone ?? 'neutral'}>{metric.trend}</Badge> : null}
+              </div>
+              <div
+                style={{
+                  fontFamily: tokens.typography.fontFamily.tight,
+                  fontSize: tokens.typography.fontSize.h3,
+                  fontWeight: tokens.typography.fontWeight.bold,
+                  lineHeight: tokens.typography.lineHeight.tight,
+                  marginTop: '0.8rem',
+                }}
+              >
+                {metric.value}
+              </div>
+              {metric.detail ? (
+                <p style={{ color: tokens.colors.fgSecondary, fontSize: tokens.typography.fontSize.bodySm, margin: '0.55rem 0 0' }}>
+                  {metric.detail}
+                </p>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      </section>
+    </ComponentShell>
+  );
+}
+
+export interface SourceTruthStatusProps {
+  sources?: JsonList<SourceStatusItem>;
+  contextEndpointUrl?: string;
+  contextId?: string;
+  title?: string;
+  body?: string;
+  className?: string;
+}
+
+export function SourceTruthStatus({
+  sources,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
+  title = 'Source-of-Truth Status',
+  body = 'Confirm the systems that own data, automation, secrets, and policy before action.',
+  className = '',
+}: SourceTruthStatusProps) {
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedSources = useMemo(
+    () => context?.sourceStatuses ?? parseJsonList(sources, defaultSourceStatuses),
+    [context?.sourceStatuses, sources]
+  );
+
+  return (
+    <ComponentShell className={className}>
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Database / automation / judgment" title={title} body={body} />
+        <div className="cs-control-list">
+          {parsedSources.map((source) => (
+            <article
+              key={`${source.system}-${source.tier ?? 'source'}`}
+              style={{
+                ...surfaceStyles,
+                background: tokens.colors.bgPure,
+                display: 'grid',
+                gap: '0.85rem',
+                gridTemplateColumns: 'minmax(0, 1fr) auto',
+                padding: tokens.spacing.md,
+              }}
+            >
+              <div>
+                <div style={compactLabelStyles}>{source.tier ?? 'System'}</div>
+                <h3 style={{ fontFamily: tokens.typography.fontFamily.tight, fontSize: tokens.typography.fontSize.h5, margin: '0.35rem 0 0' }}>
+                  {source.system}
+                </h3>
+                <p style={{ color: tokens.colors.fgSecondary, lineHeight: tokens.typography.lineHeight.relaxed, margin: '0.55rem 0 0' }}>
+                  {source.detail}
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.85rem' }}>
+                  {source.lastSynced ? <Badge tone="neutral">{source.lastSynced}</Badge> : null}
+                  {source.owner ? <Badge tone="neutral">Owner: {source.owner}</Badge> : null}
+                </div>
+              </div>
+              <Badge tone={statusToTone(source.status)}>{source.status ?? 'ok'}</Badge>
+            </article>
+          ))}
+        </div>
+      </section>
+    </ComponentShell>
+  );
+}
+
+export interface ApprovalQueueProps {
+  approvals?: JsonList<ApprovalQueueItem>;
+  endpointUrl?: string;
+  contextEndpointUrl?: string;
+  contextId?: string;
+  actor?: string;
+  title?: string;
+  body?: string;
+  className?: string;
+}
+
+export function ApprovalQueue({
+  approvals,
+  endpointUrl = '',
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
+  actor = 'Operator',
+  title = 'Approval Queue',
+  body = 'Persist decisions before any recommendation can become an external action.',
+  className = '',
+}: ApprovalQueueProps) {
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedApprovals = useMemo(
+    () => context?.approvalQueue ?? parseJsonList(approvals, defaultApprovalQueue),
+    [context?.approvalQueue, approvals]
+  );
+  const [localApprovals, setLocalApprovals] = useState<ApprovalQueueItem[]>(parsedApprovals);
+  const [pendingId, setPendingId] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setLocalApprovals(parsedApprovals);
+  }, [parsedApprovals]);
+
+  async function updateApproval(approval: ApprovalQueueItem, status: ApprovalState) {
+    setError('');
+
+    if (!endpointUrl) {
+      setLocalApprovals((items) => items.map((item) => (item.id === approval.id ? { ...item, status, updatedBy: actor } : item)));
+      return;
+    }
+
+    setPendingId(approval.id);
+
+    try {
+      const response = await fetch(endpointUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          approvalId: approval.id,
+          contextId,
+          status,
+          actor,
+          note: `${approval.title} moved to ${readableStatus(status)} from the Webflow console.`,
+        }),
+      });
+      const payload = (await response.json()) as ApprovalUpdateResponse;
+      if (!response.ok || !payload.approval) throw new Error(payload.error ?? 'Unable to update approval.');
+      setLocalApprovals((items) => items.map((item) => (item.id === approval.id ? payload.approval! : item)));
+    } catch (approvalError) {
+      setError(approvalError instanceof Error ? approvalError.message : 'Unable to update approval.');
+    } finally {
+      setPendingId('');
+    }
+  }
+
+  return (
+    <ComponentShell className={className}>
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Human approval" title={title} body={body} />
+        <div className="cs-control-list">
+          {localApprovals.map((approval) => (
+            <article key={approval.id} style={{ ...surfaceStyles, background: tokens.colors.bgPure, padding: tokens.spacing.md }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '0.75rem' }}>
+                <div>
+                  <div style={compactLabelStyles}>{approval.requester ?? 'Requester'}</div>
+                  <h3 style={{ fontFamily: tokens.typography.fontFamily.tight, fontSize: tokens.typography.fontSize.h5, margin: '0.35rem 0 0' }}>
+                    {approval.title}
+                  </h3>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', justifyContent: 'flex-end' }}>
+                  <Badge tone={riskToTone(approval.risk)}>{approval.risk ?? 'standard'} risk</Badge>
+                  <Badge tone={statusToTone(approval.status)}>{approval.status ?? 'review'}</Badge>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.85rem' }}>
+                <Badge tone="neutral">Approver: {approval.requiredApprover}</Badge>
+                {approval.due ? <Badge tone="neutral">{approval.due}</Badge> : null}
+                {approval.updatedBy ? <Badge tone="neutral">Updated by {approval.updatedBy}</Badge> : null}
+              </div>
+              {approval.policyChecks?.length ? (
+                <ul style={{ color: tokens.colors.fgSecondary, margin: '0.85rem 0 0', paddingLeft: '1.1rem' }}>
+                  {approval.policyChecks.map((check) => (
+                    <li key={check} style={{ marginBottom: '0.35rem' }}>
+                      {check}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '0.6rem', marginTop: tokens.spacing.md }}>
+                <button className="cs-control-button cs-control-button--ghost" type="button" onClick={() => void updateApproval(approval, 'review')} disabled={pendingId === approval.id}>
+                  Keep in review
+                </button>
+                <button className="cs-control-button cs-control-button--ghost" type="button" onClick={() => void updateApproval(approval, 'blocked')} disabled={pendingId === approval.id}>
+                  Block
+                </button>
+                <button className="cs-control-button" type="button" onClick={() => void updateApproval(approval, 'approved')} disabled={pendingId === approval.id}>
+                  {pendingId === approval.id ? 'Saving...' : 'Approve'}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+        {error ? <p style={{ color: tokens.colors.error, margin: '1rem 0 0' }}>{error}</p> : null}
+      </section>
+    </ComponentShell>
+  );
+}
+
+export interface ActionExecutionQueueProps {
+  items?: JsonList<ActionExecutionItem>;
+  contextEndpointUrl?: string;
+  contextId?: string;
+  title?: string;
+  body?: string;
+  className?: string;
+}
+
+export function ActionExecutionQueue({
+  items,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
+  title = 'Action Execution Queue',
+  body = 'Track which actions are previews, approved, queued, blocked, or executed.',
+  className = '',
+}: ActionExecutionQueueProps) {
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedItems = useMemo(
+    () => context?.executionQueue ?? parseJsonList(items, defaultExecutionQueue),
+    [context?.executionQueue, items]
+  );
+
+  return (
+    <ComponentShell className={className}>
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Governed execution" title={title} body={body} />
+        <div className="cs-control-list">
+          {parsedItems.map((item) => (
+            <article key={item.id} style={{ ...surfaceStyles, background: tokens.colors.bgPure, padding: tokens.spacing.md }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '0.75rem' }}>
+                <div>
+                  <div style={compactLabelStyles}>{item.system ?? 'Action'}</div>
+                  <h3 style={{ fontFamily: tokens.typography.fontFamily.tight, fontSize: tokens.typography.fontSize.h5, margin: '0.35rem 0 0' }}>
+                    {item.title}
+                  </h3>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', justifyContent: 'flex-end' }}>
+                  <Badge tone={riskToTone(item.risk)}>{item.risk ?? 'standard'} risk</Badge>
+                  <Badge tone={statusToTone(item.status)}>{item.status ?? 'preview'}</Badge>
+                </div>
+              </div>
+              {item.rollback ? (
+                <p style={{ color: tokens.colors.fgSecondary, lineHeight: tokens.typography.lineHeight.relaxed, margin: '0.8rem 0 0' }}>
+                  Rollback: {item.rollback}
+                </p>
+              ) : null}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.85rem' }}>
+                {item.owner ? <Badge tone="neutral">Owner: {item.owner}</Badge> : null}
+                {item.lastUpdated ? <Badge tone="neutral">{item.lastUpdated}</Badge> : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </ComponentShell>
+  );
+}
+
+export interface EvidenceManagerProps {
+  evidence?: JsonList<EvidenceItem>;
+  contextEndpointUrl?: string;
+  contextId?: string;
+  title?: string;
+  body?: string;
+  className?: string;
+}
+
+export function EvidenceManager({
+  evidence,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
+  title = 'Evidence Manager',
+  body = 'Review which evidence is public-safe, internal, or private before it grounds an action.',
+  className = '',
+}: EvidenceManagerProps) {
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedEvidence = useMemo(() => context?.evidence ?? parseJsonList(evidence, defaultEvidence), [context?.evidence, evidence]);
+
+  return (
+    <ComponentShell className={className}>
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Grounding boundary" title={title} body={body} />
+        <div className="cs-control-grid cs-control-grid--two">
+          {parsedEvidence.map((item, index) => (
+            <article key={item.id ?? `${item.label}-${index}`} style={{ ...surfaceStyles, background: tokens.colors.bgPure, padding: tokens.spacing.md }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+                <div style={compactLabelStyles}>{item.source ?? 'Evidence'}</div>
+                <Badge tone={item.visibility === 'private' ? 'danger' : item.visibility === 'internal' ? 'warning' : 'success'}>
+                  {item.visibility ?? 'public-safe'}
+                </Badge>
+              </div>
+              <h3 style={{ fontFamily: tokens.typography.fontFamily.tight, fontSize: tokens.typography.fontSize.h5, margin: '0.7rem 0 0' }}>
+                {item.label}
+              </h3>
+              {item.detail ? (
+                <p style={{ color: tokens.colors.fgSecondary, lineHeight: tokens.typography.lineHeight.relaxed, margin: '0.55rem 0 0' }}>
+                  {item.detail}
+                </p>
+              ) : null}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.85rem' }}>
+                <Badge tone={statusToTone(item.status)}>{item.status ?? 'review'}</Badge>
+                {item.owner ? <Badge tone="neutral">Owner: {item.owner}</Badge> : null}
+                {item.timestamp ? <Badge tone="neutral">{item.timestamp}</Badge> : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </ComponentShell>
+  );
+}
+
+export interface OperatorActivityLogProps {
+  events?: JsonList<ActivityEventItem>;
+  contextEndpointUrl?: string;
+  contextId?: string;
+  title?: string;
+  body?: string;
+  className?: string;
+}
+
+export function OperatorActivityLog({
+  events,
+  contextEndpointUrl = '',
+  contextId = 'create-something-governed-workflow-console',
+  title = 'Operator Activity Log',
+  body = 'Show the public-safe audit trail for previews, approvals, evidence, and deployments.',
+  className = '',
+}: OperatorActivityLogProps) {
+  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const parsedEvents = useMemo(
+    () => context?.activityEvents ?? parseJsonList(events, defaultActivityEvents),
+    [context?.activityEvents, events]
+  );
+
+  return (
+    <ComponentShell className={className}>
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Audit trail" title={title} body={body} />
+        <div className="cs-control-list">
+          {parsedEvents.map((event) => (
+            <article
+              key={event.id}
+              style={{
+                ...surfaceStyles,
+                background: tokens.colors.bgPure,
+                display: 'grid',
+                gap: '0.85rem',
+                gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+                padding: tokens.spacing.md,
+              }}
+            >
+              <Badge tone={event.tone ?? statusToTone(event.eventType)}>{event.eventType ?? 'event'}</Badge>
+              <div>
+                <h3 style={{ fontFamily: tokens.typography.fontFamily.tight, fontSize: tokens.typography.fontSize.h5, margin: 0 }}>
+                  {event.label}
+                </h3>
+                {event.detail ? (
+                  <p style={{ color: tokens.colors.fgSecondary, lineHeight: tokens.typography.lineHeight.relaxed, margin: '0.45rem 0 0' }}>
+                    {event.detail}
+                  </p>
+                ) : null}
+                {event.actor ? <p style={{ color: tokens.colors.fgMuted, fontSize: tokens.typography.fontSize.caption, margin: '0.55rem 0 0' }}>By {event.actor}</p> : null}
+              </div>
+              {event.timestamp ? <Badge tone="neutral">{event.timestamp}</Badge> : null}
+            </article>
+          ))}
+        </div>
+      </section>
+    </ComponentShell>
+  );
+}
+
 export interface ActionPreviewProps {
   actions?: JsonList<ActionPreviewItem>;
   endpointUrl?: string;
@@ -1531,6 +2217,14 @@ export interface CanonControlPanelProps {
   contextEndpointUrl?: string;
   agentEndpointUrl?: string;
   actionEndpointUrl?: string;
+  approvalEndpointUrl?: string;
+  operatorName?: string;
+  businessContexts?: JsonList<BusinessContextItem>;
+  metrics?: JsonList<WorkflowMetricItem>;
+  sourceStatuses?: JsonList<SourceStatusItem>;
+  approvalQueue?: JsonList<ApprovalQueueItem>;
+  executionQueue?: JsonList<ActionExecutionItem>;
+  activityEvents?: JsonList<ActivityEventItem>;
   layers?: JsonList<OperatingLayer>;
   evidence?: JsonList<EvidenceItem>;
   artifacts?: JsonList<ArtifactItem>;
@@ -1548,6 +2242,14 @@ export function CanonControlPanel({
   contextEndpointUrl = '',
   agentEndpointUrl = '',
   actionEndpointUrl = '',
+  approvalEndpointUrl = '',
+  operatorName = 'Operator',
+  businessContexts,
+  metrics,
+  sourceStatuses,
+  approvalQueue,
+  executionQueue,
+  activityEvents,
   layers,
   evidence,
   artifacts,
@@ -1568,6 +2270,12 @@ export function CanonControlPanel({
   const effectiveSuggestedPrompts = context?.agent?.suggestedPrompts ?? suggestedPrompts;
   const effectiveRuntime = context?.runtime;
   const effectiveApproval = context?.approval;
+  const effectiveBusinessContexts = context?.businessContexts ?? businessContexts;
+  const effectiveMetrics = context?.metrics ?? metrics;
+  const effectiveSourceStatuses = context?.sourceStatuses ?? sourceStatuses;
+  const effectiveApprovalQueue = context?.approvalQueue ?? approvalQueue;
+  const effectiveExecutionQueue = context?.executionQueue ?? executionQueue;
+  const effectiveActivityEvents = context?.activityEvents ?? activityEvents;
 
   return (
     <ComponentShell className={className}>
@@ -1615,7 +2323,28 @@ export function CanonControlPanel({
         </div>
 
         <div style={{ marginTop: tokens.spacing.lg }}>
+          <BusinessContextSwitcher
+            contexts={effectiveBusinessContexts}
+            activeContextId={context?.activeBusinessContextId}
+            title="Business Context"
+            body="Select the operating scope before reviewing approvals, actions, and source status."
+          />
+        </div>
+
+        <div style={{ marginTop: tokens.spacing.lg }}>
+          <WorkflowMetricsStrip metrics={effectiveMetrics} />
+        </div>
+
+        <div style={{ marginTop: tokens.spacing.lg }}>
           <OperatingLayerCards layers={effectiveLayers} body="Each feature is designed as a public surface, a callable runtime, and a policy-backed approval state." />
+        </div>
+
+        <div style={{ marginTop: tokens.spacing.lg }}>
+          <SourceTruthStatus sources={effectiveSourceStatuses} />
+        </div>
+
+        <div style={{ marginTop: tokens.spacing.lg }}>
+          <ApprovalQueue approvals={effectiveApprovalQueue} endpointUrl={approvalEndpointUrl} contextId={contextId} actor={operatorName} />
         </div>
 
         <div className="cs-control-grid cs-control-grid--two" style={{ marginTop: tokens.spacing.lg, alignItems: 'start' }}>
@@ -1628,6 +2357,10 @@ export function CanonControlPanel({
             primaryActionLabel={effectiveApproval?.primaryActionLabel}
             secondaryActionLabel={effectiveApproval?.secondaryActionLabel}
           />
+        </div>
+
+        <div style={{ marginTop: tokens.spacing.lg }}>
+          <ActionExecutionQueue items={effectiveExecutionQueue} />
         </div>
 
         <div className="cs-control-grid cs-control-grid--two" style={{ marginTop: tokens.spacing.lg, alignItems: 'start' }}>
@@ -1643,11 +2376,19 @@ export function CanonControlPanel({
         </div>
 
         <div style={{ marginTop: tokens.spacing.lg }}>
-          <EvidenceTrail evidence={effectiveEvidence} />
+          <EvidenceManager evidence={effectiveEvidence} />
+        </div>
+
+        <div style={{ marginTop: tokens.spacing.lg }}>
+          <EvidenceTrail evidence={effectiveEvidence} title="Evidence Trail" />
         </div>
 
         <div style={{ marginTop: tokens.spacing.lg }}>
           <ArtifactGrid artifacts={effectiveArtifacts} />
+        </div>
+
+        <div style={{ marginTop: tokens.spacing.lg }}>
+          <OperatorActivityLog events={effectiveActivityEvents} />
         </div>
       </section>
     </ComponentShell>
@@ -1663,4 +2404,10 @@ export const canonControlDefaults = {
   suggestedPrompts: defaultPrompts,
   initialMessages: defaultMessages,
   runtimeChecks: defaultChecks,
+  businessContexts: defaultBusinessContexts,
+  metrics: defaultMetrics,
+  sourceStatuses: defaultSourceStatuses,
+  approvalQueue: defaultApprovalQueue,
+  executionQueue: defaultExecutionQueue,
+  activityEvents: defaultActivityEvents,
 };

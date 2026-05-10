@@ -34,6 +34,9 @@ export interface CanonWorkflowEvidenceItem {
 	href?: string;
 	tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 	timestamp?: string;
+	visibility?: 'public' | 'private' | 'internal';
+	status?: 'draft' | 'approved' | 'review' | 'blocked';
+	owner?: string;
 }
 
 export interface CanonWorkflowDecisionItem {
@@ -71,6 +74,71 @@ export interface CanonWorkflowAgent {
 	initialMessages: Array<{ role: 'agent' | 'operator'; body: string; grounding?: string[] }>;
 }
 
+export interface CanonWorkflowBusinessContext {
+	id: string;
+	client: string;
+	project: string;
+	workflow: string;
+	environment: string;
+	status: 'active' | 'review' | 'blocked' | 'idle';
+	owner: string;
+	detail?: string;
+}
+
+export interface CanonWorkflowMetric {
+	label: string;
+	value: string;
+	detail?: string;
+	tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+	trend?: string;
+}
+
+export interface CanonWorkflowSourceStatus {
+	system: string;
+	status: 'ok' | 'warning' | 'blocked' | 'idle';
+	detail: string;
+	lastSynced?: string;
+	owner?: string;
+	tier?: 'Database' | 'Automation' | 'Judgment';
+}
+
+export interface CanonWorkflowApprovalQueueItem {
+	id: string;
+	actionId?: string;
+	title: string;
+	requester?: string;
+	requiredApprover: string;
+	status: 'review' | 'approved' | 'blocked';
+	risk?: 'low' | 'medium' | 'high';
+	due?: string;
+	evidence?: string[];
+	policyChecks?: string[];
+	updatedBy?: string;
+	updatedAt?: string;
+}
+
+export interface CanonWorkflowExecutionQueueItem {
+	id: string;
+	actionId?: string;
+	title: string;
+	status: 'preview' | 'queued' | 'approved' | 'blocked' | 'executed';
+	owner?: string;
+	system?: string;
+	risk?: 'low' | 'medium' | 'high';
+	rollback?: string;
+	lastUpdated?: string;
+}
+
+export interface CanonWorkflowActivityEvent {
+	id: string;
+	eventType: 'context' | 'approval' | 'preview' | 'agent' | 'deploy' | 'evidence' | 'decision';
+	label: string;
+	detail?: string;
+	actor?: string;
+	timestamp?: string;
+	tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+}
+
 export interface CanonWorkflowContext {
 	contextId: string;
 	title: string;
@@ -85,6 +153,13 @@ export interface CanonWorkflowContext {
 	decisions: CanonWorkflowDecisionItem[];
 	artifacts: CanonWorkflowArtifactItem[];
 	agent: CanonWorkflowAgent;
+	businessContexts: CanonWorkflowBusinessContext[];
+	activeBusinessContextId: string;
+	metrics: CanonWorkflowMetric[];
+	sourceStatuses: CanonWorkflowSourceStatus[];
+	approvalQueue: CanonWorkflowApprovalQueueItem[];
+	executionQueue: CanonWorkflowExecutionQueueItem[];
+	activityEvents: CanonWorkflowActivityEvent[];
 	guardrails: string[];
 }
 
@@ -94,6 +169,36 @@ interface CanonWorkflowContextRow {
 	summary: string;
 	workflow_json: string;
 	updated_at: string | null;
+}
+
+interface CanonWorkflowApprovalRow {
+	approval_id: string;
+	action_id: string | null;
+	title: string;
+	requester: string | null;
+	required_approver: string;
+	status: 'review' | 'approved' | 'blocked';
+	risk: 'low' | 'medium' | 'high' | null;
+	due_at: string | null;
+	evidence_json: string;
+	policy_checks_json: string;
+	updated_by: string | null;
+	updated_at: string | null;
+}
+
+interface CanonWorkflowActivityRow {
+	event_id: string;
+	event_type: CanonWorkflowActivityEvent['eventType'];
+	label: string;
+	detail: string | null;
+	actor: string | null;
+	tone: CanonWorkflowActivityEvent['tone'] | null;
+	created_at: string | null;
+}
+
+interface CanonWorkflowContextOverlays {
+	approvalQueue?: CanonWorkflowApprovalQueueItem[];
+	activityEvents?: CanonWorkflowActivityEvent[];
 }
 
 export const DEFAULT_CANON_WORKFLOW_CONTEXT_ID = 'create-something-governed-workflow-console';
@@ -126,7 +231,9 @@ export async function loadCanonWorkflowContext(
 
 		if (!row) return fallback;
 
-		return mergeCanonWorkflowContext(row, fallback);
+		const overlays = await loadCanonWorkflowContextOverlays(db, contextId);
+
+		return mergeCanonWorkflowContext(row, fallback, overlays);
 	} catch {
 		return fallback;
 	}
@@ -136,7 +243,11 @@ export function selectCanonWorkflowAction(context: CanonWorkflowContext, actionI
 	return context.actions.find((action) => action.id === actionId) ?? context.actions[0] ?? canonActionDefinitions[0];
 }
 
-function mergeCanonWorkflowContext(row: CanonWorkflowContextRow, fallback: CanonWorkflowContext): CanonWorkflowContext {
+function mergeCanonWorkflowContext(
+	row: CanonWorkflowContextRow,
+	fallback: CanonWorkflowContext,
+	overlays: CanonWorkflowContextOverlays = {}
+): CanonWorkflowContext {
 	const parsed = safeParseRecord(row.workflow_json);
 	const actions = normalizeActions(parsed.actions, fallback.actions);
 
@@ -155,6 +266,22 @@ function mergeCanonWorkflowContext(row: CanonWorkflowContextRow, fallback: Canon
 		decisions: normalizeArray<CanonWorkflowDecisionItem>(parsed.decisions, fallback.decisions),
 		artifacts: normalizeArray<CanonWorkflowArtifactItem>(parsed.artifacts, fallback.artifacts),
 		agent: normalizeAgent(parsed.agent, fallback.agent),
+		businessContexts: normalizeArray<CanonWorkflowBusinessContext>(parsed.businessContexts, fallback.businessContexts),
+		activeBusinessContextId:
+			typeof parsed.activeBusinessContextId === 'string'
+				? parsed.activeBusinessContextId
+				: fallback.activeBusinessContextId,
+		metrics: normalizeArray<CanonWorkflowMetric>(parsed.metrics, fallback.metrics),
+		sourceStatuses: normalizeArray<CanonWorkflowSourceStatus>(parsed.sourceStatuses, fallback.sourceStatuses),
+		approvalQueue:
+			overlays.approvalQueue && overlays.approvalQueue.length > 0
+				? overlays.approvalQueue
+				: normalizeArray<CanonWorkflowApprovalQueueItem>(parsed.approvalQueue, fallback.approvalQueue),
+		executionQueue: normalizeArray<CanonWorkflowExecutionQueueItem>(parsed.executionQueue, fallback.executionQueue),
+		activityEvents:
+			overlays.activityEvents && overlays.activityEvents.length > 0
+				? overlays.activityEvents
+				: normalizeArray<CanonWorkflowActivityEvent>(parsed.activityEvents, fallback.activityEvents),
 		guardrails: normalizeStringArray(parsed.guardrails, fallback.guardrails)
 	};
 }
@@ -298,8 +425,214 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 				}
 			]
 		},
+		businessContexts: [
+			{
+				id: 'cs-ops-core',
+				client: 'CREATE SOMETHING',
+				project: 'Governed Workflow Console',
+				workflow: 'Webflow + Cloudflare delivery',
+				environment: 'Production preview',
+				status: 'active',
+				owner: 'Operator',
+				detail: 'Console state is scoped to the CREATE SOMETHING operating layer.'
+			}
+		],
+		activeBusinessContextId: 'cs-ops-core',
+		metrics: [
+			{ label: 'Open decisions', value: '3', detail: 'Operator review queue', tone: 'warning' },
+			{ label: 'Approval SLA', value: '24h', detail: 'Named approver required', tone: 'info' },
+			{ label: 'Runtime posture', value: 'Preview', detail: 'No external mutation in v1', tone: 'success' },
+			{ label: 'Private boundary', value: 'Enforced', detail: 'Secrets and raw records stay out of Webflow', tone: 'success' }
+		],
+		sourceStatuses: [
+			{
+				system: 'Cloudflare D1',
+				status: 'ok',
+				detail: 'Sanitized workflow context is available.',
+				lastSynced: 'Runtime read',
+				owner: 'Engineering',
+				tier: 'Database'
+			},
+			{
+				system: 'Webflow Components',
+				status: 'ok',
+				detail: 'Reusable components hydrate from the workflow context.',
+				lastSynced: 'Library share',
+				owner: 'Design systems',
+				tier: 'Automation'
+			},
+			{
+				system: 'Approval Policy',
+				status: 'warning',
+				detail: 'External mutations require a named human approval path.',
+				lastSynced: 'Policy artifact',
+				owner: 'Operator',
+				tier: 'Judgment'
+			}
+		],
+		approvalQueue: [
+			{
+				id: 'approval-action-boundary',
+				actionId: 'request-approval',
+				title: 'Approve action boundary',
+				requester: 'Delivery system',
+				requiredApprover: 'Named operator',
+				status: 'review',
+				risk: 'medium',
+				due: 'Before connector execution',
+				evidence: ['Approval boundary', 'Policy rules'],
+				policyChecks: ['Named approver required', 'No external mutation before approval']
+			},
+			{
+				id: 'approval-external-execution',
+				actionId: 'execute-external-action',
+				title: 'External execution contract',
+				requester: 'Runtime system',
+				requiredApprover: 'Senior operator',
+				status: 'blocked',
+				risk: 'high',
+				due: 'After production connector contract',
+				evidence: ['Runtime contract', 'Governance rule'],
+				policyChecks: ['Production connector contract required', 'Rollback note required']
+			}
+		],
+		executionQueue: [
+			{
+				id: 'execution-draft-brief',
+				actionId: 'draft-operator-brief',
+				title: 'Draft operator brief',
+				status: 'preview',
+				owner: 'Operator',
+				system: 'Cloudflare route',
+				risk: 'low',
+				rollback: 'Discard generated draft before publication.',
+				lastUpdated: 'Preview ready'
+			},
+			{
+				id: 'execution-external-action',
+				actionId: 'execute-external-action',
+				title: 'Execute external action',
+				status: 'blocked',
+				owner: 'Senior operator',
+				system: 'External connector',
+				risk: 'high',
+				rollback: 'Define rollback before enabling connector execution.',
+				lastUpdated: 'Blocked in v1'
+			}
+		],
+		activityEvents: [
+			{
+				id: 'event-context-ready',
+				eventType: 'context',
+				label: 'Workflow context ready',
+				detail: 'The console can render from sanitized workflow state.',
+				actor: 'Cloudflare',
+				timestamp: 'Runtime read',
+				tone: 'success'
+			},
+			{
+				id: 'event-policy-boundary',
+				eventType: 'approval',
+				label: 'Approval boundary active',
+				detail: 'External mutations require named approval and an execution contract.',
+				actor: 'Policy',
+				timestamp: 'Policy artifact',
+				tone: 'warning'
+			}
+		],
 		guardrails: canonControlContext.guardrails
 	};
+}
+
+async function loadCanonWorkflowContextOverlays(
+	db: D1Database,
+	contextId: string
+): Promise<CanonWorkflowContextOverlays> {
+	const [approvalQueue, activityEvents] = await Promise.all([
+		loadCanonWorkflowApprovals(db, contextId),
+		loadCanonWorkflowActivityEvents(db, contextId)
+	]);
+
+	return {
+		approvalQueue,
+		activityEvents
+	};
+}
+
+async function loadCanonWorkflowApprovals(
+	db: D1Database,
+	contextId: string
+): Promise<CanonWorkflowApprovalQueueItem[] | undefined> {
+	try {
+		const response = await db
+			.prepare(
+				`SELECT approval_id, action_id, title, requester, required_approver, status, risk, due_at,
+				        evidence_json, policy_checks_json, updated_by, updated_at
+				 FROM canon_workflow_approvals
+				 WHERE context_id = ?
+				 ORDER BY
+				   CASE status WHEN 'blocked' THEN 0 WHEN 'review' THEN 1 ELSE 2 END,
+				   CASE WHEN due_at IS NULL THEN 1 ELSE 0 END,
+				   due_at ASC,
+				   updated_at DESC
+				 LIMIT 20`
+			)
+			.bind(contextId)
+			.all<CanonWorkflowApprovalRow>();
+
+		const rows = response.results ?? [];
+		if (rows.length === 0) return undefined;
+
+		return rows.map((row) => ({
+			id: row.approval_id,
+			actionId: row.action_id ?? undefined,
+			title: row.title,
+			requester: row.requester ?? undefined,
+			requiredApprover: row.required_approver,
+			status: row.status,
+			risk: row.risk ?? undefined,
+			due: row.due_at ?? undefined,
+			evidence: safeParseStringArray(row.evidence_json),
+			policyChecks: safeParseStringArray(row.policy_checks_json),
+			updatedBy: row.updated_by ?? undefined,
+			updatedAt: row.updated_at ?? undefined
+		}));
+	} catch {
+		return undefined;
+	}
+}
+
+async function loadCanonWorkflowActivityEvents(
+	db: D1Database,
+	contextId: string
+): Promise<CanonWorkflowActivityEvent[] | undefined> {
+	try {
+		const response = await db
+			.prepare(
+				`SELECT event_id, event_type, label, detail, actor, tone, created_at
+				 FROM canon_workflow_activity
+				 WHERE context_id = ?
+				 ORDER BY created_at DESC
+				 LIMIT 20`
+			)
+			.bind(contextId)
+			.all<CanonWorkflowActivityRow>();
+
+		const rows = response.results ?? [];
+		if (rows.length === 0) return undefined;
+
+		return rows.map((row) => ({
+			id: row.event_id,
+			eventType: row.event_type,
+			label: row.label,
+			detail: row.detail ?? undefined,
+			actor: row.actor ?? undefined,
+			timestamp: row.created_at ?? undefined,
+			tone: row.tone ?? undefined
+		}));
+	} catch {
+		return undefined;
+	}
 }
 
 function safeParseRecord(value: string): Record<string, unknown> {
@@ -308,6 +641,15 @@ function safeParseRecord(value: string): Record<string, unknown> {
 		return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {};
 	} catch {
 		return {};
+	}
+}
+
+function safeParseStringArray(value: string): string[] {
+	try {
+		const parsed = JSON.parse(value) as unknown;
+		return normalizeStringArray(parsed, []);
+	} catch {
+		return [];
 	}
 }
 

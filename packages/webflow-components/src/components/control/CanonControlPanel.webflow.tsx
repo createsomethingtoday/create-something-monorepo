@@ -34,6 +34,45 @@ export default declareComponent(CanonControlPanel, {
       defaultValue: '',
       tooltip: 'Optional POST endpoint for Action Preview',
     }),
+    approvalEndpointUrl: props.Text({
+      name: 'Approval Endpoint URL',
+      defaultValue: '',
+      tooltip: 'Optional trusted operator proxy for approval updates. Do not expose internal credentials in Webflow.',
+    }),
+    operatorName: props.Text({
+      name: 'Operator Name',
+      defaultValue: 'Operator',
+    }),
+    businessContexts: props.Text({
+      name: 'Business Contexts (JSON)',
+      defaultValue: '',
+      tooltip: 'Optional BusinessContext array. Leave empty for Canon defaults.',
+    }),
+    metrics: props.Text({
+      name: 'Metrics (JSON)',
+      defaultValue: '',
+      tooltip: 'Optional WorkflowMetric array. Leave empty for Canon defaults.',
+    }),
+    sourceStatuses: props.Text({
+      name: 'Source Statuses (JSON)',
+      defaultValue: '',
+      tooltip: 'Optional SourceStatus array. Leave empty for Canon defaults.',
+    }),
+    approvalQueue: props.Text({
+      name: 'Approval Queue (JSON)',
+      defaultValue: '',
+      tooltip: 'Optional ApprovalQueueItem array. Leave empty for Canon defaults.',
+    }),
+    executionQueue: props.Text({
+      name: 'Execution Queue (JSON)',
+      defaultValue: '',
+      tooltip: 'Optional ActionExecutionItem array. Leave empty for Canon defaults.',
+    }),
+    activityEvents: props.Text({
+      name: 'Activity Events (JSON)',
+      defaultValue: '',
+      tooltip: 'Optional ActivityEvent array. Leave empty for Canon defaults.',
+    }),
     layers: props.Text({
       name: 'Layers (JSON)',
       defaultValue: '',

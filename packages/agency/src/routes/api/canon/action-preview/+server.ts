@@ -21,9 +21,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	const context = await loadCanonWorkflowContext(platform?.env?.DB, body.contextId);
 	const actionId = typeof body.actionId === 'string' && body.actionId.trim() ? body.actionId.trim() : 'draft-operator-brief';
-	const approvalState = typeof body.approvalState === 'string' ? body.approvalState : 'review';
 	const action = selectCanonWorkflowAction(context, actionId);
-	const approved = approvalState === 'approved';
+	const persistedApproval = context.approvalQueue.find((item) => item.actionId === action.id);
+	const approved = action.status === 'allowed' || persistedApproval?.status === 'approved';
 	const status = action.status === 'blocked' ? 'blocked' : action.status === 'requires_approval' && !approved ? 'requires_approval' : 'allowed';
 
 	return json(
@@ -44,6 +44,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			],
 			evidence: action.evidence,
 			allowedNextActions: action.allowedNextActions,
+			approval: persistedApproval,
 			contextId: context.contextId,
 			contextSource: context.source,
 			guardrails: context.guardrails

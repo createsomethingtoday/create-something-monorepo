@@ -129,13 +129,20 @@ The current package contains both Canon exports and compatibility exports. The l
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
 | **Canon Control Panel** | Full operator control surface | `contextEndpointUrl`, `agentEndpointUrl`, `actionEndpointUrl`, JSON content props |
+| **Business Context Switcher** | Business/client/project/workflow scope | `contextEndpointUrl`, `contexts` (JSON), `activeContextId` |
+| **Workflow Metrics Strip** | Operating metrics for approvals, decisions, runtime, and boundary state | `contextEndpointUrl`, `metrics` (JSON) |
 | **Operating Layer Cards** | Database / Automation / Judgment layer cards | `contextEndpointUrl`, `layers` (JSON), `layout` |
+| **Source Truth Status** | Source-of-truth and connectivity status | `contextEndpointUrl`, `sources` (JSON) |
 | **Evidence Trail** | Evidence and grounding list | `contextEndpointUrl`, `evidence` (JSON), `compact` |
+| **Evidence Manager** | Evidence visibility and review-state manager | `contextEndpointUrl`, `evidence` (JSON) |
 | **Artifact Grid** | Client-safe review artifact grid | `contextEndpointUrl`, `artifacts` (JSON), `columns` |
 | **Action Preview** | Governed action preview | `contextEndpointUrl`, `endpointUrl`, `contextId` |
 | **Approval Gate** | Human approval state panel | `contextEndpointUrl`, `approvalState`, `requiredApprover` |
+| **Approval Queue** | Approval review, approve, and block queue with local fallback state | `contextEndpointUrl`, trusted-proxy `endpointUrl`, `approvals` (JSON) |
+| **Action Execution Queue** | Preview, queued, approved, blocked, and executed action states | `contextEndpointUrl`, `items` (JSON) |
 | **Agent Dock** | Bounded Q&A dock | `contextEndpointUrl`, `endpointUrl`, `suggestedPrompts` (JSON) |
 | **Decision Queue** | Operator decisions and owners | `contextEndpointUrl`, `decisions` (JSON) |
+| **Operator Activity Log** | Public-safe audit trail | `contextEndpointUrl`, `events` (JSON) |
 | **Runtime Status** | Runtime checks and status | `contextEndpointUrl`, `status`, `checks` (JSON) |
 
 ### Sections (Group: Sections)
@@ -256,7 +263,9 @@ Agent Endpoint URL: https://<agency-domain>/api/canon/agent
 Action Endpoint URL: https://<agency-domain>/api/canon/action-preview
 ```
 
-The workflow context endpoint returns sanitized runtime checks, operating layers, actions, approval state, evidence, decisions, artifacts, and agent prompts from Cloudflare-managed workflow state. The action and agent endpoints are preview-only in v1. They return sanitized answers, policy checks, evidence labels, and allowed next actions. They do not expose secrets, raw source records, private workspace URLs, or token-bearing endpoints, and they do not execute external mutations.
+The workflow context endpoint returns sanitized runtime checks, business contexts, operating metrics, source statuses, operating layers, actions, approvals, execution queue items, evidence, decisions, artifacts, activity events, and agent prompts from Cloudflare-managed workflow state. The action and agent endpoints are preview-only in v1. They return sanitized answers, policy checks, evidence labels, and allowed next actions. They do not expose secrets, raw source records, private workspace URLs, or token-bearing endpoints, and they do not execute external mutations.
+
+Approval persistence uses `POST /api/canon/approval`, but that route requires the server-side `AGENCY_INTERNAL_API_KEY`. Do not place that credential in Webflow props or browser code. Public Webflow compositions should leave `Approval Endpoint URL` empty for local review state, or call approval writes through a trusted authenticated operator proxy.
 
 Endpoint props are intentionally deployment-specific. Configure them per Webflow site or environment so component defaults never imply a production target.
 

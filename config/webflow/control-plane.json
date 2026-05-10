@@ -14,6 +14,7 @@
     "previewEndpoints": {
       "agent": "",
       "actionPreview": "",
+      "approval": "",
       "workflowContext": "",
       "status": "deployment_specific"
     }
@@ -28,13 +29,20 @@
   },
   "requiredControlComponents": [
     "CanonControlPanel",
+    "BusinessContextSwitcher",
+    "WorkflowMetricsStrip",
     "OperatingLayerCards",
+    "SourceTruthStatus",
     "EvidenceTrail",
+    "EvidenceManager",
     "ArtifactGrid",
     "ActionPreview",
     "ApprovalGate",
+    "ApprovalQueue",
+    "ActionExecutionQueue",
     "AgentDock",
     "DecisionQueue",
+    "OperatorActivityLog",
     "RuntimeStatus"
   ],
   "deployment": {

@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	return json(context, {
 		headers: {
 			...canonCorsHeaders,
-			'cache-control': context.source === 'd1' ? 'public, max-age=30, stale-while-revalidate=120' : 'no-store'
+			'cache-control': 'no-store'
 		}
 	});
 };

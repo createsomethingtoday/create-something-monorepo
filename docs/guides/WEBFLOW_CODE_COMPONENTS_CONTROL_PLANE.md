@@ -43,7 +43,15 @@ The shared workflow context endpoint shape is:
 GET /api/canon/workflow-context?contextId=create-something-governed-workflow-console
 ```
 
-That route returns sanitized runtime checks, Database / Automation / Judgment layers, action definitions, approval state, evidence, decisions, artifacts, agent prompts, and guardrails. It must not return secrets, raw source data, credentials, private workspace URLs, or token-bearing endpoints.
+That route returns sanitized runtime checks, business contexts, operating metrics, source statuses, Database / Automation / Judgment layers, action definitions, approval queue state, execution queue items, evidence, decisions, artifacts, activity events, agent prompts, and guardrails. It must not return secrets, raw source data, credentials, private workspace URLs, or token-bearing endpoints.
+
+Business-management deployments should also configure:
+
+```text
+POST /api/canon/approval
+```
+
+That route persists approval queue review/approve/block decisions in D1 and appends public-safe activity events. It requires the server-side `AGENCY_INTERNAL_API_KEY` as `Authorization: Bearer <key>` or `X-API-Key`. Public Webflow pages must leave approval endpoint props empty or call through a trusted, authenticated operator proxy; do not place internal credentials in Webflow props or browser code.
 
 Endpoint defaults should stay empty in reusable components. Promotion to a specific Webflow site should set Cloudflare URLs in the Webflow Designer or a site-specific composition layer.
 

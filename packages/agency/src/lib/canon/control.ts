@@ -12,6 +12,14 @@ export type CanonActionPreviewBody = {
 	approvalState?: unknown;
 };
 
+export type CanonApprovalUpdateBody = {
+	approvalId?: unknown;
+	contextId?: unknown;
+	status?: unknown;
+	actor?: unknown;
+	note?: unknown;
+};
+
 export type CanonHistoryMessage = {
 	role: 'agent' | 'client';
 	body: string;
@@ -37,7 +45,7 @@ export const CANON_MAX_HISTORY_MESSAGES = 8;
 export const canonCorsHeaders = {
 	'access-control-allow-origin': '*',
 	'access-control-allow-methods': 'GET, POST, OPTIONS',
-	'access-control-allow-headers': 'content-type'
+	'access-control-allow-headers': 'authorization, content-type, x-api-key'
 };
 
 export const canonControlContext = {
