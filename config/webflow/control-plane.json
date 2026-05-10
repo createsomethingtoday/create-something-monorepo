@@ -26,7 +26,7 @@
     "sourceOfTruth": "cloudflare",
     "durableSystems": ["Cloudflare Workers", "D1", "KV", "R2"],
     "workflowContextEndpoint": "/api/canon/workflow-context?contextId=create-something-governed-workflow-console",
-    "automationSurface": "CREATE SOMETHING MCP hub and governed Cloudflare endpoints",
+    "automationSurface": "CREATE SOMETHING MCP hub, agents, workflows, Dify and Composio connector governance, and governed Cloudflare endpoints",
     "policySurface": "repo-owned policy artifacts and Linear evidence",
     "rule": "Webflow renders and controls the operator UI; Cloudflare owns durable governance state and execution."
   },

@@ -300,9 +300,38 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 			environment: 'Webflow + Cloudflare',
 			lastChecked: 'Preview ready',
 			checks: [
-				{ label: 'Cloudflare route', status: 'ok', detail: 'Ready for preview calls' },
-				{ label: 'Action execution', status: 'idle', detail: 'Preview-only in v1' },
-				{ label: 'Policy boundary', status: 'ok', detail: 'Human approval required for mutations' }
+				{
+					label: 'Cloudflare routes',
+					status: 'ok',
+					detail: 'Workflow context, agent, approval, and action preview routes are available.'
+				},
+				{
+					label: 'D1 workflow state',
+					status: 'ok',
+					detail: 'Sanitized business-management context is loaded by context ID.'
+				},
+				{
+					label: 'MCP fleet',
+					status: 'warning',
+					detail: 'Fleet posture is visible; endpoint health remains governed by the registry and runbooks.'
+				},
+				{
+					label: 'Agents and workflows',
+					status: 'ok',
+					detail: 'Agent answers are bounded by approved context and guardrails.'
+				},
+				{
+					label: 'Dify intake',
+					status: 'warning',
+					detail: 'Dify candidates are tracked as intake and promotion state, not direct browser actions.'
+				},
+				{
+					label: 'Composio connectors',
+					status: 'warning',
+					detail: 'SaaS connector execution remains brokered and approval-gated.'
+				},
+				{ label: 'Action execution', status: 'idle', detail: 'Preview-only in v1; no external mutation is executed.' },
+				{ label: 'Policy boundary', status: 'ok', detail: 'Human approval remains required for mutations.' }
 			]
 		},
 		layers: [
@@ -361,6 +390,19 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 				detail: 'Source data, credentials, and raw client records stay outside the public surface.',
 				source: 'Governance rule',
 				tone: 'warning'
+			},
+			{
+				label: 'MCP fleet registry',
+				detail: 'The console tracks which MCPs are active, brokered, direct, or awaiting promotion.',
+				source: 'Repo registry',
+				tone: 'info'
+			},
+			{
+				label: 'Connector boundary',
+				detail:
+					'Dify and Composio remain managed connector surfaces, not browser-exposed credentials or direct public writes.',
+				source: 'Integration policy',
+				tone: 'warning'
 			}
 		],
 		decisions: [
@@ -384,6 +426,27 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 				owner: 'Engineer',
 				state: 'ready',
 				tier: 'Automation'
+			},
+			{
+				title: 'Review MCP fleet posture',
+				description: 'Confirm which MCP servers are active, brokered, Dify-direct candidates, or parked.',
+				owner: 'Operator',
+				state: 'review',
+				tier: 'Automation'
+			},
+			{
+				title: 'Promote connector execution',
+				description: 'Decide whether any Dify or Composio connector may move beyond preview-only behavior.',
+				owner: 'Senior operator',
+				state: 'blocked',
+				tier: 'Judgment'
+			},
+			{
+				title: 'Confirm agent workflow ownership',
+				description: 'Name the operator responsible for agent answers, workflow handoff, and approval records.',
+				owner: 'Delivery lead',
+				state: 'open',
+				tier: 'Judgment'
 			}
 		],
 		artifacts: [
@@ -407,6 +470,28 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 				description: 'Endpoint shape for bounded agent answers and action previews.',
 				visibility: 'public',
 				tone: 'success'
+			},
+			{
+				title: 'MCP Fleet Registry',
+				type: 'Operations',
+				description: 'Inventory and posture for CREATE SOMETHING MCP endpoints, bundles, and brokered tool access.',
+				visibility: 'internal',
+				tone: 'info'
+			},
+			{
+				title: 'Dify Intake Manifest',
+				type: 'Connector Intake',
+				description: 'Dify app and MCP intake state used to decide what is direct, brokered, or not yet production-ready.',
+				visibility: 'internal',
+				tone: 'warning'
+			},
+			{
+				title: 'Composio Connector Boundary',
+				type: 'Connector Policy',
+				description:
+					'Rules for when Composio-backed SaaS actions stay brokered, require approval, or can move toward execution.',
+				visibility: 'internal',
+				tone: 'warning'
 			}
 		],
 		agent: {
@@ -415,7 +500,10 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 			suggestedPrompts: [
 				{ label: 'Explain the workflow', prompt: 'Explain how the database, automation, and judgment layers work together.' },
 				{ label: 'What needs approval?', prompt: 'What decision needs approval before this action can run?' },
-				{ label: 'What is private?', prompt: 'What should stay out of the public surface?' }
+				{ label: 'What is private?', prompt: 'What should stay out of the public surface?' },
+				{ label: 'Which MCPs matter?', prompt: 'Summarize the MCP fleet posture and what needs operator review.' },
+				{ label: 'Connector readiness', prompt: 'Explain the Dify and Composio boundary before any connector execution.' },
+				{ label: 'Cloudflare state', prompt: 'What does Cloudflare own in this console?' }
 			],
 			initialMessages: [
 				{
@@ -435,23 +523,87 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 				status: 'active',
 				owner: 'Operator',
 				detail: 'Console state is scoped to the CREATE SOMETHING operating layer.'
+			},
+			{
+				id: 'mcp-agent-operations',
+				client: 'CREATE SOMETHING',
+				project: 'MCP and agent operations',
+				workflow: 'MCP fleet + agent workflow review',
+				environment: 'Internal',
+				status: 'review',
+				owner: 'Engineering',
+				detail: 'Tracks active MCP surfaces, agent routes, workflow handoffs, and which actions stay approval-gated.'
+			},
+			{
+				id: 'connector-governance',
+				client: 'CREATE SOMETHING',
+				project: 'Dify and Composio connector governance',
+				workflow: 'Connector intake, brokerage, and approval',
+				environment: 'Internal',
+				status: 'review',
+				owner: 'Senior operator',
+				detail: 'Keeps Dify and Composio useful without letting connector credentials or write actions leak into Webflow.'
 			}
 		],
 		activeBusinessContextId: 'cs-ops-core',
 		metrics: [
-			{ label: 'Open decisions', value: '3', detail: 'Operator review queue', tone: 'warning' },
-			{ label: 'Approval SLA', value: '24h', detail: 'Named approver required', tone: 'info' },
+			{
+				label: 'Business surfaces',
+				value: '9',
+				detail: 'MCPs, agents, workflows, Dify, Composio, Cloudflare, Linear, Infisical, Webflow',
+				tone: 'info'
+			},
+			{ label: 'Pending approvals', value: '5', detail: 'Named approver required for promotion and execution', tone: 'warning' },
 			{ label: 'Runtime posture', value: 'Preview', detail: 'No external mutation in v1', tone: 'success' },
-			{ label: 'Private boundary', value: 'Enforced', detail: 'Secrets and raw records stay out of Webflow', tone: 'success' }
+			{ label: 'Connector posture', value: 'Brokered', detail: 'Dify and Composio stay behind policy boundaries', tone: 'warning' },
+			{ label: 'Private boundary', value: 'Enforced', detail: 'Secrets and raw records stay out of Webflow', tone: 'success' },
+			{
+				label: 'Evidence model',
+				value: 'Artifact-backed',
+				detail: 'Linear, docs, registry, and D1 context provide review evidence',
+				tone: 'success'
+			}
 		],
 		sourceStatuses: [
 			{
-				system: 'Cloudflare D1',
+				system: 'Cloudflare Workers, Pages, and D1',
 				status: 'ok',
-				detail: 'Sanitized workflow context is available.',
+				detail: 'The runtime owns workflow state, preview routes, approval persistence, and production deployment.',
 				lastSynced: 'Runtime read',
 				owner: 'Engineering',
 				tier: 'Database'
+			},
+			{
+				system: 'MCP Hub and fleet registry',
+				status: 'warning',
+				detail: 'MCP inventory and brokered access are visible for operator review; execution remains policy-bound.',
+				lastSynced: 'Repo registry',
+				owner: 'Engineering',
+				tier: 'Automation'
+			},
+			{
+				system: 'Agents and workflows',
+				status: 'ok',
+				detail: 'Agent answers and workflow previews are bounded by sanitized context and approval rules.',
+				lastSynced: 'Cloudflare route',
+				owner: 'Engineering',
+				tier: 'Automation'
+			},
+			{
+				system: 'Dify',
+				status: 'warning',
+				detail: 'Dify MCP coverage is tracked as intake and promotion state before production use.',
+				lastSynced: 'Inventory artifact',
+				owner: 'Operator',
+				tier: 'Automation'
+			},
+			{
+				system: 'Composio',
+				status: 'warning',
+				detail: 'Composio remains a brokered connector layer; no browser-exposed credentials or direct public writes.',
+				lastSynced: 'Connector policy',
+				owner: 'Engineering',
+				tier: 'Automation'
 			},
 			{
 				system: 'Webflow Components',
@@ -460,6 +612,22 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 				lastSynced: 'Library share',
 				owner: 'Design systems',
 				tier: 'Automation'
+			},
+			{
+				system: 'Linear',
+				status: 'ok',
+				detail: 'Tracked work, ownership, deployment evidence, and follow-up decisions live outside the public page.',
+				lastSynced: 'Issue evidence',
+				owner: 'Operator',
+				tier: 'Database'
+			},
+			{
+				system: 'Infisical',
+				status: 'idle',
+				detail: 'Secrets remain out of component props, D1 public context, and Webflow browser code.',
+				lastSynced: 'Secret boundary',
+				owner: 'Engineering',
+				tier: 'Judgment'
 			},
 			{
 				system: 'Approval Policy',
@@ -494,6 +662,42 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 				due: 'After production connector contract',
 				evidence: ['Runtime contract', 'Governance rule'],
 				policyChecks: ['Production connector contract required', 'Rollback note required']
+			},
+			{
+				id: 'approval-mcp-fleet-posture',
+				actionId: 'review-mcp-fleet',
+				title: 'MCP fleet posture review',
+				requester: 'Operations system',
+				requiredApprover: 'Operator',
+				status: 'review',
+				risk: 'medium',
+				due: 'Before promoting new tool access',
+				evidence: ['MCP fleet registry', 'Dify coverage', 'Hub control plane'],
+				policyChecks: ['Classify direct vs brokered access', 'Confirm tenant boundary', 'Record owner before promotion']
+			},
+			{
+				id: 'approval-agent-workflow-handoff',
+				actionId: 'prepare-agent-workflow-handoff',
+				title: 'Agent workflow handoff',
+				requester: 'Agent runtime',
+				requiredApprover: 'Delivery lead',
+				status: 'review',
+				risk: 'medium',
+				due: 'Before client-facing use',
+				evidence: ['Agent prompts', 'Workflow route', 'Decision queue'],
+				policyChecks: ['Use sanitized context only', 'Name operator owner', 'Keep private source material out of replies']
+			},
+			{
+				id: 'approval-dify-composio-promotion',
+				actionId: 'promote-connector-action',
+				title: 'Dify and Composio promotion',
+				requester: 'Connector system',
+				requiredApprover: 'Senior operator',
+				status: 'blocked',
+				risk: 'high',
+				due: 'After connector contract and rollback plan',
+				evidence: ['Dify intake manifest', 'Composio connector boundary', 'Approval policy'],
+				policyChecks: ['No token-bearing endpoints in Webflow', 'Require rollback note', 'Require production connector contract']
 			}
 		],
 		executionQueue: [
@@ -518,6 +722,39 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 				risk: 'high',
 				rollback: 'Define rollback before enabling connector execution.',
 				lastUpdated: 'Blocked in v1'
+			},
+			{
+				id: 'execution-mcp-fleet-review',
+				actionId: 'review-mcp-fleet',
+				title: 'Review MCP fleet posture',
+				status: 'queued',
+				owner: 'Engineering',
+				system: 'MCP Hub',
+				risk: 'medium',
+				rollback: 'Keep new tool access disabled until review evidence is recorded.',
+				lastUpdated: 'Awaiting operator review'
+			},
+			{
+				id: 'execution-agent-workflow-handoff',
+				actionId: 'prepare-agent-workflow-handoff',
+				title: 'Prepare agent workflow handoff',
+				status: 'preview',
+				owner: 'Delivery lead',
+				system: 'Agent route',
+				risk: 'medium',
+				rollback: 'Revert to static guidance and keep agent route bounded to read-only answers.',
+				lastUpdated: 'Preview ready'
+			},
+			{
+				id: 'execution-connector-promotion',
+				actionId: 'promote-connector-action',
+				title: 'Promote Dify or Composio connector action',
+				status: 'blocked',
+				owner: 'Senior operator',
+				system: 'Dify / Composio',
+				risk: 'high',
+				rollback: 'Disable connector execution and leave only preview/intake state visible.',
+				lastUpdated: 'Blocked pending contract'
 			}
 		],
 		activityEvents: [
@@ -537,6 +774,35 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 				detail: 'External mutations require named approval and an execution contract.',
 				actor: 'Policy',
 				timestamp: 'Policy artifact',
+				tone: 'warning'
+			},
+			{
+				id: 'event-business-scope-expanded',
+				eventType: 'context',
+				label: 'Business-management scope expanded',
+				detail:
+					'The console tracks MCPs, agents, workflows, Dify, Composio, Cloudflare, Linear, Infisical, and Webflow.',
+				actor: 'Operator',
+				timestamp: 'Production readiness pass',
+				tone: 'info'
+			},
+			{
+				id: 'event-mcp-fleet-visible',
+				eventType: 'evidence',
+				label: 'MCP fleet visible',
+				detail: 'MCP posture is represented as source status, decisions, approvals, and execution queue state.',
+				actor: 'Repository',
+				timestamp: 'Registry review',
+				tone: 'success'
+			},
+			{
+				id: 'event-connectors-held',
+				eventType: 'approval',
+				label: 'Connector writes held',
+				detail:
+					'Dify and Composio connector promotion remains blocked until approval, contract, and rollback evidence exist.',
+				actor: 'Policy',
+				timestamp: 'Guardrail',
 				tone: 'warning'
 			}
 		],

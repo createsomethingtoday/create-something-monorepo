@@ -4,7 +4,7 @@ import { CanonControlPanel } from './ControlComponents';
 
 export default declareComponent(CanonControlPanel, {
   name: 'Canon Control Panel',
-  description: 'Full CREATE SOMETHING operator control surface for Webflow with Cloudflare-ready agent and action previews',
+  description: 'Full CREATE SOMETHING operator control surface for MCPs, agents, workflows, connectors, Cloudflare state, approvals, and evidence',
   group: 'Control Plane',
   props: {
     heading: props.Text({
@@ -13,7 +13,7 @@ export default declareComponent(CanonControlPanel, {
     }),
     subheading: props.Text({
       name: 'Subheading',
-      defaultValue: 'A Webflow interface backed by Cloudflare previews, evidence, and human approval boundaries.',
+      defaultValue: 'A Webflow interface backed by Cloudflare workflow state, preview-only actions, evidence, decisions, approvals, and client-safe artifacts.',
     }),
     contextId: props.Text({
       name: 'Context ID',

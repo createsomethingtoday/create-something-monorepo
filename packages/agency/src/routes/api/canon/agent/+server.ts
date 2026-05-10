@@ -109,9 +109,10 @@ function buildAgentResponse(
 	}
 
 	if (intent === 'action') {
+		const actionLabels = context.actions.map((action) => action.label).join(', ');
 		return {
 			answer:
-				'The current action model supports drafting an operator brief, preparing an approval request, and demonstrating a blocked external execution. The first two can be previewed safely; external execution is intentionally blocked until a production connector contract and approval path exist.',
+				`The current action model includes ${actionLabels}. Drafting and review actions can be previewed safely; external or connector execution remains blocked until a production connector contract, named approval owner, and rollback path exist.`,
 			grounding: context.actions.map((action) => action.label),
 			followUps: ['Preview the approval request?', 'What approval owner should be recorded?'],
 			restricted: false,

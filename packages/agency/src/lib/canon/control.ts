@@ -70,9 +70,10 @@ export const canonControlContext = {
 		}
 	],
 	guardrails: [
-		'Answers use generic CREATE SOMETHING Canon context only.',
+		'Answers use the sanitized CREATE SOMETHING business-management context only.',
 		'This endpoint does not expose client secrets, credentials, raw source records, private workspace URLs, or token-bearing endpoints.',
-		'V1 action routes return previews and policy checks only; they do not execute external mutations.'
+		'V1 action routes return previews and policy checks only; they do not execute external mutations.',
+		'MCP, Dify, and Composio promotion requires named operator approval, a connector contract, and rollback evidence.'
 	]
 };
 
@@ -121,6 +122,51 @@ export const canonActionDefinitions: CanonActionDefinition[] = [
 		],
 		evidence: ['Governance rule', 'Approval boundary'],
 		allowedNextActions: ['Review policy checks', 'Define connector contract', 'Assign approval owner']
+	},
+	{
+		id: 'review-mcp-fleet',
+		label: 'Review MCP fleet',
+		summary:
+			'This action prepares an operator review of MCP endpoints, brokered access, Dify candidates, and ownership gaps without exposing credentials or private registry details.',
+		status: 'requires_approval',
+		risk: 'medium',
+		policyChecks: [
+			'Classifies direct versus brokered MCP access.',
+			'Records owner and tenant boundary before promotion.',
+			'Keeps credentials, private source records, and token-bearing URLs out of Webflow.'
+		],
+		evidence: ['MCP fleet registry', 'Hub control plane', 'Dify coverage'],
+		allowedNextActions: ['Prepare fleet review', 'Record owner', 'Keep risky tool access in review']
+	},
+	{
+		id: 'prepare-agent-workflow-handoff',
+		label: 'Prepare agent workflow handoff',
+		summary:
+			'This action drafts the operator handoff for agents, workflows, allowed questions, and approval boundaries from approved context.',
+		status: 'allowed',
+		risk: 'medium',
+		policyChecks: [
+			'Uses sanitized workflow context only.',
+			'Names the approval owner before client-facing use.',
+			'Keeps private source material out of agent answers.'
+		],
+		evidence: ['Agent prompts', 'Workflow route', 'Decision queue'],
+		allowedNextActions: ['Draft handoff', 'Ask for operator review', 'Attach decision evidence']
+	},
+	{
+		id: 'promote-connector-action',
+		label: 'Promote connector action',
+		summary:
+			'This action is blocked until a Dify or Composio connector has a production contract, named approval owner, and rollback note.',
+		status: 'blocked',
+		risk: 'high',
+		policyChecks: [
+			'Production connector contract required.',
+			'Rollback note required before execution.',
+			'No token-bearing endpoints or credentials may be placed in browser props.'
+		],
+		evidence: ['Dify intake manifest', 'Composio connector boundary', 'Approval policy'],
+		allowedNextActions: ['Define connector contract', 'Assign senior operator', 'Keep execution blocked']
 	}
 ];
 
@@ -177,7 +223,7 @@ export function classifyCanonQuestion(message: string) {
 
 	if (asksForRestrictedCanonMaterial(message)) return 'restricted';
 	if (/(database|data|records|source of truth|memory)/i.test(normalized)) return 'database';
-	if (/(automation|cloudflare|runtime|api|mcp|tool|endpoint)/i.test(normalized)) return 'automation';
+	if (/(automation|cloudflare|runtime|api|mcp|tool|endpoint|workflow|dify|composio|connector|agent)/i.test(normalized)) return 'automation';
 	if (/(approval|approve|judgment|policy|human|private|boundary|blocked)/i.test(normalized)) return 'judgment';
 	if (/(action|preview|execute|send|draft|mutation)/i.test(normalized)) return 'action';
 	if (/(evidence|artifact|proof|grounding|review packet)/i.test(normalized)) return 'evidence';

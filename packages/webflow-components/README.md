@@ -128,7 +128,7 @@ The current package contains both Canon exports and compatibility exports. The l
 
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
-| **Canon Control Panel** | Full operator control surface | `contextEndpointUrl`, `agentEndpointUrl`, `actionEndpointUrl`, JSON content props |
+| **Canon Control Panel** | Full operator control surface for MCPs, agents, workflows, Dify, Composio, Cloudflare, approvals, and evidence | `contextEndpointUrl`, `agentEndpointUrl`, `actionEndpointUrl`, JSON content props |
 | **Business Context Switcher** | Business/client/project/workflow scope | `contextEndpointUrl`, `contexts` (JSON), `activeContextId` |
 | **Workflow Metrics Strip** | Operating metrics for approvals, decisions, runtime, and boundary state | `contextEndpointUrl`, `metrics` (JSON) |
 | **Operating Layer Cards** | Database / Automation / Judgment layer cards | `contextEndpointUrl`, `layers` (JSON), `layout` |

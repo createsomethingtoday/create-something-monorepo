@@ -2,6 +2,8 @@
 
 Webflow Code Components are the active governance UI surface for CREATE SOMETHING operator and client-safe control-plane views.
 
+The production console is the business-management surface for MCPs, agents, workflows, Dify, Composio, Cloudflare, Linear, Infisical, and Webflow. Webflow shows the operator UI; the durable state, approval trail, source status, and execution posture remain in Cloudflare and repo-owned evidence.
+
 ## Boundary
 
 - Webflow renders the interface.
@@ -46,6 +48,17 @@ GET /api/canon/workflow-context?contextId=create-something-governed-workflow-con
 ```
 
 That route returns sanitized runtime checks, business contexts, operating metrics, source statuses, Database / Automation / Judgment layers, action definitions, approval queue state, execution queue items, evidence, decisions, artifacts, activity events, agent prompts, and guardrails. It must not return secrets, raw source data, credentials, private workspace URLs, or token-bearing endpoints.
+
+The default production context must include source status and approval posture for:
+
+- MCP Hub and fleet registry
+- Agents and workflows
+- Dify intake and promotion state
+- Composio connector boundary
+- Cloudflare Workers, Pages, and D1
+- Linear evidence and task ownership
+- Infisical secret boundary
+- Webflow component runtime
 
 Business-management deployments should also configure:
 

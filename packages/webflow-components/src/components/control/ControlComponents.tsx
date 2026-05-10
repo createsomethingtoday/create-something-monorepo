@@ -102,6 +102,14 @@ type ApprovalUpdateResponse = {
   error?: string;
 };
 
+type ConsoleStatusItem = {
+  label: string;
+  value: string;
+  detail?: string;
+  tone?: StatusTone;
+  status?: string;
+};
+
 type WorkflowApproval = {
   title?: string;
   description?: string;
@@ -260,6 +268,18 @@ const defaultEvidence: EvidenceItem[] = [
     source: 'Governance rule',
     tone: 'warning',
   },
+  {
+    label: 'MCP fleet registry',
+    detail: 'The console tracks which MCPs are active, brokered, direct, or awaiting promotion.',
+    source: 'Repo registry',
+    tone: 'info',
+  },
+  {
+    label: 'Connector boundary',
+    detail: 'Dify and Composio remain managed connector surfaces, not browser-exposed credentials or direct public writes.',
+    source: 'Integration policy',
+    tone: 'warning',
+  },
 ];
 
 const defaultArtifacts: ArtifactItem[] = [
@@ -284,6 +304,27 @@ const defaultArtifacts: ArtifactItem[] = [
     visibility: 'public',
     tone: 'success',
   },
+  {
+    title: 'MCP Fleet Registry',
+    type: 'Operations',
+    description: 'Inventory and posture for CREATE SOMETHING MCP endpoints, bundles, and brokered tool access.',
+    visibility: 'internal',
+    tone: 'info',
+  },
+  {
+    title: 'Dify Intake Manifest',
+    type: 'Connector Intake',
+    description: 'Dify app and MCP intake state used to decide what is direct, brokered, or not yet production-ready.',
+    visibility: 'internal',
+    tone: 'warning',
+  },
+  {
+    title: 'Composio Connector Boundary',
+    type: 'Connector Policy',
+    description: 'Rules for when Composio-backed SaaS actions stay brokered, require approval, or can move toward execution.',
+    visibility: 'internal',
+    tone: 'warning',
+  },
 ];
 
 const defaultDecisions: DecisionItem[] = [
@@ -307,6 +348,27 @@ const defaultDecisions: DecisionItem[] = [
     owner: 'Engineer',
     state: 'ready',
     tier: 'Automation',
+  },
+  {
+    title: 'Review MCP fleet posture',
+    description: 'Confirm which MCP servers are active, brokered, Dify-direct candidates, or parked.',
+    owner: 'Operator',
+    state: 'review',
+    tier: 'Automation',
+  },
+  {
+    title: 'Promote connector execution',
+    description: 'Decide whether any Dify or Composio connector may move beyond preview-only behavior.',
+    owner: 'Senior operator',
+    state: 'blocked',
+    tier: 'Judgment',
+  },
+  {
+    title: 'Confirm agent workflow ownership',
+    description: 'Name the operator responsible for agent answers, workflow handoff, and approval records.',
+    owner: 'Delivery lead',
+    state: 'open',
+    tier: 'Judgment',
   },
 ];
 
@@ -338,12 +400,42 @@ const defaultActions: ActionPreviewItem[] = [
     policyChecks: ['External mutation disabled', 'Production connector not configured', 'Human approval required'],
     evidence: ['Governance rule'],
   },
+  {
+    id: 'review-mcp-fleet',
+    label: 'Review MCP fleet',
+    description: 'Prepare an operator review of MCP endpoints, brokered access, Dify candidates, and ownership gaps.',
+    status: 'requires_approval',
+    risk: 'medium',
+    policyChecks: ['Classifies direct vs brokered access', 'Records owner before promotion', 'Keeps credentials out of Webflow'],
+    evidence: ['MCP fleet registry', 'Hub control plane', 'Dify coverage'],
+  },
+  {
+    id: 'prepare-agent-workflow-handoff',
+    label: 'Prepare agent workflow handoff',
+    description: 'Draft the operator handoff for agents, workflows, allowed questions, and approval boundaries.',
+    status: 'allowed',
+    risk: 'medium',
+    policyChecks: ['Uses sanitized workflow context', 'Names approval owner', 'No raw source records in agent answers'],
+    evidence: ['Agent prompts', 'Workflow route', 'Decision queue'],
+  },
+  {
+    id: 'promote-connector-action',
+    label: 'Promote connector action',
+    description: 'Blocked until a Dify or Composio connector has a production contract, approval owner, and rollback note.',
+    status: 'blocked',
+    risk: 'high',
+    policyChecks: ['Connector contract required', 'Rollback note required', 'No token-bearing endpoints in browser props'],
+    evidence: ['Dify intake manifest', 'Composio connector boundary', 'Approval policy'],
+  },
 ];
 
 const defaultPrompts: SuggestedPrompt[] = [
   { label: 'Explain the workflow', prompt: 'Explain how the database, automation, and judgment layers work together.' },
   { label: 'What needs approval?', prompt: 'What decision needs approval before this action can run?' },
   { label: 'What is private?', prompt: 'What should stay out of the public surface?' },
+  { label: 'Which MCPs matter?', prompt: 'Summarize the MCP fleet posture and what needs operator review.' },
+  { label: 'Connector readiness', prompt: 'Explain the Dify and Composio boundary before any connector execution.' },
+  { label: 'Cloudflare state', prompt: 'What does Cloudflare own in this console?' },
 ];
 
 const defaultMessages: AgentMessage[] = [
@@ -355,9 +447,14 @@ const defaultMessages: AgentMessage[] = [
 ];
 
 const defaultChecks: RuntimeCheck[] = [
-  { label: 'Cloudflare route', status: 'ok', detail: 'Ready for preview calls' },
-  { label: 'Action execution', status: 'idle', detail: 'Preview-only in v1' },
-  { label: 'Policy boundary', status: 'ok', detail: 'Human approval required for mutations' },
+  { label: 'Cloudflare routes', status: 'ok', detail: 'Workflow context, agent, approval, and action preview routes are available.' },
+  { label: 'D1 workflow state', status: 'ok', detail: 'Sanitized business-management context is loaded by context ID.' },
+  { label: 'MCP fleet', status: 'warning', detail: 'Fleet posture is visible; endpoint health remains governed by the registry and runbooks.' },
+  { label: 'Agents and workflows', status: 'ok', detail: 'Agent answers are bounded by approved context and guardrails.' },
+  { label: 'Dify intake', status: 'warning', detail: 'Dify candidates are tracked as intake and promotion state, not direct browser actions.' },
+  { label: 'Composio connectors', status: 'warning', detail: 'SaaS connector execution remains brokered and approval-gated.' },
+  { label: 'Action execution', status: 'idle', detail: 'Preview-only in v1; no external mutation is executed.' },
+  { label: 'Policy boundary', status: 'ok', detail: 'Human approval remains required for mutations.' },
 ];
 
 const defaultBusinessContexts: BusinessContextItem[] = [
@@ -371,23 +468,77 @@ const defaultBusinessContexts: BusinessContextItem[] = [
     owner: 'Operator',
     detail: 'Console state is scoped to the CREATE SOMETHING operating layer.',
   },
+  {
+    id: 'mcp-agent-operations',
+    client: 'CREATE SOMETHING',
+    project: 'MCP and agent operations',
+    workflow: 'MCP fleet + agent workflow review',
+    environment: 'Internal',
+    status: 'review',
+    owner: 'Engineering',
+    detail: 'Tracks active MCP surfaces, agent routes, workflow handoffs, and which actions stay approval-gated.',
+  },
+  {
+    id: 'connector-governance',
+    client: 'CREATE SOMETHING',
+    project: 'Dify and Composio connector governance',
+    workflow: 'Connector intake, brokerage, and approval',
+    environment: 'Internal',
+    status: 'review',
+    owner: 'Senior operator',
+    detail: 'Keeps Dify and Composio useful without letting connector credentials or write actions leak into Webflow.',
+  },
 ];
 
 const defaultMetrics: WorkflowMetricItem[] = [
-  { label: 'Open decisions', value: '3', detail: 'Operator review queue', tone: 'warning' },
-  { label: 'Pending approvals', value: '2', detail: 'Named approver required', tone: 'warning' },
+  { label: 'Business surfaces', value: '9', detail: 'MCPs, agents, workflows, Dify, Composio, Cloudflare, Linear, Infisical, Webflow', tone: 'info' },
+  { label: 'Pending approvals', value: '5', detail: 'Named approver required for promotion and execution', tone: 'warning' },
   { label: 'Runtime posture', value: 'Preview', detail: 'No external mutation in v1', tone: 'success' },
+  { label: 'Connector posture', value: 'Brokered', detail: 'Dify and Composio stay behind policy boundaries', tone: 'warning' },
   { label: 'Private boundary', value: 'Enforced', detail: 'Secrets and raw records stay out of Webflow', tone: 'success' },
+  { label: 'Evidence model', value: 'Artifact-backed', detail: 'Linear, docs, registry, and D1 context provide review evidence', tone: 'success' },
 ];
 
 const defaultSourceStatuses: SourceStatusItem[] = [
   {
-    system: 'Cloudflare D1',
+    system: 'Cloudflare Workers, Pages, and D1',
     status: 'ok',
-    detail: 'Sanitized workflow context and approval queue are available.',
+    detail: 'The runtime owns workflow state, preview routes, approval persistence, and production deployment.',
     lastSynced: 'Runtime read',
     owner: 'Engineering',
     tier: 'Database',
+  },
+  {
+    system: 'MCP Hub and fleet registry',
+    status: 'warning',
+    detail: 'MCP inventory and brokered access are visible for operator review; execution remains policy-bound.',
+    lastSynced: 'Repo registry',
+    owner: 'Engineering',
+    tier: 'Automation',
+  },
+  {
+    system: 'Agents and workflows',
+    status: 'ok',
+    detail: 'Agent answers and workflow previews are bounded by sanitized context and approval rules.',
+    lastSynced: 'Cloudflare route',
+    owner: 'Engineering',
+    tier: 'Automation',
+  },
+  {
+    system: 'Dify',
+    status: 'warning',
+    detail: 'Dify MCP coverage is tracked as intake and promotion state before production use.',
+    lastSynced: 'Inventory artifact',
+    owner: 'Operator',
+    tier: 'Automation',
+  },
+  {
+    system: 'Composio',
+    status: 'warning',
+    detail: 'Composio remains a brokered connector layer; no browser-exposed credentials or direct public writes.',
+    lastSynced: 'Connector policy',
+    owner: 'Engineering',
+    tier: 'Automation',
   },
   {
     system: 'Webflow Components',
@@ -396,6 +547,22 @@ const defaultSourceStatuses: SourceStatusItem[] = [
     lastSynced: 'Library share',
     owner: 'Design systems',
     tier: 'Automation',
+  },
+  {
+    system: 'Linear',
+    status: 'ok',
+    detail: 'Tracked work, ownership, deployment evidence, and follow-up decisions live outside the public page.',
+    lastSynced: 'Issue evidence',
+    owner: 'Operator',
+    tier: 'Database',
+  },
+  {
+    system: 'Infisical',
+    status: 'idle',
+    detail: 'Secrets remain out of component props, D1 public context, and Webflow browser code.',
+    lastSynced: 'Secret boundary',
+    owner: 'Engineering',
+    tier: 'Judgment',
   },
   {
     system: 'Approval Policy',
@@ -432,6 +599,42 @@ const defaultApprovalQueue: ApprovalQueueItem[] = [
     evidence: ['Runtime contract', 'Governance rule'],
     policyChecks: ['Production connector contract required', 'Rollback note required'],
   },
+  {
+    id: 'approval-mcp-fleet-posture',
+    actionId: 'review-mcp-fleet',
+    title: 'MCP fleet posture review',
+    requester: 'Operations system',
+    requiredApprover: 'Operator',
+    status: 'review',
+    risk: 'medium',
+    due: 'Before promoting new tool access',
+    evidence: ['MCP fleet registry', 'Dify coverage', 'Hub control plane'],
+    policyChecks: ['Classify direct vs brokered access', 'Confirm tenant boundary', 'Record owner before promotion'],
+  },
+  {
+    id: 'approval-agent-workflow-handoff',
+    actionId: 'prepare-agent-workflow-handoff',
+    title: 'Agent workflow handoff',
+    requester: 'Agent runtime',
+    requiredApprover: 'Delivery lead',
+    status: 'review',
+    risk: 'medium',
+    due: 'Before client-facing use',
+    evidence: ['Agent prompts', 'Workflow route', 'Decision queue'],
+    policyChecks: ['Use sanitized context only', 'Name operator owner', 'Keep private source material out of replies'],
+  },
+  {
+    id: 'approval-dify-composio-promotion',
+    actionId: 'promote-connector-action',
+    title: 'Dify and Composio promotion',
+    requester: 'Connector system',
+    requiredApprover: 'Senior operator',
+    status: 'blocked',
+    risk: 'high',
+    due: 'After connector contract and rollback plan',
+    evidence: ['Dify intake manifest', 'Composio connector boundary', 'Approval policy'],
+    policyChecks: ['No token-bearing endpoints in Webflow', 'Require rollback note', 'Require production connector contract'],
+  },
 ];
 
 const defaultExecutionQueue: ActionExecutionItem[] = [
@@ -457,6 +660,39 @@ const defaultExecutionQueue: ActionExecutionItem[] = [
     rollback: 'Define rollback before enabling connector execution.',
     lastUpdated: 'Blocked in v1',
   },
+  {
+    id: 'execution-mcp-fleet-review',
+    actionId: 'review-mcp-fleet',
+    title: 'Review MCP fleet posture',
+    status: 'queued',
+    owner: 'Engineering',
+    system: 'MCP Hub',
+    risk: 'medium',
+    rollback: 'Keep new tool access disabled until review evidence is recorded.',
+    lastUpdated: 'Awaiting operator review',
+  },
+  {
+    id: 'execution-agent-workflow-handoff',
+    actionId: 'prepare-agent-workflow-handoff',
+    title: 'Prepare agent workflow handoff',
+    status: 'preview',
+    owner: 'Delivery lead',
+    system: 'Agent route',
+    risk: 'medium',
+    rollback: 'Revert to static guidance and keep agent route bounded to read-only answers.',
+    lastUpdated: 'Preview ready',
+  },
+  {
+    id: 'execution-connector-promotion',
+    actionId: 'promote-connector-action',
+    title: 'Promote Dify or Composio connector action',
+    status: 'blocked',
+    owner: 'Senior operator',
+    system: 'Dify / Composio',
+    risk: 'high',
+    rollback: 'Disable connector execution and leave only preview/intake state visible.',
+    lastUpdated: 'Blocked pending contract',
+  },
 ];
 
 const defaultActivityEvents: ActivityEventItem[] = [
@@ -476,6 +712,33 @@ const defaultActivityEvents: ActivityEventItem[] = [
     detail: 'External mutations require named approval and an execution contract.',
     actor: 'Policy',
     timestamp: 'Policy artifact',
+    tone: 'warning',
+  },
+  {
+    id: 'event-business-scope-expanded',
+    eventType: 'context',
+    label: 'Business-management scope expanded',
+    detail: 'The console now tracks MCPs, agents, workflows, Dify, Composio, Cloudflare, Linear, Infisical, and Webflow.',
+    actor: 'Operator',
+    timestamp: 'Production readiness pass',
+    tone: 'info',
+  },
+  {
+    id: 'event-mcp-fleet-visible',
+    eventType: 'evidence',
+    label: 'MCP fleet visible',
+    detail: 'MCP posture is represented as source status, decisions, approvals, and execution queue state.',
+    actor: 'Repository',
+    timestamp: 'Registry review',
+    tone: 'success',
+  },
+  {
+    id: 'event-connectors-held',
+    eventType: 'approval',
+    label: 'Connector writes held',
+    detail: 'Dify and Composio connector promotion remains blocked until approval, contract, and rollback evidence exist.',
+    actor: 'Policy',
+    timestamp: 'Guardrail',
     tone: 'warning',
   },
 ];
@@ -616,6 +879,68 @@ function isCrossOriginEndpoint(endpointUrl: string) {
   }
 }
 
+function hasConfiguredEndpoint(endpointUrl: string) {
+  return Boolean(endpointUrl.trim());
+}
+
+function buildConsoleStatusItems({
+  context,
+  contextError,
+  contextEndpointUrl,
+  agentEndpointUrl,
+  actionEndpointUrl,
+  approvalEndpointUrl,
+  approvalRequestCredentials,
+}: {
+  context: WorkflowContextPayload | null;
+  contextError: string;
+  contextEndpointUrl: string;
+  agentEndpointUrl: string;
+  actionEndpointUrl: string;
+  approvalEndpointUrl: string;
+  approvalRequestCredentials: ApprovalRequestCredentials;
+}): ConsoleStatusItem[] {
+  const hasContextEndpoint = hasConfiguredEndpoint(contextEndpointUrl);
+  const hasAgentEndpoint = hasConfiguredEndpoint(agentEndpointUrl);
+  const hasActionEndpoint = hasConfiguredEndpoint(actionEndpointUrl);
+  const hasApprovalEndpoint = hasConfiguredEndpoint(approvalEndpointUrl);
+  const sourceCount = context?.sourceStatuses?.length ?? defaultSourceStatuses.length;
+  const warningCount = (context?.sourceStatuses ?? defaultSourceStatuses).filter((source) => source.status === 'warning').length;
+
+  return [
+    {
+      label: 'Workflow state',
+      value: context?.source === 'd1' ? 'D1-backed' : hasContextEndpoint ? 'Fallback' : 'Static props',
+      detail: contextError || (context?.source === 'd1' ? 'Cloudflare D1 is serving the console context.' : 'Using bundled Webflow-safe defaults.'),
+      tone: contextError ? 'warning' : context?.source === 'd1' ? 'success' : 'neutral',
+      status: contextError ? 'review' : context?.source === 'd1' ? 'live' : 'local',
+    },
+    {
+      label: 'Runtime routes',
+      value: hasAgentEndpoint && hasActionEndpoint ? 'Agent + preview' : hasAgentEndpoint || hasActionEndpoint ? 'Partial' : 'Static',
+      detail: hasAgentEndpoint && hasActionEndpoint ? 'Agent answers and action previews call Cloudflare.' : 'Configure Cloudflare endpoints to move beyond local preview.',
+      tone: hasAgentEndpoint && hasActionEndpoint ? 'success' : hasAgentEndpoint || hasActionEndpoint ? 'warning' : 'neutral',
+      status: hasAgentEndpoint && hasActionEndpoint ? 'ready' : 'review',
+    },
+    {
+      label: 'Approval writes',
+      value: hasApprovalEndpoint ? 'Operator-gated' : 'Local review',
+      detail: hasApprovalEndpoint
+        ? `Approval updates call the configured proxy with credentials=${approvalRequestCredentials}.`
+        : 'Approval queue can be reviewed without persisting browser writes.',
+      tone: hasApprovalEndpoint ? 'warning' : 'neutral',
+      status: hasApprovalEndpoint ? 'gated' : 'read-only',
+    },
+    {
+      label: 'Business coverage',
+      value: `${sourceCount} systems`,
+      detail: warningCount > 0 ? `${warningCount} surfaces intentionally require review before promotion.` : 'All tracked sources are currently green.',
+      tone: warningCount > 0 ? 'warning' : 'success',
+      status: warningCount > 0 ? 'review' : 'ok',
+    },
+  ];
+}
+
 const surfaceStyles: CSSProperties = {
   background: tokens.colors.bgSurface,
   border: `1px solid ${tokens.colors.borderDefault}`,
@@ -671,6 +996,68 @@ const controlCss = `
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+  }
+
+  .cs-console-shell {
+    background: transparent;
+    color: ${tokens.colors.fgPrimary};
+    padding: ${tokens.spacing.lg};
+  }
+
+  .cs-control-title {
+    font-family: ${tokens.typography.fontFamily.tight};
+    font-size: 3.25rem;
+    font-weight: ${tokens.typography.fontWeight.bold};
+    letter-spacing: 0;
+    line-height: ${tokens.typography.lineHeight.tight};
+    margin: 0.55rem 0 0;
+    max-width: 56rem;
+  }
+
+  .cs-console-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: 0.75rem;
+    margin-top: ${tokens.spacing.lg};
+  }
+
+  .cs-console-status-card {
+    min-width: 0;
+    border: 1px solid ${tokens.colors.borderDefault};
+    border-radius: ${tokens.radii.md};
+    background: ${tokens.colors.bgSurface};
+    padding: 1rem;
+  }
+
+  .cs-console-status-card[data-tone="success"] {
+    border-left: 3px solid ${tokens.colors.success};
+  }
+
+  .cs-console-status-card[data-tone="warning"] {
+    border-left: 3px solid ${tokens.colors.warning};
+  }
+
+  .cs-console-status-card[data-tone="danger"] {
+    border-left: 3px solid ${tokens.colors.error};
+  }
+
+  .cs-console-status-card[data-tone="info"] {
+    border-left: 3px solid ${tokens.colors.info};
+  }
+
+  .cs-console-status-value {
+    font-family: ${tokens.typography.fontFamily.tight};
+    font-size: 1.25rem;
+    font-weight: ${tokens.typography.fontWeight.bold};
+    line-height: ${tokens.typography.lineHeight.tight};
+    margin-top: 0.6rem;
+  }
+
+  .cs-console-status-detail {
+    color: ${tokens.colors.fgSecondary};
+    font-size: ${tokens.typography.fontSize.bodySm};
+    line-height: ${tokens.typography.lineHeight.relaxed};
+    margin: 0.55rem 0 0;
   }
 
   .cs-control-button {
@@ -832,6 +1219,13 @@ const controlCss = `
     min-width: 0;
   }
 
+  .cs-approval-stage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+    gap: 1rem;
+    align-items: start;
+  }
+
   .cs-badge-list {
     display: flex;
     flex-wrap: wrap;
@@ -850,6 +1244,14 @@ const controlCss = `
     .cs-control-hero-grid,
     .cs-agent-form {
       grid-template-columns: 1fr;
+    }
+
+    .cs-console-shell {
+      padding: ${tokens.spacing.md};
+    }
+
+    .cs-control-title {
+      font-size: 2.25rem;
     }
 
     .cs-source-status-card {
@@ -933,6 +1335,23 @@ function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone
     >
       {children}
     </span>
+  );
+}
+
+function ConsoleStatusStrip({ items }: { items: ConsoleStatusItem[] }) {
+  return (
+    <div className="cs-console-status-grid">
+      {items.map((item) => (
+        <article className="cs-console-status-card" data-tone={item.tone ?? 'neutral'} key={`${item.label}-${item.value}`}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+            <div style={compactLabelStyles}>{item.label}</div>
+            <Badge tone={item.tone ?? 'neutral'}>{item.status ?? item.tone ?? 'ready'}</Badge>
+          </div>
+          <div className="cs-console-status-value">{item.value}</div>
+          {item.detail ? <p className="cs-console-status-detail">{item.detail}</p> : null}
+        </article>
+      ))}
+    </div>
   );
 }
 
@@ -2332,7 +2751,7 @@ export interface CanonControlPanelProps {
 
 export function CanonControlPanel({
   heading = 'Canon Control Panel',
-  subheading = 'A Webflow interface backed by Cloudflare previews, evidence, and human approval boundaries.',
+  subheading = 'A Webflow interface backed by Cloudflare workflow state, preview-only actions, evidence, decisions, approvals, and client-safe artifacts.',
   contextId = 'create-something-governed-workflow-console',
   contextEndpointUrl = '',
   agentEndpointUrl = '',
@@ -2355,7 +2774,7 @@ export function CanonControlPanel({
   runtimeChecks,
   className = '',
 }: CanonControlPanelProps) {
-  const { context } = useWorkflowContext(contextEndpointUrl, contextId);
+  const { context, error: contextError } = useWorkflowContext(contextEndpointUrl, contextId);
   const effectiveHeading = context?.title ?? heading;
   const effectiveSubheading = context?.summary ?? subheading;
   const effectiveLayers = context?.layers ?? layers;
@@ -2372,10 +2791,24 @@ export function CanonControlPanel({
   const effectiveApprovalQueue = context?.approvalQueue ?? approvalQueue;
   const effectiveExecutionQueue = context?.executionQueue ?? executionQueue;
   const effectiveActivityEvents = context?.activityEvents ?? activityEvents;
+  const consoleStatusItems = useMemo(
+    () =>
+      buildConsoleStatusItems({
+        context,
+        contextError,
+        contextEndpointUrl,
+        agentEndpointUrl,
+        actionEndpointUrl,
+        approvalEndpointUrl,
+        approvalRequestCredentials,
+      }),
+    [context, contextError, contextEndpointUrl, agentEndpointUrl, actionEndpointUrl, approvalEndpointUrl, approvalRequestCredentials]
+  );
 
   return (
     <ComponentShell className={className}>
       <section
+        className="cs-console-shell"
         style={{
           background: tokens.colors.bgPure,
           border: `1px solid ${tokens.colors.borderDefault}`,
@@ -2387,9 +2820,9 @@ export function CanonControlPanel({
           <div>
             <div style={compactLabelStyles}>Create Something / Webflow Code Components</div>
             <h1
+              className="cs-control-title"
               style={{
                 fontFamily: tokens.typography.fontFamily.tight,
-                fontSize: tokens.typography.fontSize.h1,
                 lineHeight: tokens.typography.lineHeight.tight,
                 margin: '0.55rem 0 0',
                 maxWidth: '56rem',
@@ -2418,6 +2851,27 @@ export function CanonControlPanel({
           />
         </div>
 
+        <ConsoleStatusStrip items={consoleStatusItems} />
+
+        {contextError ? (
+          <div
+            aria-live="polite"
+            style={{
+              ...surfaceStyles,
+              background: tokens.colors.warningMuted,
+              borderColor: tokens.colors.warningBorder,
+              color: tokens.colors.warning,
+              marginTop: tokens.spacing.md,
+              padding: tokens.spacing.md,
+            }}
+          >
+            <strong>Workflow context endpoint needs review.</strong>
+            <p style={{ color: tokens.colors.fgSecondary, lineHeight: tokens.typography.lineHeight.relaxed, margin: '0.45rem 0 0' }}>
+              {contextError}
+            </p>
+          </div>
+        ) : null}
+
         <div style={{ marginTop: tokens.spacing.lg }}>
           <BusinessContextSwitcher
             contexts={effectiveBusinessContexts}
@@ -2440,14 +2894,11 @@ export function CanonControlPanel({
         </div>
 
         <div style={{ marginTop: tokens.spacing.lg }}>
-          <ApprovalQueue approvals={effectiveApprovalQueue} endpointUrl={approvalEndpointUrl} requestCredentials={approvalRequestCredentials} contextId={contextId} actor={operatorName} />
-        </div>
-
-        <div style={{ marginTop: tokens.spacing.lg }}>
           <ActionPreview endpointUrl={actionEndpointUrl} contextId={contextId} actions={effectiveActions} />
         </div>
 
-        <div style={{ marginTop: tokens.spacing.lg }}>
+        <div className="cs-approval-stage-grid" style={{ marginTop: tokens.spacing.lg }}>
+          <ApprovalQueue approvals={effectiveApprovalQueue} endpointUrl={approvalEndpointUrl} requestCredentials={approvalRequestCredentials} contextId={contextId} actor={operatorName} />
           <ApprovalGate
             title={effectiveApproval?.title}
             description={effectiveApproval?.description}
