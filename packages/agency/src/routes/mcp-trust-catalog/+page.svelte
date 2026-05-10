@@ -13,6 +13,13 @@
     ['MCP tools/list', '200 from each public endpoint'],
     ['Credential boundary', 'No bearer token or API key in public evidence']
   ];
+
+  const evidenceStats = [
+    ['Public endpoints', String(publicMcpTrustCards.length)],
+    ['Auth posture', 'No public auth'],
+    ['Guide tools', '0 enabled'],
+    ['Evidence', 'MCP probes + Braintrust']
+  ];
 </script>
 
 <SEO
@@ -55,6 +62,17 @@
 </section>
 
 <div class="catalog-body">
+  <section class="catalog-section catalog-section--summary" aria-label="Public trust catalog summary">
+    <div class="summary-strip">
+      {#each evidenceStats as stat}
+        <div class="summary-item">
+          <span>{stat[0]}</span>
+          <strong>{stat[1]}</strong>
+        </div>
+      {/each}
+    </div>
+  </section>
+
   <section class="catalog-section" id="trust-cards">
     <div class="section-copy">
       <p class="catalog-eyebrow">Verified public MCPs</p>
@@ -77,7 +95,17 @@
           <dl>
             <div>
               <dt>Endpoint</dt>
-              <dd><code>{card.endpoint}</code></dd>
+              <dd>
+                <a
+                  class="endpoint-link"
+                  href={card.endpoint}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Open ${card.name} public MCP endpoint`}
+                >
+                  <code>{card.endpoint}</code>
+                </a>
+              </dd>
             </div>
             <div>
               <dt>Server</dt>
@@ -294,6 +322,42 @@
     padding: 3rem var(--container-padding, 1.5rem) 0;
   }
 
+  .catalog-section--summary {
+    padding-top: 1rem;
+  }
+
+  .summary-strip {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
+    border-radius: var(--radius-md, 8px);
+    box-shadow: var(--glass-shine-soft);
+  }
+
+  .summary-item {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .summary-item span {
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+  }
+
+  .summary-item strong {
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug, 1.35);
+  }
+
   .catalog-section--split {
     align-items: start;
     display: grid;
@@ -404,6 +468,25 @@
     white-space: normal;
   }
 
+  .endpoint-link {
+    display: inline-block;
+    max-width: 100%;
+    text-decoration: none;
+  }
+
+  .endpoint-link:hover code,
+  .endpoint-link:focus-visible code {
+    border-color: rgba(96, 165, 250, 0.45);
+    color: var(--color-fg-primary);
+  }
+
+  .primary-action:focus-visible,
+  .secondary-action:focus-visible,
+  .endpoint-link:focus-visible {
+    outline: 2px solid rgba(191, 219, 254, 0.72);
+    outline-offset: 3px;
+  }
+
   .launch-list {
     display: grid;
     gap: 0;
@@ -455,6 +538,10 @@
       grid-template-columns: 1fr;
     }
 
+    .summary-strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .catalog-hero {
       padding: 3rem var(--container-padding, 1.5rem) 2rem;
     }
@@ -468,6 +555,10 @@
   @media (max-width: 520px) {
     .catalog-section {
       padding-right: 5rem;
+    }
+
+    .summary-strip {
+      grid-template-columns: 1fr;
     }
   }
 </style>
