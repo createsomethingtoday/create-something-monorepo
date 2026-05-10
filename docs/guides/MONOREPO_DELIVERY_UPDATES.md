@@ -62,7 +62,7 @@ The generated Markdown is the portable artifact. The generated images are eviden
 Later delivery surfaces can render the same content:
 
 - Cloudflare/Webflow Cloud client portal
-- Retool operator console
+- Webflow Code Components operator surface
 - Loom handoff note
 - PDF or deck export
 - client email digest

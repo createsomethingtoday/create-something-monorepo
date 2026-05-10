@@ -52,7 +52,7 @@ Agents can generate and stage delivery updates automatically from the monorepo. 
 | --- | --- | --- | --- |
 | repo_markdown | active | operator | docs/deliveries |
 | cloudflare_delivery_page | planned | client_summary | Render from generated delivery artifacts and manifests. |
-| retool_operator_console | optional | private_internal | Use for operator/admin surfaces, not durable delivery truth. |
+| webflow_code_components_control_plane | active | private_internal | Render operator/admin surfaces from Cloudflare-backed governance data. |
 
 ## Next Operator Decisions
 

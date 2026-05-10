@@ -140,10 +140,10 @@ docs/
   [DIFY_MCP_COVERAGE.generated.md](./DIFY_MCP_COVERAGE.generated.md),
   [guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md](./guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md)
 
-- **Operating Retool as a UI/control plane**:
-  [guides/RETOOL_CONTROL_PLANE_SETUP.md](./guides/RETOOL_CONTROL_PLANE_SETUP.md),
-  [guides/RETOOL_VENDOR_BOUNDARY.md](./guides/RETOOL_VENDOR_BOUNDARY.md),
-  [RETOOL_WORKSPACE_INVENTORY.generated.md](./RETOOL_WORKSPACE_INVENTORY.generated.md)
+- **Operating the Webflow Code Components governance UI**:
+  [guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md](./guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md),
+  [WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.generated.md](./WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.generated.md),
+  [../packages/webflow-components/README.md](../packages/webflow-components/README.md)
 
 - **Understanding why a decision exists**:
   first the canonical doc in `docs/`,
