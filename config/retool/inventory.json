@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "workspace": {
+    "slug": "createsomething",
+    "name": "CREATE SOMETHING",
+    "provider": "retool_cloud",
+    "origin": "https://createsomething.retool.com",
+    "api_base_url": "https://createsomething.retool.com/api/v2",
+    "mcp_url": "https://createsomething.retool.com/mcp"
+  },
+  "status": "partial",
+  "snapshot": {
+    "last_manual_inventory_at": "2026-05-10",
+    "source": "Repo-side Retool control-plane review plus Retool MCP/admin readiness contract",
+    "notes": "This inventory is intentionally partial until Retool-native app IDs, workflow IDs, resources, and folder exports are transcribed from the live workspace."
+  },
+  "access": {
+    "daily_mcp_scopes": ["mcp:read"],
+    "admin_mcp_scopes": ["mcp:read", "mcp:admin"],
+    "admin_use_cases": [
+      "organization_inventory",
+      "user_and_group_review",
+      "folder_app_workflow_resource_review",
+      "environment_review"
+    ],
+    "rest_api_secret": {
+      "environment": "prod",
+      "path": "/retool",
+      "secret_key": "RETOOL_API_TOKEN"
+    },
+    "rest_api_smoke_path": "/users",
+    "rest_api_smoke_success_scopes": ["users:read", "mcp:admin"],
+    "spaces_token_policy": "Each Retool Space has its own API endpoint and access tokens; a primary organization token can operate on a Space only when the token creator is an admin in both places.",
+    "evidence_system": "linear"
+  },
+  "mcp_resources": {
+    "create-something-mcp-hub": {
+      "display_name": "CREATE SOMETHING MCP Hub",
+      "server_url": "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp",
+      "auth": {
+        "type": "managed_bearer",
+        "notes": "Bearer is issued by identity-worker and stored outside this inventory."
+      },
+      "direction": "retool_to_hub",
+      "exposure": "operator",
+      "status": "configured",
+      "source": "config/retool/control-plane.json",
+      "notes": "Retool should call the remote brokered hub, never the local stdio hub."
+    },
+    "retool-organization-mcp": {
+      "display_name": "Retool Organization MCP",
+      "server_url": "https://createsomething.retool.com/mcp",
+      "auth": {
+        "type": "oauth",
+        "notes": "Daily Codex profile is read-only; admin scopes are requested only for inventory and administration."
+      },
+      "direction": "codex_to_retool",
+      "exposure": "internal",
+      "status": "configured",
+      "source": "config/retool/control-plane.json",
+      "notes": "Used for organization, users, folders, apps, workflows, resources, and environment inspection."
+    }
+  },
+  "resources": {
+    "retool-rest-api": {
+      "display_name": "Retool REST API",
+      "kind": "rest_api",
+      "status": "configured",
+      "source": "scripts/retool-api-smoke.sh",
+      "base_url": "https://createsomething.retool.com/api/v2",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/retool",
+          "secret_key": "RETOOL_API_TOKEN"
+        }
+      },
+      "notes": "Production smoke requires a 200 on the configured path. A 403 is only useful for explicit auth-only debugging."
+    },
+    "delivery-graph-manifest": {
+      "display_name": "Retool Delivery Graph Manifest",
+      "kind": "generated_manifest",
+      "status": "configured",
+      "source": "scripts/retool-control-plane.mjs",
+      "notes": "Generated from monorepo workspace lanes, MCP registry, MCP fleet, Retool control-plane config, and this inventory."
+    }
+  },
+  "apps": {
+    "operator-console": {
+      "display_name": "Operator Console",
+      "status": "manifest_ready",
+      "visibility": "private_internal",
+      "source": "manifest_generated",
+      "modules": [
+        "today",
+        "workstreams",
+        "decisions",
+        "risks",
+        "approvals",
+        "mcp_registry",
+        "agent_registry",
+        "deploy_evidence"
+      ],
+      "data_sources": [
+        "delivery-graph-manifest",
+        "create-something-mcp-hub",
+        "linear"
+      ],
+      "writes_to_retool_storage": false,
+      "production_ready": true,
+      "evidence": ["CRE-228"],
+      "notes": "Retool app layout can be native, but data contracts and deployment evidence stay repo/Linear-backed."
+    },
+    "workflow-control-room": {
+      "display_name": "Workflow Control Room",
+      "status": "manifest_ready",
+      "visibility": "client_summary",
+      "source": "manifest_generated",
+      "modules": [
+        "status",
+        "decisions_needed",
+        "risks",
+        "artifacts",
+        "demos",
+        "approvals",
+        "handoff"
+      ],
+      "data_sources": [
+        "delivery-graph-manifest",
+        "create-something-mcp-hub",
+        "linear"
+      ],
+      "writes_to_retool_storage": false,
+      "production_ready": true,
+      "evidence": ["CRE-228"],
+      "notes": "Client summaries must render redacted status and evidence, not Retool-hosted source data."
+    }
+  },
+  "workflows": {},
+  "evals": {
+    "owner_system": "braintrust",
+    "project": "create-something-retool-control-plane",
+    "local_command": "pnpm braintrust:eval:retool:local",
+    "published_command": "pnpm braintrust:eval:retool",
+    "required_checks": [
+      "manifest_shape",
+      "vendor_boundary",
+      "api_health",
+      "mcp_admin_readiness",
+      "no_secret_material",
+      "least_privilege_scopes",
+      "linear_evidence_path"
+    ],
+    "last_verified_at": "2026-05-10",
+    "notes": "Static Braintrust eval verifies the repo-owned Retool contract before any Retool-native app state is promoted."
+  }
+}

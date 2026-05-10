@@ -4,7 +4,7 @@ set -euo pipefail
 RETOOL_MCP_SERVER_NAME="${RETOOL_MCP_SERVER_NAME:-retool}"
 RETOOL_MCP_URL="${RETOOL_MCP_URL:-https://createsomething.retool.com/mcp}"
 RETOOL_MCP_LOGIN="${RETOOL_MCP_LOGIN:-true}"
-RETOOL_MCP_SCOPES="${RETOOL_MCP_SCOPES:-mcp:read,mcp:admin}"
+RETOOL_MCP_SCOPES="${RETOOL_MCP_SCOPES:-mcp:read}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then

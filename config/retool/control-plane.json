@@ -11,7 +11,16 @@
     "transport": "http",
     "url": "https://createsomething.retool.com/mcp",
     "auth": "oauth",
-    "scopes": ["mcp:read", "mcp:admin"]
+    "scopes": ["mcp:read"],
+    "profile": "daily_read"
+  },
+  "adminCodexMcp": {
+    "name": "retool",
+    "transport": "http",
+    "url": "https://createsomething.retool.com/mcp",
+    "auth": "oauth",
+    "scopes": ["mcp:read", "mcp:admin"],
+    "profile": "admin_inventory_sync"
   },
   "infisical": {
     "env": "prod",
@@ -40,7 +49,7 @@
       "runbooks",
       "delivery_graph_manifest",
       "observability_events",
-      "loom_evidence"
+      "linear_evidence"
     ],
     "nonPortableRetoolState": [
       "app_layouts",

@@ -17,10 +17,12 @@ Keep durable system state in the monorepo, external databases, MCP servers, and 
 
 ## Current Integration
 
-- Retool MCP is connected through Codex with `mcp:read,mcp:admin`.
-- Retool REST API token is stored in Infisical but is scope-limited on the current plan.
-- Retool MCP admin reads have been verified for organization, users, folders, apps, resources, and environments.
+- Retool MCP is connected through Codex with a daily `mcp:read` profile and an explicit `mcp:read,mcp:admin` admin profile.
+- Retool REST API token is stored in Infisical and production smoke requires a `200` response on the configured path with `users:read` or `mcp:admin`.
+- Retool MCP admin reads are reserved for organization, users, folders, apps, resources, and environment inventory.
 - The current Retool org is small enough to remain a controlled UI layer rather than a data platform.
+- Repo-owned Retool inventory lives in `config/retool/inventory.json`, with a generated operator view at `docs/RETOOL_WORKSPACE_INVENTORY.generated.md`.
+- Spaces are treated as separate operational boundaries with Space-specific Retool API endpoints and tokens.
 
 ## Portable By Default
 
@@ -36,7 +38,7 @@ These assets must remain portable and repo-backed:
 - source code
 - deployment scripts
 - delivery graph manifests
-- telemetry and Loom evidence summaries
+- telemetry and Linear evidence summaries
 
 ## Retool-Native State
 

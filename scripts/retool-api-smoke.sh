@@ -12,7 +12,7 @@ LOAD_FROM_VAULT="${LOAD_FROM_VAULT:-true}"
 RETOOL_ORIGIN="${RETOOL_ORIGIN:-https://createsomething.retool.com}"
 RETOOL_API_BASE_URL="${RETOOL_API_BASE_URL:-${RETOOL_ORIGIN%/}/api/v2}"
 RETOOL_API_SMOKE_PATH="${RETOOL_API_SMOKE_PATH:-/users}"
-RETOOL_API_SMOKE_ACCEPT_FORBIDDEN="${RETOOL_API_SMOKE_ACCEPT_FORBIDDEN:-true}"
+RETOOL_API_SMOKE_ACCEPT_FORBIDDEN="${RETOOL_API_SMOKE_ACCEPT_FORBIDDEN:-false}"
 TMP_BODY_FILE=""
 
 cleanup() {
@@ -88,7 +88,8 @@ main() {
   )"
 
   if [[ "$status" == "403" && "$RETOOL_API_SMOKE_ACCEPT_FORBIDDEN" == "true" ]]; then
-    echo "Retool API auth ok but scope denied path=${RETOOL_API_SMOKE_PATH}"
+    echo "Retool API auth accepted but scope denied path=${RETOOL_API_SMOKE_PATH}"
+    echo "This is an auth-only diagnostic, not a production smoke pass."
     head -c 500 "$body_file" || true
     echo
     return 0

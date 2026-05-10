@@ -12,7 +12,7 @@ RETOOL_ORIGIN="${RETOOL_ORIGIN:-https://createsomething.retool.com}"
 RETOOL_API_BASE_URL="${RETOOL_API_BASE_URL:-${RETOOL_ORIGIN%/}/api/v2}"
 RETOOL_MCP_URL="${RETOOL_MCP_URL:-${RETOOL_ORIGIN%/}/mcp}"
 RETOOL_API_TOKEN_SECRET_NAME="${RETOOL_API_TOKEN_SECRET_NAME:-RETOOL_API_TOKEN}"
-RETOOL_MIN_TOKEN_LENGTH="${RETOOL_MIN_TOKEN_LENGTH:-40}"
+RETOOL_MIN_TOKEN_LENGTH="${RETOOL_MIN_TOKEN_LENGTH:-30}"
 TOKEN_SOURCE="${TOKEN_SOURCE:-clipboard}"
 TMP_SECRET_FILE=""
 
@@ -102,6 +102,11 @@ main() {
   if (( ${#token} < RETOOL_MIN_TOKEN_LENGTH )); then
     echo "refusing to store token: token length ${#token} is shorter than RETOOL_MIN_TOKEN_LENGTH=${RETOOL_MIN_TOKEN_LENGTH}" >&2
     echo "copy the generated Retool API token, then rerun this script" >&2
+    exit 1
+  fi
+
+  if [[ ! "$token" =~ ^retool_[A-Za-z0-9_-]+$ ]]; then
+    echo "refusing to store token: expected Retool API token shape retool_<url-safe-value>" >&2
     exit 1
   fi
 

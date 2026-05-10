@@ -19,7 +19,7 @@
     "write_image2_prompts",
     "attempt_image2_generation_when_requested",
     "generate_operator_progress_report",
-    "record_loom_evidence"
+    "record_linear_evidence"
   ],
   "approvalRequired": [
     "send_client_email_or_message",

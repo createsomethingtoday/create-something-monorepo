@@ -5,12 +5,14 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CONTROL_PLANE_PATH = join(ROOT, 'config/retool/control-plane.json');
+const RETOOL_INVENTORY_PATH = join(ROOT, 'config/retool/inventory.json');
 const WORKSPACE_LANES_PATH = join(ROOT, 'config/workspace-lanes.json');
 const MCP_REGISTRY_PATH = join(ROOT, 'config/mcp-hub/registry.json');
 const MCP_FLEET_PATH = join(ROOT, 'config/mcp-hub/fleet.json');
+const GENERATED_RETOOL_INVENTORY_DOC_PATH = join(ROOT, 'docs/RETOOL_WORKSPACE_INVENTORY.generated.md');
 
 const SECRET_PATTERNS = [
-  /retool_[a-z0-9_]{16,}/i,
+  /retool_[0-9a-z]{20,}/,
   /Bearer\s+[A-Za-z0-9._~+/=-]{16,}/,
 ];
 
@@ -132,8 +134,26 @@ function buildMcpRegistry(registry, fleet) {
   };
 }
 
+function buildRetoolInventorySummary(inventory) {
+  return {
+    status: inventory.status ?? null,
+    workspace: inventory.workspace ?? null,
+    appCount: Object.keys(inventory.apps ?? {}).length,
+    mcpResourceCount: Object.keys(inventory.mcp_resources ?? {}).length,
+    resourceCount: Object.keys(inventory.resources ?? {}).length,
+    workflowCount: Object.keys(inventory.workflows ?? {}).length,
+    evidenceSystem: inventory.access?.evidence_system ?? null,
+    evals: {
+      ownerSystem: inventory.evals?.owner_system ?? null,
+      localCommand: inventory.evals?.local_command ?? null,
+      requiredChecks: inventory.evals?.required_checks ?? [],
+    },
+  };
+}
+
 function buildDeliveryGraph() {
   const controlPlane = readJson(CONTROL_PLANE_PATH);
+  const retoolInventory = readJson(RETOOL_INVENTORY_PATH);
   const workspaceLanes = readJson(WORKSPACE_LANES_PATH);
   const mcpRegistry = readJson(MCP_REGISTRY_PATH);
   const mcpFleet = readJson(MCP_FLEET_PATH);
@@ -145,6 +165,7 @@ function buildDeliveryGraph() {
       repo: 'create-something-monorepo',
       root: ROOT,
       controlPlanePath: relative(ROOT, CONTROL_PLANE_PATH),
+      retoolInventoryPath: relative(ROOT, RETOOL_INVENTORY_PATH),
       workspaceLanesPath: relative(ROOT, WORKSPACE_LANES_PATH),
       mcpRegistryPath: relative(ROOT, MCP_REGISTRY_PATH),
       mcpFleetPath: relative(ROOT, MCP_FLEET_PATH),
@@ -169,13 +190,15 @@ function buildDeliveryGraph() {
         modules: ['status', 'decisions_needed', 'risks', 'artifacts', 'demos', 'approvals', 'handoff'],
       },
     ],
+    retoolInventory: buildRetoolInventorySummary(retoolInventory),
     workstreams: buildWorkstreams(workspaceLanes),
     mcp: buildMcpRegistry(mcpRegistry, mcpFleet),
     policies: {
-      executionPath: 'Retool UI -> scoped identity token -> remote brokered MCP hub -> downstream MCP/tool -> telemetry + Loom evidence',
+      executionPath: 'Retool UI -> scoped identity token -> remote brokered MCP hub -> downstream MCP/tool -> telemetry + Linear evidence',
       localHubUse: 'developer_only',
       remoteHubUse: 'operator_and_client_surfaces',
       sourceOfTruth: 'monorepo',
+      evidenceSystem: 'linear',
     },
   };
 }
@@ -206,12 +229,16 @@ function checkGraph(graph) {
     errors.push('Retool baseUrl must be https://createsomething.retool.com.');
   }
 
-    if (graph.controlPlane.codexMcp?.url !== 'https://createsomething.retool.com/mcp') {
+  if (graph.controlPlane.codexMcp?.url !== 'https://createsomething.retool.com/mcp') {
     errors.push('Codex Retool MCP URL must be https://createsomething.retool.com/mcp.');
   }
 
-  if (graph.controlPlane.codexMcp?.scopes?.join(',') !== 'mcp:read,mcp:admin') {
-    errors.push('Codex Retool MCP must request mcp:read,mcp:admin.');
+  if (graph.controlPlane.codexMcp?.scopes?.join(',') !== 'mcp:read') {
+    errors.push('Codex Retool MCP daily profile must request only mcp:read.');
+  }
+
+  if (graph.controlPlane.adminCodexMcp?.scopes?.join(',') !== 'mcp:read,mcp:admin') {
+    errors.push('Codex Retool MCP admin profile must request mcp:read,mcp:admin.');
   }
 
   if (!graph.controlPlane.createSomethingMcpResource?.serverUrl?.endsWith('/mcp')) {
@@ -226,6 +253,18 @@ function checkGraph(graph) {
     errors.push('Retool must be configured as the UI/control-plane layer, not the durable data layer.');
   }
 
+  const portableArtifacts = graph.controlPlane.lockInBoundary?.portableArtifacts ?? [];
+  if (!portableArtifacts.includes('linear_evidence')) {
+    errors.push('Retool portable artifacts must include Linear evidence.');
+  }
+  if (portableArtifacts.includes('loom_evidence')) {
+    errors.push('Retool portable artifacts must not include Loom evidence.');
+  }
+
+  if (graph.retoolInventory?.evidenceSystem !== 'linear') {
+    errors.push('Retool inventory must use Linear as the evidence system.');
+  }
+
   for (const workstream of graph.workstreams) {
     if (workstream.missingPackageCount > 0) {
       warnings.push(`${workstream.id} has ${workstream.missingPackageCount} missing package path(s).`);
@@ -234,8 +273,10 @@ function checkGraph(graph) {
 
   const secretFindings = scanForSecrets([
     CONTROL_PLANE_PATH,
+    RETOOL_INVENTORY_PATH,
     join(ROOT, 'docs/guides/RETOOL_CONTROL_PLANE_SETUP.md'),
     join(ROOT, 'docs/guides/RETOOL_VENDOR_BOUNDARY.md'),
+    GENERATED_RETOOL_INVENTORY_DOC_PATH,
   ]);
   for (const finding of secretFindings) {
     errors.push(`Possible secret in ${finding.path}.`);
