@@ -792,6 +792,16 @@ function useWorkflowContext(contextEndpointUrl = '', contextId = 'create-somethi
   return { context, error };
 }
 
+function useHasMounted() {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  return hasMounted;
+}
+
 function asTextList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
 }
@@ -2774,6 +2784,7 @@ export function CanonControlPanel({
   runtimeChecks,
   className = '',
 }: CanonControlPanelProps) {
+  const hasMounted = useHasMounted();
   const { context, error: contextError } = useWorkflowContext(contextEndpointUrl, contextId);
   const effectiveHeading = context?.title ?? heading;
   const effectiveSubheading = context?.summary ?? subheading;
@@ -2804,6 +2815,59 @@ export function CanonControlPanel({
       }),
     [context, contextError, contextEndpointUrl, agentEndpointUrl, actionEndpointUrl, approvalEndpointUrl, approvalRequestCredentials]
   );
+
+  if (!hasMounted) {
+    return (
+      <ComponentShell className={className}>
+        <section
+          className="cs-console-shell"
+          style={{
+            background: tokens.colors.bgPure,
+            border: `1px solid ${tokens.colors.borderDefault}`,
+            borderRadius: tokens.radii.md,
+            minHeight: '28rem',
+            padding: tokens.spacing.lg,
+          }}
+        >
+          <div style={compactLabelStyles}>Create Something / Webflow Code Components</div>
+          <h1
+            className="cs-control-title"
+            style={{
+              fontFamily: tokens.typography.fontFamily.tight,
+              lineHeight: tokens.typography.lineHeight.tight,
+              margin: '0.55rem 0 0',
+              maxWidth: '56rem',
+            }}
+          >
+            {heading}
+          </h1>
+          <p
+            style={{
+              color: tokens.colors.fgSecondary,
+              fontSize: tokens.typography.fontSize.bodyLg,
+              lineHeight: tokens.typography.lineHeight.relaxed,
+              margin: '0.85rem 0 0',
+              maxWidth: '58rem',
+            }}
+          >
+            {subheading}
+          </p>
+          <div className="cs-console-status-grid">
+            <article className="cs-console-status-card" data-tone="neutral">
+              <div style={compactLabelStyles}>Workflow state</div>
+              <div className="cs-console-status-value">Loading</div>
+              <p className="cs-console-status-detail">Preparing the governed workflow console.</p>
+            </article>
+            <article className="cs-console-status-card" data-tone="neutral">
+              <div style={compactLabelStyles}>Runtime routes</div>
+              <div className="cs-console-status-value">{agentEndpointUrl || actionEndpointUrl ? 'Configured' : 'Static'}</div>
+              <p className="cs-console-status-detail">Cloudflare endpoint settings are ready for hydration.</p>
+            </article>
+          </div>
+        </section>
+      </ComponentShell>
+    );
+  }
 
   return (
     <ComponentShell className={className}>
