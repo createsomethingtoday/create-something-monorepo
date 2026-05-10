@@ -271,6 +271,8 @@ Use `POST /api/canon/operator-approval` for an operator-only console. That proxy
 
 Endpoint props are intentionally deployment-specific. Configure them per Webflow site or environment so component defaults never imply a production target.
 
+`CanonControlPanel` is client-rendered in Webflow (`ssr: false`) on purpose. It is an operator console backed by Cloudflare/D1, not an SEO surface, and client rendering prevents Webflow code-island SSR/client recovery errors from becoming production noise.
+
 ### Control Plane JSON Examples
 
 #### Operating Layers

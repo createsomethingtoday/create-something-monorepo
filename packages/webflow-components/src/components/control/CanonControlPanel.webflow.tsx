@@ -6,6 +6,9 @@ export default declareComponent(CanonControlPanel, {
   name: 'Canon Control Panel',
   description: 'Full CREATE SOMETHING operator control surface for MCPs, agents, workflows, connectors, Cloudflare state, approvals, and evidence',
   group: 'Control Plane',
+  options: {
+    ssr: false,
+  },
   props: {
     heading: props.Text({
       name: 'Heading',

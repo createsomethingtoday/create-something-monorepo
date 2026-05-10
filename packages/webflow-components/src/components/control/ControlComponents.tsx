@@ -110,6 +110,14 @@ type ConsoleStatusItem = {
   status?: string;
 };
 
+type ApprovalPersistenceState = {
+  endpointUrl: string;
+  value: string;
+  detail: string;
+  tone: StatusTone;
+  status: string;
+};
+
 type WorkflowApproval = {
   title?: string;
   description?: string;
@@ -802,6 +810,16 @@ function useHasMounted() {
   return hasMounted;
 }
 
+function useRuntimeOrigin() {
+  const [origin, setOrigin] = useState(() => (typeof window === 'undefined' ? '' : window.location.origin));
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  return origin;
+}
+
 function asTextList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
 }
@@ -893,27 +911,92 @@ function hasConfiguredEndpoint(endpointUrl: string) {
   return Boolean(endpointUrl.trim());
 }
 
+function isHostedWebflowOrigin(origin: string) {
+  try {
+    const hostname = new URL(origin).hostname;
+    return hostname === 'webflow.io' || hostname.endsWith('.webflow.io') || hostname === 'design.webflow.com' || hostname.endsWith('.design.webflow.com');
+  } catch {
+    return false;
+  }
+}
+
+function isCreateSomethingAgencyEndpoint(endpointUrl: string, origin: string) {
+  if (!endpointUrl.trim()) return false;
+
+  try {
+    const hostname = new URL(endpointUrl, origin || 'https://createsomething.agency').hostname;
+    return hostname === 'createsomething.agency' || hostname.endsWith('.createsomething.agency');
+  } catch {
+    return false;
+  }
+}
+
+function getApprovalPersistenceState({
+  approvalEndpointUrl,
+  approvalRequestCredentials,
+  runtimeOrigin,
+}: {
+  approvalEndpointUrl: string;
+  approvalRequestCredentials: ApprovalRequestCredentials;
+  runtimeOrigin: string;
+}): ApprovalPersistenceState {
+  if (!hasConfiguredEndpoint(approvalEndpointUrl)) {
+    return {
+      endpointUrl: '',
+      value: 'Local review',
+      detail: 'Approval queue can be reviewed without persisting browser writes.',
+      tone: 'neutral',
+      status: 'read-only',
+    };
+  }
+
+  if (approvalRequestCredentials === 'same-origin' && isCrossOriginEndpoint(approvalEndpointUrl)) {
+    return {
+      endpointUrl: '',
+      value: 'Local review',
+      detail: 'Cross-origin approval endpoints need Approval Request Credentials set to include before writes can persist.',
+      tone: 'warning',
+      status: 'needs-auth',
+    };
+  }
+
+  if (isHostedWebflowOrigin(runtimeOrigin) && isCreateSomethingAgencyEndpoint(approvalEndpointUrl, runtimeOrigin)) {
+    return {
+      endpointUrl: '',
+      value: 'Auth bridge needed',
+      detail: 'Webflow.io cannot send the .agency SameSite operator session to the approval proxy; approvals stay local until a same-site operator origin or auth bridge is active.',
+      tone: 'warning',
+      status: 'local',
+    };
+  }
+
+  return {
+    endpointUrl: approvalEndpointUrl,
+    value: 'Operator-gated',
+    detail: `Approval updates call the configured proxy with credentials=${approvalRequestCredentials}.`,
+    tone: 'warning',
+    status: 'gated',
+  };
+}
+
 function buildConsoleStatusItems({
   context,
   contextError,
   contextEndpointUrl,
   agentEndpointUrl,
   actionEndpointUrl,
-  approvalEndpointUrl,
-  approvalRequestCredentials,
+  approvalPersistence,
 }: {
   context: WorkflowContextPayload | null;
   contextError: string;
   contextEndpointUrl: string;
   agentEndpointUrl: string;
   actionEndpointUrl: string;
-  approvalEndpointUrl: string;
-  approvalRequestCredentials: ApprovalRequestCredentials;
+  approvalPersistence: ApprovalPersistenceState;
 }): ConsoleStatusItem[] {
   const hasContextEndpoint = hasConfiguredEndpoint(contextEndpointUrl);
   const hasAgentEndpoint = hasConfiguredEndpoint(agentEndpointUrl);
   const hasActionEndpoint = hasConfiguredEndpoint(actionEndpointUrl);
-  const hasApprovalEndpoint = hasConfiguredEndpoint(approvalEndpointUrl);
   const sourceCount = context?.sourceStatuses?.length ?? defaultSourceStatuses.length;
   const warningCount = (context?.sourceStatuses ?? defaultSourceStatuses).filter((source) => source.status === 'warning').length;
 
@@ -934,12 +1017,10 @@ function buildConsoleStatusItems({
     },
     {
       label: 'Approval writes',
-      value: hasApprovalEndpoint ? 'Operator-gated' : 'Local review',
-      detail: hasApprovalEndpoint
-        ? `Approval updates call the configured proxy with credentials=${approvalRequestCredentials}.`
-        : 'Approval queue can be reviewed without persisting browser writes.',
-      tone: hasApprovalEndpoint ? 'warning' : 'neutral',
-      status: hasApprovalEndpoint ? 'gated' : 'read-only',
+      value: approvalPersistence.value,
+      detail: approvalPersistence.detail,
+      tone: approvalPersistence.tone,
+      status: approvalPersistence.status,
     },
     {
       label: 'Business coverage',
@@ -1727,6 +1808,7 @@ export interface RuntimeStatusProps {
   environment?: string;
   lastChecked?: string;
   checks?: JsonList<RuntimeCheck>;
+  maxChecks?: number;
   contextEndpointUrl?: string;
   contextId?: string;
   className?: string;
@@ -1738,6 +1820,7 @@ export function RuntimeStatus({
   environment = 'Cloudflare Pages',
   lastChecked = 'Preview ready',
   checks,
+  maxChecks,
   contextEndpointUrl = '',
   contextId = 'create-something-governed-workflow-console',
   className = '',
@@ -1749,6 +1832,8 @@ export function RuntimeStatus({
   const effectiveStatus = runtime?.status ?? status;
   const effectiveEnvironment = runtime?.environment ?? environment;
   const effectiveLastChecked = runtime?.lastChecked ?? lastChecked;
+  const visibleChecks = typeof maxChecks === 'number' && maxChecks > 0 ? parsedChecks.slice(0, maxChecks) : parsedChecks;
+  const hiddenCheckCount = Math.max(0, parsedChecks.length - visibleChecks.length);
 
   return (
     <ComponentShell className={className}>
@@ -1771,7 +1856,7 @@ export function RuntimeStatus({
           <Badge tone={statusToTone(effectiveStatus)}>{effectiveStatus}</Badge>
         </div>
         <div className="cs-runtime-check-grid">
-          {parsedChecks.map((check) => (
+          {visibleChecks.map((check) => (
             <div
               className="cs-runtime-check-card"
               key={check.label}
@@ -1801,6 +1886,11 @@ export function RuntimeStatus({
             </div>
           ))}
         </div>
+        {hiddenCheckCount > 0 ? (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.85rem' }}>
+            <Badge tone="neutral">+{hiddenCheckCount} tracked systems below</Badge>
+          </div>
+        ) : null}
       </article>
     </ComponentShell>
   );
@@ -2785,6 +2875,7 @@ export function CanonControlPanel({
   className = '',
 }: CanonControlPanelProps) {
   const hasMounted = useHasMounted();
+  const runtimeOrigin = useRuntimeOrigin();
   const { context, error: contextError } = useWorkflowContext(contextEndpointUrl, contextId);
   const effectiveHeading = context?.title ?? heading;
   const effectiveSubheading = context?.summary ?? subheading;
@@ -2802,6 +2893,15 @@ export function CanonControlPanel({
   const effectiveApprovalQueue = context?.approvalQueue ?? approvalQueue;
   const effectiveExecutionQueue = context?.executionQueue ?? executionQueue;
   const effectiveActivityEvents = context?.activityEvents ?? activityEvents;
+  const approvalPersistence = useMemo(
+    () =>
+      getApprovalPersistenceState({
+        approvalEndpointUrl,
+        approvalRequestCredentials,
+        runtimeOrigin,
+      }),
+    [approvalEndpointUrl, approvalRequestCredentials, runtimeOrigin]
+  );
   const consoleStatusItems = useMemo(
     () =>
       buildConsoleStatusItems({
@@ -2810,10 +2910,9 @@ export function CanonControlPanel({
         contextEndpointUrl,
         agentEndpointUrl,
         actionEndpointUrl,
-        approvalEndpointUrl,
-        approvalRequestCredentials,
+        approvalPersistence,
       }),
-    [context, contextError, contextEndpointUrl, agentEndpointUrl, actionEndpointUrl, approvalEndpointUrl, approvalRequestCredentials]
+    [context, contextError, contextEndpointUrl, agentEndpointUrl, actionEndpointUrl, approvalPersistence]
   );
 
   if (!hasMounted) {
@@ -2912,6 +3011,7 @@ export function CanonControlPanel({
             environment={effectiveRuntime?.environment ?? 'Webflow + Cloudflare'}
             lastChecked={effectiveRuntime?.lastChecked ?? (agentEndpointUrl || actionEndpointUrl ? 'Endpoint configured' : 'Using static Webflow props')}
             checks={effectiveRuntime?.checks ?? runtimeChecks}
+            maxChecks={4}
           />
         </div>
 
@@ -2962,7 +3062,13 @@ export function CanonControlPanel({
         </div>
 
         <div className="cs-approval-stage-grid" style={{ marginTop: tokens.spacing.lg }}>
-          <ApprovalQueue approvals={effectiveApprovalQueue} endpointUrl={approvalEndpointUrl} requestCredentials={approvalRequestCredentials} contextId={contextId} actor={operatorName} />
+          <ApprovalQueue
+            approvals={effectiveApprovalQueue}
+            endpointUrl={approvalPersistence.endpointUrl}
+            requestCredentials={approvalRequestCredentials}
+            contextId={contextId}
+            actor={operatorName}
+          />
           <ApprovalGate
             title={effectiveApproval?.title}
             description={effectiveApproval?.description}

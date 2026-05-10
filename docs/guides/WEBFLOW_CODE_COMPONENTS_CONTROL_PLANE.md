@@ -101,6 +101,8 @@ Approval Request Credentials: include
 
 Endpoint defaults should stay empty in reusable components. Promotion to a specific Webflow site should set Cloudflare URLs in the Webflow Designer or a site-specific composition layer.
 
+`CanonControlPanel` is intentionally shared with Webflow Code Component SSR disabled. The console is an authenticated operator surface that hydrates from Cloudflare/D1 after load; client rendering avoids React SSR recovery errors in Webflow code islands and keeps the published runtime smoke deterministic.
+
 ## Share
 
 Sharing updates the Webflow workspace:
