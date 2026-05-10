@@ -256,6 +256,8 @@ Action Endpoint URL: https://<agency-domain>/api/canon/action-preview
 
 Both endpoints are preview-only in v1. They return sanitized answers, policy checks, evidence labels, and allowed next actions. They do not expose secrets, raw source records, private workspace URLs, or token-bearing endpoints, and they do not execute external mutations.
 
+Endpoint props are intentionally deployment-specific. Configure them per Webflow site or environment so component defaults never imply a production target.
+
 ### Control Plane JSON Examples
 
 #### Operating Layers

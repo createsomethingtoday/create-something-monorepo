@@ -330,6 +330,12 @@ const surfaceStyles: CSSProperties = {
   color: tokens.colors.fgPrimary,
 };
 
+const sectionSurfaceStyles: CSSProperties = {
+  ...surfaceStyles,
+  overflow: 'hidden',
+  padding: tokens.spacing.md,
+};
+
 const compactLabelStyles: CSSProperties = {
   color: tokens.colors.fgMuted,
   fontFamily: tokens.typography.fontFamily.sans,
@@ -349,6 +355,8 @@ const controlCss = `
     width: 100%;
     color: ${tokens.colors.fgPrimary};
     font-family: ${tokens.typography.fontFamily.sans};
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .cs-control-grid {
@@ -441,6 +449,36 @@ const controlCss = `
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.75rem;
     margin-top: ${tokens.spacing.md};
+  }
+
+  .cs-action-option {
+    width: 100%;
+    border: 1px solid ${tokens.colors.borderDefault};
+    border-radius: ${tokens.radii.md};
+    background: ${tokens.colors.bgPure};
+    color: ${tokens.colors.fgPrimary};
+    cursor: pointer;
+    font: inherit;
+    padding: 1rem;
+    text-align: left;
+    transition: background ${tokens.animation.duration.micro} ${tokens.animation.easing.standard},
+      border-color ${tokens.animation.duration.micro} ${tokens.animation.easing.standard},
+      transform ${tokens.animation.duration.micro} ${tokens.animation.easing.standard};
+  }
+
+  .cs-action-option:hover {
+    border-color: ${tokens.colors.borderEmphasis};
+    transform: translateY(-1px);
+  }
+
+  .cs-action-option[data-active="true"] {
+    background: ${tokens.colors.bgSubtle};
+    border-color: ${tokens.colors.borderStrong};
+  }
+
+  .cs-action-option:focus-visible {
+    outline: 2px solid ${tokens.colors.focus};
+    outline-offset: 2px;
   }
 
   @media (max-width: ${tokens.breakpoints.lg}) {
@@ -550,49 +588,51 @@ export function OperatingLayerCards({
 
   return (
     <ComponentShell className={className}>
-      <SectionHeader eyebrow="Database / Automation / Judgment" title={title} body={body} />
-      <div className={layout === 'compact' ? 'cs-control-list' : gridClassName}>
-        {parsedLayers.map((layer) => {
-          const tone = layer.tone ?? statusToTone(layer.status);
-          return (
-            <article key={`${layer.tier}-${layer.title}`} style={{ ...surfaceStyles, padding: tokens.spacing.md }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                <div style={compactLabelStyles}>{layer.tier}</div>
-                <Badge tone={tone}>{layer.status}</Badge>
-              </div>
-              <h3
-                style={{
-                  fontFamily: tokens.typography.fontFamily.tight,
-                  fontSize: tokens.typography.fontSize.h4,
-                  lineHeight: tokens.typography.lineHeight.tight,
-                  margin: '1rem 0 0',
-                }}
-              >
-                {layer.title}
-              </h3>
-              <p
-                style={{
-                  color: tokens.colors.fgSecondary,
-                  fontSize: tokens.typography.fontSize.bodySm,
-                  lineHeight: tokens.typography.lineHeight.relaxed,
-                  margin: '0.75rem 0 0',
-                }}
-              >
-                {layer.description}
-              </p>
-              {layer.evidence?.length ? (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '1rem' }}>
-                  {layer.evidence.map((item) => (
-                    <Badge key={item} tone="neutral">
-                      {item}
-                    </Badge>
-                  ))}
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Database / Automation / Judgment" title={title} body={body} />
+        <div className={layout === 'compact' ? 'cs-control-list' : gridClassName}>
+          {parsedLayers.map((layer) => {
+            const tone = layer.tone ?? statusToTone(layer.status);
+            return (
+              <article key={`${layer.tier}-${layer.title}`} style={{ ...surfaceStyles, background: tokens.colors.bgPure, padding: tokens.spacing.md }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                  <div style={compactLabelStyles}>{layer.tier}</div>
+                  <Badge tone={tone}>{layer.status}</Badge>
                 </div>
-              ) : null}
-            </article>
-          );
-        })}
-      </div>
+                <h3
+                  style={{
+                    fontFamily: tokens.typography.fontFamily.tight,
+                    fontSize: tokens.typography.fontSize.h4,
+                    lineHeight: tokens.typography.lineHeight.tight,
+                    margin: '1rem 0 0',
+                  }}
+                >
+                  {layer.title}
+                </h3>
+                <p
+                  style={{
+                    color: tokens.colors.fgSecondary,
+                    fontSize: tokens.typography.fontSize.bodySm,
+                    lineHeight: tokens.typography.lineHeight.relaxed,
+                    margin: '0.75rem 0 0',
+                  }}
+                >
+                  {layer.description}
+                </p>
+                {layer.evidence?.length ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '1rem' }}>
+                    {layer.evidence.map((item) => (
+                      <Badge key={item} tone="neutral">
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
+        </div>
+      </section>
     </ComponentShell>
   );
 }
@@ -616,79 +656,82 @@ export function EvidenceTrail({
 
   return (
     <ComponentShell className={className}>
-      <SectionHeader eyebrow="Grounded review" title={title} body={body} />
-      <div className="cs-control-list">
-        {parsedEvidence.map((item, index) => {
-          const tone = item.tone ?? 'info';
-          const toneStyle = toneStyles(tone);
-          const content = (
-            <article
-              style={{
-                ...surfaceStyles,
-                display: 'grid',
-                gridTemplateColumns: compact ? 'auto 1fr' : 'auto minmax(0, 1fr) auto',
-                gap: '0.85rem',
-                padding: compact ? '0.875rem' : tokens.spacing.md,
-              }}
-            >
-              <div
-                aria-hidden="true"
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Grounded review" title={title} body={body} />
+        <div className="cs-control-list">
+          {parsedEvidence.map((item, index) => {
+            const tone = item.tone ?? 'info';
+            const toneStyle = toneStyles(tone);
+            const content = (
+              <article
                 style={{
-                  width: '1.5rem',
-                  height: '1.5rem',
-                  borderRadius: tokens.radii.full,
-                  border: `1px solid ${toneStyle.border}`,
-                  background: toneStyle.background,
-                  color: toneStyle.color,
+                  ...surfaceStyles,
+                  background: tokens.colors.bgPure,
                   display: 'grid',
-                  placeItems: 'center',
-                  fontSize: tokens.typography.fontSize.caption,
-                  fontWeight: tokens.typography.fontWeight.semibold,
+                  gridTemplateColumns: compact ? 'auto 1fr' : 'auto minmax(0, 1fr) auto',
+                  gap: '0.85rem',
+                  padding: compact ? '0.875rem' : tokens.spacing.md,
                 }}
               >
-                {index + 1}
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <h3
-                    style={{
-                      fontSize: tokens.typography.fontSize.body,
-                      fontWeight: tokens.typography.fontWeight.semibold,
-                      margin: 0,
-                    }}
-                  >
-                    {item.label}
-                  </h3>
-                  {item.source ? <Badge tone="neutral">{item.source}</Badge> : null}
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: '1.5rem',
+                    height: '1.5rem',
+                    borderRadius: tokens.radii.full,
+                    border: `1px solid ${toneStyle.border}`,
+                    background: toneStyle.background,
+                    color: toneStyle.color,
+                    display: 'grid',
+                    placeItems: 'center',
+                    fontSize: tokens.typography.fontSize.caption,
+                    fontWeight: tokens.typography.fontWeight.semibold,
+                  }}
+                >
+                  {index + 1}
                 </div>
-                {item.detail ? (
-                  <p
-                    style={{
-                      color: tokens.colors.fgSecondary,
-                      fontSize: tokens.typography.fontSize.bodySm,
-                      lineHeight: tokens.typography.lineHeight.relaxed,
-                      margin: '0.4rem 0 0',
-                    }}
-                  >
-                    {item.detail}
-                  </p>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <h3
+                      style={{
+                        fontSize: tokens.typography.fontSize.body,
+                        fontWeight: tokens.typography.fontWeight.semibold,
+                        margin: 0,
+                      }}
+                    >
+                      {item.label}
+                    </h3>
+                    {item.source ? <Badge tone="neutral">{item.source}</Badge> : null}
+                  </div>
+                  {item.detail ? (
+                    <p
+                      style={{
+                        color: tokens.colors.fgSecondary,
+                        fontSize: tokens.typography.fontSize.bodySm,
+                        lineHeight: tokens.typography.lineHeight.relaxed,
+                        margin: '0.4rem 0 0',
+                      }}
+                    >
+                      {item.detail}
+                    </p>
+                  ) : null}
+                </div>
+                {!compact && item.timestamp ? (
+                  <time style={{ ...compactLabelStyles, alignSelf: 'start' }}>{item.timestamp}</time>
                 ) : null}
-              </div>
-              {!compact && item.timestamp ? (
-                <time style={{ ...compactLabelStyles, alignSelf: 'start' }}>{item.timestamp}</time>
-              ) : null}
-            </article>
-          );
+              </article>
+            );
 
-          return item.href ? (
-            <a key={item.id ?? item.label} href={item.href} style={{ color: 'inherit', textDecoration: 'none' }}>
-              {content}
-            </a>
-          ) : (
-            <div key={item.id ?? item.label}>{content}</div>
-          );
-        })}
-      </div>
+            return item.href ? (
+              <a key={item.id ?? item.label} href={item.href} style={{ color: 'inherit', textDecoration: 'none' }}>
+                {content}
+              </a>
+            ) : (
+              <div key={item.id ?? item.label}>{content}</div>
+            );
+          })}
+        </div>
+      </section>
     </ComponentShell>
   );
 }
@@ -718,63 +761,66 @@ export function ArtifactGrid({
 
   return (
     <ComponentShell className={className}>
-      <SectionHeader eyebrow="Client-safe packet" title={title} body={body} />
-      <div className={gridClassName}>
-        {parsedArtifacts.map((artifact) => {
-          const tone = artifact.tone ?? (artifact.visibility === 'private' ? 'danger' : artifact.visibility === 'internal' ? 'warning' : 'info');
-          const card = (
-            <article
-              style={{
-                ...surfaceStyles,
-                minHeight: '12rem',
-                padding: tokens.spacing.md,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '1rem',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                  {artifact.type ? <div style={compactLabelStyles}>{artifact.type}</div> : <span />}
-                  {artifact.visibility ? <Badge tone={tone}>{artifact.visibility}</Badge> : null}
-                </div>
-                <h3
-                  style={{
-                    fontFamily: tokens.typography.fontFamily.tight,
-                    fontSize: tokens.typography.fontSize.h4,
-                    lineHeight: tokens.typography.lineHeight.tight,
-                    margin: '1rem 0 0',
-                  }}
-                >
-                  {artifact.title}
-                </h3>
-                {artifact.description ? (
-                  <p
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Client-safe packet" title={title} body={body} />
+        <div className={gridClassName}>
+          {parsedArtifacts.map((artifact) => {
+            const tone = artifact.tone ?? (artifact.visibility === 'private' ? 'danger' : artifact.visibility === 'internal' ? 'warning' : 'info');
+            const card = (
+              <article
+                style={{
+                  ...surfaceStyles,
+                  background: tokens.colors.bgPure,
+                  minHeight: '12rem',
+                  padding: tokens.spacing.md,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                    {artifact.type ? <div style={compactLabelStyles}>{artifact.type}</div> : <span />}
+                    {artifact.visibility ? <Badge tone={tone}>{artifact.visibility}</Badge> : null}
+                  </div>
+                  <h3
                     style={{
-                      color: tokens.colors.fgSecondary,
-                      fontSize: tokens.typography.fontSize.bodySm,
-                      lineHeight: tokens.typography.lineHeight.relaxed,
-                      margin: '0.65rem 0 0',
+                      fontFamily: tokens.typography.fontFamily.tight,
+                      fontSize: tokens.typography.fontSize.h4,
+                      lineHeight: tokens.typography.lineHeight.tight,
+                      margin: '1rem 0 0',
                     }}
                   >
-                    {artifact.description}
-                  </p>
-                ) : null}
-              </div>
-              {artifact.href ? <div style={compactLabelStyles}>Open artifact</div> : null}
-            </article>
-          );
+                    {artifact.title}
+                  </h3>
+                  {artifact.description ? (
+                    <p
+                      style={{
+                        color: tokens.colors.fgSecondary,
+                        fontSize: tokens.typography.fontSize.bodySm,
+                        lineHeight: tokens.typography.lineHeight.relaxed,
+                        margin: '0.65rem 0 0',
+                      }}
+                    >
+                      {artifact.description}
+                    </p>
+                  ) : null}
+                </div>
+                {artifact.href ? <div style={compactLabelStyles}>Open artifact</div> : null}
+              </article>
+            );
 
-          return artifact.href ? (
-            <a key={artifact.title} href={artifact.href} style={{ color: 'inherit', textDecoration: 'none' }}>
-              {card}
-            </a>
-          ) : (
-            <div key={artifact.title}>{card}</div>
-          );
-        })}
-      </div>
+            return artifact.href ? (
+              <a key={artifact.title} href={artifact.href} style={{ color: 'inherit', textDecoration: 'none' }}>
+                {card}
+              </a>
+            ) : (
+              <div key={artifact.title}>{card}</div>
+            );
+          })}
+        </div>
+      </section>
     </ComponentShell>
   );
 }
@@ -796,61 +842,64 @@ export function DecisionQueue({
 
   return (
     <ComponentShell className={className}>
-      <SectionHeader eyebrow="Operator queue" title={title} body={body} />
-      <div className="cs-control-list">
-        {parsedDecisions.map((decision, index) => {
-          const state = decision.state ?? 'open';
-          return (
-            <article
-              key={decision.id ?? decision.title}
-              style={{
-                ...surfaceStyles,
-                display: 'grid',
-                gridTemplateColumns: 'auto minmax(0, 1fr) auto',
-                gap: '1rem',
-                padding: tokens.spacing.md,
-                alignItems: 'start',
-              }}
-            >
-              <div
+      <section style={sectionSurfaceStyles}>
+        <SectionHeader eyebrow="Operator queue" title={title} body={body} />
+        <div className="cs-control-list">
+          {parsedDecisions.map((decision, index) => {
+            const state = decision.state ?? 'open';
+            return (
+              <article
+                key={decision.id ?? decision.title}
                 style={{
-                  width: '2rem',
-                  height: '2rem',
-                  borderRadius: tokens.radii.md,
-                  border: `1px solid ${tokens.colors.borderDefault}`,
+                  ...surfaceStyles,
+                  background: tokens.colors.bgPure,
                   display: 'grid',
-                  placeItems: 'center',
-                  color: tokens.colors.fgSecondary,
-                  fontWeight: tokens.typography.fontWeight.semibold,
+                  gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+                  gap: '1rem',
+                  padding: tokens.spacing.md,
+                  alignItems: 'start',
                 }}
               >
-                {index + 1}
-              </div>
-              <div>
-                <h3 style={{ fontSize: tokens.typography.fontSize.body, margin: 0 }}>{decision.title}</h3>
-                {decision.description ? (
-                  <p
-                    style={{
-                      color: tokens.colors.fgSecondary,
-                      fontSize: tokens.typography.fontSize.bodySm,
-                      lineHeight: tokens.typography.lineHeight.relaxed,
-                      margin: '0.4rem 0 0',
-                    }}
-                  >
-                    {decision.description}
-                  </p>
-                ) : null}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.75rem' }}>
-                  {decision.tier ? <Badge tone="info">{decision.tier}</Badge> : null}
-                  {decision.owner ? <Badge tone="neutral">{decision.owner}</Badge> : null}
-                  {decision.due ? <Badge tone="neutral">{decision.due}</Badge> : null}
+                <div
+                  style={{
+                    width: '2rem',
+                    height: '2rem',
+                    borderRadius: tokens.radii.md,
+                    border: `1px solid ${tokens.colors.borderDefault}`,
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: tokens.colors.fgSecondary,
+                    fontWeight: tokens.typography.fontWeight.semibold,
+                  }}
+                >
+                  {index + 1}
                 </div>
-              </div>
-              <Badge tone={statusToTone(state)}>{state}</Badge>
-            </article>
-          );
-        })}
-      </div>
+                <div>
+                  <h3 style={{ fontSize: tokens.typography.fontSize.body, margin: 0 }}>{decision.title}</h3>
+                  {decision.description ? (
+                    <p
+                      style={{
+                        color: tokens.colors.fgSecondary,
+                        fontSize: tokens.typography.fontSize.bodySm,
+                        lineHeight: tokens.typography.lineHeight.relaxed,
+                        margin: '0.4rem 0 0',
+                      }}
+                    >
+                      {decision.description}
+                    </p>
+                  ) : null}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.75rem' }}>
+                    {decision.tier ? <Badge tone="info">{decision.tier}</Badge> : null}
+                    {decision.owner ? <Badge tone="neutral">{decision.owner}</Badge> : null}
+                    {decision.due ? <Badge tone="neutral">{decision.due}</Badge> : null}
+                  </div>
+                </div>
+                <Badge tone={statusToTone(state)}>{state}</Badge>
+              </article>
+            );
+          })}
+        </div>
+      </section>
     </ComponentShell>
   );
 }
@@ -992,77 +1041,92 @@ export function ActionPreview({
 
   return (
     <ComponentShell className={className}>
-      <SectionHeader eyebrow="Governed action" title={title} body={body} />
-      <article style={{ ...surfaceStyles, padding: tokens.spacing.md }}>
-        <div className="cs-control-grid cs-control-grid--two">
-          <div>
-            <label style={{ ...compactLabelStyles, display: 'block', marginBottom: '0.5rem' }} htmlFor="cs-action-preview-select">
-              Action
-            </label>
-            <select
-              id="cs-action-preview-select"
-              className="cs-control-select"
-              value={selectedAction.id}
-              onChange={(event) => {
-                setSelectedActionId(event.target.value);
-                setRemotePreview(null);
-                setError('');
-              }}
-            >
-              {parsedActions.map((action) => (
-                <option key={action.id} value={action.id}>
-                  {action.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'flex-end', gap: '0.75rem' }}>
+      <article style={sectionSurfaceStyles}>
+        <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', gap: '1rem' }}>
+          <SectionHeader eyebrow="Governed action" title={title} body={body} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '0.5rem', paddingTop: '0.15rem' }}>
             <Badge tone={riskToTone(selectedAction.risk)}>{selectedAction.risk ?? 'standard'} risk</Badge>
             <Badge tone={statusToTone(selectedAction.status)}>{readableStatus(selectedAction.status)}</Badge>
           </div>
         </div>
 
-        <div style={{ marginTop: tokens.spacing.md }}>
-          <h3 style={{ fontFamily: tokens.typography.fontFamily.tight, fontSize: tokens.typography.fontSize.h4, margin: 0 }}>
-            {selectedAction.label}
-          </h3>
-          <p style={{ color: tokens.colors.fgSecondary, lineHeight: tokens.typography.lineHeight.relaxed, margin: '0.65rem 0 0' }}>
-            {remotePreview?.summary ?? selectedAction.description}
-          </p>
-        </div>
-
-        <div className="cs-control-grid cs-control-grid--two" style={{ marginTop: tokens.spacing.md }}>
-          <div>
-            <div style={compactLabelStyles}>Policy checks</div>
-            <ul style={{ color: tokens.colors.fgSecondary, margin: '0.75rem 0 0', paddingLeft: '1.1rem' }}>
-              {policyChecks.map((check) => (
-                <li key={check} style={{ marginBottom: '0.45rem' }}>
-                  {check}
-                </li>
-              ))}
-            </ul>
+        <div className="cs-control-grid cs-control-grid--two">
+          <div className="cs-control-list">
+            {parsedActions.map((action) => {
+              const isActive = selectedAction.id === action.id;
+              return (
+                <button
+                  key={action.id}
+                  type="button"
+                  className="cs-action-option"
+                  data-active={isActive}
+                  onClick={() => {
+                    setSelectedActionId(action.id);
+                    setRemotePreview(null);
+                    setError('');
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', gap: '0.75rem' }}>
+                    <strong style={{ lineHeight: tokens.typography.lineHeight.tight }}>{action.label}</strong>
+                    <Badge tone={statusToTone(action.status)}>{readableStatus(action.status)}</Badge>
+                  </div>
+                  <p
+                    style={{
+                      color: tokens.colors.fgSecondary,
+                      fontSize: tokens.typography.fontSize.bodySm,
+                      lineHeight: tokens.typography.lineHeight.relaxed,
+                      margin: '0.55rem 0 0',
+                    }}
+                  >
+                    {action.description}
+                  </p>
+                </button>
+              );
+            })}
           </div>
-          <div>
-            <div style={compactLabelStyles}>Grounding</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.75rem' }}>
-              {evidence.map((item) => (
-                <Badge key={item} tone="neutral">
-                  {item}
-                </Badge>
-              ))}
-            </div>
-            {remotePreview?.allowedNextActions?.length ? (
-              <div style={{ marginTop: '1rem' }}>
-                <div style={compactLabelStyles}>Allowed next actions</div>
+
+          <div style={{ ...surfaceStyles, background: tokens.colors.bgPure, padding: tokens.spacing.md }}>
+            <h3 style={{ fontFamily: tokens.typography.fontFamily.tight, fontSize: tokens.typography.fontSize.h4, margin: 0 }}>
+              {selectedAction.label}
+            </h3>
+            <p style={{ color: tokens.colors.fgSecondary, lineHeight: tokens.typography.lineHeight.relaxed, margin: '0.65rem 0 0' }}>
+              {remotePreview?.summary ?? selectedAction.description}
+            </p>
+
+            <div className="cs-control-grid cs-control-grid--two" style={{ marginTop: tokens.spacing.md }}>
+              <div>
+                <div style={compactLabelStyles}>Policy checks</div>
+                <ul style={{ color: tokens.colors.fgSecondary, margin: '0.75rem 0 0', paddingLeft: '1.1rem' }}>
+                  {policyChecks.map((check) => (
+                    <li key={check} style={{ marginBottom: '0.45rem' }}>
+                      {check}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <div style={compactLabelStyles}>Grounding</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.75rem' }}>
-                  {remotePreview.allowedNextActions.map((item) => (
-                    <Badge key={item} tone="success">
+                  {evidence.map((item) => (
+                    <Badge key={item} tone="neutral">
                       {item}
                     </Badge>
                   ))}
                 </div>
+                {remotePreview?.allowedNextActions?.length ? (
+                  <div style={{ marginTop: '1rem' }}>
+                    <div style={compactLabelStyles}>Allowed next actions</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.75rem' }}>
+                      {remotePreview.allowedNextActions.map((item) => (
+                        <Badge key={item} tone="success">
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            </div>
           </div>
         </div>
 
