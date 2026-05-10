@@ -795,7 +795,7 @@ const controlCss = `
 
   .cs-action-preview-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
     gap: 1rem;
     align-items: start;
   }
@@ -813,9 +813,21 @@ const controlCss = `
 
   .cs-action-preview-detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     gap: 1rem;
     margin-top: ${tokens.spacing.md};
+  }
+
+  .cs-action-preview-detail-card {
+    min-width: 0;
+  }
+
+  .cs-badge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.75rem;
+    min-width: 0;
   }
 
   @media (max-width: ${tokens.breakpoints.lg}) {
@@ -900,10 +912,13 @@ function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone
         fontSize: tokens.typography.fontSize.caption,
         fontWeight: tokens.typography.fontWeight.semibold,
         lineHeight: 1,
+        maxWidth: '100%',
         minHeight: '1.625rem',
+        overflowWrap: 'break-word',
         padding: '0.35rem 0.55rem',
+        textAlign: 'left',
         textTransform: 'capitalize',
-        whiteSpace: 'nowrap',
+        width: 'fit-content',
       }}
     >
       {children}
@@ -1953,7 +1968,7 @@ export function ActionPreview({
             })}
           </div>
 
-          <div style={{ ...surfaceStyles, background: tokens.colors.bgPure, padding: tokens.spacing.md }}>
+          <div className="cs-action-preview-detail-card" style={{ ...surfaceStyles, background: tokens.colors.bgPure, padding: tokens.spacing.md }}>
             <h3 style={{ fontFamily: tokens.typography.fontFamily.tight, fontSize: tokens.typography.fontSize.h4, margin: 0 }}>
               {selectedAction.label}
             </h3>
@@ -1974,7 +1989,7 @@ export function ActionPreview({
               </div>
               <div>
                 <div style={compactLabelStyles}>Grounding</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.75rem' }}>
+                <div className="cs-badge-list">
                   {evidence.map((item) => (
                     <Badge key={item} tone="neutral">
                       {item}
@@ -1984,7 +1999,7 @@ export function ActionPreview({
                 {remotePreview?.allowedNextActions?.length ? (
                   <div style={{ marginTop: '1rem' }}>
                     <div style={compactLabelStyles}>Allowed next actions</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.75rem' }}>
+                    <div className="cs-badge-list">
                       {remotePreview.allowedNextActions.map((item) => (
                         <Badge key={item} tone="success">
                           {item}
