@@ -8,38 +8,46 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 
 ## Summary
 
-- MCP registry servers: 1014
-- Dify-direct candidates: 26
+- MCP registry servers: 1029
+- Dify-direct candidates: 35
 - Dify inventory status: `partial`
-- Dify MCP server cards in inventory: 13
-- Dify agents in inventory: 13
+- Dify MCP server cards in inventory: 16
+- Dify agents in inventory: 14
 - Dify MCP intake artifacts: 25
 
 ## Candidate Status
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| `ready` | 1 | Mapped to a Dify server and published agent with smoke/eval gates. |
+| `ready` | 4 | Mapped to a Dify server and published agent with smoke/eval gates. |
 | `agent-needs-gates` | 0 | Published agent exists but smoke/eval evidence is incomplete. |
 | `agent-draft` | 0 | Agent exists but is not published yet. |
-| `intake-ready` | 25 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
+| `intake-ready` | 22 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
 | `server-only` | 0 | Dify MCP server exists but no Dify agent uses it yet. |
-| `missing-dify-server` | 0 | No Dify MCP server card is codified for this registry server. |
+| `missing-dify-server` | 9 | No Dify MCP server card is codified for this registry server. |
 
 ## Excluded From Direct Dify Coverage
 
 | Reason | Count |
 | --- | ---: |
 | `brokered` | 986 |
-| `dormant` | 1 |
+| `dormant` | 2 |
 | `local` | 0 |
-| `non-http` | 1 |
+| `non-http` | 6 |
 
 ## Dify-Direct Candidate Matrix
 
 | MCP Registry Server | Status | Dify Server Card | Intake Artifact | Dify Agents | Published Agents | Est. Tools | Exposure | Next Action |
 | --- | --- | --- | --- | --- | --- | ---: | --- | --- |
-| `create-something` | `intake-ready` | - | `config/dify-mcp-intake/create-something.json` | - | - | 10 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
+| `interaction-atlas-mcp` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id interaction-atlas-mcp --write. |
+| `notion-halfdozen-cracked` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-cracked --write. |
+| `notion-halfdozen-fanpad` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-fanpad --write. |
+| `notion-halfdozen-juice-labs` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-juice-labs --write. |
+| `notion-halfdozen-kk-management` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-kk-management --write. |
+| `notion-halfdozen-lightswitch` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-lightswitch --write. |
+| `notion-halfdozen-phase-3` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-phase-3 --write. |
+| `notion-halfdozen-system-studio` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-system-studio --write. |
+| `notion-halfdozen-three-six-zero` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-three-six-zero --write. |
 | `cs-telemetry` | `intake-ready` | - | `config/dify-mcp-intake/cs-telemetry.json` | - | - | 10 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `gmail-notion-mcp` | `intake-ready` | - | `config/dify-mcp-intake/gmail-notion-mcp.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `half-dozen-youtube-sync` | `intake-ready` | - | `config/dify-mcp-intake/youtube-sync.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
@@ -54,23 +62,23 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `notion-halfdozen-create-something` | `intake-ready` | - | `config/dify-mcp-intake/notion-halfdozen-create-something.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `notion-sync-mcp` | `intake-ready` | - | `config/dify-mcp-intake/notion-sync-mcp.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `outerfields-pcn` | `intake-ready` | - | `config/dify-mcp-intake/outerfields.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
-| `playbook` | `intake-ready` | - | `config/dify-mcp-intake/playbook.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `quickbooks-notion-mcp-server` | `intake-ready` | - | `config/dify-mcp-intake/quickbooks-notion.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `schedule-mcp` | `intake-ready` | - | `config/dify-mcp-intake/schedule.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `slack_create_something` | `intake-ready` | - | `config/dify-mcp-intake/slack-create-something.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `substrate-mcp` | `intake-ready` | - | `config/dify-mcp-intake/substrate.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
-| `three-tier-framework` | `intake-ready` | - | `config/dify-mcp-intake/three-tier-framework.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-app-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-app-review.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-local` | `intake-ready` | - | `config/dify-mcp-intake/webflow-local.json` | - | - | 10 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-site-analyzer-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-site-analyzer.json` | - | - | 22 | `unset` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-template-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-template-review.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
+| `create-something` | `ready` | `create-something` | `config/dify-mcp-intake/create-something.json` | `create-something-guide-agent` | `create-something-guide-agent` | 5 | `direct` | Keep smoke/eval evidence current. |
+| `playbook` | `ready` | `playbook` | `config/dify-mcp-intake/playbook.json` | `create-something-guide-agent` | `create-something-guide-agent` | 14 | `direct` | Keep smoke/eval evidence current. |
+| `three-tier-framework` | `ready` | `three-tier-framework` | `config/dify-mcp-intake/three-tier-framework.json` | `create-something-guide-agent` | `create-something-guide-agent` | 6 | `direct` | Keep smoke/eval evidence current. |
 | `youtube-transcript-notion-mcp` | `ready` | `yt-transcript-notion` | - | `youtube-transcript-notion-agent` | `youtube-transcript-notion-agent` | 6 | `direct` | Keep smoke/eval evidence current. |
 
 ## Intake-Ready Candidate URLs
 
 | MCP Registry Server | Intake Artifact | URL | Description |
 | --- | --- | --- | --- |
-| `create-something` | `config/dify-mcp-intake/create-something.json` | `https://mcp.createsomething.ltd/mcp` | CREATE SOMETHING content MCP |
 | `cs-telemetry` | `config/dify-mcp-intake/cs-telemetry.json` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | Fleet telemetry MCP for CREATE SOMETHING account |
 | `gmail-notion-mcp` | `config/dify-mcp-intake/gmail-notion-mcp.json` | `https://gmail-notion-mcp.createsomething.workers.dev/mcp` | Dormant Gmail to Notion MCP prototype |
 | `half-dozen-youtube-sync` | `config/dify-mcp-intake/youtube-sync.json` | `https://youtube.mcp.workway.co/mcp` | Half Dozen YouTube sync MCP |
@@ -85,12 +93,10 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `notion-halfdozen-create-something` | `config/dify-mcp-intake/notion-halfdozen-create-something.json` | `https://createsomething-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for CREATE SOMETHING |
 | `notion-sync-mcp` | `config/dify-mcp-intake/notion-sync-mcp.json` | `https://notion-sync-mcp-worker.createsomething.workers.dev/mcp` | Dormant Notion sync MCP prototype |
 | `outerfields-pcn` | `config/dify-mcp-intake/outerfields.json` | `https://outerfields.mcp.createsomething.agency/mcp` | OUTERFIELDS remote MCP |
-| `playbook` | `config/dify-mcp-intake/playbook.json` | `https://playbook.mcp.createsomething.ltd/mcp` | Workflow playbooks MCP |
 | `quickbooks-notion-mcp-server` | `config/dify-mcp-intake/quickbooks-notion.json` | `https://quickbooks.mcp.workway.co/mcp` | QuickBooks to Notion MCP server |
 | `schedule-mcp` | `config/dify-mcp-intake/schedule.json` | `https://schedule.mcp.createsomething.agency/mcp` | Scheduling MCP |
 | `slack_create_something` | `config/dify-mcp-intake/slack-create-something.json` | `https://mcp.slack.com/mcp` | Slack MCP for CREATE SOMETHING workspace |
 | `substrate-mcp` | `config/dify-mcp-intake/substrate.json` | `https://substrate.mcp.createsomething.agency/mcp` | Substrate execution/storage MCP |
-| `three-tier-framework` | `config/dify-mcp-intake/three-tier-framework.json` | `https://framework.mcp.createsomething.agency/mcp` | Three-Tier Framework MCP |
 | `webflow-app-review-mcp` | `config/dify-mcp-intake/webflow-app-review.json` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | Webflow App Review MCP for app asset and version workflows |
 | `webflow-local` | `config/dify-mcp-intake/webflow-local.json` | `https://webflow-mcp.createsomething.workers.dev/mcp` | Remote Webflow Marketplace MCP for plagiarism and framework analysis; kept as webflow-local for existing Hub bundle compatibility |
 | `webflow-site-analyzer-mcp` | `config/dify-mcp-intake/webflow-site-analyzer.json` | `https://analyzer.mcp.createsomething.agency/mcp` | Webflow Site Analyzer MCP — browser-backed template validation with Steel + Groq |
@@ -100,4 +106,12 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 
 | MCP Registry Server | URL | Description |
 | --- | --- | --- |
-| - | - | - |
+| `interaction-atlas-mcp` | `https://interaction-atlas-mcp.createsomething.workers.dev/mcp` | Interaction Atlas MCP for policy, workflow, and agent/MCP capability mapping |
+| `notion-halfdozen-cracked` | `https://cracked-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Cracked |
+| `notion-halfdozen-fanpad` | `https://fanpad-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Fanpad |
+| `notion-halfdozen-juice-labs` | `https://juice-labs-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Juice Labs |
+| `notion-halfdozen-kk-management` | `https://kk-management-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for KK Management |
+| `notion-halfdozen-lightswitch` | `https://lightswitch-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Lightswitch |
+| `notion-halfdozen-phase-3` | `https://phase-3-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Phase 3 |
+| `notion-halfdozen-system-studio` | `https://system-studio-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for System Studio |
+| `notion-halfdozen-three-six-zero` | `https://three-six-zero-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Three Six Zero |

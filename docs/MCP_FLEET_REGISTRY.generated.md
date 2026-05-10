@@ -991,7 +991,7 @@
 | `composio-toolkit-zulip` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zulip` | `brokered` | `100` | `composio`, `composio-team-chat`, `composio-team-collaboration`, `toolkit` |
 | `composio-toolkit-zylvie` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zylvie` | `brokered` | `100` | `composio`, `composio-ecommerce`, `composio-payment-processing`, `toolkit` |
 | `composio-toolkit-zyte_api` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zyte_api` | `brokered` | `100` | `composio`, `composio-ai-web-scraping`, `composio-developer-tools`, `toolkit` |
-| `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `10` | `core`, `content`, `cs`, `policy_os_only` |
+| `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `5` | `core`, `content`, `cs`, `policy_os_only` |
 | `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `observability`, `telemetry`, `cs`, `policy_os_only` |
 | `half-dozen-youtube-sync` | `http` | `https://youtube.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `youtube`, `workway` |
 | `halfdozen-dm-mcp` | `http` | `https://dm.mcp.workway.co/mcp` | `brokered` | `100` | `halfdozen`, `dm`, `notion`, `drive`, `composio`, `workway` |
@@ -1015,12 +1015,12 @@
 | `notion-halfdozen-system-studio` | `http` | `https://system-studio-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `system-studio`, `workway` |
 | `notion-halfdozen-three-six-zero` | `http` | `https://three-six-zero-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `three-six-zero`, `workway` |
 | `outerfields-pcn` | `http` | `https://outerfields.mcp.createsomething.agency/mcp` | `direct` | `0` | `agency`, `outerfields`, `cs` |
-| `playbook` | `http` | `https://playbook.mcp.createsomething.ltd/mcp` | `direct` | `0` | `core`, `workflow`, `cs`, `policy_os_only` |
+| `playbook` | `http` | `https://playbook.mcp.createsomething.ltd/mcp` | `direct` | `14` | `core`, `workflow`, `cs`, `policy_os_only` |
 | `quickbooks-notion-mcp-server` | `http` | `https://quickbooks.mcp.workway.co/mcp` | `direct` | `0` | `finance`, `quickbooks`, `notion`, `workway` |
 | `schedule-mcp` | `http` | `https://schedule.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `scheduling`, `cs`, `policy_os_only` |
 | `slack_create_something` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `cs` |
 | `substrate-mcp` | `http` | `https://substrate.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `automation`, `cs`, `policy_os_only` |
-| `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `direct` | `0` | `core`, `framework`, `cs`, `policy_os_only` |
+| `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `direct` | `6` | `core`, `framework`, `cs`, `policy_os_only` |
 | `webflow-app-review-mcp` | `http` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `apps`, `cs` |
 | `webflow-local` | `http` | `https://webflow-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `webflow`, `review`, `plagiarism`, `frameworks`, `cs` |
 | `webflow-site-analyzer-mcp` | `http` | `https://analyzer.mcp.createsomething.agency/mcp` | `direct` | `22` | `webflow`, `review`, `analyzer`, `browser`, `cs` |

@@ -107,6 +107,118 @@
         }
       }
     },
+    "publicTrustCard": {
+      "type": "object",
+      "required": ["summary", "limitations", "policy_pack", "eval_suite", "evidence_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "policy_pack": {
+          "type": "string",
+          "minLength": 1
+        },
+        "eval_suite": {
+          "type": "string",
+          "minLength": 1
+        },
+        "last_verified_date": {
+          "type": "string"
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "escalation": {
+          "type": "string"
+        }
+      }
+    },
+    "publicObservability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "braintrust": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "project": {
+              "type": "string"
+            },
+            "experiment": {
+              "type": "string"
+            }
+          }
+        },
+        "langfuse": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "project": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "externalListings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "glama": {
+          "type": "string"
+        },
+        "hugging_face": {
+          "type": "string"
+        },
+        "docker": {
+          "type": "string"
+        },
+        "github": {
+          "type": "string"
+        },
+        "official_registry": {
+          "type": "string"
+        }
+      }
+    },
+    "publicAccess": {
+      "type": "object",
+      "required": ["status", "access_model", "trust_card"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["public", "sandbox", "byo_auth", "waitlist", "private"]
+        },
+        "access_model": {
+          "type": "string",
+          "enum": ["read_only", "simulated_write", "approval_required", "live_write"]
+        },
+        "trust_card": {
+          "$ref": "#/$defs/publicTrustCard"
+        },
+        "observability": {
+          "$ref": "#/$defs/publicObservability"
+        },
+        "external_listings": {
+          "$ref": "#/$defs/externalListings"
+        }
+      }
+    },
     "metadata": {
       "type": "object",
       "properties": {
@@ -128,7 +240,7 @@
         },
         "catalog_exposure_mode": {
           "type": "string",
-          "enum": ["direct", "brokered", "exception_direct"]
+          "enum": ["direct", "brokered", "exception_direct", "dormant"]
         },
         "estimated_tool_count": {
           "type": "integer",
@@ -142,6 +254,9 @@
         },
         "catalog": {
           "$ref": "#/$defs/catalog"
+        },
+        "public_access": {
+          "$ref": "#/$defs/publicAccess"
         }
       }
     },
@@ -167,6 +282,14 @@
           "type": "string",
           "minLength": 1
         },
+        "connect_timeout_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "list_tools_timeout_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
         "headers": {
           "$ref": "#/$defs/stringMap"
         },
@@ -188,7 +311,7 @@
         },
         "catalog_exposure_mode": {
           "type": "string",
-          "enum": ["direct", "brokered", "exception_direct"]
+          "enum": ["direct", "brokered", "exception_direct", "dormant"]
         },
         "estimated_tool_count": {
           "type": "integer",
@@ -202,6 +325,9 @@
         },
         "catalog": {
           "$ref": "#/$defs/catalog"
+        },
+        "public_access": {
+          "$ref": "#/$defs/publicAccess"
         }
       }
     },
@@ -247,7 +373,7 @@
         },
         "catalog_exposure_mode": {
           "type": "string",
-          "enum": ["direct", "brokered", "exception_direct"]
+          "enum": ["direct", "brokered", "exception_direct", "dormant"]
         },
         "estimated_tool_count": {
           "type": "integer",
