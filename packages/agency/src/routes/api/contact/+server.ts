@@ -27,6 +27,17 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		const env = platform.env;
+		const resendApiKey = env.RESEND_API_KEY;
+		if (!resendApiKey) {
+			logger.error('RESEND_API_KEY not configured for contact form');
+			return json(
+				{
+					success: false,
+					message: 'Email service is not configured'
+				},
+				{ status: 500 }
+			);
+		}
 
 		// Store contact submission in D1 database (optional)
 		try {
@@ -55,7 +66,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const autoResponsePromise = fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${env.RESEND_API_KEY || 're_JbMtKyRz_3n55bLDPciMmZfgaez38WzM7'}`,
+				Authorization: `Bearer ${resendApiKey}`,
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
@@ -96,7 +107,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const notificationPromise = fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${env.RESEND_API_KEY || 're_JbMtKyRz_3n55bLDPciMmZfgaez38WzM7'}`,
+				Authorization: `Bearer ${resendApiKey}`,
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
