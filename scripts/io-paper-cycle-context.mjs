@@ -2,6 +2,8 @@
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const CYCLE_LABELS = [
   'paper-cycle',
@@ -15,8 +17,25 @@ const CYCLE_LABELS = [
 
 const PAPER_ROUTE_PREFIX = 'packages/io/src/routes/papers/';
 const EXPERIMENT_ROUTE_PREFIX = 'packages/io/src/routes/experiments/';
+const MCP_TRUST_ROUTE_PREFIX = 'packages/io/src/routes/mcp/';
+const AGENT_TRUST_ROUTE_PREFIX = 'packages/io/src/routes/agents/';
+const API_MANIFEST_ROUTE_PREFIX = 'packages/io/src/routes/api/manifest/';
+const SITEMAP_ROUTE_PREFIX = 'packages/io/src/routes/sitemap.xml/';
 const PAPER_CONTENT_PREFIX = 'packages/io/content/papers/';
 const EXPERIMENT_CONTENT_PREFIX = 'packages/io/content/experiments/';
+const PUBLIC_TRUST_DATA_PREFIX = 'config/public-trust/';
+const PUBLIC_TRUST_CONFIG_FILE = 'packages/io/src/lib/config/publicTrustCatalog.ts';
+const PUBLIC_TRUST_GENERATED_CONFIG_FILE = 'packages/io/src/lib/config/publicTrustCatalog.generated.ts';
+const PUBLIC_TRUST_FALLBACK_MCP_ROUTES = [
+  '/mcp',
+  '/mcp/create-something',
+  '/mcp/three-tier-framework',
+  '/mcp/playbook',
+];
+const PUBLIC_TRUST_FALLBACK_AGENT_ROUTES = [
+  '/agents',
+  '/agents/create-something-guide-agent',
+];
 
 function parseArgs(argv) {
   const args = {
@@ -113,8 +132,15 @@ function isPublishableIoFile(file) {
   return (
     file.startsWith(PAPER_ROUTE_PREFIX) ||
     file.startsWith(EXPERIMENT_ROUTE_PREFIX) ||
+    file.startsWith(MCP_TRUST_ROUTE_PREFIX) ||
+    file.startsWith(AGENT_TRUST_ROUTE_PREFIX) ||
+    file.startsWith(API_MANIFEST_ROUTE_PREFIX) ||
+    file.startsWith(SITEMAP_ROUTE_PREFIX) ||
     file.startsWith(PAPER_CONTENT_PREFIX) ||
     file.startsWith(EXPERIMENT_CONTENT_PREFIX) ||
+    file.startsWith(PUBLIC_TRUST_DATA_PREFIX) ||
+    file === PUBLIC_TRUST_CONFIG_FILE ||
+    file === PUBLIC_TRUST_GENERATED_CONFIG_FILE ||
     file === 'packages/io/src/lib/config/paperContent.ts'
   );
 }
@@ -129,44 +155,106 @@ function isLifecycleSupportFile(file) {
   );
 }
 
-function routeFromIoRouteFile(file) {
+function publicTrustRoutes(kind = 'all') {
+  try {
+    const source = readFileSync(PUBLIC_TRUST_GENERATED_CONFIG_FILE, 'utf8');
+    const match = source.match(/export const PUBLIC_TRUST_CATALOG = ([\s\S]*?) as const;/u);
+    if (!match) {
+      throw new Error('Generated public trust catalog export not found.');
+    }
+
+    const catalog = JSON.parse(match[1]);
+    const mcpRoutes = uniqueSorted([
+      '/mcp',
+      ...((catalog.mcp ?? [])
+        .map((card) => typeof card.slug === 'string' ? `/mcp/${card.slug}` : '')
+        .filter(Boolean)),
+    ]);
+    const agentRoutes = uniqueSorted([
+      '/agents',
+      ...((catalog.agents ?? [])
+        .map((card) => typeof card.slug === 'string' ? `/agents/${card.slug}` : '')
+        .filter(Boolean)),
+    ]);
+
+    return uniqueSorted([
+      ...(kind === 'agents' ? [] : mcpRoutes),
+      ...(kind === 'mcp' ? [] : agentRoutes),
+      '/api/manifest',
+      '/sitemap.xml',
+    ]);
+  } catch {
+    return uniqueSorted([
+      ...(kind === 'agents' ? [] : PUBLIC_TRUST_FALLBACK_MCP_ROUTES),
+      ...(kind === 'mcp' ? [] : PUBLIC_TRUST_FALLBACK_AGENT_ROUTES),
+      '/api/manifest',
+      '/sitemap.xml',
+    ]);
+  }
+}
+
+function routesFromIoRouteFile(file) {
   if (file.startsWith(PAPER_ROUTE_PREFIX)) {
     const remainder = file.slice(PAPER_ROUTE_PREFIX.length);
     const [slug = ''] = remainder.split('/');
     if (!slug || slug.startsWith('+') || slug === '[slug]' || slug.endsWith('.ts')) {
-      return '/papers';
+      return ['/papers'];
     }
-    return `/papers/${slug}`;
+    return [`/papers/${slug}`];
   }
 
   if (file.startsWith(EXPERIMENT_ROUTE_PREFIX)) {
     const remainder = file.slice(EXPERIMENT_ROUTE_PREFIX.length);
     const [slug = ''] = remainder.split('/');
     if (!slug || slug.startsWith('+') || slug === '[slug]') {
-      return '/experiments';
+      return ['/experiments'];
     }
-    return `/experiments/${slug}`;
+    return [`/experiments/${slug}`];
   }
 
   if (file.startsWith(PAPER_CONTENT_PREFIX)) {
     const remainder = file.slice(PAPER_CONTENT_PREFIX.length);
-    if (remainder === 'README.md') return '/papers';
-    if (!remainder.endsWith('.md')) return '/papers';
-    return `/papers/${remainder.replace(/\.md$/u, '')}`;
+    if (remainder === 'README.md') return ['/papers'];
+    if (!remainder.endsWith('.md')) return ['/papers'];
+    return [`/papers/${remainder.replace(/\.md$/u, '')}`];
   }
 
   if (file.startsWith(EXPERIMENT_CONTENT_PREFIX)) {
     const remainder = file.slice(EXPERIMENT_CONTENT_PREFIX.length);
-    if (remainder === 'README.md') return '/experiments';
-    if (!remainder.endsWith('.md')) return '/experiments';
-    return `/experiments/${remainder.replace(/\.md$/u, '')}`;
+    if (remainder === 'README.md') return ['/experiments'];
+    if (!remainder.endsWith('.md')) return ['/experiments'];
+    return [`/experiments/${remainder.replace(/\.md$/u, '')}`];
+  }
+
+  if (file.startsWith(MCP_TRUST_ROUTE_PREFIX)) {
+    return publicTrustRoutes('mcp');
+  }
+
+  if (file.startsWith(AGENT_TRUST_ROUTE_PREFIX)) {
+    return publicTrustRoutes('agents');
+  }
+
+  if (
+    file.startsWith(PUBLIC_TRUST_DATA_PREFIX) ||
+    file === PUBLIC_TRUST_CONFIG_FILE ||
+    file === PUBLIC_TRUST_GENERATED_CONFIG_FILE
+  ) {
+    return publicTrustRoutes('all');
+  }
+
+  if (file.startsWith(API_MANIFEST_ROUTE_PREFIX)) {
+    return ['/api/manifest'];
+  }
+
+  if (file.startsWith(SITEMAP_ROUTE_PREFIX)) {
+    return ['/sitemap.xml'];
   }
 
   if (file === 'packages/io/src/lib/config/paperContent.ts') {
-    return '/papers';
+    return ['/papers'];
   }
 
-  return null;
+  return [];
 }
 
 function collectPolicyIds(files) {
@@ -182,10 +270,17 @@ export function collectIoPaperCycleContext(files) {
   const publishableFiles = changedFiles.filter(isPublishableIoFile);
   const policyFiles = changedFiles.filter(isPolicyFile);
   const supportFiles = changedFiles.filter(isLifecycleSupportFile);
-  const changedRoutes = uniqueSorted(publishableFiles.map(routeFromIoRouteFile).filter(Boolean));
+  const changedRoutes = uniqueSorted(publishableFiles.flatMap(routesFromIoRouteFile).filter(Boolean));
   const artifactKinds = uniqueSorted([
     ...(publishableFiles.some((file) => file.startsWith(PAPER_ROUTE_PREFIX) || file.startsWith(PAPER_CONTENT_PREFIX)) ? ['paper'] : []),
     ...(publishableFiles.some((file) => file.startsWith(EXPERIMENT_ROUTE_PREFIX) || file.startsWith(EXPERIMENT_CONTENT_PREFIX)) ? ['experiment'] : []),
+    ...(publishableFiles.some((file) => (
+      file.startsWith(MCP_TRUST_ROUTE_PREFIX) ||
+      file.startsWith(AGENT_TRUST_ROUTE_PREFIX) ||
+      file.startsWith(PUBLIC_TRUST_DATA_PREFIX) ||
+      file === PUBLIC_TRUST_CONFIG_FILE ||
+      file === PUBLIC_TRUST_GENERATED_CONFIG_FILE
+    )) ? ['trust-catalog'] : []),
     ...(policyFiles.length > 0 ? ['policy'] : []),
   ]);
 
@@ -255,9 +350,11 @@ function main() {
   printText(context);
 }
 
-try {
-  main();
-} catch (error) {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  try {
+    main();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
 }
