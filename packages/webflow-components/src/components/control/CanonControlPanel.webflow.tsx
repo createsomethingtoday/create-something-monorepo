@@ -39,6 +39,12 @@ export default declareComponent(CanonControlPanel, {
       defaultValue: '',
       tooltip: 'Optional trusted operator proxy for approval updates. Do not expose internal credentials in Webflow.',
     }),
+    approvalRequestCredentials: props.Variant({
+      name: 'Approval Request Credentials',
+      options: ['same-origin', 'include', 'omit'],
+      defaultValue: 'same-origin',
+      tooltip: 'Use include only with /api/canon/operator-approval on a trusted CREATE SOMETHING domain.',
+    }),
     operatorName: props.Text({
       name: 'Operator Name',
       defaultValue: 'Operator',

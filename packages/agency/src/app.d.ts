@@ -85,6 +85,7 @@ declare global {
 				AUTH0_REDIRECT_URI?: string;
 				AGENCY_INTERNAL_API_KEY?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
+				CANON_OPERATOR_ORIGINS?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

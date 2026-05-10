@@ -15,6 +15,7 @@
       "agent": "",
       "actionPreview": "",
       "approval": "",
+      "operatorApproval": "",
       "workflowContext": "",
       "status": "deployment_specific"
     }

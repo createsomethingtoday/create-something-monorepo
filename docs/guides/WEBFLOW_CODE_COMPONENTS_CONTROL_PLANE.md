@@ -36,6 +36,8 @@ Control components render without live endpoints by using static Webflow props. 
 - `ActionPreview.endpointUrl`
 - `CanonControlPanel.agentEndpointUrl`
 - `CanonControlPanel.actionEndpointUrl`
+- `ApprovalQueue.endpointUrl` or `CanonControlPanel.approvalEndpointUrl` only for trusted approval proxies
+- `ApprovalQueue.requestCredentials` or `CanonControlPanel.approvalRequestCredentials` when operator session cookies must be sent
 
 The shared workflow context endpoint shape is:
 
@@ -52,6 +54,14 @@ POST /api/canon/approval
 ```
 
 That route persists approval queue review/approve/block decisions in D1 and appends public-safe activity events. It requires the server-side `AGENCY_INTERNAL_API_KEY` as `Authorization: Bearer <key>` or `X-API-Key`. Public Webflow pages must leave approval endpoint props empty or call through a trusted, authenticated operator proxy; do not place internal credentials in Webflow props or browser code.
+
+Operator-only deployments can use the session-authenticated proxy instead:
+
+```text
+POST /api/canon/operator-approval
+```
+
+That route requires an Auth0-backed `.agency` session whose email is listed in `AGENCY_OPERATOR_EMAILS`. It only accepts same-origin requests, configured `CANON_OPERATOR_ORIGINS`, local development origins, or HTTPS origins under `*.createsomething.agency`. For Webflow Code Components, set `Approval Request Credentials` to `include` only when the console is served from a trusted CREATE SOMETHING domain that can send the `.createsomething.agency` session cookie. Keep public `webflow.io` previews read-only or local-state only.
 
 Endpoint defaults should stay empty in reusable components. Promotion to a specific Webflow site should set Cloudflare URLs in the Webflow Designer or a site-specific composition layer.
 

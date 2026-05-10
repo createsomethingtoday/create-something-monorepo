@@ -25,6 +25,12 @@ export default declareComponent(ApprovalQueue, {
       defaultValue: '',
       tooltip: 'Optional trusted operator proxy for persisted approval updates. Leave empty on public pages.',
     }),
+    requestCredentials: props.Variant({
+      name: 'Approval Request Credentials',
+      options: ['same-origin', 'include', 'omit'],
+      defaultValue: 'same-origin',
+      tooltip: 'Use include only when calling a trusted operator-session endpoint on a CREATE SOMETHING domain.',
+    }),
     actor: props.Text({
       name: 'Actor',
       defaultValue: 'Operator',

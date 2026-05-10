@@ -5,6 +5,7 @@ export type TriadTier = 'Database' | 'Automation' | 'Judgment';
 export type StatusTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 export type CheckStatus = 'ok' | 'warning' | 'blocked' | 'idle';
 export type ApprovalState = 'review' | 'approved' | 'blocked';
+export type ApprovalRequestCredentials = Extract<RequestCredentials, 'omit' | 'same-origin' | 'include'>;
 export type ActionStatus = 'draft' | 'requires_approval' | 'allowed' | 'blocked';
 export type RiskLevel = 'low' | 'medium' | 'high';
 
@@ -638,21 +639,22 @@ const controlCss = `
     color: ${tokens.colors.fgPrimary};
     font-family: ${tokens.typography.fontFamily.sans};
     min-width: 0;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   .cs-control-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
     gap: 1rem;
   }
 
   .cs-control-grid--two {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
   }
 
   .cs-control-grid--four {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   }
 
   .cs-control-list {
@@ -726,6 +728,23 @@ const controlCss = `
     align-items: start;
   }
 
+  .cs-runtime-check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+    gap: 0.75rem;
+    margin-top: ${tokens.spacing.md};
+  }
+
+  .cs-runtime-check-card {
+    min-width: 0;
+  }
+
+  .cs-runtime-check-card strong {
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: auto;
+  }
+
   .cs-agent-form {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -764,16 +783,12 @@ const controlCss = `
   }
 
   @media (max-width: ${tokens.breakpoints.lg}) {
-    .cs-control-grid,
-    .cs-control-grid--four {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .cs-control-hero-grid {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
   @media (max-width: ${tokens.breakpoints.md}) {
-    .cs-control-grid,
-    .cs-control-grid--two,
-    .cs-control-grid--four,
     .cs-control-hero-grid,
     .cs-agent-form {
       grid-template-columns: 1fr;
@@ -836,6 +851,7 @@ function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone
         borderRadius: tokens.radii.full,
         background: toneStyle.background,
         color: toneStyle.color,
+        flexShrink: 0,
         fontSize: tokens.typography.fontSize.caption,
         fontWeight: tokens.typography.fontWeight.semibold,
         lineHeight: 1,
@@ -1239,7 +1255,7 @@ export function RuntimeStatus({
     <ComponentShell className={className}>
       <article style={{ ...surfaceStyles, padding: tokens.spacing.md }}>
         <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', gap: '1rem' }}>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div style={compactLabelStyles}>{effectiveEnvironment}</div>
             <h2
               style={{
@@ -1255,9 +1271,10 @@ export function RuntimeStatus({
           </div>
           <Badge tone={statusToTone(effectiveStatus)}>{effectiveStatus}</Badge>
         </div>
-        <div className="cs-control-grid" style={{ marginTop: tokens.spacing.md }}>
+        <div className="cs-runtime-check-grid">
           {parsedChecks.map((check) => (
             <div
+              className="cs-runtime-check-card"
               key={check.label}
               style={{
                 border: `1px solid ${tokens.colors.borderDefault}`,
@@ -1481,6 +1498,7 @@ export function SourceTruthStatus({
 export interface ApprovalQueueProps {
   approvals?: JsonList<ApprovalQueueItem>;
   endpointUrl?: string;
+  requestCredentials?: ApprovalRequestCredentials;
   contextEndpointUrl?: string;
   contextId?: string;
   actor?: string;
@@ -1492,6 +1510,7 @@ export interface ApprovalQueueProps {
 export function ApprovalQueue({
   approvals,
   endpointUrl = '',
+  requestCredentials = 'same-origin',
   contextEndpointUrl = '',
   contextId = 'create-something-governed-workflow-console',
   actor = 'Operator',
@@ -1525,6 +1544,7 @@ export function ApprovalQueue({
     try {
       const response = await fetch(endpointUrl, {
         method: 'POST',
+        credentials: requestCredentials,
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           approvalId: approval.id,
@@ -2218,6 +2238,7 @@ export interface CanonControlPanelProps {
   agentEndpointUrl?: string;
   actionEndpointUrl?: string;
   approvalEndpointUrl?: string;
+  approvalRequestCredentials?: ApprovalRequestCredentials;
   operatorName?: string;
   businessContexts?: JsonList<BusinessContextItem>;
   metrics?: JsonList<WorkflowMetricItem>;
@@ -2243,6 +2264,7 @@ export function CanonControlPanel({
   agentEndpointUrl = '',
   actionEndpointUrl = '',
   approvalEndpointUrl = '',
+  approvalRequestCredentials = 'same-origin',
   operatorName = 'Operator',
   businessContexts,
   metrics,
@@ -2344,7 +2366,7 @@ export function CanonControlPanel({
         </div>
 
         <div style={{ marginTop: tokens.spacing.lg }}>
-          <ApprovalQueue approvals={effectiveApprovalQueue} endpointUrl={approvalEndpointUrl} contextId={contextId} actor={operatorName} />
+          <ApprovalQueue approvals={effectiveApprovalQueue} endpointUrl={approvalEndpointUrl} requestCredentials={approvalRequestCredentials} contextId={contextId} actor={operatorName} />
         </div>
 
         <div className="cs-control-grid cs-control-grid--two" style={{ marginTop: tokens.spacing.lg, alignItems: 'start' }}>

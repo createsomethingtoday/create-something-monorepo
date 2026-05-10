@@ -86,6 +86,7 @@ export type {
   ActivityEventItem,
   AgentDockProps,
   AgentMessage,
+  ApprovalRequestCredentials,
   ApprovalQueueItem,
   ApprovalQueueProps,
   ApprovalGateProps,
