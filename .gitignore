@@ -105,3 +105,4 @@ tmp/loom-remote-secrets-*.txt
 
 # Fleet secret setup scripts (contain raw tokens — push to Infisical, then delete)
 config/mcp-hub/fleet-secrets.local.*
+.claude/settings.local.json
