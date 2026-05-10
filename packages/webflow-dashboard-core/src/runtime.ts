@@ -17,6 +17,9 @@ export interface DashboardCloudflareEnv {
   NEXT_PUBLIC_TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
   TURNSTILE_EXPECTED_HOSTNAME?: string;
+  KNOCK_API_KEY?: string;
+  KNOCK_LOGIN_WORKFLOW_KEY?: string;
+  KNOCK_LOGIN_ENABLED?: string;
 }
 
 const PROCESS_ENV_KEYS = [
@@ -35,6 +38,9 @@ const PROCESS_ENV_KEYS = [
   'NEXT_PUBLIC_TURNSTILE_SITE_KEY',
   'TURNSTILE_SECRET_KEY',
   'TURNSTILE_EXPECTED_HOSTNAME',
+  'KNOCK_API_KEY',
+  'KNOCK_LOGIN_WORKFLOW_KEY',
+  'KNOCK_LOGIN_ENABLED',
 ] as const satisfies readonly (keyof DashboardCloudflareEnv)[];
 
 function getProcessEnvFallback(): DashboardCloudflareEnv | null {
