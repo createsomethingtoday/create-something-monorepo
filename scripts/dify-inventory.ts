@@ -611,7 +611,7 @@ function renderInventoryDoc(inventory: DifyInventory): string {
     lines.push('');
   }
 
-  return `${lines.join('\n')}\n`;
+  return `${lines.join('\n').trimEnd()}\n`;
 }
 
 function validateSecretRef(context: string, secret: SecretRef | undefined, errors: string[]): void {

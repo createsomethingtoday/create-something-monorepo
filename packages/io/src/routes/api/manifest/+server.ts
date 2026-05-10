@@ -24,6 +24,10 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { fileBasedPapers } from '$lib/config/fileBasedPapers';
+import {
+	PUBLIC_AGENT_TRUST_CARDS,
+	PUBLIC_MCP_TRUST_CARDS
+} from '$lib/config/publicTrustCatalog';
 
 interface ContentItem {
 	slug: string;
@@ -97,6 +101,20 @@ const EXPERIMENTS: ContentItem[] = [
 	{ slug: 'text-revelation', title: 'Text Revelation', description: 'Progressive text revelation patterns', category: 'interactive' }
 ];
 
+const MCP_TRUST_CARDS: ContentItem[] = PUBLIC_MCP_TRUST_CARDS.map((card) => ({
+	slug: card.slug,
+	title: card.name,
+	description: card.description,
+	category: 'mcp-trust-card'
+}));
+
+const AGENT_TRUST_CARDS: ContentItem[] = PUBLIC_AGENT_TRUST_CARDS.map((card) => ({
+	slug: card.slug,
+	title: card.name,
+	description: card.description,
+	category: 'agent-trust-card'
+}));
+
 export const GET: RequestHandler = async () => {
 	const mergedPapers = [...PAPERS, ...FILE_BASED_PAPERS].filter(
 		(paper, index, all) => all.findIndex((candidate) => candidate.slug === paper.slug) === index
@@ -106,9 +124,13 @@ export const GET: RequestHandler = async () => {
 		property: 'io',
 		papers: mergedPapers,
 		experiments: EXPERIMENTS,
+		mcpTrustCards: MCP_TRUST_CARDS,
+		agentTrustCards: AGENT_TRUST_CARDS,
 		// Legacy format for backward compatibility
 		paperSlugs: mergedPapers.map(p => p.slug),
 		experimentSlugs: EXPERIMENTS.map(e => e.slug),
+		mcpTrustCardSlugs: MCP_TRUST_CARDS.map((card) => card.slug),
+		agentTrustCardSlugs: AGENT_TRUST_CARDS.map((card) => card.slug),
 		generated: new Date().toISOString()
 	});
 };
