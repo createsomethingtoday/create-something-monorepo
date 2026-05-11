@@ -15,6 +15,11 @@ export interface Env {
   DEFAULT_CLIENT_MODE?: string;
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;
+  CMS_READ_ONLY?: string;
+  WEBFLOW_API_TOKEN?: string;
+  WEBFLOW_API_BASE?: string;
+  WEBFLOW_TEMPLATES_COLLECTION_ID?: string;
+  WEBFLOW_IMAGE_SYNC_REQUIRED?: string;
 }
 
 export interface AirtableAttachment {
@@ -121,6 +126,12 @@ export interface TemplateDocumentInput {
   syncedAt: string;
 }
 
+export interface TemplateImageUrls {
+  template_slug: string;
+  thumbnail_image_url: string | null;
+  thumbnail_image_secondary_url: string | null;
+}
+
 export interface SearchParams {
   q: string | null;
   scope: TemplateScope;
@@ -185,6 +196,23 @@ export interface SearchResponsePayload {
   subcategory_pills: Array<{ name: string; slug: string; url: string; count: number; active: boolean }>;
 }
 
+export interface CategoryMetadataPayload {
+  slug: string;
+  name: string;
+  title: string;
+  description: string;
+  canonical_url: string;
+  total_items: number;
+}
+
+export interface WebflowImageSyncSummary {
+  started_at: string;
+  finished_at: string;
+  fetched_items: number;
+  matched_records: number;
+  configured: boolean;
+}
+
 export interface SyncSummary {
   mode: 'full' | 'incremental';
   started_at: string;
@@ -193,6 +221,7 @@ export interface SyncSummary {
   indexed_records: number;
   removed_records: number;
   cursor: string;
+  webflow_images?: Pick<WebflowImageSyncSummary, 'fetched_items' | 'matched_records' | 'configured'>;
 }
 
 export interface DocumentRow {

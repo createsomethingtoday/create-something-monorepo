@@ -1,9 +1,28 @@
 import { fetchModifiedAssetsSince, fetchPublishedTemplateAssets, loadLookupMaps } from './airtable.js';
-import { clearIndex, deleteTemplateDocuments, getSyncCursor, recordSyncSummary, setSyncCursor, upsertTemplateDocuments } from './db.js';
+import {
+  clearIndex,
+  deleteTemplateDocuments,
+  getSyncCursor,
+  loadTemplateImageUrls,
+  recordSyncSummary,
+  setSyncCursor,
+  updateTemplateImageUrls,
+  upsertTemplateDocuments,
+} from './db.js';
 import { stripHtml } from './html.js';
 import { canonicalizeCategoryGroupSlug } from './slug.js';
-import type { AirtableAssetFields, AirtableRecord, Env, LookupMaps, SyncSummary, TemplateDocumentInput } from './types.js';
+import type {
+  AirtableAssetFields,
+  AirtableRecord,
+  Env,
+  LookupMaps,
+  SyncSummary,
+  TemplateDocumentInput,
+  TemplateImageUrls,
+  WebflowImageSyncSummary,
+} from './types.js';
 import { ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
+import { fetchWebflowTemplateImages, isWebflowImageSyncRequired, type WebflowImageSyncResult } from './webflow-cms.js';
 
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
@@ -95,12 +114,40 @@ function normalizeTemplateRecord(
   };
 }
 
+function applyImageOverrides(documents: TemplateDocumentInput[], images: Map<string, TemplateImageUrls>): number {
+  let matched = 0;
+  for (const document of documents) {
+    const image = images.get(document.templateSlug);
+    if (!image) continue;
+    document.thumbnailImageUrl = image.thumbnail_image_url ?? document.thumbnailImageUrl;
+    document.thumbnailImageSecondaryUrl = image.thumbnail_image_secondary_url ?? document.thumbnailImageSecondaryUrl;
+    matched += 1;
+  }
+  return matched;
+}
+
+async function fetchOptionalWebflowImages(env: Env): Promise<WebflowImageSyncResult> {
+  try {
+    return await fetchWebflowTemplateImages(env);
+  } catch (error) {
+    if (isWebflowImageSyncRequired(env)) throw error;
+
+    console.error('webflow image sync skipped', error instanceof Error ? error.message : String(error));
+    return { images: new Map(), fetchedItems: 0, configured: Boolean(env.CMS_READ_ONLY || env.WEBFLOW_API_TOKEN) };
+  }
+}
+
 async function runFullSync(env: Env): Promise<SyncSummary> {
   const startedAt = nowIso();
-  const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchPublishedTemplateAssets(env)]);
+  const [lookups, assets, webflowImages] = await Promise.all([
+    loadLookupMaps(env),
+    fetchPublishedTemplateAssets(env),
+    fetchOptionalWebflowImages(env),
+  ]);
   const documents = assets
     .map((record) => normalizeTemplateRecord(record, lookups, startedAt))
     .filter((value): value is NonNullable<typeof value> => Boolean(value));
+  const matchedRecords = applyImageOverrides(documents, webflowImages.images);
 
   await clearIndex(env.DB);
   await upsertTemplateDocuments(env.DB, documents);
@@ -113,6 +160,11 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
     indexed_records: documents.length,
     removed_records: 0,
     cursor: startedAt,
+    webflow_images: {
+      fetched_items: webflowImages.fetchedItems,
+      matched_records: matchedRecords,
+      configured: webflowImages.configured,
+    },
   };
 
   await setSyncCursor(env.DB, startedAt);
@@ -138,6 +190,12 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
     }
   }
 
+  const existingImages = await loadTemplateImageUrls(
+    env.DB,
+    toUpsert.map((document) => document.templateSlug),
+  );
+  applyImageOverrides(toUpsert, existingImages);
+
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
 
@@ -158,4 +216,19 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 
 export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Promise<SyncSummary> {
   return mode === 'full' ? runFullSync(env) : runIncrementalSync(env);
+}
+
+export async function syncWebflowTemplateImages(env: Env): Promise<WebflowImageSyncSummary> {
+  const startedAt = nowIso();
+  const result = await fetchWebflowTemplateImages(env);
+  const matchedRecords = await updateTemplateImageUrls(env.DB, result.images.values());
+  const summary: WebflowImageSyncSummary = {
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_items: result.fetchedItems,
+    matched_records: matchedRecords,
+    configured: result.configured,
+  };
+  await recordSyncSummary(env.DB, summary, 'last_webflow_image_sync');
+  return summary;
 }

@@ -1,9 +1,10 @@
 import { getClientScript } from './client-script.js';
+import { getCategoryMetadata } from './categories.js';
 import { healthCounts } from './db.js';
 import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
-import { syncTemplates } from './sync.js';
+import { syncTemplates, syncWebflowTemplateImages } from './sync.js';
 import type { Env } from './types.js';
 
 const INCREMENTAL_CRON = '*/5 * * * *';
@@ -35,6 +36,12 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
   return jsonResponse(request, env, await searchTemplates(env, params));
 }
 
+async function handleCategoryMetadata(request: Request, env: Env, slug: string): Promise<Response> {
+  const metadata = await getCategoryMetadata(env, slug);
+  if (!metadata) return jsonResponse(request, env, { error: 'Category not found' }, 404);
+  return jsonResponse(request, env, metadata);
+}
+
 async function handleManualSync(request: Request, env: Env, mode: 'full' | 'incremental'): Promise<Response> {
   const authError = validateAdminToken(request, env);
   if (authError) return authError;
@@ -57,7 +64,12 @@ export default {
       }
 
       if (url.pathname === '/api/templates/search' && request.method === 'GET') {
-        return handleSearch(request, env);
+        return await handleSearch(request, env);
+      }
+
+      const categoryMatch = url.pathname.match(/^\/api\/templates\/categories\/([^/]+)$/);
+      if (categoryMatch && request.method === 'GET') {
+        return await handleCategoryMetadata(request, env, categoryMatch[1]);
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {
@@ -65,11 +77,17 @@ export default {
       }
 
       if (url.pathname === '/api/templates/admin/rebuild' && request.method === 'POST') {
-        return handleManualSync(request, env, 'full');
+        return await handleManualSync(request, env, 'full');
       }
 
       if (url.pathname === '/api/templates/admin/sync' && request.method === 'POST') {
-        return handleManualSync(request, env, 'incremental');
+        return await handleManualSync(request, env, 'incremental');
+      }
+
+      if (url.pathname === '/api/templates/admin/webflow-images' && request.method === 'POST') {
+        const authError = validateAdminToken(request, env);
+        if (authError) return authError;
+        return jsonResponse(request, env, await syncWebflowTemplateImages(env));
       }
 
       return jsonResponse(request, env, { error: 'Not found' }, 404);

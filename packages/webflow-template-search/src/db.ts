@@ -1,4 +1,4 @@
-import type { AliasType, DocumentCountRow, TemplateDocumentInput } from './types.js';
+import type { AliasType, DocumentCountRow, TemplateDocumentInput, TemplateImageUrls } from './types.js';
 import { chunk, nowIso } from './utils.js';
 
 const UPSERT_TEMPLATE_SQL = `
@@ -170,6 +170,72 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
   for (const group of chunk(statements, 50)) {
     await db.batch(group);
   }
+}
+
+export async function loadTemplateImageUrls(db: D1Database, slugs: string[]): Promise<Map<string, TemplateImageUrls>> {
+  const unique = Array.from(new Set(slugs.filter(Boolean)));
+  const images = new Map<string, TemplateImageUrls>();
+  if (unique.length === 0) return images;
+
+  for (const group of chunk(unique, 50)) {
+    const result = await db
+      .prepare(
+        `SELECT template_slug, thumbnail_image_url, thumbnail_image_secondary_url
+         FROM template_documents
+         WHERE template_slug IN (${placeholderList(group.length)})`,
+      )
+      .bind(...group)
+      .all<TemplateImageUrls>();
+
+    for (const row of result.results ?? []) {
+      images.set(row.template_slug, row);
+    }
+  }
+
+  return images;
+}
+
+export async function updateTemplateImageUrls(db: D1Database, images: Iterable<TemplateImageUrls>): Promise<number> {
+  const updates = Array.from(images).filter((image) => image.thumbnail_image_url || image.thumbnail_image_secondary_url);
+  if (updates.length === 0) return 0;
+
+  let matched = 0;
+  for (const group of chunk(
+    updates.map((image) => image.template_slug),
+    50,
+  )) {
+    const result = await db
+      .prepare(
+        `SELECT template_slug
+         FROM template_documents
+         WHERE template_slug IN (${placeholderList(group.length)})`,
+      )
+      .bind(...group)
+      .all<{ template_slug: string }>();
+    matched += result.results?.length ?? 0;
+  }
+
+  const statements: D1PreparedStatement[] = [];
+
+  for (const image of updates) {
+    statements.push(
+      db
+        .prepare(
+          `UPDATE template_documents
+           SET
+             thumbnail_image_url = COALESCE(?, thumbnail_image_url),
+             thumbnail_image_secondary_url = COALESCE(?, thumbnail_image_secondary_url)
+           WHERE template_slug = ?`,
+        )
+        .bind(image.thumbnail_image_url, image.thumbnail_image_secondary_url, image.template_slug),
+    );
+  }
+
+  for (const group of chunk(statements, 50)) {
+    await db.batch(group);
+  }
+
+  return matched;
 }
 
 export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Promise<void> {

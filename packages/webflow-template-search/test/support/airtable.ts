@@ -6,6 +6,7 @@ interface MockDataset {
   styles?: Array<{ id: string; fields: Record<string, unknown> }>;
   childCategories?: Array<{ id: string; fields: Record<string, unknown> }>;
   tags?: Array<{ id: string; fields: Record<string, unknown> }>;
+  webflowItems?: Array<{ id: string; fieldData: Record<string, unknown> }>;
 }
 
 export function installAirtableFetchMock(dataset: MockDataset) {
@@ -13,6 +14,20 @@ export function installAirtableFetchMock(dataset: MockDataset) {
     const url = new URL(typeof input === 'string' ? input : input.url);
     const tableId = decodeURIComponent(url.pathname.split('/').pop() ?? '');
     const formula = url.searchParams.get('filterByFormula') ?? '';
+
+    if (url.hostname === 'api.webflow.com') {
+      const limit = Number(url.searchParams.get('limit') ?? 100) || 100;
+      const offset = Number(url.searchParams.get('offset') ?? 0) || 0;
+      const allItems = dataset.webflowItems ?? [];
+      return Response.json({
+        items: allItems.slice(offset, offset + limit),
+        pagination: {
+          limit,
+          offset,
+          total: allItems.length,
+        },
+      });
+    }
 
     if (!url.hostname.includes('airtable.com')) {
       return new Response('Not Found', { status: 404 });
