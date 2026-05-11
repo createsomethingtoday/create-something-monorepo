@@ -23,6 +23,7 @@
     "BETTERMODE_MARKETPLACE_SPACE_SLUG": "marketplace-creators",
     "BETTERMODE_MARKETPLACE_SPACE_ID": "ROtfBgdQyiAB",
     "BETTERMODE_ADMIN_USER_IDS": "lgjO9fjLNn",
+    "BETTERMODE_STAFF_AUTHOR_DOMAINS": "webflow.com",
     "AIRTABLE_API_BASE": "https://api.airtable.com",
     "AIRTABLE_BASE_ID": "appMoIgXMTTTNIc3p",
     "AIRTABLE_CREATORS_TABLE": "tbljt0plqxdMARZXb",
