@@ -216,6 +216,19 @@ function toTemplateUrl(row: DocumentRow): string | null {
   return row.listing_url ?? `https://webflow.com/templates/html/${row.template_slug}`;
 }
 
+function toDurableImageUrl(value: string | null): string | null {
+  if (!value) return null;
+
+  try {
+    const hostname = new URL(value).hostname.toLowerCase();
+    if (hostname.endsWith('airtableusercontent.com')) return null;
+  } catch {
+    return null;
+  }
+
+  return value;
+}
+
 function buildCategoryGroups(names: string[], slugs: string[]): Array<{ name: string; slug: string; url: string }> {
   return names.map((name, index) => ({
     name,
@@ -298,8 +311,8 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       preview_url: row.preview_url,
       website_url: row.website_url,
       creator_name: row.creator_name,
-      thumbnail_image_url: row.thumbnail_image_url,
-      thumbnail_image_secondary_url: row.thumbnail_image_secondary_url,
+      thumbnail_image_url: toDurableImageUrl(row.thumbnail_image_url),
+      thumbnail_image_secondary_url: toDurableImageUrl(row.thumbnail_image_secondary_url),
       price: row.price,
       is_free: row.is_free === 1,
       is_featured: row.is_featured === 1,

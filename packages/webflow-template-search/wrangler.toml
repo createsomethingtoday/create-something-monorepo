@@ -3,6 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 workers_dev = true
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
 [observability]
 enabled = true
@@ -10,7 +11,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "webflow-template-search"
-database_id = "REPLACE_ME"
+database_id = "bffab674-a86b-456b-a72d-f620b2755396"
 
 [vars]
 ENVIRONMENT = "development"
