@@ -50,6 +50,24 @@
       href: 'https://createsomething.space'
     }
   ];
+
+  const decisionFilters = [
+    {
+      step: '01',
+      title: 'Can it be removed?',
+      body: 'If the system still works without it, it was decoration.'
+    },
+    {
+      step: '02',
+      title: 'Can it be named?',
+      body: 'If it stays, the rule must become visible enough to inspect.'
+    },
+    {
+      step: '03',
+      title: 'Can it travel?',
+      body: 'If it helps one surface, promote it into the canon for reuse.'
+    }
+  ];
 </script>
 
 <SEO
@@ -129,18 +147,40 @@
       </BlurFade>
     </div>
 
-    <BlurFade delay={0.15}>
-      <div class="product-surface product-surface--soft manifesto-panel">
-        <p>
-          Before adding anything, ask whether it earns its place. The same question applies to every
-          feature, word, workflow, policy rule, and handoff.
-        </p>
-        <p>
-          Simple is not easy. It takes more effort to make something clear than to leave it
-          complicated. That effort is the work.
-        </p>
-      </div>
-    </BlurFade>
+    <div class="ltd-principle-artifacts">
+      <BlurFade delay={0.15}>
+        <div class="product-surface product-surface--soft manifesto-panel">
+          <p>
+            Before adding anything, ask whether it earns its place. The same question applies to
+            every feature, word, workflow, policy rule, and handoff.
+          </p>
+          <p>
+            Simple is not easy. It takes more effort to make something clear than to leave it
+            complicated. That effort is the work.
+          </p>
+        </div>
+      </BlurFade>
+
+      <BlurFade delay={0.2}>
+        <div
+          class="product-surface decision-filter-panel"
+          aria-label="Less but better decision filter"
+        >
+          <span class="property-content-meta">Decision filter</span>
+          <div class="decision-filter-list">
+            {#each decisionFilters as filter}
+              <article class="decision-filter-item">
+                <span>{filter.step}</span>
+                <div>
+                  <h3>{filter.title}</h3>
+                  <p>{filter.body}</p>
+                </div>
+              </article>
+            {/each}
+          </div>
+        </div>
+      </BlurFade>
+    </div>
   </div>
 </section>
 
@@ -265,6 +305,12 @@
     max-width: 38rem;
   }
 
+  .ltd-principle-artifacts {
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+  }
+
   .manifesto-panel {
     display: grid;
     gap: clamp(1.2rem, 3vw, 1.8rem);
@@ -278,6 +324,56 @@
     color: var(--color-fg-secondary);
     font-size: var(--text-body-lg);
     line-height: var(--leading-relaxed);
+  }
+
+  .decision-filter-panel {
+    display: grid;
+    gap: 1rem;
+    --product-surface-padding: 1.05rem;
+  }
+
+  .decision-filter-list {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .decision-filter-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: start;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--color-shell-border-subtle);
+  }
+
+  .decision-filter-item:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .decision-filter-item > span {
+    color: var(--color-brand-primary);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+  }
+
+  .decision-filter-item h3,
+  .decision-filter-item p {
+    margin: 0;
+  }
+
+  .decision-filter-item h3 {
+    color: var(--color-fg-primary);
+    font-size: 0.98rem;
+    line-height: 1.2;
+  }
+
+  .decision-filter-item p {
+    margin-top: 0.25rem;
+    color: var(--color-fg-secondary);
+    font-size: 0.9rem;
+    line-height: 1.55;
   }
 
   .crystallization-panel {
