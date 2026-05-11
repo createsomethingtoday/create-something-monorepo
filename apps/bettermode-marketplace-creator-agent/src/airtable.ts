@@ -63,8 +63,12 @@ export async function fetchCreatorContext(
   const normalized = email.trim().toLowerCase();
   if (!normalized) return null;
 
-  // Match emails case-insensitively.
-  const formula = `LOWER({${config.emailField}}) = "${escapeFormula(normalized)}"`;
+  // The Email field on Creators is a rollup that can return an array of
+  // strings even when a single linked email exists. Direct equality
+  // (`LOWER({Email}) = "x"`) compares against the array and always fails.
+  // ARRAYJOIN coerces to a comma-joined string; FIND does substring match.
+  const formula =
+    `FIND("${escapeFormula(normalized)}", LOWER(ARRAYJOIN({${config.emailField}}))) > 0`;
   const url = new URL(`${config.apiBase}/v0/${config.baseId}/${config.creatorsTable}`);
   url.searchParams.set('filterByFormula', formula);
   url.searchParams.set('maxRecords', '1');
