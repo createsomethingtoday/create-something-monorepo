@@ -19,5 +19,9 @@ declare namespace Cloudflare {
     DIFY_API_BASE?: string;
     DIFY_AGENT_API_KEY?: string;
     DIFY_AGENT_USER?: string;
+    // Comma-separated email domains whose posts the agent should NOT draft
+    // replies for (typically Webflow staff announcements). Defaults to
+    // `webflow.com` when unset.
+    BETTERMODE_STAFF_AUTHOR_DOMAINS?: string;
   }
 }
