@@ -8,6 +8,7 @@
     "webflow-site-analyzer": "dist/index.js"
   },
   "scripts": {
+    "prebuild": "pnpm --filter @create-something/observability build",
     "build": "tsc",
     "dev": "tsc --watch",
     "dev:http": "tsx src/http.ts",

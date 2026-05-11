@@ -19,7 +19,7 @@
     "write_image2_prompts",
     "attempt_image2_generation_when_requested",
     "generate_operator_progress_report",
-    "record_loom_evidence"
+    "record_linear_evidence"
   ],
   "approvalRequired": [
     "send_client_email_or_message",
@@ -53,10 +53,11 @@
       "rule": "Render from generated delivery artifacts and manifests."
     },
     {
-      "id": "retool_operator_console",
-      "status": "optional",
+      "id": "webflow_code_components_control_plane",
+      "status": "active",
       "visibility": "private_internal",
-      "rule": "Use for operator/admin surfaces, not durable delivery truth."
+      "package": "packages/webflow-components",
+      "rule": "Use Webflow Code Components for operator/admin surfaces; Cloudflare remains the durable governance data plane."
     }
   ],
   "publishRule": "Agents may generate and stage delivery updates automatically. Client-facing send, public publishing, and scope-changing language require human approval.",

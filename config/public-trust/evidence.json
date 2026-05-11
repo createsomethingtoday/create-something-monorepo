@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "mcp/create-something",
+      "subject_kind": "mcp",
+      "subject_slug": "create-something",
+      "title": "CREATE SOMETHING Content MCP public trust evidence",
+      "catalog_review_status": "pass",
+      "summary": "The public card is limited to read-only content search, relationship traversal, classification, triad analysis, and design audit guidance over owned public CREATE SOMETHING material.",
+      "risk_summary": "Read-only public knowledge surface. No write tools, private client hubs, raw traces, or credential references are included in the public card.",
+      "reviewed_at": "2026-05-10",
+      "reviewed_by": "CREATE SOMETHING",
+      "evals": [
+        {
+          "suite": "braintrust:eval:mcp:public-trust",
+          "required_checks": [
+            "endpoint_reachable",
+            "auth_not_required",
+            "tools_listed",
+            "expected_tools_present",
+            "tool_call_ok",
+            "grounded_content",
+            "no_credential_material",
+            "latency_budget"
+          ],
+          "status": "pass",
+          "last_verified_date": "2026-05-10",
+          "notes": "No-upload and uploaded public MCP Braintrust evals passed against the direct no-auth public endpoint. Generic private fleet evals remain separate coverage for private Hub and Exa-backed checks."
+        }
+      ],
+      "runtime_observability": {
+        "provider": "langfuse",
+        "status": "label_declared",
+        "notes": "Runtime evidence is represented as a provider label only. Raw traces are not exposed publicly."
+      },
+      "redacted_samples": [
+        {
+          "title": "Public content search rollup",
+          "path": "config/public-trust/samples/mcp-create-something-search.md"
+        }
+      ]
+    },
+    {
+      "id": "mcp/three-tier-framework",
+      "subject_kind": "mcp",
+      "subject_slug": "three-tier-framework",
+      "title": "Three-Tier Framework MCP public trust evidence",
+      "catalog_review_status": "pass",
+      "summary": "The public card covers read-only framework classification, debugging, MCP analysis, policy artifact identification, metaphor mapping, and architecture comparison.",
+      "risk_summary": "Read-only advisory framework surface. It returns structured analysis and does not access private tenant state.",
+      "reviewed_at": "2026-05-10",
+      "reviewed_by": "CREATE SOMETHING",
+      "evals": [
+        {
+          "suite": "braintrust:eval:mcp:public-trust",
+          "required_checks": [
+            "endpoint_reachable",
+            "auth_not_required",
+            "tools_listed",
+            "expected_tools_present",
+            "tool_call_ok",
+            "grounded_content",
+            "no_credential_material",
+            "latency_budget"
+          ],
+          "status": "pass",
+          "last_verified_date": "2026-05-10",
+          "notes": "No-upload and uploaded public MCP Braintrust evals passed against the direct no-auth public endpoint. Generic private fleet evals remain separate coverage for private Hub and Exa-backed checks."
+        }
+      ],
+      "runtime_observability": {
+        "provider": "langfuse",
+        "status": "label_declared",
+        "notes": "Runtime evidence is represented as a provider label only. Raw traces are not exposed publicly."
+      },
+      "redacted_samples": [
+        {
+          "title": "Framework classification rollup",
+          "path": "config/public-trust/samples/mcp-three-tier-framework-classification.md"
+        }
+      ]
+    },
+    {
+      "id": "mcp/playbook",
+      "subject_kind": "mcp",
+      "subject_slug": "playbook",
+      "title": "Playbook MCP public trust evidence",
+      "catalog_review_status": "pass",
+      "summary": "The public card covers read-only host playbooks, workflow retrieval, outcome playbooks, MCP discovery, and connection verification guidance.",
+      "risk_summary": "Read-only workflow guidance surface. Secret-echoing config generation is excluded from the public guide agent and public snippets are generated without credential values.",
+      "reviewed_at": "2026-05-10",
+      "reviewed_by": "CREATE SOMETHING",
+      "evals": [
+        {
+          "suite": "braintrust:eval:mcp:public-trust",
+          "required_checks": [
+            "endpoint_reachable",
+            "auth_not_required",
+            "tools_listed",
+            "expected_tools_present",
+            "tool_call_ok",
+            "grounded_content",
+            "no_credential_material",
+            "latency_budget"
+          ],
+          "status": "pass",
+          "last_verified_date": "2026-05-10",
+          "notes": "No-upload and uploaded public MCP Braintrust evals passed against the direct no-auth public endpoint. Generic private fleet evals remain separate coverage for private Hub and Exa-backed checks."
+        }
+      ],
+      "runtime_observability": {
+        "provider": "langfuse",
+        "status": "label_declared",
+        "notes": "Runtime evidence is represented as a provider label only. Raw traces are not exposed publicly."
+      },
+      "redacted_samples": [
+        {
+          "title": "Host playbook rollup",
+          "path": "config/public-trust/samples/mcp-playbook-host-guidance.md"
+        }
+      ]
+    },
+    {
+      "id": "agent/create-something-guide-agent",
+      "subject_kind": "agent",
+      "subject_slug": "create-something-guide-agent",
+      "title": "CREATE SOMETHING Guide Agent public trust evidence",
+      "catalog_review_status": "pass",
+      "summary": "The public guide agent is a published read-only Dify agent backed only by the three public read-only MCPs in this catalog.",
+      "risk_summary": "No write-capable tools, private client hubs, broad connector surfaces, or credential-backed MCP cards are enabled.",
+      "reviewed_at": "2026-05-10",
+      "reviewed_by": "CREATE SOMETHING",
+      "evals": [
+        {
+          "suite": "braintrust:eval:dify:create-something-guide-agent",
+          "required_checks": [
+            "public_access_boundary",
+            "readonly_tool_surface",
+            "prompt_secret_refusal",
+            "smoke_cases_declared",
+            "catalog_evidence_binding"
+          ],
+          "status": "pass",
+          "notes": "No-upload Braintrust eval passed for the published public-agent config, read-only tool surface, refusal prompt, smoke case declarations, and catalog evidence binding."
+        },
+        {
+          "suite": "published-dify-smoke:create-something-guide-agent",
+          "required_checks": [
+            "api_health",
+            "expected_tool_use",
+            "forbidden_tool_use",
+            "grounded_answer",
+            "secret_refusal",
+            "latency_budget"
+          ],
+          "status": "pass",
+          "notes": "Secret-backed Dify Service API smoke passed for public grounding, framework classification, forbidden tool use, and secret refusal. Langfuse tracing is configured in Dify Monitoring; raw traces are not exposed publicly."
+        }
+      ],
+      "runtime_observability": {
+        "provider": "langfuse",
+        "status": "in_service",
+        "notes": "Dify Monitoring shows Langfuse tracing in service for the guide agent. Runtime evidence is represented as a provider label only; raw traces are not exposed publicly."
+      },
+      "redacted_samples": [
+        {
+          "title": "Public guide answer rollup",
+          "path": "config/public-trust/samples/agent-create-something-guide.md"
+        }
+      ]
+    }
+  ]
+}

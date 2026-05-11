@@ -131,7 +131,7 @@
           "kind": "mcp_hub",
           "evidence": "config/mcp-hub/registry.json",
           "registry": "config/mcp-hub/registry.json",
-          "role": "Brokered MCP registry and routing layer used to expose governed tools without making Retool or a delivery page the source of truth."
+          "role": "Brokered MCP registry and routing layer used to expose governed tools without making a frontend surface or delivery page the source of truth."
         },
         {
           "id": "abundance-dedicated-mcp",

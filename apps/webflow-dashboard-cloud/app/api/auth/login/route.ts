@@ -1,4 +1,5 @@
 import { validateEmail } from '@create-something/webflow-dashboard-core/airtable';
+import { triggerKnockLoginWorkflow } from '@create-something/webflow-dashboard-core/knock';
 import { checkRateLimit } from '@create-something/webflow-dashboard-core/kv';
 import { NextRequest } from 'next/server';
 import { getServerAirtable } from '../../../../lib/server/airtable';
@@ -51,7 +52,22 @@ export async function POST(request: NextRequest) {
 
     const token = crypto.randomUUID();
     const expirationTime = new Date(Date.now() + 60 * 60 * 1000);
-    await airtable.triggerVerificationEmailAutomation(user.id, token, expirationTime);
+
+    const knockEnabled = env.KNOCK_LOGIN_ENABLED === 'true' && env.KNOCK_API_KEY;
+    if (knockEnabled) {
+      await airtable.setVerificationToken(user.id, token, expirationTime);
+      await triggerKnockLoginWorkflow({
+        apiKey: env.KNOCK_API_KEY!,
+        workflowKey: env.KNOCK_LOGIN_WORKFLOW_KEY ?? 'asset-dashboard-login-validation',
+        recipient: { id: user.id, email: validatedEmail },
+        data: {
+          verificationToken: token,
+          expiresAtIso: expirationTime.toISOString()
+        }
+      });
+    } else {
+      await airtable.triggerVerificationEmailAutomation(user.id, token, expirationTime);
+    }
 
     return jsonNoStore({
       message: 'If your email is registered, a verification email has been sent'

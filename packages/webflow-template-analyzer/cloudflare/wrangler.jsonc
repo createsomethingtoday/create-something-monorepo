@@ -15,7 +15,7 @@
       "class_name": "AnalyzerContainer",
       "image": "./Dockerfile",
       "instance_type": "standard-4",
-      "max_instances": 1
+      "max_instances": 2
     }
   ],
   "durable_objects": {
@@ -38,6 +38,7 @@
     "UPSTREAM_PORT": "7860",
     "SANDBOX_SLEEP_AFTER": "20m",
     "ALLOW_VISIBLE_BROWSER": "false",
+    "BROWSER_PROVIDER": "steel",
     "STEEL_SESSION_TIMEOUT_MS": "1200000"
   }
 }

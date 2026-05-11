@@ -140,6 +140,11 @@ docs/
   [DIFY_MCP_COVERAGE.generated.md](./DIFY_MCP_COVERAGE.generated.md),
   [guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md](./guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md)
 
+- **Operating the Webflow Code Components governance UI**:
+  [guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md](./guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md),
+  [WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.generated.md](./WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.generated.md),
+  [../packages/webflow-components/README.md](../packages/webflow-components/README.md)
+
 - **Understanding why a decision exists**:
   first the canonical doc in `docs/`,
   then the related memo in `docs/internal/`

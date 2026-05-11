@@ -15,7 +15,41 @@
         "transports": ["http", "sse"]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 10
+      "estimated_tool_count": 5,
+      "public_access": {
+        "status": "public",
+        "access_model": "read_only",
+        "trust_card": {
+          "summary": "Public read-only content MCP for CREATE SOMETHING papers, patterns, policy language, and framework references.",
+          "limitations": [
+            "Public card exposes only read-only content and analysis tools.",
+            "Catalog evidence is sanitized and does not include raw traces or private client hub data.",
+            "Runtime behavior must remain inside public CREATE SOMETHING source material."
+          ],
+          "policy_pack": "public-readonly-mcp.v1",
+          "eval_suite": "braintrust:eval:mcp:public-trust",
+          "last_verified_date": "2026-05-10",
+          "evidence_ref": "mcp/create-something",
+          "escalation": "security@createsomething.io"
+        },
+        "observability": {
+          "braintrust": {
+            "project": "create-something-mcp",
+            "experiment": "create_something_public_trust"
+          },
+          "langfuse": {
+            "project": "create-something-mcp",
+            "environment": "production"
+          }
+        },
+        "external_listings": {
+          "glama": "",
+          "hugging_face": "",
+          "docker": "",
+          "github": "",
+          "official_registry": ""
+        }
+      }
     },
     "three-tier-framework": {
       "transport": "http",
@@ -31,7 +65,41 @@
         "transports": ["http", "sse"]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 6,
+      "public_access": {
+        "status": "public",
+        "access_model": "read_only",
+        "trust_card": {
+          "summary": "Public read-only Three-Tier Framework MCP for classifying systems across Database, Automation, and Judgment.",
+          "limitations": [
+            "Framework outputs are advisory and must be checked against the actual system being evaluated.",
+            "Public evidence summarizes eval outcomes only; raw traces are not exposed.",
+            "The server does not grant access to private client policies or tenant data."
+          ],
+          "policy_pack": "public-three-tier-framework.v1",
+          "eval_suite": "braintrust:eval:mcp:public-trust",
+          "last_verified_date": "2026-05-10",
+          "evidence_ref": "mcp/three-tier-framework",
+          "escalation": "security@createsomething.io"
+        },
+        "observability": {
+          "braintrust": {
+            "project": "three-tier-framework-mcp",
+            "experiment": "three_tier_framework_public_trust"
+          },
+          "langfuse": {
+            "project": "three-tier-framework-mcp",
+            "environment": "production"
+          }
+        },
+        "external_listings": {
+          "glama": "",
+          "hugging_face": "",
+          "docker": "",
+          "github": "",
+          "official_registry": ""
+        }
+      }
     },
     "playbook": {
       "transport": "http",
@@ -49,7 +117,41 @@
         "transports": ["http", "sse"]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 14,
+      "public_access": {
+        "status": "public",
+        "access_model": "read_only",
+        "trust_card": {
+          "summary": "Public read-only playbook MCP for MCP host setup guidance, workflow playbooks, and install pattern discovery.",
+          "limitations": [
+            "Generated setup snippets must never include secrets or bearer values.",
+            "Workflow playbooks are templates, not live operational authority.",
+            "Public evidence links to redacted samples only; raw traces remain private."
+          ],
+          "policy_pack": "public-playbook-mcp.v1",
+          "eval_suite": "braintrust:eval:mcp:public-trust",
+          "last_verified_date": "2026-05-10",
+          "evidence_ref": "mcp/playbook",
+          "escalation": "security@createsomething.io"
+        },
+        "observability": {
+          "braintrust": {
+            "project": "playbook-mcp",
+            "experiment": "playbook_public_trust"
+          },
+          "langfuse": {
+            "project": "playbook-mcp",
+            "environment": "production"
+          }
+        },
+        "external_listings": {
+          "glama": "",
+          "hugging_face": "",
+          "docker": "",
+          "github": "",
+          "official_registry": ""
+        }
+      }
     },
     "cs-telemetry": {
       "transport": "http",
@@ -109,6 +211,25 @@
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
+    },
+    "bettermode-creator": {
+      "transport": "http",
+      "url": "https://bettermode-creator.mcp.createsomething.agency/mcp",
+      "description": "Bettermode Marketplace Creator drafting MCP — read-only Bettermode + Airtable + community queue helpers consumed by the Dify drafter agent.",
+      "bearer_token_env_var": "WEBFLOW_BETTERMODE_CREATOR_MCP_BEARER",
+      "tags": ["agency", "webflow", "bettermode", "marketplace", "cs"],
+      "package_path": "packages/bettermode-creator-mcp",
+      "catalog": {
+        "include": true,
+        "name": "Bettermode Creator",
+        "slug": "bettermode-creator",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": ["http", "sse"]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 4
     },
     "gmail-notion-mcp": {
       "transport": "http",

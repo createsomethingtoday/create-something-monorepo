@@ -1,0 +1,20 @@
+{
+  "name": "@create-something/bettermode-marketplace-creator-agent",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker Bettermode app that drafts admin replies for Webflow Marketplace Creator posts.",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "infisical run --env=dev -- wrangler deploy",
+    "deploy:dry-run": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "secrets:push": "infisical run --env=dev -- bash scripts/push-secrets.sh",
+    "check": "tsc --noEmit",
+    "types": "wrangler types"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.9",
+    "typescript": "^5.7.2",
+    "wrangler": "^4.74.0"
+  }
+}

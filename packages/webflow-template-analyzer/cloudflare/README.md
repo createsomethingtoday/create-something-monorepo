@@ -24,6 +24,7 @@ Set as Worker secrets/vars in this Cloudflare project:
 - `UPSTREAM_PORT` (var, optional, default `7860`)
 - `SANDBOX_SLEEP_AFTER` (var, optional, default `20m`)
 - `ALLOW_VISIBLE_BROWSER` (var, optional, default `false`)
+- `BROWSER_PROVIDER` (var, optional, `steel` uses Steel-backed browser sessions when `STEEL_API_KEY` is set)
 - `STEEL_SESSION_TIMEOUT_MS` (var, optional, default `1200000`)
 
 ## Deploy

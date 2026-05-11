@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "status": "draft_pending_studio_import",
+  "created_at": "2026-05-08",
+  "dify_app": {
+    "name": "Bettermode Marketplace Creator Agent",
+    "type": "agent",
+    "description": "Drafts admin replies for posts in the Webflow Community Marketplace Creators space, grounded in the Marketplace policy knowledge base and the bettermode-creator MCP. Consumed by the Cloudflare Worker at apps/bettermode-marketplace-creator-agent via the chat-messages API.",
+    "recommended_model": "gpt-5.4",
+    "api_response_mode": "blocking",
+    "service_api": {
+      "base_url": "https://api.dify.ai/v1",
+      "api_key_secret": {
+        "environment": "dev",
+        "path": "/",
+        "secret_key": "WEBFLOW_DIFY_AGENT_API_KEY"
+      }
+    }
+  },
+  "mcp_server": {
+    "display_name": "Bettermode Creator",
+    "server_id": "bettermode-creator",
+    "transport": "http",
+    "url": "https://bettermode-creator.mcp.createsomething.agency/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "dev",
+        "path": "/",
+        "secret_key": "WEBFLOW_BETTERMODE_CREATOR_MCP_BEARER"
+      }
+    },
+    "package_path": "packages/bettermode-creator-mcp"
+  },
+  "verified_mcp": {
+    "verified_at": "2026-05-08",
+    "protocol_version": "2024-11-05",
+    "server_info": {
+      "name": "bettermode-marketplace-creator",
+      "version": "0.1.0"
+    },
+    "capabilities": ["tools"]
+  },
+  "tools": [
+    {
+      "name": "fetch_post_thread",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": ["post_id"],
+      "description": "Fetch a Marketplace Creator post by Bettermode post ID and return body + reply thread + author + space."
+    },
+    {
+      "name": "get_creator_context",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": ["email"],
+      "description": "Look up a Webflow Marketplace Creator by email in Airtable; return record + linked Assets/templates."
+    },
+    {
+      "name": "list_recent_approved_drafts",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": [],
+      "description": "Return the most recent admin replies sent via this agent. Used as few-shot voice examples."
+    },
+    {
+      "name": "get_draft_status",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": ["post_id"],
+      "description": "Audit lookup: return whether a draft already exists for a post and its current status."
+    }
+  ],
+  "knowledge_base": {
+    "name": "Webflow Marketplace Policy",
+    "datasets": [
+      {
+        "name": "Submission Guidelines",
+        "source": "Submission Guidelines Updates V2.md (internal; supersedes published guidelines on conflict)",
+        "indexing": "high_quality",
+        "retrieval": "hybrid_search",
+        "chunking": "general",
+        "max_chunk_length": 1024
+      },
+      {
+        "name": "Grading Rubric",
+        "source": "https://webflow.com/templates/grading-rubric",
+        "indexing": "high_quality",
+        "retrieval": "hybrid_search",
+        "chunking": "parent_child"
+      }
+    ],
+    "binding_note": "Datasets are workspace-scoped in Dify and cannot be bound through the imported YAML. After importing the .dify.yml in Studio, manually attach both datasets under the agent app's Knowledge tab. retrieval top_k = 5, reranking enabled."
+  },
+  "input_variables": {
+    "post_id": { "type": "string", "required": true, "source": "Bettermode webhook entityId" },
+    "is_top_level": { "type": "string", "required": false, "default": "true" },
+    "space_id": { "type": "string", "required": false },
+    "author_member_id": { "type": "string", "required": false },
+    "author_email": { "type": "string", "required": false },
+    "author_name": { "type": "string", "required": false },
+    "regenerate": { "type": "string", "required": false, "default": "false" }
+  },
+  "consumers": [
+    {
+      "package_path": "apps/bettermode-marketplace-creator-agent",
+      "calls": "POST {api_base}/chat-messages",
+      "auth": "Authorization: Bearer ${WEBFLOW_DIFY_AGENT_API_KEY}",
+      "fallback": "If Dify is unreachable or DIFY_AGENT_API_KEY is unset, the worker falls back to direct OpenAI drafting from src/openai.ts (no policy KB grounding)."
+    }
+  ],
+  "import_instructions": [
+    "1. In Dify Studio, Studio → Create new app → 'Import from DSL file' and upload bettermode-marketplace-creator-agent.dify.yml.",
+    "2. After import, attach the 'Submission Guidelines' and 'Grading Rubric' datasets to the agent under the Knowledge tab. Set top_k = 5 and reranking enabled.",
+    "3. Confirm the bettermode-creator MCP is authorized under Tools → MCP. All 4 tools should be selected on the agent.",
+    "4. Confirm model is gpt-5.4 (workspace-approved). Adjust temperature if drafts feel too uniform.",
+    "5. Publish the app and create a Service API key from API Access.",
+    "6. Store the Service API key in Infisical under WEBFLOW_DIFY_AGENT_API_KEY (env=dev).",
+    "7. Push to the Cloudflare Worker:",
+    "     pnpm --filter @create-something/bettermode-marketplace-creator-agent secrets:push",
+    "8. The worker auto-uses Dify on the next webhook (no redeploy required)."
+  ],
+  "agent_prompt": "See pre_prompt block in bettermode-marketplace-creator-agent.dify.yml — the prompt is the single source of truth and is imported with the YAML."
+}

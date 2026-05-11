@@ -1,0 +1,25 @@
+{
+  "name": "@create-something/bettermode-creator-mcp",
+  "version": "0.0.1",
+  "description": "MCP server exposing Bettermode/Airtable/D1 read tools for the Marketplace Creator Agent. Consumed by Dify agents and Claude Code.",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "pnpm run typecheck",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": ["mcp", "bettermode", "webflow", "marketplace", "creator"],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}

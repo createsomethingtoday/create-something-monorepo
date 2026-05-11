@@ -26,6 +26,11 @@ const IMAGE_CONSTRAINTS = {
   'secondary-thumbnail': { width: 750, height: 995, maxSize: 300 * 1024, label: 'Secondary thumbnail' },
   gallery: { width: 1440, height: 900, maxSize: 250 * 1024, label: 'Gallery image' }
 } as const;
+const TEMPLATE_ANALYZER_API_BASE = (
+  process.env.NEXT_PUBLIC_TEMPLATE_ANALYZER_API_BASE ||
+  'https://webflow-template-analyzer.createsomething.workers.dev'
+).replace(/\/$/, '');
+const TEMPLATE_SUGGESTIONS_TIMEOUT_MS = 90_000;
 
 type ImageKind = keyof typeof IMAGE_CONSTRAINTS;
 
@@ -89,6 +94,24 @@ type PublishedUrlValidationResponse = {
   error?: string;
 };
 
+type RawTemplateAnalyzerPayload = {
+  template_name?: string;
+  short_description?: string;
+  long_description?: string;
+  categories?: string[];
+  pricing?: string;
+  page_type?: string;
+  webflow_features_cms?: boolean;
+  webflow_features_ecommerce?: boolean;
+  styles?: string[];
+  features?: string[];
+  screenshots?: {
+    primary?: string;
+    secondary?: string;
+    gallery?: string[];
+  };
+};
+
 async function readJsonResponse(response: Response): Promise<Record<string, unknown>> {
   const text = await response.text();
   if (!text) return {};
@@ -97,6 +120,144 @@ async function readJsonResponse(response: Response): Promise<Record<string, unkn
     return JSON.parse(text) as Record<string, unknown>;
   } catch {
     return {};
+  }
+}
+
+function normalizeToken(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/&/g, ' and ')
+    .replace(/['’]/g, '')
+    .replace(/[^\p{Letter}\p{Number}]+/gu, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function dedupe<T>(values: readonly T[]): T[] {
+  return [...new Set(values)];
+}
+
+function mapKnownValues(
+  values: readonly string[] | undefined,
+  allowedValues: readonly string[],
+  maxCount?: number
+) {
+  if (!Array.isArray(values)) return [];
+
+  const lookup = new Map(allowedValues.map((value) => [normalizeToken(value), value]));
+  return dedupe(
+    values.map((value) => lookup.get(normalizeToken(value))).filter((value): value is string => Boolean(value))
+  ).slice(0, maxCount);
+}
+
+function mapAnalyzerFeatures(values: readonly string[] | undefined): string[] {
+  if (!Array.isArray(values)) return [];
+
+  const lookup = new Map<string, string>();
+  for (const feature of WEBFLOW_FEATURES) {
+    lookup.set(normalizeToken(feature.label), feature.id);
+  }
+  lookup.set(normalizeToken('Symbols'), 'symbols');
+  lookup.set(normalizeToken('Components'), 'symbols');
+
+  return dedupe(
+    values.map((value) => lookup.get(normalizeToken(value))).filter((value): value is string => Boolean(value))
+  );
+}
+
+function analyzerLongDescriptionToHtml(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+
+  const escapeHtml = (text: string) =>
+    text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  return trimmed
+    .split(/\n{2,}/)
+    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
+    .join('');
+}
+
+function mapAnalyzerPageCount(value: string | undefined): PageCountOption | undefined {
+  if (value === 'one_page') return 'One';
+  if (value === 'multi_page') return 'Multi';
+  if (value === 'multi_layout') return 'Multi-layout';
+  return undefined;
+}
+
+function countAnalyzerScreenshots(payload: RawTemplateAnalyzerPayload) {
+  const screenshots = payload.screenshots;
+  if (!screenshots) return 0;
+
+  return [
+    screenshots.primary ? 1 : 0,
+    screenshots.secondary ? 1 : 0,
+    Array.isArray(screenshots.gallery) ? screenshots.gallery.length : 0
+  ].reduce((total, count) => total + count, 0);
+}
+
+function mapAnalyzerPayload(payload: RawTemplateAnalyzerPayload): TemplateAutofillPayload {
+  return {
+    templateName: payload.template_name?.trim() || undefined,
+    shortDescription: payload.short_description?.trim() || undefined,
+    longDescription: analyzerLongDescriptionToHtml(payload.long_description),
+    categories: mapKnownValues(payload.categories, CATEGORY_OPTIONS, 2),
+    priceModel: payload.pricing === 'Free' || payload.pricing === 'Paid' ? payload.pricing : undefined,
+    pageCount: mapAnalyzerPageCount(payload.page_type),
+    typeCms: payload.webflow_features_cms === true,
+    typeEcommerce: payload.webflow_features_ecommerce === true,
+    styles: mapKnownValues(payload.styles, TEMPLATE_STYLES, 2),
+    featureIds: mapAnalyzerFeatures(payload.features)
+  };
+}
+
+function suggestionsFailureMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : '';
+  if (/abort|timed out/i.test(message)) {
+    return 'Template suggestions took longer than expected. Continue filling the remaining fields manually.';
+  }
+  return 'Template suggestions are temporarily unavailable. Continue filling the remaining fields manually.';
+}
+
+async function fetchTemplateSuggestions(url: string) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), TEMPLATE_SUGGESTIONS_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${TEMPLATE_ANALYZER_API_BASE}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+      signal: controller.signal
+    });
+    const payload = (await response.json().catch(() => ({}))) as RawTemplateAnalyzerPayload & {
+      error?: string;
+      detail?: string;
+    };
+
+    if (!response.ok) {
+      throw new Error(
+        payload.detail ||
+          payload.error ||
+          `Template analyzer request failed with status ${response.status}`
+      );
+    }
+
+    const screenshotCount = countAnalyzerScreenshots(payload);
+    return {
+      autofill: mapAnalyzerPayload(payload),
+      screenshotCount,
+      screenshotsDownloadUrl:
+        screenshotCount > 0 ? `${TEMPLATE_ANALYZER_API_BASE}/screenshots/download` : undefined
+    };
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 }
 
@@ -223,6 +384,7 @@ type TemplateAnalyzerSummary = {
   suggestedFields: TemplateAutofillFieldKey[];
   screenshotCount: number;
   screenshotsDownloadUrl?: string;
+  loading?: boolean;
   warning?: string;
 };
 
@@ -830,6 +992,7 @@ export function TemplateIntake() {
   const creatorSectionRef = useRef<HTMLElement | null>(null);
   const templateSectionRef = useRef<HTMLElement | null>(null);
   const analyzerSummaryRef = useRef<HTMLDivElement | null>(null);
+  const analyzerRequestId = useRef(0);
 
   const hasAutofilledTemplateName = isAutofilledText(
     template.templateName,
@@ -1482,6 +1645,65 @@ export function TemplateIntake() {
     };
   }
 
+  async function loadTemplateSuggestions(
+    url: string,
+    validationMessage: string,
+    gsapDetected: boolean,
+    requestId: number
+  ) {
+    try {
+      const suggestions = await fetchTemplateSuggestions(url);
+      if (analyzerRequestId.current !== requestId) {
+        return;
+      }
+
+      const autofillResult = applyTemplateAutofill(suggestions.autofill, { gsapDetected });
+      setAnalyzerSummary({
+        validationMessage,
+        appliedFields: autofillResult.appliedFields,
+        suggestedFields: autofillResult.suggestedFields,
+        screenshotCount: suggestions.screenshotCount,
+        screenshotsDownloadUrl: suggestions.screenshotsDownloadUrl
+      });
+      setFeedback('publishedUrl', {
+        tone: 'success',
+        message: [
+          validationMessage,
+          autofillResult.appliedFields.length > 0
+            ? `Analyzer suggestions filled ${autofillResult.appliedFields.length} field${autofillResult.appliedFields.length === 1 ? '' : 's'}.`
+            : 'Review the analyzer summary below.',
+          gsapDetected ? 'GSAP was detected automatically.' : ''
+        ]
+          .filter(Boolean)
+          .join(' ')
+      });
+    } catch (error) {
+      if (analyzerRequestId.current !== requestId) {
+        return;
+      }
+
+      const warning = suggestionsFailureMessage(error);
+      setAnalyzerSummary((current) => ({
+        validationMessage,
+        appliedFields: current?.appliedFields ?? [],
+        suggestedFields: current?.suggestedFields ?? [],
+        screenshotCount: current?.screenshotCount ?? 0,
+        screenshotsDownloadUrl: current?.screenshotsDownloadUrl,
+        warning
+      }));
+      setFeedback('publishedUrl', {
+        tone: 'success',
+        message: [
+          validationMessage,
+          gsapDetected ? 'GSAP was detected automatically.' : '',
+          warning
+        ]
+          .filter(Boolean)
+          .join(' ')
+      });
+    }
+  }
+
   async function verifyCreatorEmail(kind: 'primary' | 'webflow') {
     const field = kind === 'primary' ? 'primaryEmail' : 'webflowEmail';
     const email = (kind === 'primary' ? creator.primaryEmail : creator.webflowEmail).trim();
@@ -1598,6 +1820,8 @@ export function TemplateIntake() {
   }
 
   async function verifyPublishedUrl() {
+    const requestId = analyzerRequestId.current + 1;
+    analyzerRequestId.current = requestId;
     const url = template.publishedUrl.trim();
     if (!url) {
       setFeedback('publishedUrl', { tone: 'error', message: 'Enter the published Webflow URL first.' });
@@ -1634,19 +1858,24 @@ export function TemplateIntake() {
     const autofillResult = applyTemplateAutofill(validationData.autofill, {
       gsapDetected: Boolean(validationData.gsapDetected)
     });
+    const validationMessage = validationData.message || 'Published site validated.';
+    const gsapDetected = Boolean(validationData.gsapDetected);
+    const shouldLoadSuggestions = Boolean(validationData.normalizedUrl && !validationData.autofill);
 
     const nextAnalyzerSummary: TemplateAnalyzerSummary | null =
       autofillResult.appliedFields.length > 0 ||
       autofillResult.suggestedFields.length > 0 ||
       Boolean(validationData.autofillWarning) ||
-      Boolean(validationData.screenshotsDownloadUrl)
+      Boolean(validationData.screenshotsDownloadUrl) ||
+      shouldLoadSuggestions
         ? {
-            validationMessage: validationData.message || 'Published site validated.',
+            validationMessage,
             appliedFields: autofillResult.appliedFields,
             suggestedFields: autofillResult.suggestedFields,
             screenshotCount: validationData.screenshotCount ?? 0,
             screenshotsDownloadUrl: validationData.screenshotsDownloadUrl,
-            warning: validationData.autofillWarning
+            loading: shouldLoadSuggestions,
+            warning: shouldLoadSuggestions ? undefined : validationData.autofillWarning
           }
         : null;
 
@@ -1663,14 +1892,16 @@ export function TemplateIntake() {
     setFeedback('publishedUrl', {
       tone: 'success',
       message: [
-        validationData.message || 'Published site validated.',
+        validationMessage,
         autofillResult.appliedFields.length > 0
           ? `Analyzer suggestions filled ${autofillResult.appliedFields.length} field${autofillResult.appliedFields.length === 1 ? '' : 's'}.`
           : nextAnalyzerSummary
-            ? 'Review the analyzer summary below.'
+            ? shouldLoadSuggestions
+              ? 'Template suggestions are generating and will fill in when ready.'
+              : 'Review the analyzer summary below.'
             : '',
-        validationData.gsapDetected ? 'GSAP was detected automatically.' : '',
-        validationData.autofillWarning
+        gsapDetected ? 'GSAP was detected automatically.' : '',
+        validationData.autofillWarning && !shouldLoadSuggestions
           ? 'Template suggestions were unavailable, so finish the remaining fields manually.'
           : ''
       ]
@@ -1680,23 +1911,31 @@ export function TemplateIntake() {
     setVerification((current) => ({
       ...current,
       publishedUrlVerified: validationData.normalizedUrl || '',
-      publishedUrlMessage: validationData.message || 'Published site validated.'
+      publishedUrlMessage: validationMessage
     }));
     setTemplate((current) => ({
       ...current,
       publishedUrl: validationData.normalizedUrl || current.publishedUrl,
-      featureIds: validationData.gsapDetected
+      featureIds: gsapDetected
         ? [...new Set([...current.featureIds, 'gsap'])]
         : current.featureIds
     }));
     setVerification((current) => ({
       ...current,
-      gsapDetected: Boolean(validationData.gsapDetected)
+      gsapDetected
     }));
     setTemplateStatus({
       tone: 'success',
-      message: validationData.message || 'Published site validated.'
+      message: validationMessage
     });
+    if (shouldLoadSuggestions && validationData.normalizedUrl) {
+      void loadTemplateSuggestions(
+        validationData.normalizedUrl,
+        validationMessage,
+        gsapDetected,
+        requestId
+      );
+    }
   }
 
   async function submitCreator(event: React.FormEvent<HTMLFormElement>) {
@@ -2446,7 +2685,9 @@ export function TemplateIntake() {
                         </div>
                       </div>
                       <p className="field-help submission-analyzer-copy">
-                        {analyzerSummary.appliedFields.length > 0
+                        {analyzerSummary.loading
+                          ? 'The published-site crawl passed. Template suggestions are being generated and will fill in when ready.'
+                          : analyzerSummary.appliedFields.length > 0
                           ? 'AI updated the highlighted fields below from the published site. You can still edit anything before submitting.'
                           : analyzerSummary.warning
                             ? 'The published-site crawl passed, but template suggestions were only partially available.'
@@ -2464,14 +2705,18 @@ export function TemplateIntake() {
                         <div className="submission-analyzer-stage">
                           <div className="submission-analyzer-stage-label">AI updates</div>
                           <div className="submission-analyzer-stage-value">
-                            {analyzerSummary.appliedFields.length > 0
+                            {analyzerSummary.loading
+                              ? 'Generating'
+                              : analyzerSummary.appliedFields.length > 0
                               ? `${analyzerSummary.appliedFields.length} field${analyzerSummary.appliedFields.length === 1 ? '' : 's'} applied`
                               : analyzerSummary.warning
                                 ? 'Partial'
                                 : 'Suggestions ready'}
                           </div>
                           <div className="submission-analyzer-stage-copy">
-                            {analyzerSummary.appliedFields.length > 0
+                            {analyzerSummary.loading
+                              ? 'You can continue filling the form while suggestions run separately.'
+                              : analyzerSummary.appliedFields.length > 0
                               ? 'The matching fields below were updated from the published site.'
                               : analyzerSummary.warning
                                 ? 'Some fields still need manual input because suggestions were incomplete.'

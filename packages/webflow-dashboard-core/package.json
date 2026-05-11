@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./airtable": "./src/airtable.ts",
     "./hash": "./src/hash.ts",
+    "./knock": "./src/knock.ts",
     "./kv": "./src/kv.ts",
     "./marketplace-webhook": "./src/marketplace-webhook.ts",
     "./r2": "./src/r2.ts",
@@ -20,7 +21,8 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "node --import tsx --test src/*.test.ts"
+    "test": "node --import tsx --test src/*.test.ts",
+    "test:knock-login": "node --import tsx scripts/test-knock-login.ts"
   },
   "dependencies": {
     "airtable": "^0.12.2"
