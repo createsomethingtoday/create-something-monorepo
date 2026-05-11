@@ -113,9 +113,48 @@ function arrayField(fields: Record<string, unknown>, name: string): string[] {
 }
 
 function stringField(fields: Record<string, unknown>, names: string[]): string | undefined {
+  // Try exact-name matches first.
   for (const name of names) {
-    const value = fields[name];
-    if (typeof value === 'string' && value.trim()) return value;
+    const s = coerceFieldToString(fields[name]);
+    if (s) return s;
+  }
+  // Fallback: case-insensitive substring match ignoring non-alphanumerics
+  // (handles emoji-prefixed columns like "🥞CMS Status" matching "status").
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const targets = names.map(norm).filter(Boolean);
+  if (targets.length === 0) return undefined;
+  for (const [key, value] of Object.entries(fields)) {
+    const nk = norm(key);
+    if (!targets.some((t) => nk.includes(t))) continue;
+    const s = coerceFieldToString(value);
+    if (s) return s;
+  }
+  return undefined;
+}
+
+// Coerces an Airtable field value into a usable string. Handles:
+//   - plain strings
+//   - numbers / booleans (stringified)
+//   - singleSelect objects ({ name, color })
+//   - lookup / rollup arrays (first non-empty element)
+//   - collaborator objects ({ name, email })
+function coerceFieldToString(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const t = value.trim();
+    return t || undefined;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const s = coerceFieldToString(item);
+      if (s) return s;
+    }
+    return undefined;
+  }
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    const candidate = obj.name ?? obj.email ?? obj.text;
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
   }
   return undefined;
 }
