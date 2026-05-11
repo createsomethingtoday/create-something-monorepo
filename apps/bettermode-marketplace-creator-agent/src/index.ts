@@ -131,6 +131,19 @@ async function handleWebhook(
 
   const webhook = parseJson<WebhookPayload>(rawBody);
 
+  // Diagnostic logging — surfaces the exact event type Bettermode sends so we
+  // can verify our POST_EVENT_TYPES filter matches reality. Cheap and safe:
+  // single structured line per inbound webhook, no payload contents.
+  console.log('webhook received', {
+    pathname,
+    type: webhook.type,
+    entityId: webhook.entityId,
+    context: webhook.context,
+    objectId: webhook.data?.object?.id,
+    spaceId: webhook.data?.object?.spaceId,
+    targetId: webhook.data?.target?.id,
+  });
+
   if (webhook.type === 'TEST') {
     return jsonResponse(
       {
@@ -150,11 +163,21 @@ async function handleWebhook(
   if (pathname === '/webhook' && webhook.type && POST_EVENT_TYPES.has(webhook.type)) {
     const postId = webhook.data?.object?.id || webhook.entityId;
     const spaceId = webhook.data?.object?.spaceId;
+    console.log('matched post event', { type: webhook.type, postId, spaceId });
     if (postId && shouldHandleSpace(spaceId, env)) {
       ctx.waitUntil(generateDraftForPost(postId, env).catch((err) => {
         console.error('draft generation failed', { postId, error: errorMessage(err) });
       }));
+    } else {
+      console.warn('event matched type but filtered out', {
+        type: webhook.type,
+        postId,
+        spaceId,
+        marketplace_space: env.BETTERMODE_MARKETPLACE_SPACE_ID,
+      });
     }
+  } else if (pathname === '/webhook' && webhook.type) {
+    console.warn('unhandled webhook type', { type: webhook.type });
   }
 
   // Federated search and unknown types: ack with success.
