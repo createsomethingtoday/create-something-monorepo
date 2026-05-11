@@ -215,9 +215,42 @@ function pickString(
   fields: Record<string, unknown>,
   names: string[],
 ): string | null {
+  // Exact-name match first.
   for (const name of names) {
-    const value = fields[name];
-    if (typeof value === 'string' && value.trim()) return value.trim();
+    const s = coerceFieldToString(fields[name]);
+    if (s) return s;
+  }
+  // Fallback: case-insensitive substring match ignoring non-alphanumerics
+  // so "Status" matches Airtable fields like "🥞CMS Status".
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const targets = names.map(norm).filter(Boolean);
+  if (targets.length === 0) return null;
+  for (const [key, value] of Object.entries(fields)) {
+    const nk = norm(key);
+    if (!targets.some((t) => nk.includes(t))) continue;
+    const s = coerceFieldToString(value);
+    if (s) return s;
+  }
+  return null;
+}
+
+function coerceFieldToString(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const t = value.trim();
+    return t || null;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const s = coerceFieldToString(item);
+      if (s) return s;
+    }
+    return null;
+  }
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    const candidate = obj.name ?? obj.email ?? obj.text;
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
   }
   return null;
 }

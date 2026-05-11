@@ -32,6 +32,17 @@ const TEST_POST_SPACE_ID = 'ROtfBgdQyiAB';
 const TEST_AUTHOR_EMAIL = 'denibozo1990@gmail.com';
 const TEST_AUTHOR_NAME = 'Deni Bozo';
 
+// A real Marketplace Creator with exactly one approved template in Airtable.
+// Used to assert the Airtable enrichment path (get_creator_context returns
+// the creator + linked Assets, and the agent's draft references the template
+// by name). Caught the rollup-Email lookup bug on first run.
+const AIRTABLE_GROUNDED_POST_ID = 'IGuvieeBtZbeT6e';
+const AIRTABLE_GROUNDED_AUTHOR_EMAIL = 'flowxpo.team@gmail.com';
+const AIRTABLE_GROUNDED_AUTHOR_NAME = 'Kawshar Ahmed';
+const AIRTABLE_GROUNDED_AUTHOR_MEMBER_ID = 'D0Ey6ht16K';
+const AIRTABLE_GROUNDED_EXPECTED_TEMPLATE = 'LabXpo';
+const AIRTABLE_GROUNDED_EXPECTED_CREATOR = 'FlowXpo';
+
 const ABSTAIN_MARKERS = [
   "we're confirming",
   'we are confirming',
@@ -115,6 +126,23 @@ const CASES: Array<{ input: DifyChatInput; metadata: Record<string, string> }> =
       forbiddenTools: [],
     },
     metadata: { suite: 'dify-bettermode-marketplace-creator-agent', eval: 'secret_refusal' },
+  },
+  {
+    input: {
+      name: 'airtable_grounded',
+      query: `Draft an admin reply for Bettermode post ${AIRTABLE_GROUNDED_POST_ID}.`,
+      inputs: {
+        post_id: AIRTABLE_GROUNDED_POST_ID,
+        is_top_level: 'true',
+        space_id: TEST_POST_SPACE_ID,
+        author_member_id: AIRTABLE_GROUNDED_AUTHOR_MEMBER_ID,
+        author_email: AIRTABLE_GROUNDED_AUTHOR_EMAIL,
+        author_name: AIRTABLE_GROUNDED_AUTHOR_NAME,
+        regenerate: 'false',
+      },
+      shouldUseTool: 'get_creator_context',
+    },
+    metadata: { suite: 'dify-bettermode-marketplace-creator-agent', eval: 'airtable_grounded' },
   },
 ];
 
@@ -232,6 +260,39 @@ function voiceRulesScore(input: DifyChatInput, output: DifyChatOutput): Score {
   };
 }
 
+function airtableGroundedScore(input: DifyChatInput, output: DifyChatOutput): Score {
+  if (output.skipped || input.name !== 'airtable_grounded') {
+    return {
+      name: 'airtable_grounded',
+      score: null,
+      metadata: { reason: output.reason ?? 'Not an Airtable-grounded case' },
+    };
+  }
+  const text = `${output.answer} ${output.toolCalls.map((c) => c.observation).join(' ')}`.toLowerCase();
+  const hasTemplate = text.includes(AIRTABLE_GROUNDED_EXPECTED_TEMPLATE.toLowerCase());
+  const hasCreator = text.includes(AIRTABLE_GROUNDED_EXPECTED_CREATOR.toLowerCase());
+  const calledLookup = usedTool(output, 'get_creator_context');
+  // Score 1 only if the agent actually used Airtable AND the resulting draft
+  // names the real template. Naming just the creator without the template is
+  // partial credit (0.5) since it proves enrichment fired but the draft
+  // wasn't fully grounded.
+  let score = 0;
+  if (calledLookup && hasTemplate) score = 1;
+  else if (calledLookup && hasCreator) score = 0.5;
+  return {
+    name: 'airtable_grounded',
+    score,
+    metadata: {
+      calledLookup,
+      expectedTemplate: AIRTABLE_GROUNDED_EXPECTED_TEMPLATE,
+      expectedCreator: AIRTABLE_GROUNDED_EXPECTED_CREATOR,
+      hasTemplate,
+      hasCreator,
+      answer: output.answer,
+    },
+  };
+}
+
 function secretRefusalScore(input: DifyChatInput, output: DifyChatOutput): Score {
   if (output.skipped || input.name !== 'secret_refusal') {
     return {
@@ -309,6 +370,7 @@ void Eval<DifyChatInput, DifyChatOutput>('create-something-dify-agents', {
     ({ input, output }) => abstainScore(input, output),
     ({ input, output }) => voiceRulesScore(input, output),
     ({ input, output }) => secretRefusalScore(input, output),
+    ({ input, output }) => airtableGroundedScore(input, output),
     ({ output }) => latencyScore(output),
   ],
 });
