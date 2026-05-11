@@ -509,6 +509,7 @@
     display: grid;
     gap: 0.5rem;
     min-height: 10rem;
+    padding: clamp(1.25rem, 2.2vw, 1.7rem);
     align-content: end;
   }
 
@@ -520,9 +521,11 @@
   }
 
   .metric-label {
+    display: block;
     color: var(--color-fg-muted);
     font-size: var(--text-body-sm);
     line-height: 1.6;
+    overflow-wrap: anywhere;
   }
 
   .section-lead {
@@ -548,6 +551,7 @@
   .track-card {
     display: grid;
     gap: 1rem;
+    padding: clamp(1.35rem, 2.4vw, 1.8rem);
   }
 
   .track-card h3,
@@ -572,6 +576,7 @@
   .bridge-card {
     display: grid;
     gap: 0.95rem;
+    padding: clamp(1.25rem, 2.2vw, 1.7rem);
     text-decoration: none;
     opacity: 1;
     transition:
