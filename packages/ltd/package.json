@@ -30,7 +30,8 @@
 	},
 	"dependencies": {
 		"@create-something/canon": "workspace:*",
-		"@create-something/tufte": "workspace:*"
+		"@create-something/tufte": "workspace:*",
+		"lucide-svelte": "^0.562.0"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20251128.0",

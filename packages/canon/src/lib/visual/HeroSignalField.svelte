@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  type HeroSignalVariant = 'agency' | 'io' | 'space';
+  type HeroSignalVariant = 'agency' | 'io' | 'space' | 'ltd';
   type HeroSignalFocus = 'balanced' | 'left' | 'right';
 
   interface AnchorConfig {
@@ -157,6 +157,43 @@
         { label: 'detect', top: 24, left: 22 },
         { label: 'simulate', top: 48, left: 50, emphasis: true },
         { label: 'ship', top: 68, left: 78 }
+      ]
+    },
+    ltd: {
+      accent: 'rgba(37, 86, 255, 0.14)',
+      accentSoft: 'rgba(180, 198, 255, 0.1)',
+      edgeGlow: 'rgba(232, 238, 255, 0.1)',
+      palette: ['#243cff', '#5d79ff', '#b7c5ff', '#f5f7ff'],
+      defaultFocus: 'right',
+      laneCounts: {
+        balanced: { left: 3, right: 3 },
+        left: { left: 4, right: 2 },
+        right: { left: 2, right: 4 }
+      },
+      barsPerLane: 7,
+      centerGap: 6.4,
+      laneSpacing: 1.36,
+      laneJitter: 0.4,
+      ySpread: 6.4,
+      heightRange: [3.2, 7.2],
+      widthRange: [0.04, 0.08],
+      speed: 1.36,
+      angle: 0.18,
+      cameraDrift: 0.14,
+      cameraLift: 0.06,
+      xDrift: 0.06,
+      yDrift: 0.08,
+      resetZ: 5.2,
+      farZ: -32,
+      depthStep: 1.9,
+      particleCount: 92,
+      particleSpread: 14,
+      pointerPull: 0.12,
+      pointerRadius: 4.4,
+      anchors: [
+        { label: 'canon', top: 27, left: 70 },
+        { label: 'judgment', top: 46, left: 79, emphasis: true },
+        { label: 'practice', top: 65, left: 72 }
       ]
     }
   };
@@ -577,10 +614,8 @@
 
           const driftPhase = time * bar.driftRate + bar.phase;
           const pulse = 0.92 + Math.sin(time * bar.pulseRate + bar.phase) * 0.08;
-          const driftedX =
-            bar.baseX + Math.sin(driftPhase) * currentConfig.xDrift * bar.side;
-          const driftedY =
-            bar.baseY + Math.cos(driftPhase * 1.2) * currentConfig.yDrift;
+          const driftedX = bar.baseX + Math.sin(driftPhase) * currentConfig.xDrift * bar.side;
+          const driftedY = bar.baseY + Math.cos(driftPhase * 1.2) * currentConfig.yDrift;
           const dx = pointerWorldX - bar.baseX;
           const dy = pointerWorldY - bar.baseY;
           const distance = Math.hypot(dx, dy * 1.12);
@@ -1037,6 +1072,14 @@
     --hero-field-accent: rgba(37, 86, 255, 0.22);
     --hero-field-accent-soft: rgba(70, 216, 255, 0.18);
     --hero-field-edge: rgba(121, 241, 255, 0.2);
+  }
+
+  .hero-signal-field--ltd {
+    --hero-field-accent: rgba(83, 110, 255, 0.14);
+    --hero-field-accent-soft: rgba(202, 211, 255, 0.1);
+    --hero-field-edge: rgba(242, 246, 255, 0.1);
+    --hero-field-canvas-opacity: 0.62;
+    --hero-field-guides-opacity: 0.42;
   }
 
   .hero-signal-field--agency .hero-signal-field__fallback {

@@ -6,14 +6,10 @@
   Clean, analytical presentation for research content.
 */
 
-/* Import Google Fonts */
-/* IBM Plex Sans: primary interface and editorial type */
-/* JetBrains Mono: system/UI accents */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 /* Import shared Canon Design System (must precede @tailwind) */
 @import '@create-something/canon/styles/canon.css';
 @import '@create-something/canon/styles/components.css';
+@import '@create-something/canon/styles/property-shell.css';
 
 /* Import shared enhancement modules */
 @import '@create-something/canon/styles/spacing.css';
@@ -37,43 +33,4 @@
 
 :root {
   --view-transition-duration: 250ms;
-
-  /* Shared product shell typography */
-  --font-heading: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-display: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  --color-focus: color-mix(in srgb, var(--color-brand-secondary) 72%, transparent);
-}
-
-.nav-logo {
-  font-family: var(--font-display);
-}
-
-a:not([class*="button"]):not(.btn) {
-  transition: opacity var(--duration-micro) var(--ease-standard);
-}
-
-a:not([class*="button"]):not(.btn):hover {
-  opacity: 0.7;
-}
-
-*:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-  border-radius: 0px;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  background:
-    radial-gradient(circle at top, var(--color-brand-primary-soft), transparent 28%),
-    linear-gradient(180deg, var(--color-shell-surface-secondary) 0%, var(--color-bg-elevated) 48%, var(--color-bg-pure) 100%);
-  letter-spacing: var(--tracking-tight, -0.015em);
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }

@@ -9,14 +9,10 @@
   Bridge property: CREATE SOMETHING ↔ WORKWAY
 */
 
-/* Import Google Fonts */
-/* IBM Plex Sans: primary interface and editorial type */
-/* JetBrains Mono: system/UI accents */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 /* Import shared Canon Design System (must precede @tailwind) */
 @import '@create-something/canon/styles/canon.css';
 @import '@create-something/canon/styles/components.css';
+@import '@create-something/canon/styles/property-shell.css';
 
 /* Import shared enhancement modules (extracted from .agency) */
 @import '@create-something/canon/styles/spacing.css';
@@ -41,61 +37,4 @@
 
 :root {
   --view-transition-duration: 200ms;
-  
-  /* ==========================================================================
-     Font Stack - Two-family system (agency-specific)
-     
-     Display (--font-display): IBM Plex Sans
-     Body (--font-sans): IBM Plex Sans
-     System/UI (--font-mono): JetBrains Mono
-     ========================================================================== */
-  --font-heading: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-display: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  --color-focus: rgba(167, 184, 255, 0.72);
-}
-
-/* ==========================================================================
-   Navigation - Stack Sans Notch logo
-   ========================================================================== */
-
-.nav-logo {
-  font-family: var(--font-display);
-}
-
-/* ==========================================================================
-   Global Base Styles
-   ========================================================================== */
-
-/* Links - Canonical CREATE SOMETHING micro-interactions */
-a:not([class*="button"]):not(.btn) {
-  transition: opacity var(--duration-micro) var(--ease-standard);
-}
-
-a:not([class*="button"]):not(.btn):hover {
-  opacity: 0.7;
-}
-
-/* Custom focus styles for accessibility */
-*:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-  border-radius: 0px;
-}
-
-/* Smooth scroll behavior */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Body Typography Polish */
-body {
-  background:
-    radial-gradient(circle at top, rgba(49, 92, 255, 0.12), transparent 28%),
-    linear-gradient(180deg, #0c0c10 0%, #060608 48%, #000000 100%);
-  letter-spacing: var(--tracking-tight, -0.015em);
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { Button, PapersGrid, SEO } from '@create-something/canon';
+  import { Button, HeroSignalField, PapersGrid, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import type { Paper } from '@create-something/canon/types';
 
@@ -137,38 +137,63 @@
   propertyName="io"
 />
 
-<section class="hero-page">
-  <div class="shell-inner-pad hero-layout">
-    <div class="hero-copy">
-      <BlurFade delay={0}>
-        <span class="product-kicker">CREATE SOMETHING .io</span>
-      </BlurFade>
+<section class="property-hero-page">
+  <div class="property-hero-stage">
+    <HeroSignalField variant="io" focus="right" />
 
-      <BlurFade delay={0.05}>
-        <h1 class="hero-title">Research for teams building automation they can defend.</h1>
-      </BlurFade>
+    <div class="shell-inner-pad property-hero-layout">
+      <div class="property-hero-copy">
+        <BlurFade delay={0}>
+          <span class="product-kicker">CREATE SOMETHING .io</span>
+        </BlurFade>
 
-      <BlurFade delay={0.1}>
-        <p class="hero-detail">
-          CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research
-          layer for operators. The goal is not content volume. It is evidence you can carry into
-          the next build, review, or production decision.
-        </p>
-      </BlurFade>
+        <BlurFade delay={0.05}>
+          <h1 class="property-hero-title">
+            Research for teams building automation they can defend.
+          </h1>
+        </BlurFade>
 
-      <BlurFade delay={0.15}>
-        <div class="hero-actions">
-          <Button href="/papers">Read The Papers</Button>
-          <Button href="/experiments" variant="secondary">Browse Experiments</Button>
-        </div>
-      </BlurFade>
+        <BlurFade delay={0.1}>
+          <p class="property-hero-detail">
+            CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research
+            layer for operators. The goal is not content volume. It is evidence you can carry into
+            the next build, review, or production decision.
+          </p>
+        </BlurFade>
 
-      <BlurFade delay={0.2}>
-        <p class="hero-note">Patterns, benchmarks, and operator notes tied back to real builds.</p>
-      </BlurFade>
+        <BlurFade delay={0.15}>
+          <div class="property-hero-actions">
+            <Button href="/papers">Read The Papers</Button>
+            <Button href="/experiments" variant="secondary">Browse Experiments</Button>
+          </div>
+        </BlurFade>
+
+        <BlurFade delay={0.2}>
+          <p class="property-hero-note">
+            Patterns, benchmarks, and operator notes tied back to real builds.
+          </p>
+        </BlurFade>
+      </div>
     </div>
+  </div>
 
-    <BlurFade delay={0.2}>
+  <div class="shell-inner-pad">
+    <div class="property-metric-grid">
+      {#each proofMetrics as metric, index}
+        <BlurFade delay={0.25 + index * 0.05}>
+          <article class="product-surface product-surface--soft property-metric-card">
+            <span class="property-metric-value">{metric.value}</span>
+            <span class="property-metric-label">{metric.label}</span>
+          </article>
+        </BlurFade>
+      {/each}
+    </div>
+  </div>
+</section>
+
+<section class="property-section research-loop-section">
+  <div class="shell-inner-pad">
+    <BlurFade delay={0.05}>
       <aside class="product-surface product-surface--soft research-panel">
         <div class="panel-stack">
           <section class="panel-block">
@@ -218,24 +243,11 @@
       </aside>
     </BlurFade>
   </div>
-
-  <div class="shell-inner-pad">
-    <div class="metric-grid">
-      {#each proofMetrics as metric, index}
-        <BlurFade delay={0.25 + index * 0.05}>
-          <article class="product-surface product-surface--soft metric-card">
-            <span class="metric-value">{metric.value}</span>
-            <span class="metric-label">{metric.label}</span>
-          </article>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
 </section>
 
-<section class="track-section">
+<section class="property-section">
   <div class="shell-inner-pad">
-    <div class="section-lead">
+    <div class="property-section-lead">
       <BlurFade>
         <span class="product-kicker">What the research is for</span>
       </BlurFade>
@@ -251,11 +263,15 @@
       </BlurFade>
     </div>
 
-    <div class="track-grid">
+    <div class="property-card-grid property-card-grid--2">
       {#each researchTracks as track, index}
         <BlurFade delay={0.15 + index * 0.05}>
-          <article class="product-surface track-card" class:trackFeatured={track.featured}>
-            <span class="track-tag">{track.tag}</span>
+          <article
+            class="product-surface property-content-card {track.featured
+              ? 'property-content-card--featured'
+              : ''}"
+          >
+            <span class="property-content-meta">{track.tag}</span>
             <h3>{track.title}</h3>
             <p>{track.summary}</p>
             <ul class="product-list">
@@ -278,9 +294,9 @@
   />
 {/if}
 
-<section class="bridge-section">
+<section class="property-section">
   <div class="shell-inner-pad">
-    <div class="section-lead section-lead--center">
+    <div class="property-section-lead property-section-lead--center">
       <BlurFade>
         <span class="product-kicker">Cross-property handoff</span>
       </BlurFade>
@@ -289,25 +305,25 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Research only matters if it transfers cleanly into practice, delivery, or philosophy.
-          That handoff is the point of the network.
+          Research only matters if it transfers cleanly into practice, delivery, or philosophy. That
+          handoff is the point of the network.
         </p>
       </BlurFade>
     </div>
 
-    <div class="bridge-grid">
+    <div class="property-card-grid property-card-grid--3">
       {#each handoffCards as card, index}
         <BlurFade delay={0.15 + index * 0.06}>
           <a
             href={card.href}
-            class="product-surface product-surface--soft bridge-card"
+            class="product-surface product-surface--soft property-content-card property-content-link-card"
             target="_blank"
             rel="noopener"
           >
-            <span class="bridge-eyebrow">{card.eyebrow}</span>
+            <span class="property-content-meta">{card.eyebrow}</span>
             <h3>{card.title}</h3>
             <p>{card.body}</p>
-            <span class="bridge-link">Open property</span>
+            <span class="property-content-link">Open property</span>
           </a>
         </BlurFade>
       {/each}
@@ -315,9 +331,9 @@
   </div>
 </section>
 
-<section class="cta-section">
+<section class="property-section">
   <div class="shell-inner-pad">
-    <div class="product-surface product-surface--accent cta-panel">
+    <div class="product-surface product-surface--accent property-cta-panel">
       <BlurFade>
         <span class="product-kicker">Research stack</span>
       </BlurFade>
@@ -331,7 +347,7 @@
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
-        <div class="hero-actions hero-actions--center">
+        <div class="property-hero-actions property-hero-actions--center">
           <Button href="/methodology">See The Methodology</Button>
           <Button href="/graph" variant="secondary">Open The Research Graph</Button>
         </div>
@@ -341,82 +357,28 @@
 </section>
 
 <style>
-  .hero-page,
-  .track-section,
-  .bridge-section,
-  .cta-section {
-    padding-block: clamp(3.5rem, 8vw, 6rem);
-  }
-
-  .hero-page {
-    padding-top: clamp(5.5rem, 10vw, 7rem);
-  }
-
-  .hero-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-    gap: clamp(2rem, 4vw, 3.5rem);
-    align-items: center;
-  }
-
-  .hero-copy,
-  .panel-stack,
-  .section-lead,
-  .cta-panel {
+  .panel-stack {
     display: grid;
     gap: 1rem;
   }
 
-  .hero-title,
-  .section-lead h2,
-  .cta-panel h2,
   .research-panel h2 {
     margin: 0;
-    font-size: clamp(2.6rem, 5vw, 4.75rem);
-    line-height: 0.96;
-    letter-spacing: -0.04em;
-    color: var(--color-fg-primary);
-  }
-
-  .research-panel h2 {
     font-size: clamp(1.9rem, 2.8vw, 2.7rem);
     line-height: 1.02;
+    color: var(--color-fg-primary);
+    text-wrap: balance;
   }
 
-  .hero-detail,
-  .section-lead p,
-  .cta-panel p,
-  .research-panel p,
-  .track-card p,
-  .bridge-card p {
+  .research-panel p {
     margin: 0;
     color: var(--color-fg-secondary);
     font-size: var(--text-body);
     line-height: 1.75;
   }
 
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    margin-top: 0.35rem;
-  }
-
-  .hero-actions--center {
-    justify-content: center;
-  }
-
-  .hero-note {
-    margin: 0;
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-
   .research-panel {
     height: 100%;
-    padding: clamp(1.2rem, 2.5vw, 1.8rem);
   }
 
   .panel-grid {
@@ -432,9 +394,7 @@
   }
 
   .panel-label,
-  .track-tag,
-  .bridge-eyebrow,
-  .bridge-link {
+  .latest-empty {
     font-family: var(--font-mono);
     font-size: var(--text-caption);
     font-weight: 500;
@@ -493,133 +453,9 @@
     line-height: 1.6;
   }
 
-  .metric-grid,
-  .track-grid,
-  .bridge-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .metric-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: clamp(1.8rem, 4vw, 2.5rem);
-  }
-
-  .metric-card {
-    display: grid;
-    gap: 0.5rem;
-    min-height: 10rem;
-    padding: clamp(1.25rem, 2.2vw, 1.7rem);
-    align-content: end;
-  }
-
-  .metric-value {
-    font-size: clamp(2rem, 4vw, 3rem);
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: var(--color-fg-primary);
-  }
-
-  .metric-label {
-    display: block;
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-  }
-
-  .section-lead {
-    max-width: 46rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .section-lead--center {
-    margin-inline: auto;
-    text-align: center;
-  }
-
-  .section-lead h2,
-  .cta-panel h2 {
-    font-size: clamp(2.2rem, 4vw, 3.45rem);
-    line-height: 1;
-  }
-
-  .track-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .track-card {
-    display: grid;
-    gap: 1rem;
-    padding: clamp(1.35rem, 2.4vw, 1.8rem);
-  }
-
-  .track-card h3,
-  .bridge-card h3 {
-    margin: 0;
-    font-size: clamp(1.35rem, 2vw, 1.7rem);
-    line-height: 1.08;
-    color: var(--color-fg-primary);
-  }
-
-  .trackFeatured {
-    border-color: var(--color-brand-primary-border);
-    background:
-      linear-gradient(180deg, var(--color-brand-primary-soft), var(--color-brand-primary-muted)),
-      var(--color-shell-surface-secondary);
-  }
-
-  .bridge-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .bridge-card {
-    display: grid;
-    gap: 0.95rem;
-    padding: clamp(1.25rem, 2.2vw, 1.7rem);
-    text-decoration: none;
-    opacity: 1;
-    transition:
-      transform var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard);
-  }
-
-  .bridge-card:hover {
-    opacity: 1;
-    transform: translateY(-2px);
-    border-color: var(--color-shell-border-strong);
-    background: var(--color-shell-surface-hover);
-  }
-
-  .cta-panel {
-    justify-items: center;
-    text-align: center;
-    padding: clamp(1.7rem, 4vw, 2.4rem);
-  }
-
-  @media (max-width: 1100px) {
-    .hero-layout,
-    .metric-grid,
-    .track-grid,
-    .bridge-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
   @media (max-width: 720px) {
     .panel-grid {
       grid-template-columns: 1fr;
-    }
-
-    .hero-title,
-    .section-lead h2,
-    .cta-panel h2 {
-      line-height: 1.02;
-    }
-
-    .hero-actions {
-      flex-direction: column;
     }
   }
 </style>

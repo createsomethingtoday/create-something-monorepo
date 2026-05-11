@@ -34,6 +34,7 @@
 		"./styles/tokens.css": "./dist/styles/tokens.css",
 		"./styles/canon.css": "./dist/styles/canon.css",
 		"./styles/components.css": "./dist/styles/components.css",
+		"./styles/property-shell.css": "./dist/styles/property-shell.css",
 		"./styles/editorial.css": "./dist/styles/editorial.css",
 		"./styles/animations.css": "./dist/styles/animations.css",
 		"./styles/glass.css": "./dist/styles/glass.css",

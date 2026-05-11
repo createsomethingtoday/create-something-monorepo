@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, SEO } from '@create-something/canon';
+  import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import RuntimeWorkbench from '$lib/components/RuntimeWorkbench.svelte';
 
@@ -137,49 +137,53 @@
   propertyName="space"
 />
 
-<section class="hero-page">
-  <div class="shell-inner-pad hero-layout">
-    <div class="hero-copy">
-      <BlurFade delay={0}>
-        <span class="product-kicker">CREATE SOMETHING .space</span>
-      </BlurFade>
+<section class="property-hero-page">
+  <div class="property-hero-stage">
+    <HeroSignalField variant="space" focus="right" />
 
-      <BlurFade delay={0.05}>
-        <h1 class="hero-title">A public workbench for trying the runtime in the open.</h1>
-      </BlurFade>
+    <div class="shell-inner-pad property-hero-layout">
+      <div class="property-hero-copy">
+        <BlurFade delay={0}>
+          <span class="product-kicker">CREATE SOMETHING .space</span>
+        </BlurFade>
 
-      <BlurFade delay={0.1}>
-        <p class="hero-detail">
-          CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested
-          against real execution surfaces. The point is not a polished demo. It is a live place to
-          run code, inspect motion, and stress ideas before they become patterns or products.
-        </p>
-      </BlurFade>
+        <BlurFade delay={0.05}>
+          <h1 class="property-hero-title">
+            A public workbench for trying the runtime in the open.
+          </h1>
+        </BlurFade>
 
-      <BlurFade delay={0.15}>
-        <div class="hero-actions">
-          <Button href="/playground">Open The Playground</Button>
-          <Button href="/praxis" variant="secondary">Start Praxis</Button>
-        </div>
-      </BlurFade>
+        <BlurFade delay={0.1}>
+          <p class="property-hero-detail">
+            CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested
+            against real execution surfaces. The point is not a polished demo. It is a live place to
+            run code, inspect motion, and stress ideas before they become patterns or products.
+          </p>
+        </BlurFade>
 
-      <BlurFade delay={0.2}>
-        <p class="hero-note">Live routes. Workers-first execution. Inspectable outputs.</p>
-      </BlurFade>
+        <BlurFade delay={0.15}>
+          <div class="property-hero-actions">
+            <Button href="/playground">Open The Playground</Button>
+            <Button href="/praxis" variant="secondary">Start Praxis</Button>
+          </div>
+        </BlurFade>
+
+        <BlurFade delay={0.2}>
+          <p class="property-hero-note">
+            Live routes. Workers-first execution. Inspectable outputs.
+          </p>
+        </BlurFade>
+      </div>
     </div>
-
-    <BlurFade delay={0.2}>
-      <RuntimeWorkbench />
-    </BlurFade>
   </div>
 
   <div class="shell-inner-pad">
-    <div class="metric-grid">
+    <div class="property-metric-grid">
       {#each proofMetrics as metric, index}
         <BlurFade delay={0.25 + index * 0.05}>
-          <article class="product-surface product-surface--soft metric-card">
-            <span class="metric-value">{metric.value}</span>
-            <span class="metric-label">{metric.label}</span>
+          <article class="product-surface product-surface--soft property-metric-card">
+            <span class="property-metric-value">{metric.value}</span>
+            <span class="property-metric-label">{metric.label}</span>
           </article>
         </BlurFade>
       {/each}
@@ -187,9 +191,17 @@
   </div>
 </section>
 
-<section class="tool-section">
+<section class="property-section workbench-section">
   <div class="shell-inner-pad">
-    <div class="section-lead">
+    <BlurFade delay={0.05}>
+      <RuntimeWorkbench />
+    </BlurFade>
+  </div>
+</section>
+
+<section class="property-section">
+  <div class="shell-inner-pad">
+    <div class="property-section-lead">
       <BlurFade>
         <span class="product-kicker">Live surfaces</span>
       </BlurFade>
@@ -198,24 +210,26 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The workbench is organized around live routes that expose execution, analysis, or
-          learning loops. Each surface should feel like a working tool, not a static marketing
-          panel.
+          The workbench is organized around live routes that expose execution, analysis, or learning
+          loops. Each surface should feel like a working tool, not a static marketing panel.
         </p>
       </BlurFade>
     </div>
 
-    <div class="tool-grid">
+    <div class="property-card-grid property-card-grid--3">
       {#each tools as tool, index}
         <BlurFade delay={0.15 + index * 0.05}>
-          <a href={tool.href} class="product-surface tool-card">
+          <a
+            href={tool.href}
+            class="product-surface property-content-card property-content-link-card tool-card"
+          >
             <div class="tool-header">
               <div class="tool-icon" aria-hidden="true">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d={tool.icon} />
                 </svg>
               </div>
-              <span class="tool-tag">{tool.tag}</span>
+              <span class="property-content-meta">{tool.tag}</span>
             </div>
 
             <div class="tool-body">
@@ -223,7 +237,7 @@
               <p>{tool.description}</p>
             </div>
 
-            <span class="tool-link">Open route</span>
+            <span class="property-content-link">Open route</span>
           </a>
         </BlurFade>
       {/each}
@@ -231,9 +245,9 @@
   </div>
 </section>
 
-<section class="loop-section">
+<section class="property-section">
   <div class="shell-inner-pad">
-    <div class="section-lead section-lead--center">
+    <div class="property-section-lead property-section-lead--center">
       <BlurFade>
         <span class="product-kicker">Operating loop</span>
       </BlurFade>
@@ -248,10 +262,10 @@
       </BlurFade>
     </div>
 
-    <div class="loop-grid">
+    <div class="property-card-grid property-card-grid--3">
       {#each operatingLoops as loop, index}
         <BlurFade delay={0.15 + index * 0.06}>
-          <article class="product-surface product-surface--soft loop-card">
+          <article class="product-surface product-surface--soft property-content-card">
             <h3>{loop.title}</h3>
             <p>{loop.summary}</p>
             <ul class="product-list">
@@ -266,9 +280,9 @@
   </div>
 </section>
 
-<section class="ecosystem-section">
+<section class="property-section">
   <div class="shell-inner-pad">
-    <div class="section-lead section-lead--center">
+    <div class="property-section-lead property-section-lead--center">
       <BlurFade>
         <span class="product-kicker">Cross-property handoff</span>
       </BlurFade>
@@ -283,19 +297,19 @@
       </BlurFade>
     </div>
 
-    <div class="ecosystem-grid">
+    <div class="property-card-grid property-card-grid--3">
       {#each ecosystemCards as card, index}
         <BlurFade delay={0.15 + index * 0.06}>
           <a
             href={card.href}
-            class="product-surface product-surface--soft ecosystem-card"
+            class="product-surface product-surface--soft property-content-card property-content-link-card"
             target="_blank"
             rel="noopener"
           >
-            <span class="ecosystem-eyebrow">{card.eyebrow}</span>
+            <span class="property-content-meta">{card.eyebrow}</span>
             <h3>{card.title}</h3>
             <p>{card.body}</p>
-            <span class="ecosystem-link">Open property</span>
+            <span class="property-content-link">Open property</span>
           </a>
         </BlurFade>
       {/each}
@@ -303,9 +317,9 @@
   </div>
 </section>
 
-<section class="cta-section">
+<section class="property-section">
   <div class="shell-inner-pad">
-    <div class="product-surface product-surface--accent cta-panel">
+    <div class="product-surface product-surface--accent property-cta-panel">
       <BlurFade>
         <span class="product-kicker">Pick a surface</span>
       </BlurFade>
@@ -319,7 +333,7 @@
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
-        <div class="hero-actions hero-actions--center">
+        <div class="property-hero-actions property-hero-actions--center">
           <Button href="/motion">Inspect Motion</Button>
           <Button href="/data/nba" variant="secondary">Open Data Studio</Button>
         </div>
@@ -329,144 +343,9 @@
 </section>
 
 <style>
-  .hero-page,
-  .tool-section,
-  .loop-section,
-  .ecosystem-section,
-  .cta-section {
-    padding-block: clamp(3.5rem, 8vw, 6rem);
-  }
-
-  .hero-page {
-    padding-top: clamp(5.5rem, 10vw, 7rem);
-  }
-
-  .hero-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-    gap: clamp(2rem, 4vw, 3.5rem);
-    align-items: center;
-  }
-
-  .hero-copy,
-  .section-lead,
-  .cta-panel,
   .tool-body {
     display: grid;
-    gap: 1rem;
-  }
-
-  .hero-title,
-  .section-lead h2,
-  .cta-panel h2 {
-    margin: 0;
-    font-size: clamp(2.6rem, 5vw, 4.75rem);
-    line-height: 0.96;
-    letter-spacing: -0.04em;
-    color: var(--color-fg-primary);
-  }
-
-  .hero-detail,
-  .section-lead p,
-  .cta-panel p,
-  .tool-card p,
-  .loop-card p,
-  .ecosystem-card p {
-    margin: 0;
-    color: var(--color-fg-secondary);
-    font-size: 1rem;
-    line-height: 1.75;
-  }
-
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    margin-top: 0.35rem;
-  }
-
-  .hero-actions--center {
-    justify-content: center;
-  }
-
-  .hero-note {
-    margin: 0;
-    color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-
-  .metric-grid,
-  .tool-grid,
-  .loop-grid,
-  .ecosystem-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .metric-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: clamp(1.8rem, 4vw, 2.5rem);
-  }
-
-  .metric-card {
-    display: grid;
-    gap: 0.5rem;
-    min-height: 10rem;
-    align-content: end;
-  }
-
-  .metric-value {
-    font-size: clamp(2rem, 4vw, 3rem);
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: var(--color-fg-primary);
-  }
-
-  .metric-label {
-    color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    line-height: 1.6;
-  }
-
-  .section-lead {
-    max-width: 46rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .section-lead--center {
-    margin-inline: auto;
-    text-align: center;
-  }
-
-  .section-lead h2,
-  .cta-panel h2 {
-    font-size: clamp(2.2rem, 4vw, 3.45rem);
-    line-height: 1;
-  }
-
-  .tool-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .tool-card {
-    display: grid;
-    gap: 1.1rem;
-    text-decoration: none;
-    opacity: 1;
-    transition:
-      transform var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard);
-  }
-
-  .tool-card:hover,
-  .ecosystem-card:hover {
-    opacity: 1;
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.05);
+    gap: 0.65rem;
   }
 
   .tool-header {
@@ -483,89 +362,13 @@
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--color-shell-border-subtle);
+    background: var(--color-hover);
     color: var(--color-fg-primary);
   }
 
   .tool-icon svg {
     width: 1.4rem;
     height: 1.4rem;
-  }
-
-  .tool-tag,
-  .tool-link,
-  .ecosystem-eyebrow,
-  .ecosystem-link {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-fg-muted);
-  }
-
-  .tool-card h3,
-  .loop-card h3,
-  .ecosystem-card h3 {
-    margin: 0;
-    font-size: clamp(1.35rem, 2vw, 1.7rem);
-    line-height: 1.08;
-    color: var(--color-fg-primary);
-  }
-
-  .loop-grid,
-  .ecosystem-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .loop-card,
-  .ecosystem-card {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .ecosystem-card {
-    text-decoration: none;
-    opacity: 1;
-    transition:
-      transform var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard);
-  }
-
-  .cta-panel {
-    justify-items: center;
-    text-align: center;
-    padding: clamp(1.7rem, 4vw, 2.4rem);
-  }
-
-  @media (max-width: 1200px) {
-    .hero-layout,
-    .metric-grid,
-    .loop-grid,
-    .ecosystem-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .tool-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 720px) {
-    .tool-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .hero-title,
-    .section-lead h2,
-    .cta-panel h2 {
-      line-height: 1.02;
-    }
-
-    .hero-actions {
-      flex-direction: column;
-    }
   }
 </style>

@@ -152,8 +152,7 @@
     {
       name: 'Workflow System',
       featured: true,
-      summary:
-        'The first reliable operating path. Fix one workflow your team still does by hand.',
+      summary: 'The first reliable operating path. Fix one workflow your team still does by hand.',
       points: [
         'Business-rule mapping',
         'Workflow implementation',
@@ -164,8 +163,7 @@
     {
       name: 'Policy OS',
       featured: false,
-      summary:
-        'The governed execution layer once speed touches revenue, trust, or compliance.',
+      summary: 'The governed execution layer once speed touches revenue, trust, or compliance.',
       points: [
         'Approval and block boundaries',
         'Release checks and eval gates',
@@ -191,22 +189,24 @@
   {services}
 />
 
-<section class="hero-page">
-  <div class="hero-stage">
+<section class="property-hero-page">
+  <div class="property-hero-stage">
     <HeroSignalField variant="agency" focus="right" />
 
-    <div class="shell-inner-pad hero-layout">
-      <div class="hero-copy">
+    <div class="shell-inner-pad property-hero-layout">
+      <div class="property-hero-copy">
         <BlurFade delay={0}>
           <span class="product-kicker">{agencyCoreMessaging.categoryLabel}</span>
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Calm, transparent AI systems for the operator who has to own the outcome.</h1>
+          <h1 class="property-hero-title">
+            Calm, transparent AI systems for the operator who has to own the outcome.
+          </h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
-          <p class="hero-detail">
+          <p class="property-hero-detail">
             CREATE SOMETHING is the operating toolchain I use as a solo operator to complete the
             outcome. Reputable services make the work transparent; the moat is the calm, reliable
             workflow built around your business.
@@ -214,26 +214,26 @@
         </BlurFade>
 
         <BlurFade delay={0.15}>
-          <div class="hero-actions">
+          <div class="property-hero-actions">
             <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
             <Button href="/stack" variant="secondary">See The Stack</Button>
           </div>
         </BlurFade>
 
         <BlurFade delay={0.2}>
-          <p class="hero-note">Connect. Automate. Govern. Operate.</p>
+          <p class="property-hero-note">Connect. Automate. Govern. Operate.</p>
         </BlurFade>
       </div>
     </div>
   </div>
 
   <div class="shell-inner-pad">
-    <div class="metric-grid">
+    <div class="property-metric-grid">
       {#each proofMetrics as metric, index}
         <BlurFade delay={0.25 + index * 0.05}>
-          <article class="product-surface product-surface--soft metric-card">
-            <span class="metric-value">{metric.value}</span>
-            <span class="metric-label">{metric.label}</span>
+          <article class="product-surface product-surface--soft property-metric-card">
+            <span class="property-metric-value">{metric.value}</span>
+            <span class="property-metric-label">{metric.label}</span>
           </article>
         </BlurFade>
       {/each}
@@ -241,7 +241,7 @@
   </div>
 </section>
 
-<section class="signal-section">
+<section class="property-section">
   <div class="shell-inner-pad">
     <div class="product-surface product-surface--soft signal-shell">
       <div class="signal-header">
@@ -268,7 +268,7 @@
   </div>
 </section>
 
-<section id="ink" class="ink-section">
+<section id="ink" class="property-section">
   <div class="shell-inner-pad">
     <BlurFade>
       <InkOperatorSurface />
@@ -276,9 +276,9 @@
   </div>
 </section>
 
-<section class="control-section">
+<section class="property-section">
   <div class="shell-inner-pad showcase-stack">
-    <div class="section-lead">
+    <div class="property-section-lead">
       <BlurFade>
         <span class="product-kicker">Inspect the full control room</span>
       </BlurFade>
@@ -287,8 +287,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Once the hero establishes the workflow boundaries, the full surface can show tabs,
-          checks, artifacts, and release logic without crushing the copy.
+          Once the hero establishes the workflow boundaries, the full surface can show tabs, checks,
+          artifacts, and release logic without crushing the copy.
         </p>
       </BlurFade>
     </div>
@@ -299,9 +299,9 @@
   </div>
 </section>
 
-<section id="how" class="capability-section">
+<section id="how" class="property-section">
   <div class="shell-inner-pad">
-    <div class="section-lead">
+    <div class="property-section-lead">
       <BlurFade>
         <span class="product-kicker">Why teams buy this</span>
       </BlurFade>
@@ -316,11 +316,11 @@
       </BlurFade>
     </div>
 
-    <div class="capability-grid">
+    <div class="property-card-grid property-card-grid--2">
       {#each capabilityCards as card, index}
         <BlurFade delay={0.15 + index * 0.05}>
-          <article class="product-surface capability-card">
-            <span class="capability-id">{card.id}</span>
+          <article class="product-surface property-content-card">
+            <span class="property-content-meta">{card.id}</span>
             <h3>{card.title}</h3>
             <p>{card.body}</p>
             <ul class="product-list">
@@ -335,9 +335,9 @@
   </div>
 </section>
 
-<section class="offer-section">
+<section class="property-section">
   <div class="shell-inner-pad">
-    <div class="section-lead section-lead--center">
+    <div class="property-section-lead property-section-lead--center">
       <BlurFade>
         <span class="product-kicker">Offer ladder</span>
       </BlurFade>
@@ -352,14 +352,17 @@
       </BlurFade>
     </div>
 
-    <div class="offer-grid">
+    <div class="property-card-grid property-card-grid--3">
       {#each offerCards as offer, index}
         <BlurFade delay={0.15 + index * 0.08}>
           <article
-            class="product-surface offer-card"
-            class:offerFeatured={offer.featured}
+            class="product-surface property-content-card {offer.featured
+              ? 'property-content-card--featured'
+              : ''}"
           >
-            <span class="offer-tag">{offer.featured ? 'Primary build' : 'Entry or expansion'}</span>
+            <span class="property-content-meta"
+              >{offer.featured ? 'Primary build' : 'Entry or expansion'}</span
+            >
             <h3>{offer.name}</h3>
             <p>{offer.summary}</p>
             <ul class="product-list">
@@ -374,7 +377,7 @@
   </div>
 </section>
 
-<section class="governance-section">
+<section class="property-section">
   <div class="shell-inner-pad governance-grid">
     <div class="governance-copy">
       <BlurFade>
@@ -405,7 +408,7 @@
   </div>
 </section>
 
-<section class="artifact-section">
+<section class="property-section">
   <div class="shell-inner-pad">
     <BlurFade>
       <ArtifactSystemStrip
@@ -418,7 +421,7 @@
   </div>
 </section>
 
-<section class="mapping-section">
+<section class="property-section">
   <div class="shell-inner-pad">
     <BlurFade>
       <MappingSessionBrief />
@@ -426,9 +429,9 @@
   </div>
 </section>
 
-<section class="cta-section">
+<section class="property-section">
   <div class="shell-inner-pad">
-    <div class="product-surface product-surface--accent cta-panel">
+    <div class="product-surface product-surface--accent property-cta-panel">
       <BlurFade>
         <span class="product-kicker">Start with one workflow</span>
       </BlurFade>
@@ -439,7 +442,7 @@
         <p>{agencyCoreMessaging.workflowCtaDetail}</p>
       </BlurFade>
       <BlurFade delay={0.15}>
-        <div class="hero-actions hero-actions--center">
+        <div class="property-hero-actions property-hero-actions--center">
           <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
           <Button href="/stack" variant="secondary">See The Stack</Button>
         </div>
@@ -449,177 +452,6 @@
 </section>
 
 <style>
-  .hero-page {
-    padding-top: clamp(6rem, 10vw, 8rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4rem);
-  }
-
-  .hero-stage {
-    position: relative;
-    min-height: clamp(34rem, 58vw, 43rem);
-    overflow: clip;
-    isolation: isolate;
-  }
-
-  .hero-stage::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background:
-      linear-gradient(
-        180deg,
-        rgba(3, 3, 4, 1) 0%,
-        rgba(3, 3, 4, 0.86) 8%,
-        rgba(3, 3, 4, 0.28) 20%,
-        rgba(3, 3, 4, 0) 34%,
-        rgba(3, 3, 4, 0) 66%,
-        rgba(3, 3, 4, 0.32) 80%,
-        rgba(3, 3, 4, 0.82) 92%,
-        rgba(3, 3, 4, 1) 100%
-      ),
-      linear-gradient(
-        90deg,
-        rgba(3, 3, 4, 1) 0%,
-        rgba(3, 3, 4, 0.965) 28%,
-        rgba(3, 3, 4, 0.68) 52%,
-        rgba(3, 3, 4, 0.18) 72%,
-        rgba(3, 3, 4, 0.34) 88%,
-        rgba(3, 3, 4, 0.52) 100%
-      ),
-      radial-gradient(
-        circle at 74% 54%,
-        rgba(3, 3, 4, 0) 0%,
-        rgba(3, 3, 4, 0.08) 22%,
-        rgba(3, 3, 4, 0.24) 58%,
-        rgba(3, 3, 4, 0.46) 100%
-      ),
-      radial-gradient(circle at 16% 52%, rgba(3, 3, 4, 0.18) 0%, transparent 38%);
-  }
-
-  .hero-stage :global(.hero-signal-field) {
-    inset: -2rem -4rem -3rem -2rem;
-  }
-
-  .hero-layout {
-    position: relative;
-    z-index: 2;
-    display: block;
-    width: 100%;
-    padding-top: clamp(2rem, 4vw, 3rem);
-    padding-bottom: clamp(3rem, 6vw, 4.5rem);
-  }
-
-  .hero-copy {
-    display: grid;
-    gap: 1.15rem;
-    max-width: 47rem;
-  }
-
-  .hero-copy .product-kicker {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    width: fit-content;
-    padding: 0.38rem 0.7rem 0.4rem;
-    border: 1px solid rgba(91, 125, 255, 0.16);
-    border-radius: 999px;
-    background: rgba(8, 10, 14, 0.62);
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-      0 10px 30px rgba(0, 0, 0, 0.18);
-    backdrop-filter: blur(12px);
-  }
-
-  .hero-copy .product-kicker::before {
-    content: '';
-    width: 0.38rem;
-    height: 0.38rem;
-    border-radius: 999px;
-    background: rgba(59, 109, 255, 0.96);
-    box-shadow: 0 0 14px rgba(70, 154, 255, 0.38);
-  }
-
-  .hero-title {
-    margin: 0;
-    font-size: clamp(3rem, 5vw + 1rem, 5.6rem);
-    line-height: 0.96;
-    letter-spacing: -0.045em;
-    text-wrap: balance;
-  }
-
-  .hero-detail {
-    margin: 0;
-    max-width: 34rem;
-    color: var(--color-fg-secondary);
-    font-size: clamp(1.05rem, 1vw + 0.9rem, 1.2rem);
-    line-height: 1.72;
-    text-wrap: pretty;
-  }
-
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    align-items: center;
-  }
-
-  .hero-actions--center {
-    justify-content: center;
-  }
-
-  .hero-note {
-    margin: 0;
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .metric-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.9rem;
-    margin-top: 1.1rem;
-  }
-
-  .metric-card {
-    display: grid;
-    gap: 0.35rem;
-    padding: 1rem 1.05rem;
-  }
-
-  .metric-value {
-    color: var(--color-fg-primary);
-    font-family: var(--font-mono);
-    font-size: 1.45rem;
-    letter-spacing: -0.05em;
-  }
-
-  .metric-label {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    line-height: 1.45;
-  }
-
-  .signal-section,
-  .control-section,
-  .ink-section,
-  .capability-section,
-  .offer-section,
-  .governance-section,
-  .artifact-section,
-  .mapping-section,
-  .cta-section {
-    padding-top: 1.25rem;
-    padding-bottom: clamp(3.5rem, 6vw, 5rem);
-  }
-
   .signal-shell {
     display: grid;
     gap: 1.2rem;
@@ -681,83 +513,6 @@
     color: var(--color-brand-ink);
   }
 
-  .section-lead {
-    display: grid;
-    gap: 0.85rem;
-    max-width: 42rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .section-lead--center {
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center;
-  }
-
-  .section-lead h2 {
-    margin: 0;
-    line-height: 1;
-    text-wrap: balance;
-  }
-
-  .section-lead p {
-    margin: 0;
-    color: var(--color-fg-secondary);
-    line-height: 1.72;
-  }
-
-  .capability-grid,
-  .offer-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .capability-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .capability-card,
-  .offer-card {
-    display: grid;
-    gap: 0.9rem;
-    padding: 1.2rem;
-  }
-
-  .capability-id,
-  .offer-tag {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
-    font-size: 0.74rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .capability-card h3,
-  .offer-card h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    line-height: 1.15;
-  }
-
-  .capability-card p,
-  .offer-card p {
-    margin: 0;
-    color: var(--color-fg-secondary);
-    line-height: 1.7;
-  }
-
-  .offer-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .offer-card.offerFeatured {
-    border-color: var(--color-brand-primary-border);
-    box-shadow:
-      0 18px 38px rgba(0, 0, 0, 0.42),
-      0 0 0 1px rgba(49, 92, 255, 0.14),
-      0 0 44px rgba(49, 92, 255, 0.12);
-  }
-
   .governance-grid {
     display: grid;
     gap: clamp(1.25rem, 3vw, 2rem);
@@ -771,15 +526,13 @@
     max-width: 36rem;
   }
 
-  .governance-copy h2,
-  .cta-panel h2 {
+  .governance-copy h2 {
     margin: 0;
     line-height: 1.02;
     text-wrap: balance;
   }
 
-  .governance-copy p,
-  .cta-panel p {
+  .governance-copy p {
     margin: 0;
     color: var(--color-fg-secondary);
     line-height: 1.72;
@@ -787,13 +540,6 @@
 
   .governance-points {
     margin-top: 0.25rem;
-  }
-
-  .cta-panel {
-    display: grid;
-    gap: 0.95rem;
-    padding: clamp(1.4rem, 3vw, 2rem);
-    text-align: center;
   }
 
   @media (max-width: 1100px) {
@@ -807,78 +553,11 @@
   }
 
   @media (max-width: 768px) {
-    .hero-page {
-      padding-top: clamp(2.25rem, 9vw, 3.25rem);
-      padding-bottom: clamp(1.75rem, 8vw, 3rem);
-    }
-
-    .hero-stage {
-      min-height: clamp(28rem, 104vw, 37rem);
-    }
-
-    .hero-stage::after {
-      background:
-        linear-gradient(
-          180deg,
-          rgba(3, 3, 4, 1) 0%,
-          rgba(3, 3, 4, 0.9) 10%,
-          rgba(3, 3, 4, 0.38) 22%,
-          rgba(3, 3, 4, 0) 34%,
-          rgba(3, 3, 4, 0) 68%,
-          rgba(3, 3, 4, 0.4) 82%,
-          rgba(3, 3, 4, 0.9) 94%,
-          rgba(3, 3, 4, 1) 100%
-        ),
-        linear-gradient(
-          90deg,
-          rgba(3, 3, 4, 1) 0%,
-          rgba(3, 3, 4, 0.972) 42%,
-          rgba(3, 3, 4, 0.7) 66%,
-          rgba(3, 3, 4, 0.26) 82%,
-          rgba(3, 3, 4, 0.46) 100%
-        ),
-        radial-gradient(
-          circle at 76% 56%,
-          rgba(3, 3, 4, 0) 0%,
-          rgba(3, 3, 4, 0.12) 24%,
-          rgba(3, 3, 4, 0.34) 64%,
-          rgba(3, 3, 4, 0.58) 100%
-        ),
-        radial-gradient(circle at 18% 42%, rgba(3, 3, 4, 0.2) 0%, transparent 36%);
-    }
-
-    .hero-stage :global(.hero-signal-field) {
-      inset: 0 -2.5rem -2rem -1rem;
-    }
-
-    .hero-layout {
-      padding-top: 1rem;
-      padding-bottom: 2.75rem;
-    }
-
-    .metric-grid,
-    .capability-grid,
-    .offer-grid {
-      grid-template-columns: 1fr;
-    }
-
     .signal-strip {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .hero-title {
-      font-size: clamp(2.6rem, 11vw, 4rem);
-    }
-
-    .hero-copy .product-kicker {
-      gap: 0.38rem;
-      padding: 0.34rem 0.58rem 0.36rem;
-    }
-
-    .signal-shell,
-    .capability-card,
-    .offer-card,
-    .cta-panel {
+    .signal-shell {
       padding: 1rem;
     }
 
