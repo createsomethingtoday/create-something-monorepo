@@ -391,7 +391,7 @@
   .bridge-card p {
     margin: 0;
     color: var(--color-fg-secondary);
-    font-size: 1rem;
+    font-size: var(--text-body);
     line-height: 1.75;
   }
 
@@ -409,13 +409,14 @@
   .hero-note {
     margin: 0;
     color: var(--color-fg-muted);
-    font-size: 0.92rem;
+    font-size: var(--text-body-sm);
     letter-spacing: 0.03em;
     text-transform: uppercase;
   }
 
   .research-panel {
     height: 100%;
+    padding: clamp(1.2rem, 2.5vw, 1.8rem);
   }
 
   .panel-grid {
@@ -427,6 +428,7 @@
   .panel-block {
     display: grid;
     gap: 0.75rem;
+    padding: 0;
   }
 
   .panel-label,
@@ -434,7 +436,7 @@
   .bridge-eyebrow,
   .bridge-link {
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: var(--text-caption);
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -444,12 +446,12 @@
   .panel-command {
     margin: 0;
     padding: 1rem 1.05rem;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-shell-border-subtle);
+    background: var(--color-hover);
     color: var(--color-fg-primary);
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: var(--text-body-sm);
     line-height: 1.7;
   }
 
@@ -464,11 +466,11 @@
   .latest-link {
     display: block;
     padding: 0.95rem 1rem;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    background: rgba(255, 255, 255, 0.025);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-shell-border-subtle);
+    background: color-mix(in srgb, var(--color-shell-surface) 82%, transparent);
     color: var(--color-fg-primary);
-    font-size: 0.95rem;
+    font-size: var(--text-body-sm);
     line-height: 1.45;
     text-decoration: none;
     opacity: 1;
@@ -481,13 +483,13 @@
   .latest-link:hover {
     opacity: 1;
     transform: translateY(-1px);
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-shell-border-strong);
+    background: var(--color-shell-surface-hover);
   }
 
   .latest-empty {
     color: var(--color-fg-muted);
-    font-size: 0.9rem;
+    font-size: var(--text-body-sm);
     line-height: 1.6;
   }
 
@@ -519,7 +521,7 @@
 
   .metric-label {
     color: var(--color-fg-muted);
-    font-size: 0.92rem;
+    font-size: var(--text-body-sm);
     line-height: 1.6;
   }
 
@@ -559,7 +561,7 @@
   .trackFeatured {
     border-color: var(--color-brand-primary-border);
     background:
-      linear-gradient(180deg, rgba(49, 92, 255, 0.16), rgba(49, 92, 255, 0.06)),
+      linear-gradient(180deg, var(--color-brand-primary-soft), var(--color-brand-primary-muted)),
       var(--color-shell-surface-secondary);
   }
 
@@ -581,8 +583,8 @@
   .bridge-card:hover {
     opacity: 1;
     transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-shell-border-strong);
+    background: var(--color-shell-surface-hover);
   }
 
   .cta-panel {
