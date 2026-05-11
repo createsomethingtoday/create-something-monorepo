@@ -60,7 +60,7 @@
   propertyName="ltd"
 />
 
-<section class="property-hero-page">
+<section class="property-hero-page ltd-hero-page">
   <div class="property-hero-stage">
     <HeroSignalField variant="ltd" focus="right" />
 
@@ -112,9 +112,9 @@
   </div>
 </section>
 
-<section class="property-section">
-  <div class="shell-inner-pad">
-    <div class="property-section-lead">
+<section class="property-section ltd-principle-section">
+  <div class="shell-inner-pad ltd-principle-grid">
+    <div class="property-section-lead ltd-principle-lead">
       <BlurFade>
         <span class="product-kicker">Weniger, aber besser</span>
       </BlurFade>
@@ -244,10 +244,33 @@
 />
 
 <style>
+  .ltd-hero-page {
+    padding-bottom: clamp(1.5rem, 3.5vw, 2.5rem);
+  }
+
+  .ltd-principle-section {
+    padding-top: clamp(0.5rem, 2vw, 1.5rem);
+    padding-bottom: clamp(2.75rem, 5vw, 4rem);
+  }
+
+  .ltd-principle-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(24rem, 1fr);
+    gap: clamp(1.4rem, 4vw, 4rem);
+    align-items: start;
+  }
+
+  .ltd-principle-lead {
+    margin-bottom: 0;
+    max-width: 38rem;
+  }
+
   .manifesto-panel {
     display: grid;
     gap: clamp(1.2rem, 3vw, 1.8rem);
-    max-width: 52rem;
+    max-width: none;
+    margin-top: 0.4rem;
+    --product-surface-padding: clamp(1.35rem, 2.5vw, 2rem);
   }
 
   .manifesto-panel p {
@@ -285,5 +308,16 @@
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-shell-border-subtle);
     background: var(--color-hover);
+  }
+
+  @media (max-width: 980px) {
+    .ltd-principle-grid {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    .manifesto-panel {
+      margin-top: 0;
+    }
   }
 </style>
