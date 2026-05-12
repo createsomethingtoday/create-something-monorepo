@@ -1,0 +1,13 @@
+{
+  "name": "@create-something/pi-halfdozen",
+  "version": "1.0.0",
+  "description": "Half Dozen MCP fleet knowledge for Pi agents — client Notion MCPs, Gmail/Zoom/YouTube sync patterns, and telemetry queries for music management workflows.",
+  "private": true,
+  "keywords": ["pi-package", "half-dozen", "workway", "music-management", "mcp"],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "UNLICENSED",
+  "pi": {
+    "skills": ["./skills"],
+    "prompts": ["./prompts"]
+  }
+}

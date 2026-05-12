@@ -1,0 +1,28 @@
+{
+  "theme": "glass",
+  "defaultThinkingLevel": "medium",
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 16384,
+    "keepRecentTokens": 20000
+  },
+  "retry": {
+    "enabled": true,
+    "maxRetries": 3,
+    "baseDelayMs": 2000
+  },
+  "skills": [
+    "../.claude/skills",
+    "../packages/pi-three-tier-framework/skills",
+    "../packages/pi-policy-os/skills",
+    "../packages/pi-halfdozen/skills",
+    "../packages/pi-webflow/skills"
+  ],
+  "prompts": [
+    "../packages/pi-three-tier-framework/prompts",
+    "../packages/pi-policy-os/prompts",
+    "../packages/pi-halfdozen/prompts",
+    "../packages/pi-webflow/prompts"
+  ],
+  "enableSkillCommands": true
+}
