@@ -15,6 +15,7 @@ Copy the relevant server configuration to your `~/.claude/settings.json` under `
 | Slack | Send messages, read channels | `slack.json` |
 | Linear | Issue tracking integration | `linear.json` |
 | Notion | Document and database access | `notion.json` |
+| Webflow Template Review Hub | Reviewer-scoped Webflow Template Review queue access | `webflow-template-review-hub.json` |
 | Resend | Email sending | `resend.json` |
 | Stripe | Payment operations | `stripe.json` |
 | Supabase | Database and auth | `supabase.json` |

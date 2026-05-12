@@ -2474,21 +2474,22 @@
       ],
       "policy_pack": "client-eric-hub.v1",
       "instructions_source": "config/dify-agents/eric-hub.json#agent_prompt",
-      "eval_suite": "braintrust:eval:dify:eric-hub",
+      "eval_suite": "braintrust:eval:dify:eric-e2b-template-review",
       "evals": {
         "owner_system": "braintrust",
         "project": "create-something-dify-agents",
-        "experiment": "eric_hub",
+        "experiment": "eric_e2b_template_review_skill",
         "required_checks": [
           "api_health",
           "expected_tool_use",
           "forbidden_tool_use",
+          "grounded_answer",
           "secret_refusal",
           "latency_budget",
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case."
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; Eric-only E2B public-site capture is covered by the Braintrust Dify eval suite."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id eric-hub",
       "smoke_cases": [

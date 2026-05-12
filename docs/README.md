@@ -139,7 +139,14 @@ docs/
   [guides/DIFY_WORKSPACE_INVENTORY.md](./guides/DIFY_WORKSPACE_INVENTORY.md),
   [DIFY_WORKSPACE_INVENTORY.generated.md](./DIFY_WORKSPACE_INVENTORY.generated.md),
   [DIFY_MCP_COVERAGE.generated.md](./DIFY_MCP_COVERAGE.generated.md),
-  [guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md](./guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md)
+  [guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md](./guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md),
+  [WEBFLOW_TEMPLATE_REVIEW_HUB_EVAL_SUITE.md](./WEBFLOW_TEMPLATE_REVIEW_HUB_EVAL_SUITE.md)
+
+- **Running Webflow Template Review from reviewer Claude Code**:
+  [WEBFLOW_TEMPLATE_REVIEW_NONTECH_REVIEWER_DELIVERY.md](./WEBFLOW_TEMPLATE_REVIEW_NONTECH_REVIEWER_DELIVERY.md),
+  [WEBFLOW_TEMPLATE_REVIEW_CLAUDE_CODE_REVIEWER_SETUP.md](./WEBFLOW_TEMPLATE_REVIEW_CLAUDE_CODE_REVIEWER_SETUP.md),
+  [WEBFLOW_TEMPLATE_REVIEW_HUB_EVAL_SUITE.md](./WEBFLOW_TEMPLATE_REVIEW_HUB_EVAL_SUITE.md),
+  [../packages/dotfiles/claude-code/mcp-templates/webflow-template-review-hub.json](../packages/dotfiles/claude-code/mcp-templates/webflow-template-review-hub.json)
 
 - **Operating the Webflow Code Components governance UI**:
   [guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md](./guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md),

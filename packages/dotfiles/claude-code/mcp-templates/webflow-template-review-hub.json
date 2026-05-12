@@ -1,0 +1,43 @@
+{
+  "_template": "Webflow Template Review reviewer Hub",
+  "_description": "Reviewer-scoped CREATE SOMETHING Hub endpoint for Webflow Template Review work in Claude Code.",
+  "_workway": "Claude Code gets local shell access for URL probes and a reviewer-scoped MCP Hub for Airtable review queue reads/writes.",
+  "_requires": ["infisical CLI access to prod:/mcp-hub/hubs or WF_TEMPLATE_REVIEW_HUB_TOKEN"],
+
+  "webflow-template-review-eric": {
+    "type": "http",
+    "url": "https://wf-template-review-eric.mcp.createsomething.agency/mcp",
+    "headersHelper": "/absolute/path/to/create-something-monorepo/scripts/webflow-template-review-mcp-headers.sh eric"
+  },
+
+  "webflow-template-review-natalia": {
+    "type": "http",
+    "url": "https://wf-template-review-natalia.mcp.createsomething.agency/mcp",
+    "headersHelper": "/absolute/path/to/create-something-monorepo/scripts/webflow-template-review-mcp-headers.sh natalia"
+  },
+
+  "webflow-template-review-mariana": {
+    "type": "http",
+    "url": "https://wf-template-review-mariana.mcp.createsomething.agency/mcp",
+    "headersHelper": "/absolute/path/to/create-something-monorepo/scripts/webflow-template-review-mcp-headers.sh mariana"
+  },
+
+  "webflow-template-review-vicki": {
+    "type": "http",
+    "url": "https://wf-template-review-vicki.mcp.createsomething.agency/mcp",
+    "headersHelper": "/absolute/path/to/create-something-monorepo/scripts/webflow-template-review-mcp-headers.sh vicki"
+  },
+
+  "_setup": [
+    "Run scripts/webflow-template-review-claude-code-setup.sh <reviewer> from the repo root.",
+    "Use scope user for a reviewer machine, or project when intentionally sharing a non-secret .mcp.json.",
+    "Run claude mcp list and /mcp in Claude Code to confirm the server connects.",
+    "Ask Claude Code to list Hub services; it must return only webflow-template-review-mcp."
+  ],
+
+  "_security": [
+    "The headersHelper prints only an Authorization header JSON object and keeps bearer values out of committed config.",
+    "The reviewer Hub must stay constrained to webflow-template-review-mcp.",
+    "Do not add webflow-site-analyzer-mcp back for Template Review reviewer Hubs."
+  ]
+}
