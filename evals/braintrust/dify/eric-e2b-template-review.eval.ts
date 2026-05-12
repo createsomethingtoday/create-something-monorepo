@@ -10,7 +10,16 @@ import {
   type DifyChatOutput
 } from './shared.js';
 
-type EricE2BInput = DifyChatInput & {
+type ReviewerConfig = {
+  slug: 'eric' | 'natalia' | 'mariana' | 'vicki';
+  displayName: string;
+  agentId: string;
+  apiKeyEnv: string;
+  infisicalPath: string;
+};
+
+type TemplateReviewE2BInput = DifyChatInput & {
+  reviewer: ReviewerConfig;
   expectedAnyTools?: string[];
   expectedTerms?: string[];
   expectedAnyTerms?: string[];
@@ -23,8 +32,39 @@ type Score = {
 };
 
 const TARGET_URL = 'https://omnerat-template.webflow.io/';
-const DEFAULT_DIFY_EVAL_USER = 'braintrust-eric-e2b-template-review-skill';
+const DEFAULT_DIFY_EVAL_USER = 'braintrust-template-review-e2b-skill';
 const LATENCY_BUDGET_MS = readPositiveIntEnv('DIFY_AGENT_EVAL_LATENCY_BUDGET_MS', 240_000);
+
+const REVIEWERS: ReviewerConfig[] = [
+  {
+    slug: 'eric',
+    displayName: 'Eric',
+    agentId: 'eric-hub',
+    apiKeyEnv: 'DIFY_ERIC_HUB_API_KEY',
+    infisicalPath: process.env.DIFY_ERIC_HUB_INFISICAL_PATH?.trim() || '/dify/eric-hub'
+  },
+  {
+    slug: 'natalia',
+    displayName: 'Natalia',
+    agentId: 'natalia-hub',
+    apiKeyEnv: 'DIFY_NATALIA_HUB_API_KEY',
+    infisicalPath: process.env.DIFY_NATALIA_HUB_INFISICAL_PATH?.trim() || '/dify/natalia-hub'
+  },
+  {
+    slug: 'mariana',
+    displayName: 'Mariana',
+    agentId: 'mariana-hub',
+    apiKeyEnv: 'DIFY_MARIANA_HUB_API_KEY',
+    infisicalPath: process.env.DIFY_MARIANA_HUB_INFISICAL_PATH?.trim() || '/dify/mariana-hub'
+  },
+  {
+    slug: 'vicki',
+    displayName: 'Vicki',
+    agentId: 'vicki-hub',
+    apiKeyEnv: 'DIFY_VICKI_HUB_API_KEY',
+    infisicalPath: process.env.DIFY_VICKI_HUB_INFISICAL_PATH?.trim() || '/dify/vicki-hub'
+  }
+];
 
 const FORBIDDEN_HUB_TOOLS = [
   'hub_status',
@@ -49,26 +89,21 @@ const FORBIDDEN_WRITE_TOOLS = [
   'hub_refresh_connections'
 ];
 
-const DIFY_CONFIG = buildDifyClientConfig({
-  apiKeyEnv: 'DIFY_ERIC_HUB_API_KEY',
-  secretName: 'DIFY_ERIC_HUB_API_KEY',
-  infisicalPath: process.env.DIFY_ERIC_HUB_INFISICAL_PATH?.trim() || '/dify/eric-hub',
-  timeoutMs: readPositiveIntEnv('DIFY_AGENT_EVAL_TIMEOUT_MS', 240_000),
-  user: process.env.DIFY_AGENT_EVAL_USER?.trim() || DEFAULT_DIFY_EVAL_USER
-});
-
-const CASES: Array<{ input: EricE2BInput; metadata: Record<string, string> }> = [
+const CASES: Array<{
+  input: Omit<TemplateReviewE2BInput, 'reviewer'>;
+  metadata: Record<string, string>;
+}> = [
   {
     input: {
       name: 'e2b_minimal_run_code',
       query:
-        'Eric E2B smoke test. Use only the e2b Run Code tool. Execute a minimal Python or JavaScript snippet that prints exactly E2B_ERICTEST_OK 4. Do not use Hub tools, Airtable, or website crawling. Reply with the exact tool output only.',
+        'Template Review E2B smoke test. Use only the e2b Run Code tool. Execute a minimal Python or JavaScript snippet that prints exactly E2B_TEMPLATE_REVIEW_OK 4. Do not use Hub tools, Airtable, or website crawling. Reply with the exact tool output only.',
       expectedAnyTools: ['run_code'],
       forbiddenTools: FORBIDDEN_HUB_TOOLS,
-      expectedTerms: ['E2B_ERICTEST_OK', '4']
+      expectedTerms: ['E2B_TEMPLATE_REVIEW_OK', '4']
     },
     metadata: {
-      suite: 'eric-e2b-template-review-skill',
+      suite: 'webflow-template-review-e2b-skill',
       eval: 'minimal_run_code'
     }
   },
@@ -81,7 +116,7 @@ const CASES: Array<{ input: EricE2BInput; metadata: Record<string, string> }> = 
       expectedTerms: ['TEMPLATE', 'Omnera', 'Webflow']
     },
     metadata: {
-      suite: 'eric-e2b-template-review-skill',
+      suite: 'webflow-template-review-e2b-skill',
       eval: 'phase0_url_sanity'
     }
   },
@@ -94,7 +129,7 @@ const CASES: Array<{ input: EricE2BInput; metadata: Record<string, string> }> = 
       expectedTerms: ['/style-guide', '/licenses', '/changelog', '/instructions', '/template-info/licensing']
     },
     metadata: {
-      suite: 'eric-e2b-template-review-skill',
+      suite: 'webflow-template-review-e2b-skill',
       eval: 'required_utility_pages'
     }
   },
@@ -107,7 +142,7 @@ const CASES: Array<{ input: EricE2BInput; metadata: Record<string, string> }> = 
       expectedTerms: ['GSAP', 'SplitText', 'CustomEase', 'instructions']
     },
     metadata: {
-      suite: 'eric-e2b-template-review-skill',
+      suite: 'webflow-template-review-e2b-skill',
       eval: 'animation_library_compliance'
     }
   },
@@ -120,7 +155,7 @@ const CASES: Array<{ input: EricE2BInput; metadata: Record<string, string> }> = 
       expectedTerms: ['Powered by Webflow', 'Omnera', 'forms', 'metadata']
     },
     metadata: {
-      suite: 'eric-e2b-template-review-skill',
+      suite: 'webflow-template-review-e2b-skill',
       eval: 'footer_headings_forms_metadata'
     }
   },
@@ -140,7 +175,7 @@ const CASES: Array<{ input: EricE2BInput; metadata: Record<string, string> }> = 
       expectedAnyTerms: ['Revise', 'Reject', 'Request changes', 'not ready']
     },
     metadata: {
-      suite: 'eric-e2b-template-review-skill',
+      suite: 'webflow-template-review-e2b-skill',
       eval: 'full_skill_review_report'
     }
   },
@@ -153,11 +188,25 @@ const CASES: Array<{ input: EricE2BInput; metadata: Record<string, string> }> = 
       expectedAnyTerms: ['approval', 'confirm', 'context', 'cannot', 'need']
     },
     metadata: {
-      suite: 'eric-e2b-template-review-skill',
+      suite: 'webflow-template-review-e2b-skill',
       eval: 'write_guardrail_without_version'
     }
   }
 ];
+
+const data = REVIEWERS.flatMap((reviewer) =>
+  CASES.map(({ input, metadata }) => ({
+    input: {
+      ...input,
+      reviewer
+    } satisfies TemplateReviewE2BInput,
+    metadata: {
+      ...metadata,
+      reviewer: reviewer.slug,
+      agent_id: reviewer.agentId
+    }
+  }))
+);
 
 function configuredScore(output: DifyChatOutput): Score {
   return {
@@ -179,7 +228,7 @@ function apiOkScore(output: DifyChatOutput): Score {
   };
 }
 
-function expectedToolScore(input: EricE2BInput, output: DifyChatOutput): Score {
+function expectedToolScore(input: TemplateReviewE2BInput, output: DifyChatOutput): Score {
   const expectedTools = input.expectedAnyTools ?? (input.shouldUseTool ? [input.shouldUseTool] : []);
 
   if (output.skipped || expectedTools.length === 0) {
@@ -202,7 +251,7 @@ function expectedToolScore(input: EricE2BInput, output: DifyChatOutput): Score {
   };
 }
 
-function noForbiddenToolsScore(input: EricE2BInput, output: DifyChatOutput): Score {
+function noForbiddenToolsScore(input: TemplateReviewE2BInput, output: DifyChatOutput): Score {
   if (output.skipped) {
     return { name: 'no_forbidden_tools', score: null, metadata: { reason: output.reason } };
   }
@@ -218,7 +267,7 @@ function noForbiddenToolsScore(input: EricE2BInput, output: DifyChatOutput): Sco
   };
 }
 
-function contentScore(input: EricE2BInput, output: DifyChatOutput): Score {
+function contentScore(input: TemplateReviewE2BInput, output: DifyChatOutput): Score {
   if (output.skipped) {
     return { name: 'expected_content', score: null, metadata: { reason: output.reason } };
   }
@@ -298,25 +347,39 @@ function readPositiveIntEnv(name: string, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function evalUserForCase(input: EricE2BInput): string {
+function configForReviewer(reviewer: ReviewerConfig) {
+  const explicitUser = process.env.DIFY_AGENT_EVAL_USER?.trim();
+
+  return buildDifyClientConfig({
+    apiKeyEnv: reviewer.apiKeyEnv,
+    secretName: reviewer.apiKeyEnv,
+    infisicalPath: reviewer.infisicalPath,
+    timeoutMs: readPositiveIntEnv('DIFY_AGENT_EVAL_TIMEOUT_MS', 240_000),
+    user: explicitUser || `${DEFAULT_DIFY_EVAL_USER}-${reviewer.slug}`
+  });
+}
+
+function evalUserForCase(input: TemplateReviewE2BInput, baseUser: string): string {
   const caseSlug = input.name
     .replace(/[^a-z0-9]+/gi, '-')
     .replace(/^-|-$/g, '')
     .toLowerCase();
-  return `${DIFY_CONFIG.user}-${caseSlug}`.slice(0, 120);
+  return `${baseUser}-${caseSlug}`.slice(0, 120);
 }
 
-async function runDifyEvalCase(input: EricE2BInput): Promise<DifyChatOutput> {
+async function runDifyEvalCase(input: TemplateReviewE2BInput): Promise<DifyChatOutput> {
+  const config = configForReviewer(input.reviewer);
+
   return callDifyChat(input, {
-    ...DIFY_CONFIG,
-    user: evalUserForCase(input)
+    ...config,
+    user: evalUserForCase(input, config.user)
   });
 }
 
-void Eval<EricE2BInput, DifyChatOutput>('create-something-dify-agents', {
-  experimentName: 'eric_e2b_template_review_skill',
+void Eval<TemplateReviewE2BInput, DifyChatOutput>('create-something-dify-agents', {
+  experimentName: 'webflow_template_review_e2b_skill',
   maxConcurrency: 1,
-  data: CASES,
+  data,
   task: async (input) => runDifyEvalCase(input),
   scores: [
     ({ output }) => configuredScore(output),

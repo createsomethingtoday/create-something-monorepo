@@ -544,7 +544,7 @@ test('listMyQueueDetailed reads reviewer-owned versions directly and hydrates on
   assert.equal(queue.items[0]?.reviewOwner?.id, ericReviewer.id);
 });
 
-test('listMyQueueDetailed bounds reviewer scans to a buffered limit', async () => {
+test('listMyQueueDetailed applies requested page size and token to reviewer scans', async () => {
   let capturedVersionUrl: URL | null = null;
   const client = new AirtableClient({
     apiKey: 'test',
@@ -562,13 +562,18 @@ test('listMyQueueDetailed bounds reviewer scans to a buffered limit', async () =
 
   const queue = await client.listMyQueueDetailed({
     limit: 10,
+    pageToken: 'next-page',
+    status: 'ready_to_review',
     currentReviewer: ericReviewer,
   });
 
   assert.equal(queue.items.length, 0);
+  assert.equal(queue.pagination.hasMore, false);
   assert.ok(capturedVersionUrl);
-  assert.equal(capturedVersionUrl.searchParams.get('maxRecords'), '100');
-  assert.equal(capturedVersionUrl.searchParams.get('pageSize'), '100');
+  assert.equal(capturedVersionUrl.searchParams.get('maxRecords'), null);
+  assert.equal(capturedVersionUrl.searchParams.get('pageSize'), '10');
+  assert.equal(capturedVersionUrl.searchParams.get('offset'), 'next-page');
+  assert.match(capturedVersionUrl.searchParams.get('filterByFormula') ?? '', /Ready for Review/);
 });
 
 test('assignSelfToVersion rejects versions already owned by another reviewer', async () => {

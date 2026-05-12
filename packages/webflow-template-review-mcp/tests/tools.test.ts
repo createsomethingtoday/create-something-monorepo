@@ -13,16 +13,18 @@ type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult>;
 
 function createServerHarness() {
   const names: string[] = [];
+  const descriptions = new Map<string, string>();
   const handlers = new Map<string, ToolHandler>();
 
   const server = {
-    tool(name: string, _description: string, _schema: unknown, handler: ToolHandler) {
+    tool(name: string, description: string, _schema: unknown, handler: ToolHandler) {
       names.push(name);
+      descriptions.set(name, description);
       handlers.set(name, handler);
     },
   } as unknown as McpServer;
 
-  return { server, names, handlers };
+  return { server, names, descriptions, handlers };
 }
 
 function parsePayload(result: ToolResult) {
@@ -36,6 +38,101 @@ const reviewer: ReviewerProfile = {
   name: 'Eric Unger',
   lane: 'wf-template-review-eric',
 };
+
+test('template_review_workflow does not mention removed analyzer or client-specific capture tools', async () => {
+  const { server, descriptions, handlers } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  assert.doesNotMatch(descriptions.get('template_review_workflow') ?? '', /analyzer|webflow-site-analyzer|e2b/i);
+
+  const result = await handlers.get('template_review_workflow')?.({});
+  assert.ok(result);
+  const text = result.content[0]?.text ?? '';
+  assert.doesNotMatch(text, /webflow-site-analyzer-mcp|run_template_review|enqueue_template_review|template_review_enqueue_analyzer_review|e2b/i);
+});
+
+test('list_queue defaults to a compact paginated page', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<Record<string, unknown>> = [];
+  const longFeedback = 'Long reviewer feedback. '.repeat(40);
+  const client = {
+    listAssetQueueDetailed: async (query: Record<string, unknown>) => {
+      calls.push(query);
+      return {
+        sortApplied: 'submittedDate_desc',
+        pagination: {
+          limit: query.limit,
+          returned: 1,
+          hasMore: true,
+          nextPageToken: 'next-token',
+          source: 'asset_versions',
+        },
+        items: [
+          {
+            assetId: 'rec_asset_1',
+            templateName: 'Finoraa',
+            latestReviewFeedback: longFeedback,
+            assignableVersionId: 'rec_version_1',
+            normalizedStatus: 'ready_to_review',
+            canAssign: true,
+            canReview: false,
+            canPublish: false,
+          },
+        ],
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_list_queue')?.({});
+  assert.ok(result);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.equal(calls[0]?.limit, 10);
+  assert.equal(calls[0]?.pageToken, undefined);
+  assert.equal((payload.data?.pagination as Record<string, unknown>).nextPageToken, 'next-token');
+  const item = (payload.data?.items as Array<Record<string, unknown>>)[0]!;
+  assert.equal(item.templateName, 'Finoraa');
+  assert.equal(item.latestReviewFeedback, undefined);
+  assert.match(String(item.latestReviewFeedbackPreview), /^Long reviewer feedback/);
+  assert.ok(String(item.latestReviewFeedbackPreview).length < longFeedback.length);
+});
+
+test('my_queue passes pagination token through to Airtable client', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<Record<string, unknown>> = [];
+  const client = {
+    listMyQueueDetailed: async (query: Record<string, unknown>) => {
+      calls.push(query);
+      return {
+        sortApplied: 'submittedDate_desc',
+        pagination: {
+          limit: query.limit,
+          returned: 0,
+          hasMore: false,
+          source: 'asset_versions',
+        },
+        items: [],
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_my_queue')?.({
+    limit: 5,
+    page_token: 'next-token',
+  });
+
+  assert.ok(result);
+  assert.equal(parsePayload(result).ok, true);
+  assert.equal(calls[0]?.limit, 5);
+  assert.equal(calls[0]?.pageToken, 'next-token');
+});
 
 test('registerTools places reviewer-safe write tools before admin and broad mutation routes', () => {
   const { server, names } = createServerHarness();

@@ -2474,11 +2474,11 @@
       ],
       "policy_pack": "client-eric-hub.v1",
       "instructions_source": "config/dify-agents/eric-hub.json#agent_prompt",
-      "eval_suite": "braintrust:eval:dify:eric-e2b-template-review",
+      "eval_suite": "braintrust:eval:dify:webflow-template-review-e2b",
       "evals": {
         "owner_system": "braintrust",
         "project": "create-something-dify-agents",
-        "experiment": "eric_e2b_template_review_skill",
+        "experiment": "webflow_template_review_e2b_skill",
         "required_checks": [
           "api_health",
           "expected_tool_use",
@@ -2489,7 +2489,7 @@
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; Eric-only E2B public-site capture is covered by the Braintrust Dify eval suite."
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; E2B public-site capture is covered for all reviewer lanes by the Braintrust Dify eval suite."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id eric-hub",
       "smoke_cases": [
@@ -2560,11 +2560,11 @@
       ],
       "policy_pack": "client-natalia-hub.v1",
       "instructions_source": "config/dify-agents/natalia-hub.json#agent_prompt",
-      "eval_suite": "braintrust:eval:dify:natalia-hub",
+      "eval_suite": "braintrust:eval:dify:webflow-template-review-e2b",
       "evals": {
         "owner_system": "braintrust",
         "project": "create-something-dify-agents",
-        "experiment": "natalia_hub",
+        "experiment": "webflow_template_review_e2b_skill",
         "required_checks": [
           "api_health",
           "expected_tool_use",
@@ -2574,7 +2574,7 @@
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case."
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; E2B public-site capture is covered by the shared reviewer Braintrust Dify eval suite."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id natalia-hub",
       "smoke_cases": [
@@ -2645,11 +2645,11 @@
       ],
       "policy_pack": "client-mariana-hub.v1",
       "instructions_source": "config/dify-agents/mariana-hub.json#agent_prompt",
-      "eval_suite": "braintrust:eval:dify:mariana-hub",
+      "eval_suite": "braintrust:eval:dify:webflow-template-review-e2b",
       "evals": {
         "owner_system": "braintrust",
         "project": "create-something-dify-agents",
-        "experiment": "mariana_hub",
+        "experiment": "webflow_template_review_e2b_skill",
         "required_checks": [
           "api_health",
           "expected_tool_use",
@@ -2659,7 +2659,7 @@
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case."
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; E2B public-site capture is covered by the shared reviewer Braintrust Dify eval suite."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id mariana-hub",
       "smoke_cases": [
@@ -2730,11 +2730,11 @@
       ],
       "policy_pack": "client-vicki-hub.v1",
       "instructions_source": "config/dify-agents/vicki-hub.json#agent_prompt",
-      "eval_suite": "braintrust:eval:dify:vicki-hub",
+      "eval_suite": "braintrust:eval:dify:webflow-template-review-e2b",
       "evals": {
         "owner_system": "braintrust",
         "project": "create-something-dify-agents",
-        "experiment": "vicki_hub",
+        "experiment": "webflow_template_review_e2b_skill",
         "required_checks": [
           "api_health",
           "expected_tool_use",
@@ -2744,7 +2744,7 @@
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case."
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; E2B public-site capture is covered by the shared reviewer Braintrust Dify eval suite."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id vicki-hub",
       "smoke_cases": [

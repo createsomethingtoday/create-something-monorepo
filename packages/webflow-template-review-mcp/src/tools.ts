@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import type { AirtableClient } from './airtable.js';
+import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
@@ -15,6 +15,10 @@ const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '👀Admin Feedback Review',
   '🔁Response to Review',
 ] as const;
+
+const DEFAULT_QUEUE_LIMIT = 10;
+const MAX_QUEUE_LIMIT = 100;
+const FEEDBACK_PREVIEW_LENGTH = 240;
 
 function jsonContent(value: unknown, isError = false) {
   return {
@@ -66,6 +70,42 @@ function asError(error: unknown) {
     },
     true,
   );
+}
+
+function queueLimit(limit: number | undefined): number {
+  return limit ?? DEFAULT_QUEUE_LIMIT;
+}
+
+function truncateText(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  return value.length > FEEDBACK_PREVIEW_LENGTH ? `${value.slice(0, FEEDBACK_PREVIEW_LENGTH)}...` : value;
+}
+
+function compactQueueItem(item: TemplateReviewQueueItem) {
+  return {
+    assetId: item.assetId,
+    templateName: item.templateName,
+    websiteUrl: item.websiteUrl,
+    previewSiteUrl: item.previewSiteUrl,
+    submittedDate: item.submittedDate,
+    decisionDate: item.decisionDate,
+    marketplaceStatus: item.marketplaceStatus,
+    latestReviewStatus: item.latestReviewStatus,
+    latestReviewDate: item.latestReviewDate,
+    qualityRating: item.qualityRating,
+    priceString: item.priceString,
+    assignableVersionId: item.assignableVersionId,
+    reviewOwner: item.reviewOwner,
+    normalizedStatus: item.normalizedStatus,
+    isReadyToReview: item.isReadyToReview,
+    isUnassigned: item.isUnassigned,
+    canAssign: item.canAssign,
+    canReview: item.canReview,
+    canPublish: item.canPublish,
+    isAssignedToCurrentReviewer: item.isAssignedToCurrentReviewer,
+    isBlockedByOtherReviewer: item.isBlockedByOtherReviewer,
+    ...(item.latestReviewFeedback ? { latestReviewFeedbackPreview: truncateText(item.latestReviewFeedback) } : {}),
+  };
 }
 
 function currentReviewerAsCollaborator(getReviewer: ReviewerFactory) {
@@ -128,7 +168,7 @@ function assertReviewerScopedReviewOwner(value: unknown, reviewer: ReviewerProfi
 export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
   server.tool(
     'template_review_workflow',
-    'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.',
+    'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, evidence requirements, and decision criteria. No parameters needed.',
     {},
     async () => ({
       content: [{ type: 'text' as const, text: REVIEW_WORKFLOW }],
@@ -151,17 +191,20 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_list_queue',
-    'List compact template review queue summaries using confirmed template Airtable fields.',
+    'List one compact page of template review queue summaries using confirmed template Airtable fields. Defaults to 10 items; pass page_token from pagination.nextPageToken for the next page.',
     {
       status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
       assigned: z.enum(['any', 'assigned', 'unassigned']).optional(),
       sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),
-      limit: z.number().int().min(1).max(500).optional(),
+      limit: z.number().int().min(1).max(MAX_QUEUE_LIMIT).optional(),
+      page_token: z.string().min(1).optional(),
     },
-    async ({ limit, status, assigned, sort }) => {
+    async ({ limit, page_token, status, assigned, sort }) => {
       try {
+        const pageLimit = queueLimit(limit);
         const queue = await getClient().listAssetQueueDetailed({
-          limit: limit ?? 100,
+          limit: pageLimit,
+          pageToken: page_token,
           status: status ?? 'ready_to_review',
           assigned: assigned ?? 'unassigned',
           sort: sort ?? 'submittedDate_desc',
@@ -169,10 +212,17 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         });
         return asSuccess({
           count: queue.items.length,
+          returned: queue.items.length,
           sortApplied: queue.sortApplied,
           statusApplied: status ?? 'ready_to_review',
           assignedApplied: assigned ?? 'unassigned',
-          items: queue.items,
+          pagination: {
+            limit: pageLimit,
+            hasMore: queue.pagination.hasMore,
+            nextPageToken: queue.pagination.nextPageToken ?? null,
+            source: queue.pagination.source,
+          },
+          items: queue.items.map(compactQueueItem),
         });
       } catch (error) {
         return asError(error);
@@ -182,13 +232,14 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_my_queue',
-    'List compact template review queue summaries currently assigned to the authenticated reviewer.',
+    'List one compact page of template review queue summaries currently assigned to the authenticated reviewer. Defaults to 10 items; pass page_token from pagination.nextPageToken for the next page.',
     {
       status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
       sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),
-      limit: z.number().int().min(1).max(500).optional(),
+      limit: z.number().int().min(1).max(MAX_QUEUE_LIMIT).optional(),
+      page_token: z.string().min(1).optional(),
     },
-    async ({ limit, status, sort }) => {
+    async ({ limit, page_token, status, sort }) => {
       try {
         const currentReviewer = currentReviewerAsCollaborator(getReviewer);
         if (!currentReviewer?.id) {
@@ -198,18 +249,27 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
             503,
           );
         }
+        const pageLimit = queueLimit(limit);
         const queue = await getClient().listMyQueueDetailed({
           status,
           sort: sort ?? 'submittedDate_desc',
-          limit: limit ?? 100,
+          limit: pageLimit,
+          pageToken: page_token,
           currentReviewer,
         });
         return asSuccess({
           count: queue.items.length,
+          returned: queue.items.length,
           sortApplied: queue.sortApplied,
           statusApplied: status ?? null,
           assignedApplied: 'assigned_to_current_reviewer',
-          items: queue.items,
+          pagination: {
+            limit: pageLimit,
+            hasMore: queue.pagination.hasMore,
+            nextPageToken: queue.pagination.nextPageToken ?? null,
+            source: queue.pagination.source,
+          },
+          items: queue.items.map(compactQueueItem),
         });
       } catch (error) {
         return asError(error);
