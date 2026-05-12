@@ -48,5 +48,5 @@ pnpm --filter @create-something/dotfiles install-codex-skills
 # Install Pi coding agent for container-based agent sessions
 if ! command -v pi >/dev/null 2>&1; then
   echo "Installing Pi coding agent..."
-  npm install -g @mariozechner/pi-coding-agent 2>/dev/null || true
+  npm install -g @earendil-works/pi-coding-agent 2>/dev/null || true
 fi
