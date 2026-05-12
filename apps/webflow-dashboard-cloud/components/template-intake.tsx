@@ -6,8 +6,8 @@ import { appPath } from '../lib/runtime-paths';
 import { CountryPicker } from './country-picker';
 import { QuillEditor } from './quill-editor';
 import {
+  ALL_COUNTRIES,
   CATEGORY_OPTIONS,
-  SUPPORTED_COUNTRIES,
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
   getPricingTiers,
@@ -1075,11 +1075,7 @@ export function TemplateIntake() {
       }
 
       if (!creator.country.trim()) {
-        throw new Error('Select an available payout country before submitting.');
-      }
-
-      if (!creatorCountrySupported) {
-        throw new Error('This country is not currently available for payout onboarding.');
+        throw new Error('Select a country from the list before submitting.');
       }
 
       if (turnstileEnabled && !turnstileTokens.creator) {
@@ -1367,12 +1363,12 @@ export function TemplateIntake() {
                         Country
                       </label>
                       <p className="field-help cc-library-application-form_field-desc">
-                        Choose the country tied to your creator account. This list is limited to
-                        currently available payout countries.
+                        Choose the country tied to your creator account. Some countries require
+                        specific Stripe onboarding before payouts can continue.
                       </p>
                       <CountryPicker
                         id="country"
-                        countries={SUPPORTED_COUNTRIES}
+                        countries={ALL_COUNTRIES}
                         value={creator.country}
                         onChange={(v) => updateCreator('country', v)}
                         placeholder="Select or search for a country…"
@@ -1402,9 +1398,12 @@ export function TemplateIntake() {
                   </div>
 
                   {!creatorCountrySupported && creator.country ? (
-                    <div className="submission-status submission-status-error">
-                      This country is not currently in the supported payout list. The submission
-                      cannot continue until an available payout country is selected.
+                    <div className="submission-status submission-status-warning">
+                      This country requires specific Stripe onboarding before payouts can continue.
+                      Creators may need to meet Stripe requirements for another supported country,
+                      including a valid tax ID or incorporation through a service such as Doola or
+                      Stripe Atlas. Webflow cannot configure those services on your behalf; contact
+                      Stripe Support with setup questions.
                     </div>
                   ) : null}
 
