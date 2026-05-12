@@ -982,7 +982,7 @@
     "triage-certified-partners-draft-findings": {
       "trigger_id": "trig_01LRdEEPsZXG5ukDCEsQ1e6t",
       "name": "Triage Certified Partners — Draft Findings",
-      "description": "Polls #triage-certified-partners (Webflow Slack) every 2 hours for unanalyzed bot-submitted triage threads. For each, fetches the linked Zendesk ticket, classifies the request type, looks up Airtable partner data if relevant, and posts a structured '🔍 Analyzed by Claude' reply with a ready-to-send draft response for the human resolver. Idempotency via '🔍 Analyzed by Claude' thread reply marker.",
+      "description": "Polls #triage-certified-partners (Webflow Slack) every 2 hours for unanalyzed bot-submitted triage threads. For each, fetches the linked Zendesk ticket, classifies the request, looks up Airtable partner data if relevant, and DMs Micah (U9FSLPKRB) a full analysis + ready-to-send draft reply for review. Posts '🔍 Queued for review' to the original thread as an idempotency marker only — no draft is posted to threads without human approval.",
       "schedule": "0 */2 * * *",
       "schedule_human": "Every 2 hours",
       "environment_id": "env_01TJD9Hn9AVfAhB44GdFKkXA",
@@ -1009,7 +1009,8 @@
         "channel_id": "C0490P0G8G7",
         "channel_name": "#triage-certified-partners",
         "workspace": "webflow",
-        "processed_marker": "🔍 Analyzed by Claude"
+        "processed_marker": "🔍 Queued for review",
+        "review_dm_user": "U9FSLPKRB"
       },
       "zendesk": {
         "instance": "webflow2579.zendesk.com",
