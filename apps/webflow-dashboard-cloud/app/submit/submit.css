@@ -575,6 +575,10 @@
   border: 1px solid rgba(255, 174, 19, 0.28);
 }
 
+.submission-country-onboarding-warning {
+  margin-top: 0.75rem;
+}
+
 .submission-status-error {
   color: #b42318;
   background: rgba(238, 29, 54, 0.12);

@@ -1374,6 +1374,15 @@ export function TemplateIntake() {
                         placeholder="Select or search for a country…"
                         required
                       />
+                      {!creatorCountrySupported && creator.country ? (
+                        <div className="submission-status submission-status-warning submission-country-onboarding-warning">
+                          This country requires specific Stripe onboarding before payouts can
+                          continue. Creators may need to meet Stripe requirements for another
+                          supported country, including a valid tax ID or incorporation through a
+                          service such as Doola or Stripe Atlas. Webflow cannot configure those
+                          services on your behalf; contact Stripe Support with setup questions.
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="submission-field">
@@ -1396,16 +1405,6 @@ export function TemplateIntake() {
                       />
                     </div>
                   </div>
-
-                  {!creatorCountrySupported && creator.country ? (
-                    <div className="submission-status submission-status-warning">
-                      This country requires specific Stripe onboarding before payouts can continue.
-                      Creators may need to meet Stripe requirements for another supported country,
-                      including a valid tax ID or incorporation through a service such as Doola or
-                      Stripe Atlas. Webflow cannot configure those services on your behalf; contact
-                      Stripe Support with setup questions.
-                    </div>
-                  ) : null}
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
