@@ -3,6 +3,8 @@ name: MCP Registry Check
 on:
   pull_request:
     paths:
+      # config/mcp-hub/** already covers registry.json, registry.core.json,
+      # registry.composio.generated.json, registry.schema.json, and state.json.
       - 'config/mcp-hub/**'
       - 'packages/**/package.json'
       - 'packages/cs-mcp-hub/**'
@@ -11,6 +13,7 @@ on:
       - 'scripts/mcp-registry.ts'
       - 'scripts/mcp-registry-coverage.mjs'
       - 'scripts/composio-registry-sync.ts'
+      - 'scripts/test/mcp-registry.test.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/mcp-registry-check.yml'
@@ -26,6 +29,7 @@ on:
       - 'scripts/mcp-registry.ts'
       - 'scripts/mcp-registry-coverage.mjs'
       - 'scripts/composio-registry-sync.ts'
+      - 'scripts/test/mcp-registry.test.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/mcp-registry-check.yml'

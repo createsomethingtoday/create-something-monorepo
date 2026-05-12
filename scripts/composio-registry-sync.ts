@@ -19,7 +19,16 @@ type ScriptOptions = {
 };
 
 const ROOT = process.cwd();
-const DEFAULT_REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
+/**
+ * Default target is the composio-generated layer (CRE-267). The legacy flat
+ * `config/mcp-hub/registry.json` is still accepted via --registry for the
+ * pre-split workflow, but landing day was 2026-05-11 and the two-layer
+ * source is now authoritative. Once the merged registry.json is
+ * reconstructed from the layers by `pnpm mcp:registry:generate`, hand edits
+ * to it would be overwritten on the next regenerate anyway.
+ */
+const DEFAULT_REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.composio.generated.json');
+const LEGACY_REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
 const MANAGED_SERVER_PREFIX = 'composio-toolkit-';
 const MANAGED_BUNDLE_PREFIX = 'composio-category-';
 const COMPOSIO_ALL_BUNDLE = 'composio-all';

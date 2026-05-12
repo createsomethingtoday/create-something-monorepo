@@ -136,7 +136,7 @@ fi
 # (those need pnpm run, which is slower); the PR CI workflow covers them.
 # =============================================================================
 STAGED_REGISTRY=$(git diff --cached --name-only --diff-filter=ACM \
-  | grep -E '^(config/mcp-hub/(registry|state|registry\.schema)\.json|scripts/mcp-registry\.ts)$' \
+  | grep -E '^(config/mcp-hub/(registry|registry\.core|registry\.composio\.generated|state|registry\.schema)\.json|scripts/mcp-registry\.ts)$' \
   || true)
 
 if [ -n "$STAGED_REGISTRY" ]; then

@@ -78,10 +78,31 @@ type GeneratedCatalogEntry = {
 
 const ROOT = process.cwd();
 const REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
+const REGISTRY_CORE_PATH = resolve(ROOT, 'config/mcp-hub/registry.core.json');
+const REGISTRY_COMPOSIO_PATH = resolve(ROOT, 'config/mcp-hub/registry.composio.generated.json');
 const SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.schema.json');
 const STATE_PATH = resolve(ROOT, 'config/mcp-hub/state.json');
 const GENERATED_CATALOG_PATH = resolve(ROOT, 'packages/playbook-mcp/src/catalog.registry.generated.ts');
 const GENERATED_FLEET_DOC_PATH = resolve(ROOT, 'docs/MCP_FLEET_REGISTRY.generated.md');
+
+/**
+ * Two-layer source of truth for the registry (see CRE-267).
+ *
+ * - `registry.core.json` is hand-authored: the 44 CREATE SOMETHING + WORKWAY
+ *   MCP servers plus the hand-curated bundles plus `defaults`.
+ * - `registry.composio.generated.json` is overwritten nightly by
+ *   `scripts/composio-registry-sync.ts`: `composio-toolkit-*` servers plus
+ *   `composio-all` and `composio-category-*` bundles.
+ * - `registry.json` is the merge of the two and is the file every consumer
+ *   reads at runtime.
+ *
+ * Hand edits target the core layer. The merge step (`mcp:registry:generate`)
+ * reconstructs `registry.json`. The drift check (`mcp:registry:check`) fails
+ * the build if `registry.json` is not equal to `merge(core, composio)`.
+ */
+const COMPOSIO_SERVER_PREFIX = 'composio-toolkit-';
+const COMPOSIO_BUNDLE_PREFIXES = ['composio-category-'];
+const COMPOSIO_BUNDLE_NAMES = new Set<string>(['composio-all']);
 
 /**
  * Server name policy.
@@ -117,27 +138,77 @@ const BROAD_CONNECTOR_DEFAULT_TOOL_COUNT = 100;
 const GRANDFATHERED_SERVER_NAMES = new Set<string>([]);
 
 const command = (process.argv[2] ?? 'check').trim().toLowerCase();
+const KNOWN_COMMANDS = [
+  'annotate-exposure',
+  'check',
+  'generate',
+  'merge',
+  'split',
+  'validate',
+] as const;
 
-if (!['annotate-exposure', 'check', 'generate', 'validate'].includes(command)) {
-  console.error('Usage: tsx scripts/mcp-registry.ts [annotate-exposure|check|generate|validate]');
+if (!KNOWN_COMMANDS.includes(command as (typeof KNOWN_COMMANDS)[number])) {
+  console.error(`Usage: tsx scripts/mcp-registry.ts [${KNOWN_COMMANDS.join('|')}]`);
   process.exit(2);
 }
 
-if (!existsSync(REGISTRY_PATH)) {
-  console.error(`Registry missing: ${REGISTRY_PATH}`);
-  process.exit(1);
-}
 if (!existsSync(SCHEMA_PATH)) {
   console.error(`Schema missing: ${SCHEMA_PATH}`);
   process.exit(1);
 }
 
-const registry = loadRegistry(REGISTRY_PATH);
+// The `split` subcommand is a one-time bootstrap: it produces the two layer
+// files from the current registry.json. It bypasses validation because the
+// point is to seed the new files, not gate on them.
+if (command === 'split') {
+  if (!existsSync(REGISTRY_PATH)) {
+    console.error(`Registry missing: ${REGISTRY_PATH}`);
+    process.exit(1);
+  }
+  const source = loadRegistry(REGISTRY_PATH);
+  const { core, composio } = splitRegistry(source);
+  writeFileSync(REGISTRY_CORE_PATH, `${JSON.stringify(core, null, 2)}\n`, 'utf8');
+  writeFileSync(REGISTRY_COMPOSIO_PATH, `${JSON.stringify(composio, null, 2)}\n`, 'utf8');
+  console.log(`Wrote ${relativeToRoot(REGISTRY_CORE_PATH)}`);
+  console.log(`Wrote ${relativeToRoot(REGISTRY_COMPOSIO_PATH)}`);
+  console.log(
+    `Core: ${Object.keys(core.servers).length} servers, ${Object.keys(core.bundles).length} bundles.`,
+  );
+  console.log(
+    `Composio: ${Object.keys(composio.servers).length} servers, ${Object.keys(composio.bundles).length} bundles.`,
+  );
+  process.exit(0);
+}
+
+// The `merge` subcommand reconstructs registry.json from the two layers.
+// It is run automatically as part of `generate`; we keep it exposed for
+// scripts (e.g. the composio sync workflow) that want to write the merged
+// output directly after refreshing the generated layer.
+if (command === 'merge') {
+  const { merged, mergeErrors } = readAndMergeLayers();
+  if (mergeErrors.length > 0) {
+    console.error('Registry merge failed:');
+    for (const error of mergeErrors) console.error(`- ${error}`);
+    process.exit(1);
+  }
+  writeFileSync(REGISTRY_PATH, `${JSON.stringify(merged, null, 2)}\n`, 'utf8');
+  console.log(`Wrote ${relativeToRoot(REGISTRY_PATH)}`);
+  process.exit(0);
+}
+
+// For every other subcommand the runtime view is the merged registry. When
+// the layer files exist we treat them as the source of truth; otherwise we
+// fall back to reading registry.json directly so a partial migration still
+// works.
+const registry = loadEffectiveRegistry();
 const errors: string[] = [];
 const schemaErrors = await validateRegistryAgainstSchema(registry);
 errors.push(...schemaErrors);
 errors.push(...validateRegistry(registry));
 errors.push(...validateStateFile(STATE_PATH, registry));
+if (existsSync(REGISTRY_CORE_PATH) && existsSync(REGISTRY_COMPOSIO_PATH)) {
+  errors.push(...validateLayerInvariants(REGISTRY_CORE_PATH, REGISTRY_COMPOSIO_PATH));
+}
 if (errors.length > 0) {
   console.error('Registry validation failed:');
   for (const error of errors) {
@@ -156,6 +227,12 @@ if (command === 'validate') {
 }
 
 if (command === 'generate') {
+  // When the two-layer source exists, regenerate registry.json from them
+  // so the merged file is always authoritative.
+  if (existsSync(REGISTRY_CORE_PATH) && existsSync(REGISTRY_COMPOSIO_PATH)) {
+    writeFileSync(REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`, 'utf8');
+    console.log(`Wrote ${relativeToRoot(REGISTRY_PATH)}`);
+  }
   writeFileSync(GENERATED_CATALOG_PATH, generatedCatalog, 'utf8');
   writeFileSync(GENERATED_FLEET_DOC_PATH, generatedFleetDoc, 'utf8');
   console.log(`Wrote ${relativeToRoot(GENERATED_CATALOG_PATH)}`);
@@ -183,6 +260,14 @@ if (!isFileContentEqual(GENERATED_CATALOG_PATH, generatedCatalog)) {
 if (!isFileContentEqual(GENERATED_FLEET_DOC_PATH, generatedFleetDoc)) {
   drift.push(relativeToRoot(GENERATED_FLEET_DOC_PATH));
 }
+// If the two-layer source exists, also fail when the merged registry.json
+// has drifted from merge(core, composio).
+if (existsSync(REGISTRY_CORE_PATH) && existsSync(REGISTRY_COMPOSIO_PATH)) {
+  const expectedRegistryJson = `${JSON.stringify(registry, null, 2)}\n`;
+  if (!existsSync(REGISTRY_PATH) || readFileSync(REGISTRY_PATH, 'utf8') !== expectedRegistryJson) {
+    drift.push(relativeToRoot(REGISTRY_PATH));
+  }
+}
 
 if (drift.length > 0) {
   console.error('Registry artifacts are out of date:');
@@ -197,6 +282,195 @@ console.log('Registry check passed.');
 
 function loadRegistry(path: string): Registry {
   return JSON.parse(readFileSync(path, 'utf8')) as Registry;
+}
+
+/**
+ * Read the effective merged registry view. When both layer files exist they
+ * are the source of truth; otherwise we fall back to reading the flat
+ * registry.json (covers the pre-split state and any consumer running before
+ * the migration completes).
+ */
+function loadEffectiveRegistry(): Registry {
+  if (existsSync(REGISTRY_CORE_PATH) && existsSync(REGISTRY_COMPOSIO_PATH)) {
+    const { merged, mergeErrors } = readAndMergeLayers();
+    if (mergeErrors.length > 0) {
+      console.error('Registry merge failed during validation:');
+      for (const error of mergeErrors) console.error(`- ${error}`);
+      process.exit(1);
+    }
+    return merged;
+  }
+  if (!existsSync(REGISTRY_PATH)) {
+    console.error(`Registry missing: ${REGISTRY_PATH}`);
+    process.exit(1);
+  }
+  return loadRegistry(REGISTRY_PATH);
+}
+
+type RegistryLayer = {
+  servers: Record<string, RegistryServer>;
+  bundles: Record<string, string[]>;
+};
+
+type CoreLayer = RegistryLayer & {
+  version: 1;
+  defaults?: Registry['defaults'];
+};
+
+type ComposioLayer = RegistryLayer & {
+  version: 1;
+};
+
+function isComposioServer(name: string): boolean {
+  return name.startsWith(COMPOSIO_SERVER_PREFIX);
+}
+
+function isComposioBundle(name: string): boolean {
+  if (COMPOSIO_BUNDLE_NAMES.has(name)) return true;
+  return COMPOSIO_BUNDLE_PREFIXES.some((prefix) => name.startsWith(prefix));
+}
+
+/**
+ * Partition a flat registry into the two layers. Servers are sorted by name
+ * and bundles by name to keep the output deterministic so split is
+ * idempotent and the resulting files diff cleanly.
+ */
+function splitRegistry(source: Registry): { core: CoreLayer; composio: ComposioLayer } {
+  const coreServers: Record<string, RegistryServer> = {};
+  const composioServers: Record<string, RegistryServer> = {};
+  for (const [name, config] of Object.entries(source.servers).sort(([a], [b]) => a.localeCompare(b))) {
+    if (isComposioServer(name)) composioServers[name] = config;
+    else coreServers[name] = config;
+  }
+
+  const coreBundles: Record<string, string[]> = {};
+  const composioBundles: Record<string, string[]> = {};
+  for (const [name, members] of Object.entries(source.bundles).sort(([a], [b]) => a.localeCompare(b))) {
+    if (isComposioBundle(name)) composioBundles[name] = members;
+    else coreBundles[name] = members;
+  }
+
+  const core: CoreLayer = {
+    version: 1,
+    servers: coreServers,
+    bundles: coreBundles,
+  };
+  if (source.defaults) {
+    core.defaults = source.defaults;
+  }
+  const composio: ComposioLayer = {
+    version: 1,
+    servers: composioServers,
+    bundles: composioBundles,
+  };
+  return { core, composio };
+}
+
+function mergeLayers(core: CoreLayer, composio: ComposioLayer): { merged: Registry; errors: string[] } {
+  const errors: string[] = [];
+
+  // Detect collisions before merging so downstream consumers see one error
+  // per duplicated key rather than a silently overwritten entry.
+  for (const name of Object.keys(composio.servers)) {
+    if (name in core.servers) {
+      errors.push(`server ${name}: present in both core and composio layers`);
+    }
+    if (!isComposioServer(name)) {
+      errors.push(`server ${name}: in composio layer but does not match ${COMPOSIO_SERVER_PREFIX}* prefix`);
+    }
+  }
+  for (const name of Object.keys(core.servers)) {
+    if (isComposioServer(name)) {
+      errors.push(`server ${name}: matches ${COMPOSIO_SERVER_PREFIX}* prefix but lives in core layer`);
+    }
+  }
+  for (const name of Object.keys(composio.bundles)) {
+    if (name in core.bundles) {
+      errors.push(`bundle ${name}: present in both core and composio layers`);
+    }
+    if (!isComposioBundle(name)) {
+      errors.push(`bundle ${name}: in composio layer but is not a composio-* bundle name`);
+    }
+  }
+  for (const name of Object.keys(core.bundles)) {
+    if (isComposioBundle(name)) {
+      errors.push(`bundle ${name}: composio-* bundle name lives in core layer`);
+    }
+  }
+
+  if (errors.length > 0) {
+    return { merged: { version: 1, servers: {}, bundles: {} }, errors };
+  }
+
+  // Sorted merge for deterministic output.
+  const servers: Record<string, RegistryServer> = {};
+  for (const [name, config] of Object.entries({ ...core.servers, ...composio.servers }).sort(
+    ([a], [b]) => a.localeCompare(b),
+  )) {
+    servers[name] = config;
+  }
+
+  const bundles: Record<string, string[]> = {};
+  for (const [name, members] of Object.entries({ ...core.bundles, ...composio.bundles }).sort(
+    ([a], [b]) => a.localeCompare(b),
+  )) {
+    bundles[name] = members;
+  }
+
+  const merged: Registry = {
+    version: 1,
+    servers,
+    bundles,
+  };
+  if (core.defaults) {
+    merged.defaults = core.defaults;
+  }
+  return { merged, errors };
+}
+
+function readAndMergeLayers(): { merged: Registry; mergeErrors: string[] } {
+  if (!existsSync(REGISTRY_CORE_PATH)) {
+    return {
+      merged: { version: 1, servers: {}, bundles: {} },
+      mergeErrors: [`missing layer file: ${relativeToRoot(REGISTRY_CORE_PATH)}`],
+    };
+  }
+  if (!existsSync(REGISTRY_COMPOSIO_PATH)) {
+    return {
+      merged: { version: 1, servers: {}, bundles: {} },
+      mergeErrors: [`missing layer file: ${relativeToRoot(REGISTRY_COMPOSIO_PATH)}`],
+    };
+  }
+  const core = JSON.parse(readFileSync(REGISTRY_CORE_PATH, 'utf8')) as CoreLayer;
+  const composio = JSON.parse(readFileSync(REGISTRY_COMPOSIO_PATH, 'utf8')) as ComposioLayer;
+  const { merged, errors } = mergeLayers(core, composio);
+  return { merged, mergeErrors: errors };
+}
+
+function validateLayerInvariants(corePath: string, composioPath: string): string[] {
+  const errors: string[] = [];
+  let core: CoreLayer;
+  let composio: ComposioLayer;
+  try {
+    core = JSON.parse(readFileSync(corePath, 'utf8')) as CoreLayer;
+  } catch (error: unknown) {
+    errors.push(`failed to parse ${relativeToRoot(corePath)}: ${error instanceof Error ? error.message : String(error)}`);
+    return errors;
+  }
+  try {
+    composio = JSON.parse(readFileSync(composioPath, 'utf8')) as ComposioLayer;
+  } catch (error: unknown) {
+    errors.push(`failed to parse ${relativeToRoot(composioPath)}: ${error instanceof Error ? error.message : String(error)}`);
+    return errors;
+  }
+  if (core.version !== 1) errors.push(`${relativeToRoot(corePath)}: version must be 1`);
+  if (composio.version !== 1) errors.push(`${relativeToRoot(composioPath)}: version must be 1`);
+  if ((composio as { defaults?: unknown }).defaults) {
+    errors.push(`${relativeToRoot(composioPath)}: defaults must live in the core layer`);
+  }
+  const { errors: mergeErrors } = mergeLayers(core, composio);
+  errors.push(...mergeErrors);
+  return errors;
 }
 
 function validateRegistry(data: Registry): string[] {
