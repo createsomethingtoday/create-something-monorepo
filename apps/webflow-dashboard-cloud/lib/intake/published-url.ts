@@ -11,6 +11,7 @@ const VALIDATION_OPTIONS = {
   maxPages: 1000,
   async: true
 } as const;
+const IX2_POLICY_EXCEPTION_HOSTS = new Set(['az-bergamo.webflow.io']);
 
 export interface PublishedUrlValidationSummary {
   pageResults: Array<{
@@ -23,11 +24,14 @@ export interface PublishedUrlValidationSummary {
       validGsapCount?: number;
       flaggedCodeCount?: number;
       securityRiskCount?: number;
+      legacyIx2Detected?: boolean;
+      legacyIx2Count?: number;
       passed?: boolean;
     };
     details?: {
       flaggedCode?: Array<{
         message?: string;
+        policy?: string;
       }>;
     };
   }>;
@@ -44,6 +48,11 @@ export interface PublishedUrlValidationSummary {
   gsapDetected: boolean;
   raw: Record<string, unknown>;
 }
+
+type PublishedPageResult = PublishedUrlValidationSummary['pageResults'][number];
+type PublishedFlaggedCodeFinding = NonNullable<
+  NonNullable<PublishedPageResult['details']>['flaggedCode']
+>[number];
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -84,6 +93,14 @@ async function postWorker(payload: Record<string, unknown>, timeoutMs: number) {
   return data;
 }
 
+function isIx2PolicyExceptionUrl(value: string) {
+  try {
+    return IX2_POLICY_EXCEPTION_HOSTS.has(new URL(value).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
 export function normalizePublishedUrl(rawValue: string): string {
   if (typeof rawValue !== 'string' || rawValue.trim() === '') {
     throw new Error('Published URL is required.');
@@ -116,36 +133,101 @@ export function normalizePublishedUrl(rawValue: string): string {
   return parsed.toString();
 }
 
-function summarizeWorkerResponse(data: Record<string, unknown>): PublishedUrlValidationSummary {
+function isIx2PolicyFinding(finding: PublishedFlaggedCodeFinding) {
+  return (
+    finding?.policy === 'ix2-rejected' ||
+    /legacy webflow ix2/i.test(finding?.message || '')
+  );
+}
+
+function failedOnlyBecauseOfIx2(page: PublishedPageResult) {
+  if (page.success === false || page.passed !== false) {
+    return false;
+  }
+
+  if ((page.summary?.securityRiskCount || 0) > 0) {
+    return false;
+  }
+
+  const flaggedCode = page.details?.flaggedCode || [];
+  if (flaggedCode.length > 0) {
+    return flaggedCode.every(isIx2PolicyFinding);
+  }
+
+  return page.summary?.legacyIx2Detected === true && (page.summary?.flaggedCodeCount || 0) <= 1;
+}
+
+function applyIx2PolicyException(normalizedUrl: string, pageResults: PublishedPageResult[]) {
+  if (!isIx2PolicyExceptionUrl(normalizedUrl)) {
+    return { applied: false, pageResults };
+  }
+
+  return {
+    applied: true,
+    pageResults: pageResults.map((page) => {
+      if (!failedOnlyBecauseOfIx2(page)) {
+        return page;
+      }
+
+      const flaggedCode = page.details?.flaggedCode || [];
+      const retainedFlaggedCode = flaggedCode.filter((finding) => !isIx2PolicyFinding(finding));
+
+      return {
+        ...page,
+        passed: true,
+        summary: {
+          ...page.summary,
+          flaggedCodeCount: retainedFlaggedCode.length,
+          legacyIx2Detected: false,
+          legacyIx2Count: 0,
+          passed: true
+        },
+        details: page.details
+          ? {
+              ...page.details,
+              flaggedCode: retainedFlaggedCode
+            }
+          : page.details
+      };
+    })
+  };
+}
+
+function summarizeWorkerResponse(
+  data: Record<string, unknown>,
+  normalizedUrl: string
+): PublishedUrlValidationSummary {
   if (data.success !== true) {
     throw new Error(typeof data.error === 'string' ? data.error : 'Validation service returned an invalid response.');
   }
 
-  const pageResults = Array.isArray(data.pageResults)
+  const rawPageResults = Array.isArray(data.pageResults)
     ? (data.pageResults as PublishedUrlValidationSummary['pageResults'])
     : [];
+  const ix2Exception = applyIx2PolicyException(normalizedUrl, rawPageResults);
+  const pageResults = ix2Exception.pageResults;
   const siteResults = (typeof data.siteResults === 'object' && data.siteResults
     ? (data.siteResults as Record<string, unknown>)
     : {}) as Record<string, unknown>;
 
   const analyzedCount =
-    typeof siteResults.analyzedCount === 'number'
+    !ix2Exception.applied && typeof siteResults.analyzedCount === 'number'
       ? siteResults.analyzedCount
       : pageResults.filter((page) => page.success !== false).length;
   const passedCount =
-    typeof siteResults.passedCount === 'number'
+    !ix2Exception.applied && typeof siteResults.passedCount === 'number'
       ? siteResults.passedCount
       : pageResults.filter((page) => page.success !== false && page.passed).length;
   const requestFailureCount =
-    typeof siteResults.requestFailureCount === 'number'
+    !ix2Exception.applied && typeof siteResults.requestFailureCount === 'number'
       ? siteResults.requestFailureCount
       : pageResults.filter((page) => page.success === false).length;
   const validationFailureCount =
-    typeof siteResults.validationFailureCount === 'number'
+    !ix2Exception.applied && typeof siteResults.validationFailureCount === 'number'
       ? siteResults.validationFailureCount
       : pageResults.filter((page) => page.success !== false && !page.passed).length;
   const failedCount =
-    typeof siteResults.failedCount === 'number'
+    !ix2Exception.applied && typeof siteResults.failedCount === 'number'
       ? siteResults.failedCount
       : requestFailureCount + validationFailureCount;
   const pageCount =
@@ -159,7 +241,7 @@ function summarizeWorkerResponse(data: Record<string, unknown>): PublishedUrlVal
     crawlStats.partial === true ||
     crawlStats.truncatedByPageLimit === true;
   const passed =
-    data.passed === true &&
+    (data.passed === true || ix2Exception.applied) &&
     failedCount === 0 &&
     analyzedCount === pageCount &&
     pageCount > 0 &&
@@ -269,6 +351,6 @@ export async function runPublishedUrlValidation(input: string): Promise<{
   const workerData = await pollWorkflow(normalizedUrl, startData.instanceId);
   return {
     normalizedUrl,
-    summary: summarizeWorkerResponse(workerData)
+    summary: summarizeWorkerResponse(workerData, normalizedUrl)
   };
 }

@@ -10,6 +10,7 @@ import { fetchHTML } from '../utils/fetch-utils';
 
 const IX2_REJECTION_MESSAGE =
 	'Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected.';
+const IX2_POLICY_EXCEPTION_HOSTS = new Set(['az-bergamo.webflow.io']);
 
 type Ix2Match = {
 	label: string;
@@ -57,7 +58,8 @@ export async function validateInteractions(
 		const failedPages = pageResults
 			.filter((result): result is { status: 'rejected'; reason: FailedPageResult } => result.status === 'rejected')
 			.map((result) => result.reason);
-		const pagesWithLegacyIx2 = pages.filter((page) => page.legacyIx2Detected);
+		const ix2PolicyException = isIx2PolicyExceptionUrl(siteUrl);
+		const pagesWithLegacyIx2 = ix2PolicyException ? [] : pages.filter((page) => page.legacyIx2Detected);
 		const legacyIx2Count = pagesWithLegacyIx2.reduce((total, page) => total + page.legacyIx2Count, 0);
 		const issues = [
 			...generateInteractionIssues(pagesWithLegacyIx2, legacyIx2Count),
@@ -123,6 +125,14 @@ function buildPageUrls(siteUrl: string, pageSlugs?: string[], maxPages = 25): st
 	}
 
 	return Array.from(urls).slice(0, maxPages);
+}
+
+function isIx2PolicyExceptionUrl(value: string): boolean {
+	try {
+		return IX2_POLICY_EXCEPTION_HOSTS.has(new URL(value).hostname.toLowerCase());
+	} catch {
+		return false;
+	}
 }
 
 function normalizePageUrl(value: string, baseUrl: string): string {

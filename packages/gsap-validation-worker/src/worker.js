@@ -9,11 +9,21 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
+var IX2_POLICY_EXCEPTION_HOSTS = /* @__PURE__ */ new Set(["az-bergamo.webflow.io"]);
 function countPatternMatches(value, pattern) {
   const matches = value.match(pattern);
   return matches ? matches.length : 0;
 }
 __name(countPatternMatches, "countPatternMatches");
+function isIx2PolicyExceptionUrl(value) {
+  if (!value) return false;
+  try {
+    return IX2_POLICY_EXCEPTION_HOSTS.has(new URL(value).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+__name(isIx2PolicyExceptionUrl, "isIx2PolicyExceptionUrl");
 function detectIx2Interactions(html) {
   const matches = [
     {
@@ -430,13 +440,22 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
   if (ix2Detection.detected) {
     results.legacyIx2Detected = true;
     results.legacyIx2Count = ix2Detection.count;
-    results.flaggedCode.push({
-      scriptIndex: "document",
-      message: IX2_REJECTION_MESSAGE,
-      reason: "Legacy IX2 interactions are no longer accepted for Marketplace templates submitted on or after May 1, 2026.",
-      policy: "ix2-rejected",
-      flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
-    });
+    if (isIx2PolicyExceptionUrl(pageUrl)) {
+      results.allowedCustomCode.push({
+        scriptIndex: "document",
+        message: "Legacy IX2 interactions allowed by policy exception for az-bergamo.webflow.io.",
+        policy: "ix2-exception",
+        flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
+      });
+    } else {
+      results.flaggedCode.push({
+        scriptIndex: "document",
+        message: IX2_REJECTION_MESSAGE,
+        reason: "Legacy IX2 interactions are no longer accepted for Marketplace templates submitted on or after May 1, 2026.",
+        policy: "ix2-rejected",
+        flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
+      });
+    }
   }
   const scriptContents = extractScriptContents(html);
   const styleContents = extractStyleContents(html);

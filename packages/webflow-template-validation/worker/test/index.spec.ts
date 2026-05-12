@@ -469,6 +469,22 @@ describe('Interactions Validator', () => {
 		expect(result.issues.some((issue) => issue.id === 'interactions-analysis-incomplete' && issue.severity === 'warning')).toBe(true);
 	});
 
+	it('allows IX2 for the az-bergamo policy exception', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: '<!doctype html><html><body><div data-w-id="abc"></div><script>Webflow.require("ix2").init({})</script></body></html>',
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		const result = await validateInteractions('https://az-bergamo.webflow.io/');
+
+		expect(result.stats.legacyIx2Detected).toBe(false);
+		expect(result.stats.pagesWithLegacyIx2).toBe(0);
+		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected')).toBe(false);
+	});
+
 	it('blocks validation when no pages can be checked for IX2', async () => {
 		vi.mocked(fetchHTML).mockRejectedValue(new Error('HTTP 404: Not Found'));
 
