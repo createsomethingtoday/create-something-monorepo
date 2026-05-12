@@ -24,6 +24,8 @@ Codex MCP settings are a flat list. This control plane keeps local/workspace MCP
   - `packages/playbook-mcp/src/catalog.registry.generated.ts`
   - `docs/MCP_FLEET_REGISTRY.generated.md`
 
+> Contributor walkthrough with command reference, error troubleshooting, and step-by-step instructions for adding a new MCP: [docs/guides/MCP_REGISTRY_WORKFLOW.md](./guides/MCP_REGISTRY_WORKFLOW.md).
+
 ## Two-layer source of truth (CRE-267)
 
 The registry is split into two source files plus a deterministic merge step:

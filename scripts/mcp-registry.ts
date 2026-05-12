@@ -868,39 +868,84 @@ function renderFleetDoc(data: Registry): string {
     '',
     '> Auto-generated from `config/mcp-hub/registry.json`.',
     '> Regenerate with `pnpm mcp:registry:generate`.',
+    '>',
+    '> The Active section is split into a hand-curated core table (always inline)',
+    '> and a Composio toolkit summary (count + per-category bundles only). The full',
+    '> `composio-toolkit-*` server list lives in',
+    '> [`config/mcp-hub/registry.composio.generated.json`](../config/mcp-hub/registry.composio.generated.json).',
     '',
   ];
 
   for (const lifecycle of ['active', 'dormant', 'local'] as const) {
-    const rows = byLifecycle[lifecycle];
-    lines.push(`## ${titleCase(lifecycle)} (${rows.length})`, '');
-    lines.push('| Server | Transport | Endpoint | Exposure | Est. Tools | Tags |');
-    lines.push('| --- | --- | --- | --- | --- | --- |');
-    for (const row of rows) {
-      const endpoint =
-        row.server.transport === 'http'
-          ? `\`${row.server.url}\``
-          : `\`${row.server.command}${row.server.args?.length ? ` ${row.server.args.join(' ')}` : ''}\``;
-      const exposure = row.server.catalog_exposure_mode ?? inferCatalogExposureMode(row.name, row.server);
-      const estimatedToolCount = inferEstimatedToolCount(row.name, row.server);
-      const tags = row.server.tags?.length ? row.server.tags.map((tag) => `\`${tag}\``).join(', ') : '—';
+    const allRows = byLifecycle[lifecycle];
+    if (lifecycle === 'active') {
+      const coreRows = allRows.filter((row) => !isComposioServer(row.name));
+      const composioRows = allRows.filter((row) => isComposioServer(row.name));
+      lines.push(`## Active (core, ${coreRows.length})`, '');
+      renderFleetRowTable(lines, coreRows);
+      lines.push('');
+      lines.push(`## Active (composio toolkits, ${composioRows.length} — summarized)`, '');
       lines.push(
-        `| \`${row.name}\` | \`${row.server.transport}\` | ${endpoint} | \`${exposure}\` | \`${estimatedToolCount}\` | ${tags} |`,
+        'Per-toolkit detail is in `registry.composio.generated.json`. This section shows',
+        'category bundles only so reviewers can audit the routing surface without scrolling',
+        'past a thousand near-identical rows.',
+        '',
       );
+      const composioBundleSummary = Object.entries(data.bundles)
+        .filter(([name]) => isComposioBundle(name))
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, members]) => ({ name, count: members.length }));
+      if (composioBundleSummary.length > 0) {
+        lines.push('| Composio Bundle | Toolkit Count |');
+        lines.push('| --- | ---: |');
+        for (const entry of composioBundleSummary) {
+          lines.push(`| \`${entry.name}\` | ${entry.count} |`);
+        }
+        lines.push('');
+      }
+    } else {
+      lines.push(`## ${titleCase(lifecycle)} (${allRows.length})`, '');
+      renderFleetRowTable(lines, allRows);
+      lines.push('');
     }
-    lines.push('');
   }
 
   lines.push('## Bundles', '');
+  lines.push(
+    'Hand-curated bundles are listed inline. Composio category bundles are listed in the Active',
+    '(composio toolkits) section above.',
+    '',
+  );
   lines.push('| Bundle | Servers |');
   lines.push('| --- | --- |');
   for (const [bundleName, members] of Object.entries(data.bundles).sort(([a], [b]) => a.localeCompare(b))) {
+    if (isComposioBundle(bundleName)) continue;
     const memberText = members.map((member) => `\`${member}\``).join(', ');
     lines.push(`| \`${bundleName}\` | ${memberText} |`);
   }
   lines.push('');
 
   return lines.join('\n');
+}
+
+function renderFleetRowTable(
+  lines: string[],
+  rows: Array<{ name: string; server: RegistryServer }>,
+): void {
+  lines.push('| Server | Transport | Endpoint | Exposure | Est. Tools | Tags |');
+  lines.push('| --- | --- | --- | --- | --- | --- |');
+  for (const row of rows) {
+    const endpoint =
+      row.server.transport === 'http'
+        ? `\`${row.server.url}\``
+        : `\`${row.server.command}${row.server.args?.length ? ` ${row.server.args.join(' ')}` : ''}\``;
+    const exposure = row.server.catalog_exposure_mode ?? inferCatalogExposureMode(row.name, row.server);
+    const estimatedToolCount = inferEstimatedToolCount(row.name, row.server);
+    const tags = row.server.tags?.length ? row.server.tags.map((tag) => `\`${tag}\``).join(', ') : '—';
+    lines.push(
+      `| \`${row.name}\` | \`${row.server.transport}\` | ${endpoint} | \`${exposure}\` | \`${estimatedToolCount}\` | ${tags} |`,
+    );
+  }
 }
 
 function resolveLifecycle(server: RegistryServer): ServerLifecycle {
