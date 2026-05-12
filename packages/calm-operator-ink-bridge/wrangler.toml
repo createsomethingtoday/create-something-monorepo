@@ -21,6 +21,24 @@ crons = ["0 4,11,12,13,14,15,18,23 * * *"]
 name = "INK_STATE"
 class_name = "InkState"
 
+# Optional R2 binding for self-hosted firmware binaries. One-time operator
+# setup, requires a Cloudflare API token with `Workers R2 Storage` scope:
+#
+#   pnpm --dir packages/calm-operator-ink-bridge exec wrangler r2 bucket create calm-operator-ink-firmware
+#
+# Then uncomment the binding below and redeploy.
+#
+# [[r2_buckets]]
+# binding = "FIRMWARE_BUCKET"
+# bucket_name = "calm-operator-ink-firmware"
+#
+# Once bound, publish builds with:
+#   pnpm --dir packages/calm-operator-ink-bridge exec wrangler r2 object put \
+#     calm-operator-ink-firmware/firmware/0.1.9.bin \
+#     --file packages/calm-operator-ink-firmware/.pio/build/m5stack-coreink/firmware.bin
+# and point INK_FIRMWARE_MANIFEST_JSON.url at
+#   https://ink.createsomething.agency/ink/firmware/binary?version=0.1.9
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["InkState"]
@@ -35,6 +53,32 @@ DAILY_ALARMS_CT = "06:00,09:00"
 ALARM_TTL_MS = "2700000"
 HEALTH_SELF_ORIGIN = "https://ink.createsomething.agency"
 HEALTH_SELF_CHECK_ENABLED = "false"
+# Operator daily anchors rendered on Ink Rhythm screen. Override per
+# deployment. Empty/invalid falls back to the firmware's known defaults.
+RHYTHM_JSON = """
+[
+  { "time": "06:00", "label": "WORKOUT" },
+  { "time": "09:00", "label": "WORK" },
+  { "time": "12:30", "label": "WALK" },
+  { "time": "15:00", "label": "EAT" },
+  { "time": "23:00", "label": "SLEEP" }
+]
+"""
+# Firmware OTA manifest. The signature is computed by
+# scripts/sign-manifest.mjs using the ECDSA P-256 private JWK in Infisical
+# (INK_FIRMWARE_SIGNING_PRIVATE_JWK). The device verifies it with the public
+# key burned into firmware (include/firmware_signing_pubkey.h). Leave empty
+# to disable OTA discovery; the device will render "No update channel".
+INK_FIRMWARE_MANIFEST_JSON = """
+{
+  "version": "0.1.9",
+  "url": "https://ink.createsomething.agency/ink/firmware/binary?version=0.1.9",
+  "sha256": "439a39b4715ff4b1bde4a313de8f5b48ed76bd9516f6d2dd982c24cd33a0df4c",
+  "size": 1136224,
+  "signature": "I043B0F+WQ9+36zXxVU0D0MkiZ/B2vbovet2c4fomzU+J1RG3Z00ysfCHcsT1V2IztgP8iGtXlroMhQkgFrA4A==",
+  "notes": "Sync review + R2 binary endpoint + ECDSA P-256 signing"
+}
+"""
 HEALTH_CHECKS_JSON = """
 [
   {
