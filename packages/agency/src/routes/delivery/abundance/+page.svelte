@@ -2,10 +2,16 @@
   import { SEO } from '@create-something/canon';
   import {
     abundanceArtifactLinks,
+    abundanceAgentBoundaryCards,
+    abundanceApprovalOwner,
+    abundanceChangesSinceLastUpdate,
     abundanceDeliverySummary,
+    abundanceDeliveryEvidence,
+    abundanceStaffHeadcountAgent,
     abundanceNextReview,
     abundanceOperatingLayers,
     abundancePrivateArtifacts,
+    abundanceSafeToForward,
     abundanceSuggestedPrompts
   } from '$lib/delivery/abundance';
 
@@ -30,6 +36,33 @@
     insightDraft?: DeliveryAgentMessage['insightDraft'];
     error?: string;
   };
+
+  const reviewPath = [
+    {
+      step: '01',
+      href: '#latest-agent',
+      label: 'Review the latest agent',
+      detail: 'Open the Staff Headcount Agent and confirm what the MCP surface can explain.'
+    },
+    {
+      step: '02',
+      href: '#artifacts',
+      label: 'Open the proof set',
+      detail: 'Use the live app, walkthroughs, and generated package as the client-safe review set.'
+    },
+    {
+      step: '03',
+      href: '#ask-delivery',
+      label: 'Close context gaps',
+      detail: 'Ask the bounded delivery agent what changed, what is private, and what needs a decision.'
+    },
+    {
+      step: '04',
+      href: '#next-review',
+      label: 'Decide the next pass',
+      detail: 'Confirm field mapping, MCP credentials, review ownership, and operator access.'
+    }
+  ];
 
   let deliveryMessages: DeliveryAgentMessage[] = [
     {
@@ -107,6 +140,10 @@
       <p>
         {abundanceDeliverySummary.description}
       </p>
+      <div class="delivery-actions" aria-label="Primary delivery actions">
+        <a href="#latest-agent">Review latest agent</a>
+        <a href="#next-review">See decisions</a>
+      </div>
     </div>
 
     <aside class="delivery-status product-surface product-surface--soft">
@@ -115,11 +152,87 @@
       <p><strong>Owner</strong><span>{abundanceDeliverySummary.owner}</span></p>
       <p><strong>Phase</strong><span>{abundanceDeliverySummary.phase}</span></p>
       <p><strong>Private data</strong><span>Paylocity export received</span></p>
+      <p class="status-note"><strong>Next decision</strong><span>{abundanceNextReview[0]}</span></p>
     </aside>
   </div>
 </section>
 
-<section class="delivery-section">
+<nav class="review-path shell-inner-pad" aria-label="Recommended delivery review path">
+  {#each reviewPath as item}
+    <a href={item.href} class="review-path__item">
+      <span>{item.step}</span>
+      <strong>{item.label}</strong>
+      <small>{item.detail}</small>
+    </a>
+  {/each}
+</nav>
+
+<section class="control-strip shell-inner-pad" aria-label="Delivery control summary">
+  <article class="control-card product-surface">
+    <span class="product-kicker">What Changed</span>
+    <h2>Since the last update.</h2>
+    <div class="control-list">
+      {#each abundanceChangesSinceLastUpdate as item}
+        <p>{item}</p>
+      {/each}
+    </div>
+  </article>
+
+  <article class="control-card product-surface control-card--forward">
+    <span class="product-kicker">Safe To Forward</span>
+    <h2>Client-safe summary.</h2>
+    <div class="control-list">
+      {#each abundanceSafeToForward as item}
+        <p>{item}</p>
+      {/each}
+    </div>
+  </article>
+
+  <aside class="control-card product-surface control-card--decision">
+    <span class="product-kicker">Decision Owner</span>
+    <h2>{abundanceApprovalOwner.value}</h2>
+    <p>{abundanceApprovalOwner.detail}</p>
+  </aside>
+</section>
+
+<section class="delivery-section" id="latest-agent">
+  <div class="shell-inner-pad">
+    <div class="agent-delivery product-surface" aria-labelledby="latest-agent-heading">
+      <div class="agent-delivery__copy">
+        <span class="product-kicker">{abundanceStaffHeadcountAgent.meta}</span>
+        <h2 id="latest-agent-heading">{abundanceStaffHeadcountAgent.label}</h2>
+        <p>{abundanceStaffHeadcountAgent.summary}</p>
+
+        <div class="agent-delivery__points">
+          {#each abundanceStaffHeadcountAgent.valuePoints as point}
+            <p>{point}</p>
+          {/each}
+        </div>
+
+        <p class="agent-delivery__guardrail">{abundanceStaffHeadcountAgent.guardrail}</p>
+        <p class="agent-delivery__guardrail">{abundanceStaffHeadcountAgent.evaluationNote}</p>
+
+        <a class="agent-delivery__link" href={abundanceStaffHeadcountAgent.chatUrl} target="_blank" rel="noreferrer">
+          Open full chat
+        </a>
+      </div>
+
+      <div class="agent-delivery__embed" aria-label="Embedded Abundance Staff Headcount Agent">
+        <div class="agent-delivery__embed-header">
+          <span>Embedded review surface</span>
+          <a href={abundanceStaffHeadcountAgent.chatUrl} target="_blank" rel="noreferrer">Open direct</a>
+        </div>
+        <iframe
+          src={abundanceStaffHeadcountAgent.embedUrl}
+          title={abundanceStaffHeadcountAgent.label}
+          allow="microphone"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="delivery-section" id="artifacts">
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Artifacts</span>
@@ -131,17 +244,30 @@
     </div>
 
     <div class="artifact-grid">
-      {#each abundanceArtifactLinks as artifact}
+      {#each abundanceArtifactLinks as artifact, index}
         <a class="artifact-link product-surface" href={artifact.href} target="_blank" rel="noreferrer">
-          <span>{artifact.meta}</span>
-          <strong>{artifact.label}</strong>
+          <div class="artifact-link__top">
+            <span class="artifact-index">{String(index + 1).padStart(2, '0')}</span>
+            <div class="artifact-badges" aria-label={`${artifact.label} status`}>
+              {#each artifact.badges as badge}
+                <span>{badge}</span>
+              {/each}
+            </div>
+          </div>
+
+          <div class="artifact-link__body">
+            <span>{artifact.meta}</span>
+            <strong>{artifact.label}</strong>
+          </div>
+
+          <span class="artifact-open">Open artifact</span>
         </a>
       {/each}
     </div>
   </div>
 </section>
 
-<section class="delivery-section">
+<section class="delivery-section" id="ask-delivery">
   <div class="shell-inner-pad">
     <div class="delivery-agent product-surface">
       <div class="delivery-agent__intro">
@@ -228,7 +354,7 @@
   </div>
 </section>
 
-<section class="delivery-section">
+<section class="delivery-section" id="operating-model">
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Database / Automation / Judgment</span>
@@ -245,10 +371,23 @@
         </article>
       {/each}
     </div>
+
+    <div class="boundary-grid" aria-label="Agent boundary">
+      {#each abundanceAgentBoundaryCards as card}
+        <article class={`boundary-card boundary-card--${card.tone}`}>
+          <h3>{card.title}</h3>
+          <div>
+            {#each card.items as item}
+              <p>{item}</p>
+            {/each}
+          </div>
+        </article>
+      {/each}
+    </div>
   </div>
 </section>
 
-<section class="delivery-section">
+<section class="delivery-section" id="next-review">
   <div class="shell-inner-pad evidence-layout">
     <div class="product-surface product-surface--soft evidence-panel">
       <span class="product-kicker">Private Source Artifacts</span>
@@ -272,12 +411,41 @@
   </div>
 </section>
 
+<section class="delivery-section delivery-section--footer">
+  <div class="shell-inner-pad">
+    <div class="version-panel product-surface product-surface--soft">
+      <div>
+        <span class="product-kicker">Version / Evidence</span>
+        <h2>Repo-backed delivery surface.</h2>
+      </div>
+      <div class="version-grid">
+        {#each abundanceDeliveryEvidence as item}
+          <p><strong>{item.label}</strong><span>{item.value}</span></p>
+        {/each}
+      </div>
+    </div>
+  </div>
+</section>
+
 <style>
+  :global(html) {
+    --delivery-radius-chip: var(--radius-sm, 6px);
+    --delivery-radius-control: var(--radius-md, 8px);
+    --delivery-radius-card: var(--radius-lg, 12px);
+    --delivery-radius-surface: var(--radius-lg, 12px);
+    --delivery-radius-full: var(--radius-full, 9999px);
+    scroll-behavior: smooth;
+  }
+
+  .product-surface {
+    border-radius: var(--delivery-radius-surface);
+  }
+
   .delivery-hero {
-    min-height: 82vh;
+    min-height: auto;
     display: flex;
     align-items: center;
-    padding: clamp(56px, 8vw, 112px) 0 clamp(36px, 6vw, 72px);
+    padding: clamp(48px, 7vw, 82px) 0 clamp(28px, 5vw, 56px);
   }
 
   .delivery-hero__inner {
@@ -313,6 +481,38 @@
     line-height: 1.35;
   }
 
+  .delivery-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .delivery-actions a,
+  .review-path__item {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--delivery-radius-control);
+    background: rgba(255, 255, 255, 0.055);
+    color: rgba(246, 247, 251, 0.9);
+    text-decoration: none;
+  }
+
+  .delivery-actions a {
+    padding: 11px 14px;
+  }
+
+  .delivery-actions a:first-child {
+    border-color: rgba(94, 234, 212, 0.36);
+    background: rgba(94, 234, 212, 0.12);
+    color: #ffffff;
+  }
+
+  .delivery-actions a:hover,
+  .review-path__item:hover {
+    border-color: rgba(94, 234, 212, 0.72);
+    color: #ffffff;
+  }
+
   .delivery-status {
     display: grid;
     gap: 18px;
@@ -344,16 +544,108 @@
     text-align: right;
   }
 
+  .delivery-status .status-note {
+    display: grid;
+    gap: 8px;
+  }
+
+  .delivery-status .status-note span {
+    text-align: left;
+    line-height: 1.45;
+  }
+
   .status-dot {
     width: 11px;
     height: 11px;
-    border-radius: 999px;
+    border-radius: var(--delivery-radius-full);
     background: #5eead4;
     box-shadow: 0 0 34px rgba(94, 234, 212, 0.75);
   }
 
+  .review-path {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 0;
+    margin-bottom: clamp(20px, 4vw, 42px);
+  }
+
+  .review-path__item {
+    display: grid;
+    gap: 9px;
+    min-height: 154px;
+    align-content: start;
+    border-radius: var(--delivery-radius-card);
+    padding: 18px;
+  }
+
+  .review-path__item span {
+    color: #5eead4;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+
+  .review-path__item strong {
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .review-path__item small {
+    color: rgba(246, 247, 251, 0.62);
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+
+  .control-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(260px, 0.7fr);
+    gap: 14px;
+    margin-bottom: clamp(12px, 3vw, 26px);
+  }
+
+  .control-card {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+    padding: 22px;
+    border-top: 4px solid rgba(94, 234, 212, 0.78);
+  }
+
+  .control-card--forward {
+    border-top-color: rgba(167, 184, 255, 0.78);
+  }
+
+  .control-card--decision {
+    border-top-color: rgba(247, 200, 115, 0.84);
+  }
+
+  .control-card h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(25px, 3vw, 38px);
+    line-height: 1.02;
+    letter-spacing: 0;
+  }
+
+  .control-card p {
+    margin: 0;
+    color: rgba(246, 247, 251, 0.72);
+    line-height: 1.48;
+  }
+
+  .control-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .control-list p {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 10px;
+  }
+
   .delivery-section {
     padding: clamp(36px, 6vw, 76px) 0;
+    scroll-margin-top: 32px;
   }
 
   .section-lead {
@@ -370,10 +662,15 @@
     letter-spacing: 0;
   }
 
-  .artifact-grid,
   .layer-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .artifact-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 16px;
   }
 
@@ -383,13 +680,83 @@
 
   .artifact-link {
     display: grid;
-    min-height: 170px;
-    align-content: space-between;
+    grid-column: span 4;
+    min-height: 244px;
+    grid-template-rows: auto 1fr auto;
+    gap: 20px;
+    overflow: hidden;
     padding: 20px;
+    position: relative;
+    border-radius: var(--delivery-radius-card);
     text-decoration: none;
   }
 
-  .artifact-link span,
+  .artifact-link:nth-child(4),
+  .artifact-link:nth-child(5) {
+    grid-column: span 6;
+    min-height: 214px;
+  }
+
+  .artifact-link::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(94, 234, 212, 0.72), rgba(167, 184, 255, 0.28), transparent);
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+
+  .artifact-link:hover {
+    border-color: rgba(94, 234, 212, 0.38);
+    transform: translateY(-2px);
+  }
+
+  .artifact-link:hover::after {
+    opacity: 1;
+  }
+
+  .artifact-link__top {
+    display: flex;
+    min-height: 56px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .artifact-index {
+    color: rgba(246, 247, 251, 0.42);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+  }
+
+  .artifact-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .artifact-badges span {
+    border: 1px solid rgba(94, 234, 212, 0.28);
+    border-radius: var(--delivery-radius-chip);
+    background: rgba(94, 234, 212, 0.09);
+    color: rgba(246, 247, 251, 0.8);
+    padding: 4px 7px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .artifact-link__body {
+    align-self: center;
+    display: grid;
+    max-width: 31rem;
+    gap: 14px;
+  }
+
+  .artifact-link__body span,
   .layer-tier,
   .layer-status {
     color: #5eead4;
@@ -400,8 +767,17 @@
   }
 
   .artifact-link strong {
-    font-size: 1.2rem;
-    line-height: 1.15;
+    color: rgba(246, 247, 251, 0.94);
+    font-size: clamp(1.16rem, 1.5vw, 1.42rem);
+    line-height: 1.12;
+  }
+
+  .artifact-open {
+    color: rgba(246, 247, 251, 0.48);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
   .delivery-agent {
@@ -409,6 +785,107 @@
     gap: 22px;
     padding: clamp(20px, 4vw, 34px);
     border-top: 4px solid rgba(94, 234, 212, 0.78);
+  }
+
+  .agent-delivery {
+    display: grid;
+    grid-template-columns: minmax(0, 0.86fr) minmax(360px, 1.14fr);
+    gap: clamp(18px, 4vw, 34px);
+    align-items: stretch;
+    padding: clamp(20px, 4vw, 34px);
+    border-top: 4px solid rgba(167, 184, 255, 0.76);
+  }
+
+  .agent-delivery__copy {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+
+  .agent-delivery__copy h2 {
+    margin: 8px 0 2px;
+    font-family: var(--font-display);
+    font-size: clamp(30px, 5vw, 58px);
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .agent-delivery__copy p {
+    margin: 0;
+    color: rgba(246, 247, 251, 0.72);
+    font-size: 1.03rem;
+    line-height: 1.55;
+  }
+
+  .agent-delivery__points {
+    display: grid;
+    gap: 10px;
+    margin: 4px 0;
+  }
+
+  .agent-delivery__points p,
+  .agent-delivery__guardrail {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 10px;
+  }
+
+  .agent-delivery__guardrail {
+    color: rgba(246, 247, 251, 0.6) !important;
+  }
+
+  .agent-delivery__link {
+    width: fit-content;
+    border: 1px solid rgba(94, 234, 212, 0.36);
+    border-radius: var(--delivery-radius-control);
+    background: rgba(94, 234, 212, 0.12);
+    color: #ffffff;
+    padding: 11px 14px;
+    text-decoration: none;
+  }
+
+  .agent-delivery__link:hover {
+    border-color: rgba(94, 234, 212, 0.72);
+  }
+
+  .agent-delivery__embed {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-height: clamp(560px, 58vw, 700px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--delivery-radius-card);
+    background: rgba(0, 0, 0, 0.32);
+  }
+
+  .agent-delivery__embed-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.035);
+    padding: 11px 14px;
+  }
+
+  .agent-delivery__embed-header span,
+  .agent-delivery__embed-header a {
+    color: rgba(246, 247, 251, 0.72);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    text-decoration: none;
+  }
+
+  .agent-delivery__embed-header a {
+    color: #5eead4;
+  }
+
+  .agent-delivery__embed iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: clamp(500px, 52vw, 640px);
+    border: 0;
+    background: #0b0b10;
   }
 
   .delivery-agent__intro {
@@ -440,6 +917,7 @@
   .follow-up-list button,
   .delivery-agent__form button {
     border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--delivery-radius-control);
     background: rgba(255, 255, 255, 0.06);
     color: rgba(246, 247, 251, 0.88);
     padding: 10px 13px;
@@ -474,6 +952,7 @@
     gap: 10px;
     max-width: 82%;
     padding: 16px;
+    border-radius: var(--delivery-radius-card);
     background: rgba(255, 255, 255, 0.055);
     border: 1px solid rgba(255, 255, 255, 0.12);
   }
@@ -537,6 +1016,7 @@
     min-height: 92px;
     resize: vertical;
     border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--delivery-radius-control);
     background: rgba(0, 0, 0, 0.28);
     color: #ffffff;
     padding: 13px 14px;
@@ -564,8 +1044,53 @@
     border-top: 4px solid rgba(167, 184, 255, 0.76);
   }
 
+  .boundary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+  }
+
+  .boundary-card {
+    display: grid;
+    gap: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 4px solid rgba(94, 234, 212, 0.78);
+    border-radius: var(--delivery-radius-card);
+    background: rgba(255, 255, 255, 0.045);
+    padding: 20px;
+  }
+
+  .boundary-card--review {
+    border-top-color: rgba(247, 200, 115, 0.84);
+  }
+
+  .boundary-card--blocked {
+    border-top-color: rgba(248, 113, 113, 0.78);
+  }
+
+  .boundary-card h3 {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 32px);
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .boundary-card div {
+    display: grid;
+    gap: 9px;
+  }
+
+  .boundary-card p {
+    margin: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(246, 247, 251, 0.72);
+    padding-top: 9px;
+  }
+
   .layer-card h3,
-  .evidence-panel h2 {
+  .evidence-panel h2,
+  .version-panel h2 {
     margin: 14px 0 10px;
     font-size: clamp(24px, 3vw, 36px);
     line-height: 1.05;
@@ -597,11 +1122,55 @@
     padding-top: 12px;
   }
 
+  .delivery-section--footer {
+    padding-top: 0;
+  }
+
+  .version-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 20px;
+    padding: 24px;
+    border-top: 4px solid rgba(94, 234, 212, 0.78);
+  }
+
+  .version-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .version-grid p {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 12px;
+  }
+
+  .version-grid strong {
+    color: #5eead4;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .version-grid span {
+    color: rgba(246, 247, 251, 0.74);
+  }
+
   @media (max-width: 980px) {
     .delivery-hero__inner,
+    .agent-delivery,
+    .control-strip,
+    .review-path,
     .artifact-grid,
     .layer-grid,
+    .boundary-grid,
     .evidence-layout,
+    .version-panel,
+    .version-grid,
     .delivery-agent__form div {
       grid-template-columns: 1fr;
     }
@@ -612,6 +1181,56 @@
 
     .chat-message {
       max-width: 100%;
+    }
+
+    .artifact-link,
+    .artifact-link:nth-child(4),
+    .artifact-link:nth-child(5) {
+      grid-column: auto;
+      min-height: 220px;
+    }
+  }
+
+  @media (min-width: 981px) and (max-width: 1220px) {
+    .artifact-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .artifact-link,
+    .artifact-link:nth-child(4),
+    .artifact-link:nth-child(5) {
+      grid-column: auto;
+      min-height: 232px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .delivery-copy h1 {
+      font-size: clamp(40px, 13vw, 54px);
+    }
+
+    .delivery-status p {
+      display: grid;
+      gap: 6px;
+    }
+
+    .delivery-status span {
+      text-align: left;
+    }
+
+    .agent-delivery__embed,
+    .agent-delivery__embed iframe {
+      min-height: 620px;
+    }
+
+    .artifact-link__top {
+      display: grid;
+      min-height: auto;
+      gap: 12px;
+    }
+
+    .artifact-badges {
+      justify-content: flex-start;
     }
   }
 </style>

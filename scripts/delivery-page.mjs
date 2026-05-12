@@ -401,9 +401,9 @@ function renderLayout({ title, body, basePath = '' }) {
       color: var(--ink);
       font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.5;
-      letter-spacing: -0.015em;
+      letter-spacing: 0;
     }
-    a { color: inherit; }
+    a { color: inherit; overflow-wrap: anywhere; }
     .shell { max-width: 1180px; margin: 0 auto; padding: 32px 20px 52px; }
     .topbar {
       display: flex;
@@ -428,6 +428,67 @@ function renderLayout({ title, body, basePath = '' }) {
     h3 { font-size: 17px; margin: 0 0 8px; letter-spacing: 0; }
     p { margin: 0 0 14px; }
     .lede { font-size: 20px; color: #cbd5e1; max-width: 790px; }
+    .review-path {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 26px 0 44px;
+    }
+    .review-path a {
+      min-height: 150px;
+      display: grid;
+      gap: 9px;
+      align-content: start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.055);
+      text-decoration: none;
+    }
+    .review-path a:hover { border-color: rgba(94, 234, 212, 0.72); }
+    .review-path span {
+      color: var(--teal);
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 12px;
+    }
+    .review-path strong {
+      font-size: 17px;
+      line-height: 1.2;
+    }
+    .review-path small {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .control-strip {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(240px, 0.7fr);
+      gap: 14px;
+      margin: 0 0 42px;
+    }
+    .control-card {
+      border-top: 5px solid var(--teal);
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+    .control-card.forward { border-top-color: var(--blue); }
+    .control-card.decision { border-top-color: var(--amber); }
+    .control-card h2 {
+      margin-bottom: 2px;
+    }
+    .control-card p {
+      color: var(--muted);
+    }
+    .control-list {
+      display: grid;
+      gap: 10px;
+    }
+    .control-list p {
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+      margin: 0;
+    }
     .meta {
       border-left: 4px solid var(--teal);
       background: rgba(255, 255, 255, 0.04);
@@ -469,6 +530,12 @@ function renderLayout({ title, body, basePath = '' }) {
     .tag.blue { color: var(--blue); border-color: rgba(37, 99, 235, 0.28); }
     .tag.amber { color: var(--amber); border-color: rgba(161, 98, 7, 0.28); }
     .tag.red { color: var(--red); border-color: rgba(180, 35, 24, 0.28); }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
     .stack { display: grid; gap: 12px; }
     .muted { color: var(--muted); }
     .proof-image {
@@ -479,11 +546,53 @@ function renderLayout({ title, body, basePath = '' }) {
       background: rgba(255, 255, 255, 0.04);
       box-shadow: var(--shadow);
     }
+    .embed-card {
+      display: grid;
+      gap: 16px;
+      grid-column: 1 / -1;
+    }
+    .embed-frame {
+      width: 100%;
+      min-height: 700px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.36);
+    }
+    .boundary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .boundary-card.safe { border-top-color: var(--teal); }
+    .boundary-card.review { border-top-color: var(--amber); }
+    .boundary-card.blocked { border-top-color: var(--red); }
+    .version-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 18px;
+    }
+    .version-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .version-grid p {
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+      margin: 0;
+    }
+    .version-grid strong {
+      display: block;
+      color: var(--teal);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 14px;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.055);
       border: 1px solid var(--line);
       border-radius: 8px;
       overflow: hidden;
@@ -503,7 +612,7 @@ function renderLayout({ title, body, basePath = '' }) {
     }
     .footer { border-top: 1px solid var(--line); padding-top: 22px; margin-top: 46px; color: var(--muted); font-size: 13px; }
     @media (max-width: 840px) {
-      .hero, .grid, .grid.two { grid-template-columns: 1fr; }
+      .hero, .review-path, .control-strip, .boundary-grid, .version-panel, .version-grid, .grid, .grid.two { grid-template-columns: 1fr; }
       .topbar { align-items: flex-start; flex-direction: column; }
       h1 { font-size: 42px; }
       table { display: block; overflow-x: auto; }
@@ -581,6 +690,71 @@ function renderIndex({ projects, agent, git }) {
   return renderLayout({ title: 'CREATE SOMETHING Delivery', body, basePath: '' });
 }
 
+function renderReviewPath() {
+  const items = [
+    {
+      step: '01',
+      href: '#delivery-artifacts',
+      label: 'Open the live surfaces',
+      detail: 'Start with the newest agent, app, package, and walkthrough links.',
+    },
+    {
+      step: '02',
+      href: '#operating-map',
+      label: 'Read the operating map',
+      detail: 'See how the database, MCP, and agent layers fit together.',
+    },
+    {
+      step: '03',
+      href: '#client-registry',
+      label: 'Check ownership',
+      detail: 'Review client context, owner roles, access surfaces, and package scope.',
+    },
+    {
+      step: '04',
+      href: '#next-review',
+      label: 'Decide the next pass',
+      detail: 'Use the decision list before approving another build cycle.',
+    },
+  ];
+
+  return `<nav class="review-path" aria-label="Recommended delivery review path">
+    ${items.map((item) => `<a href="${escapeHtml(item.href)}">
+      <span>${escapeHtml(item.step)}</span>
+      <strong>${escapeHtml(item.label)}</strong>
+      <small>${escapeHtml(item.detail)}</small>
+    </a>`).join('\n')}
+  </nav>`;
+}
+
+function renderControlSummary(project) {
+  const changes = project.changesSinceLastUpdate ?? [];
+  const safeToForward = project.safeToForward ?? [];
+  const approvalOwner = project.approvalOwner;
+
+  if (changes.length === 0 && safeToForward.length === 0 && !approvalOwner) {
+    return '';
+  }
+
+  return `<section class="control-strip" aria-label="Delivery control summary">
+    <article class="card control-card">
+      ${tag('what changed', 'teal')}
+      <h2>Since the last update</h2>
+      <div class="control-list">${changes.map((item) => `<p>${escapeHtml(item)}</p>`).join('\n')}</div>
+    </article>
+    <article class="card control-card forward">
+      ${tag('safe to forward', 'blue')}
+      <h2>Client-safe summary</h2>
+      <div class="control-list">${safeToForward.map((item) => `<p>${escapeHtml(item)}</p>`).join('\n')}</div>
+    </article>
+    <aside class="card control-card decision">
+      ${tag('decision owner', 'amber')}
+      <h2>${escapeHtml(approvalOwner?.value ?? 'Not yet confirmed')}</h2>
+      <p>${escapeHtml(approvalOwner?.detail ?? 'Confirm the person who can approve the next build pass before client-facing changes move forward.')}</p>
+    </aside>
+  </section>`;
+}
+
 function renderComponentCards(project) {
   const tones = ['teal', 'blue', 'amber'];
   return project.components.map((component, index) => `
@@ -591,6 +765,57 @@ function renderComponentCards(project) {
       <p class="muted">${escapeHtml(component.summary)}</p>
     </article>
   `).join('\n');
+}
+
+function renderAgentBoundary(project, agent) {
+  const cards = project.agentBoundary?.length
+    ? project.agentBoundary
+    : [
+      {
+        title: 'Allowed',
+        tone: 'safe',
+        items: agent.allowedActions,
+      },
+      {
+        title: 'Approval Required',
+        tone: 'review',
+        items: agent.approvalRequired,
+      },
+      {
+        title: 'Blocked',
+        tone: 'blocked',
+        items: agent.blockedContent ?? [],
+      },
+    ];
+
+  return `<div class="boundary-grid">
+    ${cards.map((card) => `<article class="card boundary-card ${escapeHtml(card.tone ?? 'safe')}">
+      <h3>${escapeHtml(card.title)}</h3>
+      <div class="stack">${(card.items ?? []).map((item) => `<p class="muted">${escapeHtml(item)}</p>`).join('\n')}</div>
+    </article>`).join('\n')}
+  </div>`;
+}
+
+function renderVersionPanel(project, git) {
+  const items = [
+    ['Last updated', project.deliveryDate ?? 'unknown'],
+    ['Commit', git.shortSha],
+    ['Branch', git.branch],
+    ['Source', `config/delivery/projects/${project.slug}.json`],
+    ['Package', 'create-something-deliveries'],
+    ['Agency route', `/delivery/${project.slug}`],
+  ];
+
+  return `<section class="section">
+    <div class="card teal version-panel">
+      <div>
+        ${tag('version / evidence', 'teal')}
+        <h2>Repo-backed delivery surface</h2>
+        <p class="muted">Generated from monorepo manifests and repo evidence rather than a hand-written status note.</p>
+      </div>
+      <div class="version-grid">${items.map(([label, value]) => `<p><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</p>`).join('\n')}</div>
+    </div>
+  </section>`;
 }
 
 function renderEvidenceTable(project) {
@@ -671,7 +896,7 @@ function renderClientRegistry(project, registryEntry) {
 
   const owner = entry.ownerContext;
 
-  return `<section class="section">
+  return `<section class="section" id="client-registry">
       <h2>Client Registry</h2>
       <div class="grid two">
         <div class="card blue">
@@ -724,15 +949,17 @@ function renderArtifactUrls(project) {
   const artifacts = project.artifactUrls ?? [];
   if (artifacts.length === 0) return '';
 
-  return `<section class="section">
+  return `<section class="section" id="delivery-artifacts">
       <h2>Delivery Artifacts</h2>
       <div class="grid auto">${artifacts.map((artifact) => `
-        <article class="card ${artifact.visibility === 'private_internal' ? 'amber' : 'teal'}">
+        <article class="card ${artifact.visibility === 'private_internal' ? 'amber' : 'teal'} ${artifact.embedUrl ? 'embed-card' : ''}">
+          ${artifact.badges?.length ? `<div class="badge-row">${artifact.badges.map((badge) => tag(badge, artifact.visibility === 'private_internal' ? 'amber' : 'teal')).join('\n')}</div>` : ''}
           ${tag(artifact.visibility ?? artifact.kind ?? 'artifact', artifact.visibility === 'private_internal' ? 'amber' : 'teal')}
           <h3>${escapeHtml(artifact.label ?? artifact.id)}</h3>
           <p class="muted"><strong>Kind:</strong> ${escapeHtml(artifact.kind ?? 'artifact')}</p>
           ${artifact.url ? `<p><a href="${escapeHtml(artifact.url)}">${escapeHtml(artifact.url)}</a></p>` : ''}
           <p class="muted">${escapeHtml(artifact.summary ?? '')}</p>
+          ${artifact.embedUrl ? `<iframe class="embed-frame" src="${escapeHtml(artifact.embedUrl)}" title="${escapeHtml(artifact.label ?? artifact.id)}" allow="microphone" loading="lazy"></iframe>` : ''}
         </article>
       `).join('\n')}</div>
     </section>`;
@@ -766,7 +993,10 @@ function renderProjectPage({ project, agent, git, outputDir, clientRegistry }) {
       </aside>
     </section>
 
-    ${project.notionContext ? `<section class="section">
+    ${renderReviewPath()}
+    ${renderControlSummary(project)}
+
+    ${project.notionContext ? `<section class="section" id="client-context">
       <h2>Client Context</h2>
       <div class="card blue">
         <h3>${escapeHtml(project.notionContext.engagementTitle ?? project.client)}</h3>
@@ -776,16 +1006,16 @@ function renderProjectPage({ project, agent, git, outputDir, clientRegistry }) {
       </div>
     </section>` : ''}
 
-    <section class="section">
+    ${renderArtifactUrls(project)}
+
+    <section class="section" id="operating-map">
       <h2>DB, MCP, and Agent Map</h2>
       <div class="grid">${renderComponentCards(project)}</div>
     </section>
 
     ${renderClientRegistry(project, registryEntry)}
 
-    ${renderArtifactUrls(project)}
-
-    <section class="section">
+    <section class="section" id="summary">
       <h2>Client Summary</h2>
       <div class="stack">${project.summary.map((item) => `<p>${escapeHtml(item)}</p>`).join('\n')}</div>
     </section>
@@ -825,24 +1055,17 @@ function renderProjectPage({ project, agent, git, outputDir, clientRegistry }) {
       ${renderCoordination(project)}
     </section>
 
-    <section class="section">
+    <section class="section" id="next-review">
       <h2>Next Review</h2>
       <div class="grid auto">${project.nextReview.map((item) => `<div class="card amber"><p>${escapeHtml(item)}</p></div>`).join('\n')}</div>
     </section>
 
-    <section class="section">
+    <section class="section" id="agent-boundary">
       <h2>Agent Boundary</h2>
-      <div class="grid two">
-        <div class="card teal">
-          <h3>Allowed</h3>
-          <p class="muted">${agent.allowedActions.map((action) => escapeHtml(action)).join(', ')}</p>
-        </div>
-        <div class="card red">
-          <h3>Approval Required</h3>
-          <p class="muted">${agent.approvalRequired.map((action) => escapeHtml(action)).join(', ')}</p>
-        </div>
-      </div>
+      ${renderAgentBoundary(project, agent)}
     </section>
+
+    ${renderVersionPanel(project, git)}
 
     <footer class="footer">
       ${updatePath ? `Markdown source: <code>${escapeHtml(relativePath(updatePath))}</code>. ` : ''}
@@ -914,7 +1137,7 @@ function buildSite({ projects, agent, clientRegistry, outputDir }) {
     '/*',
     '  X-Content-Type-Options: nosniff',
     '  Referrer-Policy: no-referrer-when-downgrade',
-    '  Permissions-Policy: camera=(), microphone=(), geolocation=()',
+    '  Permissions-Policy: camera=(), microphone=(self "https://udify.app"), geolocation=()',
     '',
   ].join('\n'));
 

@@ -37,10 +37,10 @@
 <text x="834" y="303" font-size="15" fill="#334155">The matching logic can produce an</text>
 <text x="834" y="325" font-size="15" fill="#334155">explainable shortlist using skills,</text>
 <text x="834" y="347" font-size="15" fill="#334155">budget, and availability. The Dify-side</text>
-<text x="834" y="369" font-size="15" fill="#334155">staff agent configuration is tracked as</text>
-<text x="834" y="391" font-size="15" fill="#334155">an external artifact, and the</text>
-<text x="834" y="413" font-size="15" fill="#334155">client-facing rule remains</text>
-<text x="834" y="435" font-size="15" fill="#334155">recommendation support, not autonomous</text>
+<text x="834" y="369" font-size="15" fill="#334155">Staff Headcount Agent is now a</text>
+<text x="834" y="391" font-size="15" fill="#334155">client-safe chat surface over the</text>
+<text x="834" y="413" font-size="15" fill="#334155">Abundance Staff MCP, and the</text>
+<text x="834" y="435" font-size="15" fill="#334155">client-facing rule remains</text>
 <rect x="60" y="505" width="1080" height="64" rx="8" fill="#e2e8f0"/>
 <text x="84" y="545" font-size="18" fill="#0f172a">Delivery rule: repo artifacts stay authoritative; the client surface renders the current state instead of becoming the source of truth.</text>
 </svg>
