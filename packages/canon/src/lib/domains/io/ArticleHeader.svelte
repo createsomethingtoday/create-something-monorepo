@@ -1,290 +1,234 @@
 <script lang="ts">
-	import { TrackedExperimentBadge } from "@create-something/canon/interactive";
-	import type { Paper } from "$lib/types/paper";
+  import { TrackedExperimentBadge } from '@create-something/canon/interactive';
+  import type { Paper } from '$lib/types/paper';
 
-	interface Props {
-		paper: Paper;
-	}
+  interface Props {
+    paper: Paper;
+  }
 
-	let { paper }: Props = $props();
+  let { paper }: Props = $props();
 
-	const categoryDisplayNames: Record<string, string> = {
-		automation: 'Automation',
-		webflow: 'Webflow',
-		development: 'Development',
-	};
+  const categoryDisplayNames: Record<string, string> = {
+    automation: 'Automation',
+    webflow: 'Webflow',
+    development: 'Development'
+  };
 
-	const categoryDisplayName = $derived(categoryDisplayNames[paper.category] || paper.category);
+  const categoryDisplayName = $derived(categoryDisplayNames[paper.category] || paper.category);
+  const formattedDate = $derived(formatDate(paper.published_at || paper.date || paper.created_at));
+  const technicalTags = $derived(
+    paper.technical_focus
+      ? paper.technical_focus
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+          .slice(0, 4)
+      : []
+  );
 
-	const difficultyLevels: Record<string, string> = {
-		Beginner: 'difficulty-beginner',
-		Intermediate: 'difficulty-intermediate',
-		Advanced: 'difficulty-advanced',
-	};
+  function formatDate(dateString?: string | null): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return '';
 
-	const difficultyClass = $derived(
-		difficultyLevels[paper.difficulty_level || ''] || 'difficulty-default'
-	);
-
-	const formatDate = (dateString?: string) => {
-		if (!dateString) return '';
-		const date = new Date(dateString);
-		return date.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-		});
-	};
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
 </script>
 
-<header class="w-full max-w-5xl mx-auto px-6 py-12 animate-reveal">
-	<!-- ASCII Art Hero -->
-	<div class="ascii-hero mb-8 overflow-hidden">
-		<div class="aspect-[21/9] flex items-center justify-center p-8">
-			{#if paper.ascii_art}
-				<pre class="ascii-art ascii-art-real">{paper.ascii_art}</pre>
-			{:else}
-				<pre class="ascii-art ascii-art-placeholder">{`
-  ╔═══════════════════════════════════════════════════════════╗
-  ║                                                           ║
-  ║                     [ASCII ART HERO]                      ║
-  ║                      PLACEHOLDER                          ║
-  ║                                                           ║
-  ╚═══════════════════════════════════════════════════════════╝
-`}</pre>
-			{/if}
-		</div>
-	</div>
+<header class="property-article-hero">
+  <div class="shell-inner-pad">
+    <div class="property-article-hero__layout">
+      <div class="property-article-hero__copy">
+        <span class="product-kicker">{categoryDisplayName}</span>
 
-	<!-- Category Tag -->
-	<div class="mb-6 animate-slide-in" style="--delay: 2">
-		<span class="category-tag">
-			{categoryDisplayName}
-		</span>
-	</div>
+        <h1>{paper.title}</h1>
 
-	<!-- Title -->
-	<h1 class="article-title mb-6 animate-reveal" style="--delay: 3">
-		{paper.title}
-	</h1>
+        {#if paper.excerpt_long || paper.description}
+          <p>{paper.excerpt_long || paper.description}</p>
+        {/if}
 
-	<!-- Excerpt -->
-	{#if paper.excerpt_long}
-		<p class="article-excerpt mb-8 max-w-3xl animate-reveal" style="--delay: 4">
-			{paper.excerpt_long}
-		</p>
-	{/if}
+        <div class="property-article-hero__meta" aria-label="Article metadata">
+          {#if formattedDate}
+            <span>{formattedDate}</span>
+          {/if}
+          {#if paper.reading_time}
+            <span>{paper.reading_time} min read</span>
+          {/if}
+          {#if paper.difficulty_level}
+            <span>{paper.difficulty_level}</span>
+          {/if}
+        </div>
 
-	<!-- Metadata Row -->
-	<div class="metadata-row flex flex-wrap items-center gap-6 pt-6 animate-reveal" style="--delay: 5">
-		<!-- Published Date -->
-		{#if paper.published_at || paper.date}
-			<div class="flex items-center gap-2">
-				<svg
-					class="w-4 h-4"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					stroke-width="1.5"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
-					/>
-				</svg>
-				<span>{formatDate(paper.published_at || paper.date)}</span>
-			</div>
-		{/if}
+        {#if technicalTags.length > 0}
+          <div class="property-article-hero__tags" aria-label="Technical focus">
+            {#each technicalTags as tag}
+              <span>{tag}</span>
+            {/each}
+          </div>
+        {/if}
+      </div>
 
-		<!-- Reading Time -->
-		<div class="flex items-center gap-2">
-			<svg
-				class="w-4 h-4"
-				fill="none"
-				stroke="currentColor"
-				viewBox="0 0 24 24"
-				stroke-width="1.5"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-				/>
-			</svg>
-			<span>{paper.reading_time} min read</span>
-		</div>
+      <aside class="product-surface product-surface--soft property-article-hero__artifact">
+        <span class="property-content-meta">Research artifact</span>
+        {#if paper.ascii_art}
+          <pre>{paper.ascii_art}</pre>
+        {:else}
+          <div class="property-article-hero__artifact-copy">
+            <h2>Evidence before opinion.</h2>
+            <p>
+              This page records the claim, the method, and the artifact trail so the next decision
+              can be inspected.
+            </p>
+          </div>
+        {/if}
+      </aside>
+    </div>
 
-		<!-- Difficulty -->
-		{#if paper.difficulty_level}
-			<div class="flex items-center gap-2 {difficultyClass}">
-				<div class="difficulty-indicator"></div>
-				<span class="difficulty-text">
-					{paper.difficulty_level}
-				</span>
-			</div>
-		{/if}
-
-		<!-- Technical Focus Tags -->
-		{#if paper.technical_focus}
-			<div class="flex items-center gap-2">
-				<span class="tag-label">Tags:</span>
-				<div class="flex gap-2">
-					{#each paper.technical_focus.split(",").slice(0, 3) as tech}
-						<span class="tech-tag">
-							{tech.trim()}
-						</span>
-					{/each}
-				</div>
-			</div>
-		{/if}
-	</div>
-
-	<!-- Tracked Experiment Badge -->
-	<div class="mt-8 animate-reveal" style="--delay: 6">
-		<TrackedExperimentBadge {paper} showFullStats={true} />
-	</div>
+    <div class="property-article-hero__badge">
+      <TrackedExperimentBadge {paper} showFullStats={true} />
+    </div>
+  </div>
 </header>
 
 <style>
-	.ascii-hero {
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
-	}
+  .property-article-hero {
+    padding-top: clamp(3rem, 7vw, 5rem);
+    padding-bottom: clamp(2rem, 5vw, 3.5rem);
+  }
 
-	.ascii-art {
-		font-family: monospace;
-		user-select: none;
-	}
+  .property-article-hero__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.56fr);
+    gap: clamp(1.5rem, 5vw, 4rem);
+    align-items: end;
+  }
 
-	.ascii-art-real {
-		color: var(--color-fg-secondary);
-		font-size: clamp(0.7rem, 1.5vw, 0.9rem);
-		line-height: 1.2;
-		opacity: 0.9;
-	}
+  .property-article-hero__copy {
+    display: grid;
+    gap: 1rem;
+    max-width: 58rem;
+  }
 
-	.ascii-art-placeholder {
-		color: var(--color-fg-muted);
-		font-size: 0.8rem;
-		line-height: 1.4;
-	}
+  .property-article-hero h1 {
+    margin: 0;
+    color: var(--color-fg-primary);
+    font-size: 4.35rem;
+    line-height: 0.98;
+    letter-spacing: 0;
+    text-wrap: balance;
+  }
 
-	.category-tag {
-		display: inline-block;
-		padding: 0.5rem 1rem;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body-sm);
-		font-weight: 500;
-		color: var(--color-fg-secondary);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
+  .property-article-hero__copy > p {
+    margin: 0;
+    max-width: 44rem;
+    color: var(--color-fg-secondary);
+    font-size: 1.16rem;
+    line-height: 1.72;
+    text-wrap: pretty;
+  }
 
-	.article-title {
-		font-size: clamp(2rem, 5vw, 3.75rem);
-		font-weight: bold;
-		color: var(--color-fg-primary);
-		line-height: 1.2;
-	}
+  .property-article-hero__meta,
+  .property-article-hero__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.48rem;
+    align-items: center;
+  }
 
-	.article-excerpt {
-		font-size: clamp(1.125rem, 2vw, 1.25rem);
-		color: var(--color-fg-muted);
-		line-height: 1.6;
-	}
+  .property-article-hero__meta span,
+  .property-article-hero__tags span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.9rem;
+    padding: 0.36rem 0.62rem;
+    border: 1px solid var(--color-shell-border-subtle);
+    border-radius: var(--radius-full);
+    color: var(--color-fg-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
 
-	.metadata-row {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-	}
+  .property-article-hero__tags span {
+    color: var(--color-fg-muted);
+    background: rgba(255, 255, 255, 0.025);
+  }
 
-	.difficulty-indicator {
-		width: 0.5rem;
-		height: 0.5rem;
-		border-radius: var(--radius-full);
-	}
+  .property-article-hero__artifact {
+    display: grid;
+    gap: 1rem;
+    min-height: 18rem;
+    align-content: start;
+  }
 
-	/* Difficulty level colors - using Canon semantic tokens */
-	.difficulty-beginner .difficulty-indicator {
-		background-color: var(--color-success);
-	}
+  .property-article-hero__artifact pre {
+    margin: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    color: var(--color-fg-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.56rem;
+    line-height: 1.18;
+    white-space: pre;
+    opacity: 0.9;
+  }
 
-	.difficulty-beginner .difficulty-text {
-		color: var(--color-success);
-	}
+  .property-article-hero__artifact pre::-webkit-scrollbar {
+    display: none;
+  }
 
-	.difficulty-intermediate .difficulty-indicator {
-		background-color: var(--color-warning);
-	}
+  .property-article-hero__artifact-copy {
+    display: grid;
+    gap: 0.75rem;
+  }
 
-	.difficulty-intermediate .difficulty-text {
-		color: var(--color-warning);
-	}
+  .property-article-hero__artifact-copy h2,
+  .property-article-hero__artifact-copy p {
+    margin: 0;
+  }
 
-	.difficulty-advanced .difficulty-indicator {
-		background-color: var(--color-error);
-	}
+  .property-article-hero__artifact-copy h2 {
+    color: var(--color-fg-primary);
+    font-size: 1.85rem;
+    line-height: 1.05;
+  }
 
-	.difficulty-advanced .difficulty-text {
-		color: var(--color-error);
-	}
+  .property-article-hero__artifact-copy p {
+    color: var(--color-fg-secondary);
+    line-height: 1.65;
+  }
 
-	.difficulty-default .difficulty-indicator {
-		background-color: var(--color-fg-primary);
-	}
+  .property-article-hero__badge {
+    margin-top: 1.2rem;
+    max-width: 58rem;
+  }
 
-	.difficulty-default .difficulty-text {
-		color: var(--color-fg-primary);
-	}
+  @media (max-width: 980px) {
+    .property-article-hero__layout {
+      grid-template-columns: 1fr;
+    }
 
-	.tag-label {
-		color: var(--color-fg-muted);
-	}
+    .property-article-hero h1 {
+      font-size: 3.6rem;
+    }
+  }
 
-	.tech-tag {
-		padding: 0.25rem 0.5rem;
-		font-size: var(--text-caption);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-tertiary);
-	}
+  @media (max-width: 720px) {
+    .property-article-hero h1 {
+      font-size: 3rem;
+      line-height: 1;
+    }
 
-	.animate-reveal {
-		opacity: 0;
-		transform: translateY(12px);
-		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		animation-delay: calc(var(--delay, 0) * 100ms);
-	}
+    .property-article-hero__copy > p {
+      font-size: 1.02rem;
+    }
 
-	.animate-slide-in {
-		opacity: 0;
-		transform: translateX(-12px);
-		animation: slide-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		animation-delay: calc(var(--delay, 0) * 100ms);
-	}
-
-	@keyframes reveal {
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@keyframes slide-in {
-		to {
-			opacity: 1;
-			transform: translateX(0);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.animate-reveal,
-		.animate-slide-in {
-			animation: none;
-			opacity: 1;
-			transform: none;
-		}
-	}
+    .property-article-hero__artifact pre {
+      font-size: 0.5rem;
+    }
+  }
 </style>

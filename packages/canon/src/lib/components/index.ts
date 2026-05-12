@@ -9,6 +9,16 @@ export { default as Card } from './Card.svelte';
 export { default as CatalogCard } from './CatalogCard.svelte';
 export { default as PaperCard } from './PaperCard.svelte';
 export { default as PapersGrid } from './PapersGrid.svelte';
+export { default as PropertyArchiveControls } from './PropertyArchiveControls.svelte';
+export { default as PropertyArchiveHero } from './PropertyArchiveHero.svelte';
+export { default as PropertyArchivePagination } from './PropertyArchivePagination.svelte';
+export { default as PropertyArtifactCard } from './PropertyArtifactCard.svelte';
+export { default as PropertyArtifactGrid } from './PropertyArtifactGrid.svelte';
+export type {
+  PropertyArtifact,
+  PropertyArtifactKind,
+  PropertyArtifactTag
+} from './property-artifacts.js';
 export { default as AnimatedAsciiThumbnail } from './AnimatedAsciiThumbnail.svelte';
 export { default as CategorySection } from './CategorySection.svelte';
 export { default as ShareButtons } from './ShareButtons.svelte';
@@ -26,14 +36,14 @@ export { default as CookieConsent } from './CookieConsent.svelte';
 
 // Form components
 export {
-	TextField,
-	TextArea,
-	Checkbox,
-	CheckboxGroup,
-	Radio,
-	RadioGroup,
-	Select,
-	Switch
+  TextField,
+  TextArea,
+  Checkbox,
+  CheckboxGroup,
+  Radio,
+  RadioGroup,
+  Select,
+  Switch
 } from './form/index.js';
 
 // Feedback components
@@ -41,13 +51,13 @@ export { Alert, Toast, Dialog, Progress, Spinner, Skeleton } from './feedback/in
 
 // Navigation components
 export {
-	Breadcrumbs,
-	Tabs,
-	Pagination,
-	Tooltip,
-	Popover,
-	DropdownMenu,
-	Drawer
+  Breadcrumbs,
+  Tabs,
+  Pagination,
+  Tooltip,
+  Popover,
+  DropdownMenu,
+  Drawer
 } from './navigation/index.js';
 
 // Documentation components (live docs - components ARE the documentation)

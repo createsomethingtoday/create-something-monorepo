@@ -1,10 +1,9 @@
 <script lang="ts">
 	import type { PageData } from "./$types";
 	import { ArticleHeader, ArticleContent, StickyCTA, NextExperimentCard } from "@create-something/canon/domains/io";
-	import { ShareButtons, SEO, RelatedArticles, PageActions, MarkdownPreviewModal, Footer } from "@create-something/canon";
+	import { ShareButtons, SEO, RelatedArticles, PageActions, MarkdownPreviewModal } from "@create-something/canon";
 	import { page } from "$app/stores";
 	import type { Paper } from '@create-something/canon/types';
-	import confetti from "canvas-confetti";
 	import {
 		markExperimentCompleted,
 		isExperimentCompleted,
@@ -84,11 +83,13 @@ ${hasInteractive ? `
 		if (validateCompletionToken($page.url)) {
 			markExperimentCompleted(currentSlug);
 
-			// Trigger celebration!
-			confetti({
-				particleCount: 100,
-				spread: 70,
-				origin: { y: 0.6 },
+			// Trigger celebration after returning from the interactive artifact.
+			import("canvas-confetti").then(({ default: confetti }) => {
+				confetti({
+					particleCount: 100,
+					spread: 70,
+					origin: { y: 0.6 },
+				});
 			});
 
 			// Clean up URL without reloading
@@ -179,9 +180,6 @@ ${hasInteractive ? `
 			Back to all experiments
 		</a>
 	</div>
-
-	<!-- Footer -->
-	
 
 	<!-- Sticky CTA for Interactive Experiments -->
 	{#if hasInteractive && paper.interactive_demo_url}

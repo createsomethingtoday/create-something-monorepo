@@ -1,247 +1,230 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import { marked } from "marked";
-	import hljs from "highlight.js";
-	import type { Paper } from "$lib/types/paper";
-	import { InteractiveExperimentCTA } from "@create-something/canon/interactive";
+  import { tick } from 'svelte';
+  import type { Paper } from '$lib/types/paper';
+  import { InteractiveExperimentCTA } from '@create-something/canon/interactive';
 
-	interface Props {
-		paper: Paper;
-		isCompleted?: boolean;
-		onReset?: () => void;
-	}
+  interface Props {
+    paper: Paper;
+    isCompleted?: boolean;
+    onReset?: () => void;
+  }
 
-	let { paper, isCompleted = false, onReset }: Props = $props();
+  let { paper, isCompleted = false, onReset }: Props = $props();
 
-	// Use html_content if it's substantial (not just an excerpt), otherwise use markdown content
-	// Some papers have html_content set to a short excerpt instead of full rendered HTML
-	const hasSubstantialHtmlContent = $derived(
-		!!paper.html_content &&
-			(!paper.content || paper.html_content.length >= paper.content.length * 0.5)
-	);
-	const contentToRender = $derived(hasSubstantialHtmlContent ? paper.html_content : paper.content);
+  const hasSubstantialHtmlContent = $derived(
+    !!paper.html_content &&
+      (!paper.content || paper.html_content.length >= paper.content.length * 0.5)
+  );
+  const contentToRender = $derived(hasSubstantialHtmlContent ? paper.html_content : paper.content);
 
-	// For markdown content, configure marked
-	let renderedContent = $state("");
+  let renderedContent = $state('');
+  let proseElement = $state<HTMLElement>();
 
-	onMount(async () => {
-		if (!hasSubstantialHtmlContent && contentToRender) {
-			// Configure marked for GitHub-flavored markdown
-			marked.setOptions({
-				gfm: true,
-				breaks: true
-			});
+  $effect(() => {
+    const content = contentToRender;
+    let cancelled = false;
 
-			// Render markdown (marked now returns a Promise)
-			renderedContent = await marked(contentToRender);
+    if (!content) {
+      renderedContent = '';
+      return;
+    }
 
-			// Apply syntax highlighting to code blocks after rendering
-			if (typeof document !== 'undefined') {
-				setTimeout(() => {
-					document.querySelectorAll('pre code').forEach((block) => {
-						hljs.highlightElement(block as HTMLElement);
-					});
-				}, 0);
-			}
-		} else if (hasSubstantialHtmlContent) {
-			renderedContent = contentToRender;
-		}
-	});
+    void (async () => {
+      if (hasSubstantialHtmlContent) {
+        renderedContent = content;
+      } else {
+        const { marked } = await import('marked');
+
+        marked.setOptions({
+          gfm: true,
+          breaks: true
+        });
+        renderedContent = await marked(content);
+      }
+
+      await tick();
+      if (!cancelled && proseElement) {
+        const { default: hljs } = await import('highlight.js');
+        proseElement
+          .querySelectorAll('pre code')
+          .forEach((block) => hljs.highlightElement(block as HTMLElement));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  });
 </script>
 
-<article class="article-container w-full max-w-4xl mx-auto px-6 py-12 animate-reveal">
-	<!-- Interactive Experiment CTA - Show if SPACE URL exists -->
-	{#if paper.interactive_demo_url}
-		<InteractiveExperimentCTA
-			spaceUrl={paper.interactive_demo_url}
-			paperTitle={paper.title}
-			{isCompleted}
-			{onReset}
-		/>
-	{/if}
+<article class="property-article-content">
+  <div class="shell-inner-pad">
+    <div class="product-surface product-surface--soft property-article-body">
+      {#if paper.interactive_demo_url}
+        <InteractiveExperimentCTA
+          spaceUrl={paper.interactive_demo_url}
+          paperTitle={paper.title}
+          {isCompleted}
+          {onReset}
+        />
+      {/if}
 
-	<div class="article-prose prose prose-invert prose-lg max-w-none">
-		{@html renderedContent}
-	</div>
+      <div class="property-article-prose" bind:this={proseElement}>
+        {@html renderedContent}
+      </div>
+    </div>
+  </div>
 </article>
 
 <style>
-	.article-prose :global(h1) {
-		font-size: var(--text-display);
-		font-weight: bold;
-		color: var(--color-fg-primary);
-		margin-bottom: 1.5rem;
-		margin-top: 3rem;
-	}
+  .property-article-content {
+    padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
+  }
 
-	.article-prose :global(h2) {
-		font-size: var(--text-h1);
-		font-weight: bold;
-		color: var(--color-fg-primary);
-		margin-bottom: 1.25rem;
-		margin-top: 2.5rem;
-	}
+  .property-article-body {
+    max-width: 58rem;
+    margin-inline: auto;
+    --product-surface-padding: clamp(1.35rem, 3vw, 2.4rem);
+  }
 
-	.article-prose :global(h3) {
-		font-size: var(--text-h2);
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: 1rem;
-		margin-top: 2rem;
-	}
+  .property-article-prose {
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-lg);
+    line-height: 1.78;
+  }
 
-	.article-prose :global(h4) {
-		font-size: var(--text-h3);
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: 0.75rem;
-		margin-top: 1.5rem;
-	}
+  .property-article-prose :global(*) {
+    max-width: 100%;
+  }
 
-	.article-prose :global(p) {
-		color: var(--color-fg-secondary);
-		line-height: 1.75;
-		margin-bottom: 1.5rem;
-	}
+  .property-article-prose :global(h1),
+  .property-article-prose :global(h2),
+  .property-article-prose :global(h3),
+  .property-article-prose :global(h4) {
+    color: var(--color-fg-primary);
+    line-height: 1.05;
+    text-wrap: balance;
+  }
 
-	.article-prose :global(a) {
-		color: var(--color-fg-secondary);
-		text-decoration: underline;
-		text-underline-offset: 0.25rem;
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
+  .property-article-prose :global(h1) {
+    margin: 0 0 1.5rem;
+    font-size: 3.5rem;
+  }
 
-	.article-prose :global(a:hover) {
-		color: var(--color-fg-primary);
-	}
+  .property-article-prose :global(h2) {
+    margin: 2.8rem 0 1rem;
+    font-size: 2.65rem;
+  }
 
-	.article-prose :global(ul),
-	.article-prose :global(ol) {
-		list-style-position: outside;
-		color: var(--color-fg-secondary);
-		margin-bottom: 1.5rem;
-		margin-left: 0;
-		padding-left: 1.5rem;
-	}
+  .property-article-prose :global(h3) {
+    margin: 2.2rem 0 0.85rem;
+    font-size: 1.85rem;
+  }
 
-	.article-prose :global(ul) {
-		list-style-type: disc;
-	}
+  .property-article-prose :global(h4) {
+    margin: 1.8rem 0 0.7rem;
+    font-size: 1.2rem;
+  }
 
-	.article-prose :global(ol) {
-		list-style-type: decimal;
-	}
+  .property-article-prose :global(p),
+  .property-article-prose :global(ul),
+  .property-article-prose :global(ol),
+  .property-article-prose :global(blockquote),
+  .property-article-prose :global(pre),
+  .property-article-prose :global(table) {
+    margin-top: 0;
+    margin-bottom: 1.35rem;
+  }
 
-	.article-prose :global(li) {
-		line-height: 1.75;
-		margin-bottom: 0.5rem;
-	}
+  .property-article-prose :global(p) {
+    color: var(--color-fg-secondary);
+  }
 
-	.article-prose :global(li > p) {
-		margin: 0;
-	}
+  .property-article-prose :global(a) {
+    color: var(--color-fg-primary);
+    text-decoration: underline;
+    text-underline-offset: 0.25rem;
+  }
 
-	.article-prose :global(li > p:first-child:last-child) {
-		display: inline;
-	}
+  .property-article-prose :global(ul),
+  .property-article-prose :global(ol) {
+    padding-left: 1.4rem;
+  }
 
-	.article-prose :global(pre) {
-		border-radius: var(--radius-lg);
-		padding: 1.5rem;
-		margin-bottom: 1.5rem;
-		overflow-x: auto;
-	}
+  .property-article-prose :global(li) {
+    margin-bottom: 0.45rem;
+  }
 
-	.article-prose :global(code) {
-		font-family: monospace;
-		font-size: var(--text-body-sm);
-	}
+  .property-article-prose :global(pre) {
+    overflow-x: auto;
+    padding: 1.15rem;
+    border: 1px solid var(--color-shell-border-subtle);
+    border-radius: var(--radius-lg);
+    background: rgba(0, 0, 0, 0.28);
+  }
 
-	.article-prose :global(:not(pre) > code) {
-		background: var(--color-bg-surface);
-		padding: 0.125rem 0.5rem;
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-secondary);
-	}
+  .property-article-prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
 
-	.article-prose :global(blockquote) {
-		border-left: 4px solid var(--color-border-emphasis);
-		padding-left: 1.5rem;
-		padding-top: 0.5rem;
-		padding-bottom: 0.5rem;
-		margin-top: 1.5rem;
-		margin-bottom: 1.5rem;
-		font-style: italic;
-		color: var(--color-fg-tertiary);
-		background: var(--color-bg-surface);
-		border-top-right-radius: var(--radius-sm);
-		border-bottom-right-radius: var(--radius-sm);
-	}
+  .property-article-prose :global(:not(pre) > code) {
+    padding: 0.13rem 0.42rem;
+    border: 1px solid var(--color-shell-border-subtle);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-fg-primary);
+  }
 
-	.article-prose :global(img) {
-		border-radius: var(--radius-lg);
-		width: 100%;
-		margin-top: 2rem;
-		margin-bottom: 2rem;
-	}
+  .property-article-prose :global(blockquote) {
+    padding: 1rem 1.1rem;
+    border-left: 3px solid var(--color-brand-primary);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    background: rgba(255, 255, 255, 0.035);
+    color: var(--color-fg-secondary);
+  }
 
-	.article-prose :global(table) {
-		min-width: 100%;
-		border-radius: var(--radius-lg);
-		margin-top: 1.5rem;
-		margin-bottom: 1.5rem;
-	}
+  .property-article-prose :global(img) {
+    width: 100%;
+    margin: 2rem 0;
+    border-radius: var(--radius-lg);
+  }
 
-	.article-prose :global(thead) {
-		background: var(--color-bg-surface);
-	}
+  .property-article-prose :global(table) {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    border: 1px solid var(--color-shell-border-subtle);
+    border-radius: var(--radius-lg);
+  }
 
-	.article-prose :global(th) {
-		padding: 0.75rem 1rem;
-		text-align: left;
-		color: var(--color-fg-primary);
-		font-weight: 600;
-	}
+  .property-article-prose :global(th),
+  .property-article-prose :global(td) {
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid var(--color-shell-border-subtle);
+    text-align: left;
+  }
 
-	.article-prose :global(td) {
-		padding: 0.75rem 1rem;
-		color: var(--color-fg-secondary);
-	}
+  .property-article-prose :global(th) {
+    color: var(--color-fg-primary);
+    background: rgba(255, 255, 255, 0.035);
+  }
 
-	.article-prose :global(hr) {
-		border-color: var(--color-border-default);
-		margin-top: 2rem;
-		margin-bottom: 2rem;
-	}
+  .property-article-prose :global(strong) {
+    color: var(--color-fg-primary);
+  }
 
-	.article-prose :global(strong) {
-		font-weight: bold;
-		color: var(--color-fg-primary);
-	}
+  @media (max-width: 720px) {
+    .property-article-prose :global(h1) {
+      font-size: 2.3rem;
+    }
 
-	.article-prose :global(em) {
-		font-style: italic;
-		color: var(--color-fg-secondary);
-	}
+    .property-article-prose :global(h2) {
+      font-size: 2rem;
+    }
 
-	.animate-reveal {
-		opacity: 0;
-		transform: translateY(12px);
-		animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
-	}
-
-	@keyframes reveal {
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.animate-reveal {
-			animation: none;
-			opacity: 1;
-			transform: none;
-		}
-	}
+    .property-article-prose :global(h3) {
+      font-size: 1.45rem;
+    }
+  }
 </style>
