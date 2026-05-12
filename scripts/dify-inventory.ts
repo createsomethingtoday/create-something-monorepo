@@ -134,6 +134,28 @@ const VALID_EVAL_CHECKS = new Set<EvalCheck>([
   'error_recovery'
 ]);
 
+// Manifests in these statuses describe agents that are NOT yet present in
+// Dify Studio (e.g. `draft_pending_studio_import` for an unimported DSL).
+// The inventory only tracks live agents, so demanding coverage for drafts
+// is a category error. Bump this set when introducing new draft statuses.
+const DRAFT_MANIFEST_STATUSES = new Set<string>([
+  'draft_pending_studio_import',
+  'draft',
+  'planned',
+]);
+
+function isDraftManifestFile(absolutePath: string): boolean {
+  try {
+    const raw = readFileSync(absolutePath, 'utf-8');
+    const parsed = JSON.parse(raw) as { status?: unknown };
+    return typeof parsed.status === 'string' && DRAFT_MANIFEST_STATUSES.has(parsed.status);
+  } catch {
+    // If the manifest is unreadable/non-JSON, treat it as non-draft so the
+    // coverage rule still fires and the operator notices.
+    return false;
+  }
+}
+
 const command = (process.argv[2] ?? 'check').trim().toLowerCase();
 
 if (!['check', 'generate', 'validate'].includes(command)) {
@@ -354,9 +376,10 @@ function validateManifestCoverage(manifestPaths: Set<string>, errors: string[]):
     .map((path) => normalizePath(path));
 
   for (const path of manifestList) {
-    if (!manifestPaths.has(path)) {
-      errors.push(`manifest ${path} is not referenced by config/dify/inventory.json`);
-    }
+    if (manifestPaths.has(path)) continue;
+    const absolute = resolve(ROOT, path);
+    if (isDraftManifestFile(absolute)) continue;
+    errors.push(`manifest ${path} is not referenced by config/dify/inventory.json`);
   }
 }
 

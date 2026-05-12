@@ -5,59 +5,10 @@ import { resolve } from 'node:path';
 
 import { ComposioClient } from '../packages/composio-bridge/src/client.ts';
 import type { ComposioToolkitSummary } from '../packages/composio-bridge/src/types.ts';
-
-type StringMap = Record<string, string>;
-
-type HttpServerConfig = {
-  transport: 'http';
-  url: string;
-  http_headers?: StringMap;
-  env_http_headers?: StringMap;
-  bearer_token_env_var?: string;
-  headers?: StringMap;
-  description?: string;
-  tags?: string[];
-  lifecycle?: 'active' | 'dormant' | 'local';
-  package_path?: string;
-  catalog?: {
-    include: boolean;
-    name?: string;
-    slug?: string;
-    category: 'create-something' | 'workway';
-    description?: string;
-    transports?: Array<'http' | 'sse'>;
-    requiresAuth?: boolean;
-    authType?: 'bearer' | 'oauth';
-    setupNotes?: string;
-  };
-};
-
-type StdioServerConfig = {
-  transport: 'stdio';
-  command: string;
-  args?: string[];
-  env?: StringMap;
-  cwd?: string;
-  description?: string;
-  tags?: string[];
-  lifecycle?: 'active' | 'dormant' | 'local';
-  package_path?: string;
-  catalog?: HttpServerConfig['catalog'];
-};
-
-type RegistryServer = HttpServerConfig | StdioServerConfig;
-
-type Registry = {
-  version: 1;
-  servers: Record<string, RegistryServer>;
-  bundles: Record<string, string[]>;
-  defaults?: {
-    enabledBundles?: string[];
-    enabledServers?: string[];
-    disabledServers?: string[];
-    codexConfigPath?: string;
-  };
-};
+import type {
+  McpBundleRegistry as Registry,
+  McpServerConfig as RegistryServer,
+} from '../packages/cs-mcp-hub/src/types.ts';
 
 type ScriptOptions = {
   registryPath: string;
@@ -68,7 +19,16 @@ type ScriptOptions = {
 };
 
 const ROOT = process.cwd();
-const DEFAULT_REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
+/**
+ * Default target is the composio-generated layer (CRE-267). The legacy flat
+ * `config/mcp-hub/registry.json` is still accepted via --registry for the
+ * pre-split workflow, but landing day was 2026-05-11 and the two-layer
+ * source is now authoritative. Once the merged registry.json is
+ * reconstructed from the layers by `pnpm mcp:registry:generate`, hand edits
+ * to it would be overwritten on the next regenerate anyway.
+ */
+const DEFAULT_REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.composio.generated.json');
+const LEGACY_REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
 const MANAGED_SERVER_PREFIX = 'composio-toolkit-';
 const MANAGED_BUNDLE_PREFIX = 'composio-category-';
 const COMPOSIO_ALL_BUNDLE = 'composio-all';
@@ -370,15 +330,13 @@ function buildManagedServerEntries(
       ? `Composio toolkit gateway: ${toolkit.name} (${toolkit.slug}) - ${toolkit.description.trim()}`
       : `Composio toolkit gateway: ${toolkit.name} (${toolkit.slug})`;
 
-    return [
-      serverName,
-      {
-        transport: 'http',
-        url: `${toolkitBaseUrl}/mcp/${encodeURIComponent(toolkit.slug)}`,
-        description,
-        tags,
-      },
-    ];
+    const server: RegistryServer = {
+      transport: 'http',
+      url: `${toolkitBaseUrl}/mcp/${encodeURIComponent(toolkit.slug)}`,
+      description,
+      tags,
+    };
+    return [serverName, server];
   });
 
   entries.sort(([a], [b]) => a.localeCompare(b));
