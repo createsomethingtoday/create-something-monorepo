@@ -928,6 +928,58 @@
       "estimated_tool_count": 6
     }
   },
+  "routines": {
+    "partner-onboarding-airtable": {
+      "trigger_id": "trig_01BWWv4R6TMDgsJeaDW535o8",
+      "name": "Partner Onboarding Requests → Airtable",
+      "description": "Polls #alerts-partner-onboarding-requests (Webflow Slack) daily for unprocessed Zapier bot messages and creates 🧠Experts records in Airtable. Idempotency via '✅ Added to Airtable' thread reply.",
+      "schedule": "0 14 * * *",
+      "schedule_human": "Daily at 9am CDT (14:00 UTC)",
+      "environment_id": "env_01TJD9Hn9AVfAhB44GdFKkXA",
+      "model": "claude-sonnet-4-6",
+      "repo": "https://github.com/createsomethingtoday/create-something-monorepo",
+      "mcp_connections": [
+        {
+          "connector_uuid": "9728c0dc-a996-411d-a6bd-f05343e7b7df",
+          "name": "Slack",
+          "description": "Slack MCP for Webflow workspace — reads #alerts-partner-onboarding-requests (C0886URB8C9)"
+        },
+        {
+          "connector_uuid": "fdc96768-8413-4fee-979d-9f66e6de6664",
+          "name": "Airtable",
+          "description": "Airtable MCP — writes to base appR3EHkpfTErTS1y, table tblD1iKe1AN8Scurm (🧠Experts)"
+        }
+      ],
+      "airtable": {
+        "base_id": "appR3EHkpfTErTS1y",
+        "table_id": "tblD1iKe1AN8Scurm",
+        "table_name": "🧠Experts",
+        "fields": {
+          "expert_name": "fldNfzY5itM5KpliQ",
+          "first_name": "fldESKn7gfH0HHFDl",
+          "last_name": "fldIzlPJ4aGtz9QyB",
+          "project_inquiry_email": "fldJqyIzhfPLJTs9G",
+          "mongo_workspace_id": "fld4GgBUvP5ZvGucX",
+          "expert_type": "fldF9JNc709zE31UB",
+          "accelerate_post_onboarding": "fldK82pXtWKLozTSr"
+        }
+      },
+      "slack": {
+        "channel_id": "C0886URB8C9",
+        "channel_name": "#alerts-partner-onboarding-requests",
+        "workspace": "webflow",
+        "processed_marker": "✅ Added to Airtable"
+      },
+      "tags": [
+        "webflow",
+        "airtable",
+        "slack",
+        "automation",
+        "partner-onboarding",
+        "ccr"
+      ]
+    }
+  },
   "bundles": {
     "agency": [
       "outerfields-pcn"
