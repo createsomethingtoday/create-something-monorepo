@@ -81,6 +81,8 @@ const REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
 const REGISTRY_CORE_PATH = resolve(ROOT, 'config/mcp-hub/registry.core.json');
 const REGISTRY_COMPOSIO_PATH = resolve(ROOT, 'config/mcp-hub/registry.composio.generated.json');
 const SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.schema.json');
+const CORE_SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.core.schema.json');
+const COMPOSIO_SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.composio.generated.schema.json');
 const STATE_PATH = resolve(ROOT, 'config/mcp-hub/state.json');
 const GENERATED_CATALOG_PATH = resolve(ROOT, 'packages/playbook-mcp/src/catalog.registry.generated.ts');
 const GENERATED_FLEET_DOC_PATH = resolve(ROOT, 'docs/MCP_FLEET_REGISTRY.generated.md');
@@ -208,7 +210,12 @@ errors.push(...validateRegistry(registry));
 errors.push(...validateStateFile(STATE_PATH, registry));
 if (existsSync(REGISTRY_CORE_PATH) && existsSync(REGISTRY_COMPOSIO_PATH)) {
   errors.push(...validateLayerInvariants(REGISTRY_CORE_PATH, REGISTRY_COMPOSIO_PATH));
+  errors.push(...(await validateLayerAgainstSchema(REGISTRY_CORE_PATH, CORE_SCHEMA_PATH, 'core')));
+  errors.push(
+    ...(await validateLayerAgainstSchema(REGISTRY_COMPOSIO_PATH, COMPOSIO_SCHEMA_PATH, 'composio')),
+  );
 }
+const warnings = collectRegistryWarnings(registry);
 if (errors.length > 0) {
   console.error('Registry validation failed:');
   for (const error of errors) {
@@ -222,7 +229,11 @@ const generatedCatalog = renderCatalogFile(catalogEntries);
 const generatedFleetDoc = renderFleetDoc(registry);
 
 if (command === 'validate') {
-  console.log('Registry validation passed.');
+  if (warnings.length > 0) {
+    console.warn('Registry warnings (non-failing):');
+    for (const warning of warnings) console.warn(`- ${warning}`);
+  }
+  console.log(`Registry validation passed (${warnings.length} warning${warnings.length === 1 ? '' : 's'}).`);
   process.exit(0);
 }
 
@@ -445,6 +456,85 @@ function readAndMergeLayers(): { merged: Registry; mergeErrors: string[] } {
   const composio = JSON.parse(readFileSync(REGISTRY_COMPOSIO_PATH, 'utf8')) as ComposioLayer;
   const { merged, errors } = mergeLayers(core, composio);
   return { merged, mergeErrors: errors };
+}
+
+/**
+ * Run Ajv against a single layer file using its dedicated schema. The merged
+ * registry schema is still applied at the top level for the merged result;
+ * this catches per-layer-only constraints (e.g. composio layer must not have
+ * `defaults`, core layer must not contain composio-toolkit-* keys) closer to
+ * the actual source of the error.
+ */
+async function validateLayerAgainstSchema(
+  layerPath: string,
+  schemaPath: string,
+  label: 'core' | 'composio',
+): Promise<string[]> {
+  if (!existsSync(schemaPath)) {
+    return [];
+  }
+  let AjvCtor: any;
+  try {
+    const mod: any = await import('ajv/dist/2020.js').catch(() => import('ajv'));
+    AjvCtor = mod.default ?? mod.Ajv ?? mod;
+  } catch {
+    return [];
+  }
+  let layer: unknown;
+  try {
+    layer = JSON.parse(readFileSync(layerPath, 'utf8'));
+  } catch (error: unknown) {
+    return [
+      `${relativeToRoot(layerPath)}: failed to parse: ${error instanceof Error ? error.message : String(error)}`,
+    ];
+  }
+  let schema: unknown;
+  try {
+    schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
+  } catch (error: unknown) {
+    return [
+      `${relativeToRoot(schemaPath)}: failed to parse: ${error instanceof Error ? error.message : String(error)}`,
+    ];
+  }
+  // Per-layer schemas intentionally do not $ref the merged schema; server
+  // shape is already enforced by validateRegistryAgainstSchema on the merged
+  // result. The per-layer schemas only enforce layer-specific invariants
+  // (property-name prefixes, no extra top-level keys, no `defaults` in the
+  // composio layer, etc.).
+  try {
+    const ajv = new AjvCtor({ allErrors: true, strict: false });
+    const validate = ajv.compile(schema);
+    if (validate(layer)) return [];
+    const errors: string[] = [];
+    for (const err of validate.errors ?? []) {
+      const path = err.instancePath || '/';
+      errors.push(`layer ${label} ${path}: ${err.message ?? 'invalid'}`);
+    }
+    return errors;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return [`ajv (layer ${label}): failed to compile/validate schema: ${message}`];
+  }
+}
+
+/**
+ * Non-failing soft signals about the registry. Surfaced by `validate` output
+ * so reviewers see them without blocking the build. Keep entries cheap and
+ * unambiguously actionable; promote to a hard error if a pattern matures.
+ */
+function collectRegistryWarnings(data: Registry): string[] {
+  const warnings: string[] = [];
+
+  for (const serverName of Object.keys(data.servers)) {
+    if (serverName.startsWith(COMPOSIO_NAME_PREFIX)) continue;
+    if (serverName.endsWith('-mcp-server')) {
+      warnings.push(
+        `server ${serverName}: name ends with -mcp-server (uncommon); consider renaming to -mcp to match the convention used by ground-mcp, harness-mcp, loom-mcp, etc.`,
+      );
+    }
+  }
+
+  return warnings;
 }
 
 function validateLayerInvariants(corePath: string, composioPath: string): string[] {

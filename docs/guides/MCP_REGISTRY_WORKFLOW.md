@@ -66,7 +66,9 @@ Invariants enforced by `pnpm mcp:registry:validate`:
 ## Commands
 
 ```bash
-# Validate the layers (schema + policy + state.json refs + name policy + invariants).
+# Validate the layers (merged schema + per-layer schemas + policy + state.json refs
+# + name policy + invariants). Non-failing warnings are printed to stderr; the
+# success message reports the warning count.
 pnpm mcp:registry:validate
 
 # Rebuild registry.json from the two layers and regenerate the playbook
@@ -129,6 +131,29 @@ pnpm mcp:composio:sync-and-generate
 5. Commit `registry.core.json`, the regenerated `registry.json`, the regenerated
    `docs/MCP_FLEET_REGISTRY.generated.md`, the regenerated playbook catalog,
    and (if applicable) `scripts/mcp-registry-coverage.mjs`.
+
+## Soft warnings
+
+The validator emits non-failing warnings alongside hard errors. A warning does
+not fail the build; it surfaces a soft policy signal for the next time the
+entry is touched. Today the validator warns when:
+
+- A server name ends with `-mcp-server` (only `quickbooks-notion-mcp-server`
+  matches at HEAD). The convention used elsewhere is `-mcp`.
+
+Add new warnings in `collectRegistryWarnings` in `scripts/mcp-registry.ts`.
+Promote to a hard error in `validateRegistry` once the pattern has been drained.
+
+## Hub status at a glance
+
+```bash
+# Full JSON status (paths, state, connections, proxy tool counts, policy).
+node packages/cs-mcp-hub/dist/index.js --status
+
+# One-line operator summary (shell-script friendly).
+node packages/cs-mcp-hub/dist/index.js --status --terse
+# [create-something-hub@0.1.0] enabled=12 connected=11 failed=1 idle=988 tools=144 tenant=default warnings=0
+```
 
 ## Naming policy
 

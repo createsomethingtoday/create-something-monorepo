@@ -20,6 +20,7 @@ import type { McpBundleRegistry, RegistryPaths } from './types.js';
 
 export type AdminArgs = {
   status: boolean;
+  terse: boolean;
   writeCodex: boolean;
   writeCodexExplicit: boolean;
   enableBundles: string[];
@@ -32,6 +33,7 @@ export type AdminArgs = {
 export function parseAdminArgs(argv: string[]): AdminArgs | null {
   const args: AdminArgs = {
     status: false,
+    terse: false,
     writeCodex: true,
     writeCodexExplicit: false,
     enableBundles: [],
@@ -53,6 +55,12 @@ export function parseAdminArgs(argv: string[]): AdminArgs | null {
 
     if (token === '--status') {
       args.status = true;
+      adminMode = true;
+      continue;
+    }
+
+    if (token === '--terse') {
+      args.terse = true;
       adminMode = true;
       continue;
     }
@@ -151,9 +159,53 @@ export async function runAdminMode(args: AdminArgs, identity: HubIdentity): Prom
     status,
   };
 
+  if (args.terse) {
+    console.log(formatTerseStatus(status, identity));
+    return;
+  }
+
   if (args.status || hasPatch || shouldWriteCodex) {
     console.log(JSON.stringify(output, null, 2));
   }
+}
+
+/**
+ * Format hub status as a single operator-friendly line. Useful for shell
+ * scripts, dashboards, and quick health checks where the multi-KB JSON of
+ * --status is too noisy. Shape:
+ *
+ *   [create-something-hub@0.1.0] enabled=N connected=N failed=N idle=N tools=N tenant=default warnings=N
+ */
+export function formatTerseStatus(
+  status: Record<string, unknown>,
+  identity: HubIdentity,
+): string {
+  type Summary = {
+    enabledServerNames?: string[];
+    connected?: number;
+    failed?: number;
+    idle?: number;
+  };
+  const summary = (status.connectionSummary ?? {}) as Summary;
+  const routing = (status.routing ?? null) as { tenantId?: string } | null;
+  const enabledTopLevel = status.enabledServerNames;
+  const enabledCount = Array.isArray(summary.enabledServerNames)
+    ? summary.enabledServerNames.length
+    : Array.isArray(enabledTopLevel)
+      ? enabledTopLevel.length
+      : 0;
+  const warnings = Array.isArray(status.warnings) ? status.warnings.length : 0;
+  const tools = typeof status.proxyToolCount === 'number' ? status.proxyToolCount : 0;
+  return [
+    `[${identity.name}@${identity.version}]`,
+    `enabled=${enabledCount}`,
+    `connected=${summary.connected ?? 0}`,
+    `failed=${summary.failed ?? 0}`,
+    `idle=${summary.idle ?? 0}`,
+    `tools=${tools}`,
+    `tenant=${routing?.tenantId ?? 'default'}`,
+    `warnings=${warnings}`,
+  ].join(' ');
 }
 
 export function printAdminUsage(): void {
@@ -165,6 +217,7 @@ Run as MCP server (default):
 
 Admin mode:
   cs-mcp-hub --status
+  cs-mcp-hub --status --terse        # one-line operator summary
   cs-mcp-hub --enable-bundle <bundle> [--disable-bundle <bundle>] [--no-write-codex]
   cs-mcp-hub --enable-server <server> [--disable-server <server>] [--no-write-codex]
   cs-mcp-hub --write-codex

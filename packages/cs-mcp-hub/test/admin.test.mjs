@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseAdminArgs } from '../dist/admin.js';
+import { formatTerseStatus, parseAdminArgs } from '../dist/admin.js';
 
 test('parseAdminArgs returns null when there are no admin tokens (server mode)', () => {
   assert.equal(parseAdminArgs([]), null);
@@ -52,4 +52,40 @@ test('parseAdminArgs supports -h alias', () => {
   const result = parseAdminArgs(['-h']);
   assert.ok(result);
   assert.equal(result.help, true);
+});
+
+test('parseAdminArgs recognizes --terse alongside --status', () => {
+  const result = parseAdminArgs(['--status', '--terse']);
+  assert.ok(result);
+  assert.equal(result.status, true);
+  assert.equal(result.terse, true);
+});
+
+test('formatTerseStatus emits a one-line operator summary', () => {
+  const status = {
+    enabledServerNames: ['a', 'b', 'c'],
+    proxyToolCount: 144,
+    routing: { tenantId: 'acme', allowPendingOauthApprovals: false, aliasCount: 1 },
+    warnings: ['minor: x', 'minor: y'],
+    connectionSummary: {
+      enabledServerNames: ['a', 'b', 'c'],
+      totalConfiguredServers: 100,
+      connected: 2,
+      failed: 1,
+      idle: 97,
+    },
+  };
+  const out = formatTerseStatus(status, { name: 'create-something-hub', version: '0.1.0' });
+  assert.equal(
+    out,
+    '[create-something-hub@0.1.0] enabled=3 connected=2 failed=1 idle=97 tools=144 tenant=acme warnings=2',
+  );
+});
+
+test('formatTerseStatus falls back gracefully when fields are missing', () => {
+  const out = formatTerseStatus({}, { name: 'hub', version: '0.0.1' });
+  assert.equal(
+    out,
+    '[hub@0.0.1] enabled=0 connected=0 failed=0 idle=0 tools=0 tenant=default warnings=0',
+  );
 });

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -24,8 +24,15 @@ function makeWorkspace(t) {
     spawnSync('mkdir', ['-p', dir]);
   }
 
-  // The script reads SCHEMA_PATH directly under cwd, so copy the real one.
+  // Copy all three schemas so the validator finds them under cwd.
   cpSync(SCHEMA_SRC, path.join(configDir, 'registry.schema.json'));
+  const REPO_CONFIG = path.join(REPO_ROOT, 'config', 'mcp-hub');
+  for (const layerSchema of ['registry.core.schema.json', 'registry.composio.generated.schema.json']) {
+    const src = path.join(REPO_CONFIG, layerSchema);
+    if (existsSync(src)) {
+      cpSync(src, path.join(configDir, layerSchema));
+    }
+  }
 
   return { root, configDir, playbookDir, docsDir };
 }
@@ -408,6 +415,66 @@ test('validate rejects defaults in the composio layer', (t) => {
   const result = runValidate(root);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /defaults must live in the core layer/);
+});
+
+// --- Per-layer schemas (CRE-276) ----------------------------------------
+
+test('per-layer schema rejects an unknown top-level property in the composio layer', (t) => {
+  const { root, configDir } = makeWorkspace(t);
+  writeRegistry(configDir, baseRegistry());
+  assert.equal(runRegistry(root, 'split').status, 0);
+
+  // Inject a stray top-level field in the composio layer.
+  const composioPath = path.join(configDir, 'registry.composio.generated.json');
+  const composio = JSON.parse(readFileSync(composioPath, 'utf8'));
+  composio.someUnknownField = 'oops';
+  writeFileSync(composioPath, `${JSON.stringify(composio, null, 2)}\n`, 'utf8');
+
+  const result = runValidate(root);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /layer composio/);
+  assert.match(result.stderr, /must NOT have additional properties/);
+});
+
+test('per-layer schema rejects non-composio server in the composio layer', (t) => {
+  const { root, configDir } = makeWorkspace(t);
+  writeRegistry(configDir, baseRegistry());
+  assert.equal(runRegistry(root, 'split').status, 0);
+
+  // Smuggle a non-composio-prefixed entry into the composio layer.
+  const composioPath = path.join(configDir, 'registry.composio.generated.json');
+  const composio = JSON.parse(readFileSync(composioPath, 'utf8'));
+  composio.servers['plain-server'] = { transport: 'http', url: 'https://x/mcp' };
+  writeFileSync(composioPath, `${JSON.stringify(composio, null, 2)}\n`, 'utf8');
+
+  const result = runValidate(root);
+  assert.equal(result.status, 1);
+  // Either the merge invariant or the per-layer schema (or both) should fire.
+  assert.match(result.stderr, /plain-server|composio layer/);
+});
+
+// --- Soft warnings (CRE-276) --------------------------------------------
+
+test('validate reports -mcp-server suffix as a non-failing warning', (t) => {
+  const { root, configDir } = makeWorkspace(t);
+  const registry = baseRegistry();
+  registry.servers['legacy-thing-mcp-server'] = {
+    transport: 'http',
+    url: 'https://x/mcp',
+    description: 'legacy outlier',
+    tags: ['core'],
+    catalog_exposure_mode: 'direct',
+    estimated_tool_count: 1,
+  };
+  registry.bundles.core.push('legacy-thing-mcp-server');
+  writeRegistry(configDir, registry);
+
+  const result = runValidate(root);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  // The warning is written to stderr by console.warn; the success line lives on stdout.
+  assert.match(result.stderr, /legacy-thing-mcp-server/);
+  assert.match(result.stderr, /-mcp-server \(uncommon\)/);
+  assert.match(result.stdout, /Registry validation passed \(\d+ warning/);
 });
 
 // Sanity check that the real repo registry validates with the new rules.

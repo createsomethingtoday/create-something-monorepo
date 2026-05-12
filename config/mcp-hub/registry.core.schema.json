@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://create-something.dev/schemas/mcp-hub-registry.core.schema.json",
+  "title": "MCP Hub Registry — core layer",
+  "description": "Schema for config/mcp-hub/registry.core.json. The core layer holds hand-authored CREATE SOMETHING + WORKWAY + agency MCPs, hand-curated bundles, and `defaults`. Composio toolkit entries are forbidden here; they live in the composio-generated layer.",
+  "type": "object",
+  "required": ["version", "servers", "bundles"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "servers": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(?!composio-toolkit-).+",
+        "description": "Server names in the core layer must not start with composio-toolkit-."
+      },
+      "additionalProperties": { "type": "object" }
+    },
+    "bundles": {
+      "type": "object",
+      "propertyNames": {
+        "not": {
+          "anyOf": [
+            { "const": "composio-all" },
+            { "pattern": "^composio-category-" }
+          ]
+        },
+        "description": "Bundle names in the core layer must not be composio-all or start with composio-category-."
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabledBundles": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "enabledServers": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "disabledServers": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "codexConfigPath": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
