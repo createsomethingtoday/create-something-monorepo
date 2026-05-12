@@ -3,10 +3,11 @@
 > Auto-generated from `config/mcp-hub/registry.json`.
 > Regenerate with `pnpm mcp:registry:generate`.
 
-## Active (1019)
+## Active (1020)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
+| `bettermode-creator` | `http` | `https://bettermode-creator.mcp.createsomething.agency/mcp` | `direct` | `4` | `agency`, `webflow`, `bettermode`, `marketplace`, `cs` |
 | `composio-toolkit-_21risk` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/_21risk` | `brokered` | `100` | `composio`, `composio-business-intelligence`, `toolkit` |
 | `composio-toolkit-_2chat` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/_2chat` | `brokered` | `100` | `composio`, `composio-communication`, `composio-developer-tools`, `toolkit` |
 | `composio-toolkit-ably` | `http` | `https://composio-toolkit-mcp.createsomething.workers.dev/mcp/ably` | `brokered` | `100` | `composio`, `composio-developer-tools`, `toolkit` |
@@ -1018,7 +1019,7 @@
 | `playbook` | `http` | `https://playbook.mcp.createsomething.ltd/mcp` | `direct` | `14` | `core`, `workflow`, `cs`, `policy_os_only` |
 | `quickbooks-notion-mcp-server` | `http` | `https://quickbooks.mcp.workway.co/mcp` | `direct` | `0` | `finance`, `quickbooks`, `notion`, `workway` |
 | `schedule-mcp` | `http` | `https://schedule.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `scheduling`, `cs`, `policy_os_only` |
-| `slack_create_something` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `cs` |
+| `slack-create-something` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `cs` |
 | `substrate-mcp` | `http` | `https://substrate.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `automation`, `cs`, `policy_os_only` |
 | `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `direct` | `6` | `core`, `framework`, `cs`, `policy_os_only` |
 | `webflow-app-review-mcp` | `http` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `apps`, `cs` |
@@ -1034,7 +1035,7 @@
 | `gmail-notion-mcp` | `http` | `https://gmail-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
 | `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `dormant` | `0` | `coordination`, `loom`, `legacy`, `dormant`, `cs` |
 | `notion-sync-mcp` | `http` | `https://notion-sync-mcp-worker.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
-| `slack_webflow` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `webflow` |
+| `slack-webflow` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `webflow` |
 
 ## Local (6)
 
@@ -1152,7 +1153,7 @@
 | `observability` | `cs-telemetry` |
 | `ops` | `schedule-mcp`, `substrate-mcp` |
 | `policy-os` | `interaction-atlas-mcp` |
-| `slack` | `slack_create_something`, `slack_webflow` |
+| `slack` | `slack-create-something`, `slack-webflow` |
 | `webflow-marketplace-app-review-phase-a` | `webflow-app-review-mcp` |
 | `webflow-marketplace-app-review-phase-b` | `webflow-app-review-mcp` |
 | `webflow-marketplace-review-phase-a` | `webflow-template-review-mcp` |

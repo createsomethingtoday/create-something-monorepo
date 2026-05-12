@@ -7,7 +7,7 @@ type CatalogCategory = 'create-something' | 'workway';
 type CatalogAuthType = 'bearer' | 'oauth';
 type CatalogTransport = 'http' | 'sse';
 type ServerLifecycle = 'active' | 'dormant' | 'local';
-type CatalogExposureMode = 'direct' | 'brokered' | 'exception_direct';
+type CatalogExposureMode = 'direct' | 'brokered' | 'exception_direct' | 'dormant';
 
 type CatalogConfig = {
   include: boolean;
@@ -79,8 +79,42 @@ type GeneratedCatalogEntry = {
 const ROOT = process.cwd();
 const REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
 const SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.schema.json');
+const STATE_PATH = resolve(ROOT, 'config/mcp-hub/state.json');
 const GENERATED_CATALOG_PATH = resolve(ROOT, 'packages/playbook-mcp/src/catalog.registry.generated.ts');
 const GENERATED_FLEET_DOC_PATH = resolve(ROOT, 'docs/MCP_FLEET_REGISTRY.generated.md');
+
+/**
+ * Server name policy.
+ *
+ * Hand-authored entries must be kebab-case alphanumeric, optionally with
+ * a trailing `-mcp` suffix. Machine-generated Composio toolkit entries
+ * (`composio-toolkit-<slug>`) are exempt because their slug comes from
+ * an upstream provider and may contain `_`.
+ *
+ * Legacy entries are listed in `GRANDFATHERED_SERVER_NAMES`. New entries
+ * must conform to `SERVER_NAME_PATTERN`. Plan a rename + state.json /
+ * routing.json migration to drain the grandfathered list.
+ */
+const SERVER_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
+const COMPOSIO_NAME_PREFIX = 'composio-toolkit-';
+
+/**
+ * Exposure-policy thresholds (see docs/MCP_CATALOG_EXPOSURE_POLICY.md).
+ *
+ * - `<=` `EXPOSURE_DIRECT_TOOL_THRESHOLD`: direct registration acceptable
+ * - `>` threshold and `<=` brokered cap: direct allowed with documented justification
+ * - `>` `EXPOSURE_BROKERED_REQUIRED_THRESHOLD`: brokered discovery required
+ *
+ * When a broad-connector surface has no declared `estimated_tool_count`, we
+ * impute `BROAD_CONNECTOR_DEFAULT_TOOL_COUNT` so the >=75 brokered rule fires.
+ */
+const EXPOSURE_DIRECT_TOOL_THRESHOLD = 25;
+const EXPOSURE_BROKERED_REQUIRED_THRESHOLD = 75;
+const BROAD_CONNECTOR_DEFAULT_TOOL_COUNT = 100;
+// Empty by design: CRE-263 migrated slack_* legacy names to kebab-case.
+// Re-add an entry here ONLY if a rename is impossible and a sunset plan
+// is documented; new non-kebab names are otherwise rejected.
+const GRANDFATHERED_SERVER_NAMES = new Set<string>([]);
 
 const command = (process.argv[2] ?? 'check').trim().toLowerCase();
 
@@ -99,7 +133,11 @@ if (!existsSync(SCHEMA_PATH)) {
 }
 
 const registry = loadRegistry(REGISTRY_PATH);
-const errors = validateRegistry(registry);
+const errors: string[] = [];
+const schemaErrors = await validateRegistryAgainstSchema(registry);
+errors.push(...schemaErrors);
+errors.push(...validateRegistry(registry));
+errors.push(...validateStateFile(STATE_PATH, registry));
 if (errors.length > 0) {
   console.error('Registry validation failed:');
   for (const error of errors) {
@@ -210,6 +248,7 @@ function validateRegistry(data: Registry): string[] {
       catalogSlugs.add(slug);
     }
 
+    validateServerName(serverName, errors);
     validateCatalogExposurePolicy(serverName, server, errors);
   }
 
@@ -246,6 +285,121 @@ function validateRegistry(data: Registry): string[] {
   return errors;
 }
 
+function validateServerName(serverName: string, errors: string[]): void {
+  // Composio toolkit names are mechanically generated from upstream provider
+  // slugs (which can contain `_`); exempt them from the hand-author rule.
+  if (serverName.startsWith(COMPOSIO_NAME_PREFIX)) {
+    const remainder = serverName.slice(COMPOSIO_NAME_PREFIX.length);
+    if (!remainder || !/^[a-z0-9_]+$/.test(remainder)) {
+      errors.push(
+        `server ${serverName}: composio toolkit name must match composio-toolkit-<lowercase_slug>`,
+      );
+    }
+    return;
+  }
+
+  if (GRANDFATHERED_SERVER_NAMES.has(serverName)) {
+    return;
+  }
+
+  if (!SERVER_NAME_PATTERN.test(serverName)) {
+    errors.push(
+      `server ${serverName}: server names must be kebab-case (^[a-z][a-z0-9-]*$); rename or add to GRANDFATHERED_SERVER_NAMES in scripts/mcp-registry.ts`,
+    );
+  }
+}
+
+type StateFile = {
+  enabledBundles?: string[];
+  enabledServers?: string[];
+  disabledServers?: string[];
+};
+
+function validateStateFile(statePath: string, data: Registry): string[] {
+  const errors: string[] = [];
+  if (!existsSync(statePath)) {
+    return errors;
+  }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(statePath, 'utf8'));
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.push(`state.json: failed to parse: ${message}`);
+    return errors;
+  }
+
+  if (!isPlainObject(raw)) {
+    errors.push('state.json: must be an object');
+    return errors;
+  }
+
+  const state = raw as StateFile;
+  const bundles = new Set(Object.keys(data.bundles ?? {}));
+  const servers = new Set(Object.keys(data.servers ?? {}));
+
+  for (const bundleName of state.enabledBundles ?? []) {
+    if (!bundles.has(bundleName)) {
+      errors.push(`state.json: enabledBundles references unknown bundle: ${bundleName}`);
+    }
+  }
+  for (const serverName of state.enabledServers ?? []) {
+    if (!servers.has(serverName)) {
+      errors.push(`state.json: enabledServers references unknown server: ${serverName}`);
+    }
+  }
+  for (const serverName of state.disabledServers ?? []) {
+    if (!servers.has(serverName)) {
+      errors.push(`state.json: disabledServers references unknown server: ${serverName}`);
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Best-effort JSON Schema validation. We dynamic-import Ajv so that contributors
+ * running this script before `pnpm install` (or in environments where Ajv is
+ * unavailable) still get the hand-rolled checks below. When Ajv is present,
+ * the schema is the structural source of truth.
+ */
+async function validateRegistryAgainstSchema(data: Registry): Promise<string[]> {
+  let AjvCtor: any;
+  try {
+    const mod: any = await import('ajv/dist/2020.js').catch(() => import('ajv'));
+    AjvCtor = mod.default ?? mod.Ajv ?? mod;
+  } catch {
+    console.warn(
+      '[mcp-registry] Ajv not installed; falling back to custom validator only. Run `pnpm install` for schema validation.',
+    );
+    return [];
+  }
+
+  let schema: unknown;
+  try {
+    schema = JSON.parse(readFileSync(SCHEMA_PATH, 'utf8'));
+  } catch (error: unknown) {
+    return [`registry.schema.json: failed to parse: ${error instanceof Error ? error.message : String(error)}`];
+  }
+
+  try {
+    const ajv = new AjvCtor({ allErrors: true, strict: false });
+    const validate = ajv.compile(schema);
+    const valid = validate(data);
+    if (valid) return [];
+    const errors: string[] = [];
+    for (const err of validate.errors ?? []) {
+      const path = err.instancePath || '/';
+      errors.push(`schema ${path}: ${err.message ?? 'invalid'}`);
+    }
+    return errors;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return [`ajv: failed to compile/validate schema: ${message}`];
+  }
+}
+
 function validateCatalogExposurePolicy(
   serverName: string,
   server: RegistryServer,
@@ -256,16 +410,20 @@ function validateCatalogExposurePolicy(
   const reason = server.exposure_exception_reason?.trim();
   const owner = server.exposure_review_owner?.trim();
 
-  if (estimatedToolCount >= 75 && exposureMode === 'direct') {
+  if (estimatedToolCount >= EXPOSURE_BROKERED_REQUIRED_THRESHOLD && exposureMode === 'direct') {
     errors.push(
-      `server ${serverName}: direct catalog exposure is not allowed for estimated_tool_count >= 75; use brokered or exception_direct`,
+      `server ${serverName}: direct catalog exposure is not allowed for estimated_tool_count >= ${EXPOSURE_BROKERED_REQUIRED_THRESHOLD}; use brokered or exception_direct`,
     );
   }
 
-  if (estimatedToolCount >= 26 && estimatedToolCount <= 75 && exposureMode === 'direct') {
+  if (
+    estimatedToolCount > EXPOSURE_DIRECT_TOOL_THRESHOLD &&
+    estimatedToolCount <= EXPOSURE_BROKERED_REQUIRED_THRESHOLD &&
+    exposureMode === 'direct'
+  ) {
     if (!reason || !owner) {
       errors.push(
-        `server ${serverName}: direct catalog exposure for estimated_tool_count 26-75 requires exposure_exception_reason and exposure_review_owner`,
+        `server ${serverName}: direct catalog exposure for estimated_tool_count ${EXPOSURE_DIRECT_TOOL_THRESHOLD + 1}-${EXPOSURE_BROKERED_REQUIRED_THRESHOLD} requires exposure_exception_reason and exposure_review_owner`,
       );
     }
   }
@@ -278,7 +436,11 @@ function validateCatalogExposurePolicy(
     }
   }
 
-  if (isBroadConnectorSurface(serverName, server) && exposureMode === 'direct' && estimatedToolCount >= 75) {
+  if (
+    isBroadConnectorSurface(serverName, server) &&
+    exposureMode === 'direct' &&
+    estimatedToolCount >= EXPOSURE_BROKERED_REQUIRED_THRESHOLD
+  ) {
     errors.push(
       `server ${serverName}: broad connector surfaces should not be marked direct at large-catalog scale`,
     );
@@ -330,7 +492,7 @@ function inferEstimatedToolCount(serverName: string, server: RegistryServer): nu
     return Math.max(0, Math.trunc(server.estimated_tool_count));
   }
   if (isBroadConnectorSurface(serverName, server)) {
-    return 100;
+    return BROAD_CONNECTOR_DEFAULT_TOOL_COUNT;
   }
   return 0;
 }

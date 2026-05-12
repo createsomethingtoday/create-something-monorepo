@@ -55,6 +55,12 @@ const PACKAGE_COVERAGE = {
     note: 'local companion to outerfields-pcn',
     registry: ['outerfields-pcn']
   },
+  'packages/bettermode-creator-mcp': {
+    registry: ['bettermode-creator']
+  },
+  'packages/bettermode-creator-mcp/worker': {
+    registry: ['bettermode-creator']
+  },
   'packages/community-mcp': {
     registry: ['community-mcp']
   },

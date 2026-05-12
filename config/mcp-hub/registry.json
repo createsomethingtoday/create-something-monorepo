@@ -480,7 +480,7 @@
       "catalog_exposure_mode": "dormant",
       "estimated_tool_count": 0
     },
-    "slack_create_something": {
+    "slack-create-something": {
       "transport": "http",
       "url": "https://mcp.slack.com/mcp",
       "description": "Slack MCP for CREATE SOMETHING workspace",
@@ -489,7 +489,7 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
-    "slack_webflow": {
+    "slack-webflow": {
       "transport": "http",
       "url": "https://mcp.slack.com/mcp",
       "description": "Slack MCP for Webflow workspace",
@@ -9271,7 +9271,7 @@
     "halfdozen-observability": ["halfdozen-telemetry"],
     "meetings": ["meetings"],
     "policy-os": ["interaction-atlas-mcp"],
-    "slack": ["slack_create_something", "slack_webflow"],
+    "slack": ["slack-create-something", "slack-webflow"],
     "finance": ["quickbooks-notion-mcp-server"],
     "local-dev": [
       "community-mcp",

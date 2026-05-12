@@ -5,59 +5,10 @@ import { resolve } from 'node:path';
 
 import { ComposioClient } from '../packages/composio-bridge/src/client.ts';
 import type { ComposioToolkitSummary } from '../packages/composio-bridge/src/types.ts';
-
-type StringMap = Record<string, string>;
-
-type HttpServerConfig = {
-  transport: 'http';
-  url: string;
-  http_headers?: StringMap;
-  env_http_headers?: StringMap;
-  bearer_token_env_var?: string;
-  headers?: StringMap;
-  description?: string;
-  tags?: string[];
-  lifecycle?: 'active' | 'dormant' | 'local';
-  package_path?: string;
-  catalog?: {
-    include: boolean;
-    name?: string;
-    slug?: string;
-    category: 'create-something' | 'workway';
-    description?: string;
-    transports?: Array<'http' | 'sse'>;
-    requiresAuth?: boolean;
-    authType?: 'bearer' | 'oauth';
-    setupNotes?: string;
-  };
-};
-
-type StdioServerConfig = {
-  transport: 'stdio';
-  command: string;
-  args?: string[];
-  env?: StringMap;
-  cwd?: string;
-  description?: string;
-  tags?: string[];
-  lifecycle?: 'active' | 'dormant' | 'local';
-  package_path?: string;
-  catalog?: HttpServerConfig['catalog'];
-};
-
-type RegistryServer = HttpServerConfig | StdioServerConfig;
-
-type Registry = {
-  version: 1;
-  servers: Record<string, RegistryServer>;
-  bundles: Record<string, string[]>;
-  defaults?: {
-    enabledBundles?: string[];
-    enabledServers?: string[];
-    disabledServers?: string[];
-    codexConfigPath?: string;
-  };
-};
+import type {
+  McpBundleRegistry as Registry,
+  McpServerConfig as RegistryServer,
+} from '../packages/cs-mcp-hub/src/types.ts';
 
 type ScriptOptions = {
   registryPath: string;
@@ -370,15 +321,13 @@ function buildManagedServerEntries(
       ? `Composio toolkit gateway: ${toolkit.name} (${toolkit.slug}) - ${toolkit.description.trim()}`
       : `Composio toolkit gateway: ${toolkit.name} (${toolkit.slug})`;
 
-    return [
-      serverName,
-      {
-        transport: 'http',
-        url: `${toolkitBaseUrl}/mcp/${encodeURIComponent(toolkit.slug)}`,
-        description,
-        tags,
-      },
-    ];
+    const server: RegistryServer = {
+      transport: 'http',
+      url: `${toolkitBaseUrl}/mcp/${encodeURIComponent(toolkit.slug)}`,
+      description,
+      tags,
+    };
+    return [serverName, server];
   });
 
   entries.sort(([a], [b]) => a.localeCompare(b));

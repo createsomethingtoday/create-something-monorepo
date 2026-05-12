@@ -15,7 +15,7 @@ export type ServerCatalogConfig = {
 };
 
 export type ServerLifecycle = 'active' | 'dormant' | 'local';
-export type CatalogExposureMode = 'direct' | 'brokered' | 'exception_direct';
+export type CatalogExposureMode = 'direct' | 'brokered' | 'exception_direct' | 'dormant';
 
 export type ServerMetadata = {
   lifecycle?: ServerLifecycle;
@@ -70,6 +70,14 @@ export type HttpServerConfig = {
    * Backward-compat alias. Prefer http_headers.
    */
   headers?: StringMap;
+  /**
+   * Per-server connect timeout (milliseconds) for the downstream MCP transport.
+   */
+  connect_timeout_ms?: number;
+  /**
+   * Per-server list-tools timeout (milliseconds) for the initial tool inventory.
+   */
+  list_tools_timeout_ms?: number;
   description?: string;
   tags?: string[];
 } & ServerMetadata;

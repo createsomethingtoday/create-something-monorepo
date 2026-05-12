@@ -6,6 +6,19 @@
 
 export const REGISTRY_CATALOG_ENTRIES = [
   {
+    "name": "Bettermode Creator",
+    "slug": "bettermode-creator",
+    "url": "https://bettermode-creator.mcp.createsomething.agency",
+    "description": "Bettermode Marketplace Creator drafting MCP — read-only Bettermode + Airtable + community queue helpers consumed by the Dify drafter agent.",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "CREATE SOMETHING Content",
     "slug": "create-something",
     "url": "https://mcp.createsomething.ltd",

@@ -126,6 +126,37 @@ if [ -n "$STAGED_SVELTE" ]; then
   fi
 fi
 
+# =============================================================================
+# CHECK 5: MCP Registry artifact validation
+#
+# When the staged change touches any of the registry source files, run the
+# validator (Ajv schema + exposure policy + state.json refs + name policy).
+# The validator is fast (~600ms) and uses only what's already in node_modules.
+# Generated artifact drift and coverage are intentionally NOT checked here
+# (those need pnpm run, which is slower); the PR CI workflow covers them.
+# =============================================================================
+STAGED_REGISTRY=$(git diff --cached --name-only --diff-filter=ACM \
+  | grep -E '^(config/mcp-hub/(registry|state|registry\.schema)\.json|scripts/mcp-registry\.ts)$' \
+  || true)
+
+if [ -n "$STAGED_REGISTRY" ]; then
+  echo ""
+  echo "🧩 Validating MCP registry source (touched: $(echo $STAGED_REGISTRY | tr '\n' ' '))"
+  if [ -x ./node_modules/.bin/tsx ]; then
+    if ./node_modules/.bin/tsx scripts/mcp-registry.ts validate; then
+      echo "✅ MCP registry validation passed"
+    else
+      echo ""
+      echo "❌ MCP registry validation failed. Run pnpm mcp:registry:validate locally."
+      echo "   Bypass with --no-verify only if you know what you are doing."
+      exit 1
+    fi
+  else
+    echo "⚠️  ./node_modules/.bin/tsx not found; skipping registry validation."
+    echo "   Run pnpm install (or pnpm bootstrap:worktree) to enable this gate."
+  fi
+fi
+
 echo ""
 echo "✅ Pre-commit checks complete"
 exit 0
