@@ -60,6 +60,13 @@ export async function POST(request: Request) {
       return jsonNoStore({ error: 'Country is required.' }, { status: 400 });
     }
 
+    if (!isSupportedCountry(country)) {
+      return jsonNoStore(
+        { error: 'This country is not currently available for payout onboarding.' },
+        { status: 400 }
+      );
+    }
+
     if (!legalName) {
       return jsonNoStore({ error: 'Legal name is required.' }, { status: 400 });
     }

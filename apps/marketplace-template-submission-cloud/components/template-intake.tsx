@@ -6,8 +6,8 @@ import { appPath } from '../lib/runtime-paths';
 import { CountryPicker } from './country-picker';
 import { QuillEditor } from './quill-editor';
 import {
-  ALL_COUNTRIES,
   CATEGORY_OPTIONS,
+  SUPPORTED_COUNTRIES,
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
   getPricingTiers,
@@ -1957,6 +1957,14 @@ export function TemplateIntake() {
         throw new Error('Upload the creator profile image before submitting.');
       }
 
+      if (!creator.country.trim()) {
+        throw new Error('Select an available payout country before submitting.');
+      }
+
+      if (!creatorCountrySupported) {
+        throw new Error('This country is not currently available for payout onboarding.');
+      }
+
       if (turnstileEnabled && !turnstileTokens.creator) {
         throw new Error('Complete the bot check before creating the creator profile.');
       }
@@ -2242,12 +2250,12 @@ export function TemplateIntake() {
                       Country
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
-                      Choose the country tied to your creator account. Unsupported payout
-                      countries still behave as warnings, matching the live page.
+                      Choose the country tied to your creator account. This list is limited to
+                      currently available payout countries.
                     </p>
                     <CountryPicker
                       id="country"
-                      countries={ALL_COUNTRIES}
+                      countries={SUPPORTED_COUNTRIES}
                       value={creator.country}
                       onChange={(v) => updateCreator('country', v)}
                       placeholder="Select or search for a country…"
@@ -2276,9 +2284,9 @@ export function TemplateIntake() {
                   </div>
 
                   {!creatorCountrySupported && creator.country ? (
-                    <div className="submission-status submission-status-warning">
+                    <div className="submission-status submission-status-error">
                       This country is not currently in the supported payout list. The submission
-                      can continue, but this will need a follow-up review.
+                      cannot continue until an available payout country is selected.
                     </div>
                   ) : null}
 
