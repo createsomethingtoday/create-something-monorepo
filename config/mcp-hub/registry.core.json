@@ -978,6 +978,74 @@
         "partner-onboarding",
         "ccr"
       ]
+    },
+    "triage-certified-partners-draft-findings": {
+      "trigger_id": "trig_01LRdEEPsZXG5ukDCEsQ1e6t",
+      "name": "Triage Certified Partners — Draft Findings",
+      "description": "Polls #triage-certified-partners (Webflow Slack) every 2 hours for unanalyzed bot-submitted triage threads. For each, fetches the linked Zendesk ticket, classifies the request type, looks up Airtable partner data if relevant, and posts a structured '🔍 Analyzed by Claude' reply with a ready-to-send draft response for the human resolver. Idempotency via '🔍 Analyzed by Claude' thread reply marker.",
+      "schedule": "0 */2 * * *",
+      "schedule_human": "Every 2 hours",
+      "environment_id": "env_01TJD9Hn9AVfAhB44GdFKkXA",
+      "model": "claude-opus-4-7",
+      "repo": "https://github.com/createsomethingtoday/create-something-monorepo",
+      "mcp_connections": [
+        {
+          "connector_uuid": "9728c0dc-a996-411d-a6bd-f05343e7b7df",
+          "name": "Slack",
+          "description": "Slack MCP for Webflow workspace — reads/writes #triage-certified-partners (C0490P0G8G7)"
+        },
+        {
+          "connector_uuid": "82886bf0-4012-4c37-9b8b-004d079ff6b0",
+          "name": "Zendesk",
+          "description": "Zendesk MCP — fetches ticket details from webflow2579.zendesk.com for every triage request"
+        },
+        {
+          "connector_uuid": "fdc96768-8413-4fee-979d-9f66e6de6664",
+          "name": "Airtable",
+          "description": "Airtable MCP — reads CS Team Approved Experts table (base appR3EHkpfTErTS1y) for partner code lookups"
+        }
+      ],
+      "slack": {
+        "channel_id": "C0490P0G8G7",
+        "channel_name": "#triage-certified-partners",
+        "workspace": "webflow",
+        "processed_marker": "🔍 Analyzed by Claude"
+      },
+      "zendesk": {
+        "instance": "webflow2579.zendesk.com",
+        "usage": "Fetches ticket description, comments, and requester info for every triage thread"
+      },
+      "airtable": {
+        "base_id": "appR3EHkpfTErTS1y",
+        "table_name": "CS Team Approved Experts",
+        "usage": "Partner code lookup by Mongo Profile Slug for partner code update requests"
+      },
+      "request_taxonomy": {
+        "Partner Points / Points Discrepancy": "Connor",
+        "Partner Code Issues": "Tayla",
+        "Commission / PartnerStack Payouts": "Jordan",
+        "Partner Profile Updates": "Sasha",
+        "Partner Removal / Offboarding": "Tayla",
+        "Partner Status / Upgrade Issues": "Erin",
+        "Application Questions": "Erin",
+        "Marketplace Badge Requests": "Sasha",
+        "Certification / Exam Points": "Connor",
+        "Partner Program Access (Bettermode)": "Sasha",
+        "Enterprise Partner Issues": "Connor",
+        "Fraud / Risk Flags": "Escalation",
+        "Bug Reports": "Jira SPS"
+      },
+      "tags": [
+        "webflow",
+        "zendesk",
+        "airtable",
+        "slack",
+        "automation",
+        "partner-triage",
+        "certified-partners",
+        "ccr",
+        "opus"
+      ]
     }
   },
   "bundles": {
