@@ -982,7 +982,7 @@
     "triage-certified-partners-draft-findings": {
       "trigger_id": "trig_01LRdEEPsZXG5ukDCEsQ1e6t",
       "name": "Triage Certified Partners — Draft Findings",
-      "description": "Polls #triage-certified-partners (Webflow Slack) every 2 hours for unanalyzed bot-submitted triage threads. For each, fetches the linked Zendesk ticket, classifies the request, looks up Airtable partner data if relevant, and DMs Micah (U9FSLPKRB) a full analysis + ready-to-send draft reply for review. Posts '🔍 Queued for review' to the original thread as an idempotency marker only — no draft is posted to threads without human approval.",
+      "description": "Polls #triage-certified-partners (Webflow Slack) every 2 hours for unanalyzed bot-submitted triage threads. For each, fetches the linked Zendesk ticket, classifies the request, looks up Airtable partner data if relevant, and DMs Micah (U9FSLPKRB) a full analysis + ready-to-send draft reply for review. Zero thread footprint — no replies or markers posted to triage threads. Idempotency is tracked privately in the Airtable Triage Thread Log table (tbl4nORKDlmh58Gsq).",
       "schedule": "0 */2 * * *",
       "schedule_human": "Every 2 hours",
       "environment_id": "env_01TJD9Hn9AVfAhB44GdFKkXA",
@@ -1002,15 +1002,15 @@
         {
           "connector_uuid": "fdc96768-8413-4fee-979d-9f66e6de6664",
           "name": "Airtable",
-          "description": "Airtable MCP — reads CS Team Approved Experts table (base appR3EHkpfTErTS1y) for partner code lookups"
+          "description": "Airtable MCP — reads CS Team Approved Experts table for partner code lookups; writes Triage Thread Log table (tbl4nORKDlmh58Gsq) for private idempotency tracking"
         }
       ],
       "slack": {
         "channel_id": "C0490P0G8G7",
         "channel_name": "#triage-certified-partners",
         "workspace": "webflow",
-        "processed_marker": "🔍 Queued for review",
-        "review_dm_user": "U9FSLPKRB"
+        "review_dm_user": "U9FSLPKRB",
+        "thread_footprint": "none"
       },
       "zendesk": {
         "instance": "webflow2579.zendesk.com",
@@ -1018,8 +1018,24 @@
       },
       "airtable": {
         "base_id": "appR3EHkpfTErTS1y",
-        "table_name": "CS Team Approved Experts",
-        "usage": "Partner code lookup by Mongo Profile Slug for partner code update requests"
+        "tables": {
+          "CS Team Approved Experts": {
+            "usage": "Partner code lookup by Mongo Profile Slug for partner code update requests"
+          },
+          "Triage Thread Log": {
+            "table_id": "tbl4nORKDlmh58Gsq",
+            "usage": "Private idempotency log — records processed thread ts values so the agent never processes the same thread twice",
+            "fields": {
+              "Thread TS": "fldIeHjVGAC1ojXtA",
+              "Processed At": "fldw69gx0HJfwUHti",
+              "Zendesk Ticket": "fldZxIEJARY6aXNqz",
+              "Category": "flddLzr1j28JhHVld",
+              "Partner": "fldXh8tef0PoW2x5n",
+              "Owner": "fld2Z6CGvzWnJw4x5",
+              "DM Sent": "fldn9Qt4R7YHWg8A2"
+            }
+          }
+        }
       },
       "request_taxonomy": {
         "Partner Points / Points Discrepancy": "Connor",
