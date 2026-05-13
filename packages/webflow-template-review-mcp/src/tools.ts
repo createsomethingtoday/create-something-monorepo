@@ -538,6 +538,26 @@ function captureSummary(state: CaptureState) {
   };
 }
 
+function compactCaptureState(state: CaptureState): CaptureState {
+  return {
+    ...state,
+    pages_checked: state.pages_checked.map((page) => ({
+      ...page,
+      h1Text: page.h1Text.slice(0, 5),
+      meta: {
+        description: page.meta.description,
+        ogTitle: page.meta.ogTitle,
+        ogImage: page.meta.ogImage
+      },
+      scripts: page.scripts
+        .filter((script) => /gsap|splittext|scrolltrigger|customease|lenis|unicorn/i.test(script))
+        .slice(0, 12)
+    })),
+    findings: state.findings.slice(0, 80),
+    assets_discovered_sample: state.assets_discovered_sample.slice(0, 12)
+  };
+}
+
 function compactQueueItem(item: TemplateReviewQueueItem) {
   return {
     assetId: item.assetId,
@@ -670,7 +690,7 @@ export function registerTools(
         return asSuccess({
           status: 'started',
           summary: captureSummary(state),
-          capture_state: state,
+          capture_state: compactCaptureState(state),
           reviewer_note:
             'Use template_review_continue_capture_session with capture_state to continue visibly in a later Dify turn.'
         });
@@ -712,7 +732,7 @@ export function registerTools(
         return asSuccess({
           status: 'continued',
           summary: captureSummary(state),
-          capture_state: state,
+          capture_state: compactCaptureState(state),
           reviewer_note:
             'Use template_review_draft_from_capture_session when the public capture is sufficient, or continue with more paths.'
         });
@@ -740,7 +760,7 @@ export function registerTools(
         }
         return asSuccess({
           summary: captureSummary(state),
-          capture_state: state
+          capture_state: compactCaptureState(state)
         });
       } catch (error) {
         return asError(error);
