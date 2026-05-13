@@ -1074,6 +1074,10 @@ export function TemplateIntake() {
         throw new Error('Upload the creator profile image before submitting.');
       }
 
+      if (!creator.country.trim()) {
+        throw new Error('Select a country from the list before submitting.');
+      }
+
       if (turnstileEnabled && !turnstileTokens.creator) {
         throw new Error('Complete the bot check before creating the creator profile.');
       }
@@ -1359,8 +1363,8 @@ export function TemplateIntake() {
                         Country
                       </label>
                       <p className="field-help cc-library-application-form_field-desc">
-                        Choose the country tied to your creator account. Unsupported payout
-                        countries still behave as warnings, matching the live page.
+                        Choose the country tied to your creator account. Some countries require
+                        specific Stripe onboarding before payouts can continue.
                       </p>
                       <CountryPicker
                         id="country"
@@ -1370,6 +1374,15 @@ export function TemplateIntake() {
                         placeholder="Select or search for a country…"
                         required
                       />
+                      {!creatorCountrySupported && creator.country ? (
+                        <div className="submission-status submission-status-warning submission-country-onboarding-warning">
+                          This country requires specific Stripe onboarding before payouts can
+                          continue. Creators may need to meet Stripe requirements for another
+                          supported country, including a valid tax ID or incorporation through a
+                          service such as Doola or Stripe Atlas. Webflow cannot configure those
+                          services on your behalf; contact Stripe Support with setup questions.
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="submission-field">
@@ -1392,13 +1405,6 @@ export function TemplateIntake() {
                       />
                     </div>
                   </div>
-
-                  {!creatorCountrySupported && creator.country ? (
-                    <div className="submission-status submission-status-warning">
-                      This country is not currently in the supported payout list. The submission
-                      can continue, but this will need a follow-up review.
-                    </div>
-                  ) : null}
 
                   <div className="submission-field-inline">
                     <div className="submission-field">
