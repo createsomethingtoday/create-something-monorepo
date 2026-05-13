@@ -982,7 +982,7 @@
     "triage-certified-partners-draft-findings": {
       "trigger_id": "trig_01LRdEEPsZXG5ukDCEsQ1e6t",
       "name": "Triage Certified Partners — Draft Findings",
-      "description": "Polls #triage-certified-partners (Webflow Slack) every 2 hours for unanalyzed bot-submitted triage threads. For each, fetches the linked Zendesk ticket, classifies the request, looks up Airtable partner data if relevant, and DMs Micah (U9FSLPKRB) a full analysis + ready-to-send draft reply for review. Zero thread footprint — no replies or markers posted to triage threads. Idempotency is tracked privately in the Airtable Triage Thread Log table (tbl4nORKDlmh58Gsq).",
+      "description": "Polls #triage-certified-partners (Webflow Slack) every 2 hours for unanalyzed bot-submitted triage threads. For each, fetches the linked Zendesk ticket, classifies the request, looks up Airtable partner data if relevant, and DMs Micah (U9FSLPKRB) a full analysis + ready-to-send draft reply for review. Zero thread footprint — no replies or markers posted to triage threads. Idempotency is tracked privately in the Slack #help table (tblrxBvxx3bzlkRJk) in base appr9Ws3qU2ivrGbC.",
       "schedule": "0 */2 * * *",
       "schedule_human": "Every 2 hours",
       "environment_id": "env_01TJD9Hn9AVfAhB44GdFKkXA",
@@ -1002,7 +1002,7 @@
         {
           "connector_uuid": "fdc96768-8413-4fee-979d-9f66e6de6664",
           "name": "Airtable",
-          "description": "Airtable MCP — reads CS Team Approved Experts table for partner code lookups; writes Triage Thread Log table (tbl4nORKDlmh58Gsq) for private idempotency tracking"
+          "description": "Airtable MCP — reads CS Team Approved Experts (appR3EHkpfTErTS1y) for partner code lookups; writes Slack #help table (appr9Ws3qU2ivrGbC / tblrxBvxx3bzlkRJk) for private idempotency tracking"
         }
       ],
       "slack": {
@@ -1017,23 +1017,24 @@
         "usage": "Fetches ticket description, comments, and requester info for every triage thread"
       },
       "airtable": {
-        "base_id": "appR3EHkpfTErTS1y",
-        "tables": {
-          "CS Team Approved Experts": {
-            "usage": "Partner code lookup by Mongo Profile Slug for partner code update requests"
-          },
-          "Triage Thread Log": {
-            "table_id": "tbl4nORKDlmh58Gsq",
-            "usage": "Private idempotency log — records processed thread ts values so the agent never processes the same thread twice",
-            "fields": {
-              "Thread TS": "fldIeHjVGAC1ojXtA",
-              "Processed At": "fldw69gx0HJfwUHti",
-              "Zendesk Ticket": "fldZxIEJARY6aXNqz",
-              "Category": "flddLzr1j28JhHVld",
-              "Partner": "fldXh8tef0PoW2x5n",
-              "Owner": "fld2Z6CGvzWnJw4x5",
-              "DM Sent": "fldn9Qt4R7YHWg8A2"
-            }
+        "partner_lookup": {
+          "base_id": "appR3EHkpfTErTS1y",
+          "table_name": "CS Team Approved Experts",
+          "usage": "Partner code lookup by Mongo Profile Slug for partner code update requests"
+        },
+        "idempotency_log": {
+          "base_id": "appr9Ws3qU2ivrGbC",
+          "table_id": "tblrxBvxx3bzlkRJk",
+          "table_name": "Slack #help",
+          "view_id": "viwGAqof9Vv8AbHks",
+          "usage": "Private idempotency log — records processed thread ts values so the agent never processes the same thread twice",
+          "fields": {
+            "Thread TS": "fldgJwOzL9JMpozEG",
+            "Name": "fld8rsDLWcgiWFyNY",
+            "Relevant Links": "fldg8At97fFWFcj4A",
+            "Issue Category": "fldJNfTd5MI50edkc",
+            "Support": "fldGASOOvPSPXDfCD",
+            "Description": "fldqZpcrFdOpraYMN"
           }
         }
       },
