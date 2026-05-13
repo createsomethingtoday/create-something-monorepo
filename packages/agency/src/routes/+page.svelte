@@ -207,9 +207,9 @@
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            CREATE SOMETHING turns one exposed agent path into a production workflow: mapped
-            handoffs, scoped actions, approval rules, recovery paths, and evidence your team can
-            inherit.
+            An agent can reach your tools and still be unsafe to run. CREATE SOMETHING turns one
+            risky path into a production workflow: scoped actions, approval rules, recovery paths,
+            and evidence your team can inherit.
           </p>
         </BlurFade>
 
@@ -450,8 +450,8 @@
 
 <style>
   .hero-page {
-    padding-top: clamp(6rem, 10vw, 8rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4rem);
+    padding-top: var(--agency-hero-padding-top);
+    padding-bottom: var(--agency-hero-padding-bottom);
   }
 
   .hero-stage {
@@ -507,7 +507,7 @@
     z-index: 2;
     display: block;
     width: 100%;
-    padding-top: clamp(2rem, 4vw, 3rem);
+    padding-top: var(--agency-hero-layout-padding-top);
     padding-bottom: clamp(3rem, 6vw, 4.5rem);
   }
 
@@ -808,8 +808,8 @@
 
   @media (max-width: 768px) {
     .hero-page {
-      padding-top: clamp(2.25rem, 9vw, 3.25rem);
-      padding-bottom: clamp(1.75rem, 8vw, 3rem);
+      padding-top: var(--agency-hero-padding-top-mobile);
+      padding-bottom: var(--agency-hero-padding-bottom-mobile);
     }
 
     .hero-stage {

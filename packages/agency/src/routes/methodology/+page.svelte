@@ -108,9 +108,9 @@
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				Calm, transparent workflow systems do not start by adding more agents. They start
-				by removing duplication, stripping excess, reconnecting what matters, and then
-				deciding what agents and tools can do, what needs approval, and what should stop.
+				Trusted workflows do not start by adding more agents. They start by removing
+				duplication, reconnecting what matters, and deciding what agents and tools can do,
+				what needs approval, and what should stop.
 			</p>
 		</BlurFade>
 	</div>
@@ -348,7 +348,7 @@
 	/* ─── Hero ─── */
 	.hero {
 		position: relative;
-		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		padding: var(--agency-hero-padding-top) var(--container-padding, 1.5rem) var(--agency-hero-padding-bottom);
 		overflow: hidden;
 	}
 
@@ -841,7 +841,7 @@
 
 	@media (max-width: 768px) {
 		.hero {
-			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+			padding: var(--agency-hero-padding-top-mobile) var(--container-padding, 1.5rem) var(--agency-hero-padding-bottom-mobile);
 		}
 
 		.hero-title {

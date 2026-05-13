@@ -240,9 +240,9 @@
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          Bring the operating path your team cannot trust to run unattended. I map the boundaries,
-          rebuild the handoff, and govern agent capacity so the operator only hears from the system
-          when judgment is required.
+          Bring the workflow where the agent can connect but your team still babysits the outcome. I
+          map what it may do, where a human approves, how it recovers, and what evidence proves it
+          worked.
         </p>
       </BlurFade>
 
@@ -536,7 +536,8 @@
   }
 
   .hero-page {
-    padding-top: clamp(4.5rem, 7vw, 6rem);
+    padding-top: var(--agency-hero-padding-top);
+    padding-bottom: var(--agency-hero-padding-bottom);
   }
 
   .hero-layout,
@@ -813,6 +814,11 @@
   }
 
   @media (max-width: 768px) {
+    .hero-page {
+      padding-top: var(--agency-hero-padding-top-mobile);
+      padding-bottom: var(--agency-hero-padding-bottom-mobile);
+    }
+
     .offer-grid,
     .faq-grid,
     .trust-grid,

@@ -76,8 +76,8 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        Book a workflow mapping session or send the stack details. We’ll scope the smallest safe
-        wedge to ship first, then extend only where the risk actually justifies it.
+        Book a workflow mapping session or send the stack details. We will identify where connection
+        is not yet trust, scope the smallest safe wedge, and extend only where the risk justifies it.
       </p>
     </BlurFade>
   </div>
@@ -193,8 +193,8 @@
   /* Hero with grid background */
   .hero {
     position: relative;
-    padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem)
-      var(--section-padding, 6rem);
+    padding: var(--agency-hero-padding-top) var(--container-padding, 1.5rem)
+      var(--agency-hero-padding-bottom);
     overflow: hidden;
   }
 
@@ -388,7 +388,8 @@
   /* Responsive */
   @media (max-width: 768px) {
     .hero {
-      padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+      padding: var(--agency-hero-padding-top-mobile) var(--container-padding, 1.5rem)
+        var(--agency-hero-padding-bottom-mobile);
     }
 
     .hero-title {

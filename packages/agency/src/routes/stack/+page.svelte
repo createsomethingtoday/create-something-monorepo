@@ -213,9 +213,9 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          CREATE SOMETHING uses proven services where they help, then adds repo-owned contracts,
-          policy, runbooks, and evidence where the business needs trust. When agents become part of
-          the workflow, MCPs define their toolkits and Policy OS keeps their work bounded.
+          Connection only proves the agent can reach a tool. Trust comes from repo-owned contracts,
+          policy, runbooks, and evidence. This stack shows which vendors are replaceable and which
+          workflow boundaries CREATE SOMETHING owns.
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
@@ -479,7 +479,8 @@
   }
 
   .hero-page {
-    padding-top: clamp(4.5rem, 7vw, 6.25rem);
+    padding-top: var(--agency-hero-padding-top);
+    padding-bottom: var(--agency-hero-padding-bottom);
   }
 
   .hero-layout,
@@ -756,7 +757,8 @@
 
   @media (max-width: 640px) {
     .hero-page {
-      padding-top: clamp(2.75rem, 10vw, 3.5rem);
+      padding-top: var(--agency-hero-padding-top-mobile);
+      padding-bottom: var(--agency-hero-padding-bottom-mobile);
     }
 
     .hero-title {

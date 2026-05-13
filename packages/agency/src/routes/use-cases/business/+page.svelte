@@ -156,9 +156,9 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					We turn one painful workflow into a reliable system instead of asking your team to keep
-					bridging the gap by hand. If your team is stitching together HubSpot, Notion, Slack,
-					and spreadsheets, we start with the smallest wedge that removes the manual bridge.
+					Your tools can be connected while your team is still the workflow. We turn one
+					painful path into a reliable system, starting with the smallest wedge that removes a
+					manual bridge across HubSpot, Notion, Slack, spreadsheets, or the tools you already use.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -398,7 +398,7 @@
 	/* Hero with grid background */
 	.hero {
 		position: relative;
-		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		padding: var(--agency-hero-padding-top) var(--container-padding, 1.5rem) var(--agency-hero-padding-bottom);
 		max-width: 100%;
 		overflow: hidden;
 	}
@@ -934,7 +934,7 @@
 	
 	@media (max-width: 768px) {
 		.hero {
-			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+			padding: var(--agency-hero-padding-top-mobile) var(--container-padding, 1.5rem) var(--agency-hero-padding-bottom-mobile);
 		}
 		
 		.hero-title {

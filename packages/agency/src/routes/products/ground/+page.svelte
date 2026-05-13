@@ -264,13 +264,13 @@
 	.ground-page {
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
-		padding: var(--space-xl) var(--space-lg);
+		padding: 0 var(--space-lg) var(--space-xl);
 	}
 
 	/* Hero */
 	.hero {
 		text-align: center;
-		padding: 6rem 0 var(--space-xl);
+		padding: var(--agency-hero-padding-top) 0 var(--agency-hero-padding-bottom);
 	}
 
 	.hero-badge {

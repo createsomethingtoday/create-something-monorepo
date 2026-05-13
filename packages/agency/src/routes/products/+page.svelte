@@ -68,9 +68,9 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Loom, Ground, MCP connectors, and client builds are not a random product shelf. They are
-        proof surfaces for the same path: connect the system, verify the claim, coordinate the
-        agents, then govern the workflow.
+        Loom, Ground, MCP connectors, and client builds are proof surfaces, not a product shelf.
+        Each one verifies a claim, coordinates agents, or enforces a boundary inside a trusted
+        workflow.
       </p>
     </BlurFade>
   </div>
@@ -276,7 +276,8 @@
   /* Hero with grid background */
   .hero {
     position: relative;
-    padding: 5rem var(--container-padding, 1.5rem) 3rem;
+    padding: var(--agency-hero-padding-top) var(--container-padding, 1.5rem)
+      var(--agency-hero-padding-bottom);
     overflow: hidden;
   }
 
@@ -614,7 +615,8 @@
   /* Responsive */
   @media (max-width: 768px) {
     .hero {
-      padding: 3rem var(--container-padding, 1.5rem) 2rem;
+      padding: var(--agency-hero-padding-top-mobile) var(--container-padding, 1.5rem)
+        var(--agency-hero-padding-bottom-mobile);
     }
 
     .hero-title {

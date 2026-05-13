@@ -166,10 +166,9 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					For teams already running MCPs or cross-system workflows, this is Policy OS: the
-					governed execution layer that keeps outcomes reliable after launch. We add prompt
-					optimization, policy controls, approval and escalation logic, and ongoing operational
-					oversight.
+					Running MCPs is not the same as running operations. Policy OS adds the governed
+					execution layer after launch: prompt optimization, policy controls, approval and
+					escalation logic, and ongoing operational oversight.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -403,7 +402,7 @@
 	/* Hero */
 	.hero {
 		position: relative;
-		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		padding: var(--agency-hero-padding-top) var(--container-padding, 1.5rem) var(--agency-hero-padding-bottom);
 		overflow: hidden;
 	}
 	
@@ -971,9 +970,13 @@
 	}
 	
 	@media (max-width: 768px) {
-		.failure-grid {
-			grid-template-columns: 1fr;
+		.hero {
+			padding: var(--agency-hero-padding-top-mobile) var(--container-padding, 1.5rem) var(--agency-hero-padding-bottom-mobile);
 		}
+
+			.failure-grid {
+				grid-template-columns: 1fr;
+			}
 		
 		.tier-grid {
 			grid-template-columns: 1fr;

@@ -35,9 +35,9 @@
     <div class="copy animate-reveal">
       <h1 class="page-title">Security</h1>
       <p class="lede">
-        Policy OS is what turns credentials into governable runtime behavior. A token can
-        exist and access can still stop. That is intentional. Identity, entitlement, commercial
-        state, and policy all participate in the final decision.
+        A valid token is not a trusted action. Policy OS turns credentials into governable runtime
+        behavior: access can exist, stop, or require approval based on identity, entitlement,
+        commercial state, and policy.
       </p>
       <p class="date-text">Last updated: March 9, 2026</p>
     </div>
@@ -98,7 +98,7 @@
 
 <style>
   .hero {
-    padding: 8rem 1.5rem 3rem;
+    padding: var(--agency-hero-padding-top) 1.5rem var(--agency-hero-padding-bottom);
   }
 
   .section-shell {

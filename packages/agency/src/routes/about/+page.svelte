@@ -68,9 +68,9 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        The operator should not carry the chaos of automation. My work turns toolchains into clear
-        workflow states: what agents and tools can do, what needs judgment, and what must stop
-        with a reason.
+        The operator should not carry the gap between a demo and production. My work turns
+        toolchains into clear workflow states: what agents and tools can do, what needs judgment,
+        and what must stop with a reason.
       </p>
     </BlurFade>
     <BlurFade delay={0.3}>
@@ -336,8 +336,8 @@
   /* Hero with grid background */
   .hero {
     position: relative;
-    padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem)
-      var(--section-padding, 6rem);
+    padding: var(--agency-hero-padding-top) var(--container-padding, 1.5rem)
+      var(--agency-hero-padding-bottom);
     overflow: hidden;
   }
 
@@ -590,7 +590,8 @@
   /* Responsive */
   @media (max-width: 768px) {
     .hero {
-      padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+      padding: var(--agency-hero-padding-top-mobile) var(--container-padding, 1.5rem)
+        var(--agency-hero-padding-bottom-mobile);
     }
 
     .hero-title {

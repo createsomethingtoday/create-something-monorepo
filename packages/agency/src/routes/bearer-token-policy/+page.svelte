@@ -34,8 +34,8 @@
     <div class="copy animate-reveal">
       <h1 class="page-title">Bearer Token Policy</h1>
       <p class="lede">
-        `.agency` issues one long-lived bearer token per authenticated user for use in approved hosts,
-        local tools, and background agents. The token is portable. The authorization is conditional.
+        A portable token should not become a portable permission slip. `.agency` issues one managed
+        bearer token per authenticated user, but authorization stays conditional at request time.
       </p>
       <p class="date-text">Effective date: {effectiveDate}</p>
     </div>
@@ -98,6 +98,7 @@
 <style>
   .hero {
     position: relative;
+    padding: var(--agency-hero-padding-top) 1.5rem var(--agency-hero-padding-bottom);
   }
 
   .eyebrow {
