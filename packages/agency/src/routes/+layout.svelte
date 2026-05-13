@@ -44,7 +44,7 @@
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-services', label: 'How I Work', description: 'Calm, transparent workflow systems and governed execution', href: '/services', icon: '🔨', keywords: ['workflow system', 'calm', 'transparent', 'reliable', 'governed execution', 'automation', 'pricing', 'services'] },
+		{ id: 'nav-services', label: 'How I Work', description: 'Trusted workflow infrastructure and governed execution', href: '/services', icon: '🔨', keywords: ['workflow system', 'trusted', 'governed execution', 'automation', 'pricing', 'services'] },
 		{ id: 'nav-stack', label: 'Stack', description: 'Vendor roles, portability boundaries, and delivery ownership', href: '/stack', icon: '🧭', keywords: ['stack', 'vendors', 'boundaries', 'composio', 'cloudflare', 'webflow', 'dify', 'openai', 'trmnl'] },
 		{ id: 'nav-products', label: 'Proof Surfaces', description: 'Proof surfaces for MCPs, agent tools, and Policy OS', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations', 'proof surfaces'] },
 		{ id: 'nav-book', label: agencyCoreMessaging.bookMappingSessionLabel, description: 'Map the workflow, MCP wedge, and decision states', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session', 'workflow system'] },
@@ -159,7 +159,7 @@
 	<Footer
 		mode="agency"
 		showNewsletter={false}
-		aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear trust boundaries, artifact-backed delivery, and escalation only when judgment is required."
+		aboutText="Trusted workflow infrastructure for operator-owned outcomes: clear trust boundaries, artifact-backed delivery, and escalation only when judgment is required."
 		quickLinks={[
 			{ label: 'How I Work', href: '/services' },
 			{ label: 'Stack', href: '/stack' },

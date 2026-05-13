@@ -1,8 +1,10 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — production-safe workflow infrastructure for technical operators
+**createsomething.agency** — trusted workflow infrastructure for technical operators
 
-We build the connectivity layer between your tools and AI.
+We turn connected agents into governed workflows.
+
+**A connected agent is not a trusted workflow.**
 
 ---
 

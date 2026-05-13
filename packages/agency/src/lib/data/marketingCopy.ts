@@ -1,8 +1,9 @@
 export const agencyCoreMessaging = {
-	categoryLabel: 'Calm, Transparent, Reliable AI Workflow Systems',
+	categoryLabel: 'Trusted Workflow Infrastructure',
+	thesis: 'A connected agent is not a trusted workflow.',
 	bookMappingSessionLabel: 'Book Mapping Session',
 	engagementModelLabel: 'See the operating model →',
-	workflowCtaHeading: 'Bring the workflow that needs doing, not just watching.',
+	workflowCtaHeading: 'Turn the connected agent into a workflow your team can trust.',
 	workflowCtaDetail:
-		'In one session, I map the handoffs, approval points, failure modes, and first agent-ready wedge.'
+		'In one session, I map the handoffs, approval points, failure modes, and first agent-ready control boundary.'
 } as const;

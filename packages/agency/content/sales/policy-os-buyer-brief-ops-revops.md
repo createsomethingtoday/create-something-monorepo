@@ -1,17 +1,18 @@
 # Workflow Infrastructure Buyer Brief (Ops/RevOps)
 
-**Audience:** Ops and RevOps leaders  
-**Read time:** ~3 minutes  
-**Core phrase:** Production-safe workflow infrastructure  
-**Delivery vector language:** client-facing `Skills + MCP`; technical proof `MCP + Skills`
+- **Audience:** Ops and RevOps leaders
+- **Read time:** ~3 minutes
+- **Core phrase:** Trusted workflow infrastructure
+- **Thesis:** A connected agent is not a trusted workflow.
+- **Delivery vector language:** client-facing `Skills + MCP`; technical proof `MCP + Skills`
 
 ---
 
 ## What this solves
 
-Most teams can now connect tools to AI. Very few can run autonomous workflows safely in production.
+Most teams can now connect agents to tools. That does not make those agents trustworthy workflow owners.
 
-The bottleneck is no longer "Can we connect systems?"  
+The bottleneck is no longer "Can we connect systems?"
 The bottleneck is "Can we govern actions, approvals, and risk while keeping execution fast?"
 
 This operating model closes that gap.
@@ -88,7 +89,7 @@ Most automations fail at governance boundaries. This model adds approvals, polic
 It is phased. Start with one high-value workflow, govern only the risky actions, then expand coverage with evidence.
 
 ### "Why not MCP-only?"
-MCP-only is a valid entry wedge for discovery/compliance. Policy OS is what makes autonomous outcomes dependable in production.
+MCP-only is a valid entry wedge for discovery/compliance. A connected agent is not a trusted workflow; Policy OS is what makes autonomous outcomes dependable in production.
 
 ---
 

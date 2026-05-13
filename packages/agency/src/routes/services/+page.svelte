@@ -173,7 +173,7 @@
     {
       question: 'Are agents part of the workforce?',
       answer:
-        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, and evidence. MCPs are the toolkits; Policy OS decides what agents can do, what needs a person, and what must stop.'
+        'They can be, but connection is only the starting point. Agents belong in the workflow when they have a clear job, scoped tools, approval boundaries, and evidence. MCPs are the toolkits; Policy OS decides what agents can do, what needs a person, and what must stop.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
@@ -212,15 +212,15 @@
     },
     {
       question: 'Why the phrase Skills + MCP?',
-      answer: `Client-facing delivery is ${deliveryVector.clientFacingLabel}. MCP handles trust and connectivity. Skills carry behavior and workflow intent.`
+      answer: `Client-facing delivery is ${deliveryVector.clientFacingLabel}. MCP handles connectivity. Skills carry behavior and workflow intent. Policy OS turns both into a trusted workflow.`
     }
   ];
 </script>
 
 <SEO
-  title="How I Work | Calm, Transparent AI Workflow Systems"
-  description="CREATE SOMETHING .agency installs calm, transparent, reliable AI workflow systems: one workflow, clear stack boundaries, decision states, and governed escalation only when judgment is required."
-  keywords="calm transparent AI workflow systems, Policy OS, workflow system, MCP wedge, production automation, agent reliability"
+  title="How I Work | Trusted Workflow Infrastructure"
+  description="A connected agent is not a trusted workflow. CREATE SOMETHING .agency maps one workflow, defines action boundaries, and installs governed execution before production risk rises."
+  keywords="trusted workflow infrastructure, Policy OS, workflow system, MCP wedge, production automation, agent governance"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -235,14 +235,14 @@
       </BlurFade>
 
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">Start with one workflow.</h1>
+        <h1 class="hero-title">Start with one workflow, not a connected agent.</h1>
       </BlurFade>
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          Bring the operating path your team cannot keep covering by hand. I map the boundaries,
-          rebuild the handoff, and add governed agent capacity until the operator only hears from
-          the system when judgment is required.
+          Bring the operating path your team cannot trust to run unattended. I map the boundaries,
+          rebuild the handoff, and govern agent capacity so the operator only hears from the system
+          when judgment is required.
         </p>
       </BlurFade>
 
@@ -254,14 +254,14 @@
       </BlurFade>
 
       <BlurFade delay={0.2}>
-        <p class="hero-note">One workflow. Clear boundaries. Quiet escalation.</p>
+        <p class="hero-note">Connected agent → trusted workflow.</p>
       </BlurFade>
     </div>
 
     <BlurFade delay={0.2}>
       <aside class="product-surface product-surface--soft hero-brief" aria-label="Calm transparent workflow service brief">
-        <span class="product-kicker">Calm, transparent delivery</span>
-        <h2>CREATE SOMETHING turns the toolchain into one workflow outcome.</h2>
+        <span class="product-kicker">Trusted workflow delivery</span>
+        <h2>CREATE SOMETHING turns agent capacity into one governed operating path.</h2>
         <div class="hero-brief__grid" role="list">
           {#each heroSignals as signal}
             <div class="hero-brief__item" role="listitem">
@@ -346,7 +346,7 @@
         <span class="product-kicker">Offer ladder</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>From connection wedge to governed execution.</h2>
+        <h2>From connected agent to governed execution.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
@@ -390,9 +390,9 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Workflow System gets the first handoff working. Policy OS decides what runs
-          automatically, what needs review, and what stops. That is the point where speed stops
-          being a demo and becomes an operating path.
+          Workflow System gets the first handoff working. Policy OS turns connected agent capacity
+          into a trusted workflow by deciding what runs automatically, what needs review, and what
+          stops with a reason.
         </p>
       </BlurFade>
     </div>
@@ -400,7 +400,7 @@
     <BlurFade delay={0.15}>
       <GovernedExecutionFlow
         title="Policy OS"
-        description="Hub MCP routes the request, and Policy OS decides what can run automatically, what waits for approval, and what stops with a reason."
+        description="Hub MCP routes the request. Policy OS turns the connected agent into a trusted workflow by deciding what runs, what waits, and what stops with a reason."
       />
     </BlurFade>
   </div>

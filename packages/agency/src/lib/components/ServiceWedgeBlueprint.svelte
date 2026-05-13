@@ -44,10 +44,10 @@
 <div class="wedge-shell product-surface product-surface--soft" aria-labelledby="service-wedge-title">
   <div class="wedge-copy">
     <span class="wedge-eyebrow">Service blueprint</span>
-    <h3 id="service-wedge-title">The offer ladder starts with one wedge and rises into Policy OS.</h3>
+    <h3 id="service-wedge-title">The offer ladder turns a connected agent into a trusted workflow.</h3>
     <p>
-      The service is easier to understand as a progression: first prove the connection, then
-      harden one workflow, then install the policy layer that protects operator attention.
+      The service is easier to understand as a progression: first prove the connection, then turn
+      it into one workflow, then install the policy layer that protects operator attention.
     </p>
   </div>
 

@@ -10,9 +10,13 @@ The category should stay fixed. Only proof, examples, and stack references shoul
 
 ## Durable Category
 
-CREATE SOMETHING .agency is governed workflow infrastructure for ops-minded teams.
+CREATE SOMETHING .agency is trusted workflow infrastructure for ops-minded teams.
 
 The promise is not "latest AI tooling."
+
+The thesis is:
+
+- a connected agent is not a trusted workflow
 
 The promise is:
 
@@ -62,6 +66,7 @@ It should shape tone, not turn the whole site into a racing theme.
 
 Homepage:
 
+- A connected agent is not a trusted workflow.
 - Fix the workflow your team still protects by hand.
 - Start with one workflow.
 - Add governed execution when risk rises.
@@ -115,6 +120,7 @@ If a new model ships, update the proof and examples. Do not rewrite the category
 ## Words To Use
 
 - governed
+- trusted
 - workflow
 - operating path
 - control layer
@@ -132,6 +138,7 @@ If a new model ships, update the proof and examples. Do not rewrite the category
 - autonomous everything
 - AI-native as a standalone claim
 - latest model
+- connected agent as a standalone claim
 - hours and retainers before outcomes are clear
 - custom platform as the first answer
 

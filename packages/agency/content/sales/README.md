@@ -1,8 +1,9 @@
 # Workflow Infrastructure Sales Assets v1
 
-**Primary buyer:** Ops/RevOps  
-**Primary channel:** Live discovery and mapping calls  
-**Core phrase:** Production-safe workflow infrastructure
+- **Primary buyer:** Ops/RevOps
+- **Primary channel:** Live discovery and mapping calls
+- **Core phrase:** Trusted workflow infrastructure
+- **Thesis:** A connected agent is not a trusted workflow.
 
 ---
 
@@ -63,7 +64,8 @@
 
 ## Message taxonomy
 
-- Core phrase: "Production-safe workflow infrastructure."
+- Core phrase: "Trusted workflow infrastructure."
+- Thesis: "A connected agent is not a trusted workflow."
 - Client-facing delivery vector: `Skills + MCP`
 - Technical proof vector: `MCP + Skills`
 

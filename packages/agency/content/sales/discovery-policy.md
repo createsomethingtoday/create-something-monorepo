@@ -23,6 +23,10 @@ Discovery must determine:
 
 Discovery is successful only when the workflow, risk boundary, and next-step package are clear.
 
+The thesis is:
+
+> "A connected agent is not a trusted workflow."
+
 The question is not:
 
 > "What do you want to connect?"

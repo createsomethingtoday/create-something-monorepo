@@ -184,8 +184,8 @@
 
 <SEO
   title={`${agencyCoreMessaging.categoryLabel} | CREATE SOMETHING .agency`}
-  description="CREATE SOMETHING .agency builds calm, transparent, reliable AI workflow systems for business operators: one workflow, clear vendor boundaries, portable artifacts, and escalation only when judgment is required."
-  keywords="calm transparent reliable AI workflow systems, Policy OS, MCP wedge, transparent AI stack, workflow system, production automation, technical operators"
+  description="A connected agent is not a trusted workflow. CREATE SOMETHING .agency turns one critical workflow into a governed operating path with approvals, recovery, and artifact-backed evidence."
+  keywords="trusted workflow infrastructure, governed workflow systems, Policy OS, MCP wedge, production automation, agent governance, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -202,14 +202,14 @@
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Calm, transparent AI systems for the operator who has to own the outcome.</h1>
+          <h1 class="hero-title">{agencyCoreMessaging.thesis}</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            CREATE SOMETHING is the operating toolchain I use as a solo operator to complete the
-            outcome. Reputable services make the work transparent; the moat is the calm, reliable
-            workflow built around your business.
+            CREATE SOMETHING turns one exposed agent path into a production workflow: mapped
+            handoffs, scoped actions, approval rules, recovery paths, and evidence your team can
+            inherit.
           </p>
         </BlurFade>
 
@@ -221,7 +221,7 @@
         </BlurFade>
 
         <BlurFade delay={0.2}>
-          <p class="hero-note">Connect. Automate. Govern. Operate.</p>
+          <p class="hero-note">Connect. Govern. Prove. Operate.</p>
         </BlurFade>
       </div>
     </div>
@@ -245,7 +245,7 @@
   <div class="shell-inner-pad">
     <div class="product-surface product-surface--soft signal-shell">
       <div class="signal-header">
-        <span class="product-kicker">Calm, transparent stack</span>
+        <span class="product-kicker">Trusted workflow stack</span>
         <p>
           Vendor names are not the product. They make the stack easier to explain, while CREATE
           SOMETHING owns the specialized workflow: the map, policy layer, delivery artifacts, and
@@ -306,7 +306,7 @@
         <span class="product-kicker">Why teams buy this</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>Connecting tools is easy. Trust is the product.</h2>
+        <h2>Connecting agents is easy. Trusted workflow is the product.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
@@ -381,7 +381,7 @@
         <span class="product-kicker">Policy before speed</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>The control layer is the difference between a demo and an operating path.</h2>
+        <h2>The control layer is the difference between a connected demo and a trusted workflow.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>

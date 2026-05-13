@@ -3,7 +3,7 @@
 **Audience:** Ops/RevOps leaders  
 **Duration:** 20–30 minutes  
 **Primary objective:** confirm fit and secure next step for a Workflow Mapping Session  
-**Message taxonomy:** core phrase "Production-safe workflow infrastructure"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
+**Message taxonomy:** thesis "A connected agent is not a trusted workflow"; core phrase "Trusted workflow infrastructure"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
 
 **Operator standard:** discovery is workflow diagnosis and policy-boundary mapping, not app-intake alone
 
@@ -77,7 +77,7 @@ Follow-up probes:
 
 Playback format:
 
-> "Here’s what I’m hearing: [workflow candidate] is failing at [governance boundary], and the cost shows up as [impact]. The issue isn’t just connectivity; it’s controlled execution under risk."
+> "Here’s what I’m hearing: [workflow candidate] is failing at [governance boundary], and the cost shows up as [impact]. The issue isn’t just a connected agent; it’s controlled execution under risk."
 
 Then validate:
 
@@ -138,7 +138,7 @@ Pivot:
 ### Objection: "Why not MCP-only?"
 Response:
 
-> "MCP-only is a good wedge for discovery or compliance-constrained starts. Policy OS is what makes automation reliable at production scale."
+> "MCP-only is a good wedge for discovery or compliance-constrained starts. But a connected agent is not a trusted workflow. Policy OS is what makes automation reliable at production scale."
 
 Pivot:
 
@@ -207,7 +207,7 @@ Commit:
 
 ### 30-second positioning statement
 
-> "CREATE SOMETHING builds production-safe workflow infrastructure. We usually start with a scoped MCP wedge, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
+> "A connected agent is not a trusted workflow. CREATE SOMETHING builds trusted workflow infrastructure: a scoped MCP wedge, then governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
 
 ### 2-minute "how it works in practice"
 

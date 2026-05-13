@@ -5,7 +5,7 @@
   export let eyebrow = 'Mapping session';
   export let title = 'The first call turns the pitch into a scoped operating path.';
   export let description =
-    'The buyer does not need a technical scavenger hunt. They need to see what agents and tools can do, what stays human, where MCPs fit, and how the stack stays governable before implementation starts.';
+    'A connected agent is not a trusted workflow. The buyer needs to see what agents and tools can do, what stays human, where MCPs fit, and how the workflow stays governable before implementation starts.';
   export let ctaHref = '/book';
   export let ctaLabel = agencyCoreMessaging.bookMappingSessionLabel;
 

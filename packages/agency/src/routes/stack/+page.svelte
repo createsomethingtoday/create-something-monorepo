@@ -196,8 +196,8 @@
 
 <SEO
   title="Stack & Boundaries | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING uses Cloudflare, Composio, Dify, OpenAI, Webflow, TRMNL, Linear, Infisical, and Auth0 without turning vendor names into the product."
-  keywords="transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, OpenAI, Webflow, TRMNL, Policy OS"
+  description="A connected agent is not a trusted workflow. How CREATE SOMETHING uses replaceable vendors, MCP contracts, and Policy OS boundaries without turning the stack into the product."
+  keywords="trusted workflow stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, OpenAI, Webflow, TRMNL, Policy OS"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -209,14 +209,13 @@
         <span class="product-kicker">Stack & Boundaries</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">The stack is visible so the operator can trust the handoff.</h1>
+        <h1 class="hero-title">The stack is visible because connection is not trust.</h1>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          CREATE SOMETHING is the toolchain I use as the sole operator to complete the outcome:
-          proven services where they help, then repo-owned contracts, policy, runbooks, and
-          evidence where the business needs trust. When agents become part of the workflow, MCPs
-          are their toolkits and Policy OS keeps their work bounded.
+          CREATE SOMETHING uses proven services where they help, then adds repo-owned contracts,
+          policy, runbooks, and evidence where the business needs trust. When agents become part of
+          the workflow, MCPs define their toolkits and Policy OS keeps their work bounded.
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
@@ -257,8 +256,9 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The story stays simple for a non-technical buyer: connect the narrow surface, automate
-          one workflow, govern the risky actions, then operate through the right visible surface.
+          The story stays simple for a non-technical buyer: connect the narrow surface, turn it
+          into one workflow, govern the risky actions, then operate through the right visible
+          surface.
         </p>
       </BlurFade>
     </div>
@@ -310,9 +310,9 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Each service earns a clear job. The connected tools are not the moat. CREATE SOMETHING
-          owns the specialized workflow: what gets connected, what runs, what pauses, what stops,
-          and what the operator receives.
+          Each service earns a clear job. The connected agent is not the moat. CREATE SOMETHING
+          owns the trusted workflow: what gets connected, what runs, what pauses, what stops, and
+          what the operator receives.
         </p>
       </BlurFade>
     </div>
