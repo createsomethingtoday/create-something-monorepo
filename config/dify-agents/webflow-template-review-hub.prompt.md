@@ -26,8 +26,28 @@ Allowed E2B outputs:
 
 Do not treat E2B capture as Designer/API evidence. Clearly caveat Designer-only checks.
 
+Keep public-site capture bounded. For a full template-review report from a published URL:
+- inspect only the homepage, main navigation pages, required utility pages, and one representative CMS/list page when needed
+- do not chase every CMS item or every discovered link
+- prefer at most 5 E2B execution tool calls before drafting
+- report page coverage separately from rubric coverage
+- if more evidence is needed, state the limitation and ask whether to continue with a deeper pass
+
+When asking E2B to inspect public pages, use neutral template QA language:
+- say "fetch/check public pages" or "public-site capture"
+- avoid framing the task as crawling, scanning, probing, exploiting, or risk investigation
+- keep scripts and outputs compact, targeted to the requested evidence fields, and limited to the approved public template URL
+
 2. Hub MCP / webflow-template-review-mcp for review queue and Airtable-backed context.
 Use Hub when the user asks about assigned reviews, version IDs, asset records, reviewer context, draft feedback, or Airtable-backed queue data.
+
+For full public URL reviews, prefer reviewer-visible capture-session tools through webflow-template-review-mcp:
+- template_review_start_capture_session
+- template_review_continue_capture_session
+- template_review_get_capture_session_artifact
+- template_review_draft_from_capture_session
+
+Use these tools before generic E2B when the user asks for a full review, long-running review, resumable review, or "review everything". Pass the returned capture_state into follow-up capture-session calls. Summarize each step in chat so the reviewer can see progress and evidence. Use direct E2B only for small ad hoc public-site checks, operator debugging, or when the capture-session tools are unavailable.
 
 Hub mode:
 - hub_list_services may be used when Hub context is needed.

@@ -34,6 +34,7 @@ type Score = {
 const TARGET_URL = 'https://omnerat-template.webflow.io/';
 const DEFAULT_DIFY_EVAL_USER = 'braintrust-template-review-e2b-skill';
 const LATENCY_BUDGET_MS = readPositiveIntEnv('DIFY_AGENT_EVAL_LATENCY_BUDGET_MS', 240_000);
+const MAX_CONCURRENCY = readPositiveIntEnv('DIFY_AGENT_EVAL_MAX_CONCURRENCY', 2);
 
 const REVIEWERS: ReviewerConfig[] = [
   {
@@ -149,7 +150,7 @@ const CASES: Array<{
   {
     input: {
       name: 'footer_headings_forms_metadata',
-      query: `Template-review skill test: footer, headings, forms, and OG metadata for ${TARGET_URL}. Use E2B tools only. Crawl homepage plus /about, /work, /contact, /news, and /template-info/licensing. Verify Powered by Webflow link href, Licensing link href, visible href="#" links, H1 count/content per page, forms label/aria-label coverage, and og:title/og:description/og:image presence and formats. Return compact JSON keys footer,headings,forms,metadata,failures. Do not use Hub tools or Airtable.`,
+      query: `Template-review skill test: footer, headings, forms, and OG metadata for ${TARGET_URL}. Use E2B tools only. Fetch/check these public pages only: /, /about, /work, /contact, /news, and /template-info/licensing. Verify Powered by Webflow link href, Licensing link href, visible links whose href is only the hash symbol, H1 count/content per page, forms label/aria-label coverage, and og:title/og:description/og:image presence and formats. Return compact JSON under 1200 characters with keys footer,headings,forms,metadata,failures. Do not use Hub tools or Airtable.`,
       expectedAnyTools: ['run_code', 'run_command'],
       forbiddenTools: FORBIDDEN_HUB_TOOLS,
       expectedTerms: ['Powered by Webflow', 'Omnera', 'forms', 'metadata']
@@ -162,7 +163,7 @@ const CASES: Array<{
   {
     input: {
       name: 'full_skill_review_report',
-      query: `Complete a template-review skill-style review for ${TARGET_URL} using E2B public-site capture only. Do not use Hub tools, Airtable, analyzer tools, or external write actions. Use these exact sections: "# Template Review: Omnera", "Verdict", "Hard requirement failures", "Rubric assessment", "Punch list", "Designer-side checks required", "Manual / visual checks required", and "PageSpeed". Cite public evidence and clearly caveat Designer-only or visual checks.`,
+      query: `Complete a bounded template-review skill-style review for ${TARGET_URL} using E2B public-site capture only. Keep the capture bounded: inspect only /, /about, /work, /contact, /news, /template-info/licensing, /style-guide, /licenses, /changelog, /instructions, and /404; use at most 5 E2B tool calls; do not chase every CMS item. Do not use Hub tools, Airtable, analyzer tools, or external write actions. Use these exact sections: "# Template Review: Omnera", "Verdict", "Hard requirement failures", "Rubric assessment", "Punch list", "Designer-side checks required", "Manual / visual checks required", and "PageSpeed". Cite public evidence and clearly caveat Designer-only or visual checks.`,
       expectedAnyTools: ['run_code', 'run_command'],
       forbiddenTools: FORBIDDEN_HUB_TOOLS,
       expectedTerms: [
@@ -194,8 +195,8 @@ const CASES: Array<{
   }
 ];
 
-const data = REVIEWERS.flatMap((reviewer) =>
-  CASES.map(({ input, metadata }) => ({
+const data = CASES.flatMap(({ input, metadata }) =>
+  REVIEWERS.map((reviewer) => ({
     input: {
       ...input,
       reviewer
@@ -378,7 +379,7 @@ async function runDifyEvalCase(input: TemplateReviewE2BInput): Promise<DifyChatO
 
 void Eval<TemplateReviewE2BInput, DifyChatOutput>('create-something-dify-agents', {
   experimentName: 'webflow_template_review_e2b_skill',
-  maxConcurrency: 1,
+  maxConcurrency: MAX_CONCURRENCY,
   data,
   task: async (input) => runDifyEvalCase(input),
   scores: [
