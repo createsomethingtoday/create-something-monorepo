@@ -39,6 +39,88 @@ interface Env {
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
+  RHYTHM_JSON?: string;
+  INK_FIRMWARE_MANIFEST_JSON?: string;
+  // Optional R2 binding for hosting firmware binaries on the same TLS
+  // origin as the manifest. Bind via wrangler.toml [[r2_buckets]]. When
+  // absent, GET /ink/firmware/binary returns 503 with operator guidance.
+  FIRMWARE_BUCKET?: R2Bucket;
+}
+
+interface RhythmAnchor {
+  time: string;
+  label: string;
+}
+
+const DEFAULT_RHYTHM_ANCHORS: RhythmAnchor[] = [
+  { time: '06:00', label: 'WORKOUT' },
+  { time: '09:00', label: 'WORK' },
+  { time: '12:30', label: 'WALK' },
+  { time: '15:00', label: 'EAT' },
+  { time: '23:00', label: 'SLEEP' }
+];
+
+function getRhythmAnchors(env: Env): RhythmAnchor[] {
+  const raw = env.RHYTHM_JSON?.trim();
+  if (!raw) return DEFAULT_RHYTHM_ANCHORS;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return DEFAULT_RHYTHM_ANCHORS;
+    const anchors: RhythmAnchor[] = [];
+    for (const item of parsed) {
+      if (item && typeof item === 'object') {
+        const time = (item as Record<string, unknown>).time;
+        const label = (item as Record<string, unknown>).label;
+        if (typeof time === 'string' && typeof label === 'string' && time.trim() && label.trim()) {
+          anchors.push({ time: time.trim(), label: label.trim() });
+        }
+      }
+    }
+    return anchors.length > 0 ? anchors : DEFAULT_RHYTHM_ANCHORS;
+  } catch {
+    return DEFAULT_RHYTHM_ANCHORS;
+  }
+}
+
+interface FirmwareManifest {
+  version: string;
+  url: string;
+  sha256: string;
+  size?: number;
+  notes?: string;
+  // Base64-encoded ECDSA P-256 r||s (64 bytes) over
+  // `${version}|${sha256}|${size}`. Produced by
+  // packages/calm-operator-ink-firmware/scripts/sign-manifest.mjs. The bridge
+  // does not validate the signature; the device does.
+  signature?: string;
+}
+
+function getFirmwareManifest(env: Env): FirmwareManifest | null {
+  const raw = env.INK_FIRMWARE_MANIFEST_JSON?.trim();
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object') return null;
+    const { version, url, sha256, size, notes, signature } = parsed;
+    if (typeof version !== 'string' || !version.trim()) return null;
+    if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return null;
+    if (typeof sha256 !== 'string' || !/^[0-9a-fA-F]{64}$/.test(sha256.trim())) return null;
+    const manifest: FirmwareManifest = {
+      version: version.trim(),
+      url: url.trim(),
+      sha256: sha256.trim().toLowerCase()
+    };
+    if (typeof size === 'number' && Number.isFinite(size) && size > 0) manifest.size = size;
+    if (typeof notes === 'string' && notes.trim()) manifest.notes = notes.trim();
+    // Shape-check the signature (base64 of 64 bytes ≈ 88 chars with padding)
+    // but defer cryptographic verification to the device.
+    if (typeof signature === 'string' && /^[A-Za-z0-9+/]{86,90}={0,2}$/.test(signature.trim())) {
+      manifest.signature = signature.trim();
+    }
+    return manifest;
+  } catch {
+    return null;
+  }
 }
 
 const JSON_HEADERS = {
@@ -881,12 +963,22 @@ async function route(request: Request, env: Env): Promise<Response> {
         'POST /ink/health-review/run',
         'POST /ink/alarms/run',
         'POST /ink/device-heartbeat',
-        'POST /ink/clear'
+        'POST /ink/clear',
+        'GET /ink/rhythm',
+        'GET /ink/firmware/manifest',
+        'GET /ink/firmware/binary'
       ]
     });
   }
 
-  if ((method === 'GET' && (path === '/ink/brief' || path === '/ink/surface-brief' || path === '/ink/clock' || path === '/ink/device')) ||
+  if ((method === 'GET' && (
+        path === '/ink/brief' ||
+        path === '/ink/surface-brief' ||
+        path === '/ink/clock' ||
+        path === '/ink/device' ||
+        path === '/ink/rhythm' ||
+        path === '/ink/firmware/manifest' ||
+        path === '/ink/firmware/binary')) ||
       (method === 'POST' &&
         (path === '/ink/device-heartbeat' ||
           path === '/ink/clear' ||
@@ -1032,6 +1124,53 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === 'POST' && path === '/ink/clear') {
     const body = await parseJsonBody<{ scope?: string }>(request).catch(() => ({ scope: 'alerts' }));
     return json(await stub.clear(body.scope ?? 'alerts'));
+  }
+
+  if (method === 'GET' && path === '/ink/rhythm') {
+    return json({ ok: true, anchors: getRhythmAnchors(env) });
+  }
+
+  if (method === 'GET' && path === '/ink/firmware/manifest') {
+    const manifest = getFirmwareManifest(env);
+    return json({
+      ok: true,
+      // null manifest = update channel is not yet configured for this bridge
+      // deployment. The firmware should treat this as "no update available".
+      manifest,
+      generated_at: new Date().toISOString()
+    });
+  }
+
+  if (method === 'GET' && path === '/ink/firmware/binary') {
+    if (!env.FIRMWARE_BUCKET) {
+      return json(
+        {
+          ok: false,
+          error: 'Firmware binary binding not configured.',
+          hint: 'Bind an R2 bucket via wrangler.toml [[r2_buckets]] and redeploy.'
+        },
+        { status: 503 }
+      );
+    }
+    const version = url.searchParams.get('version')?.trim();
+    if (!version || !/^[0-9A-Za-z._+-]{1,32}$/.test(version)) {
+      return json({ ok: false, error: 'Missing or invalid version parameter.' }, { status: 400 });
+    }
+    // Convention: firmware/<version>.bin. Keeps the bucket namespace clear if
+    // it ever hosts non-firmware assets.
+    const objectKey = `firmware/${version}.bin`;
+    const object = await env.FIRMWARE_BUCKET.get(objectKey);
+    if (!object) {
+      return json({ ok: false, error: `Firmware build not found: ${objectKey}` }, { status: 404 });
+    }
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set('content-type', 'application/octet-stream');
+    headers.set('content-length', String(object.size));
+    // Binaries are immutable per version: cache aggressively at the edge.
+    headers.set('cache-control', 'public, max-age=31536000, immutable');
+    headers.set('etag', object.httpEtag);
+    return new Response(object.body, { status: 200, headers });
   }
 
   return json({ ok: false, error: 'Not found.' }, { status: 404 });

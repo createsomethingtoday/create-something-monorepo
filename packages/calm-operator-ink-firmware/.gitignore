@@ -1,2 +1,3 @@
 .pio/
 include/operator_config.local.h
+tmp/

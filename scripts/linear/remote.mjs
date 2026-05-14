@@ -137,6 +137,7 @@ function formatIssue(issue) {
 }
 
 async function findIssue(issueId) {
+  // Try UUID lookup first — succeeds when caller passes the internal id.
   const byId = await gql(
     `query IssueById($id: String!) {
       issue(id: $id) {
@@ -151,9 +152,15 @@ async function findIssue(issueId) {
   ).catch(() => ({ issue: null }));
   if (byId.issue) return byId.issue;
 
+  // Fall back to identifier lookup (e.g. "CRE-275"). The Linear IssueFilter
+  // schema does not expose `identifier` as a filterable field; the supported
+  // way is to filter by `team.key` + `number`.
+  const match = /^([A-Za-z]+)-(\d+)$/.exec(issueId);
+  if (!match) throw new Error(`Linear issue not found: ${issueId}`);
+  const [, teamKey, numberText] = match;
   const byIdentifier = await gql(
     `query IssueByIdentifier($filter: IssueFilter) {
-      issues(first: 10, filter: $filter) {
+      issues(first: 1, filter: $filter) {
         nodes {
           id identifier title description url priority updatedAt
           state { id name type }
@@ -163,7 +170,12 @@ async function findIssue(issueId) {
         }
       }
     }`,
-    { filter: { identifier: { eq: issueId } } },
+    {
+      filter: {
+        team: { key: { eq: teamKey.toUpperCase() } },
+        number: { eq: Number(numberText) },
+      },
+    },
   );
   const issue = byIdentifier.issues.nodes[0];
   if (!issue) throw new Error(`Linear issue not found: ${issueId}`);

@@ -7,6 +7,8 @@
     "build": "pio run",
     "config:write": "node scripts/write-local-config.mjs",
     "monitor": "pio device monitor -p /dev/cu.usbserial-5A6D0107571 -b 115200",
+    "sign:keygen": "node scripts/sign-keygen.mjs",
+    "sign:manifest": "node scripts/sign-manifest.mjs",
     "upload": "pio run -t upload --upload-port /dev/cu.usbserial-5A6D0107571"
   }
 }
