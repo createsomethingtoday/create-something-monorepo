@@ -112,7 +112,7 @@ These gaps should be tracked before expanding beyond the Dify baseline:
 
 - Structural `capture_state` validation, not only tool sequence validation.
 - Adversarial reviewer identity isolation, including prompt-spoofed identity and cross-reviewer mutation attempts.
-- Central endpoint live identity evals using two reviewer tokens against `wf-template-review`.
+- Central endpoint live identity evals using two reviewer-managed bearer/session tokens against `wf-template-review`. The central endpoint is live, but this eval is blocked until `.agency` reviewer entitlement permits managed bearer issuance or Claude OAuth/session auth is configured.
 - Live reversible write roundtrips for `request_changes`, `save_draft_feedback`, and status updates.
 - Prompt-injection fixtures where the malicious instruction is captured from an actual public page.
 - Mechanical Claude proper and Gumloop runtime evals after those surfaces are connected through the Hub.

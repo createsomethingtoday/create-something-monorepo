@@ -72,6 +72,16 @@ The central worker defaults to:
 
 Reviewer-specific Hubs remain available as fallback.
 
+## Current Live Status
+
+As of 2026-05-14:
+
+- The central Worker is deployed at `https://wf-template-review.mcp.createsomething.agency/mcp`.
+- `/health` reports `identity_mode=session_required`, session resolver enabled, and only `webflow-template-review-mcp` connected.
+- Unauthenticated MCP calls return `401` with OAuth protected-resource metadata.
+- The static central Hub bearer reaches the Hub control surface only; it is not a reviewer credential.
+- Live reviewer-managed bearer issuance is blocked until `.agency` entitlement state is updated for the reviewer accounts. The current identity-worker response is `policy_acceptance_required`.
+
 ## Reviewer Token Requirements
 
 For reviewer-safe writes, Claude and Gumloop must use a token that resolves through the identity worker. The token should resolve to a Webflow Template Review reviewer account such as `acct_wf_eric`, `acct_wf_natalia`, `acct_wf_mariana`, or `acct_wf_vicki`.
@@ -85,9 +95,21 @@ Recommended token posture:
 
 Migration posture:
 
+- The existing `CS_HUB_WF_TEMPLATE_REVIEW_*_API_TOKEN` secrets are reviewer-specific Worker runtime tokens. They are not governed reviewer identity tokens and should not be used as central Claude/Gumloop credentials.
 - Existing reviewer-bound managed bearer tokens for `wf-template-review-{reviewer}` may resolve on the shared `wf-template-review` host.
 - Central tokens do not become valid on reviewer-specific hosts just because the shared host exists.
 - Non-reviewer accounts on the shared host do not inherit reviewer tool prefixes.
+
+Before issuing reviewer-managed bearers for the central connector, update or confirm `.agency` entitlement rows so each reviewer has:
+
+- `managed_bearer_allowed=true`
+- `org_membership_active=true`
+- `service_entitled=true`
+- `policy_accepted=true`
+- `contract_active=true`
+- `billing_active=true`
+
+Then issue managed bearers through `identity-worker` `POST /v1/mcp/long-lived-tokens/admin-issue` with `bound_host=wf-template-review`. Store the one-time returned plaintext only in the approved secret manager or deliver it through the approved credential handoff path.
 
 ## Claude Setup
 
@@ -152,6 +174,8 @@ Do not expose or promote broad admin tools such as `template_review_assign_revie
 Before PMM or reviewer enablement treats the central connector as reviewer-ready:
 
 - The endpoint is reachable at `/mcp` and advertises OAuth protected-resource metadata.
+- `.agency` entitlement rows allow managed bearer issuance for each reviewer.
+- Reviewer-managed bearers are issued or OAuth/session login is confirmed for Claude.
 - `hub_list_services` shows only `webflow-template-review-mcp`.
 - `hub_search_proxy_tools` shows the Phase A reviewer-safe Template Review tools and no analyzer/local tools.
 - Eric and Natalia tokens on the same endpoint resolve to different reviewer identities.

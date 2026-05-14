@@ -9,7 +9,7 @@
       "client": "internal",
       "tenant": "webflow-marketplace",
       "url": "https://wf-template-review.mcp.createsomething.agency/mcp",
-      "status": "requested",
+      "status": "deployed",
       "account": "create-something",
       "package_path": "packages/cs-mcp-hub-remote",
       "wrangler_config": "packages/cs-mcp-hub-remote/wrangler.team-hubs.toml",
@@ -22,7 +22,7 @@
       "related_deployments": [
         "webflow-template-review-mcp"
       ],
-      "notes": "Single reviewer-facing Hub endpoint for Claude custom connectors and Gumloop. Deploy with HUB_IDENTITY_MODE=session_required and keep reviewer-specific Hubs as fallback."
+      "notes": "Single reviewer-facing Hub endpoint for Claude custom connectors and Gumloop. Deployed with HUB_IDENTITY_MODE=session_required. Reviewer-specific Hubs remain fallback until .agency reviewer entitlement and managed-bearer issuance are complete."
     },
     "viv-blondish": {
       "type": "policy_os_hub",
