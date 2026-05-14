@@ -407,6 +407,73 @@
         "bearer_token_env_var": "MCP_BEARER_TOKEN"
       }
     },
+    "abundance-staff-mcp": {
+      "type": "remote_mcp_server",
+      "product": "Abundance Staff MCP",
+      "client": "npg",
+      "tenant": "abundance",
+      "url": "https://abundance-staff-mcp.createsomething.workers.dev/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "ABUNDANCE_STAFF_MCP_API_KEY",
+        "infisical_path": "/"
+      },
+      "related_deployments": [
+        "abundance-thenpgroup",
+        "abundance-jobs-mcp"
+      ],
+      "notes": "Production smoke passed on 2026-05-13; summarized active headcount without exposing employee-level rows."
+    },
+    "abundance-jobs-mcp": {
+      "type": "remote_mcp_server",
+      "product": "Abundance Jobs MCP",
+      "client": "npg",
+      "tenant": "abundance",
+      "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "ABUNDANCE_MCP_BEARER_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
+      },
+      "related_deployments": [
+        "abundance-thenpgroup",
+        "abundance-staff-mcp"
+      ],
+      "notes": "Production smoke passed on 2026-05-13 via list_public_jobs; write-capable send_job_to_funnel remains confirmation-gated in the agent policy."
+    },
+    "abundance-thenpgroup": {
+      "type": "policy_os_hub",
+      "product": "The NP Group — Abundance scoped hub",
+      "client": "npg",
+      "tenant": "abundance",
+      "url": "https://abundance-thenpgroup.mcp.createsomething.agency/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_ABUNDANCE_THENPGROUP_API_TOKEN",
+        "infisical_path": "/"
+      },
+      "related_deployments": [
+        "abundance-staff-mcp",
+        "abundance-jobs-mcp"
+      ],
+      "toolkits": [
+        "jotform",
+        "mailchimp",
+        "whatsapp"
+      ],
+      "discovery_pack": "abundance-thenpgroup-review",
+      "known_blockers": [
+        "Jotform, Mailchimp, and WhatsApp brokered connection_status calls return successfully, but all three currently report connected=false, active=0, pending=0; NPG account-owner authorization is required before write-capable automation.",
+        "Cold hub management calls are production-functional but slow, observed around 79-86 seconds in the 2026-05-13 smoke."
+      ],
+      "notes": "Production smoke passed on 2026-05-13 for health, services discovery, and brokered connection_status across the scoped service set."
+    },
     "createsomething-notion": {
       "type": "notion_mcp",
       "product": "Half Dozen \u00d7 CREATE SOMETHING \u2014 Notion MCP",

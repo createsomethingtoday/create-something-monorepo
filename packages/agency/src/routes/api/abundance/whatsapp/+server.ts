@@ -16,6 +16,8 @@ import type { RequestHandler } from './$types';
 import type { Seeker, Talent, Intake, ApiResponse } from '$lib/types/abundance';
 import { generateId } from '$lib/abundance/matching';
 
+const textEncoder = new TextEncoder();
+
 // Types for WhatsApp webhook payloads
 interface WhatsAppWebhookEntry {
 	id: string;
@@ -80,8 +82,12 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	const token = url.searchParams.get('hub.verify_token');
 	const challenge = url.searchParams.get('hub.challenge');
 
-	// Get verify token from environment (must be set in Cloudflare dashboard)
-	const verifyToken = platform?.env?.WHATSAPP_VERIFY_TOKEN || 'abundance-network-verify';
+	const verifyToken = platform?.env?.WHATSAPP_VERIFY_TOKEN?.trim();
+
+	if (!verifyToken) {
+		console.error('WhatsApp webhook verify token is not configured');
+		return json({ error: 'Webhook verification is not configured' }, { status: 503 });
+	}
 
 	if (mode === 'subscribe' && token === verifyToken) {
 		console.log('WhatsApp webhook verified');
@@ -89,7 +95,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 		return text(challenge || '', { status: 200 });
 	}
 
-	console.warn('WhatsApp webhook verification failed', { mode, token });
+	console.warn('WhatsApp webhook verification failed', { mode });
 	return json({ error: 'Verification failed' }, { status: 403 });
 };
 
@@ -98,13 +104,32 @@ export const GET: RequestHandler = async ({ url, platform }) => {
  */
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
+		const appSecret = platform?.env?.WHATSAPP_APP_SECRET?.trim();
+
+		if (!appSecret) {
+			console.error('WhatsApp app secret is not configured');
+			return json({ success: false, error: 'Webhook signature verification is not configured' }, { status: 503 });
+		}
+
+		const rawBody = await request.text();
+		const isSignatureValid = await isValidMetaSignature(
+			rawBody,
+			request.headers.get('x-hub-signature-256'),
+			appSecret
+		);
+
+		if (!isSignatureValid) {
+			console.warn('WhatsApp webhook signature verification failed');
+			return json({ success: false, error: 'Invalid signature' }, { status: 401 });
+		}
+
 		if (!platform?.env?.DB) {
 			console.error('Database not available');
 			// Still return 200 to acknowledge receipt (Meta requires this)
 			return json({ success: false, error: 'Database not available' }, { status: 200 });
 		}
 
-		const payload = (await request.json()) as WhatsAppWebhookPayload;
+		const payload = JSON.parse(rawBody) as WhatsAppWebhookPayload;
 
 		// Validate it's from WhatsApp
 		if (payload.object !== 'whatsapp_business_account') {
@@ -211,6 +236,47 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}, { status: 200 });
 	}
 };
+
+function timingSafeBytesEqual(left: Uint8Array, right: Uint8Array): boolean {
+	let diff = left.length ^ right.length;
+	const length = Math.max(left.length, right.length);
+
+	for (let index = 0; index < length; index += 1) {
+		diff |= (left[index] ?? 0) ^ (right[index] ?? 0);
+	}
+
+	return diff === 0;
+}
+
+export async function isValidMetaSignature(
+	payload: string,
+	signatureHeader: string | null | undefined,
+	appSecret: string | null | undefined
+): Promise<boolean> {
+	const secret = appSecret?.trim();
+
+	if (!secret || !signatureHeader?.startsWith('sha256=')) {
+		return false;
+	}
+
+	const expectedHex = signatureHeader.slice('sha256='.length).toLowerCase();
+
+	if (!/^[a-f0-9]{64}$/.test(expectedHex)) {
+		return false;
+	}
+
+	const key = await crypto.subtle.importKey(
+		'raw',
+		textEncoder.encode(secret),
+		{ name: 'HMAC', hash: 'SHA-256' },
+		false,
+		['sign']
+	);
+	const signature = await crypto.subtle.sign('HMAC', key, textEncoder.encode(payload));
+	const actualHex = Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, '0')).join('');
+
+	return timingSafeBytesEqual(textEncoder.encode(actualHex), textEncoder.encode(expectedHex));
+}
 
 /**
  * Look up user by phone or create placeholder

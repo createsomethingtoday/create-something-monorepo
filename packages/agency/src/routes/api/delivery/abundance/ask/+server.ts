@@ -164,9 +164,9 @@ function classifyIntent(message: string, context: ReturnType<typeof buildConvers
 			reasoningNote:
 				'I treated this as a decision-list question because it asks what NPG needs to decide next.',
 			answer:
-				'The current decisions are:\n\n1. Confirm how Paylocity fields map into staff/operator records.\n2. Verify Staff MCP and Jobs MCP credentials from secret storage before live smoke tests.\n3. Review the live app, generated delivery package, and MCP boundaries with NPG.\n4. Decide which operator roster receives MCP/database access.\n\nThe first decision is the build blocker. The field mapping shapes the staff/operator database records, and those records determine what the agent can safely recommend.',
+				'The current decisions are:\n\n1. Provision the WhatsApp webhook verify token and Meta app secret before enabling the webhook route.\n2. Confirm how Paylocity fields map into staff/operator records.\n3. Have NPG account owners review or reauthorize Jotform, Mailchimp, and WhatsApp before write-capable automation.\n4. Review the live app, generated delivery package, Staff/Jobs MCPs, NPG scoped hub, and agent boundary.\n5. Decide which operator roster receives MCP/database access.\n\nThe system smoke has passed. The remaining decisions are production promotion and operating ownership decisions, not core architecture blockers.',
 			followUpQuestions: [
-				'Which decision needs to be made before the next build pass?',
+				'Who will provide or approve the WhatsApp webhook secrets?',
 				'Who will own the Paylocity field mapping review?',
 				'Who is the approval owner for operator access?'
 			]
@@ -218,11 +218,11 @@ function classifyIntent(message: string, context: ReturnType<typeof buildConvers
 			reasoningNote:
 				'I treated this as a prioritization question because it asks which decision should happen before the next build pass.',
 			answer:
-				'The build-blocking decision is the Paylocity field mapping. NPG needs to confirm which Paylocity fields become staff/operator records, which system is authoritative for staff status and availability, and which fields should block a match recommendation when missing or stale.\n\nThe access-owner decision can happen in parallel, but the next build pass depends most on the field mapping because the database and agent recommendations need a trustworthy staff/operator record shape before MCP smoke tests become meaningful.',
+				'There are two remaining blockers, depending on the track. For production promotion, the blocker is WhatsApp webhook configuration: the production Pages environment needs WHATSAPP_VERIFY_TOKEN and WHATSAPP_APP_SECRET before the Meta webhook should be enabled. For the next data build, the blocker is Paylocity field mapping: NPG needs to confirm which fields become staff/operator records, which system is authoritative for staff status and availability, and which fields should block a match recommendation when missing or stale.\n\nThe access-owner and external-account review decisions can happen in parallel.',
 			followUpQuestions: [
+				'Who will provide or approve the WhatsApp webhook secrets?',
 				'Who will own the Paylocity field mapping review?',
-				'Which staff statuses should block match recommendations?',
-				'Should MCP access wait until field mapping is approved?'
+				'Which external accounts can move from status checks to write-capable automation?'
 			]
 		};
 	}
@@ -235,7 +235,7 @@ function classifyIntent(message: string, context: ReturnType<typeof buildConvers
 			reasoningNote:
 				'I treated this as an ownership question because it asks who should approve operator or MCP/database access.',
 			answer:
-				'The sanitized delivery context does not name the approval owner yet. That is an open NPG decision.\n\nThe clean operating rule is: one NPG owner should approve the operator roster before any MCP/database access is granted. Until that owner and roster are confirmed, the delivery should stay in review mode with credentials held in secret storage and private staff artifacts kept out of the public page.',
+				'The sanitized delivery context does not name the approval owner yet. That is an open NPG decision.\n\nThe clean operating rule is: one NPG owner should approve the operator roster before MCP/database access expands beyond review, and the relevant account owners should approve or reauthorize Jotform, Mailchimp, and WhatsApp before any write-capable automation. Until that owner and roster are confirmed, credentials stay in secret storage and private staff artifacts stay out of the public page.',
 			followUpQuestions: [
 				'Can NPG name one approval owner for operator access?',
 				'Should operator access be read-only until the roster is confirmed?',
@@ -269,7 +269,7 @@ function classifyIntent(message: string, context: ReturnType<typeof buildConvers
 			reasoningNote:
 				'I treated this as a delivery-boundary question because it asks what can be shared and what should stay private.',
 			answer:
-				'Safe to forward: the live Abundance Concierge app, the two walkthrough links, the generated delivery page, and a plain-English summary of the DB/MCP/agent architecture.\n\nKeep private: token-bearing MCP URLs, raw Paylocity rows, local file paths, private Notion details, contact data, credential values, and any operational secret. If a token was shared outside secret storage, rotate it before depending on it in production.',
+				'Safe to forward: the live Abundance Concierge app, the two walkthrough links, the generated delivery page, and a plain-English summary of the DB/MCP/NPG hub/agent architecture and production smoke status.\n\nKeep private: token-bearing MCP URLs, raw Paylocity rows, local file paths, private Notion details, contact data, credential values, Dify API keys, and external account authorization details.',
 			followUpQuestions: [
 				'Should this delivery stay public-link accessible or require login later?',
 				'Who needs the non-technical recap?',
@@ -286,10 +286,10 @@ function classifyIntent(message: string, context: ReturnType<typeof buildConvers
 			reasoningNote:
 				'I treated this as an architecture question because it asks how the database, MCP surface, and agent boundary connect.',
 			answer:
-				'The database is the memory layer: it stores intake context, staff/operator records, matching state, and source-artifact context.\n\nThe MCP layer is the controlled action/data-access layer: Staff and Jobs MCP expose specific capabilities without publishing credentials or raw private data.\n\nThe agent is the judgment-support layer: it reads the structured context, drafts recommendations, flags missing information, and prepares recruiter review. The recruiter/operator remains the approval boundary for staffing decisions.',
+				'The database is the memory layer: it stores intake context, staff/operator records, matching state, and source-artifact context.\n\nThe MCP layer is the controlled action/data-access layer: Staff MCP, Jobs MCP, and the NPG scoped hub expose specific capabilities without publishing credentials or raw private data.\n\nThe agent is the judgment-support layer: it reads structured context, uses the Jobs MCP for public listings, drafts recommendations, flags missing information, and prepares recruiter review. The recruiter/operator remains the approval boundary for staffing decisions.',
 			followUpQuestions: [
 				'Which database field should the agent rely on first?',
-				'Should Staff MCP and Jobs MCP stay separate during review?',
+				'Which NPG hub tools should remain status-only during review?',
 				'What should count as a blocked state for agent recommendations?'
 			]
 		};
@@ -347,7 +347,7 @@ function classifyIntent(message: string, context: ReturnType<typeof buildConvers
 				'I treated this as an MCP question because it asks about endpoints, credentials, tools, or automation.',
 			followUpQuestions: [
 				'Who should have MCP/database access?',
-				'Should Staff MCP and Jobs MCP stay separate during review?'
+				'Which NPG hub tools should remain status-only during review?'
 			]
 		};
 	}

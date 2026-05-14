@@ -46,6 +46,54 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "abundance-staff-mcp": {
+      "transport": "http",
+      "url": "https://abundance-staff-mcp.createsomething.workers.dev/mcp",
+      "description": "Abundance Staff MCP for NPG staff/operator headcount and private staffing context. Token-bearing access stays in Infisical and is excluded from public delivery artifacts.",
+      "bearer_token_env_var": "ABUNDANCE_STAFF_MCP_API_KEY",
+      "tags": [
+        "client",
+        "abundance",
+        "npg",
+        "staffing",
+        "healthcare"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 1,
+      "setupNotes": "Production smoke passed on 2026-05-13 via abundance_staff_summarize_headcount; total active headcount returned without publishing employee-level rows."
+    },
+    "abundance-jobs-mcp": {
+      "transport": "http",
+      "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
+      "description": "Abundance Jobs MCP for public healthcare and nursing job discovery, including list/search/read tools and a confirmation-gated funnel write action.",
+      "bearer_token_env_var": "ABUNDANCE_MCP_BEARER_TOKEN",
+      "tags": [
+        "client",
+        "abundance",
+        "npg",
+        "jobs",
+        "healthcare"
+      ],
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 4,
+      "setupNotes": "Production smoke passed on 2026-05-13 via list_public_jobs using the shared Abundance MCP bearer from prod:/mcp-hub/hubs."
+    },
+    "abundance-thenpgroup-hub": {
+      "transport": "http",
+      "url": "https://abundance-thenpgroup.mcp.createsomething.agency/mcp",
+      "description": "NPG-scoped MCP hub for Abundance review across Jotform, Mailchimp, WhatsApp, Staff MCP, and Jobs MCP boundaries.",
+      "bearer_token_env_var": "CS_HUB_ABUNDANCE_THENPGROUP_API_TOKEN",
+      "tags": [
+        "client",
+        "abundance",
+        "npg",
+        "policy-os",
+        "hub"
+      ],
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 319,
+      "setupNotes": "Production smoke passed on 2026-05-13 for /health, hub_list_services, and brokered Jotform/Mailchimp/WhatsApp connection_status. The service set is reachable, but Jotform, Mailchimp, and WhatsApp report connected=false with active=0/pending=0, so NPG account-owner authorization is required before write-capable automation. Cold management calls remain slow at roughly 79-86s and should be optimized before high-frequency operator use."
+    },
     "create-something": {
       "transport": "http",
       "url": "https://mcp.createsomething.ltd/mcp",
@@ -936,6 +984,11 @@
       "create-something",
       "three-tier-framework",
       "playbook"
+    ],
+    "abundance": [
+      "abundance-staff-mcp",
+      "abundance-jobs-mcp",
+      "abundance-thenpgroup-hub"
     ],
     "dormant": [
       "gmail-notion-mcp",

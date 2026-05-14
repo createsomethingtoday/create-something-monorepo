@@ -3,6 +3,7 @@
   import {
     abundanceArtifactLinks,
     abundanceDeliverySummary,
+    abundanceJobAgentPrompts,
     abundanceNextReview,
     abundanceOperatingLayers,
     abundancePrivateArtifacts,
@@ -31,6 +32,32 @@
     error?: string;
   };
 
+  type JobAgentMessage = {
+    role: 'agent' | 'client';
+    body: string;
+    tools?: string[];
+  };
+
+  type JobAgentResponse = {
+    answer: string;
+    conversationId?: string;
+    tools?: string[];
+    error?: string;
+  };
+
+  let jobAgentMessages: JobAgentMessage[] = [
+    {
+      role: 'agent',
+      body:
+        'Ask for current public nursing and healthcare jobs. This embedded panel is read-only; funnel actions stay outside the public delivery page.'
+    }
+  ];
+
+  let jobAgentQuestion = '';
+  let jobAgentConversationId = '';
+  let isAskingJobAgent = false;
+  let jobAgentError = '';
+
   let deliveryMessages: DeliveryAgentMessage[] = [
     {
       role: 'agent',
@@ -42,6 +69,50 @@
   let deliveryQuestion = '';
   let isAskingDeliveryAgent = false;
   let deliveryAgentError = '';
+
+  async function askJobAgent(prompt?: string) {
+    const message = (prompt ?? jobAgentQuestion).trim();
+
+    if (!message || isAskingJobAgent) {
+      return;
+    }
+
+    jobAgentError = '';
+    jobAgentMessages = [...jobAgentMessages, { role: 'client', body: message }];
+    jobAgentQuestion = '';
+    isAskingJobAgent = true;
+
+    try {
+      const response = await fetch('/api/delivery/abundance/job-agent', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ message, conversationId: jobAgentConversationId })
+      });
+
+      const payload = (await response.json()) as JobAgentResponse;
+
+      if (!response.ok) {
+        throw new Error(payload?.error ?? 'The Abundance Jobs Agent could not answer that question.');
+      }
+
+      jobAgentConversationId = payload.conversationId ?? jobAgentConversationId;
+      jobAgentMessages = [
+        ...jobAgentMessages,
+        {
+          role: 'agent',
+          body: payload.answer,
+          tools: payload.tools ?? []
+        }
+      ];
+    } catch (error) {
+      jobAgentError =
+        error instanceof Error ? error.message : 'The Abundance Jobs Agent could not answer that question.';
+    } finally {
+      isAskingJobAgent = false;
+    }
+  }
 
   async function askDeliveryAgent(prompt?: string) {
     const message = (prompt ?? deliveryQuestion).trim();
@@ -95,6 +166,7 @@
   title="Abundance Delivery | The NP Group"
   description="Client delivery page for The NP Group's Abundance nurse staffing system: live concierge app, database, MCP surfaces, agent boundary, walkthroughs, and private source artifacts."
   keywords="Abundance, The NP Group, nurse staffing, MCP, workflow delivery, CREATE SOMETHING"
+  canonical="https://createsomething.agency/delivery/abundance"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -137,6 +209,74 @@
           <strong>{artifact.label}</strong>
         </a>
       {/each}
+    </div>
+  </div>
+</section>
+
+<section class="delivery-section" id="job-agent">
+  <div class="shell-inner-pad">
+    <div class="job-agent product-surface">
+      <div class="job-agent__intro">
+        <span class="product-kicker">Abundance Jobs Agent</span>
+        <h2>Search public roles through the Dify job agent.</h2>
+        <p>
+          This embedded client panel calls the production-smoked Abundance Hub agent from the server.
+          It can list and search public nursing jobs while keeping credentials and funnel writes out of
+          the public page.
+        </p>
+      </div>
+
+      <div class="job-agent__guardrails" aria-label="Job agent guardrails">
+        <span>Read-only job discovery</span>
+        <span>Dify + Jobs MCP path</span>
+        <span>No exposed keys</span>
+      </div>
+
+      <div class="suggested-prompts" aria-label="Suggested job agent prompts">
+        {#each abundanceJobAgentPrompts as prompt}
+          <button type="button" on:click={() => askJobAgent(prompt)} disabled={isAskingJobAgent}>
+            {prompt}
+          </button>
+        {/each}
+      </div>
+
+      <div class="job-chat-log" aria-live="polite">
+        {#each jobAgentMessages as message}
+          <article class:message-client={message.role === 'client'} class="chat-message">
+            <span>{message.role === 'client' ? 'Client prompt' : 'Abundance Jobs Agent'}</span>
+            {#each message.body.split('\n\n') as paragraph}
+              <p>{paragraph}</p>
+            {/each}
+
+            {#if message.tools?.length}
+              <div class="agent-meta">
+                <strong>Tools used</strong>
+                <span>{message.tools.join(', ')}</span>
+              </div>
+            {/if}
+          </article>
+        {/each}
+      </div>
+
+      <form class="delivery-agent__form" on:submit|preventDefault={() => askJobAgent()}>
+        <label for="job-agent-question">Search public jobs</label>
+        <div>
+          <textarea
+            id="job-agent-question"
+            bind:value={jobAgentQuestion}
+            rows="3"
+            maxlength="700"
+            placeholder="Example: Search for travel nurse roles in Texas"
+          ></textarea>
+          <button type="submit" disabled={isAskingJobAgent || !jobAgentQuestion.trim()}>
+            {isAskingJobAgent ? 'Searching' : 'Search'}
+          </button>
+        </div>
+      </form>
+
+      {#if jobAgentError}
+        <p class="delivery-agent__error">{jobAgentError}</p>
+      {/if}
     </div>
   </div>
 </section>
@@ -411,11 +551,20 @@
     border-top: 4px solid rgba(94, 234, 212, 0.78);
   }
 
-  .delivery-agent__intro {
+  .job-agent {
+    display: grid;
+    gap: 22px;
+    padding: clamp(20px, 4vw, 34px);
+    border-top: 4px solid rgba(167, 184, 255, 0.76);
+  }
+
+  .delivery-agent__intro,
+  .job-agent__intro {
     max-width: 820px;
   }
 
-  .delivery-agent__intro h2 {
+  .delivery-agent__intro h2,
+  .job-agent__intro h2 {
     margin: 10px 0 12px;
     font-family: var(--font-display);
     font-size: clamp(30px, 5vw, 58px);
@@ -423,10 +572,25 @@
     letter-spacing: 0;
   }
 
-  .delivery-agent__intro p {
+  .delivery-agent__intro p,
+  .job-agent__intro p {
     color: rgba(246, 247, 251, 0.72);
     font-size: 1.05rem;
     line-height: 1.55;
+  }
+
+  .job-agent__guardrails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .job-agent__guardrails span {
+    border: 1px solid rgba(167, 184, 255, 0.24);
+    background: rgba(167, 184, 255, 0.09);
+    color: rgba(246, 247, 251, 0.78);
+    padding: 9px 11px;
+    font-size: 0.9rem;
   }
 
   .suggested-prompts,
@@ -461,7 +625,8 @@
     opacity: 0.54;
   }
 
-  .chat-log {
+  .chat-log,
+  .job-chat-log {
     display: grid;
     gap: 12px;
     max-height: 620px;
@@ -499,6 +664,7 @@
     margin: 0;
     color: rgba(246, 247, 251, 0.78);
     line-height: 1.55;
+    white-space: pre-line;
   }
 
   .agent-meta {

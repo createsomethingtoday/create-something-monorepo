@@ -127,22 +127,32 @@
         {
           "id": "abundance-dedicated-mcp",
           "label": "Abundance Staff MCP",
-          "status": "deployed",
+          "status": "production-smoked",
           "kind": "remote_mcp_server",
           "url": "https://abundance-staff-mcp.createsomething.workers.dev/mcp",
           "evidence": "packages/agency/static/openapi-abundance.yaml",
           "registry": "config/mcp-hub/fleet.json",
-          "role": "Remote MCP endpoint for staff/operator-facing Abundance workflows. Token material is stored outside public artifacts."
+          "role": "Remote MCP endpoint for staff/operator-facing Abundance workflows. Production smoke passed for active headcount summary; token material is stored outside public artifacts."
         },
         {
           "id": "abundance-jobs-mcp",
           "label": "Abundance Jobs MCP",
-          "status": "deployed",
+          "status": "production-smoked",
           "kind": "remote_mcp_server",
           "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
           "evidence": "packages/agency/static/openapi-abundance.yaml",
           "registry": "config/mcp-hub/fleet.json",
-          "role": "Remote MCP endpoint for nursing-job capture and job-source workflow access."
+          "role": "Remote MCP endpoint for nursing-job capture and job-source workflow access. Production smoke passed for public job listing through the shared Abundance MCP bearer."
+        },
+        {
+          "id": "abundance-thenpgroup-hub",
+          "label": "NPG Abundance scoped hub",
+          "status": "production-smoked-latency-watch",
+          "kind": "policy_os_hub",
+          "url": "https://abundance-thenpgroup.mcp.createsomething.agency/mcp",
+          "evidence": "config/mcp-hub/fleet.json",
+          "registry": "config/mcp-hub/discovery-packs.json",
+          "role": "Brokered NPG review hub for Jotform, Mailchimp, and WhatsApp status during final delivery. Production smoke passed for reachability and status calls, but all three services currently report connected=false; NPG account-owner authorization is required before write automation."
         }
       ],
       "agents": [
@@ -161,11 +171,11 @@
           "role": "Recommendation support for intake, shortlist, missing-information flags, and recruiter review. It does not make autonomous staffing decisions."
         },
         {
-          "id": "abundance-staff-dify-agent",
-          "label": "Abundance staff agent",
-          "status": "configured_external",
-          "source": "abundance-staff-agent.yml",
-          "role": "Dify-side staff agent configuration connected to the tokenless Abundance Staff MCP endpoint; credential values remain in secret storage."
+          "id": "abundance-hub-dify-agent",
+          "label": "Abundance Hub Dify agent",
+          "status": "production-smoked",
+          "source": "config/dify-agents/abundance-hub.json",
+          "role": "Dify-side job discovery agent connected to the Abundance Jobs MCP. It is now exposed on the Abundance delivery page through a server-side read-only chat panel. Production smoke and published Braintrust eval passed with streaming Service API events, jobs-tool usage, forbidden-write checks, secret refusal, and Dify/Langfuse trace IDs; credential values remain in secret storage."
         }
       ],
       "coordination": {

@@ -8,10 +8,13 @@
 > `composio-toolkit-*` server list lives in
 > [`config/mcp-hub/registry.composio.generated.json`](../config/mcp-hub/registry.composio.generated.json).
 
-## Active (core, 36)
+## Active (core, 39)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
+| `abundance-jobs-mcp` | `http` | `https://abundance-jobs-mcp.createsomething.workers.dev/mcp` | `direct` | `4` | `client`, `abundance`, `npg`, `jobs`, `healthcare` |
+| `abundance-staff-mcp` | `http` | `https://abundance-staff-mcp.createsomething.workers.dev/mcp` | `direct` | `1` | `client`, `abundance`, `npg`, `staffing`, `healthcare` |
+| `abundance-thenpgroup-hub` | `http` | `https://abundance-thenpgroup.mcp.createsomething.agency/mcp` | `brokered` | `319` | `client`, `abundance`, `npg`, `policy-os`, `hub` |
 | `bettermode-creator` | `http` | `https://bettermode-creator.mcp.createsomething.agency/mcp` | `direct` | `4` | `agency`, `webflow`, `bettermode`, `marketplace`, `cs` |
 | `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `5` | `core`, `content`, `cs`, `policy_os_only` |
 | `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `observability`, `telemetry`, `cs`, `policy_os_only` |
@@ -174,6 +177,7 @@ Hand-curated bundles are listed inline. Composio category bundles are listed in 
 
 | Bundle | Servers |
 | --- | --- |
+| `abundance` | `abundance-staff-mcp`, `abundance-jobs-mcp`, `abundance-thenpgroup-hub` |
 | `agency` | `outerfields-pcn` |
 | `core` | `create-something`, `three-tier-framework`, `playbook` |
 | `dormant` | `gmail-notion-mcp`, `notion-sync-mcp`, `loom-mcp` |

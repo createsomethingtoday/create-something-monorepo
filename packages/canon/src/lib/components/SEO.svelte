@@ -271,6 +271,10 @@
     noindex ? 'noindex' : 'index',
     nofollow ? 'nofollow' : 'follow'
   ].join(', ');
+
+  function jsonLd(schema: unknown): string {
+    return `<script type="application/ld+json">${JSON.stringify(schema)}</scr` + 'ipt>';
+  }
 </script>
 
 <svelte:head>
@@ -318,58 +322,40 @@
   <meta property="twitter:image" content={fullOgImage} />
 
   <!-- Schema.org JSON-LD -->
-  <script type="application/ld+json">
-    {JSON.stringify(organizationSchema)}
-  </script>
-  <script type="application/ld+json">
-    {JSON.stringify(websiteSchema)}
-  </script>
+  {@html jsonLd(organizationSchema)}
+  {@html jsonLd(websiteSchema)}
   {#if articleSchema}
-    <script type="application/ld+json">
-      {JSON.stringify(articleSchema)}
-    </script>
+    {@html jsonLd(articleSchema)}
   {/if}
 
   <!-- Service Schemas -->
   {#each serviceSchemas as serviceSchema}
-    <script type="application/ld+json">
-      {JSON.stringify(serviceSchema)}
-    </script>
+    {@html jsonLd(serviceSchema)}
   {/each}
 
   <!-- FAQ Schema -->
   {#if faqSchema}
-    <script type="application/ld+json">
-      {JSON.stringify(faqSchema)}
-    </script>
+    {@html jsonLd(faqSchema)}
   {/if}
 
   <!-- Breadcrumb Schema -->
   {#if breadcrumbSchema}
-    <script type="application/ld+json">
-      {JSON.stringify(breadcrumbSchema)}
-    </script>
+    {@html jsonLd(breadcrumbSchema)}
   {/if}
 
   <!-- AggregateRating Schema -->
   {#if aggregateRatingSchema}
-    <script type="application/ld+json">
-      {JSON.stringify(aggregateRatingSchema)}
-    </script>
+    {@html jsonLd(aggregateRatingSchema)}
   {/if}
 
   <!-- VideoObject Schema -->
   {#if videoSchema}
-    <script type="application/ld+json">
-      {JSON.stringify(videoSchema)}
-    </script>
+    {@html jsonLd(videoSchema)}
   {/if}
 
   <!-- Course Schema -->
   {#if courseSchema}
-    <script type="application/ld+json">
-      {JSON.stringify(courseSchema)}
-    </script>
+    {@html jsonLd(courseSchema)}
   {/if}
 
   <!-- Additional SEO -->
