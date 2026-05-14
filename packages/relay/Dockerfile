@@ -8,15 +8,22 @@ RUN apt-get update && apt-get install -y xz-utils ca-certificates rsync \
     && curl -fsSLk https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz -o /tmp/node.tar.xz \
     && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 \
     && rm /tmp/node.tar.xz \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
     && node --version \
     && npm --version
 
 # Install pnpm globally
-RUN npm install -g pnpm
+RUN npm install -g pnpm \
+    && npm cache clean --force
 
 # Install moltbot (CLI is still named clawdbot until upstream renames)
 # Pin to specific version for reproducible builds
 RUN npm install -g clawdbot@2026.1.24-3 \
+    && if [ -d /usr/local/lib/node_modules/clawdbot/node_modules/@node-llama-cpp ]; then \
+        find /usr/local/lib/node_modules/clawdbot/node_modules/@node-llama-cpp -mindepth 1 -maxdepth 1 ! -name linux-x64 -exec rm -rf {} +; \
+    fi \
+    && npm cache clean --force \
     && clawdbot --version
 
 # Create moltbot directories (paths still use clawdbot until upstream renames)
