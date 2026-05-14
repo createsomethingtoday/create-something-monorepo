@@ -1,0 +1,28 @@
+{
+  "name": "@create-something/notion-worker-experiments",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Notion Worker experiments for CREATE SOMETHING Custom Agent tools and Syncs.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "@notionhq/workers": "^0.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "notion",
+    "notion-workers",
+    "custom-agents",
+    "create-something"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}
