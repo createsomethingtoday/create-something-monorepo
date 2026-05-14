@@ -1,6 +1,8 @@
 # Webflow Template Review Nontechnical Reviewer Delivery
 
-Reviewers should not have to understand Claude Code, MCP configuration, Infisical, or shell commands. Dify remains the primary reviewer-facing surface.
+Strategy context: [Webflow Template Review Runtime Strategy Brief](./WEBFLOW_TEMPLATE_REVIEW_RUNTIME_STRATEGY_BRIEF_2026-05-14.md).
+
+Reviewers should not have to understand Claude Code, MCP configuration, Infisical, or shell commands. This doc describes the Dify-first delivery model for the current low-friction reviewer rollout; the runtime strategy brief explains how the workflow can move across Claude, Dify, and E2B surfaces.
 
 ## Recommended Delivery Model
 
@@ -44,14 +46,14 @@ This gets reviewers moving without asking them to install anything.
 
 To remove the operator dependency, migrate the skill's shell checks into narrow MCP tools:
 
-| Proposed tool | Purpose |
-| --- | --- |
-| `template_review_probe_url` | Fetch URL, status, title, redirects, basic failure classification |
-| `template_review_check_required_pages` | Check `/style-guide`, `/licenses`, `/changelog`, `/instructions`, `/404` |
-| `template_review_scan_homepage_html` | Count H1s, detect metadata, Powered by Webflow link, licensing link |
-| `template_review_scan_custom_code` | Detect GSAP, SplitText, Lenis, multiple GSAP versions, suspicious scripts |
-| `template_review_run_phase0` | Return `TEMPLATE`, `CUSTOM_DOMAIN_TEMPLATE`, `DEAD_URL`, or `NOT_A_TEMPLATE` |
-| `template_review_triage_version` | Pull Airtable context and run the safe URL/page/script probes in one call |
+| Proposed tool                          | Purpose                                                                      |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| `template_review_probe_url`            | Fetch URL, status, title, redirects, basic failure classification            |
+| `template_review_check_required_pages` | Check `/style-guide`, `/licenses`, `/changelog`, `/instructions`, `/404`     |
+| `template_review_scan_homepage_html`   | Count H1s, detect metadata, Powered by Webflow link, licensing link          |
+| `template_review_scan_custom_code`     | Detect GSAP, SplitText, Lenis, multiple GSAP versions, suspicious scripts    |
+| `template_review_run_phase0`           | Return `TEMPLATE`, `CUSTOM_DOMAIN_TEMPLATE`, `DEAD_URL`, or `NOT_A_TEMPLATE` |
+| `template_review_triage_version`       | Pull Airtable context and run the safe URL/page/script probes in one call    |
 
 These tools let Dify do what the Claude skill currently does with `curl` and `grep`, but behind a controlled MCP boundary.
 

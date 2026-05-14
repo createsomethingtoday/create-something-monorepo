@@ -1,5 +1,7 @@
 # Webflow Template Review Hub Eval Suite
 
+Runtime strategy context: [Webflow Template Review Runtime Strategy Brief](./WEBFLOW_TEMPLATE_REVIEW_RUNTIME_STRATEGY_BRIEF_2026-05-14.md).
+
 This Braintrust suite verifies the reviewer-specific Webflow Template Review Hubs:
 
 - Eric: `https://wf-template-review-eric.mcp.createsomething.agency/mcp`
